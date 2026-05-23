@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<title>OVR — popover / menu</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link rel="stylesheet" href="_card.css">
+<style>html,body{height:280px;}</style>
+</head>
+<body>
+<div class="card">
+
+<div class="label">popover · 6px radius · the only place shadow is used</div>
+<div style="background:var(--bg-raised); border-radius:6px; box-shadow:var(--shadow-popover); width:220px; padding:4px; font-size:12px;">
+  <div style="padding:6px 10px 4px; font-size:10px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--fg-tertiary);">filter</div>
+  <div style="display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:2px;">
+    <span style="color:var(--status-fail);">●</span><span>changed</span><span style="margin-left:auto; color:var(--fg-tertiary);">12</span>
+  </div>
+  <div style="display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:2px; background:var(--bg-hover);">
+    <span style="color:var(--status-pass);">○</span><span>passed</span><span style="margin-left:auto; color:var(--fg-tertiary);">35</span>
+  </div>
+  <div style="display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:2px;">
+    <span style="color:var(--status-pending);">◐</span><span>pending</span><span style="margin-left:auto; color:var(--fg-tertiary);">2</span>
+  </div>
+  <div style="height:1px; background:var(--border-subtle); margin:4px 0;"></div>
+  <div style="display:flex; align-items:center; gap:8px; padding:6px 10px;">
+    <span>by branch</span><span style="margin-left:auto; color:var(--fg-tertiary);">›</span>
+  </div>
+  <div style="display:flex; align-items:center; gap:8px; padding:6px 10px;">
+    <span>by author</span><span style="margin-left:auto; color:var(--fg-tertiary);">›</span>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

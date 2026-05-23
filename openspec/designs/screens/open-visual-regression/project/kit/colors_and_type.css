@@ -1,0 +1,330 @@
+/* ============================================================================
+   OVR — Design Tokens
+   Dark-first, mono-forward, hairline-dense.
+   Load order: this file → component CSS. All tokens are CSS custom properties
+   so per-section overrides (e.g. light-theme report embeds) just re-declare.
+   ========================================================================= */
+
+/* ----------------------------------------------------------------------------
+   FONTS
+   Berkeley Mono is paid; JetBrains Mono is the substitute. If you have a
+   Berkeley Mono license, drop the .woff2 into fonts/ and rewrite --font-mono.
+   We self-host JetBrains Mono in fonts/ AND import Google Fonts as fallback,
+   so this works whether or not the fonts/ files are deployed.
+   ------------------------------------------------------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+
+:root {
+  --font-mono: 'JetBrains Mono', 'Berkeley Mono', 'SF Mono', 'IBM Plex Mono',
+               ui-monospace, Menlo, Consolas, monospace;
+  --font-sans: var(--font-mono); /* mono-forward: no separate sans */
+
+  /* ==========================================================================
+     COLOR — DARK (default surface)
+     Built in oklch so light theme + accent shifts stay perceptually even.
+     ======================================================================= */
+
+  /* Background elevations */
+  --bg-base:       oklch(0.155 0.006 270);   /* app background */
+  --bg-elevated:   oklch(0.195 0.006 270);   /* cards, panels */
+  --bg-raised:     oklch(0.235 0.006 270);   /* popovers, menus */
+  --bg-hover:      oklch(0.225 0.006 270);   /* row hover */
+  --bg-active:     oklch(0.265 0.006 270);   /* row pressed / selected */
+  --bg-inset:      oklch(0.125 0.006 270);   /* sunken (code blocks) */
+
+  /* Borders — three levels, all hairline */
+  --border-subtle:  oklch(0.265 0.006 270);  /* table rules, dividers */
+  --border-default: oklch(0.325 0.006 270);  /* card edges, inputs */
+  --border-strong:  oklch(0.42 0.006 270);   /* focused / emphasized */
+
+  /* Foreground (text) */
+  --fg-primary:    oklch(0.965 0 0);         /* body, headings */
+  --fg-secondary:  oklch(0.78 0 0);          /* labels, dim body */
+  --fg-tertiary:   oklch(0.60 0 0);          /* metadata, captions */
+  --fg-muted:      oklch(0.46 0 0);          /* disabled, placeholder */
+  --fg-on-accent:  oklch(0.15 0.006 270);    /* text on magenta */
+
+  /* Accent — warm amber. Reads as "attention / something to review"
+     without being alarmist. The one brand color. */
+  --accent-primary:       oklch(0.78 0.18 75);   /* warm amber/gold */
+  --accent-primary-hover: oklch(0.82 0.18 75);
+  --accent-primary-press: oklch(0.74 0.18 75);
+  --accent-primary-dim:   oklch(0.78 0.18 75 / 0.15); /* tint backgrounds */
+  --accent-primary-ring:  oklch(0.78 0.18 75 / 0.35); /* focus rings */
+
+  /* Diff semantics — used by the diff viewer + status badges.
+     Note: --diff-change is slightly MORE vivid than --accent-primary.
+     The brand accent should be calm; the literal diff highlight should pop. */
+  --diff-add:        oklch(0.78 0.20 145);   /* green: pixel added */
+  --diff-add-dim:    oklch(0.78 0.20 145 / 0.18);
+  --diff-remove:     oklch(0.68 0.23 25);    /* red: pixel removed */
+  --diff-remove-dim: oklch(0.68 0.23 25 / 0.18);
+  --diff-change:     oklch(0.80 0.20 75);    /* amber: pixel changed — vivid */
+  --diff-change-dim: oklch(0.80 0.20 75 / 0.18);
+
+  /* Status semantics */
+  --status-pass:    var(--diff-add);
+  --status-fail:    var(--diff-remove);
+  --status-pending: oklch(0.72 0.13 230);    /* blue (moved from amber) */
+  --status-stale:   oklch(0.68 0.04 270);    /* neutral grey */
+
+  /* ==========================================================================
+     TYPE SCALE
+     ======================================================================= */
+  --text-2xs:  10px;
+  --text-xs:   11px;
+  --text-sm:   12px;
+  --text-base: 13px;
+  --text-md:   14px;
+  --text-lg:   16px;
+  --text-xl:   20px;
+  --text-2xl:  28px;
+  --text-3xl:  40px;
+  --text-4xl:  56px;
+  --text-5xl:  80px;
+
+  --leading-tight:  1.15;
+  --leading-snug:   1.35;
+  --leading-normal: 1.5;
+  --leading-loose:  1.7;
+
+  --tracking-tight:   -0.02em;
+  --tracking-normal:   0;
+  --tracking-label:    0.08em; /* UPPERCASE labels */
+  --tracking-display: -0.03em;
+
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+
+  /* ==========================================================================
+     SPACING — 4px base. Dense.
+     ======================================================================= */
+  --space-0:  0;
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-14: 56px;
+  --space-18: 72px;
+  --space-24: 96px;
+
+  /* ==========================================================================
+     RADII — sharp.
+     ======================================================================= */
+  --radius-0: 0;
+  --radius-1: 2px;   /* buttons, badges, inputs */
+  --radius-2: 4px;   /* cards, panels */
+  --radius-3: 6px;   /* popovers, modals */
+
+  /* ==========================================================================
+     SHADOWS — almost none. Border is the elevation.
+     ======================================================================= */
+  --shadow-none: none;
+  --shadow-popover:
+    0 8px 24px -8px rgba(0, 0, 0, 0.6),
+    0 0 0 1px var(--border-default);
+  --shadow-modal:
+    0 24px 64px -16px rgba(0, 0, 0, 0.7),
+    0 0 0 1px var(--border-default);
+  --shadow-focus: 0 0 0 2px var(--accent-primary-ring);
+
+  /* ==========================================================================
+     MOTION
+     ======================================================================= */
+  --ease-out:    cubic-bezier(0.2, 0, 0, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast:    120ms;
+  --dur-base:    200ms;
+  --dur-slow:    320ms;
+
+  /* ==========================================================================
+     LAYOUT
+     ======================================================================= */
+  --topbar-h:  48px;
+  --sidebar-w: 240px;
+  --row-h-sm:  28px;
+  --row-h-md:  32px;
+  --row-h-lg:  40px;
+
+  /* ==========================================================================
+     MOTIFS
+     ======================================================================= */
+  --pixel-grid:
+    radial-gradient(
+      circle at 8px 8px,
+      oklch(1 0 0 / 0.13) 1px,
+      transparent 0
+    );
+  --pixel-grid-size: 16px 16px;
+}
+
+/* ----------------------------------------------------------------------------
+   LIGHT THEME — for print/embed only. Opt-in via [data-theme="light"].
+   ------------------------------------------------------------------------- */
+[data-theme="light"] {
+  --bg-base:       oklch(0.99 0 0);
+  --bg-elevated:   oklch(0.97 0 0);
+  --bg-raised:     oklch(1 0 0);
+  --bg-hover:      oklch(0.95 0 0);
+  --bg-active:     oklch(0.92 0 0);
+  --bg-inset:      oklch(0.96 0 0);
+
+  --border-subtle:  oklch(0.92 0 0);
+  --border-default: oklch(0.86 0 0);
+  --border-strong:  oklch(0.72 0 0);
+
+  --fg-primary:    oklch(0.15 0.006 270);
+  --fg-secondary:  oklch(0.32 0.006 270);
+  --fg-tertiary:   oklch(0.48 0.006 270);
+  --fg-muted:      oklch(0.62 0.006 270);
+  --fg-on-accent:  oklch(1 0 0);
+}
+
+/* ============================================================================
+   SEMANTIC TYPE — apply these classes (or use the vars) for consistency.
+   ========================================================================= */
+.t-display {
+  font-family: var(--font-mono);
+  font-size: var(--text-4xl);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-display);
+  line-height: var(--leading-tight);
+}
+.t-h1 {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-tight);
+}
+.t-h2 {
+  font-family: var(--font-mono);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-snug);
+}
+.t-h3 {
+  font-family: var(--font-mono);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0;
+  line-height: var(--leading-snug);
+}
+.t-body {
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-normal);
+}
+.t-body-sm {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-normal);
+}
+.t-caption {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-regular);
+  color: var(--fg-tertiary);
+  line-height: var(--leading-normal);
+}
+.t-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--fg-secondary);
+}
+.t-code {
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+  font-feature-settings: "calt" 0, "liga" 0;
+}
+.t-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================================
+   GLOBAL RESETS used by every preview / kit file
+   ========================================================================= */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-base);
+  color: var(--fg-primary);
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-variant-numeric: tabular-nums;
+}
+
+a { color: inherit; text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: 2px; }
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+}
+
+::selection {
+  background: var(--accent-primary);
+  color: var(--fg-on-accent);
+}
+
+/* ============================================================================
+   SHIMMER — reusable skeleton primitive. Add `.shimmer` to any element
+   to get the pulsing loading state. Sets background, color (text becomes
+   invisible), and pulse animation. Use `.shimmer.shimmer-light` on already-
+   dark surfaces if the default reads too soft.
+   ========================================================================= */
+@keyframes ovrShimmer {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
+}
+.shimmer {
+  background: var(--bg-hover);
+  color: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  animation: ovrShimmer 1.4s ease-in-out infinite;
+  border-radius: 2px;
+  user-select: none;
+}
+.shimmer-light { background: var(--border-default); }
+.shimmer > * { visibility: hidden; }
+.shimmer svg, .shimmer img { visibility: hidden; }
+
+/* Focus: always brand-color. Never the browser default.
+   !important because inline `border` styles in preview cards / mocks would
+   otherwise beat the border-color override. */
+input:focus,
+input:focus-visible,
+textarea:focus,
+textarea:focus-visible,
+select:focus,
+select:focus-visible {
+  outline: 2px solid var(--accent-primary-ring) !important;
+  outline-offset: 0 !important;
+  border-color: var(--accent-primary) !important;
+}
+button:focus-visible,
+a:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent-primary-ring);
+  outline-offset: 2px;
+}

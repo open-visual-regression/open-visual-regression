@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<title>OVR — codeblock</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link rel="stylesheet" href="_card.css">
+<style>html,body{height:560px;}</style>
+</head>
+<body>
+<div class="card">
+
+<div class="label">codeblock · multi-line · with line numbers</div>
+<div style="background:var(--bg-inset); border:1px solid var(--border-default); border-radius:2px; overflow:hidden;">
+  
+  <div style="display:flex; align-items:center; height:32px; padding:0 8px 0 12px; background:var(--bg-elevated); border-bottom:1px solid var(--border-default); gap:10px;">
+    <span style="font-size:10px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--fg-tertiary);">stacktrace</span>
+    <span style="font-size:11px; color:var(--fg-tertiary);">cart-with-items.test.ts</span>
+    <span style="font-size:11px; color:var(--fg-muted); margin-left:auto;">6 lines</span>
+    
+    <button style="display:inline-flex; align-items:center; gap:6px; height:24px; padding:0 8px; background:var(--bg-elevated); color:var(--fg-secondary); border:1px solid var(--border-default); border-radius:2px; font-family:inherit; font-size:10px; font-weight:500; letter-spacing:0.04em; text-transform:uppercase; cursor:pointer;">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square">
+        <rect x="9" y="9" width="11" height="11" rx="1"/>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+      </svg>
+      copy
+    </button>
+  </div>
+  <div style="padding:8px 0; max-height:140px; overflow:auto;">
+
+      <div style="display:flex; align-items:flex-start; gap:12px; padding:0 12px; font-size:11px; line-height:1.6; color:var(--diff-remove); font-weight:600; white-space:pre;">
+        <span style="color:var(--fg-muted); text-align:right; width:18px; user-select:none; flex-shrink:0;">1</span>
+        <span>TypeError: Cannot read properties of undefined (reading 'price')</span>
+      </div>
+      <div style="display:flex; align-items:flex-start; gap:12px; padding:0 12px; font-size:11px; line-height:1.6; color:var(--fg-primary); font-weight:400; white-space:pre;">
+        <span style="color:var(--fg-muted); text-align:right; width:18px; user-select:none; flex-shrink:0;">2</span>
+        <span>    at computeSubtotal (src/cart/total.ts:42:18)</span>
+      </div>
+      <div style="display:flex; align-items:flex-start; gap:12px; padding:0 12px; font-size:11px; line-height:1.6; color:var(--fg-primary); font-weight:400; white-space:pre;">
+        <span style="color:var(--fg-muted); text-align:right; width:18px; user-select:none; flex-shrink:0;">3</span>
+        <span>    at CartSummary (src/components/CartSummary.tsx:88:24)</span>
+      </div>
+      <div style="display:flex; align-items:flex-start; gap:12px; padding:0 12px; font-size:11px; line-height:1.6; color:var(--fg-tertiary); font-weight:400; white-space:pre;">
+        <span style="color:var(--fg-muted); text-align:right; width:18px; user-select:none; flex-shrink:0;">4</span>
+        <span>    at renderWithHooks (node_modules/react-dom/cjs/react-dom.dev.js:14985)</span>
+      </div>
+      <div style="display:flex; align-items:flex-start; gap:12px; padding:0 12px; font-size:11px; line-height:1.6; color:var(--fg-tertiary); font-weight:400; white-space:pre;">
+        <span style="color:var(--fg-muted); text-align:right; width:18px; user-select:none; flex-shrink:0;">5</span>
+        <span>    at mountIndeterminateComponent (.../react-dom.dev.js:17811)</span>
+      </div>
+      <div style="display:flex; align-items:flex-start; gap:12px; padding:0 12px; font-size:11px; line-height:1.6; color:var(--fg-tertiary); font-weight:400; white-space:pre;">
+        <span style="color:var(--fg-muted); text-align:right; width:18px; user-select:none; flex-shrink:0;">6</span>
+        <span>    at beginWork (.../react-dom.dev.js:19049)</span>
+      </div>
+  </div>
+</div>
+
+<div class="label" style="margin-top:8px;">codeblock · multi-line · no line numbers</div>
+<div style="background:var(--bg-inset); border:1px solid var(--border-default); border-radius:2px; overflow:hidden;">
+  
+  <div style="display:flex; align-items:center; height:32px; padding:0 8px 0 12px; background:var(--bg-elevated); border-bottom:1px solid var(--border-default); gap:10px;">
+    <span style="font-size:10px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--fg-tertiary);">stacktrace</span>
+    <span style="font-size:11px; color:var(--fg-tertiary);">cart-with-items.test.ts</span>
+    <span style="font-size:11px; color:var(--fg-muted); margin-left:auto;">6 lines</span>
+    
+    <button style="display:inline-flex; align-items:center; gap:6px; height:24px; padding:0 8px; background:var(--bg-elevated); color:var(--fg-secondary); border:1px solid var(--border-default); border-radius:2px; font-family:inherit; font-size:10px; font-weight:500; letter-spacing:0.04em; text-transform:uppercase; cursor:pointer;">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square">
+        <rect x="9" y="9" width="11" height="11" rx="1"/>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+      </svg>
+      copy
+    </button>
+  </div>
+  <div style="padding:8px 0; max-height:140px; overflow:auto;">
+
+      <div style="padding:0 12px; font-size:11px; line-height:1.6; color:var(--diff-remove); font-weight:600; white-space:pre;">TypeError: Cannot read properties of undefined (reading 'price')</div>
+      <div style="padding:0 12px; font-size:11px; line-height:1.6; color:var(--fg-primary); font-weight:400; white-space:pre;">    at computeSubtotal (src/cart/total.ts:42:18)</div>
+      <div style="padding:0 12px; font-size:11px; line-height:1.6; color:var(--fg-primary); font-weight:400; white-space:pre;">    at CartSummary (src/components/CartSummary.tsx:88:24)</div>
+      <div style="padding:0 12px; font-size:11px; line-height:1.6; color:var(--fg-tertiary); font-weight:400; white-space:pre;">    at renderWithHooks (node_modules/react-dom/cjs/react-dom.dev.js:14985)</div>
+      <div style="padding:0 12px; font-size:11px; line-height:1.6; color:var(--fg-tertiary); font-weight:400; white-space:pre;">    at mountIndeterminateComponent (.../react-dom.dev.js:17811)</div>
+      <div style="padding:0 12px; font-size:11px; line-height:1.6; color:var(--fg-tertiary); font-weight:400; white-space:pre;">    at beginWork (.../react-dom.dev.js:19049)</div>
+  </div>
+</div>
+
+<div class="label" style="margin-top:8px;">codeblock · single-line · horizontal scroll · no wrap</div>
+<div style="background:var(--bg-inset); border:1px solid var(--border-default); border-radius:2px; overflow:hidden;">
+  <div style="display:flex; align-items:center; padding:8px 12px; gap:12px;">
+    <span style="color:var(--accent-primary); font-size:12px; flex-shrink:0;">$</span>
+    <div style="flex:1; min-width:0; overflow-x:auto; font-size:12px; color:var(--fg-primary); white-space:nowrap;">
+      ovr run --project checkout-flow --branch pr/482 --viewport 1280x800 --browser chromium-117 --baseline main --threshold 0.1 --output ./reports/run-1284 --concurrency 4 --retries 2
+    </div>
+
+    <button style="display:inline-flex; align-items:center; gap:6px; height:24px; padding:0 8px; background:var(--bg-elevated); color:var(--fg-secondary); border:1px solid var(--border-default); border-radius:2px; font-family:inherit; font-size:10px; font-weight:500; letter-spacing:0.04em; text-transform:uppercase; cursor:pointer;">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square">
+        <rect x="9" y="9" width="11" height="11" rx="1"/>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+      </svg>
+      copy
+    </button>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

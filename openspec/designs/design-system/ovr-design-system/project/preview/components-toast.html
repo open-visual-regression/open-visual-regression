@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<title>OVR — toast</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link rel="stylesheet" href="_card.css">
+<style>html,body{height:380px;}</style>
+</head>
+<body>
+<div class="card">
+
+<div class="label">toast · transient · bottom-right · 5 tones · auto-dismiss after 5s</div>
+
+<!-- Stacked toasts in their typical position. Use a faint pixel-grid stage to imply "on top of the app". -->
+<div style="flex:1; position:relative; background:var(--bg-inset); background-image:var(--pixel-grid); background-size:var(--pixel-grid-size); border:1px solid var(--border-subtle); overflow:hidden;">
+  <div style="position:absolute; bottom:16px; right:16px; display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
+    
+  <div style="display:flex; align-items:stretch; background:var(--bg-raised); border:1px solid var(--border-default); border-radius:2px; box-shadow:var(--shadow-popover); overflow:hidden; width:340px;">
+    <div style="width:3px; background:var(--diff-add); flex-shrink:0;"></div>
+    <div style="display:flex; align-items:flex-start; gap:10px; padding:10px 12px; flex:1; min-width:0;">
+      <span style="color:var(--diff-add); font-size:13px; line-height:1.2; flex-shrink:0; margin-top:1px;">✓</span>
+      <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;">
+        <div style="font-size:12px; font-weight:600; color:var(--fg-primary);">run #1284 approved</div>
+        <div style="font-size:11px; color:var(--fg-secondary); line-height:1.5;">12 snapshots accepted · baseline updated</div>
+      </div>
+      <button style="height:22px; padding:0 8px; background:transparent; color:var(--diff-add); border:1px solid var(--diff-add); border-radius:2px; font-family:inherit; font-size:10px; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; cursor:pointer; white-space:nowrap; align-self:center; flex-shrink:0;">view</button>
+      <button style="width:16px; height:16px; padding:0; background:transparent; color:var(--fg-tertiary); border:none; cursor:pointer; font-family:inherit; font-size:12px; line-height:1; flex-shrink:0; align-self:flex-start; margin-top:1px;">✗</button>
+    </div>
+    
+  </div>
+    
+  <div style="display:flex; align-items:stretch; background:var(--bg-raised); border:1px solid var(--border-default); border-radius:2px; box-shadow:var(--shadow-popover); overflow:hidden; width:340px;">
+    <div style="width:3px; background:var(--status-pending); flex-shrink:0;"></div>
+    <div style="display:flex; align-items:flex-start; gap:10px; padding:10px 12px; flex:1; min-width:0;">
+      <span style="color:var(--status-pending); font-size:13px; line-height:1.2; flex-shrink:0; margin-top:1px;">△</span>
+      <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;">
+        <div style="font-size:12px; font-weight:600; color:var(--fg-primary);">baseline is stale</div>
+        <div style="font-size:11px; color:var(--fg-secondary); line-height:1.5;">47 days old · consider re-snapshotting</div>
+      </div>
+      <button style="height:22px; padding:0 8px; background:transparent; color:var(--status-pending); border:1px solid var(--status-pending); border-radius:2px; font-family:inherit; font-size:10px; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; cursor:pointer; white-space:nowrap; align-self:center; flex-shrink:0;">update</button>
+      <button style="width:16px; height:16px; padding:0; background:transparent; color:var(--fg-tertiary); border:none; cursor:pointer; font-family:inherit; font-size:12px; line-height:1; flex-shrink:0; align-self:flex-start; margin-top:1px;">✗</button>
+    </div>
+    
+  </div>
+    
+  <div style="display:flex; align-items:stretch; background:var(--bg-raised); border:1px solid var(--border-default); border-radius:2px; box-shadow:var(--shadow-popover); overflow:hidden; width:340px;">
+    <div style="width:3px; background:var(--diff-remove); flex-shrink:0;"></div>
+    <div style="display:flex; align-items:flex-start; gap:10px; padding:10px 12px; flex:1; min-width:0;">
+      <span style="color:var(--diff-remove); font-size:13px; line-height:1.2; flex-shrink:0; margin-top:1px;">●</span>
+      <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;">
+        <div style="font-size:12px; font-weight:600; color:var(--fg-primary);">compare failed</div>
+        <div style="font-size:11px; color:var(--fg-secondary); line-height:1.5;">baseline mismatch · viewport 1280×720</div>
+      </div>
+      <button style="height:22px; padding:0 8px; background:transparent; color:var(--diff-remove); border:1px solid var(--diff-remove); border-radius:2px; font-family:inherit; font-size:10px; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; cursor:pointer; white-space:nowrap; align-self:center; flex-shrink:0;">retry</button>
+      <button style="width:16px; height:16px; padding:0; background:transparent; color:var(--fg-tertiary); border:none; cursor:pointer; font-family:inherit; font-size:12px; line-height:1; flex-shrink:0; align-self:flex-start; margin-top:1px;">✗</button>
+    </div>
+    
+  </div>
+    
+  <div style="display:flex; align-items:stretch; background:var(--bg-raised); border:1px solid var(--border-default); border-radius:2px; box-shadow:var(--shadow-popover); overflow:hidden; width:340px;">
+    <div style="width:3px; background:var(--accent-primary); flex-shrink:0;"></div>
+    <div style="display:flex; align-items:flex-start; gap:10px; padding:10px 12px; flex:1; min-width:0;">
+      <span style="color:var(--accent-primary); font-size:13px; line-height:1.2; flex-shrink:0; margin-top:1px;">●</span>
+      <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;">
+        <div style="font-size:12px; font-weight:600; color:var(--fg-primary);">new run starting</div>
+        <div style="font-size:11px; color:var(--fg-secondary); line-height:1.5;">#1285 · pr/483 · 12 snapshots queued</div>
+      </div>
+      
+      <button style="width:16px; height:16px; padding:0; background:transparent; color:var(--fg-tertiary); border:none; cursor:pointer; font-family:inherit; font-size:12px; line-height:1; flex-shrink:0; align-self:flex-start; margin-top:1px;">✗</button>
+    </div>
+    
+  </div>
+    
+  <div style="display:flex; align-items:stretch; background:var(--bg-raised); border:1px solid var(--border-default); border-radius:2px; box-shadow:var(--shadow-popover); overflow:hidden; width:340px;">
+    <div style="width:3px; background:var(--fg-secondary); flex-shrink:0;"></div>
+    <div style="display:flex; align-items:flex-start; gap:10px; padding:10px 12px; flex:1; min-width:0;">
+      <span style="color:var(--fg-secondary); font-size:13px; line-height:1.2; flex-shrink:0; margin-top:1px;">◐</span>
+      <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;">
+        <div style="font-size:12px; font-weight:600; color:var(--fg-primary);">auto-saved</div>
+        
+      </div>
+      
+      <button style="width:16px; height:16px; padding:0; background:transparent; color:var(--fg-tertiary); border:none; cursor:pointer; font-family:inherit; font-size:12px; line-height:1; flex-shrink:0; align-self:flex-start; margin-top:1px;">✗</button>
+    </div>
+    
+  </div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

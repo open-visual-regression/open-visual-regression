@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<title>OVR — sidebar</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link rel="stylesheet" href="_card.css">
+<style>html,body{height:480px;}</style>
+</head>
+<body>
+<div class="card">
+
+<div class="label">sidebar · collapsible · 240px expanded · 48px collapsed</div>
+<div style="display:flex; gap:16px; align-items:flex-start; flex:1; min-height:0;">
+
+  <!-- EXPANDED STATE -->
+  <div style="display:flex; flex-direction:column; gap:6px; flex-shrink:0;">
+    <span style="font-size:10px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--fg-tertiary);">expanded · desktop default</span>
+
+    <div style="width:240px; height:380px; background:var(--bg-base); border:1px solid var(--border-default); border-radius:2px; display:flex; flex-direction:column; overflow:hidden;">
+      <!-- group: projects -->
+      <div style="display:flex; align-items:center; padding:12px 12px 6px; white-space:nowrap;">
+        <span style="font-size:10px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--fg-tertiary);">projects</span>
+        <span style="margin-left:auto; font-size:10px; color:var(--fg-muted);">5</span>
+      </div>
+
+      <a href="#" style="display:flex; align-items:center; gap:8px; height:28px; padding:0 10px; font-size:12px; color:var(--fg-primary); background:var(--bg-active); border-left:2px solid var(--accent-primary); text-decoration:none;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--fg-tertiary)" stroke-width="1.5" stroke-linecap="square"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <span>checkout-flow</span>
+        <span style="margin-left:auto; color:var(--accent-primary); font-weight:600; font-size:10px;">3</span>
+      </a>
+      <a href="#" style="display:flex; align-items:center; gap:8px; height:28px; padding:0 10px 0 12px; font-size:12px; color:var(--fg-secondary); text-decoration:none;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--fg-tertiary)" stroke-width="1.5" stroke-linecap="square"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <span>marketing</span>
+        <span style="margin-left:auto; color:var(--accent-primary); font-weight:600; font-size:10px;">1</span>
+      </a>
+      <a href="#" style="display:flex; align-items:center; gap:8px; height:28px; padding:0 10px 0 12px; font-size:12px; color:var(--fg-secondary); text-decoration:none;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--fg-tertiary)" stroke-width="1.5" stroke-linecap="square"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <span>dashboard</span>
+      </a>
+      <a href="#" style="display:flex; align-items:center; gap:8px; height:28px; padding:0 10px 0 12px; font-size:12px; color:var(--fg-secondary); text-decoration:none;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--fg-tertiary)" stroke-width="1.5" stroke-linecap="square"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <span>mobile-web</span>
+      </a>
+      <a href="#" style="display:flex; align-items:center; gap:8px; height:28px; padding:0 10px 0 12px; font-size:12px; color:var(--fg-secondary); text-decoration:none;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--fg-tertiary)" stroke-width="1.5" stroke-linecap="square"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <span>admin</span>
+      </a>
+
+      <!-- group: recent runs -->
+      <div style="display:flex; align-items:center; padding:14px 12px 6px; white-space:nowrap;">
+        <span style="font-size:10px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--fg-tertiary);">recent runs</span>
+      </div>
+      <a href="#" style="display:flex; align-items:center; gap:8px; height:28px; padding:0 12px; font-size:11px; color:var(--fg-secondary); text-decoration:none;">
+        <span style="color:var(--status-fail);">●</span>
+        <span style="color:var(--fg-tertiary);">#1284</span>
+        <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">checkout-flow</span>
+      </a>
+      <a href="#" style="display:flex; align-items:center; gap:8px; height:28px; padding:0 12px; font-size:11px; color:var(--fg-secondary); text-decoration:none;">
+        <span style="color:var(--status-pending);">◐</span>
+        <span style="color:var(--fg-tertiary);">#0891</span>
+        <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">marketing</span>
+      </a>
+      <a href="#" style="display:flex; align-items:center; gap:8px; height:28px; padding:0 12px; font-size:11px; color:var(--fg-secondary); text-decoration:none;">
+        <span style="color:var(--status-pass);">○</span>
+        <span style="color:var(--fg-tertiary);">#1283</span>
+        <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">checkout-flow</span>
+      </a>
+
+      <!-- footer: collapse toggle + version -->
+      <div style="margin-top:auto; padding:10px 12px; border-top:1px solid var(--border-subtle); display:flex; align-items:center; gap:8px;">
+        <button style="width:24px; height:24px; padding:0; background:transparent; color:var(--fg-secondary); border:1px solid var(--border-default); border-radius:2px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;" title="collapse">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <span style="font-size:10px; color:var(--fg-muted);">ovr v0.4.2</span>
+        <span style="margin-left:auto; font-size:10px; color:var(--fg-muted);">self-hosted</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- COLLAPSED STATE -->
+  <div style="display:flex; flex-direction:column; gap:6px; flex-shrink:0;">
+    <span style="font-size:10px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--fg-tertiary);">collapsed · tablet default</span>
+
+    <div style="width:48px; height:380px; background:var(--bg-base); border:1px solid var(--border-default); border-radius:2px; display:flex; flex-direction:column; padding:0; overflow:hidden;">
+      <!-- group label: matches "projects" in the expanded state -->
+      <div style="height:24px; display:flex; align-items:center; justify-content:center; padding-top:8px;">
+        <span style="font-size:9px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--fg-tertiary);">prj</span>
+      </div>
+
+      <!-- projects: full-width rows with 2-letter monograms.
+           Active row spans the full width and has the accent edge. -->
+      <a href="#" title="checkout-flow" style="display:flex; align-items:center; justify-content:center; height:32px; background:var(--bg-active); border-left:2px solid var(--accent-primary); padding-left:0; padding-right:2px; text-decoration:none; position:relative;">
+        <span style="font-size:11px; font-weight:600; color:var(--fg-primary); font-family:var(--font-mono);">ck</span>
+        <span style="position:absolute; top:6px; right:6px; width:6px; height:6px; background:var(--accent-primary); border-radius:50%;"></span>
+      </a>
+      <a href="#" title="marketing" style="display:flex; align-items:center; justify-content:center; height:32px; text-decoration:none; position:relative;">
+        <span style="font-size:11px; font-weight:600; color:var(--fg-secondary); font-family:var(--font-mono);">mk</span>
+        <span style="position:absolute; top:6px; right:6px; width:6px; height:6px; background:var(--accent-primary); border-radius:50%;"></span>
+      </a>
+      <a href="#" title="dashboard" style="display:flex; align-items:center; justify-content:center; height:32px; text-decoration:none;">
+        <span style="font-size:11px; font-weight:600; color:var(--fg-secondary); font-family:var(--font-mono);">db</span>
+      </a>
+      <a href="#" title="mobile-web" style="display:flex; align-items:center; justify-content:center; height:32px; text-decoration:none;">
+        <span style="font-size:11px; font-weight:600; color:var(--fg-secondary); font-family:var(--font-mono);">mw</span>
+      </a>
+      <a href="#" title="admin" style="display:flex; align-items:center; justify-content:center; height:32px; text-decoration:none;">
+        <span style="font-size:11px; font-weight:600; color:var(--fg-secondary); font-family:var(--font-mono);">ad</span>
+      </a>
+
+      <!-- group label: matches "recent runs" in the expanded state -->
+      <div style="height:24px; display:flex; align-items:center; justify-content:center; padding-top:10px;">
+        <span style="font-size:9px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--fg-tertiary);">run</span>
+      </div>
+
+      <!-- recent runs as glyph stack -->
+      <div style="height:24px; display:flex; align-items:center; justify-content:center;" title="#1284 · checkout-flow"><span style="color:var(--status-fail); font-size:13px;">●</span></div>
+      <div style="height:24px; display:flex; align-items:center; justify-content:center;" title="#0891 · marketing"><span style="color:var(--status-pending); font-size:13px;">◐</span></div>
+      <div style="height:24px; display:flex; align-items:center; justify-content:center;" title="#1283 · checkout-flow"><span style="color:var(--status-pass); font-size:13px;">○</span></div>
+
+      <!-- expand toggle -->
+      <div style="margin-top:auto; padding:8px; border-top:1px solid var(--border-subtle); display:flex; justify-content:center;">
+        <button style="width:24px; height:24px; padding:0; background:transparent; color:var(--fg-secondary); border:1px solid var(--border-default); border-radius:2px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;" title="expand">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BEHAVIOUR NOTES -->
+  <div style="flex:1; display:flex; flex-direction:column; gap:10px; font-size:11px; color:var(--fg-secondary); line-height:1.55; max-width:240px;">
+    <span style="font-size:10px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--fg-tertiary);">behaviour</span>
+
+    <div style="display:flex; gap:8px;">
+      <span style="color:var(--accent-primary); flex-shrink:0; width:14px;">›</span>
+      <span><span style="color:var(--fg-primary);">desktop ≥ 1024px</span> — expanded by default</span>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <span style="color:var(--accent-primary); flex-shrink:0; width:14px;">›</span>
+      <span><span style="color:var(--fg-primary);">tablet 768–1023px</span> — collapsed by default</span>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <span style="color:var(--accent-primary); flex-shrink:0; width:14px;">›</span>
+      <span><span style="color:var(--fg-primary);">mobile &lt; 768px</span> — hidden · drawer over content on toggle</span>
+    </div>
+
+    <div style="height:1px; background:var(--border-subtle); margin:4px 0;"></div>
+
+    <div style="display:flex; gap:8px;">
+      <span style="color:var(--fg-tertiary); flex-shrink:0; width:14px;">·</span>
+      <span>user preference overrides default · persisted in localStorage</span>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <span style="color:var(--fg-tertiary); flex-shrink:0; width:14px;">·</span>
+      <span>collapse animation: 180ms ease-out · width only</span>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <span style="color:var(--fg-tertiary); flex-shrink:0; width:14px;">·</span>
+      <span>hover any icon → tooltip with full label</span>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <span style="color:var(--fg-tertiary); flex-shrink:0; width:14px;">·</span>
+      <span>collapsed projects use 2-letter monograms · group headers shorten (prj, run)</span>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <span style="color:var(--fg-tertiary); flex-shrink:0; width:14px;">·</span>
+      <span>active project keeps its 2px accent edge in both states</span>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <span style="color:var(--fg-tertiary); flex-shrink:0; width:14px;">·</span>
+      <span>changed-count shows as number expanded, dot collapsed</span>
+    </div>
+  </div>
+</div>
+</div>
+</body>
+</html>

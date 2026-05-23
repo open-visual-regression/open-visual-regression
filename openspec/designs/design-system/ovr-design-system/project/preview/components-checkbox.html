@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<title>OVR — checkbox</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link rel="stylesheet" href="_card.css">
+<style>html,body{height:240px;}</style>
+</head>
+<body>
+<div class="card">
+
+<div class="label">checkbox · 14px · 2px radius</div>
+<div style="display:flex; flex-direction:column; gap:10px; font-size:12px;">
+  <!-- checked -->
+  <label style="display:inline-flex; align-items:center; gap:8px; cursor:pointer;">
+    <span style="width:14px; height:14px; background:var(--accent-primary); border:1px solid var(--accent-primary); border-radius:2px; display:inline-flex; align-items:center; justify-content:center;">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--fg-on-accent)" stroke-width="3" stroke-linecap="square"><path d="M20 6L9 17l-5-5"/></svg>
+    </span>
+    <span>include passing snapshots</span>
+  </label>
+  <!-- indeterminate -->
+  <label style="display:inline-flex; align-items:center; gap:8px; cursor:pointer;">
+    <span style="width:14px; height:14px; background:var(--accent-primary); border:1px solid var(--accent-primary); border-radius:2px; display:inline-flex; align-items:center; justify-content:center;">
+      <span style="width:8px; height:2px; background:var(--fg-on-accent);"></span>
+    </span>
+    <span>all snapshots (some selected)</span>
+  </label>
+  <!-- unchecked -->
+  <label style="display:inline-flex; align-items:center; gap:8px; cursor:pointer;">
+    <span style="width:14px; height:14px; background:var(--bg-elevated); border:1px solid var(--border-default); border-radius:2px;"></span>
+    <span>ignore antialiasing</span>
+  </label>
+  <!-- focused -->
+  <label style="display:inline-flex; align-items:center; gap:8px; cursor:pointer;">
+    <span style="width:14px; height:14px; background:var(--bg-elevated); border:1px solid var(--accent-primary); border-radius:2px; outline:2px solid var(--accent-primary-ring); outline-offset:0;"></span>
+    <span>flag snapshots below 1% (focused)</span>
+  </label>
+  <!-- disabled -->
+  <label style="display:inline-flex; align-items:center; gap:8px; color:var(--fg-muted); cursor:not-allowed;">
+    <span style="width:14px; height:14px; background:var(--bg-inset); border:1px solid var(--border-subtle); border-radius:2px;"></span>
+    <span>skip on PR drafts</span>
+  </label>
+</div>
+
+</div>
+</body>
+</html>

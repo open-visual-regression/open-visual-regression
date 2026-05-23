@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<title>OVR — buttons</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link rel="stylesheet" href="_card.css">
+<style>html,body{height:200px;}</style>
+</head>
+<body>
+<div class="card">
+
+<div class="label">buttons · 2px radius · 28/32/40 heights</div>
+<div style="display:flex; flex-direction:column; gap:14px;">
+  <div style="display:flex; gap:8px; align-items:center;">
+    <button style="height:32px; padding:0 14px; background:var(--accent-primary); color:var(--fg-on-accent); border:none; border-radius:2px; font-weight:600; font-size:12px; letter-spacing:-0.01em;">approve</button>
+    <button style="height:32px; padding:0 14px; background:var(--bg-elevated); color:var(--fg-primary); border:1px solid var(--border-default); border-radius:2px; font-weight:500; font-size:12px;">reject</button>
+    <button style="height:32px; padding:0 14px; background:transparent; color:var(--fg-secondary); border:none; border-radius:2px; font-size:12px;">cancel</button>
+    <button style="height:32px; padding:0 14px; background:transparent; color:var(--diff-remove); border:1px solid var(--diff-remove); border-radius:2px; font-weight:500; font-size:12px;">delete run</button>
+    <button style="height:32px; padding:0 14px; background:var(--bg-elevated); color:var(--fg-muted); border:1px solid var(--border-subtle); border-radius:2px; font-size:12px;" disabled>approve</button>
+  </div>
+  <div style="display:flex; gap:8px; align-items:center;">
+    <button style="height:28px; padding:0 10px; background:var(--accent-primary); color:var(--fg-on-accent); border:none; border-radius:2px; font-weight:600; font-size:11px;">approve</button>
+    <button style="height:28px; padding:0 10px; background:var(--bg-elevated); color:var(--fg-primary); border:1px solid var(--border-default); border-radius:2px; font-size:11px;">reject</button>
+    <button style="height:40px; padding:0 18px; background:var(--accent-primary); color:var(--fg-on-accent); border:none; border-radius:2px; font-weight:600; font-size:13px;">approve all</button>
+    <button style="height:40px; padding:0 18px; background:var(--bg-elevated); color:var(--fg-primary); border:1px solid var(--border-default); border-radius:2px; font-size:13px;">⌘ rerun</button>
+  </div>
+  <div style="font-size:10px; color:var(--fg-tertiary);">primary · secondary · ghost · destructive · disabled — small/medium/large heights</div>
+</div>
+
+</div>
+</body>
+</html>

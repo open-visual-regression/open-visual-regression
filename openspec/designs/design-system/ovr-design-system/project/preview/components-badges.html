@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<title>OVR — badges & glyphs</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link rel="stylesheet" href="_card.css">
+<style>html,body{height:200px;}</style>
+</head>
+<body>
+<div class="card">
+
+<div class="label">badges · bracketed · never pill-shaped</div>
+<div style="display:flex; gap:8px; flex-wrap:wrap;">
+  <span style="font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; padding:2px 6px; border:1px solid var(--diff-add); color:var(--diff-add); border-radius:2px;">PASS</span>
+  <span style="font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; padding:2px 6px; border:1px solid var(--diff-remove); color:var(--diff-remove); border-radius:2px;">FAIL</span>
+  <span style="font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; padding:2px 6px; border:1px solid var(--status-pending); color:var(--status-pending); border-radius:2px;">PENDING</span>
+  <span style="font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; padding:2px 6px; border:1px solid var(--status-stale); color:var(--status-stale); border-radius:2px;">STALE</span>
+  <span style="font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; padding:2px 6px; background:var(--accent-primary); color:var(--fg-on-accent); border-radius:2px;">3 CHANGED</span>
+  <span style="font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; padding:2px 6px; background:var(--bg-elevated); color:var(--fg-secondary); border:1px solid var(--border-default); border-radius:2px;">v1.0.4</span>
+</div>
+<div class="label" style="margin-top:8px;">status glyphs · unicode characters · not icons</div>
+<div style="display:flex; gap:20px; flex-wrap:wrap; font-size:14px; align-items:center;">
+  <div style="display:flex; align-items:center; gap:6px;"><span style="color:var(--status-fail); font-size:18px;">●</span><span style="font-size:11px; color:var(--fg-tertiary);">changed</span></div>
+  <div style="display:flex; align-items:center; gap:6px;"><span style="color:var(--status-pass); font-size:18px;">○</span><span style="font-size:11px; color:var(--fg-tertiary);">passed</span></div>
+  <div style="display:flex; align-items:center; gap:6px;"><span style="color:var(--status-pending); font-size:18px;">◐</span><span style="font-size:11px; color:var(--fg-tertiary);">pending</span></div>
+  <div style="display:flex; align-items:center; gap:6px;"><span style="color:var(--status-stale); font-size:18px;">△</span><span style="font-size:11px; color:var(--fg-tertiary);">stale</span></div>
+  <div style="display:flex; align-items:center; gap:6px;"><span style="color:var(--diff-add); font-size:18px;">✓</span><span style="font-size:11px; color:var(--fg-tertiary);">approved</span></div>
+  <div style="display:flex; align-items:center; gap:6px;"><span style="color:var(--diff-remove); font-size:18px;">✗</span><span style="font-size:11px; color:var(--fg-tertiary);">rejected</span></div>
+  <div style="display:flex; align-items:center; gap:6px;"><span style="color:var(--accent-primary); font-size:18px;">Δ</span><span style="font-size:11px; color:var(--fg-tertiary);">delta</span></div>
+</div>
+
+</div>
+</body>
+</html>

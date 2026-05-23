@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<title>OVR — status semantics</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link rel="stylesheet" href="_card.css">
+<style>html,body{height:160px;}</style>
+</head>
+<body>
+<div class="card">
+
+<div class="label">status semantics · run + baseline states</div>
+<div style="display:flex; gap:12px; flex:1; flex-wrap:wrap;">
+  <div style="display:flex; align-items:center; gap:8px; padding:8px 14px; background:var(--bg-elevated); border:1px solid var(--border-subtle); border-left:3px solid var(--status-pass);">
+    <span style="color:var(--status-pass); font-size:14px;">○</span>
+    <span style="font-size:12px;">PASS</span>
+    <span style="font-size:10px; color:var(--fg-tertiary);">--status-pass</span>
+  </div>
+  <div style="display:flex; align-items:center; gap:8px; padding:8px 14px; background:var(--bg-elevated); border:1px solid var(--border-subtle); border-left:3px solid var(--status-fail);">
+    <span style="color:var(--status-fail); font-size:14px;">●</span>
+    <span style="font-size:12px;">FAIL</span>
+    <span style="font-size:10px; color:var(--fg-tertiary);">--status-fail</span>
+  </div>
+  <div style="display:flex; align-items:center; gap:8px; padding:8px 14px; background:var(--bg-elevated); border:1px solid var(--border-subtle); border-left:3px solid var(--status-pending);">
+    <span style="color:var(--status-pending); font-size:14px;">◐</span>
+    <span style="font-size:12px;">PENDING</span>
+    <span style="font-size:10px; color:var(--fg-tertiary);">--status-pending</span>
+  </div>
+  <div style="display:flex; align-items:center; gap:8px; padding:8px 14px; background:var(--bg-elevated); border:1px solid var(--border-subtle); border-left:3px solid var(--status-stale);">
+    <span style="color:var(--status-stale); font-size:14px;">△</span>
+    <span style="font-size:12px;">STALE</span>
+    <span style="font-size:10px; color:var(--fg-tertiary);">--status-stale</span>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

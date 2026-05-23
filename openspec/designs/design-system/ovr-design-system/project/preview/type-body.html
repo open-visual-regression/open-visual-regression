@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<title>OVR — body + caption</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link rel="stylesheet" href="_card.css">
+<style>html,body{height:200px;}</style>
+</head>
+<body>
+<div class="card">
+
+<div style="display:flex; flex-direction:column; gap:12px;">
+  <div style="display:flex; align-items:baseline; gap:16px;">
+    <div style="font-size:13px; line-height:1.5; max-width:480px;">baseline mismatch. expected 1280×800, got 1280×720. rerun with the matching viewport or update the baseline.</div>
+    <div class="label" style="margin-left:auto; white-space:nowrap;">body · 13 / 400</div>
+  </div>
+  <div style="display:flex; align-items:baseline; gap:16px;">
+    <div style="font-size:12px; line-height:1.5; color:var(--fg-secondary); max-width:480px;">push a commit to start. ovr will pick up your config from ovr.config.ts at the repo root.</div>
+    <div class="label" style="margin-left:auto; white-space:nowrap;">body-sm · 12 / 400 / fg-secondary</div>
+  </div>
+  <div style="display:flex; align-items:baseline; gap:16px;">
+    <div style="font-size:11px; line-height:1.5; color:var(--fg-tertiary);">2.4s · 1280×800 · chromium-117</div>
+    <div class="label" style="margin-left:auto; white-space:nowrap;">caption · 11 / 400 / fg-tertiary</div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

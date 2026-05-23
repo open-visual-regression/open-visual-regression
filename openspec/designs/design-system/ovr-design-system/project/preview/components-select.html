@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<title>OVR — select</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link rel="stylesheet" href="_card.css">
+<style>html,body{height:240px;}</style>
+</head>
+<body>
+<div class="card">
+
+<div class="label">select · default · open · disabled</div>
+<div style="display:flex; gap:12px; align-items:flex-start; flex-wrap:wrap;">
+  <!-- closed -->
+  <div style="display:flex; flex-direction:column; gap:4px; width:180px;">
+    <label style="font-size:10px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--fg-secondary);">browser</label>
+    <div style="height:32px; padding:0 10px; background:var(--bg-elevated); border:1px solid var(--border-default); border-radius:2px; display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+      <span style="flex:1;">chromium-117</span>
+      <span style="color:var(--fg-tertiary); font-size:10px;">▾</span>
+    </div>
+  </div>
+  <!-- open -->
+  <div style="display:flex; flex-direction:column; gap:4px; width:200px; position:relative;">
+    <label style="font-size:10px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--fg-secondary);">viewport</label>
+    <div style="height:32px; padding:0 10px; background:var(--bg-elevated); border:1px solid var(--accent-primary); border-radius:2px; display:flex; align-items:center; gap:8px; font-size:12px;">
+      <span style="flex:1;">1280×800 (desktop)</span>
+      <span style="color:var(--fg-tertiary); font-size:10px;">▴</span>
+    </div>
+    <div style="position:absolute; top:60px; left:0; right:0; background:var(--bg-raised); border-radius:2px; box-shadow:var(--shadow-popover); padding:4px; z-index:1;">
+      <div style="display:flex; align-items:center; gap:8px; padding:6px 10px; font-size:12px; background:var(--bg-hover); border-radius:2px;">
+        <span style="flex:1;">1280×800</span>
+        <span style="color:var(--accent-primary); font-size:11px;">✓</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; padding:6px 10px; font-size:12px;">
+        <span style="flex:1;">1440×900</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; padding:6px 10px; font-size:12px;">
+        <span style="flex:1;">1920×1080</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; padding:6px 10px; font-size:12px;">
+        <span style="flex:1;">375×812 (mobile)</span>
+      </div>
+    </div>
+  </div>
+  <!-- disabled -->
+  <div style="display:flex; flex-direction:column; gap:4px; width:180px;">
+    <label style="font-size:10px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--fg-muted);">env</label>
+    <div style="height:32px; padding:0 10px; background:var(--bg-elevated); border:1px solid var(--border-subtle); border-radius:2px; display:flex; align-items:center; gap:8px; font-size:12px; color:var(--fg-muted); cursor:not-allowed;">
+      <span style="flex:1;">production</span>
+      <span style="font-size:10px;">▾</span>
+    </div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

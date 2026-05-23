@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<title>OVR — loading & skeletons</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link rel="stylesheet" href="_card.css">
+<style>html,body{height:320px;}</style>
+</head>
+<body>
+<div class="card">
+
+<div class="label">loading states · text-first · subtle pulse</div>
+<div style="display:flex; gap:24px; align-items:center; flex-wrap:wrap;">
+  <!-- pulsing dot -->
+  <div style="display:flex; align-items:center; gap:8px; font-size:12px;">
+    <span style="color:var(--status-pending); font-size:14px; animation:ovrPulse 1.4s ease-in-out infinite;">●</span>
+    <span>running…</span>
+  </div>
+  <!-- spinner (ring) -->
+  <div style="display:flex; align-items:center; gap:8px; font-size:12px;">
+    <span style="width:14px; height:14px; border:1.5px solid var(--border-default); border-top-color:var(--accent-primary); border-radius:50%; animation:ovrSpin 0.8s linear infinite; display:inline-block;"></span>
+    <span>comparing 12 snapshots…</span>
+  </div>
+  <!-- progress bar -->
+  <div style="display:flex; flex-direction:column; gap:4px; min-width:220px;">
+    <div style="display:flex; font-size:11px; color:var(--fg-tertiary);">
+      <span>uploading baseline</span>
+      <span style="margin-left:auto;">7 / 12</span>
+    </div>
+    <div style="height:4px; background:var(--bg-inset); border-radius:2px; overflow:hidden;">
+      <div style="height:100%; width:58%; background:var(--accent-primary);"></div>
+    </div>
+  </div>
+</div>
+
+<div class="label" style="margin-top:6px;">skeleton · subtle shimmer · matches row geometry</div>
+<div style="border:1px solid var(--border-subtle); border-radius:4px; background:var(--bg-elevated); overflow:hidden;">
+  
+  <div style="display:flex; align-items:stretch; height:36px; border-bottom:1px solid var(--border-subtle);">
+    <div style="width:3px; background:var(--border-default);"></div>
+    <div style="display:flex; align-items:center; padding:0 12px; gap:12px; flex:1;">
+      <span style="width:8px; height:8px; border-radius:50%; background:var(--bg-hover); animation:ovrShimmer 1.4s ease-in-out infinite; animation-delay:0s;"></span>
+      <span style="width:36px; height:10px; background:var(--bg-hover); animation:ovrShimmer 1.4s ease-in-out infinite; animation-delay:0.05s;"></span>
+      <span style="width:160px; height:10px; background:var(--bg-hover); animation:ovrShimmer 1.4s ease-in-out infinite; animation-delay:0.1s;"></span>
+      <span style="flex:1;"></span>
+      <span style="width:60px; height:10px; background:var(--bg-hover); animation:ovrShimmer 1.4s ease-in-out infinite; animation-delay:0.15s;"></span>
+    </div>
+  </div>
+  <div style="display:flex; align-items:stretch; height:36px; border-bottom:1px solid var(--border-subtle);">
+    <div style="width:3px; background:var(--border-default);"></div>
+    <div style="display:flex; align-items:center; padding:0 12px; gap:12px; flex:1;">
+      <span style="width:8px; height:8px; border-radius:50%; background:var(--bg-hover); animation:ovrShimmer 1.4s ease-in-out infinite; animation-delay:0.1s;"></span>
+      <span style="width:36px; height:10px; background:var(--bg-hover); animation:ovrShimmer 1.4s ease-in-out infinite; animation-delay:0.15000000000000002s;"></span>
+      <span style="width:140px; height:10px; background:var(--bg-hover); animation:ovrShimmer 1.4s ease-in-out infinite; animation-delay:0.2s;"></span>
+      <span style="flex:1;"></span>
+      <span style="width:60px; height:10px; background:var(--bg-hover); animation:ovrShimmer 1.4s ease-in-out infinite; animation-delay:0.25s;"></span>
+    </div>
+  </div>
+  <div style="display:flex; align-items:stretch; height:36px; border-bottom:none;">
+    <div style="width:3px; background:var(--border-default);"></div>
+    <div style="display:flex; align-items:center; padding:0 12px; gap:12px; flex:1;">
+      <span style="width:8px; height:8px; border-radius:50%; background:var(--bg-hover); animation:ovrShimmer 1.4s ease-in-out infinite; animation-delay:0.2s;"></span>
+      <span style="width:36px; height:10px; background:var(--bg-hover); animation:ovrShimmer 1.4s ease-in-out infinite; animation-delay:0.25s;"></span>
+      <span style="width:120px; height:10px; background:var(--bg-hover); animation:ovrShimmer 1.4s ease-in-out infinite; animation-delay:0.30000000000000004s;"></span>
+      <span style="flex:1;"></span>
+      <span style="width:60px; height:10px; background:var(--bg-hover); animation:ovrShimmer 1.4s ease-in-out infinite; animation-delay:0.35s;"></span>
+    </div>
+  </div>
+</div>
+
+<style>
+  @keyframes ovrPulse   { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+  @keyframes ovrSpin    { to { transform: rotate(360deg); } }
+  @keyframes ovrShimmer { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+</style>
+
+</div>
+</body>
+</html>
