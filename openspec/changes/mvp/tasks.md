@@ -27,7 +27,7 @@
 - [ ] 3.3 Install `@testing-library/react`, `@testing-library/user-event`, `@testing-library/jest-dom` in `apps/web`; add Vitest setup file extending `jest-dom` matchers
 - [ ] 3.4 Install `testcontainers` in `packages/db`, `packages/queue`, `packages/storage`; create `__tests__/helpers/containers.ts` in each with typed helpers for starting/stopping Postgres, Valkey, and MinIO containers
 - [ ] 3.5 Add `test` script to each package `package.json`; wire `test` into `turbo.json` with `dependsOn: ["^build"]`
-- [ ] 3.6 Create `.github/workflows/ci.yml`: five jobs (`lint`, `format-check`, `type-check`, `build`, `test`), triggered on push to `main` and PRs targeting `main`, `ubuntu-latest`, pnpm cache, Node 22
+- [x] 3.6 Create `.github/workflows/ci.yml`: five jobs (`lint`, `format-check`, `type-check`, `build`, `test`), triggered on push to `main` and PRs targeting `main`, `ubuntu-latest`, pnpm cache, Node 22 — `build` and `check-types` active; `lint`, `format-check`, `test` stubbed (`if: false`) until toolchain/vitest PRs
 - [ ] 3.7 Configure GitHub branch protection on `main`: require all five CI status checks to pass
 
 ## 4. Database Schema
