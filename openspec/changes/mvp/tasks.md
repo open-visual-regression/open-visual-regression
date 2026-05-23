@@ -1,16 +1,16 @@
 ## 1. Monorepo Foundation
 
-- [ ] 1.1 Delete `apps/docs`, reset `apps/web` and `packages/ui` to blank stubs, update `pnpm-workspace.yaml` and `turbo.json`
-- [ ] 1.2 Create `apps/worker` package with `package.json`, `tsconfig.json`, and empty entrypoint
-- [ ] 1.3 Create `apps/cli` package with `package.json` (`name: "@ovr/cli"`, `bin` field), `tsconfig.json`, and empty entrypoint
-- [ ] 1.4 Create `packages/db` with `package.json` and `tsconfig.json`
-- [ ] 1.5 Create `packages/services` with `package.json` and `tsconfig.json`
-- [ ] 1.6 Create `packages/api` with `package.json` and `tsconfig.json`
-- [ ] 1.7 Create `packages/queue` with `package.json` and `tsconfig.json`
-- [ ] 1.8 Create `packages/storage` with `package.json` and `tsconfig.json`
-- [ ] 1.9 Wire all new packages into `pnpm-workspace.yaml` and verify `pnpm install` resolves correctly
-- [ ] 1.10 Configure `turbo.json` pipeline: `build`, `dev`, `lint`, `format`, `check-types`, `test`, `storybook`, `build-storybook` tasks with correct `dependsOn` and output caching
-- [ ] 1.11 Rename `packages/typescript-config` → `@ovr/typescript-config` and `packages/eslint-config` → `@ovr/eslint-config`; update all `package.json` references across the monorepo
+- [x] 1.1 Delete `apps/docs`, reset `apps/web` and `packages/ui` to blank stubs, update `pnpm-workspace.yaml` and `turbo.json`
+- [x] 1.2 Create `apps/worker` package with `package.json`, `tsconfig.json`, and empty entrypoint
+- [x] 1.3 Create `apps/cli` package with `package.json` (`name: "@ovr/cli"`, `bin` field), `tsconfig.json`, and empty entrypoint
+- [x] 1.4 Create `packages/db` with `package.json` and `tsconfig.json`
+- [x] 1.5 Create `packages/services` with `package.json` and `tsconfig.json`
+- [x] 1.6 Create `packages/api` with `package.json` and `tsconfig.json`
+- [x] 1.7 Create `packages/queue` with `package.json` and `tsconfig.json`
+- [x] 1.8 Create `packages/storage` with `package.json` and `tsconfig.json`
+- [x] 1.9 Wire all new packages into `pnpm-workspace.yaml` and verify `pnpm install` resolves correctly
+- [x] 1.10 Configure `turbo.json` pipeline: `build`, `dev`, `lint`, `format`, `check-types`, `test`, `storybook`, `build-storybook` tasks with correct `dependsOn` and output caching
+- [x] 1.11 Rename `packages/typescript-config` → `@ovr/typescript-config` and `packages/eslint-config` → `@ovr/eslint-config`; update all `package.json` references across the monorepo
 
 ## 2. Toolchain
 

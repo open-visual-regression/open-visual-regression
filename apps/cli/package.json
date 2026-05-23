@@ -1,0 +1,21 @@
+{
+  "name": "@ovr/cli",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "bin": {
+    "ovr": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "check-types": "tsc --noEmit",
+    "lint": "oxlint src",
+    "format": "oxfmt src",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@ovr/typescript-config": "workspace:*",
+    "typescript": "5.9.2"
+  }
+}
