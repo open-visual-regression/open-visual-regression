@@ -24,7 +24,7 @@ Gate: worker starts; enqueue a capture job → it runs and transitions snapshot 
   - Queue `snapshot:capture` failed: `snapshotsRepo.updateStatus(snapshotId, "error")` → check `allDoneForBuild` → if true enqueue finalize
   - Queue `snapshot:diff` failed: `diffsRepo.updateStatus(diffId, "error")` → same check
 
-- [ ] 1.7 Unit tests for handlers (mock service functions):
+- [ ] 1.7 Remove `passWithNoTests: true` from `apps/worker/vitest.config.ts`; unit tests for handlers (mock service functions):
   - Capture handler: calls `captureSnapshot`; retry config correct
   - Diff handler: calls `diffSnapshot`; retry config correct
   - Finalize handler: calls `finalizeBuild`

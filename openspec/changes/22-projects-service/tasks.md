@@ -29,7 +29,7 @@ Gate: all service unit tests pass; `SlugConflictError` thrown on duplicate slug;
 
 - [ ] 1.2 Export custom error classes from `packages/services/src/errors.ts`: `SlugConflictError`, `LimitExceededError`, `SelfActionError`, `ForbiddenError`
 
-- [ ] 1.3 Unit tests (mocked repos):
+- [ ] 1.3 Remove `passWithNoTests: true` from `packages/services/vitest.config.ts`; unit tests (mocked repos):
   - `createProject`: duplicate slug → `SlugConflictError`; success → returns project + creates default variant
   - `deleteProject`: returns correct counts; calls `storageRepo.deletePrefix`
   - `addVariant`: 10 variants → `LimitExceededError`

@@ -72,9 +72,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @ovr/ui build-storybook
 
-  # Enabled in PR 3 (testing: vitest)
   test:
-    if: false
     name: Test
     runs-on: ubuntu-latest
     steps:
