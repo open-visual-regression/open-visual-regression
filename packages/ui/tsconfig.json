@@ -4,9 +4,6 @@
     "outDir": "dist",
     "strictNullChecks": true,
     "module": "preserve",
-    "paths": {
-      "@/*": ["./*"],
-    },
     "moduleResolution": "bundler",
     "resolvePackageJsonImports": true,
   },
