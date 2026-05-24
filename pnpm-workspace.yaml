@@ -2,9 +2,6 @@ packages:
   - "apps/*"
   - "packages/*"
 allowBuilds:
-  cpu-features: true
   esbuild: true
   msw: true
-  protobufjs: true
   sharp: true
-  ssh2: true
