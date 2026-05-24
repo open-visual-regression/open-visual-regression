@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-05-24
+title: "Review: diff viewer slider mode (draggable amber divider + clip-path)"
+depends_on: 41-diff-viewer

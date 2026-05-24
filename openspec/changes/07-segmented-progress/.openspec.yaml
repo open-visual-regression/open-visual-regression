@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-05-24
+title: "UI: SegmentedProgress component + story"
+depends_on: 04-icon-status-icon

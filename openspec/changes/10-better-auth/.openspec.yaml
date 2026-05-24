@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-05-24
+title: "Auth: Better Auth config (auth.ts + auth-client.ts + API handler)"
+depends_on: 09-db-setup

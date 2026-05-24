@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-05-24
+title: "Pipeline: review service (approveDiff, rejectDiff, promoteBaseline)"
+depends_on: 33-diff-service
