@@ -20,13 +20,7 @@ const meta: Meta<typeof Card> = {
 export default meta;
 type Story = StoryObj<typeof Card>;
 
-const Section = ({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) => (
+const Section = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="space-y-2 w-72">
     <p className="font-mono text-[11px] text-muted-foreground">{label}</p>
     {children}

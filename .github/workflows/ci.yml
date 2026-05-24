@@ -57,7 +57,7 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm format --check
+      - run: pnpm format -- --check
 
   build-storybook:
     name: Build Storybook

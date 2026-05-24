@@ -14,8 +14,7 @@ const buttonVariants = cva(
           "bg-transparent text-ovr-fg border-ovr-border hover:bg-ovr-elevated aria-expanded:bg-ovr-elevated",
         ghost:
           "bg-transparent text-ovr-fg-secondary hover:bg-ovr-hover hover:text-ovr-fg aria-expanded:bg-ovr-hover aria-expanded:text-ovr-fg",
-        destructive:
-          "border-ovr-remove text-ovr-remove font-medium hover:bg-ovr-remove/10",
+        destructive: "border-ovr-remove text-ovr-remove font-medium hover:bg-ovr-remove/10",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {

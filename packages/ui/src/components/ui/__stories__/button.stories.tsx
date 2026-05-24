@@ -17,13 +17,7 @@ const PlusIcon = () => (
   </svg>
 );
 
-const Section = ({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) => (
+const Section = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="space-y-1">
     <p className="text-xs text-muted-foreground font-mono">{label}</p>
     <div className="flex flex-wrap items-end gap-2">{children}</div>
@@ -32,13 +26,7 @@ const Section = ({
 
 export const KitchenSink: Story = {
   render: () => {
-    const variants = [
-      "default",
-      "secondary",
-      "ghost",
-      "destructive",
-      "link",
-    ] as const;
+    const variants = ["default", "secondary", "ghost", "destructive", "link"] as const;
 
     return (
       <div className="space-y-6 p-4">

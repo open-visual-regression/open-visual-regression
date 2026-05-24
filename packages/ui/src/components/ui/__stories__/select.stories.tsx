@@ -20,13 +20,7 @@ const meta: Meta<typeof SelectTrigger> = {
 export default meta;
 type Story = StoryObj<typeof SelectTrigger>;
 
-const Section = ({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) => (
+const Section = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="space-y-1">
     <p className="font-mono text-[11px] text-muted-foreground">{label}</p>
     {children}
@@ -37,7 +31,7 @@ const BranchSelect = (
   props: React.ComponentProps<typeof Select> & {
     triggerSize?: "default" | "sm";
     triggerProps?: React.ComponentProps<typeof SelectTrigger>;
-  }
+  },
 ) => {
   const { triggerSize, triggerProps, ...selectProps } = props;
   return (

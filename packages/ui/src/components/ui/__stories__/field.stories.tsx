@@ -43,17 +43,13 @@ export const KitchenSink: Story = {
 
           <Field>
             <FieldLabel htmlFor="threshold">Diff threshold</FieldLabel>
-            <FieldDescription>
-              Maximum allowed pixel difference (0–1).
-            </FieldDescription>
+            <FieldDescription>Maximum allowed pixel difference (0–1).</FieldDescription>
             <Input id="threshold" type="number" placeholder="0.01" />
           </Field>
 
           <Field>
             <FieldLabel htmlFor="notes">Notes</FieldLabel>
-            <FieldDescription>
-              Optional context for this run.
-            </FieldDescription>
+            <FieldDescription>Optional context for this run.</FieldDescription>
             <Textarea id="notes" placeholder="Describe the change…" />
           </Field>
 

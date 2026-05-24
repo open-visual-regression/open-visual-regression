@@ -11,22 +11,14 @@ const meta: Meta<typeof Tabs> = {
 export default meta;
 type Story = StoryObj<typeof Tabs>;
 
-const Section = ({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) => (
+const Section = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="space-y-2">
     <p className="font-mono text-[11px] text-muted-foreground">{label}</p>
     {children}
   </div>
 );
 
-const placeholder = (text: string) => (
-  <p className="text-xs text-muted-foreground">{text}</p>
-);
+const placeholder = (text: string) => <p className="text-xs text-muted-foreground">{text}</p>;
 
 export const KitchenSink: Story = {
   render: () => (
@@ -83,15 +75,9 @@ export const KitchenSink: Story = {
             <TabsTrigger value="snapshots">Snapshots</TabsTrigger>
             <TabsTrigger value="diffs">Diffs</TabsTrigger>
           </TabsList>
-          <TabsContent value="overview">
-            {placeholder("Run #42 overview.")}
-          </TabsContent>
-          <TabsContent value="snapshots">
-            {placeholder("Snapshot list.")}
-          </TabsContent>
-          <TabsContent value="diffs">
-            {placeholder("No diffs.")}
-          </TabsContent>
+          <TabsContent value="overview">{placeholder("Run #42 overview.")}</TabsContent>
+          <TabsContent value="snapshots">{placeholder("Snapshot list.")}</TabsContent>
+          <TabsContent value="diffs">{placeholder("No diffs.")}</TabsContent>
         </Tabs>
       </Section>
     </div>

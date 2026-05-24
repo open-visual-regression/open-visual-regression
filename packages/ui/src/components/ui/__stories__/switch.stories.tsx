@@ -12,13 +12,7 @@ const meta: Meta<typeof Switch> = {
 export default meta;
 type Story = StoryObj<typeof Switch>;
 
-const Section = ({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) => (
+const Section = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="space-y-1">
     <p className="font-mono text-[11px] text-muted-foreground">{label}</p>
     <div className="flex flex-col gap-3">{children}</div>
@@ -49,11 +43,7 @@ export const KitchenSink: Story = {
 
       <Section label="invalid">
         <SwitchRow label="Auto-approve runs" aria-invalid="true" />
-        <SwitchRow
-          label="Auto-approve runs"
-          defaultChecked
-          aria-invalid="true"
-        />
+        <SwitchRow label="Auto-approve runs" defaultChecked aria-invalid="true" />
       </Section>
     </div>
   ),

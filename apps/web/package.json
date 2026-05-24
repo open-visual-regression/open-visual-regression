@@ -8,8 +8,8 @@
     "build": "next build",
     "start": "next start",
     "check-types": "tsc --noEmit",
-    "lint": "oxlint src",
-    "format": "oxfmt src",
+    "lint": "oxlint app",
+    "format": "oxfmt app",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
