@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-05-24
+title: "Review: /projects/[slug]/builds/[id] run detail + SegmentedProgress + snapshot grid"
+depends_on: 38-runs-list

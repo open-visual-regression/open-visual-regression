@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-05-24
+title: "Review: diff viewer page — side + overlay modes + toolbar"
+depends_on: 39-run-detail
