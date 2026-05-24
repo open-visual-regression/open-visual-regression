@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-05-24
+title: "Pipeline: packages/storage S3 client implementation + MinIO integration tests"
+depends_on: 03-testcontainers

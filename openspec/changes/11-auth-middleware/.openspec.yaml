@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-05-24
+title: "Auth: Next.js middleware (zero-users → /setup, unauth → /login)"
+depends_on: 10-better-auth

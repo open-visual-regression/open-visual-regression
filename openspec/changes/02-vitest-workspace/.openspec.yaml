@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-05-24
+title: "Toolchain: Vitest workspace + per-package configs + testing-library"
+depends_on: 01-oxlint-config
