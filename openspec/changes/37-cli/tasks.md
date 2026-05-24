@@ -19,6 +19,6 @@ Gate: `ovr snapshot --storybook-dir ./storybook-static` with valid config create
 - [ ] 1.6 Update `apps/cli/package.json`:
   - `"build": "tsup src/index.ts --format cjs --dts --out-dir dist"`
   - `"bin": { "ovr": "dist/index.js" }`
-- [ ] 1.7 Unit tests:
+- [ ] 1.7 Remove `passWithNoTests: true` from `apps/cli/vitest.config.ts`; unit tests:
   - `loadConfig`: valid config → returns; missing apiKey with no env → throws; env fallback works
   - Polling: passed → exit 0; needs_review → prints URL + exit 1; error → exit 1

@@ -21,7 +21,7 @@ Gate: `POST /api/rpc/builds/createBuild` with valid API key creates build and re
     - `reviewUrl = status !== "passed" ? `${BASE_URL}/projects/${project.slug}/builds/${buildId}` : null`
 - [ ] 1.5 Create `packages/api/src/index.ts`: compose root router; export router type for client inference
 - [ ] 1.6 Create `apps/web/app/api/rpc/[...path]/route.ts`: mount oRPC router with Next.js adapter
-- [ ] 1.7 Unit tests:
+- [ ] 1.7 Remove `passWithNoTests: true` from `packages/api/vitest.config.ts`; unit tests:
   - Valid API key → `createBuild` succeeds; returns buildId
   - Missing key → UNAUTHORIZED
   - Invalid projectSlug → NOT_FOUND

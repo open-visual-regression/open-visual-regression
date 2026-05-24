@@ -12,6 +12,7 @@ const dirname =
 
 export default defineConfig({
   test: {
+    passWithNoTests: true,
     projects: [
       {
         test: {

@@ -5,5 +5,6 @@ export default defineConfig({
     name: "api",
     environment: "node",
     include: ["src/**/*.test.ts"],
+    passWithNoTests: true,
   },
 });
