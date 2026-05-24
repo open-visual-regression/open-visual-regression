@@ -5,6 +5,7 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
+    "lint:ci": "turbo run lint -- --deny-warnings",
     "format": "turbo run format",
     "check-types": "turbo run check-types",
     "test": "turbo run test",

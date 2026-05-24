@@ -3,6 +3,6 @@
   "plugins": ["react", "typescript", "import", "unicorn"],
   "env": { "browser": true, "node": true },
   "rules": {
-    "curly": "error"
+    "curly": "warn"
   }
 }
