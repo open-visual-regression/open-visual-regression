@@ -23,6 +23,7 @@
     "node": ">=22"
   },
   "lint-staged": {
-    "*.{ts,tsx,js,jsx,mjs,cjs}": ["oxfmt", "oxlint"]
+    "*.{ts,tsx,js,jsx,mjs,cjs}": ["oxfmt", "oxlint"],
+    "*.css": ["oxfmt"]
   }
 }

@@ -4,7 +4,7 @@ import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { XIcon } from "lucide-react";
 
-import { cn } from "@/src/lib/utils";
+import { cn } from "../../lib/utils";
 
 const toastVariants = cva(
   "group/toast relative flex items-stretch overflow-hidden rounded-[2px] border border-l-[3px] shadow-ovr-popover w-[340px]",

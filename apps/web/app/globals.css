@@ -1,5 +1,3 @@
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+@import "@ovr/ui/styles";
+
+@source "../../../packages/ui/src";
