@@ -17,14 +17,20 @@
     "oxfmt": "^0.51.0",
     "oxlint": "^1.66.0",
     "turbo": "^2.9.14",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "vitest": "^4.1.7"
   },
   "packageManager": "pnpm@11.2.2",
   "engines": {
     "node": ">=22"
   },
   "lint-staged": {
-    "*.{ts,tsx,js,jsx,mjs,cjs}": ["oxfmt", "oxlint"],
-    "*.css": ["oxfmt"]
+    "*.{ts,tsx,js,jsx,mjs,cjs}": [
+      "oxfmt",
+      "oxlint"
+    ],
+    "*.css": [
+      "oxfmt"
+    ]
   }
 }

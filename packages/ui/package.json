@@ -15,7 +15,7 @@
     "check-types": "tsc --noEmit",
     "lint": "oxlint src",
     "format": "oxfmt src",
-    "test": "vitest run"
+    "test": "vitest run --project unit"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
