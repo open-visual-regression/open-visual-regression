@@ -28,3 +28,4 @@ Read: `openspec/designs/screens/open-visual-regression/project/kit/components-fe
   - Story: pass=14 (green `var(--ovr-diff-add)`) / changed=3 (amber `var(--ovr-accent-primary)`) / failed=1 (red `var(--ovr-diff-remove)`) / pending=4 (blue `var(--ovr-status-pending)`)
   - Title: "run #1284" · Subtitle: "22 stories" · Summary: "3 changed · 1 failed · 4 pending"
   - Show at default height and height=4
+- [ ] 1.3 Export `SegmentedProgress`, `Segment` from `packages/ui/src/index.ts`; run `pnpm --filter @ovr/ui check-types` and `build-storybook` to confirm exits 0

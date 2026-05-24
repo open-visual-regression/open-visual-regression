@@ -24,3 +24,4 @@ Read: `openspec/designs/screens/open-visual-regression/project/kit/components.js
   ```
 - [ ] 1.4 Create `packages/ui/src/components/ui/__stories__/icon.stories.tsx`: grid of all Lucide icons used in OVR (AlertCircle, CircleCheck, LoaderCircle, TriangleAlert, CircleX, Eye, EyeOff, ChevronLeft, ChevronRight, X, Plus, Settings, Users, Key) at sizes 14 / 16 / 20
 - [ ] 1.5 Create `packages/ui/src/components/ui/__stories__/status-icon.stories.tsx`: all 6 StatusKind states in a row on dark background; label each with kind name and token color
+- [ ] 1.6 Export `Icon`, `StatusIcon`, `StatusKind` from `packages/ui/src/index.ts`; run `pnpm --filter @ovr/ui check-types` and `build-storybook` to confirm exits 0
