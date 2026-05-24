@@ -23,46 +23,14 @@ const STATUS_KINDS: { kind: StatusKind; color: string }[] = [
 
 export const AllStates: Story = {
   render: () => (
-    <div
-      style={{
-        background: "var(--ovr-bg-base, #0d0d0d)",
-        padding: "32px",
-        display: "flex",
-        gap: "32px",
-        alignItems: "flex-start",
-        flexWrap: "wrap",
-      }}
-    >
+    <div className="flex flex-wrap items-start gap-8 p-8 bg-[var(--ovr-bg-base,#0d0d0d)]">
       {STATUS_KINDS.map(({ kind, color }) => (
-        <div
-          key={kind}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "8px",
-          }}
-        >
+        <div key={kind} className="flex flex-col items-center gap-2">
           <StatusIcon kind={kind} size={20} />
+          <span className="text-[10px] font-mono text-ovr-fg-secondary text-center">{kind}</span>
           <span
-            style={{
-              fontSize: 10,
-              fontFamily: "monospace",
-              color: "var(--ovr-fg-secondary, #aaa)",
-              textAlign: "center",
-            }}
-          >
-            {kind}
-          </span>
-          <span
-            style={{
-              fontSize: 9,
-              fontFamily: "monospace",
-              color,
-              textAlign: "center",
-              maxWidth: 100,
-              wordBreak: "break-all",
-            }}
+            className="text-[9px] font-mono text-center max-w-[100px] break-all"
+            style={{ color }}
           >
             {color}
           </span>
@@ -74,27 +42,10 @@ export const AllStates: Story = {
 
 export const Sizes: Story = {
   render: () => (
-    <div
-      style={{
-        background: "var(--ovr-bg-base, #0d0d0d)",
-        padding: "32px",
-        display: "flex",
-        gap: "24px",
-        alignItems: "center",
-      }}
-    >
+    <div className="flex items-center gap-6 p-8 bg-[var(--ovr-bg-base,#0d0d0d)]">
       {([14, 16, 20] as const).map((size) => (
-        <div key={size} style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-          <span
-            style={{
-              fontSize: 10,
-              fontFamily: "monospace",
-              color: "var(--ovr-fg-muted, #666)",
-              minWidth: 30,
-            }}
-          >
-            {size}px
-          </span>
+        <div key={size} className="flex items-center gap-3">
+          <span className="text-[10px] font-mono text-ovr-fg-muted min-w-[30px]">{size}px</span>
           {STATUS_KINDS.map(({ kind }) => (
             <StatusIcon key={kind} kind={kind} size={size} />
           ))}

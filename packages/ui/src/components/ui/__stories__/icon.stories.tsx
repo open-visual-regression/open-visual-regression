@@ -48,15 +48,8 @@ const SIZES = [14, 16, 20] as const;
 
 export const Grid: Story = {
   render: () => (
-    <div className="p-4 space-y-4">
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: `160px repeat(${SIZES.length}, 60px)`,
-          gap: "8px",
-          alignItems: "center",
-        }}
-      >
+    <div className="p-4">
+      <div className="grid grid-cols-[160px_60px_60px_60px] items-center gap-2">
         <div className="text-xs text-muted-foreground font-mono font-semibold">Icon</div>
         {SIZES.map((size) => (
           <div
@@ -66,7 +59,6 @@ export const Grid: Story = {
             {size}px
           </div>
         ))}
-
         {ICONS.map(({ name, icon }) => (
           <>
             <div key={`${name}-label`} className="text-xs font-mono text-ovr-fg-secondary">
