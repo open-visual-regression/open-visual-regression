@@ -51,15 +51,29 @@
     /* OVR design tokens */
     --color-ovr-accent: var(--ovr-accent-primary);
     --color-ovr-accent-hover: var(--ovr-accent-primary-hover);
+    --color-ovr-accent-dim: var(--ovr-accent-dim);
+    --color-ovr-accent-ring: var(--ovr-accent-ring);
     --color-ovr-on-accent: var(--ovr-on-accent);
     --color-ovr-elevated: var(--ovr-bg-elevated);
+    --color-ovr-raised: var(--ovr-bg-raised);
+    --color-ovr-inset: var(--ovr-bg-inset);
+    --color-ovr-active: var(--ovr-bg-active);
     --color-ovr-hover: var(--ovr-bg-hover);
     --color-ovr-fg: var(--ovr-fg-primary);
     --color-ovr-fg-secondary: var(--ovr-fg-secondary);
+    --color-ovr-fg-tertiary: var(--ovr-fg-tertiary);
     --color-ovr-fg-muted: var(--ovr-fg-muted);
     --color-ovr-border: var(--ovr-border-default);
     --color-ovr-border-subtle: var(--ovr-border-subtle);
     --color-ovr-remove: var(--ovr-diff-remove);
+    --color-ovr-diff-remove-dim: var(--ovr-diff-remove-dim);
+    --color-ovr-diff-add: var(--ovr-diff-add);
+    --color-ovr-diff-add-dim: var(--ovr-diff-add-dim);
+    --color-ovr-status-pending: var(--ovr-status-pending);
+    --color-ovr-status-pending-dim: var(--ovr-status-pending-dim);
+    /* Shadows */
+    --shadow-ovr-popover: 0 8px 24px -8px rgba(0,0,0,0.6), 0 0 0 1px var(--ovr-border-default);
+    --shadow-ovr-modal: 0 24px 64px -16px rgba(0,0,0,0.7), 0 0 0 1px var(--ovr-border-default);
 }
 
 :root {
@@ -78,6 +92,17 @@
     --ovr-border-default: oklch(0.86 0 0);
     --ovr-border-subtle: oklch(0.92 0 0);
     --ovr-diff-remove: oklch(0.68 0.23 25);
+    --ovr-bg-raised: oklch(1 0 0);
+    --ovr-bg-inset: oklch(0.96 0 0);
+    --ovr-bg-active: oklch(0.92 0 0);
+    --ovr-fg-tertiary: oklch(0.48 0.006 270);
+    --ovr-diff-add: oklch(0.78 0.20 145);
+    --ovr-diff-add-dim: oklch(0.78 0.20 145 / 0.18);
+    --ovr-diff-remove-dim: oklch(0.68 0.23 25 / 0.18);
+    --ovr-accent-dim: oklch(0.78 0.18 75 / 0.15);
+    --ovr-accent-ring: oklch(0.78 0.18 75 / 0.35);
+    --ovr-status-pending: oklch(0.72 0.13 230);
+    --ovr-status-pending-dim: oklch(0.72 0.13 230 / 0.10);
     --foreground: oklch(0.145 0 0);
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.145 0 0);
@@ -125,6 +150,17 @@
     --ovr-border-default: oklch(0.325 0.006 270);
     --ovr-border-subtle: oklch(0.265 0.006 270);
     --ovr-diff-remove: oklch(0.68 0.23 25);
+    --ovr-bg-raised: oklch(0.235 0.006 270);
+    --ovr-bg-inset: oklch(0.125 0.006 270);
+    --ovr-bg-active: oklch(0.265 0.006 270);
+    --ovr-fg-tertiary: oklch(0.60 0 0);
+    --ovr-diff-add: oklch(0.78 0.20 145);
+    --ovr-diff-add-dim: oklch(0.78 0.20 145 / 0.18);
+    --ovr-diff-remove-dim: oklch(0.68 0.23 25 / 0.18);
+    --ovr-accent-dim: oklch(0.78 0.18 75 / 0.15);
+    --ovr-accent-ring: oklch(0.78 0.18 75 / 0.35);
+    --ovr-status-pending: oklch(0.72 0.13 230);
+    --ovr-status-pending-dim: oklch(0.72 0.13 230 / 0.10);
     --foreground: oklch(0.985 0 0);
     --card: oklch(0.205 0 0);
     --card-foreground: oklch(0.985 0 0);
