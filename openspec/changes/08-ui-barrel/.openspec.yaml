@@ -1,4 +1,0 @@
-schema: spec-driven
-created: 2026-05-24
-title: "UI: fix index.ts barrel — export all components + types"
-depends_on: 07-segmented-progress

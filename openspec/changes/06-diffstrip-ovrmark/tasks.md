@@ -22,3 +22,4 @@ Read: `openspec/designs/design-system/ovr-design-system/project/preview/brand-di
 - [ ] 1.3 Create `__stories__/diff-strip.stories.tsx`:
   - Show all 5 statuses in a flex row; each strip inside a div with 80px height text content to prove `align-self: stretch` works
 - [ ] 1.4 Create `__stories__/ovr-mark.stories.tsx`: sizes 16 / 22 / 32 / 48 side by side on dark background
+- [ ] 1.5 Export `DiffStrip`, `OvrMark` from `packages/ui/src/index.ts`; run `pnpm --filter @ovr/ui check-types` and `build-storybook` to confirm exits 0

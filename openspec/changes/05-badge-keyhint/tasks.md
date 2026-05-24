@@ -22,3 +22,4 @@ Read: `openspec/designs/screens/open-visual-regression/project/kit/components.js
   - Style: height 18px; `background: var(--ovr-bg-inset)`; `border: 1px solid var(--ovr-border-subtle)`; `border-radius: 2px`; `font-size: 10px`; `font-weight: 600`; `font-family: var(--font-mono)`; horizontal padding 4px
 - [ ] 1.3 Create `__stories__/badge.stories.tsx`: all 6 tones × filled=true/false in a grid (12 cells total)
 - [ ] 1.4 Create `__stories__/key-hint.stories.tsx`: J · K · A · R · ⌘K · ⇧Tab shown side by side
+- [ ] 1.5 Export `Badge`, `KeyHint` from `packages/ui/src/index.ts`; run `pnpm --filter @ovr/ui check-types` and `build-storybook` to confirm exits 0

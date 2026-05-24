@@ -1,4 +1,0 @@
-schema: spec-driven
-created: 2026-05-24
-title: "Toolchain: Testcontainers helpers (Postgres, Valkey, MinIO) + enable CI test job"
-depends_on: 02-vitest-workspace
