@@ -8,4 +8,4 @@ Gate: `pnpm test` at repo root discovers and runs all test files; `apps/web` com
 - [x] 1.4 Create `vitest.config.ts` in `apps/worker`, `apps/cli`, `packages/services`, `packages/api`: `environment: "node"`; co-located unit tests as `*.test.ts`
 - [x] 1.5 Create `vitest.config.ts` in `packages/db`, `packages/queue`, `packages/storage`: `environment: "node"`; integration test glob `src/__tests__/integration/**/*.test.ts`; `testTimeout: 30000`
 - [x] 1.6 Wire `test` into `turbo.json` with `dependsOn: ["^build"]` and `outputs: ["coverage/**"]`
-- [x] 1.7 Write one smoke test per package (trivially passes: `expect(true).toBe(true)`); confirm `pnpm test` runs all of them
+- [ ] 1.7 Write one smoke test per package (trivially passes: `expect(true).toBe(true)`); confirm `pnpm test` runs all of them
