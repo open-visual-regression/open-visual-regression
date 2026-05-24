@@ -3,7 +3,7 @@
   "compilerOptions": {
     "outDir": "dist",
     "strictNullChecks": true,
-    "baseUrl": ".",
+    "module": "preserve",
     "paths": {
       "@/*": ["./*"],
     },
