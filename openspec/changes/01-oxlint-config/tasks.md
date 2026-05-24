@@ -4,7 +4,7 @@ Gate: `pnpm lint` and `pnpm format -- --check` pass across all packages with zer
 
 - [x] 1.1 Install `oxlint` + `oxfmt` in root devDeps; wire `oxfmt` → `oxlint` into lint-staged pre-commit hook
 - [x] 1.2 Add `"lint"` and `"format"` scripts to every package.json (`oxlint src` / `oxfmt src`); wire into turbo.json pipeline
-- [ ] 1.3 Create `oxlint.json` at repo root:
+- [x] 1.3 Create `oxlint.json` at repo root:
   ```json
   {
     "extends": ["oxlint:recommended"],
@@ -13,9 +13,9 @@ Gate: `pnpm lint` and `pnpm format -- --check` pass across all packages with zer
     "rules": {}
   }
   ```
-- [ ] 1.4 Create `oxfmt.toml` at repo root:
+- [x] 1.4 Create `oxfmt.toml` at repo root:
   ```toml
   line_length = 100
   tailwind = true
   ```
-- [ ] 1.5 Run `pnpm lint` + `pnpm format -- --check` from root; fix all violations; both must pass clean
+- [x] 1.5 Run `pnpm lint` + `pnpm format -- --check` from root; fix all violations; both must pass clean
