@@ -57,7 +57,6 @@ export const Grid: Story = {
           alignItems: "center",
         }}
       >
-        {/* Header row */}
         <div className="text-xs text-muted-foreground font-mono font-semibold">Icon</div>
         {SIZES.map((size) => (
           <div
@@ -68,7 +67,6 @@ export const Grid: Story = {
           </div>
         ))}
 
-        {/* Icon rows */}
         {ICONS.map(({ name, icon }) => (
           <>
             <div key={`${name}-label`} className="text-xs font-mono text-ovr-fg-secondary">
