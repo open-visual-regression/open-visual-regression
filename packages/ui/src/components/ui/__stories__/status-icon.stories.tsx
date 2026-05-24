@@ -21,36 +21,37 @@ const STATUS_KINDS: { kind: StatusKind; color: string }[] = [
   { kind: "rejected", color: "var(--ovr-diff-remove)" },
 ];
 
+const SIZES = [14, 16, 20] as const;
+
 export const AllStates: Story = {
   render: () => (
-    <div className="flex flex-wrap items-start gap-8 p-8 bg-[var(--ovr-bg-base,#0d0d0d)]">
-      {STATUS_KINDS.map(({ kind, color }) => (
-        <div key={kind} className="flex flex-col items-center gap-2">
-          <StatusIcon kind={kind} size={20} />
-          <span className="text-[10px] font-mono text-ovr-fg-secondary text-center">{kind}</span>
-          <span
-            className="text-[9px] font-mono text-center max-w-[100px] break-all"
-            style={{ color }}
-          >
-            {color}
-          </span>
-        </div>
-      ))}
-    </div>
-  ),
-};
-
-export const Sizes: Story = {
-  render: () => (
-    <div className="flex items-center gap-6 p-8 bg-[var(--ovr-bg-base,#0d0d0d)]">
-      {([14, 16, 20] as const).map((size) => (
-        <div key={size} className="flex items-center gap-3">
-          <span className="text-[10px] font-mono text-ovr-fg-muted min-w-[30px]">{size}px</span>
-          {STATUS_KINDS.map(({ kind }) => (
-            <StatusIcon key={kind} kind={kind} size={size} />
-          ))}
-        </div>
-      ))}
+    <div className="p-8 bg-[var(--ovr-bg-base,#0d0d0d)]">
+      <div
+        className={`grid items-center gap-x-6 gap-y-3`}
+        style={{ gridTemplateColumns: `80px repeat(${STATUS_KINDS.length}, 1fr)` }}
+      >
+        <div />
+        {STATUS_KINDS.map(({ kind, color }) => (
+          <div key={kind} className="flex flex-col items-center gap-1">
+            <span className="text-[10px] font-mono text-ovr-fg-secondary text-center">{kind}</span>
+            <span className="text-[9px] font-mono text-center break-all" style={{ color }}>
+              {color}
+            </span>
+          </div>
+        ))}
+        {SIZES.map((size) => (
+          <>
+            <span key={`${size}-label`} className="text-[10px] font-mono text-ovr-fg-muted">
+              {size}px
+            </span>
+            {STATUS_KINDS.map(({ kind }) => (
+              <div key={`${size}-${kind}`} className="flex justify-center">
+                <StatusIcon kind={kind} size={size} />
+              </div>
+            ))}
+          </>
+        ))}
+      </div>
     </div>
   ),
 };
