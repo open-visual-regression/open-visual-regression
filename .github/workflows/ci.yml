@@ -33,9 +33,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm check-types
 
-  # Enabled in PR 2 (toolchain: oxlint)
   lint:
-    if: false
     name: Lint
     runs-on: ubuntu-latest
     steps:
@@ -48,9 +46,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
 
-  # Enabled in PR 2 (toolchain: oxfmt)
   format-check:
-    if: false
     name: Format check
     runs-on: ubuntu-latest
     steps:
