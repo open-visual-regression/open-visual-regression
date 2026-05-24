@@ -16,7 +16,9 @@ export const KitchenSink: Story = {
   render: () => (
     <div className="p-6 space-y-8 max-w-md">
       <div className="space-y-2">
-        <p className="font-mono text-[11px] text-muted-foreground">variant="default" — blue/pending</p>
+        <p className="font-mono text-[11px] text-muted-foreground">
+          variant="default" — blue/pending
+        </p>
         <Toast
           variant="default"
           icon={<CircleDotIcon className="size-3.5" />}
@@ -58,12 +60,10 @@ export const KitchenSink: Story = {
       </div>
 
       <div className="space-y-2">
-        <p className="font-mono text-[11px] text-muted-foreground">variant="warning" — amber/accent</p>
-        <Toast
-          variant="warning"
-          icon={<ZapIcon className="size-3.5" />}
-          title="Run started"
-        />
+        <p className="font-mono text-[11px] text-muted-foreground">
+          variant="warning" — amber/accent
+        </p>
+        <Toast variant="warning" icon={<ZapIcon className="size-3.5" />} title="Run started" />
         <Toast
           variant="warning"
           icon={<InfoIcon className="size-3.5" />}
@@ -95,10 +95,7 @@ export const KitchenSink: Story = {
 
       <div className="space-y-2">
         <p className="font-mono text-[11px] text-muted-foreground">variant="muted" — grey</p>
-        <Toast
-          variant="muted"
-          title="Auto-saved"
-        />
+        <Toast variant="muted" title="Auto-saved" />
         <Toast
           variant="muted"
           title="Settings updated"
@@ -132,11 +129,7 @@ export const Stack: Story = {
           onAction={() => {}}
           onDismiss={() => {}}
         />
-        <Toast
-          variant="muted"
-          title="Auto-saved"
-          onDismiss={() => {}}
-        />
+        <Toast variant="muted" title="Auto-saved" onDismiss={() => {}} />
       </ToastContainer>
     </div>
   ),

@@ -1,7 +1,7 @@
-import * as React from "react"
-import { Input as InputPrimitive } from "@base-ui/react/input"
+import * as React from "react";
+import { Input as InputPrimitive } from "@base-ui/react/input";
 
-import { cn } from "@/src/lib/utils"
+import { cn } from "@/src/lib/utils";
 
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
@@ -13,11 +13,11 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
         type === "file"
           ? "p-0 file:h-full file:cursor-pointer file:border-0 file:border-r file:border-ovr-border file:bg-ovr-raised file:px-2.5 file:text-xs file:font-medium file:text-ovr-fg file:mr-2.5 hover:file:bg-ovr-hover"
           : "px-2.5 py-1",
-        className
+        className,
       )}
       {...props}
     />
-  )
+  );
 }
 
-export { Input }
+export { Input };

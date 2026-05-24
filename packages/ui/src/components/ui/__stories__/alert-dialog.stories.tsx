@@ -39,8 +39,8 @@ export const Default: Story = {
             </AlertDialogMedia>
             <AlertDialogTitle>Delete run #42?</AlertDialogTitle>
             <AlertDialogDescription>
-              All 142 snapshots and diffs for this run will be permanently
-              deleted. This action cannot be undone.
+              All 142 snapshots and diffs for this run will be permanently deleted. This action
+              cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -68,8 +68,8 @@ export const Small: Story = {
           <AlertDialogHeader>
             <AlertDialogTitle>Clear baseline?</AlertDialogTitle>
             <AlertDialogDescription>
-              The baseline for branch <strong>main</strong> will be cleared and
-              must be re-captured before comparisons can run.
+              The baseline for branch <strong>main</strong> will be cleared and must be re-captured
+              before comparisons can run.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

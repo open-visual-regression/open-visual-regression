@@ -29,9 +29,7 @@ export const Default: Story = {
   render: () => (
     <div className="flex items-start justify-center p-6 min-h-[420px]">
       <Dialog>
-        <DialogTrigger render={<Button variant="secondary" />}>
-          Open dialog
-        </DialogTrigger>
+        <DialogTrigger render={<Button variant="secondary" />}>Open dialog</DialogTrigger>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>New run</DialogTitle>
@@ -46,9 +44,7 @@ export const Default: Story = {
             </Field>
             <Field>
               <FieldLabel htmlFor="dlg-env">Environment</FieldLabel>
-              <FieldDescription>
-                The environment to capture snapshots in.
-              </FieldDescription>
+              <FieldDescription>The environment to capture snapshots in.</FieldDescription>
               <Select defaultValue="ci">
                 <SelectTrigger id="dlg-env">
                   <SelectValue />
@@ -78,15 +74,13 @@ export const Simple: Story = {
   render: () => (
     <div className="flex items-start justify-center p-6 min-h-64">
       <Dialog>
-        <DialogTrigger render={<Button variant="ghost" />}>
-          Update baseline
-        </DialogTrigger>
+        <DialogTrigger render={<Button variant="ghost" />}>Update baseline</DialogTrigger>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Update baseline?</DialogTitle>
             <DialogDescription>
-              This will replace the current baseline for all 142 snapshots on{" "}
-              <strong>main</strong>. This action cannot be undone.
+              This will replace the current baseline for all 142 snapshots on <strong>main</strong>.
+              This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

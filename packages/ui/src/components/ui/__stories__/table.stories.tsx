@@ -22,9 +22,23 @@ type Story = StoryObj<typeof Table>;
 
 const runs = [
   { id: "#42", branch: "main", snapshots: 142, diffs: 0, status: "passed", date: "2m ago" },
-  { id: "#41", branch: "feature/navbar", snapshots: 38, diffs: 4, status: "failed", date: "1h ago" },
+  {
+    id: "#41",
+    branch: "feature/navbar",
+    snapshots: 38,
+    diffs: 4,
+    status: "failed",
+    date: "1h ago",
+  },
   { id: "#40", branch: "develop", snapshots: 142, diffs: 0, status: "passed", date: "3h ago" },
-  { id: "#39", branch: "fix/button-padding", snapshots: 12, diffs: 1, status: "failed", date: "5h ago" },
+  {
+    id: "#39",
+    branch: "fix/button-padding",
+    snapshots: 12,
+    diffs: 1,
+    status: "failed",
+    date: "5h ago",
+  },
   { id: "#38", branch: "main", snapshots: 142, diffs: 0, status: "passed", date: "1d ago" },
 ];
 
@@ -59,9 +73,7 @@ export const KitchenSink: Story = {
           {runs.map((run) => (
             <TableRow key={run.id}>
               <TableCell className="font-mono">{run.id}</TableCell>
-              <TableCell className="font-mono text-muted-foreground">
-                {run.branch}
-              </TableCell>
+              <TableCell className="font-mono text-muted-foreground">{run.branch}</TableCell>
               <TableCell className="text-right">{run.snapshots}</TableCell>
               <TableCell className="text-right">{run.diffs}</TableCell>
               <TableCell>

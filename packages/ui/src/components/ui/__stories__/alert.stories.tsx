@@ -19,13 +19,7 @@ const meta: Meta<typeof Alert> = {
 export default meta;
 type Story = StoryObj<typeof Alert>;
 
-const Section = ({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) => (
+const Section = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="space-y-2">
     <p className="font-mono text-[11px] text-muted-foreground">{label}</p>
     <div className="flex flex-col gap-2">{children}</div>
@@ -41,9 +35,7 @@ export const KitchenSink: Story = {
         </Alert>
         <Alert>
           <AlertTitle>Baseline updated</AlertTitle>
-          <AlertDescription>
-            New baseline set for 3 components on branch main.
-          </AlertDescription>
+          <AlertDescription>New baseline set for 3 components on branch main.</AlertDescription>
         </Alert>
         <Alert>
           <InfoIcon />
@@ -55,9 +47,7 @@ export const KitchenSink: Story = {
         <Alert>
           <InfoIcon />
           <AlertTitle>Threshold warning</AlertTitle>
-          <AlertDescription>
-            4 snapshots are within 0.1% of the diff threshold.
-          </AlertDescription>
+          <AlertDescription>4 snapshots are within 0.1% of the diff threshold.</AlertDescription>
           <AlertAction>
             <Button size="xs" variant="secondary">
               Review
@@ -73,9 +63,7 @@ export const KitchenSink: Story = {
         <Alert variant="success">
           <CircleCheckIcon />
           <AlertTitle>No regressions detected</AlertTitle>
-          <AlertDescription>
-            All 142 snapshots match baseline within threshold.
-          </AlertDescription>
+          <AlertDescription>All 142 snapshots match baseline within threshold.</AlertDescription>
         </Alert>
         <Alert variant="success">
           <CircleCheckIcon />
@@ -105,9 +93,7 @@ export const KitchenSink: Story = {
         <Alert variant="warning">
           <TriangleAlertIcon />
           <AlertTitle>Queued behind 3 runs</AlertTitle>
-          <AlertDescription>
-            Snapshot capture will start once the queue clears.
-          </AlertDescription>
+          <AlertDescription>Snapshot capture will start once the queue clears.</AlertDescription>
           <AlertAction>
             <Button size="xs" variant="secondary">
               Prioritise

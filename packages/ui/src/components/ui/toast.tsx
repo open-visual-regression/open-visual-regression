@@ -1,36 +1,35 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
-import { XIcon } from "lucide-react"
+import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
+import { XIcon } from "lucide-react";
 
-import { cn } from "@/src/lib/utils"
+import { cn } from "@/src/lib/utils";
 
 const toastVariants = cva(
   "group/toast relative flex items-stretch overflow-hidden rounded-[2px] border border-l-[3px] shadow-ovr-popover w-[340px]",
   {
     variants: {
       variant: {
-        default:     "border-ovr-status-pending bg-ovr-raised text-ovr-status-pending",
-        success:     "border-ovr-diff-add  bg-ovr-raised text-ovr-diff-add",
-        warning:     "border-ovr-accent    bg-ovr-raised text-ovr-accent",
+        default: "border-ovr-status-pending bg-ovr-raised text-ovr-status-pending",
+        success: "border-ovr-diff-add  bg-ovr-raised text-ovr-diff-add",
+        warning: "border-ovr-accent    bg-ovr-raised text-ovr-accent",
         destructive: "border-ovr-remove    bg-ovr-raised text-ovr-remove",
-        muted:       "border-ovr-fg-secondary bg-ovr-raised text-ovr-fg-secondary",
+        muted: "border-ovr-fg-secondary bg-ovr-raised text-ovr-fg-secondary",
       },
     },
     defaultVariants: { variant: "default" },
-  }
-)
+  },
+);
 
 export interface ToastProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof toastVariants> {
-  icon?: React.ReactNode
-  title: string
-  description?: string
-  actionLabel?: string
-  onAction?: () => void
-  onDismiss?: () => void
+  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof toastVariants> {
+  icon?: React.ReactNode;
+  title: string;
+  description?: string;
+  actionLabel?: string;
+  onAction?: () => void;
+  onDismiss?: () => void;
 }
 
 function Toast({
@@ -54,9 +53,7 @@ function Toast({
     >
       <div className="flex flex-1 items-start gap-2.5 px-3 py-2.5 min-w-0">
         {icon && (
-          <span className="mt-px flex-shrink-0 text-[13px] leading-none text-current">
-            {icon}
-          </span>
+          <span className="mt-px flex-shrink-0 text-[13px] leading-none text-current">{icon}</span>
         )}
         <div className="flex flex-1 flex-col gap-0.5 min-w-0">
           <p className="text-xs font-semibold text-ovr-fg leading-snug">{title}</p>
@@ -81,20 +78,17 @@ function Toast({
         </button>
       </div>
     </div>
-  )
+  );
 }
 
 function ToastContainer({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="toast-container"
-      className={cn(
-        "fixed bottom-4 right-4 z-[100] flex flex-col items-end gap-2",
-        className
-      )}
+      className={cn("fixed bottom-4 right-4 z-[100] flex flex-col items-end gap-2", className)}
       {...props}
     />
-  )
+  );
 }
 
-export { Toast, ToastContainer, toastVariants }
+export { Toast, ToastContainer, toastVariants };

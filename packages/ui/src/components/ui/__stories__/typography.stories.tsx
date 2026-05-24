@@ -11,13 +11,7 @@ const meta: Meta<typeof Typography> = {
 export default meta;
 type Story = StoryObj<typeof Typography>;
 
-const Section = ({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) => (
+const Section = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="space-y-1">
     <p className="font-mono text-[11px] text-muted-foreground">{label}</p>
     <div>{children}</div>
@@ -53,17 +47,15 @@ export const KitchenSink: Story = {
 
       <Section label='variant="body"'>
         <Typography variant="body" as="p">
-          Pixel-level visual regression for your CI pipeline. Compare
-          screenshots automatically and catch unintended changes before they
-          reach production.
+          Pixel-level visual regression for your CI pipeline. Compare screenshots automatically and
+          catch unintended changes before they reach production.
         </Typography>
       </Section>
 
       <Section label='variant="body-sm"'>
         <Typography variant="body-sm" as="p">
-          Pixel-level visual regression for your CI pipeline. Compare
-          screenshots automatically and catch unintended changes before they
-          reach production.
+          Pixel-level visual regression for your CI pipeline. Compare screenshots automatically and
+          catch unintended changes before they reach production.
         </Typography>
       </Section>
 

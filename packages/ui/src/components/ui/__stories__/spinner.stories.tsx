@@ -11,13 +11,7 @@ const meta: Meta<typeof Spinner> = {
 export default meta;
 type Story = StoryObj<typeof Spinner>;
 
-const Section = ({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) => (
+const Section = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="space-y-1">
     <p className="font-mono text-[11px] text-muted-foreground">{label}</p>
     <div className="flex items-end gap-4">{children}</div>

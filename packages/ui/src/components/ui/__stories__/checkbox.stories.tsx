@@ -12,13 +12,7 @@ const meta: Meta<typeof Checkbox> = {
 export default meta;
 type Story = StoryObj<typeof Checkbox>;
 
-const Section = ({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) => (
+const Section = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="space-y-1">
     <p className="font-mono text-[11px] text-muted-foreground">{label}</p>
     <div className="flex flex-col gap-2">{children}</div>
@@ -46,15 +40,8 @@ export const KitchenSink: Story = {
       </Section>
 
       <Section label="invalid">
-        <CheckboxRow
-          label="Accept terms and conditions"
-          aria-invalid="true"
-        />
-        <CheckboxRow
-          label="Accept terms and conditions"
-          defaultChecked
-          aria-invalid="true"
-        />
+        <CheckboxRow label="Accept terms and conditions" aria-invalid="true" />
+        <CheckboxRow label="Accept terms and conditions" defaultChecked aria-invalid="true" />
       </Section>
 
       <Section label="in a list">

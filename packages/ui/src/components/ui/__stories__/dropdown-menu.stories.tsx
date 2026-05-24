@@ -39,9 +39,7 @@ export const RunActions: Story = {
     <div className="flex items-start justify-center p-6 min-h-80">
       <DropdownMenu>
         <DropdownMenuTrigger
-          render={
-            <Button variant="ghost" size="icon-sm" aria-label="Run actions" />
-          }
+          render={<Button variant="ghost" size="icon-sm" aria-label="Run actions" />}
         >
           <EllipsisIcon />
         </DropdownMenuTrigger>
@@ -76,9 +74,7 @@ export const RunActions: Story = {
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <DropdownMenuCheckboxItem checked>
-              Email on completion
-            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem checked>Email on completion</DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem>Auto-approve</DropdownMenuCheckboxItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
