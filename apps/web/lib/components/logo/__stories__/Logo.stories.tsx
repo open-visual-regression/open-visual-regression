@@ -19,45 +19,43 @@ const SURFACES: { surface: LogoSurface; bg: string; label: string }[] = [
   { surface: "accent", bg: "bg-ovr-accent", label: "on accent" },
 ];
 
-export const Sizes: Story = {
-  render: () => (
-    <div className="flex items-end gap-8 p-6 bg-background">
-      {(["sm", "lg", "xl"] as const).map((size) => (
-        <div key={size} className="flex flex-col gap-2">
-          <Logo size={size} />
-          <span className="text-label tracking-label uppercase text-ovr-fg-tertiary">{size}</span>
-        </div>
-      ))}
-    </div>
-  ),
-};
+const Section = ({ label, children }: { label: string; children: React.ReactNode }) => (
+  <div className="space-y-3">
+    <p className="text-label tracking-label uppercase text-ovr-fg-tertiary">{label}</p>
+    {children}
+  </div>
+);
 
-export const MarkOnly: Story = {
+export const KitchenSink: Story = {
   render: () => (
-    <div className="flex items-end gap-8 p-6 bg-background">
-      {(["sm", "lg", "xl"] as const).map((size) => (
-        <div key={size} className="flex flex-col gap-2">
-          <Logo size={size} wordmark={false} />
-          <span className="text-label tracking-label uppercase text-ovr-fg-tertiary">{size}</span>
+    <div className="space-y-8 p-6 bg-background">
+      <Section label="default — sm / lg">
+        <div className="flex items-end gap-8">
+          <Logo variant="default" size="sm" />
+          <Logo variant="default" size="lg" />
         </div>
-      ))}
-    </div>
-  ),
-};
+      </Section>
 
-export const Surfaces: Story = {
-  render: () => (
-    <div className="flex p-6 bg-background">
-      {SURFACES.map(({ surface, bg, label }) => (
-        <div key={label} className="flex flex-col items-center gap-3">
-          <div
-            className={`flex w-40 h-20 items-center justify-center border border-ovr-border-subtle ${bg}`}
-          >
-            <Logo size="lg" surface={surface} />
-          </div>
-          <span className="text-label tracking-label uppercase text-ovr-fg-tertiary">{label}</span>
+      <Section label="full">
+        <Logo variant="full" />
+      </Section>
+
+      <Section label="surfaces">
+        <div className="flex">
+          {SURFACES.map(({ surface, bg, label }) => (
+            <div key={label} className="flex flex-col items-center gap-3">
+              <div
+                className={`flex w-40 h-20 items-center justify-center border border-ovr-border-subtle ${bg}`}
+              >
+                <Logo variant="default" size="lg" surface={surface} />
+              </div>
+              <span className="text-label tracking-label uppercase text-ovr-fg-tertiary">
+                {label}
+              </span>
+            </div>
+          ))}
         </div>
-      ))}
+      </Section>
     </div>
   ),
 };
