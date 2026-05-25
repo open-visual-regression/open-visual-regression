@@ -2,7 +2,7 @@
 
 Gate: run detail page with a pending build polls every 5s; SegmentedProgress updates live; polling stops when build reaches terminal status.
 
-- [ ] 1.1 Install `@tanstack/react-query` in `apps/web`; wrap `(app)/layout.tsx` with `QueryClientProvider` (client component wrapper)
+- [ ] 1.1 Install `@tanstack/react-query` in `apps/web`; wrap `(authenticated)/layout.tsx` with `QueryClientProvider` (client component wrapper)
 - [ ] 1.2 Create `apps/web/app/api/builds/[buildId]/status/route.ts`:
   - `GET /api/builds/[buildId]/status`
   - Validate session; fetch build + snapshot/diff counts by status

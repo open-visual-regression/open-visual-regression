@@ -4,13 +4,13 @@ Gate: cold start with zero users loads `/setup`; submitting valid form creates o
 
 Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-auth.jsx` (SetupScreen)
 
-- [ ] 1.1 Create `apps/web/app/(public)/setup/page.tsx` (RSC):
+- [ ] 1.1 Create `apps/web/app/(unauthenticated)/setup/page.tsx` (RSC):
   - Query user count via `db` — if `count > 0` → `redirect("/login")` (handles cleared-cookie case)
   - Fields: org name · admin email · password · confirm password
   - Layout matches SetupScreen: OvrMark centered top, card with form, version string footer
   - Submit button: primary variant, full width, "create account"
 
-- [ ] 1.2 Create `apps/web/app/(public)/setup/actions.ts`:
+- [ ] 1.2 Create `apps/web/app/(unauthenticated)/setup/actions.ts`:
   - `createAdminAccount(formData)` Server Action
   - Validate with Zod: all required; password ≥ 8 chars; passwords match
   - `auth.api.signUpEmail({ email, password, name })` → creates first user

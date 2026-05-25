@@ -5,7 +5,7 @@ Gate: authenticated user sees project card grid; zero projects shows empty state
 Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-builds.jsx` (ProjectsScreen)
 Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-states.jsx` (empty state)
 
-- [ ] 1.1 Create `apps/web/app/(app)/projects/page.tsx` (RSC):
+- [ ] 1.1 Create `apps/web/app/(authenticated)/projects/page.tsx` (RSC):
   - Fetch all projects with `projectsRepo.findAll()`
   - If `projects.length === 0` → render empty state (see 1.3)
   - Otherwise → render card grid
