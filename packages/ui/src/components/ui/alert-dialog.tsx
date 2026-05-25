@@ -130,7 +130,7 @@ const AlertDialogAction = ({ className, ...props }: React.ComponentProps<typeof 
 const AlertDialogCancel = ({
   className,
   variant = "secondary",
-  size = "default",
+  size = "md",
   ...props
 }: AlertDialogPrimitive.Close.Props &
   Pick<React.ComponentProps<typeof Button>, "variant" | "size">) => {

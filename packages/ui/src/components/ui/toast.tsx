@@ -22,15 +22,15 @@ const toastVariants = cva(
   },
 );
 
-export interface ToastProps
-  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof toastVariants> {
+export type ToastProps = {
   icon?: React.ReactNode;
   title: string;
   description?: string;
   actionLabel?: string;
   onAction?: () => void;
   onDismiss?: () => void;
-}
+} & React.HTMLAttributes<HTMLOutputElement> &
+  VariantProps<typeof toastVariants>;
 
 const Toast = ({
   className,
@@ -44,9 +44,8 @@ const Toast = ({
   ...props
 }: ToastProps) => {
   return (
-    <div
+    <output
       data-slot="toast"
-      role="status"
       aria-live="polite"
       className={cn(toastVariants({ variant }), className)}
       {...props}
@@ -77,7 +76,7 @@ const Toast = ({
           <XIcon className="size-3.5" />
         </button>
       </div>
-    </div>
+    </output>
   );
 };
 

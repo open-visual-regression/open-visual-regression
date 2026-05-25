@@ -30,7 +30,7 @@ export const KitchenSink: Story = {
 
     return (
       <div className="space-y-6 p-4">
-        {(["xs", "sm", "default", "lg"] as const).map((size) => (
+        {(["xs", "sm", "md", "lg"] as const).map((size) => (
           <Section key={size} label={`size="${size}"`}>
             {variants.map((variant) => (
               <Button key={variant} variant={variant} size={size}>

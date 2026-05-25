@@ -18,8 +18,7 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        default:
-          "h-8 gap-1 px-3.5 text-xs has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3 [&_svg:not([class*='size-'])]:size-3.5",
+        md: "h-8 gap-1 px-3.5 text-xs has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3 [&_svg:not([class*='size-'])]:size-3.5",
         xs: "h-5 gap-1 px-2 text-badge has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-2.5",
         sm: "h-7 gap-1 px-2.5 text-label has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3",
         lg: "h-10 gap-1.5 px-4.5 text-body has-data-[icon=inline-end]:pr-3.5 has-data-[icon=inline-start]:pl-3.5 [&_svg:not([class*='size-'])]:size-4",
@@ -31,7 +30,7 @@ const buttonVariants = cva(
     },
     defaultVariants: {
       variant: "default",
-      size: "default",
+      size: "md",
     },
   },
 );
@@ -39,7 +38,7 @@ const buttonVariants = cva(
 const Button = ({
   className,
   variant = "default",
-  size = "default",
+  size = "md",
   ...props
 }: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) => {
   return (

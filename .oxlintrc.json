@@ -1,0 +1,17 @@
+{
+  "plugins": ["react", "typescript", "import", "unicorn", "jsx-a11y", "vitest"],
+  "env": { "browser": true, "node": true },
+  "rules": {
+    "curly": "warn",
+    "func-style": ["warn", "expression"],
+    "react/forbid-dom-props": ["warn", { "forbid": ["style"] }],
+    "react/rules-of-hooks": "error",
+    "react/jsx-handler-names": "warn",
+    "no-nested-ternary": "warn",
+    "typescript/prefer-reduce-type-parameter": "warn",
+    "typescript/consistent-type-definitions": ["warn", "type"],
+    "jsx-a11y/prefer-tag-over-role": "off",
+    "jsx-a11y/no-static-element-interactions": "warn",
+    "jsx-a11y/click-events-have-key-events": "warn"
+  }
+}
