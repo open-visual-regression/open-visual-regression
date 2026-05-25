@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
-import { Logo } from "../Logo";
+import { Logo, LogoFull } from "../Logo";
 import type { LogoSurface } from "../Logo";
 
 const meta: Meta<typeof Logo> = {
@@ -29,15 +29,15 @@ const Section = ({ label, children }: { label: string; children: React.ReactNode
 export const KitchenSink: Story = {
   render: () => (
     <div className="space-y-8 p-6 bg-background">
-      <Section label="default — sm / lg">
+      <Section label="Logo — sm / lg">
         <div className="flex items-end gap-8">
-          <Logo variant="default" size="sm" />
-          <Logo variant="default" size="lg" />
+          <Logo size="sm" />
+          <Logo size="lg" />
         </div>
       </Section>
 
-      <Section label="full">
-        <Logo variant="full" />
+      <Section label="LogoFull">
+        <LogoFull />
       </Section>
 
       <Section label="surfaces">
@@ -47,7 +47,7 @@ export const KitchenSink: Story = {
               <div
                 className={`flex w-40 h-20 items-center justify-center border border-ovr-border-subtle ${bg}`}
               >
-                <Logo variant="default" size="lg" surface={surface} />
+                <Logo size="lg" surface={surface} />
               </div>
               <span className="text-label tracking-label uppercase text-ovr-fg-tertiary">
                 {label}

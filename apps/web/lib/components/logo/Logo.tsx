@@ -2,13 +2,16 @@ import { cva } from "class-variance-authority";
 
 import { cn } from "@ovr/ui/lib/utils";
 
-type LogoVariant = "default" | "full";
 type LogoSize = "sm" | "lg";
 type LogoSurface = "default" | "light" | "accent";
 
 interface LogoProps {
-  variant?: LogoVariant;
   size?: LogoSize;
+  surface?: LogoSurface;
+  className?: string;
+}
+
+interface LogoFullProps {
   surface?: LogoSurface;
   className?: string;
 }
@@ -40,7 +43,7 @@ const SIZE_CONFIG = {
   lg: { markW: 4, markH: 28, gap: "gap-[10px]", wordmarkClass: "text-2xl tracking-display" },
 } as const satisfies Record<LogoSize, object>;
 
-const FULL_CONFIG = {
+const FULL = {
   markW: 6,
   markH: 64,
   gap: "gap-[14px]",
@@ -49,45 +52,41 @@ const FULL_CONFIG = {
   cursorH: 22,
 };
 
-const Logo = ({ variant = "default", size = "sm", surface = "default", className }: LogoProps) => {
-  const isFull = variant === "full";
-  const { markW, markH, gap, wordmarkClass } = isFull ? FULL_CONFIG : SIZE_CONFIG[size];
+const Mark = ({ w, h, surface }: { w: number; h: number; surface: LogoSurface }) => (
+  <span className={cn(markColorVariants({ surface }))}>
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} fill="currentColor" aria-hidden="true">
+      <rect width="100%" height="100%" />
+    </svg>
+  </span>
+);
 
+const Logo = ({ size = "sm", surface = "default", className }: LogoProps) => {
+  const { markW, markH, gap, wordmarkClass } = SIZE_CONFIG[size];
   return (
     <div className={cn("inline-flex items-center", gap, className)}>
-      <span className={cn(markColorVariants({ surface }))}>
-        <svg
-          width={markW}
-          height={markH}
-          viewBox={`0 0 ${markW} ${markH}`}
-          fill="currentColor"
-          aria-hidden="true"
-        >
-          <rect width="100%" height="100%" />
-        </svg>
-      </span>
-
-      {isFull ? (
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-1.5">
-            <span className={cn(wordmarkClass, textColorVariants({ surface }))}>ovr</span>
-            <span
-              className={cn("inline-block shrink-0", markColorVariants({ surface }))}
-              style={{ width: FULL_CONFIG.cursorW, height: FULL_CONFIG.cursorH }}
-            />
-          </div>
-          <span
-            className={cn("text-label tracking-label uppercase", textColorVariants({ surface }))}
-          >
-            open visual regression
-          </span>
-        </div>
-      ) : (
-        <span className={cn(wordmarkClass, textColorVariants({ surface }))}>ovr</span>
-      )}
+      <Mark w={markW} h={markH} surface={surface} />
+      <span className={cn(wordmarkClass, textColorVariants({ surface }))}>ovr</span>
     </div>
   );
 };
 
-export { Logo };
-export type { LogoProps, LogoVariant, LogoSize, LogoSurface };
+const LogoFull = ({ surface = "default", className }: LogoFullProps) => (
+  <div className={cn("inline-flex items-center", FULL.gap, className)}>
+    <Mark w={FULL.markW} h={FULL.markH} surface={surface} />
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center gap-1.5">
+        <span className={cn(FULL.wordmarkClass, textColorVariants({ surface }))}>ovr</span>
+        <span
+          className={cn("inline-block shrink-0", markColorVariants({ surface }))}
+          style={{ width: FULL.cursorW, height: FULL.cursorH }}
+        />
+      </div>
+      <span className={cn("text-label tracking-label uppercase", textColorVariants({ surface }))}>
+        open visual regression
+      </span>
+    </div>
+  </div>
+);
+
+export { Logo, LogoFull };
+export type { LogoProps, LogoFullProps, LogoSize, LogoSurface };
