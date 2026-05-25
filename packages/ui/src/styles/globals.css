@@ -33,7 +33,9 @@
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-card: 4px;
+  --radius-xl: 6px;
+  --radius-thumb: 1px;
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
@@ -66,6 +68,21 @@
   --leading-heading: 1.35;
   --leading-body: 1.5;
 
+  /* OVR Tailwind text utilities (--text-* generates text-* utility classes) */
+  --text-display: 56px;
+  --text-h1: 28px;
+  --text-body: 13px;
+  --text-label: 11px;
+  --text-badge: 10px;
+
+  /* OVR border/ring widths */
+  --border-width-3: 3px;
+  --ring-width-3: 3px;
+
+  /* OVR z-index scale */
+  --z-toast: 100;
+
+  /* OVR design tokens */
   --color-ovr-accent: var(--ovr-accent-primary);
   --color-ovr-accent-hover: var(--ovr-accent-primary-hover);
   --color-ovr-accent-dim: var(--ovr-accent-dim);
@@ -93,7 +110,7 @@
 }
 
 :root {
-  --radius: 0;
+  --radius: 2px;
   --background: oklch(1 0 0);
 
   --ovr-accent-primary: oklch(0.78 0.18 75);

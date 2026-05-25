@@ -6,16 +6,16 @@ import { cn } from "../../lib/utils";
 const typographyVariants = cva("font-mono", {
   variants: {
     variant: {
-      display: "text-[56px] font-medium tracking-[-0.03em] leading-[1.15]",
-      h1: "text-[28px] font-medium tracking-[-0.02em] leading-[1.15]",
-      h2: "text-[20px] font-medium tracking-[-0.02em] leading-[1.35]",
-      h3: "text-[16px] font-semibold leading-[1.35]",
-      body: "text-[13px] font-normal leading-[1.5]",
-      "body-sm": "text-[12px] font-normal leading-[1.5]",
-      caption: "text-[11px] font-normal leading-[1.5] text-muted-foreground",
-      label: "text-[11px] font-semibold tracking-[0.08em] uppercase text-ovr-fg-secondary",
-      code: "text-[13px] [font-feature-settings:'calt'_0,'liga'_0]",
-      num: "[font-variant-numeric:tabular-nums]",
+      display: "text-display font-medium tracking-display leading-display",
+      h1: "text-h1 font-medium tracking-h1 leading-display",
+      h2: "text-xl font-medium tracking-h1 leading-heading",
+      h3: "text-base font-semibold leading-heading",
+      body: "text-body font-normal leading-body",
+      "body-sm": "text-xs font-normal leading-body",
+      caption: "text-label font-normal leading-body text-muted-foreground",
+      label: "text-label font-semibold tracking-label uppercase text-ovr-fg-secondary",
+      code: "text-body [font-feature-settings:'calt'_0,'liga'_0]",
+      num: "tabular-nums",
     },
   },
   defaultVariants: {
