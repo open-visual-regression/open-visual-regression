@@ -3,5 +3,9 @@ type NavigationBarProps = {
 };
 
 export const NavigationBar = ({ children }: NavigationBarProps) => {
-  return <nav className="py-3 px-3 border-b border-b-ovr-border">{children}</nav>;
+  return (
+    <nav className="py-3 px-3 border-b border-b-ovr-border flex flex-row items-center">
+      {children}
+    </nav>
+  );
 };
