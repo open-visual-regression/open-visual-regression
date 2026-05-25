@@ -1,26 +1,41 @@
 import { cn } from "../../lib/utils";
 
-interface Segment {
+export type SegmentedProgressSize = "sm" | "md" | "lg";
+
+type SegmentColor = "green" | "orange" | "red" | "blue";
+
+type Segment = {
   label: string;
   count: number;
-  color: string;
-}
+  color: SegmentColor;
+};
 
-interface SegmentedProgressProps {
+type SegmentedProgressProps = {
   segments: Segment[];
   title?: string;
   subtitle?: string;
-  summary?: string;
-  height?: number;
+  size?: SegmentedProgressSize;
   className?: string;
-}
+};
+
+const getColor = (color: SegmentColor) => {
+  switch (color) {
+    case "green":
+      return "bg-ovr-status-pass";
+    case "orange":
+      return "bg-ovr-status-changed";
+    case "red":
+      return "bg-ovr-status-fail";
+    case "blue":
+      return "bg-ovr-status-pending";
+  }
+};
 
 const SegmentedProgress = ({
   segments,
   title,
   subtitle,
-  summary,
-  height = 8,
+  size = "md",
   className,
 }: SegmentedProgressProps) => {
   const active = segments.filter((s) => s.count > 0);
@@ -28,37 +43,44 @@ const SegmentedProgress = ({
 
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
-      {(title || subtitle) && (
+      {title || subtitle ? (
         <div className="flex items-baseline gap-2">
-          {title && (
+          {title ? (
             <span className="font-mono text-label font-semibold tracking-label uppercase text-ovr-fg-secondary">
               {title}
             </span>
-          )}
-          {subtitle && (
+          ) : null}
+          {subtitle ? (
             <span className="font-mono text-label font-normal leading-body text-muted-foreground">
               {subtitle}
             </span>
-          )}
+          ) : null}
         </div>
-      )}
-      <div className="flex overflow-hidden rounded-[2px] bg-ovr-inset" style={{ height }}>
+      ) : null}
+      <div
+        className={cn(
+          "flex gap-px overflow-hidden rounded-xs bg-background",
+          { "h-2": size === "sm", "h-4": size === "md", "h-6": size === "lg" },
+          className,
+        )}
+      >
         {active.map((s, i) => (
           <div
             key={i}
-            style={{
-              flexBasis: `${(s.count / total) * 100}%`,
-              background: s.color,
-              borderRight: i < active.length - 1 ? "1px solid var(--background)" : "none",
-            }}
+            className={cn(getColor(s.color))}
+            style={{ flexBasis: `${(s.count / total) * 100}%` }}
           />
         ))}
       </div>
-      {summary && (
-        <span className="font-mono text-label font-normal leading-body text-muted-foreground">
-          {summary}
-        </span>
-      )}
+      <div className="flex flex-wrap gap-x-3.5 gap-y-1">
+        {active.map((s, i) => (
+          <div key={i} className="flex items-center gap-1">
+            <span className={cn("size-2 shrink-0", getColor(s.color))} />
+            <span className="font-mono text-badge text-ovr-fg-secondary">{s.count}</span>
+            <span className="font-mono text-badge text-ovr-fg-secondary">{s.label}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
