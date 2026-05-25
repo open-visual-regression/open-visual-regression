@@ -1,5 +1,4 @@
 {
-  "extends": ["oxlint:recommended"],
   "plugins": ["react", "typescript", "import", "unicorn", "jsx-a11y"],
   "env": { "browser": true, "node": true },
   "rules": {
