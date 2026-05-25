@@ -24,7 +24,7 @@ const ICON_MAP: Record<StatusKind, LucideIcon> = {
 
 const statusIconVariants = cva("", {
   variants: {
-    kind: {
+    variant: {
       changed: "text-ovr-accent",
       passed: "text-ovr-diff-add",
       pending: "text-ovr-status-pending animate-spin",
@@ -36,17 +36,17 @@ const statusIconVariants = cva("", {
 });
 
 type StatusIconProps = VariantProps<typeof statusIconVariants> & {
-  kind: StatusKind;
+  variant: StatusKind;
   size?: number;
   className?: string;
 };
 
-function StatusIcon({ kind, size = 16, className }: StatusIconProps) {
+function StatusIcon({ variant, size = 16, className }: StatusIconProps) {
   return (
     <Icon
-      icon={ICON_MAP[kind]}
+      icon={ICON_MAP[variant]}
       size={size}
-      className={cn(statusIconVariants({ kind }), className)}
+      className={cn(statusIconVariants({ variant }), className)}
     />
   );
 }

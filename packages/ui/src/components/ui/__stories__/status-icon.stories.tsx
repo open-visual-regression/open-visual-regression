@@ -43,7 +43,7 @@ export const AllStates: Story = {
             </span>
             {STATUS_KINDS.map(({ kind }) => (
               <div key={`${size}-${kind}`} className="flex justify-center">
-                <StatusIcon kind={kind} size={size} />
+                <StatusIcon variant={kind} size={size} />
               </div>
             ))}
           </>
