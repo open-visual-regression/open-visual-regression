@@ -7,7 +7,7 @@ import { XIcon } from "lucide-react";
 import { cn } from "../../lib/utils";
 
 const toastVariants = cva(
-  "group/toast relative flex items-stretch overflow-hidden rounded-[2px] border border-l-[3px] shadow-ovr-popover w-[340px]",
+  "group/toast relative flex items-stretch overflow-hidden rounded-lg border border-l-3 shadow-ovr-popover w-85",
   {
     variants: {
       variant: {
@@ -53,18 +53,18 @@ function Toast({
     >
       <div className="flex flex-1 items-start gap-2.5 px-3 py-2.5 min-w-0">
         {icon && (
-          <span className="mt-px flex-shrink-0 text-[13px] leading-none text-current">{icon}</span>
+          <span className="mt-px flex-shrink-0 text-body leading-none text-current">{icon}</span>
         )}
         <div className="flex flex-1 flex-col gap-0.5 min-w-0">
           <p className="text-xs font-semibold text-ovr-fg leading-snug">{title}</p>
           {description && (
-            <p className="text-[11px] text-ovr-fg-secondary leading-relaxed">{description}</p>
+            <p className="text-label text-ovr-fg-secondary leading-relaxed">{description}</p>
           )}
         </div>
         {actionLabel && onAction && (
           <button
             onClick={onAction}
-            className="h-[22px] flex-shrink-0 self-center rounded-[2px] border border-current bg-transparent px-2 font-mono text-[10px] font-semibold uppercase tracking-[0.04em] text-current transition-opacity hover:opacity-80 cursor-pointer"
+            className="h-5.5 flex-shrink-0 self-center rounded-lg border border-current bg-transparent px-2 font-mono text-badge font-semibold uppercase tracking-[0.04em] text-current transition-opacity hover:opacity-80 cursor-pointer"
           >
             {actionLabel}
           </button>
@@ -85,7 +85,7 @@ function ToastContainer({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="toast-container"
-      className={cn("fixed bottom-4 right-4 z-[100] flex flex-col items-end gap-2", className)}
+      className={cn("fixed bottom-4 right-4 z-toast flex flex-col items-end gap-2", className)}
       {...props}
     />
   );
