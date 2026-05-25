@@ -11,18 +11,28 @@ const meta: Meta<typeof KeyHint> = {
 export default meta;
 type Story = StoryObj<typeof KeyHint>;
 
-export const AllKeys: Story = {
+const Section = ({ label, children }: { label: string; children: React.ReactNode }) => (
+  <div className="space-y-1">
+    <p className="font-mono text-[11px] text-muted-foreground">{label}</p>
+    <div className="flex flex-wrap items-center gap-2">{children}</div>
+  </div>
+);
+
+export const KitchenSink: Story = {
   render: () => (
-    <div className="flex flex-wrap items-center gap-2 p-4">
-      {["J", "K", "A", "R", "⌘K", "⇧Tab"].map((key) => (
-        <KeyHint key={key}>{key}</KeyHint>
-      ))}
+    <div className="space-y-6 p-4">
+      <Section label="navigation">
+        <KeyHint>J</KeyHint>
+        <KeyHint>K</KeyHint>
+      </Section>
+      <Section label="actions">
+        <KeyHint>A</KeyHint>
+        <KeyHint>R</KeyHint>
+      </Section>
+      <Section label="chords">
+        <KeyHint>⌘K</KeyHint>
+        <KeyHint>⇧Tab</KeyHint>
+      </Section>
     </div>
   ),
-};
-
-export const Single: Story = {
-  args: {
-    children: "J",
-  },
 };

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { Badge } from "../badge";
-import type { BadgeTone } from "../badge";
+import type { BadgeVariant } from "../badge";
 
 const meta: Meta<typeof Badge> = {
   title: "UI/Badge",
@@ -12,47 +12,25 @@ const meta: Meta<typeof Badge> = {
 export default meta;
 type Story = StoryObj<typeof Badge>;
 
-const TONES: BadgeTone[] = ["pass", "fail", "pending", "stale", "changed", "neutral"];
+const Section = ({ label, children }: { label: string; children: React.ReactNode }) => (
+  <div className="space-y-1">
+    <p className="font-mono text-[11px] text-muted-foreground">{label}</p>
+    <div className="flex flex-wrap gap-2">{children}</div>
+  </div>
+);
 
-export const Grid: Story = {
-  render: () => (
-    <div className="p-4">
-      <div className="grid grid-cols-6 gap-4">
-        {TONES.map((tone) => (
-          <div key={tone} className="flex flex-col items-center gap-2">
-            <span className="text-ovr-fg-muted text-[10px] uppercase tracking-[0.08em]">
-              {tone}
-            </span>
-            <Badge tone={tone}>{tone}</Badge>
-            <Badge tone={tone} filled>
-              {tone}
-            </Badge>
-          </div>
-        ))}
-      </div>
-    </div>
-  ),
-};
+const VARIANTS: BadgeVariant[] = ["pass", "fail", "pending", "stale", "changed", "neutral"];
 
-export const Outlined: Story = {
+export const KitchenSink: Story = {
   render: () => (
-    <div className="flex flex-wrap gap-2 p-4">
-      {TONES.map((tone) => (
-        <Badge key={tone} tone={tone}>
-          {tone}
-        </Badge>
-      ))}
-    </div>
-  ),
-};
-
-export const Filled: Story = {
-  render: () => (
-    <div className="flex flex-wrap gap-2 p-4">
-      {TONES.map((tone) => (
-        <Badge key={tone} tone={tone} filled>
-          {tone}
-        </Badge>
+    <div className="space-y-6 p-4">
+      {VARIANTS.map((variant) => (
+        <Section key={variant} label={`variant="${variant}"`}>
+          <Badge variant={variant}>{variant}</Badge>
+          <Badge variant={variant} filled>
+            {variant}
+          </Badge>
+        </Section>
       ))}
     </div>
   ),
