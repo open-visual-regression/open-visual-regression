@@ -1,33 +1,30 @@
 import { cn } from "@ovr/ui/lib/utils";
 
 type LogoSize = "sm" | "lg";
-type LogoSurface = "default" | "light" | "accent";
 
 interface LogoProps {
   size?: LogoSize;
-  surface?: LogoSurface;
   className?: string;
 }
 
 interface LogoFullProps {
-  surface?: LogoSurface;
   className?: string;
 }
 
-const Mark = ({ w, h, surface }: { w: number; h: number; surface: LogoSurface }) => (
+const Mark = ({ w, h }: { w: number; h: number }) => (
   <svg
     width={w}
     height={h}
     viewBox={`0 0 ${w} ${h}`}
     fill="currentColor"
     aria-hidden="true"
-    className={surface === "accent" ? "text-ovr-on-accent shrink-0" : "text-ovr-accent shrink-0"}
+    className="text-ovr-accent shrink-0"
   >
     <rect width="100%" height="100%" />
   </svg>
 );
 
-const Logo = ({ size = "sm", surface = "default", className }: LogoProps) => (
+const Logo = ({ size = "sm", className }: LogoProps) => (
   <div
     className={cn(
       "inline-flex items-center",
@@ -35,12 +32,11 @@ const Logo = ({ size = "sm", surface = "default", className }: LogoProps) => (
       className,
     )}
   >
-    <Mark w={size === "sm" ? 3 : 4} h={size === "sm" ? 18 : 28} surface={surface} />
+    <Mark w={size === "sm" ? 3 : 4} h={size === "sm" ? 18 : 28} />
     <span
       className={cn(
         size === "sm" ? "text-sm tracking-h1" : "text-2xl tracking-display",
-        "font-medium leading-none",
-        surface === "default" ? "text-ovr-fg" : "text-ovr-on-accent",
+        "font-medium leading-none text-ovr-fg",
       )}
     >
       ovr
@@ -48,32 +44,17 @@ const Logo = ({ size = "sm", surface = "default", className }: LogoProps) => (
   </div>
 );
 
-const LogoFull = ({ surface = "default", className }: LogoFullProps) => (
+const LogoFull = ({ className }: LogoFullProps) => (
   <div className={cn("inline-flex items-center gap-[14px]", className)}>
-    <Mark w={6} h={64} surface={surface} />
+    <Mark w={6} h={64} />
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-1.5">
-        <span
-          className={cn(
-            "text-[32px] tracking-[-0.04em] font-medium leading-none",
-            surface === "default" ? "text-ovr-fg" : "text-ovr-on-accent",
-          )}
-        >
+        <span className="text-[32px] tracking-[-0.04em] font-medium leading-none text-ovr-fg">
           ovr
         </span>
-        <span
-          className={cn(
-            "inline-block shrink-0 w-[14px] h-[22px]",
-            surface === "accent" ? "text-ovr-on-accent" : "text-ovr-accent",
-          )}
-        />
+        <span className="inline-block shrink-0 w-[14px] h-[22px] text-ovr-accent" />
       </div>
-      <span
-        className={cn(
-          "text-label tracking-label uppercase",
-          surface === "default" ? "text-ovr-fg" : "text-ovr-on-accent",
-        )}
-      >
+      <span className="text-label tracking-label uppercase text-ovr-fg">
         open visual regression
       </span>
     </div>
@@ -81,4 +62,4 @@ const LogoFull = ({ surface = "default", className }: LogoFullProps) => (
 );
 
 export { Logo, LogoFull };
-export type { LogoProps, LogoFullProps, LogoSize, LogoSurface };
+export type { LogoProps, LogoFullProps, LogoSize };
