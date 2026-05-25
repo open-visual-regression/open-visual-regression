@@ -63,10 +63,9 @@ const LogoFull = ({ surface = "default", className }: LogoFullProps) => (
         </span>
         <span
           className={cn(
-            "inline-block shrink-0",
+            "inline-block shrink-0 w-[14px] h-[22px]",
             surface === "accent" ? "text-ovr-on-accent" : "text-ovr-accent",
           )}
-          style={{ width: 14, height: 22 }}
         />
       </div>
       <span
