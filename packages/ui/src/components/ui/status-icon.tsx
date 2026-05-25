@@ -11,9 +11,9 @@ import {
 import { cn } from "../../lib/utils";
 import { Icon } from "./icon";
 
-type StatusKind = "changed" | "passed" | "pending" | "stale" | "approved" | "rejected";
+type StatusVariant = "changed" | "passed" | "pending" | "stale" | "approved" | "rejected";
 
-const ICON_MAP: Record<StatusKind, LucideIcon> = {
+const ICON_MAP: Record<StatusVariant, LucideIcon> = {
   changed: AlertCircleIcon,
   passed: CircleCheckIcon,
   pending: LoaderCircleIcon,
@@ -36,7 +36,7 @@ const statusIconVariants = cva("", {
 });
 
 type StatusIconProps = VariantProps<typeof statusIconVariants> & {
-  variant: StatusKind;
+  variant: StatusVariant;
   size?: number;
   className?: string;
 };
@@ -52,4 +52,4 @@ function StatusIcon({ variant, size = 16, className }: StatusIconProps) {
 }
 
 export { StatusIcon, statusIconVariants };
-export type { StatusKind, StatusIconProps };
+export type { StatusVariant, StatusIconProps };
