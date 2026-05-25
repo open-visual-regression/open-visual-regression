@@ -4,8 +4,7 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./client": "./src/client.ts"
+    "./*": "./src/*"
   },
   "scripts": {
     "build": "tsc",
