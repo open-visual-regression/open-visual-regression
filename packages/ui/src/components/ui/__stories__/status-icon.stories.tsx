@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
+import { cn } from "../../../lib/utils";
 import { StatusIcon } from "../status-icon";
 import type { StatusVariant } from "../status-icon";
 
@@ -31,7 +32,7 @@ export const AllStates: Story = {
         {STATUS_KINDS.map(({ kind, colorClass, colorToken }) => (
           <div key={kind} className="flex flex-col items-center gap-1">
             <span className="text-[10px] font-mono text-ovr-fg-secondary text-center">{kind}</span>
-            <span className={`text-[9px] font-mono text-center break-all ${colorClass}`}>
+            <span className={cn("text-[9px] font-mono text-center break-all", colorClass)}>
               {colorToken}
             </span>
           </div>
