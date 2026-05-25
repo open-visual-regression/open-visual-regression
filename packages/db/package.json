@@ -16,13 +16,13 @@
   "devDependencies": {
     "@ovr/typescript-config": "workspace:*",
     "@types/node": "^22.15.3",
+    "@types/pg": "^8.20.0",
     "drizzle-kit": "^0.31.10",
     "typescript": "6.0.3",
     "vitest": "^4.1.7"
   },
   "dependencies": {
-    "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
-    "postgres": "^3.4.9"
+    "pg": "^8.21.0"
   }
 }
