@@ -66,7 +66,6 @@
   --leading-heading: 1.35;
   --leading-body: 1.5;
 
-  /* OVR design tokens */
   --color-ovr-accent: var(--ovr-accent-primary);
   --color-ovr-accent-hover: var(--ovr-accent-primary-hover);
   --color-ovr-accent-dim: var(--ovr-accent-dim);
@@ -89,7 +88,6 @@
   --color-ovr-diff-add-dim: var(--ovr-diff-add-dim);
   --color-ovr-status-pending: var(--ovr-status-pending);
   --color-ovr-status-pending-dim: var(--ovr-status-pending-dim);
-  /* Shadows */
   --shadow-ovr-popover: 0 8px 24px -8px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--ovr-border-default);
   --shadow-ovr-modal: 0 24px 64px -16px rgba(0, 0, 0, 0.7), 0 0 0 1px var(--ovr-border-default);
 }
@@ -98,7 +96,6 @@
   --radius: 0;
   --background: oklch(1 0 0);
 
-  /* OVR design tokens — light */
   --ovr-accent-primary: oklch(0.78 0.18 75);
   --ovr-accent-primary-hover: oklch(0.82 0.18 75);
   --ovr-on-accent: oklch(1 0 0);
@@ -156,7 +153,6 @@
 .dark {
   --background: oklch(0.145 0 0);
 
-  /* OVR design tokens — dark */
   --ovr-accent-primary: oklch(0.78 0.18 75);
   --ovr-accent-primary-hover: oklch(0.82 0.18 75);
   --ovr-on-accent: oklch(0.15 0.006 270);

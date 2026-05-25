@@ -184,5 +184,7 @@ rules:
     - Tasks are ordered by dependency — complete in sequence within each change
     - Read the relevant design files before implementing any UI component
     - Integration tests use Testcontainers with real service containers (not mocks)
-    - Do not add unnecessary comments
+    - Do not add any comments
     - Use the skills defined in the project
+    - Architect the components so that they are composible
+    - Avoid arbitrary Tailwind values unless absolutely necessary

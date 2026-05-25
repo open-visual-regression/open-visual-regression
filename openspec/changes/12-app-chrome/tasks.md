@@ -1,57 +1,66 @@
-# 12 · App chrome + layout groups
+# 12 · App shell + layout groups
 
-Gate: authenticated routes show TopBar + correct sidebar at all three breakpoints; public routes (login/setup/invite) show minimal centered layout; unauthenticated visit to a protected route redirects to /login.
+Gate: authenticated routes show NavigationBar + correct sidebar at all three breakpoints; unauthenticated routes show minimal centered layout; unauthenticated visit to a protected route redirects to /login.
 
-Read: `openspec/designs/screens/open-visual-regression/project/kit/chrome.jsx`
-Read: `openspec/designs/screens/open-visual-regression/project/kit/chrome-tablet.jsx`
-Read: `openspec/designs/screens/open-visual-regression/project/kit/chrome-mobile.jsx`
+## Routing structure
 
-Layout hierarchy established in this PR:
+Parallel route slots (`@navigation`, `@sidebar`) allow server-side data fetching per slot while keeping them mounted across navigations within the layout group.
+
 ```
 app/
-  layout.tsx                 root — HTML, fonts, ThemeProvider, globals.css
-  (public)/
-    layout.tsx               centered card wrapper, no chrome
-    (setup, login, invite pages go here)
-  (app)/
-    layout.tsx               full chrome — TopBar + Sidebar + content insets
-                             server-side session guard: no session → redirect /login
-    (all authenticated pages go here)
+  layout.tsx
+  (unauthenticated)/
+    layout.tsx
+    (login, setup, invite pages)
+  (authenticated)/
+    layout.tsx                  session guard → redirect /login
+    @navigation/
+      default.tsx               RSC — fetches session data → renders NavigationBar
+    @sidebar/
+      default.tsx               RSC — fetches projects + recent runs → renders Sidebar / SidebarCollapsed
+    dashboard/
+      page.tsx
 ```
 
-- [ ] 1.1 Update `apps/web/app/layout.tsx` (root):
-  - Load JetBrains Mono via `next/font/local` (point to `node_modules/@fontsource-variable/jetbrains-mono`)
-  - `<html lang="en" className="dark">`
-  - Wrap body with `ThemeProvider` from `next-themes` (`defaultTheme: "dark"`, `attribute: "class"`, `storageKey: "ovr-theme"`)
-  - Import `@ovr/ui/globals.css`
+## Component tree
 
-- [ ] 1.2 Create `apps/web/app/(public)/layout.tsx`:
-  - Minimal full-height centered flex container; `var(--background)` bg
-  - No topbar, no sidebar — just `{children}` centered on screen
+```
+apps/web/lib/components/
+  navigation-bar/
+    NavigationBar.tsx
+    NavigationBarLogo.tsx
+    NavigationBarSeparator.tsx
+    NavigationBarBreadcrumb.tsx
+    NavigationBarSearch.tsx     — ⌘K trigger; icon-only on tablet
+    NavigationBarActions.tsx    — branch button + settings button + UserAvatar
+    UserAvatar.tsx              — monogram square, opens sign-out DropdownMenu
 
-- [ ] 1.3 Create `apps/web/app/(app)/layout.tsx`:
-  - Server Component; call `auth.api.getSession({ headers })` → no session → `redirect("/login")`
-  - Render `<TopBar />` + `<Sidebar />` (hidden <1024px) + `<TabletSidebar />` (768–1023px) + `<MobileChrome />`
-  - Content area: `paddingTop: var(--topbar-h)`; `paddingLeft: var(--sidebar-w)` on ≥1024px; `paddingLeft: 48px` on tablet; `paddingBottom: 56px` on mobile
+  sidebar/
+    Sidebar.tsx                 — desktop (240px)
+    SidebarSection.tsx          — label row + optional count
+    SidebarItem.tsx             — icon + label + change indicator
+    SidebarFooter.tsx           — collapse toggle + version + "self-hosted"
+    SidebarCollapsed.tsx        — tablet (48px)
+    SidebarMonogram.tsx         — 2-letter monogram + amber dot when changedCount > 0
 
-- [ ] 1.4 Create `apps/web/components/chrome/TopBar.tsx` (RSC):
-  - 48px fixed top; z-index above content; `var(--ovr-bg-elevated)` bg; 1px `var(--ovr-border-default)` bottom
-  - Left: `OvrMark` size=22 + "ovr" wordmark (amber) + `|` separator + breadcrumb slot
-  - Right: branch button (secondary variant, small) + user avatar (24×24 square, 2-letter monogram, `var(--ovr-accent-primary)` bg)
-  - Avatar opens DropdownMenu: "settings" link + separator + "sign out" button
+  mobile-app-shell/
+    MobileNavBar.tsx            — 48px bar: hamburger + title + trailing slot
+    MobileDrawer.tsx            — 280px left overlay
+    MobileNavItem.tsx           — icon + label row
+    MobileTabBar.tsx            — 56px fixed bottom
+    MobileTabBarItem.tsx
+```
 
-- [ ] 1.5 Create `apps/web/components/chrome/Sidebar.tsx` (RSC, desktop ≥1024px):
-  - 240px fixed left; full height below topbar; `var(--ovr-bg-elevated)` bg; 1px right border
-  - Projects section: fetches all projects; list of project names with amber filled Badge when `changedCount > 0`; active project: amber left border + `var(--ovr-fg-primary)` text
-  - Below each project: mini run-status row (last 5 runs as 8×8 colored dots using DiffStrip colors)
-  - Bottom: `Separator` + version + "self-hosted" caption text
+## Tasks
 
-- [ ] 1.6 Create `apps/web/components/chrome/TabletSidebar.tsx` (RSC, 768–1023px):
-  - 48px wide; 2-letter project monogram squares (`var(--ovr-accent-primary)` bg, white text)
-  - Amber 6px dot in top-right corner of monogram when project has `changedCount > 0`
-  - Each monogram links to project runs page
+- [ ] 1.1 Update `apps/web/app/layout.tsx`: JetBrains Mono font, ThemeProvider, import `@ovr/ui/globals.css`
 
-- [ ] 1.7 Create `apps/web/components/chrome/MobileChrome.tsx` (`"use client"`):
-  - `MobileTopBar`: 48px; `Menu` icon left opens drawer; OvrMark + "ovr" center; avatar right
-  - `MobileDrawer`: 280px left overlay; closes on backdrop click or nav link click; project list + separator + "settings" + "sign out"
-  - `MobileTabBar`: 56px fixed bottom; 3 items: Projects (`FolderIcon`) · Runs (`PlayIcon`) · Settings (`SettingsIcon`); active: amber icon + amber 2px top border
+- [ ] 1.2 Create `apps/web/app/(unauthenticated)/layout.tsx`: centered full-height wrapper, no app shell
+
+- [ ] 1.3 Update `apps/web/app/(authenticated)/layout.tsx`: session guard + responsive content insets
+
+- [ ] 1.4 Build `NavigationBar` in `apps/web/lib/components/navigation-bar/`; `@navigation/default.tsx` fetches session data and passes props
+
+- [ ] 1.5 Build `Sidebar` + `SidebarCollapsed` in `apps/web/lib/components/sidebar/`; `@sidebar/default.tsx` fetches projects + recent runs and renders correct variant
+
+- [ ] 1.6 Build `MobileAppShell` in `apps/web/lib/components/mobile-app-shell/` (`"use client"`)

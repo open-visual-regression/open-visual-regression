@@ -4,32 +4,32 @@ Gate: diff viewer page loads; side and overlay modes render baseline and current
 
 Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-builds.jsx` (DiffScreen)
 
-- [ ] 1.1 Create `apps/web/app/(app)/projects/[slug]/builds/[buildId]/diffs/[diffId]/page.tsx` (RSC):
+## Component tree
+
+```
+apps/web/lib/components/
+  diff-viewer/
+    DiffViewer.tsx            — "use client" root: mode state + showOverlay state
+    DiffToolbar.tsx           — mode switcher (side/overlay/slider) + overlay toggle + approve/reject slots
+    DiffSideBySide.tsx        — two equal panels: baseline (left) + current (right)
+    DiffOverlay.tsx           — single full-width frame with overlay regions
+    DiffFooter.tsx            — "N of M changed" + prev/next + KeyHint chips
+```
+
+## Tasks
+
+- [ ] 1.1 Create `apps/web/app/(authenticated)/projects/[slug]/builds/[buildId]/diffs/[diffId]/page.tsx` (RSC):
   - Fetch diff + snapshot + baseline snapshot + build + project
-  - Pass image paths (presigned via storage route) to client component
+  - Pass image paths (via storage presigned proxy) to `DiffViewer`
 
-- [ ] 1.2 Create `DiffViewer.tsx` (`"use client"`):
-  - Toolbar: mode switcher (side / overlay / slider toggle group) + overlay toggle (Eye/EyeOff icon button) + approve/reject buttons (placeholder, wired in 44-approve-reject)
-  - Mode stored in local state (default "side")
-  - `showOverlay` boolean in state (default true)
+- [ ] 1.2 Build `DiffViewer` in `apps/web/lib/components/diff-viewer/` (`"use client"`):
+  - `DiffToolbar` — mode toggle group (side / overlay / slider) + Eye/EyeOff overlay toggle + approve/reject placeholder buttons
+  - `DiffSideBySide` — two equal panels; diff region rects overlaid; hidden when `showOverlay=false`
+  - `DiffOverlay` — single frame; all region types overlaid simultaneously
+  - `DiffFooter` — "N of M changed" counter + prev/next buttons (disabled; wired in 43) + KeyHint chips J · K · A · R
+  - Mode + showOverlay in local state; default mode "side"
 
-- [ ] 1.3 Side mode (`DiffSideBySide`):
-  - Two equal-width panels side by side; each ~50% of available width
-  - Left panel: "baseline" label + image; diff regions overlaid as colored rects (remove=red, 40% opacity, 2px red outline)
-  - Right panel: "current" label + image; diff regions overlaid (change=amber, add=green)
-  - Regions hidden when `showOverlay=false`
-  - Images sized to fit panel width; pixel-grid bg behind images
-
-- [ ] 1.4 Overlay mode (`DiffOverlay`):
-  - Single full-width frame showing current image
-  - All diff regions (add/remove/change) overlaid simultaneously when `showOverlay=true`
-
-- [ ] 1.5 Footer:
-  - "N of M changed" counter (navigation wired in 43-diff-shortcuts)
-  - Prev/next buttons (ChevronLeft/Right icons) — disabled state for now
-  - KeyHint chips: J · K · A · R (rendered but handlers wired in 43)
-
-- [ ] 1.6 Component tests:
-  - Side mode: both panels render; overlay rects visible when showOverlay=true; hidden when false
+- [ ] 1.3 Component tests:
+  - Side mode: both panels render; overlay rects toggle with showOverlay
   - Overlay mode: single frame; overlay rects toggle
   - Toolbar mode switcher updates active mode

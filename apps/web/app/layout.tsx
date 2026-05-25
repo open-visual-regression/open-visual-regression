@@ -5,10 +5,16 @@ export const metadata: Metadata = {
   title: "Open Visual Regression",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+type RootLayoutProps = Readonly<{
+  children: React.ReactNode;
+}>;
+
+export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en">
-      <body className="dark">{children}</body>
+      <body className="dark">
+        <main>{children}</main>
+      </body>
     </html>
   );
 }
