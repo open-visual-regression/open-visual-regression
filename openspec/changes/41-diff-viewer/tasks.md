@@ -20,16 +20,29 @@ apps/web/lib/components/
 
 - [ ] 1.1 Create `apps/web/app/(authenticated)/projects/[slug]/builds/[buildId]/diffs/[diffId]/page.tsx` (RSC):
   - Fetch diff + snapshot + baseline snapshot + build + project
-  - Pass image paths (via storage presigned proxy) to `DiffViewer`
+  - Pass image paths (presigned via storage route) to `DiffViewer`
 
 - [ ] 1.2 Build `DiffViewer` in `apps/web/lib/components/diff-viewer/` (`"use client"`):
-  - `DiffToolbar` — mode toggle group (side / overlay / slider) + Eye/EyeOff overlay toggle + approve/reject placeholder buttons
-  - `DiffSideBySide` — two equal panels; diff region rects overlaid; hidden when `showOverlay=false`
-  - `DiffOverlay` — single frame; all region types overlaid simultaneously
-  - `DiffFooter` — "N of M changed" counter + prev/next buttons (disabled; wired in 43) + KeyHint chips J · K · A · R
-  - Mode + showOverlay in local state; default mode "side"
+  - `DiffToolbar` — mode toggle group (side / overlay / slider) + Eye/EyeOff overlay toggle + approve/reject placeholder buttons (wired in 44-approve-reject)
+  - Mode stored in local state (default "side"); `showOverlay` boolean (default true)
 
-- [ ] 1.3 Component tests:
-  - Side mode: both panels render; overlay rects toggle with showOverlay
+- [ ] 1.3 Build `DiffSideBySide`:
+  - Two equal-width panels side by side; each ~50% of available width
+  - Left panel: "baseline" label + image; diff regions overlaid as colored rects (remove=red, 40% opacity, 2px red outline)
+  - Right panel: "current" label + image; diff regions overlaid (change=amber, add=green)
+  - Regions hidden when `showOverlay=false`
+  - Images sized to fit panel width; pixel-grid bg behind images
+
+- [ ] 1.4 Build `DiffOverlay`:
+  - Single full-width frame showing current image
+  - All diff regions (add/remove/change) overlaid simultaneously when `showOverlay=true`
+
+- [ ] 1.5 Build `DiffFooter`:
+  - "N of M changed" counter (navigation wired in 43-diff-shortcuts)
+  - Prev/next buttons (ChevronLeft/Right icons) — disabled state for now
+  - KeyHint chips: J · K · A · R (rendered but handlers wired in 43)
+
+- [ ] 1.6 Component tests:
+  - Side mode: both panels render; overlay rects visible when `showOverlay=true`; hidden when false
   - Overlay mode: single frame; overlay rects toggle
   - Toolbar mode switcher updates active mode

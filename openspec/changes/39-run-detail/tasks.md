@@ -22,14 +22,24 @@ apps/web/lib/components/
   - Accept `searchParams: { filter?: "changed" | "pass" }` — default "all"
 
 - [ ] 1.2 Build `RunHeader` in `apps/web/lib/components/run-header/`:
-  - `DiffStrip` + `StatusIcon` + status text + run ID + branch pill + commit sha + author + duration + relative age
-  - `SegmentedProgress` bar: pass / changed / failed / pending segments proportional to snapshot counts
+  - `DiffStrip` (3px, full height of header block)
+  - `StatusIcon` + status text + run ID + branch pill + commit sha + author + duration + relative age
+  - `SegmentedProgress` bar: pass (green) / changed (amber) / failed (red) / pending (blue) segments proportional to snapshot counts
+  - Progress title: "run #[id]" · subtitle: "[N] stories × [M] variants" · summary: "N changed · N failed · N pending"
 
-- [ ] 1.3 Build `SnapshotGrid` + `SnapshotCard` in `apps/web/lib/components/snapshot-grid/`:
-  - `SnapshotGrid` — filter tabs ("all · changed · pass") + `grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))`
-  - `SnapshotCard` — 160px thumbnail area + Δ badge when `diffPercent > 0` + story ID + `StatusIcon`; links to diff page
+- [ ] 1.3 Build `SnapshotGrid` in `apps/web/lib/components/snapshot-grid/`:
+  - Filter tabs: "all (N)" · "changed (N)" · "pass (N)"
+  - `grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))`
+  - Approve-all + reject-all buttons (secondary/destructive) — disabled state placeholder (wired in 44)
 
-- [ ] 1.4 Component tests:
-  - Header renders correct SegmentedProgress segments
-  - Snapshot cards render Δ badge when diffPercent > 0
-  - Filter tabs filter the grid
+- [ ] 1.4 Build `SnapshotCard` in `apps/web/lib/components/snapshot-grid/`:
+  - 160px tall thumbnail area: `var(--ovr-bg-inset)` bg + pixel-grid texture
+  - If diff exists + `diffPercent > 0`: amber filled `Badge` "Δ N.NN%" in top-left corner of thumbnail
+  - Thumbnail image via `<img src="/api/storage/...">` (routed through presigned URL proxy)
+  - Below thumbnail: story ID (monospace, truncated) + `StatusIcon` + status text
+  - Card links to `/projects/[slug]/builds/[buildId]/diffs/[diffId]` (if diff exists) else no link
+
+- [ ] 1.5 Component tests:
+  - Header renders with correct SegmentedProgress segments
+  - Snapshot cards render with Δ badge when diffPercent > 0
+  - Filter tabs filter snapshot grid
