@@ -5,18 +5,16 @@ type IconProps = React.SVGProps<SVGSVGElement> & {
   size?: number;
 };
 
-function Icon({ icon: LucideIconComponent, size = 16, ...props }: IconProps) {
-  return (
-    <LucideIconComponent
-      width={size}
-      height={size}
-      strokeWidth={1.5}
-      strokeLinecap="square"
-      strokeLinejoin="miter"
-      {...props}
-    />
-  );
-}
+const Icon = ({ icon: LucideIconComponent, size = 16, ...props }: IconProps) => (
+  <LucideIconComponent
+    width={size}
+    height={size}
+    strokeWidth={1.5}
+    strokeLinecap="square"
+    strokeLinejoin="miter"
+    {...props}
+  />
+);
 
 export { Icon };
 export type { IconProps };

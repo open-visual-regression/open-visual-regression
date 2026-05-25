@@ -6,9 +6,9 @@ import { dirname } from "path";
 
 import { fileURLToPath } from "url";
 
-function getAbsolutePath(value: string) {
+const getAbsolutePath = (value: string) => {
   return dirname(fileURLToPath(import.meta.resolve(`${value}/package.json`)));
-}
+};
 
 const config: StorybookConfig = {
   stories: ["../**/__stories__/**/*.mdx", "../**/__stories__/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
