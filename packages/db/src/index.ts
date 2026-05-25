@@ -1,1 +1,1 @@
-export { db, sql } from "./client.js";
+export { db, sql } from "./client";
