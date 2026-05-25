@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 import { Logo } from "../Logo";
+import type { LogoSurface } from "../Logo";
 
 const meta: Meta<typeof Logo> = {
   title: "Web/Logo",
@@ -11,115 +12,52 @@ const meta: Meta<typeof Logo> = {
 export default meta;
 type Story = StoryObj<typeof Logo>;
 
-const Surface = ({
-  label,
-  bg,
-  children,
-}: {
-  label: string;
-  bg: string;
-  children: React.ReactNode;
-}) => (
-  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-    <div
-      style={{
-        width: 160,
-        height: 80,
-        background: bg,
-        border: "1px solid var(--ovr-border-subtle)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      {children}
-    </div>
-    <span
-      style={{
-        fontSize: 10,
-        color: "var(--ovr-fg-tertiary)",
-        letterSpacing: "0.08em",
-        textTransform: "uppercase",
-      }}
-    >
-      {label}
-    </span>
-  </div>
-);
+const SURFACES: { surface: LogoSurface; bg: string; label: string }[] = [
+  { surface: "default", bg: "bg-background", label: "on base" },
+  { surface: "default", bg: "bg-ovr-elevated", label: "on elevated" },
+  { surface: "light", bg: "bg-white", label: "on light" },
+  { surface: "accent", bg: "bg-ovr-accent", label: "on accent" },
+];
 
 export const Sizes: Story = {
   render: () => (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 32,
-        padding: 24,
-        background: "var(--ovr-bg-base)",
-      }}
-    >
-      <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start" }}>
-        <Logo size="sm" />
-        <span
-          style={{
-            fontSize: 10,
-            color: "var(--ovr-fg-tertiary)",
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-          }}
-        >
-          sm — topbar
-        </span>
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start" }}>
-        <Logo size="lg" />
-        <span
-          style={{
-            fontSize: 10,
-            color: "var(--ovr-fg-tertiary)",
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-          }}
-        >
-          lg — display
-        </span>
-      </div>
+    <div className="flex items-end gap-8 p-6 bg-background">
+      {(["sm", "lg", "xl"] as const).map((size) => (
+        <div key={size} className="flex flex-col gap-2">
+          <Logo size={size} />
+          <span className="text-label tracking-label uppercase text-ovr-fg-tertiary">{size}</span>
+        </div>
+      ))}
     </div>
   ),
 };
 
 export const MarkOnly: Story = {
   render: () => (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 24,
-        padding: 24,
-        background: "var(--ovr-bg-base)",
-      }}
-    >
-      <Logo size="sm" wordmark={false} />
-      <Logo size="lg" wordmark={false} />
+    <div className="flex items-end gap-8 p-6 bg-background">
+      {(["sm", "lg", "xl"] as const).map((size) => (
+        <div key={size} className="flex flex-col gap-2">
+          <Logo size={size} wordmark={false} />
+          <span className="text-label tracking-label uppercase text-ovr-fg-tertiary">{size}</span>
+        </div>
+      ))}
     </div>
   ),
 };
 
 export const Surfaces: Story = {
   render: () => (
-    <div style={{ display: "flex", gap: 0, padding: 24, background: "var(--ovr-bg-base)" }}>
-      <Surface label="on base" bg="var(--ovr-bg-base)">
-        <Logo size="lg" />
-      </Surface>
-      <Surface label="on elevated" bg="var(--ovr-bg-elevated)">
-        <Logo size="lg" />
-      </Surface>
-      <Surface label="on light" bg="#fafafa">
-        <Logo size="lg" />
-      </Surface>
-      <Surface label="on accent" bg="var(--ovr-accent-primary)">
-        <Logo size="lg" onAccent />
-      </Surface>
+    <div className="flex p-6 bg-background">
+      {SURFACES.map(({ surface, bg, label }) => (
+        <div key={label} className="flex flex-col items-center gap-3">
+          <div
+            className={`flex w-40 h-20 items-center justify-center border border-ovr-border-subtle ${bg}`}
+          >
+            <Logo size="lg" surface={surface} />
+          </div>
+          <span className="text-label tracking-label uppercase text-ovr-fg-tertiary">{label}</span>
+        </div>
+      ))}
     </div>
   ),
 };
