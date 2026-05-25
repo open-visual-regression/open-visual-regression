@@ -1,5 +1,7 @@
 import type { StorybookConfig } from "@storybook/nextjs-vite";
 
+import tailwindcss from "@tailwindcss/vite";
+
 import { dirname } from "path";
 
 import { fileURLToPath } from "url";
@@ -9,10 +11,7 @@ function getAbsolutePath(value: string) {
 }
 
 const config: StorybookConfig = {
-  stories: [
-    "../**/__stories__/**/*.mdx",
-    "../**/__stories__/**/*.stories.@(js|jsx|mjs|ts|tsx)",
-  ],
+  stories: ["../**/__stories__/**/*.mdx", "../**/__stories__/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
   addons: [
     getAbsolutePath("@chromatic-com/storybook"),
     getAbsolutePath("@storybook/addon-vitest"),
@@ -21,6 +20,11 @@ const config: StorybookConfig = {
     getAbsolutePath("@storybook/addon-mcp"),
   ],
   framework: getAbsolutePath("@storybook/nextjs-vite"),
+  viteFinal: async (config) => {
+    config.plugins = config.plugins ?? [];
+    config.plugins.push(tailwindcss());
+    return config;
+  },
 };
 
 export default config;
