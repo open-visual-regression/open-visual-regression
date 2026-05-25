@@ -4,7 +4,7 @@ Gate: Storybook story shows proportional colored segments with title/subtitle/su
 
 Read: `openspec/designs/screens/open-visual-regression/project/kit/components-feedback.jsx`
 
-- [ ] 1.1 Create `packages/ui/src/components/ui/segmented-progress.tsx`:
+- [x] 1.1 Create `packages/ui/src/components/ui/segmented-progress.tsx`:
   ```tsx
   interface Segment {
     label: string
@@ -24,8 +24,8 @@ Read: `openspec/designs/screens/open-visual-regression/project/kit/components-fe
   - No gap between segments; no border-radius on individual segments; overall bar `border-radius: 2px` on first/last via CSS
   - Title rendered above bar in `label` typography variant; subtitle next to title in `caption` variant
   - Summary rendered below bar in `caption` variant
-- [ ] 1.2 Create `__stories__/segmented-progress.stories.tsx`:
+- [x] 1.2 Create `__stories__/segmented-progress.stories.tsx`:
   - Story: pass=14 (green `var(--ovr-diff-add)`) / changed=3 (amber `var(--ovr-accent-primary)`) / failed=1 (red `var(--ovr-diff-remove)`) / pending=4 (blue `var(--ovr-status-pending)`)
   - Title: "run #1284" · Subtitle: "22 stories" · Summary: "3 changed · 1 failed · 4 pending"
   - Show at default height and height=4
-- [ ] 1.3 Export `SegmentedProgress`, `Segment` from `packages/ui/src/index.ts`; run `pnpm --filter @ovr/ui check-types` and `build-storybook` to confirm exits 0
+- [x] 1.3 Export `SegmentedProgress`, `Segment` from `packages/ui/src/index.ts`; run `pnpm --filter @ovr/ui check-types` and `build-storybook` to confirm exits 0
