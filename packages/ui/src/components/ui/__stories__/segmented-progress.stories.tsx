@@ -23,6 +23,7 @@ export const Default: Story = {
     <div className="space-y-8 p-4 w-full">
       {(["sm", "md", "lg"] satisfies SegmentedProgressSize[]).map((size) => (
         <SegmentedProgress
+          key={size}
           segments={SEGMENTS}
           title="run #1284"
           subtitle="22 stories"

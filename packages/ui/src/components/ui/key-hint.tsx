@@ -1,9 +1,9 @@
 import { cn } from "../../lib/utils";
 
-interface KeyHintProps {
+type KeyHintProps = {
   children: React.ReactNode;
   className?: string;
-}
+};
 
 const KeyHint = ({ children, className }: KeyHintProps) => (
   <span

@@ -68,6 +68,7 @@ const SegmentedProgress = ({
           <div
             key={i}
             className={cn(getColor(s.color))}
+            // oxlint-disable-next-line react/forbid-dom-props -- dynamic flex-basis, no static Tailwind class available
             style={{ flexBasis: `${(s.count / total) * 100}%` }}
           />
         ))}

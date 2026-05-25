@@ -8,11 +8,8 @@ const AspectRatio = ({
   return (
     <div
       data-slot="aspect-ratio"
-      style={
-        {
-          "--ratio": ratio,
-        } as React.CSSProperties
-      }
+      // oxlint-disable-next-line react/forbid-dom-props -- CSS custom property, no Tailwind alternative
+      style={{ "--ratio": ratio } as React.CSSProperties}
       className={cn("relative aspect-(--ratio)", className)}
       {...props}
     />

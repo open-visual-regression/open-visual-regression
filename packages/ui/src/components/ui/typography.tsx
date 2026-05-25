@@ -23,10 +23,10 @@ const typographyVariants = cva("font-mono", {
   },
 });
 
-interface TypographyProps
-  extends React.HTMLAttributes<HTMLElement>, VariantProps<typeof typographyVariants> {
+type TypographyProps = {
   as?: React.ElementType;
-}
+} & React.HTMLAttributes<HTMLElement> &
+  VariantProps<typeof typographyVariants>;
 
 const Typography = ({ as: Component = "span", variant, className, ...props }: TypographyProps) => {
   return (
