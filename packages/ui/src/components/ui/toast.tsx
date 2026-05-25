@@ -32,7 +32,7 @@ export interface ToastProps
   onDismiss?: () => void;
 }
 
-function Toast({
+const Toast = ({
   className,
   variant,
   icon,
@@ -42,7 +42,7 @@ function Toast({
   onAction,
   onDismiss,
   ...props
-}: ToastProps) {
+}: ToastProps) => {
   return (
     <div
       data-slot="toast"
@@ -79,9 +79,9 @@ function Toast({
       </div>
     </div>
   );
-}
+};
 
-function ToastContainer({ className, ...props }: React.ComponentProps<"div">) {
+const ToastContainer = ({ className, ...props }: React.ComponentProps<"div">) => {
   return (
     <div
       data-slot="toast-container"
@@ -89,6 +89,6 @@ function ToastContainer({ className, ...props }: React.ComponentProps<"div">) {
       {...props}
     />
   );
-}
+};
 
 export { Toast, ToastContainer, toastVariants };

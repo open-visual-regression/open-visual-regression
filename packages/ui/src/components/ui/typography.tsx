@@ -28,7 +28,7 @@ interface TypographyProps
   as?: React.ElementType;
 }
 
-function Typography({ as: Component = "span", variant, className, ...props }: TypographyProps) {
+const Typography = ({ as: Component = "span", variant, className, ...props }: TypographyProps) => {
   return (
     <Component
       data-slot="typography"
@@ -36,6 +36,6 @@ function Typography({ as: Component = "span", variant, className, ...props }: Ty
       {...props}
     />
   );
-}
+};
 
 export { Typography, typographyVariants };

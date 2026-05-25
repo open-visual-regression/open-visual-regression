@@ -41,7 +41,7 @@ type StatusIconProps = VariantProps<typeof statusIconVariants> & {
   className?: string;
 };
 
-function StatusIcon({ variant, size = 16, className }: StatusIconProps) {
+const StatusIcon = ({ variant, size = 16, className }: StatusIconProps) => {
   return (
     <Icon
       icon={ICON_MAP[variant]}
@@ -49,7 +49,7 @@ function StatusIcon({ variant, size = 16, className }: StatusIconProps) {
       className={cn(statusIconVariants({ variant }), className)}
     />
   );
-}
+};
 
 export { StatusIcon, statusIconVariants };
 export type { StatusVariant, StatusIconProps };

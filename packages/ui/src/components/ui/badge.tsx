@@ -47,9 +47,9 @@ type BadgeProps = VariantProps<typeof badgeVariants> & {
   className?: string;
 };
 
-function Badge({ variant, filled, children, className }: BadgeProps) {
+const Badge = ({ variant, filled, children, className }: BadgeProps) => {
   return <span className={cn(badgeVariants({ variant, filled }), className)}>{children}</span>;
-}
+};
 
 export { Badge, badgeVariants };
 export type { BadgeVariant, BadgeProps };
