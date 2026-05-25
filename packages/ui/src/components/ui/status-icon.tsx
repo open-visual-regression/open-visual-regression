@@ -1,3 +1,4 @@
+import { cva, type VariantProps } from "class-variance-authority";
 import type { LucideIcon } from "lucide-react";
 import {
   AlertCircleIcon,
@@ -7,44 +8,48 @@ import {
   TriangleAlertIcon,
 } from "lucide-react";
 
+import { cn } from "../../lib/utils";
 import { Icon } from "./icon";
 
 type StatusKind = "changed" | "passed" | "pending" | "stale" | "approved" | "rejected";
 
-const STATUS_MAP: Record<
-  StatusKind,
-  {
-    icon: LucideIcon;
-    color: string;
-    spin?: boolean;
-  }
-> = {
-  changed: { icon: AlertCircleIcon, color: "var(--ovr-accent-primary)" },
-  passed: { icon: CircleCheckIcon, color: "var(--ovr-diff-add)" },
-  pending: { icon: LoaderCircleIcon, color: "var(--ovr-status-pending)", spin: true },
-  stale: { icon: TriangleAlertIcon, color: "var(--ovr-fg-muted)" },
-  approved: { icon: CircleCheckIcon, color: "var(--ovr-diff-add)" },
-  rejected: { icon: CircleXIcon, color: "var(--ovr-diff-remove)" },
+const ICON_MAP: Record<StatusKind, LucideIcon> = {
+  changed: AlertCircleIcon,
+  passed: CircleCheckIcon,
+  pending: LoaderCircleIcon,
+  stale: TriangleAlertIcon,
+  approved: CircleCheckIcon,
+  rejected: CircleXIcon,
 };
 
-type StatusIconProps = {
+const statusIconVariants = cva("", {
+  variants: {
+    kind: {
+      changed: "text-ovr-accent",
+      passed: "text-ovr-diff-add",
+      pending: "text-ovr-status-pending animate-spin",
+      stale: "text-ovr-fg-muted",
+      approved: "text-ovr-diff-add",
+      rejected: "text-ovr-remove",
+    },
+  },
+});
+
+type StatusIconProps = VariantProps<typeof statusIconVariants> & {
   kind: StatusKind;
   size?: number;
   className?: string;
 };
 
 function StatusIcon({ kind, size = 16, className }: StatusIconProps) {
-  const { icon, color, spin } = STATUS_MAP[kind];
-
   return (
     <Icon
-      icon={icon}
+      icon={ICON_MAP[kind]}
       size={size}
-      style={{ color }}
-      className={spin ? `animate-spin${className ? ` ${className}` : ""}` : className}
+      className={cn(statusIconVariants({ kind }), className)}
     />
   );
 }
 
-export { StatusIcon };
+export { StatusIcon, statusIconVariants };
 export type { StatusKind, StatusIconProps };
