@@ -12,20 +12,35 @@ const meta: Meta<typeof DiffStrip> = {
 export default meta;
 type Story = StoryObj<typeof DiffStrip>;
 
-const STATUSES: DiffStripStatus[] = ["changed", "passed", "failed", "pending", "stale"];
+const ROWS: { status: DiffStripStatus; id: string; label: string; meta: string }[] = [
+  { status: "changed", id: "#1284", label: "checkout-flow", meta: "3 changed" },
+  { status: "passed", id: "#1283", label: "checkout-flow", meta: "pass" },
+  { status: "failed", id: "#1282", label: "marketing", meta: "1 removed" },
+  { status: "pending", id: "#1281", label: "main", meta: "running…" },
+  { status: "stale", id: "#1280", label: "feature/nav", meta: "stale" },
+];
 
-export const AllStatuses: Story = {
+const META_COLOR: Record<DiffStripStatus, string> = {
+  changed: "var(--ovr-accent-primary)",
+  passed: "var(--ovr-diff-add)",
+  failed: "var(--ovr-diff-remove)",
+  pending: "var(--ovr-status-pending)",
+  stale: "var(--ovr-fg-muted)",
+};
+
+export const RunRows: Story = {
   render: () => (
-    <div className="flex gap-4 p-4">
-      {STATUSES.map((status) => (
+    <div style={{ width: 400, fontFamily: "var(--font-mono)", fontSize: 12 }}>
+      {ROWS.map(({ status, id, label, meta }) => (
         <div
-          key={status}
+          key={id}
           style={{
             display: "flex",
             alignItems: "stretch",
-            height: 80,
+            height: 36,
             background: "var(--ovr-bg-elevated)",
-            border: "1px solid var(--ovr-border-subtle)",
+            borderBottom: "1px solid var(--ovr-border-subtle)",
+            overflow: "hidden",
           }}
         >
           <DiffStrip status={status} />
@@ -34,11 +49,13 @@ export const AllStatuses: Story = {
               display: "flex",
               alignItems: "center",
               padding: "0 12px",
-              fontSize: 12,
-              color: "var(--ovr-fg-secondary)",
+              gap: 14,
+              flex: 1,
             }}
           >
-            {status}
+            <span style={{ color: "var(--ovr-fg-tertiary)" }}>{id}</span>
+            <span style={{ color: "var(--ovr-fg-primary)", flex: 1 }}>{label}</span>
+            <span style={{ color: META_COLOR[status], marginLeft: "auto" }}>{meta}</span>
           </div>
         </div>
       ))}
