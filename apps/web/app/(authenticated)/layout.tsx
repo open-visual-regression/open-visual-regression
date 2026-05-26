@@ -1,10 +1,20 @@
+import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
+
 type AppLayoutProps = Readonly<{
   navigation: React.ReactNode;
   sidebar: React.ReactNode;
   children: React.ReactNode;
 }>;
 
-export default function AppLayout({ navigation, sidebar, children }: AppLayoutProps) {
+export default async function AppLayout({ navigation, sidebar, children }: AppLayoutProps) {
+  const session = await auth.api.getSession({ headers: await headers() });
+
+  if (!session) {
+    redirect("/login");
+  }
+
   return (
     <div className="flex h-screen flex-col">
       {navigation}
