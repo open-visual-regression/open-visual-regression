@@ -33,7 +33,6 @@
   "devDependencies": {
     "@better-auth/core": "^1.6.11",
     "@chromatic-com/storybook": "^5.2.1",
-    "@faker-js/faker": "^10.4.0",
     "@ovr/mocks": "workspace:*",
     "@ovr/typescript-config": "workspace:*",
     "@storybook/addon-a11y": "^10.4.1",
