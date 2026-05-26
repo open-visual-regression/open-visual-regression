@@ -1,5 +1,7 @@
+import { Separator } from "@ovr/ui/components/separator";
+
 const NavigationBarSeparator = () => (
-  <div className="w-px h-5 bg-ovr-border shrink-0" aria-hidden="true" />
+  <Separator orientation="vertical" className="h-5 bg-ovr-border" />
 );
 
 export { NavigationBarSeparator };

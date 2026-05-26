@@ -16,10 +16,8 @@ type MobileDrawerProps = {
   onClose: () => void;
 };
 
-const MobileDrawer = ({ open, projects, activeProjectId, version, onClose }: MobileDrawerProps) => {
-  if (!open) return null;
-
-  return (
+const MobileDrawer = ({ open, projects, activeProjectId, version, onClose }: MobileDrawerProps) =>
+  open ? (
     <div className="absolute inset-0 z-50">
       <div className="absolute inset-0 bg-black/55" onClick={onClose} aria-hidden="true" />
       <div className="absolute top-0 bottom-0 left-0 w-70 bg-background border-r border-ovr-border flex flex-col overflow-hidden">
@@ -47,8 +45,7 @@ const MobileDrawer = ({ open, projects, activeProjectId, version, onClose }: Mob
         </div>
       </div>
     </div>
-  );
-};
+  ) : null;
 
 export { MobileDrawer };
 export type { MobileDrawerProps, MobileDrawerProject };

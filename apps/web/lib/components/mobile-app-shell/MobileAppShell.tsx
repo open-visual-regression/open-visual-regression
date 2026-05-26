@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { MobileNavBar } from "./MobileNavBar";
 import { MobileDrawer, type MobileDrawerProject } from "./MobileDrawer";
 import { MobileTabBar, type MobileTabBarTab } from "./MobileTabBar";
@@ -11,7 +12,6 @@ type MobileAppShellProps = {
   trailing?: React.ReactNode;
   projects?: MobileDrawerProject[];
   activeProjectId?: string;
-  activeTab?: MobileTabBarTab;
   version?: string;
   children: React.ReactNode;
 };
@@ -22,11 +22,17 @@ const MobileAppShell = ({
   trailing,
   projects = [],
   activeProjectId,
-  activeTab,
   version,
   children,
 }: MobileAppShellProps) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const pathname = usePathname();
+
+  const activeTab: MobileTabBarTab = pathname.startsWith("/settings")
+    ? "settings"
+    : pathname.startsWith("/runs")
+      ? "runs"
+      : "projects";
 
   return (
     <div className="relative w-full h-full bg-background flex flex-col overflow-hidden">

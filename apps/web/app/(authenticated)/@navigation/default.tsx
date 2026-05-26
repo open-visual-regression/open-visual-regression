@@ -8,8 +8,14 @@ import { NavigationBarSearch } from "@/lib/components/navigation-bar/NavigationB
 import { NavigationBarActions } from "@/lib/components/navigation-bar/NavigationBarActions";
 
 export default async function NavigationPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
-  const userName = session?.user?.name ?? session?.user?.email ?? "user";
+  let userName = "user";
+
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    userName = session?.user?.name ?? session?.user?.email ?? "user";
+  } catch {
+    // Render nav in degraded state rather than crashing the slot
+  }
 
   return (
     <NavigationBar>

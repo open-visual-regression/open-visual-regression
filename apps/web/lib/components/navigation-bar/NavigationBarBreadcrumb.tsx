@@ -5,10 +5,11 @@ import { Icon } from "@ovr/ui/components/icon";
 type NavigationBarBreadcrumbProps = {
   project?: { id: string; name: string };
   runId?: string;
-  isDiff?: boolean;
+  /** Adds a trailing segment after the run link. Only meaningful when runId is also set. */
+  view?: "diff";
 };
 
-const NavigationBarBreadcrumb = ({ project, runId, isDiff }: NavigationBarBreadcrumbProps) => (
+const NavigationBarBreadcrumb = ({ project, runId, view }: NavigationBarBreadcrumbProps) => (
   <div className="flex items-center gap-2 text-body-sm whitespace-nowrap min-w-0 overflow-hidden">
     {project ? (
       <>
@@ -29,7 +30,7 @@ const NavigationBarBreadcrumb = ({ project, runId, isDiff }: NavigationBarBreadc
             </Link>
           </>
         )}
-        {isDiff && (
+        {runId && view === "diff" && (
           <>
             <Icon icon={ChevronRightIcon} size={12} className="text-ovr-fg-tertiary shrink-0" />
             <span className="text-ovr-fg-tertiary">diff</span>

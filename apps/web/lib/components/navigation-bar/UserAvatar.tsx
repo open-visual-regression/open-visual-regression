@@ -14,17 +14,24 @@ type UserAvatarProps = {
 };
 
 const UserAvatar = ({ name }: UserAvatarProps) => {
-  const monogram = name
-    .split(/[\s-_]+/)
-    .map((w) => w[0])
-    .join("")
-    .slice(0, 2)
-    .toLowerCase();
+  const monogram =
+    name
+      .split(/[\s-_]+/)
+      .map((w) => w[0])
+      .filter(Boolean)
+      .join("")
+      .slice(0, 2)
+      .toLowerCase() || "?";
 
   const handleSignOut = async () => {
     await authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
+          window.location.href = "/login";
+        },
+        onError: () => {
+          // Sign-out failed; redirect anyway — the server-side session
+          // cookie may already be cleared, and the auth guard will handle it.
           window.location.href = "/login";
         },
       },
