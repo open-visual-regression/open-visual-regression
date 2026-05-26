@@ -5,7 +5,8 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "env": ["BETTER_AUTH_SECRET"]
     },
     "dev": {
       "cache": false,
@@ -17,8 +18,11 @@
     "format": {
       "cache": false
     },
-    "check-types": {
+    "tsc": {
       "dependsOn": ["^build"]
+    },
+    "//#tsc": {
+      "dependsOn": []
     },
     "test": {
       "dependsOn": ["^build"],
