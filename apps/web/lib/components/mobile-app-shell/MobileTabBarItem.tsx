@@ -18,7 +18,7 @@ const MobileTabBarItem = ({ icon, label, active, onClick }: MobileTabBarItemProp
     )}
   >
     <Icon icon={icon} size={16} />
-    <span className="text-[10px] tracking-[0.04em]">{label}</span>
+    <span className="text-badge tracking-wider">{label}</span>
   </button>
 );
 

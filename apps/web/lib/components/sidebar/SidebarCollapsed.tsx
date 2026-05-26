@@ -19,7 +19,7 @@ type SidebarCollapsedProps = {
 const SidebarCollapsed = ({ projects, activeProjectId, onExpand }: SidebarCollapsedProps) => (
   <aside className="flex h-full w-12 shrink-0 flex-col overflow-hidden border-r border-ovr-border">
     <div className="flex items-center justify-center h-6 pt-2">
-      <span className="text-[9px] font-semibold tracking-label uppercase text-ovr-fg-tertiary">
+      <span className="text-badge font-semibold tracking-label uppercase text-ovr-fg-tertiary">
         prj
       </span>
     </div>

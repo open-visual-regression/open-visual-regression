@@ -18,7 +18,7 @@ const SidebarMonogram = ({ name, changedCount = 0, active }: SidebarMonogramProp
     <div className="relative">
       <span
         className={cn(
-          "text-[11px] font-semibold font-mono",
+          "text-label font-semibold font-mono",
           active ? "text-ovr-fg" : "text-ovr-fg-secondary",
         )}
       >

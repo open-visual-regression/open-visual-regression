@@ -15,11 +15,11 @@ const SidebarFooter = ({ version = "0.0.0", onCollapse }: SidebarFooterProps) =>
     >
       <Icon icon={ChevronLeftIcon} size={12} />
     </button>
-    <div className="flex items-center gap-1.5 text-[10px] text-ovr-fg-muted">
+    <div className="flex items-center gap-1.5 text-badge text-ovr-fg-muted">
       <span>ovr</span>
       <span>v{version}</span>
     </div>
-    <span className="ml-auto text-[10px] text-ovr-fg-muted">self-hosted</span>
+    <span className="ml-auto text-badge text-ovr-fg-muted">self-hosted</span>
   </div>
 );
 

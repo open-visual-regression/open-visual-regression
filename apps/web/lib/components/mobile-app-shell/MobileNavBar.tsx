@@ -10,7 +10,7 @@ type MobileNavBarProps = {
 };
 
 const MobileNavBar = ({ title, subtitle, leading, trailing, onMenu }: MobileNavBarProps) => (
-  <div className="h-[--topbar-h] shrink-0 flex items-center gap-2 px-2 border-b border-ovr-border bg-background">
+  <div className="shrink-0 flex items-center gap-2 px-2 py-2.5 border-b border-ovr-border bg-background">
     {leading ?? (
       <button
         onClick={onMenu}
@@ -21,8 +21,8 @@ const MobileNavBar = ({ title, subtitle, leading, trailing, onMenu }: MobileNavB
       </button>
     )}
     <div className="flex-1 min-w-0 flex flex-col justify-center overflow-hidden">
-      <div className="text-[14px] font-medium tracking-[-0.01em] text-ovr-fg truncate">{title}</div>
-      {subtitle && <div className="text-[10px] text-ovr-fg-tertiary truncate">{subtitle}</div>}
+      <div className="text-sm font-medium tracking-h1 text-ovr-fg truncate">{title}</div>
+      {subtitle && <div className="text-badge text-ovr-fg-tertiary truncate">{subtitle}</div>}
     </div>
     {trailing}
   </div>

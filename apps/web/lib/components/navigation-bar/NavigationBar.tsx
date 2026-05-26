@@ -8,7 +8,7 @@ type NavigationBarProps = {
 const NavigationBar = ({ children, className }: NavigationBarProps) => (
   <nav
     className={cn(
-      "h-[--topbar-h] flex shrink-0 items-center gap-4 px-3 border-b border-ovr-border bg-background",
+      "flex shrink-0 items-center gap-4 px-3 py-2.5 border-b border-ovr-border bg-background",
       className,
     )}
   >

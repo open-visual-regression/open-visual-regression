@@ -23,14 +23,14 @@ const MobileDrawer = ({ open, projects, activeProjectId, version, onClose }: Mob
     <div className="absolute inset-0 z-50">
       <div className="absolute inset-0 bg-black/55" onClick={onClose} aria-hidden="true" />
       <div className="absolute top-0 bottom-0 left-0 w-70 bg-background border-r border-ovr-border flex flex-col overflow-hidden">
-        <div className="h-[--topbar-h] shrink-0 px-3 border-b border-ovr-border flex items-center gap-2 justify-between">
+        <div className="shrink-0 px-3 py-2.5 border-b border-ovr-border flex items-center gap-2 justify-between">
           <Logo size="sm" />
-          <span className="text-[10px] text-ovr-fg-tertiary">v{version ?? "0.0.0"}</span>
+          <span className="text-badge text-ovr-fg-tertiary">v{version ?? "0.0.0"}</span>
         </div>
 
         <div className="flex-1 overflow-auto pb-4">
           <div className="px-3 pt-3.5 pb-1.5">
-            <span className="text-[10px] font-semibold tracking-label uppercase text-ovr-fg-tertiary">
+            <span className="text-badge font-semibold tracking-label uppercase text-ovr-fg-tertiary">
               projects
             </span>
           </div>

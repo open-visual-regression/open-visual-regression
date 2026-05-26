@@ -36,7 +36,7 @@ const UserAvatar = ({ name }: UserAvatarProps) => {
       <DropdownMenuTrigger
         render={
           <button
-            className="size-6 rounded-sm bg-ovr-elevated border border-ovr-border flex items-center justify-center text-[10px] font-semibold text-ovr-fg-secondary hover:bg-ovr-hover transition-colors"
+            className="size-6 rounded-sm bg-ovr-elevated border border-ovr-border flex items-center justify-center text-badge font-semibold text-ovr-fg-secondary hover:bg-ovr-hover transition-colors"
             aria-label={`User menu for ${name}`}
           />
         }
