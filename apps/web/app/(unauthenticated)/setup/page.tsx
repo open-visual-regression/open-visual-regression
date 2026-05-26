@@ -4,6 +4,8 @@ import { LogoFull } from "@/lib/components/logo/Logo";
 import { Typography } from "@ovr/ui/components/typography";
 import { SetupCard } from "./_components/setup-card/SetupCard";
 
+export const dynamic = "force-dynamic";
+
 export default async function SetupPage() {
   const { count } = await rpc.setup.getUserCount();
 
