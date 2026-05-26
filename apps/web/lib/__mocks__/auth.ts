@@ -4,6 +4,5 @@ export const auth = {
   api: {
     signUpEmail: vi.fn(),
     createOrganization: vi.fn(),
-    getSession: vi.fn(),
   },
 };
