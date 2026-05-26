@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { getSessionCookie } from "better-auth/cookies";
 
 type AppLayoutProps = Readonly<{
   navigation: React.ReactNode;
@@ -9,9 +9,9 @@ type AppLayoutProps = Readonly<{
 }>;
 
 export default async function AppLayout({ navigation, sidebar, children }: AppLayoutProps) {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const sessionCookie = getSessionCookie(await headers());
 
-  if (!session) {
+  if (!sessionCookie) {
     redirect("/login");
   }
 

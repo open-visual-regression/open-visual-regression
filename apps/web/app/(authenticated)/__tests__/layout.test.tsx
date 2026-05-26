@@ -1,15 +1,14 @@
 import { vi, describe, it, expect } from "vitest";
-import { mocks } from "@ovr/mocks";
-import { auth } from "@/lib/auth";
+import { getSessionCookie } from "better-auth/cookies";
 import { redirect } from "next/navigation";
 import { render } from "@/test-utils";
 import AppLayout from "../layout";
 
-vi.mock("@/lib/auth");
+vi.mock("better-auth/cookies");
 vi.mock("next/navigation");
 vi.mock("next/headers");
 
-const mockGetSession = vi.mocked(auth.api.getSession);
+const mockGetSessionCookie = vi.mocked(getSessionCookie);
 
 const props = {
   navigation: <nav />,
@@ -18,17 +17,14 @@ const props = {
 };
 
 describe("AppLayout", () => {
-  it("should redirect to /login when there is no session", async () => {
-    mockGetSession.mockResolvedValue(null);
+  it("should redirect to /login when there is no session cookie", async () => {
+    mockGetSessionCookie.mockReturnValue(null);
     await AppLayout(props);
     expect(vi.mocked(redirect)).toHaveBeenCalledWith("/login");
   });
 
-  it("should render children when session is valid", async () => {
-    mockGetSession.mockResolvedValue({
-      session: mocks.session.generateSession(),
-      user: mocks.user.generateUser(),
-    });
+  it("should render children when session cookie is present", async () => {
+    mockGetSessionCookie.mockReturnValue("session-token");
     const jsx = await AppLayout(props);
     const { getByText } = render(jsx);
     expect(getByText("content")).toBeVisible();
