@@ -16,7 +16,9 @@ export default async function SetupPage() {
       <div className="w-full max-w-115 flex flex-col items-center gap-6">
         <LogoFull />
         <SetupCard />
-        <Typography variant="caption">self-hosted · v0.1.0</Typography>
+        <Typography variant="caption">
+          self-hosted · v{process.env.npm_package_version ?? "0.0.0"}
+        </Typography>
       </div>
     </div>
   );

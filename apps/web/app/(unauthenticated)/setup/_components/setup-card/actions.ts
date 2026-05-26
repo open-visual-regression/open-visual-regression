@@ -7,7 +7,9 @@ import { setupSchema, type SetupFormValues } from "./schema";
 
 type ActionError = { error: string };
 
-export const createAdminAccount = async (values: SetupFormValues): Promise<ActionError> => {
+export const createAdminAccount = async (
+  values: SetupFormValues,
+): Promise<ActionError | undefined> => {
   const parsed = setupSchema.safeParse(values);
 
   if (!parsed.success) {
@@ -26,6 +28,7 @@ export const createAdminAccount = async (values: SetupFormValues): Promise<Actio
   cookieStore.set("ovr_setup_complete", "1", {
     httpOnly: true,
     sameSite: "strict",
+    secure: process.env.NODE_ENV === "production",
     path: "/",
   });
 

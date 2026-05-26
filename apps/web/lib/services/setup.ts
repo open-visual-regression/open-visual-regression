@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import type { Result } from "@/lib/types";
 
-type SetupInput = {
+export type SetupInput = {
   orgName: string;
   name: string;
   email: string;
@@ -14,18 +14,19 @@ export const createAdminAndOrg = async (input: SetupInput): Promise<Result<null>
       body: { name: input.name, email: input.email, password: input.password },
     });
 
-    if (!signUpResponse) {
+    if (!signUpResponse?.token) {
       return { status: "error", error: "failed to create admin account" };
     }
 
     await auth.api.createOrganization({
       body: {
         name: input.orgName,
-        slug: input.orgName.toLowerCase().replace(/\s+/g, "-"),
+        slug: input.orgName
+          .toLowerCase()
+          .replace(/\s+/g, "-")
+          .replace(/[^a-z0-9-]/g, ""),
       },
-      headers: new Headers({
-        cookie: `better-auth.session_token=${signUpResponse.token}`,
-      }),
+      headers: { cookie: `better-auth.session_token=${signUpResponse.token}` },
     });
 
     return { status: "ok", data: null };
