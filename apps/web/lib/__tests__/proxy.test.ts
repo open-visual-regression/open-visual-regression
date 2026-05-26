@@ -1,5 +1,6 @@
 import { vi, describe, it, expect } from "vitest";
 import { NextRequest } from "next/server";
+import { mocks } from "@ovr/mocks";
 import { auth } from "@/lib/auth";
 import { proxy } from "@/proxy";
 
@@ -77,9 +78,9 @@ describe("proxy", () => {
 
   it("should pass through when cookie present and session is valid", async () => {
     mockGetSession.mockResolvedValue({
-      session: { id: "s1", userId: "u1" },
-      user: { id: "u1", email: "user@example.com" },
-    } as never);
+      session: mocks.session.generateSession(),
+      user: mocks.user.generateUser(),
+    });
     const res = await proxy(makeRequest("/projects", SETUP_COOKIE));
     expect(res.headers.get("location")).toBeNull();
   });
