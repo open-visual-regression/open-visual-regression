@@ -2,7 +2,7 @@
 
 Gate: clicking approve on a diff updates its status; build status recalculates; approving on default branch promotes baseline; bulk approve/reject at run level works.
 
-- [ ] 1.1 Create `apps/web/app/(app)/projects/[slug]/builds/[buildId]/diffs/[diffId]/actions.ts`:
+- [ ] 1.1 Create `apps/web/app/(authenticated)/projects/[slug]/builds/[buildId]/diffs/[diffId]/actions.ts`:
   - `approveDiff(diffId)` Server Action:
     - Validate session
     - Call `reviewService.approveDiff(diffId, session.user.id)`
@@ -18,7 +18,7 @@ Gate: clicking approve on a diff updates its status; build status recalculates; 
   - `A` keyboard shortcut → same as approve button
   - `R` keyboard shortcut → same as reject button
 
-- [ ] 1.3 Create `apps/web/app/(app)/projects/[slug]/builds/[buildId]/actions.ts`:
+- [ ] 1.3 Create `apps/web/app/(authenticated)/projects/[slug]/builds/[buildId]/actions.ts`:
   - `approveAll(buildId)` Server Action:
     - Fetch all `needs_review` diffs for build
     - Call `reviewService.approveDiff` for each in sequence

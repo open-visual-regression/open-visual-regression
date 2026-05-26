@@ -7,11 +7,17 @@ Gate: authenticated routes show NavigationBar + correct sidebar at all three bre
 Parallel route slots (`@navigation`, `@sidebar`) allow server-side data fetching per slot while keeping them mounted across navigations within the layout group.
 
 ```
+proxy.ts                        Node.js proxy — route gating (task 11)
 app/
   layout.tsx
   (unauthenticated)/
-    layout.tsx
-    (login, setup, invite pages)
+    layout.tsx                  centered full-height wrapper, no app shell
+    login/
+      page.tsx
+    setup/
+      page.tsx
+    invite/[invitationId]/
+      page.tsx
   (authenticated)/
     layout.tsx                  session guard → redirect /login
     @navigation/

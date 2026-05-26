@@ -4,7 +4,7 @@ Gate: `/projects/[slug]/builds` renders table with DiffStrip per row; filter tab
 
 Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-builds.jsx` (RunsScreen)
 
-- [ ] 1.1 Create `apps/web/app/(app)/projects/[slug]/builds/page.tsx` (RSC):
+- [ ] 1.1 Create `apps/web/app/(authenticated)/projects/[slug]/builds/page.tsx` (RSC):
   - Accept `searchParams: { filter?: "changed" | "pass" | "fail" | "pending" }` — default "all"
   - Fetch builds via `buildsRepo.findByProject(project.id, { status: filterToStatus(filter) })`
   - Render filter tab bar: "all (N)" · "changed (N)" · "pass (N)" · "fail (N)" · "pending (N)"

@@ -4,7 +4,7 @@ Gate: `/settings/users` renders pending invitations table and members table with
 
 Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-admin.jsx` (UsersScreen)
 
-- [ ] 1.1 Create `apps/web/app/(app)/settings/users/page.tsx` (RSC):
+- [ ] 1.1 Create `apps/web/app/(authenticated)/settings/users/page.tsx` (RSC):
   - Server-side: verify `session.user.role === "admin"`; if not → `notFound()` (renders 404)
   - Fetch pending invitations from Better Auth; fetch all organization members
   - Pending invitations table columns: email · invited-by name · issued date (relative) · expiry date · near-expiry warning `△` (when < 6h remaining) · copy button · cancel button placeholder
