@@ -4,7 +4,7 @@ Gate: admin clicks "invite user", fills form, submits; invite URL appears in acc
 
 Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-admin.jsx` (InviteModalScreen)
 
-- [ ] 1.1 Create `apps/web/app/(app)/settings/users/InviteModal.tsx` (`"use client"`):
+- [ ] 1.1 Create `apps/web/app/(authenticated)/settings/users/InviteModal.tsx` (`"use client"`):
   - Dialog triggered by "invite user" button in page header
   - Fields: email (required) + role toggle (radio: "user" [default] / "admin")
   - Note text below form: "no email will be sent — share the invite link directly"
@@ -12,7 +12,7 @@ Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-admin
   - On success: close dialog; show invite URL in accent-tone `Alert` with `AlertTitle` "invite link" + copy button + dismiss ×
   - Alert persists until dismissed (no auto-dismiss)
   - Copy button: `navigator.clipboard.writeText(url)`
-- [ ] 1.2 Create `apps/web/app/(app)/settings/users/actions.ts`:
+- [ ] 1.2 Create `apps/web/app/(authenticated)/settings/users/actions.ts`:
   - `inviteUser(email, role)` Server Action → calls `auth.api.createInvitation`; returns `{ inviteUrl: string }` or `{ error: string }`; revalidates page
   - `cancelInvitation(invitationId)` Server Action → calls `auth.api.cancelInvitation`; revalidates page
 - [ ] 1.3 Wire cancel button in invitations table → calls `cancelInvitation` action; row disappears on revalidation

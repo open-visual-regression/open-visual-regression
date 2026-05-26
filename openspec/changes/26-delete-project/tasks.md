@@ -4,7 +4,7 @@ Gate: danger zone button opens AlertDialog showing counts; confirm button disabl
 
 Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-projects.jsx` (DeleteProjectScreen)
 
-- [ ] 1.1 Create `apps/web/app/(app)/projects/[slug]/settings/DeleteProjectDialog.tsx` (`"use client"`):
+- [ ] 1.1 Create `apps/web/app/(authenticated)/projects/[slug]/settings/DeleteProjectDialog.tsx` (`"use client"`):
   - Trigger: "delete project" destructive button in danger zone at bottom of settings page
   - `AlertDialog` with:
     - Title: "delete [project name]"
@@ -13,7 +13,7 @@ Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-proje
     - Confirm button: destructive variant; `disabled` until `typedSlug === project.slug`
     - Cancel button: secondary variant
 
-- [ ] 1.2 Add `deleteProject(projectId, slug)` to `apps/web/app/(app)/projects/[slug]/settings/actions.ts`:
+- [ ] 1.2 Add `deleteProject(projectId, slug)` to `apps/web/app/(authenticated)/projects/[slug]/settings/actions.ts`:
   - Validate caller is admin
   - Calls `projectsService.deleteProject(projectId, callerId)`
   - `redirect("/projects")`

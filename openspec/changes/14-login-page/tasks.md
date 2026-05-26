@@ -4,12 +4,12 @@ Gate: valid credentials create session + redirect to `/projects`; invalid creden
 
 Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-auth.jsx` (LoginScreen)
 
-- [ ] 1.1 Create `apps/web/app/login/page.tsx` (RSC):
+- [ ] 1.1 Create `apps/web/app/(unauthenticated)/login/page.tsx` (RSC):
   - If already authenticated → `redirect("/projects")`
   - Fields: email, password
   - "forgot password" link — renders but links to `#` with tooltip "password reset not available in self-hosted mode"
   - Layout matches LoginScreen: OvrMark + wordmark top; centered card; footer with version
-- [ ] 1.2 Create `apps/web/app/login/actions.ts`:
+- [ ] 1.2 Create `apps/web/app/(unauthenticated)/login/actions.ts`:
   - `signIn(formData)` Server Action
   - Validate: email + password non-empty
   - Call `auth.api.signInEmail`; on success set session + `redirect("/projects")`

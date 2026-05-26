@@ -9,7 +9,7 @@ Gate: admin can promote/demote a user's role; admin can deactivate a user; self-
   - `deactivateUser(targetUserId, callerId)`:
     - Throws `SelfActionError` if `targetUserId === callerId`
     - Calls Better Auth Admin plugin `banUser`
-- [ ] 1.2 Add to `apps/web/app/(app)/settings/users/actions.ts`:
+- [ ] 1.2 Add to `apps/web/app/(authenticated)/settings/users/actions.ts`:
   - `changeRole(userId, role)` Server Action → validates admin session; calls service; revalidates
   - `deactivateUser(userId)` Server Action → validates admin session; calls service; revalidates
 - [ ] 1.3 Wire actions menu in members table:
