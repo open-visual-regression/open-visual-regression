@@ -28,7 +28,7 @@ describe("SetupCard", () => {
     expect(await screen.findByText("organization name is required")).toBeVisible();
 
     // Advance to step 2
-    await user.type(screen.getByLabelText(/organization name/i), "Acme");
+    await user.type(screen.getByLabelText(/organization name/i), "Tom Fischer's Organization");
     await user.click(screen.getByRole("button", { name: /next/i }));
 
     // Step 2: all empty
@@ -55,21 +55,21 @@ describe("SetupCard", () => {
   it("should remember what was typed when going back a step", async ({ user }) => {
     renderComponent();
 
-    await user.type(screen.getByLabelText(/organization name/i), "Acme");
+    await user.type(screen.getByLabelText(/organization name/i), "Tom Fischer's Organization");
     await user.click(screen.getByRole("button", { name: /next/i }));
     await user.click(await screen.findByRole("button", { name: /back/i }));
 
-    expect(screen.getByLabelText(/organization name/i)).toHaveValue("Acme");
+    expect(screen.getByLabelText(/organization name/i)).toHaveValue("Tom Fischer's Organization");
   });
 
   it("should show an error if account creation fails", async ({ user }) => {
     mockSignUpEmail.mockRejectedValue(new Error("email already in use"));
     renderComponent();
 
-    await user.type(screen.getByLabelText(/organization name/i), "Acme");
+    await user.type(screen.getByLabelText(/organization name/i), "Tom Fischer's Organization");
     await user.click(screen.getByRole("button", { name: /next/i }));
-    await user.type(await screen.findByLabelText(/^name$/i), "Ari Shapiro");
-    await user.type(screen.getByLabelText(/^email$/i), "ari@acme.dev");
+    await user.type(await screen.findByLabelText(/^name$/i), "Tom Fischer");
+    await user.type(screen.getByLabelText(/^email$/i), "tom.fischer@openvisualregression.com");
     await user.type(screen.getByLabelText(/^password$/i), "securepass123");
     await user.type(screen.getByLabelText(/confirm password/i), "securepass123");
     await user.click(screen.getByRole("button", { name: /create/i }));
@@ -88,10 +88,10 @@ describe("SetupCard", () => {
     });
     renderComponent();
 
-    await user.type(screen.getByLabelText(/organization name/i), "Acme");
+    await user.type(screen.getByLabelText(/organization name/i), "Tom Fischer's Organization");
     await user.click(screen.getByRole("button", { name: /next/i }));
-    await user.type(await screen.findByLabelText(/^name$/i), "Ari Shapiro");
-    await user.type(screen.getByLabelText(/^email$/i), "ari@acme.dev");
+    await user.type(await screen.findByLabelText(/^name$/i), "Tom Fischer");
+    await user.type(screen.getByLabelText(/^email$/i), "tom.fischer@openvisualregression.com");
     await user.type(screen.getByLabelText(/^password$/i), "securepass123");
     await user.type(screen.getByLabelText(/confirm password/i), "securepass123");
     await user.click(screen.getByRole("button", { name: /create/i }));
@@ -103,10 +103,10 @@ describe("SetupCard", () => {
     mockSignUpEmail.mockReturnValue(new Promise(() => {}));
     renderComponent();
 
-    await user.type(screen.getByLabelText(/organization name/i), "Acme");
+    await user.type(screen.getByLabelText(/organization name/i), "Tom Fischer's Organization");
     await user.click(screen.getByRole("button", { name: /next/i }));
-    await user.type(await screen.findByLabelText(/^name$/i), "Ari Shapiro");
-    await user.type(screen.getByLabelText(/^email$/i), "ari@acme.dev");
+    await user.type(await screen.findByLabelText(/^name$/i), "Tom Fischer");
+    await user.type(screen.getByLabelText(/^email$/i), "tom.fischer@openvisualregression.com");
     await user.type(screen.getByLabelText(/^password$/i), "securepass123");
     await user.type(screen.getByLabelText(/confirm password/i), "securepass123");
     await user.click(screen.getByRole("button", { name: /create/i }));
