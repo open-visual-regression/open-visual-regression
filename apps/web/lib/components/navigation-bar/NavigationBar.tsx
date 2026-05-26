@@ -1,11 +1,20 @@
+import { cn } from "@ovr/ui/lib/utils";
+
 type NavigationBarProps = {
   children: React.ReactNode;
+  className?: string;
 };
 
-export const NavigationBar = ({ children }: NavigationBarProps) => {
-  return (
-    <nav className="py-3 px-3 border-b border-b-ovr-border flex flex-row items-center">
-      {children}
-    </nav>
-  );
-};
+const NavigationBar = ({ children, className }: NavigationBarProps) => (
+  <nav
+    className={cn(
+      "h-[--topbar-h] flex shrink-0 items-center gap-4 px-3 border-b border-ovr-border bg-background",
+      className,
+    )}
+  >
+    {children}
+  </nav>
+);
+
+export { NavigationBar };
+export type { NavigationBarProps };
