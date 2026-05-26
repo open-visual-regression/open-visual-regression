@@ -12,7 +12,7 @@
  *   DATABASE_PORT           — port (default: 5432)
  *   DATABASE_NAME           — database name
  */
-export function buildDatabaseUrl(env: NodeJS.ProcessEnv = process.env): string {
+export const buildDatabaseUrl = (env: NodeJS.ProcessEnv = process.env): string => {
   const {
     DATABASE_URL,
     DATABASE_USER,
@@ -22,14 +22,13 @@ export function buildDatabaseUrl(env: NodeJS.ProcessEnv = process.env): string {
     DATABASE_NAME,
   } = env;
 
-  if (DATABASE_URL) return DATABASE_URL;
+  if (DATABASE_URL) {
+    return DATABASE_URL;
+  }
 
   if (!DATABASE_USER || !DATABASE_PASSWORD || !DATABASE_NAME) {
-    throw new Error(
-      "Missing required env vars: DATABASE_USER, DATABASE_PASSWORD, DATABASE_NAME " +
-        "(or set DATABASE_URL directly)",
-    );
+    return "";
   }
 
   return `postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}`;
-}
+};
