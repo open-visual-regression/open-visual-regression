@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import type { Result } from "@/lib/types";
 
 type SetupInput = {
   orgName: string;
@@ -7,18 +8,14 @@ type SetupInput = {
   password: string;
 };
 
-type SetupSuccess = { success: true };
-type SetupFailure = { success: false; error: string };
-type SetupResult = SetupSuccess | SetupFailure;
-
-export const createAdminAndOrg = async (input: SetupInput): Promise<SetupResult> => {
+export const createAdminAndOrg = async (input: SetupInput): Promise<Result<null>> => {
   try {
     const signUpResponse = await auth.api.signUpEmail({
       body: { name: input.name, email: input.email, password: input.password },
     });
 
     if (!signUpResponse) {
-      return { success: false, error: "failed to create admin account" };
+      return { status: "error", error: "failed to create admin account" };
     }
 
     await auth.api.createOrganization({
@@ -31,9 +28,9 @@ export const createAdminAndOrg = async (input: SetupInput): Promise<SetupResult>
       }),
     });
 
-    return { success: true };
+    return { status: "ok", data: null };
   } catch (err) {
     const message = err instanceof Error ? err.message : "setup failed";
-    return { success: false, error: message };
+    return { status: "error", error: message };
   }
 };

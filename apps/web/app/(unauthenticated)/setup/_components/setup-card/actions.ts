@@ -17,7 +17,7 @@ export const createAdminAccount = async (values: SetupFormValues): Promise<Actio
 
   const result = await createAdminAndOrg(parsed.data);
 
-  if (!result.success) {
+  if (result.status === "error") {
     return { error: result.error };
   }
 
