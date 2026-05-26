@@ -6,13 +6,13 @@ Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-admin
 
 - [ ] 1.1 Create `apps/web/app/(app)/settings/api-keys/page.tsx` (RSC):
   - Fetch API keys for current user via Better Auth API Key plugin
-  - Table columns: name · prefix (`ovr_pk_•••` — last 4 chars of key hash) · created date · last-used date
+  - Table columns: name · prefix (`ovr_api_key_•••` — last 4 chars of key hash) · created date · last-used date
   - Stale indicator: `△` TriangleAlert amber icon in last-used column when key has never been used
   - "generate key" form above table: single name field + primary submit button
   - Revoke button (XIcon, ghost variant) per row with confirmation (inline `AlertDialog`)
 - [ ] 1.2 Create `apps/web/app/(app)/settings/api-keys/actions.ts`:
   - `generateApiKey(name)` Server Action:
-    - Calls `auth.api.createApiKey({ name, prefix: "ovr_pk_live_", userId })`
+    - Calls `auth.api.createApiKey({ name, prefix: "ovr_api_key_", userId })`
     - Returns `{ key: string }` (the full plaintext key — only time it's available)
     - Revalidates page
   - `revokeApiKey(keyId)` Server Action → `auth.api.deleteApiKey`; revalidates

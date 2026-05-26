@@ -1,0 +1,31 @@
+services:
+  db:
+    image: postgres
+    restart: always
+    user: postgres
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME:-open_visual_regression}
+      POSTGRES_USER: ${DATABASE_USER:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-postgres}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -d ${DATABASE_NAME:-open_visual_regression} -U ${DATABASE_USER:-postgres}",
+        ]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+    ports:
+      - ${DATABASE_PORT:-5432}:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - ${ADMINER_PORT:-8080}:8080
+
+volumes:
+  pgdata:

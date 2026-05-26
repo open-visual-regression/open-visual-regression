@@ -9,6 +9,10 @@
     "format": "turbo run format",
     "check-types": "turbo run check-types",
     "test": "turbo run test",
+    "db:generate": "pnpm --filter @ovr/db db:generate",
+    "db:migrate": "pnpm --filter @ovr/db db:migrate",
+    "db:push": "pnpm --filter @ovr/db db:push",
+    "db:studio": "pnpm --filter @ovr/db db:studio",
     "prepare": "husky"
   },
   "devDependencies": {
