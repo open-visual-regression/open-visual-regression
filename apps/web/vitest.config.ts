@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
 import { storybookTest } from "@storybook/addon-vitest/vitest-plugin";
@@ -11,13 +12,25 @@ const dirname =
   typeof __dirname !== "undefined" ? __dirname : path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      "@": path.resolve(dirname, "."),
+    },
+  },
   test: {
     passWithNoTests: true,
     projects: [
       {
+        plugins: [react()],
+        resolve: {
+          alias: {
+            "@": path.resolve(dirname, "."),
+          },
+        },
         test: {
           name: "unit",
           environment: "jsdom",
+          globals: true,
           setupFiles: ["./vitest.setup.ts"],
           include: ["app/**/*.test.{ts,tsx}"],
         },

@@ -8,13 +8,14 @@
   },
   "scripts": {
     "build": "tsc",
-    "check-types": "tsc --noEmit",
+    "tsc": "tsc --noEmit",
     "lint": "oxlint src",
     "format": "oxfmt src",
     "test": "vitest run"
   },
   "dependencies": {
-    "@ovr/db": "workspace:*"
+    "@ovr/db": "workspace:*",
+    "drizzle-orm": "^0.45.2"
   },
   "devDependencies": {
     "@ovr/typescript-config": "workspace:*",

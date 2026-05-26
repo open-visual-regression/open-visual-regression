@@ -45,16 +45,16 @@ const Logo = ({ size = "sm", className }: LogoProps) => (
 );
 
 const LogoFull = ({ className }: LogoFullProps) => (
-  <div className={cn("inline-flex items-center gap-[14px]", className)}>
+  <div className={cn("inline-flex items-center gap-3.5", className)}>
     <Mark w={6} h={64} />
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-1.5">
         <span className="text-[32px] tracking-[-0.04em] font-medium leading-none text-ovr-fg">
           ovr
         </span>
-        <span className="inline-block shrink-0 w-[14px] h-[22px] text-ovr-accent" />
+        <span className="inline-block shrink-0 w-3.5 h-5.5 text-ovr-accent" />
       </div>
-      <span className="text-label tracking-label uppercase text-ovr-fg">
+      <span className="text-label tracking-label uppercase text text-muted-foreground">
         open visual regression
       </span>
     </div>

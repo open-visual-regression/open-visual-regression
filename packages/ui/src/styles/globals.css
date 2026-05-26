@@ -115,6 +115,8 @@
 :root {
   --radius: 2px;
   --background: oklch(1 0 0);
+  --pixel-grid: radial-gradient(circle at 8px 8px, oklch(0 0 0 / 0.07) 1px, transparent 0);
+  --pixel-grid-size: 16px 16px;
 
   --ovr-accent-primary: oklch(0.78 0.18 75);
   --ovr-accent-primary-hover: oklch(0.82 0.18 75);
@@ -175,6 +177,8 @@
 
 .dark {
   --background: oklch(0.145 0 0);
+  --pixel-grid: radial-gradient(circle at 8px 8px, oklch(1 0 0 / 0.13) 1px, transparent 0);
+  --pixel-grid-size: 16px 16px;
 
   --ovr-accent-primary: oklch(0.78 0.18 75);
   --ovr-accent-primary-hover: oklch(0.82 0.18 75);
@@ -250,4 +254,9 @@
   [role="button"] {
     cursor: pointer;
   }
+}
+
+@utility bg-pixel-grid {
+  background-image: var(--pixel-grid);
+  background-size: var(--pixel-grid-size);
 }

@@ -8,12 +8,14 @@
   },
   "scripts": {
     "build": "tsc",
-    "check-types": "tsc --noEmit",
+    "tsc": "tsc --noEmit",
     "lint": "oxlint src",
     "format": "oxfmt src",
     "test": "vitest run"
   },
   "dependencies": {
+    "@orpc/next": "^0.27.0",
+    "@orpc/server": "^0.27.0",
     "@ovr/services": "workspace:*"
   },
   "devDependencies": {

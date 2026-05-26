@@ -1,1 +1,1 @@
-export {};
+export { getUserCount } from "./setup";
