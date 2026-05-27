@@ -77,7 +77,7 @@ describe("SetupCard", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("email already in use");
   });
 
-  it("should take the user to the dashboard after successful setup", async ({ user }) => {
+  it("should redirect to /login after successful setup", async ({ user }) => {
     mockSignUpEmail.mockResolvedValue({
       token: "test-token",
       user: mocks.user.generateUser(),
@@ -96,7 +96,7 @@ describe("SetupCard", () => {
     await user.type(screen.getByLabelText(/confirm password/i), "securepass123");
     await user.click(screen.getByRole("button", { name: /create/i }));
 
-    await waitFor(() => expect(vi.mocked(redirect)).toHaveBeenCalledWith("/projects"));
+    await waitFor(() => expect(vi.mocked(redirect)).toHaveBeenCalledWith("/login"));
   });
 
   it("should prevent resubmission while saving", async ({ user }) => {

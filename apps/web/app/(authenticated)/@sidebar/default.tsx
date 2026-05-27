@@ -1,5 +1,7 @@
-import { Sidebar } from "../../../lib/components/sidebar/Sidebar";
+import { SidebarContainer } from "@/lib/components/sidebar/SidebarContainer";
 
 export default function SidebarPage() {
-  return <Sidebar>Hello, World!</Sidebar>;
+  const version = process.env.npm_package_version ?? "0.0.0";
+
+  return <SidebarContainer projects={[]} version={version} />;
 }

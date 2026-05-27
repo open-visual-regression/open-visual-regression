@@ -1,4 +1,15 @@
 import type { LucideIcon } from "lucide-react";
+export {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  FolderIcon,
+  GitBranchIcon,
+  GitCommitHorizontalIcon,
+  LogOutIcon,
+  MenuIcon,
+  SearchIcon,
+  SettingsIcon,
+} from "lucide-react";
 
 type IconProps = React.SVGProps<SVGSVGElement> & {
   icon: LucideIcon;
@@ -17,4 +28,4 @@ const Icon = ({ icon: LucideIconComponent, size = 16, ...props }: IconProps) => 
 );
 
 export { Icon };
-export type { IconProps };
+export type { IconProps, LucideIcon };

@@ -31,11 +31,9 @@ describe("createAdminAndOrg", () => {
     expect(result).toEqual({ status: "ok", data: null });
   });
 
-  it("should pass session token cookie to createOrganization", async () => {
-    mockSignUpEmail.mockResolvedValue({
-      token: "abc123",
-      user: mocks.user.generateUser(),
-    });
+  it("should pass user id to createOrganization body", async () => {
+    const user = mocks.user.generateUser();
+    mockSignUpEmail.mockResolvedValue({ token: "abc123", user });
     mockCreateOrganization.mockResolvedValue({
       ...mocks.organization.generateOrganization(),
       members: [],
@@ -45,7 +43,7 @@ describe("createAdminAndOrg", () => {
 
     expect(mockCreateOrganization).toHaveBeenCalledWith(
       expect.objectContaining({
-        headers: { cookie: "better-auth.session_token=abc123" },
+        body: expect.objectContaining({ userId: user.id }),
       }),
     );
   });
@@ -67,21 +65,6 @@ describe("createAdminAndOrg", () => {
         body: expect.objectContaining({ slug: "toms-org" }),
       }),
     );
-  });
-
-  it("should return error when signUpEmail returns null token", async () => {
-    mockSignUpEmail.mockResolvedValue({
-      token: null,
-      user: mocks.user.generateUser(),
-    });
-
-    const result = await createAdminAndOrg(baseInput);
-
-    expect(result).toEqual({
-      status: "error",
-      error: "failed to create admin account",
-    });
-    expect(mockCreateOrganization).not.toHaveBeenCalled();
   });
 
   it("should return error when signUpEmail throws", async () => {

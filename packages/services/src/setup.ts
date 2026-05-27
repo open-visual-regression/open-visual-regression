@@ -1,8 +1,12 @@
-import { count } from "drizzle-orm";
-import { db } from "@ovr/db/client";
-import { user } from "@ovr/db/schema/auth";
+import { getOrganizationCount } from "@ovr/db/repository/organizations";
+import { getUserCount } from "@ovr/db/repository/users";
 
-export const getUserCount = async (): Promise<number> => {
-  const [row] = await db.select({ count: count() }).from(user);
-  return row?.count ?? 0;
+type SetupStatus = "complete" | "incomplete";
+
+export const getSetupStatus = async (): Promise<SetupStatus> => {
+  const [organizationCount, userCount] = await Promise.all([
+    getOrganizationCount(),
+    getUserCount(),
+  ]);
+  return organizationCount > 0 && userCount > 0 ? "complete" : "incomplete";
 };

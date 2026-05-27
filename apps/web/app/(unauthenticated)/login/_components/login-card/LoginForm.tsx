@@ -1,0 +1,72 @@
+"use client";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@ovr/ui/components/button";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@ovr/ui/components/field";
+import { Input } from "@ovr/ui/components/input";
+import { useForm } from "react-hook-form";
+import { authClient } from "@/lib/auth-client";
+import { loginSchema, type LoginFormValues } from "./schema";
+
+export const LoginForm = () => {
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: "", password: "" },
+  });
+
+  const onSubmit = async (values: LoginFormValues) => {
+    const result = await authClient.signIn.email({
+      email: values.email,
+      password: values.password,
+    });
+
+    if (result.error) {
+      setError("root", {
+        message: result.error.message ?? "invalid email or password",
+      });
+
+      return;
+    }
+
+    window.location.href = "/";
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} noValidate>
+      <FieldGroup>
+        <Field data-invalid={!!errors.email}>
+          <FieldLabel htmlFor="email">email</FieldLabel>
+          <Input
+            id="email"
+            type="email"
+            placeholder="enter your email"
+            autoFocus
+            aria-invalid={!!errors.email}
+            {...register("email")}
+          />
+          <FieldError errors={[errors.email]} />
+        </Field>
+        <Field data-invalid={!!errors.password}>
+          <FieldLabel htmlFor="password">password</FieldLabel>
+          <Input
+            id="password"
+            type="password"
+            placeholder="enter your password"
+            aria-invalid={!!errors.password}
+            {...register("password")}
+          />
+          <FieldError errors={[errors.password]} />
+        </Field>
+        <FieldError errors={[errors.root]} />
+        <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+          sign in
+        </Button>
+      </FieldGroup>
+    </form>
+  );
+};

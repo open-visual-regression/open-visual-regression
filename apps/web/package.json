@@ -8,8 +8,8 @@
     "build": "next build",
     "start": "next start",
     "tsc": "tsc --noEmit",
-    "lint": "oxlint app",
-    "format": "oxfmt app",
+    "lint": "oxlint app lib",
+    "format": "oxfmt app lib",
     "test": "vitest run --project unit",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"

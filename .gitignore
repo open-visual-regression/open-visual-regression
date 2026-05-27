@@ -38,5 +38,8 @@ debug-storybook.log
 .DS_Store
 *.pem
 
+# Editor
+.zed/
+
 *storybook.log
 storybook-static

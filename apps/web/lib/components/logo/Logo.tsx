@@ -26,11 +26,7 @@ const Mark = ({ w, h }: { w: number; h: number }) => (
 
 const Logo = ({ size = "sm", className }: LogoProps) => (
   <div
-    className={cn(
-      "inline-flex items-center",
-      size === "sm" ? "gap-[7px]" : "gap-[10px]",
-      className,
-    )}
+    className={cn("inline-flex items-center", size === "sm" ? "gap-1.75" : "gap-2.5", className)}
   >
     <Mark w={size === "sm" ? 3 : 4} h={size === "sm" ? 18 : 28} />
     <span
