@@ -23,7 +23,7 @@ const SidebarItem = ({ href, icon, label, changedCount, active }: SidebarItemPro
   >
     <Icon icon={icon} size={12} className="text-ovr-fg-tertiary shrink-0" />
     <span className="flex-1 truncate">{label}</span>
-    {changedCount !== undefined && changedCount > 0 ? (
+    {(changedCount ?? 0) > 0 ? (
       <span className="ml-auto text-badge font-semibold text-ovr-accent">{changedCount}</span>
     ) : null}
   </Link>
