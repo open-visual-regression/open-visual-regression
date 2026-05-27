@@ -1,13 +1,5 @@
 import { auth } from "@/lib/auth";
-import { rpc } from "@/lib/rpc";
 import type { Result } from "@/lib/types";
-
-export const SETUP_CACHE_TAG = "setup-status";
-
-export const getIsSetupComplete = async () => {
-  const { status } = await rpc.setup.getSetupStatus();
-  return status === "complete";
-};
 
 export type SetupInput = {
   orgName: string;

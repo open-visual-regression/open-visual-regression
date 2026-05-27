@@ -192,15 +192,24 @@ importers:
 
   packages/api:
     dependencies:
+      '@orpc/contract':
+        specifier: ^1.14.3
+        version: 1.14.3
       '@orpc/next':
         specifier: ^0.27.0
-        version: 0.27.0(@orpc/server@0.27.0(hono@4.12.22)(next@16.2.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)))(next@16.2.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)
+        version: 0.27.0(@orpc/server@1.14.3(ws@8.21.0))(next@16.2.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)
       '@orpc/server':
-        specifier: ^0.27.0
-        version: 0.27.0(hono@4.12.22)(next@16.2.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
-      '@ovr/services':
+        specifier: ^1.14.3
+        version: 1.14.3(ws@8.21.0)
+      '@ovr/db':
         specifier: workspace:*
-        version: link:../services
+        version: link:../db
+      next:
+        specifier: ^16.2.6
+        version: 16.2.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
     devDependencies:
       '@ovr/typescript-config':
         specifier: workspace:*
@@ -263,25 +272,6 @@ importers:
         version: 6.0.3
 
   packages/queue:
-    devDependencies:
-      '@ovr/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
-      typescript:
-        specifier: 6.0.3
-        version: 6.0.3
-      vitest:
-        specifier: ^4.1.7
-        version: 4.1.7(@types/node@22.15.3)(@vitest/browser-playwright@4.1.7)(@vitest/coverage-v8@4.1.7)(jsdom@29.1.1(@noble/hashes@2.2.0))(msw@2.14.6(@types/node@22.15.3)(typescript@6.0.3))(vite@8.0.14(@types/node@22.15.3)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.3)(yaml@2.9.0))
-
-  packages/services:
-    dependencies:
-      '@ovr/db':
-        specifier: workspace:*
-        version: link:../db
-      drizzle-orm:
-        specifier: ^0.45.2
-        version: 0.45.2(@types/pg@8.20.0)(kysely@0.28.17)(pg@8.21.0)
     devDependencies:
       '@ovr/typescript-config':
         specifier: workspace:*
@@ -1753,8 +1743,17 @@ packages:
     resolution: {integrity: sha512-/UhIkaZgPutTFmQ7RnIJGgDXZmtEJ7Dvi86xNTFWcnRxVRNk/aotsqDJYeEvDP+FSMB2SdW+pQzNMcWP0rwuNA==}
     engines: {node: '>=14'}
 
+  '@orpc/client@1.14.3':
+    resolution: {integrity: sha512-0HzeD/BgPctvFnd6ltjuQvx4/POXo0K01Tee/3whAm3ohXnlGqCfhzR2VMN8zBaGs1SYe6AFzjmGG928Ej3pAg==}
+
   '@orpc/contract@0.27.0':
     resolution: {integrity: sha512-0DHroTEQUNC6O/yvE93+hzjgRZxF+Z+NCidJ6A3CAz1H8oiftE+rm7DsOiKjm1bcUuiUD0zPEKXsG3qYaclZTQ==}
+
+  '@orpc/contract@1.14.3':
+    resolution: {integrity: sha512-docXs4ALK3TADAnscEywjqvV1Dy+4+B6ihfo33hayvJdxZdpVmxjHOf7pcAYaJFJ6+LgKYoskaVVKad6LLxFlg==}
+
+  '@orpc/interop@1.14.3':
+    resolution: {integrity: sha512-B8ANHAGVI8Mjw7Co0p+qBlkFG84i38WTKjR01HMkMXd6g9bHbgaqOfHcMpJMFaZzqvxBnXH4zPra2w6J8sQmhQ==}
 
   '@orpc/next@0.27.0':
     resolution: {integrity: sha512-b4+u2uNSmFxEDTw0otGbUs/QVoGrX3vp3HZVCLLqPwdIEVQxFUi5ONcqlYA8zg7RWb8tYr6GdEnfp2C+jSWviA==}
@@ -1772,8 +1771,50 @@ packages:
       hono: '>=4.6.0'
       next: '>=14.0.0'
 
+  '@orpc/server@1.14.3':
+    resolution: {integrity: sha512-VQG1sgruPhWdzT/ChltJ5Ju9v1A8F+s8EQ1MMSI33z0AthZ3IuuMZdqMIOo5YSuHROoFxzMJgCShOWYR9qXhQA==}
+    peerDependencies:
+      crossws: '>=0.3.4'
+      ws: '>=8.18.1'
+    peerDependenciesMeta:
+      crossws:
+        optional: true
+      ws:
+        optional: true
+
   '@orpc/shared@0.27.0':
     resolution: {integrity: sha512-w64lrtQYJsKhUDj2mwyeyCUmdKWIw/gA4N3m7SEis4J0ThtX5WTLWSTUYXje85U4yEr8nGvXew3k6q5qypM/Pg==}
+
+  '@orpc/shared@1.14.3':
+    resolution: {integrity: sha512-S7qmhZT4vchKEF6F6YduG5ub5lWnvQRVNq1/f5/kJkSnYMG5q6rWLcK7c3wYfDkeap05ZIiWTwksH+fv+yJOrw==}
+    peerDependencies:
+      '@opentelemetry/api': '>=1.9.0'
+    peerDependenciesMeta:
+      '@opentelemetry/api':
+        optional: true
+
+  '@orpc/standard-server-aws-lambda@1.14.3':
+    resolution: {integrity: sha512-/JpBBpLVcKTrALyhOB2zi5FfQi+X0uKNVkaZzGKd0iNLGLMYAQvfuWzdQRqWfnJb30yAPNVIjia+HFQgjyZBDA==}
+
+  '@orpc/standard-server-fastify@1.14.3':
+    resolution: {integrity: sha512-hDQCazvnlXR8+27qkm/uBwGd82l8UAz3LbBGmJyhDK96Cfuyx9QX5oECC21CeRZJylpbdvSuwwDlSpm6IQ0uRQ==}
+    peerDependencies:
+      fastify: '>=5.6.1'
+    peerDependenciesMeta:
+      fastify:
+        optional: true
+
+  '@orpc/standard-server-fetch@1.14.3':
+    resolution: {integrity: sha512-IHpBpyd+CTav7ycftKkQax6qrMGdpQfYKCuTLK+P3xsBl1A07UXvlpzPi/8MjyNGDCRAQkTaN7JIr/uqLL1B8A==}
+
+  '@orpc/standard-server-node@1.14.3':
+    resolution: {integrity: sha512-jDMfxmicxwJq+UT3X9Ls/ijR1Inwv07Dkz+YIFiZ2MKlp3sXVZlxhleLqH5nxlsrANmNMpIENqosSBnaCcbQjg==}
+
+  '@orpc/standard-server-peer@1.14.3':
+    resolution: {integrity: sha512-Pk2Sccy+rnMYEDZnbO23NE6gP7ltk8pmlKABE4xlD1l87I/vENip94tiTG0QqmAmKCZ20Gec9vHtuLxtUqMOjQ==}
+
+  '@orpc/standard-server@1.14.3':
+    resolution: {integrity: sha512-qO6xJy+S15Wx0elQeVojo3p5EgBLJDTEtElPcUF9o4ac8hrikYZJBeSg7qGgu/elCIrVbaFk/16Lu8P4qatPWg==}
 
   '@oxc-parser/binding-android-arm-eabi@0.127.0':
     resolution: {integrity: sha512-0LC7ye4hvqbIKxAzThzvswgHLFu2AURKzYLeSVvLdu2TBOYWQDmHnTqPLeA597BcUCxiLqLsS4CJ5uoI5WYWCQ==}
@@ -4266,6 +4307,9 @@ packages:
     resolution: {integrity: sha512-smsWv2LzFjP03xmvFoJ331ss6h+jixfA4UUV/Bsiyuu4YJPfN+FIQGOIiv4w9/+MoHkfkJ22UIaQWRVFRfH6Vw==}
     engines: {node: '>=20'}
 
+  openapi-types@12.1.3:
+    resolution: {integrity: sha512-N4YtSYJqghVu4iek2ZUvcN/0aqH1kRDuNqzcycDxhOUpg7GdvLa2F3DgS6yBNhInhv2r/6I0Flkn7CqL8+nIcw==}
+
   openapi3-ts@4.5.0:
     resolution: {integrity: sha512-jaL+HgTq2Gj5jRcfdutgRGLosCy/hT8sQf6VOy+P+g36cZOjI1iukdPnijC+4CmeRzg/jEllJUboEic2FhxhtQ==}
 
@@ -6225,16 +6269,45 @@ snapshots:
 
   '@opentelemetry/semantic-conventions@1.41.1': {}
 
+  '@orpc/client@1.14.3':
+    dependencies:
+      '@orpc/shared': 1.14.3
+      '@orpc/standard-server': 1.14.3
+      '@orpc/standard-server-fetch': 1.14.3
+      '@orpc/standard-server-peer': 1.14.3
+    transitivePeerDependencies:
+      - '@opentelemetry/api'
+
   '@orpc/contract@0.27.0':
     dependencies:
       '@orpc/shared': 0.27.0
       '@standard-schema/spec': 1.0.0-beta.4
+
+  '@orpc/contract@1.14.3':
+    dependencies:
+      '@orpc/client': 1.14.3
+      '@orpc/shared': 1.14.3
+      '@standard-schema/spec': 1.1.0
+      openapi-types: 12.1.3
+    transitivePeerDependencies:
+      - '@opentelemetry/api'
+
+  '@orpc/interop@1.14.3': {}
 
   '@orpc/next@0.27.0(@orpc/server@0.27.0(hono@4.12.22)(next@16.2.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)))(next@16.2.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)':
     dependencies:
       '@orpc/contract': 0.27.0
       '@orpc/openapi': 0.27.0(next@16.2.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
       '@orpc/server': 0.27.0(hono@4.12.22)(next@16.2.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
+      '@orpc/shared': 0.27.0
+      next: 16.2.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      react: 19.2.0
+
+  '@orpc/next@0.27.0(@orpc/server@1.14.3(ws@8.21.0))(next@16.2.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)':
+    dependencies:
+      '@orpc/contract': 0.27.0
+      '@orpc/openapi': 0.27.0(next@16.2.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
+      '@orpc/server': 1.14.3(ws@8.21.0)
       '@orpc/shared': 0.27.0
       next: 16.2.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       react: 19.2.0
@@ -6263,12 +6336,81 @@ snapshots:
       hono: 4.12.22
       next: 16.2.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
 
+  '@orpc/server@1.14.3(ws@8.21.0)':
+    dependencies:
+      '@orpc/client': 1.14.3
+      '@orpc/contract': 1.14.3
+      '@orpc/interop': 1.14.3
+      '@orpc/shared': 1.14.3
+      '@orpc/standard-server': 1.14.3
+      '@orpc/standard-server-aws-lambda': 1.14.3
+      '@orpc/standard-server-fastify': 1.14.3
+      '@orpc/standard-server-fetch': 1.14.3
+      '@orpc/standard-server-node': 1.14.3
+      '@orpc/standard-server-peer': 1.14.3
+      cookie: 1.1.1
+    optionalDependencies:
+      ws: 8.21.0
+    transitivePeerDependencies:
+      - '@opentelemetry/api'
+      - fastify
+
   '@orpc/shared@0.27.0':
     dependencies:
       '@standard-schema/spec': 1.0.0-beta.4
       is-what: 5.5.0
       radash: 12.1.1
       type-fest: 4.41.0
+
+  '@orpc/shared@1.14.3':
+    dependencies:
+      radash: 12.1.1
+      type-fest: 5.6.0
+
+  '@orpc/standard-server-aws-lambda@1.14.3':
+    dependencies:
+      '@orpc/shared': 1.14.3
+      '@orpc/standard-server': 1.14.3
+      '@orpc/standard-server-fetch': 1.14.3
+      '@orpc/standard-server-node': 1.14.3
+    transitivePeerDependencies:
+      - '@opentelemetry/api'
+
+  '@orpc/standard-server-fastify@1.14.3':
+    dependencies:
+      '@orpc/shared': 1.14.3
+      '@orpc/standard-server': 1.14.3
+      '@orpc/standard-server-node': 1.14.3
+    transitivePeerDependencies:
+      - '@opentelemetry/api'
+
+  '@orpc/standard-server-fetch@1.14.3':
+    dependencies:
+      '@orpc/shared': 1.14.3
+      '@orpc/standard-server': 1.14.3
+    transitivePeerDependencies:
+      - '@opentelemetry/api'
+
+  '@orpc/standard-server-node@1.14.3':
+    dependencies:
+      '@orpc/shared': 1.14.3
+      '@orpc/standard-server': 1.14.3
+      '@orpc/standard-server-fetch': 1.14.3
+    transitivePeerDependencies:
+      - '@opentelemetry/api'
+
+  '@orpc/standard-server-peer@1.14.3':
+    dependencies:
+      '@orpc/shared': 1.14.3
+      '@orpc/standard-server': 1.14.3
+    transitivePeerDependencies:
+      - '@opentelemetry/api'
+
+  '@orpc/standard-server@1.14.3':
+    dependencies:
+      '@orpc/shared': 1.14.3
+    transitivePeerDependencies:
+      - '@opentelemetry/api'
 
   '@oxc-parser/binding-android-arm-eabi@0.127.0':
     optional: true
@@ -8384,6 +8526,8 @@ snapshots:
       is-inside-container: 1.0.0
       powershell-utils: 0.1.0
       wsl-utils: 0.3.1
+
+  openapi-types@12.1.3: {}
 
   openapi3-ts@4.5.0:
     dependencies:

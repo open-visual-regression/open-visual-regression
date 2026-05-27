@@ -1,9 +1,15 @@
-import { os } from "@orpc/server";
-import { setupService } from "@ovr/services";
+import { db } from "@ovr/db";
+import { os } from "./os";
 
-export const setupRouter = {
-  getSetupStatus: os.handler(async () => {
-    const status = await setupService.getSetupStatus();
+export const status = os.setup.status
+  .handler(async () => {
+    const [organizationCount, userCount] = await Promise.all([
+      db.organizations.getOrganizationCount(),
+      db.users.getUserCount(),
+    ]);
+
+    const status = organizationCount > 0 && userCount > 0 ? "completed" : "pending";
+
     return { status };
-  }),
-};
+  })
+  .actionable();

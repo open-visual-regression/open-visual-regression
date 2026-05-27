@@ -1,16 +1,18 @@
 import { redirect } from "next/navigation";
-import { getIsSetupComplete } from "@/lib/services/setup";
 import { SetupCard } from "./_components/setup-card/SetupCard";
 import { CenteredFormSection } from "../_components/CenteredFormSection";
+import { router } from "@ovr/api/router";
 
 export const dynamic = "force-dynamic";
 
 export default async function SetupPage() {
-  const isSetupComplete = await getIsSetupComplete();
+  const [error, setupStatusResult] = await router.setup.status();
 
-  console.log(isSetupComplete);
+  if (error) {
+    redirect("/error");
+  }
 
-  if (isSetupComplete) {
+  if (setupStatusResult.status === "completed") {
     redirect("/login");
   }
 

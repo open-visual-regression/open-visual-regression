@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    "./router": "./src/routers/index.ts"
   },
   "scripts": {
     "build": "tsc",
@@ -14,9 +14,12 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@orpc/contract": "^1.14.3",
     "@orpc/next": "^0.27.0",
-    "@orpc/server": "^0.27.0",
-    "@ovr/services": "workspace:*"
+    "@orpc/server": "^1.14.3",
+    "@ovr/db": "workspace:*",
+    "next": "^16.2.6",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@ovr/typescript-config": "workspace:*",
