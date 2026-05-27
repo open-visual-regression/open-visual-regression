@@ -10,7 +10,9 @@ const SidebarSection = ({ label, count, children }: SidebarSectionProps) => (
       <span className="text-badge font-semibold tracking-label uppercase text-ovr-fg-tertiary">
         {label}
       </span>
-      {count !== undefined && <span className="ml-auto text-badge text-ovr-fg-muted">{count}</span>}
+      {count !== undefined ? (
+        <span className="ml-auto text-badge text-ovr-fg-muted">{count}</span>
+      ) : null}
     </div>
     {children}
   </div>

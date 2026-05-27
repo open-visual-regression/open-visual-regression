@@ -5,11 +5,11 @@ import { Icon } from "@ovr/ui/components/icon";
 type NavigationBarBreadcrumbProps = {
   project?: { id: string; name: string };
   runId?: string;
-  /** Adds a trailing segment after the run link. Only meaningful when runId is also set. */
-  view?: "diff";
+  /** Additional breadcrumb segments composed via children. */
+  children?: React.ReactNode;
 };
 
-const NavigationBarBreadcrumb = ({ project, runId, view }: NavigationBarBreadcrumbProps) => (
+const NavigationBarBreadcrumb = ({ project, runId, children }: NavigationBarBreadcrumbProps) => (
   <div className="flex items-center gap-2 text-body-sm whitespace-nowrap min-w-0 overflow-hidden">
     {project ? (
       <>
@@ -19,7 +19,7 @@ const NavigationBarBreadcrumb = ({ project, runId, view }: NavigationBarBreadcru
         >
           {project.name}
         </Link>
-        {runId && (
+        {runId ? (
           <>
             <Icon icon={ChevronRightIcon} size={12} className="text-ovr-fg-tertiary shrink-0" />
             <Link
@@ -29,13 +29,8 @@ const NavigationBarBreadcrumb = ({ project, runId, view }: NavigationBarBreadcru
               #{runId}
             </Link>
           </>
-        )}
-        {runId && view === "diff" && (
-          <>
-            <Icon icon={ChevronRightIcon} size={12} className="text-ovr-fg-tertiary shrink-0" />
-            <span className="text-ovr-fg-tertiary">diff</span>
-          </>
-        )}
+        ) : null}
+        {children}
       </>
     ) : (
       <span className="text-ovr-fg-tertiary">projects</span>
@@ -43,5 +38,13 @@ const NavigationBarBreadcrumb = ({ project, runId, view }: NavigationBarBreadcru
   </div>
 );
 
-export { NavigationBarBreadcrumb };
+/** A labelled breadcrumb segment. Compose inside NavigationBarBreadcrumb as children. */
+const NavigationBarBreadcrumbSegment = ({ label }: { label: string }) => (
+  <>
+    <Icon icon={ChevronRightIcon} size={12} className="text-ovr-fg-tertiary shrink-0" />
+    <span className="text-ovr-fg-tertiary">{label}</span>
+  </>
+);
+
+export { NavigationBarBreadcrumb, NavigationBarBreadcrumbSegment };
 export type { NavigationBarBreadcrumbProps };

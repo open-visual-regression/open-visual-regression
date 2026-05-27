@@ -1,4 +1,5 @@
 import { ChevronLeftIcon } from "lucide-react";
+import { Button } from "@ovr/ui/components/button";
 import { Icon } from "@ovr/ui/components/icon";
 
 type SidebarFooterProps = {
@@ -8,13 +9,9 @@ type SidebarFooterProps = {
 
 const SidebarFooter = ({ version = "0.0.0", onCollapse }: SidebarFooterProps) => (
   <div className="mt-auto px-3 py-3 border-t border-ovr-border-subtle flex items-center gap-2">
-    <button
-      onClick={onCollapse}
-      title="collapse sidebar"
-      className="size-6 inline-flex items-center justify-center rounded-sm bg-transparent border border-ovr-border text-ovr-fg-secondary hover:bg-ovr-hover transition-colors"
-    >
+    <Button variant="secondary" size="icon-xs" onClick={onCollapse} aria-label="Collapse sidebar">
       <Icon icon={ChevronLeftIcon} size={12} />
-    </button>
+    </Button>
     <div className="flex items-center gap-1.5 text-badge text-ovr-fg-muted">
       <span>ovr</span>
       <span>v{version}</span>

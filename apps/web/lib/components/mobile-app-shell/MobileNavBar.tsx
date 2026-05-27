@@ -1,4 +1,5 @@
 import { MenuIcon } from "lucide-react";
+import { Button } from "@ovr/ui/components/button";
 import { Icon } from "@ovr/ui/components/icon";
 
 type MobileNavBarProps = {
@@ -12,17 +13,13 @@ type MobileNavBarProps = {
 const MobileNavBar = ({ title, subtitle, leading, trailing, onMenu }: MobileNavBarProps) => (
   <div className="shrink-0 flex items-center gap-2 px-2 py-2.5 border-b border-ovr-border bg-background">
     {leading ?? (
-      <button
-        onClick={onMenu}
-        className="size-9 flex items-center justify-center bg-transparent border-none text-ovr-fg cursor-pointer"
-        aria-label="menu"
-      >
+      <Button variant="ghost" size="icon" onClick={onMenu} aria-label="Open navigation menu">
         <Icon icon={MenuIcon} size={16} />
-      </button>
+      </Button>
     )}
     <div className="flex-1 min-w-0 flex flex-col justify-center overflow-hidden">
       <div className="text-sm font-medium tracking-h1 text-ovr-fg truncate">{title}</div>
-      {subtitle && <div className="text-badge text-ovr-fg-tertiary truncate">{subtitle}</div>}
+      {subtitle ? <div className="text-badge text-ovr-fg-tertiary truncate">{subtitle}</div> : null}
     </div>
     {trailing}
   </div>

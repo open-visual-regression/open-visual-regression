@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { ThemeProvider } from "@ovr/ui/components/theme-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -12,12 +11,8 @@ type RootLayoutProps = Readonly<{
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body>
-        <ThemeProvider attribute="class" defaultTheme="dark" disableTransitionOnChange>
-          {children}
-        </ThemeProvider>
-      </body>
+    <html lang="en" className="dark">
+      <body>{children}</body>
     </html>
   );
 }

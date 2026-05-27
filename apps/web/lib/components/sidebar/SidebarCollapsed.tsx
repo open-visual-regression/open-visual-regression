@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ChevronRightIcon } from "lucide-react";
+import { Button } from "@ovr/ui/components/button";
 import { Icon } from "@ovr/ui/components/icon";
 import { cn } from "@ovr/ui/lib/utils";
 import { SidebarMonogram } from "./SidebarMonogram";
@@ -44,13 +45,9 @@ const SidebarCollapsed = ({ projects, activeProjectId, onExpand }: SidebarCollap
     })}
 
     <div className="mt-auto p-2 border-t border-ovr-border-subtle flex justify-center">
-      <button
-        onClick={onExpand}
-        title="expand sidebar"
-        className="size-6 inline-flex items-center justify-center rounded-sm bg-transparent border border-ovr-border text-ovr-fg-secondary hover:bg-ovr-hover transition-colors"
-      >
+      <Button variant="secondary" size="icon-xs" onClick={onExpand} aria-label="Expand sidebar">
         <Icon icon={ChevronRightIcon} size={12} />
-      </button>
+      </Button>
     </div>
   </aside>
 );

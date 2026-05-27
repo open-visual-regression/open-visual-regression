@@ -7,22 +7,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@ovr/ui/components/dropdown-menu";
+import { Button } from "@ovr/ui/components/button";
 import { authClient } from "@/lib/auth-client";
+import { getMonogram } from "@/lib/utils/monogram";
 
 type UserAvatarProps = {
   name: string;
 };
 
 const UserAvatar = ({ name }: UserAvatarProps) => {
-  const monogram =
-    name
-      .split(/[\s-_]+/)
-      .map((w) => w[0])
-      .filter(Boolean)
-      .join("")
-      .slice(0, 2)
-      .toLowerCase() || "?";
-
   const handleSignOut = async () => {
     await authClient.signOut({
       fetchOptions: {
@@ -30,8 +23,6 @@ const UserAvatar = ({ name }: UserAvatarProps) => {
           window.location.href = "/login";
         },
         onError: () => {
-          // Sign-out failed; redirect anyway — the server-side session
-          // cookie may already be cleared, and the auth guard will handle it.
           window.location.href = "/login";
         },
       },
@@ -42,13 +33,14 @@ const UserAvatar = ({ name }: UserAvatarProps) => {
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <button
-            className="size-6 rounded-sm bg-ovr-elevated border border-ovr-border flex items-center justify-center text-badge font-semibold text-ovr-fg-secondary hover:bg-ovr-hover transition-colors"
+          <Button
+            variant="secondary"
+            className="size-6 text-badge font-semibold rounded-sm"
             aria-label={`User menu for ${name}`}
           />
         }
       >
-        {monogram}
+        {getMonogram(name)}
       </DropdownMenuTrigger>
       <DropdownMenuContent side="bottom" align="end">
         <DropdownMenuItem onSelect={handleSignOut}>

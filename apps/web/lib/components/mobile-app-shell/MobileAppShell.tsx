@@ -16,6 +16,12 @@ type MobileAppShellProps = {
   children: React.ReactNode;
 };
 
+const getActiveTab = (pathname: string): MobileTabBarTab => {
+  if (pathname.startsWith("/settings")) return "settings";
+  if (pathname.startsWith("/runs")) return "runs";
+  return "projects";
+};
+
 const MobileAppShell = ({
   title,
   subtitle,
@@ -27,12 +33,7 @@ const MobileAppShell = ({
 }: MobileAppShellProps) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const pathname = usePathname();
-
-  const activeTab: MobileTabBarTab = pathname.startsWith("/settings")
-    ? "settings"
-    : pathname.startsWith("/runs")
-      ? "runs"
-      : "projects";
+  const activeTab = getActiveTab(pathname);
 
   return (
     <div className="relative w-full h-full bg-background flex flex-col overflow-hidden">
@@ -44,13 +45,14 @@ const MobileAppShell = ({
       />
       <div className="flex-1 overflow-auto min-h-0">{children}</div>
       <MobileTabBar active={activeTab} />
-      <MobileDrawer
-        open={drawerOpen}
-        projects={projects}
-        activeProjectId={activeProjectId}
-        version={version}
-        onClose={() => setDrawerOpen(false)}
-      />
+      {drawerOpen ? (
+        <MobileDrawer
+          projects={projects}
+          activeProjectId={activeProjectId}
+          version={version}
+          onClose={() => setDrawerOpen(false)}
+        />
+      ) : null}
     </div>
   );
 };
