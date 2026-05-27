@@ -8,6 +8,13 @@
       "when": 1779757718061,
       "tag": "0000_nasty_kronos",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1779912605028,
+      "tag": "0001_slim_whistler",
+      "breakpoints": true
     }
   ]
 }
