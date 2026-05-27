@@ -4,7 +4,7 @@ import { Typography } from "@ovr/ui/components/typography";
 import { auth } from "@/lib/auth";
 
 export default async function DashboardPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await auth.api.getSession({ headers: await headers() }).catch(() => null);
 
   if (!session) {
     redirect("/login");

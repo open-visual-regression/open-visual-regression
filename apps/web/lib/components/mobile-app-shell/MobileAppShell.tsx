@@ -18,7 +18,7 @@ type MobileAppShellProps = {
 
 const getActiveTab = (pathname: string): MobileTabBarTab => {
   if (pathname.startsWith("/settings")) return "settings";
-  if (pathname.startsWith("/runs")) return "runs";
+  if (pathname.startsWith("/runs") || pathname.includes("/runs")) return "runs";
   return "projects";
 };
 

@@ -1,8 +1,13 @@
 import Link from "next/link";
 import { Icon, ChevronRightIcon } from "@ovr/ui/components/icon";
 
+type NavigationBarBreadcrumbProject = {
+  id: string;
+  name: string;
+};
+
 type NavigationBarBreadcrumbProps = {
-  project?: { id: string; name: string };
+  project?: NavigationBarBreadcrumbProject;
   runId?: string;
   children?: React.ReactNode;
 };
@@ -48,4 +53,8 @@ const NavigationBarBreadcrumbSegment = ({ label }: NavigationBarBreadcrumbSegmen
 );
 
 export { NavigationBarBreadcrumb, NavigationBarBreadcrumbSegment };
-export type { NavigationBarBreadcrumbProps, NavigationBarBreadcrumbSegmentProps };
+export type {
+  NavigationBarBreadcrumbProps,
+  NavigationBarBreadcrumbProject,
+  NavigationBarBreadcrumbSegmentProps,
+};
