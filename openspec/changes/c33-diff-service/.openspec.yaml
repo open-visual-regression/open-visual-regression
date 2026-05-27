@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-05-24
+title: "Pipeline: diff service (Pixelmatch) + baselines service"
+depends_on: c32-capture-service

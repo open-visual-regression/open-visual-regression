@@ -1,4 +1,0 @@
-schema: spec-driven
-created: 2026-05-24
-title: "Projects: projects service (createProject, deleteProject, addVariant, removeVariant)"
-depends_on: 21-project-schema

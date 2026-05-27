@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-05-24
+title: "Pipeline: GET /api/storage/[...path] presigned URL proxy route"
+depends_on: c28-storage-package

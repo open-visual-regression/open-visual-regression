@@ -1,4 +1,0 @@
-schema: spec-driven
-created: 2026-05-24
-title: "Review: diff viewer keyboard shortcuts (J/K/A/R) + KeyHint footer"
-depends_on: 42-diff-slider

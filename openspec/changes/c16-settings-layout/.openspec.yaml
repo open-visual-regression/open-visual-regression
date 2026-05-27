@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-05-24
+title: "User Mgmt: settings route group layout with 200px sub-nav rail"
+depends_on: c12-app-chrome

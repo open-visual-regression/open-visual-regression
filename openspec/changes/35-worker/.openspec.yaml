@@ -1,4 +1,0 @@
-schema: spec-driven
-created: 2026-05-24
-title: "Pipeline: BullMQ worker (capture/diff/finalize handlers + retry policies)"
-depends_on: 34-review-service

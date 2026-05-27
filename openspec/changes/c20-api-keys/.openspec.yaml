@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-05-24
+title: "User Mgmt: /settings/api-keys page + generate + revoke"
+depends_on: c16-settings-layout

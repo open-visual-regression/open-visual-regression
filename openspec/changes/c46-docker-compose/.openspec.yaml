@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-05-24
+title: "Deployment: docker-compose.yml (7 services) + health checks + .env.example"
+depends_on: c45-dockerfile

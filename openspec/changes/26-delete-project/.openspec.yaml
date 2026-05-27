@@ -1,4 +1,0 @@
-schema: spec-driven
-created: 2026-05-24
-title: "Projects: delete project AlertDialog + slug confirmation + Server Action"
-depends_on: 25-project-settings
