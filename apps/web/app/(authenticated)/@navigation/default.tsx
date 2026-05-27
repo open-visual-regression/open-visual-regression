@@ -8,8 +8,7 @@ import { Separator } from "@ovr/ui/components/separator";
 
 export default async function NavigationPage() {
   const session = await auth.api.getSession({ headers: await headers() }).catch(() => null);
-
-  const userName = session?.user?.name ?? session?.user?.email ?? "user";
+  const userName = session?.user?.name ?? session?.user?.email ?? "";
 
   return (
     <NavigationBar className="flex flex-row gap-3 justify-between items-center">
