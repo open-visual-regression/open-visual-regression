@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { ChevronRightIcon } from "lucide-react";
 import { Button } from "@ovr/ui/components/button";
-import { Icon } from "@ovr/ui/components/icon";
+import { Icon, ChevronRightIcon } from "@ovr/ui/components/icon";
 import { cn } from "@ovr/ui/lib/utils";
 import { SidebarMonogram } from "./SidebarMonogram";
 

@@ -1,6 +1,5 @@
-import { ChevronLeftIcon } from "lucide-react";
 import { Button } from "@ovr/ui/components/button";
-import { Icon } from "@ovr/ui/components/icon";
+import { Icon, ChevronLeftIcon } from "@ovr/ui/components/icon";
 
 type SidebarFooterProps = {
   version?: string;

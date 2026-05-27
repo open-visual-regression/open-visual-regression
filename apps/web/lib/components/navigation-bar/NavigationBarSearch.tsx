@@ -1,5 +1,4 @@
-import { SearchIcon } from "lucide-react";
-import { Icon } from "@ovr/ui/components/icon";
+import { Icon, SearchIcon } from "@ovr/ui/components/icon";
 import { KeyHint } from "@ovr/ui/components/key-hint";
 
 const NavigationBarSearch = () => (

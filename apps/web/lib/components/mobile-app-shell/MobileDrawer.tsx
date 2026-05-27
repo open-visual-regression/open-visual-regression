@@ -1,4 +1,4 @@
-import { FolderIcon } from "lucide-react";
+import { FolderIcon } from "@ovr/ui/components/icon";
 import { Logo } from "../logo/Logo";
 import { MobileNavItem } from "./MobileNavItem";
 

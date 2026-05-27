@@ -1,6 +1,5 @@
-import { MenuIcon } from "lucide-react";
 import { Button } from "@ovr/ui/components/button";
-import { Icon } from "@ovr/ui/components/icon";
+import { Icon, MenuIcon } from "@ovr/ui/components/icon";
 
 type MobileNavBarProps = {
   title: string;

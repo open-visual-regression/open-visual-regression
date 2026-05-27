@@ -1,7 +1,6 @@
-import { GitBranchIcon, SettingsIcon } from "lucide-react";
 import Link from "next/link";
-import { Button, buttonVariants } from "@ovr/ui/components/button";
-import { Icon } from "@ovr/ui/components/icon";
+import { Button } from "@ovr/ui/components/button";
+import { Icon, GitBranchIcon, SettingsIcon } from "@ovr/ui/components/icon";
 import { UserAvatar } from "./UserAvatar";
 
 type NavigationBarActionsProps = {
@@ -15,13 +14,9 @@ const NavigationBarActions = ({ userName, branch = "main" }: NavigationBarAction
       <Icon icon={GitBranchIcon} size={12} />
       {branch}
     </Button>
-    <Link
-      href="/settings"
-      className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
-      aria-label="Settings"
-    >
+    <Button variant="ghost" size="icon-sm" render={<Link href="/settings" />} aria-label="Settings">
       <Icon icon={SettingsIcon} size={14} />
-    </Link>
+    </Button>
     <UserAvatar name={userName} />
   </div>
 );

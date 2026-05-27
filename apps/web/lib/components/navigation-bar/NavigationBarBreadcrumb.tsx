@@ -1,12 +1,14 @@
 import Link from "next/link";
-import { ChevronRightIcon } from "lucide-react";
-import { Icon } from "@ovr/ui/components/icon";
+import { Icon, ChevronRightIcon } from "@ovr/ui/components/icon";
 
 type NavigationBarBreadcrumbProps = {
   project?: { id: string; name: string };
   runId?: string;
-  /** Additional breadcrumb segments composed via children. */
   children?: React.ReactNode;
+};
+
+type NavigationBarBreadcrumbSegmentProps = {
+  label: string;
 };
 
 const NavigationBarBreadcrumb = ({ project, runId, children }: NavigationBarBreadcrumbProps) => (
@@ -38,8 +40,7 @@ const NavigationBarBreadcrumb = ({ project, runId, children }: NavigationBarBrea
   </div>
 );
 
-/** A labelled breadcrumb segment. Compose inside NavigationBarBreadcrumb as children. */
-const NavigationBarBreadcrumbSegment = ({ label }: { label: string }) => (
+const NavigationBarBreadcrumbSegment = ({ label }: NavigationBarBreadcrumbSegmentProps) => (
   <>
     <Icon icon={ChevronRightIcon} size={12} className="text-ovr-fg-tertiary shrink-0" />
     <span className="text-ovr-fg-tertiary">{label}</span>
@@ -47,4 +48,4 @@ const NavigationBarBreadcrumbSegment = ({ label }: { label: string }) => (
 );
 
 export { NavigationBarBreadcrumb, NavigationBarBreadcrumbSegment };
-export type { NavigationBarBreadcrumbProps };
+export type { NavigationBarBreadcrumbProps, NavigationBarBreadcrumbSegmentProps };

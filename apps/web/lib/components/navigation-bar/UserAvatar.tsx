@@ -1,6 +1,5 @@
 "use client";
 
-import { LogOutIcon } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,6 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@ovr/ui/components/dropdown-menu";
 import { Button } from "@ovr/ui/components/button";
+import { Icon, LogOutIcon } from "@ovr/ui/components/icon";
 import { authClient } from "@/lib/auth-client";
 import { getMonogram } from "@/lib/utils/monogram";
 
@@ -44,7 +44,7 @@ const UserAvatar = ({ name }: UserAvatarProps) => {
       </DropdownMenuTrigger>
       <DropdownMenuContent side="bottom" align="end">
         <DropdownMenuItem onSelect={handleSignOut}>
-          <LogOutIcon />
+          <Icon icon={LogOutIcon} size={14} />
           sign out
         </DropdownMenuItem>
       </DropdownMenuContent>

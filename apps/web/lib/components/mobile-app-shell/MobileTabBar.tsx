@@ -1,13 +1,21 @@
-import { FolderIcon, GitCommitHorizontalIcon, SettingsIcon } from "lucide-react";
+import type { LucideIcon } from "@ovr/ui/components/icon";
+import { FolderIcon, GitCommitHorizontalIcon, SettingsIcon } from "@ovr/ui/components/icon";
 import { MobileTabBarItem } from "./MobileTabBarItem";
 
 type MobileTabBarTab = "projects" | "runs" | "settings";
+
+type MobileTab = {
+  id: MobileTabBarTab;
+  href: string;
+  icon: LucideIcon;
+  label: string;
+};
 
 type MobileTabBarProps = {
   active?: MobileTabBarTab;
 };
 
-const tabs: Array<{ id: MobileTabBarTab; href: string; icon: typeof FolderIcon; label: string }> = [
+const tabs: MobileTab[] = [
   { id: "projects", href: "/projects", icon: FolderIcon, label: "projects" },
   { id: "runs", href: "/runs", icon: GitCommitHorizontalIcon, label: "runs" },
   { id: "settings", href: "/settings", icon: SettingsIcon, label: "settings" },
