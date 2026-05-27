@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-05-24
+title: "User Mgmt: invite modal + Server Action + one-time URL reveal banner"
+depends_on: c17-users-page

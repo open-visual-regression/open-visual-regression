@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-05-24
+title: "Pipeline: oRPC API (createBuild + getBuildStatus) + API key auth middleware"
+depends_on: c31-build-service
