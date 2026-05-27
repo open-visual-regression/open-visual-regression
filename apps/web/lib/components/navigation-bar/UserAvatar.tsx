@@ -35,7 +35,7 @@ const UserAvatar = ({ name }: UserAvatarProps) => {
         render={
           <Button
             variant="secondary"
-            className="size-6 text-badge font-semibold rounded-sm"
+            className="size-7 text-badge font-semibold rounded-sm"
             aria-label={`User menu for ${name}`}
           />
         }
@@ -43,7 +43,7 @@ const UserAvatar = ({ name }: UserAvatarProps) => {
         {getMonogram(name)}
       </DropdownMenuTrigger>
       <DropdownMenuContent side="bottom" align="end">
-        <DropdownMenuItem onSelect={handleSignOut}>
+        <DropdownMenuItem onClick={handleSignOut}>
           <Icon icon={LogOutIcon} size={14} />
           sign out
         </DropdownMenuItem>

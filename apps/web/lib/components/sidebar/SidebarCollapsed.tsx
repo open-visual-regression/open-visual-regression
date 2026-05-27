@@ -18,7 +18,7 @@ type SidebarCollapsedProps = {
 
 const SidebarCollapsed = ({ projects, activeProjectId, onExpand }: SidebarCollapsedProps) => (
   <aside className="flex h-full w-12 shrink-0 flex-col overflow-hidden border-r border-ovr-border">
-    <div className="flex items-center justify-center h-6 pt-2">
+    <div className="flex items-center justify-center pt-3.5 pb-1.5">
       <span className="text-badge font-semibold tracking-label uppercase text-ovr-fg-tertiary">
         prj
       </span>
@@ -43,7 +43,7 @@ const SidebarCollapsed = ({ projects, activeProjectId, onExpand }: SidebarCollap
       );
     })}
 
-    <div className="mt-auto p-2 border-t border-ovr-border-subtle flex justify-center">
+    <div className="mt-auto px-3 py-3 border-t border-ovr-border-subtle flex">
       <Button variant="secondary" size="icon-xs" onClick={onExpand} aria-label="Expand sidebar">
         <Icon icon={ChevronRightIcon} size={12} />
       </Button>

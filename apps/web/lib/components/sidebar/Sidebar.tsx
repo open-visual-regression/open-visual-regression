@@ -13,10 +13,11 @@ type SidebarProps = {
   projects: SidebarProject[];
   activeProjectId?: string;
   version?: string;
+  onCollapse?: () => void;
 };
 
-const Sidebar = ({ projects, activeProjectId, version }: SidebarProps) => (
-  <aside className="flex h-full w-full flex-col overflow-hidden border-r border-ovr-border bg-background">
+const Sidebar = ({ projects, activeProjectId, version, onCollapse }: SidebarProps) => (
+  <aside className="flex h-full w-60 flex-col overflow-hidden border-r border-ovr-border bg-background">
     <SidebarSection label="projects" count={projects.length}>
       {projects.map((p) => (
         <SidebarItem
@@ -29,7 +30,7 @@ const Sidebar = ({ projects, activeProjectId, version }: SidebarProps) => (
         />
       ))}
     </SidebarSection>
-    <SidebarFooter version={version} />
+    <SidebarFooter version={version} onCollapse={onCollapse} />
   </aside>
 );
 

@@ -1,18 +1,18 @@
 import { redirect } from "next/navigation";
 import { getIsSetupComplete } from "@/lib/services/setup";
-import { SetupCard } from "./_components/setup-card/SetupCard";
 import { CenteredFormSection } from "../_components/CenteredFormSection";
+import { LoginCard } from "./_components/login-card/LoginCard";
 
-export default async function SetupPage() {
+export default async function LoginPage() {
   const isSetupComplete = await getIsSetupComplete();
 
-  if (isSetupComplete) {
-    redirect("/login");
+  if (!isSetupComplete) {
+    redirect("/setup");
   }
 
   return (
     <CenteredFormSection>
-      <SetupCard />
+      <LoginCard />
     </CenteredFormSection>
   );
 }

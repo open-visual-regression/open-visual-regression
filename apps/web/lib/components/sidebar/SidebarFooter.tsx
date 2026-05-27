@@ -15,7 +15,6 @@ const SidebarFooter = ({ version = "0.0.0", onCollapse }: SidebarFooterProps) =>
       <span>ovr</span>
       <span>v{version}</span>
     </div>
-    <span className="ml-auto text-badge text-ovr-fg-muted">self-hosted</span>
   </div>
 );
 

@@ -1,7 +1,6 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
 import { createAdminAndOrg } from "@/lib/services/setup";
 import { setupSchema, type SetupFormValues } from "./schema";
 
@@ -13,8 +12,8 @@ export const createAdminAccount = async (
   const parsed = setupSchema.safeParse(values);
 
   if (!parsed.success) {
-    const firstIssue = parsed.error.issues[0];
-    return { error: firstIssue?.message ?? "invalid form data" };
+    const [issue] = parsed.error.issues;
+    return { error: issue?.message ?? "invalid form data" };
   }
 
   const result = await createAdminAndOrg(parsed.data);
@@ -23,14 +22,5 @@ export const createAdminAccount = async (
     return { error: result.error };
   }
 
-  const cookieStore = await cookies();
-
-  cookieStore.set("ovr_setup_complete", "1", {
-    httpOnly: true,
-    sameSite: "strict",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-  });
-
-  redirect("/projects");
+  redirect("/login");
 };

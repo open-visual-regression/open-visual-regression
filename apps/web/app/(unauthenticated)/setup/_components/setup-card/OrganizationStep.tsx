@@ -24,7 +24,7 @@ export const OrganizationStep = ({ register, errors, onSubmit }: OrganizationSte
         />
         <FieldError errors={[errors.orgName]} />
       </Field>
-      <Button type="submit" size="lg" className="w-full justify-center">
+      <Button type="submit" size="lg" className="w-full">
         next
       </Button>
     </FieldGroup>
