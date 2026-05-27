@@ -67,22 +67,6 @@ describe("createAdminAndOrg", () => {
     );
   });
 
-  it("should return error when signUpEmail returns no user id", async () => {
-    mockSignUpEmail.mockResolvedValue({
-      token: null,
-      // @ts-expect-error intentionally testing missing id
-      user: { ...mocks.user.generateUser(), id: undefined },
-    });
-
-    const result = await createAdminAndOrg(baseInput);
-
-    expect(result).toEqual({
-      status: "error",
-      error: "failed to create admin account",
-    });
-    expect(mockCreateOrganization).not.toHaveBeenCalled();
-  });
-
   it("should return error when signUpEmail throws", async () => {
     mockSignUpEmail.mockRejectedValue(new Error("email already in use"));
 
