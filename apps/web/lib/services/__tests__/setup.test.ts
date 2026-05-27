@@ -70,6 +70,7 @@ describe("createAdminAndOrg", () => {
   it("should return error when signUpEmail returns no user id", async () => {
     mockSignUpEmail.mockResolvedValue({
       token: null,
+      // @ts-expect-error intentionally testing missing id
       user: { ...mocks.user.generateUser(), id: undefined },
     });
 
