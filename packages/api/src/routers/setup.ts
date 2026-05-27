@@ -1,9 +1,9 @@
 import { os } from "@orpc/server";
-import { getUserCount } from "@ovr/services";
+import { setupService } from "@ovr/services";
 
 export const setupRouter = {
-  getUserCount: os.handler(async () => {
-    const count = await getUserCount();
-    return { count };
+  getSetupStatus: os.handler(async () => {
+    const status = await setupService.getSetupStatus();
+    return { status };
   }),
 };

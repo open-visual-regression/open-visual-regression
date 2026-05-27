@@ -17,7 +17,7 @@ type SidebarProps = {
 };
 
 const Sidebar = ({ projects, activeProjectId, version, onCollapse }: SidebarProps) => (
-  <aside className="flex h-full w-60 flex-col overflow-hidden border-r border-ovr-border bg-background">
+  <aside className="flex h-full w-60 shrink-0 flex-col overflow-hidden border-r border-ovr-border bg-background">
     <SidebarSection label="projects" count={projects.length}>
       {projects.map((p) => (
         <SidebarItem

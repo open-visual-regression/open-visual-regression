@@ -6,6 +6,8 @@ import { CenteredFormSection } from "../_components/CenteredFormSection";
 export default async function SetupPage() {
   const isSetupComplete = await getIsSetupComplete();
 
+  console.log(isSetupComplete);
+
   if (isSetupComplete) {
     redirect("/login");
   }

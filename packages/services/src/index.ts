@@ -1,1 +1,1 @@
-export { getUserCount } from "./setup";
+export * as setupService from "./setup";

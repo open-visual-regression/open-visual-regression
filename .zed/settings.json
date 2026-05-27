@@ -1,44 +1,54 @@
 {
   "languages": {
     "TypeScript": {
+      "format_on_save": "on",
+      "prettier": { "allowed": false },
       "formatter": {
         "external": {
-          "command": "./node_modules/.bin/oxfmt",
-          "arguments": ["--stdin-filepath", "{buffer_path}"]
-        }
-      }
+          "command": "/opt/homebrew/bin/oxfmt",
+          "arguments": ["--stdin-filepath", "{buffer_path}"],
+        },
+      },
     },
     "TSX": {
+      "format_on_save": "on",
+      "prettier": { "allowed": false },
       "formatter": {
         "external": {
-          "command": "./node_modules/.bin/oxfmt",
-          "arguments": ["--stdin-filepath", "{buffer_path}"]
-        }
-      }
+          "command": "/opt/homebrew/bin/oxfmt",
+          "arguments": ["--stdin-filepath", "{buffer_path}"],
+        },
+      },
     },
     "JavaScript": {
+      "format_on_save": "on",
+      "prettier": { "allowed": false },
       "formatter": {
         "external": {
-          "command": "./node_modules/.bin/oxfmt",
-          "arguments": ["--stdin-filepath", "{buffer_path}"]
-        }
-      }
+          "command": "/opt/homebrew/bin/oxfmt",
+          "arguments": ["--stdin-filepath", "{buffer_path}"],
+        },
+      },
     },
-    "JSX": {
+    "JSON": {
+      "format_on_save": "on",
+      "prettier": { "allowed": false },
       "formatter": {
         "external": {
-          "command": "./node_modules/.bin/oxfmt",
-          "arguments": ["--stdin-filepath", "{buffer_path}"]
-        }
-      }
+          "command": "/opt/homebrew/bin/oxfmt",
+          "arguments": ["--stdin-filepath", "{buffer_path}"],
+        },
+      },
     },
     "CSS": {
+      "format_on_save": "on",
+      "prettier": { "allowed": false },
       "formatter": {
         "external": {
-          "command": "./node_modules/.bin/oxfmt",
-          "arguments": ["--stdin-filepath", "{buffer_path}"]
-        }
-      }
-    }
-  }
+          "command": "/opt/homebrew/bin/oxfmt",
+          "arguments": ["--stdin-filepath", "{buffer_path}"],
+        },
+      },
+    },
+  },
 }
