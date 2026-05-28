@@ -10,7 +10,7 @@
     "tsc": "tsc --noEmit",
     "lint": "oxlint app lib",
     "format": "oxfmt app lib",
-    "test": "vitest run --project unit",
+    "test": "vitest run --project unit --project integration",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
