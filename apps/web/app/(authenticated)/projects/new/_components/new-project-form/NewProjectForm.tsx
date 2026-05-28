@@ -28,6 +28,14 @@ const newProjectSchema = z.object({
 
 type NewProjectFormValues = z.infer<typeof newProjectSchema>;
 
+/**
+ * @todo
+ * 1. Update the field label so it matches the mockups
+ * 2. Update the diff input so it matches the mockups, and add a field description
+ * 3. Trigger a server action if the form is submitted and valid
+ * 4. Render the loading button if the form is submitting.
+ * 5. Allow users to specify screenshot resolutions/browsers, as per the mockups.
+ */
 export const NewProjectForm = () => {
   const {
     register,
