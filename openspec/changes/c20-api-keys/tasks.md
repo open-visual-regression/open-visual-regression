@@ -4,24 +4,26 @@ Gate: user can generate an API key; full key shown once in reveal banner; key ne
 
 Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-admin.jsx` (ApiKeysScreen)
 
-- [ ] 1.1 Create `apps/web/app/(authenticated)/settings/api-keys/page.tsx` (RSC):
-  - Fetch API keys for current user via Better Auth API Key plugin
-  - Table columns: name · prefix (`ovr_api_key_•••` — last 4 chars of key hash) · created date · last-used date
-  - Stale indicator: `△` TriangleAlert amber icon in last-used column when key has never been used
-  - "generate key" form above table: single name field + primary submit button
-  - Revoke button (XIcon, ghost variant) per row with confirmation (inline `AlertDialog`)
-- [ ] 1.2 Create `apps/web/app/(authenticated)/settings/api-keys/actions.ts`:
-  - `generateApiKey(name)` Server Action:
-    - Calls `auth.api.createApiKey({ name, prefix: "ovr_api_key_", userId })`
-    - Returns `{ key: string }` (the full plaintext key — only time it's available)
-    - Revalidates page
-  - `revokeApiKey(keyId)` Server Action → `auth.api.deleteApiKey`; revalidates
-- [ ] 1.3 Key reveal UX (client component `ApiKeyReveal.tsx`):
-  - After `generateApiKey` returns: show accent-tone `Alert` with `AlertTitle` "api key created"
-  - Alert body: full key in `<code>` block + copy button
-  - Warning: "this key cannot be retrieved again — store it securely"
-  - Alert dismisses on ×; after dismiss the key is gone forever
-- [ ] 1.4 Component tests:
-  - Generated key appears in Alert; not shown in table
-  - After dismiss, key not visible anywhere on page
-  - Revoke removes row after confirmation
+- [ ] 1.1 `packages/api/src/contracts/apiKeys.ts`: `generateApiKey` contract (input: `{ name }`; output: `{ key: string }`) + `revokeApiKey` contract (input: `{ keyId }`; output: void); update `contracts/index.ts`
+
+- [ ] 1.2 `apps/web/lib/router/apiKeys.ts`: `"use server"`;
+  - `generateApiKey`: validate session; `auth.api.createApiKey({ name, prefix: "ovr_pk_live_", userId })`; return `{ key }`; `.actionable()`
+  - `revokeApiKey`: validate session; `auth.api.deleteApiKey({ keyId })`; `.actionable()`
+  - Update `router/index.ts`
+
+- [ ] 1.3 `apps/web/app/(authenticated)/settings/api-keys/page.tsx` (RSC):
+  - Fetch keys via `auth.api.listApiKeys({ userId })`
+  - Table columns: name · prefix (`ovr_pk_live_•••`) · created date · last-used date
+  - `△` TriangleAlert amber icon when key has never been used
+  - "generate key" form (name field + submit) — `"use client"` component using `useServerAction(router.apiKeys.generateApiKey, { interceptors: [onSuccess(({ key }) => showRevealBanner(key)), onError(...)] })`
+  - Revoke button per row: `useServerAction(router.apiKeys.revokeApiKey)` + `AlertDialog` confirmation
+
+- [ ] 1.4 `ApiKeyReveal` (`"use client"` component):
+  - Accent-tone `Alert` "api key created"; full key in `<code>` + copy button
+  - "this key cannot be retrieved again — store it securely"
+  - Dismiss × removes from view permanently
+
+- [ ] 1.5 Component tests:
+  - Generated key appears in Alert banner; not visible in table
+  - After dismiss, key gone
+  - Revoke: confirmation required; row removed after confirm

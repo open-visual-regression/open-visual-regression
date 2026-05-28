@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth/auth";
@@ -18,14 +17,10 @@ export default async function AppLayout({ navigation, sidebar, children }: AppLa
 
   return (
     <div className="flex h-screen flex-col">
-      <Suspense>{navigation}</Suspense>
+      {navigation}
       <div className="flex flex-1 overflow-hidden">
-        <div className="hidden shrink-0 md:block">
-          <Suspense>{sidebar}</Suspense>
-        </div>
-        <main className="flex-1 overflow-auto">
-          <Suspense>{children}</Suspense>
-        </main>
+        <div className="hidden shrink-0 md:block">{sidebar}</div>
+        <main className="flex-1 overflow-auto">{children}</main>
       </div>
     </div>
   );

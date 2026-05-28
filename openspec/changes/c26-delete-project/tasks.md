@@ -1,30 +1,32 @@
 # 26 · Delete project
 
-Gate: danger zone button opens AlertDialog showing counts; confirm button disabled until slug typed exactly; on confirm project is deleted and user redirected to /projects.
+Gate: danger zone button opens AlertDialog showing deletion counts; confirm disabled until slug typed exactly; on confirm project deleted and user redirected to /projects.
+
+Depends on: c25-project-settings (project layout + settings page must exist)
 
 Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-projects.jsx` (DeleteProjectScreen)
 
-- [ ] 1.1 Create `apps/web/app/(authenticated)/projects/[slug]/settings/DeleteProjectDialog.tsx` (`"use client"`):
-  - Trigger: "delete project" destructive button in danger zone at bottom of settings page
-  - `AlertDialog` with:
-    - Title: "delete [project name]"
-    - Body: counts from `deleteProject` service preview — "this will permanently delete N runs, N snapshots, and all associated storage"
-    - Slug confirmation input: label "type [slug] to confirm"; tracks typed value in state
-    - Confirm button: destructive variant; `disabled` until `typedSlug === project.slug`
-    - Cancel button: secondary variant
+- [ ] 1.1 `packages/services/src/projects.ts` — add `deleteProject(id, callerId)`:
+  - Fetch build/snapshot/diff counts for confirmation dialog
+  - `db.projects.delete(id)` — cascade handles DB rows
+  - Fire-and-forget: `storage.deletePrefix(`projects/${id}/`)` (don't await)
+  - Return `{ buildCount, snapshotCount, diffCount }`
+  - Unit tests (mocked): returns correct counts; calls `storage.deletePrefix`
 
-- [ ] 1.2 Add `deleteProject(projectId, slug)` to `apps/web/app/(authenticated)/projects/[slug]/settings/actions.ts`:
-  - Validate caller is admin
-  - Calls `projectsService.deleteProject(projectId, callerId)`
-  - `redirect("/projects")`
+- [ ] 1.2 `packages/api/src/contracts/projects.ts` — add `deleteProject` contract (input: `{ id }`; output: void); update index
 
-- [ ] 1.3 Load deletion counts server-side when dialog opens:
-  - Either pre-fetch counts in page RSC and pass as props, or
-  - Fetch counts via a Server Action call when dialog mounts
+- [ ] 1.3 `apps/web/lib/router/projects.ts` — add `deleteProject` handler: validate admin session; call service; `.actionable()`; on success use `onSuccess` interceptor to redirect
 
-- [ ] 1.4 Component tests:
-  - Dialog renders with correct project name in title
-  - Confirm button disabled by default
-  - Typing wrong slug: confirm remains disabled
-  - Typing exact slug: confirm enabled
+- [ ] 1.4 `apps/web/app/(authenticated)/projects/[slug]/settings/DeleteProjectDialog.tsx` (`"use client"`):
+  - Trigger: "delete project" destructive button in danger zone
+  - Deletion counts pre-fetched in parent RSC, passed as props
+  - `AlertDialog`: title "delete [project name]"; body "this will permanently delete N runs, N snapshots, and all associated storage"
+  - Slug confirmation input: disabled until `typedSlug === project.slug`
+  - `useServerAction(router.projects.deleteProject, { interceptors: [onSuccess(() => navigate.push("/projects")), onError(...)] })`
+
+- [ ] 1.5 Component tests:
+  - Dialog renders with correct project name
+  - Confirm disabled by default
+  - Wrong slug typed: confirm stays disabled
+  - Exact slug typed: confirm enabled
   - Confirm calls action + redirects
