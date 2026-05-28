@@ -1,12 +1,15 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { onError, onSuccess } from "@orpc/client";
+import { useServerAction } from "@orpc/react/hooks";
 import { setupSchema, type SetupFormValues } from "./schema";
 import { AdminStep } from "./AdminStep";
 import { OrganizationStep } from "./OrganizationStep";
-import { createAdminAccount } from "./actions";
+import { router } from "@/lib/router";
 
 type Step = 1 | 2;
 
@@ -17,7 +20,7 @@ const STEPS: { id: Step; label: string }[] = [
 
 export const SetupForm = () => {
   const [step, setStep] = useState<Step>(1);
-  const [isPending, startTransition] = useTransition();
+  const navigate = useRouter();
 
   const {
     register,
@@ -37,6 +40,13 @@ export const SetupForm = () => {
     },
   });
 
+  const { execute, status } = useServerAction(router.setup.exec, {
+    interceptors: [
+      onSuccess(() => navigate.push("/")),
+      onError((err) => setError("root", { message: err.message })),
+    ],
+  });
+
   const handleStep1Submit: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
 
@@ -53,13 +63,7 @@ export const SetupForm = () => {
   };
 
   const handleFormSubmit = (values: SetupFormValues) => {
-    startTransition(async () => {
-      const result = await createAdminAccount(values);
-
-      if (result?.status === "error") {
-        setError("root", { message: result.error });
-      }
-    });
+    execute(values);
   };
 
   return (
@@ -81,7 +85,7 @@ export const SetupForm = () => {
           errors={errors}
           onSubmit={handleSubmit(handleFormSubmit)}
           onBack={handleBack}
-          isPending={isPending}
+          isPending={status === "pending"}
           rootError={errors.root?.message}
         />
       )}

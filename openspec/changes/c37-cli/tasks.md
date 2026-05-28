@@ -2,12 +2,12 @@
 
 Gate: `ovr snapshot --storybook-dir ./storybook-static` with valid config creates build, polls status, exits 0 on pass / exits 1 on needs_review or error.
 
-- [ ] 1.1 Install `commander`, `@orpc/client`, `zod`, `tsup` in `apps/cli`
+- [ ] 1.1 Install `commander`, `@orpc/client@^1.14.3`, `zod`, `tsup` in `apps/cli`; add `@ovr/api` as workspace dep
 - [ ] 1.2 Create `apps/cli/src/config.ts`:
   - Zod schema: `{ serverUrl: z.string().url(), apiKey: z.string().optional() }`
   - `loadConfig()`: reads `ovr.config.ts` from CWD using dynamic `import()`; validates with Zod; `apiKey` falls back to `process.env.OVR_API_KEY` if not in config; throws with helpful message if missing
 - [ ] 1.3 Create `apps/cli/src/client.ts`:
-  - Build oRPC client from `@ovr/api` router type + `serverUrl` + `Authorization: Bearer` header
+  - Import `contract` from `@ovr/api/contract`; build typed oRPC client via `createClient(contract)` with `RPCLink` pointed at `${serverUrl}/api/rpc` + `Authorization: Bearer ${apiKey}` header
 - [ ] 1.4 Create `apps/cli/src/commands/snapshot.ts`:
   - `ovr snapshot --storybook-dir <path>` (required option)
   - Validate dir exists; read `stories.json` → extract story IDs array

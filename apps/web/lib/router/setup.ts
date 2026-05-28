@@ -1,3 +1,5 @@
+"use server";
+
 import { db } from "@ovr/db";
 import { os } from "./os";
 import { auth } from "../auth/auth";

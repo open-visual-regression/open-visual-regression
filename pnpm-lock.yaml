@@ -53,6 +53,12 @@ importers:
       '@hookform/resolvers':
         specifier: ^5.4.0
         version: 5.4.0(react-hook-form@7.76.1(react@19.2.0))
+      '@orpc/client':
+        specifier: ^1.14.3
+        version: 1.14.3
+      '@orpc/react':
+        specifier: ^1.14.3
+        version: 1.14.3(react@19.2.0)(ws@8.21.0)
       '@orpc/server':
         specifier: ^1.14.3
         version: 1.14.3(ws@8.21.0)
@@ -1733,6 +1739,14 @@ packages:
 
   '@orpc/interop@1.14.3':
     resolution: {integrity: sha512-B8ANHAGVI8Mjw7Co0p+qBlkFG84i38WTKjR01HMkMXd6g9bHbgaqOfHcMpJMFaZzqvxBnXH4zPra2w6J8sQmhQ==}
+
+  '@orpc/openapi-client@1.14.3':
+    resolution: {integrity: sha512-1vp+hi858XDrCwYdhONl15YKNlHtj5F5gI3dq/McRRZ45tZ9/Ma03hxzABOOcayaT1L9nX7gPxhX7l5EuRf2zw==}
+
+  '@orpc/react@1.14.3':
+    resolution: {integrity: sha512-2V/hVUSHAOCIkP+NdkYvdseGwg8jYgRgZ2QteGXPryF/PooJOo5LJVEUWXQmCICN8olsZY90xYwAz3d2fvXi0g==}
+    peerDependencies:
+      react: '>=18.0.0'
 
   '@orpc/server@1.14.3':
     resolution: {integrity: sha512-VQG1sgruPhWdzT/ChltJ5Ju9v1A8F+s8EQ1MMSI33z0AthZ3IuuMZdqMIOo5YSuHROoFxzMJgCShOWYR9qXhQA==}
@@ -6214,6 +6228,29 @@ snapshots:
       - '@opentelemetry/api'
 
   '@orpc/interop@1.14.3': {}
+
+  '@orpc/openapi-client@1.14.3':
+    dependencies:
+      '@orpc/client': 1.14.3
+      '@orpc/contract': 1.14.3
+      '@orpc/shared': 1.14.3
+      '@orpc/standard-server': 1.14.3
+    transitivePeerDependencies:
+      - '@opentelemetry/api'
+
+  '@orpc/react@1.14.3(react@19.2.0)(ws@8.21.0)':
+    dependencies:
+      '@orpc/client': 1.14.3
+      '@orpc/contract': 1.14.3
+      '@orpc/openapi-client': 1.14.3
+      '@orpc/server': 1.14.3(ws@8.21.0)
+      '@orpc/shared': 1.14.3
+      react: 19.2.0
+    transitivePeerDependencies:
+      - '@opentelemetry/api'
+      - crossws
+      - fastify
+      - ws
 
   '@orpc/server@1.14.3(ws@8.21.0)':
     dependencies:

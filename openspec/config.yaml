@@ -14,7 +14,7 @@ context: |
 
   packages/db            Drizzle ORM schema + migrations + repositories
   packages/services      Business logic (no framework imports)
-  packages/api           oRPC routers (CLI-facing only; web does NOT import this)
+  packages/api           oRPC contracts only (`@orpc/contract` + Zod schemas); no handlers; imported by both web router and CLI client
   packages/queue         BullMQ job type definitions + producers
   packages/storage       RustFS / S3 client
   packages/ui            Design system (shadcn + Base UI + OVR primitives)
@@ -40,9 +40,9 @@ context: |
   - Services own all business logic; no Next.js imports allowed in packages/services
   - Repositories contain only Drizzle queries; no business logic
   - RBAC enforced in service layer only (not routes, not UI)
-  - apps/web does NOT import packages/api
+  - apps/web imports `@ovr/api/contract` only (never handler implementations from packages/api)
   - `"use client"` only for state, event handlers, or browser APIs
-  - Mutations: Server Actions co-located with the route that uses them (actions.ts)
+  - Mutations: oRPC procedures with `"use server"` + `.actionable()` used directly as Server Actions — no `actions.ts` wrapper needed; client components call via `useServerAction` from `@orpc/react/hooks`
   - Data display: Server Components
   - Client-side polling: Tanstack Query
 

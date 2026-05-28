@@ -1,12 +1,14 @@
-import { redirect } from "next/navigation";
-
 import { vi } from "vitest";
 
 import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
 import { router } from "@/lib/router";
 import { SetupCard } from "../SetupCard";
 
-vi.mock("next/navigation");
+const mockPush = vi.hoisted(() => vi.fn());
+
+vi.mock("next/navigation", () => ({
+  useRouter: vi.fn().mockReturnValue({ push: mockPush }),
+}));
 vi.mock("@/lib/router", () => ({
   router: {
     setup: {
@@ -101,7 +103,7 @@ describe("SetupCard", () => {
     await user.type(screen.getByLabelText(/confirm password/i), "securepass123");
     await user.click(screen.getByRole("button", { name: /create/i }));
 
-    await waitFor(() => expect(vi.mocked(redirect)).toHaveBeenCalledWith("/login"));
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/"));
   });
 
   it("should prevent resubmission while saving", async ({ user }) => {
