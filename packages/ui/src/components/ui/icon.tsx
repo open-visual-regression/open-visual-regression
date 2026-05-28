@@ -9,6 +9,8 @@ export {
   MenuIcon,
   SearchIcon,
   SettingsIcon,
+  PlusIcon,
+  CircleSlash2Icon,
 } from "lucide-react";
 
 type IconProps = React.SVGProps<SVGSVGElement> & {
