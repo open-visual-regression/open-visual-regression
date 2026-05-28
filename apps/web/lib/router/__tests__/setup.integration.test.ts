@@ -14,7 +14,14 @@ vi.mock("next/headers", () => ({
   headers: vi.fn(),
 }));
 
-vi.mock("@/lib/auth/auth");
+vi.mock("@/lib/auth/auth", () => ({
+  auth: {
+    api: {
+      signUpEmail: vi.fn(),
+      createOrganization: vi.fn(),
+    },
+  },
+}));
 
 const mockSignUpEmail = vi.mocked(auth.api.signUpEmail);
 const mockCreateOrganization = vi.mocked(auth.api.createOrganization);
