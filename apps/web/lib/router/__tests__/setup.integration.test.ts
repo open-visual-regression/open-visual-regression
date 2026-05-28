@@ -1,18 +1,15 @@
 // @vitest-environment node
 
-import { beforeEach, describe, expect, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { mocks } from "@ovr/mocks";
 import * as schema from "@ovr/db/schema";
+import { db } from "@ovr/db/dbClient";
 
 import { router } from "@/lib/router";
 import { auth } from "@/lib/auth/auth";
 
-import { test, truncateAll } from "./fixtures/dbFixture";
-
-vi.mock("next/headers", () => ({
-  headers: vi.fn(),
-}));
+vi.mock("next/headers");
 
 vi.mock("@/lib/auth/auth", () => ({
   auth: {
@@ -26,43 +23,37 @@ vi.mock("@/lib/auth/auth", () => ({
 const mockSignUpEmail = vi.mocked(auth.api.signUpEmail);
 const mockCreateOrganization = vi.mocked(auth.api.createOrganization);
 
-beforeEach(async () => {
-  const { headers } = await import("next/headers");
-  vi.mocked(headers).mockResolvedValue(new Headers() as never);
-  await truncateAll();
-});
-
 describe("setup.status", () => {
-  test("returns pending when DB is empty", async () => {
+  it("should return pending when DB is empty", async () => {
     const [error, result] = await router.setup.status();
     expect(error).toBeNull();
     expect(result?.status).toBe("pending");
-  }, 30_000);
+  });
 
-  test("returns pending when only users exist", async ({ dbCtx }) => {
-    await dbCtx.db.insert(schema.user).values(mocks.user.generateUser());
-
-    const [error, result] = await router.setup.status();
-    expect(error).toBeNull();
-    expect(result?.status).toBe("pending");
-  }, 30_000);
-
-  test("returns pending when only orgs exist", async ({ dbCtx }) => {
-    await dbCtx.db.insert(schema.organization).values(mocks.organization.generateOrganization());
+  it("should return pending when only users exist", async () => {
+    await db.insert(schema.user).values(mocks.user.generateUser());
 
     const [error, result] = await router.setup.status();
     expect(error).toBeNull();
     expect(result?.status).toBe("pending");
-  }, 30_000);
+  });
 
-  test("returns completed when both users and orgs exist", async ({ dbCtx }) => {
-    await dbCtx.db.insert(schema.user).values(mocks.user.generateUser());
-    await dbCtx.db.insert(schema.organization).values(mocks.organization.generateOrganization());
+  it("should return pending when only orgs exist", async () => {
+    await db.insert(schema.organization).values(mocks.organization.generateOrganization());
+
+    const [error, result] = await router.setup.status();
+    expect(error).toBeNull();
+    expect(result?.status).toBe("pending");
+  });
+
+  it("should return completed when both users and orgs exist", async () => {
+    await db.insert(schema.user).values(mocks.user.generateUser());
+    await db.insert(schema.organization).values(mocks.organization.generateOrganization());
 
     const [error, result] = await router.setup.status();
     expect(error).toBeNull();
     expect(result?.status).toBe("completed");
-  }, 30_000);
+  });
 });
 
 describe("setup.exec", () => {
@@ -73,7 +64,7 @@ describe("setup.exec", () => {
     password: "securepass123",
   };
 
-  test("calls signUpEmail then createOrganization with correct args", async () => {
+  it("should call signUpEmail then createOrganization with correct args", async () => {
     const user = mocks.user.generateUser();
     mockSignUpEmail.mockResolvedValue({ token: "test-token", user });
     mockCreateOrganization.mockResolvedValue({
@@ -91,9 +82,9 @@ describe("setup.exec", () => {
     expect(mockCreateOrganization).toHaveBeenCalledWith({
       body: { name: input.organizationName, slug: "my-test-org", userId: user.id },
     });
-  }, 30_000);
+  });
 
-  test("generates slug from org name with spaces and special chars", async () => {
+  it("should generate slug from org name with spaces and special chars", async () => {
     const user = mocks.user.generateUser();
     mockSignUpEmail.mockResolvedValue({ token: "test-token", user });
     mockCreateOrganization.mockResolvedValue({
@@ -106,13 +97,13 @@ describe("setup.exec", () => {
     expect(mockCreateOrganization).toHaveBeenCalledWith({
       body: expect.objectContaining({ slug: "tom-fischers-org--co" }),
     });
-  }, 30_000);
+  });
 
-  test("returns INTERNAL_SERVER_ERROR when signUpEmail returns no user", async () => {
+  it("should return INTERNAL_SERVER_ERROR when signUpEmail returns no user", async () => {
     mockSignUpEmail.mockResolvedValue(null as never);
 
     const [error] = await router.setup.exec(input);
     expect(error?.message).toBe("Failed to sign up user");
     expect(mockCreateOrganization).not.toHaveBeenCalled();
-  }, 30_000);
+  });
 });
