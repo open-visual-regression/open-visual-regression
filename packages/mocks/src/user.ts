@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker";
 
-import type { user } from "@ovr/db/schema/auth";
+import type { user } from "@ovr/db/schema";
 
 type User = typeof user.$inferSelect;
 

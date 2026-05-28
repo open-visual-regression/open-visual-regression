@@ -6,7 +6,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./dbClient": "./src/client.ts",
-    "./authSchema": "./src/schema/auth.ts"
+    "./schema": "./src/schema/auth.ts"
   },
   "scripts": {
     "build": "tsc",

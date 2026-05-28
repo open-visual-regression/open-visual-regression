@@ -3,7 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin, organization } from "better-auth/plugins";
 import { apiKey } from "@better-auth/api-key";
 import { db } from "@ovr/db/dbClient";
-import * as schema from "@ovr/db/authSchema";
+import * as schema from "@ovr/db/schema";
 
 export const auth = betterAuth({
   emailAndPassword: {
