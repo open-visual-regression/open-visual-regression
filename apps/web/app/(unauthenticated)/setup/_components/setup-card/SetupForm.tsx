@@ -56,7 +56,7 @@ export const SetupForm = () => {
     startTransition(async () => {
       const result = await createAdminAccount(values);
 
-      if (result.status === "error") {
+      if (result?.status === "error") {
         setError("root", { message: result.error });
       }
     });

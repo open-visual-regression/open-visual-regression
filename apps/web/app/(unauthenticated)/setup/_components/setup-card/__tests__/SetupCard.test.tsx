@@ -7,7 +7,14 @@ import { router } from "@/lib/router";
 import { SetupCard } from "../SetupCard";
 
 vi.mock("next/navigation");
-vi.mock("@/lib/router");
+vi.mock("@/lib/router", () => ({
+  router: {
+    setup: {
+      exec: vi.fn(),
+      status: vi.fn(),
+    },
+  },
+}));
 
 const mockExec = vi.mocked(router.setup.exec);
 
