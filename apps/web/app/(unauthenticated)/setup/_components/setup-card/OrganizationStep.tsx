@@ -6,23 +6,23 @@ import type { SetupFormValues } from "./schema";
 
 type OrganizationStepProps = {
   register: UseFormRegister<SetupFormValues>;
-  errors: Pick<FieldErrors<SetupFormValues>, "orgName">;
+  errors: Pick<FieldErrors<SetupFormValues>, "organizationName">;
   onSubmit: React.FormEventHandler<HTMLFormElement>;
 };
 
 export const OrganizationStep = ({ register, errors, onSubmit }: OrganizationStepProps) => (
   <form onSubmit={onSubmit} noValidate>
     <FieldGroup>
-      <Field data-invalid={!!errors.orgName}>
-        <FieldLabel htmlFor="orgName">organization name</FieldLabel>
+      <Field data-invalid={!!errors.organizationName}>
+        <FieldLabel htmlFor="organizationName">organization name</FieldLabel>
         <Input
-          id="orgName"
+          id="organizationName"
           placeholder="enter your organization's name"
           autoFocus
-          aria-invalid={!!errors.orgName}
-          {...register("orgName")}
+          aria-invalid={!!errors.organizationName}
+          {...register("organizationName")}
         />
-        <FieldError errors={[errors.orgName]} />
+        <FieldError errors={[errors.organizationName]} />
       </Field>
       <Button type="submit" size="lg" className="w-full">
         next

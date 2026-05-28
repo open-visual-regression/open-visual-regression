@@ -7,6 +7,16 @@ export const getSetupStatusOutputSchema = z.object({ status: setupStatusSchema }
 
 export const getSetupStatusContract = oc.output(getSetupStatusOutputSchema);
 
+export const execSetupInputSchema = z.object({
+  organizationName: z.string().min(1),
+  name: z.string().min(1),
+  email: z.email(),
+  password: z.string().min(8),
+});
+
+export const execSetupContract = oc.input(execSetupInputSchema);
+
 export const contract = {
   status: getSetupStatusContract,
+  exec: execSetupContract,
 } as const;

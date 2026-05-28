@@ -8,7 +8,7 @@ import {
 } from "@ovr/ui/components/dropdown-menu";
 import { Button } from "@ovr/ui/components/button";
 import { Icon, LogOutIcon } from "@ovr/ui/components/icon";
-import { authClient } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth/client";
 import { getMonogram } from "@/lib/utils/monogram";
 
 type UserAvatarProps = {

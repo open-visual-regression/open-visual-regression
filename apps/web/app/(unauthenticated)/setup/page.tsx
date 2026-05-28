@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { SetupCard } from "./_components/setup-card/SetupCard";
 import { CenteredFormSection } from "../_components/CenteredFormSection";
-import { router } from "@ovr/api/router";
+import { router } from "@/lib/router";
 
 export const dynamic = "force-dynamic";
 

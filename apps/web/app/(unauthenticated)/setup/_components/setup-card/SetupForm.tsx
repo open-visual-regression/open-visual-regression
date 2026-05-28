@@ -29,7 +29,7 @@ export const SetupForm = () => {
   } = useForm<SetupFormValues>({
     resolver: zodResolver(setupSchema),
     defaultValues: {
-      orgName: "",
+      organizationName: "",
       name: "",
       email: "",
       password: "",
@@ -39,7 +39,9 @@ export const SetupForm = () => {
 
   const handleStep1Submit: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
-    const valid = await trigger("orgName");
+
+    const valid = await trigger("organizationName");
+
     if (valid) {
       clearErrors(["name", "email", "password", "confirmPassword"]);
       setStep(2);
@@ -53,7 +55,8 @@ export const SetupForm = () => {
   const handleFormSubmit = (values: SetupFormValues) => {
     startTransition(async () => {
       const result = await createAdminAccount(values);
-      if (result && "error" in result) {
+
+      if (result.status === "error") {
         setError("root", { message: result.error });
       }
     });

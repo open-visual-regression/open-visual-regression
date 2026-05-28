@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const setupSchema = z
   .object({
-    orgName: z.string().min(1, "organization name is required"),
+    organizationName: z.string().min(1, "organization name is required"),
     name: z.string().min(1, "name is required"),
     email: z.email("invalid email address"),
     password: z.string().min(8, "password must be at least 8 characters"),

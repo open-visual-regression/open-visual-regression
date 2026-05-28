@@ -4,6 +4,7 @@ import { admin, organization } from "better-auth/plugins";
 import { apiKey } from "@better-auth/api-key";
 import { db } from "@ovr/db/dbClient";
 import * as schema from "@ovr/db/schema";
+import { nextCookies } from "better-auth/next-js";
 
 export const auth = betterAuth({
   emailAndPassword: {
@@ -13,7 +14,7 @@ export const auth = betterAuth({
     provider: "pg",
     schema,
   }),
-  plugins: [admin(), apiKey({ defaultPrefix: "ovr_api_key_" }), organization()],
+  plugins: [admin(), apiKey({ defaultPrefix: "ovr_api_key_" }), organization(), nextCookies()],
   rateLimit: {
     window: 60,
     max: 100,

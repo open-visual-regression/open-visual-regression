@@ -1,19 +1,15 @@
-import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-
-import { mocks } from "@ovr/mocks";
 
 import { vi } from "vitest";
 
 import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
+import { router } from "@/lib/router";
 import { SetupCard } from "../SetupCard";
 
-vi.mock("@/lib/auth");
 vi.mock("next/navigation");
-vi.mock("next/headers");
+vi.mock("@/lib/router");
 
-const mockSignUpEmail = vi.mocked(auth.api.signUpEmail);
-const mockCreateOrganization = vi.mocked(auth.api.createOrganization);
+const mockExec = vi.mocked(router.setup.exec);
 
 const renderComponent = () => render(<SetupCard />);
 
@@ -63,7 +59,16 @@ describe("SetupCard", () => {
   });
 
   it("should show an error if account creation fails", async ({ user }) => {
-    mockSignUpEmail.mockRejectedValue(new Error("email already in use"));
+    mockExec.mockResolvedValue([
+      {
+        message: "email already in use",
+        code: "INTERNAL_SERVER_ERROR",
+        status: 500,
+        data: undefined,
+        defined: false,
+      },
+      undefined,
+    ]);
     renderComponent();
 
     await user.type(screen.getByLabelText(/organization name/i), "Tom Fischer's Organization");
@@ -78,14 +83,7 @@ describe("SetupCard", () => {
   });
 
   it("should redirect to /login after successful setup", async ({ user }) => {
-    mockSignUpEmail.mockResolvedValue({
-      token: "test-token",
-      user: mocks.user.generateUser(),
-    });
-    mockCreateOrganization.mockResolvedValue({
-      ...mocks.organization.generateOrganization(),
-      members: [],
-    });
+    mockExec.mockResolvedValue([null, undefined]);
     renderComponent();
 
     await user.type(screen.getByLabelText(/organization name/i), "Tom Fischer's Organization");
@@ -100,7 +98,7 @@ describe("SetupCard", () => {
   });
 
   it("should prevent resubmission while saving", async ({ user }) => {
-    mockSignUpEmail.mockReturnValue(new Promise(() => {}));
+    mockExec.mockReturnValue(new Promise(() => {}));
     renderComponent();
 
     await user.type(screen.getByLabelText(/organization name/i), "Tom Fischer's Organization");

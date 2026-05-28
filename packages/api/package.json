@@ -4,26 +4,20 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./router": "./src/routers/index.ts"
+    "./contract": "./src/contracts/index.ts"
   },
   "scripts": {
     "build": "tsc",
     "tsc": "tsc --noEmit",
     "lint": "oxlint src",
-    "format": "oxfmt src",
-    "test": "vitest run"
+    "format": "oxfmt src"
   },
   "dependencies": {
     "@orpc/contract": "^1.14.3",
-    "@orpc/next": "^0.27.0",
-    "@orpc/server": "^1.14.3",
-    "@ovr/db": "workspace:*",
-    "next": "^16.2.6",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@ovr/typescript-config": "workspace:*",
-    "typescript": "6.0.3",
-    "vitest": "^4.1.7"
+    "typescript": "6.0.3"
   }
 }

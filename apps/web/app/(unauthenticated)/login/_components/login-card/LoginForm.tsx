@@ -5,7 +5,7 @@ import { Button } from "@ovr/ui/components/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@ovr/ui/components/field";
 import { Input } from "@ovr/ui/components/input";
 import { useForm } from "react-hook-form";
-import { authClient } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth/client";
 import { loginSchema, type LoginFormValues } from "./schema";
 
 export const LoginForm = () => {

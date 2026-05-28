@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/auth/auth";
 import { NavigationBar } from "@/lib/components/navigation-bar/NavigationBar";
 import { NavigationBarLogo } from "@/lib/components/navigation-bar/NavigationBarLogo";
 import { NavigationBarBreadcrumb } from "@/lib/components/navigation-bar/NavigationBarBreadcrumb";

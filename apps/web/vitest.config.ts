@@ -33,6 +33,16 @@ export default defineConfig({
           globals: true,
           setupFiles: ["./vitest.setup.ts"],
           include: ["app/**/*.test.{ts,tsx}", "lib/**/*.test.{ts,tsx}"],
+          exclude: ["lib/**/*.integration.test.ts"],
+          clearMocks: true,
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "integration",
+          environment: "node",
+          include: ["lib/**/*.integration.test.ts"],
           clearMocks: true,
         },
       },
