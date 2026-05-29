@@ -10,6 +10,7 @@ import { Card, CardContent, CardFooter } from "@ovr/ui/components/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@ovr/ui/components/field";
 import { Icon, PlusIcon } from "@ovr/ui/components/icon";
 import { Input } from "@ovr/ui/components/input";
+import { Textarea } from "@ovr/ui/components/textarea";
 import { Typography } from "@ovr/ui/components/typography";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -20,6 +21,9 @@ const newProjectSchema = z.object({
     .string()
     .min(1, "you must enter a project name")
     .max(255, "the project name must be less than 255 characters"),
+  projectDescription: z
+    .string()
+    .max(511, "the project description must be less than 511 characters"),
   gitMainBranch: z
     .string()
     .min(1, "you must enter a baseline git branch")
@@ -50,7 +54,12 @@ export const NewProjectForm = () => {
     formState: { errors },
   } = useForm<NewProjectFormValues>({
     resolver: zodResolver(newProjectSchema),
-    defaultValues: { projectName: "", gitMainBranch: "main", diffThreshold: 0.05 },
+    defaultValues: {
+      projectName: "",
+      projectDescription: "",
+      gitMainBranch: "main",
+      diffThreshold: 0.05,
+    },
   });
 
   const { execute, status } = useServerAction(router.projects.add, {
@@ -82,6 +91,18 @@ export const NewProjectForm = () => {
                   {...register("projectName")}
                 />
                 <FieldError errors={[errors.projectName]} />
+              </Field>
+            </FieldGroup>
+            <FieldGroup>
+              <Field data-invalid={!!errors.projectDescription}>
+                <FieldLabel>description</FieldLabel>
+                <Textarea
+                  id="description"
+                  placeholder="enter the project description"
+                  aria-invalid={!!errors.projectDescription}
+                  {...register("projectDescription")}
+                />
+                <FieldError errors={[errors.projectDescription]} />
               </Field>
             </FieldGroup>
             <div className="flex flex-row gap-3">

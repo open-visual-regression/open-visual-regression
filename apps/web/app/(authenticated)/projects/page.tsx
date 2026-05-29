@@ -4,6 +4,7 @@ import { Typography } from "@ovr/ui/components/typography";
 import { NoProjectsSection } from "./_components/NoProjectsSection";
 import { router } from "@/lib/router";
 import { redirect } from "next/navigation";
+import { ProjectCardsList } from "./_components/ProjectCardsList";
 
 export default async function ProjectsPage() {
   const [error, listProjectsResult] = await router.projects.list();
@@ -29,7 +30,11 @@ export default async function ProjectsPage() {
           new project
         </ButtonLink>
       </div>
-      {listProjectsResult?.projects.length === 0 ? <NoProjectsSection /> : null}
+      {listProjectsResult?.projects.length === 0 ? (
+        <NoProjectsSection />
+      ) : (
+        <ProjectCardsList projects={listProjectsResult?.projects ?? []} />
+      )}
     </div>
   );
 }

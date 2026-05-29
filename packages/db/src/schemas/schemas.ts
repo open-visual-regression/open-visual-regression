@@ -16,6 +16,7 @@ const utcTimestamp = customType<{
 export const projects = pgTable("projects", {
   id: uuid().primaryKey().$defaultFn(uuidv7),
   name: varchar({ length: 255 }).notNull(),
+  description: varchar({ length: 511 }),
   diffThreshold: numeric("diff_threshold", { mode: "number", precision: 3, scale: 2 }).notNull(),
   gitMainBranch: varchar("git_main_branch", { length: 255 }).notNull(),
   organizationId: text("organization_id")

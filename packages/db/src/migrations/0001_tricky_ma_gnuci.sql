@@ -1,6 +1,7 @@
 CREATE TABLE "projects" (
 	"id" uuid PRIMARY KEY NOT NULL,
 	"name" varchar(255) NOT NULL,
+	"description" varchar(511),
 	"diff_threshold" numeric(3, 2) NOT NULL,
 	"git_main_branch" varchar(255) NOT NULL,
 	"organization_id" text NOT NULL,

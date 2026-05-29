@@ -1,5 +1,5 @@
 {
-  "id": "dd5e5a94-720c-4dc2-8d8a-decaeeb6fc68",
+  "id": "a3580258-7c43-4cd3-95f6-77cb705b6c9c",
   "prevId": "e5da4e9d-ceaa-4fa4-9782-03edfdd937db",
   "version": "7",
   "dialect": "postgresql",
@@ -904,6 +904,12 @@
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar(511)",
+          "primaryKey": false,
+          "notNull": false
         },
         "diff_threshold": {
           "name": "diff_threshold",

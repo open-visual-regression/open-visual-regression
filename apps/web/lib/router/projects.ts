@@ -3,20 +3,20 @@
 import { os } from "./os";
 import { authenticatedMiddleware } from "./middleware";
 import { ORPCError } from "@orpc/client";
-import { UserSchema } from "@ovr/api/contracts/users";
-import { ProjectSchema } from "@ovr/api/contracts/projects";
+import { ProjectCreatorDto, ProjectDto } from "@ovr/api/contracts/projects";
 import { ProjectCreatorDbSchema, ProjectDbSchema } from "@ovr/db/repository/projects";
 import { dbClient } from "@ovr/db/client";
 
-const toCreatorDto = (creator: ProjectCreatorDbSchema): UserSchema => ({
+const toCreatorDto = (creator: ProjectCreatorDbSchema): ProjectCreatorDto => ({
   id: creator.id,
   name: creator.name,
   email: creator.email,
 });
 
-const toProjectDto = (project: ProjectDbSchema): ProjectSchema => ({
+const toProjectDto = (project: ProjectDbSchema): ProjectDto => ({
   id: project.id,
   name: project.name,
+  description: project.description,
   gitMainBranch: project.gitMainBranch,
   diffThreshold: project.diffThreshold,
   createdBy: toCreatorDto(project.creator),
@@ -36,6 +36,7 @@ export const add = os.projects.add
   .handler(async ({ input, context }) => {
     const project = await dbClient.projects.addProject({
       name: input.projectName,
+      description: input.projectDescription,
       gitMainBranch: input.gitMainBranch,
       diffThreshold: input.diffThreshold,
       organizationId: context.organizationId,

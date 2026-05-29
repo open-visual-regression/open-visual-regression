@@ -1,7 +1,22 @@
 import { SidebarContainer } from "@/lib/components/sidebar/SidebarContainer";
+import { router } from "@/lib/router";
+import { redirect } from "next/navigation";
 
-export default function SidebarPage() {
-  const version = process.env.npm_package_version ?? "0.0.0";
+export default async function SidebarPage() {
+  const [error, projectsResult] = await router.projects.list();
 
-  return <SidebarContainer projects={[]} version={version} />;
+  if (error) {
+    redirect("/error");
+  }
+
+  if (!projectsResult.projects) {
+    redirect("/error");
+  }
+
+  return (
+    <SidebarContainer
+      projects={projectsResult.projects}
+      version={process.env.npm_package_version}
+    />
+  );
 }
