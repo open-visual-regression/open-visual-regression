@@ -4,9 +4,7 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./dbClient": "./src/client.ts",
-    "./schema": "./src/schema/auth.ts"
+    "./*": "./src/*.ts"
   },
   "scripts": {
     "build": "tsc",
@@ -21,7 +19,8 @@
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",
-    "pg": "^8.21.0"
+    "pg": "^8.21.0",
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "@ovr/typescript-config": "workspace:*",

@@ -1,24 +1,27 @@
 "use server";
 
-import { db } from "@ovr/db";
+import { dbClient } from "@ovr/db/client";
 import { os } from "./os";
 import { auth } from "../auth/auth";
 import { ORPCError } from "@orpc/server";
+import { unauthenticatedMiddleware } from "./middleware";
+import { headers } from "next/headers";
 
 export const status = os.setup.status
   .handler(async () => {
-    const [organizationCount, userCount] = await Promise.all([
-      db.organizations.getOrganizationCount(),
-      db.users.getUserCount(),
+    const [organization, userCount] = await Promise.all([
+      dbClient.organizations.getOrganization(),
+      dbClient.users.getUserCount(),
     ]);
 
-    const status = organizationCount > 0 && userCount > 0 ? "completed" : "pending";
+    const status = organization && userCount > 0 ? "completed" : "pending";
 
     return { status };
   })
   .actionable();
 
 export const exec = os.setup.exec
+  .use(unauthenticatedMiddleware)
   .handler(async ({ input }) => {
     const signUpResponse = await auth.api.signUpEmail({
       body: { name: input.name, email: input.email, password: input.password },
@@ -33,8 +36,13 @@ export const exec = os.setup.exec
       .replace(/\s+/g, "-")
       .replace(/[^a-z0-9-]/g, "");
 
-    await auth.api.createOrganization({
+    const organization = await auth.api.createOrganization({
       body: { name: input.organizationName, slug, userId: signUpResponse.user.id },
+    });
+
+    await auth.api.setActiveOrganization({
+      body: { organizationId: organization.id },
+      headers: await headers(),
     });
   })
   .actionable();

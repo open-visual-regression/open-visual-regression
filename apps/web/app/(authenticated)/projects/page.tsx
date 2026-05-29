@@ -2,14 +2,17 @@ import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
 import { Icon, PlusIcon } from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
 import { NoProjectsSection } from "./_components/NoProjectsSection";
+import { router } from "@/lib/router";
+import { redirect } from "next/navigation";
 
-/**
- * @todo
- * 1. Fetch the projects from the oRPC router
- * 2. Render the count beside the heading
- * 3. Render the projects if there are any, otherwise render the NoProjectsSection
- */
-export default function ProjectsPage() {
+export default async function ProjectsPage() {
+  const [error, listProjectsResult] = await router.projects.list();
+
+  if (error) {
+    console.error(error);
+    redirect("/error");
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex justify-between items-center">
@@ -18,7 +21,7 @@ export default function ProjectsPage() {
             projects
           </Typography>
           <Typography variant="h2" className="text-muted-foreground" as="p">
-            (0)
+            ({listProjectsResult?.projects.length ?? 0})
           </Typography>
         </div>
         <ButtonLink href="/projects/new" size="lg">
@@ -26,7 +29,7 @@ export default function ProjectsPage() {
           new project
         </ButtonLink>
       </div>
-      <NoProjectsSection />
+      {listProjectsResult?.projects.length === 0 ? <NoProjectsSection /> : null}
     </div>
   );
 }

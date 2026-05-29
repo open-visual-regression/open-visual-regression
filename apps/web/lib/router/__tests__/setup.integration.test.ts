@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { mocks } from "@ovr/mocks";
 import * as schema from "@ovr/db/schema";
-import { db } from "@ovr/db/dbClient";
+import { db } from "@ovr/db/db";
 
 import { router } from "@/lib/router";
 import { auth } from "@/lib/auth/auth";
