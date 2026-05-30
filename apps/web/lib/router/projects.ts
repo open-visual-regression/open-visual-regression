@@ -3,31 +3,32 @@
 import { os } from "./os";
 import { authenticatedMiddleware } from "./middleware";
 import { ORPCError } from "@orpc/client";
-import { ProjectCreatorDto, ProjectDto } from "@ovr/api/contracts/projects";
-import { ProjectCreatorDbSchema, ProjectDbSchema } from "@ovr/db/repository/projects";
 import { dbClient } from "@ovr/db/client";
 
-const toCreatorDto = (creator: ProjectCreatorDbSchema): ProjectCreatorDto => ({
-  id: creator.id,
-  name: creator.name,
-  email: creator.email,
-});
+export const getOne = os.projects.getOne
+  .use(authenticatedMiddleware)
+  .handler(async ({ input, context }) => {
+    const project = await dbClient.projects.getProject({
+      projectId: input.projectId,
+      organizationId: context.organizationId,
+    });
 
-const toProjectDto = (project: ProjectDbSchema): ProjectDto => ({
-  id: project.id,
-  name: project.name,
-  description: project.description,
-  gitMainBranch: project.gitMainBranch,
-  diffThreshold: project.diffThreshold,
-  createdBy: toCreatorDto(project.creator),
-  createdAt: project.createdAt,
-});
+    if (!project) {
+      throw new ORPCError("NOT_FOUND", { message: "Project not found" });
+    }
+
+    return { project };
+  })
+  .actionable();
 
 export const list = os.projects.list
   .use(authenticatedMiddleware)
-  .handler(async () => {
-    const projects = await dbClient.projects.listProjects();
-    return { projects: projects.map(toProjectDto) };
+  .handler(async ({ context }) => {
+    const projects = await dbClient.projects.listProjects({
+      organizationId: context.organizationId,
+    });
+
+    return { projects };
   })
   .actionable();
 

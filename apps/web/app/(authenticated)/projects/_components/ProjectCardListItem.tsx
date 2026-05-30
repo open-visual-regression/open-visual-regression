@@ -3,6 +3,12 @@ import { Card, CardContent, CardHeader } from "@ovr/ui/components/card";
 import { FolderIcon, GitBranchIcon, Icon } from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
 import Link from "next/link";
+import {
+  DescriptionDetails,
+  DescriptionList,
+  DescriptionListItem,
+  DescriptionTerm,
+} from "./DescriptionList";
 
 type ProjectCardListItemProps = {
   project: ProjectDto;
@@ -22,30 +28,36 @@ export const ProjectCardListItem = ({ project }: ProjectCardListItemProps) => {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-4">
-              <div>
+              {project.description ? (
                 <Typography variant="body-muted">{project.description}</Typography>
-              </div>
-              <div>
-                <dl className="flex flex-row gap-6 items-center">
-                  <div className="flex flex-row gap-2 items-center">
-                    <dt>
-                      <Typography variant="body-muted">runs:</Typography>
-                    </dt>
-                    <dd>
-                      <Typography variant="body-muted">0</Typography>
-                    </dd>
-                  </div>
-                  <div className="flex flex-row gap-2 items-center">
-                    <dt>
-                      <Typography variant="body-muted">baseline:</Typography>
-                    </dt>
-                    <dd className="flex flex-row gap-1 items-center">
-                      <Icon icon={GitBranchIcon} size={12} />
-                      <Typography variant="body-muted">{project.gitMainBranch}</Typography>
-                    </dd>
-                  </div>
-                </dl>
-              </div>
+              ) : null}
+              <DescriptionList>
+                <DescriptionListItem>
+                  <DescriptionTerm>
+                    <Typography variant="body-muted">runs:</Typography>
+                  </DescriptionTerm>
+                  <DescriptionDetails>
+                    <Typography variant="body">0</Typography>
+                  </DescriptionDetails>
+                </DescriptionListItem>
+                <DescriptionListItem>
+                  <DescriptionTerm>
+                    <Typography variant="body-muted">baseline:</Typography>
+                  </DescriptionTerm>
+                  <DescriptionDetails>
+                    <Icon icon={GitBranchIcon} size={12} />
+                    <Typography variant="body">{project.gitMainBranch}</Typography>
+                  </DescriptionDetails>
+                </DescriptionListItem>
+                <DescriptionListItem>
+                  <DescriptionTerm>
+                    <Typography variant="body-muted">threshold:</Typography>
+                  </DescriptionTerm>
+                  <DescriptionDetails>
+                    <Typography variant="body">{project.diffThreshold * 100}%</Typography>
+                  </DescriptionDetails>
+                </DescriptionListItem>
+              </DescriptionList>
             </div>
           </CardContent>
         </Card>
