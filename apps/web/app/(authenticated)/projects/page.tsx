@@ -14,6 +14,8 @@ export default async function ProjectsPage() {
     redirect("/error");
   }
 
+  const { projects } = listProjectsResult;
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex justify-between items-center">
@@ -22,7 +24,7 @@ export default async function ProjectsPage() {
             projects
           </Typography>
           <Typography variant="h2" className="text-muted-foreground" as="p">
-            ({listProjectsResult?.projects.length ?? 0})
+            ({projects.length ?? 0})
           </Typography>
         </div>
         <ButtonLink href="/projects/new" size="lg">
@@ -30,10 +32,10 @@ export default async function ProjectsPage() {
           new project
         </ButtonLink>
       </div>
-      {listProjectsResult?.projects.length === 0 ? (
+      {projects.length === 0 ? (
         <NoProjectsSection />
       ) : (
-        <ProjectCardsList projects={listProjectsResult?.projects ?? []} />
+        <ProjectCardsList projects={projects ?? []} />
       )}
     </div>
   );

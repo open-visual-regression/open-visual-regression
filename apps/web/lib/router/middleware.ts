@@ -7,7 +7,6 @@ import { type RequestContext } from "./os";
 export const unauthenticatedMiddleware = os
   .$context<RequestContext>()
   .middleware(async ({ context, next }) => {
-    console.log(context);
     const session = await auth.api.getSession({ headers: context.headers });
 
     if (session) {

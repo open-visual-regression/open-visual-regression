@@ -1,6 +1,6 @@
 import { Typography } from "@ovr/ui/components/typography";
 import { router } from "@/lib/router";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ProjectTabNav } from "./_components/ProjectTabNav";
 import { ProjectSettings } from "./_components/project-settings/ProjectSettings";
 import { ProjectRuns } from "./_components/project-runs/ProjectRuns";
@@ -24,7 +24,7 @@ export default async function ProjectPage(props: ProjectPageProps) {
   const [error, result] = await router.projects.getOne({ projectId });
 
   if (error?.status === 404) {
-    redirect("/404");
+    notFound();
   }
 
   if (error) {
