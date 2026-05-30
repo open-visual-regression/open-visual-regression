@@ -12,8 +12,6 @@ const searchParamsSchema = z.object({
   tab: z.enum(["runs", "settings"]),
 });
 
-import type { Tab } from "./_components/ProjectTabNav";
-
 export default async function ProjectPage(props: ProjectPageProps) {
   const [{ projectId }, rawSearchParams] = await Promise.all([props.params, props.searchParams]);
 
@@ -22,8 +20,6 @@ export default async function ProjectPage(props: ProjectPageProps) {
   if (!parsed.success) {
     redirect(`/projects/${projectId}?tab=runs`);
   }
-
-  const tab: Tab = parsed.data.tab;
 
   const [error, result] = await router.projects.getOne({ projectId });
 
@@ -40,10 +36,10 @@ export default async function ProjectPage(props: ProjectPageProps) {
       <Typography variant="h1" as="h1">
         {result.project.name}
       </Typography>
-      <ProjectTabNav projectId={projectId} activeTab={tab} />
+      <ProjectTabNav projectId={projectId} />
       <div className="py-4">
-        {tab === "runs" && <ProjectRuns />}
-        {tab === "settings" && <ProjectSettings />}
+        {parsed.data.tab === "runs" && <ProjectRuns />}
+        {parsed.data.tab === "settings" && <ProjectSettings />}
       </div>
     </div>
   );
