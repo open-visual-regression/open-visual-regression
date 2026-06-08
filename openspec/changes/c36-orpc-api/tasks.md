@@ -26,6 +26,6 @@ Architecture:
 
 - [ ] 1.12 `packages/api/src/contracts/builds.ts`: `createBuild` contract (input: `{ projectSlug, branch, commitSha, stories: string[] }`; output: `{ buildId: string }`) + `getBuildStatus` contract (input: `{ buildId: string }`; output: `{ status: BuildStatus }`)
 - [ ] 1.13 `packages/api/src/contracts/index.ts`: add `builds` to root contract
-- [ ] 1.14 `apps/web/lib/router/builds.ts`: `"use server"`; implement `createBuild` + `getBuildStatus` via `os.builds.*`; API key auth middleware using `auth.api.verifyApiKey({ headers: context.headers })` → throw `ORPCError("UNAUTHORIZED")` if missing/invalid
+- [ ] 1.14 `apps/web/lib/router/builds.ts`: `"use server"`; implement `createBuild` + `getBuildStatus` via `osApiKey.builds.*`; `osApiKey = os.use(async ({ context, next }) => { const bearer = context.headers.get("authorization")?.replace("Bearer ", ""); if (!bearer) throw new ORPCError("UNAUTHORIZED"); const result = await auth.api.verifyApiKey({ body: { key: bearer } }); if (!result.valid) throw new ORPCError("UNAUTHORIZED"); return next({ context: { apiKey: result } }); })` — note: `verifyApiKey` takes `body: { key }` (not headers); Bearer token extracted manually from `Authorization` header
 - [ ] 1.15 `apps/web/lib/router/index.ts`: add `builds` to router
 - [ ] 1.16 Integration tests: `apps/web/lib/router/__tests__/builds.integration.test.ts` — valid API key passes; missing/invalid key → UNAUTHORIZED; `createBuild` creates DB records + enqueues jobs; `getBuildStatus` returns correct status
