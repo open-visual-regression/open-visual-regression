@@ -1,16 +1,16 @@
 import { oc } from "@orpc/contract";
 import { z } from "zod";
 
-export const apiKeyItemSchema = z.object({
+export const apiKeySchema = z.object({
   id: z.string(),
   name: z.string().nullable(),
-  start: z.string().nullable(),
+  start: z.string().nullable(), // first few visible characters; helps identify keys without exposing the full key
   createdAt: z.date(),
   lastRequest: z.date().nullable(),
 });
 
 export const createApiKeyInputSchema = z.object({
-  name: z.string().min(1),
+  name: z.string().min(1).max(100),
 });
 
 export const createApiKeyOutputSchema = z.object({
@@ -23,8 +23,8 @@ export const listApiKeysInputSchema = z.object({
 });
 
 export const listApiKeysOutputSchema = z.object({
-  apiKeys: z.array(apiKeyItemSchema),
-  total: z.number(),
+  apiKeys: z.array(apiKeySchema),
+  total: z.number().int().nonnegative(),
 });
 
 export const revokeApiKeyInputSchema = z.object({
