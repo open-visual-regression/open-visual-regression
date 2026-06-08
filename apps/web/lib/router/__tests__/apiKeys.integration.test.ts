@@ -1,50 +1,11 @@
 // @vitest-environment node
 
-import { describe, expect, test, vi } from "vitest";
-import { headers } from "next/headers";
-import { convertSetCookieToCookie } from "better-auth/test";
+import { vi } from "vitest";
 
-import { mocks } from "@ovr/mocks";
-import { auth } from "@/lib/auth/auth";
+import { it, describe, expect } from "@/test-integration-utils";
 import { router } from "@/lib/router";
 
 vi.mock("next/headers");
-
-const TEST_PASSWORD = "securepass123";
-
-interface AdminContext {
-  userId: string;
-}
-
-const it = test.extend<{
-  adminContext: AdminContext;
-  userContext: Record<string, never>;
-}>({
-  adminContext: async (_ctx, use) => {
-    const { name, email } = mocks.user.generateUser();
-    const { user } = await auth.api.createUser({
-      body: { name, email, password: TEST_PASSWORD, role: "admin" },
-    });
-    const response = await auth.api.signInEmail({
-      body: { email, password: TEST_PASSWORD },
-      asResponse: true,
-    });
-    vi.mocked(headers).mockResolvedValue(convertSetCookieToCookie(response.headers));
-    await use({ userId: user.id });
-    vi.mocked(headers).mockResolvedValue(new Headers());
-  },
-
-  userContext: async (_ctx, use) => {
-    const { name, email } = mocks.user.generateUser();
-    const response = await auth.api.signUpEmail({
-      body: { name, email, password: TEST_PASSWORD },
-      asResponse: true,
-    });
-    vi.mocked(headers).mockResolvedValue(convertSetCookieToCookie(response.headers));
-    await use({});
-    vi.mocked(headers).mockResolvedValue(new Headers());
-  },
-});
 
 describe("apiKeys", () => {
   describe("create", () => {
@@ -53,25 +14,25 @@ describe("apiKeys", () => {
       expect(error?.code).toBe("UNAUTHORIZED");
     });
 
-    it("should return FORBIDDEN when the session user is not an admin", async ({
-      userContext: _,
-    }) => {
+    it("should return FORBIDDEN when the session user is not an admin", async ({ user: _ }) => {
       const [error] = await router.apiKeys.create({ name: "my key" });
       expect(error?.code).toBe("FORBIDDEN");
     });
 
-    it("should return the api key when created by an admin", async ({ adminContext: _ }) => {
+    it("should return the api key when created by an admin", async ({ admin: _ }) => {
       const [error, result] = await router.apiKeys.create({ name: "my key" });
       expect(error).toBeNull();
       expect(result?.key).toMatch(/^ovr_api_key_/);
     });
 
     it("should persist the api key to the database when created by an admin", async ({
-      adminContext: _,
+      admin: _,
     }) => {
       await router.apiKeys.create({ name: "persist test key" });
       const [, list] = await router.apiKeys.list({});
-      expect(list?.apiKeys.some((k) => k.name === "persist test key")).toBe(true);
+      expect(list?.apiKeys).toEqual(
+        expect.arrayContaining([expect.objectContaining({ name: "persist test key" })]),
+      );
     });
   });
 
@@ -81,21 +42,19 @@ describe("apiKeys", () => {
       expect(error?.code).toBe("UNAUTHORIZED");
     });
 
-    it("should return FORBIDDEN when the session user is not an admin", async ({
-      userContext: _,
-    }) => {
+    it("should return FORBIDDEN when the session user is not an admin", async ({ user: _ }) => {
       const [error] = await router.apiKeys.list({});
       expect(error?.code).toBe("FORBIDDEN");
     });
 
-    it("should return an empty list when the admin has no keys", async ({ adminContext: _ }) => {
+    it("should return an empty list when the admin has no keys", async ({ admin: _ }) => {
       const [error, result] = await router.apiKeys.list({});
       expect(error).toBeNull();
       expect(result?.apiKeys).toHaveLength(0);
       expect(result?.total).toBe(0);
     });
 
-    it("should return the api keys for the admin", async ({ adminContext: _ }) => {
+    it("should return the api keys for the admin", async ({ admin: _ }) => {
       await router.apiKeys.create({ name: "key one" });
       await router.apiKeys.create({ name: "key two" });
       const [error, result] = await router.apiKeys.list({});
@@ -104,7 +63,7 @@ describe("apiKeys", () => {
       expect(result?.total).toBe(2);
     });
 
-    it("should respect the limit and offset params", async ({ adminContext: _ }) => {
+    it("should respect the limit and offset params", async ({ admin: _ }) => {
       await router.apiKeys.create({ name: "key one" });
       await router.apiKeys.create({ name: "key two" });
       await router.apiKeys.create({ name: "key three" });
@@ -121,26 +80,26 @@ describe("apiKeys", () => {
       expect(error?.code).toBe("UNAUTHORIZED");
     });
 
-    it("should return FORBIDDEN when the session user is not an admin", async ({
-      userContext: _,
-    }) => {
+    it("should return FORBIDDEN when the session user is not an admin", async ({ user: _ }) => {
       const [error] = await router.apiKeys.revoke({ keyId: "fake-id" });
       expect(error?.code).toBe("FORBIDDEN");
     });
 
     it("should delete the api key from the database when revoked by an admin", async ({
-      adminContext: _,
+      admin: _,
     }) => {
       await router.apiKeys.create({ name: "revoke test key" });
       const [, beforeList] = await router.apiKeys.list({});
-      const key = beforeList?.apiKeys.find((k) => k.name === "revoke test key");
-      expect(key).toBeDefined();
+      expect(beforeList?.apiKeys).toEqual(
+        expect.arrayContaining([expect.objectContaining({ name: "revoke test key" })]),
+      );
 
+      const [key] = beforeList!.apiKeys;
       const [error] = await router.apiKeys.revoke({ keyId: key!.id });
       expect(error).toBeNull();
 
       const [, afterList] = await router.apiKeys.list({});
-      expect(afterList?.apiKeys.find((k) => k.name === "revoke test key")).toBeUndefined();
+      expect(afterList?.apiKeys).toHaveLength(0);
     });
   });
 });

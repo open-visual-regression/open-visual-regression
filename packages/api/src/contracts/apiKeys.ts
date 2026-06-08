@@ -4,7 +4,7 @@ import { z } from "zod";
 export const apiKeySchema = z.object({
   id: z.string(),
   name: z.string().nullable(),
-  start: z.string().nullable(), // first few visible characters; helps identify keys without exposing the full key
+  peek: z.string().nullable(),
   createdAt: z.date(),
   lastRequest: z.date().nullable(),
 });

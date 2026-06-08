@@ -22,7 +22,7 @@ export const list = adminMiddleware.apiKeys.list
       apiKeys: apiKeys.map((k) => ({
         id: k.id,
         name: k.name,
-        start: k.start,
+        peek: k.start,
         createdAt: k.createdAt,
         lastRequest: k.lastRequest,
       })),
