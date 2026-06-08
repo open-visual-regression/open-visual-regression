@@ -1,5 +1,3 @@
-// @vitest-environment node
-
 import { vi } from "vitest";
 
 import { it, describe, expect } from "@/test-integration-utils";
