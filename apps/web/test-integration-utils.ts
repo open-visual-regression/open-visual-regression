@@ -11,8 +11,8 @@ export { expect, describe } from "vitest";
 const TEST_PASSWORD = "securepass123";
 
 export const it = test.extend<{
-  admin: { user: User };
-  user: { user: User };
+  admin: User;
+  user: User;
 }>({
   admin: async ({}, use) => {
     const { name, email } = mocks.user.generateUser();
@@ -24,7 +24,7 @@ export const it = test.extend<{
       asResponse: true,
     });
     vi.mocked(headers).mockResolvedValue(convertSetCookieToCookie(response.headers));
-    await use({ user: user as User });
+    await use(user);
     vi.mocked(headers).mockResolvedValue(new Headers());
   },
 
@@ -36,7 +36,7 @@ export const it = test.extend<{
       asResponse: true,
     });
     vi.mocked(headers).mockResolvedValue(convertSetCookieToCookie(response.headers));
-    await use({ user });
+    await use(user);
     vi.mocked(headers).mockResolvedValue(new Headers());
   },
 });
