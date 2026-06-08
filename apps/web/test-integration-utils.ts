@@ -14,7 +14,7 @@ export const it = test.extend<{
   admin: { user: User };
   user: { user: User };
 }>({
-  admin: async (_ctx, use) => {
+  admin: async ({}, use) => {
     const { name, email } = mocks.user.generateUser();
     const { user } = await auth.api.createUser({
       body: { name, email, password: TEST_PASSWORD, role: "admin" },
@@ -28,7 +28,7 @@ export const it = test.extend<{
     vi.mocked(headers).mockResolvedValue(new Headers());
   },
 
-  user: async (_ctx, use) => {
+  user: async ({}, use) => {
     const { name, email } = mocks.user.generateUser();
     const { user } = await auth.api.signUpEmail({ body: { name, email, password: TEST_PASSWORD } });
     const response = await auth.api.signInEmail({
