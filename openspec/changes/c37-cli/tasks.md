@@ -7,11 +7,12 @@ The CLI is designed to support multiple snapshot sources. Storybook is the first
 ## 1 · Package setup
 
 - [ ] 1.1 Install `commander@^15`, `@orpc/client@^1.14.3`, `tsup` in `apps/cli`; add `@ovr/api` as workspace dep
-- [ ] 1.2 Update `apps/cli/package.json`:
+  - `commander@^15` and `tsup` are installed; `@orpc/client` and `@ovr/api` workspace dep still needed
+- [x] 1.2 Update `apps/cli/package.json`:
   - `"build": "tsup"` (replaces `tsc`)
   - `"dev": "tsup --watch"`
   - keep `"bin": { "ovr": "dist/index.js" }`
-- [ ] 1.3 Add `apps/cli/tsup.config.ts`:
+- [x] 1.3 Add `apps/cli/tsup.config.ts`:
   - entry: `src/index.ts`; format: `esm`; target: `node22`; clean: true
   - banner: `#!/usr/bin/env node` so the output is directly executable
 
@@ -28,15 +29,15 @@ Required values are passed as CLI flags. The API key is the only exception — i
 
 ## 4 · Snapshot command
 
-- [ ] 4.1 Create `apps/cli/src/commands/snapshot/index.ts`: `snapshot` parent Command; subcommands are registered here
+- [x] 4.1 Create `apps/cli/src/commands/snapshot/index.ts`: `snapshot` parent Command; subcommands are registered here
 - [ ] 4.2 Create `apps/cli/src/commands/snapshot/storybook.ts`: `ovr snapshot storybook` subcommand
-  - Options:
+  - Options (done — action is currently a stub):
     - `--dir <path>` (required) — path to storybook-static output directory
     - `--project <slug>` (required) — project slug
     - `--branch <name>` — overrides auto-detected branch
     - `--commit <sha>` — overrides auto-detected commit SHA
     - `--timeout <seconds>` — max seconds to wait for build result (default: `600`)
-  - Implementation:
+  - Implementation (not yet done):
     1. Read `OVR_API_KEY` from env; fail fast with a clear message if missing
     2. Validate `--dir` exists and contains `index.json` (Storybook v7+); read and extract story IDs
     3. Auto-detect `branch` and `commitSha` from git; check CI env vars first (`GITHUB_REF_NAME` / `GITHUB_SHA`, `CI_COMMIT_BRANCH` / `CI_COMMIT_SHA`) before falling back to `git branch --show-current` / `git rev-parse HEAD`
@@ -47,7 +48,7 @@ Required values are passed as CLI flags. The API key is the only exception — i
 
 ## 5 · Entry point
 
-- [ ] 5.1 Create `apps/cli/src/index.ts`: wire commander `Program`; register `snapshot` command; call `program.parseAsync()`
+- [x] 5.1 Create `apps/cli/src/index.ts`: wire commander `Program`; register `snapshot` command; call `program.parseAsync()`
 
 ## 6 · Tests
 
