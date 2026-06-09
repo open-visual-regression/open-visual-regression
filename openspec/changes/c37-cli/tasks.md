@@ -32,7 +32,7 @@ Required values are passed as CLI flags. The API key is the only exception — i
 - [ ] 4.2 Create `apps/cli/src/commands/snapshot/storybook.ts`: `ovr snapshot storybook` subcommand
   - Options:
     - `--dir <path>` (required) — path to storybook-static output directory
-    - `--project <slug>` — project slug; overrides `ovr.config.ts`
+    - `--project <slug>` (required) — project slug
     - `--branch <name>` — overrides auto-detected branch
     - `--commit <sha>` — overrides auto-detected commit SHA
     - `--timeout <seconds>` — max seconds to wait for build result (default: `600`)

@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-06-09
+title: "API keys: project scoping + ownership"
+depends_on: c20-api-keys
