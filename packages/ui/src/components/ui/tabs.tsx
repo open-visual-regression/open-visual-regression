@@ -17,12 +17,12 @@ const Tabs = ({ className, orientation = "horizontal", ...props }: TabsPrimitive
 };
 
 const tabsListVariants = cva(
-  "group/tabs-list inline-flex items-center justify-center rounded-none text-muted-foreground group-data-horizontal/tabs:h-8 group-data-vertical/tabs:h-fit group-data-vertical/tabs:flex-col",
+  "group/tabs-list inline-flex items-center justify-center rounded-none text-muted-foreground group-data-vertical/tabs:h-fit group-data-vertical/tabs:flex-col",
   {
     variants: {
       variant: {
-        default: "w-fit bg-muted p-0.75",
-        line: "w-full gap-1 bg-transparent border-b border-border p-0 justify-start",
+        default: "w-fit bg-muted p-0.75 group-data-horizontal/tabs:h-8",
+        line: "w-full gap-1 bg-transparent border-b border-border p-0 justify-start group-data-horizontal/tabs:h-12",
       },
     },
     defaultVariants: {
