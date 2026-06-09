@@ -1,4 +1,4 @@
-import { test, vi } from "vitest";
+import { test as vitest, vi } from "vitest";
 import { headers } from "next/headers";
 import { convertSetCookieToCookie } from "better-auth/test";
 
@@ -10,7 +10,7 @@ export { expect, describe } from "vitest";
 
 const TEST_PASSWORD = "securepass123";
 
-export const it = test.extend<{
+export const test = vitest.extend<{
   admin: User;
   user: User;
 }>({

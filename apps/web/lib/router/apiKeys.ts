@@ -1,9 +1,12 @@
 "use server";
 
-import { adminMiddleware } from "./os";
+import { os } from "./os";
+import { authenticatedMiddleware, adminMiddleware } from "./middleware";
 import { auth } from "../auth/auth";
 
-export const create = adminMiddleware.apiKeys.create
+export const create = os.apiKeys.create
+  .use(authenticatedMiddleware)
+  .use(adminMiddleware)
   .handler(async ({ input, context }) => {
     const result = await auth.api.createApiKey({
       body: { name: input.name, prefix: "ovr_api_key_", userId: context.session.user.id },
@@ -12,7 +15,9 @@ export const create = adminMiddleware.apiKeys.create
   })
   .actionable();
 
-export const list = adminMiddleware.apiKeys.list
+export const list = os.apiKeys.list
+  .use(authenticatedMiddleware)
+  .use(adminMiddleware)
   .handler(async ({ input, context }) => {
     const { apiKeys, total } = await auth.api.listApiKeys({
       query: { limit: input.limit, offset: input.offset },
@@ -31,7 +36,9 @@ export const list = adminMiddleware.apiKeys.list
   })
   .actionable();
 
-export const revoke = adminMiddleware.apiKeys.revoke
+export const revoke = os.apiKeys.revoke
+  .use(authenticatedMiddleware)
+  .use(adminMiddleware)
   .handler(async ({ input, context }) => {
     await auth.api.deleteApiKey({
       body: { keyId: input.keyId },
