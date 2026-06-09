@@ -45,6 +45,7 @@ export default defineConfig({
           include: ["lib/**/*.integration.test.ts"],
           setupFiles: ["./vitest.integration.setup.ts"],
           testTimeout: 30_000,
+          fileParallelism: false,
           clearMocks: true,
           env: {
             BASE_URL: "http://localhost:3000",

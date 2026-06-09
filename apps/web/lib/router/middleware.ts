@@ -17,7 +17,7 @@ export const unauthenticatedMiddleware = os
     const session = await auth.api.getSession({ headers: context.headers });
 
     if (session) {
-      throw new ORPCError("UNAUTHORIZED");
+      throw new ORPCError("FORBIDDEN");
     }
 
     return next();

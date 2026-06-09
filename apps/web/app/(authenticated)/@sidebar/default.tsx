@@ -9,10 +9,6 @@ export default async function SidebarPage() {
     redirect("/error");
   }
 
-  if (!projectsResult.projects) {
-    redirect("/error");
-  }
-
   return (
     <SidebarContainer
       projects={projectsResult.projects}

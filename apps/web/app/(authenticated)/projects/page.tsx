@@ -29,7 +29,7 @@ export default async function ProjectsPage() {
             projects
           </Typography>
           <Typography variant="h2" className="text-muted-foreground" as="p">
-            ({projects.length ?? 0})
+            ({projects.length})
           </Typography>
         </div>
         <RequiresAdminRole role={sessionResult?.user.role}>
@@ -39,11 +39,7 @@ export default async function ProjectsPage() {
           </ButtonLink>
         </RequiresAdminRole>
       </div>
-      {projects.length === 0 ? (
-        <NoProjectsSection />
-      ) : (
-        <ProjectCardsList projects={projects ?? []} />
-      )}
+      {projects.length === 0 ? <NoProjectsSection /> : <ProjectCardsList projects={projects} />}
     </div>
   );
 }

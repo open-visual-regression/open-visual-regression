@@ -4,7 +4,7 @@ import { db, sql } from "@ovr/db/db";
 
 beforeEach(async () => {
   await db.execute(sql`
-    TRUNCATE "user", organization, session, account, verification, apikey, member, invitation
+    TRUNCATE "user", organization, session, account, verification, apikey, member, invitation, projects
     RESTART IDENTITY CASCADE
   `);
 });

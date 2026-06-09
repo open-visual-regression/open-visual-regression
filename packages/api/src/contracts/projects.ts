@@ -29,10 +29,12 @@ export type ListProjectsDto = InferContractRouterOutputs<typeof listProjectsCont
 
 export const addProjectInputSchema = z.object({
   projectName: z.string().min(1).max(255),
-  projectDescription: z.string().max(255),
+  projectDescription: z.string().max(511),
   gitMainBranch: z.string().min(1).max(255),
   diffThreshold: z.number().min(0.01).max(1),
 });
+
+export type AddProjectInput = z.infer<typeof addProjectInputSchema>;
 
 export const addProjectOutputSchema = z.object({
   projectId: z.uuidv7(),

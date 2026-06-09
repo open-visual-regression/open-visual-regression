@@ -40,7 +40,7 @@ export const LoginForm = () => {
       return;
     }
 
-    window.location.href = "/";
+    window.location.href = "/projects";
   };
 
   return (

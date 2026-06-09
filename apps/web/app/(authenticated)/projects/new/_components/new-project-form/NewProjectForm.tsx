@@ -64,7 +64,7 @@ export const NewProjectForm = () => {
 
   const { execute, status } = useServerAction(router.projects.add, {
     interceptors: [
-      onSuccess(() => navigate.push("/")),
+      onSuccess(() => navigate.push("/projects")),
       onError((err) => setError("root", { message: err.message })),
     ],
   });
@@ -127,7 +127,7 @@ export const NewProjectForm = () => {
                     step="0.01"
                     placeholder="enter the diff threshold"
                     aria-invalid={!!errors.diffThreshold}
-                    {...register("diffThreshold")}
+                    {...register("diffThreshold", { valueAsNumber: true })}
                   />
                   <FieldError errors={[errors.diffThreshold]} />
                 </Field>

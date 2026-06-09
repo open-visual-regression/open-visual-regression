@@ -12,8 +12,10 @@ vi.mock("next/headers");
 vi.mock("@/lib/auth/auth", () => ({
   auth: {
     api: {
+      getSession: vi.fn().mockResolvedValue(null),
       signUpEmail: vi.fn(),
       createOrganization: vi.fn(),
+      setActiveOrganization: vi.fn(),
     },
   },
 }));

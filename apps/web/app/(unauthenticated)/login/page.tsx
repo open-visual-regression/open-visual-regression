@@ -22,7 +22,7 @@ export default async function LoginPage() {
   }
 
   if (session) {
-    redirect("/");
+    redirect("/projects");
   }
 
   return (
