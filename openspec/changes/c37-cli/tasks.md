@@ -17,12 +17,15 @@ The CLI is designed to support multiple snapshot sources. Storybook is the first
 
 ## 2 · Config
 
-All configuration is supplied via environment variables:
+Configuration is resolved from environment variables, with CLI flags taking precedence for non-secret values:
 
-- `OVR_SERVER_URL` — base URL of the OVR server (required)
-- `OVR_API_KEY` — API key for authentication (required)
+| Value | Env var | Flag | Notes |
+|---|---|---|---|
+| Server URL | `OVR_SERVER_URL` | `--server-url` | required |
+| API key | `OVR_API_KEY` | — | env only; never a flag |
+| Project slug | `OVR_PROJECT` | `--project` | required |
 
-`apps/cli/src/config.ts` reads these at startup and exits with a clear message if either is missing.
+`apps/cli/src/config.ts` reads and merges these at startup and exits with a clear message if any required value is missing.
 
 ## 3 · oRPC client
 
@@ -40,7 +43,7 @@ All configuration is supplied via environment variables:
     - `--commit <sha>` — overrides auto-detected commit SHA
     - `--timeout <seconds>` — max seconds to wait for build result (default: `600`)
   - Implementation:
-    1. Read `OVR_SERVER_URL` and `OVR_API_KEY` from env; resolve `project` from `--project` option; fail fast with clear message if any are missing
+    1. Resolve config: `serverUrl` from `--server-url` flag or `OVR_SERVER_URL`; `apiKey` from `OVR_API_KEY`; `project` from `--project` flag or `OVR_PROJECT`; fail fast with clear message if any are missing
     2. Validate `--dir` exists and contains `index.json` (Storybook v7+); read and extract story IDs
     3. Auto-detect `branch` and `commitSha` from git; check CI env vars first (`GITHUB_REF_NAME` / `GITHUB_SHA`, `CI_COMMIT_BRANCH` / `CI_COMMIT_SHA`) before falling back to `git branch --show-current` / `git rev-parse HEAD`
     4. Call `builds.createBuild({ projectSlug, branch, commitSha, stories })`; server returns `{ buildId, uploadUrl }`
@@ -56,7 +59,10 @@ All configuration is supplied via environment variables:
 
 - [ ] 6.1 Remove `passWithNoTests: true` from `apps/cli/vitest.config.ts`
 - [ ] 6.2 Unit tests for config:
-  - missing `OVR_SERVER_URL` → exits with clear message
+  - missing `OVR_SERVER_URL` with no `--server-url` flag → exits with clear message
   - missing `OVR_API_KEY` → exits with clear message
+  - missing `OVR_PROJECT` with no `--project` flag → exits with clear message
+  - `--server-url` flag overrides `OVR_SERVER_URL`
+  - `--project` flag overrides `OVR_PROJECT`
 - [ ] 6.3 Unit tests for polling logic:
   - `passed` → resolves; `needs_review` → rejects with review URL; `error` → rejects; timeout → rejects with timeout message
