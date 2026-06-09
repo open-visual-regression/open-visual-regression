@@ -2,20 +2,24 @@
   "name": "@ovr/cli",
   "version": "0.1.0",
   "private": false,
-  "type": "module",
   "bin": {
     "ovr": "./dist/index.js"
   },
+  "type": "module",
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
+    "build": "tsup",
+    "dev": "tsup --watch",
     "tsc": "tsc --noEmit",
     "lint": "oxlint src",
     "format": "oxfmt src",
     "test": "vitest run"
   },
+  "dependencies": {
+    "commander": "^15.0.0"
+  },
   "devDependencies": {
     "@ovr/typescript-config": "workspace:*",
+    "tsup": "^8.5.1",
     "typescript": "6.0.3",
     "vitest": "^4.1.7"
   }

@@ -4,7 +4,7 @@ Gate: CLI can call `router.builds.createBuild` + `router.builds.getBuildStatus` 
 
 Depends on: `c36-orpc-api`, `c31-build-service`
 
-- [ ] 1 `packages/api/src/contracts/builds.ts`: `createBuild` contract (input: `{ projectSlug, branch, commitSha, stories: string[] }`; output: `{ buildId: string }`) + `getBuildStatus` contract (input: `{ buildId: string }`; output: `{ status: BuildStatus }`)
+- [ ] 1 `packages/api/src/contracts/builds.ts`: `createBuild` contract (input: `{ projectSlug, branch, commitSha, stories: string[] }`; output: `{ buildId: string, uploadUrl: string }` — `uploadUrl` is a presigned RustFS PUT URL the CLI uses to upload a tar.gz of the storybook-static directory) + `getBuildStatus` contract (input: `{ buildId: string }`; output: `{ status: BuildStatus, reviewUrl?: string }` — `reviewUrl` is included when `status` is `needs_review`)
 
 - [ ] 2 `packages/api/src/contracts/index.ts`: add `builds` to root contract
 
