@@ -9,7 +9,7 @@ export const create = os.apiKeys.create
   .use(adminMiddleware)
   .handler(async ({ input, context }) => {
     const result = await auth.api.createApiKey({
-      body: { name: input.name, prefix: "ovr_api_key_", userId: context.session.user.id },
+      body: { name: input.name, prefix: "ovr_api_key_", userId: context.user.id },
     });
     return { key: result.key };
   })

@@ -1,7 +1,7 @@
 "use server";
 
 import { os } from "./os";
-import { authenticatedMiddleware } from "./middleware";
+import { adminMiddleware, authenticatedMiddleware } from "./middleware";
 import { ORPCError } from "@orpc/client";
 import { dbClient } from "@ovr/db/client";
 
@@ -34,6 +34,7 @@ export const list = os.projects.list
 
 export const add = os.projects.add
   .use(authenticatedMiddleware)
+  .use(adminMiddleware)
   .handler(async ({ input, context }) => {
     const project = await dbClient.projects.addProject({
       name: input.projectName,

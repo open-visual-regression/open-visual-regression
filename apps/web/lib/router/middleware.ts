@@ -6,7 +6,8 @@ import { type Session, type User } from "../auth/auth";
 import { type RequestContext } from "./os";
 
 type AuthenticatedContext = RequestContext & {
-  session: { session: Session; user: User };
+  session: Session;
+  user: User;
   organizationId: string;
 };
 
@@ -35,7 +36,7 @@ export const authenticatedMiddleware = os
 
     return next({
       context: {
-        session: sessionResult,
+        ...sessionResult,
         organizationId: sessionResult.session.activeOrganizationId,
       },
     });
@@ -44,6 +45,9 @@ export const authenticatedMiddleware = os
 export const adminMiddleware = os
   .$context<AuthenticatedContext>()
   .middleware(async ({ context, next }) => {
-    if (context.session.user.role !== "admin") throw new ORPCError("FORBIDDEN");
+    if (context.user.role !== "admin") {
+      throw new ORPCError("FORBIDDEN");
+    }
+
     return next();
   });
