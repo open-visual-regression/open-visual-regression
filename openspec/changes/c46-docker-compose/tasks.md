@@ -74,3 +74,5 @@ Gate: `docker compose up` starts all 7 services; app service passes health check
   ```
 
 - [ ] 1.4 Verify: `docker compose config` validates without errors
+
+- [ ] 1.5 Add a comment block above the `worker` service in `docker-compose.yml` noting that in production deployments the worker should be placed on a network with no route to internal services beyond `postgres`, `valkey`, and `rustfs` — it executes Playwright against uploaded build artifacts, which are untrusted content. See `DEPLOYMENT.md`.

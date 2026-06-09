@@ -10,6 +10,7 @@ Gate: unit tests pass with mocked Playwright and storage; snapshot record update
   - Construct Storybook story URL: `${storybookBaseUrl}/iframe.html?id=${storyId}&viewMode=story`
     - `storybookBaseUrl` derived from build.storybookPath in RustFS (use presigned URL or internal URL)
   - Launch Playwright chromium; set viewport to `variant.viewportWidth × variant.viewportHeight`
+  - Before navigating, register `page.route("**/*", ...)`: allow requests whose origin matches `storybookBaseUrl`'s origin (and `data:`/`blob:` URLs); abort all other requests. This is a defense-in-depth measure — uploaded Storybook builds are untrusted content and must not be able to reach other hosts from the worker
   - Navigate to story URL; wait for `networkidle`; capture screenshot as PNG buffer
   - Collect console messages + page errors → `snapshotLogsRepo.createMany(...)`
   - Upload PNG to storage at `builds/${buildId}/snapshots/${snapshotId}.png`
@@ -21,3 +22,4 @@ Gate: unit tests pass with mocked Playwright and storage; snapshot record update
   - Happy path: screenshot taken; logs created; status updated to "captured"; diff jobs enqueued when last capture
   - Render error: `hasRenderError=true` stored; status still "captured"
   - Not last capture: diff jobs NOT enqueued
+  - Route handler aborts a request to a third-party origin and continues a request to the storybook origin

@@ -29,3 +29,4 @@ Gate: `docker compose up` with only `POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET`, `
   - Quick start: `cp .env.example .env && docker compose up`
   - Note on worker image size (~1.5GB due to Playwright browser binaries)
   - Upgrade path: pull new image tags → `docker compose up` (migrate runs automatically)
+  - **Network isolation (required for production)**: the worker executes Playwright against Storybook builds uploaded by CI — untrusted content. Deploy the worker with no network path to internal infrastructure beyond `postgres`, `valkey`, and `rustfs` (e.g. a dedicated Docker network, or a Kubernetes `NetworkPolicy` denying all egress except those three destinations). The route-interception in the capture service (c32) is defense-in-depth, not a substitute for network-level isolation.

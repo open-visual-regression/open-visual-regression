@@ -1,4 +1,4 @@
 schema: spec-driven
 created: 2026-05-24
-title: "Pipeline: CLI — ovr.config.ts loader + snapshot command + status polling"
+title: "Pipeline: CLI — ovr.config.ts loader + snapshot storybook subcommand + status polling"
 depends_on: c36-orpc-api

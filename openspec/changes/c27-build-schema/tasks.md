@@ -7,9 +7,10 @@ Gate: migration applies cleanly; integration tests cover all repository function
   buildStatus enum: "pending" | "needs_review" | "passed" | "error"
   snapshotStatus enum: "pending" | "captured" | "error"
   diffStatus enum: "pending" | "auto_approved" | "needs_review" | "approved" | "rejected" | "error"
+  captureMode enum: "worker" | "pre_captured"
 
   build:       id, projectId (FK→project cascade), branch, commitSha, status (buildStatus default pending),
-               storybookPath, createdAt (defaultNow), createdBy (FK→user)
+               captureMode (captureMode default "worker"), storybookPath, createdAt (defaultNow), createdBy (FK→user)
 
   snapshot:    id, buildId (FK→build cascade), variantId (FK→variant), storyId,
                status (snapshotStatus default pending), imagePath (nullable), hasRenderError (bool default false)
@@ -26,6 +27,8 @@ Gate: migration applies cleanly; integration tests cover all repository function
                UNIQUE(projectId, variantId, storyId)
   ```
 - [ ] 1.2 Run `drizzle-kit generate`; commit migration
+
+`captureMode` distinguishes how a build's snapshots are produced: `"worker"` means the worker renders each story with Playwright (the only mode used today, by `ovr snapshot storybook`); `"pre_captured"` means snapshots were captured by the source itself and uploaded directly, skipping the capture step entirely. This field exists so future snapshot sources (e.g. browser-mode test runners) can plug into the same build/diff pipeline without a schema change.
 - [ ] 1.3 Create repositories in `packages/db/src/repositories/`:
 
   `builds.ts`: `create`, `findById`, `updateStatus(id, status)`, `findByProject(projectId, opts?: { branch?, status? })`
