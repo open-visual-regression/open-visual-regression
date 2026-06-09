@@ -1,9 +1,14 @@
 import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
+import { RequiresAdminRole } from "@/lib/components/authorization/RequiresAdminRole";
 import { Card, CardContent, CardHeader } from "@ovr/ui/components/card";
 import { Icon, PlusIcon } from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
 
-export const NoProjectsSection = () => (
+type NoProjectsSectionProps = {
+  role: string | null | undefined;
+};
+
+export const NoProjectsSection = ({ role }: NoProjectsSectionProps) => (
   <Card className="bg-pixel-grid py-20">
     <CardHeader className="flex justify-center">
       <Typography variant="h2" as="h2">
@@ -14,10 +19,12 @@ export const NoProjectsSection = () => (
       <Typography variant="caption" className="text-sm">
         create a project to start running visual regression tests.
       </Typography>
-      <ButtonLink href="/projects/new" size="lg">
-        <Icon icon={PlusIcon} />
-        create first project
-      </ButtonLink>
+      <RequiresAdminRole role={role}>
+        <ButtonLink href="/projects/new" size="lg">
+          <Icon icon={PlusIcon} />
+          create first project
+        </ButtonLink>
+      </RequiresAdminRole>
     </CardContent>
   </Card>
 );

@@ -39,7 +39,11 @@ export default async function ProjectsPage() {
           </ButtonLink>
         </RequiresAdminRole>
       </div>
-      {projects.length === 0 ? <NoProjectsSection /> : <ProjectCardsList projects={projects} />}
+      {projects.length === 0 ? (
+        <NoProjectsSection role={sessionResult?.user.role} />
+      ) : (
+        <ProjectCardsList projects={projects} />
+      )}
     </div>
   );
 }
