@@ -103,7 +103,7 @@ describe("SetupCard", () => {
     await user.type(screen.getByLabelText(/confirm password/i), "securepass123");
     await user.click(screen.getByRole("button", { name: /create/i }));
 
-    await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/projects"));
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/login"));
   });
 
   it("should prevent resubmission while saving", async ({ user }) => {

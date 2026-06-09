@@ -5,7 +5,6 @@ import { os } from "./os";
 import { auth } from "../auth/auth";
 import { ORPCError } from "@orpc/server";
 import { unauthenticatedMiddleware } from "./middleware";
-import { headers } from "next/headers";
 
 export const status = os.setup.status
   .handler(async () => {
@@ -36,13 +35,12 @@ export const exec = os.setup.exec
       .replace(/\s+/g, "-")
       .replace(/[^a-z0-9-]/g, "");
 
-    const organization = await auth.api.createOrganization({
+    await auth.api.createOrganization({
       body: { name: input.organizationName, slug, userId: signUpResponse.user.id },
     });
 
-    await auth.api.setActiveOrganization({
-      body: { organizationId: organization.id },
-      headers: await headers(),
+    await auth.api.signOut({
+      headers: new Headers({ authorization: `Bearer ${signUpResponse.token}` }),
     });
   })
   .actionable();
