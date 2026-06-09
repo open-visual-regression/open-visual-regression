@@ -5,12 +5,17 @@ import { NoProjectsSection } from "./_components/NoProjectsSection";
 import { router } from "@/lib/router";
 import { redirect } from "next/navigation";
 import { ProjectCardsList } from "./_components/ProjectCardsList";
+import { auth } from "@/lib/auth/auth";
+import { headers } from "next/headers";
+import { RequiresAdminRole } from "@/lib/components/authorization/RequiresAdminRole";
 
 export default async function ProjectsPage() {
-  const [error, listProjectsResult] = await router.projects.list();
+  const [[error, listProjectsResult], sessionResult] = await Promise.all([
+    router.projects.list(),
+    auth.api.getSession({ headers: await headers() }),
+  ]);
 
   if (error) {
-    console.error(error);
     redirect("/error");
   }
 
@@ -27,10 +32,12 @@ export default async function ProjectsPage() {
             ({projects.length ?? 0})
           </Typography>
         </div>
-        <ButtonLink href="/projects/new" size="lg">
-          <Icon icon={PlusIcon} />
-          new project
-        </ButtonLink>
+        <RequiresAdminRole role={sessionResult?.user.role}>
+          <ButtonLink href="/projects/new" size="lg">
+            <Icon icon={PlusIcon} />
+            new project
+          </ButtonLink>
+        </RequiresAdminRole>
       </div>
       {projects.length === 0 ? (
         <NoProjectsSection />
