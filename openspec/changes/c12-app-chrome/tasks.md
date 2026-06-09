@@ -59,14 +59,15 @@ apps/web/lib/components/
 
 ## Tasks
 
-- [ ] 1.1 Update `apps/web/app/layout.tsx`: JetBrains Mono font, ThemeProvider, import `@ovr/ui/globals.css`
+- [x] 1.1 Update `apps/web/app/layout.tsx`: JetBrains Mono font, ThemeProvider, import `@ovr/ui/globals.css`
 
-- [ ] 1.2 Create `apps/web/app/(unauthenticated)/layout.tsx`: centered full-height wrapper, no app shell
+- [x] 1.2 Create `apps/web/app/(unauthenticated)/layout.tsx`: centered full-height wrapper, no app shell
 
-- [ ] 1.3 Update `apps/web/app/(authenticated)/layout.tsx`: session guard + responsive content insets
+- [x] 1.3 Update `apps/web/app/(authenticated)/layout.tsx`: session guard + responsive content insets
 
-- [ ] 1.4 Build `NavigationBar` in `apps/web/lib/components/navigation-bar/`; `@navigation/default.tsx` fetches session data and passes props
+- [x] 1.4 Build `NavigationBar` in `apps/web/lib/components/navigation-bar/`; `@navigation/default.tsx` fetches session data and passes props
 
-- [ ] 1.5 Build `Sidebar` + `SidebarCollapsed` in `apps/web/lib/components/sidebar/`; `@sidebar/default.tsx` fetches projects + recent runs and renders correct variant
+- [x] 1.5 Build `Sidebar` + `SidebarCollapsed` in `apps/web/lib/components/sidebar/`; `@sidebar/default.tsx` fetches projects + recent runs and renders correct variant
+  - "recent runs" not yet fetched (no builds data exists yet); sidebar currently renders projects only
 
 - [ ] 1.6 Build `MobileAppShell` in `apps/web/lib/components/mobile-app-shell/` (`"use client"`)
