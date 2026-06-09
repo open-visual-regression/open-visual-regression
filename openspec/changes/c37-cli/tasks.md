@@ -6,7 +6,7 @@ The CLI is designed to support multiple snapshot sources. Storybook is the first
 
 ## 1 · Package setup
 
-- [ ] 1.1 Install `commander@^15`, `@orpc/client@^1.14.3`, `zod`, `tsup` in `apps/cli`; add `@ovr/api` as workspace dep
+- [ ] 1.1 Install `commander@^15`, `@orpc/client@^1.14.3`, `tsup` in `apps/cli`; add `@ovr/api` as workspace dep
 - [ ] 1.2 Update `apps/cli/package.json`:
   - `"build": "tsup"` (replaces `tsc`)
   - `"dev": "tsup --watch"`
@@ -15,11 +15,14 @@ The CLI is designed to support multiple snapshot sources. Storybook is the first
   - entry: `src/index.ts`; format: `esm`; target: `node22`; clean: true
   - banner: `#!/usr/bin/env node` so the output is directly executable
 
-## 2 · Config loader
+## 2 · Config
 
-- [ ] 2.1 Create `apps/cli/src/config.ts`:
-  - Zod schema: `{ serverUrl: z.string().url(), apiKey: z.string().optional(), project: z.string().optional() }`
-  - `loadConfig(configPath?: string)`: dynamically imports `ovr.config.ts` from CWD (or explicit path); validates with Zod; `apiKey` falls back to `OVR_API_KEY` env var; throws with a user-readable message if `serverUrl` or resolved `apiKey` are missing
+All configuration is supplied via environment variables:
+
+- `OVR_SERVER_URL` — base URL of the OVR server (required)
+- `OVR_API_KEY` — API key for authentication (required)
+
+`apps/cli/src/config.ts` reads these at startup and exits with a clear message if either is missing.
 
 ## 3 · oRPC client
 
@@ -35,10 +38,9 @@ The CLI is designed to support multiple snapshot sources. Storybook is the first
     - `--project <slug>` — project slug; overrides `ovr.config.ts`
     - `--branch <name>` — overrides auto-detected branch
     - `--commit <sha>` — overrides auto-detected commit SHA
-    - `--config <path>` — path to `ovr.config.ts` (default: `./ovr.config.ts`)
     - `--timeout <seconds>` — max seconds to wait for build result (default: `600`)
   - Implementation:
-    1. Load config; resolve `project` from option or config; fail fast with clear message if missing
+    1. Read `OVR_SERVER_URL` and `OVR_API_KEY` from env; resolve `project` from `--project` option; fail fast with clear message if any are missing
     2. Validate `--dir` exists and contains `index.json` (Storybook v7+); read and extract story IDs
     3. Auto-detect `branch` and `commitSha` from git; check CI env vars first (`GITHUB_REF_NAME` / `GITHUB_SHA`, `CI_COMMIT_BRANCH` / `CI_COMMIT_SHA`) before falling back to `git branch --show-current` / `git rev-parse HEAD`
     4. Call `builds.createBuild({ projectSlug, branch, commitSha, stories })`; server returns `{ buildId, uploadUrl }`
@@ -53,9 +55,8 @@ The CLI is designed to support multiple snapshot sources. Storybook is the first
 ## 6 · Tests
 
 - [ ] 6.1 Remove `passWithNoTests: true` from `apps/cli/vitest.config.ts`
-- [ ] 6.2 Unit tests for `loadConfig`:
-  - valid config → returns parsed config
-  - missing `apiKey` with no env var → throws with message containing "OVR_API_KEY"
-  - `OVR_API_KEY` env var fallback works
+- [ ] 6.2 Unit tests for config:
+  - missing `OVR_SERVER_URL` → exits with clear message
+  - missing `OVR_API_KEY` → exits with clear message
 - [ ] 6.3 Unit tests for polling logic:
   - `passed` → resolves; `needs_review` → rejects with review URL; `error` → rejects; timeout → rejects with timeout message
