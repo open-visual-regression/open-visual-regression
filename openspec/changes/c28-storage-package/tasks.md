@@ -1,9 +1,9 @@
 # 28 · packages/storage
 
-Gate: all integration tests pass against real MinIO container; upload → download → delete → presigned URL all work.
+Gate: all integration tests pass against real RustFS container; upload → download → delete → presigned URL all work.
 
 - [ ] 1.1 Install `testcontainers` in `packages/storage`; create `packages/storage/src/__tests__/helpers/containers.ts`:
-  - `startMinio()` → starts `minio/minio` with default credentials; returns `{ endpoint: string, accessKey: string, secretKey: string, stop: () => Promise<void> }`
+  - `startRustfs()` → starts `rustfs/rustfs:latest` with default credentials; returns `{ endpoint: string, accessKey: string, secretKey: string, stop: () => Promise<void> }`
   - Remove `passWithNoTests: true` from `packages/storage/vitest.config.ts`
 - [ ] 1.2 Install `@aws-sdk/client-s3`, `@aws-sdk/s3-request-presigner` in `packages/storage`
 - [ ] 1.3 Implement `packages/storage/src/index.ts`:
@@ -13,7 +13,7 @@ Gate: all integration tests pass against real MinIO container; upload → downlo
   - `deleteFile(key: string): Promise<void>`
   - `deletePrefix(prefix: string): Promise<void>` — list all keys with prefix → bulk delete (handle >1000 keys in batches)
   - `getPresignedUrl(key: string, ttlSeconds: number): Promise<string>`
-- [ ] 1.4 Integration tests (`src/__tests__/integration/storage.test.ts`) using Testcontainers MinIO:
+- [ ] 1.4 Integration tests (`src/__tests__/integration/storage.test.ts`) using Testcontainers RustFS:
   - Upload a PNG buffer → `getFileStream` returns same bytes
   - `deleteFile` → subsequent `getFileStream` throws NoSuchKey
   - `deletePrefix` removes all keys with that prefix
