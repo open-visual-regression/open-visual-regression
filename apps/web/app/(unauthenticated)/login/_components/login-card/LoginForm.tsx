@@ -20,7 +20,7 @@ export const LoginForm = () => {
     register,
     handleSubmit,
     setError,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isSubmitSuccessful },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
@@ -70,7 +70,12 @@ export const LoginForm = () => {
           <FieldError errors={[errors.password]} />
         </Field>
         <FieldError errors={[errors.root]} />
-        <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full"
+          disabled={isSubmitting || isSubmitSuccessful}
+        >
           sign in
         </Button>
       </FieldGroup>

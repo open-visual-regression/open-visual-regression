@@ -22,12 +22,12 @@ export const status = os.setup.status
 export const exec = os.setup.exec
   .use(unauthenticatedMiddleware)
   .handler(async ({ input }) => {
-    const signUpResponse = await auth.api.signUpEmail({
-      body: { name: input.name, email: input.email, password: input.password },
+    const createUserResponse = await auth.api.createUser({
+      body: { name: input.name, email: input.email, password: input.password, role: "admin" },
     });
 
-    if (!signUpResponse?.user?.id) {
-      throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "Failed to sign up user" });
+    if (!createUserResponse?.user?.id) {
+      throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "Failed to create the admin user" });
     }
 
     const slug = input.organizationName
@@ -36,11 +36,7 @@ export const exec = os.setup.exec
       .replace(/[^a-z0-9-]/g, "");
 
     await auth.api.createOrganization({
-      body: { name: input.organizationName, slug, userId: signUpResponse.user.id },
-    });
-
-    await auth.api.signOut({
-      headers: new Headers({ authorization: `Bearer ${signUpResponse.token}` }),
+      body: { name: input.organizationName, slug, userId: createUserResponse.user.id },
     });
   })
   .actionable();
