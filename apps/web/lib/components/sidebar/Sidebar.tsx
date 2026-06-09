@@ -22,7 +22,7 @@ const Sidebar = ({ projects, activeProjectId, version, onCollapse }: SidebarProp
       {projects.map((p) => (
         <SidebarItem
           key={p.id}
-          href={`/projects/${p.id}/runs`}
+          href={`/projects/${p.id}`}
           icon={FolderIcon}
           label={p.name}
           changedCount={p.changedCount}

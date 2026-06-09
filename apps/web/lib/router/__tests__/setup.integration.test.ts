@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { mocks } from "@ovr/mocks";
 import * as schema from "@ovr/db/schema";
-import { db } from "@ovr/db/dbClient";
+import { db } from "@ovr/db/db";
 
 import { router } from "@/lib/router";
 import { auth } from "@/lib/auth/auth";
@@ -12,14 +12,17 @@ vi.mock("next/headers");
 vi.mock("@/lib/auth/auth", () => ({
   auth: {
     api: {
+      getSession: vi.fn().mockResolvedValue(null),
       signUpEmail: vi.fn(),
       createOrganization: vi.fn(),
+      signOut: vi.fn(),
     },
   },
 }));
 
 const mockSignUpEmail = vi.mocked(auth.api.signUpEmail);
 const mockCreateOrganization = vi.mocked(auth.api.createOrganization);
+const mockSignOut = vi.mocked(auth.api.signOut);
 
 describe("setup.status", () => {
   it("should return pending when DB is empty", async () => {
@@ -62,13 +65,11 @@ describe("setup.exec", () => {
     password: "securepass123",
   };
 
-  it("should call signUpEmail then createOrganization with correct args", async () => {
+  it("should create the admin account and organization", async () => {
     const user = mocks.user.generateUser();
+    const org = mocks.organization.generateOrganization();
     mockSignUpEmail.mockResolvedValue({ token: "test-token", user });
-    mockCreateOrganization.mockResolvedValue({
-      ...mocks.organization.generateOrganization(),
-      members: [],
-    });
+    mockCreateOrganization.mockResolvedValue({ ...org, members: [] });
 
     const [error] = await router.setup.exec(input);
     expect(error).toBeNull();
@@ -79,6 +80,10 @@ describe("setup.exec", () => {
 
     expect(mockCreateOrganization).toHaveBeenCalledWith({
       body: { name: input.organizationName, slug: "my-test-org", userId: user.id },
+    });
+
+    expect(mockSignOut).toHaveBeenCalledWith({
+      headers: expect.any(Headers),
     });
   });
 

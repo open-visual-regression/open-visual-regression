@@ -42,7 +42,7 @@ export const SetupForm = () => {
 
   const { execute, status } = useServerAction(router.setup.exec, {
     interceptors: [
-      onSuccess(() => navigate.push("/")),
+      onSuccess(() => navigate.push("/login")),
       onError((err) => setError("root", { message: err.message })),
     ],
   });

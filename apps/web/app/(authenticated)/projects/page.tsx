@@ -2,8 +2,25 @@ import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
 import { Icon, PlusIcon } from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
 import { NoProjectsSection } from "./_components/NoProjectsSection";
+import { router } from "@/lib/router";
+import { redirect } from "next/navigation";
+import { ProjectCardsList } from "./_components/ProjectCardsList";
+import { auth } from "@/lib/auth/auth";
+import { headers } from "next/headers";
+import { RequiresAdminRole } from "@/lib/components/authorization/RequiresAdminRole";
 
-export default function ProjectsPage() {
+export default async function ProjectsPage() {
+  const [[error, listProjectsResult], sessionResult] = await Promise.all([
+    router.projects.list(),
+    auth.api.getSession({ headers: await headers() }),
+  ]);
+
+  if (error) {
+    redirect("/error");
+  }
+
+  const { projects } = listProjectsResult;
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex justify-between items-center">
@@ -12,15 +29,17 @@ export default function ProjectsPage() {
             projects
           </Typography>
           <Typography variant="h2" className="text-muted-foreground" as="p">
-            (0)
+            ({projects.length})
           </Typography>
         </div>
-        <ButtonLink href="/projects/new" size="lg">
-          <Icon icon={PlusIcon} />
-          new project
-        </ButtonLink>
+        <RequiresAdminRole role={sessionResult?.user.role}>
+          <ButtonLink href="/projects/new" size="lg">
+            <Icon icon={PlusIcon} />
+            new project
+          </ButtonLink>
+        </RequiresAdminRole>
       </div>
-      <NoProjectsSection />
+      {projects.length === 0 ? <NoProjectsSection /> : <ProjectCardsList projects={projects} />}
     </div>
   );
 }

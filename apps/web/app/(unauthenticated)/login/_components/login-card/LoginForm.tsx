@@ -6,7 +6,14 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@ovr/ui/components/fi
 import { Input } from "@ovr/ui/components/input";
 import { useForm } from "react-hook-form";
 import { authClient } from "@/lib/auth/client";
-import { loginSchema, type LoginFormValues } from "./schema";
+import { z } from "zod";
+
+const loginSchema = z.object({
+  email: z.email("invalid email address"),
+  password: z.string().min(1, "you must enter your password"),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
 
 export const LoginForm = () => {
   const {
@@ -33,7 +40,7 @@ export const LoginForm = () => {
       return;
     }
 
-    window.location.href = "/";
+    window.location.href = "/projects";
   };
 
   return (

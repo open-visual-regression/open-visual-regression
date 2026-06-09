@@ -1,10 +1,13 @@
+"server only";
+
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin, organization } from "better-auth/plugins";
 import { apiKey } from "@better-auth/api-key";
-import { db } from "@ovr/db/dbClient";
+import { db } from "@ovr/db/db";
 import * as schema from "@ovr/db/schema";
 import { nextCookies } from "better-auth/next-js";
+import { dbClient } from "@ovr/db/client";
 
 export const auth = betterAuth({
   emailAndPassword: {
@@ -21,6 +24,16 @@ export const auth = betterAuth({
   },
   baseURL: process.env.BASE_URL ?? "http://localhost:3000",
   trustedOrigins: [process.env.BASE_URL ?? "http://localhost:3000"],
+  databaseHooks: {
+    session: {
+      create: {
+        before: async (session) => {
+          const organization = await dbClient.organizations.getOrganization();
+          return { data: { ...session, activeOrganizationId: organization?.id } };
+        },
+      },
+    },
+  },
 });
 
 export type Session = typeof auth.$Infer.Session.session;

@@ -20,7 +20,9 @@ export default async function AppLayout({ navigation, sidebar, children }: AppLa
       {navigation}
       <div className="flex flex-1 overflow-hidden">
         <div className="hidden shrink-0 md:block">{sidebar}</div>
-        <main className="flex-1 overflow-auto py-6 px-10">{children}</main>
+        <main className="flex-1 overflow-auto py-3 px-5 md:py-4 md:px-6 lg:py-6 lg:px-10">
+          {children}
+        </main>
       </div>
     </div>
   );

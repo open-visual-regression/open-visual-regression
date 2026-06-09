@@ -1,6 +1,5 @@
-import { drizzle } from "drizzle-orm/node-postgres";
-import { buildDatabaseUrl } from "./url";
+import * as organizations from "./repository/organizations";
+import * as users from "./repository/users";
+import * as projects from "./repository/projects";
 
-export { sql } from "drizzle-orm";
-
-export const db = drizzle(buildDatabaseUrl());
+export const dbClient = { organizations, users, projects } as const;

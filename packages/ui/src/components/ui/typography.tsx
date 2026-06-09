@@ -11,6 +11,7 @@ const typographyVariants = cva("font-mono", {
       h2: "text-xl font-medium tracking-h1 leading-heading",
       h3: "text-base font-semibold leading-heading",
       body: "text-body font-normal leading-body",
+      "body-muted": "text-body font-normal leading-body text-muted-foreground",
       "body-sm": "text-xs font-normal leading-body",
       caption: "text-label font-normal leading-body text-muted-foreground",
       label: "text-label font-semibold tracking-label uppercase text-ovr-fg-secondary",

@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./contract": "./src/contracts/index.ts"
+    "./*": "./src/*.ts"
   },
   "scripts": {
     "build": "tsc",

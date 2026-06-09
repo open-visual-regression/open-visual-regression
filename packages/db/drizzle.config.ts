@@ -9,7 +9,7 @@ config({ path: "../../.env.local" });
 config({ path: "../../.env" });
 
 export default defineConfig({
-  schema: "./src/schema/**/*.ts",
+  schema: "./src/schemas/**/*.ts",
   out: "./src/migrations",
   dialect: "postgresql",
   dbCredentials: { url: buildDatabaseUrl() },

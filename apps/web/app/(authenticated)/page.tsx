@@ -1,5 +1,5 @@
-import { Typography } from "@ovr/ui/components/typography";
+import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {
-  return <Typography variant="display">open visual regression</Typography>;
+  redirect("/projects");
 }
