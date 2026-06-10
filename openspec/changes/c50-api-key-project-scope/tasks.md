@@ -25,3 +25,6 @@ API keys are project-scoped credentials for CI. Each key is created within the c
   - `create`: stores `projectId` in `metadata`
   - `list`: only returns keys created with the given `projectId`; includes `ownerName` for each
   - `list`: a key created by user A shows user A's name as `ownerName`
+
+- [x] 6 `apps/web/lib/router/apiKeys.ts` — `create` and `list`: validate `projectId` refers to a project in the caller's organization via `dbClient.projects.getProject`; throw `ORPCError("BAD_REQUEST")` if not found
+  - Integration tests: `create` and `list` return `BAD_REQUEST` for a nonexistent `projectId`

@@ -27,6 +27,11 @@ describe("apiKeys", () => {
       expect(error?.code).toBe("FORBIDDEN");
     });
 
+    test("should return BAD_REQUEST when the project does not exist", async ({ admin: _ }) => {
+      const [error] = await router.apiKeys.create({ projectId: FAKE_PROJECT_ID, name: "my key" });
+      expect(error?.code).toBe("BAD_REQUEST");
+    });
+
     test("should return the api key when created by an admin", async ({ admin: _ }) => {
       const [, addResult] = await router.projects.add(TEST_PROJECT);
       const projectId = addResult!.projectId;
@@ -60,6 +65,11 @@ describe("apiKeys", () => {
     test("should return FORBIDDEN when the session user is not an admin", async ({ user: _ }) => {
       const [error] = await router.apiKeys.list({ projectId: FAKE_PROJECT_ID });
       expect(error?.code).toBe("FORBIDDEN");
+    });
+
+    test("should return BAD_REQUEST when the project does not exist", async ({ admin: _ }) => {
+      const [error] = await router.apiKeys.list({ projectId: FAKE_PROJECT_ID });
+      expect(error?.code).toBe("BAD_REQUEST");
     });
 
     test("should return an empty list when the project has no keys", async ({ admin: _ }) => {
