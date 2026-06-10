@@ -31,7 +31,7 @@
       "oxfmt",
       "oxlint"
     ],
-    "*.{css,json,yaml,yml}": [
+    "!(pnpm-lock).{css,json,yaml,yml}": [
       "oxfmt"
     ]
   },
