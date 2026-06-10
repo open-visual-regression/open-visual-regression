@@ -105,8 +105,6 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-      - name: Allow Testcontainers to access the Docker daemon
-        run: sudo chmod 666 /var/run/docker.sock
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @ovr/db db:migrate
       - run: pnpm test
