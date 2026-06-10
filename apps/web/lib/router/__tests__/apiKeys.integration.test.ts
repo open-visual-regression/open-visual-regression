@@ -68,7 +68,7 @@ describe("apiKeys", () => {
       expect(result?.total).toBe(0);
     });
 
-    test("should return the api keys for the project", async ({ admin: _ }) => {
+    test("should return the api keys for the project", async ({ admin }) => {
       const [, addResult] = await router.projects.add(TEST_PROJECT);
       const projectId = addResult!.projectId;
 
@@ -79,6 +79,7 @@ describe("apiKeys", () => {
       expect(error).toBeNull();
       expect(result?.apiKeys).toHaveLength(2);
       expect(result?.total).toBe(2);
+      expect(result?.apiKeys[0]).toMatchObject({ ownerName: admin.name });
     });
 
     test("should respect the limit and offset params", async ({ admin: _ }) => {
@@ -109,17 +110,6 @@ describe("apiKeys", () => {
       expect(error).toBeNull();
       expect(result?.apiKeys).toHaveLength(1);
       expect(result?.apiKeys[0]).toMatchObject({ name: "key for A" });
-    });
-
-    test("should include the owner name for each key", async ({ admin }) => {
-      const [, addResult] = await router.projects.add(TEST_PROJECT);
-      const projectId = addResult!.projectId;
-
-      await router.apiKeys.create({ projectId, name: "owned key" });
-
-      const [error, result] = await router.apiKeys.list({ projectId });
-      expect(error).toBeNull();
-      expect(result?.apiKeys[0]).toMatchObject({ name: "owned key", ownerName: admin.name });
     });
   });
 
