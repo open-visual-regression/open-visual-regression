@@ -15,6 +15,13 @@
       "when": 1780053589604,
       "tag": "0001_tricky_ma_gnuci",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781125903031,
+      "tag": "0002_stiff_changeling",
+      "breakpoints": true
     }
   ]
 }
