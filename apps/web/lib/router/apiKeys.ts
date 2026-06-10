@@ -6,19 +6,18 @@ import { authenticatedMiddleware, adminMiddleware } from "./middleware";
 import { auth } from "../auth/auth";
 import { dbClient } from "@ovr/db/client";
 
-const assertProjectExists = async (projectId: string, organizationId: string) => {
-  const project = await dbClient.projects.getProject({ projectId, organizationId });
-
-  if (!project) {
-    throw new ORPCError("BAD_REQUEST", { message: "Invalid project" });
-  }
-};
-
 export const create = os.apiKeys.create
   .use(authenticatedMiddleware)
   .use(adminMiddleware)
   .handler(async ({ input, context }) => {
-    await assertProjectExists(input.projectId, context.organizationId);
+    const project = await dbClient.projects.getProject({
+      projectId: input.projectId,
+      organizationId: context.organizationId,
+    });
+
+    if (!project) {
+      throw new ORPCError("BAD_REQUEST", { message: "Invalid project" });
+    }
 
     const result = await auth.api.createApiKey({
       body: {
@@ -36,7 +35,14 @@ export const list = os.apiKeys.list
   .use(authenticatedMiddleware)
   .use(adminMiddleware)
   .handler(async ({ input, context }) => {
-    await assertProjectExists(input.projectId, context.organizationId);
+    const project = await dbClient.projects.getProject({
+      projectId: input.projectId,
+      organizationId: context.organizationId,
+    });
+
+    if (!project) {
+      throw new ORPCError("BAD_REQUEST", { message: "Invalid project" });
+    }
 
     const { apiKeys, total } = await dbClient.apiKeys.findByProject({
       projectId: input.projectId,
