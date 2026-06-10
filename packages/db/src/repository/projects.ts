@@ -1,3 +1,5 @@
+import { eq } from "drizzle-orm";
+
 import { db } from "../db";
 import { projects } from "../schema";
 
@@ -44,6 +46,15 @@ export type ListProjectsResult = Awaited<ReturnType<typeof listProjects>>;
 export const addProject = async (values: typeof projects.$inferInsert) => {
   const [project] = await db.insert(projects).values(values).returning();
   return project;
+};
+
+export const updateProject = async (id: string, patch: Partial<typeof projects.$inferInsert>) => {
+  const [project] = await db.update(projects).set(patch).where(eq(projects.id, id)).returning();
+  return project;
+};
+
+export const deleteProject = async (id: string) => {
+  await db.delete(projects).where(eq(projects.id, id));
 };
 
 export type ListProjectsResultDbSchema = Awaited<ReturnType<typeof listProjects>>;

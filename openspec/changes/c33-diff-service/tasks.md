@@ -7,7 +7,7 @@ Gate: unit tests verify threshold logic (auto_approved vs needs_review), no-base
 
   `diffSnapshot(snapshotId, diffId)`:
   - Load snapshot + diff + build + project (for `diffThreshold`) from repos
-  - Load baseline via `baselinesRepo.find(project.id, snapshot.variantId, snapshot.storyId)`
+  - Load baseline via `baselinesRepo.find(project.id, snapshot.captureConfigurationId, snapshot.storyId)`
   - **No baseline**: `diffsRepo.updateStatus(diffId, "needs_review")`; check if all diffs done → enqueue finalize; return
   - Fetch snapshot image from storage (Buffer); fetch baseline image from storage (Buffer)
   - Run Pixelmatch: `pixelmatch(baselinePixels, capturePixels, diffPixels, w, h, { threshold: project.diffThreshold / 100 })`
@@ -18,13 +18,13 @@ Gate: unit tests verify threshold logic (auto_approved vs needs_review), no-base
 
 - [ ] 1.3 Create `packages/services/src/baselines.ts`:
 
-  `getBaseline(projectId, variantId, storyId)`:
-  - `baselinesRepo.find(projectId, variantId, storyId)`
+  `getBaseline(projectId, captureConfigurationId, storyId)`:
+  - `baselinesRepo.find(projectId, captureConfigurationId, storyId)`
 
   `promoteBaseline(diffId, approverId)`:
   - Load diff → snapshot → build
   - Only promote if `build.branch === project.defaultBranch`; if not, return early (feature branch)
-  - `baselinesRepo.upsert({ projectId, variantId: snapshot.variantId, storyId: snapshot.storyId, snapshotId: snapshot.id, approvedBy: approverId })`
+  - `baselinesRepo.upsert({ projectId, captureConfigurationId: snapshot.captureConfigurationId, storyId: snapshot.storyId, snapshotId: snapshot.id, approvedBy: approverId })`
 
 - [ ] 1.4 Unit tests:
   - No baseline → needs_review; finalize enqueued if last diff

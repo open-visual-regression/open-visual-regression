@@ -4,7 +4,7 @@ Gate: unit tests cover `purgeExpiredBuilds` (deletes expired builds, skips build
 
 Depends on: `c25-project-settings` (`retentionDays`), `c27-build-schema`, `c28-storage-package`, `c29-queue-package`, `c35-worker`
 
-Each project has a configurable `retentionDays` (`c25-project-settings`). A nightly job deletes builds older than that window, along with their storage objects, except builds that hold a project's current baseline for any story/variant.
+Each project has a configurable `retentionDays` (`c25-project-settings`). A nightly job deletes builds older than that window, along with their storage objects, except builds that hold a project's current baseline for any story/capture configuration.
 
 - [ ] 1.1 `packages/db/src/repositories/builds.ts` — add:
   - `findExpired(projectId, cutoff: Date)` → builds where `projectId` matches and `createdAt < cutoff`

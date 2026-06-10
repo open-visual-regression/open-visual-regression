@@ -7,8 +7,8 @@ Gate: unit tests cover createBuild (creates correct DB records + enqueues captur
   `createBuild({ projectId, branch, commitSha, stories, storybookStaticDir }, callerId)`:
   - Validate project exists
   - `buildsRepo.create({ projectId, branch, commitSha, status: "pending", captureMode: "worker", storybookPath: `builds/${buildId}/storybook` })`
-  - Fetch variants for project
-  - `snapshotsRepo.createMany(stories × variants)` — one snapshot per combination
+  - Fetch capture configurations for project
+  - `snapshotsRepo.createMany(stories × captureConfigurations)` — one snapshot per combination
   - Upload storybook static dir to storage at `builds/${buildId}/storybook/` (recursive)
   - `enqueueCapture({ buildId, snapshotId })` for every snapshot
   - Return `buildId`

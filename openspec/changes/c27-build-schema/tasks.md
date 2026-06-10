@@ -12,7 +12,7 @@ Gate: migration applies cleanly; integration tests cover all repository function
   build:       id, projectId (FK→project cascade), branch, commitSha, status (buildStatus default pending),
                captureMode (captureMode default "worker"), storybookPath, createdAt (defaultNow), createdBy (FK→user)
 
-  snapshot:    id, buildId (FK→build cascade), variantId (FK→variant), storyId,
+  snapshot:    id, buildId (FK→build cascade), captureConfigurationId (FK→captureConfiguration), storyId,
                status (snapshotStatus default pending), imagePath (nullable), hasRenderError (bool default false)
 
   snapshotLog: id, snapshotId (FK→snapshot cascade), level, message, timestamp (defaultNow)
@@ -22,9 +22,9 @@ Gate: migration applies cleanly; integration tests cover all repository function
                pixelDiffCount (int nullable), diffPercent (real nullable),
                reviewerId (nullable FK→user), reviewedAt (timestamp nullable)
 
-  baseline:    id, projectId (FK→project cascade), variantId (FK→variant), storyId,
+  baseline:    id, projectId (FK→project cascade), captureConfigurationId (FK→captureConfiguration), storyId,
                snapshotId (FK→snapshot), approvedAt (defaultNow), approvedBy (FK→user)
-               UNIQUE(projectId, variantId, storyId)
+               UNIQUE(projectId, captureConfigurationId, storyId)
   ```
 - [ ] 1.2 Run `drizzle-kit generate`; commit migration
 
@@ -39,7 +39,7 @@ Gate: migration applies cleanly; integration tests cover all repository function
   `diffs.ts`: `create`, `findById`, `findByBuild(buildId)`, `updateStatus(id, status)`,
   `updateReview(id, { reviewerId, reviewedAt, status })`, `allDoneForBuild(buildId)` → boolean
 
-  `baselines.ts`: `find(projectId, variantId, storyId)` → baseline | undefined,
+  `baselines.ts`: `find(projectId, captureConfigurationId, storyId)` → baseline | undefined,
   `upsert(data)` → baseline, `findByProject(projectId)` → baseline[]
 
 - [ ] 1.4 Export all from `packages/db/src/index.ts`

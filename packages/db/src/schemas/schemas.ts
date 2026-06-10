@@ -1,4 +1,4 @@
-import { pgTable, text, uuid, varchar, numeric } from "drizzle-orm/pg-core";
+import { pgTable, text, uuid, varchar, numeric, integer } from "drizzle-orm/pg-core";
 import { v7 as uuidv7 } from "uuid";
 import { organization, user } from "./auth";
 import { customType } from "drizzle-orm/pg-core";
@@ -36,3 +36,14 @@ export const projectsRelations = relations(projects, ({ one }) => ({
     references: [user.id],
   }),
 }));
+
+export const captureConfigurations = pgTable("capture_configurations", {
+  id: uuid().primaryKey().$defaultFn(uuidv7),
+  projectId: uuid("project_id")
+    .references(() => projects.id, { onDelete: "cascade" })
+    .notNull(),
+  name: varchar({ length: 255 }).notNull(),
+  browser: varchar({ length: 50 }).notNull().default("chromium"),
+  viewportWidth: integer("viewport_width").notNull().default(1280),
+  viewportHeight: integer("viewport_height").notNull().default(800),
+});
