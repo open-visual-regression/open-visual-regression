@@ -5,11 +5,13 @@ export const apiKeySchema = z.object({
   id: z.string(),
   name: z.string().nullable(),
   peek: z.string().nullable(),
+  ownerName: z.string().nullable(),
   createdAt: z.date(),
   lastRequest: z.date().nullable(),
 });
 
 export const createApiKeyInputSchema = z.object({
+  projectId: z.string(),
   name: z.string().min(1).max(100),
 });
 
@@ -18,6 +20,7 @@ export const createApiKeyOutputSchema = z.object({
 });
 
 export const listApiKeysInputSchema = z.object({
+  projectId: z.string(),
   limit: z.number().int().min(1).max(100).default(20),
   offset: z.number().int().min(0).default(0),
 });
