@@ -59,16 +59,7 @@ export const LoginForm = () => {
           <FieldError errors={[errors.email]} />
         </Field>
         <Field data-invalid={!!errors.password}>
-          <div className="flex items-center justify-between">
-            <FieldLabel htmlFor="password">password</FieldLabel>
-            <a
-              href="#"
-              title="password reset not available in self-hosted mode"
-              className="text-xs text-ovr-fg-muted hover:text-ovr-fg-secondary"
-            >
-              forgot password?
-            </a>
-          </div>
+          <FieldLabel htmlFor="password">password</FieldLabel>
           <Input
             id="password"
             type="password"

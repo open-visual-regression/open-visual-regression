@@ -12,9 +12,9 @@ Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-auth.
 
 - [x] 1.4 Fix post-login redirect: `window.location.href = "/"` → `window.location.href = "/projects"`
 
-- [x] 1.5 Add "forgot password" link (`href="#"`, tooltip: "password reset not available in self-hosted mode")
+- [ ] 1.5 Add "forgot password" link (`href="#"`, tooltip: "password reset not available in self-hosted mode")
 
-- [x] 1.6 Component tests:
+- [ ] 1.6 Component tests:
   - Renders form
   - Empty fields show validation errors without calling auth
   - Invalid credentials: error renders inline; no redirect
