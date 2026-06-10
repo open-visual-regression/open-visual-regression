@@ -20,7 +20,7 @@ Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-auth.
   - `useServerAction(router.invitations.acceptInvitation, { interceptors: [onSuccess(() => navigate.push("/")), onError(...)] })`
   - Password mismatch validated client-side with `react-hook-form`
 
-- [ ] 1.5 Add sign-out to authenticated layout:
+- [x] 1.5 Add sign-out to authenticated layout:
   - Sign-out item in TopBar user avatar dropdown → calls `authClient.signOut()` + `window.location.href = "/login"`
 
 - [ ] 1.6 Component tests:

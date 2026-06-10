@@ -1,6 +1,6 @@
 # 39 · Run detail page
 
-Gate: `/projects/[slug]/builds/[buildId]` renders run header with SegmentedProgress and snapshot card grid; filter tabs work; approve-all and reject-all buttons visible (wired in 44-approve-reject).
+Gate: `/projects/[projectId]/builds/[buildId]` renders run header with SegmentedProgress and snapshot card grid; filter tabs work; approve-all and reject-all buttons visible (wired in 44-approve-reject).
 
 Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-builds.jsx` (RunDetailScreen)
 
@@ -17,7 +17,7 @@ apps/web/lib/components/
 
 ## Tasks
 
-- [ ] 1.1 Create `apps/web/app/(authenticated)/projects/[slug]/builds/[buildId]/page.tsx` (RSC):
+- [ ] 1.1 Create `apps/web/app/(authenticated)/projects/[projectId]/builds/[buildId]/page.tsx` (RSC):
   - Fetch build + all diffs + snapshots
   - Accept `searchParams: { filter?: "changed" | "pass" }` — default "all"
 
@@ -37,7 +37,7 @@ apps/web/lib/components/
   - If diff exists + `diffPercent > 0`: amber filled `Badge` "Δ N.NN%" in top-left corner of thumbnail
   - Thumbnail image via `<img src="/api/storage/...">` (routed through presigned URL proxy)
   - Below thumbnail: story ID (monospace, truncated) + `StatusIcon` + status text
-  - Card links to `/projects/[slug]/builds/[buildId]/diffs/[diffId]` (if diff exists) else no link
+  - Card links to `/projects/[projectId]/builds/[buildId]/diffs/[diffId]` (if diff exists) else no link
 
 - [ ] 1.5 Component tests:
   - Header renders with correct SegmentedProgress segments

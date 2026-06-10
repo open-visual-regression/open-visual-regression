@@ -8,16 +8,16 @@ Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-build
 Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-states.jsx` (empty state)
 
 - [ ] 1.1 `apps/web/app/(authenticated)/projects/page.tsx` (RSC):
-  - Fetch all projects with `db.projects.findAll()`
+  - Fetch all projects with `router.projects.list()`
   - If empty → render empty state (1.3); otherwise → card grid (1.2)
 
 - [ ] 1.2 `ProjectCard` component:
   - `grid-template-columns: repeat(auto-fill, minmax(320px, 1fr))`; `gap: 1px`; hairline grid
   - Card: `var(--ovr-bg-elevated)` bg; `4px` radius; padding 16px
-  - Top row: project name (`h3`) + amber filled `Badge` with changed count (hide when 0)
-  - Middle: slug (caption, muted) + default branch (caption)
-  - Bottom row: run count + most recent run `StatusIcon` + relative timestamp
-  - Links to `/projects/[slug]/builds`
+  - Top row: project name (`h3`) + amber filled `Badge` with changed count (hide when 0) — requires build/diff data from `c38-runs-list`
+  - Middle: default git branch + diff threshold (caption)
+  - Bottom row: run count + most recent run `StatusIcon` + relative timestamp — requires build data from `c38-runs-list`
+  - Links to `/projects/[projectId]`
 
 - [ ] 1.3 Empty state:
   - Full-width centered container; `1px dashed var(--ovr-border-subtle)` border; `var(--pixel-grid)` bg (checkerboard CSS in globals.css)

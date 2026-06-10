@@ -18,7 +18,7 @@ apps/web/lib/components/
 
 ## Tasks
 
-- [ ] 1.1 Create `apps/web/app/(authenticated)/projects/[slug]/builds/[buildId]/diffs/[diffId]/page.tsx` (RSC):
+- [ ] 1.1 Create `apps/web/app/(authenticated)/projects/[projectId]/builds/[buildId]/diffs/[diffId]/page.tsx` (RSC):
   - Fetch diff + snapshot + baseline snapshot + build + project
   - Pass image paths (presigned via storage route) to `DiffViewer`
 

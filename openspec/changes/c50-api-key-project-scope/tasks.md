@@ -1,6 +1,6 @@
 # 50 · API key project scoping + ownership
 
-Gate: a key created for project A is rejected with `FORBIDDEN` when used to call `builds.createBuild` with project B's slug; the API key list for a project shows each key's owner.
+Gate: a key created for project A is rejected with `FORBIDDEN` when used to call `builds.getBuildStatus` for a build belonging to project B; the API key list for a project shows each key's owner.
 
 API keys are project-scoped credentials for CI. Each key is created within the context of a single project and is rejected by the builds router for any other project. Each key also has an owner — the user who created it — surfaced in the key list for accountability.
 
