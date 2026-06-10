@@ -33,15 +33,16 @@ Required values are passed as CLI flags. The API key is the only exception — i
 - [ ] 4.2 Create `apps/cli/src/commands/snapshot/storybook.ts`: `ovr snapshot storybook` subcommand
   - Options (done — action is currently a stub):
     - `--dir <path>` (required) — path to storybook-static output directory
-    - `--project <slug>` (required) — project slug
+    - `--server-url <url>` (required) — OVR server URL
     - `--branch <name>` — overrides auto-detected branch
     - `--commit <sha>` — overrides auto-detected commit SHA
     - `--timeout <seconds>` — max seconds to wait for build result (default: `600`)
+  - No `--project` option: the API key (`OVR_API_KEY`) is project-scoped (see `c50-api-key-project-scope`), so the server resolves the target project from the key itself
   - Implementation (not yet done):
     1. Read `OVR_API_KEY` from env; fail fast with a clear message if missing
     2. Validate `--dir` exists and contains `index.json` (Storybook v7+); read and extract story IDs
     3. Auto-detect `branch` and `commitSha` from git; check CI env vars first (`GITHUB_REF_NAME` / `GITHUB_SHA`, `CI_COMMIT_BRANCH` / `CI_COMMIT_SHA`) before falling back to `git branch --show-current` / `git rev-parse HEAD`
-    4. Call `builds.createBuild({ projectSlug, branch, commitSha, stories })`; server returns `{ buildId, uploadUrl }`
+    4. Call `builds.createBuild({ branch, commitSha, stories })`; server returns `{ buildId, uploadUrl }`
     5. Tar the storybook-static dir and PUT to `uploadUrl` (presigned RustFS URL)
     6. Poll `builds.getBuildStatus({ buildId })` every 5 s; print progress on each poll; enforce `--timeout`
     7. Terminal statuses: `passed` → print success + `process.exit(0)`; `needs_review` → print review URL + `process.exit(1)`; `error` → print error + `process.exit(1)`; timeout exceeded → print timeout message + `process.exit(1)`

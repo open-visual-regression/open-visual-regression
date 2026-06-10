@@ -6,9 +6,9 @@ Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-admin
 
 Depends on: `c20-api-keys`, `c25-project-settings`, `c50-api-key-project-scope`
 
-API keys are scoped to a single project (see `c50-api-key-project-scope`), so this page lives under project settings — replacing the "coming soon" placeholder at `/projects/[slug]/settings/api` from `c25-project-settings`. `projectId` comes from the project loaded in `apps/web/app/(authenticated)/projects/[slug]/layout.tsx`.
+API keys are scoped to a single project (see `c50-api-key-project-scope`), so this page lives under project settings — replacing the "coming soon" placeholder at `/projects/[projectId]/settings/api` from `c25-project-settings`. `projectId` comes from the route param.
 
-- [ ] 1 `apps/web/app/(authenticated)/projects/[slug]/settings/api/page.tsx` (RSC):
+- [ ] 1 `apps/web/app/(authenticated)/projects/[projectId]/settings/api/page.tsx` (RSC):
   - Fetch keys via `router.apiKeys.list({ projectId })`
   - Table columns: name · prefix (`ovr_api_key_•••`) · owner · created date · last-used date
   - `△` TriangleAlert amber icon when key has never been used
