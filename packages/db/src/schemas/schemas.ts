@@ -37,7 +37,7 @@ export const projectsRelations = relations(projects, ({ one }) => ({
   }),
 }));
 
-export const variants = pgTable("variants", {
+export const captureConfigurations = pgTable("capture_configurations", {
   id: uuid().primaryKey().$defaultFn(uuidv7),
   projectId: uuid("project_id")
     .references(() => projects.id, { onDelete: "cascade" })

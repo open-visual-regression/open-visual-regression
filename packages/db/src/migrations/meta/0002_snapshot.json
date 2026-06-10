@@ -1,5 +1,5 @@
 {
-  "id": "60019b16-02eb-4fdf-9e5f-661fac3256da",
+  "id": "d5855ca0-db74-4667-8524-855bbf171bbb",
   "prevId": "a3580258-7c43-4cd3-95f6-77cb705b6c9c",
   "version": "7",
   "dialect": "postgresql",
@@ -859,6 +859,68 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.capture_configurations": {
+      "name": "capture_configurations",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "project_id": {
+          "name": "project_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "browser": {
+          "name": "browser",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'chromium'"
+        },
+        "viewport_width": {
+          "name": "viewport_width",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1280
+        },
+        "viewport_height": {
+          "name": "viewport_height",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 800
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "capture_configurations_project_id_projects_id_fk": {
+          "name": "capture_configurations_project_id_projects_id_fk",
+          "tableFrom": "capture_configurations",
+          "tableTo": "projects",
+          "columnsFrom": ["project_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.projects": {
       "name": "projects",
       "schema": "",
@@ -929,68 +991,6 @@
           "tableFrom": "projects",
           "tableTo": "user",
           "columnsFrom": ["creator_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.variants": {
-      "name": "variants",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "project_id": {
-          "name": "project_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "browser": {
-          "name": "browser",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'chromium'"
-        },
-        "viewport_width": {
-          "name": "viewport_width",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 1280
-        },
-        "viewport_height": {
-          "name": "viewport_height",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 800
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "variants_project_id_projects_id_fk": {
-          "name": "variants_project_id_projects_id_fk",
-          "tableFrom": "variants",
-          "tableTo": "projects",
-          "columnsFrom": ["project_id"],
           "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"

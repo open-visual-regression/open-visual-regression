@@ -25,7 +25,7 @@ apps/web/lib/components/
   - `DiffStrip` (3px, full height of header block)
   - `StatusIcon` + status text + run ID + branch pill + commit sha + author + duration + relative age
   - `SegmentedProgress` bar: pass (green) / changed (amber) / failed (red) / pending (blue) segments proportional to snapshot counts
-  - Progress title: "run #[id]" · subtitle: "[N] stories × [M] variants" · summary: "N changed · N failed · N pending"
+  - Progress title: "run #[id]" · subtitle: "[N] stories × [M] capture configurations" · summary: "N changed · N failed · N pending"
 
 - [ ] 1.3 Build `SnapshotGrid` in `apps/web/lib/components/snapshot-grid/`:
   - Filter tabs: "all (N)" · "changed (N)" · "pass (N)"
