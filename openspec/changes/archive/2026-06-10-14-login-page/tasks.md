@@ -19,3 +19,10 @@ Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-auth.
   - Empty fields show validation errors without calling auth
   - Invalid credentials: error renders inline; no redirect
   - Valid credentials: redirects to /projects
+
+## Status: will not do (1.5, 1.6)
+
+A non-functional "forgot password" link with a "not available" tooltip isn't worth shipping.
+A real reset flow needs either SMTP (self-hosted deployments may not have it configured) or an
+admin-initiated reset action — propose that as its own change if/when prioritized. The login
+page itself (1.1-1.4) is implemented and meets the gate.
