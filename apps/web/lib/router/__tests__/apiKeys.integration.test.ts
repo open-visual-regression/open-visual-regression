@@ -40,20 +40,6 @@ describe("apiKeys", () => {
       expect(error).toBeNull();
       expect(result?.key).toMatch(/^ovr_api_key_/);
     });
-
-    test("should store the projectId in metadata, scoping the key to that project", async ({
-      admin: _,
-    }) => {
-      const [, addResult] = await router.projects.add(TEST_PROJECT);
-      const projectId = addResult!.projectId;
-
-      await router.apiKeys.create({ projectId, name: "persist test key" });
-
-      const [, list] = await router.apiKeys.list({ projectId });
-      expect(list?.apiKeys).toEqual(
-        expect.arrayContaining([expect.objectContaining({ name: "persist test key" })]),
-      );
-    });
   });
 
   describe("list", () => {

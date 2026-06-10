@@ -22,8 +22,7 @@ API keys are project-scoped credentials for CI. Each key is created within the c
 - [x] 4 `apps/web/lib/router/apiKeys.ts` — `list`: call `apiKeysRepo.findByProject(projectId, { limit, offset })` instead of `auth.api.listApiKeys` (which is scoped per-user, not per-project). `revoke` is unaffected — `auth.api.deleteApiKey` operates on a key id directly.
 
 - [x] 5 Integration tests: `apps/web/lib/router/__tests__/apiKeys.integration.test.ts`
-  - `create`: stores `projectId` in `metadata`
-  - `list`: only returns keys created with the given `projectId`; includes `ownerName` for each
+  - `list`: only returns keys created with the given `projectId` (covers `create` storing `projectId` in `metadata`); includes `ownerName` for each
   - `list`: a key created by user A shows user A's name as `ownerName`
 
 - [x] 6 `apps/web/lib/router/apiKeys.ts` — `create` and `list`: validate `projectId` refers to a project in the caller's organization via `dbClient.projects.getProject`; throw `ORPCError("BAD_REQUEST")` if not found
