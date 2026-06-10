@@ -71,3 +71,10 @@ apps/web/lib/components/
   - "recent runs" not yet fetched (no builds data exists yet); sidebar currently renders projects only
 
 - [ ] 1.6 Build `MobileAppShell` in `apps/web/lib/components/mobile-app-shell/` (`"use client"`)
+
+## Status: will not do (1.6)
+
+Mobile (<768px) layout — hamburger top bar, slide-out drawer nav, bottom tab bar — deferred
+indefinitely. Desktop and tablet layouts (1.1-1.5) are implemented and meet the gate for those
+breakpoints. Mobile mockups remain in `openspec/designs/.../chrome-mobile.jsx` and
+`sections/mobile-*.jsx` for reference if mobile support is prioritized later.
