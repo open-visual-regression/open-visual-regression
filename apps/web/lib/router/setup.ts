@@ -6,24 +6,28 @@ import { auth } from "../auth/auth";
 import { ORPCError } from "@orpc/server";
 import { unauthenticatedMiddleware } from "./middleware";
 
-const isSetupCompleted = async () => {
+const hasSetupBeenCompleted = async () => {
   const [organization, userCount] = await Promise.all([
     dbClient.organizations.getOrganization(),
     dbClient.users.getUserCount(),
   ]);
+
   return organization != null && userCount > 0;
 };
 
 export const status = os.setup.status
-  .handler(async () => ({
-    status: (await isSetupCompleted()) ? "completed" : "pending",
-  }))
+  .handler(async () => {
+    const isCompleted = await hasSetupBeenCompleted();
+    return { status: isCompleted ? "completed" : "pending" };
+  })
   .actionable();
 
 export const exec = os.setup.exec
   .use(unauthenticatedMiddleware)
   .handler(async ({ input }) => {
-    if (await isSetupCompleted()) {
+    const isCompleted = await hasSetupBeenCompleted();
+
+    if (isCompleted) {
       throw new ORPCError("FORBIDDEN");
     }
 
