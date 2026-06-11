@@ -2,13 +2,13 @@ import { vi } from "vitest";
 
 import { test, describe, expect } from "@/lib/testing/fixtures";
 import { router } from "@/lib/router";
-import type { AddProjectInput } from "@ovr/api/contracts/projects";
+import type { AddProjectInputSchema } from "@ovr/api/contracts/projects";
 
 vi.mock("next/headers");
 
 const NONEXISTENT_PROJECT_ID = "01900000-0000-7000-8000-000000000000";
 
-const TEST_PROJECT: AddProjectInput = {
+const TEST_PROJECT: AddProjectInputSchema = {
   projectName: "Test Project",
   projectDescription: "A test project",
   gitMainBranch: "main",

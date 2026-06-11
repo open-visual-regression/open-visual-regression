@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { serverError } from "@/lib/utils/errors";
 import { CenteredFormSection } from "../_components/CenteredFormSection";
 import { LoginCard } from "./_components/login-card/LoginCard";
 import { router } from "@/lib/router";
@@ -14,7 +15,7 @@ export default async function LoginPage() {
   ]);
 
   if (error) {
-    redirect("/error");
+    serverError();
   }
 
   if (setupStatusResult.status === "pending") {

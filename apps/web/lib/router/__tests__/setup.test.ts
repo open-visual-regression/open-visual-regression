@@ -1,14 +1,22 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { mocks } from "@ovr/mocks";
-import * as schema from "@ovr/db/schema";
-import { db } from "@ovr/db/db";
 
 import { router } from "@/lib/router";
 import { auth } from "@/lib/auth/auth";
 
 vi.mock("next/headers");
 vi.mock("@/lib/auth/auth");
+vi.mock("@ovr/db/client", () => ({
+  dbClient: {
+    organizations: { getOrganization: vi.fn() },
+    users: { getUserCount: vi.fn() },
+  },
+}));
+
+const { dbClient } = await import("@ovr/db/client");
+const mockGetOrganization = vi.mocked(dbClient.organizations.getOrganization);
+const mockGetUserCount = vi.mocked(dbClient.users.getUserCount);
 
 describe("setup", () => {
   const mockCreateUser = vi.mocked(auth.api.createUser);
@@ -16,13 +24,17 @@ describe("setup", () => {
 
   describe("setup.status", () => {
     it("should return pending when DB is empty", async () => {
+      mockGetOrganization.mockResolvedValue(undefined);
+      mockGetUserCount.mockResolvedValue(0);
+
       const [error, result] = await router.setup.status();
       expect(error).toBeNull();
       expect(result?.status).toBe("pending");
     });
 
     it("should return pending when only users exist", async () => {
-      await db.insert(schema.user).values(mocks.user.generateUser());
+      mockGetOrganization.mockResolvedValue(undefined);
+      mockGetUserCount.mockResolvedValue(1);
 
       const [error, result] = await router.setup.status();
       expect(error).toBeNull();
@@ -30,7 +42,8 @@ describe("setup", () => {
     });
 
     it("should return pending when only orgs exist", async () => {
-      await db.insert(schema.organization).values(mocks.organization.generateOrganization());
+      mockGetOrganization.mockResolvedValue(mocks.organization.generateOrganization());
+      mockGetUserCount.mockResolvedValue(0);
 
       const [error, result] = await router.setup.status();
       expect(error).toBeNull();
@@ -38,8 +51,8 @@ describe("setup", () => {
     });
 
     it("should return completed when both users and orgs exist", async () => {
-      await db.insert(schema.user).values(mocks.user.generateUser());
-      await db.insert(schema.organization).values(mocks.organization.generateOrganization());
+      mockGetOrganization.mockResolvedValue(mocks.organization.generateOrganization());
+      mockGetUserCount.mockResolvedValue(1);
 
       const [error, result] = await router.setup.status();
       expect(error).toBeNull();

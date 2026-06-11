@@ -3,7 +3,7 @@ import { Icon, PlusIcon } from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
 import { NoProjectsSection } from "./_components/NoProjectsSection";
 import { router } from "@/lib/router";
-import { redirect } from "next/navigation";
+import { serverError } from "@/lib/utils/errors";
 import { ProjectCardsList } from "./_components/ProjectCardsList";
 import { auth } from "@/lib/auth/auth";
 import { headers } from "next/headers";
@@ -16,7 +16,7 @@ export default async function ProjectsPage() {
   ]);
 
   if (error) {
-    redirect("/error");
+    serverError();
   }
 
   const { projects } = listProjectsResult;
@@ -33,7 +33,7 @@ export default async function ProjectsPage() {
           </Typography>
         </div>
         <RequiresAdminRole role={sessionResult?.user.role}>
-          <ButtonLink href="/projects/new" size="lg">
+          <ButtonLink href="/projects/new">
             <Icon icon={PlusIcon} />
             new project
           </ButtonLink>

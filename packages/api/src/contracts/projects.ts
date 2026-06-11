@@ -34,7 +34,7 @@ export const addProjectInputSchema = z.object({
   diffThreshold: z.number().min(0.01).max(1),
 });
 
-export type AddProjectInput = z.infer<typeof addProjectInputSchema>;
+export type AddProjectInputSchema = z.infer<typeof addProjectInputSchema>;
 
 export const addProjectOutputSchema = z.object({
   projectId: z.uuidv7(),

@@ -1,13 +1,14 @@
 import { verifyRole } from "@/lib/utils/authorization";
 import { Typography } from "@ovr/ui/components/typography";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
+import { serverError } from "@/lib/utils/errors";
 import { NewProjectForm } from "./_components/new-project-form/NewProjectForm";
 
 export default async function CreateProjectPage() {
   const verifyRoleResult = await verifyRole("admin");
 
   if (verifyRoleResult.status === "error") {
-    return redirect("/error");
+    serverError();
   }
 
   if (!verifyRoleResult.data) {
