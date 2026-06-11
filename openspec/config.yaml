@@ -54,6 +54,33 @@ context: |
   oRPC mounted at: `/api/rpc/[...path]`
   API key prefix format: `ovr_pk_live_<random>` — shown once, stored as hash
 
+  Package public API: export a single namespace object named for the package's role
+  (e.g. `dbClient` from `@ovr/db`, `storage` from `@ovr/storage`) — not a grab-bag of
+  top-level named exports. Other specs call these as `storage.getPresignedUrl(...)`,
+  `dbClient.builds.create(...)`, etc.
+
+  ## Testing conventions
+
+  Integration tests: `src/__tests__/*.integration.test.ts` (flat — never a nested
+  `integration/` subdirectory), run against real service containers via Testcontainers
+  (never mocks). Reference implementation: `packages/db`.
+
+  - `vitest.config.ts`: `globalSetup: ["./vitest.integration.globalSetup.ts"]`
+  - `vitest.integration.globalSetup.ts` (package root, outside `src/`): exported `setup`/`teardown`
+    function declarations (not arrows — the `func-style` lint rule only applies under `src/`);
+    starts the container(s) once, sets env vars, runs migrations/seeds — all before any test
+    file (and therefore the package's `index.ts`) is imported
+  - Package-specific container starters live in `src/__tests__/helpers/containers.ts`
+    (e.g. `startRustfs()`); prefer an official `@testcontainers/*` package, fall back to `GenericContainer`
+  - The package's primary client/singleton is constructed eagerly at module scope from
+    `process.env` (see `packages/db/src/db.ts`) — safe only because globalSetup sets env vars first
+  - Per-test setup/teardown: `src/__tests__/fixtures.ts` exporting `test`/`describe`/`expect`
+    via `vitest.extend<Fixtures>({...})` (see `packages/db/src/__tests__/fixtures.ts`)
+  - Backend-only packages (no React/JSX, e.g. db/storage/queue/services): add a package-level
+    `.oxlintrc.json` with `"plugins": ["typescript", "import", "unicorn", "vitest"]`
+    (copy `packages/db/.oxlintrc.json`) — otherwise oxlint's `react-hooks/rules-of-hooks`
+    misfires on the `use` callback in vitest fixtures
+
   ## Auth flow
 
   Roles: `admin` (manages users/projects/settings) and `user` (view/review diffs)
@@ -66,6 +93,10 @@ context: |
 
   All assets (snapshots, diffs, storybook builds) in RustFS; no public bucket policy.
   Access: GET /api/storage/[...path] → validate session + project membership → presigned URL (60s TTL) → 302 redirect
+
+  MinIO must never be used — image, client library, or Testcontainers module — for licensing
+  reasons. Use `rustfs/rustfs:latest` via Testcontainers' `GenericContainer` for storage
+  integration tests; default credentials are `rustfsadmin` / `rustfsadmin`.
 
   ## Build pipeline
 
@@ -188,3 +219,7 @@ rules:
     - Use the skills defined in the project
     - Architect the components so that they are composible
     - Avoid arbitrary Tailwind values unless absolutely necessary
+    - MinIO must never be used (licensing) — use RustFS for S3-compatible storage and tests
+    - New backend-only packages (no React/JSX) need a package-level .oxlintrc.json matching packages/db
+    - When adding new npm dependencies, pin to a version at least ~2 weeks old to avoid pnpm's
+      minimumReleaseAge check auto-editing pnpm-workspace.yaml's minimumReleaseAgeExclude
