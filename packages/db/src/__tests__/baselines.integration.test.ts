@@ -1,7 +1,7 @@
-import { dbClient } from "../../client";
-import { describe, expect, test } from "../fixtures";
+import { dbClient } from "../client";
+import { describe, expect, test } from "./fixtures";
 
-describe("baselines repository", () => {
+describe("baselines", () => {
   describe("upsert", () => {
     test("should create a baseline when none exists", async ({
       project,

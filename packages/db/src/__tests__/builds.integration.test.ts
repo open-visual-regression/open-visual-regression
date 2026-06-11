@@ -1,7 +1,7 @@
-import { dbClient } from "../../client";
-import { describe, expect, test } from "../fixtures";
+import { dbClient } from "../client";
+import { describe, expect, test } from "./fixtures";
 
-describe("builds repository", () => {
+describe("builds", () => {
   describe("create", () => {
     test("should create a build with pending status and worker capture mode by default", async ({
       project,

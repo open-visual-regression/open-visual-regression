@@ -1,7 +1,7 @@
-import { dbClient } from "../../client";
-import { describe, expect, test } from "../fixtures";
+import { dbClient } from "../client";
+import { describe, expect, test } from "./fixtures";
 
-describe("snapshots repository", () => {
+describe("snapshots", () => {
   describe("createMany", () => {
     test("should create a snapshot for each input row", async ({ build, captureConfiguration }) => {
       const created = await dbClient.snapshots.createMany([

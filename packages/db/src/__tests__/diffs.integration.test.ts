@@ -1,7 +1,7 @@
-import { dbClient } from "../../client";
-import { describe, expect, test } from "../fixtures";
+import { dbClient } from "../client";
+import { describe, expect, test } from "./fixtures";
 
-describe("diffs repository", () => {
+describe("diffs", () => {
   describe("create", () => {
     test("should create a diff with pending status", async ({ build, captureConfiguration }) => {
       const [snapshot] = await dbClient.snapshots.createMany([
