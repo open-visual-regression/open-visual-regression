@@ -23,7 +23,7 @@ export const allCapturedForBuild = async (buildId: string) => {
     columns: { status: true },
     where: (snapshots, { eq }) => eq(snapshots.buildId, buildId),
   });
-  return rows.every((row) => row.status !== "pending");
+  return rows.length > 0 && rows.every((row) => row.status !== "pending");
 };
 
 export const countByBuild = async (buildId: string) => {

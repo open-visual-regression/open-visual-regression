@@ -44,7 +44,7 @@ export const allDoneForBuild = async (buildId: string) => {
     .innerJoin(snapshots, eq(diffs.snapshotId, snapshots.id))
     .where(eq(snapshots.buildId, buildId));
 
-  return rows.every((row) => row.status !== "pending");
+  return rows.length > 0 && rows.every((row) => row.status !== "pending");
 };
 
 export type DiffDbSchema = Awaited<ReturnType<typeof findById>>;

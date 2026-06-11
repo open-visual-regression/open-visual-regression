@@ -42,4 +42,10 @@ describe("snapshots repository", () => {
     await dbClient.snapshots.updateStatus(b!.id, "error");
     expect(await dbClient.snapshots.allCapturedForBuild(build.id)).toBe(true);
   });
+
+  test("allCapturedForBuild returns false for a build with no snapshots", async () => {
+    const { build } = await seedBuild();
+
+    expect(await dbClient.snapshots.allCapturedForBuild(build.id)).toBe(false);
+  });
 });

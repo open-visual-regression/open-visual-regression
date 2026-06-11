@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm/sql";
 import {
   boolean,
+  index,
   integer,
   pgEnum,
   pgTable,
@@ -61,19 +62,23 @@ export const builds = pgTable("builds", {
     .notNull(),
 });
 
-export const snapshots = pgTable("snapshots", {
-  id: uuid().primaryKey().$defaultFn(uuidv7),
-  buildId: uuid("build_id")
-    .references(() => builds.id, { onDelete: "cascade" })
-    .notNull(),
-  captureConfigurationId: uuid("capture_configuration_id")
-    .references(() => captureConfigurations.id)
-    .notNull(),
-  storyId: varchar("story_id", { length: 255 }).notNull(),
-  status: snapshotStatusEnum().notNull().default("pending"),
-  imagePath: text("image_path"),
-  hasRenderError: boolean("has_render_error").notNull().default(false),
-});
+export const snapshots = pgTable(
+  "snapshots",
+  {
+    id: uuid().primaryKey().$defaultFn(uuidv7),
+    buildId: uuid("build_id")
+      .references(() => builds.id, { onDelete: "cascade" })
+      .notNull(),
+    captureConfigurationId: uuid("capture_configuration_id")
+      .references(() => captureConfigurations.id)
+      .notNull(),
+    storyId: varchar("story_id", { length: 255 }).notNull(),
+    status: snapshotStatusEnum().notNull().default("pending"),
+    imagePath: text("image_path"),
+    hasRenderError: boolean("has_render_error").notNull().default(false),
+  },
+  (table) => [index("snapshots_buildId_idx").on(table.buildId)],
+);
 
 export const snapshotLogs = pgTable("snapshot_logs", {
   id: uuid().primaryKey().$defaultFn(uuidv7),
@@ -87,19 +92,25 @@ export const snapshotLogs = pgTable("snapshot_logs", {
     .notNull(),
 });
 
-export const diffs = pgTable("diffs", {
-  id: uuid().primaryKey().$defaultFn(uuidv7),
-  snapshotId: uuid("snapshot_id")
-    .references(() => snapshots.id, { onDelete: "cascade" })
-    .notNull(),
-  baselineSnapshotId: uuid("baseline_snapshot_id").references(() => snapshots.id),
-  status: diffStatusEnum().notNull().default("pending"),
-  diffImagePath: text("diff_image_path"),
-  pixelDiffCount: integer("pixel_diff_count"),
-  diffPercent: real("diff_percent"),
-  reviewerId: text("reviewer_id").references(() => user.id),
-  reviewedAt: utcTimestamp("reviewed_at"),
-});
+export const diffs = pgTable(
+  "diffs",
+  {
+    id: uuid().primaryKey().$defaultFn(uuidv7),
+    snapshotId: uuid("snapshot_id")
+      .references(() => snapshots.id, { onDelete: "cascade" })
+      .notNull(),
+    baselineSnapshotId: uuid("baseline_snapshot_id").references(() => snapshots.id, {
+      onDelete: "set null",
+    }),
+    status: diffStatusEnum().notNull().default("pending"),
+    diffImagePath: text("diff_image_path"),
+    pixelDiffCount: integer("pixel_diff_count"),
+    diffPercent: real("diff_percent"),
+    reviewerId: text("reviewer_id").references(() => user.id),
+    reviewedAt: utcTimestamp("reviewed_at"),
+  },
+  (table) => [index("diffs_snapshotId_idx").on(table.snapshotId)],
+);
 
 export const baselines = pgTable(
   "baselines",

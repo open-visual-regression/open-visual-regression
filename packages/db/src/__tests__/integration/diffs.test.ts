@@ -25,6 +25,12 @@ describe("diffs repository", () => {
     expect(await dbClient.diffs.allDoneForBuild(build.id)).toBe(true);
   });
 
+  test("allDoneForBuild returns false for a build with no diffs", async () => {
+    const { build } = await seedBuild();
+
+    expect(await dbClient.diffs.allDoneForBuild(build.id)).toBe(false);
+  });
+
   test("updateReview", async () => {
     const { build, captureConfiguration, user } = await seedBuild();
     const [snapshot] = await dbClient.snapshots.createMany([
