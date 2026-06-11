@@ -1,4 +1,4 @@
-import type { Readable } from "node:stream";
+import { Readable } from "node:stream";
 
 import {
   DeleteObjectCommand,
@@ -32,7 +32,11 @@ export const storage = {
   getFileStream: async (key: string): Promise<Readable> => {
     const { Body } = await client.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
 
-    return Body as Readable;
+    if (!(Body instanceof Readable)) {
+      throw new Error(`Expected a readable stream for "${key}"`);
+    }
+
+    return Body;
   },
 
   deleteFile: async (key: string): Promise<void> => {
