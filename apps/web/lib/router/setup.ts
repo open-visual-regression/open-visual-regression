@@ -28,7 +28,7 @@ export const exec = os.setup.exec
     const isCompleted = await hasSetupBeenCompleted();
 
     if (isCompleted) {
-      throw new ORPCError("FORBIDDEN");
+      throw new ORPCError("FORBIDDEN", { message: "Setup has already been completed" });
     }
 
     const createUserResponse = await auth.api.createUser({
