@@ -14,6 +14,8 @@ export const execSetupInputSchema = z.object({
   password: z.string().min(8),
 });
 
+export type ExecSetupInputSchema = z.infer<typeof execSetupInputSchema>;
+
 export const execSetupContract = oc.input(execSetupInputSchema);
 
 export const contract = {

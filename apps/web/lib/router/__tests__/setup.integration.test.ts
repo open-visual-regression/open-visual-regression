@@ -2,10 +2,12 @@ import { vi } from "vitest";
 
 import { test, describe, expect } from "@/lib/testing/fixtures";
 import { router } from "@/lib/router";
+import { dbClient } from "@ovr/db/client";
+import { type ExecSetupInputSchema } from "@ovr/api/contracts/setup";
 
 vi.mock("next/headers");
 
-const TEST_INPUT = {
+const TEST_INPUT: ExecSetupInputSchema = {
   organizationName: "My Test Org",
   name: "Test User",
   email: "test@example.com",
@@ -13,29 +15,16 @@ const TEST_INPUT = {
 };
 
 describe("setup", () => {
-  describe("setup.status", () => {
-    test("should return pending when DB is empty", async () => {
-      const [error, result] = await router.setup.status();
-      expect(error).toBeNull();
-      expect(result?.status).toBe("pending");
-    });
-
-    test("should return completed when both users and orgs exist", async () => {
-      await router.setup.exec(TEST_INPUT);
-
-      const [error, result] = await router.setup.status();
-      expect(error).toBeNull();
-      expect(result?.status).toBe("completed");
-    });
-  });
-
   describe("setup.exec", () => {
     test("should create the admin account and organization", async () => {
+      const [, pending] = await router.setup.status();
+      expect(pending?.status).toBe("pending");
+
       const [error] = await router.setup.exec(TEST_INPUT);
       expect(error).toBeNull();
 
-      const [, statusResult] = await router.setup.status();
-      expect(statusResult?.status).toBe("completed");
+      const [, completed] = await router.setup.status();
+      expect(completed?.status).toBe("completed");
     });
 
     test("should generate slug from org name with spaces and special chars", async () => {
@@ -44,6 +33,16 @@ describe("setup", () => {
         organizationName: "Tom Fischer's Org & Co!",
       });
       expect(error).toBeNull();
+
+      const org = await dbClient.organizations.getOrganization();
+      expect(org?.slug).toBe("tom-fischers-org--co");
+    });
+
+    test("should return INTERNAL_SERVER_ERROR when the email is already taken", async () => {
+      await router.setup.exec(TEST_INPUT);
+
+      const [error] = await router.setup.exec(TEST_INPUT);
+      expect(error?.code).toBe("INTERNAL_SERVER_ERROR");
     });
   });
 });
