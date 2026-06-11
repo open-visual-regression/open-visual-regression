@@ -5,6 +5,7 @@ export default defineConfig({
     name: "storage",
     environment: "node",
     include: ["src/__tests__/integration/**/*.test.ts"],
+    globalSetup: ["./vitest.integration.globalSetup.ts"],
     testTimeout: 30000,
   },
 });

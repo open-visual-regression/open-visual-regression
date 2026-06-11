@@ -10,74 +10,64 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-let cachedClient: S3Client | undefined;
+const client = new S3Client({
+  endpoint: process.env.STORAGE_ENDPOINT,
+  region: process.env.STORAGE_REGION ?? "us-east-1",
+  credentials: {
+    accessKeyId: process.env.STORAGE_ACCESS_KEY ?? "",
+    secretAccessKey: process.env.STORAGE_SECRET_KEY ?? "",
+  },
+  forcePathStyle: true,
+});
 
-const getClient = (): S3Client => {
-  if (!cachedClient) {
-    cachedClient = new S3Client({
-      endpoint: process.env.STORAGE_ENDPOINT,
-      region: process.env.STORAGE_REGION ?? "us-east-1",
-      credentials: {
-        accessKeyId: process.env.STORAGE_ACCESS_KEY ?? "",
-        secretAccessKey: process.env.STORAGE_SECRET_KEY ?? "",
-      },
-      forcePathStyle: true,
-    });
-  }
+const bucket = process.env.STORAGE_BUCKET ?? "ovr";
 
-  return cachedClient;
-};
-
-const getBucket = (): string => process.env.STORAGE_BUCKET ?? "ovr";
-
-export const uploadFile = async (
-  key: string,
-  body: Buffer | Readable,
-  contentType: string,
-): Promise<void> => {
-  await getClient().send(
-    new PutObjectCommand({ Bucket: getBucket(), Key: key, Body: body, ContentType: contentType }),
-  );
-};
-
-export const getFileStream = async (key: string): Promise<Readable> => {
-  const { Body } = await getClient().send(new GetObjectCommand({ Bucket: getBucket(), Key: key }));
-
-  return Body as Readable;
-};
-
-export const deleteFile = async (key: string): Promise<void> => {
-  await getClient().send(new DeleteObjectCommand({ Bucket: getBucket(), Key: key }));
-};
-
-export const deletePrefix = async (prefix: string): Promise<void> => {
-  const client = getClient();
-  const bucket = getBucket();
-  let continuationToken: string | undefined;
-
-  do {
-    const { Contents, NextContinuationToken } = await client.send(
-      new ListObjectsV2Command({
-        Bucket: bucket,
-        Prefix: prefix,
-        ContinuationToken: continuationToken,
-      }),
+export const storage = {
+  uploadFile: async (key: string, body: Buffer | Readable, contentType: string): Promise<void> => {
+    await client.send(
+      new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: contentType }),
     );
+  },
 
-    const objects = (Contents ?? [])
-      .filter((object): object is { Key: string } => object.Key !== undefined)
-      .map(({ Key }) => ({ Key }));
+  getFileStream: async (key: string): Promise<Readable> => {
+    const { Body } = await client.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
 
-    if (objects.length > 0) {
-      await client.send(new DeleteObjectsCommand({ Bucket: bucket, Delete: { Objects: objects } }));
-    }
+    return Body as Readable;
+  },
 
-    continuationToken = NextContinuationToken;
-  } while (continuationToken);
-};
+  deleteFile: async (key: string): Promise<void> => {
+    await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
+  },
 
-export const getPresignedUrl = async (key: string, ttlSeconds: number): Promise<string> => {
-  return getSignedUrl(getClient(), new GetObjectCommand({ Bucket: getBucket(), Key: key }), {
-    expiresIn: ttlSeconds,
-  });
+  deletePrefix: async (prefix: string): Promise<void> => {
+    let continuationToken: string | undefined;
+
+    do {
+      const { Contents, NextContinuationToken } = await client.send(
+        new ListObjectsV2Command({
+          Bucket: bucket,
+          Prefix: prefix,
+          ContinuationToken: continuationToken,
+        }),
+      );
+
+      const objects = (Contents ?? [])
+        .filter((object): object is { Key: string } => object.Key !== undefined)
+        .map(({ Key }) => ({ Key }));
+
+      if (objects.length > 0) {
+        await client.send(
+          new DeleteObjectsCommand({ Bucket: bucket, Delete: { Objects: objects } }),
+        );
+      }
+
+      continuationToken = NextContinuationToken;
+    } while (continuationToken);
+  },
+
+  getPresignedUrl: async (key: string, ttlSeconds: number): Promise<string> => {
+    return getSignedUrl(client, new GetObjectCommand({ Bucket: bucket, Key: key }), {
+      expiresIn: ttlSeconds,
+    });
+  },
 };
