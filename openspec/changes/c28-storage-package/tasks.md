@@ -13,7 +13,7 @@ Gate: all integration tests pass against real RustFS container; upload → downl
   - `deleteFile(key: string): Promise<void>`
   - `deletePrefix(prefix: string): Promise<void>` — list all keys with prefix → bulk delete (handle >1000 keys in batches)
   - `getPresignedUrl(key: string, ttlSeconds: number): Promise<string>`
-- [x] 1.4 Integration tests (`src/__tests__/integration/storage.test.ts`) using Testcontainers RustFS:
+- [x] 1.4 Integration tests (`src/__tests__/storage.integration.test.ts`) using Testcontainers RustFS:
   - Upload a PNG buffer → `getFileStream` returns same bytes
   - `deleteFile` → subsequent `getFileStream` throws NoSuchKey
   - `deletePrefix` removes all keys with that prefix

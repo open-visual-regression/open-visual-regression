@@ -1,7 +1,7 @@
 import type { Readable } from "node:stream";
 
-import { storage } from "../../index";
-import { describe, expect, test } from "../fixtures";
+import { storage } from "../index";
+import { describe, expect, test } from "./fixtures";
 
 const streamToBuffer = async (stream: Readable): Promise<Buffer> => {
   const chunks: Buffer[] = [];
