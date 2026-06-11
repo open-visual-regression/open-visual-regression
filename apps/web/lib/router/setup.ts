@@ -6,22 +6,31 @@ import { auth } from "../auth/auth";
 import { ORPCError } from "@orpc/server";
 import { unauthenticatedMiddleware } from "./middleware";
 
+const hasSetupBeenCompleted = async () => {
+  const [organization, userCount] = await Promise.all([
+    dbClient.organizations.getOrganization(),
+    dbClient.users.getUserCount(),
+  ]);
+
+  return organization != null && userCount > 0;
+};
+
 export const status = os.setup.status
   .handler(async () => {
-    const [organization, userCount] = await Promise.all([
-      dbClient.organizations.getOrganization(),
-      dbClient.users.getUserCount(),
-    ]);
-
-    const status = organization && userCount > 0 ? "completed" : "pending";
-
-    return { status };
+    const isCompleted = await hasSetupBeenCompleted();
+    return { status: isCompleted ? "completed" : "pending" };
   })
   .actionable();
 
 export const exec = os.setup.exec
   .use(unauthenticatedMiddleware)
   .handler(async ({ input }) => {
+    const isCompleted = await hasSetupBeenCompleted();
+
+    if (isCompleted) {
+      throw new ORPCError("FORBIDDEN", { message: "Setup has already been completed" });
+    }
+
     const createUserResponse = await auth.api.createUser({
       body: { name: input.name, email: input.email, password: input.password, role: "admin" },
     });

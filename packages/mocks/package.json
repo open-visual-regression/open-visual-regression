@@ -12,13 +12,14 @@
     "lint": "oxlint src",
     "format": "oxfmt src"
   },
+  "dependencies": {
+    "@faker-js/faker": "^10.4.0",
+    "@ovr/api": "workspace:*",
+    "@ovr/db": "workspace:*"
+  },
   "devDependencies": {
     "@ovr/typescript-config": "workspace:*",
     "@types/node": "^22.15.3",
     "typescript": "6.0.3"
-  },
-  "dependencies": {
-    "@faker-js/faker": "^10.4.0",
-    "@ovr/db": "workspace:*"
   }
 }

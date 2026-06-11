@@ -22,7 +22,7 @@ export const findByProject = async ({ projectId, limit, offset }: FindByProjectI
         lastRequest: apikey.lastRequest,
       })
       .from(apikey)
-      .leftJoin(user, eq(apikey.referenceId, user.id))
+      .innerJoin(user, eq(apikey.referenceId, user.id))
       .where(projectFilter)
       .orderBy(desc(apikey.createdAt))
       .limit(limit)

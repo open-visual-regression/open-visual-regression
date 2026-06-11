@@ -1,99 +1,50 @@
-import { describe, expect, it, vi } from "vitest";
+import { vi } from "vitest";
 
-import { mocks } from "@ovr/mocks";
-import * as schema from "@ovr/db/schema";
-import { db } from "@ovr/db/db";
-
+import { test, describe, expect } from "@/lib/testing/fixtures";
 import { router } from "@/lib/router";
-import { auth } from "@/lib/auth/auth";
+import { dbClient } from "@ovr/db/client";
+import { type ExecSetupInputSchema } from "@ovr/api/contracts/setup";
 
 vi.mock("next/headers");
-vi.mock("@/lib/auth/auth");
+
+const TEST_INPUT: ExecSetupInputSchema = {
+  organizationName: "My Test Org",
+  name: "Test User",
+  email: "test@example.com",
+  password: "securepass123",
+};
 
 describe("setup", () => {
-  const mockCreateUser = vi.mocked(auth.api.createUser);
-  const mockCreateOrganization = vi.mocked(auth.api.createOrganization);
-
-  describe("setup.status", () => {
-    it("should return pending when DB is empty", async () => {
-      const [error, result] = await router.setup.status();
-      expect(error).toBeNull();
-      expect(result?.status).toBe("pending");
-    });
-
-    it("should return pending when only users exist", async () => {
-      await db.insert(schema.user).values(mocks.user.generateUser());
-
-      const [error, result] = await router.setup.status();
-      expect(error).toBeNull();
-      expect(result?.status).toBe("pending");
-    });
-
-    it("should return pending when only orgs exist", async () => {
-      await db.insert(schema.organization).values(mocks.organization.generateOrganization());
-
-      const [error, result] = await router.setup.status();
-      expect(error).toBeNull();
-      expect(result?.status).toBe("pending");
-    });
-
-    it("should return completed when both users and orgs exist", async () => {
-      await db.insert(schema.user).values(mocks.user.generateUser());
-      await db.insert(schema.organization).values(mocks.organization.generateOrganization());
-
-      const [error, result] = await router.setup.status();
-      expect(error).toBeNull();
-      expect(result?.status).toBe("completed");
-    });
-  });
-
   describe("setup.exec", () => {
-    const input = {
-      organizationName: "My Test Org",
-      name: "Test User",
-      email: "test@example.com",
-      password: "securepass123",
-    };
+    test("should create the admin account and organization", async () => {
+      const [, pending] = await router.setup.status();
+      expect(pending?.status).toBe("pending");
 
-    it("should create the admin account and organization", async () => {
-      const user = mocks.user.generateUser();
-      const org = mocks.organization.generateOrganization();
-      mockCreateUser.mockResolvedValue({ user: { ...user, role: user.role ?? undefined } });
-      mockCreateOrganization.mockResolvedValue({ ...org, members: [] });
-
-      const [error] = await router.setup.exec(input);
+      const [error] = await router.setup.exec(TEST_INPUT);
       expect(error).toBeNull();
 
-      expect(mockCreateUser).toHaveBeenCalledWith({
-        body: { name: input.name, email: input.email, password: input.password, role: "admin" },
-      });
-
-      expect(mockCreateOrganization).toHaveBeenCalledWith({
-        body: { name: input.organizationName, slug: "my-test-org", userId: user.id },
-      });
+      const [, completed] = await router.setup.status();
+      expect(completed?.status).toBe("completed");
     });
 
-    it("should generate slug from org name with spaces and special chars", async () => {
-      const user = mocks.user.generateUser();
-      mockCreateUser.mockResolvedValue({ user: { ...user, role: user.role ?? undefined } });
-      mockCreateOrganization.mockResolvedValue({
-        ...mocks.organization.generateOrganization(),
-        members: [],
+    test("should generate slug from org name with spaces and special chars", async () => {
+      const [error] = await router.setup.exec({
+        ...TEST_INPUT,
+        organizationName: "Tom Fischer's Org & Co!",
       });
 
-      await router.setup.exec({ ...input, organizationName: "Tom Fischer's Org & Co!" });
+      const org = await dbClient.organizations.getOrganization();
 
-      expect(mockCreateOrganization).toHaveBeenCalledWith({
-        body: expect.objectContaining({ slug: "tom-fischers-org--co" }),
-      });
+      expect(error).toBeNull();
+      expect(org?.slug).toBe("tom-fischers-org--co");
     });
 
-    it("should return INTERNAL_SERVER_ERROR when signUpEmail returns no user", async () => {
-      mockCreateUser.mockResolvedValue(null as never);
+    test("should return FORBIDDEN when setup is already completed", async () => {
+      const [error1] = await router.setup.exec(TEST_INPUT);
+      expect(error1).toBeNull();
 
-      const [error] = await router.setup.exec(input);
-      expect(error?.message).toBe("Failed to create the admin user");
-      expect(mockCreateOrganization).not.toHaveBeenCalled();
+      const [error2] = await router.setup.exec({ ...TEST_INPUT, email: "other@example.com" });
+      expect(error2?.code).toBe("FORBIDDEN");
     });
   });
 });

@@ -1,10 +1,17 @@
+import { Pool } from "pg";
 import { beforeEach } from "vitest";
 
-import { db, sql } from "@ovr/db/db";
-
 beforeEach(async () => {
-  await db.execute(sql`
-    TRUNCATE "user", organization, session, account, verification, apikey, member, invitation, projects
-    RESTART IDENTITY CASCADE
-  `);
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  try {
+    const { rows } = await pool.query<{ tablename: string }>(
+      `SELECT tablename FROM pg_tables WHERE schemaname = 'public'`,
+    );
+    const tables = rows.map((r) => `"${r.tablename}"`).join(", ");
+    if (tables) {
+      await pool.query(`TRUNCATE ${tables} RESTART IDENTITY CASCADE`);
+    }
+  } finally {
+    await pool.end();
+  }
 });

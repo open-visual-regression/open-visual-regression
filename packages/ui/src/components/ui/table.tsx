@@ -2,18 +2,43 @@ import * as React from "react";
 
 import { cn } from "../../lib/utils";
 
-const Table = ({ className, ...props }: React.ComponentProps<"table">) => (
-  <div data-slot="table-container" className="relative w-full overflow-x-auto">
-    <table
-      data-slot="table"
-      className={cn("w-full caption-bottom text-xs", className)}
-      {...props}
-    />
-  </div>
+const TableCaption = ({ className, ...props }: React.ComponentProps<"p">) => (
+  <p
+    data-slot="table-caption"
+    className={cn("mt-3 text-label text-ovr-fg-tertiary", className)}
+    {...props}
+  />
 );
 
+const Table = ({ className, children, ...props }: React.ComponentProps<"table">) => {
+  const childArray = React.Children.toArray(children);
+  const caption = childArray.filter(
+    (child) => React.isValidElement(child) && child.type === TableCaption,
+  );
+  const tableChildren = childArray.filter(
+    (child) => !(React.isValidElement(child) && child.type === TableCaption),
+  );
+  return (
+    <div className="relative w-full">
+      <div
+        data-slot="table-container"
+        className="overflow-x-auto rounded-card border border-ovr-border bg-ovr-elevated"
+      >
+        <table data-slot="table" className={cn("w-full text-body-sm", className)} {...props}>
+          {tableChildren}
+        </table>
+      </div>
+      {caption}
+    </div>
+  );
+};
+
 const TableHeader = ({ className, ...props }: React.ComponentProps<"thead">) => (
-  <thead data-slot="table-header" className={cn("[&_tr]:border-b", className)} {...props} />
+  <thead
+    data-slot="table-header"
+    className={cn("[&_tr]:bg-ovr-inset [&_tr]:border-b [&_tr]:border-ovr-border", className)}
+    {...props}
+  />
 );
 
 const TableBody = ({ className, ...props }: React.ComponentProps<"tbody">) => (
@@ -27,7 +52,10 @@ const TableBody = ({ className, ...props }: React.ComponentProps<"tbody">) => (
 const TableFooter = ({ className, ...props }: React.ComponentProps<"tfoot">) => (
   <tfoot
     data-slot="table-footer"
-    className={cn("border-t bg-muted/50 font-medium [&>tr]:last:border-b-0", className)}
+    className={cn(
+      "border-t border-ovr-border bg-ovr-inset font-medium [&>tr]:last:border-b-0",
+      className,
+    )}
     {...props}
   />
 );
@@ -36,7 +64,7 @@ const TableRow = ({ className, ...props }: React.ComponentProps<"tr">) => (
   <tr
     data-slot="table-row"
     className={cn(
-      "border-b transition-colors hover:bg-muted/50 has-aria-expanded:bg-muted/50 data-[state=selected]:bg-muted",
+      "h-8 border-b border-ovr-border-subtle transition-colors hover:bg-ovr-hover has-aria-expanded:bg-ovr-hover data-[state=selected]:bg-ovr-active",
       className,
     )}
     {...props}
@@ -47,7 +75,7 @@ const TableHead = ({ className, ...props }: React.ComponentProps<"th">) => (
   <th
     data-slot="table-head"
     className={cn(
-      "h-10 px-2 text-left align-middle font-medium whitespace-nowrap text-foreground [&:has([role=checkbox])]:pr-0",
+      "h-8 px-3 text-left align-middle text-badge font-semibold uppercase tracking-[0.08em] whitespace-nowrap text-ovr-fg-tertiary [&:has([role=checkbox])]:pr-0",
       className,
     )}
     {...props}
@@ -57,15 +85,10 @@ const TableHead = ({ className, ...props }: React.ComponentProps<"th">) => (
 const TableCell = ({ className, ...props }: React.ComponentProps<"td">) => (
   <td
     data-slot="table-cell"
-    className={cn("p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0", className)}
-    {...props}
-  />
-);
-
-const TableCaption = ({ className, ...props }: React.ComponentProps<"caption">) => (
-  <caption
-    data-slot="table-caption"
-    className={cn("mt-4 text-xs text-muted-foreground", className)}
+    className={cn(
+      "px-3 py-0 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0",
+      className,
+    )}
     {...props}
   />
 );

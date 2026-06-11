@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { serverError } from "@/lib/utils/errors";
 import { SetupCard } from "./_components/setup-card/SetupCard";
 import { CenteredFormSection } from "../_components/CenteredFormSection";
 import { router } from "@/lib/router";
@@ -9,7 +10,7 @@ export default async function SetupPage() {
   const [error, setupStatusResult] = await router.setup.status();
 
   if (error) {
-    redirect("/error");
+    serverError();
   }
 
   if (setupStatusResult.status === "completed") {

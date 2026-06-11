@@ -4,11 +4,12 @@ import { z } from "zod";
 export const apiKeySchema = z.object({
   id: z.string(),
   name: z.string().nullable(),
-  peek: z.string().nullable(),
-  ownerName: z.string().nullable(),
+  ownerName: z.string(),
   createdAt: z.date(),
   lastRequest: z.date().nullable(),
 });
+
+export type ApiKeySchema = z.infer<typeof apiKeySchema>;
 
 export const createApiKeyInputSchema = z.object({
   projectId: z.string(),

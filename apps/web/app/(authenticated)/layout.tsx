@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth/auth";
+import { DevTools } from "./_components/DevTools";
 
 type AppLayoutProps = Readonly<{
   navigation: React.ReactNode;
@@ -24,6 +25,7 @@ export default async function AppLayout({ navigation, sidebar, children }: AppLa
           {children}
         </main>
       </div>
+      <DevTools />
     </div>
   );
 }

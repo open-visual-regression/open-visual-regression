@@ -1,12 +1,12 @@
 import { SidebarContainer } from "@/lib/components/sidebar/SidebarContainer";
 import { router } from "@/lib/router";
-import { redirect } from "next/navigation";
+import { serverError } from "@/lib/utils/errors";
 
 export default async function SidebarPage() {
   const [error, projectsResult] = await router.projects.list();
 
   if (error) {
-    redirect("/error");
+    serverError();
   }
 
   return (

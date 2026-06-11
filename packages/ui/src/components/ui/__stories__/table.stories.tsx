@@ -58,7 +58,6 @@ export const KitchenSink: Story = {
   render: () => (
     <div className="p-6 max-w-2xl">
       <Table>
-        <TableCaption>Recent runs across all branches</TableCaption>
         <TableHeader>
           <TableRow>
             <TableHead>Run</TableHead>
@@ -91,6 +90,7 @@ export const KitchenSink: Story = {
             <TableCell colSpan={2} />
           </TableRow>
         </TableFooter>
+        <TableCaption>Recent runs across all branches</TableCaption>
       </Table>
     </div>
   ),

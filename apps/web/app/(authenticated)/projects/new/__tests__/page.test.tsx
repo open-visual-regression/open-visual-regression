@@ -3,7 +3,7 @@ import { vi } from "vitest";
 import { describe, expect, it, render, screen } from "@/test-utils";
 import { auth } from "@/lib/auth/auth";
 import { mocks } from "@ovr/mocks";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import CreateProjectPage from "../page";
 
 vi.mock("next/headers");
@@ -13,7 +13,6 @@ vi.mock("@/lib/router");
 
 const mockGetSession = vi.mocked(auth.api.getSession);
 const mockNotFound = vi.mocked(notFound);
-const mockRedirect = vi.mocked(redirect);
 
 describe("CreateProjectPage", () => {
   it("should show the new project form for admins", async () => {
@@ -42,8 +41,6 @@ describe("CreateProjectPage", () => {
   it("should show an error page when the session cannot be retrieved", async () => {
     mockGetSession.mockRejectedValue(new Error("DB connection failed"));
 
-    render(await CreateProjectPage());
-
-    expect(mockRedirect).toHaveBeenCalledWith("/error");
+    await expect(CreateProjectPage()).rejects.toThrow();
   });
 });

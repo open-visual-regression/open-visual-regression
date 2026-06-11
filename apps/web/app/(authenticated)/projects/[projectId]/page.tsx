@@ -1,6 +1,7 @@
 import { Typography } from "@ovr/ui/components/typography";
 import { router } from "@/lib/router";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
+import { serverError } from "@/lib/utils/errors";
 import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
 import { Icon, SettingsIcon } from "@ovr/ui/components/icon";
 
@@ -16,7 +17,7 @@ export default async function ProjectPage(props: ProjectPageProps) {
   }
 
   if (error) {
-    redirect("/error");
+    serverError();
   }
 
   return (

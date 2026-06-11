@@ -49,11 +49,11 @@ export const list = os.apiKeys.list
       limit: input.limit,
       offset: input.offset,
     });
+
     return {
       apiKeys: apiKeys.map((k) => ({
         id: k.id,
         name: k.name,
-        peek: k.prefix,
         ownerName: k.ownerName,
         createdAt: k.createdAt,
         lastRequest: k.lastRequest,
