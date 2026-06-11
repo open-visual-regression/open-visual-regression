@@ -2,7 +2,7 @@
 
 Gate: migration applies cleanly; integration tests cover all repository functions against real Postgres.
 
-- [ ] 1.1 Create `packages/db/src/schema/builds.ts`:
+- [x] 1.1 Create `packages/db/src/schema/builds.ts`:
   ```ts
   buildStatus enum: "pending" | "needs_review" | "passed" | "error"
   snapshotStatus enum: "pending" | "captured" | "error"
@@ -26,21 +26,21 @@ Gate: migration applies cleanly; integration tests cover all repository function
                snapshotId (FK→snapshot), approvedAt (defaultNow), approvedBy (FK→user)
                UNIQUE(projectId, captureConfigurationId, storyId)
   ```
-- [ ] 1.2 Run `drizzle-kit generate`; commit migration
+- [x] 1.2 Run `drizzle-kit generate`; commit migration
 
 `captureMode` distinguishes how a build's snapshots are produced: `"worker"` means the worker renders each story with Playwright (the only mode used today, by `ovr snapshot storybook`); `"pre_captured"` means snapshots were captured by the source itself and uploaded directly, skipping the capture step entirely. This field exists so future snapshot sources (e.g. browser-mode test runners) can plug into the same build/diff pipeline without a schema change.
-- [ ] 1.3 Create repositories in `packages/db/src/repositories/`:
+- [x] 1.3 Create repositories in `packages/db/src/repositories/`:
 
   `builds.ts`: `create`, `findById`, `updateStatus(id, status)`, `findByProject(projectId, opts?: { branch?, status? })`
 
   `snapshots.ts`: `createMany(snapshots[])`, `findByBuild(buildId)`, `updateStatus(id, status)`,
-  `allCapturedForBuild(buildId)` → boolean, `countByBuild(buildId)`
+  `hasAllCapturedForBuild(buildId)` → boolean, `countByBuild(buildId)`
 
   `diffs.ts`: `create`, `findById`, `findByBuild(buildId)`, `updateStatus(id, status)`,
-  `updateReview(id, { reviewerId, reviewedAt, status })`, `allDoneForBuild(buildId)` → boolean
+  `updateReview(id, { reviewerId, reviewedAt, status })`, `hasAllDoneForBuild(buildId)` → boolean
 
   `baselines.ts`: `find(projectId, captureConfigurationId, storyId)` → baseline | undefined,
   `upsert(data)` → baseline, `findByProject(projectId)` → baseline[]
 
-- [ ] 1.4 Export all from `packages/db/src/index.ts`
-- [ ] 1.5 Integration tests: create build → create snapshots → update statuses → find; upsert baseline replaces existing
+- [x] 1.4 Export all from `packages/db/src/index.ts`
+- [x] 1.5 Integration tests: create build → create snapshots → update statuses → find; upsert baseline replaces existing

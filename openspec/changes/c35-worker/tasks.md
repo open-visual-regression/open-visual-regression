@@ -21,7 +21,7 @@ Gate: worker starts; enqueue a capture job → it runs and transitions snapshot 
   - Retry config: `{ attempts: 3, backoff: { type: "fixed", delay: 1000 } }`
 
 - [ ] 1.6 Handle BullMQ `failed` event (all retries exhausted) in `apps/worker/src/index.ts`:
-  - Queue `snapshot:capture` failed: `snapshotsRepo.updateStatus(snapshotId, "error")` → check `allDoneForBuild` → if true enqueue finalize
+  - Queue `snapshot:capture` failed: `snapshotsRepo.updateStatus(snapshotId, "error")` → check `hasAllDoneForBuild` → if true enqueue finalize
   - Queue `snapshot:diff` failed: `diffsRepo.updateStatus(diffId, "error")` → same check
 
 - [ ] 1.7 Remove `passWithNoTests: true` from `apps/worker/vitest.config.ts`; unit tests for handlers (mock service functions):

@@ -14,7 +14,7 @@ Gate: unit tests verify threshold logic (auto_approved vs needs_review), no-base
   - Calculate `diffPercent = pixelDiffCount / (w * h) * 100`
   - If `diffPercent === 0` OR within threshold: `diffsRepo.updateStatus(diffId, "auto_approved")`
   - If exceeds threshold: upload diff PNG to `builds/${buildId}/diffs/${diffId}.png`; `diffsRepo.updateStatus(diffId, "needs_review")` + store `pixelDiffCount` + `diffPercent` + `diffImagePath`
-  - Check `diffsRepo.allDoneForBuild(buildId)` → if true, `enqueueFinalize({ buildId })`
+  - Check `diffsRepo.hasAllDoneForBuild(buildId)` → if true, `enqueueFinalize({ buildId })`
 
 - [ ] 1.3 Create `packages/services/src/baselines.ts`:
 
