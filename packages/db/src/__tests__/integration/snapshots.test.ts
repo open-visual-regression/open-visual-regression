@@ -1,12 +1,8 @@
-import { describe, expect, test } from "vitest";
-
 import { dbClient } from "../../client";
-import { seedBuild } from "../helpers/seed";
+import { describe, expect, test } from "../fixtures";
 
 describe("snapshots repository", () => {
-  test("createMany + findByBuild + countByBuild", async () => {
-    const { build, captureConfiguration } = await seedBuild();
-
+  test("createMany + findByBuild + countByBuild", async ({ build, captureConfiguration }) => {
     const created = await dbClient.snapshots.createMany([
       {
         buildId: build.id,
@@ -27,8 +23,7 @@ describe("snapshots repository", () => {
     expect(await dbClient.snapshots.countByBuild(build.id)).toBe(2);
   });
 
-  test("updateStatus + hasAllCapturedForBuild", async () => {
-    const { build, captureConfiguration } = await seedBuild();
+  test("updateStatus + hasAllCapturedForBuild", async ({ build, captureConfiguration }) => {
     const [a, b] = await dbClient.snapshots.createMany([
       { buildId: build.id, captureConfigurationId: captureConfiguration.id, storyId: "a" },
       { buildId: build.id, captureConfigurationId: captureConfiguration.id, storyId: "b" },
@@ -43,9 +38,7 @@ describe("snapshots repository", () => {
     expect(await dbClient.snapshots.hasAllCapturedForBuild(build.id)).toBe(true);
   });
 
-  test("hasAllCapturedForBuild returns false for a build with no snapshots", async () => {
-    const { build } = await seedBuild();
-
+  test("hasAllCapturedForBuild returns false for a build with no snapshots", async ({ build }) => {
     expect(await dbClient.snapshots.hasAllCapturedForBuild(build.id)).toBe(false);
   });
 });

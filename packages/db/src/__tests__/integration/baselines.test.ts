@@ -1,11 +1,13 @@
-import { describe, expect, test } from "vitest";
-
 import { dbClient } from "../../client";
-import { seedBuild } from "../helpers/seed";
+import { describe, expect, test } from "../fixtures";
 
 describe("baselines repository", () => {
-  test("upsert creates then replaces existing baseline", async () => {
-    const { project, captureConfiguration, build, user } = await seedBuild();
+  test("upsert creates then replaces existing baseline", async ({
+    project,
+    captureConfiguration,
+    build,
+    user,
+  }) => {
     const [snapshotA, snapshotB] = await dbClient.snapshots.createMany([
       {
         buildId: build.id,

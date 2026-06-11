@@ -1,11 +1,11 @@
-import { describe, expect, test } from "vitest";
-
 import { dbClient } from "../../client";
-import { seedBuild } from "../helpers/seed";
+import { describe, expect, test } from "../fixtures";
 
 describe("diffs repository", () => {
-  test("create + findById + findByBuild + hasAllDoneForBuild", async () => {
-    const { build, captureConfiguration } = await seedBuild();
+  test("create + findById + findByBuild + hasAllDoneForBuild", async ({
+    build,
+    captureConfiguration,
+  }) => {
     const [snapshot] = await dbClient.snapshots.createMany([
       { buildId: build.id, captureConfigurationId: captureConfiguration.id, storyId: "a" },
     ]);
@@ -25,14 +25,11 @@ describe("diffs repository", () => {
     expect(await dbClient.diffs.hasAllDoneForBuild(build.id)).toBe(true);
   });
 
-  test("hasAllDoneForBuild returns false for a build with no diffs", async () => {
-    const { build } = await seedBuild();
-
+  test("hasAllDoneForBuild returns false for a build with no diffs", async ({ build }) => {
     expect(await dbClient.diffs.hasAllDoneForBuild(build.id)).toBe(false);
   });
 
-  test("updateReview", async () => {
-    const { build, captureConfiguration, user } = await seedBuild();
+  test("updateReview", async ({ build, captureConfiguration, user }) => {
     const [snapshot] = await dbClient.snapshots.createMany([
       { buildId: build.id, captureConfigurationId: captureConfiguration.id, storyId: "a" },
     ]);
