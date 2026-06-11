@@ -22,6 +22,15 @@ export const status = os.setup.status
 export const exec = os.setup.exec
   .use(unauthenticatedMiddleware)
   .handler(async ({ input }) => {
+    const [organization, userCount] = await Promise.all([
+      dbClient.organizations.getOrganization(),
+      dbClient.users.getUserCount(),
+    ]);
+
+    if (organization && userCount > 0) {
+      throw new ORPCError("FORBIDDEN");
+    }
+
     const createUserResponse = await auth.api.createUser({
       body: { name: input.name, email: input.email, password: input.password, role: "admin" },
     });

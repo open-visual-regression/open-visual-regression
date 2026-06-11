@@ -32,17 +32,19 @@ describe("setup", () => {
         ...TEST_INPUT,
         organizationName: "Tom Fischer's Org & Co!",
       });
-      expect(error).toBeNull();
 
       const org = await dbClient.organizations.getOrganization();
+
+      expect(error).toBeNull();
       expect(org?.slug).toBe("tom-fischers-org--co");
     });
 
-    test("should return INTERNAL_SERVER_ERROR when the email is already taken", async () => {
-      await router.setup.exec(TEST_INPUT);
+    test("should return FORBIDDEN when setup is already completed", async () => {
+      const [error1] = await router.setup.exec(TEST_INPUT);
+      expect(error1).toBeNull();
 
-      const [error] = await router.setup.exec(TEST_INPUT);
-      expect(error?.code).toBe("INTERNAL_SERVER_ERROR");
+      const [error2] = await router.setup.exec({ ...TEST_INPUT, email: "other@example.com" });
+      expect(error2?.code).toBe("FORBIDDEN");
     });
   });
 });
