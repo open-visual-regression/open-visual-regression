@@ -31,6 +31,14 @@ context: |
   oRPC (CLI API transport) · Playwright (screenshot capture) · Pixelmatch (diffing)
   Sonner (toasts) · Tanstack Query (client polling) · Zod (validation)
 
+  ## Licensing
+
+  This is an open source, self-hosted project — every dependency (npm package, container
+  image, client library) must carry a license compatible with self-hosted open source
+  redistribution (e.g. MIT, Apache-2.0, BSD, ISC). Avoid AGPL/SSPL/BSL, proprietary, or
+  "free for non-commercial use" licenses, and anything requiring a paid license for
+  self-hosted deployments.
+
   ## Architecture rules
 
   Route / Server Action → Service → Repository → Drizzle → Postgres
@@ -94,8 +102,7 @@ context: |
   All assets (snapshots, diffs, storybook builds) in RustFS; no public bucket policy.
   Access: GET /api/storage/[...path] → validate session + project membership → presigned URL (60s TTL) → 302 redirect
 
-  MinIO must never be used — image, client library, or Testcontainers module — for licensing
-  reasons. Use `rustfs/rustfs:latest` via Testcontainers' `GenericContainer` for storage
+  Use `rustfs/rustfs:latest` via Testcontainers' `GenericContainer` for storage
   integration tests; default credentials are `rustfsadmin` / `rustfsadmin`.
 
   ## Build pipeline
@@ -219,7 +226,9 @@ rules:
     - Use the skills defined in the project
     - Architect the components so that they are composible
     - Avoid arbitrary Tailwind values unless absolutely necessary
-    - MinIO must never be used (licensing) — use RustFS for S3-compatible storage and tests
+    - When adding new dependencies (npm packages, container images, client libraries), verify
+      the license permits self-hosted open source redistribution (avoid AGPL/SSPL/BSL or
+      proprietary licenses)
     - New backend-only packages (no React/JSX) need a package-level .oxlintrc.json matching packages/db
     - When adding new npm dependencies, pin to a version at least ~2 weeks old to avoid pnpm's
       minimumReleaseAge check auto-editing pnpm-workspace.yaml's minimumReleaseAgeExclude
