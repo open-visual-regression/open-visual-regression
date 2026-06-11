@@ -62,24 +62,18 @@ context: |
   oRPC mounted at: `/api/rpc/[...path]`
   API key prefix format: `ovr_pk_live_<random>` — shown once, stored as hash
 
-  Package public API: export a single namespace object named for the package's role
-  (e.g. `dbClient` from `@ovr/db`, `storage` from `@ovr/storage`) — not a grab-bag of
-  top-level named exports. Other specs call these as `storage.getPresignedUrl(...)`,
-  `dbClient.builds.create(...)`, etc.
-
   ## Testing conventions
 
   Integration tests: `src/__tests__/*.integration.test.ts` (flat — never a nested
   `integration/` subdirectory), run against real service containers via Testcontainers
-  (never mocks). Reference implementation: `packages/db`.
+  (never mocks).
 
   - `vitest.config.ts`: `globalSetup: ["./vitest.integration.globalSetup.ts"]`
   - `vitest.integration.globalSetup.ts` (package root, outside `src/`): exported `setup`/`teardown`
-    function declarations (not arrows — the `func-style` lint rule only applies under `src/`);
-    starts the container(s) once, sets env vars, runs migrations/seeds — all before any test
-    file (and therefore the package's `index.ts`) is imported
-  - Package-specific container starters live in `src/__tests__/helpers/containers.ts`
-    (e.g. `startRustfs()`); prefer an official `@testcontainers/*` package, fall back to `GenericContainer`
+    functions; starts the container(s) once, sets env vars, runs migrations/seeds — all
+    before any test file (and therefore the package's `index.ts`) is imported
+  - When a service has no official `@testcontainers/*` package, put the `GenericContainer`
+    starter in `src/__tests__/helpers/containers.ts` (e.g. `startRustfs()`, see `packages/storage`)
   - The package's primary client/singleton is constructed eagerly at module scope from
     `process.env` (see `packages/db/src/db.ts`) — safe only because globalSetup sets env vars first
   - Per-test setup/teardown: `src/__tests__/fixtures.ts` exporting `test`/`describe`/`expect`
