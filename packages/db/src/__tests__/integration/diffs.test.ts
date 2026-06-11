@@ -4,7 +4,7 @@ import { dbClient } from "../../client";
 import { seedBuild } from "../helpers/seed";
 
 describe("diffs repository", () => {
-  test("create + findById + findByBuild + allDoneForBuild", async () => {
+  test("create + findById + findByBuild + hasAllDoneForBuild", async () => {
     const { build, captureConfiguration } = await seedBuild();
     const [snapshot] = await dbClient.snapshots.createMany([
       { buildId: build.id, captureConfigurationId: captureConfiguration.id, storyId: "a" },
@@ -19,16 +19,16 @@ describe("diffs repository", () => {
     const byBuild = await dbClient.diffs.findByBuild(build.id);
     expect(byBuild.map((d) => d.id)).toEqual([diff!.id]);
 
-    expect(await dbClient.diffs.allDoneForBuild(build.id)).toBe(false);
+    expect(await dbClient.diffs.hasAllDoneForBuild(build.id)).toBe(false);
 
     await dbClient.diffs.updateStatus(diff!.id, "auto_approved");
-    expect(await dbClient.diffs.allDoneForBuild(build.id)).toBe(true);
+    expect(await dbClient.diffs.hasAllDoneForBuild(build.id)).toBe(true);
   });
 
-  test("allDoneForBuild returns false for a build with no diffs", async () => {
+  test("hasAllDoneForBuild returns false for a build with no diffs", async () => {
     const { build } = await seedBuild();
 
-    expect(await dbClient.diffs.allDoneForBuild(build.id)).toBe(false);
+    expect(await dbClient.diffs.hasAllDoneForBuild(build.id)).toBe(false);
   });
 
   test("updateReview", async () => {

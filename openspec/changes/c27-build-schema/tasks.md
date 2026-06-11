@@ -34,10 +34,10 @@ Gate: migration applies cleanly; integration tests cover all repository function
   `builds.ts`: `create`, `findById`, `updateStatus(id, status)`, `findByProject(projectId, opts?: { branch?, status? })`
 
   `snapshots.ts`: `createMany(snapshots[])`, `findByBuild(buildId)`, `updateStatus(id, status)`,
-  `allCapturedForBuild(buildId)` → boolean, `countByBuild(buildId)`
+  `hasAllCapturedForBuild(buildId)` → boolean, `countByBuild(buildId)`
 
   `diffs.ts`: `create`, `findById`, `findByBuild(buildId)`, `updateStatus(id, status)`,
-  `updateReview(id, { reviewerId, reviewedAt, status })`, `allDoneForBuild(buildId)` → boolean
+  `updateReview(id, { reviewerId, reviewedAt, status })`, `hasAllDoneForBuild(buildId)` → boolean
 
   `baselines.ts`: `find(projectId, captureConfigurationId, storyId)` → baseline | undefined,
   `upsert(data)` → baseline, `findByProject(projectId)` → baseline[]

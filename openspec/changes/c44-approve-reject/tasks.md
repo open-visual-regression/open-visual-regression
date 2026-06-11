@@ -10,12 +10,12 @@ Depends on: c27-build-schema (diff/snapshot/baseline repos must exist)
   - Load diff; throw `AlreadyDecidedError` if `diff.status !== "needs_review"`
   - `db.diffs.updateReview(diffId, { reviewerId, reviewedAt: new Date(), status: "approved" })`
   - `promoteBaseline(diffId, reviewerId)` — if build's project default branch matches build's branch, upsert baseline
-  - If `db.diffs.allDoneForBuild(buildId)` → `buildService.finalizeBuild(buildId)`
+  - If `db.diffs.hasAllDoneForBuild(buildId)` → `buildService.finalizeBuild(buildId)`
 
   `rejectDiff(diffId, reviewerId)`:
   - Load diff; throw `AlreadyDecidedError` if not `needs_review`
   - `db.diffs.updateReview(diffId, { reviewerId, reviewedAt: new Date(), status: "rejected" })`
-  - If `db.diffs.allDoneForBuild(buildId)` → `buildService.finalizeBuild(buildId)`
+  - If `db.diffs.hasAllDoneForBuild(buildId)` → `buildService.finalizeBuild(buildId)`
 
   Unit tests (mocked deps):
   - `approveDiff` on default branch: approved + baseline promoted + finalize triggered when last

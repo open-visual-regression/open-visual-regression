@@ -37,7 +37,7 @@ export const updateReview = async (id: string, review: UpdateReviewInput) => {
   return diff;
 };
 
-export const allDoneForBuild = async (buildId: string) => {
+export const hasAllDoneForBuild = async (buildId: string) => {
   const rows = await db
     .select({ status: diffs.status })
     .from(diffs)

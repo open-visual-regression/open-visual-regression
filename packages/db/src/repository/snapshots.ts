@@ -18,7 +18,7 @@ export const updateStatus = async (id: string, status: SnapshotStatus) => {
   return snapshot;
 };
 
-export const allCapturedForBuild = async (buildId: string) => {
+export const hasAllCapturedForBuild = async (buildId: string) => {
   const rows = await db.query.snapshots.findMany({
     columns: { status: true },
     where: (snapshots, { eq }) => eq(snapshots.buildId, buildId),

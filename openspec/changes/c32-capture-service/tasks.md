@@ -15,7 +15,7 @@ Gate: unit tests pass with mocked Playwright and storage; snapshot record update
   - Collect console messages + page errors → `snapshotLogsRepo.createMany(...)`
   - Upload PNG to storage at `builds/${buildId}/snapshots/${snapshotId}.png`
   - `snapshotsRepo.updateStatus(snapshotId, "captured")` + set `imagePath` + set `hasRenderError` if errors captured
-  - Check `snapshotsRepo.allCapturedForBuild(buildId)` → if true, enqueue diff job for each snapshot
+  - Check `snapshotsRepo.hasAllCapturedForBuild(buildId)` → if true, enqueue diff job for each snapshot
   - Close Playwright browser
 
 - [ ] 1.3 Unit tests (mock Playwright via `vi.mock`, mock storage, mock repos):
