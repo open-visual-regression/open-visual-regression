@@ -23,6 +23,7 @@
     "@orpc/server": "^1.14.3",
     "@ovr/api": "workspace:*",
     "@ovr/db": "workspace:*",
+    "@ovr/storage": "workspace:*",
     "@ovr/ui": "workspace:*",
     "@tanstack/react-devtools": "^0.10.5",
     "@tanstack/react-table": "9.0.0-beta.6",
