@@ -1,8 +1,7 @@
 import type { Readable } from "node:stream";
 
-import { describe, expect, test } from "vitest";
-
 import { storage } from "../../index";
+import { describe, expect, test } from "../fixtures";
 
 const streamToBuffer = async (stream: Readable): Promise<Buffer> => {
   const chunks: Buffer[] = [];
@@ -13,42 +12,40 @@ const streamToBuffer = async (stream: Readable): Promise<Buffer> => {
 };
 
 describe("storage", () => {
-  test("uploads a file and downloads the same bytes", async () => {
+  test("uploads a file and downloads the same bytes", async ({ key }) => {
     const body = Buffer.from("fake-png-bytes");
 
-    await storage.uploadFile("test/upload.png", body, "image/png");
-    const downloaded = await streamToBuffer(await storage.getFileStream("test/upload.png"));
+    await storage.uploadFile(key, body, "image/png");
+    const downloaded = await streamToBuffer(await storage.getFileStream(key));
 
     expect(downloaded).toEqual(body);
   });
 
-  test("deleteFile removes the object", async () => {
-    await storage.uploadFile("test/delete.png", Buffer.from("to-delete"), "image/png");
-    await storage.deleteFile("test/delete.png");
+  test("deleteFile removes the object", async ({ key }) => {
+    await storage.uploadFile(key, Buffer.from("to-delete"), "image/png");
+    await storage.deleteFile(key);
 
-    await expect(storage.getFileStream("test/delete.png")).rejects.toMatchObject({
+    await expect(storage.getFileStream(key)).rejects.toMatchObject({ name: "NoSuchKey" });
+  });
+
+  test("deletePrefix removes all keys with that prefix", async ({ prefix }) => {
+    await storage.uploadFile(`${prefix}a.png`, Buffer.from("a"), "image/png");
+    await storage.uploadFile(`${prefix}b.png`, Buffer.from("b"), "image/png");
+
+    await storage.deletePrefix(prefix);
+
+    await expect(storage.getFileStream(`${prefix}a.png`)).rejects.toMatchObject({
+      name: "NoSuchKey",
+    });
+    await expect(storage.getFileStream(`${prefix}b.png`)).rejects.toMatchObject({
       name: "NoSuchKey",
     });
   });
 
-  test("deletePrefix removes all keys with that prefix", async () => {
-    await storage.uploadFile("test/prefix/a.png", Buffer.from("a"), "image/png");
-    await storage.uploadFile("test/prefix/b.png", Buffer.from("b"), "image/png");
+  test("getPresignedUrl returns a URL that resolves", async ({ key }) => {
+    await storage.uploadFile(key, Buffer.from("presigned"), "image/png");
 
-    await storage.deletePrefix("test/prefix/");
-
-    await expect(storage.getFileStream("test/prefix/a.png")).rejects.toMatchObject({
-      name: "NoSuchKey",
-    });
-    await expect(storage.getFileStream("test/prefix/b.png")).rejects.toMatchObject({
-      name: "NoSuchKey",
-    });
-  });
-
-  test("getPresignedUrl returns a URL that resolves", async () => {
-    await storage.uploadFile("test/presigned.png", Buffer.from("presigned"), "image/png");
-
-    const url = await storage.getPresignedUrl("test/presigned.png", 60);
+    const url = await storage.getPresignedUrl(key, 60);
     const response = await fetch(url);
 
     expect(response.status).toBe(200);
