@@ -5,7 +5,7 @@ import { customType } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm/sql";
 import { relations } from "drizzle-orm/relations";
 
-const utcTimestamp = customType<{
+export const utcTimestamp = customType<{
   data: string;
   driverData: string;
 }>({
