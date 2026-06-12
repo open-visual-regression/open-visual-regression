@@ -1,6 +1,5 @@
 import { Queue, Worker } from "bullmq";
-import { Redis } from "ioredis";
-import { afterAll, describe, expect, it } from "vitest";
+import type { Redis } from "ioredis";
 
 import {
   enqueueCapture,
@@ -11,19 +10,11 @@ import {
   type DiffJobPayload,
   type FinalizeJobPayload,
 } from "../index";
-
-const connection = new Redis({
-  host: process.env.REDIS_HOST,
-  port: Number(process.env.REDIS_PORT),
-  maxRetriesPerRequest: null,
-});
-
-afterAll(async () => {
-  await connection.quit();
-});
+import { describe, expect, test } from "./fixtures";
 
 const processedByWorker = async <T extends object>(
   queueName: QueueName,
+  connection: Redis,
   enqueue: () => Promise<unknown>,
 ): Promise<T> => {
   const worker = new Worker<T>(queueName, async (job) => job.data, { connection });
@@ -53,31 +44,39 @@ const processedByWorker = async <T extends object>(
 };
 
 describe("queue", () => {
-  it("enqueueCapture delivers the payload to a capture worker and drains", async () => {
+  test("enqueueCapture delivers the payload to a capture worker and drains", async ({
+    connection,
+  }) => {
     const payload: CaptureJobPayload = { buildId: "build-1", snapshotId: "snapshot-1" };
 
-    const data = await processedByWorker<CaptureJobPayload>(QueueName.SNAPSHOT_CAPTURE, () =>
-      enqueueCapture(payload, connection),
+    const data = await processedByWorker<CaptureJobPayload>(
+      QueueName.SNAPSHOT_CAPTURE,
+      connection,
+      () => enqueueCapture(payload, connection),
     );
 
     expect(data).toEqual(payload);
   });
 
-  it("enqueueDiff delivers the payload to a diff worker and drains", async () => {
+  test("enqueueDiff delivers the payload to a diff worker and drains", async ({ connection }) => {
     const payload: DiffJobPayload = { snapshotId: "snapshot-1", diffId: "diff-1" };
 
-    const data = await processedByWorker<DiffJobPayload>(QueueName.SNAPSHOT_DIFF, () =>
+    const data = await processedByWorker<DiffJobPayload>(QueueName.SNAPSHOT_DIFF, connection, () =>
       enqueueDiff(payload, connection),
     );
 
     expect(data).toEqual(payload);
   });
 
-  it("enqueueFinalize delivers the payload to a finalize worker and drains", async () => {
+  test("enqueueFinalize delivers the payload to a finalize worker and drains", async ({
+    connection,
+  }) => {
     const payload: FinalizeJobPayload = { buildId: "build-1" };
 
-    const data = await processedByWorker<FinalizeJobPayload>(QueueName.BUILD_FINALIZE, () =>
-      enqueueFinalize(payload, connection),
+    const data = await processedByWorker<FinalizeJobPayload>(
+      QueueName.BUILD_FINALIZE,
+      connection,
+      () => enqueueFinalize(payload, connection),
     );
 
     expect(data).toEqual(payload);
