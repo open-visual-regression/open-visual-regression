@@ -3,9 +3,9 @@ import type { Job } from "bullmq";
 import type IORedis from "ioredis";
 
 export enum QueueName {
-  SNAPSHOT_CAPTURE = "snapshot:capture",
-  SNAPSHOT_DIFF = "snapshot:diff",
-  BUILD_FINALIZE = "build:finalize",
+  SNAPSHOT_CAPTURE = "snapshot-capture",
+  SNAPSHOT_DIFF = "snapshot-diff",
+  BUILD_FINALIZE = "build-finalize",
 }
 
 export type CaptureJobPayload = {
