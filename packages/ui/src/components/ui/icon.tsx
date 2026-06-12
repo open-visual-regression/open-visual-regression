@@ -1,7 +1,9 @@
 import type { LucideIcon } from "lucide-react";
 export {
+  CheckIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  CopyIcon,
   FolderIcon,
   GitBranchIcon,
   GitCommitHorizontalIcon,
