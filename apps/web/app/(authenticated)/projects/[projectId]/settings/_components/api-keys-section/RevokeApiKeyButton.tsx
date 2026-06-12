@@ -28,7 +28,7 @@ type RevokeApiKeyButtonProps = {
 export const RevokeApiKeyButton = ({ keyId, keyName }: RevokeApiKeyButtonProps) => {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [error, setError] = useState<{ message: string } | undefined>();
+  const [error, setError] = useState<{ message: string } | null>(null);
 
   const { execute, status } = useServerAction(serverClient.apiKeys.revoke, {
     interceptors: [
@@ -42,7 +42,7 @@ export const RevokeApiKeyButton = ({ keyId, keyName }: RevokeApiKeyButtonProps) 
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (nextOpen) {
-      setError(undefined);
+      setError(null);
     }
     setOpen(nextOpen);
   };
