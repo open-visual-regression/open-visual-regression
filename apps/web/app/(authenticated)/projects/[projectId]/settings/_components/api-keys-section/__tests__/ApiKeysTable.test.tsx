@@ -38,13 +38,17 @@ describe("ApiKeysTable", () => {
 
     await user.click(screen.getByRole("button", { name: /revoke ci · github actions/i }));
 
-    expect(await screen.findByRole("alertdialog")).toBeVisible();
+    expect(await screen.findByRole("alertdialog", { name: /revoke api key\?/i })).toBeVisible();
 
     await user.click(screen.getByRole("button", { name: /^revoke$/i }));
 
     expect(mockRevoke).toHaveBeenCalledWith({ keyId: apiKey.id });
     await waitFor(() => expect(mockRefresh).toHaveBeenCalled());
-    await waitFor(() => expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("alertdialog", { name: /revoke api key\?/i }),
+      ).not.toBeInTheDocument(),
+    );
   });
 
   it("should close the confirmation dialog when cancelled", async ({ user }) => {
@@ -52,11 +56,15 @@ describe("ApiKeysTable", () => {
     render(<ApiKeysTable data={[apiKey]} />);
 
     await user.click(screen.getByRole("button", { name: /revoke local dev/i }));
-    expect(await screen.findByRole("alertdialog")).toBeVisible();
+    expect(await screen.findByRole("alertdialog", { name: /revoke api key\?/i })).toBeVisible();
 
     await user.click(screen.getByRole("button", { name: /^cancel$/i }));
 
-    await waitFor(() => expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("alertdialog", { name: /revoke api key\?/i }),
+      ).not.toBeInTheDocument(),
+    );
     expect(mockRevoke).not.toHaveBeenCalled();
   });
 
@@ -69,6 +77,6 @@ describe("ApiKeysTable", () => {
     await user.click(screen.getByRole("button", { name: /^revoke$/i }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("INTERNAL_SERVER_ERROR");
-    expect(screen.getByRole("alertdialog")).toBeVisible();
+    expect(screen.getByRole("alertdialog", { name: /revoke api key\?/i })).toBeVisible();
   });
 });
