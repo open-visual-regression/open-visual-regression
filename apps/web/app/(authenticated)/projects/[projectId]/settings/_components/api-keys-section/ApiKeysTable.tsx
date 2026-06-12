@@ -23,7 +23,6 @@ type ApiKeyTableRow = {
   id: string;
   name: string | null;
   ownerName: string;
-  prefix: string | null;
   createdAt: Date;
   lastRequest: Date | null;
 };
@@ -34,13 +33,6 @@ const columnHelper = createColumnHelper<typeof features, ApiKeyTableRow>();
 const columns = columnHelper.columns([
   columnHelper.accessor("name", { header: "Name" }),
   columnHelper.accessor("ownerName", { header: "Owner" }),
-  columnHelper.accessor("prefix", {
-    header: "Prefix",
-    cell: ({ getValue }) => {
-      const prefix = getValue();
-      return prefix ? `${prefix}•••` : "—";
-    },
-  }),
   columnHelper.accessor("createdAt", {
     header: "Created",
     cell: ({ getValue }) => formatDateTime(getValue()),

@@ -5,7 +5,6 @@ export const apiKeySchema = z.object({
   id: z.string(),
   name: z.string().nullable(),
   ownerName: z.string(),
-  prefix: z.string().nullable(),
   createdAt: z.date(),
   lastRequest: z.date().nullable(),
 });

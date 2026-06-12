@@ -15,13 +15,6 @@ const mockRevoke = vi.mocked(router.apiKeys.revoke);
 const mockRefresh = vi.mocked(useRouter)().refresh;
 
 describe("ApiKeysTable", () => {
-  it("should show the masked key prefix", () => {
-    const apiKey = mocks.apiKey.generateApiKey({ prefix: "ovr_api_key_" });
-    render(<ApiKeysTable data={[apiKey]} />);
-
-    expect(screen.getByText("ovr_api_key_•••")).toBeVisible();
-  });
-
   it("should show a never-used indicator when the key has not been used", () => {
     const apiKey = mocks.apiKey.generateApiKey({ lastRequest: null });
     render(<ApiKeysTable data={[apiKey]} />);
