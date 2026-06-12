@@ -48,7 +48,7 @@ describe("ProjectSettingsPage", () => {
     render(await ProjectSettingsPage(pageProps));
 
     expect(screen.getByRole("heading", { name: /settings/i })).toBeVisible();
-    expect(screen.getByText(apiKey.name!)).toBeVisible();
+    expect(screen.getByText(apiKey.name)).toBeVisible();
   });
 
   it("should show a not found page for non-admins", async () => {

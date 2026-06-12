@@ -22,7 +22,7 @@ import {
 
 type RevokeApiKeyButtonProps = {
   keyId: string;
-  keyName: string | null;
+  keyName: string;
 };
 
 export const RevokeApiKeyButton = ({ keyId, keyName }: RevokeApiKeyButtonProps) => {
@@ -52,9 +52,7 @@ export const RevokeApiKeyButton = ({ keyId, keyName }: RevokeApiKeyButtonProps) 
   return (
     <AlertDialog open={open} onOpenChange={handleOpenChange}>
       <AlertDialogTrigger
-        render={
-          <Button variant="ghost" size="icon-sm" aria-label={`revoke ${keyName ?? "api key"}`} />
-        }
+        render={<Button variant="ghost" size="icon-sm" aria-label={`revoke ${keyName}`} />}
       >
         <Icon icon={XIcon} />
       </AlertDialogTrigger>
@@ -62,8 +60,8 @@ export const RevokeApiKeyButton = ({ keyId, keyName }: RevokeApiKeyButtonProps) 
         <AlertDialogHeader>
           <AlertDialogTitle>revoke api key?</AlertDialogTitle>
           <AlertDialogDescription>
-            {keyName ? `"${keyName}"` : "this api key"} will stop working immediately. anything
-            using it to authenticate will start failing.
+            &quot;{keyName}&quot; will stop working immediately. anything using it to authenticate
+            will start failing.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <FieldError errors={[error]} />

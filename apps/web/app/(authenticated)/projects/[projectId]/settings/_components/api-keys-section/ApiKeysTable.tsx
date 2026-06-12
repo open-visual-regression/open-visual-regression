@@ -21,7 +21,7 @@ import { RevokeApiKeyButton } from "./RevokeApiKeyButton";
 
 type ApiKeyTableRow = {
   id: string;
-  name: string | null;
+  name: string;
   ownerName: string;
   createdAt: Date;
   lastRequest: Date | null;
