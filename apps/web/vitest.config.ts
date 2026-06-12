@@ -33,7 +33,7 @@ export default defineConfig({
           globals: true,
           setupFiles: ["./vitest.setup.ts"],
           include: ["app/**/*.test.{ts,tsx}", "lib/**/*.test.{ts,tsx}"],
-          exclude: ["lib/**/*.integration.test.ts"],
+          exclude: ["app/**/*.integration.test.{ts,tsx}", "lib/**/*.integration.test.ts"],
           clearMocks: true,
         },
       },
@@ -42,7 +42,7 @@ export default defineConfig({
         test: {
           name: "integration",
           environment: "node",
-          include: ["lib/**/*.integration.test.ts"],
+          include: ["app/**/*.integration.test.{ts,tsx}", "lib/**/*.integration.test.ts"],
           globalSetup: ["./vitest.integration.globalSetup.ts"],
           setupFiles: ["./vitest.integration.setup.ts"],
           fileParallelism: false,

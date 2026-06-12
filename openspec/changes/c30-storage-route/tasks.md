@@ -12,7 +12,7 @@ Gate: unauthenticated request → 401; authenticated request with wrong project 
   - Reconstruct full storage key from `params.path.join("/")`
   - Call `storage.getPresignedUrl(key, 60)` → `Response.redirect(url, 302)`
 
-- [x] 1.2 Unit tests (mock `getSession` + mock `storage.getPresignedUrl`):
+- [x] 1.2 Integration tests (real session via Testcontainers Postgres + real `storage.getPresignedUrl` via Testcontainers RustFS):
   - No session → 401
   - Unknown project → 403
   - Valid session + valid project → 302 with presigned URL in Location header
