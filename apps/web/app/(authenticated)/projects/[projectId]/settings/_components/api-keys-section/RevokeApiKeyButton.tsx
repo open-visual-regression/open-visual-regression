@@ -19,6 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@ovr/ui/components/alert-dialog";
+import { Typography } from "@ovr/ui/components/typography";
 
 type RevokeApiKeyButtonProps = {
   keyId: string;
@@ -52,18 +53,21 @@ export const RevokeApiKeyButton = ({ keyId, keyName }: RevokeApiKeyButtonProps) 
   return (
     <AlertDialog open={open} onOpenChange={handleOpenChange}>
       <AlertDialogTrigger
-        render={<Button variant="ghost" size="icon-sm" aria-label={`revoke ${keyName}`} />}
+        className="inline-flex flex-row items-center"
+        render={<Button variant="ghost" size="sm" aria-label={`revoke ${keyName}`} />}
       >
         <Icon icon={XIcon} />
+        revoke
       </AlertDialogTrigger>
-      <AlertDialogContent size="sm">
+      <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>revoke api key?</AlertDialogTitle>
-          <AlertDialogDescription>
-            &quot;{keyName}&quot; will stop working immediately. anything using it to authenticate
-            will start failing.
-          </AlertDialogDescription>
+          <AlertDialogDescription>this cannot be undone.</AlertDialogDescription>
         </AlertDialogHeader>
+        <Typography>
+          are you sure you want to revoke the api key &quot;{keyName}&quot;? anything still using it
+          will fail.
+        </Typography>
         <FieldError errors={[error]} />
         <AlertDialogFooter>
           <AlertDialogCancel>cancel</AlertDialogCancel>

@@ -34,7 +34,7 @@ const columns = columnHelper.columns([
   columnHelper.accessor("name", { header: "Name" }),
   columnHelper.accessor("ownerName", { header: "Owner" }),
   columnHelper.accessor("createdAt", {
-    header: "Created",
+    header: "Created at",
     cell: ({ getValue }) => formatDateTime(getValue()),
   }),
   columnHelper.accessor("lastRequest", {
@@ -54,6 +54,7 @@ const columns = columnHelper.columns([
   }),
   columnHelper.display({
     id: "actions",
+    meta: { className: "text-right" },
     cell: ({ row }) => <RevokeApiKeyButton keyId={row.original.id} keyName={row.original.name} />,
   }),
 ]);
@@ -80,7 +81,11 @@ export const ApiKeysTable = ({ data }: ApiKeysTableProps) => {
         {table.getHeaderGroups().map((headerGroup) => (
           <TableRow key={headerGroup.id}>
             {headerGroup.headers.map((header) => (
-              <TableHead key={header.id} colSpan={header.colSpan}>
+              <TableHead
+                key={header.id}
+                colSpan={header.colSpan}
+                className={header.column.columnDef.meta?.className}
+              >
                 {!header.isPlaceholder && <table.FlexRender header={header} />}
               </TableHead>
             ))}
@@ -91,7 +96,7 @@ export const ApiKeysTable = ({ data }: ApiKeysTableProps) => {
         {table.getRowModel().rows.map((row) => (
           <TableRow key={row.id}>
             {row.getAllCells().map((cell) => (
-              <TableCell key={cell.id}>
+              <TableCell key={cell.id} className={cell.column.columnDef.meta?.className}>
                 <table.FlexRender cell={cell} />
               </TableCell>
             ))}

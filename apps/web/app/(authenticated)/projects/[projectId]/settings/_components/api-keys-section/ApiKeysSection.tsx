@@ -25,6 +25,10 @@ export const ApiKeysSection = ({ projectId, apiKeys }: ApiKeysSectionProps) => (
         }
       />
     </div>
-    {apiKeys.length === 0 ? <NoApiKeysSection /> : <ApiKeysTable data={apiKeys} />}
+    {apiKeys.length === 0 ? (
+      <NoApiKeysSection projectId={projectId} />
+    ) : (
+      <ApiKeysTable data={apiKeys} />
+    )}
   </div>
 );

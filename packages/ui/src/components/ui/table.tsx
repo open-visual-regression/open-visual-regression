@@ -1,6 +1,17 @@
 import * as React from "react";
+import type { CellData, RowData, TableFeatures } from "@tanstack/table-core";
 
 import { cn } from "../../lib/utils";
+
+declare module "@tanstack/table-core" {
+  interface ColumnMeta<
+    TFeatures extends TableFeatures,
+    TData extends RowData,
+    TValue extends CellData = CellData,
+  > {
+    className?: string;
+  }
+}
 
 const TableCaption = ({ className, ...props }: React.ComponentProps<"p">) => (
   <p
@@ -64,7 +75,7 @@ const TableRow = ({ className, ...props }: React.ComponentProps<"tr">) => (
   <tr
     data-slot="table-row"
     className={cn(
-      "h-8 border-b border-ovr-border-subtle transition-colors hover:bg-ovr-hover has-aria-expanded:bg-ovr-hover data-[state=selected]:bg-ovr-active",
+      "h-8 border-b border-ovr-border-subtle transition-colors has-aria-expanded:bg-ovr-hover data-[state=selected]:bg-ovr-active",
       className,
     )}
     {...props}
