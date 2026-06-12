@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { dbClient } from "@ovr/db/client";
 
 import { createBuild, finalizeBuild } from "../builds";
-import { NotFoundError } from "../errors";
 import { enqueueCapture } from "../lib/queue";
 import { uploadDirectory } from "../lib/storage";
 
@@ -68,7 +67,13 @@ describe("createBuild", () => {
     mockUploadDirectory.mockResolvedValue();
     mockEnqueueCapture.mockResolvedValue(undefined as never);
 
-    const buildId = await createBuild(input, "user-1");
+    const result = await createBuild(input, "user-1");
+
+    if (result.status !== "ok") {
+      throw new Error("Expected createBuild to succeed");
+    }
+
+    const buildId = result.data;
 
     expect(mockFindProjectById).toHaveBeenCalledWith("project-1");
 
@@ -104,11 +109,12 @@ describe("createBuild", () => {
     expect(buildId).toBeTruthy();
   });
 
-  it("throws NotFoundError when the project does not exist", async () => {
+  it("returns an error result when the project does not exist", async () => {
     mockFindProjectById.mockResolvedValue(undefined);
 
-    await expect(createBuild(input, "user-1")).rejects.toThrow(NotFoundError);
+    const result = await createBuild(input, "user-1");
 
+    expect(result).toEqual({ status: "error", error: "PROJECT_NOT_FOUND" });
     expect(mockCreateBuild).not.toHaveBeenCalled();
     expect(mockEnqueueCapture).not.toHaveBeenCalled();
   });

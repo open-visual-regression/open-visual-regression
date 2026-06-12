@@ -1,9 +1,9 @@
 import { dbClient } from "@ovr/db/client";
 import { v7 as uuidv7 } from "uuid";
 
-import { NotFoundError } from "./errors";
 import { enqueueCapture } from "./lib/queue";
 import { uploadDirectory } from "./lib/storage";
+import type { Result } from "./types";
 
 type CreateBuildInput = {
   projectId: string;
@@ -13,11 +13,14 @@ type CreateBuildInput = {
   storybookStaticDir: string;
 };
 
-export const createBuild = async (input: CreateBuildInput, callerId: string): Promise<string> => {
+export const createBuild = async (
+  input: CreateBuildInput,
+  callerId: string,
+): Promise<Result<string, "PROJECT_NOT_FOUND">> => {
   const project = await dbClient.projects.findById(input.projectId);
 
   if (!project) {
-    throw new NotFoundError("Project not found");
+    return { status: "error", error: "PROJECT_NOT_FOUND" };
   }
 
   const buildId = uuidv7();
@@ -52,7 +55,7 @@ export const createBuild = async (input: CreateBuildInput, callerId: string): Pr
     snapshots.map((snapshot) => enqueueCapture({ buildId, snapshotId: snapshot.id })),
   );
 
-  return buildId;
+  return { status: "ok", data: buildId };
 };
 
 export const finalizeBuild = async (buildId: string): Promise<void> => {
