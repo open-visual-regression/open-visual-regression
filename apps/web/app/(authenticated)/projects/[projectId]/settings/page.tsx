@@ -1,6 +1,6 @@
 import { Typography } from "@ovr/ui/components/typography";
 import { ApiKeysSection } from "./_components/api-keys-section/ApiKeysSection";
-import { router } from "@/lib/router";
+import { serverClient } from "@/lib/router";
 import { verifyRole } from "@/lib/utils/authorization";
 import { notFound } from "next/navigation";
 import { serverError } from "@/lib/utils/errors";
@@ -20,7 +20,7 @@ export default async function ProjectSettingsPage(props: ProjectSettingsPageProp
     notFound();
   }
 
-  const [error, apiKeysResult] = await router.apiKeys.list({ projectId });
+  const [error, apiKeysResult] = await serverClient.apiKeys.list({ projectId });
 
   if (error) {
     serverError();

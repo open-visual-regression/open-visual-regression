@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { onError, onSuccess } from "@orpc/client";
 import { useServerAction } from "@orpc/react/hooks";
-import { router as serverClient } from "@/lib/router";
+import { serverClient } from "@/lib/router";
 import { Button } from "@ovr/ui/components/button";
 import { Icon, XIcon } from "@ovr/ui/components/icon";
 import { FieldError } from "@ovr/ui/components/field";

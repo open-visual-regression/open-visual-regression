@@ -1,7 +1,7 @@
 import { vi } from "vitest";
 
 import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
-import { router } from "@/lib/router";
+import { serverClient } from "@/lib/router";
 import { SetupCard } from "../SetupCard";
 
 const mockPush = vi.hoisted(() => vi.fn());
@@ -10,7 +10,7 @@ vi.mock("next/navigation", () => ({
   useRouter: vi.fn().mockReturnValue({ push: mockPush }),
 }));
 vi.mock("@/lib/router", () => ({
-  router: {
+  serverClient: {
     setup: {
       exec: vi.fn(),
       status: vi.fn(),
@@ -18,7 +18,7 @@ vi.mock("@/lib/router", () => ({
   },
 }));
 
-const mockExec = vi.mocked(router.setup.exec);
+const mockExec = vi.mocked(serverClient.setup.exec);
 
 const renderComponent = () => render(<SetupCard />);
 

@@ -2,7 +2,7 @@ import { vi } from "vitest";
 
 import { describe, expect, it, render, screen } from "@/test-utils";
 import { auth } from "@/lib/auth/auth";
-import { router } from "@/lib/router";
+import { serverClient } from "@/lib/router";
 import { mocks } from "@ovr/mocks";
 import { notFound } from "next/navigation";
 import { createORPCError } from "@/lib/testing/orpc";
@@ -14,7 +14,7 @@ vi.mock("@/lib/auth/auth");
 vi.mock("@/lib/router");
 
 const mockGetSession = vi.mocked(auth.api.getSession);
-const mockListApiKeys = vi.mocked(router.apiKeys.list);
+const mockListApiKeys = vi.mocked(serverClient.apiKeys.list);
 const mockNotFound = vi.mocked(notFound);
 
 const PROJECT_ID = "test-project-id";

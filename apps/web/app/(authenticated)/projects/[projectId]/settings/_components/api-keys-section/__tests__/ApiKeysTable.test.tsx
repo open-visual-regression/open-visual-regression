@@ -1,7 +1,7 @@
 import { vi } from "vitest";
 
 import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
-import { router } from "@/lib/router";
+import { serverClient } from "@/lib/router";
 import { useRouter } from "next/navigation";
 import { mocks } from "@ovr/mocks";
 import { createORPCError } from "@/lib/testing/orpc";
@@ -11,7 +11,7 @@ import { ApiKeysTable } from "../ApiKeysTable";
 vi.mock("@/lib/router");
 vi.mock("next/navigation");
 
-const mockRevoke = vi.mocked(router.apiKeys.revoke);
+const mockRevoke = vi.mocked(serverClient.apiKeys.revoke);
 const mockRefresh = vi.mocked(useRouter)().refresh;
 
 describe("ApiKeysTable", () => {

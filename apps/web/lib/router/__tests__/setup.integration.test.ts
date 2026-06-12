@@ -1,7 +1,7 @@
 import { vi } from "vitest";
 
 import { test, describe, expect } from "@/lib/testing/fixtures";
-import { router } from "@/lib/router";
+import { serverClient } from "@/lib/router";
 import { dbClient } from "@ovr/db/client";
 import { type ExecSetupInputSchema } from "@ovr/api/contracts/setup";
 
@@ -17,18 +17,18 @@ const TEST_INPUT: ExecSetupInputSchema = {
 describe("setup", () => {
   describe("setup.exec", () => {
     test("should create the admin account and organization", async () => {
-      const [, pending] = await router.setup.status();
+      const [, pending] = await serverClient.setup.status();
       expect(pending?.status).toBe("pending");
 
-      const [error] = await router.setup.exec(TEST_INPUT);
+      const [error] = await serverClient.setup.exec(TEST_INPUT);
       expect(error).toBeNull();
 
-      const [, completed] = await router.setup.status();
+      const [, completed] = await serverClient.setup.status();
       expect(completed?.status).toBe("completed");
     });
 
     test("should generate slug from org name with spaces and special chars", async () => {
-      const [error] = await router.setup.exec({
+      const [error] = await serverClient.setup.exec({
         ...TEST_INPUT,
         organizationName: "Tom Fischer's Org & Co!",
       });
@@ -40,10 +40,10 @@ describe("setup", () => {
     });
 
     test("should return FORBIDDEN when setup is already completed", async () => {
-      const [error1] = await router.setup.exec(TEST_INPUT);
+      const [error1] = await serverClient.setup.exec(TEST_INPUT);
       expect(error1).toBeNull();
 
-      const [error2] = await router.setup.exec({ ...TEST_INPUT, email: "other@example.com" });
+      const [error2] = await serverClient.setup.exec({ ...TEST_INPUT, email: "other@example.com" });
       expect(error2?.code).toBe("FORBIDDEN");
     });
   });

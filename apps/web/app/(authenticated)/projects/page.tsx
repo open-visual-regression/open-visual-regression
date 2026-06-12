@@ -2,7 +2,7 @@ import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
 import { Icon, PlusIcon } from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
 import { NoProjectsSection } from "./_components/NoProjectsSection";
-import { router } from "@/lib/router";
+import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
 import { ProjectCardsList } from "./_components/ProjectCardsList";
 import { auth } from "@/lib/auth/auth";
@@ -11,7 +11,7 @@ import { RequiresAdminRole } from "@/lib/components/authorization/RequiresAdminR
 
 export default async function ProjectsPage() {
   const [[error, listProjectsResult], sessionResult] = await Promise.all([
-    router.projects.list(),
+    serverClient.projects.list(),
     auth.api.getSession({ headers: await headers() }),
   ]);
 

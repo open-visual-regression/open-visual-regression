@@ -9,7 +9,7 @@ import { useServerAction } from "@orpc/react/hooks";
 import { setupSchema, type SetupFormValues } from "./schema";
 import { AdminStep } from "./AdminStep";
 import { OrganizationStep } from "./OrganizationStep";
-import { router } from "@/lib/router";
+import { serverClient } from "@/lib/router";
 
 type Step = 1 | 2;
 
@@ -40,7 +40,7 @@ export const SetupForm = () => {
     },
   });
 
-  const { execute, status } = useServerAction(router.setup.exec, {
+  const { execute, status } = useServerAction(serverClient.setup.exec, {
     interceptors: [
       onSuccess(() => navigate.push("/login")),
       onError((err) => setError("root", { message: err.message })),
