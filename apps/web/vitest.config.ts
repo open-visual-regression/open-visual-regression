@@ -35,6 +35,9 @@ export default defineConfig({
           include: ["app/**/*.test.{ts,tsx}", "lib/**/*.test.{ts,tsx}"],
           exclude: ["app/**/*.integration.test.{ts,tsx}", "lib/**/*.integration.test.ts"],
           clearMocks: true,
+          env: {
+            BASE_URL: "http://localhost:3000",
+          },
         },
       },
       {

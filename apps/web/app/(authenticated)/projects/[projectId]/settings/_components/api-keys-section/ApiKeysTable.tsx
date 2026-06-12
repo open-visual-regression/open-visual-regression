@@ -15,6 +15,7 @@ import {
   TableCell,
 } from "@ovr/ui/components/table";
 import { useTanStackTableDevtools } from "@tanstack/react-table-devtools";
+import { formatDateTime } from "@/lib/utils/date";
 
 type ApiKeyTableRow = {
   id: string;
@@ -27,10 +28,12 @@ const features = tableFeatures({});
 const columnHelper = createColumnHelper<typeof features, ApiKeyTableRow>();
 
 const columns = columnHelper.columns([
-  columnHelper.accessor("id", {}),
   columnHelper.accessor("name", { header: "Name" }),
   columnHelper.accessor("ownerName", { header: "Owner" }),
-  columnHelper.accessor("createdAt", { header: "Created" }),
+  columnHelper.accessor("createdAt", {
+    header: "Created",
+    cell: ({ getValue }) => formatDateTime(getValue()),
+  }),
 ]);
 
 type ApiKeysTableProps = {
@@ -44,11 +47,7 @@ export const ApiKeysTable = ({ data }: ApiKeysTableProps) => {
     data,
     features,
     rowModels: { coreRowModel: createCoreRowModel() },
-    initialState: {
-      columnVisibility: {
-        id: false,
-      },
-    },
+    getRowId: (row) => row.id,
   });
 
   useTanStackTableDevtools(table);

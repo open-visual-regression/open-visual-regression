@@ -6,22 +6,21 @@ Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-admin
 
 Depends on: `c20-api-keys`, `c25-project-settings`, `c50-api-key-project-scope`
 
-API keys are scoped to a single project (see `c50-api-key-project-scope`), so this page lives under project settings — replacing the "coming soon" placeholder at `/projects/[projectId]/settings/api` from `c25-project-settings`. `projectId` comes from the route param.
+API keys are scoped to a single project (see `c50-api-key-project-scope`), so this lives under project settings. Implemented as a "new api key" modal + table on the main `/projects/[projectId]/settings` page (`ApiKeysSection`/`ApiKeysTable`) rather than a separate `/settings/api` route — the `c25-project-settings` placeholder route is not used.
 
-- [ ] 1 `apps/web/app/(authenticated)/projects/[projectId]/settings/api/page.tsx` (RSC):
-  - Fetch keys via `router.apiKeys.list({ projectId })`
-  - Table columns: name · prefix (`ovr_api_key_•••`) · owner · created date · last-used date
-  - `△` TriangleAlert amber icon when key has never been used
-  - "generate key" form (name field + submit) — `"use client"` component using `useServerAction(router.apiKeys.create, { interceptors: [onSuccess(({ key }) => showRevealBanner(key)), onError(...)] })`, passing `{ projectId, name }`
-  - Revoke button per row: `useServerAction(router.apiKeys.revoke)` + `AlertDialog` confirmation
+- [x] 1 `CreateApiKeyModal` (`apps/web/.../settings/_components/create-api-key/`):
+  - "new api key" modal form (name field + submit), `"use client"`, `useServerAction(router.apiKeys.create, { interceptors: [onSuccess(({ key }) => ...), onError(...)] })`, passing `{ projectId, name }`
+  - On success, `router.refresh()` so `ApiKeysTable` picks up the new row
 
-- [ ] 2 `ApiKeyReveal` (`"use client"` component):
-  - Accent-tone `Alert` "api key created"; full key in `<code>` + copy button
-  - "this key cannot be retrieved again — store it securely"
-  - Dismiss × removes from view permanently
+- [x] 2 `CreateApiKeyModalReveal` (`"use client"` component):
+  - `Alert` "copy this key now, it will only be shown once"; full key in `<code>` + copy button
+  - "done" closes the modal; reopening shows the create form again
 
-- [ ] 3 Component tests:
-  - Generated key appears in Alert banner; not visible in table
-  - After dismiss, key gone
-  - Revoke: confirmation required; row removed after confirm
-  - Table shows owner name per key
+- [ ] 3 `ApiKeysTable` columns: name · owner · created date — still missing prefix (`ovr_api_key_•••`), last-used date, `△` TriangleAlert never-used icon
+
+- [ ] 4 Revoke button per row: `useServerAction(router.apiKeys.revoke)` + `AlertDialog` confirmation
+
+- [x] 5 Component tests (`CreateApiKeyModal.test.tsx`):
+  - Generated key shown in reveal view; copy-to-clipboard; server error surfaced
+  - Reopening after "done" resets to create form
+  - Revoke + prefix/last-used column tests still pending — see 3, 4

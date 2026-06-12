@@ -31,7 +31,7 @@ export default async function ProjectSettingsPage(props: ProjectSettingsPageProp
       <Typography variant="h1" as="h1">
         settings
       </Typography>
-      <ApiKeysSection apiKeys={apiKeysResult.apiKeys} />
+      <ApiKeysSection projectId={projectId} apiKeys={apiKeysResult.apiKeys} />
     </div>
   );
 }
