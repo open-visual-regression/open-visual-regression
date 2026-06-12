@@ -351,12 +351,27 @@ importers:
         specifier: ^14.0.0
         version: 14.0.0
     devDependencies:
+      '@aws-sdk/client-s3':
+        specifier: ^3.1060.0
+        version: 3.1066.0
       '@ovr/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
+      '@testcontainers/postgresql':
+        specifier: ^12.0.1
+        version: 12.0.1
       '@types/node':
         specifier: ^22.15.3
         version: 22.15.3
+      '@types/pg':
+        specifier: ^8.20.0
+        version: 8.20.0
+      pg:
+        specifier: ^8.21.0
+        version: 8.21.0
+      testcontainers:
+        specifier: ^12.0.1
+        version: 12.0.1
       typescript:
         specifier: 6.0.3
         version: 6.0.3
