@@ -4,6 +4,7 @@ packages:
 allowBuilds:
   cpu-features: true
   esbuild: true
+  msgpackr-extract: true
   msw: true
   protobufjs: true
   sharp: true
