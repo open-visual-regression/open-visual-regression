@@ -1,0 +1,30 @@
+{
+  "name": "@ovr/services",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "tsc": "tsc --noEmit",
+    "lint": "oxlint src",
+    "format": "oxfmt src",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@ovr/db": "workspace:*",
+    "@ovr/queue": "workspace:*",
+    "@ovr/storage": "workspace:*",
+    "bullmq": "^5.78.0",
+    "ioredis": "5.10.1",
+    "uuid": "^14.0.0"
+  },
+  "devDependencies": {
+    "@ovr/typescript-config": "workspace:*",
+    "@types/node": "^22.15.3",
+    "typescript": "6.0.3",
+    "vitest": "^4.1.7"
+  }
+}
