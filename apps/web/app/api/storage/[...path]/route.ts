@@ -1,8 +1,8 @@
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 
-import { router } from "@/lib/router";
+import { serverClient } from "@/lib/router";
 
-const handler = new OpenAPIHandler(router.storage);
+const handler = new OpenAPIHandler(serverClient.storage);
 
 const serve = async (request: Request) => {
   const { matched, response } = await handler.handle(request, { prefix: "/api/storage" });

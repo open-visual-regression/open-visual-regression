@@ -1,7 +1,7 @@
 "use client";
 
 import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
-import { router } from "@/lib/router";
+import { serverClient } from "@/lib/router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { onError, onSuccess } from "@orpc/client";
 import { useServerAction } from "@orpc/react/hooks";
@@ -62,7 +62,7 @@ export const NewProjectForm = () => {
     },
   });
 
-  const { execute, status } = useServerAction(router.projects.add, {
+  const { execute, status } = useServerAction(serverClient.projects.add, {
     interceptors: [
       onSuccess(() => navigate.push("/projects")),
       onError((err) => setError("root", { message: err.message })),

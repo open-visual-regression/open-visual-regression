@@ -3,7 +3,7 @@ import { z } from "zod";
 
 export const apiKeySchema = z.object({
   id: z.string(),
-  name: z.string().nullable(),
+  name: z.string(),
   ownerName: z.string(),
   createdAt: z.date(),
   lastRequest: z.date().nullable(),

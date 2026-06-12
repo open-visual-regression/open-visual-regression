@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { serverError } from "@/lib/utils/errors";
 import { CenteredFormSection } from "../_components/CenteredFormSection";
 import { LoginCard } from "./_components/login-card/LoginCard";
-import { router } from "@/lib/router";
+import { serverClient } from "@/lib/router";
 import { auth } from "@/lib/auth/auth";
 import { headers } from "next/headers";
 
@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export default async function LoginPage() {
   const [[error, setupStatusResult], session] = await Promise.all([
-    router.setup.status(),
+    serverClient.setup.status(),
     auth.api.getSession({ headers: await headers() }),
   ]);
 

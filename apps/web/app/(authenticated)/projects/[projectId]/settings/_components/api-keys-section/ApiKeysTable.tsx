@@ -14,14 +14,17 @@ import {
   TableRow,
   TableCell,
 } from "@ovr/ui/components/table";
+import { StatusIcon } from "@ovr/ui/components/status-icon";
 import { useTanStackTableDevtools } from "@tanstack/react-table-devtools";
 import { formatDateTime } from "@/lib/utils/date";
+import { RevokeApiKeyButton } from "./RevokeApiKeyButton";
 
 type ApiKeyTableRow = {
   id: string;
-  name: string | null;
+  name: string;
   ownerName: string;
   createdAt: Date;
+  lastRequest: Date | null;
 };
 
 const features = tableFeatures({});
@@ -31,8 +34,28 @@ const columns = columnHelper.columns([
   columnHelper.accessor("name", { header: "Name" }),
   columnHelper.accessor("ownerName", { header: "Owner" }),
   columnHelper.accessor("createdAt", {
-    header: "Created",
+    header: "Created at",
     cell: ({ getValue }) => formatDateTime(getValue()),
+  }),
+  columnHelper.accessor("lastRequest", {
+    header: "Last used",
+    cell: ({ getValue }) => {
+      const lastRequest = getValue();
+      if (!lastRequest) {
+        return (
+          <span className="inline-flex items-center gap-1.5">
+            <StatusIcon variant="stale" size={12} />
+            never
+          </span>
+        );
+      }
+      return formatDateTime(lastRequest);
+    },
+  }),
+  columnHelper.display({
+    id: "actions",
+    meta: { className: "text-right" },
+    cell: ({ row }) => <RevokeApiKeyButton keyId={row.original.id} keyName={row.original.name} />,
   }),
 ]);
 
@@ -58,7 +81,11 @@ export const ApiKeysTable = ({ data }: ApiKeysTableProps) => {
         {table.getHeaderGroups().map((headerGroup) => (
           <TableRow key={headerGroup.id}>
             {headerGroup.headers.map((header) => (
-              <TableHead key={header.id} colSpan={header.colSpan}>
+              <TableHead
+                key={header.id}
+                colSpan={header.colSpan}
+                className={header.column.columnDef.meta?.className}
+              >
                 {!header.isPlaceholder && <table.FlexRender header={header} />}
               </TableHead>
             ))}
@@ -69,7 +96,7 @@ export const ApiKeysTable = ({ data }: ApiKeysTableProps) => {
         {table.getRowModel().rows.map((row) => (
           <TableRow key={row.id}>
             {row.getAllCells().map((cell) => (
-              <TableCell key={cell.id}>
+              <TableCell key={cell.id} className={cell.column.columnDef.meta?.className}>
                 <table.FlexRender cell={cell} />
               </TableCell>
             ))}

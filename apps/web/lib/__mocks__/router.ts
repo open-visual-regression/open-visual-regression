@@ -1,6 +1,6 @@
 import { vi } from "vitest";
 
-export const router = {
+export const serverClient = {
   setup: {
     status: vi.fn(),
     exec: vi.fn(),

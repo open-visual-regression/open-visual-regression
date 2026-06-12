@@ -53,7 +53,9 @@ export const list = os.apiKeys.list
     return {
       apiKeys: apiKeys.map((k) => ({
         id: k.id,
-        name: k.name,
+        // `name` is required by createApiKeyInputSchema, so every key created through
+        // this app has one — better-auth's column type is nullable, but ours never is.
+        name: k.name!,
         ownerName: k.ownerName,
         createdAt: k.createdAt,
         lastRequest: k.lastRequest,

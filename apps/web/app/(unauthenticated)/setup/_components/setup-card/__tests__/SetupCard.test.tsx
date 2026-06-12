@@ -1,24 +1,15 @@
 import { vi } from "vitest";
 
 import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
-import { router } from "@/lib/router";
+import { serverClient } from "@/lib/router";
+import { useRouter } from "next/navigation";
 import { SetupCard } from "../SetupCard";
 
-const mockPush = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/router");
+vi.mock("next/navigation");
 
-vi.mock("next/navigation", () => ({
-  useRouter: vi.fn().mockReturnValue({ push: mockPush }),
-}));
-vi.mock("@/lib/router", () => ({
-  router: {
-    setup: {
-      exec: vi.fn(),
-      status: vi.fn(),
-    },
-  },
-}));
-
-const mockExec = vi.mocked(router.setup.exec);
+const mockExec = vi.mocked(serverClient.setup.exec);
+const mockPush = vi.mocked(useRouter)().push;
 
 const renderComponent = () => render(<SetupCard />);
 

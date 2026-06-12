@@ -1,9 +1,14 @@
-import { Button } from "@ovr/ui/components/button";
 import { Icon, PlusIcon } from "@ovr/ui/components/icon";
 import { Card, CardContent, CardHeader } from "@ovr/ui/components/card";
 import { Typography } from "@ovr/ui/components/typography";
+import { CreateApiKeyModal } from "../create-api-key/CreateApiKeyModal";
+import { CreateApiKeyModalButton } from "../create-api-key/CreateApiKeyModalButton";
 
-export const NoApiKeysSection = () => (
+type NoApiKeysSectionProps = {
+  projectId: string;
+};
+
+export const NoApiKeysSection = ({ projectId }: NoApiKeysSectionProps) => (
   <Card className="bg-pixel-grid py-20">
     <CardHeader className="flex justify-center">
       <Typography variant="h2" as="h2">
@@ -14,10 +19,15 @@ export const NoApiKeysSection = () => (
       <Typography variant="caption" className="text-sm">
         api keys are required to upload snapshots to this project.
       </Typography>
-      <Button size="lg">
-        <Icon icon={PlusIcon} />
-        create first api key
-      </Button>
+      <CreateApiKeyModal
+        projectId={projectId}
+        trigger={
+          <CreateApiKeyModalButton variant="default" size="lg">
+            <Icon icon={PlusIcon} />
+            create first api key
+          </CreateApiKeyModalButton>
+        }
+      />
     </CardContent>
   </Card>
 );

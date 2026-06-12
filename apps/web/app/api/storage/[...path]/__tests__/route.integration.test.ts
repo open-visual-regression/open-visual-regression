@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { vi } from "vitest";
 
 import { describe, expect, test } from "@/lib/testing/fixtures";
-import { router } from "@/lib/router";
+import { serverClient } from "@/lib/router";
 import type { AddProjectInputSchema } from "@ovr/api/contracts/projects";
 import { GET } from "../route";
 
@@ -34,7 +34,7 @@ describe("GET /api/storage/[...path]", () => {
   });
 
   test("should redirect to a presigned url for an authorized request", async ({ admin: _ }) => {
-    const [, addResult] = await router.projects.add(TEST_PROJECT);
+    const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
     const projectId = addResult!.projectId;
 
     const response = await buildRequest([projectId, "snapshots", "foo.png"]);

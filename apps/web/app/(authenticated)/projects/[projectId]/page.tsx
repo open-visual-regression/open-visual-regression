@@ -1,5 +1,5 @@
 import { Typography } from "@ovr/ui/components/typography";
-import { router } from "@/lib/router";
+import { serverClient } from "@/lib/router";
 import { notFound } from "next/navigation";
 import { serverError } from "@/lib/utils/errors";
 import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
@@ -10,7 +10,7 @@ type ProjectPageProps = PageProps<"/projects/[projectId]">;
 export default async function ProjectPage(props: ProjectPageProps) {
   const { projectId } = await props.params;
 
-  const [error, result] = await router.projects.getOne({ projectId });
+  const [error, result] = await serverClient.projects.getOne({ projectId });
 
   if (error?.status === 404) {
     notFound();

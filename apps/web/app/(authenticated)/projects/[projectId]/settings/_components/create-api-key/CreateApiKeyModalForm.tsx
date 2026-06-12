@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { router } from "@/lib/router";
+import { serverClient } from "@/lib/router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { onError, onSuccess } from "@orpc/client";
 import { useServerAction } from "@orpc/react/hooks";
@@ -51,7 +51,7 @@ export const CreateApiKeyModalForm = ({ projectId }: CreateApiKeyModalFormProps)
     defaultValues: { name: "" },
   });
 
-  const { execute, status } = useServerAction(router.apiKeys.create, {
+  const { execute, status } = useServerAction(serverClient.apiKeys.create, {
     interceptors: [
       onSuccess(({ key }) => {
         navigate.refresh();

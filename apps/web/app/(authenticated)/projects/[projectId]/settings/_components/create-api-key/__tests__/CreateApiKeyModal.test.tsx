@@ -1,7 +1,7 @@
 import { vi } from "vitest";
 
 import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
-import { router } from "@/lib/router";
+import { serverClient } from "@/lib/router";
 import { useRouter } from "next/navigation";
 import { createORPCError } from "@/lib/testing/orpc";
 import { CreateApiKeyModal } from "../CreateApiKeyModal";
@@ -10,7 +10,7 @@ import { CreateApiKeyModalButton } from "../CreateApiKeyModalButton";
 vi.mock("@/lib/router");
 vi.mock("next/navigation");
 
-const mockCreate = vi.mocked(router.apiKeys.create);
+const mockCreate = vi.mocked(serverClient.apiKeys.create);
 const mockRefresh = vi.mocked(useRouter)().refresh;
 
 const PROJECT_ID = "test-project-id";

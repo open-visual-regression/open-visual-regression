@@ -13,6 +13,7 @@ export {
   SettingsIcon,
   PlusIcon,
   CircleSlash2Icon,
+  XIcon,
 } from "lucide-react";
 
 type IconProps = React.SVGProps<SVGSVGElement> & {
