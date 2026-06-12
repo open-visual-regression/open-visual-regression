@@ -44,41 +44,51 @@ const processedByWorker = async <T extends object>(
 };
 
 describe("queue", () => {
-  test("enqueueCapture delivers the payload to a capture worker and drains", async ({
-    connection,
-  }) => {
-    const payload: CaptureJobPayload = { buildId: "build-1", snapshotId: "snapshot-1" };
-
-    const data = await processedByWorker<CaptureJobPayload>(
-      QueueName.SNAPSHOT_CAPTURE,
+  describe("enqueueCapture", () => {
+    test("should deliver the payload to a capture worker and drain the queue", async ({
       connection,
-      () => enqueueCapture(payload, connection),
-    );
+    }) => {
+      const payload: CaptureJobPayload = { buildId: "build-1", snapshotId: "snapshot-1" };
 
-    expect(data).toEqual(payload);
+      const data = await processedByWorker<CaptureJobPayload>(
+        QueueName.SNAPSHOT_CAPTURE,
+        connection,
+        () => enqueueCapture(payload, connection),
+      );
+
+      expect(data).toEqual(payload);
+    });
   });
 
-  test("enqueueDiff delivers the payload to a diff worker and drains", async ({ connection }) => {
-    const payload: DiffJobPayload = { snapshotId: "snapshot-1", diffId: "diff-1" };
+  describe("enqueueDiff", () => {
+    test("should deliver the payload to a diff worker and drain the queue", async ({
+      connection,
+    }) => {
+      const payload: DiffJobPayload = { snapshotId: "snapshot-1", diffId: "diff-1" };
 
-    const data = await processedByWorker<DiffJobPayload>(QueueName.SNAPSHOT_DIFF, connection, () =>
-      enqueueDiff(payload, connection),
-    );
+      const data = await processedByWorker<DiffJobPayload>(
+        QueueName.SNAPSHOT_DIFF,
+        connection,
+        () => enqueueDiff(payload, connection),
+      );
 
-    expect(data).toEqual(payload);
+      expect(data).toEqual(payload);
+    });
   });
 
-  test("enqueueFinalize delivers the payload to a finalize worker and drains", async ({
-    connection,
-  }) => {
-    const payload: FinalizeJobPayload = { buildId: "build-1" };
-
-    const data = await processedByWorker<FinalizeJobPayload>(
-      QueueName.BUILD_FINALIZE,
+  describe("enqueueFinalize", () => {
+    test("should deliver the payload to a finalize worker and drain the queue", async ({
       connection,
-      () => enqueueFinalize(payload, connection),
-    );
+    }) => {
+      const payload: FinalizeJobPayload = { buildId: "build-1" };
 
-    expect(data).toEqual(payload);
+      const data = await processedByWorker<FinalizeJobPayload>(
+        QueueName.BUILD_FINALIZE,
+        connection,
+        () => enqueueFinalize(payload, connection),
+      );
+
+      expect(data).toEqual(payload);
+    });
   });
 });
