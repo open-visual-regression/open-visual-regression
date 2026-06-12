@@ -13,8 +13,14 @@
     "format": "oxfmt src",
     "test": "vitest run"
   },
+  "dependencies": {
+    "bullmq": "^5.78.0",
+    "ioredis": "5.10.1"
+  },
   "devDependencies": {
     "@ovr/typescript-config": "workspace:*",
+    "@types/node": "^22.15.3",
+    "testcontainers": "^12.0.1",
     "typescript": "6.0.3",
     "vitest": "^4.1.7"
   }
