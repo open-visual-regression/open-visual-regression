@@ -1,34 +1,17 @@
-import { dbClient } from "@ovr/db/client";
-import { storage } from "@ovr/storage";
+import { OpenAPIHandler } from "@orpc/openapi/fetch";
 
-import { auth } from "@/lib/auth/auth";
+import { router } from "@/lib/router";
 
-type RouteContext = {
-  params: Promise<{ path: string[] }>;
-};
+const handler = new OpenAPIHandler(router.storage);
 
-const handleGet = async (request: Request, { params }: RouteContext) => {
-  const session = await auth.api.getSession({ headers: request.headers });
+const serve = async (request: Request) => {
+  const { matched, response } = await handler.handle(request, { prefix: "/api/storage" });
 
-  if (!session?.session.activeOrganizationId) {
-    return new Response(null, { status: 401 });
+  if (matched) {
+    return response;
   }
 
-  const { path } = await params;
-  const projectId = path[0]!;
-
-  const project = await dbClient.projects.getProject({
-    projectId,
-    organizationId: session.session.activeOrganizationId,
-  });
-
-  if (!project) {
-    return new Response(null, { status: 403 });
-  }
-
-  const url = await storage.getPresignedUrl(path.join("/"), 60);
-
-  return Response.redirect(url, 302);
+  return new Response(null, { status: 404 });
 };
 
-export const GET = handleGet;
+export const GET = serve;

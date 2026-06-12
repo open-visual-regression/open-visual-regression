@@ -18,9 +18,7 @@ const TEST_PROJECT: AddProjectInputSchema = {
 };
 
 const buildRequest = async (path: string[]) =>
-  GET(new Request(`http://localhost/api/storage/${path.join("/")}`, { headers: await headers() }), {
-    params: Promise.resolve({ path }),
-  });
+  GET(new Request(`http://localhost/api/storage/${path.join("/")}`, { headers: await headers() }));
 
 describe("GET /api/storage/[...path]", () => {
   test("should return 401 when there is no session", async () => {

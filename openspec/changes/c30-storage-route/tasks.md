@@ -6,11 +6,16 @@ Gate: unauthenticated request → 401; authenticated request with wrong project 
   ```
   GET /api/storage/{projectId}/{rest...}
   ```
-  - Extract `projectId` from `params.path[0]`
-  - Validate session via `auth.api.getSession`; no session → `Response(null, { status: 401 })`
-  - Verify `projectId` exists and user has access (any authenticated user can access any project in this MVP); 403 if project not found
-  - Reconstruct full storage key from `params.path.join("/")`
-  - Call `storage.getPresignedUrl(key, 60)` → `Response.redirect(url, 302)`
+  - Add a `storage.getObject` oRPC contract (`packages/api/src/contracts/storage.ts`) with
+    `.route({ method: "GET", path: "/{+path}", outputStructure: "detailed" })`, input
+    `{ path: string }`, output `{ status: 302, headers: { location: string } }`
+  - Implement `apps/web/lib/router/storage.ts`: `os.storage.getObject.use(authenticatedMiddleware)`
+    reuses the same auth/tenancy pipeline as the other routers (no session → `UNAUTHORIZED` → 401)
+  - Extract `projectId` from the leading segment of `input.path`
+  - Verify `projectId` exists and user has access (any authenticated user can access any project in
+    this MVP); throw `ORPCError("FORBIDDEN")` if project not found → 403
+  - Call `storage.getPresignedUrl(input.path, 60)` and return `{ status: 302, headers: { location: url } }`
+  - Mount via `OpenAPIHandler` (from `@orpc/openapi/fetch`) in the route file, prefixed at `/api/storage`
 
 - [x] 1.2 Integration tests (real session via Testcontainers Postgres + real `storage.getPresignedUrl` via Testcontainers RustFS):
   - No session → 401
