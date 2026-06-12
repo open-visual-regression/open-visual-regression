@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { onError, onSuccess } from "@orpc/client";
 import { useServerAction } from "@orpc/react/hooks";
-import { router } from "@/lib/router";
+import { router as serverClient } from "@/lib/router";
 import { Button } from "@ovr/ui/components/button";
 import { Icon, XIcon } from "@ovr/ui/components/icon";
 import { FieldError } from "@ovr/ui/components/field";
@@ -26,15 +26,15 @@ type RevokeApiKeyButtonProps = {
 };
 
 export const RevokeApiKeyButton = ({ keyId, keyName }: RevokeApiKeyButtonProps) => {
-  const navigate = useRouter();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<{ message: string } | undefined>();
 
-  const { execute, status } = useServerAction(router.apiKeys.revoke, {
+  const { execute, status } = useServerAction(serverClient.apiKeys.revoke, {
     interceptors: [
       onSuccess(() => {
         setOpen(false);
-        navigate.refresh();
+        router.refresh();
       }),
       onError((err) => setError({ message: err.message })),
     ],
