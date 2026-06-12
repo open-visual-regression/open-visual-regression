@@ -16,11 +16,11 @@ API keys are scoped to a single project (see `c50-api-key-project-scope`), so th
   - `Alert` "copy this key now, it will only be shown once"; full key in `<code>` + copy button
   - "done" closes the modal; reopening shows the create form again
 
-- [ ] 3 `ApiKeysTable` columns: name · owner · created date — still missing prefix (`ovr_api_key_•••`), last-used date, `△` TriangleAlert never-used icon
+- [x] 3 `ApiKeysTable` columns: name · owner · created date — added prefix (`ovr_api_key_•••`), last-used date, `△` TriangleAlert never-used icon
 
-- [ ] 4 Revoke button per row: `useServerAction(router.apiKeys.revoke)` + `AlertDialog` confirmation
+- [x] 4 Revoke button per row: `useServerAction(router.apiKeys.revoke)` + `AlertDialog` confirmation
 
-- [x] 5 Component tests (`CreateApiKeyModal.test.tsx`):
+- [x] 5 Component tests (`CreateApiKeyModal.test.tsx`, `ApiKeysTable.test.tsx`):
   - Generated key shown in reveal view; copy-to-clipboard; server error surfaced
   - Reopening after "done" resets to create form
-  - Revoke + prefix/last-used column tests still pending — see 3, 4
+  - Prefix/last-used columns rendered; revoke confirms via `AlertDialog`, calls `router.apiKeys.revoke`, refreshes, and surfaces server errors

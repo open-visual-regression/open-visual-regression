@@ -14,14 +14,18 @@ import {
   TableRow,
   TableCell,
 } from "@ovr/ui/components/table";
+import { StatusIcon } from "@ovr/ui/components/status-icon";
 import { useTanStackTableDevtools } from "@tanstack/react-table-devtools";
 import { formatDateTime } from "@/lib/utils/date";
+import { RevokeApiKeyButton } from "./RevokeApiKeyButton";
 
 type ApiKeyTableRow = {
   id: string;
   name: string | null;
   ownerName: string;
+  prefix: string | null;
   createdAt: Date;
+  lastRequest: Date | null;
 };
 
 const features = tableFeatures({});
@@ -30,9 +34,35 @@ const columnHelper = createColumnHelper<typeof features, ApiKeyTableRow>();
 const columns = columnHelper.columns([
   columnHelper.accessor("name", { header: "Name" }),
   columnHelper.accessor("ownerName", { header: "Owner" }),
+  columnHelper.accessor("prefix", {
+    header: "Prefix",
+    cell: ({ getValue }) => {
+      const prefix = getValue();
+      return prefix ? `${prefix}•••` : "—";
+    },
+  }),
   columnHelper.accessor("createdAt", {
     header: "Created",
     cell: ({ getValue }) => formatDateTime(getValue()),
+  }),
+  columnHelper.accessor("lastRequest", {
+    header: "Last used",
+    cell: ({ getValue }) => {
+      const lastRequest = getValue();
+      if (!lastRequest) {
+        return (
+          <span className="inline-flex items-center gap-1.5">
+            <StatusIcon variant="stale" size={12} />
+            never
+          </span>
+        );
+      }
+      return formatDateTime(lastRequest);
+    },
+  }),
+  columnHelper.display({
+    id: "actions",
+    cell: ({ row }) => <RevokeApiKeyButton keyId={row.original.id} keyName={row.original.name} />,
   }),
 ]);
 

@@ -55,6 +55,7 @@ export const list = os.apiKeys.list
         id: k.id,
         name: k.name,
         ownerName: k.ownerName,
+        prefix: k.prefix,
         createdAt: k.createdAt,
         lastRequest: k.lastRequest,
       })),
