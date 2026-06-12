@@ -4,6 +4,7 @@ import type { CellData, RowData, TableFeatures } from "@tanstack/table-core";
 import { cn } from "../../lib/utils";
 
 declare module "@tanstack/table-core" {
+  // oxlint-disable-next-line typescript/consistent-type-definitions -- module augmentation requires `interface`
   interface ColumnMeta<
     TFeatures extends TableFeatures,
     TData extends RowData,
