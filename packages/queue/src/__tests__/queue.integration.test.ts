@@ -1,6 +1,6 @@
 import { Queue, Worker } from "bullmq";
 import { Redis } from "ioredis";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 
 import {
   enqueueCapture,
@@ -10,20 +10,16 @@ import {
   type CaptureJobPayload,
   type DiffJobPayload,
   type FinalizeJobPayload,
-} from "../../index";
-import { startValkey, type ValkeyContainer } from "../helpers/containers";
+} from "../index";
 
-let valkey: ValkeyContainer;
-let connection: Redis;
-
-beforeAll(async () => {
-  valkey = await startValkey();
-  connection = new Redis({ host: valkey.host, port: valkey.port, maxRetriesPerRequest: null });
+const connection = new Redis({
+  host: process.env.REDIS_HOST,
+  port: Number(process.env.REDIS_PORT),
+  maxRetriesPerRequest: null,
 });
 
 afterAll(async () => {
   await connection.quit();
-  await valkey.stop();
 });
 
 const processedByWorker = async <T extends object>(

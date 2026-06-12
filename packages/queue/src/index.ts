@@ -27,10 +27,9 @@ const enqueue = async <T>(
   payload: T,
   connection: IORedis,
 ): Promise<Job<T>> => {
-  const queue = new Queue(queueName, { connection });
+  const queue = new Queue<T, void, string, T, void, string>(queueName, { connection });
   try {
-    const job = await queue.add(queueName, payload);
-    return job as unknown as Job<T>;
+    return await queue.add(queueName, payload);
   } finally {
     await queue.close();
   }
