@@ -1,5 +1,7 @@
 import { Pool } from "pg";
-import { beforeEach } from "vitest";
+import { beforeEach, vi } from "vitest";
+
+vi.mock("next/cache");
 
 beforeEach(async () => {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
