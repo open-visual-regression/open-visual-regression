@@ -4,6 +4,7 @@ import { os } from "./os";
 import { adminMiddleware, authenticatedMiddleware } from "./middleware";
 import { ORPCError } from "@orpc/client";
 import { dbClient } from "@ovr/db/client";
+import { revalidatePath } from "next/cache";
 
 export const getOne = os.projects.getOne
   .use(authenticatedMiddleware)
@@ -48,6 +49,8 @@ export const add = os.projects.add
     if (!project) {
       throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "Failed to add project" });
     }
+
+    revalidatePath("/", "layout");
 
     return { projectId: project.id };
   })
