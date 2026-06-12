@@ -2,7 +2,7 @@
 
 Gate: settings page renders general form + capture configurations table; saving form persists changes; adding/removing capture configurations persists to DB; `?created=1` shows "next step" toast.
 
-Depends on: c24-new-project (errors.ts + projects service must exist)
+Depends on: c24-new-project
 
 Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-projects.jsx` (ProjectSettingsScreen)
 
@@ -18,25 +18,22 @@ Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-proje
 
 - [ ] 1.3 Add `retentionDays` column to the `projects` table (`packages/db/src/schemas/schemas.ts`): `integer("retention_days").notNull().default(90)`. Run `drizzle-kit generate`; commit migration.
 
-- [ ] 1.4 `packages/services/src/projects.ts` — add `updateProject(id, patch, callerId)`:
-  - If patch includes `retentionDays`: validate `retentionDays >= 1` → throw `ValidationError` if not
-  - `db.projects.updateProject(id, patch)`
-  - Unit tests: invalid `retentionDays` throws; success updates
+- [ ] 1.4 `packages/api/src/contracts/projects.ts` — add `updateProject` contract (input: `{ id, patch }`, where `patch` includes `retentionDays?: number`) + `addCaptureConfiguration` contract (input: `{ projectId, data }`) + `removeCaptureConfiguration` contract (input: `{ captureConfigurationId }`); update index
 
-- [ ] 1.5 `packages/api/src/contracts/projects.ts` — add `updateProject` contract (input: `{ id, patch }`, where `patch` includes `retentionDays?: number`); update index
+- [ ] 1.5 `apps/web/lib/router/projects.ts` — add handlers, each `.use(authenticatedMiddleware).use(adminMiddleware)` + `.actionable()`:
+  - `updateProject`: if `patch.retentionDays !== undefined && patch.retentionDays < 1` → `throw new ORPCError("BAD_REQUEST")`; else `dbClient.projects.updateProject(input.id, input.patch)`
+  - `addCaptureConfiguration`: if `dbClient.captureConfigurations.countByProject(input.projectId) >= 10` → `throw new ORPCError("BAD_REQUEST")`; else `dbClient.captureConfigurations.addCaptureConfiguration(input.projectId, input.data)`
+  - `removeCaptureConfiguration`: `dbClient.captureConfigurations.deleteCaptureConfiguration(input.captureConfigurationId)`
+  - Update `router/index.ts`
 
-- [ ] 1.6 `apps/web/lib/router/projects.ts` — add `updateProject` handler: validate session; call service; `.actionable()`; on `ValidationError` → `ORPCError("BAD_REQUEST")`
+- [ ] 1.6 Integration tests (`apps/web/lib/router/__tests__/projects.integration.test.ts`):
+  - `updateProject` with `retentionDays < 1` → `BAD_REQUEST`
+  - `updateProject` with a valid patch → project updated
+  - `addCaptureConfiguration` at the 10-configuration limit → `BAD_REQUEST`
+  - `addCaptureConfiguration` under the limit → configuration created
+  - `removeCaptureConfiguration` → configuration deleted
 
-- [ ] 1.7 `packages/services/src/projects.ts` — add `addCaptureConfiguration(projectId, data, callerId)` + `removeCaptureConfiguration(captureConfigurationId, callerId)`:
-  - `addCaptureConfiguration`: `db.captureConfigurations.countByProject(projectId)` → throw `LimitExceededError` if ≥ 10; `db.captureConfigurations.addCaptureConfiguration(...)`
-  - `removeCaptureConfiguration`: `db.captureConfigurations.deleteCaptureConfiguration(captureConfigurationId)`
-  - Unit tests: 10 capture configurations → `LimitExceededError`; add/remove call correct repo methods
-
-- [ ] 1.8 `packages/api/src/contracts/projects.ts` — add `addCaptureConfiguration` + `removeCaptureConfiguration` contracts; update index
-
-- [ ] 1.9 `apps/web/lib/router/projects.ts` — add `addCaptureConfiguration` + `removeCaptureConfiguration` handlers with `.actionable()`
-
-- [ ] 1.10 `apps/web/app/(authenticated)/projects/[projectId]/settings/page.tsx` (RSC):
+- [ ] 1.7 `apps/web/app/(authenticated)/projects/[projectId]/settings/page.tsx` (RSC):
   - General form (`"use client"` component): name · description · git main branch · diff threshold % · retention (days); "save changes" button
     - `useServerAction(router.projects.updateProject, { interceptors: [...] })`
   - Capture configurations table: columns: name · browser · viewport (W×H) · × remove button
@@ -44,7 +41,7 @@ Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-proje
   - Add-capture-configuration row (always visible): name · browser Select (chromium/firefox/webkit) · width · height · "add" button
     - `useServerAction(router.projects.addCaptureConfiguration, { interceptors: [onError(err => show inline error)] })`
 
-- [ ] 1.11 Component tests:
+- [ ] 1.8 Component tests:
   - `?created=1`: toast shown on mount; absent without param
   - General form: save calls `updateProject`, including `retentionDays`
   - Add capture configuration: validation inline; success appends row; at limit shows error
