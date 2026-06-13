@@ -1,3 +1,5 @@
+import assert from "node:assert";
+
 import { Worker } from "bullmq";
 import type { Redis } from "ioredis";
 
@@ -70,9 +72,7 @@ describe("builds", () => {
         user.id,
       );
 
-      if (result.status !== "ok") {
-        throw new Error("expected createBuild to succeed");
-      }
+      assert(result.status === "ok");
 
       const buildId = result.data;
 
