@@ -6,7 +6,7 @@ The CLI is designed to support multiple snapshot sources. Storybook is the first
 
 ## 1 · Package setup
 
-- [ ] 1.1 Install `commander@^15`, `@orpc/client@^1.14.3`, `tsup` in `apps/cli`; add `@ovr/api` as workspace dep
+- [x] 1.1 Install `commander@^15`, `@orpc/client@^1.14.3`, `tsup` in `apps/cli`; add `@ovr/api` as workspace dep
   - `commander@^15` and `tsup` are installed; `@orpc/client` and `@ovr/api` workspace dep still needed
 - [x] 1.2 Update `apps/cli/package.json`:
   - `"build": "tsup"` (replaces `tsc`)
@@ -24,7 +24,7 @@ Required values are passed as CLI flags. The API key is the only exception — i
 
 ## 3 · oRPC client
 
-- [ ] 3.1 Create `apps/cli/src/client.ts`:
+- [x] 3.1 Create `apps/cli/src/client.ts`:
   - Import `contract` from `@ovr/api/contract`; build typed oRPC client via `createClient(contract)` with `RPCLink` pointed at `${serverUrl}/api/rpc` + `Authorization: Bearer ${apiKey}` header
 
 ## 4 · Snapshot command
@@ -53,8 +53,8 @@ Required values are passed as CLI flags. The API key is the only exception — i
 
 ## 6 · Tests
 
-- [ ] 6.1 Remove `passWithNoTests: true` from `apps/cli/vitest.config.ts`
-- [ ] 6.2 Unit tests for config:
+- [x] 6.1 Remove `passWithNoTests: true` from `apps/cli/vitest.config.ts`
+- [x] 6.2 Unit tests for config:
   - missing `OVR_API_KEY` → exits with clear message
 - [ ] 6.3 Unit tests for polling logic:
   - `passed` → resolves; `needs_review` → rejects with review URL; `error` → rejects; timeout → rejects with timeout message

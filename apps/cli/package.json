@@ -15,10 +15,14 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@orpc/client": "^1.14.4",
+    "@orpc/contract": "^1.14.4",
+    "@ovr/api": "workspace:*",
     "commander": "^15.0.0"
   },
   "devDependencies": {
     "@ovr/typescript-config": "workspace:*",
+    "@types/node": "^22.15.3",
     "tsup": "^8.5.1",
     "typescript": "6.0.3",
     "vitest": "^4.1.7"
