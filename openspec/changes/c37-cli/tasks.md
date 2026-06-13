@@ -30,7 +30,7 @@ Required values are passed as CLI flags. The API key is the only exception — i
 ## 4 · Snapshot command
 
 - [x] 4.1 Create `apps/cli/src/commands/snapshot/index.ts`: `snapshot` parent Command; subcommands are registered here
-- [ ] 4.2 Create `apps/cli/src/commands/snapshot/storybook.ts`: `ovr snapshot storybook` subcommand
+- [x] 4.2 Create `apps/cli/src/commands/snapshot/storybook.ts`: `ovr snapshot storybook` subcommand
   - Options (done — action is currently a stub):
     - `--dir <path>` (required) — path to storybook-static output directory
     - `--server-url <url>` (required) — OVR server URL
@@ -38,7 +38,7 @@ Required values are passed as CLI flags. The API key is the only exception — i
     - `--commit <sha>` — overrides auto-detected commit SHA
     - `--timeout <seconds>` — max seconds to wait for build result (default: `600`)
   - No `--project` option: the API key (`OVR_API_KEY`) is project-scoped (see `c50-api-key-project-scope`), so the server resolves the target project from the key itself
-  - Implementation (not yet done):
+  - Implementation:
     1. Read `OVR_API_KEY` from env; fail fast with a clear message if missing
     2. Validate `--dir` exists and contains `index.json` (Storybook v7+); read and extract story IDs
     3. Auto-detect `branch` and `commitSha` from git; check CI env vars first (`GITHUB_REF_NAME` / `GITHUB_SHA`, `CI_COMMIT_BRANCH` / `CI_COMMIT_SHA`) before falling back to `git branch --show-current` / `git rev-parse HEAD`
@@ -46,6 +46,7 @@ Required values are passed as CLI flags. The API key is the only exception — i
     5. Tar the storybook-static dir and PUT to `uploadUrl` (presigned RustFS URL)
     6. Poll `builds.getBuildStatus({ buildId })` every 5 s; print progress on each poll; enforce `--timeout`
     7. Terminal statuses: `passed` → print success + `process.exit(0)`; `needs_review` → print review URL + `process.exit(1)`; `error` → print error + `process.exit(1)`; timeout exceeded → print timeout message + `process.exit(1)`
+  - Split into focused modules under `apps/cli/src/commands/snapshot/`: `storybookIndex.ts` (read `index.json` → story IDs), `git.ts` (`detectBranch`/`detectCommitSha`), `artifact.ts` (`createArtifactTarball` via `tar`, `uploadArtifact` PUT), `poll.ts` (`pollBuildStatus` + terminal-status errors)
 
 ## 5 · Entry point
 
@@ -56,5 +57,6 @@ Required values are passed as CLI flags. The API key is the only exception — i
 - [x] 6.1 Remove `passWithNoTests: true` from `apps/cli/vitest.config.ts`
 - [x] 6.2 Unit tests for config:
   - missing `OVR_API_KEY` → exits with clear message
-- [ ] 6.3 Unit tests for polling logic:
+- [x] 6.3 Unit tests for polling logic:
   - `passed` → resolves; `needs_review` → rejects with review URL; `error` → rejects; timeout → rejects with timeout message
+  - `apps/cli/src/commands/snapshot/__tests__/poll.test.ts`
