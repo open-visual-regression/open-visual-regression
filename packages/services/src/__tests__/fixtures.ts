@@ -1,7 +1,3 @@
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import path from "node:path";
-
 import { Redis } from "ioredis";
 import { test as vitest } from "vitest";
 import { v7 as uuidv7 } from "uuid";
@@ -18,7 +14,6 @@ type Fixtures = {
   project: typeof projects.$inferSelect;
   captureConfiguration: typeof captureConfigurations.$inferSelect;
   build: NonNullable<Awaited<ReturnType<typeof dbClient.builds.create>>>;
-  artifactDir: string;
   connection: Redis;
 };
 
@@ -72,18 +67,6 @@ export const test = vitest.extend<Fixtures>({
       createdBy: user.id,
     });
     await use(created!);
-  },
-
-  // eslint-disable-next-line no-empty-pattern
-  artifactDir: async ({}, use) => {
-    const dir = await mkdtemp(path.join(tmpdir(), "artifact-"));
-    await writeFile(path.join(dir, "index.html"), "<!doctype html><html></html>");
-    await mkdir(path.join(dir, "assets"));
-    await writeFile(path.join(dir, "assets", "iframe.html"), "<!doctype html><html></html>");
-
-    await use(dir);
-
-    await rm(dir, { recursive: true, force: true });
   },
 
   // eslint-disable-next-line no-empty-pattern

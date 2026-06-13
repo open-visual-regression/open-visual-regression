@@ -96,6 +96,9 @@ importers:
       '@ovr/logger':
         specifier: workspace:*
         version: link:../../packages/logger
+      '@ovr/services':
+        specifier: workspace:*
+        version: link:../../packages/services
       '@ovr/storage':
         specifier: workspace:*
         version: link:../../packages/storage
