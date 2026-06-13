@@ -44,7 +44,7 @@ const seedDiffs = async (
 ) => {
   for (const status of statuses) {
     const [snapshot] = await dbClient.snapshots.createMany([
-      { buildId, captureConfigurationId, storyId: crypto.randomUUID(), status: "captured" },
+      { buildId, captureConfigurationId, targetId: crypto.randomUUID(), status: "captured" },
     ]);
     await dbClient.diffs.create({ snapshotId: snapshot!.id, status });
   }
@@ -52,11 +52,11 @@ const seedDiffs = async (
 
 describe("builds", () => {
   describe("createBuild", () => {
-    test("creates a pending build with a snapshot per story x capture configuration, uploads the storybook directory, and enqueues a capture job for each snapshot", async ({
+    test("creates a pending build with a snapshot per target x capture configuration, uploads the artifact directory, and enqueues a capture job for each snapshot", async ({
       project,
       captureConfiguration,
       user,
-      storybookStaticDir,
+      artifactDir,
       connection,
     }) => {
       const result = await createBuild(
@@ -64,8 +64,8 @@ describe("builds", () => {
           projectId: project.id,
           branch: "main",
           commitSha: "a".repeat(40),
-          stories: ["story-a", "story-b"],
-          storybookStaticDir,
+          targets: ["story-a", "story-b"],
+          artifactDir,
         },
         user.id,
       );
@@ -83,17 +83,17 @@ describe("builds", () => {
         commitSha: "a".repeat(40),
         status: "pending",
         captureMode: "worker",
-        storybookPath: `builds/${buildId}/storybook`,
+        artifactPath: `builds/${buildId}/artifact`,
         createdBy: user.id,
       });
 
       const snapshots = await dbClient.snapshots.findByBuild(buildId);
-      expect(snapshots.map((snapshot) => snapshot.storyId).sort()).toEqual(["story-a", "story-b"]);
+      expect(snapshots.map((snapshot) => snapshot.targetId).sort()).toEqual(["story-a", "story-b"]);
       expect(
         snapshots.every((snapshot) => snapshot.captureConfigurationId === captureConfiguration.id),
       ).toBe(true);
 
-      const uploaded = await storage.getFileStream(`builds/${buildId}/storybook/index.html`);
+      const uploaded = await storage.getFileStream(`builds/${buildId}/artifact/index.html`);
       expect(uploaded).toBeTruthy();
       uploaded.destroy();
 
@@ -105,15 +105,15 @@ describe("builds", () => {
 
     test("returns PROJECT_NOT_FOUND when the project does not exist", async ({
       user,
-      storybookStaticDir,
+      artifactDir,
     }) => {
       const result = await createBuild(
         {
           projectId: crypto.randomUUID(),
           branch: "main",
           commitSha: "a".repeat(40),
-          stories: ["story-a"],
-          storybookStaticDir,
+          targets: ["story-a"],
+          artifactDir,
         },
         user.id,
       );
@@ -121,7 +121,7 @@ describe("builds", () => {
       expect(result).toEqual({ status: "error", error: "PROJECT_NOT_FOUND" });
     });
 
-    test("marks the build as error and rethrows when the storybook directory cannot be uploaded", async ({
+    test("marks the build as error and rethrows when the artifact directory cannot be uploaded", async ({
       project,
       user,
     }) => {
@@ -131,8 +131,8 @@ describe("builds", () => {
             projectId: project.id,
             branch: "main",
             commitSha: "a".repeat(40),
-            stories: ["story-a"],
-            storybookStaticDir: `/nonexistent-${crypto.randomUUID()}`,
+            targets: ["story-a"],
+            artifactDir: `/nonexistent-${crypto.randomUUID()}`,
           },
           user.id,
         ),

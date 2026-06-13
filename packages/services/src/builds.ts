@@ -9,8 +9,8 @@ type CreateBuildInput = {
   projectId: string;
   branch: string;
   commitSha: string;
-  stories: string[];
-  storybookStaticDir: string;
+  targets: string[];
+  artifactDir: string;
 };
 
 export const createBuild = async (
@@ -32,7 +32,7 @@ export const createBuild = async (
     commitSha: input.commitSha,
     status: "pending",
     captureMode: "worker",
-    storybookPath: `builds/${buildId}/storybook`,
+    artifactPath: `builds/${buildId}/artifact`,
     createdBy: callerId,
   });
 
@@ -42,17 +42,17 @@ export const createBuild = async (
     );
 
     const snapshots = await dbClient.snapshots.createMany(
-      input.stories.flatMap((storyId) =>
+      input.targets.flatMap((targetId) =>
         captureConfigurations.map((captureConfiguration) => ({
           buildId,
           captureConfigurationId: captureConfiguration.id,
-          storyId,
+          targetId,
           status: "pending" as const,
         })),
       ),
     );
 
-    await uploadDirectory(input.storybookStaticDir, `builds/${buildId}/storybook`);
+    await uploadDirectory(input.artifactDir, `builds/${buildId}/artifact`);
 
     await Promise.all(
       snapshots.map((snapshot) => enqueueCapture({ buildId, snapshotId: snapshot.id })),

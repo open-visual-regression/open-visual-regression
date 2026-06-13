@@ -4,12 +4,12 @@ Gate: unit tests cover createBuild (creates correct DB records + enqueues captur
 
 - [x] 1.1 Create `packages/services/src/builds.ts`:
 
-  `createBuild({ projectId, branch, commitSha, stories, storybookStaticDir }, callerId)`:
+  `createBuild({ projectId, branch, commitSha, targets, artifactDir }, callerId)`:
   - Validate project exists
-  - `buildsRepo.create({ projectId, branch, commitSha, status: "pending", captureMode: "worker", storybookPath: `builds/${buildId}/storybook` })`
+  - `buildsRepo.create({ projectId, branch, commitSha, status: "pending", captureMode: "worker", artifactPath: `builds/${buildId}/artifact` })`
   - Fetch capture configurations for project
-  - `snapshotsRepo.createMany(stories × captureConfigurations)` — one snapshot per combination
-  - Upload storybook static dir to storage at `builds/${buildId}/storybook/` (recursive)
+  - `snapshotsRepo.createMany(targets × captureConfigurations)` — one snapshot per combination
+  - Upload artifact dir to storage at `builds/${buildId}/artifact/` (recursive)
   - `enqueueCapture({ buildId, snapshotId })` for every snapshot
   - Return `buildId`
 

@@ -11,7 +11,7 @@ describe("builds", () => {
         projectId: project.id,
         branch: "main",
         commitSha: "a".repeat(40),
-        storybookPath: "builds/test/storybook",
+        artifactPath: "builds/test/artifact",
         createdBy: user.id,
       });
 
@@ -44,7 +44,7 @@ describe("builds", () => {
         projectId: project.id,
         branch: "feature",
         commitSha: "b".repeat(40),
-        storybookPath: "builds/feature/storybook",
+        artifactPath: "builds/feature/artifact",
         createdBy: user.id,
       });
 
@@ -61,7 +61,7 @@ describe("builds", () => {
         projectId: project.id,
         branch: "feature",
         commitSha: "b".repeat(40),
-        storybookPath: "builds/feature/storybook",
+        artifactPath: "builds/feature/artifact",
         createdBy: user.id,
       });
       await dbClient.builds.updateStatus(main.id, "passed");
@@ -79,7 +79,7 @@ describe("builds", () => {
         projectId: project.id,
         branch: "feature",
         commitSha: "b".repeat(40),
-        storybookPath: "builds/feature/storybook",
+        artifactPath: "builds/feature/artifact",
         createdBy: user.id,
       });
 

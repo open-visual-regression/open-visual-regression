@@ -53,7 +53,7 @@ export const builds = pgTable("builds", {
   commitSha: varchar("commit_sha", { length: 64 }).notNull(),
   status: buildStatusEnum().notNull().default("pending"),
   captureMode: captureModeEnum("capture_mode").notNull().default("worker"),
-  storybookPath: text("storybook_path").notNull(),
+  artifactPath: text("artifact_path").notNull(),
   createdAt: utcTimestamp("created_at")
     .default(sql`now()`)
     .notNull(),
@@ -72,7 +72,7 @@ export const snapshots = pgTable(
     captureConfigurationId: uuid("capture_configuration_id")
       .references(() => captureConfigurations.id)
       .notNull(),
-    storyId: varchar("story_id", { length: 255 }).notNull(),
+    targetId: varchar("target_id", { length: 255 }).notNull(),
     status: snapshotStatusEnum().notNull().default("pending"),
     imagePath: text("image_path"),
     hasRenderError: boolean("has_render_error").notNull().default(false),
@@ -122,7 +122,7 @@ export const baselines = pgTable(
     captureConfigurationId: uuid("capture_configuration_id")
       .references(() => captureConfigurations.id)
       .notNull(),
-    storyId: varchar("story_id", { length: 255 }).notNull(),
+    targetId: varchar("target_id", { length: 255 }).notNull(),
     snapshotId: uuid("snapshot_id")
       .references(() => snapshots.id)
       .notNull(),
@@ -134,10 +134,10 @@ export const baselines = pgTable(
       .notNull(),
   },
   (table) => [
-    uniqueIndex("baselines_project_capture_configuration_story_uidx").on(
+    uniqueIndex("baselines_project_capture_configuration_target_uidx").on(
       table.projectId,
       table.captureConfigurationId,
-      table.storyId,
+      table.targetId,
     ),
   ],
 );

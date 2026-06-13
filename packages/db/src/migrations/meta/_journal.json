@@ -36,6 +36,13 @@
       "when": 1781160348746,
       "tag": "0004_solid_hellion",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1781340884695,
+      "tag": "0005_rename_target_and_artifact",
+      "breakpoints": true
     }
   ]
 }

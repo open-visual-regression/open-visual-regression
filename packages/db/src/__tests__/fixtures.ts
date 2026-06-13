@@ -61,7 +61,7 @@ export const test = vitest.extend<Fixtures>({
       projectId: project.id,
       branch: "main",
       commitSha: "a".repeat(40),
-      storybookPath: "builds/seed/storybook",
+      artifactPath: "builds/seed/artifact",
       createdBy: user.id,
     });
     await use(created!);

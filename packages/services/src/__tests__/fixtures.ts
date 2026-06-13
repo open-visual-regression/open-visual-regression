@@ -18,7 +18,7 @@ type Fixtures = {
   project: typeof projects.$inferSelect;
   captureConfiguration: typeof captureConfigurations.$inferSelect;
   build: NonNullable<Awaited<ReturnType<typeof dbClient.builds.create>>>;
-  storybookStaticDir: string;
+  artifactDir: string;
   connection: Redis;
 };
 
@@ -68,15 +68,15 @@ export const test = vitest.extend<Fixtures>({
       projectId: project.id,
       branch: "main",
       commitSha: "a".repeat(40),
-      storybookPath: "builds/seed/storybook",
+      artifactPath: "builds/seed/artifact",
       createdBy: user.id,
     });
     await use(created!);
   },
 
   // eslint-disable-next-line no-empty-pattern
-  storybookStaticDir: async ({}, use) => {
-    const dir = await mkdtemp(path.join(tmpdir(), "storybook-static-"));
+  artifactDir: async ({}, use) => {
+    const dir = await mkdtemp(path.join(tmpdir(), "artifact-"));
     await writeFile(path.join(dir, "index.html"), "<!doctype html><html></html>");
     await mkdir(path.join(dir, "assets"));
     await writeFile(path.join(dir, "assets", "iframe.html"), "<!doctype html><html></html>");

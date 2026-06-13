@@ -5,7 +5,7 @@ describe("diffs", () => {
   describe("create", () => {
     test("should create a diff with pending status", async ({ build, captureConfiguration }) => {
       const [snapshot] = await dbClient.snapshots.createMany([
-        { buildId: build.id, captureConfigurationId: captureConfiguration.id, storyId: "a" },
+        { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
       ]);
 
       const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
@@ -19,7 +19,7 @@ describe("diffs", () => {
       captureConfiguration,
     }) => {
       const [snapshot] = await dbClient.snapshots.createMany([
-        { buildId: build.id, captureConfigurationId: captureConfiguration.id, storyId: "a" },
+        { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
       ]);
       const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
 
@@ -34,7 +34,7 @@ describe("diffs", () => {
       captureConfiguration,
     }) => {
       const [snapshot] = await dbClient.snapshots.createMany([
-        { buildId: build.id, captureConfigurationId: captureConfiguration.id, storyId: "a" },
+        { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
       ]);
       const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
 
@@ -46,7 +46,7 @@ describe("diffs", () => {
   describe("updateStatus", () => {
     test("should update the diff's status", async ({ build, captureConfiguration }) => {
       const [snapshot] = await dbClient.snapshots.createMany([
-        { buildId: build.id, captureConfigurationId: captureConfiguration.id, storyId: "a" },
+        { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
       ]);
       const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
 
@@ -62,7 +62,7 @@ describe("diffs", () => {
       user,
     }) => {
       const [snapshot] = await dbClient.snapshots.createMany([
-        { buildId: build.id, captureConfigurationId: captureConfiguration.id, storyId: "a" },
+        { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
       ]);
       const diff = await dbClient.diffs.create({
         snapshotId: snapshot!.id,
@@ -87,7 +87,7 @@ describe("diffs", () => {
       captureConfiguration,
     }) => {
       const [snapshot] = await dbClient.snapshots.createMany([
-        { buildId: build.id, captureConfigurationId: captureConfiguration.id, storyId: "a" },
+        { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
       ]);
       await dbClient.diffs.create({ snapshotId: snapshot!.id });
 
@@ -99,7 +99,7 @@ describe("diffs", () => {
       captureConfiguration,
     }) => {
       const [snapshot] = await dbClient.snapshots.createMany([
-        { buildId: build.id, captureConfigurationId: captureConfiguration.id, storyId: "a" },
+        { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
       ]);
       const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
 
