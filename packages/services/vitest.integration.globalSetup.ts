@@ -1,15 +1,14 @@
-import { CreateBucketCommand, S3Client } from "@aws-sdk/client-s3";
 import type { StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { PostgreSqlContainer } from "@testcontainers/postgresql";
 
 import { runMigrations } from "@ovr/db/migrate";
-
 import {
+  createBucket,
   startRustfs,
   startValkey,
   type RustfsContainer,
   type ValkeyContainer,
-} from "./src/__tests__/helpers/containers";
+} from "@ovr/testing";
 
 let postgres: StartedPostgreSqlContainer;
 let rustfs: RustfsContainer;
@@ -31,13 +30,7 @@ export async function setup() {
   process.env.STORAGE_BUCKET = "ovr";
   process.env.STORAGE_REGION = "us-east-1";
 
-  const client = new S3Client({
-    endpoint: rustfs.endpoint,
-    region: "us-east-1",
-    credentials: { accessKeyId: rustfs.accessKey, secretAccessKey: rustfs.secretKey },
-    forcePathStyle: true,
-  });
-  await client.send(new CreateBucketCommand({ Bucket: "ovr" }));
+  await createBucket(rustfs, "ovr");
 
   process.env.VALKEY_URL = `redis://${valkey.host}:${valkey.port}`;
 }

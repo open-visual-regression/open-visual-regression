@@ -2,8 +2,7 @@ import type { StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { PostgreSqlContainer } from "@testcontainers/postgresql";
 
 import { runMigrations } from "@ovr/db/migrate";
-
-import { startRustfs, type RustfsContainer } from "./lib/testing/containers";
+import { createBucket, startRustfs, type RustfsContainer } from "@ovr/testing";
 
 let postgres: StartedPostgreSqlContainer;
 let rustfs: RustfsContainer;
@@ -19,6 +18,8 @@ export async function setup() {
   process.env.STORAGE_SECRET_KEY = rustfs.secretKey;
   process.env.STORAGE_BUCKET = "ovr";
   process.env.STORAGE_REGION = "us-east-1";
+
+  await createBucket(rustfs, "ovr");
 }
 
 export async function teardown() {

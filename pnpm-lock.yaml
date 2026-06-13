@@ -121,6 +121,9 @@ importers:
       '@ovr/mocks':
         specifier: workspace:*
         version: link:../../packages/mocks
+      '@ovr/testing':
+        specifier: workspace:*
+        version: link:../../packages/testing
       '@ovr/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
@@ -202,9 +205,6 @@ importers:
       tailwindcss:
         specifier: ^4.3.0
         version: 4.3.0
-      testcontainers:
-        specifier: ^12.0.1
-        version: 12.0.1
       typescript:
         specifier: 6.0.3
         version: 6.0.3
@@ -314,15 +314,15 @@ importers:
         specifier: 5.10.1
         version: 5.10.1
     devDependencies:
+      '@ovr/testing':
+        specifier: workspace:*
+        version: link:../testing
       '@ovr/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       '@types/node':
         specifier: ^22.15.3
         version: 22.15.3
-      testcontainers:
-        specifier: ^12.0.1
-        version: 12.0.1
       typescript:
         specifier: 6.0.3
         version: 6.0.3
@@ -351,9 +351,9 @@ importers:
         specifier: ^14.0.0
         version: 14.0.0
     devDependencies:
-      '@aws-sdk/client-s3':
-        specifier: ^3.1060.0
-        version: 3.1066.0
+      '@ovr/testing':
+        specifier: workspace:*
+        version: link:../testing
       '@ovr/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
@@ -369,9 +369,6 @@ importers:
       pg:
         specifier: ^8.21.0
         version: 8.21.0
-      testcontainers:
-        specifier: ^12.0.1
-        version: 12.0.1
       typescript:
         specifier: 6.0.3
         version: 6.0.3
@@ -388,21 +385,40 @@ importers:
         specifier: ^3.1060.0
         version: 3.1066.0
     devDependencies:
+      '@ovr/testing':
+        specifier: workspace:*
+        version: link:../testing
       '@ovr/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       '@types/node':
         specifier: ^22.15.3
         version: 22.15.3
-      testcontainers:
-        specifier: ^12.0.1
-        version: 12.0.1
       typescript:
         specifier: 6.0.3
         version: 6.0.3
       vitest:
         specifier: ^4.1.7
         version: 4.1.7(@types/node@22.15.3)(@vitest/browser-playwright@4.1.7)(@vitest/coverage-v8@4.1.7)(jsdom@29.1.1(@noble/hashes@2.2.0))(msw@2.14.6(@types/node@22.15.3)(typescript@6.0.3))(vite@8.0.14(@types/node@22.15.3)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.3)(yaml@2.9.0))
+
+  packages/testing:
+    dependencies:
+      '@aws-sdk/client-s3':
+        specifier: ^3.1060.0
+        version: 3.1066.0
+      testcontainers:
+        specifier: ^12.0.1
+        version: 12.0.1
+    devDependencies:
+      '@ovr/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: ^22.15.3
+        version: 22.15.3
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
 
   packages/typescript-config: {}
 

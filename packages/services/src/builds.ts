@@ -49,11 +49,16 @@ export const createBuild = async (
     ),
   );
 
-  await uploadDirectory(input.storybookStaticDir, `builds/${buildId}/storybook`);
+  try {
+    await uploadDirectory(input.storybookStaticDir, `builds/${buildId}/storybook`);
 
-  await Promise.all(
-    snapshots.map((snapshot) => enqueueCapture({ buildId, snapshotId: snapshot.id })),
-  );
+    await Promise.all(
+      snapshots.map((snapshot) => enqueueCapture({ buildId, snapshotId: snapshot.id })),
+    );
+  } catch (error) {
+    await dbClient.builds.updateStatus(buildId, "error");
+    throw error;
+  }
 
   return { status: "ok", data: buildId };
 };

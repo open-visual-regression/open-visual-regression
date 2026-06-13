@@ -120,6 +120,28 @@ describe("builds", () => {
 
       expect(result).toEqual({ status: "error", error: "PROJECT_NOT_FOUND" });
     });
+
+    test("marks the build as error and rethrows when the storybook directory cannot be uploaded", async ({
+      project,
+      user,
+    }) => {
+      await expect(
+        createBuild(
+          {
+            projectId: project.id,
+            branch: "main",
+            commitSha: "a".repeat(40),
+            stories: ["story-a"],
+            storybookStaticDir: `/nonexistent-${crypto.randomUUID()}`,
+          },
+          user.id,
+        ),
+      ).rejects.toThrow();
+
+      const builds = await dbClient.builds.findByProject(project.id);
+      expect(builds).toHaveLength(1);
+      expect(builds[0]).toMatchObject({ status: "error" });
+    });
   });
 
   describe("finalizeBuild", () => {
