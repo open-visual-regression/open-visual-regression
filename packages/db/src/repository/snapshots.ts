@@ -1,10 +1,15 @@
 import { count, eq } from "drizzle-orm";
 
-import { db } from "../db";
+import { db, type DbClient } from "../db";
 import { snapshots, type SnapshotStatus } from "../schema";
 
-export const createMany = (values: (typeof snapshots.$inferInsert)[]) =>
-  db.insert(snapshots).values(values).returning();
+export const createMany = ({
+  values,
+  tx = db,
+}: {
+  values: (typeof snapshots.$inferInsert)[];
+  tx?: DbClient;
+}) => tx.insert(snapshots).values(values).returning();
 
 export const findByBuild = (buildId: string) =>
   db.query.snapshots.findMany({ where: (snapshots, { eq }) => eq(snapshots.buildId, buildId) });

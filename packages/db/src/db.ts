@@ -8,3 +8,7 @@ import * as schema from "./schema";
 const client = new Pool({ connectionString: buildDatabaseUrl() });
 
 export const db = drizzle({ schema, client, casing: "snake_case" });
+
+export type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+export type DbClient = typeof db | Transaction;

@@ -1,10 +1,10 @@
 import { count, eq } from "drizzle-orm";
 
-import { db } from "../db";
+import { db, type DbClient } from "../db";
 import { captureConfigurations } from "../schema";
 
-export const findByProject = (projectId: string) =>
-  db.query.captureConfigurations.findMany({
+export const findByProject = ({ projectId, tx = db }: { projectId: string; tx?: DbClient }) =>
+  tx.query.captureConfigurations.findMany({
     where: (captureConfigurations, { eq }) => eq(captureConfigurations.projectId, projectId),
   });
 

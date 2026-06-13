@@ -45,9 +45,11 @@ const seedDiffs = async (
   statuses: DiffStatus[],
 ) => {
   for (const status of statuses) {
-    const [snapshot] = await dbClient.snapshots.createMany([
-      { buildId, captureConfigurationId, targetId: crypto.randomUUID(), status: "captured" },
-    ]);
+    const [snapshot] = await dbClient.snapshots.createMany({
+      values: [
+        { buildId, captureConfigurationId, targetId: crypto.randomUUID(), status: "captured" },
+      ],
+    });
     await dbClient.diffs.create({ snapshotId: snapshot!.id, status });
   }
 };

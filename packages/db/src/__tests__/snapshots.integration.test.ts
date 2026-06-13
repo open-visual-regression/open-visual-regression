@@ -4,18 +4,20 @@ import { describe, expect, test } from "./fixtures";
 describe("snapshots", () => {
   describe("createMany", () => {
     test("should create a snapshot for each input row", async ({ build, captureConfiguration }) => {
-      const created = await dbClient.snapshots.createMany([
-        {
-          buildId: build.id,
-          captureConfigurationId: captureConfiguration.id,
-          targetId: "button--primary",
-        },
-        {
-          buildId: build.id,
-          captureConfigurationId: captureConfiguration.id,
-          targetId: "button--secondary",
-        },
-      ]);
+      const created = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            captureConfigurationId: captureConfiguration.id,
+            targetId: "button--primary",
+          },
+          {
+            buildId: build.id,
+            captureConfigurationId: captureConfiguration.id,
+            targetId: "button--secondary",
+          },
+        ],
+      });
 
       expect(created).toHaveLength(2);
     });
@@ -26,18 +28,20 @@ describe("snapshots", () => {
       build,
       captureConfiguration,
     }) => {
-      await dbClient.snapshots.createMany([
-        {
-          buildId: build.id,
-          captureConfigurationId: captureConfiguration.id,
-          targetId: "button--primary",
-        },
-        {
-          buildId: build.id,
-          captureConfigurationId: captureConfiguration.id,
-          targetId: "button--secondary",
-        },
-      ]);
+      await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            captureConfigurationId: captureConfiguration.id,
+            targetId: "button--primary",
+          },
+          {
+            buildId: build.id,
+            captureConfigurationId: captureConfiguration.id,
+            targetId: "button--secondary",
+          },
+        ],
+      });
 
       const found = await dbClient.snapshots.findByBuild(build.id);
       expect(found).toHaveLength(2);
@@ -49,18 +53,20 @@ describe("snapshots", () => {
       build,
       captureConfiguration,
     }) => {
-      await dbClient.snapshots.createMany([
-        {
-          buildId: build.id,
-          captureConfigurationId: captureConfiguration.id,
-          targetId: "button--primary",
-        },
-        {
-          buildId: build.id,
-          captureConfigurationId: captureConfiguration.id,
-          targetId: "button--secondary",
-        },
-      ]);
+      await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            captureConfigurationId: captureConfiguration.id,
+            targetId: "button--primary",
+          },
+          {
+            buildId: build.id,
+            captureConfigurationId: captureConfiguration.id,
+            targetId: "button--secondary",
+          },
+        ],
+      });
 
       expect(await dbClient.snapshots.countByBuild(build.id)).toBe(2);
     });
@@ -68,9 +74,11 @@ describe("snapshots", () => {
 
   describe("updateStatus", () => {
     test("should update a snapshot's status", async ({ build, captureConfiguration }) => {
-      const [snapshot] = await dbClient.snapshots.createMany([
-        { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
-      ]);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
+        ],
+      });
 
       const updated = await dbClient.snapshots.updateStatus(snapshot!.id, "captured");
       expect(updated?.status).toBe("captured");
@@ -82,10 +90,12 @@ describe("snapshots", () => {
       build,
       captureConfiguration,
     }) => {
-      const [a] = await dbClient.snapshots.createMany([
-        { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
-        { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "b" },
-      ]);
+      const [a] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
+          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "b" },
+        ],
+      });
 
       await dbClient.snapshots.updateStatus(a!.id, "captured");
       expect(await dbClient.snapshots.hasAllCapturedForBuild(build.id)).toBe(false);
@@ -95,10 +105,12 @@ describe("snapshots", () => {
       build,
       captureConfiguration,
     }) => {
-      const created = await dbClient.snapshots.createMany([
-        { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
-        { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "b" },
-      ]);
+      const created = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
+          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "b" },
+        ],
+      });
 
       await dbClient.snapshots.updateStatus(created[0]!.id, "captured");
       await dbClient.snapshots.updateStatus(created[1]!.id, "error");

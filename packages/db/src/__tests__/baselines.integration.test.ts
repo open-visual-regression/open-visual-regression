@@ -9,13 +9,15 @@ describe("baselines", () => {
       build,
       user,
     }) => {
-      const [snapshot] = await dbClient.snapshots.createMany([
-        {
-          buildId: build.id,
-          captureConfigurationId: captureConfiguration.id,
-          targetId: "button--primary",
-        },
-      ]);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            captureConfigurationId: captureConfiguration.id,
+            targetId: "button--primary",
+          },
+        ],
+      });
 
       const created = await dbClient.baselines.upsert({
         projectId: project.id,
@@ -34,18 +36,20 @@ describe("baselines", () => {
       build,
       user,
     }) => {
-      const [snapshotA, snapshotB] = await dbClient.snapshots.createMany([
-        {
-          buildId: build.id,
-          captureConfigurationId: captureConfiguration.id,
-          targetId: "button--primary",
-        },
-        {
-          buildId: build.id,
-          captureConfigurationId: captureConfiguration.id,
-          targetId: "button--primary",
-        },
-      ]);
+      const [snapshotA, snapshotB] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            captureConfigurationId: captureConfiguration.id,
+            targetId: "button--primary",
+          },
+          {
+            buildId: build.id,
+            captureConfigurationId: captureConfiguration.id,
+            targetId: "button--primary",
+          },
+        ],
+      });
 
       const created = await dbClient.baselines.upsert({
         projectId: project.id,
@@ -75,13 +79,15 @@ describe("baselines", () => {
       build,
       user,
     }) => {
-      const [snapshot] = await dbClient.snapshots.createMany([
-        {
-          buildId: build.id,
-          captureConfigurationId: captureConfiguration.id,
-          targetId: "button--primary",
-        },
-      ]);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            captureConfigurationId: captureConfiguration.id,
+            targetId: "button--primary",
+          },
+        ],
+      });
       await dbClient.baselines.upsert({
         projectId: project.id,
         captureConfigurationId: captureConfiguration.id,
@@ -106,13 +112,15 @@ describe("baselines", () => {
       build,
       user,
     }) => {
-      const [snapshot] = await dbClient.snapshots.createMany([
-        {
-          buildId: build.id,
-          captureConfigurationId: captureConfiguration.id,
-          targetId: "button--primary",
-        },
-      ]);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            captureConfigurationId: captureConfiguration.id,
+            targetId: "button--primary",
+          },
+        ],
+      });
       await dbClient.baselines.upsert({
         projectId: project.id,
         captureConfigurationId: captureConfiguration.id,

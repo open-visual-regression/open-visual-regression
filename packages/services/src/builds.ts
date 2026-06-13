@@ -1,4 +1,5 @@
 import { dbClient } from "@ovr/db/client";
+import { db } from "@ovr/db/db";
 import { v7 as uuidv7 } from "uuid";
 
 import { enqueueCapture } from "./lib/queue";
@@ -25,32 +26,37 @@ export const createBuild = async (
 
   const buildId = uuidv7();
 
-  await dbClient.builds.create({
-    id: buildId,
-    projectId: input.projectId,
-    branch: input.branch,
-    commitSha: input.commitSha,
-    status: "pending",
-    captureMode: "worker",
-    artifactPath: `builds/${buildId}/artifact`,
-    createdBy: callerId,
-  });
-
   try {
-    const captureConfigurations = await dbClient.captureConfigurations.findByProject(
-      input.projectId,
-    );
+    const snapshots = await db.transaction(async (tx) => {
+      await dbClient.builds.create({
+        id: buildId,
+        projectId: input.projectId,
+        branch: input.branch,
+        commitSha: input.commitSha,
+        status: "pending",
+        captureMode: "worker",
+        artifactPath: `builds/${buildId}/artifact`,
+        createdBy: callerId,
+        tx,
+      });
 
-    const snapshots = await dbClient.snapshots.createMany(
-      input.targets.flatMap((targetId) =>
-        captureConfigurations.map((captureConfiguration) => ({
-          buildId,
-          captureConfigurationId: captureConfiguration.id,
-          targetId,
-          status: "pending" as const,
-        })),
-      ),
-    );
+      const captureConfigurations = await dbClient.captureConfigurations.findByProject({
+        projectId: input.projectId,
+        tx,
+      });
+
+      return dbClient.snapshots.createMany({
+        values: input.targets.flatMap((targetId) =>
+          captureConfigurations.map((captureConfiguration) => ({
+            buildId,
+            captureConfigurationId: captureConfiguration.id,
+            targetId,
+            status: "pending" as const,
+          })),
+        ),
+        tx,
+      });
+    });
 
     await uploadDirectory(input.artifactDir, `builds/${buildId}/artifact`);
 

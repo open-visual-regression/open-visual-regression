@@ -1,10 +1,13 @@
 import { eq } from "drizzle-orm";
 
-import { db } from "../db";
+import { db, type DbClient } from "../db";
 import { builds, type BuildStatus } from "../schema";
 
-export const create = async (values: typeof builds.$inferInsert) => {
-  const [build] = await db.insert(builds).values(values).returning();
+export const create = async ({
+  tx = db,
+  ...values
+}: typeof builds.$inferInsert & { tx?: DbClient }) => {
+  const [build] = await tx.insert(builds).values(values).returning();
   return build;
 };
 
