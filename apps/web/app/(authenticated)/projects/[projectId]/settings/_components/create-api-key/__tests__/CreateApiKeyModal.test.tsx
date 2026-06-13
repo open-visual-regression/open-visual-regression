@@ -35,7 +35,7 @@ describe("CreateApiKeyModal", () => {
     expect(mockCreate).not.toHaveBeenCalled();
   });
 
-  it("should create an api key, show it in a reveal view, and refresh the table", async ({
+  it("should create an api key, show it in a reveal view, and refresh the table on close", async ({
     user,
   }) => {
     mockCreate.mockResolvedValue([null, { key: API_KEY }]);
@@ -48,6 +48,10 @@ describe("CreateApiKeyModal", () => {
     expect(await screen.findByRole("heading", { name: /api key created/i })).toBeVisible();
     expect(screen.getByText(API_KEY)).toBeVisible();
     expect(mockCreate).toHaveBeenCalledWith({ projectId: PROJECT_ID, name: "ci · github actions" });
+    expect(mockRefresh).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: /^done$/i }));
+
     await waitFor(() => expect(mockRefresh).toHaveBeenCalled());
   });
 

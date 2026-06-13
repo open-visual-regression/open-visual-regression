@@ -24,6 +24,7 @@
     "@orpc/server": "^1.14.4",
     "@ovr/api": "workspace:*",
     "@ovr/db": "workspace:*",
+    "@ovr/logger": "workspace:*",
     "@ovr/storage": "workspace:*",
     "@ovr/ui": "workspace:*",
     "@tanstack/react-devtools": "^0.10.5",

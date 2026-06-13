@@ -7,12 +7,17 @@ export {
   FolderIcon,
   GitBranchIcon,
   GitCommitHorizontalIcon,
+  KeyRoundIcon,
   LogOutIcon,
+  MailIcon,
   MenuIcon,
+  MonitorIcon,
   SearchIcon,
   SettingsIcon,
   PlusIcon,
   CircleSlash2Icon,
+  UserIcon,
+  UsersIcon,
   XIcon,
 } from "lucide-react";
 

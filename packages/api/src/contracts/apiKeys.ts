@@ -13,7 +13,7 @@ export type ApiKeySchema = z.infer<typeof apiKeySchema>;
 
 export const createApiKeyInputSchema = z.object({
   projectId: z.string(),
-  name: z.string().min(1).max(100),
+  name: z.string().min(1).max(32),
 });
 
 export const createApiKeyOutputSchema = z.object({

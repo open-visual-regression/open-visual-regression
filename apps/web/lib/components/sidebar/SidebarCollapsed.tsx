@@ -1,55 +1,23 @@
-import Link from "next/link";
-import { Button } from "@ovr/ui/components/button";
-import { Icon, ChevronRightIcon } from "@ovr/ui/components/icon";
-import { cn } from "@ovr/ui/lib/utils";
-import { SidebarMonogram } from "./SidebarMonogram";
-
-type SidebarCollapsedProject = {
-  id: string;
-  name: string;
-  changedCount?: number;
-};
+import { SidebarCollapseToggle } from "./SidebarCollapseToggle";
 
 type SidebarCollapsedProps = {
-  projects: SidebarCollapsedProject[];
-  activeProjectId?: string;
+  expandLabel?: string;
   onExpand?: () => void;
+  children?: React.ReactNode;
 };
 
-const SidebarCollapsed = ({ projects, activeProjectId, onExpand }: SidebarCollapsedProps) => (
+const SidebarCollapsed = ({
+  expandLabel = "Expand sidebar",
+  onExpand,
+  children,
+}: SidebarCollapsedProps) => (
   <aside className="flex h-full w-12 shrink-0 flex-col overflow-hidden border-r border-ovr-border">
-    <div className="flex items-center justify-center pt-3.5 pb-1.5">
-      <span className="text-badge font-semibold tracking-label uppercase text-ovr-fg-tertiary">
-        prj
-      </span>
-    </div>
-
-    {projects.map((p) => {
-      const active = p.id === activeProjectId;
-      return (
-        <Link
-          key={p.id}
-          href={`/projects/${p.id}/runs`}
-          title={p.name}
-          className={cn(
-            "flex h-8 items-center justify-center border-l-2 no-underline transition-colors relative",
-            active
-              ? "bg-ovr-active border-l-ovr-accent"
-              : "border-l-transparent hover:bg-ovr-hover",
-          )}
-        >
-          <SidebarMonogram name={p.name} changedCount={p.changedCount} active={active} />
-        </Link>
-      );
-    })}
-
+    {children}
     <div className="mt-auto px-3 py-3 border-t border-ovr-border-subtle flex">
-      <Button variant="secondary" size="icon-xs" onClick={onExpand} aria-label="Expand sidebar">
-        <Icon icon={ChevronRightIcon} size={12} />
-      </Button>
+      <SidebarCollapseToggle direction="right" label={expandLabel} onClick={onExpand} />
     </div>
   </aside>
 );
 
 export { SidebarCollapsed };
-export type { SidebarCollapsedProps, SidebarCollapsedProject };
+export type { SidebarCollapsedProps };

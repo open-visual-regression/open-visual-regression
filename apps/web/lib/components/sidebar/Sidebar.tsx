@@ -1,38 +1,46 @@
-import { FolderIcon } from "@ovr/ui/components/icon";
-import { SidebarSection } from "./SidebarSection";
-import { SidebarItem } from "./SidebarItem";
-import { SidebarFooter } from "./SidebarFooter";
+"use client";
 
-type SidebarProject = {
-  id: string;
-  name: string;
-  changedCount?: number;
-};
+import { useState } from "react";
+import { SidebarCollapsed } from "./SidebarCollapsed";
+import { SidebarExpanded } from "./SidebarExpanded";
 
 type SidebarProps = {
-  projects: SidebarProject[];
-  activeProjectId?: string;
   version?: string;
-  onCollapse?: () => void;
+  collapseLabel?: string;
+  expandLabel?: string;
+  defaultCollapsed?: boolean;
+  expandedContent: React.ReactNode;
+  collapsedContent: React.ReactNode;
 };
 
-const Sidebar = ({ projects, activeProjectId, version, onCollapse }: SidebarProps) => (
-  <aside className="flex h-full w-60 shrink-0 flex-col overflow-hidden border-r border-ovr-border bg-background">
-    <SidebarSection label="projects" count={projects.length}>
-      {projects.map((p) => (
-        <SidebarItem
-          key={p.id}
-          href={`/projects/${p.id}`}
-          icon={FolderIcon}
-          label={p.name}
-          changedCount={p.changedCount}
-          active={p.id === activeProjectId}
-        />
-      ))}
-    </SidebarSection>
-    <SidebarFooter version={version} onCollapse={onCollapse} />
-  </aside>
-);
+const Sidebar = ({
+  version,
+  collapseLabel,
+  expandLabel,
+  defaultCollapsed = false,
+  expandedContent,
+  collapsedContent,
+}: SidebarProps) => {
+  const [collapsed, setCollapsed] = useState(defaultCollapsed);
+
+  if (collapsed) {
+    return (
+      <SidebarCollapsed expandLabel={expandLabel} onExpand={() => setCollapsed(false)}>
+        {collapsedContent}
+      </SidebarCollapsed>
+    );
+  }
+
+  return (
+    <SidebarExpanded
+      version={version}
+      collapseLabel={collapseLabel}
+      onCollapse={() => setCollapsed(true)}
+    >
+      {expandedContent}
+    </SidebarExpanded>
+  );
+};
 
 export { Sidebar };
-export type { SidebarProps, SidebarProject };
+export type { SidebarProps };

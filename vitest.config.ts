@@ -7,6 +7,7 @@ export default defineConfig({
       "apps/worker/vitest.config.ts",
       "apps/cli/vitest.config.ts",
       "packages/db/vitest.config.ts",
+      "packages/logger/vitest.config.ts",
       "packages/queue/vitest.config.ts",
       "packages/services/vitest.config.ts",
       "packages/storage/vitest.config.ts",
