@@ -4,9 +4,11 @@ import { describe, expect, test } from "./fixtures";
 describe("diffs", () => {
   describe("create", () => {
     test("should create a diff with pending status", async ({ build, captureConfiguration }) => {
-      const [snapshot] = await dbClient.snapshots.createMany([
-        { buildId: build.id, captureConfigurationId: captureConfiguration.id, storyId: "a" },
-      ]);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
+        ],
+      });
 
       const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
       expect(diff?.status).toBe("pending");
@@ -18,9 +20,11 @@ describe("diffs", () => {
       build,
       captureConfiguration,
     }) => {
-      const [snapshot] = await dbClient.snapshots.createMany([
-        { buildId: build.id, captureConfigurationId: captureConfiguration.id, storyId: "a" },
-      ]);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
+        ],
+      });
       const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
 
       const found = await dbClient.diffs.findById(diff!.id);
@@ -33,9 +37,11 @@ describe("diffs", () => {
       build,
       captureConfiguration,
     }) => {
-      const [snapshot] = await dbClient.snapshots.createMany([
-        { buildId: build.id, captureConfigurationId: captureConfiguration.id, storyId: "a" },
-      ]);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
+        ],
+      });
       const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
 
       const found = await dbClient.diffs.findByBuild(build.id);
@@ -45,9 +51,11 @@ describe("diffs", () => {
 
   describe("updateStatus", () => {
     test("should update the diff's status", async ({ build, captureConfiguration }) => {
-      const [snapshot] = await dbClient.snapshots.createMany([
-        { buildId: build.id, captureConfigurationId: captureConfiguration.id, storyId: "a" },
-      ]);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
+        ],
+      });
       const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
 
       const updated = await dbClient.diffs.updateStatus(diff!.id, "auto_approved");
@@ -61,9 +69,11 @@ describe("diffs", () => {
       captureConfiguration,
       user,
     }) => {
-      const [snapshot] = await dbClient.snapshots.createMany([
-        { buildId: build.id, captureConfigurationId: captureConfiguration.id, storyId: "a" },
-      ]);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
+        ],
+      });
       const diff = await dbClient.diffs.create({
         snapshotId: snapshot!.id,
         status: "needs_review",
@@ -86,9 +96,11 @@ describe("diffs", () => {
       build,
       captureConfiguration,
     }) => {
-      const [snapshot] = await dbClient.snapshots.createMany([
-        { buildId: build.id, captureConfigurationId: captureConfiguration.id, storyId: "a" },
-      ]);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
+        ],
+      });
       await dbClient.diffs.create({ snapshotId: snapshot!.id });
 
       expect(await dbClient.diffs.hasAllDoneForBuild(build.id)).toBe(false);
@@ -98,9 +110,11 @@ describe("diffs", () => {
       build,
       captureConfiguration,
     }) => {
-      const [snapshot] = await dbClient.snapshots.createMany([
-        { buildId: build.id, captureConfigurationId: captureConfiguration.id, storyId: "a" },
-      ]);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
+        ],
+      });
       const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
 
       await dbClient.diffs.updateStatus(diff!.id, "auto_approved");

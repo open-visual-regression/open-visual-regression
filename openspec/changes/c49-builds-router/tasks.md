@@ -4,13 +4,14 @@ Gate: CLI can call `router.builds.createBuild` + `router.builds.getBuildStatus` 
 
 Depends on: `c36-orpc-api`, `c31-build-service`, `c50-api-key-project-scope`
 
-- [ ] 1 `packages/api/src/contracts/builds.ts`: `createBuild` contract (input: `{ branch, commitSha, stories: string[] }` — no project identifier; the target project is resolved from the API key, see task 4; output: `{ buildId: string, uploadUrl: string }` — `uploadUrl` is a presigned RustFS PUT URL the CLI uses to upload a tar.gz of the storybook-static directory) + `getBuildStatus` contract (input: `{ buildId: string }`; output: `{ status: BuildStatus, reviewUrl?: string }` — `reviewUrl` is included when `status` is `needs_review`)
+- [ ] 1 `packages/api/src/contracts/builds.ts`: `createBuild` contract (input: `{ branch, commitSha, targets: string[] }` — no project identifier; the target project is resolved from the API key, see task 4; output: `{ buildId: string, uploadUrl: string }` — `uploadUrl` is a presigned RustFS PUT URL the CLI uses to upload a tar.gz of the build artifact directory, e.g. the storybook-static directory) + `getBuildStatus` contract (input: `{ buildId: string }`; output: `{ status: BuildStatus, reviewUrl?: string }` — `reviewUrl` is included when `status` is `needs_review`)
 
 - [ ] 2 `packages/api/src/contracts/index.ts`: add `builds` to root contract
 
 - [ ] 3 `apps/web/lib/router/builds.ts`: `"use server"`; implement `createBuild` + `getBuildStatus` via `osApiKey.builds.*`
   - `osApiKey = os.use(async ({ context, next }) => { const bearer = context.headers.get("authorization")?.replace("Bearer ", ""); if (!bearer) throw new ORPCError("UNAUTHORIZED"); const result = await auth.api.verifyApiKey({ body: { key: bearer } }); if (!result.valid) throw new ORPCError("UNAUTHORIZED"); return next({ context: { apiKey: result } }); })`
   - Note: `verifyApiKey` takes `body: { key }` (not headers); Bearer token extracted manually from `Authorization` header
+  - `createBuild` handler calls `createBuild` from `@ovr/services/builds` (returns `Result<string, "PROJECT_NOT_FOUND">`); on `{ status: "error" }` → `throw new ORPCError("NOT_FOUND")`
 
 - [ ] 4 Project scoping: parse `apiKey.key.metadata` (JSON string set at key creation, see `c50-api-key-project-scope`) → `{ projectId }`.
   - `createBuild`: use this `projectId` directly as the build's project — no project identifier is accepted from the CLI, so there's nothing to cross-check

@@ -4,7 +4,7 @@ Gate: pressing J/K navigates to next/previous changed snapshot; prev/next button
 
 - [ ] 1.1 Create `apps/web/app/api/builds/[buildId]/changed-diffs/route.ts`:
   - `GET /api/builds/[buildId]/changed-diffs`
-  - Returns ordered list of `{ diffId, snapshotStoryId }` for diffs with `status = "needs_review"`
+  - Returns ordered list of `{ diffId, snapshotTargetId }` for diffs with `status = "needs_review"`
 
 - [ ] 1.2 Add keyboard shortcut handler in `DiffViewer.tsx`:
   - `useEffect` → `window.addEventListener("keydown", handler)`; cleanup on unmount

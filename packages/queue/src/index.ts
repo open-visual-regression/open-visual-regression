@@ -29,7 +29,10 @@ const enqueue = async <T>(
 ): Promise<Job<T>> => {
   const queue = new Queue<T, void, string, T, void, string>(queueName, { connection });
   try {
-    return await queue.add(queueName, payload);
+    return await queue.add(queueName, payload, {
+      attempts: 3,
+      backoff: { type: "exponential", delay: 1000 },
+    });
   } finally {
     await queue.close();
   }

@@ -6,16 +6,16 @@ Depends on: c25-project-settings (project layout + settings page must exist)
 
 Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-projects.jsx` (DeleteProjectScreen)
 
-- [ ] 1.1 `packages/services/src/projects.ts` — add `deleteProject(id, callerId)`:
-  - Fetch build/snapshot/diff counts for confirmation dialog
-  - `db.projects.deleteProject(id)` — cascade handles DB rows
-  - Fire-and-forget: `storage.deletePrefix(`projects/${id}/`)` (don't await)
+- [ ] 1.1 `packages/api/src/contracts/projects.ts` — add `deleteProject` contract (input: `{ id }`; output: `{ buildCount, snapshotCount, diffCount }`); update index
+
+- [ ] 1.2 `apps/web/lib/router/projects.ts` — add `deleteProject` handler: `.use(authenticatedMiddleware).use(adminMiddleware)` + `.actionable()`:
+  - Fetch build/snapshot/diff counts for the project
+  - `dbClient.projects.deleteProject(input.id)` — cascade handles DB rows
+  - Fire-and-forget: `storage.deletePrefix(`projects/${input.id}/`)` (don't await)
   - Return `{ buildCount, snapshotCount, diffCount }`
-  - Unit tests (mocked): returns correct counts; calls `storage.deletePrefix`
+  - On success use `onSuccess` interceptor to redirect
 
-- [ ] 1.2 `packages/api/src/contracts/projects.ts` — add `deleteProject` contract (input: `{ id }`; output: void); update index
-
-- [ ] 1.3 `apps/web/lib/router/projects.ts` — add `deleteProject` handler: validate admin session; call service; `.actionable()`; on success use `onSuccess` interceptor to redirect
+- [ ] 1.3 Integration tests (`apps/web/lib/router/__tests__/projects.integration.test.ts`): `deleteProject` returns correct counts; project + cascading rows deleted; `storage.deletePrefix` called
 
 - [ ] 1.4 `apps/web/app/(authenticated)/projects/[projectId]/settings/DeleteProjectDialog.tsx` (`"use client"`):
   - Trigger: "delete project" destructive button in danger zone

@@ -13,7 +13,7 @@ context: |
   apps/cli               @ovr/cli npm package
 
   packages/db            Drizzle ORM schema + migrations + repositories
-  packages/services      Business logic (no framework imports)
+  packages/services      Business logic shared across oRPC router + worker jobs (no framework imports)
   packages/api           oRPC contracts only (`@orpc/contract` + Zod schemas); no handlers; imported by both web router and CLI client
   packages/queue         BullMQ job type definitions + producers
   packages/storage       RustFS / S3 client
@@ -41,13 +41,19 @@ context: |
 
   ## Architecture rules
 
-  Route / Server Action → Service → Repository → Drizzle → Postgres
-  oRPC Router           → Service → Repository → Drizzle → Postgres
-  Worker Job            → Service → Repository → Drizzle → Postgres
+  oRPC Router → Repository → Drizzle → Postgres
+  Worker Job  → Repository → Drizzle → Postgres
 
-  - Services own all business logic; no Next.js imports allowed in packages/services
+  - oRPC procedures call repositories directly; validation, NOT_FOUND lookups, and other
+    request-scoped business rules live in the handler, which throws `ORPCError` directly
+  - RBAC and auth enforced via oRPC middleware (`authenticatedMiddleware`, `adminMiddleware`,
+    ...), composed onto procedures with `.use()` — not in routes, UI, or a service layer
   - Repositories contain only Drizzle queries; no business logic
-  - RBAC enforced in service layer only (not routes, not UI)
+  - packages/services holds business logic invoked from more than one entry point (an oRPC
+    router and a worker job) or substantial enough to isolate (capture/diff pipelines,
+    baselines, retention). These functions take no framework types and return
+    `Result<TData, TError>` (see `apps/web/lib/types.ts`) instead of throwing; the calling
+    oRPC handler or worker job translates an error result into an `ORPCError` or `Error`
   - apps/web imports `@ovr/api/contract` only (never handler implementations from packages/api)
   - `"use client"` only for state, event handlers, or browser APIs
   - Mutations: oRPC procedures with `"use server"` + `.actionable()` used directly as Server Actions — no `actions.ts` wrapper needed; client components call via `useServerAction` from `@orpc/react/hooks`

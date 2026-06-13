@@ -3,6 +3,9 @@ import { eq } from "drizzle-orm";
 import { db } from "../db";
 import { projects } from "../schema";
 
+export const findById = (id: string) =>
+  db.query.projects.findFirst({ where: (projects, { eq }) => eq(projects.id, id) });
+
 type GetProjectInput = {
   projectId: string;
   organizationId: string;

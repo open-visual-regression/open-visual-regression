@@ -2,14 +2,14 @@
 
 Gate: unit tests cover createBuild (creates correct DB records + enqueues capture jobs) and finalizeBuild (correct status aggregation logic).
 
-- [ ] 1.1 Create `packages/services/src/builds.ts`:
+- [x] 1.1 Create `packages/services/src/builds.ts`:
 
-  `createBuild({ projectId, branch, commitSha, stories, storybookStaticDir }, callerId)`:
+  `createBuild({ projectId, branch, commitSha, targets, artifactDir }, callerId)`:
   - Validate project exists
-  - `buildsRepo.create({ projectId, branch, commitSha, status: "pending", captureMode: "worker", storybookPath: `builds/${buildId}/storybook` })`
+  - `buildsRepo.create({ projectId, branch, commitSha, status: "pending", captureMode: "worker", artifactPath: `builds/${buildId}/artifact` })`
   - Fetch capture configurations for project
-  - `snapshotsRepo.createMany(stories × captureConfigurations)` — one snapshot per combination
-  - Upload storybook static dir to storage at `builds/${buildId}/storybook/` (recursive)
+  - `snapshotsRepo.createMany(targets × captureConfigurations)` — one snapshot per combination
+  - Upload artifact dir to storage at `builds/${buildId}/artifact/` (recursive)
   - `enqueueCapture({ buildId, snapshotId })` for every snapshot
   - Return `buildId`
 
@@ -19,7 +19,7 @@ Gate: unit tests cover createBuild (creates correct DB records + enqueues captur
   - If any diff.status === "needs_review" → `buildsRepo.updateStatus(buildId, "needs_review")` → return
   - All diffs "auto_approved" or "approved" → `buildsRepo.updateStatus(buildId, "passed")`
 
-- [ ] 1.2 Unit tests (mocked repos + mocked enqueueCapture):
+- [x] 1.2 Unit tests (mocked repos + mocked enqueueCapture):
   - `createBuild`: creates build record; creates N×M snapshots; enqueues N×M capture jobs; returns buildId
   - `finalizeBuild`: any error diff → build error; any needs_review → needs_review; all approved → passed
   - `finalizeBuild`: empty diffs array → passed

@@ -1,4 +1,4 @@
-import { startValkey, type ValkeyContainer } from "./src/__tests__/helpers/containers";
+import { startValkey, type ValkeyContainer } from "@ovr/testing";
 
 let valkey: ValkeyContainer;
 
