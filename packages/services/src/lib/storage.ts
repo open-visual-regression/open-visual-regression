@@ -28,17 +28,17 @@ const contentTypes: Record<string, string> = {
 const contentTypeFor = (filePath: string): string =>
   contentTypes[path.extname(filePath).toLowerCase()] ?? "application/octet-stream";
 
-const listFiles = async (dir: string, base = dir): Promise<string[]> => {
+const listFiles = async (dir: string): Promise<string[]> => {
   const entries = await readdir(dir, { withFileTypes: true });
 
   const files = await Promise.all(
     entries.map((entry) => {
       const fullPath = path.join(dir, entry.name);
-      return entry.isDirectory() ? listFiles(fullPath, base) : Promise.resolve([fullPath]);
+      return entry.isDirectory() ? listFiles(fullPath) : Promise.resolve([fullPath]);
     }),
   );
 
-  return files.flat().map((file) => path.relative(base, file));
+  return files.flat();
 };
 
 const UPLOAD_CONCURRENCY = 10;
@@ -63,8 +63,9 @@ const mapWithConcurrency = async <T>(
 export const uploadDirectory = async (localDir: string, remotePrefix: string): Promise<void> => {
   const files = await listFiles(localDir);
 
-  await mapWithConcurrency(files, UPLOAD_CONCURRENCY, async (relativePath) => {
-    const content = await readFile(path.join(localDir, relativePath));
+  await mapWithConcurrency(files, UPLOAD_CONCURRENCY, async (absolutePath) => {
+    const content = await readFile(absolutePath);
+    const relativePath = path.relative(localDir, absolutePath);
     const key = `${remotePrefix}/${relativePath.split(path.sep).join("/")}`;
     await storage.uploadFile(key, content, contentTypeFor(relativePath));
   });

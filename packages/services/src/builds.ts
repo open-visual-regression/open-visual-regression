@@ -36,20 +36,22 @@ export const createBuild = async (
     createdBy: callerId,
   });
 
-  const captureConfigurations = await dbClient.captureConfigurations.findByProject(input.projectId);
-
-  const snapshots = await dbClient.snapshots.createMany(
-    input.stories.flatMap((storyId) =>
-      captureConfigurations.map((captureConfiguration) => ({
-        buildId,
-        captureConfigurationId: captureConfiguration.id,
-        storyId,
-        status: "pending" as const,
-      })),
-    ),
-  );
-
   try {
+    const captureConfigurations = await dbClient.captureConfigurations.findByProject(
+      input.projectId,
+    );
+
+    const snapshots = await dbClient.snapshots.createMany(
+      input.stories.flatMap((storyId) =>
+        captureConfigurations.map((captureConfiguration) => ({
+          buildId,
+          captureConfigurationId: captureConfiguration.id,
+          storyId,
+          status: "pending" as const,
+        })),
+      ),
+    );
+
     await uploadDirectory(input.storybookStaticDir, `builds/${buildId}/storybook`);
 
     await Promise.all(
