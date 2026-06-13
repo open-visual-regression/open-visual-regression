@@ -26,6 +26,9 @@ describe("NoApiKeysSection", () => {
     expect(await screen.findByRole("heading", { name: /api key created/i })).toBeVisible();
     expect(screen.getByText(API_KEY)).toBeVisible();
     expect(mockCreate).toHaveBeenCalledWith({ projectId: PROJECT_ID, name: "ci · github actions" });
+
+    await user.click(screen.getByRole("button", { name: /^done$/i }));
+
     await waitFor(() => expect(mockRefresh).toHaveBeenCalled());
   });
 });

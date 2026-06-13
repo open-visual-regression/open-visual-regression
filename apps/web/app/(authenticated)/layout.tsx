@@ -1,30 +1,18 @@
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth/auth";
+import { requireSession } from "@/lib/auth/session";
 import { DevTools } from "./_components/DevTools";
 
 type AppLayoutProps = Readonly<{
   navigation: React.ReactNode;
-  sidebar: React.ReactNode;
   children: React.ReactNode;
 }>;
 
-export default async function AppLayout({ navigation, sidebar, children }: AppLayoutProps) {
-  const session = await auth.api.getSession({ headers: await headers() });
-
-  if (!session) {
-    redirect("/login");
-  }
+export default async function AppLayout({ navigation, children }: AppLayoutProps) {
+  await requireSession();
 
   return (
     <div className="flex h-screen flex-col">
       {navigation}
-      <div className="flex flex-1 overflow-hidden">
-        <div className="hidden shrink-0 md:block">{sidebar}</div>
-        <main className="flex-1 overflow-auto py-3 px-5 md:py-4 md:px-6 lg:py-6 lg:px-10">
-          {children}
-        </main>
-      </div>
+      <div className="flex flex-1 overflow-hidden">{children}</div>
       <DevTools />
     </div>
   );

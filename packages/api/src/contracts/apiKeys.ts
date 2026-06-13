@@ -1,6 +1,8 @@
 import { oc } from "@orpc/contract";
 import { z } from "zod";
 
+export const API_KEY_NAME_MAX_LENGTH = 32;
+
 export const apiKeySchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -13,7 +15,7 @@ export type ApiKeySchema = z.infer<typeof apiKeySchema>;
 
 export const createApiKeyInputSchema = z.object({
   projectId: z.string(),
-  name: z.string().min(1).max(100),
+  name: z.string().min(1).max(API_KEY_NAME_MAX_LENGTH),
 });
 
 export const createApiKeyOutputSchema = z.object({

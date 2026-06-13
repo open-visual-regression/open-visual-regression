@@ -12,7 +12,7 @@ type ApiKeysSectionProps = {
 };
 
 export const ApiKeysSection = ({ projectId, apiKeys }: ApiKeysSectionProps) => (
-  <div className="flex flex-col gap-4">
+  <div className="flex flex-col gap-4 w-2/3">
     <div className="flex items-center justify-between">
       <Typography variant="h2">api keys</Typography>
       <CreateApiKeyModal
