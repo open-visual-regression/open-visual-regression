@@ -3,13 +3,9 @@ import { count, eq } from "drizzle-orm";
 import { db, type DbClient } from "../db";
 import { snapshots, type SnapshotStatus } from "../schema";
 
-export const createMany = async ({
-  values,
-  tx = db,
-}: {
-  values: (typeof snapshots.$inferInsert)[];
-  tx?: DbClient;
-}) => {
+type CreateManyInput = { values: (typeof snapshots.$inferInsert)[]; tx?: DbClient };
+
+export const createMany = async ({ values, tx = db }: CreateManyInput) => {
   if (values.length === 0) {
     return [];
   }
