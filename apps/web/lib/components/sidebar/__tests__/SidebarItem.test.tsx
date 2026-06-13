@@ -23,7 +23,6 @@ describe("SidebarItem", () => {
       </>,
     );
 
-    // Mirrors a route change: the consumer recomputes `active` from the new pathname.
     rerender(
       <>
         <SidebarItem href="/a" icon={FolderIcon} label="Item 1" />

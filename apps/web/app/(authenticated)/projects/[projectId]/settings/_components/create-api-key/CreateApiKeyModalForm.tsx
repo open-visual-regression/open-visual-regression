@@ -20,6 +20,7 @@ import {
   FieldLabel,
 } from "@ovr/ui/components/field";
 import { Input } from "@ovr/ui/components/input";
+import { API_KEY_NAME_MAX_LENGTH } from "@ovr/api/contracts/apiKeys";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { CreateApiKeyModalReveal } from "./CreateApiKeyModalReveal";
@@ -28,7 +29,10 @@ const createApiKeyFormSchema = z.object({
   name: z
     .string()
     .min(1, "you must enter a name")
-    .max(32, "the name must be less than 32 characters"),
+    .max(
+      API_KEY_NAME_MAX_LENGTH,
+      `the name must be less than ${API_KEY_NAME_MAX_LENGTH} characters`,
+    ),
 });
 
 type CreateApiKeyFormValues = z.infer<typeof createApiKeyFormSchema>;

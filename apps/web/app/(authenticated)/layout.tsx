@@ -1,6 +1,4 @@
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth/auth";
+import { requireSession } from "@/lib/auth/session";
 import { DevTools } from "./_components/DevTools";
 
 type AppLayoutProps = Readonly<{
@@ -9,11 +7,7 @@ type AppLayoutProps = Readonly<{
 }>;
 
 export default async function AppLayout({ navigation, children }: AppLayoutProps) {
-  const session = await auth.api.getSession({ headers: await headers() });
-
-  if (!session) {
-    redirect("/login");
-  }
+  await requireSession();
 
   return (
     <div className="flex h-screen flex-col">

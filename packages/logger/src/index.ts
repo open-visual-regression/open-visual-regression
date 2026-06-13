@@ -25,6 +25,4 @@ export const createRootLogger = (options: LoggerOptions = {}): pino.Logger => {
 
 const root = createRootLogger();
 
-export const logger = root;
-
 export const createLogger = (name: string) => root.child({ name });
