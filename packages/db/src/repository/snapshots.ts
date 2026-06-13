@@ -3,13 +3,19 @@ import { count, eq } from "drizzle-orm";
 import { db, type DbClient } from "../db";
 import { snapshots, type SnapshotStatus } from "../schema";
 
-export const createMany = ({
+export const createMany = async ({
   values,
   tx = db,
 }: {
   values: (typeof snapshots.$inferInsert)[];
   tx?: DbClient;
-}) => tx.insert(snapshots).values(values).returning();
+}) => {
+  if (values.length === 0) {
+    return [];
+  }
+
+  return tx.insert(snapshots).values(values).returning();
+};
 
 export const findByBuild = (buildId: string) =>
   db.query.snapshots.findMany({ where: (snapshots, { eq }) => eq(snapshots.buildId, buildId) });
