@@ -20,11 +20,11 @@ const mockNotFound = vi.mocked(notFound);
 describe("SettingsUsersPage", () => {
   it("should show the users table for admins", async () => {
     const users = [
-      mocks.user.generateUserSchema({ name: "ari shapiro" }),
-      mocks.user.generateUserSchema({ name: "sam chen" }),
+      mocks.user.generateUser({ name: "ari shapiro" }),
+      mocks.user.generateUser({ name: "sam chen" }),
     ];
     mockGetSession.mockResolvedValue({
-      user: mocks.user.generateUser({ role: "admin" }),
+      user: mocks.user.generateAuthUser({ role: "admin" }),
       session: mocks.session.generateSession(),
     });
     mockListUsers.mockResolvedValue([null, { users }]);
@@ -38,7 +38,7 @@ describe("SettingsUsersPage", () => {
 
   it("should show a not found page for non-admins", async () => {
     mockGetSession.mockResolvedValue({
-      user: mocks.user.generateUser({ role: "user" }),
+      user: mocks.user.generateAuthUser({ role: "user" }),
       session: mocks.session.generateSession(),
     });
 
@@ -55,7 +55,7 @@ describe("SettingsUsersPage", () => {
 
   it("should show an error page when the users cannot be retrieved", async () => {
     mockGetSession.mockResolvedValue({
-      user: mocks.user.generateUser({ role: "admin" }),
+      user: mocks.user.generateAuthUser({ role: "admin" }),
       session: mocks.session.generateSession(),
     });
     mockListUsers.mockResolvedValue([createORPCError("INTERNAL_SERVER_ERROR"), undefined]);

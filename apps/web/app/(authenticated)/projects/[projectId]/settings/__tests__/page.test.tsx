@@ -26,7 +26,7 @@ const pageProps: ProjectSettingsPageProps = {
 describe("ProjectSettingsPage", () => {
   it("should show the settings page for admins with no api keys", async () => {
     mockGetSession.mockResolvedValue({
-      user: mocks.user.generateUser({ role: "admin" }),
+      user: mocks.user.generateAuthUser({ role: "admin" }),
       session: mocks.session.generateSession(),
     });
     mockListApiKeys.mockResolvedValue([null, { apiKeys: [], total: 0 }]);
@@ -40,7 +40,7 @@ describe("ProjectSettingsPage", () => {
   it("should show the settings page for admins with existing api keys", async () => {
     const apiKey = mocks.apiKey.generateApiKey();
     mockGetSession.mockResolvedValue({
-      user: mocks.user.generateUser({ role: "admin" }),
+      user: mocks.user.generateAuthUser({ role: "admin" }),
       session: mocks.session.generateSession(),
     });
     mockListApiKeys.mockResolvedValue([null, { apiKeys: [apiKey], total: 1 }]);
@@ -53,7 +53,7 @@ describe("ProjectSettingsPage", () => {
 
   it("should show a not found page for non-admins", async () => {
     mockGetSession.mockResolvedValue({
-      user: mocks.user.generateUser({ role: "user" }),
+      user: mocks.user.generateAuthUser({ role: "user" }),
       session: mocks.session.generateSession(),
     });
 
@@ -70,7 +70,7 @@ describe("ProjectSettingsPage", () => {
 
   it("should show an error page when the api keys cannot be retrieved", async () => {
     mockGetSession.mockResolvedValue({
-      user: mocks.user.generateUser({ role: "admin" }),
+      user: mocks.user.generateAuthUser({ role: "admin" }),
       session: mocks.session.generateSession(),
     });
     mockListApiKeys.mockResolvedValue([createORPCError("INTERNAL_SERVER_ERROR"), undefined]);

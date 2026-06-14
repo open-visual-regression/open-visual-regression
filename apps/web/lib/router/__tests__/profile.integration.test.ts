@@ -49,7 +49,7 @@ describe("profile", () => {
     });
 
     test("should return CONFLICT when the email belongs to another user", async ({ user }) => {
-      const generated = mocks.user.generateUser();
+      const generated = mocks.user.generateAuthUser();
       const other = { ...generated, email: generated.email.toLowerCase() };
       await auth.api.signUpEmail({
         body: { name: other.name, email: other.email, password: TEST_PASSWORD },
@@ -65,7 +65,7 @@ describe("profile", () => {
     });
 
     test("should not modify another user's record", async ({ user }) => {
-      const generated = mocks.user.generateUser();
+      const generated = mocks.user.generateAuthUser();
       const other = { ...generated, email: generated.email.toLowerCase() };
       await auth.api.signUpEmail({
         body: { name: other.name, email: other.email, password: TEST_PASSWORD },

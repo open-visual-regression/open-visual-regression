@@ -13,7 +13,7 @@ const mockGetSession = vi.mocked(auth.api.getSession);
 describe("verifyRole", () => {
   it("should grant access when the user has the required role", async () => {
     mockGetSession.mockResolvedValue({
-      user: mocks.user.generateUser({ role: "admin" }),
+      user: mocks.user.generateAuthUser({ role: "admin" }),
       session: mocks.session.generateSession(),
     });
 
@@ -24,7 +24,7 @@ describe("verifyRole", () => {
 
   it("should deny access when the user does not have the required role", async () => {
     mockGetSession.mockResolvedValue({
-      user: mocks.user.generateUser({ role: "user" }),
+      user: mocks.user.generateAuthUser({ role: "user" }),
       session: mocks.session.generateSession(),
     });
 

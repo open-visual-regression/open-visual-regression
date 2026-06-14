@@ -17,7 +17,7 @@ const mockNotFound = vi.mocked(notFound);
 describe("CreateProjectPage", () => {
   it("should show the new project form for admins", async () => {
     mockGetSession.mockResolvedValue({
-      user: mocks.user.generateUser({ role: "admin" }),
+      user: mocks.user.generateAuthUser({ role: "admin" }),
       session: mocks.session.generateSession(),
     });
 
@@ -29,7 +29,7 @@ describe("CreateProjectPage", () => {
 
   it("should show a not found page for non-admins", async () => {
     mockGetSession.mockResolvedValue({
-      user: mocks.user.generateUser({ role: "user" }),
+      user: mocks.user.generateAuthUser({ role: "user" }),
       session: mocks.session.generateSession(),
     });
 
