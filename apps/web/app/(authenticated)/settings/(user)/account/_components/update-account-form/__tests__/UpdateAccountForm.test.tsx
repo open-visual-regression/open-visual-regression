@@ -3,13 +3,13 @@ import { Toaster } from "@ovr/ui/components/sonner";
 
 import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
 import { serverClient } from "@/lib/router";
-import { UpdateProfileForm, type UpdateProfileFormProps } from "../UpdateProfileForm";
+import { UpdateAccountForm, type UpdateAccountFormProps } from "../UpdateAccountForm";
 
 vi.mock("@/lib/router");
 
-const mockUpdateProfileInformation = vi.mocked(serverClient.profile.updateProfileInformation);
+const mockUpdateAccountInformation = vi.mocked(serverClient.account.updateAccountInformation);
 
-const USER: UpdateProfileFormProps["user"] = {
+const USER: UpdateAccountFormProps["user"] = {
   name: "Tom Fischer",
   email: "tom@openvisualregression.com",
 };
@@ -17,12 +17,12 @@ const USER: UpdateProfileFormProps["user"] = {
 const renderComponent = () =>
   render(
     <>
-      <UpdateProfileForm user={USER} />
+      <UpdateAccountForm user={USER} />
       <Toaster />
     </>,
   );
 
-describe("UpdateProfileForm", () => {
+describe("UpdateAccountForm", () => {
   it("should render the user's current name and email", () => {
     renderComponent();
 
@@ -37,7 +37,7 @@ describe("UpdateProfileForm", () => {
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
     expect(await screen.findByText("you must enter a name")).toBeVisible();
-    expect(mockUpdateProfileInformation).not.toHaveBeenCalled();
+    expect(mockUpdateAccountInformation).not.toHaveBeenCalled();
   });
 
   it("should show a validation error when the email is invalid", async ({ user }) => {
@@ -48,11 +48,11 @@ describe("UpdateProfileForm", () => {
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
     expect(await screen.findByText("invalid email address")).toBeVisible();
-    expect(mockUpdateProfileInformation).not.toHaveBeenCalled();
+    expect(mockUpdateAccountInformation).not.toHaveBeenCalled();
   });
 
   it("should submit the updated name and email", async ({ user }) => {
-    mockUpdateProfileInformation.mockResolvedValue([null, undefined]);
+    mockUpdateAccountInformation.mockResolvedValue([null, undefined]);
     renderComponent();
 
     await user.clear(screen.getByLabelText(/^name$/i));
@@ -60,16 +60,16 @@ describe("UpdateProfileForm", () => {
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
     await waitFor(() =>
-      expect(mockUpdateProfileInformation).toHaveBeenCalledWith({
+      expect(mockUpdateAccountInformation).toHaveBeenCalledWith({
         name: "New Name",
         email: USER.email,
       }),
     );
-    expect(await screen.findByText("profile updated")).toBeVisible();
+    expect(await screen.findByText("account updated")).toBeVisible();
   });
 
   it("should disable the submit button while saving", async ({ user }) => {
-    mockUpdateProfileInformation.mockReturnValue(new Promise(() => {}));
+    mockUpdateAccountInformation.mockReturnValue(new Promise(() => {}));
     renderComponent();
 
     await user.click(screen.getByRole("button", { name: /save changes/i }));
@@ -78,7 +78,7 @@ describe("UpdateProfileForm", () => {
   });
 
   it("should show a root error message when saving fails", async ({ user }) => {
-    mockUpdateProfileInformation.mockResolvedValue([
+    mockUpdateAccountInformation.mockResolvedValue([
       {
         message: "this email is already in use",
         code: "CONFLICT",
@@ -93,6 +93,6 @@ describe("UpdateProfileForm", () => {
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("this email is already in use");
-    expect(screen.queryByText("profile updated")).not.toBeInTheDocument();
+    expect(screen.queryByText("account updated")).not.toBeInTheDocument();
   });
 });

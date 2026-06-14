@@ -13,7 +13,7 @@ const PROJECTS: ProjectsSidebarProps["projects"] = [
 
 describe("ProjectsSidebar", () => {
   it("should mark the project matching the current path as active", () => {
-    vi.mocked(usePathname).mockReturnValue("/projects/project-2/runs");
+    vi.mocked(usePathname).mockReturnValue("/projects/project-2");
 
     render(<ProjectsSidebar projects={PROJECTS} />);
 

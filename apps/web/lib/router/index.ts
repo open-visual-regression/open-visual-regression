@@ -3,7 +3,7 @@ import * as setup from "./setup";
 import * as projects from "./projects";
 import * as storage from "./storage";
 import * as builds from "./builds";
-import * as profile from "./profile";
+import * as account from "./account";
 import * as users from "./users";
 
 export const serverClient = {
@@ -12,6 +12,6 @@ export const serverClient = {
   projects,
   storage,
   builds,
-  profile,
+  account,
   users,
 } as const;

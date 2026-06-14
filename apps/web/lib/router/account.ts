@@ -6,7 +6,7 @@ import { authServerClient } from "../auth";
 import { authenticatedMiddleware } from "./middleware";
 import { os } from "./os";
 
-export const updateProfileInformation = os.profile.updateProfileInformation
+export const updateAccountInformation = os.account.updateAccountInformation
   .use(authenticatedMiddleware)
   .handler(async ({ input, context }) => {
     const { user, headers } = context;
@@ -35,7 +35,7 @@ export const updateProfileInformation = os.profile.updateProfileInformation
   })
   .actionable();
 
-export const updatePassword = os.profile.updatePassword
+export const updatePassword = os.account.updatePassword
   .use(authenticatedMiddleware)
   .handler(async ({ input, context }) => {
     const { headers } = context;

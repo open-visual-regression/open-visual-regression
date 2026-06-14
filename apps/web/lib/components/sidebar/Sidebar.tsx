@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSidebarStore } from "@/lib/stores/sidebarStore";
 import { SidebarCollapsed } from "./SidebarCollapsed";
 import { SidebarExpanded } from "./SidebarExpanded";
 
@@ -8,7 +9,7 @@ type SidebarProps = {
   version?: string;
   collapseLabel?: string;
   expandLabel?: string;
-  defaultCollapsed?: boolean;
+  initialCollapsed?: boolean;
   expandedContent: React.ReactNode;
   collapsedContent: React.ReactNode;
 };
@@ -17,13 +18,21 @@ const Sidebar = ({
   version,
   collapseLabel,
   expandLabel,
-  defaultCollapsed = false,
+  initialCollapsed = false,
   expandedContent,
   collapsedContent,
 }: SidebarProps) => {
-  const [collapsed, setCollapsed] = useState(defaultCollapsed);
+  const collapsed = useSidebarStore((state) => state.collapsed);
+  const setCollapsed = useSidebarStore((state) => state.setCollapsed);
+  const [hydrated, setHydrated] = useState(false);
 
-  if (collapsed) {
+  useEffect(() => {
+    void Promise.resolve(useSidebarStore.persist.rehydrate()).then(() => setHydrated(true));
+  }, []);
+
+  const isCollapsed = hydrated ? collapsed : initialCollapsed;
+
+  if (isCollapsed) {
     return (
       <SidebarCollapsed expandLabel={expandLabel} onExpand={() => setCollapsed(false)}>
         {collapsedContent}
