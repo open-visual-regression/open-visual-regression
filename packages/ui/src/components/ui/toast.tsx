@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
-import { XIcon } from "lucide-react";
+import { CircleCheckIcon, OctagonXIcon, XIcon } from "lucide-react";
+import { toast as sonnerToast } from "sonner";
 
 import { cn } from "../../lib/utils";
 
@@ -90,4 +91,27 @@ const ToastContainer = ({ className, ...props }: React.ComponentProps<"div">) =>
   );
 };
 
-export { Toast, ToastContainer, toastVariants };
+type ShowToastOptions = Omit<ToastProps, "onDismiss">;
+type ToastMessageOptions = Omit<ShowToastOptions, "variant" | "title">;
+
+const showToast = (options: ShowToastOptions) =>
+  sonnerToast.custom((id) => <Toast {...options} onDismiss={() => sonnerToast.dismiss(id)} />);
+
+const toast = Object.assign(showToast, {
+  success: (title: string, options?: ToastMessageOptions) =>
+    showToast({
+      icon: <CircleCheckIcon className="size-3.5" />,
+      ...options,
+      variant: "success",
+      title,
+    }),
+  error: (title: string, options?: ToastMessageOptions) =>
+    showToast({
+      icon: <OctagonXIcon className="size-3.5" />,
+      ...options,
+      variant: "destructive",
+      title,
+    }),
+});
+
+export { Toast, ToastContainer, toastVariants, toast };

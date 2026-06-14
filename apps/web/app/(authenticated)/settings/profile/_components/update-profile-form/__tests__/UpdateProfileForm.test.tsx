@@ -1,19 +1,26 @@
 import { vi } from "vitest";
+import { Toaster } from "@ovr/ui/components/sonner";
 
 import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
 import { serverClient } from "@/lib/router";
-import { UpdateProfileForm } from "../UpdateProfileForm";
+import { UpdateProfileForm, type UpdateProfileFormProps } from "../UpdateProfileForm";
 
 vi.mock("@/lib/router");
 
 const mockUpdateProfileInformation = vi.mocked(serverClient.profile.updateProfileInformation);
 
-const USER = {
+const USER: UpdateProfileFormProps["user"] = {
   name: "Tom Fischer",
   email: "tom@openvisualregression.com",
 };
 
-const renderComponent = () => render(<UpdateProfileForm user={USER} />);
+const renderComponent = () =>
+  render(
+    <>
+      <UpdateProfileForm user={USER} />
+      <Toaster />
+    </>,
+  );
 
 describe("UpdateProfileForm", () => {
   it("should render the user's current name and email", () => {
@@ -58,6 +65,7 @@ describe("UpdateProfileForm", () => {
         email: USER.email,
       }),
     );
+    expect(await screen.findByText("profile updated")).toBeVisible();
   });
 
   it("should disable the submit button while saving", async ({ user }) => {
@@ -85,5 +93,6 @@ describe("UpdateProfileForm", () => {
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("this email is already in use");
+    expect(screen.queryByText("profile updated")).not.toBeInTheDocument();
   });
 });

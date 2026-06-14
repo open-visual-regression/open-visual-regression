@@ -8,6 +8,7 @@ import { Card, CardContent, CardFooter } from "@ovr/ui/components/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@ovr/ui/components/field";
 import { CheckIcon, Icon } from "@ovr/ui/components/icon";
 import { Input } from "@ovr/ui/components/input";
+import { toast } from "@ovr/ui/components/toast";
 import { Typography } from "@ovr/ui/components/typography";
 import { useForm } from "react-hook-form";
 import { serverClient } from "@/lib/router";
@@ -31,7 +32,10 @@ export const UpdatePasswordForm = () => {
 
   const { execute, status } = useServerAction(serverClient.profile.updatePassword, {
     interceptors: [
-      onSuccess(() => reset()),
+      onSuccess(() => {
+        reset();
+        toast.success("password updated");
+      }),
       onError((err) => setError("root", { message: err.message })),
     ],
   });
@@ -98,7 +102,7 @@ export const UpdatePasswordForm = () => {
             <FieldError errors={[errors.root]} />
           </CardContent>
           <CardFooter className="flex flex-row justify-end">
-            <Button type="submit" size="lg" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting}>
               <Icon icon={CheckIcon} />
               {isSubmitting ? "saving..." : "save changes"}
             </Button>
