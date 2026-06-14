@@ -9,9 +9,7 @@ import { getBreadcrumbSegments } from "@/lib/components/navigation-bar/getBreadc
 import { NavigationBarMobileMenu } from "@/lib/components/navigation-bar/NavigationBarMobileMenu";
 import { Separator } from "@ovr/ui/components/separator";
 
-type NavigationSlotProps = {
-  params: Promise<{ pathname?: string[] }>;
-};
+type NavigationSlotProps = PageProps<"/[[...pathname]]">;
 
 export default async function NavigationSlot({ params }: NavigationSlotProps) {
   const { pathname } = await params;
