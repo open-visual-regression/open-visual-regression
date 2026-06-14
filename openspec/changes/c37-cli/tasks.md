@@ -34,19 +34,18 @@ Required values are passed as CLI flags. The API key is the only exception — i
   - Options (done — action is currently a stub):
     - `--dir <path>` (required) — path to storybook-static output directory
     - `--server-url <url>` (required) — OVR server URL
-    - `--branch <name>` — overrides auto-detected branch
-    - `--commit <sha>` — overrides auto-detected commit SHA
+    - `--branch <name>` (required) — branch name
+    - `--commit <sha>` (required) — commit SHA
     - `--timeout <seconds>` — max seconds to wait for build result (default: `600`)
   - No `--project` option: the API key (`OVR_API_KEY`) is project-scoped (see `c50-api-key-project-scope`), so the server resolves the target project from the key itself
   - Implementation:
     1. Read `OVR_API_KEY` from env; fail fast with a clear message if missing
     2. Validate `--dir` exists and contains `index.json` (Storybook v7+); read and extract story IDs
-    3. Auto-detect `branch` and `commitSha` via `git branch --show-current` / `git rev-parse HEAD`; CI providers that checkout in detached HEAD (e.g. GitHub Actions, GitLab CI) should pass `--branch`/`--commit` explicitly using their own env vars
-    4. Call `builds.createBuild({ branch, commitSha, stories })`; server returns `{ buildId, uploadUrl }`
-    5. Tar the storybook-static dir and PUT to `uploadUrl` (presigned RustFS URL)
-    6. Poll `builds.getBuildStatus({ buildId })` every 5 s; print progress on each poll; enforce `--timeout`
-    7. Terminal statuses: `passed` → print success + `process.exit(0)`; `needs_review` → print review URL + `process.exit(1)`; `error` → print error + `process.exit(1)`; timeout exceeded → print timeout message + `process.exit(1)`
-  - Split into focused modules under `apps/cli/src/commands/snapshot/`: `storybookIndex.ts` (read `index.json` → story IDs), `git.ts` (`detectBranch`/`detectCommitSha`), `artifact.ts` (`createArtifactTarball` via `tar`, `uploadArtifact` PUT), `poll.ts` (`pollBuildStatus` + terminal-status errors)
+    3. Call `builds.createBuild({ branch, commitSha, stories })` using the `--branch`/`--commit` values; server returns `{ buildId, uploadUrl }`
+    4. Tar the storybook-static dir and PUT to `uploadUrl` (presigned RustFS URL)
+    5. Poll `builds.getBuildStatus({ buildId })` every 5 s; print progress on each poll; enforce `--timeout`
+    6. Terminal statuses: `passed` → print success + `process.exit(0)`; `needs_review` → print review URL + `process.exit(1)`; `error` → print error + `process.exit(1)`; timeout exceeded → print timeout message + `process.exit(1)`
+  - Split into focused modules under `apps/cli/src/commands/snapshot/`: `storybookIndex.ts` (read `index.json` → story IDs), `artifact.ts` (`createArtifactTarball` via `tar`, `uploadArtifact` PUT), `poll.ts` (`pollBuildStatus` + terminal-status errors)
 
 ## 5 · Entry point
 

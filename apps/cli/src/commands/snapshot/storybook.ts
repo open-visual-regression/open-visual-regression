@@ -3,7 +3,6 @@ import { Command } from "commander";
 import { createClient } from "../../client";
 import { getApiKey } from "../../config";
 import { createArtifactTarball, uploadArtifact } from "./artifact";
-import { detectBranch, detectCommitSha } from "./git";
 import {
   BuildFailedError,
   BuildNeedsReviewError,
@@ -15,8 +14,8 @@ import { readStoryIds } from "./storybookIndex";
 type StorybookCommandOptions = {
   dir: string;
   serverUrl: string;
-  branch?: string;
-  commit?: string;
+  branch: string;
+  commit: string;
   timeout: string;
 };
 
@@ -24,16 +23,15 @@ export const storybookCommand = new Command("storybook")
   .description("Snapshot a Storybook static build")
   .requiredOption("-d, --dir <path>", "path to storybook-static output directory")
   .requiredOption("--server-url <url>", "OVR server URL")
-  .option("--branch <name>", "branch name (default: auto-detected from git or CI environment)")
-  .option("--commit <sha>", "commit SHA (default: auto-detected from git or CI environment)")
+  .requiredOption("--branch <name>", "branch name")
+  .requiredOption("--commit <sha>", "commit SHA")
   .option("--timeout <seconds>", "maximum seconds to wait for build result", "600")
   .action(async (options: StorybookCommandOptions) => {
     const apiKey = getApiKey();
 
     try {
       const targets = await readStoryIds(options.dir);
-      const branch = options.branch ?? detectBranch();
-      const commitSha = options.commit ?? detectCommitSha();
+      const { branch, commit: commitSha } = options;
 
       const client = createClient(options.serverUrl, apiKey);
 
