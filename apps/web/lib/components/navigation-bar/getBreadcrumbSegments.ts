@@ -18,9 +18,7 @@ const SEGMENT_RESOLVERS: Record<string, SegmentResolver> = {
 
 const humanize = (segment: string) => segment.replace(/-/g, " ");
 
-const getBreadcrumbSegments = async (pathname: string): Promise<BreadcrumbSegment[]> => {
-  const segments = pathname.split("/").filter(Boolean);
-
+const getBreadcrumbSegments = async (segments: string[]): Promise<BreadcrumbSegment[]> => {
   if (segments.length === 0) {
     return [{ label: "projects" }];
   }

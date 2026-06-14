@@ -1,6 +1,5 @@
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth/auth";
-import { serverError } from "@/lib/utils/errors";
 import { NavigationBar } from "@/lib/components/navigation-bar/NavigationBar";
 import { NavigationBarLogo } from "@/lib/components/navigation-bar/NavigationBarLogo";
 import { NavigationBarBreadcrumb } from "@/lib/components/navigation-bar/NavigationBarBreadcrumb";
@@ -8,17 +7,16 @@ import { NavigationBarActions } from "@/lib/components/navigation-bar/Navigation
 import { getBreadcrumbSegments } from "@/lib/components/navigation-bar/getBreadcrumbSegments";
 import { Separator } from "@ovr/ui/components/separator";
 
-export default async function NavigationPage() {
-  const requestHeaders = await headers();
-  const pathname = requestHeaders.get("x-pathname");
+type NavigationSlotProps = {
+  params: Promise<{ pathname?: string[] }>;
+};
 
-  if (!pathname) {
-    serverError();
-  }
+export default async function NavigationSlot({ params }: NavigationSlotProps) {
+  const { pathname } = await params;
 
   const [session, segments] = await Promise.all([
-    auth.api.getSession({ headers: requestHeaders }).catch(() => null),
-    getBreadcrumbSegments(pathname),
+    auth.api.getSession({ headers: await headers() }).catch(() => null),
+    getBreadcrumbSegments(pathname ?? []),
   ]);
 
   const userName = session?.user?.name ?? session?.user?.email ?? "";
