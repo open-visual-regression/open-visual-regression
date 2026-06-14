@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth/auth";
+import { serverError } from "@/lib/utils/errors";
 import { NavigationBar } from "@/lib/components/navigation-bar/NavigationBar";
 import { NavigationBarLogo } from "@/lib/components/navigation-bar/NavigationBarLogo";
 import { NavigationBarBreadcrumb } from "@/lib/components/navigation-bar/NavigationBarBreadcrumb";
@@ -9,7 +10,11 @@ import { Separator } from "@ovr/ui/components/separator";
 
 export default async function NavigationPage() {
   const requestHeaders = await headers();
-  const pathname = requestHeaders.get("x-pathname") ?? "/projects";
+  const pathname = requestHeaders.get("x-pathname");
+
+  if (!pathname) {
+    serverError();
+  }
 
   const [session, segments] = await Promise.all([
     auth.api.getSession({ headers: requestHeaders }).catch(() => null),

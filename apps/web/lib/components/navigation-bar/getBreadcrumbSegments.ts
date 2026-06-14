@@ -9,9 +9,6 @@ type BreadcrumbSegment = {
 
 type SegmentResolver = (value: string) => Promise<string | undefined>;
 
-// Keyed by the path up to and including a dynamic segment, with dynamic
-// segments written as "*". Add an entry here when a new route has a
-// dynamic ID segment that needs a human-friendly label.
 const SEGMENT_RESOLVERS: Record<string, SegmentResolver> = {
   "projects/*": async (projectId) => {
     const [error, result] = await serverClient.projects.getOne({ projectId });
