@@ -15,7 +15,7 @@ const safeAuth = async <TData>(promise: Promise<TData>): Promise<SafeAuthResult<
   }
 };
 
-export const authClient = {
+export const authServerClient = {
   updateUser: (input: { name: string; headers: Headers }) =>
     safeAuth(auth.api.updateUser({ body: { name: input.name }, headers: input.headers })),
 
