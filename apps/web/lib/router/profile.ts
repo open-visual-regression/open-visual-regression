@@ -2,8 +2,7 @@
 
 import { ORPCError } from "@orpc/client";
 import { dbClient } from "@ovr/db/client";
-import { callAuthApi } from "../auth/api";
-import { auth } from "../auth/auth";
+import { authClient } from "../auth/api";
 import { authenticatedMiddleware } from "./middleware";
 import { os } from "./os";
 
@@ -13,12 +12,10 @@ export const updateProfileInformation = os.profile.updateProfileInformation
     const { user, headers } = context;
 
     if (input.name !== user.name) {
-      const result = await callAuthApi(
-        auth.api.updateUser({ body: { name: input.name }, headers }),
-      );
+      const [error] = await authClient.updateUser({ name: input.name, headers });
 
-      if (result.status === "error") {
-        throw new ORPCError("BAD_REQUEST", { message: result.error.message });
+      if (error) {
+        throw new ORPCError("BAD_REQUEST", { message: error.message });
       }
     }
 
@@ -29,12 +26,10 @@ export const updateProfileInformation = os.profile.updateProfileInformation
         throw new ORPCError("CONFLICT", { message: "this email is already in use" });
       }
 
-      const result = await callAuthApi(
-        auth.api.changeEmail({ body: { newEmail: input.email }, headers }),
-      );
+      const [error] = await authClient.changeEmail({ email: input.email, headers });
 
-      if (result.status === "error") {
-        throw new ORPCError("BAD_REQUEST", { message: result.error.message });
+      if (error) {
+        throw new ORPCError("BAD_REQUEST", { message: error.message });
       }
     }
   })
@@ -45,15 +40,14 @@ export const updatePassword = os.profile.updatePassword
   .handler(async ({ input, context }) => {
     const { headers } = context;
 
-    const result = await callAuthApi(
-      auth.api.changePassword({
-        body: { currentPassword: input.currentPassword, newPassword: input.newPassword },
-        headers,
-      }),
-    );
+    const [error] = await authClient.changePassword({
+      currentPassword: input.currentPassword,
+      newPassword: input.newPassword,
+      headers,
+    });
 
-    if (result.status === "error") {
-      throw new ORPCError("BAD_REQUEST", { message: result.error.message });
+    if (error) {
+      throw new ORPCError("BAD_REQUEST", { message: error.message });
     }
   })
   .actionable();

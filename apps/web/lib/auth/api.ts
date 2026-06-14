@@ -1,17 +1,32 @@
-import { isAPIError, type APIError } from "better-auth/api";
+import { isAPIError } from "better-auth/api";
+import { auth } from "./auth";
 
-export type AuthResult<TData> =
-  | { status: "success"; data: TData }
-  | { status: "error"; error: APIError };
+export type SafeAuthResult<TData> = [error: Error, data: null] | [error: null, data: TData];
 
-export const callAuthApi = async <TData>(promise: Promise<TData>): Promise<AuthResult<TData>> => {
+const safeAuth = async <TData>(promise: Promise<TData>): Promise<SafeAuthResult<TData>> => {
   try {
-    return { status: "success", data: await promise };
+    return [null, await promise];
   } catch (error) {
-    if (isAPIError(error)) {
-      return { status: "error", error };
+    if (isAPIError(error) || error instanceof Error) {
+      return [error, null];
     }
 
     throw error;
   }
+};
+
+export const authClient = {
+  updateUser: (input: { name: string; headers: Headers }) =>
+    safeAuth(auth.api.updateUser({ body: { name: input.name }, headers: input.headers })),
+
+  changeEmail: (input: { email: string; headers: Headers }) =>
+    safeAuth(auth.api.changeEmail({ body: { newEmail: input.email }, headers: input.headers })),
+
+  changePassword: (input: { currentPassword: string; newPassword: string; headers: Headers }) =>
+    safeAuth(
+      auth.api.changePassword({
+        body: { currentPassword: input.currentPassword, newPassword: input.newPassword },
+        headers: input.headers,
+      }),
+    ),
 };
