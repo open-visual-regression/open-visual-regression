@@ -13,6 +13,12 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
+  user: {
+    changeEmail: {
+      enabled: true,
+      updateEmailWithoutVerification: true,
+    },
+  },
   database: drizzleAdapter(db, {
     provider: "pg",
     schema,
