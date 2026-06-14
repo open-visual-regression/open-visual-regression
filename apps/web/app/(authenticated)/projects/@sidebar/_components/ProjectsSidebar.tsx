@@ -1,21 +1,19 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { FolderIcon } from "@ovr/ui/components/icon";
 import { ProjectDto } from "@ovr/api/contracts/projects";
 import { Sidebar } from "@/lib/components/sidebar/Sidebar";
 import { SidebarCollapsedLink } from "@/lib/components/sidebar/SidebarCollapsedLink";
-import { SidebarItem } from "@/lib/components/sidebar/SidebarItem";
 import { SidebarMonogram } from "@/lib/components/sidebar/SidebarMonogram";
-import { SidebarSection } from "@/lib/components/sidebar/SidebarSection";
+import {
+  ProjectsSidebarLinks,
+  isProjectActive,
+} from "@/lib/components/sidebar/ProjectsSidebarLinks";
 
 type ProjectsSidebarProps = {
   projects: Pick<ProjectDto, "id" | "name">[];
   version?: string;
 };
-
-const isProjectActive = (pathname: string, projectId: string) =>
-  pathname.startsWith(`/projects/${projectId}`);
 
 const ProjectsSidebar = ({ projects, version }: ProjectsSidebarProps) => {
   const pathname = usePathname();
@@ -23,19 +21,7 @@ const ProjectsSidebar = ({ projects, version }: ProjectsSidebarProps) => {
   return (
     <Sidebar
       version={version}
-      expandedContent={
-        <SidebarSection label="projects" count={projects.length}>
-          {projects.map((p) => (
-            <SidebarItem
-              key={p.id}
-              href={`/projects/${p.id}`}
-              icon={FolderIcon}
-              label={p.name}
-              active={isProjectActive(pathname, p.id)}
-            />
-          ))}
-        </SidebarSection>
-      }
+      expandedContent={<ProjectsSidebarLinks projects={projects} />}
       collapsedContent={
         <>
           <div className="flex items-center justify-center pt-3.5 pb-1.5">
