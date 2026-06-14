@@ -1,19 +1,20 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { onError } from "@orpc/client";
+import { onError, onSuccess } from "@orpc/client";
 import { useServerAction } from "@orpc/react/hooks";
 import { Button } from "@ovr/ui/components/button";
 import { Card, CardContent, CardFooter } from "@ovr/ui/components/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@ovr/ui/components/field";
 import { CheckIcon, Icon } from "@ovr/ui/components/icon";
 import { Input } from "@ovr/ui/components/input";
+import { toast } from "@ovr/ui/components/toast";
 import { Typography } from "@ovr/ui/components/typography";
 import { useForm } from "react-hook-form";
 import { serverClient } from "@/lib/router";
 import { updateProfileFormSchema, type UpdateProfileFormValues } from "./schema";
 
-type UpdateProfileFormProps = {
+export type UpdateProfileFormProps = {
   user: {
     name: string;
     email: string;
@@ -35,7 +36,12 @@ export const UpdateProfileForm = ({ user }: UpdateProfileFormProps) => {
   });
 
   const { execute, status } = useServerAction(serverClient.profile.updateProfileInformation, {
-    interceptors: [onError((err) => setError("root", { message: err.message }))],
+    interceptors: [
+      onSuccess(() => {
+        toast.success("profile updated");
+      }),
+      onError((err) => setError("root", { message: err.message })),
+    ],
   });
 
   const handleFormSubmit = (values: UpdateProfileFormValues) => {
@@ -78,7 +84,7 @@ export const UpdateProfileForm = ({ user }: UpdateProfileFormProps) => {
             <FieldError errors={[errors.root]} />
           </CardContent>
           <CardFooter className="flex flex-row justify-end">
-            <Button type="submit" size="lg" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting}>
               <Icon icon={CheckIcon} />
               {isSubmitting ? "saving..." : "save changes"}
             </Button>

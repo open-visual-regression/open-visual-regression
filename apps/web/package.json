@@ -25,6 +25,7 @@
     "@ovr/api": "workspace:*",
     "@ovr/db": "workspace:*",
     "@ovr/logger": "workspace:*",
+    "@ovr/services": "workspace:*",
     "@ovr/storage": "workspace:*",
     "@ovr/ui": "workspace:*",
     "@tanstack/react-devtools": "^0.10.5",

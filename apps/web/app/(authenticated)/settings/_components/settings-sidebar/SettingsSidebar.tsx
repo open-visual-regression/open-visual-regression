@@ -5,9 +5,12 @@ import { Icon } from "@ovr/ui/components/icon";
 import { RequiresAdminRole } from "@/lib/components/authorization/RequiresAdminRole";
 import { Sidebar } from "@/lib/components/sidebar/Sidebar";
 import { SidebarCollapsedLink } from "@/lib/components/sidebar/SidebarCollapsedLink";
-import { SidebarItem } from "@/lib/components/sidebar/SidebarItem";
-import { SidebarSection } from "@/lib/components/sidebar/SidebarSection";
-import { ADMIN_NAV_ITEMS, PERSONAL_NAV_ITEMS, isNavItemActive } from "./settingsNavItems";
+import {
+  ADMIN_NAV_ITEMS,
+  PERSONAL_NAV_ITEMS,
+  isNavItemActive,
+} from "@/lib/components/sidebar/settingsNavItems";
+import { SettingsSidebarLinks } from "@/lib/components/sidebar/SettingsSidebarLinks";
 
 type SettingsSidebarProps = {
   role: string | null | undefined;
@@ -22,34 +25,7 @@ const SettingsSidebar = ({ role, version }: SettingsSidebarProps) => {
       version={version}
       collapseLabel="Collapse settings navigation"
       expandLabel="Expand settings navigation"
-      expandedContent={
-        <>
-          <SidebarSection label="personal">
-            {PERSONAL_NAV_ITEMS.map((item) => (
-              <SidebarItem
-                key={item.href}
-                href={item.href}
-                icon={item.icon}
-                label={item.label}
-                active={isNavItemActive(pathname, item.href)}
-              />
-            ))}
-          </SidebarSection>
-          <RequiresAdminRole role={role}>
-            <SidebarSection label="admin">
-              {ADMIN_NAV_ITEMS.map((item) => (
-                <SidebarItem
-                  key={item.href}
-                  href={item.href}
-                  icon={item.icon}
-                  label={item.label}
-                  active={isNavItemActive(pathname, item.href)}
-                />
-              ))}
-            </SidebarSection>
-          </RequiresAdminRole>
-        </>
-      }
+      expandedContent={<SettingsSidebarLinks role={role} />}
       collapsedContent={
         <>
           <div className="flex flex-col pt-3.5">

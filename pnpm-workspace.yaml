@@ -2,6 +2,7 @@ packages:
   - "apps/*"
   - "packages/*"
 allowBuilds:
+  "@fission-ai/openspec": true
   cpu-features: true
   esbuild: true
   msgpackr-extract: true

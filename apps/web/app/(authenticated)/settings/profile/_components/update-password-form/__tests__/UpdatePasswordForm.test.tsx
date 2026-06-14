@@ -1,4 +1,5 @@
 import { vi } from "vitest";
+import { Toaster } from "@ovr/ui/components/sonner";
 
 import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
 import { serverClient } from "@/lib/router";
@@ -8,7 +9,13 @@ vi.mock("@/lib/router");
 
 const mockUpdatePassword = vi.mocked(serverClient.profile.updatePassword);
 
-const renderComponent = () => render(<UpdatePasswordForm />);
+const renderComponent = () =>
+  render(
+    <>
+      <UpdatePasswordForm />
+      <Toaster />
+    </>,
+  );
 
 describe("UpdatePasswordForm", () => {
   it("should show a validation error when the current password is empty", async ({ user }) => {
@@ -61,6 +68,7 @@ describe("UpdatePasswordForm", () => {
         newPassword: "newpassword123",
       }),
     );
+    expect(await screen.findByText("password updated")).toBeVisible();
   });
 
   it("should clear the password fields after a successful save", async ({ user }) => {
@@ -108,5 +116,6 @@ describe("UpdatePasswordForm", () => {
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("incorrect password");
+    expect(screen.queryByText("password updated")).not.toBeInTheDocument();
   });
 });

@@ -9,11 +9,13 @@ type SidebarItemProps = {
   label: string;
   changedCount?: number;
   active?: boolean;
+  onClick?: () => void;
 };
 
-const SidebarItem = ({ href, icon, label, changedCount, active }: SidebarItemProps) => (
+const SidebarItem = ({ href, icon, label, changedCount, active, onClick }: SidebarItemProps) => (
   <Link
     href={href}
+    onClick={onClick}
     className={cn(
       "flex items-center gap-2 h-7 pl-2.5 pr-3 text-body-sm border-l-2 transition-colors no-underline",
       active

@@ -3,7 +3,6 @@ import { db } from "@ovr/db/db";
 import { v7 as uuidv7 } from "uuid";
 
 import { enqueueCapture } from "./lib/queue";
-import { uploadDirectory } from "./lib/storage";
 import type { Result } from "./types";
 
 type CreateBuildInput = {
@@ -11,8 +10,9 @@ type CreateBuildInput = {
   branch: string;
   commitSha: string;
   targets: string[];
-  artifactDir: string;
 };
+
+export const getArtifactPath = (buildId: string): string => `builds/${buildId}/artifact.tar.gz`;
 
 export const createBuild = async (
   input: CreateBuildInput,
@@ -35,7 +35,7 @@ export const createBuild = async (
         commitSha: input.commitSha,
         status: "pending",
         captureMode: "worker",
-        artifactPath: `builds/${buildId}/artifact`,
+        artifactPath: getArtifactPath(buildId),
         createdBy: callerId,
         tx,
       });
@@ -57,8 +57,6 @@ export const createBuild = async (
         tx,
       });
     });
-
-    await uploadDirectory(input.artifactDir, `builds/${buildId}/artifact`);
 
     await Promise.all(
       snapshots.map((snapshot) => enqueueCapture({ buildId, snapshotId: snapshot.id })),

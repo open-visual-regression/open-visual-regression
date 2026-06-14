@@ -1,10 +1,12 @@
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth/auth";
+import { serverClient } from "@/lib/router";
 import { NavigationBar } from "@/lib/components/navigation-bar/NavigationBar";
 import { NavigationBarLogo } from "@/lib/components/navigation-bar/NavigationBarLogo";
 import { NavigationBarBreadcrumb } from "@/lib/components/navigation-bar/NavigationBarBreadcrumb";
 import { NavigationBarActions } from "@/lib/components/navigation-bar/NavigationBarActions";
 import { getBreadcrumbSegments } from "@/lib/components/navigation-bar/getBreadcrumbSegments";
+import { NavigationBarMobileMenu } from "@/lib/components/navigation-bar/NavigationBarMobileMenu";
 import { Separator } from "@ovr/ui/components/separator";
 
 type NavigationSlotProps = {
@@ -21,9 +23,13 @@ export default async function NavigationSlot({ params }: NavigationSlotProps) {
 
   const userName = session?.user?.name ?? session?.user?.email ?? "";
 
+  const [projectsError, projectsResult] = await serverClient.projects.list();
+  const projects = projectsError ? [] : projectsResult.projects;
+
   return (
     <NavigationBar className="flex flex-row gap-3 justify-between items-center">
       <div className="flex flex-row gap-3 items-center min-w-0">
+        <NavigationBarMobileMenu role={session?.user?.role} projects={projects} />
         <NavigationBarLogo />
         <Separator orientation="vertical" className="h-5" />
         <NavigationBarBreadcrumb segments={segments} />

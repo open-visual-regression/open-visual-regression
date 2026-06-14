@@ -51,3 +51,27 @@ export const adminMiddleware = os
 
     return next();
   });
+
+export const apiKeyMiddleware = os
+  .$context<RequestContext>()
+  .middleware(async ({ context, next }) => {
+    const bearer = context.headers.get("authorization")?.replace("Bearer ", "");
+
+    if (!bearer) {
+      throw new ORPCError("UNAUTHORIZED");
+    }
+
+    const result = await auth.api.verifyApiKey({ body: { key: bearer } });
+
+    if (!result.valid || !result.key) {
+      throw new ORPCError("UNAUTHORIZED");
+    }
+
+    const projectId = result.key.metadata?.projectId;
+
+    if (typeof projectId !== "string") {
+      throw new ORPCError("UNAUTHORIZED");
+    }
+
+    return next({ context: { apiKey: result.key, projectId } });
+  });
