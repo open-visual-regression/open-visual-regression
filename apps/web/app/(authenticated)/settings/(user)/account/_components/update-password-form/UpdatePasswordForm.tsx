@@ -30,7 +30,7 @@ export const UpdatePasswordForm = () => {
     },
   });
 
-  const { execute, status } = useServerAction(serverClient.profile.updatePassword, {
+  const { execute, status } = useServerAction(serverClient.account.updatePassword, {
     interceptors: [
       onSuccess(() => {
         reset();

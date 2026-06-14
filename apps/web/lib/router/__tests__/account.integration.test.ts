@@ -11,10 +11,10 @@ vi.mock("next/headers");
 
 const TEST_PASSWORD = "securepass123";
 
-describe("profile", () => {
-  describe("updateProfileInformation", () => {
+describe("account", () => {
+  describe("updateAccountInformation", () => {
     test("should return UNAUTHORIZED when no session cookie is provided", async () => {
-      const [error] = await serverClient.profile.updateProfileInformation({
+      const [error] = await serverClient.account.updateAccountInformation({
         name: "New Name",
         email: "new-name@openvisualregression.com",
       });
@@ -23,7 +23,7 @@ describe("profile", () => {
     });
 
     test("should update the user's name", async ({ user }) => {
-      const [error] = await serverClient.profile.updateProfileInformation({
+      const [error] = await serverClient.account.updateAccountInformation({
         name: "Updated Name",
         email: user.email,
       });
@@ -37,7 +37,7 @@ describe("profile", () => {
     test("should update the user's email", async ({ user }) => {
       const newEmail = "updated-email@openvisualregression.com";
 
-      const [error] = await serverClient.profile.updateProfileInformation({
+      const [error] = await serverClient.account.updateAccountInformation({
         name: user.name,
         email: newEmail,
       });
@@ -55,7 +55,7 @@ describe("profile", () => {
         body: { name: other.name, email: other.email, password: TEST_PASSWORD },
       });
 
-      const [error] = await serverClient.profile.updateProfileInformation({
+      const [error] = await serverClient.account.updateAccountInformation({
         name: user.name,
         email: other.email,
       });
@@ -71,7 +71,7 @@ describe("profile", () => {
         body: { name: other.name, email: other.email, password: TEST_PASSWORD },
       });
 
-      const [error] = await serverClient.profile.updateProfileInformation({
+      const [error] = await serverClient.account.updateAccountInformation({
         name: "Updated Name",
         email: user.email,
       });
@@ -85,7 +85,7 @@ describe("profile", () => {
 
   describe("updatePassword", () => {
     test("should return UNAUTHORIZED when no session cookie is provided", async () => {
-      const [error] = await serverClient.profile.updatePassword({
+      const [error] = await serverClient.account.updatePassword({
         currentPassword: TEST_PASSWORD,
         newPassword: "newsecurepass456",
       });
@@ -94,7 +94,7 @@ describe("profile", () => {
     });
 
     test("should update the user's password", async ({ user }) => {
-      const [error] = await serverClient.profile.updatePassword({
+      const [error] = await serverClient.account.updatePassword({
         currentPassword: TEST_PASSWORD,
         newPassword: "newsecurepass456",
       });
@@ -113,7 +113,7 @@ describe("profile", () => {
     test("should return BAD_REQUEST when the current password is incorrect", async ({
       user: _user,
     }) => {
-      const [error] = await serverClient.profile.updatePassword({
+      const [error] = await serverClient.account.updatePassword({
         currentPassword: "wrongpassword123",
         newPassword: "newsecurepass456",
       });

@@ -3,7 +3,7 @@ import * as setup from "./setup";
 import * as projects from "./projects";
 import * as storage from "./storage";
 import * as builds from "./builds";
-import * as profile from "./profile";
+import * as account from "./account";
 
 export const serverClient = {
   apiKeys,
@@ -11,5 +11,5 @@ export const serverClient = {
   projects,
   storage,
   builds,
-  profile,
+  account,
 } as const;
