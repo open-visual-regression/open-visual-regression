@@ -5,8 +5,8 @@ import { UsersTable } from "../UsersTable";
 
 describe("UsersTable", () => {
   it("should render a row for each user", () => {
-    const admin = mocks.user.generateUserListItem({ name: "ari shapiro", role: "admin" });
-    const user = mocks.user.generateUserListItem({ name: "sam chen", role: "user" });
+    const admin = mocks.user.generateUserSchema({ name: "ari shapiro", role: "admin" });
+    const user = mocks.user.generateUserSchema({ name: "sam chen", role: "user" });
     render(<UsersTable data={[admin, user]} />);
 
     expect(screen.getByRole("cell", { name: admin.name })).toBeVisible();
@@ -14,23 +14,23 @@ describe("UsersTable", () => {
   });
 
   it("should show the role for each user", () => {
-    const admin = mocks.user.generateUserListItem({ role: "admin" });
-    const user = mocks.user.generateUserListItem({ role: "user" });
+    const admin = mocks.user.generateUserSchema({ role: "admin" });
+    const user = mocks.user.generateUserSchema({ role: "user" });
     render(<UsersTable data={[admin, user]} />);
 
-    expect(screen.getByText("admin")).toBeVisible();
-    expect(screen.getByText("user")).toBeVisible();
+    expect(screen.getByRole("cell", { name: "admin" })).toBeVisible();
+    expect(screen.getByRole("cell", { name: "user" })).toBeVisible();
   });
 
   it("should treat a null role as a regular user", () => {
-    const user = mocks.user.generateUserListItem({ role: null });
+    const user = mocks.user.generateUserSchema({ role: null });
     render(<UsersTable data={[user]} />);
 
-    expect(screen.getByText("user")).toBeVisible();
+    expect(screen.getByRole("cell", { name: "user" })).toBeVisible();
   });
 
   it("should show a never-logged-in indicator when there is no last login", () => {
-    const user = mocks.user.generateUserListItem({ lastLoginAt: null });
+    const user = mocks.user.generateUserSchema({ lastLoginAt: null });
     render(<UsersTable data={[user]} />);
 
     expect(screen.getByRole("cell", { name: "never" })).toBeVisible();
@@ -38,7 +38,7 @@ describe("UsersTable", () => {
 
   it("should show the last login date when available", () => {
     const lastLoginAt = new Date("2026-05-01T12:00:00Z");
-    const user = mocks.user.generateUserListItem({ lastLoginAt });
+    const user = mocks.user.generateUserSchema({ lastLoginAt });
     render(<UsersTable data={[user]} />);
 
     expect(screen.getByRole("cell", { name: formatDateTime(lastLoginAt) })).toBeVisible();
@@ -46,7 +46,7 @@ describe("UsersTable", () => {
 
   it("should show the created date for each user", () => {
     const createdAt = new Date("2026-04-12T08:30:00Z");
-    const user = mocks.user.generateUserListItem({ createdAt });
+    const user = mocks.user.generateUserSchema({ createdAt });
     render(<UsersTable data={[user]} />);
 
     expect(screen.getByRole("cell", { name: formatDateTime(createdAt) })).toBeVisible();

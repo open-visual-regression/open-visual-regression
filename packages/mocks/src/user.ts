@@ -20,7 +20,7 @@ export const generateUser = (overrides?: Partial<User>): User => ({
   ...overrides,
 });
 
-export const generateUserListItem = (overrides?: Partial<UserSchema>): UserSchema => ({
+export const generateUserSchema = (overrides?: Partial<UserSchema>): UserSchema => ({
   id: faker.string.uuid(),
   name: faker.person.fullName(),
   email: faker.internet.email(),

@@ -20,8 +20,8 @@ const mockNotFound = vi.mocked(notFound);
 describe("SettingsUsersPage", () => {
   it("should show the users table for admins", async () => {
     const users = [
-      mocks.user.generateUserListItem({ name: "ari shapiro" }),
-      mocks.user.generateUserListItem({ name: "sam chen" }),
+      mocks.user.generateUserSchema({ name: "ari shapiro" }),
+      mocks.user.generateUserSchema({ name: "sam chen" }),
     ];
     mockGetSession.mockResolvedValue({
       user: mocks.user.generateUser({ role: "admin" }),
@@ -32,8 +32,8 @@ describe("SettingsUsersPage", () => {
     render(await SettingsUsersPage());
 
     expect(screen.getByRole("heading", { name: /users/i })).toBeVisible();
-    expect(screen.getByText("ari shapiro")).toBeVisible();
-    expect(screen.getByText("sam chen")).toBeVisible();
+    expect(screen.getByRole("cell", { name: "ari shapiro" })).toBeVisible();
+    expect(screen.getByRole("cell", { name: "sam chen" })).toBeVisible();
   });
 
   it("should show a not found page for non-admins", async () => {
