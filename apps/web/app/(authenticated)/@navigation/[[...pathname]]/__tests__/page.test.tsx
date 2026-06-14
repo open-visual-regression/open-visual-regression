@@ -1,4 +1,4 @@
-import { beforeEach, vi } from "vitest";
+import { vi } from "vitest";
 
 import { describe, expect, it, render, screen } from "@/test-utils";
 import { auth } from "@/lib/auth/auth";
@@ -15,11 +15,9 @@ const mockGetSession = vi.mocked(auth.api.getSession);
 const mockGetOne = vi.mocked(serverClient.projects.getOne);
 const mockList = vi.mocked(serverClient.projects.list);
 
-describe("NavigationSlot", () => {
-  beforeEach(() => {
-    mockList.mockResolvedValue([null, { projects: [] }]);
-  });
+mockList.mockResolvedValue([null, { projects: [] }]);
 
+describe("NavigationSlot", () => {
   it("should render breadcrumbs for the projects root", async () => {
     mockGetSession.mockResolvedValue({
       user: mocks.user.generateUser({ name: "Jane Doe" }),
