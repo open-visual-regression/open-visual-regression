@@ -41,7 +41,7 @@ Required values are passed as CLI flags. The API key is the only exception — i
   - Implementation:
     1. Read `OVR_API_KEY` from env; fail fast with a clear message if missing
     2. Validate `--dir` exists and contains `index.json` (Storybook v7+); read and extract story IDs
-    3. Auto-detect `branch` and `commitSha` from git; check CI env vars first (`GITHUB_REF_NAME` / `GITHUB_SHA`, `CI_COMMIT_BRANCH` / `CI_COMMIT_SHA`) before falling back to `git branch --show-current` / `git rev-parse HEAD`
+    3. Auto-detect `branch` and `commitSha` via `git branch --show-current` / `git rev-parse HEAD`; CI providers that checkout in detached HEAD (e.g. GitHub Actions, GitLab CI) should pass `--branch`/`--commit` explicitly using their own env vars
     4. Call `builds.createBuild({ branch, commitSha, stories })`; server returns `{ buildId, uploadUrl }`
     5. Tar the storybook-static dir and PUT to `uploadUrl` (presigned RustFS URL)
     6. Poll `builds.getBuildStatus({ buildId })` every 5 s; print progress on each poll; enforce `--timeout`

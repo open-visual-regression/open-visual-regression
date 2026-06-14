@@ -1,12 +1,7 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { getApiKey } from "../config";
 
 describe("getApiKey", () => {
-  afterEach(() => {
-    vi.unstubAllEnvs();
-    vi.restoreAllMocks();
-  });
-
   it("returns the API key when OVR_API_KEY is set", () => {
     vi.stubEnv("OVR_API_KEY", "test-key");
 

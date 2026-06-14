@@ -1,16 +1,16 @@
 import { Command } from "commander";
 
-import { createClient } from "../../client.js";
-import { getApiKey } from "../../config.js";
-import { createArtifactTarball, uploadArtifact } from "./artifact.js";
-import { detectBranch, detectCommitSha } from "./git.js";
+import { createClient } from "../../client";
+import { getApiKey } from "../../config";
+import { createArtifactTarball, uploadArtifact } from "./artifact";
+import { detectBranch, detectCommitSha } from "./git";
 import {
   BuildFailedError,
   BuildNeedsReviewError,
   BuildTimeoutError,
   pollBuildStatus,
-} from "./poll.js";
-import { readStoryIds } from "./storybookIndex.js";
+} from "./poll";
+import { readStoryIds } from "./storybookIndex";
 
 type StorybookCommandOptions = {
   dir: string;

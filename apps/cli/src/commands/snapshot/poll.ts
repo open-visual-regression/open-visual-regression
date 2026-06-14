@@ -1,4 +1,4 @@
-import type { OvrClient } from "../../client.js";
+import type { OvrClient } from "../../client";
 
 const DEFAULT_POLL_INTERVAL_MS = 5_000;
 
@@ -24,7 +24,7 @@ export class BuildTimeoutError extends Error {
 }
 
 export type PollBuildStatusOptions = {
-  client: OvrClient;
+  client: { builds: Pick<OvrClient["builds"], "getBuildStatus"> };
   buildId: string;
   timeoutSeconds: number;
   pollIntervalMs?: number;
