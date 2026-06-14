@@ -19,6 +19,7 @@
     "@orpc/contract": "^1.14.4",
     "@ovr/api": "workspace:*",
     "commander": "^15.0.0",
+    "ky": "^2.0.2",
     "tar": "^7.5.16"
   },
   "devDependencies": {
