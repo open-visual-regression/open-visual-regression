@@ -19,4 +19,7 @@ export const serverClient = {
     updateProfileInformation: vi.fn(),
     updatePassword: vi.fn(),
   },
+  users: {
+    list: vi.fn(),
+  },
 };

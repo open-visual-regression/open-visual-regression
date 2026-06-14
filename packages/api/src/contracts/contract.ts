@@ -4,6 +4,7 @@ import { contract as projectsContract } from "./projects";
 import { contract as storageContract } from "./storage";
 import { contract as buildsContract } from "./builds";
 import { contract as profileContract } from "./profile";
+import { contract as usersContract } from "./users";
 
 export const contract = {
   apiKeys: { ...apiKeysContract },
@@ -12,4 +13,5 @@ export const contract = {
   storage: { ...storageContract },
   builds: { ...buildsContract },
   profile: { ...profileContract },
+  users: { ...usersContract },
 } as const;
