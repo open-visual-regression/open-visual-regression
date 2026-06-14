@@ -6,9 +6,8 @@ import type { Redis } from "ioredis";
 import { dbClient } from "@ovr/db/client";
 import type { DiffStatus } from "@ovr/db/schema";
 import { QueueName, type CaptureJobPayload } from "@ovr/queue";
-import { storage } from "@ovr/storage";
 
-import { createBuild, finalizeBuild } from "../builds";
+import { createBuild, finalizeBuild, getArtifactPath } from "../builds";
 import { describe, expect, test } from "./fixtures";
 
 const collectCaptureJobs = async (
@@ -56,11 +55,10 @@ const seedDiffs = async (
 
 describe("builds", () => {
   describe("createBuild", () => {
-    test("creates a pending build with a snapshot per target x capture configuration, uploads the artifact directory, and enqueues a capture job for each snapshot", async ({
+    test("creates a pending build with a snapshot per target x capture configuration, and enqueues a capture job for each snapshot", async ({
       project,
       captureConfiguration,
       user,
-      artifactDir,
       connection,
     }) => {
       const result = await createBuild(
@@ -69,7 +67,6 @@ describe("builds", () => {
           branch: "main",
           commitSha: "a".repeat(40),
           targets: ["story-a", "story-b"],
-          artifactDir,
         },
         user.id,
       );
@@ -85,7 +82,7 @@ describe("builds", () => {
         commitSha: "a".repeat(40),
         status: "pending",
         captureMode: "worker",
-        artifactPath: `builds/${buildId}/artifact`,
+        artifactPath: getArtifactPath(buildId),
         createdBy: user.id,
       });
 
@@ -95,54 +92,24 @@ describe("builds", () => {
         snapshots.every((snapshot) => snapshot.captureConfigurationId === captureConfiguration.id),
       ).toBe(true);
 
-      const uploaded = await storage.getFileStream(`builds/${buildId}/artifact/index.html`);
-      expect(uploaded).toBeTruthy();
-      uploaded.destroy();
-
       const jobs = await collectCaptureJobs(connection, snapshots.length);
       expect(jobs).toEqual(
         expect.arrayContaining(snapshots.map((snapshot) => ({ buildId, snapshotId: snapshot.id }))),
       );
     });
 
-    test("returns PROJECT_NOT_FOUND when the project does not exist", async ({
-      user,
-      artifactDir,
-    }) => {
+    test("returns PROJECT_NOT_FOUND when the project does not exist", async ({ user }) => {
       const result = await createBuild(
         {
           projectId: crypto.randomUUID(),
           branch: "main",
           commitSha: "a".repeat(40),
           targets: ["story-a"],
-          artifactDir,
         },
         user.id,
       );
 
       expect(result).toEqual({ status: "error", error: "PROJECT_NOT_FOUND" });
-    });
-
-    test("marks the build as error and rethrows when the artifact directory cannot be uploaded", async ({
-      project,
-      user,
-    }) => {
-      await expect(
-        createBuild(
-          {
-            projectId: project.id,
-            branch: "main",
-            commitSha: "a".repeat(40),
-            targets: ["story-a"],
-            artifactDir: `/nonexistent-${crypto.randomUUID()}`,
-          },
-          user.id,
-        ),
-      ).rejects.toThrow();
-
-      const builds = await dbClient.builds.findByProject(project.id);
-      expect(builds).toHaveLength(1);
-      expect(builds[0]).toMatchObject({ status: "error" });
     });
   });
 

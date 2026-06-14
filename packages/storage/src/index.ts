@@ -74,4 +74,10 @@ export const storage = {
       expiresIn: ttlSeconds,
     });
   },
+
+  getPresignedUploadUrl: async (key: string, ttlSeconds: number): Promise<string> => {
+    return getSignedUrl(client, new PutObjectCommand({ Bucket: bucket, Key: key }), {
+      expiresIn: ttlSeconds,
+    });
+  },
 };
