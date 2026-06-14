@@ -13,15 +13,9 @@ const UPLOAD_URL_TTL_SECONDS = 3600;
 export const createBuild = os.builds.createBuild
   .use(apiKeyMiddleware)
   .handler(async ({ input, context }) => {
-    const projectId = context.apiKey.metadata?.projectId;
-
-    if (typeof projectId !== "string") {
-      throw new ORPCError("UNAUTHORIZED");
-    }
-
     const result = await createBuildService(
       {
-        projectId,
+        projectId: context.projectId,
         branch: input.branch,
         commitSha: input.commitSha,
         targets: input.targets,
@@ -51,7 +45,7 @@ export const getBuildStatus = os.builds.getBuildStatus
       throw new ORPCError("NOT_FOUND");
     }
 
-    if (build.projectId !== context.apiKey.metadata?.projectId) {
+    if (build.projectId !== context.projectId) {
       throw new ORPCError("FORBIDDEN");
     }
 

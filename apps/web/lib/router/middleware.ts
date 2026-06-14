@@ -67,5 +67,11 @@ export const apiKeyMiddleware = os
       throw new ORPCError("UNAUTHORIZED");
     }
 
-    return next({ context: { apiKey: result.key } });
+    const projectId = result.key.metadata?.projectId;
+
+    if (typeof projectId !== "string") {
+      throw new ORPCError("UNAUTHORIZED");
+    }
+
+    return next({ context: { apiKey: result.key, projectId } });
   });
