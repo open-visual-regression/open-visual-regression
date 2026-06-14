@@ -12,39 +12,39 @@ import { toast } from "@ovr/ui/components/toast";
 import { Typography } from "@ovr/ui/components/typography";
 import { useForm } from "react-hook-form";
 import { serverClient } from "@/lib/router";
-import { updateProfileFormSchema, type UpdateProfileFormValues } from "./schema";
+import { updateAccountFormSchema, type UpdateAccountFormValues } from "./schema";
 
-export type UpdateProfileFormProps = {
+export type UpdateAccountFormProps = {
   user: {
     name: string;
     email: string;
   };
 };
 
-export const UpdateProfileForm = ({ user }: UpdateProfileFormProps) => {
+export const UpdateAccountForm = ({ user }: UpdateAccountFormProps) => {
   const {
     register,
     handleSubmit,
     setError,
     formState: { errors },
-  } = useForm<UpdateProfileFormValues>({
-    resolver: zodResolver(updateProfileFormSchema),
+  } = useForm<UpdateAccountFormValues>({
+    resolver: zodResolver(updateAccountFormSchema),
     defaultValues: {
       name: user.name,
       email: user.email,
     },
   });
 
-  const { execute, status } = useServerAction(serverClient.profile.updateProfileInformation, {
+  const { execute, status } = useServerAction(serverClient.account.updateAccountInformation, {
     interceptors: [
       onSuccess(() => {
-        toast.success("profile updated");
+        toast.success("account updated");
       }),
       onError((err) => setError("root", { message: err.message })),
     ],
   });
 
-  const handleFormSubmit = (values: UpdateProfileFormValues) => {
+  const handleFormSubmit = (values: UpdateAccountFormValues) => {
     execute(values);
   };
 

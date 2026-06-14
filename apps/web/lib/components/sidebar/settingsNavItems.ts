@@ -12,17 +12,33 @@ type SettingsNavItem = {
   label: string;
 };
 
-const PERSONAL_NAV_ITEMS: SettingsNavItem[] = [
-  { href: "/settings/profile", icon: UserIcon, label: "profile" },
-];
+type SettingsNavSection = {
+  label: string;
+  collapsedLabel: string;
+  access: "all" | "admin";
+  items: SettingsNavItem[];
+};
 
-const ADMIN_NAV_ITEMS: SettingsNavItem[] = [
-  { href: "/settings/general", icon: SettingsIcon, label: "general" },
-  { href: "/settings/users", icon: UsersIcon, label: "users" },
-  { href: "/settings/invitations", icon: MailIcon, label: "invitations" },
+const SETTINGS_NAV_SECTIONS: SettingsNavSection[] = [
+  {
+    label: "personal",
+    collapsedLabel: "per",
+    access: "all",
+    items: [{ href: "/settings/account", icon: UserIcon, label: "account" }],
+  },
+  {
+    label: "admin",
+    collapsedLabel: "adm",
+    access: "admin",
+    items: [
+      { href: "/settings/general", icon: SettingsIcon, label: "general" },
+      { href: "/settings/users", icon: UsersIcon, label: "users" },
+      { href: "/settings/invitations", icon: MailIcon, label: "invitations" },
+    ],
+  },
 ];
 
 const isNavItemActive = (pathname: string, href: string) => pathname.startsWith(href);
 
-export { PERSONAL_NAV_ITEMS, ADMIN_NAV_ITEMS, isNavItemActive };
-export type { SettingsNavItem };
+export { SETTINGS_NAV_SECTIONS, isNavItemActive };
+export type { SettingsNavItem, SettingsNavSection };

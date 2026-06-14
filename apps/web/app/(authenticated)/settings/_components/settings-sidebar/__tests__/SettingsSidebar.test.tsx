@@ -8,7 +8,7 @@ vi.mock("next/navigation");
 
 describe("SettingsSidebar", () => {
   it("should show personal and admin sections for an admin user", () => {
-    vi.mocked(usePathname).mockReturnValue("/settings/profile");
+    vi.mocked(usePathname).mockReturnValue("/settings/account");
 
     render(<SettingsSidebar role="admin" />);
 
@@ -20,7 +20,7 @@ describe("SettingsSidebar", () => {
   });
 
   it("should hide the admin section for a non-admin user", () => {
-    vi.mocked(usePathname).mockReturnValue("/settings/profile");
+    vi.mocked(usePathname).mockReturnValue("/settings/account");
 
     render(<SettingsSidebar role="user" />);
 
@@ -32,7 +32,7 @@ describe("SettingsSidebar", () => {
   });
 
   it("should collapse to an icon-only rail and back", async ({ user }) => {
-    vi.mocked(usePathname).mockReturnValue("/settings/profile");
+    vi.mocked(usePathname).mockReturnValue("/settings/account");
 
     render(<SettingsSidebar role="admin" />);
 
@@ -41,7 +41,9 @@ describe("SettingsSidebar", () => {
     await user.click(screen.getByRole("button", { name: /collapse settings navigation/i }));
 
     expect(screen.queryByRole("heading", { name: "personal" })).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /profile/i })).toBeVisible();
+    expect(screen.getByText("per")).toBeVisible();
+    expect(screen.getByText("adm")).toBeVisible();
+    expect(screen.getByRole("link", { name: /account/i })).toBeVisible();
 
     await user.click(screen.getByRole("button", { name: /expand settings navigation/i }));
 

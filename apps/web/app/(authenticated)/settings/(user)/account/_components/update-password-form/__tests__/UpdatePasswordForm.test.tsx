@@ -7,7 +7,7 @@ import { UpdatePasswordForm } from "../UpdatePasswordForm";
 
 vi.mock("@/lib/router");
 
-const mockUpdatePassword = vi.mocked(serverClient.profile.updatePassword);
+const mockUpdatePassword = vi.mocked(serverClient.account.updatePassword);
 
 const renderComponent = () =>
   render(
