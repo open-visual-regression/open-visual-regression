@@ -29,4 +29,13 @@ describe("ProjectsSidebar", () => {
     expect(screen.getByRole("link", { name: "Alpha" })).toHaveClass("border-l-transparent");
     expect(screen.getByRole("link", { name: "Beta" })).toHaveClass("border-l-transparent");
   });
+
+  it("should show the project count in the section heading", () => {
+    vi.mocked(usePathname).mockReturnValue("/projects");
+
+    render(<ProjectsSidebar projects={PROJECTS} />);
+
+    expect(screen.getByRole("heading", { name: "projects" })).toBeVisible();
+    expect(screen.getByText("(2)")).toBeVisible();
+  });
 });
