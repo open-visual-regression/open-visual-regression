@@ -69,7 +69,7 @@ export const UpdatePasswordForm = () => {
                 <FieldError errors={[errors.currentPassword]} />
               </Field>
             </FieldGroup>
-            <div className="flex flex-row gap-3">
+            <div className="flex flex-col gap-5 sm:flex-row sm:gap-3">
               <FieldGroup>
                 <Field data-invalid={!!errors.newPassword}>
                   <FieldLabel htmlFor="newPassword">new password</FieldLabel>
