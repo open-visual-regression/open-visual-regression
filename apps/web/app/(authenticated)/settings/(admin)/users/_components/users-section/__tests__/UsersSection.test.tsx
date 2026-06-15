@@ -1,0 +1,126 @@
+import { vi } from "vitest";
+import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
+import { serverClient } from "@/lib/router";
+import { useRouter } from "next/navigation";
+import { mocks } from "@ovr/mocks";
+import { formatDateTime } from "@/lib/utils/date";
+import { UsersSection } from "../UsersSection";
+
+vi.mock("@/lib/router");
+vi.mock("next/navigation");
+
+const mockRemove = vi.mocked(serverClient.users.remove);
+const mockRefresh = vi.mocked(useRouter)().refresh;
+
+const CURRENT_USER_ID = "current-user-id";
+
+describe("UsersSection", () => {
+  it("should render a row for each user", () => {
+    const admin = mocks.user.generateUser({ name: "ari shapiro", role: "admin" });
+    const user = mocks.user.generateUser({ name: "sam chen", role: "user" });
+    render(<UsersSection users={[admin, user]} currentUserId={CURRENT_USER_ID} />);
+
+    expect(screen.getByRole("cell", { name: admin.name })).toBeVisible();
+    expect(screen.getByRole("cell", { name: user.name })).toBeVisible();
+  });
+
+  it("should show the role for each user", () => {
+    const admin = mocks.user.generateUser({ role: "admin" });
+    const user = mocks.user.generateUser({ role: "user" });
+    render(<UsersSection users={[admin, user]} currentUserId={CURRENT_USER_ID} />);
+
+    expect(screen.getByRole("cell", { name: "admin" })).toBeVisible();
+    expect(screen.getByRole("cell", { name: "user" })).toBeVisible();
+  });
+
+  it("should treat a null role as a regular user", () => {
+    const user = mocks.user.generateUser({ role: null });
+    render(<UsersSection users={[user]} currentUserId={CURRENT_USER_ID} />);
+
+    expect(screen.getByRole("cell", { name: "user" })).toBeVisible();
+  });
+
+  it("should show a never-logged-in indicator when there is no last login", () => {
+    const user = mocks.user.generateUser({ lastLoginAt: null });
+    render(<UsersSection users={[user]} currentUserId={CURRENT_USER_ID} />);
+
+    expect(screen.getByRole("cell", { name: "never" })).toBeVisible();
+  });
+
+  it("should show the last login date when available", () => {
+    const lastLoginAt = new Date("2026-05-01T12:00:00Z");
+    const user = mocks.user.generateUser({ lastLoginAt });
+    render(<UsersSection users={[user]} currentUserId={CURRENT_USER_ID} />);
+
+    expect(screen.getByRole("cell", { name: formatDateTime(lastLoginAt) })).toBeVisible();
+  });
+
+  it("should show an active status badge for active users", () => {
+    const user = mocks.user.generateUser({ status: "active" });
+    render(<UsersSection users={[user]} currentUserId={CURRENT_USER_ID} />);
+
+    expect(screen.getByRole("cell", { name: "active" })).toBeVisible();
+  });
+
+  it("should show an invited status badge for invited users", () => {
+    const user = mocks.user.generateUser({ status: "invited" });
+    render(<UsersSection users={[user]} currentUserId={CURRENT_USER_ID} />);
+
+    expect(screen.getByRole("cell", { name: "invited" })).toBeVisible();
+  });
+
+  it("should not show a copy invite button for active users", () => {
+    const user = mocks.user.generateUser({ status: "active" });
+    render(<UsersSection users={[user]} currentUserId={CURRENT_USER_ID} />);
+
+    expect(screen.queryByRole("button", { name: /copy invite/i })).not.toBeInTheDocument();
+  });
+
+  it("should copy the invitation link to clipboard when clicked", async ({ user }) => {
+    const invitationUrl = "http://localhost:3000/invitations/test-invitation-id";
+    const invitedUser = mocks.user.generateUser({ status: "invited", invitationUrl });
+    render(<UsersSection users={[invitedUser]} currentUserId={CURRENT_USER_ID} />);
+
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText },
+      configurable: true,
+    });
+
+    await user.click(screen.getByRole("button", { name: /copy invite/i }));
+
+    expect(writeText).toHaveBeenCalledWith(invitationUrl);
+    expect(await screen.findByRole("button", { name: /^copied$/i })).toBeVisible();
+  });
+
+  it("should not allow selecting your own row", () => {
+    const admin = mocks.user.generateUser({ name: "ari shapiro" });
+    const user = mocks.user.generateUser({ name: "sam chen" });
+    render(<UsersSection users={[admin, user]} currentUserId={admin.id} />);
+
+    expect(
+      screen.queryByRole("checkbox", { name: `select ${admin.name}` }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: `select ${user.name}` })).toBeVisible();
+  });
+
+  it("should remove selected users when confirmed", async ({ user }) => {
+    mockRemove.mockResolvedValue([null, undefined]);
+    const activeUser = mocks.user.generateUser({ name: "sam chen", status: "active" });
+    render(<UsersSection users={[activeUser]} currentUserId={CURRENT_USER_ID} />);
+
+    await user.click(screen.getByRole("checkbox", { name: `select ${activeUser.name}` }));
+    expect(screen.getByText("1 user selected")).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: /^remove$/i }));
+    expect(await screen.findByRole("alertdialog", { name: /remove 1 user\?/i })).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: /^remove$/i }));
+
+    expect(mockRemove).toHaveBeenCalledWith({
+      users: [{ status: "active", email: activeUser.email }],
+    });
+    await waitFor(() => expect(mockRefresh).toHaveBeenCalled());
+    await waitFor(() => expect(screen.queryByText("1 user selected")).not.toBeInTheDocument());
+  });
+});

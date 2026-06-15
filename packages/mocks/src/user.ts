@@ -3,6 +3,17 @@ import { faker } from "@faker-js/faker";
 import type { user } from "@ovr/db/schema";
 import type { UserSchema } from "@ovr/api/contracts/users";
 
+type UserOverrides = {
+  id?: string;
+  name?: string;
+  email?: string;
+  role?: string | null;
+  createdAt?: Date;
+  status?: UserSchema["status"];
+  lastLoginAt?: Date | null;
+  invitationUrl?: string;
+};
+
 type User = typeof user.$inferSelect;
 
 export const generateAuthUser = (overrides?: Partial<User>): User => ({
@@ -20,12 +31,27 @@ export const generateAuthUser = (overrides?: Partial<User>): User => ({
   ...overrides,
 });
 
-export const generateUser = (overrides?: Partial<UserSchema>): UserSchema => ({
-  id: faker.string.uuid(),
-  name: faker.person.fullName(),
-  email: faker.internet.email(),
-  role: "user",
-  createdAt: faker.date.past(),
-  lastLoginAt: faker.date.recent(),
-  ...overrides,
-});
+export const generateUser = (overrides?: UserOverrides): UserSchema => {
+  const base = {
+    id: overrides?.id ?? faker.string.uuid(),
+    name: overrides?.name ?? faker.person.fullName(),
+    email: overrides?.email ?? faker.internet.email(),
+    role: overrides?.role !== undefined ? overrides.role : "user",
+    createdAt: overrides?.createdAt ?? faker.date.past(),
+  };
+
+  if (overrides?.status === "invited") {
+    return {
+      ...base,
+      status: "invited",
+      invitationUrl:
+        overrides.invitationUrl ?? "https://example.com/invitations/test-invitation-id",
+    };
+  }
+
+  return {
+    ...base,
+    status: "active",
+    lastLoginAt: overrides?.lastLoginAt !== undefined ? overrides.lastLoginAt : faker.date.recent(),
+  };
+};

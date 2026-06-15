@@ -17,8 +17,10 @@ import { useForm } from "react-hook-form";
 import { serverClient } from "@/lib/router";
 import { inviteUserFormSchema, type InviteUserFormValues } from "./schema";
 import { InviteUserModalReveal } from "./InviteUserModalReveal";
+import { useRouter } from "next/navigation";
 
 export const InviteUserModalForm = () => {
+  const router = useRouter();
   const [invitationUrl, setInvitationUrl] = useState<string | null>(null);
   const {
     register,
@@ -32,7 +34,10 @@ export const InviteUserModalForm = () => {
 
   const { execute, status } = useServerAction(serverClient.users.invite, {
     interceptors: [
-      onSuccess(({ invitationUrl }) => setInvitationUrl(invitationUrl)),
+      onSuccess(({ invitationUrl }) => {
+        setInvitationUrl(invitationUrl);
+        router.refresh();
+      }),
       onError((err) => setError("root", { message: err.message })),
     ],
   });

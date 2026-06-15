@@ -1,10 +1,4 @@
-import {
-  SettingsIcon,
-  type LucideIcon,
-  UserIcon,
-  UsersIcon,
-  MailIcon,
-} from "@ovr/ui/components/icon";
+import { SettingsIcon, type LucideIcon, UserIcon, UsersIcon } from "@ovr/ui/components/icon";
 
 type SettingsNavItem = {
   href: string;
@@ -33,7 +27,6 @@ const SETTINGS_NAV_SECTIONS: SettingsNavSection[] = [
     items: [
       { href: "/settings/general", icon: SettingsIcon, label: "general" },
       { href: "/settings/users", icon: UsersIcon, label: "users" },
-      { href: "/settings/invitations", icon: MailIcon, label: "invitations" },
     ],
   },
 ];

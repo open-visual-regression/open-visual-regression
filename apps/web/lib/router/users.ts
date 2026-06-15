@@ -9,18 +9,43 @@ import { authServerClient } from "../auth";
 export const list = os.users.list
   .use(authenticatedMiddleware)
   .use(adminMiddleware)
-  .handler(async () => {
-    const users = await dbClient.users.findAll();
+  .handler(async ({ input, context }) => {
+    const { search, sortBy = "name", sortDirection = "asc", limit = 50, offset = 0 } = input ?? {};
+
+    const { rows, total } = await dbClient.users.findAllUsers({
+      organizationId: context.organizationId,
+      search,
+      sortBy,
+      sortDirection,
+      limit,
+      offset,
+    });
+
+    const baseUrl = process.env.BASE_URL ?? "http://localhost:3000";
 
     return {
-      users: users.map((u) => ({
-        id: u.id,
-        name: u.name,
-        email: u.email,
-        role: u.role,
-        createdAt: u.createdAt,
-        lastLoginAt: u.lastLoginAt,
-      })),
+      users: rows.map((row) =>
+        row.status === "active"
+          ? {
+              id: row.id,
+              name: row.name,
+              email: row.email,
+              role: row.role,
+              status: "active" as const,
+              createdAt: row.createdAt,
+              lastLoginAt: row.lastLoginAt,
+            }
+          : {
+              id: row.id,
+              name: row.name,
+              email: row.email,
+              role: row.role,
+              status: "invited" as const,
+              createdAt: row.createdAt,
+              invitationUrl: `${baseUrl}/invitations/${row.id}`,
+            },
+      ),
+      total,
     };
   })
   .actionable();
@@ -42,5 +67,40 @@ export const invite = os.users.invite
     const baseUrl = process.env.BASE_URL ?? "http://localhost:3000";
 
     return { invitationUrl: `${baseUrl}/invitations/${invitation.id}` };
+  })
+  .actionable();
+
+export const remove = os.users.remove
+  .use(authenticatedMiddleware)
+  .use(adminMiddleware)
+  .handler(async ({ input, context }) => {
+    const removingSelf = input.users.some(
+      (user) => user.status === "active" && user.email === context.user.email,
+    );
+
+    if (removingSelf) {
+      throw new ORPCError("BAD_REQUEST", { message: "you cannot remove yourself" });
+    }
+
+    const results = await Promise.all(
+      input.users.map((user) =>
+        user.status === "active"
+          ? authServerClient.removeMember({
+              email: user.email,
+              organizationId: context.organizationId,
+              headers: context.headers,
+            })
+          : authServerClient.cancelInvitation({
+              invitationId: user.invitationId,
+              headers: context.headers,
+            }),
+      ),
+    );
+
+    const [error] = results.find(([error]) => error) ?? [];
+
+    if (error) {
+      throw new ORPCError("BAD_REQUEST", { message: error.message });
+    }
   })
   .actionable();

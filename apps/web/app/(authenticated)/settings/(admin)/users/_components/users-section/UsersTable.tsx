@@ -5,29 +5,55 @@ import {
   tableFeatures,
   createColumnHelper,
   createCoreRowModel,
+  rowSelectionFeature,
 } from "@tanstack/react-table";
+import { useTanStackTableDevtools } from "@tanstack/react-table-devtools";
 import {
   Table,
   TableHeader,
   TableBody,
+  TableFooter,
   TableHead,
   TableRow,
   TableCell,
 } from "@ovr/ui/components/table";
 import { Badge } from "@ovr/ui/components/badge";
+import { Checkbox } from "@ovr/ui/components/checkbox";
 import { StatusIcon } from "@ovr/ui/components/status-icon";
-import { useTanStackTableDevtools } from "@tanstack/react-table-devtools";
 import { formatDateTime } from "@/lib/utils/date";
 import { type UserSchema } from "@ovr/api/contracts/users";
+import { CopyInviteButton } from "./CopyInviteButton";
+import { UsersTableBulkActions } from "./UsersTableBulkActions";
 
-const features = tableFeatures({});
+const features = tableFeatures({ rowSelectionFeature });
 const columnHelper = createColumnHelper<typeof features, UserSchema>();
 
 const columns = columnHelper.columns([
+  columnHelper.display({
+    id: "select",
+    meta: { className: "w-px" },
+    header: ({ table }) => (
+      <Checkbox
+        aria-label="select all users"
+        checked={table.getIsAllRowsSelected()}
+        indeterminate={table.getIsSomeRowsSelected()}
+        onCheckedChange={(checked) => table.toggleAllRowsSelected(checked)}
+      />
+    ),
+    cell: ({ row }) =>
+      row.getCanSelect() ? (
+        <Checkbox
+          aria-label={`select ${row.original.name}`}
+          checked={row.getIsSelected()}
+          onCheckedChange={(checked) => row.toggleSelected(checked)}
+        />
+      ) : null,
+  }),
   columnHelper.accessor("name", { header: "Name" }),
   columnHelper.accessor("email", { header: "Email" }),
   columnHelper.accessor("role", {
     header: "Role",
+    meta: { className: "text-center" },
     cell: ({ getValue }) =>
       getValue() === "admin" ? (
         <Badge variant="changed">admin</Badge>
@@ -35,32 +61,51 @@ const columns = columnHelper.columns([
         <Badge variant="neutral">user</Badge>
       ),
   }),
-  columnHelper.accessor("lastLoginAt", {
+  columnHelper.accessor("status", {
+    header: "Status",
+    meta: { className: "text-center" },
+    cell: ({ getValue }) =>
+      getValue() === "invited" ? (
+        <Badge variant="pending">invited</Badge>
+      ) : (
+        <Badge variant="pass">active</Badge>
+      ),
+  }),
+  columnHelper.display({
+    id: "lastLoginAt",
     header: "Last login",
-    cell: ({ getValue }) => {
-      const lastLoginAt = getValue();
-      if (!lastLoginAt) {
-        return (
-          <span className="inline-flex items-center gap-1.5">
-            <StatusIcon variant="stale" size={12} />
-            never
-          </span>
-        );
+    meta: { className: "text-center" },
+    cell: ({ row }) => {
+      const neverLabel = (
+        <span className="inline-flex items-center gap-1.5">
+          <StatusIcon variant="stale" size={12} />
+          never
+        </span>
+      );
+
+      if (row.original.status === "invited") {
+        return neverLabel;
       }
-      return formatDateTime(lastLoginAt);
+
+      return row.original.lastLoginAt ? formatDateTime(row.original.lastLoginAt) : neverLabel;
     },
   }),
-  columnHelper.accessor("createdAt", {
-    header: "Created",
-    cell: ({ getValue }) => formatDateTime(getValue()),
+  columnHelper.display({
+    id: "actions",
+    meta: { className: "w-px text-center" },
+    cell: ({ row }) =>
+      row.original.status === "invited" ? (
+        <CopyInviteButton invitationUrl={row.original.invitationUrl} />
+      ) : null,
   }),
 ]);
 
 type UsersTableProps = {
   data: UserSchema[];
+  currentUserId: string;
 };
 
-export const UsersTable = ({ data }: UsersTableProps) => {
+export const UsersTable = ({ data, currentUserId }: UsersTableProps) => {
   const table = useTable({
     key: "users-table",
     columns,
@@ -68,9 +113,13 @@ export const UsersTable = ({ data }: UsersTableProps) => {
     features,
     rowModels: { coreRowModel: createCoreRowModel() },
     getRowId: (row) => row.id,
+    enableRowSelection: (row) => row.original.id !== currentUserId,
   });
 
   useTanStackTableDevtools(table);
+
+  const selectedUsers = table.getSelectedRowModel().rows.map((row) => row.original);
+  const columnCount = table.getAllLeafColumns().length;
 
   return (
     <Table>
@@ -91,7 +140,7 @@ export const UsersTable = ({ data }: UsersTableProps) => {
       </TableHeader>
       <TableBody>
         {table.getRowModel().rows.map((row) => (
-          <TableRow key={row.id}>
+          <TableRow key={row.id} data-state={row.getIsSelected() ? "selected" : undefined}>
             {row.getAllCells().map((cell) => (
               <TableCell key={cell.id} className={cell.column.columnDef.meta?.className}>
                 <table.FlexRender cell={cell} />
@@ -100,6 +149,18 @@ export const UsersTable = ({ data }: UsersTableProps) => {
           </TableRow>
         ))}
       </TableBody>
+      {selectedUsers.length > 0 && (
+        <TableFooter>
+          <TableRow className="h-auto">
+            <TableCell colSpan={columnCount} className="py-2">
+              <UsersTableBulkActions
+                users={selectedUsers}
+                onRemovedAction={() => table.resetRowSelection()}
+              />
+            </TableCell>
+          </TableRow>
+        </TableFooter>
+      )}
     </Table>
   );
 };
