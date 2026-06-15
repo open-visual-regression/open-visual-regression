@@ -60,17 +60,15 @@ describe("UsersTable", () => {
   });
 
   it("should not show a copy invite button for active users", () => {
-    const user = mocks.user.generateUser({ status: "active", invitationUrl: null });
+    const user = mocks.user.generateUser({ status: "active" });
     render(<UsersTable data={[user]} />);
 
     expect(screen.queryByRole("button", { name: /copy invite/i })).not.toBeInTheDocument();
   });
 
   it("should copy the invitation link to clipboard when clicked", async ({ user }) => {
-    const invitedUser = mocks.user.generateUser({
-      status: "invited",
-      invitationUrl: "http://localhost:3000/invitations/test-invitation-id",
-    });
+    const invitationUrl = "http://localhost:3000/invitations/test-invitation-id";
+    const invitedUser = mocks.user.generateUser({ status: "invited", invitationUrl });
     render(<UsersTable data={[invitedUser]} />);
 
     const writeText = vi.fn().mockResolvedValue(undefined);
@@ -81,7 +79,7 @@ describe("UsersTable", () => {
 
     await user.click(screen.getByRole("button", { name: /copy invite/i }));
 
-    expect(writeText).toHaveBeenCalledWith(invitedUser.invitationUrl);
+    expect(writeText).toHaveBeenCalledWith(invitationUrl);
     expect(await screen.findByRole("button", { name: /^copied$/i })).toBeVisible();
   });
 });

@@ -1,16 +1,29 @@
 import { oc } from "@orpc/contract";
 import { z } from "zod";
 
-export const userSchema = z.object({
+const baseUserSchema = z.object({
   id: z.string(),
   name: z.string(),
   email: z.string(),
   role: z.string().nullable(),
-  status: z.enum(["active", "invited"]),
   createdAt: z.date(),
-  lastLoginAt: z.date().nullable(),
-  invitationUrl: z.string().nullable(),
 });
+
+export const activeUserSchema = baseUserSchema.extend({
+  status: z.literal("active"),
+  lastLoginAt: z.date().nullable(),
+});
+
+export type ActiveUserSchema = z.infer<typeof activeUserSchema>;
+
+export const invitedUserSchema = baseUserSchema.extend({
+  status: z.literal("invited"),
+  invitationUrl: z.string(),
+});
+
+export type InvitedUserSchema = z.infer<typeof invitedUserSchema>;
+
+export const userSchema = z.discriminatedUnion("status", [activeUserSchema, invitedUserSchema]);
 
 export type UserSchema = z.infer<typeof userSchema>;
 

@@ -37,7 +37,8 @@ describe("users", () => {
       const [, result] = await serverClient.users.list();
 
       const adminEntry = result?.users.find((u) => u.id === admin.id);
-      expect(adminEntry?.lastLoginAt).toBeInstanceOf(Date);
+      expect(adminEntry?.status).toBe("active");
+      expect(adminEntry?.status === "active" && adminEntry.lastLoginAt).toBeInstanceOf(Date);
     });
 
     test("should mark existing members as active", async ({ admin }) => {
@@ -45,7 +46,6 @@ describe("users", () => {
 
       const adminEntry = result?.users.find((u) => u.id === admin.id);
       expect(adminEntry?.status).toBe("active");
-      expect(adminEntry?.invitationUrl).toBeNull();
     });
 
     test("should include pending invitations with an invited status", async ({ admin: _ }) => {
@@ -55,7 +55,9 @@ describe("users", () => {
 
       const invitedEntry = result?.users.find((u) => u.email === "pending@example.com");
       expect(invitedEntry?.status).toBe("invited");
-      expect(invitedEntry?.invitationUrl).toBe(inviteResult?.invitationUrl);
+      expect(invitedEntry?.status === "invited" && invitedEntry.invitationUrl).toBe(
+        inviteResult?.invitationUrl,
+      );
     });
 
     test("should sort users and invitations by name", async ({ admin: _ }) => {

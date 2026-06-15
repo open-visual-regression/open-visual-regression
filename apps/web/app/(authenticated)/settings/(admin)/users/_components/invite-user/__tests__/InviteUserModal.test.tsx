@@ -7,6 +7,7 @@ import { InviteUserModal } from "../InviteUserModal";
 import { InviteUserModalButton } from "../InviteUserModalButton";
 
 vi.mock("@/lib/router");
+vi.mock("next/navigation");
 
 const mockInvite = vi.mocked(serverClient.users.invite);
 

@@ -11,8 +11,8 @@ export const list = os.users.list
   .use(adminMiddleware)
   .handler(async ({ context }) => {
     const [users, invitations] = await Promise.all([
-      dbClient.users.findAllUsers(),
-      dbClient.users.findPendingInvitations(context.organizationId),
+      dbClient.users.findAll(context.organizationId),
+      dbClient.invitations.findPending(context.organizationId),
     ]);
 
     const baseUrl = process.env.BASE_URL ?? "http://localhost:3000";
@@ -27,7 +27,6 @@ export const list = os.users.list
           status: "active" as const,
           createdAt: u.createdAt,
           lastLoginAt: u.lastLoginAt,
-          invitationUrl: null,
         })),
         ...invitations.map((i) => ({
           id: i.id,
@@ -36,7 +35,6 @@ export const list = os.users.list
           role: i.role,
           status: "invited" as const,
           createdAt: i.createdAt,
-          lastLoginAt: null,
           invitationUrl: `${baseUrl}/invitations/${i.id}`,
         })),
       ].sort((a, b) => a.name.localeCompare(b.name)),

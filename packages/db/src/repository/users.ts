@@ -1,6 +1,6 @@
-import { and, count, desc, eq, max } from "drizzle-orm";
+import { count, desc, eq, max } from "drizzle-orm";
 import { db } from "../db";
-import { invitation, session, user } from "../schemas/auth";
+import { member, session, user } from "../schemas/auth";
 
 export const getUserCount = async (): Promise<number> => {
   const [row] = await db.select({ count: count() }).from(user);
@@ -10,7 +10,7 @@ export const getUserCount = async (): Promise<number> => {
 export const findByEmail = (email: string) =>
   db.query.user.findFirst({ where: eq(user.email, email) });
 
-export const findAllUsers = () =>
+export const findAll = (organizationId: string) =>
   db
     .select({
       id: user.id,
@@ -21,26 +21,12 @@ export const findAllUsers = () =>
       lastLoginAt: max(session.createdAt),
     })
     .from(user)
+    .innerJoin(member, eq(member.userId, user.id))
     .leftJoin(session, eq(session.userId, user.id))
+    .where(eq(member.organizationId, organizationId))
     .groupBy(user.id)
     .orderBy(desc(user.createdAt));
 
-export type FindAllUsersResult = Awaited<ReturnType<typeof findAllUsers>>;
+export type FindAllResult = Awaited<ReturnType<typeof findAll>>;
 
-export type UserDbSchema = FindAllUsersResult[number];
-
-export const findPendingInvitations = (organizationId: string) =>
-  db
-    .select({
-      id: invitation.id,
-      email: invitation.email,
-      role: invitation.role,
-      createdAt: invitation.createdAt,
-    })
-    .from(invitation)
-    .where(and(eq(invitation.organizationId, organizationId), eq(invitation.status, "pending")))
-    .orderBy(desc(invitation.createdAt));
-
-export type FindPendingInvitationsResult = Awaited<ReturnType<typeof findPendingInvitations>>;
-
-export type InvitationDbSchema = FindPendingInvitationsResult[number];
+export type UserDbSchema = FindAllResult[number];

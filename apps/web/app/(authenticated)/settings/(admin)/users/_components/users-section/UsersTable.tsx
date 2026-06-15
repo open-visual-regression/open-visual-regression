@@ -29,6 +29,7 @@ const columns = columnHelper.columns([
   columnHelper.accessor("email", { header: "Email" }),
   columnHelper.accessor("role", {
     header: "Role",
+    meta: { className: "text-center" },
     cell: ({ getValue }) =>
       getValue() === "admin" ? (
         <Badge variant="changed">admin</Badge>
@@ -38,6 +39,7 @@ const columns = columnHelper.columns([
   }),
   columnHelper.accessor("status", {
     header: "Status",
+    meta: { className: "text-center" },
     cell: ({ getValue }) =>
       getValue() === "invited" ? (
         <Badge variant="pending">invited</Badge>
@@ -45,26 +47,30 @@ const columns = columnHelper.columns([
         <Badge variant="pass">active</Badge>
       ),
   }),
-  columnHelper.accessor("lastLoginAt", {
+  columnHelper.display({
+    id: "lastLoginAt",
     header: "Last login",
-    cell: ({ getValue }) => {
-      const lastLoginAt = getValue();
-      if (!lastLoginAt) {
-        return (
-          <span className="inline-flex items-center gap-1.5">
-            <StatusIcon variant="stale" size={12} />
-            never
-          </span>
-        );
+    meta: { className: "text-center" },
+    cell: ({ row }) => {
+      const neverLabel = (
+        <span className="inline-flex items-center gap-1.5">
+          <StatusIcon variant="stale" size={12} />
+          never
+        </span>
+      );
+
+      if (row.original.status === "invited") {
+        return neverLabel;
       }
-      return formatDateTime(lastLoginAt);
+
+      return row.original.lastLoginAt ? formatDateTime(row.original.lastLoginAt) : neverLabel;
     },
   }),
   columnHelper.display({
     id: "actions",
-    meta: { className: "w-px" },
+    meta: { className: "w-px text-center" },
     cell: ({ row }) =>
-      row.original.invitationUrl ? (
+      row.original.status === "invited" ? (
         <CopyInviteButton invitationUrl={row.original.invitationUrl} />
       ) : null,
   }),
