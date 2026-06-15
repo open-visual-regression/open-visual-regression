@@ -39,6 +39,24 @@ describe("users", () => {
       const adminEntry = result?.users.find((u) => u.id === admin.id);
       expect(adminEntry?.lastLoginAt).toBeInstanceOf(Date);
     });
+
+    test("should mark existing members as active", async ({ admin }) => {
+      const [, result] = await serverClient.users.list();
+
+      const adminEntry = result?.users.find((u) => u.id === admin.id);
+      expect(adminEntry?.status).toBe("active");
+      expect(adminEntry?.invitationUrl).toBeNull();
+    });
+
+    test("should include pending invitations with an invited status", async ({ admin: _ }) => {
+      const [, inviteResult] = await serverClient.users.invite({ email: "pending@example.com" });
+
+      const [, result] = await serverClient.users.list();
+
+      const invitedEntry = result?.users.find((u) => u.email === "pending@example.com");
+      expect(invitedEntry?.status).toBe("invited");
+      expect(invitedEntry?.invitationUrl).toBe(inviteResult?.invitationUrl);
+    });
   });
 
   describe("invite", () => {

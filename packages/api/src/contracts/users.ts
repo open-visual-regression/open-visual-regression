@@ -6,8 +6,10 @@ export const userSchema = z.object({
   name: z.string(),
   email: z.string(),
   role: z.string().nullable(),
+  status: z.enum(["active", "invited"]),
   createdAt: z.date(),
   lastLoginAt: z.date().nullable(),
+  invitationUrl: z.string().nullable(),
 });
 
 export type UserSchema = z.infer<typeof userSchema>;

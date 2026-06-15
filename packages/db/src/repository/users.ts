@@ -1,6 +1,6 @@
-import { count, desc, eq, max } from "drizzle-orm";
+import { and, count, desc, eq, max } from "drizzle-orm";
 import { db } from "../db";
-import { session, user } from "../schemas/auth";
+import { invitation, session, user } from "../schemas/auth";
 
 export const getUserCount = async (): Promise<number> => {
   const [row] = await db.select({ count: count() }).from(user);
@@ -28,3 +28,19 @@ export const findAll = () =>
 export type FindAllResult = Awaited<ReturnType<typeof findAll>>;
 
 export type UserDbSchema = FindAllResult[number];
+
+export const findPendingInvitations = (organizationId: string) =>
+  db
+    .select({
+      id: invitation.id,
+      email: invitation.email,
+      role: invitation.role,
+      createdAt: invitation.createdAt,
+    })
+    .from(invitation)
+    .where(and(eq(invitation.organizationId, organizationId), eq(invitation.status, "pending")))
+    .orderBy(desc(invitation.createdAt));
+
+export type FindPendingInvitationsResult = Awaited<ReturnType<typeof findPendingInvitations>>;
+
+export type InvitationDbSchema = FindPendingInvitationsResult[number];

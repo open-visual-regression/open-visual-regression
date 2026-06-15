@@ -19,6 +19,7 @@ import { StatusIcon } from "@ovr/ui/components/status-icon";
 import { useTanStackTableDevtools } from "@tanstack/react-table-devtools";
 import { formatDateTime } from "@/lib/utils/date";
 import { type UserSchema } from "@ovr/api/contracts/users";
+import { CopyInviteButton } from "./CopyInviteButton";
 
 const features = tableFeatures({});
 const columnHelper = createColumnHelper<typeof features, UserSchema>();
@@ -33,6 +34,15 @@ const columns = columnHelper.columns([
         <Badge variant="changed">admin</Badge>
       ) : (
         <Badge variant="neutral">user</Badge>
+      ),
+  }),
+  columnHelper.accessor("status", {
+    header: "Status",
+    cell: ({ getValue }) =>
+      getValue() === "invited" ? (
+        <Badge variant="pending">invited</Badge>
+      ) : (
+        <Badge variant="pass">active</Badge>
       ),
   }),
   columnHelper.accessor("lastLoginAt", {
@@ -53,6 +63,14 @@ const columns = columnHelper.columns([
   columnHelper.accessor("createdAt", {
     header: "Created",
     cell: ({ getValue }) => formatDateTime(getValue()),
+  }),
+  columnHelper.display({
+    id: "actions",
+    meta: { className: "w-px" },
+    cell: ({ row }) =>
+      row.original.invitationUrl ? (
+        <CopyInviteButton invitationUrl={row.original.invitationUrl} />
+      ) : null,
   }),
 ]);
 

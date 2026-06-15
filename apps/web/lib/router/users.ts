@@ -9,18 +9,37 @@ import { authServerClient } from "../auth";
 export const list = os.users.list
   .use(authenticatedMiddleware)
   .use(adminMiddleware)
-  .handler(async () => {
-    const users = await dbClient.users.findAll();
+  .handler(async ({ context }) => {
+    const [users, invitations] = await Promise.all([
+      dbClient.users.findAll(),
+      dbClient.users.findPendingInvitations(context.organizationId),
+    ]);
+
+    const baseUrl = process.env.BASE_URL ?? "http://localhost:3000";
 
     return {
-      users: users.map((u) => ({
-        id: u.id,
-        name: u.name,
-        email: u.email,
-        role: u.role,
-        createdAt: u.createdAt,
-        lastLoginAt: u.lastLoginAt,
-      })),
+      users: [
+        ...users.map((u) => ({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          role: u.role,
+          status: "active" as const,
+          createdAt: u.createdAt,
+          lastLoginAt: u.lastLoginAt,
+          invitationUrl: null,
+        })),
+        ...invitations.map((i) => ({
+          id: i.id,
+          name: i.email,
+          email: i.email,
+          role: i.role,
+          status: "invited" as const,
+          createdAt: i.createdAt,
+          lastLoginAt: null,
+          invitationUrl: `${baseUrl}/invitations/${i.id}`,
+        })),
+      ],
     };
   })
   .actionable();

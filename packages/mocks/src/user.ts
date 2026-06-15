@@ -25,7 +25,9 @@ export const generateUser = (overrides?: Partial<UserSchema>): UserSchema => ({
   name: faker.person.fullName(),
   email: faker.internet.email(),
   role: "user",
+  status: "active",
   createdAt: faker.date.past(),
   lastLoginAt: faker.date.recent(),
+  invitationUrl: null,
   ...overrides,
 });

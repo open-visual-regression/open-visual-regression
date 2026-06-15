@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { describe, expect, it, render, screen } from "@/test-utils";
 import { mocks } from "@ovr/mocks";
 import { formatDateTime } from "@/lib/utils/date";
@@ -50,5 +51,55 @@ describe("UsersTable", () => {
     render(<UsersTable data={[user]} />);
 
     expect(screen.getByRole("cell", { name: formatDateTime(createdAt) })).toBeVisible();
+  });
+
+  it("should show an active status badge for active users", () => {
+    const user = mocks.user.generateUser({ status: "active" });
+    render(<UsersTable data={[user]} />);
+
+    expect(screen.getByRole("cell", { name: "active" })).toBeVisible();
+  });
+
+  it("should show an invited status badge for invited users", () => {
+    const user = mocks.user.generateUser({ status: "invited" });
+    render(<UsersTable data={[user]} />);
+
+    expect(screen.getByRole("cell", { name: "invited" })).toBeVisible();
+  });
+
+  it("should not show a copy invite button for active users", () => {
+    const user = mocks.user.generateUser({ status: "active", invitationUrl: null });
+    render(<UsersTable data={[user]} />);
+
+    expect(screen.queryByRole("button", { name: /copy invite/i })).not.toBeInTheDocument();
+  });
+
+  it("should show a copy invite button for invited users", () => {
+    const user = mocks.user.generateUser({
+      status: "invited",
+      invitationUrl: "http://localhost:3000/invitations/test-invitation-id",
+    });
+    render(<UsersTable data={[user]} />);
+
+    expect(screen.getByRole("button", { name: /copy invite/i })).toBeVisible();
+  });
+
+  it("should copy the invitation link to clipboard when clicked", async ({ user }) => {
+    const invitedUser = mocks.user.generateUser({
+      status: "invited",
+      invitationUrl: "http://localhost:3000/invitations/test-invitation-id",
+    });
+    render(<UsersTable data={[invitedUser]} />);
+
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText },
+      configurable: true,
+    });
+
+    await user.click(screen.getByRole("button", { name: /copy invite/i }));
+
+    expect(writeText).toHaveBeenCalledWith(invitedUser.invitationUrl);
+    expect(await screen.findByRole("button", { name: /^copied$/i })).toBeVisible();
   });
 });
