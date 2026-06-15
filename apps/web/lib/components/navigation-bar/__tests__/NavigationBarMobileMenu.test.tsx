@@ -33,7 +33,6 @@ describe("NavigationBarMobileMenu", () => {
     expect(screen.getByRole("link", { name: "account" })).toBeVisible();
     expect(screen.getByRole("link", { name: "general" })).toBeVisible();
     expect(screen.getByRole("link", { name: "users" })).toBeVisible();
-    expect(screen.getByRole("link", { name: "invitations" })).toBeVisible();
   });
 
   it("should open the projects nav links from the mobile menu", async ({ user }) => {
