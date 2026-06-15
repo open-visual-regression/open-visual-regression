@@ -23,6 +23,17 @@ const RELATIVE_TIME_DIVISIONS: { amount: number; unit: Intl.RelativeTimeFormatUn
   { amount: 24, unit: "hours" },
 ];
 
+const formatRelativeDuration = (
+  durationSeconds: number,
+  [division, ...remainingDivisions]: typeof RELATIVE_TIME_DIVISIONS,
+): string => {
+  if (!division || Math.abs(durationSeconds) < division.amount) {
+    return relativeTimeFormatter.format(Math.round(durationSeconds), division?.unit ?? "hours");
+  }
+
+  return formatRelativeDuration(durationSeconds / division.amount, remainingDivisions);
+};
+
 /** Relative time (e.g. "5 minutes ago") within 24h, otherwise an absolute date/time. */
 export const formatRelativeDateTime = (date: Date): string => {
   const diffMs = date.getTime() - Date.now();
@@ -31,14 +42,5 @@ export const formatRelativeDateTime = (date: Date): string => {
     return formatDateTime(date);
   }
 
-  let duration = diffMs / 1000;
-
-  for (const division of RELATIVE_TIME_DIVISIONS) {
-    if (Math.abs(duration) < division.amount) {
-      return relativeTimeFormatter.format(Math.round(duration), division.unit);
-    }
-    duration /= division.amount;
-  }
-
-  return relativeTimeFormatter.format(Math.round(duration), "hours");
+  return formatRelativeDuration(diffMs / 1000, RELATIVE_TIME_DIVISIONS);
 };

@@ -11,16 +11,10 @@ declare global {
 globalThis.jest ??= { advanceTimersByTime: vi.advanceTimersByTime };
 
 export const it = base.extend<{ user: ReturnType<typeof userEvent.setup> }>({
+  // `delay: null` skips user-event's internal setTimeout-based waits, so
+  // interactions work the same under real and fake timers.
   user: async ({}, use) => {
-    await use(
-      userEvent.setup({
-        advanceTimers: (delay) => {
-          if (vi.isFakeTimers()) {
-            vi.advanceTimersByTime(delay);
-          }
-        },
-      }),
-    );
+    await use(userEvent.setup({ delay: null }));
   },
 });
 

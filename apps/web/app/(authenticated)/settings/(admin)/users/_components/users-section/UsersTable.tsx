@@ -88,7 +88,7 @@ const columns = columnHelper.columns([
     meta: { className: "w-px text-center" },
     cell: ({ row }) =>
       row.original.status === "invited" ? (
-        <CopyButton text={row.original.invitationUrl} label="copy invite" />
+        <CopyButton text={row.original.invitationUrl}>copy invite</CopyButton>
       ) : null,
   }),
 ]);
