@@ -45,14 +45,6 @@ describe("UsersTable", () => {
     expect(screen.getByRole("cell", { name: formatDateTime(lastLoginAt) })).toBeVisible();
   });
 
-  it("should show the created date for each user", () => {
-    const createdAt = new Date("2026-04-12T08:30:00Z");
-    const user = mocks.user.generateUser({ createdAt });
-    render(<UsersTable data={[user]} />);
-
-    expect(screen.getByRole("cell", { name: formatDateTime(createdAt) })).toBeVisible();
-  });
-
   it("should show an active status badge for active users", () => {
     const user = mocks.user.generateUser({ status: "active" });
     render(<UsersTable data={[user]} />);

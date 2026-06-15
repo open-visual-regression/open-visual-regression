@@ -57,6 +57,16 @@ describe("users", () => {
       expect(invitedEntry?.status).toBe("invited");
       expect(invitedEntry?.invitationUrl).toBe(inviteResult?.invitationUrl);
     });
+
+    test("should sort users and invitations by name", async ({ admin: _ }) => {
+      await serverClient.users.invite({ email: "zzz-test@example.com" });
+      await serverClient.users.invite({ email: "aaa-test@example.com" });
+
+      const [, result] = await serverClient.users.list();
+
+      const names = result?.users.map((u) => u.name) ?? [];
+      expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
+    });
   });
 
   describe("invite", () => {

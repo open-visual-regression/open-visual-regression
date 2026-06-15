@@ -60,10 +60,6 @@ const columns = columnHelper.columns([
       return formatDateTime(lastLoginAt);
     },
   }),
-  columnHelper.accessor("createdAt", {
-    header: "Created",
-    cell: ({ getValue }) => formatDateTime(getValue()),
-  }),
   columnHelper.display({
     id: "actions",
     meta: { className: "w-px" },

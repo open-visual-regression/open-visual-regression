@@ -39,7 +39,7 @@ export const list = os.users.list
           lastLoginAt: null,
           invitationUrl: `${baseUrl}/invitations/${i.id}`,
         })),
-      ],
+      ].sort((a, b) => a.name.localeCompare(b.name)),
     };
   })
   .actionable();
