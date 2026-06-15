@@ -16,6 +16,7 @@ type StorybookCommandOptions = {
   serverUrl: string;
   branch: string;
   commit: string;
+  name?: string;
   timeout: string;
 };
 
@@ -25,13 +26,14 @@ export const storybookCommand = new Command("storybook")
   .requiredOption("--server-url <url>", "OVR server URL")
   .requiredOption("--branch <name>", "branch name")
   .requiredOption("--commit <sha>", "commit SHA")
+  .option("--name <name>", "build name (e.g. commit message)")
   .option("--timeout <seconds>", "maximum seconds to wait for build result", "600")
   .action(async (options: StorybookCommandOptions) => {
     const apiKey = getApiKey();
 
     try {
       const targets = await readStoryIds(options.dir);
-      const { branch, commit: commitSha } = options;
+      const { branch, commit: commitSha, name } = options;
 
       const client = createClient(options.serverUrl, apiKey);
 
@@ -39,6 +41,7 @@ export const storybookCommand = new Command("storybook")
       const { buildId, uploadUrl } = await client.builds.createBuild({
         branch,
         commitSha,
+        name,
         targets,
       });
 

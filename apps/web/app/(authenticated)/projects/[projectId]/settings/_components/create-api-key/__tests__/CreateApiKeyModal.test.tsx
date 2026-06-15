@@ -75,6 +75,33 @@ describe("CreateApiKeyModal", () => {
     expect(await screen.findByRole("button", { name: /^copied$/i })).toBeVisible();
   });
 
+  it("should revert the copy button back to 'copy' after a few seconds", async ({ user }) => {
+    vi.useFakeTimers();
+
+    try {
+      mockCreate.mockResolvedValue([null, { key: API_KEY }]);
+      renderComponent();
+
+      await user.click(screen.getByRole("button", { name: /new api key/i }));
+      await user.type(screen.getByLabelText(/name/i), "local dev");
+      await user.click(screen.getByRole("button", { name: /^create$/i }));
+
+      Object.defineProperty(navigator, "clipboard", {
+        value: { writeText: vi.fn().mockResolvedValue(undefined) },
+        configurable: true,
+      });
+
+      await user.click(await screen.findByRole("button", { name: /^copy$/i }));
+      expect(await screen.findByRole("button", { name: /^copied$/i })).toBeVisible();
+
+      await vi.advanceTimersByTimeAsync(2100);
+
+      expect(await screen.findByRole("button", { name: /^copy$/i })).toBeVisible();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("should show an error if api key creation fails", async ({ user }) => {
     mockCreate.mockResolvedValue([createORPCError("INTERNAL_SERVER_ERROR"), undefined]);
     renderComponent();

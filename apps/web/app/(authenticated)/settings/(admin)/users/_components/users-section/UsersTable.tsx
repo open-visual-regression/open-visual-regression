@@ -21,9 +21,9 @@ import {
 import { Badge } from "@ovr/ui/components/badge";
 import { Checkbox } from "@ovr/ui/components/checkbox";
 import { StatusIcon } from "@ovr/ui/components/status-icon";
+import { CopyButton } from "@/lib/components/copy-button/CopyButton";
 import { formatDateTime } from "@/lib/utils/date";
 import { type UserSchema } from "@ovr/api/contracts/users";
-import { CopyInviteButton } from "./CopyInviteButton";
 import { UsersTableBulkActions } from "./UsersTableBulkActions";
 
 const features = tableFeatures({ rowSelectionFeature });
@@ -88,7 +88,7 @@ const columns = columnHelper.columns([
     meta: { className: "w-px text-center" },
     cell: ({ row }) =>
       row.original.status === "invited" ? (
-        <CopyInviteButton invitationUrl={row.original.invitationUrl} />
+        <CopyButton text={row.original.invitationUrl}>copy invite</CopyButton>
       ) : null,
   }),
 ]);

@@ -3,9 +3,12 @@ import { z } from "zod";
 
 export const buildStatusSchema = z.enum(["pending", "needs_review", "passed", "error"]);
 
+export type BuildStatus = z.infer<typeof buildStatusSchema>;
+
 export const createBuildInputSchema = z.object({
   branch: z.string().min(1),
   commitSha: z.string().min(1),
+  name: z.string().min(1).optional(),
   targets: z.array(z.string().min(1)),
 });
 
@@ -39,6 +42,7 @@ export const buildSchema = z.object({
   }),
   branch: z.string().min(1),
   commitSha: z.string().min(1),
+  name: z.string().min(1).nullable(),
   status: buildStatusSchema,
   createdAt: z.string().nonempty(),
 });

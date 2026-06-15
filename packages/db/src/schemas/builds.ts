@@ -51,6 +51,7 @@ export const builds = pgTable("builds", {
     .notNull(),
   branch: varchar({ length: 255 }).notNull(),
   commitSha: varchar("commit_sha", { length: 64 }).notNull(),
+  name: varchar({ length: 255 }),
   status: buildStatusEnum().notNull().default("pending"),
   captureMode: captureModeEnum("capture_mode").notNull().default("worker"),
   artifactPath: text("artifact_path").notNull(),
