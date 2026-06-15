@@ -93,7 +93,7 @@ describe("builds", () => {
   });
 
   describe("findAll", () => {
-    test("returns builds across projects in the organization sorted by most recent first", async ({
+    test("should return builds across all projects in the organization, most recent first", async ({
       organization,
       project,
       user,
@@ -144,7 +144,7 @@ describe("builds", () => {
       });
     });
 
-    test("does not return builds belonging to other organizations", async ({
+    test("should not return builds belonging to other organizations", async ({
       organization,
       project,
       user,
@@ -191,7 +191,11 @@ describe("builds", () => {
       expect(builds.map((build) => build.projectId)).toEqual([project.id]);
     });
 
-    test("filters by projectIds", async ({ organization, project, user }) => {
+    test("should only return builds for the given projects", async ({
+      organization,
+      project,
+      user,
+    }) => {
       const [otherProject] = await db
         .insert(projects)
         .values({
@@ -230,7 +234,12 @@ describe("builds", () => {
       expect(builds.map((build) => build.id)).toEqual([otherProjectBuild!.id]);
     });
 
-    test("filters by status", async ({ organization, project, user, build: pendingBuild }) => {
+    test("should only return builds matching the given status", async ({
+      organization,
+      project,
+      user,
+      build: pendingBuild,
+    }) => {
       const passedBuild = await dbClient.builds.create({
         projectId: project.id,
         branch: "main",
@@ -252,7 +261,7 @@ describe("builds", () => {
       expect(pendingBuild.status).toBe("pending");
     });
 
-    test("paginates results with limit and offset", async ({ organization, project, user }) => {
+    test("should respect the limit and offset params", async ({ organization, project, user }) => {
       for (let i = 0; i < 3; i++) {
         await dbClient.builds.create({
           projectId: project.id,
@@ -275,7 +284,11 @@ describe("builds", () => {
       expect(builds.map((build) => build.commitSha)).toEqual(["1".repeat(40), "0".repeat(40)]);
     });
 
-    test("sorts ascending when sortDirection is asc", async ({ organization, project, user }) => {
+    test("should return the oldest builds first when sorted ascending", async ({
+      organization,
+      project,
+      user,
+    }) => {
       const older = await dbClient.builds.create({
         projectId: project.id,
         branch: "main",

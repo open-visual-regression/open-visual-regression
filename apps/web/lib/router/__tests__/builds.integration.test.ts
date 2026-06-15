@@ -181,7 +181,7 @@ describe("builds", () => {
       expect(error).toBeNull();
     });
 
-    test("should return builds across projects in the organization, most recent first", async ({
+    test("should return builds across all projects in the organization, most recent first", async ({
       admin,
     }) => {
       const [, projectA] = await serverClient.projects.add(TEST_PROJECT);
@@ -221,7 +221,7 @@ describe("builds", () => {
       });
     });
 
-    test("should filter builds by projectIds", async ({ admin }) => {
+    test("should only return builds for the given projects", async ({ admin }) => {
       const [, projectA] = await serverClient.projects.add(TEST_PROJECT);
       const [, projectB] = await serverClient.projects.add({
         ...TEST_PROJECT,
@@ -251,7 +251,7 @@ describe("builds", () => {
       expect(result?.builds.map((build) => build.id)).toEqual([buildB!.id]);
     });
 
-    test("should filter builds by status", async ({ admin }) => {
+    test("should only return builds matching the given status", async ({ admin }) => {
       const [, project] = await serverClient.projects.add(TEST_PROJECT);
 
       await dbClient.builds.create({
@@ -277,7 +277,7 @@ describe("builds", () => {
       expect(result?.builds.map((build) => build.id)).toEqual([passedBuild!.id]);
     });
 
-    test("should respect limit and offset for pagination", async ({ admin }) => {
+    test("should respect the limit and offset params", async ({ admin }) => {
       const [, project] = await serverClient.projects.add(TEST_PROJECT);
 
       for (let i = 0; i < 3; i++) {
@@ -298,7 +298,7 @@ describe("builds", () => {
       expect(result?.total).toBe(3);
     });
 
-    test("should not return builds from other organizations", async ({ admin }) => {
+    test("should not return builds belonging to other organizations", async ({ admin }) => {
       const [, project] = await serverClient.projects.add(TEST_PROJECT);
 
       await dbClient.builds.create({
