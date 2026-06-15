@@ -16,7 +16,7 @@ export const test = vitest.extend<{
 }>({
   // eslint-disable-next-line no-empty-pattern
   admin: async ({}, use) => {
-    const { name, email } = mocks.user.generateUser();
+    const { name, email } = mocks.user.generateAuthUser();
     const { user } = await auth.api.createUser({
       body: { name, email, password: TEST_PASSWORD, role: "admin" },
     });
@@ -35,7 +35,7 @@ export const test = vitest.extend<{
 
   // eslint-disable-next-line no-empty-pattern
   user: async ({}, use) => {
-    const { name, email } = mocks.user.generateUser();
+    const { name, email } = mocks.user.generateAuthUser();
     const { user } = await auth.api.signUpEmail({ body: { name, email, password: TEST_PASSWORD } });
     const org = mocks.organization.generateOrganization();
     await auth.api.createOrganization({

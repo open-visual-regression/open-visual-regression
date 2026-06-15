@@ -20,7 +20,7 @@ mockList.mockResolvedValue([null, { projects: [] }]);
 describe("NavigationSlot", () => {
   it("should render breadcrumbs for the projects root", async () => {
     mockGetSession.mockResolvedValue({
-      user: mocks.user.generateUser({ name: "Jane Doe" }),
+      user: mocks.user.generateAuthUser({ name: "Jane Doe" }),
       session: mocks.session.generateSession(),
     });
 
@@ -38,7 +38,7 @@ describe("NavigationSlot", () => {
   it("should resolve the project name in the breadcrumb trail", async () => {
     const project = mocks.project.generateProject({ name: "D's Construction" });
     mockGetSession.mockResolvedValue({
-      user: mocks.user.generateUser(),
+      user: mocks.user.generateAuthUser(),
       session: mocks.session.generateSession(),
     });
     mockGetOne.mockResolvedValue([null, { project }]);
