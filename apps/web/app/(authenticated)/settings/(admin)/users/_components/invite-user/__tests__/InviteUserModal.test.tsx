@@ -13,13 +13,13 @@ const mockInvite = vi.mocked(serverClient.users.invite);
 const INVITATION_URL = "http://localhost:3000/accept-invitation/test-invitation-id";
 
 const renderComponent = () =>
-  render(<InviteUserModal trigger={<InviteUserModalButton>add user</InviteUserModalButton>} />);
+  render(<InviteUserModal trigger={<InviteUserModalButton>invite user</InviteUserModalButton>} />);
 
 describe("InviteUserModal", () => {
   it("should show a validation error when the email is empty", async ({ user }) => {
     renderComponent();
 
-    await user.click(screen.getByRole("button", { name: /add user/i }));
+    await user.click(screen.getByRole("button", { name: /invite user/i }));
     await user.click(screen.getByRole("button", { name: /^send invite$/i }));
 
     expect(await screen.findByText("invalid email address")).toBeVisible();
@@ -32,7 +32,7 @@ describe("InviteUserModal", () => {
     mockInvite.mockResolvedValue([null, { invitationUrl: INVITATION_URL }]);
     renderComponent();
 
-    await user.click(screen.getByRole("button", { name: /add user/i }));
+    await user.click(screen.getByRole("button", { name: /invite user/i }));
     await user.type(screen.getByLabelText(/email/i), "new.user@example.com");
     await user.click(screen.getByRole("button", { name: /^send invite$/i }));
 
@@ -45,7 +45,7 @@ describe("InviteUserModal", () => {
     mockInvite.mockResolvedValue([null, { invitationUrl: INVITATION_URL }]);
     renderComponent();
 
-    await user.click(screen.getByRole("button", { name: /add user/i }));
+    await user.click(screen.getByRole("button", { name: /invite user/i }));
     await user.type(screen.getByLabelText(/email/i), "new.user@example.com");
     await user.click(screen.getByRole("button", { name: /^send invite$/i }));
 
@@ -65,7 +65,7 @@ describe("InviteUserModal", () => {
     mockInvite.mockResolvedValue([createORPCError("INTERNAL_SERVER_ERROR"), undefined]);
     renderComponent();
 
-    await user.click(screen.getByRole("button", { name: /add user/i }));
+    await user.click(screen.getByRole("button", { name: /invite user/i }));
     await user.type(screen.getByLabelText(/email/i), "new.user@example.com");
     await user.click(screen.getByRole("button", { name: /^send invite$/i }));
 
@@ -76,7 +76,7 @@ describe("InviteUserModal", () => {
     mockInvite.mockReturnValue(new Promise(() => {}));
     renderComponent();
 
-    await user.click(screen.getByRole("button", { name: /add user/i }));
+    await user.click(screen.getByRole("button", { name: /invite user/i }));
     await user.type(screen.getByLabelText(/email/i), "new.user@example.com");
     await user.click(screen.getByRole("button", { name: /^send invite$/i }));
 
@@ -89,12 +89,12 @@ describe("InviteUserModal", () => {
     mockInvite.mockResolvedValue([null, { invitationUrl: INVITATION_URL }]);
     renderComponent();
 
-    await user.click(screen.getByRole("button", { name: /add user/i }));
+    await user.click(screen.getByRole("button", { name: /invite user/i }));
     await user.type(screen.getByLabelText(/email/i), "new.user@example.com");
     await user.click(screen.getByRole("button", { name: /^send invite$/i }));
     await user.click(await screen.findByRole("button", { name: /^done$/i }));
 
-    await user.click(screen.getByRole("button", { name: /add user/i }));
+    await user.click(screen.getByRole("button", { name: /invite user/i }));
 
     expect(await screen.findByRole("heading", { name: /^invite user$/i })).toBeVisible();
     expect(screen.getByLabelText(/email/i)).toHaveValue("");

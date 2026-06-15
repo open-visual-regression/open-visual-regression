@@ -19,7 +19,7 @@ export const UsersSection = ({ users }: UsersSectionProps) => (
         trigger={
           <InviteUserModalButton>
             <Icon icon={PlusIcon} />
-            add user
+            invite user
           </InviteUserModalButton>
         }
       />
