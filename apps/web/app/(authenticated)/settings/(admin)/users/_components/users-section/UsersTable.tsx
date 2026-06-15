@@ -16,6 +16,7 @@ import {
   TableHead,
   TableRow,
   TableCell,
+  TableEmpty,
 } from "@ovr/ui/components/table";
 import { Badge } from "@ovr/ui/components/badge";
 import { Checkbox } from "@ovr/ui/components/checkbox";
@@ -32,14 +33,6 @@ const columns = columnHelper.columns([
   columnHelper.display({
     id: "select",
     meta: { className: "w-px" },
-    header: ({ table }) => (
-      <Checkbox
-        aria-label="select all users"
-        checked={table.getIsAllRowsSelected()}
-        indeterminate={table.getIsSomeRowsSelected()}
-        onCheckedChange={(checked) => table.toggleAllRowsSelected(checked)}
-      />
-    ),
     cell: ({ row }) =>
       row.getCanSelect() ? (
         <Checkbox
@@ -103,9 +96,10 @@ const columns = columnHelper.columns([
 type UsersTableProps = {
   data: UserSchema[];
   currentUserId: string;
+  search?: string;
 };
 
-export const UsersTable = ({ data, currentUserId }: UsersTableProps) => {
+export const UsersTable = ({ data, currentUserId, search }: UsersTableProps) => {
   const table = useTable({
     key: "users-table",
     columns,
@@ -139,15 +133,21 @@ export const UsersTable = ({ data, currentUserId }: UsersTableProps) => {
         ))}
       </TableHeader>
       <TableBody>
-        {table.getRowModel().rows.map((row) => (
-          <TableRow key={row.id} data-state={row.getIsSelected() ? "selected" : undefined}>
-            {row.getAllCells().map((cell) => (
-              <TableCell key={cell.id} className={cell.column.columnDef.meta?.className}>
-                <table.FlexRender cell={cell} />
-              </TableCell>
-            ))}
-          </TableRow>
-        ))}
+        {table.getRowModel().rows.length === 0 ? (
+          <TableEmpty colSpan={columnCount}>
+            {search ? `no users found matching "${search}"` : "no users found"}
+          </TableEmpty>
+        ) : (
+          table.getRowModel().rows.map((row) => (
+            <TableRow key={row.id} data-state={row.getIsSelected() ? "selected" : undefined}>
+              {row.getAllCells().map((cell) => (
+                <TableCell key={cell.id} className={cell.column.columnDef.meta?.className}>
+                  <table.FlexRender cell={cell} />
+                </TableCell>
+              ))}
+            </TableRow>
+          ))
+        )}
       </TableBody>
       {selectedUsers.length > 0 && (
         <TableFooter>

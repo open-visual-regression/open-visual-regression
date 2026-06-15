@@ -6,7 +6,11 @@ import { auth } from "@/lib/auth/auth";
 import { verifyRole } from "@/lib/utils/authorization";
 import { serverError } from "@/lib/utils/errors";
 
-export default async function SettingsUsersPage() {
+export type SettingsUsersPageProps = {
+  searchParams: Promise<{ search?: string }>;
+};
+
+export default async function SettingsUsersPage({ searchParams }: SettingsUsersPageProps) {
   const verifyRoleResult = await verifyRole("admin");
 
   if (verifyRoleResult.status === "error") {
@@ -17,8 +21,10 @@ export default async function SettingsUsersPage() {
     notFound();
   }
 
+  const { search } = await searchParams;
+
   const [[error, listResult], session] = await Promise.all([
-    serverClient.users.list(),
+    serverClient.users.list({ search }),
     auth.api.getSession({ headers: await headers() }),
   ]);
 
@@ -26,5 +32,5 @@ export default async function SettingsUsersPage() {
     serverError();
   }
 
-  return <UsersSection users={listResult.users} currentUserId={session.user.id} />;
+  return <UsersSection users={listResult.users} currentUserId={session.user.id} search={search} />;
 }

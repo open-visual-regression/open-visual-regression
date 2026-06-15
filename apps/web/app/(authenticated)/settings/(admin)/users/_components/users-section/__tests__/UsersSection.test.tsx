@@ -15,6 +15,24 @@ const mockRefresh = vi.mocked(useRouter)().refresh;
 const CURRENT_USER_ID = "current-user-id";
 
 describe("UsersSection", () => {
+  it("should show a search field for users", () => {
+    render(<UsersSection users={[]} currentUserId={CURRENT_USER_ID} />);
+
+    expect(screen.getByLabelText("search users")).toBeVisible();
+  });
+
+  it("should show an empty state when there are no users", () => {
+    render(<UsersSection users={[]} currentUserId={CURRENT_USER_ID} />);
+
+    expect(screen.getByRole("cell", { name: "no users found" })).toBeVisible();
+  });
+
+  it("should show a search-specific empty state when a search has no results", () => {
+    render(<UsersSection users={[]} currentUserId={CURRENT_USER_ID} search="ari" />);
+
+    expect(screen.getByRole("cell", { name: 'no users found matching "ari"' })).toBeVisible();
+  });
+
   it("should render a row for each user", () => {
     const admin = mocks.user.generateUser({ name: "ari shapiro", role: "admin" });
     const user = mocks.user.generateUser({ name: "sam chen", role: "user" });
