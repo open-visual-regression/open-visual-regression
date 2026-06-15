@@ -6,7 +6,7 @@ import { createBuild as createBuildService, getArtifactPath } from "@ovr/service
 import { storage } from "@ovr/storage";
 
 import { os } from "./os";
-import { apiKeyMiddleware } from "./middleware";
+import { apiKeyMiddleware, authenticatedMiddleware } from "./middleware";
 
 const UPLOAD_URL_TTL_SECONDS = 3600;
 
@@ -58,5 +58,33 @@ export const getBuildStatus = os.builds.getBuildStatus
     }
 
     return { status: build.status };
+  })
+  .actionable();
+
+export const list = os.builds.list
+  .use(authenticatedMiddleware)
+  .handler(async ({ input, context }) => {
+    const { projectIds, status, sortDirection = "desc", limit = 20, offset = 0 } = input ?? {};
+
+    const { builds: rows, total } = await dbClient.builds.findAll({
+      organizationId: context.organizationId,
+      projectIds,
+      status,
+      sortDirection,
+      limit,
+      offset,
+    });
+
+    return {
+      builds: rows.map((build) => ({
+        id: build.id,
+        project: { id: build.projectId, name: build.projectName },
+        branch: build.branch,
+        commitSha: build.commitSha,
+        status: build.status,
+        createdAt: build.createdAt,
+      })),
+      total,
+    };
   })
   .actionable();
