@@ -36,14 +36,10 @@ export type CancelInvitationInput = {
   headers: Headers;
 };
 
-export type SignInEmailInput = {
+export type CreateUserInput = {
+  name: string;
   email: string;
   password: string;
-};
-
-export type AcceptInvitationInput = {
-  invitationId: string;
-  headers: Headers;
 };
 
 const safeAuth = async <TData>(promise: Promise<TData>): Promise<SafeAuthResult<TData>> => {
@@ -76,8 +72,5 @@ export const removeMember = ({ email, organizationId, headers }: RemoveMemberInp
 export const cancelInvitation = ({ invitationId, headers }: CancelInvitationInput) =>
   safeAuth(auth.api.cancelInvitation({ body: { invitationId }, headers }));
 
-export const signInEmail = ({ email, password }: SignInEmailInput) =>
-  safeAuth(auth.api.signInEmail({ body: { email, password }, asResponse: true }));
-
-export const acceptInvitation = ({ invitationId, headers }: AcceptInvitationInput) =>
-  safeAuth(auth.api.acceptInvitation({ body: { invitationId }, headers }));
+export const createUser = ({ name, email, password }: CreateUserInput) =>
+  safeAuth(auth.api.createUser({ body: { name, email, password } }));

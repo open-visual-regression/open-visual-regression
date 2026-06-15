@@ -31,7 +31,7 @@ export const InvitationForm = ({ invitationId, email }: InvitationFormProps) => 
 
   const { execute, status } = useServerAction(serverClient.invitations.acceptInvitation, {
     interceptors: [
-      onSuccess(() => router.push("/projects")),
+      onSuccess(() => router.push("/login")),
       onError((err) => setError("root", { message: err.message })),
     ],
   });
@@ -45,11 +45,10 @@ export const InvitationForm = ({ invitationId, email }: InvitationFormProps) => 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate>
       <FieldGroup>
-        <div className="flex items-center gap-2 rounded border px-3 py-2 text-sm">
-          <span className="text-green-600">✓</span>
-          <span className="text-foreground">{email}</span>
-          <span className="ml-auto text-muted-foreground text-xs">verified</span>
-        </div>
+        <Field>
+          <FieldLabel htmlFor="email">email</FieldLabel>
+          <Input id="email" type="email" value={email} disabled readOnly />
+        </Field>
         <Field data-invalid={!!errors.name}>
           <FieldLabel htmlFor="name">name</FieldLabel>
           <Input

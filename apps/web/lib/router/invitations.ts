@@ -3,7 +3,6 @@
 import { ORPCError } from "@orpc/client";
 import { os } from "./os";
 import { unauthenticatedMiddleware } from "./middleware";
-import { auth } from "../auth/auth";
 import { authServerClient } from "../auth";
 import { dbClient } from "@ovr/db/client";
 
@@ -37,36 +36,23 @@ export const acceptInvitation = os.invitations.acceptInvitation
       });
     }
 
-    const createUserResult = await auth.api
-      .createUser({ body: { name: input.name, email: invitation.email, password: input.password } })
-      .catch((err: Error) => {
-        throw new ORPCError("BAD_REQUEST", { message: err.message });
-      });
-
-    if (!createUserResult?.user?.id) {
-      throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "failed to create account" });
-    }
-
-    const [signInError, signInResponse] = await authServerClient.signInEmail({
+    const [createUserError, createUserResult] = await authServerClient.createUser({
+      name: input.name,
       email: invitation.email,
       password: input.password,
     });
 
-    if (signInError || !signInResponse) {
-      throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "failed to sign in" });
+    if (createUserError || !createUserResult?.user?.id) {
+      throw new ORPCError("BAD_REQUEST", {
+        message: createUserError?.message ?? "failed to create account",
+      });
     }
 
-    const setCookieHeader = signInResponse.headers.get("set-cookie") ?? "";
-    const sessionCookie = setCookieHeader.split(";")[0];
-    const sessionHeaders = new Headers({ cookie: sessionCookie });
-
-    const [acceptError] = await authServerClient.acceptInvitation({
+    await dbClient.users.acceptInvitation({
       invitationId: input.invitationId,
-      headers: sessionHeaders,
+      userId: createUserResult.user.id,
+      organizationId: invitation.organizationId,
+      role: invitation.role,
     });
-
-    if (acceptError) {
-      throw new ORPCError("INTERNAL_SERVER_ERROR", { message: acceptError.message });
-    }
   })
   .actionable();

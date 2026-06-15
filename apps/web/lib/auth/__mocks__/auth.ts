@@ -5,7 +5,5 @@ export const auth = {
     getSession: vi.fn(),
     createUser: vi.fn(),
     createOrganization: vi.fn(),
-    signInEmail: vi.fn(),
-    acceptInvitation: vi.fn(),
   },
 };

@@ -22,12 +22,12 @@ export const InvitationCard = ({
       </Typography>
       <Typography className="text-muted-foreground">
         invited to <span className="text-foreground">{organizationName}</span>
-        {role && (
+        {role ? (
           <>
             {" "}
             as <span className="text-ovr-accent">{role}</span>
           </>
-        )}
+        ) : null}
         . set a name and password to finish.
       </Typography>
     </CardHeader>

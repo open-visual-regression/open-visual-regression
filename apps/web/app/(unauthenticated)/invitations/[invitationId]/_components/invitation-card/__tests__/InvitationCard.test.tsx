@@ -29,7 +29,7 @@ const renderComponent = () =>
 describe("InvitationCard", () => {
   it("should display the pre-filled email address", () => {
     renderComponent();
-    expect(screen.getByText(EMAIL)).toBeVisible();
+    expect(screen.getByDisplayValue(EMAIL)).toBeVisible();
   });
 
   it("should show validation errors for empty fields", async ({ user }) => {
@@ -62,7 +62,7 @@ describe("InvitationCard", () => {
     await user.type(screen.getByLabelText(/confirm password/i), "securepass123");
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
-    await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/projects"));
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/login"));
     expect(mockAcceptInvitation).toHaveBeenCalledWith({
       invitationId: INVITATION_ID,
       name: "Jules Ortega",
