@@ -31,7 +31,41 @@ export const getBuildStatusContract = oc
   .input(getBuildStatusInputSchema)
   .output(getBuildStatusOutputSchema);
 
+export const buildSchema = z.object({
+  id: z.uuidv7(),
+  project: z.object({
+    id: z.uuidv7(),
+    name: z.string().min(1),
+  }),
+  branch: z.string().min(1),
+  commitSha: z.string().min(1),
+  status: buildStatusSchema,
+  createdAt: z.string().nonempty(),
+});
+
+export type BuildSchema = z.infer<typeof buildSchema>;
+
+export const listBuildsInputSchema = z.object({
+  projectIds: z.array(z.uuidv7()).optional(),
+  status: buildStatusSchema.optional(),
+  sortDirection: z.enum(["asc", "desc"]).default("desc"),
+  limit: z.number().int().min(1).max(100).default(20),
+  offset: z.number().int().min(0).default(0),
+});
+
+export type ListBuildsInputSchema = z.infer<typeof listBuildsInputSchema>;
+
+export const listBuildsOutputSchema = z.object({
+  builds: z.array(buildSchema),
+  total: z.number().int().nonnegative(),
+});
+
+export const listBuildsContract = oc
+  .input(listBuildsInputSchema.optional())
+  .output(listBuildsOutputSchema);
+
 export const contract = {
   createBuild: createBuildContract,
   getBuildStatus: getBuildStatusContract,
+  list: listBuildsContract,
 } as const;
