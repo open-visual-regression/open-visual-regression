@@ -1,18 +1,9 @@
-import userEvent from "@testing-library/user-event";
-import { test as base, vi } from "vitest";
+import { test as base } from "vitest";
+import { user } from "@/lib/testing/user";
 
-declare global {
-  // eslint-disable-next-line no-var
-  var jest: { advanceTimersByTime: typeof vi.advanceTimersByTime } | undefined;
-}
-
-// `waitFor`/`findBy*` only auto-advance vitest's fake timers when this jest-shaped
-// global is present. See https://github.com/testing-library/dom-testing-library/issues/987
-globalThis.jest ??= { advanceTimersByTime: vi.advanceTimersByTime };
-
-export const it = base.extend<{ user: ReturnType<typeof userEvent.setup> }>({
+export const it = base.extend<{ user: typeof user }>({
   user: async ({}, use) => {
-    await use(userEvent.setup());
+    await use(user);
   },
 });
 

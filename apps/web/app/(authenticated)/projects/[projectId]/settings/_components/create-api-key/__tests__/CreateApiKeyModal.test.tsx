@@ -4,7 +4,6 @@ import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
 import { serverClient } from "@/lib/router";
 import { useRouter } from "next/navigation";
 import { createORPCError } from "@/lib/testing/orpc";
-import { user } from "@/lib/testing/user";
 import { CreateApiKeyModal } from "../CreateApiKeyModal";
 import { CreateApiKeyModalButton } from "../CreateApiKeyModalButton";
 
@@ -76,7 +75,7 @@ describe("CreateApiKeyModal", () => {
     expect(await screen.findByRole("button", { name: /^copied$/i })).toBeVisible();
   });
 
-  it("should revert the copy button back to 'copy' after a few seconds", async () => {
+  it("should revert the copy button back to 'copy' after a few seconds", async ({ user }) => {
     vi.useFakeTimers();
 
     try {
