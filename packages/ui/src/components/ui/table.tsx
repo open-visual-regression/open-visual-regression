@@ -105,4 +105,28 @@ const TableCell = ({ className, ...props }: React.ComponentProps<"td">) => (
   />
 );
 
-export { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption };
+const TableEmpty = ({
+  colSpan,
+  className,
+  ...props
+}: React.ComponentProps<"td"> & { colSpan: number }) => (
+  <TableRow className="h-20">
+    <TableCell
+      colSpan={colSpan}
+      className={cn("text-center text-body-sm whitespace-normal text-ovr-fg-secondary", className)}
+      {...props}
+    />
+  </TableRow>
+);
+
+export {
+  Table,
+  TableHeader,
+  TableBody,
+  TableFooter,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableCaption,
+  TableEmpty,
+};
