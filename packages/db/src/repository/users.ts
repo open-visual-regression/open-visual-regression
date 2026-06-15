@@ -43,9 +43,6 @@ export const findAllUsers = async ({
     search ? ilike(invitation.email, `%${search}%`) : undefined,
   );
 
-  // ORDER BY on a UNION ALL can only reference the combined result's output column
-  // names, not arbitrary expressions, so the case-insensitive sort key has to be
-  // computed as its own column in each branch's SELECT.
   const buildSortKey = (column: { name: PgColumn; email: PgColumn; createdAt: PgColumn }) => {
     switch (sortBy) {
       case "email":
