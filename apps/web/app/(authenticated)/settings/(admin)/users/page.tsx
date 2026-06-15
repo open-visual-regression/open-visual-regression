@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { Typography } from "@ovr/ui/components/typography";
 import { UsersSection } from "./_components/users-section/UsersSection";
 import { serverClient } from "@/lib/router";
 import { verifyRole } from "@/lib/utils/authorization";
@@ -22,12 +21,5 @@ export default async function SettingsUsersPage() {
     serverError();
   }
 
-  return (
-    <div className="flex flex-col gap-6">
-      <Typography variant="h1" as="h1">
-        users
-      </Typography>
-      <UsersSection users={listResult.users} />
-    </div>
-  );
+  return <UsersSection users={listResult.users} />;
 }

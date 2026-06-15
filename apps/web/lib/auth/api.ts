@@ -19,6 +19,12 @@ export type ChangePasswordInput = {
   headers: Headers;
 };
 
+export type CreateInvitationInput = {
+  email: string;
+  organizationId: string;
+  headers: Headers;
+};
+
 const safeAuth = async <TData>(promise: Promise<TData>): Promise<SafeAuthResult<TData>> => {
   try {
     return [null, await promise];
@@ -39,3 +45,6 @@ export const changeEmail = ({ email, headers }: ChangeEmailInput) =>
 
 export const changePassword = ({ currentPassword, newPassword, headers }: ChangePasswordInput) =>
   safeAuth(auth.api.changePassword({ body: { currentPassword, newPassword }, headers }));
+
+export const createInvitation = ({ email, organizationId, headers }: CreateInvitationInput) =>
+  safeAuth(auth.api.createInvitation({ body: { email, role: "member", organizationId }, headers }));

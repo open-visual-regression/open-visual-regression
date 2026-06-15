@@ -40,4 +40,30 @@ describe("users", () => {
       expect(adminEntry?.lastLoginAt).toBeInstanceOf(Date);
     });
   });
+
+  describe("invite", () => {
+    test("should return UNAUTHORIZED when no session cookie is provided", async () => {
+      const [error] = await serverClient.users.invite({ email: "new.user@example.com" });
+      expect(error?.code).toBe("UNAUTHORIZED");
+    });
+
+    test("should return FORBIDDEN when the session user is not an admin", async ({ user: _ }) => {
+      const [error] = await serverClient.users.invite({ email: "new.user@example.com" });
+      expect(error?.code).toBe("FORBIDDEN");
+    });
+
+    test("should return an invitation url when invited by an admin", async ({ admin: _ }) => {
+      const [error, result] = await serverClient.users.invite({ email: "new.user@example.com" });
+
+      expect(error).toBeNull();
+      expect(result?.invitationUrl).toMatch(/^http:\/\/localhost:3000\/invitations\/.+/);
+    });
+
+    test("should return BAD_REQUEST when the user is already invited", async ({ admin: _ }) => {
+      await serverClient.users.invite({ email: "duplicate@example.com" });
+
+      const [error] = await serverClient.users.invite({ email: "duplicate@example.com" });
+      expect(error?.code).toBe("BAD_REQUEST");
+    });
+  });
 });
