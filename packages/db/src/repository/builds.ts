@@ -70,6 +70,7 @@ export const findAll = async ({
         projectName: projects.name,
         branch: builds.branch,
         commitSha: builds.commitSha,
+        name: builds.name,
         status: builds.status,
         createdAt: builds.createdAt,
       })
