@@ -11,6 +11,9 @@ export const getUserCount = async (): Promise<number> => {
 export const findByEmail = (email: string) =>
   db.query.user.findFirst({ where: eq(user.email, email) });
 
+export const findInvitationById = (id: string) =>
+  db.query.invitation.findFirst({ where: eq(invitation.id, id), with: { organization: true } });
+
 export type UsersSortField = "name" | "email" | "createdAt" | "status";
 
 export type SortDirection = "asc" | "desc";

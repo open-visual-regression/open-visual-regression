@@ -24,4 +24,8 @@ export const serverClient = {
     invite: vi.fn(),
     remove: vi.fn(),
   },
+  invitations: {
+    getInvitation: vi.fn(),
+    acceptInvitation: vi.fn(),
+  },
 };
