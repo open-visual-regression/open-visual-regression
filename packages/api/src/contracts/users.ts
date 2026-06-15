@@ -27,8 +27,19 @@ export const userSchema = z.discriminatedUnion("status", [activeUserSchema, invi
 
 export type UserSchema = z.infer<typeof userSchema>;
 
+export const listUsersInputSchema = z.object({
+  search: z.string().optional(),
+  sortBy: z.enum(["name", "email", "createdAt", "status"]).default("name"),
+  sortDirection: z.enum(["asc", "desc"]).default("asc"),
+  limit: z.number().int().min(1).max(100).default(50),
+  offset: z.number().int().min(0).default(0),
+});
+
+export type ListUsersInputSchema = z.infer<typeof listUsersInputSchema>;
+
 export const listUsersOutputSchema = z.object({
   users: z.array(userSchema),
+  total: z.number().int().nonnegative(),
 });
 
 export const inviteUserInputSchema = z.object({
@@ -41,7 +52,19 @@ export const inviteUserOutputSchema = z.object({
   invitationUrl: z.string(),
 });
 
+export const removeUserInputSchema = z.discriminatedUnion("status", [
+  z.object({ status: z.literal("active"), email: z.email() }),
+  z.object({ status: z.literal("invited"), invitationId: z.string() }),
+]);
+
+export type RemoveUserInputSchema = z.infer<typeof removeUserInputSchema>;
+
+export const removeUsersInputSchema = z.object({
+  users: z.array(removeUserInputSchema).min(1),
+});
+
 export const contract = {
-  list: oc.output(listUsersOutputSchema),
+  list: oc.input(listUsersInputSchema.optional()).output(listUsersOutputSchema),
   invite: oc.input(inviteUserInputSchema).output(inviteUserOutputSchema),
+  remove: oc.input(removeUsersInputSchema),
 } as const;

@@ -27,7 +27,7 @@ describe("SettingsUsersPage", () => {
       user: mocks.user.generateAuthUser({ role: "admin" }),
       session: mocks.session.generateSession(),
     });
-    mockListUsers.mockResolvedValue([null, { users }]);
+    mockListUsers.mockResolvedValue([null, { users, total: users.length }]);
 
     render(await SettingsUsersPage());
 

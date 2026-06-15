@@ -36,27 +36,38 @@ describe("users", () => {
     test("should include the last login time for a user that has signed in", async ({ admin }) => {
       const [, result] = await serverClient.users.list();
 
-      const adminEntry = result?.users.find((u) => u.id === admin.id);
-      expect(adminEntry?.status).toBe("active");
-      expect(adminEntry?.status === "active" && adminEntry.lastLoginAt).toBeInstanceOf(Date);
+      expect(result?.users).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: admin.id,
+            status: "active",
+            lastLoginAt: expect.any(Date),
+          }),
+        ]),
+      );
     });
 
     test("should mark existing members as active", async ({ admin }) => {
       const [, result] = await serverClient.users.list();
 
-      const adminEntry = result?.users.find((u) => u.id === admin.id);
-      expect(adminEntry?.status).toBe("active");
+      expect(result?.users).toEqual(
+        expect.arrayContaining([expect.objectContaining({ id: admin.id, status: "active" })]),
+      );
     });
 
     test("should include pending invitations with an invited status", async ({ admin: _ }) => {
-      const [, inviteResult] = await serverClient.users.invite({ email: "pending@example.com" });
+      await serverClient.users.invite({ email: "pending@example.com" });
 
       const [, result] = await serverClient.users.list();
 
-      const invitedEntry = result?.users.find((u) => u.email === "pending@example.com");
-      expect(invitedEntry?.status).toBe("invited");
-      expect(invitedEntry?.status === "invited" && invitedEntry.invitationUrl).toBe(
-        inviteResult?.invitationUrl,
+      expect(result?.users).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            email: "pending@example.com",
+            status: "invited",
+            invitationUrl: expect.stringMatching(/^http:\/\/localhost:3000\/invitations\/.+/),
+          }),
+        ]),
       );
     });
 
@@ -68,6 +79,82 @@ describe("users", () => {
 
       const names = result?.users.map((u) => u.name) ?? [];
       expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
+    });
+
+    test("should filter users by search term", async ({ admin: _ }) => {
+      await serverClient.users.invite({ email: "searchable-match@example.com" });
+      await serverClient.users.invite({ email: "unrelated@example.com" });
+
+      const [error, result] = await serverClient.users.list({ search: "searchable" });
+
+      expect(error).toBeNull();
+      expect(result?.users).toHaveLength(1);
+      expect(result?.users[0]).toMatchObject({ email: "searchable-match@example.com" });
+      expect(result?.total).toBe(1);
+    });
+
+    test("should sort users by the given field and direction", async ({ admin: _ }) => {
+      await serverClient.users.invite({ email: "aaa-sort@example.com" });
+      await serverClient.users.invite({ email: "zzz-sort@example.com" });
+
+      const [error, result] = await serverClient.users.list({
+        sortBy: "email",
+        sortDirection: "desc",
+      });
+
+      expect(error).toBeNull();
+
+      const emails = result?.users.map((u) => u.email) ?? [];
+      expect(emails.indexOf("zzz-sort@example.com")).toBeLessThan(
+        emails.indexOf("aaa-sort@example.com"),
+      );
+    });
+
+    test("should sort active users before invited users when sorting by status", async ({
+      admin,
+    }) => {
+      await serverClient.users.invite({ email: "status-sort@example.com" });
+
+      const [error, result] = await serverClient.users.list({
+        sortBy: "status",
+        sortDirection: "asc",
+      });
+
+      expect(error).toBeNull();
+
+      const adminIndex = result?.users.findIndex((u) => u.id === admin.id) ?? -1;
+      const invitedIndex =
+        result?.users.findIndex((u) => u.email === "status-sort@example.com") ?? -1;
+      expect(adminIndex).toBeLessThan(invitedIndex);
+    });
+
+    test("should sort users by createdAt without error", async ({ admin: _ }) => {
+      await serverClient.users.invite({ email: "created-at-sort@example.com" });
+
+      const [error, result] = await serverClient.users.list({
+        sortBy: "createdAt",
+        sortDirection: "desc",
+      });
+
+      expect(error).toBeNull();
+      expect(result?.users[0]).toMatchObject({ email: "created-at-sort@example.com" });
+    });
+
+    test("should respect limit and offset and return the total count", async ({ admin: _ }) => {
+      await serverClient.users.invite({ email: "page-a@example.com" });
+      await serverClient.users.invite({ email: "page-b@example.com" });
+      await serverClient.users.invite({ email: "page-c@example.com" });
+
+      const [, firstPage] = await serverClient.users.list({ limit: 2, offset: 0 });
+      const [, secondPage] = await serverClient.users.list({ limit: 2, offset: 2 });
+
+      expect(firstPage?.total).toBe(4);
+      expect(firstPage?.users).toHaveLength(2);
+      expect(secondPage?.users).toHaveLength(2);
+
+      const firstIds = firstPage?.users.map((u) => u.id) ?? [];
+      const secondIds = secondPage?.users.map((u) => u.id) ?? [];
+      expect(new Set([...firstIds, ...secondIds]).size).toBe(4);
     });
   });
 

@@ -22,5 +22,6 @@ export const serverClient = {
   users: {
     list: vi.fn(),
     invite: vi.fn(),
+    remove: vi.fn(),
   },
 };
