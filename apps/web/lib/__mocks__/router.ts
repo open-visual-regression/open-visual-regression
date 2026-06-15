@@ -15,8 +15,8 @@ export const serverClient = {
     list: vi.fn(),
     revoke: vi.fn(),
   },
-  profile: {
-    updateProfileInformation: vi.fn(),
+  account: {
+    updateAccountInformation: vi.fn(),
     updatePassword: vi.fn(),
   },
   users: {
