@@ -16,6 +16,17 @@ export const listUsersOutputSchema = z.object({
   users: z.array(userSchema),
 });
 
+export const inviteUserInputSchema = z.object({
+  email: z.email("invalid email address"),
+});
+
+export type InviteUserInputSchema = z.infer<typeof inviteUserInputSchema>;
+
+export const inviteUserOutputSchema = z.object({
+  invitationUrl: z.string(),
+});
+
 export const contract = {
   list: oc.output(listUsersOutputSchema),
+  invite: oc.input(inviteUserInputSchema).output(inviteUserOutputSchema),
 } as const;
