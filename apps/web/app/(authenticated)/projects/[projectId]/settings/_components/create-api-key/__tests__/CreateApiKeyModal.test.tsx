@@ -1,10 +1,10 @@
 import { vi } from "vitest";
-import userEvent from "@testing-library/user-event";
 
 import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
 import { serverClient } from "@/lib/router";
 import { useRouter } from "next/navigation";
 import { createORPCError } from "@/lib/testing/orpc";
+import { user } from "@/lib/testing/user";
 import { CreateApiKeyModal } from "../CreateApiKeyModal";
 import { CreateApiKeyModalButton } from "../CreateApiKeyModalButton";
 
@@ -78,9 +78,6 @@ describe("CreateApiKeyModal", () => {
 
   it("should revert the copy button back to 'copy' after a few seconds", async () => {
     vi.useFakeTimers();
-    // user-event delays internally via `setTimeout`, so fake timers need to be
-    // advanced for it to proceed. See https://testing-library.com/docs/user-event/options/#advancetimers
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
 
     try {
       mockCreate.mockResolvedValue([null, { key: API_KEY }]);
