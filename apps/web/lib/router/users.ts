@@ -11,7 +11,7 @@ export const list = os.users.list
   .use(adminMiddleware)
   .handler(async ({ context }) => {
     const [users, invitations] = await Promise.all([
-      dbClient.users.findAll(),
+      dbClient.users.findAllUsers(),
       dbClient.users.findPendingInvitations(context.organizationId),
     ]);
 

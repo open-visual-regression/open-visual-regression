@@ -10,7 +10,7 @@ export const getUserCount = async (): Promise<number> => {
 export const findByEmail = (email: string) =>
   db.query.user.findFirst({ where: eq(user.email, email) });
 
-export const findAll = () =>
+export const findAllUsers = () =>
   db
     .select({
       id: user.id,
@@ -25,9 +25,9 @@ export const findAll = () =>
     .groupBy(user.id)
     .orderBy(desc(user.createdAt));
 
-export type FindAllResult = Awaited<ReturnType<typeof findAll>>;
+export type FindAllUsersResult = Awaited<ReturnType<typeof findAllUsers>>;
 
-export type UserDbSchema = FindAllResult[number];
+export type UserDbSchema = FindAllUsersResult[number];
 
 export const findPendingInvitations = (organizationId: string) =>
   db

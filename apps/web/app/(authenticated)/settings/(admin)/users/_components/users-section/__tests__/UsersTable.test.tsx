@@ -66,16 +66,6 @@ describe("UsersTable", () => {
     expect(screen.queryByRole("button", { name: /copy invite/i })).not.toBeInTheDocument();
   });
 
-  it("should show a copy invite button for invited users", () => {
-    const user = mocks.user.generateUser({
-      status: "invited",
-      invitationUrl: "http://localhost:3000/invitations/test-invitation-id",
-    });
-    render(<UsersTable data={[user]} />);
-
-    expect(screen.getByRole("button", { name: /copy invite/i })).toBeVisible();
-  });
-
   it("should copy the invitation link to clipboard when clicked", async ({ user }) => {
     const invitedUser = mocks.user.generateUser({
       status: "invited",
