@@ -1,9 +1,11 @@
 import { Typography } from "@ovr/ui/components/typography";
-import { ApiKeysSection } from "./_components/api-keys-section/ApiKeysSection";
 import { serverClient } from "@/lib/router";
 import { verifyRole } from "@/lib/utils/authorization";
 import { notFound } from "next/navigation";
 import { serverError } from "@/lib/utils/errors";
+import { ApiKeysSection } from "./_components/api-keys-section/ApiKeysSection";
+import { UpdateProjectForm } from "./_components/update-project-form/UpdateProjectForm";
+import { CaptureConfigurationsSection } from "./_components/capture-configurations-section/CaptureConfigurationsSection";
 
 export type ProjectSettingsPageProps = PageProps<"/projects/[projectId]/settings">;
 
@@ -20,9 +22,21 @@ export default async function ProjectSettingsPage(props: ProjectSettingsPageProp
     notFound();
   }
 
-  const [error, apiKeysResult] = await serverClient.apiKeys.list({ projectId });
+  const [
+    [projectError, projectResult],
+    [captureConfigsError, captureConfigsResult],
+    [apiKeysError, apiKeysResult],
+  ] = await Promise.all([
+    serverClient.projects.getOne({ projectId }),
+    serverClient.projects.listCaptureConfigurations({ projectId }),
+    serverClient.apiKeys.list({ projectId }),
+  ]);
 
-  if (error) {
+  if (projectError?.code === "NOT_FOUND") {
+    return notFound();
+  }
+
+  if (projectError || captureConfigsError || apiKeysError) {
     serverError();
   }
 
@@ -31,7 +45,14 @@ export default async function ProjectSettingsPage(props: ProjectSettingsPageProp
       <Typography variant="h1" as="h1">
         settings
       </Typography>
-      <ApiKeysSection projectId={projectId} apiKeys={apiKeysResult.apiKeys} />
+      <div className="flex flex-col gap-6 w-full md:w-3/4 lg:w-2/3">
+        <UpdateProjectForm project={projectResult.project} />
+        <CaptureConfigurationsSection
+          projectId={projectId}
+          captureConfigurations={captureConfigsResult.captureConfigurations}
+        />
+        <ApiKeysSection projectId={projectId} apiKeys={apiKeysResult.apiKeys} />
+      </div>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { vi } from "vitest";
+import type { serverClient as ServerClient } from "../router";
 
 export const serverClient = {
   setup: {
@@ -9,6 +10,10 @@ export const serverClient = {
     getOne: vi.fn(),
     list: vi.fn(),
     add: vi.fn(),
+    update: vi.fn(),
+    listCaptureConfigurations: vi.fn(),
+    addCaptureConfiguration: vi.fn(),
+    removeCaptureConfiguration: vi.fn(),
   },
   apiKeys: {
     create: vi.fn(),
@@ -28,4 +33,12 @@ export const serverClient = {
     getInvitation: vi.fn(),
     acceptInvitation: vi.fn(),
   },
-};
+  storage: {
+    getObject: vi.fn(),
+  },
+  builds: {
+    createBuild: vi.fn(),
+    getBuildStatus: vi.fn(),
+    list: vi.fn(),
+  },
+} as unknown as typeof ServerClient;

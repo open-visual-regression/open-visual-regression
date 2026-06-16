@@ -7,6 +7,7 @@ import type { AddProjectInputSchema } from "@ovr/api/contracts/projects";
 vi.mock("next/headers");
 
 const NONEXISTENT_PROJECT_ID = "01900000-0000-7000-8000-000000000000";
+const NONEXISTENT_CAPTURE_CONFIG_ID = "01900000-0000-7000-8000-000000000001";
 
 const TEST_PROJECT: AddProjectInputSchema = {
   projectName: "Test Project",
@@ -49,6 +50,7 @@ describe("projects", () => {
         description: TEST_PROJECT.projectDescription,
         gitMainBranch: TEST_PROJECT.gitMainBranch,
         diffThreshold: TEST_PROJECT.diffThreshold,
+        retentionDays: 90,
       });
     });
   });
@@ -75,6 +77,7 @@ describe("projects", () => {
         name: TEST_PROJECT.projectName,
         gitMainBranch: TEST_PROJECT.gitMainBranch,
         diffThreshold: TEST_PROJECT.diffThreshold,
+        retentionDays: 90,
       });
     });
 
@@ -119,6 +122,170 @@ describe("projects", () => {
       expect(listResult?.projects).toEqual(
         expect.arrayContaining([expect.objectContaining({ name: TEST_PROJECT.projectName })]),
       );
+    });
+  });
+
+  describe("update", () => {
+    test("should return UNAUTHORIZED when no session cookie is provided", async () => {
+      const [error] = await serverClient.projects.update({
+        id: NONEXISTENT_PROJECT_ID,
+        patch: { retentionDays: 30 },
+      });
+      expect(error?.code).toBe("UNAUTHORIZED");
+    });
+
+    test("should return FORBIDDEN when the session user is not an admin", async ({ user: _ }) => {
+      const [error] = await serverClient.projects.update({
+        id: NONEXISTENT_PROJECT_ID,
+        patch: { retentionDays: 30 },
+      });
+      expect(error?.code).toBe("FORBIDDEN");
+    });
+
+    test("should return NOT_FOUND for an unknown project ID", async ({ admin: _ }) => {
+      const [error] = await serverClient.projects.update({
+        id: NONEXISTENT_PROJECT_ID,
+        patch: { retentionDays: 30 },
+      });
+      expect(error?.code).toBe("NOT_FOUND");
+    });
+
+    test("should return BAD_REQUEST when retentionDays is less than 1", async ({ admin: _ }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+
+      const [error] = await serverClient.projects.update({
+        id: projectId,
+        patch: { retentionDays: 0 },
+      });
+
+      expect(error?.code).toBe("BAD_REQUEST");
+    });
+
+    test("should update the project with a valid patch", async ({ admin: _ }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+
+      const [error] = await serverClient.projects.update({
+        id: projectId,
+        patch: { name: "Updated Name", retentionDays: 30 },
+      });
+
+      expect(error).toBeNull();
+
+      const [, getResult] = await serverClient.projects.getOne({ projectId });
+      expect(getResult?.project).toMatchObject({ name: "Updated Name", retentionDays: 30 });
+    });
+  });
+
+  describe("addCaptureConfiguration", () => {
+    test("should return UNAUTHORIZED when no session cookie is provided", async () => {
+      const [error] = await serverClient.projects.addCaptureConfiguration({
+        projectId: NONEXISTENT_PROJECT_ID,
+        data: { name: "desktop", browser: "chromium", viewportWidth: 1280, viewportHeight: 800 },
+      });
+      expect(error?.code).toBe("UNAUTHORIZED");
+    });
+
+    test("should return FORBIDDEN when the session user is not an admin", async ({ user: _ }) => {
+      const [error] = await serverClient.projects.addCaptureConfiguration({
+        projectId: NONEXISTENT_PROJECT_ID,
+        data: { name: "desktop", browser: "chromium", viewportWidth: 1280, viewportHeight: 800 },
+      });
+      expect(error?.code).toBe("FORBIDDEN");
+    });
+
+    test("should return NOT_FOUND for an unknown project ID", async ({ admin: _ }) => {
+      const [error] = await serverClient.projects.addCaptureConfiguration({
+        projectId: NONEXISTENT_PROJECT_ID,
+        data: { name: "desktop", browser: "chromium", viewportWidth: 1280, viewportHeight: 800 },
+      });
+      expect(error?.code).toBe("NOT_FOUND");
+    });
+
+    test("should create a capture configuration", async ({ admin: _ }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+
+      const [error] = await serverClient.projects.addCaptureConfiguration({
+        projectId,
+        data: { name: "desktop", browser: "chromium", viewportWidth: 1280, viewportHeight: 800 },
+      });
+
+      expect(error).toBeNull();
+
+      const [, listResult] = await serverClient.projects.listCaptureConfigurations({ projectId });
+      expect(listResult?.captureConfigurations).toHaveLength(1);
+      expect(listResult?.captureConfigurations[0]).toMatchObject({
+        name: "desktop",
+        browser: "chromium",
+        viewportWidth: 1280,
+        viewportHeight: 800,
+      });
+    });
+
+    test("should return BAD_REQUEST when the 10-configuration limit is reached", async ({
+      admin: _,
+    }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+
+      for (let i = 0; i < 10; i++) {
+        await serverClient.projects.addCaptureConfiguration({
+          projectId,
+          data: {
+            name: `config-${i}`,
+            browser: "chromium",
+            viewportWidth: 1280,
+            viewportHeight: 800,
+          },
+        });
+      }
+
+      const [error] = await serverClient.projects.addCaptureConfiguration({
+        projectId,
+        data: { name: "over-limit", browser: "chromium", viewportWidth: 1280, viewportHeight: 800 },
+      });
+
+      expect(error?.code).toBe("BAD_REQUEST");
+    });
+  });
+
+  describe("removeCaptureConfiguration", () => {
+    test("should return UNAUTHORIZED when no session cookie is provided", async () => {
+      const [error] = await serverClient.projects.removeCaptureConfiguration({
+        captureConfigurationId: NONEXISTENT_CAPTURE_CONFIG_ID,
+      });
+      expect(error?.code).toBe("UNAUTHORIZED");
+    });
+
+    test("should return FORBIDDEN when the session user is not an admin", async ({ user: _ }) => {
+      const [error] = await serverClient.projects.removeCaptureConfiguration({
+        captureConfigurationId: NONEXISTENT_CAPTURE_CONFIG_ID,
+      });
+      expect(error?.code).toBe("FORBIDDEN");
+    });
+
+    test("should delete the capture configuration", async ({ admin: _ }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+
+      await serverClient.projects.addCaptureConfiguration({
+        projectId,
+        data: { name: "desktop", browser: "chromium", viewportWidth: 1280, viewportHeight: 800 },
+      });
+
+      const [, listResult] = await serverClient.projects.listCaptureConfigurations({ projectId });
+      const configId = listResult!.captureConfigurations[0]!.id;
+
+      const [error] = await serverClient.projects.removeCaptureConfiguration({
+        captureConfigurationId: configId,
+      });
+
+      expect(error).toBeNull();
+
+      const [, afterList] = await serverClient.projects.listCaptureConfigurations({ projectId });
+      expect(afterList?.captureConfigurations).toHaveLength(0);
     });
   });
 });

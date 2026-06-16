@@ -14,40 +14,99 @@ vi.mock("@/lib/auth/auth");
 vi.mock("@/lib/router");
 
 const mockGetSession = vi.mocked(auth.api.getSession);
+const mockGetProject = vi.mocked(serverClient.projects.getOne);
+const mockListCaptureConfigurations = vi.mocked(serverClient.projects.listCaptureConfigurations);
 const mockListApiKeys = vi.mocked(serverClient.apiKeys.list);
 const mockNotFound = vi.mocked(notFound);
 
-const PROJECT_ID = "test-project-id";
+const PROJECT_ID = "01900000-0000-7000-8000-000000000099";
 const pageProps: ProjectSettingsPageProps = {
   params: Promise.resolve({ projectId: PROJECT_ID }),
   searchParams: Promise.resolve({}),
 };
 
 describe("ProjectSettingsPage", () => {
-  it("should show the settings page for admins with no api keys", async () => {
+  it("should show the settings page for admins with no api keys or capture configs", async () => {
+    const project = mocks.project.generateProject({ id: PROJECT_ID });
     mockGetSession.mockResolvedValue({
       user: mocks.user.generateAuthUser({ role: "admin" }),
       session: mocks.session.generateSession(),
     });
+    mockGetProject.mockResolvedValue([null, { project }]);
+    mockListCaptureConfigurations.mockResolvedValue([null, { captureConfigurations: [] }]);
     mockListApiKeys.mockResolvedValue([null, { apiKeys: [], total: 0 }]);
 
     render(await ProjectSettingsPage(pageProps));
 
     expect(screen.getByRole("heading", { name: /settings/i })).toBeVisible();
+    expect(screen.getByRole("button", { name: /save changes/i })).toBeVisible();
+    expect(screen.getByText(/no capture configurations yet/i)).toBeVisible();
     expect(screen.getByRole("heading", { name: /no api keys yet/i })).toBeVisible();
   });
 
-  it("should show the settings page for admins with existing api keys", async () => {
+  it("should show existing capture configurations", async () => {
+    const project = mocks.project.generateProject({ id: PROJECT_ID });
+    const captureConfig = mocks.captureConfiguration.generateCaptureConfiguration({
+      name: "desktop",
+      browser: "chromium",
+      viewportWidth: 1280,
+      viewportHeight: 800,
+    });
+    mockGetSession.mockResolvedValue({
+      user: mocks.user.generateAuthUser({ role: "admin" }),
+      session: mocks.session.generateSession(),
+    });
+    mockGetProject.mockResolvedValue([null, { project }]);
+    mockListCaptureConfigurations.mockResolvedValue([
+      null,
+      { captureConfigurations: [captureConfig] },
+    ]);
+    mockListApiKeys.mockResolvedValue([null, { apiKeys: [], total: 0 }]);
+
+    render(await ProjectSettingsPage(pageProps));
+
+    expect(screen.getByText("desktop")).toBeVisible();
+    expect(screen.getByText("chromium")).toBeVisible();
+    expect(screen.getByText("1280×800")).toBeVisible();
+  });
+
+  it("should prefill the general form with project values", async () => {
+    const project = mocks.project.generateProject({
+      id: PROJECT_ID,
+      name: "My Project",
+      gitMainBranch: "develop",
+      diffThreshold: 0.1,
+      retentionDays: 60,
+    });
+    mockGetSession.mockResolvedValue({
+      user: mocks.user.generateAuthUser({ role: "admin" }),
+      session: mocks.session.generateSession(),
+    });
+    mockGetProject.mockResolvedValue([null, { project }]);
+    mockListCaptureConfigurations.mockResolvedValue([null, { captureConfigurations: [] }]);
+    mockListApiKeys.mockResolvedValue([null, { apiKeys: [], total: 0 }]);
+
+    render(await ProjectSettingsPage(pageProps));
+
+    expect(screen.getByDisplayValue("My Project")).toBeVisible();
+    expect(screen.getByDisplayValue("develop")).toBeVisible();
+    expect(screen.getByDisplayValue("0.1")).toBeVisible();
+    expect(screen.getByDisplayValue("60")).toBeVisible();
+  });
+
+  it("should show existing api keys", async () => {
+    const project = mocks.project.generateProject({ id: PROJECT_ID });
     const apiKey = mocks.apiKey.generateApiKey();
     mockGetSession.mockResolvedValue({
       user: mocks.user.generateAuthUser({ role: "admin" }),
       session: mocks.session.generateSession(),
     });
+    mockGetProject.mockResolvedValue([null, { project }]);
+    mockListCaptureConfigurations.mockResolvedValue([null, { captureConfigurations: [] }]);
     mockListApiKeys.mockResolvedValue([null, { apiKeys: [apiKey], total: 1 }]);
 
     render(await ProjectSettingsPage(pageProps));
 
-    expect(screen.getByRole("heading", { name: /settings/i })).toBeVisible();
     expect(screen.getByText(apiKey.name)).toBeVisible();
   });
 
@@ -62,17 +121,50 @@ describe("ProjectSettingsPage", () => {
     expect(mockNotFound).toHaveBeenCalled();
   });
 
+  it("should show a not found page when the project does not exist", async () => {
+    mockGetSession.mockResolvedValue({
+      user: mocks.user.generateAuthUser({ role: "admin" }),
+      session: mocks.session.generateSession(),
+    });
+    mockGetProject.mockResolvedValue([createORPCError("NOT_FOUND", 404), undefined]);
+    mockListCaptureConfigurations.mockResolvedValue([null, { captureConfigurations: [] }]);
+    mockListApiKeys.mockResolvedValue([null, { apiKeys: [], total: 0 }]);
+
+    render(await ProjectSettingsPage(pageProps));
+
+    expect(mockNotFound).toHaveBeenCalled();
+  });
+
   it("should show an error page when the session cannot be retrieved", async () => {
     mockGetSession.mockRejectedValue(new Error("DB connection failed"));
 
     await expect(ProjectSettingsPage(pageProps)).rejects.toThrow();
   });
 
-  it("should show an error page when the api keys cannot be retrieved", async () => {
+  it("should show an error page when the capture configurations cannot be retrieved", async () => {
+    const project = mocks.project.generateProject({ id: PROJECT_ID });
     mockGetSession.mockResolvedValue({
       user: mocks.user.generateAuthUser({ role: "admin" }),
       session: mocks.session.generateSession(),
     });
+    mockGetProject.mockResolvedValue([null, { project }]);
+    mockListCaptureConfigurations.mockResolvedValue([
+      createORPCError("INTERNAL_SERVER_ERROR"),
+      undefined,
+    ]);
+    mockListApiKeys.mockResolvedValue([null, { apiKeys: [], total: 0 }]);
+
+    await expect(ProjectSettingsPage(pageProps)).rejects.toThrow();
+  });
+
+  it("should show an error page when the api keys cannot be retrieved", async () => {
+    const project = mocks.project.generateProject({ id: PROJECT_ID });
+    mockGetSession.mockResolvedValue({
+      user: mocks.user.generateAuthUser({ role: "admin" }),
+      session: mocks.session.generateSession(),
+    });
+    mockGetProject.mockResolvedValue([null, { project }]);
+    mockListCaptureConfigurations.mockResolvedValue([null, { captureConfigurations: [] }]);
     mockListApiKeys.mockResolvedValue([createORPCError("INTERNAL_SERVER_ERROR"), undefined]);
 
     await expect(ProjectSettingsPage(pageProps)).rejects.toThrow();

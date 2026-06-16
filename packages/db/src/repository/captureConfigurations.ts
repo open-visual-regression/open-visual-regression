@@ -21,9 +21,10 @@ export const addCaptureConfiguration = async (
   return captureConfiguration;
 };
 
-export const deleteCaptureConfiguration = async (id: string) => {
-  await db.delete(captureConfigurations).where(eq(captureConfigurations.id, id));
-};
+export const findById = (id: string) =>
+  db.query.captureConfigurations.findFirst({
+    where: (captureConfigurations, { eq }) => eq(captureConfigurations.id, id),
+  });
 
 export const countByProject = async (projectId: string) => {
   const [result] = await db
@@ -32,4 +33,8 @@ export const countByProject = async (projectId: string) => {
     .where(eq(captureConfigurations.projectId, projectId));
 
   return result?.count ?? 0;
+};
+
+export const deleteCaptureConfiguration = async (id: string) => {
+  await db.delete(captureConfigurations).where(eq(captureConfigurations.id, id));
 };
