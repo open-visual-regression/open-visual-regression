@@ -1,7 +1,7 @@
 import { vi } from "vitest";
 import type { serverClient as ServerClient } from "../router";
 
-export const serverClient: typeof ServerClient = {
+export const serverClient = {
   setup: {
     status: vi.fn(),
     exec: vi.fn(),
@@ -41,4 +41,4 @@ export const serverClient: typeof ServerClient = {
     getBuildStatus: vi.fn(),
     list: vi.fn(),
   },
-};
+} as unknown as typeof ServerClient;

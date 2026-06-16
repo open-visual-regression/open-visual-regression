@@ -37,7 +37,9 @@ export const CaptureConfigurationsSection = ({
     {
       interceptors: [
         onSuccess(() => router.refresh()),
-        onError((err) => toast.error(err.message)),
+        onError((err) => {
+          toast.error(err.message);
+        }),
       ],
     },
   );
