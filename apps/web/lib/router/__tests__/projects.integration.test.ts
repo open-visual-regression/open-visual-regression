@@ -187,36 +187,7 @@ describe("projects", () => {
       expect(error?.code).toBe("FORBIDDEN");
     });
 
-    test("should return BAD_REQUEST at the 10-configuration limit", async ({ admin: _ }) => {
-      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
-      const projectId = addResult!.projectId;
-
-      for (let i = 0; i < 10; i++) {
-        await serverClient.projects.addCaptureConfiguration({
-          projectId,
-          data: {
-            name: `config-${i}`,
-            browser: "chromium",
-            viewportWidth: 1280,
-            viewportHeight: 800,
-          },
-        });
-      }
-
-      const [error] = await serverClient.projects.addCaptureConfiguration({
-        projectId,
-        data: {
-          name: "one-too-many",
-          browser: "chromium",
-          viewportWidth: 1280,
-          viewportHeight: 800,
-        },
-      });
-
-      expect(error?.code).toBe("BAD_REQUEST");
-    });
-
-    test("should create a capture configuration when under the limit", async ({ admin: _ }) => {
+    test("should create a capture configuration", async ({ admin: _ }) => {
       const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
       const projectId = addResult!.projectId;
 

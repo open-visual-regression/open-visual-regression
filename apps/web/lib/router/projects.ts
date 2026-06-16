@@ -95,14 +95,6 @@ export const addCaptureConfiguration = os.projects.addCaptureConfiguration
   .use(authenticatedMiddleware)
   .use(adminMiddleware)
   .handler(async ({ input }) => {
-    const count = await dbClient.captureConfigurations.countByProject(input.projectId);
-
-    if (count >= 10) {
-      throw new ORPCError("BAD_REQUEST", {
-        message: "A project can have at most 10 capture configurations",
-      });
-    }
-
     await dbClient.captureConfigurations.addCaptureConfiguration({
       projectId: input.projectId,
       ...input.data,
