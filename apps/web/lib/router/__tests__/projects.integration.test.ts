@@ -142,6 +142,14 @@ describe("projects", () => {
       expect(error?.code).toBe("FORBIDDEN");
     });
 
+    test("should return NOT_FOUND for an unknown project ID", async ({ admin: _ }) => {
+      const [error] = await serverClient.projects.update({
+        id: NONEXISTENT_PROJECT_ID,
+        patch: { retentionDays: 30 },
+      });
+      expect(error?.code).toBe("NOT_FOUND");
+    });
+
     test("should return BAD_REQUEST when retentionDays is less than 1", async ({ admin: _ }) => {
       const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
       const projectId = addResult!.projectId;
@@ -187,6 +195,14 @@ describe("projects", () => {
       expect(error?.code).toBe("FORBIDDEN");
     });
 
+    test("should return NOT_FOUND for an unknown project ID", async ({ admin: _ }) => {
+      const [error] = await serverClient.projects.addCaptureConfiguration({
+        projectId: NONEXISTENT_PROJECT_ID,
+        data: { name: "desktop", browser: "chromium", viewportWidth: 1280, viewportHeight: 800 },
+      });
+      expect(error?.code).toBe("NOT_FOUND");
+    });
+
     test("should create a capture configuration", async ({ admin: _ }) => {
       const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
       const projectId = addResult!.projectId;
@@ -206,6 +222,25 @@ describe("projects", () => {
         viewportWidth: 1280,
         viewportHeight: 800,
       });
+    });
+
+    test("should return BAD_REQUEST when the 10-configuration limit is reached", async ({ admin: _ }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+
+      for (let i = 0; i < 10; i++) {
+        await serverClient.projects.addCaptureConfiguration({
+          projectId,
+          data: { name: `config-${i}`, browser: "chromium", viewportWidth: 1280, viewportHeight: 800 },
+        });
+      }
+
+      const [error] = await serverClient.projects.addCaptureConfiguration({
+        projectId,
+        data: { name: "over-limit", browser: "chromium", viewportWidth: 1280, viewportHeight: 800 },
+      });
+
+      expect(error?.code).toBe("BAD_REQUEST");
     });
   });
 

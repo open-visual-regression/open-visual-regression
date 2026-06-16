@@ -1,10 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { onSuccess } from "@orpc/client";
+import { onError, onSuccess } from "@orpc/client";
 import { useServerAction } from "@orpc/react/hooks";
 import { Button } from "@ovr/ui/components/button";
 import { Icon, PlusIcon, XIcon } from "@ovr/ui/components/icon";
+import { toast } from "@ovr/ui/components/toast";
 import { Typography } from "@ovr/ui/components/typography";
 import {
   Table,
@@ -34,7 +35,10 @@ export const CaptureConfigurationsSection = ({
   const { execute: executeRemove } = useServerAction(
     serverClient.projects.removeCaptureConfiguration,
     {
-      interceptors: [onSuccess(() => router.refresh())],
+      interceptors: [
+        onSuccess(() => router.refresh()),
+        onError((err) => toast.error(err.message)),
+      ],
     },
   );
 

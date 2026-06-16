@@ -59,28 +59,44 @@ export const add = os.projects.add
 export const update = os.projects.update
   .use(authenticatedMiddleware)
   .use(adminMiddleware)
-  .handler(async ({ input }) => {
+  .handler(async ({ input, context }) => {
+    const project = await dbClient.projects.getProject({
+      projectId: input.id,
+      organizationId: context.organizationId,
+    });
+
+    if (!project) {
+      throw new ORPCError("NOT_FOUND", { message: "Project not found" });
+    }
+
     await dbClient.projects.updateProject(input.id, input.patch);
   })
   .actionable();
 
 export const listCaptureConfigurations = os.projects.listCaptureConfigurations
   .use(authenticatedMiddleware)
-  .handler(async ({ input }) => {
+  .handler(async ({ input, context }) => {
+    const project = await dbClient.projects.getProject({
+      projectId: input.projectId,
+      organizationId: context.organizationId,
+    });
+
+    if (!project) {
+      throw new ORPCError("NOT_FOUND", { message: "Project not found" });
+    }
+
     const configs = await dbClient.captureConfigurations.findByProject({
       projectId: input.projectId,
     });
 
     return {
-      captureConfigurations: configs.map(
-        ({ id, name, browser, viewportWidth, viewportHeight }) => ({
-          id,
-          name,
-          browser: browser as "chromium" | "firefox" | "webkit",
-          viewportWidth,
-          viewportHeight,
-        }),
-      ),
+      captureConfigurations: configs.map(({ id, name, browser, viewportWidth, viewportHeight }) => ({
+        id,
+        name,
+        browser: browser as "chromium" | "firefox" | "webkit",
+        viewportWidth,
+        viewportHeight,
+      })),
     };
   })
   .actionable();
@@ -88,7 +104,24 @@ export const listCaptureConfigurations = os.projects.listCaptureConfigurations
 export const addCaptureConfiguration = os.projects.addCaptureConfiguration
   .use(authenticatedMiddleware)
   .use(adminMiddleware)
-  .handler(async ({ input }) => {
+  .handler(async ({ input, context }) => {
+    const project = await dbClient.projects.getProject({
+      projectId: input.projectId,
+      organizationId: context.organizationId,
+    });
+
+    if (!project) {
+      throw new ORPCError("NOT_FOUND", { message: "Project not found" });
+    }
+
+    const count = await dbClient.captureConfigurations.countByProject(input.projectId);
+
+    if (count >= 10) {
+      throw new ORPCError("BAD_REQUEST", {
+        message: "capture configuration limit of 10 reached",
+      });
+    }
+
     await dbClient.captureConfigurations.addCaptureConfiguration({
       projectId: input.projectId,
       ...input.data,
@@ -99,7 +132,22 @@ export const addCaptureConfiguration = os.projects.addCaptureConfiguration
 export const removeCaptureConfiguration = os.projects.removeCaptureConfiguration
   .use(authenticatedMiddleware)
   .use(adminMiddleware)
-  .handler(async ({ input }) => {
+  .handler(async ({ input, context }) => {
+    const config = await dbClient.captureConfigurations.findById(input.captureConfigurationId);
+
+    if (!config) {
+      throw new ORPCError("NOT_FOUND", { message: "Capture configuration not found" });
+    }
+
+    const project = await dbClient.projects.getProject({
+      projectId: config.projectId,
+      organizationId: context.organizationId,
+    });
+
+    if (!project) {
+      throw new ORPCError("NOT_FOUND", { message: "Capture configuration not found" });
+    }
+
     await dbClient.captureConfigurations.deleteCaptureConfiguration(input.captureConfigurationId);
   })
   .actionable();

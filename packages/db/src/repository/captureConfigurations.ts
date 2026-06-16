@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 
 import { db, type DbClient } from "../db";
 import { captureConfigurations } from "../schema";
@@ -19,6 +19,20 @@ export const addCaptureConfiguration = async (
 ) => {
   const [captureConfiguration] = await db.insert(captureConfigurations).values(values).returning();
   return captureConfiguration;
+};
+
+export const findById = (id: string) =>
+  db.query.captureConfigurations.findFirst({
+    where: (captureConfigurations, { eq }) => eq(captureConfigurations.id, id),
+  });
+
+export const countByProject = async (projectId: string) => {
+  const [result] = await db
+    .select({ count: count() })
+    .from(captureConfigurations)
+    .where(eq(captureConfigurations.projectId, projectId));
+
+  return result?.count ?? 0;
 };
 
 export const deleteCaptureConfiguration = async (id: string) => {
