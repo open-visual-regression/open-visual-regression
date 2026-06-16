@@ -45,12 +45,14 @@ export default async function ProjectSettingsPage(props: ProjectSettingsPageProp
       <Typography variant="h1" as="h1">
         settings
       </Typography>
-      <UpdateProjectForm project={projectResult.project} />
-      <CaptureConfigurationsSection
-        projectId={projectId}
-        captureConfigurations={captureConfigsResult.captureConfigurations}
-      />
-      <ApiKeysSection projectId={projectId} apiKeys={apiKeysResult.apiKeys} />
+      <div className="flex flex-col gap-6 w-full md:w-3/4 lg:w-2/3">
+        <UpdateProjectForm project={projectResult.project} />
+        <CaptureConfigurationsSection
+          projectId={projectId}
+          captureConfigurations={captureConfigsResult.captureConfigurations}
+        />
+        <ApiKeysSection projectId={projectId} apiKeys={apiKeysResult.apiKeys} />
+      </div>
     </div>
   );
 }
