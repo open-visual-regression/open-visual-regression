@@ -1,6 +1,7 @@
 "use server";
 
 import { ORPCError } from "@orpc/client";
+import { isAPIError } from "better-auth/api";
 import { convertSetCookieToCookie } from "better-auth/test";
 import { os } from "./os";
 import { unauthenticatedMiddleware } from "./middleware";
@@ -39,19 +40,23 @@ export const acceptInvitation = os.invitations.acceptInvitation
 
     // TODO: if signUpEmail succeeds but acceptInvitation fails, the user account exists with no
     // org membership and cannot retry (email taken). Risk is low — sequential server-side calls.
-    const signUpResponse = await auth.api.signUpEmail({
-      body: { name: input.name, email: invitation.email, password: input.password },
+    try {
+      await auth.api.signUpEmail({
+        body: { name: input.name, email: invitation.email, password: input.password },
+      });
+    } catch (err) {
+      if (isAPIError(err)) {
+        throw new ORPCError("BAD_REQUEST", { message: err.message });
+      }
+      throw err;
+    }
+
+    const signInResponse = await auth.api.signInEmail({
+      body: { email: invitation.email, password: input.password },
       asResponse: true,
     });
 
-    if (!signUpResponse.ok) {
-      const body = (await signUpResponse.json()) as { message?: string };
-      throw new ORPCError("BAD_REQUEST", {
-        message: body?.message ?? "failed to create account",
-      });
-    }
-
-    const sessionHeaders = convertSetCookieToCookie(new Headers(signUpResponse.headers));
+    const sessionHeaders = convertSetCookieToCookie(new Headers(signInResponse.headers));
 
     await auth.api.acceptInvitation({
       body: { invitationId: input.invitationId },
