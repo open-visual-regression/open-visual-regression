@@ -60,10 +60,6 @@ export const update = os.projects.update
   .use(authenticatedMiddleware)
   .use(adminMiddleware)
   .handler(async ({ input }) => {
-    if (input.patch.retentionDays !== undefined && input.patch.retentionDays < 1) {
-      throw new ORPCError("BAD_REQUEST", { message: "retentionDays must be at least 1" });
-    }
-
     await dbClient.projects.updateProject(input.id, input.patch);
   })
   .actionable();
