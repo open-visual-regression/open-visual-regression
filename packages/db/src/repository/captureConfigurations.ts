@@ -1,4 +1,4 @@
-import { count, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 import { db, type DbClient } from "../db";
 import { captureConfigurations } from "../schema";
@@ -23,13 +23,4 @@ export const addCaptureConfiguration = async (
 
 export const deleteCaptureConfiguration = async (id: string) => {
   await db.delete(captureConfigurations).where(eq(captureConfigurations.id, id));
-};
-
-export const countByProject = async (projectId: string) => {
-  const [result] = await db
-    .select({ count: count() })
-    .from(captureConfigurations)
-    .where(eq(captureConfigurations.projectId, projectId));
-
-  return result?.count ?? 0;
 };
