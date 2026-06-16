@@ -76,18 +76,17 @@ export const update = os.projects.update
 export const listCaptureConfigurations = os.projects.listCaptureConfigurations
   .use(authenticatedMiddleware)
   .handler(async ({ input, context }) => {
-    const project = await dbClient.projects.getProject({
-      projectId: input.projectId,
-      organizationId: context.organizationId,
-    });
+    const [project, configs] = await Promise.all([
+      dbClient.projects.getProject({
+        projectId: input.projectId,
+        organizationId: context.organizationId,
+      }),
+      dbClient.captureConfigurations.findByProject({ projectId: input.projectId }),
+    ]);
 
     if (!project) {
       throw new ORPCError("NOT_FOUND", { message: "Project not found" });
     }
-
-    const configs = await dbClient.captureConfigurations.findByProject({
-      projectId: input.projectId,
-    });
 
     return {
       captureConfigurations: configs.map(({ id, name, browser, viewportWidth, viewportHeight }) => ({
@@ -105,16 +104,17 @@ export const addCaptureConfiguration = os.projects.addCaptureConfiguration
   .use(authenticatedMiddleware)
   .use(adminMiddleware)
   .handler(async ({ input, context }) => {
-    const project = await dbClient.projects.getProject({
-      projectId: input.projectId,
-      organizationId: context.organizationId,
-    });
+    const [project, count] = await Promise.all([
+      dbClient.projects.getProject({
+        projectId: input.projectId,
+        organizationId: context.organizationId,
+      }),
+      dbClient.captureConfigurations.countByProject(input.projectId),
+    ]);
 
     if (!project) {
       throw new ORPCError("NOT_FOUND", { message: "Project not found" });
     }
-
-    const count = await dbClient.captureConfigurations.countByProject(input.projectId);
 
     if (count >= 10) {
       throw new ORPCError("BAD_REQUEST", {
