@@ -33,7 +33,7 @@ export default async function ProjectSettingsPage(props: ProjectSettingsPageProp
   ]);
 
   if (projectError?.code === "NOT_FOUND") {
-    notFound();
+    return notFound();
   }
 
   if (projectError || captureConfigsError || apiKeysError) {
