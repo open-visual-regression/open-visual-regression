@@ -10,7 +10,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableEmpty,
   TableHead,
   TableHeader,
   TableRow,
@@ -19,6 +18,7 @@ import { serverClient } from "@/lib/router";
 import type { CaptureConfigurationDto } from "@ovr/api/contracts/projects";
 import { AddCaptureConfigurationModal } from "../add-capture-configuration/AddCaptureConfigurationModal";
 import { AddCaptureConfigurationModalButton } from "../add-capture-configuration/AddCaptureConfigurationModalButton";
+import { NoCaptureConfigurationsSection } from "./NoCaptureConfigurationsSection";
 
 type CaptureConfigurationsSectionProps = {
   projectId: string;
@@ -52,20 +52,20 @@ export const CaptureConfigurationsSection = ({
           }
         />
       </div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>name</TableHead>
-            <TableHead>browser</TableHead>
-            <TableHead>viewport</TableHead>
-            <TableHead className="w-px" />
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {captureConfigurations.length === 0 ? (
-            <TableEmpty colSpan={4}>no capture configurations yet</TableEmpty>
-          ) : (
-            captureConfigurations.map((config) => (
+      {captureConfigurations.length === 0 ? (
+        <NoCaptureConfigurationsSection projectId={projectId} />
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>name</TableHead>
+              <TableHead>browser</TableHead>
+              <TableHead>viewport</TableHead>
+              <TableHead className="w-px" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {captureConfigurations.map((config) => (
               <TableRow key={config.id}>
                 <TableCell>{config.name}</TableCell>
                 <TableCell>{config.browser}</TableCell>
@@ -83,10 +83,10 @@ export const CaptureConfigurationsSection = ({
                   </Button>
                 </TableCell>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
+            ))}
+          </TableBody>
+        </Table>
+      )}
     </div>
   );
 };
