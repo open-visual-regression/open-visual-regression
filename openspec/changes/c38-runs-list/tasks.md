@@ -1,25 +1,24 @@
-# 38 · Runs list page
+# 38 · Runs list
 
-Gate: `/projects/[projectId]/builds` renders table with DiffStrip per row; filter tabs update the list; baseline branch info shown.
+Gate: project page shows builds table with DiffStrip per row; filter tabs narrow the list; clicking a row navigates to run detail.
 
 Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-builds.jsx` (RunsScreen)
 
-- [ ] 1.1 Create `apps/web/app/(authenticated)/projects/[projectId]/builds/page.tsx` (RSC):
-  - Accept `searchParams: { filter?: "changed" | "pass" | "fail" | "pending" }` — default "all"
-  - Fetch builds via `buildsRepo.findByProject(project.id, { status: filterToStatus(filter) })`
-  - Render filter tab bar: "all (N)" · "changed (N)" · "pass (N)" · "fail (N)" · "pending (N)"
-  - Baseline info line below tabs: "baseline: [defaultBranch] · last updated [relative date]"
+- [x] `apps/web/app/(authenticated)/projects/[projectId]/page.tsx`: fetches project + builds; renders `BuildsSection`
+- [x] `BuildsSection` + `NoBuildsSection`: empty state or table
+- [x] `BuildsTable`: columns: status icon · name/commitSha · branch · status badge · date
 
-- [ ] 1.2 Build row component (`RunRow`):
-  - Left edge: `DiffStrip` with status mapped to strip color
-  - `StatusIcon` + status text (use build status → UI mapping from config.yaml)
-  - Run ID (monospace, muted) · commit sha (7 chars, monospace) · branch pill · author · relative timestamp
-  - Full row links to `/projects/[projectId]/builds/[buildId]`
+- [ ] 1.1 Add `DiffStrip` to each row: 3px left-edge vertical strip; color mapped from build status
 
-- [ ] 1.3 Empty state for filtered view:
-  - When filter is active and no results: "no [filter] runs" + "clear filter" link
+- [ ] 1.2 Make full row a link to `/projects/[projectId]/builds/[buildId]`
+
+- [ ] 1.3 Filter tab bar above the table:
+  - Tabs: "all (N)" · "changed (N)" · "pass (N)" · "fail (N)" · "pending (N)"
+  - Active filter passed as `searchParams.filter`; page re-fetches filtered list
+  - "clear filter" link when filter active and no results
 
 - [ ] 1.4 Component tests:
   - All filter tabs render with correct counts
   - Each row shows DiffStrip with correct status color
-  - Active filter tab is highlighted; URL updates on tab click
+  - Active filter tab is highlighted
+  - Row click navigates to run detail URL
