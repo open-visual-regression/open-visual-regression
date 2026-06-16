@@ -10,7 +10,6 @@ type UserOverrides = {
   role?: string | null;
   createdAt?: Date;
   status?: UserSchema["status"];
-  lastLoginAt?: Date | null;
   invitationUrl?: string;
 };
 
@@ -52,6 +51,5 @@ export const generateUser = (overrides?: UserOverrides): UserSchema => {
   return {
     ...base,
     status: "active",
-    lastLoginAt: overrides?.lastLoginAt !== undefined ? overrides.lastLoginAt : faker.date.recent(),
   };
 };

@@ -5,6 +5,7 @@ import * as storage from "./storage";
 import * as builds from "./builds";
 import * as account from "./account";
 import * as users from "./users";
+import * as invitations from "./invitations";
 
 export const serverClient = {
   apiKeys,
@@ -14,4 +15,5 @@ export const serverClient = {
   builds,
   account,
   users,
+  invitations,
 } as const;

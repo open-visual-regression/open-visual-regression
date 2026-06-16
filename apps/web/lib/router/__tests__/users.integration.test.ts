@@ -33,20 +33,6 @@ describe("users", () => {
       );
     });
 
-    test("should include the last login time for a user that has signed in", async ({ admin }) => {
-      const [, result] = await serverClient.users.list();
-
-      expect(result?.users).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            id: admin.id,
-            status: "active",
-            lastLoginAt: expect.any(Date),
-          }),
-        ]),
-      );
-    });
-
     test("should mark existing members as active", async ({ admin }) => {
       const [, result] = await serverClient.users.list();
 
