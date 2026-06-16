@@ -2,7 +2,6 @@
 
 import { ORPCError } from "@orpc/client";
 import { isAPIError } from "better-auth/api";
-import { convertSetCookieToCookie } from "better-auth/test";
 import { os } from "./os";
 import { unauthenticatedMiddleware } from "./middleware";
 import { auth } from "../auth/auth";
@@ -56,7 +55,11 @@ export const acceptInvitation = os.invitations.acceptInvitation
       asResponse: true,
     });
 
-    const sessionHeaders = convertSetCookieToCookie(new Headers(signInResponse.headers));
+    const sessionCookie = signInResponse.headers
+      .getSetCookie()
+      .map((c) => c.split(";")[0])
+      .join("; ");
+    const sessionHeaders = new Headers({ cookie: sessionCookie });
 
     await auth.api.acceptInvitation({
       body: { invitationId: input.invitationId },
