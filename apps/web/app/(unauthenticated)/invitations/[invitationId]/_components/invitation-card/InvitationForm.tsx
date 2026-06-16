@@ -31,7 +31,7 @@ export const InvitationForm = ({ invitationId, email }: InvitationFormProps) => 
 
   const { execute, status } = useServerAction(serverClient.invitations.acceptInvitation, {
     interceptors: [
-      onSuccess(() => router.push("/login")),
+      onSuccess(() => router.push("/")),
       onError((err) => setError("root", { message: err.message })),
     ],
   });

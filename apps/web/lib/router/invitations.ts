@@ -1,9 +1,10 @@
 "use server";
 
 import { ORPCError } from "@orpc/client";
+import { convertSetCookieToCookie } from "better-auth/test";
 import { os } from "./os";
 import { unauthenticatedMiddleware } from "./middleware";
-import { authServerClient } from "../auth";
+import { auth } from "../auth/auth";
 import { dbClient } from "@ovr/db/client";
 
 export const getInvitation = os.invitations.getInvitation
@@ -36,23 +37,25 @@ export const acceptInvitation = os.invitations.acceptInvitation
       });
     }
 
-    const [createUserError, createUserResult] = await authServerClient.createUser({
-      name: input.name,
-      email: invitation.email,
-      password: input.password,
+    // TODO: if signUpEmail succeeds but acceptInvitation fails, the user account exists with no
+    // org membership and cannot retry (email taken). Risk is low — sequential server-side calls.
+    const signUpResponse = await auth.api.signUpEmail({
+      body: { name: input.name, email: invitation.email, password: input.password },
+      asResponse: true,
     });
 
-    if (createUserError || !createUserResult?.user?.id) {
+    if (!signUpResponse.ok) {
+      const body = (await signUpResponse.json()) as { message?: string };
       throw new ORPCError("BAD_REQUEST", {
-        message: createUserError?.message ?? "failed to create account",
+        message: body?.message ?? "failed to create account",
       });
     }
 
-    await dbClient.users.acceptInvitation({
-      invitationId: input.invitationId,
-      userId: createUserResult.user.id,
-      organizationId: invitation.organizationId,
-      role: invitation.role,
+    const sessionHeaders = convertSetCookieToCookie(new Headers(signUpResponse.headers));
+
+    await auth.api.acceptInvitation({
+      body: { invitationId: input.invitationId },
+      headers: sessionHeaders,
     });
   })
   .actionable();

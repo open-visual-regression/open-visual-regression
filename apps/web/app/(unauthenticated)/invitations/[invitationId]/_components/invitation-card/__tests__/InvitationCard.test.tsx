@@ -53,7 +53,7 @@ describe("InvitationCard", () => {
     expect(mockAcceptInvitation).not.toHaveBeenCalled();
   });
 
-  it("should redirect to /projects on successful submission", async ({ user }) => {
+  it("should redirect to / on successful submission", async ({ user }) => {
     mockAcceptInvitation.mockResolvedValue([null, undefined]);
     renderComponent();
 
@@ -62,7 +62,7 @@ describe("InvitationCard", () => {
     await user.type(screen.getByLabelText(/confirm password/i), "securepass123");
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
-    await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/login"));
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/"));
     expect(mockAcceptInvitation).toHaveBeenCalledWith({
       invitationId: INVITATION_ID,
       name: "Jules Ortega",

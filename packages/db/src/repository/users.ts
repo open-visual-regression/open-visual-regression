@@ -14,29 +14,6 @@ export const findByEmail = (email: string) =>
 export const findInvitationById = (id: string) =>
   db.query.invitation.findFirst({ where: eq(invitation.id, id), with: { organization: true } });
 
-export const acceptInvitation = async ({
-  invitationId,
-  userId,
-  organizationId,
-  role,
-}: {
-  invitationId: string;
-  userId: string;
-  organizationId: string;
-  role: string | null;
-}) => {
-  await db.transaction(async (tx) => {
-    await tx.insert(member).values({
-      id: crypto.randomUUID(),
-      userId,
-      organizationId,
-      role: role ?? "member",
-      createdAt: new Date(),
-    });
-    await tx.update(invitation).set({ status: "accepted" }).where(eq(invitation.id, invitationId));
-  });
-};
-
 export type UsersSortField = "name" | "email" | "createdAt" | "status";
 
 export type SortDirection = "asc" | "desc";
