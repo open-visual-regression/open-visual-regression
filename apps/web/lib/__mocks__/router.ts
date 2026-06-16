@@ -9,7 +9,7 @@ export const serverClient = {
     getOne: vi.fn(),
     list: vi.fn(),
     add: vi.fn(),
-    updateSettings: vi.fn(),
+    update: vi.fn(),
     listCaptureConfigurations: vi.fn(),
     addCaptureConfiguration: vi.fn(),
     removeCaptureConfiguration: vi.fn(),
