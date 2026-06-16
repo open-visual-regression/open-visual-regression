@@ -1,10 +1,9 @@
 "use server";
 
 import { ORPCError } from "@orpc/client";
-import { isAPIError } from "better-auth/api";
 import { os } from "./os";
 import { unauthenticatedMiddleware } from "./middleware";
-import { auth } from "../auth/auth";
+import { authServerClient } from "../auth";
 import { dbClient } from "@ovr/db/client";
 
 export const getInvitation = os.invitations.getInvitation
@@ -39,31 +38,33 @@ export const acceptInvitation = os.invitations.acceptInvitation
 
     // TODO: if signUpEmail succeeds but acceptInvitation fails, the user account exists with no
     // org membership and cannot retry (email taken). Risk is low — sequential server-side calls.
-    try {
-      await auth.api.signUpEmail({
-        body: { name: input.name, email: invitation.email, password: input.password },
-      });
-    } catch (err) {
-      if (isAPIError(err)) {
-        throw new ORPCError("BAD_REQUEST", { message: err.message });
-      }
-      throw err;
+    const [signUpError] = await authServerClient.signUpEmail({
+      name: input.name,
+      email: invitation.email,
+      password: input.password,
+    });
+
+    if (signUpError) {
+      throw new ORPCError("BAD_REQUEST", { message: signUpError.message });
     }
 
-    const signInResponse = await auth.api.signInEmail({
-      body: { email: invitation.email, password: input.password },
-      asResponse: true,
+    const signInResponse = await authServerClient.signInEmail({
+      email: invitation.email,
+      password: input.password,
     });
 
     const sessionCookie = signInResponse.headers
       .getSetCookie()
       .map((c) => c.split(";")[0])
       .join("; ");
-    const sessionHeaders = new Headers({ cookie: sessionCookie });
 
-    await auth.api.acceptInvitation({
-      body: { invitationId: input.invitationId },
-      headers: sessionHeaders,
+    const [acceptError] = await authServerClient.acceptInvitation({
+      invitationId: input.invitationId,
+      headers: new Headers({ cookie: sessionCookie }),
     });
+
+    if (acceptError) {
+      throw new ORPCError("BAD_REQUEST", { message: acceptError.message });
+    }
   })
   .actionable();
