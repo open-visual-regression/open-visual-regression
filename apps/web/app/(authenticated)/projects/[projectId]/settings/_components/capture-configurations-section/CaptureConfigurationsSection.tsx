@@ -136,7 +136,7 @@ export const CaptureConfigurationsSection = ({
       <form onSubmit={handleSubmit(handleAdd)} noValidate>
         <div className="flex flex-col gap-2">
           <Typography variant="label">add configuration</Typography>
-          <div className="flex flex-row gap-3 items-end">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <FieldGroup>
               <Field data-invalid={!!errors.name}>
                 <FieldLabel htmlFor="config-name">name</FieldLabel>

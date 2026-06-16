@@ -107,7 +107,7 @@ export const UpdateProjectForm = ({ project }: UpdateProjectFormProps) => {
                 <FieldError errors={[errors.description]} />
               </Field>
             </FieldGroup>
-            <div className="flex flex-row gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <FieldGroup>
                 <Field data-invalid={!!errors.gitMainBranch}>
                   <FieldLabel htmlFor="gitMainBranch">git main branch</FieldLabel>

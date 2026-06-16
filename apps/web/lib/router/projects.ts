@@ -65,8 +65,6 @@ export const update = os.projects.update
     }
 
     await dbClient.projects.updateProject(input.id, input.patch);
-
-    revalidatePath("/", "layout");
   })
   .actionable();
 
@@ -99,8 +97,6 @@ export const addCaptureConfiguration = os.projects.addCaptureConfiguration
       projectId: input.projectId,
       ...input.data,
     });
-
-    revalidatePath("/", "layout");
   })
   .actionable();
 
@@ -109,7 +105,5 @@ export const removeCaptureConfiguration = os.projects.removeCaptureConfiguration
   .use(adminMiddleware)
   .handler(async ({ input }) => {
     await dbClient.captureConfigurations.deleteCaptureConfiguration(input.captureConfigurationId);
-
-    revalidatePath("/", "layout");
   })
   .actionable();
