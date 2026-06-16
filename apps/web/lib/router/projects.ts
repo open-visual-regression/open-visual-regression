@@ -89,13 +89,15 @@ export const listCaptureConfigurations = os.projects.listCaptureConfigurations
     }
 
     return {
-      captureConfigurations: configs.map(({ id, name, browser, viewportWidth, viewportHeight }) => ({
-        id,
-        name,
-        browser: browser as "chromium" | "firefox" | "webkit",
-        viewportWidth,
-        viewportHeight,
-      })),
+      captureConfigurations: configs.map(
+        ({ id, name, browser, viewportWidth, viewportHeight }) => ({
+          id,
+          name,
+          browser: browser as "chromium" | "firefox" | "webkit",
+          viewportWidth,
+          viewportHeight,
+        }),
+      ),
     };
   })
   .actionable();

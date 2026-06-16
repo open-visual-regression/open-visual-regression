@@ -224,14 +224,21 @@ describe("projects", () => {
       });
     });
 
-    test("should return BAD_REQUEST when the 10-configuration limit is reached", async ({ admin: _ }) => {
+    test("should return BAD_REQUEST when the 10-configuration limit is reached", async ({
+      admin: _,
+    }) => {
       const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
       const projectId = addResult!.projectId;
 
       for (let i = 0; i < 10; i++) {
         await serverClient.projects.addCaptureConfiguration({
           projectId,
-          data: { name: `config-${i}`, browser: "chromium", viewportWidth: 1280, viewportHeight: 800 },
+          data: {
+            name: `config-${i}`,
+            browser: "chromium",
+            viewportWidth: 1280,
+            viewportHeight: 800,
+          },
         });
       }
 
