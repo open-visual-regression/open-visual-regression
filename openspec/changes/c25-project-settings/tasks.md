@@ -6,19 +6,24 @@ Depends on: c24-new-project
 
 Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-projects.jsx` (ProjectSettingsScreen)
 
+> Note: `apps/web/app/(authenticated)/projects/[projectId]/settings/page.tsx` currently shows only the API keys section. The project layout (`[projectId]/layout.tsx`) does not exist yet.
+
 - [ ] 1.1 `apps/web/app/(authenticated)/projects/[projectId]/layout.tsx` (RSC):
-  - Load project via `router.projects.getOne({ projectId })` → `notFound()` if missing
-  - Pass project to children via slot props or `React.cache`
+  - Load project via `serverClient.projects.getOne({ projectId })` → `notFound()` if missing
+  - Pass project to children via `React.cache` or slot
 
 - [ ] 1.2 `apps/web/app/(authenticated)/projects/[projectId]/settings/layout.tsx`:
   - Tab nav: "runs" · "settings" · "api" · "logs"
-  - Links: `/projects/[projectId]/builds` · `/projects/[projectId]/settings` · `/projects/[projectId]/settings/api` · `/projects/[projectId]/settings/logs`
-  - "api" and "logs" → "coming soon" placeholder pages
-  - `?created=1` → accent-tone Toast "project created — add a capture configuration to begin capturing" (auto-dismiss 6s)
+  - Links: `/projects/[projectId]` · `/projects/[projectId]/settings` · `/projects/[projectId]/settings/api` · `/projects/[projectId]/settings/logs`
+  - "api" and "logs" tabs → "coming soon" placeholder pages
+  - `?created=1` in searchParams → accent-tone Toast "project created — add a capture configuration to begin capturing" (auto-dismiss 6s)
 
-- [ ] 1.3 Add `retentionDays` column to the `projects` table (`packages/db/src/schemas/schemas.ts`): `integer("retention_days").notNull().default(90)`. Run `drizzle-kit generate`; commit migration.
+- [ ] 1.3 Add `retentionDays` column to `projects` table (`packages/db/src/schemas/schemas.ts`): `integer("retention_days").notNull().default(90)`. Run `drizzle-kit generate`; commit migration.
 
-- [ ] 1.4 `packages/api/src/contracts/projects.ts` — add `updateProject` contract (input: `{ id, patch }`, where `patch` includes `retentionDays?: number`) + `addCaptureConfiguration` contract (input: `{ projectId, data }`) + `removeCaptureConfiguration` contract (input: `{ captureConfigurationId }`); update index
+- [ ] 1.4 `packages/api/src/contracts/projects.ts` — add contracts; update index:
+  - `updateProject`: input `{ id, patch: { name?, description?, gitMainBranch?, diffThreshold?, retentionDays? } }`; output void
+  - `addCaptureConfiguration`: input `{ projectId, data: { name, browser, viewportWidth, viewportHeight } }`; output void
+  - `removeCaptureConfiguration`: input `{ captureConfigurationId }`; output void
 
 - [ ] 1.5 `apps/web/lib/router/projects.ts` — add handlers, each `.use(authenticatedMiddleware).use(adminMiddleware)` + `.actionable()`:
   - `updateProject`: if `patch.retentionDays !== undefined && patch.retentionDays < 1` → `throw new ORPCError("BAD_REQUEST")`; else `dbClient.projects.updateProject(input.id, input.patch)`
@@ -33,13 +38,14 @@ Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-proje
   - `addCaptureConfiguration` under the limit → configuration created
   - `removeCaptureConfiguration` → configuration deleted
 
-- [ ] 1.7 `apps/web/app/(authenticated)/projects/[projectId]/settings/page.tsx` (RSC):
-  - General form (`"use client"` component): name · description · git main branch · diff threshold % · retention (days); "save changes" button
+- [ ] 1.7 `apps/web/app/(authenticated)/projects/[projectId]/settings/page.tsx` (RSC) — replace current API-keys-only page with full settings page:
+  - General form (`"use client"` component): name · description · git main branch · diff threshold % · retention days; "save changes" button
     - `useServerAction(router.projects.updateProject, { interceptors: [...] })`
   - Capture configurations table: columns: name · browser · viewport (W×H) · × remove button
     - Remove button: `useServerAction(router.projects.removeCaptureConfiguration)`
   - Add-capture-configuration row (always visible): name · browser Select (chromium/firefox/webkit) · width · height · "add" button
-    - `useServerAction(router.projects.addCaptureConfiguration, { interceptors: [onError(err => show inline error)] })`
+    - `useServerAction(router.projects.addCaptureConfiguration)`
+  - API keys section remains below (already implemented)
 
 - [ ] 1.8 Component tests:
   - `?created=1`: toast shown on mount; absent without param

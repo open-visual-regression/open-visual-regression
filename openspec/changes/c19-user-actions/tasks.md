@@ -1,26 +1,23 @@
-# 19 · User actions (role change + deactivate)
+# 19 · User actions
 
-Gate: admin can promote/demote a user's role; admin can deactivate a user; self-targeting either action is blocked.
+Gate: admin can remove an active member or cancel a pending invitation; self-targeting is blocked; bulk removal works.
 
-- [ ] 1.1 `packages/api/src/contracts/users.ts`: `changeRole` contract (input: `{ userId, role }`; output: void) + `deactivateUser` contract (input: `{ userId }`; output: void); update `contracts/index.ts`
+> **Design divergence from original spec.** The original plan was `changeRole` (promote/demote) + `deactivateUser` (ban). The implementation instead built `remove`, which hard-removes both active members (via `auth.api.removeMember`) and pending invitations (via `auth.api.cancelInvitation`) in a single bulk-capable action. Role changes are not yet implemented.
 
-- [ ] 1.2 `apps/web/lib/router/users.ts`: `"use server"`; each handler `.use(authenticatedMiddleware).use(adminMiddleware)` + `.actionable()`:
-  - `changeRole`: if `input.userId === context.user.id` → `throw new ORPCError("FORBIDDEN")`; else `auth.api.setRole({ userId: input.userId, role: input.role })`
-  - `deactivateUser`: if `input.userId === context.user.id` → `throw new ORPCError("FORBIDDEN")`; else `auth.api.banUser({ userId: input.userId })`
-  - Update `router/index.ts`
+## What was built
 
-- [ ] 1.3 Integration tests (`apps/web/lib/router/__tests__/users.integration.test.ts`):
-  - `changeRole` targeting self → `FORBIDDEN`
-  - `deactivateUser` targeting self → `FORBIDDEN`
-  - `changeRole` on another user → role updated via Better Auth
-  - `deactivateUser` on another user → user banned via Better Auth
+- [x] `packages/api/src/contracts/users.ts`: `remove` contract — discriminated union input: `{ status: "active", email }` | `{ status: "invited", invitationId }`; wrapped in `{ users: [...] }` for bulk; output: void
+- [x] `apps/web/lib/router/users.ts`: `remove` handler — blocks self-removal; calls `auth.api.removeMember` for active users, `auth.api.cancelInvitation` for invited; reports first error if any
+- [x] `UsersTableBulkActions.tsx` + `RemoveUsersModal.tsx` — bulk-select rows, confirm removal in modal; calls `useServerAction(router.users.remove)`
+- [x] Integration guard: attempting to remove self throws `BAD_REQUEST`
 
-- [ ] 1.4 Wire actions menu in members table (`"use client"` component):
-  - `DropdownMenu` per row: "make admin" / "make user" (based on role) + separator + "deactivate"
-  - Both actions use `useServerAction`; revalidate page on success
-  - Self row: all items disabled with tooltip "cannot modify your own account"
-  - Deactivated user row: only "restore" item (disabled, not yet implemented)
+## Still needed
 
-- [ ] 1.5 Component tests:
-  - Actions menu on own row: all items disabled
-  - Actions menu on other row: items enabled; correct action called on click
+- [ ] 1.1 `changeRole` contract + router handler (if still in scope):
+  - `packages/api/src/contracts/users.ts`: add `changeRole` (input: `{ userId, role: "user" | "admin" }`; output: void)
+  - `apps/web/lib/router/users.ts`: if `input.userId === context.user.id` → `FORBIDDEN`; else `auth.api.setRole(...)`
+  - Self-targeting test + happy-path test
+
+- [ ] 1.2 Per-row role switcher in `UsersTable`:
+  - Dropdown or inline toggle: "make admin" / "make user" based on current role
+  - Disabled on own row with tooltip "cannot change your own role"
