@@ -3,7 +3,6 @@ import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
 import { serverClient } from "@/lib/router";
 import { useRouter } from "next/navigation";
 import { mocks } from "@ovr/mocks";
-import { formatDateTime } from "@/lib/utils/date";
 import { UsersSection } from "../UsersSection";
 
 vi.mock("@/lib/router");
@@ -56,21 +55,6 @@ describe("UsersSection", () => {
     render(<UsersSection users={[user]} currentUserId={CURRENT_USER_ID} />);
 
     expect(screen.getByRole("cell", { name: "user" })).toBeVisible();
-  });
-
-  it("should show a never-logged-in indicator when there is no last login", () => {
-    const user = mocks.user.generateUser({ lastLoginAt: null });
-    render(<UsersSection users={[user]} currentUserId={CURRENT_USER_ID} />);
-
-    expect(screen.getByRole("cell", { name: "never" })).toBeVisible();
-  });
-
-  it("should show the last login date when available", () => {
-    const lastLoginAt = new Date("2026-05-01T12:00:00Z");
-    const user = mocks.user.generateUser({ lastLoginAt });
-    render(<UsersSection users={[user]} currentUserId={CURRENT_USER_ID} />);
-
-    expect(screen.getByRole("cell", { name: formatDateTime(lastLoginAt) })).toBeVisible();
   });
 
   it("should show an active status badge for active users", () => {

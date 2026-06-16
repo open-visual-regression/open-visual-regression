@@ -11,7 +11,6 @@ const baseUserSchema = z.object({
 
 export const activeUserSchema = baseUserSchema.extend({
   status: z.literal("active"),
-  lastLoginAt: z.date().nullable(),
 });
 
 export type ActiveUserSchema = z.infer<typeof activeUserSchema>;

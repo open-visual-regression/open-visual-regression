@@ -1,7 +1,7 @@
-import { and, asc, count, desc, eq, ilike, max, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { type PgColumn, unionAll } from "drizzle-orm/pg-core";
 import { db } from "../db";
-import { invitation, member, session, user } from "../schemas/auth";
+import { invitation, member, user } from "../schemas/auth";
 
 export const getUserCount = async (): Promise<number> => {
   const [row] = await db.select({ count: count() }).from(user);
@@ -88,7 +88,6 @@ export const findAllUsers = async ({
       role: user.role,
       status: sql<"active" | "invited">`'active'`.as("status"),
       createdAt: user.createdAt,
-      lastLoginAt: max(session.createdAt),
       sortKey:
         sortBy === "status"
           ? sql<string>`'active'`.as("sort_key")
@@ -98,7 +97,6 @@ export const findAllUsers = async ({
     })
     .from(user)
     .innerJoin(member, eq(member.userId, user.id))
-    .leftJoin(session, eq(session.userId, user.id))
     .where(activeFilter)
     .groupBy(user.id);
 
@@ -110,7 +108,6 @@ export const findAllUsers = async ({
       role: invitation.role,
       status: sql<"active" | "invited">`'invited'`.as("status"),
       createdAt: invitation.createdAt,
-      lastLoginAt: sql<Date | null>`null::timestamp`.as("last_login_at"),
       sortKey:
         sortBy === "status"
           ? sql<string>`'invited'`.as("sort_key")

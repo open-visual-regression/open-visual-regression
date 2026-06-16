@@ -27,5 +27,16 @@ services:
     ports:
       - ${ADMINER_PORT:-8080}:8080
 
+  valkey:
+    image: valkey/valkey:8-alpine
+    restart: always
+    ports:
+      - ${VALKEY_PORT:-6379}:6379
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+
 volumes:
   pgdata:

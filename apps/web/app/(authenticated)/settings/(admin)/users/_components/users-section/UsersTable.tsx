@@ -20,9 +20,7 @@ import {
 } from "@ovr/ui/components/table";
 import { Badge } from "@ovr/ui/components/badge";
 import { Checkbox } from "@ovr/ui/components/checkbox";
-import { StatusIcon } from "@ovr/ui/components/status-icon";
 import { CopyButton } from "@/lib/components/copy-button/CopyButton";
-import { formatDateTime } from "@/lib/utils/date";
 import { type UserSchema } from "@ovr/api/contracts/users";
 import { UsersTableBulkActions } from "./UsersTableBulkActions";
 
@@ -63,25 +61,6 @@ const columns = columnHelper.columns([
       ) : (
         <Badge variant="pass">active</Badge>
       ),
-  }),
-  columnHelper.display({
-    id: "lastLoginAt",
-    header: "Last login",
-    meta: { className: "text-center" },
-    cell: ({ row }) => {
-      const neverLabel = (
-        <span className="inline-flex items-center gap-1.5">
-          <StatusIcon variant="stale" size={12} />
-          never
-        </span>
-      );
-
-      if (row.original.status === "invited") {
-        return neverLabel;
-      }
-
-      return row.original.lastLoginAt ? formatDateTime(row.original.lastLoginAt) : neverLabel;
-    },
   }),
   columnHelper.display({
     id: "actions",

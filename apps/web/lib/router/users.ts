@@ -33,7 +33,6 @@ export const list = os.users.list
               role: row.role,
               status: "active" as const,
               createdAt: row.createdAt,
-              lastLoginAt: row.lastLoginAt,
             }
           : {
               id: row.id,
