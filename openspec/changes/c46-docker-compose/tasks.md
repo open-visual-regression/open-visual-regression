@@ -2,11 +2,11 @@
 
 Gate: `docker compose up` starts all 7 services; app service passes health check; migrate service exits 0 before app starts.
 
-> A dev-only `docker-compose.yml` already exists with `db` (postgres), `adminer`, and `valkey`. The production compose (app, worker, rustfs, rustfs-init, migrate services) is still needed. The existing dev file should be renamed `docker-compose.dev.yml` and the production compose created as `docker-compose.yml`.
+The existing `docker-compose.yml` is a dev-only file (postgres, adminer, valkey). Rename it and add the production compose alongside it.
 
-- [ ] 1.1 Rename existing `docker-compose.yml` → `docker-compose.dev.yml`
+- [ ] 1.1 Rename `docker-compose.yml` → `docker-compose.dev.yml`
 
-- [ ] 1.2 Create `docker-compose.yml` (production, 7 services):
+- [ ] 1.2 Create `docker-compose.yml` (7 services):
   ```yaml
   services:
     postgres:

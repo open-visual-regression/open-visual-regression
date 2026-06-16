@@ -6,8 +6,6 @@ Depends on: c24-new-project
 
 Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-projects.jsx` (ProjectSettingsScreen)
 
-> Note: `apps/web/app/(authenticated)/projects/[projectId]/settings/page.tsx` currently shows only the API keys section. The project layout (`[projectId]/layout.tsx`) does not exist yet.
-
 - [ ] 1.1 `apps/web/app/(authenticated)/projects/[projectId]/layout.tsx` (RSC):
   - Load project via `serverClient.projects.getOne({ projectId })` → `notFound()` if missing
   - Pass project to children via `React.cache` or slot
@@ -15,8 +13,8 @@ Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-proje
 - [ ] 1.2 `apps/web/app/(authenticated)/projects/[projectId]/settings/layout.tsx`:
   - Tab nav: "runs" · "settings" · "api" · "logs"
   - Links: `/projects/[projectId]` · `/projects/[projectId]/settings` · `/projects/[projectId]/settings/api` · `/projects/[projectId]/settings/logs`
-  - "api" and "logs" tabs → "coming soon" placeholder pages
-  - `?created=1` in searchParams → accent-tone Toast "project created — add a capture configuration to begin capturing" (auto-dismiss 6s)
+  - "api" and "logs" → "coming soon" placeholder pages
+  - `?created=1` → accent-tone Toast "project created — add a capture configuration to begin capturing" (auto-dismiss 6s)
 
 - [ ] 1.3 Add `retentionDays` column to `projects` table (`packages/db/src/schemas/schemas.ts`): `integer("retention_days").notNull().default(90)`. Run `drizzle-kit generate`; commit migration.
 
@@ -38,14 +36,14 @@ Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-proje
   - `addCaptureConfiguration` under the limit → configuration created
   - `removeCaptureConfiguration` → configuration deleted
 
-- [ ] 1.7 `apps/web/app/(authenticated)/projects/[projectId]/settings/page.tsx` (RSC) — replace current API-keys-only page with full settings page:
+- [ ] 1.7 `apps/web/app/(authenticated)/projects/[projectId]/settings/page.tsx` (RSC):
   - General form (`"use client"` component): name · description · git main branch · diff threshold % · retention days; "save changes" button
     - `useServerAction(router.projects.updateProject, { interceptors: [...] })`
   - Capture configurations table: columns: name · browser · viewport (W×H) · × remove button
     - Remove button: `useServerAction(router.projects.removeCaptureConfiguration)`
   - Add-capture-configuration row (always visible): name · browser Select (chromium/firefox/webkit) · width · height · "add" button
     - `useServerAction(router.projects.addCaptureConfiguration)`
-  - API keys section remains below (already implemented)
+  - API keys section remains below
 
 - [ ] 1.8 Component tests:
   - `?created=1`: toast shown on mount; absent without param

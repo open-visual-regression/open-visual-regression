@@ -4,17 +4,13 @@ Gate: `docker compose up` with only `POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET`, `
 
 Depends on: c45-dockerfile, c46-docker-compose
 
-## What was built
+- [x] `packages/db/src/migrate.ts`: exports `runMigrations(connectionString)` — runs Drizzle migrations programmatically
 
-- [x] `packages/db/src/migrate.ts`: exports `runMigrations(connectionString)` — runs Drizzle migrations programmatically; used by the migrate entrypoint
-
-## Still needed
-
-- [ ] 1.1 Create `packages/db/src/migrate-entrypoint.ts` (standalone script):
-  - Reads `DATABASE_URL` from env; fails fast if missing
+- [ ] 1.1 Create `packages/db/src/migrate-entrypoint.ts`:
+  - Reads `DATABASE_URL` from env; exits with clear message if missing
   - Calls `runMigrations(process.env.DATABASE_URL)`
   - `process.exit(0)` on success; logs to stderr + `process.exit(1)` on error
-  - Add to `packages/db/package.json` build output so Dockerfile can run it as `node packages/db/dist/migrate-entrypoint.js`
+  - Add to `packages/db` build output so the Dockerfile can invoke it as `node packages/db/dist/migrate-entrypoint.js`
 
 - [ ] 1.2 Create `scripts/rustfs-init.js`:
   - Uses `@aws-sdk/client-s3` to create the `ovr` bucket if it doesn't exist
