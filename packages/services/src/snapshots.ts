@@ -7,6 +7,7 @@ import { chromium } from "playwright";
 import { dbClient } from "@ovr/db/client";
 import { storage } from "@ovr/storage";
 
+import { detectCaptureStrategy } from "./captureStrategies";
 import { getContentType, getStaticPath } from "./extract";
 import { enqueueDiff, enqueueFinalize } from "./lib/queue";
 
@@ -43,113 +44,8 @@ const startStaticProxy = (buildId: string): Promise<{ origin: string; close: () 
 
 type ConsoleLog = { level: string; message: string };
 
-const STORYBOOK_BOOT_TIMEOUT_MS = 10_000;
-const STORY_RENDER_TIMEOUT_MS = 30_000;
-
-type StoryRenderResult = { ok: boolean; error?: string };
-
-type StorybookChannel = {
-  on: (event: string, listener: (...args: never[]) => void) => void;
-  off: (event: string, listener: (...args: never[]) => void) => void;
-  emit: (event: string, payload: unknown) => void;
-};
-
-declare global {
-  // eslint-disable-next-line no-var
-  var __STORYBOOK_ADDONS_CHANNEL__: StorybookChannel | undefined;
-}
-
-const waitForStoryRendered = ({
-  storyId,
-  timeoutMs,
-}: {
-  storyId: string;
-  timeoutMs: number;
-}): Promise<StoryRenderResult> =>
-  new Promise((resolve) => {
-    const channel = globalThis.__STORYBOOK_ADDONS_CHANNEL__;
-
-    if (!channel) {
-      resolve({ ok: false, error: "Storybook channel (__STORYBOOK_ADDONS_CHANNEL__) not found" });
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      cleanup();
-      resolve({ ok: false, error: `Timed out waiting for story "${storyId}" to render` });
-    }, timeoutMs);
-
-    const cleanup = () => {
-      clearTimeout(timeout);
-      Object.entries(listeners).forEach(([event, listener]) => channel.off(event, listener));
-    };
-
-    const listeners: Record<string, (...args: never[]) => void> = {
-      storyRendered: () => {
-        cleanup();
-        resolve({ ok: true });
-      },
-      storyUnchanged: () => {
-        cleanup();
-        resolve({ ok: true });
-      },
-      storyErrored: (payload?: { description?: string }) => {
-        cleanup();
-        resolve({ ok: false, error: payload?.description ?? "story errored" });
-      },
-      storyThrewException: (error?: { message?: string }) => {
-        cleanup();
-        resolve({ ok: false, error: error?.message ?? "story threw an exception" });
-      },
-      playFunctionThrewException: (error?: { message?: string }) => {
-        cleanup();
-        resolve({ ok: false, error: error?.message ?? "play function threw an exception" });
-      },
-      unhandledErrorsWhilePlaying: (errors?: { message?: string }[]) => {
-        cleanup();
-        resolve({ ok: false, error: errors?.[0]?.message ?? "unhandled error while playing" });
-      },
-      storyMissing: (id?: string) => {
-        if (id !== storyId) {
-          return;
-        }
-        cleanup();
-        resolve({ ok: false, error: `story "${storyId}" was missing` });
-      },
-    };
-
-    Object.entries(listeners).forEach(([event, listener]) => channel.on(event, listener));
-    channel.emit("setCurrentStory", { storyId, viewMode: "story" });
-  });
-
-type CaptureStrategy = {
-  waitForStoryRendered: (args: {
-    storyId: string;
-    timeoutMs: number;
-  }) => Promise<StoryRenderResult>;
-};
-
-const channelBasedCaptureStrategy: CaptureStrategy = { waitForStoryRendered };
-
-const getCaptureStrategy = (storyIndexVersion: number | undefined): CaptureStrategy => {
-  switch (storyIndexVersion) {
-    default:
-      return channelBasedCaptureStrategy;
-  }
-};
-
-const detectStoryIndexVersion = async (proxyOrigin: string): Promise<number | undefined> => {
-  try {
-    const response = await fetch(`${proxyOrigin}/index.json`);
-    if (!response.ok) {
-      return undefined;
-    }
-    const index = (await response.json()) as { v?: unknown };
-    return typeof index.v === "number" ? index.v : undefined;
-  } catch {
-    return undefined;
-  }
-};
+const BOOT_TIMEOUT_MS = 10_000;
+const RENDER_TIMEOUT_MS = 30_000;
 
 export const captureSnapshot = async (snapshotId: string): Promise<void> => {
   const snapshot = await dbClient.snapshots.findById(snapshotId);
@@ -202,21 +98,19 @@ export const captureSnapshot = async (snapshotId: string): Promise<void> => {
       return route.abort();
     });
 
-    await page.goto(`${proxy.origin}/iframe.html`, { waitUntil: "load" });
-    await page.waitForSelector("#storybook-root, #root", {
-      timeout: STORYBOOK_BOOT_TIMEOUT_MS,
-      state: "attached",
-    });
+    const strategy = await detectCaptureStrategy(proxy.origin);
 
-    const strategy = getCaptureStrategy(await detectStoryIndexVersion(proxy.origin));
-    const renderResult = await page.evaluate(strategy.waitForStoryRendered, {
-      storyId: snapshot.targetId,
-      timeoutMs: STORY_RENDER_TIMEOUT_MS,
+    await page.goto(`${proxy.origin}/iframe.html`, { waitUntil: "load" });
+    await strategy.waitForBoot(page, BOOT_TIMEOUT_MS);
+
+    const renderResult = await page.evaluate(strategy.waitForTargetRendered, {
+      targetId: snapshot.targetId,
+      timeoutMs: RENDER_TIMEOUT_MS,
     });
 
     if (!renderResult.ok) {
       hasRenderError = true;
-      logs.push({ level: "error", message: renderResult.error ?? "story failed to render" });
+      logs.push({ level: "error", message: renderResult.error ?? "target failed to render" });
     }
 
     screenshot = await page.screenshot();
