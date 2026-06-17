@@ -32,10 +32,14 @@ type UpdateCaptureResultInput = {
   status: SnapshotStatus;
   imagePath: string;
   hasRenderError: boolean;
+  tx?: DbClient;
 };
 
-export const updateCaptureResult = async (id: string, result: UpdateCaptureResultInput) => {
-  const [snapshot] = await db.update(snapshots).set(result).where(eq(snapshots.id, id)).returning();
+export const updateCaptureResult = async (
+  id: string,
+  { tx = db, ...result }: UpdateCaptureResultInput,
+) => {
+  const [snapshot] = await tx.update(snapshots).set(result).where(eq(snapshots.id, id)).returning();
   return snapshot;
 };
 

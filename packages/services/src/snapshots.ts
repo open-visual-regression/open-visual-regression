@@ -5,6 +5,7 @@ import pixelmatch from "pixelmatch";
 import { chromium } from "playwright";
 
 import { dbClient } from "@ovr/db/client";
+import { db } from "@ovr/db/db";
 import { storage } from "@ovr/storage";
 
 import { detectCaptureStrategy } from "./captureStrategies";
@@ -119,16 +120,20 @@ export const captureSnapshot = async (snapshotId: string): Promise<void> => {
   const imagePath = `builds/${build.id}/snapshots/${snapshotId}.png`;
   await storage.uploadFile(imagePath, screenshot, "image/png");
 
-  if (logs.length > 0) {
-    await dbClient.snapshotLogs.createMany({
-      values: logs.map((log) => ({ snapshotId, level: log.level, message: log.message })),
-    });
-  }
+  await db.transaction(async (tx) => {
+    if (logs.length > 0) {
+      await dbClient.snapshotLogs.createMany({
+        values: logs.map((log) => ({ snapshotId, level: log.level, message: log.message })),
+        tx,
+      });
+    }
 
-  await dbClient.snapshots.updateCaptureResult(snapshotId, {
-    status: "captured",
-    imagePath,
-    hasRenderError,
+    await dbClient.snapshots.updateCaptureResult(snapshotId, {
+      status: "captured",
+      imagePath,
+      hasRenderError,
+      tx,
+    });
   });
 
   await enqueueDiffsIfAllCaptured(build.id);
