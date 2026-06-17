@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 type StorybookIndex = {
-  entries?: Record<string, { id: string }>;
+  entries?: Record<string, { id: string; type?: string }>;
 };
 
 export const readStoryIds = async (dir: string): Promise<string[]> => {
@@ -25,5 +25,7 @@ export const readStoryIds = async (dir: string): Promise<string[]> => {
     );
   }
 
-  return Object.keys(index.entries);
+  return Object.values(index.entries)
+    .filter((entry) => entry.type !== "docs")
+    .map((entry) => entry.id);
 };
