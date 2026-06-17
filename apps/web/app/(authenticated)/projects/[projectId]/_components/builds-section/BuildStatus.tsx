@@ -1,8 +1,5 @@
-import { type ComponentProps } from "react";
 import { Badge } from "@ovr/ui/components/badge";
 import { StatusIcon } from "@ovr/ui/components/status-icon";
-import { TableRow } from "@ovr/ui/components/table";
-import { cn } from "@ovr/ui/lib/utils";
 import { type BuildStatus } from "@ovr/api/contracts/builds";
 
 export const BuildStatusIcon = ({ status }: { status: BuildStatus }) => {
@@ -31,19 +28,15 @@ export const BuildStatusBadge = ({ status }: { status: BuildStatus }) => {
   }
 };
 
-type BuildStatusTableRowProps = ComponentProps<typeof TableRow> & { status: BuildStatus };
-
-export const BuildStatusTableRow = ({ status, className, ...props }: BuildStatusTableRowProps) => {
+export const BuildStatusStripe = ({ status }: { status: BuildStatus }) => {
   switch (status) {
     case "pending":
-      return (
-        <TableRow className={cn("border-l-4 border-l-ovr-status-pending", className)} {...props} />
-      );
+      return <div className="absolute inset-0 bg-ovr-status-pending" />;
     case "needs_review":
-      return <TableRow className={cn("border-l-4 border-l-ovr-accent", className)} {...props} />;
+      return <div className="absolute inset-0 bg-ovr-accent" />;
     case "passed":
-      return <TableRow className={cn("border-l-4 border-l-ovr-diff-add", className)} {...props} />;
+      return <div className="absolute inset-0 bg-ovr-diff-add" />;
     case "error":
-      return <TableRow className={cn("border-l-4 border-l-ovr-remove", className)} {...props} />;
+      return <div className="absolute inset-0 bg-ovr-remove" />;
   }
 };

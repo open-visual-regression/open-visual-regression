@@ -17,22 +17,37 @@ import {
 } from "@ovr/ui/components/table";
 import { formatRelativeDateTime } from "@/lib/utils/date";
 import { type BuildSchema } from "@ovr/api/contracts/builds";
-import { BuildStatusIcon, BuildStatusBadge, BuildStatusTableRow } from "./BuildStatus";
+import { BuildStatusIcon, BuildStatusBadge, BuildStatusStripe } from "./BuildStatus";
+import { Typography } from "@ovr/ui/components/typography";
 
 const features = tableFeatures({});
 const columnHelper = createColumnHelper<typeof features, BuildSchema>();
 
 const columns = columnHelper.columns([
   columnHelper.display({
+    id: "statusStripe",
+    meta: { className: "w-1 min-w-1 p-0 relative" },
+    cell: ({ row }) => <BuildStatusStripe status={row.original.status} />,
+  }),
+  columnHelper.display({
     id: "statusIcon",
     meta: { className: "w-px" },
     cell: ({ row }) => <BuildStatusIcon status={row.original.status} />,
   }),
   columnHelper.accessor("name", {
-    header: "Build",
-    cell: ({ row }) => row.original.name ?? row.original.commitSha.slice(0, 7),
+    header: "Commit",
+    cell: ({ row }) => (
+      <div className="flex flex-row gap-2">
+        <Typography variant="body-muted">{row.original.commitSha.slice(0, 7)}</Typography>
+        {row.original.name ? <Typography>{row.original.name}</Typography> : null}
+      </div>
+    ),
   }),
   columnHelper.accessor("branch", { header: "Branch" }),
+  columnHelper.accessor("author", {
+    header: "Author",
+    cell: ({ getValue }) => getValue() ?? "—",
+  }),
   columnHelper.display({
     id: "status",
     header: "Status",
@@ -80,13 +95,13 @@ export const BuildsTable = ({ data }: BuildsTableProps) => {
       </TableHeader>
       <TableBody>
         {table.getRowModel().rows.map((row) => (
-          <BuildStatusTableRow key={row.id} status={row.original.status}>
+          <TableRow key={row.id}>
             {row.getAllCells().map((cell) => (
               <TableCell key={cell.id} className={cell.column.columnDef.meta?.className}>
                 <table.FlexRender cell={cell} />
               </TableCell>
             ))}
-          </BuildStatusTableRow>
+          </TableRow>
         ))}
       </TableBody>
     </Table>

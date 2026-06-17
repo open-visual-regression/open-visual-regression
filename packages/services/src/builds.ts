@@ -10,6 +10,7 @@ type CreateBuildInput = {
   branch: string;
   commitSha: string;
   name?: string;
+  author?: string;
   targets: string[];
 };
 
@@ -35,6 +36,7 @@ export const createBuild = async (
         branch: input.branch,
         commitSha: input.commitSha,
         name: input.name,
+        author: input.author,
         status: "pending",
         captureMode: "worker",
         artifactPath: getArtifactPath(buildId),

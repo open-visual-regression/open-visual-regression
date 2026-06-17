@@ -18,6 +18,7 @@ type StorybookCommandOptions = {
   branch: string;
   commit: string;
   name?: string;
+  author?: string;
   timeout: string;
 };
 
@@ -28,13 +29,14 @@ export const storybookCommand = new Command("storybook")
   .requiredOption("--branch <name>", "branch name")
   .requiredOption("--commit <sha>", "commit SHA")
   .option("--name <name>", "build name (e.g. commit message)")
+  .option("--author <author>", "commit author")
   .option("--timeout <seconds>", "maximum seconds to wait for build result", "600")
   .action(async (options: StorybookCommandOptions) => {
     const apiKey = getApiKey();
 
     try {
       const targets = await readStoryIds(options.dir);
-      const { branch, commit: commitSha, name } = options;
+      const { branch, commit: commitSha, name, author } = options;
 
       const client = createClient(options.serverUrl, apiKey);
 
@@ -43,6 +45,7 @@ export const storybookCommand = new Command("storybook")
         branch,
         commitSha,
         name,
+        author,
         targets,
       });
 

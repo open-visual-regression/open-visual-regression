@@ -1,0 +1,1 @@
+ALTER TABLE "builds" ADD COLUMN "author" varchar(255);
