@@ -1,11 +1,21 @@
 import { eq } from "drizzle-orm";
 
-import { db } from "../db";
+import { db, type DbClient } from "../db";
 import { diffs, snapshots, type DiffStatus } from "../schema";
 
 export const create = async (values: typeof diffs.$inferInsert) => {
   const [diff] = await db.insert(diffs).values(values).returning();
   return diff;
+};
+
+type CreateManyInput = { values: (typeof diffs.$inferInsert)[]; tx?: DbClient };
+
+export const createMany = async ({ values, tx = db }: CreateManyInput) => {
+  if (values.length === 0) {
+    return [];
+  }
+
+  return tx.insert(diffs).values(values).returning();
 };
 
 export const findById = (id: string) =>

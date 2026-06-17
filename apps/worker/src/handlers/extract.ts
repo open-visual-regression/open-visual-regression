@@ -4,10 +4,10 @@ import { extractBuild } from "@ovr/services/extract";
 
 type ExtractJob = { data: ExtractJobPayload };
 
-export const extract = async (job: ExtractJob): Promise<void> => {
+export const run = async (job: ExtractJob): Promise<void> => {
   await extractBuild(job.data.buildId);
 };
 
-export const extractFailed = async (job: ExtractJob): Promise<void> => {
+export const failed = async (job: ExtractJob): Promise<void> => {
   await dbClient.builds.updateStatus(job.data.buildId, "error");
 };

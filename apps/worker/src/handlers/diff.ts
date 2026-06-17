@@ -4,11 +4,11 @@ import { checkAllDoneAndFinalize, diffSnapshot } from "@ovr/services/snapshots";
 
 type DiffJob = { data: DiffJobPayload };
 
-export const diff = async (job: DiffJob): Promise<void> => {
+export const run = async (job: DiffJob): Promise<void> => {
   await diffSnapshot(job.data.snapshotId, job.data.diffId);
 };
 
-export const diffFailed = async (job: DiffJob): Promise<void> => {
+export const failed = async (job: DiffJob): Promise<void> => {
   await dbClient.diffs.updateStatus(job.data.diffId, "error");
 
   const diff = await dbClient.diffs.findById(job.data.diffId);

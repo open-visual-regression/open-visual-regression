@@ -2,11 +2,11 @@ import { dbClient } from "@ovr/db/client";
 import { Worker } from "bullmq";
 import { QueueName, type DiffJobPayload } from "@ovr/queue";
 
-import { captureFailed } from "../capture";
+import { failed } from "../capture";
 import { describe, expect, test } from "../../__tests__/fixtures";
 
 describe("capture", () => {
-  describe("captureFailed", () => {
+  describe("failed", () => {
     test("should still move the build toward a diff when a story can't be captured, instead of leaving it stuck", async ({
       build,
       captureConfiguration,
@@ -22,7 +22,7 @@ describe("capture", () => {
         ],
       });
 
-      await captureFailed({ data: { buildId: build.id, snapshotId: snapshot!.id } });
+      await failed({ data: { buildId: build.id, snapshotId: snapshot!.id } });
 
       expect(await dbClient.snapshots.findById(snapshot!.id)).toMatchObject({ status: "error" });
 
@@ -59,7 +59,7 @@ describe("capture", () => {
         ],
       });
 
-      await captureFailed({
+      await failed({
         data: { buildId: build.id, snapshotId: erroredSnapshot!.id },
       });
 

@@ -2,11 +2,11 @@ import { dbClient } from "@ovr/db/client";
 import { Worker } from "bullmq";
 import { QueueName, type FinalizeJobPayload } from "@ovr/queue";
 
-import { diffFailed } from "../diff";
+import { failed } from "../diff";
 import { describe, expect, test } from "../../__tests__/fixtures";
 
 describe("diff", () => {
-  describe("diffFailed", () => {
+  describe("failed", () => {
     test("should still move the build toward a result when a story's diff can't be computed, instead of leaving it stuck", async ({
       build,
       captureConfiguration,
@@ -24,7 +24,7 @@ describe("diff", () => {
       });
       const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
 
-      await diffFailed({ data: { snapshotId: snapshot!.id, diffId: diff!.id } });
+      await failed({ data: { snapshotId: snapshot!.id, diffId: diff!.id } });
 
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({ status: "error" });
 
@@ -67,7 +67,7 @@ describe("diff", () => {
       const erroredDiff = await dbClient.diffs.create({ snapshotId: erroredSnapshot!.id });
       await dbClient.diffs.create({ snapshotId: otherSnapshot!.id });
 
-      await diffFailed({
+      await failed({
         data: { snapshotId: erroredSnapshot!.id, diffId: erroredDiff!.id },
       });
 

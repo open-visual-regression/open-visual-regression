@@ -246,11 +246,11 @@ export const captureSnapshot = async (snapshotId: string): Promise<void> => {
 export const enqueueDiffsIfAllCaptured = async (buildId: string): Promise<void> => {
   if (await dbClient.snapshots.hasAllCapturedForBuild(buildId)) {
     const snapshots = await dbClient.snapshots.findByBuild(buildId);
+    const diffs = await dbClient.diffs.createMany({
+      values: snapshots.map((s) => ({ snapshotId: s.id })),
+    });
     await Promise.all(
-      snapshots.map(async (s) => {
-        const diff = await dbClient.diffs.create({ snapshotId: s.id });
-        await enqueueDiff({ snapshotId: s.id, diffId: diff!.id });
-      }),
+      diffs.map((diff) => enqueueDiff({ snapshotId: diff.snapshotId, diffId: diff.id })),
     );
   }
 };

@@ -4,11 +4,11 @@ import { captureSnapshot, enqueueDiffsIfAllCaptured } from "@ovr/services/snapsh
 
 type CaptureJob = { data: CaptureJobPayload };
 
-export const capture = async (job: CaptureJob): Promise<void> => {
+export const run = async (job: CaptureJob): Promise<void> => {
   await captureSnapshot(job.data.snapshotId);
 };
 
-export const captureFailed = async (job: CaptureJob): Promise<void> => {
+export const failed = async (job: CaptureJob): Promise<void> => {
   await dbClient.snapshots.updateStatus(job.data.snapshotId, "error");
   await enqueueDiffsIfAllCaptured(job.data.buildId);
 };

@@ -3,19 +3,19 @@ import { Redis } from "ioredis";
 
 import { QueueName } from "@ovr/queue";
 
-import { capture, captureFailed } from "./handlers/capture";
-import { diff, diffFailed } from "./handlers/diff";
-import { extract, extractFailed } from "./handlers/extract";
-import { finalize } from "./handlers/finalize";
+import * as capture from "./handlers/capture";
+import * as diff from "./handlers/diff";
+import * as extract from "./handlers/extract";
+import * as finalize from "./handlers/finalize";
 
 const connection = new Redis(process.env.VALKEY_URL ?? "redis://localhost:6379", {
   maxRetriesPerRequest: null,
 });
 
-const extractWorker = new Worker(QueueName.BUILD_EXTRACT, extract, { connection });
-const captureWorker = new Worker(QueueName.SNAPSHOT_CAPTURE, capture, { connection });
-const diffWorker = new Worker(QueueName.SNAPSHOT_DIFF, diff, { connection });
-const finalizeWorker = new Worker(QueueName.BUILD_FINALIZE, finalize, { connection });
+const extractWorker = new Worker(QueueName.BUILD_EXTRACT, extract.run, { connection });
+const captureWorker = new Worker(QueueName.SNAPSHOT_CAPTURE, capture.run, { connection });
+const diffWorker = new Worker(QueueName.SNAPSHOT_DIFF, diff.run, { connection });
+const finalizeWorker = new Worker(QueueName.BUILD_FINALIZE, finalize.run, { connection });
 
 const guard =
   <T>(fn: (job: T) => Promise<void>) =>
@@ -28,9 +28,9 @@ const guard =
     });
   };
 
-extractWorker.on("failed", guard(extractFailed));
-captureWorker.on("failed", guard(captureFailed));
-diffWorker.on("failed", guard(diffFailed));
+extractWorker.on("failed", guard(extract.failed));
+captureWorker.on("failed", guard(capture.failed));
+diffWorker.on("failed", guard(diff.failed));
 
 const workers = [extractWorker, captureWorker, diffWorker, finalizeWorker];
 
