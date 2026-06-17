@@ -2,11 +2,11 @@ import { dbClient } from "@ovr/db/client";
 import { Worker } from "bullmq";
 import { QueueName, type DiffJobPayload } from "@ovr/queue";
 
-import { handleCaptureFailed } from "../capture";
+import { captureFailed } from "../capture";
 import { describe, expect, test } from "../../__tests__/fixtures";
 
 describe("capture", () => {
-  describe("handleCaptureFailed", () => {
+  describe("captureFailed", () => {
     test("marks the snapshot errored and enqueues a diff job when it was the last capture in the build", async ({
       build,
       captureConfiguration,
@@ -22,7 +22,7 @@ describe("capture", () => {
         ],
       });
 
-      await handleCaptureFailed({ data: { buildId: build.id, snapshotId: snapshot!.id } } as never);
+      await captureFailed({ data: { buildId: build.id, snapshotId: snapshot!.id } });
 
       expect(await dbClient.snapshots.findById(snapshot!.id)).toMatchObject({ status: "error" });
 
@@ -59,9 +59,9 @@ describe("capture", () => {
         ],
       });
 
-      await handleCaptureFailed({
+      await captureFailed({
         data: { buildId: build.id, snapshotId: erroredSnapshot!.id },
-      } as never);
+      });
 
       expect(await dbClient.diffs.findByBuild(build.id)).toEqual([]);
     });

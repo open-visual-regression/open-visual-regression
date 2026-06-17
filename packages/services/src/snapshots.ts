@@ -1,5 +1,4 @@
 import http from "node:http";
-import type { AddressInfo } from "node:net";
 
 import { PNG } from "pngjs";
 import pixelmatch from "pixelmatch";
@@ -31,9 +30,12 @@ const startStaticProxy = (buildId: string): Promise<{ origin: string; close: () 
     });
 
     server.listen(0, "127.0.0.1", () => {
-      const { port } = server.address() as AddressInfo;
+      const address = server.address();
+      if (address === null || typeof address === "string") {
+        throw new Error("Expected the static proxy server to bind to a TCP port");
+      }
       resolve({
-        origin: `http://127.0.0.1:${port}`,
+        origin: `http://127.0.0.1:${address.port}`,
         close: () => server.close(),
       });
     });
@@ -46,9 +48,19 @@ const STORY_RENDER_TIMEOUT_MS = 30_000;
 
 type StoryRenderResult = { ok: boolean; error?: string };
 
-// Runs in the browser context (page.evaluate) — driven via the Storybook preview's
-// pub/sub channel, the same primitive @storybook/test-runner uses to know when a
-// story (including its play() interactions) has finished rendering.
+type StorybookChannel = {
+  on: (event: string, listener: (...args: never[]) => void) => void;
+  off: (event: string, listener: (...args: never[]) => void) => void;
+  emit: (event: string, payload: unknown) => void;
+};
+
+declare global {
+  // eslint-disable-next-line no-var
+  var __STORYBOOK_ADDONS_CHANNEL__: StorybookChannel | undefined;
+}
+
+// Runs in the browser via page.evaluate; resolves once Storybook's preview channel
+// reports the story (including any play() interactions) has finished rendering.
 const waitForStoryRendered = ({
   storyId,
   timeoutMs,
@@ -57,13 +69,7 @@ const waitForStoryRendered = ({
   timeoutMs: number;
 }): Promise<StoryRenderResult> =>
   new Promise((resolve) => {
-    const channel = (globalThis as Record<string, unknown>).__STORYBOOK_ADDONS_CHANNEL__ as
-      | {
-          on: (event: string, listener: (...args: never[]) => void) => void;
-          off: (event: string, listener: (...args: never[]) => void) => void;
-          emit: (event: string, payload: unknown) => void;
-        }
-      | undefined;
+    const channel = globalThis.__STORYBOOK_ADDONS_CHANNEL__;
 
     if (!channel) {
       resolve({ ok: false, error: "Storybook channel (__STORYBOOK_ADDONS_CHANNEL__) not found" });
@@ -127,11 +133,8 @@ type CaptureStrategy = {
 
 const channelBasedCaptureStrategy: CaptureStrategy = { waitForStoryRendered };
 
-// `index.json`'s `v` field is the story-index schema version, which has tracked
-// Storybook's preview API closely enough to key a capture strategy off of (v3+ is
-// Storybook 7's channel-based preview, which is all we support today). Any future
-// Storybook release that changes the preview API gets a new `case` here; anything
-// we don't recognize falls through to the current strategy rather than failing.
+// Keyed off index.json's story-index version so a future Storybook preview API
+// change can get its own `case` here; unrecognized versions fall through to default.
 const getCaptureStrategy = (storyIndexVersion: number | undefined): CaptureStrategy => {
   switch (storyIndexVersion) {
     default:
@@ -344,12 +347,11 @@ export const checkAllDoneAndFinalize = async (buildId: string): Promise<void> =>
 
 const readPng = async (imagePath: string): Promise<PNG> => {
   const stream = await storage.getFileStream(imagePath);
+  const png = new PNG();
   return new Promise((resolve, reject) => {
     stream
-      .pipe(new PNG())
-      .on("parsed", function parsed() {
-        resolve(this as PNG);
-      })
+      .pipe(png)
+      .on("parsed", () => resolve(png))
       .on("error", reject);
   });
 };

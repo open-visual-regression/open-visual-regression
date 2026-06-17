@@ -1,14 +1,14 @@
 import { dbClient } from "@ovr/db/client";
 
-import { handleExtractFailed } from "../extract";
+import { extractFailed } from "../extract";
 import { describe, expect, test } from "../../__tests__/fixtures";
 
 describe("extract", () => {
-  describe("handleExtractFailed", () => {
+  describe("extractFailed", () => {
     test("marks the build as errored", async ({ build }) => {
-      await handleExtractFailed({
+      await extractFailed({
         data: { buildId: build.id, artifactPath: build.artifactPath },
-      } as never);
+      });
 
       expect(await dbClient.builds.findById(build.id)).toMatchObject({ status: "error" });
     });

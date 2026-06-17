@@ -10,9 +10,6 @@ import { getStaticPath } from "../extract";
 import { captureSnapshot, diffSnapshot } from "../snapshots";
 import { describe, expect, test } from "./fixtures";
 
-// A real, minimal Storybook preview: defines `__STORYBOOK_ADDONS_CHANNEL__` so
-// captureSnapshot's real channel-based render-wait resolves against it, the same
-// way a real Storybook static build would.
 const IFRAME_HTML = `<!doctype html><html><body><div id="storybook-root" hidden="true"></div>
 <script>
   window.__STORYBOOK_ADDONS_CHANNEL__ = {

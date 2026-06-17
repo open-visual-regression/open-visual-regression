@@ -2,11 +2,11 @@ import { dbClient } from "@ovr/db/client";
 import { Worker } from "bullmq";
 import { QueueName, type FinalizeJobPayload } from "@ovr/queue";
 
-import { handleDiffFailed } from "../diff";
+import { diffFailed } from "../diff";
 import { describe, expect, test } from "../../__tests__/fixtures";
 
 describe("diff", () => {
-  describe("handleDiffFailed", () => {
+  describe("diffFailed", () => {
     test("marks the diff errored and enqueues finalize when it was the last diff in the build", async ({
       build,
       captureConfiguration,
@@ -24,7 +24,7 @@ describe("diff", () => {
       });
       const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
 
-      await handleDiffFailed({ data: { snapshotId: snapshot!.id, diffId: diff!.id } } as never);
+      await diffFailed({ data: { snapshotId: snapshot!.id, diffId: diff!.id } });
 
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({ status: "error" });
 
@@ -67,9 +67,9 @@ describe("diff", () => {
       const erroredDiff = await dbClient.diffs.create({ snapshotId: erroredSnapshot!.id });
       await dbClient.diffs.create({ snapshotId: otherSnapshot!.id });
 
-      await handleDiffFailed({
+      await diffFailed({
         data: { snapshotId: erroredSnapshot!.id, diffId: erroredDiff!.id },
-      } as never);
+      });
 
       const diffs = await dbClient.diffs.findByBuild(build.id);
       expect(diffs.every((diff) => diff.status !== "pending")).toBe(false);
