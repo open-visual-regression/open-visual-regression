@@ -2,29 +2,32 @@ import { Badge } from "@ovr/ui/components/badge";
 import { StatusIcon } from "@ovr/ui/components/status-icon";
 import { type BuildStatus } from "@ovr/api/contracts/builds";
 
-export const BuildStatusIcon = ({ status }: { status: BuildStatus }) => {
-  switch (status) {
-    case "pending":
-      return <StatusIcon variant="pending" />;
-    case "needs_review":
-      return <StatusIcon variant="changed" />;
-    case "passed":
-      return <StatusIcon variant="passed" />;
-    case "error":
-      return <StatusIcon variant="rejected" />;
-  }
-};
-
 export const BuildStatusBadge = ({ status }: { status: BuildStatus }) => {
   switch (status) {
     case "pending":
-      return <Badge variant="pending">pending</Badge>;
+      return (
+        <Badge variant="pending">
+          <StatusIcon variant="pending" size={12} /> pending
+        </Badge>
+      );
     case "needs_review":
-      return <Badge variant="changed">needs review</Badge>;
+      return (
+        <Badge variant="changed">
+          <StatusIcon variant="changed" size={12} /> needs review
+        </Badge>
+      );
     case "passed":
-      return <Badge variant="pass">passed</Badge>;
+      return (
+        <Badge variant="pass">
+          <StatusIcon variant="passed" size={12} /> passed
+        </Badge>
+      );
     case "error":
-      return <Badge variant="fail">error</Badge>;
+      return (
+        <Badge variant="fail">
+          <StatusIcon variant="rejected" size={12} /> error
+        </Badge>
+      );
   }
 };
 

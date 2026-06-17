@@ -17,7 +17,7 @@ import {
 } from "@ovr/ui/components/table";
 import { formatRelativeDateTime } from "@/lib/utils/date";
 import { type BuildSchema } from "@ovr/api/contracts/builds";
-import { BuildStatusIcon, BuildStatusBadge, BuildStatusStripe } from "./BuildStatus";
+import { BuildStatusBadge, BuildStatusStripe } from "./BuildStatus";
 import { Typography } from "@ovr/ui/components/typography";
 
 const features = tableFeatures({});
@@ -30,10 +30,12 @@ const columns = columnHelper.columns([
     cell: ({ row }) => <BuildStatusStripe status={row.original.status} />,
   }),
   columnHelper.display({
-    id: "statusIcon",
-    meta: { className: "w-px" },
-    cell: ({ row }) => <BuildStatusIcon status={row.original.status} />,
+    id: "status",
+    header: "Status",
+    meta: { className: "text-left w-px" },
+    cell: ({ row }) => <BuildStatusBadge status={row.original.status} />,
   }),
+  columnHelper.accessor("branch", { header: "Branch", meta: { className: "text-center w-px" } }),
   columnHelper.accessor("name", {
     header: "Commit",
     cell: ({ row }) => (
@@ -43,15 +45,11 @@ const columns = columnHelper.columns([
       </div>
     ),
   }),
-  columnHelper.accessor("branch", { header: "Branch" }),
+
   columnHelper.accessor("author", {
     header: "Author",
+    meta: { className: "text-center" },
     cell: ({ getValue }) => getValue() ?? "—",
-  }),
-  columnHelper.display({
-    id: "status",
-    header: "Status",
-    cell: ({ row }) => <BuildStatusBadge status={row.original.status} />,
   }),
   columnHelper.accessor("createdAt", {
     header: "Created",
