@@ -66,58 +66,55 @@ export const captureSnapshot = async (snapshotId: string): Promise<void> => {
   const browser = await chromium.launch();
 
   const logs: ConsoleLog[] = [];
-  let hasRenderError = false;
-  let screenshot: Buffer;
 
-  try {
-    const context = await browser.newContext({
-      viewport: {
-        width: captureConfiguration.viewportWidth,
-        height: captureConfiguration.viewportHeight,
-      },
-    });
-    const page = await context.newPage();
+  const { screenshot, renderFailed } = await (async () => {
+    try {
+      const context = await browser.newContext({
+        viewport: {
+          width: captureConfiguration.viewportWidth,
+          height: captureConfiguration.viewportHeight,
+        },
+      });
+      const page = await context.newPage();
 
-    page.on("console", (message) => {
-      logs.push({ level: message.type(), message: message.text() });
-      if (message.type() === "error") {
-        hasRenderError = true;
+      page.on("console", (message) => {
+        logs.push({ level: message.type(), message: message.text() });
+      });
+
+      page.on("pageerror", (error) => {
+        logs.push({ level: "error", message: error.message });
+      });
+
+      await page.route("**/*", (route) => {
+        const url = new URL(route.request().url());
+        if (url.origin === proxy.origin || url.protocol === "data:" || url.protocol === "blob:") {
+          return route.continue();
+        }
+        return route.abort();
+      });
+
+      const strategy = await detectCaptureStrategy(proxy.origin);
+
+      await page.goto(`${proxy.origin}/iframe.html`, { waitUntil: "load" });
+      await strategy.waitForBoot(page, BOOT_TIMEOUT_MS);
+
+      const renderResult = await page.evaluate(strategy.waitForTargetRendered, {
+        targetId: snapshot.targetId,
+        timeoutMs: RENDER_TIMEOUT_MS,
+      });
+
+      if (!renderResult.ok) {
+        logs.push({ level: "error", message: renderResult.error ?? "target failed to render" });
       }
-    });
 
-    page.on("pageerror", (error) => {
-      logs.push({ level: "error", message: error.message });
-      hasRenderError = true;
-    });
-
-    await page.route("**/*", (route) => {
-      const url = new URL(route.request().url());
-      if (url.origin === proxy.origin || url.protocol === "data:" || url.protocol === "blob:") {
-        return route.continue();
-      }
-      return route.abort();
-    });
-
-    const strategy = await detectCaptureStrategy(proxy.origin);
-
-    await page.goto(`${proxy.origin}/iframe.html`, { waitUntil: "load" });
-    await strategy.waitForBoot(page, BOOT_TIMEOUT_MS);
-
-    const renderResult = await page.evaluate(strategy.waitForTargetRendered, {
-      targetId: snapshot.targetId,
-      timeoutMs: RENDER_TIMEOUT_MS,
-    });
-
-    if (!renderResult.ok) {
-      hasRenderError = true;
-      logs.push({ level: "error", message: renderResult.error ?? "target failed to render" });
+      return { screenshot: await page.screenshot(), renderFailed: !renderResult.ok };
+    } finally {
+      await browser.close();
+      proxy.close();
     }
+  })();
 
-    screenshot = await page.screenshot();
-  } finally {
-    await browser.close();
-    proxy.close();
-  }
+  const hasRenderError = renderFailed || logs.some((log) => log.level === "error");
 
   const imagePath = `builds/${build.id}/snapshots/${snapshotId}.png`;
   await storage.uploadFile(imagePath, screenshot, "image/png");
