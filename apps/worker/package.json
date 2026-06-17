@@ -25,9 +25,14 @@
     "tar": "^7.5.16"
   },
   "devDependencies": {
+    "@ovr/testing": "workspace:*",
     "@ovr/typescript-config": "workspace:*",
+    "@testcontainers/postgresql": "^12.0.1",
+    "@types/node": "^22.15.3",
+    "@types/pg": "^8.20.0",
     "tsup": "^8.5.1",
     "typescript": "6.0.3",
+    "uuid": "^14.0.0",
     "vitest": "^4.1.7"
   }
 }
