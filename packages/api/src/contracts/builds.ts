@@ -9,6 +9,7 @@ export const createBuildInputSchema = z.object({
   branch: z.string().min(1),
   commitSha: z.string().min(1),
   name: z.string().min(1).optional(),
+  author: z.string().min(1).optional(),
   targets: z.array(z.string().min(1)),
 });
 
@@ -43,6 +44,7 @@ export const buildSchema = z.object({
   branch: z.string().min(1),
   commitSha: z.string().min(1),
   name: z.string().min(1).nullable(),
+  author: z.string().min(1).nullable(),
   status: buildStatusSchema,
   createdAt: z.string().nonempty(),
 });

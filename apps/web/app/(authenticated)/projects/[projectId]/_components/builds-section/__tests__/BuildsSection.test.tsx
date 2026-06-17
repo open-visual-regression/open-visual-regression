@@ -15,7 +15,7 @@ describe("BuildsSection", () => {
     });
     render(<BuildsSection builds={[build]} />);
 
-    expect(screen.getByRole("cell", { name: "fix: cart total rounding" })).toBeVisible();
+    expect(screen.getByRole("cell", { name: /fix: cart total rounding/ })).toBeVisible();
     expect(screen.getByRole("cell", { name: "pr/482" })).toBeVisible();
   });
 

@@ -11,6 +11,7 @@ export const generateBuild = (overrides?: Partial<BuildSchema>): BuildSchema => 
   branch: "main",
   commitSha: faker.git.commitSha(),
   name: faker.git.commitMessage(),
+  author: faker.person.fullName(),
   status: "passed",
   createdAt: faker.date.recent().toISOString(),
   ...overrides,
