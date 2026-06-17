@@ -10,7 +10,7 @@ import {
   BuildTimeoutError,
   pollBuildStatus,
 } from "./poll";
-import { readStoryIds } from "./storybookIndex";
+import { readStoryIds } from "./storybookManifest";
 
 type StorybookCommandOptions = {
   dir: string;

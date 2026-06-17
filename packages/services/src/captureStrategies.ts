@@ -88,22 +88,22 @@ const storybookCaptureStrategy: CaptureStrategy = {
   waitForTargetRendered: waitForStorybookTargetRendered,
 };
 
-const detectStorybookIndexVersion = async (proxyOrigin: string): Promise<number | undefined> => {
+const detectStorybookManifestVersion = async (proxyOrigin: string): Promise<number | undefined> => {
   try {
     const response = await fetch(`${proxyOrigin}/index.json`);
     if (!response.ok) {
       return undefined;
     }
-    const index = (await response.json()) as { v?: unknown };
-    return typeof index.v === "number" ? index.v : undefined;
+    const manifest = (await response.json()) as { v?: unknown };
+    return typeof manifest.v === "number" ? manifest.v : undefined;
   } catch {
     return undefined;
   }
 };
 
 export const detectCaptureStrategy = async (proxyOrigin: string): Promise<CaptureStrategy> => {
-  const storybookIndexVersion = await detectStorybookIndexVersion(proxyOrigin);
-  switch (storybookIndexVersion) {
+  const storybookManifestVersion = await detectStorybookManifestVersion(proxyOrigin);
+  switch (storybookManifestVersion) {
     default:
       return storybookCaptureStrategy;
   }
