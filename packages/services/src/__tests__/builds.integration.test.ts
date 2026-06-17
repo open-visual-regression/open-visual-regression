@@ -5,32 +5,19 @@ import type { Redis } from "ioredis";
 
 import { dbClient } from "@ovr/db/client";
 import type { DiffStatus } from "@ovr/db/schema";
-import { QueueName, type CaptureJobPayload } from "@ovr/queue";
+import { QueueName, type ExtractJobPayload } from "@ovr/queue";
 
 import { createBuild, finalizeBuild, getArtifactPath } from "../builds";
 import { describe, expect, test } from "./fixtures";
 
-const collectCaptureJobs = async (
-  connection: Redis,
-  count: number,
-): Promise<CaptureJobPayload[]> => {
-  const worker = new Worker<CaptureJobPayload>(
-    QueueName.SNAPSHOT_CAPTURE,
-    async (job) => job.data,
-    { connection },
-  );
+const collectExtractJob = async (connection: Redis): Promise<ExtractJobPayload> => {
+  const worker = new Worker<ExtractJobPayload>(QueueName.BUILD_EXTRACT, async (job) => job.data, {
+    connection,
+  });
 
   try {
-    return await new Promise<CaptureJobPayload[]>((resolve, reject) => {
-      const jobs: CaptureJobPayload[] = [];
-
-      worker.on("completed", (job) => {
-        jobs.push(job.data);
-        if (jobs.length === count) {
-          resolve(jobs);
-        }
-      });
-
+    return await new Promise<ExtractJobPayload>((resolve, reject) => {
+      worker.on("completed", (job) => resolve(job.data));
       worker.on("failed", (_job, error) => reject(error));
     });
   } finally {
@@ -55,7 +42,7 @@ const seedDiffs = async (
 
 describe("builds", () => {
   describe("createBuild", () => {
-    test("creates a pending build with a snapshot per target x capture configuration, and enqueues a capture job for each snapshot", async ({
+    test("creates a pending build with a snapshot per target x capture configuration, and enqueues an extract job", async ({
       project,
       captureConfiguration,
       user,
@@ -92,10 +79,8 @@ describe("builds", () => {
         snapshots.every((snapshot) => snapshot.captureConfigurationId === captureConfiguration.id),
       ).toBe(true);
 
-      const jobs = await collectCaptureJobs(connection, snapshots.length);
-      expect(jobs).toEqual(
-        expect.arrayContaining(snapshots.map((snapshot) => ({ buildId, snapshotId: snapshot.id }))),
-      );
+      const job = await collectExtractJob(connection);
+      expect(job).toEqual({ buildId, artifactPath: getArtifactPath(buildId) });
     });
 
     test("returns PROJECT_NOT_FOUND when the project does not exist", async ({ user }) => {

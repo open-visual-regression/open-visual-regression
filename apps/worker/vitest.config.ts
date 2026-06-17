@@ -5,6 +5,6 @@ export default defineConfig({
     name: "worker",
     environment: "node",
     include: ["src/**/*.test.ts"],
-    passWithNoTests: true,
+    clearMocks: true,
   },
 });

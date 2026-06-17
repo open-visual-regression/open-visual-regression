@@ -2,8 +2,8 @@
 
 Gate: unit tests pass with mocked Playwright and storage; snapshot record updated to "captured" after successful run; SnapshotLog records created for console output.
 
-- [ ] 1.1 Install `playwright` (chromium only) in `packages/services` as a peer dep; actual browser binary installed in `apps/worker`
-- [ ] 1.2 Create `packages/services/src/snapshots.ts`:
+- [x] 1.1 Install `playwright` (chromium only) in `packages/services` as a peer dep; actual browser binary installed in `apps/worker`
+- [x] 1.2 Create `packages/services/src/snapshots.ts`:
 
   `captureSnapshot(snapshotId)`:
   - Load snapshot + build + capture configuration from repos
@@ -18,7 +18,12 @@ Gate: unit tests pass with mocked Playwright and storage; snapshot record update
   - Check `snapshotsRepo.hasAllCapturedForBuild(buildId)` → if true, enqueue diff job for each snapshot
   - Close Playwright browser
 
-- [ ] 1.3 Unit tests (mock Playwright via `vi.mock`, mock storage, mock repos):
+  Implementation deviates from the description above in three ways, found necessary during e2e verification against a real Storybook build:
+  - A new `c32-extract` step (`extractBuild`, new `build-extract` queue) splits the uploaded `artifact.tar.gz` into individual files in storage once per build — a single presigned URL can't serve a multi-asset static site (relative asset requests need a real shared origin).
+  - `captureSnapshot` runs a local per-job static-file HTTP proxy (`builds/{id}/static/*` fetched from storage on demand) as that shared origin, instead of a single presigned `artifactBaseUrl`.
+  - Render-complete detection uses Storybook's `__STORYBOOK_ADDONS_CHANNEL__` pub/sub (`setCurrentStory` / `storyRendered` / `playFunctionThrewException` etc.) rather than `networkidle` — `networkidle` resolves before `play()` interactions finish, producing incomplete/flaky screenshots for stories with interaction tests.
+
+- [x] 1.3 Unit tests (mock Playwright via `vi.mock`, mock storage, mock repos):
   - Happy path: screenshot taken; logs created; status updated to "captured"; diff jobs enqueued when last capture
   - Render error: `hasRenderError=true` stored; status still "captured"
   - Not last capture: diff jobs NOT enqueued

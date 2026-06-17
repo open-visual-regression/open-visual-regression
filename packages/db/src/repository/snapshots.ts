@@ -16,12 +16,26 @@ export const createMany = async ({ values, tx = db }: CreateManyInput) => {
 export const findByBuild = (buildId: string) =>
   db.query.snapshots.findMany({ where: (snapshots, { eq }) => eq(snapshots.buildId, buildId) });
 
+export const findById = (id: string) =>
+  db.query.snapshots.findFirst({ where: (snapshots, { eq }) => eq(snapshots.id, id) });
+
 export const updateStatus = async (id: string, status: SnapshotStatus) => {
   const [snapshot] = await db
     .update(snapshots)
     .set({ status })
     .where(eq(snapshots.id, id))
     .returning();
+  return snapshot;
+};
+
+type UpdateCaptureResultInput = {
+  status: SnapshotStatus;
+  imagePath: string;
+  hasRenderError: boolean;
+};
+
+export const updateCaptureResult = async (id: string, result: UpdateCaptureResultInput) => {
+  const [snapshot] = await db.update(snapshots).set(result).where(eq(snapshots.id, id)).returning();
   return snapshot;
 };
 

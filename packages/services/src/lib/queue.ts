@@ -4,15 +4,20 @@ import { Redis } from "ioredis";
 import {
   enqueueCapture as enqueueCaptureJob,
   enqueueDiff as enqueueDiffJob,
+  enqueueExtract as enqueueExtractJob,
   enqueueFinalize as enqueueFinalizeJob,
   type CaptureJobPayload,
   type DiffJobPayload,
+  type ExtractJobPayload,
   type FinalizeJobPayload,
 } from "@ovr/queue";
 
 const connection = new Redis(process.env.VALKEY_URL ?? "redis://localhost:6379", {
   maxRetriesPerRequest: null,
 });
+
+export const enqueueExtract = (payload: ExtractJobPayload): Promise<Job<ExtractJobPayload>> =>
+  enqueueExtractJob(payload, connection);
 
 export const enqueueCapture = (payload: CaptureJobPayload): Promise<Job<CaptureJobPayload>> =>
   enqueueCaptureJob(payload, connection);

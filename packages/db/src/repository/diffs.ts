@@ -26,6 +26,18 @@ export const updateStatus = async (id: string, status: DiffStatus) => {
   return diff;
 };
 
+type UpdateResultInput = {
+  status: DiffStatus;
+  diffImagePath?: string;
+  pixelDiffCount?: number;
+  diffPercent?: number;
+};
+
+export const updateResult = async (id: string, result: UpdateResultInput) => {
+  const [diff] = await db.update(diffs).set(result).where(eq(diffs.id, id)).returning();
+  return diff;
+};
+
 type UpdateReviewInput = {
   reviewerId: string;
   reviewedAt: string;
