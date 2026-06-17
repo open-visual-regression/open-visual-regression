@@ -6,9 +6,6 @@ export default defineConfig({
   target: "node22",
   clean: true,
   noExternal: [/^@ovr\//],
-  // playwright spawns the real browser binary at a path relative to its own
-  // package, and pg's CJS internals use dynamic require() patterns esbuild
-  // can't convert to ESM — bundling either breaks at runtime.
   external: [
     "playwright",
     "playwright-core",

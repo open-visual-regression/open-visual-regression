@@ -59,8 +59,6 @@ declare global {
   var __STORYBOOK_ADDONS_CHANNEL__: StorybookChannel | undefined;
 }
 
-// Runs in the browser via page.evaluate; resolves once Storybook's preview channel
-// reports the story (including any play() interactions) has finished rendering.
 const waitForStoryRendered = ({
   storyId,
   timeoutMs,
@@ -133,8 +131,6 @@ type CaptureStrategy = {
 
 const channelBasedCaptureStrategy: CaptureStrategy = { waitForStoryRendered };
 
-// Keyed off index.json's story-index version so a future Storybook preview API
-// change can get its own `case` here; unrecognized versions fall through to default.
 const getCaptureStrategy = (storyIndexVersion: number | undefined): CaptureStrategy => {
   switch (storyIndexVersion) {
     default:
