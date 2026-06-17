@@ -5,13 +5,16 @@ import { describe, expect, test } from "./fixtures";
 
 describe("baselines", () => {
   describe("getBaseline", () => {
-    test("returns undefined when no baseline exists", async ({ project, captureConfiguration }) => {
+    test("should have nothing to compare a story against until a reviewer has approved one", async ({
+      project,
+      captureConfiguration,
+    }) => {
       const result = await getBaseline(project.id, captureConfiguration.id, "story-a");
 
       expect(result).toBeUndefined();
     });
 
-    test("returns the upserted baseline", async ({
+    test("should compare future stories against the one a reviewer most recently approved", async ({
       project,
       captureConfiguration,
       build,
@@ -41,7 +44,7 @@ describe("baselines", () => {
   });
 
   describe("promoteBaseline", () => {
-    test("upserts a baseline when the build is on the project's default branch", async ({
+    test("should let a reviewer's approval set the new baseline when the build is on the project's default branch", async ({
       project,
       captureConfiguration,
       build,
@@ -64,7 +67,7 @@ describe("baselines", () => {
       expect(baseline).toMatchObject({ snapshotId: snapshot!.id, approvedBy: user.id });
     });
 
-    test("does not upsert a baseline for a feature branch build", async ({
+    test("should not let an approval on a feature branch change what future stories are compared against", async ({
       project,
       captureConfiguration,
       user,

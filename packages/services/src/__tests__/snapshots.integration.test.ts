@@ -62,7 +62,7 @@ const collectDiffJob = async (connection: Redis): Promise<DiffJobPayload> => {
 
 describe("snapshots", () => {
   describe("captureSnapshot", () => {
-    test("captures a real screenshot, marks the snapshot captured, and enqueues a diff job when last in build", async ({
+    test("should let a reviewer see a screenshot of the story, and move the build toward a diff once every story in the build has been captured", async ({
       build,
       captureConfiguration,
       connection,
@@ -91,7 +91,7 @@ describe("snapshots", () => {
       expect(job.snapshotId).toBe(snapshot!.id);
     }, 30000);
 
-    test("records hasRenderError when the story fails to render", async ({
+    test("should still let a reviewer see the story, flagged as a render error, when the story fails to render", async ({
       build,
       captureConfiguration,
     }) => {
@@ -123,7 +123,7 @@ describe("snapshots", () => {
   });
 
   describe("diffSnapshot", () => {
-    test("marks needs_review when there is no baseline, and enqueues finalize when last diff", async ({
+    test("should ask a reviewer to approve the story when it has never been approved before, and move the build toward done once every story has a verdict", async ({
       build,
       captureConfiguration,
       connection,
@@ -157,7 +157,7 @@ describe("snapshots", () => {
       }
     }, 30000);
 
-    test("marks auto_approved when the capture matches the baseline within threshold", async ({
+    test("should approve a story automatically, with nothing for a reviewer to do, when it renders the same as the approved baseline", async ({
       build,
       project,
       captureConfiguration,
@@ -203,7 +203,7 @@ describe("snapshots", () => {
       });
     }, 30000);
 
-    test("marks needs_review and uploads a diff image when the capture exceeds the threshold", async ({
+    test("should ask a reviewer to approve a story and show them what changed when it renders differently from the approved baseline", async ({
       build,
       project,
       captureConfiguration,

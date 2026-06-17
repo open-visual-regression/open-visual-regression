@@ -7,7 +7,7 @@ import { describe, expect, test } from "../../__tests__/fixtures";
 
 describe("capture", () => {
   describe("captureFailed", () => {
-    test("marks the snapshot errored and enqueues a diff job when it was the last capture in the build", async ({
+    test("should still move the build toward a diff when a story can't be captured, instead of leaving it stuck", async ({
       build,
       captureConfiguration,
       connection,
@@ -40,7 +40,7 @@ describe("capture", () => {
       }
     });
 
-    test("does not enqueue a diff job when other snapshots in the build are still pending", async ({
+    test("should wait for every story in the build before moving toward a diff", async ({
       build,
       captureConfiguration,
     }) => {

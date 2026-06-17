@@ -5,7 +5,9 @@ import { describe, expect, test } from "../../__tests__/fixtures";
 
 describe("extract", () => {
   describe("extractFailed", () => {
-    test("marks the build as errored", async ({ build }) => {
+    test("should let the person who pushed the build know it failed, instead of leaving it stuck pending", async ({
+      build,
+    }) => {
       await extractFailed({
         data: { buildId: build.id, artifactPath: build.artifactPath },
       });

@@ -7,7 +7,7 @@ import { describe, expect, test } from "../../__tests__/fixtures";
 
 describe("diff", () => {
   describe("diffFailed", () => {
-    test("marks the diff errored and enqueues finalize when it was the last diff in the build", async ({
+    test("should still move the build toward a result when a story's diff can't be computed, instead of leaving it stuck", async ({
       build,
       captureConfiguration,
       connection,
@@ -44,7 +44,7 @@ describe("diff", () => {
       }
     });
 
-    test("does not enqueue finalize when other diffs in the build are still pending", async ({
+    test("should wait for every story's diff before moving the build toward a result", async ({
       build,
       captureConfiguration,
     }) => {
