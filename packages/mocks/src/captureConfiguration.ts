@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker";
 
-import type { CaptureConfigurationDto } from "@ovr/api/contracts/projects";
+import type { CaptureConfigurationDto } from "@ovr/api/contracts/captureConfigurations";
 
 export const generateCaptureConfiguration = (
   overrides?: Partial<CaptureConfigurationDto>,

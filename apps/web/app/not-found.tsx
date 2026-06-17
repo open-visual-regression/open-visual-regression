@@ -3,7 +3,7 @@ import { Typography } from "@ovr/ui/components/typography";
 
 export default function NotFoundPage() {
   return (
-    <PixelGrid className="min-h-screen flex flex-col">
+    <PixelGrid className="min-h-screen flex flex-col w-full">
       <div className="flex-1 flex flex-row justify-center items-center py-6 md:py-12 px-8">
         <div className="w-full max-w-115 flex flex-col items-center gap-6">
           <Typography variant="display" as="h1">

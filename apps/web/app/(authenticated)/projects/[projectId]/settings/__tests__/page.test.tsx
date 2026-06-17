@@ -15,7 +15,7 @@ vi.mock("@/lib/router");
 
 const mockGetSession = vi.mocked(auth.api.getSession);
 const mockGetProject = vi.mocked(serverClient.projects.getOne);
-const mockListCaptureConfigurations = vi.mocked(serverClient.projects.listCaptureConfigurations);
+const mockListCaptureConfigurations = vi.mocked(serverClient.captureConfigurations.list);
 const mockListApiKeys = vi.mocked(serverClient.apiKeys.list);
 const mockNotFound = vi.mocked(notFound);
 

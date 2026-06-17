@@ -63,6 +63,10 @@ export const apiKeyMiddleware = os
 
     const result = await auth.api.verifyApiKey({ body: { key: bearer } });
 
+    if (result.error?.code === "RATE_LIMITED") {
+      throw new ORPCError("TOO_MANY_REQUESTS");
+    }
+
     if (!result.valid || !result.key) {
       throw new ORPCError("UNAUTHORIZED");
     }

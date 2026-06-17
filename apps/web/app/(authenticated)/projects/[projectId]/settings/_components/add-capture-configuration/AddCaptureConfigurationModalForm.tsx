@@ -59,7 +59,7 @@ export const AddCaptureConfigurationModalForm = ({
     },
   });
 
-  const { execute, status } = useServerAction(serverClient.projects.addCaptureConfiguration, {
+  const { execute, status } = useServerAction(serverClient.captureConfigurations.add, {
     interceptors: [
       onSuccess(() => {
         router.refresh();
