@@ -28,7 +28,7 @@ export default async function ProjectSettingsPage(props: ProjectSettingsPageProp
     [apiKeysError, apiKeysResult],
   ] = await Promise.all([
     serverClient.projects.getOne({ projectId }),
-    serverClient.projects.listCaptureConfigurations({ projectId }),
+    serverClient.captureConfigurations.list({ projectId }),
     serverClient.apiKeys.list({ projectId }),
   ]);
 

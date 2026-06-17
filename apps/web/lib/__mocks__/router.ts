@@ -11,9 +11,11 @@ export const serverClient = {
     list: vi.fn(),
     add: vi.fn(),
     update: vi.fn(),
-    listCaptureConfigurations: vi.fn(),
-    addCaptureConfiguration: vi.fn(),
-    removeCaptureConfiguration: vi.fn(),
+  },
+  captureConfigurations: {
+    list: vi.fn(),
+    add: vi.fn(),
+    remove: vi.fn(),
   },
   apiKeys: {
     create: vi.fn(),

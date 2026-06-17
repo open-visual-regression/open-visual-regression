@@ -4,7 +4,7 @@ import { serverClient } from "@/lib/router";
 const handler = new RPCHandler(serverClient);
 
 const serve = async (request: Request) => {
-  const { matched, response } = await handler.handle(request);
+  const { matched, response } = await handler.handle(request, { prefix: "/api/rpc", context: {} });
 
   if (matched) {
     return response;

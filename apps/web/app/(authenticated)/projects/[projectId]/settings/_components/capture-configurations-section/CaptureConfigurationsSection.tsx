@@ -16,7 +16,7 @@ import {
   TableRow,
 } from "@ovr/ui/components/table";
 import { serverClient } from "@/lib/router";
-import type { CaptureConfigurationDto } from "@ovr/api/contracts/projects";
+import type { CaptureConfigurationDto } from "@ovr/api/contracts/captureConfigurations";
 import { AddCaptureConfigurationModal } from "../add-capture-configuration/AddCaptureConfigurationModal";
 import { AddCaptureConfigurationModalButton } from "../add-capture-configuration/AddCaptureConfigurationModalButton";
 import { NoCaptureConfigurationsSection } from "./NoCaptureConfigurationsSection";
@@ -32,17 +32,14 @@ export const CaptureConfigurationsSection = ({
 }: CaptureConfigurationsSectionProps) => {
   const router = useRouter();
 
-  const { execute: executeRemove } = useServerAction(
-    serverClient.projects.removeCaptureConfiguration,
-    {
-      interceptors: [
-        onSuccess(() => router.refresh()),
-        onError((err) => {
-          toast.error(err.message);
-        }),
-      ],
-    },
-  );
+  const { execute: executeRemove } = useServerAction(serverClient.captureConfigurations.remove, {
+    interceptors: [
+      onSuccess(() => router.refresh()),
+      onError((err) => {
+        toast.error(err.message);
+      }),
+    ],
+  });
 
   return (
     <div className="flex flex-col gap-4">

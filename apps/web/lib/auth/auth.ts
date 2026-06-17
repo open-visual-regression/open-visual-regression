@@ -25,7 +25,11 @@ export const auth = betterAuth({
   }),
   plugins: [
     admin(),
-    apiKey({ defaultPrefix: "ovr_api_key_", enableMetadata: true }),
+    apiKey({
+      defaultPrefix: "ovr_api_key_",
+      enableMetadata: true,
+      rateLimit: { enabled: false },
+    }),
     organization(),
     nextCookies(),
   ],

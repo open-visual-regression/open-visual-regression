@@ -1,3 +1,4 @@
+import { ORPCError } from "@orpc/client";
 import { Command } from "commander";
 
 import { createClient } from "../../client";
@@ -66,6 +67,10 @@ export const storybookCommand = new Command("storybook")
         console.error(error.message);
       } else if (error instanceof BuildTimeoutError) {
         console.error(error.message);
+      } else if (error instanceof ORPCError) {
+        console.error(
+          `Request to ${options.serverUrl} failed: ${error.status} ${error.code} - ${error.message}`,
+        );
       } else {
         console.error(error instanceof Error ? error.message : String(error));
       }
