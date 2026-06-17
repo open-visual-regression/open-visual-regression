@@ -57,6 +57,13 @@
       "when": 1781613760888,
       "tag": "0007_equal_peter_quill",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1781707231136,
+      "tag": "0008_legal_nova",
+      "breakpoints": true
     }
   ]
 }

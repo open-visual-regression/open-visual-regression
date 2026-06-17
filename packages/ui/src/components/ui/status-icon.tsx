@@ -3,8 +3,8 @@ import type { LucideIcon } from "lucide-react";
 import {
   AlertCircleIcon,
   CircleCheckIcon,
+  CircleDashedIcon,
   CircleXIcon,
-  LoaderCircleIcon,
   TriangleAlertIcon,
 } from "lucide-react";
 
@@ -16,7 +16,7 @@ type StatusVariant = "changed" | "passed" | "pending" | "stale" | "approved" | "
 const ICON_MAP: Record<StatusVariant, LucideIcon> = {
   changed: AlertCircleIcon,
   passed: CircleCheckIcon,
-  pending: LoaderCircleIcon,
+  pending: CircleDashedIcon,
   stale: TriangleAlertIcon,
   approved: CircleCheckIcon,
   rejected: CircleXIcon,
@@ -27,7 +27,7 @@ const statusIconVariants = cva("", {
     variant: {
       changed: "text-ovr-accent",
       passed: "text-ovr-diff-add",
-      pending: "text-ovr-status-pending animate-spin",
+      pending: "text-ovr-status-pending",
       stale: "text-ovr-fg-muted",
       approved: "text-ovr-diff-add",
       rejected: "text-ovr-remove",

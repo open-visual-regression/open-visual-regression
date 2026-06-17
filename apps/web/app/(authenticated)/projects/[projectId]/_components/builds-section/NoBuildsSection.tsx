@@ -7,7 +7,8 @@ const SAMPLE_COMMAND = `OVR_API_KEY=<your-api-key> ovr snapshot storybook \\
   --server-url <your-ovr-server-url> \\
   --branch $(git branch --show-current) \\
   --commit $(git rev-parse HEAD) \\
-  --name "$(git log -1 --pretty=%s)"`;
+  --name "$(git log -1 --pretty=%s)" \\
+  --author "$(git log -1 --pretty=%an)"`;
 
 export const NoBuildsSection = () => (
   <Card className="bg-pixel-grid py-20">
