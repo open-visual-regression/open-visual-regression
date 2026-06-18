@@ -1,4 +1,5 @@
 import http from "node:http";
+import path from "node:path";
 
 import { PNG } from "pngjs";
 import pixelmatch from "pixelmatch";
@@ -17,7 +18,14 @@ const DEFAULT_PIXELMATCH_THRESHOLD = 0.1;
 const startStaticProxy = (buildId: string): Promise<{ origin: string; close: () => void }> =>
   new Promise((resolve) => {
     const server = http.createServer((req, res) => {
-      const relativePath = decodeURIComponent((req.url ?? "/").split("?")[0]!).replace(/^\/+/, "");
+      const requestedPath = decodeURIComponent((req.url ?? "/").split("?")[0]!).replace(/^\/+/, "");
+      const relativePath = path.posix.normalize(requestedPath);
+
+      if (relativePath === ".." || relativePath.startsWith("../")) {
+        res.writeHead(403);
+        res.end();
+        return;
+      }
 
       storage
         .getFileStream(getStaticPath(buildId, relativePath))
@@ -192,6 +200,15 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
     readPng(snapshot.imagePath),
     readPng(baselineSnapshot.imagePath),
   ]);
+
+  if (
+    capturePixels.width !== baselinePixels.width ||
+    capturePixels.height !== baselinePixels.height
+  ) {
+    await dbClient.diffs.updateStatus(diffId, "needs_review");
+    await checkAllDoneAndFinalize(build.id);
+    return;
+  }
 
   const width = capturePixels.width;
   const height = capturePixels.height;

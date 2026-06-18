@@ -1,4 +1,4 @@
-import { Worker } from "bullmq";
+import { Worker, type Job } from "bullmq";
 import { Redis } from "ioredis";
 
 import { QueueName } from "@ovr/queue";
@@ -17,13 +17,18 @@ const captureWorker = new Worker(QueueName.SNAPSHOT_CAPTURE, capture.run, { conn
 const diffWorker = new Worker(QueueName.SNAPSHOT_DIFF, diff.run, { connection });
 const finalizeWorker = new Worker(QueueName.BUILD_FINALIZE, finalize.run, { connection });
 
+// BullMQ emits "failed" after every attempt, including ones that still have
+// retries left, so only treat the job as permanently failed once it has used
+// up every attempt.
+const isFinalAttempt = (job: Job): boolean => job.attemptsMade >= (job.opts.attempts ?? 1);
+
 const guard =
-  <T>(fn: (job: T) => Promise<void>) =>
-  (job: T | undefined) => {
-    if (!job) {
+  <T extends { data: unknown }>(fn: (job: T) => Promise<void>) =>
+  (job: Job | undefined) => {
+    if (!job || !isFinalAttempt(job)) {
       return;
     }
-    fn(job).catch((error: unknown) => {
+    fn(job as unknown as T).catch((error: unknown) => {
       console.error("Error while handling job failure:", error);
     });
   };
@@ -31,6 +36,7 @@ const guard =
 extractWorker.on("failed", guard(extract.failed));
 captureWorker.on("failed", guard(capture.failed));
 diffWorker.on("failed", guard(diff.failed));
+finalizeWorker.on("failed", guard(finalize.failed));
 
 const workers = [extractWorker, captureWorker, diffWorker, finalizeWorker];
 
