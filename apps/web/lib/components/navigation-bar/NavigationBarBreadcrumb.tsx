@@ -22,11 +22,16 @@ const NavigationBarBreadcrumb = ({ segments }: NavigationBarBreadcrumbProps) => 
           {index > 0 ? <BreadcrumbSeparator className="shrink-0" /> : null}
           <BreadcrumbItem className="min-w-0">
             {segment.href ? (
-              <BreadcrumbLink render={<Link href={segment.href} />} className="truncate">
+              <BreadcrumbLink
+                render={<Link href={segment.href} />}
+                className="block max-w-[300px] truncate"
+              >
                 {segment.label}
               </BreadcrumbLink>
             ) : (
-              <BreadcrumbPage className="truncate">{segment.label}</BreadcrumbPage>
+              <BreadcrumbPage className="block max-w-[300px] truncate">
+                {segment.label}
+              </BreadcrumbPage>
             )}
           </BreadcrumbItem>
         </Fragment>

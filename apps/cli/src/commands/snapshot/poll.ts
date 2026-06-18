@@ -10,8 +10,8 @@ export class BuildNeedsReviewError extends Error {
 }
 
 export class BuildFailedError extends Error {
-  constructor() {
-    super("Build finished with an error");
+  constructor(detail?: string) {
+    super(detail ? `Build finished with an error: ${detail}` : "Build finished with an error");
     this.name = "BuildFailedError";
   }
 }
@@ -43,7 +43,7 @@ export const pollBuildStatus = async ({
   const deadline = Date.now() + timeoutSeconds * 1000;
 
   while (true) {
-    const { status, reviewUrl } = await client.builds.getBuildStatus({ buildId });
+    const { status, reviewUrl, errorMessage } = await client.builds.getBuildStatus({ buildId });
 
     onPoll?.(status);
 
@@ -56,7 +56,7 @@ export const pollBuildStatus = async ({
     }
 
     if (status === "error") {
-      throw new BuildFailedError();
+      throw new BuildFailedError(errorMessage);
     }
 
     if (Date.now() >= deadline) {

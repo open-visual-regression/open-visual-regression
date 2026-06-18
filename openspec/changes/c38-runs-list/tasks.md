@@ -8,9 +8,9 @@ Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-build
 - [x] `BuildsSection` + `NoBuildsSection`: empty state or table
 - [x] `BuildsTable`: columns: status icon · name/commitSha · branch · status badge · date
 
-- [ ] 1.1 Add `DiffStrip` to each row: 3px left-edge vertical strip; color mapped from build status
+- [x] 1.1 Add `DiffStrip` to each row: 3px left-edge vertical strip; color mapped from build status
 
-- [ ] 1.2 Make full row a link to `/projects/[projectId]/builds/[buildId]`
+- [x] 1.2 Make full row a link to `/projects/[projectId]/builds/[buildId]`
 
 - [ ] 1.3 Filter tab bar above the table:
   - Tabs: "all (N)" · "changed (N)" · "pass (N)" · "fail (N)" · "pending (N)"

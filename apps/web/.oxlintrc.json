@@ -1,3 +1,6 @@
 {
-  "plugins": ["nextjs"]
+  "plugins": ["nextjs"],
+  "rules": {
+    "nextjs/no-img-element": "off"
+  }
 }

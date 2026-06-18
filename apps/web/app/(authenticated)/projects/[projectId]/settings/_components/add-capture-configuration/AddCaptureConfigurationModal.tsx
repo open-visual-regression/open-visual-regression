@@ -19,7 +19,10 @@ export const AddCaptureConfigurationModal = ({
     <Dialog open={open} onOpenChange={setOpen}>
       {trigger}
       <DialogContent>
-        <AddCaptureConfigurationModalForm projectId={projectId} onAdd={() => setOpen(false)} />
+        <AddCaptureConfigurationModalForm
+          projectId={projectId}
+          onAddAction={() => setOpen(false)}
+        />
       </DialogContent>
     </Dialog>
   );

@@ -4,11 +4,37 @@ import { ORPCError } from "@orpc/client";
 import { dbClient } from "@ovr/db/client";
 import { createBuild as createBuildService, getArtifactPath } from "@ovr/services/builds";
 import { storage } from "@ovr/storage";
+import type { SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
+import type { SnapshotDbSchema } from "@ovr/db/repository/snapshots";
+import type { DiffDbSchema } from "@ovr/db/repository/diffs";
 
 import { os } from "./os";
 import { apiKeyMiddleware, authenticatedMiddleware } from "./middleware";
 
 const UPLOAD_URL_TTL_SECONDS = 3600;
+
+const getSnapshotDisplayStatus = (
+  snapshot: SnapshotDbSchema,
+  diff: DiffDbSchema | undefined,
+): SnapshotDisplayStatus => {
+  if (snapshot.status === "error" || snapshot.hasRenderError) {
+    return "fail";
+  }
+
+  if (snapshot.status === "pending" || !diff || diff.status === "pending") {
+    return "pending";
+  }
+
+  if (diff.status === "needs_review" || diff.status === "rejected") {
+    return "changed";
+  }
+
+  if (diff.status === "error") {
+    return "fail";
+  }
+
+  return "pass";
+};
 
 export const createBuild = os.builds.createBuild
   .use(apiKeyMiddleware)
@@ -59,6 +85,10 @@ export const getBuildStatus = os.builds.getBuildStatus
       };
     }
 
+    if (build.status === "error") {
+      return { status: build.status, errorMessage: build.errorMessage ?? undefined };
+    }
+
     return { status: build.status };
   })
   .actionable();
@@ -89,6 +119,71 @@ export const list = os.builds.list
         createdAt: build.createdAt,
       })),
       total,
+    };
+  })
+  .actionable();
+
+export const getOne = os.builds.getOne
+  .use(authenticatedMiddleware)
+  .handler(async ({ input, context }) => {
+    const build = await dbClient.builds.findById(input.buildId);
+
+    if (!build) {
+      throw new ORPCError("NOT_FOUND");
+    }
+
+    const project = await dbClient.projects.getProject({
+      projectId: build.projectId,
+      organizationId: context.organizationId,
+    });
+
+    if (!project) {
+      throw new ORPCError("NOT_FOUND");
+    }
+
+    const [snapshots, diffs, captureConfigurations] = await Promise.all([
+      dbClient.snapshots.findByBuild(build.id),
+      dbClient.diffs.findByBuild(build.id),
+      dbClient.captureConfigurations.findByProject({ projectId: build.projectId }),
+    ]);
+
+    const diffBySnapshotId = new Map(diffs.map((diff) => [diff.snapshotId, diff]));
+    const captureConfigurationById = new Map(captureConfigurations.map((cc) => [cc.id, cc]));
+
+    return {
+      build: {
+        id: build.id,
+        project: { id: project.id, name: project.name },
+        branch: build.branch,
+        commitSha: build.commitSha,
+        name: build.name,
+        author: build.author,
+        status: build.status,
+        createdAt: build.createdAt,
+      },
+      snapshots: snapshots.map((snapshot) => {
+        const diff = diffBySnapshotId.get(snapshot.id);
+        const captureConfiguration = captureConfigurationById.get(snapshot.captureConfigurationId)!;
+
+        return {
+          id: snapshot.id,
+          targetId: snapshot.targetId,
+          targetTitle: snapshot.targetTitle,
+          targetName: snapshot.targetName,
+          status: getSnapshotDisplayStatus(snapshot, diff),
+          imagePath: snapshot.imagePath,
+          diffId: diff?.id ?? null,
+          diffImagePath: diff?.diffImagePath ?? null,
+          diffPercent: diff?.diffPercent ?? null,
+          captureConfiguration: {
+            id: captureConfiguration.id,
+            name: captureConfiguration.name,
+            browser: captureConfiguration.browser,
+            viewportWidth: captureConfiguration.viewportWidth,
+            viewportHeight: captureConfiguration.viewportHeight,
+          },
+        };
+      }),
     };
   })
   .actionable();

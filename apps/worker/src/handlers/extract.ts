@@ -8,6 +8,6 @@ export const run = async (job: ExtractJob): Promise<void> => {
   await extractBuild(job.data.buildId);
 };
 
-export const failed = async (job: ExtractJob): Promise<void> => {
-  await dbClient.builds.updateStatus(job.data.buildId, "error");
+export const failed = async (job: ExtractJob, error?: Error): Promise<void> => {
+  await dbClient.builds.updateStatus(job.data.buildId, "error", error?.message);
 };

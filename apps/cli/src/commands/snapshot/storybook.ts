@@ -10,7 +10,7 @@ import {
   BuildTimeoutError,
   pollBuildStatus,
 } from "./poll";
-import { readStoryIds } from "./storybookManifest";
+import { readStoryTargets } from "./storybookManifest";
 
 type StorybookCommandOptions = {
   dir: string;
@@ -35,7 +35,7 @@ export const storybookCommand = new Command("storybook")
     const apiKey = getApiKey();
 
     try {
-      const targets = await readStoryIds(options.dir);
+      const targets = await readStoryTargets(options.dir);
       const { branch, commit: commitSha, name, author } = options;
 
       const client = createClient(options.serverUrl, apiKey);

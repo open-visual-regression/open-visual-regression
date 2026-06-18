@@ -82,7 +82,9 @@ describe("snapshots", () => {
 
       const captured = await dbClient.snapshots.findById(snapshot!.id);
       expect(captured).toMatchObject({ status: "captured", hasRenderError: false });
-      expect(captured!.imagePath).toBe(`builds/${build.id}/snapshots/${snapshot!.id}.png`);
+      expect(captured!.imagePath).toBe(
+        `${build.projectId}/builds/${build.id}/snapshots/${snapshot!.id}.png`,
+      );
 
       const imageStream = await storage.getFileStream(captured!.imagePath!);
       expect(imageStream).toBeDefined();
@@ -244,7 +246,9 @@ describe("snapshots", () => {
 
       const result = await dbClient.diffs.findById(diff!.id);
       expect(result).toMatchObject({ status: "needs_review" });
-      expect(result!.diffImagePath).toBe(`builds/${build.id}/diffs/${diff!.id}.png`);
+      expect(result!.diffImagePath).toBe(
+        `${build.projectId}/builds/${build.id}/diffs/${diff!.id}.png`,
+      );
       expect(result!.pixelDiffCount).toBeGreaterThan(0);
 
       const diffImage = await storage.getFileStream(result!.diffImagePath!);

@@ -11,7 +11,7 @@ type CreateBuildInput = {
   commitSha: string;
   name?: string;
   author?: string;
-  targets: string[];
+  targets: { id: string; title: string; name: string }[];
 };
 
 export const getArtifactPath = (buildId: string): string => `builds/${buildId}/artifact.tar.gz`;
@@ -50,11 +50,13 @@ export const createBuild = async (
       });
 
       return dbClient.snapshots.createMany({
-        values: input.targets.flatMap((targetId) =>
+        values: input.targets.flatMap((target) =>
           captureConfigurations.map((captureConfiguration) => ({
             buildId,
             captureConfigurationId: captureConfiguration.id,
-            targetId,
+            targetId: target.id,
+            targetTitle: target.title,
+            targetName: target.name,
             status: "pending" as const,
           })),
         ),
@@ -64,7 +66,8 @@ export const createBuild = async (
 
     await enqueueExtract({ buildId, artifactPath: getArtifactPath(buildId) });
   } catch (error) {
-    await dbClient.builds.updateStatus(buildId, "error");
+    const message = error instanceof Error ? error.message : String(error);
+    await dbClient.builds.updateStatus(buildId, "error", message);
     throw error;
   }
 
@@ -75,7 +78,11 @@ export const finalizeBuild = async (buildId: string): Promise<void> => {
   const diffs = await dbClient.diffs.findByBuild(buildId);
 
   if (diffs.some((diff) => diff.status === "error")) {
-    await dbClient.builds.updateStatus(buildId, "error");
+    await dbClient.builds.updateStatus(
+      buildId,
+      "error",
+      "One or more snapshots failed to diff against their baseline",
+    );
     return;
   }
 

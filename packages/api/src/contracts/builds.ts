@@ -10,7 +10,13 @@ export const createBuildInputSchema = z.object({
   commitSha: z.string().min(1),
   name: z.string().min(1).optional(),
   author: z.string().min(1).optional(),
-  targets: z.array(z.string().min(1)),
+  targets: z.array(
+    z.object({
+      id: z.string().min(1),
+      title: z.string().min(1),
+      name: z.string().min(1),
+    }),
+  ),
 });
 
 export type CreateBuildInputSchema = z.infer<typeof createBuildInputSchema>;
@@ -29,6 +35,7 @@ export const getBuildStatusInputSchema = z.object({
 export const getBuildStatusOutputSchema = z.object({
   status: buildStatusSchema,
   reviewUrl: z.string().optional(),
+  errorMessage: z.string().optional(),
 });
 
 export const getBuildStatusContract = oc
@@ -70,8 +77,45 @@ export const listBuildsContract = oc
   .input(listBuildsInputSchema.optional())
   .output(listBuildsOutputSchema);
 
+export const snapshotDisplayStatusSchema = z.enum(["pass", "changed", "fail", "pending"]);
+
+export type SnapshotDisplayStatus = z.infer<typeof snapshotDisplayStatusSchema>;
+
+export const buildSnapshotSchema = z.object({
+  id: z.uuidv7(),
+  targetId: z.string().min(1),
+  targetTitle: z.string().min(1),
+  targetName: z.string().min(1),
+  status: snapshotDisplayStatusSchema,
+  imagePath: z.string().nullable(),
+  diffId: z.uuidv7().nullable(),
+  diffImagePath: z.string().nullable(),
+  diffPercent: z.number().nullable(),
+  captureConfiguration: z.object({
+    id: z.uuidv7(),
+    name: z.string().min(1),
+    browser: z.string().min(1),
+    viewportWidth: z.number().int(),
+    viewportHeight: z.number().int(),
+  }),
+});
+
+export type BuildSnapshotSchema = z.infer<typeof buildSnapshotSchema>;
+
+export const getBuildInputSchema = z.object({
+  buildId: z.uuidv7(),
+});
+
+export const getBuildOutputSchema = z.object({
+  build: buildSchema,
+  snapshots: z.array(buildSnapshotSchema),
+});
+
+export const getBuildContract = oc.input(getBuildInputSchema).output(getBuildOutputSchema);
+
 export const contract = {
   createBuild: createBuildContract,
   getBuildStatus: getBuildStatusContract,
   list: listBuildsContract,
+  getOne: getBuildContract,
 } as const;

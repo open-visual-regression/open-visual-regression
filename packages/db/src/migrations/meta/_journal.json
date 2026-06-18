@@ -64,6 +64,20 @@
       "when": 1781707231136,
       "tag": "0008_legal_nova",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1781779033880,
+      "tag": "0009_daily_leo",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1781782712501,
+      "tag": "0010_fresh_boomerang",
+      "breakpoints": true
     }
   ]
 }

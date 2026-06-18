@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   useTable,
   tableFeatures,
@@ -17,7 +18,7 @@ import {
 } from "@ovr/ui/components/table";
 import { formatRelativeDateTime } from "@/lib/utils/date";
 import { type BuildSchema } from "@ovr/api/contracts/builds";
-import { BuildStatusBadge, BuildStatusStripe } from "./BuildStatus";
+import { BuildStatusBadge, BuildStatusStripe } from "@/lib/components/BuildStatus";
 import { Typography } from "@ovr/ui/components/typography";
 
 const features = tableFeatures({});
@@ -40,6 +41,12 @@ const columns = columnHelper.columns([
     header: "Commit",
     cell: ({ row }) => (
       <div className="flex flex-row gap-2">
+        <Link
+          href={`/projects/${row.original.project.id}/builds/${row.original.id}`}
+          className="absolute inset-0 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ovr-accent"
+        >
+          <span className="sr-only">view build {row.original.commitSha.slice(0, 7)}</span>
+        </Link>
         <Typography variant="body-muted">{row.original.commitSha.slice(0, 7)}</Typography>
         {row.original.name ? <Typography>{row.original.name}</Typography> : null}
       </div>
@@ -93,7 +100,7 @@ export const BuildsTable = ({ data }: BuildsTableProps) => {
       </TableHeader>
       <TableBody>
         {table.getRowModel().rows.map((row) => (
-          <TableRow key={row.id}>
+          <TableRow key={row.id} className="relative has-[a:hover]:bg-ovr-hover">
             {row.getAllCells().map((cell) => (
               <TableCell key={cell.id} className={cell.column.columnDef.meta?.className}>
                 <table.FlexRender cell={cell} />

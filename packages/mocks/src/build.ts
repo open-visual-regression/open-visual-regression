@@ -1,6 +1,28 @@
 import { faker } from "@faker-js/faker";
 
-import type { BuildSchema } from "@ovr/api/contracts/builds";
+import type { BuildSchema, BuildSnapshotSchema } from "@ovr/api/contracts/builds";
+
+export const generateBuildSnapshot = (
+  overrides?: Partial<BuildSnapshotSchema>,
+): BuildSnapshotSchema => ({
+  id: faker.string.uuid(),
+  targetId: faker.word.noun(),
+  targetTitle: faker.word.noun(),
+  targetName: faker.word.noun(),
+  status: "pass",
+  imagePath: faker.system.filePath(),
+  diffId: null,
+  diffImagePath: null,
+  diffPercent: null,
+  captureConfiguration: {
+    id: faker.string.uuid(),
+    name: faker.word.noun(),
+    browser: "chromium",
+    viewportWidth: 1280,
+    viewportHeight: 800,
+  },
+  ...overrides,
+});
 
 export const generateBuild = (overrides?: Partial<BuildSchema>): BuildSchema => ({
   id: faker.string.uuid(),
