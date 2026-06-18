@@ -111,4 +111,5 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @ovr/db db:migrate
+      - run: pnpm exec playwright install
       - run: pnpm test
