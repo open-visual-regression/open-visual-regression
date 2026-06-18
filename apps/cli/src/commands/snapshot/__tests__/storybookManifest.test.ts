@@ -4,7 +4,7 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { readStoryIds } from "../storybookManifest";
+import { readStoryTargets } from "../storybookManifest";
 
 const writeManifest = async (entries: object): Promise<string> => {
   const dir = await mkdtemp(path.join(tmpdir(), "ovr-storybook-manifest-"));
@@ -12,15 +12,17 @@ const writeManifest = async (entries: object): Promise<string> => {
   return dir;
 };
 
-describe("readStoryIds", () => {
-  it("returns only the story ids, leaving out docs pages so they're never captured", async () => {
+describe("readStoryTargets", () => {
+  it("returns only the story targets, leaving out docs pages so they're never captured", async () => {
     const dir = await writeManifest({
-      "button--docs": { id: "button--docs", type: "docs" },
-      "button--default": { id: "button--default", type: "story" },
+      "button--docs": { id: "button--docs", title: "Button", name: "Docs", type: "docs" },
+      "button--default": { id: "button--default", title: "Button", name: "Default", type: "story" },
     });
 
     try {
-      expect(await readStoryIds(dir)).toEqual(["button--default"]);
+      expect(await readStoryTargets(dir)).toEqual([
+        { id: "button--default", title: "Button", name: "Default" },
+      ]);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
@@ -30,7 +32,7 @@ describe("readStoryIds", () => {
     const dir = await mkdtemp(path.join(tmpdir(), "ovr-storybook-manifest-"));
 
     try {
-      await expect(readStoryIds(dir)).rejects.toThrow(/Could not find "index.json"/);
+      await expect(readStoryTargets(dir)).rejects.toThrow(/Could not find "index.json"/);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
@@ -41,7 +43,7 @@ describe("readStoryIds", () => {
     await writeFile(path.join(dir, "index.json"), JSON.stringify({ v: 5 }));
 
     try {
-      await expect(readStoryIds(dir)).rejects.toThrow(/missing "entries"/);
+      await expect(readStoryTargets(dir)).rejects.toThrow(/missing "entries"/);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

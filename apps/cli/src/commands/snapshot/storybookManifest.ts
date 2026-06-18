@@ -2,10 +2,16 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 type StorybookManifest = {
-  entries?: Record<string, { id: string; type?: string }>;
+  entries?: Record<string, { id: string; title: string; name: string; type?: string }>;
 };
 
-export const readStoryIds = async (dir: string): Promise<string[]> => {
+export type StoryTarget = {
+  id: string;
+  title: string;
+  name: string;
+};
+
+export const readStoryTargets = async (dir: string): Promise<StoryTarget[]> => {
   const manifestPath = path.join(dir, "index.json");
 
   let raw: string;
@@ -27,5 +33,5 @@ export const readStoryIds = async (dir: string): Promise<string[]> => {
 
   return Object.values(manifest.entries)
     .filter((entry) => entry.type !== "docs")
-    .map((entry) => entry.id);
+    .map((entry) => ({ id: entry.id, title: entry.title, name: entry.name }));
 };

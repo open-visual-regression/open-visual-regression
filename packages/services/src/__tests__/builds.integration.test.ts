@@ -53,7 +53,10 @@ describe("builds", () => {
           projectId: project.id,
           branch: "main",
           commitSha: "a".repeat(40),
-          targets: ["story-a", "story-b"],
+          targets: [
+            { id: "story-a", title: "Story", name: "A" },
+            { id: "story-b", title: "Story", name: "B" },
+          ],
         },
         user.id,
       );
@@ -89,7 +92,7 @@ describe("builds", () => {
           projectId: crypto.randomUUID(),
           branch: "main",
           commitSha: "a".repeat(40),
-          targets: ["story-a"],
+          targets: [{ id: "story-a", title: "Story", name: "A" }],
         },
         user.id,
       );

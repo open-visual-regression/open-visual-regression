@@ -168,6 +168,8 @@ export const getOne = os.builds.getOne
         return {
           id: snapshot.id,
           targetId: snapshot.targetId,
+          targetTitle: snapshot.targetTitle,
+          targetName: snapshot.targetName,
           status: getSnapshotDisplayStatus(snapshot, diff),
           imagePath: snapshot.imagePath,
           diffId: diff?.id ?? null,

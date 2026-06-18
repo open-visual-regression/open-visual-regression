@@ -11,7 +11,7 @@ type CreateBuildInput = {
   commitSha: string;
   name?: string;
   author?: string;
-  targets: string[];
+  targets: { id: string; title: string; name: string }[];
 };
 
 export const getArtifactPath = (buildId: string): string => `builds/${buildId}/artifact.tar.gz`;
@@ -50,11 +50,13 @@ export const createBuild = async (
       });
 
       return dbClient.snapshots.createMany({
-        values: input.targets.flatMap((targetId) =>
+        values: input.targets.flatMap((target) =>
           captureConfigurations.map((captureConfiguration) => ({
             buildId,
             captureConfigurationId: captureConfiguration.id,
-            targetId,
+            targetId: target.id,
+            targetTitle: target.title,
+            targetName: target.name,
             status: "pending" as const,
           })),
         ),

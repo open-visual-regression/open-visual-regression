@@ -7,6 +7,8 @@ export const generateBuildSnapshot = (
 ): BuildSnapshotSchema => ({
   id: faker.string.uuid(),
   targetId: faker.word.noun(),
+  targetTitle: faker.word.noun(),
+  targetName: faker.word.noun(),
   status: "pass",
   imagePath: faker.system.filePath(),
   diffId: null,

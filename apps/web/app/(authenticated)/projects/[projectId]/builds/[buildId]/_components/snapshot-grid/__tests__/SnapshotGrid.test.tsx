@@ -4,9 +4,9 @@ import { SnapshotGrid } from "../SnapshotGrid";
 
 describe("SnapshotGrid", () => {
   const snapshots = [
-    mocks.build.generateBuildSnapshot({ targetId: "home-page", status: "pass" }),
-    mocks.build.generateBuildSnapshot({ targetId: "checkout-page", status: "changed" }),
-    mocks.build.generateBuildSnapshot({ targetId: "cart-page", status: "fail" }),
+    mocks.build.generateBuildSnapshot({ targetName: "home-page", status: "pass" }),
+    mocks.build.generateBuildSnapshot({ targetName: "checkout-page", status: "changed" }),
+    mocks.build.generateBuildSnapshot({ targetName: "cart-page", status: "fail" }),
   ];
 
   it("should show every snapshot when the filter is 'all'", () => {

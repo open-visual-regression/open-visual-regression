@@ -40,7 +40,7 @@ describe("builds", () => {
       const [error] = await serverClient.builds.createBuild({
         branch: "main",
         commitSha: "a".repeat(40),
-        targets: ["story-a"],
+        targets: [{ id: "story-a", title: "Story", name: "A" }],
       });
 
       expect(error?.code).toBe("UNAUTHORIZED");
@@ -52,7 +52,7 @@ describe("builds", () => {
       const [error] = await serverClient.builds.createBuild({
         branch: "main",
         commitSha: "a".repeat(40),
-        targets: ["story-a"],
+        targets: [{ id: "story-a", title: "Story", name: "A" }],
       });
 
       expect(error?.code).toBe("UNAUTHORIZED");
@@ -68,7 +68,10 @@ describe("builds", () => {
       const [error, result] = await serverClient.builds.createBuild({
         branch: "main",
         commitSha: "a".repeat(40),
-        targets: ["story-a", "story-b"],
+        targets: [
+          { id: "story-a", title: "Story", name: "A" },
+          { id: "story-b", title: "Story", name: "B" },
+        ],
       });
 
       expect(error).toBeNull();
@@ -104,7 +107,7 @@ describe("builds", () => {
       const [, createResult] = await serverClient.builds.createBuild({
         branch: "main",
         commitSha: "a".repeat(40),
-        targets: ["story-a"],
+        targets: [{ id: "story-a", title: "Story", name: "A" }],
       });
 
       const [error, result] = await serverClient.builds.getBuildStatus({
@@ -123,7 +126,7 @@ describe("builds", () => {
       const [, createResult] = await serverClient.builds.createBuild({
         branch: "main",
         commitSha: "a".repeat(40),
-        targets: ["story-a"],
+        targets: [{ id: "story-a", title: "Story", name: "A" }],
       });
       const buildId = createResult!.buildId;
 
@@ -146,7 +149,7 @@ describe("builds", () => {
       const [, createResult] = await serverClient.builds.createBuild({
         branch: "main",
         commitSha: "a".repeat(40),
-        targets: ["story-a"],
+        targets: [{ id: "story-a", title: "Story", name: "A" }],
       });
 
       setApiKeyHeader(projectA.apiKey);

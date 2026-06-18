@@ -76,6 +76,8 @@ export const snapshots = pgTable(
       .references(() => captureConfigurations.id)
       .notNull(),
     targetId: varchar("target_id", { length: 255 }).notNull(),
+    targetTitle: varchar("target_title", { length: 255 }).notNull().default(""),
+    targetName: varchar("target_name", { length: 255 }).notNull().default(""),
     status: snapshotStatusEnum().notNull().default("pending"),
     imagePath: text("image_path"),
     hasRenderError: boolean("has_render_error").notNull().default(false),

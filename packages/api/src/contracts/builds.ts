@@ -10,7 +10,13 @@ export const createBuildInputSchema = z.object({
   commitSha: z.string().min(1),
   name: z.string().min(1).optional(),
   author: z.string().min(1).optional(),
-  targets: z.array(z.string().min(1)),
+  targets: z.array(
+    z.object({
+      id: z.string().min(1),
+      title: z.string().min(1),
+      name: z.string().min(1),
+    }),
+  ),
 });
 
 export type CreateBuildInputSchema = z.infer<typeof createBuildInputSchema>;
@@ -78,6 +84,8 @@ export type SnapshotDisplayStatus = z.infer<typeof snapshotDisplayStatusSchema>;
 export const buildSnapshotSchema = z.object({
   id: z.uuidv7(),
   targetId: z.string().min(1),
+  targetTitle: z.string().min(1),
+  targetName: z.string().min(1),
   status: snapshotDisplayStatusSchema,
   imagePath: z.string().nullable(),
   diffId: z.uuidv7().nullable(),

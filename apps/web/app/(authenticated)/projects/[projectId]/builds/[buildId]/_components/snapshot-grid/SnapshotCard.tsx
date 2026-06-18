@@ -31,7 +31,7 @@ export const SnapshotCard = ({ snapshot, projectId, buildId }: SnapshotCardProps
         {snapshot.imagePath ? (
           <img
             src={`/api/storage/${snapshot.imagePath}`}
-            alt={`snapshot of ${snapshot.targetId}`}
+            alt={`snapshot of ${snapshot.targetTitle} ${snapshot.targetName}`}
             className="absolute inset-0 h-full w-full object-cover"
           />
         ) : (
@@ -51,9 +51,12 @@ export const SnapshotCard = ({ snapshot, projectId, buildId }: SnapshotCardProps
         <div className="flex min-w-0 items-center gap-2">
           <StatusIcon variant={STATUS_ICON_VARIANT[snapshot.status]} size={11} />
           <Typography variant="code" className="min-w-0 flex-1 truncate text-xs font-medium">
-            {snapshot.targetId}
+            {snapshot.targetName}
           </Typography>
         </div>
+        <Typography variant="caption" className="truncate">
+          {snapshot.targetTitle}
+        </Typography>
         <Typography variant="caption">{STATUS_LABEL[snapshot.status]}</Typography>
       </div>
     </>
