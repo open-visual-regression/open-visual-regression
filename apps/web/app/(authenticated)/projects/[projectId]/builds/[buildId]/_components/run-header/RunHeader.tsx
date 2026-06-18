@@ -21,17 +21,15 @@ export const RunHeader = ({ build, snapshotCounts }: RunHeaderProps) => {
           <Typography variant="h1" as="h1">
             {build.name}
           </Typography>
-          <div className="flex flex-row items-center gap-5 text-xs">
-            <Typography variant="body-muted" className="flex items-center gap-1">
-              <Icon icon={GitCommitHorizontalIcon} size={11} />
-              {build.commitSha.slice(0, 7)} {build.name ? `· ${build.name}` : null}
-            </Typography>
-          </div>
           <div className="flex flex-row flex-wrap items-center gap-4 text-xs">
             <BuildStatusBadge status={build.status} />
             <Typography variant="caption" className="flex items-center gap-1">
               <Icon icon={GitBranchIcon} size={10} />
               {build.branch}
+            </Typography>
+            <Typography variant="caption" className="flex items-center gap-1">
+              <Icon icon={GitCommitHorizontalIcon} size={10} />
+              {build.commitSha.slice(0, 7)}
             </Typography>
             {build.author ? (
               <Typography variant="caption" className="flex items-center gap-1">
@@ -41,9 +39,6 @@ export const RunHeader = ({ build, snapshotCounts }: RunHeaderProps) => {
             ) : null}
             <Typography variant="caption">
               {formatRelativeDateTime(new Date(build.createdAt))}
-            </Typography>
-            <Typography variant="caption">
-              {total} snapshots · {snapshotCounts.changed} changed
             </Typography>
           </div>
         </div>
