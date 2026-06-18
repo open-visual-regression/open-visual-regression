@@ -48,6 +48,7 @@ services:
       RUSTFS_VOLUMES: /data
     ports:
       - ${RUSTFS_PORT:-9000}:9000
+      - ${RUSTFS_CONSOLE_PORT:-9001}:9001
     volumes:
       - rustfsdata:/data
 

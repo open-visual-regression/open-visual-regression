@@ -1,12 +1,18 @@
 import { Queue } from "bullmq";
-import type { Job } from "bullmq";
+import type { Job, JobsOptions } from "bullmq";
 import type IORedis from "ioredis";
 
 export enum QueueName {
+  BUILD_EXTRACT = "build-extract",
   SNAPSHOT_CAPTURE = "snapshot-capture",
   SNAPSHOT_DIFF = "snapshot-diff",
   BUILD_FINALIZE = "build-finalize",
 }
+
+export type ExtractJobPayload = {
+  buildId: string;
+  artifactPath: string;
+};
 
 export type CaptureJobPayload = {
   buildId: string;
@@ -22,6 +28,13 @@ export type FinalizeJobPayload = {
   buildId: string;
 };
 
+const JOB_OPTIONS: Record<QueueName, JobsOptions> = {
+  [QueueName.BUILD_EXTRACT]: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
+  [QueueName.SNAPSHOT_CAPTURE]: { attempts: 5, backoff: { type: "exponential", delay: 2000 } },
+  [QueueName.SNAPSHOT_DIFF]: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
+  [QueueName.BUILD_FINALIZE]: { attempts: 3, backoff: { type: "fixed", delay: 1000 } },
+};
+
 const enqueue = async <T>(
   queueName: QueueName,
   payload: T,
@@ -29,14 +42,16 @@ const enqueue = async <T>(
 ): Promise<Job<T>> => {
   const queue = new Queue<T, void, string, T, void, string>(queueName, { connection });
   try {
-    return await queue.add(queueName, payload, {
-      attempts: 3,
-      backoff: { type: "exponential", delay: 1000 },
-    });
+    return await queue.add(queueName, payload, JOB_OPTIONS[queueName]);
   } finally {
     await queue.close();
   }
 };
+
+export const enqueueExtract = (
+  payload: ExtractJobPayload,
+  connection: IORedis,
+): Promise<Job<ExtractJobPayload>> => enqueue(QueueName.BUILD_EXTRACT, payload, connection);
 
 export const enqueueCapture = (
   payload: CaptureJobPayload,

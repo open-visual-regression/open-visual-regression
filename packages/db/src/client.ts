@@ -5,6 +5,7 @@ import * as apiKeys from "./repository/apiKeys";
 import * as captureConfigurations from "./repository/captureConfigurations";
 import * as builds from "./repository/builds";
 import * as snapshots from "./repository/snapshots";
+import * as snapshotLogs from "./repository/snapshotLogs";
 import * as diffs from "./repository/diffs";
 import * as baselines from "./repository/baselines";
 
@@ -16,6 +17,7 @@ export const dbClient = {
   captureConfigurations,
   builds,
   snapshots,
+  snapshotLogs,
   diffs,
   baselines,
 } as const;

@@ -1,11 +1,21 @@
 import { eq } from "drizzle-orm";
 
-import { db } from "../db";
+import { db, type DbClient } from "../db";
 import { diffs, snapshots, type DiffStatus } from "../schema";
 
 export const create = async (values: typeof diffs.$inferInsert) => {
   const [diff] = await db.insert(diffs).values(values).returning();
   return diff;
+};
+
+type CreateManyInput = { values: (typeof diffs.$inferInsert)[]; tx?: DbClient };
+
+export const createMany = async ({ values, tx = db }: CreateManyInput) => {
+  if (values.length === 0) {
+    return [];
+  }
+
+  return tx.insert(diffs).values(values).returning();
 };
 
 export const findById = (id: string) =>
@@ -23,6 +33,18 @@ export const findByBuild = async (buildId: string) => {
 
 export const updateStatus = async (id: string, status: DiffStatus) => {
   const [diff] = await db.update(diffs).set({ status }).where(eq(diffs.id, id)).returning();
+  return diff;
+};
+
+type UpdateResultInput = {
+  status: DiffStatus;
+  diffImagePath?: string;
+  pixelDiffCount?: number;
+  diffPercent?: number;
+};
+
+export const updateResult = async (id: string, result: UpdateResultInput) => {
+  const [diff] = await db.update(diffs).set(result).where(eq(diffs.id, id)).returning();
   return diff;
 };
 

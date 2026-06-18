@@ -4,7 +4,10 @@ export default defineConfig({
   test: {
     name: "worker",
     environment: "node",
-    include: ["src/**/*.test.ts"],
-    passWithNoTests: true,
+    include: ["src/**/*.integration.test.ts"],
+    globalSetup: ["./vitest.integration.globalSetup.ts"],
+    setupFiles: ["./vitest.integration.setup.ts"],
+    fileParallelism: false,
+    testTimeout: 30_000,
   },
 });

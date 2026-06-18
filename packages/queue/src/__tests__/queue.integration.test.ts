@@ -4,10 +4,12 @@ import type { Redis } from "ioredis";
 import {
   enqueueCapture,
   enqueueDiff,
+  enqueueExtract,
   enqueueFinalize,
   QueueName,
   type CaptureJobPayload,
   type DiffJobPayload,
+  type ExtractJobPayload,
   type FinalizeJobPayload,
 } from "../index";
 import { describe, expect, test } from "./fixtures";
@@ -44,6 +46,25 @@ const processedByWorker = async <T extends object>(
 };
 
 describe("queue", () => {
+  describe("enqueueExtract", () => {
+    test("should deliver the payload to an extract worker and drain the queue", async ({
+      connection,
+    }) => {
+      const payload: ExtractJobPayload = {
+        buildId: "build-1",
+        artifactPath: "builds/build-1/artifact.tar.gz",
+      };
+
+      const data = await processedByWorker<ExtractJobPayload>(
+        QueueName.BUILD_EXTRACT,
+        connection,
+        () => enqueueExtract(payload, connection),
+      );
+
+      expect(data).toEqual(payload);
+    });
+  });
+
   describe("enqueueCapture", () => {
     test("should deliver the payload to a capture worker and drain the queue", async ({
       connection,

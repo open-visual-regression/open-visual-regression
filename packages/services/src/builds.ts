@@ -2,7 +2,7 @@ import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
 import { v7 as uuidv7 } from "uuid";
 
-import { enqueueCapture } from "./lib/queue";
+import { enqueueExtract } from "./lib/queue";
 import type { Result } from "./types";
 
 type CreateBuildInput = {
@@ -29,7 +29,7 @@ export const createBuild = async (
   const buildId = uuidv7();
 
   try {
-    const snapshots = await db.transaction(async (tx) => {
+    await db.transaction(async (tx) => {
       await dbClient.builds.create({
         id: buildId,
         projectId: input.projectId,
@@ -62,9 +62,7 @@ export const createBuild = async (
       });
     });
 
-    await Promise.all(
-      snapshots.map((snapshot) => enqueueCapture({ buildId, snapshotId: snapshot.id })),
-    );
+    await enqueueExtract({ buildId, artifactPath: getArtifactPath(buildId) });
   } catch (error) {
     await dbClient.builds.updateStatus(buildId, "error");
     throw error;
