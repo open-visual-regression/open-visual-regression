@@ -17,18 +17,15 @@ const captureWorker = new Worker(QueueName.SNAPSHOT_CAPTURE, capture.run, { conn
 const diffWorker = new Worker(QueueName.SNAPSHOT_DIFF, diff.run, { connection });
 const finalizeWorker = new Worker(QueueName.BUILD_FINALIZE, finalize.run, { connection });
 
-// BullMQ emits "failed" after every attempt, including ones that still have
-// retries left, so only treat the job as permanently failed once it has used
-// up every attempt.
-const isFinalAttempt = (job: Job): boolean => job.attemptsMade >= (job.opts.attempts ?? 1);
+const isFinalAttempt = (job: Job<unknown>): boolean => job.attemptsMade >= (job.opts.attempts ?? 1);
 
 const guard =
-  <T extends { data: unknown }>(fn: (job: T) => Promise<void>) =>
-  (job: Job | undefined) => {
+  <T>(fn: (job: { data: T }) => Promise<void>) =>
+  (job: Job<T> | undefined) => {
     if (!job || !isFinalAttempt(job)) {
       return;
     }
-    fn(job as unknown as T).catch((error: unknown) => {
+    fn(job).catch((error: unknown) => {
       console.error("Error while handling job failure:", error);
     });
   };
