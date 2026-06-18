@@ -23,7 +23,7 @@ describe("BuildsSection", () => {
     const build = mocks.build.generateBuild({ name: null, commitSha: "4f2a91e1234567890" });
     render(<BuildsSection builds={[build]} />);
 
-    expect(screen.getByRole("cell", { name: "4f2a91e" })).toBeVisible();
+    expect(screen.getByRole("cell", { name: /4f2a91e/ })).toBeVisible();
   });
 
   it("should show a passed build's status as 'passed'", () => {
@@ -61,5 +61,15 @@ describe("BuildsSection", () => {
     render(<BuildsSection builds={[build]} />);
 
     expect(screen.getByRole("cell", { name: "5 minutes ago" })).toBeVisible();
+  });
+
+  it("should link each row to its run detail page", () => {
+    const build = mocks.build.generateBuild({ commitSha: "4f2a91e1234567890" });
+    render(<BuildsSection builds={[build]} />);
+
+    expect(screen.getByRole("link", { name: /view build 4f2a91e/i })).toHaveAttribute(
+      "href",
+      `/projects/${build.project.id}/builds/${build.id}`,
+    );
   });
 });
