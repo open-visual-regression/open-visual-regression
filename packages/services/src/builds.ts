@@ -64,7 +64,8 @@ export const createBuild = async (
 
     await enqueueExtract({ buildId, artifactPath: getArtifactPath(buildId) });
   } catch (error) {
-    await dbClient.builds.updateStatus(buildId, "error");
+    const message = error instanceof Error ? error.message : String(error);
+    await dbClient.builds.updateStatus(buildId, "error", message);
     throw error;
   }
 
@@ -75,7 +76,11 @@ export const finalizeBuild = async (buildId: string): Promise<void> => {
   const diffs = await dbClient.diffs.findByBuild(buildId);
 
   if (diffs.some((diff) => diff.status === "error")) {
-    await dbClient.builds.updateStatus(buildId, "error");
+    await dbClient.builds.updateStatus(
+      buildId,
+      "error",
+      "One or more snapshots failed to diff against their baseline",
+    );
     return;
   }
 

@@ -125,7 +125,7 @@ export const captureSnapshot = async (snapshotId: string): Promise<void> => {
 
   const hasRenderError = renderFailed || logs.some((log) => log.level === "error");
 
-  const imagePath = `builds/${build.id}/snapshots/${snapshotId}.png`;
+  const imagePath = `${build.projectId}/builds/${build.id}/snapshots/${snapshotId}.png`;
   await storage.uploadFile(imagePath, screenshot, "image/png");
 
   await db.transaction(async (tx) => {
@@ -235,7 +235,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
     return;
   }
 
-  const diffImagePath = `builds/${build.id}/diffs/${diffId}.png`;
+  const diffImagePath = `${build.projectId}/builds/${build.id}/diffs/${diffId}.png`;
   await storage.uploadFile(diffImagePath, encodePng(diffPixels, width, height), "image/png");
 
   await dbClient.diffs.updateResult(diffId, {

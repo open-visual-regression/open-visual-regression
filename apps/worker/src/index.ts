@@ -1,3 +1,5 @@
+import "./env";
+
 import { Worker, type Job } from "bullmq";
 import { Redis } from "ioredis";
 
@@ -20,13 +22,14 @@ const finalizeWorker = new Worker(QueueName.BUILD_FINALIZE, finalize.run, { conn
 const isFinalAttempt = (job: Job<unknown>): boolean => job.attemptsMade >= (job.opts.attempts ?? 1);
 
 const guard =
-  <T>(fn: (job: { data: T }) => Promise<void>) =>
-  (job: Job<T> | undefined) => {
+  <T>(fn: (job: { data: T }, error: Error) => Promise<void>) =>
+  (job: Job<T> | undefined, error: Error) => {
     if (!job || !isFinalAttempt(job)) {
       return;
     }
-    fn(job).catch((error: unknown) => {
-      console.error("Error while handling job failure:", error);
+    console.error(`Job ${job.id} (${job.queueName}) failed:`, error);
+    fn(job, error).catch((handlerError: unknown) => {
+      console.error("Error while handling job failure:", handlerError);
     });
   };
 

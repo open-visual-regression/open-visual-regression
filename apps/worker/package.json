@@ -17,6 +17,7 @@
     "@ovr/queue": "workspace:*",
     "@ovr/services": "workspace:*",
     "bullmq": "^5.78.0",
+    "dotenv": "^17.4.2",
     "ioredis": "5.10.1",
     "pg": "8.21.0",
     "pixelmatch": "^7.1.0",

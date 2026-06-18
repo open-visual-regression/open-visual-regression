@@ -18,7 +18,7 @@ import {
 } from "@ovr/ui/components/table";
 import { formatRelativeDateTime } from "@/lib/utils/date";
 import { type BuildSchema } from "@ovr/api/contracts/builds";
-import { BuildStatusBadge, BuildStatusStripe } from "./BuildStatus";
+import { BuildStatusBadge, BuildStatusStripe } from "@/lib/components/BuildStatus";
 import { Typography } from "@ovr/ui/components/typography";
 
 const features = tableFeatures({});

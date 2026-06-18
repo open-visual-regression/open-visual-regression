@@ -29,6 +29,7 @@ export const getBuildStatusInputSchema = z.object({
 export const getBuildStatusOutputSchema = z.object({
   status: buildStatusSchema,
   reviewUrl: z.string().optional(),
+  errorMessage: z.string().optional(),
 });
 
 export const getBuildStatusContract = oc

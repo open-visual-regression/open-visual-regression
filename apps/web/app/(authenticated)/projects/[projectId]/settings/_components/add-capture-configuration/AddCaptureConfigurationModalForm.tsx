@@ -35,12 +35,12 @@ type AddCaptureConfigurationValues = z.infer<typeof addCaptureConfigurationSchem
 
 type AddCaptureConfigurationModalFormProps = {
   projectId: string;
-  onAdd: () => void;
+  onAddAction: () => void;
 };
 
 export const AddCaptureConfigurationModalForm = ({
   projectId,
-  onAdd,
+  onAddAction,
 }: AddCaptureConfigurationModalFormProps) => {
   const router = useRouter();
   const {
@@ -63,7 +63,7 @@ export const AddCaptureConfigurationModalForm = ({
     interceptors: [
       onSuccess(() => {
         router.refresh();
-        onAdd();
+        onAddAction();
       }),
       onError((err) => setError("root", { message: err.message })),
     ],

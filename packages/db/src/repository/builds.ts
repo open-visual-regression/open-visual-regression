@@ -13,8 +13,12 @@ export const create = async ({ tx = db, ...values }: CreateInput) => {
 export const findById = (id: string) =>
   db.query.builds.findFirst({ where: (builds, { eq }) => eq(builds.id, id) });
 
-export const updateStatus = async (id: string, status: BuildStatus) => {
-  const [build] = await db.update(builds).set({ status }).where(eq(builds.id, id)).returning();
+export const updateStatus = async (id: string, status: BuildStatus, errorMessage?: string) => {
+  const [build] = await db
+    .update(builds)
+    .set({ status, errorMessage })
+    .where(eq(builds.id, id))
+    .returning();
   return build;
 };
 

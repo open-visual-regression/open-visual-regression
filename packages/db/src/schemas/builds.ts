@@ -54,6 +54,7 @@ export const builds = pgTable("builds", {
   name: varchar({ length: 255 }),
   author: varchar({ length: 255 }),
   status: buildStatusEnum().notNull().default("pending"),
+  errorMessage: text("error_message"),
   captureMode: captureModeEnum("capture_mode").notNull().default("worker"),
   artifactPath: text("artifact_path").notNull(),
   createdAt: utcTimestamp("created_at")

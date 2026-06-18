@@ -85,6 +85,10 @@ export const getBuildStatus = os.builds.getBuildStatus
       };
     }
 
+    if (build.status === "error") {
+      return { status: build.status, errorMessage: build.errorMessage ?? undefined };
+    }
+
     return { status: build.status };
   })
   .actionable();
