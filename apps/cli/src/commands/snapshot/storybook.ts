@@ -41,9 +41,7 @@ export const storybookCommand = new Command("storybook")
 
       const client = createClient(options.serverUrl, apiKey);
 
-      console.log(
-        `Creating build for ${branch}@${commitSha} (${targets.length} stories, ${viewports.length} viewport(s))...`,
-      );
+      console.log(`Creating build for ${branch}@${commitSha} (${targets.length} stories)...`);
       const { buildId, uploadUrl } = await client.builds.createBuild({
         branch,
         commitSha,
