@@ -6,7 +6,7 @@ Depends on: c54-branch-aware-diffing
 
 This is the primitive layer only — no contracts/router/UI here (that's c56-reviewer-api and c57-reviewer-ui). It exists so both the bulk "approve all"/"reject all" actions and a future per-diff detail page can call the same functions.
 
-- [ ] 1.1 `packages/services/src/diffs.ts` (new):
+- [x] 1.1 `packages/services/src/diffs.ts` (new):
   ```ts
   export const castVote = async (
     diffId: string,
@@ -30,7 +30,7 @@ This is the primitive layer only — no contracts/router/UI here (that's c56-rev
   - `bulkCastVote`: fetch `dbClient.diffs.findByBuild(buildId)`, filter to `reviewStatus === "awaiting_review"`, call `castVote` for each with the given reviewer/vote — terminal-state diffs are left untouched
   - Note: an approved-via-votes diff never promotes the baseline (only main-branch builds do that, in `diffSnapshot`) — feature-branch approvals stay review-only, matching today's behavior
 
-- [ ] 1.2 `packages/services/src/__tests__/diffs.integration.test.ts` (new):
+- [x] 1.2 `packages/services/src/__tests__/diffs.integration.test.ts` (new):
   - `castVote`: approve vote on a fresh `awaiting_review` diff with `requiredReviewerCount: 1` → `reviewStatus: "approved"`; with `requiredReviewerCount: 2` and one approve → stays `"awaiting_review"`; a second distinct reviewer's approve → `"approved"`
   - `castVote`: a single reject immediately sets `"rejected"` even with existing approvals (veto)
   - `castVote`: same reviewer voting twice replaces their vote (e.g. approve then reject → `"rejected"`; reject then approve with enough other approvals → `"approved"`)
