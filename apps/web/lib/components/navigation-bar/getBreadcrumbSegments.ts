@@ -12,17 +12,21 @@ type SegmentResolver = (value: string) => Promise<string | undefined>;
 const SEGMENT_RESOLVERS: Record<string, SegmentResolver> = {
   "projects/*": async (projectId) => {
     const [error, result] = await serverClient.projects.getOne({ projectId });
-    return error ? undefined : result.project.name;
+    return error ? projectId : result.project.name;
   },
   "projects/*/builds/*": async (buildId) => {
     const [error, result] = await serverClient.builds.getOne({ buildId });
-    return error ? undefined : (result.build.name ?? result.build.id);
+    return error ? buildId : (result.build.name ?? result.build.id);
+  },
+  "projects/*/builds/*/snapshots/*": async (snapshotId) => {
+    const [error, result] = await serverClient.snapshots.getOne({ snapshotId });
+    return error ? snapshotId : `${result.snapshot.targetTitle} ${result.snapshot.targetName}`;
   },
 };
 
-const SEGMENT_FILTERS = new Set<string>(["projects/*/builds"]);
+const SEGMENT_FILTERS = new Set<string>(["projects/*/builds", "projects/*/builds/*/snapshots"]);
 
-const LITERAL_SEGMENTS = new Set(["projects", "builds"]);
+const LITERAL_SEGMENTS = new Set(["projects", "builds", "snapshots"]);
 
 const humanize = (segment: string) => segment.replace(/-/g, " ");
 
@@ -31,7 +35,7 @@ const getBreadcrumbSegments = async (segments: string[]): Promise<BreadcrumbSegm
     return [{ label: "projects" }];
   }
 
-  const labels = await Promise.all(
+  const entries = await Promise.all(
     segments.map(async (segment, index) => {
       const pattern = segments
         .slice(0, index + 1)
@@ -43,15 +47,15 @@ const getBreadcrumbSegments = async (segments: string[]): Promise<BreadcrumbSegm
       }
 
       const resolved = await SEGMENT_RESOLVERS[pattern]?.(segment);
-      return resolved ?? humanize(segment);
+      return { index, label: resolved ?? humanize(segment) };
     }),
   );
 
-  const filteredLabels = labels.filter((label) => label !== null);
+  const filteredEntries = entries.filter((entry) => entry !== null);
 
-  return filteredLabels.map((label, index) => {
+  return filteredEntries.map(({ index, label }, position) => {
     const href =
-      index === filteredLabels.length - 1
+      position === filteredEntries.length - 1
         ? undefined
         : `/${segments.slice(0, index + 1).join("/")}`;
 

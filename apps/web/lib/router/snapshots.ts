@@ -1,6 +1,5 @@
 "use server";
 
-import { ORPCError } from "@orpc/client";
 import { dbClient } from "@ovr/db/client";
 
 import { os } from "./os";
@@ -12,14 +11,7 @@ export const getOne = os.snapshots.getOne
   .handler(async ({ context }) => {
     const { snapshot } = context;
 
-    const [captureConfiguration, errorLogs] = await Promise.all([
-      dbClient.captureConfigurations.findById(snapshot.captureConfigurationId),
-      dbClient.snapshotLogs.findBySnapshot(snapshot.id),
-    ]);
-
-    if (!captureConfiguration) {
-      throw new ORPCError("NOT_FOUND");
-    }
+    const errorLogs = await dbClient.snapshotLogs.findBySnapshot(snapshot.id);
 
     return {
       snapshot: {
@@ -27,13 +19,9 @@ export const getOne = os.snapshots.getOne
         targetName: snapshot.targetName,
         targetTitle: snapshot.targetTitle,
         imagePath: snapshot.imagePath,
-        captureConfiguration: {
-          id: captureConfiguration.id,
-          name: captureConfiguration.name,
-          browser: captureConfiguration.browser,
-          viewportWidth: captureConfiguration.viewportWidth,
-          viewportHeight: captureConfiguration.viewportHeight,
-        },
+        browser: snapshot.browser,
+        viewportWidth: snapshot.viewportWidth,
+        viewportHeight: snapshot.viewportHeight === 0 ? null : snapshot.viewportHeight,
         errorLogs: errorLogs.map((log) => ({
           id: log.id,
           level: log.level,

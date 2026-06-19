@@ -14,13 +14,9 @@ export const generateBuildSnapshot = (
   diffId: null,
   diffImagePath: null,
   diffPercent: null,
-  captureConfiguration: {
-    id: faker.string.uuid(),
-    name: faker.word.noun(),
-    browser: "chromium",
-    viewportWidth: 1280,
-    viewportHeight: 800,
-  },
+  browser: "chromium",
+  viewportWidth: 1280,
+  viewportHeight: 800,
   ...overrides,
 });
 

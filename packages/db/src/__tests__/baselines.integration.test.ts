@@ -13,7 +13,7 @@ describe("baselines", () => {
         values: [
           {
             buildId: build.id,
-            captureConfigurationId: captureConfiguration.id,
+            ...captureConfiguration,
             targetId: "button--primary",
           },
         ],
@@ -21,7 +21,7 @@ describe("baselines", () => {
 
       const created = await dbClient.baselines.upsert({
         projectId: project.id,
-        captureConfigurationId: captureConfiguration.id,
+        ...captureConfiguration,
         targetId: "button--primary",
         snapshotId: snapshot!.id,
         approvedBy: user.id,
@@ -40,12 +40,12 @@ describe("baselines", () => {
         values: [
           {
             buildId: build.id,
-            captureConfigurationId: captureConfiguration.id,
+            ...captureConfiguration,
             targetId: "button--primary",
           },
           {
             buildId: build.id,
-            captureConfigurationId: captureConfiguration.id,
+            ...captureConfiguration,
             targetId: "button--primary",
           },
         ],
@@ -53,7 +53,7 @@ describe("baselines", () => {
 
       const created = await dbClient.baselines.upsert({
         projectId: project.id,
-        captureConfigurationId: captureConfiguration.id,
+        ...captureConfiguration,
         targetId: "button--primary",
         snapshotId: snapshotA!.id,
         approvedBy: user.id,
@@ -61,7 +61,7 @@ describe("baselines", () => {
 
       const replaced = await dbClient.baselines.upsert({
         projectId: project.id,
-        captureConfigurationId: captureConfiguration.id,
+        ...captureConfiguration,
         targetId: "button--primary",
         snapshotId: snapshotB!.id,
         approvedBy: user.id,
@@ -83,24 +83,24 @@ describe("baselines", () => {
         values: [
           {
             buildId: build.id,
-            captureConfigurationId: captureConfiguration.id,
+            ...captureConfiguration,
             targetId: "button--primary",
           },
         ],
       });
       await dbClient.baselines.upsert({
         projectId: project.id,
-        captureConfigurationId: captureConfiguration.id,
+        ...captureConfiguration,
         targetId: "button--primary",
         snapshotId: snapshot!.id,
         approvedBy: user.id,
       });
 
-      const found = await dbClient.baselines.find(
-        project.id,
-        captureConfiguration.id,
-        "button--primary",
-      );
+      const found = await dbClient.baselines.find({
+        projectId: project.id,
+        ...captureConfiguration,
+        targetId: "button--primary",
+      });
       expect(found?.snapshotId).toBe(snapshot!.id);
     });
   });
@@ -116,14 +116,14 @@ describe("baselines", () => {
         values: [
           {
             buildId: build.id,
-            captureConfigurationId: captureConfiguration.id,
+            ...captureConfiguration,
             targetId: "button--primary",
           },
         ],
       });
       await dbClient.baselines.upsert({
         projectId: project.id,
-        captureConfigurationId: captureConfiguration.id,
+        ...captureConfiguration,
         targetId: "button--primary",
         snapshotId: snapshot!.id,
         approvedBy: user.id,

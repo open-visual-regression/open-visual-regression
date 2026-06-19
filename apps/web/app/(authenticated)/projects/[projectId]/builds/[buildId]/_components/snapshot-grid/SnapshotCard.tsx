@@ -3,6 +3,9 @@ import { Typography } from "@ovr/ui/components/typography";
 import { type BuildSnapshotSchema } from "@ovr/api/contracts/builds";
 import { SnapshotStatusBadge } from "@/lib/components/SnapshotStatusBadge";
 import { cn } from "@ovr/ui/lib/utils";
+import { Badge } from "@ovr/ui/components/badge";
+import { GlobeIcon, Icon } from "@ovr/ui/components/icon";
+import { ResolutionIcon } from "@ovr/ui/components/resolution-icon";
 
 type SnapshotCardProps = {
   snapshot: BuildSnapshotSchema;
@@ -25,6 +28,13 @@ export const SnapshotCard = ({ snapshot, projectId, buildId }: SnapshotCardProps
             <Typography variant="caption">no preview</Typography>
           </div>
         )}
+        {snapshot.status === "changed" && snapshot.diffPercent !== null ? (
+          <div className="absolute top-2 left-2">
+            <Badge variant="changed" filled>
+              Δ {snapshot.diffPercent.toFixed(2)}%
+            </Badge>
+          </div>
+        ) : null}
         {snapshot.status === "changed" || snapshot.status === "fail" ? (
           <div className="absolute bottom-2 right-2">
             <SnapshotStatusBadge status={snapshot.status} />
@@ -32,13 +42,17 @@ export const SnapshotCard = ({ snapshot, projectId, buildId }: SnapshotCardProps
         ) : null}
       </div>
       <div className="flex min-w-0 flex-col gap-1 px-3 py-2.5">
-        <div className="flex min-w-0 items-center gap-2">
-          <Typography variant="code" className="min-w-0 flex-1 truncate text-xs font-medium">
-            {snapshot.targetName}
-          </Typography>
-        </div>
+        <Typography variant="code" className="truncate">
+          {snapshot.targetName}
+        </Typography>
         <Typography variant="caption" className="truncate">
           {snapshot.targetTitle}
+        </Typography>
+        <Typography variant="caption" className="flex items-center gap-1 truncate">
+          <Icon icon={GlobeIcon} size={12} className="shrink-0" />
+          {snapshot.browser} ·{" "}
+          <ResolutionIcon width={snapshot.viewportWidth} size={12} className="shrink-0" />
+          {snapshot.viewportWidth}×{snapshot.viewportHeight ?? "auto"}
         </Typography>
       </div>
     </>

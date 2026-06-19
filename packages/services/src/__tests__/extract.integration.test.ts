@@ -61,30 +61,20 @@ const buildArtifactTarball = async (): Promise<Buffer> => {
 };
 
 describe("extractBuild", () => {
-  test("uploads each file from the artifact tarball to per-file storage and enqueues a capture job per snapshot", async ({
+  test("uploads each file from the artifact tarball, creates a snapshot per target x viewport, and enqueues a capture job per snapshot", async ({
     mainBuild,
     captureConfiguration,
     connection,
   }) => {
-    await dbClient.snapshots.createMany({
-      values: [
-        {
-          buildId: mainBuild.id,
-          captureConfigurationId: captureConfiguration.id,
-          targetId: "story-a",
-        },
-        {
-          buildId: mainBuild.id,
-          captureConfigurationId: captureConfiguration.id,
-          targetId: "story-b",
-        },
-      ],
-    });
-
     const tarball = await buildArtifactTarball();
     await storage.uploadFile(mainBuild.artifactPath, tarball, "application/gzip");
 
-    await extractBuild(mainBuild.id);
+    const targets = [
+      { id: "story-a", title: "Story", name: "A" },
+      { id: "story-b", title: "Story", name: "B" },
+    ];
+
+    await extractBuild(mainBuild.id, targets, [captureConfiguration]);
 
     const iframeStream = await storage.getFileStream(getStaticPath(mainBuild.id, "iframe.html"));
     const runtimeStream = await storage.getFileStream(getStaticPath(mainBuild.id, "runtime.js"));
@@ -92,11 +82,17 @@ describe("extractBuild", () => {
     expect(runtimeStream).toBeDefined();
 
     const snapshots = await dbClient.snapshots.findByBuild(mainBuild.id);
+    expect(snapshots).toHaveLength(2);
+    expect(snapshots.map((snapshot) => snapshot.targetId).sort()).toEqual(["story-a", "story-b"]);
+    expect(snapshots.every((snapshot) => snapshot.browser === captureConfiguration.browser)).toBe(
+      true,
+    );
+
     const jobs = await collectCaptureJobs(connection, snapshots.length);
     expect(jobs).toEqual(
       expect.arrayContaining(
         snapshots.map((snapshot) => ({ buildId: mainBuild.id, snapshotId: snapshot.id })),
       ),
     );
-  });
+  }, 30000);
 });

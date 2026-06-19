@@ -5,7 +5,7 @@ import { test, describe, expect } from "@/lib/testing/fixtures";
 import { serverClient } from "@/lib/router";
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
-import { captureConfigurations, organization, projects } from "@ovr/db/schema";
+import { organization, projects } from "@ovr/db/schema";
 import type { AddProjectInputSchema } from "@ovr/api/contracts/projects";
 
 vi.mock("next/headers");
@@ -17,6 +17,8 @@ const TEST_PROJECT: AddProjectInputSchema = {
   diffThreshold: 0.05,
 };
 
+const VIEWPORTS = [{ browser: "chromium" as const, viewportWidth: 1280 }];
+
 const setApiKeyHeader = (key?: string) => {
   vi.mocked(headers).mockResolvedValue(new Headers(key ? { authorization: `Bearer ${key}` } : {}));
 };
@@ -24,8 +26,6 @@ const setApiKeyHeader = (key?: string) => {
 const createProjectWithApiKey = async () => {
   const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
   const projectId = addResult!.projectId;
-
-  await db.insert(captureConfigurations).values({ projectId, name: "Default" });
 
   const [, keyResult] = await serverClient.apiKeys.create({ projectId, name: "ci" });
 
@@ -41,6 +41,7 @@ describe("builds", () => {
         branch: "main",
         commitSha: "a".repeat(40),
         targets: [{ id: "story-a", title: "Story", name: "A" }],
+        viewports: VIEWPORTS,
       });
 
       expect(error?.code).toBe("UNAUTHORIZED");
@@ -53,14 +54,13 @@ describe("builds", () => {
         branch: "main",
         commitSha: "a".repeat(40),
         targets: [{ id: "story-a", title: "Story", name: "A" }],
+        viewports: VIEWPORTS,
       });
 
       expect(error?.code).toBe("UNAUTHORIZED");
     });
 
-    test("creates a build under the project the key is scoped to and enqueues captures", async ({
-      admin: _,
-    }) => {
+    test("creates a pending build under the project the key is scoped to", async ({ admin: _ }) => {
       const { projectId, apiKey } = await createProjectWithApiKey();
 
       setApiKeyHeader(apiKey);
@@ -72,6 +72,7 @@ describe("builds", () => {
           { id: "story-a", title: "Story", name: "A" },
           { id: "story-b", title: "Story", name: "B" },
         ],
+        viewports: VIEWPORTS,
       });
 
       expect(error).toBeNull();
@@ -85,9 +86,6 @@ describe("builds", () => {
         commitSha: "a".repeat(40),
         status: "pending",
       });
-
-      const snapshots = await dbClient.snapshots.findByBuild(result!.buildId);
-      expect(snapshots.map((snapshot) => snapshot.targetId).sort()).toEqual(["story-a", "story-b"]);
     });
   });
 
@@ -108,6 +106,7 @@ describe("builds", () => {
         branch: "main",
         commitSha: "a".repeat(40),
         targets: [{ id: "story-a", title: "Story", name: "A" }],
+        viewports: VIEWPORTS,
       });
 
       const [error, result] = await serverClient.builds.getBuildStatus({
@@ -127,6 +126,7 @@ describe("builds", () => {
         branch: "main",
         commitSha: "a".repeat(40),
         targets: [{ id: "story-a", title: "Story", name: "A" }],
+        viewports: VIEWPORTS,
       });
       const buildId = createResult!.buildId;
 
@@ -150,6 +150,7 @@ describe("builds", () => {
         branch: "main",
         commitSha: "a".repeat(40),
         targets: [{ id: "story-a", title: "Story", name: "A" }],
+        viewports: VIEWPORTS,
       });
 
       setApiKeyHeader(projectA.apiKey);

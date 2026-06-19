@@ -14,7 +14,7 @@ import {
 import { v7 as uuidv7 } from "uuid";
 
 import { user } from "./auth";
-import { captureConfigurations, projects, utcTimestamp } from "./schemas";
+import { projects, utcTimestamp } from "./schemas";
 
 export const buildStatusEnum = pgEnum("build_status", [
   "pending",
@@ -83,9 +83,10 @@ export const snapshots = pgTable(
     buildId: uuid("build_id")
       .references(() => builds.id, { onDelete: "cascade" })
       .notNull(),
-    captureConfigurationId: uuid("capture_configuration_id")
-      .references(() => captureConfigurations.id)
-      .notNull(),
+    browser: varchar({ length: 50 }).notNull().default("chromium"),
+    viewportWidth: integer("viewport_width").notNull().default(1280),
+    // 0 means "auto/full-page height" — no fixed viewport height was requested.
+    viewportHeight: integer("viewport_height").notNull().default(0),
     targetId: varchar("target_id", { length: 255 }).notNull(),
     targetTitle: varchar("target_title", { length: 255 }).notNull().default(""),
     targetName: varchar("target_name", { length: 255 }).notNull().default(""),
@@ -154,9 +155,9 @@ export const baselines = pgTable(
     projectId: uuid("project_id")
       .references(() => projects.id, { onDelete: "cascade" })
       .notNull(),
-    captureConfigurationId: uuid("capture_configuration_id")
-      .references(() => captureConfigurations.id)
-      .notNull(),
+    browser: varchar({ length: 50 }).notNull().default("chromium"),
+    viewportWidth: integer("viewport_width").notNull().default(1280),
+    viewportHeight: integer("viewport_height").notNull().default(0),
     targetId: varchar("target_id", { length: 255 }).notNull(),
     snapshotId: uuid("snapshot_id")
       .references(() => snapshots.id)
@@ -169,9 +170,11 @@ export const baselines = pgTable(
       .notNull(),
   },
   (table) => [
-    uniqueIndex("baselines_project_capture_configuration_target_uidx").on(
+    uniqueIndex("baselines_project_browser_viewport_target_uidx").on(
       table.projectId,
-      table.captureConfigurationId,
+      table.browser,
+      table.viewportWidth,
+      table.viewportHeight,
       table.targetId,
     ),
   ],

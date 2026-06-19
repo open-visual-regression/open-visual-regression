@@ -13,9 +13,28 @@ type StorybookChannel = {
   emit: (event: string, payload: unknown) => void;
 };
 
+type StorybookPreview = {
+  storyStoreValue?: {
+    getStoryContext?: (storyId: string) => { parameters?: Record<string, unknown> } | undefined;
+  };
+};
+
 declare global {
   var __STORYBOOK_ADDONS_CHANNEL__: StorybookChannel | undefined;
+  var __STORYBOOK_PREVIEW__: StorybookPreview | undefined;
 }
+
+export type OvrStoryParameterViewport =
+  | string
+  | { browser?: string; width: number; height?: number };
+
+export type OvrStoryParameters = { viewports?: OvrStoryParameterViewport[] };
+
+export const readOvrStoryParameters = (targetId: string): OvrStoryParameters | null => {
+  const context = globalThis.__STORYBOOK_PREVIEW__?.storyStoreValue?.getStoryContext?.(targetId);
+  const ovr = context?.parameters?.ovr;
+  return (ovr as OvrStoryParameters | undefined) ?? null;
+};
 
 const waitForStorybookTargetRendered = ({
   targetId,

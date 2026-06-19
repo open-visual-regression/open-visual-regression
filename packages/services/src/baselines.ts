@@ -1,7 +1,9 @@
 import { dbClient } from "@ovr/db/client";
 
-export const getBaseline = (projectId: string, captureConfigurationId: string, targetId: string) =>
-  dbClient.baselines.find(projectId, captureConfigurationId, targetId);
+type Viewport = { browser: string; viewportWidth: number; viewportHeight: number };
+
+export const getBaseline = (projectId: string, viewport: Viewport, targetId: string) =>
+  dbClient.baselines.find({ projectId, ...viewport, targetId });
 
 export const promoteBaseline = async (diffId: string, approverId: string): Promise<void> => {
   const diff = await dbClient.diffs.findById(diffId);
@@ -30,7 +32,9 @@ export const promoteBaseline = async (diffId: string, approverId: string): Promi
 
   await dbClient.baselines.upsert({
     projectId: project.id,
-    captureConfigurationId: snapshot.captureConfigurationId,
+    browser: snapshot.browser,
+    viewportWidth: snapshot.viewportWidth,
+    viewportHeight: snapshot.viewportHeight,
     targetId: snapshot.targetId,
     snapshotId: snapshot.id,
     approvedBy: approverId,

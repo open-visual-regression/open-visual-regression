@@ -1,12 +1,22 @@
 import { baselines } from "../schema";
 import { db } from "../db";
 
-export const find = (projectId: string, captureConfigurationId: string, targetId: string) =>
+type FindInput = {
+  projectId: string;
+  browser: string;
+  viewportWidth: number;
+  viewportHeight: number;
+  targetId: string;
+};
+
+export const find = ({ projectId, browser, viewportWidth, viewportHeight, targetId }: FindInput) =>
   db.query.baselines.findFirst({
     where: (baselines, { and, eq }) =>
       and(
         eq(baselines.projectId, projectId),
-        eq(baselines.captureConfigurationId, captureConfigurationId),
+        eq(baselines.browser, browser),
+        eq(baselines.viewportWidth, viewportWidth),
+        eq(baselines.viewportHeight, viewportHeight),
         eq(baselines.targetId, targetId),
       ),
   });
@@ -16,7 +26,13 @@ export const upsert = async (values: typeof baselines.$inferInsert) => {
     .insert(baselines)
     .values(values)
     .onConflictDoUpdate({
-      target: [baselines.projectId, baselines.captureConfigurationId, baselines.targetId],
+      target: [
+        baselines.projectId,
+        baselines.browser,
+        baselines.viewportWidth,
+        baselines.viewportHeight,
+        baselines.targetId,
+      ],
       set: {
         snapshotId: values.snapshotId,
         approvedAt: values.approvedAt,

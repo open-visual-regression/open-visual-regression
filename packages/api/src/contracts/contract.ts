@@ -1,7 +1,6 @@
 import { contract as apiKeysContract } from "./apiKeys";
 import { contract as setupContract } from "./setup";
 import { contract as projectsContract } from "./projects";
-import { contract as captureConfigurationsContract } from "./captureConfigurations";
 import { contract as storageContract } from "./storage";
 import { contract as buildsContract } from "./builds";
 import { contract as accountContract } from "./account";
@@ -14,7 +13,6 @@ export const contract = {
   apiKeys: { ...apiKeysContract },
   setup: { ...setupContract },
   projects: { ...projectsContract },
-  captureConfigurations: { ...captureConfigurationsContract },
   storage: { ...storageContract },
   builds: { ...buildsContract },
   account: { ...accountContract },

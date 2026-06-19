@@ -6,6 +6,10 @@
     "ovr": "./dist/index.js"
   },
   "type": "module",
+  "exports": {
+    ".": "./dist/index.js",
+    "./config": "./dist/defineConfig.js"
+  },
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
@@ -19,6 +23,7 @@
     "@orpc/contract": "^1.14.4",
     "@ovr/api": "workspace:*",
     "commander": "^15.0.0",
+    "jiti": "^2.7.0",
     "ky": "^2.0.2",
     "tar": "^7.5.16"
   },

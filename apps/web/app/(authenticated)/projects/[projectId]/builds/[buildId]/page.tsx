@@ -17,7 +17,7 @@ export default async function BuildPage(props: BuildPageProps) {
     ? searchParams.filter
     : "all";
 
-  const [error, result] = await serverClient.builds.getOne({ buildId });
+  const [error, buildResult] = await serverClient.builds.getOne({ buildId });
 
   if (error?.code === "NOT_FOUND") {
     notFound();
@@ -27,7 +27,7 @@ export default async function BuildPage(props: BuildPageProps) {
     serverError();
   }
 
-  const snapshotCounts = result.snapshots.reduce<Record<SnapshotDisplayStatus, number>>(
+  const snapshotCounts = buildResult.snapshots.reduce<Record<SnapshotDisplayStatus, number>>(
     (counts, snapshot) => {
       counts[snapshot.status] += 1;
       return counts;
@@ -37,9 +37,9 @@ export default async function BuildPage(props: BuildPageProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <RunHeader build={result.build} snapshotCounts={snapshotCounts} />
+      <RunHeader build={buildResult.build} snapshotCounts={snapshotCounts} />
       <SnapshotGrid
-        snapshots={result.snapshots}
+        snapshots={buildResult.snapshots}
         projectId={projectId}
         buildId={buildId}
         filter={filter}

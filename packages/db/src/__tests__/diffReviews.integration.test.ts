@@ -5,9 +5,7 @@ describe("diffReviews", () => {
   describe("upsertVote", () => {
     test("should create a vote", async ({ build, captureConfiguration, user }) => {
       const [snapshot] = await dbClient.snapshots.createMany({
-        values: [
-          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
-        ],
+        values: [{ buildId: build.id, ...captureConfiguration, targetId: "a" }],
       });
       const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
 
@@ -26,9 +24,7 @@ describe("diffReviews", () => {
       user,
     }) => {
       const [snapshot] = await dbClient.snapshots.createMany({
-        values: [
-          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
-        ],
+        values: [{ buildId: build.id, ...captureConfiguration, targetId: "a" }],
       });
       const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
 
@@ -52,9 +48,7 @@ describe("diffReviews", () => {
   describe("removeVote", () => {
     test("should delete the reviewer's vote", async ({ build, captureConfiguration, user }) => {
       const [snapshot] = await dbClient.snapshots.createMany({
-        values: [
-          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
-        ],
+        values: [{ buildId: build.id, ...captureConfiguration, targetId: "a" }],
       });
       const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
       await dbClient.diffReviews.upsertVote({
@@ -77,8 +71,8 @@ describe("diffReviews", () => {
     }) => {
       const [snapshotA, snapshotB] = await dbClient.snapshots.createMany({
         values: [
-          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
-          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "b" },
+          { buildId: build.id, ...captureConfiguration, targetId: "a" },
+          { buildId: build.id, ...captureConfiguration, targetId: "b" },
         ],
       });
       const diffA = await dbClient.diffs.create({ snapshotId: snapshotA!.id });

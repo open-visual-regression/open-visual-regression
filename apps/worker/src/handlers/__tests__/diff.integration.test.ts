@@ -16,7 +16,7 @@ describe("diff", () => {
         values: [
           {
             buildId: build.id,
-            captureConfigurationId: captureConfiguration.id,
+            ...captureConfiguration,
             targetId: "story-a",
             status: "captured",
           },
@@ -52,13 +52,13 @@ describe("diff", () => {
         values: [
           {
             buildId: build.id,
-            captureConfigurationId: captureConfiguration.id,
+            ...captureConfiguration,
             targetId: "story-a",
             status: "captured",
           },
           {
             buildId: build.id,
-            captureConfigurationId: captureConfiguration.id,
+            ...captureConfiguration,
             targetId: "story-b",
             status: "captured",
           },

@@ -16,7 +16,7 @@ describe("capture", () => {
         values: [
           {
             buildId: build.id,
-            captureConfigurationId: captureConfiguration.id,
+            ...captureConfiguration,
             targetId: "story-a",
           },
         ],
@@ -48,12 +48,12 @@ describe("capture", () => {
         values: [
           {
             buildId: build.id,
-            captureConfigurationId: captureConfiguration.id,
+            ...captureConfiguration,
             targetId: "story-a",
           },
           {
             buildId: build.id,
-            captureConfigurationId: captureConfiguration.id,
+            ...captureConfiguration,
             targetId: "story-b",
           },
         ],
