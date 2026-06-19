@@ -62,32 +62,40 @@ const buildArtifactTarball = async (): Promise<Buffer> => {
 
 describe("extractBuild", () => {
   test("uploads each file from the artifact tarball to per-file storage and enqueues a capture job per snapshot", async ({
-    build,
+    mainBuild,
     captureConfiguration,
     connection,
   }) => {
     await dbClient.snapshots.createMany({
       values: [
-        { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "story-a" },
-        { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "story-b" },
+        {
+          buildId: mainBuild.id,
+          captureConfigurationId: captureConfiguration.id,
+          targetId: "story-a",
+        },
+        {
+          buildId: mainBuild.id,
+          captureConfigurationId: captureConfiguration.id,
+          targetId: "story-b",
+        },
       ],
     });
 
     const tarball = await buildArtifactTarball();
-    await storage.uploadFile(build.artifactPath, tarball, "application/gzip");
+    await storage.uploadFile(mainBuild.artifactPath, tarball, "application/gzip");
 
-    await extractBuild(build.id);
+    await extractBuild(mainBuild.id);
 
-    const iframeStream = await storage.getFileStream(getStaticPath(build.id, "iframe.html"));
-    const runtimeStream = await storage.getFileStream(getStaticPath(build.id, "runtime.js"));
+    const iframeStream = await storage.getFileStream(getStaticPath(mainBuild.id, "iframe.html"));
+    const runtimeStream = await storage.getFileStream(getStaticPath(mainBuild.id, "runtime.js"));
     expect(iframeStream).toBeDefined();
     expect(runtimeStream).toBeDefined();
 
-    const snapshots = await dbClient.snapshots.findByBuild(build.id);
+    const snapshots = await dbClient.snapshots.findByBuild(mainBuild.id);
     const jobs = await collectCaptureJobs(connection, snapshots.length);
     expect(jobs).toEqual(
       expect.arrayContaining(
-        snapshots.map((snapshot) => ({ buildId: build.id, snapshotId: snapshot.id })),
+        snapshots.map((snapshot) => ({ buildId: mainBuild.id, snapshotId: snapshot.id })),
       ),
     );
   });

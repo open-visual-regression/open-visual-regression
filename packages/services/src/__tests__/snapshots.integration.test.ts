@@ -63,15 +63,15 @@ const collectDiffJob = async (connection: Redis): Promise<DiffJobPayload> => {
 describe("snapshots", () => {
   describe("captureSnapshot", () => {
     test("should let a reviewer see a screenshot of the story, and move the build toward a diff once every story in the build has been captured", async ({
-      build,
+      mainBuild,
       captureConfiguration,
       connection,
     }) => {
-      await uploadStaticBuild(build.id);
+      await uploadStaticBuild(mainBuild.id);
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
           {
-            buildId: build.id,
+            buildId: mainBuild.id,
             captureConfigurationId: captureConfiguration.id,
             targetId: "story-a",
           },
@@ -83,7 +83,7 @@ describe("snapshots", () => {
       const captured = await dbClient.snapshots.findById(snapshot!.id);
       expect(captured).toMatchObject({ status: "captured", hasRenderError: false });
       expect(captured!.imagePath).toBe(
-        `${build.projectId}/builds/${build.id}/snapshots/${snapshot!.id}.png`,
+        `${mainBuild.projectId}/builds/${mainBuild.id}/snapshots/${snapshot!.id}.png`,
       );
 
       const imageStream = await storage.getFileStream(captured!.imagePath!);
@@ -94,11 +94,11 @@ describe("snapshots", () => {
     }, 30000);
 
     test("should still let a reviewer see the story, flagged as a render error, when the story fails to render", async ({
-      build,
+      mainBuild,
       captureConfiguration,
     }) => {
       await storage.uploadFile(
-        getStaticPath(build.id, "iframe.html"),
+        getStaticPath(mainBuild.id, "iframe.html"),
         Buffer.from(
           '<!doctype html><html><body><div id="storybook-root" hidden="true"></div></body></html>',
         ),
@@ -107,7 +107,7 @@ describe("snapshots", () => {
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
           {
-            buildId: build.id,
+            buildId: mainBuild.id,
             captureConfigurationId: captureConfiguration.id,
             targetId: "story-a",
           },
@@ -260,17 +260,17 @@ describe("snapshots", () => {
     }, 30000);
 
     test("promotes the baseline and skips review entirely for a main-branch build with no prior baseline", async ({
-      build,
+      mainBuild,
       project,
       captureConfiguration,
     }) => {
-      const capturePath = `builds/${build.id}/snapshots/main-no-baseline.png`;
+      const capturePath = `builds/${mainBuild.id}/snapshots/main-no-baseline.png`;
       await uploadPng(capturePath, 255);
 
       const [captureSnapshotRow] = await dbClient.snapshots.createMany({
         values: [
           {
-            buildId: build.id,
+            buildId: mainBuild.id,
             captureConfigurationId: captureConfiguration.id,
             targetId: "story-c",
             status: "captured",
@@ -296,26 +296,26 @@ describe("snapshots", () => {
     }, 30000);
 
     test("promotes the baseline and skips review for a main-branch build even when the diff is large", async ({
-      build,
+      mainBuild,
       project,
       captureConfiguration,
     }) => {
-      const baselinePath = `builds/${build.id}/snapshots/main-baseline.png`;
-      const capturePath = `builds/${build.id}/snapshots/main-capture.png`;
+      const baselinePath = `builds/${mainBuild.id}/snapshots/main-baseline.png`;
+      const capturePath = `builds/${mainBuild.id}/snapshots/main-capture.png`;
       await uploadPng(baselinePath, 0);
       await uploadPng(capturePath, 255);
 
       const [baselineSnapshot, captureSnapshotRow] = await dbClient.snapshots.createMany({
         values: [
           {
-            buildId: build.id,
+            buildId: mainBuild.id,
             captureConfigurationId: captureConfiguration.id,
             targetId: "story-d",
             status: "captured",
             imagePath: baselinePath,
           },
           {
-            buildId: build.id,
+            buildId: mainBuild.id,
             captureConfigurationId: captureConfiguration.id,
             targetId: "story-d",
             status: "captured",
@@ -328,7 +328,7 @@ describe("snapshots", () => {
         captureConfigurationId: captureConfiguration.id,
         targetId: "story-d",
         snapshotId: baselineSnapshot!.id,
-        approvedBy: build.createdBy,
+        approvedBy: mainBuild.createdBy,
       });
       const diff = await dbClient.diffs.create({ snapshotId: captureSnapshotRow!.id });
 
