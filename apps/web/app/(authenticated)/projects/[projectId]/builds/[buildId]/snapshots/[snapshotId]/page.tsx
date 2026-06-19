@@ -5,7 +5,7 @@ import { Typography } from "@ovr/ui/components/typography";
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
 
-type SnapshotPageProps = PageProps<"/projects/[projectId]/builds/[buildId]/snapshot/[snapshotId]">;
+type SnapshotPageProps = PageProps<"/projects/[projectId]/builds/[buildId]/snapshots/[snapshotId]">;
 
 export default async function DiffPage(props: SnapshotPageProps) {
   const { projectId, buildId, snapshotId } = await props.params;

@@ -23,7 +23,7 @@ describe("SnapshotCard", () => {
 
     expect(screen.getByRole("link")).toHaveAttribute(
       "href",
-      "/projects/project-1/builds/build-1/snapshot/snapshot-1",
+      "/projects/project-1/builds/build-1/snapshots/snapshot-1",
     );
   });
 });

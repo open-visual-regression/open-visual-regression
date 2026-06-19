@@ -49,7 +49,7 @@ export const SnapshotCard = ({ snapshot, projectId, buildId }: SnapshotCardProps
 
   return (
     <Link
-      href={`/projects/${projectId}/builds/${buildId}/snapshot/${snapshot.id}`}
+      href={`/projects/${projectId}/builds/${buildId}/snapshots/${snapshot.id}`}
       className={cn(
         cardClassName,
         "hover:border-ovr-border-strong focus-visible:border-ovr-accent focus-visible:ring-2 focus-visible:ring-ovr-accent/35 focus-visible:outline-none hover:scale-101 focus-visible:scale-101",
