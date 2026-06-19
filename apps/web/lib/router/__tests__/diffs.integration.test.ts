@@ -46,7 +46,7 @@ const createAwaitingDiff = async (
   const [snapshot] = await dbClient.snapshots.createMany({
     values: [{ buildId, captureConfigurationId, targetId }],
   });
-  return dbClient.diffs.create({ snapshotId: snapshot!.id, reviewStatus: "awaiting_review" });
+  return dbClient.diffs.create({ snapshotId: snapshot!.id, reviewStatus: "needs_review" });
 };
 
 describe("diffs", () => {
@@ -124,13 +124,13 @@ describe("diffs", () => {
 
       expect(error).toBeNull();
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
-        reviewStatus: "awaiting_review",
+        reviewStatus: "needs_review",
       });
     });
   });
 
   describe("bulkCastVote", () => {
-    test("casts the caller's vote across every awaiting_review diff, skipping terminal ones", async ({
+    test("casts the caller's vote across every needs_review diff, skipping terminal ones", async ({
       admin,
     }) => {
       const { build, captureConfiguration } = await createProjectAndBuild(admin, 1);

@@ -34,7 +34,7 @@ const recomputeReviewStatus = async (diffId: string): Promise<void> => {
     if (votes.filter((vote) => vote.vote === "approve").length >= project.requiredReviewerCount) {
       return "approved";
     }
-    return "awaiting_review";
+    return "needs_review";
   })();
 
   await dbClient.diffs.updateReviewStatus(diffId, reviewStatus);
@@ -88,7 +88,7 @@ export const bulkCastVote = async (
   const diffs = await dbClient.diffs.findByBuild(buildId);
 
   for (const diff of diffs) {
-    if (diff.reviewStatus === "awaiting_review") {
+    if (diff.reviewStatus === "needs_review") {
       await castVote(diff.id, reviewerId, vote);
     }
   }
