@@ -1,5 +1,5 @@
 CREATE TYPE "public"."diff_processing_status" AS ENUM('pending', 'diffed', 'error');--> statement-breakpoint
-CREATE TYPE "public"."diff_review_status" AS ENUM('not_required', 'awaiting_review', 'approved', 'rejected');--> statement-breakpoint
+CREATE TYPE "public"."diff_review_status" AS ENUM('not_required', 'needs_review', 'approved', 'rejected');--> statement-breakpoint
 CREATE TYPE "public"."diff_review_vote" AS ENUM('approve', 'reject');--> statement-breakpoint
 ALTER TYPE "public"."build_status" ADD VALUE 'rejected' BEFORE 'error';--> statement-breakpoint
 CREATE TABLE "diff_reviews" (

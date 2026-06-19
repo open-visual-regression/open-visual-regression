@@ -91,7 +91,7 @@ export const finalizeBuild = async (buildId: string): Promise<void> => {
     return;
   }
 
-  if (diffs.some((diff) => diff.reviewStatus === "awaiting_review")) {
+  if (diffs.some((diff) => diff.reviewStatus === "needs_review")) {
     await dbClient.builds.updateStatus(buildId, "needs_review");
     return;
   }
