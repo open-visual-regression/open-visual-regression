@@ -1,8 +1,9 @@
+import type { Page } from "playwright";
 import { chromium } from "playwright";
 
 import { detectCaptureStrategy, readOvrStoryParameters } from "./captureStrategies";
 import { startStaticProxy } from "./lib/staticProxy";
-import type { OvrStoryParameterViewport } from "./captureStrategies";
+import type { CaptureStrategy, OvrStoryParameterViewport } from "./captureStrategies";
 
 export type NamedViewport = {
   name?: string;
@@ -15,12 +16,50 @@ export type NamedViewport = {
 const PARAM_BOOT_TIMEOUT_MS = 3_000;
 const PARAM_RENDER_TIMEOUT_MS = 5_000;
 
+type OverrideEntry = [targetId: string, viewports: OvrStoryParameterViewport[]];
+
+const readOneStoryOverride = async (
+  page: Page,
+  strategy: CaptureStrategy,
+  targetId: string,
+): Promise<OverrideEntry | undefined> => {
+  try {
+    const renderResult = await page.evaluate(strategy.waitForTargetRendered, {
+      targetId,
+      timeoutMs: PARAM_RENDER_TIMEOUT_MS,
+    });
+
+    if (!renderResult.ok) {
+      return undefined;
+    }
+
+    const parameters = await page.evaluate(readOvrStoryParameters, targetId);
+    return parameters?.viewports ? [targetId, parameters.viewports] : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+const readStoryOverrides = async (
+  page: Page,
+  strategy: CaptureStrategy,
+  targetIds: readonly string[],
+): Promise<OverrideEntry[]> => {
+  if (targetIds.length === 0) {
+    return [];
+  }
+
+  const [targetId, ...rest] = targetIds;
+  const entry = await readOneStoryOverride(page, strategy, targetId!);
+  const remaining = await readStoryOverrides(page, strategy, rest);
+
+  return entry ? [entry, ...remaining] : remaining;
+};
+
 export const readStoryViewportOverrides = async (
   buildId: string,
   targetIds: string[],
-): Promise<Map<string, OvrStoryParameterViewport[] | undefined>> => {
-  const overrides = new Map<string, OvrStoryParameterViewport[] | undefined>();
-
+): Promise<Map<string, OvrStoryParameterViewport[]>> => {
   const proxy = await startStaticProxy(buildId);
   const browser = await chromium.launch();
 
@@ -42,34 +81,14 @@ export const readStoryViewportOverrides = async (
     try {
       await strategy.waitForBoot(page, PARAM_BOOT_TIMEOUT_MS);
     } catch {
-      return overrides;
+      return new Map();
     }
 
-    for (const targetId of targetIds) {
-      try {
-        const renderResult = await page.evaluate(strategy.waitForTargetRendered, {
-          targetId,
-          timeoutMs: PARAM_RENDER_TIMEOUT_MS,
-        });
-
-        if (!renderResult.ok) {
-          continue;
-        }
-
-        const parameters = await page.evaluate(readOvrStoryParameters, targetId);
-        if (parameters?.viewports) {
-          overrides.set(targetId, parameters.viewports);
-        }
-      } catch {
-        continue;
-      }
-    }
+    return new Map(await readStoryOverrides(page, strategy, targetIds));
   } finally {
     await browser.close();
     proxy.close();
   }
-
-  return overrides;
 };
 
 export const resolveTargetViewports = (

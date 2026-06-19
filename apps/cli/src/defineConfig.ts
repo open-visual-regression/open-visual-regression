@@ -29,11 +29,7 @@ export type OvrStoryParameters = {
 
 type ViewportName<V extends readonly Viewport[]> = Extract<V[number]["name"], string>;
 
-/**
- * Typed config builder. Pass `viewports` as an inline array literal (not a
- * pre-declared variable) so TypeScript can infer the exact set of names and
- * reject typos in `defaultViewports`.
- */
+/** `viewports` must be an inline array literal — assigning it to a variable first loses the name types `defaultViewports` is checked against. */
 export const defineConfig = <const V extends readonly Viewport[] = []>(config: {
   viewports?: V;
   defaultViewports?: ViewportName<V>[];
