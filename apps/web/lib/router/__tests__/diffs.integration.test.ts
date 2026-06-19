@@ -5,7 +5,7 @@ import { test, describe, expect } from "@/lib/testing/fixtures";
 import { serverClient } from "@/lib/router";
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
-import { captureConfigurations } from "@ovr/db/schema";
+import { captureConfigurations, organization, projects } from "@ovr/db/schema";
 import type { AddProjectInputSchema } from "@ovr/api/contracts/projects";
 import type { User } from "@/lib/auth/auth";
 
@@ -159,6 +159,86 @@ describe("diffs", () => {
       expect(await dbClient.diffs.findById(notRequiredDiff!.id)).toMatchObject({
         reviewStatus: "not_required",
       });
+    });
+  });
+
+  describe("getOne", () => {
+    test("should return UNAUTHORIZED when no session cookie is provided", async () => {
+      const [error] = await serverClient.diffs.getOne({ snapshotId: uuidv7() });
+      expect(error?.code).toBe("UNAUTHORIZED");
+    });
+
+    test("returns NOT_FOUND for a missing snapshot id", async ({ admin: _ }) => {
+      const [error] = await serverClient.diffs.getOne({ snapshotId: uuidv7() });
+      expect(error?.code).toBe("NOT_FOUND");
+    });
+
+    test("returns NOT_FOUND for a snapshot belonging to a different organization", async ({
+      admin,
+    }) => {
+      const [otherOrg] = await db
+        .insert(organization)
+        .values({
+          id: crypto.randomUUID(),
+          name: "Other Org",
+          slug: crypto.randomUUID(),
+          createdAt: new Date(),
+        })
+        .returning();
+
+      const [otherProject] = await db
+        .insert(projects)
+        .values({
+          name: "Other Org Project",
+          diffThreshold: 0.1,
+          gitMainBranch: "main",
+          organizationId: otherOrg!.id,
+          creatorId: admin.id,
+        })
+        .returning();
+
+      const [captureConfiguration] = await db
+        .insert(captureConfigurations)
+        .values({ projectId: otherProject!.id, name: "Default" })
+        .returning();
+
+      const otherBuild = await dbClient.builds.create({
+        projectId: otherProject!.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/other/artifact",
+        createdBy: admin.id,
+      });
+
+      const diff = await createAwaitingDiff(otherBuild!.id, captureConfiguration!.id, "story-a");
+
+      const [error] = await serverClient.diffs.getOne({ snapshotId: diff!.snapshotId });
+
+      expect(error?.code).toBe("NOT_FOUND");
+    });
+
+    test("returns the diff for a snapshot", async ({ admin }) => {
+      const { build, captureConfiguration } = await createProjectAndBuild(admin);
+      const diff = await createAwaitingDiff(build.id, captureConfiguration.id, "story-a");
+
+      const [error, result] = await serverClient.diffs.getOne({ snapshotId: diff!.snapshotId });
+
+      expect(error).toBeNull();
+      expect(result?.diff).toMatchObject({ id: diff!.id, reviewStatus: "needs_review" });
+    });
+
+    test("returns null when the snapshot has no diff yet", async ({ admin }) => {
+      const { build, captureConfiguration } = await createProjectAndBuild(admin);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
+        ],
+      });
+
+      const [error, result] = await serverClient.diffs.getOne({ snapshotId: snapshot!.id });
+
+      expect(error).toBeNull();
+      expect(result?.diff).toBeNull();
     });
   });
 

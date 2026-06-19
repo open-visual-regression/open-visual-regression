@@ -1,11 +1,12 @@
 "server only";
 
 import { ORPCError, os } from "@orpc/server";
+import { dbClient } from "@ovr/db/client";
 import { auth } from "../auth/auth";
 import { type Session, type User } from "../auth/auth";
 import { type RequestContext } from "./os";
 
-type AuthenticatedContext = RequestContext & {
+export type AuthenticatedContext = RequestContext & {
   session: Session;
   user: User;
   organizationId: string;
@@ -78,4 +79,31 @@ export const apiKeyMiddleware = os
     }
 
     return next({ context: { apiKey: result.key, projectId } });
+  });
+
+export const organizationSnapshotMiddleware = os
+  .$context<AuthenticatedContext>()
+  .middleware(async ({ context, next }, input: { snapshotId: string }) => {
+    const snapshot = await dbClient.snapshots.findById(input.snapshotId);
+
+    if (!snapshot) {
+      throw new ORPCError("NOT_FOUND");
+    }
+
+    const build = await dbClient.builds.findById(snapshot.buildId);
+
+    if (!build) {
+      throw new ORPCError("NOT_FOUND");
+    }
+
+    const project = await dbClient.projects.getProject({
+      projectId: build.projectId,
+      organizationId: context.organizationId,
+    });
+
+    if (!project) {
+      throw new ORPCError("NOT_FOUND");
+    }
+
+    return next({ context: { snapshot, build, project } });
   });

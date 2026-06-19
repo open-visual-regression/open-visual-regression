@@ -9,8 +9,7 @@ import {
 } from "@ovr/services/diffs";
 
 import { os } from "./os";
-import { authenticatedMiddleware } from "./middleware";
-import { getAuthorizedSnapshot } from "./snapshotAuthz";
+import { authenticatedMiddleware, organizationSnapshotMiddleware } from "./middleware";
 
 const throwOnError = (error: "DIFF_NOT_FOUND" | "REVIEW_NOT_REQUIRED"): never => {
   if (error === "DIFF_NOT_FOUND") {
@@ -50,10 +49,9 @@ export const bulkCastVote = os.diffs.bulkCastVote
 
 export const getOne = os.diffs.getOne
   .use(authenticatedMiddleware)
-  .handler(async ({ input, context }) => {
-    await getAuthorizedSnapshot(input.snapshotId, context.organizationId);
-
-    const diff = await dbClient.diffs.findBySnapshot(input.snapshotId);
+  .use(organizationSnapshotMiddleware)
+  .handler(async ({ context }) => {
+    const diff = await dbClient.diffs.findBySnapshot(context.snapshot.id);
 
     return {
       diff: diff

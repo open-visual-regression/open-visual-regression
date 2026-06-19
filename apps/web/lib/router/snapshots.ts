@@ -4,13 +4,13 @@ import { ORPCError } from "@orpc/client";
 import { dbClient } from "@ovr/db/client";
 
 import { os } from "./os";
-import { authenticatedMiddleware } from "./middleware";
-import { getAuthorizedSnapshot } from "./snapshotAuthz";
+import { authenticatedMiddleware, organizationSnapshotMiddleware } from "./middleware";
 
 export const getOne = os.snapshots.getOne
   .use(authenticatedMiddleware)
-  .handler(async ({ input, context }) => {
-    const { snapshot } = await getAuthorizedSnapshot(input.snapshotId, context.organizationId);
+  .use(organizationSnapshotMiddleware)
+  .handler(async ({ context }) => {
+    const { snapshot } = context;
 
     const [captureConfiguration, errorLogs] = await Promise.all([
       dbClient.captureConfigurations.findById(snapshot.captureConfigurationId),
