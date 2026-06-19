@@ -19,6 +19,7 @@ export const projects = pgTable("projects", {
   description: varchar({ length: 511 }),
   diffThreshold: numeric("diff_threshold", { mode: "number", precision: 3, scale: 2 }).notNull(),
   gitMainBranch: varchar("git_main_branch", { length: 255 }).notNull(),
+  requiredReviewerCount: integer("required_reviewer_count").notNull().default(1),
   organizationId: text("organization_id")
     .references(() => organization.id, { onDelete: "cascade" })
     .notNull(),

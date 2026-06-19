@@ -16,6 +16,7 @@ export const projectSchema = z.object({
   gitMainBranch: z.string().min(1).max(255),
   diffThreshold: z.number().min(0.01).max(1),
   retentionDays: z.number().int().min(1),
+  requiredReviewerCount: z.number().int().min(1),
   creator: projectCreatorSchema,
   createdAt: z.string().nonempty(),
 });
@@ -61,6 +62,7 @@ export const updateProjectInputSchema = z.object({
     gitMainBranch: z.string().min(1).max(255).optional(),
     diffThreshold: z.number().min(0.01).max(1).optional(),
     retentionDays: z.number().int().min(1).optional(),
+    requiredReviewerCount: z.number().int().min(1).optional(),
   }),
 });
 

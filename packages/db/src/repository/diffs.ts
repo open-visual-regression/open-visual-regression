@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 
 import { db, type DbClient } from "../db";
-import { diffs, snapshots, type DiffStatus } from "../schema";
+import { diffs, snapshots, type DiffProcessingStatus, type DiffReviewStatus } from "../schema";
 
 export const create = async (values: typeof diffs.$inferInsert) => {
   const [diff] = await db.insert(diffs).values(values).returning();
@@ -31,13 +31,21 @@ export const findByBuild = async (buildId: string) => {
   return rows.map((row) => row.diff);
 };
 
-export const updateStatus = async (id: string, status: DiffStatus) => {
-  const [diff] = await db.update(diffs).set({ status }).where(eq(diffs.id, id)).returning();
+export const updateProcessingStatus = async (
+  id: string,
+  processingStatus: DiffProcessingStatus,
+) => {
+  const [diff] = await db
+    .update(diffs)
+    .set({ processingStatus })
+    .where(eq(diffs.id, id))
+    .returning();
   return diff;
 };
 
 type UpdateResultInput = {
-  status: DiffStatus;
+  processingStatus: DiffProcessingStatus;
+  reviewStatus: DiffReviewStatus;
   diffImagePath?: string;
   pixelDiffCount?: number;
   diffPercent?: number;
@@ -48,25 +56,19 @@ export const updateResult = async (id: string, result: UpdateResultInput) => {
   return diff;
 };
 
-type UpdateReviewInput = {
-  reviewerId: string;
-  reviewedAt: string;
-  status: DiffStatus;
-};
-
-export const updateReview = async (id: string, review: UpdateReviewInput) => {
-  const [diff] = await db.update(diffs).set(review).where(eq(diffs.id, id)).returning();
+export const updateReviewStatus = async (id: string, reviewStatus: DiffReviewStatus) => {
+  const [diff] = await db.update(diffs).set({ reviewStatus }).where(eq(diffs.id, id)).returning();
   return diff;
 };
 
 export const hasAllDoneForBuild = async (buildId: string) => {
   const rows = await db
-    .select({ status: diffs.status })
+    .select({ processingStatus: diffs.processingStatus })
     .from(diffs)
     .innerJoin(snapshots, eq(diffs.snapshotId, snapshots.id))
     .where(eq(snapshots.buildId, buildId));
 
-  return rows.length > 0 && rows.every((row) => row.status !== "pending");
+  return rows.length > 0 && rows.every((row) => row.processingStatus !== "pending");
 };
 
 export type DiffDbSchema = Awaited<ReturnType<typeof findById>>;

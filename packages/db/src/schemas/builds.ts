@@ -20,6 +20,7 @@ export const buildStatusEnum = pgEnum("build_status", [
   "pending",
   "needs_review",
   "passed",
+  "rejected",
   "error",
 ]);
 
@@ -29,16 +30,26 @@ export const snapshotStatusEnum = pgEnum("snapshot_status", ["pending", "capture
 
 export type SnapshotStatus = (typeof snapshotStatusEnum.enumValues)[number];
 
-export const diffStatusEnum = pgEnum("diff_status", [
+export const diffProcessingStatusEnum = pgEnum("diff_processing_status", [
   "pending",
-  "auto_approved",
-  "needs_review",
-  "approved",
-  "rejected",
+  "diffed",
   "error",
 ]);
 
-export type DiffStatus = (typeof diffStatusEnum.enumValues)[number];
+export type DiffProcessingStatus = (typeof diffProcessingStatusEnum.enumValues)[number];
+
+export const diffReviewStatusEnum = pgEnum("diff_review_status", [
+  "not_required",
+  "awaiting_review",
+  "approved",
+  "rejected",
+]);
+
+export type DiffReviewStatus = (typeof diffReviewStatusEnum.enumValues)[number];
+
+export const diffReviewVoteEnum = pgEnum("diff_review_vote", ["approve", "reject"]);
+
+export type DiffReviewVote = (typeof diffReviewVoteEnum.enumValues)[number];
 
 export const captureModeEnum = pgEnum("capture_mode", ["worker", "pre_captured"]);
 
@@ -107,14 +118,33 @@ export const diffs = pgTable(
     baselineSnapshotId: uuid("baseline_snapshot_id").references(() => snapshots.id, {
       onDelete: "set null",
     }),
-    status: diffStatusEnum().notNull().default("pending"),
+    processingStatus: diffProcessingStatusEnum("processing_status").notNull().default("pending"),
+    reviewStatus: diffReviewStatusEnum("review_status").notNull().default("not_required"),
     diffImagePath: text("diff_image_path"),
     pixelDiffCount: integer("pixel_diff_count"),
     diffPercent: real("diff_percent"),
-    reviewerId: text("reviewer_id").references(() => user.id),
-    reviewedAt: utcTimestamp("reviewed_at"),
   },
   (table) => [index("diffs_snapshotId_idx").on(table.snapshotId)],
+);
+
+export const diffReviews = pgTable(
+  "diff_reviews",
+  {
+    id: uuid().primaryKey().$defaultFn(uuidv7),
+    diffId: uuid("diff_id")
+      .references(() => diffs.id, { onDelete: "cascade" })
+      .notNull(),
+    reviewerId: text("reviewer_id")
+      .references(() => user.id, { onDelete: "cascade" })
+      .notNull(),
+    vote: diffReviewVoteEnum().notNull(),
+    reviewedAt: utcTimestamp("reviewed_at")
+      .default(sql`now()`)
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("diff_reviews_diffId_reviewerId_uidx").on(table.diffId, table.reviewerId),
+  ],
 );
 
 export const baselines = pgTable(
