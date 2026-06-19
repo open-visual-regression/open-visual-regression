@@ -1,4 +1,5 @@
 import { vi } from "vitest";
+import { v7 as uuidv7 } from "uuid";
 
 import { test, describe, expect } from "@/lib/testing/fixtures";
 import { serverClient } from "@/lib/router";
@@ -53,7 +54,7 @@ describe("diffs", () => {
   describe("castVote", () => {
     test("should return UNAUTHORIZED when no session cookie is provided", async () => {
       const [error] = await serverClient.diffs.castVote({
-        diffId: crypto.randomUUID(),
+        diffId: uuidv7(),
         vote: "approve",
       });
       expect(error?.code).toBe("UNAUTHORIZED");
@@ -104,7 +105,7 @@ describe("diffs", () => {
 
     test("returns NOT_FOUND for a missing diff id", async ({ admin: _ }) => {
       const [error] = await serverClient.diffs.castVote({
-        diffId: crypto.randomUUID(),
+        diffId: uuidv7(),
         vote: "approve",
       });
 
