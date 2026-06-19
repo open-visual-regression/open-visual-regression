@@ -13,10 +13,34 @@ export const bulkCastVoteInputSchema = z.object({
   buildId: z.uuidv7(),
   vote: diffReviewVoteSchema,
 });
+
 export const bulkCastVoteContract = oc.input(bulkCastVoteInputSchema).output(z.void());
+
+export const diffProcessingStatusSchema = z.enum(["pending", "diffed", "error"]);
+export const diffReviewStatusSchema = z.enum([
+  "not_required",
+  "needs_review",
+  "approved",
+  "rejected",
+]);
+
+export const diffSchema = z.object({
+  id: z.uuidv7(),
+  processingStatus: diffProcessingStatusSchema,
+  reviewStatus: diffReviewStatusSchema,
+  diffImagePath: z.string().nullable(),
+  pixelDiffCount: z.number().int().nullable(),
+  diffPercent: z.number().nullable(),
+  baselineSnapshotId: z.uuidv7().nullable(),
+});
+
+export const getOneInputSchema = z.object({ snapshotId: z.uuidv7() });
+export const getOneOutputSchema = z.object({ diff: diffSchema.nullable() });
+export const getOneContract = oc.input(getOneInputSchema).output(getOneOutputSchema);
 
 export const contract = {
   castVote: castVoteContract,
   removeVote: removeVoteContract,
   bulkCastVote: bulkCastVoteContract,
+  getOne: getOneContract,
 } as const;

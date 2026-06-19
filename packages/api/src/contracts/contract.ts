@@ -8,6 +8,7 @@ import { contract as accountContract } from "./account";
 import { contract as usersContract } from "./users";
 import { contract as invitationsContract } from "./invitations";
 import { contract as diffsContract } from "./diffs";
+import { contract as snapshotsContract } from "./snapshots";
 
 export const contract = {
   apiKeys: { ...apiKeysContract },
@@ -20,4 +21,5 @@ export const contract = {
   users: { ...usersContract },
   invitations: { ...invitationsContract },
   diffs: { ...diffsContract },
+  snapshots: { ...snapshotsContract },
 } as const;

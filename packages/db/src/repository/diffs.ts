@@ -21,6 +21,9 @@ export const createMany = async ({ values, tx = db }: CreateManyInput) => {
 export const findById = (id: string) =>
   db.query.diffs.findFirst({ where: (diffs, { eq }) => eq(diffs.id, id) });
 
+export const findBySnapshot = (snapshotId: string) =>
+  db.query.diffs.findFirst({ where: (diffs, { eq }) => eq(diffs.snapshotId, snapshotId) });
+
 export const findByBuild = async (buildId: string) => {
   const rows = await db
     .select({ diff: diffs })
