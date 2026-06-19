@@ -17,13 +17,13 @@ describe("baselines", () => {
     test("should compare future stories against the one a reviewer most recently approved", async ({
       project,
       captureConfiguration,
-      build,
+      mainBuild,
       user,
     }) => {
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
           {
-            buildId: build.id,
+            buildId: mainBuild.id,
             captureConfigurationId: captureConfiguration.id,
             targetId: "story-a",
           },
@@ -47,13 +47,13 @@ describe("baselines", () => {
     test("should let a reviewer's approval set the new baseline when the build is on the project's default branch", async ({
       project,
       captureConfiguration,
-      build,
+      mainBuild,
       user,
     }) => {
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
           {
-            buildId: build.id,
+            buildId: mainBuild.id,
             captureConfigurationId: captureConfiguration.id,
             targetId: "story-a",
           },

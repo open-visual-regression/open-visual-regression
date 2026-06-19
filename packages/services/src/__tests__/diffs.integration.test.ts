@@ -20,13 +20,13 @@ const createUser = async () => {
 describe("diffs", () => {
   describe("castVote", () => {
     test("approves a diff once requiredReviewerCount distinct approvals are cast", async ({
-      build,
+      mainBuild,
       captureConfiguration,
       user,
     }) => {
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
-          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
+          { buildId: mainBuild.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
         ],
       });
       const diff = await dbClient.diffs.create({
@@ -42,7 +42,7 @@ describe("diffs", () => {
 
     test("stays needs_review until enough distinct reviewers approve", async ({
       project,
-      build,
+      mainBuild,
       captureConfiguration,
       user,
     }) => {
@@ -50,7 +50,7 @@ describe("diffs", () => {
 
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
-          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
+          { buildId: mainBuild.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
         ],
       });
       const diff = await dbClient.diffs.create({
@@ -70,13 +70,13 @@ describe("diffs", () => {
     });
 
     test("a single reject vetoes regardless of existing approvals", async ({
-      build,
+      mainBuild,
       captureConfiguration,
       user,
     }) => {
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
-          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
+          { buildId: mainBuild.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
         ],
       });
       const diff = await dbClient.diffs.create({
@@ -98,13 +98,13 @@ describe("diffs", () => {
     });
 
     test("the same reviewer voting again replaces their previous vote", async ({
-      build,
+      mainBuild,
       captureConfiguration,
       user,
     }) => {
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
-          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
+          { buildId: mainBuild.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
         ],
       });
       const diff = await dbClient.diffs.create({
@@ -120,13 +120,13 @@ describe("diffs", () => {
     });
 
     test("returns REVIEW_NOT_REQUIRED for a diff that doesn't need review", async ({
-      build,
+      mainBuild,
       captureConfiguration,
       user,
     }) => {
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
-          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
+          { buildId: mainBuild.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
         ],
       });
       const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
@@ -143,13 +143,13 @@ describe("diffs", () => {
     });
 
     test("finalizes the build once the last needs_review diff is approved", async ({
-      build,
+      mainBuild,
       captureConfiguration,
       user,
     }) => {
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
-          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
+          { buildId: mainBuild.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
         ],
       });
       const diff = await dbClient.diffs.create({
@@ -160,19 +160,19 @@ describe("diffs", () => {
 
       await castVote(diff!.id, user.id, "approve");
 
-      expect((await dbClient.builds.findById(build.id))?.status).toBe("passed");
+      expect((await dbClient.builds.findById(mainBuild.id))?.status).toBe("passed");
     });
   });
 
   describe("removeVote", () => {
     test("reverts to needs_review once the only reject is removed", async ({
-      build,
+      mainBuild,
       captureConfiguration,
       user,
     }) => {
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
-          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
+          { buildId: mainBuild.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
         ],
       });
       const diff = await dbClient.diffs.create({
@@ -193,7 +193,7 @@ describe("diffs", () => {
 
     test("reverts to approved when enough other approvals already exist", async ({
       project,
-      build,
+      mainBuild,
       captureConfiguration,
       user,
     }) => {
@@ -201,7 +201,7 @@ describe("diffs", () => {
 
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
-          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
+          { buildId: mainBuild.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
         ],
       });
       const diff = await dbClient.diffs.create({
@@ -226,15 +226,15 @@ describe("diffs", () => {
 
   describe("bulkCastVote", () => {
     test("casts the vote across every needs_review diff, leaving terminal diffs untouched", async ({
-      build,
+      mainBuild,
       captureConfiguration,
       user,
     }) => {
       const [snapshotA, snapshotB, snapshotC] = await dbClient.snapshots.createMany({
         values: [
-          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
-          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "b" },
-          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "c" },
+          { buildId: mainBuild.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
+          { buildId: mainBuild.id, captureConfigurationId: captureConfiguration.id, targetId: "b" },
+          { buildId: mainBuild.id, captureConfigurationId: captureConfiguration.id, targetId: "c" },
         ],
       });
       const awaitingDiff = await dbClient.diffs.create({
@@ -250,7 +250,7 @@ describe("diffs", () => {
         reviewStatus: "not_required",
       });
 
-      await bulkCastVote(build.id, user.id, "approve");
+      await bulkCastVote(mainBuild.id, user.id, "approve");
 
       expect(await dbClient.diffs.findById(awaitingDiff!.id)).toMatchObject({
         reviewStatus: "approved",
