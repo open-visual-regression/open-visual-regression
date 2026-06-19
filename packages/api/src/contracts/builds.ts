@@ -1,7 +1,7 @@
 import { oc } from "@orpc/contract";
 import { z } from "zod";
 
-export const buildStatusSchema = z.enum(["pending", "needs_review", "passed", "error"]);
+export const buildStatusSchema = z.enum(["pending", "needs_review", "passed", "rejected", "error"]);
 
 export type BuildStatus = z.infer<typeof buildStatusSchema>;
 
