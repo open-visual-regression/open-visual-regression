@@ -34,6 +34,10 @@ const updateProjectSchema = z.object({
     .number()
     .int("retention days must be a whole number")
     .min(1, "retention days must be at least 1"),
+  requiredReviewerCount: z
+    .number()
+    .int("required reviewer count must be a whole number")
+    .min(1, "required reviewer count must be at least 1"),
 });
 
 type UpdateProjectFormValues = z.infer<typeof updateProjectSchema>;
@@ -41,7 +45,13 @@ type UpdateProjectFormValues = z.infer<typeof updateProjectSchema>;
 type UpdateProjectFormProps = {
   project: Pick<
     ProjectDto,
-    "id" | "name" | "description" | "gitMainBranch" | "diffThreshold" | "retentionDays"
+    | "id"
+    | "name"
+    | "description"
+    | "gitMainBranch"
+    | "diffThreshold"
+    | "retentionDays"
+    | "requiredReviewerCount"
   >;
 };
 
@@ -59,6 +69,7 @@ export const UpdateProjectForm = ({ project }: UpdateProjectFormProps) => {
       gitMainBranch: project.gitMainBranch,
       diffThreshold: project.diffThreshold,
       retentionDays: project.retentionDays,
+      requiredReviewerCount: project.requiredReviewerCount,
     },
   });
 
@@ -146,6 +157,20 @@ export const UpdateProjectForm = ({ project }: UpdateProjectFormProps) => {
                     {...register("retentionDays", { valueAsNumber: true })}
                   />
                   <FieldError errors={[errors.retentionDays]} />
+                </Field>
+              </FieldGroup>
+              <FieldGroup>
+                <Field data-invalid={!!errors.requiredReviewerCount}>
+                  <FieldLabel htmlFor="requiredReviewerCount">required reviewers</FieldLabel>
+                  <Input
+                    id="requiredReviewerCount"
+                    type="number"
+                    step="1"
+                    placeholder="1"
+                    aria-invalid={!!errors.requiredReviewerCount}
+                    {...register("requiredReviewerCount", { valueAsNumber: true })}
+                  />
+                  <FieldError errors={[errors.requiredReviewerCount]} />
                 </Field>
               </FieldGroup>
             </div>
