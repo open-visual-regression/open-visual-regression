@@ -262,5 +262,62 @@ describe("diffs", () => {
         reviewStatus: "not_required",
       });
     });
+
+    test("finalizes the build once every needs_review diff is approved", async ({
+      mainBuild,
+      captureConfiguration,
+      user,
+    }) => {
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: mainBuild.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
+        ],
+      });
+      await dbClient.diffs.create({ snapshotId: snapshot!.id, reviewStatus: "needs_review" });
+
+      await bulkCastVote(mainBuild.id, user.id, "approve");
+
+      expect((await dbClient.builds.findById(mainBuild.id))?.status).toBe("passed");
+    });
+
+    test("leaves a diff at needs_review when it still needs more distinct approvals than the bulk vote provides", async ({
+      project,
+      mainBuild,
+      captureConfiguration,
+      user,
+    }) => {
+      await dbClient.projects.updateProject(project.id, { requiredReviewerCount: 2 });
+
+      const [snapshotA, snapshotB] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: mainBuild.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
+          { buildId: mainBuild.id, captureConfigurationId: captureConfiguration.id, targetId: "b" },
+        ],
+      });
+      const alreadyApprovedOnceDiff = await dbClient.diffs.create({
+        snapshotId: snapshotA!.id,
+        reviewStatus: "needs_review",
+      });
+      const noVotesYetDiff = await dbClient.diffs.create({
+        snapshotId: snapshotB!.id,
+        reviewStatus: "needs_review",
+      });
+
+      const otherReviewer = await createUser();
+      await dbClient.diffReviews.upsertVote({
+        diffId: alreadyApprovedOnceDiff!.id,
+        reviewerId: otherReviewer.id,
+        vote: "approve",
+      });
+
+      await bulkCastVote(mainBuild.id, user.id, "approve");
+
+      expect(await dbClient.diffs.findById(alreadyApprovedOnceDiff!.id)).toMatchObject({
+        reviewStatus: "approved",
+      });
+      expect(await dbClient.diffs.findById(noVotesYetDiff!.id)).toMatchObject({
+        reviewStatus: "needs_review",
+      });
+    });
   });
 });

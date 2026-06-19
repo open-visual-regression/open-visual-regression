@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { onError, onSuccess } from "@orpc/client";
 import { useServerAction } from "@orpc/react/hooks";
@@ -8,18 +7,7 @@ import { Button } from "@ovr/ui/components/button";
 import { SegmentedProgress } from "@ovr/ui/components/segmented-progress";
 import { Typography } from "@ovr/ui/components/typography";
 import { Icon, GitBranchIcon, GitCommitHorizontalIcon, UserIcon } from "@ovr/ui/components/icon";
-import { FieldError } from "@ovr/ui/components/field";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@ovr/ui/components/alert-dialog";
+import { toast } from "@ovr/ui/components/toast";
 import { type BuildSchema, type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
 import { formatRelativeDateTime } from "@/lib/utils/date";
 import { BuildStatusBadge } from "@/lib/components/BuildStatus";
@@ -37,21 +25,24 @@ export const RunHeader = ({ build, snapshotCounts }: RunHeaderProps) => {
 
   const { execute: approveAll, status: approveStatus } = useServerAction(
     serverClient.diffs.bulkCastVote,
-    { interceptors: [onSuccess(() => router.refresh())] },
+    {
+      interceptors: [
+        onSuccess(() => router.refresh()),
+        onError((err) => {
+          toast.error(err.message);
+        }),
+      ],
+    },
   );
-
-  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
-  const [rejectError, setRejectError] = useState<{ message: string } | null>(null);
 
   const { execute: rejectAll, status: rejectStatus } = useServerAction(
     serverClient.diffs.bulkCastVote,
     {
       interceptors: [
-        onSuccess(() => {
-          setRejectDialogOpen(false);
-          router.refresh();
+        onSuccess(() => router.refresh()),
+        onError((err) => {
+          toast.error(err.message);
         }),
-        onError((err) => setRejectError({ message: err.message })),
       ],
     },
   );
@@ -88,38 +79,13 @@ export const RunHeader = ({ build, snapshotCounts }: RunHeaderProps) => {
           </div>
         </div>
         <div className="flex flex-row gap-2">
-          <AlertDialog
-            open={rejectDialogOpen}
-            onOpenChange={(open) => {
-              if (open) setRejectError(null);
-              setRejectDialogOpen(open);
-            }}
+          <Button
+            variant="secondary"
+            disabled={!hasChanged || isRejecting}
+            onClick={() => rejectAll({ buildId: build.id, vote: "reject" })}
           >
-            <AlertDialogTrigger
-              render={<Button variant="secondary" disabled={!hasChanged || isRejecting} />}
-            >
-              reject all
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>reject all changed snapshots?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  this overrides any existing approvals.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <FieldError errors={[rejectError]} />
-              <AlertDialogFooter>
-                <AlertDialogCancel>cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  variant="destructive"
-                  disabled={isRejecting}
-                  onClick={() => rejectAll({ buildId: build.id, vote: "reject" })}
-                >
-                  {isRejecting ? "rejecting..." : "reject all"}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+            {isRejecting ? "rejecting..." : "reject all"}
+          </Button>
           <Button
             disabled={!hasChanged || isApproving}
             onClick={() => approveAll({ buildId: build.id, vote: "approve" })}

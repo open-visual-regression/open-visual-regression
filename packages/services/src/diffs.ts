@@ -1,8 +1,22 @@
 import { dbClient } from "@ovr/db/client";
-import type { DiffReviewVote } from "@ovr/db/schema";
+import type { DiffReviewStatus, DiffReviewVote } from "@ovr/db/schema";
+import type { DiffReviewDbSchema } from "@ovr/db/repository/diffReviews";
 
 import { finalizeBuild } from "./builds";
 import type { Result } from "./types";
+
+const computeReviewStatus = (
+  votes: DiffReviewDbSchema[],
+  requiredReviewerCount: number,
+): DiffReviewStatus => {
+  if (votes.some((vote) => vote.vote === "reject")) {
+    return "rejected";
+  }
+  if (votes.filter((vote) => vote.vote === "approve").length >= requiredReviewerCount) {
+    return "approved";
+  }
+  return "needs_review";
+};
 
 const recomputeReviewStatus = async (diffId: string): Promise<void> => {
   const diff = await dbClient.diffs.findById(diffId);
@@ -26,16 +40,7 @@ const recomputeReviewStatus = async (diffId: string): Promise<void> => {
   }
 
   const votes = await dbClient.diffReviews.findByDiff(diffId);
-
-  const reviewStatus = (() => {
-    if (votes.some((vote) => vote.vote === "reject")) {
-      return "rejected";
-    }
-    if (votes.filter((vote) => vote.vote === "approve").length >= project.requiredReviewerCount) {
-      return "approved";
-    }
-    return "needs_review";
-  })();
+  const reviewStatus = computeReviewStatus(votes, project.requiredReviewerCount);
 
   await dbClient.diffs.updateReviewStatus(diffId, reviewStatus);
   await finalizeBuild(build.id);
@@ -86,10 +91,39 @@ export const bulkCastVote = async (
   vote: DiffReviewVote,
 ): Promise<void> => {
   const diffs = await dbClient.diffs.findByBuild(buildId);
+  const targetIds = diffs
+    .filter((diff) => diff.reviewStatus === "needs_review")
+    .map((diff) => diff.id);
 
-  for (const diff of diffs) {
-    if (diff.reviewStatus === "needs_review") {
-      await castVote(diff.id, reviewerId, vote);
-    }
+  if (targetIds.length === 0) {
+    return;
   }
+
+  const build = await dbClient.builds.findById(buildId);
+  if (!build) {
+    throw new Error(`Build not found: ${buildId}`);
+  }
+
+  const project = await dbClient.projects.findById(build.projectId);
+  if (!project) {
+    throw new Error(`Project not found for build: ${buildId}`);
+  }
+
+  await dbClient.diffReviews.upsertVotes(targetIds.map((diffId) => ({ diffId, reviewerId, vote })));
+  const votes = await dbClient.diffReviews.findByDiffs(targetIds);
+
+  const idsByStatus = new Map<DiffReviewStatus, string[]>();
+  for (const diffId of targetIds) {
+    const diffVotes = votes.filter((diffReview) => diffReview.diffId === diffId);
+    const reviewStatus = computeReviewStatus(diffVotes, project.requiredReviewerCount);
+    idsByStatus.set(reviewStatus, [...(idsByStatus.get(reviewStatus) ?? []), diffId]);
+  }
+
+  await Promise.all(
+    [...idsByStatus.entries()].map(([reviewStatus, ids]) =>
+      dbClient.diffs.updateReviewStatusMany(ids, reviewStatus),
+    ),
+  );
+
+  await finalizeBuild(buildId);
 };
