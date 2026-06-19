@@ -1,10 +1,29 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { onError, onSuccess } from "@orpc/client";
+import { useServerAction } from "@orpc/react/hooks";
 import { Button } from "@ovr/ui/components/button";
 import { SegmentedProgress } from "@ovr/ui/components/segmented-progress";
 import { Typography } from "@ovr/ui/components/typography";
 import { Icon, GitBranchIcon, GitCommitHorizontalIcon, UserIcon } from "@ovr/ui/components/icon";
+import { FieldError } from "@ovr/ui/components/field";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@ovr/ui/components/alert-dialog";
 import { type BuildSchema, type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
 import { formatRelativeDateTime } from "@/lib/utils/date";
 import { BuildStatusBadge } from "@/lib/components/BuildStatus";
+import { serverClient } from "@/lib/router";
 
 type RunHeaderProps = {
   build: BuildSchema;
@@ -12,7 +31,33 @@ type RunHeaderProps = {
 };
 
 export const RunHeader = ({ build, snapshotCounts }: RunHeaderProps) => {
+  const router = useRouter();
   const total = Object.values(snapshotCounts).reduce((sum, count) => sum + count, 0);
+  const hasChanged = snapshotCounts.changed > 0;
+
+  const { execute: approveAll, status: approveStatus } = useServerAction(
+    serverClient.diffs.bulkCastVote,
+    { interceptors: [onSuccess(() => router.refresh())] },
+  );
+
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectError, setRejectError] = useState<{ message: string } | null>(null);
+
+  const { execute: rejectAll, status: rejectStatus } = useServerAction(
+    serverClient.diffs.bulkCastVote,
+    {
+      interceptors: [
+        onSuccess(() => {
+          setRejectDialogOpen(false);
+          router.refresh();
+        }),
+        onError((err) => setRejectError({ message: err.message })),
+      ],
+    },
+  );
+
+  const isApproving = approveStatus === "pending";
+  const isRejecting = rejectStatus === "pending";
 
   return (
     <div className="flex flex-col gap-6">
@@ -43,10 +88,44 @@ export const RunHeader = ({ build, snapshotCounts }: RunHeaderProps) => {
           </div>
         </div>
         <div className="flex flex-row gap-2">
-          <Button variant="secondary" disabled>
-            reject all
+          <AlertDialog
+            open={rejectDialogOpen}
+            onOpenChange={(open) => {
+              if (open) setRejectError(null);
+              setRejectDialogOpen(open);
+            }}
+          >
+            <AlertDialogTrigger
+              render={<Button variant="secondary" disabled={!hasChanged || isRejecting} />}
+            >
+              reject all
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>reject all changed snapshots?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  this overrides any existing approvals.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <FieldError errors={[rejectError]} />
+              <AlertDialogFooter>
+                <AlertDialogCancel>cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  variant="destructive"
+                  disabled={isRejecting}
+                  onClick={() => rejectAll({ buildId: build.id, vote: "reject" })}
+                >
+                  {isRejecting ? "rejecting..." : "reject all"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+          <Button
+            disabled={!hasChanged || isApproving}
+            onClick={() => approveAll({ buildId: build.id, vote: "approve" })}
+          >
+            {isApproving ? "approving..." : "approve all"}
           </Button>
-          <Button disabled>approve all</Button>
         </div>
       </div>
       <SegmentedProgress
