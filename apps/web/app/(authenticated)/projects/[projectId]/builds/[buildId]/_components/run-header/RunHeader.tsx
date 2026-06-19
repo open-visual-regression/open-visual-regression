@@ -13,7 +13,7 @@ import { formatRelativeDateTime } from "@/lib/utils/date";
 import { BuildStatusBadge } from "@/lib/components/BuildStatus";
 import { serverClient } from "@/lib/router";
 
-type RunHeaderProps = {
+export type RunHeaderProps = {
   build: BuildSchema;
   snapshotCounts: Record<SnapshotDisplayStatus, number>;
 };
