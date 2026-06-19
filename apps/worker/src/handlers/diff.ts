@@ -9,7 +9,7 @@ export const run = async (job: DiffJob): Promise<void> => {
 };
 
 export const failed = async (job: DiffJob): Promise<void> => {
-  await dbClient.diffs.updateStatus(job.data.diffId, "error");
+  await dbClient.diffs.updateProcessingStatus(job.data.diffId, "error");
 
   const diff = await dbClient.diffs.findById(job.data.diffId);
   if (!diff) {

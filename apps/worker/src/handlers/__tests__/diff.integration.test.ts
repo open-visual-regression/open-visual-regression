@@ -26,7 +26,7 @@ describe("diff", () => {
 
       await failed({ data: { snapshotId: snapshot!.id, diffId: diff!.id } });
 
-      expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({ status: "error" });
+      expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({ processingStatus: "error" });
 
       const worker = new Worker<FinalizeJobPayload>(
         QueueName.BUILD_FINALIZE,
@@ -72,7 +72,7 @@ describe("diff", () => {
       });
 
       const diffs = await dbClient.diffs.findByBuild(build.id);
-      expect(diffs.every((diff) => diff.status !== "pending")).toBe(false);
+      expect(diffs.every((diff) => diff.processingStatus !== "pending")).toBe(false);
     });
   });
 });

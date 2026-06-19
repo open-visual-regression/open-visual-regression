@@ -4,7 +4,7 @@ import { Worker } from "bullmq";
 import type { Redis } from "ioredis";
 
 import { dbClient } from "@ovr/db/client";
-import type { DiffStatus } from "@ovr/db/schema";
+import type { DiffProcessingStatus, DiffReviewStatus } from "@ovr/db/schema";
 import { QueueName, type ExtractJobPayload } from "@ovr/queue";
 
 import { createBuild, finalizeBuild, getArtifactPath } from "../builds";
@@ -25,10 +25,12 @@ const collectExtractJob = async (connection: Redis): Promise<ExtractJobPayload> 
   }
 };
 
+type SeedDiffStatus = { processingStatus: DiffProcessingStatus; reviewStatus: DiffReviewStatus };
+
 const seedDiffs = async (
   buildId: string,
   captureConfigurationId: string,
-  statuses: DiffStatus[],
+  statuses: SeedDiffStatus[],
 ) => {
   for (const status of statuses) {
     const [snapshot] = await dbClient.snapshots.createMany({
@@ -36,7 +38,7 @@ const seedDiffs = async (
         { buildId, captureConfigurationId, targetId: crypto.randomUUID(), status: "captured" },
       ],
     });
-    await dbClient.diffs.create({ snapshotId: snapshot!.id, status });
+    await dbClient.diffs.create({ snapshotId: snapshot!.id, ...status });
   }
 };
 
@@ -103,42 +105,79 @@ describe("builds", () => {
 
   describe("finalizeBuild", () => {
     test("marks the build as error when any diff errored", async ({
-      build,
+      mainBuild,
       captureConfiguration,
     }) => {
-      await seedDiffs(build.id, captureConfiguration.id, ["auto_approved", "error"]);
+      await seedDiffs(mainBuild.id, captureConfiguration.id, [
+        { processingStatus: "diffed", reviewStatus: "not_required" },
+        { processingStatus: "error", reviewStatus: "not_required" },
+      ]);
 
-      await finalizeBuild(build.id);
+      await finalizeBuild(mainBuild.id);
 
-      expect((await dbClient.builds.findById(build.id))?.status).toBe("error");
+      expect((await dbClient.builds.findById(mainBuild.id))?.status).toBe("error");
     });
 
     test("marks the build as needs_review when any diff needs review", async ({
-      build,
+      mainBuild,
       captureConfiguration,
     }) => {
-      await seedDiffs(build.id, captureConfiguration.id, ["auto_approved", "needs_review"]);
+      await seedDiffs(mainBuild.id, captureConfiguration.id, [
+        { processingStatus: "diffed", reviewStatus: "not_required" },
+        { processingStatus: "diffed", reviewStatus: "needs_review" },
+      ]);
 
-      await finalizeBuild(build.id);
+      await finalizeBuild(mainBuild.id);
 
-      expect((await dbClient.builds.findById(build.id))?.status).toBe("needs_review");
+      expect((await dbClient.builds.findById(mainBuild.id))?.status).toBe("needs_review");
     });
 
-    test("marks the build as passed when all diffs are auto_approved or approved", async ({
-      build,
+    test("marks the build as rejected when any diff is rejected, even if others need review", async ({
+      mainBuild,
       captureConfiguration,
     }) => {
-      await seedDiffs(build.id, captureConfiguration.id, ["auto_approved", "approved"]);
+      await seedDiffs(mainBuild.id, captureConfiguration.id, [
+        { processingStatus: "diffed", reviewStatus: "needs_review" },
+        { processingStatus: "diffed", reviewStatus: "rejected" },
+      ]);
 
-      await finalizeBuild(build.id);
+      await finalizeBuild(mainBuild.id);
 
-      expect((await dbClient.builds.findById(build.id))?.status).toBe("passed");
+      expect((await dbClient.builds.findById(mainBuild.id))?.status).toBe("rejected");
     });
 
-    test("marks the build as passed when there are no diffs", async ({ build }) => {
-      await finalizeBuild(build.id);
+    test("marks the build as rejected ahead of needs_review when both are present", async ({
+      mainBuild,
+      captureConfiguration,
+    }) => {
+      await seedDiffs(mainBuild.id, captureConfiguration.id, [
+        { processingStatus: "diffed", reviewStatus: "rejected" },
+        { processingStatus: "diffed", reviewStatus: "needs_review" },
+      ]);
 
-      expect((await dbClient.builds.findById(build.id))?.status).toBe("passed");
+      await finalizeBuild(mainBuild.id);
+
+      expect((await dbClient.builds.findById(mainBuild.id))?.status).toBe("rejected");
+    });
+
+    test("marks the build as passed when all diffs are not_required or approved", async ({
+      mainBuild,
+      captureConfiguration,
+    }) => {
+      await seedDiffs(mainBuild.id, captureConfiguration.id, [
+        { processingStatus: "diffed", reviewStatus: "not_required" },
+        { processingStatus: "diffed", reviewStatus: "approved" },
+      ]);
+
+      await finalizeBuild(mainBuild.id);
+
+      expect((await dbClient.builds.findById(mainBuild.id))?.status).toBe("passed");
+    });
+
+    test("marks the build as passed when there are no diffs", async ({ mainBuild }) => {
+      await finalizeBuild(mainBuild.id);
+
+      expect((await dbClient.builds.findById(mainBuild.id))?.status).toBe("passed");
     });
   });
 });

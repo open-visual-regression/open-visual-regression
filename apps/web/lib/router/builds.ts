@@ -21,16 +21,16 @@ const getSnapshotDisplayStatus = (
     return "fail";
   }
 
-  if (snapshot.status === "pending" || !diff || diff.status === "pending") {
+  if (snapshot.status === "pending" || !diff || diff.processingStatus === "pending") {
     return "pending";
   }
 
-  if (diff.status === "needs_review" || diff.status === "rejected") {
-    return "changed";
+  if (diff.processingStatus === "error") {
+    return "fail";
   }
 
-  if (diff.status === "error") {
-    return "fail";
+  if (diff.reviewStatus === "needs_review" || diff.reviewStatus === "rejected") {
+    return "changed";
   }
 
   return "pass";

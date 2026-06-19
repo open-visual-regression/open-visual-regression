@@ -3,7 +3,10 @@ import { describe, expect, test } from "./fixtures";
 
 describe("diffs", () => {
   describe("create", () => {
-    test("should create a diff with pending status", async ({ build, captureConfiguration }) => {
+    test("should create a diff with pending/not_required defaults", async ({
+      build,
+      captureConfiguration,
+    }) => {
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
           { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
@@ -11,7 +14,8 @@ describe("diffs", () => {
       });
 
       const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
-      expect(diff?.status).toBe("pending");
+      expect(diff?.processingStatus).toBe("pending");
+      expect(diff?.reviewStatus).toBe("not_required");
     });
   });
 
@@ -49,8 +53,8 @@ describe("diffs", () => {
     });
   });
 
-  describe("updateStatus", () => {
-    test("should update the diff's status", async ({ build, captureConfiguration }) => {
+  describe("updateProcessingStatus", () => {
+    test("should update the diff's processing status", async ({ build, captureConfiguration }) => {
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
           { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
@@ -58,17 +62,41 @@ describe("diffs", () => {
       });
       const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
 
-      const updated = await dbClient.diffs.updateStatus(diff!.id, "auto_approved");
-      expect(updated?.status).toBe("auto_approved");
+      const updated = await dbClient.diffs.updateProcessingStatus(diff!.id, "diffed");
+      expect(updated?.processingStatus).toBe("diffed");
     });
   });
 
-  describe("updateReview", () => {
-    test("should update the diff's reviewer, status, and reviewedAt", async ({
+  describe("updateResult", () => {
+    test("should update the diff's processing/review status and pixel diff fields", async ({
       build,
       captureConfiguration,
-      user,
     }) => {
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
+        ],
+      });
+      const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
+
+      const updated = await dbClient.diffs.updateResult(diff!.id, {
+        processingStatus: "diffed",
+        reviewStatus: "needs_review",
+        pixelDiffCount: 12,
+        diffPercent: 0.5,
+      });
+
+      expect(updated).toMatchObject({
+        processingStatus: "diffed",
+        reviewStatus: "needs_review",
+        pixelDiffCount: 12,
+        diffPercent: 0.5,
+      });
+    });
+  });
+
+  describe("updateReviewStatus", () => {
+    test("should update the diff's review status", async ({ build, captureConfiguration }) => {
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
           { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
@@ -76,18 +104,11 @@ describe("diffs", () => {
       });
       const diff = await dbClient.diffs.create({
         snapshotId: snapshot!.id,
-        status: "needs_review",
+        reviewStatus: "needs_review",
       });
 
-      const reviewed = await dbClient.diffs.updateReview(diff!.id, {
-        reviewerId: user.id,
-        reviewedAt: new Date().toISOString(),
-        status: "approved",
-      });
-
-      expect(reviewed?.status).toBe("approved");
-      expect(reviewed?.reviewerId).toBe(user.id);
-      expect(reviewed?.reviewedAt).toBeTruthy();
+      const updated = await dbClient.diffs.updateReviewStatus(diff!.id, "approved");
+      expect(updated?.reviewStatus).toBe("approved");
     });
   });
 
@@ -106,7 +127,7 @@ describe("diffs", () => {
       expect(await dbClient.diffs.hasAllDoneForBuild(build.id)).toBe(false);
     });
 
-    test("should return true once every diff for the build is resolved", async ({
+    test("should return true once every diff for the build has finished processing", async ({
       build,
       captureConfiguration,
     }) => {
@@ -117,7 +138,7 @@ describe("diffs", () => {
       });
       const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
 
-      await dbClient.diffs.updateStatus(diff!.id, "auto_approved");
+      await dbClient.diffs.updateProcessingStatus(diff!.id, "diffed");
       expect(await dbClient.diffs.hasAllDoneForBuild(build.id)).toBe(true);
     });
 

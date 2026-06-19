@@ -77,7 +77,7 @@ export const createBuild = async (
 export const finalizeBuild = async (buildId: string): Promise<void> => {
   const diffs = await dbClient.diffs.findByBuild(buildId);
 
-  if (diffs.some((diff) => diff.status === "error")) {
+  if (diffs.some((diff) => diff.processingStatus === "error")) {
     await dbClient.builds.updateStatus(
       buildId,
       "error",
@@ -86,7 +86,12 @@ export const finalizeBuild = async (buildId: string): Promise<void> => {
     return;
   }
 
-  if (diffs.some((diff) => diff.status === "needs_review")) {
+  if (diffs.some((diff) => diff.reviewStatus === "rejected")) {
+    await dbClient.builds.updateStatus(buildId, "rejected");
+    return;
+  }
+
+  if (diffs.some((diff) => diff.reviewStatus === "needs_review")) {
     await dbClient.builds.updateStatus(buildId, "needs_review");
     return;
   }

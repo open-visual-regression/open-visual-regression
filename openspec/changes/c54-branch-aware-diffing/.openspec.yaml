@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-06-19
+title: "Branch-aware diff auto-approval"
+depends_on: c53-build-finalize-rejected

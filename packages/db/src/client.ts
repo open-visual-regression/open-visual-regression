@@ -7,6 +7,7 @@ import * as builds from "./repository/builds";
 import * as snapshots from "./repository/snapshots";
 import * as snapshotLogs from "./repository/snapshotLogs";
 import * as diffs from "./repository/diffs";
+import * as diffReviews from "./repository/diffReviews";
 import * as baselines from "./repository/baselines";
 
 export const dbClient = {
@@ -19,5 +20,6 @@ export const dbClient = {
   snapshots,
   snapshotLogs,
   diffs,
+  diffReviews,
   baselines,
 } as const;

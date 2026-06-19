@@ -3,6 +3,7 @@ import type { OvrClient } from "../../../client";
 import {
   BuildFailedError,
   BuildNeedsReviewError,
+  BuildRejectedError,
   BuildTimeoutError,
   pollBuildStatus,
 } from "../poll";
@@ -50,6 +51,19 @@ describe("pollBuildStatus", () => {
         pollIntervalMs: 1,
       }),
     ).rejects.toBeInstanceOf(BuildFailedError);
+  });
+
+  it("should reject when the build is rejected", async () => {
+    const getBuildStatus = vi.fn<GetBuildStatus>().mockResolvedValue({ status: "rejected" });
+
+    await expect(
+      pollBuildStatus({
+        client: { builds: { getBuildStatus } },
+        buildId: "build-1",
+        timeoutSeconds: 10,
+        pollIntervalMs: 1,
+      }),
+    ).rejects.toBeInstanceOf(BuildRejectedError);
   });
 
   it("should reject with a timeout message when the deadline is exceeded", async () => {
