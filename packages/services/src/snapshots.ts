@@ -207,7 +207,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
   if (!diff) {
     await dbClient.diffs.updateResult(diffId, {
       processingStatus: "diffed",
-      reviewStatus: "awaiting_review",
+      reviewStatus: "needs_review",
     });
     await checkAllDoneAndFinalize(build.id);
     return;
@@ -235,7 +235,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
 
   await dbClient.diffs.updateResult(diffId, {
     processingStatus: "diffed",
-    reviewStatus: "awaiting_review",
+    reviewStatus: "needs_review",
     diffImagePath,
     pixelDiffCount,
     diffPercent,

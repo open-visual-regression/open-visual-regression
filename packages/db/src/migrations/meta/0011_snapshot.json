@@ -1613,7 +1613,7 @@
     "public.diff_review_status": {
       "name": "diff_review_status",
       "schema": "public",
-      "values": ["not_required", "awaiting_review", "approved", "rejected"]
+      "values": ["not_required", "needs_review", "approved", "rejected"]
     },
     "public.diff_review_vote": {
       "name": "diff_review_vote",

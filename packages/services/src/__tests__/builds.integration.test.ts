@@ -124,7 +124,7 @@ describe("builds", () => {
     }) => {
       await seedDiffs(build.id, captureConfiguration.id, [
         { processingStatus: "diffed", reviewStatus: "not_required" },
-        { processingStatus: "diffed", reviewStatus: "awaiting_review" },
+        { processingStatus: "diffed", reviewStatus: "needs_review" },
       ]);
 
       await finalizeBuild(build.id);
@@ -137,7 +137,7 @@ describe("builds", () => {
       captureConfiguration,
     }) => {
       await seedDiffs(build.id, captureConfiguration.id, [
-        { processingStatus: "diffed", reviewStatus: "awaiting_review" },
+        { processingStatus: "diffed", reviewStatus: "needs_review" },
         { processingStatus: "diffed", reviewStatus: "rejected" },
       ]);
 
@@ -152,7 +152,7 @@ describe("builds", () => {
     }) => {
       await seedDiffs(build.id, captureConfiguration.id, [
         { processingStatus: "diffed", reviewStatus: "rejected" },
-        { processingStatus: "diffed", reviewStatus: "awaiting_review" },
+        { processingStatus: "diffed", reviewStatus: "needs_review" },
       ]);
 
       await finalizeBuild(build.id);

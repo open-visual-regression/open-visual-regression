@@ -81,14 +81,14 @@ describe("diffs", () => {
 
       const updated = await dbClient.diffs.updateResult(diff!.id, {
         processingStatus: "diffed",
-        reviewStatus: "awaiting_review",
+        reviewStatus: "needs_review",
         pixelDiffCount: 12,
         diffPercent: 0.5,
       });
 
       expect(updated).toMatchObject({
         processingStatus: "diffed",
-        reviewStatus: "awaiting_review",
+        reviewStatus: "needs_review",
         pixelDiffCount: 12,
         diffPercent: 0.5,
       });
@@ -104,7 +104,7 @@ describe("diffs", () => {
       });
       const diff = await dbClient.diffs.create({
         snapshotId: snapshot!.id,
-        reviewStatus: "awaiting_review",
+        reviewStatus: "needs_review",
       });
 
       const updated = await dbClient.diffs.updateReviewStatus(diff!.id, "approved");

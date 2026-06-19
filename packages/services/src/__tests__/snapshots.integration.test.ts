@@ -148,7 +148,7 @@ describe("snapshots", () => {
 
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
         processingStatus: "diffed",
-        reviewStatus: "awaiting_review",
+        reviewStatus: "needs_review",
       });
 
       const worker = new Worker(QueueName.BUILD_FINALIZE, async (job) => job.data, { connection });
@@ -249,7 +249,7 @@ describe("snapshots", () => {
       await diffSnapshot(captureSnapshotRow!.id, diff!.id);
 
       const result = await dbClient.diffs.findById(diff!.id);
-      expect(result).toMatchObject({ processingStatus: "diffed", reviewStatus: "awaiting_review" });
+      expect(result).toMatchObject({ processingStatus: "diffed", reviewStatus: "needs_review" });
       expect(result!.diffImagePath).toBe(
         `${featureBuild.projectId}/builds/${featureBuild.id}/diffs/${diff!.id}.png`,
       );

@@ -31,7 +31,7 @@ describe("diffs", () => {
       });
       const diff = await dbClient.diffs.create({
         snapshotId: snapshot!.id,
-        reviewStatus: "awaiting_review",
+        reviewStatus: "needs_review",
       });
 
       const result = await castVote(diff!.id, user.id, "approve");
@@ -40,7 +40,7 @@ describe("diffs", () => {
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({ reviewStatus: "approved" });
     });
 
-    test("stays awaiting_review until enough distinct reviewers approve", async ({
+    test("stays needs_review until enough distinct reviewers approve", async ({
       project,
       build,
       captureConfiguration,
@@ -55,12 +55,12 @@ describe("diffs", () => {
       });
       const diff = await dbClient.diffs.create({
         snapshotId: snapshot!.id,
-        reviewStatus: "awaiting_review",
+        reviewStatus: "needs_review",
       });
 
       await castVote(diff!.id, user.id, "approve");
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
-        reviewStatus: "awaiting_review",
+        reviewStatus: "needs_review",
       });
 
       const otherReviewer = await createUser();
@@ -81,7 +81,7 @@ describe("diffs", () => {
       });
       const diff = await dbClient.diffs.create({
         snapshotId: snapshot!.id,
-        reviewStatus: "awaiting_review",
+        reviewStatus: "needs_review",
       });
 
       const otherReviewer = await createUser();
@@ -109,7 +109,7 @@ describe("diffs", () => {
       });
       const diff = await dbClient.diffs.create({
         snapshotId: snapshot!.id,
-        reviewStatus: "awaiting_review",
+        reviewStatus: "needs_review",
       });
 
       await castVote(diff!.id, user.id, "approve");
@@ -142,7 +142,7 @@ describe("diffs", () => {
       expect(result).toEqual({ status: "error", error: "DIFF_NOT_FOUND" });
     });
 
-    test("finalizes the build once the last awaiting_review diff is approved", async ({
+    test("finalizes the build once the last needs_review diff is approved", async ({
       build,
       captureConfiguration,
       user,
@@ -155,7 +155,7 @@ describe("diffs", () => {
       const diff = await dbClient.diffs.create({
         snapshotId: snapshot!.id,
         processingStatus: "diffed",
-        reviewStatus: "awaiting_review",
+        reviewStatus: "needs_review",
       });
 
       await castVote(diff!.id, user.id, "approve");
@@ -165,7 +165,7 @@ describe("diffs", () => {
   });
 
   describe("removeVote", () => {
-    test("reverts to awaiting_review once the only reject is removed", async ({
+    test("reverts to needs_review once the only reject is removed", async ({
       build,
       captureConfiguration,
       user,
@@ -177,7 +177,7 @@ describe("diffs", () => {
       });
       const diff = await dbClient.diffs.create({
         snapshotId: snapshot!.id,
-        reviewStatus: "awaiting_review",
+        reviewStatus: "needs_review",
       });
 
       await castVote(diff!.id, user.id, "reject");
@@ -187,7 +187,7 @@ describe("diffs", () => {
 
       assert(result.status === "ok");
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
-        reviewStatus: "awaiting_review",
+        reviewStatus: "needs_review",
       });
     });
 
@@ -206,7 +206,7 @@ describe("diffs", () => {
       });
       const diff = await dbClient.diffs.create({
         snapshotId: snapshot!.id,
-        reviewStatus: "awaiting_review",
+        reviewStatus: "needs_review",
       });
 
       const otherReviewer = await createUser();
@@ -225,7 +225,7 @@ describe("diffs", () => {
   });
 
   describe("bulkCastVote", () => {
-    test("casts the vote across every awaiting_review diff, leaving terminal diffs untouched", async ({
+    test("casts the vote across every needs_review diff, leaving terminal diffs untouched", async ({
       build,
       captureConfiguration,
       user,
@@ -239,7 +239,7 @@ describe("diffs", () => {
       });
       const awaitingDiff = await dbClient.diffs.create({
         snapshotId: snapshotA!.id,
-        reviewStatus: "awaiting_review",
+        reviewStatus: "needs_review",
       });
       const approvedDiff = await dbClient.diffs.create({
         snapshotId: snapshotB!.id,
