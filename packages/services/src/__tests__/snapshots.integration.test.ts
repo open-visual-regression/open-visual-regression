@@ -126,18 +126,18 @@ describe("snapshots", () => {
 
   describe("diffSnapshot", () => {
     test("should ask a reviewer to approve the story when it has never been approved before, and move the build toward done once every story has a verdict", async ({
-      build,
+      featureBuild,
       captureConfiguration,
       connection,
     }) => {
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
           {
-            buildId: build.id,
+            buildId: featureBuild.id,
             captureConfigurationId: captureConfiguration.id,
             targetId: "story-a",
             status: "captured",
-            imagePath: `builds/${build.id}/snapshots/no-baseline.png`,
+            imagePath: `builds/${featureBuild.id}/snapshots/no-baseline.png`,
           },
         ],
       });
@@ -146,7 +146,10 @@ describe("snapshots", () => {
 
       await diffSnapshot(snapshot!.id, diff!.id);
 
-      expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({ status: "needs_review" });
+      expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
+        processingStatus: "diffed",
+        reviewStatus: "awaiting_review",
+      });
 
       const worker = new Worker(QueueName.BUILD_FINALIZE, async (job) => job.data, { connection });
       try {
@@ -160,26 +163,26 @@ describe("snapshots", () => {
     }, 30000);
 
     test("should approve a story automatically, with nothing for a reviewer to do, when it renders the same as the approved baseline", async ({
-      build,
+      featureBuild,
       project,
       captureConfiguration,
     }) => {
-      const baselinePath = `builds/${build.id}/snapshots/baseline.png`;
-      const capturePath = `builds/${build.id}/snapshots/capture.png`;
+      const baselinePath = `builds/${featureBuild.id}/snapshots/baseline.png`;
+      const capturePath = `builds/${featureBuild.id}/snapshots/capture.png`;
       await uploadPng(baselinePath, 255);
       await uploadPng(capturePath, 255);
 
       const [baselineSnapshot, captureSnapshotRow] = await dbClient.snapshots.createMany({
         values: [
           {
-            buildId: build.id,
+            buildId: featureBuild.id,
             captureConfigurationId: captureConfiguration.id,
             targetId: "story-a",
             status: "captured",
             imagePath: baselinePath,
           },
           {
-            buildId: build.id,
+            buildId: featureBuild.id,
             captureConfigurationId: captureConfiguration.id,
             targetId: "story-a",
             status: "captured",
@@ -192,40 +195,41 @@ describe("snapshots", () => {
         captureConfigurationId: captureConfiguration.id,
         targetId: "story-a",
         snapshotId: baselineSnapshot!.id,
-        approvedBy: build.createdBy,
+        approvedBy: featureBuild.createdBy,
       });
       const diff = await dbClient.diffs.create({ snapshotId: captureSnapshotRow!.id });
 
       await diffSnapshot(captureSnapshotRow!.id, diff!.id);
 
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
-        status: "auto_approved",
+        processingStatus: "diffed",
+        reviewStatus: "not_required",
         pixelDiffCount: 0,
         diffPercent: 0,
       });
     }, 30000);
 
     test("should ask a reviewer to approve a story and show them what changed when it renders differently from the approved baseline", async ({
-      build,
+      featureBuild,
       project,
       captureConfiguration,
     }) => {
-      const baselinePath = `builds/${build.id}/snapshots/baseline-2.png`;
-      const capturePath = `builds/${build.id}/snapshots/capture-2.png`;
+      const baselinePath = `builds/${featureBuild.id}/snapshots/baseline-2.png`;
+      const capturePath = `builds/${featureBuild.id}/snapshots/capture-2.png`;
       await uploadPng(baselinePath, 0);
       await uploadPng(capturePath, 255);
 
       const [baselineSnapshot, captureSnapshotRow] = await dbClient.snapshots.createMany({
         values: [
           {
-            buildId: build.id,
+            buildId: featureBuild.id,
             captureConfigurationId: captureConfiguration.id,
             targetId: "story-b",
             status: "captured",
             imagePath: baselinePath,
           },
           {
-            buildId: build.id,
+            buildId: featureBuild.id,
             captureConfigurationId: captureConfiguration.id,
             targetId: "story-b",
             status: "captured",
@@ -238,6 +242,92 @@ describe("snapshots", () => {
         captureConfigurationId: captureConfiguration.id,
         targetId: "story-b",
         snapshotId: baselineSnapshot!.id,
+        approvedBy: featureBuild.createdBy,
+      });
+      const diff = await dbClient.diffs.create({ snapshotId: captureSnapshotRow!.id });
+
+      await diffSnapshot(captureSnapshotRow!.id, diff!.id);
+
+      const result = await dbClient.diffs.findById(diff!.id);
+      expect(result).toMatchObject({ processingStatus: "diffed", reviewStatus: "awaiting_review" });
+      expect(result!.diffImagePath).toBe(
+        `${featureBuild.projectId}/builds/${featureBuild.id}/diffs/${diff!.id}.png`,
+      );
+      expect(result!.pixelDiffCount).toBeGreaterThan(0);
+
+      const diffImage = await storage.getFileStream(result!.diffImagePath!);
+      expect(diffImage).toBeDefined();
+    }, 30000);
+
+    test("promotes the baseline and skips review entirely for a main-branch build with no prior baseline", async ({
+      build,
+      project,
+      captureConfiguration,
+    }) => {
+      const capturePath = `builds/${build.id}/snapshots/main-no-baseline.png`;
+      await uploadPng(capturePath, 255);
+
+      const [captureSnapshotRow] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            captureConfigurationId: captureConfiguration.id,
+            targetId: "story-c",
+            status: "captured",
+            imagePath: capturePath,
+          },
+        ],
+      });
+      const diff = await dbClient.diffs.create({ snapshotId: captureSnapshotRow!.id });
+
+      await diffSnapshot(captureSnapshotRow!.id, diff!.id);
+
+      expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
+        processingStatus: "diffed",
+        reviewStatus: "not_required",
+      });
+
+      const baseline = await dbClient.baselines.find(
+        project.id,
+        captureConfiguration.id,
+        "story-c",
+      );
+      expect(baseline?.snapshotId).toBe(captureSnapshotRow!.id);
+    }, 30000);
+
+    test("promotes the baseline and skips review for a main-branch build even when the diff is large", async ({
+      build,
+      project,
+      captureConfiguration,
+    }) => {
+      const baselinePath = `builds/${build.id}/snapshots/main-baseline.png`;
+      const capturePath = `builds/${build.id}/snapshots/main-capture.png`;
+      await uploadPng(baselinePath, 0);
+      await uploadPng(capturePath, 255);
+
+      const [baselineSnapshot, captureSnapshotRow] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            captureConfigurationId: captureConfiguration.id,
+            targetId: "story-d",
+            status: "captured",
+            imagePath: baselinePath,
+          },
+          {
+            buildId: build.id,
+            captureConfigurationId: captureConfiguration.id,
+            targetId: "story-d",
+            status: "captured",
+            imagePath: capturePath,
+          },
+        ],
+      });
+      await dbClient.baselines.upsert({
+        projectId: project.id,
+        captureConfigurationId: captureConfiguration.id,
+        targetId: "story-d",
+        snapshotId: baselineSnapshot!.id,
         approvedBy: build.createdBy,
       });
       const diff = await dbClient.diffs.create({ snapshotId: captureSnapshotRow!.id });
@@ -245,14 +335,18 @@ describe("snapshots", () => {
       await diffSnapshot(captureSnapshotRow!.id, diff!.id);
 
       const result = await dbClient.diffs.findById(diff!.id);
-      expect(result).toMatchObject({ status: "needs_review" });
-      expect(result!.diffImagePath).toBe(
-        `${build.projectId}/builds/${build.id}/diffs/${diff!.id}.png`,
-      );
+      expect(result).toMatchObject({
+        processingStatus: "diffed",
+        reviewStatus: "not_required",
+      });
       expect(result!.pixelDiffCount).toBeGreaterThan(0);
 
-      const diffImage = await storage.getFileStream(result!.diffImagePath!);
-      expect(diffImage).toBeDefined();
+      const baseline = await dbClient.baselines.find(
+        project.id,
+        captureConfiguration.id,
+        "story-d",
+      );
+      expect(baseline?.snapshotId).toBe(captureSnapshotRow!.id);
     }, 30000);
   });
 });

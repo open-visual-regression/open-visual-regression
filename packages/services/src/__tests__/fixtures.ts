@@ -14,6 +14,7 @@ type Fixtures = {
   project: typeof projects.$inferSelect;
   captureConfiguration: typeof captureConfigurations.$inferSelect;
   build: NonNullable<Awaited<ReturnType<typeof dbClient.builds.create>>>;
+  featureBuild: NonNullable<Awaited<ReturnType<typeof dbClient.builds.create>>>;
   connection: Redis;
 };
 
@@ -62,6 +63,17 @@ export const test = vitest.extend<Fixtures>({
     const created = await dbClient.builds.create({
       projectId: project.id,
       branch: "main",
+      commitSha: "a".repeat(40),
+      artifactPath: "builds/seed/artifact",
+      createdBy: user.id,
+    });
+    await use(created!);
+  },
+
+  featureBuild: async ({ project, user }, use) => {
+    const created = await dbClient.builds.create({
+      projectId: project.id,
+      branch: "feature/test",
       commitSha: "a".repeat(40),
       artifactPath: "builds/seed/artifact",
       createdBy: user.id,

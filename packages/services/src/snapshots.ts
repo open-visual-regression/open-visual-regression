@@ -9,6 +9,7 @@ import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
 import { storage } from "@ovr/storage";
 
+import { promoteBaseline } from "./baselines";
 import { detectCaptureStrategy } from "./captureStrategies";
 import { getContentType, getStaticPath } from "./extract";
 import { enqueueDiff, enqueueFinalize } from "./lib/queue";
@@ -175,39 +176,94 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
     throw new Error(`Project not found for build: ${build.id}`);
   }
 
+  const isMainBranch = build.branch === project.gitMainBranch;
+
   const baseline = await dbClient.baselines.find(
     project.id,
     snapshot.captureConfigurationId,
     snapshot.targetId,
   );
 
-  if (!baseline) {
-    await dbClient.diffs.updateStatus(diffId, "needs_review");
-    await checkAllDoneAndFinalize(build.id);
-    return;
-  }
-
   if (!snapshot.imagePath) {
     throw new Error(`Snapshot has no captured image: ${snapshotId}`);
   }
 
-  const baselineSnapshot = await dbClient.snapshots.findById(baseline.snapshotId);
-  if (!baselineSnapshot?.imagePath) {
-    throw new Error(`Baseline snapshot has no captured image: ${baseline.snapshotId}`);
+  const baselineSnapshot = baseline ? await dbClient.snapshots.findById(baseline.snapshotId) : null;
+  const diff = baselineSnapshot?.imagePath
+    ? await computeDiffAgainstBaseline(snapshot.imagePath, baselineSnapshot.imagePath)
+    : null;
+
+  if (isMainBranch) {
+    await dbClient.diffs.updateResult(diffId, {
+      processingStatus: "diffed",
+      reviewStatus: "not_required",
+      ...(diff && { pixelDiffCount: diff.pixelDiffCount, diffPercent: diff.diffPercent }),
+    });
+    await promoteBaseline(diffId, build.createdBy);
+    await checkAllDoneAndFinalize(build.id);
+    return;
   }
 
+  if (!diff) {
+    await dbClient.diffs.updateResult(diffId, {
+      processingStatus: "diffed",
+      reviewStatus: "awaiting_review",
+    });
+    await checkAllDoneAndFinalize(build.id);
+    return;
+  }
+
+  const { pixelDiffCount, diffPercent } = diff;
+
+  if (diffPercent === 0 || diffPercent <= project.diffThreshold) {
+    await dbClient.diffs.updateResult(diffId, {
+      processingStatus: "diffed",
+      reviewStatus: "not_required",
+      pixelDiffCount,
+      diffPercent,
+    });
+    await checkAllDoneAndFinalize(build.id);
+    return;
+  }
+
+  const diffImagePath = `${build.projectId}/builds/${build.id}/diffs/${diffId}.png`;
+  await storage.uploadFile(
+    diffImagePath,
+    encodePng(diff.diffPixels, diff.width, diff.height),
+    "image/png",
+  );
+
+  await dbClient.diffs.updateResult(diffId, {
+    processingStatus: "diffed",
+    reviewStatus: "awaiting_review",
+    diffImagePath,
+    pixelDiffCount,
+    diffPercent,
+  });
+
+  await checkAllDoneAndFinalize(build.id);
+};
+
+const computeDiffAgainstBaseline = async (
+  capturePath: string,
+  baselinePath: string,
+): Promise<{
+  width: number;
+  height: number;
+  pixelDiffCount: number;
+  diffPercent: number;
+  diffPixels: Uint8Array;
+} | null> => {
   const [capturePixels, baselinePixels] = await Promise.all([
-    readPng(snapshot.imagePath),
-    readPng(baselineSnapshot.imagePath),
+    readPng(capturePath),
+    readPng(baselinePath),
   ]);
 
   if (
     capturePixels.width !== baselinePixels.width ||
     capturePixels.height !== baselinePixels.height
   ) {
-    await dbClient.diffs.updateStatus(diffId, "needs_review");
-    await checkAllDoneAndFinalize(build.id);
-    return;
+    return null;
   }
 
   const width = capturePixels.width;
@@ -225,27 +281,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
 
   const diffPercent = (pixelDiffCount / (width * height)) * 100;
 
-  if (diffPercent === 0 || diffPercent <= project.diffThreshold) {
-    await dbClient.diffs.updateResult(diffId, {
-      status: "auto_approved",
-      pixelDiffCount,
-      diffPercent,
-    });
-    await checkAllDoneAndFinalize(build.id);
-    return;
-  }
-
-  const diffImagePath = `${build.projectId}/builds/${build.id}/diffs/${diffId}.png`;
-  await storage.uploadFile(diffImagePath, encodePng(diffPixels, width, height), "image/png");
-
-  await dbClient.diffs.updateResult(diffId, {
-    status: "needs_review",
-    diffImagePath,
-    pixelDiffCount,
-    diffPercent,
-  });
-
-  await checkAllDoneAndFinalize(build.id);
+  return { width, height, pixelDiffCount, diffPercent, diffPixels };
 };
 
 export const checkAllDoneAndFinalize = async (buildId: string): Promise<void> => {
