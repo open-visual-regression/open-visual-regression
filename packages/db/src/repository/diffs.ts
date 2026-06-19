@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
 import { db, type DbClient } from "../db";
 import { diffs, snapshots, type DiffProcessingStatus, type DiffReviewStatus } from "../schema";
@@ -59,6 +59,14 @@ export const updateResult = async (id: string, result: UpdateResultInput) => {
 export const updateReviewStatus = async (id: string, reviewStatus: DiffReviewStatus) => {
   const [diff] = await db.update(diffs).set({ reviewStatus }).where(eq(diffs.id, id)).returning();
   return diff;
+};
+
+export const updateReviewStatusMany = async (ids: string[], reviewStatus: DiffReviewStatus) => {
+  if (ids.length === 0) {
+    return [];
+  }
+
+  return db.update(diffs).set({ reviewStatus }).where(inArray(diffs.id, ids)).returning();
 };
 
 export const hasAllDoneForBuild = async (buildId: string) => {
