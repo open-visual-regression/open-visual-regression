@@ -17,20 +17,23 @@ describe("SnapshotCard", () => {
     expect(screen.queryByText(/Δ/)).not.toBeInTheDocument();
   });
 
-  it("should link to the diff viewer when the snapshot has a diff", () => {
-    const snapshot = mocks.build.generateBuildSnapshot({ diffId: "diff-1" });
+  it("should link to the snapshot page when the snapshot has a diff", () => {
+    const snapshot = mocks.build.generateBuildSnapshot({ id: "snapshot-1", diffId: "diff-1" });
     render(<SnapshotCard snapshot={snapshot} projectId="project-1" buildId="build-1" />);
 
     expect(screen.getByRole("link")).toHaveAttribute(
       "href",
-      "/projects/project-1/builds/build-1/diffs/diff-1",
+      "/projects/project-1/builds/build-1/snapshot/snapshot-1",
     );
   });
 
-  it("should not render a link when the snapshot has no diff", () => {
-    const snapshot = mocks.build.generateBuildSnapshot({ diffId: null });
+  it("should link to the snapshot page when the snapshot has no diff", () => {
+    const snapshot = mocks.build.generateBuildSnapshot({ id: "snapshot-1", diffId: null });
     render(<SnapshotCard snapshot={snapshot} projectId="project-1" buildId="build-1" />);
 
-    expect(screen.queryByRole("link")).not.toBeInTheDocument();
+    expect(screen.getByRole("link")).toHaveAttribute(
+      "href",
+      "/projects/project-1/builds/build-1/snapshot/snapshot-1",
+    );
   });
 });

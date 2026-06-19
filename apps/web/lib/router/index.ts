@@ -8,6 +8,7 @@ import * as account from "./account";
 import * as users from "./users";
 import * as invitations from "./invitations";
 import * as diffs from "./diffs";
+import * as snapshots from "./snapshots";
 
 export const serverClient = {
   apiKeys,
@@ -20,4 +21,5 @@ export const serverClient = {
   users,
   invitations,
   diffs,
+  snapshots,
 } as const;

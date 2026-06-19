@@ -47,13 +47,9 @@ export const SnapshotCard = ({ snapshot, projectId, buildId }: SnapshotCardProps
   const cardClassName =
     "flex flex-col overflow-hidden rounded-card border border-ovr-border bg-ovr-elevated";
 
-  if (!snapshot.diffId) {
-    return <div className={cardClassName}>{content}</div>;
-  }
-
   return (
     <Link
-      href={`/projects/${projectId}/builds/${buildId}/diffs/${snapshot.diffId}`}
+      href={`/projects/${projectId}/builds/${buildId}/snapshot/${snapshot.id}`}
       className={cn(
         cardClassName,
         "hover:border-ovr-border-strong focus-visible:border-ovr-accent focus-visible:ring-2 focus-visible:ring-ovr-accent/35 focus-visible:outline-none hover:scale-101 focus-visible:scale-101",

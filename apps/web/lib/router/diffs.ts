@@ -1,6 +1,7 @@
 "use server";
 
 import { ORPCError } from "@orpc/client";
+import { dbClient } from "@ovr/db/client";
 import {
   bulkCastVote as bulkCastVoteService,
   castVote as castVoteService,
@@ -9,6 +10,7 @@ import {
 
 import { os } from "./os";
 import { authenticatedMiddleware } from "./middleware";
+import { getAuthorizedSnapshot } from "./snapshotAuthz";
 
 const throwOnError = (error: "DIFF_NOT_FOUND" | "REVIEW_NOT_REQUIRED"): never => {
   if (error === "DIFF_NOT_FOUND") {
@@ -43,5 +45,28 @@ export const bulkCastVote = os.diffs.bulkCastVote
   .use(authenticatedMiddleware)
   .handler(async ({ input, context }) => {
     await bulkCastVoteService(input.buildId, context.user.id, input.vote);
+  })
+  .actionable();
+
+export const getOne = os.diffs.getOne
+  .use(authenticatedMiddleware)
+  .handler(async ({ input, context }) => {
+    await getAuthorizedSnapshot(input.snapshotId, context.organizationId);
+
+    const diff = await dbClient.diffs.findBySnapshot(input.snapshotId);
+
+    return {
+      diff: diff
+        ? {
+            id: diff.id,
+            processingStatus: diff.processingStatus,
+            reviewStatus: diff.reviewStatus,
+            diffImagePath: diff.diffImagePath,
+            pixelDiffCount: diff.pixelDiffCount,
+            diffPercent: diff.diffPercent,
+            baselineSnapshotId: diff.baselineSnapshotId,
+          }
+        : null,
+    };
   })
   .actionable();
