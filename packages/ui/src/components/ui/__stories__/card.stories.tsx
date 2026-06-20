@@ -104,4 +104,9 @@ export const KitchenSink: Story = {
       </Section>
     </div>
   ),
+  parameters: {
+    ovr: {
+      viewports: ["desktop", "mobile"],
+    },
+  },
 };

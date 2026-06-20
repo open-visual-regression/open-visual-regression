@@ -12,6 +12,14 @@ export enum QueueName {
 export type ExtractJobPayload = {
   buildId: string;
   artifactPath: string;
+  targets: { id: string; title: string; name: string }[];
+  viewports: {
+    name?: string;
+    browser: string;
+    viewportWidth: number;
+    viewportHeight?: number;
+    default?: boolean;
+  }[];
 };
 
 export type CaptureJobPayload = {

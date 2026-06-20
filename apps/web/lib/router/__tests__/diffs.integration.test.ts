@@ -5,7 +5,7 @@ import { test, describe, expect } from "@/lib/testing/fixtures";
 import { serverClient } from "@/lib/router";
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
-import { captureConfigurations, organization, projects } from "@ovr/db/schema";
+import { organization, projects } from "@ovr/db/schema";
 import type { AddProjectInputSchema } from "@ovr/api/contracts/projects";
 import type { User } from "@/lib/auth/auth";
 
@@ -18,15 +18,12 @@ const TEST_PROJECT: AddProjectInputSchema = {
   diffThreshold: 0.05,
 };
 
+const VIEWPORT = { browser: "chromium", viewportWidth: 1280, viewportHeight: 800 };
+
 const createProjectAndBuild = async (admin: User, requiredReviewerCount = 1) => {
   const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
   const projectId = addResult!.projectId;
   await serverClient.projects.update({ id: projectId, patch: { requiredReviewerCount } });
-
-  const [captureConfiguration] = await db
-    .insert(captureConfigurations)
-    .values({ projectId, name: "Default" })
-    .returning();
 
   const build = await dbClient.builds.create({
     projectId,
@@ -36,16 +33,12 @@ const createProjectAndBuild = async (admin: User, requiredReviewerCount = 1) => 
     createdBy: admin.id,
   });
 
-  return { projectId, captureConfiguration: captureConfiguration!, build: build! };
+  return { projectId, captureConfiguration: VIEWPORT, build: build! };
 };
 
-const createAwaitingDiff = async (
-  buildId: string,
-  captureConfigurationId: string,
-  targetId: string,
-) => {
+const createAwaitingDiff = async (buildId: string, viewport: typeof VIEWPORT, targetId: string) => {
   const [snapshot] = await dbClient.snapshots.createMany({
-    values: [{ buildId, captureConfigurationId, targetId }],
+    values: [{ buildId, ...viewport, targetId }],
   });
   return dbClient.diffs.create({ snapshotId: snapshot!.id, reviewStatus: "needs_review" });
 };
@@ -64,7 +57,7 @@ describe("diffs", () => {
       admin,
     }) => {
       const { build, captureConfiguration } = await createProjectAndBuild(admin, 1);
-      const diff = await createAwaitingDiff(build.id, captureConfiguration.id, "story-a");
+      const diff = await createAwaitingDiff(build.id, captureConfiguration, "story-a");
 
       const [error] = await serverClient.diffs.castVote({ diffId: diff!.id, vote: "approve" });
 
@@ -75,7 +68,7 @@ describe("diffs", () => {
 
     test("a reject vetoes regardless of existing approvals", async ({ admin }) => {
       const { build, captureConfiguration } = await createProjectAndBuild(admin, 2);
-      const diff = await createAwaitingDiff(build.id, captureConfiguration.id, "story-a");
+      const diff = await createAwaitingDiff(build.id, captureConfiguration, "story-a");
 
       await dbClient.diffReviews.upsertVote({
         diffId: diff!.id,
@@ -92,9 +85,7 @@ describe("diffs", () => {
     test("returns BAD_REQUEST for a diff that does not need review", async ({ admin }) => {
       const { build, captureConfiguration } = await createProjectAndBuild(admin);
       const [snapshot] = await dbClient.snapshots.createMany({
-        values: [
-          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
-        ],
+        values: [{ buildId: build.id, ...captureConfiguration, targetId: "a" }],
       });
       const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
 
@@ -116,7 +107,7 @@ describe("diffs", () => {
   describe("removeVote", () => {
     test("clears the caller's vote and recomputes the review status", async ({ admin }) => {
       const { build, captureConfiguration } = await createProjectAndBuild(admin, 1);
-      const diff = await createAwaitingDiff(build.id, captureConfiguration.id, "story-a");
+      const diff = await createAwaitingDiff(build.id, captureConfiguration, "story-a");
 
       await serverClient.diffs.castVote({ diffId: diff!.id, vote: "reject" });
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({ reviewStatus: "rejected" });
@@ -135,12 +126,12 @@ describe("diffs", () => {
       admin,
     }) => {
       const { build, captureConfiguration } = await createProjectAndBuild(admin, 1);
-      const awaitingDiff = await createAwaitingDiff(build.id, captureConfiguration.id, "story-a");
+      const awaitingDiff = await createAwaitingDiff(build.id, captureConfiguration, "story-a");
       const [notRequiredSnapshot] = await dbClient.snapshots.createMany({
         values: [
           {
             buildId: build.id,
-            captureConfigurationId: captureConfiguration.id,
+            ...captureConfiguration,
             targetId: "story-b",
           },
         ],
@@ -197,11 +188,6 @@ describe("diffs", () => {
         })
         .returning();
 
-      const [captureConfiguration] = await db
-        .insert(captureConfigurations)
-        .values({ projectId: otherProject!.id, name: "Default" })
-        .returning();
-
       const otherBuild = await dbClient.builds.create({
         projectId: otherProject!.id,
         branch: "main",
@@ -210,7 +196,7 @@ describe("diffs", () => {
         createdBy: admin.id,
       });
 
-      const diff = await createAwaitingDiff(otherBuild!.id, captureConfiguration!.id, "story-a");
+      const diff = await createAwaitingDiff(otherBuild!.id, VIEWPORT, "story-a");
 
       const [error] = await serverClient.diffs.getOne({ snapshotId: diff!.snapshotId });
 
@@ -219,7 +205,7 @@ describe("diffs", () => {
 
     test("returns the diff for a snapshot", async ({ admin }) => {
       const { build, captureConfiguration } = await createProjectAndBuild(admin);
-      const diff = await createAwaitingDiff(build.id, captureConfiguration.id, "story-a");
+      const diff = await createAwaitingDiff(build.id, captureConfiguration, "story-a");
 
       const [error, result] = await serverClient.diffs.getOne({ snapshotId: diff!.snapshotId });
 
@@ -230,9 +216,7 @@ describe("diffs", () => {
     test("returns null when the snapshot has no diff yet", async ({ admin }) => {
       const { build, captureConfiguration } = await createProjectAndBuild(admin);
       const [snapshot] = await dbClient.snapshots.createMany({
-        values: [
-          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
-        ],
+        values: [{ buildId: build.id, ...captureConfiguration, targetId: "a" }],
       });
 
       const [error, result] = await serverClient.diffs.getOne({ snapshotId: snapshot!.id });

@@ -26,17 +26,12 @@ const collectExtractJob = async (connection: Redis): Promise<ExtractJobPayload> 
 };
 
 type SeedDiffStatus = { processingStatus: DiffProcessingStatus; reviewStatus: DiffReviewStatus };
+type Viewport = { browser: string; viewportWidth: number; viewportHeight: number };
 
-const seedDiffs = async (
-  buildId: string,
-  captureConfigurationId: string,
-  statuses: SeedDiffStatus[],
-) => {
+const seedDiffs = async (buildId: string, viewport: Viewport, statuses: SeedDiffStatus[]) => {
   for (const status of statuses) {
     const [snapshot] = await dbClient.snapshots.createMany({
-      values: [
-        { buildId, captureConfigurationId, targetId: crypto.randomUUID(), status: "captured" },
-      ],
+      values: [{ buildId, ...viewport, targetId: crypto.randomUUID(), status: "captured" }],
     });
     await dbClient.diffs.create({ snapshotId: snapshot!.id, ...status });
   }
@@ -44,21 +39,24 @@ const seedDiffs = async (
 
 describe("builds", () => {
   describe("createBuild", () => {
-    test("creates a pending build with a snapshot per target x capture configuration, and enqueues an extract job", async ({
+    test("creates a pending build and enqueues an extract job with the targets and viewports", async ({
       project,
       captureConfiguration,
       user,
       connection,
     }) => {
+      const targets = [
+        { id: "story-a", title: "Story", name: "A" },
+        { id: "story-b", title: "Story", name: "B" },
+      ];
+
       const result = await createBuild(
         {
           projectId: project.id,
           branch: "main",
           commitSha: "a".repeat(40),
-          targets: [
-            { id: "story-a", title: "Story", name: "A" },
-            { id: "story-b", title: "Story", name: "B" },
-          ],
+          targets,
+          viewports: [captureConfiguration],
         },
         user.id,
       );
@@ -78,14 +76,13 @@ describe("builds", () => {
         createdBy: user.id,
       });
 
-      const snapshots = await dbClient.snapshots.findByBuild(buildId);
-      expect(snapshots.map((snapshot) => snapshot.targetId).sort()).toEqual(["story-a", "story-b"]);
-      expect(
-        snapshots.every((snapshot) => snapshot.captureConfigurationId === captureConfiguration.id),
-      ).toBe(true);
-
       const job = await collectExtractJob(connection);
-      expect(job).toEqual({ buildId, artifactPath: getArtifactPath(buildId) });
+      expect(job).toEqual({
+        buildId,
+        artifactPath: getArtifactPath(buildId),
+        targets,
+        viewports: [captureConfiguration],
+      });
     });
 
     test("returns PROJECT_NOT_FOUND when the project does not exist", async ({ user }) => {
@@ -95,6 +92,7 @@ describe("builds", () => {
           branch: "main",
           commitSha: "a".repeat(40),
           targets: [{ id: "story-a", title: "Story", name: "A" }],
+          viewports: [{ browser: "chromium", viewportWidth: 1280, viewportHeight: 800 }],
         },
         user.id,
       );
@@ -108,7 +106,7 @@ describe("builds", () => {
       mainBuild,
       captureConfiguration,
     }) => {
-      await seedDiffs(mainBuild.id, captureConfiguration.id, [
+      await seedDiffs(mainBuild.id, captureConfiguration, [
         { processingStatus: "diffed", reviewStatus: "not_required" },
         { processingStatus: "error", reviewStatus: "not_required" },
       ]);
@@ -122,7 +120,7 @@ describe("builds", () => {
       mainBuild,
       captureConfiguration,
     }) => {
-      await seedDiffs(mainBuild.id, captureConfiguration.id, [
+      await seedDiffs(mainBuild.id, captureConfiguration, [
         { processingStatus: "diffed", reviewStatus: "not_required" },
         { processingStatus: "diffed", reviewStatus: "needs_review" },
       ]);
@@ -136,7 +134,7 @@ describe("builds", () => {
       mainBuild,
       captureConfiguration,
     }) => {
-      await seedDiffs(mainBuild.id, captureConfiguration.id, [
+      await seedDiffs(mainBuild.id, captureConfiguration, [
         { processingStatus: "diffed", reviewStatus: "needs_review" },
         { processingStatus: "diffed", reviewStatus: "rejected" },
       ]);
@@ -150,7 +148,7 @@ describe("builds", () => {
       mainBuild,
       captureConfiguration,
     }) => {
-      await seedDiffs(mainBuild.id, captureConfiguration.id, [
+      await seedDiffs(mainBuild.id, captureConfiguration, [
         { processingStatus: "diffed", reviewStatus: "rejected" },
         { processingStatus: "diffed", reviewStatus: "needs_review" },
       ]);
@@ -164,7 +162,7 @@ describe("builds", () => {
       mainBuild,
       captureConfiguration,
     }) => {
-      await seedDiffs(mainBuild.id, captureConfiguration.id, [
+      await seedDiffs(mainBuild.id, captureConfiguration, [
         { processingStatus: "diffed", reviewStatus: "not_required" },
         { processingStatus: "diffed", reviewStatus: "approved" },
       ]);

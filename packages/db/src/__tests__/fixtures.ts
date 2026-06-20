@@ -3,15 +3,17 @@ import { v7 as uuidv7 } from "uuid";
 
 import { dbClient } from "../client";
 import { db } from "../db";
-import { captureConfigurations, organization, projects, user as userTable } from "../schema";
+import { organization, projects, user as userTable } from "../schema";
 
 export { describe, expect } from "vitest";
+
+type Viewport = { browser: string; viewportWidth: number; viewportHeight: number };
 
 type Fixtures = {
   user: typeof userTable.$inferSelect;
   organization: typeof organization.$inferSelect;
   project: typeof projects.$inferSelect;
-  captureConfiguration: typeof captureConfigurations.$inferSelect;
+  captureConfiguration: Viewport;
   build: NonNullable<Awaited<ReturnType<typeof dbClient.builds.create>>>;
 };
 
@@ -48,12 +50,9 @@ export const test = vitest.extend<Fixtures>({
     await use(created!);
   },
 
-  captureConfiguration: async ({ project }, use) => {
-    const [created] = await db
-      .insert(captureConfigurations)
-      .values({ projectId: project.id, name: "Default" })
-      .returning();
-    await use(created!);
+  // eslint-disable-next-line no-empty-pattern
+  captureConfiguration: async ({}, use) => {
+    await use({ browser: "chromium", viewportWidth: 1280, viewportHeight: 800 });
   },
 
   build: async ({ project, user }, use) => {

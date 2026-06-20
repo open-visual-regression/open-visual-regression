@@ -47,6 +47,7 @@ export const createBuild = os.builds.createBuild
         name: input.name,
         author: input.author,
         targets: input.targets,
+        viewports: input.viewports,
       },
       context.apiKey.referenceId,
     );
@@ -141,14 +142,12 @@ export const getOne = os.builds.getOne
       throw new ORPCError("NOT_FOUND");
     }
 
-    const [snapshots, diffs, captureConfigurations] = await Promise.all([
+    const [snapshots, diffs] = await Promise.all([
       dbClient.snapshots.findByBuild(build.id),
       dbClient.diffs.findByBuild(build.id),
-      dbClient.captureConfigurations.findByProject({ projectId: build.projectId }),
     ]);
 
     const diffBySnapshotId = new Map(diffs.map((diff) => [diff.snapshotId, diff]));
-    const captureConfigurationById = new Map(captureConfigurations.map((cc) => [cc.id, cc]));
 
     return {
       build: {
@@ -163,7 +162,6 @@ export const getOne = os.builds.getOne
       },
       snapshots: snapshots.map((snapshot) => {
         const diff = diffBySnapshotId.get(snapshot.id);
-        const captureConfiguration = captureConfigurationById.get(snapshot.captureConfigurationId)!;
 
         return {
           id: snapshot.id,
@@ -175,13 +173,9 @@ export const getOne = os.builds.getOne
           diffId: diff?.id ?? null,
           diffImagePath: diff?.diffImagePath ?? null,
           diffPercent: diff?.diffPercent ?? null,
-          captureConfiguration: {
-            id: captureConfiguration.id,
-            name: captureConfiguration.name,
-            browser: captureConfiguration.browser,
-            viewportWidth: captureConfiguration.viewportWidth,
-            viewportHeight: captureConfiguration.viewportHeight,
-          },
+          browser: snapshot.browser,
+          viewportWidth: snapshot.viewportWidth,
+          viewportHeight: snapshot.viewportHeight === 0 ? null : snapshot.viewportHeight,
         };
       }),
     };

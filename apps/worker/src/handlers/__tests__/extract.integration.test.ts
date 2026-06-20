@@ -9,7 +9,7 @@ describe("extract", () => {
       build,
     }) => {
       await failed({
-        data: { buildId: build.id, artifactPath: build.artifactPath },
+        data: { buildId: build.id, artifactPath: build.artifactPath, targets: [], viewports: [] },
       });
 
       expect(await dbClient.builds.findById(build.id)).toMatchObject({ status: "error" });

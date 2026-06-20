@@ -9,7 +9,7 @@ describe("baselines", () => {
       project,
       captureConfiguration,
     }) => {
-      const result = await getBaseline(project.id, captureConfiguration.id, "story-a");
+      const result = await getBaseline(project.id, captureConfiguration, "story-a");
 
       expect(result).toBeUndefined();
     });
@@ -24,20 +24,20 @@ describe("baselines", () => {
         values: [
           {
             buildId: mainBuild.id,
-            captureConfigurationId: captureConfiguration.id,
+            ...captureConfiguration,
             targetId: "story-a",
           },
         ],
       });
       await dbClient.baselines.upsert({
         projectId: project.id,
-        captureConfigurationId: captureConfiguration.id,
+        ...captureConfiguration,
         targetId: "story-a",
         snapshotId: snapshot!.id,
         approvedBy: user.id,
       });
 
-      const result = await getBaseline(project.id, captureConfiguration.id, "story-a");
+      const result = await getBaseline(project.id, captureConfiguration, "story-a");
 
       expect(result).toMatchObject({ snapshotId: snapshot!.id });
     });
@@ -54,7 +54,7 @@ describe("baselines", () => {
         values: [
           {
             buildId: mainBuild.id,
-            captureConfigurationId: captureConfiguration.id,
+            ...captureConfiguration,
             targetId: "story-a",
           },
         ],
@@ -63,7 +63,7 @@ describe("baselines", () => {
 
       await promoteBaseline(diff!.id, user.id);
 
-      const baseline = await getBaseline(project.id, captureConfiguration.id, "story-a");
+      const baseline = await getBaseline(project.id, captureConfiguration, "story-a");
       expect(baseline).toMatchObject({ snapshotId: snapshot!.id, approvedBy: user.id });
     });
 
@@ -83,7 +83,7 @@ describe("baselines", () => {
         values: [
           {
             buildId: featureBuild!.id,
-            captureConfigurationId: captureConfiguration.id,
+            ...captureConfiguration,
             targetId: "story-b",
           },
         ],
@@ -92,7 +92,7 @@ describe("baselines", () => {
 
       await promoteBaseline(diff!.id, user.id);
 
-      const baseline = await getBaseline(project.id, captureConfiguration.id, "story-b");
+      const baseline = await getBaseline(project.id, captureConfiguration, "story-b");
       expect(baseline).toBeUndefined();
     });
   });

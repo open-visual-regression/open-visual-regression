@@ -85,6 +85,20 @@
       "when": 1781836771620,
       "tag": "0011_wonderful_blackheart",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1781900035259,
+      "tag": "0012_good_selene",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1781900056413,
+      "tag": "0013_hard_nemesis",
+      "breakpoints": true
     }
   ]
 }

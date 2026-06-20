@@ -1,14 +1,14 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeftIcon, Icon } from "@ovr/ui/components/icon";
+import { GlobeIcon, Icon } from "@ovr/ui/components/icon";
+import { ResolutionIcon } from "@ovr/ui/components/resolution-icon";
 import { Typography } from "@ovr/ui/components/typography";
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
 
 type SnapshotPageProps = PageProps<"/projects/[projectId]/builds/[buildId]/snapshots/[snapshotId]">;
 
-export default async function DiffPage(props: SnapshotPageProps) {
-  const { projectId, buildId, snapshotId } = await props.params;
+export default async function SnapshotPage(props: SnapshotPageProps) {
+  const { buildId, snapshotId } = await props.params;
 
   const [[buildError, buildResult], [snapshotError, snapshotResult], [diffError, diffResult]] =
     await Promise.all([
@@ -37,26 +37,19 @@ export default async function DiffPage(props: SnapshotPageProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <Link
-        href={`/projects/${projectId}/builds/${buildId}`}
-        className="flex items-center gap-1 text-ovr-fg-secondary hover:text-ovr-fg-primary"
-      >
-        <Icon icon={ChevronLeftIcon} size={14} />
-        <Typography variant="caption">back to {build.name}</Typography>
-      </Link>
-
       <div className="flex flex-col gap-1">
         <Typography variant="h1" as="h1">
-          {snapshot.targetTitle}
+          {snapshot.targetTitle} {snapshot.targetName}
         </Typography>
-        <Typography variant="caption">
-          {snapshot.targetName} · {snapshot.captureConfiguration.name} ·{" "}
-          {snapshot.captureConfiguration.browser} · {snapshot.captureConfiguration.viewportWidth}×
-          {snapshot.captureConfiguration.viewportHeight}
+        <Typography variant="caption">{build.name}</Typography>
+        <Typography variant="caption" className="flex items-center gap-1">
+          <Icon icon={GlobeIcon} size={12} />
+          {snapshot.browser} · <ResolutionIcon width={snapshot.viewportWidth} size={12} />
+          {snapshot.viewportWidth}×{snapshot.viewportHeight ?? "auto"}
         </Typography>
       </div>
 
-      <div className="relative min-h-80 overflow-hidden rounded-card border border-ovr-border bg-ovr-inset bg-pixel-grid">
+      <div className="relative overflow-hidden rounded-card border border-ovr-border bg-ovr-inset bg-pixel-grid w-1/2">
         {imagePath ? (
           <img
             src={`/api/storage/${imagePath}`}

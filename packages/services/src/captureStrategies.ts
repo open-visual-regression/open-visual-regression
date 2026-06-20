@@ -13,9 +13,34 @@ type StorybookChannel = {
   emit: (event: string, payload: unknown) => void;
 };
 
+type StorybookPreview = {
+  currentRender?: {
+    story?: { id?: string; parameters?: Record<string, unknown> };
+  };
+};
+
 declare global {
   var __STORYBOOK_ADDONS_CHANNEL__: StorybookChannel | undefined;
+  var __STORYBOOK_PREVIEW__: StorybookPreview | undefined;
 }
+
+export type OvrStoryParameterViewport =
+  | string
+  | { browser?: string; width: number; height?: number };
+
+export type OvrStoryParameters = { viewports?: OvrStoryParameterViewport[] };
+
+// `getStoryContext` takes the prepared story object, not a story id, so the
+// just-rendered story's own parameters (set on currentRender.story) are read
+// directly instead.
+export const readOvrStoryParameters = (targetId: string): OvrStoryParameters | null => {
+  const story = globalThis.__STORYBOOK_PREVIEW__?.currentRender?.story;
+  if (story?.id !== targetId) {
+    return null;
+  }
+  const ovr = story.parameters?.ovr;
+  return (ovr as OvrStoryParameters | undefined) ?? null;
+};
 
 const waitForStorybookTargetRendered = ({
   targetId,

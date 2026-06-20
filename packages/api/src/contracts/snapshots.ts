@@ -10,13 +10,9 @@ export const snapshotLogSchema = z.object({
 
 export const snapshotSchema = z.object({
   id: z.uuidv7(),
-  captureConfiguration: z.object({
-    id: z.uuidv7(),
-    name: z.string().min(1),
-    browser: z.string().min(1),
-    viewportWidth: z.number().int(),
-    viewportHeight: z.number().int(),
-  }),
+  browser: z.string().min(1),
+  viewportWidth: z.number().int(),
+  viewportHeight: z.number().int().nullable(),
   targetName: z.string(),
   targetTitle: z.string(),
   imagePath: z.string().nullable(),

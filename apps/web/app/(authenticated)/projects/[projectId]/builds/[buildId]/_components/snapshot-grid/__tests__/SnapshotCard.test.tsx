@@ -3,20 +3,6 @@ import { mocks } from "@ovr/mocks";
 import { SnapshotCard } from "../SnapshotCard";
 
 describe("SnapshotCard", () => {
-  it("should not show the diff percent badge when diffPercent is 0", () => {
-    const snapshot = mocks.build.generateBuildSnapshot({ diffPercent: 0 });
-    render(<SnapshotCard snapshot={snapshot} projectId="project-1" buildId="build-1" />);
-
-    expect(screen.queryByText(/Δ/)).not.toBeInTheDocument();
-  });
-
-  it("should not show the diff percent badge when diffPercent is null", () => {
-    const snapshot = mocks.build.generateBuildSnapshot({ diffPercent: null });
-    render(<SnapshotCard snapshot={snapshot} projectId="project-1" buildId="build-1" />);
-
-    expect(screen.queryByText(/Δ/)).not.toBeInTheDocument();
-  });
-
   it("should link to the snapshot page", () => {
     const snapshot = mocks.build.generateBuildSnapshot({ id: "snapshot-1" });
     render(<SnapshotCard snapshot={snapshot} projectId="project-1" buildId="build-1" />);

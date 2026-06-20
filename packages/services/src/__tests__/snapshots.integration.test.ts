@@ -72,7 +72,7 @@ describe("snapshots", () => {
         values: [
           {
             buildId: mainBuild.id,
-            captureConfigurationId: captureConfiguration.id,
+            ...captureConfiguration,
             targetId: "story-a",
           },
         ],
@@ -108,7 +108,7 @@ describe("snapshots", () => {
         values: [
           {
             buildId: mainBuild.id,
-            captureConfigurationId: captureConfiguration.id,
+            ...captureConfiguration,
             targetId: "story-a",
           },
         ],
@@ -134,7 +134,7 @@ describe("snapshots", () => {
         values: [
           {
             buildId: featureBuild.id,
-            captureConfigurationId: captureConfiguration.id,
+            ...captureConfiguration,
             targetId: "story-a",
             status: "captured",
             imagePath: `builds/${featureBuild.id}/snapshots/no-baseline.png`,
@@ -176,14 +176,14 @@ describe("snapshots", () => {
         values: [
           {
             buildId: featureBuild.id,
-            captureConfigurationId: captureConfiguration.id,
+            ...captureConfiguration,
             targetId: "story-a",
             status: "captured",
             imagePath: baselinePath,
           },
           {
             buildId: featureBuild.id,
-            captureConfigurationId: captureConfiguration.id,
+            ...captureConfiguration,
             targetId: "story-a",
             status: "captured",
             imagePath: capturePath,
@@ -192,7 +192,7 @@ describe("snapshots", () => {
       });
       await dbClient.baselines.upsert({
         projectId: project.id,
-        captureConfigurationId: captureConfiguration.id,
+        ...captureConfiguration,
         targetId: "story-a",
         snapshotId: baselineSnapshot!.id,
         approvedBy: featureBuild.createdBy,
@@ -223,14 +223,14 @@ describe("snapshots", () => {
         values: [
           {
             buildId: featureBuild.id,
-            captureConfigurationId: captureConfiguration.id,
+            ...captureConfiguration,
             targetId: "story-b",
             status: "captured",
             imagePath: baselinePath,
           },
           {
             buildId: featureBuild.id,
-            captureConfigurationId: captureConfiguration.id,
+            ...captureConfiguration,
             targetId: "story-b",
             status: "captured",
             imagePath: capturePath,
@@ -239,7 +239,7 @@ describe("snapshots", () => {
       });
       await dbClient.baselines.upsert({
         projectId: project.id,
-        captureConfigurationId: captureConfiguration.id,
+        ...captureConfiguration,
         targetId: "story-b",
         snapshotId: baselineSnapshot!.id,
         approvedBy: featureBuild.createdBy,
@@ -271,7 +271,7 @@ describe("snapshots", () => {
         values: [
           {
             buildId: mainBuild.id,
-            captureConfigurationId: captureConfiguration.id,
+            ...captureConfiguration,
             targetId: "story-c",
             status: "captured",
             imagePath: capturePath,
@@ -287,11 +287,11 @@ describe("snapshots", () => {
         reviewStatus: "not_required",
       });
 
-      const baseline = await dbClient.baselines.find(
-        project.id,
-        captureConfiguration.id,
-        "story-c",
-      );
+      const baseline = await dbClient.baselines.find({
+        projectId: project.id,
+        ...captureConfiguration,
+        targetId: "story-c",
+      });
       expect(baseline?.snapshotId).toBe(captureSnapshotRow!.id);
     }, 30000);
 
@@ -309,14 +309,14 @@ describe("snapshots", () => {
         values: [
           {
             buildId: mainBuild.id,
-            captureConfigurationId: captureConfiguration.id,
+            ...captureConfiguration,
             targetId: "story-d",
             status: "captured",
             imagePath: baselinePath,
           },
           {
             buildId: mainBuild.id,
-            captureConfigurationId: captureConfiguration.id,
+            ...captureConfiguration,
             targetId: "story-d",
             status: "captured",
             imagePath: capturePath,
@@ -325,7 +325,7 @@ describe("snapshots", () => {
       });
       await dbClient.baselines.upsert({
         projectId: project.id,
-        captureConfigurationId: captureConfiguration.id,
+        ...captureConfiguration,
         targetId: "story-d",
         snapshotId: baselineSnapshot!.id,
         approvedBy: mainBuild.createdBy,
@@ -341,11 +341,11 @@ describe("snapshots", () => {
       });
       expect(result!.pixelDiffCount).toBeGreaterThan(0);
 
-      const baseline = await dbClient.baselines.find(
-        project.id,
-        captureConfiguration.id,
-        "story-d",
-      );
+      const baseline = await dbClient.baselines.find({
+        projectId: project.id,
+        ...captureConfiguration,
+        targetId: "story-d",
+      });
       expect(baseline?.snapshotId).toBe(captureSnapshotRow!.id);
     }, 30000);
   });

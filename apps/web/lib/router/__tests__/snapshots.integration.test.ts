@@ -5,7 +5,7 @@ import { test, describe, expect } from "@/lib/testing/fixtures";
 import { serverClient } from "@/lib/router";
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
-import { captureConfigurations, organization, projects } from "@ovr/db/schema";
+import { organization, projects } from "@ovr/db/schema";
 import type { AddProjectInputSchema } from "@ovr/api/contracts/projects";
 import type { User } from "@/lib/auth/auth";
 
@@ -18,14 +18,11 @@ const TEST_PROJECT: AddProjectInputSchema = {
   diffThreshold: 0.05,
 };
 
+const VIEWPORT = { browser: "chromium", viewportWidth: 1280, viewportHeight: 800 };
+
 const createProjectAndBuild = async (admin: User) => {
   const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
   const projectId = addResult!.projectId;
-
-  const [captureConfiguration] = await db
-    .insert(captureConfigurations)
-    .values({ projectId, name: "Default" })
-    .returning();
 
   const build = await dbClient.builds.create({
     projectId,
@@ -35,7 +32,7 @@ const createProjectAndBuild = async (admin: User) => {
     createdBy: admin.id,
   });
 
-  return { projectId, captureConfiguration: captureConfiguration!, build: build! };
+  return { projectId, build: build! };
 };
 
 describe("snapshots", () => {
@@ -74,11 +71,6 @@ describe("snapshots", () => {
         })
         .returning();
 
-      const [captureConfiguration] = await db
-        .insert(captureConfigurations)
-        .values({ projectId: otherProject!.id, name: "Default" })
-        .returning();
-
       const otherBuild = await dbClient.builds.create({
         projectId: otherProject!.id,
         branch: "main",
@@ -91,7 +83,7 @@ describe("snapshots", () => {
         values: [
           {
             buildId: otherBuild!.id,
-            captureConfigurationId: captureConfiguration!.id,
+            ...VIEWPORT,
             targetId: "story-a",
           },
         ],
@@ -102,15 +94,15 @@ describe("snapshots", () => {
       expect(error?.code).toBe("NOT_FOUND");
     });
 
-    test("returns the snapshot with its capture configuration and error logs", async ({
+    test("returns the snapshot with its browser and viewport, and error logs", async ({
       admin,
     }) => {
-      const { build, captureConfiguration } = await createProjectAndBuild(admin);
+      const { build } = await createProjectAndBuild(admin);
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
           {
             buildId: build.id,
-            captureConfigurationId: captureConfiguration.id,
+            ...VIEWPORT,
             targetId: "story-a",
             targetTitle: "Story",
             targetName: "A",
@@ -133,7 +125,9 @@ describe("snapshots", () => {
         targetName: "A",
         targetTitle: "Story",
         imagePath: "projects/p/builds/b/snapshots/s.png",
-        captureConfiguration: { id: captureConfiguration.id, name: "Default" },
+        browser: VIEWPORT.browser,
+        viewportWidth: VIEWPORT.viewportWidth,
+        viewportHeight: VIEWPORT.viewportHeight,
       });
       expect(result?.snapshot.errorLogs).toMatchObject([
         { level: "error", message: "target failed to render" },

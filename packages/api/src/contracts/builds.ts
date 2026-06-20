@@ -5,6 +5,16 @@ export const buildStatusSchema = z.enum(["pending", "needs_review", "passed", "r
 
 export type BuildStatus = z.infer<typeof buildStatusSchema>;
 
+export const viewportSchema = z.object({
+  name: z.string().min(1).optional(),
+  browser: z.enum(["chromium", "firefox", "webkit"]),
+  viewportWidth: z.number().int().min(320).max(3840),
+  viewportHeight: z.number().int().min(240).max(2160).optional(),
+  default: z.boolean().optional(),
+});
+
+export type ViewportSchema = z.infer<typeof viewportSchema>;
+
 export const createBuildInputSchema = z.object({
   branch: z.string().min(1),
   commitSha: z.string().min(1),
@@ -17,6 +27,7 @@ export const createBuildInputSchema = z.object({
       name: z.string().min(1),
     }),
   ),
+  viewports: z.array(viewportSchema).min(1),
 });
 
 export type CreateBuildInputSchema = z.infer<typeof createBuildInputSchema>;
@@ -91,13 +102,9 @@ export const buildSnapshotSchema = z.object({
   diffId: z.uuidv7().nullable(),
   diffImagePath: z.string().nullable(),
   diffPercent: z.number().nullable(),
-  captureConfiguration: z.object({
-    id: z.uuidv7(),
-    name: z.string().min(1),
-    browser: z.string().min(1),
-    viewportWidth: z.number().int(),
-    viewportHeight: z.number().int(),
-  }),
+  browser: z.string().min(1),
+  viewportWidth: z.number().int(),
+  viewportHeight: z.number().int().nullable(),
 });
 
 export type BuildSnapshotSchema = z.infer<typeof buildSnapshotSchema>;

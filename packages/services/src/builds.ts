@@ -1,9 +1,16 @@
 import { dbClient } from "@ovr/db/client";
-import { db } from "@ovr/db/db";
 import { v7 as uuidv7 } from "uuid";
 
 import { enqueueExtract } from "./lib/queue";
 import type { Result } from "./types";
+
+type Viewport = {
+  name?: string;
+  browser: string;
+  viewportWidth: number;
+  viewportHeight?: number;
+  default?: boolean;
+};
 
 type CreateBuildInput = {
   projectId: string;
@@ -12,6 +19,7 @@ type CreateBuildInput = {
   name?: string;
   author?: string;
   targets: { id: string; title: string; name: string }[];
+  viewports: Viewport[];
 };
 
 export const getArtifactPath = (buildId: string): string => `builds/${buildId}/artifact.tar.gz`;
@@ -29,42 +37,25 @@ export const createBuild = async (
   const buildId = uuidv7();
 
   try {
-    await db.transaction(async (tx) => {
-      await dbClient.builds.create({
-        id: buildId,
-        projectId: input.projectId,
-        branch: input.branch,
-        commitSha: input.commitSha,
-        name: input.name,
-        author: input.author,
-        status: "pending",
-        captureMode: "worker",
-        artifactPath: getArtifactPath(buildId),
-        createdBy: callerId,
-        tx,
-      });
-
-      const captureConfigurations = await dbClient.captureConfigurations.findByProject({
-        projectId: input.projectId,
-        tx,
-      });
-
-      return dbClient.snapshots.createMany({
-        values: input.targets.flatMap((target) =>
-          captureConfigurations.map((captureConfiguration) => ({
-            buildId,
-            captureConfigurationId: captureConfiguration.id,
-            targetId: target.id,
-            targetTitle: target.title,
-            targetName: target.name,
-            status: "pending" as const,
-          })),
-        ),
-        tx,
-      });
+    await dbClient.builds.create({
+      id: buildId,
+      projectId: input.projectId,
+      branch: input.branch,
+      commitSha: input.commitSha,
+      name: input.name,
+      author: input.author,
+      status: "pending",
+      captureMode: "worker",
+      artifactPath: getArtifactPath(buildId),
+      createdBy: callerId,
     });
 
-    await enqueueExtract({ buildId, artifactPath: getArtifactPath(buildId) });
+    await enqueueExtract({
+      buildId,
+      artifactPath: getArtifactPath(buildId),
+      targets: input.targets,
+      viewports: input.viewports,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     await dbClient.builds.updateStatus(buildId, "error", message);

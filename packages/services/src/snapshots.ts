@@ -1,9 +1,6 @@
-import http from "node:http";
-import path from "node:path";
-
 import { PNG } from "pngjs";
 import pixelmatch from "pixelmatch";
-import { chromium } from "playwright";
+import { chromium, firefox, webkit } from "playwright";
 
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
@@ -11,51 +8,25 @@ import { storage } from "@ovr/storage";
 
 import { promoteBaseline } from "./baselines";
 import { detectCaptureStrategy } from "./captureStrategies";
-import { getContentType, getStaticPath } from "./extract";
+import { BOOT_TIMEOUT_MS, RENDER_TIMEOUT_MS } from "./lib/captureTimeouts";
+import { startStaticProxy } from "./lib/staticProxy";
 import { enqueueDiff, enqueueFinalize } from "./lib/queue";
 
 const DEFAULT_PIXELMATCH_THRESHOLD = 0.1;
 
-const startStaticProxy = (buildId: string): Promise<{ origin: string; close: () => void }> =>
-  new Promise((resolve) => {
-    const server = http.createServer((req, res) => {
-      const requestedPath = decodeURIComponent((req.url ?? "/").split("?")[0]!).replace(/^\/+/, "");
-      const relativePath = path.posix.normalize(requestedPath);
-
-      if (relativePath === ".." || relativePath.startsWith("../")) {
-        res.writeHead(403);
-        res.end();
-        return;
-      }
-
-      storage
-        .getFileStream(getStaticPath(buildId, relativePath))
-        .then((stream) => {
-          res.writeHead(200, { "Content-Type": getContentType(relativePath) });
-          stream.pipe(res);
-        })
-        .catch(() => {
-          res.writeHead(404);
-          res.end();
-        });
-    });
-
-    server.listen(0, "127.0.0.1", () => {
-      const address = server.address();
-      if (address === null || typeof address === "string") {
-        throw new Error("Expected the static proxy server to bind to a TCP port");
-      }
-      resolve({
-        origin: `http://127.0.0.1:${address.port}`,
-        close: () => server.close(),
-      });
-    });
-  });
-
 type ConsoleLog = { level: string; message: string };
 
-const BOOT_TIMEOUT_MS = 10_000;
-const RENDER_TIMEOUT_MS = 30_000;
+const DEFAULT_VIEWPORT_HEIGHT = 800;
+
+const BROWSER_LAUNCHERS = { chromium, firefox, webkit };
+
+const getBrowserLauncher = (browser: string) => {
+  const launcher = BROWSER_LAUNCHERS[browser as keyof typeof BROWSER_LAUNCHERS];
+  if (!launcher) {
+    throw new Error(`Unsupported browser: ${browser}`);
+  }
+  return launcher;
+};
 
 export const captureSnapshot = async (snapshotId: string): Promise<void> => {
   const snapshot = await dbClient.snapshots.findById(snapshotId);
@@ -63,17 +34,16 @@ export const captureSnapshot = async (snapshotId: string): Promise<void> => {
     throw new Error(`Snapshot not found: ${snapshotId}`);
   }
 
-  const [build, captureConfiguration] = await Promise.all([
-    dbClient.builds.findById(snapshot.buildId),
-    dbClient.captureConfigurations.findById(snapshot.captureConfigurationId),
-  ]);
+  const build = await dbClient.builds.findById(snapshot.buildId);
 
-  if (!build || !captureConfiguration) {
-    throw new Error(`Missing build or capture configuration for snapshot: ${snapshotId}`);
+  if (!build) {
+    throw new Error(`Missing build for snapshot: ${snapshotId}`);
   }
 
+  const fullPage = snapshot.viewportHeight === 0;
+
   const proxy = await startStaticProxy(build.id);
-  const browser = await chromium.launch();
+  const browser = await getBrowserLauncher(snapshot.browser).launch();
 
   const logs: ConsoleLog[] = [];
 
@@ -81,8 +51,8 @@ export const captureSnapshot = async (snapshotId: string): Promise<void> => {
     try {
       const context = await browser.newContext({
         viewport: {
-          width: captureConfiguration.viewportWidth,
-          height: captureConfiguration.viewportHeight,
+          width: snapshot.viewportWidth,
+          height: fullPage ? DEFAULT_VIEWPORT_HEIGHT : snapshot.viewportHeight,
         },
       });
       const page = await context.newPage();
@@ -117,7 +87,7 @@ export const captureSnapshot = async (snapshotId: string): Promise<void> => {
         logs.push({ level: "error", message: renderResult.error ?? "target failed to render" });
       }
 
-      return { screenshot: await page.screenshot(), renderFailed: !renderResult.ok };
+      return { screenshot: await page.screenshot({ fullPage }), renderFailed: !renderResult.ok };
     } finally {
       await browser.close();
       proxy.close();
@@ -178,11 +148,13 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
 
   const isMainBranch = build.branch === project.gitMainBranch;
 
-  const baseline = await dbClient.baselines.find(
-    project.id,
-    snapshot.captureConfigurationId,
-    snapshot.targetId,
-  );
+  const baseline = await dbClient.baselines.find({
+    projectId: project.id,
+    browser: snapshot.browser,
+    viewportWidth: snapshot.viewportWidth,
+    viewportHeight: snapshot.viewportHeight,
+    targetId: snapshot.targetId,
+  });
 
   if (!snapshot.imagePath) {
     throw new Error(`Snapshot has no captured image: ${snapshotId}`);

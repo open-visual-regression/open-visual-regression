@@ -36,7 +36,6 @@ const columns = columnHelper.columns([
     meta: { className: "text-left w-px" },
     cell: ({ row }) => <BuildStatusBadge status={row.original.status} />,
   }),
-  columnHelper.accessor("branch", { header: "Branch", meta: { className: "text-center w-px" } }),
   columnHelper.accessor("name", {
     header: "Commit",
     cell: ({ row }) => (
@@ -52,10 +51,9 @@ const columns = columnHelper.columns([
       </div>
     ),
   }),
-
+  columnHelper.accessor("branch", { header: "Branch", meta: { className: "w-px" } }),
   columnHelper.accessor("author", {
     header: "Author",
-    meta: { className: "text-center" },
     cell: ({ getValue }) => getValue() ?? "—",
   }),
   columnHelper.accessor("createdAt", {

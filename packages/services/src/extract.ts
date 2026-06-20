@@ -10,32 +10,19 @@ import { dbClient } from "@ovr/db/client";
 import { storage } from "@ovr/storage";
 
 import { enqueueCapture } from "./lib/queue";
+import { getContentType, getStaticPath } from "./lib/staticFiles";
+import { readStoryViewportOverrides, resolveTargetViewports } from "./storyViewports";
+import type { NamedViewport } from "./storyViewports";
 
-const CONTENT_TYPES: Record<string, string> = {
-  ".html": "text/html",
-  ".js": "application/javascript",
-  ".mjs": "application/javascript",
-  ".css": "text/css",
-  ".json": "application/json",
-  ".png": "image/png",
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".gif": "image/gif",
-  ".svg": "image/svg+xml",
-  ".woff": "font/woff",
-  ".woff2": "font/woff2",
-  ".ico": "image/x-icon",
-  ".map": "application/json",
-  ".txt": "text/plain",
-};
+export { getContentType, getStaticPath };
 
-export const getContentType = (filePath: string): string =>
-  CONTENT_TYPES[path.extname(filePath).toLowerCase()] ?? "application/octet-stream";
+type Target = { id: string; title: string; name: string };
 
-export const getStaticPath = (buildId: string, relativePath: string): string =>
-  `builds/${buildId}/static/${relativePath}`;
-
-export const extractBuild = async (buildId: string): Promise<void> => {
+export const extractBuild = async (
+  buildId: string,
+  targets: Target[],
+  viewports: NamedViewport[],
+): Promise<void> => {
   const build = await dbClient.builds.findById(buildId);
 
   if (!build) {
@@ -71,6 +58,26 @@ export const extractBuild = async (buildId: string): Promise<void> => {
   } finally {
     await rm(tmpDir, { recursive: true, force: true });
   }
+
+  const overridesByTarget = await readStoryViewportOverrides(
+    buildId,
+    targets.map((target) => target.id),
+  );
+
+  await dbClient.snapshots.createMany({
+    values: targets.flatMap((target) =>
+      resolveTargetViewports(viewports, overridesByTarget.get(target.id)).map((viewport) => ({
+        buildId,
+        browser: viewport.browser,
+        viewportWidth: viewport.viewportWidth,
+        viewportHeight: viewport.viewportHeight ?? 0,
+        targetId: target.id,
+        targetTitle: target.title,
+        targetName: target.name,
+        status: "pending" as const,
+      })),
+    ),
+  });
 
   const snapshots = await dbClient.snapshots.findByBuild(buildId);
   await Promise.all(

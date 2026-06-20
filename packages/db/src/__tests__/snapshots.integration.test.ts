@@ -8,12 +8,12 @@ describe("snapshots", () => {
         values: [
           {
             buildId: build.id,
-            captureConfigurationId: captureConfiguration.id,
+            ...captureConfiguration,
             targetId: "button--primary",
           },
           {
             buildId: build.id,
-            captureConfigurationId: captureConfiguration.id,
+            ...captureConfiguration,
             targetId: "button--secondary",
           },
         ],
@@ -32,12 +32,12 @@ describe("snapshots", () => {
         values: [
           {
             buildId: build.id,
-            captureConfigurationId: captureConfiguration.id,
+            ...captureConfiguration,
             targetId: "button--primary",
           },
           {
             buildId: build.id,
-            captureConfigurationId: captureConfiguration.id,
+            ...captureConfiguration,
             targetId: "button--secondary",
           },
         ],
@@ -57,12 +57,12 @@ describe("snapshots", () => {
         values: [
           {
             buildId: build.id,
-            captureConfigurationId: captureConfiguration.id,
+            ...captureConfiguration,
             targetId: "button--primary",
           },
           {
             buildId: build.id,
-            captureConfigurationId: captureConfiguration.id,
+            ...captureConfiguration,
             targetId: "button--secondary",
           },
         ],
@@ -75,9 +75,7 @@ describe("snapshots", () => {
   describe("updateStatus", () => {
     test("should update a snapshot's status", async ({ build, captureConfiguration }) => {
       const [snapshot] = await dbClient.snapshots.createMany({
-        values: [
-          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
-        ],
+        values: [{ buildId: build.id, ...captureConfiguration, targetId: "a" }],
       });
 
       const updated = await dbClient.snapshots.updateStatus(snapshot!.id, "captured");
@@ -92,8 +90,8 @@ describe("snapshots", () => {
     }) => {
       const [a] = await dbClient.snapshots.createMany({
         values: [
-          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
-          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "b" },
+          { buildId: build.id, ...captureConfiguration, targetId: "a" },
+          { buildId: build.id, ...captureConfiguration, targetId: "b" },
         ],
       });
 
@@ -107,8 +105,8 @@ describe("snapshots", () => {
     }) => {
       const created = await dbClient.snapshots.createMany({
         values: [
-          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "a" },
-          { buildId: build.id, captureConfigurationId: captureConfiguration.id, targetId: "b" },
+          { buildId: build.id, ...captureConfiguration, targetId: "a" },
+          { buildId: build.id, ...captureConfiguration, targetId: "b" },
         ],
       });
 
