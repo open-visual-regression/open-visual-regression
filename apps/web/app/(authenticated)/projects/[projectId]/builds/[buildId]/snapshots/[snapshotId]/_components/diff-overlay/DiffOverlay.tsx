@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Switch } from "@ovr/ui/components/switch";
 import { Typography } from "@ovr/ui/components/typography";
+import { cn } from "@ovr/ui/lib/utils";
 
 export type DiffOverlayProps = {
   label: string;
@@ -33,8 +34,8 @@ export const DiffOverlay = ({ label, imagePath, diffImagePath, alt }: DiffOverla
           <img
             src={`/api/storage/${imagePath}`}
             alt={alt}
-            className="absolute top-0 left-0 block h-auto"
-            style={{ width: `${imageWidthPercent}%` }}
+            className="absolute top-0 left-0 block h-auto w-[var(--image-width)]"
+            style={{ "--image-width": `${imageWidthPercent}%` } as React.CSSProperties}
             onLoad={(event) => setImageNaturalWidth(event.currentTarget.naturalWidth)}
           />
         ) : (
@@ -45,8 +46,7 @@ export const DiffOverlay = ({ label, imagePath, diffImagePath, alt }: DiffOverla
         <img
           src={`/api/storage/${diffImagePath}`}
           alt={`diff overlay of ${alt}`}
-          className="relative block h-auto w-full"
-          style={{ opacity: showDiff ? 1 : 0 }}
+          className={cn("relative block h-auto w-full", showDiff ? "opacity-100" : "opacity-0")}
           onLoad={(event) => setDiffNaturalWidth(event.currentTarget.naturalWidth)}
         />
       </div>

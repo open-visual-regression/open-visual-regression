@@ -25,30 +25,37 @@ const diff: DiffSchema = {
 };
 
 describe("SnapshotComparison", () => {
-  it("should render only the new snapshot when there is no diff", () => {
-    render(<SnapshotComparison snapshot={snapshot} diff={null} />);
+  it.each([
+    ["there is no diff", null],
+    ["the diff has no baseline", { ...diff, baselineSnapshot: null }],
+  ])(
+    "should show only the new snapshot, with no baseline and no diff controls, when %s",
+    (_description, diffInput) => {
+      render(<SnapshotComparison snapshot={snapshot} diff={diffInput} />);
 
-    expect(screen.getByRole("img", { name: "snapshot of UI/Button Kitchen Sink" })).toBeVisible();
-    expect(
-      screen.queryByRole("img", { name: "baseline snapshot of UI/Button Kitchen Sink" }),
-    ).not.toBeInTheDocument();
-  });
+      expect(screen.getByRole("img", { name: "snapshot of UI/Button Kitchen Sink" })).toBeVisible();
+      expect(screen.queryByText("baseline")).not.toBeInTheDocument();
+      expect(screen.queryByRole("switch")).not.toBeInTheDocument();
+    },
+  );
 
-  it("should render only the new snapshot when the diff has no baseline", () => {
-    render(<SnapshotComparison snapshot={snapshot} diff={{ ...diff, baselineSnapshot: null }} />);
-
-    expect(screen.getByRole("img", { name: "snapshot of UI/Button Kitchen Sink" })).toBeVisible();
-    expect(
-      screen.queryByRole("img", { name: "baseline snapshot of UI/Button Kitchen Sink" }),
-    ).not.toBeInTheDocument();
-  });
-
-  it("should render the side-by-side comparison when the diff has a baseline", () => {
+  it("should show the baseline alongside the new snapshot with a diff toggle when there is a visible diff", () => {
     render(<SnapshotComparison snapshot={snapshot} diff={diff} />);
 
-    expect(screen.getByRole("img", { name: "snapshot of UI/Button Kitchen Sink" })).toBeVisible();
     expect(
       screen.getByRole("img", { name: "baseline snapshot of UI/Button Kitchen Sink" }),
     ).toBeVisible();
+    expect(screen.getByRole("img", { name: "snapshot of UI/Button Kitchen Sink" })).toBeVisible();
+    expect(screen.getByRole("switch", { checked: true })).toBeVisible();
+  });
+
+  it("should show the baseline alongside the new snapshot with no diff toggle when there is a baseline but no visible diff", () => {
+    render(<SnapshotComparison snapshot={snapshot} diff={{ ...diff, diffImagePath: null }} />);
+
+    expect(
+      screen.getByRole("img", { name: "baseline snapshot of UI/Button Kitchen Sink" }),
+    ).toBeVisible();
+    expect(screen.getByRole("img", { name: "snapshot of UI/Button Kitchen Sink" })).toBeVisible();
+    expect(screen.queryByRole("switch")).not.toBeInTheDocument();
   });
 });
