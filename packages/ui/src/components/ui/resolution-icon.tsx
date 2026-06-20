@@ -6,11 +6,19 @@ type ResolutionIconProps = {
   className?: string;
 };
 
-const ResolutionIcon = ({ width, size = 16, className }: ResolutionIconProps) => {
-  const icon = width < 768 ? SmartphoneIcon : width < 1024 ? TabletIcon : MonitorIcon;
-
-  return <Icon icon={icon} size={size} className={className} />;
+const getIconForWidth = (width: number) => {
+  if (width < 768) {
+    return SmartphoneIcon;
+  }
+  if (width < 1024) {
+    return TabletIcon;
+  }
+  return MonitorIcon;
 };
+
+const ResolutionIcon = ({ width, size = 16, className }: ResolutionIconProps) => (
+  <Icon icon={getIconForWidth(width)} size={size} className={className} />
+);
 
 export { ResolutionIcon };
 export type { ResolutionIconProps };
