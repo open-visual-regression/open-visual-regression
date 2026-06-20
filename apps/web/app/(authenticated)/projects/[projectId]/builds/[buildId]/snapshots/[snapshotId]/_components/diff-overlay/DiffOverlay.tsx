@@ -34,8 +34,8 @@ export const DiffOverlay = ({ label, imagePath, diffImagePath, alt }: DiffOverla
           <img
             src={`/api/storage/${imagePath}`}
             alt={alt}
-            className="absolute top-0 left-0 block h-auto w-[var(--image-width)]"
-            style={{ "--image-width": `${imageWidthPercent}%` } as React.CSSProperties}
+            className="absolute top-0 left-0 block h-auto"
+            style={{ width: `${imageWidthPercent}%` }}
             onLoad={(event) => setImageNaturalWidth(event.currentTarget.naturalWidth)}
           />
         ) : (
