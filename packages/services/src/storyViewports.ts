@@ -70,28 +70,36 @@ const readOneStoryOverride = async (
   }
 };
 
+const readStoryOverridesSequentially = async (
+  browser: Browser,
+  proxy: StaticProxy,
+  targetIds: readonly string[],
+): Promise<OverrideEntry[]> => {
+  if (targetIds.length === 0) {
+    return [];
+  }
+
+  const [targetId, ...rest] = targetIds;
+  const entry = await readOneStoryOverride(browser, proxy, targetId!);
+  const remaining = await readStoryOverridesSequentially(browser, proxy, rest);
+
+  return entry ? [entry, ...remaining] : remaining;
+};
+
+const partition = <T>(items: readonly T[], parts: number): T[][] =>
+  Array.from({ length: parts }, (_, i) => items.filter((_, index) => index % parts === i));
+
 const readStoryOverrides = async (
   browser: Browser,
   proxy: StaticProxy,
   targetIds: readonly string[],
 ): Promise<OverrideEntry[]> => {
-  const queue = [...targetIds];
-  const entries: OverrideEntry[] = [];
-
-  const worker = async (): Promise<void> => {
-    for (let targetId = queue.shift(); targetId !== undefined; targetId = queue.shift()) {
-      const entry = await readOneStoryOverride(browser, proxy, targetId);
-      if (entry) {
-        entries.push(entry);
-      }
-    }
-  };
-
-  await Promise.all(
-    Array.from({ length: Math.min(OVERRIDE_READ_CONCURRENCY, targetIds.length) }, worker),
+  const groups = partition(targetIds, Math.min(OVERRIDE_READ_CONCURRENCY, targetIds.length));
+  const results = await Promise.all(
+    groups.map((group) => readStoryOverridesSequentially(browser, proxy, group)),
   );
 
-  return entries;
+  return results.flat();
 };
 
 export const readStoryViewportOverrides = async (
