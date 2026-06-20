@@ -8,20 +8,33 @@ import { toast as sonnerToast } from "sonner";
 import { cn } from "../../lib/utils";
 
 const toastVariants = cva(
-  "group/toast relative flex items-stretch overflow-hidden rounded-lg border border-l-3 shadow-ovr-popover w-85",
+  "group/toast relative flex items-stretch overflow-hidden rounded-lg bg-ovr-raised shadow-ovr-popover w-85",
   {
     variants: {
       variant: {
-        default: "border-ovr-status-pending bg-ovr-raised text-ovr-status-pending",
-        success: "border-ovr-diff-add  bg-ovr-raised text-ovr-diff-add",
-        warning: "border-ovr-accent    bg-ovr-raised text-ovr-accent",
-        destructive: "border-ovr-remove    bg-ovr-raised text-ovr-remove",
-        muted: "border-ovr-fg-secondary bg-ovr-raised text-ovr-fg-secondary",
+        default: "text-ovr-status-pending",
+        success: "text-ovr-diff-add",
+        warning: "text-ovr-accent",
+        destructive: "text-ovr-remove",
+        muted: "text-ovr-fg-secondary",
       },
     },
     defaultVariants: { variant: "default" },
   },
 );
+
+const toastBarVariants = cva("w-[3px] flex-shrink-0", {
+  variants: {
+    variant: {
+      default: "bg-ovr-status-pending",
+      success: "bg-ovr-diff-add",
+      warning: "bg-ovr-accent",
+      destructive: "bg-ovr-remove",
+      muted: "bg-ovr-fg-secondary",
+    },
+  },
+  defaultVariants: { variant: "default" },
+});
 
 export type ToastProps = {
   icon?: React.ReactNode;
@@ -51,6 +64,7 @@ const Toast = ({
       className={cn(toastVariants({ variant }), className)}
       {...props}
     >
+      <div className={toastBarVariants({ variant })} />
       <div className="flex flex-1 items-start gap-2.5 px-3 py-2.5 min-w-0">
         {icon && (
           <span className="mt-px flex-shrink-0 text-body leading-none text-current">{icon}</span>

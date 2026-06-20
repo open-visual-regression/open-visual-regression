@@ -5,6 +5,13 @@ export default defineConfig({
   format: ["esm"],
   target: "node22",
   clean: true,
+  watch: [
+    "src",
+    "../../packages/db/src",
+    "../../packages/queue/src",
+    "../../packages/services/src",
+    "../../packages/storage/src",
+  ],
   noExternal: [/^@ovr\//],
   external: [
     "playwright",
