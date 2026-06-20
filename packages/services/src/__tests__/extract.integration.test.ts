@@ -45,7 +45,10 @@ const buildArtifactTarball = async (): Promise<Buffer> => {
   const sourceDir = await mkdtemp(path.join(tmpdir(), "ovr-extract-fixture-"));
 
   try {
-    await writeFile(path.join(sourceDir, "iframe.html"), "<html></html>");
+    await writeFile(
+      path.join(sourceDir, "iframe.html"),
+      '<html><body><div id="storybook-root"></div></body></html>',
+    );
     await writeFile(path.join(sourceDir, "runtime.js"), "console.log('hi')");
 
     const tarballPath = path.join(sourceDir, "..", `${path.basename(sourceDir)}.tar.gz`);
