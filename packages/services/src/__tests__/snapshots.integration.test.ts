@@ -39,8 +39,8 @@ const uploadStaticBuild = async (buildId: string): Promise<void> => {
   );
 };
 
-const uploadPng = async (path: string, fill: number): Promise<void> => {
-  const png = new PNG({ width: 2, height: 2 });
+const uploadPng = async (path: string, fill: number, width = 2, height = 2): Promise<void> => {
+  const png = new PNG({ width, height });
   png.data.fill(fill);
   await storage.uploadFile(path, PNG.sync.write(png), "image/png");
 };
@@ -257,6 +257,54 @@ describe("snapshots", () => {
 
       const diffImage = await storage.getFileStream(result!.diffImagePath!);
       expect(diffImage).toBeDefined();
+    }, 30000);
+
+    test("diffs against a differently-sized baseline instead of skipping the comparison", async ({
+      featureBuild,
+      project,
+      captureConfiguration,
+    }) => {
+      const baselinePath = `builds/${featureBuild.id}/snapshots/baseline-3.png`;
+      const capturePath = `builds/${featureBuild.id}/snapshots/capture-3.png`;
+      await uploadPng(baselinePath, 255, 2, 4);
+      await uploadPng(capturePath, 255, 2, 2);
+
+      const [baselineSnapshot, captureSnapshotRow] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: featureBuild.id,
+            ...captureConfiguration,
+            targetId: "story-sized",
+            status: "captured",
+            imagePath: baselinePath,
+          },
+          {
+            buildId: featureBuild.id,
+            ...captureConfiguration,
+            targetId: "story-sized",
+            status: "captured",
+            imagePath: capturePath,
+          },
+        ],
+      });
+      await dbClient.baselines.upsert({
+        projectId: project.id,
+        ...captureConfiguration,
+        targetId: "story-sized",
+        snapshotId: baselineSnapshot!.id,
+        approvedBy: featureBuild.createdBy,
+      });
+      const diff = await dbClient.diffs.create({ snapshotId: captureSnapshotRow!.id });
+
+      await diffSnapshot(captureSnapshotRow!.id, diff!.id);
+
+      const result = await dbClient.diffs.findById(diff!.id);
+      expect(result).toMatchObject({ processingStatus: "diffed", reviewStatus: "needs_review" });
+      expect(result!.baselineSnapshotId).toBe(baselineSnapshot!.id);
+      expect(result!.pixelDiffCount).toBeGreaterThan(0);
+      expect(result!.diffImagePath).toBe(
+        `${featureBuild.projectId}/builds/${featureBuild.id}/diffs/${diff!.id}.png`,
+      );
     }, 30000);
 
     test("promotes the baseline and skips review entirely for a main-branch build with no prior baseline", async ({

@@ -3,6 +3,7 @@ import pixelmatch from "pixelmatch";
 import { chromium, firefox, webkit } from "playwright";
 
 import { dbClient } from "@ovr/db/client";
+import type { SnapshotDbSchema } from "@ovr/db/repository/snapshots";
 import { db } from "@ovr/db/db";
 import { storage } from "@ovr/storage";
 
@@ -161,14 +162,13 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
   }
 
   const baselineSnapshot = baseline ? await dbClient.snapshots.findById(baseline.snapshotId) : null;
-  const diff = baselineSnapshot?.imagePath
-    ? await computeDiffAgainstBaseline(snapshot.imagePath, baselineSnapshot.imagePath)
-    : null;
+  const diff = await diffAgainstBaselineSnapshot(snapshot.imagePath, baselineSnapshot);
 
   if (isMainBranch) {
     await dbClient.diffs.updateResult(diffId, {
       processingStatus: "diffed",
       reviewStatus: "not_required",
+      ...(baselineSnapshot && { baselineSnapshotId: baselineSnapshot.id }),
       ...(diff && { pixelDiffCount: diff.pixelDiffCount, diffPercent: diff.diffPercent }),
     });
     await promoteBaseline(diffId, build.createdBy);
@@ -180,6 +180,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
     await dbClient.diffs.updateResult(diffId, {
       processingStatus: "diffed",
       reviewStatus: "needs_review",
+      ...(baselineSnapshot && { baselineSnapshotId: baselineSnapshot.id }),
     });
     await checkAllDoneAndFinalize(build.id);
     return;
@@ -191,6 +192,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
     await dbClient.diffs.updateResult(diffId, {
       processingStatus: "diffed",
       reviewStatus: "not_required",
+      baselineSnapshotId: diff.baselineSnapshotId,
       pixelDiffCount,
       diffPercent,
     });
@@ -208,12 +210,25 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
   await dbClient.diffs.updateResult(diffId, {
     processingStatus: "diffed",
     reviewStatus: "needs_review",
+    baselineSnapshotId: diff.baselineSnapshotId,
     diffImagePath,
     pixelDiffCount,
     diffPercent,
   });
 
   await checkAllDoneAndFinalize(build.id);
+};
+
+const diffAgainstBaselineSnapshot = async (
+  capturePath: string,
+  baselineSnapshot: SnapshotDbSchema | null | undefined,
+) => {
+  if (!baselineSnapshot?.imagePath) {
+    return null;
+  }
+
+  const diffResult = await computeDiffAgainstBaseline(capturePath, baselineSnapshot.imagePath);
+  return { ...diffResult, baselineSnapshotId: baselineSnapshot.id };
 };
 
 const computeDiffAgainstBaseline = async (
@@ -225,35 +240,41 @@ const computeDiffAgainstBaseline = async (
   pixelDiffCount: number;
   diffPercent: number;
   diffPixels: Uint8Array;
-} | null> => {
+}> => {
   const [capturePixels, baselinePixels] = await Promise.all([
     readPng(capturePath),
     readPng(baselinePath),
   ]);
 
-  if (
-    capturePixels.width !== baselinePixels.width ||
-    capturePixels.height !== baselinePixels.height
-  ) {
-    return null;
-  }
+  const width = Math.max(capturePixels.width, baselinePixels.width);
+  const height = Math.max(capturePixels.height, baselinePixels.height);
 
-  const width = capturePixels.width;
-  const height = capturePixels.height;
+  const capturePadded = padToCanvas(capturePixels, width, height);
+  const baselinePadded = padToCanvas(baselinePixels, width, height);
   const diffPixels = new Uint8Array(width * height * 4);
 
-  const pixelDiffCount = pixelmatch(
-    baselinePixels.data,
-    capturePixels.data,
-    diffPixels,
-    width,
-    height,
-    { threshold: DEFAULT_PIXELMATCH_THRESHOLD },
-  );
+  const pixelDiffCount = pixelmatch(baselinePadded, capturePadded, diffPixels, width, height, {
+    threshold: DEFAULT_PIXELMATCH_THRESHOLD,
+    diffMask: true,
+  });
 
   const diffPercent = (pixelDiffCount / (width * height)) * 100;
 
   return { width, height, pixelDiffCount, diffPercent, diffPixels };
+};
+
+const padToCanvas = (pixels: PNG, width: number, height: number): Uint8Array => {
+  if (pixels.width === width && pixels.height === height) {
+    return pixels.data;
+  }
+
+  const padded = new Uint8Array(width * height * 4);
+  for (let y = 0; y < pixels.height; y++) {
+    const srcStart = y * pixels.width * 4;
+    const destStart = y * width * 4;
+    padded.set(pixels.data.subarray(srcStart, srcStart + pixels.width * 4), destStart);
+  }
+  return padded;
 };
 
 export const checkAllDoneAndFinalize = async (buildId: string): Promise<void> => {

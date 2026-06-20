@@ -19,6 +19,8 @@ export const snapshotSchema = z.object({
   errorLogs: z.array(snapshotLogSchema),
 });
 
+export type SnapshotSchema = z.infer<typeof snapshotSchema>;
+
 export const getOneInputSchema = z.object({ snapshotId: z.uuidv7() });
 
 export const getOneOutputSchema = z.object({ snapshot: snapshotSchema });

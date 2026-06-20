@@ -51,18 +51,20 @@ export const getOne = os.diffs.getOne
   .use(authenticatedMiddleware)
   .use(organizationSnapshotMiddleware)
   .handler(async ({ context }) => {
-    const diff = await dbClient.diffs.findBySnapshot(context.snapshot.id);
+    const row = await dbClient.diffs.findBySnapshotWithBaseline(context.snapshot.id);
 
     return {
-      diff: diff
+      diff: row
         ? {
-            id: diff.id,
-            processingStatus: diff.processingStatus,
-            reviewStatus: diff.reviewStatus,
-            diffImagePath: diff.diffImagePath,
-            pixelDiffCount: diff.pixelDiffCount,
-            diffPercent: diff.diffPercent,
-            baselineSnapshotId: diff.baselineSnapshotId,
+            id: row.diff.id,
+            processingStatus: row.diff.processingStatus,
+            reviewStatus: row.diff.reviewStatus,
+            diffImagePath: row.diff.diffImagePath,
+            pixelDiffCount: row.diff.pixelDiffCount,
+            diffPercent: row.diff.diffPercent,
+            baselineSnapshot: row.baselineSnapshot
+              ? { imagePath: row.baselineSnapshot.imagePath }
+              : null,
           }
         : null,
     };
