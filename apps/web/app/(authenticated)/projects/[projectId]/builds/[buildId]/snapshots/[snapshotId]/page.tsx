@@ -7,7 +7,7 @@ import { serverError } from "@/lib/utils/errors";
 
 type SnapshotPageProps = PageProps<"/projects/[projectId]/builds/[buildId]/snapshots/[snapshotId]">;
 
-export default async function DiffPage(props: SnapshotPageProps) {
+export default async function SnapshotPage(props: SnapshotPageProps) {
   const { buildId, snapshotId } = await props.params;
 
   const [[buildError, buildResult], [snapshotError, snapshotResult], [diffError, diffResult]] =

@@ -3,7 +3,6 @@ import { Typography } from "@ovr/ui/components/typography";
 import { type BuildSnapshotSchema } from "@ovr/api/contracts/builds";
 import { SnapshotStatusBadge } from "@/lib/components/SnapshotStatusBadge";
 import { cn } from "@ovr/ui/lib/utils";
-import { Badge } from "@ovr/ui/components/badge";
 import { GlobeIcon, Icon } from "@ovr/ui/components/icon";
 import { ResolutionIcon } from "@ovr/ui/components/resolution-icon";
 
@@ -28,13 +27,6 @@ export const SnapshotCard = ({ snapshot, projectId, buildId }: SnapshotCardProps
             <Typography variant="caption">no preview</Typography>
           </div>
         )}
-        {snapshot.status === "changed" && snapshot.diffPercent !== null ? (
-          <div className="absolute top-2 left-2">
-            <Badge variant="changed" filled>
-              Δ {snapshot.diffPercent.toFixed(2)}%
-            </Badge>
-          </div>
-        ) : null}
         {snapshot.status === "changed" || snapshot.status === "fail" ? (
           <div className="absolute bottom-2 right-2">
             <SnapshotStatusBadge status={snapshot.status} />
