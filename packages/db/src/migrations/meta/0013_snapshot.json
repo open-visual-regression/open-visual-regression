@@ -1,5 +1,5 @@
 {
-  "id": "34da07d9-6d44-4abe-a785-511a3931ffde",
+  "id": "15984003-9d03-423e-ba98-d565d7fb2b1a",
   "prevId": "67a003c1-3d78-4b15-bcdf-7ad3077cc7bb",
   "version": "7",
   "dialect": "postgresql",
@@ -893,7 +893,8 @@
           "name": "viewport_height",
           "type": "integer",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true,
+          "default": 0
         },
         "target_id": {
           "name": "target_id",
@@ -944,9 +945,9 @@
               "nulls": "last"
             },
             {
-              "expression": "coalesce(\"viewport_height\", 0)",
+              "expression": "viewport_height",
+              "isExpression": false,
               "asc": true,
-              "isExpression": true,
               "nulls": "last"
             },
             {
@@ -1380,7 +1381,8 @@
           "name": "viewport_height",
           "type": "integer",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true,
+          "default": 0
         },
         "target_id": {
           "name": "target_id",

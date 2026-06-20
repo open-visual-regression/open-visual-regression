@@ -1,5 +1,6 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { createJiti } from "jiti";
 
 import type { OvrConfig, Viewport as ConfigViewport } from "./defineConfig";
@@ -37,7 +38,11 @@ export const loadViewports = async (cwd: string = process.cwd()): Promise<Resolv
     return DEFAULT_VIEWPORTS;
   }
 
-  const jiti = createJiti(import.meta.url);
+  // Anchor jiti's module resolution at the consumer's project (cwd) rather
+  // than at this CLI's own install location, so bare imports inside
+  // ovr.config.ts (e.g. importing a shared local module) resolve against
+  // the consumer's node_modules/project files instead of ours.
+  const jiti = createJiti(pathToFileURL(path.join(cwd, "/")).href);
   const loaded = await jiti.import<{ default: OvrConfig }>(configPath);
   const viewports = loaded.default?.viewports;
   const defaultViewports = loaded.default?.defaultViewports;

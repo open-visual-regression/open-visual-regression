@@ -17,6 +17,10 @@ export type NamedViewport = {
 
 type OverrideEntry = [targetId: string, viewports: OvrStoryParameterViewport[]];
 
+// Caps how many targets are read concurrently so a build with hundreds of
+// stories doesn't try to open hundreds of browser contexts at once.
+const OVERRIDE_READ_CONCURRENCY = 8;
+
 // Storybook reloads the preview iframe when switching between stories from
 // different CSF files, which tears down any page state (including
 // __STORYBOOK_ADDONS_CHANNEL__). Each target therefore gets its own fresh
@@ -49,32 +53,49 @@ const readOneStoryOverride = async (
     });
 
     if (!renderResult.ok) {
+      console.warn(
+        `ovr: falling back to default viewports for "${targetId}" — story failed to render while reading its viewport override (${renderResult.error ?? "unknown error"})`,
+      );
       return undefined;
     }
 
     const parameters = await page.evaluate(readOvrStoryParameters, targetId);
     return parameters?.viewports ? [targetId, parameters.viewports] : undefined;
-  } catch {
+  } catch (error) {
+    console.warn(
+      `ovr: falling back to default viewports for "${targetId}" — error while reading its viewport override:`,
+      error,
+    );
     return undefined;
   } finally {
     await context.close();
   }
 };
 
+// Each target gets its own browser context (see readOneStoryOverride), so
+// reads are independent and safe to run concurrently up to a fixed pool size.
 const readStoryOverrides = async (
   browser: Browser,
   proxy: StaticProxy,
   targetIds: readonly string[],
 ): Promise<OverrideEntry[]> => {
-  if (targetIds.length === 0) {
-    return [];
-  }
+  const queue = [...targetIds];
+  const entries: OverrideEntry[] = [];
 
-  const [targetId, ...rest] = targetIds;
-  const entry = await readOneStoryOverride(browser, proxy, targetId!);
-  const remaining = await readStoryOverrides(browser, proxy, rest);
+  const worker = async (): Promise<void> => {
+    for (let targetId = queue.shift(); targetId !== undefined; targetId = queue.shift()) {
+      const entry = await readOneStoryOverride(browser, proxy, targetId);
+      if (entry) {
+        entries.push(entry);
+      }
+    }
+  };
 
-  return entry ? [entry, ...remaining] : remaining;
+  await Promise.all(
+    Array.from({ length: Math.min(OVERRIDE_READ_CONCURRENCY, targetIds.length) }, worker),
+  );
+
+  return entries;
 };
 
 export const readStoryViewportOverrides = async (

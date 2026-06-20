@@ -59,6 +59,11 @@ export const extractBuild = async (
     await rm(tmpDir, { recursive: true, force: true });
   }
 
+  // Renders every story once here to read its viewport override, then again
+  // later (per snapshot) in captureSnapshot to actually screenshot it. This
+  // doubles boot/render cost per story; if that becomes a bottleneck for
+  // large builds, the override read and the capture would need to be merged
+  // into a single render pass.
   const overridesByTarget = await readStoryViewportOverrides(
     buildId,
     targets.map((target) => target.id),
