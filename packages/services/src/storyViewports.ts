@@ -17,8 +17,6 @@ export type NamedViewport = {
 
 type OverrideEntry = [targetId: string, viewports: OvrStoryParameterViewport[]];
 
-// Caps how many targets are read concurrently so a build with hundreds of
-// stories doesn't try to open hundreds of browser contexts at once.
 const OVERRIDE_READ_CONCURRENCY = 8;
 
 // Storybook reloads the preview iframe when switching between stories from
@@ -72,8 +70,6 @@ const readOneStoryOverride = async (
   }
 };
 
-// Each target gets its own browser context (see readOneStoryOverride), so
-// reads are independent and safe to run concurrently up to a fixed pool size.
 const readStoryOverrides = async (
   browser: Browser,
   proxy: StaticProxy,
