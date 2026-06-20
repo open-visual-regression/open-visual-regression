@@ -19,11 +19,7 @@ type OverrideEntry = [targetId: string, viewports: OvrStoryParameterViewport[]];
 
 const OVERRIDE_READ_CONCURRENCY = 8;
 
-// Storybook reloads the preview iframe when switching between stories from
-// different CSF files, which tears down any page state (including
-// __STORYBOOK_ADDONS_CHANNEL__). Each target therefore gets its own fresh
-// page, the same way the real capture step does.
-const readOneStoryOverride = async (
+const readStoryOverride = async (
   browser: Browser,
   proxy: StaticProxy,
   targetId: string,
@@ -70,7 +66,7 @@ const readOneStoryOverride = async (
   }
 };
 
-const readStoryOverridesSequentially = async (
+const readGroupOverrides = async (
   browser: Browser,
   proxy: StaticProxy,
   targetIds: readonly string[],
@@ -80,8 +76,8 @@ const readStoryOverridesSequentially = async (
   }
 
   const [targetId, ...rest] = targetIds;
-  const entry = await readOneStoryOverride(browser, proxy, targetId!);
-  const remaining = await readStoryOverridesSequentially(browser, proxy, rest);
+  const entry = await readStoryOverride(browser, proxy, targetId!);
+  const remaining = await readGroupOverrides(browser, proxy, rest);
 
   return entry ? [entry, ...remaining] : remaining;
 };
@@ -89,14 +85,14 @@ const readStoryOverridesSequentially = async (
 const partition = <T>(items: readonly T[], parts: number): T[][] =>
   Array.from({ length: parts }, (_, i) => items.filter((_, index) => index % parts === i));
 
-const readStoryOverrides = async (
+const readOverridesConcurrently = async (
   browser: Browser,
   proxy: StaticProxy,
   targetIds: readonly string[],
 ): Promise<OverrideEntry[]> => {
   const groups = partition(targetIds, Math.min(OVERRIDE_READ_CONCURRENCY, targetIds.length));
   const results = await Promise.all(
-    groups.map((group) => readStoryOverridesSequentially(browser, proxy, group)),
+    groups.map((group) => readGroupOverrides(browser, proxy, group)),
   );
 
   return results.flat();
@@ -110,7 +106,7 @@ export const readStoryViewportOverrides = async (
   const browser = await chromium.launch();
 
   try {
-    return new Map(await readStoryOverrides(browser, proxy, targetIds));
+    return new Map(await readOverridesConcurrently(browser, proxy, targetIds));
   } finally {
     await browser.close();
     proxy.close();
