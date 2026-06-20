@@ -1,9 +1,11 @@
-import type { Page } from "playwright";
+import type { Browser } from "playwright";
 import { chromium } from "playwright";
 
 import { detectCaptureStrategy, readOvrStoryParameters } from "./captureStrategies";
+import { BOOT_TIMEOUT_MS, RENDER_TIMEOUT_MS } from "./lib/captureTimeouts";
 import { startStaticProxy } from "./lib/staticProxy";
-import type { CaptureStrategy, OvrStoryParameterViewport } from "./captureStrategies";
+import type { StaticProxy } from "./lib/staticProxy";
+import type { OvrStoryParameterViewport } from "./captureStrategies";
 
 export type NamedViewport = {
   name?: string;
@@ -13,58 +15,20 @@ export type NamedViewport = {
   default?: boolean;
 };
 
-const PARAM_BOOT_TIMEOUT_MS = 3_000;
-const PARAM_RENDER_TIMEOUT_MS = 5_000;
-
 type OverrideEntry = [targetId: string, viewports: OvrStoryParameterViewport[]];
 
+// Storybook reloads the preview iframe when switching between stories from
+// different CSF files, which tears down any page state (including
+// __STORYBOOK_ADDONS_CHANNEL__). Each target therefore gets its own fresh
+// page, the same way the real capture step does.
 const readOneStoryOverride = async (
-  page: Page,
-  strategy: CaptureStrategy,
+  browser: Browser,
+  proxy: StaticProxy,
   targetId: string,
 ): Promise<OverrideEntry | undefined> => {
-  try {
-    const renderResult = await page.evaluate(strategy.waitForTargetRendered, {
-      targetId,
-      timeoutMs: PARAM_RENDER_TIMEOUT_MS,
-    });
-
-    if (!renderResult.ok) {
-      return undefined;
-    }
-
-    const parameters = await page.evaluate(readOvrStoryParameters, targetId);
-    return parameters?.viewports ? [targetId, parameters.viewports] : undefined;
-  } catch {
-    return undefined;
-  }
-};
-
-const readStoryOverrides = async (
-  page: Page,
-  strategy: CaptureStrategy,
-  targetIds: readonly string[],
-): Promise<OverrideEntry[]> => {
-  if (targetIds.length === 0) {
-    return [];
-  }
-
-  const [targetId, ...rest] = targetIds;
-  const entry = await readOneStoryOverride(page, strategy, targetId!);
-  const remaining = await readStoryOverrides(page, strategy, rest);
-
-  return entry ? [entry, ...remaining] : remaining;
-};
-
-export const readStoryViewportOverrides = async (
-  buildId: string,
-  targetIds: string[],
-): Promise<Map<string, OvrStoryParameterViewport[]>> => {
-  const proxy = await startStaticProxy(buildId);
-  const browser = await chromium.launch();
+  const context = await browser.newContext();
 
   try {
-    const context = await browser.newContext();
     const page = await context.newPage();
 
     await page.route("**/*", (route) => {
@@ -77,14 +41,51 @@ export const readStoryViewportOverrides = async (
 
     const strategy = await detectCaptureStrategy(proxy.origin);
     await page.goto(`${proxy.origin}/iframe.html`, { waitUntil: "load" });
+    await strategy.waitForBoot(page, BOOT_TIMEOUT_MS);
 
-    try {
-      await strategy.waitForBoot(page, PARAM_BOOT_TIMEOUT_MS);
-    } catch {
-      return new Map();
+    const renderResult = await page.evaluate(strategy.waitForTargetRendered, {
+      targetId,
+      timeoutMs: RENDER_TIMEOUT_MS,
+    });
+
+    if (!renderResult.ok) {
+      return undefined;
     }
 
-    return new Map(await readStoryOverrides(page, strategy, targetIds));
+    const parameters = await page.evaluate(readOvrStoryParameters, targetId);
+    return parameters?.viewports ? [targetId, parameters.viewports] : undefined;
+  } catch {
+    return undefined;
+  } finally {
+    await context.close();
+  }
+};
+
+const readStoryOverrides = async (
+  browser: Browser,
+  proxy: StaticProxy,
+  targetIds: readonly string[],
+): Promise<OverrideEntry[]> => {
+  if (targetIds.length === 0) {
+    return [];
+  }
+
+  const [targetId, ...rest] = targetIds;
+  const entry = await readOneStoryOverride(browser, proxy, targetId!);
+  const remaining = await readStoryOverrides(browser, proxy, rest);
+
+  return entry ? [entry, ...remaining] : remaining;
+};
+
+export const readStoryViewportOverrides = async (
+  buildId: string,
+  targetIds: string[],
+): Promise<Map<string, OvrStoryParameterViewport[]>> => {
+  const proxy = await startStaticProxy(buildId);
+  const browser = await chromium.launch();
+
+  try {
+    return new Map(await readStoryOverrides(browser, proxy, targetIds));
   } finally {
     await browser.close();
     proxy.close();

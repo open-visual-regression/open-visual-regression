@@ -14,5 +14,6 @@ export default defineConfig([
     entry: ["src/defineConfig.ts"],
     format: ["esm"],
     target: "node22",
+    dts: true,
   },
 ]);

@@ -8,7 +8,10 @@
   "type": "module",
   "exports": {
     ".": "./dist/index.js",
-    "./config": "./dist/defineConfig.js"
+    "./config": {
+      "types": "./dist/defineConfig.d.ts",
+      "default": "./dist/defineConfig.js"
+    }
   },
   "scripts": {
     "build": "tsup",

@@ -8,6 +8,7 @@ import { storage } from "@ovr/storage";
 
 import { promoteBaseline } from "./baselines";
 import { detectCaptureStrategy } from "./captureStrategies";
+import { BOOT_TIMEOUT_MS, RENDER_TIMEOUT_MS } from "./lib/captureTimeouts";
 import { startStaticProxy } from "./lib/staticProxy";
 import { enqueueDiff, enqueueFinalize } from "./lib/queue";
 
@@ -15,8 +16,6 @@ const DEFAULT_PIXELMATCH_THRESHOLD = 0.1;
 
 type ConsoleLog = { level: string; message: string };
 
-const BOOT_TIMEOUT_MS = 10_000;
-const RENDER_TIMEOUT_MS = 30_000;
 const DEFAULT_VIEWPORT_HEIGHT = 800;
 
 const BROWSER_LAUNCHERS = { chromium, firefox, webkit };
