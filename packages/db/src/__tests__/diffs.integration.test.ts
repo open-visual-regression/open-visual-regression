@@ -47,6 +47,48 @@ describe("diffs", () => {
     });
   });
 
+  describe("findBySnapshotWithBaseline", () => {
+    test("should return the diff with its joined baseline snapshot", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const [snapshot, baselineSnapshot] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, ...captureConfiguration, targetId: "a", imagePath: "new.png" },
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            targetId: "a",
+            imagePath: "baseline.png",
+          },
+        ],
+      });
+      await dbClient.diffs.create({
+        snapshotId: snapshot!.id,
+        baselineSnapshotId: baselineSnapshot!.id,
+      });
+
+      const found = await dbClient.diffs.findBySnapshotWithBaseline(snapshot!.id);
+
+      expect(found?.diff.snapshotId).toBe(snapshot!.id);
+      expect(found?.baselineSnapshot?.imagePath).toBe("baseline.png");
+    });
+
+    test("should return a null baseline snapshot when the diff has no baseline", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: build.id, ...captureConfiguration, targetId: "a" }],
+      });
+      await dbClient.diffs.create({ snapshotId: snapshot!.id });
+
+      const found = await dbClient.diffs.findBySnapshotWithBaseline(snapshot!.id);
+
+      expect(found?.baselineSnapshot).toBeNull();
+    });
+  });
+
   describe("updateProcessingStatus", () => {
     test("should update the diff's processing status", async ({ build, captureConfiguration }) => {
       const [snapshot] = await dbClient.snapshots.createMany({

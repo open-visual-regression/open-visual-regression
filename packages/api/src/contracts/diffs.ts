@@ -31,8 +31,10 @@ export const diffSchema = z.object({
   diffImagePath: z.string().nullable(),
   pixelDiffCount: z.number().int().nullable(),
   diffPercent: z.number().nullable(),
-  baselineSnapshotId: z.uuidv7().nullable(),
+  baselineSnapshot: z.object({ imagePath: z.string().nullable() }).nullable(),
 });
+
+export type DiffSchema = z.infer<typeof diffSchema>;
 
 export const getOneInputSchema = z.object({ snapshotId: z.uuidv7() });
 export const getOneOutputSchema = z.object({ diff: diffSchema.nullable() });

@@ -1,4 +1,5 @@
 import { eq, inArray } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 
 import { db, type DbClient } from "../db";
 import { diffs, snapshots, type DiffProcessingStatus, type DiffReviewStatus } from "../schema";
@@ -23,6 +24,18 @@ export const findById = (id: string) =>
 
 export const findBySnapshot = (snapshotId: string) =>
   db.query.diffs.findFirst({ where: (diffs, { eq }) => eq(diffs.snapshotId, snapshotId) });
+
+export const findBySnapshotWithBaseline = async (snapshotId: string) => {
+  const baselineSnapshots = alias(snapshots, "baseline_snapshots");
+
+  const [row] = await db
+    .select({ diff: diffs, baselineSnapshot: baselineSnapshots })
+    .from(diffs)
+    .leftJoin(baselineSnapshots, eq(diffs.baselineSnapshotId, baselineSnapshots.id))
+    .where(eq(diffs.snapshotId, snapshotId));
+
+  return row;
+};
 
 export const findByBuild = async (buildId: string) => {
   const rows = await db
@@ -52,6 +65,7 @@ type UpdateResultInput = {
   diffImagePath?: string;
   pixelDiffCount?: number;
   diffPercent?: number;
+  baselineSnapshotId?: string;
 };
 
 export const updateResult = async (id: string, result: UpdateResultInput) => {
