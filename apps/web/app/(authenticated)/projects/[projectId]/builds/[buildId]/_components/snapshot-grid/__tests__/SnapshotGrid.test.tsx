@@ -7,6 +7,7 @@ describe("SnapshotGrid", () => {
     mocks.build.generateBuildSnapshot({ targetName: "home-page", status: "pass" }),
     mocks.build.generateBuildSnapshot({ targetName: "checkout-page", status: "changed" }),
     mocks.build.generateBuildSnapshot({ targetName: "cart-page", status: "fail" }),
+    mocks.build.generateBuildSnapshot({ targetName: "login-page", status: "rejected" }),
   ];
 
   it("should show every snapshot when the filter is 'all'", () => {
@@ -17,6 +18,7 @@ describe("SnapshotGrid", () => {
     expect(screen.getByText("home-page")).toBeVisible();
     expect(screen.getByText("checkout-page")).toBeVisible();
     expect(screen.getByText("cart-page")).toBeVisible();
+    expect(screen.getByText("login-page")).toBeVisible();
   });
 
   it("should only show changed snapshots when the filter is 'changed'", () => {
@@ -32,6 +34,7 @@ describe("SnapshotGrid", () => {
     expect(screen.getByText("checkout-page")).toBeVisible();
     expect(screen.queryByText("home-page")).not.toBeInTheDocument();
     expect(screen.queryByText("cart-page")).not.toBeInTheDocument();
+    expect(screen.queryByText("login-page")).not.toBeInTheDocument();
   });
 
   it("should only show passing snapshots when the filter is 'pass'", () => {

@@ -19,7 +19,15 @@ const Section = ({ label, children }: { label: string; children: React.ReactNode
   </div>
 );
 
-const VARIANTS: BadgeVariant[] = ["pass", "fail", "pending", "stale", "changed", "neutral"];
+const VARIANTS: BadgeVariant[] = [
+  "pass",
+  "fail",
+  "rejected",
+  "pending",
+  "stale",
+  "changed",
+  "neutral",
+];
 
 export const KitchenSink: Story = {
   render: () => (
