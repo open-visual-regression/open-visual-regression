@@ -13,7 +13,7 @@ const writeConfig = async (contents: string): Promise<string> => {
 };
 
 describe("loadViewports", () => {
-  it("returns a single default viewport when no config file exists", async () => {
+  it("should use a single default viewport when no config file exists", async () => {
     const dir = await mkdtemp(path.join(tmpdir(), "ovr-cli-config-"));
 
     try {
@@ -23,7 +23,7 @@ describe("loadViewports", () => {
     }
   });
 
-  it("treats every viewport as default when 'defaultViewports' is omitted", async () => {
+  it("should treat every viewport as default when 'defaultViewports' is omitted", async () => {
     const dir = await writeConfig(`
       export default {
         viewports: [
@@ -43,7 +43,7 @@ describe("loadViewports", () => {
     }
   });
 
-  it("only marks viewports named in 'defaultViewports' as default", async () => {
+  it("should only mark viewports named in 'defaultViewports' as default", async () => {
     const dir = await writeConfig(`
       export default {
         viewports: [
@@ -66,7 +66,7 @@ describe("loadViewports", () => {
     }
   });
 
-  it("throws a clear error when 'defaultViewports' references an unknown viewport name", async () => {
+  it("should throw a clear error when 'defaultViewports' references an unknown viewport name", async () => {
     const dir = await writeConfig(`
       export default {
         viewports: [{ name: "desktop", width: 1280 }],
@@ -76,6 +76,51 @@ describe("loadViewports", () => {
 
     try {
       await expect(loadViewports(dir)).rejects.toThrow(/unknown viewport/i);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("should load the config from a path the caller specifies relative to cwd", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "ovr-cli-config-"));
+
+    try {
+      await writeFile(
+        path.join(dir, "custom.config.mjs"),
+        `export default { viewports: [{ name: "desktop", width: 1280 }] };`,
+      );
+
+      expect(await loadViewports(dir, "custom.config.mjs")).toEqual([
+        { name: "desktop", browser: "chromium", viewportWidth: 1280 },
+      ]);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("should load the config from an absolute path the caller specifies", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "ovr-cli-config-"));
+
+    try {
+      const configPath = path.join(dir, "custom.config.mjs");
+      await writeFile(
+        configPath,
+        `export default { viewports: [{ name: "desktop", width: 1280 }] };`,
+      );
+
+      expect(await loadViewports(dir, configPath)).toEqual([
+        { name: "desktop", browser: "chromium", viewportWidth: 1280 },
+      ]);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("should throw a clear error when the config path the caller specifies does not exist", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "ovr-cli-config-"));
+
+    try {
+      await expect(loadViewports(dir, "missing.config.mjs")).rejects.toThrow(/not found/i);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

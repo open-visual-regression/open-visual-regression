@@ -1,11 +1,11 @@
 import { defineConfig } from "tsup";
 
-export default defineConfig({
+export default defineConfig((options) => ({
   entry: ["src/index.ts"],
   format: ["esm"],
   target: "node22",
   clean: true,
-  watch: [
+  watch: options.watch && [
     "src",
     "../../packages/db/src",
     "../../packages/queue/src",
@@ -23,4 +23,4 @@ export default defineConfig({
     "pngjs",
     "pg",
   ],
-});
+}));

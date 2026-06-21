@@ -28,18 +28,32 @@ const DEFAULT_VIEWPORTS: ResolvedViewport[] = [{ browser: "chromium", viewportWi
 
 const CONFIG_FILENAMES = ["ovr.config.ts", "ovr.config.js", "ovr.config.mjs"];
 
-const findConfigPath = (cwd: string): string | undefined =>
-  CONFIG_FILENAMES.map((filename) => path.join(cwd, filename)).find((file) => existsSync(file));
+const findConfigPath = (cwd: string, configPath?: string): string | undefined => {
+  if (configPath) {
+    const resolved = path.resolve(cwd, configPath);
+    if (!existsSync(resolved)) {
+      throw new Error(`ovr.config: config file not found at "${resolved}"`);
+    }
+    return resolved;
+  }
 
-export const loadViewports = async (cwd: string = process.cwd()): Promise<ResolvedViewport[]> => {
-  const configPath = findConfigPath(cwd);
+  return CONFIG_FILENAMES.map((filename) => path.join(cwd, filename)).find((file) =>
+    existsSync(file),
+  );
+};
 
-  if (!configPath) {
+export const loadViewports = async (
+  cwd: string = process.cwd(),
+  configPath?: string,
+): Promise<ResolvedViewport[]> => {
+  const resolvedConfigPath = findConfigPath(cwd, configPath);
+
+  if (!resolvedConfigPath) {
     return DEFAULT_VIEWPORTS;
   }
 
   const jiti = createJiti(pathToFileURL(path.join(cwd, "/")).href);
-  const loaded = await jiti.import<{ default: OvrConfig }>(configPath);
+  const loaded = await jiti.import<{ default: OvrConfig }>(resolvedConfigPath);
   const viewports = loaded.default?.viewports;
   const defaultViewports = loaded.default?.defaultViewports;
 

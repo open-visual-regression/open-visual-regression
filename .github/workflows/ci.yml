@@ -39,7 +39,7 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @ovr/web build
+      - run: pnpm turbo run build --filter=@ovr/web...
         env:
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
       - run: pnpm check-types
