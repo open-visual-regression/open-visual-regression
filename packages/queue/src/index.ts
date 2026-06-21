@@ -7,6 +7,8 @@ export enum QueueName {
   SNAPSHOT_CAPTURE = "snapshot-capture",
   SNAPSHOT_DIFF = "snapshot-diff",
   BUILD_FINALIZE = "build-finalize",
+  BUILD_PURGE_DISPATCH = "build-purge-dispatch",
+  BUILD_PURGE = "build-purge",
 }
 
 export type ExtractJobPayload = {
@@ -37,11 +39,19 @@ export type FinalizeJobPayload = {
   buildId: string;
 };
 
+export type PurgeDispatchJobPayload = Record<string, never>;
+
+export type PurgeJobPayload = {
+  projectId: string;
+};
+
 const JOB_OPTIONS: Record<QueueName, JobsOptions> = {
   [QueueName.BUILD_EXTRACT]: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
   [QueueName.SNAPSHOT_CAPTURE]: { attempts: 5, backoff: { type: "exponential", delay: 2000 } },
   [QueueName.SNAPSHOT_DIFF]: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
   [QueueName.BUILD_FINALIZE]: { attempts: 3, backoff: { type: "fixed", delay: 1000 } },
+  [QueueName.BUILD_PURGE_DISPATCH]: { attempts: 1 },
+  [QueueName.BUILD_PURGE]: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
 };
 
 const enqueue = async <T>(
@@ -76,3 +86,23 @@ export const enqueueFinalize = (
   payload: FinalizeJobPayload,
   connection: IORedis,
 ): Promise<Job<FinalizeJobPayload>> => enqueue(QueueName.BUILD_FINALIZE, payload, connection);
+
+export const enqueuePurge = (
+  payload: PurgeJobPayload,
+  connection: IORedis,
+): Promise<Job<PurgeJobPayload>> => enqueue(QueueName.BUILD_PURGE, payload, connection);
+
+const PURGE_DISPATCH_JOB_ID = "build-purge-dispatch";
+
+export const schedulePurge = async (connection: IORedis): Promise<void> => {
+  const queue = new Queue<PurgeDispatchJobPayload>(QueueName.BUILD_PURGE_DISPATCH, { connection });
+  try {
+    await queue.upsertJobScheduler(
+      PURGE_DISPATCH_JOB_ID,
+      { pattern: "0 3 * * *" },
+      { name: QueueName.BUILD_PURGE_DISPATCH, data: {} },
+    );
+  } finally {
+    await queue.close();
+  }
+};
