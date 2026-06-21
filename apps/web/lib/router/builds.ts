@@ -66,7 +66,7 @@ export const createBuild = os.builds.createBuild
     }
 
     const uploadUrl = await storage.getPresignedUploadUrl(
-      getArtifactPath(result.data),
+      getArtifactPath(context.projectId, result.data),
       UPLOAD_URL_TTL_SECONDS,
     );
 

@@ -26,14 +26,14 @@ const IFRAME_HTML = `<!doctype html><html><body><div id="storybook-root" hidden=
 </script>
 </body></html>`;
 
-const uploadStaticBuild = async (buildId: string): Promise<void> => {
+const uploadStaticBuild = async (projectId: string, buildId: string): Promise<void> => {
   await storage.uploadFile(
-    getStaticPath(buildId, "iframe.html"),
+    getStaticPath(projectId, buildId, "iframe.html"),
     Buffer.from(IFRAME_HTML),
     "text/html",
   );
   await storage.uploadFile(
-    getStaticPath(buildId, "index.json"),
+    getStaticPath(projectId, buildId, "index.json"),
     Buffer.from(JSON.stringify({ v: 3, entries: {} })),
     "application/json",
   );
@@ -67,7 +67,7 @@ describe("snapshots", () => {
       captureConfiguration,
       connection,
     }) => {
-      await uploadStaticBuild(mainBuild.id);
+      await uploadStaticBuild(mainBuild.projectId, mainBuild.id);
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
           {
@@ -98,7 +98,7 @@ describe("snapshots", () => {
       captureConfiguration,
     }) => {
       await storage.uploadFile(
-        getStaticPath(mainBuild.id, "iframe.html"),
+        getStaticPath(mainBuild.projectId, mainBuild.id, "iframe.html"),
         Buffer.from(
           '<!doctype html><html><body><div id="storybook-root" hidden="true"></div></body></html>',
         ),

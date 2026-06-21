@@ -100,8 +100,12 @@ describe("extractBuild", () => {
 
     await extractBuild(mainBuild.id, targets, [captureConfiguration], 0.05);
 
-    const iframeStream = await storage.getFileStream(getStaticPath(mainBuild.id, "iframe.html"));
-    const runtimeStream = await storage.getFileStream(getStaticPath(mainBuild.id, "runtime.js"));
+    const iframeStream = await storage.getFileStream(
+      getStaticPath(mainBuild.projectId, mainBuild.id, "iframe.html"),
+    );
+    const runtimeStream = await storage.getFileStream(
+      getStaticPath(mainBuild.projectId, mainBuild.id, "runtime.js"),
+    );
     expect(iframeStream).toBeDefined();
     expect(runtimeStream).toBeDefined();
 
