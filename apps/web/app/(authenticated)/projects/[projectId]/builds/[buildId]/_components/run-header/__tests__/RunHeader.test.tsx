@@ -25,7 +25,10 @@ const renderComponent = (props: RunHeaderProps) =>
 describe("RunHeader", () => {
   it("should render the SegmentedProgress segments with the correct counts", () => {
     const build = mocks.build.generateBuild();
-    renderComponent({ build, snapshotCounts: { pass: 3, changed: 2, fail: 1, pending: 4 } });
+    renderComponent({
+      build,
+      snapshotCounts: { pass: 3, changed: 2, rejected: 0, fail: 1, pending: 4 },
+    });
 
     expect(screen.getByText("10 snapshots")).toBeVisible();
     expect(screen.getByText("3")).toBeVisible();
@@ -40,7 +43,10 @@ describe("RunHeader", () => {
 
   it("should disable both bulk actions when there are no changed snapshots", () => {
     const build = mocks.build.generateBuild();
-    renderComponent({ build, snapshotCounts: { pass: 3, changed: 0, fail: 1, pending: 4 } });
+    renderComponent({
+      build,
+      snapshotCounts: { pass: 3, changed: 0, rejected: 0, fail: 1, pending: 4 },
+    });
 
     expect(screen.getByRole("button", { name: /approve all/i })).toBeDisabled();
     expect(screen.getByRole("button", { name: /reject all/i })).toBeDisabled();
@@ -49,7 +55,10 @@ describe("RunHeader", () => {
   it("should approve all changed snapshots", async ({ user }) => {
     mockBulkCastVote.mockResolvedValue([null, undefined]);
     const build = mocks.build.generateBuild();
-    renderComponent({ build, snapshotCounts: { pass: 3, changed: 2, fail: 1, pending: 4 } });
+    renderComponent({
+      build,
+      snapshotCounts: { pass: 3, changed: 2, rejected: 0, fail: 1, pending: 4 },
+    });
 
     await user.click(screen.getByRole("button", { name: /approve all/i }));
 
@@ -60,7 +69,10 @@ describe("RunHeader", () => {
   it("should reject all changed snapshots", async ({ user }) => {
     mockBulkCastVote.mockResolvedValue([null, undefined]);
     const build = mocks.build.generateBuild();
-    renderComponent({ build, snapshotCounts: { pass: 3, changed: 2, fail: 1, pending: 4 } });
+    renderComponent({
+      build,
+      snapshotCounts: { pass: 3, changed: 2, rejected: 0, fail: 1, pending: 4 },
+    });
 
     await user.click(screen.getByRole("button", { name: /^reject all$/i }));
 
@@ -71,7 +83,10 @@ describe("RunHeader", () => {
   it("should show an error toast if approving all fails", async ({ user }) => {
     mockBulkCastVote.mockResolvedValue([createORPCError("INTERNAL_SERVER_ERROR"), undefined]);
     const build = mocks.build.generateBuild();
-    renderComponent({ build, snapshotCounts: { pass: 3, changed: 2, fail: 1, pending: 4 } });
+    renderComponent({
+      build,
+      snapshotCounts: { pass: 3, changed: 2, rejected: 0, fail: 1, pending: 4 },
+    });
 
     await user.click(screen.getByRole("button", { name: /approve all/i }));
 
@@ -82,7 +97,10 @@ describe("RunHeader", () => {
   it("should show an error toast if rejecting all fails", async ({ user }) => {
     mockBulkCastVote.mockResolvedValue([createORPCError("INTERNAL_SERVER_ERROR"), undefined]);
     const build = mocks.build.generateBuild();
-    renderComponent({ build, snapshotCounts: { pass: 3, changed: 2, fail: 1, pending: 4 } });
+    renderComponent({
+      build,
+      snapshotCounts: { pass: 3, changed: 2, rejected: 0, fail: 1, pending: 4 },
+    });
 
     await user.click(screen.getByRole("button", { name: /^reject all$/i }));
 

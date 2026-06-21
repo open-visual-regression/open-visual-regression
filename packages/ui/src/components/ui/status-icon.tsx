@@ -11,7 +11,7 @@ import {
 import { cn } from "../../lib/utils";
 import { Icon } from "./icon";
 
-type StatusVariant = "changed" | "passed" | "pending" | "stale" | "approved" | "rejected";
+type StatusVariant = "changed" | "passed" | "pending" | "stale" | "approved" | "rejected" | "error";
 
 const ICON_MAP: Record<StatusVariant, LucideIcon> = {
   changed: AlertCircleIcon,
@@ -20,6 +20,7 @@ const ICON_MAP: Record<StatusVariant, LucideIcon> = {
   stale: TriangleAlertIcon,
   approved: CircleCheckIcon,
   rejected: CircleXIcon,
+  error: TriangleAlertIcon,
 };
 
 const statusIconVariants = cva("", {
@@ -31,6 +32,7 @@ const statusIconVariants = cva("", {
       stale: "text-ovr-fg-muted",
       approved: "text-ovr-diff-add",
       rejected: "text-ovr-remove",
+      error: "text-ovr-remove",
     },
   },
 });

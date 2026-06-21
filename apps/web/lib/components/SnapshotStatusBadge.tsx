@@ -26,10 +26,16 @@ export const SnapshotStatusBadge = ({ status }: SnapshotStatusBadgeProps) => {
           <StatusIcon variant="passed" size={12} className="text-current" /> passed
         </Badge>
       );
+    case "rejected":
+      return (
+        <Badge variant="rejected" filled>
+          <StatusIcon variant="rejected" size={12} className="text-current" /> rejected
+        </Badge>
+      );
     case "fail":
       return (
         <Badge variant="fail" filled>
-          <StatusIcon variant="rejected" size={12} className="text-current" /> error
+          <StatusIcon variant="error" size={12} className="text-current" /> error
         </Badge>
       );
   }

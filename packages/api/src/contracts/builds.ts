@@ -88,7 +88,13 @@ export const listBuildsContract = oc
   .input(listBuildsInputSchema.optional())
   .output(listBuildsOutputSchema);
 
-export const snapshotDisplayStatusSchema = z.enum(["pass", "changed", "fail", "pending"]);
+export const snapshotDisplayStatusSchema = z.enum([
+  "pass",
+  "changed",
+  "rejected",
+  "fail",
+  "pending",
+]);
 
 export type SnapshotDisplayStatus = z.infer<typeof snapshotDisplayStatusSchema>;
 

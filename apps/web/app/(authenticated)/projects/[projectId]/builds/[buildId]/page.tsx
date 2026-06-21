@@ -32,7 +32,7 @@ export default async function BuildPage(props: BuildPageProps) {
       counts[snapshot.status] += 1;
       return counts;
     },
-    { pass: 0, changed: 0, fail: 0, pending: 0 },
+    { pass: 0, changed: 0, rejected: 0, fail: 0, pending: 0 },
   );
 
   return (

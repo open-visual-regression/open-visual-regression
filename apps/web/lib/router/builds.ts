@@ -29,7 +29,11 @@ const getSnapshotDisplayStatus = (
     return "fail";
   }
 
-  if (diff.reviewStatus === "needs_review" || diff.reviewStatus === "rejected") {
+  if (diff.reviewStatus === "rejected") {
+    return "rejected";
+  }
+
+  if (diff.reviewStatus === "needs_review") {
     return "changed";
   }
 
