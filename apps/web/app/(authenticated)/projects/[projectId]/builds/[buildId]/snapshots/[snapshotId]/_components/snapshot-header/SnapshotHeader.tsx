@@ -14,7 +14,7 @@ export type SnapshotHeaderProps = {
 
 export const SnapshotHeader = ({ snapshot, build, diff }: SnapshotHeaderProps) => (
   <div className="flex flex-col gap-1">
-    <div className="flex flex-row items-center justify-between gap-3">
+    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
       <Typography variant="h1" as="h1">
         {snapshot.targetTitle} {snapshot.targetName}
       </Typography>

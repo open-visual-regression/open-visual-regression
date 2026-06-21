@@ -41,19 +41,14 @@ export const SnapshotReviewActions = ({ diffId }: SnapshotReviewActionsProps) =>
       <Button
         variant="secondary"
         disabled={isRejecting}
-        aria-label="reject"
         onClick={() => reject({ diffId, vote: "reject" })}
       >
         <Icon icon={XIcon} />
-        <span className="hidden sm:inline">{isRejecting ? "rejecting..." : "reject"}</span>
+        {isRejecting ? "rejecting..." : "reject"}
       </Button>
-      <Button
-        disabled={isApproving}
-        aria-label="approve"
-        onClick={() => approve({ diffId, vote: "approve" })}
-      >
+      <Button disabled={isApproving} onClick={() => approve({ diffId, vote: "approve" })}>
         <Icon icon={CheckIcon} />
-        <span className="hidden sm:inline">{isApproving ? "approving..." : "approve"}</span>
+        {isApproving ? "approving..." : "approve"}
       </Button>
     </div>
   );
