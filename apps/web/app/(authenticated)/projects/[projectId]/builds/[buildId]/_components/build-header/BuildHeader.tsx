@@ -1,54 +1,20 @@
-"use client";
-
-import { useRouter } from "next/navigation";
-import { onError, onSuccess } from "@orpc/client";
-import { useServerAction } from "@orpc/react/hooks";
-import { Button } from "@ovr/ui/components/button";
 import { SegmentedProgress } from "@ovr/ui/components/segmented-progress";
 import { Typography } from "@ovr/ui/components/typography";
 import { Icon, GitBranchIcon, GitCommitHorizontalIcon, UserIcon } from "@ovr/ui/components/icon";
-import { toast } from "@ovr/ui/components/toast";
 import { type BuildSchema, type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
 import { formatRelativeDateTime } from "@/lib/utils/date";
 import { BuildStatusBadge } from "@/lib/components/BuildStatus";
-import { serverClient } from "@/lib/router";
+import { BuildApproveButton } from "./BuildApproveButton";
+import { BuildRejectButton } from "./BuildRejectButton";
 
-export type RunHeaderProps = {
+export type BuildHeaderProps = {
   build: BuildSchema;
   snapshotCounts: Record<SnapshotDisplayStatus, number>;
 };
 
-export const RunHeader = ({ build, snapshotCounts }: RunHeaderProps) => {
-  const router = useRouter();
+export const BuildHeader = ({ build, snapshotCounts }: BuildHeaderProps) => {
   const total = Object.values(snapshotCounts).reduce((sum, count) => sum + count, 0);
   const hasChanged = snapshotCounts.changed > 0;
-
-  const { execute: approveAll, status: approveStatus } = useServerAction(
-    serverClient.diffs.bulkCastVote,
-    {
-      interceptors: [
-        onSuccess(() => router.refresh()),
-        onError((err) => {
-          toast.error(err.message);
-        }),
-      ],
-    },
-  );
-
-  const { execute: rejectAll, status: rejectStatus } = useServerAction(
-    serverClient.diffs.bulkCastVote,
-    {
-      interceptors: [
-        onSuccess(() => router.refresh()),
-        onError((err) => {
-          toast.error(err.message);
-        }),
-      ],
-    },
-  );
-
-  const isApproving = approveStatus === "pending";
-  const isRejecting = rejectStatus === "pending";
 
   return (
     <div className="flex flex-col gap-6">
@@ -79,19 +45,16 @@ export const RunHeader = ({ build, snapshotCounts }: RunHeaderProps) => {
           </div>
         </div>
         <div className="flex flex-row gap-2">
-          <Button
-            variant="secondary"
-            disabled={!hasChanged || isRejecting}
-            onClick={() => rejectAll({ buildId: build.id, vote: "reject" })}
-          >
-            {isRejecting ? "rejecting..." : "reject all"}
-          </Button>
-          <Button
-            disabled={!hasChanged || isApproving}
-            onClick={() => approveAll({ buildId: build.id, vote: "approve" })}
-          >
-            {isApproving ? "approving..." : "approve all"}
-          </Button>
+          <BuildRejectButton
+            buildId={build.id}
+            rejected={build.status === "rejected"}
+            disabled={!hasChanged}
+          />
+          <BuildApproveButton
+            buildId={build.id}
+            approved={build.status === "passed"}
+            disabled={!hasChanged}
+          />
         </div>
       </div>
       <SegmentedProgress
