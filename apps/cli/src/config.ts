@@ -42,7 +42,10 @@ const findConfigPath = (cwd: string, configPath?: string): string | undefined =>
   );
 };
 
-const loadOvrConfig = async (cwd: string, configPath?: string): Promise<OvrConfig | undefined> => {
+export const loadOvrConfig = async (
+  cwd: string,
+  configPath?: string,
+): Promise<OvrConfig | undefined> => {
   const resolvedConfigPath = findConfigPath(cwd, configPath);
 
   if (!resolvedConfigPath) {
@@ -56,11 +59,7 @@ const loadOvrConfig = async (cwd: string, configPath?: string): Promise<OvrConfi
 
 export const DEFAULT_DIFF_THRESHOLD = 0.05;
 
-export const loadDiffThreshold = async (
-  cwd: string = process.cwd(),
-  configPath?: string,
-): Promise<number> => {
-  const config = await loadOvrConfig(cwd, configPath);
+export const resolveDiffThreshold = (config: OvrConfig | undefined): number => {
   const diffThreshold = config?.diffThreshold;
 
   if (diffThreshold === undefined) {
@@ -74,11 +73,12 @@ export const loadDiffThreshold = async (
   return diffThreshold;
 };
 
-export const loadViewports = async (
+export const loadDiffThreshold = async (
   cwd: string = process.cwd(),
   configPath?: string,
-): Promise<ResolvedViewport[]> => {
-  const config = await loadOvrConfig(cwd, configPath);
+): Promise<number> => resolveDiffThreshold(await loadOvrConfig(cwd, configPath));
+
+export const resolveViewports = (config: OvrConfig | undefined): ResolvedViewport[] => {
   const viewports = config?.viewports;
   const defaultViewports = config?.defaultViewports;
 
@@ -106,3 +106,8 @@ export const loadViewports = async (
     }),
   }));
 };
+
+export const loadViewports = async (
+  cwd: string = process.cwd(),
+  configPath?: string,
+): Promise<ResolvedViewport[]> => resolveViewports(await loadOvrConfig(cwd, configPath));

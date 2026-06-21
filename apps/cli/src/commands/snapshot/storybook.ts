@@ -2,7 +2,7 @@ import { ORPCError } from "@orpc/client";
 import { Command } from "commander";
 
 import { createClient } from "../../client";
-import { getApiKey, loadDiffThreshold, loadViewports } from "../../config";
+import { getApiKey, loadOvrConfig, resolveDiffThreshold, resolveViewports } from "../../config";
 import { createArtifactTarball, uploadArtifact } from "./artifact";
 import {
   BuildFailedError,
@@ -38,8 +38,9 @@ export const storybookCommand = new Command("storybook")
 
     try {
       const targets = await readStoryTargets(options.dir);
-      const viewports = await loadViewports(process.cwd(), options.config);
-      const diffThreshold = await loadDiffThreshold(process.cwd(), options.config);
+      const config = await loadOvrConfig(process.cwd(), options.config);
+      const viewports = resolveViewports(config);
+      const diffThreshold = resolveDiffThreshold(config);
       const { branch, commit: commitSha, name, author } = options;
 
       const client = createClient(options.serverUrl, apiKey);
