@@ -7,17 +7,17 @@ import { Button } from "@ovr/ui/components/button";
 import { toast } from "@ovr/ui/components/toast";
 import { serverClient } from "@/lib/router";
 
-export type RunApproveButtonProps = {
+export type BuildApproveButtonProps = {
   buildId: string;
   approved: boolean;
   disabled?: boolean;
 };
 
-export const RunApproveButton = ({
+export const BuildApproveButton = ({
   buildId,
   approved,
   disabled = false,
-}: RunApproveButtonProps) => {
+}: BuildApproveButtonProps) => {
   const router = useRouter();
 
   const { execute, status } = useServerAction(serverClient.diffs.bulkCastVote, {

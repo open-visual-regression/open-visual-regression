@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
-import { RunHeader } from "./_components/run-header/RunHeader";
+import { BuildHeader } from "./_components/build-header/BuildHeader";
 import { SnapshotGrid, type SnapshotFilter } from "./_components/snapshot-grid/SnapshotGrid";
 import { type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
 
@@ -37,7 +37,7 @@ export default async function BuildPage(props: BuildPageProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <RunHeader build={buildResult.build} snapshotCounts={snapshotCounts} />
+      <BuildHeader build={buildResult.build} snapshotCounts={snapshotCounts} />
       <SnapshotGrid
         snapshots={buildResult.snapshots}
         projectId={projectId}

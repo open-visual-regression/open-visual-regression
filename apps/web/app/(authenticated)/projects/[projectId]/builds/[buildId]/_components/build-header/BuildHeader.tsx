@@ -4,15 +4,15 @@ import { Icon, GitBranchIcon, GitCommitHorizontalIcon, UserIcon } from "@ovr/ui/
 import { type BuildSchema, type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
 import { formatRelativeDateTime } from "@/lib/utils/date";
 import { BuildStatusBadge } from "@/lib/components/BuildStatus";
-import { RunApproveButton } from "./RunApproveButton";
-import { RunRejectButton } from "./RunRejectButton";
+import { BuildApproveButton } from "./BuildApproveButton";
+import { BuildRejectButton } from "./BuildRejectButton";
 
-export type RunHeaderProps = {
+export type BuildHeaderProps = {
   build: BuildSchema;
   snapshotCounts: Record<SnapshotDisplayStatus, number>;
 };
 
-export const RunHeader = ({ build, snapshotCounts }: RunHeaderProps) => {
+export const BuildHeader = ({ build, snapshotCounts }: BuildHeaderProps) => {
   const total = Object.values(snapshotCounts).reduce((sum, count) => sum + count, 0);
   const hasChanged = snapshotCounts.changed > 0;
 
@@ -45,12 +45,12 @@ export const RunHeader = ({ build, snapshotCounts }: RunHeaderProps) => {
           </div>
         </div>
         <div className="flex flex-row gap-2">
-          <RunRejectButton
+          <BuildRejectButton
             buildId={build.id}
             rejected={build.status === "rejected"}
             disabled={!hasChanged}
           />
-          <RunApproveButton
+          <BuildApproveButton
             buildId={build.id}
             approved={build.status === "passed"}
             disabled={!hasChanged}

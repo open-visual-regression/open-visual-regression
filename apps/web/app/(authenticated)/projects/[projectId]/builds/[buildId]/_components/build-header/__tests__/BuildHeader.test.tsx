@@ -6,7 +6,7 @@ import { serverClient } from "@/lib/router";
 import { useRouter } from "next/navigation";
 import { mocks } from "@ovr/mocks";
 import { createORPCError } from "@/lib/testing/orpc";
-import { RunHeader, type RunHeaderProps } from "../RunHeader";
+import { BuildHeader, type BuildHeaderProps } from "../BuildHeader";
 
 vi.mock("@/lib/router");
 vi.mock("next/navigation");
@@ -14,15 +14,15 @@ vi.mock("next/navigation");
 const mockBulkCastVote = vi.mocked(serverClient.diffs.bulkCastVote);
 const mockRefresh = vi.mocked(useRouter)().refresh;
 
-const renderComponent = (props: RunHeaderProps) =>
+const renderComponent = (props: BuildHeaderProps) =>
   render(
     <>
-      <RunHeader {...props} />
+      <BuildHeader {...props} />
       <Toaster />
     </>,
   );
 
-describe("RunHeader", () => {
+describe("BuildHeader", () => {
   it("should render the SegmentedProgress segments with the correct counts", () => {
     const build = mocks.build.generateBuild({ status: "needs_review" });
     renderComponent({
