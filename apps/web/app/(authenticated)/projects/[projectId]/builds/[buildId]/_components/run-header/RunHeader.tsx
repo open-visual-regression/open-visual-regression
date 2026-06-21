@@ -1,18 +1,11 @@
-"use client";
-
-import { useRouter } from "next/navigation";
-import { onError, onSuccess } from "@orpc/client";
-import { useServerAction } from "@orpc/react/hooks";
 import { SegmentedProgress } from "@ovr/ui/components/segmented-progress";
 import { Typography } from "@ovr/ui/components/typography";
 import { Icon, GitBranchIcon, GitCommitHorizontalIcon, UserIcon } from "@ovr/ui/components/icon";
-import { toast } from "@ovr/ui/components/toast";
 import { type BuildSchema, type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
 import { formatRelativeDateTime } from "@/lib/utils/date";
 import { BuildStatusBadge } from "@/lib/components/BuildStatus";
-import { ApproveButton } from "@/lib/components/review-actions/ApproveButton";
-import { RejectButton } from "@/lib/components/review-actions/RejectButton";
-import { serverClient } from "@/lib/router";
+import { RunApproveButton } from "./RunApproveButton";
+import { RunRejectButton } from "./RunRejectButton";
 
 export type RunHeaderProps = {
   build: BuildSchema;
@@ -20,36 +13,8 @@ export type RunHeaderProps = {
 };
 
 export const RunHeader = ({ build, snapshotCounts }: RunHeaderProps) => {
-  const router = useRouter();
   const total = Object.values(snapshotCounts).reduce((sum, count) => sum + count, 0);
   const hasChanged = snapshotCounts.changed > 0;
-
-  const { execute: approveAll, status: approveStatus } = useServerAction(
-    serverClient.diffs.bulkCastVote,
-    {
-      interceptors: [
-        onSuccess(() => router.refresh()),
-        onError((err) => {
-          toast.error(err.message);
-        }),
-      ],
-    },
-  );
-
-  const { execute: rejectAll, status: rejectStatus } = useServerAction(
-    serverClient.diffs.bulkCastVote,
-    {
-      interceptors: [
-        onSuccess(() => router.refresh()),
-        onError((err) => {
-          toast.error(err.message);
-        }),
-      ],
-    },
-  );
-
-  const isApproved = build.status === "passed";
-  const isRejected = build.status === "rejected";
 
   return (
     <div className="flex flex-col gap-6">
@@ -80,19 +45,15 @@ export const RunHeader = ({ build, snapshotCounts }: RunHeaderProps) => {
           </div>
         </div>
         <div className="flex flex-row gap-2">
-          <RejectButton
-            rejected={isRejected}
-            pending={rejectStatus === "pending"}
+          <RunRejectButton
+            buildId={build.id}
+            rejected={build.status === "rejected"}
             disabled={!hasChanged}
-            onClick={() => rejectAll({ buildId: build.id, vote: "reject" })}
-            label="reject all"
           />
-          <ApproveButton
-            approved={isApproved}
-            pending={approveStatus === "pending"}
+          <RunApproveButton
+            buildId={build.id}
+            approved={build.status === "passed"}
             disabled={!hasChanged}
-            onClick={() => approveAll({ buildId: build.id, vote: "approve" })}
-            label="approve all"
           />
         </div>
       </div>
