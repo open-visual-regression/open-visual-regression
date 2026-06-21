@@ -80,4 +80,49 @@ describe("loadViewports", () => {
       await rm(dir, { recursive: true, force: true });
     }
   });
+
+  it("loads the config from an explicit path relative to cwd", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "ovr-cli-config-"));
+
+    try {
+      await writeFile(
+        path.join(dir, "custom.config.mjs"),
+        `export default { viewports: [{ name: "desktop", width: 1280 }] };`,
+      );
+
+      expect(await loadViewports(dir, "custom.config.mjs")).toEqual([
+        { name: "desktop", browser: "chromium", viewportWidth: 1280 },
+      ]);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("loads the config from an explicit absolute path", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "ovr-cli-config-"));
+
+    try {
+      const configPath = path.join(dir, "custom.config.mjs");
+      await writeFile(
+        configPath,
+        `export default { viewports: [{ name: "desktop", width: 1280 }] };`,
+      );
+
+      expect(await loadViewports(dir, configPath)).toEqual([
+        { name: "desktop", browser: "chromium", viewportWidth: 1280 },
+      ]);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("throws a clear error when an explicit config path does not exist", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "ovr-cli-config-"));
+
+    try {
+      await expect(loadViewports(dir, "missing.config.mjs")).rejects.toThrow(/not found/i);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
 });

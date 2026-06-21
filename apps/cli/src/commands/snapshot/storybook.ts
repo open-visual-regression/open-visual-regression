@@ -20,6 +20,7 @@ type StorybookCommandOptions = {
   name?: string;
   author?: string;
   timeout: string;
+  config?: string;
 };
 
 export const storybookCommand = new Command("storybook")
@@ -31,12 +32,13 @@ export const storybookCommand = new Command("storybook")
   .option("--name <name>", "build name (e.g. commit message)")
   .option("--author <author>", "commit author")
   .option("--timeout <seconds>", "maximum seconds to wait for build result", "600")
+  .option("-c, --config <path>", "path to ovr.config file")
   .action(async (options: StorybookCommandOptions) => {
     const apiKey = getApiKey();
 
     try {
       const targets = await readStoryTargets(options.dir);
-      const viewports = await loadViewports();
+      const viewports = await loadViewports(process.cwd(), options.config);
       const { branch, commit: commitSha, name, author } = options;
 
       const client = createClient(options.serverUrl, apiKey);
