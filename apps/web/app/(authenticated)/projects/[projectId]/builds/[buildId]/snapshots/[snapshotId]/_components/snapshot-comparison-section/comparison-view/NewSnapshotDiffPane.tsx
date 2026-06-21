@@ -4,15 +4,22 @@ import { useState } from "react";
 import { Switch } from "@ovr/ui/components/switch";
 import { Typography } from "@ovr/ui/components/typography";
 import { cn } from "@ovr/ui/lib/utils";
+import { SnapshotPane } from "../../snapshot-pane/SnapshotPane";
+import { SnapshotPaneHeader } from "../../snapshot-pane/SnapshotPaneHeader";
 
-export type DiffOverlayProps = {
+export type NewSnapshotDiffPaneProps = {
   label: string;
   imagePath: string | null;
   diffImagePath: string;
   alt: string;
 };
 
-export const DiffOverlay = ({ label, imagePath, diffImagePath, alt }: DiffOverlayProps) => {
+export const NewSnapshotDiffPane = ({
+  label,
+  imagePath,
+  diffImagePath,
+  alt,
+}: NewSnapshotDiffPaneProps) => {
   const [showDiff, setShowDiff] = useState(true);
   const [diffNaturalWidth, setDiffNaturalWidth] = useState<number | null>(null);
   const [imageNaturalWidth, setImageNaturalWidth] = useState<number | null>(null);
@@ -21,18 +28,18 @@ export const DiffOverlay = ({ label, imagePath, diffImagePath, alt }: DiffOverla
     diffNaturalWidth && imageNaturalWidth ? (imageNaturalWidth / diffNaturalWidth) * 100 : 100;
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex h-7 items-center justify-between">
+    <SnapshotPane>
+      <SnapshotPaneHeader className="justify-between">
         <Typography variant="label">{label}</Typography>
         <label className="flex items-center gap-2">
           <Typography variant="caption">show diff</Typography>
           <Switch checked={showDiff} onCheckedChange={setShowDiff} />
         </label>
-      </div>
+      </SnapshotPaneHeader>
       <div className="relative overflow-hidden rounded-card border border-ovr-border bg-ovr-inset bg-pixel-grid">
         {imagePath ? (
           <img
-            src={`/api/storage/${imagePath}`}
+            src={imagePath}
             alt={alt}
             className="absolute top-0 left-0 block h-auto"
             style={{ width: `${imageWidthPercent}%` }}
@@ -44,12 +51,12 @@ export const DiffOverlay = ({ label, imagePath, diffImagePath, alt }: DiffOverla
           </div>
         )}
         <img
-          src={`/api/storage/${diffImagePath}`}
+          src={diffImagePath}
           alt={`diff overlay of ${alt}`}
           className={cn("relative block h-auto w-full", showDiff ? "opacity-100" : "opacity-0")}
           onLoad={(event) => setDiffNaturalWidth(event.currentTarget.naturalWidth)}
         />
       </div>
-    </div>
+    </SnapshotPane>
   );
 };

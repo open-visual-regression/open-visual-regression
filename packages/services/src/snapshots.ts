@@ -55,6 +55,7 @@ export const captureSnapshot = async (snapshotId: string): Promise<void> => {
           width: snapshot.viewportWidth,
           height: fullPage ? DEFAULT_VIEWPORT_HEIGHT : snapshot.viewportHeight,
         },
+        deviceScaleFactor: 1,
       });
       const page = await context.newPage();
 

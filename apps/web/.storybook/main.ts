@@ -12,7 +12,7 @@ const getAbsolutePath = (value: string) => {
 
 const config: StorybookConfig = {
   stories: ["../**/__stories__/**/*.mdx", "../**/__stories__/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
-  staticDirs: [{ from: "../public/storage-fixtures", to: "/api/storage" }],
+  staticDirs: [{ from: "./static/images", to: "/api/storage" }],
   addons: [
     getAbsolutePath("@chromatic-com/storybook"),
     getAbsolutePath("@storybook/addon-vitest"),
