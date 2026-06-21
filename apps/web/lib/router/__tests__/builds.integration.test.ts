@@ -366,8 +366,20 @@ describe("builds", () => {
 
       const [needsReviewSnapshot, rejectedSnapshot] = await dbClient.snapshots.createMany({
         values: [
-          { buildId: build!.id, ...VIEWPORT, targetId: "story-a" },
-          { buildId: build!.id, ...VIEWPORT, targetId: "story-b" },
+          {
+            buildId: build!.id,
+            ...VIEWPORT,
+            targetId: "story-a",
+            targetTitle: "Story A",
+            targetName: "story-a",
+          },
+          {
+            buildId: build!.id,
+            ...VIEWPORT,
+            targetId: "story-b",
+            targetTitle: "Story B",
+            targetName: "story-b",
+          },
         ],
       });
       await dbClient.diffs.create({
