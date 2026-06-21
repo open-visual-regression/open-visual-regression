@@ -35,7 +35,7 @@ export default async function SnapshotPage(props: SnapshotPageProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <SnapshotHeader snapshot={snapshot} build={build} />
+      <SnapshotHeader snapshot={snapshot} build={build} diff={diff} />
       <SnapshotComparisonSection snapshot={snapshot} diff={diff} />
       <ErrorLogs logs={snapshot.errorLogs} />
     </div>
