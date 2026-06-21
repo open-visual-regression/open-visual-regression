@@ -13,7 +13,7 @@ const writeConfig = async (contents: string): Promise<string> => {
 };
 
 describe("loadViewports", () => {
-  it("returns a single default viewport when no config file exists", async () => {
+  it("should use a single default viewport when no config file exists", async () => {
     const dir = await mkdtemp(path.join(tmpdir(), "ovr-cli-config-"));
 
     try {
@@ -23,7 +23,7 @@ describe("loadViewports", () => {
     }
   });
 
-  it("treats every viewport as default when 'defaultViewports' is omitted", async () => {
+  it("should treat every viewport as default when 'defaultViewports' is omitted", async () => {
     const dir = await writeConfig(`
       export default {
         viewports: [
@@ -43,7 +43,7 @@ describe("loadViewports", () => {
     }
   });
 
-  it("only marks viewports named in 'defaultViewports' as default", async () => {
+  it("should only mark viewports named in 'defaultViewports' as default", async () => {
     const dir = await writeConfig(`
       export default {
         viewports: [
@@ -66,7 +66,7 @@ describe("loadViewports", () => {
     }
   });
 
-  it("throws a clear error when 'defaultViewports' references an unknown viewport name", async () => {
+  it("should throw a clear error when 'defaultViewports' references an unknown viewport name", async () => {
     const dir = await writeConfig(`
       export default {
         viewports: [{ name: "desktop", width: 1280 }],
@@ -81,7 +81,7 @@ describe("loadViewports", () => {
     }
   });
 
-  it("loads the config from an explicit path relative to cwd", async () => {
+  it("should load the config from a path the caller specifies relative to cwd", async () => {
     const dir = await mkdtemp(path.join(tmpdir(), "ovr-cli-config-"));
 
     try {
@@ -98,7 +98,7 @@ describe("loadViewports", () => {
     }
   });
 
-  it("loads the config from an explicit absolute path", async () => {
+  it("should load the config from an absolute path the caller specifies", async () => {
     const dir = await mkdtemp(path.join(tmpdir(), "ovr-cli-config-"));
 
     try {
@@ -116,7 +116,7 @@ describe("loadViewports", () => {
     }
   });
 
-  it("throws a clear error when an explicit config path does not exist", async () => {
+  it("should throw a clear error when the config path the caller specifies does not exist", async () => {
     const dir = await mkdtemp(path.join(tmpdir(), "ovr-cli-config-"));
 
     try {
