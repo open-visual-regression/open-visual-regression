@@ -28,9 +28,9 @@ const DEFAULT_VIEWPORTS: ResolvedViewport[] = [{ browser: "chromium", viewportWi
 
 const CONFIG_FILENAMES = ["ovr.config.ts", "ovr.config.js", "ovr.config.mjs"];
 
-const findConfigPath = (cwd: string, explicitPath?: string): string | undefined => {
-  if (explicitPath) {
-    const resolved = path.resolve(cwd, explicitPath);
+const findConfigPath = (cwd: string, configPath?: string): string | undefined => {
+  if (configPath) {
+    const resolved = path.resolve(cwd, configPath);
     if (!existsSync(resolved)) {
       throw new Error(`ovr.config: config file not found at "${resolved}"`);
     }
