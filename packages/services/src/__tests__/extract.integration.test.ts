@@ -41,13 +41,34 @@ const collectCaptureJobs = async (
   }
 };
 
-const buildArtifactTarball = async (): Promise<Buffer> => {
+const buildArtifactTarball = async (
+  storyParameters: Record<string, { diffThreshold?: number }> = {},
+): Promise<Buffer> => {
   const sourceDir = await mkdtemp(path.join(tmpdir(), "ovr-extract-fixture-"));
 
   try {
     await writeFile(
       path.join(sourceDir, "iframe.html"),
-      '<html><body><div id="storybook-root"></div></body></html>',
+      `<html><body><div id="storybook-root"></div><script>
+        window.__OVR_STORY_PARAMETERS__ = ${JSON.stringify(storyParameters)};
+        const listeners = {};
+        window.__STORYBOOK_ADDONS_CHANNEL__ = {
+          on: (event, listener) => { (listeners[event] ||= []).push(listener); },
+          off: (event, listener) => {
+            listeners[event] = (listeners[event] || []).filter((l) => l !== listener);
+          },
+          emit: (event, payload) => {
+            if (event !== "setCurrentStory") return;
+            const storyId = payload.storyId;
+            window.__STORYBOOK_PREVIEW__ = {
+              currentRender: {
+                story: { id: storyId, parameters: { ovr: window.__OVR_STORY_PARAMETERS__[storyId] } },
+              },
+            };
+            (listeners["storyRendered"] || []).forEach((l) => l());
+          },
+        };
+      </script></body></html>`,
     );
     await writeFile(path.join(sourceDir, "runtime.js"), "console.log('hi')");
 
@@ -77,7 +98,7 @@ describe("extractBuild", () => {
       { id: "story-b", title: "Story", name: "B" },
     ];
 
-    await extractBuild(mainBuild.id, targets, [captureConfiguration]);
+    await extractBuild(mainBuild.id, targets, [captureConfiguration], 0.05);
 
     const iframeStream = await storage.getFileStream(getStaticPath(mainBuild.id, "iframe.html"));
     const runtimeStream = await storage.getFileStream(getStaticPath(mainBuild.id, "runtime.js"));
@@ -97,5 +118,41 @@ describe("extractBuild", () => {
         snapshots.map((snapshot) => ({ buildId: mainBuild.id, snapshotId: snapshot.id })),
       ),
     );
+  }, 30000);
+
+  test("uses the build default diff threshold when a story has no override", async ({
+    mainBuild,
+    captureConfiguration,
+  }) => {
+    const tarball = await buildArtifactTarball();
+    await storage.uploadFile(mainBuild.artifactPath, tarball, "application/gzip");
+
+    await extractBuild(
+      mainBuild.id,
+      [{ id: "story-a", title: "Story", name: "A" }],
+      [captureConfiguration],
+      0.1,
+    );
+
+    const [snapshot] = await dbClient.snapshots.findByBuild(mainBuild.id);
+    expect(snapshot!.diffThreshold).toBe(0.1);
+  }, 30000);
+
+  test("resolves a story's parameters.ovr.diffThreshold override onto its snapshots", async ({
+    mainBuild,
+    captureConfiguration,
+  }) => {
+    const tarball = await buildArtifactTarball({ "story-a": { diffThreshold: 0.2 } });
+    await storage.uploadFile(mainBuild.artifactPath, tarball, "application/gzip");
+
+    await extractBuild(
+      mainBuild.id,
+      [{ id: "story-a", title: "Story", name: "A" }],
+      [captureConfiguration],
+      0.1,
+    );
+
+    const [snapshot] = await dbClient.snapshots.findByBuild(mainBuild.id);
+    expect(snapshot!.diffThreshold).toBe(0.2);
   }, 30000);
 });

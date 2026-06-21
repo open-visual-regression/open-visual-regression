@@ -1,4 +1,4 @@
-import { pgTable, text, uuid, varchar, numeric, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, uuid, varchar, integer } from "drizzle-orm/pg-core";
 import { v7 as uuidv7 } from "uuid";
 import { organization, user } from "./auth";
 import { customType } from "drizzle-orm/pg-core";
@@ -17,7 +17,6 @@ export const projects = pgTable("projects", {
   id: uuid().primaryKey().$defaultFn(uuidv7),
   name: varchar({ length: 255 }).notNull(),
   description: varchar({ length: 511 }),
-  diffThreshold: numeric("diff_threshold", { mode: "number", precision: 3, scale: 2 }).notNull(),
   gitMainBranch: varchar("git_main_branch", { length: 255 }).notNull(),
   requiredReviewerCount: integer("required_reviewer_count").notNull().default(1),
   organizationId: text("organization_id")

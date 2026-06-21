@@ -55,6 +55,7 @@ describe("queue", () => {
         artifactPath: "builds/build-1/artifact.tar.gz",
         targets: [{ id: "story-a", title: "Story", name: "A" }],
         viewports: [{ browser: "chromium", viewportWidth: 1280 }],
+        diffThreshold: 0.05,
       };
 
       const data = await processedByWorker<ExtractJobPayload>(

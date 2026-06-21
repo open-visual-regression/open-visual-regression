@@ -26,10 +26,6 @@ const updateProjectSchema = z.object({
     .string()
     .min(1, "you must enter a baseline git branch")
     .max(255, "the baseline git branch must be less than 255 characters"),
-  diffThreshold: z
-    .number()
-    .min(0.01, "the diff threshold must be at least 0.01")
-    .max(1, "the diff threshold must be at most 1"),
   retentionDays: z
     .number()
     .int("retention days must be a whole number")
@@ -45,13 +41,7 @@ type UpdateProjectFormValues = z.infer<typeof updateProjectSchema>;
 type UpdateProjectFormProps = {
   project: Pick<
     ProjectDto,
-    | "id"
-    | "name"
-    | "description"
-    | "gitMainBranch"
-    | "diffThreshold"
-    | "retentionDays"
-    | "requiredReviewerCount"
+    "id" | "name" | "description" | "gitMainBranch" | "retentionDays" | "requiredReviewerCount"
   >;
 };
 
@@ -67,7 +57,6 @@ export const UpdateProjectForm = ({ project }: UpdateProjectFormProps) => {
       name: project.name,
       description: project.description ?? "",
       gitMainBranch: project.gitMainBranch,
-      diffThreshold: project.diffThreshold,
       retentionDays: project.retentionDays,
       requiredReviewerCount: project.requiredReviewerCount,
     },
@@ -129,20 +118,6 @@ export const UpdateProjectForm = ({ project }: UpdateProjectFormProps) => {
                     {...register("gitMainBranch")}
                   />
                   <FieldError errors={[errors.gitMainBranch]} />
-                </Field>
-              </FieldGroup>
-              <FieldGroup>
-                <Field data-invalid={!!errors.diffThreshold}>
-                  <FieldLabel htmlFor="diffThreshold">diff threshold</FieldLabel>
-                  <Input
-                    id="diffThreshold"
-                    type="number"
-                    step="0.01"
-                    placeholder="0.05"
-                    aria-invalid={!!errors.diffThreshold}
-                    {...register("diffThreshold", { valueAsNumber: true })}
-                  />
-                  <FieldError errors={[errors.diffThreshold]} />
                 </Field>
               </FieldGroup>
               <FieldGroup>

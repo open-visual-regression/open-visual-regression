@@ -14,7 +14,6 @@ export const projectSchema = z.object({
   name: z.string().min(1),
   description: z.string().max(511).nullable(),
   gitMainBranch: z.string().min(1).max(255),
-  diffThreshold: z.number().min(0.01).max(1),
   retentionDays: z.number().int().min(1),
   requiredReviewerCount: z.number().int().min(1),
   creator: projectCreatorSchema,
@@ -33,7 +32,6 @@ export const addProjectInputSchema = z.object({
   projectName: z.string().min(1).max(255),
   projectDescription: z.string().max(511),
   gitMainBranch: z.string().min(1).max(255),
-  diffThreshold: z.number().min(0.01).max(1),
 });
 
 export type AddProjectInputSchema = z.infer<typeof addProjectInputSchema>;
@@ -60,7 +58,6 @@ export const updateProjectInputSchema = z.object({
     name: z.string().min(1).max(255).optional(),
     description: z.string().max(511).optional(),
     gitMainBranch: z.string().min(1).max(255).optional(),
-    diffThreshold: z.number().min(0.01).max(1).optional(),
     retentionDays: z.number().int().min(1).optional(),
     requiredReviewerCount: z.number().int().min(1).optional(),
   }),

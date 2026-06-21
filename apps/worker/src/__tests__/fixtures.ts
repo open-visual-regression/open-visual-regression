@@ -43,7 +43,6 @@ export const test = vitest.extend<Fixtures>({
       .insert(projects)
       .values({
         name: "Test Project",
-        diffThreshold: 0.1,
         gitMainBranch: "main",
         organizationId: organization.id,
         creatorId: user.id,

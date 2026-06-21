@@ -5,7 +5,12 @@ import { extractBuild } from "@ovr/services/extract";
 type ExtractJob = { data: ExtractJobPayload };
 
 export const run = async (job: ExtractJob): Promise<void> => {
-  await extractBuild(job.data.buildId, job.data.targets, job.data.viewports);
+  await extractBuild(
+    job.data.buildId,
+    job.data.targets,
+    job.data.viewports,
+    job.data.diffThreshold,
+  );
 };
 
 export const failed = async (job: ExtractJob, error?: Error): Promise<void> => {

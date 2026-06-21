@@ -189,7 +189,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
 
   const { pixelDiffCount, diffPercent } = diff;
 
-  if (diffPercent === 0 || diffPercent <= project.diffThreshold) {
+  if (diffPercent === 0 || diffPercent <= snapshot.diffThreshold) {
     await dbClient.diffs.updateResult(diffId, {
       processingStatus: "diffed",
       reviewStatus: "not_required",

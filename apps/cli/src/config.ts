@@ -42,20 +42,45 @@ const findConfigPath = (cwd: string, configPath?: string): string | undefined =>
   );
 };
 
-export const loadViewports = async (
-  cwd: string = process.cwd(),
-  configPath?: string,
-): Promise<ResolvedViewport[]> => {
+const loadOvrConfig = async (cwd: string, configPath?: string): Promise<OvrConfig | undefined> => {
   const resolvedConfigPath = findConfigPath(cwd, configPath);
 
   if (!resolvedConfigPath) {
-    return DEFAULT_VIEWPORTS;
+    return undefined;
   }
 
   const jiti = createJiti(pathToFileURL(path.join(cwd, "/")).href);
   const loaded = await jiti.import<{ default: OvrConfig }>(resolvedConfigPath);
-  const viewports = loaded.default?.viewports;
-  const defaultViewports = loaded.default?.defaultViewports;
+  return loaded.default;
+};
+
+export const DEFAULT_DIFF_THRESHOLD = 0.05;
+
+export const loadDiffThreshold = async (
+  cwd: string = process.cwd(),
+  configPath?: string,
+): Promise<number> => {
+  const config = await loadOvrConfig(cwd, configPath);
+  const diffThreshold = config?.diffThreshold;
+
+  if (diffThreshold === undefined) {
+    return DEFAULT_DIFF_THRESHOLD;
+  }
+
+  if (diffThreshold <= 0 || diffThreshold > 1) {
+    throw new Error(`ovr.config: "diffThreshold" must be greater than 0 and at most 1`);
+  }
+
+  return diffThreshold;
+};
+
+export const loadViewports = async (
+  cwd: string = process.cwd(),
+  configPath?: string,
+): Promise<ResolvedViewport[]> => {
+  const config = await loadOvrConfig(cwd, configPath);
+  const viewports = config?.viewports;
+  const defaultViewports = config?.defaultViewports;
 
   if (!viewports || viewports.length === 0) {
     return DEFAULT_VIEWPORTS;

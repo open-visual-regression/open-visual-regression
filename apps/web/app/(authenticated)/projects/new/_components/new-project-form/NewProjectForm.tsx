@@ -28,10 +28,6 @@ const newProjectSchema = z.object({
     .string()
     .min(1, "you must enter a baseline git branch")
     .max(255, "the baseline git branch must be less than 255 characters"),
-  diffThreshold: z
-    .number()
-    .min(0.01, "the diff threshold must be greater than or equal to 0.01")
-    .max(1, "the diff threshold must be less than or equal to 1"),
 });
 
 type NewProjectFormValues = z.infer<typeof newProjectSchema>;
@@ -39,11 +35,10 @@ type NewProjectFormValues = z.infer<typeof newProjectSchema>;
 /**
  * @todo
  * 1. Update the field label so it matches the mockups
- * 2. Update the diff input so it matches the mockups
- * 3. Add field descriptions for git main branch and diff threshold
- * 4. Trigger a server action if the form is submitted and valid
- * 5. Render the loading button if the form is submitting.
- * 6. Allow users to specify screenshot resolutions/browsers, as per the mockups.
+ * 2. Add a field description for git main branch
+ * 3. Trigger a server action if the form is submitted and valid
+ * 4. Render the loading button if the form is submitting.
+ * 5. Allow users to specify screenshot resolutions/browsers, as per the mockups.
  */
 export const NewProjectForm = () => {
   const navigate = useRouter();
@@ -58,7 +53,6 @@ export const NewProjectForm = () => {
       projectName: "",
       projectDescription: "",
       gitMainBranch: "main",
-      diffThreshold: 0.05,
     },
   });
 
@@ -105,34 +99,18 @@ export const NewProjectForm = () => {
                 <FieldError errors={[errors.projectDescription]} />
               </Field>
             </FieldGroup>
-            <div className="flex flex-row gap-3">
-              <FieldGroup>
-                <Field data-invalid={!!errors.gitMainBranch}>
-                  <FieldLabel>git main branch</FieldLabel>
-                  <Input
-                    id="gitMainBranch"
-                    placeholder="enter the baseline git branch"
-                    aria-invalid={!!errors.gitMainBranch}
-                    {...register("gitMainBranch")}
-                  />
-                  <FieldError errors={[errors.gitMainBranch]} />
-                </Field>
-              </FieldGroup>
-              <FieldGroup>
-                <Field data-invalid={!!errors.diffThreshold}>
-                  <FieldLabel>diff threshold</FieldLabel>
-                  <Input
-                    id="diffThreshold"
-                    type="number"
-                    step="0.01"
-                    placeholder="enter the diff threshold"
-                    aria-invalid={!!errors.diffThreshold}
-                    {...register("diffThreshold", { valueAsNumber: true })}
-                  />
-                  <FieldError errors={[errors.diffThreshold]} />
-                </Field>
-              </FieldGroup>
-            </div>
+            <FieldGroup>
+              <Field data-invalid={!!errors.gitMainBranch}>
+                <FieldLabel>git main branch</FieldLabel>
+                <Input
+                  id="gitMainBranch"
+                  placeholder="enter the baseline git branch"
+                  aria-invalid={!!errors.gitMainBranch}
+                  {...register("gitMainBranch")}
+                />
+                <FieldError errors={[errors.gitMainBranch]} />
+              </Field>
+            </FieldGroup>
           </CardContent>
           <CardFooter className="flex flex-row gap-3 justify-between">
             <ButtonLink href="/projects" size="lg" variant="secondary">

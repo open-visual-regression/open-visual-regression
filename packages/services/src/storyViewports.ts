@@ -5,7 +5,7 @@ import { detectCaptureStrategy, readOvrStoryParameters } from "./captureStrategi
 import { BOOT_TIMEOUT_MS, RENDER_TIMEOUT_MS } from "./lib/captureTimeouts";
 import { startStaticProxy } from "./lib/staticProxy";
 import type { StaticProxy } from "./lib/staticProxy";
-import type { OvrStoryParameterViewport } from "./captureStrategies";
+import type { OvrStoryParameterViewport, OvrStoryParameters } from "./captureStrategies";
 
 export type NamedViewport = {
   name?: string;
@@ -15,7 +15,7 @@ export type NamedViewport = {
   default?: boolean;
 };
 
-type OverrideEntry = [targetId: string, viewports: OvrStoryParameterViewport[]];
+type OverrideEntry = [targetId: string, parameters: OvrStoryParameters];
 
 const OVERRIDE_READ_CONCURRENCY = 8;
 
@@ -54,7 +54,7 @@ const readStoryOverride = async (
     }
 
     const parameters = await page.evaluate(readOvrStoryParameters, targetId);
-    return parameters?.viewports ? [targetId, parameters.viewports] : undefined;
+    return parameters ? [targetId, parameters] : undefined;
   } catch (error) {
     console.warn(
       `ovr: falling back to default viewports for "${targetId}" — error while reading its viewport override:`,
@@ -98,10 +98,10 @@ const readOverridesConcurrently = async (
   return results.flat();
 };
 
-export const readStoryViewportOverrides = async (
+export const readStoryParameterOverrides = async (
   buildId: string,
   targetIds: string[],
-): Promise<Map<string, OvrStoryParameterViewport[]>> => {
+): Promise<Map<string, OvrStoryParameters>> => {
   const proxy = await startStaticProxy(buildId);
   const browser = await chromium.launch();
 
@@ -137,3 +137,8 @@ export const resolveTargetViewports = (
     };
   });
 };
+
+export const resolveTargetDiffThreshold = (
+  buildDefault: number,
+  override: OvrStoryParameters | undefined,
+): number => override?.diffThreshold ?? buildDefault;

@@ -7,7 +7,6 @@ export const generateProject = (overrides?: Partial<ProjectDto>): ProjectDto => 
   name: faker.company.name(),
   description: faker.lorem.sentence(),
   gitMainBranch: "main",
-  diffThreshold: 0.1,
   retentionDays: 90,
   requiredReviewerCount: 1,
   creator: {

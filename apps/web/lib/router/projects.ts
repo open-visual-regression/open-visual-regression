@@ -41,7 +41,6 @@ export const add = os.projects.add
       name: input.projectName,
       description: input.projectDescription,
       gitMainBranch: input.gitMainBranch,
-      diffThreshold: input.diffThreshold,
       organizationId: context.organizationId,
       creatorId: context.user.id,
     });

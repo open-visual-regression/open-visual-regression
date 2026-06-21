@@ -12,7 +12,6 @@ const TEST_PROJECT: AddProjectInputSchema = {
   projectName: "Test Project",
   projectDescription: "A test project",
   gitMainBranch: "main",
-  diffThreshold: 0.05,
 };
 
 describe("projects", () => {
@@ -48,7 +47,6 @@ describe("projects", () => {
         name: TEST_PROJECT.projectName,
         description: TEST_PROJECT.projectDescription,
         gitMainBranch: TEST_PROJECT.gitMainBranch,
-        diffThreshold: TEST_PROJECT.diffThreshold,
         retentionDays: 90,
       });
     });
@@ -75,7 +73,6 @@ describe("projects", () => {
       expect(result?.project).toMatchObject({
         name: TEST_PROJECT.projectName,
         gitMainBranch: TEST_PROJECT.gitMainBranch,
-        diffThreshold: TEST_PROJECT.diffThreshold,
         retentionDays: 90,
       });
     });

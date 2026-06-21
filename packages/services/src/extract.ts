@@ -11,7 +11,11 @@ import { storage } from "@ovr/storage";
 
 import { enqueueCapture } from "./lib/queue";
 import { getContentType, getStaticPath } from "./lib/staticFiles";
-import { readStoryViewportOverrides, resolveTargetViewports } from "./storyViewports";
+import {
+  readStoryParameterOverrides,
+  resolveTargetDiffThreshold,
+  resolveTargetViewports,
+} from "./storyViewports";
 import type { NamedViewport } from "./storyViewports";
 
 export { getContentType, getStaticPath };
@@ -22,6 +26,7 @@ export const extractBuild = async (
   buildId: string,
   targets: Target[],
   viewports: NamedViewport[],
+  diffThreshold: number,
 ): Promise<void> => {
   const build = await dbClient.builds.findById(buildId);
 
@@ -59,14 +64,16 @@ export const extractBuild = async (
     await rm(tmpDir, { recursive: true, force: true });
   }
 
-  const overridesByTarget = await readStoryViewportOverrides(
+  const overridesByTarget = await readStoryParameterOverrides(
     buildId,
     targets.map((target) => target.id),
   );
 
   await dbClient.snapshots.createMany({
-    values: targets.flatMap((target) =>
-      resolveTargetViewports(viewports, overridesByTarget.get(target.id)).map((viewport) => ({
+    values: targets.flatMap((target) => {
+      const override = overridesByTarget.get(target.id);
+
+      return resolveTargetViewports(viewports, override?.viewports).map((viewport) => ({
         buildId,
         browser: viewport.browser,
         viewportWidth: viewport.viewportWidth,
@@ -75,8 +82,9 @@ export const extractBuild = async (
         targetTitle: target.title,
         targetName: target.name,
         status: "pending" as const,
-      })),
-    ),
+        diffThreshold: resolveTargetDiffThreshold(diffThreshold, override),
+      }));
+    }),
   });
 
   const snapshots = await dbClient.snapshots.findByBuild(buildId);
