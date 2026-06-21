@@ -348,4 +348,43 @@ describe("builds", () => {
       expect(result?.total).toBe(1);
     });
   });
+
+  describe("getOne", () => {
+    const VIEWPORT = { browser: "chromium", viewportWidth: 1280, viewportHeight: 800 };
+
+    test("maps a rejected diff to the 'rejected' snapshot status, distinct from 'changed'", async ({
+      admin,
+    }) => {
+      const [, project] = await serverClient.projects.add(TEST_PROJECT);
+      const build = await dbClient.builds.create({
+        projectId: project!.projectId,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: admin.id,
+      });
+
+      const [needsReviewSnapshot, rejectedSnapshot] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build!.id, ...VIEWPORT, targetId: "story-a" },
+          { buildId: build!.id, ...VIEWPORT, targetId: "story-b" },
+        ],
+      });
+      await dbClient.diffs.create({
+        snapshotId: needsReviewSnapshot!.id,
+        reviewStatus: "needs_review",
+      });
+      await dbClient.diffs.create({ snapshotId: rejectedSnapshot!.id, reviewStatus: "rejected" });
+
+      const [error, result] = await serverClient.builds.getOne({ buildId: build!.id });
+
+      expect(error).toBeNull();
+      expect(result?.snapshots).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ targetId: "story-a", status: "changed" }),
+          expect.objectContaining({ targetId: "story-b", status: "rejected" }),
+        ]),
+      );
+    });
+  });
 });

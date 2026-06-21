@@ -22,10 +22,16 @@ export const BuildStatusBadge = ({ status }: { status: BuildStatus }) => {
           <StatusIcon variant="passed" size={12} /> passed
         </Badge>
       );
+    case "rejected":
+      return (
+        <Badge variant="rejected">
+          <StatusIcon variant="rejected" size={12} /> rejected
+        </Badge>
+      );
     case "error":
       return (
         <Badge variant="fail">
-          <StatusIcon variant="rejected" size={12} /> error
+          <StatusIcon variant="error" size={12} /> error
         </Badge>
       );
   }
@@ -39,6 +45,7 @@ export const BuildStatusStripe = ({ status }: { status: BuildStatus }) => {
       return <div className="absolute inset-0 bg-ovr-accent" />;
     case "passed":
       return <div className="absolute inset-0 bg-ovr-diff-add" />;
+    case "rejected":
     case "error":
       return <div className="absolute inset-0 bg-ovr-remove" />;
   }
