@@ -54,7 +54,7 @@ export const extractBuild = async (
           const relativePath = path.relative(extractDir, absolutePath).split(path.sep).join("/");
 
           return storage.uploadFile(
-            getStaticPath(buildId, relativePath),
+            getStaticPath(build.projectId, buildId, relativePath),
             createReadStream(absolutePath),
             getContentType(relativePath),
           );
@@ -65,6 +65,7 @@ export const extractBuild = async (
   }
 
   const overridesByTarget = await readStoryParameterOverrides(
+    build.projectId,
     buildId,
     targets.map((target) => target.id),
   );

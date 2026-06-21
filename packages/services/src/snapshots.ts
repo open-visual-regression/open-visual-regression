@@ -43,7 +43,7 @@ export const captureSnapshot = async (snapshotId: string): Promise<void> => {
 
   const fullPage = snapshot.viewportHeight === 0;
 
-  const proxy = await startStaticProxy(build.id);
+  const proxy = await startStaticProxy(build.projectId, build.id);
   const browser = await getBrowserLauncher(snapshot.browser).launch();
 
   const logs: ConsoleLog[] = [];

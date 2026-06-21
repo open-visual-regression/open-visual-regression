@@ -7,7 +7,7 @@ import { getContentType, getStaticPath } from "./staticFiles";
 
 export type StaticProxy = { origin: string; close: () => void };
 
-export const startStaticProxy = (buildId: string): Promise<StaticProxy> =>
+export const startStaticProxy = (projectId: string, buildId: string): Promise<StaticProxy> =>
   new Promise((resolve) => {
     const server = http.createServer((req, res) => {
       const requestedPath = decodeURIComponent((req.url ?? "/").split("?")[0]!).replace(/^\/+/, "");
@@ -20,7 +20,7 @@ export const startStaticProxy = (buildId: string): Promise<StaticProxy> =>
       }
 
       storage
-        .getFileStream(getStaticPath(buildId, relativePath))
+        .getFileStream(getStaticPath(projectId, buildId, relativePath))
         .then((stream) => {
           res.writeHead(200, { "Content-Type": getContentType(relativePath) });
           stream.pipe(res);

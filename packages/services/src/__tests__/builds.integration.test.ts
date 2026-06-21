@@ -73,14 +73,14 @@ describe("builds", () => {
         commitSha: "a".repeat(40),
         status: "pending",
         captureMode: "worker",
-        artifactPath: getArtifactPath(buildId),
+        artifactPath: getArtifactPath(project.id, buildId),
         createdBy: user.id,
       });
 
       const job = await collectExtractJob(connection);
       expect(job).toEqual({
         buildId,
-        artifactPath: getArtifactPath(buildId),
+        artifactPath: getArtifactPath(project.id, buildId),
         targets,
         viewports: [captureConfiguration],
         diffThreshold: 0.05,

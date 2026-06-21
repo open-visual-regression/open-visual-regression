@@ -25,7 +25,8 @@ type CreateBuildInput = {
 
 export const DEFAULT_DIFF_THRESHOLD = 0.05;
 
-export const getArtifactPath = (buildId: string): string => `builds/${buildId}/artifact.tar.gz`;
+export const getArtifactPath = (projectId: string, buildId: string): string =>
+  `${projectId}/builds/${buildId}/artifact.tar.gz`;
 
 export const createBuild = async (
   input: CreateBuildInput,
@@ -49,13 +50,13 @@ export const createBuild = async (
       author: input.author,
       status: "pending",
       captureMode: "worker",
-      artifactPath: getArtifactPath(buildId),
+      artifactPath: getArtifactPath(input.projectId, buildId),
       createdBy: callerId,
     });
 
     await enqueueExtract({
       buildId,
-      artifactPath: getArtifactPath(buildId),
+      artifactPath: getArtifactPath(input.projectId, buildId),
       targets: input.targets,
       viewports: input.viewports,
       diffThreshold: input.diffThreshold,
