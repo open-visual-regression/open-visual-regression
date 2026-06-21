@@ -3,16 +3,19 @@
 import { useRouter } from "next/navigation";
 import { onError, onSuccess } from "@orpc/client";
 import { useServerAction } from "@orpc/react/hooks";
-import { Button } from "@ovr/ui/components/button";
-import { Icon, CheckIcon, XIcon } from "@ovr/ui/components/icon";
+import { CheckIcon, XIcon } from "@ovr/ui/components/icon";
 import { toast } from "@ovr/ui/components/toast";
+import type { DiffSchema } from "@ovr/api/contracts/diffs";
+import { ApproveButton } from "@/lib/components/review-actions/ApproveButton";
+import { RejectButton } from "@/lib/components/review-actions/RejectButton";
 import { serverClient } from "@/lib/router";
 
 export type SnapshotReviewActionsProps = {
   diffId: string;
+  reviewStatus: DiffSchema["reviewStatus"];
 };
 
-export const SnapshotReviewActions = ({ diffId }: SnapshotReviewActionsProps) => {
+export const SnapshotReviewActions = ({ diffId, reviewStatus }: SnapshotReviewActionsProps) => {
   const router = useRouter();
 
   const { execute: approve, status: approveStatus } = useServerAction(serverClient.diffs.castVote, {
@@ -33,23 +36,20 @@ export const SnapshotReviewActions = ({ diffId }: SnapshotReviewActionsProps) =>
     ],
   });
 
-  const isApproving = approveStatus === "pending";
-  const isRejecting = rejectStatus === "pending";
-
   return (
     <div className="flex flex-row gap-2 shrink-0">
-      <Button
-        variant="secondary"
-        disabled={isRejecting}
+      <RejectButton
+        rejected={reviewStatus === "rejected"}
+        pending={rejectStatus === "pending"}
         onClick={() => reject({ diffId, vote: "reject" })}
-      >
-        <Icon icon={XIcon} />
-        {isRejecting ? "rejecting..." : "reject"}
-      </Button>
-      <Button disabled={isApproving} onClick={() => approve({ diffId, vote: "approve" })}>
-        <Icon icon={CheckIcon} />
-        {isApproving ? "approving..." : "approve"}
-      </Button>
+        icon={XIcon}
+      />
+      <ApproveButton
+        approved={reviewStatus === "approved"}
+        pending={approveStatus === "pending"}
+        onClick={() => approve({ diffId, vote: "approve" })}
+        icon={CheckIcon}
+      />
     </div>
   );
 };

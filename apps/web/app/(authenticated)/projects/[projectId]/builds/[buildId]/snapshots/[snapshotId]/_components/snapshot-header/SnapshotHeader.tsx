@@ -19,7 +19,7 @@ export const SnapshotHeader = ({ snapshot, build, diff }: SnapshotHeaderProps) =
         {snapshot.targetTitle} {snapshot.targetName}
       </Typography>
       {diff && diff.reviewStatus !== "not_required" ? (
-        <SnapshotReviewActions diffId={diff.id} />
+        <SnapshotReviewActions diffId={diff.id} reviewStatus={diff.reviewStatus} />
       ) : null}
     </div>
     <Typography variant="caption">{build.name}</Typography>

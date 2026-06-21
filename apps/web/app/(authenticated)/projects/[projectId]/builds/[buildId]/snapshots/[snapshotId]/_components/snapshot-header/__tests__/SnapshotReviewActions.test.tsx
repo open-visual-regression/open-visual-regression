@@ -15,10 +15,10 @@ const mockRefresh = vi.mocked(useRouter)().refresh;
 
 const diffId = "019edfc7-e040-7492-86b2-ccfdc00cf6e3";
 
-const renderComponent = (props: SnapshotReviewActionsProps) =>
+const renderComponent = (props: Partial<SnapshotReviewActionsProps> = {}) =>
   render(
     <>
-      <SnapshotReviewActions {...props} />
+      <SnapshotReviewActions diffId={diffId} reviewStatus="needs_review" {...props} />
       <Toaster />
     </>,
   );
@@ -26,7 +26,7 @@ const renderComponent = (props: SnapshotReviewActionsProps) =>
 describe("SnapshotReviewActions", () => {
   it("should approve the diff", async ({ user }) => {
     mockCastVote.mockResolvedValue([null, undefined]);
-    renderComponent({ diffId });
+    renderComponent();
 
     await user.click(screen.getByRole("button", { name: /^approve$/i }));
 
@@ -36,7 +36,7 @@ describe("SnapshotReviewActions", () => {
 
   it("should reject the diff", async ({ user }) => {
     mockCastVote.mockResolvedValue([null, undefined]);
-    renderComponent({ diffId });
+    renderComponent();
 
     await user.click(screen.getByRole("button", { name: /^reject$/i }));
 
@@ -46,7 +46,7 @@ describe("SnapshotReviewActions", () => {
 
   it("should show an error toast if approving fails", async ({ user }) => {
     mockCastVote.mockResolvedValue([createORPCError("INTERNAL_SERVER_ERROR"), undefined]);
-    renderComponent({ diffId });
+    renderComponent();
 
     await user.click(screen.getByRole("button", { name: /^approve$/i }));
 
@@ -56,11 +56,25 @@ describe("SnapshotReviewActions", () => {
 
   it("should show an error toast if rejecting fails", async ({ user }) => {
     mockCastVote.mockResolvedValue([createORPCError("INTERNAL_SERVER_ERROR"), undefined]);
-    renderComponent({ diffId });
+    renderComponent();
 
     await user.click(screen.getByRole("button", { name: /^reject$/i }));
 
     expect(await screen.findByText("INTERNAL_SERVER_ERROR")).toBeVisible();
     expect(mockRefresh).not.toHaveBeenCalled();
+  });
+
+  it("should show approve as disabled and labeled when already approved", () => {
+    renderComponent({ reviewStatus: "approved" });
+
+    expect(screen.getByRole("button", { name: /^approved$/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /^reject$/i })).toBeEnabled();
+  });
+
+  it("should show reject as disabled and labeled when already rejected", () => {
+    renderComponent({ reviewStatus: "rejected" });
+
+    expect(screen.getByRole("button", { name: /^rejected$/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /^approve$/i })).toBeEnabled();
   });
 });
