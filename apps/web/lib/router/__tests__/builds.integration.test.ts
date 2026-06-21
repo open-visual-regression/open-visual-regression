@@ -372,6 +372,7 @@ describe("builds", () => {
             targetId: "story-a",
             targetTitle: "Story A",
             targetName: "story-a",
+            status: "captured",
           },
           {
             buildId: build!.id,
@@ -379,14 +380,20 @@ describe("builds", () => {
             targetId: "story-b",
             targetTitle: "Story B",
             targetName: "story-b",
+            status: "captured",
           },
         ],
       });
       await dbClient.diffs.create({
         snapshotId: needsReviewSnapshot!.id,
+        processingStatus: "diffed",
         reviewStatus: "needs_review",
       });
-      await dbClient.diffs.create({ snapshotId: rejectedSnapshot!.id, reviewStatus: "rejected" });
+      await dbClient.diffs.create({
+        snapshotId: rejectedSnapshot!.id,
+        processingStatus: "diffed",
+        reviewStatus: "rejected",
+      });
 
       const [error, result] = await serverClient.builds.getOne({ buildId: build!.id });
 
