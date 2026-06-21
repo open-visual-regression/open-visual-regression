@@ -57,6 +57,7 @@ describe("builds", () => {
           commitSha: "a".repeat(40),
           targets,
           viewports: [captureConfiguration],
+          diffThreshold: 0.05,
         },
         user.id,
       );
@@ -82,6 +83,7 @@ describe("builds", () => {
         artifactPath: getArtifactPath(buildId),
         targets,
         viewports: [captureConfiguration],
+        diffThreshold: 0.05,
       });
     });
 
@@ -93,6 +95,7 @@ describe("builds", () => {
           commitSha: "a".repeat(40),
           targets: [{ id: "story-a", title: "Story", name: "A" }],
           viewports: [{ browser: "chromium", viewportWidth: 1280, viewportHeight: 800 }],
+          diffThreshold: 0.05,
         },
         user.id,
       );

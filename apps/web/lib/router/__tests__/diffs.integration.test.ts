@@ -15,7 +15,6 @@ const TEST_PROJECT: AddProjectInputSchema = {
   projectName: "Test Project",
   projectDescription: "A test project",
   gitMainBranch: "main",
-  diffThreshold: 0.05,
 };
 
 const VIEWPORT = { browser: "chromium", viewportWidth: 1280, viewportHeight: 800 };
@@ -181,7 +180,6 @@ describe("diffs", () => {
         .insert(projects)
         .values({
           name: "Other Org Project",
-          diffThreshold: 0.1,
           gitMainBranch: "main",
           organizationId: otherOrg!.id,
           creatorId: admin.id,

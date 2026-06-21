@@ -49,14 +49,6 @@ export const ProjectCardListItem = ({ project }: ProjectCardListItemProps) => {
                     <Typography variant="body">{project.gitMainBranch}</Typography>
                   </DescriptionDetails>
                 </DescriptionListItem>
-                <DescriptionListItem>
-                  <DescriptionTerm>
-                    <Typography variant="body-muted">threshold:</Typography>
-                  </DescriptionTerm>
-                  <DescriptionDetails>
-                    <Typography variant="body">{project.diffThreshold * 100}%</Typography>
-                  </DescriptionDetails>
-                </DescriptionListItem>
               </DescriptionList>
             </div>
           </CardContent>

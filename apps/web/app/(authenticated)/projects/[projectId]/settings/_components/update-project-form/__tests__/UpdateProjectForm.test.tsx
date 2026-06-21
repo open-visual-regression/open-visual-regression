@@ -14,7 +14,6 @@ const PROJECT = {
   name: "Test Project",
   description: "A test project",
   gitMainBranch: "main",
-  diffThreshold: 0.05,
   retentionDays: 90,
   requiredReviewerCount: 1,
 };

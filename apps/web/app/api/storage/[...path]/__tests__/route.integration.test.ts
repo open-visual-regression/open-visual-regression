@@ -14,7 +14,6 @@ const TEST_PROJECT: AddProjectInputSchema = {
   projectName: "Test Project",
   projectDescription: "A test project",
   gitMainBranch: "main",
-  diffThreshold: 0.05,
 };
 
 const buildRequest = async (path: string[]) =>

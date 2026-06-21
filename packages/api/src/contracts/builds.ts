@@ -28,6 +28,7 @@ export const createBuildInputSchema = z.object({
     }),
   ),
   viewports: z.array(viewportSchema).min(1),
+  diffThreshold: z.number().min(0.01).max(1).optional(),
 });
 
 export type CreateBuildInputSchema = z.infer<typeof createBuildInputSchema>;

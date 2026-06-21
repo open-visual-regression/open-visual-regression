@@ -46,7 +46,6 @@ describe("ProjectSettingsPage", () => {
       id: PROJECT_ID,
       name: "My Project",
       gitMainBranch: "develop",
-      diffThreshold: 0.1,
       retentionDays: 60,
     });
     mockGetSession.mockResolvedValue({
@@ -60,7 +59,6 @@ describe("ProjectSettingsPage", () => {
 
     expect(screen.getByDisplayValue("My Project")).toBeVisible();
     expect(screen.getByDisplayValue("develop")).toBeVisible();
-    expect(screen.getByDisplayValue("0.1")).toBeVisible();
     expect(screen.getByDisplayValue("60")).toBeVisible();
   });
 

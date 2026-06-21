@@ -20,7 +20,10 @@ type CreateBuildInput = {
   author?: string;
   targets: { id: string; title: string; name: string }[];
   viewports: Viewport[];
+  diffThreshold: number;
 };
+
+export const DEFAULT_DIFF_THRESHOLD = 0.05;
 
 export const getArtifactPath = (buildId: string): string => `builds/${buildId}/artifact.tar.gz`;
 
@@ -55,6 +58,7 @@ export const createBuild = async (
       artifactPath: getArtifactPath(buildId),
       targets: input.targets,
       viewports: input.viewports,
+      diffThreshold: input.diffThreshold,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

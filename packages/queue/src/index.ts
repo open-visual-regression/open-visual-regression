@@ -20,6 +20,7 @@ export type ExtractJobPayload = {
     viewportHeight?: number;
     default?: boolean;
   }[];
+  diffThreshold: number;
 };
 
 export type CaptureJobPayload = {

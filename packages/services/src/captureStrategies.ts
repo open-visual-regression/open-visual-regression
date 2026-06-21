@@ -28,7 +28,10 @@ export type OvrStoryParameterViewport =
   | string
   | { browser?: string; width: number; height?: number };
 
-export type OvrStoryParameters = { viewports?: OvrStoryParameterViewport[] };
+export type OvrStoryParameters = {
+  viewports?: OvrStoryParameterViewport[];
+  diffThreshold?: number;
+};
 
 // `getStoryContext` takes the prepared story object, not a story id, so the
 // just-rendered story's own parameters (set on currentRender.story) are read

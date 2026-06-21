@@ -102,7 +102,6 @@ describe("builds", () => {
         .insert(projects)
         .values({
           name: "Other Project",
-          diffThreshold: 0.1,
           gitMainBranch: "main",
           organizationId: organization.id,
           creatorId: user.id,
@@ -158,7 +157,6 @@ describe("builds", () => {
         .insert(projects)
         .values({
           name: "Other Org Project",
-          diffThreshold: 0.1,
           gitMainBranch: "main",
           organizationId: otherOrg!.id,
           creatorId: user.id,
@@ -200,7 +198,6 @@ describe("builds", () => {
         .insert(projects)
         .values({
           name: "Other Project",
-          diffThreshold: 0.1,
           gitMainBranch: "main",
           organizationId: organization.id,
           creatorId: user.id,

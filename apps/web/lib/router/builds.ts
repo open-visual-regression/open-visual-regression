@@ -2,7 +2,11 @@
 
 import { ORPCError } from "@orpc/client";
 import { dbClient } from "@ovr/db/client";
-import { createBuild as createBuildService, getArtifactPath } from "@ovr/services/builds";
+import {
+  createBuild as createBuildService,
+  DEFAULT_DIFF_THRESHOLD,
+  getArtifactPath,
+} from "@ovr/services/builds";
 import { storage } from "@ovr/storage";
 import type { SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
 import type { SnapshotDbSchema } from "@ovr/db/repository/snapshots";
@@ -52,6 +56,7 @@ export const createBuild = os.builds.createBuild
         author: input.author,
         targets: input.targets,
         viewports: input.viewports,
+        diffThreshold: input.diffThreshold ?? DEFAULT_DIFF_THRESHOLD,
       },
       context.apiKey.referenceId,
     );

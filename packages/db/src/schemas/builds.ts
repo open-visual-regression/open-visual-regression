@@ -3,6 +3,7 @@ import {
   boolean,
   index,
   integer,
+  numeric,
   pgEnum,
   pgTable,
   real,
@@ -93,6 +94,9 @@ export const snapshots = pgTable(
     status: snapshotStatusEnum().notNull().default("pending"),
     imagePath: text("image_path"),
     hasRenderError: boolean("has_render_error").notNull().default(false),
+    diffThreshold: numeric("diff_threshold", { mode: "number", precision: 3, scale: 2 })
+      .notNull()
+      .default(0.05),
   },
   (table) => [index("snapshots_buildId_idx").on(table.buildId)],
 );
