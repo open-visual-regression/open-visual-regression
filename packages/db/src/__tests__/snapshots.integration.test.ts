@@ -255,10 +255,7 @@ describe("snapshots", () => {
   });
 
   describe("listForBuild / countForBuild", () => {
-    test("filters by derived display status and search, and paginates results", async ({
-      build,
-      captureConfiguration,
-    }) => {
+    const seedHomeAndCheckout = async (build: { id: string }, captureConfiguration: object) => {
       const [pass, changed] = await dbClient.snapshots.createMany({
         values: [
           {
@@ -290,6 +287,10 @@ describe("snapshots", () => {
         processingStatus: "diffed",
         reviewStatus: "needs_review",
       });
+    };
+
+    test("filters by derived display status", async ({ build, captureConfiguration }) => {
+      await seedHomeAndCheckout(build, captureConfiguration);
 
       const changedOnly = await dbClient.snapshots.listForBuild(build.id, {
         status: "changed",
@@ -298,6 +299,13 @@ describe("snapshots", () => {
       });
       expect(changedOnly.map((row) => row.targetId)).toEqual(["checkout"]);
       expect(await dbClient.snapshots.countForBuild(build.id, { status: "changed" })).toBe(1);
+    });
+
+    test("filters by search across target title and name", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      await seedHomeAndCheckout(build, captureConfiguration);
 
       const searched = await dbClient.snapshots.listForBuild(build.id, {
         search: "home",
@@ -305,6 +313,10 @@ describe("snapshots", () => {
         offset: 0,
       });
       expect(searched.map((row) => row.targetId)).toEqual(["home"]);
+    });
+
+    test("paginates results with limit and offset", async ({ build, captureConfiguration }) => {
+      await seedHomeAndCheckout(build, captureConfiguration);
 
       const firstPage = await dbClient.snapshots.listForBuild(build.id, { limit: 1, offset: 0 });
       const secondPage = await dbClient.snapshots.listForBuild(build.id, { limit: 1, offset: 1 });

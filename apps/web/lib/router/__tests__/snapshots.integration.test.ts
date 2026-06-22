@@ -183,7 +183,7 @@ describe("snapshots", () => {
   });
 
   describe("list", () => {
-    test("maps a rejected diff to the 'rejected' status, distinct from 'changed'", async ({
+    test("maps diffs to 'changed' or 'rejected' based on their review status", async ({
       admin,
     }) => {
       const { build } = await createProjectAndBuild(admin);
@@ -263,9 +263,7 @@ describe("snapshots", () => {
       expect(error?.code).toBe("NOT_FOUND");
     });
 
-    test("matches the per-snapshot display status counts returned by list, including approved", async ({
-      admin,
-    }) => {
+    test("returns the count of snapshots in each display status", async ({ admin }) => {
       const { build } = await createProjectAndBuild(admin);
 
       const [pending, pass, approved, changed, rejected, renderError] =
