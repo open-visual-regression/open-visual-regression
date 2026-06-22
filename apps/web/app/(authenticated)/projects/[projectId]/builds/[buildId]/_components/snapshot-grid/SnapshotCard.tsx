@@ -31,7 +31,7 @@ export const SnapshotCard = ({ snapshot, projectId, buildId }: SnapshotCardProps
         snapshot.status === "rejected" ||
         snapshot.status === "fail" ? (
           <div className="absolute bottom-2 right-2">
-            <SnapshotStatusBadge status={snapshot.status} />
+            <SnapshotStatusBadge status={snapshot.status} filled />
           </div>
         ) : null}
       </div>
