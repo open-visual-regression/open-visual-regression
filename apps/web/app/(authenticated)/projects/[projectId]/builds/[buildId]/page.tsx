@@ -6,9 +6,9 @@ import { SnapshotGrid } from "./_components/snapshot-grid/SnapshotGrid";
 
 const PAGE_SIZE = 24;
 
-export default async function BuildPage({
-  params,
-}: PageProps<"/projects/[projectId]/builds/[buildId]">) {
+type BuildPageProps = PageProps<"/projects/[projectId]/builds/[buildId]">;
+
+export default async function BuildPage({ params }: BuildPageProps) {
   const { projectId, buildId } = await params;
 
   const [[error, buildResult], [countsError, snapshotCounts], [snapshotsError, snapshotsResult]] =
