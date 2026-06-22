@@ -148,6 +148,12 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
     throw new Error(`Project not found for build: ${build.id}`);
   }
 
+  if (snapshot.hasRenderError) {
+    await dbClient.diffs.updateProcessingStatus(diffId, "error");
+    await checkAllDoneAndFinalize(build.id);
+    return;
+  }
+
   const isMainBranch = build.branch === project.gitMainBranch;
 
   const baseline = await dbClient.baselines.find({

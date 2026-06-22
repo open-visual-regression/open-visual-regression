@@ -396,5 +396,35 @@ describe("snapshots", () => {
       });
       expect(baseline?.snapshotId).toBe(captureSnapshotRow!.id);
     }, 30000);
+
+    test("marks the diff as errored without comparing pixels when the snapshot failed to render", async ({
+      featureBuild,
+      captureConfiguration,
+    }) => {
+      const capturePath = `builds/${featureBuild.id}/snapshots/render-error.png`;
+      await uploadPng(capturePath, 255);
+
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: featureBuild.id,
+            ...captureConfiguration,
+            targetId: "story-render-error",
+            status: "captured",
+            imagePath: capturePath,
+            hasRenderError: true,
+          },
+        ],
+      });
+      const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
+
+      await diffSnapshot(snapshot!.id, diff!.id);
+
+      expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
+        processingStatus: "error",
+        reviewStatus: "not_required",
+        pixelDiffCount: null,
+      });
+    }, 30000);
   });
 });
