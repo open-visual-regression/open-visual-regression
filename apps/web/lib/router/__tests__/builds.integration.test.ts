@@ -404,4 +404,109 @@ describe("builds", () => {
       );
     });
   });
+
+  describe("getSnapshotCounts", () => {
+    const VIEWPORT = { browser: "chromium", viewportWidth: 1280, viewportHeight: 800 };
+
+    test("should return NOT_FOUND for a build that does not exist", async ({ admin: _ }) => {
+      const [error] = await serverClient.builds.getSnapshotCounts({
+        buildId: "019edfc7-e040-7492-86b2-ccfdc00cf6e2",
+      });
+
+      expect(error?.code).toBe("NOT_FOUND");
+    });
+
+    test("should return NOT_FOUND for a build belonging to a different organization", async ({
+      admin,
+    }) => {
+      const [otherOrg] = await db
+        .insert(organization)
+        .values({
+          id: crypto.randomUUID(),
+          name: "Other Org",
+          slug: crypto.randomUUID(),
+          createdAt: new Date(),
+        })
+        .returning();
+
+      const [otherProject] = await db
+        .insert(projects)
+        .values({
+          name: "Other Org Project",
+          gitMainBranch: "main",
+          organizationId: otherOrg!.id,
+          creatorId: admin.id,
+        })
+        .returning();
+
+      const build = await dbClient.builds.create({
+        projectId: otherProject!.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: admin.id,
+      });
+
+      const [error] = await serverClient.builds.getSnapshotCounts({ buildId: build!.id });
+
+      expect(error?.code).toBe("NOT_FOUND");
+    });
+
+    test("should match the per-snapshot display status counts returned by getOne", async ({
+      admin,
+    }) => {
+      const [, project] = await serverClient.projects.add(TEST_PROJECT);
+      const build = await dbClient.builds.create({
+        projectId: project!.projectId,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: admin.id,
+      });
+
+      const [pending, pass, changed, rejected, renderError] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build!.id, ...VIEWPORT, targetId: "pending" },
+          { buildId: build!.id, ...VIEWPORT, targetId: "pass", status: "captured" },
+          { buildId: build!.id, ...VIEWPORT, targetId: "changed", status: "captured" },
+          { buildId: build!.id, ...VIEWPORT, targetId: "rejected", status: "captured" },
+          {
+            buildId: build!.id,
+            ...VIEWPORT,
+            targetId: "render-error",
+            status: "captured",
+            hasRenderError: true,
+          },
+        ],
+      });
+
+      await dbClient.diffs.create({
+        snapshotId: pass!.id,
+        processingStatus: "diffed",
+        reviewStatus: "not_required",
+      });
+      await dbClient.diffs.create({
+        snapshotId: changed!.id,
+        processingStatus: "diffed",
+        reviewStatus: "needs_review",
+      });
+      await dbClient.diffs.create({
+        snapshotId: rejected!.id,
+        processingStatus: "diffed",
+        reviewStatus: "rejected",
+      });
+      await dbClient.diffs.create({
+        snapshotId: renderError!.id,
+        processingStatus: "diffed",
+        reviewStatus: "needs_review",
+      });
+
+      expect(pending).toBeTruthy();
+
+      const [error, counts] = await serverClient.builds.getSnapshotCounts({ buildId: build!.id });
+
+      expect(error).toBeNull();
+      expect(counts).toEqual({ pass: 1, changed: 1, rejected: 1, fail: 1, pending: 1 });
+    });
+  });
 });

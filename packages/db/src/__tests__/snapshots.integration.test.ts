@@ -119,4 +119,134 @@ describe("snapshots", () => {
       expect(await dbClient.snapshots.hasAllCapturedForBuild(build.id)).toBe(false);
     });
   });
+
+  describe("getDisplayStatusCounts", () => {
+    test("should return zero counts for a build with no snapshots", async ({ build }) => {
+      expect(await dbClient.snapshots.getDisplayStatusCounts(build.id)).toEqual({
+        pass: 0,
+        changed: 0,
+        rejected: 0,
+        fail: 0,
+        pending: 0,
+      });
+    });
+
+    test("should bucket each snapshot by its derived display status", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const [pending, pass, changed, rejected, capturedError] = await dbClient.snapshots.createMany(
+        {
+          values: [
+            { buildId: build.id, ...captureConfiguration, targetId: "pending" },
+            {
+              buildId: build.id,
+              ...captureConfiguration,
+              targetId: "pass",
+              status: "captured",
+            },
+            {
+              buildId: build.id,
+              ...captureConfiguration,
+              targetId: "changed",
+              status: "captured",
+            },
+            {
+              buildId: build.id,
+              ...captureConfiguration,
+              targetId: "rejected",
+              status: "captured",
+            },
+            {
+              buildId: build.id,
+              ...captureConfiguration,
+              targetId: "captured-error",
+              status: "error",
+            },
+          ],
+        },
+      );
+
+      await dbClient.diffs.create({
+        snapshotId: pass!.id,
+        processingStatus: "diffed",
+        reviewStatus: "not_required",
+      });
+      await dbClient.diffs.create({
+        snapshotId: changed!.id,
+        processingStatus: "diffed",
+        reviewStatus: "needs_review",
+      });
+      await dbClient.diffs.create({
+        snapshotId: rejected!.id,
+        processingStatus: "diffed",
+        reviewStatus: "rejected",
+      });
+
+      expect(pending).toBeTruthy();
+      expect(capturedError).toBeTruthy();
+
+      expect(await dbClient.snapshots.getDisplayStatusCounts(build.id)).toEqual({
+        pass: 1,
+        changed: 1,
+        rejected: 1,
+        fail: 1,
+        pending: 1,
+      });
+    });
+
+    test("should count a render-errored snapshot as 'fail' even when its diff needs review", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            targetId: "rendered-but-broken",
+            status: "captured",
+            hasRenderError: true,
+          },
+        ],
+      });
+
+      await dbClient.diffs.create({
+        snapshotId: snapshot!.id,
+        processingStatus: "diffed",
+        reviewStatus: "needs_review",
+      });
+
+      expect(await dbClient.snapshots.getDisplayStatusCounts(build.id)).toEqual({
+        pass: 0,
+        changed: 0,
+        rejected: 0,
+        fail: 1,
+        pending: 0,
+      });
+    });
+
+    test("should count a diff processing error as 'fail'", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: build.id, ...captureConfiguration, targetId: "diff-error" }],
+      });
+      await dbClient.snapshots.updateStatus(snapshot!.id, "captured");
+      await dbClient.diffs.create({
+        snapshotId: snapshot!.id,
+        processingStatus: "error",
+        reviewStatus: "not_required",
+      });
+
+      expect(await dbClient.snapshots.getDisplayStatusCounts(build.id)).toEqual({
+        pass: 0,
+        changed: 0,
+        rejected: 0,
+        fail: 1,
+        pending: 0,
+      });
+    });
+  });
 });

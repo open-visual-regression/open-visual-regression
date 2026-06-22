@@ -50,6 +50,14 @@ describe("SnapshotHeader", () => {
     expect(screen.queryByRole("button", { name: /^reject$/i })).not.toBeInTheDocument();
   });
 
+  it("should hide the approve and reject actions when the snapshot failed to render, even if the diff needs review", () => {
+    const build = mocks.build.generateBuild();
+    render(<SnapshotHeader snapshot={{ ...snapshot, status: "fail" }} build={build} diff={diff} />);
+
+    expect(screen.queryByRole("button", { name: /^approve$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^reject$/i })).not.toBeInTheDocument();
+  });
+
   it("should show the snapshot status badge", () => {
     const build = mocks.build.generateBuild();
     render(
