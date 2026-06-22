@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { SnapshotHeader } from "./_components/snapshot-header/SnapshotHeader";
 import { SnapshotComparisonSection } from "./_components/snapshot-comparison-section/SnapshotComparisonSection";
-import { ErrorLogs } from "./_components/snapshot-error-section/ErrorLogs";
+import { SnapshotLogs } from "./_components/snapshot-logs/SnapshotLogs";
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
 
@@ -36,7 +36,7 @@ export default async function SnapshotPage(props: SnapshotPageProps) {
   return (
     <div className="flex flex-col gap-6">
       <SnapshotHeader snapshot={snapshot} build={build} diff={diff} />
-      <ErrorLogs logs={snapshot.errorLogs} />
+      <SnapshotLogs logs={snapshot.errorLogs} />
       <SnapshotComparisonSection snapshot={snapshot} diff={diff} />
     </div>
   );

@@ -7,11 +7,11 @@ import { MultiLineCodeBlockHeader } from "@/lib/components/multi-line-code-block
 import { MultiLineCodeBlockLine } from "@/lib/components/multi-line-code-block/MultiLineCodeBlockLine";
 import { MultiLineCodeBlockLineCount } from "@/lib/components/multi-line-code-block/MultiLineCodeBlockLineCount";
 
-export type ErrorLogsProps = {
+export type SnapshotLogsProps = {
   logs: SnapshotSchema["errorLogs"];
 };
 
-export const ErrorLogs = ({ logs }: ErrorLogsProps) => {
+export const SnapshotLogs = ({ logs }: SnapshotLogsProps) => {
   if (logs.length === 0) {
     return null;
   }

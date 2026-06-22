@@ -1,14 +1,14 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { ErrorLogs } from "../ErrorLogs";
+import { SnapshotLogs } from "../SnapshotLogs";
 
-const meta: Meta<typeof ErrorLogs> = {
-  title: "Web/ErrorLogs",
-  component: ErrorLogs,
+const meta: Meta<typeof SnapshotLogs> = {
+  title: "Web/SnapshotLogs",
+  component: SnapshotLogs,
   tags: ["autodocs"],
 };
 
 export default meta;
-type Story = StoryObj<typeof ErrorLogs>;
+type Story = StoryObj<typeof SnapshotLogs>;
 
 export const Default: Story = {
   args: {
