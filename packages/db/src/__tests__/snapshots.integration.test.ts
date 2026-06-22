@@ -136,20 +136,20 @@ describe("snapshots", () => {
       build,
       captureConfiguration,
     }) => {
-      const [pending, pass, changed, rejected, capturedError] = await dbClient.snapshots.createMany(
-        {
+      const [pending, passed, needsReview, rejected, capturedError] =
+        await dbClient.snapshots.createMany({
           values: [
             { buildId: build.id, ...captureConfiguration, targetId: "pending" },
             {
               buildId: build.id,
               ...captureConfiguration,
-              targetId: "pass",
+              targetId: "passed",
               status: "captured",
             },
             {
               buildId: build.id,
               ...captureConfiguration,
-              targetId: "changed",
+              targetId: "needs_review",
               status: "captured",
             },
             {
@@ -165,16 +165,15 @@ describe("snapshots", () => {
               status: "error",
             },
           ],
-        },
-      );
+        });
 
       await dbClient.diffs.create({
-        snapshotId: pass!.id,
+        snapshotId: passed!.id,
         processingStatus: "diffed",
         reviewStatus: "not_required",
       });
       await dbClient.diffs.create({
-        snapshotId: changed!.id,
+        snapshotId: needsReview!.id,
         processingStatus: "diffed",
         reviewStatus: "needs_review",
       });
@@ -197,7 +196,7 @@ describe("snapshots", () => {
       });
     });
 
-    test("should count a render-errored snapshot as 'fail' even when its diff needs review", async ({
+    test("should count a render-errored snapshot as 'error' even when its diff needs review", async ({
       build,
       captureConfiguration,
     }) => {
@@ -229,7 +228,7 @@ describe("snapshots", () => {
       });
     });
 
-    test("should count a diff processing error as 'fail'", async ({
+    test("should count a diff processing error as 'error'", async ({
       build,
       captureConfiguration,
     }) => {
@@ -256,7 +255,7 @@ describe("snapshots", () => {
 
   describe("listForBuild / countForBuild", () => {
     const seedHomeAndCheckout = async (build: { id: string }, captureConfiguration: object) => {
-      const [pass, changed] = await dbClient.snapshots.createMany({
+      const [passed, needsReview] = await dbClient.snapshots.createMany({
         values: [
           {
             buildId: build.id,
@@ -278,12 +277,12 @@ describe("snapshots", () => {
       });
 
       await dbClient.diffs.create({
-        snapshotId: pass!.id,
+        snapshotId: passed!.id,
         processingStatus: "diffed",
         reviewStatus: "not_required",
       });
       await dbClient.diffs.create({
-        snapshotId: changed!.id,
+        snapshotId: needsReview!.id,
         processingStatus: "diffed",
         reviewStatus: "needs_review",
       });
@@ -292,12 +291,12 @@ describe("snapshots", () => {
     test("filters by derived display status", async ({ build, captureConfiguration }) => {
       await seedHomeAndCheckout(build, captureConfiguration);
 
-      const changedOnly = await dbClient.snapshots.listForBuild(build.id, {
+      const needsReviewOnly = await dbClient.snapshots.listForBuild(build.id, {
         status: "needs_review",
         limit: 10,
         offset: 0,
       });
-      expect(changedOnly.map((row) => row.targetId)).toEqual(["checkout"]);
+      expect(needsReviewOnly.map((row) => row.targetId)).toEqual(["checkout"]);
       expect(await dbClient.snapshots.countForBuild(build.id, { status: "needs_review" })).toBe(1);
     });
 
@@ -326,66 +325,71 @@ describe("snapshots", () => {
       expect(await dbClient.snapshots.countForBuild(build.id)).toBe(2);
     });
 
-    test("defaults to sorting by status priority: fail, changed, rejected, approved, pass, then pending", async ({
+    test("defaults to sorting by status priority: error, needs_review, rejected, approved, passed, then pending", async ({
       build,
       captureConfiguration,
     }) => {
-      const [failSnapshot, changedSnapshot, rejectedSnapshot, approvedSnapshot, passSnapshot] =
-        await dbClient.snapshots.createMany({
-          values: [
-            {
-              buildId: build.id,
-              ...captureConfiguration,
-              targetId: "fail",
-              targetTitle: "Story",
-              targetName: "Story",
-              status: "captured",
-              hasRenderError: true,
-            },
-            {
-              buildId: build.id,
-              ...captureConfiguration,
-              targetId: "changed",
-              targetTitle: "Story",
-              targetName: "Story",
-              status: "captured",
-            },
-            {
-              buildId: build.id,
-              ...captureConfiguration,
-              targetId: "rejected",
-              targetTitle: "Story",
-              targetName: "Story",
-              status: "captured",
-            },
-            {
-              buildId: build.id,
-              ...captureConfiguration,
-              targetId: "approved",
-              targetTitle: "Story",
-              targetName: "Story",
-              status: "captured",
-            },
-            {
-              buildId: build.id,
-              ...captureConfiguration,
-              targetId: "pass",
-              targetTitle: "Story",
-              targetName: "Story",
-              status: "captured",
-            },
-            {
-              buildId: build.id,
-              ...captureConfiguration,
-              targetId: "pending",
-              targetTitle: "Story",
-              targetName: "Story",
-            },
-          ],
-        });
+      const [
+        errorSnapshot,
+        needsReviewSnapshot,
+        rejectedSnapshot,
+        approvedSnapshot,
+        passedSnapshot,
+      ] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            targetId: "error",
+            targetTitle: "Story",
+            targetName: "Story",
+            status: "captured",
+            hasRenderError: true,
+          },
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            targetId: "needs_review",
+            targetTitle: "Story",
+            targetName: "Story",
+            status: "captured",
+          },
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            targetId: "rejected",
+            targetTitle: "Story",
+            targetName: "Story",
+            status: "captured",
+          },
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            targetId: "approved",
+            targetTitle: "Story",
+            targetName: "Story",
+            status: "captured",
+          },
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            targetId: "passed",
+            targetTitle: "Story",
+            targetName: "Story",
+            status: "captured",
+          },
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            targetId: "pending",
+            targetTitle: "Story",
+            targetName: "Story",
+          },
+        ],
+      });
 
       await dbClient.diffs.create({
-        snapshotId: changedSnapshot!.id,
+        snapshotId: needsReviewSnapshot!.id,
         processingStatus: "diffed",
         reviewStatus: "needs_review",
       });
@@ -400,20 +404,20 @@ describe("snapshots", () => {
         reviewStatus: "approved",
       });
       await dbClient.diffs.create({
-        snapshotId: passSnapshot!.id,
+        snapshotId: passedSnapshot!.id,
         processingStatus: "diffed",
         reviewStatus: "not_required",
       });
 
-      expect(failSnapshot).toBeTruthy();
+      expect(errorSnapshot).toBeTruthy();
 
       const results = await dbClient.snapshots.listForBuild(build.id, { limit: 10, offset: 0 });
       expect(results.map((row) => row.targetId)).toEqual([
-        "fail",
-        "changed",
+        "error",
+        "needs_review",
         "rejected",
         "approved",
-        "pass",
+        "passed",
         "pending",
       ]);
     });

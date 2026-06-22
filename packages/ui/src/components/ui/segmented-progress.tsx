@@ -73,15 +73,15 @@ const SegmentedProgress = ({
           />
         ))}
       </div>
-      <div className="flex flex-wrap gap-x-3.5 gap-y-1">
+      <ul className="flex flex-wrap gap-x-3.5 gap-y-1">
         {active.map((s, i) => (
-          <div key={i} className="flex items-center gap-1">
+          <li key={i} className="flex items-center gap-1" aria-label={`${s.count} ${s.label}`}>
             <span className={cn("size-2 shrink-0", getColor(s.color))} />
             <span className="font-mono text-badge text-ovr-fg-secondary">{s.count}</span>
             <span className="font-mono text-badge text-ovr-fg-secondary">{s.label}</span>
-          </div>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 };

@@ -38,14 +38,10 @@ describe("BuildHeader", () => {
     });
 
     expect(screen.getByText("10 snapshots")).toBeVisible();
-    expect(screen.getByText("3")).toBeVisible();
-    expect(screen.getByText("pass")).toBeVisible();
-    expect(screen.getByText("2")).toBeVisible();
-    expect(screen.getByText("changed")).toBeVisible();
-    expect(screen.getByText("1")).toBeVisible();
-    expect(screen.getByText("failed")).toBeVisible();
-    expect(screen.getByText("4")).toBeVisible();
-    expect(screen.getByText("pending")).toBeVisible();
+    expect(screen.getByRole("listitem", { name: "3 passed" })).toBeVisible();
+    expect(screen.getByRole("listitem", { name: "2 needs review" })).toBeVisible();
+    expect(screen.getByRole("listitem", { name: "1 error" })).toBeVisible();
+    expect(screen.getByRole("listitem", { name: "4 pending" })).toBeVisible();
   });
 
   it("should disable both bulk actions when there are no changed snapshots", () => {
@@ -185,8 +181,9 @@ describe("BuildHeader", () => {
       },
     });
 
-    expect(screen.getByText("Error")).toBeVisible();
-    expect(screen.getByText("Build failed: unable to connect to the test runner.")).toBeVisible();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Build failed: unable to connect to the test runner.",
+    );
   });
 
   it("should not show the error alert when the build has no error message", () => {
@@ -203,7 +200,7 @@ describe("BuildHeader", () => {
       },
     });
 
-    expect(screen.queryByText("Error")).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   it("should show reject all as disabled and labeled when the build was rejected", () => {

@@ -305,13 +305,13 @@ describe("snapshots", () => {
     test("returns the count of snapshots in each display status", async ({ admin }) => {
       const { build } = await createProjectAndBuild(admin);
 
-      const [pending, pass, approved, changed, rejected, renderError] =
+      const [pending, passed, approved, needsReview, rejected, renderError] =
         await dbClient.snapshots.createMany({
           values: [
             { buildId: build.id, ...VIEWPORT, targetId: "pending" },
-            { buildId: build.id, ...VIEWPORT, targetId: "pass", status: "captured" },
+            { buildId: build.id, ...VIEWPORT, targetId: "passed", status: "captured" },
             { buildId: build.id, ...VIEWPORT, targetId: "approved", status: "captured" },
-            { buildId: build.id, ...VIEWPORT, targetId: "changed", status: "captured" },
+            { buildId: build.id, ...VIEWPORT, targetId: "needs_review", status: "captured" },
             { buildId: build.id, ...VIEWPORT, targetId: "rejected", status: "captured" },
             {
               buildId: build.id,
@@ -324,7 +324,7 @@ describe("snapshots", () => {
         });
 
       await dbClient.diffs.create({
-        snapshotId: pass!.id,
+        snapshotId: passed!.id,
         processingStatus: "diffed",
         reviewStatus: "not_required",
       });
@@ -334,7 +334,7 @@ describe("snapshots", () => {
         reviewStatus: "approved",
       });
       await dbClient.diffs.create({
-        snapshotId: changed!.id,
+        snapshotId: needsReview!.id,
         processingStatus: "diffed",
         reviewStatus: "needs_review",
       });
