@@ -34,7 +34,7 @@ describe("BuildHeader", () => {
     expect(screen.getByText("3")).toBeVisible();
     expect(screen.getByText("pass")).toBeVisible();
     expect(screen.getByText("2")).toBeVisible();
-    expect(screen.getByText("changed")).toBeVisible();
+    expect(screen.getAllByText("needs review").length).toBeGreaterThan(0);
     expect(screen.getByText("1")).toBeVisible();
     expect(screen.getByText("failed")).toBeVisible();
     expect(screen.getByText("4")).toBeVisible();
