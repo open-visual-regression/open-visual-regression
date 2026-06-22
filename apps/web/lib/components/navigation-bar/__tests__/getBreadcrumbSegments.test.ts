@@ -67,7 +67,7 @@ describe("getBreadcrumbSegments", () => {
     const project = mocks.project.generateProject({ name: "D's Construction" });
     const build = mocks.build.generateBuild({ name: "feat: add login" });
     mockGetOne.mockResolvedValue([null, { project }]);
-    mockBuildsGetOne.mockResolvedValue([null, { build, snapshots: [] }]);
+    mockBuildsGetOne.mockResolvedValue([null, { build }]);
 
     expect(await getBreadcrumbSegments(["projects", project.id, "builds", build.id])).toEqual([
       { label: "projects", href: "/projects" },
@@ -84,7 +84,7 @@ describe("getBreadcrumbSegments", () => {
       targetName: "homepage",
     });
     mockGetOne.mockResolvedValue([null, { project }]);
-    mockBuildsGetOne.mockResolvedValue([null, { build, snapshots: [] }]);
+    mockBuildsGetOne.mockResolvedValue([null, { build }]);
     mockSnapshotsGetOne.mockResolvedValue([
       null,
       {

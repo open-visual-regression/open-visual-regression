@@ -8,6 +8,7 @@ const badgeVariants = cva(
     variants: {
       variant: {
         pass: "text-ovr-diff-add",
+        approved: "text-ovr-diff-add",
         fail: "text-ovr-remove",
         rejected: "text-ovr-remove",
         pending: "text-ovr-status-pending",
@@ -22,6 +23,7 @@ const badgeVariants = cva(
     },
     compoundVariants: [
       { variant: "pass", filled: false, className: "border-ovr-diff-add" },
+      { variant: "approved", filled: false, className: "border-ovr-diff-add" },
       { variant: "fail", filled: false, className: "border-ovr-remove" },
       { variant: "rejected", filled: false, className: "border-ovr-remove" },
       { variant: "pending", filled: false, className: "border-ovr-status-pending" },
@@ -29,6 +31,7 @@ const badgeVariants = cva(
       { variant: "changed", filled: false, className: "border-ovr-accent" },
       { variant: "neutral", filled: false, className: "border-ovr-fg-secondary" },
       { variant: "pass", filled: true, className: "bg-ovr-diff-add text-ovr-on-accent" },
+      { variant: "approved", filled: true, className: "bg-ovr-diff-add text-ovr-on-accent" },
       { variant: "fail", filled: true, className: "bg-ovr-remove text-ovr-on-accent" },
       { variant: "rejected", filled: true, className: "bg-ovr-remove text-ovr-on-accent" },
       { variant: "pending", filled: true, className: "bg-ovr-status-pending text-ovr-on-accent" },
@@ -43,7 +46,15 @@ const badgeVariants = cva(
   },
 );
 
-type BadgeVariant = "pass" | "fail" | "rejected" | "pending" | "stale" | "changed" | "neutral";
+type BadgeVariant =
+  | "pass"
+  | "approved"
+  | "fail"
+  | "rejected"
+  | "pending"
+  | "stale"
+  | "changed"
+  | "neutral";
 
 type BadgeProps = VariantProps<typeof badgeVariants> & {
   children: React.ReactNode;

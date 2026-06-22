@@ -124,6 +124,7 @@ describe("snapshots", () => {
     test("should return zero counts for a build with no snapshots", async ({ build }) => {
       expect(await dbClient.snapshots.getDisplayStatusCounts(build.id)).toEqual({
         pass: 0,
+        approved: 0,
         changed: 0,
         rejected: 0,
         fail: 0,
@@ -188,6 +189,7 @@ describe("snapshots", () => {
 
       expect(await dbClient.snapshots.getDisplayStatusCounts(build.id)).toEqual({
         pass: 1,
+        approved: 0,
         changed: 1,
         rejected: 1,
         fail: 1,
@@ -219,6 +221,7 @@ describe("snapshots", () => {
 
       expect(await dbClient.snapshots.getDisplayStatusCounts(build.id)).toEqual({
         pass: 0,
+        approved: 0,
         changed: 0,
         rejected: 0,
         fail: 1,
@@ -242,11 +245,73 @@ describe("snapshots", () => {
 
       expect(await dbClient.snapshots.getDisplayStatusCounts(build.id)).toEqual({
         pass: 0,
+        approved: 0,
         changed: 0,
         rejected: 0,
         fail: 1,
         pending: 0,
       });
+    });
+  });
+
+  describe("listForBuild / countForBuild", () => {
+    test("filters by derived display status and search, and paginates results", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const [pass, changed] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            targetId: "home",
+            targetTitle: "Home Page",
+            targetName: "home",
+            status: "captured",
+          },
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            targetId: "checkout",
+            targetTitle: "Checkout Page",
+            targetName: "checkout",
+            status: "captured",
+          },
+        ],
+      });
+
+      await dbClient.diffs.create({
+        snapshotId: pass!.id,
+        processingStatus: "diffed",
+        reviewStatus: "not_required",
+      });
+      await dbClient.diffs.create({
+        snapshotId: changed!.id,
+        processingStatus: "diffed",
+        reviewStatus: "needs_review",
+      });
+
+      const changedOnly = await dbClient.snapshots.listForBuild(build.id, {
+        status: "changed",
+        limit: 10,
+        offset: 0,
+      });
+      expect(changedOnly.map((row) => row.targetId)).toEqual(["checkout"]);
+      expect(await dbClient.snapshots.countForBuild(build.id, { status: "changed" })).toBe(1);
+
+      const searched = await dbClient.snapshots.listForBuild(build.id, {
+        search: "home",
+        limit: 10,
+        offset: 0,
+      });
+      expect(searched.map((row) => row.targetId)).toEqual(["home"]);
+
+      const firstPage = await dbClient.snapshots.listForBuild(build.id, { limit: 1, offset: 0 });
+      const secondPage = await dbClient.snapshots.listForBuild(build.id, { limit: 1, offset: 1 });
+      expect(firstPage).toHaveLength(1);
+      expect(secondPage).toHaveLength(1);
+      expect(firstPage[0]!.id).not.toBe(secondPage[0]!.id);
+      expect(await dbClient.snapshots.countForBuild(build.id)).toBe(2);
     });
   });
 });

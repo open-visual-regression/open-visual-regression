@@ -10,8 +10,11 @@ import {
 import { storage } from "@ovr/storage";
 
 import { os } from "./os";
-import { apiKeyMiddleware, authenticatedMiddleware } from "./middleware";
-import { getSnapshotDisplayStatus } from "./utils/snapshotStatus";
+import {
+  apiKeyMiddleware,
+  authenticatedMiddleware,
+  organizationBuildMiddleware,
+} from "./middleware";
 
 const UPLOAD_URL_TTL_SECONDS = 3600;
 
@@ -110,28 +113,9 @@ export const list = os.builds.list
 
 export const getOne = os.builds.getOne
   .use(authenticatedMiddleware)
-  .handler(async ({ input, context }) => {
-    const build = await dbClient.builds.findById(input.buildId);
-
-    if (!build) {
-      throw new ORPCError("NOT_FOUND");
-    }
-
-    const project = await dbClient.projects.getProject({
-      projectId: build.projectId,
-      organizationId: context.organizationId,
-    });
-
-    if (!project) {
-      throw new ORPCError("NOT_FOUND");
-    }
-
-    const [snapshots, diffs] = await Promise.all([
-      dbClient.snapshots.findByBuild(build.id),
-      dbClient.diffs.findByBuild(build.id),
-    ]);
-
-    const diffBySnapshotId = new Map(diffs.map((diff) => [diff.snapshotId, diff]));
+  .use(organizationBuildMiddleware)
+  .handler(async ({ context }) => {
+    const { build, project } = context;
 
     return {
       build: {
@@ -145,46 +129,6 @@ export const getOne = os.builds.getOne
         status: build.status,
         createdAt: build.createdAt,
       },
-      snapshots: snapshots.map((snapshot) => {
-        const diff = diffBySnapshotId.get(snapshot.id);
-
-        return {
-          id: snapshot.id,
-          targetId: snapshot.targetId,
-          targetTitle: snapshot.targetTitle,
-          targetName: snapshot.targetName,
-          status: getSnapshotDisplayStatus(snapshot, diff),
-          imagePath: snapshot.imagePath,
-          diffId: diff?.id ?? null,
-          diffImagePath: diff?.diffImagePath ?? null,
-          diffPercent: diff?.diffPercent ?? null,
-          browser: snapshot.browser,
-          viewportWidth: snapshot.viewportWidth,
-          viewportHeight: snapshot.viewportHeight === 0 ? null : snapshot.viewportHeight,
-        };
-      }),
     };
-  })
-  .actionable();
-
-export const getSnapshotCounts = os.builds.getSnapshotCounts
-  .use(authenticatedMiddleware)
-  .handler(async ({ input, context }) => {
-    const build = await dbClient.builds.findById(input.buildId);
-
-    if (!build) {
-      throw new ORPCError("NOT_FOUND");
-    }
-
-    const project = await dbClient.projects.getProject({
-      projectId: build.projectId,
-      organizationId: context.organizationId,
-    });
-
-    if (!project) {
-      throw new ORPCError("NOT_FOUND");
-    }
-
-    return dbClient.snapshots.getDisplayStatusCounts(build.id);
   })
   .actionable();

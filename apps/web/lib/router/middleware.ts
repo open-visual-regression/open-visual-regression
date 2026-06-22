@@ -81,6 +81,27 @@ export const apiKeyMiddleware = os
     return next({ context: { apiKey: result.key, projectId } });
   });
 
+export const organizationBuildMiddleware = os
+  .$context<AuthenticatedContext>()
+  .middleware(async ({ context, next }, input: { buildId: string }) => {
+    const build = await dbClient.builds.findById(input.buildId);
+
+    if (!build) {
+      throw new ORPCError("NOT_FOUND");
+    }
+
+    const project = await dbClient.projects.getProject({
+      projectId: build.projectId,
+      organizationId: context.organizationId,
+    });
+
+    if (!project) {
+      throw new ORPCError("NOT_FOUND");
+    }
+
+    return next({ context: { build, project } });
+  });
+
 export const organizationSnapshotMiddleware = os
   .$context<AuthenticatedContext>()
   .middleware(async ({ context, next }, input: { snapshotId: string }) => {

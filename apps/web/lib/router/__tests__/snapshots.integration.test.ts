@@ -181,4 +181,150 @@ describe("snapshots", () => {
       expect(result?.snapshot.status).toBe("pass");
     });
   });
+
+  describe("list", () => {
+    test("maps a rejected diff to the 'rejected' status, distinct from 'changed'", async ({
+      admin,
+    }) => {
+      const { build } = await createProjectAndBuild(admin);
+
+      const [needsReviewSnapshot, rejectedSnapshot] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            ...VIEWPORT,
+            targetId: "story-a",
+            targetTitle: "Story A",
+            targetName: "story-a",
+            status: "captured",
+          },
+          {
+            buildId: build.id,
+            ...VIEWPORT,
+            targetId: "story-b",
+            targetTitle: "Story B",
+            targetName: "story-b",
+            status: "captured",
+          },
+        ],
+      });
+      await dbClient.diffs.create({
+        snapshotId: needsReviewSnapshot!.id,
+        processingStatus: "diffed",
+        reviewStatus: "needs_review",
+      });
+      await dbClient.diffs.create({
+        snapshotId: rejectedSnapshot!.id,
+        processingStatus: "diffed",
+        reviewStatus: "rejected",
+      });
+
+      const [error, result] = await serverClient.snapshots.list({ buildId: build.id });
+
+      expect(error).toBeNull();
+      expect(result?.snapshots).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ targetId: "story-a", status: "changed" }),
+          expect.objectContaining({ targetId: "story-b", status: "rejected" }),
+        ]),
+      );
+    });
+
+    test("filters by status and paginates with limit/offset", async ({ admin }) => {
+      const { build } = await createProjectAndBuild(admin);
+
+      await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, ...VIEWPORT, targetId: "a", targetName: "a" },
+          { buildId: build.id, ...VIEWPORT, targetId: "b", targetName: "b" },
+          { buildId: build.id, ...VIEWPORT, targetId: "c", targetName: "c" },
+        ],
+      });
+
+      const [error, result] = await serverClient.snapshots.list({
+        buildId: build.id,
+        status: "pending",
+        limit: 2,
+        offset: 1,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.total).toBe(3);
+      expect(result?.snapshots).toHaveLength(2);
+    });
+  });
+
+  describe("getCounts", () => {
+    test("should return NOT_FOUND for a build that does not exist", async ({ admin: _ }) => {
+      const [error] = await serverClient.snapshots.getCounts({
+        buildId: "019edfc7-e040-7492-86b2-ccfdc00cf6e2",
+      });
+
+      expect(error?.code).toBe("NOT_FOUND");
+    });
+
+    test("matches the per-snapshot display status counts returned by list, including approved", async ({
+      admin,
+    }) => {
+      const { build } = await createProjectAndBuild(admin);
+
+      const [pending, pass, approved, changed, rejected, renderError] =
+        await dbClient.snapshots.createMany({
+          values: [
+            { buildId: build.id, ...VIEWPORT, targetId: "pending" },
+            { buildId: build.id, ...VIEWPORT, targetId: "pass", status: "captured" },
+            { buildId: build.id, ...VIEWPORT, targetId: "approved", status: "captured" },
+            { buildId: build.id, ...VIEWPORT, targetId: "changed", status: "captured" },
+            { buildId: build.id, ...VIEWPORT, targetId: "rejected", status: "captured" },
+            {
+              buildId: build.id,
+              ...VIEWPORT,
+              targetId: "render-error",
+              status: "captured",
+              hasRenderError: true,
+            },
+          ],
+        });
+
+      await dbClient.diffs.create({
+        snapshotId: pass!.id,
+        processingStatus: "diffed",
+        reviewStatus: "not_required",
+      });
+      await dbClient.diffs.create({
+        snapshotId: approved!.id,
+        processingStatus: "diffed",
+        reviewStatus: "approved",
+      });
+      await dbClient.diffs.create({
+        snapshotId: changed!.id,
+        processingStatus: "diffed",
+        reviewStatus: "needs_review",
+      });
+      await dbClient.diffs.create({
+        snapshotId: rejected!.id,
+        processingStatus: "diffed",
+        reviewStatus: "rejected",
+      });
+      await dbClient.diffs.create({
+        snapshotId: renderError!.id,
+        processingStatus: "diffed",
+        reviewStatus: "needs_review",
+      });
+
+      expect(pending).toBeTruthy();
+
+      const [error, counts] = await serverClient.snapshots.getCounts({ buildId: build.id });
+
+      expect(error).toBeNull();
+      expect(counts).toEqual({
+        pass: 1,
+        approved: 1,
+        changed: 1,
+        rejected: 1,
+        fail: 1,
+        pending: 1,
+      });
+    });
+  });
 });

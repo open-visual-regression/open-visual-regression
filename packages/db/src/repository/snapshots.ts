@@ -1,10 +1,11 @@
-import { count, eq, sql } from "drizzle-orm";
+import { and, count, eq, ilike, or, sql } from "drizzle-orm";
 
 import { db, type DbClient } from "../db";
 import { diffs, snapshots, type SnapshotStatus } from "../schema";
 
 export type SnapshotDisplayStatusCounts = {
   pass: number;
+  approved: number;
   changed: number;
   rejected: number;
   fail: number;
@@ -73,6 +74,7 @@ const displayStatusExpr = sql<string>`case
   when ${diffs.processingStatus} = 'error' then 'fail'
   when ${diffs.reviewStatus} = 'rejected' then 'rejected'
   when ${diffs.reviewStatus} = 'needs_review' then 'changed'
+  when ${diffs.reviewStatus} = 'approved' then 'approved'
   else 'pass'
 end`;
 
@@ -88,6 +90,7 @@ export const getDisplayStatusCounts = async (
 
   const counts: SnapshotDisplayStatusCounts = {
     pass: 0,
+    approved: 0,
     changed: 0,
     rejected: 0,
     fail: 0,
@@ -99,6 +102,61 @@ export const getDisplayStatusCounts = async (
   }
 
   return counts;
+};
+
+export type SnapshotDisplayStatus = keyof SnapshotDisplayStatusCounts;
+
+type ListForBuildFilters = { status?: SnapshotDisplayStatus; search?: string };
+
+const listForBuildWhere = (buildId: string, { status, search }: ListForBuildFilters) =>
+  and(
+    eq(snapshots.buildId, buildId),
+    status ? sql`${displayStatusExpr} = ${status}` : undefined,
+    search
+      ? or(ilike(snapshots.targetTitle, `%${search}%`), ilike(snapshots.targetName, `%${search}%`))
+      : undefined,
+  );
+
+export type ListForBuildOptions = ListForBuildFilters & { limit: number; offset: number };
+
+export const listForBuild = (
+  buildId: string,
+  { status, search, limit, offset }: ListForBuildOptions,
+) =>
+  db
+    .select({
+      id: snapshots.id,
+      targetId: snapshots.targetId,
+      targetTitle: snapshots.targetTitle,
+      targetName: snapshots.targetName,
+      browser: snapshots.browser,
+      viewportWidth: snapshots.viewportWidth,
+      viewportHeight: snapshots.viewportHeight,
+      imagePath: snapshots.imagePath,
+      status: displayStatusExpr,
+      diffId: diffs.id,
+      diffImagePath: diffs.diffImagePath,
+      diffPercent: diffs.diffPercent,
+    })
+    .from(snapshots)
+    .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
+    .where(listForBuildWhere(buildId, { status, search }))
+    .orderBy(
+      snapshots.targetTitle,
+      snapshots.targetName,
+      snapshots.browser,
+      snapshots.viewportWidth,
+    )
+    .limit(limit)
+    .offset(offset);
+
+export const countForBuild = async (buildId: string, filters: ListForBuildFilters = {}) => {
+  const [result] = await db
+    .select({ count: count() })
+    .from(snapshots)
+    .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
+    .where(listForBuildWhere(buildId, filters));
+  return result?.count ?? 0;
 };
 
 export type SnapshotDbSchema = Awaited<ReturnType<typeof findByBuild>>[number];
