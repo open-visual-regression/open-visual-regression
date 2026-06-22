@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { MultiLineCodeBlock } from "../MultiLineCodeBlock";
 import { MultiLineCodeBlockBody } from "../MultiLineCodeBlockBody";
 import { MultiLineCodeBlockCopyButton } from "../MultiLineCodeBlockCopyButton";
-import { MultiLineCodeBlockEyebrow } from "../MultiLineCodeBlockEyebrow";
+import { MultiLineCodeBlockLabel } from "../MultiLineCodeBlockLabel";
 import { MultiLineCodeBlockFilename } from "../MultiLineCodeBlockFilename";
 import { MultiLineCodeBlockHeader } from "../MultiLineCodeBlockHeader";
 import { MultiLineCodeBlockLine } from "../MultiLineCodeBlockLine";
@@ -38,7 +38,7 @@ export const WithLineNumbers: Story = {
     <div className="w-150 p-6">
       <MultiLineCodeBlock lines={STACK_TRACE}>
         <MultiLineCodeBlockHeader>
-          <MultiLineCodeBlockEyebrow>stacktrace</MultiLineCodeBlockEyebrow>
+          <MultiLineCodeBlockLabel>stacktrace</MultiLineCodeBlockLabel>
           <MultiLineCodeBlockFilename>cart-with-items.test.ts</MultiLineCodeBlockFilename>
           <MultiLineCodeBlockLineCount />
           <MultiLineCodeBlockCopyButton />
@@ -60,7 +60,7 @@ export const WithoutLineNumbers: Story = {
     <div className="w-150 p-6">
       <MultiLineCodeBlock lines={STACK_TRACE} showLineNumbers={false}>
         <MultiLineCodeBlockHeader>
-          <MultiLineCodeBlockEyebrow>stacktrace</MultiLineCodeBlockEyebrow>
+          <MultiLineCodeBlockLabel>stacktrace</MultiLineCodeBlockLabel>
           <MultiLineCodeBlockFilename>cart-with-items.test.ts</MultiLineCodeBlockFilename>
           <MultiLineCodeBlockLineCount />
           <MultiLineCodeBlockCopyButton />
@@ -87,7 +87,7 @@ export const Wrapped: Story = {
         ]}
       >
         <MultiLineCodeBlockHeader>
-          <MultiLineCodeBlockEyebrow>command</MultiLineCodeBlockEyebrow>
+          <MultiLineCodeBlockLabel>command</MultiLineCodeBlockLabel>
           <MultiLineCodeBlockLineCount />
           <MultiLineCodeBlockCopyButton />
         </MultiLineCodeBlockHeader>

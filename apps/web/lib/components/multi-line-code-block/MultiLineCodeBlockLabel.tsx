@@ -2,13 +2,13 @@ import { Typography } from "@ovr/ui/components/typography";
 import { cn } from "@ovr/ui/lib/utils";
 import { JSX } from "react";
 
-type MultiLineCodeBlockEyebrowProps = JSX.IntrinsicElements["span"];
+type MultiLineCodeBlockLabelProps = JSX.IntrinsicElements["span"];
 
-export const MultiLineCodeBlockEyebrow = ({
+export const MultiLineCodeBlockLabel = ({
   className,
   children,
   ...props
-}: MultiLineCodeBlockEyebrowProps) => (
+}: MultiLineCodeBlockLabelProps) => (
   <Typography
     as="span"
     variant="label"

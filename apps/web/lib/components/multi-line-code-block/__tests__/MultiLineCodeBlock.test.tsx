@@ -3,7 +3,7 @@ import { describe, expect, it, render, screen } from "@/test-utils";
 import { MultiLineCodeBlock } from "../MultiLineCodeBlock";
 import { MultiLineCodeBlockBody } from "../MultiLineCodeBlockBody";
 import { MultiLineCodeBlockCopyButton } from "../MultiLineCodeBlockCopyButton";
-import { MultiLineCodeBlockEyebrow } from "../MultiLineCodeBlockEyebrow";
+import { MultiLineCodeBlockLabel } from "../MultiLineCodeBlockLabel";
 import { MultiLineCodeBlockFilename } from "../MultiLineCodeBlockFilename";
 import { MultiLineCodeBlockHeader } from "../MultiLineCodeBlockHeader";
 import { MultiLineCodeBlockLine } from "../MultiLineCodeBlockLine";
@@ -18,7 +18,7 @@ const renderCodeBlock = (props: Partial<{ wrap: boolean; showLineNumbers: boolea
   render(
     <MultiLineCodeBlock lines={LINES} {...props}>
       <MultiLineCodeBlockHeader>
-        <MultiLineCodeBlockEyebrow>stacktrace</MultiLineCodeBlockEyebrow>
+        <MultiLineCodeBlockLabel>stacktrace</MultiLineCodeBlockLabel>
         <MultiLineCodeBlockFilename>cart-with-items.test.ts</MultiLineCodeBlockFilename>
         <MultiLineCodeBlockLineCount />
         <MultiLineCodeBlockCopyButton />
