@@ -56,14 +56,26 @@ export const snapshotSortColumnSchema = z.enum([
 
 export type SnapshotSortColumnSchema = z.infer<typeof snapshotSortColumnSchema>;
 
+export const snapshotSortSchema = z.object({
+  column: snapshotSortColumnSchema,
+  direction: z.enum(["asc", "desc"]),
+});
+
+export type SnapshotSortSchema = z.infer<typeof snapshotSortSchema>;
+
 export const listInputSchema = z.object({
   buildId: z.uuidv7(),
   status: snapshotDisplayStatusSchema.optional(),
   search: z.string().min(1).optional(),
   sortBy: z
-    .array(snapshotSortColumnSchema)
+    .array(snapshotSortSchema)
     .min(1)
-    .default(["targetTitle", "targetName", "browser", "viewportWidth"]),
+    .default([
+      { column: "targetTitle", direction: "asc" },
+      { column: "targetName", direction: "asc" },
+      { column: "browser", direction: "asc" },
+      { column: "viewportWidth", direction: "asc" },
+    ]),
   limit: z.number().int().min(1).max(100).default(24),
   offset: z.number().int().min(0).default(0),
 });

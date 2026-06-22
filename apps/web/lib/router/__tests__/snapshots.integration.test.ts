@@ -273,7 +273,7 @@ describe("snapshots", () => {
       expect(result?.snapshots).toHaveLength(2);
     });
 
-    test("sorts by the given sortBy columns", async ({ admin }) => {
+    test("sorts by the given sortBy column and direction", async ({ admin }) => {
       const { build } = await createProjectAndBuild(admin);
 
       await dbClient.snapshots.createMany({
@@ -285,11 +285,11 @@ describe("snapshots", () => {
 
       const [error, result] = await serverClient.snapshots.list({
         buildId: build.id,
-        sortBy: ["targetName"],
+        sortBy: [{ column: "targetName", direction: "desc" }],
       });
 
       expect(error).toBeNull();
-      expect(result?.snapshots.map((snapshot) => snapshot.targetId)).toEqual(["a", "b"]);
+      expect(result?.snapshots.map((snapshot) => snapshot.targetId)).toEqual(["b", "a"]);
     });
   });
 

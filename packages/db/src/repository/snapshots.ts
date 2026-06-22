@@ -1,4 +1,4 @@
-import { and, count, eq, ilike, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, or, sql } from "drizzle-orm";
 
 import { db, type DbClient } from "../db";
 import { diffs, snapshots, type SnapshotStatus } from "../schema";
@@ -126,15 +126,19 @@ export const snapshotSortColumns = {
 
 export type SnapshotSortColumn = keyof typeof snapshotSortColumns;
 
-export const defaultSnapshotSortBy: SnapshotSortColumn[] = [
-  "targetTitle",
-  "targetName",
-  "browser",
-  "viewportWidth",
+export type SnapshotSortDirection = "asc" | "desc";
+
+export type SnapshotSort = { column: SnapshotSortColumn; direction: SnapshotSortDirection };
+
+export const defaultSnapshotSortBy: SnapshotSort[] = [
+  { column: "targetTitle", direction: "asc" },
+  { column: "targetName", direction: "asc" },
+  { column: "browser", direction: "asc" },
+  { column: "viewportWidth", direction: "asc" },
 ];
 
 export type ListForBuildOptions = ListForBuildFilters & {
-  sortBy?: SnapshotSortColumn[];
+  sortBy?: SnapshotSort[];
   limit: number;
   offset: number;
 };
@@ -161,7 +165,11 @@ export const listForBuild = (
     .from(snapshots)
     .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
     .where(listForBuildWhere(buildId, { status, search }))
-    .orderBy(...sortBy.map((column) => snapshotSortColumns[column]))
+    .orderBy(
+      ...sortBy.map(({ column, direction }) =>
+        (direction === "desc" ? desc : asc)(snapshotSortColumns[column]),
+      ),
+    )
     .limit(limit)
     .offset(offset);
 

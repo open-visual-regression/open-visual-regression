@@ -364,7 +364,7 @@ describe("snapshots", () => {
       await createSortableRows(build, captureConfiguration);
 
       const results = await dbClient.snapshots.listForBuild(build.id, {
-        sortBy: ["targetName"],
+        sortBy: [{ column: "targetName", direction: "asc" }],
         limit: 10,
         offset: 0,
       });
@@ -375,7 +375,7 @@ describe("snapshots", () => {
       await createSortableRows(build, captureConfiguration);
 
       const results = await dbClient.snapshots.listForBuild(build.id, {
-        sortBy: ["browser"],
+        sortBy: [{ column: "browser", direction: "asc" }],
         limit: 10,
         offset: 0,
       });
@@ -386,11 +386,22 @@ describe("snapshots", () => {
       await createSortableRows(build, captureConfiguration);
 
       const results = await dbClient.snapshots.listForBuild(build.id, {
-        sortBy: ["viewportWidth"],
+        sortBy: [{ column: "viewportWidth", direction: "asc" }],
         limit: 10,
         offset: 0,
       });
       expect(results.map((row) => row.targetId)).toEqual(["row-a-title", "row-b-title"]);
+    });
+
+    test("reverses order when direction is desc", async ({ build, captureConfiguration }) => {
+      await createSortableRows(build, captureConfiguration);
+
+      const results = await dbClient.snapshots.listForBuild(build.id, {
+        sortBy: [{ column: "targetTitle", direction: "desc" }],
+        limit: 10,
+        offset: 0,
+      });
+      expect(results.map((row) => row.targetId)).toEqual(["row-b-title", "row-a-title"]);
     });
   });
 });
