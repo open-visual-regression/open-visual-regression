@@ -1,52 +1,27 @@
 import { type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
-import { Badge } from "@ovr/ui/components/badge";
-import { StatusIcon } from "@ovr/ui/components/status-icon";
+import { StatusBadge, type StatusBadgeProps } from "@ovr/ui/components/status-badge";
 
 type SnapshotStatusBadgeProps = {
   status: SnapshotDisplayStatus;
   filled?: boolean;
 };
 
+const SNAPSHOT_STATUS_BADGE: Record<
+  SnapshotDisplayStatus,
+  Pick<StatusBadgeProps, "variant" | "icon"> & { label: string }
+> = {
+  pending: { variant: "pending", icon: "pending", label: "pending" },
+  changed: { variant: "changed", icon: "changed", label: "needs review" },
+  pass: { variant: "pass", icon: "passed", label: "passed" },
+  rejected: { variant: "rejected", icon: "rejected", label: "rejected" },
+  fail: { variant: "fail", icon: "error", label: "error" },
+};
+
 export const SnapshotStatusBadge = ({ status, filled }: SnapshotStatusBadgeProps) => {
-  switch (status) {
-    case "pending":
-      return (
-        <Badge variant="pending" filled={filled}>
-          <StatusIcon variant="pending" size={12} className={filled ? "text-current" : undefined} />{" "}
-          pending
-        </Badge>
-      );
-    case "changed":
-      return (
-        <Badge variant="changed" filled={filled}>
-          <StatusIcon variant="changed" size={12} className={filled ? "text-current" : undefined} />{" "}
-          needs review
-        </Badge>
-      );
-    case "pass":
-      return (
-        <Badge variant="pass" filled={filled}>
-          <StatusIcon variant="passed" size={12} className={filled ? "text-current" : undefined} />{" "}
-          passed
-        </Badge>
-      );
-    case "rejected":
-      return (
-        <Badge variant="rejected" filled={filled}>
-          <StatusIcon
-            variant="rejected"
-            size={12}
-            className={filled ? "text-current" : undefined}
-          />{" "}
-          rejected
-        </Badge>
-      );
-    case "fail":
-      return (
-        <Badge variant="fail" filled={filled}>
-          <StatusIcon variant="error" size={12} className={filled ? "text-current" : undefined} />{" "}
-          error
-        </Badge>
-      );
-  }
+  const { variant, icon, label } = SNAPSHOT_STATUS_BADGE[status];
+  return (
+    <StatusBadge variant={variant} icon={icon} filled={filled}>
+      {label}
+    </StatusBadge>
+  );
 };
