@@ -10,32 +10,32 @@ export const SnapshotStatusBadge = ({ status }: SnapshotStatusBadgeProps) => {
   switch (status) {
     case "pending":
       return (
-        <Badge variant="pending" filled>
-          <StatusIcon variant="pending" size={12} className="text-current" /> pending
+        <Badge variant="pending">
+          <StatusIcon variant="pending" size={12} /> pending
         </Badge>
       );
     case "changed":
       return (
-        <Badge variant="changed" filled>
-          <StatusIcon variant="changed" size={12} className="text-current" /> needs review
+        <Badge variant="changed">
+          <StatusIcon variant="changed" size={12} /> needs review
         </Badge>
       );
     case "pass":
       return (
-        <Badge variant="pass" filled>
-          <StatusIcon variant="passed" size={12} className="text-current" /> passed
+        <Badge variant="pass">
+          <StatusIcon variant="passed" size={12} /> passed
         </Badge>
       );
     case "rejected":
       return (
-        <Badge variant="rejected" filled>
-          <StatusIcon variant="rejected" size={12} className="text-current" /> rejected
+        <Badge variant="rejected">
+          <StatusIcon variant="rejected" size={12} /> rejected
         </Badge>
       );
     case "fail":
       return (
-        <Badge variant="fail" filled>
-          <StatusIcon variant="error" size={12} className="text-current" /> error
+        <Badge variant="fail">
+          <StatusIcon variant="error" size={12} /> error
         </Badge>
       );
   }
