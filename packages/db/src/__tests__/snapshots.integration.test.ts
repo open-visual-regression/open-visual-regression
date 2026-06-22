@@ -325,5 +325,15 @@ describe("snapshots", () => {
       expect(firstPage[0]!.id).not.toBe(secondPage[0]!.id);
       expect(await dbClient.snapshots.countForBuild(build.id)).toBe(2);
     });
+
+    test("orders results by target title, then name, browser, and viewport width", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      await seedHomeAndCheckout(build, captureConfiguration);
+
+      const results = await dbClient.snapshots.listForBuild(build.id, { limit: 10, offset: 0 });
+      expect(results.map((row) => row.targetId)).toEqual(["checkout", "home"]);
+    });
   });
 });

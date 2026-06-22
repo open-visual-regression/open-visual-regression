@@ -230,7 +230,7 @@ describe("snapshots", () => {
       );
     });
 
-    test("filters by status and paginates with limit/offset", async ({ admin }) => {
+    test("filters by status", async ({ admin }) => {
       const { build } = await createProjectAndBuild(admin);
 
       await dbClient.snapshots.createMany({
@@ -244,6 +244,26 @@ describe("snapshots", () => {
       const [error, result] = await serverClient.snapshots.list({
         buildId: build.id,
         status: "pending",
+      });
+
+      expect(error).toBeNull();
+      expect(result?.total).toBe(3);
+      expect(result?.snapshots).toHaveLength(3);
+    });
+
+    test("paginates with limit/offset", async ({ admin }) => {
+      const { build } = await createProjectAndBuild(admin);
+
+      await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, ...VIEWPORT, targetId: "a", targetName: "a" },
+          { buildId: build.id, ...VIEWPORT, targetId: "b", targetName: "b" },
+          { buildId: build.id, ...VIEWPORT, targetId: "c", targetName: "c" },
+        ],
+      });
+
+      const [error, result] = await serverClient.snapshots.list({
+        buildId: build.id,
         limit: 2,
         offset: 1,
       });
