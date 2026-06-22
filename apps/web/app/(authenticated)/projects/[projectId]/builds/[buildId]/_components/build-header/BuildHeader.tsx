@@ -15,7 +15,7 @@ export type BuildHeaderProps = {
 
 export const BuildHeader = ({ build, snapshotCounts }: BuildHeaderProps) => {
   const total = Object.values(snapshotCounts).reduce((sum, count) => sum + count, 0);
-  const hasChanged = snapshotCounts.changed > 0;
+  const hasChanged = snapshotCounts.needs_review > 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -68,11 +68,11 @@ export const BuildHeader = ({ build, snapshotCounts }: BuildHeaderProps) => {
         <SegmentedProgress
           title={`${total} snapshots`}
           segments={[
-            { label: "pass", count: snapshotCounts.pass, color: "green" },
+            { label: "pass", count: snapshotCounts.passed, color: "green" },
             { label: "approved", count: snapshotCounts.approved, color: "green" },
-            { label: "changed", count: snapshotCounts.changed, color: "orange" },
+            { label: "changed", count: snapshotCounts.needs_review, color: "orange" },
             { label: "rejected", count: snapshotCounts.rejected, color: "red" },
-            { label: "failed", count: snapshotCounts.fail, color: "red" },
+            { label: "failed", count: snapshotCounts.error, color: "red" },
             { label: "pending", count: snapshotCounts.pending, color: "blue" },
           ]}
         />

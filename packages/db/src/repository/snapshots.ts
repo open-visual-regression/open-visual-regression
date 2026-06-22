@@ -4,11 +4,11 @@ import { db, type DbClient } from "../db";
 import { diffs, snapshots, type SnapshotStatus } from "../schema";
 
 export type SnapshotDisplayStatusCounts = {
-  pass: number;
+  passed: number;
   approved: number;
-  changed: number;
+  needs_review: number;
   rejected: number;
-  fail: number;
+  error: number;
   pending: number;
 };
 
@@ -69,13 +69,13 @@ export const countByBuild = async (buildId: string) => {
 };
 
 const displayStatusExpr = sql<string>`case
-  when ${snapshots.status} = 'error' or ${snapshots.hasRenderError} then 'fail'
+  when ${snapshots.status} = 'error' or ${snapshots.hasRenderError} then 'error'
   when ${snapshots.status} = 'pending' or ${diffs.id} is null or ${diffs.processingStatus} = 'pending' then 'pending'
-  when ${diffs.processingStatus} = 'error' then 'fail'
+  when ${diffs.processingStatus} = 'error' then 'error'
   when ${diffs.reviewStatus} = 'rejected' then 'rejected'
-  when ${diffs.reviewStatus} = 'needs_review' then 'changed'
+  when ${diffs.reviewStatus} = 'needs_review' then 'needs_review'
   when ${diffs.reviewStatus} = 'approved' then 'approved'
-  else 'pass'
+  else 'passed'
 end`;
 
 export const getDisplayStatusCounts = async (
@@ -89,11 +89,11 @@ export const getDisplayStatusCounts = async (
     .groupBy(displayStatusExpr);
 
   const counts: SnapshotDisplayStatusCounts = {
-    pass: 0,
+    passed: 0,
     approved: 0,
-    changed: 0,
+    needs_review: 0,
     rejected: 0,
-    fail: 0,
+    error: 0,
     pending: 0,
   };
 
@@ -118,11 +118,11 @@ const listForBuildWhere = (buildId: string, { status, search }: ListForBuildFilt
   );
 
 const statusPriorityExpr = sql<number>`case (${displayStatusExpr})
-  when 'fail' then 1
-  when 'changed' then 2
+  when 'error' then 1
+  when 'needs_review' then 2
   when 'rejected' then 3
   when 'approved' then 4
-  when 'pass' then 5
+  when 'passed' then 5
   when 'pending' then 6
 end`;
 

@@ -27,7 +27,14 @@ describe("BuildHeader", () => {
     const build = mocks.build.generateBuild({ status: "needs_review" });
     renderComponent({
       build,
-      snapshotCounts: { pass: 3, approved: 0, changed: 2, rejected: 0, fail: 1, pending: 4 },
+      snapshotCounts: {
+        passed: 3,
+        approved: 0,
+        needs_review: 2,
+        rejected: 0,
+        error: 1,
+        pending: 4,
+      },
     });
 
     expect(screen.getByText("10 snapshots")).toBeVisible();
@@ -45,7 +52,14 @@ describe("BuildHeader", () => {
     const build = mocks.build.generateBuild({ status: "needs_review" });
     renderComponent({
       build,
-      snapshotCounts: { pass: 3, approved: 0, changed: 0, rejected: 0, fail: 1, pending: 4 },
+      snapshotCounts: {
+        passed: 3,
+        approved: 0,
+        needs_review: 0,
+        rejected: 0,
+        error: 1,
+        pending: 4,
+      },
     });
 
     expect(screen.getByRole("button", { name: /approve all/i })).toBeDisabled();
@@ -57,7 +71,14 @@ describe("BuildHeader", () => {
     const build = mocks.build.generateBuild({ status: "needs_review" });
     renderComponent({
       build,
-      snapshotCounts: { pass: 3, approved: 0, changed: 2, rejected: 0, fail: 1, pending: 4 },
+      snapshotCounts: {
+        passed: 3,
+        approved: 0,
+        needs_review: 2,
+        rejected: 0,
+        error: 1,
+        pending: 4,
+      },
     });
 
     await user.click(screen.getByRole("button", { name: /approve all/i }));
@@ -71,7 +92,14 @@ describe("BuildHeader", () => {
     const build = mocks.build.generateBuild({ status: "needs_review" });
     renderComponent({
       build,
-      snapshotCounts: { pass: 3, approved: 0, changed: 2, rejected: 0, fail: 1, pending: 4 },
+      snapshotCounts: {
+        passed: 3,
+        approved: 0,
+        needs_review: 2,
+        rejected: 0,
+        error: 1,
+        pending: 4,
+      },
     });
 
     await user.click(screen.getByRole("button", { name: /^reject all$/i }));
@@ -85,7 +113,14 @@ describe("BuildHeader", () => {
     const build = mocks.build.generateBuild({ status: "needs_review" });
     renderComponent({
       build,
-      snapshotCounts: { pass: 3, approved: 0, changed: 2, rejected: 0, fail: 1, pending: 4 },
+      snapshotCounts: {
+        passed: 3,
+        approved: 0,
+        needs_review: 2,
+        rejected: 0,
+        error: 1,
+        pending: 4,
+      },
     });
 
     await user.click(screen.getByRole("button", { name: /approve all/i }));
@@ -99,7 +134,14 @@ describe("BuildHeader", () => {
     const build = mocks.build.generateBuild({ status: "needs_review" });
     renderComponent({
       build,
-      snapshotCounts: { pass: 3, approved: 0, changed: 2, rejected: 0, fail: 1, pending: 4 },
+      snapshotCounts: {
+        passed: 3,
+        approved: 0,
+        needs_review: 2,
+        rejected: 0,
+        error: 1,
+        pending: 4,
+      },
     });
 
     await user.click(screen.getByRole("button", { name: /^reject all$/i }));
@@ -112,7 +154,14 @@ describe("BuildHeader", () => {
     const build = mocks.build.generateBuild({ status: "passed" });
     renderComponent({
       build,
-      snapshotCounts: { pass: 3, approved: 0, changed: 2, rejected: 0, fail: 1, pending: 4 },
+      snapshotCounts: {
+        passed: 3,
+        approved: 0,
+        needs_review: 2,
+        rejected: 0,
+        error: 1,
+        pending: 4,
+      },
     });
 
     expect(screen.getByRole("button", { name: /^approved$/i })).toBeDisabled();
@@ -126,7 +175,14 @@ describe("BuildHeader", () => {
     });
     renderComponent({
       build,
-      snapshotCounts: { pass: 0, approved: 0, changed: 0, rejected: 0, fail: 0, pending: 0 },
+      snapshotCounts: {
+        passed: 0,
+        approved: 0,
+        needs_review: 0,
+        rejected: 0,
+        error: 0,
+        pending: 0,
+      },
     });
 
     expect(screen.getByText("Error")).toBeVisible();
@@ -137,7 +193,14 @@ describe("BuildHeader", () => {
     const build = mocks.build.generateBuild({ status: "needs_review", errorMessage: null });
     renderComponent({
       build,
-      snapshotCounts: { pass: 3, approved: 0, changed: 2, rejected: 0, fail: 1, pending: 4 },
+      snapshotCounts: {
+        passed: 3,
+        approved: 0,
+        needs_review: 2,
+        rejected: 0,
+        error: 1,
+        pending: 4,
+      },
     });
 
     expect(screen.queryByText("Error")).not.toBeInTheDocument();
@@ -147,7 +210,14 @@ describe("BuildHeader", () => {
     const build = mocks.build.generateBuild({ status: "rejected" });
     renderComponent({
       build,
-      snapshotCounts: { pass: 3, approved: 0, changed: 2, rejected: 0, fail: 1, pending: 4 },
+      snapshotCounts: {
+        passed: 3,
+        approved: 0,
+        needs_review: 2,
+        rejected: 0,
+        error: 1,
+        pending: 4,
+      },
     });
 
     expect(screen.getByRole("button", { name: /^rejected$/i })).toBeDisabled();

@@ -27,7 +27,7 @@ const snapshot: SnapshotSchema = {
   targetName: "Kitchen Sink",
   targetTitle: "UI/Button",
   imagePath: "new.png",
-  status: "pass",
+  status: "passed",
   errorLogs: [],
 };
 
@@ -43,7 +43,7 @@ const diff: DiffSchema = {
 
 export const Passed: Story = {
   args: {
-    snapshot: { ...snapshot, status: "pass" },
+    snapshot: { ...snapshot, status: "passed" },
     build: mocks.build.generateBuild(),
     diff: { ...diff, reviewStatus: "not_required" },
   },
@@ -51,7 +51,7 @@ export const Passed: Story = {
 
 export const NeedsReview: Story = {
   args: {
-    snapshot: { ...snapshot, status: "changed" },
+    snapshot: { ...snapshot, status: "needs_review" },
     build: mocks.build.generateBuild(),
     diff,
   },
@@ -67,7 +67,7 @@ export const Rejected: Story = {
 
 export const Errored: Story = {
   args: {
-    snapshot: { ...snapshot, status: "fail" },
+    snapshot: { ...snapshot, status: "error" },
     build: mocks.build.generateBuild(),
     diff: null,
   },

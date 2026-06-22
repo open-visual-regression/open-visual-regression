@@ -31,11 +31,11 @@ export const SnapshotHeader = ({ snapshot, build, diff }: SnapshotHeaderProps) =
           </Typography>
         </div>
       </div>
-      {diff && diff.reviewStatus !== "not_required" && snapshot.status !== "fail" ? (
+      {diff && diff.reviewStatus !== "not_required" && snapshot.status !== "error" ? (
         <SnapshotReviewActions diffId={diff.id} reviewStatus={diff.reviewStatus} />
       ) : null}
     </div>
-    {snapshot.status === "fail" ? (
+    {snapshot.status === "error" ? (
       <Alert variant="destructive">
         <AlertTitle>Error</AlertTitle>
         <AlertDescription>This snapshot failed to capture.</AlertDescription>

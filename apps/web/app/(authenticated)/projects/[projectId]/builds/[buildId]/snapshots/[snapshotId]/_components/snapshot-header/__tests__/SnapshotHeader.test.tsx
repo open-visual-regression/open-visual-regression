@@ -16,7 +16,7 @@ const snapshot: SnapshotSchema = {
   targetName: "Kitchen Sink",
   targetTitle: "UI/Button",
   imagePath: "new.png",
-  status: "changed",
+  status: "needs_review",
   errorLogs: [],
 };
 
@@ -52,7 +52,9 @@ describe("SnapshotHeader", () => {
 
   it("should hide the approve and reject actions when the snapshot failed to render, even if the diff needs review", () => {
     const build = mocks.build.generateBuild();
-    render(<SnapshotHeader snapshot={{ ...snapshot, status: "fail" }} build={build} diff={diff} />);
+    render(
+      <SnapshotHeader snapshot={{ ...snapshot, status: "error" }} build={build} diff={diff} />,
+    );
 
     expect(screen.queryByRole("button", { name: /^approve$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^reject$/i })).not.toBeInTheDocument();
@@ -61,7 +63,11 @@ describe("SnapshotHeader", () => {
   it("should show the snapshot status badge", () => {
     const build = mocks.build.generateBuild();
     render(
-      <SnapshotHeader snapshot={{ ...snapshot, status: "changed" }} build={build} diff={diff} />,
+      <SnapshotHeader
+        snapshot={{ ...snapshot, status: "needs_review" }}
+        build={build}
+        diff={diff}
+      />,
     );
 
     expect(screen.getByText("needs review")).toBeVisible();
@@ -69,7 +75,9 @@ describe("SnapshotHeader", () => {
 
   it("should show the error alert when the snapshot failed to capture", () => {
     const build = mocks.build.generateBuild();
-    render(<SnapshotHeader snapshot={{ ...snapshot, status: "fail" }} build={build} diff={null} />);
+    render(
+      <SnapshotHeader snapshot={{ ...snapshot, status: "error" }} build={build} diff={null} />,
+    );
 
     expect(screen.getByText("Error")).toBeVisible();
     expect(screen.getByText("This snapshot failed to capture.")).toBeVisible();
@@ -77,7 +85,9 @@ describe("SnapshotHeader", () => {
 
   it("should not show the error alert when the snapshot did not fail to capture", () => {
     const build = mocks.build.generateBuild();
-    render(<SnapshotHeader snapshot={{ ...snapshot, status: "pass" }} build={build} diff={null} />);
+    render(
+      <SnapshotHeader snapshot={{ ...snapshot, status: "passed" }} build={build} diff={null} />,
+    );
 
     expect(screen.queryByText("Error")).not.toBeInTheDocument();
   });

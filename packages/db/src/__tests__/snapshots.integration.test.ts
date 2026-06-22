@@ -123,11 +123,11 @@ describe("snapshots", () => {
   describe("getDisplayStatusCounts", () => {
     test("should return zero counts for a build with no snapshots", async ({ build }) => {
       expect(await dbClient.snapshots.getDisplayStatusCounts(build.id)).toEqual({
-        pass: 0,
+        passed: 0,
         approved: 0,
-        changed: 0,
+        needs_review: 0,
         rejected: 0,
-        fail: 0,
+        error: 0,
         pending: 0,
       });
     });
@@ -188,11 +188,11 @@ describe("snapshots", () => {
       expect(capturedError).toBeTruthy();
 
       expect(await dbClient.snapshots.getDisplayStatusCounts(build.id)).toEqual({
-        pass: 1,
+        passed: 1,
         approved: 0,
-        changed: 1,
+        needs_review: 1,
         rejected: 1,
-        fail: 1,
+        error: 1,
         pending: 1,
       });
     });
@@ -220,11 +220,11 @@ describe("snapshots", () => {
       });
 
       expect(await dbClient.snapshots.getDisplayStatusCounts(build.id)).toEqual({
-        pass: 0,
+        passed: 0,
         approved: 0,
-        changed: 0,
+        needs_review: 0,
         rejected: 0,
-        fail: 1,
+        error: 1,
         pending: 0,
       });
     });
@@ -244,11 +244,11 @@ describe("snapshots", () => {
       });
 
       expect(await dbClient.snapshots.getDisplayStatusCounts(build.id)).toEqual({
-        pass: 0,
+        passed: 0,
         approved: 0,
-        changed: 0,
+        needs_review: 0,
         rejected: 0,
-        fail: 1,
+        error: 1,
         pending: 0,
       });
     });
@@ -293,12 +293,12 @@ describe("snapshots", () => {
       await seedHomeAndCheckout(build, captureConfiguration);
 
       const changedOnly = await dbClient.snapshots.listForBuild(build.id, {
-        status: "changed",
+        status: "needs_review",
         limit: 10,
         offset: 0,
       });
       expect(changedOnly.map((row) => row.targetId)).toEqual(["checkout"]);
-      expect(await dbClient.snapshots.countForBuild(build.id, { status: "changed" })).toBe(1);
+      expect(await dbClient.snapshots.countForBuild(build.id, { status: "needs_review" })).toBe(1);
     });
 
     test("filters by search across target title and name", async ({

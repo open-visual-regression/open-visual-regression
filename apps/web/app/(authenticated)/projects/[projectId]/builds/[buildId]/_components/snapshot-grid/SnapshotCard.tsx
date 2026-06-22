@@ -27,11 +27,11 @@ export const SnapshotCard = ({ snapshot, projectId, buildId }: SnapshotCardProps
             <Typography variant="caption">no preview</Typography>
           </div>
         )}
-        {snapshot.status === "changed" ||
+        {snapshot.status === "needs_review" ||
         snapshot.status === "rejected" ||
-        snapshot.status === "fail" ? (
+        snapshot.status === "error" ? (
           <div className="absolute bottom-2 right-2">
-            <SnapshotStatusBadge status={snapshot.status} />
+            <SnapshotStatusBadge status={snapshot.status} filled />
           </div>
         ) : null}
       </div>

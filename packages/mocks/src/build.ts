@@ -10,7 +10,7 @@ export const generateBuildSnapshot = (
   targetId: faker.word.noun(),
   targetTitle: faker.word.noun(),
   targetName: faker.word.noun(),
-  status: "pass",
+  status: "passed",
   imagePath: faker.system.filePath(),
   diffId: null,
   diffImagePath: null,
