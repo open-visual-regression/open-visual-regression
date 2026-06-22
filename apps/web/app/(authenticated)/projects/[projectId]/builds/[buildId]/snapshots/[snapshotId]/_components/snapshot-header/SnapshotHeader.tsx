@@ -31,7 +31,7 @@ export const SnapshotHeader = ({ snapshot, build, diff }: SnapshotHeaderProps) =
           </Typography>
         </div>
       </div>
-      {diff && diff.reviewStatus !== "not_required" ? (
+      {diff && diff.reviewStatus !== "not_required" && snapshot.status !== "fail" ? (
         <SnapshotReviewActions diffId={diff.id} reviewStatus={diff.reviewStatus} />
       ) : null}
     </div>

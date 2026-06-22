@@ -1,7 +1,15 @@
-import { count, eq } from "drizzle-orm";
+import { count, eq, sql } from "drizzle-orm";
 
 import { db, type DbClient } from "../db";
-import { snapshots, type SnapshotStatus } from "../schema";
+import { diffs, snapshots, type SnapshotStatus } from "../schema";
+
+export type SnapshotDisplayStatusCounts = {
+  pass: number;
+  changed: number;
+  rejected: number;
+  fail: number;
+  pending: number;
+};
 
 type CreateManyInput = { values: (typeof snapshots.$inferInsert)[]; tx?: DbClient };
 
@@ -57,6 +65,40 @@ export const countByBuild = async (buildId: string) => {
     .from(snapshots)
     .where(eq(snapshots.buildId, buildId));
   return result?.count ?? 0;
+};
+
+const displayStatusExpr = sql<string>`case
+  when ${snapshots.status} = 'error' or ${snapshots.hasRenderError} then 'fail'
+  when ${snapshots.status} = 'pending' or ${diffs.id} is null or ${diffs.processingStatus} = 'pending' then 'pending'
+  when ${diffs.processingStatus} = 'error' then 'fail'
+  when ${diffs.reviewStatus} = 'rejected' then 'rejected'
+  when ${diffs.reviewStatus} = 'needs_review' then 'changed'
+  else 'pass'
+end`;
+
+export const getDisplayStatusCounts = async (
+  buildId: string,
+): Promise<SnapshotDisplayStatusCounts> => {
+  const rows = await db
+    .select({ status: displayStatusExpr, count: count() })
+    .from(snapshots)
+    .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
+    .where(eq(snapshots.buildId, buildId))
+    .groupBy(displayStatusExpr);
+
+  const counts: SnapshotDisplayStatusCounts = {
+    pass: 0,
+    changed: 0,
+    rejected: 0,
+    fail: 0,
+    pending: 0,
+  };
+
+  for (const row of rows) {
+    counts[row.status as keyof SnapshotDisplayStatusCounts] = row.count;
+  }
+
+  return counts;
 };
 
 export type SnapshotDbSchema = Awaited<ReturnType<typeof findByBuild>>[number];

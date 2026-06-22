@@ -166,3 +166,25 @@ export const getOne = os.builds.getOne
     };
   })
   .actionable();
+
+export const getSnapshotCounts = os.builds.getSnapshotCounts
+  .use(authenticatedMiddleware)
+  .handler(async ({ input, context }) => {
+    const build = await dbClient.builds.findById(input.buildId);
+
+    if (!build) {
+      throw new ORPCError("NOT_FOUND");
+    }
+
+    const project = await dbClient.projects.getProject({
+      projectId: build.projectId,
+      organizationId: context.organizationId,
+    });
+
+    if (!project) {
+      throw new ORPCError("NOT_FOUND");
+    }
+
+    return dbClient.snapshots.getDisplayStatusCounts(build.id);
+  })
+  .actionable();
