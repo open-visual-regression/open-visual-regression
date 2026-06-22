@@ -326,11 +326,120 @@ describe("snapshots", () => {
       expect(await dbClient.snapshots.countForBuild(build.id)).toBe(2);
     });
 
-    test("defaults to ordering by target title, then name, browser, and viewport width", async ({
+    test("defaults to sorting by status priority: fail, changed, rejected, approved, pass, then pending", async ({
       build,
       captureConfiguration,
     }) => {
-      await seedHomeAndCheckout(build, captureConfiguration);
+      const [failSnapshot, changedSnapshot, rejectedSnapshot, approvedSnapshot, passSnapshot] =
+        await dbClient.snapshots.createMany({
+          values: [
+            {
+              buildId: build.id,
+              ...captureConfiguration,
+              targetId: "fail",
+              targetTitle: "Story",
+              targetName: "Story",
+              status: "captured",
+              hasRenderError: true,
+            },
+            {
+              buildId: build.id,
+              ...captureConfiguration,
+              targetId: "changed",
+              targetTitle: "Story",
+              targetName: "Story",
+              status: "captured",
+            },
+            {
+              buildId: build.id,
+              ...captureConfiguration,
+              targetId: "rejected",
+              targetTitle: "Story",
+              targetName: "Story",
+              status: "captured",
+            },
+            {
+              buildId: build.id,
+              ...captureConfiguration,
+              targetId: "approved",
+              targetTitle: "Story",
+              targetName: "Story",
+              status: "captured",
+            },
+            {
+              buildId: build.id,
+              ...captureConfiguration,
+              targetId: "pass",
+              targetTitle: "Story",
+              targetName: "Story",
+              status: "captured",
+            },
+            {
+              buildId: build.id,
+              ...captureConfiguration,
+              targetId: "pending",
+              targetTitle: "Story",
+              targetName: "Story",
+            },
+          ],
+        });
+
+      await dbClient.diffs.create({
+        snapshotId: changedSnapshot!.id,
+        processingStatus: "diffed",
+        reviewStatus: "needs_review",
+      });
+      await dbClient.diffs.create({
+        snapshotId: rejectedSnapshot!.id,
+        processingStatus: "diffed",
+        reviewStatus: "rejected",
+      });
+      await dbClient.diffs.create({
+        snapshotId: approvedSnapshot!.id,
+        processingStatus: "diffed",
+        reviewStatus: "approved",
+      });
+      await dbClient.diffs.create({
+        snapshotId: passSnapshot!.id,
+        processingStatus: "diffed",
+        reviewStatus: "not_required",
+      });
+
+      expect(failSnapshot).toBeTruthy();
+
+      const results = await dbClient.snapshots.listForBuild(build.id, { limit: 10, offset: 0 });
+      expect(results.map((row) => row.targetId)).toEqual([
+        "fail",
+        "changed",
+        "rejected",
+        "approved",
+        "pass",
+        "pending",
+      ]);
+    });
+
+    test("falls back to target title when status priority is tied", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            targetId: "home",
+            targetTitle: "Home Page",
+            targetName: "home",
+          },
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            targetId: "checkout",
+            targetTitle: "Checkout Page",
+            targetName: "checkout",
+          },
+        ],
+      });
 
       const results = await dbClient.snapshots.listForBuild(build.id, { limit: 10, offset: 0 });
       expect(results.map((row) => row.targetId)).toEqual(["checkout", "home"]);

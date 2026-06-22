@@ -48,6 +48,7 @@ export const buildSnapshotSchema = z.object({
 export type BuildSnapshotSchema = z.infer<typeof buildSnapshotSchema>;
 
 export const snapshotSortColumnSchema = z.enum([
+  "status",
   "targetTitle",
   "targetName",
   "browser",
@@ -71,6 +72,7 @@ export const listInputSchema = z.object({
     .array(snapshotSortSchema)
     .min(1)
     .default([
+      { column: "status", direction: "asc" },
       { column: "targetTitle", direction: "asc" },
       { column: "targetName", direction: "asc" },
       { column: "browser", direction: "asc" },

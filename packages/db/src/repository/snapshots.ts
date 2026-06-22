@@ -117,7 +117,17 @@ const listForBuildWhere = (buildId: string, { status, search }: ListForBuildFilt
       : undefined,
   );
 
+const statusPriorityExpr = sql<number>`case (${displayStatusExpr})
+  when 'fail' then 1
+  when 'changed' then 2
+  when 'rejected' then 3
+  when 'approved' then 4
+  when 'pass' then 5
+  when 'pending' then 6
+end`;
+
 export const snapshotSortColumns = {
+  status: statusPriorityExpr,
   targetTitle: snapshots.targetTitle,
   targetName: snapshots.targetName,
   browser: snapshots.browser,
@@ -131,6 +141,7 @@ export type SnapshotSortDirection = "asc" | "desc";
 export type SnapshotSort = { column: SnapshotSortColumn; direction: SnapshotSortDirection };
 
 export const defaultSnapshotSortBy: SnapshotSort[] = [
+  { column: "status", direction: "asc" },
   { column: "targetTitle", direction: "asc" },
   { column: "targetName", direction: "asc" },
   { column: "browser", direction: "asc" },
