@@ -1,48 +1,28 @@
 import { type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
-import { Badge } from "@ovr/ui/components/badge";
-import { StatusIcon } from "@ovr/ui/components/status-icon";
+import { StatusBadge, type StatusBadgeProps } from "@ovr/ui/components/status-badge";
 
 type SnapshotStatusBadgeProps = {
   status: SnapshotDisplayStatus;
+  filled?: boolean;
 };
 
-export const SnapshotStatusBadge = ({ status }: SnapshotStatusBadgeProps) => {
-  switch (status) {
-    case "pending":
-      return (
-        <Badge variant="pending">
-          <StatusIcon variant="pending" size={12} /> pending
-        </Badge>
-      );
-    case "changed":
-      return (
-        <Badge variant="changed">
-          <StatusIcon variant="changed" size={12} /> needs review
-        </Badge>
-      );
-    case "pass":
-      return (
-        <Badge variant="pass">
-          <StatusIcon variant="passed" size={12} /> passed
-        </Badge>
-      );
-    case "approved":
-      return (
-        <Badge variant="approved">
-          <StatusIcon variant="approved" size={12} /> approved
-        </Badge>
-      );
-    case "rejected":
-      return (
-        <Badge variant="rejected">
-          <StatusIcon variant="rejected" size={12} /> rejected
-        </Badge>
-      );
-    case "fail":
-      return (
-        <Badge variant="fail">
-          <StatusIcon variant="error" size={12} /> error
-        </Badge>
-      );
-  }
+const SNAPSHOT_STATUS_BADGE: Record<
+  SnapshotDisplayStatus,
+  Pick<StatusBadgeProps, "variant" | "icon"> & { label: string }
+> = {
+  pending: { variant: "pending", icon: "pending", label: "pending" },
+  needs_review: { variant: "needs_review", icon: "needs_review", label: "needs review" },
+  passed: { variant: "passed", icon: "passed", label: "passed" },
+  approved: { variant: "approved", icon: "approved", label: "approved" },
+  rejected: { variant: "rejected", icon: "rejected", label: "rejected" },
+  error: { variant: "error", icon: "error", label: "error" },
+};
+
+export const SnapshotStatusBadge = ({ status, filled }: SnapshotStatusBadgeProps) => {
+  const { variant, icon, label } = SNAPSHOT_STATUS_BADGE[status];
+  return (
+    <StatusBadge variant={variant} icon={icon} filled={filled}>
+      {label}
+    </StatusBadge>
+  );
 };

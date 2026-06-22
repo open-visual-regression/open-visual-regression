@@ -7,7 +7,7 @@ export const getSnapshotDisplayStatus = (
   diff: DiffDbSchema | undefined,
 ): SnapshotDisplayStatus => {
   if (snapshot.status === "error" || snapshot.hasRenderError) {
-    return "fail";
+    return "error";
   }
 
   if (snapshot.status === "pending" || !diff || diff.processingStatus === "pending") {
@@ -15,7 +15,7 @@ export const getSnapshotDisplayStatus = (
   }
 
   if (diff.processingStatus === "error") {
-    return "fail";
+    return "error";
   }
 
   if (diff.reviewStatus === "rejected") {
@@ -23,12 +23,12 @@ export const getSnapshotDisplayStatus = (
   }
 
   if (diff.reviewStatus === "needs_review") {
-    return "changed";
+    return "needs_review";
   }
 
   if (diff.reviewStatus === "approved") {
     return "approved";
   }
 
-  return "pass";
+  return "passed";
 };

@@ -144,14 +144,14 @@ describe("snapshots", () => {
         browser: VIEWPORT.browser,
         viewportWidth: VIEWPORT.viewportWidth,
         viewportHeight: VIEWPORT.viewportHeight,
-        status: "fail",
+        status: "error",
       });
       expect(result?.snapshot.errorLogs).toMatchObject([
         { level: "error", message: "target failed to render" },
       ]);
     });
 
-    test("returns a 'pass' status for a captured snapshot with an approved diff", async ({
+    test("returns a 'passed' status for a captured snapshot with an approved diff", async ({
       admin,
     }) => {
       const { build } = await createProjectAndBuild(admin);
@@ -178,12 +178,12 @@ describe("snapshots", () => {
       });
 
       expect(error).toBeNull();
-      expect(result?.snapshot.status).toBe("pass");
+      expect(result?.snapshot.status).toBe("passed");
     });
   });
 
   describe("list", () => {
-    test("maps diffs to 'changed' or 'rejected' based on their review status", async ({
+    test("maps diffs to 'needs_review' or 'rejected' based on their review status", async ({
       admin,
     }) => {
       const { build } = await createProjectAndBuild(admin);
@@ -224,7 +224,7 @@ describe("snapshots", () => {
       expect(error).toBeNull();
       expect(result?.snapshots).toEqual(
         expect.arrayContaining([
-          expect.objectContaining({ targetId: "story-a", status: "changed" }),
+          expect.objectContaining({ targetId: "story-a", status: "needs_review" }),
           expect.objectContaining({ targetId: "story-b", status: "rejected" }),
         ]),
       );
@@ -305,13 +305,13 @@ describe("snapshots", () => {
     test("returns the count of snapshots in each display status", async ({ admin }) => {
       const { build } = await createProjectAndBuild(admin);
 
-      const [pending, pass, approved, changed, rejected, renderError] =
+      const [pending, passed, approved, needsReview, rejected, renderError] =
         await dbClient.snapshots.createMany({
           values: [
             { buildId: build.id, ...VIEWPORT, targetId: "pending" },
-            { buildId: build.id, ...VIEWPORT, targetId: "pass", status: "captured" },
+            { buildId: build.id, ...VIEWPORT, targetId: "passed", status: "captured" },
             { buildId: build.id, ...VIEWPORT, targetId: "approved", status: "captured" },
-            { buildId: build.id, ...VIEWPORT, targetId: "changed", status: "captured" },
+            { buildId: build.id, ...VIEWPORT, targetId: "needs_review", status: "captured" },
             { buildId: build.id, ...VIEWPORT, targetId: "rejected", status: "captured" },
             {
               buildId: build.id,
@@ -324,7 +324,7 @@ describe("snapshots", () => {
         });
 
       await dbClient.diffs.create({
-        snapshotId: pass!.id,
+        snapshotId: passed!.id,
         processingStatus: "diffed",
         reviewStatus: "not_required",
       });
@@ -334,7 +334,7 @@ describe("snapshots", () => {
         reviewStatus: "approved",
       });
       await dbClient.diffs.create({
-        snapshotId: changed!.id,
+        snapshotId: needsReview!.id,
         processingStatus: "diffed",
         reviewStatus: "needs_review",
       });
@@ -355,11 +355,11 @@ describe("snapshots", () => {
 
       expect(error).toBeNull();
       expect(counts).toEqual({
-        pass: 1,
+        passed: 1,
         approved: 1,
-        changed: 1,
+        needs_review: 1,
         rejected: 1,
-        fail: 1,
+        error: 1,
         pending: 1,
       });
     });

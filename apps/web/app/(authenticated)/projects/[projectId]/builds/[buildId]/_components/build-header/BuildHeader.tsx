@@ -15,7 +15,7 @@ export type BuildHeaderProps = {
 
 export const BuildHeader = ({ build, snapshotCounts }: BuildHeaderProps) => {
   const total = Object.values(snapshotCounts).reduce((sum, count) => sum + count, 0);
-  const hasChanged = snapshotCounts.changed > 0;
+  const hasNeedsReview = snapshotCounts.needs_review > 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -49,12 +49,12 @@ export const BuildHeader = ({ build, snapshotCounts }: BuildHeaderProps) => {
           <BuildRejectButton
             buildId={build.id}
             rejected={build.status === "rejected"}
-            disabled={!hasChanged}
+            disabled={!hasNeedsReview}
           />
           <BuildApproveButton
             buildId={build.id}
             approved={build.status === "passed"}
-            disabled={!hasChanged}
+            disabled={!hasNeedsReview}
           />
         </div>
       </div>
@@ -68,11 +68,11 @@ export const BuildHeader = ({ build, snapshotCounts }: BuildHeaderProps) => {
         <SegmentedProgress
           title={`${total} snapshots`}
           segments={[
-            { label: "pass", count: snapshotCounts.pass, color: "green" },
+            { label: "passed", count: snapshotCounts.passed, color: "green" },
             { label: "approved", count: snapshotCounts.approved, color: "green" },
-            { label: "changed", count: snapshotCounts.changed, color: "orange" },
+            { label: "needs review", count: snapshotCounts.needs_review, color: "orange" },
             { label: "rejected", count: snapshotCounts.rejected, color: "red" },
-            { label: "failed", count: snapshotCounts.fail, color: "red" },
+            { label: "error", count: snapshotCounts.error, color: "red" },
             { label: "pending", count: snapshotCounts.pending, color: "blue" },
           ]}
         />

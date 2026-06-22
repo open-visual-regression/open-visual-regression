@@ -21,11 +21,11 @@ type SegmentedProgressProps = {
 const getColor = (color: SegmentColor) => {
   switch (color) {
     case "green":
-      return "bg-ovr-status-pass";
+      return "bg-ovr-status-passed";
     case "orange":
-      return "bg-ovr-status-changed";
+      return "bg-ovr-status-needs-review";
     case "red":
-      return "bg-ovr-status-fail";
+      return "bg-ovr-status-error";
     case "blue":
       return "bg-ovr-status-pending";
   }
@@ -73,15 +73,15 @@ const SegmentedProgress = ({
           />
         ))}
       </div>
-      <div className="flex flex-wrap gap-x-3.5 gap-y-1">
+      <ul className="flex flex-wrap gap-x-3.5 gap-y-1">
         {active.map((s, i) => (
-          <div key={i} className="flex items-center gap-1">
+          <li key={i} className="flex items-center gap-1" aria-label={`${s.count} ${s.label}`}>
             <span className={cn("size-2 shrink-0", getColor(s.color))} />
             <span className="font-mono text-badge text-ovr-fg-secondary">{s.count}</span>
             <span className="font-mono text-badge text-ovr-fg-secondary">{s.label}</span>
-          </div>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 };

@@ -91,11 +91,11 @@ export const listBuildsContract = oc
   .output(listBuildsOutputSchema);
 
 export const snapshotDisplayStatusSchema = z.enum([
-  "pass",
+  "passed",
   "approved",
-  "changed",
+  "needs_review",
   "rejected",
-  "fail",
+  "error",
   "pending",
 ]);
 

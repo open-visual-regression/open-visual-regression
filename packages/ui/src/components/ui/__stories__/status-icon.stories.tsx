@@ -14,7 +14,7 @@ export default meta;
 type Story = StoryObj<typeof StatusIcon>;
 
 const STATUS_KINDS: { kind: StatusVariant; colorClass: string; colorToken: string }[] = [
-  { kind: "changed", colorClass: "text-ovr-accent", colorToken: "--ovr-accent-primary" },
+  { kind: "needs_review", colorClass: "text-ovr-accent", colorToken: "--ovr-accent-primary" },
   { kind: "passed", colorClass: "text-ovr-diff-add", colorToken: "--ovr-diff-add" },
   { kind: "pending", colorClass: "text-ovr-status-pending", colorToken: "--ovr-status-pending" },
   { kind: "stale", colorClass: "text-ovr-fg-muted", colorToken: "--ovr-fg-muted" },
