@@ -16,6 +16,7 @@ const snapshot: SnapshotSchema = {
   targetName: "Kitchen Sink",
   targetTitle: "UI/Button",
   imagePath: "new.png",
+  status: "changed",
   errorLogs: [],
 };
 
@@ -47,5 +48,29 @@ describe("SnapshotHeader", () => {
 
     expect(screen.queryByRole("button", { name: /^approve$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^reject$/i })).not.toBeInTheDocument();
+  });
+
+  it("should show the snapshot status badge", () => {
+    const build = mocks.build.generateBuild();
+    render(
+      <SnapshotHeader snapshot={{ ...snapshot, status: "changed" }} build={build} diff={diff} />,
+    );
+
+    expect(screen.getByText("needs review")).toBeVisible();
+  });
+
+  it("should show the error alert when the snapshot failed to capture", () => {
+    const build = mocks.build.generateBuild();
+    render(<SnapshotHeader snapshot={{ ...snapshot, status: "fail" }} build={build} diff={null} />);
+
+    expect(screen.getByText("Error")).toBeVisible();
+    expect(screen.getByText("This snapshot failed to capture.")).toBeVisible();
+  });
+
+  it("should not show the error alert when the snapshot did not fail to capture", () => {
+    const build = mocks.build.generateBuild();
+    render(<SnapshotHeader snapshot={{ ...snapshot, status: "pass" }} build={build} diff={null} />);
+
+    expect(screen.queryByText("Error")).not.toBeInTheDocument();
   });
 });

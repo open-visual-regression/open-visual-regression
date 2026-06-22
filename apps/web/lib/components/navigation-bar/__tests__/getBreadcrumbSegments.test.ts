@@ -96,6 +96,7 @@ describe("getBreadcrumbSegments", () => {
           targetName: snapshot.targetName,
           targetTitle: snapshot.targetTitle,
           imagePath: snapshot.imagePath,
+          status: snapshot.status,
           errorLogs: [],
         },
       },
@@ -113,7 +114,10 @@ describe("getBreadcrumbSegments", () => {
     ).toEqual([
       { label: "projects", href: "/projects" },
       { label: "D's Construction", href: `/projects/${project.id}` },
-      { label: "feat: add login", href: `/projects/${project.id}/builds/${build.id}` },
+      {
+        label: "feat: add login",
+        href: `/projects/${project.id}/builds/${build.id}`,
+      },
       { label: "Home Page homepage" },
     ]);
   });

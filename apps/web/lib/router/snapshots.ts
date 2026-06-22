@@ -4,6 +4,7 @@ import { dbClient } from "@ovr/db/client";
 
 import { os } from "./os";
 import { authenticatedMiddleware, organizationSnapshotMiddleware } from "./middleware";
+import { getSnapshotDisplayStatus } from "./snapshotStatus";
 
 export const getOne = os.snapshots.getOne
   .use(authenticatedMiddleware)
@@ -11,7 +12,10 @@ export const getOne = os.snapshots.getOne
   .handler(async ({ context }) => {
     const { snapshot } = context;
 
-    const errorLogs = await dbClient.snapshotLogs.findBySnapshot(snapshot.id);
+    const [errorLogs, diff] = await Promise.all([
+      dbClient.snapshotLogs.findBySnapshot(snapshot.id),
+      dbClient.diffs.findBySnapshot(snapshot.id),
+    ]);
 
     return {
       snapshot: {
@@ -22,6 +26,7 @@ export const getOne = os.snapshots.getOne
         browser: snapshot.browser,
         viewportWidth: snapshot.viewportWidth,
         viewportHeight: snapshot.viewportHeight === 0 ? null : snapshot.viewportHeight,
+        status: getSnapshotDisplayStatus(snapshot, diff),
         errorLogs: errorLogs.map((log) => ({
           id: log.id,
           level: log.level,

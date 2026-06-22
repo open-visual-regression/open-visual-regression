@@ -1,6 +1,8 @@
 import { oc } from "@orpc/contract";
 import { z } from "zod";
 
+import { snapshotDisplayStatusSchema } from "./builds";
+
 export const snapshotLogSchema = z.object({
   id: z.uuidv7(),
   level: z.string().min(1),
@@ -16,6 +18,7 @@ export const snapshotSchema = z.object({
   targetName: z.string(),
   targetTitle: z.string(),
   imagePath: z.string().nullable(),
+  status: snapshotDisplayStatusSchema,
   errorLogs: z.array(snapshotLogSchema),
 });
 

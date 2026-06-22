@@ -17,7 +17,11 @@ const TEST_PROJECT: AddProjectInputSchema = {
   gitMainBranch: "main",
 };
 
-const VIEWPORT = { browser: "chromium", viewportWidth: 1280, viewportHeight: 800 };
+const VIEWPORT = {
+  browser: "chromium",
+  viewportWidth: 1280,
+  viewportHeight: 800,
+};
 
 const createProjectAndBuild = async (admin: User) => {
   const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
@@ -37,12 +41,16 @@ const createProjectAndBuild = async (admin: User) => {
 describe("snapshots", () => {
   describe("getOne", () => {
     test("should return UNAUTHORIZED when no session cookie is provided", async () => {
-      const [error] = await serverClient.snapshots.getOne({ snapshotId: uuidv7() });
+      const [error] = await serverClient.snapshots.getOne({
+        snapshotId: uuidv7(),
+      });
       expect(error?.code).toBe("UNAUTHORIZED");
     });
 
     test("returns NOT_FOUND for a missing snapshot id", async ({ admin: _ }) => {
-      const [error] = await serverClient.snapshots.getOne({ snapshotId: uuidv7() });
+      const [error] = await serverClient.snapshots.getOne({
+        snapshotId: uuidv7(),
+      });
       expect(error?.code).toBe("NOT_FOUND");
     });
 
@@ -87,7 +95,9 @@ describe("snapshots", () => {
         ],
       });
 
-      const [error] = await serverClient.snapshots.getOne({ snapshotId: snapshot!.id });
+      const [error] = await serverClient.snapshots.getOne({
+        snapshotId: snapshot!.id,
+      });
 
       expect(error?.code).toBe("NOT_FOUND");
     });
@@ -112,10 +122,18 @@ describe("snapshots", () => {
       });
 
       await dbClient.snapshotLogs.createMany({
-        values: [{ snapshotId: snapshot!.id, level: "error", message: "target failed to render" }],
+        values: [
+          {
+            snapshotId: snapshot!.id,
+            level: "error",
+            message: "target failed to render",
+          },
+        ],
       });
 
-      const [error, result] = await serverClient.snapshots.getOne({ snapshotId: snapshot!.id });
+      const [error, result] = await serverClient.snapshots.getOne({
+        snapshotId: snapshot!.id,
+      });
 
       expect(error).toBeNull();
       expect(result?.snapshot).toMatchObject({
@@ -126,10 +144,41 @@ describe("snapshots", () => {
         browser: VIEWPORT.browser,
         viewportWidth: VIEWPORT.viewportWidth,
         viewportHeight: VIEWPORT.viewportHeight,
+        status: "fail",
       });
       expect(result?.snapshot.errorLogs).toMatchObject([
         { level: "error", message: "target failed to render" },
       ]);
+    });
+
+    test("returns a 'pass' status for a captured snapshot with an approved diff", async ({
+      admin,
+    }) => {
+      const { build } = await createProjectAndBuild(admin);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            ...VIEWPORT,
+            targetId: "story-a",
+            status: "captured",
+            imagePath: "projects/p/builds/b/snapshots/s.png",
+          },
+        ],
+      });
+
+      await dbClient.diffs.create({
+        snapshotId: snapshot!.id,
+        processingStatus: "diffed",
+        reviewStatus: "not_required",
+      });
+
+      const [error, result] = await serverClient.snapshots.getOne({
+        snapshotId: snapshot!.id,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.snapshot.status).toBe("pass");
     });
   });
 });

@@ -8,41 +8,12 @@ import {
   getArtifactPath,
 } from "@ovr/services/builds";
 import { storage } from "@ovr/storage";
-import type { SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
-import type { SnapshotDbSchema } from "@ovr/db/repository/snapshots";
-import type { DiffDbSchema } from "@ovr/db/repository/diffs";
 
 import { os } from "./os";
 import { apiKeyMiddleware, authenticatedMiddleware } from "./middleware";
+import { getSnapshotDisplayStatus } from "./snapshotStatus";
 
 const UPLOAD_URL_TTL_SECONDS = 3600;
-
-const getSnapshotDisplayStatus = (
-  snapshot: SnapshotDbSchema,
-  diff: DiffDbSchema | undefined,
-): SnapshotDisplayStatus => {
-  if (snapshot.status === "error" || snapshot.hasRenderError) {
-    return "fail";
-  }
-
-  if (snapshot.status === "pending" || !diff || diff.processingStatus === "pending") {
-    return "pending";
-  }
-
-  if (diff.processingStatus === "error") {
-    return "fail";
-  }
-
-  if (diff.reviewStatus === "rejected") {
-    return "rejected";
-  }
-
-  if (diff.reviewStatus === "needs_review") {
-    return "changed";
-  }
-
-  return "pass";
-};
 
 export const createBuild = os.builds.createBuild
   .use(apiKeyMiddleware)
@@ -96,7 +67,10 @@ export const getBuildStatus = os.builds.getBuildStatus
     }
 
     if (build.status === "error") {
-      return { status: build.status, errorMessage: build.errorMessage ?? undefined };
+      return {
+        status: build.status,
+        errorMessage: build.errorMessage ?? undefined,
+      };
     }
 
     return { status: build.status };
