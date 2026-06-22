@@ -272,6 +272,25 @@ describe("snapshots", () => {
       expect(result?.total).toBe(3);
       expect(result?.snapshots).toHaveLength(2);
     });
+
+    test("sorts by the given sortBy columns", async ({ admin }) => {
+      const { build } = await createProjectAndBuild(admin);
+
+      await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, ...VIEWPORT, targetId: "a", targetTitle: "B", targetName: "a" },
+          { buildId: build.id, ...VIEWPORT, targetId: "b", targetTitle: "A", targetName: "b" },
+        ],
+      });
+
+      const [error, result] = await serverClient.snapshots.list({
+        buildId: build.id,
+        sortBy: ["targetName"],
+      });
+
+      expect(error).toBeNull();
+      expect(result?.snapshots.map((snapshot) => snapshot.targetId)).toEqual(["a", "b"]);
+    });
   });
 
   describe("getCounts", () => {

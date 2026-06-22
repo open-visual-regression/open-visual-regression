@@ -15,7 +15,12 @@ export default async function BuildPage({ params }: BuildPageProps) {
     await Promise.all([
       serverClient.builds.getOne({ buildId }),
       serverClient.snapshots.getCounts({ buildId }),
-      serverClient.snapshots.list({ buildId, limit: PAGE_SIZE, offset: 0 }),
+      serverClient.snapshots.list({
+        buildId,
+        sortBy: ["targetTitle", "targetName", "browser", "viewportWidth"],
+        limit: PAGE_SIZE,
+        offset: 0,
+      }),
     ]);
 
   if (

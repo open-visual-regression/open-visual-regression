@@ -326,93 +326,71 @@ describe("snapshots", () => {
       expect(await dbClient.snapshots.countForBuild(build.id)).toBe(2);
     });
 
-    test("orders by target title", async ({ build, captureConfiguration }) => {
+    test("defaults to ordering by target title, then name, browser, and viewport width", async ({
+      build,
+      captureConfiguration,
+    }) => {
       await seedHomeAndCheckout(build, captureConfiguration);
 
       const results = await dbClient.snapshots.listForBuild(build.id, { limit: 10, offset: 0 });
       expect(results.map((row) => row.targetId)).toEqual(["checkout", "home"]);
     });
 
-    test("orders by target name when titles match", async ({ build, captureConfiguration }) => {
-      await dbClient.snapshots.createMany({
+    const createSortableRows = (build: { id: string }, captureConfiguration: object) =>
+      dbClient.snapshots.createMany({
         values: [
-          {
-            buildId: build.id,
-            ...captureConfiguration,
-            targetId: "z",
-            targetTitle: "Story",
-            targetName: "z",
-          },
-          {
-            buildId: build.id,
-            ...captureConfiguration,
-            targetId: "a",
-            targetTitle: "Story",
-            targetName: "a",
-          },
-        ],
-      });
-
-      const results = await dbClient.snapshots.listForBuild(build.id, { limit: 10, offset: 0 });
-      expect(results.map((row) => row.targetId)).toEqual(["a", "z"]);
-    });
-
-    test("orders by browser when titles and names match", async ({
-      build,
-      captureConfiguration,
-    }) => {
-      await dbClient.snapshots.createMany({
-        values: [
-          {
-            buildId: build.id,
-            ...captureConfiguration,
-            browser: "webkit",
-            targetId: "webkit-snapshot",
-            targetTitle: "Story",
-            targetName: "A",
-          },
           {
             buildId: build.id,
             ...captureConfiguration,
             browser: "chromium",
-            targetId: "chromium-snapshot",
-            targetTitle: "Story",
-            targetName: "A",
+            viewportWidth: 1920,
+            targetId: "row-b-title",
+            targetTitle: "B",
+            targetName: "a",
+          },
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            browser: "webkit",
+            viewportWidth: 375,
+            targetId: "row-a-title",
+            targetTitle: "A",
+            targetName: "z",
           },
         ],
       });
 
-      const results = await dbClient.snapshots.listForBuild(build.id, { limit: 10, offset: 0 });
-      expect(results.map((row) => row.targetId)).toEqual(["chromium-snapshot", "webkit-snapshot"]);
+    test("sorts by targetName when requested", async ({ build, captureConfiguration }) => {
+      await createSortableRows(build, captureConfiguration);
+
+      const results = await dbClient.snapshots.listForBuild(build.id, {
+        sortBy: ["targetName"],
+        limit: 10,
+        offset: 0,
+      });
+      expect(results.map((row) => row.targetId)).toEqual(["row-b-title", "row-a-title"]);
     });
 
-    test("orders by viewport width when titles, names, and browsers match", async ({
-      build,
-      captureConfiguration,
-    }) => {
-      await dbClient.snapshots.createMany({
-        values: [
-          {
-            buildId: build.id,
-            ...captureConfiguration,
-            viewportWidth: 1920,
-            targetId: "wide",
-            targetTitle: "Story",
-            targetName: "A",
-          },
-          {
-            buildId: build.id,
-            ...captureConfiguration,
-            viewportWidth: 375,
-            targetId: "narrow",
-            targetTitle: "Story",
-            targetName: "A",
-          },
-        ],
-      });
+    test("sorts by browser when requested", async ({ build, captureConfiguration }) => {
+      await createSortableRows(build, captureConfiguration);
 
-      const results = await dbClient.snapshots.listForBuild(build.id, { limit: 10, offset: 0 });
-      expect(results.map((row) => row.targetId)).toEqual(["narrow", "wide"]);
+      const results = await dbClient.snapshots.listForBuild(build.id, {
+        sortBy: ["browser"],
+        limit: 10,
+        offset: 0,
+      });
+      expect(results.map((row) => row.targetId)).toEqual(["row-b-title", "row-a-title"]);
+    });
+
+    test("sorts by viewportWidth when requested", async ({ build, captureConfiguration }) => {
+      await createSortableRows(build, captureConfiguration);
+
+      const results = await dbClient.snapshots.listForBuild(build.id, {
+        sortBy: ["viewportWidth"],
+        limit: 10,
+        offset: 0,
+      });
+      expect(results.map((row) => row.targetId)).toEqual(["row-a-title", "row-b-title"]);
     });
   });
 });

@@ -47,10 +47,23 @@ export const buildSnapshotSchema = z.object({
 
 export type BuildSnapshotSchema = z.infer<typeof buildSnapshotSchema>;
 
+export const snapshotSortColumnSchema = z.enum([
+  "targetTitle",
+  "targetName",
+  "browser",
+  "viewportWidth",
+]);
+
+export type SnapshotSortColumnSchema = z.infer<typeof snapshotSortColumnSchema>;
+
 export const listInputSchema = z.object({
   buildId: z.uuidv7(),
   status: snapshotDisplayStatusSchema.optional(),
   search: z.string().min(1).optional(),
+  sortBy: z
+    .array(snapshotSortColumnSchema)
+    .min(1)
+    .default(["targetTitle", "targetName", "browser", "viewportWidth"]),
   limit: z.number().int().min(1).max(100).default(24),
   offset: z.number().int().min(0).default(0),
 });

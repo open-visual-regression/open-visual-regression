@@ -117,11 +117,31 @@ const listForBuildWhere = (buildId: string, { status, search }: ListForBuildFilt
       : undefined,
   );
 
-export type ListForBuildOptions = ListForBuildFilters & { limit: number; offset: number };
+export const snapshotSortColumns = {
+  targetTitle: snapshots.targetTitle,
+  targetName: snapshots.targetName,
+  browser: snapshots.browser,
+  viewportWidth: snapshots.viewportWidth,
+} as const;
+
+export type SnapshotSortColumn = keyof typeof snapshotSortColumns;
+
+export const defaultSnapshotSortBy: SnapshotSortColumn[] = [
+  "targetTitle",
+  "targetName",
+  "browser",
+  "viewportWidth",
+];
+
+export type ListForBuildOptions = ListForBuildFilters & {
+  sortBy?: SnapshotSortColumn[];
+  limit: number;
+  offset: number;
+};
 
 export const listForBuild = (
   buildId: string,
-  { status, search, limit, offset }: ListForBuildOptions,
+  { status, search, sortBy = defaultSnapshotSortBy, limit, offset }: ListForBuildOptions,
 ) =>
   db
     .select({
@@ -141,12 +161,7 @@ export const listForBuild = (
     .from(snapshots)
     .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
     .where(listForBuildWhere(buildId, { status, search }))
-    .orderBy(
-      snapshots.targetTitle,
-      snapshots.targetName,
-      snapshots.browser,
-      snapshots.viewportWidth,
-    )
+    .orderBy(...sortBy.map((column) => snapshotSortColumns[column]))
     .limit(limit)
     .offset(offset);
 
