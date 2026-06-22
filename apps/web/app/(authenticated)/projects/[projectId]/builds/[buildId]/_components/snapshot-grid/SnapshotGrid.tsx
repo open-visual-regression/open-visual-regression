@@ -1,4 +1,4 @@
-import { type BuildSnapshotSchema } from "@ovr/api/contracts/builds";
+import { type BuildSnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { SnapshotCard } from "./SnapshotCard";
 
 type SnapshotGridProps = {
@@ -7,19 +7,10 @@ type SnapshotGridProps = {
   buildId: string;
 };
 
-export const SnapshotGrid = ({ snapshots, projectId, buildId }: SnapshotGridProps) => {
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-3">
-        {snapshots.map((snapshot) => (
-          <SnapshotCard
-            key={snapshot.id}
-            snapshot={snapshot}
-            projectId={projectId}
-            buildId={buildId}
-          />
-        ))}
-      </div>
-    </div>
-  );
-};
+export const SnapshotGrid = ({ snapshots, projectId, buildId }: SnapshotGridProps) => (
+  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+    {snapshots.map((snapshot) => (
+      <SnapshotCard key={snapshot.id} snapshot={snapshot} projectId={projectId} buildId={buildId} />
+    ))}
+  </div>
+);

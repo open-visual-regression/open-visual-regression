@@ -92,6 +92,7 @@ export const listBuildsContract = oc
 
 export const snapshotDisplayStatusSchema = z.enum([
   "pass",
+  "approved",
   "changed",
   "rejected",
   "fail",
@@ -100,56 +101,19 @@ export const snapshotDisplayStatusSchema = z.enum([
 
 export type SnapshotDisplayStatus = z.infer<typeof snapshotDisplayStatusSchema>;
 
-export const buildSnapshotSchema = z.object({
-  id: z.uuidv7(),
-  targetId: z.string().min(1),
-  targetTitle: z.string().min(1),
-  targetName: z.string().min(1),
-  status: snapshotDisplayStatusSchema,
-  imagePath: z.string().nullable(),
-  diffId: z.uuidv7().nullable(),
-  diffImagePath: z.string().nullable(),
-  diffPercent: z.number().nullable(),
-  browser: z.string().min(1),
-  viewportWidth: z.number().int(),
-  viewportHeight: z.number().int().nullable(),
-});
-
-export type BuildSnapshotSchema = z.infer<typeof buildSnapshotSchema>;
-
 export const getBuildInputSchema = z.object({
   buildId: z.uuidv7(),
 });
 
 export const getBuildOutputSchema = z.object({
   build: buildSchema,
-  snapshots: z.array(buildSnapshotSchema),
 });
 
 export const getBuildContract = oc.input(getBuildInputSchema).output(getBuildOutputSchema);
-
-export const snapshotCountsSchema = z.object({
-  pass: z.number().int().nonnegative(),
-  changed: z.number().int().nonnegative(),
-  rejected: z.number().int().nonnegative(),
-  fail: z.number().int().nonnegative(),
-  pending: z.number().int().nonnegative(),
-});
-
-export type SnapshotCountsSchema = z.infer<typeof snapshotCountsSchema>;
-
-export const getSnapshotCountsInputSchema = z.object({
-  buildId: z.uuidv7(),
-});
-
-export const getSnapshotCountsContract = oc
-  .input(getSnapshotCountsInputSchema)
-  .output(snapshotCountsSchema);
 
 export const contract = {
   createBuild: createBuildContract,
   getBuildStatus: getBuildStatusContract,
   list: listBuildsContract,
   getOne: getBuildContract,
-  getSnapshotCounts: getSnapshotCountsContract,
 } as const;

@@ -1,6 +1,7 @@
 import { faker } from "@faker-js/faker";
 
-import type { BuildSchema, BuildSnapshotSchema } from "@ovr/api/contracts/builds";
+import type { BuildSchema } from "@ovr/api/contracts/builds";
+import type { BuildSnapshotSchema } from "@ovr/api/contracts/snapshots";
 
 export const generateBuildSnapshot = (
   overrides?: Partial<BuildSnapshotSchema>,

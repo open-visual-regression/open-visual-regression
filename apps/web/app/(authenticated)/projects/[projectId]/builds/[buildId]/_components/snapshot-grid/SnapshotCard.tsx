@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Typography } from "@ovr/ui/components/typography";
-import { type BuildSnapshotSchema } from "@ovr/api/contracts/builds";
+import { type BuildSnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { SnapshotStatusBadge } from "@/lib/components/SnapshotStatusBadge";
 import { cn } from "@ovr/ui/lib/utils";
 import { GlobeIcon, Icon } from "@ovr/ui/components/icon";

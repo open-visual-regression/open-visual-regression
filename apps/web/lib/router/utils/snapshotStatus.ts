@@ -26,5 +26,9 @@ export const getSnapshotDisplayStatus = (
     return "changed";
   }
 
+  if (diff.reviewStatus === "approved") {
+    return "approved";
+  }
+
   return "pass";
 };

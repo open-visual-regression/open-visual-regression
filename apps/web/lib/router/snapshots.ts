@@ -1,9 +1,14 @@
 "use server";
 
 import { dbClient } from "@ovr/db/client";
+import { type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
 
 import { os } from "./os";
-import { authenticatedMiddleware, organizationSnapshotMiddleware } from "./middleware";
+import {
+  authenticatedMiddleware,
+  organizationBuildMiddleware,
+  organizationSnapshotMiddleware,
+} from "./middleware";
 import { getSnapshotDisplayStatus } from "./utils/snapshotStatus";
 
 export const getOne = os.snapshots.getOne
@@ -36,4 +41,41 @@ export const getOne = os.snapshots.getOne
       },
     };
   })
+  .actionable();
+
+export const list = os.snapshots.list
+  .use(authenticatedMiddleware)
+  .use(organizationBuildMiddleware)
+  .handler(async ({ input }) => {
+    const { buildId, status, search, sortBy, limit, offset } = input;
+
+    const [rows, total] = await Promise.all([
+      dbClient.snapshots.listForBuild(buildId, { status, search, sortBy, limit, offset }),
+      dbClient.snapshots.countForBuild(buildId, { status, search }),
+    ]);
+
+    return {
+      snapshots: rows.map((row) => ({
+        id: row.id,
+        targetId: row.targetId,
+        targetTitle: row.targetTitle,
+        targetName: row.targetName,
+        status: row.status as SnapshotDisplayStatus,
+        imagePath: row.imagePath,
+        diffId: row.diffId,
+        diffImagePath: row.diffImagePath,
+        diffPercent: row.diffPercent,
+        browser: row.browser,
+        viewportWidth: row.viewportWidth,
+        viewportHeight: row.viewportHeight === 0 ? null : row.viewportHeight,
+      })),
+      total,
+    };
+  })
+  .actionable();
+
+export const getCounts = os.snapshots.getCounts
+  .use(authenticatedMiddleware)
+  .use(organizationBuildMiddleware)
+  .handler(async ({ input }) => dbClient.snapshots.getDisplayStatusCounts(input.buildId))
   .actionable();

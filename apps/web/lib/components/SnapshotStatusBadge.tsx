@@ -26,6 +26,12 @@ export const SnapshotStatusBadge = ({ status }: SnapshotStatusBadgeProps) => {
           <StatusIcon variant="passed" size={12} /> passed
         </Badge>
       );
+    case "approved":
+      return (
+        <Badge variant="approved">
+          <StatusIcon variant="approved" size={12} /> approved
+        </Badge>
+      );
     case "rejected":
       return (
         <Badge variant="rejected">

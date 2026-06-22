@@ -17,7 +17,7 @@ const meta: Meta<typeof BuildHeader> = {
 export default meta;
 type Story = StoryObj<typeof BuildHeader>;
 
-const snapshotCounts = { pass: 3, changed: 2, rejected: 0, fail: 1, pending: 4 };
+const snapshotCounts = { pass: 3, approved: 1, changed: 2, rejected: 0, fail: 1, pending: 4 };
 
 export const NeedsReview: Story = {
   args: {
@@ -46,6 +46,6 @@ export const Errored: Story = {
       status: "error",
       errorMessage: "Build failed: unable to connect to the test runner.",
     }),
-    snapshotCounts: { pass: 0, changed: 0, rejected: 0, fail: 0, pending: 0 },
+    snapshotCounts: { pass: 0, approved: 0, changed: 0, rejected: 0, fail: 0, pending: 0 },
   },
 };
