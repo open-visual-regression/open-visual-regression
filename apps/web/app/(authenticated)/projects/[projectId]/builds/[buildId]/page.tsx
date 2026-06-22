@@ -3,7 +3,6 @@ import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
 import { BuildHeader } from "./_components/build-header/BuildHeader";
 import { SnapshotGrid, type SnapshotFilter } from "./_components/snapshot-grid/SnapshotGrid";
-import { type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
 
 type BuildPageProps = PageProps<"/projects/[projectId]/builds/[buildId]">;
 
@@ -17,23 +16,18 @@ export default async function BuildPage(props: BuildPageProps) {
     ? searchParams.filter
     : "all";
 
-  const [error, buildResult] = await serverClient.builds.getOne({ buildId });
+  const [[error, buildResult], [countsError, snapshotCounts]] = await Promise.all([
+    serverClient.builds.getOne({ buildId }),
+    serverClient.builds.getSnapshotCounts({ buildId }),
+  ]);
 
-  if (error?.code === "NOT_FOUND") {
+  if (error?.code === "NOT_FOUND" || countsError?.code === "NOT_FOUND") {
     notFound();
   }
 
-  if (error) {
+  if (error || countsError) {
     serverError();
   }
-
-  const snapshotCounts = buildResult.snapshots.reduce<Record<SnapshotDisplayStatus, number>>(
-    (counts, snapshot) => {
-      counts[snapshot.status] += 1;
-      return counts;
-    },
-    { pass: 0, changed: 0, rejected: 0, fail: 0, pending: 0 },
-  );
 
   return (
     <div className="flex flex-col gap-6">

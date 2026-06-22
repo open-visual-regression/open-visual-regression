@@ -128,9 +128,28 @@ export const getBuildOutputSchema = z.object({
 
 export const getBuildContract = oc.input(getBuildInputSchema).output(getBuildOutputSchema);
 
+export const snapshotCountsSchema = z.object({
+  pass: z.number().int().nonnegative(),
+  changed: z.number().int().nonnegative(),
+  rejected: z.number().int().nonnegative(),
+  fail: z.number().int().nonnegative(),
+  pending: z.number().int().nonnegative(),
+});
+
+export type SnapshotCountsSchema = z.infer<typeof snapshotCountsSchema>;
+
+export const getSnapshotCountsInputSchema = z.object({
+  buildId: z.uuidv7(),
+});
+
+export const getSnapshotCountsContract = oc
+  .input(getSnapshotCountsInputSchema)
+  .output(snapshotCountsSchema);
+
 export const contract = {
   createBuild: createBuildContract,
   getBuildStatus: getBuildStatusContract,
   list: listBuildsContract,
   getOne: getBuildContract,
+  getSnapshotCounts: getSnapshotCountsContract,
 } as const;

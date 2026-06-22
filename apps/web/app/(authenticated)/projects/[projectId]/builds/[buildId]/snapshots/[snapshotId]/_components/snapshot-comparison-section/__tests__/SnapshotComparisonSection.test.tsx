@@ -11,6 +11,7 @@ const snapshot: SnapshotSchema = {
   targetName: "Kitchen Sink",
   targetTitle: "UI/Button",
   imagePath: "new.png",
+  status: "pass",
   errorLogs: [],
 };
 
@@ -43,7 +44,9 @@ describe("SnapshotComparisonSection", () => {
     render(<SnapshotComparisonSection snapshot={snapshot} diff={diff} />);
 
     expect(
-      screen.getByRole("img", { name: "baseline snapshot of UI/Button Kitchen Sink" }),
+      screen.getByRole("img", {
+        name: "baseline snapshot of UI/Button Kitchen Sink",
+      }),
     ).toBeVisible();
     expect(screen.getByRole("img", { name: "snapshot of UI/Button Kitchen Sink" })).toBeVisible();
     expect(screen.getByRole("switch", { checked: true })).toBeVisible();
@@ -55,7 +58,9 @@ describe("SnapshotComparisonSection", () => {
     );
 
     expect(
-      screen.getByRole("img", { name: "baseline snapshot of UI/Button Kitchen Sink" }),
+      screen.getByRole("img", {
+        name: "baseline snapshot of UI/Button Kitchen Sink",
+      }),
     ).toBeVisible();
     expect(screen.getByRole("img", { name: "snapshot of UI/Button Kitchen Sink" })).toBeVisible();
     expect(screen.queryByRole("switch")).not.toBeInTheDocument();
