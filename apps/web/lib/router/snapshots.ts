@@ -4,7 +4,7 @@ import { dbClient } from "@ovr/db/client";
 
 import { os } from "./os";
 import { authenticatedMiddleware, organizationSnapshotMiddleware } from "./middleware";
-import { getSnapshotDisplayStatus } from "./snapshotStatus";
+import { getSnapshotDisplayStatus } from "./utils/snapshotStatus";
 
 export const getOne = os.snapshots.getOne
   .use(authenticatedMiddleware)

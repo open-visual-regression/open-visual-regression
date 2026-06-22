@@ -11,7 +11,7 @@ import { storage } from "@ovr/storage";
 
 import { os } from "./os";
 import { apiKeyMiddleware, authenticatedMiddleware } from "./middleware";
-import { getSnapshotDisplayStatus } from "./snapshotStatus";
+import { getSnapshotDisplayStatus } from "./utils/snapshotStatus";
 
 const UPLOAD_URL_TTL_SECONDS = 3600;
 
