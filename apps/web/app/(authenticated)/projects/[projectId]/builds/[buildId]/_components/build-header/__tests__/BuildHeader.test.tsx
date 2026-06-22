@@ -119,6 +119,30 @@ describe("BuildHeader", () => {
     expect(screen.getByRole("button", { name: /^reject all$/i })).toBeEnabled();
   });
 
+  it("should show the error alert when the build has an error message", () => {
+    const build = mocks.build.generateBuild({
+      status: "error",
+      errorMessage: "Build failed: unable to connect to the test runner.",
+    });
+    renderComponent({
+      build,
+      snapshotCounts: { pass: 0, changed: 0, rejected: 0, fail: 0, pending: 0 },
+    });
+
+    expect(screen.getByText("Error")).toBeVisible();
+    expect(screen.getByText("Build failed: unable to connect to the test runner.")).toBeVisible();
+  });
+
+  it("should not show the error alert when the build has no error message", () => {
+    const build = mocks.build.generateBuild({ status: "needs_review", errorMessage: null });
+    renderComponent({
+      build,
+      snapshotCounts: { pass: 3, changed: 2, rejected: 0, fail: 1, pending: 4 },
+    });
+
+    expect(screen.queryByText("Error")).not.toBeInTheDocument();
+  });
+
   it("should show reject all as disabled and labeled when the build was rejected", () => {
     const build = mocks.build.generateBuild({ status: "rejected" });
     renderComponent({

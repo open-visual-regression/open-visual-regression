@@ -1,4 +1,5 @@
 import { SegmentedProgress } from "@ovr/ui/components/segmented-progress";
+import { Alert, AlertDescription, AlertTitle } from "@ovr/ui/components/alert";
 import { Typography } from "@ovr/ui/components/typography";
 import { Icon, GitBranchIcon, GitCommitHorizontalIcon, UserIcon } from "@ovr/ui/components/icon";
 import { type BuildSchema, type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
@@ -57,16 +58,24 @@ export const BuildHeader = ({ build, snapshotCounts }: BuildHeaderProps) => {
           />
         </div>
       </div>
-      <SegmentedProgress
-        title={`${total} snapshots`}
-        segments={[
-          { label: "pass", count: snapshotCounts.pass, color: "green" },
-          { label: "changed", count: snapshotCounts.changed, color: "orange" },
-          { label: "rejected", count: snapshotCounts.rejected, color: "red" },
-          { label: "failed", count: snapshotCounts.fail, color: "red" },
-          { label: "pending", count: snapshotCounts.pending, color: "blue" },
-        ]}
-      />
+      {build.errorMessage ? (
+        <Alert variant="destructive">
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{build.errorMessage}</AlertDescription>
+        </Alert>
+      ) : null}
+      {total > 0 ? (
+        <SegmentedProgress
+          title={`${total} snapshots`}
+          segments={[
+            { label: "pass", count: snapshotCounts.pass, color: "green" },
+            { label: "changed", count: snapshotCounts.changed, color: "orange" },
+            { label: "rejected", count: snapshotCounts.rejected, color: "red" },
+            { label: "failed", count: snapshotCounts.fail, color: "red" },
+            { label: "pending", count: snapshotCounts.pending, color: "blue" },
+          ]}
+        />
+      ) : null}
     </div>
   );
 };

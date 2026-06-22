@@ -64,6 +64,7 @@ export const buildSchema = z.object({
   commitSha: z.string().min(1),
   name: z.string().min(1).nullable(),
   author: z.string().min(1).nullable(),
+  errorMessage: z.string().nullable(),
   status: buildStatusSchema,
   createdAt: z.string().nonempty(),
 });
