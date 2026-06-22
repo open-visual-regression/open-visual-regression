@@ -70,7 +70,7 @@ export const BuildHeader = ({ build, snapshotCounts }: BuildHeaderProps) => {
           segments={[
             { label: "pass", count: snapshotCounts.pass, color: "green" },
             { label: "approved", count: snapshotCounts.approved, color: "green" },
-            { label: "needs review", count: snapshotCounts.changed, color: "orange" },
+            { label: "changed", count: snapshotCounts.changed, color: "orange" },
             { label: "rejected", count: snapshotCounts.rejected, color: "red" },
             { label: "failed", count: snapshotCounts.fail, color: "red" },
             { label: "pending", count: snapshotCounts.pending, color: "blue" },
