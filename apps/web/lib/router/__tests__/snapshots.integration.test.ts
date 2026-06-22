@@ -235,9 +235,9 @@ describe("snapshots", () => {
 
       await dbClient.snapshots.createMany({
         values: [
-          { buildId: build.id, ...VIEWPORT, targetId: "a", targetName: "a" },
-          { buildId: build.id, ...VIEWPORT, targetId: "b", targetName: "b" },
-          { buildId: build.id, ...VIEWPORT, targetId: "c", targetName: "c" },
+          { buildId: build.id, ...VIEWPORT, targetId: "a", targetTitle: "A", targetName: "a" },
+          { buildId: build.id, ...VIEWPORT, targetId: "b", targetTitle: "B", targetName: "b" },
+          { buildId: build.id, ...VIEWPORT, targetId: "c", targetTitle: "C", targetName: "c" },
         ],
       });
 
@@ -256,9 +256,9 @@ describe("snapshots", () => {
 
       await dbClient.snapshots.createMany({
         values: [
-          { buildId: build.id, ...VIEWPORT, targetId: "a", targetName: "a" },
-          { buildId: build.id, ...VIEWPORT, targetId: "b", targetName: "b" },
-          { buildId: build.id, ...VIEWPORT, targetId: "c", targetName: "c" },
+          { buildId: build.id, ...VIEWPORT, targetId: "a", targetTitle: "A", targetName: "a" },
+          { buildId: build.id, ...VIEWPORT, targetId: "b", targetTitle: "B", targetName: "b" },
+          { buildId: build.id, ...VIEWPORT, targetId: "c", targetTitle: "C", targetName: "c" },
         ],
       });
 
