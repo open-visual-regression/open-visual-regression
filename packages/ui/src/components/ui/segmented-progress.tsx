@@ -21,11 +21,11 @@ type SegmentedProgressProps = {
 const getColor = (color: SegmentColor) => {
   switch (color) {
     case "green":
-      return "bg-ovr-status-pass";
+      return "bg-ovr-status-passed";
     case "orange":
-      return "bg-ovr-status-changed";
+      return "bg-ovr-status-needs-review";
     case "red":
-      return "bg-ovr-status-fail";
+      return "bg-ovr-status-error";
     case "blue":
       return "bg-ovr-status-pending";
   }

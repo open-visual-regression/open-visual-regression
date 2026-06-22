@@ -15,7 +15,7 @@ export type BuildHeaderProps = {
 
 export const BuildHeader = ({ build, snapshotCounts }: BuildHeaderProps) => {
   const total = Object.values(snapshotCounts).reduce((sum, count) => sum + count, 0);
-  const hasChanged = snapshotCounts.needs_review > 0;
+  const hasNeedsReview = snapshotCounts.needs_review > 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -49,12 +49,12 @@ export const BuildHeader = ({ build, snapshotCounts }: BuildHeaderProps) => {
           <BuildRejectButton
             buildId={build.id}
             rejected={build.status === "rejected"}
-            disabled={!hasChanged}
+            disabled={!hasNeedsReview}
           />
           <BuildApproveButton
             buildId={build.id}
             approved={build.status === "passed"}
-            disabled={!hasChanged}
+            disabled={!hasNeedsReview}
           />
         </div>
       </div>

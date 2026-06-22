@@ -44,7 +44,7 @@ describe("BuildHeader", () => {
     expect(screen.getByRole("listitem", { name: "4 pending" })).toBeVisible();
   });
 
-  it("should disable both bulk actions when there are no changed snapshots", () => {
+  it("should disable both bulk actions when there are no snapshots needing review", () => {
     const build = mocks.build.generateBuild({ status: "needs_review" });
     renderComponent({
       build,
@@ -62,7 +62,7 @@ describe("BuildHeader", () => {
     expect(screen.getByRole("button", { name: /reject all/i })).toBeDisabled();
   });
 
-  it("should approve all changed snapshots", async ({ user }) => {
+  it("should approve all needs-review snapshots", async ({ user }) => {
     mockBulkCastVote.mockResolvedValue([null, undefined]);
     const build = mocks.build.generateBuild({ status: "needs_review" });
     renderComponent({
@@ -83,7 +83,7 @@ describe("BuildHeader", () => {
     await waitFor(() => expect(mockRefresh).toHaveBeenCalled());
   });
 
-  it("should reject all changed snapshots", async ({ user }) => {
+  it("should reject all needs-review snapshots", async ({ user }) => {
     mockBulkCastVote.mockResolvedValue([null, undefined]);
     const build = mocks.build.generateBuild({ status: "needs_review" });
     renderComponent({
