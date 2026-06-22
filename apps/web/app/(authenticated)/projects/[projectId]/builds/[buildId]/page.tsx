@@ -6,24 +6,16 @@ import { SnapshotGrid } from "./_components/snapshot-grid/SnapshotGrid";
 
 const PAGE_SIZE = 24;
 
-type BuildPageProps = PageProps<"/projects/[projectId]/builds/[buildId]"> & {
-  searchParams: Promise<{ page?: string }>;
-};
-
-export default async function BuildPage(props: BuildPageProps) {
-  const { projectId, buildId } = await props.params;
-  const { page } = await props.searchParams;
-  const currentPage = Math.max(1, Number(page) || 1);
+export default async function BuildPage({
+  params,
+}: PageProps<"/projects/[projectId]/builds/[buildId]">) {
+  const { projectId, buildId } = await params;
 
   const [[error, buildResult], [countsError, snapshotCounts], [snapshotsError, snapshotsResult]] =
     await Promise.all([
       serverClient.builds.getOne({ buildId }),
       serverClient.snapshots.getCounts({ buildId }),
-      serverClient.snapshots.list({
-        buildId,
-        limit: PAGE_SIZE,
-        offset: (currentPage - 1) * PAGE_SIZE,
-      }),
+      serverClient.snapshots.list({ buildId, limit: PAGE_SIZE, offset: 0 }),
     ]);
 
   if (
@@ -41,14 +33,7 @@ export default async function BuildPage(props: BuildPageProps) {
   return (
     <div className="flex flex-col gap-6">
       <BuildHeader build={buildResult.build} snapshotCounts={snapshotCounts} />
-      <SnapshotGrid
-        snapshots={snapshotsResult.snapshots}
-        projectId={projectId}
-        buildId={buildId}
-        total={snapshotsResult.total}
-        page={currentPage}
-        pageSize={PAGE_SIZE}
-      />
+      <SnapshotGrid snapshots={snapshotsResult.snapshots} projectId={projectId} buildId={buildId} />
     </div>
   );
 }
