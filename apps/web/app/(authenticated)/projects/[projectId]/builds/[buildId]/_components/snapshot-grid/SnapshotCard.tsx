@@ -28,6 +28,7 @@ export const SnapshotCard = ({ snapshot, projectId, buildId }: SnapshotCardProps
           </div>
         )}
         {snapshot.status === "needs_review" ||
+        snapshot.status === "approved" ||
         snapshot.status === "rejected" ||
         snapshot.status === "error" ? (
           <div className="absolute bottom-2 right-2">
