@@ -7,7 +7,7 @@ export type SnapshotPaneImageProps = {
 };
 
 export const SnapshotPaneImage = ({ imagePath, alt }: SnapshotPaneImageProps) => (
-  <div className="relative min-h-40 overflow-hidden rounded-card border border-ovr-border bg-ovr-inset bg-pixel-grid">
+  <div className="relative min-h-64 overflow-hidden rounded-card border border-ovr-border bg-ovr-inset bg-pixel-grid lg:min-h-96">
     {imagePath ? (
       <Image
         src={imagePath}

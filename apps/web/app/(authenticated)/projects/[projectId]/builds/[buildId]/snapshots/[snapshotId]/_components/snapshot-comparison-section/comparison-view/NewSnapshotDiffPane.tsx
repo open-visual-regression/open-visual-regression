@@ -37,7 +37,7 @@ export const NewSnapshotDiffPane = ({
           <Switch checked={showDiff} onCheckedChange={setShowDiff} />
         </label>
       </SnapshotPaneHeader>
-      <div className="relative min-h-40 overflow-hidden rounded-card border border-ovr-border bg-ovr-inset bg-pixel-grid">
+      <div className="relative min-h-64 overflow-hidden rounded-card border border-ovr-border bg-ovr-inset bg-pixel-grid lg:min-h-96">
         {imagePath ? (
           <Image
             src={imagePath}
@@ -52,7 +52,7 @@ export const NewSnapshotDiffPane = ({
             }
           />
         ) : (
-          <div className="flex h-40 w-40 items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center">
             <Typography variant="caption">no preview</Typography>
           </div>
         )}
