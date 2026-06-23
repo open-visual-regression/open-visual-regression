@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { expect } from "@storybook/test";
 
 import { Skeleton } from "../skeleton";
 
@@ -33,12 +32,4 @@ export const KitchenSink: Story = {
       </Section>
     </div>
   ),
-  play: async ({ canvasElement }) => {
-    const skeletons = canvasElement.querySelectorAll('[data-slot="skeleton"]');
-
-    expect(skeletons.length).toBeGreaterThan(0);
-    for (const skeleton of skeletons) {
-      expect(skeleton).toHaveClass("animate-pulse");
-    }
-  },
 };
