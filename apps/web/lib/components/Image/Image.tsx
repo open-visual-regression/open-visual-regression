@@ -6,17 +6,9 @@ import { cn } from "@ovr/ui/lib/utils";
 
 export type ImageProps = React.ComponentProps<"img"> & {
   errorFallback: React.ReactNode;
-  skeletonClassName?: string;
 };
 
-export const Image = ({
-  errorFallback,
-  skeletonClassName,
-  className,
-  onLoad,
-  onError,
-  ...props
-}: ImageProps) => {
+export const Image = ({ errorFallback, className, onLoad, onError, ...props }: ImageProps) => {
   const [status, setStatus] = useState<"loading" | "loaded" | "error">("loading");
 
   if (status === "error") {
@@ -37,9 +29,7 @@ export const Image = ({
           onError?.(event);
         }}
       />
-      {status === "loading" && (
-        <Skeleton className={skeletonClassName ?? cn("absolute inset-0", className)} />
-      )}
+      {status === "loading" && <Skeleton className="absolute inset-0" />}
     </>
   );
 };

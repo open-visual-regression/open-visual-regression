@@ -7,15 +7,14 @@ export type SnapshotPaneImageProps = {
 };
 
 export const SnapshotPaneImage = ({ imagePath, alt }: SnapshotPaneImageProps) => (
-  <div className="relative overflow-hidden rounded-card border border-ovr-border bg-ovr-inset bg-pixel-grid">
+  <div className="relative min-h-40 overflow-hidden rounded-card border border-ovr-border bg-ovr-inset bg-pixel-grid">
     {imagePath ? (
       <Image
         src={imagePath}
         alt={alt}
         className="max-w-full h-auto mx-auto block"
-        skeletonClassName="h-40 w-full"
         errorFallback={
-          <div className="flex h-40 items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center">
             <Typography variant="caption">failed to load snapshot</Typography>
           </div>
         }

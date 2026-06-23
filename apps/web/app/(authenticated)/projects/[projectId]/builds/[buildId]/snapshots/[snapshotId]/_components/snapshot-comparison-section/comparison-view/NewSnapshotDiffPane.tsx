@@ -37,17 +37,16 @@ export const NewSnapshotDiffPane = ({
           <Switch checked={showDiff} onCheckedChange={setShowDiff} />
         </label>
       </SnapshotPaneHeader>
-      <div className="relative overflow-hidden rounded-card border border-ovr-border bg-ovr-inset bg-pixel-grid">
+      <div className="relative min-h-40 overflow-hidden rounded-card border border-ovr-border bg-ovr-inset bg-pixel-grid">
         {imagePath ? (
           <Image
             src={imagePath}
             alt={alt}
             className="absolute top-0 left-0 block h-auto"
             style={{ width: `${imageWidthPercent}%` }}
-            skeletonClassName="h-40 w-40"
             onLoad={(event) => setImageNaturalWidth(event.currentTarget.naturalWidth)}
             errorFallback={
-              <div className="flex h-40 w-40 items-center justify-center">
+              <div className="absolute inset-0 flex items-center justify-center">
                 <Typography variant="caption">failed to load snapshot</Typography>
               </div>
             }

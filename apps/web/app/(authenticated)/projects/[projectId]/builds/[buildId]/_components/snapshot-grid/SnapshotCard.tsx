@@ -3,6 +3,7 @@ import { Typography } from "@ovr/ui/components/typography";
 import { type BuildSnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { SnapshotStatusBadge } from "@/lib/components/SnapshotStatusBadge";
 import { Image } from "@/lib/components/Image/Image";
+import { getStoragePath } from "@/lib/utils/storage";
 import { cn } from "@ovr/ui/lib/utils";
 import { GlobeIcon, Icon } from "@ovr/ui/components/icon";
 import { ResolutionIcon } from "@ovr/ui/components/resolution-icon";
@@ -14,12 +15,14 @@ type SnapshotCardProps = {
 };
 
 export const SnapshotCard = ({ snapshot, projectId, buildId }: SnapshotCardProps) => {
+  const imagePath = getStoragePath(snapshot.imagePath);
+
   const content = (
     <>
       <div className="relative h-40 overflow-hidden border-b border-ovr-border-subtle bg-ovr-inset bg-pixel-grid">
-        {snapshot.imagePath ? (
+        {imagePath ? (
           <Image
-            src={`/api/storage/${snapshot.imagePath}`}
+            src={imagePath}
             alt={`snapshot of ${snapshot.targetTitle} ${snapshot.targetName}`}
             className="absolute inset-0 h-full w-full object-cover"
             errorFallback={
