@@ -35,8 +35,8 @@ const buildProjectsFilter = ({ organizationId }: ProjectsFilter) =>
   eq(projects.organizationId, organizationId);
 
 type ListProjectsInput = ProjectsFilter & {
-  limit: number;
-  offset: number;
+  limit?: number;
+  offset?: number;
 };
 
 export const listProjects = ({ organizationId, limit, offset }: ListProjectsInput) =>

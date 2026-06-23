@@ -7,30 +7,9 @@ import { enqueuePurgeMany } from "./lib/queue";
 const RETENTION_PAGE_SIZE = 500;
 const STORAGE_DELETE_CONCURRENCY = 10;
 const MAX_PAGES_PER_RUN = 200;
-const ORGANIZATION_PROJECTS_PAGE_SIZE = 500;
 
 const getBuildPrefix = (projectId: string, buildId: string): string =>
   `${projectId}/builds/${buildId}/`;
-
-const dispatchPurgeJobsForOrganizationPage = async (
-  organizationId: string,
-  offset: number,
-): Promise<void> => {
-  const projects = await dbClient.projects.listProjects({
-    organizationId,
-    limit: ORGANIZATION_PROJECTS_PAGE_SIZE,
-    offset,
-  });
-
-  await enqueuePurgeMany(projects.map((project) => ({ projectId: project.id })));
-
-  if (projects.length === ORGANIZATION_PROJECTS_PAGE_SIZE) {
-    await dispatchPurgeJobsForOrganizationPage(
-      organizationId,
-      offset + ORGANIZATION_PROJECTS_PAGE_SIZE,
-    );
-  }
-};
 
 export const dispatchPurgeJobs = async (): Promise<void> => {
   const organizations = await dbClient.organizations.findAll();
@@ -38,7 +17,9 @@ export const dispatchPurgeJobs = async (): Promise<void> => {
 
   for (const organization of organizations) {
     try {
-      await dispatchPurgeJobsForOrganizationPage(organization.id, 0);
+      const projects = await dbClient.projects.listProjects({ organizationId: organization.id });
+
+      await enqueuePurgeMany(projects.map((project) => ({ projectId: project.id })));
     } catch (error) {
       console.error(`Failed to dispatch purge jobs for organization ${organization.id}:`, error);
       errors.push(error);
