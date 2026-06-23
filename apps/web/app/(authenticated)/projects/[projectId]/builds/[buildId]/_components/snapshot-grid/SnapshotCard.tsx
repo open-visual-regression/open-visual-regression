@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Typography } from "@ovr/ui/components/typography";
 import { type BuildSnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { SnapshotStatusBadge } from "@/lib/components/SnapshotStatusBadge";
+import { Image } from "@/lib/components/Image/Image";
 import { cn } from "@ovr/ui/lib/utils";
 import { GlobeIcon, Icon } from "@ovr/ui/components/icon";
 import { ResolutionIcon } from "@ovr/ui/components/resolution-icon";
@@ -17,10 +18,15 @@ export const SnapshotCard = ({ snapshot, projectId, buildId }: SnapshotCardProps
     <>
       <div className="relative h-40 overflow-hidden border-b border-ovr-border-subtle bg-ovr-inset bg-pixel-grid">
         {snapshot.imagePath ? (
-          <img
+          <Image
             src={`/api/storage/${snapshot.imagePath}`}
             alt={`snapshot of ${snapshot.targetTitle} ${snapshot.targetName}`}
             className="absolute inset-0 h-full w-full object-cover"
+            errorFallback={
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Typography variant="caption">failed to load snapshot</Typography>
+              </div>
+            }
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
