@@ -2,27 +2,23 @@ import { describe, expect, fireEvent, it, render, screen } from "@/test-utils";
 import { Image } from "../Image";
 
 describe("Image", () => {
-  it("should show a skeleton while the image is loading", () => {
-    const { container } = render(
-      <Image src="/snapshot.png" alt="snapshot" errorFallback={<div>failed</div>} />,
-    );
+  it("should show a loading indicator while the image is loading", () => {
+    render(<Image src="/snapshot.png" alt="snapshot" errorFallback={<div>failed</div>} />);
 
-    expect(container.querySelector('[data-slot="skeleton"]')).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "loading" })).toBeInTheDocument();
     expect(screen.getByAltText("snapshot")).toHaveClass("invisible");
   });
 
-  it("should hide the skeleton and reveal the image once it loads", () => {
-    const { container } = render(
-      <Image src="/snapshot.png" alt="snapshot" errorFallback={<div>failed</div>} />,
-    );
+  it("should hide the loading indicator and reveal the image once it loads", () => {
+    render(<Image src="/snapshot.png" alt="snapshot" errorFallback={<div>failed</div>} />);
 
     fireEvent.load(screen.getByAltText("snapshot"));
 
-    expect(container.querySelector('[data-slot="skeleton"]')).not.toBeInTheDocument();
+    expect(screen.queryByRole("status", { name: "loading" })).not.toBeInTheDocument();
     expect(screen.getByAltText("snapshot")).not.toHaveClass("invisible");
   });
 
-  it("should skip the skeleton when the image is already cached on mount", () => {
+  it("should not get stuck showing the loading indicator when the image was already loaded before mount", () => {
     Object.defineProperty(HTMLImageElement.prototype, "complete", {
       configurable: true,
       get: () => true,
@@ -32,11 +28,9 @@ describe("Image", () => {
       get: () => 240,
     });
 
-    const { container } = render(
-      <Image src="/snapshot.png" alt="snapshot" errorFallback={<div>failed</div>} />,
-    );
+    render(<Image src="/snapshot.png" alt="snapshot" errorFallback={<div>failed</div>} />);
 
-    expect(container.querySelector('[data-slot="skeleton"]')).not.toBeInTheDocument();
+    expect(screen.queryByRole("status", { name: "loading" })).not.toBeInTheDocument();
     expect(screen.getByAltText("snapshot")).not.toHaveClass("invisible");
 
     Reflect.deleteProperty(HTMLImageElement.prototype, "complete");

@@ -34,7 +34,9 @@ export const Image = ({ errorFallback, className, onLoad, onError, ...props }: I
           onError?.(event);
         }}
       />
-      {status === "loading" && <Skeleton className="absolute inset-0" />}
+      {status === "loading" && (
+        <Skeleton role="status" aria-label="loading" className="absolute inset-0" />
+      )}
     </>
   );
 };

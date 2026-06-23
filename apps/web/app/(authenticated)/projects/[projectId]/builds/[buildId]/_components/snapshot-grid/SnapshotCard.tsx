@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Typography } from "@ovr/ui/components/typography";
 import { type BuildSnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { SnapshotStatusBadge } from "@/lib/components/SnapshotStatusBadge";
-import { Image } from "@/lib/components/Image/Image";
+import { Image } from "@/lib/components/image/Image";
 import { getStoragePath } from "@/lib/utils/storage";
 import { cn } from "@ovr/ui/lib/utils";
 import { GlobeIcon, Icon } from "@ovr/ui/components/icon";

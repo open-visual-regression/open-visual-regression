@@ -1,5 +1,5 @@
 import { Typography } from "@ovr/ui/components/typography";
-import { Image } from "@/lib/components/Image/Image";
+import { Image } from "@/lib/components/image/Image";
 
 export type SnapshotPaneImageProps = {
   imagePath: string | null;
