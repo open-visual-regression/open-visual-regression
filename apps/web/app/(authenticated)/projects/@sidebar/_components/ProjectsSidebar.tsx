@@ -13,18 +13,19 @@ import {
 
 type ProjectsSidebarProps = {
   projects: Pick<ProjectDto, "id" | "name">[];
+  total: number;
   version?: string;
   initialCollapsed?: boolean;
 };
 
-const ProjectsSidebar = ({ projects, version, initialCollapsed }: ProjectsSidebarProps) => {
+const ProjectsSidebar = ({ projects, total, version, initialCollapsed }: ProjectsSidebarProps) => {
   const pathname = usePathname();
 
   return (
     <Sidebar
       version={version}
       initialCollapsed={initialCollapsed}
-      expandedContent={<ProjectsSidebarLinks projects={projects} />}
+      expandedContent={<ProjectsSidebarLinks projects={projects} total={total} />}
       collapsedContent={
         <>
           <SidebarCollapsedSectionLabel label="prj" />

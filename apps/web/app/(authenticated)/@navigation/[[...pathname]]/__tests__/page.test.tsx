@@ -14,8 +14,10 @@ vi.mock("@/lib/router");
 const mockGetSession = vi.mocked(auth.api.getSession);
 const mockGetOne = vi.mocked(serverClient.projects.getOne);
 const mockList = vi.mocked(serverClient.projects.list);
+const mockCount = vi.mocked(serverClient.projects.count);
 
 mockList.mockResolvedValue([null, { projects: [] }]);
+mockCount.mockResolvedValue([null, { total: 0 }]);
 
 describe("NavigationSlot", () => {
   it("should render breadcrumbs for the projects root", async () => {

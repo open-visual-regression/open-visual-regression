@@ -50,6 +50,43 @@ describe("projects", () => {
         retentionDays: 90,
       });
     });
+
+    test("should respect the limit and offset params", async ({ admin: _ }) => {
+      await serverClient.projects.add(TEST_PROJECT);
+      await serverClient.projects.add({ ...TEST_PROJECT, projectName: "Second Project" });
+      await serverClient.projects.add({ ...TEST_PROJECT, projectName: "Third Project" });
+
+      const [error, result] = await serverClient.projects.list({ limit: 1, offset: 1 });
+
+      expect(error).toBeNull();
+      expect(result?.projects).toHaveLength(1);
+      expect(result?.projects[0]?.name).toBe("Second Project");
+    });
+  });
+
+  describe("count", () => {
+    test("should return UNAUTHORIZED when no session cookie is provided", async () => {
+      const [error] = await serverClient.projects.count();
+      expect(error?.code).toBe("UNAUTHORIZED");
+    });
+
+    test("should return 0 when the admin has no projects", async ({ admin: _ }) => {
+      const [error, result] = await serverClient.projects.count();
+      expect(error).toBeNull();
+      expect(result?.total).toBe(0);
+    });
+
+    test("should return the total number of projects belonging to the organization", async ({
+      admin: _,
+    }) => {
+      await serverClient.projects.add(TEST_PROJECT);
+      await serverClient.projects.add({ ...TEST_PROJECT, projectName: "Second Project" });
+
+      const [error, result] = await serverClient.projects.count();
+
+      expect(error).toBeNull();
+      expect(result?.total).toBe(2);
+    });
   });
 
   describe("getOne", () => {

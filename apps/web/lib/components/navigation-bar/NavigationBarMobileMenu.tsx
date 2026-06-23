@@ -12,9 +12,14 @@ import { SettingsSidebarLinks } from "@/lib/components/sidebar/SettingsSidebarLi
 type NavigationBarMobileMenuProps = {
   role: string | null | undefined;
   projects: Pick<ProjectDto, "id" | "name">[];
+  projectsTotal: number;
 };
 
-const NavigationBarMobileMenu = ({ role, projects }: NavigationBarMobileMenuProps) => {
+const NavigationBarMobileMenu = ({
+  role,
+  projects,
+  projectsTotal,
+}: NavigationBarMobileMenuProps) => {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -43,7 +48,7 @@ const NavigationBarMobileMenu = ({ role, projects }: NavigationBarMobileMenuProp
         {section === "settings" ? (
           <SettingsSidebarLinks role={role} onNavigate={onNavigate} />
         ) : (
-          <ProjectsSidebarLinks projects={projects} onNavigate={onNavigate} />
+          <ProjectsSidebarLinks projects={projects} total={projectsTotal} onNavigate={onNavigate} />
         )}
       </SheetContent>
     </Sheet>

@@ -22,11 +22,24 @@ export const projectSchema = z.object({
 
 export type ProjectDto = z.infer<typeof projectSchema>;
 
+export const listProjectsInputSchema = z.object({
+  limit: z.number().int().min(1).max(100).default(20),
+  offset: z.number().int().min(0).default(0),
+});
+
+export type ListProjectsInputSchema = z.infer<typeof listProjectsInputSchema>;
+
 export const listProjectsOutputSchema = z.object({ projects: z.array(projectSchema) });
 
-export const listProjectsContract = oc.output(listProjectsOutputSchema);
+export const listProjectsContract = oc
+  .input(listProjectsInputSchema.optional())
+  .output(listProjectsOutputSchema);
 
 export type ListProjectsDto = InferContractRouterOutputs<typeof listProjectsContract>;
+
+export const countProjectsOutputSchema = z.object({ total: z.number().int().nonnegative() });
+
+export const countProjectsContract = oc.output(countProjectsOutputSchema);
 
 export const addProjectInputSchema = z.object({
   projectName: z.string().min(1).max(255),
@@ -68,6 +81,7 @@ export const updateProjectContract = oc.input(updateProjectInputSchema).output(z
 export const contract = {
   getOne: getOneContract,
   list: listProjectsContract,
+  count: countProjectsContract,
   add: addProjectContract,
   update: updateProjectContract,
 } as const;

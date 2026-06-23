@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { count, desc, eq } from "drizzle-orm";
 
 import { db } from "../db";
 import { projects } from "../schema";
@@ -27,11 +27,19 @@ export const getProject = async ({ projectId, organizationId }: GetProjectInput)
       and(eq(projects.id, projectId), eq(projects.organizationId, organizationId)),
   });
 
-type ListProjectsInput = {
+type ProjectsFilter = {
   organizationId: string;
 };
 
-export const listProjects = ({ organizationId }: ListProjectsInput) =>
+const buildProjectsFilter = ({ organizationId }: ProjectsFilter) =>
+  eq(projects.organizationId, organizationId);
+
+type ListProjectsInput = ProjectsFilter & {
+  limit?: number;
+  offset?: number;
+};
+
+export const listProjects = ({ organizationId, limit, offset }: ListProjectsInput) =>
   db.query.projects.findMany({
     columns: {
       id: true,
@@ -43,10 +51,22 @@ export const listProjects = ({ organizationId }: ListProjectsInput) =>
       createdAt: true,
     },
     with: { creator: { columns: { id: true, name: true, email: true } } },
-    where: (projects, { eq }) => eq(projects.organizationId, organizationId),
+    where: buildProjectsFilter({ organizationId }),
+    orderBy: desc(projects.createdAt),
+    limit,
+    offset,
   });
 
 export type ListProjectsResult = Awaited<ReturnType<typeof listProjects>>;
+
+export const countProjects = async ({ organizationId }: ProjectsFilter) => {
+  const [result] = await db
+    .select({ count: count() })
+    .from(projects)
+    .where(buildProjectsFilter({ organizationId }));
+
+  return result?.count ?? 0;
+};
 
 export const addProject = async (values: typeof projects.$inferInsert) => {
   const [project] = await db.insert(projects).values(values).returning();

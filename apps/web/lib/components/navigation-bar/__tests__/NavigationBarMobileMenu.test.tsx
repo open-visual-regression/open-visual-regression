@@ -18,7 +18,7 @@ describe("NavigationBarMobileMenu", () => {
   it("should not render a mobile menu trigger outside settings and projects routes", () => {
     vi.mocked(usePathname).mockReturnValue("/");
 
-    render(<NavigationBarMobileMenu role="user" projects={PROJECTS} />);
+    render(<NavigationBarMobileMenu role="user" projects={PROJECTS} projectsTotal={2} />);
 
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
@@ -26,7 +26,7 @@ describe("NavigationBarMobileMenu", () => {
   it("should open the settings nav links from the mobile menu", async ({ user }) => {
     vi.mocked(usePathname).mockReturnValue("/settings/account");
 
-    render(<NavigationBarMobileMenu role="admin" projects={PROJECTS} />);
+    render(<NavigationBarMobileMenu role="admin" projects={PROJECTS} projectsTotal={2} />);
 
     await user.click(screen.getByRole("button", { name: /open settings navigation/i }));
 
@@ -38,7 +38,7 @@ describe("NavigationBarMobileMenu", () => {
   it("should open the projects nav links from the mobile menu", async ({ user }) => {
     vi.mocked(usePathname).mockReturnValue("/projects");
 
-    render(<NavigationBarMobileMenu role="user" projects={PROJECTS} />);
+    render(<NavigationBarMobileMenu role="user" projects={PROJECTS} projectsTotal={2} />);
 
     await user.click(screen.getByRole("button", { name: /open projects navigation/i }));
 
@@ -49,7 +49,7 @@ describe("NavigationBarMobileMenu", () => {
   it("should close the menu after clicking a nav link", async ({ user }) => {
     vi.mocked(usePathname).mockReturnValue("/settings/account");
 
-    render(<NavigationBarMobileMenu role="admin" projects={PROJECTS} />);
+    render(<NavigationBarMobileMenu role="admin" projects={PROJECTS} projectsTotal={2} />);
 
     await user.click(screen.getByRole("button", { name: /open settings navigation/i }));
     expect(screen.getByRole("link", { name: "account" })).toBeVisible();
@@ -58,6 +58,19 @@ describe("NavigationBarMobileMenu", () => {
 
     await waitFor(() => {
       expect(screen.queryByRole("link", { name: "account" })).not.toBeInTheDocument();
+    });
+  });
+
+  it("should close the menu after clicking the view all projects link", async ({ user }) => {
+    vi.mocked(usePathname).mockReturnValue("/projects");
+
+    render(<NavigationBarMobileMenu role="user" projects={PROJECTS} projectsTotal={5} />);
+
+    await user.click(screen.getByRole("button", { name: /open projects navigation/i }));
+    await user.click(screen.getByRole("link", { name: "view all projects" }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole("link", { name: "view all projects" })).not.toBeInTheDocument();
     });
   });
 });
