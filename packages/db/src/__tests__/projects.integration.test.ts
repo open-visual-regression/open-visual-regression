@@ -93,6 +93,26 @@ describe("projects", () => {
 
       expect(found.map((p) => p.id)).toEqual([middle!.id]);
     });
+
+    test("should return every project when limit and offset are omitted", async ({
+      organization,
+      project,
+      user,
+    }) => {
+      const [second] = await db
+        .insert(projects)
+        .values({
+          name: "Second Project",
+          gitMainBranch: "main",
+          organizationId: organization.id,
+          creatorId: user.id,
+        })
+        .returning();
+
+      const found = await dbClient.projects.listProjects({ organizationId: organization.id });
+
+      expect(found.map((p) => p.id).sort()).toEqual([project.id, second!.id].sort());
+    });
   });
 
   describe("countProjects", () => {
