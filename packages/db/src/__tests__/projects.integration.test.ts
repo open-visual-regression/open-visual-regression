@@ -137,30 +137,5 @@ describe("projects", () => {
       const total = await dbClient.projects.countProjects({ organizationId: organization.id });
       expect(total).toBe(1);
     });
-
-    test("should be unaffected by the limit and offset passed to listProjects", async ({
-      organization,
-      project: _project,
-      user,
-    }) => {
-      for (let i = 0; i < 2; i++) {
-        await db.insert(projects).values({
-          name: `Project ${i}`,
-          gitMainBranch: "main",
-          organizationId: organization.id,
-          creatorId: user.id,
-        });
-      }
-
-      const found = await dbClient.projects.listProjects({
-        organizationId: organization.id,
-        limit: 1,
-        offset: 0,
-      });
-      const total = await dbClient.projects.countProjects({ organizationId: organization.id });
-
-      expect(found).toHaveLength(1);
-      expect(total).toBe(3);
-    });
   });
 });

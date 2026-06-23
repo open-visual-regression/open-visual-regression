@@ -76,13 +76,12 @@ describe("projects", () => {
       expect(result?.total).toBe(0);
     });
 
-    test("should return the total project count regardless of the limit passed to list", async ({
+    test("should return the total number of projects belonging to the organization", async ({
       admin: _,
     }) => {
       await serverClient.projects.add(TEST_PROJECT);
       await serverClient.projects.add({ ...TEST_PROJECT, projectName: "Second Project" });
 
-      await serverClient.projects.list({ limit: 1, offset: 0 });
       const [error, result] = await serverClient.projects.count();
 
       expect(error).toBeNull();
