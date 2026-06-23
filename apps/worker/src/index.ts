@@ -3,12 +3,14 @@ import "./env";
 import { Worker, type Job } from "bullmq";
 import { Redis } from "ioredis";
 
-import { QueueName } from "@ovr/queue";
+import { QueueName, schedulePurge } from "@ovr/queue";
 
 import * as capture from "./handlers/capture";
 import * as diff from "./handlers/diff";
 import * as extract from "./handlers/extract";
 import * as finalize from "./handlers/finalize";
+import * as purge from "./handlers/purge";
+import * as purgeDispatch from "./handlers/purgeDispatch";
 
 const connection = new Redis(process.env.VALKEY_URL ?? "redis://localhost:6379", {
   maxRetriesPerRequest: null,
@@ -18,6 +20,10 @@ const extractWorker = new Worker(QueueName.BUILD_EXTRACT, extract.run, { connect
 const captureWorker = new Worker(QueueName.SNAPSHOT_CAPTURE, capture.run, { connection });
 const diffWorker = new Worker(QueueName.SNAPSHOT_DIFF, diff.run, { connection });
 const finalizeWorker = new Worker(QueueName.BUILD_FINALIZE, finalize.run, { connection });
+const purgeDispatchWorker = new Worker(QueueName.BUILD_PURGE_DISPATCH, purgeDispatch.run, {
+  connection,
+});
+const purgeWorker = new Worker(QueueName.BUILD_PURGE, purge.run, { connection });
 
 const isFinalAttempt = (job: Job<unknown>): boolean => job.attemptsMade >= (job.opts.attempts ?? 1);
 
@@ -37,8 +43,23 @@ extractWorker.on("failed", guard(extract.failed));
 captureWorker.on("failed", guard(capture.failed));
 diffWorker.on("failed", guard(diff.failed));
 finalizeWorker.on("failed", guard(finalize.failed));
+purgeDispatchWorker.on("failed", guard(purgeDispatch.failed));
+purgeWorker.on("failed", guard(purge.failed));
 
-const workers = [extractWorker, captureWorker, diffWorker, finalizeWorker];
+const workers = [
+  extractWorker,
+  captureWorker,
+  diffWorker,
+  finalizeWorker,
+  purgeDispatchWorker,
+  purgeWorker,
+];
+
+try {
+  await schedulePurge(connection);
+} catch (error) {
+  console.error("Failed to schedule the daily purge dispatch job:", error);
+}
 
 process.on("SIGTERM", async () => {
   await Promise.all(workers.map((worker) => worker.close()));

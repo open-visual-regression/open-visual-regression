@@ -1,3 +1,4 @@
+import { db } from "./db";
 import * as organizations from "./repository/organizations";
 import * as users from "./repository/users";
 import * as projects from "./repository/projects";
@@ -8,6 +9,7 @@ import * as snapshotLogs from "./repository/snapshotLogs";
 import * as diffs from "./repository/diffs";
 import * as diffReviews from "./repository/diffReviews";
 import * as baselines from "./repository/baselines";
+import * as storageOutbox from "./repository/storageOutbox";
 
 export const dbClient = {
   organizations,
@@ -20,4 +22,6 @@ export const dbClient = {
   diffs,
   diffReviews,
   baselines,
+  storageOutbox,
+  transaction: db.transaction.bind(db),
 } as const;
