@@ -74,6 +74,10 @@ export const extractBuild = async (
     values: targets.flatMap((target) => {
       const override = overridesByTarget.get(target.id);
 
+      if (override?.skip) {
+        return [];
+      }
+
       return resolveTargetViewports(viewports, override?.viewports).map((viewport) => ({
         buildId,
         browser: viewport.browser,
