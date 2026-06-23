@@ -176,5 +176,5 @@ describe("extractBuild", () => {
 
     const snapshots = await dbClient.snapshots.findByBuild(mainBuild.id);
     expect(snapshots.map((snapshot) => snapshot.targetId)).toEqual(["story-b"]);
-  }, 30000);
+  });
 });
