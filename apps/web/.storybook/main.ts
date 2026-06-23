@@ -24,6 +24,10 @@ const config: StorybookConfig = {
   viteFinal: async (config) => {
     config.plugins = config.plugins ?? [];
     config.plugins.push(tailwindcss());
+    config.define = {
+      ...config.define,
+      "process.env": {},
+    };
     return config;
   },
 };
