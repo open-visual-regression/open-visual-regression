@@ -1,7 +1,7 @@
-import { and, asc, count, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, lt, notExists, sql } from "drizzle-orm";
 
 import { db, type DbClient } from "../db";
-import { builds, projects, type BuildStatus } from "../schema";
+import { baselines, builds, projects, snapshots, type BuildStatus } from "../schema";
 
 type CreateInput = typeof builds.$inferInsert & { tx?: DbClient };
 
@@ -99,3 +99,38 @@ export const findAll = async ({
 export type FindAllResult = Awaited<ReturnType<typeof findAll>>;
 
 export type BuildListItemDbSchema = FindAllResult["builds"][number];
+
+export const findExpiredPage = async (
+  projectId: string,
+  cutoff: string,
+  limit: number,
+): Promise<string[]> => {
+  const rows = await db
+    .select({ id: builds.id })
+    .from(builds)
+    .where(
+      and(
+        eq(builds.projectId, projectId),
+        lt(builds.createdAt, cutoff),
+        notExists(
+          db
+            .select({ one: sql`1` })
+            .from(snapshots)
+            .innerJoin(baselines, eq(baselines.snapshotId, snapshots.id))
+            .where(eq(snapshots.buildId, builds.id)),
+        ),
+      ),
+    )
+    .orderBy(asc(builds.createdAt), asc(builds.id))
+    .limit(limit);
+
+  return rows.map((row) => row.id);
+};
+
+export const removeMany = async (ids: string[]): Promise<void> => {
+  if (ids.length === 0) {
+    return;
+  }
+
+  await db.delete(builds).where(inArray(builds.id, ids));
+};
