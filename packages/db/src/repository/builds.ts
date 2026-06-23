@@ -127,10 +127,10 @@ export const findExpiredPage = async (
   return rows.map((row) => row.id);
 };
 
-export const removeMany = async (ids: string[]): Promise<void> => {
+export const removeMany = async (tx: DbClient, ids: string[]): Promise<void> => {
   if (ids.length === 0) {
     return;
   }
 
-  await db.delete(builds).where(inArray(builds.id, ids));
+  await tx.delete(builds).where(inArray(builds.id, ids));
 };
