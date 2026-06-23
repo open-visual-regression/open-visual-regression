@@ -91,7 +91,7 @@ describe("snapshots", () => {
 
       const job = await collectDiffJob(connection);
       expect(job.snapshotId).toBe(snapshot!.id);
-    }, 30000);
+    });
 
     test("should still let a reviewer see the story, flagged as a render error, when the story fails to render", async ({
       mainBuild,
@@ -121,7 +121,38 @@ describe("snapshots", () => {
 
       const logs = await dbClient.snapshotLogs.findBySnapshot(snapshot!.id);
       expect(logs.length).toBeGreaterThan(0);
-    }, 30000);
+    });
+
+    test("should let a reviewer see the story as captured when the app logs a console error without an uncaught exception", async ({
+      mainBuild,
+      captureConfiguration,
+    }) => {
+      await uploadStaticBuild(mainBuild.projectId, mainBuild.id);
+      await storage.uploadFile(
+        getStaticPath(mainBuild.projectId, mainBuild.id, "iframe.html"),
+        Buffer.from(
+          IFRAME_HTML.replace("</body>", '<script>console.error("logged error");</script></body>'),
+        ),
+        "text/html",
+      );
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: mainBuild.id,
+            ...captureConfiguration,
+            targetId: "story-a",
+          },
+        ],
+      });
+
+      await captureSnapshot(snapshot!.id);
+
+      const captured = await dbClient.snapshots.findById(snapshot!.id);
+      expect(captured).toMatchObject({ status: "captured", hasRenderError: false });
+
+      const logs = await dbClient.snapshotLogs.findBySnapshot(snapshot!.id);
+      expect(logs.some((log) => log.level === "error")).toBe(true);
+    });
   });
 
   describe("diffSnapshot", () => {
@@ -160,7 +191,7 @@ describe("snapshots", () => {
       } finally {
         await worker.close();
       }
-    }, 30000);
+    });
 
     test("should approve a story automatically, with nothing for a reviewer to do, when it renders the same as the approved baseline", async ({
       featureBuild,
@@ -207,7 +238,7 @@ describe("snapshots", () => {
         pixelDiffCount: 0,
         diffPercent: 0,
       });
-    }, 30000);
+    });
 
     test("should ask a reviewer to approve a story and show them what changed when it renders differently from the approved baseline", async ({
       featureBuild,
@@ -257,7 +288,7 @@ describe("snapshots", () => {
 
       const diffImage = await storage.getFileStream(result!.diffImagePath!);
       expect(diffImage).toBeDefined();
-    }, 30000);
+    });
 
     test("diffs against a differently-sized baseline instead of skipping the comparison", async ({
       featureBuild,
@@ -305,7 +336,7 @@ describe("snapshots", () => {
       expect(result!.diffImagePath).toBe(
         `${featureBuild.projectId}/builds/${featureBuild.id}/diffs/${diff!.id}.png`,
       );
-    }, 30000);
+    });
 
     test("promotes the baseline and skips review entirely for a main-branch build with no prior baseline", async ({
       mainBuild,
@@ -341,7 +372,7 @@ describe("snapshots", () => {
         targetId: "story-c",
       });
       expect(baseline?.snapshotId).toBe(captureSnapshotRow!.id);
-    }, 30000);
+    });
 
     test("promotes the baseline and skips review for a main-branch build even when the diff is large", async ({
       mainBuild,
@@ -395,7 +426,7 @@ describe("snapshots", () => {
         targetId: "story-d",
       });
       expect(baseline?.snapshotId).toBe(captureSnapshotRow!.id);
-    }, 30000);
+    });
 
     test("marks the diff as errored without comparing pixels when the snapshot failed to render", async ({
       featureBuild,
@@ -425,6 +456,6 @@ describe("snapshots", () => {
         reviewStatus: "not_required",
         pixelDiffCount: null,
       });
-    }, 30000);
+    });
   });
 });

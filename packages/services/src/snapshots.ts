@@ -43,12 +43,10 @@ export const captureSnapshot = async (snapshotId: string): Promise<void> => {
 
   const fullPage = snapshot.viewportHeight === 0;
 
-  const proxy = await startStaticProxy(build.projectId, build.id);
-  const browser = await getBrowserLauncher(snapshot.browser).launch();
+  const { logs, screenshot, hasRenderError } = await (async () => {
+    const proxy = await startStaticProxy(build.projectId, build.id);
+    const browser = await getBrowserLauncher(snapshot.browser).launch();
 
-  const logs: ConsoleLog[] = [];
-
-  const { screenshot, renderFailed } = await (async () => {
     try {
       const context = await browser.newContext({
         viewport: {
@@ -57,13 +55,17 @@ export const captureSnapshot = async (snapshotId: string): Promise<void> => {
         },
         deviceScaleFactor: 1,
       });
+
       const page = await context.newPage();
+      const logs: ConsoleLog[] = [];
+      let hasPageError = false;
 
       page.on("console", (message) => {
         logs.push({ level: message.type(), message: message.text() });
       });
 
       page.on("pageerror", (error) => {
+        hasPageError = true;
         logs.push({ level: "error", message: error.message });
       });
 
@@ -89,14 +91,16 @@ export const captureSnapshot = async (snapshotId: string): Promise<void> => {
         logs.push({ level: "error", message: renderResult.error ?? "target failed to render" });
       }
 
-      return { screenshot: await page.screenshot({ fullPage }), renderFailed: !renderResult.ok };
+      return {
+        logs,
+        screenshot: await page.screenshot({ fullPage }),
+        hasRenderError: !renderResult.ok || hasPageError,
+      };
     } finally {
       await browser.close();
       proxy.close();
     }
   })();
-
-  const hasRenderError = renderFailed || logs.some((log) => log.level === "error");
 
   const imagePath = `${build.projectId}/builds/${build.id}/snapshots/${snapshotId}.png`;
   await storage.uploadFile(imagePath, screenshot, "image/png");
