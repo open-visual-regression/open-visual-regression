@@ -1,4 +1,4 @@
-import { eq, inArray } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 import { db, type DbClient } from "../db";
 import { storageOutbox } from "../schema";
@@ -23,14 +23,6 @@ export const findByProject = (projectId: string): Promise<StorageOutboxEntry[]> 
   db.query.storageOutbox.findMany({
     where: (storageOutbox, { eq }) => eq(storageOutbox.projectId, projectId),
   });
-
-export const removeMany = async (ids: string[]): Promise<void> => {
-  if (ids.length === 0) {
-    return;
-  }
-
-  await db.delete(storageOutbox).where(inArray(storageOutbox.id, ids));
-};
 
 export const remove = async (id: string): Promise<void> => {
   await db.delete(storageOutbox).where(eq(storageOutbox.id, id));
