@@ -106,12 +106,13 @@ describe("projects", () => {
           gitMainBranch: "main",
           organizationId: organization.id,
           creatorId: user.id,
+          createdAt: "2024-01-01T00:00:00.000Z",
         })
         .returning();
 
       const found = await dbClient.projects.listProjects({ organizationId: organization.id });
 
-      expect(found.map((p) => p.id).sort()).toEqual([project.id, second!.id].sort());
+      expect(found.map((p) => p.id)).toEqual([project.id, second!.id]);
     });
   });
 
