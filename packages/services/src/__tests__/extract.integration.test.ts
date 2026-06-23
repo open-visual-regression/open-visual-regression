@@ -122,7 +122,7 @@ describe("extractBuild", () => {
         snapshots.map((snapshot) => ({ buildId: mainBuild.id, snapshotId: snapshot.id })),
       ),
     );
-  }, 30000);
+  });
 
   test("uses the build default diff threshold when a story has no override", async ({
     mainBuild,
@@ -140,7 +140,7 @@ describe("extractBuild", () => {
 
     const [snapshot] = await dbClient.snapshots.findByBuild(mainBuild.id);
     expect(snapshot!.diffThreshold).toBe(0.1);
-  }, 30000);
+  });
 
   test("resolves a story's parameters.ovr.diffThreshold override onto its snapshots", async ({
     mainBuild,
@@ -158,7 +158,7 @@ describe("extractBuild", () => {
 
     const [snapshot] = await dbClient.snapshots.findByBuild(mainBuild.id);
     expect(snapshot!.diffThreshold).toBe(0.2);
-  }, 30000);
+  });
 
   test("skips creating snapshots for a story with parameters.ovr.skip set", async ({
     mainBuild,
