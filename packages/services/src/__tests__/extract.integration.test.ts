@@ -42,7 +42,7 @@ const collectCaptureJobs = async (
 };
 
 const buildArtifactTarball = async (
-  storyParameters: Record<string, { diffThreshold?: number }> = {},
+  storyParameters: Record<string, { diffThreshold?: number; skip?: boolean }> = {},
 ): Promise<Buffer> => {
   const sourceDir = await mkdtemp(path.join(tmpdir(), "ovr-extract-fixture-"));
 
@@ -122,7 +122,7 @@ describe("extractBuild", () => {
         snapshots.map((snapshot) => ({ buildId: mainBuild.id, snapshotId: snapshot.id })),
       ),
     );
-  }, 30000);
+  });
 
   test("uses the build default diff threshold when a story has no override", async ({
     mainBuild,
@@ -140,7 +140,7 @@ describe("extractBuild", () => {
 
     const [snapshot] = await dbClient.snapshots.findByBuild(mainBuild.id);
     expect(snapshot!.diffThreshold).toBe(0.1);
-  }, 30000);
+  });
 
   test("resolves a story's parameters.ovr.diffThreshold override onto its snapshots", async ({
     mainBuild,
@@ -158,5 +158,23 @@ describe("extractBuild", () => {
 
     const [snapshot] = await dbClient.snapshots.findByBuild(mainBuild.id);
     expect(snapshot!.diffThreshold).toBe(0.2);
-  }, 30000);
+  });
+
+  test("skips creating snapshots for a story with parameters.ovr.skip set", async ({
+    mainBuild,
+    captureConfiguration,
+  }) => {
+    const tarball = await buildArtifactTarball({ "story-a": { skip: true } });
+    await storage.uploadFile(mainBuild.artifactPath, tarball, "application/gzip");
+
+    const targets = [
+      { id: "story-a", title: "Story", name: "A" },
+      { id: "story-b", title: "Story", name: "B" },
+    ];
+
+    await extractBuild(mainBuild.id, targets, [captureConfiguration], 0.05);
+
+    const snapshots = await dbClient.snapshots.findByBuild(mainBuild.id);
+    expect(snapshots.map((snapshot) => snapshot.targetId)).toEqual(["story-b"]);
+  });
 });

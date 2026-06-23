@@ -31,6 +31,7 @@ export type OvrStoryParameterViewport =
 export type OvrStoryParameters = {
   viewports?: OvrStoryParameterViewport[];
   diffThreshold?: number;
+  skip?: boolean;
 };
 
 // `getStoryContext` takes the prepared story object, not a story id, so the

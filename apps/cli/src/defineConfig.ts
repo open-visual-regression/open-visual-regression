@@ -35,6 +35,8 @@ export type OvrStoryParameters = {
   viewports?: (string | Omit<Viewport, "name">)[];
   /** Replaces the config's `diffThreshold` for this story only. */
   diffThreshold?: number;
+  /** Skips this story entirely — no snapshots are taken for it. */
+  skip?: boolean;
 };
 
 type ViewportName<V extends readonly Viewport[]> = Extract<V[number]["name"], string>;
