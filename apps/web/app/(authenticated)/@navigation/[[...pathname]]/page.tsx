@@ -11,6 +11,8 @@ import { Separator } from "@ovr/ui/components/separator";
 
 type NavigationSlotProps = PageProps<"/[[...pathname]]">;
 
+const NAVIGATION_PROJECTS_LIMIT = 10;
+
 export default async function NavigationSlot({ params }: NavigationSlotProps) {
   const { pathname } = await params;
 
@@ -21,13 +23,21 @@ export default async function NavigationSlot({ params }: NavigationSlotProps) {
 
   const userName = session?.user?.name ?? session?.user?.email ?? "";
 
-  const [projectsError, projectsResult] = await serverClient.projects.list();
-  const projects = projectsError ? [] : projectsResult.projects;
+  const [[listError, listResult], [countError, countResult]] = await Promise.all([
+    serverClient.projects.list({ limit: NAVIGATION_PROJECTS_LIMIT }),
+    serverClient.projects.count(),
+  ]);
+  const projects = listError ? [] : listResult.projects;
+  const projectsTotal = countError ? 0 : countResult.total;
 
   return (
     <NavigationBar className="flex flex-row gap-3 justify-between items-center">
       <div className="flex flex-row gap-3 items-center min-w-0">
-        <NavigationBarMobileMenu role={session?.user?.role} projects={projects} />
+        <NavigationBarMobileMenu
+          role={session?.user?.role}
+          projects={projects}
+          projectsTotal={projectsTotal}
+        />
         <NavigationBarLogo />
         <Separator orientation="vertical" className="h-5" />
         <NavigationBarBreadcrumb segments={segments} />

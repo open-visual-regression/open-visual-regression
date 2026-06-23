@@ -24,12 +24,27 @@ export const getOne = os.projects.getOne
 
 export const list = os.projects.list
   .use(authenticatedMiddleware)
-  .handler(async ({ context }) => {
+  .handler(async ({ input, context }) => {
+    const { limit = 20, offset = 0 } = input ?? {};
+
     const projects = await dbClient.projects.listProjects({
       organizationId: context.organizationId,
+      limit,
+      offset,
     });
 
     return { projects };
+  })
+  .actionable();
+
+export const count = os.projects.count
+  .use(authenticatedMiddleware)
+  .handler(async ({ context }) => {
+    const total = await dbClient.projects.countProjects({
+      organizationId: context.organizationId,
+    });
+
+    return { total };
   })
   .actionable();
 

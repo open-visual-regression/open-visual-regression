@@ -9,17 +9,22 @@ import { auth } from "@/lib/auth/auth";
 import { headers } from "next/headers";
 import { RequiresAdminRole } from "@/lib/components/authorization/RequiresAdminRole";
 
-export default async function ProjectsPage() {
-  const [[error, listProjectsResult], sessionResult] = await Promise.all([
-    serverClient.projects.list(),
-    auth.api.getSession({ headers: await headers() }),
-  ]);
+const PROJECTS_PAGE_LIMIT = 100;
 
-  if (error) {
+export default async function ProjectsPage() {
+  const [[listError, listProjectsResult], [countError, countResult], sessionResult] =
+    await Promise.all([
+      serverClient.projects.list({ limit: PROJECTS_PAGE_LIMIT }),
+      serverClient.projects.count(),
+      auth.api.getSession({ headers: await headers() }),
+    ]);
+
+  if (listError || countError) {
     serverError();
   }
 
   const { projects } = listProjectsResult;
+  const { total } = countResult;
 
   return (
     <div className="flex flex-col gap-6">
@@ -29,7 +34,7 @@ export default async function ProjectsPage() {
             projects
           </Typography>
           <Typography variant="h2" className="text-muted-foreground" as="p">
-            ({projects.length})
+            ({total})
           </Typography>
         </div>
         <RequiresAdminRole role={sessionResult?.user.role}>
