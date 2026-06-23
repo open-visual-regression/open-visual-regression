@@ -145,7 +145,7 @@
   --ovr-status-approved: oklch(0.62 0.14 165);
   --ovr-status-needs-review: var(--ovr-accent-primary);
   --ovr-status-error: var(--ovr-diff-remove);
-  --ovr-status-rejected: oklch(0.55 0.18 10);
+  --ovr-status-rejected: oklch(0.68 0.2 350);
   --ovr-status-pending: oklch(0.72 0.13 230);
   --ovr-status-pending-dim: oklch(0.72 0.13 230 / 0.1);
   --foreground: oklch(0.145 0 0);
@@ -209,7 +209,7 @@
   --ovr-status-approved: oklch(0.62 0.14 165);
   --ovr-status-needs-review: var(--ovr-accent-primary);
   --ovr-status-error: var(--ovr-diff-remove);
-  --ovr-status-rejected: oklch(0.55 0.18 10);
+  --ovr-status-rejected: oklch(0.68 0.2 350);
   --ovr-status-pending: oklch(0.72 0.13 230);
   --ovr-status-pending-dim: oklch(0.72 0.13 230 / 0.1);
   --foreground: oklch(0.985 0 0);
