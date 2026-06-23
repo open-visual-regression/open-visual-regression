@@ -83,8 +83,8 @@ export const builds = pgTable(
   ],
 );
 
-export const pendingStoragePurges = pgTable(
-  "pending_storage_purges",
+export const storageOutbox = pgTable(
+  "storage_outbox",
   {
     id: uuid().primaryKey().$defaultFn(uuidv7),
     projectId: uuid("project_id").notNull(),
@@ -94,7 +94,7 @@ export const pendingStoragePurges = pgTable(
       .default(sql`now()`)
       .notNull(),
   },
-  (table) => [index("pending_storage_purges_projectId_idx").on(table.projectId)],
+  (table) => [index("storage_outbox_projectId_idx").on(table.projectId)],
 );
 
 export const snapshots = pgTable(

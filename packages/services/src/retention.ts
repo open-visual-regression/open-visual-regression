@@ -34,20 +34,20 @@ export const dispatchPurgeJobs = async (): Promise<void> => {
   }
 };
 
-const drainPendingPurges = async (projectId: string): Promise<void> => {
-  const pending = await dbClient.pendingStoragePurges.findByProject(projectId);
+const drainStorageOutbox = async (projectId: string): Promise<void> => {
+  const pending = await dbClient.storageOutbox.findByProject(projectId);
 
   if (pending.length === 0) {
     return;
   }
 
-  const results = await mapWithConcurrency(pending, STORAGE_DELETE_CONCURRENCY, async (purge) => {
+  const results = await mapWithConcurrency(pending, STORAGE_DELETE_CONCURRENCY, async (entry) => {
     try {
-      await storage.deletePrefix(purge.prefix);
-      await dbClient.pendingStoragePurges.remove(purge.id);
-      return { purge, ok: true as const };
+      await storage.deletePrefix(entry.prefix);
+      await dbClient.storageOutbox.remove(entry.id);
+      return { entry, ok: true as const };
     } catch (error) {
-      return { purge, ok: false as const, error };
+      return { entry, ok: false as const, error };
     }
   });
 
@@ -57,7 +57,7 @@ const drainPendingPurges = async (projectId: string): Promise<void> => {
     console.error(
       `purgeExpiredBuilds: failed to delete storage for ${failures.length} purged build(s) in ` +
         `project ${projectId} (will retry on the next run): ` +
-        failures.map((failure) => failure.purge.prefix).join(", "),
+        failures.map((failure) => failure.entry.prefix).join(", "),
       failures.map((failure) => failure.error),
     );
   }
@@ -71,7 +71,7 @@ export const purgeExpiredBuilds = async (projectId: string): Promise<void> => {
   }
 
   // Retry storage deletes left over from a previous run before paging through new ones.
-  await drainPendingPurges(projectId);
+  await drainStorageOutbox(projectId);
 
   const cutoff = new Date(Date.now() - project.retentionDays * 24 * 60 * 60 * 1000).toISOString();
 
@@ -86,7 +86,7 @@ export const purgeExpiredBuilds = async (projectId: string): Promise<void> => {
     // promoted to a baseline mid-page still fails the cascade's FK and rolls back both,
     // instead of leaving an outbox entry for storage that was never actually orphaned.
     await dbClient.transaction(async (tx) => {
-      await dbClient.pendingStoragePurges.insertMany(
+      await dbClient.storageOutbox.insertMany(
         tx,
         buildIds.map((buildId) => ({
           projectId,
@@ -97,7 +97,7 @@ export const purgeExpiredBuilds = async (projectId: string): Promise<void> => {
       await dbClient.builds.removeMany(tx, buildIds);
     });
 
-    await drainPendingPurges(projectId);
+    await drainStorageOutbox(projectId);
 
     if (buildIds.length < RETENTION_PAGE_SIZE) {
       return;

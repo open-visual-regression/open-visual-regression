@@ -9,7 +9,7 @@ import * as snapshotLogs from "./repository/snapshotLogs";
 import * as diffs from "./repository/diffs";
 import * as diffReviews from "./repository/diffReviews";
 import * as baselines from "./repository/baselines";
-import * as pendingStoragePurges from "./repository/pendingStoragePurges";
+import * as storageOutbox from "./repository/storageOutbox";
 
 export const dbClient = {
   organizations,
@@ -22,6 +22,6 @@ export const dbClient = {
   diffs,
   diffReviews,
   baselines,
-  pendingStoragePurges,
+  storageOutbox,
   transaction: db.transaction.bind(db),
 } as const;

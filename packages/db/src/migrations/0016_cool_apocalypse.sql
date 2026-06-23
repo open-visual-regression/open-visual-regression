@@ -1,4 +1,4 @@
-CREATE TABLE "pending_storage_purges" (
+CREATE TABLE "storage_outbox" (
 	"id" uuid PRIMARY KEY NOT NULL,
 	"project_id" uuid NOT NULL,
 	"build_id" uuid NOT NULL,
@@ -6,4 +6,4 @@ CREATE TABLE "pending_storage_purges" (
 	"created_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE INDEX "pending_storage_purges_projectId_idx" ON "pending_storage_purges" USING btree ("project_id");
+CREATE INDEX "storage_outbox_projectId_idx" ON "storage_outbox" USING btree ("project_id");
