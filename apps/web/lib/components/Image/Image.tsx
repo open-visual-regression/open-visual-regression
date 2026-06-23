@@ -19,6 +19,11 @@ export const Image = ({ errorFallback, className, onLoad, onError, ...props }: I
     <>
       <img
         {...props}
+        ref={(img) => {
+          if (img?.complete) {
+            setStatus(img.naturalWidth > 0 ? "loaded" : "error");
+          }
+        }}
         className={cn(className, status === "loading" && "invisible")}
         onLoad={(event) => {
           setStatus("loaded");

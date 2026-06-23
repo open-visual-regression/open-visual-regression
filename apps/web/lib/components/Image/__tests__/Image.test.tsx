@@ -22,6 +22,27 @@ describe("Image", () => {
     expect(screen.getByAltText("snapshot")).not.toHaveClass("invisible");
   });
 
+  it("should skip the skeleton when the image is already cached on mount", () => {
+    Object.defineProperty(HTMLImageElement.prototype, "complete", {
+      configurable: true,
+      get: () => true,
+    });
+    Object.defineProperty(HTMLImageElement.prototype, "naturalWidth", {
+      configurable: true,
+      get: () => 240,
+    });
+
+    const { container } = render(
+      <Image src="/snapshot.png" alt="snapshot" errorFallback={<div>failed</div>} />,
+    );
+
+    expect(container.querySelector('[data-slot="skeleton"]')).not.toBeInTheDocument();
+    expect(screen.getByAltText("snapshot")).not.toHaveClass("invisible");
+
+    Reflect.deleteProperty(HTMLImageElement.prototype, "complete");
+    Reflect.deleteProperty(HTMLImageElement.prototype, "naturalWidth");
+  });
+
   it("should render the error fallback when the image fails to load", () => {
     render(
       <Image
