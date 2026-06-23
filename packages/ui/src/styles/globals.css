@@ -105,8 +105,10 @@
   --color-ovr-diff-add: var(--ovr-diff-add);
   --color-ovr-diff-add-dim: var(--ovr-diff-add-dim);
   --color-ovr-status-passed: var(--ovr-status-passed);
+  --color-ovr-status-approved: var(--ovr-status-approved);
   --color-ovr-status-needs-review: var(--ovr-status-needs-review);
   --color-ovr-status-error: var(--ovr-status-error);
+  --color-ovr-status-rejected: var(--ovr-status-rejected);
   --color-ovr-status-pending: var(--ovr-status-pending);
   --color-ovr-status-pending-dim: var(--ovr-status-pending-dim);
   --shadow-ovr-popover: 0 8px 24px -8px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--ovr-border-default);
@@ -140,8 +142,10 @@
   --ovr-accent-dim: oklch(0.78 0.18 75 / 0.15);
   --ovr-accent-ring: oklch(0.78 0.18 75 / 0.35);
   --ovr-status-passed: var(--ovr-diff-add);
+  --ovr-status-approved: oklch(0.62 0.14 165);
   --ovr-status-needs-review: var(--ovr-accent-primary);
   --ovr-status-error: var(--ovr-diff-remove);
+  --ovr-status-rejected: oklch(0.55 0.18 10);
   --ovr-status-pending: oklch(0.72 0.13 230);
   --ovr-status-pending-dim: oklch(0.72 0.13 230 / 0.1);
   --foreground: oklch(0.145 0 0);
@@ -202,8 +206,10 @@
   --ovr-accent-dim: oklch(0.78 0.18 75 / 0.15);
   --ovr-accent-ring: oklch(0.78 0.18 75 / 0.35);
   --ovr-status-passed: var(--ovr-diff-add);
+  --ovr-status-approved: oklch(0.62 0.14 165);
   --ovr-status-needs-review: var(--ovr-accent-primary);
   --ovr-status-error: var(--ovr-diff-remove);
+  --ovr-status-rejected: oklch(0.55 0.18 10);
   --ovr-status-pending: oklch(0.72 0.13 230);
   --ovr-status-pending-dim: oklch(0.72 0.13 230 / 0.1);
   --foreground: oklch(0.985 0 0);

@@ -13,7 +13,9 @@ type Story = StoryObj<typeof SegmentedProgress>;
 
 const SEGMENTS: Segment[] = [
   { label: "passed", count: 14, color: "green" },
+  { label: "approved", count: 6, color: "teal" },
   { label: "needs review", count: 3, color: "orange" },
+  { label: "rejected", count: 2, color: "maroon" },
   { label: "error", count: 1, color: "red" },
   { label: "pending", count: 4, color: "blue" },
 ];
