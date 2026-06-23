@@ -19,7 +19,7 @@ const meta: Meta<typeof ProjectsSidebar> = {
       navigation: { pathname: `/projects/${PROJECTS[0]!.id}` },
     },
     ovr: {
-      viewports: ["desktop", "tablet"],
+      viewports: ["desktop"],
     },
   },
 };
@@ -38,13 +38,5 @@ export const WithViewAllLink: Story = {
   args: {
     projects: PROJECTS,
     total: 12,
-  },
-};
-
-export const Collapsed: Story = {
-  args: {
-    projects: PROJECTS,
-    total: PROJECTS.length,
-    initialCollapsed: true,
   },
 };
