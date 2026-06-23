@@ -7,12 +7,13 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        pass: "text-ovr-diff-add",
-        fail: "text-ovr-remove",
+        passed: "text-ovr-diff-add",
+        approved: "text-ovr-diff-add",
+        error: "text-ovr-remove",
         rejected: "text-ovr-remove",
         pending: "text-ovr-status-pending",
         stale: "text-ovr-fg-muted",
-        changed: "text-ovr-accent",
+        needs_review: "text-ovr-accent",
         neutral: "text-ovr-fg-secondary",
       },
       filled: {
@@ -21,19 +22,21 @@ const badgeVariants = cva(
       },
     },
     compoundVariants: [
-      { variant: "pass", filled: false, className: "border-ovr-diff-add" },
-      { variant: "fail", filled: false, className: "border-ovr-remove" },
+      { variant: "passed", filled: false, className: "border-ovr-diff-add" },
+      { variant: "approved", filled: false, className: "border-ovr-diff-add" },
+      { variant: "error", filled: false, className: "border-ovr-remove" },
       { variant: "rejected", filled: false, className: "border-ovr-remove" },
       { variant: "pending", filled: false, className: "border-ovr-status-pending" },
       { variant: "stale", filled: false, className: "border-ovr-fg-muted" },
-      { variant: "changed", filled: false, className: "border-ovr-accent" },
+      { variant: "needs_review", filled: false, className: "border-ovr-accent" },
       { variant: "neutral", filled: false, className: "border-ovr-fg-secondary" },
-      { variant: "pass", filled: true, className: "bg-ovr-diff-add text-ovr-on-accent" },
-      { variant: "fail", filled: true, className: "bg-ovr-remove text-ovr-on-accent" },
+      { variant: "passed", filled: true, className: "bg-ovr-diff-add text-ovr-on-accent" },
+      { variant: "approved", filled: true, className: "bg-ovr-diff-add text-ovr-on-accent" },
+      { variant: "error", filled: true, className: "bg-ovr-remove text-ovr-on-accent" },
       { variant: "rejected", filled: true, className: "bg-ovr-remove text-ovr-on-accent" },
       { variant: "pending", filled: true, className: "bg-ovr-status-pending text-ovr-on-accent" },
       { variant: "stale", filled: true, className: "bg-ovr-fg-muted text-ovr-on-accent" },
-      { variant: "changed", filled: true, className: "bg-ovr-accent text-ovr-on-accent" },
+      { variant: "needs_review", filled: true, className: "bg-ovr-accent text-ovr-on-accent" },
       { variant: "neutral", filled: true, className: "bg-ovr-fg-secondary text-ovr-on-accent" },
     ],
     defaultVariants: {
@@ -43,7 +46,15 @@ const badgeVariants = cva(
   },
 );
 
-type BadgeVariant = "pass" | "fail" | "rejected" | "pending" | "stale" | "changed" | "neutral";
+type BadgeVariant =
+  | "passed"
+  | "approved"
+  | "error"
+  | "rejected"
+  | "pending"
+  | "stale"
+  | "needs_review"
+  | "neutral";
 
 type BadgeProps = VariantProps<typeof badgeVariants> & {
   children: React.ReactNode;

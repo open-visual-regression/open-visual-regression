@@ -1,4 +1,5 @@
 import { SegmentedProgress } from "@ovr/ui/components/segmented-progress";
+import { Alert, AlertDescription, AlertTitle } from "@ovr/ui/components/alert";
 import { Typography } from "@ovr/ui/components/typography";
 import { Icon, GitBranchIcon, GitCommitHorizontalIcon, UserIcon } from "@ovr/ui/components/icon";
 import { type BuildSchema, type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
@@ -14,7 +15,7 @@ export type BuildHeaderProps = {
 
 export const BuildHeader = ({ build, snapshotCounts }: BuildHeaderProps) => {
   const total = Object.values(snapshotCounts).reduce((sum, count) => sum + count, 0);
-  const hasChanged = snapshotCounts.changed > 0;
+  const hasNeedsReview = snapshotCounts.needs_review > 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -48,25 +49,34 @@ export const BuildHeader = ({ build, snapshotCounts }: BuildHeaderProps) => {
           <BuildRejectButton
             buildId={build.id}
             rejected={build.status === "rejected"}
-            disabled={!hasChanged}
+            disabled={!hasNeedsReview}
           />
           <BuildApproveButton
             buildId={build.id}
             approved={build.status === "passed"}
-            disabled={!hasChanged}
+            disabled={!hasNeedsReview}
           />
         </div>
       </div>
-      <SegmentedProgress
-        title={`${total} snapshots`}
-        segments={[
-          { label: "pass", count: snapshotCounts.pass, color: "green" },
-          { label: "changed", count: snapshotCounts.changed, color: "orange" },
-          { label: "rejected", count: snapshotCounts.rejected, color: "red" },
-          { label: "failed", count: snapshotCounts.fail, color: "red" },
-          { label: "pending", count: snapshotCounts.pending, color: "blue" },
-        ]}
-      />
+      {build.errorMessage ? (
+        <Alert variant="destructive">
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{build.errorMessage}</AlertDescription>
+        </Alert>
+      ) : null}
+      {total > 0 ? (
+        <SegmentedProgress
+          title={`${total} snapshots`}
+          segments={[
+            { label: "passed", count: snapshotCounts.passed, color: "green" },
+            { label: "approved", count: snapshotCounts.approved, color: "green" },
+            { label: "needs review", count: snapshotCounts.needs_review, color: "orange" },
+            { label: "rejected", count: snapshotCounts.rejected, color: "red" },
+            { label: "error", count: snapshotCounts.error, color: "red" },
+            { label: "pending", count: snapshotCounts.pending, color: "blue" },
+          ]}
+        />
+      ) : null}
     </div>
   );
 };

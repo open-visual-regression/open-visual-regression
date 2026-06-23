@@ -11,6 +11,7 @@
     "tsc": "tsc --noEmit",
     "check-types": "turbo run tsc",
     "test": "turbo run test",
+    "build-storybook": "turbo run build-storybook",
     "db:generate": "pnpm --filter @ovr/db db:generate",
     "db:migrate": "pnpm --filter @ovr/db db:migrate",
     "db:push": "pnpm --filter @ovr/db db:push",

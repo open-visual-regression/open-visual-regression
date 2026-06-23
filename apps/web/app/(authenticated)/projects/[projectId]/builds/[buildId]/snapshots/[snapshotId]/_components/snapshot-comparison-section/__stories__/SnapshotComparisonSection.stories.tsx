@@ -25,6 +25,7 @@ const newSnapshot = {
   targetName: "Primary",
   targetTitle: "Button",
   imagePath: "new-desktop.png",
+  status: "passed" as const,
   errorLogs: [],
 };
 

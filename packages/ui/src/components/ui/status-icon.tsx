@@ -11,10 +11,17 @@ import {
 import { cn } from "../../lib/utils";
 import { Icon } from "./icon";
 
-type StatusVariant = "changed" | "passed" | "pending" | "stale" | "approved" | "rejected" | "error";
+type StatusVariant =
+  | "needs_review"
+  | "passed"
+  | "pending"
+  | "stale"
+  | "approved"
+  | "rejected"
+  | "error";
 
 const ICON_MAP: Record<StatusVariant, LucideIcon> = {
-  changed: AlertCircleIcon,
+  needs_review: AlertCircleIcon,
   passed: CircleCheckIcon,
   pending: CircleDashedIcon,
   stale: TriangleAlertIcon,
@@ -26,7 +33,7 @@ const ICON_MAP: Record<StatusVariant, LucideIcon> = {
 const statusIconVariants = cva("", {
   variants: {
     variant: {
-      changed: "text-ovr-accent",
+      needs_review: "text-ovr-accent",
       passed: "text-ovr-diff-add",
       pending: "text-ovr-status-pending",
       stale: "text-ovr-fg-muted",

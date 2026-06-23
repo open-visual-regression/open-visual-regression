@@ -119,6 +119,20 @@ describe("builds", () => {
       expect((await dbClient.builds.findById(mainBuild.id))?.status).toBe("error");
     });
 
+    test("marks the build as error ahead of needs_review when both are present", async ({
+      mainBuild,
+      captureConfiguration,
+    }) => {
+      await seedDiffs(mainBuild.id, captureConfiguration, [
+        { processingStatus: "diffed", reviewStatus: "needs_review" },
+        { processingStatus: "error", reviewStatus: "not_required" },
+      ]);
+
+      await finalizeBuild(mainBuild.id);
+
+      expect((await dbClient.builds.findById(mainBuild.id))?.status).toBe("error");
+    });
+
     test("marks the build as needs_review when any diff needs review", async ({
       mainBuild,
       captureConfiguration,

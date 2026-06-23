@@ -1,6 +1,8 @@
 import { oc } from "@orpc/contract";
 import { z } from "zod";
 
+import { snapshotDisplayStatusSchema } from "./builds";
+
 export const snapshotLogSchema = z.object({
   id: z.uuidv7(),
   level: z.string().min(1),
@@ -16,6 +18,7 @@ export const snapshotSchema = z.object({
   targetName: z.string(),
   targetTitle: z.string(),
   imagePath: z.string().nullable(),
+  status: snapshotDisplayStatusSchema,
   errorLogs: z.array(snapshotLogSchema),
 });
 
@@ -27,6 +30,86 @@ export const getOneOutputSchema = z.object({ snapshot: snapshotSchema });
 
 export const getOneContract = oc.input(getOneInputSchema).output(getOneOutputSchema);
 
+export const buildSnapshotSchema = z.object({
+  id: z.uuidv7(),
+  targetId: z.string().min(1),
+  targetTitle: z.string().min(1),
+  targetName: z.string().min(1),
+  status: snapshotDisplayStatusSchema,
+  imagePath: z.string().nullable(),
+  diffId: z.uuidv7().nullable(),
+  diffImagePath: z.string().nullable(),
+  diffPercent: z.number().nullable(),
+  browser: z.string().min(1),
+  viewportWidth: z.number().int(),
+  viewportHeight: z.number().int().nullable(),
+});
+
+export type BuildSnapshotSchema = z.infer<typeof buildSnapshotSchema>;
+
+export const snapshotSortColumnSchema = z.enum([
+  "status",
+  "targetTitle",
+  "targetName",
+  "browser",
+  "viewportWidth",
+]);
+
+export type SnapshotSortColumnSchema = z.infer<typeof snapshotSortColumnSchema>;
+
+export const snapshotSortSchema = z.object({
+  column: snapshotSortColumnSchema,
+  direction: z.enum(["asc", "desc"]),
+});
+
+export type SnapshotSortSchema = z.infer<typeof snapshotSortSchema>;
+
+export const listInputSchema = z.object({
+  buildId: z.uuidv7(),
+  status: snapshotDisplayStatusSchema.optional(),
+  search: z.string().min(1).optional(),
+  sortBy: z
+    .array(snapshotSortSchema)
+    .min(1)
+    .default([
+      { column: "status", direction: "asc" },
+      { column: "targetTitle", direction: "asc" },
+      { column: "targetName", direction: "asc" },
+      { column: "browser", direction: "asc" },
+      { column: "viewportWidth", direction: "asc" },
+    ]),
+  limit: z.number().int().min(1).max(100).default(24),
+  offset: z.number().int().min(0).default(0),
+});
+
+export type ListInputSchema = z.infer<typeof listInputSchema>;
+
+export const listOutputSchema = z.object({
+  snapshots: z.array(buildSnapshotSchema),
+  total: z.number().int().nonnegative(),
+});
+
+export const listContract = oc.input(listInputSchema).output(listOutputSchema);
+
+export const snapshotCountsSchema = z.object({
+  passed: z.number().int().nonnegative(),
+  approved: z.number().int().nonnegative(),
+  needs_review: z.number().int().nonnegative(),
+  rejected: z.number().int().nonnegative(),
+  error: z.number().int().nonnegative(),
+  pending: z.number().int().nonnegative(),
+});
+
+export type SnapshotCountsSchema = z.infer<typeof snapshotCountsSchema>;
+
+export const getCountsInputSchema = z.object({
+  buildId: z.uuidv7(),
+});
+
+export const getCountsContract = oc.input(getCountsInputSchema).output(snapshotCountsSchema);
+
 export const contract = {
   getOne: getOneContract,
+  list: listContract,
+  getCounts: getCountsContract,
 } as const;

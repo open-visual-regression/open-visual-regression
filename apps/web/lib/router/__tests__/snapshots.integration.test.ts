@@ -17,7 +17,11 @@ const TEST_PROJECT: AddProjectInputSchema = {
   gitMainBranch: "main",
 };
 
-const VIEWPORT = { browser: "chromium", viewportWidth: 1280, viewportHeight: 800 };
+const VIEWPORT = {
+  browser: "chromium",
+  viewportWidth: 1280,
+  viewportHeight: 800,
+};
 
 const createProjectAndBuild = async (admin: User) => {
   const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
@@ -37,12 +41,16 @@ const createProjectAndBuild = async (admin: User) => {
 describe("snapshots", () => {
   describe("getOne", () => {
     test("should return UNAUTHORIZED when no session cookie is provided", async () => {
-      const [error] = await serverClient.snapshots.getOne({ snapshotId: uuidv7() });
+      const [error] = await serverClient.snapshots.getOne({
+        snapshotId: uuidv7(),
+      });
       expect(error?.code).toBe("UNAUTHORIZED");
     });
 
     test("returns NOT_FOUND for a missing snapshot id", async ({ admin: _ }) => {
-      const [error] = await serverClient.snapshots.getOne({ snapshotId: uuidv7() });
+      const [error] = await serverClient.snapshots.getOne({
+        snapshotId: uuidv7(),
+      });
       expect(error?.code).toBe("NOT_FOUND");
     });
 
@@ -87,7 +95,9 @@ describe("snapshots", () => {
         ],
       });
 
-      const [error] = await serverClient.snapshots.getOne({ snapshotId: snapshot!.id });
+      const [error] = await serverClient.snapshots.getOne({
+        snapshotId: snapshot!.id,
+      });
 
       expect(error?.code).toBe("NOT_FOUND");
     });
@@ -112,10 +122,18 @@ describe("snapshots", () => {
       });
 
       await dbClient.snapshotLogs.createMany({
-        values: [{ snapshotId: snapshot!.id, level: "error", message: "target failed to render" }],
+        values: [
+          {
+            snapshotId: snapshot!.id,
+            level: "error",
+            message: "target failed to render",
+          },
+        ],
       });
 
-      const [error, result] = await serverClient.snapshots.getOne({ snapshotId: snapshot!.id });
+      const [error, result] = await serverClient.snapshots.getOne({
+        snapshotId: snapshot!.id,
+      });
 
       expect(error).toBeNull();
       expect(result?.snapshot).toMatchObject({
@@ -126,10 +144,224 @@ describe("snapshots", () => {
         browser: VIEWPORT.browser,
         viewportWidth: VIEWPORT.viewportWidth,
         viewportHeight: VIEWPORT.viewportHeight,
+        status: "error",
       });
       expect(result?.snapshot.errorLogs).toMatchObject([
         { level: "error", message: "target failed to render" },
       ]);
+    });
+
+    test("returns a 'passed' status for a captured snapshot with an approved diff", async ({
+      admin,
+    }) => {
+      const { build } = await createProjectAndBuild(admin);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            ...VIEWPORT,
+            targetId: "story-a",
+            status: "captured",
+            imagePath: "projects/p/builds/b/snapshots/s.png",
+          },
+        ],
+      });
+
+      await dbClient.diffs.create({
+        snapshotId: snapshot!.id,
+        processingStatus: "diffed",
+        reviewStatus: "not_required",
+      });
+
+      const [error, result] = await serverClient.snapshots.getOne({
+        snapshotId: snapshot!.id,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.snapshot.status).toBe("passed");
+    });
+  });
+
+  describe("list", () => {
+    test("maps diffs to 'needs_review' or 'rejected' based on their review status", async ({
+      admin,
+    }) => {
+      const { build } = await createProjectAndBuild(admin);
+
+      const [needsReviewSnapshot, rejectedSnapshot] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            ...VIEWPORT,
+            targetId: "story-a",
+            targetTitle: "Story A",
+            targetName: "story-a",
+            status: "captured",
+          },
+          {
+            buildId: build.id,
+            ...VIEWPORT,
+            targetId: "story-b",
+            targetTitle: "Story B",
+            targetName: "story-b",
+            status: "captured",
+          },
+        ],
+      });
+      await dbClient.diffs.create({
+        snapshotId: needsReviewSnapshot!.id,
+        processingStatus: "diffed",
+        reviewStatus: "needs_review",
+      });
+      await dbClient.diffs.create({
+        snapshotId: rejectedSnapshot!.id,
+        processingStatus: "diffed",
+        reviewStatus: "rejected",
+      });
+
+      const [error, result] = await serverClient.snapshots.list({ buildId: build.id });
+
+      expect(error).toBeNull();
+      expect(result?.snapshots).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ targetId: "story-a", status: "needs_review" }),
+          expect.objectContaining({ targetId: "story-b", status: "rejected" }),
+        ]),
+      );
+    });
+
+    test("filters by status", async ({ admin }) => {
+      const { build } = await createProjectAndBuild(admin);
+
+      await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, ...VIEWPORT, targetId: "a", targetTitle: "A", targetName: "a" },
+          { buildId: build.id, ...VIEWPORT, targetId: "b", targetTitle: "B", targetName: "b" },
+          { buildId: build.id, ...VIEWPORT, targetId: "c", targetTitle: "C", targetName: "c" },
+        ],
+      });
+
+      const [error, result] = await serverClient.snapshots.list({
+        buildId: build.id,
+        status: "pending",
+      });
+
+      expect(error).toBeNull();
+      expect(result?.total).toBe(3);
+      expect(result?.snapshots).toHaveLength(3);
+    });
+
+    test("paginates with limit/offset", async ({ admin }) => {
+      const { build } = await createProjectAndBuild(admin);
+
+      await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, ...VIEWPORT, targetId: "a", targetTitle: "A", targetName: "a" },
+          { buildId: build.id, ...VIEWPORT, targetId: "b", targetTitle: "B", targetName: "b" },
+          { buildId: build.id, ...VIEWPORT, targetId: "c", targetTitle: "C", targetName: "c" },
+        ],
+      });
+
+      const [error, result] = await serverClient.snapshots.list({
+        buildId: build.id,
+        limit: 2,
+        offset: 1,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.total).toBe(3);
+      expect(result?.snapshots).toHaveLength(2);
+    });
+
+    test("sorts by the given sortBy column and direction", async ({ admin }) => {
+      const { build } = await createProjectAndBuild(admin);
+
+      await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, ...VIEWPORT, targetId: "a", targetTitle: "B", targetName: "a" },
+          { buildId: build.id, ...VIEWPORT, targetId: "b", targetTitle: "A", targetName: "b" },
+        ],
+      });
+
+      const [error, result] = await serverClient.snapshots.list({
+        buildId: build.id,
+        sortBy: [{ column: "targetName", direction: "desc" }],
+      });
+
+      expect(error).toBeNull();
+      expect(result?.snapshots.map((snapshot) => snapshot.targetId)).toEqual(["b", "a"]);
+    });
+  });
+
+  describe("getCounts", () => {
+    test("should return NOT_FOUND for a build that does not exist", async ({ admin: _ }) => {
+      const [error] = await serverClient.snapshots.getCounts({
+        buildId: "019edfc7-e040-7492-86b2-ccfdc00cf6e2",
+      });
+
+      expect(error?.code).toBe("NOT_FOUND");
+    });
+
+    test("returns the count of snapshots in each display status", async ({ admin }) => {
+      const { build } = await createProjectAndBuild(admin);
+
+      const [pending, passed, approved, needsReview, rejected, renderError] =
+        await dbClient.snapshots.createMany({
+          values: [
+            { buildId: build.id, ...VIEWPORT, targetId: "pending" },
+            { buildId: build.id, ...VIEWPORT, targetId: "passed", status: "captured" },
+            { buildId: build.id, ...VIEWPORT, targetId: "approved", status: "captured" },
+            { buildId: build.id, ...VIEWPORT, targetId: "needs_review", status: "captured" },
+            { buildId: build.id, ...VIEWPORT, targetId: "rejected", status: "captured" },
+            {
+              buildId: build.id,
+              ...VIEWPORT,
+              targetId: "render-error",
+              status: "captured",
+              hasRenderError: true,
+            },
+          ],
+        });
+
+      await dbClient.diffs.create({
+        snapshotId: passed!.id,
+        processingStatus: "diffed",
+        reviewStatus: "not_required",
+      });
+      await dbClient.diffs.create({
+        snapshotId: approved!.id,
+        processingStatus: "diffed",
+        reviewStatus: "approved",
+      });
+      await dbClient.diffs.create({
+        snapshotId: needsReview!.id,
+        processingStatus: "diffed",
+        reviewStatus: "needs_review",
+      });
+      await dbClient.diffs.create({
+        snapshotId: rejected!.id,
+        processingStatus: "diffed",
+        reviewStatus: "rejected",
+      });
+      await dbClient.diffs.create({
+        snapshotId: renderError!.id,
+        processingStatus: "diffed",
+        reviewStatus: "needs_review",
+      });
+
+      expect(pending).toBeTruthy();
+
+      const [error, counts] = await serverClient.snapshots.getCounts({ buildId: build.id });
+
+      expect(error).toBeNull();
+      expect(counts).toEqual({
+        passed: 1,
+        approved: 1,
+        needs_review: 1,
+        rejected: 1,
+        error: 1,
+        pending: 1,
+      });
     });
   });
 });

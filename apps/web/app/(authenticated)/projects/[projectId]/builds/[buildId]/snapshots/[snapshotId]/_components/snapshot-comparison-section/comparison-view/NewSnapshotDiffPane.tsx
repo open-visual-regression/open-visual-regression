@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Switch } from "@ovr/ui/components/switch";
 import { Typography } from "@ovr/ui/components/typography";
 import { cn } from "@ovr/ui/lib/utils";
+import { Image } from "@/lib/components/image/Image";
 import { SnapshotPane } from "../../snapshot-pane/SnapshotPane";
 import { SnapshotPaneHeader } from "../../snapshot-pane/SnapshotPaneHeader";
 
@@ -36,17 +37,22 @@ export const NewSnapshotDiffPane = ({
           <Switch checked={showDiff} onCheckedChange={setShowDiff} />
         </label>
       </SnapshotPaneHeader>
-      <div className="relative overflow-hidden rounded-card border border-ovr-border bg-ovr-inset bg-pixel-grid">
+      <div className="relative min-h-64 overflow-hidden rounded-card border border-ovr-border bg-ovr-inset bg-pixel-grid lg:min-h-96">
         {imagePath ? (
-          <img
+          <Image
             src={imagePath}
             alt={alt}
             className="absolute top-0 left-0 block h-auto"
             style={{ width: `${imageWidthPercent}%` }}
             onLoad={(event) => setImageNaturalWidth(event.currentTarget.naturalWidth)}
+            errorFallback={
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Typography variant="caption">failed to load snapshot</Typography>
+              </div>
+            }
           />
         ) : (
-          <div className="flex h-40 w-40 items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center">
             <Typography variant="caption">no preview</Typography>
           </div>
         )}

@@ -64,6 +64,7 @@ export const buildSchema = z.object({
   commitSha: z.string().min(1),
   name: z.string().min(1).nullable(),
   author: z.string().min(1).nullable(),
+  errorMessage: z.string().nullable(),
   status: buildStatusSchema,
   createdAt: z.string().nonempty(),
 });
@@ -90,31 +91,15 @@ export const listBuildsContract = oc
   .output(listBuildsOutputSchema);
 
 export const snapshotDisplayStatusSchema = z.enum([
-  "pass",
-  "changed",
+  "passed",
+  "approved",
+  "needs_review",
   "rejected",
-  "fail",
+  "error",
   "pending",
 ]);
 
 export type SnapshotDisplayStatus = z.infer<typeof snapshotDisplayStatusSchema>;
-
-export const buildSnapshotSchema = z.object({
-  id: z.uuidv7(),
-  targetId: z.string().min(1),
-  targetTitle: z.string().min(1),
-  targetName: z.string().min(1),
-  status: snapshotDisplayStatusSchema,
-  imagePath: z.string().nullable(),
-  diffId: z.uuidv7().nullable(),
-  diffImagePath: z.string().nullable(),
-  diffPercent: z.number().nullable(),
-  browser: z.string().min(1),
-  viewportWidth: z.number().int(),
-  viewportHeight: z.number().int().nullable(),
-});
-
-export type BuildSnapshotSchema = z.infer<typeof buildSnapshotSchema>;
 
 export const getBuildInputSchema = z.object({
   buildId: z.uuidv7(),
@@ -122,7 +107,6 @@ export const getBuildInputSchema = z.object({
 
 export const getBuildOutputSchema = z.object({
   build: buildSchema,
-  snapshots: z.array(buildSnapshotSchema),
 });
 
 export const getBuildContract = oc.input(getBuildInputSchema).output(getBuildOutputSchema);

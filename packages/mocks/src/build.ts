@@ -1,6 +1,7 @@
 import { faker } from "@faker-js/faker";
 
-import type { BuildSchema, BuildSnapshotSchema } from "@ovr/api/contracts/builds";
+import type { BuildSchema } from "@ovr/api/contracts/builds";
+import type { BuildSnapshotSchema } from "@ovr/api/contracts/snapshots";
 
 export const generateBuildSnapshot = (
   overrides?: Partial<BuildSnapshotSchema>,
@@ -9,7 +10,7 @@ export const generateBuildSnapshot = (
   targetId: faker.word.noun(),
   targetTitle: faker.word.noun(),
   targetName: faker.word.noun(),
-  status: "pass",
+  status: "passed",
   imagePath: faker.system.filePath(),
   diffId: null,
   diffImagePath: null,
@@ -30,6 +31,7 @@ export const generateBuild = (overrides?: Partial<BuildSchema>): BuildSchema => 
   commitSha: faker.git.commitSha(),
   name: faker.git.commitMessage(),
   author: faker.person.fullName(),
+  errorMessage: null,
   status: "passed",
   createdAt: faker.date.recent().toISOString(),
   ...overrides,

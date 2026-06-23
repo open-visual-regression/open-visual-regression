@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { Typography } from "@ovr/ui/components/typography";
-import { type BuildSnapshotSchema } from "@ovr/api/contracts/builds";
+import { type BuildSnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { SnapshotStatusBadge } from "@/lib/components/SnapshotStatusBadge";
+import { Image } from "@/lib/components/image/Image";
+import { getStoragePath } from "@/lib/utils/storage";
 import { cn } from "@ovr/ui/lib/utils";
 import { GlobeIcon, Icon } from "@ovr/ui/components/icon";
 import { ResolutionIcon } from "@ovr/ui/components/resolution-icon";
@@ -13,25 +15,33 @@ type SnapshotCardProps = {
 };
 
 export const SnapshotCard = ({ snapshot, projectId, buildId }: SnapshotCardProps) => {
+  const imagePath = getStoragePath(snapshot.imagePath);
+
   const content = (
     <>
       <div className="relative h-40 overflow-hidden border-b border-ovr-border-subtle bg-ovr-inset bg-pixel-grid">
-        {snapshot.imagePath ? (
-          <img
-            src={`/api/storage/${snapshot.imagePath}`}
+        {imagePath ? (
+          <Image
+            src={imagePath}
             alt={`snapshot of ${snapshot.targetTitle} ${snapshot.targetName}`}
             className="absolute inset-0 h-full w-full object-cover"
+            errorFallback={
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Typography variant="caption">failed to load snapshot</Typography>
+              </div>
+            }
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             <Typography variant="caption">no preview</Typography>
           </div>
         )}
-        {snapshot.status === "changed" ||
+        {snapshot.status === "needs_review" ||
+        snapshot.status === "approved" ||
         snapshot.status === "rejected" ||
-        snapshot.status === "fail" ? (
+        snapshot.status === "error" ? (
           <div className="absolute bottom-2 right-2">
-            <SnapshotStatusBadge status={snapshot.status} />
+            <SnapshotStatusBadge status={snapshot.status} filled />
           </div>
         ) : null}
       </div>

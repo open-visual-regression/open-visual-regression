@@ -2,48 +2,49 @@ import { notFound } from "next/navigation";
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
 import { BuildHeader } from "./_components/build-header/BuildHeader";
-import { SnapshotGrid, type SnapshotFilter } from "./_components/snapshot-grid/SnapshotGrid";
-import { type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
+import { SnapshotGrid } from "./_components/snapshot-grid/SnapshotGrid";
+
+const PAGE_SIZE = 24;
 
 type BuildPageProps = PageProps<"/projects/[projectId]/builds/[buildId]">;
 
-const isSnapshotFilter = (value: string | string[] | undefined): value is SnapshotFilter =>
-  value === "changed" || value === "pass";
+export default async function BuildPage({ params }: BuildPageProps) {
+  const { projectId, buildId } = await params;
 
-export default async function BuildPage(props: BuildPageProps) {
-  const { projectId, buildId } = await props.params;
-  const searchParams = await props.searchParams;
-  const filter: SnapshotFilter = isSnapshotFilter(searchParams.filter)
-    ? searchParams.filter
-    : "all";
+  const [[error, buildResult], [countsError, snapshotCounts], [snapshotsError, snapshotsResult]] =
+    await Promise.all([
+      serverClient.builds.getOne({ buildId }),
+      serverClient.snapshots.getCounts({ buildId }),
+      serverClient.snapshots.list({
+        buildId,
+        sortBy: [
+          { column: "status", direction: "asc" },
+          { column: "targetTitle", direction: "asc" },
+          { column: "targetName", direction: "asc" },
+          { column: "browser", direction: "asc" },
+          { column: "viewportWidth", direction: "asc" },
+        ],
+        limit: PAGE_SIZE,
+        offset: 0,
+      }),
+    ]);
 
-  const [error, buildResult] = await serverClient.builds.getOne({ buildId });
-
-  if (error?.code === "NOT_FOUND") {
+  if (
+    error?.code === "NOT_FOUND" ||
+    countsError?.code === "NOT_FOUND" ||
+    snapshotsError?.code === "NOT_FOUND"
+  ) {
     notFound();
   }
 
-  if (error) {
+  if (error || countsError || snapshotsError) {
     serverError();
   }
-
-  const snapshotCounts = buildResult.snapshots.reduce<Record<SnapshotDisplayStatus, number>>(
-    (counts, snapshot) => {
-      counts[snapshot.status] += 1;
-      return counts;
-    },
-    { pass: 0, changed: 0, rejected: 0, fail: 0, pending: 0 },
-  );
 
   return (
     <div className="flex flex-col gap-6">
       <BuildHeader build={buildResult.build} snapshotCounts={snapshotCounts} />
-      <SnapshotGrid
-        snapshots={buildResult.snapshots}
-        projectId={projectId}
-        buildId={buildId}
-        filter={filter}
-      />
+      <SnapshotGrid snapshots={snapshotsResult.snapshots} projectId={projectId} buildId={buildId} />
     </div>
   );
 }

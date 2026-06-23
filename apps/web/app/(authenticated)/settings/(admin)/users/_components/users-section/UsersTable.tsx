@@ -47,7 +47,7 @@ const columns = columnHelper.columns([
     meta: { className: "text-center" },
     cell: ({ getValue }) =>
       getValue() === "admin" ? (
-        <Badge variant="changed">admin</Badge>
+        <Badge variant="needs_review">admin</Badge>
       ) : (
         <Badge variant="neutral">user</Badge>
       ),
@@ -59,7 +59,7 @@ const columns = columnHelper.columns([
       getValue() === "invited" ? (
         <Badge variant="pending">invited</Badge>
       ) : (
-        <Badge variant="pass">active</Badge>
+        <Badge variant="passed">active</Badge>
       ),
   }),
   columnHelper.display({

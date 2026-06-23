@@ -27,37 +27,54 @@ describe("BuildHeader", () => {
     const build = mocks.build.generateBuild({ status: "needs_review" });
     renderComponent({
       build,
-      snapshotCounts: { pass: 3, changed: 2, rejected: 0, fail: 1, pending: 4 },
+      snapshotCounts: {
+        passed: 3,
+        approved: 0,
+        needs_review: 2,
+        rejected: 0,
+        error: 1,
+        pending: 4,
+      },
     });
 
     expect(screen.getByText("10 snapshots")).toBeVisible();
-    expect(screen.getByText("3")).toBeVisible();
-    expect(screen.getByText("pass")).toBeVisible();
-    expect(screen.getByText("2")).toBeVisible();
-    expect(screen.getByText("changed")).toBeVisible();
-    expect(screen.getByText("1")).toBeVisible();
-    expect(screen.getByText("failed")).toBeVisible();
-    expect(screen.getByText("4")).toBeVisible();
-    expect(screen.getByText("pending")).toBeVisible();
+    expect(screen.getByRole("listitem", { name: "3 passed" })).toBeVisible();
+    expect(screen.getByRole("listitem", { name: "2 needs review" })).toBeVisible();
+    expect(screen.getByRole("listitem", { name: "1 error" })).toBeVisible();
+    expect(screen.getByRole("listitem", { name: "4 pending" })).toBeVisible();
   });
 
-  it("should disable both bulk actions when there are no changed snapshots", () => {
+  it("should disable both bulk actions when there are no snapshots needing review", () => {
     const build = mocks.build.generateBuild({ status: "needs_review" });
     renderComponent({
       build,
-      snapshotCounts: { pass: 3, changed: 0, rejected: 0, fail: 1, pending: 4 },
+      snapshotCounts: {
+        passed: 3,
+        approved: 0,
+        needs_review: 0,
+        rejected: 0,
+        error: 1,
+        pending: 4,
+      },
     });
 
     expect(screen.getByRole("button", { name: /approve all/i })).toBeDisabled();
     expect(screen.getByRole("button", { name: /reject all/i })).toBeDisabled();
   });
 
-  it("should approve all changed snapshots", async ({ user }) => {
+  it("should approve all needs-review snapshots", async ({ user }) => {
     mockBulkCastVote.mockResolvedValue([null, undefined]);
     const build = mocks.build.generateBuild({ status: "needs_review" });
     renderComponent({
       build,
-      snapshotCounts: { pass: 3, changed: 2, rejected: 0, fail: 1, pending: 4 },
+      snapshotCounts: {
+        passed: 3,
+        approved: 0,
+        needs_review: 2,
+        rejected: 0,
+        error: 1,
+        pending: 4,
+      },
     });
 
     await user.click(screen.getByRole("button", { name: /approve all/i }));
@@ -66,12 +83,19 @@ describe("BuildHeader", () => {
     await waitFor(() => expect(mockRefresh).toHaveBeenCalled());
   });
 
-  it("should reject all changed snapshots", async ({ user }) => {
+  it("should reject all needs-review snapshots", async ({ user }) => {
     mockBulkCastVote.mockResolvedValue([null, undefined]);
     const build = mocks.build.generateBuild({ status: "needs_review" });
     renderComponent({
       build,
-      snapshotCounts: { pass: 3, changed: 2, rejected: 0, fail: 1, pending: 4 },
+      snapshotCounts: {
+        passed: 3,
+        approved: 0,
+        needs_review: 2,
+        rejected: 0,
+        error: 1,
+        pending: 4,
+      },
     });
 
     await user.click(screen.getByRole("button", { name: /^reject all$/i }));
@@ -85,7 +109,14 @@ describe("BuildHeader", () => {
     const build = mocks.build.generateBuild({ status: "needs_review" });
     renderComponent({
       build,
-      snapshotCounts: { pass: 3, changed: 2, rejected: 0, fail: 1, pending: 4 },
+      snapshotCounts: {
+        passed: 3,
+        approved: 0,
+        needs_review: 2,
+        rejected: 0,
+        error: 1,
+        pending: 4,
+      },
     });
 
     await user.click(screen.getByRole("button", { name: /approve all/i }));
@@ -99,7 +130,14 @@ describe("BuildHeader", () => {
     const build = mocks.build.generateBuild({ status: "needs_review" });
     renderComponent({
       build,
-      snapshotCounts: { pass: 3, changed: 2, rejected: 0, fail: 1, pending: 4 },
+      snapshotCounts: {
+        passed: 3,
+        approved: 0,
+        needs_review: 2,
+        rejected: 0,
+        error: 1,
+        pending: 4,
+      },
     });
 
     await user.click(screen.getByRole("button", { name: /^reject all$/i }));
@@ -112,18 +150,71 @@ describe("BuildHeader", () => {
     const build = mocks.build.generateBuild({ status: "passed" });
     renderComponent({
       build,
-      snapshotCounts: { pass: 3, changed: 2, rejected: 0, fail: 1, pending: 4 },
+      snapshotCounts: {
+        passed: 3,
+        approved: 0,
+        needs_review: 2,
+        rejected: 0,
+        error: 1,
+        pending: 4,
+      },
     });
 
     expect(screen.getByRole("button", { name: /^approved$/i })).toBeDisabled();
     expect(screen.getByRole("button", { name: /^reject all$/i })).toBeEnabled();
   });
 
+  it("should show the error alert when the build has an error message", () => {
+    const build = mocks.build.generateBuild({
+      status: "error",
+      errorMessage: "Build failed: unable to connect to the test runner.",
+    });
+    renderComponent({
+      build,
+      snapshotCounts: {
+        passed: 0,
+        approved: 0,
+        needs_review: 0,
+        rejected: 0,
+        error: 0,
+        pending: 0,
+      },
+    });
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Build failed: unable to connect to the test runner.",
+    );
+  });
+
+  it("should not show the error alert when the build has no error message", () => {
+    const build = mocks.build.generateBuild({ status: "needs_review", errorMessage: null });
+    renderComponent({
+      build,
+      snapshotCounts: {
+        passed: 3,
+        approved: 0,
+        needs_review: 2,
+        rejected: 0,
+        error: 1,
+        pending: 4,
+      },
+    });
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it("should show reject all as disabled and labeled when the build was rejected", () => {
     const build = mocks.build.generateBuild({ status: "rejected" });
     renderComponent({
       build,
-      snapshotCounts: { pass: 3, changed: 2, rejected: 0, fail: 1, pending: 4 },
+      snapshotCounts: {
+        passed: 3,
+        approved: 0,
+        needs_review: 2,
+        rejected: 0,
+        error: 1,
+        pending: 4,
+      },
     });
 
     expect(screen.getByRole("button", { name: /^rejected$/i })).toBeDisabled();
