@@ -1,6 +1,3 @@
-const partition = <T>(items: readonly T[], parts: number): T[][] =>
-  Array.from({ length: parts }, (_, i) => items.filter((_, index) => index % parts === i));
-
 export const mapWithConcurrency = async <T, R>(
   items: readonly T[],
   concurrency: number,
@@ -10,8 +7,17 @@ export const mapWithConcurrency = async <T, R>(
     return [];
   }
 
-  const groups = partition(items, Math.min(concurrency, items.length));
-  const results = await Promise.all(groups.map((group) => Promise.all(group.map(fn))));
+  const results: R[] = Array.from({ length: items.length });
+  let nextIndex = 0;
 
-  return results.flat();
+  const runWorker = async (): Promise<void> => {
+    while (nextIndex < items.length) {
+      const index = nextIndex++;
+      results[index] = await fn(items[index]!);
+    }
+  };
+
+  await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, runWorker));
+
+  return results;
 };

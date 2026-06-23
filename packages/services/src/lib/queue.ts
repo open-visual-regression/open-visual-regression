@@ -7,6 +7,7 @@ import {
   enqueueExtract as enqueueExtractJob,
   enqueueFinalize as enqueueFinalizeJob,
   enqueuePurge as enqueuePurgeJob,
+  enqueuePurgeMany as enqueuePurgeManyJob,
   type CaptureJobPayload,
   type DiffJobPayload,
   type ExtractJobPayload,
@@ -32,3 +33,6 @@ export const enqueueFinalize = (payload: FinalizeJobPayload): Promise<Job<Finali
 
 export const enqueuePurge = (payload: PurgeJobPayload): Promise<Job<PurgeJobPayload>> =>
   enqueuePurgeJob(payload, connection);
+
+export const enqueuePurgeMany = (payloads: PurgeJobPayload[]): Promise<void> =>
+  enqueuePurgeManyJob(payloads, connection);

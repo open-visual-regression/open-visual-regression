@@ -1,0 +1,2 @@
+CREATE INDEX "baselines_snapshotId_idx" ON "baselines" USING btree ("snapshot_id");--> statement-breakpoint
+CREATE INDEX "builds_projectId_createdAt_id_idx" ON "builds" USING btree ("project_id","created_at","id");

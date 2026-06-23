@@ -50,7 +50,7 @@ const JOB_OPTIONS: Record<QueueName, JobsOptions> = {
   [QueueName.SNAPSHOT_CAPTURE]: { attempts: 5, backoff: { type: "exponential", delay: 2000 } },
   [QueueName.SNAPSHOT_DIFF]: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
   [QueueName.BUILD_FINALIZE]: { attempts: 3, backoff: { type: "fixed", delay: 1000 } },
-  [QueueName.BUILD_PURGE_DISPATCH]: { attempts: 1 },
+  [QueueName.BUILD_PURGE_DISPATCH]: { attempts: 3, backoff: { type: "exponential", delay: 5000 } },
   [QueueName.BUILD_PURGE]: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
 };
 
@@ -91,6 +91,31 @@ export const enqueuePurge = (
   payload: PurgeJobPayload,
   connection: IORedis,
 ): Promise<Job<PurgeJobPayload>> => enqueue(QueueName.BUILD_PURGE, payload, connection);
+
+export const enqueuePurgeMany = async (
+  payloads: PurgeJobPayload[],
+  connection: IORedis,
+): Promise<void> => {
+  if (payloads.length === 0) {
+    return;
+  }
+
+  const queue = new Queue<PurgeJobPayload, void, string, PurgeJobPayload, void, string>(
+    QueueName.BUILD_PURGE,
+    { connection },
+  );
+  try {
+    await queue.addBulk(
+      payloads.map((payload) => ({
+        name: QueueName.BUILD_PURGE,
+        data: payload,
+        opts: JOB_OPTIONS[QueueName.BUILD_PURGE],
+      })),
+    );
+  } finally {
+    await queue.close();
+  }
+};
 
 const PURGE_DISPATCH_JOB_ID = "build-purge-dispatch";
 

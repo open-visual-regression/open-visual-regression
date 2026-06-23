@@ -56,26 +56,32 @@ export const captureModeEnum = pgEnum("capture_mode", ["worker", "pre_captured"]
 
 export type CaptureMode = (typeof captureModeEnum.enumValues)[number];
 
-export const builds = pgTable("builds", {
-  id: uuid().primaryKey().$defaultFn(uuidv7),
-  projectId: uuid("project_id")
-    .references(() => projects.id, { onDelete: "cascade" })
-    .notNull(),
-  branch: varchar({ length: 255 }).notNull(),
-  commitSha: varchar("commit_sha", { length: 64 }).notNull(),
-  name: varchar({ length: 255 }),
-  author: varchar({ length: 255 }),
-  status: buildStatusEnum().notNull().default("pending"),
-  errorMessage: text("error_message"),
-  captureMode: captureModeEnum("capture_mode").notNull().default("worker"),
-  artifactPath: text("artifact_path").notNull(),
-  createdAt: utcTimestamp("created_at")
-    .default(sql`now()`)
-    .notNull(),
-  createdBy: text("created_by")
-    .references(() => user.id, { onDelete: "cascade" })
-    .notNull(),
-});
+export const builds = pgTable(
+  "builds",
+  {
+    id: uuid().primaryKey().$defaultFn(uuidv7),
+    projectId: uuid("project_id")
+      .references(() => projects.id, { onDelete: "cascade" })
+      .notNull(),
+    branch: varchar({ length: 255 }).notNull(),
+    commitSha: varchar("commit_sha", { length: 64 }).notNull(),
+    name: varchar({ length: 255 }),
+    author: varchar({ length: 255 }),
+    status: buildStatusEnum().notNull().default("pending"),
+    errorMessage: text("error_message"),
+    captureMode: captureModeEnum("capture_mode").notNull().default("worker"),
+    artifactPath: text("artifact_path").notNull(),
+    createdAt: utcTimestamp("created_at")
+      .default(sql`now()`)
+      .notNull(),
+    createdBy: text("created_by")
+      .references(() => user.id, { onDelete: "cascade" })
+      .notNull(),
+  },
+  (table) => [
+    index("builds_projectId_createdAt_id_idx").on(table.projectId, table.createdAt, table.id),
+  ],
+);
 
 export const snapshots = pgTable(
   "snapshots",
@@ -181,5 +187,6 @@ export const baselines = pgTable(
       table.viewportHeight,
       table.targetId,
     ),
+    index("baselines_snapshotId_idx").on(table.snapshotId),
   ],
 );
