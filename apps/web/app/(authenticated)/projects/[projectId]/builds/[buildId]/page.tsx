@@ -4,7 +4,7 @@ import { serverError } from "@/lib/utils/errors";
 import { BuildHeader } from "./_components/build-header/BuildHeader";
 import { SnapshotGrid } from "./_components/snapshot-grid/SnapshotGrid";
 
-const PAGE_SIZE = 24;
+const PAGE_SIZE = 60;
 
 type BuildPageProps = PageProps<"/projects/[projectId]/builds/[buildId]">;
 

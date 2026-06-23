@@ -8,7 +8,7 @@ type SnapshotGridProps = {
 };
 
 export const SnapshotGrid = ({ snapshots, projectId, buildId }: SnapshotGridProps) => (
-  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
     {snapshots.map((snapshot) => (
       <SnapshotCard key={snapshot.id} snapshot={snapshot} projectId={projectId} buildId={buildId} />
     ))}
