@@ -50,12 +50,9 @@ export const purgeExpiredBuilds = async (projectId: string): Promise<void> => {
       return;
     }
 
-    // Builds are removed from the DB before their storage objects so that a build which is
-    // promoted to a baseline mid-page is protected: the cascading delete is rejected by the
-    // baselines FK and that build's storage prefix is never touched. Once the DB row is gone,
-    // findExpiredPage can never see that buildId again, so a storage delete failure here is
-    // unrecoverable — failures are logged individually (not aborting the rest of the page)
-    // so an orphaned prefix is at least discoverable for manual cleanup.
+    // DB rows go first so a build promoted to a baseline mid-page fails the cascade's FK
+    // before storage is touched. That makes the storage deletes below unrecoverable on
+    // failure, so each one is caught and logged individually rather than dropped silently.
     await dbClient.builds.removeMany(buildIds);
 
     const deleteResults = await mapWithConcurrency(
