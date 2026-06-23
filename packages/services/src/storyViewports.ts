@@ -3,6 +3,7 @@ import { chromium } from "playwright";
 
 import { detectCaptureStrategy, readOvrStoryParameters } from "./captureStrategies";
 import { BOOT_TIMEOUT_MS, RENDER_TIMEOUT_MS } from "./lib/captureTimeouts";
+import { mapWithConcurrency } from "./lib/concurrency";
 import { startStaticProxy } from "./lib/staticProxy";
 import type { StaticProxy } from "./lib/staticProxy";
 import type { OvrStoryParameterViewport, OvrStoryParameters } from "./captureStrategies";
@@ -66,36 +67,16 @@ const readStoryOverride = async (
   }
 };
 
-const readGroupOverrides = async (
-  browser: Browser,
-  proxy: StaticProxy,
-  targetIds: readonly string[],
-): Promise<OverrideEntry[]> => {
-  if (targetIds.length === 0) {
-    return [];
-  }
-
-  const [targetId, ...rest] = targetIds;
-  const entry = await readStoryOverride(browser, proxy, targetId!);
-  const remaining = await readGroupOverrides(browser, proxy, rest);
-
-  return entry ? [entry, ...remaining] : remaining;
-};
-
-const partition = <T>(items: readonly T[], parts: number): T[][] =>
-  Array.from({ length: parts }, (_, i) => items.filter((_, index) => index % parts === i));
-
 const readOverridesConcurrently = async (
   browser: Browser,
   proxy: StaticProxy,
   targetIds: readonly string[],
 ): Promise<OverrideEntry[]> => {
-  const groups = partition(targetIds, Math.min(OVERRIDE_READ_CONCURRENCY, targetIds.length));
-  const results = await Promise.all(
-    groups.map((group) => readGroupOverrides(browser, proxy, group)),
+  const entries = await mapWithConcurrency(targetIds, OVERRIDE_READ_CONCURRENCY, (targetId) =>
+    readStoryOverride(browser, proxy, targetId),
   );
 
-  return results.flat();
+  return entries.filter((entry): entry is OverrideEntry => entry !== undefined);
 };
 
 export const readStoryParameterOverrides = async (

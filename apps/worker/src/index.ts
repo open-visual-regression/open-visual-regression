@@ -55,7 +55,11 @@ const workers = [
   purgeWorker,
 ];
 
-await schedulePurge(connection);
+try {
+  await schedulePurge(connection);
+} catch (error) {
+  console.error("Failed to schedule the daily purge dispatch job:", error);
+}
 
 process.on("SIGTERM", async () => {
   await Promise.all(workers.map((worker) => worker.close()));
