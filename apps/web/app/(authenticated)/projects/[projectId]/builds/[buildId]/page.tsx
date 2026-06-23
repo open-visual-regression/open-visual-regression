@@ -3,6 +3,7 @@ import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
 import { BuildHeader } from "./_components/build-header/BuildHeader";
 import { SnapshotGrid } from "./_components/snapshot-grid/SnapshotGrid";
+import { SnapshotGridSkeleton } from "./_components/snapshot-grid/SnapshotGridSkeleton";
 
 const PAGE_SIZE = 24;
 
@@ -44,7 +45,15 @@ export default async function BuildPage({ params }: BuildPageProps) {
   return (
     <div className="flex flex-col gap-6">
       <BuildHeader build={buildResult.build} snapshotCounts={snapshotCounts} />
-      <SnapshotGrid snapshots={snapshotsResult.snapshots} projectId={projectId} buildId={buildId} />
+      {buildResult.build.status === "pending" && snapshotsResult.snapshots.length === 0 ? (
+        <SnapshotGridSkeleton />
+      ) : (
+        <SnapshotGrid
+          snapshots={snapshotsResult.snapshots}
+          projectId={projectId}
+          buildId={buildId}
+        />
+      )}
     </div>
   );
 }
