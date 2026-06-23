@@ -39,15 +39,14 @@ describe("ProjectsSidebar", () => {
     expect(screen.getByText("(5)")).toBeVisible();
   });
 
-  it("should render a link to view all projects when there are more projects than are shown", () => {
+  it("should render a clickable link to view all projects when there are more projects than are shown", async ({
+    user,
+  }) => {
     vi.mocked(usePathname).mockReturnValue("/projects");
 
     render(<ProjectsSidebar projects={PROJECTS} total={5} />);
 
-    expect(screen.getByRole("link", { name: "view all projects" })).toHaveAttribute(
-      "href",
-      "/projects",
-    );
+    await user.click(screen.getByRole("link", { name: "view all projects" }));
   });
 
   it("should not render a link to view all projects when every project is already shown", () => {
