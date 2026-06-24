@@ -35,7 +35,7 @@ const ProjectsSidebar = ({
       version={version}
       initialCollapsed={initialCollapsed}
       expandedContent={
-        <div className="flex h-full flex-col overflow-hidden">
+        <div className="flex min-h-0 flex-1 flex-col">
           <ProjectsSidebarLinks projects={projects} total={total} />
           <RecentBuildsSidebarLinks builds={builds} />
         </div>

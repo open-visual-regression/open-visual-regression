@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { BuildSchema } from "@ovr/api/contracts/builds";
 import { cn } from "@ovr/ui/lib/utils";
-import { BUILD_STATUS_COLOR_CLASS } from "@/lib/components/BuildStatus";
+import { Typography } from "@ovr/ui/components/typography";
 
 const RECENT_BUILD_ROW_HEIGHT_PX = 44;
 
@@ -11,28 +11,34 @@ type RecentBuildSidebarLinkProps = {
   onClick?: () => void;
 };
 
+const BUILD_STATUS_BORDER_CLASS = {
+  pending: "border-ovr-status-pending",
+  needs_review: "border-ovr-accent",
+  passed: "border-ovr-diff-add",
+  rejected: "border-ovr-remove",
+  error: "border-ovr-remove",
+};
+
 const RecentBuildSidebarLink = ({ build, className, onClick }: RecentBuildSidebarLinkProps) => (
   <Link
     href={`/projects/${build.project.id}/builds/${build.id}`}
     onClick={onClick}
     className={cn(
-      "relative flex h-11 flex-col justify-center gap-0.5 overflow-hidden pl-4 pr-3 transition-colors no-underline hover:bg-ovr-hover",
+      "shrink-0 overflow-hidden transition-colors no-underline hover:bg-ovr-hover",
       className,
     )}
   >
-    <span
-      aria-hidden
+    <div
       className={cn(
-        "absolute top-1/2 left-2 h-5 w-0.5 -translate-y-1/2 rounded-full",
-        BUILD_STATUS_COLOR_CLASS[build.status],
+        "flex flex-col justify-center pr-3 pl-2.5 py-0.5 border-l-3",
+        BUILD_STATUS_BORDER_CLASS[build.status],
       )}
-    />
-    <span className="truncate text-badge text-ovr-fg-muted">
-      {build.project.name} · {build.branch}
-    </span>
-    <span className="truncate text-body text-ovr-fg">
-      {build.name ?? build.commitSha.slice(0, 7)}
-    </span>
+    >
+      <Typography variant="body-sm" className="truncate text-ovr-fg-muted">
+        {build.project.name} · {build.branch}
+      </Typography>
+      <Typography className="truncate">{build.name ?? build.commitSha.slice(0, 7)}</Typography>
+    </div>
   </Link>
 );
 

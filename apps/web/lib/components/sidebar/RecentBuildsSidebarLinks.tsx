@@ -1,7 +1,6 @@
 import type { BuildSchema } from "@ovr/api/contracts/builds";
 import { SidebarSection } from "./SidebarSection";
 import { RecentBuildSidebarLink } from "./RecentBuildSidebarLink";
-import styles from "./RecentBuildsSidebarLinks.module.css";
 
 const RECENT_BUILDS_FETCH_LIMIT = 20;
 
@@ -16,15 +15,10 @@ const RecentBuildsSidebarLinks = ({ builds, onNavigate }: RecentBuildsSidebarLin
   }
 
   return (
-    <SidebarSection label="recent builds" className="min-h-0 flex-1 overflow-hidden">
-      <div className={styles.container} data-testid="recent-builds-rows">
+    <SidebarSection label="recent builds" className="min-h-0 flex-1">
+      <div className="flex flex-col gap-0.5 overflow-auto">
         {builds.slice(0, RECENT_BUILDS_FETCH_LIMIT).map((build) => (
-          <RecentBuildSidebarLink
-            key={build.id}
-            build={build}
-            className={styles.row}
-            onClick={onNavigate}
-          />
+          <RecentBuildSidebarLink key={build.id} build={build} onClick={onNavigate} />
         ))}
       </div>
     </SidebarSection>

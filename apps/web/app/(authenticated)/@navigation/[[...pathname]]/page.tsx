@@ -12,6 +12,7 @@ import { Separator } from "@ovr/ui/components/separator";
 type NavigationSlotProps = PageProps<"/[[...pathname]]">;
 
 const NAVIGATION_PROJECTS_LIMIT = 10;
+const NAVIGATION_RECENT_BUILDS_LIMIT = 20;
 
 export default async function NavigationSlot({ params }: NavigationSlotProps) {
   const { pathname } = await params;
@@ -23,12 +24,15 @@ export default async function NavigationSlot({ params }: NavigationSlotProps) {
 
   const userName = session?.user?.name ?? session?.user?.email ?? "";
 
-  const [[listError, listResult], [countError, countResult]] = await Promise.all([
-    serverClient.projects.list({ limit: NAVIGATION_PROJECTS_LIMIT }),
-    serverClient.projects.count(),
-  ]);
+  const [[listError, listResult], [countError, countResult], [buildsError, buildsResult]] =
+    await Promise.all([
+      serverClient.projects.list({ limit: NAVIGATION_PROJECTS_LIMIT }),
+      serverClient.projects.count(),
+      serverClient.builds.list({ limit: NAVIGATION_RECENT_BUILDS_LIMIT }),
+    ]);
   const projects = listError ? [] : listResult.projects;
   const projectsTotal = countError ? 0 : countResult.total;
+  const builds = buildsError ? [] : buildsResult.builds;
 
   return (
     <NavigationBar className="flex flex-row gap-3 justify-between items-center">
@@ -37,6 +41,7 @@ export default async function NavigationSlot({ params }: NavigationSlotProps) {
           role={session?.user?.role}
           projects={projects}
           projectsTotal={projectsTotal}
+          builds={builds}
         />
         <NavigationBarLogo />
         <Separator orientation="vertical" className="h-5" />
