@@ -1,6 +1,6 @@
 import { implement } from "@orpc/server";
 import { contract } from "@ovr/api/contracts/contract";
-import type { serverClient as RealServerClient } from "@/lib/router";
+import type { serverClient as RealServerClient } from "../../lib/router";
 
 const os = implement(contract);
 
