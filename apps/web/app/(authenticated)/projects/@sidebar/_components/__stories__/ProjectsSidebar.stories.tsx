@@ -9,6 +9,12 @@ const PROJECTS = [
   mocks.project.generateProject({ name: "Acme Admin" }),
 ];
 
+const BUILDS = Array.from({ length: 20 }, () =>
+  mocks.build.generateBuild({
+    project: { id: PROJECTS[0]!.id, name: PROJECTS[0]!.name },
+  }),
+);
+
 const meta: Meta<typeof ProjectsSidebar> = {
   title: "Web/ProjectsSidebar",
   component: ProjectsSidebar,
@@ -31,6 +37,7 @@ export const Default: Story = {
   args: {
     projects: PROJECTS,
     total: PROJECTS.length,
+    builds: BUILDS,
   },
 };
 
@@ -38,5 +45,14 @@ export const WithViewAllLink: Story = {
   args: {
     projects: PROJECTS,
     total: 12,
+    builds: BUILDS,
+  },
+};
+
+export const NoRecentBuilds: Story = {
+  args: {
+    projects: PROJECTS,
+    total: PROJECTS.length,
+    builds: [],
   },
 };

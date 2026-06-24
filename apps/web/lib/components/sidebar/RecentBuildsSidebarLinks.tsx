@@ -1,0 +1,29 @@
+import type { BuildSchema } from "@ovr/api/contracts/builds";
+import { SidebarSection } from "./SidebarSection";
+import { RecentBuildSidebarLink } from "./RecentBuildSidebarLink";
+
+const RECENT_BUILDS_FETCH_LIMIT = 20;
+
+type RecentBuildsSidebarLinksProps = {
+  builds: Pick<BuildSchema, "id" | "project" | "branch" | "name" | "commitSha" | "status">[];
+  onNavigate?: () => void;
+};
+
+const RecentBuildsSidebarLinks = ({ builds, onNavigate }: RecentBuildsSidebarLinksProps) => {
+  if (builds.length === 0) {
+    return null;
+  }
+
+  return (
+    <SidebarSection label="recent builds" className="min-h-0 flex-1">
+      <div className="flex flex-col gap-0.5 overflow-auto">
+        {builds.slice(0, RECENT_BUILDS_FETCH_LIMIT).map((build) => (
+          <RecentBuildSidebarLink key={build.id} build={build} onClick={onNavigate} />
+        ))}
+      </div>
+    </SidebarSection>
+  );
+};
+
+export { RecentBuildsSidebarLinks, RECENT_BUILDS_FETCH_LIMIT };
+export type { RecentBuildsSidebarLinksProps };

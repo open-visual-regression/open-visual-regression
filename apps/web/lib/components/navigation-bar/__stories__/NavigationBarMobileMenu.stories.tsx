@@ -10,6 +10,11 @@ const PROJECTS = [
   mocks.project.generateProject({ name: "Acme Admin" }),
 ];
 
+const BUILDS = [
+  mocks.build.generateBuild({ project: PROJECTS[0] }),
+  mocks.build.generateBuild({ project: PROJECTS[1] }),
+];
+
 const meta: Meta<typeof NavigationBarMobileMenu> = {
   title: "Web/NavigationBarMobileMenu",
   component: NavigationBarMobileMenu,
@@ -32,6 +37,7 @@ export const Projects: Story = {
   args: {
     role: "user",
     projects: PROJECTS,
+    builds: BUILDS,
     projectsTotal: PROJECTS.length,
   },
   play: async ({ canvasElement }) => {
@@ -44,6 +50,7 @@ export const WithViewAllLink: Story = {
   args: {
     role: "user",
     projects: PROJECTS,
+    builds: BUILDS,
     projectsTotal: 12,
   },
   play: async ({ canvasElement }) => {
