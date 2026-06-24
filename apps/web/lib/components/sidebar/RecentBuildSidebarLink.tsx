@@ -1,11 +1,12 @@
 import Link from "next/link";
 import type { BuildSchema } from "@ovr/api/contracts/builds";
 import { cn } from "@ovr/ui/lib/utils";
+import { BUILD_STATUS_COLOR_CLASS } from "@/lib/components/BuildStatus";
 
 const RECENT_BUILD_ROW_HEIGHT_PX = 44;
 
 type RecentBuildSidebarLinkProps = {
-  build: Pick<BuildSchema, "id" | "project" | "branch" | "name" | "commitSha">;
+  build: Pick<BuildSchema, "id" | "project" | "branch" | "name" | "commitSha" | "status">;
   className?: string;
   onClick?: () => void;
 };
@@ -15,10 +16,17 @@ const RecentBuildSidebarLink = ({ build, className, onClick }: RecentBuildSideba
     href={`/projects/${build.project.id}/builds/${build.id}`}
     onClick={onClick}
     className={cn(
-      "flex h-11 flex-col justify-center gap-0.5 overflow-hidden px-3 transition-colors no-underline hover:bg-ovr-hover",
+      "relative flex h-11 flex-col justify-center gap-0.5 overflow-hidden pl-4 pr-3 transition-colors no-underline hover:bg-ovr-hover",
       className,
     )}
   >
+    <span
+      aria-hidden
+      className={cn(
+        "absolute top-1/2 left-2 h-5 w-0.5 -translate-y-1/2 rounded-full",
+        BUILD_STATUS_COLOR_CLASS[build.status],
+      )}
+    />
     <span className="truncate text-badge text-ovr-fg-muted">
       {build.project.name} · {build.branch}
     </span>

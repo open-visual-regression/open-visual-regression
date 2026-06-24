@@ -1,5 +1,6 @@
 import { StatusBadge, type StatusBadgeProps } from "@ovr/ui/components/status-badge";
 import { type BuildStatus } from "@ovr/api/contracts/builds";
+import { cn } from "@ovr/ui/lib/utils";
 
 const BUILD_STATUS_BADGE: Record<
   BuildStatus,
@@ -12,6 +13,14 @@ const BUILD_STATUS_BADGE: Record<
   error: { variant: "error", icon: "error", label: "error" },
 };
 
+const BUILD_STATUS_COLOR_CLASS: Record<BuildStatus, string> = {
+  pending: "bg-ovr-status-pending",
+  needs_review: "bg-ovr-accent",
+  passed: "bg-ovr-diff-add",
+  rejected: "bg-ovr-remove",
+  error: "bg-ovr-remove",
+};
+
 export const BuildStatusBadge = ({ status }: { status: BuildStatus }) => {
   const { variant, icon, label } = BUILD_STATUS_BADGE[status];
   return (
@@ -21,16 +30,8 @@ export const BuildStatusBadge = ({ status }: { status: BuildStatus }) => {
   );
 };
 
-export const BuildStatusStripe = ({ status }: { status: BuildStatus }) => {
-  switch (status) {
-    case "pending":
-      return <div className="absolute inset-0 bg-ovr-status-pending" />;
-    case "needs_review":
-      return <div className="absolute inset-0 bg-ovr-accent" />;
-    case "passed":
-      return <div className="absolute inset-0 bg-ovr-diff-add" />;
-    case "rejected":
-    case "error":
-      return <div className="absolute inset-0 bg-ovr-remove" />;
-  }
-};
+export const BuildStatusStripe = ({ status }: { status: BuildStatus }) => (
+  <div className={cn("absolute inset-0", BUILD_STATUS_COLOR_CLASS[status])} />
+);
+
+export { BUILD_STATUS_COLOR_CLASS };

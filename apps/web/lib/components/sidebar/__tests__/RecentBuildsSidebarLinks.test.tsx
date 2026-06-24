@@ -56,4 +56,12 @@ describe("RecentBuildsSidebarLinks", () => {
 
     expect(screen.getByRole("heading", { name: "recent builds" })).toBeVisible();
   });
+
+  it("should color the status stripe according to the build's status", () => {
+    const build = mocks.build.generateBuild({ status: "rejected" });
+
+    const { container } = render(<RecentBuildsSidebarLinks builds={[build]} />);
+
+    expect(container.querySelector(".bg-ovr-remove")).toBeVisible();
+  });
 });

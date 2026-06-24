@@ -6,7 +6,7 @@ import styles from "./RecentBuildsSidebarLinks.module.css";
 const RECENT_BUILDS_FETCH_LIMIT = 20;
 
 type RecentBuildsSidebarLinksProps = {
-  builds: Pick<BuildSchema, "id" | "project" | "branch" | "name" | "commitSha">[];
+  builds: Pick<BuildSchema, "id" | "project" | "branch" | "name" | "commitSha" | "status">[];
   onNavigate?: () => void;
 };
 
