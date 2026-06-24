@@ -41,7 +41,7 @@ const ProjectsSidebarLinks = ({ projects, total, onNavigate }: ProjectsSidebarLi
         )}
       >
         <Icon icon={ChevronRightIcon} size={12} className="text-ovr-fg-tertiary shrink-0" />
-        <span className="flex-1 truncate">view all</span>
+        <span className="flex-1 truncate">view all projects</span>
       </Link>
     </SidebarSection>
   );

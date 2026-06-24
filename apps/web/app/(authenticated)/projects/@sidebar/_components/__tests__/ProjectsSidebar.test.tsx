@@ -47,7 +47,10 @@ describe("ProjectsSidebar", () => {
 
     render(<ProjectsSidebar projects={PROJECTS} total={PROJECTS.length} builds={BUILDS} />);
 
-    expect(screen.getByRole("link", { name: "view all" })).toHaveAttribute("href", "/projects");
+    expect(screen.getByRole("link", { name: "view all projects" })).toHaveAttribute(
+      "href",
+      "/projects",
+    );
   });
 
   it("should render the recent builds section when builds are provided", () => {
