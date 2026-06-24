@@ -4,6 +4,9 @@ import type { Preview } from "@storybook/nextjs-vite";
 
 const preview: Preview = {
   parameters: {
+    nextjs: {
+      appDirectory: true,
+    },
     controls: {
       matchers: {
         color: /(background|color)$/i,
