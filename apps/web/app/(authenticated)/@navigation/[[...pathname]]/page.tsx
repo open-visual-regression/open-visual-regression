@@ -12,7 +12,7 @@ import { Separator } from "@ovr/ui/components/separator";
 type NavigationSlotProps = PageProps<"/[[...pathname]]">;
 
 const NAVIGATION_PROJECTS_LIMIT = 10;
-const NAVIGATION_RECENT_BUILDS_LIMIT = 20;
+const NAVIGATION_RECENT_BUILDS_LIMIT = 15;
 
 export default async function NavigationSlot({ params }: NavigationSlotProps) {
   const { pathname } = await params;
