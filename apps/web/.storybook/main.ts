@@ -2,9 +2,11 @@ import type { StorybookConfig } from "@storybook/nextjs-vite";
 
 import tailwindcss from "@tailwindcss/vite";
 
-import { dirname } from "path";
+import { dirname, resolve } from "path";
 
 import { fileURLToPath } from "url";
+
+const storybookDir = dirname(fileURLToPath(import.meta.url));
 
 const getAbsolutePath = (value: string) => {
   return dirname(fileURLToPath(import.meta.resolve(`${value}/package.json`)));
@@ -24,9 +26,10 @@ const config: StorybookConfig = {
   viteFinal: async (config) => {
     config.plugins = config.plugins ?? [];
     config.plugins.push(tailwindcss());
-    config.define = {
-      ...config.define,
-      "process.env": {},
+    config.resolve = config.resolve ?? {};
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "@/lib/router": resolve(storybookDir, "./mocks/router.ts"),
     };
     return config;
   },
