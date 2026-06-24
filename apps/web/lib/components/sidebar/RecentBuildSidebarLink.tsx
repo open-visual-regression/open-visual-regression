@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { BuildSchema } from "@ovr/api/contracts/builds";
+import type { BuildSchema, BuildStatus } from "@ovr/api/contracts/builds";
 import { cn } from "@ovr/ui/lib/utils";
 import { Typography } from "@ovr/ui/components/typography";
 
@@ -11,7 +11,7 @@ type RecentBuildSidebarLinkProps = {
   onClick?: () => void;
 };
 
-const BUILD_STATUS_BORDER_CLASS = {
+const BUILD_STATUS_BORDER_CLASS: Record<BuildStatus, string> = {
   pending: "border-ovr-status-pending",
   needs_review: "border-ovr-accent",
   passed: "border-ovr-diff-add",

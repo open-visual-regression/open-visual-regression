@@ -5,9 +5,6 @@ import { serverError } from "@/lib/utils/errors";
 import { ProjectsSidebar } from "./_components/ProjectsSidebar";
 
 const SIDEBAR_PROJECTS_LIMIT = 10;
-
-// A few more than an xl desktop sidebar can show at once; the sidebar clips to
-// whichever of these fit without rendering a partial row.
 const SIDEBAR_RECENT_BUILDS_LIMIT = 20;
 
 export default async function ProjectsSidebarSlot() {

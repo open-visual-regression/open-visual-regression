@@ -102,10 +102,10 @@ describe("NavigationBarMobileMenu", () => {
     );
 
     await user.click(screen.getByRole("button", { name: /open projects navigation/i }));
-    await user.click(screen.getByRole("link", { name: "view all projects" }));
+    await user.click(screen.getByRole("link", { name: "view all" }));
 
     await waitFor(() => {
-      expect(screen.queryByRole("link", { name: "view all projects" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: "view all" })).not.toBeInTheDocument();
     });
   });
 });
