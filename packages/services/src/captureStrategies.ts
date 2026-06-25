@@ -71,30 +71,35 @@ const waitForStorybookTargetRendered = ({
       Object.entries(listeners).forEach(([event, listener]) => channel.off(event, listener));
     };
 
+    // Storybook emits `storyRendered` once the story mounts but BEFORE its play
+    // function runs — resolving there would screenshot mid-interaction. `storyFinished`
+    // fires after render, play, and afterEach all complete (success or error), so it's
+    // the only event that's safe to resolve on.
+    let lastError: string | undefined;
+
     const listeners: Record<string, (...args: never[]) => void> = {
-      storyRendered: () => {
+      storyFinished: (payload?: { storyId?: string; status?: "error" | "success" }) => {
+        if (payload?.storyId !== targetId) {
+          return;
+        }
         cleanup();
-        resolve({ ok: true });
-      },
-      storyUnchanged: () => {
-        cleanup();
-        resolve({ ok: true });
+        resolve(
+          payload.status === "success"
+            ? { ok: true }
+            : { ok: false, error: lastError ?? "story finished with errors" },
+        );
       },
       storyErrored: (payload?: { description?: string }) => {
-        cleanup();
-        resolve({ ok: false, error: payload?.description ?? "story errored" });
+        lastError = payload?.description ?? lastError;
       },
       storyThrewException: (error?: { message?: string }) => {
-        cleanup();
-        resolve({ ok: false, error: error?.message ?? "story threw an exception" });
+        lastError = error?.message ?? lastError;
       },
       playFunctionThrewException: (error?: { message?: string }) => {
-        cleanup();
-        resolve({ ok: false, error: error?.message ?? "play function threw an exception" });
+        lastError = error?.message ?? lastError;
       },
       unhandledErrorsWhilePlaying: (errors?: { message?: string }[]) => {
-        cleanup();
-        resolve({ ok: false, error: errors?.[0]?.message ?? "unhandled error while playing" });
+        lastError = errors?.[0]?.message ?? lastError;
       },
       storyMissing: (id?: string) => {
         if (id !== targetId) {

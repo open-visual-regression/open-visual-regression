@@ -66,6 +66,9 @@ const buildArtifactTarball = async (
               },
             };
             (listeners["storyRendered"] || []).forEach((l) => l());
+            (listeners["storyFinished"] || []).forEach((l) =>
+              l({ storyId, status: "success" }),
+            );
           },
         };
       </script></body></html>`,

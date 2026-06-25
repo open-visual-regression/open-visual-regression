@@ -20,6 +20,9 @@ const IFRAME_HTML = `<!doctype html><html><body><div id="storybook-root" hidden=
       if (e === "setCurrentStory") {
         document.getElementById("storybook-root").textContent = "rendered: " + payload.storyId;
         (this._l["storyRendered"] || []).forEach((l) => l(payload));
+        (this._l["storyFinished"] || []).forEach((l) =>
+          l({ storyId: payload.storyId, status: "success" }),
+        );
       }
     },
   };
