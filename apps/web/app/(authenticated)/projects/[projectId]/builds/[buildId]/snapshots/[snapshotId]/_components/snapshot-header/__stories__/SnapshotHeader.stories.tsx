@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
+import type { BuildSchema } from "@ovr/api/contracts/builds";
 import type { DiffSchema } from "@ovr/api/contracts/diffs";
 import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { mocks } from "@ovr/mocks";
@@ -41,10 +42,17 @@ const diff: DiffSchema = {
   baselineSnapshot: { imagePath: "baseline.png" },
 };
 
+const buildOverrides: Partial<BuildSchema> = {
+  name: "Add empty state to projects table",
+  commitSha: "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0",
+  author: "Jordan Lee",
+  createdAt: "2026-06-20T12:00:00.000Z",
+};
+
 export const Passed: Story = {
   args: {
     snapshot: { ...snapshot, status: "passed" },
-    build: mocks.build.generateBuild(),
+    build: mocks.build.generateBuild(buildOverrides),
     diff: { ...diff, reviewStatus: "not_required" },
   },
 };
@@ -52,7 +60,7 @@ export const Passed: Story = {
 export const NeedsReview: Story = {
   args: {
     snapshot: { ...snapshot, status: "needs_review" },
-    build: mocks.build.generateBuild(),
+    build: mocks.build.generateBuild(buildOverrides),
     diff,
   },
 };
@@ -60,7 +68,7 @@ export const NeedsReview: Story = {
 export const Rejected: Story = {
   args: {
     snapshot: { ...snapshot, status: "rejected" },
-    build: mocks.build.generateBuild(),
+    build: mocks.build.generateBuild(buildOverrides),
     diff: { ...diff, reviewStatus: "rejected" },
   },
 };
@@ -68,7 +76,7 @@ export const Rejected: Story = {
 export const Errored: Story = {
   args: {
     snapshot: { ...snapshot, status: "error" },
-    build: mocks.build.generateBuild(),
+    build: mocks.build.generateBuild(buildOverrides),
     diff: null,
   },
 };
