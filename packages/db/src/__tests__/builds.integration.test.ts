@@ -7,7 +7,7 @@ import { describe, expect, test } from "./fixtures";
 
 describe("builds", () => {
   describe("create", () => {
-    test("should create a build with pending status and worker capture mode by default", async ({
+    test("should create a build with queued status and worker capture mode by default", async ({
       project,
       user,
     }) => {
@@ -19,7 +19,7 @@ describe("builds", () => {
         createdBy: user.id,
       });
 
-      expect(build?.status).toBe("pending");
+      expect(build?.status).toBe("queued");
       expect(build?.captureMode).toBe("worker");
     });
   });
@@ -139,7 +139,7 @@ describe("builds", () => {
         projectName: "Other Project",
         branch: "main",
         commitSha: "b".repeat(40),
-        status: "pending",
+        status: "queued",
       });
     });
 
@@ -235,7 +235,7 @@ describe("builds", () => {
       organization,
       project,
       user,
-      build: pendingBuild,
+      build: queuedBuild,
     }) => {
       const passedBuild = await dbClient.builds.create({
         projectId: project.id,
@@ -255,7 +255,7 @@ describe("builds", () => {
 
       expect(total).toBe(1);
       expect(builds.map((build) => build.id)).toEqual([passedBuild!.id]);
-      expect(pendingBuild.status).toBe("pending");
+      expect(queuedBuild.status).toBe("queued");
     });
 
     test("should respect the limit and offset params", async ({ organization, project, user }) => {

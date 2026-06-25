@@ -39,7 +39,7 @@ const seedDiffs = async (buildId: string, viewport: Viewport, statuses: SeedDiff
 
 describe("builds", () => {
   describe("createBuild", () => {
-    test("creates a pending build and enqueues an extract job with the targets and viewports", async ({
+    test("creates a queued build and enqueues an extract job with the targets and viewports", async ({
       project,
       captureConfiguration,
       user,
@@ -71,7 +71,7 @@ describe("builds", () => {
         projectId: project.id,
         branch: "main",
         commitSha: "a".repeat(40),
-        status: "pending",
+        status: "queued",
         captureMode: "worker",
         artifactPath: getArtifactPath(project.id, buildId),
         createdBy: user.id,

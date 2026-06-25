@@ -97,7 +97,8 @@ export const snapshotCountsSchema = z.object({
   needs_review: z.number().int().nonnegative(),
   rejected: z.number().int().nonnegative(),
   error: z.number().int().nonnegative(),
-  pending: z.number().int().nonnegative(),
+  queued: z.number().int().nonnegative(),
+  processing: z.number().int().nonnegative(),
 });
 
 export type SnapshotCountsSchema = z.infer<typeof snapshotCountsSchema>;

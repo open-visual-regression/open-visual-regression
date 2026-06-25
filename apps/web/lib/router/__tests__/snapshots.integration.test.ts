@@ -243,7 +243,7 @@ describe("snapshots", () => {
 
       const [error, result] = await serverClient.snapshots.list({
         buildId: build.id,
-        status: "pending",
+        status: "queued",
       });
 
       expect(error).toBeNull();
@@ -305,10 +305,10 @@ describe("snapshots", () => {
     test("returns the count of snapshots in each display status", async ({ admin }) => {
       const { build } = await createProjectAndBuild(admin);
 
-      const [pending, passed, approved, needsReview, rejected, renderError] =
+      const [queued, passed, approved, needsReview, rejected, renderError] =
         await dbClient.snapshots.createMany({
           values: [
-            { buildId: build.id, ...VIEWPORT, targetId: "pending" },
+            { buildId: build.id, ...VIEWPORT, targetId: "queued" },
             { buildId: build.id, ...VIEWPORT, targetId: "passed", status: "captured" },
             { buildId: build.id, ...VIEWPORT, targetId: "approved", status: "captured" },
             { buildId: build.id, ...VIEWPORT, targetId: "needs_review", status: "captured" },
@@ -349,7 +349,7 @@ describe("snapshots", () => {
         reviewStatus: "needs_review",
       });
 
-      expect(pending).toBeTruthy();
+      expect(queued).toBeTruthy();
 
       const [error, counts] = await serverClient.snapshots.getCounts({ buildId: build.id });
 
@@ -360,7 +360,8 @@ describe("snapshots", () => {
         needs_review: 1,
         rejected: 1,
         error: 1,
-        pending: 1,
+        queued: 1,
+        processing: 0,
       });
     });
   });

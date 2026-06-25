@@ -10,7 +10,8 @@ const SNAPSHOT_STATUS_BADGE: Record<
   SnapshotDisplayStatus,
   Pick<StatusBadgeProps, "variant" | "icon"> & { label: string }
 > = {
-  pending: { variant: "pending", icon: "pending", label: "pending" },
+  queued: { variant: "queued", icon: "queued", label: "queued" },
+  processing: { variant: "processing", icon: "processing", label: "processing" },
   needs_review: { variant: "needs_review", icon: "needs_review", label: "needs review" },
   passed: { variant: "passed", icon: "passed", label: "passed" },
   approved: { variant: "approved", icon: "approved", label: "approved" },

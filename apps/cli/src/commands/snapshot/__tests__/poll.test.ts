@@ -67,7 +67,7 @@ describe("pollBuildStatus", () => {
   });
 
   it("should reject with a timeout message when the deadline is exceeded", async () => {
-    const getBuildStatus = vi.fn<GetBuildStatus>().mockResolvedValue({ status: "pending" });
+    const getBuildStatus = vi.fn<GetBuildStatus>().mockResolvedValue({ status: "queued" });
 
     await expect(
       pollBuildStatus({

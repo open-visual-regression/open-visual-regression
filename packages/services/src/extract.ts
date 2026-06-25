@@ -86,7 +86,7 @@ export const extractBuild = async (
         targetId: target.id,
         targetTitle: target.title,
         targetName: target.name,
-        status: "pending" as const,
+        status: "queued" as const,
         diffThreshold: resolveTargetDiffThreshold(diffThreshold, override),
       }));
     }),

@@ -18,7 +18,8 @@ import { user } from "./auth";
 import { projects, utcTimestamp } from "./schemas";
 
 export const buildStatusEnum = pgEnum("build_status", [
-  "pending",
+  "queued",
+  "processing",
   "needs_review",
   "passed",
   "rejected",
@@ -27,7 +28,12 @@ export const buildStatusEnum = pgEnum("build_status", [
 
 export type BuildStatus = (typeof buildStatusEnum.enumValues)[number];
 
-export const snapshotStatusEnum = pgEnum("snapshot_status", ["pending", "captured", "error"]);
+export const snapshotStatusEnum = pgEnum("snapshot_status", [
+  "queued",
+  "processing",
+  "captured",
+  "error",
+]);
 
 export type SnapshotStatus = (typeof snapshotStatusEnum.enumValues)[number];
 
@@ -67,7 +73,7 @@ export const builds = pgTable(
     commitSha: varchar("commit_sha", { length: 64 }).notNull(),
     name: varchar({ length: 255 }),
     author: varchar({ length: 255 }),
-    status: buildStatusEnum().notNull().default("pending"),
+    status: buildStatusEnum().notNull().default("queued"),
     errorMessage: text("error_message"),
     captureMode: captureModeEnum("capture_mode").notNull().default("worker"),
     artifactPath: text("artifact_path").notNull(),
@@ -111,7 +117,7 @@ export const snapshots = pgTable(
     targetId: varchar("target_id", { length: 255 }).notNull(),
     targetTitle: varchar("target_title", { length: 255 }).notNull().default(""),
     targetName: varchar("target_name", { length: 255 }).notNull().default(""),
-    status: snapshotStatusEnum().notNull().default("pending"),
+    status: snapshotStatusEnum().notNull().default("queued"),
     imagePath: text("image_path"),
     hasRenderError: boolean("has_render_error").notNull().default(false),
     diffThreshold: numeric("diff_threshold", { mode: "number", precision: 3, scale: 2 })

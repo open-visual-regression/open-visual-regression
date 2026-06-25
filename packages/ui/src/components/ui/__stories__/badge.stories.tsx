@@ -21,9 +21,11 @@ const Section = ({ label, children }: { label: string; children: React.ReactNode
 
 const VARIANTS: BadgeVariant[] = [
   "passed",
+  "approved",
   "error",
   "rejected",
-  "pending",
+  "queued",
+  "processing",
   "stale",
   "needs_review",
   "neutral",

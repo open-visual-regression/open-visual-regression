@@ -48,7 +48,7 @@ export const createBuild = async (
       commitSha: input.commitSha,
       name: input.name,
       author: input.author,
-      status: "pending",
+      status: "queued",
       captureMode: "worker",
       artifactPath: getArtifactPath(input.projectId, buildId),
       createdBy: callerId,

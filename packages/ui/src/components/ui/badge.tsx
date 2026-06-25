@@ -7,11 +7,12 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        passed: "text-ovr-green",
+        passed: "text-ovr-blue",
         approved: "text-ovr-green",
         error: "text-ovr-red",
         rejected: "text-ovr-red",
-        pending: "text-ovr-blue",
+        queued: "text-ovr-gray",
+        processing: "text-ovr-purple",
         stale: "text-ovr-fg-muted",
         needs_review: "text-ovr-amber",
         neutral: "text-ovr-fg-secondary",
@@ -22,19 +23,21 @@ const badgeVariants = cva(
       },
     },
     compoundVariants: [
-      { variant: "passed", filled: false, className: "border-ovr-green" },
+      { variant: "passed", filled: false, className: "border-ovr-blue" },
       { variant: "approved", filled: false, className: "border-ovr-green" },
       { variant: "error", filled: false, className: "border-ovr-red" },
       { variant: "rejected", filled: false, className: "border-ovr-red" },
-      { variant: "pending", filled: false, className: "border-ovr-blue" },
+      { variant: "queued", filled: false, className: "border-ovr-gray" },
+      { variant: "processing", filled: false, className: "border-ovr-purple" },
       { variant: "stale", filled: false, className: "border-ovr-fg-muted" },
       { variant: "needs_review", filled: false, className: "border-ovr-amber" },
       { variant: "neutral", filled: false, className: "border-ovr-fg-secondary" },
-      { variant: "passed", filled: true, className: "bg-ovr-green text-ovr-on-solid" },
+      { variant: "passed", filled: true, className: "bg-ovr-blue text-ovr-on-solid" },
       { variant: "approved", filled: true, className: "bg-ovr-green text-ovr-on-solid" },
       { variant: "error", filled: true, className: "bg-ovr-red text-ovr-on-solid" },
       { variant: "rejected", filled: true, className: "bg-ovr-red text-ovr-on-solid" },
-      { variant: "pending", filled: true, className: "bg-ovr-blue text-ovr-on-solid" },
+      { variant: "queued", filled: true, className: "bg-ovr-gray text-ovr-on-solid" },
+      { variant: "processing", filled: true, className: "bg-ovr-purple text-ovr-on-solid" },
       { variant: "stale", filled: true, className: "bg-ovr-fg-muted text-ovr-on-solid" },
       { variant: "needs_review", filled: true, className: "bg-ovr-amber text-ovr-on-solid" },
       { variant: "neutral", filled: true, className: "bg-ovr-fg-secondary text-ovr-on-solid" },
@@ -51,7 +54,8 @@ type BadgeVariant =
   | "approved"
   | "error"
   | "rejected"
-  | "pending"
+  | "queued"
+  | "processing"
   | "stale"
   | "needs_review"
   | "neutral";

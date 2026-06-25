@@ -10,7 +10,14 @@ const PROJECTS = [
   mocks.project.generateProject({ name: "Acme Admin" }),
 ];
 
-const BUILD_STATUSES = ["passed", "needs_review", "rejected", "error", "pending"] as const;
+const BUILD_STATUSES = [
+  "passed",
+  "needs_review",
+  "rejected",
+  "error",
+  "queued",
+  "processing",
+] as const;
 
 const buildOverrides: Partial<BuildSchema>[] = Array.from({ length: 20 }, (_, index) => ({
   project: { id: PROJECTS[0]!.id, name: PROJECTS[0]!.name },

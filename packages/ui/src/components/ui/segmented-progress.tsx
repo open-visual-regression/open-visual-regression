@@ -2,7 +2,7 @@ import { cn } from "../../lib/utils";
 
 export type SegmentedProgressSize = "sm" | "md" | "lg";
 
-type SegmentColor = "green" | "orange" | "red" | "blue";
+type SegmentColor = "green" | "amber" | "red" | "blue" | "gray" | "purple";
 
 type Segment = {
   label: string;
@@ -21,13 +21,17 @@ type SegmentedProgressProps = {
 const getColor = (color: SegmentColor) => {
   switch (color) {
     case "green":
-      return "bg-ovr-status-passed";
-    case "orange":
-      return "bg-ovr-status-needs-review";
+      return "bg-ovr-green";
+    case "amber":
+      return "bg-ovr-amber";
     case "red":
-      return "bg-ovr-status-error";
+      return "bg-ovr-red";
     case "blue":
-      return "bg-ovr-status-pending";
+      return "bg-ovr-blue";
+    case "gray":
+      return "bg-ovr-gray";
+    case "purple":
+      return "bg-ovr-purple";
   }
 };
 

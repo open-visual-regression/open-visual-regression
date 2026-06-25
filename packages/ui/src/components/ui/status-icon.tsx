@@ -5,6 +5,7 @@ import {
   CircleCheckIcon,
   CircleDashedIcon,
   CircleXIcon,
+  LoaderCircleIcon,
   TriangleAlertIcon,
 } from "lucide-react";
 
@@ -14,7 +15,8 @@ import { Icon } from "./icon";
 type StatusVariant =
   | "needs_review"
   | "passed"
-  | "pending"
+  | "queued"
+  | "processing"
   | "stale"
   | "approved"
   | "rejected"
@@ -23,7 +25,8 @@ type StatusVariant =
 const ICON_MAP: Record<StatusVariant, LucideIcon> = {
   needs_review: AlertCircleIcon,
   passed: CircleCheckIcon,
-  pending: CircleDashedIcon,
+  queued: CircleDashedIcon,
+  processing: LoaderCircleIcon,
   stale: TriangleAlertIcon,
   approved: CircleCheckIcon,
   rejected: CircleXIcon,
@@ -34,8 +37,9 @@ const statusIconVariants = cva("", {
   variants: {
     variant: {
       needs_review: "text-ovr-amber",
-      passed: "text-ovr-green",
-      pending: "text-ovr-blue",
+      passed: "text-ovr-blue",
+      queued: "text-ovr-gray",
+      processing: "text-ovr-purple",
       stale: "text-ovr-fg-muted",
       approved: "text-ovr-green",
       rejected: "text-ovr-red",

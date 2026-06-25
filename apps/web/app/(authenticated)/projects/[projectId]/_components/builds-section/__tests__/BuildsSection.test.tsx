@@ -47,11 +47,11 @@ describe("BuildsSection", () => {
     expect(screen.getByRole("cell", { name: "error" })).toBeVisible();
   });
 
-  it("should show a pending build's status as 'pending'", () => {
-    const build = mocks.build.generateBuild({ status: "pending" });
+  it("should show a queued build's status as 'queued'", () => {
+    const build = mocks.build.generateBuild({ status: "queued" });
     render(<BuildsSection builds={[build]} />);
 
-    expect(screen.getByRole("cell", { name: "pending" })).toBeVisible();
+    expect(screen.getByRole("cell", { name: "queued" })).toBeVisible();
   });
 
   it("should show a relative time for a build created recently", () => {

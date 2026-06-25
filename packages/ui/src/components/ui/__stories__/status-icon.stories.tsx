@@ -14,13 +14,14 @@ export default meta;
 type Story = StoryObj<typeof StatusIcon>;
 
 const STATUS_KINDS: { kind: StatusVariant; colorClass: string; colorToken: string }[] = [
-  { kind: "needs_review", colorClass: "text-ovr-accent", colorToken: "--ovr-accent-primary" },
-  { kind: "passed", colorClass: "text-ovr-diff-add", colorToken: "--ovr-diff-add" },
-  { kind: "pending", colorClass: "text-ovr-status-pending", colorToken: "--ovr-status-pending" },
+  { kind: "needs_review", colorClass: "text-ovr-amber", colorToken: "--ovr-color-amber" },
+  { kind: "passed", colorClass: "text-ovr-blue", colorToken: "--ovr-color-blue" },
+  { kind: "queued", colorClass: "text-ovr-gray", colorToken: "--ovr-color-gray" },
+  { kind: "processing", colorClass: "text-ovr-purple", colorToken: "--ovr-color-purple" },
   { kind: "stale", colorClass: "text-ovr-fg-muted", colorToken: "--ovr-fg-muted" },
-  { kind: "approved", colorClass: "text-ovr-diff-add", colorToken: "--ovr-diff-add" },
-  { kind: "rejected", colorClass: "text-ovr-remove", colorToken: "--ovr-diff-remove" },
-  { kind: "error", colorClass: "text-ovr-remove", colorToken: "--ovr-diff-remove" },
+  { kind: "approved", colorClass: "text-ovr-green", colorToken: "--ovr-color-green" },
+  { kind: "rejected", colorClass: "text-ovr-red", colorToken: "--ovr-color-red" },
+  { kind: "error", colorClass: "text-ovr-red", colorToken: "--ovr-color-red" },
 ];
 
 const SIZES = [14, 16, 20] as const;
@@ -28,7 +29,7 @@ const SIZES = [14, 16, 20] as const;
 export const AllStates: Story = {
   render: () => (
     <div className="p-8 bg-[var(--ovr-bg-base,#0d0d0d)]">
-      <div className="grid grid-cols-[80px_repeat(7,1fr)] items-center gap-x-6 gap-y-3">
+      <div className="grid grid-cols-[80px_repeat(8,1fr)] items-center gap-x-6 gap-y-3">
         <div />
         {STATUS_KINDS.map(({ kind, colorClass, colorToken }) => (
           <div key={kind} className="flex flex-col items-center gap-1">

@@ -33,7 +33,8 @@ describe("BuildHeader", () => {
         needs_review: 2,
         rejected: 0,
         error: 1,
-        pending: 4,
+        queued: 4,
+        processing: 0,
       },
     });
 
@@ -41,7 +42,7 @@ describe("BuildHeader", () => {
     expect(screen.getByRole("listitem", { name: "3 passed" })).toBeVisible();
     expect(screen.getByRole("listitem", { name: "2 needs review" })).toBeVisible();
     expect(screen.getByRole("listitem", { name: "1 error" })).toBeVisible();
-    expect(screen.getByRole("listitem", { name: "4 pending" })).toBeVisible();
+    expect(screen.getByRole("listitem", { name: "4 queued" })).toBeVisible();
   });
 
   it("should disable both bulk actions when there are no reviewable snapshots", () => {
@@ -54,7 +55,8 @@ describe("BuildHeader", () => {
         needs_review: 0,
         rejected: 0,
         error: 1,
-        pending: 4,
+        queued: 4,
+        processing: 0,
       },
     });
 
@@ -72,7 +74,8 @@ describe("BuildHeader", () => {
         needs_review: 0,
         rejected: 0,
         error: 1,
-        pending: 4,
+        queued: 4,
+        processing: 0,
       },
     });
 
@@ -90,7 +93,8 @@ describe("BuildHeader", () => {
         needs_review: 0,
         rejected: 1,
         error: 1,
-        pending: 4,
+        queued: 4,
+        processing: 0,
       },
     });
 
@@ -109,7 +113,8 @@ describe("BuildHeader", () => {
         needs_review: 2,
         rejected: 0,
         error: 1,
-        pending: 4,
+        queued: 4,
+        processing: 0,
       },
     });
 
@@ -130,7 +135,8 @@ describe("BuildHeader", () => {
         needs_review: 2,
         rejected: 0,
         error: 1,
-        pending: 4,
+        queued: 4,
+        processing: 0,
       },
     });
 
@@ -151,7 +157,8 @@ describe("BuildHeader", () => {
         needs_review: 2,
         rejected: 0,
         error: 1,
-        pending: 4,
+        queued: 4,
+        processing: 0,
       },
     });
 
@@ -172,7 +179,8 @@ describe("BuildHeader", () => {
         needs_review: 2,
         rejected: 0,
         error: 1,
-        pending: 4,
+        queued: 4,
+        processing: 0,
       },
     });
 
@@ -192,7 +200,8 @@ describe("BuildHeader", () => {
         needs_review: 2,
         rejected: 0,
         error: 1,
-        pending: 4,
+        queued: 4,
+        processing: 0,
       },
     });
 
@@ -213,7 +222,8 @@ describe("BuildHeader", () => {
         needs_review: 0,
         rejected: 0,
         error: 0,
-        pending: 0,
+        queued: 0,
+        processing: 0,
       },
     });
 
@@ -232,7 +242,8 @@ describe("BuildHeader", () => {
         needs_review: 2,
         rejected: 0,
         error: 1,
-        pending: 4,
+        queued: 4,
+        processing: 0,
       },
     });
 
@@ -249,7 +260,8 @@ describe("BuildHeader", () => {
         needs_review: 2,
         rejected: 0,
         error: 1,
-        pending: 4,
+        queued: 4,
+        processing: 0,
       },
     });
 

@@ -57,7 +57,7 @@ const columns = columnHelper.columns([
     meta: { className: "text-center" },
     cell: ({ getValue }) =>
       getValue() === "invited" ? (
-        <Badge variant="pending">invited</Badge>
+        <Badge variant="queued">invited</Badge>
       ) : (
         <Badge variant="passed">active</Badge>
       ),

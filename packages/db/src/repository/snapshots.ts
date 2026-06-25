@@ -9,7 +9,8 @@ export type SnapshotDisplayStatusCounts = {
   needs_review: number;
   rejected: number;
   error: number;
-  pending: number;
+  queued: number;
+  processing: number;
 };
 
 type CreateManyInput = { values: (typeof snapshots.$inferInsert)[]; tx?: DbClient };
@@ -57,7 +58,9 @@ export const hasAllCapturedForBuild = async (buildId: string) => {
     columns: { status: true },
     where: (snapshots, { eq }) => eq(snapshots.buildId, buildId),
   });
-  return rows.length > 0 && rows.every((row) => row.status !== "pending");
+  return (
+    rows.length > 0 && rows.every((row) => row.status !== "queued" && row.status !== "processing")
+  );
 };
 
 export const countByBuild = async (buildId: string) => {
@@ -70,7 +73,9 @@ export const countByBuild = async (buildId: string) => {
 
 const displayStatusExpr = sql<string>`case
   when ${snapshots.status} = 'error' or ${snapshots.hasRenderError} then 'error'
-  when ${snapshots.status} = 'pending' or ${diffs.id} is null or ${diffs.processingStatus} = 'pending' then 'pending'
+  when ${snapshots.status} = 'queued' then 'queued'
+  when ${snapshots.status} = 'processing' then 'processing'
+  when ${diffs.id} is null or ${diffs.processingStatus} = 'pending' then 'queued'
   when ${diffs.processingStatus} = 'error' then 'error'
   when ${diffs.reviewStatus} = 'rejected' then 'rejected'
   when ${diffs.reviewStatus} = 'needs_review' then 'needs_review'
@@ -94,7 +99,8 @@ export const getDisplayStatusCounts = async (
     needs_review: 0,
     rejected: 0,
     error: 0,
-    pending: 0,
+    queued: 0,
+    processing: 0,
   };
 
   for (const row of rows) {
@@ -126,7 +132,8 @@ const statusPriorityExpr = sql<number>`case (${displayStatusExpr})
   when 'rejected' then 2
   when 'approved' then 2
   when 'passed' then 3
-  when 'pending' then 4
+  when 'processing' then 4
+  when 'queued' then 5
 end`;
 
 export const snapshotSortColumns = {

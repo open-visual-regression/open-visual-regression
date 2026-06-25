@@ -59,7 +59,7 @@ describe("builds", () => {
       expect(error?.code).toBe("UNAUTHORIZED");
     });
 
-    test("creates a pending build under the project the key is scoped to", async ({ admin: _ }) => {
+    test("creates a queued build under the project the key is scoped to", async ({ admin: _ }) => {
       const { projectId, apiKey } = await createProjectWithApiKey();
 
       setApiKeyHeader(apiKey);
@@ -83,7 +83,7 @@ describe("builds", () => {
         projectId,
         branch: "main",
         commitSha: "a".repeat(40),
-        status: "pending",
+        status: "queued",
       });
     });
   });
@@ -113,7 +113,7 @@ describe("builds", () => {
       });
 
       expect(error).toBeNull();
-      expect(result?.status).toBe("pending");
+      expect(result?.status).toBe("queued");
       expect(result?.reviewUrl).toBeUndefined();
     });
 
@@ -220,7 +220,7 @@ describe("builds", () => {
         project: { id: projectB!.projectId, name: "Project B" },
         branch: "main",
         commitSha: "b".repeat(40),
-        status: "pending",
+        status: "queued",
       });
     });
 
@@ -410,7 +410,7 @@ describe("builds", () => {
         project: { id: project!.projectId, name: TEST_PROJECT.projectName },
         branch: "main",
         commitSha: "a".repeat(40),
-        status: "pending",
+        status: "queued",
       });
     });
   });
