@@ -141,17 +141,14 @@ const waitForStorybookTargetPlayed = ({
           return;
         }
         cleanup();
-        resolve(
-          payload.status === "success"
-            ? { ok: true }
-            : {
-                ok: false,
-                error:
-                  errorMessages.length > 0
-                    ? errorMessages.join("\n")
-                    : "story finished with errors",
-              },
-        );
+        if (payload.status === "success") {
+          resolve({ ok: true });
+          return;
+        }
+        resolve({
+          ok: false,
+          error: errorMessages.length > 0 ? errorMessages.join("\n") : "story finished with errors",
+        });
       },
       storyErrored: (payload?: { description?: string }) => {
         if (payload?.description) {

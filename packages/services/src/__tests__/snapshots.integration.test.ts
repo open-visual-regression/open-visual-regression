@@ -14,8 +14,8 @@ import { getStaticPath } from "../extract";
 import { captureSnapshot, diffSnapshot } from "../snapshots";
 import { describe, expect, test } from "./fixtures";
 
-const FIXTURES_DIR = path.dirname(fileURLToPath(import.meta.url));
-const IFRAME_HTML = await readFile(path.join(FIXTURES_DIR, "fixtures/iframe-static.html"), "utf-8");
+const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
+const IFRAME_HTML = await readFile(path.join(TEST_DIR, "html/iframe-static.html"), "utf-8");
 
 const uploadStaticBuild = async (projectId: string, buildId: string): Promise<void> => {
   await storage.uploadFile(

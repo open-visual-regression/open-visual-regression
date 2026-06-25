@@ -14,11 +14,8 @@ import { storage } from "@ovr/storage";
 import { extractBuild, getStaticPath } from "../extract";
 import { describe, expect, test } from "./fixtures";
 
-const FIXTURES_DIR = path.dirname(fileURLToPath(import.meta.url));
-const IFRAME_TEMPLATE = await readFile(
-  path.join(FIXTURES_DIR, "fixtures/iframe-template.html"),
-  "utf-8",
-);
+const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
+const IFRAME_TEMPLATE = await readFile(path.join(TEST_DIR, "html/iframe-template.html"), "utf-8");
 
 const collectCaptureJobs = async (
   connection: Redis,
