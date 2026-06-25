@@ -5,6 +5,7 @@ export type RenderResult = { ok: boolean; error?: string };
 export type CaptureStrategy = {
   waitForBoot: (page: Page, timeoutMs: number) => Promise<void>;
   waitForTargetRendered: (args: { targetId: string; timeoutMs: number }) => Promise<RenderResult>;
+  waitForTargetPlayed: (args: { targetId: string; timeoutMs: number }) => Promise<RenderResult>;
 };
 
 type StorybookChannel = {
@@ -68,7 +69,9 @@ const waitForStorybookTargetRendered = ({
 
     const cleanup = () => {
       clearTimeout(timeout);
-      Object.entries(listeners).forEach(([event, listener]) => channel.off(event, listener));
+      for (const [event, listener] of Object.entries(listeners)) {
+        channel.off(event, listener);
+      }
     };
 
     const listeners: Record<string, (...args: never[]) => void> = {
@@ -88,13 +91,86 @@ const waitForStorybookTargetRendered = ({
         cleanup();
         resolve({ ok: false, error: error?.message ?? "story threw an exception" });
       },
-      playFunctionThrewException: (error?: { message?: string }) => {
+      storyMissing: (id?: string) => {
+        if (id !== targetId) {
+          return;
+        }
         cleanup();
-        resolve({ ok: false, error: error?.message ?? "play function threw an exception" });
+        resolve({ ok: false, error: `story "${targetId}" was missing` });
+      },
+    };
+
+    for (const [event, listener] of Object.entries(listeners)) {
+      channel.on(event, listener);
+    }
+    channel.emit("setCurrentStory", { storyId: targetId, viewMode: "story" });
+  });
+
+const waitForStorybookTargetPlayed = ({
+  targetId,
+  timeoutMs,
+}: {
+  targetId: string;
+  timeoutMs: number;
+}): Promise<RenderResult> =>
+  new Promise((resolve) => {
+    const channel = globalThis.__STORYBOOK_ADDONS_CHANNEL__;
+
+    if (!channel) {
+      resolve({ ok: false, error: "Storybook channel (__STORYBOOK_ADDONS_CHANNEL__) not found" });
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      cleanup();
+      resolve({ ok: false, error: `Timed out waiting for "${targetId}" to render` });
+    }, timeoutMs);
+
+    const cleanup = () => {
+      clearTimeout(timeout);
+      for (const [event, listener] of Object.entries(listeners)) {
+        channel.off(event, listener);
+      }
+    };
+
+    const errorMessages: string[] = [];
+
+    const listeners: Record<string, (...args: never[]) => void> = {
+      storyFinished: (payload?: { storyId?: string; status?: "error" | "success" }) => {
+        if (payload?.storyId !== targetId) {
+          return;
+        }
+        cleanup();
+        if (payload.status === "success") {
+          resolve({ ok: true });
+          return;
+        }
+        resolve({
+          ok: false,
+          error: errorMessages.length > 0 ? errorMessages.join("\n") : "story finished with errors",
+        });
+      },
+      storyErrored: (payload?: { description?: string }) => {
+        if (payload?.description) {
+          errorMessages.push(payload.description);
+        }
+      },
+      storyThrewException: (error?: { message?: string }) => {
+        if (error?.message) {
+          errorMessages.push(error.message);
+        }
+      },
+      playFunctionThrewException: (error?: { message?: string }) => {
+        if (error?.message) {
+          errorMessages.push(error.message);
+        }
       },
       unhandledErrorsWhilePlaying: (errors?: { message?: string }[]) => {
-        cleanup();
-        resolve({ ok: false, error: errors?.[0]?.message ?? "unhandled error while playing" });
+        for (const error of errors ?? []) {
+          if (error.message) {
+            errorMessages.push(error.message);
+          }
+        }
       },
       storyMissing: (id?: string) => {
         if (id !== targetId) {
@@ -105,7 +181,9 @@ const waitForStorybookTargetRendered = ({
       },
     };
 
-    Object.entries(listeners).forEach(([event, listener]) => channel.on(event, listener));
+    for (const [event, listener] of Object.entries(listeners)) {
+      channel.on(event, listener);
+    }
     channel.emit("setCurrentStory", { storyId: targetId, viewMode: "story" });
   });
 
@@ -115,6 +193,7 @@ const storybookCaptureStrategy: CaptureStrategy = {
       .waitForSelector("#storybook-root, #root", { timeout: timeoutMs, state: "attached" })
       .then(() => undefined),
   waitForTargetRendered: waitForStorybookTargetRendered,
+  waitForTargetPlayed: waitForStorybookTargetPlayed,
 };
 
 const detectStorybookManifestVersion = async (proxyOrigin: string): Promise<number | undefined> => {

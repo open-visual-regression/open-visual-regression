@@ -82,7 +82,7 @@ export const captureSnapshot = async (snapshotId: string): Promise<void> => {
       await page.goto(`${proxy.origin}/iframe.html`, { waitUntil: "load" });
       await strategy.waitForBoot(page, BOOT_TIMEOUT_MS);
 
-      const renderResult = await page.evaluate(strategy.waitForTargetRendered, {
+      const renderResult = await page.evaluate(strategy.waitForTargetPlayed, {
         targetId: snapshot.targetId,
         timeoutMs: RENDER_TIMEOUT_MS,
       });

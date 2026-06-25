@@ -1,6 +1,7 @@
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { Worker } from "bullmq";
 import type { Redis } from "ioredis";
@@ -12,6 +13,9 @@ import { storage } from "@ovr/storage";
 
 import { extractBuild, getStaticPath } from "../extract";
 import { describe, expect, test } from "./fixtures";
+
+const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
+const IFRAME_TEMPLATE = await readFile(path.join(TEST_DIR, "html/iframe-template.html"), "utf-8");
 
 const collectCaptureJobs = async (
   connection: Redis,
@@ -49,26 +53,7 @@ const buildArtifactTarball = async (
   try {
     await writeFile(
       path.join(sourceDir, "iframe.html"),
-      `<html><body><div id="storybook-root"></div><script>
-        window.__OVR_STORY_PARAMETERS__ = ${JSON.stringify(storyParameters)};
-        const listeners = {};
-        window.__STORYBOOK_ADDONS_CHANNEL__ = {
-          on: (event, listener) => { (listeners[event] ||= []).push(listener); },
-          off: (event, listener) => {
-            listeners[event] = (listeners[event] || []).filter((l) => l !== listener);
-          },
-          emit: (event, payload) => {
-            if (event !== "setCurrentStory") return;
-            const storyId = payload.storyId;
-            window.__STORYBOOK_PREVIEW__ = {
-              currentRender: {
-                story: { id: storyId, parameters: { ovr: window.__OVR_STORY_PARAMETERS__[storyId] } },
-              },
-            };
-            (listeners["storyRendered"] || []).forEach((l) => l());
-          },
-        };
-      </script></body></html>`,
+      IFRAME_TEMPLATE.replace('"__OVR_STORY_PARAMETERS_JSON__"', JSON.stringify(storyParameters)),
     );
     await writeFile(path.join(sourceDir, "runtime.js"), "console.log('hi')");
 
