@@ -1,3 +1,7 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { Worker } from "bullmq";
 import type { Redis } from "ioredis";
 import { PNG } from "pngjs";
@@ -10,24 +14,8 @@ import { getStaticPath } from "../extract";
 import { captureSnapshot, diffSnapshot } from "../snapshots";
 import { describe, expect, test } from "./fixtures";
 
-const IFRAME_HTML = `<!doctype html><html><body><div id="storybook-root" hidden="true"></div>
-<script>
-  window.__STORYBOOK_ADDONS_CHANNEL__ = {
-    _l: {},
-    on(e, l) { (this._l[e] ??= []).push(l); },
-    off(e, l) { this._l[e] = (this._l[e] || []).filter((x) => x !== l); },
-    emit(e, payload) {
-      if (e === "setCurrentStory") {
-        document.getElementById("storybook-root").textContent = "rendered: " + payload.storyId;
-        (this._l["storyRendered"] || []).forEach((l) => l(payload));
-        (this._l["storyFinished"] || []).forEach((l) =>
-          l({ storyId: payload.storyId, status: "success" }),
-        );
-      }
-    },
-  };
-</script>
-</body></html>`;
+const FIXTURES_DIR = path.dirname(fileURLToPath(import.meta.url));
+const IFRAME_HTML = await readFile(path.join(FIXTURES_DIR, "fixtures/iframe-static.html"), "utf-8");
 
 const uploadStaticBuild = async (projectId: string, buildId: string): Promise<void> => {
   await storage.uploadFile(

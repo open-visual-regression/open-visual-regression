@@ -4,12 +4,7 @@ export type RenderResult = { ok: boolean; error?: string };
 
 export type CaptureStrategy = {
   waitForBoot: (page: Page, timeoutMs: number) => Promise<void>;
-  // Resolves once the story has mounted, before its play() function runs. Use this when
-  // only `parameters.ovr` is needed (e.g. to discover which viewport to capture at) —
-  // it doesn't depend on a play() function succeeding at a particular layout.
   waitForTargetRendered: (args: { targetId: string; timeoutMs: number }) => Promise<RenderResult>;
-  // Resolves once the story's render, play(), and afterEach have all completed. Use this
-  // before taking a screenshot, so interactions have actually run at the captured viewport.
   waitForTargetPlayed: (args: { targetId: string; timeoutMs: number }) => Promise<RenderResult>;
 };
 
@@ -52,10 +47,6 @@ export const readOvrStoryParameters = (targetId: string): OvrStoryParameters | n
   return (ovr as OvrStoryParameters | undefined) ?? null;
 };
 
-// These are passed to `page.evaluate` and run as standalone functions inside the
-// browser — they can't close over anything from this module, so the two variants
-// below are intentionally self-contained rather than sharing a helper.
-
 const waitForStorybookTargetRendered = ({
   targetId,
   timeoutMs,
@@ -78,7 +69,9 @@ const waitForStorybookTargetRendered = ({
 
     const cleanup = () => {
       clearTimeout(timeout);
-      Object.entries(listeners).forEach(([event, listener]) => channel.off(event, listener));
+      for (const [event, listener] of Object.entries(listeners)) {
+        channel.off(event, listener);
+      }
     };
 
     const listeners: Record<string, (...args: never[]) => void> = {
@@ -107,7 +100,9 @@ const waitForStorybookTargetRendered = ({
       },
     };
 
-    Object.entries(listeners).forEach(([event, listener]) => channel.on(event, listener));
+    for (const [event, listener] of Object.entries(listeners)) {
+      channel.on(event, listener);
+    }
     channel.emit("setCurrentStory", { storyId: targetId, viewMode: "story" });
   });
 
@@ -133,7 +128,9 @@ const waitForStorybookTargetPlayed = ({
 
     const cleanup = () => {
       clearTimeout(timeout);
-      Object.entries(listeners).forEach(([event, listener]) => channel.off(event, listener));
+      for (const [event, listener] of Object.entries(listeners)) {
+        channel.off(event, listener);
+      }
     };
 
     const errorMessages: string[] = [];
@@ -172,11 +169,11 @@ const waitForStorybookTargetPlayed = ({
         }
       },
       unhandledErrorsWhilePlaying: (errors?: { message?: string }[]) => {
-        errors?.forEach((error) => {
+        for (const error of errors ?? []) {
           if (error.message) {
             errorMessages.push(error.message);
           }
-        });
+        }
       },
       storyMissing: (id?: string) => {
         if (id !== targetId) {
@@ -187,7 +184,9 @@ const waitForStorybookTargetPlayed = ({
       },
     };
 
-    Object.entries(listeners).forEach(([event, listener]) => channel.on(event, listener));
+    for (const [event, listener] of Object.entries(listeners)) {
+      channel.on(event, listener);
+    }
     channel.emit("setCurrentStory", { storyId: targetId, viewMode: "story" });
   });
 
