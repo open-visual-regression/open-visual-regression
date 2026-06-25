@@ -44,7 +44,7 @@ describe("BuildHeader", () => {
     expect(screen.getByRole("listitem", { name: "4 pending" })).toBeVisible();
   });
 
-  it("should disable both bulk actions when there are no snapshots needing review", () => {
+  it("should disable both bulk actions when there are no reviewable snapshots", () => {
     const build = mocks.build.generateBuild({ status: "needs_review" });
     renderComponent({
       build,
@@ -60,6 +60,42 @@ describe("BuildHeader", () => {
 
     expect(screen.getByRole("button", { name: /approve all/i })).toBeDisabled();
     expect(screen.getByRole("button", { name: /reject all/i })).toBeDisabled();
+  });
+
+  it("should keep reject all enabled after approve all has resolved every needs-review snapshot", () => {
+    const build = mocks.build.generateBuild({ status: "passed" });
+    renderComponent({
+      build,
+      snapshotCounts: {
+        passed: 3,
+        approved: 2,
+        needs_review: 0,
+        rejected: 0,
+        error: 1,
+        pending: 4,
+      },
+    });
+
+    expect(screen.getByRole("button", { name: /^approved$/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /^reject all$/i })).toBeEnabled();
+  });
+
+  it("should keep approve all enabled after a snapshot is individually rejected following a bulk approval", () => {
+    const build = mocks.build.generateBuild({ status: "rejected" });
+    renderComponent({
+      build,
+      snapshotCounts: {
+        passed: 3,
+        approved: 1,
+        needs_review: 0,
+        rejected: 1,
+        error: 1,
+        pending: 4,
+      },
+    });
+
+    expect(screen.getByRole("button", { name: /^rejected$/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /^approve all$/i })).toBeEnabled();
   });
 
   it("should approve all needs-review snapshots", async ({ user }) => {

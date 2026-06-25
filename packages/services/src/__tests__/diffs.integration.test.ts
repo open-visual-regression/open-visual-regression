@@ -209,7 +209,7 @@ describe("diffs", () => {
   });
 
   describe("bulkCastVote", () => {
-    test("casts the vote across every needs_review diff, leaving terminal diffs untouched", async ({
+    test("casts the vote across every reviewable diff, leaving not_required diffs untouched", async ({
       mainBuild,
       captureConfiguration,
       user,
@@ -244,6 +244,36 @@ describe("diffs", () => {
       });
       expect(await dbClient.diffs.findById(notRequiredDiff!.id)).toMatchObject({
         reviewStatus: "not_required",
+      });
+    });
+
+    test("overrides already-decided diffs, letting a later bulk vote flip the earlier one", async ({
+      mainBuild,
+      captureConfiguration,
+      user,
+    }) => {
+      const [snapshotA, snapshotB] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: mainBuild.id, ...captureConfiguration, targetId: "a" },
+          { buildId: mainBuild.id, ...captureConfiguration, targetId: "b" },
+        ],
+      });
+      const approvedDiff = await dbClient.diffs.create({
+        snapshotId: snapshotA!.id,
+        reviewStatus: "approved",
+      });
+      const rejectedDiff = await dbClient.diffs.create({
+        snapshotId: snapshotB!.id,
+        reviewStatus: "rejected",
+      });
+
+      await bulkCastVote(mainBuild.id, user.id, "reject");
+
+      expect(await dbClient.diffs.findById(approvedDiff!.id)).toMatchObject({
+        reviewStatus: "rejected",
+      });
+      expect(await dbClient.diffs.findById(rejectedDiff!.id)).toMatchObject({
+        reviewStatus: "rejected",
       });
     });
 
