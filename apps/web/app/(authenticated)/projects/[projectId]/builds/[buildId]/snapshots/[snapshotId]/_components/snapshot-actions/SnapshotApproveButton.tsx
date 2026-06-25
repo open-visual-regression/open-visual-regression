@@ -4,16 +4,16 @@ import { useRouter } from "next/navigation";
 import { onError, onSuccess } from "@orpc/client";
 import { useServerAction } from "@orpc/react/hooks";
 import { Button } from "@ovr/ui/components/button";
-import { Icon, XIcon } from "@ovr/ui/components/icon";
+import { Icon, CheckIcon } from "@ovr/ui/components/icon";
 import { toast } from "@ovr/ui/components/toast";
 import { serverClient } from "@/lib/router";
 
-export type SnapshotRejectButtonProps = {
+export type SnapshotApproveButtonProps = {
   diffId: string;
-  rejected: boolean;
+  approved: boolean;
 };
 
-export const SnapshotRejectButton = ({ diffId, rejected }: SnapshotRejectButtonProps) => {
+export const SnapshotApproveButton = ({ diffId, approved }: SnapshotApproveButtonProps) => {
   const router = useRouter();
 
   const { execute, status } = useServerAction(serverClient.diffs.castVote, {
@@ -29,17 +29,17 @@ export const SnapshotRejectButton = ({ diffId, rejected }: SnapshotRejectButtonP
 
   return (
     <Button
-      variant="secondary"
-      disabled={pending || rejected}
+      disabled={pending || approved}
       className={
-        rejected
-          ? "disabled:bg-ovr-remove disabled:text-ovr-on-accent disabled:border-transparent"
+        approved
+          ? "disabled:bg-ovr-diff-add disabled:text-ovr-on-accent disabled:border-transparent"
           : undefined
       }
-      onClick={() => execute({ diffId, vote: "reject" })}
+      onClick={() => execute({ diffId, vote: "approve" })}
+      size="sm"
     >
-      <Icon icon={XIcon} />
-      {rejected ? "rejected" : pending ? "rejecting..." : "reject"}
+      <Icon icon={CheckIcon} />
+      {approved ? "approved" : pending ? "approving..." : "approve"}
     </Button>
   );
 };

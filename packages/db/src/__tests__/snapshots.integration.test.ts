@@ -517,4 +517,105 @@ describe("snapshots", () => {
       expect(results.map((row) => row.targetId)).toEqual(["row-b-title", "row-a-title"]);
     });
   });
+
+  describe("findAdjacentReviewableIds", () => {
+    const seedReviewQueue = async (build: { id: string }, captureConfiguration: object) => {
+      const [first, second, noDiff, errored] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            targetId: "a",
+            targetTitle: "A",
+            status: "captured",
+          },
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            targetId: "b",
+            targetTitle: "B",
+            status: "captured",
+          },
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            targetId: "c",
+            targetTitle: "C",
+            status: "captured",
+          },
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            targetId: "d",
+            targetTitle: "D",
+            status: "error",
+            hasRenderError: true,
+          },
+        ],
+      });
+
+      await dbClient.diffs.create({
+        snapshotId: first!.id,
+        processingStatus: "diffed",
+        reviewStatus: "needs_review",
+      });
+      await dbClient.diffs.create({
+        snapshotId: second!.id,
+        processingStatus: "diffed",
+        reviewStatus: "rejected",
+      });
+      await dbClient.diffs.create({
+        snapshotId: noDiff!.id,
+        processingStatus: "diffed",
+        reviewStatus: "not_required",
+      });
+
+      return { first: first!, second: second!, noDiff: noDiff!, errored: errored! };
+    };
+
+    test("returns the next reviewable id in sort order", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const { first, second } = await seedReviewQueue(build, captureConfiguration);
+
+      const result = await dbClient.snapshots.findAdjacentReviewableIds(build.id, first.id);
+      expect(result).toEqual({ prevId: null, nextId: second.id, position: 1, total: 2 });
+    });
+
+    test("returns the previous reviewable id in sort order", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const { first, second } = await seedReviewQueue(build, captureConfiguration);
+
+      const result = await dbClient.snapshots.findAdjacentReviewableIds(build.id, second.id);
+      expect(result).toEqual({ prevId: first.id, nextId: null, position: 2, total: 2 });
+    });
+
+    test("returns nulls for a snapshot that does not require review", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const { noDiff } = await seedReviewQueue(build, captureConfiguration);
+
+      const result = await dbClient.snapshots.findAdjacentReviewableIds(build.id, noDiff.id);
+      expect(result).toEqual({ prevId: null, nextId: null, position: null, total: null });
+    });
+
+    test("excludes errored snapshots even when their diff needs review", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const { second, errored } = await seedReviewQueue(build, captureConfiguration);
+      await dbClient.diffs.create({
+        snapshotId: errored.id,
+        processingStatus: "diffed",
+        reviewStatus: "needs_review",
+      });
+
+      const result = await dbClient.snapshots.findAdjacentReviewableIds(build.id, second.id);
+      expect(result.nextId).toBeNull();
+    });
+  });
 });

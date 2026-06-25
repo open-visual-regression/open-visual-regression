@@ -79,3 +79,18 @@ export const getCounts = os.snapshots.getCounts
   .use(organizationBuildMiddleware)
   .handler(async ({ input }) => dbClient.snapshots.getDisplayStatusCounts(input.buildId))
   .actionable();
+
+export const getAdjacent = os.snapshots.getAdjacent
+  .use(authenticatedMiddleware)
+  .use(organizationSnapshotMiddleware)
+  .handler(async ({ context }) => {
+    const { snapshot } = context;
+
+    const { prevId, nextId, position, total } = await dbClient.snapshots.findAdjacentReviewableIds(
+      snapshot.buildId,
+      snapshot.id,
+    );
+
+    return { prevSnapshotId: prevId, nextSnapshotId: nextId, position, total };
+  })
+  .actionable();

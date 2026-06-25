@@ -364,4 +364,182 @@ describe("snapshots", () => {
       });
     });
   });
+
+  describe("getAdjacent", () => {
+    test("should return NOT_FOUND for a missing snapshot id", async ({ admin: _ }) => {
+      const [error] = await serverClient.snapshots.getAdjacent({
+        snapshotId: uuidv7(),
+      });
+
+      expect(error?.code).toBe("NOT_FOUND");
+    });
+
+    test("returns NOT_FOUND for a snapshot belonging to a different organization", async ({
+      admin,
+    }) => {
+      const [otherOrg] = await db
+        .insert(organization)
+        .values({
+          id: crypto.randomUUID(),
+          name: "Other Org",
+          slug: crypto.randomUUID(),
+          createdAt: new Date(),
+        })
+        .returning();
+
+      const [otherProject] = await db
+        .insert(projects)
+        .values({
+          name: "Other Org Project",
+          gitMainBranch: "main",
+          organizationId: otherOrg!.id,
+          creatorId: admin.id,
+        })
+        .returning();
+
+      const otherBuild = await dbClient.builds.create({
+        projectId: otherProject!.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/other/artifact",
+        createdBy: admin.id,
+      });
+
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: otherBuild!.id, ...VIEWPORT, targetId: "story-a" }],
+      });
+
+      const [error] = await serverClient.snapshots.getAdjacent({
+        snapshotId: snapshot!.id,
+      });
+
+      expect(error?.code).toBe("NOT_FOUND");
+    });
+
+    const seedReviewQueue = async (buildId: string) => {
+      const [first, second, third, noDiff, errored] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId, ...VIEWPORT, targetId: "a", targetTitle: "A", status: "captured" },
+          { buildId, ...VIEWPORT, targetId: "b", targetTitle: "B", status: "captured" },
+          { buildId, ...VIEWPORT, targetId: "c", targetTitle: "C", status: "captured" },
+          { buildId, ...VIEWPORT, targetId: "d", targetTitle: "D", status: "captured" },
+          {
+            buildId,
+            ...VIEWPORT,
+            targetId: "e",
+            targetTitle: "E",
+            status: "error",
+            hasRenderError: true,
+          },
+        ],
+      });
+
+      await dbClient.diffs.create({
+        snapshotId: first!.id,
+        processingStatus: "diffed",
+        reviewStatus: "needs_review",
+      });
+      await dbClient.diffs.create({
+        snapshotId: second!.id,
+        processingStatus: "diffed",
+        reviewStatus: "rejected",
+      });
+      await dbClient.diffs.create({
+        snapshotId: third!.id,
+        processingStatus: "diffed",
+        reviewStatus: "approved",
+      });
+      await dbClient.diffs.create({
+        snapshotId: noDiff!.id,
+        processingStatus: "diffed",
+        reviewStatus: "not_required",
+      });
+
+      return { first: first!, second: second!, third: third!, noDiff: noDiff!, errored: errored! };
+    };
+
+    test("returns the next snapshot awaiting review", async ({ admin }) => {
+      const { build } = await createProjectAndBuild(admin);
+      const { first, second } = await seedReviewQueue(build.id);
+
+      const [error, result] = await serverClient.snapshots.getAdjacent({
+        snapshotId: first.id,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.nextSnapshotId).toBe(second.id);
+    });
+
+    test("returns the previous snapshot awaiting review", async ({ admin }) => {
+      const { build } = await createProjectAndBuild(admin);
+      const { second, third } = await seedReviewQueue(build.id);
+
+      const [error, result] = await serverClient.snapshots.getAdjacent({
+        snapshotId: third.id,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.prevSnapshotId).toBe(second.id);
+    });
+
+    test("returns null prevSnapshotId for the first snapshot in the build", async ({ admin }) => {
+      const { build } = await createProjectAndBuild(admin);
+      const { first } = await seedReviewQueue(build.id);
+
+      const [error, result] = await serverClient.snapshots.getAdjacent({
+        snapshotId: first.id,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.prevSnapshotId).toBeNull();
+    });
+
+    test("returns null nextSnapshotId for the last snapshot in the build", async ({ admin }) => {
+      const { build } = await createProjectAndBuild(admin);
+      const { third } = await seedReviewQueue(build.id);
+
+      const [error, result] = await serverClient.snapshots.getAdjacent({
+        snapshotId: third.id,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.nextSnapshotId).toBeNull();
+    });
+
+    test("returns null for both when the snapshot doesn't require review", async ({ admin }) => {
+      const { build } = await createProjectAndBuild(admin);
+      const { noDiff } = await seedReviewQueue(build.id);
+
+      const [error, result] = await serverClient.snapshots.getAdjacent({
+        snapshotId: noDiff.id,
+      });
+
+      expect(error).toBeNull();
+      expect(result).toEqual({
+        prevSnapshotId: null,
+        nextSnapshotId: null,
+        position: null,
+        total: null,
+      });
+    });
+
+    test("excludes errored snapshots from the review queue, even with a needs_review diff", async ({
+      admin,
+    }) => {
+      const { build } = await createProjectAndBuild(admin);
+      const { third, errored } = await seedReviewQueue(build.id);
+      await dbClient.diffs.create({
+        snapshotId: errored.id,
+        processingStatus: "diffed",
+        reviewStatus: "needs_review",
+      });
+
+      const [error, result] = await serverClient.snapshots.getAdjacent({
+        snapshotId: third.id,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.nextSnapshotId).toBeNull();
+    });
+  });
 });
