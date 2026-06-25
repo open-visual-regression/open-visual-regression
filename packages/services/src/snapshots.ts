@@ -294,14 +294,31 @@ export const checkAllDoneAndFinalize = async (buildId: string): Promise<void> =>
   }
 };
 
+const PNG_READ_TIMEOUT_MS = 30_000;
+
 const readPng = async (imagePath: string): Promise<PNG> => {
   const stream = await storage.getFileStream(imagePath);
   const png = new PNG();
   return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      stream.destroy();
+      reject(new Error(`Timed out reading PNG: ${imagePath}`));
+    }, PNG_READ_TIMEOUT_MS);
+
+    const done = (result: PNG | Error) => {
+      clearTimeout(timeout);
+      if (result instanceof Error) {
+        reject(result);
+      } else {
+        resolve(result);
+      }
+    };
+
+    stream.on("error", done);
     stream
       .pipe(png)
-      .on("parsed", () => resolve(png))
-      .on("error", reject);
+      .on("parsed", () => done(png))
+      .on("error", done);
   });
 };
 

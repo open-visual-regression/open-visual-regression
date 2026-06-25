@@ -149,7 +149,7 @@ export const diffs = pgTable(
     pixelDiffCount: integer("pixel_diff_count"),
     diffPercent: real("diff_percent"),
   },
-  (table) => [index("diffs_snapshotId_idx").on(table.snapshotId)],
+  (table) => [uniqueIndex("diffs_snapshotId_uidx").on(table.snapshotId)],
 );
 
 export const diffReviews = pgTable(

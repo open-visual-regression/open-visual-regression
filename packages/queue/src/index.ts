@@ -58,10 +58,11 @@ const enqueue = async <T>(
   queueName: QueueName,
   payload: T,
   connection: IORedis,
+  extraOpts?: JobsOptions,
 ): Promise<Job<T>> => {
   const queue = new Queue<T, void, string, T, void, string>(queueName, { connection });
   try {
-    return await queue.add(queueName, payload, JOB_OPTIONS[queueName]);
+    return await queue.add(queueName, payload, { ...JOB_OPTIONS[queueName], ...extraOpts });
   } finally {
     await queue.close();
   }
@@ -85,7 +86,8 @@ export const enqueueDiff = (
 export const enqueueFinalize = (
   payload: FinalizeJobPayload,
   connection: IORedis,
-): Promise<Job<FinalizeJobPayload>> => enqueue(QueueName.BUILD_FINALIZE, payload, connection);
+): Promise<Job<FinalizeJobPayload>> =>
+  enqueue(QueueName.BUILD_FINALIZE, payload, connection, { jobId: payload.buildId });
 
 export const enqueuePurge = (
   payload: PurgeJobPayload,
