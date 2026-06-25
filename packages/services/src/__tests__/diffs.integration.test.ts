@@ -247,7 +247,7 @@ describe("diffs", () => {
       });
     });
 
-    test("overrides already-decided diffs, letting a later bulk vote flip the earlier one", async ({
+    test("overrides already-decided diffs with the new vote", async ({
       mainBuild,
       captureConfiguration,
       user,

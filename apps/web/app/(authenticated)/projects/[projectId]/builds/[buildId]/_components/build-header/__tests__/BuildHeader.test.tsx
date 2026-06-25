@@ -62,7 +62,7 @@ describe("BuildHeader", () => {
     expect(screen.getByRole("button", { name: /reject all/i })).toBeDisabled();
   });
 
-  it("should keep reject all enabled after approve all has resolved every needs-review snapshot", () => {
+  it("should enable reject all when every reviewable snapshot is already approved", () => {
     const build = mocks.build.generateBuild({ status: "passed" });
     renderComponent({
       build,
@@ -80,7 +80,7 @@ describe("BuildHeader", () => {
     expect(screen.getByRole("button", { name: /^reject all$/i })).toBeEnabled();
   });
 
-  it("should keep approve all enabled after a snapshot is individually rejected following a bulk approval", () => {
+  it("should enable approve all when at least one snapshot is rejected but others are still approved", () => {
     const build = mocks.build.generateBuild({ status: "rejected" });
     renderComponent({
       build,
