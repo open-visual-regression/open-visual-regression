@@ -41,14 +41,6 @@ export const Default: Story = {
   },
 };
 
-export const WithViewAllLink: Story = {
-  args: {
-    projects: PROJECTS,
-    total: 12,
-    builds: BUILDS,
-  },
-};
-
 export const NoRecentBuilds: Story = {
   args: {
     projects: PROJECTS,

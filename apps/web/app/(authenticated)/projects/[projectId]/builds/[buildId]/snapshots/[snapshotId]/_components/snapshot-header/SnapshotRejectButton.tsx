@@ -31,6 +31,11 @@ export const SnapshotRejectButton = ({ diffId, rejected }: SnapshotRejectButtonP
     <Button
       variant="secondary"
       disabled={pending || rejected}
+      className={
+        rejected
+          ? "disabled:bg-ovr-remove disabled:text-ovr-on-accent disabled:border-transparent"
+          : undefined
+      }
       onClick={() => execute({ diffId, vote: "reject" })}
     >
       <Icon icon={XIcon} />

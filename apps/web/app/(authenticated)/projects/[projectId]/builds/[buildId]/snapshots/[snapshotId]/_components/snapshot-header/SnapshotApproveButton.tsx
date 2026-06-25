@@ -28,7 +28,15 @@ export const SnapshotApproveButton = ({ diffId, approved }: SnapshotApproveButto
   const pending = status === "pending";
 
   return (
-    <Button disabled={pending || approved} onClick={() => execute({ diffId, vote: "approve" })}>
+    <Button
+      disabled={pending || approved}
+      className={
+        approved
+          ? "disabled:bg-ovr-diff-add disabled:text-ovr-on-accent disabled:border-transparent"
+          : undefined
+      }
+      onClick={() => execute({ diffId, vote: "approve" })}
+    >
       <Icon icon={CheckIcon} />
       {approved ? "approved" : pending ? "approving..." : "approve"}
     </Button>

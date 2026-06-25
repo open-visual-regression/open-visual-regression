@@ -2,7 +2,7 @@ import type { BuildSchema } from "@ovr/api/contracts/builds";
 import { SidebarSection } from "./SidebarSection";
 import { RecentBuildSidebarLink } from "./RecentBuildSidebarLink";
 
-const RECENT_BUILDS_FETCH_LIMIT = 20;
+const RECENT_BUILDS_FETCH_LIMIT = 15;
 
 type RecentBuildsSidebarLinksProps = {
   builds: Pick<BuildSchema, "id" | "project" | "branch" | "name" | "commitSha" | "status">[];

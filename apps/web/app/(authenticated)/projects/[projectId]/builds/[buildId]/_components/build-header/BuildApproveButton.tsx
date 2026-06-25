@@ -34,6 +34,11 @@ export const BuildApproveButton = ({
   return (
     <Button
       disabled={pending || approved || disabled}
+      className={
+        approved
+          ? "disabled:bg-ovr-diff-add disabled:text-ovr-on-accent disabled:border-transparent"
+          : undefined
+      }
       onClick={() => execute({ buildId, vote: "approve" })}
     >
       {approved ? "approved" : pending ? "approving..." : "approve all"}
