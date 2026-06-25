@@ -9,6 +9,7 @@ import {
   S3Client,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { NodeHttpHandler } from "@smithy/node-http-handler";
 
 const client = new S3Client({
   endpoint: process.env.STORAGE_ENDPOINT,
@@ -18,6 +19,10 @@ const client = new S3Client({
     secretAccessKey: process.env.STORAGE_SECRET_KEY ?? "",
   },
   forcePathStyle: true,
+  requestHandler: new NodeHttpHandler({
+    connectionTimeout: 5_000,
+    socketTimeout: 30_000,
+  }),
 });
 
 const bucket = process.env.STORAGE_BUCKET ?? "ovr";
