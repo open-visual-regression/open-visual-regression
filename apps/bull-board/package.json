@@ -1,0 +1,30 @@
+{
+  "name": "@ovr/bull-board",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch --onSuccess \"node dist/index.js\"",
+    "start": "node dist/index.js",
+    "tsc": "tsc --noEmit",
+    "lint": "oxlint src",
+    "format": "oxfmt src"
+  },
+  "dependencies": {
+    "@bull-board/api": "^8.0.1",
+    "@bull-board/express": "^8.0.1",
+    "@ovr/queue": "workspace:*",
+    "bullmq": "^5.78.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "ioredis": "5.10.1"
+  },
+  "devDependencies": {
+    "@ovr/typescript-config": "workspace:*",
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.15.3",
+    "tsup": "^8.5.1",
+    "typescript": "6.0.3"
+  }
+}
