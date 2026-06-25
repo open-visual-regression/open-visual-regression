@@ -108,8 +108,22 @@ export const getCountsInputSchema = z.object({
 
 export const getCountsContract = oc.input(getCountsInputSchema).output(snapshotCountsSchema);
 
+export const getAdjacentInputSchema = z.object({ snapshotId: z.uuidv7() });
+
+export const getAdjacentOutputSchema = z.object({
+  prevSnapshotId: z.uuidv7().nullable(),
+  nextSnapshotId: z.uuidv7().nullable(),
+  position: z.number().int().positive().nullable(),
+  total: z.number().int().positive().nullable(),
+});
+
+export type GetAdjacentOutputSchema = z.infer<typeof getAdjacentOutputSchema>;
+
+export const getAdjacentContract = oc.input(getAdjacentInputSchema).output(getAdjacentOutputSchema);
+
 export const contract = {
   getOne: getOneContract,
   list: listContract,
   getCounts: getCountsContract,
+  getAdjacent: getAdjacentContract,
 } as const;

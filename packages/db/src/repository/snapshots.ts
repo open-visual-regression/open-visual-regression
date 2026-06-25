@@ -148,6 +148,54 @@ export const defaultSnapshotSortBy: SnapshotSort[] = [
   { column: "viewportWidth", direction: "asc" },
 ];
 
+export type AdjacentSnapshotIds = {
+  prevId: string | null;
+  nextId: string | null;
+  position: number | null;
+  total: number | null;
+};
+
+export const findAdjacentReviewableIds = async (
+  buildId: string,
+  snapshotId: string,
+): Promise<AdjacentSnapshotIds> => {
+  const orderBy = sql.join(
+    defaultSnapshotSortBy.map(
+      ({ column, direction }) => sql`${snapshotSortColumns[column]} ${sql.raw(direction)}`,
+    ),
+    sql`, `,
+  );
+
+  const { rows } = await db.execute<{
+    prev_id: string | null;
+    next_id: string | null;
+    position: number;
+    total: number;
+  }>(sql`
+    with ordered as (
+      select
+        ${snapshots.id} as id,
+        row_number() over (order by ${orderBy}) as position,
+        count(*) over () as total,
+        lag(${snapshots.id}) over (order by ${orderBy}) as prev_id,
+        lead(${snapshots.id}) over (order by ${orderBy}) as next_id
+      from ${snapshots}
+      left join ${diffs} on ${diffs.snapshotId} = ${snapshots.id}
+      where ${snapshots.buildId} = ${buildId}
+        and ${displayStatusExpr} in ('needs_review', 'rejected', 'approved')
+    )
+    select position, total, prev_id, next_id from ordered where id = ${snapshotId}
+  `);
+
+  const row = rows[0];
+  return {
+    prevId: row?.prev_id ?? null,
+    nextId: row?.next_id ?? null,
+    position: row ? Number(row.position) : null,
+    total: row ? Number(row.total) : null,
+  };
+};
+
 export type ListForBuildOptions = ListForBuildFilters & {
   sortBy?: SnapshotSort[];
   limit: number;
