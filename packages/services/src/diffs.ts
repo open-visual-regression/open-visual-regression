@@ -92,7 +92,7 @@ export const bulkCastVote = async (
 ): Promise<void> => {
   const diffs = await dbClient.diffs.findByBuild(buildId);
   const targetIds = diffs
-    .filter((diff) => diff.reviewStatus === "needs_review")
+    .filter((diff) => diff.reviewStatus !== "not_required")
     .map((diff) => diff.id);
 
   if (targetIds.length === 0) {
