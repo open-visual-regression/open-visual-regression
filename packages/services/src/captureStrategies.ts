@@ -4,7 +4,13 @@ export type RenderResult = { ok: boolean; error?: string };
 
 export type CaptureStrategy = {
   waitForBoot: (page: Page, timeoutMs: number) => Promise<void>;
+  // Resolves once the story has mounted, before its play() function runs. Use this when
+  // only `parameters.ovr` is needed (e.g. to discover which viewport to capture at) —
+  // it doesn't depend on a play() function succeeding at a particular layout.
   waitForTargetRendered: (args: { targetId: string; timeoutMs: number }) => Promise<RenderResult>;
+  // Resolves once the story's render, play(), and afterEach have all completed. Use this
+  // before taking a screenshot, so interactions have actually run at the captured viewport.
+  waitForTargetPlayed: (args: { targetId: string; timeoutMs: number }) => Promise<RenderResult>;
 };
 
 type StorybookChannel = {
@@ -46,6 +52,10 @@ export const readOvrStoryParameters = (targetId: string): OvrStoryParameters | n
   return (ovr as OvrStoryParameters | undefined) ?? null;
 };
 
+// These are passed to `page.evaluate` and run as standalone functions inside the
+// browser — they can't close over anything from this module, so the two variants
+// below are intentionally self-contained rather than sharing a helper.
+
 const waitForStorybookTargetRendered = ({
   targetId,
   timeoutMs,
@@ -71,11 +81,62 @@ const waitForStorybookTargetRendered = ({
       Object.entries(listeners).forEach(([event, listener]) => channel.off(event, listener));
     };
 
-    // Storybook emits `storyRendered` once the story mounts but BEFORE its play
-    // function runs — resolving there would screenshot mid-interaction. `storyFinished`
-    // fires after render, play, and afterEach all complete (success or error), so it's
-    // the only event that's safe to resolve on.
-    let lastError: string | undefined;
+    const listeners: Record<string, (...args: never[]) => void> = {
+      storyRendered: () => {
+        cleanup();
+        resolve({ ok: true });
+      },
+      storyUnchanged: () => {
+        cleanup();
+        resolve({ ok: true });
+      },
+      storyErrored: (payload?: { description?: string }) => {
+        cleanup();
+        resolve({ ok: false, error: payload?.description ?? "story errored" });
+      },
+      storyThrewException: (error?: { message?: string }) => {
+        cleanup();
+        resolve({ ok: false, error: error?.message ?? "story threw an exception" });
+      },
+      storyMissing: (id?: string) => {
+        if (id !== targetId) {
+          return;
+        }
+        cleanup();
+        resolve({ ok: false, error: `story "${targetId}" was missing` });
+      },
+    };
+
+    Object.entries(listeners).forEach(([event, listener]) => channel.on(event, listener));
+    channel.emit("setCurrentStory", { storyId: targetId, viewMode: "story" });
+  });
+
+const waitForStorybookTargetPlayed = ({
+  targetId,
+  timeoutMs,
+}: {
+  targetId: string;
+  timeoutMs: number;
+}): Promise<RenderResult> =>
+  new Promise((resolve) => {
+    const channel = globalThis.__STORYBOOK_ADDONS_CHANNEL__;
+
+    if (!channel) {
+      resolve({ ok: false, error: "Storybook channel (__STORYBOOK_ADDONS_CHANNEL__) not found" });
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      cleanup();
+      resolve({ ok: false, error: `Timed out waiting for "${targetId}" to render` });
+    }, timeoutMs);
+
+    const cleanup = () => {
+      clearTimeout(timeout);
+      Object.entries(listeners).forEach(([event, listener]) => channel.off(event, listener));
+    };
+
+    const errorMessages: string[] = [];
 
     const listeners: Record<string, (...args: never[]) => void> = {
       storyFinished: (payload?: { storyId?: string; status?: "error" | "success" }) => {
@@ -86,20 +147,36 @@ const waitForStorybookTargetRendered = ({
         resolve(
           payload.status === "success"
             ? { ok: true }
-            : { ok: false, error: lastError ?? "story finished with errors" },
+            : {
+                ok: false,
+                error:
+                  errorMessages.length > 0
+                    ? errorMessages.join("\n")
+                    : "story finished with errors",
+              },
         );
       },
       storyErrored: (payload?: { description?: string }) => {
-        lastError = payload?.description ?? lastError;
+        if (payload?.description) {
+          errorMessages.push(payload.description);
+        }
       },
       storyThrewException: (error?: { message?: string }) => {
-        lastError = error?.message ?? lastError;
+        if (error?.message) {
+          errorMessages.push(error.message);
+        }
       },
       playFunctionThrewException: (error?: { message?: string }) => {
-        lastError = error?.message ?? lastError;
+        if (error?.message) {
+          errorMessages.push(error.message);
+        }
       },
       unhandledErrorsWhilePlaying: (errors?: { message?: string }[]) => {
-        lastError = errors?.[0]?.message ?? lastError;
+        errors?.forEach((error) => {
+          if (error.message) {
+            errorMessages.push(error.message);
+          }
+        });
       },
       storyMissing: (id?: string) => {
         if (id !== targetId) {
@@ -120,6 +197,7 @@ const storybookCaptureStrategy: CaptureStrategy = {
       .waitForSelector("#storybook-root, #root", { timeout: timeoutMs, state: "attached" })
       .then(() => undefined),
   waitForTargetRendered: waitForStorybookTargetRendered,
+  waitForTargetPlayed: waitForStorybookTargetPlayed,
 };
 
 const detectStorybookManifestVersion = async (proxyOrigin: string): Promise<number | undefined> => {
