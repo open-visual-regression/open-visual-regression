@@ -33,7 +33,6 @@ const buttonVariants = cva(
       },
     },
     compoundVariants: [
-      // solid
       {
         variant: "solid",
         color: "accent",
@@ -64,7 +63,6 @@ const buttonVariants = cva(
         color: "neutral",
         className: "bg-ovr-fg text-background hover:bg-ovr-fg-secondary",
       },
-      // outline
       {
         variant: "outline",
         color: "accent",
@@ -96,7 +94,6 @@ const buttonVariants = cva(
         className:
           "border-ovr-border text-ovr-fg hover:bg-ovr-elevated aria-expanded:bg-ovr-elevated",
       },
-      // ghost
       {
         variant: "ghost",
         color: "accent",
@@ -112,7 +109,6 @@ const buttonVariants = cva(
         className:
           "text-ovr-fg-secondary hover:bg-ovr-hover hover:text-ovr-fg aria-expanded:bg-ovr-hover aria-expanded:text-ovr-fg",
       },
-      // link
       { variant: "link", color: "accent", className: "text-ovr-accent" },
       { variant: "link", color: "red", className: "text-ovr-red" },
       { variant: "link", color: "green", className: "text-ovr-green" },

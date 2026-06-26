@@ -110,7 +110,6 @@
   --color-ovr-status-pending: var(--ovr-status-pending);
   --color-ovr-status-pending-dim: var(--ovr-status-pending-dim);
 
-  /* OVR primitive color palette (hue-named, no intent attached) */
   --color-ovr-red: var(--ovr-color-red);
   --color-ovr-red-hover: var(--ovr-color-red-hover);
   --color-ovr-red-dim: var(--ovr-color-red-dim);
@@ -134,7 +133,6 @@
   --pixel-grid: radial-gradient(circle at 8px 8px, oklch(0 0 0 / 0.07) 1px, transparent 0);
   --pixel-grid-size: 16px 16px;
 
-  /* OVR primitive color palette — hue-named, carries no meaning of its own */
   --ovr-color-red: oklch(0.68 0.23 25);
   --ovr-color-red-hover: oklch(0.64 0.23 25);
   --ovr-color-red-dim: oklch(0.68 0.23 25 / 0.18);
@@ -168,14 +166,11 @@
   --ovr-accent-dim: oklch(0.78 0.18 75 / 0.15);
   --ovr-accent-ring: oklch(0.78 0.18 75 / 0.35);
 
-  /* Diff visualization — fixed convention (additions green, removals red),
-     sourced from the primitives but scoped to diff rendering only */
   --ovr-diff-add: var(--ovr-color-green);
   --ovr-diff-add-dim: var(--ovr-color-green-dim);
   --ovr-diff-remove: var(--ovr-color-red);
   --ovr-diff-remove-dim: var(--ovr-color-red-dim);
 
-  /* Review/build status — domain meaning mapped onto primitives, not onto diff tokens */
   --ovr-status-passed: var(--ovr-color-green);
   --ovr-status-needs-review: var(--ovr-color-amber);
   --ovr-status-error: var(--ovr-color-red);
