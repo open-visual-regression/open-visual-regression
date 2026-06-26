@@ -633,5 +633,27 @@ describe("snapshots", () => {
       const after = await dbClient.snapshots.findAdjacentReviewableIds(build.id, first.id);
       expect(after).toEqual({ prevId: null, nextId: second.id, position: 1, total: 2 });
     });
+
+    test("listForBuild groups needs_review/rejected/approved above passed and pending, and approving doesn't reshuffle them", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const { first } = await seedReviewQueue(build, captureConfiguration);
+
+      const before = await dbClient.snapshots.listForBuild(build.id, { limit: 10, offset: 0 });
+      expect(before.map((row) => row.targetId)).toEqual(["d", "a", "b", "c"]);
+      expect(before.map((row) => row.status)).toEqual([
+        "error",
+        "needs_review",
+        "rejected",
+        "passed",
+      ]);
+
+      const diff = await dbClient.diffs.findBySnapshot(first.id);
+      await dbClient.diffs.updateReviewStatus(diff!.id, "approved");
+
+      const after = await dbClient.snapshots.listForBuild(build.id, { limit: 10, offset: 0 });
+      expect(after.map((row) => row.targetId)).toEqual(["d", "a", "b", "c"]);
+    });
   });
 });

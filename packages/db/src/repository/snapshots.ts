@@ -117,13 +117,16 @@ const listForBuildWhere = (buildId: string, { status, search }: ListForBuildFilt
       : undefined,
   );
 
+// needs_review/rejected/approved share a tier so that reviewing a snapshot
+// (which changes its reviewStatus) can't move it past its neighbors and
+// reorder the grid or shift prev/next navigation underneath the reviewer.
 const statusPriorityExpr = sql<number>`case (${displayStatusExpr})
   when 'error' then 1
   when 'needs_review' then 2
-  when 'rejected' then 3
-  when 'approved' then 4
-  when 'passed' then 5
-  when 'pending' then 6
+  when 'rejected' then 2
+  when 'approved' then 2
+  when 'passed' then 3
+  when 'pending' then 4
 end`;
 
 export const snapshotSortColumns = {
@@ -140,10 +143,8 @@ export type SnapshotSortDirection = "asc" | "desc";
 
 export type SnapshotSort = { column: SnapshotSortColumn; direction: SnapshotSortDirection };
 
-// Excludes "status": it's derived from mutable review state, so sorting by it
-// would reorder the build page grid (and the queue position it implies for
-// prev/next navigation) every time a snapshot is approved or rejected.
 export const defaultSnapshotSortBy: SnapshotSort[] = [
+  { column: "status", direction: "asc" },
   { column: "targetTitle", direction: "asc" },
   { column: "targetName", direction: "asc" },
   { column: "browser", direction: "asc" },
