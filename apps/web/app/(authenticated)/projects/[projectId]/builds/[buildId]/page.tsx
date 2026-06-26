@@ -17,13 +17,6 @@ export default async function BuildPage({ params }: BuildPageProps) {
       serverClient.snapshots.getCounts({ buildId }),
       serverClient.snapshots.list({
         buildId,
-        sortBy: [
-          { column: "status", direction: "asc" },
-          { column: "targetTitle", direction: "asc" },
-          { column: "targetName", direction: "asc" },
-          { column: "browser", direction: "asc" },
-          { column: "viewportWidth", direction: "asc" },
-        ],
         limit: PAGE_SIZE,
         offset: 0,
       }),

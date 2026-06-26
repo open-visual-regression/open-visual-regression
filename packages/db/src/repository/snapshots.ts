@@ -140,19 +140,15 @@ export type SnapshotSortDirection = "asc" | "desc";
 
 export type SnapshotSort = { column: SnapshotSortColumn; direction: SnapshotSortDirection };
 
+// Excludes "status": it's derived from mutable review state, so sorting by it
+// would reorder the build page grid (and the queue position it implies for
+// prev/next navigation) every time a snapshot is approved or rejected.
 export const defaultSnapshotSortBy: SnapshotSort[] = [
-  { column: "status", direction: "asc" },
   { column: "targetTitle", direction: "asc" },
   { column: "targetName", direction: "asc" },
   { column: "browser", direction: "asc" },
   { column: "viewportWidth", direction: "asc" },
 ];
-
-// Excludes "status" so that approving/rejecting a snapshot can't change its
-// position in the review queue and shift prev/next navigation underneath the reviewer.
-const reviewQueueSortBy: SnapshotSort[] = defaultSnapshotSortBy.filter(
-  ({ column }) => column !== "status",
-);
 
 export type AdjacentSnapshotIds = {
   prevId: string | null;
@@ -166,7 +162,7 @@ export const findAdjacentReviewableIds = async (
   snapshotId: string,
 ): Promise<AdjacentSnapshotIds> => {
   const orderBy = sql.join(
-    reviewQueueSortBy.map(
+    defaultSnapshotSortBy.map(
       ({ column, direction }) => sql`${snapshotSortColumns[column]} ${sql.raw(direction)}`,
     ),
     sql`, `,
