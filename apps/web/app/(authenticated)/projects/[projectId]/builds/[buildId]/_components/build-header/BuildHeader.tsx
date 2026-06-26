@@ -60,7 +60,7 @@ export const BuildHeader = ({ build, snapshotCounts }: BuildHeaderProps) => {
         </div>
       </div>
       {build.errorMessage ? (
-        <Alert variant="destructive">
+        <Alert color="red">
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>{build.errorMessage}</AlertDescription>
         </Alert>

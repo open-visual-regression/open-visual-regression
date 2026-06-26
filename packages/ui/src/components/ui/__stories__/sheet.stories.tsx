@@ -28,7 +28,9 @@ export const Default: Story = {
   render: () => (
     <div className="flex items-start justify-center p-6 min-h-[420px]">
       <Sheet>
-        <SheetTrigger render={<Button variant="secondary" />}>Open sheet</SheetTrigger>
+        <SheetTrigger render={<Button variant="outline" color="neutral" />}>
+          Open sheet
+        </SheetTrigger>
         <SheetContent>
           <SheetHeader>
             <SheetTitle>Run settings</SheetTitle>
@@ -67,7 +69,7 @@ export const Navigation: Story = {
   render: () => (
     <div className="flex items-start justify-center p-6 min-h-[420px]">
       <Sheet>
-        <SheetTrigger render={<Button variant="ghost" size="icon-sm" />}>
+        <SheetTrigger render={<Button variant="ghost" color="neutral" size="icon-sm" />}>
           <FolderIcon />
           <span className="sr-only">Open navigation</span>
         </SheetTrigger>

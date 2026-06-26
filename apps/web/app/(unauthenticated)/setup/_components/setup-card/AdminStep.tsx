@@ -81,7 +81,8 @@ export const AdminStep = ({
         </Button>
         <Button
           type="button"
-          variant="secondary"
+          variant="outline"
+          color="neutral"
           size="lg"
           className="w-full"
           disabled={isPending}

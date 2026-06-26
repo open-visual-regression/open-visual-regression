@@ -109,6 +109,21 @@
   --color-ovr-status-error: var(--ovr-status-error);
   --color-ovr-status-pending: var(--ovr-status-pending);
   --color-ovr-status-pending-dim: var(--ovr-status-pending-dim);
+
+  /* OVR primitive color palette (hue-named, no intent attached) */
+  --color-ovr-red: var(--ovr-color-red);
+  --color-ovr-red-hover: var(--ovr-color-red-hover);
+  --color-ovr-red-dim: var(--ovr-color-red-dim);
+  --color-ovr-green: var(--ovr-color-green);
+  --color-ovr-green-hover: var(--ovr-color-green-hover);
+  --color-ovr-green-dim: var(--ovr-color-green-dim);
+  --color-ovr-blue: var(--ovr-color-blue);
+  --color-ovr-blue-hover: var(--ovr-color-blue-hover);
+  --color-ovr-blue-dim: var(--ovr-color-blue-dim);
+  --color-ovr-amber: var(--ovr-color-amber);
+  --color-ovr-amber-hover: var(--ovr-color-amber-hover);
+  --color-ovr-amber-dim: var(--ovr-color-amber-dim);
+  --color-ovr-on-solid: var(--ovr-color-on-solid);
   --shadow-ovr-popover: 0 8px 24px -8px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--ovr-border-default);
   --shadow-ovr-modal: 0 24px 64px -16px rgba(0, 0, 0, 0.7), 0 0 0 1px var(--ovr-border-default);
 }
@@ -119,9 +134,26 @@
   --pixel-grid: radial-gradient(circle at 8px 8px, oklch(0 0 0 / 0.07) 1px, transparent 0);
   --pixel-grid-size: 16px 16px;
 
+  /* OVR primitive color palette — hue-named, carries no meaning of its own */
+  --ovr-color-red: oklch(0.68 0.23 25);
+  --ovr-color-red-hover: oklch(0.64 0.23 25);
+  --ovr-color-red-dim: oklch(0.68 0.23 25 / 0.18);
+  --ovr-color-green: oklch(0.78 0.2 145);
+  --ovr-color-green-hover: oklch(0.74 0.2 145);
+  --ovr-color-green-dim: oklch(0.78 0.2 145 / 0.18);
+  --ovr-color-blue: oklch(0.72 0.13 230);
+  --ovr-color-blue-hover: oklch(0.68 0.13 230);
+  --ovr-color-blue-dim: oklch(0.72 0.13 230 / 0.18);
+  --ovr-color-amber: oklch(0.78 0.18 75);
+  --ovr-color-amber-hover: oklch(0.82 0.18 75);
+  --ovr-color-amber-dim: oklch(0.78 0.18 75 / 0.15);
+  --ovr-color-on-solid: oklch(0.15 0.006 270);
+
+  /* Brand accent — intentionally its own token, decoupled from the amber primitive
+     even though it currently shares the same hue */
   --ovr-accent-primary: oklch(0.78 0.18 75);
   --ovr-accent-primary-hover: oklch(0.82 0.18 75);
-  --ovr-on-accent: oklch(0.15 0.006 270);
+  --ovr-on-accent: var(--ovr-color-on-solid);
   --ovr-bg-elevated: oklch(0.97 0 0);
   --ovr-bg-hover: oklch(0.95 0 0);
   --ovr-fg-primary: oklch(0.15 0.006 270);
@@ -129,21 +161,26 @@
   --ovr-fg-muted: oklch(0.62 0.006 270);
   --ovr-border-default: oklch(0.86 0 0);
   --ovr-border-subtle: oklch(0.92 0 0);
-  --ovr-diff-remove: oklch(0.68 0.23 25);
   --ovr-bg-raised: oklch(1 0 0);
   --ovr-bg-inset: oklch(0.96 0 0);
   --ovr-bg-active: oklch(0.92 0 0);
   --ovr-fg-tertiary: oklch(0.48 0.006 270);
-  --ovr-diff-add: oklch(0.78 0.2 145);
-  --ovr-diff-add-dim: oklch(0.78 0.2 145 / 0.18);
-  --ovr-diff-remove-dim: oklch(0.68 0.23 25 / 0.18);
   --ovr-accent-dim: oklch(0.78 0.18 75 / 0.15);
   --ovr-accent-ring: oklch(0.78 0.18 75 / 0.35);
-  --ovr-status-passed: var(--ovr-diff-add);
-  --ovr-status-needs-review: var(--ovr-accent-primary);
-  --ovr-status-error: var(--ovr-diff-remove);
-  --ovr-status-pending: oklch(0.72 0.13 230);
-  --ovr-status-pending-dim: oklch(0.72 0.13 230 / 0.1);
+
+  /* Diff visualization — fixed convention (additions green, removals red),
+     sourced from the primitives but scoped to diff rendering only */
+  --ovr-diff-add: var(--ovr-color-green);
+  --ovr-diff-add-dim: var(--ovr-color-green-dim);
+  --ovr-diff-remove: var(--ovr-color-red);
+  --ovr-diff-remove-dim: var(--ovr-color-red-dim);
+
+  /* Review/build status — domain meaning mapped onto primitives, not onto diff tokens */
+  --ovr-status-passed: var(--ovr-color-green);
+  --ovr-status-needs-review: var(--ovr-color-amber);
+  --ovr-status-error: var(--ovr-color-red);
+  --ovr-status-pending: var(--ovr-color-blue);
+  --ovr-status-pending-dim: var(--ovr-color-blue-dim);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -181,9 +218,23 @@
   --pixel-grid: radial-gradient(circle at 8px 8px, oklch(1 0 0 / 0.13) 1px, transparent 0);
   --pixel-grid-size: 16px 16px;
 
+  --ovr-color-red: oklch(0.68 0.23 25);
+  --ovr-color-red-hover: oklch(0.64 0.23 25);
+  --ovr-color-red-dim: oklch(0.68 0.23 25 / 0.18);
+  --ovr-color-green: oklch(0.78 0.2 145);
+  --ovr-color-green-hover: oklch(0.74 0.2 145);
+  --ovr-color-green-dim: oklch(0.78 0.2 145 / 0.18);
+  --ovr-color-blue: oklch(0.72 0.13 230);
+  --ovr-color-blue-hover: oklch(0.68 0.13 230);
+  --ovr-color-blue-dim: oklch(0.72 0.13 230 / 0.18);
+  --ovr-color-amber: oklch(0.78 0.18 75);
+  --ovr-color-amber-hover: oklch(0.82 0.18 75);
+  --ovr-color-amber-dim: oklch(0.78 0.18 75 / 0.15);
+  --ovr-color-on-solid: oklch(0.15 0.006 270);
+
   --ovr-accent-primary: oklch(0.78 0.18 75);
   --ovr-accent-primary-hover: oklch(0.82 0.18 75);
-  --ovr-on-accent: oklch(0.15 0.006 270);
+  --ovr-on-accent: var(--ovr-color-on-solid);
   --ovr-bg-elevated: oklch(0.195 0.006 270);
   --ovr-bg-hover: oklch(0.225 0.006 270);
   --ovr-fg-primary: oklch(0.965 0 0);
@@ -191,21 +242,23 @@
   --ovr-fg-muted: oklch(0.46 0 0);
   --ovr-border-default: oklch(0.325 0.006 270);
   --ovr-border-subtle: oklch(0.265 0.006 270);
-  --ovr-diff-remove: oklch(0.68 0.23 25);
   --ovr-bg-raised: oklch(0.235 0.006 270);
   --ovr-bg-inset: oklch(0.125 0.006 270);
   --ovr-bg-active: oklch(0.265 0.006 270);
   --ovr-fg-tertiary: oklch(0.6 0 0);
-  --ovr-diff-add: oklch(0.78 0.2 145);
-  --ovr-diff-add-dim: oklch(0.78 0.2 145 / 0.18);
-  --ovr-diff-remove-dim: oklch(0.68 0.23 25 / 0.18);
   --ovr-accent-dim: oklch(0.78 0.18 75 / 0.15);
   --ovr-accent-ring: oklch(0.78 0.18 75 / 0.35);
-  --ovr-status-passed: var(--ovr-diff-add);
-  --ovr-status-needs-review: var(--ovr-accent-primary);
-  --ovr-status-error: var(--ovr-diff-remove);
-  --ovr-status-pending: oklch(0.72 0.13 230);
-  --ovr-status-pending-dim: oklch(0.72 0.13 230 / 0.1);
+
+  --ovr-diff-add: var(--ovr-color-green);
+  --ovr-diff-add-dim: var(--ovr-color-green-dim);
+  --ovr-diff-remove: var(--ovr-color-red);
+  --ovr-diff-remove-dim: var(--ovr-color-red-dim);
+
+  --ovr-status-passed: var(--ovr-color-green);
+  --ovr-status-needs-review: var(--ovr-color-amber);
+  --ovr-status-error: var(--ovr-color-red);
+  --ovr-status-pending: var(--ovr-color-blue);
+  --ovr-status-pending-dim: var(--ovr-color-blue-dim);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);

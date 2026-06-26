@@ -12,13 +12,14 @@ type CopyButtonProps = {
   children?: ReactNode;
   copiedLabel?: ReactNode;
   className?: string;
-} & Pick<VariantProps<typeof buttonVariants>, "variant" | "size">;
+} & Pick<VariantProps<typeof buttonVariants>, "variant" | "color" | "size">;
 
 export const CopyButton = ({
   text,
   children = "copy",
   copiedLabel = "copied",
-  variant = "secondary",
+  variant = "outline",
+  color = "neutral",
   size = "sm",
   className,
 }: CopyButtonProps) => {
@@ -42,6 +43,7 @@ export const CopyButton = ({
     <Button
       type="button"
       variant={variant}
+      color={color}
       size={size}
       className={className}
       onClick={handleCopyClick}

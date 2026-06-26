@@ -33,13 +33,13 @@ const ICON_MAP: Record<StatusVariant, LucideIcon> = {
 const statusIconVariants = cva("", {
   variants: {
     variant: {
-      needs_review: "text-ovr-accent",
-      passed: "text-ovr-diff-add",
-      pending: "text-ovr-status-pending",
+      needs_review: "text-ovr-amber",
+      passed: "text-ovr-green",
+      pending: "text-ovr-blue",
       stale: "text-ovr-fg-muted",
-      approved: "text-ovr-diff-add",
-      rejected: "text-ovr-remove",
-      error: "text-ovr-remove",
+      approved: "text-ovr-green",
+      rejected: "text-ovr-red",
+      error: "text-ovr-red",
     },
   },
 });

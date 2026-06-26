@@ -54,7 +54,14 @@ const DialogContent = ({
       {showCloseButton && (
         <DialogPrimitive.Close
           data-slot="dialog-close"
-          render={<Button variant="ghost" className="absolute top-2 right-2" size="icon-sm" />}
+          render={
+            <Button
+              variant="ghost"
+              color="neutral"
+              className="absolute top-2 right-2"
+              size="icon-sm"
+            />
+          }
         >
           <XIcon />
           <span className="sr-only">Close</span>
@@ -90,7 +97,9 @@ const DialogFooter = ({
   >
     {children}
     {showCloseButton && (
-      <DialogPrimitive.Close render={<Button variant="ghost" />}>Cancel</DialogPrimitive.Close>
+      <DialogPrimitive.Close render={<Button variant="ghost" color="neutral" />}>
+        Cancel
+      </DialogPrimitive.Close>
     )}
   </div>
 );

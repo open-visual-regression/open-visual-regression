@@ -16,22 +16,16 @@ export const KitchenSink: Story = {
   render: () => (
     <div className="p-6 space-y-8 max-w-md">
       <div className="space-y-2">
-        <p className="font-mono text-[11px] text-muted-foreground">
-          variant="default" — blue/pending
-        </p>
+        <p className="font-mono text-[11px] text-muted-foreground">color="blue" (default)</p>
+        <Toast color="blue" icon={<CircleDotIcon className="size-3.5" />} title="Run pending" />
         <Toast
-          variant="default"
-          icon={<CircleDotIcon className="size-3.5" />}
-          title="Run pending"
-        />
-        <Toast
-          variant="default"
+          color="blue"
           icon={<InfoIcon className="size-3.5" />}
           title="Run queued"
           description="Waiting for previous run to finish."
         />
         <Toast
-          variant="default"
+          color="blue"
           icon={<InfoIcon className="size-3.5" />}
           title="Stale baseline"
           description="Baseline is 14 days old. Consider re-capturing."
@@ -42,14 +36,14 @@ export const KitchenSink: Story = {
       </div>
 
       <div className="space-y-2">
-        <p className="font-mono text-[11px] text-muted-foreground">variant="success" — green</p>
+        <p className="font-mono text-[11px] text-muted-foreground">color="green"</p>
         <Toast
-          variant="success"
+          color="green"
           icon={<CheckCircle2Icon className="size-3.5" />}
           title="Run approved"
         />
         <Toast
-          variant="success"
+          color="green"
           icon={<CheckCircle2Icon className="size-3.5" />}
           title="Snapshots accepted"
           description="All 38 diffs marked as approved."
@@ -60,12 +54,10 @@ export const KitchenSink: Story = {
       </div>
 
       <div className="space-y-2">
-        <p className="font-mono text-[11px] text-muted-foreground">
-          variant="warning" — amber/accent
-        </p>
-        <Toast variant="warning" icon={<ZapIcon className="size-3.5" />} title="Run started" />
+        <p className="font-mono text-[11px] text-muted-foreground">color="amber"</p>
+        <Toast color="amber" icon={<ZapIcon className="size-3.5" />} title="Run started" />
         <Toast
-          variant="warning"
+          color="amber"
           icon={<InfoIcon className="size-3.5" />}
           title="New baseline captured"
           description="142 snapshots saved for branch main."
@@ -76,14 +68,14 @@ export const KitchenSink: Story = {
       </div>
 
       <div className="space-y-2">
-        <p className="font-mono text-[11px] text-muted-foreground">variant="destructive" — red</p>
+        <p className="font-mono text-[11px] text-muted-foreground">color="red"</p>
         <Toast
-          variant="destructive"
+          color="red"
           icon={<OctagonXIcon className="size-3.5" />}
           title="Regression detected"
         />
         <Toast
-          variant="destructive"
+          color="red"
           icon={<OctagonXIcon className="size-3.5" />}
           title="14 regressions found"
           description="Visual diffs exceed threshold on feature/navbar."
@@ -94,10 +86,10 @@ export const KitchenSink: Story = {
       </div>
 
       <div className="space-y-2">
-        <p className="font-mono text-[11px] text-muted-foreground">variant="muted" — grey</p>
-        <Toast variant="muted" title="Auto-saved" />
+        <p className="font-mono text-[11px] text-muted-foreground">color="neutral"</p>
+        <Toast color="neutral" title="Auto-saved" />
         <Toast
-          variant="muted"
+          color="neutral"
           title="Settings updated"
           description="Threshold changed to 0.5%."
           onDismiss={() => {}}
@@ -114,14 +106,14 @@ export const Stack: Story = {
       <p className="p-4 font-mono text-[11px] text-muted-foreground">Fixed bottom-right stack</p>
       <ToastContainer className="absolute">
         <Toast
-          variant="success"
+          color="green"
           icon={<CheckCircle2Icon className="size-3.5" />}
           title="Run approved"
           description="All snapshots accepted."
           onDismiss={() => {}}
         />
         <Toast
-          variant="default"
+          color="blue"
           icon={<InfoIcon className="size-3.5" />}
           title="New run started"
           description="Branch: feature/my-branch"
@@ -129,7 +121,7 @@ export const Stack: Story = {
           onAction={() => {}}
           onDismiss={() => {}}
         />
-        <Toast variant="muted" title="Auto-saved" onDismiss={() => {}} />
+        <Toast color="neutral" title="Auto-saved" onDismiss={() => {}} />
       </ToastContainer>
     </div>
   ),

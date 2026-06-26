@@ -28,7 +28,7 @@ export const SnapshotHeader = ({ snapshot, build }: SnapshotHeaderProps) => (
       </div>
     </div>
     {snapshot.status === "error" ? (
-      <Alert variant="destructive">
+      <Alert color="red">
         <AlertTitle>Error</AlertTitle>
         <AlertDescription>This snapshot failed to capture.</AlertDescription>
       </Alert>

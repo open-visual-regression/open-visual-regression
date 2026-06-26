@@ -30,7 +30,7 @@ export default async function ProjectPage(props: ProjectPageProps) {
         <Typography variant="h1" as="h1">
           {projectResult.project.name}
         </Typography>
-        <ButtonLink href={`/projects/${projectId}/settings`} variant="secondary">
+        <ButtonLink href={`/projects/${projectId}/settings`} variant="outline" color="neutral">
           <Icon icon={SettingsIcon} />
           project settings
         </ButtonLink>

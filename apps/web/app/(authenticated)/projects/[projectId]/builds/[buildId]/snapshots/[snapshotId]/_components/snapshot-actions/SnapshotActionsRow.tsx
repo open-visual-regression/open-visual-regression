@@ -32,7 +32,7 @@ export const SnapshotActionsRow = ({
   return (
     <div className="bg-ovr-elevated border-b px-5 md:px-6 lg:px-10 py-2 -mx-5 md:-mx-6 lg:-mx-10 -mt-3 md:-mt-4 lg:-mt-6 flex flex-row justify-between">
       <div className="flex items-center flex-row gap-2">
-        <ButtonLink href="../" variant="secondary" size="sm">
+        <ButtonLink href="../" variant="outline" color="neutral" size="sm">
           <Icon icon={ChevronLeftIcon} />
           back
         </ButtonLink>
@@ -48,7 +48,8 @@ export const SnapshotActionsRow = ({
           <ButtonLink
             href={prevSnapshotId ? snapshotHref(prevSnapshotId) : null}
             disabled={!prevSnapshotId}
-            variant="secondary"
+            variant="outline"
+            color="neutral"
             size="sm"
           >
             <Icon icon={ChevronLeftIcon} />
@@ -62,7 +63,8 @@ export const SnapshotActionsRow = ({
           <ButtonLink
             href={nextSnapshotId ? snapshotHref(nextSnapshotId) : null}
             disabled={!nextSnapshotId}
-            variant="secondary"
+            variant="outline"
+            color="neutral"
             size="sm"
           >
             next
