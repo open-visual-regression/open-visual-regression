@@ -11,7 +11,7 @@ const buttonVariants = cva(
         solid: "font-semibold tracking-[-0.01em]",
         outline: "bg-transparent font-medium",
         ghost: "bg-transparent font-medium",
-        link: "bg-transparent underline-offset-4 hover:underline",
+        link: "bg-transparent underline underline-offset-4",
       },
       color: {
         accent: "",
@@ -115,6 +115,7 @@ const buttonVariants = cva(
       { variant: "link", color: "blue", className: "text-ovr-blue" },
       { variant: "link", color: "amber", className: "text-ovr-amber" },
       { variant: "link", color: "neutral", className: "text-ovr-fg" },
+      { variant: "link", className: "h-auto p-0" },
     ],
     defaultVariants: {
       variant: "solid",
