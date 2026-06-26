@@ -1,6 +1,5 @@
 import http from "node:http";
 import path from "node:path";
-import { pipeline } from "node:stream";
 
 import { storage } from "@ovr/storage";
 
@@ -24,15 +23,16 @@ export const startStaticProxy = (projectId: string, buildId: string): Promise<St
         .getFileStream(getStaticPath(projectId, buildId, relativePath))
         .then((stream) => {
           res.writeHead(200, { "Content-Type": getContentType(relativePath) });
-          pipeline(stream, res, (err) => {
-            if (err) {
-              res.destroy(err);
-            }
-          });
+          stream.on("error", () => res.destroy());
+          stream.pipe(res);
         })
         .catch(() => {
-          res.writeHead(404);
-          res.end();
+          if (res.headersSent) {
+            res.destroy();
+          } else {
+            res.writeHead(404);
+            res.end();
+          }
         });
     });
 

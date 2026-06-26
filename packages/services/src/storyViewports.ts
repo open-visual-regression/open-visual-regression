@@ -23,6 +23,7 @@ const OVERRIDE_READ_CONCURRENCY = 8;
 const readStoryOverride = async (
   browser: Browser,
   proxy: StaticProxy,
+  strategy: Awaited<ReturnType<typeof detectCaptureStrategy>>,
   targetId: string,
 ): Promise<OverrideEntry | undefined> => {
   const context = await browser.newContext();
@@ -38,7 +39,6 @@ const readStoryOverride = async (
       return route.abort();
     });
 
-    const strategy = await detectCaptureStrategy(proxy.origin);
     await page.goto(`${proxy.origin}/iframe.html`, { waitUntil: "load" });
     await strategy.waitForBoot(page, BOOT_TIMEOUT_MS);
 
@@ -72,8 +72,9 @@ const readOverridesConcurrently = async (
   proxy: StaticProxy,
   targetIds: readonly string[],
 ): Promise<OverrideEntry[]> => {
+  const strategy = await detectCaptureStrategy(proxy.origin);
   const entries = await mapWithConcurrency(targetIds, OVERRIDE_READ_CONCURRENCY, (targetId) =>
-    readStoryOverride(browser, proxy, targetId),
+    readStoryOverride(browser, proxy, strategy, targetId),
   );
 
   return entries.filter((entry): entry is OverrideEntry => entry !== undefined);
