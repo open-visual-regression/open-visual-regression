@@ -46,21 +46,9 @@ export type PurgeJobPayload = {
 };
 
 const JOB_OPTIONS: Record<QueueName, JobsOptions> = {
-  [QueueName.BUILD_EXTRACT]: {
-    attempts: 3,
-    backoff: { type: "exponential", delay: 2000 },
-    timeout: 300_000,
-  },
-  [QueueName.SNAPSHOT_CAPTURE]: {
-    attempts: 5,
-    backoff: { type: "exponential", delay: 2000 },
-    timeout: 180_000,
-  },
-  [QueueName.SNAPSHOT_DIFF]: {
-    attempts: 3,
-    backoff: { type: "exponential", delay: 2000 },
-    timeout: 60_000,
-  },
+  [QueueName.BUILD_EXTRACT]: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
+  [QueueName.SNAPSHOT_CAPTURE]: { attempts: 5, backoff: { type: "exponential", delay: 2000 } },
+  [QueueName.SNAPSHOT_DIFF]: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
   [QueueName.BUILD_FINALIZE]: { attempts: 3, backoff: { type: "fixed", delay: 1000 } },
   [QueueName.BUILD_PURGE_DISPATCH]: { attempts: 3, backoff: { type: "exponential", delay: 5000 } },
   [QueueName.BUILD_PURGE]: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
