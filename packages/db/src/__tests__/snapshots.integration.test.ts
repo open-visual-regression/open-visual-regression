@@ -1,6 +1,60 @@
 import { dbClient } from "../client";
 import { describe, expect, test } from "./fixtures";
 
+const seedReviewQueue = async (build: { id: string }, captureConfiguration: object) => {
+  const [first, second, noDiff, errored] = await dbClient.snapshots.createMany({
+    values: [
+      {
+        buildId: build.id,
+        ...captureConfiguration,
+        targetId: "a",
+        targetTitle: "A",
+        status: "captured",
+      },
+      {
+        buildId: build.id,
+        ...captureConfiguration,
+        targetId: "b",
+        targetTitle: "B",
+        status: "captured",
+      },
+      {
+        buildId: build.id,
+        ...captureConfiguration,
+        targetId: "c",
+        targetTitle: "C",
+        status: "captured",
+      },
+      {
+        buildId: build.id,
+        ...captureConfiguration,
+        targetId: "d",
+        targetTitle: "D",
+        status: "error",
+        hasRenderError: true,
+      },
+    ],
+  });
+
+  await dbClient.diffs.create({
+    snapshotId: first!.id,
+    processingStatus: "diffed",
+    reviewStatus: "needs_review",
+  });
+  await dbClient.diffs.create({
+    snapshotId: second!.id,
+    processingStatus: "diffed",
+    reviewStatus: "rejected",
+  });
+  await dbClient.diffs.create({
+    snapshotId: noDiff!.id,
+    processingStatus: "diffed",
+    reviewStatus: "not_required",
+  });
+
+  return { first: first!, second: second!, noDiff: noDiff!, errored: errored! };
+};
+
 describe("snapshots", () => {
   describe("createMany", () => {
     test("should create a snapshot for each input row", async ({ build, captureConfiguration }) => {
@@ -519,60 +573,6 @@ describe("snapshots", () => {
   });
 
   describe("findAdjacentReviewableIds", () => {
-    const seedReviewQueue = async (build: { id: string }, captureConfiguration: object) => {
-      const [first, second, noDiff, errored] = await dbClient.snapshots.createMany({
-        values: [
-          {
-            buildId: build.id,
-            ...captureConfiguration,
-            targetId: "a",
-            targetTitle: "A",
-            status: "captured",
-          },
-          {
-            buildId: build.id,
-            ...captureConfiguration,
-            targetId: "b",
-            targetTitle: "B",
-            status: "captured",
-          },
-          {
-            buildId: build.id,
-            ...captureConfiguration,
-            targetId: "c",
-            targetTitle: "C",
-            status: "captured",
-          },
-          {
-            buildId: build.id,
-            ...captureConfiguration,
-            targetId: "d",
-            targetTitle: "D",
-            status: "error",
-            hasRenderError: true,
-          },
-        ],
-      });
-
-      await dbClient.diffs.create({
-        snapshotId: first!.id,
-        processingStatus: "diffed",
-        reviewStatus: "needs_review",
-      });
-      await dbClient.diffs.create({
-        snapshotId: second!.id,
-        processingStatus: "diffed",
-        reviewStatus: "rejected",
-      });
-      await dbClient.diffs.create({
-        snapshotId: noDiff!.id,
-        processingStatus: "diffed",
-        reviewStatus: "not_required",
-      });
-
-      return { first: first!, second: second!, noDiff: noDiff!, errored: errored! };
-    };
-
     test("returns the next reviewable id in sort order", async ({
       build,
       captureConfiguration,
@@ -618,7 +618,7 @@ describe("snapshots", () => {
       expect(result.nextId).toBeNull();
     });
 
-    test("keeps queue order stable after approving or rejecting a snapshot", async ({
+    test("preserves position when status changes within the same priority tier", async ({
       build,
       captureConfiguration,
     }) => {
@@ -633,8 +633,26 @@ describe("snapshots", () => {
       const after = await dbClient.snapshots.findAdjacentReviewableIds(build.id, first.id);
       expect(after).toEqual({ prevId: null, nextId: second.id, position: 1, total: 2 });
     });
+  });
 
-    test("listForBuild groups needs_review/rejected/approved above passed and pending, and approving doesn't reshuffle them", async ({
+  describe("listForBuild default sort", () => {
+    test("orders by status tier before title/name/browser/viewport", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      await seedReviewQueue(build, captureConfiguration);
+
+      const results = await dbClient.snapshots.listForBuild(build.id, { limit: 10, offset: 0 });
+      expect(results.map((row) => row.targetId)).toEqual(["d", "a", "b", "c"]);
+      expect(results.map((row) => row.status)).toEqual([
+        "error",
+        "needs_review",
+        "rejected",
+        "passed",
+      ]);
+    });
+
+    test("preserves position when status changes within the same priority tier", async ({
       build,
       captureConfiguration,
     }) => {
@@ -642,12 +660,6 @@ describe("snapshots", () => {
 
       const before = await dbClient.snapshots.listForBuild(build.id, { limit: 10, offset: 0 });
       expect(before.map((row) => row.targetId)).toEqual(["d", "a", "b", "c"]);
-      expect(before.map((row) => row.status)).toEqual([
-        "error",
-        "needs_review",
-        "rejected",
-        "passed",
-      ]);
 
       const diff = await dbClient.diffs.findBySnapshot(first.id);
       await dbClient.diffs.updateReviewStatus(diff!.id, "approved");
