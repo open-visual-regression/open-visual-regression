@@ -147,8 +147,6 @@
   --ovr-color-amber-dim: oklch(0.78 0.18 75 / 0.15);
   --ovr-color-on-solid: oklch(0.15 0.006 270);
 
-  /* Brand accent — intentionally its own token, decoupled from the amber primitive
-     even though it currently shares the same hue */
   --ovr-accent-primary: oklch(0.78 0.18 75);
   --ovr-accent-primary-hover: oklch(0.82 0.18 75);
   --ovr-on-accent: var(--ovr-color-on-solid);
