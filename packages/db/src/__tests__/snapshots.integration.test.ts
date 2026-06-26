@@ -617,5 +617,21 @@ describe("snapshots", () => {
       const result = await dbClient.snapshots.findAdjacentReviewableIds(build.id, second.id);
       expect(result.nextId).toBeNull();
     });
+
+    test("keeps queue order stable after approving or rejecting a snapshot", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const { first, second } = await seedReviewQueue(build, captureConfiguration);
+      const diff = await dbClient.diffs.findBySnapshot(first.id);
+
+      const before = await dbClient.snapshots.findAdjacentReviewableIds(build.id, first.id);
+      expect(before).toEqual({ prevId: null, nextId: second.id, position: 1, total: 2 });
+
+      await dbClient.diffs.updateReviewStatus(diff!.id, "approved");
+
+      const after = await dbClient.snapshots.findAdjacentReviewableIds(build.id, first.id);
+      expect(after).toEqual({ prevId: null, nextId: second.id, position: 1, total: 2 });
+    });
   });
 });

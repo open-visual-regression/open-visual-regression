@@ -148,6 +148,12 @@ export const defaultSnapshotSortBy: SnapshotSort[] = [
   { column: "viewportWidth", direction: "asc" },
 ];
 
+// Excludes "status" so that approving/rejecting a snapshot can't change its
+// position in the review queue and shift prev/next navigation underneath the reviewer.
+const reviewQueueSortBy: SnapshotSort[] = defaultSnapshotSortBy.filter(
+  ({ column }) => column !== "status",
+);
+
 export type AdjacentSnapshotIds = {
   prevId: string | null;
   nextId: string | null;
@@ -160,7 +166,7 @@ export const findAdjacentReviewableIds = async (
   snapshotId: string,
 ): Promise<AdjacentSnapshotIds> => {
   const orderBy = sql.join(
-    defaultSnapshotSortBy.map(
+    reviewQueueSortBy.map(
       ({ column, direction }) => sql`${snapshotSortColumns[column]} ${sql.raw(direction)}`,
     ),
     sql`, `,
