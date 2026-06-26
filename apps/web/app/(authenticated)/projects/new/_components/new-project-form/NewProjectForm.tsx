@@ -113,7 +113,7 @@ export const NewProjectForm = () => {
             </FieldGroup>
           </CardContent>
           <CardFooter className="flex flex-row gap-3 justify-between">
-            <ButtonLink href="/projects" size="lg" variant="secondary">
+            <ButtonLink href="/projects" size="lg" variant="outline" color="neutral">
               cancel
             </ButtonLink>
             <Button type="submit" size="lg" disabled={isSubmitting}>

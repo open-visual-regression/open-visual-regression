@@ -33,11 +33,12 @@ export const BuildRejectButton = ({
 
   return (
     <Button
-      variant="secondary"
+      variant="outline"
+      color="neutral"
       disabled={pending || rejected || disabled}
       className={
         rejected
-          ? "disabled:bg-ovr-remove disabled:text-ovr-on-accent disabled:border-transparent"
+          ? "disabled:bg-ovr-red disabled:text-ovr-on-solid disabled:border-transparent"
           : undefined
       }
       onClick={() => execute({ buildId, vote: "reject" })}

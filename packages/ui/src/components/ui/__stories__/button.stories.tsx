@@ -26,15 +26,16 @@ const Section = ({ label, children }: { label: string; children: React.ReactNode
 
 export const KitchenSink: Story = {
   render: () => {
-    const variants = ["default", "secondary", "ghost", "destructive", "link"] as const;
+    const variants = ["solid", "outline", "ghost", "link"] as const;
+    const colors = ["accent", "red", "green", "blue", "amber", "neutral"] as const;
 
     return (
       <div className="space-y-6 p-4">
-        {(["xs", "sm", "md", "lg"] as const).map((size) => (
-          <Section key={size} label={`size="${size}"`}>
-            {variants.map((variant) => (
-              <Button key={variant} variant={variant} size={size}>
-                {variant}
+        {variants.map((variant) => (
+          <Section key={variant} label={`variant="${variant}"`}>
+            {colors.map((color) => (
+              <Button key={color} variant={variant} color={color}>
+                {color}
               </Button>
             ))}
           </Section>
@@ -55,7 +56,7 @@ export const KitchenSink: Story = {
         </Section>
         <Section label="disabled">
           {variants.map((variant) => (
-            <Button key={variant} variant={variant} disabled>
+            <Button key={variant} variant={variant} color="accent" disabled>
               {variant}
             </Button>
           ))}

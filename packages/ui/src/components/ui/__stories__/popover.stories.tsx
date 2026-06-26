@@ -29,7 +29,7 @@ export const FilterRuns: Story = {
   render: () => (
     <div className="flex items-start justify-center p-6 min-h-[460px]">
       <Popover>
-        <PopoverTrigger render={<Button variant="secondary" size="sm" />}>
+        <PopoverTrigger render={<Button variant="outline" color="neutral" size="sm" />}>
           <SlidersHorizontalIcon />
           Filter
         </PopoverTrigger>
@@ -65,7 +65,7 @@ export const FilterRuns: Story = {
             </Field>
           </FieldGroup>
           <div className="flex justify-end gap-2 pt-1">
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" color="neutral" size="sm">
               Reset
             </Button>
             <Button size="sm">Apply</Button>

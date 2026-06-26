@@ -42,7 +42,7 @@ const NavigationBarMobileMenu = ({
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
-        render={<Button variant="ghost" size="icon-sm" className="md:hidden" />}
+        render={<Button variant="ghost" color="neutral" size="icon-sm" className="md:hidden" />}
         aria-label={`Open ${section} navigation`}
       >
         <Icon icon={MenuIcon} size={14} />

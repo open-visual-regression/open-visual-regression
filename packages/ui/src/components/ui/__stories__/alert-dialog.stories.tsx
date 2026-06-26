@@ -29,7 +29,7 @@ export const Default: Story = {
   render: () => (
     <div className="flex items-start justify-center p-6 min-h-64">
       <AlertDialog>
-        <AlertDialogTrigger render={<Button variant="destructive" />}>
+        <AlertDialogTrigger render={<Button variant="outline" color="red" />}>
           Delete run
         </AlertDialogTrigger>
         <AlertDialogContent>
@@ -45,7 +45,9 @@ export const Default: Story = {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction variant="destructive">Delete</AlertDialogAction>
+            <AlertDialogAction variant="outline" color="red">
+              Delete
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -61,7 +63,7 @@ export const Small: Story = {
   render: () => (
     <div className="flex items-start justify-center p-6 min-h-64">
       <AlertDialog>
-        <AlertDialogTrigger render={<Button variant="secondary" size="xs" />}>
+        <AlertDialogTrigger render={<Button variant="outline" color="neutral" size="xs" />}>
           Clear baseline
         </AlertDialogTrigger>
         <AlertDialogContent size="sm">
@@ -74,7 +76,9 @@ export const Small: Story = {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction variant="destructive">Clear</AlertDialogAction>
+            <AlertDialogAction variant="outline" color="red">
+              Clear
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

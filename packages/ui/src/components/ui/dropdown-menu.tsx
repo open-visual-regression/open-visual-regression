@@ -72,18 +72,18 @@ const DropdownMenuLabel = ({
 const DropdownMenuItem = ({
   className,
   inset,
-  variant = "default",
+  color = "neutral",
   ...props
 }: MenuPrimitive.Item.Props & {
   inset?: boolean;
-  variant?: "default" | "destructive";
+  color?: "neutral" | "red" | "green" | "blue" | "amber";
 }) => (
   <MenuPrimitive.Item
     data-slot="dropdown-menu-item"
     data-inset={inset}
-    data-variant={variant}
+    data-color={color}
     className={cn(
-      "group/dropdown-menu-item relative flex cursor-default items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs outline-hidden select-none focus:bg-ovr-hover data-inset:pl-7 data-[variant=destructive]:text-ovr-remove data-[variant=destructive]:focus:bg-ovr-diff-remove-dim data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5",
+      "group/dropdown-menu-item relative flex cursor-default items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs outline-hidden select-none focus:bg-ovr-hover data-inset:pl-7 data-[color=red]:text-ovr-red data-[color=red]:focus:bg-ovr-red-dim data-[color=green]:text-ovr-green data-[color=green]:focus:bg-ovr-green-dim data-[color=blue]:text-ovr-blue data-[color=blue]:focus:bg-ovr-blue-dim data-[color=amber]:text-ovr-amber data-[color=amber]:focus:bg-ovr-amber-dim data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5",
       className,
     )}
     {...props}

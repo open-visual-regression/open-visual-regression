@@ -54,7 +54,9 @@ export const RevokeApiKeyButton = ({ keyId, keyName }: RevokeApiKeyButtonProps) 
     <AlertDialog open={open} onOpenChange={handleOpenChange}>
       <AlertDialogTrigger
         className="inline-flex flex-row items-center"
-        render={<Button variant="ghost" size="sm" aria-label={`revoke ${keyName}`} />}
+        render={
+          <Button variant="ghost" color="neutral" size="sm" aria-label={`revoke ${keyName}`} />
+        }
       >
         <Icon icon={XIcon} />
         revoke
@@ -72,7 +74,8 @@ export const RevokeApiKeyButton = ({ keyId, keyName }: RevokeApiKeyButtonProps) 
         <AlertDialogFooter>
           <AlertDialogCancel>cancel</AlertDialogCancel>
           <AlertDialogAction
-            variant="destructive"
+            variant="outline"
+            color="red"
             disabled={isRevoking}
             onClick={() => execute({ keyId })}
           >

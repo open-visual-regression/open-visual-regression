@@ -29,7 +29,9 @@ export const Default: Story = {
   render: () => (
     <div className="flex items-start justify-center p-6 min-h-[420px]">
       <Dialog>
-        <DialogTrigger render={<Button variant="secondary" />}>Open dialog</DialogTrigger>
+        <DialogTrigger render={<Button variant="outline" color="neutral" />}>
+          Open dialog
+        </DialogTrigger>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>New run</DialogTitle>
@@ -74,7 +76,9 @@ export const Simple: Story = {
   render: () => (
     <div className="flex items-start justify-center p-6 min-h-64">
       <Dialog>
-        <DialogTrigger render={<Button variant="ghost" />}>Update baseline</DialogTrigger>
+        <DialogTrigger render={<Button variant="ghost" color="neutral" />}>
+          Update baseline
+        </DialogTrigger>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Update baseline?</DialogTitle>
@@ -84,7 +88,7 @@ export const Simple: Story = {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <DialogClose render={<Button variant="secondary" />}>Cancel</DialogClose>
+            <DialogClose render={<Button variant="outline" color="neutral" />}>Cancel</DialogClose>
             <Button>Update baseline</Button>
           </DialogFooter>
         </DialogContent>

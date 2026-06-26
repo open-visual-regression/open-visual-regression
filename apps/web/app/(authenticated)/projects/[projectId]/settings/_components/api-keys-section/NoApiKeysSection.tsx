@@ -22,7 +22,7 @@ export const NoApiKeysSection = ({ projectId }: NoApiKeysSectionProps) => (
       <CreateApiKeyModal
         projectId={projectId}
         trigger={
-          <CreateApiKeyModalButton variant="default" size="lg">
+          <CreateApiKeyModalButton variant="solid" color="accent" size="lg">
             <Icon icon={PlusIcon} />
             create first api key
           </CreateApiKeyModalButton>

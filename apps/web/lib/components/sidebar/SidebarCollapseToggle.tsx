@@ -8,7 +8,7 @@ type SidebarCollapseToggleProps = {
 };
 
 const SidebarCollapseToggle = ({ direction, label, onClick }: SidebarCollapseToggleProps) => (
-  <Button variant="secondary" size="icon-xs" onClick={onClick} aria-label={label}>
+  <Button variant="outline" color="neutral" size="icon-xs" onClick={onClick} aria-label={label}>
     <Icon icon={direction === "left" ? ChevronLeftIcon : ChevronRightIcon} size={12} />
   </Button>
 );

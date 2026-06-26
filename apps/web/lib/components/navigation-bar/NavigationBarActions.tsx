@@ -11,6 +11,7 @@ const NavigationBarActions = ({ userName }: NavigationBarActionsProps) => (
   <div className="flex items-center gap-1 shrink-0">
     <Button
       variant="ghost"
+      color="neutral"
       size="icon-sm"
       render={<Link href="/settings" />}
       nativeButton={false}

@@ -7,29 +7,30 @@ const alertVariants = cva(
   "group/alert relative grid w-full gap-0.5 overflow-hidden rounded-lg border border-l-3 px-3 py-2.5 text-left text-xs has-data-[slot=alert-action]:pr-20 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2.5 *:[svg]:row-span-2 *:[svg]:size-3.25 *:[svg]:translate-y-px *:[svg]:text-current",
   {
     variants: {
-      variant: {
-        default: "border-ovr-accent    bg-ovr-accent-dim         text-ovr-accent",
-        warning: "border-ovr-status-pending bg-ovr-status-pending-dim text-ovr-status-pending",
-        success: "border-ovr-diff-add  bg-ovr-diff-add-dim       text-ovr-diff-add",
-        destructive: "border-ovr-remove    bg-ovr-diff-remove-dim    text-ovr-remove",
+      color: {
+        accent: "border-ovr-accent bg-ovr-accent-dim text-ovr-accent",
+        red: "border-ovr-red bg-ovr-red-dim text-ovr-red",
+        green: "border-ovr-green bg-ovr-green-dim text-ovr-green",
+        blue: "border-ovr-blue bg-ovr-blue-dim text-ovr-blue",
+        amber: "border-ovr-amber bg-ovr-amber-dim text-ovr-amber",
       },
     },
     defaultVariants: {
-      variant: "default",
+      color: "accent",
     },
   },
 );
 
 const Alert = ({
   className,
-  variant,
+  color,
   ...props
 }: React.ComponentProps<"div"> & VariantProps<typeof alertVariants>) => {
   return (
     <div
       data-slot="alert"
       role="alert"
-      className={cn(alertVariants({ variant }), className)}
+      className={cn(alertVariants({ color }), className)}
       {...props}
     />
   );

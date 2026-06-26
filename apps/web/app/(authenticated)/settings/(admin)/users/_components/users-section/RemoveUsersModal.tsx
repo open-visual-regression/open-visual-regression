@@ -74,7 +74,8 @@ export const RemoveUsersModal = ({ trigger, users, onRemovedAction }: RemoveUser
         <AlertDialogFooter>
           <AlertDialogCancel>cancel</AlertDialogCancel>
           <AlertDialogAction
-            variant="destructive"
+            variant="outline"
+            color="red"
             disabled={isRemoving}
             onClick={() => execute({ users: users.map(toRemoveUserInput) })}
           >

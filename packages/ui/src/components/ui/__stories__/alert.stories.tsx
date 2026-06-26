@@ -29,7 +29,7 @@ const Section = ({ label, children }: { label: string; children: React.ReactNode
 export const KitchenSink: Story = {
   render: () => (
     <div className="space-y-8 p-6 max-w-lg">
-      <Section label='variant="default" — amber/accent'>
+      <Section label='color="accent" (default)'>
         <Alert>
           <AlertTitle>Run complete</AlertTitle>
         </Alert>
@@ -49,77 +49,77 @@ export const KitchenSink: Story = {
           <AlertTitle>Threshold warning</AlertTitle>
           <AlertDescription>4 snapshots are within 0.1% of the diff threshold.</AlertDescription>
           <AlertAction>
-            <Button size="xs" variant="secondary">
+            <Button size="xs" variant="outline" color="neutral">
               Review
             </Button>
           </AlertAction>
         </Alert>
       </Section>
 
-      <Section label='variant="success" — green'>
-        <Alert variant="success">
+      <Section label='color="green"'>
+        <Alert color="green">
           <AlertTitle>Run approved</AlertTitle>
         </Alert>
-        <Alert variant="success">
+        <Alert color="green">
           <CircleCheckIcon />
           <AlertTitle>No regressions detected</AlertTitle>
           <AlertDescription>All 142 snapshots match baseline within threshold.</AlertDescription>
         </Alert>
-        <Alert variant="success">
+        <Alert color="green">
           <CircleCheckIcon />
           <AlertTitle>Snapshots accepted</AlertTitle>
           <AlertDescription>
             38 diffs were approved and the baseline has been updated.
           </AlertDescription>
           <AlertAction>
-            <Button size="xs" variant="secondary">
+            <Button size="xs" variant="outline" color="neutral">
               View report
             </Button>
           </AlertAction>
         </Alert>
       </Section>
 
-      <Section label='variant="warning" — blue/pending'>
-        <Alert variant="warning">
+      <Section label='color="blue"'>
+        <Alert color="blue">
           <AlertTitle>Run pending</AlertTitle>
         </Alert>
-        <Alert variant="warning">
+        <Alert color="blue">
           <CircleDotIcon />
           <AlertTitle>Stale baseline</AlertTitle>
           <AlertDescription>
             Baseline is 14 days old. Consider re-capturing before next run.
           </AlertDescription>
         </Alert>
-        <Alert variant="warning">
+        <Alert color="blue">
           <TriangleAlertIcon />
           <AlertTitle>Queued behind 3 runs</AlertTitle>
           <AlertDescription>Snapshot capture will start once the queue clears.</AlertDescription>
           <AlertAction>
-            <Button size="xs" variant="secondary">
+            <Button size="xs" variant="outline" color="neutral">
               Prioritise
             </Button>
           </AlertAction>
         </Alert>
       </Section>
 
-      <Section label='variant="destructive" — red'>
-        <Alert variant="destructive">
+      <Section label='color="red"'>
+        <Alert color="red">
           <AlertTitle>Build failed</AlertTitle>
         </Alert>
-        <Alert variant="destructive">
+        <Alert color="red">
           <AlertTitle>Connection error</AlertTitle>
           <AlertDescription>
             Could not connect to screenshot service. Retry in 30s.
           </AlertDescription>
         </Alert>
-        <Alert variant="destructive">
+        <Alert color="red">
           <OctagonXIcon />
           <AlertTitle>14 regressions detected</AlertTitle>
           <AlertDescription>
             Visual diffs exceed threshold on branch feature/navbar.
           </AlertDescription>
           <AlertAction>
-            <Button size="xs" variant="destructive">
+            <Button size="xs" variant="outline" color="red">
               View diffs
             </Button>
           </AlertAction>

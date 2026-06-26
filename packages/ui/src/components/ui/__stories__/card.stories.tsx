@@ -36,7 +36,7 @@ export const KitchenSink: Story = {
             <CardTitle>Run #42</CardTitle>
             <CardDescription>branch main · 2 minutes ago</CardDescription>
             <CardAction>
-              <Button size="xs" variant="ghost">
+              <Button size="xs" variant="ghost" color="neutral">
                 View
               </Button>
             </CardAction>
@@ -47,10 +47,10 @@ export const KitchenSink: Story = {
             </p>
           </CardContent>
           <CardFooter className="gap-2">
-            <Button size="xs" variant="secondary">
+            <Button size="xs" variant="outline" color="neutral">
               Approve all
             </Button>
-            <Button size="xs" variant="ghost">
+            <Button size="xs" variant="ghost" color="neutral">
               Download
             </Button>
           </CardFooter>
@@ -77,7 +77,7 @@ export const KitchenSink: Story = {
             <CardTitle>feature/navbar</CardTitle>
             <CardDescription>4 diffs · pending review</CardDescription>
             <CardAction>
-              <Button size="xs" variant="ghost">
+              <Button size="xs" variant="ghost" color="neutral">
                 Review
               </Button>
             </CardAction>
@@ -88,7 +88,7 @@ export const KitchenSink: Story = {
             </p>
           </CardContent>
           <CardFooter>
-            <Button size="xs" variant="destructive">
+            <Button size="xs" variant="outline" color="red">
               Reject
             </Button>
           </CardFooter>

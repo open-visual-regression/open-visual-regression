@@ -11,29 +11,29 @@ const toastVariants = cva(
   "group/toast relative flex items-stretch overflow-hidden rounded-lg bg-ovr-raised shadow-ovr-popover w-85",
   {
     variants: {
-      variant: {
-        default: "text-ovr-status-pending",
-        success: "text-ovr-diff-add",
-        warning: "text-ovr-accent",
-        destructive: "text-ovr-remove",
-        muted: "text-ovr-fg-secondary",
+      color: {
+        blue: "text-ovr-blue",
+        green: "text-ovr-green",
+        amber: "text-ovr-amber",
+        red: "text-ovr-red",
+        neutral: "text-ovr-fg-secondary",
       },
     },
-    defaultVariants: { variant: "default" },
+    defaultVariants: { color: "blue" },
   },
 );
 
 const toastBarVariants = cva("w-[3px] flex-shrink-0", {
   variants: {
-    variant: {
-      default: "bg-ovr-status-pending",
-      success: "bg-ovr-diff-add",
-      warning: "bg-ovr-accent",
-      destructive: "bg-ovr-remove",
-      muted: "bg-ovr-fg-secondary",
+    color: {
+      blue: "bg-ovr-blue",
+      green: "bg-ovr-green",
+      amber: "bg-ovr-amber",
+      red: "bg-ovr-red",
+      neutral: "bg-ovr-fg-secondary",
     },
   },
-  defaultVariants: { variant: "default" },
+  defaultVariants: { color: "blue" },
 });
 
 export type ToastProps = {
@@ -48,7 +48,7 @@ export type ToastProps = {
 
 const Toast = ({
   className,
-  variant,
+  color,
   icon,
   title,
   description,
@@ -61,10 +61,10 @@ const Toast = ({
     <output
       data-slot="toast"
       aria-live="polite"
-      className={cn(toastVariants({ variant }), className)}
+      className={cn(toastVariants({ color }), className)}
       {...props}
     >
-      <div className={toastBarVariants({ variant })} />
+      <div className={toastBarVariants({ color })} />
       <div className="flex flex-1 items-start gap-2.5 px-3 py-2.5 min-w-0">
         {icon && (
           <span className="mt-px flex-shrink-0 text-body leading-none text-current">{icon}</span>
@@ -106,7 +106,7 @@ const ToastContainer = ({ className, ...props }: React.ComponentProps<"div">) =>
 };
 
 type ShowToastOptions = Omit<ToastProps, "onDismiss">;
-type ToastMessageOptions = Omit<ShowToastOptions, "variant" | "title">;
+type ToastMessageOptions = Omit<ShowToastOptions, "color" | "title">;
 
 const showToast = (options: ShowToastOptions) =>
   sonnerToast.custom((id) => <Toast {...options} onDismiss={() => sonnerToast.dismiss(id)} />);
@@ -116,14 +116,14 @@ const toast = Object.assign(showToast, {
     showToast({
       icon: <CircleCheckIcon className="size-3.5" />,
       ...options,
-      variant: "success",
+      color: "green",
       title,
     }),
   error: (title: string, options?: ToastMessageOptions) =>
     showToast({
       icon: <OctagonXIcon className="size-3.5" />,
       ...options,
-      variant: "destructive",
+      color: "red",
       title,
     }),
 });
