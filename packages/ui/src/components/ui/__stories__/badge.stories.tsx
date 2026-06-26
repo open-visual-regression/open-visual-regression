@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import type { VariantProps } from "class-variance-authority";
 
-import { Badge } from "../badge";
-import type { BadgeVariant } from "../badge";
+import { Badge, badgeVariants } from "../badge";
 
 const meta: Meta<typeof Badge> = {
   title: "UI/Badge",
@@ -19,15 +19,18 @@ const Section = ({ label, children }: { label: string; children: React.ReactNode
   </div>
 );
 
-const VARIANTS: BadgeVariant[] = [
-  "passed",
-  "approved",
-  "error",
-  "rejected",
-  "queued",
-  "processing",
-  "stale",
-  "needs_review",
+type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>["variant"]>;
+type BadgeColor = NonNullable<VariantProps<typeof badgeVariants>["color"]>;
+
+const VARIANTS: BadgeVariant[] = ["solid", "outline"];
+const COLORS: BadgeColor[] = [
+  "accent",
+  "red",
+  "green",
+  "blue",
+  "amber",
+  "gray",
+  "purple",
   "neutral",
 ];
 
@@ -36,10 +39,11 @@ export const KitchenSink: Story = {
     <div className="space-y-6 p-4">
       {VARIANTS.map((variant) => (
         <Section key={variant} label={`variant="${variant}"`}>
-          <Badge variant={variant}>{variant}</Badge>
-          <Badge variant={variant} filled>
-            {variant}
-          </Badge>
+          {COLORS.map((color) => (
+            <Badge key={color} variant={variant} color={color}>
+              {color}
+            </Badge>
+          ))}
         </Section>
       ))}
     </div>

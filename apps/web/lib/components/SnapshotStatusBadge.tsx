@@ -8,21 +8,21 @@ type SnapshotStatusBadgeProps = {
 
 const SNAPSHOT_STATUS_BADGE: Record<
   SnapshotDisplayStatus,
-  Pick<StatusBadgeProps, "variant" | "icon"> & { label: string }
+  Pick<StatusBadgeProps, "color" | "icon"> & { label: string }
 > = {
-  queued: { variant: "queued", icon: "queued", label: "queued" },
-  processing: { variant: "processing", icon: "processing", label: "processing" },
-  needs_review: { variant: "needs_review", icon: "needs_review", label: "needs review" },
-  passed: { variant: "passed", icon: "passed", label: "passed" },
-  approved: { variant: "approved", icon: "approved", label: "approved" },
-  rejected: { variant: "rejected", icon: "rejected", label: "rejected" },
-  error: { variant: "error", icon: "error", label: "error" },
+  queued: { color: "gray", icon: "queued", label: "queued" },
+  processing: { color: "purple", icon: "processing", label: "processing" },
+  needs_review: { color: "amber", icon: "needs_review", label: "needs review" },
+  passed: { color: "blue", icon: "passed", label: "passed" },
+  approved: { color: "green", icon: "approved", label: "approved" },
+  rejected: { color: "red", icon: "rejected", label: "rejected" },
+  error: { color: "red", icon: "error", label: "error" },
 };
 
 export const SnapshotStatusBadge = ({ status, filled }: SnapshotStatusBadgeProps) => {
-  const { variant, icon, label } = SNAPSHOT_STATUS_BADGE[status];
+  const { color, icon, label } = SNAPSHOT_STATUS_BADGE[status];
   return (
-    <StatusBadge variant={variant} icon={icon} filled={filled}>
+    <StatusBadge variant={filled ? "solid" : "outline"} color={color} icon={icon}>
       {label}
     </StatusBadge>
   );

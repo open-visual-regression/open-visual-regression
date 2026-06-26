@@ -47,9 +47,9 @@ const columns = columnHelper.columns([
     meta: { className: "text-center" },
     cell: ({ getValue }) =>
       getValue() === "admin" ? (
-        <Badge variant="needs_review">admin</Badge>
+        <Badge color="amber">admin</Badge>
       ) : (
-        <Badge variant="neutral">user</Badge>
+        <Badge color="neutral">user</Badge>
       ),
   }),
   columnHelper.accessor("status", {
@@ -57,9 +57,9 @@ const columns = columnHelper.columns([
     meta: { className: "text-center" },
     cell: ({ getValue }) =>
       getValue() === "invited" ? (
-        <Badge variant="queued">invited</Badge>
+        <Badge color="gray">invited</Badge>
       ) : (
-        <Badge variant="passed">active</Badge>
+        <Badge color="green">active</Badge>
       ),
   }),
   columnHelper.display({
