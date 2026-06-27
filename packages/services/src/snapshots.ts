@@ -41,6 +41,8 @@ export const captureSnapshot = async (snapshotId: string): Promise<void> => {
     throw new Error(`Missing build for snapshot: ${snapshotId}`);
   }
 
+  await dbClient.snapshots.updateStatus(snapshotId, "processing");
+
   const fullPage = snapshot.viewportHeight === 0;
 
   const { logs, screenshot, hasRenderError } = await (async () => {

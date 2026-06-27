@@ -10,8 +10,16 @@ export const getSnapshotDisplayStatus = (
     return "error";
   }
 
-  if (snapshot.status === "pending" || !diff || diff.processingStatus === "pending") {
-    return "pending";
+  if (snapshot.status === "queued") {
+    return "queued";
+  }
+
+  if (snapshot.status === "processing") {
+    return "processing";
+  }
+
+  if (!diff || diff.processingStatus === "pending") {
+    return "queued";
   }
 
   if (diff.processingStatus === "error") {

@@ -69,12 +69,13 @@ export const BuildHeader = ({ build, snapshotCounts }: BuildHeaderProps) => {
         <SegmentedProgress
           title={`${total} snapshots`}
           segments={[
-            { label: "passed", count: snapshotCounts.passed, color: "green" },
+            { label: "passed", count: snapshotCounts.passed, color: "blue" },
             { label: "approved", count: snapshotCounts.approved, color: "green" },
-            { label: "needs review", count: snapshotCounts.needs_review, color: "orange" },
+            { label: "needs review", count: snapshotCounts.needs_review, color: "amber" },
             { label: "rejected", count: snapshotCounts.rejected, color: "red" },
             { label: "error", count: snapshotCounts.error, color: "red" },
-            { label: "pending", count: snapshotCounts.pending, color: "blue" },
+            { label: "processing", count: snapshotCounts.processing, color: "purple" },
+            { label: "queued", count: snapshotCounts.queued, color: "gray" },
           ]}
         />
       ) : null}

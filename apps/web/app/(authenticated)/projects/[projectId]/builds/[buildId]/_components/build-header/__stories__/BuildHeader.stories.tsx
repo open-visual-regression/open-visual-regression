@@ -24,7 +24,8 @@ const snapshotCounts = {
   needs_review: 2,
   rejected: 0,
   error: 1,
-  pending: 4,
+  queued: 3,
+  processing: 1,
 };
 
 const buildOverrides: Partial<BuildSchema> = {
@@ -62,6 +63,14 @@ export const Errored: Story = {
       status: "error",
       errorMessage: "Build failed: unable to connect to the test runner.",
     }),
-    snapshotCounts: { passed: 0, approved: 0, needs_review: 0, rejected: 0, error: 0, pending: 0 },
+    snapshotCounts: {
+      passed: 0,
+      approved: 0,
+      needs_review: 0,
+      rejected: 0,
+      error: 0,
+      queued: 0,
+      processing: 0,
+    },
   },
 };

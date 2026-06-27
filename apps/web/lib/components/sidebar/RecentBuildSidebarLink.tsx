@@ -12,9 +12,10 @@ type RecentBuildSidebarLinkProps = {
 };
 
 const BUILD_STATUS_BORDER_CLASS: Record<BuildStatus, string> = {
-  pending: "border-ovr-status-pending",
+  queued: "border-ovr-gray",
+  processing: "border-ovr-purple",
   needs_review: "border-ovr-accent",
-  passed: "border-ovr-diff-add",
+  passed: "border-ovr-blue",
   rejected: "border-ovr-remove",
   error: "border-ovr-remove",
 };

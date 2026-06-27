@@ -12,10 +12,12 @@ export default meta;
 type Story = StoryObj<typeof SegmentedProgress>;
 
 const SEGMENTS: Segment[] = [
-  { label: "passed", count: 14, color: "green" },
-  { label: "needs review", count: 3, color: "orange" },
+  { label: "passed", count: 14, color: "blue" },
+  { label: "approved", count: 2, color: "green" },
+  { label: "needs review", count: 3, color: "amber" },
   { label: "error", count: 1, color: "red" },
-  { label: "pending", count: 4, color: "blue" },
+  { label: "processing", count: 2, color: "purple" },
+  { label: "queued", count: 4, color: "gray" },
 ];
 
 export const Default: Story = {

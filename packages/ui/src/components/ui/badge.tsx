@@ -7,63 +7,61 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        passed: "text-ovr-green",
-        approved: "text-ovr-green",
-        error: "text-ovr-red",
-        rejected: "text-ovr-red",
-        pending: "text-ovr-blue",
-        stale: "text-ovr-fg-muted",
-        needs_review: "text-ovr-amber",
-        neutral: "text-ovr-fg-secondary",
+        solid: "border-transparent",
+        outline: "bg-transparent",
       },
-      filled: {
-        true: "border-transparent",
-        false: "bg-transparent",
+      color: {
+        accent: "",
+        red: "",
+        green: "",
+        blue: "",
+        amber: "",
+        gray: "",
+        purple: "",
+        neutral: "",
       },
     },
     compoundVariants: [
-      { variant: "passed", filled: false, className: "border-ovr-green" },
-      { variant: "approved", filled: false, className: "border-ovr-green" },
-      { variant: "error", filled: false, className: "border-ovr-red" },
-      { variant: "rejected", filled: false, className: "border-ovr-red" },
-      { variant: "pending", filled: false, className: "border-ovr-blue" },
-      { variant: "stale", filled: false, className: "border-ovr-fg-muted" },
-      { variant: "needs_review", filled: false, className: "border-ovr-amber" },
-      { variant: "neutral", filled: false, className: "border-ovr-fg-secondary" },
-      { variant: "passed", filled: true, className: "bg-ovr-green text-ovr-on-solid" },
-      { variant: "approved", filled: true, className: "bg-ovr-green text-ovr-on-solid" },
-      { variant: "error", filled: true, className: "bg-ovr-red text-ovr-on-solid" },
-      { variant: "rejected", filled: true, className: "bg-ovr-red text-ovr-on-solid" },
-      { variant: "pending", filled: true, className: "bg-ovr-blue text-ovr-on-solid" },
-      { variant: "stale", filled: true, className: "bg-ovr-fg-muted text-ovr-on-solid" },
-      { variant: "needs_review", filled: true, className: "bg-ovr-amber text-ovr-on-solid" },
-      { variant: "neutral", filled: true, className: "bg-ovr-fg-secondary text-ovr-on-solid" },
+      { variant: "outline", color: "accent", className: "border-ovr-accent text-ovr-accent" },
+      { variant: "outline", color: "red", className: "border-ovr-red text-ovr-red" },
+      { variant: "outline", color: "green", className: "border-ovr-green text-ovr-green" },
+      { variant: "outline", color: "blue", className: "border-ovr-blue text-ovr-blue" },
+      { variant: "outline", color: "amber", className: "border-ovr-amber text-ovr-amber" },
+      { variant: "outline", color: "gray", className: "border-ovr-gray text-ovr-gray" },
+      { variant: "outline", color: "purple", className: "border-ovr-purple text-ovr-purple" },
+      {
+        variant: "outline",
+        color: "neutral",
+        className: "border-ovr-fg-secondary text-ovr-fg-secondary",
+      },
+      { variant: "solid", color: "accent", className: "bg-ovr-accent text-ovr-on-accent" },
+      { variant: "solid", color: "red", className: "bg-ovr-red text-ovr-on-solid" },
+      { variant: "solid", color: "green", className: "bg-ovr-green text-ovr-on-solid" },
+      { variant: "solid", color: "blue", className: "bg-ovr-blue text-ovr-on-solid" },
+      { variant: "solid", color: "amber", className: "bg-ovr-amber text-ovr-on-solid" },
+      { variant: "solid", color: "gray", className: "bg-ovr-gray text-ovr-on-solid" },
+      { variant: "solid", color: "purple", className: "bg-ovr-purple text-ovr-on-solid" },
+      {
+        variant: "solid",
+        color: "neutral",
+        className: "bg-ovr-fg-secondary text-ovr-on-solid",
+      },
     ],
     defaultVariants: {
-      variant: "neutral",
-      filled: false,
+      variant: "outline",
+      color: "neutral",
     },
   },
 );
-
-type BadgeVariant =
-  | "passed"
-  | "approved"
-  | "error"
-  | "rejected"
-  | "pending"
-  | "stale"
-  | "needs_review"
-  | "neutral";
 
 type BadgeProps = VariantProps<typeof badgeVariants> & {
   children: React.ReactNode;
   className?: string;
 };
 
-const Badge = ({ variant, filled, children, className }: BadgeProps) => {
-  return <span className={cn(badgeVariants({ variant, filled }), className)}>{children}</span>;
+const Badge = ({ variant, color, children, className }: BadgeProps) => {
+  return <span className={cn(badgeVariants({ variant, color }), className)}>{children}</span>;
 };
 
 export { Badge, badgeVariants };
-export type { BadgeVariant, BadgeProps };
+export type { BadgeProps };

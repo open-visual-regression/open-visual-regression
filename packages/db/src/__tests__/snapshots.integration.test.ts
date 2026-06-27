@@ -138,7 +138,7 @@ describe("snapshots", () => {
   });
 
   describe("hasAllCapturedForBuild", () => {
-    test("should return false while any snapshot is still pending", async ({
+    test("should return false while any snapshot is still queued", async ({
       build,
       captureConfiguration,
     }) => {
@@ -182,7 +182,8 @@ describe("snapshots", () => {
         needs_review: 0,
         rejected: 0,
         error: 0,
-        pending: 0,
+        queued: 0,
+        processing: 0,
       });
     });
 
@@ -190,10 +191,10 @@ describe("snapshots", () => {
       build,
       captureConfiguration,
     }) => {
-      const [pending, passed, needsReview, rejected, capturedError] =
+      const [queued, passed, needsReview, rejected, capturedError] =
         await dbClient.snapshots.createMany({
           values: [
-            { buildId: build.id, ...captureConfiguration, targetId: "pending" },
+            { buildId: build.id, ...captureConfiguration, targetId: "queued" },
             {
               buildId: build.id,
               ...captureConfiguration,
@@ -237,7 +238,7 @@ describe("snapshots", () => {
         reviewStatus: "rejected",
       });
 
-      expect(pending).toBeTruthy();
+      expect(queued).toBeTruthy();
       expect(capturedError).toBeTruthy();
 
       expect(await dbClient.snapshots.getDisplayStatusCounts(build.id)).toEqual({
@@ -246,7 +247,8 @@ describe("snapshots", () => {
         needs_review: 1,
         rejected: 1,
         error: 1,
-        pending: 1,
+        queued: 1,
+        processing: 0,
       });
     });
 
@@ -278,7 +280,8 @@ describe("snapshots", () => {
         needs_review: 0,
         rejected: 0,
         error: 1,
-        pending: 0,
+        queued: 0,
+        processing: 0,
       });
     });
 
@@ -302,7 +305,8 @@ describe("snapshots", () => {
         needs_review: 0,
         rejected: 0,
         error: 1,
-        pending: 0,
+        queued: 0,
+        processing: 0,
       });
     });
   });
@@ -379,7 +383,7 @@ describe("snapshots", () => {
       expect(await dbClient.snapshots.countForBuild(build.id)).toBe(2);
     });
 
-    test("defaults to sorting by status priority: error, needs_review, rejected, approved, passed, then pending", async ({
+    test("defaults to sorting by status priority: error, needs_review, rejected, approved, passed, then queued", async ({
       build,
       captureConfiguration,
     }) => {
@@ -435,7 +439,7 @@ describe("snapshots", () => {
           {
             buildId: build.id,
             ...captureConfiguration,
-            targetId: "pending",
+            targetId: "queued",
             targetTitle: "Story",
             targetName: "Story",
           },
@@ -472,7 +476,7 @@ describe("snapshots", () => {
         "rejected",
         "approved",
         "passed",
-        "pending",
+        "queued",
       ]);
     });
 

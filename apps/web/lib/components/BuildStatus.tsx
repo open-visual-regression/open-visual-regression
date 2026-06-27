@@ -3,19 +3,20 @@ import { type BuildStatus } from "@ovr/api/contracts/builds";
 
 const BUILD_STATUS_BADGE: Record<
   BuildStatus,
-  Pick<StatusBadgeProps, "variant" | "icon"> & { label: string }
+  Pick<StatusBadgeProps, "color" | "icon"> & { label: string }
 > = {
-  pending: { variant: "pending", icon: "pending", label: "pending" },
-  needs_review: { variant: "needs_review", icon: "needs_review", label: "needs review" },
-  passed: { variant: "passed", icon: "passed", label: "passed" },
-  rejected: { variant: "rejected", icon: "rejected", label: "rejected" },
-  error: { variant: "error", icon: "error", label: "error" },
+  queued: { color: "gray", icon: "queued", label: "queued" },
+  processing: { color: "purple", icon: "processing", label: "processing" },
+  needs_review: { color: "amber", icon: "needs_review", label: "needs review" },
+  passed: { color: "blue", icon: "passed", label: "passed" },
+  rejected: { color: "red", icon: "rejected", label: "rejected" },
+  error: { color: "red", icon: "error", label: "error" },
 };
 
 export const BuildStatusBadge = ({ status }: { status: BuildStatus }) => {
-  const { variant, icon, label } = BUILD_STATUS_BADGE[status];
+  const { color, icon, label } = BUILD_STATUS_BADGE[status];
   return (
-    <StatusBadge variant={variant} icon={icon}>
+    <StatusBadge variant="outline" color={color} icon={icon}>
       {label}
     </StatusBadge>
   );
@@ -23,12 +24,14 @@ export const BuildStatusBadge = ({ status }: { status: BuildStatus }) => {
 
 export const BuildStatusStripe = ({ status }: { status: BuildStatus }) => {
   switch (status) {
-    case "pending":
-      return <div className="absolute inset-0 bg-ovr-status-pending" />;
+    case "queued":
+      return <div className="absolute inset-0 bg-ovr-gray" />;
+    case "processing":
+      return <div className="absolute inset-0 bg-ovr-purple" />;
     case "needs_review":
       return <div className="absolute inset-0 bg-ovr-accent" />;
     case "passed":
-      return <div className="absolute inset-0 bg-ovr-diff-add" />;
+      return <div className="absolute inset-0 bg-ovr-blue" />;
     case "rejected":
     case "error":
       return <div className="absolute inset-0 bg-ovr-remove" />;

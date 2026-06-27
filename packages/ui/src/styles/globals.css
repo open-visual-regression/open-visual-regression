@@ -104,12 +104,6 @@
   --color-ovr-diff-remove-dim: var(--ovr-diff-remove-dim);
   --color-ovr-diff-add: var(--ovr-diff-add);
   --color-ovr-diff-add-dim: var(--ovr-diff-add-dim);
-  --color-ovr-status-passed: var(--ovr-status-passed);
-  --color-ovr-status-needs-review: var(--ovr-status-needs-review);
-  --color-ovr-status-error: var(--ovr-status-error);
-  --color-ovr-status-pending: var(--ovr-status-pending);
-  --color-ovr-status-pending-dim: var(--ovr-status-pending-dim);
-
   --color-ovr-red: var(--ovr-color-red);
   --color-ovr-red-hover: var(--ovr-color-red-hover);
   --color-ovr-red-dim: var(--ovr-color-red-dim);
@@ -122,6 +116,12 @@
   --color-ovr-amber: var(--ovr-color-amber);
   --color-ovr-amber-hover: var(--ovr-color-amber-hover);
   --color-ovr-amber-dim: var(--ovr-color-amber-dim);
+  --color-ovr-gray: var(--ovr-color-gray);
+  --color-ovr-gray-hover: var(--ovr-color-gray-hover);
+  --color-ovr-gray-dim: var(--ovr-color-gray-dim);
+  --color-ovr-purple: var(--ovr-color-purple);
+  --color-ovr-purple-hover: var(--ovr-color-purple-hover);
+  --color-ovr-purple-dim: var(--ovr-color-purple-dim);
   --color-ovr-on-solid: var(--ovr-color-on-solid);
   --shadow-ovr-popover: 0 8px 24px -8px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--ovr-border-default);
   --shadow-ovr-modal: 0 24px 64px -16px rgba(0, 0, 0, 0.7), 0 0 0 1px var(--ovr-border-default);
@@ -145,6 +145,12 @@
   --ovr-color-amber: oklch(0.78 0.18 75);
   --ovr-color-amber-hover: oklch(0.82 0.18 75);
   --ovr-color-amber-dim: oklch(0.78 0.18 75 / 0.15);
+  --ovr-color-gray: oklch(0.65 0.01 270);
+  --ovr-color-gray-hover: oklch(0.6 0.01 270);
+  --ovr-color-gray-dim: oklch(0.65 0.01 270 / 0.18);
+  --ovr-color-purple: oklch(0.72 0.19 300);
+  --ovr-color-purple-hover: oklch(0.68 0.19 300);
+  --ovr-color-purple-dim: oklch(0.72 0.19 300 / 0.18);
   --ovr-color-on-solid: oklch(0.15 0.006 270);
 
   --ovr-accent-primary: oklch(0.78 0.18 75);
@@ -168,12 +174,6 @@
   --ovr-diff-add-dim: var(--ovr-color-green-dim);
   --ovr-diff-remove: var(--ovr-color-red);
   --ovr-diff-remove-dim: var(--ovr-color-red-dim);
-
-  --ovr-status-passed: var(--ovr-color-green);
-  --ovr-status-needs-review: var(--ovr-color-amber);
-  --ovr-status-error: var(--ovr-color-red);
-  --ovr-status-pending: var(--ovr-color-blue);
-  --ovr-status-pending-dim: var(--ovr-color-blue-dim);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -223,6 +223,12 @@
   --ovr-color-amber: oklch(0.78 0.18 75);
   --ovr-color-amber-hover: oklch(0.82 0.18 75);
   --ovr-color-amber-dim: oklch(0.78 0.18 75 / 0.15);
+  --ovr-color-gray: oklch(0.65 0.01 270);
+  --ovr-color-gray-hover: oklch(0.6 0.01 270);
+  --ovr-color-gray-dim: oklch(0.65 0.01 270 / 0.18);
+  --ovr-color-purple: oklch(0.72 0.19 300);
+  --ovr-color-purple-hover: oklch(0.68 0.19 300);
+  --ovr-color-purple-dim: oklch(0.72 0.19 300 / 0.18);
   --ovr-color-on-solid: oklch(0.15 0.006 270);
 
   --ovr-accent-primary: oklch(0.78 0.18 75);
@@ -246,12 +252,6 @@
   --ovr-diff-add-dim: var(--ovr-color-green-dim);
   --ovr-diff-remove: var(--ovr-color-red);
   --ovr-diff-remove-dim: var(--ovr-color-red-dim);
-
-  --ovr-status-passed: var(--ovr-color-green);
-  --ovr-status-needs-review: var(--ovr-color-amber);
-  --ovr-status-error: var(--ovr-color-red);
-  --ovr-status-pending: var(--ovr-color-blue);
-  --ovr-status-pending-dim: var(--ovr-color-blue-dim);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
