@@ -26,7 +26,10 @@ export const BuildHeader = ({ build, snapshotCounts }: BuildHeaderProps) => {
             {build.name}
           </Typography>
           <div className="flex flex-row flex-wrap items-center gap-4 text-xs">
-            <BuildStatusBadge status={build.status} />
+            <BuildStatusBadge
+              processingStatus={build.processingStatus}
+              reviewStatus={build.reviewStatus}
+            />
             <Typography variant="caption" className="flex items-center gap-1">
               <Icon icon={GitBranchIcon} size={10} />
               {build.branch}
@@ -49,12 +52,12 @@ export const BuildHeader = ({ build, snapshotCounts }: BuildHeaderProps) => {
         <div className="flex flex-row gap-2">
           <BuildRejectButton
             buildId={build.id}
-            rejected={build.status === "rejected"}
+            rejected={build.reviewStatus === "rejected"}
             disabled={!hasReviewable}
           />
           <BuildApproveButton
             buildId={build.id}
-            approved={build.status === "approved"}
+            approved={build.reviewStatus === "approved"}
             disabled={!hasReviewable}
           />
         </div>

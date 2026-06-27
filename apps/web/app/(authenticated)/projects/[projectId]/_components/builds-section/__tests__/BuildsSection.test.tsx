@@ -27,28 +27,40 @@ describe("BuildsSection", () => {
   });
 
   it("should show a passed build's status as 'passed'", () => {
-    const build = mocks.build.generateBuild({ status: "passed" });
+    const build = mocks.build.generateBuild({
+      processingStatus: "success",
+      reviewStatus: "not_required",
+    });
     render(<BuildsSection builds={[build]} />);
 
     expect(screen.getByRole("cell", { name: "passed" })).toBeVisible();
   });
 
   it("should show a needs_review build's status as 'needs review'", () => {
-    const build = mocks.build.generateBuild({ status: "needs_review" });
+    const build = mocks.build.generateBuild({
+      processingStatus: "success",
+      reviewStatus: "needs_review",
+    });
     render(<BuildsSection builds={[build]} />);
 
     expect(screen.getByRole("cell", { name: "needs review" })).toBeVisible();
   });
 
   it("should show an error build's status as 'error'", () => {
-    const build = mocks.build.generateBuild({ status: "error" });
+    const build = mocks.build.generateBuild({
+      processingStatus: "error",
+      reviewStatus: "not_required",
+    });
     render(<BuildsSection builds={[build]} />);
 
     expect(screen.getByRole("cell", { name: "error" })).toBeVisible();
   });
 
   it("should show a queued build's status as 'queued'", () => {
-    const build = mocks.build.generateBuild({ status: "queued" });
+    const build = mocks.build.generateBuild({
+      processingStatus: "queued",
+      reviewStatus: "not_required",
+    });
     render(<BuildsSection builds={[build]} />);
 
     expect(screen.getByRole("cell", { name: "queued" })).toBeVisible();

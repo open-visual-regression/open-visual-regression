@@ -21,7 +21,8 @@ const BUILDS: NavigationBarMobileMenuProps["builds"] = [
     branch: "main",
     name: "Build 1",
     commitSha: "abcdef1234",
-    status: "passed",
+    processingStatus: "success",
+    reviewStatus: "not_required",
   },
 ];
 

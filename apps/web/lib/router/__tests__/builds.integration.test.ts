@@ -224,7 +224,8 @@ describe("builds", () => {
         project: { id: projectB!.projectId, name: "Project B" },
         branch: "main",
         commitSha: "b".repeat(40),
-        status: "queued",
+        processingStatus: "queued",
+        reviewStatus: "not_required",
       });
     });
 
@@ -414,7 +415,8 @@ describe("builds", () => {
         project: { id: project!.projectId, name: TEST_PROJECT.projectName },
         branch: "main",
         commitSha: "a".repeat(40),
-        status: "queued",
+        processingStatus: "queued",
+        reviewStatus: "not_required",
       });
     });
   });

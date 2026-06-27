@@ -10,14 +10,14 @@ const PROJECTS = [
   mocks.project.generateProject({ name: "Acme Admin" }),
 ];
 
-const BUILD_STATUSES = [
-  "passed",
-  "needs_review",
-  "rejected",
-  "error",
-  "queued",
-  "processing",
-] as const;
+const BUILD_STATUSES: Pick<BuildSchema, "processingStatus" | "reviewStatus">[] = [
+  { processingStatus: "success", reviewStatus: "not_required" },
+  { processingStatus: "success", reviewStatus: "needs_review" },
+  { processingStatus: "success", reviewStatus: "rejected" },
+  { processingStatus: "error", reviewStatus: "not_required" },
+  { processingStatus: "queued", reviewStatus: "not_required" },
+  { processingStatus: "processing", reviewStatus: "not_required" },
+];
 
 const buildOverrides: Partial<BuildSchema>[] = Array.from({ length: 20 }, (_, index) => ({
   project: { id: PROJECTS[0]!.id, name: PROJECTS[0]!.name },
@@ -25,7 +25,7 @@ const buildOverrides: Partial<BuildSchema>[] = Array.from({ length: 20 }, (_, in
   commitSha: `${index.toString(16).padStart(2, "0")}b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0`,
   author: "Jordan Lee",
   createdAt: `2026-06-${String((index % 28) + 1).padStart(2, "0")}T12:00:00.000Z`,
-  status: BUILD_STATUSES[index % BUILD_STATUSES.length],
+  ...BUILD_STATUSES[index % BUILD_STATUSES.length],
 }));
 
 const BUILDS = buildOverrides.map((overrides) => mocks.build.generateBuild(overrides));

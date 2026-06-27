@@ -2,11 +2,15 @@ import Link from "next/link";
 import type { BuildSchema, BuildStatus } from "@ovr/api/contracts/builds";
 import { cn } from "@ovr/ui/lib/utils";
 import { Typography } from "@ovr/ui/components/typography";
+import { getBuildDisplayStatus } from "@/lib/router/utils/buildStatus";
 
 const RECENT_BUILD_ROW_HEIGHT_PX = 44;
 
 type RecentBuildSidebarLinkProps = {
-  build: Pick<BuildSchema, "id" | "project" | "branch" | "name" | "commitSha" | "status">;
+  build: Pick<
+    BuildSchema,
+    "id" | "project" | "branch" | "name" | "commitSha" | "processingStatus" | "reviewStatus"
+  >;
   className?: string;
   onClick?: () => void;
 };
@@ -33,7 +37,7 @@ const RecentBuildSidebarLink = ({ build, className, onClick }: RecentBuildSideba
     <div
       className={cn(
         "flex flex-col justify-center pr-3 pl-2.5 py-0.5 border-l-3",
-        BUILD_STATUS_BORDER_CLASS[build.status],
+        BUILD_STATUS_BORDER_CLASS[getBuildDisplayStatus(build)],
       )}
     >
       <Typography variant="body-sm" className="truncate text-ovr-fg-muted">

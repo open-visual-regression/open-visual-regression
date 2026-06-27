@@ -18,7 +18,8 @@ const buildOverrides: Partial<BuildSchema>[] = [
     commitSha: "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0",
     author: "Jordan Lee",
     createdAt: "2026-06-20T12:00:00.000Z",
-    status: "passed",
+    processingStatus: "success",
+    reviewStatus: "not_required",
   },
   {
     project: PROJECTS[1],
@@ -26,7 +27,8 @@ const buildOverrides: Partial<BuildSchema>[] = [
     commitSha: "b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0",
     author: "Jordan Lee",
     createdAt: "2026-06-19T12:00:00.000Z",
-    status: "needs_review",
+    processingStatus: "success",
+    reviewStatus: "needs_review",
   },
 ];
 

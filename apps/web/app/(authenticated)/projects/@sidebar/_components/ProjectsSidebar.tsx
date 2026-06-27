@@ -16,7 +16,10 @@ import { RecentBuildsSidebarLinks } from "@/lib/components/sidebar/RecentBuildsS
 type ProjectsSidebarProps = {
   projects: Pick<ProjectDto, "id" | "name">[];
   total: number;
-  builds: Pick<BuildSchema, "id" | "project" | "branch" | "name" | "commitSha" | "status">[];
+  builds: Pick<
+    BuildSchema,
+    "id" | "project" | "branch" | "name" | "commitSha" | "processingStatus" | "reviewStatus"
+  >[];
   version?: string;
   initialCollapsed?: boolean;
 };

@@ -1,5 +1,7 @@
 import { StatusBadge, type StatusBadgeProps } from "@ovr/ui/components/status-badge";
 import { type BuildStatus } from "@ovr/api/contracts/builds";
+import type { BuildProcessingStatus, BuildReviewStatus } from "@ovr/db/schema";
+import { getBuildDisplayStatus } from "@/lib/router/utils/buildStatus";
 
 const BUILD_STATUS_BADGE: Record<
   BuildStatus,
@@ -14,7 +16,13 @@ const BUILD_STATUS_BADGE: Record<
   error: { color: "red", icon: "error", label: "error" },
 };
 
-export const BuildStatusBadge = ({ status }: { status: BuildStatus }) => {
+type BuildStatusProps = {
+  processingStatus: BuildProcessingStatus;
+  reviewStatus: BuildReviewStatus;
+};
+
+export const BuildStatusBadge = ({ processingStatus, reviewStatus }: BuildStatusProps) => {
+  const status = getBuildDisplayStatus({ processingStatus, reviewStatus });
   const { color, icon, label } = BUILD_STATUS_BADGE[status];
   return (
     <StatusBadge variant="outline" color={color} icon={icon}>
@@ -23,7 +31,8 @@ export const BuildStatusBadge = ({ status }: { status: BuildStatus }) => {
   );
 };
 
-export const BuildStatusStripe = ({ status }: { status: BuildStatus }) => {
+export const BuildStatusStripe = ({ processingStatus, reviewStatus }: BuildStatusProps) => {
+  const status = getBuildDisplayStatus({ processingStatus, reviewStatus });
   switch (status) {
     case "queued":
       return <div className="absolute inset-0 bg-ovr-gray" />;

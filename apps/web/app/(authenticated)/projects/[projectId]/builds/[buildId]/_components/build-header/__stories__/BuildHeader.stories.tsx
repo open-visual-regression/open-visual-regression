@@ -37,28 +37,44 @@ const buildOverrides: Partial<BuildSchema> = {
 
 export const NeedsReview: Story = {
   args: {
-    build: mocks.build.generateBuild({ ...buildOverrides, status: "needs_review" }),
+    build: mocks.build.generateBuild({
+      ...buildOverrides,
+      processingStatus: "success",
+      reviewStatus: "needs_review",
+    }),
     snapshotCounts,
   },
 };
 
 export const Passed: Story = {
   args: {
-    build: mocks.build.generateBuild({ ...buildOverrides, status: "passed" }),
+    build: mocks.build.generateBuild({
+      ...buildOverrides,
+      processingStatus: "success",
+      reviewStatus: "not_required",
+    }),
     snapshotCounts,
   },
 };
 
 export const Approved: Story = {
   args: {
-    build: mocks.build.generateBuild({ ...buildOverrides, status: "approved" }),
+    build: mocks.build.generateBuild({
+      ...buildOverrides,
+      processingStatus: "success",
+      reviewStatus: "approved",
+    }),
     snapshotCounts,
   },
 };
 
 export const Rejected: Story = {
   args: {
-    build: mocks.build.generateBuild({ ...buildOverrides, status: "rejected" }),
+    build: mocks.build.generateBuild({
+      ...buildOverrides,
+      processingStatus: "success",
+      reviewStatus: "rejected",
+    }),
     snapshotCounts,
   },
 };
@@ -67,7 +83,8 @@ export const Errored: Story = {
   args: {
     build: mocks.build.generateBuild({
       ...buildOverrides,
-      status: "error",
+      processingStatus: "error",
+      reviewStatus: "not_required",
       errorMessage: "Build failed: unable to connect to the test runner.",
     }),
     snapshotCounts: {
