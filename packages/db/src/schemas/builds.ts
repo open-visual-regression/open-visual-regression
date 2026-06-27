@@ -65,7 +65,7 @@ export const diffReviewVoteEnum = pgEnum("diff_review_vote", ["approve", "reject
 
 export type DiffReviewVote = (typeof diffReviewVoteEnum.enumValues)[number];
 
-export const captureModeEnum = pgEnum("capture_mode", ["worker", "pre_captured"]);
+export const captureModeEnum = pgEnum("capture_mode", ["worker"]);
 
 export type CaptureMode = (typeof captureModeEnum.enumValues)[number];
 
