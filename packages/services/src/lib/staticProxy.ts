@@ -23,11 +23,16 @@ export const startStaticProxy = (projectId: string, buildId: string): Promise<St
         .getFileStream(getStaticPath(projectId, buildId, relativePath))
         .then((stream) => {
           res.writeHead(200, { "Content-Type": getContentType(relativePath) });
+          stream.on("error", () => res.destroy());
           stream.pipe(res);
         })
         .catch(() => {
-          res.writeHead(404);
-          res.end();
+          if (res.headersSent) {
+            res.destroy();
+          } else {
+            res.writeHead(404);
+            res.end();
+          }
         });
     });
 

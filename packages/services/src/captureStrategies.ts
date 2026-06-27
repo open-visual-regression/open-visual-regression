@@ -196,9 +196,13 @@ const storybookCaptureStrategy: CaptureStrategy = {
   waitForTargetPlayed: waitForStorybookTargetPlayed,
 };
 
+const DETECT_STRATEGY_TIMEOUT_MS = 10_000;
+
 const detectStorybookManifestVersion = async (proxyOrigin: string): Promise<number | undefined> => {
   try {
-    const response = await fetch(`${proxyOrigin}/index.json`);
+    const response = await fetch(`${proxyOrigin}/index.json`, {
+      signal: AbortSignal.timeout(DETECT_STRATEGY_TIMEOUT_MS),
+    });
     if (!response.ok) {
       return undefined;
     }
