@@ -28,8 +28,7 @@ describe("BuildsSection", () => {
 
   it("should show a passed build's status as 'passed'", () => {
     const build = mocks.build.generateBuild({
-      processingStatus: "success",
-      reviewStatus: "not_required",
+      status: "passed",
     });
     render(<BuildsSection builds={[build]} />);
 
@@ -38,8 +37,7 @@ describe("BuildsSection", () => {
 
   it("should show a needs_review build's status as 'needs review'", () => {
     const build = mocks.build.generateBuild({
-      processingStatus: "success",
-      reviewStatus: "needs_review",
+      status: "needs_review",
     });
     render(<BuildsSection builds={[build]} />);
 
@@ -48,8 +46,7 @@ describe("BuildsSection", () => {
 
   it("should show an error build's status as 'error'", () => {
     const build = mocks.build.generateBuild({
-      processingStatus: "error",
-      reviewStatus: "not_required",
+      status: "error",
     });
     render(<BuildsSection builds={[build]} />);
 
@@ -58,8 +55,7 @@ describe("BuildsSection", () => {
 
   it("should show a queued build's status as 'queued'", () => {
     const build = mocks.build.generateBuild({
-      processingStatus: "queued",
-      reviewStatus: "not_required",
+      status: "queued",
     });
     render(<BuildsSection builds={[build]} />);
 

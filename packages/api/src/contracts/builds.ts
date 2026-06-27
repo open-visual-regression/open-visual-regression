@@ -86,8 +86,7 @@ export const buildSchema = z.object({
   name: z.string().min(1).nullable(),
   author: z.string().min(1).nullable(),
   errorMessage: z.string().nullable(),
-  processingStatus: buildProcessingStatusSchema,
-  reviewStatus: buildReviewStatusSchema,
+  status: buildStatusSchema,
   createdAt: z.string().nonempty(),
 });
 

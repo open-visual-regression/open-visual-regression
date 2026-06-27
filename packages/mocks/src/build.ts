@@ -32,8 +32,7 @@ export const generateBuild = (overrides?: Partial<BuildSchema>): BuildSchema => 
   name: faker.git.commitMessage(),
   author: faker.person.fullName(),
   errorMessage: null,
-  processingStatus: "success",
-  reviewStatus: "not_required",
+  status: "passed",
   createdAt: faker.date.recent().toISOString(),
   ...overrides,
 });

@@ -83,8 +83,7 @@ describe("builds", () => {
         projectId,
         branch: "main",
         commitSha: "a".repeat(40),
-        processingStatus: "queued",
-        reviewStatus: "not_required",
+        status: "queued",
       });
     });
   });
@@ -224,8 +223,7 @@ describe("builds", () => {
         project: { id: projectB!.projectId, name: "Project B" },
         branch: "main",
         commitSha: "b".repeat(40),
-        processingStatus: "queued",
-        reviewStatus: "not_required",
+        status: "queued",
       });
     });
 
@@ -415,8 +413,7 @@ describe("builds", () => {
         project: { id: project!.projectId, name: TEST_PROJECT.projectName },
         branch: "main",
         commitSha: "a".repeat(40),
-        processingStatus: "queued",
-        reviewStatus: "not_required",
+        status: "queued",
       });
     });
   });

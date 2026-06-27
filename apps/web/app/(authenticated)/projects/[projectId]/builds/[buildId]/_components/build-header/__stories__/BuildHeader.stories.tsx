@@ -39,8 +39,7 @@ export const NeedsReview: Story = {
   args: {
     build: mocks.build.generateBuild({
       ...buildOverrides,
-      processingStatus: "success",
-      reviewStatus: "needs_review",
+      status: "needs_review",
     }),
     snapshotCounts,
   },
@@ -50,8 +49,7 @@ export const Passed: Story = {
   args: {
     build: mocks.build.generateBuild({
       ...buildOverrides,
-      processingStatus: "success",
-      reviewStatus: "not_required",
+      status: "passed",
     }),
     snapshotCounts,
   },
@@ -61,8 +59,7 @@ export const Approved: Story = {
   args: {
     build: mocks.build.generateBuild({
       ...buildOverrides,
-      processingStatus: "success",
-      reviewStatus: "approved",
+      status: "approved",
     }),
     snapshotCounts,
   },
@@ -72,8 +69,7 @@ export const Rejected: Story = {
   args: {
     build: mocks.build.generateBuild({
       ...buildOverrides,
-      processingStatus: "success",
-      reviewStatus: "rejected",
+      status: "rejected",
     }),
     snapshotCounts,
   },
@@ -83,8 +79,7 @@ export const Errored: Story = {
   args: {
     build: mocks.build.generateBuild({
       ...buildOverrides,
-      processingStatus: "error",
-      reviewStatus: "not_required",
+      status: "error",
       errorMessage: "Build failed: unable to connect to the test runner.",
     }),
     snapshotCounts: {

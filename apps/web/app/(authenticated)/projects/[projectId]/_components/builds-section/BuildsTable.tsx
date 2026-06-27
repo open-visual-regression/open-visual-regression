@@ -28,23 +28,13 @@ const columns = columnHelper.columns([
   columnHelper.display({
     id: "statusStripe",
     meta: { className: "w-1 min-w-1 p-0 relative" },
-    cell: ({ row }) => (
-      <BuildStatusStripe
-        processingStatus={row.original.processingStatus}
-        reviewStatus={row.original.reviewStatus}
-      />
-    ),
+    cell: ({ row }) => <BuildStatusStripe status={row.original.status} />,
   }),
   columnHelper.display({
     id: "status",
     header: "Status",
     meta: { className: "text-left w-px" },
-    cell: ({ row }) => (
-      <BuildStatusBadge
-        processingStatus={row.original.processingStatus}
-        reviewStatus={row.original.reviewStatus}
-      />
-    ),
+    cell: ({ row }) => <BuildStatusBadge status={row.original.status} />,
   }),
   columnHelper.accessor("name", {
     header: "Commit",
