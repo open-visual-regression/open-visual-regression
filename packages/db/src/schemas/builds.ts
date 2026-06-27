@@ -17,21 +17,28 @@ import { v7 as uuidv7 } from "uuid";
 import { user } from "./auth";
 import { projects, utcTimestamp } from "./schemas";
 
-export const buildStatusEnum = pgEnum("build_status", [
+export const buildProcessingStatusEnum = pgEnum("build_processing_status", [
   "queued",
   "processing",
-  "needs_review",
-  "passed",
-  "rejected",
+  "success",
   "error",
 ]);
 
-export type BuildStatus = (typeof buildStatusEnum.enumValues)[number];
+export type BuildProcessingStatus = (typeof buildProcessingStatusEnum.enumValues)[number];
+
+export const buildReviewStatusEnum = pgEnum("build_review_status", [
+  "not_required",
+  "needs_review",
+  "approved",
+  "rejected",
+]);
+
+export type BuildReviewStatus = (typeof buildReviewStatusEnum.enumValues)[number];
 
 export const snapshotStatusEnum = pgEnum("snapshot_status", [
   "queued",
   "processing",
-  "captured",
+  "success",
   "error",
 ]);
 
@@ -39,7 +46,7 @@ export type SnapshotStatus = (typeof snapshotStatusEnum.enumValues)[number];
 
 export const diffProcessingStatusEnum = pgEnum("diff_processing_status", [
   "pending",
-  "diffed",
+  "success",
   "error",
 ]);
 
@@ -58,7 +65,7 @@ export const diffReviewVoteEnum = pgEnum("diff_review_vote", ["approve", "reject
 
 export type DiffReviewVote = (typeof diffReviewVoteEnum.enumValues)[number];
 
-export const captureModeEnum = pgEnum("capture_mode", ["worker", "pre_captured"]);
+export const captureModeEnum = pgEnum("capture_mode", ["worker"]);
 
 export type CaptureMode = (typeof captureModeEnum.enumValues)[number];
 
@@ -73,7 +80,8 @@ export const builds = pgTable(
     commitSha: varchar("commit_sha", { length: 64 }).notNull(),
     name: varchar({ length: 255 }),
     author: varchar({ length: 255 }),
-    status: buildStatusEnum().notNull().default("queued"),
+    processingStatus: buildProcessingStatusEnum("processing_status").notNull().default("queued"),
+    reviewStatus: buildReviewStatusEnum("review_status").notNull().default("not_required"),
     errorMessage: text("error_message"),
     captureMode: captureModeEnum("capture_mode").notNull().default("worker"),
     artifactPath: text("artifact_path").notNull(),

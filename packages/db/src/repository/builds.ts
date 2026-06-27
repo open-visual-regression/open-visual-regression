@@ -1,7 +1,14 @@
 import { and, asc, count, desc, eq, inArray, lt, notExists, sql } from "drizzle-orm";
 
 import { db, type DbClient } from "../db";
-import { baselines, builds, projects, snapshots, type BuildStatus } from "../schema";
+import {
+  baselines,
+  builds,
+  projects,
+  snapshots,
+  type BuildProcessingStatus,
+  type BuildReviewStatus,
+} from "../schema";
 
 type CreateInput = typeof builds.$inferInsert & { tx?: DbClient };
 
@@ -13,18 +20,34 @@ export const create = async ({ tx = db, ...values }: CreateInput) => {
 export const findById = (id: string) =>
   db.query.builds.findFirst({ where: (builds, { eq }) => eq(builds.id, id) });
 
-export const updateStatus = async (id: string, status: BuildStatus, errorMessage?: string) => {
+export const updateProcessingStatus = async (
+  id: string,
+  processingStatus: BuildProcessingStatus,
+  errorMessage?: string,
+) => {
   const [build] = await db
     .update(builds)
-    .set({ status, errorMessage })
+    .set({ processingStatus, errorMessage })
     .where(eq(builds.id, id))
     .returning();
   return build;
 };
 
+type UpdateResultInput = {
+  processingStatus: BuildProcessingStatus;
+  reviewStatus: BuildReviewStatus;
+  errorMessage?: string | null;
+};
+
+export const updateResult = async (id: string, result: UpdateResultInput) => {
+  const [build] = await db.update(builds).set(result).where(eq(builds.id, id)).returning();
+  return build;
+};
+
 type FindByProjectOptions = {
   branch?: string;
-  status?: BuildStatus;
+  processingStatus?: BuildProcessingStatus;
+  reviewStatus?: BuildReviewStatus;
 };
 
 export const findByProject = (projectId: string, opts: FindByProjectOptions = {}) =>
@@ -33,7 +56,8 @@ export const findByProject = (projectId: string, opts: FindByProjectOptions = {}
       and(
         eq(builds.projectId, projectId),
         opts.branch ? eq(builds.branch, opts.branch) : undefined,
-        opts.status ? eq(builds.status, opts.status) : undefined,
+        opts.processingStatus ? eq(builds.processingStatus, opts.processingStatus) : undefined,
+        opts.reviewStatus ? eq(builds.reviewStatus, opts.reviewStatus) : undefined,
       ),
   });
 
@@ -44,7 +68,8 @@ export type SortDirection = "asc" | "desc";
 type FindAllInput = {
   organizationId: string;
   projectIds?: string[];
-  status?: BuildStatus;
+  processingStatus?: BuildProcessingStatus;
+  reviewStatus?: BuildReviewStatus;
   sortDirection?: SortDirection;
   limit: number;
   offset: number;
@@ -53,7 +78,8 @@ type FindAllInput = {
 export const findAll = async ({
   organizationId,
   projectIds,
-  status,
+  processingStatus,
+  reviewStatus,
   sortDirection = "desc",
   limit,
   offset,
@@ -61,7 +87,8 @@ export const findAll = async ({
   const filter = and(
     eq(projects.organizationId, organizationId),
     projectIds?.length ? inArray(builds.projectId, projectIds) : undefined,
-    status ? eq(builds.status, status) : undefined,
+    processingStatus ? eq(builds.processingStatus, processingStatus) : undefined,
+    reviewStatus ? eq(builds.reviewStatus, reviewStatus) : undefined,
   );
 
   const orderFn = sortDirection === "asc" ? asc : desc;
@@ -77,7 +104,8 @@ export const findAll = async ({
         commitSha: builds.commitSha,
         name: builds.name,
         author: builds.author,
-        status: builds.status,
+        processingStatus: builds.processingStatus,
+        reviewStatus: builds.reviewStatus,
         createdAt: builds.createdAt,
       })
       .from(builds)

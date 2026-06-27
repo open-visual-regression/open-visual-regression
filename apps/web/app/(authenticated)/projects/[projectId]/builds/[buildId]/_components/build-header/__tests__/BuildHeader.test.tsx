@@ -24,7 +24,9 @@ const renderComponent = (props: BuildHeaderProps) =>
 
 describe("BuildHeader", () => {
   it("should render the SegmentedProgress segments with the correct counts", () => {
-    const build = mocks.build.generateBuild({ status: "needs_review" });
+    const build = mocks.build.generateBuild({
+      status: "needs_review",
+    });
     renderComponent({
       build,
       snapshotCounts: {
@@ -46,7 +48,9 @@ describe("BuildHeader", () => {
   });
 
   it("should disable both bulk actions when there are no reviewable snapshots", () => {
-    const build = mocks.build.generateBuild({ status: "needs_review" });
+    const build = mocks.build.generateBuild({
+      status: "needs_review",
+    });
     renderComponent({
       build,
       snapshotCounts: {
@@ -65,7 +69,9 @@ describe("BuildHeader", () => {
   });
 
   it("should enable reject all when every reviewable snapshot is already approved", () => {
-    const build = mocks.build.generateBuild({ status: "passed" });
+    const build = mocks.build.generateBuild({
+      status: "approved",
+    });
     renderComponent({
       build,
       snapshotCounts: {
@@ -84,7 +90,9 @@ describe("BuildHeader", () => {
   });
 
   it("should enable approve all when at least one snapshot is rejected but others are still approved", () => {
-    const build = mocks.build.generateBuild({ status: "rejected" });
+    const build = mocks.build.generateBuild({
+      status: "rejected",
+    });
     renderComponent({
       build,
       snapshotCounts: {
@@ -104,7 +112,9 @@ describe("BuildHeader", () => {
 
   it("should approve all needs-review snapshots", async ({ user }) => {
     mockBulkCastVote.mockResolvedValue([null, undefined]);
-    const build = mocks.build.generateBuild({ status: "needs_review" });
+    const build = mocks.build.generateBuild({
+      status: "needs_review",
+    });
     renderComponent({
       build,
       snapshotCounts: {
@@ -126,7 +136,9 @@ describe("BuildHeader", () => {
 
   it("should reject all needs-review snapshots", async ({ user }) => {
     mockBulkCastVote.mockResolvedValue([null, undefined]);
-    const build = mocks.build.generateBuild({ status: "needs_review" });
+    const build = mocks.build.generateBuild({
+      status: "needs_review",
+    });
     renderComponent({
       build,
       snapshotCounts: {
@@ -148,7 +160,9 @@ describe("BuildHeader", () => {
 
   it("should show an error toast if approving all fails", async ({ user }) => {
     mockBulkCastVote.mockResolvedValue([createORPCError("INTERNAL_SERVER_ERROR"), undefined]);
-    const build = mocks.build.generateBuild({ status: "needs_review" });
+    const build = mocks.build.generateBuild({
+      status: "needs_review",
+    });
     renderComponent({
       build,
       snapshotCounts: {
@@ -170,7 +184,9 @@ describe("BuildHeader", () => {
 
   it("should show an error toast if rejecting all fails", async ({ user }) => {
     mockBulkCastVote.mockResolvedValue([createORPCError("INTERNAL_SERVER_ERROR"), undefined]);
-    const build = mocks.build.generateBuild({ status: "needs_review" });
+    const build = mocks.build.generateBuild({
+      status: "needs_review",
+    });
     renderComponent({
       build,
       snapshotCounts: {
@@ -190,8 +206,10 @@ describe("BuildHeader", () => {
     expect(mockRefresh).not.toHaveBeenCalled();
   });
 
-  it("should show approve all as disabled and labeled when the build already passed", () => {
-    const build = mocks.build.generateBuild({ status: "passed" });
+  it("should show approve all as disabled and labeled when the build is already approved", () => {
+    const build = mocks.build.generateBuild({
+      status: "approved",
+    });
     renderComponent({
       build,
       snapshotCounts: {
@@ -233,7 +251,10 @@ describe("BuildHeader", () => {
   });
 
   it("should not show the error alert when the build has no error message", () => {
-    const build = mocks.build.generateBuild({ status: "needs_review", errorMessage: null });
+    const build = mocks.build.generateBuild({
+      status: "needs_review",
+      errorMessage: null,
+    });
     renderComponent({
       build,
       snapshotCounts: {
@@ -251,7 +272,9 @@ describe("BuildHeader", () => {
   });
 
   it("should show reject all as disabled and labeled when the build was rejected", () => {
-    const build = mocks.build.generateBuild({ status: "rejected" });
+    const build = mocks.build.generateBuild({
+      status: "rejected",
+    });
     renderComponent({
       build,
       snapshotCounts: {

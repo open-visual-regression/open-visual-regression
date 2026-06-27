@@ -18,7 +18,7 @@ describe("diff", () => {
             buildId: build.id,
             ...captureConfiguration,
             targetId: "story-a",
-            status: "captured",
+            status: "success",
           },
         ],
       });
@@ -54,13 +54,13 @@ describe("diff", () => {
             buildId: build.id,
             ...captureConfiguration,
             targetId: "story-a",
-            status: "captured",
+            status: "success",
           },
           {
             buildId: build.id,
             ...captureConfiguration,
             targetId: "story-b",
-            status: "captured",
+            status: "success",
           },
         ],
       });

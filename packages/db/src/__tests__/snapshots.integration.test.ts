@@ -9,21 +9,21 @@ const seedReviewQueue = async (build: { id: string }, captureConfiguration: obje
         ...captureConfiguration,
         targetId: "a",
         targetTitle: "A",
-        status: "captured",
+        status: "success",
       },
       {
         buildId: build.id,
         ...captureConfiguration,
         targetId: "b",
         targetTitle: "B",
-        status: "captured",
+        status: "success",
       },
       {
         buildId: build.id,
         ...captureConfiguration,
         targetId: "c",
         targetTitle: "C",
-        status: "captured",
+        status: "success",
       },
       {
         buildId: build.id,
@@ -38,17 +38,17 @@ const seedReviewQueue = async (build: { id: string }, captureConfiguration: obje
 
   await dbClient.diffs.create({
     snapshotId: first!.id,
-    processingStatus: "diffed",
+    processingStatus: "success",
     reviewStatus: "needs_review",
   });
   await dbClient.diffs.create({
     snapshotId: second!.id,
-    processingStatus: "diffed",
+    processingStatus: "success",
     reviewStatus: "rejected",
   });
   await dbClient.diffs.create({
     snapshotId: noDiff!.id,
-    processingStatus: "diffed",
+    processingStatus: "success",
     reviewStatus: "not_required",
   });
 
@@ -132,8 +132,8 @@ describe("snapshots", () => {
         values: [{ buildId: build.id, ...captureConfiguration, targetId: "a" }],
       });
 
-      const updated = await dbClient.snapshots.updateStatus(snapshot!.id, "captured");
-      expect(updated?.status).toBe("captured");
+      const updated = await dbClient.snapshots.updateStatus(snapshot!.id, "success");
+      expect(updated?.status).toBe("success");
     });
   });
 
@@ -149,7 +149,7 @@ describe("snapshots", () => {
         ],
       });
 
-      await dbClient.snapshots.updateStatus(a!.id, "captured");
+      await dbClient.snapshots.updateStatus(a!.id, "success");
       expect(await dbClient.snapshots.hasAllCapturedForBuild(build.id)).toBe(false);
     });
 
@@ -164,7 +164,7 @@ describe("snapshots", () => {
         ],
       });
 
-      await dbClient.snapshots.updateStatus(created[0]!.id, "captured");
+      await dbClient.snapshots.updateStatus(created[0]!.id, "success");
       await dbClient.snapshots.updateStatus(created[1]!.id, "error");
       expect(await dbClient.snapshots.hasAllCapturedForBuild(build.id)).toBe(true);
     });
@@ -199,19 +199,19 @@ describe("snapshots", () => {
               buildId: build.id,
               ...captureConfiguration,
               targetId: "passed",
-              status: "captured",
+              status: "success",
             },
             {
               buildId: build.id,
               ...captureConfiguration,
               targetId: "needs_review",
-              status: "captured",
+              status: "success",
             },
             {
               buildId: build.id,
               ...captureConfiguration,
               targetId: "rejected",
-              status: "captured",
+              status: "success",
             },
             {
               buildId: build.id,
@@ -224,17 +224,17 @@ describe("snapshots", () => {
 
       await dbClient.diffs.create({
         snapshotId: passed!.id,
-        processingStatus: "diffed",
+        processingStatus: "success",
         reviewStatus: "not_required",
       });
       await dbClient.diffs.create({
         snapshotId: needsReview!.id,
-        processingStatus: "diffed",
+        processingStatus: "success",
         reviewStatus: "needs_review",
       });
       await dbClient.diffs.create({
         snapshotId: rejected!.id,
-        processingStatus: "diffed",
+        processingStatus: "success",
         reviewStatus: "rejected",
       });
 
@@ -262,7 +262,7 @@ describe("snapshots", () => {
             buildId: build.id,
             ...captureConfiguration,
             targetId: "rendered-but-broken",
-            status: "captured",
+            status: "success",
             hasRenderError: true,
           },
         ],
@@ -270,7 +270,7 @@ describe("snapshots", () => {
 
       await dbClient.diffs.create({
         snapshotId: snapshot!.id,
-        processingStatus: "diffed",
+        processingStatus: "success",
         reviewStatus: "needs_review",
       });
 
@@ -292,7 +292,7 @@ describe("snapshots", () => {
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [{ buildId: build.id, ...captureConfiguration, targetId: "diff-error" }],
       });
-      await dbClient.snapshots.updateStatus(snapshot!.id, "captured");
+      await dbClient.snapshots.updateStatus(snapshot!.id, "success");
       await dbClient.diffs.create({
         snapshotId: snapshot!.id,
         processingStatus: "error",
@@ -321,7 +321,7 @@ describe("snapshots", () => {
             targetId: "home",
             targetTitle: "Home Page",
             targetName: "home",
-            status: "captured",
+            status: "success",
           },
           {
             buildId: build.id,
@@ -329,19 +329,19 @@ describe("snapshots", () => {
             targetId: "checkout",
             targetTitle: "Checkout Page",
             targetName: "checkout",
-            status: "captured",
+            status: "success",
           },
         ],
       });
 
       await dbClient.diffs.create({
         snapshotId: passed!.id,
-        processingStatus: "diffed",
+        processingStatus: "success",
         reviewStatus: "not_required",
       });
       await dbClient.diffs.create({
         snapshotId: needsReview!.id,
-        processingStatus: "diffed",
+        processingStatus: "success",
         reviewStatus: "needs_review",
       });
     };
@@ -401,7 +401,7 @@ describe("snapshots", () => {
             targetId: "error",
             targetTitle: "Story",
             targetName: "Story",
-            status: "captured",
+            status: "success",
             hasRenderError: true,
           },
           {
@@ -410,7 +410,7 @@ describe("snapshots", () => {
             targetId: "needs_review",
             targetTitle: "Story",
             targetName: "Story",
-            status: "captured",
+            status: "success",
           },
           {
             buildId: build.id,
@@ -418,7 +418,7 @@ describe("snapshots", () => {
             targetId: "rejected",
             targetTitle: "Story",
             targetName: "Story",
-            status: "captured",
+            status: "success",
           },
           {
             buildId: build.id,
@@ -426,7 +426,7 @@ describe("snapshots", () => {
             targetId: "approved",
             targetTitle: "Story",
             targetName: "Story",
-            status: "captured",
+            status: "success",
           },
           {
             buildId: build.id,
@@ -434,7 +434,7 @@ describe("snapshots", () => {
             targetId: "passed",
             targetTitle: "Story",
             targetName: "Story",
-            status: "captured",
+            status: "success",
           },
           {
             buildId: build.id,
@@ -448,22 +448,22 @@ describe("snapshots", () => {
 
       await dbClient.diffs.create({
         snapshotId: needsReviewSnapshot!.id,
-        processingStatus: "diffed",
+        processingStatus: "success",
         reviewStatus: "needs_review",
       });
       await dbClient.diffs.create({
         snapshotId: rejectedSnapshot!.id,
-        processingStatus: "diffed",
+        processingStatus: "success",
         reviewStatus: "rejected",
       });
       await dbClient.diffs.create({
         snapshotId: approvedSnapshot!.id,
-        processingStatus: "diffed",
+        processingStatus: "success",
         reviewStatus: "approved",
       });
       await dbClient.diffs.create({
         snapshotId: passedSnapshot!.id,
-        processingStatus: "diffed",
+        processingStatus: "success",
         reviewStatus: "not_required",
       });
 
@@ -614,7 +614,7 @@ describe("snapshots", () => {
       const { second, errored } = await seedReviewQueue(build, captureConfiguration);
       await dbClient.diffs.create({
         snapshotId: errored.id,
-        processingStatus: "diffed",
+        processingStatus: "success",
         reviewStatus: "needs_review",
       });
 

@@ -6,7 +6,7 @@ import { Typography } from "@ovr/ui/components/typography";
 const RECENT_BUILD_ROW_HEIGHT_PX = 44;
 
 type RecentBuildSidebarLinkProps = {
-  build: Pick<BuildSchema, "id" | "project" | "branch" | "name" | "commitSha" | "status">;
+  build: BuildSchema;
   className?: string;
   onClick?: () => void;
 };
@@ -16,6 +16,7 @@ const BUILD_STATUS_BORDER_CLASS: Record<BuildStatus, string> = {
   processing: "border-ovr-purple",
   needs_review: "border-ovr-accent",
   passed: "border-ovr-blue",
+  approved: "border-ovr-green",
   rejected: "border-ovr-remove",
   error: "border-ovr-remove",
 };

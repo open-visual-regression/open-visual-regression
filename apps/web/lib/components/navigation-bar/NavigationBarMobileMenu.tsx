@@ -15,7 +15,7 @@ type NavigationBarMobileMenuProps = {
   role: string | null | undefined;
   projects: Pick<ProjectDto, "id" | "name">[];
   projectsTotal: number;
-  builds: Pick<BuildSchema, "id" | "project" | "branch" | "name" | "commitSha" | "status">[];
+  builds: BuildSchema[];
 };
 
 const NavigationBarMobileMenu = ({

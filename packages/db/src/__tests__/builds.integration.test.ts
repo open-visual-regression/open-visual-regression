@@ -7,7 +7,7 @@ import { describe, expect, test } from "./fixtures";
 
 describe("builds", () => {
   describe("create", () => {
-    test("should create a build with queued status and worker capture mode by default", async ({
+    test("should create a build with queued processing status and worker capture mode by default", async ({
       project,
       user,
     }) => {
@@ -19,7 +19,8 @@ describe("builds", () => {
         createdBy: user.id,
       });
 
-      expect(build?.status).toBe("queued");
+      expect(build?.processingStatus).toBe("queued");
+      expect(build?.reviewStatus).toBe("not_required");
       expect(build?.captureMode).toBe("worker");
     });
   });
@@ -31,10 +32,20 @@ describe("builds", () => {
     });
   });
 
-  describe("updateStatus", () => {
-    test("should update the build's status", async ({ build }) => {
-      const updated = await dbClient.builds.updateStatus(build.id, "passed");
-      expect(updated?.status).toBe("passed");
+  describe("updateProcessingStatus", () => {
+    test("should update the build's processing status", async ({ build }) => {
+      const updated = await dbClient.builds.updateProcessingStatus(build.id, "success");
+      expect(updated?.processingStatus).toBe("success");
+    });
+  });
+
+  describe("updateResult", () => {
+    test("should update the build's processing and review status together", async ({ build }) => {
+      const updated = await dbClient.builds.updateResult(build.id, {
+        processingStatus: "success",
+        reviewStatus: "approved",
+      });
+      expect(updated).toMatchObject({ processingStatus: "success", reviewStatus: "approved" });
     });
   });
 
@@ -56,7 +67,7 @@ describe("builds", () => {
       expect(builds.map((build) => build.id)).toEqual([main.id]);
     });
 
-    test("should only return builds matching the given status", async ({
+    test("should only return builds matching the given review status", async ({
       project,
       user,
       build: main,
@@ -68,9 +79,12 @@ describe("builds", () => {
         artifactPath: "builds/feature/artifact",
         createdBy: user.id,
       });
-      await dbClient.builds.updateStatus(main.id, "passed");
+      await dbClient.builds.updateResult(main.id, {
+        processingStatus: "success",
+        reviewStatus: "approved",
+      });
 
-      const builds = await dbClient.builds.findByProject(project.id, { status: "passed" });
+      const builds = await dbClient.builds.findByProject(project.id, { reviewStatus: "approved" });
       expect(builds.map((build) => build.id)).toEqual([main.id]);
     });
 
@@ -139,7 +153,8 @@ describe("builds", () => {
         projectName: "Other Project",
         branch: "main",
         commitSha: "b".repeat(40),
-        status: "queued",
+        processingStatus: "queued",
+        reviewStatus: "not_required",
       });
     });
 
@@ -231,31 +246,31 @@ describe("builds", () => {
       expect(builds.map((build) => build.id)).toEqual([otherProjectBuild!.id]);
     });
 
-    test("should only return builds matching the given status", async ({
+    test("should only return builds matching the given processing status", async ({
       organization,
       project,
       user,
       build: queuedBuild,
     }) => {
-      const passedBuild = await dbClient.builds.create({
+      const successBuild = await dbClient.builds.create({
         projectId: project.id,
         branch: "main",
         commitSha: "b".repeat(40),
         artifactPath: "builds/b/artifact",
         createdBy: user.id,
       });
-      await dbClient.builds.updateStatus(passedBuild!.id, "passed");
+      await dbClient.builds.updateProcessingStatus(successBuild!.id, "success");
 
       const { builds, total } = await dbClient.builds.findAll({
         organizationId: organization.id,
-        status: "passed",
+        processingStatus: "success",
         limit: 10,
         offset: 0,
       });
 
       expect(total).toBe(1);
-      expect(builds.map((build) => build.id)).toEqual([passedBuild!.id]);
-      expect(queuedBuild.status).toBe("queued");
+      expect(builds.map((build) => build.id)).toEqual([successBuild!.id]);
+      expect(queuedBuild.processingStatus).toBe("queued");
     });
 
     test("should respect the limit and offset params", async ({ organization, project, user }) => {

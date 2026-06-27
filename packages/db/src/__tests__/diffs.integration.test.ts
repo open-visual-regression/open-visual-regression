@@ -96,8 +96,8 @@ describe("diffs", () => {
       });
       const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
 
-      const updated = await dbClient.diffs.updateProcessingStatus(diff!.id, "diffed");
-      expect(updated?.processingStatus).toBe("diffed");
+      const updated = await dbClient.diffs.updateProcessingStatus(diff!.id, "success");
+      expect(updated?.processingStatus).toBe("success");
     });
   });
 
@@ -112,14 +112,14 @@ describe("diffs", () => {
       const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
 
       const updated = await dbClient.diffs.updateResult(diff!.id, {
-        processingStatus: "diffed",
+        processingStatus: "success",
         reviewStatus: "needs_review",
         pixelDiffCount: 12,
         diffPercent: 0.5,
       });
 
       expect(updated).toMatchObject({
-        processingStatus: "diffed",
+        processingStatus: "success",
         reviewStatus: "needs_review",
         pixelDiffCount: 12,
         diffPercent: 0.5,
@@ -164,7 +164,7 @@ describe("diffs", () => {
       });
       const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
 
-      await dbClient.diffs.updateProcessingStatus(diff!.id, "diffed");
+      await dbClient.diffs.updateProcessingStatus(diff!.id, "success");
       expect(await dbClient.diffs.hasAllDoneForBuild(build.id)).toBe(true);
     });
 

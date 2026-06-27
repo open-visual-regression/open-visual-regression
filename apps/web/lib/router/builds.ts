@@ -15,6 +15,7 @@ import {
   authenticatedMiddleware,
   organizationBuildMiddleware,
 } from "./middleware";
+import { getBuildDisplayStatus } from "./utils/buildStatus";
 
 const UPLOAD_URL_TTL_SECONDS = 3600;
 
@@ -61,34 +62,44 @@ export const getBuildStatus = os.builds.getBuildStatus
       throw new ORPCError("FORBIDDEN");
     }
 
-    if (build.status === "needs_review") {
+    const status = getBuildDisplayStatus(build);
+
+    if (status === "needs_review") {
       const baseUrl = process.env.BASE_URL ?? "http://localhost:3000";
       return {
-        status: build.status,
+        status,
         reviewUrl: `${baseUrl}/projects/${build.projectId}/builds/${build.id}`,
       };
     }
 
-    if (build.status === "error") {
+    if (status === "error") {
       return {
-        status: build.status,
+        status,
         errorMessage: build.errorMessage ?? undefined,
       };
     }
 
-    return { status: build.status };
+    return { status };
   })
   .actionable();
 
 export const list = os.builds.list
   .use(authenticatedMiddleware)
   .handler(async ({ input, context }) => {
-    const { projectIds, status, sortDirection = "desc", limit = 20, offset = 0 } = input ?? {};
+    const {
+      projectIds,
+      processingStatus,
+      reviewStatus,
+      sortDirection = "desc",
+      limit = 20,
+      offset = 0,
+    } = input ?? {};
 
     const { builds: rows, total } = await dbClient.builds.findAll({
       organizationId: context.organizationId,
       projectIds,
-      status,
+      processingStatus,
+      reviewStatus,
       sortDirection,
       limit,
       offset,
@@ -103,7 +114,7 @@ export const list = os.builds.list
         commitSha: build.commitSha,
         name: build.name,
         author: build.author,
-        status: build.status,
+        status: getBuildDisplayStatus(build),
         createdAt: build.createdAt,
       })),
       total,
@@ -126,7 +137,7 @@ export const getOne = os.builds.getOne
         errorMessage: build.errorMessage,
         name: build.name,
         author: build.author,
-        status: build.status,
+        status: getBuildDisplayStatus(build),
         createdAt: build.createdAt,
       },
     };

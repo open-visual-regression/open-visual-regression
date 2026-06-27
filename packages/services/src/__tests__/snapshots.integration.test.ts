@@ -72,7 +72,7 @@ describe("snapshots", () => {
       await captureSnapshot(snapshot!.id);
 
       const captured = await dbClient.snapshots.findById(snapshot!.id);
-      expect(captured).toMatchObject({ status: "captured", hasRenderError: false });
+      expect(captured).toMatchObject({ status: "success", hasRenderError: false });
       expect(captured!.imagePath).toBe(
         `${mainBuild.projectId}/builds/${mainBuild.id}/snapshots/${snapshot!.id}.png`,
       );
@@ -108,7 +108,7 @@ describe("snapshots", () => {
       await captureSnapshot(snapshot!.id);
 
       const captured = await dbClient.snapshots.findById(snapshot!.id);
-      expect(captured).toMatchObject({ status: "captured", hasRenderError: true });
+      expect(captured).toMatchObject({ status: "success", hasRenderError: true });
 
       const logs = await dbClient.snapshotLogs.findBySnapshot(snapshot!.id);
       expect(logs.length).toBeGreaterThan(0);
@@ -139,7 +139,7 @@ describe("snapshots", () => {
       await captureSnapshot(snapshot!.id);
 
       const captured = await dbClient.snapshots.findById(snapshot!.id);
-      expect(captured).toMatchObject({ status: "captured", hasRenderError: false });
+      expect(captured).toMatchObject({ status: "success", hasRenderError: false });
 
       const logs = await dbClient.snapshotLogs.findBySnapshot(snapshot!.id);
       expect(logs.some((log) => log.level === "error")).toBe(true);
@@ -158,7 +158,7 @@ describe("snapshots", () => {
             buildId: featureBuild.id,
             ...captureConfiguration,
             targetId: "story-a",
-            status: "captured",
+            status: "success",
             imagePath: `builds/${featureBuild.id}/snapshots/no-baseline.png`,
           },
         ],
@@ -169,7 +169,7 @@ describe("snapshots", () => {
       await diffSnapshot(snapshot!.id, diff!.id);
 
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
-        processingStatus: "diffed",
+        processingStatus: "success",
         reviewStatus: "needs_review",
       });
 
@@ -200,14 +200,14 @@ describe("snapshots", () => {
             buildId: featureBuild.id,
             ...captureConfiguration,
             targetId: "story-a",
-            status: "captured",
+            status: "success",
             imagePath: baselinePath,
           },
           {
             buildId: featureBuild.id,
             ...captureConfiguration,
             targetId: "story-a",
-            status: "captured",
+            status: "success",
             imagePath: capturePath,
           },
         ],
@@ -224,7 +224,7 @@ describe("snapshots", () => {
       await diffSnapshot(captureSnapshotRow!.id, diff!.id);
 
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
-        processingStatus: "diffed",
+        processingStatus: "success",
         reviewStatus: "not_required",
         pixelDiffCount: 0,
         diffPercent: 0,
@@ -247,14 +247,14 @@ describe("snapshots", () => {
             buildId: featureBuild.id,
             ...captureConfiguration,
             targetId: "story-b",
-            status: "captured",
+            status: "success",
             imagePath: baselinePath,
           },
           {
             buildId: featureBuild.id,
             ...captureConfiguration,
             targetId: "story-b",
-            status: "captured",
+            status: "success",
             imagePath: capturePath,
           },
         ],
@@ -271,7 +271,7 @@ describe("snapshots", () => {
       await diffSnapshot(captureSnapshotRow!.id, diff!.id);
 
       const result = await dbClient.diffs.findById(diff!.id);
-      expect(result).toMatchObject({ processingStatus: "diffed", reviewStatus: "needs_review" });
+      expect(result).toMatchObject({ processingStatus: "success", reviewStatus: "needs_review" });
       expect(result!.diffImagePath).toBe(
         `${featureBuild.projectId}/builds/${featureBuild.id}/diffs/${diff!.id}.png`,
       );
@@ -297,14 +297,14 @@ describe("snapshots", () => {
             buildId: featureBuild.id,
             ...captureConfiguration,
             targetId: "story-sized",
-            status: "captured",
+            status: "success",
             imagePath: baselinePath,
           },
           {
             buildId: featureBuild.id,
             ...captureConfiguration,
             targetId: "story-sized",
-            status: "captured",
+            status: "success",
             imagePath: capturePath,
           },
         ],
@@ -321,7 +321,7 @@ describe("snapshots", () => {
       await diffSnapshot(captureSnapshotRow!.id, diff!.id);
 
       const result = await dbClient.diffs.findById(diff!.id);
-      expect(result).toMatchObject({ processingStatus: "diffed", reviewStatus: "needs_review" });
+      expect(result).toMatchObject({ processingStatus: "success", reviewStatus: "needs_review" });
       expect(result!.baselineSnapshotId).toBe(baselineSnapshot!.id);
       expect(result!.pixelDiffCount).toBeGreaterThan(0);
       expect(result!.diffImagePath).toBe(
@@ -343,7 +343,7 @@ describe("snapshots", () => {
             buildId: mainBuild.id,
             ...captureConfiguration,
             targetId: "story-c",
-            status: "captured",
+            status: "success",
             imagePath: capturePath,
           },
         ],
@@ -353,7 +353,7 @@ describe("snapshots", () => {
       await diffSnapshot(captureSnapshotRow!.id, diff!.id);
 
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
-        processingStatus: "diffed",
+        processingStatus: "success",
         reviewStatus: "not_required",
       });
 
@@ -381,14 +381,14 @@ describe("snapshots", () => {
             buildId: mainBuild.id,
             ...captureConfiguration,
             targetId: "story-d",
-            status: "captured",
+            status: "success",
             imagePath: baselinePath,
           },
           {
             buildId: mainBuild.id,
             ...captureConfiguration,
             targetId: "story-d",
-            status: "captured",
+            status: "success",
             imagePath: capturePath,
           },
         ],
@@ -406,7 +406,7 @@ describe("snapshots", () => {
 
       const result = await dbClient.diffs.findById(diff!.id);
       expect(result).toMatchObject({
-        processingStatus: "diffed",
+        processingStatus: "success",
         reviewStatus: "not_required",
       });
       expect(result!.pixelDiffCount).toBeGreaterThan(0);
@@ -432,7 +432,7 @@ describe("snapshots", () => {
             buildId: featureBuild.id,
             ...captureConfiguration,
             targetId: "story-render-error",
-            status: "captured",
+            status: "success",
             imagePath: capturePath,
             hasRenderError: true,
           },

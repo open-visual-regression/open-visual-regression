@@ -142,13 +142,13 @@ describe("diffs", () => {
       });
       const diff = await dbClient.diffs.create({
         snapshotId: snapshot!.id,
-        processingStatus: "diffed",
+        processingStatus: "success",
         reviewStatus: "needs_review",
       });
 
       await castVote(diff!.id, user.id, "approve");
 
-      expect((await dbClient.builds.findById(mainBuild.id))?.status).toBe("passed");
+      expect((await dbClient.builds.findById(mainBuild.id))?.reviewStatus).toBe("approved");
     });
   });
 
@@ -289,7 +289,7 @@ describe("diffs", () => {
 
       await bulkCastVote(mainBuild.id, user.id, "approve");
 
-      expect((await dbClient.builds.findById(mainBuild.id))?.status).toBe("passed");
+      expect((await dbClient.builds.findById(mainBuild.id))?.reviewStatus).toBe("approved");
     });
 
     test("leaves a diff at needs_review when it still needs more distinct approvals than the bulk vote provides", async ({

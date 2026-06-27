@@ -114,7 +114,7 @@ describe("snapshots", () => {
             targetId: "story-a",
             targetTitle: "Story",
             targetName: "A",
-            status: "captured",
+            status: "success",
             imagePath: "projects/p/builds/b/snapshots/s.png",
             hasRenderError: true,
           },
@@ -161,7 +161,7 @@ describe("snapshots", () => {
             buildId: build.id,
             ...VIEWPORT,
             targetId: "story-a",
-            status: "captured",
+            status: "success",
             imagePath: "projects/p/builds/b/snapshots/s.png",
           },
         ],
@@ -169,7 +169,7 @@ describe("snapshots", () => {
 
       await dbClient.diffs.create({
         snapshotId: snapshot!.id,
-        processingStatus: "diffed",
+        processingStatus: "success",
         reviewStatus: "not_required",
       });
 
@@ -196,7 +196,7 @@ describe("snapshots", () => {
             targetId: "story-a",
             targetTitle: "Story A",
             targetName: "story-a",
-            status: "captured",
+            status: "success",
           },
           {
             buildId: build.id,
@@ -204,18 +204,18 @@ describe("snapshots", () => {
             targetId: "story-b",
             targetTitle: "Story B",
             targetName: "story-b",
-            status: "captured",
+            status: "success",
           },
         ],
       });
       await dbClient.diffs.create({
         snapshotId: needsReviewSnapshot!.id,
-        processingStatus: "diffed",
+        processingStatus: "success",
         reviewStatus: "needs_review",
       });
       await dbClient.diffs.create({
         snapshotId: rejectedSnapshot!.id,
-        processingStatus: "diffed",
+        processingStatus: "success",
         reviewStatus: "rejected",
       });
 
@@ -309,15 +309,15 @@ describe("snapshots", () => {
         await dbClient.snapshots.createMany({
           values: [
             { buildId: build.id, ...VIEWPORT, targetId: "queued" },
-            { buildId: build.id, ...VIEWPORT, targetId: "passed", status: "captured" },
-            { buildId: build.id, ...VIEWPORT, targetId: "approved", status: "captured" },
-            { buildId: build.id, ...VIEWPORT, targetId: "needs_review", status: "captured" },
-            { buildId: build.id, ...VIEWPORT, targetId: "rejected", status: "captured" },
+            { buildId: build.id, ...VIEWPORT, targetId: "passed", status: "success" },
+            { buildId: build.id, ...VIEWPORT, targetId: "approved", status: "success" },
+            { buildId: build.id, ...VIEWPORT, targetId: "needs_review", status: "success" },
+            { buildId: build.id, ...VIEWPORT, targetId: "rejected", status: "success" },
             {
               buildId: build.id,
               ...VIEWPORT,
               targetId: "render-error",
-              status: "captured",
+              status: "success",
               hasRenderError: true,
             },
           ],
@@ -325,27 +325,27 @@ describe("snapshots", () => {
 
       await dbClient.diffs.create({
         snapshotId: passed!.id,
-        processingStatus: "diffed",
+        processingStatus: "success",
         reviewStatus: "not_required",
       });
       await dbClient.diffs.create({
         snapshotId: approved!.id,
-        processingStatus: "diffed",
+        processingStatus: "success",
         reviewStatus: "approved",
       });
       await dbClient.diffs.create({
         snapshotId: needsReview!.id,
-        processingStatus: "diffed",
+        processingStatus: "success",
         reviewStatus: "needs_review",
       });
       await dbClient.diffs.create({
         snapshotId: rejected!.id,
-        processingStatus: "diffed",
+        processingStatus: "success",
         reviewStatus: "rejected",
       });
       await dbClient.diffs.create({
         snapshotId: renderError!.id,
-        processingStatus: "diffed",
+        processingStatus: "success",
         reviewStatus: "needs_review",
       });
 
@@ -420,10 +420,10 @@ describe("snapshots", () => {
     const seedReviewQueue = async (buildId: string) => {
       const [first, second, third, noDiff, errored] = await dbClient.snapshots.createMany({
         values: [
-          { buildId, ...VIEWPORT, targetId: "a", targetTitle: "A", status: "captured" },
-          { buildId, ...VIEWPORT, targetId: "b", targetTitle: "B", status: "captured" },
-          { buildId, ...VIEWPORT, targetId: "c", targetTitle: "C", status: "captured" },
-          { buildId, ...VIEWPORT, targetId: "d", targetTitle: "D", status: "captured" },
+          { buildId, ...VIEWPORT, targetId: "a", targetTitle: "A", status: "success" },
+          { buildId, ...VIEWPORT, targetId: "b", targetTitle: "B", status: "success" },
+          { buildId, ...VIEWPORT, targetId: "c", targetTitle: "C", status: "success" },
+          { buildId, ...VIEWPORT, targetId: "d", targetTitle: "D", status: "success" },
           {
             buildId,
             ...VIEWPORT,
@@ -437,22 +437,22 @@ describe("snapshots", () => {
 
       await dbClient.diffs.create({
         snapshotId: first!.id,
-        processingStatus: "diffed",
+        processingStatus: "success",
         reviewStatus: "needs_review",
       });
       await dbClient.diffs.create({
         snapshotId: second!.id,
-        processingStatus: "diffed",
+        processingStatus: "success",
         reviewStatus: "rejected",
       });
       await dbClient.diffs.create({
         snapshotId: third!.id,
-        processingStatus: "diffed",
+        processingStatus: "success",
         reviewStatus: "approved",
       });
       await dbClient.diffs.create({
         snapshotId: noDiff!.id,
-        processingStatus: "diffed",
+        processingStatus: "success",
         reviewStatus: "not_required",
       });
 
@@ -531,7 +531,7 @@ describe("snapshots", () => {
       const { third, errored } = await seedReviewQueue(build.id);
       await dbClient.diffs.create({
         snapshotId: errored.id,
-        processingStatus: "diffed",
+        processingStatus: "success",
         reviewStatus: "needs_review",
       });
 

@@ -17,7 +17,7 @@ const snapshot: SnapshotSchema = {
 
 const diff: DiffSchema = {
   id: "019edfc7-e040-7492-86b2-ccfdc00cf6e3",
-  processingStatus: "diffed",
+  processingStatus: "success",
   reviewStatus: "needs_review",
   diffImagePath: "diff.png",
   pixelDiffCount: 10,

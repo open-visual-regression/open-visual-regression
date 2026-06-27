@@ -16,7 +16,7 @@ export const bulkCastVoteInputSchema = z.object({
 
 export const bulkCastVoteContract = oc.input(bulkCastVoteInputSchema).output(z.void());
 
-export const diffProcessingStatusSchema = z.enum(["pending", "diffed", "error"]);
+export const diffProcessingStatusSchema = z.enum(["pending", "success", "error"]);
 export const diffReviewStatusSchema = z.enum([
   "not_required",
   "needs_review",

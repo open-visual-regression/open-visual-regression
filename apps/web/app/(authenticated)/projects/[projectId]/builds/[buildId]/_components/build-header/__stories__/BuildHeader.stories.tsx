@@ -37,21 +37,40 @@ const buildOverrides: Partial<BuildSchema> = {
 
 export const NeedsReview: Story = {
   args: {
-    build: mocks.build.generateBuild({ ...buildOverrides, status: "needs_review" }),
+    build: mocks.build.generateBuild({
+      ...buildOverrides,
+      status: "needs_review",
+    }),
     snapshotCounts,
   },
 };
 
 export const Passed: Story = {
   args: {
-    build: mocks.build.generateBuild({ ...buildOverrides, status: "passed" }),
+    build: mocks.build.generateBuild({
+      ...buildOverrides,
+      status: "passed",
+    }),
+    snapshotCounts,
+  },
+};
+
+export const Approved: Story = {
+  args: {
+    build: mocks.build.generateBuild({
+      ...buildOverrides,
+      status: "approved",
+    }),
     snapshotCounts,
   },
 };
 
 export const Rejected: Story = {
   args: {
-    build: mocks.build.generateBuild({ ...buildOverrides, status: "rejected" }),
+    build: mocks.build.generateBuild({
+      ...buildOverrides,
+      status: "rejected",
+    }),
     snapshotCounts,
   },
 };

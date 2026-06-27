@@ -83,7 +83,8 @@ describe("builds", () => {
         projectId,
         branch: "main",
         commitSha: "a".repeat(40),
-        status: "queued",
+        processingStatus: "queued",
+        reviewStatus: "not_required",
       });
     });
   });
@@ -129,7 +130,10 @@ describe("builds", () => {
       });
       const buildId = createResult!.buildId;
 
-      await dbClient.builds.updateStatus(buildId, "needs_review");
+      await dbClient.builds.updateResult(buildId, {
+        processingStatus: "success",
+        reviewStatus: "needs_review",
+      });
 
       const [error, result] = await serverClient.builds.getBuildStatus({ buildId });
 
@@ -254,7 +258,7 @@ describe("builds", () => {
       expect(result?.builds.map((build) => build.id)).toEqual([buildB!.id]);
     });
 
-    test("should only return builds matching the given status", async ({ admin }) => {
+    test("should only return builds matching the given processing status", async ({ admin }) => {
       const [, project] = await serverClient.projects.add(TEST_PROJECT);
 
       await dbClient.builds.create({
@@ -265,19 +269,19 @@ describe("builds", () => {
         createdBy: admin.id,
       });
 
-      const passedBuild = await dbClient.builds.create({
+      const successBuild = await dbClient.builds.create({
         projectId: project!.projectId,
         branch: "main",
         commitSha: "b".repeat(40),
         artifactPath: "builds/b/artifact",
         createdBy: admin.id,
       });
-      await dbClient.builds.updateStatus(passedBuild!.id, "passed");
+      await dbClient.builds.updateProcessingStatus(successBuild!.id, "success");
 
-      const [error, result] = await serverClient.builds.list({ status: "passed" });
+      const [error, result] = await serverClient.builds.list({ processingStatus: "success" });
 
       expect(error).toBeNull();
-      expect(result?.builds.map((build) => build.id)).toEqual([passedBuild!.id]);
+      expect(result?.builds.map((build) => build.id)).toEqual([successBuild!.id]);
     });
 
     test("should respect the limit and offset params", async ({ admin }) => {

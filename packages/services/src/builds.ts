@@ -1,4 +1,5 @@
 import { dbClient } from "@ovr/db/client";
+import type { BuildReviewStatus } from "@ovr/db/schema";
 import { v7 as uuidv7 } from "uuid";
 
 import { enqueueExtract } from "./lib/queue";
@@ -48,7 +49,7 @@ export const createBuild = async (
       commitSha: input.commitSha,
       name: input.name,
       author: input.author,
-      status: "queued",
+      processingStatus: "queued",
       captureMode: "worker",
       artifactPath: getArtifactPath(input.projectId, buildId),
       createdBy: callerId,
@@ -63,34 +64,41 @@ export const createBuild = async (
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    await dbClient.builds.updateStatus(buildId, "error", message);
+    await dbClient.builds.updateProcessingStatus(buildId, "error", message);
     throw error;
   }
 
   return { status: "ok", data: buildId };
 };
 
-export const finalizeBuild = async (buildId: string): Promise<void> => {
-  const diffs = await dbClient.diffs.findByBuild(buildId);
+type BuildDiff = Awaited<ReturnType<typeof dbClient.diffs.findByBuild>>[number];
 
-  if (diffs.some((diff) => diff.processingStatus === "error")) {
-    await dbClient.builds.updateStatus(
-      buildId,
-      "error",
-      "One or more snapshots failed to diff against their baseline",
-    );
-    return;
-  }
-
+const computeBuildReviewStatus = (diffs: BuildDiff[]): BuildReviewStatus => {
   if (diffs.some((diff) => diff.reviewStatus === "rejected")) {
-    await dbClient.builds.updateStatus(buildId, "rejected");
-    return;
+    return "rejected";
   }
 
   if (diffs.some((diff) => diff.reviewStatus === "needs_review")) {
-    await dbClient.builds.updateStatus(buildId, "needs_review");
-    return;
+    return "needs_review";
   }
 
-  await dbClient.builds.updateStatus(buildId, "passed");
+  if (diffs.some((diff) => diff.reviewStatus === "approved")) {
+    return "approved";
+  }
+
+  return "not_required";
+};
+
+export const finalizeBuild = async (buildId: string): Promise<void> => {
+  const diffs = await dbClient.diffs.findByBuild(buildId);
+
+  const hasProcessingError = diffs.some((diff) => diff.processingStatus === "error");
+
+  await dbClient.builds.updateResult(buildId, {
+    processingStatus: hasProcessingError ? "error" : "success",
+    reviewStatus: computeBuildReviewStatus(diffs),
+    errorMessage: hasProcessingError
+      ? "One or more snapshots failed to diff against their baseline"
+      : null,
+  });
 };
