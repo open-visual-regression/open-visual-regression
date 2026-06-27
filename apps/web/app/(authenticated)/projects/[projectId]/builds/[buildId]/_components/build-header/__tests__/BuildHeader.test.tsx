@@ -65,7 +65,7 @@ describe("BuildHeader", () => {
   });
 
   it("should enable reject all when every reviewable snapshot is already approved", () => {
-    const build = mocks.build.generateBuild({ status: "passed" });
+    const build = mocks.build.generateBuild({ status: "approved" });
     renderComponent({
       build,
       snapshotCounts: {
@@ -190,8 +190,8 @@ describe("BuildHeader", () => {
     expect(mockRefresh).not.toHaveBeenCalled();
   });
 
-  it("should show approve all as disabled and labeled when the build already passed", () => {
-    const build = mocks.build.generateBuild({ status: "passed" });
+  it("should show approve all as disabled and labeled when the build is already approved", () => {
+    const build = mocks.build.generateBuild({ status: "approved" });
     renderComponent({
       build,
       snapshotCounts: {

@@ -62,7 +62,7 @@ describe("diffs", () => {
 
       expect(error).toBeNull();
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({ reviewStatus: "approved" });
-      expect((await dbClient.builds.findById(build.id))?.status).toBe("passed");
+      expect((await dbClient.builds.findById(build.id))?.reviewStatus).toBe("approved");
     });
 
     test("a reject vetoes regardless of existing approvals", async ({ admin }) => {

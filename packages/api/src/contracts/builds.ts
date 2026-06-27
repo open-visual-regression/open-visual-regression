@@ -1,11 +1,25 @@
 import { oc } from "@orpc/contract";
 import { z } from "zod";
 
+export const buildProcessingStatusSchema = z.enum(["queued", "processing", "processed", "error"]);
+
+export type BuildProcessingStatus = z.infer<typeof buildProcessingStatusSchema>;
+
+export const buildReviewStatusSchema = z.enum([
+  "not_required",
+  "needs_review",
+  "approved",
+  "rejected",
+]);
+
+export type BuildReviewStatus = z.infer<typeof buildReviewStatusSchema>;
+
 export const buildStatusSchema = z.enum([
   "queued",
   "processing",
   "needs_review",
   "passed",
+  "approved",
   "rejected",
   "error",
 ]);
@@ -80,7 +94,8 @@ export type BuildSchema = z.infer<typeof buildSchema>;
 
 export const listBuildsInputSchema = z.object({
   projectIds: z.array(z.uuidv7()).optional(),
-  status: buildStatusSchema.optional(),
+  processingStatus: buildProcessingStatusSchema.optional(),
+  reviewStatus: buildReviewStatusSchema.optional(),
   sortDirection: z.enum(["asc", "desc"]).default("desc"),
   limit: z.number().int().min(1).max(100).default(20),
   offset: z.number().int().min(0).default(0),

@@ -54,7 +54,7 @@ export const BuildHeader = ({ build, snapshotCounts }: BuildHeaderProps) => {
           />
           <BuildApproveButton
             buildId={build.id}
-            approved={build.status === "passed"}
+            approved={build.status === "approved"}
             disabled={!hasReviewable}
           />
         </div>

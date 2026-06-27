@@ -16,6 +16,7 @@ const BUILD_STATUS_BORDER_CLASS: Record<BuildStatus, string> = {
   processing: "border-ovr-purple",
   needs_review: "border-ovr-accent",
   passed: "border-ovr-blue",
+  approved: "border-ovr-green",
   rejected: "border-ovr-remove",
   error: "border-ovr-remove",
 };

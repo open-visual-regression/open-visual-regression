@@ -9,6 +9,7 @@ const BUILD_STATUS_BADGE: Record<
   processing: { color: "purple", icon: "processing", label: "processing" },
   needs_review: { color: "amber", icon: "needs_review", label: "needs review" },
   passed: { color: "blue", icon: "passed", label: "passed" },
+  approved: { color: "green", icon: "approved", label: "approved" },
   rejected: { color: "red", icon: "rejected", label: "rejected" },
   error: { color: "red", icon: "error", label: "error" },
 };
@@ -32,6 +33,8 @@ export const BuildStatusStripe = ({ status }: { status: BuildStatus }) => {
       return <div className="absolute inset-0 bg-ovr-accent" />;
     case "passed":
       return <div className="absolute inset-0 bg-ovr-blue" />;
+    case "approved":
+      return <div className="absolute inset-0 bg-ovr-green" />;
     case "rejected":
     case "error":
       return <div className="absolute inset-0 bg-ovr-remove" />;

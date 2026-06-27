@@ -54,7 +54,7 @@ export const pollBuildStatus = async ({
 
     onPoll?.(status);
 
-    if (status === "passed") {
+    if (status === "passed" || status === "approved") {
       return;
     }
 

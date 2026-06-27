@@ -134,6 +134,13 @@
       "when": 1782418126495,
       "tag": "0018_lowly_vector",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1782559415692,
+      "tag": "0019_classy_khan",
+      "breakpoints": true
     }
   ]
 }

@@ -49,6 +49,13 @@ export const Passed: Story = {
   },
 };
 
+export const Approved: Story = {
+  args: {
+    build: mocks.build.generateBuild({ ...buildOverrides, status: "approved" }),
+    snapshotCounts,
+  },
+};
+
 export const Rejected: Story = {
   args: {
     build: mocks.build.generateBuild({ ...buildOverrides, status: "rejected" }),

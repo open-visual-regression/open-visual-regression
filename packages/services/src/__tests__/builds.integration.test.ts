@@ -71,7 +71,8 @@ describe("builds", () => {
         projectId: project.id,
         branch: "main",
         commitSha: "a".repeat(40),
-        status: "queued",
+        processingStatus: "queued",
+        reviewStatus: "not_required",
         captureMode: "worker",
         artifactPath: getArtifactPath(project.id, buildId),
         createdBy: user.id,
@@ -116,10 +117,12 @@ describe("builds", () => {
 
       await finalizeBuild(mainBuild.id);
 
-      expect((await dbClient.builds.findById(mainBuild.id))?.status).toBe("error");
+      expect(await dbClient.builds.findById(mainBuild.id)).toMatchObject({
+        processingStatus: "error",
+      });
     });
 
-    test("marks the build as error ahead of needs_review when both are present", async ({
+    test("marks the build's processing status as error ahead of review status when both are present", async ({
       mainBuild,
       captureConfiguration,
     }) => {
@@ -130,10 +133,13 @@ describe("builds", () => {
 
       await finalizeBuild(mainBuild.id);
 
-      expect((await dbClient.builds.findById(mainBuild.id))?.status).toBe("error");
+      expect(await dbClient.builds.findById(mainBuild.id)).toMatchObject({
+        processingStatus: "error",
+        reviewStatus: "needs_review",
+      });
     });
 
-    test("marks the build as needs_review when any diff needs review", async ({
+    test("marks the build review status as needs_review when any diff needs review", async ({
       mainBuild,
       captureConfiguration,
     }) => {
@@ -144,10 +150,13 @@ describe("builds", () => {
 
       await finalizeBuild(mainBuild.id);
 
-      expect((await dbClient.builds.findById(mainBuild.id))?.status).toBe("needs_review");
+      expect(await dbClient.builds.findById(mainBuild.id)).toMatchObject({
+        processingStatus: "processed",
+        reviewStatus: "needs_review",
+      });
     });
 
-    test("marks the build as rejected when any diff is rejected, even if others need review", async ({
+    test("marks the build review status as rejected when any diff is rejected, even if others need review", async ({
       mainBuild,
       captureConfiguration,
     }) => {
@@ -158,10 +167,12 @@ describe("builds", () => {
 
       await finalizeBuild(mainBuild.id);
 
-      expect((await dbClient.builds.findById(mainBuild.id))?.status).toBe("rejected");
+      expect(await dbClient.builds.findById(mainBuild.id)).toMatchObject({
+        reviewStatus: "rejected",
+      });
     });
 
-    test("marks the build as rejected ahead of needs_review when both are present", async ({
+    test("marks the build review status as rejected ahead of needs_review when both are present", async ({
       mainBuild,
       captureConfiguration,
     }) => {
@@ -172,10 +183,12 @@ describe("builds", () => {
 
       await finalizeBuild(mainBuild.id);
 
-      expect((await dbClient.builds.findById(mainBuild.id))?.status).toBe("rejected");
+      expect(await dbClient.builds.findById(mainBuild.id)).toMatchObject({
+        reviewStatus: "rejected",
+      });
     });
 
-    test("marks the build as passed when all diffs are not_required or approved", async ({
+    test("marks the build review status as approved when any diff is approved and none need review or were rejected", async ({
       mainBuild,
       captureConfiguration,
     }) => {
@@ -186,13 +199,21 @@ describe("builds", () => {
 
       await finalizeBuild(mainBuild.id);
 
-      expect((await dbClient.builds.findById(mainBuild.id))?.status).toBe("passed");
+      expect(await dbClient.builds.findById(mainBuild.id)).toMatchObject({
+        processingStatus: "processed",
+        reviewStatus: "approved",
+      });
     });
 
-    test("marks the build as passed when there are no diffs", async ({ mainBuild }) => {
+    test("marks the build review status as not_required when there are no diffs", async ({
+      mainBuild,
+    }) => {
       await finalizeBuild(mainBuild.id);
 
-      expect((await dbClient.builds.findById(mainBuild.id))?.status).toBe("passed");
+      expect(await dbClient.builds.findById(mainBuild.id)).toMatchObject({
+        processingStatus: "processed",
+        reviewStatus: "not_required",
+      });
     });
   });
 });
