@@ -116,7 +116,7 @@ export const captureSnapshot = async (snapshotId: string): Promise<void> => {
     }
 
     await dbClient.snapshots.updateCaptureResult(snapshotId, {
-      status: "captured",
+      status: "success",
       imagePath,
       hasRenderError,
       tx,
@@ -179,7 +179,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
 
   if (isMainBranch) {
     await dbClient.diffs.updateResult(diffId, {
-      processingStatus: "diffed",
+      processingStatus: "success",
       reviewStatus: "not_required",
       ...(baselineSnapshot && { baselineSnapshotId: baselineSnapshot.id }),
       ...(diff && { pixelDiffCount: diff.pixelDiffCount, diffPercent: diff.diffPercent }),
@@ -191,7 +191,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
 
   if (!diff) {
     await dbClient.diffs.updateResult(diffId, {
-      processingStatus: "diffed",
+      processingStatus: "success",
       reviewStatus: "needs_review",
       ...(baselineSnapshot && { baselineSnapshotId: baselineSnapshot.id }),
     });
@@ -203,7 +203,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
 
   if (diffPercent === 0 || diffPercent <= snapshot.diffThreshold) {
     await dbClient.diffs.updateResult(diffId, {
-      processingStatus: "diffed",
+      processingStatus: "success",
       reviewStatus: "not_required",
       baselineSnapshotId: diff.baselineSnapshotId,
       pixelDiffCount,
@@ -221,7 +221,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
   );
 
   await dbClient.diffs.updateResult(diffId, {
-    processingStatus: "diffed",
+    processingStatus: "success",
     reviewStatus: "needs_review",
     baselineSnapshotId: diff.baselineSnapshotId,
     diffImagePath,

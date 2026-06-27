@@ -131,7 +131,7 @@ describe("builds", () => {
       const buildId = createResult!.buildId;
 
       await dbClient.builds.updateResult(buildId, {
-        processingStatus: "processed",
+        processingStatus: "success",
         reviewStatus: "needs_review",
       });
 
@@ -269,19 +269,19 @@ describe("builds", () => {
         createdBy: admin.id,
       });
 
-      const processedBuild = await dbClient.builds.create({
+      const successBuild = await dbClient.builds.create({
         projectId: project!.projectId,
         branch: "main",
         commitSha: "b".repeat(40),
         artifactPath: "builds/b/artifact",
         createdBy: admin.id,
       });
-      await dbClient.builds.updateProcessingStatus(processedBuild!.id, "processed");
+      await dbClient.builds.updateProcessingStatus(successBuild!.id, "success");
 
-      const [error, result] = await serverClient.builds.list({ processingStatus: "processed" });
+      const [error, result] = await serverClient.builds.list({ processingStatus: "success" });
 
       expect(error).toBeNull();
-      expect(result?.builds.map((build) => build.id)).toEqual([processedBuild!.id]);
+      expect(result?.builds.map((build) => build.id)).toEqual([successBuild!.id]);
     });
 
     test("should respect the limit and offset params", async ({ admin }) => {

@@ -41,7 +41,7 @@ export const NewWithBaseline: Story = {
     snapshot: newSnapshot,
     diff: {
       id: "01970000-0000-7000-8000-000000000002",
-      processingStatus: "diffed",
+      processingStatus: "success",
       reviewStatus: "not_required",
       diffImagePath: null,
       pixelDiffCount: 0,
@@ -56,7 +56,7 @@ export const NewWithBaselineAndDiff: Story = {
     snapshot: newSnapshot,
     diff: {
       id: "01970000-0000-7000-8000-000000000003",
-      processingStatus: "diffed",
+      processingStatus: "success",
       reviewStatus: "needs_review",
       diffImagePath: "diff-desktop.png",
       pixelDiffCount: 120,

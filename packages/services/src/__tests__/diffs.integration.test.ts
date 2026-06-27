@@ -142,7 +142,7 @@ describe("diffs", () => {
       });
       const diff = await dbClient.diffs.create({
         snapshotId: snapshot!.id,
-        processingStatus: "diffed",
+        processingStatus: "success",
         reviewStatus: "needs_review",
       });
 

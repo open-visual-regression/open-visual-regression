@@ -95,7 +95,7 @@ export const finalizeBuild = async (buildId: string): Promise<void> => {
   const hasProcessingError = diffs.some((diff) => diff.processingStatus === "error");
 
   await dbClient.builds.updateResult(buildId, {
-    processingStatus: hasProcessingError ? "error" : "processed",
+    processingStatus: hasProcessingError ? "error" : "success",
     reviewStatus: computeBuildReviewStatus(diffs),
     errorMessage: hasProcessingError
       ? "One or more snapshots failed to diff against their baseline"

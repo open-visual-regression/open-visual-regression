@@ -34,18 +34,18 @@ describe("builds", () => {
 
   describe("updateProcessingStatus", () => {
     test("should update the build's processing status", async ({ build }) => {
-      const updated = await dbClient.builds.updateProcessingStatus(build.id, "processed");
-      expect(updated?.processingStatus).toBe("processed");
+      const updated = await dbClient.builds.updateProcessingStatus(build.id, "success");
+      expect(updated?.processingStatus).toBe("success");
     });
   });
 
   describe("updateResult", () => {
     test("should update the build's processing and review status together", async ({ build }) => {
       const updated = await dbClient.builds.updateResult(build.id, {
-        processingStatus: "processed",
+        processingStatus: "success",
         reviewStatus: "approved",
       });
-      expect(updated).toMatchObject({ processingStatus: "processed", reviewStatus: "approved" });
+      expect(updated).toMatchObject({ processingStatus: "success", reviewStatus: "approved" });
     });
   });
 
@@ -80,7 +80,7 @@ describe("builds", () => {
         createdBy: user.id,
       });
       await dbClient.builds.updateResult(main.id, {
-        processingStatus: "processed",
+        processingStatus: "success",
         reviewStatus: "approved",
       });
 
@@ -252,24 +252,24 @@ describe("builds", () => {
       user,
       build: queuedBuild,
     }) => {
-      const processedBuild = await dbClient.builds.create({
+      const successBuild = await dbClient.builds.create({
         projectId: project.id,
         branch: "main",
         commitSha: "b".repeat(40),
         artifactPath: "builds/b/artifact",
         createdBy: user.id,
       });
-      await dbClient.builds.updateProcessingStatus(processedBuild!.id, "processed");
+      await dbClient.builds.updateProcessingStatus(successBuild!.id, "success");
 
       const { builds, total } = await dbClient.builds.findAll({
         organizationId: organization.id,
-        processingStatus: "processed",
+        processingStatus: "success",
         limit: 10,
         offset: 0,
       });
 
       expect(total).toBe(1);
-      expect(builds.map((build) => build.id)).toEqual([processedBuild!.id]);
+      expect(builds.map((build) => build.id)).toEqual([successBuild!.id]);
       expect(queuedBuild.processingStatus).toBe("queued");
     });
 

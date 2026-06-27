@@ -20,7 +20,7 @@ import { projects, utcTimestamp } from "./schemas";
 export const buildProcessingStatusEnum = pgEnum("build_processing_status", [
   "queued",
   "processing",
-  "processed",
+  "success",
   "error",
 ]);
 
@@ -38,7 +38,7 @@ export type BuildReviewStatus = (typeof buildReviewStatusEnum.enumValues)[number
 export const snapshotStatusEnum = pgEnum("snapshot_status", [
   "queued",
   "processing",
-  "captured",
+  "success",
   "error",
 ]);
 
@@ -46,7 +46,7 @@ export type SnapshotStatus = (typeof snapshotStatusEnum.enumValues)[number];
 
 export const diffProcessingStatusEnum = pgEnum("diff_processing_status", [
   "pending",
-  "diffed",
+  "success",
   "error",
 ]);
 

@@ -1,5 +1,5 @@
 {
-  "id": "90468a3b-62ab-428f-9ff2-1756f42d765d",
+  "id": "b83e64a2-f9be-4182-bf78-398424727cef",
   "prevId": "97324013-a3a9-40a8-a1cf-1e22a59f9a49",
   "version": "7",
   "dialect": "postgresql",
@@ -1672,7 +1672,7 @@
     "public.build_processing_status": {
       "name": "build_processing_status",
       "schema": "public",
-      "values": ["queued", "processing", "processed", "error"]
+      "values": ["queued", "processing", "success", "error"]
     },
     "public.build_review_status": {
       "name": "build_review_status",
@@ -1687,7 +1687,7 @@
     "public.diff_processing_status": {
       "name": "diff_processing_status",
       "schema": "public",
-      "values": ["pending", "diffed", "error"]
+      "values": ["pending", "success", "error"]
     },
     "public.diff_review_status": {
       "name": "diff_review_status",
@@ -1702,7 +1702,7 @@
     "public.snapshot_status": {
       "name": "snapshot_status",
       "schema": "public",
-      "values": ["queued", "processing", "captured", "error"]
+      "values": ["queued", "processing", "success", "error"]
     }
   },
   "schemas": {},

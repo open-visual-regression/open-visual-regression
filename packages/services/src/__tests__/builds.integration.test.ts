@@ -31,7 +31,7 @@ type Viewport = { browser: string; viewportWidth: number; viewportHeight: number
 const seedDiffs = async (buildId: string, viewport: Viewport, statuses: SeedDiffStatus[]) => {
   for (const status of statuses) {
     const [snapshot] = await dbClient.snapshots.createMany({
-      values: [{ buildId, ...viewport, targetId: crypto.randomUUID(), status: "captured" }],
+      values: [{ buildId, ...viewport, targetId: crypto.randomUUID(), status: "success" }],
     });
     await dbClient.diffs.create({ snapshotId: snapshot!.id, ...status });
   }
@@ -111,7 +111,7 @@ describe("builds", () => {
       captureConfiguration,
     }) => {
       await seedDiffs(mainBuild.id, captureConfiguration, [
-        { processingStatus: "diffed", reviewStatus: "not_required" },
+        { processingStatus: "success", reviewStatus: "not_required" },
         { processingStatus: "error", reviewStatus: "not_required" },
       ]);
 
@@ -127,7 +127,7 @@ describe("builds", () => {
       captureConfiguration,
     }) => {
       await seedDiffs(mainBuild.id, captureConfiguration, [
-        { processingStatus: "diffed", reviewStatus: "needs_review" },
+        { processingStatus: "success", reviewStatus: "needs_review" },
         { processingStatus: "error", reviewStatus: "not_required" },
       ]);
 
@@ -144,14 +144,14 @@ describe("builds", () => {
       captureConfiguration,
     }) => {
       await seedDiffs(mainBuild.id, captureConfiguration, [
-        { processingStatus: "diffed", reviewStatus: "not_required" },
-        { processingStatus: "diffed", reviewStatus: "needs_review" },
+        { processingStatus: "success", reviewStatus: "not_required" },
+        { processingStatus: "success", reviewStatus: "needs_review" },
       ]);
 
       await finalizeBuild(mainBuild.id);
 
       expect(await dbClient.builds.findById(mainBuild.id)).toMatchObject({
-        processingStatus: "processed",
+        processingStatus: "success",
         reviewStatus: "needs_review",
       });
     });
@@ -161,8 +161,8 @@ describe("builds", () => {
       captureConfiguration,
     }) => {
       await seedDiffs(mainBuild.id, captureConfiguration, [
-        { processingStatus: "diffed", reviewStatus: "needs_review" },
-        { processingStatus: "diffed", reviewStatus: "rejected" },
+        { processingStatus: "success", reviewStatus: "needs_review" },
+        { processingStatus: "success", reviewStatus: "rejected" },
       ]);
 
       await finalizeBuild(mainBuild.id);
@@ -177,8 +177,8 @@ describe("builds", () => {
       captureConfiguration,
     }) => {
       await seedDiffs(mainBuild.id, captureConfiguration, [
-        { processingStatus: "diffed", reviewStatus: "rejected" },
-        { processingStatus: "diffed", reviewStatus: "needs_review" },
+        { processingStatus: "success", reviewStatus: "rejected" },
+        { processingStatus: "success", reviewStatus: "needs_review" },
       ]);
 
       await finalizeBuild(mainBuild.id);
@@ -193,14 +193,14 @@ describe("builds", () => {
       captureConfiguration,
     }) => {
       await seedDiffs(mainBuild.id, captureConfiguration, [
-        { processingStatus: "diffed", reviewStatus: "not_required" },
-        { processingStatus: "diffed", reviewStatus: "approved" },
+        { processingStatus: "success", reviewStatus: "not_required" },
+        { processingStatus: "success", reviewStatus: "approved" },
       ]);
 
       await finalizeBuild(mainBuild.id);
 
       expect(await dbClient.builds.findById(mainBuild.id)).toMatchObject({
-        processingStatus: "processed",
+        processingStatus: "success",
         reviewStatus: "approved",
       });
     });
@@ -211,7 +211,7 @@ describe("builds", () => {
       await finalizeBuild(mainBuild.id);
 
       expect(await dbClient.builds.findById(mainBuild.id)).toMatchObject({
-        processingStatus: "processed",
+        processingStatus: "success",
         reviewStatus: "not_required",
       });
     });
