@@ -18,7 +18,10 @@ describe("extract", () => {
         },
       });
 
-      expect(await dbClient.builds.findById(build.id)).toMatchObject({ status: "error" });
+      expect(await dbClient.builds.findById(build.id)).toMatchObject({
+        processingStatus: "error",
+        reviewStatus: "not_required",
+      });
     });
   });
 });
