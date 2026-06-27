@@ -83,7 +83,8 @@ describe("builds", () => {
         projectId,
         branch: "main",
         commitSha: "a".repeat(40),
-        status: "queued",
+        processingStatus: "queued",
+        reviewStatus: "not_required",
       });
     });
   });
