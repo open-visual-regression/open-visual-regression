@@ -7,10 +7,7 @@ import { getBuildDisplayStatus } from "@/lib/router/utils/buildStatus";
 const RECENT_BUILD_ROW_HEIGHT_PX = 44;
 
 type RecentBuildSidebarLinkProps = {
-  build: Pick<
-    BuildSchema,
-    "id" | "project" | "branch" | "name" | "commitSha" | "processingStatus" | "reviewStatus"
-  >;
+  build: BuildSchema;
   className?: string;
   onClick?: () => void;
 };

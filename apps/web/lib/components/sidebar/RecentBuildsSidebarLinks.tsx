@@ -5,10 +5,7 @@ import { RecentBuildSidebarLink } from "./RecentBuildSidebarLink";
 const RECENT_BUILDS_FETCH_LIMIT = 15;
 
 type RecentBuildsSidebarLinksProps = {
-  builds: Pick<
-    BuildSchema,
-    "id" | "project" | "branch" | "name" | "commitSha" | "processingStatus" | "reviewStatus"
-  >[];
+  builds: BuildSchema[];
   onNavigate?: () => void;
 };
 

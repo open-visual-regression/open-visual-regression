@@ -1,6 +1,7 @@
 import { vi } from "vitest";
 import { usePathname } from "next/navigation";
 
+import { mocks } from "@ovr/mocks";
 import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
 import {
   NavigationBarMobileMenu,
@@ -15,15 +16,13 @@ const PROJECTS: NavigationBarMobileMenuProps["projects"] = [
 ];
 
 const BUILDS: NavigationBarMobileMenuProps["builds"] = [
-  {
+  mocks.build.generateBuild({
     id: "build-1",
     project: { id: "project-1", name: "Alpha" },
     branch: "main",
     name: "Build 1",
     commitSha: "abcdef1234",
-    processingStatus: "success",
-    reviewStatus: "not_required",
-  },
+  }),
 ];
 
 describe("NavigationBarMobileMenu", () => {
