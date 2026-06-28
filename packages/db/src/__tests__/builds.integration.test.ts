@@ -273,6 +273,65 @@ describe("builds", () => {
       expect(queuedBuild.processingStatus).toBe("queued");
     });
 
+    test("should only return builds with a name matching the search term", async ({
+      organization,
+      project,
+      user,
+    }) => {
+      const cartFix = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        name: "fix: cart total rounding",
+        artifactPath: "builds/a/artifact",
+        createdBy: user.id,
+      });
+
+      await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "b".repeat(40),
+        name: "feat: add checkout flow",
+        artifactPath: "builds/b/artifact",
+        createdBy: user.id,
+      });
+
+      const { builds, total } = await dbClient.builds.findAll({
+        organizationId: organization.id,
+        search: "cart",
+        limit: 10,
+        offset: 0,
+      });
+
+      expect(total).toBe(1);
+      expect(builds.map((build) => build.id)).toEqual([cartFix!.id]);
+    });
+
+    test("should not match the search term against branch, commit sha, or author", async ({
+      organization,
+      project,
+      user,
+    }) => {
+      await dbClient.builds.create({
+        projectId: project.id,
+        branch: "cart-feature",
+        commitSha: "cartcartcartcartcartcartcartcartcartcart",
+        author: "cart bot",
+        artifactPath: "builds/a/artifact",
+        createdBy: user.id,
+      });
+
+      const { builds, total } = await dbClient.builds.findAll({
+        organizationId: organization.id,
+        search: "cart",
+        limit: 10,
+        offset: 0,
+      });
+
+      expect(total).toBe(0);
+      expect(builds).toHaveLength(0);
+    });
+
     test("should respect the limit and offset params", async ({ organization, project, user }) => {
       for (let i = 0; i < 3; i++) {
         await dbClient.builds.create({

@@ -96,6 +96,7 @@ export const listBuildsInputSchema = z.object({
   projectIds: z.array(z.uuidv7()).optional(),
   processingStatus: buildProcessingStatusSchema.optional(),
   reviewStatus: buildReviewStatusSchema.optional(),
+  search: z.string().optional(),
   sortDirection: z.enum(["asc", "desc"]).default("desc"),
   limit: z.number().int().min(1).max(100).default(20),
   offset: z.number().int().min(0).default(0),

@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, inArray, lt, notExists, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, inArray, lt, notExists, sql } from "drizzle-orm";
 
 import { db, type DbClient } from "../db";
 import {
@@ -70,6 +70,7 @@ type FindAllInput = {
   projectIds?: string[];
   processingStatus?: BuildProcessingStatus;
   reviewStatus?: BuildReviewStatus;
+  search?: string;
   sortDirection?: SortDirection;
   limit: number;
   offset: number;
@@ -80,6 +81,7 @@ export const findAll = async ({
   projectIds,
   processingStatus,
   reviewStatus,
+  search,
   sortDirection = "desc",
   limit,
   offset,
@@ -89,6 +91,7 @@ export const findAll = async ({
     projectIds?.length ? inArray(builds.projectId, projectIds) : undefined,
     processingStatus ? eq(builds.processingStatus, processingStatus) : undefined,
     reviewStatus ? eq(builds.reviewStatus, reviewStatus) : undefined,
+    search ? ilike(builds.name, `%${search}%`) : undefined,
   );
 
   const orderFn = sortDirection === "asc" ? asc : desc;
