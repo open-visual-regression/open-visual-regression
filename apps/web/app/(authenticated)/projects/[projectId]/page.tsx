@@ -7,7 +7,8 @@ import { Icon, SettingsIcon } from "@ovr/ui/components/icon";
 import { BuildsSection } from "./_components/builds-section/BuildsSection";
 import { BuildsSearchField } from "./_components/builds-section/BuildsSearchField";
 
-type ProjectPageProps = PageProps<"/projects/[projectId]"> & {
+type ProjectPageProps = {
+  params: PageProps<"/projects/[projectId]">["params"];
   searchParams: Promise<{ search?: string }>;
 };
 

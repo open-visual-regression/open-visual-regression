@@ -278,7 +278,7 @@ describe("builds", () => {
       project,
       user,
     }) => {
-      const cartFix = await dbClient.builds.create({
+      const matchingBuild = await dbClient.builds.create({
         projectId: project.id,
         branch: "main",
         commitSha: "a".repeat(40),
@@ -304,7 +304,7 @@ describe("builds", () => {
       });
 
       expect(total).toBe(1);
-      expect(builds.map((build) => build.id)).toEqual([cartFix!.id]);
+      expect(builds.map((build) => build.id)).toEqual([matchingBuild!.id]);
     });
 
     test("should not match the search term against branch, commit sha, or author", async ({

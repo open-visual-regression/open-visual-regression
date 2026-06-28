@@ -8,7 +8,7 @@ describe("UsersSearchField", () => {
     expect(screen.getByLabelText("search users")).toHaveValue("ari");
   });
 
-  it("should link the clear button back to the users page", () => {
+  it("should point the clear button back to the users page", () => {
     render(<UsersSearchField search="ari" />);
 
     expect(screen.getByRole("button", { name: "clear search" })).toHaveAttribute(
