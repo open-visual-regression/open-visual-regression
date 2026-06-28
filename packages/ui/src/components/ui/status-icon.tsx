@@ -39,7 +39,7 @@ const statusIconVariants = cva("", {
       needs_review: "text-ovr-amber",
       passed: "text-ovr-blue",
       queued: "text-ovr-gray",
-      processing: "text-ovr-purple",
+      processing: "text-ovr-purple animate-spin",
       stale: "text-ovr-fg-muted",
       approved: "text-ovr-green",
       rejected: "text-ovr-red",
