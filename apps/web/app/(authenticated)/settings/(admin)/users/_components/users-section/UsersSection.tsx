@@ -1,5 +1,3 @@
-"use client";
-
 import { Icon, PlusIcon } from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
 import { type UserSchema } from "@ovr/api/contracts/users";
@@ -22,7 +20,7 @@ export const UsersSection = ({ users, currentUserId, search }: UsersSectionProps
           users
         </Typography>
         <div className="flex w-full items-center gap-3 sm:w-auto">
-          <UsersSearchField className="flex-1 sm:w-64 sm:flex-none" />
+          <UsersSearchField search={search} className="flex-1 sm:w-64 sm:flex-none" />
           <InviteUserModal
             trigger={
               <InviteUserModalButton className="w-8 gap-0 px-0 sm:w-auto sm:gap-1 sm:px-3.5">

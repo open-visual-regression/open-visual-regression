@@ -1,6 +1,5 @@
-"use client";
-
-import { useState, type FormEvent } from "react";
+import Form from "next/form";
+import Link from "next/link";
 import { Icon, SearchIcon, XIcon } from "@ovr/ui/components/icon";
 import {
   InputGroup,
@@ -10,55 +9,43 @@ import {
 } from "@ovr/ui/components/input-group";
 
 export type SearchFieldProps = {
+  action: string;
   label: string;
   placeholder?: string;
-  defaultValue?: string;
-  loading?: boolean;
+  search?: string;
   className?: string;
-  onSearchAction: (value: string) => void;
 };
 
 export const SearchField = ({
+  action,
   label,
   placeholder = "search...",
-  defaultValue = "",
-  loading = false,
+  search,
   className,
-  onSearchAction,
-}: SearchFieldProps) => {
-  const [value, setValue] = useState(defaultValue);
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    onSearchAction(value.trim());
-  };
-
-  const handleClear = () => {
-    setValue("");
-    onSearchAction("");
-  };
-
-  return (
-    <form role="search" className={className} onSubmit={handleSubmit}>
-      <InputGroup>
-        <InputGroupInput
-          aria-label={label}
-          placeholder={placeholder}
-          value={value}
-          disabled={loading}
-          onChange={(event) => setValue(event.target.value)}
-        />
-        <InputGroupAddon align="inline-end">
-          {value ? (
-            <InputGroupButton aria-label="clear search" disabled={loading} onClick={handleClear}>
-              <Icon icon={XIcon} />
-            </InputGroupButton>
-          ) : null}
-          <InputGroupButton type="submit" aria-label="search" disabled={loading}>
-            <Icon icon={SearchIcon} />
+}: SearchFieldProps) => (
+  <Form action={action} role="search" className={className}>
+    <InputGroup>
+      <InputGroupInput
+        key={search}
+        name="search"
+        aria-label={label}
+        placeholder={placeholder}
+        defaultValue={search}
+      />
+      <InputGroupAddon align="inline-end">
+        {search ? (
+          <InputGroupButton
+            aria-label="clear search"
+            render={<Link href={action} />}
+            nativeButton={false}
+          >
+            <Icon icon={XIcon} />
           </InputGroupButton>
-        </InputGroupAddon>
-      </InputGroup>
-    </form>
-  );
-};
+        ) : null}
+        <InputGroupButton type="submit" aria-label="search">
+          <Icon icon={SearchIcon} />
+        </InputGroupButton>
+      </InputGroupAddon>
+    </InputGroup>
+  </Form>
+);
