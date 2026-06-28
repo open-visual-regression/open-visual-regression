@@ -31,7 +31,11 @@ export default async function ProjectPage(props: ProjectPageProps) {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center gap-3">
-        <Typography variant="h1" as="h1" className="order-1 w-full md:w-auto">
+        <Typography
+          variant="h1"
+          as="h1"
+          className="order-1 w-full min-w-0 truncate md:w-auto md:flex-1"
+        >
           {projectResult.project.name}
         </Typography>
         <BuildsSearchField
