@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { Typography } from "@ovr/ui/components/typography";
 import { serverClient } from "@/lib/router";
 import { notFound } from "next/navigation";
@@ -7,14 +8,15 @@ import { Icon, SettingsIcon } from "@ovr/ui/components/icon";
 import { BuildsSection } from "./_components/builds-section/BuildsSection";
 import { BuildsSearchField } from "./_components/builds-section/BuildsSearchField";
 
-type ProjectPageProps = {
-  params: PageProps<"/projects/[projectId]">["params"];
-  searchParams: Promise<{ search?: string }>;
-};
+type ProjectPageProps = PageProps<"/projects/[projectId]">;
+
+const searchParamsSchema = z.object({
+  search: z.string().optional().catch(undefined),
+});
 
 export default async function ProjectPage(props: ProjectPageProps) {
   const { projectId } = await props.params;
-  const { search } = await props.searchParams;
+  const { search } = searchParamsSchema.parse(await props.searchParams);
 
   const [[projectError, projectResult], [buildsError, buildsResult]] = await Promise.all([
     serverClient.projects.getOne({ projectId }),
