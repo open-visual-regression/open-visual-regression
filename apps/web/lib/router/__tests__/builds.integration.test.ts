@@ -261,7 +261,7 @@ describe("builds", () => {
     test("should only return builds with a name matching the search term", async ({ admin }) => {
       const [, project] = await serverClient.projects.add(TEST_PROJECT);
 
-      const cartFix = await dbClient.builds.create({
+      const matchingBuild = await dbClient.builds.create({
         projectId: project!.projectId,
         branch: "main",
         commitSha: "a".repeat(40),
@@ -283,7 +283,7 @@ describe("builds", () => {
 
       expect(error).toBeNull();
       expect(result?.total).toBe(1);
-      expect(result?.builds.map((build) => build.id)).toEqual([cartFix!.id]);
+      expect(result?.builds.map((build) => build.id)).toEqual([matchingBuild!.id]);
     });
 
     test("should only return builds matching the given processing status", async ({ admin }) => {
