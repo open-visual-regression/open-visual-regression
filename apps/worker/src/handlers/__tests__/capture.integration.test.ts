@@ -40,7 +40,7 @@ describe("capture", () => {
       }
     });
 
-    test("should create a diff for the failed story immediately, without waiting for the rest of the build", async ({
+    test("should create a diff immediately when a capture fails", async ({
       build,
       captureConfiguration,
     }) => {

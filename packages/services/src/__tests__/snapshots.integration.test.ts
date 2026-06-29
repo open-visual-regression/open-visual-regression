@@ -84,7 +84,7 @@ describe("snapshots", () => {
       expect(job.snapshotId).toBe(snapshot!.id);
     });
 
-    test("should re-enqueue the diff job for a snapshot whose diff row already exists but is still pending, instead of leaving the build stuck", async ({
+    test("should re-enqueue a pending diff that was never dispatched", async ({
       mainBuild,
       captureConfiguration,
       connection,
