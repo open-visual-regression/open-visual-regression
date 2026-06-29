@@ -136,9 +136,6 @@ export const enqueueDiffsIfAllCaptured = async (buildId: string): Promise<void> 
     values: snapshots.map((s) => ({ snapshotId: s.id })),
   });
 
-  // Re-fetch all pending diffs (including any from a prior partial run) so
-  // we recover from interrupted fan-outs. enqueueDiff uses diffId as BullMQ
-  // jobId so duplicate enqueues are deduplicated safely.
   const pendingDiffs = await dbClient.diffs.findPendingByBuild(buildId);
   await Promise.all(
     pendingDiffs.map((diff) => enqueueDiff({ snapshotId: diff.snapshotId, diffId: diff.id })),
