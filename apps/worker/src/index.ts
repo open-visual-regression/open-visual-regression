@@ -19,7 +19,7 @@ const connection = new Redis(process.env.VALKEY_URL ?? "redis://localhost:6379",
 const extractWorker = new Worker(QueueName.BUILD_EXTRACT, extract.run, { connection });
 const captureWorker = new Worker(QueueName.SNAPSHOT_CAPTURE, capture.run, {
   connection,
-  lockDuration: 6 * 60 * 1000, // longer than CAPTURE_JOB_TIMEOUT_MS so BullMQ won't stall a running job
+  lockDuration: 6 * 60 * 1000,
 });
 const diffWorker = new Worker(QueueName.SNAPSHOT_DIFF, diff.run, { connection });
 const finalizeWorker = new Worker(QueueName.BUILD_FINALIZE, finalize.run, { connection });
