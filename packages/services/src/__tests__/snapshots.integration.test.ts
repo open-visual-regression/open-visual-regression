@@ -11,7 +11,7 @@ import { QueueName, type DiffJobPayload } from "@ovr/queue";
 import { storage } from "@ovr/storage";
 
 import { getStaticPath } from "../extract";
-import { captureSnapshot, diffSnapshot } from "../snapshots";
+import { captureSnapshot, diffSnapshot, enqueueSnapshotDiff } from "../snapshots";
 import { describe, expect, test } from "./fixtures";
 
 const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -82,6 +82,28 @@ describe("snapshots", () => {
 
       const job = await collectDiffJob(connection);
       expect(job.snapshotId).toBe(snapshot!.id);
+    });
+
+    test("should re-enqueue a pending diff that was never dispatched", async ({
+      mainBuild,
+      captureConfiguration,
+      connection,
+    }) => {
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: mainBuild.id,
+            ...captureConfiguration,
+            targetId: "story-recovery",
+          },
+        ],
+      });
+      const existingDiff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
+
+      await enqueueSnapshotDiff(snapshot!.id);
+
+      const job = await collectDiffJob(connection);
+      expect(job).toEqual({ snapshotId: snapshot!.id, diffId: existingDiff!.id });
     });
 
     test("should still let a reviewer see the story, flagged as a render error, when the story fails to render", async ({

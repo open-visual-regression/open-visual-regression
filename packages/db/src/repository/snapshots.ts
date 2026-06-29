@@ -53,16 +53,6 @@ export const updateCaptureResult = async (
   return snapshot;
 };
 
-export const hasAllCapturedForBuild = async (buildId: string) => {
-  const rows = await db.query.snapshots.findMany({
-    columns: { status: true },
-    where: (snapshots, { eq }) => eq(snapshots.buildId, buildId),
-  });
-  return (
-    rows.length > 0 && rows.every((row) => row.status !== "queued" && row.status !== "processing")
-  );
-};
-
 export const countByBuild = async (buildId: string) => {
   const [result] = await db
     .select({ count: count() })
