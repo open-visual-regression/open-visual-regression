@@ -19,16 +19,6 @@ export const createMany = async ({ values, tx = db }: CreateManyInput) => {
   return tx.insert(diffs).values(values).onConflictDoNothing().returning();
 };
 
-export const findPendingByBuild = async (buildId: string) => {
-  const rows = await db
-    .select({ diff: diffs })
-    .from(diffs)
-    .innerJoin(snapshots, eq(diffs.snapshotId, snapshots.id))
-    .where(and(eq(snapshots.buildId, buildId), eq(diffs.processingStatus, "pending")));
-
-  return rows.map((row) => row.diff);
-};
-
 export const findById = (id: string) =>
   db.query.diffs.findFirst({ where: (diffs, { eq }) => eq(diffs.id, id) });
 
@@ -47,12 +37,21 @@ export const findBySnapshotWithBaseline = async (snapshotId: string) => {
   return row;
 };
 
-export const findByBuild = async (buildId: string) => {
+type FindByBuildOptions = {
+  processingStatus?: DiffProcessingStatus;
+};
+
+export const findByBuild = async (buildId: string, opts: FindByBuildOptions = {}) => {
   const rows = await db
     .select({ diff: diffs })
     .from(diffs)
     .innerJoin(snapshots, eq(diffs.snapshotId, snapshots.id))
-    .where(eq(snapshots.buildId, buildId));
+    .where(
+      and(
+        eq(snapshots.buildId, buildId),
+        opts.processingStatus ? eq(diffs.processingStatus, opts.processingStatus) : undefined,
+      ),
+    );
 
   return rows.map((row) => row.diff);
 };

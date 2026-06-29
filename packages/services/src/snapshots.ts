@@ -136,7 +136,7 @@ export const enqueueDiffsIfAllCaptured = async (buildId: string): Promise<void> 
     values: snapshots.map((s) => ({ snapshotId: s.id })),
   });
 
-  const pendingDiffs = await dbClient.diffs.findPendingByBuild(buildId);
+  const pendingDiffs = await dbClient.diffs.findByBuild(buildId, { processingStatus: "pending" });
   await Promise.all(
     pendingDiffs.map((diff) => enqueueDiff({ snapshotId: diff.snapshotId, diffId: diff.id })),
   );
