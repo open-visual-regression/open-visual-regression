@@ -1,6 +1,6 @@
 import { PNG } from "pngjs";
 import pixelmatch from "pixelmatch";
-import { chromium, firefox, webkit } from "playwright";
+import { chromium, firefox, webkit, type Browser } from "playwright";
 
 import { dbClient } from "@ovr/db/client";
 import type { SnapshotDbSchema } from "@ovr/db/repository/snapshots";
@@ -9,7 +9,12 @@ import { storage } from "@ovr/storage";
 
 import { promoteBaseline } from "./baselines";
 import { detectCaptureStrategy } from "./captureStrategies";
-import { BOOT_TIMEOUT_MS, CAPTURE_JOB_TIMEOUT_MS, RENDER_TIMEOUT_MS } from "./lib/captureTimeouts";
+import {
+  BOOT_TIMEOUT_MS,
+  CAPTURE_JOB_TIMEOUT_MS,
+  RENDER_TIMEOUT_MS,
+  withTimeout,
+} from "./lib/captureTimeouts";
 import { startStaticProxy } from "./lib/staticProxy";
 import { enqueueDiff, enqueueFinalize } from "./lib/queue";
 
@@ -45,91 +50,101 @@ export const captureSnapshot = async (snapshotId: string): Promise<void> => {
 
   const fullPage = snapshot.viewportHeight === 0;
 
-  const { logs, screenshot, hasRenderError } = await Promise.race([
-    (async () => {
-      const proxy = await startStaticProxy(build.projectId, build.id);
-      const browser = await getBrowserLauncher(snapshot.browser).launch();
+  let activeBrowser: Browser | undefined;
+  let activeProxy: { close: () => void } | undefined;
 
-      try {
-        const context = await browser.newContext({
-          viewport: {
-            width: snapshot.viewportWidth,
-            height: fullPage ? DEFAULT_VIEWPORT_HEIGHT : snapshot.viewportHeight,
-          },
-          deviceScaleFactor: 1,
-        });
+  await withTimeout(
+    async () => {
+      const { logs, screenshot, hasRenderError } = await (async () => {
+        const proxy = await startStaticProxy(build.projectId, build.id);
+        activeProxy = proxy;
+        const browser = await getBrowserLauncher(snapshot.browser).launch();
+        activeBrowser = browser;
 
-        const page = await context.newPage();
-        const logs: ConsoleLog[] = [];
-        let hasPageError = false;
+        try {
+          const context = await browser.newContext({
+            viewport: {
+              width: snapshot.viewportWidth,
+              height: fullPage ? DEFAULT_VIEWPORT_HEIGHT : snapshot.viewportHeight,
+            },
+            deviceScaleFactor: 1,
+          });
 
-        page.on("console", (message) => {
-          logs.push({ level: message.type(), message: message.text() });
-        });
+          const page = await context.newPage();
+          const logs: ConsoleLog[] = [];
+          let hasPageError = false;
 
-        page.on("pageerror", (error) => {
-          hasPageError = true;
-          logs.push({ level: "error", message: error.message });
-        });
+          page.on("console", (message) => {
+            logs.push({ level: message.type(), message: message.text() });
+          });
 
-        await page.route("**/*", (route) => {
-          const url = new URL(route.request().url());
-          if (url.origin === proxy.origin || url.protocol === "data:" || url.protocol === "blob:") {
-            return route.continue();
+          page.on("pageerror", (error) => {
+            hasPageError = true;
+            logs.push({ level: "error", message: error.message });
+          });
+
+          await page.route("**/*", (route) => {
+            const url = new URL(route.request().url());
+            if (
+              url.origin === proxy.origin ||
+              url.protocol === "data:" ||
+              url.protocol === "blob:"
+            ) {
+              return route.continue();
+            }
+            return route.abort();
+          });
+
+          const strategy = await detectCaptureStrategy(proxy.origin);
+
+          await page.goto(`${proxy.origin}/iframe.html`, { waitUntil: "load" });
+          await strategy.waitForBoot(page, BOOT_TIMEOUT_MS);
+
+          const renderResult = await page.evaluate(strategy.waitForTargetPlayed, {
+            targetId: snapshot.targetId,
+            timeoutMs: RENDER_TIMEOUT_MS,
+          });
+
+          if (!renderResult.ok) {
+            logs.push({ level: "error", message: renderResult.error ?? "target failed to render" });
           }
-          return route.abort();
-        });
 
-        const strategy = await detectCaptureStrategy(proxy.origin);
+          return {
+            logs,
+            screenshot: await page.screenshot({ fullPage }),
+            hasRenderError: !renderResult.ok || hasPageError,
+          };
+        } finally {
+          await browser.close();
+          proxy.close();
+        }
+      })();
 
-        await page.goto(`${proxy.origin}/iframe.html`, { waitUntil: "load" });
-        await strategy.waitForBoot(page, BOOT_TIMEOUT_MS);
+      const imagePath = `${build.projectId}/builds/${build.id}/snapshots/${snapshotId}.png`;
+      await storage.uploadFile(imagePath, screenshot, "image/png");
 
-        const renderResult = await page.evaluate(strategy.waitForTargetPlayed, {
-          targetId: snapshot.targetId,
-          timeoutMs: RENDER_TIMEOUT_MS,
-        });
-
-        if (!renderResult.ok) {
-          logs.push({ level: "error", message: renderResult.error ?? "target failed to render" });
+      await db.transaction(async (tx) => {
+        if (logs.length > 0) {
+          await dbClient.snapshotLogs.createMany({
+            values: logs.map((log) => ({ snapshotId, level: log.level, message: log.message })),
+            tx,
+          });
         }
 
-        return {
-          logs,
-          screenshot: await page.screenshot({ fullPage }),
-          hasRenderError: !renderResult.ok || hasPageError,
-        };
-      } finally {
-        await browser.close();
-        proxy.close();
-      }
-    })(),
-    new Promise<never>((_, reject) =>
-      setTimeout(
-        () => reject(new Error(`Capture timed out after ${CAPTURE_JOB_TIMEOUT_MS}ms`)),
-        CAPTURE_JOB_TIMEOUT_MS,
-      ),
-    ),
-  ]);
-
-  const imagePath = `${build.projectId}/builds/${build.id}/snapshots/${snapshotId}.png`;
-  await storage.uploadFile(imagePath, screenshot, "image/png");
-
-  await db.transaction(async (tx) => {
-    if (logs.length > 0) {
-      await dbClient.snapshotLogs.createMany({
-        values: logs.map((log) => ({ snapshotId, level: log.level, message: log.message })),
-        tx,
+        await dbClient.snapshots.updateCaptureResult(snapshotId, {
+          status: "success",
+          imagePath,
+          hasRenderError,
+          tx,
+        });
       });
-    }
-
-    await dbClient.snapshots.updateCaptureResult(snapshotId, {
-      status: "success",
-      imagePath,
-      hasRenderError,
-      tx,
-    });
-  });
+    },
+    CAPTURE_JOB_TIMEOUT_MS,
+    () => {
+      activeBrowser?.close().catch(() => {});
+      activeProxy?.close();
+    },
+  );
 
   await enqueueDiffsIfAllCaptured(build.id);
 };
