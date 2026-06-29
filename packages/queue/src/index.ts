@@ -48,7 +48,12 @@ export type PurgeJobPayload = {
 const JOB_OPTIONS: Record<QueueName, JobsOptions> = {
   [QueueName.BUILD_EXTRACT]: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
   [QueueName.SNAPSHOT_CAPTURE]: { attempts: 5, backoff: { type: "exponential", delay: 2000 } },
-  [QueueName.SNAPSHOT_DIFF]: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
+  [QueueName.SNAPSHOT_DIFF]: {
+    attempts: 3,
+    backoff: { type: "exponential", delay: 2000 },
+    removeOnComplete: { age: 86_400, count: 1000 },
+    removeOnFail: { age: 604_800 },
+  },
   [QueueName.BUILD_FINALIZE]: { attempts: 3, backoff: { type: "fixed", delay: 1000 } },
   [QueueName.BUILD_PURGE_DISPATCH]: { attempts: 3, backoff: { type: "exponential", delay: 5000 } },
   [QueueName.BUILD_PURGE]: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
@@ -62,6 +67,12 @@ const enqueue = async <T>(
 ): Promise<Job<T>> => {
   const queue = new Queue<T, void, string, T, void, string>(queueName, { connection });
   try {
+    if (extraOpts?.jobId) {
+      const existing = await queue.getJob(extraOpts.jobId);
+      if (existing && (await existing.isFailed())) {
+        await existing.remove();
+      }
+    }
     return await queue.add(queueName, payload, { ...JOB_OPTIONS[queueName], ...extraOpts });
   } finally {
     await queue.close();
