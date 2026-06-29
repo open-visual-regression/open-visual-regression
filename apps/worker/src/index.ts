@@ -33,10 +33,13 @@ const isFinalAttempt = (job: Job<unknown>): boolean => job.attemptsMade >= (job.
 const guard =
   <T>(fn: (job: { data: T }, error: Error) => Promise<void>) =>
   (job: Job<T> | undefined, error: Error) => {
-    if (!job || !isFinalAttempt(job)) {
+    if (!job) {
       return;
     }
-    console.error(`Job ${job.id} (${job.queueName}) failed:`, error);
+    console.error(`Job ${job.id} (${job.queueName}) failed on attempt ${job.attemptsMade}:`, error);
+    if (!isFinalAttempt(job)) {
+      return;
+    }
     fn(job, error).catch((handlerError: unknown) => {
       console.error("Error while handling job failure:", handlerError);
     });
