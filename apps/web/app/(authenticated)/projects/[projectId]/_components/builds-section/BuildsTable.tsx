@@ -15,6 +15,7 @@ import {
   TableHead,
   TableRow,
   TableCell,
+  TableEmpty,
 } from "@ovr/ui/components/table";
 import { formatRelativeDateTime } from "@/lib/utils/date";
 import { type BuildSchema } from "@ovr/api/contracts/builds";
@@ -65,9 +66,10 @@ const columns = columnHelper.columns([
 
 type BuildsTableProps = {
   data: BuildSchema[];
+  search?: string;
 };
 
-export const BuildsTable = ({ data }: BuildsTableProps) => {
+export const BuildsTable = ({ data, search }: BuildsTableProps) => {
   const table = useTable({
     key: "builds-table",
     columns,
@@ -78,6 +80,8 @@ export const BuildsTable = ({ data }: BuildsTableProps) => {
   });
 
   useTanStackTableDevtools(table);
+
+  const columnCount = table.getAllLeafColumns().length;
 
   return (
     <Table>
@@ -97,15 +101,21 @@ export const BuildsTable = ({ data }: BuildsTableProps) => {
         ))}
       </TableHeader>
       <TableBody>
-        {table.getRowModel().rows.map((row) => (
-          <TableRow key={row.id} className="relative has-[a:hover]:bg-ovr-hover">
-            {row.getAllCells().map((cell) => (
-              <TableCell key={cell.id} className={cell.column.columnDef.meta?.className}>
-                <table.FlexRender cell={cell} />
-              </TableCell>
-            ))}
-          </TableRow>
-        ))}
+        {table.getRowModel().rows.length === 0 ? (
+          <TableEmpty colSpan={columnCount}>
+            {search ? `no builds found matching "${search}"` : "no builds found"}
+          </TableEmpty>
+        ) : (
+          table.getRowModel().rows.map((row) => (
+            <TableRow key={row.id} className="relative has-[a:hover]:bg-ovr-hover">
+              {row.getAllCells().map((cell) => (
+                <TableCell key={cell.id} className={cell.column.columnDef.meta?.className}>
+                  <table.FlexRender cell={cell} />
+                </TableCell>
+              ))}
+            </TableRow>
+          ))
+        )}
       </TableBody>
     </Table>
   );

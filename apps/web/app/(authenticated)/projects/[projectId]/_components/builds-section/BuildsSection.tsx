@@ -4,10 +4,15 @@ import { NoBuildsSection } from "./NoBuildsSection";
 
 type BuildsSectionProps = {
   builds: BuildSchema[];
+  search?: string;
 };
 
-export const BuildsSection = ({ builds }: BuildsSectionProps) => (
+export const BuildsSection = ({ builds, search }: BuildsSectionProps) => (
   <div className="flex flex-col">
-    {builds.length === 0 ? <NoBuildsSection /> : <BuildsTable data={builds} />}
+    {builds.length === 0 && !search ? (
+      <NoBuildsSection />
+    ) : (
+      <BuildsTable data={builds} search={search} />
+    )}
   </div>
 );
