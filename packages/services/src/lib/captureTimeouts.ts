@@ -7,7 +7,7 @@ export const withTimeout = async <T>(
   timeoutMs: number,
   onTimeout?: () => void,
 ): Promise<T> => {
-  let timeoutHandle: ReturnType<typeof setTimeout>;
+  let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
 
   const timeout = new Promise<never>((_, reject) => {
     timeoutHandle = setTimeout(() => {
