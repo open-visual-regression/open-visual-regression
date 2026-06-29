@@ -22,9 +22,17 @@ describe("capture", () => {
         ],
       });
 
-      await failed({ data: { buildId: build.id, snapshotId: snapshot!.id } });
+      await failed(
+        { data: { buildId: build.id, snapshotId: snapshot!.id } },
+        new Error("Timed out launching the browser"),
+      );
 
       expect(await dbClient.snapshots.findById(snapshot!.id)).toMatchObject({ status: "error" });
+
+      const logs = await dbClient.snapshotLogs.findBySnapshot(snapshot!.id);
+      expect(logs).toContainEqual(
+        expect.objectContaining({ level: "error", message: "Timed out launching the browser" }),
+      );
 
       const worker = new Worker<DiffJobPayload>(QueueName.SNAPSHOT_DIFF, async (job) => job.data, {
         connection,
@@ -59,9 +67,10 @@ describe("capture", () => {
         ],
       });
 
-      await failed({
-        data: { buildId: build.id, snapshotId: erroredSnapshot!.id },
-      });
+      await failed(
+        { data: { buildId: build.id, snapshotId: erroredSnapshot!.id } },
+        new Error("capture failed"),
+      );
 
       const diffs = await dbClient.diffs.findByBuild(build.id);
       expect(diffs).toHaveLength(1);
