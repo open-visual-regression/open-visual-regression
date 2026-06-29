@@ -127,15 +127,22 @@ export const captureSnapshot = async (snapshotId: string): Promise<void> => {
 };
 
 export const enqueueDiffsIfAllCaptured = async (buildId: string): Promise<void> => {
-  if (await dbClient.snapshots.hasAllCapturedForBuild(buildId)) {
-    const snapshots = await dbClient.snapshots.findByBuild(buildId);
-    const diffs = await dbClient.diffs.createMany({
-      values: snapshots.map((s) => ({ snapshotId: s.id })),
-    });
-    await Promise.all(
-      diffs.map((diff) => enqueueDiff({ snapshotId: diff.snapshotId, diffId: diff.id })),
-    );
+  if (!(await dbClient.snapshots.hasAllCapturedForBuild(buildId))) {
+    return;
   }
+
+  const snapshots = await dbClient.snapshots.findByBuild(buildId);
+  await dbClient.diffs.createMany({
+    values: snapshots.map((s) => ({ snapshotId: s.id })),
+  });
+
+  // Re-fetch all pending diffs (including any from a prior partial run) so
+  // we recover from interrupted fan-outs. enqueueDiff uses diffId as BullMQ
+  // jobId so duplicate enqueues are deduplicated safely.
+  const pendingDiffs = await dbClient.diffs.findPendingByBuild(buildId);
+  await Promise.all(
+    pendingDiffs.map((diff) => enqueueDiff({ snapshotId: diff.snapshotId, diffId: diff.id })),
+  );
 };
 
 export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<void> => {
@@ -154,7 +161,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
     throw new Error(`Project not found for build: ${build.id}`);
   }
 
-  if (snapshot.hasRenderError) {
+  if (snapshot.status === "error" || snapshot.hasRenderError) {
     await dbClient.diffs.updateProcessingStatus(diffId, "error");
     await checkAllDoneAndFinalize(build.id);
     return;

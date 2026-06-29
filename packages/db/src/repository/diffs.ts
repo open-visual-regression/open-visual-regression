@@ -1,4 +1,4 @@
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
 import { db, type DbClient } from "../db";
@@ -16,7 +16,17 @@ export const createMany = async ({ values, tx = db }: CreateManyInput) => {
     return [];
   }
 
-  return tx.insert(diffs).values(values).returning();
+  return tx.insert(diffs).values(values).onConflictDoNothing().returning();
+};
+
+export const findPendingByBuild = async (buildId: string) => {
+  const rows = await db
+    .select({ diff: diffs })
+    .from(diffs)
+    .innerJoin(snapshots, eq(diffs.snapshotId, snapshots.id))
+    .where(and(eq(snapshots.buildId, buildId), eq(diffs.processingStatus, "pending")));
+
+  return rows.map((row) => row.diff);
 };
 
 export const findById = (id: string) =>
