@@ -1,4 +1,4 @@
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
 import { db, type DbClient } from "../db";
@@ -16,7 +16,7 @@ export const createMany = async ({ values, tx = db }: CreateManyInput) => {
     return [];
   }
 
-  return tx.insert(diffs).values(values).returning();
+  return tx.insert(diffs).values(values).onConflictDoNothing().returning();
 };
 
 export const findById = (id: string) =>
@@ -37,12 +37,21 @@ export const findBySnapshotWithBaseline = async (snapshotId: string) => {
   return row;
 };
 
-export const findByBuild = async (buildId: string) => {
+type FindByBuildOptions = {
+  processingStatus?: DiffProcessingStatus;
+};
+
+export const findByBuild = async (buildId: string, opts: FindByBuildOptions = {}) => {
   const rows = await db
     .select({ diff: diffs })
     .from(diffs)
     .innerJoin(snapshots, eq(diffs.snapshotId, snapshots.id))
-    .where(eq(snapshots.buildId, buildId));
+    .where(
+      and(
+        eq(snapshots.buildId, buildId),
+        opts.processingStatus ? eq(diffs.processingStatus, opts.processingStatus) : undefined,
+      ),
+    );
 
   return rows.map((row) => row.diff);
 };
