@@ -40,7 +40,7 @@ describe("capture", () => {
       }
     });
 
-    test("should wait for every story in the build before moving toward a diff", async ({
+    test("should create a diff for the failed story immediately, without waiting for the rest of the build", async ({
       build,
       captureConfiguration,
     }) => {
@@ -63,7 +63,12 @@ describe("capture", () => {
         data: { buildId: build.id, snapshotId: erroredSnapshot!.id },
       });
 
-      expect(await dbClient.diffs.findByBuild(build.id)).toEqual([]);
+      const diffs = await dbClient.diffs.findByBuild(build.id);
+      expect(diffs).toHaveLength(1);
+      expect(diffs[0]).toMatchObject({
+        snapshotId: erroredSnapshot!.id,
+        processingStatus: "pending",
+      });
     });
   });
 });

@@ -127,8 +127,10 @@ export const captureSnapshot = async (snapshotId: string): Promise<void> => {
 };
 
 export const enqueueSnapshotDiff = async (snapshotId: string): Promise<void> => {
-  const [diff] = await dbClient.diffs.createMany({ values: [{ snapshotId }] });
-  if (diff) {
+  const [created] = await dbClient.diffs.createMany({ values: [{ snapshotId }] });
+  const diff = created ?? (await dbClient.diffs.findBySnapshot(snapshotId));
+
+  if (diff?.processingStatus === "pending") {
     await enqueueDiff({ snapshotId, diffId: diff.id });
   }
 };
