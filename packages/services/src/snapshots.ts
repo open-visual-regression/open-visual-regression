@@ -123,23 +123,15 @@ export const captureSnapshot = async (snapshotId: string): Promise<void> => {
     });
   });
 
-  await enqueueDiffsIfAllCaptured(build.id);
+  await enqueueSnapshotDiff(snapshotId);
 };
 
-export const enqueueDiffsIfAllCaptured = async (buildId: string): Promise<void> => {
-  if (!(await dbClient.snapshots.hasAllCapturedForBuild(buildId))) {
-    return;
+export const enqueueSnapshotDiff = async (snapshotId: string): Promise<void> => {
+  await dbClient.diffs.createMany({ values: [{ snapshotId }] });
+  const diff = await dbClient.diffs.findBySnapshot(snapshotId);
+  if (diff?.processingStatus === "pending") {
+    await enqueueDiff({ snapshotId, diffId: diff.id });
   }
-
-  const snapshots = await dbClient.snapshots.findByBuild(buildId);
-  await dbClient.diffs.createMany({
-    values: snapshots.map((s) => ({ snapshotId: s.id })),
-  });
-
-  const pendingDiffs = await dbClient.diffs.findByBuild(buildId, { processingStatus: "pending" });
-  await Promise.all(
-    pendingDiffs.map((diff) => enqueueDiff({ snapshotId: diff.snapshotId, diffId: diff.id })),
-  );
 };
 
 export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<void> => {
