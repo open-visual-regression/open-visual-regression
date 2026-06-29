@@ -81,7 +81,8 @@ export const enqueueCapture = (
 export const enqueueDiff = (
   payload: DiffJobPayload,
   connection: IORedis,
-): Promise<Job<DiffJobPayload>> => enqueue(QueueName.SNAPSHOT_DIFF, payload, connection);
+): Promise<Job<DiffJobPayload>> =>
+  enqueue(QueueName.SNAPSHOT_DIFF, payload, connection, { jobId: payload.diffId });
 
 export const enqueueFinalize = (
   payload: FinalizeJobPayload,
