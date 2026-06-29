@@ -98,11 +98,14 @@ export const updateReviewStatusMany = async (ids: string[], reviewStatus: DiffRe
 export const hasAllDoneForBuild = async (buildId: string) => {
   const rows = await db
     .select({ processingStatus: diffs.processingStatus })
-    .from(diffs)
-    .innerJoin(snapshots, eq(diffs.snapshotId, snapshots.id))
+    .from(snapshots)
+    .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
     .where(eq(snapshots.buildId, buildId));
 
-  return rows.length > 0 && rows.every((row) => row.processingStatus !== "pending");
+  return (
+    rows.length > 0 &&
+    rows.every((row) => row.processingStatus !== null && row.processingStatus !== "pending")
+  );
 };
 
 export type DiffDbSchema = Awaited<ReturnType<typeof findById>>;

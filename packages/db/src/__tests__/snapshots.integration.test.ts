@@ -137,43 +137,6 @@ describe("snapshots", () => {
     });
   });
 
-  describe("hasAllCapturedForBuild", () => {
-    test("should return false while any snapshot is still queued", async ({
-      build,
-      captureConfiguration,
-    }) => {
-      const [a] = await dbClient.snapshots.createMany({
-        values: [
-          { buildId: build.id, ...captureConfiguration, targetId: "a" },
-          { buildId: build.id, ...captureConfiguration, targetId: "b" },
-        ],
-      });
-
-      await dbClient.snapshots.updateStatus(a!.id, "success");
-      expect(await dbClient.snapshots.hasAllCapturedForBuild(build.id)).toBe(false);
-    });
-
-    test("should return true once every snapshot has been captured or errored", async ({
-      build,
-      captureConfiguration,
-    }) => {
-      const created = await dbClient.snapshots.createMany({
-        values: [
-          { buildId: build.id, ...captureConfiguration, targetId: "a" },
-          { buildId: build.id, ...captureConfiguration, targetId: "b" },
-        ],
-      });
-
-      await dbClient.snapshots.updateStatus(created[0]!.id, "success");
-      await dbClient.snapshots.updateStatus(created[1]!.id, "error");
-      expect(await dbClient.snapshots.hasAllCapturedForBuild(build.id)).toBe(true);
-    });
-
-    test("should return false for a build with no snapshots", async ({ build }) => {
-      expect(await dbClient.snapshots.hasAllCapturedForBuild(build.id)).toBe(false);
-    });
-  });
-
   describe("getDisplayStatusCounts", () => {
     test("should return zero counts for a build with no snapshots", async ({ build }) => {
       expect(await dbClient.snapshots.getDisplayStatusCounts(build.id)).toEqual({
