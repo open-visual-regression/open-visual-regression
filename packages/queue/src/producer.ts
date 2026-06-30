@@ -13,10 +13,11 @@ import {
   type ExtractJobPayload,
   type FinalizeJobPayload,
   type PurgeJobPayload,
-} from "@ovr/queue";
+} from "./index";
 
 const connection = new Redis(process.env.VALKEY_URL ?? "redis://localhost:6379", {
   maxRetriesPerRequest: null,
+  lazyConnect: true,
 });
 
 export const enqueueExtract = (payload: ExtractJobPayload): Promise<Job<ExtractJobPayload>> =>

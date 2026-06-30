@@ -17,8 +17,6 @@
     "@ovr/db": "workspace:*",
     "@ovr/queue": "workspace:*",
     "@ovr/storage": "workspace:*",
-    "bullmq": "^5.78.0",
-    "ioredis": "5.10.1",
     "uuid": "^14.0.0"
   },
   "devDependencies": {
@@ -27,6 +25,8 @@
     "@testcontainers/postgresql": "^12.0.1",
     "@types/node": "^22.15.3",
     "@types/pg": "^8.20.0",
+    "bullmq": "^5.78.0",
+    "ioredis": "5.10.1",
     "pg": "^8.21.0",
     "typescript": "6.0.3",
     "vitest": "^4.1.7"

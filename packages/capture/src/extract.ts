@@ -6,8 +6,8 @@ import { pipeline } from "node:stream/promises";
 
 import * as tar from "tar";
 
-import { enqueueCapture } from "@ovr/builds/lib/queue";
 import { dbClient } from "@ovr/db/client";
+import { enqueueCapture } from "@ovr/queue/producer";
 import { storage } from "@ovr/storage";
 
 import { getContentType, getStaticPath } from "./lib/staticFiles";

@@ -1,8 +1,8 @@
 import { dbClient } from "@ovr/db/client";
+import { enqueuePurgeMany } from "@ovr/queue/producer";
 import { storage } from "@ovr/storage";
 
 import { mapWithConcurrency } from "./lib/concurrency";
-import { enqueuePurgeMany } from "./lib/queue";
 
 const RETENTION_PAGE_SIZE = 500;
 const STORAGE_DELETE_CONCURRENCY = 10;

@@ -397,12 +397,6 @@ importers:
       '@ovr/storage':
         specifier: workspace:*
         version: link:../storage
-      bullmq:
-        specifier: ^5.78.0
-        version: 5.78.0
-      ioredis:
-        specifier: 5.10.1
-        version: 5.10.1
       uuid:
         specifier: ^14.0.0
         version: 14.0.0
@@ -422,6 +416,12 @@ importers:
       '@types/pg':
         specifier: ^8.20.0
         version: 8.20.0
+      bullmq:
+        specifier: ^5.78.0
+        version: 5.78.0
+      ioredis:
+        specifier: 5.10.1
+        version: 5.10.1
       pg:
         specifier: ^8.21.0
         version: 8.21.0
@@ -434,12 +434,12 @@ importers:
 
   packages/capture:
     dependencies:
-      '@ovr/builds':
-        specifier: workspace:*
-        version: link:../builds
       '@ovr/db':
         specifier: workspace:*
         version: link:../db
+      '@ovr/queue':
+        specifier: workspace:*
+        version: link:../queue
       '@ovr/reviews':
         specifier: workspace:*
         version: link:../reviews
@@ -459,9 +459,6 @@ importers:
         specifier: ^7.5.16
         version: 7.5.16
     devDependencies:
-      '@ovr/queue':
-        specifier: workspace:*
-        version: link:../queue
       '@ovr/testing':
         specifier: workspace:*
         version: link:../testing
