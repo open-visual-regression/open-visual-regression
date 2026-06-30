@@ -1,5 +1,5 @@
 {
-  "name": "@ovr/services",
+  "name": "@ovr/reviews",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -14,16 +14,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@ovr/db": "workspace:*",
-    "@ovr/queue": "workspace:*",
-    "@ovr/storage": "workspace:*",
-    "bullmq": "^5.78.0",
-    "ioredis": "5.10.1",
-    "pixelmatch": "^7.1.0",
-    "playwright": "^1.57.0",
-    "pngjs": "^7.0.0",
-    "tar": "^7.5.16",
-    "uuid": "^14.0.0"
+    "@ovr/builds": "workspace:*",
+    "@ovr/db": "workspace:*"
   },
   "devDependencies": {
     "@ovr/testing": "workspace:*",
@@ -31,10 +23,10 @@
     "@testcontainers/postgresql": "^12.0.1",
     "@types/node": "^22.15.3",
     "@types/pg": "^8.20.0",
-    "@types/pixelmatch": "^5.2.6",
-    "@types/pngjs": "^6.0.5",
+    "ioredis": "5.10.1",
     "pg": "^8.21.0",
     "typescript": "6.0.3",
+    "uuid": "^14.0.0",
     "vitest": "^4.1.7"
   }
 }

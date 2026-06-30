@@ -1,6 +1,6 @@
 import { dbClient } from "@ovr/db/client";
 import type { DiffJobPayload } from "@ovr/queue";
-import { checkAllDoneAndFinalize, diffSnapshot } from "@ovr/services/snapshots";
+import { checkAllDoneAndFinalize, diffSnapshot } from "@ovr/capture/snapshots";
 
 type DiffJob = { data: DiffJobPayload };
 

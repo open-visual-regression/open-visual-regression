@@ -13,7 +13,9 @@ context: |
   apps/cli               @ovr/cli npm package
 
   packages/db            Drizzle ORM schema + migrations + repositories
-  packages/services      Business logic shared across oRPC router + worker jobs (no framework imports)
+  packages/builds        Build lifecycle logic (create/finalize, retention); shared across oRPC router + worker jobs (no framework imports)
+  packages/reviews       Diff review + baseline approval logic; consumed by the oRPC router (no framework imports)
+  packages/capture       Worker-only Playwright capture + Pixelmatch diff pipeline (extract, snapshots, story viewports)
   packages/api           oRPC contracts only (`@orpc/contract` + Zod schemas); no handlers; imported by both web router and CLI client
   packages/queue         BullMQ job type definitions + producers
   packages/storage       RustFS / S3 client
@@ -49,11 +51,13 @@ context: |
   - RBAC and auth enforced via oRPC middleware (`authenticatedMiddleware`, `adminMiddleware`,
     ...), composed onto procedures with `.use()` — not in routes, UI, or a service layer
   - Repositories contain only Drizzle queries; no business logic
-  - packages/services holds business logic invoked from more than one entry point (an oRPC
-    router and a worker job) or substantial enough to isolate (capture/diff pipelines,
-    baselines, retention). These functions take no framework types and return
-    `Result<TData, TError>` (see `apps/web/lib/types.ts`) instead of throwing; the calling
-    oRPC handler or worker job translates an error result into an `ORPCError` or `Error`
+  - packages/builds, packages/reviews, and packages/capture hold business logic invoked
+    from an oRPC router and/or a worker job, split by concern: builds (build lifecycle,
+    retention) and reviews (diff review, baselines) are lightweight domain logic shared
+    with web; capture (Playwright/Pixelmatch pipeline) is worker-only and owns the heavy
+    browser dependencies. These functions take no framework types and return
+    `Result<TData, TError>` (see `packages/builds/src/types.ts`) instead of throwing; the
+    calling oRPC handler or worker job translates an error result into an `ORPCError` or `Error`
   - apps/web imports `@ovr/api/contract` only (never handler implementations from packages/api)
   - `"use client"` only for state, event handlers, or browser APIs
   - Mutations: oRPC procedures with `"use server"` + `.actionable()` used directly as Server Actions — no `actions.ts` wrapper needed; client components call via `useServerAction` from `@orpc/react/hooks`
@@ -84,7 +88,7 @@ context: |
     `process.env` (see `packages/db/src/db.ts`) — safe only because globalSetup sets env vars first
   - Per-test setup/teardown: `src/__tests__/fixtures.ts` exporting `test`/`describe`/`expect`
     via `vitest.extend<Fixtures>({...})` (see `packages/db/src/__tests__/fixtures.ts`)
-  - Backend-only packages (no React/JSX, e.g. db/storage/queue/services): add a package-level
+  - Backend-only packages (no React/JSX, e.g. db/storage/queue/builds/reviews/capture): add a package-level
     `.oxlintrc.json` with `"plugins": ["typescript", "import", "unicorn", "vitest"]`
     (copy `packages/db/.oxlintrc.json`) — otherwise oxlint's `react-hooks/rules-of-hooks`
     misfires on the `use` callback in vitest fixtures
