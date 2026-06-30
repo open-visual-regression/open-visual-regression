@@ -16,6 +16,7 @@ import {
   withTimeout,
 } from "./lib/captureTimeouts";
 import { startStaticProxy } from "./lib/staticProxy";
+import { newPage } from "./lib/browser";
 import { enqueueDiff, enqueueFinalize } from "./lib/queue";
 
 const DEFAULT_PIXELMATCH_THRESHOLD = 0.1;
@@ -70,13 +71,7 @@ export const captureSnapshot = async (snapshotId: string): Promise<void> => {
             deviceScaleFactor: 1,
           });
 
-          const page = await context.newPage();
-
-          // esbuild (via the worker's runtime) wraps functions with a `__name`
-          // helper for stack traces. Functions handed to `page.evaluate` are
-          // serialized without that helper, so define a no-op in the page to keep
-          // them runnable instead of throwing `__name is not defined`.
-          await page.addInitScript({ content: "globalThis.__name ??= (value) => value;" });
+          const page = await newPage(context);
 
           const logs: ConsoleLog[] = [];
           let hasPageError = false;

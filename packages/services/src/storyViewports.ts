@@ -3,6 +3,7 @@ import { chromium } from "playwright";
 
 import { detectCaptureStrategy, readOvrStoryParameters } from "./captureStrategies";
 import { BOOT_TIMEOUT_MS, RENDER_TIMEOUT_MS } from "./lib/captureTimeouts";
+import { newPage } from "./lib/browser";
 import { mapWithConcurrency } from "./lib/concurrency";
 import { startStaticProxy } from "./lib/staticProxy";
 import type { StaticProxy } from "./lib/staticProxy";
@@ -29,7 +30,7 @@ const readStoryOverride = async (
   const context = await browser.newContext();
 
   try {
-    const page = await context.newPage();
+    const page = await newPage(context);
 
     await page.route("**/*", (route) => {
       const url = new URL(route.request().url());
