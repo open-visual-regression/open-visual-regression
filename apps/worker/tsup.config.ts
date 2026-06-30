@@ -7,9 +7,11 @@ export default defineConfig((options) => ({
   clean: true,
   watch: options.watch && [
     "src",
+    "../../packages/builds/src",
+    "../../packages/capture/src",
     "../../packages/db/src",
     "../../packages/queue/src",
-    "../../packages/services/src",
+    "../../packages/reviews/src",
     "../../packages/storage/src",
   ],
   noExternal: [/^@ovr\//],

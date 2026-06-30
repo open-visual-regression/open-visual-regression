@@ -6,10 +6,10 @@ import { pipeline } from "node:stream/promises";
 
 import * as tar from "tar";
 
+import { enqueueCapture } from "@ovr/builds/lib/queue";
 import { dbClient } from "@ovr/db/client";
 import { storage } from "@ovr/storage";
 
-import { enqueueCapture } from "./lib/queue";
 import { getContentType, getStaticPath } from "./lib/staticFiles";
 import {
   readStoryParameterOverrides,

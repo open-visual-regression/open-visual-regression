@@ -6,7 +6,7 @@ import {
   createBuild as createBuildService,
   DEFAULT_DIFF_THRESHOLD,
   getArtifactPath,
-} from "@ovr/services/builds";
+} from "@ovr/builds/builds";
 import { storage } from "@ovr/storage";
 
 import { os } from "./os";

@@ -6,7 +6,7 @@ import {
   bulkCastVote as bulkCastVoteService,
   castVote as castVoteService,
   removeVote as removeVoteService,
-} from "@ovr/services/diffs";
+} from "@ovr/reviews/diffs";
 
 import { os } from "./os";
 import { authenticatedMiddleware, organizationSnapshotMiddleware } from "./middleware";

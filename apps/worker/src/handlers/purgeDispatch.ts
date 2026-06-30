@@ -1,5 +1,5 @@
 import type { PurgeDispatchJobPayload } from "@ovr/queue";
-import { dispatchPurgeJobs } from "@ovr/services/retention";
+import { dispatchPurgeJobs } from "@ovr/builds/retention";
 
 type PurgeDispatchJob = { data: PurgeDispatchJobPayload };
 

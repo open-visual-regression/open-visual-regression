@@ -1,6 +1,6 @@
 import { dbClient } from "@ovr/db/client";
 import type { FinalizeJobPayload } from "@ovr/queue";
-import { finalizeBuild } from "@ovr/services/builds";
+import { finalizeBuild } from "@ovr/builds/builds";
 
 type FinalizeJob = { data: FinalizeJobPayload };
 

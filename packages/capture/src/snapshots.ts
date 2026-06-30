@@ -2,12 +2,13 @@ import { PNG } from "pngjs";
 import pixelmatch from "pixelmatch";
 import { chromium, firefox, webkit, type Browser } from "playwright";
 
+import { enqueueDiff, enqueueFinalize } from "@ovr/builds/lib/queue";
 import { dbClient } from "@ovr/db/client";
 import type { SnapshotDbSchema } from "@ovr/db/repository/snapshots";
 import { db } from "@ovr/db/db";
 import { storage } from "@ovr/storage";
+import { promoteBaseline } from "@ovr/reviews/baselines";
 
-import { promoteBaseline } from "./baselines";
 import { detectCaptureStrategy } from "./captureStrategies";
 import {
   BOOT_TIMEOUT_MS,
@@ -15,9 +16,8 @@ import {
   RENDER_TIMEOUT_MS,
   withTimeout,
 } from "./lib/captureTimeouts";
-import { startStaticProxy } from "./lib/staticProxy";
 import { newPage } from "./lib/browser";
-import { enqueueDiff, enqueueFinalize } from "./lib/queue";
+import { startStaticProxy } from "./lib/staticProxy";
 
 const DEFAULT_PIXELMATCH_THRESHOLD = 0.1;
 
