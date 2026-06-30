@@ -1,6 +1,7 @@
+import { headers } from "next/headers";
+
 import { Icon, PlusIcon } from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
-import { headers } from "next/headers";
 
 import { auth } from "@/lib/auth/auth";
 import { RequiresAdminRole } from "@/lib/components/authorization/RequiresAdminRole";

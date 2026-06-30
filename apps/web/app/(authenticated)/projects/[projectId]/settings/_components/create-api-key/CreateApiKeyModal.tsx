@@ -1,7 +1,8 @@
 "use client";
 
-import { Dialog, DialogContent } from "@ovr/ui/components/dialog";
 import { useRouter } from "next/navigation";
+
+import { Dialog, DialogContent } from "@ovr/ui/components/dialog";
 
 import { CreateApiKeyModalForm } from "./CreateApiKeyModalForm";
 

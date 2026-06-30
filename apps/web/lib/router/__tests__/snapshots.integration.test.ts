@@ -1,9 +1,10 @@
+import { v7 as uuidv7 } from "uuid";
+import { vi } from "vitest";
+
 import type { AddProjectInputSchema } from "@ovr/api/contracts/projects";
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
 import { organization, projects } from "@ovr/db/schema";
-import { v7 as uuidv7 } from "uuid";
-import { vi } from "vitest";
 
 import type { User } from "@/lib/auth/auth";
 import { serverClient } from "@/lib/router";

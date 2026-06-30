@@ -4,10 +4,11 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { pipeline } from "node:stream/promises";
 
+import * as tar from "tar";
+
 import { dbClient } from "@ovr/db/client";
 import { enqueueCapture } from "@ovr/queue/producer";
 import { storage } from "@ovr/storage";
-import * as tar from "tar";
 
 import { getContentType, getStaticPath } from "./lib/staticFiles";
 import {

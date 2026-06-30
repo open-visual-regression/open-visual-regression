@@ -1,10 +1,11 @@
 import assert from "node:assert";
 
+import { Worker } from "bullmq";
+import type { Redis } from "ioredis";
+
 import { dbClient } from "@ovr/db/client";
 import type { DiffProcessingStatus, DiffReviewStatus } from "@ovr/db/schema";
 import { QueueName, type ExtractJobPayload } from "@ovr/queue";
-import { Worker } from "bullmq";
-import type { Redis } from "ioredis";
 
 import { createBuild, finalizeBuild, getArtifactPath } from "../builds";
 import { describe, expect, test } from "./fixtures";

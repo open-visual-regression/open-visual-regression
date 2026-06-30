@@ -1,12 +1,13 @@
+import pixelmatch from "pixelmatch";
+import { chromium, firefox, webkit, type Browser } from "playwright";
+import { PNG } from "pngjs";
+
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
 import type { SnapshotDbSchema } from "@ovr/db/repository/snapshots";
 import { enqueueDiff, enqueueFinalize } from "@ovr/queue/producer";
 import { promoteBaseline } from "@ovr/reviews/baselines";
 import { storage } from "@ovr/storage";
-import pixelmatch from "pixelmatch";
-import { chromium, firefox, webkit, type Browser } from "playwright";
-import { PNG } from "pngjs";
 
 import { detectCaptureStrategy } from "./captureStrategies";
 import { newPage } from "./lib/browser";

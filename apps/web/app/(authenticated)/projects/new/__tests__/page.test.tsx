@@ -1,6 +1,7 @@
-import { mocks } from "@ovr/mocks";
 import { notFound } from "next/navigation";
 import { vi } from "vitest";
+
+import { mocks } from "@ovr/mocks";
 
 import { auth } from "@/lib/auth/auth";
 import { describe, expect, it, render, screen } from "@/test-utils";

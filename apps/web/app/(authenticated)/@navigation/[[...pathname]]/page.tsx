@@ -1,5 +1,6 @@
-import { Separator } from "@ovr/ui/components/separator";
 import { headers } from "next/headers";
+
+import { Separator } from "@ovr/ui/components/separator";
 
 import { auth } from "@/lib/auth/auth";
 import { getBreadcrumbSegments } from "@/lib/components/navigation-bar/getBreadcrumbSegments";

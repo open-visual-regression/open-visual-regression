@@ -1,5 +1,6 @@
-import { cn } from "@ovr/ui/lib/utils";
 import { JSX } from "react";
+
+import { cn } from "@ovr/ui/lib/utils";
 
 type SnapshotPaneProps = JSX.IntrinsicElements["div"];
 

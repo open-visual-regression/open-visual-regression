@@ -1,8 +1,9 @@
 "use client";
 
-import { Icon } from "@ovr/ui/components/icon";
 import { usePathname } from "next/navigation";
 import { Fragment } from "react";
+
+import { Icon } from "@ovr/ui/components/icon";
 
 import { RequiresAdminRole } from "@/lib/components/authorization/RequiresAdminRole";
 import { SETTINGS_NAV_SECTIONS, isNavItemActive } from "@/lib/components/sidebar/settingsNavItems";

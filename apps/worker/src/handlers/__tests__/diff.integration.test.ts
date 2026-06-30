@@ -1,6 +1,7 @@
+import { Worker } from "bullmq";
+
 import { dbClient } from "@ovr/db/client";
 import { QueueName, type FinalizeJobPayload } from "@ovr/queue";
-import { Worker } from "bullmq";
 
 import { describe, expect, test } from "../../__tests__/fixtures";
 import { failed } from "../diff";

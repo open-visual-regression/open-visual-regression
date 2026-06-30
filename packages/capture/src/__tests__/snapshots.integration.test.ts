@@ -2,12 +2,13 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { dbClient } from "@ovr/db/client";
-import { QueueName, type DiffJobPayload } from "@ovr/queue";
-import { storage } from "@ovr/storage";
 import { Worker } from "bullmq";
 import type { Redis } from "ioredis";
 import { PNG } from "pngjs";
+
+import { dbClient } from "@ovr/db/client";
+import { QueueName, type DiffJobPayload } from "@ovr/queue";
+import { storage } from "@ovr/storage";
 
 import { getStaticPath } from "../extract";
 import { captureSnapshot, diffSnapshot, enqueueSnapshotDiff } from "../snapshots";

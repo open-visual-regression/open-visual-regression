@@ -1,3 +1,6 @@
+import Form from "next/form";
+import Link from "next/link";
+
 import { Icon, SearchIcon, XIcon } from "@ovr/ui/components/icon";
 import {
   InputGroup,
@@ -5,8 +8,6 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from "@ovr/ui/components/input-group";
-import Form from "next/form";
-import Link from "next/link";
 
 export type SearchFieldProps = {
   action: string;

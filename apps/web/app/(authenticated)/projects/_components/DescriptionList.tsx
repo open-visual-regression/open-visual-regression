@@ -1,5 +1,6 @@
-import { cn } from "@ovr/ui/lib/utils";
 import { ComponentProps } from "react";
+
+import { cn } from "@ovr/ui/lib/utils";
 
 export const DescriptionList = ({ className, ...props }: ComponentProps<"dl">) => (
   <dl className={cn("flex flex-row gap-6 items-center", className)} {...props} />

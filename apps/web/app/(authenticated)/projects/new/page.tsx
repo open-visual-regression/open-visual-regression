@@ -1,5 +1,6 @@
-import { Typography } from "@ovr/ui/components/typography";
 import { notFound } from "next/navigation";
+
+import { Typography } from "@ovr/ui/components/typography";
 
 import { verifyRole } from "@/lib/utils/authorization";
 import { serverError } from "@/lib/utils/errors";

@@ -1,4 +1,5 @@
 import { faker } from "@faker-js/faker";
+
 import type { ProjectDto } from "@ovr/api/contracts/projects";
 
 export const generateProject = (overrides?: Partial<ProjectDto>): ProjectDto => ({

@@ -1,7 +1,8 @@
-import { Icon, SettingsIcon } from "@ovr/ui/components/icon";
-import { Typography } from "@ovr/ui/components/typography";
 import { notFound } from "next/navigation";
 import { z } from "zod";
+
+import { Icon, SettingsIcon } from "@ovr/ui/components/icon";
+import { Typography } from "@ovr/ui/components/typography";
 
 import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
 import { serverClient } from "@/lib/router";

@@ -1,4 +1,5 @@
 import { faker } from "@faker-js/faker";
+
 import type { session } from "@ovr/db/schema";
 
 type Session = typeof session.$inferSelect;

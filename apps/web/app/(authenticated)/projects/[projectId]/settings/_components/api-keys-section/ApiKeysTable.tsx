@@ -1,5 +1,13 @@
 "use client";
 
+import {
+  useTable,
+  tableFeatures,
+  createColumnHelper,
+  createCoreRowModel,
+} from "@tanstack/react-table";
+import { useTanStackTableDevtools } from "@tanstack/react-table-devtools";
+
 import { StatusIcon } from "@ovr/ui/components/status-icon";
 import {
   Table,
@@ -9,13 +17,6 @@ import {
   TableRow,
   TableCell,
 } from "@ovr/ui/components/table";
-import {
-  useTable,
-  tableFeatures,
-  createColumnHelper,
-  createCoreRowModel,
-} from "@tanstack/react-table";
-import { useTanStackTableDevtools } from "@tanstack/react-table-devtools";
 
 import { formatDateTime } from "@/lib/utils/date";
 

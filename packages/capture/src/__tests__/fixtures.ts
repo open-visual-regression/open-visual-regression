@@ -1,9 +1,10 @@
-import { dbClient } from "@ovr/db/client";
-import { db } from "@ovr/db/db";
-import { organization, projects, user as userTable } from "@ovr/db/schema";
 import { Redis } from "ioredis";
 import { v7 as uuidv7 } from "uuid";
 import { test as vitest } from "vitest";
+
+import { dbClient } from "@ovr/db/client";
+import { db } from "@ovr/db/db";
+import { organization, projects, user as userTable } from "@ovr/db/schema";
 
 export { describe, expect } from "vitest";
 

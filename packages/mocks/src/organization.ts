@@ -1,4 +1,5 @@
 import { faker } from "@faker-js/faker";
+
 import type { organization } from "@ovr/db/schema";
 
 type Organization = typeof organization.$inferSelect;

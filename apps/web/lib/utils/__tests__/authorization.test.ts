@@ -1,5 +1,6 @@
-import { mocks } from "@ovr/mocks";
 import { vi } from "vitest";
+
+import { mocks } from "@ovr/mocks";
 
 import { auth } from "@/lib/auth/auth";
 import { describe, expect, it } from "@/test-utils";

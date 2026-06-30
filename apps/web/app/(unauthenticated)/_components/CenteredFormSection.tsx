@@ -1,5 +1,6 @@
-import { Typography } from "@ovr/ui/components/typography";
 import React from "react";
+
+import { Typography } from "@ovr/ui/components/typography";
 
 import { LogoFull } from "@/lib/components/logo/Logo";
 

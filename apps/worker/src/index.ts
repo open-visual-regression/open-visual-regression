@@ -1,7 +1,8 @@
 import "./env";
-import { QueueName, schedulePurge } from "@ovr/queue";
 import { Worker, type Job } from "bullmq";
 import { Redis } from "ioredis";
+
+import { QueueName, schedulePurge } from "@ovr/queue";
 
 import * as capture from "./handlers/capture";
 import * as diff from "./handlers/diff";

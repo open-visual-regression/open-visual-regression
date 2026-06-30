@@ -1,8 +1,9 @@
 "use client";
 
+import { usePathname } from "next/navigation";
+
 import { BuildSchema } from "@ovr/api/contracts/builds";
 import { ProjectDto } from "@ovr/api/contracts/projects";
-import { usePathname } from "next/navigation";
 
 import {
   ProjectsSidebarLinks,

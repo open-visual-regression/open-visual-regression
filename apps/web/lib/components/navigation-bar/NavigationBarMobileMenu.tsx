@@ -1,12 +1,13 @@
 "use client";
 
+import { usePathname } from "next/navigation";
+import { useState } from "react";
+
 import { BuildSchema } from "@ovr/api/contracts/builds";
 import { ProjectDto } from "@ovr/api/contracts/projects";
 import { Button } from "@ovr/ui/components/button";
 import { Icon, MenuIcon } from "@ovr/ui/components/icon";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@ovr/ui/components/sheet";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
 
 import { ProjectsSidebarLinks } from "@/lib/components/sidebar/ProjectsSidebarLinks";
 import { RecentBuildsSidebarLinks } from "@/lib/components/sidebar/RecentBuildsSidebarLinks";

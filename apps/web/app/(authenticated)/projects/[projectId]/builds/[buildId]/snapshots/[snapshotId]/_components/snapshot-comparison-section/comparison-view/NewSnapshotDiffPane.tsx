@@ -1,9 +1,10 @@
 "use client";
 
+import { useState } from "react";
+
 import { Switch } from "@ovr/ui/components/switch";
 import { Typography } from "@ovr/ui/components/typography";
 import { cn } from "@ovr/ui/lib/utils";
-import { useState } from "react";
 
 import { Image } from "@/lib/components/image/Image";
 

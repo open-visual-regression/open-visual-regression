@@ -1,9 +1,10 @@
 "use client";
 
-import { Button, buttonVariants } from "@ovr/ui/components/button";
-import { CheckIcon, CopyIcon, Icon } from "@ovr/ui/components/icon";
 import type { VariantProps } from "class-variance-authority";
 import { useEffect, useState, type ReactNode } from "react";
+
+import { Button, buttonVariants } from "@ovr/ui/components/button";
+import { CheckIcon, CopyIcon, Icon } from "@ovr/ui/components/icon";
 
 const COPIED_RESET_DELAY_MS = 2000;
 

@@ -1,4 +1,5 @@
 import { faker } from "@faker-js/faker";
+
 import type { UserSchema } from "@ovr/api/contracts/users";
 import type { user } from "@ovr/db/schema";
 

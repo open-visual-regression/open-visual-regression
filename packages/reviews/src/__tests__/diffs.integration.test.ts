@@ -1,9 +1,10 @@
 import assert from "node:assert";
 
+import { v7 as uuidv7 } from "uuid";
+
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
 import { user as userTable } from "@ovr/db/schema";
-import { v7 as uuidv7 } from "uuid";
 
 import { bulkCastVote, castVote, removeVote } from "../diffs";
 import { describe, expect, test } from "./fixtures";

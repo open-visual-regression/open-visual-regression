@@ -1,5 +1,6 @@
-import { Toaster } from "@ovr/ui/components/sonner";
 import type { Metadata } from "next";
+
+import { Toaster } from "@ovr/ui/components/sonner";
 
 import "./globals.css";
 

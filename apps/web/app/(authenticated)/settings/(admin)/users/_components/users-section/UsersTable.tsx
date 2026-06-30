@@ -1,5 +1,14 @@
 "use client";
 
+import {
+  useTable,
+  tableFeatures,
+  createColumnHelper,
+  createCoreRowModel,
+  rowSelectionFeature,
+} from "@tanstack/react-table";
+import { useTanStackTableDevtools } from "@tanstack/react-table-devtools";
+
 import { type UserSchema } from "@ovr/api/contracts/users";
 import { Badge } from "@ovr/ui/components/badge";
 import { Checkbox } from "@ovr/ui/components/checkbox";
@@ -13,14 +22,6 @@ import {
   TableCell,
   TableEmpty,
 } from "@ovr/ui/components/table";
-import {
-  useTable,
-  tableFeatures,
-  createColumnHelper,
-  createCoreRowModel,
-  rowSelectionFeature,
-} from "@tanstack/react-table";
-import { useTanStackTableDevtools } from "@tanstack/react-table-devtools";
 
 import { CopyButton } from "@/lib/components/copy-button/CopyButton";
 
