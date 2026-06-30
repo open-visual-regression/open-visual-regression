@@ -14,8 +14,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@ovr/builds": "workspace:*",
     "@ovr/db": "workspace:*",
+    "@ovr/queue": "workspace:*",
     "@ovr/reviews": "workspace:*",
     "@ovr/storage": "workspace:*",
     "pixelmatch": "^7.1.0",
@@ -24,7 +24,6 @@
     "tar": "^7.5.16"
   },
   "devDependencies": {
-    "@ovr/queue": "workspace:*",
     "@ovr/testing": "workspace:*",
     "@ovr/typescript-config": "workspace:*",
     "@testcontainers/postgresql": "^12.0.1",

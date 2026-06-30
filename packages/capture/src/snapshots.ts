@@ -2,10 +2,10 @@ import { PNG } from "pngjs";
 import pixelmatch from "pixelmatch";
 import { chromium, firefox, webkit, type Browser } from "playwright";
 
-import { enqueueDiff, enqueueFinalize } from "@ovr/builds/lib/queue";
 import { dbClient } from "@ovr/db/client";
 import type { SnapshotDbSchema } from "@ovr/db/repository/snapshots";
 import { db } from "@ovr/db/db";
+import { enqueueDiff, enqueueFinalize } from "@ovr/queue/producer";
 import { storage } from "@ovr/storage";
 import { promoteBaseline } from "@ovr/reviews/baselines";
 

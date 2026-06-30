@@ -1,8 +1,8 @@
 import { dbClient } from "@ovr/db/client";
 import type { BuildReviewStatus } from "@ovr/db/schema";
+import { enqueueExtract } from "@ovr/queue/producer";
 import { v7 as uuidv7 } from "uuid";
 
-import { enqueueExtract } from "./lib/queue";
 import type { Result } from "./types";
 
 type Viewport = {
