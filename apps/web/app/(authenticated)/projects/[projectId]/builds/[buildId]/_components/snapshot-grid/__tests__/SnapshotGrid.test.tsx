@@ -14,4 +14,16 @@ describe("SnapshotGrid", () => {
     expect(screen.getByText("home-page")).toBeVisible();
     expect(screen.getByText("checkout-page")).toBeVisible();
   });
+
+  it("should show an empty message when there are no snapshots", () => {
+    render(<SnapshotGrid snapshots={[]} projectId="project-1" buildId="build-1" />);
+
+    expect(screen.getByText("no snapshots found")).toBeVisible();
+  });
+
+  it("should show the search term when no snapshots match", () => {
+    render(<SnapshotGrid snapshots={[]} projectId="project-1" buildId="build-1" search="home" />);
+
+    expect(screen.getByText('no snapshots found matching "home"')).toBeVisible();
+  });
 });
