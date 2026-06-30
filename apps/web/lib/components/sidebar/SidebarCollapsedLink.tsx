@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { cn } from "@ovr/ui/lib/utils";
+import Link from "next/link";
 
 type SidebarCollapsedLinkProps = {
   href: string;

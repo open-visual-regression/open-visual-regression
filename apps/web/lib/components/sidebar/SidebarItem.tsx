@@ -1,7 +1,7 @@
-import Link from "next/link";
 import type { LucideIcon } from "@ovr/ui/components/icon";
 import { Icon } from "@ovr/ui/components/icon";
 import { cn } from "@ovr/ui/lib/utils";
+import Link from "next/link";
 
 type SidebarItemProps = {
   href: string;

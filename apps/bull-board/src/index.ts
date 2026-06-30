@@ -1,13 +1,11 @@
 import "./env";
-
 import { createBullBoard } from "@bull-board/api";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { ExpressAdapter } from "@bull-board/express";
+import { QueueName } from "@ovr/queue";
 import { Queue } from "bullmq";
 import express from "express";
 import { Redis } from "ioredis";
-
-import { QueueName } from "@ovr/queue";
 
 const PORT = Number(process.env.BULL_BOARD_PORT ?? 3001);
 

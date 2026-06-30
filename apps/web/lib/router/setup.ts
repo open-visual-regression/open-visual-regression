@@ -1,10 +1,11 @@
 "use server";
 
-import { dbClient } from "@ovr/db/client";
-import { os } from "./os";
-import { auth } from "../auth/auth";
 import { ORPCError } from "@orpc/server";
+import { dbClient } from "@ovr/db/client";
+
+import { auth } from "../auth/auth";
 import { unauthenticatedMiddleware } from "./middleware";
+import { os } from "./os";
 
 const hasSetupBeenCompleted = async () => {
   const [organization, userCount] = await Promise.all([

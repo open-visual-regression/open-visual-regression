@@ -1,7 +1,7 @@
 import { implement, onError, ORPCError } from "@orpc/server";
-import { headers } from "next/headers";
 import { contract } from "@ovr/api/contracts/contract";
 import { createLogger } from "@ovr/logger";
+import { headers } from "next/headers";
 
 const logger = createLogger("rpc");
 

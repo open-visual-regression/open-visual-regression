@@ -1,10 +1,11 @@
 "use client";
 
+import { ProjectDto } from "@ovr/api/contracts/projects";
+import { ChevronRightIcon, FolderIcon, Icon } from "@ovr/ui/components/icon";
+import { cn } from "@ovr/ui/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronRightIcon, FolderIcon, Icon } from "@ovr/ui/components/icon";
-import { ProjectDto } from "@ovr/api/contracts/projects";
-import { cn } from "@ovr/ui/lib/utils";
+
 import { SidebarItem } from "@/lib/components/sidebar/SidebarItem";
 import { SidebarSection } from "@/lib/components/sidebar/SidebarSection";
 

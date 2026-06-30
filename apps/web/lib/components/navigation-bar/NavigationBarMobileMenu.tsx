@@ -1,15 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { usePathname } from "next/navigation";
-import { ProjectDto } from "@ovr/api/contracts/projects";
 import { BuildSchema } from "@ovr/api/contracts/builds";
+import { ProjectDto } from "@ovr/api/contracts/projects";
 import { Button } from "@ovr/ui/components/button";
 import { Icon, MenuIcon } from "@ovr/ui/components/icon";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@ovr/ui/components/sheet";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
+
 import { ProjectsSidebarLinks } from "@/lib/components/sidebar/ProjectsSidebarLinks";
-import { SettingsSidebarLinks } from "@/lib/components/sidebar/SettingsSidebarLinks";
 import { RecentBuildsSidebarLinks } from "@/lib/components/sidebar/RecentBuildsSidebarLinks";
+import { SettingsSidebarLinks } from "@/lib/components/sidebar/SettingsSidebarLinks";
 
 type NavigationBarMobileMenuProps = {
   role: string | null | undefined;

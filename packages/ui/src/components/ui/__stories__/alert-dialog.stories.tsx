@@ -2,7 +2,6 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { userEvent, within } from "@storybook/test";
 import { TrashIcon } from "lucide-react";
 
-import { Button } from "../button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,6 +14,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "../alert-dialog";
+import { Button } from "../button";
 
 const meta: Meta<typeof AlertDialog> = {
   title: "UI/AlertDialog",

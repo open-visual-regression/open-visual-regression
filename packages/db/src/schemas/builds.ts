@@ -1,4 +1,3 @@
-import { sql } from "drizzle-orm/sql";
 import {
   boolean,
   index,
@@ -12,6 +11,7 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm/sql";
 import { v7 as uuidv7 } from "uuid";
 
 import { user } from "./auth";

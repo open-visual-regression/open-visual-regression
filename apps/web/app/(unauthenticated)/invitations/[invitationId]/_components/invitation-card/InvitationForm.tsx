@@ -6,9 +6,11 @@ import { useServerAction } from "@orpc/react/hooks";
 import { Button } from "@ovr/ui/components/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@ovr/ui/components/field";
 import { Input } from "@ovr/ui/components/input";
-import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+
 import { serverClient } from "@/lib/router";
+
 import { acceptInvitationSchema, type AcceptInvitationFormValues } from "./schema";
 
 type InvitationFormProps = {

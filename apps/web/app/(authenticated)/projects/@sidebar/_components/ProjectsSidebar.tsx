@@ -1,17 +1,18 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-import { ProjectDto } from "@ovr/api/contracts/projects";
 import { BuildSchema } from "@ovr/api/contracts/builds";
-import { Sidebar } from "@/lib/components/sidebar/Sidebar";
-import { SidebarCollapsedLink } from "@/lib/components/sidebar/SidebarCollapsedLink";
-import { SidebarCollapsedSectionLabel } from "@/lib/components/sidebar/SidebarCollapsedSectionLabel";
-import { SidebarMonogram } from "@/lib/components/sidebar/SidebarMonogram";
+import { ProjectDto } from "@ovr/api/contracts/projects";
+import { usePathname } from "next/navigation";
+
 import {
   ProjectsSidebarLinks,
   isProjectActive,
 } from "@/lib/components/sidebar/ProjectsSidebarLinks";
 import { RecentBuildsSidebarLinks } from "@/lib/components/sidebar/RecentBuildsSidebarLinks";
+import { Sidebar } from "@/lib/components/sidebar/Sidebar";
+import { SidebarCollapsedLink } from "@/lib/components/sidebar/SidebarCollapsedLink";
+import { SidebarCollapsedSectionLabel } from "@/lib/components/sidebar/SidebarCollapsedSectionLabel";
+import { SidebarMonogram } from "@/lib/components/sidebar/SidebarMonogram";
 
 type ProjectsSidebarProps = {
   projects: Pick<ProjectDto, "id" | "name">[];

@@ -1,4 +1,5 @@
 import { isAPIError } from "better-auth/api";
+
 import { auth } from "./auth";
 
 export type SafeAuthResult<TData> = [error: Error, data: null] | [error: null, data: TData];

@@ -1,7 +1,6 @@
 import { faker } from "@faker-js/faker";
-
-import type { user } from "@ovr/db/schema";
 import type { UserSchema } from "@ovr/api/contracts/users";
+import type { user } from "@ovr/db/schema";
 
 type UserOverrides = {
   id?: string;

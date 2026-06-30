@@ -1,6 +1,7 @@
-import { Icon, PlusIcon } from "@ovr/ui/components/icon";
 import { Card, CardContent, CardHeader } from "@ovr/ui/components/card";
+import { Icon, PlusIcon } from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
+
 import { CreateApiKeyModal } from "../create-api-key/CreateApiKeyModal";
 import { CreateApiKeyModalButton } from "../create-api-key/CreateApiKeyModalButton";
 

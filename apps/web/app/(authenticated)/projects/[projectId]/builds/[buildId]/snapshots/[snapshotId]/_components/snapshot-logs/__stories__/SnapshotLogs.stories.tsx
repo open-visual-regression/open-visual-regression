@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+
 import { SnapshotLogs } from "../SnapshotLogs";
 
 const meta: Meta<typeof SnapshotLogs> = {

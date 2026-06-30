@@ -1,9 +1,10 @@
+import { useRouter } from "next/navigation";
 import { vi } from "vitest";
 
-import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
 import { serverClient } from "@/lib/router";
 import { createORPCError } from "@/lib/testing/orpc";
-import { useRouter } from "next/navigation";
+import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
+
 import { InvitationCard } from "../InvitationCard";
 
 vi.mock("@/lib/router");

@@ -8,8 +8,8 @@ import {
   removeVote as removeVoteService,
 } from "@ovr/reviews/diffs";
 
-import { os } from "./os";
 import { authenticatedMiddleware, organizationSnapshotMiddleware } from "./middleware";
+import { os } from "./os";
 
 const throwOnError = (error: "DIFF_NOT_FOUND" | "REVIEW_NOT_REQUIRED"): never => {
   if (error === "DIFF_NOT_FOUND") {

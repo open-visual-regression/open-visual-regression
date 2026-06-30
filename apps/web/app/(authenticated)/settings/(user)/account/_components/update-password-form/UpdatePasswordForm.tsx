@@ -11,7 +11,9 @@ import { Input } from "@ovr/ui/components/input";
 import { toast } from "@ovr/ui/components/toast";
 import { Typography } from "@ovr/ui/components/typography";
 import { useForm } from "react-hook-form";
+
 import { serverClient } from "@/lib/router";
+
 import { updatePasswordFormSchema, type UpdatePasswordFormValues } from "./schema";
 
 export const UpdatePasswordForm = () => {

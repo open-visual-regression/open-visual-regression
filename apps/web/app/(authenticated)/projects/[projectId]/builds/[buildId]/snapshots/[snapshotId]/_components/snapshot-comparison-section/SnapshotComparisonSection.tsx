@@ -1,8 +1,10 @@
 import type { DiffSchema } from "@ovr/api/contracts/diffs";
 import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
-import { ComparisonView } from "./comparison-view/ComparisonView";
+
 import { getStoragePath } from "@/lib/utils/storage";
+
 import { SnapshotPaneImage } from "../snapshot-pane/SnapshotPaneImage";
+import { ComparisonView } from "./comparison-view/ComparisonView";
 
 export type SnapshotComparisonSectionProps = {
   snapshot: SnapshotSchema;

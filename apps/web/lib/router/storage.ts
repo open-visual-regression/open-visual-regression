@@ -4,8 +4,8 @@ import { ORPCError } from "@orpc/client";
 import { dbClient } from "@ovr/db/client";
 import { storage } from "@ovr/storage";
 
-import { os } from "./os";
 import { authenticatedMiddleware } from "./middleware";
+import { os } from "./os";
 
 export const getObject = os.storage.getObject
   .use(authenticatedMiddleware)

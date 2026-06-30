@@ -3,13 +3,12 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { Worker } from "bullmq";
-import type { Redis } from "ioredis";
-import * as tar from "tar";
-
 import { dbClient } from "@ovr/db/client";
 import { QueueName, type CaptureJobPayload } from "@ovr/queue";
 import { storage } from "@ovr/storage";
+import { Worker } from "bullmq";
+import type { Redis } from "ioredis";
+import * as tar from "tar";
 
 import { extractBuild, getStaticPath } from "../extract";
 import { describe, expect, test } from "./fixtures";

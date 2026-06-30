@@ -1,8 +1,8 @@
+import type { BuildSchema } from "@ovr/api/contracts/builds";
+import { mocks } from "@ovr/mocks";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { userEvent, within } from "storybook/test";
 
-import type { BuildSchema } from "@ovr/api/contracts/builds";
-import { mocks } from "@ovr/mocks";
 import { NavigationBarMobileMenu } from "../NavigationBarMobileMenu";
 
 const PROJECTS = [

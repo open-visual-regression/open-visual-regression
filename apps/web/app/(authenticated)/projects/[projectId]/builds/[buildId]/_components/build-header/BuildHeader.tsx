@@ -1,10 +1,12 @@
-import { SegmentedProgress } from "@ovr/ui/components/segmented-progress";
-import { Alert, AlertDescription, AlertTitle } from "@ovr/ui/components/alert";
-import { Typography } from "@ovr/ui/components/typography";
-import { Icon, GitBranchIcon, GitCommitHorizontalIcon, UserIcon } from "@ovr/ui/components/icon";
 import { type BuildSchema, type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
-import { formatRelativeDateTime } from "@/lib/utils/date";
+import { Alert, AlertDescription, AlertTitle } from "@ovr/ui/components/alert";
+import { Icon, GitBranchIcon, GitCommitHorizontalIcon, UserIcon } from "@ovr/ui/components/icon";
+import { SegmentedProgress } from "@ovr/ui/components/segmented-progress";
+import { Typography } from "@ovr/ui/components/typography";
+
 import { BuildStatusBadge } from "@/lib/components/BuildStatus";
+import { formatRelativeDateTime } from "@/lib/utils/date";
+
 import { BuildApproveButton } from "./BuildApproveButton";
 import { BuildRejectButton } from "./BuildRejectButton";
 

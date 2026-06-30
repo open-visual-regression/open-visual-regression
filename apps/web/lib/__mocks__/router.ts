@@ -1,4 +1,5 @@
 import { vi } from "vitest";
+
 import type { serverClient as ServerClient } from "../router";
 
 export const serverClient = {

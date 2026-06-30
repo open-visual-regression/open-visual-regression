@@ -1,13 +1,13 @@
 "server only";
 
-import { betterAuth } from "better-auth";
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { admin, organization } from "better-auth/plugins";
 import { apiKey } from "@better-auth/api-key";
+import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
 import * as schema from "@ovr/db/schema";
+import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
-import { dbClient } from "@ovr/db/client";
+import { admin, organization } from "better-auth/plugins";
 
 export const auth = betterAuth({
   emailAndPassword: {

@@ -1,7 +1,9 @@
 "server only";
 
-import { auth } from "@/lib/auth/auth";
 import { headers } from "next/headers";
+
+import { auth } from "@/lib/auth/auth";
+
 import { Result } from "../types";
 
 type Role = "admin" | "user";

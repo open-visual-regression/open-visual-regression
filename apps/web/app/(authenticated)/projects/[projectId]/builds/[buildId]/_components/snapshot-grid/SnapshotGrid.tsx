@@ -1,5 +1,6 @@
 import { type BuildSnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { Typography } from "@ovr/ui/components/typography";
+
 import { SnapshotCard } from "./SnapshotCard";
 
 type SnapshotGridProps = {

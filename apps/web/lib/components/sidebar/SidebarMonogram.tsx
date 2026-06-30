@@ -1,4 +1,5 @@
 import { cn } from "@ovr/ui/lib/utils";
+
 import { getMonogram } from "@/lib/utils/monogram";
 
 type SidebarMonogramProps = {

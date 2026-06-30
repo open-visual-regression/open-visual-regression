@@ -1,5 +1,5 @@
-import { test as vitest } from "vitest";
 import { v7 as uuidv7 } from "uuid";
+import { test as vitest } from "vitest";
 
 import { dbClient } from "../client";
 import { db } from "../db";

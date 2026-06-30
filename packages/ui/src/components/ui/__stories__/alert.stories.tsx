@@ -7,8 +7,8 @@ import {
   TriangleAlertIcon,
 } from "lucide-react";
 
-import { Button } from "../button";
 import { Alert, AlertAction, AlertDescription, AlertTitle } from "../alert";
+import { Button } from "../button";
 
 const meta: Meta<typeof Alert> = {
   title: "UI/Alert",

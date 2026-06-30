@@ -5,8 +5,9 @@ import { Button } from "@ovr/ui/components/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@ovr/ui/components/field";
 import { Input } from "@ovr/ui/components/input";
 import { useForm } from "react-hook-form";
-import { authClient } from "@/lib/auth/client";
 import { z } from "zod";
+
+import { authClient } from "@/lib/auth/client";
 
 const loginSchema = z.object({
   email: z.email("invalid email address"),

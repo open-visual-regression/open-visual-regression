@@ -1,13 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { onError, onSuccess } from "@orpc/client";
 import { useServerAction } from "@orpc/react/hooks";
-import { serverClient } from "@/lib/router";
-import { Button } from "@ovr/ui/components/button";
-import { Icon, XIcon } from "@ovr/ui/components/icon";
-import { FieldError } from "@ovr/ui/components/field";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,7 +13,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@ovr/ui/components/alert-dialog";
+import { Button } from "@ovr/ui/components/button";
+import { FieldError } from "@ovr/ui/components/field";
+import { Icon, XIcon } from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
+import { serverClient } from "@/lib/router";
 
 type RevokeApiKeyButtonProps = {
   keyId: string;

@@ -1,6 +1,7 @@
 "use client";
 
 import { Dialog, DialogContent } from "@ovr/ui/components/dialog";
+
 import { InviteUserModalForm } from "./InviteUserModalForm";
 
 type InviteUserModalProps = {

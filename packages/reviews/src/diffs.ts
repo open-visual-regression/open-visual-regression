@@ -1,9 +1,8 @@
-import { dbClient } from "@ovr/db/client";
-import type { DiffReviewStatus, DiffReviewVote } from "@ovr/db/schema";
-import type { DiffReviewDbSchema } from "@ovr/db/repository/diffReviews";
-
 import { finalizeBuild } from "@ovr/builds/builds";
 import type { Result } from "@ovr/builds/types";
+import { dbClient } from "@ovr/db/client";
+import type { DiffReviewDbSchema } from "@ovr/db/repository/diffReviews";
+import type { DiffReviewStatus, DiffReviewVote } from "@ovr/db/schema";
 
 const computeReviewStatus = (
   votes: DiffReviewDbSchema[],

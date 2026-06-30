@@ -1,9 +1,10 @@
+import { useRouter } from "next/navigation";
 import { vi } from "vitest";
 
-import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
 import { serverClient } from "@/lib/router";
-import { useRouter } from "next/navigation";
 import { createORPCError } from "@/lib/testing/orpc";
+import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
+
 import { CreateApiKeyModal } from "../CreateApiKeyModal";
 import { CreateApiKeyModalButton } from "../CreateApiKeyModalButton";
 

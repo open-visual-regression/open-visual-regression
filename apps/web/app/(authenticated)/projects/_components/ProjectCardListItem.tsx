@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader } from "@ovr/ui/components/card";
 import { FolderIcon, GitBranchIcon, Icon } from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
 import Link from "next/link";
+
 import {
   DescriptionDetails,
   DescriptionList,

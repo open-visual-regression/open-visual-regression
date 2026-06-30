@@ -1,13 +1,8 @@
 "use client";
 
-import {
-  useTable,
-  tableFeatures,
-  createColumnHelper,
-  createCoreRowModel,
-  rowSelectionFeature,
-} from "@tanstack/react-table";
-import { useTanStackTableDevtools } from "@tanstack/react-table-devtools";
+import { type UserSchema } from "@ovr/api/contracts/users";
+import { Badge } from "@ovr/ui/components/badge";
+import { Checkbox } from "@ovr/ui/components/checkbox";
 import {
   Table,
   TableHeader,
@@ -18,10 +13,17 @@ import {
   TableCell,
   TableEmpty,
 } from "@ovr/ui/components/table";
-import { Badge } from "@ovr/ui/components/badge";
-import { Checkbox } from "@ovr/ui/components/checkbox";
+import {
+  useTable,
+  tableFeatures,
+  createColumnHelper,
+  createCoreRowModel,
+  rowSelectionFeature,
+} from "@tanstack/react-table";
+import { useTanStackTableDevtools } from "@tanstack/react-table-devtools";
+
 import { CopyButton } from "@/lib/components/copy-button/CopyButton";
-import { type UserSchema } from "@ovr/api/contracts/users";
+
 import { UsersTableBulkActions } from "./UsersTableBulkActions";
 
 const features = tableFeatures({ rowSelectionFeature });

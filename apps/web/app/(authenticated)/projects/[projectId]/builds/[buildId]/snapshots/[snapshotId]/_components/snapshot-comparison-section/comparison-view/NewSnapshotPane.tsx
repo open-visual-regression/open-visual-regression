@@ -1,7 +1,8 @@
 import { Typography } from "@ovr/ui/components/typography";
-import { SnapshotPaneImage } from "../../snapshot-pane/SnapshotPaneImage";
+
 import { SnapshotPane } from "../../snapshot-pane/SnapshotPane";
 import { SnapshotPaneHeader } from "../../snapshot-pane/SnapshotPaneHeader";
+import { SnapshotPaneImage } from "../../snapshot-pane/SnapshotPaneImage";
 
 export type NewSnapshotPaneProps = {
   imagePath: string | null;

@@ -1,13 +1,13 @@
-import { vi } from "vitest";
-import { v7 as uuidv7 } from "uuid";
-
-import { test, describe, expect } from "@/lib/testing/fixtures";
-import { serverClient } from "@/lib/router";
+import type { AddProjectInputSchema } from "@ovr/api/contracts/projects";
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
 import { organization, projects } from "@ovr/db/schema";
-import type { AddProjectInputSchema } from "@ovr/api/contracts/projects";
+import { v7 as uuidv7 } from "uuid";
+import { vi } from "vitest";
+
 import type { User } from "@/lib/auth/auth";
+import { serverClient } from "@/lib/router";
+import { test, describe, expect } from "@/lib/testing/fixtures";
 
 vi.mock("next/headers");
 

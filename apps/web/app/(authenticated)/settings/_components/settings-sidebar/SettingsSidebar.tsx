@@ -1,14 +1,15 @@
 "use client";
 
-import { Fragment } from "react";
-import { usePathname } from "next/navigation";
 import { Icon } from "@ovr/ui/components/icon";
+import { usePathname } from "next/navigation";
+import { Fragment } from "react";
+
 import { RequiresAdminRole } from "@/lib/components/authorization/RequiresAdminRole";
+import { SETTINGS_NAV_SECTIONS, isNavItemActive } from "@/lib/components/sidebar/settingsNavItems";
+import { SettingsSidebarLinks } from "@/lib/components/sidebar/SettingsSidebarLinks";
 import { Sidebar } from "@/lib/components/sidebar/Sidebar";
 import { SidebarCollapsedLink } from "@/lib/components/sidebar/SidebarCollapsedLink";
 import { SidebarCollapsedSectionLabel } from "@/lib/components/sidebar/SidebarCollapsedSectionLabel";
-import { SETTINGS_NAV_SECTIONS, isNavItemActive } from "@/lib/components/sidebar/settingsNavItems";
-import { SettingsSidebarLinks } from "@/lib/components/sidebar/SettingsSidebarLinks";
 
 type SettingsSidebarProps = {
   role: string | null | undefined;

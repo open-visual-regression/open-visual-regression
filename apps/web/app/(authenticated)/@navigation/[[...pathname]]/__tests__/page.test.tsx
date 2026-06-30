@@ -1,9 +1,10 @@
+import { mocks } from "@ovr/mocks";
 import { vi } from "vitest";
 
-import { describe, expect, it, render, screen } from "@/test-utils";
 import { auth } from "@/lib/auth/auth";
 import { serverClient } from "@/lib/router";
-import { mocks } from "@ovr/mocks";
+import { describe, expect, it, render, screen } from "@/test-utils";
+
 import NavigationSlot from "../page";
 
 vi.mock("next/headers");

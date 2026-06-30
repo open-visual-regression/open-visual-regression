@@ -1,8 +1,9 @@
-import { vi } from "vitest";
-import { usePathname } from "next/navigation";
-
 import { mocks } from "@ovr/mocks";
+import { usePathname } from "next/navigation";
+import { vi } from "vitest";
+
 import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
+
 import {
   NavigationBarMobileMenu,
   type NavigationBarMobileMenuProps,

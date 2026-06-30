@@ -1,5 +1,3 @@
-import { Fragment } from "react";
-import Link from "next/link";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -8,6 +6,9 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@ovr/ui/components/breadcrumb";
+import Link from "next/link";
+import { Fragment } from "react";
+
 import type { BreadcrumbSegment } from "./getBreadcrumbSegments";
 
 type NavigationBarBreadcrumbProps = {

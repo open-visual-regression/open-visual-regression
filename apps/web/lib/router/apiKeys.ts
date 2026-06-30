@@ -1,10 +1,11 @@
 "use server";
 
 import { ORPCError } from "@orpc/client";
-import { os } from "./os";
-import { authenticatedMiddleware, adminMiddleware } from "./middleware";
-import { auth } from "../auth/auth";
 import { dbClient } from "@ovr/db/client";
+
+import { auth } from "../auth/auth";
+import { authenticatedMiddleware, adminMiddleware } from "./middleware";
+import { os } from "./os";
 
 export const create = os.apiKeys.create
   .use(authenticatedMiddleware)

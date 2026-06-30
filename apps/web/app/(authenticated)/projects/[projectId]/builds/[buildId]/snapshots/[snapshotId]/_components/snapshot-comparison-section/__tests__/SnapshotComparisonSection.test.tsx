@@ -1,6 +1,8 @@
 import type { DiffSchema } from "@ovr/api/contracts/diffs";
 import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
+
 import { describe, expect, it, render, screen } from "@/test-utils";
+
 import { SnapshotComparisonSection } from "../SnapshotComparisonSection";
 
 const snapshot: SnapshotSchema = {

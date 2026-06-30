@@ -1,10 +1,11 @@
+import { type ApiKeySchema } from "@ovr/api/contracts/apiKeys";
 import { Icon, PlusIcon } from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
-import { ApiKeysTable } from "./ApiKeysTable";
-import { NoApiKeysSection } from "./NoApiKeysSection";
-import { type ApiKeySchema } from "@ovr/api/contracts/apiKeys";
+
 import { CreateApiKeyModal } from "../create-api-key/CreateApiKeyModal";
 import { CreateApiKeyModalButton } from "../create-api-key/CreateApiKeyModalButton";
+import { ApiKeysTable } from "./ApiKeysTable";
+import { NoApiKeysSection } from "./NoApiKeysSection";
 
 type ApiKeysSectionProps = {
   projectId: string;

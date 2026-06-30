@@ -1,10 +1,12 @@
 import { notFound } from "next/navigation";
-import { SnapshotHeader } from "./_components/snapshot-header/SnapshotHeader";
-import { SnapshotComparisonSection } from "./_components/snapshot-comparison-section/SnapshotComparisonSection";
-import { SnapshotLogs } from "./_components/snapshot-logs/SnapshotLogs";
+
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
+
 import { SnapshotActionsRow } from "./_components/snapshot-actions/SnapshotActionsRow";
+import { SnapshotComparisonSection } from "./_components/snapshot-comparison-section/SnapshotComparisonSection";
+import { SnapshotHeader } from "./_components/snapshot-header/SnapshotHeader";
+import { SnapshotLogs } from "./_components/snapshot-logs/SnapshotLogs";
 
 type SnapshotPageProps = PageProps<"/projects/[projectId]/builds/[buildId]/snapshots/[snapshotId]">;
 

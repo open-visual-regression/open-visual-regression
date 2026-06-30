@@ -1,4 +1,5 @@
 import { describe, expect, it, render, screen } from "@/test-utils";
+
 import { NoProjectsSection } from "../NoProjectsSection";
 
 const renderComponent = (role: string | null | undefined) =>

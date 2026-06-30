@@ -1,7 +1,9 @@
 import { cookies } from "next/headers";
+
 import { serverClient } from "@/lib/router";
 import { getInitialSidebarCollapsed } from "@/lib/stores/sidebarCookie";
 import { serverError } from "@/lib/utils/errors";
+
 import { ProjectsSidebar } from "./_components/ProjectsSidebar";
 
 const SIDEBAR_PROJECTS_LIMIT = 10;
