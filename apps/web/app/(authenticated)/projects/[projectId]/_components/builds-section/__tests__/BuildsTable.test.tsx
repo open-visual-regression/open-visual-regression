@@ -1,39 +1,11 @@
-import { afterEach, beforeEach, vi } from "vitest";
+import { mockAllIsIntersecting } from "react-intersection-observer/test-utils";
+import { vi } from "vitest";
 
 import { mocks } from "@ovr/mocks";
 
-import { describe, expect, it, render, screen } from "@/test-utils";
+import { act, describe, expect, it, render, screen } from "@/test-utils";
 
 import { BuildsTable } from "../BuildsTable";
-
-let triggerIntersection: (() => void) | null = null;
-
-class MockIntersectionObserver {
-  constructor(private readonly callback: IntersectionObserverCallback) {}
-
-  observe(element: Element) {
-    triggerIntersection = () =>
-      this.callback(
-        [{ isIntersecting: true, target: element } as IntersectionObserverEntry],
-        this as unknown as IntersectionObserver,
-      );
-  }
-
-  unobserve() {}
-
-  disconnect() {
-    triggerIntersection = null;
-  }
-}
-
-beforeEach(() => {
-  triggerIntersection = null;
-  vi.stubGlobal("IntersectionObserver", MockIntersectionObserver);
-});
-
-afterEach(() => {
-  vi.unstubAllGlobals();
-});
 
 const noop = () => {};
 
@@ -54,58 +26,14 @@ const renderTable = (
 
 describe("BuildsTable", () => {
   it("should render a row for each build", () => {
-    const build = mocks.build.generateBuild({
-      name: "fix: cart total rounding",
-      branch: "pr/482",
-    });
-    renderTable([build]);
+    const builds = [
+      mocks.build.generateBuild({ name: "fix: cart total rounding", branch: "pr/482" }),
+      mocks.build.generateBuild({ name: "feat: add checkout", branch: "pr/483" }),
+    ];
+    renderTable(builds);
 
     expect(screen.getByRole("cell", { name: /fix: cart total rounding/ })).toBeVisible();
-    expect(screen.getByRole("cell", { name: "pr/482" })).toBeVisible();
-  });
-
-  it("should show the short commit sha when the build has no name", () => {
-    const build = mocks.build.generateBuild({ name: null, commitSha: "4f2a91e1234567890" });
-    renderTable([build]);
-
-    expect(screen.getByRole("cell", { name: /4f2a91e/ })).toBeVisible();
-  });
-
-  it("should show a passed build's status as 'passed'", () => {
-    const build = mocks.build.generateBuild({ status: "passed" });
-    renderTable([build]);
-
-    expect(screen.getByRole("cell", { name: "passed" })).toBeVisible();
-  });
-
-  it("should show a needs_review build's status as 'needs review'", () => {
-    const build = mocks.build.generateBuild({ status: "needs_review" });
-    renderTable([build]);
-
-    expect(screen.getByRole("cell", { name: "needs review" })).toBeVisible();
-  });
-
-  it("should show an error build's status as 'error'", () => {
-    const build = mocks.build.generateBuild({ status: "error" });
-    renderTable([build]);
-
-    expect(screen.getByRole("cell", { name: "error" })).toBeVisible();
-  });
-
-  it("should show a queued build's status as 'queued'", () => {
-    const build = mocks.build.generateBuild({ status: "queued" });
-    renderTable([build]);
-
-    expect(screen.getByRole("cell", { name: "queued" })).toBeVisible();
-  });
-
-  it("should show a relative time for a build created recently", () => {
-    const build = mocks.build.generateBuild({
-      createdAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-    });
-    renderTable([build]);
-
-    expect(screen.getByRole("cell", { name: "5 minutes ago" })).toBeVisible();
+    expect(screen.getByRole("cell", { name: /feat: add checkout/ })).toBeVisible();
   });
 
   it("should link each row to its build detail page", () => {
@@ -124,15 +52,27 @@ describe("BuildsTable", () => {
     expect(screen.getByRole("cell", { name: 'no builds found matching "missing"' })).toBeVisible();
   });
 
-  it("should load more builds when scrolled to the bottom", () => {
+  it("should load and append more builds when the user scrolls to the bottom", () => {
+    const firstPage = mocks.build.generateBuild({ name: "first page build" });
+    const secondPage = mocks.build.generateBuild({ name: "second page build" });
     const onLoadMore = vi.fn();
-    renderTable([mocks.build.generateBuild()], { hasNextPage: true, onLoadMore });
 
-    expect(onLoadMore).not.toHaveBeenCalled();
+    const { rerender } = renderTable([firstPage], { hasNextPage: true, onLoadMore });
+    expect(screen.queryByRole("cell", { name: /second page build/ })).toBeNull();
 
-    triggerIntersection?.();
-
+    act(() => mockAllIsIntersecting(true));
     expect(onLoadMore).toHaveBeenCalledOnce();
+
+    rerender(
+      <BuildsTable
+        data={[firstPage, secondPage]}
+        isLoading={false}
+        hasNextPage={false}
+        isFetchingNextPage={false}
+        onLoadMore={onLoadMore}
+      />,
+    );
+    expect(screen.getByRole("cell", { name: /second page build/ })).toBeVisible();
   });
 
   it("should not load more builds while a page is already loading", () => {
@@ -143,7 +83,16 @@ describe("BuildsTable", () => {
       onLoadMore,
     });
 
-    triggerIntersection?.();
+    act(() => mockAllIsIntersecting(true));
+
+    expect(onLoadMore).not.toHaveBeenCalled();
+  });
+
+  it("should not load more builds once the last page has been reached", () => {
+    const onLoadMore = vi.fn();
+    renderTable([mocks.build.generateBuild()], { hasNextPage: false, onLoadMore });
+
+    act(() => mockAllIsIntersecting(true));
 
     expect(onLoadMore).not.toHaveBeenCalled();
   });

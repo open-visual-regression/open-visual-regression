@@ -10,9 +10,13 @@ import { BuildsSection } from "../BuildsSection";
 
 const PROJECT_ID = "018f0000-0000-7000-8000-000000000000";
 
+type RenderSectionOptions = {
+  search?: string;
+};
+
 const renderSection = (
   builds: ReturnType<typeof mocks.build.generateBuild>[],
-  { search }: { search?: string } = {},
+  { search }: RenderSectionOptions = {},
 ) => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: Infinity } },

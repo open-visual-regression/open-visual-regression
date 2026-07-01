@@ -9,7 +9,8 @@ import {
 } from "@tanstack/react-table";
 import { useTanStackTableDevtools } from "@tanstack/react-table-devtools";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useInView } from "react-intersection-observer";
 
 import { type BuildSchema } from "@ovr/api/contracts/builds";
 import { Skeleton } from "@ovr/ui/components/skeleton";
@@ -26,7 +27,6 @@ import {
 import { Typography } from "@ovr/ui/components/typography";
 
 import { BuildStatusBadge, BuildStatusStripe } from "@/lib/components/BuildStatus";
-import { useIntersectionObserver } from "@/lib/hooks/useIntersectionObserver";
 import { formatRelativeDateTime } from "@/lib/utils/date";
 
 const features = tableFeatures({});
@@ -116,15 +116,18 @@ export const BuildsTable = ({
 
   useTanStackTableDevtools(table);
 
-  // Tracking the scroll container in state re-runs the observer once it mounts.
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(null);
-
-  const sentinelRef = useIntersectionObserver<HTMLTableRowElement>({
-    onIntersect: onLoadMore,
-    enabled: hasNextPage && !isFetchingNextPage,
+  const { ref: sentinelRef, inView } = useInView({
     root: scrollElement,
     rootMargin: "200px",
+    skip: !hasNextPage,
   });
+
+  useEffect(() => {
+    if (inView && hasNextPage && !isFetchingNextPage) {
+      onLoadMore();
+    }
+  }, [inView, hasNextPage, isFetchingNextPage, onLoadMore]);
 
   const leafColumns = table.getAllLeafColumns();
   const columnCount = leafColumns.length;
