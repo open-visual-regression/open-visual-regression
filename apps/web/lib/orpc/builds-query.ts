@@ -15,7 +15,6 @@ type BuildsListInfiniteOptions = {
   getNextPageParam: (lastPage: { nextCursor: BuildsCursor | null }) => BuildsCursor | undefined;
 };
 
-// Shared by the server prefetch and the client query so their keys match.
 export const buildsListInfiniteOptions = (
   projectId: string,
   search?: string,

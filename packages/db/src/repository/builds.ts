@@ -109,7 +109,6 @@ export const findAll = async ({
 
   const orderFn = sortDirection === "asc" ? asc : desc;
 
-  // Fetch one extra row to detect whether another page exists.
   const [rows, [totalResult]] = await Promise.all([
     db
       .select({

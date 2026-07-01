@@ -15,7 +15,6 @@ const makeQueryClient = () =>
 
 let browserQueryClient: QueryClient | undefined;
 
-// A fresh client per request on the server, a lazy singleton in the browser.
 export const getQueryClient = () => {
   if (isServer) {
     return makeQueryClient();
