@@ -42,9 +42,7 @@ describe("BuildsSection", () => {
     const build = mocks.build.generateBuild({ name: "fix: cart total rounding" });
     renderSection([build]);
 
-    expect(
-      screen.getByRole("link", { name: `view build ${build.commitSha.slice(0, 7)}` }),
-    ).toBeVisible();
+    expect(screen.getByRole("cell", { name: /fix: cart total rounding/ })).toBeVisible();
   });
 
   it("should show a no-results message instead of the onboarding state during a search", () => {

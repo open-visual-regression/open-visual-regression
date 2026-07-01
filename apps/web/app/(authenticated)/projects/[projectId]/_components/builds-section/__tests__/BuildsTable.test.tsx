@@ -60,7 +60,7 @@ describe("BuildsTable", () => {
     });
     renderTable([build]);
 
-    expect(screen.getByText("fix: cart total rounding")).toBeVisible();
+    expect(screen.getByRole("cell", { name: /fix: cart total rounding/ })).toBeVisible();
     expect(screen.getByRole("cell", { name: "pr/482" })).toBeVisible();
   });
 
@@ -68,7 +68,7 @@ describe("BuildsTable", () => {
     const build = mocks.build.generateBuild({ name: null, commitSha: "4f2a91e1234567890" });
     renderTable([build]);
 
-    expect(screen.getByText("4f2a91e")).toBeVisible();
+    expect(screen.getByRole("cell", { name: /4f2a91e/ })).toBeVisible();
   });
 
   it("should show a passed build's status as 'passed'", () => {
