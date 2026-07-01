@@ -35,9 +35,8 @@ export default async function ProjectPage(props: ProjectPageProps) {
     serverError();
   }
 
-  // Prefetch the first page of builds on the server so the table renders with
-  // data on first paint, then hydrate it into the client's query cache where
-  // `useInfiniteQuery` continues loading subsequent pages on scroll.
+  // Prefetch the first page so the table renders with data on first paint; the
+  // client query picks up the rest from the hydrated cache.
   const queryClient = getQueryClient();
   await queryClient.prefetchInfiniteQuery(
     orpcServer.builds.list.infiniteOptions(buildsListInfiniteOptions(projectId, search)),

@@ -99,9 +99,8 @@ export const findAll = async ({
     search ? ilike(builds.name, `%${search}%`) : undefined,
   );
 
-  // Keyset pagination on (createdAt, id): the composite matches the
-  // builds_projectId_createdAt_id index and stays stable when new builds are
-  // inserted at the top while the user is scrolling.
+  // Keyset pagination on (createdAt, id): matches the composite index and stays
+  // stable when new builds are inserted at the top mid-scroll.
   const cursorFilter = cursor
     ? sortDirection === "asc"
       ? sql`(${builds.createdAt}, ${builds.id}) > (${cursor.createdAt}::timestamp, ${cursor.id}::uuid)`
@@ -110,8 +109,7 @@ export const findAll = async ({
 
   const orderFn = sortDirection === "asc" ? asc : desc;
 
-  // Fetch one extra row to determine whether another page exists without an
-  // additional round-trip.
+  // Fetch one extra row to detect whether another page exists.
   const [rows, [totalResult]] = await Promise.all([
     db
       .select({

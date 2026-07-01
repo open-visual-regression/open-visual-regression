@@ -78,12 +78,10 @@ type SkeletonRowProps = {
   ref?: React.Ref<HTMLTableRowElement>;
 };
 
-/** A placeholder row whose cells mirror the real columns while builds load. */
 const SkeletonRow = ({ leafColumns, ref }: SkeletonRowProps) => (
   <TableRow ref={ref} aria-hidden>
     {leafColumns.map((column) => (
       <TableCell key={column.id} className={column.columnDef.meta?.className}>
-        {/* The thin status-stripe column has no content to stand in for. */}
         {column.id === "statusStripe" ? null : <Skeleton className="h-4 w-full" />}
       </TableCell>
     ))}
@@ -118,14 +116,11 @@ export const BuildsTable = ({
 
   useTanStackTableDevtools(table);
 
-  // Track the scroll container via state (not a ref) so that attaching it as the
-  // IntersectionObserver root re-runs the observer effect once it exists.
+  // Tracking the scroll container in state re-runs the observer once it mounts.
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(null);
 
   const sentinelRef = useIntersectionObserver<HTMLTableRowElement>({
     onIntersect: onLoadMore,
-    // Disabling while a page is in flight disconnects the observer and re-observes
-    // afterwards, which keeps loading until the viewport is full or the list ends.
     enabled: hasNextPage && !isFetchingNextPage,
     root: scrollElement,
     rootMargin: "200px",
@@ -173,7 +168,6 @@ export const BuildsTable = ({
               </TableRow>
             ))
           )}
-          {/* Sentinel: scrolling it into view loads the next page. */}
           {!isLoading && hasNextPage ? (
             <SkeletonRow ref={sentinelRef} leafColumns={leafColumns} />
           ) : null}

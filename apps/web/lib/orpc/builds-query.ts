@@ -2,11 +2,7 @@ import { type BuildsCursor } from "@ovr/api/contracts/builds";
 
 export const BUILDS_PAGE_SIZE = 20;
 
-/**
- * Shared configuration for the builds infinite query. Using a single factory on
- * both the server (prefetch) and the client (`useInfiniteQuery`) guarantees the
- * generated query keys match, so server-prefetched data hydrates on the client.
- */
+// Shared by the server prefetch and the client query so their keys match.
 export const buildsListInfiniteOptions = (projectId: string, search?: string) => ({
   input: (cursor: BuildsCursor | undefined) => ({
     projectIds: [projectId],

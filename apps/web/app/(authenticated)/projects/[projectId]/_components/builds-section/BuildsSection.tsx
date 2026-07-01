@@ -20,8 +20,6 @@ export const BuildsSection = ({ projectId, search }: BuildsSectionProps) => {
 
   const builds = data?.pages.flatMap((page) => page.builds) ?? [];
 
-  // Show the onboarding empty state only once we know the project has no builds
-  // at all, never while the first page is still loading or during a search.
   if (!isPending && builds.length === 0 && !search) {
     return <NoBuildsSection />;
   }

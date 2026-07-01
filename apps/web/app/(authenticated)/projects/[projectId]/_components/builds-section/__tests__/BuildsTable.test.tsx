@@ -1,8 +1,39 @@
+import { afterEach, beforeEach, vi } from "vitest";
+
 import { mocks } from "@ovr/mocks";
 
 import { describe, expect, it, render, screen } from "@/test-utils";
 
 import { BuildsTable } from "../BuildsTable";
+
+let triggerIntersection: (() => void) | null = null;
+
+class MockIntersectionObserver {
+  constructor(private readonly callback: IntersectionObserverCallback) {}
+
+  observe(element: Element) {
+    triggerIntersection = () =>
+      this.callback(
+        [{ isIntersecting: true, target: element } as IntersectionObserverEntry],
+        this as unknown as IntersectionObserver,
+      );
+  }
+
+  unobserve() {}
+
+  disconnect() {
+    triggerIntersection = null;
+  }
+}
+
+beforeEach(() => {
+  triggerIntersection = null;
+  vi.stubGlobal("IntersectionObserver", MockIntersectionObserver);
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 const noop = () => {};
 
@@ -93,16 +124,27 @@ describe("BuildsTable", () => {
     expect(screen.getByRole("cell", { name: /no builds found matching "missing"/ })).toBeVisible();
   });
 
-  it("should render skeleton rows while loading", () => {
-    const { container } = renderTable([], { isLoading: true });
+  it("should load more builds when scrolled to the bottom", () => {
+    const onLoadMore = vi.fn();
+    renderTable([mocks.build.generateBuild()], { hasNextPage: true, onLoadMore });
 
-    expect(container.querySelectorAll("[data-slot='skeleton']").length).toBeGreaterThan(0);
+    expect(onLoadMore).not.toHaveBeenCalled();
+
+    triggerIntersection?.();
+
+    expect(onLoadMore).toHaveBeenCalledOnce();
   });
 
-  it("should render a sentinel skeleton row when another page is available", () => {
-    const build = mocks.build.generateBuild();
-    const { container } = renderTable([build], { hasNextPage: true });
+  it("should not load more builds while a page is already loading", () => {
+    const onLoadMore = vi.fn();
+    renderTable([mocks.build.generateBuild()], {
+      hasNextPage: true,
+      isFetchingNextPage: true,
+      onLoadMore,
+    });
 
-    expect(container.querySelector("[data-slot='table-body'] tr[aria-hidden]")).not.toBeNull();
+    triggerIntersection?.();
+
+    expect(onLoadMore).not.toHaveBeenCalled();
   });
 });
