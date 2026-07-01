@@ -60,7 +60,7 @@ describe("BuildsTable", () => {
     });
     renderTable([build]);
 
-    expect(screen.getByRole("cell", { name: /fix: cart total rounding/ })).toBeVisible();
+    expect(screen.getByText("fix: cart total rounding")).toBeVisible();
     expect(screen.getByRole("cell", { name: "pr/482" })).toBeVisible();
   });
 
@@ -68,7 +68,7 @@ describe("BuildsTable", () => {
     const build = mocks.build.generateBuild({ name: null, commitSha: "4f2a91e1234567890" });
     renderTable([build]);
 
-    expect(screen.getByRole("cell", { name: /4f2a91e/ })).toBeVisible();
+    expect(screen.getByText("4f2a91e")).toBeVisible();
   });
 
   it("should show a passed build's status as 'passed'", () => {
@@ -112,7 +112,7 @@ describe("BuildsTable", () => {
     const build = mocks.build.generateBuild({ commitSha: "4f2a91e1234567890" });
     renderTable([build]);
 
-    expect(screen.getByRole("link", { name: /view build 4f2a91e/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "view build 4f2a91e" })).toHaveAttribute(
       "href",
       `/projects/${build.project.id}/builds/${build.id}`,
     );
@@ -121,7 +121,7 @@ describe("BuildsTable", () => {
   it("should show a no-results message when a search matches no builds", () => {
     renderTable([], { search: "missing" });
 
-    expect(screen.getByRole("cell", { name: /no builds found matching "missing"/ })).toBeVisible();
+    expect(screen.getByRole("cell", { name: 'no builds found matching "missing"' })).toBeVisible();
   });
 
   it("should load more builds when scrolled to the bottom", () => {
