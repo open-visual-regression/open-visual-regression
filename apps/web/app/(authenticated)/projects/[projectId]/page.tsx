@@ -1,3 +1,4 @@
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 
@@ -5,6 +6,9 @@ import { Icon, SettingsIcon } from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
 
 import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
+import { buildsListInfiniteOptions } from "@/lib/orpc/builds-query";
+import { getQueryClient } from "@/lib/orpc/query-client";
+import { orpcServer } from "@/lib/orpc/server";
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
 
@@ -21,21 +25,26 @@ export default async function ProjectPage(props: ProjectPageProps) {
   const { projectId } = await props.params;
   const { search } = searchParamsSchema.parse(await props.searchParams);
 
-  const [[projectError, projectResult], [buildsError, buildsResult]] = await Promise.all([
-    serverClient.projects.getOne({ projectId }),
-    serverClient.builds.list({ projectIds: [projectId], search }),
-  ]);
+  const [projectError, projectResult] = await serverClient.projects.getOne({ projectId });
 
   if (projectError?.status === 404) {
     notFound();
   }
 
-  if (projectError || buildsError) {
+  if (projectError) {
     serverError();
   }
 
+  // Prefetch the first page of builds on the server so the table renders with
+  // data on first paint, then hydrate it into the client's query cache where
+  // `useInfiniteQuery` continues loading subsequent pages on scroll.
+  const queryClient = getQueryClient();
+  await queryClient.prefetchInfiniteQuery(
+    orpcServer.builds.list.infiniteOptions(buildsListInfiniteOptions(projectId, search)),
+  );
+
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex h-full min-h-0 flex-col gap-6">
       <div className="flex flex-wrap items-center gap-3">
         <Typography
           variant="h1"
@@ -59,7 +68,9 @@ export default async function ProjectPage(props: ProjectPageProps) {
           project settings
         </ButtonLink>
       </div>
-      <BuildsSection builds={buildsResult.builds} search={search} />
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <BuildsSection projectId={projectId} search={search} />
+      </HydrationBoundary>
     </div>
   );
 }

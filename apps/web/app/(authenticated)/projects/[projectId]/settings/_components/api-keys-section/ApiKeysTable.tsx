@@ -11,6 +11,7 @@ import { useTanStackTableDevtools } from "@tanstack/react-table-devtools";
 import { StatusIcon } from "@ovr/ui/components/status-icon";
 import {
   Table,
+  TableContainer,
   TableHeader,
   TableBody,
   TableHead,
@@ -79,33 +80,35 @@ export const ApiKeysTable = ({ data }: ApiKeysTableProps) => {
   useTanStackTableDevtools(table);
 
   return (
-    <Table>
-      <TableHeader>
-        {table.getHeaderGroups().map((headerGroup) => (
-          <TableRow key={headerGroup.id}>
-            {headerGroup.headers.map((header) => (
-              <TableHead
-                key={header.id}
-                colSpan={header.colSpan}
-                className={header.column.columnDef.meta?.className}
-              >
-                {!header.isPlaceholder && <table.FlexRender header={header} />}
-              </TableHead>
-            ))}
-          </TableRow>
-        ))}
-      </TableHeader>
-      <TableBody>
-        {table.getRowModel().rows.map((row) => (
-          <TableRow key={row.id}>
-            {row.getAllCells().map((cell) => (
-              <TableCell key={cell.id} className={cell.column.columnDef.meta?.className}>
-                <table.FlexRender cell={cell} />
-              </TableCell>
-            ))}
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <TableContainer>
+      <Table>
+        <TableHeader>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id}>
+              {headerGroup.headers.map((header) => (
+                <TableHead
+                  key={header.id}
+                  colSpan={header.colSpan}
+                  className={header.column.columnDef.meta?.className}
+                >
+                  {!header.isPlaceholder && <table.FlexRender header={header} />}
+                </TableHead>
+              ))}
+            </TableRow>
+          ))}
+        </TableHeader>
+        <TableBody>
+          {table.getRowModel().rows.map((row) => (
+            <TableRow key={row.id}>
+              {row.getAllCells().map((cell) => (
+                <TableCell key={cell.id} className={cell.column.columnDef.meta?.className}>
+                  <table.FlexRender cell={cell} />
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 };

@@ -143,7 +143,6 @@ describe("builds", () => {
       const { builds, total } = await dbClient.builds.findAll({
         organizationId: organization.id,
         limit: 10,
-        offset: 0,
       });
 
       expect(total).toBe(2);
@@ -197,7 +196,6 @@ describe("builds", () => {
       const { builds, total } = await dbClient.builds.findAll({
         organizationId: organization.id,
         limit: 10,
-        offset: 0,
       });
 
       expect(total).toBe(1);
@@ -239,7 +237,6 @@ describe("builds", () => {
         organizationId: organization.id,
         projectIds: [otherProject!.id],
         limit: 10,
-        offset: 0,
       });
 
       expect(total).toBe(1);
@@ -265,7 +262,6 @@ describe("builds", () => {
         organizationId: organization.id,
         processingStatus: "success",
         limit: 10,
-        offset: 0,
       });
 
       expect(total).toBe(1);
@@ -300,7 +296,6 @@ describe("builds", () => {
         organizationId: organization.id,
         search: "cart",
         limit: 10,
-        offset: 0,
       });
 
       expect(total).toBe(1);
@@ -325,14 +320,17 @@ describe("builds", () => {
         organizationId: organization.id,
         search: "cart",
         limit: 10,
-        offset: 0,
       });
 
       expect(total).toBe(0);
       expect(builds).toHaveLength(0);
     });
 
-    test("should respect the limit and offset params", async ({ organization, project, user }) => {
+    test("should paginate with the limit and cursor params", async ({
+      organization,
+      project,
+      user,
+    }) => {
       for (let i = 0; i < 3; i++) {
         await dbClient.builds.create({
           projectId: project.id,
@@ -344,15 +342,26 @@ describe("builds", () => {
         });
       }
 
-      const { builds, total } = await dbClient.builds.findAll({
+      const firstPage = await dbClient.builds.findAll({
         organizationId: organization.id,
         limit: 2,
-        offset: 1,
       });
 
-      expect(total).toBe(3);
-      expect(builds).toHaveLength(2);
-      expect(builds.map((build) => build.commitSha)).toEqual(["1".repeat(40), "0".repeat(40)]);
+      expect(firstPage.total).toBe(3);
+      expect(firstPage.builds.map((build) => build.commitSha)).toEqual([
+        "2".repeat(40),
+        "1".repeat(40),
+      ]);
+      expect(firstPage.nextCursor).not.toBeNull();
+
+      const secondPage = await dbClient.builds.findAll({
+        organizationId: organization.id,
+        limit: 2,
+        cursor: firstPage.nextCursor!,
+      });
+
+      expect(secondPage.builds.map((build) => build.commitSha)).toEqual(["0".repeat(40)]);
+      expect(secondPage.nextCursor).toBeNull();
     });
 
     test("should return the oldest builds first when sorted ascending", async ({
@@ -382,7 +391,6 @@ describe("builds", () => {
         organizationId: organization.id,
         sortDirection: "asc",
         limit: 10,
-        offset: 0,
       });
 
       expect(builds.map((build) => build.id)).toEqual([older!.id, newer!.id]);

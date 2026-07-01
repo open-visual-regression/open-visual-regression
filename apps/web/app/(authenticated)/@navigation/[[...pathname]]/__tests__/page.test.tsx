@@ -21,7 +21,7 @@ const mockBuildsList = vi.mocked(serverClient.builds.list);
 
 mockList.mockResolvedValue([null, { projects: [] }]);
 mockCount.mockResolvedValue([null, { total: 0 }]);
-mockBuildsList.mockResolvedValue([null, { builds: [], total: 0 }]);
+mockBuildsList.mockResolvedValue([null, { builds: [], total: 0, nextCursor: null }]);
 
 describe("NavigationSlot", () => {
   it("should render breadcrumbs for the projects root", async () => {

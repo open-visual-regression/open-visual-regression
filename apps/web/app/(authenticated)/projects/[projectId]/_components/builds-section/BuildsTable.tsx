@@ -5,13 +5,17 @@ import {
   tableFeatures,
   createColumnHelper,
   createCoreRowModel,
+  type Column,
 } from "@tanstack/react-table";
 import { useTanStackTableDevtools } from "@tanstack/react-table-devtools";
 import Link from "next/link";
+import { useState } from "react";
 
 import { type BuildSchema } from "@ovr/api/contracts/builds";
+import { Skeleton } from "@ovr/ui/components/skeleton";
 import {
   Table,
+  TableContainer,
   TableHeader,
   TableBody,
   TableHead,
@@ -22,10 +26,13 @@ import {
 import { Typography } from "@ovr/ui/components/typography";
 
 import { BuildStatusBadge, BuildStatusStripe } from "@/lib/components/BuildStatus";
+import { useIntersectionObserver } from "@/lib/hooks/useIntersectionObserver";
 import { formatRelativeDateTime } from "@/lib/utils/date";
 
 const features = tableFeatures({});
 const columnHelper = createColumnHelper<typeof features, BuildSchema>();
+
+const INITIAL_SKELETON_ROW_COUNT = 8;
 
 const columns = columnHelper.columns([
   columnHelper.display({
@@ -66,12 +73,40 @@ const columns = columnHelper.columns([
   }),
 ]);
 
+type SkeletonRowProps = {
+  leafColumns: Column<typeof features, BuildSchema>[];
+  ref?: React.Ref<HTMLTableRowElement>;
+};
+
+/** A placeholder row whose cells mirror the real columns while builds load. */
+const SkeletonRow = ({ leafColumns, ref }: SkeletonRowProps) => (
+  <TableRow ref={ref} aria-hidden>
+    {leafColumns.map((column) => (
+      <TableCell key={column.id} className={column.columnDef.meta?.className}>
+        {/* The thin status-stripe column has no content to stand in for. */}
+        {column.id === "statusStripe" ? null : <Skeleton className="h-4 w-full" />}
+      </TableCell>
+    ))}
+  </TableRow>
+);
+
 type BuildsTableProps = {
   data: BuildSchema[];
   search?: string;
+  isLoading: boolean;
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
+  onLoadMore: () => void;
 };
 
-export const BuildsTable = ({ data, search }: BuildsTableProps) => {
+export const BuildsTable = ({
+  data,
+  search,
+  isLoading,
+  hasNextPage,
+  isFetchingNextPage,
+  onLoadMore,
+}: BuildsTableProps) => {
   const table = useTable({
     key: "builds-table",
     columns,
@@ -83,42 +118,67 @@ export const BuildsTable = ({ data, search }: BuildsTableProps) => {
 
   useTanStackTableDevtools(table);
 
-  const columnCount = table.getAllLeafColumns().length;
+  // Track the scroll container via state (not a ref) so that attaching it as the
+  // IntersectionObserver root re-runs the observer effect once it exists.
+  const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(null);
+
+  const sentinelRef = useIntersectionObserver<HTMLTableRowElement>({
+    onIntersect: onLoadMore,
+    // Disabling while a page is in flight disconnects the observer and re-observes
+    // afterwards, which keeps loading until the viewport is full or the list ends.
+    enabled: hasNextPage && !isFetchingNextPage,
+    root: scrollElement,
+    rootMargin: "200px",
+  });
+
+  const leafColumns = table.getAllLeafColumns();
+  const columnCount = leafColumns.length;
+  const rows = table.getRowModel().rows;
 
   return (
-    <Table>
-      <TableHeader>
-        {table.getHeaderGroups().map((headerGroup) => (
-          <TableRow key={headerGroup.id}>
-            {headerGroup.headers.map((header) => (
-              <TableHead
-                key={header.id}
-                colSpan={header.colSpan}
-                className={header.column.columnDef.meta?.className}
-              >
-                {!header.isPlaceholder ? <table.FlexRender header={header} /> : null}
-              </TableHead>
-            ))}
-          </TableRow>
-        ))}
-      </TableHeader>
-      <TableBody>
-        {table.getRowModel().rows.length === 0 ? (
-          <TableEmpty colSpan={columnCount}>
-            {search ? `no builds found matching "${search}"` : "no builds found"}
-          </TableEmpty>
-        ) : (
-          table.getRowModel().rows.map((row) => (
-            <TableRow key={row.id} className="relative has-[a:hover]:bg-ovr-hover">
-              {row.getAllCells().map((cell) => (
-                <TableCell key={cell.id} className={cell.column.columnDef.meta?.className}>
-                  <table.FlexRender cell={cell} />
-                </TableCell>
+    <TableContainer ref={setScrollElement} className="min-h-0 flex-1 overflow-y-auto">
+      <Table>
+        <TableHeader className="sticky top-0 z-10 [&_th]:bg-ovr-inset">
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id}>
+              {headerGroup.headers.map((header) => (
+                <TableHead
+                  key={header.id}
+                  colSpan={header.colSpan}
+                  className={header.column.columnDef.meta?.className}
+                >
+                  {!header.isPlaceholder ? <table.FlexRender header={header} /> : null}
+                </TableHead>
               ))}
             </TableRow>
-          ))
-        )}
-      </TableBody>
-    </Table>
+          ))}
+        </TableHeader>
+        <TableBody>
+          {isLoading ? (
+            Array.from({ length: INITIAL_SKELETON_ROW_COUNT }, (_, index) => (
+              <SkeletonRow key={index} leafColumns={leafColumns} />
+            ))
+          ) : rows.length === 0 ? (
+            <TableEmpty colSpan={columnCount}>
+              {search ? `no builds found matching "${search}"` : "no builds found"}
+            </TableEmpty>
+          ) : (
+            rows.map((row) => (
+              <TableRow key={row.id} className="relative has-[a:hover]:bg-ovr-hover">
+                {row.getAllCells().map((cell) => (
+                  <TableCell key={cell.id} className={cell.column.columnDef.meta?.className}>
+                    <table.FlexRender cell={cell} />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
+          )}
+          {/* Sentinel: scrolling it into view loads the next page. */}
+          {!isLoading && hasNextPage ? (
+            <SkeletonRow ref={sentinelRef} leafColumns={leafColumns} />
+          ) : null}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 };

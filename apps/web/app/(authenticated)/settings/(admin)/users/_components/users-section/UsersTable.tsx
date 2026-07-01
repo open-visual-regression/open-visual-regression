@@ -14,6 +14,7 @@ import { Badge } from "@ovr/ui/components/badge";
 import { Checkbox } from "@ovr/ui/components/checkbox";
 import {
   Table,
+  TableContainer,
   TableHeader,
   TableBody,
   TableFooter,
@@ -98,51 +99,53 @@ export const UsersTable = ({ data, currentUserId, search }: UsersTableProps) => 
   const columnCount = table.getAllLeafColumns().length;
 
   return (
-    <Table>
-      <TableHeader>
-        {table.getHeaderGroups().map((headerGroup) => (
-          <TableRow key={headerGroup.id}>
-            {headerGroup.headers.map((header) => (
-              <TableHead
-                key={header.id}
-                colSpan={header.colSpan}
-                className={header.column.columnDef.meta?.className}
-              >
-                {!header.isPlaceholder && <table.FlexRender header={header} />}
-              </TableHead>
-            ))}
-          </TableRow>
-        ))}
-      </TableHeader>
-      <TableBody>
-        {table.getRowModel().rows.length === 0 ? (
-          <TableEmpty colSpan={columnCount}>
-            {search ? `no users found matching "${search}"` : "no users found"}
-          </TableEmpty>
-        ) : (
-          table.getRowModel().rows.map((row) => (
-            <TableRow key={row.id} data-state={row.getIsSelected() ? "selected" : undefined}>
-              {row.getAllCells().map((cell) => (
-                <TableCell key={cell.id} className={cell.column.columnDef.meta?.className}>
-                  <table.FlexRender cell={cell} />
-                </TableCell>
+    <TableContainer>
+      <Table>
+        <TableHeader>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id}>
+              {headerGroup.headers.map((header) => (
+                <TableHead
+                  key={header.id}
+                  colSpan={header.colSpan}
+                  className={header.column.columnDef.meta?.className}
+                >
+                  {!header.isPlaceholder && <table.FlexRender header={header} />}
+                </TableHead>
               ))}
             </TableRow>
-          ))
+          ))}
+        </TableHeader>
+        <TableBody>
+          {table.getRowModel().rows.length === 0 ? (
+            <TableEmpty colSpan={columnCount}>
+              {search ? `no users found matching "${search}"` : "no users found"}
+            </TableEmpty>
+          ) : (
+            table.getRowModel().rows.map((row) => (
+              <TableRow key={row.id} data-state={row.getIsSelected() ? "selected" : undefined}>
+                {row.getAllCells().map((cell) => (
+                  <TableCell key={cell.id} className={cell.column.columnDef.meta?.className}>
+                    <table.FlexRender cell={cell} />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+        {selectedUsers.length > 0 && (
+          <TableFooter>
+            <TableRow className="h-auto">
+              <TableCell colSpan={columnCount} className="py-2">
+                <UsersTableBulkActions
+                  users={selectedUsers}
+                  onRemovedAction={() => table.resetRowSelection()}
+                />
+              </TableCell>
+            </TableRow>
+          </TableFooter>
         )}
-      </TableBody>
-      {selectedUsers.length > 0 && (
-        <TableFooter>
-          <TableRow className="h-auto">
-            <TableCell colSpan={columnCount} className="py-2">
-              <UsersTableBulkActions
-                users={selectedUsers}
-                onRemovedAction={() => table.resetRowSelection()}
-              />
-            </TableCell>
-          </TableRow>
-        </TableFooter>
-      )}
-    </Table>
+      </Table>
+    </TableContainer>
   );
 };

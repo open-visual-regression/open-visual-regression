@@ -5,6 +5,7 @@ import {
   TableBody,
   TableCaption,
   TableCell,
+  TableContainer,
   TableFooter,
   TableHead,
   TableHeader,
@@ -57,41 +58,43 @@ const StatusPill = ({ status }: { status: string }) => (
 export const KitchenSink: Story = {
   render: () => (
     <div className="p-6 max-w-2xl">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Run</TableHead>
-            <TableHead>Branch</TableHead>
-            <TableHead className="text-right">Snapshots</TableHead>
-            <TableHead className="text-right">Diffs</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>When</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {runs.map((run) => (
-            <TableRow key={run.id}>
-              <TableCell className="font-mono">{run.id}</TableCell>
-              <TableCell className="font-mono text-muted-foreground">{run.branch}</TableCell>
-              <TableCell className="text-right">{run.snapshots}</TableCell>
-              <TableCell className="text-right">{run.diffs}</TableCell>
-              <TableCell>
-                <StatusPill status={run.status} />
-              </TableCell>
-              <TableCell className="text-muted-foreground">{run.date}</TableCell>
+      <TableContainer>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Run</TableHead>
+              <TableHead>Branch</TableHead>
+              <TableHead className="text-right">Snapshots</TableHead>
+              <TableHead className="text-right">Diffs</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>When</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-        <TableFooter>
-          <TableRow>
-            <TableCell colSpan={2}>Total</TableCell>
-            <TableCell className="text-right">476</TableCell>
-            <TableCell className="text-right">5</TableCell>
-            <TableCell colSpan={2} />
-          </TableRow>
-        </TableFooter>
-        <TableCaption>Recent runs across all branches</TableCaption>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {runs.map((run) => (
+              <TableRow key={run.id}>
+                <TableCell className="font-mono">{run.id}</TableCell>
+                <TableCell className="font-mono text-muted-foreground">{run.branch}</TableCell>
+                <TableCell className="text-right">{run.snapshots}</TableCell>
+                <TableCell className="text-right">{run.diffs}</TableCell>
+                <TableCell>
+                  <StatusPill status={run.status} />
+                </TableCell>
+                <TableCell className="text-muted-foreground">{run.date}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+          <TableFooter>
+            <TableRow>
+              <TableCell colSpan={2}>Total</TableCell>
+              <TableCell className="text-right">476</TableCell>
+              <TableCell className="text-right">5</TableCell>
+              <TableCell colSpan={2} />
+            </TableRow>
+          </TableFooter>
+        </Table>
+      </TableContainer>
+      <TableCaption>Recent runs across all branches</TableCaption>
     </div>
   ),
 };

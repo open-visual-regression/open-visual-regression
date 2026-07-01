@@ -1,5 +1,7 @@
 import { implement } from "@orpc/server";
+
 import { contract } from "@ovr/api/contracts/contract";
+
 import type { serverClient as RealServerClient } from "../../lib/router";
 
 const os = implement(contract);
@@ -46,7 +48,7 @@ export const serverClient: typeof RealServerClient = {
     getBuildStatus: os.builds.getBuildStatus
       .handler(() => ({ status: "pending" as const }))
       .actionable(),
-    list: os.builds.list.handler(() => ({ builds: [], total: 0 })).actionable(),
+    list: os.builds.list.handler(() => ({ builds: [], total: 0, nextCursor: null })).actionable(),
     getOne: os.builds.getOne
       .handler(() => ({
         build: {
