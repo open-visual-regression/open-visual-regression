@@ -3,12 +3,15 @@
   "printWidth": 100,
   "tailwindcss": true,
   "sortImports": {
-    "customGroups": [{ "groupName": "ovr", "elementNamePattern": ["@ovr/**"] }],
+    "customGroups": [
+      { "groupName": "ovr", "elementNamePattern": ["@ovr/**"] },
+      { "groupName": "internal", "elementNamePattern": ["@/**"] }
+    ],
     "groups": [
       "builtin",
       "external",
       "ovr",
-      ["internal", "subpath"],
+      "internal",
       ["parent", "sibling", "index"],
       "style",
       "unknown"
