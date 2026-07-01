@@ -1,8 +1,11 @@
-import { vi } from "vitest";
-import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
-import { serverClient } from "@/lib/router";
 import { useRouter } from "next/navigation";
+import { vi } from "vitest";
+
 import { mocks } from "@ovr/mocks";
+
+import { serverClient } from "@/lib/router";
+import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
+
 import { UsersSection } from "../UsersSection";
 
 vi.mock("@/lib/router");

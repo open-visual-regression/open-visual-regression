@@ -1,8 +1,9 @@
-import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
-import { RequiresAdminRole } from "@/lib/components/authorization/RequiresAdminRole";
 import { Card, CardContent, CardHeader } from "@ovr/ui/components/card";
 import { Icon, PlusIcon } from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
+
+import { RequiresAdminRole } from "@/lib/components/authorization/RequiresAdminRole";
+import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
 
 type NoProjectsSectionProps = {
   role: string | null | undefined;

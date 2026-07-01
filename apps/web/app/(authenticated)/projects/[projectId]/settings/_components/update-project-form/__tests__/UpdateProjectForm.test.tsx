@@ -1,8 +1,10 @@
 import { vi } from "vitest";
+
 import { Toaster } from "@ovr/ui/components/sonner";
 
-import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
 import { serverClient } from "@/lib/router";
+import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
+
 import { UpdateProjectForm } from "../UpdateProjectForm";
 
 vi.mock("@/lib/router");

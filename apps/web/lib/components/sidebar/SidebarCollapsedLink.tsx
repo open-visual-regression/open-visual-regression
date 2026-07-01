@@ -1,4 +1,5 @@
 import Link from "next/link";
+
 import { cn } from "@ovr/ui/lib/utils";
 
 type SidebarCollapsedLinkProps = {

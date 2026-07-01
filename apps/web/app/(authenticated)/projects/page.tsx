@@ -1,13 +1,16 @@
-import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
+import { headers } from "next/headers";
+
 import { Icon, PlusIcon } from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
-import { NoProjectsSection } from "./_components/NoProjectsSection";
+
+import { auth } from "@/lib/auth/auth";
+import { RequiresAdminRole } from "@/lib/components/authorization/RequiresAdminRole";
+import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
+
+import { NoProjectsSection } from "./_components/NoProjectsSection";
 import { ProjectCardsList } from "./_components/ProjectCardsList";
-import { auth } from "@/lib/auth/auth";
-import { headers } from "next/headers";
-import { RequiresAdminRole } from "@/lib/components/authorization/RequiresAdminRole";
 
 const PROJECTS_PAGE_LIMIT = 100;
 

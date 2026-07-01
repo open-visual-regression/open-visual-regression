@@ -1,8 +1,10 @@
 import { vi } from "vitest";
 
-import { describe, expect, it } from "@/test-utils";
-import { auth } from "@/lib/auth/auth";
 import { mocks } from "@ovr/mocks";
+
+import { auth } from "@/lib/auth/auth";
+import { describe, expect, it } from "@/test-utils";
+
 import { verifyRole } from "../authorization";
 
 vi.mock("next/headers");

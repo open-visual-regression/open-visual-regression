@@ -1,7 +1,7 @@
 import { v7 as uuidv7 } from "uuid";
 
-import { db } from "../db";
 import { dbClient } from "../client";
+import { db } from "../db";
 import { organization as organizationTable, projects } from "../schema";
 import { describe, expect, test } from "./fixtures";
 

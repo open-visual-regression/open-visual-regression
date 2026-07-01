@@ -2,6 +2,7 @@ import { createORPCClient, ORPCError } from "@orpc/client";
 import { RPCLink } from "@orpc/client/fetch";
 import { ClientRetryPlugin } from "@orpc/client/plugins";
 import type { ContractRouterClient } from "@orpc/contract";
+
 import { contract } from "@ovr/api/contracts/contract";
 
 export type OvrClient = ContractRouterClient<typeof contract>;

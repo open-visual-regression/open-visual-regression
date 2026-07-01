@@ -1,6 +1,7 @@
 "use server";
 
 import { ORPCError } from "@orpc/client";
+
 import { dbClient } from "@ovr/db/client";
 import {
   bulkCastVote as bulkCastVoteService,
@@ -8,8 +9,8 @@ import {
   removeVote as removeVoteService,
 } from "@ovr/reviews/diffs";
 
-import { os } from "./os";
 import { authenticatedMiddleware, organizationSnapshotMiddleware } from "./middleware";
+import { os } from "./os";
 
 const throwOnError = (error: "DIFF_NOT_FOUND" | "REVIEW_NOT_REQUIRED"): never => {
   if (error === "DIFF_NOT_FOUND") {

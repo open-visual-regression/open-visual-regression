@@ -1,7 +1,10 @@
-import { verifyRole } from "@/lib/utils/authorization";
-import { Typography } from "@ovr/ui/components/typography";
 import { notFound } from "next/navigation";
+
+import { Typography } from "@ovr/ui/components/typography";
+
+import { verifyRole } from "@/lib/utils/authorization";
 import { serverError } from "@/lib/utils/errors";
+
 import { NewProjectForm } from "./_components/new-project-form/NewProjectForm";
 
 export default async function CreateProjectPage() {

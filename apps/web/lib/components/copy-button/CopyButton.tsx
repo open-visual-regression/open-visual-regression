@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
 import type { VariantProps } from "class-variance-authority";
+import { useEffect, useState, type ReactNode } from "react";
+
 import { Button, buttonVariants } from "@ovr/ui/components/button";
 import { CheckIcon, CopyIcon, Icon } from "@ovr/ui/components/icon";
 

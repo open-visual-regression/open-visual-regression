@@ -1,10 +1,11 @@
 "use client";
 
+import { type UserSchema } from "@ovr/api/contracts/users";
+import { AlertDialogTrigger } from "@ovr/ui/components/alert-dialog";
 import { Button } from "@ovr/ui/components/button";
 import { Icon, XIcon } from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
-import { AlertDialogTrigger } from "@ovr/ui/components/alert-dialog";
-import { type UserSchema } from "@ovr/api/contracts/users";
+
 import { RemoveUsersModal } from "./RemoveUsersModal";
 
 type UsersTableBulkActionsProps = {

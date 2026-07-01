@@ -1,7 +1,9 @@
-import { redirect, notFound } from "next/navigation";
 import { headers } from "next/headers";
+import { redirect, notFound } from "next/navigation";
+
 import { auth } from "@/lib/auth/auth";
 import { serverClient } from "@/lib/router";
+
 import { CenteredFormSection } from "../../_components/CenteredFormSection";
 import { InvitationCard } from "./_components/invitation-card/InvitationCard";
 

@@ -1,4 +1,5 @@
 import { describe, expect, fireEvent, it, render, screen } from "@/test-utils";
+
 import { Image } from "../Image";
 
 describe("Image", () => {

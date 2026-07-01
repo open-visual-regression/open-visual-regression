@@ -1,11 +1,13 @@
+import { notFound } from "next/navigation";
 import { vi } from "vitest";
 
-import { describe, expect, it, render, screen } from "@/test-utils";
+import { mocks } from "@ovr/mocks";
+
 import { auth } from "@/lib/auth/auth";
 import { serverClient } from "@/lib/router";
-import { mocks } from "@ovr/mocks";
-import { notFound } from "next/navigation";
 import { createORPCError } from "@/lib/testing/orpc";
+import { describe, expect, it, render, screen } from "@/test-utils";
+
 import ProjectSettingsPage, { ProjectSettingsPageProps } from "../page";
 
 vi.mock("next/headers");

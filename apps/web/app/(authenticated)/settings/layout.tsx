@@ -1,6 +1,8 @@
 import { cookies } from "next/headers";
+
 import { requireSession } from "@/lib/auth/session";
 import { getInitialSidebarCollapsed } from "@/lib/stores/sidebarCookie";
+
 import { SettingsSidebar } from "./_components/settings-sidebar/SettingsSidebar";
 
 type SettingsLayoutProps = Readonly<{

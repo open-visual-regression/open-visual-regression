@@ -1,9 +1,10 @@
 import { pgTable, text, uuid, varchar, integer } from "drizzle-orm/pg-core";
-import { v7 as uuidv7 } from "uuid";
-import { organization, user } from "./auth";
 import { customType } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm/sql";
 import { relations } from "drizzle-orm/relations";
+import { sql } from "drizzle-orm/sql";
+import { v7 as uuidv7 } from "uuid";
+
+import { organization, user } from "./auth";
 
 export const utcTimestamp = customType<{
   data: string;

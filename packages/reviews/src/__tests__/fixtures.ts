@@ -1,6 +1,6 @@
 import { Redis } from "ioredis";
-import { test as vitest } from "vitest";
 import { v7 as uuidv7 } from "uuid";
+import { test as vitest } from "vitest";
 
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";

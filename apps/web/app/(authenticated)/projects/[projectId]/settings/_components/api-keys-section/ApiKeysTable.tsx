@@ -6,6 +6,9 @@ import {
   createColumnHelper,
   createCoreRowModel,
 } from "@tanstack/react-table";
+import { useTanStackTableDevtools } from "@tanstack/react-table-devtools";
+
+import { StatusIcon } from "@ovr/ui/components/status-icon";
 import {
   Table,
   TableHeader,
@@ -14,9 +17,9 @@ import {
   TableRow,
   TableCell,
 } from "@ovr/ui/components/table";
-import { StatusIcon } from "@ovr/ui/components/status-icon";
-import { useTanStackTableDevtools } from "@tanstack/react-table-devtools";
+
 import { formatDateTime } from "@/lib/utils/date";
+
 import { RevokeApiKeyButton } from "./RevokeApiKeyButton";
 
 type ApiKeyTableRow = {

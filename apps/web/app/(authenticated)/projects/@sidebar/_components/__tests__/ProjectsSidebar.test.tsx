@@ -1,8 +1,10 @@
-import { vi } from "vitest";
 import { usePathname } from "next/navigation";
+import { vi } from "vitest";
 
 import { mocks } from "@ovr/mocks";
+
 import { describe, expect, it, render, screen } from "@/test-utils";
+
 import { ProjectsSidebar, type ProjectsSidebarProps } from "../ProjectsSidebar";
 
 vi.mock("next/navigation");

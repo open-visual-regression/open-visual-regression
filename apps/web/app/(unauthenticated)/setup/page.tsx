@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
-import { serverError } from "@/lib/utils/errors";
-import { SetupCard } from "./_components/setup-card/SetupCard";
-import { CenteredFormSection } from "../_components/CenteredFormSection";
+
 import { serverClient } from "@/lib/router";
+import { serverError } from "@/lib/utils/errors";
+
+import { CenteredFormSection } from "../_components/CenteredFormSection";
+import { SetupCard } from "./_components/setup-card/SetupCard";
 
 export const dynamic = "force-dynamic";
 

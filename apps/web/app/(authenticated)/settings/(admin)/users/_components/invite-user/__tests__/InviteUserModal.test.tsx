@@ -1,8 +1,9 @@
 import { vi } from "vitest";
 
-import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
 import { serverClient } from "@/lib/router";
 import { createORPCError } from "@/lib/testing/orpc";
+import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
+
 import { InviteUserModal } from "../InviteUserModal";
 import { InviteUserModalButton } from "../InviteUserModalButton";
 

@@ -1,11 +1,13 @@
 import { vi } from "vitest";
+
 import { describe, expect, it, render, screen } from "@/test-utils";
+
 import { MultiLineCodeBlock } from "../MultiLineCodeBlock";
 import { MultiLineCodeBlockBody } from "../MultiLineCodeBlockBody";
 import { MultiLineCodeBlockCopyButton } from "../MultiLineCodeBlockCopyButton";
-import { MultiLineCodeBlockLabel } from "../MultiLineCodeBlockLabel";
 import { MultiLineCodeBlockFilename } from "../MultiLineCodeBlockFilename";
 import { MultiLineCodeBlockHeader } from "../MultiLineCodeBlockHeader";
+import { MultiLineCodeBlockLabel } from "../MultiLineCodeBlockLabel";
 import { MultiLineCodeBlockLine } from "../MultiLineCodeBlockLine";
 import { MultiLineCodeBlockLineCount } from "../MultiLineCodeBlockLineCount";
 

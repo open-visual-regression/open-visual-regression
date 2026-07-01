@@ -1,9 +1,10 @@
+import type { BuildSchema } from "@ovr/api/contracts/builds";
+import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { Alert, AlertDescription, AlertTitle } from "@ovr/ui/components/alert";
 import { GlobeIcon, Icon } from "@ovr/ui/components/icon";
 import { ResolutionIcon } from "@ovr/ui/components/resolution-icon";
 import { Typography } from "@ovr/ui/components/typography";
-import type { BuildSchema } from "@ovr/api/contracts/builds";
-import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
+
 import { SnapshotStatusBadge } from "@/lib/components/SnapshotStatusBadge";
 
 export type SnapshotHeaderProps = {

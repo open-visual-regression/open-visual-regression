@@ -1,10 +1,12 @@
 "use client";
 
-import { Fragment } from "react";
 import { usePathname } from "next/navigation";
+import { Fragment } from "react";
+
 import { RequiresAdminRole } from "@/lib/components/authorization/RequiresAdminRole";
 import { SidebarItem } from "@/lib/components/sidebar/SidebarItem";
 import { SidebarSection } from "@/lib/components/sidebar/SidebarSection";
+
 import { SETTINGS_NAV_SECTIONS, isNavItemActive } from "./settingsNavItems";
 
 type SettingsSidebarLinksProps = {

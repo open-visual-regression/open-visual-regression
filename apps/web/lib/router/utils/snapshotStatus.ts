@@ -1,6 +1,6 @@
 import type { SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
-import type { SnapshotDbSchema } from "@ovr/db/repository/snapshots";
 import type { DiffDbSchema } from "@ovr/db/repository/diffs";
+import type { SnapshotDbSchema } from "@ovr/db/repository/snapshots";
 
 export const getSnapshotDisplayStatus = (
   snapshot: SnapshotDbSchema,

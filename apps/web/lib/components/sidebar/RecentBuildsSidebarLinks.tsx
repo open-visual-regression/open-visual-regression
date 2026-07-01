@@ -1,6 +1,7 @@
 import type { BuildSchema } from "@ovr/api/contracts/builds";
-import { SidebarSection } from "./SidebarSection";
+
 import { RecentBuildSidebarLink } from "./RecentBuildSidebarLink";
+import { SidebarSection } from "./SidebarSection";
 
 const RECENT_BUILDS_FETCH_LIMIT = 15;
 

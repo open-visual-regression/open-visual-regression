@@ -1,8 +1,9 @@
-import { test as vitest, vi } from "vitest";
-import { headers } from "next/headers";
 import { convertSetCookieToCookie } from "better-auth/test";
+import { headers } from "next/headers";
+import { test as vitest, vi } from "vitest";
 
 import { mocks } from "@ovr/mocks";
+
 import { auth } from "@/lib/auth/auth";
 import type { User } from "@/lib/auth/auth";
 

@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import { useSidebarStore } from "@/lib/stores/sidebarStore";
+
 import { SidebarCollapsed } from "./SidebarCollapsed";
 import { SidebarExpanded } from "./SidebarExpanded";
 

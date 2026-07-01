@@ -1,10 +1,12 @@
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+
+import { auth } from "@/lib/auth/auth";
+import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
+
 import { CenteredFormSection } from "../_components/CenteredFormSection";
 import { LoginCard } from "./_components/login-card/LoginCard";
-import { serverClient } from "@/lib/router";
-import { auth } from "@/lib/auth/auth";
-import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
 

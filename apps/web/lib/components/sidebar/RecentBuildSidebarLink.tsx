@@ -1,7 +1,8 @@
 import Link from "next/link";
+
 import type { BuildSchema, BuildStatus } from "@ovr/api/contracts/builds";
-import { cn } from "@ovr/ui/lib/utils";
 import { Typography } from "@ovr/ui/components/typography";
+import { cn } from "@ovr/ui/lib/utils";
 
 const RECENT_BUILD_ROW_HEIGHT_PX = 44;
 

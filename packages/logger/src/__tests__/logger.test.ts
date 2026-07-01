@@ -1,5 +1,7 @@
 import { readFileSync } from "node:fs";
+
 import { vi } from "vitest";
+
 import { createLogger, createRootLogger } from "../index";
 import { describe, expect, test } from "./fixtures";
 

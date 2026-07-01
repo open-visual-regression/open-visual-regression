@@ -1,13 +1,15 @@
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth/auth";
-import { serverClient } from "@/lib/router";
-import { NavigationBar } from "@/lib/components/navigation-bar/NavigationBar";
-import { NavigationBarLogo } from "@/lib/components/navigation-bar/NavigationBarLogo";
-import { NavigationBarBreadcrumb } from "@/lib/components/navigation-bar/NavigationBarBreadcrumb";
-import { NavigationBarActions } from "@/lib/components/navigation-bar/NavigationBarActions";
-import { getBreadcrumbSegments } from "@/lib/components/navigation-bar/getBreadcrumbSegments";
-import { NavigationBarMobileMenu } from "@/lib/components/navigation-bar/NavigationBarMobileMenu";
+
 import { Separator } from "@ovr/ui/components/separator";
+
+import { auth } from "@/lib/auth/auth";
+import { getBreadcrumbSegments } from "@/lib/components/navigation-bar/getBreadcrumbSegments";
+import { NavigationBar } from "@/lib/components/navigation-bar/NavigationBar";
+import { NavigationBarActions } from "@/lib/components/navigation-bar/NavigationBarActions";
+import { NavigationBarBreadcrumb } from "@/lib/components/navigation-bar/NavigationBarBreadcrumb";
+import { NavigationBarLogo } from "@/lib/components/navigation-bar/NavigationBarLogo";
+import { NavigationBarMobileMenu } from "@/lib/components/navigation-bar/NavigationBarMobileMenu";
+import { serverClient } from "@/lib/router";
 
 type NavigationSlotProps = PageProps<"/[[...pathname]]">;
 

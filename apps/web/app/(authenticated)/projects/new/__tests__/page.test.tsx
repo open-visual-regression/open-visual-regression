@@ -1,9 +1,11 @@
+import { notFound } from "next/navigation";
 import { vi } from "vitest";
 
-import { describe, expect, it, render, screen } from "@/test-utils";
-import { auth } from "@/lib/auth/auth";
 import { mocks } from "@ovr/mocks";
-import { notFound } from "next/navigation";
+
+import { auth } from "@/lib/auth/auth";
+import { describe, expect, it, render, screen } from "@/test-utils";
+
 import CreateProjectPage from "../page";
 
 vi.mock("next/headers");

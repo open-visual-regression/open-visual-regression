@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
+
 import { Switch } from "@ovr/ui/components/switch";
 import { Typography } from "@ovr/ui/components/typography";
 import { cn } from "@ovr/ui/lib/utils";
+
 import { Image } from "@/lib/components/image/Image";
+
 import { SnapshotPane } from "../../snapshot-pane/SnapshotPane";
 import { SnapshotPaneHeader } from "../../snapshot-pane/SnapshotPaneHeader";
 

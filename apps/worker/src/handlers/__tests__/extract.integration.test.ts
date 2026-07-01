@@ -1,7 +1,7 @@
 import { dbClient } from "@ovr/db/client";
 
-import { failed } from "../extract";
 import { describe, expect, test } from "../../__tests__/fixtures";
+import { failed } from "../extract";
 
 describe("extract", () => {
   describe("failed", () => {

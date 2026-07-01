@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {
   useTable,
   tableFeatures,
@@ -8,6 +7,9 @@ import {
   createCoreRowModel,
 } from "@tanstack/react-table";
 import { useTanStackTableDevtools } from "@tanstack/react-table-devtools";
+import Link from "next/link";
+
+import { type BuildSchema } from "@ovr/api/contracts/builds";
 import {
   Table,
   TableHeader,
@@ -17,10 +19,10 @@ import {
   TableCell,
   TableEmpty,
 } from "@ovr/ui/components/table";
-import { formatRelativeDateTime } from "@/lib/utils/date";
-import { type BuildSchema } from "@ovr/api/contracts/builds";
-import { BuildStatusBadge, BuildStatusStripe } from "@/lib/components/BuildStatus";
 import { Typography } from "@ovr/ui/components/typography";
+
+import { BuildStatusBadge, BuildStatusStripe } from "@/lib/components/BuildStatus";
+import { formatRelativeDateTime } from "@/lib/utils/date";
 
 const features = tableFeatures({});
 const columnHelper = createColumnHelper<typeof features, BuildSchema>();

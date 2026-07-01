@@ -1,10 +1,11 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+
 import { MultiLineCodeBlock } from "../MultiLineCodeBlock";
 import { MultiLineCodeBlockBody } from "../MultiLineCodeBlockBody";
 import { MultiLineCodeBlockCopyButton } from "../MultiLineCodeBlockCopyButton";
-import { MultiLineCodeBlockLabel } from "../MultiLineCodeBlockLabel";
 import { MultiLineCodeBlockFilename } from "../MultiLineCodeBlockFilename";
 import { MultiLineCodeBlockHeader } from "../MultiLineCodeBlockHeader";
+import { MultiLineCodeBlockLabel } from "../MultiLineCodeBlockLabel";
 import { MultiLineCodeBlockLine } from "../MultiLineCodeBlockLine";
 import { MultiLineCodeBlockLineCount } from "../MultiLineCodeBlockLineCount";
 

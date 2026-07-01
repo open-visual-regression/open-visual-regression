@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
+
 import { setSidebarCollapsedCookie } from "./sidebarCookie";
 
 type SidebarState = {

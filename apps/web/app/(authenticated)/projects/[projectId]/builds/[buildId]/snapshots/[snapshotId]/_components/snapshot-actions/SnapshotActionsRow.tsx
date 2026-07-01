@@ -1,10 +1,12 @@
-import { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { DiffSchema } from "@ovr/api/contracts/diffs";
-import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
+import { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { ChevronLeftIcon, ChevronRightIcon, Icon } from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
-import { SnapshotRejectButton } from "./SnapshotRejectButton";
+
+import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
+
 import { SnapshotApproveButton } from "./SnapshotApproveButton";
+import { SnapshotRejectButton } from "./SnapshotRejectButton";
 
 type ActionsRowProps = {
   snapshot: SnapshotSchema;

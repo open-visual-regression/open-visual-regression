@@ -2,12 +2,12 @@ import type { Browser } from "playwright";
 import { chromium } from "playwright";
 
 import { detectCaptureStrategy, readOvrStoryParameters } from "./captureStrategies";
-import { BOOT_TIMEOUT_MS, RENDER_TIMEOUT_MS } from "./lib/captureTimeouts";
+import type { OvrStoryParameterViewport, OvrStoryParameters } from "./captureStrategies";
 import { newPage } from "./lib/browser";
+import { BOOT_TIMEOUT_MS, RENDER_TIMEOUT_MS } from "./lib/captureTimeouts";
 import { mapWithConcurrency } from "./lib/concurrency";
 import { startStaticProxy } from "./lib/staticProxy";
 import type { StaticProxy } from "./lib/staticProxy";
-import type { OvrStoryParameterViewport, OvrStoryParameters } from "./captureStrategies";
 
 export type NamedViewport = {
   name?: string;

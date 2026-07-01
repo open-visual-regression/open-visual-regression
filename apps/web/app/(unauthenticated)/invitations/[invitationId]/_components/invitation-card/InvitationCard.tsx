@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader } from "@ovr/ui/components/card";
 import { Typography } from "@ovr/ui/components/typography";
+
 import { InvitationForm } from "./InvitationForm";
 
 type InvitationCardProps = {

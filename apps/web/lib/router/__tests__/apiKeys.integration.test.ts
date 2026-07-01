@@ -1,8 +1,9 @@
 import { vi } from "vitest";
 
-import { test, describe, expect } from "@/lib/testing/fixtures";
-import { serverClient } from "@/lib/router";
 import type { AddProjectInputSchema } from "@ovr/api/contracts/projects";
+
+import { serverClient } from "@/lib/router";
+import { test, describe, expect } from "@/lib/testing/fixtures";
 
 vi.mock("next/headers");
 

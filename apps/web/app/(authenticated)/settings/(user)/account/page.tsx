@@ -1,7 +1,9 @@
 import { Typography } from "@ovr/ui/components/typography";
-import { UpdatePasswordForm } from "./_components/update-password-form/UpdatePasswordForm";
-import { UpdateAccountForm } from "./_components/update-account-form/UpdateAccountForm";
+
 import { requireSession } from "@/lib/auth/session";
+
+import { UpdateAccountForm } from "./_components/update-account-form/UpdateAccountForm";
+import { UpdatePasswordForm } from "./_components/update-password-form/UpdatePasswordForm";
 
 export default async function SettingsAccountPage() {
   const { user } = await requireSession();

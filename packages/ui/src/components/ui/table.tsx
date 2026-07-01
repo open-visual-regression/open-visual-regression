@@ -1,5 +1,5 @@
-import * as React from "react";
 import type { CellData, RowData, TableFeatures } from "@tanstack/table-core";
+import * as React from "react";
 
 import { cn } from "../../lib/utils";
 

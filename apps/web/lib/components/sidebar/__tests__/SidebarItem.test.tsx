@@ -1,5 +1,7 @@
 import { FolderIcon } from "@ovr/ui/components/icon";
+
 import { describe, expect, it, render, screen } from "@/test-utils";
+
 import { SidebarItem } from "../SidebarItem";
 
 describe("SidebarItem", () => {

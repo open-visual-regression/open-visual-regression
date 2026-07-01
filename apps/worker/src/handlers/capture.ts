@@ -1,6 +1,6 @@
+import { captureSnapshot, enqueueSnapshotDiff } from "@ovr/capture/snapshots";
 import { dbClient } from "@ovr/db/client";
 import type { CaptureJobPayload } from "@ovr/queue";
-import { captureSnapshot, enqueueSnapshotDiff } from "@ovr/capture/snapshots";
 
 type CaptureJob = { data: CaptureJobPayload };
 

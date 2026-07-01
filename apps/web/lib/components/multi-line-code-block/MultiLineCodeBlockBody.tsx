@@ -1,7 +1,9 @@
 "use client";
 
-import { cn } from "@ovr/ui/lib/utils";
 import { JSX } from "react";
+
+import { cn } from "@ovr/ui/lib/utils";
+
 import { useMultiLineCodeBlockContext } from "./MultiLineCodeBlockContext";
 
 type MultiLineCodeBlockBodyProps = JSX.IntrinsicElements["div"];

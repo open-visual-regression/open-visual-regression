@@ -1,6 +1,7 @@
-import { Button } from "@ovr/ui/components/button";
 import Link from "next/link";
 import { ComponentProps } from "react";
+
+import { Button } from "@ovr/ui/components/button";
 
 type ButtonLinkProps = Omit<ComponentProps<typeof Button>, "render" | "nativeButton"> & {
   href: string | null;

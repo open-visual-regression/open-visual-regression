@@ -1,10 +1,12 @@
-import { notFound } from "next/navigation";
 import { headers } from "next/headers";
-import { UsersSection } from "./_components/users-section/UsersSection";
-import { serverClient } from "@/lib/router";
+import { notFound } from "next/navigation";
+
 import { auth } from "@/lib/auth/auth";
+import { serverClient } from "@/lib/router";
 import { verifyRole } from "@/lib/utils/authorization";
 import { serverError } from "@/lib/utils/errors";
+
+import { UsersSection } from "./_components/users-section/UsersSection";
 
 export type SettingsUsersPageProps = {
   searchParams: Promise<{ search?: string }>;

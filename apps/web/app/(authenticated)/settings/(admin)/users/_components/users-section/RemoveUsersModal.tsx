@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { onError, onSuccess } from "@orpc/client";
 import { useServerAction } from "@orpc/react/hooks";
-import { serverClient } from "@/lib/router";
-import { FieldError } from "@ovr/ui/components/field";
-import { Typography } from "@ovr/ui/components/typography";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
+import { type UserSchema, type RemoveUserInputSchema } from "@ovr/api/contracts/users";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,7 +16,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@ovr/ui/components/alert-dialog";
-import { type UserSchema, type RemoveUserInputSchema } from "@ovr/api/contracts/users";
+import { FieldError } from "@ovr/ui/components/field";
+import { Typography } from "@ovr/ui/components/typography";
+
+import { serverClient } from "@/lib/router";
 
 const toRemoveUserInput = (user: UserSchema): RemoveUserInputSchema =>
   user.status === "invited"

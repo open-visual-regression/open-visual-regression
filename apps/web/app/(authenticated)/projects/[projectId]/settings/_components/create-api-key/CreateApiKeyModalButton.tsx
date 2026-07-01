@@ -1,5 +1,5 @@
-import { DialogTrigger } from "@ovr/ui/components/dialog";
 import { Button } from "@ovr/ui/components/button";
+import { DialogTrigger } from "@ovr/ui/components/dialog";
 
 type CreateApiKeyModalButtonProps = {
   children: React.ReactNode;

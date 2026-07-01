@@ -1,12 +1,15 @@
-import { z } from "zod";
-import { Typography } from "@ovr/ui/components/typography";
-import { serverClient } from "@/lib/router";
 import { notFound } from "next/navigation";
-import { serverError } from "@/lib/utils/errors";
-import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
+import { z } from "zod";
+
 import { Icon, SettingsIcon } from "@ovr/ui/components/icon";
-import { BuildsSection } from "./_components/builds-section/BuildsSection";
+import { Typography } from "@ovr/ui/components/typography";
+
+import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
+import { serverClient } from "@/lib/router";
+import { serverError } from "@/lib/utils/errors";
+
 import { BuildsSearchField } from "./_components/builds-section/BuildsSearchField";
+import { BuildsSection } from "./_components/builds-section/BuildsSection";
 
 type ProjectPageProps = PageProps<"/projects/[projectId]">;
 

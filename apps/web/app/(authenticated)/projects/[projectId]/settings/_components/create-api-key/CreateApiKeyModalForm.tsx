@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { serverClient } from "@/lib/router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { onError, onSuccess } from "@orpc/client";
 import { useServerAction } from "@orpc/react/hooks";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+
+import { API_KEY_NAME_MAX_LENGTH } from "@ovr/api/contracts/apiKeys";
 import { Button } from "@ovr/ui/components/button";
 import {
   DialogDescription,
@@ -20,9 +23,9 @@ import {
   FieldLabel,
 } from "@ovr/ui/components/field";
 import { Input } from "@ovr/ui/components/input";
-import { API_KEY_NAME_MAX_LENGTH } from "@ovr/api/contracts/apiKeys";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+
+import { serverClient } from "@/lib/router";
+
 import { CreateApiKeyModalReveal } from "./CreateApiKeyModalReveal";
 
 const createApiKeyFormSchema = z.object({

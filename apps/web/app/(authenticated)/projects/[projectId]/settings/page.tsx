@@ -1,8 +1,11 @@
+import { notFound } from "next/navigation";
+
 import { Typography } from "@ovr/ui/components/typography";
+
 import { serverClient } from "@/lib/router";
 import { verifyRole } from "@/lib/utils/authorization";
-import { notFound } from "next/navigation";
 import { serverError } from "@/lib/utils/errors";
+
 import { ApiKeysSection } from "./_components/api-keys-section/ApiKeysSection";
 import { UpdateProjectForm } from "./_components/update-project-form/UpdateProjectForm";
 

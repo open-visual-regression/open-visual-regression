@@ -1,6 +1,7 @@
+import { type UserSchema } from "@ovr/api/contracts/users";
 import { Icon, PlusIcon } from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
-import { type UserSchema } from "@ovr/api/contracts/users";
+
 import { InviteUserModal } from "../invite-user/InviteUserModal";
 import { InviteUserModalButton } from "../invite-user/InviteUserModalButton";
 import { UsersSearchField } from "./UsersSearchField";

@@ -1,6 +1,8 @@
 import Link from "next/link";
+
 import { Button } from "@ovr/ui/components/button";
 import { Icon, SettingsIcon } from "@ovr/ui/components/icon";
+
 import { UserAvatar } from "./UserAvatar";
 
 type NavigationBarActionsProps = {

@@ -1,6 +1,6 @@
+import { extractBuild } from "@ovr/capture/extract";
 import { dbClient } from "@ovr/db/client";
 import type { ExtractJobPayload } from "@ovr/queue";
-import { extractBuild } from "@ovr/capture/extract";
 
 type ExtractJob = { data: ExtractJobPayload };
 

@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { onError, onSuccess } from "@orpc/client";
 import { useServerAction } from "@orpc/react/hooks";
-import { setupSchema, type SetupFormValues } from "./schema";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+
+import { serverClient } from "@/lib/router";
+
 import { AdminStep } from "./AdminStep";
 import { OrganizationStep } from "./OrganizationStep";
-import { serverClient } from "@/lib/router";
+import { setupSchema, type SetupFormValues } from "./schema";
 
 type Step = 1 | 2;
 

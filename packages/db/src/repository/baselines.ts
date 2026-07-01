@@ -1,5 +1,5 @@
-import { baselines } from "../schema";
 import { db } from "../db";
+import { baselines } from "../schema";
 
 type FindInput = {
   projectId: string;

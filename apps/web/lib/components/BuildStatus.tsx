@@ -1,5 +1,5 @@
-import { StatusBadge, type StatusBadgeProps } from "@ovr/ui/components/status-badge";
 import { type BuildStatus } from "@ovr/api/contracts/builds";
+import { StatusBadge, type StatusBadgeProps } from "@ovr/ui/components/status-badge";
 
 const BUILD_STATUS_BADGE: Record<
   BuildStatus,

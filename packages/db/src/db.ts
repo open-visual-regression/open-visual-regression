@@ -2,8 +2,8 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 export { sql } from "drizzle-orm";
 
-import { buildDatabaseUrl } from "./url";
 import * as schema from "./schema";
+import { buildDatabaseUrl } from "./url";
 
 const client = new Pool({ connectionString: buildDatabaseUrl() });
 

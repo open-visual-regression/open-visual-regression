@@ -2,5 +2,20 @@
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
   "printWidth": 100,
   "tailwindcss": true,
+  "sortImports": {
+    "customGroups": [
+      { "groupName": "ovr", "elementNamePattern": ["@ovr/**"] },
+      { "groupName": "internal", "elementNamePattern": ["@/**"] }
+    ],
+    "groups": [
+      "builtin",
+      "external",
+      "ovr",
+      "internal",
+      ["parent", "sibling", "index"],
+      "style",
+      "unknown"
+    ]
+  },
   "ignorePatterns": []
 }

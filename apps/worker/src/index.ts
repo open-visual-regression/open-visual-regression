@@ -1,5 +1,4 @@
 import "./env";
-
 import { Worker, type Job } from "bullmq";
 import { Redis } from "ioredis";
 

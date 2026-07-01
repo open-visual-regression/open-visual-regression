@@ -1,6 +1,7 @@
+import { JSX } from "react";
+
 import { Typography } from "@ovr/ui/components/typography";
 import { cn } from "@ovr/ui/lib/utils";
-import { JSX } from "react";
 
 type MultiLineCodeBlockLabelProps = JSX.IntrinsicElements["span"];
 

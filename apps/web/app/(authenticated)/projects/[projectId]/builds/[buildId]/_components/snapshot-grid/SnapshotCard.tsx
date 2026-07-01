@@ -1,12 +1,14 @@
 import Link from "next/link";
-import { Typography } from "@ovr/ui/components/typography";
+
 import { type BuildSnapshotSchema } from "@ovr/api/contracts/snapshots";
-import { SnapshotStatusBadge } from "@/lib/components/SnapshotStatusBadge";
-import { Image } from "@/lib/components/image/Image";
-import { getStoragePath } from "@/lib/utils/storage";
-import { cn } from "@ovr/ui/lib/utils";
 import { GlobeIcon, Icon } from "@ovr/ui/components/icon";
 import { ResolutionIcon } from "@ovr/ui/components/resolution-icon";
+import { Typography } from "@ovr/ui/components/typography";
+import { cn } from "@ovr/ui/lib/utils";
+
+import { Image } from "@/lib/components/image/Image";
+import { SnapshotStatusBadge } from "@/lib/components/SnapshotStatusBadge";
+import { getStoragePath } from "@/lib/utils/storage";
 
 type SnapshotCardProps = {
   snapshot: BuildSnapshotSchema;
