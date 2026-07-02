@@ -1,33 +1,44 @@
-import { readFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { Worker } from "bullmq";
 import type { Redis } from "ioredis";
+import { chromium } from "playwright";
 import { PNG } from "pngjs";
+import * as tar from "tar";
+import { vi } from "vitest";
 
 import { dbClient } from "@ovr/db/client";
 import { QueueName, type DiffJobPayload } from "@ovr/queue";
 import { storage } from "@ovr/storage";
 
-import { getStaticPath } from "../extract";
-import { captureSnapshot, diffSnapshot, enqueueSnapshotDiff } from "../snapshots";
+import { captureBuildGroup, diffSnapshot, enqueueSnapshotDiff } from "../snapshots";
 import { describe, expect, test } from "./fixtures";
 
 const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
 const IFRAME_HTML = await readFile(path.join(TEST_DIR, "html/iframe-static.html"), "utf-8");
 
-const uploadStaticBuild = async (projectId: string, buildId: string): Promise<void> => {
-  await storage.uploadFile(
-    getStaticPath(projectId, buildId, "iframe.html"),
-    Buffer.from(IFRAME_HTML),
-    "text/html",
-  );
-  await storage.uploadFile(
-    getStaticPath(projectId, buildId, "index.json"),
-    Buffer.from(JSON.stringify({ v: 3, entries: {} })),
-    "application/json",
-  );
+const uploadArtifactWithIframe = async (
+  artifactPath: string,
+  iframeHtml: string,
+): Promise<void> => {
+  const sourceDir = await mkdtemp(path.join(tmpdir(), "ovr-snapshot-fixture-"));
+
+  try {
+    await writeFile(path.join(sourceDir, "iframe.html"), iframeHtml);
+    await writeFile(path.join(sourceDir, "index.json"), JSON.stringify({ v: 3, entries: {} }));
+
+    const tarballPath = path.join(sourceDir, "..", `${path.basename(sourceDir)}.tar.gz`);
+    await tar.create({ gzip: true, file: tarballPath, cwd: sourceDir }, ["."]);
+    const tarball = await readFile(tarballPath);
+    await rm(tarballPath, { force: true });
+
+    await storage.uploadFile(artifactPath, tarball, "application/gzip");
+  } finally {
+    await rm(sourceDir, { recursive: true, force: true });
+  }
 };
 
 const uploadPng = async (path: string, fill: number, width = 2, height = 2): Promise<void> => {
@@ -52,13 +63,13 @@ const collectDiffJob = async (connection: Redis): Promise<DiffJobPayload> => {
 };
 
 describe("snapshots", () => {
-  describe("captureSnapshot", () => {
+  describe("captureBuildGroup", () => {
     test("should let a reviewer see a screenshot of the story, and move the build toward a diff once every story in the build has been captured", async ({
       mainBuild,
       captureConfiguration,
       connection,
     }) => {
-      await uploadStaticBuild(mainBuild.projectId, mainBuild.id);
+      await uploadArtifactWithIframe(mainBuild.artifactPath, IFRAME_HTML);
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
           {
@@ -69,7 +80,7 @@ describe("snapshots", () => {
         ],
       });
 
-      await captureSnapshot(snapshot!.id);
+      await captureBuildGroup(mainBuild.id, captureConfiguration.browser, [snapshot!.id]);
 
       const captured = await dbClient.snapshots.findById(snapshot!.id);
       expect(captured).toMatchObject({ status: "success", hasRenderError: false });
@@ -110,12 +121,9 @@ describe("snapshots", () => {
       mainBuild,
       captureConfiguration,
     }) => {
-      await storage.uploadFile(
-        getStaticPath(mainBuild.projectId, mainBuild.id, "iframe.html"),
-        Buffer.from(
-          '<!doctype html><html><body><div id="storybook-root" hidden="true"></div></body></html>',
-        ),
-        "text/html",
+      await uploadArtifactWithIframe(
+        mainBuild.artifactPath,
+        '<!doctype html><html><body><div id="storybook-root" hidden="true"></div></body></html>',
       );
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
@@ -127,7 +135,7 @@ describe("snapshots", () => {
         ],
       });
 
-      await captureSnapshot(snapshot!.id);
+      await captureBuildGroup(mainBuild.id, captureConfiguration.browser, [snapshot!.id]);
 
       const captured = await dbClient.snapshots.findById(snapshot!.id);
       expect(captured).toMatchObject({ status: "success", hasRenderError: true });
@@ -140,13 +148,9 @@ describe("snapshots", () => {
       mainBuild,
       captureConfiguration,
     }) => {
-      await uploadStaticBuild(mainBuild.projectId, mainBuild.id);
-      await storage.uploadFile(
-        getStaticPath(mainBuild.projectId, mainBuild.id, "iframe.html"),
-        Buffer.from(
-          IFRAME_HTML.replace("</body>", '<script>console.error("logged error");</script></body>'),
-        ),
-        "text/html",
+      await uploadArtifactWithIframe(
+        mainBuild.artifactPath,
+        IFRAME_HTML.replace("</body>", '<script>console.error("logged error");</script></body>'),
       );
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
@@ -158,13 +162,91 @@ describe("snapshots", () => {
         ],
       });
 
-      await captureSnapshot(snapshot!.id);
+      await captureBuildGroup(mainBuild.id, captureConfiguration.browser, [snapshot!.id]);
 
       const captured = await dbClient.snapshots.findById(snapshot!.id);
       expect(captured).toMatchObject({ status: "success", hasRenderError: false });
 
       const logs = await dbClient.snapshotLogs.findBySnapshot(snapshot!.id);
       expect(logs.some((log) => log.level === "error")).toBe(true);
+    });
+
+    test("captures every snapshot in a group using a single browser launch", async ({
+      mainBuild,
+      captureConfiguration,
+    }) => {
+      await uploadArtifactWithIframe(mainBuild.artifactPath, IFRAME_HTML);
+      const snapshots = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" },
+          { buildId: mainBuild.id, ...captureConfiguration, targetId: "story-b" },
+        ],
+      });
+
+      const launchSpy = vi.spyOn(chromium, "launch");
+
+      await captureBuildGroup(
+        mainBuild.id,
+        captureConfiguration.browser,
+        snapshots.map((snapshot) => snapshot!.id),
+      );
+
+      expect(launchSpy).toHaveBeenCalledTimes(1);
+
+      for (const snapshot of snapshots) {
+        expect(await dbClient.snapshots.findById(snapshot!.id)).toMatchObject({
+          status: "success",
+          hasRenderError: false,
+        });
+      }
+    });
+
+    test("marks only the failing snapshot as errored while the rest of the group still succeeds", async ({
+      mainBuild,
+      captureConfiguration,
+    }) => {
+      await uploadArtifactWithIframe(mainBuild.artifactPath, IFRAME_HTML);
+      const [badSnapshot, goodSnapshot] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: mainBuild.id, ...captureConfiguration, targetId: "story-bad" },
+          { buildId: mainBuild.id, ...captureConfiguration, targetId: "story-good" },
+        ],
+      });
+
+      vi.spyOn(storage, "uploadFile").mockRejectedValueOnce(new Error("simulated upload failure"));
+
+      await captureBuildGroup(mainBuild.id, captureConfiguration.browser, [
+        badSnapshot!.id,
+        goodSnapshot!.id,
+      ]);
+
+      expect(await dbClient.snapshots.findById(badSnapshot!.id)).toMatchObject({
+        status: "error",
+      });
+      expect(await dbClient.snapshots.findById(goodSnapshot!.id)).toMatchObject({
+        status: "success",
+      });
+    });
+
+    test("skips a snapshot in the group that a previous attempt already captured successfully", async ({
+      mainBuild,
+      captureConfiguration,
+    }) => {
+      await uploadArtifactWithIframe(mainBuild.artifactPath, IFRAME_HTML);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" }],
+      });
+
+      await captureBuildGroup(mainBuild.id, captureConfiguration.browser, [snapshot!.id]);
+      expect(await dbClient.snapshots.findById(snapshot!.id)).toMatchObject({
+        status: "success",
+      });
+
+      const uploadSpy = vi.spyOn(storage, "uploadFile");
+
+      await captureBuildGroup(mainBuild.id, captureConfiguration.browser, [snapshot!.id]);
+
+      expect(uploadSpy).not.toHaveBeenCalled();
     });
   });
 

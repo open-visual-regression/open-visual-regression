@@ -4,9 +4,11 @@ import {
   DeleteObjectCommand,
   DeleteObjectsCommand,
   GetObjectCommand,
+  HeadObjectCommand,
   ListObjectsV2Command,
   PutObjectCommand,
   S3Client,
+  S3ServiceException,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { NodeHttpHandler } from "@smithy/node-http-handler";
@@ -32,6 +34,18 @@ export const storage = {
     await client.send(
       new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: contentType }),
     );
+  },
+
+  objectExists: async (key: string): Promise<boolean> => {
+    try {
+      await client.send(new HeadObjectCommand({ Bucket: bucket, Key: key }));
+      return true;
+    } catch (error) {
+      if (error instanceof S3ServiceException && error.$metadata.httpStatusCode === 404) {
+        return false;
+      }
+      throw error;
+    }
   },
 
   getFileStream: async (key: string): Promise<Readable> => {

@@ -2,13 +2,13 @@ import type { Job } from "bullmq";
 import { Redis } from "ioredis";
 
 import {
-  enqueueCapture as enqueueCaptureJob,
+  enqueueCaptureGroup as enqueueCaptureGroupJob,
   enqueueDiff as enqueueDiffJob,
   enqueueExtract as enqueueExtractJob,
   enqueueFinalize as enqueueFinalizeJob,
   enqueuePurge as enqueuePurgeJob,
   enqueuePurgeMany as enqueuePurgeManyJob,
-  type CaptureJobPayload,
+  type CaptureGroupJobPayload,
   type DiffJobPayload,
   type ExtractJobPayload,
   type FinalizeJobPayload,
@@ -23,8 +23,9 @@ const connection = new Redis(process.env.VALKEY_URL ?? "redis://localhost:6379",
 export const enqueueExtract = (payload: ExtractJobPayload): Promise<Job<ExtractJobPayload>> =>
   enqueueExtractJob(payload, connection);
 
-export const enqueueCapture = (payload: CaptureJobPayload): Promise<Job<CaptureJobPayload>> =>
-  enqueueCaptureJob(payload, connection);
+export const enqueueCaptureGroup = (
+  payload: CaptureGroupJobPayload,
+): Promise<Job<CaptureGroupJobPayload>> => enqueueCaptureGroupJob(payload, connection);
 
 export const enqueueDiff = (payload: DiffJobPayload): Promise<Job<DiffJobPayload>> =>
   enqueueDiffJob(payload, connection);

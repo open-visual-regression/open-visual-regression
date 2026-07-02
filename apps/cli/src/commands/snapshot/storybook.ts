@@ -51,14 +51,13 @@ export const storybookCommand = new Command("storybook")
         commitSha,
         name,
         author,
-        targets,
-        viewports,
-        diffThreshold,
       });
 
       console.log("Uploading build artifact...");
       const artifact = await createArtifactTarball(options.dir);
       await uploadArtifact(uploadUrl, artifact);
+
+      await client.builds.confirmUpload({ buildId, targets, viewports, diffThreshold });
 
       console.log(`Build ${buildId} created. Waiting for result...`);
       await pollBuildStatus({

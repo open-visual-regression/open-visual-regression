@@ -45,6 +45,7 @@ export const serverClient: typeof RealServerClient = {
   },
   builds: {
     createBuild: os.builds.createBuild.handler(() => ({ buildId: "", uploadUrl: "" })).actionable(),
+    confirmUpload: os.builds.confirmUpload.handler(() => ({ ok: true as const })).actionable(),
     getBuildStatus: os.builds.getBuildStatus
       .handler(() => ({ status: "pending" as const }))
       .actionable(),

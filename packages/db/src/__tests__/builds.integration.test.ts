@@ -396,4 +396,125 @@ describe("builds", () => {
       expect(builds.map((build) => build.id)).toEqual([older!.id, newer!.id]);
     });
   });
+
+  describe("findStale", () => {
+    const OLD_TIMESTAMP = "2020-01-01T00:00:00.000Z";
+    const CUTOFF = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+
+    test("should return a build that is old with no recent snapshot or diff activity", async ({
+      project,
+      user,
+    }) => {
+      const build = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/stale/artifact",
+        createdBy: user.id,
+        createdAt: OLD_TIMESTAMP,
+        updatedAt: OLD_TIMESTAMP,
+      });
+
+      const staleIds = await dbClient.builds.findStale(CUTOFF, 100);
+      expect(staleIds).toContain(build!.id);
+    });
+
+    test("should not return a build younger than the stale window", async ({ project, user }) => {
+      const build = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/fresh/artifact",
+        createdBy: user.id,
+      });
+
+      const staleIds = await dbClient.builds.findStale(CUTOFF, 100);
+      expect(staleIds).not.toContain(build!.id);
+    });
+
+    test("should not return a build whose snapshots updated recently even if the build itself is old", async ({
+      project,
+      user,
+      captureConfiguration,
+    }) => {
+      const build = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/progressing/artifact",
+        createdBy: user.id,
+        createdAt: OLD_TIMESTAMP,
+        updatedAt: OLD_TIMESTAMP,
+      });
+
+      await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build!.id,
+            ...captureConfiguration,
+            targetId: "story-a",
+            updatedAt: new Date().toISOString(),
+          },
+        ],
+      });
+
+      const staleIds = await dbClient.builds.findStale(CUTOFF, 100);
+      expect(staleIds).not.toContain(build!.id);
+    });
+
+    test("should not return a build whose diffs updated recently even if the build itself is old", async ({
+      project,
+      user,
+      captureConfiguration,
+    }) => {
+      const build = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/diff-progressing/artifact",
+        createdBy: user.id,
+        createdAt: OLD_TIMESTAMP,
+        updatedAt: OLD_TIMESTAMP,
+      });
+
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build!.id,
+            ...captureConfiguration,
+            targetId: "story-a",
+            status: "success",
+            updatedAt: OLD_TIMESTAMP,
+          },
+        ],
+      });
+
+      await dbClient.diffs.create({
+        snapshotId: snapshot!.id,
+        updatedAt: new Date().toISOString(),
+      });
+
+      const staleIds = await dbClient.builds.findStale(CUTOFF, 100);
+      expect(staleIds).not.toContain(build!.id);
+    });
+
+    test("should not return a build that already reached a terminal processing status", async ({
+      project,
+      user,
+    }) => {
+      const build = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/done/artifact",
+        createdBy: user.id,
+        createdAt: OLD_TIMESTAMP,
+        updatedAt: OLD_TIMESTAMP,
+      });
+      await dbClient.builds.updateProcessingStatus(build!.id, "success");
+
+      const staleIds = await dbClient.builds.findStale(CUTOFF, 100);
+      expect(staleIds).not.toContain(build!.id);
+    });
+  });
 });

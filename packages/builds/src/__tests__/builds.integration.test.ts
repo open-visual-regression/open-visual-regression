@@ -1,13 +1,14 @@
 import assert from "node:assert";
 
-import { Worker } from "bullmq";
+import { Queue, Worker } from "bullmq";
 import type { Redis } from "ioredis";
 
 import { dbClient } from "@ovr/db/client";
 import type { DiffProcessingStatus, DiffReviewStatus } from "@ovr/db/schema";
 import { QueueName, type ExtractJobPayload } from "@ovr/queue";
+import { storage } from "@ovr/storage";
 
-import { createBuild, finalizeBuild, getArtifactPath } from "../builds";
+import { confirmBuildUpload, createBuild, finalizeBuild, getArtifactPath } from "../builds";
 import { describe, expect, test } from "./fixtures";
 
 const collectExtractJob = async (connection: Redis): Promise<ExtractJobPayload> => {
@@ -25,6 +26,15 @@ const collectExtractJob = async (connection: Redis): Promise<ExtractJobPayload> 
   }
 };
 
+const findExtractJob = async (connection: Redis, buildId: string) => {
+  const queue = new Queue(QueueName.BUILD_EXTRACT, { connection });
+  try {
+    return await queue.getJob(buildId);
+  } finally {
+    await queue.close();
+  }
+};
+
 type SeedDiffStatus = { processingStatus: DiffProcessingStatus; reviewStatus: DiffReviewStatus };
 type Viewport = { browser: string; viewportWidth: number; viewportHeight: number };
 
@@ -39,26 +49,9 @@ const seedDiffs = async (buildId: string, viewport: Viewport, statuses: SeedDiff
 
 describe("builds", () => {
   describe("createBuild", () => {
-    test("creates a queued build and enqueues an extract job with the targets and viewports", async ({
-      project,
-      captureConfiguration,
-      user,
-      connection,
-    }) => {
-      const targets = [
-        { id: "story-a", title: "Story", name: "A" },
-        { id: "story-b", title: "Story", name: "B" },
-      ];
-
+    test("creates a queued build", async ({ project, user, connection }) => {
       const result = await createBuild(
-        {
-          projectId: project.id,
-          branch: "main",
-          commitSha: "a".repeat(40),
-          targets,
-          viewports: [captureConfiguration],
-          diffThreshold: 0.05,
-        },
+        { projectId: project.id, branch: "main", commitSha: "a".repeat(40) },
         user.id,
       );
 
@@ -78,6 +71,52 @@ describe("builds", () => {
         createdBy: user.id,
       });
 
+      expect(await findExtractJob(connection, buildId)).toBeUndefined();
+    });
+
+    test("returns PROJECT_NOT_FOUND when the project does not exist", async ({ user }) => {
+      const result = await createBuild(
+        { projectId: crypto.randomUUID(), branch: "main", commitSha: "a".repeat(40) },
+        user.id,
+      );
+
+      expect(result).toEqual({ status: "error", error: "PROJECT_NOT_FOUND" });
+    });
+  });
+
+  describe("confirmBuildUpload", () => {
+    test("enqueues an extract job with the targets and viewports once the artifact exists", async ({
+      project,
+      captureConfiguration,
+      user,
+      connection,
+    }) => {
+      const created = await createBuild(
+        { projectId: project.id, branch: "main", commitSha: "a".repeat(40) },
+        user.id,
+      );
+      assert(created.status === "ok");
+      const buildId = created.data;
+
+      await storage.uploadFile(
+        getArtifactPath(project.id, buildId),
+        Buffer.from(""),
+        "application/gzip",
+      );
+
+      const targets = [
+        { id: "story-a", title: "Story", name: "A" },
+        { id: "story-b", title: "Story", name: "B" },
+      ];
+
+      const result = await confirmBuildUpload(buildId, {
+        targets,
+        viewports: [captureConfiguration],
+        diffThreshold: 0.05,
+      });
+
+      expect(result).toEqual({ status: "ok", data: undefined });
+
       const job = await collectExtractJob(connection);
       expect(job).toEqual({
         buildId,
@@ -88,20 +127,39 @@ describe("builds", () => {
       });
     });
 
-    test("returns PROJECT_NOT_FOUND when the project does not exist", async ({ user }) => {
-      const result = await createBuild(
-        {
-          projectId: crypto.randomUUID(),
-          branch: "main",
-          commitSha: "a".repeat(40),
-          targets: [{ id: "story-a", title: "Story", name: "A" }],
-          viewports: [{ browser: "chromium", viewportWidth: 1280, viewportHeight: 800 }],
-          diffThreshold: 0.05,
-        },
+    test("returns ARTIFACT_MISSING when the artifact was never uploaded", async ({
+      project,
+      captureConfiguration,
+      user,
+    }) => {
+      const created = await createBuild(
+        { projectId: project.id, branch: "main", commitSha: "a".repeat(40) },
         user.id,
       );
+      assert(created.status === "ok");
 
-      expect(result).toEqual({ status: "error", error: "PROJECT_NOT_FOUND" });
+      const result = await confirmBuildUpload(created.data, {
+        targets: [{ id: "story-a", title: "Story", name: "A" }],
+        viewports: [captureConfiguration],
+        diffThreshold: 0.05,
+      });
+
+      expect(result).toEqual({ status: "error", error: "ARTIFACT_MISSING" });
+      expect(await dbClient.builds.findById(created.data)).toMatchObject({
+        processingStatus: "queued",
+      });
+    });
+
+    test("returns BUILD_NOT_FOUND when the build does not exist", async ({
+      captureConfiguration,
+    }) => {
+      const result = await confirmBuildUpload(crypto.randomUUID(), {
+        targets: [{ id: "story-a", title: "Story", name: "A" }],
+        viewports: [captureConfiguration],
+        diffThreshold: 0.05,
+      });
+
+      expect(result).toEqual({ status: "error", error: "BUILD_NOT_FOUND" });
     });
   });
 

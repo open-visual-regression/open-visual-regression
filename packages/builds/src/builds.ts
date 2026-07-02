@@ -3,6 +3,7 @@ import { v7 as uuidv7 } from "uuid";
 import { dbClient } from "@ovr/db/client";
 import type { BuildReviewStatus } from "@ovr/db/schema";
 import { enqueueExtract } from "@ovr/queue/producer";
+import { storage } from "@ovr/storage";
 
 import type { Result } from "./types";
 
@@ -20,6 +21,9 @@ type CreateBuildInput = {
   commitSha: string;
   name?: string;
   author?: string;
+};
+
+type ConfirmBuildUploadInput = {
   targets: { id: string; title: string; name: string }[];
   viewports: Viewport[];
   diffThreshold: number;
@@ -42,23 +46,40 @@ export const createBuild = async (
 
   const buildId = uuidv7();
 
-  try {
-    await dbClient.builds.create({
-      id: buildId,
-      projectId: input.projectId,
-      branch: input.branch,
-      commitSha: input.commitSha,
-      name: input.name,
-      author: input.author,
-      processingStatus: "queued",
-      captureMode: "worker",
-      artifactPath: getArtifactPath(input.projectId, buildId),
-      createdBy: callerId,
-    });
+  await dbClient.builds.create({
+    id: buildId,
+    projectId: input.projectId,
+    branch: input.branch,
+    commitSha: input.commitSha,
+    name: input.name,
+    author: input.author,
+    processingStatus: "queued",
+    captureMode: "worker",
+    artifactPath: getArtifactPath(input.projectId, buildId),
+    createdBy: callerId,
+  });
 
+  return { status: "ok", data: buildId };
+};
+
+export const confirmBuildUpload = async (
+  buildId: string,
+  input: ConfirmBuildUploadInput,
+): Promise<Result<void, "BUILD_NOT_FOUND" | "ARTIFACT_MISSING">> => {
+  const build = await dbClient.builds.findById(buildId);
+
+  if (!build) {
+    return { status: "error", error: "BUILD_NOT_FOUND" };
+  }
+
+  if (!(await storage.objectExists(build.artifactPath))) {
+    return { status: "error", error: "ARTIFACT_MISSING" };
+  }
+
+  try {
     await enqueueExtract({
       buildId,
-      artifactPath: getArtifactPath(input.projectId, buildId),
+      artifactPath: build.artifactPath,
       targets: input.targets,
       viewports: input.viewports,
       diffThreshold: input.diffThreshold,
@@ -69,7 +90,7 @@ export const createBuild = async (
     throw error;
   }
 
-  return { status: "ok", data: buildId };
+  return { status: "ok", data: undefined };
 };
 
 type BuildDiff = Awaited<ReturnType<typeof dbClient.diffs.findByBuild>>[number];
