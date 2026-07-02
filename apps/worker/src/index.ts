@@ -1,10 +1,10 @@
 import "./env";
 import { Worker, type Job } from "bullmq";
 import { Redis } from "ioredis";
+import { z } from "zod";
 
 import { CAPTURE_GROUP_SIZE } from "@ovr/capture/extract";
 import { CAPTURE_JOB_TIMEOUT_MS } from "@ovr/capture/lib/captureTimeouts";
-import { parsePositiveInt } from "@ovr/capture/lib/env";
 import { QueueName, scheduleReaper, schedulePurge } from "@ovr/queue";
 
 import * as capture from "./handlers/capture";
@@ -19,10 +19,12 @@ const connection = new Redis(process.env.VALKEY_URL ?? "redis://localhost:6379",
   maxRetriesPerRequest: null,
 });
 
-// How many capture-group jobs this worker instance processes concurrently. Safe to
-// raise once each job's cost is bounded (one bundle fetch, one browser per group) —
-// horizontal scaling is running multiple worker instances, each with its own value.
-const CAPTURE_GROUP_CONCURRENCY = parsePositiveInt(process.env.CAPTURE_GROUP_CONCURRENCY, 2);
+const CAPTURE_GROUP_CONCURRENCY = z.coerce
+  .number()
+  .int()
+  .positive()
+  .catch(2)
+  .parse(process.env.CAPTURE_GROUP_CONCURRENCY);
 
 const extractWorker = new Worker(QueueName.BUILD_EXTRACT, extract.run, { connection });
 const captureWorker = new Worker(QueueName.SNAPSHOT_CAPTURE, capture.run, {

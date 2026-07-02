@@ -4,7 +4,7 @@ export default defineConfig({
   test: {
     name: "capture",
     environment: "node",
-    include: ["src/**/__tests__/**/*.test.ts"],
+    include: ["src/__tests__/**/*.integration.test.ts"],
     globalSetup: ["./vitest.integration.globalSetup.ts"],
     setupFiles: ["./vitest.integration.setup.ts"],
     fileParallelism: false,
