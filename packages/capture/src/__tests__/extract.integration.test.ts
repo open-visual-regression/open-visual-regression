@@ -11,7 +11,7 @@ import { dbClient } from "@ovr/db/client";
 import { QueueName, type CaptureJobPayload } from "@ovr/queue";
 import { storage } from "@ovr/storage";
 
-import { extractBuild, getStaticPath } from "../extract";
+import { extractBuild } from "../extract";
 import { describe, expect, test } from "./fixtures";
 
 const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -70,7 +70,7 @@ const buildArtifactTarball = async (
 };
 
 describe("extractBuild", () => {
-  test("uploads each file from the artifact tarball, creates a snapshot per target x viewport, and enqueues a capture job per snapshot", async ({
+  test("creates a snapshot per target x viewport and enqueues a capture job per snapshot", async ({
     mainBuild,
     captureConfiguration,
     connection,
@@ -84,15 +84,6 @@ describe("extractBuild", () => {
     ];
 
     await extractBuild(mainBuild.id, targets, [captureConfiguration], 0.05);
-
-    const iframeStream = await storage.getFileStream(
-      getStaticPath(mainBuild.projectId, mainBuild.id, "iframe.html"),
-    );
-    const runtimeStream = await storage.getFileStream(
-      getStaticPath(mainBuild.projectId, mainBuild.id, "runtime.js"),
-    );
-    expect(iframeStream).toBeDefined();
-    expect(runtimeStream).toBeDefined();
 
     const snapshots = await dbClient.snapshots.findByBuild(mainBuild.id);
     expect(snapshots).toHaveLength(2);

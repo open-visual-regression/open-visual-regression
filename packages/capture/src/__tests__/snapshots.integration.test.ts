@@ -1,33 +1,42 @@
-import { readFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { Worker } from "bullmq";
 import type { Redis } from "ioredis";
 import { PNG } from "pngjs";
+import * as tar from "tar";
 
 import { dbClient } from "@ovr/db/client";
 import { QueueName, type DiffJobPayload } from "@ovr/queue";
 import { storage } from "@ovr/storage";
 
-import { getStaticPath } from "../extract";
 import { captureSnapshot, diffSnapshot, enqueueSnapshotDiff } from "../snapshots";
 import { describe, expect, test } from "./fixtures";
 
 const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
 const IFRAME_HTML = await readFile(path.join(TEST_DIR, "html/iframe-static.html"), "utf-8");
 
-const uploadStaticBuild = async (projectId: string, buildId: string): Promise<void> => {
-  await storage.uploadFile(
-    getStaticPath(projectId, buildId, "iframe.html"),
-    Buffer.from(IFRAME_HTML),
-    "text/html",
-  );
-  await storage.uploadFile(
-    getStaticPath(projectId, buildId, "index.json"),
-    Buffer.from(JSON.stringify({ v: 3, entries: {} })),
-    "application/json",
-  );
+const uploadArtifactWithIframe = async (
+  artifactPath: string,
+  iframeHtml: string,
+): Promise<void> => {
+  const sourceDir = await mkdtemp(path.join(tmpdir(), "ovr-snapshot-fixture-"));
+
+  try {
+    await writeFile(path.join(sourceDir, "iframe.html"), iframeHtml);
+    await writeFile(path.join(sourceDir, "index.json"), JSON.stringify({ v: 3, entries: {} }));
+
+    const tarballPath = path.join(sourceDir, "..", `${path.basename(sourceDir)}.tar.gz`);
+    await tar.create({ gzip: true, file: tarballPath, cwd: sourceDir }, ["."]);
+    const tarball = await readFile(tarballPath);
+    await rm(tarballPath, { force: true });
+
+    await storage.uploadFile(artifactPath, tarball, "application/gzip");
+  } finally {
+    await rm(sourceDir, { recursive: true, force: true });
+  }
 };
 
 const uploadPng = async (path: string, fill: number, width = 2, height = 2): Promise<void> => {
@@ -58,7 +67,7 @@ describe("snapshots", () => {
       captureConfiguration,
       connection,
     }) => {
-      await uploadStaticBuild(mainBuild.projectId, mainBuild.id);
+      await uploadArtifactWithIframe(mainBuild.artifactPath, IFRAME_HTML);
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
           {
@@ -110,12 +119,9 @@ describe("snapshots", () => {
       mainBuild,
       captureConfiguration,
     }) => {
-      await storage.uploadFile(
-        getStaticPath(mainBuild.projectId, mainBuild.id, "iframe.html"),
-        Buffer.from(
-          '<!doctype html><html><body><div id="storybook-root" hidden="true"></div></body></html>',
-        ),
-        "text/html",
+      await uploadArtifactWithIframe(
+        mainBuild.artifactPath,
+        '<!doctype html><html><body><div id="storybook-root" hidden="true"></div></body></html>',
       );
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
@@ -140,13 +146,9 @@ describe("snapshots", () => {
       mainBuild,
       captureConfiguration,
     }) => {
-      await uploadStaticBuild(mainBuild.projectId, mainBuild.id);
-      await storage.uploadFile(
-        getStaticPath(mainBuild.projectId, mainBuild.id, "iframe.html"),
-        Buffer.from(
-          IFRAME_HTML.replace("</body>", '<script>console.error("logged error");</script></body>'),
-        ),
-        "text/html",
+      await uploadArtifactWithIframe(
+        mainBuild.artifactPath,
+        IFRAME_HTML.replace("</body>", '<script>console.error("logged error");</script></body>'),
       );
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
