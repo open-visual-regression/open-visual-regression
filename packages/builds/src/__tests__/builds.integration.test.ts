@@ -49,11 +49,7 @@ const seedDiffs = async (buildId: string, viewport: Viewport, statuses: SeedDiff
 
 describe("builds", () => {
   describe("createBuild", () => {
-    test("creates a queued build without enqueuing an extract job", async ({
-      project,
-      user,
-      connection,
-    }) => {
+    test("creates a queued build", async ({ project, user, connection }) => {
       const result = await createBuild(
         { projectId: project.id, branch: "main", commitSha: "a".repeat(40) },
         user.id,
@@ -131,7 +127,7 @@ describe("builds", () => {
       });
     });
 
-    test("returns ARTIFACT_MISSING and does not enqueue extract when the artifact was never uploaded", async ({
+    test("returns ARTIFACT_MISSING when the artifact was never uploaded", async ({
       project,
       captureConfiguration,
       user,
