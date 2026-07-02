@@ -13,6 +13,8 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { NodeHttpHandler } from "@smithy/node-http-handler";
 
+const KEEP_ALIVE_MAX_SOCKETS = 50;
+
 const client = new S3Client({
   endpoint: process.env.STORAGE_ENDPOINT,
   region: process.env.STORAGE_REGION ?? "us-east-1",
@@ -24,6 +26,8 @@ const client = new S3Client({
   requestHandler: new NodeHttpHandler({
     connectionTimeout: 5_000,
     socketTimeout: 30_000,
+    httpAgent: { keepAlive: true, maxSockets: KEEP_ALIVE_MAX_SOCKETS },
+    httpsAgent: { keepAlive: true, maxSockets: KEEP_ALIVE_MAX_SOCKETS },
   }),
 });
 
