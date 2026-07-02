@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, notInArray, or, sql } from "drizzle-orm";
 
 import { db, type DbClient } from "../db";
 import { diffs, snapshots, type SnapshotStatus } from "../schema";
@@ -51,6 +51,13 @@ export const updateCaptureResult = async (
 ) => {
   const [snapshot] = await tx.update(snapshots).set(result).where(eq(snapshots.id, id)).returning();
   return snapshot;
+};
+
+export const markStuckAsError = async (buildId: string): Promise<void> => {
+  await db
+    .update(snapshots)
+    .set({ status: "error" })
+    .where(and(eq(snapshots.buildId, buildId), notInArray(snapshots.status, ["success", "error"])));
 };
 
 export const countByBuild = async (buildId: string) => {

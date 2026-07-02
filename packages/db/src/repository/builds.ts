@@ -1,9 +1,11 @@
-import { and, asc, count, desc, eq, ilike, inArray, lt, notExists, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, ilike, inArray, lt, notExists, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 
 import { db, type DbClient } from "../db";
 import {
   baselines,
   builds,
+  diffs,
   projects,
   snapshots,
   type BuildProcessingStatus,
@@ -164,4 +166,35 @@ export const removeMany = async (tx: DbClient, ids: string[]): Promise<void> => 
   }
 
   await tx.delete(builds).where(inArray(builds.id, ids));
+};
+
+export const findStale = async (cutoff: string, limit: number): Promise<string[]> => {
+  const diffSnapshots = alias(snapshots, "diff_snapshots");
+
+  const rows = await db
+    .select({ id: builds.id })
+    .from(builds)
+    .where(
+      and(
+        inArray(builds.processingStatus, ["queued", "processing"]),
+        lt(builds.createdAt, cutoff),
+        notExists(
+          db
+            .select({ one: sql`1` })
+            .from(snapshots)
+            .where(and(eq(snapshots.buildId, builds.id), gt(snapshots.updatedAt, cutoff))),
+        ),
+        notExists(
+          db
+            .select({ one: sql`1` })
+            .from(diffs)
+            .innerJoin(diffSnapshots, eq(diffs.snapshotId, diffSnapshots.id))
+            .where(and(eq(diffSnapshots.buildId, builds.id), gt(diffs.updatedAt, cutoff))),
+        ),
+      ),
+    )
+    .orderBy(asc(builds.createdAt))
+    .limit(limit);
+
+  return rows.map((row) => row.id);
 };

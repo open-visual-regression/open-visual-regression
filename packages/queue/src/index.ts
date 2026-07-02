@@ -9,6 +9,7 @@ export enum QueueName {
   BUILD_FINALIZE = "build-finalize",
   BUILD_PURGE_DISPATCH = "build-purge-dispatch",
   BUILD_PURGE = "build-purge",
+  BUILD_REAPER = "build-reaper",
 }
 
 export type ExtractJobPayload = {
@@ -46,6 +47,8 @@ export type PurgeJobPayload = {
   projectId: string;
 };
 
+export type ReaperJobPayload = Record<string, never>;
+
 const JOB_OPTIONS: Record<QueueName, JobsOptions> = {
   [QueueName.BUILD_EXTRACT]: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
   [QueueName.SNAPSHOT_CAPTURE]: { attempts: 5, backoff: { type: "exponential", delay: 2000 } },
@@ -53,6 +56,7 @@ const JOB_OPTIONS: Record<QueueName, JobsOptions> = {
   [QueueName.BUILD_FINALIZE]: { attempts: 3, backoff: { type: "fixed", delay: 1000 } },
   [QueueName.BUILD_PURGE_DISPATCH]: { attempts: 3, backoff: { type: "exponential", delay: 5000 } },
   [QueueName.BUILD_PURGE]: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
+  [QueueName.BUILD_REAPER]: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
 };
 
 const enqueue = async <T>(
@@ -131,6 +135,21 @@ export const schedulePurge = async (connection: IORedis): Promise<void> => {
       PURGE_DISPATCH_JOB_ID,
       { pattern: "0 3 * * *" },
       { name: QueueName.BUILD_PURGE_DISPATCH, data: {} },
+    );
+  } finally {
+    await queue.close();
+  }
+};
+
+const REAPER_JOB_ID = "build-reaper";
+
+export const scheduleReaper = async (connection: IORedis): Promise<void> => {
+  const queue = new Queue<ReaperJobPayload>(QueueName.BUILD_REAPER, { connection });
+  try {
+    await queue.upsertJobScheduler(
+      REAPER_JOB_ID,
+      { pattern: "*/5 * * * *" },
+      { name: QueueName.BUILD_REAPER, data: {} },
     );
   } finally {
     await queue.close();
