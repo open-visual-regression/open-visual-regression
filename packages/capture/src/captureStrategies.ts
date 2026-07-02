@@ -150,6 +150,11 @@ const waitForStorybookTargetPlayed = ({
           error: errorMessages.length > 0 ? errorMessages.join("\n") : "story finished with errors",
         });
       },
+      // Re-selecting the current story yields no re-play; it is already played.
+      storyUnchanged: () => {
+        cleanup();
+        resolve({ ok: true });
+      },
       storyErrored: (payload?: { description?: string }) => {
         if (payload?.description) {
           errorMessages.push(payload.description);
