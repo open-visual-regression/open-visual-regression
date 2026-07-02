@@ -1,13 +1,15 @@
-import type { Browser } from "playwright";
+import type { Page } from "playwright";
 import { chromium } from "playwright";
 
-import { detectCaptureStrategy, readOvrStoryParameters } from "./captureStrategies";
+import {
+  detectCaptureStrategy,
+  readOvrStoryParameters,
+  type CaptureStrategy,
+} from "./captureStrategies";
 import type { OvrStoryParameterViewport, OvrStoryParameters } from "./captureStrategies";
 import { newPage } from "./lib/browser";
 import { BOOT_TIMEOUT_MS, RENDER_TIMEOUT_MS } from "./lib/captureTimeouts";
-import { mapWithConcurrency } from "./lib/concurrency";
 import { startStaticProxy } from "./lib/staticProxy";
-import type { StaticProxy } from "./lib/staticProxy";
 
 export type NamedViewport = {
   name?: string;
@@ -19,30 +21,12 @@ export type NamedViewport = {
 
 type OverrideEntry = [targetId: string, parameters: OvrStoryParameters];
 
-const OVERRIDE_READ_CONCURRENCY = 8;
-
 const readStoryOverride = async (
-  browser: Browser,
-  proxy: StaticProxy,
-  strategy: Awaited<ReturnType<typeof detectCaptureStrategy>>,
+  page: Page,
+  strategy: CaptureStrategy,
   targetId: string,
 ): Promise<OverrideEntry | undefined> => {
-  const context = await browser.newContext();
-
   try {
-    const page = await newPage(context);
-
-    await page.route("**/*", (route) => {
-      const url = new URL(route.request().url());
-      if (url.origin === proxy.origin || url.protocol === "data:" || url.protocol === "blob:") {
-        return route.continue();
-      }
-      return route.abort();
-    });
-
-    await page.goto(`${proxy.origin}/iframe.html`, { waitUntil: "load" });
-    await strategy.waitForBoot(page, BOOT_TIMEOUT_MS);
-
     const renderResult = await page.evaluate(strategy.waitForTargetRendered, {
       targetId,
       timeoutMs: RENDER_TIMEOUT_MS,
@@ -63,22 +47,7 @@ const readStoryOverride = async (
       error,
     );
     return undefined;
-  } finally {
-    await context.close();
   }
-};
-
-const readOverridesConcurrently = async (
-  browser: Browser,
-  proxy: StaticProxy,
-  targetIds: readonly string[],
-): Promise<OverrideEntry[]> => {
-  const strategy = await detectCaptureStrategy(proxy.origin);
-  const entries = await mapWithConcurrency(targetIds, OVERRIDE_READ_CONCURRENCY, (targetId) =>
-    readStoryOverride(browser, proxy, strategy, targetId),
-  );
-
-  return entries.filter((entry): entry is OverrideEntry => entry !== undefined);
 };
 
 export const readStoryParameterOverrides = async (
@@ -89,7 +58,30 @@ export const readStoryParameterOverrides = async (
   const browser = await chromium.launch();
 
   try {
-    return new Map(await readOverridesConcurrently(browser, proxy, targetIds));
+    const context = await browser.newContext();
+    const page = await newPage(context);
+
+    await page.route("**/*", (route) => {
+      const url = new URL(route.request().url());
+      if (url.origin === proxy.origin || url.protocol === "data:" || url.protocol === "blob:") {
+        return route.continue();
+      }
+      return route.abort();
+    });
+
+    const strategy = await detectCaptureStrategy(proxy.origin);
+    await page.goto(`${proxy.origin}/iframe.html`, { waitUntil: "load" });
+    await strategy.waitForBoot(page, BOOT_TIMEOUT_MS);
+
+    const entries: OverrideEntry[] = [];
+    for (const targetId of targetIds) {
+      const entry = await readStoryOverride(page, strategy, targetId);
+      if (entry) {
+        entries.push(entry);
+      }
+    }
+
+    return new Map(entries);
   } finally {
     await browser.close();
     proxy.close();

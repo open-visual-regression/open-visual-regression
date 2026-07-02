@@ -2,12 +2,12 @@ import { Queue, Worker } from "bullmq";
 import type { Redis } from "ioredis";
 
 import {
-  enqueueCapture,
+  enqueueCaptureGroup,
   enqueueDiff,
   enqueueExtract,
   enqueueFinalize,
   QueueName,
-  type CaptureJobPayload,
+  type CaptureGroupJobPayload,
   type DiffJobPayload,
   type ExtractJobPayload,
   type FinalizeJobPayload,
@@ -68,16 +68,20 @@ describe("queue", () => {
     });
   });
 
-  describe("enqueueCapture", () => {
+  describe("enqueueCaptureGroup", () => {
     test("should deliver the payload to a capture worker and drain the queue", async ({
       connection,
     }) => {
-      const payload: CaptureJobPayload = { buildId: "build-1", snapshotId: "snapshot-1" };
+      const payload: CaptureGroupJobPayload = {
+        buildId: "build-1",
+        browser: "chromium",
+        snapshotIds: ["snapshot-1", "snapshot-2"],
+      };
 
-      const data = await processedByWorker<CaptureJobPayload>(
+      const data = await processedByWorker<CaptureGroupJobPayload>(
         QueueName.SNAPSHOT_CAPTURE,
         connection,
-        () => enqueueCapture(payload, connection),
+        () => enqueueCaptureGroup(payload, connection),
       );
 
       expect(data).toEqual(payload);

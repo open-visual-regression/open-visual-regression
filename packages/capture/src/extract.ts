@@ -1,5 +1,5 @@
 import { dbClient } from "@ovr/db/client";
-import { enqueueCapture } from "@ovr/queue/producer";
+import { enqueueCaptureGroup } from "@ovr/queue/producer";
 
 import { withExtractedBundle } from "./lib/artifact";
 import {
@@ -10,6 +10,22 @@ import {
 import type { NamedViewport } from "./storyViewports";
 
 type Target = { id: string; title: string; name: string };
+
+// Max snapshots sharing one warm browser per capture-group job.
+export const CAPTURE_GROUP_SIZE = 10;
+
+const chunk = <T>(items: T[], size: number): T[][] =>
+  Array.from({ length: Math.ceil(items.length / size) }, (_, index) =>
+    items.slice(index * size, index * size + size),
+  );
+
+const groupSnapshotIdsByBrowser = (
+  snapshots: { id: string; browser: string }[],
+): Map<string, string[]> =>
+  snapshots.reduce((groups, snapshot) => {
+    groups.set(snapshot.browser, [...(groups.get(snapshot.browser) ?? []), snapshot.id]);
+    return groups;
+  }, new Map<string, string[]>());
 
 export const extractBuild = async (
   buildId: string,
@@ -53,7 +69,13 @@ export const extractBuild = async (
   });
 
   const snapshots = await dbClient.snapshots.findByBuild(buildId);
+  const groupedByBrowser = groupSnapshotIdsByBrowser(snapshots);
+
   await Promise.all(
-    snapshots.map((snapshot) => enqueueCapture({ buildId, snapshotId: snapshot.id })),
+    Array.from(groupedByBrowser.entries()).flatMap(([browser, snapshotIds]) =>
+      chunk(snapshotIds, CAPTURE_GROUP_SIZE).map((group) =>
+        enqueueCaptureGroup({ buildId, browser, snapshotIds: group }),
+      ),
+    ),
   );
 };
