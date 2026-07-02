@@ -123,21 +123,10 @@ describe("snapshots", () => {
     }) => {
       await uploadArtifactWithIframe(
         mainBuild.artifactPath,
-        `<!doctype html><html><body><div id="storybook-root" hidden="true"></div>
-        <script>
-          window.__STORYBOOK_ADDONS_CHANNEL__ = {
-            _l: {},
-            on(e, l) { (this._l[e] ??= []).push(l); },
-            off(e, l) { this._l[e] = (this._l[e] || []).filter((x) => x !== l); },
-            emit(e, payload) {
-              if (e !== "setCurrentStory") return;
-              for (const listener of this._l["storyFinished"] || []) {
-                listener({ storyId: payload.storyId, status: "error" });
-              }
-            },
-          };
-        </script>
-        </body></html>`,
+        IFRAME_HTML.replace(
+          'listener({ storyId: payload.storyId, status: "success" });',
+          'listener({ storyId: payload.storyId, status: "error" });',
+        ),
       );
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
@@ -206,6 +195,48 @@ describe("snapshots", () => {
       );
 
       expect(launchSpy).toHaveBeenCalledTimes(1);
+
+      for (const snapshot of snapshots) {
+        expect(await dbClient.snapshots.findById(snapshot!.id)).toMatchObject({
+          status: "success",
+          hasRenderError: false,
+        });
+      }
+    });
+
+    test("captures the same story at multiple viewports in one group without a render error", async ({
+      mainBuild,
+      captureConfiguration,
+    }) => {
+      await uploadArtifactWithIframe(mainBuild.artifactPath, IFRAME_HTML);
+      const snapshots = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: mainBuild.id,
+            ...captureConfiguration,
+            targetId: "story-a",
+            viewportWidth: 1280,
+          },
+          {
+            buildId: mainBuild.id,
+            ...captureConfiguration,
+            targetId: "story-a",
+            viewportWidth: 768,
+          },
+          {
+            buildId: mainBuild.id,
+            ...captureConfiguration,
+            targetId: "story-a",
+            viewportWidth: 375,
+          },
+        ],
+      });
+
+      await captureBuildGroup(
+        mainBuild.id,
+        captureConfiguration.browser,
+        snapshots.map((snapshot) => snapshot!.id),
+      );
 
       for (const snapshot of snapshots) {
         expect(await dbClient.snapshots.findById(snapshot!.id)).toMatchObject({

@@ -150,6 +150,13 @@ const waitForStorybookTargetPlayed = ({
           error: errorMessages.length > 0 ? errorMessages.join("\n") : "story finished with errors",
         });
       },
+      // Re-selecting the already-current story (e.g. capturing it at another
+      // viewport) re-runs no play function, so Storybook reports it unchanged
+      // rather than finished. The story is already rendered and played.
+      storyUnchanged: () => {
+        cleanup();
+        resolve({ ok: true });
+      },
       storyErrored: (payload?: { description?: string }) => {
         if (payload?.description) {
           errorMessages.push(payload.description);
