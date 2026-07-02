@@ -5,6 +5,7 @@
     <script>
       window.__STORYBOOK_ADDONS_CHANNEL__ = {
         _l: {},
+        _current: undefined,
         on(e, l) {
           (this._l[e] ??= []).push(l);
         },
@@ -13,6 +14,13 @@
         },
         emit(e, payload) {
           if (e !== "setCurrentStory") return;
+          if (this._current === payload.storyId) {
+            for (const listener of this._l["storyUnchanged"] || []) {
+              listener(payload.storyId);
+            }
+            return;
+          }
+          this._current = payload.storyId;
           document.getElementById("storybook-root").textContent = "rendered: " + payload.storyId;
           for (const listener of this._l["storyRendered"] || []) {
             listener(payload);
