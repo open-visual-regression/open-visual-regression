@@ -3,6 +3,7 @@
 import { ORPCError } from "@orpc/client";
 
 import {
+  confirmBuildUpload,
   createBuild as createBuildService,
   DEFAULT_DIFF_THRESHOLD,
   getArtifactPath,
@@ -30,9 +31,6 @@ export const createBuild = os.builds.createBuild
         commitSha: input.commitSha,
         name: input.name,
         author: input.author,
-        targets: input.targets,
-        viewports: input.viewports,
-        diffThreshold: input.diffThreshold ?? DEFAULT_DIFF_THRESHOLD,
       },
       context.apiKey.referenceId,
     );
@@ -47,6 +45,31 @@ export const createBuild = os.builds.createBuild
     );
 
     return { buildId: result.data, uploadUrl };
+  })
+  .actionable();
+
+export const confirmUpload = os.builds.confirmUpload
+  .use(apiKeyMiddleware)
+  .handler(async ({ input, context }) => {
+    const build = await dbClient.builds.findById(input.buildId);
+
+    if (!build || build.projectId !== context.projectId) {
+      throw new ORPCError("NOT_FOUND");
+    }
+
+    const result = await confirmBuildUpload(input.buildId, {
+      targets: input.targets,
+      viewports: input.viewports,
+      diffThreshold: input.diffThreshold ?? DEFAULT_DIFF_THRESHOLD,
+    });
+
+    if (result.status === "error") {
+      throw new ORPCError(
+        result.error === "ARTIFACT_MISSING" ? "PRECONDITION_FAILED" : "NOT_FOUND",
+      );
+    }
+
+    return { ok: true as const };
   })
   .actionable();
 
