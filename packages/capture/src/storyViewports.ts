@@ -82,11 +82,10 @@ const readOverridesConcurrently = async (
 };
 
 export const readStoryParameterOverrides = async (
-  projectId: string,
-  buildId: string,
+  bundleDir: string,
   targetIds: string[],
 ): Promise<Map<string, OvrStoryParameters>> => {
-  const proxy = await startStaticProxy(projectId, buildId);
+  const proxy = await startStaticProxy(bundleDir);
   const browser = await chromium.launch();
 
   try {

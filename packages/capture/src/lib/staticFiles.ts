@@ -20,6 +20,3 @@ const CONTENT_TYPES: Record<string, string> = {
 
 export const getContentType = (filePath: string): string =>
   CONTENT_TYPES[path.extname(filePath).toLowerCase()] ?? "application/octet-stream";
-
-export const getStaticPath = (projectId: string, buildId: string, relativePath: string): string =>
-  `${projectId}/builds/${buildId}/static/${relativePath}`;
