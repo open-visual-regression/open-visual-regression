@@ -95,6 +95,24 @@ export const updateReviewStatusMany = async (ids: string[], reviewStatus: DiffRe
   return db.update(diffs).set({ reviewStatus }).where(inArray(diffs.id, ids)).returning();
 };
 
+export const markStuckAsErrorForBuild = async (
+  buildId: string,
+  tx: DbClient = db,
+): Promise<void> => {
+  const rows = await tx
+    .select({ id: diffs.id })
+    .from(diffs)
+    .innerJoin(snapshots, eq(diffs.snapshotId, snapshots.id))
+    .where(and(eq(snapshots.buildId, buildId), eq(diffs.processingStatus, "pending")));
+
+  const ids = rows.map((row) => row.id);
+  if (ids.length === 0) {
+    return;
+  }
+
+  await tx.update(diffs).set({ processingStatus: "error" }).where(inArray(diffs.id, ids));
+};
+
 export const hasAllDoneForBuild = async (buildId: string) => {
   const rows = await db
     .select({ processingStatus: diffs.processingStatus })

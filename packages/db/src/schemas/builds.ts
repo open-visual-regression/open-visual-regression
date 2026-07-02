@@ -88,6 +88,10 @@ export const builds = pgTable(
     createdAt: utcTimestamp("created_at")
       .default(sql`now()`)
       .notNull(),
+    updatedAt: utcTimestamp("updated_at")
+      .default(sql`now()`)
+      .$onUpdate(() => sql`now()`)
+      .notNull(),
     createdBy: text("created_by")
       .references(() => user.id, { onDelete: "cascade" })
       .notNull(),
@@ -131,6 +135,10 @@ export const snapshots = pgTable(
     diffThreshold: numeric("diff_threshold", { mode: "number", precision: 3, scale: 2 })
       .notNull()
       .default(0.05),
+    updatedAt: utcTimestamp("updated_at")
+      .default(sql`now()`)
+      .$onUpdate(() => sql`now()`)
+      .notNull(),
   },
   (table) => [index("snapshots_buildId_idx").on(table.buildId)],
 );
@@ -162,6 +170,10 @@ export const diffs = pgTable(
     diffImagePath: text("diff_image_path"),
     pixelDiffCount: integer("pixel_diff_count"),
     diffPercent: real("diff_percent"),
+    updatedAt: utcTimestamp("updated_at")
+      .default(sql`now()`)
+      .$onUpdate(() => sql`now()`)
+      .notNull(),
   },
   (table) => [uniqueIndex("diffs_snapshotId_uidx").on(table.snapshotId)],
 );

@@ -148,6 +148,13 @@
       "when": 1782561696801,
       "tag": "0020_yellow_dust",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1782992971772,
+      "tag": "0021_orange_hellcat",
+      "breakpoints": true
     }
   ]
 }
