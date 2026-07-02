@@ -1,7 +1,14 @@
+import { z } from "zod";
+
 import { resolveStaleBuilds } from "@ovr/builds/reaper";
 import type { ReaperJobPayload } from "@ovr/queue";
 
-const REAPER_STALE_MINUTES = Number(process.env.REAPER_STALE_MINUTES ?? 30);
+const REAPER_STALE_MINUTES = z.coerce
+  .number()
+  .int()
+  .positive()
+  .catch(30)
+  .parse(process.env.OVR_REAPER_STALE_MINUTES);
 
 type ReaperJob = { data: ReaperJobPayload };
 
