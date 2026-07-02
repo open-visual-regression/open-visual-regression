@@ -19,7 +19,7 @@ export const CAPTURE_GROUP_SIZE = z.coerce
   .int()
   .positive()
   .catch(10)
-  .parse(process.env.CAPTURE_GROUP_SIZE);
+  .parse(process.env.OVR_CAPTURE_GROUP_SIZE);
 
 const chunk = <T>(items: T[], size: number): T[][] =>
   Array.from({ length: Math.ceil(items.length / size) }, (_, index) =>

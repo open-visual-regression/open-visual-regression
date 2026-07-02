@@ -24,7 +24,7 @@ const CAPTURE_GROUP_CONCURRENCY = z.coerce
   .int()
   .positive()
   .catch(2)
-  .parse(process.env.CAPTURE_GROUP_CONCURRENCY);
+  .parse(process.env.OVR_CAPTURE_GROUP_CONCURRENCY);
 
 const extractWorker = new Worker(QueueName.BUILD_EXTRACT, extract.run, { connection });
 const captureWorker = new Worker(QueueName.SNAPSHOT_CAPTURE, capture.run, {
