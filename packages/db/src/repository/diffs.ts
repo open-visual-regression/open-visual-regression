@@ -95,8 +95,11 @@ export const updateReviewStatusMany = async (ids: string[], reviewStatus: DiffRe
   return db.update(diffs).set({ reviewStatus }).where(inArray(diffs.id, ids)).returning();
 };
 
-export const markStuckAsErrorForBuild = async (buildId: string): Promise<void> => {
-  const rows = await db
+export const markStuckAsErrorForBuild = async (
+  buildId: string,
+  tx: DbClient = db,
+): Promise<void> => {
+  const rows = await tx
     .select({ id: diffs.id })
     .from(diffs)
     .innerJoin(snapshots, eq(diffs.snapshotId, snapshots.id))
@@ -107,7 +110,7 @@ export const markStuckAsErrorForBuild = async (buildId: string): Promise<void> =
     return;
   }
 
-  await db.update(diffs).set({ processingStatus: "error" }).where(inArray(diffs.id, ids));
+  await tx.update(diffs).set({ processingStatus: "error" }).where(inArray(diffs.id, ids));
 };
 
 export const hasAllDoneForBuild = async (buildId: string) => {

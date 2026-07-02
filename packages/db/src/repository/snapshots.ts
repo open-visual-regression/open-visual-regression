@@ -53,8 +53,8 @@ export const updateCaptureResult = async (
   return snapshot;
 };
 
-export const markStuckAsError = async (buildId: string): Promise<void> => {
-  await db
+export const markStuckAsError = async (buildId: string, tx: DbClient = db): Promise<void> => {
+  await tx
     .update(snapshots)
     .set({ status: "error" })
     .where(and(eq(snapshots.buildId, buildId), notInArray(snapshots.status, ["success", "error"])));

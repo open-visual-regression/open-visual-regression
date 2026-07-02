@@ -7,12 +7,15 @@ export const resolveStaleBuilds = async (staleMinutes: number): Promise<void> =>
   const staleBuildIds = await dbClient.builds.findStale(cutoff, REAPER_BATCH_LIMIT);
 
   for (const buildId of staleBuildIds) {
-    await dbClient.snapshots.markStuckAsError(buildId);
-    await dbClient.diffs.markStuckAsErrorForBuild(buildId);
-    await dbClient.builds.updateProcessingStatus(
-      buildId,
-      "error",
-      `Build timed out: no processing activity for ${staleMinutes} minutes`,
-    );
+    await dbClient.transaction(async (tx) => {
+      await dbClient.snapshots.markStuckAsError(buildId, tx);
+      await dbClient.diffs.markStuckAsErrorForBuild(buildId, tx);
+      await dbClient.builds.updateProcessingStatus(
+        buildId,
+        "error",
+        `Build timed out: no processing activity for ${staleMinutes} minutes`,
+        tx,
+      );
+    });
   }
 };

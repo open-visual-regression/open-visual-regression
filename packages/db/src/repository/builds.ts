@@ -26,8 +26,9 @@ export const updateProcessingStatus = async (
   id: string,
   processingStatus: BuildProcessingStatus,
   errorMessage?: string,
+  tx: DbClient = db,
 ) => {
-  const [build] = await db
+  const [build] = await tx
     .update(builds)
     .set({ processingStatus, errorMessage })
     .where(eq(builds.id, id))
