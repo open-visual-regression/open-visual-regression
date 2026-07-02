@@ -5,6 +5,7 @@ import type { AddProjectInputSchema } from "@ovr/api/contracts/projects";
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
 import { organization, projects } from "@ovr/db/schema";
+import { storage } from "@ovr/storage";
 
 import { serverClient } from "@/lib/router";
 import { test, describe, expect } from "@/lib/testing/fixtures";
@@ -40,8 +41,6 @@ describe("builds", () => {
       const [error] = await serverClient.builds.createBuild({
         branch: "main",
         commitSha: "a".repeat(40),
-        targets: [{ id: "story-a", title: "Story", name: "A" }],
-        viewports: VIEWPORTS,
       });
 
       expect(error?.code).toBe("UNAUTHORIZED");
@@ -53,8 +52,6 @@ describe("builds", () => {
       const [error] = await serverClient.builds.createBuild({
         branch: "main",
         commitSha: "a".repeat(40),
-        targets: [{ id: "story-a", title: "Story", name: "A" }],
-        viewports: VIEWPORTS,
       });
 
       expect(error?.code).toBe("UNAUTHORIZED");
@@ -68,11 +65,6 @@ describe("builds", () => {
       const [error, result] = await serverClient.builds.createBuild({
         branch: "main",
         commitSha: "a".repeat(40),
-        targets: [
-          { id: "story-a", title: "Story", name: "A" },
-          { id: "story-b", title: "Story", name: "B" },
-        ],
-        viewports: VIEWPORTS,
       });
 
       expect(error).toBeNull();
@@ -87,6 +79,83 @@ describe("builds", () => {
         processingStatus: "queued",
         reviewStatus: "not_required",
       });
+    });
+  });
+
+  describe("confirmUpload", () => {
+    test("should return UNAUTHORIZED when no api key is provided", async () => {
+      setApiKeyHeader();
+
+      const [error] = await serverClient.builds.confirmUpload({
+        buildId: crypto.randomUUID(),
+        targets: [{ id: "story-a", title: "Story", name: "A" }],
+        viewports: VIEWPORTS,
+      });
+
+      expect(error?.code).toBe("UNAUTHORIZED");
+    });
+
+    test("should return NOT_FOUND for a build outside the key's project", async ({ admin: _ }) => {
+      const projectA = await createProjectWithApiKey();
+      const projectB = await createProjectWithApiKey();
+
+      setApiKeyHeader(projectB.apiKey);
+      const [, createResult] = await serverClient.builds.createBuild({
+        branch: "main",
+        commitSha: "a".repeat(40),
+      });
+
+      setApiKeyHeader(projectA.apiKey);
+      const [error] = await serverClient.builds.confirmUpload({
+        buildId: createResult!.buildId,
+        targets: [{ id: "story-a", title: "Story", name: "A" }],
+        viewports: VIEWPORTS,
+      });
+
+      expect(error?.code).toBe("NOT_FOUND");
+    });
+
+    test("should return PRECONDITION_FAILED when the artifact was never uploaded", async ({
+      admin: _,
+    }) => {
+      const { apiKey } = await createProjectWithApiKey();
+      setApiKeyHeader(apiKey);
+
+      const [, createResult] = await serverClient.builds.createBuild({
+        branch: "main",
+        commitSha: "a".repeat(40),
+      });
+
+      const [error] = await serverClient.builds.confirmUpload({
+        buildId: createResult!.buildId,
+        targets: [{ id: "story-a", title: "Story", name: "A" }],
+        viewports: VIEWPORTS,
+      });
+
+      expect(error?.code).toBe("PRECONDITION_FAILED");
+    });
+
+    test("enqueues extraction once the artifact has been uploaded", async ({ admin: _ }) => {
+      const { apiKey } = await createProjectWithApiKey();
+      setApiKeyHeader(apiKey);
+
+      const [, createResult] = await serverClient.builds.createBuild({
+        branch: "main",
+        commitSha: "a".repeat(40),
+      });
+      const buildId = createResult!.buildId;
+
+      const build = await dbClient.builds.findById(buildId);
+      await storage.uploadFile(build!.artifactPath, Buffer.from(""), "application/gzip");
+
+      const [error, result] = await serverClient.builds.confirmUpload({
+        buildId,
+        targets: [{ id: "story-a", title: "Story", name: "A" }],
+        viewports: VIEWPORTS,
+      });
+
+      expect(error).toBeNull();
+      expect(result).toEqual({ ok: true });
     });
   });
 
@@ -106,8 +175,6 @@ describe("builds", () => {
       const [, createResult] = await serverClient.builds.createBuild({
         branch: "main",
         commitSha: "a".repeat(40),
-        targets: [{ id: "story-a", title: "Story", name: "A" }],
-        viewports: VIEWPORTS,
       });
 
       const [error, result] = await serverClient.builds.getBuildStatus({
@@ -126,8 +193,6 @@ describe("builds", () => {
       const [, createResult] = await serverClient.builds.createBuild({
         branch: "main",
         commitSha: "a".repeat(40),
-        targets: [{ id: "story-a", title: "Story", name: "A" }],
-        viewports: VIEWPORTS,
       });
       const buildId = createResult!.buildId;
 
@@ -153,8 +218,6 @@ describe("builds", () => {
       const [, createResult] = await serverClient.builds.createBuild({
         branch: "main",
         commitSha: "a".repeat(40),
-        targets: [{ id: "story-a", title: "Story", name: "A" }],
-        viewports: VIEWPORTS,
       });
 
       setApiKeyHeader(projectA.apiKey);

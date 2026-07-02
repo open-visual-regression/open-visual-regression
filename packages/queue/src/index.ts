@@ -71,7 +71,8 @@ const enqueue = async <T>(
 export const enqueueExtract = (
   payload: ExtractJobPayload,
   connection: IORedis,
-): Promise<Job<ExtractJobPayload>> => enqueue(QueueName.BUILD_EXTRACT, payload, connection);
+): Promise<Job<ExtractJobPayload>> =>
+  enqueue(QueueName.BUILD_EXTRACT, payload, connection, { jobId: payload.buildId });
 
 export const enqueueCapture = (
   payload: CaptureJobPayload,

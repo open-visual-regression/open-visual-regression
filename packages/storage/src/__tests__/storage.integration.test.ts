@@ -50,4 +50,14 @@ describe("storage", () => {
 
     expect(response.status).toBe(200);
   });
+
+  test("objectExists returns true once a key has been uploaded", async ({ key }) => {
+    await storage.uploadFile(key, Buffer.from("exists"), "image/png");
+
+    expect(await storage.objectExists(key)).toBe(true);
+  });
+
+  test("objectExists returns false for a key that was never uploaded", async ({ key }) => {
+    expect(await storage.objectExists(key)).toBe(false);
+  });
 });

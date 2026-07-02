@@ -36,20 +36,19 @@ export const viewportSchema = z.object({
 
 export type ViewportSchema = z.infer<typeof viewportSchema>;
 
+export const targetSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1),
+  name: z.string().min(1),
+});
+
+export type TargetSchema = z.infer<typeof targetSchema>;
+
 export const createBuildInputSchema = z.object({
   branch: z.string().min(1),
   commitSha: z.string().min(1),
   name: z.string().min(1).optional(),
   author: z.string().min(1).optional(),
-  targets: z.array(
-    z.object({
-      id: z.string().min(1),
-      title: z.string().min(1),
-      name: z.string().min(1),
-    }),
-  ),
-  viewports: z.array(viewportSchema).min(1),
-  diffThreshold: z.number().min(0.01).max(1).optional(),
 });
 
 export type CreateBuildInputSchema = z.infer<typeof createBuildInputSchema>;
@@ -60,6 +59,23 @@ export const createBuildOutputSchema = z.object({
 });
 
 export const createBuildContract = oc.input(createBuildInputSchema).output(createBuildOutputSchema);
+
+export const confirmUploadInputSchema = z.object({
+  buildId: z.string(),
+  targets: z.array(targetSchema),
+  viewports: z.array(viewportSchema).min(1),
+  diffThreshold: z.number().min(0.01).max(1).optional(),
+});
+
+export type ConfirmUploadInputSchema = z.infer<typeof confirmUploadInputSchema>;
+
+export const confirmUploadOutputSchema = z.object({
+  ok: z.literal(true),
+});
+
+export const confirmUploadContract = oc
+  .input(confirmUploadInputSchema)
+  .output(confirmUploadOutputSchema);
 
 export const getBuildStatusInputSchema = z.object({
   buildId: z.string(),
@@ -137,6 +153,7 @@ export const getBuildContract = oc.input(getBuildInputSchema).output(getBuildOut
 
 export const contract = {
   createBuild: createBuildContract,
+  confirmUpload: confirmUploadContract,
   getBuildStatus: getBuildStatusContract,
   list: listBuildsContract,
   getOne: getBuildContract,
