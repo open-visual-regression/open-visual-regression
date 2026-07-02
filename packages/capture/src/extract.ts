@@ -2,6 +2,7 @@ import { dbClient } from "@ovr/db/client";
 import { enqueueCaptureGroup } from "@ovr/queue/producer";
 
 import { withExtractedBundle } from "./lib/artifact";
+import { parsePositiveInt } from "./lib/env";
 import {
   readStoryParameterOverrides,
   resolveTargetDiffThreshold,
@@ -12,7 +13,7 @@ import type { NamedViewport } from "./storyViewports";
 type Target = { id: string; title: string; name: string };
 
 // Max snapshots sharing one warm browser per capture-group job.
-export const CAPTURE_GROUP_SIZE = 10;
+export const CAPTURE_GROUP_SIZE = parsePositiveInt(process.env.CAPTURE_GROUP_SIZE, 10);
 
 const chunk = <T>(items: T[], size: number): T[][] =>
   Array.from({ length: Math.ceil(items.length / size) }, (_, index) =>
