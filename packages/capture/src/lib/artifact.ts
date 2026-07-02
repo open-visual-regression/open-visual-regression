@@ -8,10 +8,6 @@ import * as tar from "tar";
 
 import { storage } from "@ovr/storage";
 
-// Downloads and unpacks a build's artifact tarball into a throwaway local directory,
-// runs `fn` against it, then removes the directory. The unpacked bundle is served off
-// local disk during capture, so the whole Storybook bundle is fetched from storage once
-// per job instead of one storage request per asset per snapshot.
 export const withExtractedBundle = async <T>(
   artifactPath: string,
   fn: (bundleDir: string) => Promise<T>,
