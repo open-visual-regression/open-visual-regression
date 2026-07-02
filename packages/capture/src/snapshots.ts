@@ -104,7 +104,7 @@ const captureSnapshotOnPage = async (
   await enqueueSnapshotDiff(snapshotId);
 };
 
-const markSnapshotErrored = async (snapshotId: string, error: unknown): Promise<void> => {
+export const markSnapshotErrored = async (snapshotId: string, error: unknown): Promise<void> => {
   const message = error instanceof Error ? error.message : String(error);
   await dbClient.snapshotLogs.createMany({ values: [{ snapshotId, level: "error", message }] });
   await dbClient.snapshots.updateStatus(snapshotId, "error");

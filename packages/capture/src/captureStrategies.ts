@@ -15,9 +15,9 @@ type StorybookChannel = {
 };
 
 type StorybookPreview = {
-  currentRender?: {
-    story?: { id?: string; parameters?: Record<string, unknown> };
-  };
+  loadStory: (args: {
+    storyId: string;
+  }) => Promise<{ parameters?: Record<string, unknown> } | undefined>;
 };
 
 declare global {
@@ -33,18 +33,6 @@ export type OvrStoryParameters = {
   viewports?: OvrStoryParameterViewport[];
   diffThreshold?: number;
   skip?: boolean;
-};
-
-// `getStoryContext` takes the prepared story object, not a story id, so the
-// just-rendered story's own parameters (set on currentRender.story) are read
-// directly instead.
-export const readOvrStoryParameters = (targetId: string): OvrStoryParameters | null => {
-  const story = globalThis.__STORYBOOK_PREVIEW__?.currentRender?.story;
-  if (story?.id !== targetId) {
-    return null;
-  }
-  const ovr = story.parameters?.ovr;
-  return (ovr as OvrStoryParameters | undefined) ?? null;
 };
 
 const waitForStorybookTargetRendered = ({
@@ -150,7 +138,6 @@ const waitForStorybookTargetPlayed = ({
           error: errorMessages.length > 0 ? errorMessages.join("\n") : "story finished with errors",
         });
       },
-      // Re-selecting the current story yields no re-play; it is already played.
       storyUnchanged: () => {
         cleanup();
         resolve({ ok: true });
