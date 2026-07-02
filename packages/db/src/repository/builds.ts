@@ -84,6 +84,13 @@ type FindAllInput = {
   cursor?: BuildsCursor;
 };
 
+const getCursorFilter = (cursor: BuildsCursor, sortDirection: SortDirection) => {
+  if (sortDirection === "asc") {
+    return sql`(${builds.createdAt}, ${builds.id}) > (${cursor.createdAt}::timestamp, ${cursor.id}::uuid)`;
+  }
+  return sql`(${builds.createdAt}, ${builds.id}) < (${cursor.createdAt}::timestamp, ${cursor.id}::uuid)`;
+};
+
 export const findAll = async ({
   organizationId,
   projectIds,
@@ -104,11 +111,7 @@ export const findAll = async ({
 
   // Keyset pagination on (createdAt, id): matches the composite index and stays
   // stable when new builds are inserted at the top mid-scroll.
-  const cursorFilter = cursor
-    ? sortDirection === "asc"
-      ? sql`(${builds.createdAt}, ${builds.id}) > (${cursor.createdAt}::timestamp, ${cursor.id}::uuid)`
-      : sql`(${builds.createdAt}, ${builds.id}) < (${cursor.createdAt}::timestamp, ${cursor.id}::uuid)`
-    : undefined;
+  const cursorFilter = cursor ? getCursorFilter(cursor, sortDirection) : undefined;
 
   const orderFn = sortDirection === "asc" ? asc : desc;
 
