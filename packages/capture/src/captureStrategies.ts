@@ -188,10 +188,12 @@ const waitForStorybookTargetPlayed = ({
   });
 
 const storybookCaptureStrategy: CaptureStrategy = {
-  waitForBoot: (page, timeoutMs) =>
-    page
-      .waitForSelector("#storybook-root, #root", { timeout: timeoutMs, state: "attached" })
-      .then(() => undefined),
+  waitForBoot: async (page, timeoutMs) => {
+    await page.waitForSelector("#storybook-root, #root", { timeout: timeoutMs, state: "attached" });
+    await page.waitForFunction(() => Boolean(globalThis.__STORYBOOK_ADDONS_CHANNEL__), undefined, {
+      timeout: timeoutMs,
+    });
+  },
   waitForTargetRendered: waitForStorybookTargetRendered,
   waitForTargetPlayed: waitForStorybookTargetPlayed,
 };
