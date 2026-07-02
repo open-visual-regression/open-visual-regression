@@ -123,7 +123,21 @@ describe("snapshots", () => {
     }) => {
       await uploadArtifactWithIframe(
         mainBuild.artifactPath,
-        '<!doctype html><html><body><div id="storybook-root" hidden="true"></div></body></html>',
+        `<!doctype html><html><body><div id="storybook-root" hidden="true"></div>
+        <script>
+          window.__STORYBOOK_ADDONS_CHANNEL__ = {
+            _l: {},
+            on(e, l) { (this._l[e] ??= []).push(l); },
+            off(e, l) { this._l[e] = (this._l[e] || []).filter((x) => x !== l); },
+            emit(e, payload) {
+              if (e !== "setCurrentStory") return;
+              for (const listener of this._l["storyFinished"] || []) {
+                listener({ storyId: payload.storyId, status: "error" });
+              }
+            },
+          };
+        </script>
+        </body></html>`,
       );
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
