@@ -1,6 +1,6 @@
 import { type BuildsCursor } from "@ovr/api/contracts/builds";
 
-export const BUILDS_PAGE_SIZE = 20;
+const BUILDS_PAGE_SIZE = 50;
 
 type BuildsListInput = {
   projectIds: string[];

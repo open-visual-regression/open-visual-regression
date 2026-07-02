@@ -24,8 +24,14 @@ const searchParamsSchema = z.object({
 export default async function ProjectPage(props: ProjectPageProps) {
   const { projectId } = await props.params;
   const { search } = searchParamsSchema.parse(await props.searchParams);
+  const queryClient = getQueryClient();
 
-  const [projectError, projectResult] = await serverClient.projects.getOne({ projectId });
+  const [[projectError, projectResult]] = await Promise.all([
+    serverClient.projects.getOne({ projectId }),
+    queryClient.prefetchInfiniteQuery(
+      orpcServer.builds.list.infiniteOptions(buildsListInfiniteOptions(projectId, search)),
+    ),
+  ]);
 
   if (projectError?.status === 404) {
     notFound();
@@ -34,11 +40,6 @@ export default async function ProjectPage(props: ProjectPageProps) {
   if (projectError) {
     serverError();
   }
-
-  const queryClient = getQueryClient();
-  await queryClient.prefetchInfiniteQuery(
-    orpcServer.builds.list.infiniteOptions(buildsListInfiniteOptions(projectId, search)),
-  );
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-6">
