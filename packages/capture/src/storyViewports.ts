@@ -1,14 +1,8 @@
-import type { Page } from "playwright";
 import { chromium } from "playwright";
 
-import {
-  detectCaptureStrategy,
-  readOvrStoryParameters,
-  type CaptureStrategy,
-} from "./captureStrategies";
 import type { OvrStoryParameterViewport, OvrStoryParameters } from "./captureStrategies";
 import { newPage } from "./lib/browser";
-import { BOOT_TIMEOUT_MS, RENDER_TIMEOUT_MS } from "./lib/captureTimeouts";
+import { BOOT_TIMEOUT_MS } from "./lib/captureTimeouts";
 import { startStaticProxy } from "./lib/staticProxy";
 
 export type NamedViewport = {
@@ -19,41 +13,43 @@ export type NamedViewport = {
   default?: boolean;
 };
 
-type OverrideEntry = [targetId: string, parameters: OvrStoryParameters];
+type OverrideReadResult = {
+  entries: [string, OvrStoryParameters][];
+  failures: [storyId: string, message: string][];
+};
 
-const readStoryOverride = async (
-  page: Page,
-  strategy: CaptureStrategy,
-  targetId: string,
-): Promise<OverrideEntry | undefined> => {
-  try {
-    const renderResult = await page.evaluate(strategy.waitForTargetRendered, {
-      targetId,
-      timeoutMs: RENDER_TIMEOUT_MS,
-    });
-
-    if (!renderResult.ok) {
-      console.warn(
-        `ovr: falling back to default viewports for "${targetId}" — story failed to render while reading its viewport override (${renderResult.error ?? "unknown error"})`,
-      );
-      return undefined;
-    }
-
-    const parameters = await page.evaluate(readOvrStoryParameters, targetId);
-    return parameters ? [targetId, parameters] : undefined;
-  } catch (error) {
-    console.warn(
-      `ovr: falling back to default viewports for "${targetId}" — error while reading its viewport override:`,
-      error,
-    );
-    return undefined;
+const readOvrOverrides = async (targetIds: string[]): Promise<OverrideReadResult> => {
+  const preview = globalThis.__STORYBOOK_PREVIEW__;
+  if (!preview) {
+    return { entries: [], failures: [] };
   }
+
+  const entries: [string, OvrStoryParameters][] = [];
+  const failures: [string, string][] = [];
+  for (const storyId of targetIds) {
+    try {
+      const story = await preview.loadStory({ storyId });
+      const ovr = story?.parameters?.ovr as OvrStoryParameters | undefined;
+      if (ovr) {
+        entries.push([storyId, ovr]);
+      }
+    } catch (error) {
+      failures.push([storyId, error instanceof Error ? error.message : String(error)]);
+    }
+  }
+
+  return { entries, failures };
+};
+
+export type StoryParameterOverrides = {
+  overrides: Map<string, OvrStoryParameters>;
+  failures: Map<string, string>;
 };
 
 export const readStoryParameterOverrides = async (
   bundleDir: string,
   targetIds: string[],
-): Promise<Map<string, OvrStoryParameters>> => {
+): Promise<StoryParameterOverrides> => {
   const proxy = await startStaticProxy(bundleDir);
   const browser = await chromium.launch();
 
@@ -69,19 +65,13 @@ export const readStoryParameterOverrides = async (
       return route.abort();
     });
 
-    const strategy = await detectCaptureStrategy(proxy.origin);
     await page.goto(`${proxy.origin}/iframe.html`, { waitUntil: "load" });
-    await strategy.waitForBoot(page, BOOT_TIMEOUT_MS);
+    await page.waitForFunction(() => Boolean(globalThis.__STORYBOOK_PREVIEW__), undefined, {
+      timeout: BOOT_TIMEOUT_MS,
+    });
 
-    const entries: OverrideEntry[] = [];
-    for (const targetId of targetIds) {
-      const entry = await readStoryOverride(page, strategy, targetId);
-      if (entry) {
-        entries.push(entry);
-      }
-    }
-
-    return new Map(entries);
+    const { entries, failures } = await page.evaluate(readOvrOverrides, targetIds);
+    return { overrides: new Map(entries), failures: new Map(failures) };
   } finally {
     await browser.close();
     proxy.close();

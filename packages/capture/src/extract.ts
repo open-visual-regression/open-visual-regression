@@ -4,6 +4,7 @@ import { dbClient } from "@ovr/db/client";
 import { enqueueCaptureGroup } from "@ovr/queue/producer";
 
 import { withExtractedBundle } from "./lib/artifact";
+import { markSnapshotErrored } from "./snapshots";
 import {
   readStoryParameterOverrides,
   resolveTargetDiffThreshold,
@@ -34,6 +35,49 @@ const groupSnapshotIdsByBrowser = (
     return groups;
   }, new Map<string, string[]>());
 
+const failUnreadableTargets = async (
+  buildId: string,
+  targets: Target[],
+  viewports: NamedViewport[],
+  diffThreshold: number,
+  failures: Map<string, string>,
+): Promise<void> => {
+  if (failures.size === 0) {
+    return;
+  }
+
+  const [defaultViewport] = resolveTargetViewports(viewports, undefined);
+  const viewport = defaultViewport ?? viewports[0];
+
+  for (const target of targets) {
+    const message = failures.get(target.id);
+    if (message === undefined) {
+      continue;
+    }
+
+    const [snapshot] = await dbClient.snapshots.createMany({
+      values: [
+        {
+          buildId,
+          browser: viewport?.browser ?? "chromium",
+          viewportWidth: viewport?.viewportWidth ?? 1280,
+          viewportHeight: viewport?.viewportHeight ?? 0,
+          targetId: target.id,
+          targetTitle: target.title,
+          targetName: target.name,
+          status: "queued" as const,
+          diffThreshold,
+        },
+      ],
+    });
+
+    await markSnapshotErrored(
+      snapshot!.id,
+      new Error(`Could not read viewport overrides: ${message}`),
+    );
+  }
+};
+
 export const extractBuild = async (
   buildId: string,
   targets: Target[],
@@ -46,7 +90,7 @@ export const extractBuild = async (
     throw new Error(`Build not found: ${buildId}`);
   }
 
-  const overridesByTarget = await withExtractedBundle(build.artifactPath, (bundleDir) =>
+  const { overrides, failures } = await withExtractedBundle(build.artifactPath, (bundleDir) =>
     readStoryParameterOverrides(
       bundleDir,
       targets.map((target) => target.id),
@@ -55,7 +99,11 @@ export const extractBuild = async (
 
   await dbClient.snapshots.createMany({
     values: targets.flatMap((target) => {
-      const override = overridesByTarget.get(target.id);
+      if (failures.has(target.id)) {
+        return [];
+      }
+
+      const override = overrides.get(target.id);
 
       if (override?.skip) {
         return [];
@@ -75,8 +123,12 @@ export const extractBuild = async (
     }),
   });
 
+  await failUnreadableTargets(buildId, targets, viewports, diffThreshold, failures);
+
   const snapshots = await dbClient.snapshots.findByBuild(buildId);
-  const groupedByBrowser = groupSnapshotIdsByBrowser(snapshots);
+  const groupedByBrowser = groupSnapshotIdsByBrowser(
+    snapshots.filter((snapshot) => snapshot.status === "queued"),
+  );
 
   await Promise.all(
     Array.from(groupedByBrowser.entries()).flatMap(([browser, snapshotIds]) =>

@@ -46,7 +46,10 @@ const collectCaptureGroupJobs = async (
 };
 
 const buildArtifactTarball = async (
-  storyParameters: Record<string, { diffThreshold?: number; skip?: boolean }> = {},
+  storyParameters: Record<
+    string,
+    { viewports?: string[]; diffThreshold?: number; skip?: boolean; __throw?: boolean }
+  > = {},
 ): Promise<Buffer> => {
   const sourceDir = await mkdtemp(path.join(tmpdir(), "ovr-extract-fixture-"));
 
@@ -99,6 +102,84 @@ describe("extractBuild", () => {
       snapshotIds: expect.arrayContaining(snapshots.map((snapshot) => snapshot.id)),
     });
     expect(job!.snapshotIds).toHaveLength(2);
+  });
+
+  test("resolves a story's parameters.ovr.viewports override into one snapshot per named viewport", async ({
+    mainBuild,
+  }) => {
+    const tarball = await buildArtifactTarball({ "story-a": { viewports: ["mobile"] } });
+    await storage.uploadFile(mainBuild.artifactPath, tarball, "application/gzip");
+
+    const viewports = [
+      {
+        name: "desktop",
+        browser: "chromium",
+        viewportWidth: 1280,
+        viewportHeight: 0,
+        default: true,
+      },
+      { name: "mobile", browser: "chromium", viewportWidth: 375, viewportHeight: 0 },
+    ];
+
+    await extractBuild(
+      mainBuild.id,
+      [{ id: "story-a", title: "Story", name: "A" }],
+      viewports,
+      0.05,
+    );
+
+    const snapshots = await dbClient.snapshots.findByBuild(mainBuild.id);
+    expect(snapshots).toHaveLength(1);
+    expect(snapshots[0]!.viewportWidth).toBe(375);
+  });
+
+  test("marks a story's snapshot as errored when its overrides cannot be read", async ({
+    mainBuild,
+    captureConfiguration,
+  }) => {
+    const tarball = await buildArtifactTarball({ "story-a": { __throw: true } });
+    await storage.uploadFile(mainBuild.artifactPath, tarball, "application/gzip");
+
+    await extractBuild(
+      mainBuild.id,
+      [{ id: "story-a", title: "Story", name: "A" }],
+      [captureConfiguration],
+      0.05,
+    );
+
+    const [snapshot] = await dbClient.snapshots.findByBuild(mainBuild.id);
+    expect(snapshot).toMatchObject({ targetId: "story-a", status: "error" });
+
+    const logs = await dbClient.snapshotLogs.findBySnapshot(snapshot!.id);
+    expect(logs.some((log) => log.level === "error")).toBe(true);
+  });
+
+  test("captures the readable stories while excluding an unreadable one from the group", async ({
+    mainBuild,
+    captureConfiguration,
+    connection,
+  }) => {
+    const tarball = await buildArtifactTarball({ "story-bad": { __throw: true } });
+    await storage.uploadFile(mainBuild.artifactPath, tarball, "application/gzip");
+
+    await extractBuild(
+      mainBuild.id,
+      [
+        { id: "story-good", title: "Story", name: "Good" },
+        { id: "story-bad", title: "Story", name: "Bad" },
+      ],
+      [captureConfiguration],
+      0.05,
+    );
+
+    const snapshots = await dbClient.snapshots.findByBuild(mainBuild.id);
+    const statusByTarget = Object.fromEntries(snapshots.map((s) => [s.targetId, s.status]));
+    expect(statusByTarget["story-bad"]).toBe("error");
+    expect(statusByTarget["story-good"]).toBe("queued");
+
+    const goodSnapshot = snapshots.find((s) => s.targetId === "story-good");
+    const [job] = await collectCaptureGroupJobs(connection, 1);
+    expect(job!.snapshotIds).toEqual([goodSnapshot!.id]);
   });
 
   test("uses the build default diff threshold when a story has no override", async ({
