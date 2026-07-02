@@ -1,15 +1,16 @@
 import pixelmatch from "pixelmatch";
-import { chromium, firefox, webkit, type Browser } from "playwright";
+import { chromium, firefox, webkit, type Browser, type Page } from "playwright";
 import { PNG } from "pngjs";
 
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
+import type { BuildDbSchema } from "@ovr/db/repository/builds";
 import type { SnapshotDbSchema } from "@ovr/db/repository/snapshots";
 import { enqueueDiff, enqueueFinalize } from "@ovr/queue/producer";
 import { promoteBaseline } from "@ovr/reviews/baselines";
 import { storage } from "@ovr/storage";
 
-import { detectCaptureStrategy } from "./captureStrategies";
+import { detectCaptureStrategy, type CaptureStrategy } from "./captureStrategies";
 import { withExtractedBundle } from "./lib/artifact";
 import { newPage } from "./lib/browser";
 import {
@@ -21,8 +22,6 @@ import {
 import { startStaticProxy } from "./lib/staticProxy";
 
 const DEFAULT_PIXELMATCH_THRESHOLD = 0.1;
-
-type ConsoleLog = { level: string; message: string };
 
 const DEFAULT_VIEWPORT_HEIGHT = 800;
 
@@ -36,126 +35,153 @@ const getBrowserLauncher = (browser: string) => {
   return launcher;
 };
 
-export const captureSnapshot = async (snapshotId: string): Promise<void> => {
+type CaptureLog = { level: string; message: string };
+type PageLogState = { logs: CaptureLog[]; hasPageError: boolean };
+
+const captureSnapshotOnPage = async (
+  page: Page,
+  strategy: CaptureStrategy,
+  build: NonNullable<BuildDbSchema>,
+  snapshotId: string,
+  pageLogState: PageLogState,
+): Promise<void> => {
   const snapshot = await dbClient.snapshots.findById(snapshotId);
   if (!snapshot) {
     throw new Error(`Snapshot not found: ${snapshotId}`);
   }
 
-  const build = await dbClient.builds.findById(snapshot.buildId);
-
-  if (!build) {
-    throw new Error(`Missing build for snapshot: ${snapshotId}`);
+  // Retried group job — skip snapshots an earlier attempt already captured.
+  if (snapshot.status === "success") {
+    return;
   }
 
   await dbClient.snapshots.updateStatus(snapshotId, "processing");
 
   const fullPage = snapshot.viewportHeight === 0;
 
+  await page.setViewportSize({
+    width: snapshot.viewportWidth,
+    height: fullPage ? DEFAULT_VIEWPORT_HEIGHT : snapshot.viewportHeight,
+  });
+
+  const renderResult = await page.evaluate(strategy.waitForTargetPlayed, {
+    targetId: snapshot.targetId,
+    timeoutMs: RENDER_TIMEOUT_MS,
+  });
+
+  if (!renderResult.ok) {
+    pageLogState.logs.push({
+      level: "error",
+      message: renderResult.error ?? "target failed to render",
+    });
+  }
+
+  const screenshot = await page.screenshot({ fullPage });
+  const hasRenderError = !renderResult.ok || pageLogState.hasPageError;
+  const imagePath = `${build.projectId}/builds/${build.id}/snapshots/${snapshotId}.png`;
+  await storage.uploadFile(imagePath, screenshot, "image/png");
+
+  await db.transaction(async (tx) => {
+    if (pageLogState.logs.length > 0) {
+      await dbClient.snapshotLogs.createMany({
+        values: pageLogState.logs.map((log) => ({
+          snapshotId,
+          level: log.level,
+          message: log.message,
+        })),
+        tx,
+      });
+    }
+
+    await dbClient.snapshots.updateCaptureResult(snapshotId, {
+      status: "success",
+      imagePath,
+      hasRenderError,
+      tx,
+    });
+  });
+
+  await enqueueSnapshotDiff(snapshotId);
+};
+
+const markSnapshotErrored = async (snapshotId: string, error: unknown): Promise<void> => {
+  const message = error instanceof Error ? error.message : String(error);
+  await dbClient.snapshotLogs.createMany({ values: [{ snapshotId, level: "error", message }] });
+  await dbClient.snapshots.updateStatus(snapshotId, "error");
+  await enqueueSnapshotDiff(snapshotId);
+};
+
+export const captureBuildGroup = async (
+  buildId: string,
+  browser: string,
+  snapshotIds: string[],
+): Promise<void> => {
+  const build = await dbClient.builds.findById(buildId);
+  if (!build) {
+    throw new Error(`Missing build: ${buildId}`);
+  }
+
   let activeBrowser: Browser | undefined;
   let activeProxy: { close: () => void } | undefined;
 
   await withTimeout(
-    async () => {
-      const { logs, screenshot, hasRenderError } = await withExtractedBundle(
-        build.artifactPath,
-        async (bundleDir) => {
-          const proxy = await startStaticProxy(bundleDir);
-          activeProxy = proxy;
-          const browser = await getBrowserLauncher(snapshot.browser).launch();
-          activeBrowser = browser;
+    () =>
+      withExtractedBundle(build.artifactPath, async (bundleDir) => {
+        const proxy = await startStaticProxy(bundleDir);
+        activeProxy = proxy;
+        const launchedBrowser = await getBrowserLauncher(browser).launch();
+        activeBrowser = launchedBrowser;
 
-          try {
-            const context = await browser.newContext({
-              viewport: {
-                width: snapshot.viewportWidth,
-                height: fullPage ? DEFAULT_VIEWPORT_HEIGHT : snapshot.viewportHeight,
-              },
-              deviceScaleFactor: 1,
-            });
+        try {
+          const context = await launchedBrowser.newContext({ deviceScaleFactor: 1 });
+          const page = await newPage(context);
 
-            const page = await newPage(context);
-
-            const logs: ConsoleLog[] = [];
-            let hasPageError = false;
-
-            page.on("console", (message) => {
-              logs.push({ level: message.type(), message: message.text() });
-            });
-
-            page.on("pageerror", (error) => {
-              hasPageError = true;
-              logs.push({ level: "error", message: error.message });
-            });
-
-            await page.route("**/*", (route) => {
-              const url = new URL(route.request().url());
-              if (
-                url.origin === proxy.origin ||
-                url.protocol === "data:" ||
-                url.protocol === "blob:"
-              ) {
-                return route.continue();
-              }
-              return route.abort();
-            });
-
-            const strategy = await detectCaptureStrategy(proxy.origin);
-
-            await page.goto(`${proxy.origin}/iframe.html`, { waitUntil: "load" });
-            await strategy.waitForBoot(page, BOOT_TIMEOUT_MS);
-
-            const renderResult = await page.evaluate(strategy.waitForTargetPlayed, {
-              targetId: snapshot.targetId,
-              timeoutMs: RENDER_TIMEOUT_MS,
-            });
-
-            if (!renderResult.ok) {
-              logs.push({
-                level: "error",
-                message: renderResult.error ?? "target failed to render",
-              });
+          await page.route("**/*", (route) => {
+            const url = new URL(route.request().url());
+            if (
+              url.origin === proxy.origin ||
+              url.protocol === "data:" ||
+              url.protocol === "blob:"
+            ) {
+              return route.continue();
             }
-
-            return {
-              logs,
-              screenshot: await page.screenshot({ fullPage }),
-              hasRenderError: !renderResult.ok || hasPageError,
-            };
-          } finally {
-            await browser.close();
-            proxy.close();
-          }
-        },
-      );
-
-      const imagePath = `${build.projectId}/builds/${build.id}/snapshots/${snapshotId}.png`;
-      await storage.uploadFile(imagePath, screenshot, "image/png");
-
-      await db.transaction(async (tx) => {
-        if (logs.length > 0) {
-          await dbClient.snapshotLogs.createMany({
-            values: logs.map((log) => ({ snapshotId, level: log.level, message: log.message })),
-            tx,
+            return route.abort();
           });
-        }
 
-        await dbClient.snapshots.updateCaptureResult(snapshotId, {
-          status: "success",
-          imagePath,
-          hasRenderError,
-          tx,
-        });
-      });
-    },
-    CAPTURE_JOB_TIMEOUT_MS,
+          const pageLogState: PageLogState = { logs: [], hasPageError: false };
+          page.on("console", (message) => {
+            pageLogState.logs.push({ level: message.type(), message: message.text() });
+          });
+          page.on("pageerror", (error) => {
+            pageLogState.hasPageError = true;
+            pageLogState.logs.push({ level: "error", message: error.message });
+          });
+
+          const strategy = await detectCaptureStrategy(proxy.origin);
+          await page.goto(`${proxy.origin}/iframe.html`, { waitUntil: "load" });
+          await strategy.waitForBoot(page, BOOT_TIMEOUT_MS);
+
+          for (const snapshotId of snapshotIds) {
+            try {
+              await captureSnapshotOnPage(page, strategy, build, snapshotId, pageLogState);
+            } catch (error) {
+              await markSnapshotErrored(snapshotId, error);
+            } finally {
+              pageLogState.logs = [];
+              pageLogState.hasPageError = false;
+            }
+          }
+        } finally {
+          await launchedBrowser.close();
+          proxy.close();
+        }
+      }),
+    CAPTURE_JOB_TIMEOUT_MS * snapshotIds.length,
     () => {
       activeBrowser?.close().catch(() => {});
       activeProxy?.close();
     },
   );
-
-  await enqueueSnapshotDiff(snapshotId);
 };
 
 export const enqueueSnapshotDiff = async (snapshotId: string): Promise<void> => {

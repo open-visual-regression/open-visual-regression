@@ -8,7 +8,7 @@ import type { Redis } from "ioredis";
 import * as tar from "tar";
 
 import { dbClient } from "@ovr/db/client";
-import { QueueName, type CaptureJobPayload } from "@ovr/queue";
+import { QueueName, type CaptureGroupJobPayload } from "@ovr/queue";
 import { storage } from "@ovr/storage";
 
 import { extractBuild } from "../extract";
@@ -17,19 +17,19 @@ import { describe, expect, test } from "./fixtures";
 const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
 const IFRAME_TEMPLATE = await readFile(path.join(TEST_DIR, "html/iframe-template.html"), "utf-8");
 
-const collectCaptureJobs = async (
+const collectCaptureGroupJobs = async (
   connection: Redis,
   count: number,
-): Promise<CaptureJobPayload[]> => {
-  const worker = new Worker<CaptureJobPayload>(
+): Promise<CaptureGroupJobPayload[]> => {
+  const worker = new Worker<CaptureGroupJobPayload>(
     QueueName.SNAPSHOT_CAPTURE,
     async (job) => job.data,
     { connection },
   );
 
   try {
-    return await new Promise<CaptureJobPayload[]>((resolve, reject) => {
-      const jobs: CaptureJobPayload[] = [];
+    return await new Promise<CaptureGroupJobPayload[]>((resolve, reject) => {
+      const jobs: CaptureGroupJobPayload[] = [];
 
       worker.on("completed", (job) => {
         jobs.push(job.data);
@@ -70,7 +70,7 @@ const buildArtifactTarball = async (
 };
 
 describe("extractBuild", () => {
-  test("creates a snapshot per target x viewport and enqueues a capture job per snapshot", async ({
+  test("creates a snapshot per target x viewport and enqueues one capture-group job per browser", async ({
     mainBuild,
     captureConfiguration,
     connection,
@@ -92,12 +92,13 @@ describe("extractBuild", () => {
       true,
     );
 
-    const jobs = await collectCaptureJobs(connection, snapshots.length);
-    expect(jobs).toEqual(
-      expect.arrayContaining(
-        snapshots.map((snapshot) => ({ buildId: mainBuild.id, snapshotId: snapshot.id })),
-      ),
-    );
+    const [job] = await collectCaptureGroupJobs(connection, 1);
+    expect(job).toEqual({
+      buildId: mainBuild.id,
+      browser: captureConfiguration.browser,
+      snapshotIds: expect.arrayContaining(snapshots.map((snapshot) => snapshot.id)),
+    });
+    expect(job!.snapshotIds).toHaveLength(2);
   });
 
   test("uses the build default diff threshold when a story has no override", async ({

@@ -25,9 +25,10 @@ export type ExtractJobPayload = {
   diffThreshold: number;
 };
 
-export type CaptureJobPayload = {
+export type CaptureGroupJobPayload = {
   buildId: string;
-  snapshotId: string;
+  browser: string;
+  snapshotIds: string[];
 };
 
 export type DiffJobPayload = {
@@ -74,10 +75,10 @@ export const enqueueExtract = (
 ): Promise<Job<ExtractJobPayload>> =>
   enqueue(QueueName.BUILD_EXTRACT, payload, connection, { jobId: payload.buildId });
 
-export const enqueueCapture = (
-  payload: CaptureJobPayload,
+export const enqueueCaptureGroup = (
+  payload: CaptureGroupJobPayload,
   connection: IORedis,
-): Promise<Job<CaptureJobPayload>> => enqueue(QueueName.SNAPSHOT_CAPTURE, payload, connection);
+): Promise<Job<CaptureGroupJobPayload>> => enqueue(QueueName.SNAPSHOT_CAPTURE, payload, connection);
 
 export const enqueueDiff = (
   payload: DiffJobPayload,

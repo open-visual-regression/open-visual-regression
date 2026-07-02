@@ -2,6 +2,8 @@ import "./env";
 import { Worker, type Job } from "bullmq";
 import { Redis } from "ioredis";
 
+import { CAPTURE_GROUP_SIZE } from "@ovr/capture/extract";
+import { CAPTURE_JOB_TIMEOUT_MS } from "@ovr/capture/lib/captureTimeouts";
 import { QueueName, schedulePurge } from "@ovr/queue";
 
 import * as capture from "./handlers/capture";
@@ -18,7 +20,8 @@ const connection = new Redis(process.env.VALKEY_URL ?? "redis://localhost:6379",
 const extractWorker = new Worker(QueueName.BUILD_EXTRACT, extract.run, { connection });
 const captureWorker = new Worker(QueueName.SNAPSHOT_CAPTURE, capture.run, {
   connection,
-  lockDuration: 3 * 60 * 1000,
+  // A group job budgets CAPTURE_JOB_TIMEOUT_MS per snapshot; the lock must outlive that.
+  lockDuration: CAPTURE_JOB_TIMEOUT_MS * CAPTURE_GROUP_SIZE,
 });
 const diffWorker = new Worker(QueueName.SNAPSHOT_DIFF, diff.run, { connection });
 const finalizeWorker = new Worker(QueueName.BUILD_FINALIZE, finalize.run, { connection });

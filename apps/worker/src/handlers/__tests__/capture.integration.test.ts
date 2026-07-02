@@ -24,7 +24,13 @@ describe("capture", () => {
       });
 
       await failed(
-        { data: { buildId: build.id, snapshotId: snapshot!.id } },
+        {
+          data: {
+            buildId: build.id,
+            browser: captureConfiguration.browser,
+            snapshotIds: [snapshot!.id],
+          },
+        },
         new Error("Timed out launching the browser"),
       );
 
@@ -69,7 +75,13 @@ describe("capture", () => {
       });
 
       await failed(
-        { data: { buildId: build.id, snapshotId: erroredSnapshot!.id } },
+        {
+          data: {
+            buildId: build.id,
+            browser: captureConfiguration.browser,
+            snapshotIds: [erroredSnapshot!.id],
+          },
+        },
         new Error("capture failed"),
       );
 
@@ -78,6 +90,46 @@ describe("capture", () => {
       expect(diffs[0]).toMatchObject({
         snapshotId: erroredSnapshot!.id,
         processingStatus: "pending",
+      });
+    });
+
+    test("should leave a snapshot that already succeeded untouched when the rest of the group fails", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const [succeededSnapshot, pendingSnapshot] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            targetId: "story-a",
+            status: "success",
+            imagePath: "builds/seed/snapshots/already-captured.png",
+          },
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            targetId: "story-b",
+          },
+        ],
+      });
+
+      await failed(
+        {
+          data: {
+            buildId: build.id,
+            browser: captureConfiguration.browser,
+            snapshotIds: [succeededSnapshot!.id, pendingSnapshot!.id],
+          },
+        },
+        new Error("browser crashed"),
+      );
+
+      expect(await dbClient.snapshots.findById(succeededSnapshot!.id)).toMatchObject({
+        status: "success",
+      });
+      expect(await dbClient.snapshots.findById(pendingSnapshot!.id)).toMatchObject({
+        status: "error",
       });
     });
   });
