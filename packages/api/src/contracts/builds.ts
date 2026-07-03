@@ -108,6 +108,13 @@ export const buildSchema = z.object({
 
 export type BuildSchema = z.infer<typeof buildSchema>;
 
+export const buildsCursorSchema = z.object({
+  createdAt: z.string().nonempty(),
+  id: z.uuidv7(),
+});
+
+export type BuildsCursor = z.infer<typeof buildsCursorSchema>;
+
 export const listBuildsInputSchema = z.object({
   projectIds: z.array(z.uuidv7()).optional(),
   processingStatus: buildProcessingStatusSchema.optional(),
@@ -115,7 +122,7 @@ export const listBuildsInputSchema = z.object({
   search: z.string().optional(),
   sortDirection: z.enum(["asc", "desc"]).default("desc"),
   limit: z.number().int().min(1).max(100).default(20),
-  offset: z.number().int().min(0).default(0),
+  cursor: buildsCursorSchema.optional(),
 });
 
 export type ListBuildsInputSchema = z.infer<typeof listBuildsInputSchema>;
@@ -123,6 +130,7 @@ export type ListBuildsInputSchema = z.infer<typeof listBuildsInputSchema>;
 export const listBuildsOutputSchema = z.object({
   builds: z.array(buildSchema),
   total: z.number().int().nonnegative(),
+  nextCursor: buildsCursorSchema.nullable(),
 });
 
 export const listBuildsContract = oc

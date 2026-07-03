@@ -68,6 +68,11 @@ export type BuildDbSchema = Awaited<ReturnType<typeof findById>>;
 
 export type SortDirection = "asc" | "desc";
 
+type BuildsCursor = {
+  createdAt: string;
+  id: string;
+};
+
 type FindAllInput = {
   organizationId: string;
   projectIds?: string[];
@@ -76,7 +81,14 @@ type FindAllInput = {
   search?: string;
   sortDirection?: SortDirection;
   limit: number;
-  offset: number;
+  cursor?: BuildsCursor;
+};
+
+const getCursorFilter = (cursor: BuildsCursor, sortDirection: SortDirection) => {
+  if (sortDirection === "asc") {
+    return sql`(${builds.createdAt}, ${builds.id}) > (${cursor.createdAt}::timestamp, ${cursor.id}::uuid)`;
+  }
+  return sql`(${builds.createdAt}, ${builds.id}) < (${cursor.createdAt}::timestamp, ${cursor.id}::uuid)`;
 };
 
 export const findAll = async ({
@@ -87,15 +99,19 @@ export const findAll = async ({
   search,
   sortDirection = "desc",
   limit,
-  offset,
+  cursor,
 }: FindAllInput) => {
-  const filter = and(
+  const baseFilter = and(
     eq(projects.organizationId, organizationId),
     projectIds?.length ? inArray(builds.projectId, projectIds) : undefined,
     processingStatus ? eq(builds.processingStatus, processingStatus) : undefined,
     reviewStatus ? eq(builds.reviewStatus, reviewStatus) : undefined,
     search ? ilike(builds.name, `%${search}%`) : undefined,
   );
+
+  // Keyset pagination on (createdAt, id): matches the composite index and stays
+  // stable when new builds are inserted at the top mid-scroll.
+  const cursorFilter = cursor ? getCursorFilter(cursor, sortDirection) : undefined;
 
   const orderFn = sortDirection === "asc" ? asc : desc;
 
@@ -116,18 +132,22 @@ export const findAll = async ({
       })
       .from(builds)
       .innerJoin(projects, eq(builds.projectId, projects.id))
-      .where(filter)
-      .orderBy(orderFn(builds.createdAt))
-      .limit(limit)
-      .offset(offset),
+      .where(and(baseFilter, cursorFilter))
+      .orderBy(orderFn(builds.createdAt), orderFn(builds.id))
+      .limit(limit + 1),
     db
       .select({ count: count() })
       .from(builds)
       .innerJoin(projects, eq(builds.projectId, projects.id))
-      .where(filter),
+      .where(baseFilter),
   ]);
 
-  return { builds: rows, total: totalResult?.count ?? 0 };
+  const hasMore = rows.length > limit;
+  const pageRows = hasMore ? rows.slice(0, limit) : rows;
+  const lastRow = pageRows.at(-1);
+  const nextCursor = hasMore && lastRow ? { createdAt: lastRow.createdAt, id: lastRow.id } : null;
+
+  return { builds: pageRows, total: totalResult?.count ?? 0, nextCursor };
 };
 
 export type FindAllResult = Awaited<ReturnType<typeof findAll>>;

@@ -376,25 +376,39 @@ describe("builds", () => {
       expect(result?.builds.map((build) => build.id)).toEqual([successBuild!.id]);
     });
 
-    test("should respect the limit and offset params", async ({ admin }) => {
+    test("should paginate with the limit and cursor params", async ({ admin }) => {
       const [, project] = await serverClient.projects.add(TEST_PROJECT);
 
+      const created = [];
       for (let i = 0; i < 3; i++) {
-        await dbClient.builds.create({
-          projectId: project!.projectId,
-          branch: "main",
-          commitSha: i.toString().repeat(40),
-          artifactPath: `builds/${i}/artifact`,
-          createdBy: admin.id,
-          createdAt: `2024-01-0${i + 1}T00:00:00.000Z`,
-        });
+        created.push(
+          await dbClient.builds.create({
+            projectId: project!.projectId,
+            branch: "main",
+            commitSha: i.toString().repeat(40),
+            artifactPath: `builds/${i}/artifact`,
+            createdBy: admin.id,
+            createdAt: `2024-01-0${i + 1}T00:00:00.000Z`,
+          }),
+        );
       }
 
-      const [error, result] = await serverClient.builds.list({ limit: 2, offset: 1 });
+      // Newest first: created[2], created[1], created[0].
+      const [firstError, firstPage] = await serverClient.builds.list({ limit: 2 });
 
-      expect(error).toBeNull();
-      expect(result?.builds).toHaveLength(2);
-      expect(result?.total).toBe(3);
+      expect(firstError).toBeNull();
+      expect(firstPage?.total).toBe(3);
+      expect(firstPage?.builds.map((build) => build.id)).toEqual([created[2]!.id, created[1]!.id]);
+      expect(firstPage?.nextCursor).not.toBeNull();
+
+      const [secondError, secondPage] = await serverClient.builds.list({
+        limit: 2,
+        cursor: firstPage!.nextCursor!,
+      });
+
+      expect(secondError).toBeNull();
+      expect(secondPage?.builds.map((build) => build.id)).toEqual([created[0]!.id]);
+      expect(secondPage?.nextCursor).toBeNull();
     });
 
     test("should not return builds belonging to other organizations", async ({ admin }) => {

@@ -22,28 +22,20 @@ const TableCaption = ({ className, ...props }: React.ComponentProps<"p">) => (
   />
 );
 
-const Table = ({ className, children, ...props }: React.ComponentProps<"table">) => {
-  const childArray = React.Children.toArray(children);
-  const caption = childArray.filter(
-    (child) => React.isValidElement(child) && child.type === TableCaption,
-  );
-  const tableChildren = childArray.filter(
-    (child) => !(React.isValidElement(child) && child.type === TableCaption),
-  );
-  return (
-    <div className="relative w-full">
-      <div
-        data-slot="table-container"
-        className="overflow-x-auto rounded-card border border-ovr-border bg-ovr-elevated"
-      >
-        <table data-slot="table" className={cn("w-full text-body-sm", className)} {...props}>
-          {tableChildren}
-        </table>
-      </div>
-      {caption}
-    </div>
-  );
-};
+const TableContainer = ({ className, ...props }: React.ComponentProps<"div">) => (
+  <div
+    data-slot="table-container"
+    className={cn(
+      "relative w-full overflow-x-auto rounded-card border border-ovr-border bg-ovr-elevated",
+      className,
+    )}
+    {...props}
+  />
+);
+
+const Table = ({ className, ...props }: React.ComponentProps<"table">) => (
+  <table data-slot="table" className={cn("w-full text-body-sm", className)} {...props} />
+);
 
 const TableHeader = ({ className, ...props }: React.ComponentProps<"thead">) => (
   <thead
@@ -121,6 +113,7 @@ const TableEmpty = ({
 
 export {
   Table,
+  TableContainer,
   TableHeader,
   TableBody,
   TableFooter,

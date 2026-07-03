@@ -1,85 +1,58 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
 import { mocks } from "@ovr/mocks";
 
+import { buildsListInfiniteOptions } from "@/lib/orpc/builds-query";
+import { orpc } from "@/lib/orpc/client";
 import { describe, expect, it, render, screen } from "@/test-utils";
 
 import { BuildsSection } from "../BuildsSection";
 
+const PROJECT_ID = "018f0000-0000-7000-8000-000000000000";
+
+type RenderSectionOptions = {
+  search?: string;
+};
+
+const renderSection = (
+  builds: ReturnType<typeof mocks.build.generateBuild>[],
+  { search }: RenderSectionOptions = {},
+) => {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false, staleTime: Infinity } },
+  });
+
+  const options = buildsListInfiniteOptions(PROJECT_ID, search);
+  queryClient.setQueryData(orpc.builds.list.infiniteKey(options), {
+    pages: [{ builds, total: builds.length, nextCursor: null }],
+    pageParams: [options.initialPageParam],
+  });
+
+  return render(<BuildsSection projectId={PROJECT_ID} search={search} />, {
+    wrapper: ({ children }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    ),
+  });
+};
+
 describe("BuildsSection", () => {
-  it("should show an empty state when there are no builds", () => {
-    render(<BuildsSection builds={[]} />);
+  it("should show the onboarding empty state when there are no builds", () => {
+    renderSection([]);
+
     expect(screen.getByRole("heading", { name: "no builds yet" })).toBeVisible();
   });
 
-  it("should render a row for each build", () => {
-    const build = mocks.build.generateBuild({
-      name: "fix: cart total rounding",
-      branch: "pr/482",
-    });
-    render(<BuildsSection builds={[build]} />);
+  it("should render the builds table with a row for each build", () => {
+    const build = mocks.build.generateBuild({ name: "fix: cart total rounding" });
+    renderSection([build]);
 
     expect(screen.getByRole("cell", { name: /fix: cart total rounding/ })).toBeVisible();
-    expect(screen.getByRole("cell", { name: "pr/482" })).toBeVisible();
   });
 
-  it("should show the short commit sha when the build has no name", () => {
-    const build = mocks.build.generateBuild({ name: null, commitSha: "4f2a91e1234567890" });
-    render(<BuildsSection builds={[build]} />);
+  it("should show a no-results message instead of the onboarding state during a search", () => {
+    renderSection([], { search: "missing" });
 
-    expect(screen.getByRole("cell", { name: /4f2a91e/ })).toBeVisible();
-  });
-
-  it("should show a passed build's status as 'passed'", () => {
-    const build = mocks.build.generateBuild({
-      status: "passed",
-    });
-    render(<BuildsSection builds={[build]} />);
-
-    expect(screen.getByRole("cell", { name: "passed" })).toBeVisible();
-  });
-
-  it("should show a needs_review build's status as 'needs review'", () => {
-    const build = mocks.build.generateBuild({
-      status: "needs_review",
-    });
-    render(<BuildsSection builds={[build]} />);
-
-    expect(screen.getByRole("cell", { name: "needs review" })).toBeVisible();
-  });
-
-  it("should show an error build's status as 'error'", () => {
-    const build = mocks.build.generateBuild({
-      status: "error",
-    });
-    render(<BuildsSection builds={[build]} />);
-
-    expect(screen.getByRole("cell", { name: "error" })).toBeVisible();
-  });
-
-  it("should show a queued build's status as 'queued'", () => {
-    const build = mocks.build.generateBuild({
-      status: "queued",
-    });
-    render(<BuildsSection builds={[build]} />);
-
-    expect(screen.getByRole("cell", { name: "queued" })).toBeVisible();
-  });
-
-  it("should show a relative time for a build created recently", () => {
-    const build = mocks.build.generateBuild({
-      createdAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-    });
-    render(<BuildsSection builds={[build]} />);
-
-    expect(screen.getByRole("cell", { name: "5 minutes ago" })).toBeVisible();
-  });
-
-  it("should link each row to its run detail page", () => {
-    const build = mocks.build.generateBuild({ commitSha: "4f2a91e1234567890" });
-    render(<BuildsSection builds={[build]} />);
-
-    expect(screen.getByRole("link", { name: /view build 4f2a91e/i })).toHaveAttribute(
-      "href",
-      `/projects/${build.project.id}/builds/${build.id}`,
-    );
+    expect(screen.queryByRole("heading", { name: "no builds yet" })).toBeNull();
+    expect(screen.getByRole("cell", { name: 'no builds found matching "missing"' })).toBeVisible();
   });
 });

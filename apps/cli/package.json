@@ -22,8 +22,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@orpc/client": "^1.14.4",
-    "@orpc/contract": "^1.14.4",
+    "@orpc/client": "^1.14.6",
+    "@orpc/contract": "^1.14.6",
     "@ovr/api": "workspace:*",
     "commander": "^15.0.0",
     "jiti": "^2.7.0",

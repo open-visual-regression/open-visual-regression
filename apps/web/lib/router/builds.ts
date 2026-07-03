@@ -117,10 +117,14 @@ export const list = os.builds.list
       search,
       sortDirection = "desc",
       limit = 20,
-      offset = 0,
+      cursor,
     } = input ?? {};
 
-    const { builds: rows, total } = await dbClient.builds.findAll({
+    const {
+      builds: rows,
+      total,
+      nextCursor,
+    } = await dbClient.builds.findAll({
       organizationId: context.organizationId,
       projectIds,
       processingStatus,
@@ -128,7 +132,7 @@ export const list = os.builds.list
       search,
       sortDirection,
       limit,
-      offset,
+      cursor,
     });
 
     return {
@@ -144,6 +148,7 @@ export const list = os.builds.list
         createdAt: build.createdAt,
       })),
       total,
+      nextCursor,
     };
   })
   .actionable();
