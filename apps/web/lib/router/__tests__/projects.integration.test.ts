@@ -52,16 +52,25 @@ describe("projects", () => {
       });
     });
 
-    test("should respect the limit and offset params", async ({ admin: _ }) => {
+    test("should paginate with the limit and cursor params", async ({ admin: _ }) => {
       await serverClient.projects.add(TEST_PROJECT);
       await serverClient.projects.add({ ...TEST_PROJECT, projectName: "Second Project" });
       await serverClient.projects.add({ ...TEST_PROJECT, projectName: "Third Project" });
 
-      const [error, result] = await serverClient.projects.list({ limit: 1, offset: 1 });
+      const [firstError, firstPage] = await serverClient.projects.list({ limit: 2 });
 
-      expect(error).toBeNull();
-      expect(result?.projects).toHaveLength(1);
-      expect(result?.projects[0]?.name).toBe("Second Project");
+      expect(firstError).toBeNull();
+      expect(firstPage?.projects).toHaveLength(2);
+      expect(firstPage?.nextCursor).not.toBeNull();
+
+      const [secondError, secondPage] = await serverClient.projects.list({
+        limit: 2,
+        cursor: firstPage!.nextCursor!,
+      });
+
+      expect(secondError).toBeNull();
+      expect(secondPage?.projects).toHaveLength(1);
+      expect(secondPage?.nextCursor).toBeNull();
     });
   });
 
