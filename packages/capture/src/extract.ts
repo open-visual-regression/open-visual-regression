@@ -14,8 +14,6 @@ import type { NamedViewport } from "./storyViewports";
 
 type Target = { id: string; title: string; name: string };
 
-// 0 means "auto/full-page height" — mirrors how apps/web displays it
-// (apps/web/lib/router/snapshots.ts, SnapshotHeader.tsx).
 const toViewportName = (viewport: {
   name?: string;
   viewportWidth: number;
