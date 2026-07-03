@@ -19,7 +19,7 @@ const mockList = vi.mocked(serverClient.projects.list);
 const mockCount = vi.mocked(serverClient.projects.count);
 const mockBuildsList = vi.mocked(serverClient.builds.list);
 
-mockList.mockResolvedValue([null, { projects: [] }]);
+mockList.mockResolvedValue([null, { projects: [], nextCursor: null }]);
 mockCount.mockResolvedValue([null, { total: 0 }]);
 mockBuildsList.mockResolvedValue([null, { builds: [], total: 0, nextCursor: null }]);
 

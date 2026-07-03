@@ -22,14 +22,24 @@ export const projectSchema = z.object({
 
 export type ProjectDto = z.infer<typeof projectSchema>;
 
+export const projectsCursorSchema = z.object({
+  createdAt: z.string().nonempty(),
+  id: z.uuidv7(),
+});
+
+export type ProjectsCursor = z.infer<typeof projectsCursorSchema>;
+
 export const listProjectsInputSchema = z.object({
   limit: z.number().int().min(1).max(100).default(20),
-  offset: z.number().int().min(0).default(0),
+  cursor: projectsCursorSchema.optional(),
 });
 
 export type ListProjectsInputSchema = z.infer<typeof listProjectsInputSchema>;
 
-export const listProjectsOutputSchema = z.object({ projects: z.array(projectSchema) });
+export const listProjectsOutputSchema = z.object({
+  projects: z.array(projectSchema),
+  nextCursor: projectsCursorSchema.nullable(),
+});
 
 export const listProjectsContract = oc
   .input(listProjectsInputSchema.optional())

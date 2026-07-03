@@ -1,4 +1,4 @@
-import { count, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, sql } from "drizzle-orm";
 
 import { db } from "../db";
 import { projects } from "../schema";
@@ -58,6 +58,49 @@ export const listProjects = ({ organizationId, limit, offset }: ListProjectsInpu
   });
 
 export type ListProjectsResult = Awaited<ReturnType<typeof listProjects>>;
+
+type ProjectsCursor = {
+  createdAt: string;
+  id: string;
+};
+
+const getCursorFilter = (cursor: ProjectsCursor) =>
+  sql`(${projects.createdAt}, ${projects.id}) < (${cursor.createdAt}::timestamp, ${cursor.id}::uuid)`;
+
+type FindAllInput = ProjectsFilter & {
+  limit: number;
+  cursor?: ProjectsCursor;
+};
+
+export const findAll = async ({ organizationId, limit, cursor }: FindAllInput) => {
+  const baseFilter = buildProjectsFilter({ organizationId });
+  const cursorFilter = cursor ? getCursorFilter(cursor) : undefined;
+
+  const rows = await db.query.projects.findMany({
+    columns: {
+      id: true,
+      name: true,
+      description: true,
+      gitMainBranch: true,
+      retentionDays: true,
+      requiredReviewerCount: true,
+      createdAt: true,
+    },
+    with: { creator: { columns: { id: true, name: true, email: true } } },
+    where: and(baseFilter, cursorFilter),
+    orderBy: [desc(projects.createdAt), desc(projects.id)],
+    limit: limit + 1,
+  });
+
+  const hasMore = rows.length > limit;
+  const pageRows = hasMore ? rows.slice(0, limit) : rows;
+  const lastRow = pageRows.at(-1);
+  const nextCursor = hasMore && lastRow ? { createdAt: lastRow.createdAt, id: lastRow.id } : null;
+
+  return { projects: pageRows, nextCursor };
+};
+
+export type FindAllResult = Awaited<ReturnType<typeof findAll>>;
 
 export const countProjects = async ({ organizationId }: ProjectsFilter) => {
   const [result] = await db

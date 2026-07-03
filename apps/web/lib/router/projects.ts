@@ -27,15 +27,15 @@ export const getOne = os.projects.getOne
 export const list = os.projects.list
   .use(authenticatedMiddleware)
   .handler(async ({ input, context }) => {
-    const { limit = 20, offset = 0 } = input ?? {};
+    const { limit = 20, cursor } = input ?? {};
 
-    const projects = await dbClient.projects.listProjects({
+    const { projects, nextCursor } = await dbClient.projects.findAll({
       organizationId: context.organizationId,
       limit,
-      offset,
+      cursor,
     });
 
-    return { projects };
+    return { projects, nextCursor };
   })
   .actionable();
 

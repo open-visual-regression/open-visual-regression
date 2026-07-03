@@ -116,6 +116,102 @@ describe("projects", () => {
     });
   });
 
+  describe("findAll", () => {
+    test("should only return projects belonging to the given organization", async ({
+      organization,
+      project,
+      user,
+    }) => {
+      const [otherOrg] = await db
+        .insert(organizationTable)
+        .values({ id: uuidv7(), name: "Other Org", slug: uuidv7(), createdAt: new Date() })
+        .returning();
+
+      await db.insert(projects).values({
+        name: "Other Org Project",
+        gitMainBranch: "main",
+        organizationId: otherOrg!.id,
+        creatorId: user.id,
+      });
+
+      const { projects: found } = await dbClient.projects.findAll({
+        organizationId: organization.id,
+        limit: 10,
+      });
+
+      expect(found.map((p) => p.id)).toEqual([project.id]);
+    });
+
+    test("should return the most recently created project first", async ({
+      organization,
+      user,
+    }) => {
+      const [older] = await db
+        .insert(projects)
+        .values({
+          name: "Older Project",
+          gitMainBranch: "main",
+          organizationId: organization.id,
+          creatorId: user.id,
+          createdAt: "2024-01-01T00:00:00.000Z",
+        })
+        .returning();
+
+      const [newer] = await db
+        .insert(projects)
+        .values({
+          name: "Newer Project",
+          gitMainBranch: "main",
+          organizationId: organization.id,
+          creatorId: user.id,
+          createdAt: "2024-01-02T00:00:00.000Z",
+        })
+        .returning();
+
+      const { projects: found } = await dbClient.projects.findAll({
+        organizationId: organization.id,
+        limit: 10,
+      });
+
+      expect(found.map((p) => p.id)).toEqual([newer!.id, older!.id]);
+    });
+
+    test("should paginate with the limit and cursor params", async ({ organization, user }) => {
+      const created = await Promise.all(
+        [0, 1, 2].map((i) =>
+          db
+            .insert(projects)
+            .values({
+              name: `Project ${i}`,
+              gitMainBranch: "main",
+              organizationId: organization.id,
+              creatorId: user.id,
+              createdAt: `2024-01-0${i + 1}T00:00:00.000Z`,
+            })
+            .returning(),
+        ),
+      );
+      const [first, second, third] = created.map(([p]) => p!);
+
+      const firstPage = await dbClient.projects.findAll({
+        organizationId: organization.id,
+        limit: 2,
+      });
+
+      expect(firstPage.projects.map((p) => p.id)).toEqual([third!.id, second!.id]);
+      expect(firstPage.nextCursor).not.toBeNull();
+
+      const secondPage = await dbClient.projects.findAll({
+        organizationId: organization.id,
+        limit: 2,
+        cursor: firstPage.nextCursor!,
+      });
+
+      expect(secondPage.projects.map((p) => p.id)).toEqual([first!.id]);
+      expect(secondPage.nextCursor).toBeNull();
+    });
+  });
+
   describe("countProjects", () => {
     test("should return 0 when the organization has no projects", async ({ organization }) => {
       const total = await dbClient.projects.countProjects({ organizationId: organization.id });

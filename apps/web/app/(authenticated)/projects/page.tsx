@@ -1,3 +1,4 @@
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { headers } from "next/headers";
 
 import { Icon, PlusIcon } from "@ovr/ui/components/icon";
@@ -6,27 +7,29 @@ import { Typography } from "@ovr/ui/components/typography";
 import { auth } from "@/lib/auth/auth";
 import { RequiresAdminRole } from "@/lib/components/authorization/RequiresAdminRole";
 import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
+import { projectsListInfiniteOptions } from "@/lib/orpc/projects-query";
+import { getQueryClient } from "@/lib/orpc/query-client";
+import { orpcServer } from "@/lib/orpc/server";
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
 
-import { NoProjectsSection } from "./_components/NoProjectsSection";
-import { ProjectCardsList } from "./_components/ProjectCardsList";
-
-const PROJECTS_PAGE_LIMIT = 100;
+import { ProjectsSection } from "./_components/ProjectsSection";
 
 export default async function ProjectsPage() {
-  const [[listError, listProjectsResult], [countError, countResult], sessionResult] =
-    await Promise.all([
-      serverClient.projects.list({ limit: PROJECTS_PAGE_LIMIT }),
-      serverClient.projects.count(),
-      auth.api.getSession({ headers: await headers() }),
-    ]);
+  const queryClient = getQueryClient();
 
-  if (listError || countError) {
+  const [[countError, countResult], sessionResult] = await Promise.all([
+    serverClient.projects.count(),
+    auth.api.getSession({ headers: await headers() }),
+    queryClient.prefetchInfiniteQuery(
+      orpcServer.projects.list.infiniteOptions(projectsListInfiniteOptions()),
+    ),
+  ]);
+
+  if (countError) {
     serverError();
   }
 
-  const { projects } = listProjectsResult;
   const { total } = countResult;
 
   return (
@@ -47,11 +50,9 @@ export default async function ProjectsPage() {
           </ButtonLink>
         </RequiresAdminRole>
       </div>
-      {projects.length === 0 ? (
-        <NoProjectsSection role={sessionResult?.user.role} />
-      ) : (
-        <ProjectCardsList projects={projects} />
-      )}
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <ProjectsSection role={sessionResult?.user.role} />
+      </HydrationBoundary>
     </div>
   );
 }
