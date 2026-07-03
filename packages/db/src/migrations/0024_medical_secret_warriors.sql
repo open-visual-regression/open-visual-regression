@@ -1,0 +1,2 @@
+UPDATE "snapshots" SET "viewport_name" = "viewport_width" || 'x' || "viewport_height" WHERE "viewport_name" IS NULL;--> statement-breakpoint
+ALTER TABLE "snapshots" ALTER COLUMN "viewport_name" SET NOT NULL;

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { type ViewportFilter } from "@ovr/api/contracts/builds";
+import { type ViewportOption } from "@ovr/api/contracts/builds";
 import { Popover, PopoverContent } from "@ovr/ui/components/popover";
 
 import { FacetOptionsList } from "@/lib/components/facet/FacetOptionsList";
@@ -11,14 +11,13 @@ import { formatFacetValueLabel } from "@/lib/components/facet/formatFacetValueLa
 
 const SEARCHABLE_THRESHOLD = 6;
 
-export const toViewportKey = (viewport: ViewportFilter): string =>
+export const toViewportKey = (viewport: ViewportOption): string =>
   `${viewport.viewportWidth}x${viewport.viewportHeight}`;
 
-export const toViewportLabel = (viewport: ViewportFilter): string =>
-  `${viewport.viewportWidth}×${viewport.viewportHeight}`;
+export const toViewportLabel = (viewport: ViewportOption): string => viewport.viewportName;
 
 type BuildsViewportFacetProps = {
-  viewports: ViewportFilter[];
+  viewports: ViewportOption[];
   selected: string[];
   onApply: (next: string[]) => void;
 };

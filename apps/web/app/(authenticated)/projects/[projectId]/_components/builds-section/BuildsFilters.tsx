@@ -4,7 +4,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import {
   type BuildStatus,
-  type ViewportFilter,
+  type ViewportOption,
   type ViewportSchema,
 } from "@ovr/api/contracts/builds";
 
@@ -21,7 +21,7 @@ type BuildsFiltersProps = {
   status: BuildStatus[];
   browser: Browser[];
   viewport: string[];
-  viewportOptions: ViewportFilter[];
+  viewportOptions: ViewportOption[];
   className?: string;
 };
 

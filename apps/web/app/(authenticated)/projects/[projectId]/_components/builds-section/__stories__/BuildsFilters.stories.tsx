@@ -4,9 +4,9 @@ import { userEvent, within } from "storybook/test";
 import { BuildsFilters } from "../BuildsFilters";
 
 const VIEWPORT_OPTIONS = [
-  { viewportWidth: 1280, viewportHeight: 800 },
-  { viewportWidth: 768, viewportHeight: 1024 },
-  { viewportWidth: 375, viewportHeight: 812 },
+  { viewportWidth: 1280, viewportHeight: 800, viewportName: "desktop" },
+  { viewportWidth: 768, viewportHeight: 1024, viewportName: "tablet" },
+  { viewportWidth: 375, viewportHeight: 812, viewportName: "mobile" },
 ];
 
 const meta: Meta<typeof BuildsFilters> = {

@@ -175,12 +175,18 @@ export const getBuildOutputSchema = z.object({
 
 export const getBuildContract = oc.input(getBuildInputSchema).output(getBuildOutputSchema);
 
+export const viewportOptionSchema = viewportFilterSchema.extend({
+  viewportName: z.string(),
+});
+
+export type ViewportOption = z.infer<typeof viewportOptionSchema>;
+
 export const listViewportsInputSchema = z.object({
   projectId: z.uuidv7(),
 });
 
 export const listViewportsOutputSchema = z.object({
-  viewports: z.array(viewportFilterSchema),
+  viewports: z.array(viewportOptionSchema),
 });
 
 export const listViewportsContract = oc

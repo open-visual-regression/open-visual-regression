@@ -565,12 +565,54 @@ describe("builds", () => {
       const viewports = await dbClient.builds.findDistinctViewports(project.id);
 
       expect(viewports).toEqual([
-        { viewportWidth: 375, viewportHeight: 812 },
+        {
+          viewportWidth: 375,
+          viewportHeight: 812,
+          viewportName: captureConfiguration.viewportName,
+        },
         {
           viewportWidth: captureConfiguration.viewportWidth,
           viewportHeight: captureConfiguration.viewportHeight,
+          viewportName: captureConfiguration.viewportName,
         },
       ]);
+    });
+
+    test("should return one row per dimension even when snapshots share dimensions under different names", async ({
+      project,
+      user,
+      captureConfiguration,
+    }) => {
+      const build = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: user.id,
+      });
+
+      await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build!.id, ...captureConfiguration, targetId: "story-a" },
+          {
+            buildId: build!.id,
+            ...captureConfiguration,
+            viewportName: "alternate-name",
+            targetId: "story-b",
+          },
+        ],
+      });
+
+      const viewports = await dbClient.builds.findDistinctViewports(project.id);
+
+      expect(viewports).toHaveLength(1);
+      expect(viewports[0]).toMatchObject({
+        viewportWidth: captureConfiguration.viewportWidth,
+        viewportHeight: captureConfiguration.viewportHeight,
+      });
+      expect([captureConfiguration.viewportName, "alternate-name"]).toContain(
+        viewports[0]!.viewportName,
+      );
     });
 
     test("should not return viewports captured for a different project", async ({

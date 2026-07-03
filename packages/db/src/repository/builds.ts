@@ -232,11 +232,16 @@ export type FindAllResult = Awaited<ReturnType<typeof findAll>>;
 
 export type BuildListItemDbSchema = FindAllResult["builds"][number];
 
-export const findDistinctViewports = async (projectId: string): Promise<ViewportFilter[]> => {
+export type ViewportOption = ViewportFilter & {
+  viewportName: string;
+};
+
+export const findDistinctViewports = async (projectId: string): Promise<ViewportOption[]> => {
   const rows = await db
-    .selectDistinct({
+    .selectDistinctOn([snapshots.viewportWidth, snapshots.viewportHeight], {
       viewportWidth: snapshots.viewportWidth,
       viewportHeight: snapshots.viewportHeight,
+      viewportName: snapshots.viewportName,
     })
     .from(snapshots)
     .innerJoin(builds, eq(snapshots.buildId, builds.id))

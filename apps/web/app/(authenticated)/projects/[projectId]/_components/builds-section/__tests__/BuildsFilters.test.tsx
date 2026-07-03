@@ -16,8 +16,8 @@ const renderComponent = () =>
       browser={[]}
       viewport={[]}
       viewportOptions={[
-        { viewportWidth: 1280, viewportHeight: 800 },
-        { viewportWidth: 375, viewportHeight: 812 },
+        { viewportWidth: 1280, viewportHeight: 800, viewportName: "desktop" },
+        { viewportWidth: 375, viewportHeight: 812, viewportName: "mobile" },
       ]}
     />,
   );
@@ -50,7 +50,7 @@ describe("BuildsFilters", () => {
         status={[]}
         browser={["chromium"]}
         viewport={[]}
-        viewportOptions={[{ viewportWidth: 1280, viewportHeight: 800 }]}
+        viewportOptions={[{ viewportWidth: 1280, viewportHeight: 800, viewportName: "desktop" }]}
       />,
     );
 
@@ -85,5 +85,26 @@ describe("BuildsFilters", () => {
     renderComponent();
 
     expect(screen.getByRole("button", { name: "filters" })).toBeVisible();
+  });
+
+  it("should show each viewport's configured name in the options list", async ({ user }) => {
+    renderComponent();
+
+    await user.click(screen.getByRole("button", { name: /^viewport\s+any$/i }));
+
+    expect(screen.getByRole("checkbox", { name: "desktop" })).toBeVisible();
+    expect(screen.getByRole("checkbox", { name: "mobile" })).toBeVisible();
+  });
+
+  it("should navigate using the viewport's dimension key even when it has a name", async ({
+    user,
+  }) => {
+    renderComponent();
+
+    await user.click(screen.getByRole("button", { name: /^viewport\s+any$/i }));
+    await user.click(screen.getByRole("checkbox", { name: "desktop" }));
+    await user.click(screen.getByRole("button", { name: /^apply$/i }));
+
+    expect(mockPush).toHaveBeenCalledWith("/?viewport=1280x800");
   });
 });

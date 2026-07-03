@@ -131,6 +131,9 @@ export const snapshots = pgTable(
     viewportWidth: integer("viewport_width").notNull().default(1280),
     // 0 means "auto/full-page height" — no fixed viewport height was requested.
     viewportHeight: integer("viewport_height").notNull().default(0),
+    // Friendly name from the caller's ovr.config (e.g. "desktop"), falling
+    // back to "{width}x{height}" when the caller doesn't provide one.
+    viewportName: varchar("viewport_name", { length: 255 }).notNull(),
     targetId: varchar("target_id", { length: 255 }).notNull(),
     targetTitle: varchar("target_title", { length: 255 }).notNull().default(""),
     targetName: varchar("target_name", { length: 255 }).notNull().default(""),
