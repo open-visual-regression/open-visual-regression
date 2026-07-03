@@ -1,6 +1,20 @@
+x-app-env: &app-env
+  DATABASE_HOST: db
+  DATABASE_PORT: 5432
+  DATABASE_NAME: ${DATABASE_NAME:-open_visual_regression}
+  DATABASE_USER: ${DATABASE_USER:-postgres}
+  DATABASE_PASSWORD: ${DATABASE_PASSWORD:-postgres}
+  VALKEY_URL: redis://valkey:6379
+  STORAGE_ENDPOINT: http://rustfs:9000
+  STORAGE_REGION: ${STORAGE_REGION:-us-east-1}
+  STORAGE_BUCKET: ${STORAGE_BUCKET:-ovr}
+  STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY:-rustfsadmin}
+  STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY:-rustfsadmin}
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+
 services:
   db:
-    image: postgres
+    image: postgres:17-alpine
     restart: always
     user: postgres
     environment:
@@ -21,12 +35,6 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
-  adminer:
-    image: adminer
-    restart: always
-    ports:
-      - ${ADMINER_PORT:-8080}:8080
-
   valkey:
     image: valkey/valkey:8-alpine
     restart: always
@@ -37,6 +45,8 @@ services:
       interval: 1s
       timeout: 5s
       retries: 10
+    volumes:
+      - valkeydata:/data
 
   rustfs:
     image: rustfs/rustfs:latest
@@ -52,6 +62,113 @@ services:
     volumes:
       - rustfsdata:/data
 
+  createbuckets:
+    image: minio/mc
+    depends_on:
+      rustfs:
+        condition: service_started
+    environment:
+      STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY:-rustfsadmin}
+      STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY:-rustfsadmin}
+      STORAGE_BUCKET: ${STORAGE_BUCKET:-ovr}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        until mc alias set ovr http://rustfs:9000 "$$STORAGE_ACCESS_KEY" "$$STORAGE_SECRET_KEY"; do
+          echo "waiting for object storage..."
+          sleep 2
+        done
+        mc mb --ignore-existing ovr/"$$STORAGE_BUCKET"
+    restart: "no"
+
+  migrate:
+    image: ${IMAGE_PREFIX:-open-visual-regression}/worker:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    command: ["node", "dist/migrate.js"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      <<: *app-env
+    restart: "no"
+
+  web:
+    image: ${IMAGE_PREFIX:-open-visual-regression}/web:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_BASE_URL: ${BASE_URL:-http://localhost:3000}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      createbuckets:
+        condition: service_completed_successfully
+    environment:
+      <<: *app-env
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET in your .env}
+      BASE_URL: ${BASE_URL:-http://localhost:3000}
+      NEXT_PUBLIC_BASE_URL: ${BASE_URL:-http://localhost:3000}
+    ports:
+      - ${WEB_PORT:-3000}:3000
+
+  worker:
+    image: ${IMAGE_PREFIX:-open-visual-regression}/worker:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      createbuckets:
+        condition: service_completed_successfully
+    environment:
+      <<: *app-env
+      OVR_CAPTURE_GROUP_CONCURRENCY: ${OVR_CAPTURE_GROUP_CONCURRENCY:-2}
+    volumes:
+      - workertmp:/tmp
+
+  bull-board:
+    image: ${IMAGE_PREFIX:-open-visual-regression}/bull-board:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: apps/bull-board/Dockerfile
+    profiles: ["tools"]
+    restart: unless-stopped
+    depends_on:
+      valkey:
+        condition: service_healthy
+    environment:
+      VALKEY_URL: redis://valkey:6379
+      BULL_BOARD_PORT: 3001
+    ports:
+      - ${BULL_BOARD_PORT:-3001}:3001
+
+  adminer:
+    image: adminer:5
+    profiles: ["tools"]
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - ${ADMINER_PORT:-8080}:8080
+
 volumes:
   pgdata:
+  valkeydata:
   rustfsdata:
+  workertmp:
