@@ -38,7 +38,7 @@ export const FacetMenuButton = ({ facets }: FacetMenuButtonProps) => {
               variant="outline"
               color="neutral"
               size="icon"
-              aria-label="filters"
+              aria-label={hasActiveFacet ? "filters (active)" : "filters"}
               className="relative"
             />
           }

@@ -42,7 +42,7 @@ export const BuildsBrowserFacet = ({ selected, onApply }: BuildsBrowserFacetProp
           options={BROWSER_OPTIONS}
           selected={selected}
           onApply={(next) => {
-            onApply(next as Browser[]);
+            onApply(next);
             setOpen(false);
           }}
           onClear={() => {

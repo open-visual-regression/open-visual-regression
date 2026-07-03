@@ -75,13 +75,17 @@ describe("BuildsFilters", () => {
     expect(screen.getByRole("button", { name: /^status\s+2 selected$/i })).toBeVisible();
   });
 
-  it("should show a badge dot on the mobile filter menu button when a filter is active", () => {
-    const { container } = render(
+  it("should mark the mobile filter menu button as active when a filter is applied", () => {
+    render(
       <BuildsFilters status={["queued"]} browser={[]} resolution={[]} resolutionOptions={[]} />,
     );
 
-    const menuButton = screen.getByRole("button", { name: /filters/i });
-    expect(menuButton.querySelector("[aria-hidden]")).toBeInTheDocument();
-    expect(container).toBeVisible();
+    expect(screen.getByRole("button", { name: "filters (active)" })).toBeVisible();
+  });
+
+  it("should not mark the mobile filter menu button as active when no filter is applied", () => {
+    renderComponent();
+
+    expect(screen.getByRole("button", { name: "filters" })).toBeVisible();
   });
 });

@@ -5,14 +5,14 @@ import { useState } from "react";
 import { buildStatusSchema, type BuildStatus } from "@ovr/api/contracts/builds";
 import { Popover, PopoverContent } from "@ovr/ui/components/popover";
 
-import { BUILD_STATUS_LABEL } from "@/lib/components/BuildStatus";
+import { getBuildStatusLabel } from "@/lib/components/BuildStatus";
 import { FacetOptionsList } from "@/lib/components/Facet/FacetOptionsList";
 import { FacetTrigger } from "@/lib/components/Facet/FacetTrigger";
 import { formatFacetValueLabel } from "@/lib/components/Facet/formatFacetValueLabel";
 
 export const STATUS_OPTIONS = buildStatusSchema.options.map((status) => ({
   value: status,
-  label: BUILD_STATUS_LABEL[status],
+  label: getBuildStatusLabel(status),
 }));
 
 type BuildsStatusFacetProps = {
@@ -27,7 +27,7 @@ export const BuildsStatusFacet = ({ selected, onApply }: BuildsStatusFacetProps)
     <Popover open={open} onOpenChange={setOpen}>
       <FacetTrigger
         label="status"
-        valueLabel={formatFacetValueLabel(selected.map((status) => BUILD_STATUS_LABEL[status]))}
+        valueLabel={formatFacetValueLabel(selected.map((status) => getBuildStatusLabel(status)))}
         active={selected.length > 0}
       />
       <PopoverContent>
@@ -35,7 +35,7 @@ export const BuildsStatusFacet = ({ selected, onApply }: BuildsStatusFacetProps)
           options={STATUS_OPTIONS}
           selected={selected}
           onApply={(next) => {
-            onApply(next as BuildStatus[]);
+            onApply(next);
             setOpen(false);
           }}
           onClear={() => {

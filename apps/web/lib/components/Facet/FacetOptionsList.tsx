@@ -7,34 +7,34 @@ import { Checkbox } from "@ovr/ui/components/checkbox";
 import { Icon, SearchIcon } from "@ovr/ui/components/icon";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@ovr/ui/components/input-group";
 
-export type FacetOption = {
-  value: string;
+export type FacetOption<T extends string> = {
+  value: T;
   label: string;
 };
 
-type FacetOptionsListProps = {
-  options: FacetOption[];
-  selected: string[];
+type FacetOptionsListProps<T extends string> = {
+  options: FacetOption<T>[];
+  selected: T[];
   searchable?: boolean;
-  onApply: (next: string[]) => void;
+  onApply: (next: T[]) => void;
   onClear: () => void;
 };
 
-export const FacetOptionsList = ({
+export function FacetOptionsList<T extends string>({
   options,
   selected,
   searchable = false,
   onApply,
   onClear,
-}: FacetOptionsListProps) => {
-  const [draft, setDraft] = useState(selected);
+}: FacetOptionsListProps<T>) {
+  const [draft, setDraft] = useState<T[]>(selected);
   const [query, setQuery] = useState("");
 
   const visibleOptions = searchable
     ? options.filter((option) => option.label.toLowerCase().includes(query.toLowerCase()))
     : options;
 
-  const toggle = (value: string) =>
+  const toggle = (value: T) =>
     setDraft((current) =>
       current.includes(value) ? current.filter((item) => item !== value) : [...current, value],
     );
@@ -81,4 +81,4 @@ export const FacetOptionsList = ({
       </div>
     </div>
   );
-};
+}

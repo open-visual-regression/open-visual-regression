@@ -63,7 +63,7 @@ export const BuildsFilters = ({
           options={STATUS_OPTIONS}
           selected={status}
           onApply={(next) => {
-            applyStatus(next as BuildStatus[]);
+            applyStatus(next);
             close();
           }}
           onClear={() => {
@@ -82,7 +82,7 @@ export const BuildsFilters = ({
           options={BROWSER_OPTIONS}
           selected={browser}
           onApply={(next) => {
-            applyBrowser(next as Browser[]);
+            applyBrowser(next);
             close();
           }}
           onClear={() => {
