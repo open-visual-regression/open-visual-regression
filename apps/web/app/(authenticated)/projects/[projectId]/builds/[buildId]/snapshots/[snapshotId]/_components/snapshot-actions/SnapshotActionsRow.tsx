@@ -1,5 +1,6 @@
 import { DiffSchema } from "@ovr/api/contracts/diffs";
 import { SnapshotSchema } from "@ovr/api/contracts/snapshots";
+import { Button } from "@ovr/ui/components/button";
 import { ChevronLeftIcon, ChevronRightIcon, Icon } from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
 
@@ -17,6 +18,8 @@ type ActionsRowProps = {
   nextSnapshotId: string | null;
   position: number | null;
   total: number | null;
+  sidebarCollapsed: boolean;
+  onToggleSidebar: () => void;
 };
 
 export const SnapshotActionsRow = ({
@@ -28,11 +31,13 @@ export const SnapshotActionsRow = ({
   nextSnapshotId,
   position,
   total,
+  sidebarCollapsed,
+  onToggleSidebar,
 }: ActionsRowProps) => {
   const snapshotHref = (id: string) => `/projects/${projectId}/builds/${buildId}/snapshots/${id}`;
 
   return (
-    <div className="bg-ovr-elevated border-b px-5 md:px-6 lg:px-10 py-2 -mx-5 md:-mx-6 lg:-mx-10 -mt-3 md:-mt-4 lg:-mt-6 flex flex-row justify-between">
+    <div className="bg-ovr-elevated border-b px-5 md:px-6 lg:px-10 py-2 flex flex-row justify-between shrink-0">
       <div className="flex items-center flex-row gap-2">
         <ButtonLink href="../" variant="outline" color="neutral" size="sm">
           <Icon icon={ChevronLeftIcon} />
@@ -45,35 +50,46 @@ export const SnapshotActionsRow = ({
           </>
         ) : null}
       </div>
-      {prevSnapshotId || nextSnapshotId ? (
-        <div className="flex items-center flex-row gap-2">
-          <ButtonLink
-            href={prevSnapshotId ? snapshotHref(prevSnapshotId) : null}
-            disabled={!prevSnapshotId}
-            variant="outline"
-            color="neutral"
-            size="sm"
-          >
-            <Icon icon={ChevronLeftIcon} />
-            prev
-          </ButtonLink>
-          {position !== null && total !== null ? (
-            <Typography variant="caption" className="tabular-nums">
-              {position}/{total}
-            </Typography>
-          ) : null}
-          <ButtonLink
-            href={nextSnapshotId ? snapshotHref(nextSnapshotId) : null}
-            disabled={!nextSnapshotId}
-            variant="outline"
-            color="neutral"
-            size="sm"
-          >
-            next
-            <Icon icon={ChevronRightIcon} />
-          </ButtonLink>
-        </div>
-      ) : null}
+      <div className="flex items-center flex-row gap-2">
+        {prevSnapshotId || nextSnapshotId ? (
+          <>
+            <ButtonLink
+              href={prevSnapshotId ? snapshotHref(prevSnapshotId) : null}
+              disabled={!prevSnapshotId}
+              variant="outline"
+              color="neutral"
+              size="sm"
+            >
+              <Icon icon={ChevronLeftIcon} />
+              prev
+            </ButtonLink>
+            {position !== null && total !== null ? (
+              <Typography variant="caption" className="tabular-nums">
+                {position}/{total}
+              </Typography>
+            ) : null}
+            <ButtonLink
+              href={nextSnapshotId ? snapshotHref(nextSnapshotId) : null}
+              disabled={!nextSnapshotId}
+              variant="outline"
+              color="neutral"
+              size="sm"
+            >
+              next
+              <Icon icon={ChevronRightIcon} />
+            </ButtonLink>
+          </>
+        ) : null}
+        <Button
+          variant="outline"
+          color="neutral"
+          size="icon-sm"
+          onClick={onToggleSidebar}
+          aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          <Icon icon={sidebarCollapsed ? ChevronLeftIcon : ChevronRightIcon} />
+        </Button>
+      </div>
     </div>
   );
 };
