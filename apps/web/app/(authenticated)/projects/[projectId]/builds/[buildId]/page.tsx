@@ -50,10 +50,12 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
   }
 
   const { build } = buildResult;
-  const storybookHref =
-    build.status !== "queued" && build.status !== "processing" && build.status !== "error"
-      ? getStorybookPath(build.project.id, build.id)
-      : null;
+  const hasStorybook =
+    build.buildType === "storybook" &&
+    build.status !== "queued" &&
+    build.status !== "processing" &&
+    build.status !== "error";
+  const storybookHref = hasStorybook ? getStorybookPath(build.id) : null;
 
   return (
     <div className="flex flex-col gap-6">

@@ -10,7 +10,7 @@ const meta: Meta<typeof BuildHeader> = {
   component: BuildHeader,
   tags: ["autodocs"],
   args: {
-    storybookHref: "/api/projects/mock-project/builds/mock-build/storybook/index.html",
+    storybookHref: "/api/storybook/mock-build/index.html",
   },
   parameters: {
     ovr: {

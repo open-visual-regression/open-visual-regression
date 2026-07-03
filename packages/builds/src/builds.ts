@@ -1,7 +1,7 @@
 import { v7 as uuidv7 } from "uuid";
 
 import { dbClient } from "@ovr/db/client";
-import type { BuildReviewStatus } from "@ovr/db/schema";
+import type { BuildReviewStatus, BuildType } from "@ovr/db/schema";
 import { enqueueExtract } from "@ovr/queue/producer";
 import { storage } from "@ovr/storage";
 
@@ -21,6 +21,7 @@ type CreateBuildInput = {
   commitSha: string;
   name?: string;
   author?: string;
+  buildType?: BuildType;
 };
 
 type ConfirmBuildUploadInput = {
@@ -55,6 +56,7 @@ export const createBuild = async (
     author: input.author,
     processingStatus: "queued",
     captureMode: "worker",
+    buildType: input.buildType ?? "storybook",
     artifactPath: getArtifactPath(input.projectId, buildId),
     createdBy: callerId,
   });

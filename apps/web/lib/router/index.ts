@@ -7,6 +7,7 @@ import * as projects from "./projects";
 import * as setup from "./setup";
 import * as snapshots from "./snapshots";
 import * as storage from "./storage";
+import * as storybook from "./storybook";
 import * as users from "./users";
 
 export const serverClient = {
@@ -14,6 +15,7 @@ export const serverClient = {
   setup,
   projects,
   storage,
+  storybook,
   builds,
   account,
   users,

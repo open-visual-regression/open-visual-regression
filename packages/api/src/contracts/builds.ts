@@ -26,6 +26,10 @@ export const buildStatusSchema = z.enum([
 
 export type BuildStatus = z.infer<typeof buildStatusSchema>;
 
+export const buildTypeSchema = z.enum(["storybook"]);
+
+export type BuildType = z.infer<typeof buildTypeSchema>;
+
 export const viewportSchema = z.object({
   name: z.string().min(1).optional(),
   browser: z.enum(["chromium", "firefox", "webkit"]),
@@ -49,6 +53,7 @@ export const createBuildInputSchema = z.object({
   commitSha: z.string().min(1),
   name: z.string().min(1).optional(),
   author: z.string().min(1).optional(),
+  buildType: buildTypeSchema.optional(),
 });
 
 export type CreateBuildInputSchema = z.infer<typeof createBuildInputSchema>;
@@ -103,6 +108,7 @@ export const buildSchema = z.object({
   author: z.string().min(1).nullable(),
   errorMessage: z.string().nullable(),
   status: buildStatusSchema,
+  buildType: buildTypeSchema,
   createdAt: z.string().nonempty(),
 });
 

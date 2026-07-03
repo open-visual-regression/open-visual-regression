@@ -7,6 +7,7 @@ import { contract as projectsContract } from "./projects";
 import { contract as setupContract } from "./setup";
 import { contract as snapshotsContract } from "./snapshots";
 import { contract as storageContract } from "./storage";
+import { contract as storybookContract } from "./storybook";
 import { contract as usersContract } from "./users";
 
 export const contract = {
@@ -14,6 +15,7 @@ export const contract = {
   setup: { ...setupContract },
   projects: { ...projectsContract },
   storage: { ...storageContract },
+  storybook: { ...storybookContract },
   builds: { ...buildsContract },
   account: { ...accountContract },
   users: { ...usersContract },

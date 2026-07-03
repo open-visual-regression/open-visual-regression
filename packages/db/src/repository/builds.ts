@@ -128,6 +128,7 @@ export const findAll = async ({
         author: builds.author,
         processingStatus: builds.processingStatus,
         reviewStatus: builds.reviewStatus,
+        buildType: builds.buildType,
         createdAt: builds.createdAt,
       })
       .from(builds)
