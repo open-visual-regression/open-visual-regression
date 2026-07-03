@@ -35,6 +35,8 @@ export const BuildApproveButton = ({
 
   return (
     <Button
+      variant="outline"
+      color="green"
       disabled={pending || approved || disabled}
       className={
         approved
