@@ -193,9 +193,6 @@ importers:
       react-intersection-observer:
         specifier: ^10.0.3
         version: 10.0.3(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      tar:
-        specifier: ^7.5.16
-        version: 7.5.16
       tw-animate-css:
         specifier: ^1.4.0
         version: 1.4.0
@@ -302,6 +299,9 @@ importers:
       tailwindcss:
         specifier: ^4.3.0
         version: 4.3.0
+      tar:
+        specifier: ^7.5.16
+        version: 7.5.16
       typescript:
         specifier: 6.0.3
         version: 6.0.3
@@ -412,12 +412,18 @@ importers:
       '@ovr/db':
         specifier: workspace:*
         version: link:../db
+      '@ovr/logger':
+        specifier: workspace:*
+        version: link:../logger
       '@ovr/queue':
         specifier: workspace:*
         version: link:../queue
       '@ovr/storage':
         specifier: workspace:*
         version: link:../storage
+      tar:
+        specifier: ^7.5.16
+        version: 7.5.16
       uuid:
         specifier: ^14.0.0
         version: 14.0.0

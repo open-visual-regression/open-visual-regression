@@ -19,8 +19,6 @@ import { GET } from "../route";
 
 vi.mock("next/headers");
 
-// A valid uuidv7 that no build will ever have, so input validation passes but the
-// build lookup misses.
 const NONEXISTENT_BUILD_ID = "019edfc7-e040-7492-86b2-ccfdc00cf6e2";
 
 const TEST_PROJECT: AddProjectInputSchema = {
@@ -36,8 +34,6 @@ const buildRequest = async (buildId: string, filePath: string) =>
     }),
   );
 
-// Packs the given files into a gzipped tarball and uploads it as the build's
-// artifact, mirroring what the CLI uploads for a Storybook static build.
 const uploadArtifact = async (artifactPath: string, files: Record<string, string>) => {
   const dir = await mkdtemp(path.join(tmpdir(), "ovr-artifact-"));
   try {
@@ -153,6 +149,18 @@ describe("GET /api/storybook/[...path]", () => {
     await uploadArtifact(build.artifactPath, { "index.html": "<html></html>" });
 
     const response = await buildRequest(build.id, "%2e%2e/%2e%2e/etc/passwd");
+
+    expect(response.status).not.toBe(200);
+  });
+
+  test("should not escape the bundle when the path normalizes to a bare parent", async ({
+    admin,
+  }) => {
+    const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+    const build = await createStorybookBuild(addResult!.projectId, admin.id);
+    await uploadArtifact(build.artifactPath, { "index.html": "<html></html>" });
+
+    const response = await buildRequest(build.id, "foo/%2e%2e/%2e%2e");
 
     expect(response.status).not.toBe(200);
   });

@@ -12,8 +12,6 @@ export const getStorybookFileOutputSchema = z.object({
     "content-type": z.string(),
     "cache-control": z.string(),
   }),
-  // A ReadableStream is passed through the OpenAPI codec un-serialized; zod only
-  // records the type here.
   body: z.custom<ReadableStream>(),
 });
 

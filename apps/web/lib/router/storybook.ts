@@ -7,9 +7,8 @@ import { Readable } from "node:stream";
 
 import { ORPCError } from "@orpc/client";
 
+import { getBundleDir } from "@ovr/builds/storybookBundleCache";
 import { getContentType } from "@ovr/storage/content-type";
-
-import { getBundleDir } from "@/lib/storybook/bundle-cache";
 
 import { authenticatedMiddleware, organizationBuildMiddleware } from "./middleware";
 import { os } from "./os";
@@ -24,14 +23,13 @@ export const getStorybookFile = os.storybook.getStorybookFile
 
     const relativePath = path.posix.normalize(input.path);
 
-    if (relativePath.startsWith("../") || path.posix.isAbsolute(relativePath)) {
+    if (path.posix.isAbsolute(relativePath) || relativePath.split("/").includes("..")) {
       throw new ORPCError("FORBIDDEN");
     }
 
     const bundleDir = await getBundleDir(context.build.id, context.build.artifactPath);
     const filePath = path.join(bundleDir, relativePath);
 
-    // Defence in depth against a path that escapes the bundle after joining.
     if (filePath !== bundleDir && !filePath.startsWith(bundleDir + path.sep)) {
       throw new ORPCError("FORBIDDEN");
     }

@@ -2,7 +2,6 @@ import { OpenAPIHandler } from "@orpc/openapi/fetch";
 
 import { serverClient } from "@/lib/router";
 
-// Serves unpacked Storybook bundles from a local disk cache (see bundle-cache).
 export const runtime = "nodejs";
 
 const handler = new OpenAPIHandler(serverClient.storybook);
