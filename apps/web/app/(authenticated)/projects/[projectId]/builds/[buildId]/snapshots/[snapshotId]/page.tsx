@@ -6,8 +6,8 @@ import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
 
 import { SnapshotComparisonSection } from "./_components/snapshot-comparison-section/SnapshotComparisonSection";
-import { SnapshotDetail } from "./_components/snapshot-detail/SnapshotDetail";
 import { SnapshotHeader } from "./_components/snapshot-header/SnapshotHeader";
+import { SnapshotLayout } from "./_components/snapshot-layout/SnapshotLayout";
 import { SnapshotLogs } from "./_components/snapshot-logs/SnapshotLogs";
 
 type SnapshotPageProps = PageProps<"/projects/[projectId]/builds/[buildId]/snapshots/[snapshotId]">;
@@ -46,7 +46,7 @@ export default async function SnapshotPage(props: SnapshotPageProps) {
   const { prevSnapshotId, nextSnapshotId, position, total } = adjacentResult;
 
   return (
-    <SnapshotDetail
+    <SnapshotLayout
       snapshot={snapshot}
       diff={diff}
       projectId={projectId}
@@ -60,6 +60,6 @@ export default async function SnapshotPage(props: SnapshotPageProps) {
       <SnapshotHeader snapshot={snapshot} build={build} />
       <SnapshotLogs logs={snapshot.errorLogs} />
       <SnapshotComparisonSection snapshot={snapshot} diff={diff} />
-    </SnapshotDetail>
+    </SnapshotLayout>
   );
 }

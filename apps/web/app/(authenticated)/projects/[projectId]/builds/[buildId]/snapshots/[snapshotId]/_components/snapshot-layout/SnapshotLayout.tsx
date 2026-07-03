@@ -8,7 +8,7 @@ import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { SnapshotActionsRow } from "../snapshot-actions/SnapshotActionsRow";
 import { SnapshotSidebar } from "../snapshot-sidebar/SnapshotSidebar";
 
-export type SnapshotDetailProps = {
+export type SnapshotLayoutProps = {
   snapshot: SnapshotSchema;
   diff: DiffSchema | null;
   projectId: string;
@@ -21,7 +21,7 @@ export type SnapshotDetailProps = {
   children: React.ReactNode;
 };
 
-export const SnapshotDetail = ({
+export const SnapshotLayout = ({
   snapshot,
   diff,
   projectId,
@@ -32,7 +32,7 @@ export const SnapshotDetail = ({
   total,
   sidebar,
   children,
-}: SnapshotDetailProps) => {
+}: SnapshotLayoutProps) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
 
   return (
