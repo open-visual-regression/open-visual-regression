@@ -69,6 +69,10 @@ export const captureModeEnum = pgEnum("capture_mode", ["worker"]);
 
 export type CaptureMode = (typeof captureModeEnum.enumValues)[number];
 
+export const buildTypeEnum = pgEnum("build_type", ["storybook"]);
+
+export type BuildType = (typeof buildTypeEnum.enumValues)[number];
+
 export const builds = pgTable(
   "builds",
   {
@@ -84,6 +88,7 @@ export const builds = pgTable(
     reviewStatus: buildReviewStatusEnum("review_status").notNull().default("not_required"),
     errorMessage: text("error_message"),
     captureMode: captureModeEnum("capture_mode").notNull().default("worker"),
+    buildType: buildTypeEnum("build_type").notNull().default("storybook"),
     artifactPath: text("artifact_path").notNull(),
     createdAt: utcTimestamp("created_at")
       .default(sql`now()`)

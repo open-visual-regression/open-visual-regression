@@ -145,6 +145,7 @@ export const list = os.builds.list
         name: build.name,
         author: build.author,
         status: getBuildDisplayStatus(build),
+        buildType: build.buildType,
         createdAt: build.createdAt,
       })),
       total,
@@ -169,6 +170,7 @@ export const getOne = os.builds.getOne
         name: build.name,
         author: build.author,
         status: getBuildDisplayStatus(build),
+        buildType: build.buildType,
         createdAt: build.createdAt,
       },
     };

@@ -51,6 +51,7 @@ export const storybookCommand = new Command("storybook")
         commitSha,
         name,
         author,
+        buildType: "storybook",
       });
 
       console.log("Uploading build artifact...");

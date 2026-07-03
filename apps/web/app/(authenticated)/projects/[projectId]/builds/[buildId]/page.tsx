@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
+import { getStorybookPath } from "@/lib/utils/storage";
 
 import { BuildHeader } from "./_components/build-header/BuildHeader";
 import { SnapshotGrid } from "./_components/snapshot-grid/SnapshotGrid";
@@ -48,9 +49,17 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
     serverError();
   }
 
+  const { build } = buildResult;
+  const hasStorybook =
+    build.buildType === "storybook" &&
+    build.status !== "queued" &&
+    build.status !== "processing" &&
+    build.status !== "error";
+  const storybookHref = hasStorybook ? getStorybookPath(build.id) : null;
+
   return (
     <div className="flex flex-col gap-6">
-      <BuildHeader build={buildResult.build} snapshotCounts={snapshotCounts} />
+      <BuildHeader build={build} snapshotCounts={snapshotCounts} storybookHref={storybookHref} />
       <div className="flex">
         <SnapshotsSearchField
           projectId={projectId}

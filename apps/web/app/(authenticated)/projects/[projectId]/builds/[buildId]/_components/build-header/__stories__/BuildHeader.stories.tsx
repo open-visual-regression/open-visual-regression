@@ -9,6 +9,9 @@ const meta: Meta<typeof BuildHeader> = {
   title: "Web/BuildHeader",
   component: BuildHeader,
   tags: ["autodocs"],
+  args: {
+    storybookHref: "/api/storybook/mock-build/index.html",
+  },
   parameters: {
     ovr: {
       viewports: ["desktop", "tablet", "mobile"],

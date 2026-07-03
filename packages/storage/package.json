@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./content-type": "./src/contentType.ts"
   },
   "scripts": {
     "build": "tsc",

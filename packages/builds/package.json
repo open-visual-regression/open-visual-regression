@@ -15,8 +15,10 @@
   },
   "dependencies": {
     "@ovr/db": "workspace:*",
+    "@ovr/logger": "workspace:*",
     "@ovr/queue": "workspace:*",
     "@ovr/storage": "workspace:*",
+    "tar": "^7.5.16",
     "uuid": "^14.0.0"
   },
   "devDependencies": {
