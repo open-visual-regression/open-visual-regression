@@ -2,9 +2,9 @@ import { type BuildSchema, type SnapshotDisplayStatus } from "@ovr/api/contracts
 import { Alert, AlertDescription, AlertTitle } from "@ovr/ui/components/alert";
 import {
   Icon,
+  ExternalLinkIcon,
   GitBranchIcon,
   GitCommitHorizontalIcon,
-  GlobeIcon,
   UserIcon,
 } from "@ovr/ui/components/icon";
 import { SegmentedProgress } from "@ovr/ui/components/segmented-progress";
@@ -43,7 +43,7 @@ export const BuildHeader = ({ build, snapshotCounts, storybookHref }: BuildHeade
               target="_blank"
               rel="noopener noreferrer"
             >
-              <Icon icon={GlobeIcon} size={10} />
+              <Icon icon={ExternalLinkIcon} size={10} />
               view storybook
             </ButtonLink>
             <BuildStatusBadge status={build.status} />

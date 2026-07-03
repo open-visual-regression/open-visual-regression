@@ -7,6 +7,7 @@ export {
   FolderIcon,
   GitBranchIcon,
   GitCommitHorizontalIcon,
+  ExternalLinkIcon,
   GlobeIcon,
   KeyRoundIcon,
   LogOutIcon,
