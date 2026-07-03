@@ -36,6 +36,7 @@ export const BuildHeader = ({ build, snapshotCounts, storybookHref }: BuildHeade
             {build.name}
           </Typography>
           <div className="flex flex-row flex-wrap items-center gap-4 text-xs">
+            <BuildStatusBadge status={build.status} />
             <ButtonLink
               href={storybookHref}
               variant="link"
@@ -46,7 +47,6 @@ export const BuildHeader = ({ build, snapshotCounts, storybookHref }: BuildHeade
               <Icon icon={ExternalLinkIcon} size={10} />
               view storybook
             </ButtonLink>
-            <BuildStatusBadge status={build.status} />
             <Typography variant="caption" className="flex items-center gap-1">
               <Icon icon={GitBranchIcon} size={10} />
               {build.branch}
