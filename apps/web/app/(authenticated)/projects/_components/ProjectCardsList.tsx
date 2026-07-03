@@ -8,8 +8,6 @@ import { ProjectDto } from "@ovr/api/contracts/projects";
 import { ProjectCardListItem } from "./ProjectCardListItem";
 import { ProjectCardSkeleton } from "./ProjectCardSkeleton";
 
-// Keeps the grid free of a partial trailing row while loading, regardless of the
-// active 1/2/3-column breakpoint (12 divides evenly by 1, 2, and 3).
 const SKELETON_CARD_COUNT = 12;
 
 type ProjectCardsListProps = {
