@@ -1,10 +1,17 @@
 import { type BuildSchema, type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
 import { Alert, AlertDescription, AlertTitle } from "@ovr/ui/components/alert";
-import { Icon, GitBranchIcon, GitCommitHorizontalIcon, UserIcon } from "@ovr/ui/components/icon";
+import {
+  Icon,
+  GitBranchIcon,
+  GitCommitHorizontalIcon,
+  GlobeIcon,
+  UserIcon,
+} from "@ovr/ui/components/icon";
 import { SegmentedProgress } from "@ovr/ui/components/segmented-progress";
 import { Typography } from "@ovr/ui/components/typography";
 
 import { BuildStatusBadge } from "@/lib/components/BuildStatus";
+import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
 import { formatRelativeDateTime } from "@/lib/utils/date";
 
 import { BuildApproveButton } from "./BuildApproveButton";
@@ -13,9 +20,10 @@ import { BuildRejectButton } from "./BuildRejectButton";
 export type BuildHeaderProps = {
   build: BuildSchema;
   snapshotCounts: Record<SnapshotDisplayStatus, number>;
+  storybookHref: string | null;
 };
 
-export const BuildHeader = ({ build, snapshotCounts }: BuildHeaderProps) => {
+export const BuildHeader = ({ build, snapshotCounts, storybookHref }: BuildHeaderProps) => {
   const total = Object.values(snapshotCounts).reduce((sum, count) => sum + count, 0);
   const hasReviewable =
     snapshotCounts.approved + snapshotCounts.rejected + snapshotCounts.needs_review > 0;
@@ -28,6 +36,16 @@ export const BuildHeader = ({ build, snapshotCounts }: BuildHeaderProps) => {
             {build.name}
           </Typography>
           <div className="flex flex-row flex-wrap items-center gap-4 text-xs">
+            <ButtonLink
+              href={storybookHref}
+              variant="link"
+              color="neutral"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Icon icon={GlobeIcon} size={10} />
+              view storybook
+            </ButtonLink>
             <BuildStatusBadge status={build.status} />
             <Typography variant="caption" className="flex items-center gap-1">
               <Icon icon={GitBranchIcon} size={10} />

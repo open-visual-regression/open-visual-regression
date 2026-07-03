@@ -16,10 +16,12 @@ vi.mock("next/navigation");
 const mockBulkCastVote = vi.mocked(serverClient.diffs.bulkCastVote);
 const mockRefresh = vi.mocked(useRouter)().refresh;
 
-const renderComponent = (props: BuildHeaderProps) =>
+const renderComponent = (
+  props: Omit<BuildHeaderProps, "storybookHref"> & Partial<Pick<BuildHeaderProps, "storybookHref">>,
+) =>
   render(
     <>
-      <BuildHeader {...props} />
+      <BuildHeader storybookHref={null} {...props} />
       <Toaster />
     </>,
   );
