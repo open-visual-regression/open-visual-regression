@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { type ResolutionFilter } from "@ovr/api/contracts/builds";
+import { type ViewportFilter } from "@ovr/api/contracts/builds";
 import { Popover, PopoverContent } from "@ovr/ui/components/popover";
 
 import { FacetOptionsList } from "@/lib/components/Facet/FacetOptionsList";
@@ -11,28 +11,24 @@ import { formatFacetValueLabel } from "@/lib/components/Facet/formatFacetValueLa
 
 const SEARCHABLE_THRESHOLD = 6;
 
-export const toResolutionKey = (resolution: ResolutionFilter): string =>
-  `${resolution.viewportWidth}x${resolution.viewportHeight}`;
+export const toViewportKey = (viewport: ViewportFilter): string =>
+  `${viewport.viewportWidth}x${viewport.viewportHeight}`;
 
-export const toResolutionLabel = (resolution: ResolutionFilter): string =>
-  `${resolution.viewportWidth}×${resolution.viewportHeight}`;
+export const toViewportLabel = (viewport: ViewportFilter): string =>
+  `${viewport.viewportWidth}×${viewport.viewportHeight}`;
 
-type BuildsResolutionFacetProps = {
-  resolutions: ResolutionFilter[];
+type BuildsViewportFacetProps = {
+  viewports: ViewportFilter[];
   selected: string[];
   onApply: (next: string[]) => void;
 };
 
-export const BuildsResolutionFacet = ({
-  resolutions,
-  selected,
-  onApply,
-}: BuildsResolutionFacetProps) => {
+export const BuildsViewportFacet = ({ viewports, selected, onApply }: BuildsViewportFacetProps) => {
   const [open, setOpen] = useState(false);
 
-  const options = resolutions.map((resolution) => ({
-    value: toResolutionKey(resolution),
-    label: toResolutionLabel(resolution),
+  const options = viewports.map((viewport) => ({
+    value: toViewportKey(viewport),
+    label: toViewportLabel(viewport),
   }));
 
   const labelByKey = new Map(options.map((option) => [option.value, option.label]));
@@ -40,7 +36,7 @@ export const BuildsResolutionFacet = ({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <FacetTrigger
-        label="resolution"
+        label="viewport"
         valueLabel={formatFacetValueLabel(selected.map((key) => labelByKey.get(key) ?? key))}
         active={selected.length > 0}
       />

@@ -14,8 +14,8 @@ const renderComponent = () =>
     <BuildsFilters
       status={[]}
       browser={[]}
-      resolution={[]}
-      resolutionOptions={[
+      viewport={[]}
+      viewportOptions={[
         { viewportWidth: 1280, viewportHeight: 800 },
         { viewportWidth: 375, viewportHeight: 812 },
       ]}
@@ -28,7 +28,7 @@ describe("BuildsFilters", () => {
 
     expect(screen.getByRole("button", { name: /^status\s+any$/i })).toBeVisible();
     expect(screen.getByRole("button", { name: /^browser\s+any$/i })).toBeVisible();
-    expect(screen.getByRole("button", { name: /^resolution\s+any$/i })).toBeVisible();
+    expect(screen.getByRole("button", { name: /^viewport\s+any$/i })).toBeVisible();
   });
 
   it("should navigate with the selected statuses when the status facet is applied", async ({
@@ -49,8 +49,8 @@ describe("BuildsFilters", () => {
       <BuildsFilters
         status={[]}
         browser={["chromium"]}
-        resolution={[]}
-        resolutionOptions={[{ viewportWidth: 1280, viewportHeight: 800 }]}
+        viewport={[]}
+        viewportOptions={[{ viewportWidth: 1280, viewportHeight: 800 }]}
       />,
     );
 
@@ -67,8 +67,8 @@ describe("BuildsFilters", () => {
       <BuildsFilters
         status={["queued", "error"]}
         browser={[]}
-        resolution={[]}
-        resolutionOptions={[]}
+        viewport={[]}
+        viewportOptions={[]}
       />,
     );
 
@@ -76,9 +76,7 @@ describe("BuildsFilters", () => {
   });
 
   it("should mark the mobile filter menu button as active when a filter is applied", () => {
-    render(
-      <BuildsFilters status={["queued"]} browser={[]} resolution={[]} resolutionOptions={[]} />,
-    );
+    render(<BuildsFilters status={["queued"]} browser={[]} viewport={[]} viewportOptions={[]} />);
 
     expect(screen.getByRole("button", { name: "filters (active)" })).toBeVisible();
   });

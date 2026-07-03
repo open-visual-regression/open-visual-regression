@@ -22,16 +22,16 @@ type ProjectPageProps = PageProps<"/projects/[projectId]">;
 const toArray = (value: string | string[] | undefined) =>
   value === undefined ? undefined : Array.isArray(value) ? value : [value];
 
-const resolutionKeySchema = z.string().regex(/^\d+x\d+$/);
+const viewportKeySchema = z.string().regex(/^\d+x\d+$/);
 
 const searchParamsSchema = z.object({
   search: z.string().optional().catch(undefined),
   status: z.preprocess(toArray, z.array(buildStatusSchema)).optional().catch(undefined),
   browser: z.preprocess(toArray, z.array(viewportSchema.shape.browser)).optional().catch(undefined),
-  resolution: z.preprocess(toArray, z.array(resolutionKeySchema)).optional().catch(undefined),
+  viewport: z.preprocess(toArray, z.array(viewportKeySchema)).optional().catch(undefined),
 });
 
-const parseResolutionKey = (key: string) => {
+const parseViewportKey = (key: string) => {
   const [viewportWidth, viewportHeight] = key.split("x").map(Number);
   return { viewportWidth: viewportWidth!, viewportHeight: viewportHeight! };
 };
@@ -42,20 +42,20 @@ export default async function ProjectPage(props: ProjectPageProps) {
     search,
     status = [],
     browser = [],
-    resolution = [],
+    viewport = [],
   } = searchParamsSchema.parse(await props.searchParams);
-  const resolutions = resolution.map(parseResolutionKey);
+  const viewports = viewport.map(parseViewportKey);
   const queryClient = getQueryClient();
 
-  const [[projectError, projectResult], [, resolutionsResult]] = await Promise.all([
+  const [[projectError, projectResult], [, viewportsResult]] = await Promise.all([
     serverClient.projects.getOne({ projectId }),
-    serverClient.builds.listResolutions({ projectId }),
+    serverClient.builds.listViewports({ projectId }),
     queryClient.prefetchInfiniteQuery(
       orpcServer.builds.list.infiniteOptions(
         buildsListInfiniteOptions(projectId, search, {
           statuses: status,
           browsers: browser,
-          resolutions,
+          viewports,
         }),
       ),
     ),
@@ -83,8 +83,8 @@ export default async function ProjectPage(props: ProjectPageProps) {
           <BuildsFilters
             status={status}
             browser={browser}
-            resolution={resolution}
-            resolutionOptions={resolutionsResult?.resolutions ?? []}
+            viewport={viewport}
+            viewportOptions={viewportsResult?.viewports ?? []}
           />
           <BuildsSearchField
             projectId={projectId}
@@ -108,7 +108,7 @@ export default async function ProjectPage(props: ProjectPageProps) {
           search={search}
           status={status}
           browser={browser}
-          resolutions={resolutions}
+          viewports={viewports}
         />
       </HydrationBoundary>
     </div>

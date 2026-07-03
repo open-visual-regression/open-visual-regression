@@ -92,7 +92,7 @@ export type StatusFilter = {
   reviewStatus?: BuildReviewStatus;
 };
 
-export type ResolutionFilter = {
+export type ViewportFilter = {
   viewportWidth: number;
   viewportHeight: number;
 };
@@ -104,7 +104,7 @@ type FindAllInput = {
   reviewStatus?: BuildReviewStatus;
   statuses?: StatusFilter[];
   browsers?: string[];
-  resolutions?: ResolutionFilter[];
+  viewports?: ViewportFilter[];
   search?: string;
   sortDirection?: SortDirection;
   limit: number;
@@ -133,8 +133,8 @@ const getBrowserFilter = (browsers?: string[]) =>
       )
     : undefined;
 
-const getResolutionFilter = (resolutions?: ResolutionFilter[]) =>
-  resolutions?.length
+const getViewportFilter = (viewports?: ViewportFilter[]) =>
+  viewports?.length
     ? exists(
         db
           .select({ one: sql`1` })
@@ -143,10 +143,10 @@ const getResolutionFilter = (resolutions?: ResolutionFilter[]) =>
             and(
               eq(snapshots.buildId, builds.id),
               or(
-                ...resolutions.map((resolution) =>
+                ...viewports.map((viewport) =>
                   and(
-                    eq(snapshots.viewportWidth, resolution.viewportWidth),
-                    eq(snapshots.viewportHeight, resolution.viewportHeight),
+                    eq(snapshots.viewportWidth, viewport.viewportWidth),
+                    eq(snapshots.viewportHeight, viewport.viewportHeight),
                   ),
                 ),
               ),
@@ -169,7 +169,7 @@ export const findAll = async ({
   reviewStatus,
   statuses,
   browsers,
-  resolutions,
+  viewports,
   search,
   sortDirection = "desc",
   limit,
@@ -182,7 +182,7 @@ export const findAll = async ({
     reviewStatus ? eq(builds.reviewStatus, reviewStatus) : undefined,
     getStatusFilter(statuses),
     getBrowserFilter(browsers),
-    getResolutionFilter(resolutions),
+    getViewportFilter(viewports),
     search ? ilike(builds.name, `%${search}%`) : undefined,
   );
 
@@ -232,7 +232,7 @@ export type FindAllResult = Awaited<ReturnType<typeof findAll>>;
 
 export type BuildListItemDbSchema = FindAllResult["builds"][number];
 
-export const findDistinctResolutions = async (projectId: string): Promise<ResolutionFilter[]> => {
+export const findDistinctViewports = async (projectId: string): Promise<ViewportFilter[]> => {
   const rows = await db
     .selectDistinct({
       viewportWidth: snapshots.viewportWidth,

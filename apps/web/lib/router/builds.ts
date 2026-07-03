@@ -116,7 +116,7 @@ export const list = os.builds.list
       reviewStatus,
       statuses,
       browsers,
-      resolutions,
+      viewports,
       search,
       sortDirection = "desc",
       limit = 20,
@@ -134,9 +134,9 @@ export const list = os.builds.list
       reviewStatus,
       statuses: statuses ? getBuildStatusFilters(statuses) : undefined,
       browsers,
-      resolutions: resolutions?.map((resolution) => ({
-        viewportWidth: resolution.viewportWidth,
-        viewportHeight: resolution.viewportHeight,
+      viewports: viewports?.map((viewport) => ({
+        viewportWidth: viewport.viewportWidth,
+        viewportHeight: viewport.viewportHeight,
       })),
       search,
       sortDirection,
@@ -163,7 +163,7 @@ export const list = os.builds.list
   })
   .actionable();
 
-export const listResolutions = os.builds.listResolutions
+export const listViewports = os.builds.listViewports
   .use(authenticatedMiddleware)
   .handler(async ({ input, context }) => {
     const project = await dbClient.projects.getProject({
@@ -175,9 +175,9 @@ export const listResolutions = os.builds.listResolutions
       throw new ORPCError("NOT_FOUND");
     }
 
-    const resolutions = await dbClient.builds.findDistinctResolutions(input.projectId);
+    const viewports = await dbClient.builds.findDistinctViewports(input.projectId);
 
-    return { resolutions };
+    return { viewports };
   })
   .actionable();
 

@@ -1,7 +1,7 @@
 import {
   type BuildStatus,
   type BuildsCursor,
-  type ResolutionFilter,
+  type ViewportFilter,
   type ViewportSchema,
 } from "@ovr/api/contracts/builds";
 
@@ -10,7 +10,7 @@ const BUILDS_PAGE_SIZE = 50;
 export type BuildsListFilters = {
   statuses?: BuildStatus[];
   browsers?: ViewportSchema["browser"][];
-  resolutions?: ResolutionFilter[];
+  viewports?: ViewportFilter[];
 };
 
 type BuildsListInput = {
@@ -18,7 +18,7 @@ type BuildsListInput = {
   search: string | undefined;
   statuses: BuildStatus[] | undefined;
   browsers: ViewportSchema["browser"][] | undefined;
-  resolutions: ResolutionFilter[] | undefined;
+  viewports: ViewportFilter[] | undefined;
   limit: number;
   cursor: BuildsCursor | undefined;
 };
@@ -39,7 +39,7 @@ export const buildsListInfiniteOptions = (
     search,
     statuses: filters.statuses,
     browsers: filters.browsers,
-    resolutions: filters.resolutions,
+    viewports: filters.viewports,
     limit: BUILDS_PAGE_SIZE,
     cursor,
   }),

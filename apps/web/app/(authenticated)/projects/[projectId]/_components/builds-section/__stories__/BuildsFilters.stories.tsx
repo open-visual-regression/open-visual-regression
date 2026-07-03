@@ -3,7 +3,7 @@ import { userEvent, within } from "storybook/test";
 
 import { BuildsFilters } from "../BuildsFilters";
 
-const RESOLUTION_OPTIONS = [
+const VIEWPORT_OPTIONS = [
   { viewportWidth: 1280, viewportHeight: 800 },
   { viewportWidth: 768, viewportHeight: 1024 },
   { viewportWidth: 375, viewportHeight: 812 },
@@ -31,8 +31,8 @@ export const Default: Story = {
   args: {
     status: [],
     browser: [],
-    resolution: [],
-    resolutionOptions: RESOLUTION_OPTIONS,
+    viewport: [],
+    viewportOptions: VIEWPORT_OPTIONS,
   },
 };
 
@@ -40,8 +40,8 @@ export const WithActiveFilters: Story = {
   args: {
     status: ["needs_review", "error"],
     browser: ["chromium"],
-    resolution: ["375x812"],
-    resolutionOptions: RESOLUTION_OPTIONS,
+    viewport: ["375x812"],
+    viewportOptions: VIEWPORT_OPTIONS,
   },
 };
 
@@ -49,8 +49,8 @@ export const StatusPopoverOpen: Story = {
   args: {
     status: [],
     browser: [],
-    resolution: [],
-    resolutionOptions: RESOLUTION_OPTIONS,
+    viewport: [],
+    viewportOptions: VIEWPORT_OPTIONS,
   },
   parameters: {
     ovr: {
@@ -67,8 +67,8 @@ export const MobileMenuOpen: Story = {
   args: {
     status: ["needs_review"],
     browser: [],
-    resolution: [],
-    resolutionOptions: RESOLUTION_OPTIONS,
+    viewport: [],
+    viewportOptions: VIEWPORT_OPTIONS,
   },
   parameters: {
     ovr: {
@@ -85,8 +85,8 @@ export const MobileFacetDialogOpen: Story = {
   args: {
     status: ["needs_review"],
     browser: [],
-    resolution: [],
-    resolutionOptions: RESOLUTION_OPTIONS,
+    viewport: [],
+    viewportOptions: VIEWPORT_OPTIONS,
   },
   parameters: {
     ovr: {

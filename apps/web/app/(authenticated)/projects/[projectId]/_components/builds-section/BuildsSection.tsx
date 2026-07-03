@@ -4,7 +4,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 
 import {
   type BuildStatus,
-  type ResolutionFilter,
+  type ViewportFilter,
   type ViewportSchema,
 } from "@ovr/api/contracts/builds";
 
@@ -19,7 +19,7 @@ type BuildsSectionProps = {
   search?: string;
   status?: BuildStatus[];
   browser?: ViewportSchema["browser"][];
-  resolutions?: ResolutionFilter[];
+  viewports?: ViewportFilter[];
 };
 
 export const BuildsSection = ({
@@ -27,16 +27,16 @@ export const BuildsSection = ({
   search,
   status,
   browser,
-  resolutions,
+  viewports,
 }: BuildsSectionProps) => {
-  const hasFilters = Boolean(status?.length || browser?.length || resolutions?.length);
+  const hasFilters = Boolean(status?.length || browser?.length || viewports?.length);
 
   const { data, isPending, hasNextPage, isFetchingNextPage, fetchNextPage } = useInfiniteQuery(
     orpc.builds.list.infiniteOptions(
       buildsListInfiniteOptions(projectId, search, {
         statuses: status,
         browsers: browser,
-        resolutions,
+        viewports,
       }),
     ),
   );

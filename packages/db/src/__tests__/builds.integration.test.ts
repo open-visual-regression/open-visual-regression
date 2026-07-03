@@ -487,7 +487,7 @@ describe("builds", () => {
       expect(builds.map((build) => build.id)).toEqual([firefoxBuild!.id]);
     });
 
-    test("should only return builds with a snapshot matching one of the given resolutions", async ({
+    test("should only return builds with a snapshot matching one of the given viewports", async ({
       organization,
       project,
       user,
@@ -525,7 +525,7 @@ describe("builds", () => {
 
       const { builds, total } = await dbClient.builds.findAll({
         organizationId: organization.id,
-        resolutions: [{ viewportWidth: 375, viewportHeight: 812 }],
+        viewports: [{ viewportWidth: 375, viewportHeight: 812 }],
         limit: 10,
       });
 
@@ -534,7 +534,7 @@ describe("builds", () => {
     });
   });
 
-  describe("findDistinctResolutions", () => {
+  describe("findDistinctViewports", () => {
     test("should return the distinct browser/viewport combinations captured for the project", async ({
       project,
       user,
@@ -562,9 +562,9 @@ describe("builds", () => {
         ],
       });
 
-      const resolutions = await dbClient.builds.findDistinctResolutions(project.id);
+      const viewports = await dbClient.builds.findDistinctViewports(project.id);
 
-      expect(resolutions).toEqual([
+      expect(viewports).toEqual([
         { viewportWidth: 375, viewportHeight: 812 },
         {
           viewportWidth: captureConfiguration.viewportWidth,
@@ -573,7 +573,7 @@ describe("builds", () => {
       ]);
     });
 
-    test("should not return resolutions captured for a different project", async ({
+    test("should not return viewports captured for a different project", async ({
       organization,
       project,
       user,
@@ -600,8 +600,8 @@ describe("builds", () => {
         values: [{ buildId: build!.id, ...captureConfiguration, targetId: "story-a" }],
       });
 
-      const resolutions = await dbClient.builds.findDistinctResolutions(project.id);
-      expect(resolutions).toEqual([]);
+      const viewports = await dbClient.builds.findDistinctViewports(project.id);
+      expect(viewports).toEqual([]);
     });
   });
 
