@@ -31,6 +31,8 @@ export const SnapshotApproveButton = ({ diffId, approved }: SnapshotApproveButto
 
   return (
     <Button
+      variant="outline"
+      color="green"
       disabled={pending || approved}
       className={
         approved

@@ -38,14 +38,9 @@ export const SnapshotCard = ({ snapshot, projectId, buildId }: SnapshotCardProps
             <Typography variant="caption">no preview</Typography>
           </div>
         )}
-        {snapshot.status === "needs_review" ||
-        snapshot.status === "approved" ||
-        snapshot.status === "rejected" ||
-        snapshot.status === "error" ? (
-          <div className="absolute bottom-2 right-2">
-            <SnapshotStatusBadge status={snapshot.status} filled />
-          </div>
-        ) : null}
+        <div className="absolute bottom-2 right-2">
+          <SnapshotStatusBadge status={snapshot.status} filled />
+        </div>
       </div>
       <div className="flex min-w-0 flex-col gap-1 px-3 py-2.5">
         <Typography variant="code" className="truncate">

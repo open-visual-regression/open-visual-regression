@@ -8,7 +8,7 @@ const cases: [BuildStatus, string][] = [
   ["queued", "queued"],
   ["processing", "processing"],
   ["needs_review", "needs review"],
-  ["passed", "passed"],
+  ["passed", "auto approved"],
   ["approved", "approved"],
   ["rejected", "rejected"],
   ["error", "error"],

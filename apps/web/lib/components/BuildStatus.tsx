@@ -8,7 +8,7 @@ const BUILD_STATUS_BADGE: Record<
   queued: { color: "gray", icon: "queued", label: "queued" },
   processing: { color: "purple", icon: "processing", label: "processing" },
   needs_review: { color: "amber", icon: "needs_review", label: "needs review" },
-  passed: { color: "blue", icon: "passed", label: "passed" },
+  passed: { color: "blue", icon: "passed", label: "auto approved" },
   approved: { color: "green", icon: "approved", label: "approved" },
   rejected: { color: "red", icon: "rejected", label: "rejected" },
   error: { color: "red", icon: "error", label: "error" },
