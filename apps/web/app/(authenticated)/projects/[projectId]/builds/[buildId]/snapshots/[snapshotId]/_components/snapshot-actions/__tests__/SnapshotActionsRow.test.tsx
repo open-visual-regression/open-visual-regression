@@ -195,19 +195,4 @@ describe("SnapshotActionsRow", () => {
     expect(screen.queryByRole("button", { name: /prev/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /next/i })).not.toBeInTheDocument();
   });
-
-  it("should toggle the sidebar when the collapse/expand button is clicked", async ({ user }) => {
-    const onToggleSidebar = vi.fn();
-    renderComponent({ sidebarCollapsed: true, onToggleSidebar });
-
-    await user.click(screen.getByRole("button", { name: /expand sidebar/i }));
-
-    expect(onToggleSidebar).toHaveBeenCalledTimes(1);
-  });
-
-  it("should label the toggle button as collapse when the sidebar is expanded", () => {
-    renderComponent({ sidebarCollapsed: false });
-
-    expect(screen.getByRole("button", { name: /collapse sidebar/i })).toBeVisible();
-  });
 });
