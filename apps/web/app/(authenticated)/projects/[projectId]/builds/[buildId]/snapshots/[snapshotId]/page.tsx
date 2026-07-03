@@ -1,14 +1,12 @@
 import { notFound } from "next/navigation";
 
-import { Typography } from "@ovr/ui/components/typography";
-
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
 
 import { SnapshotComparisonSection } from "./_components/snapshot-comparison-section/SnapshotComparisonSection";
 import { SnapshotHeader } from "./_components/snapshot-header/SnapshotHeader";
 import { SnapshotLayout } from "./_components/snapshot-layout/SnapshotLayout";
-import { SnapshotLogs } from "./_components/snapshot-logs/SnapshotLogs";
+import { SnapshotSidebarContent } from "./_components/snapshot-sidebar/SnapshotSidebarContent";
 
 type SnapshotPageProps = PageProps<"/projects/[projectId]/builds/[buildId]/snapshots/[snapshotId]">;
 
@@ -55,10 +53,9 @@ export default async function SnapshotPage(props: SnapshotPageProps) {
       nextSnapshotId={nextSnapshotId}
       position={position}
       total={total}
-      sidebar={<Typography variant="caption">Logs and comments coming soon.</Typography>}
+      sidebar={<SnapshotSidebarContent snapshot={snapshot} />}
     >
       <SnapshotHeader snapshot={snapshot} build={build} />
-      <SnapshotLogs logs={snapshot.errorLogs} />
       <SnapshotComparisonSection snapshot={snapshot} diff={diff} />
     </SnapshotLayout>
   );
