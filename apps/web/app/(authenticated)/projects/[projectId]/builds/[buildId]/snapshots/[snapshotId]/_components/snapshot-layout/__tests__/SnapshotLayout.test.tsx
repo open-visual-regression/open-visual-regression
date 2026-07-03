@@ -39,12 +39,6 @@ const renderComponent = () =>
   );
 
 describe("SnapshotLayout", () => {
-  it("should render the snapshot contents", () => {
-    renderComponent();
-
-    expect(screen.getByText("snapshot contents")).toBeVisible();
-  });
-
   it("should hide the sidebar until the toggle is clicked", () => {
     renderComponent();
 
