@@ -5,9 +5,9 @@ import { useState } from "react";
 import { type ViewportFilter } from "@ovr/api/contracts/builds";
 import { Popover, PopoverContent } from "@ovr/ui/components/popover";
 
-import { FacetOptionsList } from "@/lib/components/Facet/FacetOptionsList";
-import { FacetTrigger } from "@/lib/components/Facet/FacetTrigger";
-import { formatFacetValueLabel } from "@/lib/components/Facet/formatFacetValueLabel";
+import { FacetOptionsList } from "@/lib/components/facet/FacetOptionsList";
+import { FacetTrigger } from "@/lib/components/facet/FacetTrigger";
+import { formatFacetValueLabel } from "@/lib/components/facet/formatFacetValueLabel";
 
 const SEARCHABLE_THRESHOLD = 6;
 

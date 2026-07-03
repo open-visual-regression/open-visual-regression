@@ -6,9 +6,9 @@ import { buildStatusSchema, type BuildStatus } from "@ovr/api/contracts/builds";
 import { Popover, PopoverContent } from "@ovr/ui/components/popover";
 
 import { getBuildStatusLabel } from "@/lib/components/BuildStatus";
-import { FacetOptionsList } from "@/lib/components/Facet/FacetOptionsList";
-import { FacetTrigger } from "@/lib/components/Facet/FacetTrigger";
-import { formatFacetValueLabel } from "@/lib/components/Facet/formatFacetValueLabel";
+import { FacetOptionsList } from "@/lib/components/facet/FacetOptionsList";
+import { FacetTrigger } from "@/lib/components/facet/FacetTrigger";
+import { formatFacetValueLabel } from "@/lib/components/facet/formatFacetValueLabel";
 
 export const STATUS_OPTIONS = buildStatusSchema.options.map((status) => ({
   value: status,

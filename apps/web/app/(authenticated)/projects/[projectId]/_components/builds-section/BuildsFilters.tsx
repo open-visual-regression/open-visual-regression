@@ -8,8 +8,8 @@ import {
   type ViewportSchema,
 } from "@ovr/api/contracts/builds";
 
-import { FacetMenuButton, type FacetMenuItem } from "@/lib/components/Facet/FacetMenuButton";
-import { FacetOptionsList } from "@/lib/components/Facet/FacetOptionsList";
+import { FacetMenuButton, type FacetMenuItem } from "@/lib/components/facet/FacetMenuButton";
+import { FacetOptionsList } from "@/lib/components/facet/FacetOptionsList";
 
 import { BROWSER_OPTIONS, BuildsBrowserFacet } from "./BuildsBrowserFacet";
 import { BuildsStatusFacet, STATUS_OPTIONS } from "./BuildsStatusFacet";
@@ -116,7 +116,7 @@ export const BuildsFilters = ({
 
   return (
     <div className={className}>
-      <div className="hidden items-center gap-2 sm:flex">
+      <div className="hidden items-center gap-2 lg:flex">
         <BuildsStatusFacet selected={status} onApply={applyStatus} />
         <BuildsBrowserFacet selected={browser} onApply={applyBrowser} />
         <BuildsViewportFacet
@@ -125,7 +125,7 @@ export const BuildsFilters = ({
           onApply={applyViewport}
         />
       </div>
-      <div className="sm:hidden">
+      <div className="lg:hidden">
         <FacetMenuButton facets={facets} />
       </div>
     </div>

@@ -16,7 +16,7 @@ export const FacetTrigger = ({ label, valueLabel, active }: FacetTriggerProps) =
         color={active ? "accent" : "neutral"}
         aria-pressed={active}
         aria-label={`${label} ${valueLabel}`}
-        className="h-auto max-w-48 min-w-0 flex-col items-start gap-0 py-1.5"
+        className="h-auto max-w-48 min-w-0 flex-row items-center gap-3 py-1.5"
       />
     }
   >
