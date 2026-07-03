@@ -122,8 +122,8 @@ export const buildsCursorSchema = z.object({
 export type BuildsCursor = z.infer<typeof buildsCursorSchema>;
 
 export const viewportFilterSchema = z.object({
-  viewportWidth: z.number().int().min(320).max(3840),
-  viewportHeight: z.number().int().min(0).max(2160),
+  viewportWidth: z.number().int().nonnegative(),
+  viewportHeight: z.number().int().nonnegative(),
 });
 
 export type ViewportFilter = z.infer<typeof viewportFilterSchema>;
