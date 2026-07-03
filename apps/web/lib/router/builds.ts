@@ -17,7 +17,7 @@ import {
   organizationBuildMiddleware,
 } from "./middleware";
 import { os } from "./os";
-import { getBuildDisplayStatus } from "./utils/buildStatus";
+import { getBuildDisplayStatus, getBuildStatusFilters } from "./utils/buildStatus";
 
 const UPLOAD_URL_TTL_SECONDS = 3600;
 
@@ -114,6 +114,9 @@ export const list = os.builds.list
       projectIds,
       processingStatus,
       reviewStatus,
+      statuses,
+      browsers,
+      resolutions,
       search,
       sortDirection = "desc",
       limit = 20,
@@ -129,6 +132,12 @@ export const list = os.builds.list
       projectIds,
       processingStatus,
       reviewStatus,
+      statuses: statuses ? getBuildStatusFilters(statuses) : undefined,
+      browsers,
+      resolutions: resolutions?.map((resolution) => ({
+        viewportWidth: resolution.viewportWidth,
+        viewportHeight: resolution.viewportHeight,
+      })),
       search,
       sortDirection,
       limit,
@@ -151,6 +160,24 @@ export const list = os.builds.list
       total,
       nextCursor,
     };
+  })
+  .actionable();
+
+export const listResolutions = os.builds.listResolutions
+  .use(authenticatedMiddleware)
+  .handler(async ({ input, context }) => {
+    const project = await dbClient.projects.getProject({
+      projectId: input.projectId,
+      organizationId: context.organizationId,
+    });
+
+    if (!project) {
+      throw new ORPCError("NOT_FOUND");
+    }
+
+    const resolutions = await dbClient.builds.findDistinctResolutions(input.projectId);
+
+    return { resolutions };
   })
   .actionable();
 

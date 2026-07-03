@@ -1,4 +1,18 @@
-import { and, asc, count, desc, eq, gt, ilike, inArray, lt, notExists, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  exists,
+  gt,
+  ilike,
+  inArray,
+  lt,
+  notExists,
+  or,
+  sql,
+} from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
 import { db, type DbClient } from "../db";
@@ -73,16 +87,73 @@ type BuildsCursor = {
   id: string;
 };
 
+export type StatusFilter = {
+  processingStatus: BuildProcessingStatus;
+  reviewStatus?: BuildReviewStatus;
+};
+
+export type ResolutionFilter = {
+  viewportWidth: number;
+  viewportHeight: number;
+};
+
 type FindAllInput = {
   organizationId: string;
   projectIds?: string[];
   processingStatus?: BuildProcessingStatus;
   reviewStatus?: BuildReviewStatus;
+  statuses?: StatusFilter[];
+  browsers?: string[];
+  resolutions?: ResolutionFilter[];
   search?: string;
   sortDirection?: SortDirection;
   limit: number;
   cursor?: BuildsCursor;
 };
+
+const getStatusFilter = (statuses?: StatusFilter[]) =>
+  statuses?.length
+    ? or(
+        ...statuses.map((status) =>
+          and(
+            eq(builds.processingStatus, status.processingStatus),
+            status.reviewStatus ? eq(builds.reviewStatus, status.reviewStatus) : undefined,
+          ),
+        ),
+      )
+    : undefined;
+
+const getBrowserFilter = (browsers?: string[]) =>
+  browsers?.length
+    ? exists(
+        db
+          .select({ one: sql`1` })
+          .from(snapshots)
+          .where(and(eq(snapshots.buildId, builds.id), inArray(snapshots.browser, browsers))),
+      )
+    : undefined;
+
+const getResolutionFilter = (resolutions?: ResolutionFilter[]) =>
+  resolutions?.length
+    ? exists(
+        db
+          .select({ one: sql`1` })
+          .from(snapshots)
+          .where(
+            and(
+              eq(snapshots.buildId, builds.id),
+              or(
+                ...resolutions.map((resolution) =>
+                  and(
+                    eq(snapshots.viewportWidth, resolution.viewportWidth),
+                    eq(snapshots.viewportHeight, resolution.viewportHeight),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      )
+    : undefined;
 
 const getCursorFilter = (cursor: BuildsCursor, sortDirection: SortDirection) => {
   if (sortDirection === "asc") {
@@ -96,6 +167,9 @@ export const findAll = async ({
   projectIds,
   processingStatus,
   reviewStatus,
+  statuses,
+  browsers,
+  resolutions,
   search,
   sortDirection = "desc",
   limit,
@@ -106,6 +180,9 @@ export const findAll = async ({
     projectIds?.length ? inArray(builds.projectId, projectIds) : undefined,
     processingStatus ? eq(builds.processingStatus, processingStatus) : undefined,
     reviewStatus ? eq(builds.reviewStatus, reviewStatus) : undefined,
+    getStatusFilter(statuses),
+    getBrowserFilter(browsers),
+    getResolutionFilter(resolutions),
     search ? ilike(builds.name, `%${search}%`) : undefined,
   );
 
@@ -154,6 +231,20 @@ export const findAll = async ({
 export type FindAllResult = Awaited<ReturnType<typeof findAll>>;
 
 export type BuildListItemDbSchema = FindAllResult["builds"][number];
+
+export const findDistinctResolutions = async (projectId: string): Promise<ResolutionFilter[]> => {
+  const rows = await db
+    .selectDistinct({
+      viewportWidth: snapshots.viewportWidth,
+      viewportHeight: snapshots.viewportHeight,
+    })
+    .from(snapshots)
+    .innerJoin(builds, eq(snapshots.buildId, builds.id))
+    .where(eq(builds.projectId, projectId))
+    .orderBy(asc(snapshots.viewportWidth), asc(snapshots.viewportHeight));
+
+  return rows;
+};
 
 export const findExpiredPage = async (
   projectId: string,

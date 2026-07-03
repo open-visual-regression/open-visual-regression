@@ -395,6 +395,214 @@ describe("builds", () => {
 
       expect(builds.map((build) => build.id)).toEqual([older!.id, newer!.id]);
     });
+
+    test("should only return builds matching one of the given status filters", async ({
+      organization,
+      project,
+      user,
+      build: queuedBuild,
+    }) => {
+      const approvedBuild = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/b/artifact",
+        createdBy: user.id,
+      });
+      await dbClient.builds.updateResult(approvedBuild!.id, {
+        processingStatus: "success",
+        reviewStatus: "approved",
+      });
+
+      const passedBuild = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "c".repeat(40),
+        artifactPath: "builds/c/artifact",
+        createdBy: user.id,
+      });
+      await dbClient.builds.updateResult(passedBuild!.id, {
+        processingStatus: "success",
+        reviewStatus: "not_required",
+      });
+
+      const { builds, total } = await dbClient.builds.findAll({
+        organizationId: organization.id,
+        statuses: [
+          { processingStatus: "queued" },
+          { processingStatus: "success", reviewStatus: "approved" },
+        ],
+        limit: 10,
+      });
+
+      expect(total).toBe(2);
+      expect(builds.map((build) => build.id).sort()).toEqual(
+        [queuedBuild.id, approvedBuild!.id].sort(),
+      );
+      expect(builds.map((build) => build.id)).not.toContain(passedBuild!.id);
+    });
+
+    test("should only return builds with a snapshot matching one of the given browsers", async ({
+      organization,
+      project,
+      user,
+      captureConfiguration,
+    }) => {
+      const chromiumBuild = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: user.id,
+      });
+      await dbClient.snapshots.createMany({
+        values: [{ buildId: chromiumBuild!.id, ...captureConfiguration, targetId: "story-a" }],
+      });
+
+      const firefoxBuild = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/b/artifact",
+        createdBy: user.id,
+      });
+      await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: firefoxBuild!.id,
+            ...captureConfiguration,
+            browser: "firefox",
+            targetId: "story-a",
+          },
+        ],
+      });
+
+      const { builds, total } = await dbClient.builds.findAll({
+        organizationId: organization.id,
+        browsers: ["firefox"],
+        limit: 10,
+      });
+
+      expect(total).toBe(1);
+      expect(builds.map((build) => build.id)).toEqual([firefoxBuild!.id]);
+    });
+
+    test("should only return builds with a snapshot matching one of the given resolutions", async ({
+      organization,
+      project,
+      user,
+      captureConfiguration,
+    }) => {
+      const desktopBuild = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: user.id,
+      });
+      await dbClient.snapshots.createMany({
+        values: [{ buildId: desktopBuild!.id, ...captureConfiguration, targetId: "story-a" }],
+      });
+
+      const mobileBuild = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/b/artifact",
+        createdBy: user.id,
+      });
+      await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: mobileBuild!.id,
+            ...captureConfiguration,
+            viewportWidth: 375,
+            viewportHeight: 812,
+            targetId: "story-a",
+          },
+        ],
+      });
+
+      const { builds, total } = await dbClient.builds.findAll({
+        organizationId: organization.id,
+        resolutions: [{ viewportWidth: 375, viewportHeight: 812 }],
+        limit: 10,
+      });
+
+      expect(total).toBe(1);
+      expect(builds.map((build) => build.id)).toEqual([mobileBuild!.id]);
+    });
+  });
+
+  describe("findDistinctResolutions", () => {
+    test("should return the distinct browser/viewport combinations captured for the project", async ({
+      project,
+      user,
+      captureConfiguration,
+    }) => {
+      const build = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: user.id,
+      });
+
+      await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build!.id, ...captureConfiguration, targetId: "story-a" },
+          { buildId: build!.id, ...captureConfiguration, targetId: "story-b" },
+          {
+            buildId: build!.id,
+            ...captureConfiguration,
+            viewportWidth: 375,
+            viewportHeight: 812,
+            targetId: "story-a",
+          },
+        ],
+      });
+
+      const resolutions = await dbClient.builds.findDistinctResolutions(project.id);
+
+      expect(resolutions).toEqual([
+        { viewportWidth: 375, viewportHeight: 812 },
+        {
+          viewportWidth: captureConfiguration.viewportWidth,
+          viewportHeight: captureConfiguration.viewportHeight,
+        },
+      ]);
+    });
+
+    test("should not return resolutions captured for a different project", async ({
+      organization,
+      project,
+      user,
+      captureConfiguration,
+    }) => {
+      const [otherProject] = await db
+        .insert(projects)
+        .values({
+          name: "Other Project",
+          gitMainBranch: "main",
+          organizationId: organization.id,
+          creatorId: user.id,
+        })
+        .returning();
+
+      const build = await dbClient.builds.create({
+        projectId: otherProject!.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: user.id,
+      });
+      await dbClient.snapshots.createMany({
+        values: [{ buildId: build!.id, ...captureConfiguration, targetId: "story-a" }],
+      });
+
+      const resolutions = await dbClient.builds.findDistinctResolutions(project.id);
+      expect(resolutions).toEqual([]);
+    });
   });
 
   describe("findStale", () => {

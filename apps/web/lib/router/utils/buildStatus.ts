@@ -1,5 +1,19 @@
 import type { BuildStatus } from "@ovr/api/contracts/builds";
+import type { StatusFilter } from "@ovr/db/repository/builds";
 import type { BuildProcessingStatus, BuildReviewStatus } from "@ovr/db/schema";
+
+const STATUS_FILTER_COMBOS: Record<BuildStatus, StatusFilter> = {
+  queued: { processingStatus: "queued" },
+  processing: { processingStatus: "processing" },
+  error: { processingStatus: "error" },
+  needs_review: { processingStatus: "success", reviewStatus: "needs_review" },
+  rejected: { processingStatus: "success", reviewStatus: "rejected" },
+  approved: { processingStatus: "success", reviewStatus: "approved" },
+  passed: { processingStatus: "success", reviewStatus: "not_required" },
+};
+
+export const getBuildStatusFilters = (statuses: BuildStatus[]): StatusFilter[] =>
+  statuses.map((status) => STATUS_FILTER_COMBOS[status]);
 
 export const getBuildDisplayStatus = (build: {
   processingStatus: BuildProcessingStatus;
