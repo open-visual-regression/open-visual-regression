@@ -52,6 +52,8 @@ const renderComponent = (
     nextSnapshotId: string | null;
     position: number | null;
     total: number | null;
+    sidebarCollapsed: boolean;
+    onToggleSidebar: () => void;
   }> = {},
 ) =>
   render(
@@ -65,6 +67,8 @@ const renderComponent = (
         nextSnapshotId={nextSnapshotId}
         position={3}
         total={5}
+        sidebarCollapsed={true}
+        onToggleSidebar={vi.fn()}
         {...props}
       />
       <Toaster />

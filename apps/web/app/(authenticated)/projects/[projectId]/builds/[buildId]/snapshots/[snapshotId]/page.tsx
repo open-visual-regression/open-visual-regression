@@ -1,11 +1,13 @@
 import { notFound } from "next/navigation";
 
+import { Typography } from "@ovr/ui/components/typography";
+
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
 
-import { SnapshotActionsRow } from "./_components/snapshot-actions/SnapshotActionsRow";
 import { SnapshotComparisonSection } from "./_components/snapshot-comparison-section/SnapshotComparisonSection";
 import { SnapshotHeader } from "./_components/snapshot-header/SnapshotHeader";
+import { SnapshotLayout } from "./_components/snapshot-layout/SnapshotLayout";
 import { SnapshotLogs } from "./_components/snapshot-logs/SnapshotLogs";
 
 type SnapshotPageProps = PageProps<"/projects/[projectId]/builds/[buildId]/snapshots/[snapshotId]">;
@@ -44,20 +46,20 @@ export default async function SnapshotPage(props: SnapshotPageProps) {
   const { prevSnapshotId, nextSnapshotId, position, total } = adjacentResult;
 
   return (
-    <div className="flex flex-col gap-6">
-      <SnapshotActionsRow
-        diff={diff}
-        snapshot={snapshot}
-        projectId={projectId}
-        buildId={buildId}
-        prevSnapshotId={prevSnapshotId}
-        nextSnapshotId={nextSnapshotId}
-        position={position}
-        total={total}
-      />
+    <SnapshotLayout
+      snapshot={snapshot}
+      diff={diff}
+      projectId={projectId}
+      buildId={buildId}
+      prevSnapshotId={prevSnapshotId}
+      nextSnapshotId={nextSnapshotId}
+      position={position}
+      total={total}
+      sidebar={<Typography variant="caption">Logs and comments coming soon.</Typography>}
+    >
       <SnapshotHeader snapshot={snapshot} build={build} />
       <SnapshotLogs logs={snapshot.errorLogs} />
       <SnapshotComparisonSection snapshot={snapshot} diff={diff} />
-    </div>
+    </SnapshotLayout>
   );
 }
