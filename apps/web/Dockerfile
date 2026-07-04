@@ -19,7 +19,6 @@ COPY . .
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile
 
-# Placeholder secret satisfies the build; the runtime value comes from env.
 ARG BETTER_AUTH_SECRET="build-time-placeholder"
 ENV BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
 RUN pnpm exec turbo run build --filter=@ovr/web

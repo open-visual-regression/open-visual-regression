@@ -21,8 +21,6 @@ RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile
 RUN pnpm exec turbo run build --filter=@ovr/worker
 
-# Ship the SQL migrations next to the bundled migrate entrypoint, and produce a
-# lean production node_modules with just the worker's runtime dependencies.
 RUN cp -r packages/db/src/migrations apps/worker/dist/migrations
 RUN pnpm --filter @ovr/worker deploy --prod --legacy /prod
 
@@ -33,7 +31,6 @@ ENV NODE_ENV=production \
     OVR_MIGRATIONS_DIR=/app/dist/migrations
 WORKDIR /app
 
-# The Playwright image ships a non-root "pwuser"; remap it to the requested ids.
 RUN groupmod --gid ${GID} pwuser && usermod --uid ${UID} --gid ${GID} pwuser
 
 COPY --from=builder --chown=pwuser:pwuser /prod/node_modules ./node_modules
