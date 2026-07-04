@@ -3,8 +3,10 @@ export const formatFacetValueLabel = (selectedLabels: string[]): string => {
     return "any";
   }
 
-  if (selectedLabels.length === 1) {
-    return selectedLabels[0]!;
+  const [label] = selectedLabels;
+
+  if (label) {
+    return label;
   }
 
   return `${selectedLabels.length} selected`;
