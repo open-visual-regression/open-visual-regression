@@ -109,12 +109,14 @@ export const getDisplayStatusCounts = async (
 
 export type SnapshotDisplayStatus = keyof SnapshotDisplayStatusCounts;
 
-type ListForBuildFilters = { status?: SnapshotDisplayStatus; search?: string };
+type ListForBuildFilters = { statuses?: SnapshotDisplayStatus[]; search?: string };
 
-const listForBuildWhere = (buildId: string, { status, search }: ListForBuildFilters) =>
+const listForBuildWhere = (buildId: string, { statuses, search }: ListForBuildFilters) =>
   and(
     eq(snapshots.buildId, buildId),
-    status ? sql`${displayStatusExpr} = ${status}` : undefined,
+    statuses?.length
+      ? or(...statuses.map((status) => sql`${displayStatusExpr} = ${status}`))
+      : undefined,
     search
       ? or(ilike(snapshots.targetTitle, `%${search}%`), ilike(snapshots.targetName, `%${search}%`))
       : undefined,
@@ -211,7 +213,7 @@ export type ListForBuildOptions = ListForBuildFilters & {
 
 export const listForBuild = (
   buildId: string,
-  { status, search, sortBy = defaultSnapshotSortBy, limit, offset }: ListForBuildOptions,
+  { statuses, search, sortBy = defaultSnapshotSortBy, limit, offset }: ListForBuildOptions,
 ) =>
   db
     .select({
@@ -230,7 +232,7 @@ export const listForBuild = (
     })
     .from(snapshots)
     .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
-    .where(listForBuildWhere(buildId, { status, search }))
+    .where(listForBuildWhere(buildId, { statuses, search }))
     .orderBy(
       ...sortBy.map(({ column, direction }) =>
         (direction === "desc" ? desc : asc)(snapshotSortColumns[column]),

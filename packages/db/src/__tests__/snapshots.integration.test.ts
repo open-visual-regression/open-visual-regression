@@ -313,12 +313,26 @@ describe("snapshots", () => {
       await seedHomeAndCheckout(build, captureConfiguration);
 
       const needsReviewOnly = await dbClient.snapshots.listForBuild(build.id, {
-        status: "needs_review",
+        statuses: ["needs_review"],
         limit: 10,
         offset: 0,
       });
       expect(needsReviewOnly.map((row) => row.targetId)).toEqual(["checkout"]);
-      expect(await dbClient.snapshots.countForBuild(build.id, { status: "needs_review" })).toBe(1);
+      expect(await dbClient.snapshots.countForBuild(build.id, { statuses: ["needs_review"] })).toBe(
+        1,
+      );
+    });
+
+    test("filters by more than one status", async ({ build, captureConfiguration }) => {
+      await seedHomeAndCheckout(build, captureConfiguration);
+
+      const results = await dbClient.snapshots.listForBuild(build.id, {
+        statuses: ["needs_review", "passed"],
+        limit: 10,
+        offset: 0,
+      });
+
+      expect(results.map((row) => row.targetId).sort()).toEqual(["checkout", "home"]);
     });
 
     test("filters by search across target title and name", async ({

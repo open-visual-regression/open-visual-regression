@@ -244,7 +244,7 @@ describe("snapshots", () => {
 
       const [error, result] = await serverClient.snapshots.list({
         buildId: build.id,
-        status: "queued",
+        statuses: ["queued"],
       });
 
       expect(error).toBeNull();
