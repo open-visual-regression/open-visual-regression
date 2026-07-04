@@ -53,9 +53,6 @@ export const ensureBucket = async (): Promise<void> => {
     const statusCode =
       error instanceof S3ServiceException ? error.$metadata.httpStatusCode : undefined;
 
-    // Only a definitive "not found" warrants creating the bucket. Anything else
-    // (e.g. a 403 from object-scoped credentials on managed S3) means we cannot
-    // verify it but should assume it exists rather than fail.
     if (statusCode !== 404) {
       logger.warn(
         { bucket, statusCode, err: error },

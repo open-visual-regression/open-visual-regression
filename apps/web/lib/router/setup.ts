@@ -51,8 +51,6 @@ export const exec = os.setup.exec
       body: { name: input.organizationName, slug, userId: createUserResponse.user.id },
     });
 
-    // Provision the object storage bucket as part of first-run setup. Best-effort
-    // and self-logging, so a storage hiccup never blocks admin creation.
     await ensureBucket();
   })
   .actionable();
