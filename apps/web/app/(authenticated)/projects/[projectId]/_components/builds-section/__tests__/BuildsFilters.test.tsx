@@ -7,15 +7,20 @@ import { BuildsFilters } from "../BuildsFilters";
 
 vi.mock("next/navigation");
 
+const PROJECT_ID = "018f0000-0000-7000-8000-000000000000";
+
 const mockPush = vi.mocked(useRouter)().push;
 
-const renderComponent = () => render(<BuildsFilters statuses={[]} />);
+const renderComponent = () =>
+  render(<BuildsFilters projectId={PROJECT_ID} statuses={[]} branches={[]} authors={[]} />);
 
 describe("BuildsFilters", () => {
-  it("should show 'any' as the status value when no filter is applied", () => {
+  it("should show 'any' as the value for every facet when no filter is applied", () => {
     renderComponent();
 
     expect(screen.getByRole("button", { name: /^status\s+any$/i })).toBeVisible();
+    expect(screen.getByRole("button", { name: /^branch\s+any$/i })).toBeVisible();
+    expect(screen.getByRole("button", { name: /^author\s+any$/i })).toBeVisible();
   });
 
   it("should navigate with the selected statuses when the status facet is applied", async ({
@@ -31,14 +36,24 @@ describe("BuildsFilters", () => {
     expect(mockPush).toHaveBeenCalledWith("/?status=queued&status=error");
   });
 
-  it("should show a combined count once more than one option is selected", () => {
-    render(<BuildsFilters statuses={["queued", "error"]} />);
+  it("should reflect the applied branch on the branch facet trigger", () => {
+    render(<BuildsFilters projectId={PROJECT_ID} statuses={[]} branches={["main"]} authors={[]} />);
 
-    expect(screen.getByRole("button", { name: /^status\s+2 selected$/i })).toBeVisible();
+    expect(screen.getByRole("button", { name: /^branch\s+main$/i })).toBeVisible();
+  });
+
+  it("should reflect the applied author on the author facet trigger", () => {
+    render(
+      <BuildsFilters projectId={PROJECT_ID} statuses={[]} branches={[]} authors={["Jordan Lee"]} />,
+    );
+
+    expect(screen.getByRole("button", { name: /^author\s+Jordan Lee$/i })).toBeVisible();
   });
 
   it("should mark the mobile filter menu button as active when a filter is applied", () => {
-    render(<BuildsFilters statuses={["queued"]} />);
+    render(
+      <BuildsFilters projectId={PROJECT_ID} statuses={["queued"]} branches={[]} authors={[]} />,
+    );
 
     expect(screen.getByRole("button", { name: "filters (active)" })).toBeVisible();
   });

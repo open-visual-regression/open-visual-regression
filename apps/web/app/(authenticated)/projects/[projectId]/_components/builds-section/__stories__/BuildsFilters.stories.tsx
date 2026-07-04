@@ -3,10 +3,15 @@ import { userEvent, within } from "storybook/test";
 
 import { BuildsFilters } from "../BuildsFilters";
 
+const PROJECT_ID = "018f0000-0000-7000-8000-000000000000";
+
 const meta: Meta<typeof BuildsFilters> = {
   title: "Web/BuildsFilters",
   component: BuildsFilters,
   tags: ["autodocs"],
+  args: {
+    projectId: PROJECT_ID,
+  },
   parameters: {
     nextjs: {
       appDirectory: true,
@@ -24,18 +29,24 @@ type Story = StoryObj<typeof BuildsFilters>;
 export const Default: Story = {
   args: {
     statuses: [],
+    branches: [],
+    authors: [],
   },
 };
 
 export const WithActiveFilters: Story = {
   args: {
     statuses: ["needs_review", "error"],
+    branches: ["main"],
+    authors: ["Jordan Lee"],
   },
 };
 
 export const StatusPopoverOpen: Story = {
   args: {
     statuses: [],
+    branches: [],
+    authors: [],
   },
   parameters: {
     ovr: {
@@ -51,6 +62,8 @@ export const StatusPopoverOpen: Story = {
 export const MobileMenuOpen: Story = {
   args: {
     statuses: ["needs_review"],
+    branches: [],
+    authors: [],
   },
   parameters: {
     ovr: {
@@ -66,6 +79,8 @@ export const MobileMenuOpen: Story = {
 export const MobileFacetDialogOpen: Story = {
   args: {
     statuses: ["needs_review"],
+    branches: [],
+    authors: [],
   },
   parameters: {
     ovr: {

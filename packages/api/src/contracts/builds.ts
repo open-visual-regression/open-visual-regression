@@ -126,6 +126,8 @@ export const listBuildsInputSchema = z.object({
   processingStatus: buildProcessingStatusSchema.optional(),
   reviewStatus: buildReviewStatusSchema.optional(),
   statuses: z.array(buildStatusSchema).optional(),
+  branches: z.array(z.string()).optional(),
+  authors: z.array(z.string()).optional(),
   search: z.string().optional(),
   sortDirection: z.enum(["asc", "desc"]).default("desc"),
   limit: z.number().int().min(1).max(100).default(20),
@@ -166,10 +168,34 @@ export const getBuildOutputSchema = z.object({
 
 export const getBuildContract = oc.input(getBuildInputSchema).output(getBuildOutputSchema);
 
+export const listBuildFilterOptionsInputSchema = z.object({
+  projectId: z.uuidv7(),
+  search: z.string().optional(),
+  limit: z.number().int().min(1).max(100).default(20),
+});
+
+export const listBranchesOutputSchema = z.object({
+  branches: z.array(z.string()),
+});
+
+export const listBranchesContract = oc
+  .input(listBuildFilterOptionsInputSchema)
+  .output(listBranchesOutputSchema);
+
+export const listAuthorsOutputSchema = z.object({
+  authors: z.array(z.string()),
+});
+
+export const listAuthorsContract = oc
+  .input(listBuildFilterOptionsInputSchema)
+  .output(listAuthorsOutputSchema);
+
 export const contract = {
   createBuild: createBuildContract,
   confirmUpload: confirmUploadContract,
   getBuildStatus: getBuildStatusContract,
   list: listBuildsContract,
   getOne: getBuildContract,
+  listBranches: listBranchesContract,
+  listAuthors: listAuthorsContract,
 } as const;

@@ -115,6 +115,8 @@ export const list = os.builds.list
       processingStatus,
       reviewStatus,
       statuses,
+      branches,
+      authors,
       search,
       sortDirection = "desc",
       limit = 20,
@@ -131,6 +133,8 @@ export const list = os.builds.list
       processingStatus,
       reviewStatus,
       statuses: statuses ? getBuildStatusFilters(statuses) : undefined,
+      branches,
+      authors,
       search,
       sortDirection,
       limit,
@@ -153,6 +157,48 @@ export const list = os.builds.list
       total,
       nextCursor,
     };
+  })
+  .actionable();
+
+export const listBranches = os.builds.listBranches
+  .use(authenticatedMiddleware)
+  .handler(async ({ input, context }) => {
+    const project = await dbClient.projects.getProject({
+      projectId: input.projectId,
+      organizationId: context.organizationId,
+    });
+
+    if (!project) {
+      throw new ORPCError("NOT_FOUND");
+    }
+
+    const branches = await dbClient.builds.findBranches(input.projectId, {
+      search: input.search,
+      limit: input.limit,
+    });
+
+    return { branches };
+  })
+  .actionable();
+
+export const listAuthors = os.builds.listAuthors
+  .use(authenticatedMiddleware)
+  .handler(async ({ input, context }) => {
+    const project = await dbClient.projects.getProject({
+      projectId: input.projectId,
+      organizationId: context.organizationId,
+    });
+
+    if (!project) {
+      throw new ORPCError("NOT_FOUND");
+    }
+
+    const authors = await dbClient.builds.findAuthors(input.projectId, {
+      search: input.search,
+      limit: input.limit,
+    });
+
+    return { authors };
   })
   .actionable();
 

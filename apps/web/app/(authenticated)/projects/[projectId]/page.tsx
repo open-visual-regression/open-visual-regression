@@ -25,19 +25,32 @@ const toArray = (value: string | string[] | undefined) =>
 const searchParamsSchema = z.object({
   search: z.string().optional().catch(undefined),
   status: z.preprocess(toArray, z.array(buildStatusSchema)).optional().catch(undefined),
+  branch: z.preprocess(toArray, z.array(z.string())).optional().catch(undefined),
+  author: z.preprocess(toArray, z.array(z.string())).optional().catch(undefined),
 });
 
 export default async function ProjectPage(props: ProjectPageProps) {
   const { projectId } = await props.params;
-  const { search, status: statuses = [] } = searchParamsSchema.parse(await props.searchParams);
+  const {
+    search,
+    status: statuses = [],
+    branch: branches = [],
+    author: authors = [],
+  } = searchParamsSchema.parse(await props.searchParams);
   const queryClient = getQueryClient();
 
   const [[projectError, projectResult]] = await Promise.all([
     serverClient.projects.getOne({ projectId }),
     queryClient.prefetchInfiniteQuery(
       orpcServer.builds.list.infiniteOptions(
-        buildsListInfiniteOptions(projectId, search, { statuses }),
+        buildsListInfiniteOptions(projectId, search, { statuses, branches, authors }),
       ),
+    ),
+    queryClient.prefetchQuery(
+      orpcServer.builds.listBranches.queryOptions({ input: { projectId, search: undefined } }),
+    ),
+    queryClient.prefetchQuery(
+      orpcServer.builds.listAuthors.queryOptions({ input: { projectId, search: undefined } }),
     ),
   ]);
 
@@ -61,7 +74,12 @@ export default async function ProjectPage(props: ProjectPageProps) {
         </ButtonLink>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <BuildsFilters statuses={statuses} />
+        <BuildsFilters
+          projectId={projectId}
+          statuses={statuses}
+          branches={branches}
+          authors={authors}
+        />
         <BuildsSearchField
           projectId={projectId}
           search={search}
@@ -69,7 +87,13 @@ export default async function ProjectPage(props: ProjectPageProps) {
         />
       </div>
       <HydrationBoundary state={dehydrate(queryClient)}>
-        <BuildsSection projectId={projectId} search={search} statuses={statuses} />
+        <BuildsSection
+          projectId={projectId}
+          search={search}
+          statuses={statuses}
+          branches={branches}
+          authors={authors}
+        />
       </HydrationBoundary>
     </div>
   );
