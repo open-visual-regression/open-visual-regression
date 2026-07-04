@@ -683,6 +683,9 @@ importers:
       '@aws-sdk/s3-request-presigner':
         specifier: ^3.1060.0
         version: 3.1066.0
+      '@ovr/logger':
+        specifier: workspace:*
+        version: link:../logger
       '@smithy/node-http-handler':
         specifier: ^4.0.0
         version: 4.7.7

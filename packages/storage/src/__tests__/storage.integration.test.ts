@@ -1,6 +1,6 @@
 import type { Readable } from "node:stream";
 
-import { storage } from "../index";
+import { ensureBucket, storage } from "../index";
 import { describe, expect, test } from "./fixtures";
 
 const streamToBuffer = async (stream: Readable): Promise<Buffer> => {
@@ -59,5 +59,20 @@ describe("storage", () => {
 
   test("objectExists returns false for a key that was never uploaded", async ({ key }) => {
     expect(await storage.objectExists(key)).toBe(false);
+  });
+
+  test("ensureBucket resolves when the bucket already exists", async () => {
+    await expect(ensureBucket()).resolves.toBeUndefined();
+  });
+
+  test("ensureBucket is a no-op when STORAGE_CREATE_BUCKET is false", async () => {
+    const previous = process.env.STORAGE_CREATE_BUCKET;
+    process.env.STORAGE_CREATE_BUCKET = "false";
+
+    try {
+      await expect(ensureBucket()).resolves.toBeUndefined();
+    } finally {
+      process.env.STORAGE_CREATE_BUCKET = previous;
+    }
   });
 });

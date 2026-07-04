@@ -1,9 +1,11 @@
 import { Readable } from "node:stream";
 
 import {
+  CreateBucketCommand,
   DeleteObjectCommand,
   DeleteObjectsCommand,
   GetObjectCommand,
+  HeadBucketCommand,
   HeadObjectCommand,
   ListObjectsV2Command,
   PutObjectCommand,
@@ -12,6 +14,10 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { NodeHttpHandler } from "@smithy/node-http-handler";
+
+import { createLogger } from "@ovr/logger";
+
+const logger = createLogger("storage");
 
 const KEEP_ALIVE_MAX_SOCKETS = 50;
 
@@ -32,6 +38,50 @@ const client = new S3Client({
 });
 
 const bucket = process.env.STORAGE_BUCKET ?? "ovr";
+
+export const ensureBucket = async (): Promise<void> => {
+  if (process.env.STORAGE_CREATE_BUCKET === "false") {
+    logger.debug({ bucket }, "bucket bootstrap disabled via STORAGE_CREATE_BUCKET");
+    return;
+  }
+
+  try {
+    await client.send(new HeadBucketCommand({ Bucket: bucket }));
+    logger.debug({ bucket }, "storage bucket already exists");
+    return;
+  } catch (error) {
+    const statusCode =
+      error instanceof S3ServiceException ? error.$metadata.httpStatusCode : undefined;
+
+    // Only a definitive "not found" warrants creating the bucket. Anything else
+    // (e.g. a 403 from object-scoped credentials on managed S3) means we cannot
+    // verify it but should assume it exists rather than fail.
+    if (statusCode !== 404) {
+      logger.warn(
+        { bucket, statusCode, err: error },
+        "could not verify the storage bucket; assuming it exists",
+      );
+      return;
+    }
+
+    logger.info({ bucket }, "storage bucket not found; creating it");
+  }
+
+  try {
+    await client.send(new CreateBucketCommand({ Bucket: bucket }));
+    logger.info({ bucket }, "created storage bucket");
+  } catch (error) {
+    if (
+      error instanceof S3ServiceException &&
+      (error.name === "BucketAlreadyOwnedByYou" || error.name === "BucketAlreadyExists")
+    ) {
+      logger.debug({ bucket }, "storage bucket was created concurrently");
+      return;
+    }
+
+    logger.error({ bucket, err: error }, "failed to create the storage bucket");
+  }
+};
 
 export const storage = {
   uploadFile: async (key: string, body: Buffer | Readable, contentType: string): Promise<void> => {

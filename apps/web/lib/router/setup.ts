@@ -3,6 +3,7 @@
 import { ORPCError } from "@orpc/server";
 
 import { dbClient } from "@ovr/db/client";
+import { ensureBucket } from "@ovr/storage";
 
 import { auth } from "../auth/auth";
 import { unauthenticatedMiddleware } from "./middleware";
@@ -49,5 +50,9 @@ export const exec = os.setup.exec
     await auth.api.createOrganization({
       body: { name: input.organizationName, slug, userId: createUserResponse.user.id },
     });
+
+    // Provision the object storage bucket as part of first-run setup. Best-effort
+    // and self-logging, so a storage hiccup never blocks admin creation.
+    await ensureBucket();
   })
   .actionable();
