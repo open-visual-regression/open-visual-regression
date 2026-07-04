@@ -9,7 +9,7 @@ vi.mock("next/navigation");
 
 const mockPush = vi.mocked(useRouter)().push;
 
-const renderComponent = () => render(<BuildsFilters status={[]} />);
+const renderComponent = () => render(<BuildsFilters statuses={[]} />);
 
 describe("BuildsFilters", () => {
   it("should show 'any' as the status value when no filter is applied", () => {
@@ -32,13 +32,13 @@ describe("BuildsFilters", () => {
   });
 
   it("should show a combined count once more than one option is selected", () => {
-    render(<BuildsFilters status={["queued", "error"]} />);
+    render(<BuildsFilters statuses={["queued", "error"]} />);
 
     expect(screen.getByRole("button", { name: /^status\s+2 selected$/i })).toBeVisible();
   });
 
   it("should mark the mobile filter menu button as active when a filter is applied", () => {
-    render(<BuildsFilters status={["queued"]} />);
+    render(<BuildsFilters statuses={["queued"]} />);
 
     expect(screen.getByRole("button", { name: "filters (active)" })).toBeVisible();
   });

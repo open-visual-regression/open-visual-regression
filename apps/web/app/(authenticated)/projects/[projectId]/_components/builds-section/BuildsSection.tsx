@@ -13,16 +13,14 @@ import { NoBuildsSection } from "./NoBuildsSection";
 type BuildsSectionProps = {
   projectId: string;
   search?: string;
-  status?: BuildStatus[];
+  statuses?: BuildStatus[];
 };
 
-export const BuildsSection = ({ projectId, search, status }: BuildsSectionProps) => {
-  const hasFilters = Boolean(status?.length);
+export const BuildsSection = ({ projectId, search, statuses }: BuildsSectionProps) => {
+  const hasFilters = Boolean(statuses?.length);
 
   const { data, isPending, hasNextPage, isFetchingNextPage, fetchNextPage } = useInfiniteQuery(
-    orpc.builds.list.infiniteOptions(
-      buildsListInfiniteOptions(projectId, search, { statuses: status }),
-    ),
+    orpc.builds.list.infiniteOptions(buildsListInfiniteOptions(projectId, search, { statuses })),
   );
 
   const builds = data?.pages.flatMap((page) => page.builds) ?? [];

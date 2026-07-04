@@ -29,14 +29,14 @@ const searchParamsSchema = z.object({
 
 export default async function ProjectPage(props: ProjectPageProps) {
   const { projectId } = await props.params;
-  const { search, status = [] } = searchParamsSchema.parse(await props.searchParams);
+  const { search, status: statuses = [] } = searchParamsSchema.parse(await props.searchParams);
   const queryClient = getQueryClient();
 
   const [[projectError, projectResult]] = await Promise.all([
     serverClient.projects.getOne({ projectId }),
     queryClient.prefetchInfiniteQuery(
       orpcServer.builds.list.infiniteOptions(
-        buildsListInfiniteOptions(projectId, search, { statuses: status }),
+        buildsListInfiniteOptions(projectId, search, { statuses }),
       ),
     ),
   ]);
@@ -61,7 +61,7 @@ export default async function ProjectPage(props: ProjectPageProps) {
         </ButtonLink>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <BuildsFilters status={status} />
+        <BuildsFilters statuses={statuses} />
         <BuildsSearchField
           projectId={projectId}
           search={search}
@@ -69,7 +69,7 @@ export default async function ProjectPage(props: ProjectPageProps) {
         />
       </div>
       <HydrationBoundary state={dehydrate(queryClient)}>
-        <BuildsSection projectId={projectId} search={search} status={status} />
+        <BuildsSection projectId={projectId} search={search} statuses={statuses} />
       </HydrationBoundary>
     </div>
   );

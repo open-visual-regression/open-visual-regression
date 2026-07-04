@@ -10,11 +10,11 @@ import { FacetOptionsList } from "@/lib/components/facet/FacetOptionsList";
 import { BuildsStatusFacet, STATUS_OPTIONS } from "./BuildsStatusFacet";
 
 type BuildsFiltersProps = {
-  status: BuildStatus[];
+  statuses: BuildStatus[];
   className?: string;
 };
 
-export const BuildsFilters = ({ status, className }: BuildsFiltersProps) => {
+export const BuildsFilters = ({ statuses, className }: BuildsFiltersProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -27,23 +27,23 @@ export const BuildsFilters = ({ status, className }: BuildsFiltersProps) => {
     router.push(query ? `${pathname}?${query}` : pathname);
   };
 
-  const applyStatus = (next: BuildStatus[]) => commit("status", next);
+  const applyStatuses = (next: BuildStatus[]) => commit("status", next);
 
   const facets: FacetMenuItem[] = [
     {
       key: "status",
       label: "status",
-      active: status.length > 0,
+      active: statuses.length > 0,
       content: (close) => (
         <FacetOptionsList
           options={STATUS_OPTIONS}
-          selected={status}
+          selected={statuses}
           onApply={(next) => {
-            applyStatus(next);
+            applyStatuses(next);
             close();
           }}
           onClear={() => {
-            applyStatus([]);
+            applyStatuses([]);
             close();
           }}
         />
@@ -54,7 +54,7 @@ export const BuildsFilters = ({ status, className }: BuildsFiltersProps) => {
   return (
     <div className={className}>
       <div className="hidden items-center gap-2 lg:flex">
-        <BuildsStatusFacet selected={status} onApply={applyStatus} />
+        <BuildsStatusFacet selected={statuses} onApply={applyStatuses} />
       </div>
       <div className="lg:hidden">
         <FacetMenuButton facets={facets} />

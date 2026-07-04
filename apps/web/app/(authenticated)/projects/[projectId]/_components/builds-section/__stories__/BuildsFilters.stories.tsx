@@ -23,19 +23,19 @@ type Story = StoryObj<typeof BuildsFilters>;
 
 export const Default: Story = {
   args: {
-    status: [],
+    statuses: [],
   },
 };
 
 export const WithActiveFilters: Story = {
   args: {
-    status: ["needs_review", "error"],
+    statuses: ["needs_review", "error"],
   },
 };
 
 export const StatusPopoverOpen: Story = {
   args: {
-    status: [],
+    statuses: [],
   },
   parameters: {
     ovr: {
@@ -50,7 +50,7 @@ export const StatusPopoverOpen: Story = {
 
 export const MobileMenuOpen: Story = {
   args: {
-    status: ["needs_review"],
+    statuses: ["needs_review"],
   },
   parameters: {
     ovr: {
@@ -65,7 +65,7 @@ export const MobileMenuOpen: Story = {
 
 export const MobileFacetDialogOpen: Story = {
   args: {
-    status: ["needs_review"],
+    statuses: ["needs_review"],
   },
   parameters: {
     ovr: {
