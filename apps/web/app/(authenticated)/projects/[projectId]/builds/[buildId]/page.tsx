@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { z } from "zod";
 
-import { snapshotDisplayStatusSchema } from "@ovr/api/contracts/builds";
+import { browserSchema, snapshotDisplayStatusSchema } from "@ovr/api/contracts/builds";
 
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
@@ -26,11 +26,16 @@ const searchParamsSchema = z.object({
     .catch(undefined)
     .transform((value) => value || undefined),
   status: z.preprocess(toArray, z.array(snapshotDisplayStatusSchema)).optional().catch(undefined),
+  browser: z.preprocess(toArray, z.array(browserSchema)).optional().catch(undefined),
 });
 
 export default async function BuildPage({ params, searchParams }: BuildPageProps) {
   const { projectId, buildId } = await params;
-  const { search, status: statuses = [] } = searchParamsSchema.parse(await searchParams);
+  const {
+    search,
+    status: statuses = [],
+    browser: browsers = [],
+  } = searchParamsSchema.parse(await searchParams);
 
   const [[error, buildResult], [countsError, snapshotCounts], [snapshotsError, snapshotsResult]] =
     await Promise.all([
@@ -39,6 +44,7 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
       serverClient.snapshots.list({
         buildId,
         statuses,
+        browsers,
         search,
         limit: PAGE_SIZE,
         offset: 0,
@@ -69,7 +75,7 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
     <div className="flex flex-col gap-6">
       <BuildHeader build={build} snapshotCounts={snapshotCounts} storybookHref={storybookHref} />
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <SnapshotFilters statuses={statuses} />
+        <SnapshotFilters statuses={statuses} browsers={browsers} />
         <SnapshotsSearchField
           projectId={projectId}
           buildId={buildId}
