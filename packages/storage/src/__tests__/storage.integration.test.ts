@@ -1,5 +1,7 @@
 import type { Readable } from "node:stream";
 
+import { vi } from "vitest";
+
 import { ensureBucket, storage } from "../index";
 import { describe, expect, test } from "./fixtures";
 
@@ -66,13 +68,8 @@ describe("storage", () => {
   });
 
   test("ensureBucket is a no-op when STORAGE_CREATE_BUCKET is false", async () => {
-    const previous = process.env.STORAGE_CREATE_BUCKET;
-    process.env.STORAGE_CREATE_BUCKET = "false";
+    vi.stubEnv("STORAGE_CREATE_BUCKET", "false");
 
-    try {
-      await expect(ensureBucket()).resolves.toBeUndefined();
-    } finally {
-      process.env.STORAGE_CREATE_BUCKET = previous;
-    }
+    await expect(ensureBucket()).resolves.toBeUndefined();
   });
 });
