@@ -195,22 +195,46 @@ export type FindAllResult = Awaited<ReturnType<typeof findAll>>;
 
 export type BuildListItemDbSchema = FindAllResult["builds"][number];
 
-export const findDistinctBranches = async (projectId: string): Promise<string[]> => {
+type SearchOptions = {
+  search?: string;
+  limit: number;
+};
+
+export const findBranches = async (
+  projectId: string,
+  { search, limit }: SearchOptions,
+): Promise<string[]> => {
   const rows = await db
     .selectDistinct({ branch: builds.branch })
     .from(builds)
-    .where(eq(builds.projectId, projectId))
-    .orderBy(asc(builds.branch));
+    .where(
+      and(
+        eq(builds.projectId, projectId),
+        search ? ilike(builds.branch, `%${search}%`) : undefined,
+      ),
+    )
+    .orderBy(asc(builds.branch))
+    .limit(limit);
 
   return rows.map((row) => row.branch);
 };
 
-export const findDistinctAuthors = async (projectId: string): Promise<string[]> => {
+export const findAuthors = async (
+  projectId: string,
+  { search, limit }: SearchOptions,
+): Promise<string[]> => {
   const rows = await db
     .selectDistinct({ author: builds.author })
     .from(builds)
-    .where(and(eq(builds.projectId, projectId), isNotNull(builds.author)))
-    .orderBy(asc(builds.author));
+    .where(
+      and(
+        eq(builds.projectId, projectId),
+        isNotNull(builds.author),
+        search ? ilike(builds.author, `%${search}%`) : undefined,
+      ),
+    )
+    .orderBy(asc(builds.author))
+    .limit(limit);
 
   return rows.map((row) => row.author!);
 };

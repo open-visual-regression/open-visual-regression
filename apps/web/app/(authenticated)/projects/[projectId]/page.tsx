@@ -39,14 +39,18 @@ export default async function ProjectPage(props: ProjectPageProps) {
   } = searchParamsSchema.parse(await props.searchParams);
   const queryClient = getQueryClient();
 
-  const [[projectError, projectResult], [, branchesResult], [, authorsResult]] = await Promise.all([
+  const [[projectError, projectResult]] = await Promise.all([
     serverClient.projects.getOne({ projectId }),
-    serverClient.builds.listBranches({ projectId }),
-    serverClient.builds.listAuthors({ projectId }),
     queryClient.prefetchInfiniteQuery(
       orpcServer.builds.list.infiniteOptions(
         buildsListInfiniteOptions(projectId, search, { statuses, branches, authors }),
       ),
+    ),
+    queryClient.prefetchQuery(
+      orpcServer.builds.listBranches.queryOptions({ input: { projectId, search: undefined } }),
+    ),
+    queryClient.prefetchQuery(
+      orpcServer.builds.listAuthors.queryOptions({ input: { projectId, search: undefined } }),
     ),
   ]);
 
@@ -71,11 +75,10 @@ export default async function ProjectPage(props: ProjectPageProps) {
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <BuildsFilters
+          projectId={projectId}
           statuses={statuses}
           branches={branches}
           authors={authors}
-          branchOptions={branchesResult?.branches ?? []}
-          authorOptions={authorsResult?.authors ?? []}
         />
         <BuildsSearchField
           projectId={projectId}

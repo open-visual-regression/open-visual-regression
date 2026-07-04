@@ -501,7 +501,7 @@ describe("builds", () => {
     });
   });
 
-  describe("findDistinctBranches", () => {
+  describe("findBranches", () => {
     test("should return the distinct branches captured for the project, sorted alphabetically", async ({
       project,
       user,
@@ -528,9 +528,49 @@ describe("builds", () => {
         createdBy: user.id,
       });
 
-      const branches = await dbClient.builds.findDistinctBranches(project.id);
+      const branches = await dbClient.builds.findBranches(project.id, { limit: 20 });
 
       expect(branches).toEqual(["develop", "main"]);
+    });
+
+    test("should only return branches matching the search term", async ({ project, user }) => {
+      await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: user.id,
+      });
+      await dbClient.builds.create({
+        projectId: project.id,
+        branch: "feature/onboarding",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/b/artifact",
+        createdBy: user.id,
+      });
+
+      const branches = await dbClient.builds.findBranches(project.id, {
+        search: "feat",
+        limit: 20,
+      });
+
+      expect(branches).toEqual(["feature/onboarding"]);
+    });
+
+    test("should cap the number of branches at the given limit", async ({ project, user }) => {
+      for (let index = 0; index < 5; index++) {
+        await dbClient.builds.create({
+          projectId: project.id,
+          branch: `branch-${index}`,
+          commitSha: index.toString().repeat(40),
+          artifactPath: `builds/${index}/artifact`,
+          createdBy: user.id,
+        });
+      }
+
+      const branches = await dbClient.builds.findBranches(project.id, { limit: 3 });
+
+      expect(branches).toEqual(["branch-0", "branch-1", "branch-2"]);
     });
 
     test("should not return branches captured for a different project", async ({
@@ -556,12 +596,12 @@ describe("builds", () => {
         createdBy: user.id,
       });
 
-      const branches = await dbClient.builds.findDistinctBranches(project.id);
+      const branches = await dbClient.builds.findBranches(project.id, { limit: 20 });
       expect(branches).toEqual([]);
     });
   });
 
-  describe("findDistinctAuthors", () => {
+  describe("findAuthors", () => {
     test("should return the distinct non-null authors captured for the project, sorted alphabetically", async ({
       project,
       user,
@@ -590,9 +630,35 @@ describe("builds", () => {
         createdBy: user.id,
       });
 
-      const authors = await dbClient.builds.findDistinctAuthors(project.id);
+      const authors = await dbClient.builds.findAuthors(project.id, { limit: 20 });
 
       expect(authors).toEqual(["Alex Kim", "Jordan Lee"]);
+    });
+
+    test("should only return authors matching the search term", async ({ project, user }) => {
+      await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: user.id,
+        author: "Jordan Lee",
+      });
+      await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/b/artifact",
+        createdBy: user.id,
+        author: "Alex Kim",
+      });
+
+      const authors = await dbClient.builds.findAuthors(project.id, {
+        search: "kim",
+        limit: 20,
+      });
+
+      expect(authors).toEqual(["Alex Kim"]);
     });
   });
 

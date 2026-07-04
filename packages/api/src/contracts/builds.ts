@@ -170,6 +170,8 @@ export const getBuildContract = oc.input(getBuildInputSchema).output(getBuildOut
 
 export const listBuildFilterOptionsInputSchema = z.object({
   projectId: z.uuidv7(),
+  search: z.string().optional(),
+  limit: z.number().int().min(1).max(100).default(20),
 });
 
 export const listBranchesOutputSchema = z.object({

@@ -172,7 +172,10 @@ export const listBranches = os.builds.listBranches
       throw new ORPCError("NOT_FOUND");
     }
 
-    const branches = await dbClient.builds.findDistinctBranches(input.projectId);
+    const branches = await dbClient.builds.findBranches(input.projectId, {
+      search: input.search,
+      limit: input.limit,
+    });
 
     return { branches };
   })
@@ -190,7 +193,10 @@ export const listAuthors = os.builds.listAuthors
       throw new ORPCError("NOT_FOUND");
     }
 
-    const authors = await dbClient.builds.findDistinctAuthors(input.projectId);
+    const authors = await dbClient.builds.findAuthors(input.projectId, {
+      search: input.search,
+      limit: input.limit,
+    });
 
     return { authors };
   })

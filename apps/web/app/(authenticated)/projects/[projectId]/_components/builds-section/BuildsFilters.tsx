@@ -8,26 +8,24 @@ import { FacetMenuButton, type FacetMenuItem } from "@/lib/components/facet/Face
 import { FacetOptionsList } from "@/lib/components/facet/FacetOptionsList";
 
 import { BuildsAuthorFacet } from "./BuildsAuthorFacet";
+import { BuildsAuthorFacetContent } from "./BuildsAuthorFacetContent";
 import { BuildsBranchFacet } from "./BuildsBranchFacet";
+import { BuildsBranchFacetContent } from "./BuildsBranchFacetContent";
 import { BuildsStatusFacet, STATUS_OPTIONS } from "./BuildsStatusFacet";
 
-const SEARCHABLE_THRESHOLD = 6;
-
 type BuildsFiltersProps = {
+  projectId: string;
   statuses: BuildStatus[];
   branches: string[];
   authors: string[];
-  branchOptions: string[];
-  authorOptions: string[];
   className?: string;
 };
 
 export const BuildsFilters = ({
+  projectId,
   statuses,
   branches,
   authors,
-  branchOptions,
-  authorOptions,
   className,
 }: BuildsFiltersProps) => {
   const router = useRouter();
@@ -45,9 +43,6 @@ export const BuildsFilters = ({
   const applyStatuses = (next: BuildStatus[]) => commit("status", next);
   const applyBranches = (next: string[]) => commit("branch", next);
   const applyAuthors = (next: string[]) => commit("author", next);
-
-  const branchOptionList = branchOptions.map((branch) => ({ value: branch, label: branch }));
-  const authorOptionList = authorOptions.map((author) => ({ value: author, label: author }));
 
   const facets: FacetMenuItem[] = [
     {
@@ -74,16 +69,11 @@ export const BuildsFilters = ({
       label: "branch",
       active: branches.length > 0,
       content: (close) => (
-        <FacetOptionsList
-          options={branchOptionList}
+        <BuildsBranchFacetContent
+          projectId={projectId}
           selected={branches}
-          searchable={branchOptionList.length > SEARCHABLE_THRESHOLD}
           onApply={(next) => {
             applyBranches(next);
-            close();
-          }}
-          onClear={() => {
-            applyBranches([]);
             close();
           }}
         />
@@ -94,16 +84,11 @@ export const BuildsFilters = ({
       label: "author",
       active: authors.length > 0,
       content: (close) => (
-        <FacetOptionsList
-          options={authorOptionList}
+        <BuildsAuthorFacetContent
+          projectId={projectId}
           selected={authors}
-          searchable={authorOptionList.length > SEARCHABLE_THRESHOLD}
           onApply={(next) => {
             applyAuthors(next);
-            close();
-          }}
-          onClear={() => {
-            applyAuthors([]);
             close();
           }}
         />
@@ -115,8 +100,8 @@ export const BuildsFilters = ({
     <div className={className}>
       <div className="hidden items-center gap-2 lg:flex">
         <BuildsStatusFacet selected={statuses} onApply={applyStatuses} />
-        <BuildsBranchFacet branches={branchOptions} selected={branches} onApply={applyBranches} />
-        <BuildsAuthorFacet authors={authorOptions} selected={authors} onApply={applyAuthors} />
+        <BuildsBranchFacet projectId={projectId} selected={branches} onApply={applyBranches} />
+        <BuildsAuthorFacet projectId={projectId} selected={authors} onApply={applyAuthors} />
       </div>
       <div className="lg:hidden">
         <FacetMenuButton facets={facets} />
