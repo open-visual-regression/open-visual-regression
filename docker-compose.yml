@@ -83,7 +83,7 @@ services:
     restart: "no"
 
   migrate:
-    image: ${IMAGE_PREFIX:-open-visual-regression}/worker:${IMAGE_TAG:-latest}
+    image: ${IMAGE_PREFIX:-ovr}/worker:${IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: apps/worker/Dockerfile
@@ -99,7 +99,7 @@ services:
     restart: "no"
 
   web:
-    image: ${IMAGE_PREFIX:-open-visual-regression}/web:${IMAGE_TAG:-latest}
+    image: ${IMAGE_PREFIX:-ovr}/web:${IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: apps/web/Dockerfile
@@ -124,7 +124,7 @@ services:
       - ${WEB_PORT:-3000}:3000
 
   worker:
-    image: ${IMAGE_PREFIX:-open-visual-regression}/worker:${IMAGE_TAG:-latest}
+    image: ${IMAGE_PREFIX:-ovr}/worker:${IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: apps/worker/Dockerfile
@@ -148,7 +148,7 @@ services:
       - workertmp:/tmp
 
   bull-board:
-    image: ${IMAGE_PREFIX:-open-visual-regression}/bull-board:${IMAGE_TAG:-latest}
+    image: ${IMAGE_PREFIX:-ovr}/bull-board:${IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: apps/bull-board/Dockerfile

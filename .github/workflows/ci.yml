@@ -131,7 +131,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: open-visual-regression/${{ matrix.image.name }}
+          images: ovr/${{ matrix.image.name }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
