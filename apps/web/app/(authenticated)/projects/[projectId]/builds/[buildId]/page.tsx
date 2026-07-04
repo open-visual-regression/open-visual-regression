@@ -1,11 +1,14 @@
 import { notFound } from "next/navigation";
 import { z } from "zod";
 
+import { snapshotDisplayStatusSchema } from "@ovr/api/contracts/builds";
+
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
 import { getStorybookPath } from "@/lib/utils/storage";
 
 import { BuildHeader } from "./_components/build-header/BuildHeader";
+import { SnapshotFilters } from "./_components/snapshot-grid/SnapshotFilters";
 import { SnapshotGrid } from "./_components/snapshot-grid/SnapshotGrid";
 import { SnapshotsSearchField } from "./_components/snapshot-grid/SnapshotsSearchField";
 
@@ -13,17 +16,21 @@ const PAGE_SIZE = 60;
 
 type BuildPageProps = PageProps<"/projects/[projectId]/builds/[buildId]">;
 
+const toArray = (value: string | string[] | undefined) =>
+  value === undefined ? undefined : Array.isArray(value) ? value : [value];
+
 const searchParamsSchema = z.object({
   search: z
     .string()
     .optional()
     .catch(undefined)
     .transform((value) => value || undefined),
+  status: z.preprocess(toArray, z.array(snapshotDisplayStatusSchema)).optional().catch(undefined),
 });
 
 export default async function BuildPage({ params, searchParams }: BuildPageProps) {
   const { projectId, buildId } = await params;
-  const { search } = searchParamsSchema.parse(await searchParams);
+  const { search, status: statuses = [] } = searchParamsSchema.parse(await searchParams);
 
   const [[error, buildResult], [countsError, snapshotCounts], [snapshotsError, snapshotsResult]] =
     await Promise.all([
@@ -31,6 +38,7 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
       serverClient.snapshots.getCounts({ buildId }),
       serverClient.snapshots.list({
         buildId,
+        statuses,
         search,
         limit: PAGE_SIZE,
         offset: 0,
@@ -60,12 +68,13 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
   return (
     <div className="flex flex-col gap-6">
       <BuildHeader build={build} snapshotCounts={snapshotCounts} storybookHref={storybookHref} />
-      <div className="flex">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <SnapshotFilters statuses={statuses} />
         <SnapshotsSearchField
           projectId={projectId}
           buildId={buildId}
           search={search}
-          className="w-full md:ml-auto md:w-64"
+          className="min-w-0 flex-1 lg:w-64 lg:flex-none"
         />
       </div>
       <SnapshotGrid

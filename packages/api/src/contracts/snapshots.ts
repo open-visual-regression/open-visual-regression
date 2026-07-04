@@ -66,7 +66,7 @@ export type SnapshotSortSchema = z.infer<typeof snapshotSortSchema>;
 
 export const listInputSchema = z.object({
   buildId: z.uuidv7(),
-  status: snapshotDisplayStatusSchema.optional(),
+  statuses: z.array(snapshotDisplayStatusSchema).optional(),
   search: z.string().min(1).optional(),
   sortBy: z
     .array(snapshotSortSchema)
