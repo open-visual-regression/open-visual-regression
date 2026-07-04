@@ -21,11 +21,13 @@ RUN pnpm exec turbo run build --filter=@ovr/bull-board
 RUN pnpm --filter @ovr/bull-board deploy --prod --legacy /prod
 
 FROM node:${NODE_VERSION}-slim AS runner
+ARG UID=1001
+ARG GID=1001
 ENV NODE_ENV=production \
     BULL_BOARD_PORT=3001
 WORKDIR /app
-RUN groupadd --system --gid 1001 nodejs && \
-    useradd --system --uid 1001 --gid nodejs nodejs
+RUN groupadd --system --gid ${GID} nodejs && \
+    useradd --system --uid ${UID} --gid ${GID} nodejs
 
 COPY --from=builder --chown=nodejs:nodejs /prod/node_modules ./node_modules
 COPY --from=builder --chown=nodejs:nodejs /app/apps/bull-board/dist ./dist

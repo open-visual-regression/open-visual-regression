@@ -27,12 +27,17 @@ RUN cp -r packages/db/src/migrations apps/worker/dist/migrations
 RUN pnpm --filter @ovr/worker deploy --prod --legacy /prod
 
 FROM mcr.microsoft.com/playwright:v${PLAYWRIGHT_VERSION}-noble AS runner
+ARG UID=1001
+ARG GID=1001
 ENV NODE_ENV=production \
     OVR_MIGRATIONS_DIR=/app/dist/migrations
 WORKDIR /app
 
-COPY --from=builder /prod/node_modules ./node_modules
-COPY --from=builder /app/apps/worker/dist ./dist
+# The Playwright image ships a non-root "pwuser"; remap it to the requested ids.
+RUN groupmod --gid ${GID} pwuser && usermod --uid ${UID} --gid ${GID} pwuser
+
+COPY --from=builder --chown=pwuser:pwuser /prod/node_modules ./node_modules
+COPY --from=builder --chown=pwuser:pwuser /app/apps/worker/dist ./dist
 
 USER pwuser
 CMD ["node", "dist/index.js"]

@@ -29,13 +29,15 @@ ENV NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL}
 RUN pnpm exec turbo run build --filter=@ovr/web
 
 FROM node:${NODE_VERSION}-slim AS runner
+ARG UID=1001
+ARG GID=1001
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
     PORT=3000 \
     HOSTNAME=0.0.0.0
 WORKDIR /app
-RUN groupadd --system --gid 1001 nodejs && \
-    useradd --system --uid 1001 --gid nodejs nextjs
+RUN groupadd --system --gid ${GID} nodejs && \
+    useradd --system --uid ${UID} --gid ${GID} nextjs
 
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static

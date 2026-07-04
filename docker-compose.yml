@@ -87,6 +87,9 @@ services:
     build:
       context: .
       dockerfile: apps/worker/Dockerfile
+      args:
+        UID: ${PUID:-1001}
+        GID: ${PGID:-1001}
     command: ["node", "dist/migrate.js"]
     depends_on:
       db:
@@ -102,6 +105,8 @@ services:
       dockerfile: apps/web/Dockerfile
       args:
         NEXT_PUBLIC_BASE_URL: ${BASE_URL:-http://localhost:3000}
+        UID: ${PUID:-1001}
+        GID: ${PGID:-1001}
     restart: unless-stopped
     depends_on:
       db:
@@ -125,6 +130,9 @@ services:
     build:
       context: .
       dockerfile: apps/worker/Dockerfile
+      args:
+        UID: ${PUID:-1001}
+        GID: ${PGID:-1001}
     restart: unless-stopped
     depends_on:
       db:
@@ -146,6 +154,9 @@ services:
     build:
       context: .
       dockerfile: apps/bull-board/Dockerfile
+      args:
+        UID: ${PUID:-1001}
+        GID: ${PGID:-1001}
     profiles: ["tools"]
     restart: unless-stopped
     depends_on:
