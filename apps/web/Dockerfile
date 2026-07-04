@@ -22,10 +22,6 @@ RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
 # Placeholder secret satisfies the build; the runtime value comes from env.
 ARG BETTER_AUTH_SECRET="build-time-placeholder"
 ENV BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
-# NEXT_PUBLIC_* is inlined into the client bundle at build time; override when
-# serving from a domain other than http://localhost:3000.
-ARG NEXT_PUBLIC_BASE_URL="http://localhost:3000"
-ENV NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL}
 RUN pnpm exec turbo run build --filter=@ovr/web
 
 FROM node:${NODE_VERSION}-slim AS runner
