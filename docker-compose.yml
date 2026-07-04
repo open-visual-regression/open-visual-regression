@@ -63,23 +63,23 @@ services:
       - rustfsdata:/data
 
   createbuckets:
-    image: minio/mc
+    image: amazon/aws-cli
     depends_on:
       rustfs:
         condition: service_started
     environment:
-      STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY:-rustfsadmin}
-      STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY:-rustfsadmin}
-      STORAGE_BUCKET: ${STORAGE_BUCKET:-ovr}
+      AWS_ACCESS_KEY_ID: ${STORAGE_ACCESS_KEY:-rustfsadmin}
+      AWS_SECRET_ACCESS_KEY: ${STORAGE_SECRET_KEY:-rustfsadmin}
+      AWS_DEFAULT_REGION: ${STORAGE_REGION:-us-east-1}
     entrypoint:
       - /bin/sh
       - -c
       - |
-        until mc alias set ovr http://rustfs:9000 "$$STORAGE_ACCESS_KEY" "$$STORAGE_SECRET_KEY"; do
+        until aws --endpoint-url http://rustfs:9000 s3 ls >/dev/null 2>&1; do
           echo "waiting for object storage..."
           sleep 2
         done
-        mc mb --ignore-existing ovr/"$$STORAGE_BUCKET"
+        aws --endpoint-url http://rustfs:9000 s3 mb "s3://${STORAGE_BUCKET:-ovr}" 2>/dev/null || true
     restart: "no"
 
   migrate:
@@ -120,8 +120,9 @@ services:
       <<: *app-env
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET in your .env}
       BASE_URL: ${BASE_URL:-http://localhost:3000}
+      PORT: ${WEB_PORT:-3000}
     ports:
-      - ${WEB_PORT:-3000}:3000
+      - ${WEB_PORT:-3000}:${WEB_PORT:-3000}
 
   worker:
     image: ${IMAGE_PREFIX:-ovr}/worker:${IMAGE_TAG:-latest}
@@ -162,9 +163,9 @@ services:
         condition: service_healthy
     environment:
       VALKEY_URL: redis://valkey:6379
-      BULL_BOARD_PORT: 3001
+      BULL_BOARD_PORT: ${BULL_BOARD_PORT:-3001}
     ports:
-      - ${BULL_BOARD_PORT:-3001}:3001
+      - ${BULL_BOARD_PORT:-3001}:${BULL_BOARD_PORT:-3001}
 
   adminer:
     image: adminer:5
