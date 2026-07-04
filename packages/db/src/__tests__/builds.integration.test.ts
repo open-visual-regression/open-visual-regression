@@ -441,6 +441,159 @@ describe("builds", () => {
       );
       expect(builds.map((build) => build.id)).not.toContain(passedBuild!.id);
     });
+
+    test("should only return builds matching one of the given branches", async ({
+      organization,
+      project,
+      user,
+      build: mainBuild,
+    }) => {
+      const featureBuild = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "feature/onboarding",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/b/artifact",
+        createdBy: user.id,
+      });
+
+      const { builds, total } = await dbClient.builds.findAll({
+        organizationId: organization.id,
+        branches: ["feature/onboarding"],
+        limit: 10,
+      });
+
+      expect(total).toBe(1);
+      expect(builds.map((build) => build.id)).toEqual([featureBuild!.id]);
+      expect(builds.map((build) => build.id)).not.toContain(mainBuild.id);
+    });
+
+    test("should only return builds matching one of the given authors", async ({
+      organization,
+      project,
+      user,
+    }) => {
+      const jordanBuild = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: user.id,
+        author: "Jordan Lee",
+      });
+
+      await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/b/artifact",
+        createdBy: user.id,
+        author: "Alex Kim",
+      });
+
+      const { builds, total } = await dbClient.builds.findAll({
+        organizationId: organization.id,
+        authors: ["Jordan Lee"],
+        limit: 10,
+      });
+
+      expect(total).toBe(1);
+      expect(builds.map((build) => build.id)).toEqual([jordanBuild!.id]);
+    });
+  });
+
+  describe("findDistinctBranches", () => {
+    test("should return the distinct branches captured for the project, sorted alphabetically", async ({
+      project,
+      user,
+    }) => {
+      await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: user.id,
+      });
+      await dbClient.builds.create({
+        projectId: project.id,
+        branch: "develop",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/b/artifact",
+        createdBy: user.id,
+      });
+      await dbClient.builds.create({
+        projectId: project.id,
+        branch: "develop",
+        commitSha: "c".repeat(40),
+        artifactPath: "builds/c/artifact",
+        createdBy: user.id,
+      });
+
+      const branches = await dbClient.builds.findDistinctBranches(project.id);
+
+      expect(branches).toEqual(["develop", "main"]);
+    });
+
+    test("should not return branches captured for a different project", async ({
+      organization,
+      project,
+      user,
+    }) => {
+      const [otherProject] = await db
+        .insert(projects)
+        .values({
+          name: "Other Project",
+          gitMainBranch: "main",
+          organizationId: organization.id,
+          creatorId: user.id,
+        })
+        .returning();
+
+      await dbClient.builds.create({
+        projectId: otherProject!.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: user.id,
+      });
+
+      const branches = await dbClient.builds.findDistinctBranches(project.id);
+      expect(branches).toEqual([]);
+    });
+  });
+
+  describe("findDistinctAuthors", () => {
+    test("should return the distinct non-null authors captured for the project, sorted alphabetically", async ({
+      project,
+      user,
+    }) => {
+      await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: user.id,
+        author: "Jordan Lee",
+      });
+      await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/b/artifact",
+        createdBy: user.id,
+        author: "Alex Kim",
+      });
+      await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "c".repeat(40),
+        artifactPath: "builds/c/artifact",
+        createdBy: user.id,
+      });
+
+      const authors = await dbClient.builds.findDistinctAuthors(project.id);
+
+      expect(authors).toEqual(["Alex Kim", "Jordan Lee"]);
+    });
   });
 
   describe("findStale", () => {

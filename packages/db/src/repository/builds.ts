@@ -1,4 +1,18 @@
-import { and, asc, count, desc, eq, gt, ilike, inArray, lt, notExists, or, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gt,
+  ilike,
+  inArray,
+  isNotNull,
+  lt,
+  notExists,
+  or,
+  sql,
+} from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
 import { db, type DbClient } from "../db";
@@ -84,6 +98,8 @@ type FindAllInput = {
   processingStatus?: BuildProcessingStatus;
   reviewStatus?: BuildReviewStatus;
   statuses?: StatusFilter[];
+  branches?: string[];
+  authors?: string[];
   search?: string;
   sortDirection?: SortDirection;
   limit: number;
@@ -115,6 +131,8 @@ export const findAll = async ({
   processingStatus,
   reviewStatus,
   statuses,
+  branches,
+  authors,
   search,
   sortDirection = "desc",
   limit,
@@ -126,6 +144,8 @@ export const findAll = async ({
     processingStatus ? eq(builds.processingStatus, processingStatus) : undefined,
     reviewStatus ? eq(builds.reviewStatus, reviewStatus) : undefined,
     getStatusFilter(statuses),
+    branches?.length ? inArray(builds.branch, branches) : undefined,
+    authors?.length ? inArray(builds.author, authors) : undefined,
     search ? ilike(builds.name, `%${search}%`) : undefined,
   );
 
@@ -174,6 +194,26 @@ export const findAll = async ({
 export type FindAllResult = Awaited<ReturnType<typeof findAll>>;
 
 export type BuildListItemDbSchema = FindAllResult["builds"][number];
+
+export const findDistinctBranches = async (projectId: string): Promise<string[]> => {
+  const rows = await db
+    .selectDistinct({ branch: builds.branch })
+    .from(builds)
+    .where(eq(builds.projectId, projectId))
+    .orderBy(asc(builds.branch));
+
+  return rows.map((row) => row.branch);
+};
+
+export const findDistinctAuthors = async (projectId: string): Promise<string[]> => {
+  const rows = await db
+    .selectDistinct({ author: builds.author })
+    .from(builds)
+    .where(and(eq(builds.projectId, projectId), isNotNull(builds.author)))
+    .orderBy(asc(builds.author));
+
+  return rows.map((row) => row.author!);
+};
 
 export const findExpiredPage = async (
   projectId: string,

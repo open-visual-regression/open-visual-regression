@@ -3,6 +3,9 @@ import { userEvent, within } from "storybook/test";
 
 import { BuildsFilters } from "../BuildsFilters";
 
+const BRANCH_OPTIONS = ["main", "develop", "feature/onboarding"];
+const AUTHOR_OPTIONS = ["Jordan Lee", "Alex Kim", "Sam Patel"];
+
 const meta: Meta<typeof BuildsFilters> = {
   title: "Web/BuildsFilters",
   component: BuildsFilters,
@@ -24,18 +27,30 @@ type Story = StoryObj<typeof BuildsFilters>;
 export const Default: Story = {
   args: {
     statuses: [],
+    branches: [],
+    authors: [],
+    branchOptions: BRANCH_OPTIONS,
+    authorOptions: AUTHOR_OPTIONS,
   },
 };
 
 export const WithActiveFilters: Story = {
   args: {
     statuses: ["needs_review", "error"],
+    branches: ["main"],
+    authors: ["Jordan Lee"],
+    branchOptions: BRANCH_OPTIONS,
+    authorOptions: AUTHOR_OPTIONS,
   },
 };
 
 export const StatusPopoverOpen: Story = {
   args: {
     statuses: [],
+    branches: [],
+    authors: [],
+    branchOptions: BRANCH_OPTIONS,
+    authorOptions: AUTHOR_OPTIONS,
   },
   parameters: {
     ovr: {
@@ -51,6 +66,10 @@ export const StatusPopoverOpen: Story = {
 export const MobileMenuOpen: Story = {
   args: {
     statuses: ["needs_review"],
+    branches: [],
+    authors: [],
+    branchOptions: BRANCH_OPTIONS,
+    authorOptions: AUTHOR_OPTIONS,
   },
   parameters: {
     ovr: {
@@ -66,6 +85,10 @@ export const MobileMenuOpen: Story = {
 export const MobileFacetDialogOpen: Story = {
   args: {
     statuses: ["needs_review"],
+    branches: [],
+    authors: [],
+    branchOptions: BRANCH_OPTIONS,
+    authorOptions: AUTHOR_OPTIONS,
   },
   parameters: {
     ovr: {

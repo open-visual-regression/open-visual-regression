@@ -4,12 +4,16 @@ const BUILDS_PAGE_SIZE = 50;
 
 export type BuildsListFilters = {
   statuses?: BuildStatus[];
+  branches?: string[];
+  authors?: string[];
 };
 
 type BuildsListInput = {
   projectIds: string[];
   search: string | undefined;
   statuses: BuildStatus[] | undefined;
+  branches: string[] | undefined;
+  authors: string[] | undefined;
   limit: number;
   cursor: BuildsCursor | undefined;
 };
@@ -29,6 +33,8 @@ export const buildsListInfiniteOptions = (
     projectIds: [projectId],
     search,
     statuses: filters.statuses,
+    branches: filters.branches,
+    authors: filters.authors,
     limit: BUILDS_PAGE_SIZE,
     cursor,
   }),
