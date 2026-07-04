@@ -7,12 +7,7 @@ import { organization, projects, user as userTable } from "../schema";
 
 export { describe, expect } from "vitest";
 
-type Viewport = {
-  browser: string;
-  viewportWidth: number;
-  viewportHeight: number;
-  viewportName: string;
-};
+type Viewport = { browser: string; viewportWidth: number; viewportHeight: number };
 
 type Fixtures = {
   user: typeof userTable.$inferSelect;
@@ -56,12 +51,7 @@ export const test = vitest.extend<Fixtures>({
 
   // eslint-disable-next-line no-empty-pattern
   captureConfiguration: async ({}, use) => {
-    await use({
-      browser: "chromium",
-      viewportWidth: 1280,
-      viewportHeight: 800,
-      viewportName: "desktop",
-    });
+    await use({ browser: "chromium", viewportWidth: 1280, viewportHeight: 800 });
   },
 
   build: async ({ project, user }, use) => {

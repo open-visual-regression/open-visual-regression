@@ -1,24 +1,15 @@
-import {
-  type BuildStatus,
-  type BuildsCursor,
-  type ViewportFilter,
-  type ViewportSchema,
-} from "@ovr/api/contracts/builds";
+import { type BuildStatus, type BuildsCursor } from "@ovr/api/contracts/builds";
 
 const BUILDS_PAGE_SIZE = 50;
 
 export type BuildsListFilters = {
   statuses?: BuildStatus[];
-  browsers?: ViewportSchema["browser"][];
-  viewports?: ViewportFilter[];
 };
 
 type BuildsListInput = {
   projectIds: string[];
   search: string | undefined;
   statuses: BuildStatus[] | undefined;
-  browsers: ViewportSchema["browser"][] | undefined;
-  viewports: ViewportFilter[] | undefined;
   limit: number;
   cursor: BuildsCursor | undefined;
 };
@@ -38,8 +29,6 @@ export const buildsListInfiniteOptions = (
     projectIds: [projectId],
     search,
     statuses: filters.statuses,
-    browsers: filters.browsers,
-    viewports: filters.viewports,
     limit: BUILDS_PAGE_SIZE,
     cursor,
   }),

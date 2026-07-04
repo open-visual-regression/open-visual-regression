@@ -1,18 +1,4 @@
-import {
-  and,
-  asc,
-  count,
-  desc,
-  eq,
-  exists,
-  gt,
-  ilike,
-  inArray,
-  lt,
-  notExists,
-  or,
-  sql,
-} from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, ilike, inArray, lt, notExists, or, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
 import { db, type DbClient } from "../db";
@@ -92,19 +78,12 @@ export type StatusFilter = {
   reviewStatus?: BuildReviewStatus;
 };
 
-export type ViewportFilter = {
-  viewportWidth: number;
-  viewportHeight: number;
-};
-
 type FindAllInput = {
   organizationId: string;
   projectIds?: string[];
   processingStatus?: BuildProcessingStatus;
   reviewStatus?: BuildReviewStatus;
   statuses?: StatusFilter[];
-  browsers?: string[];
-  viewports?: ViewportFilter[];
   search?: string;
   sortDirection?: SortDirection;
   limit: number;
@@ -123,38 +102,6 @@ const getStatusFilter = (statuses?: StatusFilter[]) =>
       )
     : undefined;
 
-const getBrowserFilter = (browsers?: string[]) =>
-  browsers?.length
-    ? exists(
-        db
-          .select({ one: sql`1` })
-          .from(snapshots)
-          .where(and(eq(snapshots.buildId, builds.id), inArray(snapshots.browser, browsers))),
-      )
-    : undefined;
-
-const getViewportFilter = (viewports?: ViewportFilter[]) =>
-  viewports?.length
-    ? exists(
-        db
-          .select({ one: sql`1` })
-          .from(snapshots)
-          .where(
-            and(
-              eq(snapshots.buildId, builds.id),
-              or(
-                ...viewports.map((viewport) =>
-                  and(
-                    eq(snapshots.viewportWidth, viewport.viewportWidth),
-                    eq(snapshots.viewportHeight, viewport.viewportHeight),
-                  ),
-                ),
-              ),
-            ),
-          ),
-      )
-    : undefined;
-
 const getCursorFilter = (cursor: BuildsCursor, sortDirection: SortDirection) => {
   if (sortDirection === "asc") {
     return sql`(${builds.createdAt}, ${builds.id}) > (${cursor.createdAt}::timestamp, ${cursor.id}::uuid)`;
@@ -168,8 +115,6 @@ export const findAll = async ({
   processingStatus,
   reviewStatus,
   statuses,
-  browsers,
-  viewports,
   search,
   sortDirection = "desc",
   limit,
@@ -181,8 +126,6 @@ export const findAll = async ({
     processingStatus ? eq(builds.processingStatus, processingStatus) : undefined,
     reviewStatus ? eq(builds.reviewStatus, reviewStatus) : undefined,
     getStatusFilter(statuses),
-    getBrowserFilter(browsers),
-    getViewportFilter(viewports),
     search ? ilike(builds.name, `%${search}%`) : undefined,
   );
 
@@ -231,25 +174,6 @@ export const findAll = async ({
 export type FindAllResult = Awaited<ReturnType<typeof findAll>>;
 
 export type BuildListItemDbSchema = FindAllResult["builds"][number];
-
-export type ViewportOption = ViewportFilter & {
-  viewportName: string;
-};
-
-export const findDistinctViewports = async (projectId: string): Promise<ViewportOption[]> => {
-  const rows = await db
-    .selectDistinctOn([snapshots.viewportWidth, snapshots.viewportHeight], {
-      viewportWidth: snapshots.viewportWidth,
-      viewportHeight: snapshots.viewportHeight,
-      viewportName: snapshots.viewportName,
-    })
-    .from(snapshots)
-    .innerJoin(builds, eq(snapshots.buildId, builds.id))
-    .where(eq(builds.projectId, projectId))
-    .orderBy(asc(snapshots.viewportWidth), asc(snapshots.viewportHeight));
-
-  return rows;
-};
 
 export const findExpiredPage = async (
   projectId: string,

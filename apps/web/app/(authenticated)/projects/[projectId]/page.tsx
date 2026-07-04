@@ -2,7 +2,7 @@ import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 
-import { buildStatusSchema, viewportSchema } from "@ovr/api/contracts/builds";
+import { buildStatusSchema } from "@ovr/api/contracts/builds";
 import { Icon, SettingsIcon } from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
 
@@ -22,41 +22,21 @@ type ProjectPageProps = PageProps<"/projects/[projectId]">;
 const toArray = (value: string | string[] | undefined) =>
   value === undefined ? undefined : Array.isArray(value) ? value : [value];
 
-const viewportKeySchema = z.string().regex(/^\d+x\d+$/);
-
 const searchParamsSchema = z.object({
   search: z.string().optional().catch(undefined),
   status: z.preprocess(toArray, z.array(buildStatusSchema)).optional().catch(undefined),
-  browser: z.preprocess(toArray, z.array(viewportSchema.shape.browser)).optional().catch(undefined),
-  viewport: z.preprocess(toArray, z.array(viewportKeySchema)).optional().catch(undefined),
 });
-
-const parseViewportKey = (key: string) => {
-  const [viewportWidth, viewportHeight] = key.split("x").map(Number);
-  return { viewportWidth: viewportWidth!, viewportHeight: viewportHeight! };
-};
 
 export default async function ProjectPage(props: ProjectPageProps) {
   const { projectId } = await props.params;
-  const {
-    search,
-    status = [],
-    browser = [],
-    viewport = [],
-  } = searchParamsSchema.parse(await props.searchParams);
-  const viewports = viewport.map(parseViewportKey);
+  const { search, status = [] } = searchParamsSchema.parse(await props.searchParams);
   const queryClient = getQueryClient();
 
-  const [[projectError, projectResult], [, viewportsResult]] = await Promise.all([
+  const [[projectError, projectResult]] = await Promise.all([
     serverClient.projects.getOne({ projectId }),
-    serverClient.builds.listViewports({ projectId }),
     queryClient.prefetchInfiniteQuery(
       orpcServer.builds.list.infiniteOptions(
-        buildsListInfiniteOptions(projectId, search, {
-          statuses: status,
-          browsers: browser,
-          viewports,
-        }),
+        buildsListInfiniteOptions(projectId, search, { statuses: status }),
       ),
     ),
   ]);
@@ -70,46 +50,26 @@ export default async function ProjectPage(props: ProjectPageProps) {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-6">
+    <div className="flex h-full min-h-0 flex-col gap-3">
       <div className="flex flex-wrap items-center gap-3">
-        <Typography
-          variant="h1"
-          as="h1"
-          className="order-1 w-full min-w-0 truncate md:w-auto md:flex-1"
-        >
+        <Typography variant="h1" as="h1" className="w-full min-w-0 truncate md:w-auto md:flex-1">
           {projectResult.project.name}
         </Typography>
-        <div className="order-3 flex w-full items-center gap-2 lg:order-2 lg:ml-auto lg:w-auto">
-          <BuildsFilters
-            status={status}
-            browser={browser}
-            viewport={viewport}
-            viewportOptions={viewportsResult?.viewports ?? []}
-          />
-          <BuildsSearchField
-            projectId={projectId}
-            search={search}
-            className="min-w-0 flex-1 lg:w-64 lg:flex-none"
-          />
-        </div>
-        <ButtonLink
-          href={`/projects/${projectId}/settings`}
-          variant="outline"
-          color="neutral"
-          className="order-2 w-full md:ml-auto md:w-auto lg:order-3 lg:ml-0"
-        >
+        <ButtonLink href={`/projects/${projectId}/settings`} variant="outline" color="neutral">
           <Icon icon={SettingsIcon} />
           project settings
         </ButtonLink>
       </div>
-      <HydrationBoundary state={dehydrate(queryClient)}>
-        <BuildsSection
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <BuildsFilters status={status} />
+        <BuildsSearchField
           projectId={projectId}
           search={search}
-          status={status}
-          browser={browser}
-          viewports={viewports}
+          className="min-w-0 flex-1 lg:w-64 lg:flex-none"
         />
+      </div>
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <BuildsSection projectId={projectId} search={search} status={status} />
       </HydrationBoundary>
     </div>
   );

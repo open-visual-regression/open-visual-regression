@@ -121,20 +121,11 @@ export const buildsCursorSchema = z.object({
 
 export type BuildsCursor = z.infer<typeof buildsCursorSchema>;
 
-export const viewportFilterSchema = z.object({
-  viewportWidth: z.number().int().min(320).max(3840),
-  viewportHeight: z.number().int().min(0).max(2160),
-});
-
-export type ViewportFilter = z.infer<typeof viewportFilterSchema>;
-
 export const listBuildsInputSchema = z.object({
   projectIds: z.array(z.uuidv7()).optional(),
   processingStatus: buildProcessingStatusSchema.optional(),
   reviewStatus: buildReviewStatusSchema.optional(),
   statuses: z.array(buildStatusSchema).optional(),
-  browsers: z.array(viewportSchema.shape.browser).optional(),
-  viewports: z.array(viewportFilterSchema).optional(),
   search: z.string().optional(),
   sortDirection: z.enum(["asc", "desc"]).default("desc"),
   limit: z.number().int().min(1).max(100).default(20),
@@ -175,29 +166,10 @@ export const getBuildOutputSchema = z.object({
 
 export const getBuildContract = oc.input(getBuildInputSchema).output(getBuildOutputSchema);
 
-export const viewportOptionSchema = viewportFilterSchema.extend({
-  viewportName: z.string(),
-});
-
-export type ViewportOption = z.infer<typeof viewportOptionSchema>;
-
-export const listViewportsInputSchema = z.object({
-  projectId: z.uuidv7(),
-});
-
-export const listViewportsOutputSchema = z.object({
-  viewports: z.array(viewportOptionSchema),
-});
-
-export const listViewportsContract = oc
-  .input(listViewportsInputSchema)
-  .output(listViewportsOutputSchema);
-
 export const contract = {
   createBuild: createBuildContract,
   confirmUpload: confirmUploadContract,
   getBuildStatus: getBuildStatusContract,
   list: listBuildsContract,
   getOne: getBuildContract,
-  listViewports: listViewportsContract,
 } as const;

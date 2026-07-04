@@ -14,12 +14,6 @@ import type { NamedViewport } from "./storyViewports";
 
 type Target = { id: string; title: string; name: string };
 
-const toViewportName = (viewport: {
-  name?: string;
-  viewportWidth: number;
-  viewportHeight?: number;
-}): string => viewport.name ?? `${viewport.viewportWidth}x${viewport.viewportHeight || "auto"}`;
-
 // Max snapshots sharing one warm browser per capture-group job.
 export const CAPTURE_GROUP_SIZE = z.coerce
   .number()
@@ -61,21 +55,13 @@ const failUnreadableTargets = async (
       continue;
     }
 
-    const resolvedViewportWidth = viewport?.viewportWidth ?? 1280;
-    const resolvedViewportHeight = viewport?.viewportHeight ?? 0;
-
     const [snapshot] = await dbClient.snapshots.createMany({
       values: [
         {
           buildId,
           browser: viewport?.browser ?? "chromium",
-          viewportWidth: resolvedViewportWidth,
-          viewportHeight: resolvedViewportHeight,
-          viewportName: toViewportName({
-            name: viewport?.name,
-            viewportWidth: resolvedViewportWidth,
-            viewportHeight: resolvedViewportHeight,
-          }),
+          viewportWidth: viewport?.viewportWidth ?? 1280,
+          viewportHeight: viewport?.viewportHeight ?? 0,
           targetId: target.id,
           targetTitle: target.title,
           targetName: target.name,
@@ -128,7 +114,6 @@ export const extractBuild = async (
         browser: viewport.browser,
         viewportWidth: viewport.viewportWidth,
         viewportHeight: viewport.viewportHeight ?? 0,
-        viewportName: toViewportName(viewport),
         targetId: target.id,
         targetTitle: target.title,
         targetName: target.name,

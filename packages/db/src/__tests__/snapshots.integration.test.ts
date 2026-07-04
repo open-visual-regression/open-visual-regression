@@ -1,17 +1,7 @@
 import { dbClient } from "../client";
 import { describe, expect, test } from "./fixtures";
 
-type CaptureConfiguration = {
-  browser: string;
-  viewportWidth: number;
-  viewportHeight: number;
-  viewportName: string;
-};
-
-const seedReviewQueue = async (
-  build: { id: string },
-  captureConfiguration: CaptureConfiguration,
-) => {
+const seedReviewQueue = async (build: { id: string }, captureConfiguration: object) => {
   const [first, second, noDiff, errored] = await dbClient.snapshots.createMany({
     values: [
       {
@@ -285,10 +275,7 @@ describe("snapshots", () => {
   });
 
   describe("listForBuild / countForBuild", () => {
-    const seedHomeAndCheckout = async (
-      build: { id: string },
-      captureConfiguration: CaptureConfiguration,
-    ) => {
+    const seedHomeAndCheckout = async (build: { id: string }, captureConfiguration: object) => {
       const [passed, needsReview] = await dbClient.snapshots.createMany({
         values: [
           {
@@ -483,10 +470,7 @@ describe("snapshots", () => {
       expect(results.map((row) => row.targetId)).toEqual(["checkout", "home"]);
     });
 
-    const createSortableRows = (
-      build: { id: string },
-      captureConfiguration: CaptureConfiguration,
-    ) =>
+    const createSortableRows = (build: { id: string }, captureConfiguration: object) =>
       dbClient.snapshots.createMany({
         values: [
           {

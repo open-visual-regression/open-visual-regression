@@ -2,11 +2,7 @@
 
 import { useInfiniteQuery } from "@tanstack/react-query";
 
-import {
-  type BuildStatus,
-  type ViewportFilter,
-  type ViewportSchema,
-} from "@ovr/api/contracts/builds";
+import { type BuildStatus } from "@ovr/api/contracts/builds";
 
 import { buildsListInfiniteOptions } from "@/lib/orpc/builds-query";
 import { orpc } from "@/lib/orpc/client";
@@ -18,26 +14,14 @@ type BuildsSectionProps = {
   projectId: string;
   search?: string;
   status?: BuildStatus[];
-  browser?: ViewportSchema["browser"][];
-  viewports?: ViewportFilter[];
 };
 
-export const BuildsSection = ({
-  projectId,
-  search,
-  status,
-  browser,
-  viewports,
-}: BuildsSectionProps) => {
-  const hasFilters = Boolean(status?.length || browser?.length || viewports?.length);
+export const BuildsSection = ({ projectId, search, status }: BuildsSectionProps) => {
+  const hasFilters = Boolean(status?.length);
 
   const { data, isPending, hasNextPage, isFetchingNextPage, fetchNextPage } = useInfiniteQuery(
     orpc.builds.list.infiniteOptions(
-      buildsListInfiniteOptions(projectId, search, {
-        statuses: status,
-        browsers: browser,
-        viewports,
-      }),
+      buildsListInfiniteOptions(projectId, search, { statuses: status }),
     ),
   );
 

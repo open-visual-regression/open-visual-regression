@@ -1,1 +1,0 @@
-ALTER TABLE "snapshots" ADD COLUMN "viewport_name" varchar(255);

@@ -22,7 +22,6 @@ const VIEWPORT = {
   browser: "chromium",
   viewportWidth: 1280,
   viewportHeight: 800,
-  viewportName: "desktop",
 };
 
 const createProjectAndBuild = async (admin: User) => {

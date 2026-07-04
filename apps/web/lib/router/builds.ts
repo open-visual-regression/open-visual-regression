@@ -115,8 +115,6 @@ export const list = os.builds.list
       processingStatus,
       reviewStatus,
       statuses,
-      browsers,
-      viewports,
       search,
       sortDirection = "desc",
       limit = 20,
@@ -133,11 +131,6 @@ export const list = os.builds.list
       processingStatus,
       reviewStatus,
       statuses: statuses ? getBuildStatusFilters(statuses) : undefined,
-      browsers,
-      viewports: viewports?.map((viewport) => ({
-        viewportWidth: viewport.viewportWidth,
-        viewportHeight: viewport.viewportHeight,
-      })),
       search,
       sortDirection,
       limit,
@@ -160,24 +153,6 @@ export const list = os.builds.list
       total,
       nextCursor,
     };
-  })
-  .actionable();
-
-export const listViewports = os.builds.listViewports
-  .use(authenticatedMiddleware)
-  .handler(async ({ input, context }) => {
-    const project = await dbClient.projects.getProject({
-      projectId: input.projectId,
-      organizationId: context.organizationId,
-    });
-
-    if (!project) {
-      throw new ORPCError("NOT_FOUND");
-    }
-
-    const viewports = await dbClient.builds.findDistinctViewports(input.projectId);
-
-    return { viewports };
   })
   .actionable();
 
