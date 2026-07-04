@@ -395,6 +395,52 @@ describe("builds", () => {
 
       expect(builds.map((build) => build.id)).toEqual([older!.id, newer!.id]);
     });
+
+    test("should only return builds matching one of the given status filters", async ({
+      organization,
+      project,
+      user,
+      build: queuedBuild,
+    }) => {
+      const approvedBuild = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/b/artifact",
+        createdBy: user.id,
+      });
+      await dbClient.builds.updateResult(approvedBuild!.id, {
+        processingStatus: "success",
+        reviewStatus: "approved",
+      });
+
+      const passedBuild = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "c".repeat(40),
+        artifactPath: "builds/c/artifact",
+        createdBy: user.id,
+      });
+      await dbClient.builds.updateResult(passedBuild!.id, {
+        processingStatus: "success",
+        reviewStatus: "not_required",
+      });
+
+      const { builds, total } = await dbClient.builds.findAll({
+        organizationId: organization.id,
+        statuses: [
+          { processingStatus: "queued" },
+          { processingStatus: "success", reviewStatus: "approved" },
+        ],
+        limit: 10,
+      });
+
+      expect(total).toBe(2);
+      expect(builds.map((build) => build.id).sort()).toEqual(
+        [queuedBuild.id, approvedBuild!.id].sort(),
+      );
+      expect(builds.map((build) => build.id)).not.toContain(passedBuild!.id);
+    });
   });
 
   describe("findStale", () => {

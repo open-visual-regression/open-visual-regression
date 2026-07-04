@@ -2,6 +2,8 @@
 
 import { useInfiniteQuery } from "@tanstack/react-query";
 
+import { type BuildStatus } from "@ovr/api/contracts/builds";
+
 import { buildsListInfiniteOptions } from "@/lib/orpc/builds-query";
 import { orpc } from "@/lib/orpc/client";
 
@@ -11,16 +13,19 @@ import { NoBuildsSection } from "./NoBuildsSection";
 type BuildsSectionProps = {
   projectId: string;
   search?: string;
+  statuses?: BuildStatus[];
 };
 
-export const BuildsSection = ({ projectId, search }: BuildsSectionProps) => {
+export const BuildsSection = ({ projectId, search, statuses }: BuildsSectionProps) => {
+  const hasFilters = Boolean(statuses?.length);
+
   const { data, isPending, hasNextPage, isFetchingNextPage, fetchNextPage } = useInfiniteQuery(
-    orpc.builds.list.infiniteOptions(buildsListInfiniteOptions(projectId, search)),
+    orpc.builds.list.infiniteOptions(buildsListInfiniteOptions(projectId, search, { statuses })),
   );
 
   const builds = data?.pages.flatMap((page) => page.builds) ?? [];
 
-  if (!isPending && builds.length === 0 && !search) {
+  if (!isPending && builds.length === 0 && !search && !hasFilters) {
     return <NoBuildsSection />;
   }
 

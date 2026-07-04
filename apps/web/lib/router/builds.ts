@@ -17,7 +17,7 @@ import {
   organizationBuildMiddleware,
 } from "./middleware";
 import { os } from "./os";
-import { getBuildDisplayStatus } from "./utils/buildStatus";
+import { getBuildDisplayStatus, getBuildStatusFilters } from "./utils/buildStatus";
 
 const UPLOAD_URL_TTL_SECONDS = 3600;
 
@@ -114,6 +114,7 @@ export const list = os.builds.list
       projectIds,
       processingStatus,
       reviewStatus,
+      statuses,
       search,
       sortDirection = "desc",
       limit = 20,
@@ -129,6 +130,7 @@ export const list = os.builds.list
       projectIds,
       processingStatus,
       reviewStatus,
+      statuses: statuses ? getBuildStatusFilters(statuses) : undefined,
       search,
       sortDirection,
       limit,

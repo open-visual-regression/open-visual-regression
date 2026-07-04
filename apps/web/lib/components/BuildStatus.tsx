@@ -14,6 +14,9 @@ const BUILD_STATUS_BADGE: Record<
   error: { color: "red", icon: "error", label: "error" },
 };
 
+export const getBuildStatusLabel = (status: BuildStatus): string =>
+  BUILD_STATUS_BADGE[status].label;
+
 export const BuildStatusBadge = ({ status }: { status: BuildStatus }) => {
   const { color, icon, label } = BUILD_STATUS_BADGE[status];
   return (

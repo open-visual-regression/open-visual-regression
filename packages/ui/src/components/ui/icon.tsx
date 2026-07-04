@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 export {
   CheckIcon,
+  ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   CopyIcon,
@@ -10,6 +11,7 @@ export {
   ExternalLinkIcon,
   GlobeIcon,
   KeyRoundIcon,
+  ListFilterIcon,
   LogOutIcon,
   MailIcon,
   MenuIcon,

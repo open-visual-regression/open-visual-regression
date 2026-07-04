@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, gt, ilike, inArray, lt, notExists, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, ilike, inArray, lt, notExists, or, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
 import { db, type DbClient } from "../db";
@@ -73,16 +73,34 @@ type BuildsCursor = {
   id: string;
 };
 
+export type StatusFilter = {
+  processingStatus: BuildProcessingStatus;
+  reviewStatus?: BuildReviewStatus;
+};
+
 type FindAllInput = {
   organizationId: string;
   projectIds?: string[];
   processingStatus?: BuildProcessingStatus;
   reviewStatus?: BuildReviewStatus;
+  statuses?: StatusFilter[];
   search?: string;
   sortDirection?: SortDirection;
   limit: number;
   cursor?: BuildsCursor;
 };
+
+const getStatusFilter = (statuses?: StatusFilter[]) =>
+  statuses?.length
+    ? or(
+        ...statuses.map((status) =>
+          and(
+            eq(builds.processingStatus, status.processingStatus),
+            status.reviewStatus ? eq(builds.reviewStatus, status.reviewStatus) : undefined,
+          ),
+        ),
+      )
+    : undefined;
 
 const getCursorFilter = (cursor: BuildsCursor, sortDirection: SortDirection) => {
   if (sortDirection === "asc") {
@@ -96,6 +114,7 @@ export const findAll = async ({
   projectIds,
   processingStatus,
   reviewStatus,
+  statuses,
   search,
   sortDirection = "desc",
   limit,
@@ -106,6 +125,7 @@ export const findAll = async ({
     projectIds?.length ? inArray(builds.projectId, projectIds) : undefined,
     processingStatus ? eq(builds.processingStatus, processingStatus) : undefined,
     reviewStatus ? eq(builds.reviewStatus, reviewStatus) : undefined,
+    getStatusFilter(statuses),
     search ? ilike(builds.name, `%${search}%`) : undefined,
   );
 
