@@ -4,8 +4,8 @@ import { userEvent, within } from "storybook/test";
 import { SnapshotFilters } from "../SnapshotFilters";
 
 const VIEWPORT_OPTIONS = [
-  { value: "1280x800", label: "1280×800" },
-  { value: "375xauto", label: "375×auto" },
+  { value: "1280x800", label: "desktop" },
+  { value: "375xauto", label: "mobile" },
 ];
 
 const meta: Meta<typeof SnapshotFilters> = {

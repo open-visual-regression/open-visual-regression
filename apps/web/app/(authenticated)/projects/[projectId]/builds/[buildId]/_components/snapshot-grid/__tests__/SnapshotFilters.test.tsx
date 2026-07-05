@@ -10,8 +10,8 @@ vi.mock("next/navigation");
 const mockPush = vi.mocked(useRouter)().push;
 
 const VIEWPORT_OPTIONS = [
-  { value: "1280x800", label: "1280×800" },
-  { value: "375xauto", label: "375×auto" },
+  { value: "1280x800", label: "desktop" },
+  { value: "375xauto", label: "mobile" },
 ];
 
 const renderComponent = () =>
@@ -65,7 +65,7 @@ describe("SnapshotFilters", () => {
     renderComponent();
 
     await user.click(screen.getByRole("button", { name: /^viewport\s+any$/i }));
-    await user.click(await screen.findByRole("checkbox", { name: "1280×800" }));
+    await user.click(await screen.findByRole("checkbox", { name: "desktop" }));
     await user.click(screen.getByRole("button", { name: /^apply$/i }));
 
     expect(mockPush).toHaveBeenCalledWith("/?viewport=1280x800");
@@ -94,7 +94,7 @@ describe("SnapshotFilters", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: /^viewport\s+375×auto$/i })).toBeVisible();
+    expect(screen.getByRole("button", { name: /^viewport\s+mobile$/i })).toBeVisible();
   });
 
   it("should mark the mobile filter menu button as active when a filter is applied", () => {

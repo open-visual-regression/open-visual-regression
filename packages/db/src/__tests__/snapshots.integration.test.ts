@@ -1,7 +1,15 @@
 import { dbClient } from "../client";
 import { describe, expect, test } from "./fixtures";
 
-const seedReviewQueue = async (build: { id: string }, captureConfiguration: object) => {
+const seedReviewQueue = async (
+  build: { id: string },
+  captureConfiguration: {
+    browser: string;
+    viewportWidth: number;
+    viewportHeight: number;
+    viewportName: string;
+  },
+) => {
   const [first, second, noDiff, errored] = await dbClient.snapshots.createMany({
     values: [
       {
@@ -275,7 +283,15 @@ describe("snapshots", () => {
   });
 
   describe("listForBuild / countForBuild", () => {
-    const seedHomeAndCheckout = async (build: { id: string }, captureConfiguration: object) => {
+    const seedHomeAndCheckout = async (
+      build: { id: string },
+      captureConfiguration: {
+        browser: string;
+        viewportWidth: number;
+        viewportHeight: number;
+        viewportName: string;
+      },
+    ) => {
       const [passed, needsReview] = await dbClient.snapshots.createMany({
         values: [
           {
@@ -557,7 +573,15 @@ describe("snapshots", () => {
       expect(results.map((row) => row.targetId)).toEqual(["checkout", "home"]);
     });
 
-    const createSortableRows = (build: { id: string }, captureConfiguration: object) =>
+    const createSortableRows = (
+      build: { id: string },
+      captureConfiguration: {
+        browser: string;
+        viewportWidth: number;
+        viewportHeight: number;
+        viewportName: string;
+      },
+    ) =>
       dbClient.snapshots.createMany({
         values: [
           {
@@ -638,6 +662,7 @@ describe("snapshots", () => {
             ...captureConfiguration,
             viewportWidth: 1280,
             viewportHeight: 800,
+            viewportName: "desktop",
             targetId: "home",
           },
           {
@@ -645,6 +670,7 @@ describe("snapshots", () => {
             ...captureConfiguration,
             viewportWidth: 1280,
             viewportHeight: 800,
+            viewportName: "desktop",
             targetId: "checkout",
           },
           {
@@ -652,6 +678,7 @@ describe("snapshots", () => {
             ...captureConfiguration,
             viewportWidth: 375,
             viewportHeight: 0,
+            viewportName: "mobile",
             targetId: "mobile-home",
           },
         ],
@@ -660,8 +687,8 @@ describe("snapshots", () => {
       const viewports = await dbClient.snapshots.findViewports(build.id);
 
       expect(viewports).toEqual([
-        { viewportWidth: 375, viewportHeight: null },
-        { viewportWidth: 1280, viewportHeight: 800 },
+        { viewportWidth: 375, viewportHeight: null, viewportName: "mobile" },
+        { viewportWidth: 1280, viewportHeight: 800, viewportName: "desktop" },
       ]);
     });
   });

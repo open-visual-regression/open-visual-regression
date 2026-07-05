@@ -131,6 +131,24 @@ describe("extractBuild", () => {
     const snapshots = await dbClient.snapshots.findByBuild(mainBuild.id);
     expect(snapshots).toHaveLength(1);
     expect(snapshots[0]!.viewportWidth).toBe(375);
+    expect(snapshots[0]!.viewportName).toBe("mobile");
+  });
+
+  test("falls back to a '{width}x{height}' viewport name when the config doesn't name it", async ({
+    mainBuild,
+  }) => {
+    const tarball = await buildArtifactTarball();
+    await storage.uploadFile(mainBuild.artifactPath, tarball, "application/gzip");
+
+    await extractBuild(
+      mainBuild.id,
+      [{ id: "story-a", title: "Story", name: "A" }],
+      [{ browser: "chromium", viewportWidth: 1280, viewportHeight: 0 }],
+      0.05,
+    );
+
+    const [snapshot] = await dbClient.snapshots.findByBuild(mainBuild.id);
+    expect(snapshot!.viewportName).toBe("1280xauto");
   });
 
   test("marks a story's snapshot as errored when its overrides cannot be read", async ({

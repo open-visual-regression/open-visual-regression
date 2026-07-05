@@ -143,11 +143,14 @@ const listForBuildWhere = (
       : undefined,
   );
 
-export const findViewports = async (buildId: string): Promise<ViewportFilter[]> => {
+export type ViewportOption = ViewportFilter & { viewportName: string };
+
+export const findViewports = async (buildId: string): Promise<ViewportOption[]> => {
   const rows = await db
-    .selectDistinct({
+    .selectDistinctOn([snapshots.viewportWidth, snapshots.viewportHeight], {
       viewportWidth: snapshots.viewportWidth,
       viewportHeight: snapshots.viewportHeight,
+      viewportName: snapshots.viewportName,
     })
     .from(snapshots)
     .where(eq(snapshots.buildId, buildId))
@@ -156,6 +159,7 @@ export const findViewports = async (buildId: string): Promise<ViewportFilter[]> 
   return rows.map((row) => ({
     viewportWidth: row.viewportWidth,
     viewportHeight: row.viewportHeight === 0 ? null : row.viewportHeight,
+    viewportName: row.viewportName,
   }));
 };
 

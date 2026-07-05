@@ -131,10 +131,16 @@ export type GetAdjacentOutputSchema = z.infer<typeof getAdjacentOutputSchema>;
 
 export const getAdjacentContract = oc.input(getAdjacentInputSchema).output(getAdjacentOutputSchema);
 
+export const snapshotViewportOptionSchema = snapshotViewportFilterSchema.extend({
+  viewportName: z.string(),
+});
+
+export type SnapshotViewportOptionSchema = z.infer<typeof snapshotViewportOptionSchema>;
+
 export const listViewportsInputSchema = z.object({ buildId: z.uuidv7() });
 
 export const listViewportsOutputSchema = z.object({
-  viewports: z.array(snapshotViewportFilterSchema),
+  viewports: z.array(snapshotViewportOptionSchema),
 });
 
 export const listViewportsContract = oc

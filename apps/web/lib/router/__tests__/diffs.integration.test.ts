@@ -18,7 +18,12 @@ const TEST_PROJECT: AddProjectInputSchema = {
   gitMainBranch: "main",
 };
 
-const VIEWPORT = { browser: "chromium", viewportWidth: 1280, viewportHeight: 800 };
+const VIEWPORT = {
+  browser: "chromium",
+  viewportWidth: 1280,
+  viewportHeight: 800,
+  viewportName: "desktop",
+};
 
 const createProjectAndBuild = async (admin: User, requiredReviewerCount = 1) => {
   const [, addResult] = await serverClient.projects.add(TEST_PROJECT);

@@ -78,7 +78,7 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
 
   const viewportOptions = viewportsResult.viewports.map((viewport) => ({
     value: encodeViewportFilterValue(viewport),
-    label: `${viewport.viewportWidth}×${viewport.viewportHeight ?? "auto"}`,
+    label: viewport.viewportName,
   }));
 
   const { build } = buildResult;
