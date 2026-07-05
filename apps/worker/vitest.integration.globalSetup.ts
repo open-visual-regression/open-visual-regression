@@ -16,7 +16,7 @@ export async function setup() {
   process.env.DATABASE_URL = postgres.getConnectionUri();
   await runMigrations(process.env.DATABASE_URL);
 
-  process.env.VALKEY_URL = `redis://${valkey.host}:${valkey.port}`;
+  process.env.REDIS_URL = `redis://${valkey.host}:${valkey.port}`;
 }
 
 export async function teardown() {

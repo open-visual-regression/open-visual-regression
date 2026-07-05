@@ -32,7 +32,7 @@ export async function setup() {
 
   await createBucket(rustfs, "ovr");
 
-  process.env.VALKEY_URL = `redis://${valkey.host}:${valkey.port}`;
+  process.env.REDIS_URL = `redis://${valkey.host}:${valkey.port}`;
 }
 
 export async function teardown() {

@@ -81,7 +81,7 @@ export const test = vitest.extend<Fixtures>({
 
   // eslint-disable-next-line no-empty-pattern
   connection: async ({}, use) => {
-    const connection = new Redis(process.env.VALKEY_URL ?? "redis://localhost:6379", {
+    const connection = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379", {
       maxRetriesPerRequest: null,
     });
 

@@ -15,21 +15,33 @@ import { NodeHttpHandler } from "@smithy/node-http-handler";
 
 const KEEP_ALIVE_MAX_SOCKETS = 50;
 
-const client = new S3Client({
-  endpoint: process.env.STORAGE_ENDPOINT,
-  region: process.env.STORAGE_REGION ?? "us-east-1",
-  credentials: {
-    accessKeyId: process.env.STORAGE_ACCESS_KEY ?? "",
-    secretAccessKey: process.env.STORAGE_SECRET_KEY ?? "",
-  },
-  forcePathStyle: true,
-  requestHandler: new NodeHttpHandler({
-    connectionTimeout: 5_000,
-    socketTimeout: 30_000,
-    httpAgent: { keepAlive: true, maxSockets: KEEP_ALIVE_MAX_SOCKETS },
-    httpsAgent: { keepAlive: true, maxSockets: KEEP_ALIVE_MAX_SOCKETS },
-  }),
-});
+const staticCredentials =
+  process.env.STORAGE_ACCESS_KEY && process.env.STORAGE_SECRET_KEY
+    ? {
+        accessKeyId: process.env.STORAGE_ACCESS_KEY,
+        secretAccessKey: process.env.STORAGE_SECRET_KEY,
+      }
+    : undefined;
+
+const createClient = (endpoint: string | undefined): S3Client =>
+  new S3Client({
+    endpoint: endpoint || undefined,
+    region: process.env.STORAGE_REGION ?? "us-east-1",
+    ...(staticCredentials ? { credentials: staticCredentials } : {}),
+    forcePathStyle: process.env.STORAGE_FORCE_PATH_STYLE !== "false",
+    requestHandler: new NodeHttpHandler({
+      connectionTimeout: 5_000,
+      socketTimeout: 30_000,
+      httpAgent: { keepAlive: true, maxSockets: KEEP_ALIVE_MAX_SOCKETS },
+      httpsAgent: { keepAlive: true, maxSockets: KEEP_ALIVE_MAX_SOCKETS },
+    }),
+  });
+
+const client = createClient(process.env.STORAGE_ENDPOINT);
+
+const presignClient = process.env.STORAGE_PUBLIC_ENDPOINT
+  ? createClient(process.env.STORAGE_PUBLIC_ENDPOINT)
+  : client;
 
 const bucket = process.env.STORAGE_BUCKET ?? "ovr";
 
@@ -93,13 +105,13 @@ export const storage = {
   },
 
   getPresignedUrl: async (key: string, ttlSeconds: number): Promise<string> => {
-    return getSignedUrl(client, new GetObjectCommand({ Bucket: bucket, Key: key }), {
+    return getSignedUrl(presignClient, new GetObjectCommand({ Bucket: bucket, Key: key }), {
       expiresIn: ttlSeconds,
     });
   },
 
   getPresignedUploadUrl: async (key: string, ttlSeconds: number): Promise<string> => {
-    return getSignedUrl(client, new PutObjectCommand({ Bucket: bucket, Key: key }), {
+    return getSignedUrl(presignClient, new PutObjectCommand({ Bucket: bucket, Key: key }), {
       expiresIn: ttlSeconds,
     });
   },

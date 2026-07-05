@@ -4,8 +4,8 @@
 #   docker build -f apps/worker/Dockerfile -t ovr/worker .
 
 ARG NODE_VERSION=24.16.0
-# Keep in sync with the "playwright" version in pnpm-lock.yaml.
-ARG PLAYWRIGHT_VERSION=1.60.0
+# Keep in sync with the pinned "playwright" version in apps/worker + packages/capture.
+ARG PLAYWRIGHT_VERSION=1.61.0
 
 FROM node:${NODE_VERSION}-slim AS builder
 ENV HUSKY=0 \

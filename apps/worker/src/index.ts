@@ -15,7 +15,7 @@ import * as purge from "./handlers/purge";
 import * as purgeDispatch from "./handlers/purgeDispatch";
 import * as reaper from "./handlers/reaper";
 
-const connection = new Redis(process.env.VALKEY_URL ?? "redis://localhost:6379", {
+const connection = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379", {
   maxRetriesPerRequest: null,
 });
 

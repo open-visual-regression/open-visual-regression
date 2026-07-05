@@ -1,11 +1,8 @@
 x-app-env: &app-env
-  DATABASE_HOST: db
-  DATABASE_PORT: 5432
-  DATABASE_NAME: ${DATABASE_NAME:-open_visual_regression}
-  DATABASE_USER: ${DATABASE_USER:-postgres}
-  DATABASE_PASSWORD: ${DATABASE_PASSWORD:-postgres}
-  VALKEY_URL: redis://valkey:6379
+  DATABASE_URL: postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-postgres}@db:5432/${DATABASE_NAME:-open_visual_regression}
+  REDIS_URL: redis://valkey:6379
   STORAGE_ENDPOINT: http://rustfs:9000
+  STORAGE_PUBLIC_ENDPOINT: ${STORAGE_PUBLIC_ENDPOINT:-http://localhost:${STORAGE_PORT:-9000}}
   STORAGE_REGION: ${STORAGE_REGION:-us-east-1}
   STORAGE_BUCKET: ${STORAGE_BUCKET:-ovr}
   STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY:-rustfsadmin}
@@ -16,7 +13,6 @@ services:
   db:
     image: postgres:17-alpine
     restart: always
-    user: postgres
     environment:
       POSTGRES_DB: ${DATABASE_NAME:-open_visual_regression}
       POSTGRES_USER: ${DATABASE_USER:-postgres}
@@ -39,7 +35,7 @@ services:
     image: valkey/valkey:8-alpine
     restart: always
     ports:
-      - ${VALKEY_PORT:-6379}:6379
+      - ${REDIS_PORT:-6379}:6379
     healthcheck:
       test: ["CMD", "valkey-cli", "ping"]
       interval: 1s
@@ -57,8 +53,8 @@ services:
       RUSTFS_ADDRESS: 0.0.0.0:9000
       RUSTFS_VOLUMES: /data
     ports:
-      - ${RUSTFS_PORT:-9000}:9000
-      - ${RUSTFS_CONSOLE_PORT:-9001}:9001
+      - ${STORAGE_PORT:-9000}:9000
+      - ${STORAGE_CONSOLE_PORT:-9001}:9001
     volumes:
       - rustfsdata:/data
 
@@ -162,7 +158,7 @@ services:
       valkey:
         condition: service_healthy
     environment:
-      VALKEY_URL: redis://valkey:6379
+      REDIS_URL: redis://valkey:6379
       BULL_BOARD_PORT: ${BULL_BOARD_PORT:-3001}
     ports:
       - ${BULL_BOARD_PORT:-3001}:${BULL_BOARD_PORT:-3001}
