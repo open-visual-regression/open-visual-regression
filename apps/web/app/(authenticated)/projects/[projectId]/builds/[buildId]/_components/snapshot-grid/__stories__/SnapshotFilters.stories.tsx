@@ -3,10 +3,18 @@ import { userEvent, within } from "storybook/test";
 
 import { SnapshotFilters } from "../SnapshotFilters";
 
+const VIEWPORT_OPTIONS = [
+  { value: "1280x800", label: "1280×800" },
+  { value: "375xauto", label: "375×auto" },
+];
+
 const meta: Meta<typeof SnapshotFilters> = {
   title: "Web/SnapshotFilters",
   component: SnapshotFilters,
   tags: ["autodocs"],
+  args: {
+    viewportOptions: VIEWPORT_OPTIONS,
+  },
   parameters: {
     nextjs: {
       appDirectory: true,
@@ -25,6 +33,7 @@ export const Default: Story = {
   args: {
     statuses: [],
     browsers: [],
+    viewports: [],
   },
 };
 
@@ -32,6 +41,7 @@ export const WithActiveFilters: Story = {
   args: {
     statuses: ["needs_review", "error"],
     browsers: ["chromium"],
+    viewports: ["1280x800"],
   },
 };
 
@@ -39,6 +49,7 @@ export const StatusPopoverOpen: Story = {
   args: {
     statuses: [],
     browsers: [],
+    viewports: [],
   },
   parameters: {
     ovr: {
@@ -55,6 +66,7 @@ export const BrowserPopoverOpen: Story = {
   args: {
     statuses: [],
     browsers: [],
+    viewports: [],
   },
   parameters: {
     ovr: {
@@ -67,10 +79,28 @@ export const BrowserPopoverOpen: Story = {
   },
 };
 
+export const ViewportPopoverOpen: Story = {
+  args: {
+    statuses: [],
+    browsers: [],
+    viewports: [],
+  },
+  parameters: {
+    ovr: {
+      viewports: ["desktop"],
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: /^viewport any$/i }));
+  },
+};
+
 export const MobileMenuOpen: Story = {
   args: {
     statuses: ["needs_review"],
     browsers: [],
+    viewports: [],
   },
   parameters: {
     ovr: {
@@ -87,6 +117,7 @@ export const MobileFacetDialogOpen: Story = {
   args: {
     statuses: ["needs_review"],
     browsers: [],
+    viewports: [],
   },
   parameters: {
     ovr: {

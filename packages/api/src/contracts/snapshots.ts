@@ -64,10 +64,18 @@ export const snapshotSortSchema = z.object({
 
 export type SnapshotSortSchema = z.infer<typeof snapshotSortSchema>;
 
+export const snapshotViewportFilterSchema = z.object({
+  viewportWidth: z.number().int(),
+  viewportHeight: z.number().int().nullable(),
+});
+
+export type SnapshotViewportFilterSchema = z.infer<typeof snapshotViewportFilterSchema>;
+
 export const listInputSchema = z.object({
   buildId: z.uuidv7(),
   statuses: z.array(snapshotDisplayStatusSchema).optional(),
   browsers: z.array(browserSchema).optional(),
+  viewports: z.array(snapshotViewportFilterSchema).optional(),
   search: z.string().min(1).optional(),
   sortBy: z
     .array(snapshotSortSchema)
@@ -123,9 +131,20 @@ export type GetAdjacentOutputSchema = z.infer<typeof getAdjacentOutputSchema>;
 
 export const getAdjacentContract = oc.input(getAdjacentInputSchema).output(getAdjacentOutputSchema);
 
+export const listViewportsInputSchema = z.object({ buildId: z.uuidv7() });
+
+export const listViewportsOutputSchema = z.object({
+  viewports: z.array(snapshotViewportFilterSchema),
+});
+
+export const listViewportsContract = oc
+  .input(listViewportsInputSchema)
+  .output(listViewportsOutputSchema);
+
 export const contract = {
   getOne: getOneContract,
   list: listContract,
   getCounts: getCountsContract,
   getAdjacent: getAdjacentContract,
+  listViewports: listViewportsContract,
 } as const;

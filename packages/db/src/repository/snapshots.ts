@@ -109,23 +109,55 @@ export const getDisplayStatusCounts = async (
 
 export type SnapshotDisplayStatus = keyof SnapshotDisplayStatusCounts;
 
+export type ViewportFilter = { viewportWidth: number; viewportHeight: number | null };
+
 type ListForBuildFilters = {
   statuses?: SnapshotDisplayStatus[];
   browsers?: string[];
+  viewports?: ViewportFilter[];
   search?: string;
 };
 
-const listForBuildWhere = (buildId: string, { statuses, browsers, search }: ListForBuildFilters) =>
+const listForBuildWhere = (
+  buildId: string,
+  { statuses, browsers, viewports, search }: ListForBuildFilters,
+) =>
   and(
     eq(snapshots.buildId, buildId),
     statuses?.length
       ? or(...statuses.map((status) => sql`${displayStatusExpr} = ${status}`))
       : undefined,
     browsers?.length ? inArray(snapshots.browser, browsers) : undefined,
+    viewports?.length
+      ? or(
+          ...viewports.map((viewport) =>
+            and(
+              eq(snapshots.viewportWidth, viewport.viewportWidth),
+              eq(snapshots.viewportHeight, viewport.viewportHeight ?? 0),
+            ),
+          ),
+        )
+      : undefined,
     search
       ? or(ilike(snapshots.targetTitle, `%${search}%`), ilike(snapshots.targetName, `%${search}%`))
       : undefined,
   );
+
+export const findViewports = async (buildId: string): Promise<ViewportFilter[]> => {
+  const rows = await db
+    .selectDistinct({
+      viewportWidth: snapshots.viewportWidth,
+      viewportHeight: snapshots.viewportHeight,
+    })
+    .from(snapshots)
+    .where(eq(snapshots.buildId, buildId))
+    .orderBy(asc(snapshots.viewportWidth), asc(snapshots.viewportHeight));
+
+  return rows.map((row) => ({
+    viewportWidth: row.viewportWidth,
+    viewportHeight: row.viewportHeight === 0 ? null : row.viewportHeight,
+  }));
+};
 
 // needs_review/rejected/approved share a tier so that reviewing a snapshot
 // (which changes its reviewStatus) can't move it past its neighbors and
@@ -221,6 +253,7 @@ export const listForBuild = (
   {
     statuses,
     browsers,
+    viewports,
     search,
     sortBy = defaultSnapshotSortBy,
     limit,
@@ -244,7 +277,7 @@ export const listForBuild = (
     })
     .from(snapshots)
     .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
-    .where(listForBuildWhere(buildId, { statuses, browsers, search }))
+    .where(listForBuildWhere(buildId, { statuses, browsers, viewports, search }))
     .orderBy(
       ...sortBy.map(({ column, direction }) =>
         (direction === "desc" ? desc : asc)(snapshotSortColumns[column]),

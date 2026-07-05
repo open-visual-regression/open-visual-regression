@@ -381,6 +381,47 @@ describe("snapshots", () => {
       expect(await dbClient.snapshots.countForBuild(build.id, { browsers: ["firefox"] })).toBe(1);
     });
 
+    test("filters by viewport, treating a stored height of 0 as an auto height", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            viewportWidth: 1280,
+            viewportHeight: 800,
+            targetId: "home",
+            targetTitle: "Home Page",
+            targetName: "home",
+          },
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            viewportWidth: 375,
+            viewportHeight: 0,
+            targetId: "checkout",
+            targetTitle: "Checkout Page",
+            targetName: "checkout",
+          },
+        ],
+      });
+
+      const results = await dbClient.snapshots.listForBuild(build.id, {
+        viewports: [{ viewportWidth: 375, viewportHeight: null }],
+        limit: 10,
+        offset: 0,
+      });
+
+      expect(results.map((row) => row.targetId)).toEqual(["checkout"]);
+      expect(
+        await dbClient.snapshots.countForBuild(build.id, {
+          viewports: [{ viewportWidth: 375, viewportHeight: null }],
+        }),
+      ).toBe(1);
+    });
+
     test("paginates results with limit and offset", async ({ build, captureConfiguration }) => {
       await seedHomeAndCheckout(build, captureConfiguration);
 
@@ -582,6 +623,46 @@ describe("snapshots", () => {
         offset: 0,
       });
       expect(results.map((row) => row.targetId)).toEqual(["row-b-title", "row-a-title"]);
+    });
+  });
+
+  describe("findViewports", () => {
+    test("returns the distinct viewports for a build, ordered by width then height", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            viewportWidth: 1280,
+            viewportHeight: 800,
+            targetId: "home",
+          },
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            viewportWidth: 1280,
+            viewportHeight: 800,
+            targetId: "checkout",
+          },
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            viewportWidth: 375,
+            viewportHeight: 0,
+            targetId: "mobile-home",
+          },
+        ],
+      });
+
+      const viewports = await dbClient.snapshots.findViewports(build.id);
+
+      expect(viewports).toEqual([
+        { viewportWidth: 375, viewportHeight: null },
+        { viewportWidth: 1280, viewportHeight: 800 },
+      ]);
     });
   });
 
