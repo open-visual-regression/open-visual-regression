@@ -17,7 +17,9 @@ describe("loadViewports", () => {
     const dir = await mkdtemp(path.join(tmpdir(), "ovr-cli-config-"));
 
     try {
-      expect(await loadViewports(dir)).toEqual([{ browser: "chromium", viewportWidth: 1280 }]);
+      expect(await loadViewports(dir)).toEqual([
+        { name: "default", browser: "chromium", viewportWidth: 1280 },
+      ]);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

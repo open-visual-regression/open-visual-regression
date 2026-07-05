@@ -1,7 +1,7 @@
 import { oc } from "@orpc/contract";
 import { z } from "zod";
 
-import { browserSchema, snapshotDisplayStatusSchema } from "./builds";
+import { snapshotDisplayStatusSchema } from "./builds";
 
 export const snapshotLogSchema = z.object({
   id: z.uuidv7(),
@@ -15,6 +15,7 @@ export const snapshotSchema = z.object({
   browser: z.string().min(1),
   viewportWidth: z.number().int(),
   viewportHeight: z.number().int().nullable(),
+  viewportName: z.string().min(1),
   targetName: z.string(),
   targetTitle: z.string(),
   imagePath: z.string().nullable(),
@@ -43,6 +44,7 @@ export const buildSnapshotSchema = z.object({
   browser: z.string().min(1),
   viewportWidth: z.number().int(),
   viewportHeight: z.number().int().nullable(),
+  viewportName: z.string().min(1),
 });
 
 export type BuildSnapshotSchema = z.infer<typeof buildSnapshotSchema>;
@@ -67,7 +69,8 @@ export type SnapshotSortSchema = z.infer<typeof snapshotSortSchema>;
 export const listInputSchema = z.object({
   buildId: z.uuidv7(),
   statuses: z.array(snapshotDisplayStatusSchema).optional(),
-  browsers: z.array(browserSchema).optional(),
+  browsers: z.array(z.string()).optional(),
+  viewports: z.array(z.string()).optional(),
   search: z.string().min(1).optional(),
   sortBy: z
     .array(snapshotSortSchema)
@@ -123,9 +126,38 @@ export type GetAdjacentOutputSchema = z.infer<typeof getAdjacentOutputSchema>;
 
 export const getAdjacentContract = oc.input(getAdjacentInputSchema).output(getAdjacentOutputSchema);
 
+export const listSnapshotFilterOptionsInputSchema = z.object({ buildId: z.uuidv7() });
+
+export const listStatusesOutputSchema = z.object({
+  statuses: z.array(snapshotDisplayStatusSchema),
+});
+
+export const listStatusesContract = oc
+  .input(listSnapshotFilterOptionsInputSchema)
+  .output(listStatusesOutputSchema);
+
+export const listBrowsersOutputSchema = z.object({
+  browsers: z.array(z.string()),
+});
+
+export const listBrowsersContract = oc
+  .input(listSnapshotFilterOptionsInputSchema)
+  .output(listBrowsersOutputSchema);
+
+export const listViewportsOutputSchema = z.object({
+  viewports: z.array(z.string()),
+});
+
+export const listViewportsContract = oc
+  .input(listSnapshotFilterOptionsInputSchema)
+  .output(listViewportsOutputSchema);
+
 export const contract = {
   getOne: getOneContract,
   list: listContract,
   getCounts: getCountsContract,
   getAdjacent: getAdjacentContract,
+  listStatuses: listStatusesContract,
+  listBrowsers: listBrowsersContract,
+  listViewports: listViewportsContract,
 } as const;

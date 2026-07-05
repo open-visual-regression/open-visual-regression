@@ -68,7 +68,7 @@ export const countByBuild = async (buildId: string) => {
   return result?.count ?? 0;
 };
 
-const displayStatusExpr = sql<string>`case
+const displayStatusExpr = sql<SnapshotDisplayStatus>`case
   when ${snapshots.status} = 'error' or ${snapshots.hasRenderError} then 'error'
   when ${snapshots.status} = 'queued' then 'queued'
   when ${snapshots.status} = 'processing' then 'processing'
@@ -101,7 +101,7 @@ export const getDisplayStatusCounts = async (
   };
 
   for (const row of rows) {
-    counts[row.status as keyof SnapshotDisplayStatusCounts] = row.count;
+    counts[row.status] = row.count;
   }
 
   return counts;
@@ -109,23 +109,72 @@ export const getDisplayStatusCounts = async (
 
 export type SnapshotDisplayStatus = keyof SnapshotDisplayStatusCounts;
 
+const statusDisplayOrder: SnapshotDisplayStatus[] = [
+  "passed",
+  "approved",
+  "needs_review",
+  "rejected",
+  "error",
+  "queued",
+  "processing",
+];
+
 type ListForBuildFilters = {
   statuses?: SnapshotDisplayStatus[];
   browsers?: string[];
+  viewports?: string[];
   search?: string;
 };
 
-const listForBuildWhere = (buildId: string, { statuses, browsers, search }: ListForBuildFilters) =>
+const listForBuildWhere = (
+  buildId: string,
+  { statuses, browsers, viewports, search }: ListForBuildFilters,
+) =>
   and(
     eq(snapshots.buildId, buildId),
     statuses?.length
       ? or(...statuses.map((status) => sql`${displayStatusExpr} = ${status}`))
       : undefined,
     browsers?.length ? inArray(snapshots.browser, browsers) : undefined,
+    viewports?.length ? inArray(snapshots.viewportName, viewports) : undefined,
     search
       ? or(ilike(snapshots.targetTitle, `%${search}%`), ilike(snapshots.targetName, `%${search}%`))
       : undefined,
   );
+
+export const findStatuses = async (buildId: string): Promise<SnapshotDisplayStatus[]> => {
+  const rows = await db
+    .selectDistinct({ status: displayStatusExpr })
+    .from(snapshots)
+    .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
+    .where(eq(snapshots.buildId, buildId));
+
+  const present = new Set(rows.map((row) => row.status));
+  return statusDisplayOrder.filter((status) => present.has(status));
+};
+
+export const findBrowsers = async (buildId: string): Promise<string[]> => {
+  const rows = await db
+    .selectDistinct({ browser: snapshots.browser })
+    .from(snapshots)
+    .where(eq(snapshots.buildId, buildId))
+    .orderBy(asc(snapshots.browser));
+
+  return rows.map((row) => row.browser);
+};
+
+export const findViewports = async (buildId: string): Promise<string[]> => {
+  const rows = await db
+    .selectDistinct({
+      viewportName: snapshots.viewportName,
+      viewportWidth: snapshots.viewportWidth,
+    })
+    .from(snapshots)
+    .where(eq(snapshots.buildId, buildId))
+    .orderBy(asc(snapshots.viewportWidth), asc(snapshots.viewportName));
+
+  return rows.map((row) => row.viewportName);
+};
 
 // needs_review/rejected/approved share a tier so that reviewing a snapshot
 // (which changes its reviewStatus) can't move it past its neighbors and
@@ -221,6 +270,7 @@ export const listForBuild = (
   {
     statuses,
     browsers,
+    viewports,
     search,
     sortBy = defaultSnapshotSortBy,
     limit,
@@ -236,6 +286,7 @@ export const listForBuild = (
       browser: snapshots.browser,
       viewportWidth: snapshots.viewportWidth,
       viewportHeight: snapshots.viewportHeight,
+      viewportName: snapshots.viewportName,
       imagePath: snapshots.imagePath,
       status: displayStatusExpr,
       diffId: diffs.id,
@@ -244,7 +295,7 @@ export const listForBuild = (
     })
     .from(snapshots)
     .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
-    .where(listForBuildWhere(buildId, { statuses, browsers, search }))
+    .where(listForBuildWhere(buildId, { statuses, browsers, viewports, search }))
     .orderBy(
       ...sortBy.map(({ column, direction }) =>
         (direction === "desc" ? desc : asc)(snapshotSortColumns[column]),

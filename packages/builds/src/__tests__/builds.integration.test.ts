@@ -36,7 +36,12 @@ const findExtractJob = async (connection: Redis, buildId: string) => {
 };
 
 type SeedDiffStatus = { processingStatus: DiffProcessingStatus; reviewStatus: DiffReviewStatus };
-type Viewport = { browser: string; viewportWidth: number; viewportHeight: number };
+type Viewport = {
+  browser: string;
+  viewportWidth: number;
+  viewportHeight: number;
+  viewportName: string;
+};
 
 const seedDiffs = async (buildId: string, viewport: Viewport, statuses: SeedDiffStatus[]) => {
   for (const status of statuses) {

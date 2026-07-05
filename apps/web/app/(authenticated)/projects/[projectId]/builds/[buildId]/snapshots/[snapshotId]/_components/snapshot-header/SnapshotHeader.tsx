@@ -24,7 +24,7 @@ export const SnapshotHeader = ({ snapshot, build }: SnapshotHeaderProps) => (
         <Typography variant="caption" className="flex items-center gap-1">
           <Icon icon={GlobeIcon} size={12} />
           {snapshot.browser} · <ResolutionIcon width={snapshot.viewportWidth} size={12} />
-          {snapshot.viewportWidth}×{snapshot.viewportHeight ?? "auto"}
+          {snapshot.viewportName}
         </Typography>
       </div>
     </div>

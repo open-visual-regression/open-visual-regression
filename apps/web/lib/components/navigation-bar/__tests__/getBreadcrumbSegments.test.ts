@@ -95,6 +95,7 @@ describe("getBreadcrumbSegments", () => {
           browser: snapshot.browser,
           viewportWidth: snapshot.viewportWidth,
           viewportHeight: snapshot.viewportHeight,
+          viewportName: snapshot.viewportName,
           targetName: snapshot.targetName,
           targetTitle: snapshot.targetTitle,
           imagePath: snapshot.imagePath,

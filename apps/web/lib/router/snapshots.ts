@@ -1,6 +1,5 @@
 "use server";
 
-import { type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
 import { dbClient } from "@ovr/db/client";
 
 import {
@@ -31,6 +30,7 @@ export const getOne = os.snapshots.getOne
         browser: snapshot.browser,
         viewportWidth: snapshot.viewportWidth,
         viewportHeight: snapshot.viewportHeight === 0 ? null : snapshot.viewportHeight,
+        viewportName: snapshot.viewportName,
         status: getSnapshotDisplayStatus(snapshot, diff),
         errorLogs: errorLogs.map((log) => ({
           id: log.id,
@@ -47,18 +47,19 @@ export const list = os.snapshots.list
   .use(authenticatedMiddleware)
   .use(organizationBuildMiddleware)
   .handler(async ({ input }) => {
-    const { buildId, statuses, browsers, search, sortBy, limit, offset } = input;
+    const { buildId, statuses, browsers, viewports, search, sortBy, limit, offset } = input;
 
     const [rows, total] = await Promise.all([
       dbClient.snapshots.listForBuild(buildId, {
         statuses,
         browsers,
+        viewports,
         search,
         sortBy,
         limit,
         offset,
       }),
-      dbClient.snapshots.countForBuild(buildId, { statuses, browsers, search }),
+      dbClient.snapshots.countForBuild(buildId, { statuses, browsers, viewports, search }),
     ]);
 
     return {
@@ -67,7 +68,7 @@ export const list = os.snapshots.list
         targetId: row.targetId,
         targetTitle: row.targetTitle,
         targetName: row.targetName,
-        status: row.status as SnapshotDisplayStatus,
+        status: row.status,
         imagePath: row.imagePath,
         diffId: row.diffId,
         diffImagePath: row.diffImagePath,
@@ -75,6 +76,7 @@ export const list = os.snapshots.list
         browser: row.browser,
         viewportWidth: row.viewportWidth,
         viewportHeight: row.viewportHeight === 0 ? null : row.viewportHeight,
+        viewportName: row.viewportName,
       })),
       total,
     };
@@ -100,4 +102,28 @@ export const getAdjacent = os.snapshots.getAdjacent
 
     return { prevSnapshotId: prevId, nextSnapshotId: nextId, position, total };
   })
+  .actionable();
+
+export const listStatuses = os.snapshots.listStatuses
+  .use(authenticatedMiddleware)
+  .use(organizationBuildMiddleware)
+  .handler(async ({ input }) => ({
+    statuses: await dbClient.snapshots.findStatuses(input.buildId),
+  }))
+  .actionable();
+
+export const listBrowsers = os.snapshots.listBrowsers
+  .use(authenticatedMiddleware)
+  .use(organizationBuildMiddleware)
+  .handler(async ({ input }) => ({
+    browsers: await dbClient.snapshots.findBrowsers(input.buildId),
+  }))
+  .actionable();
+
+export const listViewports = os.snapshots.listViewports
+  .use(authenticatedMiddleware)
+  .use(organizationBuildMiddleware)
+  .handler(async ({ input }) => ({
+    viewports: await dbClient.snapshots.findViewports(input.buildId),
+  }))
   .actionable();

@@ -18,7 +18,7 @@ const TEST_PROJECT: AddProjectInputSchema = {
   gitMainBranch: "main",
 };
 
-const VIEWPORTS = [{ browser: "chromium" as const, viewportWidth: 1280 }];
+const VIEWPORTS = [{ name: "desktop", browser: "chromium" as const, viewportWidth: 1280 }];
 
 const setApiKeyHeader = (key?: string) => {
   vi.mocked(headers).mockResolvedValue(new Headers(key ? { authorization: `Bearer ${key}` } : {}));

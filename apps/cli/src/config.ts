@@ -18,14 +18,16 @@ export const getApiKey = (): string => {
 };
 
 export type ResolvedViewport = {
-  name?: string;
+  name: string;
   browser: "chromium" | "firefox" | "webkit";
   viewportWidth: number;
   viewportHeight?: number;
   default?: boolean;
 };
 
-const DEFAULT_VIEWPORTS: ResolvedViewport[] = [{ browser: "chromium", viewportWidth: 1280 }];
+const DEFAULT_VIEWPORTS: ResolvedViewport[] = [
+  { name: "default", browser: "chromium", viewportWidth: 1280 },
+];
 
 const CONFIG_FILENAMES = ["ovr.config.ts", "ovr.config.js", "ovr.config.mjs"];
 
@@ -87,8 +89,13 @@ export const resolveViewports = (config: OvrConfig | undefined): ResolvedViewpor
     return DEFAULT_VIEWPORTS;
   }
 
+  const names = new Set(viewports.map((viewport) => viewport.name));
+
+  if (names.size !== viewports.length) {
+    throw new Error(`ovr.config: "viewports" names must be unique`);
+  }
+
   if (defaultViewports) {
-    const names = new Set(viewports.map((viewport) => viewport.name));
     const unknown = defaultViewports.filter((name) => !names.has(name));
     if (unknown.length > 0) {
       throw new Error(
@@ -98,13 +105,11 @@ export const resolveViewports = (config: OvrConfig | undefined): ResolvedViewpor
   }
 
   return viewports.map((viewport: ConfigViewport) => ({
-    ...(viewport.name !== undefined && { name: viewport.name }),
+    name: viewport.name,
     browser: viewport.browser ?? "chromium",
     viewportWidth: viewport.width,
     ...(viewport.height !== undefined && { viewportHeight: viewport.height }),
-    ...(defaultViewports && {
-      default: viewport.name !== undefined && defaultViewports.includes(viewport.name),
-    }),
+    ...(defaultViewports && { default: defaultViewports.includes(viewport.name) }),
   }));
 };
 

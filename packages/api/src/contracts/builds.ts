@@ -35,7 +35,7 @@ export const browserSchema = z.enum(["chromium", "firefox", "webkit"]);
 export type Browser = z.infer<typeof browserSchema>;
 
 export const viewportSchema = z.object({
-  name: z.string().min(1).optional(),
+  name: z.string().min(1),
   browser: browserSchema,
   viewportWidth: z.number().int().min(320).max(3840),
   viewportHeight: z.number().int().min(240).max(2160).optional(),
@@ -72,7 +72,13 @@ export const createBuildContract = oc.input(createBuildInputSchema).output(creat
 export const confirmUploadInputSchema = z.object({
   buildId: z.string(),
   targets: z.array(targetSchema),
-  viewports: z.array(viewportSchema).min(1),
+  viewports: z
+    .array(viewportSchema)
+    .min(1)
+    .refine(
+      (viewports) => new Set(viewports.map((viewport) => viewport.name)).size === viewports.length,
+      { message: "viewport names must be unique" },
+    ),
   diffThreshold: z.number().min(0.01).max(1).optional(),
 });
 

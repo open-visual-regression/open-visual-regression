@@ -1,5 +1,5 @@
 export type Viewport = {
-  name?: string;
+  name: string;
   browser?: "chromium" | "firefox" | "webkit";
   width: number;
   /** Omit to capture the full page height instead of a fixed crop. */

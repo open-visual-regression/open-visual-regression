@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
 import { z } from "zod";
 
-import { browserSchema, snapshotDisplayStatusSchema } from "@ovr/api/contracts/builds";
+import { snapshotDisplayStatusSchema } from "@ovr/api/contracts/builds";
 
+import { getBuildStatusLabel } from "@/lib/components/BuildStatus";
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
 import { getStorybookPath } from "@/lib/utils/storage";
@@ -26,7 +27,8 @@ const searchParamsSchema = z.object({
     .catch(undefined)
     .transform((value) => value || undefined),
   status: z.preprocess(toArray, z.array(snapshotDisplayStatusSchema)).optional().catch(undefined),
-  browser: z.preprocess(toArray, z.array(browserSchema)).optional().catch(undefined),
+  browser: z.preprocess(toArray, z.array(z.string())).optional().catch(undefined),
+  viewport: z.preprocess(toArray, z.array(z.string())).optional().catch(undefined),
 });
 
 export default async function BuildPage({ params, searchParams }: BuildPageProps) {
@@ -35,33 +37,60 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
     search,
     status: statuses = [],
     browser: browsers = [],
+    viewport: viewports = [],
   } = searchParamsSchema.parse(await searchParams);
 
-  const [[error, buildResult], [countsError, snapshotCounts], [snapshotsError, snapshotsResult]] =
-    await Promise.all([
-      serverClient.builds.getOne({ buildId }),
-      serverClient.snapshots.getCounts({ buildId }),
-      serverClient.snapshots.list({
-        buildId,
-        statuses,
-        browsers,
-        search,
-        limit: PAGE_SIZE,
-        offset: 0,
-      }),
-    ]);
+  const [
+    [error, buildResult],
+    [countsError, snapshotCounts],
+    [statusesError, statusesResult],
+    [browsersError, browsersResult],
+    [viewportsError, viewportsResult],
+    [snapshotsError, snapshotsResult],
+  ] = await Promise.all([
+    serverClient.builds.getOne({ buildId }),
+    serverClient.snapshots.getCounts({ buildId }),
+    serverClient.snapshots.listStatuses({ buildId }),
+    serverClient.snapshots.listBrowsers({ buildId }),
+    serverClient.snapshots.listViewports({ buildId }),
+    serverClient.snapshots.list({
+      buildId,
+      statuses,
+      browsers,
+      viewports,
+      search,
+      limit: PAGE_SIZE,
+      offset: 0,
+    }),
+  ]);
 
   if (
     error?.code === "NOT_FOUND" ||
     countsError?.code === "NOT_FOUND" ||
+    statusesError?.code === "NOT_FOUND" ||
+    browsersError?.code === "NOT_FOUND" ||
+    viewportsError?.code === "NOT_FOUND" ||
     snapshotsError?.code === "NOT_FOUND"
   ) {
     notFound();
   }
 
-  if (error || countsError || snapshotsError) {
+  if (error || countsError || statusesError || browsersError || viewportsError || snapshotsError) {
     serverError();
   }
+
+  const statusOptions = statusesResult.statuses.map((status) => ({
+    value: status,
+    label: getBuildStatusLabel(status),
+  }));
+  const browserOptions = browsersResult.browsers.map((browser) => ({
+    value: browser,
+    label: browser,
+  }));
+  const viewportOptions = viewportsResult.viewports.map((viewport) => ({
+    value: viewport,
+    label: viewport,
+  }));
 
   const { build } = buildResult;
   const hasStorybook =
@@ -75,7 +104,14 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
     <div className="flex flex-col gap-6">
       <BuildHeader build={build} snapshotCounts={snapshotCounts} storybookHref={storybookHref} />
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <SnapshotFilters statuses={statuses} browsers={browsers} />
+        <SnapshotFilters
+          statuses={statuses}
+          browsers={browsers}
+          viewports={viewports}
+          statusOptions={statusOptions}
+          browserOptions={browserOptions}
+          viewportOptions={viewportOptions}
+        />
         <SnapshotsSearchField
           projectId={projectId}
           buildId={buildId}

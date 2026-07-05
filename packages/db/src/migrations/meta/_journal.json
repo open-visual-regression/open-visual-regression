@@ -162,6 +162,13 @@
       "when": 1783075867269,
       "tag": "0022_heavy_killraven",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1783215494774,
+      "tag": "0023_natural_vargas",
+      "breakpoints": true
     }
   ]
 }
