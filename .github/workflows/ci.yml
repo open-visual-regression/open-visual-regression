@@ -113,3 +113,40 @@ jobs:
       - run: pnpm --filter @ovr/db db:migrate
       - run: pnpm --filter @ovr/capture exec playwright install --with-deps chromium
       - run: pnpm test
+
+  docker:
+    name: Docker image (${{ matrix.image.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - { name: web, dockerfile: apps/web/Dockerfile }
+          - { name: worker, dockerfile: apps/worker/Dockerfile }
+          - { name: bull-board, dockerfile: apps/bull-board/Dockerfile }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ovr/${{ matrix.image.name }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.image.dockerfile }}
+          push: false
+          load: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.image.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image.name }}

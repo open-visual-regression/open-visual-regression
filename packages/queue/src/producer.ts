@@ -15,7 +15,7 @@ import {
   type PurgeJobPayload,
 } from "./index";
 
-const connection = new Redis(process.env.VALKEY_URL ?? "redis://localhost:6379", {
+const connection = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379", {
   maxRetriesPerRequest: null,
   lazyConnect: true,
 });

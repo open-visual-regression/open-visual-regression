@@ -10,7 +10,7 @@ import { QueueName } from "@ovr/queue";
 
 const PORT = Number(process.env.BULL_BOARD_PORT ?? 3001);
 
-const connection = new Redis(process.env.VALKEY_URL ?? "redis://localhost:6379", {
+const connection = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379", {
   maxRetriesPerRequest: null,
 });
 
