@@ -15,6 +15,7 @@ export const snapshotSchema = z.object({
   browser: z.string().min(1),
   viewportWidth: z.number().int(),
   viewportHeight: z.number().int().nullable(),
+  viewportName: z.string().min(1),
   targetName: z.string(),
   targetTitle: z.string(),
   imagePath: z.string().nullable(),
@@ -43,6 +44,7 @@ export const buildSnapshotSchema = z.object({
   browser: z.string().min(1),
   viewportWidth: z.number().int(),
   viewportHeight: z.number().int().nullable(),
+  viewportName: z.string().min(1),
 });
 
 export type BuildSnapshotSchema = z.infer<typeof buildSnapshotSchema>;

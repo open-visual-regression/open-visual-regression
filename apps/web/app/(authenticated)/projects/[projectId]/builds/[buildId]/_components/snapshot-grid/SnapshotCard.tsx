@@ -53,7 +53,7 @@ export const SnapshotCard = ({ snapshot, projectId, buildId }: SnapshotCardProps
           <Icon icon={GlobeIcon} size={12} className="shrink-0" />
           {snapshot.browser} ·{" "}
           <ResolutionIcon width={snapshot.viewportWidth} size={12} className="shrink-0" />
-          {snapshot.viewportWidth}×{snapshot.viewportHeight ?? "auto"}
+          {snapshot.viewportName}
         </Typography>
       </div>
     </>

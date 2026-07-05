@@ -293,6 +293,7 @@ export const listForBuild = (
       browser: snapshots.browser,
       viewportWidth: snapshots.viewportWidth,
       viewportHeight: snapshots.viewportHeight,
+      viewportName: snapshots.viewportName,
       imagePath: snapshots.imagePath,
       status: displayStatusExpr,
       diffId: diffs.id,

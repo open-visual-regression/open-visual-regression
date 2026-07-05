@@ -22,6 +22,7 @@ const snapshot: SnapshotSchema = {
   browser: "chromium",
   viewportWidth: 1280,
   viewportHeight: 800,
+  viewportName: "desktop",
   targetName: "Kitchen Sink",
   targetTitle: "UI/Button",
   imagePath: "new.png",

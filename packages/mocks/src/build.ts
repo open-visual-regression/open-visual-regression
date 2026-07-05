@@ -18,6 +18,7 @@ export const generateBuildSnapshot = (
   browser: "chromium",
   viewportWidth: 1280,
   viewportHeight: 800,
+  viewportName: "desktop",
   ...overrides,
 });
 

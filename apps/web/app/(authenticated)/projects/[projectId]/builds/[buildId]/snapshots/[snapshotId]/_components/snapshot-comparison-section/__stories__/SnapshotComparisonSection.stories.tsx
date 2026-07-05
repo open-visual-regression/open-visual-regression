@@ -22,6 +22,7 @@ const newSnapshot = {
   browser: "chromium",
   viewportWidth: 1280,
   viewportHeight: 720,
+  viewportName: "desktop",
   targetName: "Primary",
   targetTitle: "Button",
   imagePath: "new-desktop.png",

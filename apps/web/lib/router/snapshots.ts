@@ -31,6 +31,7 @@ export const getOne = os.snapshots.getOne
         browser: snapshot.browser,
         viewportWidth: snapshot.viewportWidth,
         viewportHeight: snapshot.viewportHeight === 0 ? null : snapshot.viewportHeight,
+        viewportName: snapshot.viewportName,
         status: getSnapshotDisplayStatus(snapshot, diff),
         errorLogs: errorLogs.map((log) => ({
           id: log.id,
@@ -76,6 +77,7 @@ export const list = os.snapshots.list
         browser: row.browser,
         viewportWidth: row.viewportWidth,
         viewportHeight: row.viewportHeight === 0 ? null : row.viewportHeight,
+        viewportName: row.viewportName,
       })),
       total,
     };
