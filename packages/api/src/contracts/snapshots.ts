@@ -137,14 +137,30 @@ export const snapshotViewportOptionSchema = snapshotViewportFilterSchema.extend(
 
 export type SnapshotViewportOptionSchema = z.infer<typeof snapshotViewportOptionSchema>;
 
-export const listViewportsInputSchema = z.object({ buildId: z.uuidv7() });
+export const listSnapshotFilterOptionsInputSchema = z.object({ buildId: z.uuidv7() });
+
+export const listStatusesOutputSchema = z.object({
+  statuses: z.array(snapshotDisplayStatusSchema),
+});
+
+export const listStatusesContract = oc
+  .input(listSnapshotFilterOptionsInputSchema)
+  .output(listStatusesOutputSchema);
+
+export const listBrowsersOutputSchema = z.object({
+  browsers: z.array(browserSchema),
+});
+
+export const listBrowsersContract = oc
+  .input(listSnapshotFilterOptionsInputSchema)
+  .output(listBrowsersOutputSchema);
 
 export const listViewportsOutputSchema = z.object({
   viewports: z.array(snapshotViewportOptionSchema),
 });
 
 export const listViewportsContract = oc
-  .input(listViewportsInputSchema)
+  .input(listSnapshotFilterOptionsInputSchema)
   .output(listViewportsOutputSchema);
 
 export const contract = {
@@ -152,5 +168,7 @@ export const contract = {
   list: listContract,
   getCounts: getCountsContract,
   getAdjacent: getAdjacentContract,
+  listStatuses: listStatusesContract,
+  listBrowsers: listBrowsersContract,
   listViewports: listViewportsContract,
 } as const;

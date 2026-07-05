@@ -3,6 +3,17 @@ import { userEvent, within } from "storybook/test";
 
 import { SnapshotFilters } from "../SnapshotFilters";
 
+const STATUS_OPTIONS = [
+  { value: "passed", label: "auto approved" },
+  { value: "needs_review", label: "needs review" },
+  { value: "error", label: "error" },
+] as const;
+
+const BROWSER_OPTIONS = [
+  { value: "chromium", label: "chromium" },
+  { value: "firefox", label: "firefox" },
+] as const;
+
 const VIEWPORT_OPTIONS = [
   { value: "1280x800", label: "desktop" },
   { value: "375xauto", label: "mobile" },
@@ -13,6 +24,8 @@ const meta: Meta<typeof SnapshotFilters> = {
   component: SnapshotFilters,
   tags: ["autodocs"],
   args: {
+    statusOptions: [...STATUS_OPTIONS],
+    browserOptions: [...BROWSER_OPTIONS],
     viewportOptions: VIEWPORT_OPTIONS,
   },
   parameters: {

@@ -1,6 +1,9 @@
 import { useRouter } from "next/navigation";
 import { vi } from "vitest";
 
+import { type Browser, type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
+
+import { type FacetOption } from "@/lib/components/facet/FacetOptionsList";
 import { describe, expect, it, render, screen } from "@/test-utils";
 
 import { SnapshotFilters } from "../SnapshotFilters";
@@ -8,6 +11,16 @@ import { SnapshotFilters } from "../SnapshotFilters";
 vi.mock("next/navigation");
 
 const mockPush = vi.mocked(useRouter)().push;
+
+const STATUS_OPTIONS: FacetOption<SnapshotDisplayStatus>[] = [
+  { value: "queued", label: "queued" },
+  { value: "error", label: "error" },
+];
+
+const BROWSER_OPTIONS: FacetOption<Browser>[] = [
+  { value: "chromium", label: "chromium" },
+  { value: "firefox", label: "firefox" },
+];
 
 const VIEWPORT_OPTIONS = [
   { value: "1280x800", label: "desktop" },
@@ -20,6 +33,8 @@ const renderComponent = () =>
       statuses={[]}
       browsers={[]}
       viewports={[]}
+      statusOptions={STATUS_OPTIONS}
+      browserOptions={BROWSER_OPTIONS}
       viewportOptions={VIEWPORT_OPTIONS}
     />,
   );
@@ -75,13 +90,15 @@ describe("SnapshotFilters", () => {
     render(
       <SnapshotFilters
         statuses={[]}
-        browsers={["webkit"]}
+        browsers={["chromium"]}
         viewports={[]}
+        statusOptions={STATUS_OPTIONS}
+        browserOptions={BROWSER_OPTIONS}
         viewportOptions={VIEWPORT_OPTIONS}
       />,
     );
 
-    expect(screen.getByRole("button", { name: /^browser\s+webkit$/i })).toBeVisible();
+    expect(screen.getByRole("button", { name: /^browser\s+chromium$/i })).toBeVisible();
   });
 
   it("should reflect the applied viewport on the viewport facet trigger", () => {
@@ -90,6 +107,8 @@ describe("SnapshotFilters", () => {
         statuses={[]}
         browsers={[]}
         viewports={["375xauto"]}
+        statusOptions={STATUS_OPTIONS}
+        browserOptions={BROWSER_OPTIONS}
         viewportOptions={VIEWPORT_OPTIONS}
       />,
     );
@@ -103,6 +122,8 @@ describe("SnapshotFilters", () => {
         statuses={["queued"]}
         browsers={[]}
         viewports={[]}
+        statusOptions={STATUS_OPTIONS}
+        browserOptions={BROWSER_OPTIONS}
         viewportOptions={VIEWPORT_OPTIONS}
       />,
     );
@@ -114,5 +135,37 @@ describe("SnapshotFilters", () => {
     renderComponent();
 
     expect(screen.getByRole("button", { name: "filters" })).toBeVisible();
+  });
+
+  it("should not render a facet that has one or zero options", () => {
+    render(
+      <SnapshotFilters
+        statuses={[]}
+        browsers={[]}
+        viewports={[]}
+        statusOptions={[{ value: "queued", label: "queued" }]}
+        browserOptions={BROWSER_OPTIONS}
+        viewportOptions={[]}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: /^status/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^viewport/i })).toBeNull();
+    expect(screen.getByRole("button", { name: /^browser\s+any$/i })).toBeVisible();
+  });
+
+  it("should render nothing when no facet has more than one option", () => {
+    render(
+      <SnapshotFilters
+        statuses={[]}
+        browsers={[]}
+        viewports={[]}
+        statusOptions={[{ value: "queued", label: "queued" }]}
+        browserOptions={[]}
+        viewportOptions={[]}
+      />,
+    );
+
+    expect(screen.queryByRole("button")).toBeNull();
   });
 });

@@ -143,6 +143,26 @@ const listForBuildWhere = (
       : undefined,
   );
 
+export const findStatuses = async (buildId: string): Promise<SnapshotDisplayStatus[]> => {
+  const rows = await db
+    .selectDistinct({ status: displayStatusExpr })
+    .from(snapshots)
+    .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
+    .where(eq(snapshots.buildId, buildId));
+
+  return rows.map((row) => row.status as SnapshotDisplayStatus);
+};
+
+export const findBrowsers = async (buildId: string): Promise<string[]> => {
+  const rows = await db
+    .selectDistinct({ browser: snapshots.browser })
+    .from(snapshots)
+    .where(eq(snapshots.buildId, buildId))
+    .orderBy(asc(snapshots.browser));
+
+  return rows.map((row) => row.browser);
+};
+
 export type ViewportOption = ViewportFilter & { viewportName: string };
 
 export const findViewports = async (buildId: string): Promise<ViewportOption[]> => {

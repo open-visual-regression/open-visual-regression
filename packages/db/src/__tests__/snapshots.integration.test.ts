@@ -650,6 +650,38 @@ describe("snapshots", () => {
     });
   });
 
+  describe("findStatuses", () => {
+    test("returns the distinct derived display statuses present in the build", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      await seedReviewQueue(build, captureConfiguration);
+
+      const statuses = await dbClient.snapshots.findStatuses(build.id);
+
+      expect(statuses.sort()).toEqual(["error", "needs_review", "passed", "rejected"]);
+    });
+  });
+
+  describe("findBrowsers", () => {
+    test("returns the distinct browsers present in the build, ordered", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, ...captureConfiguration, browser: "firefox", targetId: "a" },
+          { buildId: build.id, ...captureConfiguration, browser: "chromium", targetId: "b" },
+          { buildId: build.id, ...captureConfiguration, browser: "chromium", targetId: "c" },
+        ],
+      });
+
+      const browsers = await dbClient.snapshots.findBrowsers(build.id);
+
+      expect(browsers).toEqual(["chromium", "firefox"]);
+    });
+  });
+
   describe("findViewports", () => {
     test("returns the distinct viewports for a build, ordered by width then height", async ({
       build,

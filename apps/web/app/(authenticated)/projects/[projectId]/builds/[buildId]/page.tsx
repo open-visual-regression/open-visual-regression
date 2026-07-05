@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { browserSchema, snapshotDisplayStatusSchema } from "@ovr/api/contracts/builds";
 
+import { getBuildStatusLabel } from "@/lib/components/BuildStatus";
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
 import { getStorybookPath } from "@/lib/utils/storage";
@@ -46,11 +47,15 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
   const [
     [error, buildResult],
     [countsError, snapshotCounts],
+    [statusesError, statusesResult],
+    [browsersError, browsersResult],
     [viewportsError, viewportsResult],
     [snapshotsError, snapshotsResult],
   ] = await Promise.all([
     serverClient.builds.getOne({ buildId }),
     serverClient.snapshots.getCounts({ buildId }),
+    serverClient.snapshots.listStatuses({ buildId }),
+    serverClient.snapshots.listBrowsers({ buildId }),
     serverClient.snapshots.listViewports({ buildId }),
     serverClient.snapshots.list({
       buildId,
@@ -66,15 +71,27 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
   if (
     error?.code === "NOT_FOUND" ||
     countsError?.code === "NOT_FOUND" ||
+    statusesError?.code === "NOT_FOUND" ||
+    browsersError?.code === "NOT_FOUND" ||
     viewportsError?.code === "NOT_FOUND" ||
     snapshotsError?.code === "NOT_FOUND"
   ) {
     notFound();
   }
 
-  if (error || countsError || viewportsError || snapshotsError) {
+  if (error || countsError || statusesError || browsersError || viewportsError || snapshotsError) {
     serverError();
   }
+
+  const presentStatuses = new Set(statusesResult.statuses);
+  const statusOptions = snapshotDisplayStatusSchema.options
+    .filter((status) => presentStatuses.has(status))
+    .map((status) => ({ value: status, label: getBuildStatusLabel(status) }));
+
+  const presentBrowsers = new Set(browsersResult.browsers);
+  const browserOptions = browserSchema.options
+    .filter((browser) => presentBrowsers.has(browser))
+    .map((browser) => ({ value: browser, label: browser }));
 
   const viewportOptions = viewportsResult.viewports.map((viewport) => ({
     value: encodeViewportFilterValue(viewport),
@@ -97,6 +114,8 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
           statuses={statuses}
           browsers={browsers}
           viewports={viewports}
+          statusOptions={statusOptions}
+          browserOptions={browserOptions}
           viewportOptions={viewportOptions}
         />
         <SnapshotsSearchField

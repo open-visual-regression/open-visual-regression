@@ -1,6 +1,6 @@
 "use server";
 
-import { type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
+import { type Browser, type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
 import { dbClient } from "@ovr/db/client";
 
 import {
@@ -101,6 +101,22 @@ export const getAdjacent = os.snapshots.getAdjacent
 
     return { prevSnapshotId: prevId, nextSnapshotId: nextId, position, total };
   })
+  .actionable();
+
+export const listStatuses = os.snapshots.listStatuses
+  .use(authenticatedMiddleware)
+  .use(organizationBuildMiddleware)
+  .handler(async ({ input }) => ({
+    statuses: await dbClient.snapshots.findStatuses(input.buildId),
+  }))
+  .actionable();
+
+export const listBrowsers = os.snapshots.listBrowsers
+  .use(authenticatedMiddleware)
+  .use(organizationBuildMiddleware)
+  .handler(async ({ input }) => ({
+    browsers: (await dbClient.snapshots.findBrowsers(input.buildId)) as Browser[],
+  }))
   .actionable();
 
 export const listViewports = os.snapshots.listViewports
