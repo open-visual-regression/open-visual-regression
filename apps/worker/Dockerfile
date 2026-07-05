@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 #
 # Build from the repository root:
-#   docker build -f apps/worker/Dockerfile -t ovr/worker .
+#   docker build -f apps/worker/Dockerfile -t open-visual-regression/worker .
 
 ARG NODE_VERSION=24.16.0
 # Keep in sync with the pinned "playwright" version in apps/worker + packages/capture.
