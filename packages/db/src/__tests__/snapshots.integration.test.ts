@@ -349,6 +349,38 @@ describe("snapshots", () => {
       expect(searched.map((row) => row.targetId)).toEqual(["home"]);
     });
 
+    test("filters by browser", async ({ build, captureConfiguration }) => {
+      await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            browser: "chromium",
+            targetId: "home",
+            targetTitle: "Home Page",
+            targetName: "home",
+          },
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            browser: "firefox",
+            targetId: "checkout",
+            targetTitle: "Checkout Page",
+            targetName: "checkout",
+          },
+        ],
+      });
+
+      const results = await dbClient.snapshots.listForBuild(build.id, {
+        browsers: ["firefox"],
+        limit: 10,
+        offset: 0,
+      });
+
+      expect(results.map((row) => row.targetId)).toEqual(["checkout"]);
+      expect(await dbClient.snapshots.countForBuild(build.id, { browsers: ["firefox"] })).toBe(1);
+    });
+
     test("paginates results with limit and offset", async ({ build, captureConfiguration }) => {
       await seedHomeAndCheckout(build, captureConfiguration);
 

@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, ilike, notInArray, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, inArray, notInArray, or, sql } from "drizzle-orm";
 
 import { db, type DbClient } from "../db";
 import { diffs, snapshots, type SnapshotStatus } from "../schema";
@@ -109,14 +109,19 @@ export const getDisplayStatusCounts = async (
 
 export type SnapshotDisplayStatus = keyof SnapshotDisplayStatusCounts;
 
-type ListForBuildFilters = { statuses?: SnapshotDisplayStatus[]; search?: string };
+type ListForBuildFilters = {
+  statuses?: SnapshotDisplayStatus[];
+  browsers?: string[];
+  search?: string;
+};
 
-const listForBuildWhere = (buildId: string, { statuses, search }: ListForBuildFilters) =>
+const listForBuildWhere = (buildId: string, { statuses, browsers, search }: ListForBuildFilters) =>
   and(
     eq(snapshots.buildId, buildId),
     statuses?.length
       ? or(...statuses.map((status) => sql`${displayStatusExpr} = ${status}`))
       : undefined,
+    browsers?.length ? inArray(snapshots.browser, browsers) : undefined,
     search
       ? or(ilike(snapshots.targetTitle, `%${search}%`), ilike(snapshots.targetName, `%${search}%`))
       : undefined,
@@ -213,7 +218,14 @@ export type ListForBuildOptions = ListForBuildFilters & {
 
 export const listForBuild = (
   buildId: string,
-  { statuses, search, sortBy = defaultSnapshotSortBy, limit, offset }: ListForBuildOptions,
+  {
+    statuses,
+    browsers,
+    search,
+    sortBy = defaultSnapshotSortBy,
+    limit,
+    offset,
+  }: ListForBuildOptions,
 ) =>
   db
     .select({
@@ -232,7 +244,7 @@ export const listForBuild = (
     })
     .from(snapshots)
     .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
-    .where(listForBuildWhere(buildId, { statuses, search }))
+    .where(listForBuildWhere(buildId, { statuses, browsers, search }))
     .orderBy(
       ...sortBy.map(({ column, direction }) =>
         (direction === "desc" ? desc : asc)(snapshotSortColumns[column]),

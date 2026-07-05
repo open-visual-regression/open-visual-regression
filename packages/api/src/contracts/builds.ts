@@ -30,9 +30,13 @@ export const buildTypeSchema = z.enum(["storybook"]);
 
 export type BuildType = z.infer<typeof buildTypeSchema>;
 
+export const browserSchema = z.enum(["chromium", "firefox", "webkit"]);
+
+export type Browser = z.infer<typeof browserSchema>;
+
 export const viewportSchema = z.object({
   name: z.string().min(1).optional(),
-  browser: z.enum(["chromium", "firefox", "webkit"]),
+  browser: browserSchema,
   viewportWidth: z.number().int().min(320).max(3840),
   viewportHeight: z.number().int().min(240).max(2160).optional(),
   default: z.boolean().optional(),

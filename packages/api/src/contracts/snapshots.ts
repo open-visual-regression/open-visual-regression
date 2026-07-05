@@ -1,7 +1,7 @@
 import { oc } from "@orpc/contract";
 import { z } from "zod";
 
-import { snapshotDisplayStatusSchema } from "./builds";
+import { browserSchema, snapshotDisplayStatusSchema } from "./builds";
 
 export const snapshotLogSchema = z.object({
   id: z.uuidv7(),
@@ -67,6 +67,7 @@ export type SnapshotSortSchema = z.infer<typeof snapshotSortSchema>;
 export const listInputSchema = z.object({
   buildId: z.uuidv7(),
   statuses: z.array(snapshotDisplayStatusSchema).optional(),
+  browsers: z.array(browserSchema).optional(),
   search: z.string().min(1).optional(),
   sortBy: z
     .array(snapshotSortSchema)

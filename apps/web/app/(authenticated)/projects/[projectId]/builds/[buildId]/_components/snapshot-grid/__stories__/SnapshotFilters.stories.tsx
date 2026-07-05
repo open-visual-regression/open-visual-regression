@@ -24,18 +24,21 @@ type Story = StoryObj<typeof SnapshotFilters>;
 export const Default: Story = {
   args: {
     statuses: [],
+    browsers: [],
   },
 };
 
 export const WithActiveFilters: Story = {
   args: {
     statuses: ["needs_review", "error"],
+    browsers: ["chromium"],
   },
 };
 
 export const StatusPopoverOpen: Story = {
   args: {
     statuses: [],
+    browsers: [],
   },
   parameters: {
     ovr: {
@@ -48,9 +51,26 @@ export const StatusPopoverOpen: Story = {
   },
 };
 
+export const BrowserPopoverOpen: Story = {
+  args: {
+    statuses: [],
+    browsers: [],
+  },
+  parameters: {
+    ovr: {
+      viewports: ["desktop"],
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: /^browser any$/i }));
+  },
+};
+
 export const MobileMenuOpen: Story = {
   args: {
     statuses: ["needs_review"],
+    browsers: [],
   },
   parameters: {
     ovr: {
@@ -66,6 +86,7 @@ export const MobileMenuOpen: Story = {
 export const MobileFacetDialogOpen: Story = {
   args: {
     statuses: ["needs_review"],
+    browsers: [],
   },
   parameters: {
     ovr: {

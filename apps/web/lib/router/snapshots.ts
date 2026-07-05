@@ -47,11 +47,18 @@ export const list = os.snapshots.list
   .use(authenticatedMiddleware)
   .use(organizationBuildMiddleware)
   .handler(async ({ input }) => {
-    const { buildId, statuses, search, sortBy, limit, offset } = input;
+    const { buildId, statuses, browsers, search, sortBy, limit, offset } = input;
 
     const [rows, total] = await Promise.all([
-      dbClient.snapshots.listForBuild(buildId, { statuses, search, sortBy, limit, offset }),
-      dbClient.snapshots.countForBuild(buildId, { statuses, search }),
+      dbClient.snapshots.listForBuild(buildId, {
+        statuses,
+        browsers,
+        search,
+        sortBy,
+        limit,
+        offset,
+      }),
+      dbClient.snapshots.countForBuild(buildId, { statuses, browsers, search }),
     ]);
 
     return {
