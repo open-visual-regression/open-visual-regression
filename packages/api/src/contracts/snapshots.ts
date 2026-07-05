@@ -70,7 +70,7 @@ export const listInputSchema = z.object({
   buildId: z.uuidv7(),
   statuses: z.array(snapshotDisplayStatusSchema).optional(),
   browsers: z.array(z.string()).optional(),
-  viewportNames: z.array(z.string()).optional(),
+  viewports: z.array(z.string()).optional(),
   search: z.string().min(1).optional(),
   sortBy: z
     .array(snapshotSortSchema)
@@ -145,7 +145,7 @@ export const listBrowsersContract = oc
   .output(listBrowsersOutputSchema);
 
 export const listViewportsOutputSchema = z.object({
-  viewportNames: z.array(z.string()),
+  viewports: z.array(z.string()),
 });
 
 export const listViewportsContract = oc

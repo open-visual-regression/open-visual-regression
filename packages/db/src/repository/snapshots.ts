@@ -122,13 +122,13 @@ const statusDisplayOrder: SnapshotDisplayStatus[] = [
 type ListForBuildFilters = {
   statuses?: SnapshotDisplayStatus[];
   browsers?: string[];
-  viewportNames?: string[];
+  viewports?: string[];
   search?: string;
 };
 
 const listForBuildWhere = (
   buildId: string,
-  { statuses, browsers, viewportNames, search }: ListForBuildFilters,
+  { statuses, browsers, viewports, search }: ListForBuildFilters,
 ) =>
   and(
     eq(snapshots.buildId, buildId),
@@ -136,7 +136,7 @@ const listForBuildWhere = (
       ? or(...statuses.map((status) => sql`${displayStatusExpr} = ${status}`))
       : undefined,
     browsers?.length ? inArray(snapshots.browser, browsers) : undefined,
-    viewportNames?.length ? inArray(snapshots.viewportName, viewportNames) : undefined,
+    viewports?.length ? inArray(snapshots.viewportName, viewports) : undefined,
     search
       ? or(ilike(snapshots.targetTitle, `%${search}%`), ilike(snapshots.targetName, `%${search}%`))
       : undefined,
@@ -163,7 +163,7 @@ export const findBrowsers = async (buildId: string): Promise<string[]> => {
   return rows.map((row) => row.browser);
 };
 
-export const findViewportNames = async (buildId: string): Promise<string[]> => {
+export const findViewports = async (buildId: string): Promise<string[]> => {
   const rows = await db
     .selectDistinct({
       viewportName: snapshots.viewportName,
@@ -270,7 +270,7 @@ export const listForBuild = (
   {
     statuses,
     browsers,
-    viewportNames,
+    viewports,
     search,
     sortBy = defaultSnapshotSortBy,
     limit,
@@ -295,7 +295,7 @@ export const listForBuild = (
     })
     .from(snapshots)
     .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
-    .where(listForBuildWhere(buildId, { statuses, browsers, viewportNames, search }))
+    .where(listForBuildWhere(buildId, { statuses, browsers, viewports, search }))
     .orderBy(
       ...sortBy.map(({ column, direction }) =>
         (direction === "desc" ? desc : asc)(snapshotSortColumns[column]),

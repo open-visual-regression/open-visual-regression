@@ -420,15 +420,13 @@ describe("snapshots", () => {
       });
 
       const results = await dbClient.snapshots.listForBuild(build.id, {
-        viewportNames: ["mobile"],
+        viewports: ["mobile"],
         limit: 10,
         offset: 0,
       });
 
       expect(results.map((row) => row.targetId)).toEqual(["checkout"]);
-      expect(await dbClient.snapshots.countForBuild(build.id, { viewportNames: ["mobile"] })).toBe(
-        1,
-      );
+      expect(await dbClient.snapshots.countForBuild(build.id, { viewports: ["mobile"] })).toBe(1);
     });
 
     test("paginates results with limit and offset", async ({ build, captureConfiguration }) => {
@@ -675,7 +673,7 @@ describe("snapshots", () => {
     });
   });
 
-  describe("findViewportNames", () => {
+  describe("findViewports", () => {
     test("returns the distinct viewport names for a build, ordered by width", async ({
       build,
       captureConfiguration,
@@ -709,9 +707,9 @@ describe("snapshots", () => {
         ],
       });
 
-      const viewportNames = await dbClient.snapshots.findViewportNames(build.id);
+      const viewports = await dbClient.snapshots.findViewports(build.id);
 
-      expect(viewportNames).toEqual(["mobile", "desktop"]);
+      expect(viewports).toEqual(["mobile", "desktop"]);
     });
   });
 

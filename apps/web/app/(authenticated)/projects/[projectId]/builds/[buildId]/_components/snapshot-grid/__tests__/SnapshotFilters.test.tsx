@@ -1,6 +1,9 @@
 import { useRouter } from "next/navigation";
 import { vi } from "vitest";
 
+import { type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
+
+import { type FacetOption } from "@/lib/components/facet/FacetOptionsList";
 import { describe, expect, it, render, screen } from "@/test-utils";
 
 import { SnapshotFilters } from "../SnapshotFilters";
@@ -9,15 +12,30 @@ vi.mock("next/navigation");
 
 const mockPush = vi.mocked(useRouter)().push;
 
+const STATUS_OPTIONS: FacetOption<SnapshotDisplayStatus>[] = [
+  { value: "queued", label: "queued" },
+  { value: "error", label: "error" },
+];
+
+const BROWSER_OPTIONS: FacetOption<string>[] = [
+  { value: "chromium", label: "chromium" },
+  { value: "firefox", label: "firefox" },
+];
+
+const VIEWPORT_OPTIONS: FacetOption<string>[] = [
+  { value: "desktop", label: "desktop" },
+  { value: "mobile", label: "mobile" },
+];
+
 const renderComponent = () =>
   render(
     <SnapshotFilters
       statuses={[]}
       browsers={[]}
-      viewportNames={[]}
-      availableStatuses={["queued", "error"]}
-      availableBrowsers={["chromium", "firefox"]}
-      availableViewportNames={["desktop", "mobile"]}
+      viewports={[]}
+      statusOptions={STATUS_OPTIONS}
+      browserOptions={BROWSER_OPTIONS}
+      viewportOptions={VIEWPORT_OPTIONS}
     />,
   );
 
@@ -56,7 +74,7 @@ describe("SnapshotFilters", () => {
     expect(mockPush).toHaveBeenCalledWith("/?browser=chromium&browser=firefox");
   });
 
-  it("should navigate with the selected viewport names when the viewport facet is applied", async ({
+  it("should navigate with the selected viewports when the viewport facet is applied", async ({
     user,
   }) => {
     renderComponent();
@@ -73,10 +91,10 @@ describe("SnapshotFilters", () => {
       <SnapshotFilters
         statuses={[]}
         browsers={["chromium"]}
-        viewportNames={[]}
-        availableStatuses={["queued", "error"]}
-        availableBrowsers={["chromium", "firefox"]}
-        availableViewportNames={["desktop", "mobile"]}
+        viewports={[]}
+        statusOptions={STATUS_OPTIONS}
+        browserOptions={BROWSER_OPTIONS}
+        viewportOptions={VIEWPORT_OPTIONS}
       />,
     );
 
@@ -88,10 +106,10 @@ describe("SnapshotFilters", () => {
       <SnapshotFilters
         statuses={[]}
         browsers={[]}
-        viewportNames={["mobile"]}
-        availableStatuses={["queued", "error"]}
-        availableBrowsers={["chromium", "firefox"]}
-        availableViewportNames={["desktop", "mobile"]}
+        viewports={["mobile"]}
+        statusOptions={STATUS_OPTIONS}
+        browserOptions={BROWSER_OPTIONS}
+        viewportOptions={VIEWPORT_OPTIONS}
       />,
     );
 
@@ -103,10 +121,10 @@ describe("SnapshotFilters", () => {
       <SnapshotFilters
         statuses={["queued"]}
         browsers={[]}
-        viewportNames={[]}
-        availableStatuses={["queued", "error"]}
-        availableBrowsers={["chromium", "firefox"]}
-        availableViewportNames={["desktop", "mobile"]}
+        viewports={[]}
+        statusOptions={STATUS_OPTIONS}
+        browserOptions={BROWSER_OPTIONS}
+        viewportOptions={VIEWPORT_OPTIONS}
       />,
     );
 
@@ -119,15 +137,15 @@ describe("SnapshotFilters", () => {
     expect(screen.getByRole("button", { name: "filters" })).toBeVisible();
   });
 
-  it("should not render a facet that has one or zero available options", () => {
+  it("should not render a facet that has one or zero options", () => {
     render(
       <SnapshotFilters
         statuses={[]}
         browsers={[]}
-        viewportNames={[]}
-        availableStatuses={["queued"]}
-        availableBrowsers={["chromium", "firefox"]}
-        availableViewportNames={[]}
+        viewports={[]}
+        statusOptions={[{ value: "queued", label: "queued" }]}
+        browserOptions={BROWSER_OPTIONS}
+        viewportOptions={[]}
       />,
     );
 
@@ -136,15 +154,15 @@ describe("SnapshotFilters", () => {
     expect(screen.getByRole("button", { name: /^browser\s+any$/i })).toBeVisible();
   });
 
-  it("should render nothing when no facet has more than one available option", () => {
+  it("should render nothing when no facet has more than one option", () => {
     render(
       <SnapshotFilters
         statuses={[]}
         browsers={[]}
-        viewportNames={[]}
-        availableStatuses={["queued"]}
-        availableBrowsers={[]}
-        availableViewportNames={[]}
+        viewports={[]}
+        statusOptions={[{ value: "queued", label: "queued" }]}
+        browserOptions={[]}
+        viewportOptions={[]}
       />,
     );
 

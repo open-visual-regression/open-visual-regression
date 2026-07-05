@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { snapshotDisplayStatusSchema } from "@ovr/api/contracts/builds";
 
+import { getBuildStatusLabel } from "@/lib/components/BuildStatus";
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
 import { getStorybookPath } from "@/lib/utils/storage";
@@ -36,7 +37,7 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
     search,
     status: statuses = [],
     browser: browsers = [],
-    viewport: viewportNames = [],
+    viewport: viewports = [],
   } = searchParamsSchema.parse(await searchParams);
 
   const [
@@ -56,7 +57,7 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
       buildId,
       statuses,
       browsers,
-      viewportNames,
+      viewports,
       search,
       limit: PAGE_SIZE,
       offset: 0,
@@ -78,6 +79,19 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
     serverError();
   }
 
+  const statusOptions = statusesResult.statuses.map((status) => ({
+    value: status,
+    label: getBuildStatusLabel(status),
+  }));
+  const browserOptions = browsersResult.browsers.map((browser) => ({
+    value: browser,
+    label: browser,
+  }));
+  const viewportOptions = viewportsResult.viewports.map((viewport) => ({
+    value: viewport,
+    label: viewport,
+  }));
+
   const { build } = buildResult;
   const hasStorybook =
     build.buildType === "storybook" &&
@@ -93,10 +107,10 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
         <SnapshotFilters
           statuses={statuses}
           browsers={browsers}
-          viewportNames={viewportNames}
-          availableStatuses={statusesResult.statuses}
-          availableBrowsers={browsersResult.browsers}
-          availableViewportNames={viewportsResult.viewportNames}
+          viewports={viewports}
+          statusOptions={statusOptions}
+          browserOptions={browserOptions}
+          viewportOptions={viewportOptions}
         />
         <SnapshotsSearchField
           projectId={projectId}
