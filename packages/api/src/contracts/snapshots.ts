@@ -1,7 +1,7 @@
 import { oc } from "@orpc/contract";
 import { z } from "zod";
 
-import { browserSchema, snapshotDisplayStatusSchema } from "./builds";
+import { snapshotDisplayStatusSchema } from "./builds";
 
 export const snapshotLogSchema = z.object({
   id: z.uuidv7(),
@@ -66,18 +66,11 @@ export const snapshotSortSchema = z.object({
 
 export type SnapshotSortSchema = z.infer<typeof snapshotSortSchema>;
 
-export const snapshotViewportFilterSchema = z.object({
-  viewportWidth: z.number().int(),
-  viewportHeight: z.number().int().nullable(),
-});
-
-export type SnapshotViewportFilterSchema = z.infer<typeof snapshotViewportFilterSchema>;
-
 export const listInputSchema = z.object({
   buildId: z.uuidv7(),
   statuses: z.array(snapshotDisplayStatusSchema).optional(),
-  browsers: z.array(browserSchema).optional(),
-  viewports: z.array(snapshotViewportFilterSchema).optional(),
+  browsers: z.array(z.string()).optional(),
+  viewportNames: z.array(z.string()).optional(),
   search: z.string().min(1).optional(),
   sortBy: z
     .array(snapshotSortSchema)
@@ -133,12 +126,6 @@ export type GetAdjacentOutputSchema = z.infer<typeof getAdjacentOutputSchema>;
 
 export const getAdjacentContract = oc.input(getAdjacentInputSchema).output(getAdjacentOutputSchema);
 
-export const snapshotViewportOptionSchema = snapshotViewportFilterSchema.extend({
-  viewportName: z.string(),
-});
-
-export type SnapshotViewportOptionSchema = z.infer<typeof snapshotViewportOptionSchema>;
-
 export const listSnapshotFilterOptionsInputSchema = z.object({ buildId: z.uuidv7() });
 
 export const listStatusesOutputSchema = z.object({
@@ -150,7 +137,7 @@ export const listStatusesContract = oc
   .output(listStatusesOutputSchema);
 
 export const listBrowsersOutputSchema = z.object({
-  browsers: z.array(browserSchema),
+  browsers: z.array(z.string()),
 });
 
 export const listBrowsersContract = oc
@@ -158,7 +145,7 @@ export const listBrowsersContract = oc
   .output(listBrowsersOutputSchema);
 
 export const listViewportsOutputSchema = z.object({
-  viewports: z.array(snapshotViewportOptionSchema),
+  viewportNames: z.array(z.string()),
 });
 
 export const listViewportsContract = oc

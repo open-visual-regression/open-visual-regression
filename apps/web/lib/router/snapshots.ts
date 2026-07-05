@@ -1,6 +1,5 @@
 "use server";
 
-import { type Browser, type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
 import { dbClient } from "@ovr/db/client";
 
 import {
@@ -48,19 +47,19 @@ export const list = os.snapshots.list
   .use(authenticatedMiddleware)
   .use(organizationBuildMiddleware)
   .handler(async ({ input }) => {
-    const { buildId, statuses, browsers, viewports, search, sortBy, limit, offset } = input;
+    const { buildId, statuses, browsers, viewportNames, search, sortBy, limit, offset } = input;
 
     const [rows, total] = await Promise.all([
       dbClient.snapshots.listForBuild(buildId, {
         statuses,
         browsers,
-        viewports,
+        viewportNames,
         search,
         sortBy,
         limit,
         offset,
       }),
-      dbClient.snapshots.countForBuild(buildId, { statuses, browsers, viewports, search }),
+      dbClient.snapshots.countForBuild(buildId, { statuses, browsers, viewportNames, search }),
     ]);
 
     return {
@@ -69,7 +68,7 @@ export const list = os.snapshots.list
         targetId: row.targetId,
         targetTitle: row.targetTitle,
         targetName: row.targetName,
-        status: row.status as SnapshotDisplayStatus,
+        status: row.status,
         imagePath: row.imagePath,
         diffId: row.diffId,
         diffImagePath: row.diffImagePath,
@@ -117,7 +116,7 @@ export const listBrowsers = os.snapshots.listBrowsers
   .use(authenticatedMiddleware)
   .use(organizationBuildMiddleware)
   .handler(async ({ input }) => ({
-    browsers: (await dbClient.snapshots.findBrowsers(input.buildId)) as Browser[],
+    browsers: await dbClient.snapshots.findBrowsers(input.buildId),
   }))
   .actionable();
 
@@ -125,6 +124,6 @@ export const listViewports = os.snapshots.listViewports
   .use(authenticatedMiddleware)
   .use(organizationBuildMiddleware)
   .handler(async ({ input }) => ({
-    viewports: await dbClient.snapshots.findViewports(input.buildId),
+    viewportNames: await dbClient.snapshots.findViewportNames(input.buildId),
   }))
   .actionable();

@@ -397,17 +397,13 @@ describe("snapshots", () => {
       expect(await dbClient.snapshots.countForBuild(build.id, { browsers: ["firefox"] })).toBe(1);
     });
 
-    test("filters by viewport, treating a stored height of 0 as an auto height", async ({
-      build,
-      captureConfiguration,
-    }) => {
+    test("filters by viewport name", async ({ build, captureConfiguration }) => {
       await dbClient.snapshots.createMany({
         values: [
           {
             buildId: build.id,
             ...captureConfiguration,
-            viewportWidth: 1280,
-            viewportHeight: 800,
+            viewportName: "desktop",
             targetId: "home",
             targetTitle: "Home Page",
             targetName: "home",
@@ -415,8 +411,7 @@ describe("snapshots", () => {
           {
             buildId: build.id,
             ...captureConfiguration,
-            viewportWidth: 375,
-            viewportHeight: 0,
+            viewportName: "mobile",
             targetId: "checkout",
             targetTitle: "Checkout Page",
             targetName: "checkout",
@@ -425,17 +420,15 @@ describe("snapshots", () => {
       });
 
       const results = await dbClient.snapshots.listForBuild(build.id, {
-        viewports: [{ viewportWidth: 375, viewportHeight: null }],
+        viewportNames: ["mobile"],
         limit: 10,
         offset: 0,
       });
 
       expect(results.map((row) => row.targetId)).toEqual(["checkout"]);
-      expect(
-        await dbClient.snapshots.countForBuild(build.id, {
-          viewports: [{ viewportWidth: 375, viewportHeight: null }],
-        }),
-      ).toBe(1);
+      expect(await dbClient.snapshots.countForBuild(build.id, { viewportNames: ["mobile"] })).toBe(
+        1,
+      );
     });
 
     test("paginates results with limit and offset", async ({ build, captureConfiguration }) => {
@@ -682,8 +675,8 @@ describe("snapshots", () => {
     });
   });
 
-  describe("findViewports", () => {
-    test("returns the distinct viewports for a build, ordered by width then height", async ({
+  describe("findViewportNames", () => {
+    test("returns the distinct viewport names for a build, ordered by width", async ({
       build,
       captureConfiguration,
     }) => {
@@ -716,12 +709,9 @@ describe("snapshots", () => {
         ],
       });
 
-      const viewports = await dbClient.snapshots.findViewports(build.id);
+      const viewportNames = await dbClient.snapshots.findViewportNames(build.id);
 
-      expect(viewports).toEqual([
-        { viewportWidth: 375, viewportHeight: null, viewportName: "mobile" },
-        { viewportWidth: 1280, viewportHeight: 800, viewportName: "desktop" },
-      ]);
+      expect(viewportNames).toEqual(["mobile", "desktop"]);
     });
   });
 

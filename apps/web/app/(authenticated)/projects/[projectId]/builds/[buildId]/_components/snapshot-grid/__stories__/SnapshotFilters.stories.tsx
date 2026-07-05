@@ -3,30 +3,14 @@ import { userEvent, within } from "storybook/test";
 
 import { SnapshotFilters } from "../SnapshotFilters";
 
-const STATUS_OPTIONS = [
-  { value: "passed", label: "auto approved" },
-  { value: "needs_review", label: "needs review" },
-  { value: "error", label: "error" },
-] as const;
-
-const BROWSER_OPTIONS = [
-  { value: "chromium", label: "chromium" },
-  { value: "firefox", label: "firefox" },
-] as const;
-
-const VIEWPORT_OPTIONS = [
-  { value: "1280x800", label: "desktop" },
-  { value: "375xauto", label: "mobile" },
-];
-
 const meta: Meta<typeof SnapshotFilters> = {
   title: "Web/SnapshotFilters",
   component: SnapshotFilters,
   tags: ["autodocs"],
   args: {
-    statusOptions: [...STATUS_OPTIONS],
-    browserOptions: [...BROWSER_OPTIONS],
-    viewportOptions: VIEWPORT_OPTIONS,
+    availableStatuses: ["passed", "needs_review", "error"],
+    availableBrowsers: ["chromium", "firefox"],
+    availableViewportNames: ["desktop", "mobile"],
   },
   parameters: {
     nextjs: {
@@ -46,7 +30,7 @@ export const Default: Story = {
   args: {
     statuses: [],
     browsers: [],
-    viewports: [],
+    viewportNames: [],
   },
 };
 
@@ -54,7 +38,7 @@ export const WithActiveFilters: Story = {
   args: {
     statuses: ["needs_review", "error"],
     browsers: ["chromium"],
-    viewports: ["1280x800"],
+    viewportNames: ["desktop"],
   },
 };
 
@@ -62,7 +46,7 @@ export const StatusPopoverOpen: Story = {
   args: {
     statuses: [],
     browsers: [],
-    viewports: [],
+    viewportNames: [],
   },
   parameters: {
     ovr: {
@@ -79,7 +63,7 @@ export const BrowserPopoverOpen: Story = {
   args: {
     statuses: [],
     browsers: [],
-    viewports: [],
+    viewportNames: [],
   },
   parameters: {
     ovr: {
@@ -96,7 +80,7 @@ export const ViewportPopoverOpen: Story = {
   args: {
     statuses: [],
     browsers: [],
-    viewports: [],
+    viewportNames: [],
   },
   parameters: {
     ovr: {
@@ -113,7 +97,7 @@ export const MobileMenuOpen: Story = {
   args: {
     statuses: ["needs_review"],
     browsers: [],
-    viewports: [],
+    viewportNames: [],
   },
   parameters: {
     ovr: {
@@ -130,7 +114,7 @@ export const MobileFacetDialogOpen: Story = {
   args: {
     statuses: ["needs_review"],
     browsers: [],
-    viewports: [],
+    viewportNames: [],
   },
   parameters: {
     ovr: {

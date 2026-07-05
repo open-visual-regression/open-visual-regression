@@ -1,33 +1,51 @@
-import { type Browser, type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
+import { type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
 
+import { getBuildStatusLabel } from "@/lib/components/BuildStatus";
 import { FacetBar } from "@/lib/components/facet/FacetBar";
-import { type FacetOption } from "@/lib/components/facet/FacetOptionsList";
 
 type SnapshotFiltersProps = {
   statuses: SnapshotDisplayStatus[];
-  browsers: Browser[];
-  viewports: string[];
-  statusOptions: FacetOption<SnapshotDisplayStatus>[];
-  browserOptions: FacetOption<Browser>[];
-  viewportOptions: FacetOption<string>[];
+  browsers: string[];
+  viewportNames: string[];
+  availableStatuses: SnapshotDisplayStatus[];
+  availableBrowsers: string[];
+  availableViewportNames: string[];
   className?: string;
 };
 
 export const SnapshotFilters = ({
   statuses,
   browsers,
-  viewports,
-  statusOptions,
-  browserOptions,
-  viewportOptions,
+  viewportNames,
+  availableStatuses,
+  availableBrowsers,
+  availableViewportNames,
   className,
 }: SnapshotFiltersProps) => (
   <FacetBar
     className={className}
     facets={[
-      { param: "status", label: "status", options: statusOptions, selected: statuses },
-      { param: "browser", label: "browser", options: browserOptions, selected: browsers },
-      { param: "viewport", label: "viewport", options: viewportOptions, selected: viewports },
+      {
+        param: "status",
+        label: "status",
+        options: availableStatuses.map((status) => ({
+          value: status,
+          label: getBuildStatusLabel(status),
+        })),
+        selected: statuses,
+      },
+      {
+        param: "browser",
+        label: "browser",
+        options: availableBrowsers.map((browser) => ({ value: browser, label: browser })),
+        selected: browsers,
+      },
+      {
+        param: "viewport",
+        label: "viewport",
+        options: availableViewportNames.map((name) => ({ value: name, label: name })),
+        selected: viewportNames,
+      },
     ]}
   />
 );

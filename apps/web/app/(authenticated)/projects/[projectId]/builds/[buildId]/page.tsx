@@ -1,9 +1,8 @@
 import { notFound } from "next/navigation";
 import { z } from "zod";
 
-import { browserSchema, snapshotDisplayStatusSchema } from "@ovr/api/contracts/builds";
+import { snapshotDisplayStatusSchema } from "@ovr/api/contracts/builds";
 
-import { getBuildStatusLabel } from "@/lib/components/BuildStatus";
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
 import { getStorybookPath } from "@/lib/utils/storage";
@@ -12,10 +11,6 @@ import { BuildHeader } from "./_components/build-header/BuildHeader";
 import { SnapshotFilters } from "./_components/snapshot-grid/SnapshotFilters";
 import { SnapshotGrid } from "./_components/snapshot-grid/SnapshotGrid";
 import { SnapshotsSearchField } from "./_components/snapshot-grid/SnapshotsSearchField";
-import {
-  decodeViewportFilterValue,
-  encodeViewportFilterValue,
-} from "./_components/snapshot-grid/viewportFilterValue";
 
 const PAGE_SIZE = 60;
 
@@ -31,7 +26,7 @@ const searchParamsSchema = z.object({
     .catch(undefined)
     .transform((value) => value || undefined),
   status: z.preprocess(toArray, z.array(snapshotDisplayStatusSchema)).optional().catch(undefined),
-  browser: z.preprocess(toArray, z.array(browserSchema)).optional().catch(undefined),
+  browser: z.preprocess(toArray, z.array(z.string())).optional().catch(undefined),
   viewport: z.preprocess(toArray, z.array(z.string())).optional().catch(undefined),
 });
 
@@ -41,7 +36,7 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
     search,
     status: statuses = [],
     browser: browsers = [],
-    viewport: viewports = [],
+    viewport: viewportNames = [],
   } = searchParamsSchema.parse(await searchParams);
 
   const [
@@ -61,7 +56,7 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
       buildId,
       statuses,
       browsers,
-      viewports: viewports.map(decodeViewportFilterValue).filter((viewport) => viewport !== null),
+      viewportNames,
       search,
       limit: PAGE_SIZE,
       offset: 0,
@@ -83,21 +78,6 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
     serverError();
   }
 
-  const presentStatuses = new Set(statusesResult.statuses);
-  const statusOptions = snapshotDisplayStatusSchema.options
-    .filter((status) => presentStatuses.has(status))
-    .map((status) => ({ value: status, label: getBuildStatusLabel(status) }));
-
-  const presentBrowsers = new Set(browsersResult.browsers);
-  const browserOptions = browserSchema.options
-    .filter((browser) => presentBrowsers.has(browser))
-    .map((browser) => ({ value: browser, label: browser }));
-
-  const viewportOptions = viewportsResult.viewports.map((viewport) => ({
-    value: encodeViewportFilterValue(viewport),
-    label: viewport.viewportName,
-  }));
-
   const { build } = buildResult;
   const hasStorybook =
     build.buildType === "storybook" &&
@@ -113,10 +93,10 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
         <SnapshotFilters
           statuses={statuses}
           browsers={browsers}
-          viewports={viewports}
-          statusOptions={statusOptions}
-          browserOptions={browserOptions}
-          viewportOptions={viewportOptions}
+          viewportNames={viewportNames}
+          availableStatuses={statusesResult.statuses}
+          availableBrowsers={browsersResult.browsers}
+          availableViewportNames={viewportsResult.viewportNames}
         />
         <SnapshotsSearchField
           projectId={projectId}
