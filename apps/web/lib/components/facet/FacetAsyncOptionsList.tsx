@@ -59,11 +59,11 @@ export function FacetAsyncOptionsList<T extends string>({
         </InputGroupAddon>
       </InputGroup>
       <div className="max-h-[var(--available-height,70vh)] overflow-y-auto">
-        <div className="flex flex-col gap-0.5">
+        <div className="flex flex-col gap-0.5 py-2">
           {visibleOptions.map((option) => (
             <label
               key={option.value}
-              className="flex min-w-0 cursor-pointer items-center gap-2 rounded-lg px-1.5 py-2.5 hover:bg-ovr-hover"
+              className="flex min-w-0 cursor-pointer items-center gap-2 rounded-lg py-1 hover:bg-ovr-hover"
             >
               <Checkbox
                 checked={draft.includes(option.value)}
