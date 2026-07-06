@@ -10,12 +10,14 @@ type BuildsBranchFacetContentProps = {
   projectId: string;
   selected: string[];
   onApply: (next: string[]) => void;
+  onClear: () => void;
 };
 
 export const BuildsBranchFacetContent = ({
   projectId,
   selected,
   onApply,
+  onClear,
 }: BuildsBranchFacetContentProps) => {
   const [search, setSearch] = useState("");
 
@@ -35,7 +37,7 @@ export const BuildsBranchFacetContent = ({
       isLoading={isLoading}
       onSearchChange={setSearch}
       onApply={onApply}
-      onClear={() => onApply([])}
+      onClear={onClear}
     />
   );
 };

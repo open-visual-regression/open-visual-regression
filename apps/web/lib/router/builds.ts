@@ -202,6 +202,22 @@ export const listAuthors = os.builds.listAuthors
   })
   .actionable();
 
+export const listStatuses = os.builds.listStatuses
+  .use(authenticatedMiddleware)
+  .handler(async ({ input, context }) => {
+    const project = await dbClient.projects.getProject({
+      projectId: input.projectId,
+      organizationId: context.organizationId,
+    });
+
+    if (!project) {
+      throw new ORPCError("NOT_FOUND");
+    }
+
+    return { statuses: await dbClient.builds.findStatuses(input.projectId) };
+  })
+  .actionable();
+
 export const getOne = os.builds.getOne
   .use(authenticatedMiddleware)
   .use(organizationBuildMiddleware)

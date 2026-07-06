@@ -195,6 +195,45 @@ export type FindAllResult = Awaited<ReturnType<typeof findAll>>;
 
 export type BuildListItemDbSchema = FindAllResult["builds"][number];
 
+export type BuildDisplayStatus =
+  | "queued"
+  | "processing"
+  | "needs_review"
+  | "passed"
+  | "approved"
+  | "rejected"
+  | "error";
+
+const buildDisplayStatusExpr = sql<BuildDisplayStatus>`case
+  when ${builds.processingStatus} = 'error' then 'error'
+  when ${builds.processingStatus} = 'queued' then 'queued'
+  when ${builds.processingStatus} = 'processing' then 'processing'
+  when ${builds.reviewStatus} = 'rejected' then 'rejected'
+  when ${builds.reviewStatus} = 'needs_review' then 'needs_review'
+  when ${builds.reviewStatus} = 'approved' then 'approved'
+  else 'passed'
+end`;
+
+const buildStatusDisplayOrder: BuildDisplayStatus[] = [
+  "queued",
+  "processing",
+  "needs_review",
+  "passed",
+  "approved",
+  "rejected",
+  "error",
+];
+
+export const findStatuses = async (projectId: string): Promise<BuildDisplayStatus[]> => {
+  const rows = await db
+    .selectDistinct({ status: buildDisplayStatusExpr })
+    .from(builds)
+    .where(eq(builds.projectId, projectId));
+
+  const present = new Set(rows.map((row) => row.status));
+  return buildStatusDisplayOrder.filter((status) => present.has(status));
+};
+
 type SearchOptions = {
   search?: string;
   limit: number;

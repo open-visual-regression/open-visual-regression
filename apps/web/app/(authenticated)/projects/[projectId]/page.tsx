@@ -6,6 +6,7 @@ import { buildStatusSchema } from "@ovr/api/contracts/builds";
 import { Icon, SettingsIcon } from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
 
+import { getBuildStatusLabel } from "@/lib/components/BuildStatus";
 import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
 import { buildsListInfiniteOptions } from "@/lib/orpc/builds-query";
 import { getQueryClient } from "@/lib/orpc/query-client";
@@ -37,22 +38,8 @@ export default async function ProjectPage(props: ProjectPageProps) {
     branch: branches = [],
     author: authors = [],
   } = searchParamsSchema.parse(await props.searchParams);
-  const queryClient = getQueryClient();
 
-  const [[projectError, projectResult]] = await Promise.all([
-    serverClient.projects.getOne({ projectId }),
-    queryClient.prefetchInfiniteQuery(
-      orpcServer.builds.list.infiniteOptions(
-        buildsListInfiniteOptions(projectId, search, { statuses, branches, authors }),
-      ),
-    ),
-    queryClient.prefetchQuery(
-      orpcServer.builds.listBranches.queryOptions({ input: { projectId, search: undefined } }),
-    ),
-    queryClient.prefetchQuery(
-      orpcServer.builds.listAuthors.queryOptions({ input: { projectId, search: undefined } }),
-    ),
-  ]);
+  const [projectError, projectResult] = await serverClient.projects.getOne({ projectId });
 
   if (projectError?.status === 404) {
     notFound();
@@ -61,6 +48,36 @@ export default async function ProjectPage(props: ProjectPageProps) {
   if (projectError) {
     serverError();
   }
+
+  const queryClient = getQueryClient();
+
+  const [statusesResult, branchesResult, authorsResult] = await Promise.all([
+    queryClient.fetchQuery(orpcServer.builds.listStatuses.queryOptions({ input: { projectId } })),
+    queryClient.fetchQuery(
+      orpcServer.builds.listBranches.queryOptions({ input: { projectId, search: undefined } }),
+    ),
+    queryClient.fetchQuery(
+      orpcServer.builds.listAuthors.queryOptions({ input: { projectId, search: undefined } }),
+    ),
+    queryClient.prefetchInfiniteQuery(
+      orpcServer.builds.list.infiniteOptions(
+        buildsListInfiniteOptions(projectId, search, { statuses, branches, authors }),
+      ),
+    ),
+  ]);
+
+  const statusOptions = statusesResult.statuses.map((status) => ({
+    value: status,
+    label: getBuildStatusLabel(status),
+  }));
+  const branchOptions = branchesResult.branches.map((branch) => ({
+    value: branch,
+    label: branch,
+  }));
+  const authorOptions = authorsResult.authors.map((author) => ({
+    value: author,
+    label: author,
+  }));
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3">
@@ -79,6 +96,9 @@ export default async function ProjectPage(props: ProjectPageProps) {
           statuses={statuses}
           branches={branches}
           authors={authors}
+          statusOptions={statusOptions}
+          branchOptions={branchOptions}
+          authorOptions={authorOptions}
         />
         <BuildsSearchField
           projectId={projectId}

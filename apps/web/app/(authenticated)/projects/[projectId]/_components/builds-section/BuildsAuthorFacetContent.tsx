@@ -10,12 +10,14 @@ type BuildsAuthorFacetContentProps = {
   projectId: string;
   selected: string[];
   onApply: (next: string[]) => void;
+  onClear: () => void;
 };
 
 export const BuildsAuthorFacetContent = ({
   projectId,
   selected,
   onApply,
+  onClear,
 }: BuildsAuthorFacetContentProps) => {
   const [search, setSearch] = useState("");
 
@@ -35,7 +37,7 @@ export const BuildsAuthorFacetContent = ({
       isLoading={isLoading}
       onSearchChange={setSearch}
       onApply={onApply}
-      onClear={() => onApply([])}
+      onClear={onClear}
     />
   );
 };

@@ -200,6 +200,18 @@ export const listAuthorsContract = oc
   .input(listBuildFilterOptionsInputSchema)
   .output(listAuthorsOutputSchema);
 
+export const listBuildStatusesInputSchema = z.object({
+  projectId: z.uuidv7(),
+});
+
+export const listBuildStatusesOutputSchema = z.object({
+  statuses: z.array(buildStatusSchema),
+});
+
+export const listStatusesContract = oc
+  .input(listBuildStatusesInputSchema)
+  .output(listBuildStatusesOutputSchema);
+
 export const contract = {
   createBuild: createBuildContract,
   confirmUpload: confirmUploadContract,
@@ -208,4 +220,5 @@ export const contract = {
   getOne: getBuildContract,
   listBranches: listBranchesContract,
   listAuthors: listAuthorsContract,
+  listStatuses: listStatusesContract,
 } as const;

@@ -662,6 +662,88 @@ describe("builds", () => {
     });
   });
 
+  describe("findStatuses", () => {
+    test("should return the distinct derived display statuses present in the project, in canonical order", async ({
+      project,
+      user,
+    }) => {
+      await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: user.id,
+      });
+
+      const passedBuild = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/b/artifact",
+        createdBy: user.id,
+      });
+      await dbClient.builds.updateResult(passedBuild!.id, {
+        processingStatus: "success",
+        reviewStatus: "not_required",
+      });
+
+      const needsReviewBuild = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "c".repeat(40),
+        artifactPath: "builds/c/artifact",
+        createdBy: user.id,
+      });
+      await dbClient.builds.updateResult(needsReviewBuild!.id, {
+        processingStatus: "success",
+        reviewStatus: "needs_review",
+      });
+
+      const duplicateNeedsReviewBuild = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "d".repeat(40),
+        artifactPath: "builds/d/artifact",
+        createdBy: user.id,
+      });
+      await dbClient.builds.updateResult(duplicateNeedsReviewBuild!.id, {
+        processingStatus: "success",
+        reviewStatus: "needs_review",
+      });
+
+      const statuses = await dbClient.builds.findStatuses(project.id);
+
+      expect(statuses).toEqual(["queued", "needs_review", "passed"]);
+    });
+
+    test("should not return statuses for a different project", async ({
+      organization,
+      project,
+      user,
+    }) => {
+      const [otherProject] = await db
+        .insert(projects)
+        .values({
+          name: "Other Project",
+          gitMainBranch: "main",
+          organizationId: organization.id,
+          creatorId: user.id,
+        })
+        .returning();
+
+      await dbClient.builds.create({
+        projectId: otherProject!.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: user.id,
+      });
+
+      const statuses = await dbClient.builds.findStatuses(project.id);
+      expect(statuses).toEqual([]);
+    });
+  });
+
   describe("findStale", () => {
     const OLD_TIMESTAMP = "2020-01-01T00:00:00.000Z";
     const CUTOFF = new Date(Date.now() - 30 * 60 * 1000).toISOString();
