@@ -151,7 +151,7 @@ describe("SnapshotActionsRow", () => {
   it("should link to the previous snapshot", () => {
     renderComponent();
 
-    expect(screen.getByRole("button", { name: /prev/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /prev/i })).toHaveAttribute(
       "href",
       `/projects/${projectId}/builds/${buildId}/snapshots/${prevSnapshotId}`,
     );
@@ -160,7 +160,7 @@ describe("SnapshotActionsRow", () => {
   it("should link to the next snapshot", () => {
     renderComponent();
 
-    expect(screen.getByRole("button", { name: /next/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /next/i })).toHaveAttribute(
       "href",
       `/projects/${projectId}/builds/${buildId}/snapshots/${nextSnapshotId}`,
     );

@@ -37,6 +37,7 @@ debug-storybook.log
 # Misc
 .DS_Store
 *.pem
+.scratchpad
 
 # Editor
 .zed/

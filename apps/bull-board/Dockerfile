@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 #
 # Build from the repository root:
-#   docker build -f apps/bull-board/Dockerfile -t ovr/bull-board .
+#   docker build -f apps/bull-board/Dockerfile -t open-visual-regression/bull-board .
 
 ARG NODE_VERSION=24.16.0
 

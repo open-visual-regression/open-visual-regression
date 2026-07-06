@@ -24,7 +24,12 @@ export const ButtonLink = ({
       {children}
     </Button>
   ) : (
-    <Button {...props} render={<Link href={href} target={target} rel={rel} />} nativeButton={false}>
+    <Button
+      {...props}
+      render={<Link href={href} target={target} rel={rel} />}
+      nativeButton={false}
+      role={undefined}
+    >
       {children}
     </Button>
   );

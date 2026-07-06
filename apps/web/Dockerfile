@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 #
 # Build from the repository root:
-#   docker build -f apps/web/Dockerfile -t ovr/web .
+#   docker build -f apps/web/Dockerfile -t open-visual-regression/web .
 
 ARG NODE_VERSION=24.16.0
 

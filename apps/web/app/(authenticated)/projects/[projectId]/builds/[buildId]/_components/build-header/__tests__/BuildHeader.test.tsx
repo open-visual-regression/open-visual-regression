@@ -16,33 +16,29 @@ vi.mock("next/navigation");
 const mockBulkCastVote = vi.mocked(serverClient.diffs.bulkCastVote);
 const mockRefresh = vi.mocked(useRouter)().refresh;
 
-const renderComponent = (
-  props: Omit<BuildHeaderProps, "storybookHref"> & Partial<Pick<BuildHeaderProps, "storybookHref">>,
-) =>
+const renderComponent = ({
+  build = mocks.build.generateBuild(),
+  storybookHref = null,
+  snapshotCounts = {
+    passed: 3,
+    approved: 0,
+    needs_review: 2,
+    rejected: 0,
+    error: 1,
+    queued: 4,
+    processing: 0,
+  },
+}: Partial<BuildHeaderProps> = {}) =>
   render(
     <>
-      <BuildHeader storybookHref={null} {...props} />
+      <BuildHeader build={build} snapshotCounts={snapshotCounts} storybookHref={storybookHref} />
       <Toaster />
     </>,
   );
 
 describe("BuildHeader", () => {
   it("should render the SegmentedProgress segments with the correct counts", () => {
-    const build = mocks.build.generateBuild({
-      status: "needs_review",
-    });
-    renderComponent({
-      build,
-      snapshotCounts: {
-        passed: 3,
-        approved: 0,
-        needs_review: 2,
-        rejected: 0,
-        error: 1,
-        queued: 4,
-        processing: 0,
-      },
-    });
+    renderComponent({ build: mocks.build.generateBuild({ status: "needs_review" }) });
 
     expect(screen.getByText("10 snapshots")).toBeVisible();
     expect(screen.getByRole("listitem", { name: "3 passed" })).toBeVisible();
@@ -52,11 +48,8 @@ describe("BuildHeader", () => {
   });
 
   it("should disable both bulk actions when there are no reviewable snapshots", () => {
-    const build = mocks.build.generateBuild({
-      status: "needs_review",
-    });
     renderComponent({
-      build,
+      build: mocks.build.generateBuild({ status: "needs_review" }),
       snapshotCounts: {
         passed: 3,
         approved: 0,
@@ -73,11 +66,8 @@ describe("BuildHeader", () => {
   });
 
   it("should enable reject all when every reviewable snapshot is already approved", () => {
-    const build = mocks.build.generateBuild({
-      status: "approved",
-    });
     renderComponent({
-      build,
+      build: mocks.build.generateBuild({ status: "approved" }),
       snapshotCounts: {
         passed: 3,
         approved: 2,
@@ -94,11 +84,8 @@ describe("BuildHeader", () => {
   });
 
   it("should enable approve all when at least one snapshot is rejected but others are still approved", () => {
-    const build = mocks.build.generateBuild({
-      status: "rejected",
-    });
     renderComponent({
-      build,
+      build: mocks.build.generateBuild({ status: "rejected" }),
       snapshotCounts: {
         passed: 3,
         approved: 1,
@@ -116,21 +103,8 @@ describe("BuildHeader", () => {
 
   it("should approve all needs-review snapshots", async ({ user }) => {
     mockBulkCastVote.mockResolvedValue([null, undefined]);
-    const build = mocks.build.generateBuild({
-      status: "needs_review",
-    });
-    renderComponent({
-      build,
-      snapshotCounts: {
-        passed: 3,
-        approved: 0,
-        needs_review: 2,
-        rejected: 0,
-        error: 1,
-        queued: 4,
-        processing: 0,
-      },
-    });
+    const build = mocks.build.generateBuild({ status: "needs_review" });
+    renderComponent({ build });
 
     await user.click(screen.getByRole("button", { name: /approve all/i }));
 
@@ -140,21 +114,8 @@ describe("BuildHeader", () => {
 
   it("should reject all needs-review snapshots", async ({ user }) => {
     mockBulkCastVote.mockResolvedValue([null, undefined]);
-    const build = mocks.build.generateBuild({
-      status: "needs_review",
-    });
-    renderComponent({
-      build,
-      snapshotCounts: {
-        passed: 3,
-        approved: 0,
-        needs_review: 2,
-        rejected: 0,
-        error: 1,
-        queued: 4,
-        processing: 0,
-      },
-    });
+    const build = mocks.build.generateBuild({ status: "needs_review" });
+    renderComponent({ build });
 
     await user.click(screen.getByRole("button", { name: /^reject all$/i }));
 
@@ -164,21 +125,7 @@ describe("BuildHeader", () => {
 
   it("should show an error toast if approving all fails", async ({ user }) => {
     mockBulkCastVote.mockResolvedValue([createORPCError("INTERNAL_SERVER_ERROR"), undefined]);
-    const build = mocks.build.generateBuild({
-      status: "needs_review",
-    });
-    renderComponent({
-      build,
-      snapshotCounts: {
-        passed: 3,
-        approved: 0,
-        needs_review: 2,
-        rejected: 0,
-        error: 1,
-        queued: 4,
-        processing: 0,
-      },
-    });
+    renderComponent({ build: mocks.build.generateBuild({ status: "needs_review" }) });
 
     await user.click(screen.getByRole("button", { name: /approve all/i }));
 
@@ -188,21 +135,7 @@ describe("BuildHeader", () => {
 
   it("should show an error toast if rejecting all fails", async ({ user }) => {
     mockBulkCastVote.mockResolvedValue([createORPCError("INTERNAL_SERVER_ERROR"), undefined]);
-    const build = mocks.build.generateBuild({
-      status: "needs_review",
-    });
-    renderComponent({
-      build,
-      snapshotCounts: {
-        passed: 3,
-        approved: 0,
-        needs_review: 2,
-        rejected: 0,
-        error: 1,
-        queued: 4,
-        processing: 0,
-      },
-    });
+    renderComponent({ build: mocks.build.generateBuild({ status: "needs_review" }) });
 
     await user.click(screen.getByRole("button", { name: /^reject all$/i }));
 
@@ -211,33 +144,18 @@ describe("BuildHeader", () => {
   });
 
   it("should show approve all as disabled and labeled when the build is already approved", () => {
-    const build = mocks.build.generateBuild({
-      status: "approved",
-    });
-    renderComponent({
-      build,
-      snapshotCounts: {
-        passed: 3,
-        approved: 0,
-        needs_review: 2,
-        rejected: 0,
-        error: 1,
-        queued: 4,
-        processing: 0,
-      },
-    });
+    renderComponent({ build: mocks.build.generateBuild({ status: "approved" }) });
 
     expect(screen.getByRole("button", { name: /^approved$/i })).toBeDisabled();
     expect(screen.getByRole("button", { name: /^reject all$/i })).toBeEnabled();
   });
 
   it("should show the error alert when the build has an error message", () => {
-    const build = mocks.build.generateBuild({
-      status: "error",
-      errorMessage: "Build failed: unable to connect to the test runner.",
-    });
     renderComponent({
-      build,
+      build: mocks.build.generateBuild({
+        status: "error",
+        errorMessage: "Build failed: unable to connect to the test runner.",
+      }),
       snapshotCounts: {
         passed: 0,
         approved: 0,
@@ -255,44 +173,29 @@ describe("BuildHeader", () => {
   });
 
   it("should not show the error alert when the build has no error message", () => {
-    const build = mocks.build.generateBuild({
-      status: "needs_review",
-      errorMessage: null,
-    });
     renderComponent({
-      build,
-      snapshotCounts: {
-        passed: 3,
-        approved: 0,
-        needs_review: 2,
-        rejected: 0,
-        error: 1,
-        queued: 4,
-        processing: 0,
-      },
+      build: mocks.build.generateBuild({ status: "needs_review", errorMessage: null }),
     });
 
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   it("should show reject all as disabled and labeled when the build was rejected", () => {
-    const build = mocks.build.generateBuild({
-      status: "rejected",
-    });
-    renderComponent({
-      build,
-      snapshotCounts: {
-        passed: 3,
-        approved: 0,
-        needs_review: 2,
-        rejected: 0,
-        error: 1,
-        queued: 4,
-        processing: 0,
-      },
-    });
+    renderComponent({ build: mocks.build.generateBuild({ status: "rejected" }) });
 
     expect(screen.getByRole("button", { name: /^rejected$/i })).toBeDisabled();
     expect(screen.getByRole("button", { name: /^approve all$/i })).toBeEnabled();
+  });
+
+  it("should render the view storybook link when a storybook build exists", () => {
+    renderComponent({ storybookHref: "/api/storybook/mock-build/index.html" });
+
+    expect(screen.getByRole("link", { name: /view storybook/i })).toBeVisible();
+  });
+
+  it("should not render the view storybook link when there is no storybook build", () => {
+    renderComponent({ storybookHref: null });
+
+    expect(screen.queryByRole("link", { name: /view storybook/i })).not.toBeInTheDocument();
   });
 });
