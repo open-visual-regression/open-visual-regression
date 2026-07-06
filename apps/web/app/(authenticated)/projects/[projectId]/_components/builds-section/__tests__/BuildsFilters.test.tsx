@@ -1,9 +1,11 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { vi } from "vitest";
 
 import { type BuildStatus } from "@ovr/api/contracts/builds";
 
 import { type FacetOption } from "@/lib/components/facet/FacetOptionsList";
+import { orpc } from "@/lib/orpc/client";
 import { describe, expect, it, render, screen } from "@/test-utils";
 
 import { BuildsFilters } from "../BuildsFilters";
@@ -62,6 +64,42 @@ describe("BuildsFilters", () => {
     await user.click(screen.getByRole("button", { name: /^apply$/i }));
 
     expect(mockPush).toHaveBeenCalledWith("/?status=queued&status=error");
+  });
+
+  it("should search branches against the server when the branch facet is opened", async ({
+    user,
+  }) => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false, staleTime: Infinity } },
+    });
+    queryClient.setQueryData(
+      orpc.builds.listBranches.queryKey({ input: { projectId: PROJECT_ID, search: undefined } }),
+      { branches: ["main", "develop"] },
+    );
+
+    render(
+      <BuildsFilters
+        projectId={PROJECT_ID}
+        statuses={[]}
+        branches={[]}
+        authors={[]}
+        statusOptions={STATUS_OPTIONS}
+        branchOptions={BRANCH_OPTIONS}
+        authorOptions={AUTHOR_OPTIONS}
+      />,
+      {
+        wrapper: ({ children }) => (
+          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+        ),
+      },
+    );
+
+    await user.click(screen.getByRole("button", { name: /^branch\s+any$/i }));
+
+    // The async facet always renders a search box, unlike the static status facet.
+    expect(await screen.findByRole("textbox", { name: "search options" })).toBeVisible();
+    expect(await screen.findByRole("checkbox", { name: "main" })).toBeVisible();
+    expect(screen.getByRole("checkbox", { name: "develop" })).toBeVisible();
   });
 
   it("should reflect the applied branch on the branch facet trigger", () => {

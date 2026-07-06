@@ -1,10 +1,36 @@
+"use client";
+
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+
 import { type BuildStatus } from "@ovr/api/contracts/builds";
 
 import { FacetBar } from "@/lib/components/facet/FacetBar";
 import { type FacetOption } from "@/lib/components/facet/FacetOptionsList";
+import { orpc } from "@/lib/orpc/client";
 
-import { BuildsAuthorFacetContent } from "./BuildsAuthorFacetContent";
-import { BuildsBranchFacetContent } from "./BuildsBranchFacetContent";
+const useBranchSearch = (projectId: string, search: string) => {
+  const { data, isLoading } = useQuery({
+    ...orpc.builds.listBranches.queryOptions({ input: { projectId, search: search || undefined } }),
+    placeholderData: keepPreviousData,
+  });
+
+  return {
+    options: (data?.branches ?? []).map((branch) => ({ value: branch, label: branch })),
+    isLoading,
+  };
+};
+
+const useAuthorSearch = (projectId: string, search: string) => {
+  const { data, isLoading } = useQuery({
+    ...orpc.builds.listAuthors.queryOptions({ input: { projectId, search: search || undefined } }),
+    placeholderData: keepPreviousData,
+  });
+
+  return {
+    options: (data?.authors ?? []).map((author) => ({ value: author, label: author })),
+    isLoading,
+  };
+};
 
 type BuildsFiltersProps = {
   projectId: string;
@@ -36,18 +62,14 @@ export const BuildsFilters = ({
         label: "branch",
         options: branchOptions,
         selected: branches,
-        renderContent: ({ selected, onApply }) => (
-          <BuildsBranchFacetContent projectId={projectId} selected={selected} onApply={onApply} />
-        ),
+        useSearch: (search) => useBranchSearch(projectId, search),
       },
       {
         param: "author",
         label: "author",
         options: authorOptions,
         selected: authors,
-        renderContent: ({ selected, onApply }) => (
-          <BuildsAuthorFacetContent projectId={projectId} selected={selected} onApply={onApply} />
-        ),
+        useSearch: (search) => useAuthorSearch(projectId, search),
       },
     ]}
   />
