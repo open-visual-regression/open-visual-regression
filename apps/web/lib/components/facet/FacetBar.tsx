@@ -5,15 +5,15 @@ import { useState } from "react";
 
 import { Popover, PopoverContent } from "@ovr/ui/components/popover";
 
-import { FacetAsyncOptionsList } from "./FacetAsyncOptionsList";
 import { FacetMenuButton, type FacetMenuItem } from "./FacetMenuButton";
 import { FacetOptionsList, type FacetOption } from "./FacetOptionsList";
 import { FacetTrigger } from "./FacetTrigger";
 import { formatFacetValueLabel } from "./formatFacetValueLabel";
 
-export type FacetSearchResult = {
-  options: FacetOption<string>[];
-  isLoading: boolean;
+export type FacetContentProps = {
+  selected: string[];
+  onApply: (next: string[]) => void;
+  onClear: () => void;
 };
 
 export type FacetConfig = {
@@ -23,59 +23,33 @@ export type FacetConfig = {
   // so async facets still pass a first page here even though the popover searches.
   options: FacetOption<string>[];
   selected: string[];
-  // When provided, the popover searches options against the server instead of
-  // filtering the up-front list client-side (for facets that can be large).
-  useSearch?: (search: string) => FacetSearchResult;
+  // Overrides the default FacetOptionsList body, e.g. for a facet whose options
+  // are searched against the server rather than filtered client-side.
+  renderContent?: (props: FacetContentProps) => React.ReactNode;
 };
 
 type ResolvedFacet = FacetConfig & { onApply: (next: string[]) => void };
 
-const FacetAsyncBody = ({
-  useSearch,
-  selected,
-  onApply,
-  onClear,
-}: {
-  useSearch: (search: string) => FacetSearchResult;
-  selected: string[];
-  onApply: (next: string[]) => void;
-  onClear: () => void;
-}) => {
-  const [search, setSearch] = useState("");
-  const { options, isLoading } = useSearch(search);
-
-  return (
-    <FacetAsyncOptionsList
-      options={options}
-      selected={selected}
-      isLoading={isLoading}
-      onSearchChange={setSearch}
-      onApply={onApply}
-      onClear={onClear}
-    />
-  );
-};
-
 const FacetBody = ({
   options,
   selected,
-  useSearch,
+  renderContent,
   onApply,
   onClear,
 }: {
   options: FacetOption<string>[];
   selected: string[];
-  useSearch?: (search: string) => FacetSearchResult;
+  renderContent?: (props: FacetContentProps) => React.ReactNode;
   onApply: (next: string[]) => void;
   onClear: () => void;
 }) =>
-  useSearch ? (
-    <FacetAsyncBody useSearch={useSearch} selected={selected} onApply={onApply} onClear={onClear} />
+  renderContent ? (
+    renderContent({ selected, onApply, onClear })
   ) : (
     <FacetOptionsList options={options} selected={selected} onApply={onApply} onClear={onClear} />
   );
 
-const FacetPopover = ({ label, options, selected, useSearch, onApply }: ResolvedFacet) => {
+const FacetPopover = ({ label, options, selected, renderContent, onApply }: ResolvedFacet) => {
   const [open, setOpen] = useState(false);
   const labelByValue = new Map(options.map((option) => [option.value, option.label]));
 
@@ -92,7 +66,7 @@ const FacetPopover = ({ label, options, selected, useSearch, onApply }: Resolved
         <FacetBody
           options={options}
           selected={selected}
-          useSearch={useSearch}
+          renderContent={renderContent}
           onApply={(next) => {
             onApply(next);
             setOpen(false);
@@ -112,7 +86,7 @@ const toMenuItem = ({
   label,
   options,
   selected,
-  useSearch,
+  renderContent,
   onApply,
 }: ResolvedFacet): FacetMenuItem => ({
   key: param,
@@ -122,7 +96,7 @@ const toMenuItem = ({
     <FacetBody
       options={options}
       selected={selected}
-      useSearch={useSearch}
+      renderContent={renderContent}
       onApply={(next) => {
         onApply(next);
         close();
