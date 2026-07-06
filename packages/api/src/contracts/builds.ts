@@ -128,12 +128,18 @@ export const buildSchema = z.object({
   author: z.string().min(1).nullable(),
   errorMessage: z.string().nullable(),
   status: buildStatusSchema,
-  canceledBy: z.string().min(1).nullable(),
   buildType: buildTypeSchema,
   createdAt: z.string().nonempty(),
 });
 
 export type BuildSchema = z.infer<typeof buildSchema>;
+
+// The build detail view additionally resolves who canceled the build.
+export const buildDetailSchema = buildSchema.extend({
+  canceledBy: z.string().min(1).nullable(),
+});
+
+export type BuildDetailSchema = z.infer<typeof buildDetailSchema>;
 
 export const buildsCursorSchema = z.object({
   createdAt: z.string().nonempty(),
@@ -186,7 +192,7 @@ export const getBuildInputSchema = z.object({
 });
 
 export const getBuildOutputSchema = z.object({
-  build: buildSchema,
+  build: buildDetailSchema,
 });
 
 export const getBuildContract = oc.input(getBuildInputSchema).output(getBuildOutputSchema);

@@ -2,6 +2,10 @@ import { Queue } from "bullmq";
 import type { Job, JobsOptions } from "bullmq";
 import type IORedis from "ioredis";
 
+import { createLogger } from "@ovr/logger";
+
+const logger = createLogger("queue");
+
 export enum QueueName {
   BUILD_EXTRACT = "build-extract",
   SNAPSHOT_CAPTURE = "snapshot-capture",
@@ -126,12 +130,21 @@ export const enqueuePurgeMany = async (
   }
 };
 
-const removeJobById = async (queue: Queue, jobId: string): Promise<void> => {
+// Queue.remove is a no-op for a missing/finished job and only throws when the
+// job is active (locked). That case is expected — the worker guards it — so we
+// log at debug rather than swallow silently.
+const removeJob = async (job: Pick<Job, "id" | "remove">, queueName: string): Promise<void> => {
   try {
-    await queue.remove(jobId);
-  } catch {
-    // Best-effort: an active/locked job can't be removed and is instead
-    // no-op'd by the worker's canceled-state guards.
+    await job.remove();
+  } catch (err) {
+    logger.debug({ err, jobId: job.id, queue: queueName }, "skipped removing in-flight job");
+  }
+};
+
+const removeJobById = async (queue: Queue, jobId: string): Promise<void> => {
+  const job = await queue.getJob(jobId);
+  if (job) {
+    await removeJob(job, queue.name);
   }
 };
 
@@ -159,7 +172,7 @@ export const cancelBuildJobs = async (
     await Promise.all(
       captureJobs
         .filter((job) => (job.data as CaptureGroupJobPayload).buildId === buildId)
-        .map((job) => job.remove().catch(() => {})),
+        .map((job) => removeJob(job, captureQueue.name)),
     );
   } finally {
     await Promise.all([

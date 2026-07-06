@@ -22,7 +22,6 @@ import {
   diffs,
   projects,
   snapshots,
-  user,
   type BuildProcessingStatus,
   type BuildReviewStatus,
 } from "../schema";
@@ -51,9 +50,8 @@ export const updateProcessingStatus = async (
   return build;
 };
 
-// Marks the build canceled only while it is still queued or processing, so a
-// build that already finished (or was already canceled) is left untouched. The
-// returned row is undefined when no in-progress build matched.
+// Cancels the build only while it is still queued or processing; returns
+// undefined when it has already finished, so callers can no-op safely.
 export const cancelIfInProgress = async (id: string, canceledBy: string, tx: DbClient = db) => {
   const [build] = await tx
     .update(builds)
@@ -168,8 +166,6 @@ export const findAll = async ({
 
   const orderFn = sortDirection === "asc" ? asc : desc;
 
-  const canceledByUser = alias(user, "canceled_by_user");
-
   const [rows, [totalResult]] = await Promise.all([
     db
       .select({
@@ -185,11 +181,9 @@ export const findAll = async ({
         reviewStatus: builds.reviewStatus,
         buildType: builds.buildType,
         createdAt: builds.createdAt,
-        canceledByName: canceledByUser.name,
       })
       .from(builds)
       .innerJoin(projects, eq(builds.projectId, projects.id))
-      .leftJoin(canceledByUser, eq(builds.canceledBy, canceledByUser.id))
       .where(and(baseFilter, cursorFilter))
       .orderBy(orderFn(builds.createdAt), orderFn(builds.id))
       .limit(limit + 1),

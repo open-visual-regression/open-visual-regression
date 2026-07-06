@@ -101,8 +101,8 @@ describe("diffs", () => {
     });
   });
 
-  describe("markPendingAsCanceledForBuild", () => {
-    test("cancels pending diffs but leaves completed and errored ones untouched", async ({
+  describe("markPendingAs", () => {
+    test("transitions pending diffs but leaves completed and errored ones untouched", async ({
       build,
       captureConfiguration,
     }) => {
@@ -126,7 +126,7 @@ describe("diffs", () => {
         reviewStatus: "not_required",
       });
 
-      await dbClient.diffs.markPendingAsCanceledForBuild(build.id);
+      await dbClient.diffs.markPendingAs(build.id, "canceled");
 
       expect(await dbClient.diffs.findById(pendingDiff!.id)).toMatchObject({
         processingStatus: "canceled",
@@ -137,25 +137,6 @@ describe("diffs", () => {
       expect(await dbClient.diffs.findById(errorDiff!.id)).toMatchObject({
         processingStatus: "error",
       });
-    });
-  });
-
-  describe("findIdsForBuild", () => {
-    test("returns the ids of all diffs belonging to the build", async ({
-      build,
-      captureConfiguration,
-    }) => {
-      const [first, second] = await dbClient.snapshots.createMany({
-        values: [
-          { buildId: build.id, ...captureConfiguration, targetId: "a", status: "success" },
-          { buildId: build.id, ...captureConfiguration, targetId: "b", status: "success" },
-        ],
-      });
-      const firstDiff = await dbClient.diffs.create({ snapshotId: first!.id });
-      const secondDiff = await dbClient.diffs.create({ snapshotId: second!.id });
-
-      const ids = await dbClient.diffs.findIdsForBuild(build.id);
-      expect(ids.sort()).toEqual([firstDiff!.id, secondDiff!.id].sort());
     });
   });
 

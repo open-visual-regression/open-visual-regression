@@ -95,8 +95,11 @@ export const updateReviewStatusMany = async (ids: string[], reviewStatus: DiffRe
   return db.update(diffs).set({ reviewStatus }).where(inArray(diffs.id, ids)).returning();
 };
 
-export const markStuckAsErrorForBuild = async (
+// Transitions a build's still-pending diffs to a terminal status (error when
+// reaped, canceled when a build is canceled), leaving finished diffs as-is.
+export const markPendingAs = async (
   buildId: string,
+  status: DiffProcessingStatus,
   tx: DbClient = db,
 ): Promise<void> => {
   const rows = await tx
@@ -110,39 +113,7 @@ export const markStuckAsErrorForBuild = async (
     return;
   }
 
-  await tx.update(diffs).set({ processingStatus: "error" }).where(inArray(diffs.id, ids));
-};
-
-// Cancels diffs that are still queued for processing, leaving any that have
-// already completed or errored untouched.
-export const markPendingAsCanceledForBuild = async (
-  buildId: string,
-  tx: DbClient = db,
-): Promise<void> => {
-  const rows = await tx
-    .select({ id: diffs.id })
-    .from(diffs)
-    .innerJoin(snapshots, eq(diffs.snapshotId, snapshots.id))
-    .where(and(eq(snapshots.buildId, buildId), eq(diffs.processingStatus, "pending")));
-
-  const ids = rows.map((row) => row.id);
-  if (ids.length === 0) {
-    return;
-  }
-
-  await tx.update(diffs).set({ processingStatus: "canceled" }).where(inArray(diffs.id, ids));
-};
-
-// Diff ids for a build, used to remove queued diff jobs from the queue when a
-// build is canceled.
-export const findIdsForBuild = async (buildId: string): Promise<string[]> => {
-  const rows = await db
-    .select({ id: diffs.id })
-    .from(diffs)
-    .innerJoin(snapshots, eq(diffs.snapshotId, snapshots.id))
-    .where(eq(snapshots.buildId, buildId));
-
-  return rows.map((row) => row.id);
+  await tx.update(diffs).set({ processingStatus: status }).where(inArray(diffs.id, ids));
 };
 
 export const hasAllDoneForBuild = async (buildId: string) => {

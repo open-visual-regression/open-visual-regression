@@ -166,7 +166,6 @@ export const list = os.builds.list
         name: build.name,
         author: build.author,
         status: getBuildDisplayStatus(build),
-        canceledBy: build.canceledByName,
         buildType: build.buildType,
         createdAt: build.createdAt,
       })),

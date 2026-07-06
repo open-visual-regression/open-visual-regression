@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, ilike, inArray, ne, notInArray, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, inArray, ne, or, sql } from "drizzle-orm";
 
 import { db, type DbClient } from "../db";
 import { diffs, snapshots, type SnapshotStatus } from "../schema";
@@ -51,9 +51,8 @@ export const updateCaptureResult = async (
   id: string,
   { tx = db, ...result }: UpdateCaptureResultInput,
 ) => {
-  // A snapshot canceled while its capture was in flight is terminal; the late
-  // capture result must not resurrect it. The returned row is undefined when the
-  // snapshot was canceled, signalling the caller to skip downstream work.
+  // Won't resurrect a snapshot canceled mid-capture; returns undefined in that
+  // case so the caller skips enqueuing a diff.
   const [snapshot] = await tx
     .update(snapshots)
     .set(result)
@@ -62,24 +61,16 @@ export const updateCaptureResult = async (
   return snapshot;
 };
 
-export const markStuckAsError = async (buildId: string, tx: DbClient = db): Promise<void> => {
+// Transitions snapshots still queued or in flight to a terminal status (error
+// when reaped, canceled when a build is canceled), leaving finished ones as-is.
+export const markUnfinishedAs = async (
+  buildId: string,
+  status: SnapshotStatus,
+  tx: DbClient = db,
+): Promise<void> => {
   await tx
     .update(snapshots)
-    .set({ status: "error" })
-    .where(
-      and(
-        eq(snapshots.buildId, buildId),
-        notInArray(snapshots.status, ["success", "error", "canceled"]),
-      ),
-    );
-};
-
-// Cancels snapshots that are still queued or in flight, leaving any that have
-// already completed or errored untouched.
-export const markInFlightAsCanceled = async (buildId: string, tx: DbClient = db): Promise<void> => {
-  await tx
-    .update(snapshots)
-    .set({ status: "canceled" })
+    .set({ status })
     .where(
       and(eq(snapshots.buildId, buildId), inArray(snapshots.status, ["queued", "processing"])),
     );

@@ -612,6 +612,9 @@ importers:
 
   packages/queue:
     dependencies:
+      '@ovr/logger':
+        specifier: workspace:*
+        version: link:../logger
       bullmq:
         specifier: ^5.78.0
         version: 5.78.0

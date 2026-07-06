@@ -50,8 +50,7 @@ const captureSnapshotOnPage = async (
     throw new Error(`Snapshot not found: ${snapshotId}`);
   }
 
-  // Retried group job — skip snapshots an earlier attempt already captured.
-  // Also skip snapshots canceled while this group job was queued.
+  // Skip snapshots already captured by an earlier attempt or canceled since.
   if (snapshot.status === "success" || snapshot.status === "canceled") {
     return;
   }
@@ -102,7 +101,7 @@ const captureSnapshotOnPage = async (
     });
   });
 
-  // The snapshot was canceled while its capture was in flight — don't queue a diff.
+  // Falsy when the snapshot was canceled mid-capture — don't queue a diff.
   if (!captured) {
     return;
   }
@@ -111,8 +110,7 @@ const captureSnapshotOnPage = async (
 };
 
 export const markSnapshotErrored = async (snapshotId: string, error: unknown): Promise<void> => {
-  // A snapshot canceled mid-capture is terminal — a failing in-flight capture
-  // must not flip it back to error or queue a diff.
+  // Don't flip a snapshot canceled mid-capture back to error.
   const snapshot = await dbClient.snapshots.findById(snapshotId);
   if (snapshot?.status === "canceled") {
     return;
@@ -217,8 +215,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
     throw new Error(`Build not found for snapshot: ${snapshotId}`);
   }
 
-  // The build or snapshot was canceled while this diff was queued/in flight;
-  // leave the canceled state as-is rather than writing a diff result.
+  // Don't write a diff result for a canceled build or snapshot.
   if (build.processingStatus === "canceled" || snapshot.status === "canceled") {
     return;
   }

@@ -1,4 +1,4 @@
-import { type BuildSchema, type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
+import { type BuildDetailSchema, type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
 import { Alert, AlertDescription, AlertTitle } from "@ovr/ui/components/alert";
 import {
   Icon,
@@ -20,7 +20,7 @@ import { BuildCancelButton } from "./BuildCancelButton";
 import { BuildRejectButton } from "./BuildRejectButton";
 
 export type BuildHeaderProps = {
-  build: BuildSchema;
+  build: BuildDetailSchema;
   snapshotCounts: Record<SnapshotDisplayStatus, number>;
   storybookHref: string | null;
 };

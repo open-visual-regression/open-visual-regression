@@ -340,8 +340,8 @@ describe("snapshots", () => {
     });
   });
 
-  describe("markInFlightAsCanceled", () => {
-    test("cancels queued and processing snapshots but leaves completed ones untouched", async ({
+  describe("markUnfinishedAs", () => {
+    test("transitions queued and processing snapshots but leaves completed ones untouched", async ({
       build,
       captureConfiguration,
     }) => {
@@ -359,7 +359,7 @@ describe("snapshots", () => {
         ],
       });
 
-      await dbClient.snapshots.markInFlightAsCanceled(build.id);
+      await dbClient.snapshots.markUnfinishedAs(build.id, "canceled");
 
       expect(await dbClient.snapshots.findById(queued!.id)).toMatchObject({ status: "canceled" });
       expect(await dbClient.snapshots.findById(processing!.id)).toMatchObject({

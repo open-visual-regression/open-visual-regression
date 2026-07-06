@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker";
 
-import type { BuildSchema } from "@ovr/api/contracts/builds";
+import type { BuildDetailSchema } from "@ovr/api/contracts/builds";
 import type { BuildSnapshotSchema } from "@ovr/api/contracts/snapshots";
 
 export const generateBuildSnapshot = (
@@ -22,7 +22,7 @@ export const generateBuildSnapshot = (
   ...overrides,
 });
 
-export const generateBuild = (overrides?: Partial<BuildSchema>): BuildSchema => ({
+export const generateBuild = (overrides?: Partial<BuildDetailSchema>): BuildDetailSchema => ({
   id: faker.string.uuid(),
   project: {
     id: faker.string.uuid(),
