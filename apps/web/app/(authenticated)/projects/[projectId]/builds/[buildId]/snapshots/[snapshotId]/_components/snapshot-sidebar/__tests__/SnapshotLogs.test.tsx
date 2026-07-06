@@ -3,10 +3,10 @@ import { describe, expect, it, render, screen } from "@/test-utils";
 import { SnapshotLogs } from "../SnapshotLogs";
 
 describe("SnapshotLogs", () => {
-  it("should render nothing when there are no logs", () => {
-    const { container } = render(<SnapshotLogs logs={[]} />);
+  it("should render a message when there are no logs", () => {
+    render(<SnapshotLogs logs={[]} />);
 
-    expect(container).toBeEmptyDOMElement();
+    expect(screen.getByText("no logs to show")).toBeVisible();
   });
 
   it("should render each log line with its level and message", () => {

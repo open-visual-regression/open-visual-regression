@@ -1,4 +1,5 @@
 import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
+import { Typography } from "@ovr/ui/components/typography";
 
 import { MultiLineCodeBlock } from "@/lib/components/multi-line-code-block/MultiLineCodeBlock";
 import { MultiLineCodeBlockBody } from "@/lib/components/multi-line-code-block/MultiLineCodeBlockBody";
@@ -14,13 +15,13 @@ export type SnapshotLogsProps = {
 
 export const SnapshotLogs = ({ logs }: SnapshotLogsProps) => {
   if (logs.length === 0) {
-    return null;
+    return <Typography variant="body-muted">no logs to show</Typography>;
   }
 
   const lines = logs.map((log) => `[${log.level}] ${log.message}`);
 
   return (
-    <MultiLineCodeBlock lines={lines}>
+    <MultiLineCodeBlock lines={lines} wrap>
       <MultiLineCodeBlockHeader>
         <MultiLineCodeBlockLabel>logs</MultiLineCodeBlockLabel>
         <MultiLineCodeBlockLineCount />
