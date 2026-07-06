@@ -1,12 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
-import { ButtonLink } from "../ButtonLink";
+import { Icon, PlusIcon } from "@ovr/ui/components/icon";
 
-const PlusIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-  </svg>
-);
+import { ButtonLink } from "../ButtonLink";
 
 const Section = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="space-y-1">
@@ -57,7 +53,7 @@ export const KitchenSink: Story = {
       <Section label="icon sizes">
         {iconSizes.map((size) => (
           <ButtonLink key={size} href="#" size={size} aria-label={`plus ${size}`}>
-            <PlusIcon />
+            <Icon icon={PlusIcon} />
           </ButtonLink>
         ))}
       </Section>
