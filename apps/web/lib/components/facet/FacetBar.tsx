@@ -10,16 +10,44 @@ import { FacetOptionsList, type FacetOption } from "./FacetOptionsList";
 import { FacetTrigger } from "./FacetTrigger";
 import { formatFacetValueLabel } from "./formatFacetValueLabel";
 
+export type FacetContentProps = {
+  selected: string[];
+  onApply: (next: string[]) => void;
+  onClear: () => void;
+};
+
 export type FacetConfig = {
   param: string;
   label: string;
   options: FacetOption<string>[];
   selected: string[];
+  // Overrides the default (fully-loaded) FacetOptionsList body, e.g. for a facet
+  // whose options are searched against the server rather than known upfront.
+  renderContent?: (props: FacetContentProps) => React.ReactNode;
 };
 
 type ResolvedFacet = FacetConfig & { onApply: (next: string[]) => void };
 
-const FacetPopover = ({ label, options, selected, onApply }: ResolvedFacet) => {
+const FacetBody = ({
+  options,
+  selected,
+  renderContent,
+  onApply,
+  onClear,
+}: {
+  options: FacetOption<string>[];
+  selected: string[];
+  renderContent?: (props: FacetContentProps) => React.ReactNode;
+  onApply: (next: string[]) => void;
+  onClear: () => void;
+}) =>
+  renderContent ? (
+    renderContent({ selected, onApply, onClear })
+  ) : (
+    <FacetOptionsList options={options} selected={selected} onApply={onApply} onClear={onClear} />
+  );
+
+const FacetPopover = ({ label, options, selected, renderContent, onApply }: ResolvedFacet) => {
   const [open, setOpen] = useState(false);
   const labelByValue = new Map(options.map((option) => [option.value, option.label]));
 
@@ -33,9 +61,10 @@ const FacetPopover = ({ label, options, selected, onApply }: ResolvedFacet) => {
         active={selected.length > 0}
       />
       <PopoverContent>
-        <FacetOptionsList
+        <FacetBody
           options={options}
           selected={selected}
+          renderContent={renderContent}
           onApply={(next) => {
             onApply(next);
             setOpen(false);
@@ -55,15 +84,17 @@ const toMenuItem = ({
   label,
   options,
   selected,
+  renderContent,
   onApply,
 }: ResolvedFacet): FacetMenuItem => ({
   key: param,
   label,
   active: selected.length > 0,
   content: (close) => (
-    <FacetOptionsList
+    <FacetBody
       options={options}
       selected={selected}
+      renderContent={renderContent}
       onApply={(next) => {
         onApply(next);
         close();

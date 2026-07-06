@@ -70,6 +70,14 @@ export default async function ProjectPage(props: ProjectPageProps) {
     value: status,
     label: getBuildStatusLabel(status),
   }));
+  const branchOptions = branchesResult.branches.map((branch) => ({
+    value: branch,
+    label: branch,
+  }));
+  const authorOptions = authorsResult.authors.map((author) => ({
+    value: author,
+    label: author,
+  }));
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3">
@@ -89,8 +97,8 @@ export default async function ProjectPage(props: ProjectPageProps) {
           branches={branches}
           authors={authors}
           statusOptions={statusOptions}
-          branchOptions={branchesResult.branches}
-          authorOptions={authorsResult.authors}
+          branchOptions={branchOptions}
+          authorOptions={authorOptions}
         />
         <BuildsSearchField
           projectId={projectId}

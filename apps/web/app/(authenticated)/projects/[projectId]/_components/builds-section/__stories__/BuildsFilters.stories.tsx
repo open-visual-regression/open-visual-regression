@@ -11,9 +11,15 @@ const STATUS_OPTIONS = [
   { value: "error" as const, label: "error" },
 ];
 
-const BRANCH_OPTIONS = ["main", "develop"];
+const BRANCH_OPTIONS = [
+  { value: "main", label: "main" },
+  { value: "develop", label: "develop" },
+];
 
-const AUTHOR_OPTIONS = ["Jordan Lee", "Alex Kim"];
+const AUTHOR_OPTIONS = [
+  { value: "Jordan Lee", label: "Jordan Lee" },
+  { value: "Alex Kim", label: "Alex Kim" },
+];
 
 const meta: Meta<typeof BuildsFilters> = {
   title: "Web/BuildsFilters",
