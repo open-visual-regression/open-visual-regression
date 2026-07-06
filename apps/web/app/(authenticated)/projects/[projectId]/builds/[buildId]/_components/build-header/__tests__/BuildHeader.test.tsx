@@ -45,7 +45,7 @@ describe("BuildHeader", () => {
     });
 
     expect(screen.getByText("10 snapshots")).toBeVisible();
-    expect(screen.getByRole("listitem", { name: "3 passed" })).toBeVisible();
+    expect(screen.getByRole("listitem", { name: "3 auto approved" })).toBeVisible();
     expect(screen.getByRole("listitem", { name: "2 needs review" })).toBeVisible();
     expect(screen.getByRole("listitem", { name: "1 error" })).toBeVisible();
     expect(screen.getByRole("listitem", { name: "4 queued" })).toBeVisible();
