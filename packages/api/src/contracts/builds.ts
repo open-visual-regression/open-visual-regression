@@ -7,6 +7,8 @@ export type BuildProcessingStatus = z.infer<typeof buildProcessingStatusSchema>;
 
 export const buildReviewStatusSchema = z.enum([
   "not_required",
+  "unchanged",
+  "auto_approved",
   "needs_review",
   "approved",
   "rejected",
@@ -18,7 +20,8 @@ export const buildStatusSchema = z.enum([
   "queued",
   "processing",
   "needs_review",
-  "passed",
+  "unchanged",
+  "auto_approved",
   "approved",
   "rejected",
   "error",
@@ -157,7 +160,8 @@ export const listBuildsContract = oc
   .output(listBuildsOutputSchema);
 
 export const snapshotDisplayStatusSchema = z.enum([
-  "passed",
+  "unchanged",
+  "auto_approved",
   "approved",
   "needs_review",
   "rejected",

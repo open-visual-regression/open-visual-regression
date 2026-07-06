@@ -96,7 +96,8 @@ export const listOutputSchema = z.object({
 export const listContract = oc.input(listInputSchema).output(listOutputSchema);
 
 export const snapshotCountsSchema = z.object({
-  passed: z.number().int().nonnegative(),
+  unchanged: z.number().int().nonnegative(),
+  auto_approved: z.number().int().nonnegative(),
   approved: z.number().int().nonnegative(),
   needs_review: z.number().int().nonnegative(),
   rejected: z.number().int().nonnegative(),

@@ -28,6 +28,8 @@ export type BuildProcessingStatus = (typeof buildProcessingStatusEnum.enumValues
 
 export const buildReviewStatusEnum = pgEnum("build_review_status", [
   "not_required",
+  "unchanged",
+  "auto_approved",
   "needs_review",
   "approved",
   "rejected",

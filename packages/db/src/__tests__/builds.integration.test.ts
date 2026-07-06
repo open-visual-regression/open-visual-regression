@@ -414,16 +414,16 @@ describe("builds", () => {
         reviewStatus: "approved",
       });
 
-      const passedBuild = await dbClient.builds.create({
+      const unchangedBuild = await dbClient.builds.create({
         projectId: project.id,
         branch: "main",
         commitSha: "c".repeat(40),
         artifactPath: "builds/c/artifact",
         createdBy: user.id,
       });
-      await dbClient.builds.updateResult(passedBuild!.id, {
+      await dbClient.builds.updateResult(unchangedBuild!.id, {
         processingStatus: "success",
-        reviewStatus: "not_required",
+        reviewStatus: "unchanged",
       });
 
       const { builds, total } = await dbClient.builds.findAll({
@@ -439,7 +439,7 @@ describe("builds", () => {
       expect(builds.map((build) => build.id).sort()).toEqual(
         [queuedBuild.id, approvedBuild!.id].sort(),
       );
-      expect(builds.map((build) => build.id)).not.toContain(passedBuild!.id);
+      expect(builds.map((build) => build.id)).not.toContain(unchangedBuild!.id);
     });
 
     test("should only return builds matching one of the given branches", async ({

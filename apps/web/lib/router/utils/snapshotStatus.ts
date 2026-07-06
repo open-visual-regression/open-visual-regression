@@ -38,5 +38,9 @@ export const getSnapshotDisplayStatus = (
     return "approved";
   }
 
-  return "passed";
+  if ((diff.pixelDiffCount ?? 0) > 0) {
+    return "auto_approved";
+  }
+
+  return "unchanged";
 };

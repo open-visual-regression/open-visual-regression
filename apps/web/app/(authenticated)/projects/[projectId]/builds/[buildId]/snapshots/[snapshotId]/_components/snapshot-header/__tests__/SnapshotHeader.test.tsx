@@ -36,7 +36,7 @@ describe("SnapshotHeader", () => {
 
   it("should not show the error alert when the snapshot did not fail to capture", () => {
     const build = mocks.build.generateBuild();
-    render(<SnapshotHeader snapshot={{ ...snapshot, status: "passed" }} build={build} />);
+    render(<SnapshotHeader snapshot={{ ...snapshot, status: "unchanged" }} build={build} />);
 
     expect(screen.queryByText("Error")).not.toBeInTheDocument();
   });

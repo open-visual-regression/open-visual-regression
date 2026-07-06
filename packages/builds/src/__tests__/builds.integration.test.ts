@@ -35,7 +35,11 @@ const findExtractJob = async (connection: Redis, buildId: string) => {
   }
 };
 
-type SeedDiffStatus = { processingStatus: DiffProcessingStatus; reviewStatus: DiffReviewStatus };
+type SeedDiffStatus = {
+  processingStatus: DiffProcessingStatus;
+  reviewStatus: DiffReviewStatus;
+  pixelDiffCount?: number;
+};
 type Viewport = {
   browser: string;
   viewportWidth: number;
@@ -268,14 +272,48 @@ describe("builds", () => {
       });
     });
 
-    test("marks the build review status as not_required when there are no diffs", async ({
+    test("marks the build review status as unchanged when there are no diffs", async ({
       mainBuild,
     }) => {
       await finalizeBuild(mainBuild.id);
 
       expect(await dbClient.builds.findById(mainBuild.id)).toMatchObject({
         processingStatus: "success",
-        reviewStatus: "not_required",
+        reviewStatus: "unchanged",
+      });
+    });
+
+    test("marks the build review status as unchanged when every auto-resolved diff had no pixel changes", async ({
+      mainBuild,
+      captureConfiguration,
+    }) => {
+      await seedDiffs(mainBuild.id, captureConfiguration, [
+        { processingStatus: "success", reviewStatus: "not_required", pixelDiffCount: 0 },
+        { processingStatus: "success", reviewStatus: "not_required", pixelDiffCount: 0 },
+      ]);
+
+      await finalizeBuild(mainBuild.id);
+
+      expect(await dbClient.builds.findById(mainBuild.id)).toMatchObject({
+        processingStatus: "success",
+        reviewStatus: "unchanged",
+      });
+    });
+
+    test("marks the build review status as auto_approved when any auto-resolved diff had pixel changes", async ({
+      mainBuild,
+      captureConfiguration,
+    }) => {
+      await seedDiffs(mainBuild.id, captureConfiguration, [
+        { processingStatus: "success", reviewStatus: "not_required", pixelDiffCount: 0 },
+        { processingStatus: "success", reviewStatus: "not_required", pixelDiffCount: 320 },
+      ]);
+
+      await finalizeBuild(mainBuild.id);
+
+      expect(await dbClient.builds.findById(mainBuild.id)).toMatchObject({
+        processingStatus: "success",
+        reviewStatus: "auto_approved",
       });
     });
   });

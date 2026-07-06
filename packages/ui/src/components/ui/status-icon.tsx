@@ -2,6 +2,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import type { LucideIcon } from "lucide-react";
 import {
   AlertCircleIcon,
+  CircleCheckBigIcon,
   CircleCheckIcon,
   CircleDashedIcon,
   CircleXIcon,
@@ -14,7 +15,8 @@ import { Icon } from "./icon";
 
 type StatusVariant =
   | "needs_review"
-  | "passed"
+  | "unchanged"
+  | "auto_approved"
   | "queued"
   | "processing"
   | "stale"
@@ -24,7 +26,8 @@ type StatusVariant =
 
 const ICON_MAP: Record<StatusVariant, LucideIcon> = {
   needs_review: AlertCircleIcon,
-  passed: CircleCheckIcon,
+  unchanged: CircleCheckIcon,
+  auto_approved: CircleCheckBigIcon,
   queued: CircleDashedIcon,
   processing: LoaderCircleIcon,
   stale: TriangleAlertIcon,
@@ -37,7 +40,8 @@ const statusIconVariants = cva("", {
   variants: {
     variant: {
       needs_review: "text-ovr-amber",
-      passed: "text-ovr-blue",
+      unchanged: "text-ovr-blue",
+      auto_approved: "text-ovr-green",
       queued: "text-ovr-gray",
       processing: "text-ovr-purple animate-spin",
       stale: "text-ovr-fg-muted",

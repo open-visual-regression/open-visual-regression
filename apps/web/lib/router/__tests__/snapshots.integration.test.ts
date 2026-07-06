@@ -153,7 +153,7 @@ describe("snapshots", () => {
       ]);
     });
 
-    test("returns a 'passed' status for a captured snapshot with an approved diff", async ({
+    test("returns an 'unchanged' status for a captured snapshot whose diff had no pixel changes", async ({
       admin,
     }) => {
       const { build } = await createProjectAndBuild(admin);
@@ -173,6 +173,7 @@ describe("snapshots", () => {
         snapshotId: snapshot!.id,
         processingStatus: "success",
         reviewStatus: "not_required",
+        pixelDiffCount: 0,
       });
 
       const [error, result] = await serverClient.snapshots.getOne({
@@ -180,7 +181,38 @@ describe("snapshots", () => {
       });
 
       expect(error).toBeNull();
-      expect(result?.snapshot.status).toBe("passed");
+      expect(result?.snapshot.status).toBe("unchanged");
+    });
+
+    test("returns an 'auto_approved' status for a captured snapshot whose diff had pixel changes", async ({
+      admin,
+    }) => {
+      const { build } = await createProjectAndBuild(admin);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            ...VIEWPORT,
+            targetId: "story-a",
+            status: "success",
+            imagePath: "projects/p/builds/b/snapshots/s.png",
+          },
+        ],
+      });
+
+      await dbClient.diffs.create({
+        snapshotId: snapshot!.id,
+        processingStatus: "success",
+        reviewStatus: "not_required",
+        pixelDiffCount: 512,
+      });
+
+      const [error, result] = await serverClient.snapshots.getOne({
+        snapshotId: snapshot!.id,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.snapshot.status).toBe("auto_approved");
     });
   });
 
@@ -307,11 +339,12 @@ describe("snapshots", () => {
     test("returns the count of snapshots in each display status", async ({ admin }) => {
       const { build } = await createProjectAndBuild(admin);
 
-      const [queued, passed, approved, needsReview, rejected, renderError] =
+      const [queued, unchanged, autoApproved, approved, needsReview, rejected, renderError] =
         await dbClient.snapshots.createMany({
           values: [
             { buildId: build.id, ...VIEWPORT, targetId: "queued" },
-            { buildId: build.id, ...VIEWPORT, targetId: "passed", status: "success" },
+            { buildId: build.id, ...VIEWPORT, targetId: "unchanged", status: "success" },
+            { buildId: build.id, ...VIEWPORT, targetId: "auto_approved", status: "success" },
             { buildId: build.id, ...VIEWPORT, targetId: "approved", status: "success" },
             { buildId: build.id, ...VIEWPORT, targetId: "needs_review", status: "success" },
             { buildId: build.id, ...VIEWPORT, targetId: "rejected", status: "success" },
@@ -326,9 +359,16 @@ describe("snapshots", () => {
         });
 
       await dbClient.diffs.create({
-        snapshotId: passed!.id,
+        snapshotId: unchanged!.id,
         processingStatus: "success",
         reviewStatus: "not_required",
+        pixelDiffCount: 0,
+      });
+      await dbClient.diffs.create({
+        snapshotId: autoApproved!.id,
+        processingStatus: "success",
+        reviewStatus: "not_required",
+        pixelDiffCount: 256,
       });
       await dbClient.diffs.create({
         snapshotId: approved!.id,
@@ -357,7 +397,8 @@ describe("snapshots", () => {
 
       expect(error).toBeNull();
       expect(counts).toEqual({
-        passed: 1,
+        unchanged: 1,
+        auto_approved: 1,
         approved: 1,
         needs_review: 1,
         rejected: 1,

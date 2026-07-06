@@ -4,7 +4,8 @@ import { db, type DbClient } from "../db";
 import { diffs, snapshots, type SnapshotStatus } from "../schema";
 
 export type SnapshotDisplayStatusCounts = {
-  passed: number;
+  unchanged: number;
+  auto_approved: number;
   approved: number;
   needs_review: number;
   rejected: number;
@@ -77,7 +78,8 @@ const displayStatusExpr = sql<SnapshotDisplayStatus>`case
   when ${diffs.reviewStatus} = 'rejected' then 'rejected'
   when ${diffs.reviewStatus} = 'needs_review' then 'needs_review'
   when ${diffs.reviewStatus} = 'approved' then 'approved'
-  else 'passed'
+  when coalesce(${diffs.pixelDiffCount}, 0) > 0 then 'auto_approved'
+  else 'unchanged'
 end`;
 
 export const getDisplayStatusCounts = async (
@@ -91,7 +93,8 @@ export const getDisplayStatusCounts = async (
     .groupBy(displayStatusExpr);
 
   const counts: SnapshotDisplayStatusCounts = {
-    passed: 0,
+    unchanged: 0,
+    auto_approved: 0,
     approved: 0,
     needs_review: 0,
     rejected: 0,
@@ -110,7 +113,8 @@ export const getDisplayStatusCounts = async (
 export type SnapshotDisplayStatus = keyof SnapshotDisplayStatusCounts;
 
 const statusDisplayOrder: SnapshotDisplayStatus[] = [
-  "passed",
+  "unchanged",
+  "auto_approved",
   "approved",
   "needs_review",
   "rejected",
@@ -184,7 +188,8 @@ const statusPriorityExpr = sql<number>`case (${displayStatusExpr})
   when 'needs_review' then 2
   when 'rejected' then 2
   when 'approved' then 2
-  when 'passed' then 3
+  when 'unchanged' then 3
+  when 'auto_approved' then 3
   when 'processing' then 4
   when 'queued' then 5
 end`;

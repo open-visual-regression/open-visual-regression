@@ -113,12 +113,14 @@ export const serverClient: typeof RealServerClient = {
     list: os.snapshots.list.handler(() => ({ snapshots: [], total: 0 })).actionable(),
     getCounts: os.snapshots.getCounts
       .handler(() => ({
-        passed: 0,
+        unchanged: 0,
+        auto_approved: 0,
         approved: 0,
         needs_review: 0,
         rejected: 0,
         error: 0,
-        pending: 0,
+        queued: 0,
+        processing: 0,
       }))
       .actionable(),
   },
