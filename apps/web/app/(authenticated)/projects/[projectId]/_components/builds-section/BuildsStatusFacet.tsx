@@ -2,25 +2,21 @@
 
 import { useState } from "react";
 
-import { buildStatusSchema, type BuildStatus } from "@ovr/api/contracts/builds";
+import { type BuildStatus } from "@ovr/api/contracts/builds";
 import { Popover, PopoverContent } from "@ovr/ui/components/popover";
 
 import { getBuildStatusLabel } from "@/lib/components/BuildStatus";
-import { FacetOptionsList } from "@/lib/components/facet/FacetOptionsList";
+import { FacetOptionsList, type FacetOption } from "@/lib/components/facet/FacetOptionsList";
 import { FacetTrigger } from "@/lib/components/facet/FacetTrigger";
 import { formatFacetValueLabel } from "@/lib/components/facet/formatFacetValueLabel";
 
-export const STATUS_OPTIONS = buildStatusSchema.options.map((status) => ({
-  value: status,
-  label: getBuildStatusLabel(status),
-}));
-
 type BuildsStatusFacetProps = {
+  options: FacetOption<BuildStatus>[];
   selected: BuildStatus[];
   onApply: (next: BuildStatus[]) => void;
 };
 
-export const BuildsStatusFacet = ({ selected, onApply }: BuildsStatusFacetProps) => {
+export const BuildsStatusFacet = ({ options, selected, onApply }: BuildsStatusFacetProps) => {
   const [open, setOpen] = useState(false);
 
   return (
@@ -32,7 +28,7 @@ export const BuildsStatusFacet = ({ selected, onApply }: BuildsStatusFacetProps)
       />
       <PopoverContent>
         <FacetOptionsList
-          options={STATUS_OPTIONS}
+          options={options}
           selected={selected}
           onApply={(next) => {
             onApply(next);

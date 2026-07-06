@@ -5,12 +5,25 @@ import { BuildsFilters } from "../BuildsFilters";
 
 const PROJECT_ID = "018f0000-0000-7000-8000-000000000000";
 
+const STATUS_OPTIONS = [
+  { value: "needs_review" as const, label: "needs review" },
+  { value: "passed" as const, label: "passed" },
+  { value: "error" as const, label: "error" },
+];
+
+const BRANCH_OPTIONS = ["main", "develop"];
+
+const AUTHOR_OPTIONS = ["Jordan Lee", "Alex Kim"];
+
 const meta: Meta<typeof BuildsFilters> = {
   title: "Web/BuildsFilters",
   component: BuildsFilters,
   tags: ["autodocs"],
   args: {
     projectId: PROJECT_ID,
+    statusOptions: STATUS_OPTIONS,
+    branchOptions: BRANCH_OPTIONS,
+    authorOptions: AUTHOR_OPTIONS,
   },
   parameters: {
     nextjs: {
