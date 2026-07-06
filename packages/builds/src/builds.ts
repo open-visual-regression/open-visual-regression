@@ -2,7 +2,7 @@ import { v7 as uuidv7 } from "uuid";
 
 import { dbClient } from "@ovr/db/client";
 import type { BuildReviewStatus, BuildType } from "@ovr/db/schema";
-import { enqueueExtract } from "@ovr/queue/producer";
+import { cancelBuildJobs, enqueueExtract } from "@ovr/queue/producer";
 import { storage } from "@ovr/storage";
 
 import type { Result } from "./types";
@@ -95,6 +95,47 @@ export const confirmBuildUpload = async (
   return { status: "ok", data: undefined };
 };
 
+export const cancelBuild = async (
+  buildId: string,
+  canceledBy: string,
+): Promise<Result<void, "BUILD_NOT_FOUND" | "NOT_CANCELABLE">> => {
+  const build = await dbClient.builds.findById(buildId);
+
+  if (!build) {
+    return { status: "error", error: "BUILD_NOT_FOUND" };
+  }
+
+  // Cancel the build and any queued/in-flight snapshots and diffs atomically.
+  // cancelIfInProgress returns undefined once the build has already finished (or
+  // been canceled), which makes the whole operation a safe no-op to retry.
+  const canceled = await dbClient.transaction(async (tx) => {
+    const canceledBuild = await dbClient.builds.cancelIfInProgress(buildId, canceledBy, tx);
+    if (!canceledBuild) {
+      return false;
+    }
+
+    await dbClient.snapshots.markInFlightAsCanceled(buildId, tx);
+    await dbClient.diffs.markPendingAsCanceledForBuild(buildId, tx);
+    return true;
+  });
+
+  if (!canceled) {
+    return { status: "error", error: "NOT_CANCELABLE" };
+  }
+
+  // Best-effort: drop not-yet-started jobs so they never run. Any active job is
+  // guarded against overwriting the canceled state in the worker. A queue
+  // failure here must not undo the committed cancellation.
+  try {
+    const diffIds = await dbClient.diffs.findIdsForBuild(buildId);
+    await cancelBuildJobs(buildId, diffIds);
+  } catch (error) {
+    console.error(`Failed to remove queued jobs for canceled build ${buildId}:`, error);
+  }
+
+  return { status: "ok", data: undefined };
+};
+
 type BuildDiff = Awaited<ReturnType<typeof dbClient.diffs.findByBuild>>[number];
 
 const computeBuildReviewStatus = (diffs: BuildDiff[]): BuildReviewStatus => {
@@ -118,6 +159,13 @@ const computeBuildReviewStatus = (diffs: BuildDiff[]): BuildReviewStatus => {
 };
 
 export const finalizeBuild = async (buildId: string): Promise<void> => {
+  // A build canceled while work was still in flight is terminal; a late job
+  // finishing must not resurrect it to success/error.
+  const build = await dbClient.builds.findById(buildId);
+  if (build?.processingStatus === "canceled") {
+    return;
+  }
+
   const diffs = await dbClient.diffs.findByBuild(buildId);
 
   const hasProcessingError = diffs.some((diff) => diff.processingStatus === "error");

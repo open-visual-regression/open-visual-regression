@@ -101,6 +101,64 @@ describe("diffs", () => {
     });
   });
 
+  describe("markPendingAsCanceledForBuild", () => {
+    test("cancels pending diffs but leaves completed and errored ones untouched", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const [pendingSnap, successSnap, errorSnap] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, ...captureConfiguration, targetId: "pending", status: "queued" },
+          { buildId: build.id, ...captureConfiguration, targetId: "success", status: "success" },
+          { buildId: build.id, ...captureConfiguration, targetId: "error", status: "success" },
+        ],
+      });
+
+      const pendingDiff = await dbClient.diffs.create({ snapshotId: pendingSnap!.id });
+      const successDiff = await dbClient.diffs.create({
+        snapshotId: successSnap!.id,
+        processingStatus: "success",
+        reviewStatus: "not_required",
+      });
+      const errorDiff = await dbClient.diffs.create({
+        snapshotId: errorSnap!.id,
+        processingStatus: "error",
+        reviewStatus: "not_required",
+      });
+
+      await dbClient.diffs.markPendingAsCanceledForBuild(build.id);
+
+      expect(await dbClient.diffs.findById(pendingDiff!.id)).toMatchObject({
+        processingStatus: "canceled",
+      });
+      expect(await dbClient.diffs.findById(successDiff!.id)).toMatchObject({
+        processingStatus: "success",
+      });
+      expect(await dbClient.diffs.findById(errorDiff!.id)).toMatchObject({
+        processingStatus: "error",
+      });
+    });
+  });
+
+  describe("findIdsForBuild", () => {
+    test("returns the ids of all diffs belonging to the build", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const [first, second] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, ...captureConfiguration, targetId: "a", status: "success" },
+          { buildId: build.id, ...captureConfiguration, targetId: "b", status: "success" },
+        ],
+      });
+      const firstDiff = await dbClient.diffs.create({ snapshotId: first!.id });
+      const secondDiff = await dbClient.diffs.create({ snapshotId: second!.id });
+
+      const ids = await dbClient.diffs.findIdsForBuild(build.id);
+      expect(ids.sort()).toEqual([firstDiff!.id, secondDiff!.id].sort());
+    });
+  });
+
   describe("updateResult", () => {
     test("should update the diff's processing/review status and pixel diff fields", async ({
       build,

@@ -3,6 +3,7 @@
 import { ORPCError } from "@orpc/client";
 
 import {
+  cancelBuild as cancelBuildService,
   confirmBuildUpload,
   createBuild as createBuildService,
   DEFAULT_DIFF_THRESHOLD,
@@ -107,6 +108,20 @@ export const getBuildStatus = os.builds.getBuildStatus
   })
   .actionable();
 
+export const cancel = os.builds.cancel
+  .use(authenticatedMiddleware)
+  .use(organizationBuildMiddleware)
+  .handler(async ({ context }) => {
+    const result = await cancelBuildService(context.build.id, context.user.id);
+
+    if (result.status === "error") {
+      throw new ORPCError(result.error === "BUILD_NOT_FOUND" ? "NOT_FOUND" : "CONFLICT");
+    }
+
+    return { ok: true as const };
+  })
+  .actionable();
+
 export const list = os.builds.list
   .use(authenticatedMiddleware)
   .handler(async ({ input, context }) => {
@@ -151,6 +166,7 @@ export const list = os.builds.list
         name: build.name,
         author: build.author,
         status: getBuildDisplayStatus(build),
+        canceledBy: build.canceledByName,
         buildType: build.buildType,
         createdAt: build.createdAt,
       })),
@@ -224,6 +240,8 @@ export const getOne = os.builds.getOne
   .handler(async ({ context }) => {
     const { build, project } = context;
 
+    const canceler = build.canceledBy ? await dbClient.users.findById(build.canceledBy) : null;
+
     return {
       build: {
         id: build.id,
@@ -234,6 +252,7 @@ export const getOne = os.builds.getOne
         name: build.name,
         author: build.author,
         status: getBuildDisplayStatus(build),
+        canceledBy: canceler?.name ?? null,
         buildType: build.buildType,
         createdAt: build.createdAt,
       },

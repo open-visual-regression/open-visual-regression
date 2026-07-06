@@ -34,6 +34,7 @@ export const generateBuild = (overrides?: Partial<BuildSchema>): BuildSchema => 
   author: faker.person.fullName(),
   errorMessage: null,
   status: "unchanged",
+  canceledBy: null,
   buildType: "storybook",
   createdAt: faker.date.recent().toISOString(),
   ...overrides,

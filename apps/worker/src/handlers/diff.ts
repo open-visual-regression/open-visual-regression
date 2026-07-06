@@ -9,12 +9,17 @@ export const run = async (job: DiffJob): Promise<void> => {
 };
 
 export const failed = async (job: DiffJob): Promise<void> => {
-  await dbClient.diffs.updateProcessingStatus(job.data.diffId, "error");
-
   const diff = await dbClient.diffs.findById(job.data.diffId);
   if (!diff) {
     return;
   }
+
+  // A diff canceled while in flight is terminal — don't flip it back to error.
+  if (diff.processingStatus === "canceled") {
+    return;
+  }
+
+  await dbClient.diffs.updateProcessingStatus(job.data.diffId, "error");
 
   const snapshot = await dbClient.snapshots.findById(diff.snapshotId);
   if (snapshot) {

@@ -126,6 +126,51 @@ export const enqueuePurgeMany = async (
   }
 };
 
+const removeJobById = async (queue: Queue, jobId: string): Promise<void> => {
+  try {
+    await queue.remove(jobId);
+  } catch {
+    // Best-effort: an active/locked job can't be removed and is instead
+    // no-op'd by the worker's canceled-state guards.
+  }
+};
+
+// Best-effort removal of not-yet-started jobs for a canceled build. Queued jobs
+// are dropped so they never run; active jobs stay and are guarded in the worker.
+export const cancelBuildJobs = async (
+  buildId: string,
+  diffIds: string[],
+  connection: IORedis,
+): Promise<void> => {
+  const extractQueue = new Queue(QueueName.BUILD_EXTRACT, { connection });
+  const captureQueue = new Queue(QueueName.SNAPSHOT_CAPTURE, { connection });
+  const diffQueue = new Queue(QueueName.SNAPSHOT_DIFF, { connection });
+  const finalizeQueue = new Queue(QueueName.BUILD_FINALIZE, { connection });
+
+  try {
+    // Extract and finalize jobs are keyed by buildId; diff jobs by diffId.
+    await removeJobById(extractQueue, buildId);
+    await removeJobById(finalizeQueue, buildId);
+    await Promise.all(diffIds.map((diffId) => removeJobById(diffQueue, diffId)));
+
+    // Capture group jobs have generated ids, so match them by buildId in their
+    // payload across the not-yet-running states.
+    const captureJobs = await captureQueue.getJobs(["waiting", "delayed", "prioritized", "paused"]);
+    await Promise.all(
+      captureJobs
+        .filter((job) => (job.data as CaptureGroupJobPayload).buildId === buildId)
+        .map((job) => job.remove().catch(() => {})),
+    );
+  } finally {
+    await Promise.all([
+      extractQueue.close(),
+      captureQueue.close(),
+      diffQueue.close(),
+      finalizeQueue.close(),
+    ]);
+  }
+};
+
 const PURGE_DISPATCH_JOB_ID = "build-purge-dispatch";
 
 export const schedulePurge = async (connection: IORedis): Promise<void> => {

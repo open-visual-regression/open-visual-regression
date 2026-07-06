@@ -1,7 +1,13 @@
 import { oc } from "@orpc/contract";
 import { z } from "zod";
 
-export const buildProcessingStatusSchema = z.enum(["queued", "processing", "success", "error"]);
+export const buildProcessingStatusSchema = z.enum([
+  "queued",
+  "processing",
+  "success",
+  "error",
+  "canceled",
+]);
 
 export type BuildProcessingStatus = z.infer<typeof buildProcessingStatusSchema>;
 
@@ -25,6 +31,7 @@ export const buildStatusSchema = z.enum([
   "approved",
   "rejected",
   "error",
+  "canceled",
 ]);
 
 export type BuildStatus = z.infer<typeof buildStatusSchema>;
@@ -121,6 +128,7 @@ export const buildSchema = z.object({
   author: z.string().min(1).nullable(),
   errorMessage: z.string().nullable(),
   status: buildStatusSchema,
+  canceledBy: z.string().min(1).nullable(),
   buildType: buildTypeSchema,
   createdAt: z.string().nonempty(),
 });
@@ -166,6 +174,7 @@ export const snapshotDisplayStatusSchema = z.enum([
   "needs_review",
   "rejected",
   "error",
+  "canceled",
   "queued",
   "processing",
 ]);
@@ -216,10 +225,21 @@ export const listStatusesContract = oc
   .input(listBuildStatusesInputSchema)
   .output(listBuildStatusesOutputSchema);
 
+export const cancelBuildInputSchema = z.object({
+  buildId: z.uuidv7(),
+});
+
+export const cancelBuildOutputSchema = z.object({
+  ok: z.literal(true),
+});
+
+export const cancelBuildContract = oc.input(cancelBuildInputSchema).output(cancelBuildOutputSchema);
+
 export const contract = {
   createBuild: createBuildContract,
   confirmUpload: confirmUploadContract,
   getBuildStatus: getBuildStatusContract,
+  cancel: cancelBuildContract,
   list: listBuildsContract,
   getOne: getBuildContract,
   listBranches: listBranchesContract,

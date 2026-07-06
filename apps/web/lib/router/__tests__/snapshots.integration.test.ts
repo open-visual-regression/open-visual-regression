@@ -403,6 +403,7 @@ describe("snapshots", () => {
         needs_review: 1,
         rejected: 1,
         error: 1,
+        canceled: 0,
         queued: 1,
         processing: 0,
       });

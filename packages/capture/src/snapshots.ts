@@ -51,7 +51,8 @@ const captureSnapshotOnPage = async (
   }
 
   // Retried group job — skip snapshots an earlier attempt already captured.
-  if (snapshot.status === "success") {
+  // Also skip snapshots canceled while this group job was queued.
+  if (snapshot.status === "success" || snapshot.status === "canceled") {
     return;
   }
 
@@ -81,7 +82,7 @@ const captureSnapshotOnPage = async (
   const imagePath = `${build.projectId}/builds/${build.id}/snapshots/${snapshotId}.png`;
   await storage.uploadFile(imagePath, screenshot, "image/png");
 
-  await db.transaction(async (tx) => {
+  const captured = await db.transaction(async (tx) => {
     if (pageLogState.logs.length > 0) {
       await dbClient.snapshotLogs.createMany({
         values: pageLogState.logs.map((log) => ({
@@ -93,7 +94,7 @@ const captureSnapshotOnPage = async (
       });
     }
 
-    await dbClient.snapshots.updateCaptureResult(snapshotId, {
+    return dbClient.snapshots.updateCaptureResult(snapshotId, {
       status: "success",
       imagePath,
       hasRenderError,
@@ -101,10 +102,22 @@ const captureSnapshotOnPage = async (
     });
   });
 
+  // The snapshot was canceled while its capture was in flight — don't queue a diff.
+  if (!captured) {
+    return;
+  }
+
   await enqueueSnapshotDiff(snapshotId);
 };
 
 export const markSnapshotErrored = async (snapshotId: string, error: unknown): Promise<void> => {
+  // A snapshot canceled mid-capture is terminal — a failing in-flight capture
+  // must not flip it back to error or queue a diff.
+  const snapshot = await dbClient.snapshots.findById(snapshotId);
+  if (snapshot?.status === "canceled") {
+    return;
+  }
+
   const message = error instanceof Error ? error.message : String(error);
   await dbClient.snapshotLogs.createMany({ values: [{ snapshotId, level: "error", message }] });
   await dbClient.snapshots.updateStatus(snapshotId, "error");
@@ -202,6 +215,12 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
   const build = await dbClient.builds.findById(snapshot.buildId);
   if (!build) {
     throw new Error(`Build not found for snapshot: ${snapshotId}`);
+  }
+
+  // The build or snapshot was canceled while this diff was queued/in flight;
+  // leave the canceled state as-is rather than writing a diff result.
+  if (build.processingStatus === "canceled" || snapshot.status === "canceled") {
+    return;
   }
 
   const project = await dbClient.projects.findById(build.projectId);

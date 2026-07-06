@@ -2,6 +2,7 @@ import type { Job } from "bullmq";
 import { Redis } from "ioredis";
 
 import {
+  cancelBuildJobs as cancelBuildJobsJob,
   enqueueCaptureGroup as enqueueCaptureGroupJob,
   enqueueDiff as enqueueDiffJob,
   enqueueExtract as enqueueExtractJob,
@@ -38,3 +39,6 @@ export const enqueuePurge = (payload: PurgeJobPayload): Promise<Job<PurgeJobPayl
 
 export const enqueuePurgeMany = (payloads: PurgeJobPayload[]): Promise<void> =>
   enqueuePurgeManyJob(payloads, connection);
+
+export const cancelBuildJobs = (buildId: string, diffIds: string[]): Promise<void> =>
+  cancelBuildJobsJob(buildId, diffIds, connection);

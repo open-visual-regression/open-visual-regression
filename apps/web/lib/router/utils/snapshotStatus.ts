@@ -10,12 +10,20 @@ export const getSnapshotDisplayStatus = (
     return "error";
   }
 
+  if (snapshot.status === "canceled") {
+    return "canceled";
+  }
+
   if (snapshot.status === "queued") {
     return "queued";
   }
 
   if (snapshot.status === "processing") {
     return "processing";
+  }
+
+  if (diff?.processingStatus === "canceled") {
+    return "canceled";
   }
 
   if (!diff || diff.processingStatus === "pending") {

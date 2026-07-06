@@ -22,6 +22,7 @@ import {
   diffs,
   projects,
   snapshots,
+  user,
   type BuildProcessingStatus,
   type BuildReviewStatus,
 } from "../schema";
@@ -46,6 +47,18 @@ export const updateProcessingStatus = async (
     .update(builds)
     .set({ processingStatus, errorMessage })
     .where(eq(builds.id, id))
+    .returning();
+  return build;
+};
+
+// Marks the build canceled only while it is still queued or processing, so a
+// build that already finished (or was already canceled) is left untouched. The
+// returned row is undefined when no in-progress build matched.
+export const cancelIfInProgress = async (id: string, canceledBy: string, tx: DbClient = db) => {
+  const [build] = await tx
+    .update(builds)
+    .set({ processingStatus: "canceled", errorMessage: null, canceledBy })
+    .where(and(eq(builds.id, id), inArray(builds.processingStatus, ["queued", "processing"])))
     .returning();
   return build;
 };
@@ -155,6 +168,8 @@ export const findAll = async ({
 
   const orderFn = sortDirection === "asc" ? asc : desc;
 
+  const canceledByUser = alias(user, "canceled_by_user");
+
   const [rows, [totalResult]] = await Promise.all([
     db
       .select({
@@ -170,9 +185,11 @@ export const findAll = async ({
         reviewStatus: builds.reviewStatus,
         buildType: builds.buildType,
         createdAt: builds.createdAt,
+        canceledByName: canceledByUser.name,
       })
       .from(builds)
       .innerJoin(projects, eq(builds.projectId, projects.id))
+      .leftJoin(canceledByUser, eq(builds.canceledBy, canceledByUser.id))
       .where(and(baseFilter, cursorFilter))
       .orderBy(orderFn(builds.createdAt), orderFn(builds.id))
       .limit(limit + 1),
@@ -202,10 +219,12 @@ export type BuildDisplayStatus =
   | "passed"
   | "approved"
   | "rejected"
-  | "error";
+  | "error"
+  | "canceled";
 
 const buildDisplayStatusExpr = sql<BuildDisplayStatus>`case
   when ${builds.processingStatus} = 'error' then 'error'
+  when ${builds.processingStatus} = 'canceled' then 'canceled'
   when ${builds.processingStatus} = 'queued' then 'queued'
   when ${builds.processingStatus} = 'processing' then 'processing'
   when ${builds.reviewStatus} = 'rejected' then 'rejected'
@@ -222,6 +241,7 @@ const buildStatusDisplayOrder: BuildDisplayStatus[] = [
   "approved",
   "rejected",
   "error",
+  "canceled",
 ];
 
 export const findStatuses = async (projectId: string): Promise<BuildDisplayStatus[]> => {

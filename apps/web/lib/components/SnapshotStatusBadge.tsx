@@ -18,6 +18,7 @@ const SNAPSHOT_STATUS_BADGE: Record<
   approved: { color: "green", icon: "approved", label: "approved" },
   rejected: { color: "red", icon: "rejected", label: "rejected" },
   error: { color: "red", icon: "error", label: "error" },
+  canceled: { color: "gray", icon: "canceled", label: "canceled" },
 };
 
 export const getSnapshotStatusLabel = (status: SnapshotDisplayStatus): string =>
