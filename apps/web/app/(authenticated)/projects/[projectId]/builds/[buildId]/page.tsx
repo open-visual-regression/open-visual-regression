@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { snapshotDisplayStatusSchema } from "@ovr/api/contracts/builds";
 
-import { getBuildStatusLabel } from "@/lib/components/BuildStatus";
+import { getSnapshotStatusLabel } from "@/lib/components/SnapshotStatusBadge";
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
 import { getStorybookPath } from "@/lib/utils/storage";
@@ -81,7 +81,7 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
 
   const statusOptions = statusesResult.statuses.map((status) => ({
     value: status,
-    label: getBuildStatusLabel(status),
+    label: getSnapshotStatusLabel(status),
   }));
   const browserOptions = browsersResult.browsers.map((browser) => ({
     value: browser,

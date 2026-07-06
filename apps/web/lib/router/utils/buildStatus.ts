@@ -9,7 +9,8 @@ const STATUS_FILTER_COMBOS: Record<BuildStatus, StatusFilter> = {
   needs_review: { processingStatus: "success", reviewStatus: "needs_review" },
   rejected: { processingStatus: "success", reviewStatus: "rejected" },
   approved: { processingStatus: "success", reviewStatus: "approved" },
-  passed: { processingStatus: "success", reviewStatus: "not_required" },
+  unchanged: { processingStatus: "success", reviewStatus: "unchanged" },
+  auto_approved: { processingStatus: "success", reviewStatus: "auto_approved" },
 };
 
 export const getBuildStatusFilters = (statuses: BuildStatus[]): StatusFilter[] =>
@@ -43,5 +44,9 @@ export const getBuildDisplayStatus = (build: {
     return "approved";
   }
 
-  return "passed";
+  if (build.reviewStatus === "auto_approved") {
+    return "auto_approved";
+  }
+
+  return "unchanged";
 };

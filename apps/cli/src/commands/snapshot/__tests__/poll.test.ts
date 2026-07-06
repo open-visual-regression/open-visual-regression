@@ -12,8 +12,21 @@ import {
 type GetBuildStatus = OvrClient["builds"]["getBuildStatus"];
 
 describe("pollBuildStatus", () => {
-  it("should resolve when the build passes", async () => {
-    const getBuildStatus = vi.fn<GetBuildStatus>().mockResolvedValue({ status: "passed" });
+  it("should resolve when the build is unchanged", async () => {
+    const getBuildStatus = vi.fn<GetBuildStatus>().mockResolvedValue({ status: "unchanged" });
+
+    await expect(
+      pollBuildStatus({
+        client: { builds: { getBuildStatus } },
+        buildId: "build-1",
+        timeoutSeconds: 10,
+        pollIntervalMs: 1,
+      }),
+    ).resolves.toBeUndefined();
+  });
+
+  it("should resolve when the build is auto approved", async () => {
+    const getBuildStatus = vi.fn<GetBuildStatus>().mockResolvedValue({ status: "auto_approved" });
 
     await expect(
       pollBuildStatus({

@@ -7,7 +7,7 @@ import { SnapshotGrid } from "../SnapshotGrid";
 describe("SnapshotGrid", () => {
   it("should render a card for every snapshot", () => {
     const snapshots = [
-      mocks.build.generateBuildSnapshot({ targetName: "home-page", status: "passed" }),
+      mocks.build.generateBuildSnapshot({ targetName: "home-page", status: "unchanged" }),
       mocks.build.generateBuildSnapshot({ targetName: "checkout-page", status: "needs_review" }),
     ];
 

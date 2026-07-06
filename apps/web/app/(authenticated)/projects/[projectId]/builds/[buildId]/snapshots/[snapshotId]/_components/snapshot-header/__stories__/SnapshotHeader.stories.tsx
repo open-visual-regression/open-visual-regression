@@ -29,7 +29,7 @@ const snapshot: SnapshotSchema = {
   targetName: "Kitchen Sink",
   targetTitle: "UI/Button",
   imagePath: "new.png",
-  status: "passed",
+  status: "unchanged",
   errorLogs: [],
 };
 
@@ -40,9 +40,16 @@ const buildOverrides: Partial<BuildSchema> = {
   createdAt: "2026-06-20T12:00:00.000Z",
 };
 
-export const Passed: Story = {
+export const Unchanged: Story = {
   args: {
-    snapshot: { ...snapshot, status: "passed" },
+    snapshot: { ...snapshot, status: "unchanged" },
+    build: mocks.build.generateBuild(buildOverrides),
+  },
+};
+
+export const AutoApproved: Story = {
+  args: {
+    snapshot: { ...snapshot, status: "auto_approved" },
     build: mocks.build.generateBuild(buildOverrides),
   },
 };

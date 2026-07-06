@@ -20,7 +20,8 @@ const renderComponent = ({
   build = mocks.build.generateBuild(),
   storybookHref = null,
   snapshotCounts = {
-    passed: 3,
+    unchanged: 3,
+    auto_approved: 0,
     approved: 0,
     needs_review: 2,
     rejected: 0,
@@ -41,7 +42,7 @@ describe("BuildHeader", () => {
     renderComponent({ build: mocks.build.generateBuild({ status: "needs_review" }) });
 
     expect(screen.getByText("10 snapshots")).toBeVisible();
-    expect(screen.getByRole("listitem", { name: "3 auto approved" })).toBeVisible();
+    expect(screen.getByRole("listitem", { name: "3 unchanged" })).toBeVisible();
     expect(screen.getByRole("listitem", { name: "2 needs review" })).toBeVisible();
     expect(screen.getByRole("listitem", { name: "1 error" })).toBeVisible();
     expect(screen.getByRole("listitem", { name: "4 queued" })).toBeVisible();
@@ -51,7 +52,8 @@ describe("BuildHeader", () => {
     renderComponent({
       build: mocks.build.generateBuild({ status: "needs_review" }),
       snapshotCounts: {
-        passed: 3,
+        unchanged: 3,
+        auto_approved: 0,
         approved: 0,
         needs_review: 0,
         rejected: 0,
@@ -69,7 +71,8 @@ describe("BuildHeader", () => {
     renderComponent({
       build: mocks.build.generateBuild({ status: "approved" }),
       snapshotCounts: {
-        passed: 3,
+        unchanged: 3,
+        auto_approved: 0,
         approved: 2,
         needs_review: 0,
         rejected: 0,
@@ -87,7 +90,8 @@ describe("BuildHeader", () => {
     renderComponent({
       build: mocks.build.generateBuild({ status: "rejected" }),
       snapshotCounts: {
-        passed: 3,
+        unchanged: 3,
+        auto_approved: 0,
         approved: 1,
         needs_review: 0,
         rejected: 1,
@@ -157,7 +161,8 @@ describe("BuildHeader", () => {
         errorMessage: "Build failed: unable to connect to the test runner.",
       }),
       snapshotCounts: {
-        passed: 0,
+        unchanged: 0,
+        auto_approved: 0,
         approved: 0,
         needs_review: 0,
         rejected: 0,

@@ -15,7 +15,8 @@ type Story = StoryObj<typeof StatusIcon>;
 
 const STATUS_KINDS: { kind: StatusVariant; colorClass: string; colorToken: string }[] = [
   { kind: "needs_review", colorClass: "text-ovr-amber", colorToken: "--ovr-color-amber" },
-  { kind: "passed", colorClass: "text-ovr-blue", colorToken: "--ovr-color-blue" },
+  { kind: "unchanged", colorClass: "text-ovr-blue", colorToken: "--ovr-color-blue" },
+  { kind: "auto_approved", colorClass: "text-ovr-green", colorToken: "--ovr-color-green" },
   { kind: "queued", colorClass: "text-ovr-gray", colorToken: "--ovr-color-gray" },
   { kind: "processing", colorClass: "text-ovr-purple", colorToken: "--ovr-color-purple" },
   { kind: "stale", colorClass: "text-ovr-fg-muted", colorToken: "--ovr-fg-muted" },

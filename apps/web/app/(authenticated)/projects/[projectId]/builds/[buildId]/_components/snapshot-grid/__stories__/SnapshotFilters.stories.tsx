@@ -4,7 +4,8 @@ import { userEvent, within } from "storybook/test";
 import { SnapshotFilters } from "../SnapshotFilters";
 
 const STATUS_OPTIONS = [
-  { value: "passed", label: "auto approved" },
+  { value: "unchanged", label: "unchanged" },
+  { value: "auto_approved", label: "auto approved" },
   { value: "needs_review", label: "needs review" },
   { value: "error", label: "error" },
 ] as const;

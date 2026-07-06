@@ -13,11 +13,15 @@ const SNAPSHOT_STATUS_BADGE: Record<
   queued: { color: "gray", icon: "queued", label: "queued" },
   processing: { color: "purple", icon: "processing", label: "processing" },
   needs_review: { color: "amber", icon: "needs_review", label: "needs review" },
-  passed: { color: "blue", icon: "passed", label: "auto approved" },
+  unchanged: { color: "blue", icon: "unchanged", label: "unchanged" },
+  auto_approved: { color: "green", icon: "auto_approved", label: "auto approved" },
   approved: { color: "green", icon: "approved", label: "approved" },
   rejected: { color: "red", icon: "rejected", label: "rejected" },
   error: { color: "red", icon: "error", label: "error" },
 };
+
+export const getSnapshotStatusLabel = (status: SnapshotDisplayStatus): string =>
+  SNAPSHOT_STATUS_BADGE[status].label;
 
 export const SnapshotStatusBadge = ({ status, filled }: SnapshotStatusBadgeProps) => {
   const { color, icon, label } = SNAPSHOT_STATUS_BADGE[status];

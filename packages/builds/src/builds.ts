@@ -110,7 +110,11 @@ const computeBuildReviewStatus = (diffs: BuildDiff[]): BuildReviewStatus => {
     return "approved";
   }
 
-  return "not_required";
+  if (diffs.some((diff) => (diff.pixelDiffCount ?? 0) > 0)) {
+    return "auto_approved";
+  }
+
+  return "unchanged";
 };
 
 export const finalizeBuild = async (buildId: string): Promise<void> => {

@@ -12,7 +12,8 @@ const PROJECTS = [
 ];
 
 const BUILD_STATUSES = [
-  "passed",
+  "unchanged",
+  "auto_approved",
   "needs_review",
   "rejected",
   "error",

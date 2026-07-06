@@ -14,7 +14,7 @@ const snapshot: SnapshotSchema = {
   targetName: "Kitchen Sink",
   targetTitle: "UI/Button",
   imagePath: "new.png",
-  status: "passed",
+  status: "unchanged",
   errorLogs: [],
 };
 

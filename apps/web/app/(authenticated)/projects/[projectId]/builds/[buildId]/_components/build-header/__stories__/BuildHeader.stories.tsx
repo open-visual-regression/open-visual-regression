@@ -23,7 +23,8 @@ export default meta;
 type Story = StoryObj<typeof BuildHeader>;
 
 const snapshotCounts = {
-  passed: 3,
+  unchanged: 3,
+  auto_approved: 2,
   approved: 1,
   needs_review: 2,
   rejected: 0,
@@ -49,11 +50,11 @@ export const NeedsReview: Story = {
   },
 };
 
-export const Passed: Story = {
+export const AutoApproved: Story = {
   args: {
     build: mocks.build.generateBuild({
       ...buildOverrides,
-      status: "passed",
+      status: "auto_approved",
     }),
     snapshotCounts,
   },
@@ -87,7 +88,8 @@ export const Errored: Story = {
       errorMessage: "Build failed: unable to connect to the test runner.",
     }),
     snapshotCounts: {
-      passed: 0,
+      unchanged: 0,
+      auto_approved: 0,
       approved: 0,
       needs_review: 0,
       rejected: 0,
