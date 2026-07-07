@@ -210,7 +210,8 @@ export type BuildDisplayStatus =
   | "queued"
   | "processing"
   | "needs_review"
-  | "passed"
+  | "unchanged"
+  | "auto_approved"
   | "approved"
   | "rejected"
   | "error"
@@ -224,14 +225,16 @@ const buildDisplayStatusExpr = sql<BuildDisplayStatus>`case
   when ${builds.reviewStatus} = 'rejected' then 'rejected'
   when ${builds.reviewStatus} = 'needs_review' then 'needs_review'
   when ${builds.reviewStatus} = 'approved' then 'approved'
-  else 'passed'
+  when ${builds.reviewStatus} = 'auto_approved' then 'auto_approved'
+  else 'unchanged'
 end`;
 
 const buildStatusDisplayOrder: BuildDisplayStatus[] = [
   "queued",
   "processing",
   "needs_review",
-  "passed",
+  "unchanged",
+  "auto_approved",
   "approved",
   "rejected",
   "error",

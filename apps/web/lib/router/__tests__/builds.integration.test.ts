@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { v7 as uuidv7 } from "uuid";
 import { vi } from "vitest";
 
 import type { AddProjectInputSchema } from "@ovr/api/contracts/projects";
@@ -231,7 +232,7 @@ describe("builds", () => {
     test("should return UNAUTHORIZED when no session cookie is provided", async () => {
       vi.mocked(headers).mockResolvedValue(new Headers());
 
-      const [error] = await serverClient.builds.cancel({ buildId: crypto.randomUUID() });
+      const [error] = await serverClient.builds.cancel({ buildId: uuidv7() });
 
       expect(error?.code).toBe("UNAUTHORIZED");
     });
@@ -276,7 +277,7 @@ describe("builds", () => {
     test("should return NOT_FOUND for a build outside the user's organization", async ({
       admin: _,
     }) => {
-      const [error] = await serverClient.builds.cancel({ buildId: crypto.randomUUID() });
+      const [error] = await serverClient.builds.cancel({ buildId: uuidv7() });
 
       expect(error?.code).toBe("NOT_FOUND");
     });
