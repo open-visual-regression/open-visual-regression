@@ -107,6 +107,7 @@ export const Canceled: Story = {
     build: mocks.build.generateBuild({
       ...buildOverrides,
       status: "canceled",
+      canceledBy: "Alex Kim",
     }),
     snapshotCounts: {
       unchanged: 2,
