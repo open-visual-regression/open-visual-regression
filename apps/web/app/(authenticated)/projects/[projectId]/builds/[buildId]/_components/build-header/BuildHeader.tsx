@@ -30,6 +30,7 @@ export const BuildHeader = ({ build, snapshotCounts, storybookHref }: BuildHeade
   const hasReviewable =
     snapshotCounts.approved + snapshotCounts.rejected + snapshotCounts.needs_review > 0;
   const isCancelable = build.status === "queued" || build.status === "processing";
+  const isCanceled = build.status === "canceled";
 
   return (
     <div className="flex flex-col gap-6">
@@ -78,9 +79,8 @@ export const BuildHeader = ({ build, snapshotCounts, storybookHref }: BuildHeade
           </div>
         </div>
         <div className="flex flex-row gap-2">
-          {isCancelable ? (
-            <BuildCancelButton buildId={build.id} />
-          ) : (
+          {isCancelable ? <BuildCancelButton buildId={build.id} /> : null}
+          {!isCancelable && !isCanceled ? (
             <>
               <BuildRejectButton
                 buildId={build.id}
@@ -93,7 +93,7 @@ export const BuildHeader = ({ build, snapshotCounts, storybookHref }: BuildHeade
                 disabled={!hasReviewable}
               />
             </>
-          )}
+          ) : null}
         </div>
       </div>
       {build.errorMessage ? (

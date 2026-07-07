@@ -259,6 +259,14 @@ describe("BuildHeader", () => {
     expect(screen.getByText(/canceled by Jordan Lee/i)).toBeVisible();
   });
 
+  it("should not render the review or cancel actions when the build is canceled", () => {
+    renderComponent({ build: mocks.build.generateBuild({ status: "canceled" }) });
+
+    expect(screen.queryByRole("button", { name: /approve all/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /reject all/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /cancel build/i })).not.toBeInTheDocument();
+  });
+
   it("should render the view storybook link when a storybook build exists", () => {
     renderComponent({ storybookHref: "/api/storybook/mock-build/index.html" });
 
