@@ -14,7 +14,7 @@
     }
   },
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && tsc -p tsconfig.build.json",
     "dev": "tsup --watch",
     "tsc": "tsc --noEmit",
     "lint": "oxlint src",
@@ -34,7 +34,7 @@
     "@ovr/typescript-config": "workspace:*",
     "@types/node": "^22.15.3",
     "tsup": "^8.5.1",
-    "typescript": "6.0.3",
+    "typescript": "7.0.2",
     "vitest": "^4.1.7"
   }
 }
