@@ -1,7 +1,13 @@
 import { oc } from "@orpc/contract";
 import { z } from "zod";
 
-export const buildProcessingStatusSchema = z.enum(["queued", "processing", "success", "error"]);
+export const buildProcessingStatusSchema = z.enum([
+  "queued",
+  "processing",
+  "success",
+  "error",
+  "canceled",
+]);
 
 export type BuildProcessingStatus = z.infer<typeof buildProcessingStatusSchema>;
 
@@ -25,6 +31,7 @@ export const buildStatusSchema = z.enum([
   "approved",
   "rejected",
   "error",
+  "canceled",
 ]);
 
 export type BuildStatus = z.infer<typeof buildStatusSchema>;
@@ -127,6 +134,12 @@ export const buildSchema = z.object({
 
 export type BuildSchema = z.infer<typeof buildSchema>;
 
+export const buildDetailSchema = buildSchema.extend({
+  canceledBy: z.string().min(1).nullable(),
+});
+
+export type BuildDetailSchema = z.infer<typeof buildDetailSchema>;
+
 export const buildsCursorSchema = z.object({
   createdAt: z.string().nonempty(),
   id: z.uuidv7(),
@@ -166,6 +179,7 @@ export const snapshotDisplayStatusSchema = z.enum([
   "needs_review",
   "rejected",
   "error",
+  "canceled",
   "queued",
   "processing",
 ]);
@@ -177,7 +191,7 @@ export const getBuildInputSchema = z.object({
 });
 
 export const getBuildOutputSchema = z.object({
-  build: buildSchema,
+  build: buildDetailSchema,
 });
 
 export const getBuildContract = oc.input(getBuildInputSchema).output(getBuildOutputSchema);
@@ -216,10 +230,21 @@ export const listStatusesContract = oc
   .input(listBuildStatusesInputSchema)
   .output(listBuildStatusesOutputSchema);
 
+export const cancelBuildInputSchema = z.object({
+  buildId: z.uuidv7(),
+});
+
+export const cancelBuildOutputSchema = z.object({
+  ok: z.literal(true),
+});
+
+export const cancelBuildContract = oc.input(cancelBuildInputSchema).output(cancelBuildOutputSchema);
+
 export const contract = {
   createBuild: createBuildContract,
   confirmUpload: confirmUploadContract,
   getBuildStatus: getBuildStatusContract,
+  cancel: cancelBuildContract,
   list: listBuildsContract,
   getOne: getBuildContract,
   listBranches: listBranchesContract,

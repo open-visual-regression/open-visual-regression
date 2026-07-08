@@ -39,6 +39,34 @@ describe("builds", () => {
     });
   });
 
+  describe("cancelIfInProgress", () => {
+    test("cancels a queued build and records who canceled it", async ({ build, user }) => {
+      const updated = await dbClient.builds.cancelIfInProgress(build.id, user.id);
+
+      expect(updated).toMatchObject({ processingStatus: "canceled", canceledBy: user.id });
+    });
+
+    test("cancels a processing build", async ({ build, user }) => {
+      await dbClient.builds.updateProcessingStatus(build.id, "processing");
+
+      const updated = await dbClient.builds.cancelIfInProgress(build.id, user.id);
+
+      expect(updated).toMatchObject({ processingStatus: "canceled", canceledBy: user.id });
+    });
+
+    test("does not cancel a build that has already finished", async ({ build, user }) => {
+      await dbClient.builds.updateProcessingStatus(build.id, "success");
+
+      const updated = await dbClient.builds.cancelIfInProgress(build.id, user.id);
+
+      expect(updated).toBeUndefined();
+      expect(await dbClient.builds.findById(build.id)).toMatchObject({
+        processingStatus: "success",
+        canceledBy: null,
+      });
+    });
+  });
+
   describe("updateResult", () => {
     test("should update the build's processing and review status together", async ({ build }) => {
       const updated = await dbClient.builds.updateResult(build.id, {

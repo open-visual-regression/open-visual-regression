@@ -13,6 +13,7 @@ const BUILD_STATUS_BADGE: Record<
   approved: { color: "green", icon: "approved", label: "approved" },
   rejected: { color: "red", icon: "rejected", label: "rejected" },
   error: { color: "red", icon: "error", label: "error" },
+  canceled: { color: "gray", icon: "canceled", label: "canceled" },
 };
 
 export const getBuildStatusLabel = (status: BuildStatus): string =>
@@ -30,6 +31,7 @@ export const BuildStatusBadge = ({ status }: { status: BuildStatus }) => {
 export const BuildStatusStripe = ({ status }: { status: BuildStatus }) => {
   switch (status) {
     case "queued":
+    case "canceled":
       return <div className="absolute inset-0 bg-ovr-gray" />;
     case "processing":
       return <div className="absolute inset-0 bg-ovr-purple" />;

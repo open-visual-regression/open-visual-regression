@@ -29,6 +29,7 @@ const snapshotCounts = {
   needs_review: 2,
   rejected: 0,
   error: 1,
+  canceled: 0,
   queued: 3,
   processing: 1,
 };
@@ -94,8 +95,50 @@ export const Errored: Story = {
       needs_review: 0,
       rejected: 0,
       error: 0,
+      canceled: 0,
       queued: 0,
       processing: 0,
+    },
+  },
+};
+
+export const Canceled: Story = {
+  args: {
+    build: mocks.build.generateBuild({
+      ...buildOverrides,
+      status: "canceled",
+      canceledBy: "Alex Kim",
+    }),
+    snapshotCounts: {
+      unchanged: 2,
+      auto_approved: 1,
+      approved: 0,
+      needs_review: 0,
+      rejected: 0,
+      error: 0,
+      canceled: 4,
+      queued: 0,
+      processing: 0,
+    },
+  },
+};
+
+export const Processing: Story = {
+  args: {
+    build: mocks.build.generateBuild({
+      ...buildOverrides,
+      status: "processing",
+    }),
+    snapshotCounts: {
+      unchanged: 1,
+      auto_approved: 0,
+      approved: 0,
+      needs_review: 0,
+      rejected: 0,
+      error: 0,
+      canceled: 0,
+      queued: 4,
+      processing: 2,
     },
   },
 };

@@ -6,6 +6,7 @@ const STATUS_FILTER_COMBOS: Record<BuildStatus, StatusFilter> = {
   queued: { processingStatus: "queued" },
   processing: { processingStatus: "processing" },
   error: { processingStatus: "error" },
+  canceled: { processingStatus: "canceled" },
   needs_review: { processingStatus: "success", reviewStatus: "needs_review" },
   rejected: { processingStatus: "success", reviewStatus: "rejected" },
   approved: { processingStatus: "success", reviewStatus: "approved" },
@@ -22,6 +23,10 @@ export const getBuildDisplayStatus = (build: {
 }): BuildStatus => {
   if (build.processingStatus === "error") {
     return "error";
+  }
+
+  if (build.processingStatus === "canceled") {
+    return "canceled";
   }
 
   if (build.processingStatus === "queued") {

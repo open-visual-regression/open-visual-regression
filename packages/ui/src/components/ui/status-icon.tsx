@@ -5,6 +5,7 @@ import {
   CircleCheckBigIcon,
   CircleCheckIcon,
   CircleDashedIcon,
+  CircleSlash2Icon,
   CircleXIcon,
   LoaderCircleIcon,
   TriangleAlertIcon,
@@ -22,7 +23,8 @@ type StatusVariant =
   | "stale"
   | "approved"
   | "rejected"
-  | "error";
+  | "error"
+  | "canceled";
 
 const ICON_MAP: Record<StatusVariant, LucideIcon> = {
   needs_review: AlertCircleIcon,
@@ -34,6 +36,7 @@ const ICON_MAP: Record<StatusVariant, LucideIcon> = {
   approved: CircleCheckIcon,
   rejected: CircleXIcon,
   error: TriangleAlertIcon,
+  canceled: CircleSlash2Icon,
 };
 
 const statusIconVariants = cva("", {
@@ -48,6 +51,7 @@ const statusIconVariants = cva("", {
       approved: "text-ovr-green",
       rejected: "text-ovr-red",
       error: "text-ovr-red",
+      canceled: "text-ovr-gray",
     },
   },
 });

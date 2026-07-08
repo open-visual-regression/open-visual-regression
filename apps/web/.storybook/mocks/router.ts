@@ -119,6 +119,7 @@ export const serverClient: typeof RealServerClient = {
         needs_review: 0,
         rejected: 0,
         error: 0,
+        canceled: 0,
         queued: 0,
         processing: 0,
       }))

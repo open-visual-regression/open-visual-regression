@@ -14,6 +14,7 @@ vi.mock("@/lib/router");
 vi.mock("next/navigation");
 
 const mockBulkCastVote = vi.mocked(serverClient.diffs.bulkCastVote);
+const mockCancel = vi.mocked(serverClient.builds.cancel);
 const mockRefresh = vi.mocked(useRouter)().refresh;
 
 const renderComponent = ({
@@ -26,6 +27,7 @@ const renderComponent = ({
     needs_review: 2,
     rejected: 0,
     error: 1,
+    canceled: 0,
     queued: 4,
     processing: 0,
   },
@@ -58,6 +60,7 @@ describe("BuildHeader", () => {
         needs_review: 0,
         rejected: 0,
         error: 1,
+        canceled: 0,
         queued: 4,
         processing: 0,
       },
@@ -77,6 +80,7 @@ describe("BuildHeader", () => {
         needs_review: 0,
         rejected: 0,
         error: 1,
+        canceled: 0,
         queued: 4,
         processing: 0,
       },
@@ -96,6 +100,7 @@ describe("BuildHeader", () => {
         needs_review: 0,
         rejected: 1,
         error: 1,
+        canceled: 0,
         queued: 4,
         processing: 0,
       },
@@ -167,6 +172,7 @@ describe("BuildHeader", () => {
         needs_review: 0,
         rejected: 0,
         error: 0,
+        canceled: 0,
         queued: 0,
         processing: 0,
       },
@@ -190,6 +196,75 @@ describe("BuildHeader", () => {
 
     expect(screen.getByRole("button", { name: /^rejected$/i })).toBeDisabled();
     expect(screen.getByRole("button", { name: /^approve all$/i })).toBeEnabled();
+  });
+
+  it.each(["queued", "processing"] as const)(
+    "should show the cancel build button instead of the bulk actions when the build is %s",
+    (status) => {
+      renderComponent({ build: mocks.build.generateBuild({ status }) });
+
+      expect(screen.getByRole("button", { name: /cancel build/i })).toBeVisible();
+      expect(screen.queryByRole("button", { name: /approve all/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /reject all/i })).not.toBeInTheDocument();
+    },
+  );
+
+  it("should not show the cancel build button once the build has finished", () => {
+    renderComponent({ build: mocks.build.generateBuild({ status: "needs_review" }) });
+
+    expect(screen.queryByRole("button", { name: /cancel build/i })).not.toBeInTheDocument();
+  });
+
+  it("should cancel the build when confirmed", async ({ user }) => {
+    mockCancel.mockResolvedValue([null, { ok: true }]);
+    const build = mocks.build.generateBuild({ status: "processing" });
+    renderComponent({ build });
+
+    await user.click(screen.getByRole("button", { name: /cancel build/i }));
+    expect(await screen.findByRole("alertdialog", { name: /cancel build\?/i })).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: /^cancel build$/i }));
+
+    expect(mockCancel).toHaveBeenCalledWith({ buildId: build.id });
+    await waitFor(() => expect(mockRefresh).toHaveBeenCalled());
+  });
+
+  it("should not cancel the build when the confirmation is dismissed", async ({ user }) => {
+    renderComponent({ build: mocks.build.generateBuild({ status: "processing" }) });
+
+    await user.click(screen.getByRole("button", { name: /cancel build/i }));
+    expect(await screen.findByRole("alertdialog", { name: /cancel build\?/i })).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: /keep building/i }));
+
+    expect(mockCancel).not.toHaveBeenCalled();
+  });
+
+  it("should show an error toast if canceling fails", async ({ user }) => {
+    mockCancel.mockResolvedValue([createORPCError("INTERNAL_SERVER_ERROR"), undefined]);
+    renderComponent({ build: mocks.build.generateBuild({ status: "processing" }) });
+
+    await user.click(screen.getByRole("button", { name: /cancel build/i }));
+    await user.click(screen.getByRole("button", { name: /^cancel build$/i }));
+
+    expect(await screen.findByText("INTERNAL_SERVER_ERROR")).toBeVisible();
+    expect(mockRefresh).not.toHaveBeenCalled();
+  });
+
+  it("should show who canceled the build", () => {
+    renderComponent({
+      build: mocks.build.generateBuild({ status: "canceled", canceledBy: "Jordan Lee" }),
+    });
+
+    expect(screen.getByText(/canceled by Jordan Lee/i)).toBeVisible();
+  });
+
+  it("should not render the review or cancel actions when the build is canceled", () => {
+    renderComponent({ build: mocks.build.generateBuild({ status: "canceled" }) });
+
+    expect(screen.queryByRole("button", { name: /approve all/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /reject all/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /cancel build/i })).not.toBeInTheDocument();
   });
 
   it("should render the view storybook link when a storybook build exists", () => {

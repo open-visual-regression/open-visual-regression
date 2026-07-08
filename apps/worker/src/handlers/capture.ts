@@ -11,7 +11,7 @@ export const run = async (job: CaptureGroupJob): Promise<void> => {
 export const failed = async (job: CaptureGroupJob, error: Error): Promise<void> => {
   for (const snapshotId of job.data.snapshotIds) {
     const snapshot = await dbClient.snapshots.findById(snapshotId);
-    if (snapshot?.status === "success") {
+    if (snapshot?.status === "success" || snapshot?.status === "canceled") {
       continue;
     }
 

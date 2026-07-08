@@ -8,7 +8,13 @@ import type { DiffProcessingStatus, DiffReviewStatus } from "@ovr/db/schema";
 import { QueueName, type ExtractJobPayload } from "@ovr/queue";
 import { storage } from "@ovr/storage";
 
-import { confirmBuildUpload, createBuild, finalizeBuild, getArtifactPath } from "../builds";
+import {
+  cancelBuild,
+  confirmBuildUpload,
+  createBuild,
+  finalizeBuild,
+  getArtifactPath,
+} from "../builds";
 import { describe, expect, test } from "./fixtures";
 
 const collectExtractJob = async (connection: Redis): Promise<ExtractJobPayload> => {
@@ -172,7 +178,121 @@ describe("builds", () => {
     });
   });
 
+  describe("cancelBuild", () => {
+    const seedSnapshot = async (
+      buildId: string,
+      viewport: Viewport,
+      status: "queued" | "processing" | "success" | "error",
+    ) => {
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId, ...viewport, targetId: crypto.randomUUID(), status }],
+      });
+      return snapshot!;
+    };
+
+    test("cancels the build, its in-flight snapshots and pending diffs, and records who canceled it", async ({
+      featureBuild,
+      captureConfiguration,
+      user,
+    }) => {
+      await dbClient.builds.updateProcessingStatus(featureBuild.id, "processing");
+
+      const queuedSnapshot = await seedSnapshot(featureBuild.id, captureConfiguration, "queued");
+      const processingSnapshot = await seedSnapshot(
+        featureBuild.id,
+        captureConfiguration,
+        "processing",
+      );
+      const successSnapshot = await seedSnapshot(featureBuild.id, captureConfiguration, "success");
+      const errorSnapshot = await seedSnapshot(featureBuild.id, captureConfiguration, "error");
+
+      const pendingDiff = await dbClient.diffs.create({
+        snapshotId: successSnapshot.id,
+        processingStatus: "pending",
+        reviewStatus: "not_required",
+      });
+      const doneDiff = await dbClient.diffs.create({
+        snapshotId: errorSnapshot.id,
+        processingStatus: "success",
+        reviewStatus: "not_required",
+      });
+
+      const result = await cancelBuild(featureBuild.id, user.id);
+
+      expect(result).toEqual({ status: "ok", data: undefined });
+
+      expect(await dbClient.builds.findById(featureBuild.id)).toMatchObject({
+        processingStatus: "canceled",
+        canceledBy: user.id,
+        errorMessage: null,
+      });
+
+      expect(await dbClient.snapshots.findById(queuedSnapshot.id)).toMatchObject({
+        status: "canceled",
+      });
+      expect(await dbClient.snapshots.findById(processingSnapshot.id)).toMatchObject({
+        status: "canceled",
+      });
+      expect(await dbClient.snapshots.findById(successSnapshot.id)).toMatchObject({
+        status: "success",
+      });
+      expect(await dbClient.snapshots.findById(errorSnapshot.id)).toMatchObject({
+        status: "error",
+      });
+
+      expect(await dbClient.diffs.findById(pendingDiff!.id)).toMatchObject({
+        processingStatus: "canceled",
+      });
+      expect(await dbClient.diffs.findById(doneDiff!.id)).toMatchObject({
+        processingStatus: "success",
+      });
+    });
+
+    test("returns NOT_CANCELABLE when the build has already finished", async ({
+      featureBuild,
+      user,
+    }) => {
+      await dbClient.builds.updateResult(featureBuild.id, {
+        processingStatus: "success",
+        reviewStatus: "unchanged",
+      });
+
+      const result = await cancelBuild(featureBuild.id, user.id);
+
+      expect(result).toEqual({ status: "error", error: "NOT_CANCELABLE" });
+      expect(await dbClient.builds.findById(featureBuild.id)).toMatchObject({
+        processingStatus: "success",
+        canceledBy: null,
+      });
+    });
+
+    test("returns BUILD_NOT_FOUND when the build does not exist", async ({ user }) => {
+      const result = await cancelBuild(crypto.randomUUID(), user.id);
+
+      expect(result).toEqual({ status: "error", error: "BUILD_NOT_FOUND" });
+    });
+  });
+
   describe("finalizeBuild", () => {
+    test("leaves a canceled build canceled even when a late diff finishes", async ({
+      featureBuild,
+      captureConfiguration,
+      user,
+    }) => {
+      await dbClient.builds.updateProcessingStatus(featureBuild.id, "processing");
+      await cancelBuild(featureBuild.id, user.id);
+
+      await seedDiffs(featureBuild.id, captureConfiguration, [
+        { processingStatus: "success", reviewStatus: "not_required" },
+      ]);
+
+      await finalizeBuild(featureBuild.id);
+
+      expect(await dbClient.builds.findById(featureBuild.id)).toMatchObject({
+        processingStatus: "canceled",
+      });
+    });
+
     test("marks the build as error when any diff errored", async ({
       mainBuild,
       captureConfiguration,

@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, ilike, inArray, notInArray, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, inArray, ne, notInArray, or, sql } from "drizzle-orm";
 
 import { db, type DbClient } from "../db";
 import { diffs, snapshots, type SnapshotStatus } from "../schema";
@@ -10,6 +10,7 @@ export type SnapshotDisplayStatusCounts = {
   needs_review: number;
   rejected: number;
   error: number;
+  canceled: number;
   queued: number;
   processing: number;
 };
@@ -34,7 +35,7 @@ export const updateStatus = async (id: string, status: SnapshotStatus) => {
   const [snapshot] = await db
     .update(snapshots)
     .set({ status })
-    .where(eq(snapshots.id, id))
+    .where(and(eq(snapshots.id, id), ne(snapshots.status, "canceled")))
     .returning();
   return snapshot;
 };
@@ -50,15 +51,28 @@ export const updateCaptureResult = async (
   id: string,
   { tx = db, ...result }: UpdateCaptureResultInput,
 ) => {
-  const [snapshot] = await tx.update(snapshots).set(result).where(eq(snapshots.id, id)).returning();
+  const [snapshot] = await tx
+    .update(snapshots)
+    .set(result)
+    .where(and(eq(snapshots.id, id), ne(snapshots.status, "canceled")))
+    .returning();
   return snapshot;
 };
 
-export const markStuckAsError = async (buildId: string, tx: DbClient = db): Promise<void> => {
+export const markUnfinishedAs = async (
+  buildId: string,
+  status: SnapshotStatus,
+  tx: DbClient = db,
+): Promise<void> => {
   await tx
     .update(snapshots)
-    .set({ status: "error" })
-    .where(and(eq(snapshots.buildId, buildId), notInArray(snapshots.status, ["success", "error"])));
+    .set({ status })
+    .where(
+      and(
+        eq(snapshots.buildId, buildId),
+        notInArray(snapshots.status, ["success", "error", "canceled"]),
+      ),
+    );
 };
 
 export const countByBuild = async (buildId: string) => {
@@ -71,8 +85,10 @@ export const countByBuild = async (buildId: string) => {
 
 const displayStatusExpr = sql<SnapshotDisplayStatus>`case
   when ${snapshots.status} = 'error' or ${snapshots.hasRenderError} then 'error'
+  when ${snapshots.status} = 'canceled' then 'canceled'
   when ${snapshots.status} = 'queued' then 'queued'
   when ${snapshots.status} = 'processing' then 'processing'
+  when ${diffs.processingStatus} = 'canceled' then 'canceled'
   when ${diffs.id} is null or ${diffs.processingStatus} = 'pending' then 'queued'
   when ${diffs.processingStatus} = 'error' then 'error'
   when ${diffs.reviewStatus} = 'rejected' then 'rejected'
@@ -99,6 +115,7 @@ export const getDisplayStatusCounts = async (
     needs_review: 0,
     rejected: 0,
     error: 0,
+    canceled: 0,
     queued: 0,
     processing: 0,
   };
@@ -119,6 +136,7 @@ const statusDisplayOrder: SnapshotDisplayStatus[] = [
   "needs_review",
   "rejected",
   "error",
+  "canceled",
   "queued",
   "processing",
 ];
@@ -192,6 +210,7 @@ const statusPriorityExpr = sql<number>`case (${displayStatusExpr})
   when 'auto_approved' then 3
   when 'processing' then 4
   when 'queued' then 5
+  when 'canceled' then 6
 end`;
 
 export const snapshotSortColumns = {

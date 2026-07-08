@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { v7 as uuidv7 } from "uuid";
 import { vi } from "vitest";
 
 import type { AddProjectInputSchema } from "@ovr/api/contracts/projects";
@@ -224,6 +225,61 @@ describe("builds", () => {
       const [error] = await serverClient.builds.getBuildStatus({ buildId: createResult!.buildId });
 
       expect(error?.code).toBe("FORBIDDEN");
+    });
+  });
+
+  describe("cancel", () => {
+    test("should return UNAUTHORIZED when no session cookie is provided", async () => {
+      vi.mocked(headers).mockResolvedValue(new Headers());
+
+      const [error] = await serverClient.builds.cancel({ buildId: uuidv7() });
+
+      expect(error?.code).toBe("UNAUTHORIZED");
+    });
+
+    test("cancels an in-progress build and records the canceling user", async ({ admin }) => {
+      const [, project] = await serverClient.projects.add(TEST_PROJECT);
+      const build = await dbClient.builds.create({
+        projectId: project!.projectId,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: admin.id,
+        processingStatus: "processing",
+      });
+
+      const [error, result] = await serverClient.builds.cancel({ buildId: build!.id });
+
+      expect(error).toBeNull();
+      expect(result).toEqual({ ok: true });
+      expect(await dbClient.builds.findById(build!.id)).toMatchObject({
+        processingStatus: "canceled",
+        canceledBy: admin.id,
+      });
+    });
+
+    test("should return CONFLICT when the build has already finished", async ({ admin }) => {
+      const [, project] = await serverClient.projects.add(TEST_PROJECT);
+      const build = await dbClient.builds.create({
+        projectId: project!.projectId,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: admin.id,
+        processingStatus: "success",
+      });
+
+      const [error] = await serverClient.builds.cancel({ buildId: build!.id });
+
+      expect(error?.code).toBe("CONFLICT");
+    });
+
+    test("should return NOT_FOUND for a build outside the user's organization", async ({
+      admin: _,
+    }) => {
+      const [error] = await serverClient.builds.cancel({ buildId: uuidv7() });
+
+      expect(error?.code).toBe("NOT_FOUND");
     });
   });
 

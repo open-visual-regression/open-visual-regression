@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { OvrClient } from "../../../client";
 import {
+  BuildCanceledError,
   BuildFailedError,
   BuildNeedsReviewError,
   BuildRejectedError,
@@ -78,6 +79,19 @@ describe("pollBuildStatus", () => {
         pollIntervalMs: 1,
       }),
     ).rejects.toBeInstanceOf(BuildRejectedError);
+  });
+
+  it("should reject when the build is canceled", async () => {
+    const getBuildStatus = vi.fn<GetBuildStatus>().mockResolvedValue({ status: "canceled" });
+
+    await expect(
+      pollBuildStatus({
+        client: { builds: { getBuildStatus } },
+        buildId: "build-1",
+        timeoutSeconds: 10,
+        pollIntervalMs: 1,
+      }),
+    ).rejects.toBeInstanceOf(BuildCanceledError);
   });
 
   it("should reject with a timeout message when the deadline is exceeded", async () => {

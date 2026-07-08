@@ -22,6 +22,7 @@ export const buildProcessingStatusEnum = pgEnum("build_processing_status", [
   "processing",
   "success",
   "error",
+  "canceled",
 ]);
 
 export type BuildProcessingStatus = (typeof buildProcessingStatusEnum.enumValues)[number];
@@ -42,6 +43,7 @@ export const snapshotStatusEnum = pgEnum("snapshot_status", [
   "processing",
   "success",
   "error",
+  "canceled",
 ]);
 
 export type SnapshotStatus = (typeof snapshotStatusEnum.enumValues)[number];
@@ -50,6 +52,7 @@ export const diffProcessingStatusEnum = pgEnum("diff_processing_status", [
   "pending",
   "success",
   "error",
+  "canceled",
 ]);
 
 export type DiffProcessingStatus = (typeof diffProcessingStatusEnum.enumValues)[number];
@@ -102,6 +105,7 @@ export const builds = pgTable(
     createdBy: text("created_by")
       .references(() => user.id, { onDelete: "cascade" })
       .notNull(),
+    canceledBy: text("canceled_by").references(() => user.id, { onDelete: "set null" }),
   },
   (table) => [
     index("builds_projectId_createdAt_id_idx").on(table.projectId, table.createdAt, table.id),

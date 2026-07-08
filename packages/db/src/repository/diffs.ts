@@ -1,4 +1,4 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, ne } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
 import { db, type DbClient } from "../db";
@@ -63,7 +63,7 @@ export const updateProcessingStatus = async (
   const [diff] = await db
     .update(diffs)
     .set({ processingStatus })
-    .where(eq(diffs.id, id))
+    .where(and(eq(diffs.id, id), ne(diffs.processingStatus, "canceled")))
     .returning();
   return diff;
 };
@@ -95,10 +95,11 @@ export const updateReviewStatusMany = async (ids: string[], reviewStatus: DiffRe
   return db.update(diffs).set({ reviewStatus }).where(inArray(diffs.id, ids)).returning();
 };
 
-export const markStuckAsErrorForBuild = async (
+export const markPendingAs = async (
   buildId: string,
+  status: DiffProcessingStatus,
   tx: DbClient = db,
-): Promise<void> => {
+): Promise<string[]> => {
   const rows = await tx
     .select({ id: diffs.id })
     .from(diffs)
@@ -107,10 +108,11 @@ export const markStuckAsErrorForBuild = async (
 
   const ids = rows.map((row) => row.id);
   if (ids.length === 0) {
-    return;
+    return ids;
   }
 
-  await tx.update(diffs).set({ processingStatus: "error" }).where(inArray(diffs.id, ids));
+  await tx.update(diffs).set({ processingStatus: status }).where(inArray(diffs.id, ids));
+  return ids;
 };
 
 export const hasAllDoneForBuild = async (buildId: string) => {

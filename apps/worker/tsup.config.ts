@@ -24,5 +24,7 @@ export default defineConfig((options) => ({
     "pixelmatch",
     "pngjs",
     "pg",
+    "pino",
+    "pino-pretty",
   ],
 }));

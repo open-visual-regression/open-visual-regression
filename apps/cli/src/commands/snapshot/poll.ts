@@ -23,6 +23,13 @@ export class BuildRejectedError extends Error {
   }
 }
 
+export class BuildCanceledError extends Error {
+  constructor() {
+    super("Build was canceled");
+    this.name = "BuildCanceledError";
+  }
+}
+
 export class BuildTimeoutError extends Error {
   constructor(timeoutSeconds: number) {
     super(`Timed out after ${timeoutSeconds}s waiting for build result`);
@@ -64,6 +71,10 @@ export const pollBuildStatus = async ({
 
     if (status === "rejected") {
       throw new BuildRejectedError();
+    }
+
+    if (status === "canceled") {
+      throw new BuildCanceledError();
     }
 
     if (status === "error") {

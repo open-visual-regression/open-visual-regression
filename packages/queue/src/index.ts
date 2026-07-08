@@ -2,6 +2,10 @@ import { Queue } from "bullmq";
 import type { Job, JobsOptions } from "bullmq";
 import type IORedis from "ioredis";
 
+import { createLogger } from "@ovr/logger";
+
+const logger = createLogger("queue");
+
 export enum QueueName {
   BUILD_EXTRACT = "build-extract",
   SNAPSHOT_CAPTURE = "snapshot-capture",
@@ -123,6 +127,56 @@ export const enqueuePurgeMany = async (
     );
   } finally {
     await queue.close();
+  }
+};
+
+const removeJob = async (job: Pick<Job, "id" | "remove">, queueName: string): Promise<void> => {
+  try {
+    await job.remove();
+  } catch (err) {
+    logger.debug({ err, jobId: job.id, queue: queueName }, "skipped removing in-flight job");
+  }
+};
+
+const removeJobById = async (queue: Queue, jobId: string): Promise<void> => {
+  const job = await queue.getJob(jobId);
+  if (job) {
+    await removeJob(job, queue.name);
+  }
+};
+
+export const cancelBuildJobs = async (
+  buildId: string,
+  diffIds: string[],
+  connection: IORedis,
+): Promise<void> => {
+  const extractQueue = new Queue(QueueName.BUILD_EXTRACT, { connection });
+  const captureQueue = new Queue(QueueName.SNAPSHOT_CAPTURE, { connection });
+  const diffQueue = new Queue(QueueName.SNAPSHOT_DIFF, { connection });
+  const finalizeQueue = new Queue(QueueName.BUILD_FINALIZE, { connection });
+
+  try {
+    await Promise.all([
+      removeJobById(extractQueue, buildId),
+      removeJobById(finalizeQueue, buildId),
+      ...diffIds.map((diffId) => removeJobById(diffQueue, diffId)),
+      captureQueue
+        .getJobs(["waiting", "delayed", "prioritized", "paused"])
+        .then((captureJobs) =>
+          Promise.all(
+            captureJobs
+              .filter((job) => (job.data as CaptureGroupJobPayload).buildId === buildId)
+              .map((job) => removeJob(job, captureQueue.name)),
+          ),
+        ),
+    ]);
+  } finally {
+    await Promise.all([
+      extractQueue.close(),
+      captureQueue.close(),
+      diffQueue.close(),
+      finalizeQueue.close(),
+    ]);
   }
 };
 

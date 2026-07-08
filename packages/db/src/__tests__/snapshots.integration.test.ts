@@ -154,6 +154,7 @@ describe("snapshots", () => {
         needs_review: 0,
         rejected: 0,
         error: 0,
+        canceled: 0,
         queued: 0,
         processing: 0,
       });
@@ -233,6 +234,7 @@ describe("snapshots", () => {
         needs_review: 1,
         rejected: 1,
         error: 1,
+        canceled: 0,
         queued: 1,
         processing: 0,
       });
@@ -267,6 +269,7 @@ describe("snapshots", () => {
         needs_review: 0,
         rejected: 0,
         error: 1,
+        canceled: 0,
         queued: 0,
         processing: 0,
       });
@@ -293,9 +296,99 @@ describe("snapshots", () => {
         needs_review: 0,
         rejected: 0,
         error: 1,
+        canceled: 0,
         queued: 0,
         processing: 0,
       });
+    });
+
+    test("should count canceled snapshots and diffs as 'canceled'", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const [canceledSnapshot, canceledDiffSnapshot] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, ...captureConfiguration, targetId: "canceled", status: "canceled" },
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            targetId: "canceled-diff",
+            status: "success",
+          },
+        ],
+      });
+
+      await dbClient.diffs.create({
+        snapshotId: canceledDiffSnapshot!.id,
+        processingStatus: "canceled",
+        reviewStatus: "not_required",
+      });
+
+      expect(canceledSnapshot).toBeTruthy();
+
+      expect(await dbClient.snapshots.getDisplayStatusCounts(build.id)).toEqual({
+        unchanged: 0,
+        auto_approved: 0,
+        approved: 0,
+        needs_review: 0,
+        rejected: 0,
+        error: 0,
+        canceled: 2,
+        queued: 0,
+        processing: 0,
+      });
+    });
+  });
+
+  describe("markUnfinishedAs", () => {
+    test("transitions queued and processing snapshots but leaves completed ones untouched", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const [queued, processing, success, errored] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, ...captureConfiguration, targetId: "queued", status: "queued" },
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            targetId: "processing",
+            status: "processing",
+          },
+          { buildId: build.id, ...captureConfiguration, targetId: "success", status: "success" },
+          { buildId: build.id, ...captureConfiguration, targetId: "error", status: "error" },
+        ],
+      });
+
+      await dbClient.snapshots.markUnfinishedAs(build.id, "canceled");
+
+      expect(await dbClient.snapshots.findById(queued!.id)).toMatchObject({ status: "canceled" });
+      expect(await dbClient.snapshots.findById(processing!.id)).toMatchObject({
+        status: "canceled",
+      });
+      expect(await dbClient.snapshots.findById(success!.id)).toMatchObject({ status: "success" });
+      expect(await dbClient.snapshots.findById(errored!.id)).toMatchObject({ status: "error" });
+    });
+  });
+
+  describe("updateCaptureResult", () => {
+    test("does not overwrite a snapshot canceled while its capture was in flight", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, ...captureConfiguration, targetId: "canceled", status: "canceled" },
+        ],
+      });
+
+      const updated = await dbClient.snapshots.updateCaptureResult(snapshot!.id, {
+        status: "success",
+        imagePath: "some/path.png",
+        hasRenderError: false,
+      });
+
+      expect(updated).toBeUndefined();
+      expect(await dbClient.snapshots.findById(snapshot!.id)).toMatchObject({ status: "canceled" });
     });
   });
 

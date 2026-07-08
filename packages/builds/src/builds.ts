@@ -2,10 +2,13 @@ import { v7 as uuidv7 } from "uuid";
 
 import { dbClient } from "@ovr/db/client";
 import type { BuildReviewStatus, BuildType } from "@ovr/db/schema";
-import { enqueueExtract } from "@ovr/queue/producer";
+import { createLogger } from "@ovr/logger";
+import { cancelBuildJobs, enqueueExtract } from "@ovr/queue/producer";
 import { storage } from "@ovr/storage";
 
 import type { Result } from "./types";
+
+const logger = createLogger("builds");
 
 type Viewport = {
   name?: string;
@@ -95,6 +98,37 @@ export const confirmBuildUpload = async (
   return { status: "ok", data: undefined };
 };
 
+export const cancelBuild = async (
+  buildId: string,
+  canceledBy: string,
+): Promise<Result<void, "BUILD_NOT_FOUND" | "NOT_CANCELABLE">> => {
+  const result = await dbClient.transaction(async (tx) => {
+    const canceledBuild = await dbClient.builds.cancelIfInProgress(buildId, canceledBy, tx);
+    if (!canceledBuild) {
+      return null;
+    }
+
+    await dbClient.snapshots.markUnfinishedAs(buildId, "canceled", tx);
+    const diffIds = await dbClient.diffs.markPendingAs(buildId, "canceled", tx);
+    return diffIds;
+  });
+
+  if (!result) {
+    const build = await dbClient.builds.findById(buildId);
+    return { status: "error", error: build ? "NOT_CANCELABLE" : "BUILD_NOT_FOUND" };
+  }
+
+  logger.info({ buildId, canceledBy }, "canceled build");
+
+  try {
+    await cancelBuildJobs(buildId, result);
+  } catch (error) {
+    logger.error({ err: error, buildId }, "failed to remove queued jobs for canceled build");
+  }
+
+  return { status: "ok", data: undefined };
+};
+
 type BuildDiff = Awaited<ReturnType<typeof dbClient.diffs.findByBuild>>[number];
 
 const computeBuildReviewStatus = (diffs: BuildDiff[]): BuildReviewStatus => {
@@ -118,6 +152,11 @@ const computeBuildReviewStatus = (diffs: BuildDiff[]): BuildReviewStatus => {
 };
 
 export const finalizeBuild = async (buildId: string): Promise<void> => {
+  const build = await dbClient.builds.findById(buildId);
+  if (build?.processingStatus === "canceled") {
+    return;
+  }
+
   const diffs = await dbClient.diffs.findByBuild(buildId);
 
   const hasProcessingError = diffs.some((diff) => diff.processingStatus === "error");

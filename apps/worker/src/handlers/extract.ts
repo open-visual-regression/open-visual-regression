@@ -5,7 +5,12 @@ import type { ExtractJobPayload } from "@ovr/queue";
 type ExtractJob = { data: ExtractJobPayload };
 
 export const run = async (job: ExtractJob): Promise<void> => {
-  await dbClient.builds.updateProcessingStatus(job.data.buildId, "processing");
+  const build = await dbClient.builds.updateProcessingStatus(job.data.buildId, "processing");
+
+  if (!build) {
+    return;
+  }
+
   await extractBuild(
     job.data.buildId,
     job.data.targets,

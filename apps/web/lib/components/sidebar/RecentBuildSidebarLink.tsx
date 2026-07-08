@@ -21,6 +21,7 @@ const BUILD_STATUS_BORDER_CLASS: Record<BuildStatus, string> = {
   approved: "border-ovr-green",
   rejected: "border-ovr-remove",
   error: "border-ovr-remove",
+  canceled: "border-ovr-gray",
 };
 
 const RecentBuildSidebarLink = ({ build, className, onClick }: RecentBuildSidebarLinkProps) => (

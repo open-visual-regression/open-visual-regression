@@ -9,6 +9,7 @@ import {
   inArray,
   isNotNull,
   lt,
+  ne,
   notExists,
   or,
   sql,
@@ -45,7 +46,16 @@ export const updateProcessingStatus = async (
   const [build] = await tx
     .update(builds)
     .set({ processingStatus, errorMessage })
-    .where(eq(builds.id, id))
+    .where(and(eq(builds.id, id), ne(builds.processingStatus, "canceled")))
+    .returning();
+  return build;
+};
+
+export const cancelIfInProgress = async (id: string, canceledBy: string, tx: DbClient = db) => {
+  const [build] = await tx
+    .update(builds)
+    .set({ processingStatus: "canceled", errorMessage: null, canceledBy })
+    .where(and(eq(builds.id, id), inArray(builds.processingStatus, ["queued", "processing"])))
     .returning();
   return build;
 };
@@ -57,7 +67,11 @@ type UpdateResultInput = {
 };
 
 export const updateResult = async (id: string, result: UpdateResultInput) => {
-  const [build] = await db.update(builds).set(result).where(eq(builds.id, id)).returning();
+  const [build] = await db
+    .update(builds)
+    .set(result)
+    .where(and(eq(builds.id, id), ne(builds.processingStatus, "canceled")))
+    .returning();
   return build;
 };
 
@@ -203,10 +217,12 @@ export type BuildDisplayStatus =
   | "auto_approved"
   | "approved"
   | "rejected"
-  | "error";
+  | "error"
+  | "canceled";
 
 const buildDisplayStatusExpr = sql<BuildDisplayStatus>`case
   when ${builds.processingStatus} = 'error' then 'error'
+  when ${builds.processingStatus} = 'canceled' then 'canceled'
   when ${builds.processingStatus} = 'queued' then 'queued'
   when ${builds.processingStatus} = 'processing' then 'processing'
   when ${builds.reviewStatus} = 'rejected' then 'rejected'
@@ -225,6 +241,7 @@ const buildStatusDisplayOrder: BuildDisplayStatus[] = [
   "approved",
   "rejected",
   "error",
+  "canceled",
 ];
 
 export const findStatuses = async (projectId: string): Promise<BuildDisplayStatus[]> => {
