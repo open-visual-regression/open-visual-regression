@@ -154,6 +154,9 @@ importers:
       '@ovr/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@ovr/git-status':
+        specifier: workspace:*
+        version: link:../../packages/git-status
       '@ovr/logger':
         specifier: workspace:*
         version: link:../../packages/logger
@@ -565,6 +568,28 @@ importers:
       drizzle-kit:
         specifier: ^0.31.10
         version: 0.31.10
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: ^4.1.7
+        version: 4.1.7(@types/node@22.15.3)(@vitest/browser-playwright@4.1.7)(@vitest/coverage-v8@4.1.7)(jsdom@29.1.1(@noble/hashes@2.2.0))(msw@2.14.6(@types/node@22.15.3)(typescript@6.0.3))(vite@8.0.16(@types/node@22.15.3)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.3)(yaml@2.9.0))
+
+  packages/git-status:
+    dependencies:
+      '@ovr/db':
+        specifier: workspace:*
+        version: link:../db
+      '@ovr/logger':
+        specifier: workspace:*
+        version: link:../logger
+    devDependencies:
+      '@ovr/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: ^22.15.3
+        version: 22.15.3
       typescript:
         specifier: 6.0.3
         version: 6.0.3

@@ -4,6 +4,7 @@ import * as baselines from "./repository/baselines";
 import * as builds from "./repository/builds";
 import * as diffReviews from "./repository/diffReviews";
 import * as diffs from "./repository/diffs";
+import * as gitIntegrations from "./repository/gitIntegrations";
 import * as organizations from "./repository/organizations";
 import * as projects from "./repository/projects";
 import * as snapshotLogs from "./repository/snapshotLogs";
@@ -23,5 +24,6 @@ export const dbClient = {
   diffReviews,
   baselines,
   storageOutbox,
+  gitIntegrations,
   transaction: db.transaction.bind(db),
 } as const;
