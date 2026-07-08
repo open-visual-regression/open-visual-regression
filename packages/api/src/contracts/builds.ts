@@ -134,7 +134,6 @@ export const buildSchema = z.object({
 
 export type BuildSchema = z.infer<typeof buildSchema>;
 
-// The build detail view additionally resolves who canceled the build.
 export const buildDetailSchema = buildSchema.extend({
   canceledBy: z.string().min(1).nullable(),
 });
