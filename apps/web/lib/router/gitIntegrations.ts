@@ -1,5 +1,7 @@
 "use server";
 
+import { ORPCError } from "@orpc/client";
+
 import { dbClient } from "@ovr/db/client";
 import { encryptToken } from "@ovr/git-status/crypto";
 
@@ -43,11 +45,15 @@ export const upsert = os.gitIntegrations.upsert
       checkContext: input.checkContext,
     });
 
+    if (!integration) {
+      throw new ORPCError("INTERNAL_SERVER_ERROR");
+    }
+
     return {
-      provider: integration!.provider,
-      baseUrl: integration!.baseUrl,
-      repoIdentifier: integration!.repoIdentifier,
-      checkContext: integration!.checkContext,
+      provider: integration.provider,
+      baseUrl: integration.baseUrl,
+      repoIdentifier: integration.repoIdentifier,
+      checkContext: integration.checkContext,
       hasToken: true as const,
     };
   })
