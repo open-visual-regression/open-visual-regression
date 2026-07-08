@@ -51,8 +51,6 @@ export const updateCaptureResult = async (
   id: string,
   { tx = db, ...result }: UpdateCaptureResultInput,
 ) => {
-  // Won't resurrect a snapshot canceled mid-capture; returns undefined in that
-  // case so the caller skips enqueuing a diff.
   const [snapshot] = await tx
     .update(snapshots)
     .set(result)
@@ -61,8 +59,6 @@ export const updateCaptureResult = async (
   return snapshot;
 };
 
-// Transitions snapshots still queued or in flight to a terminal status (error
-// when reaped, canceled when a build is canceled), leaving finished ones as-is.
 export const markUnfinishedAs = async (
   buildId: string,
   status: SnapshotStatus,

@@ -130,9 +130,6 @@ export const enqueuePurgeMany = async (
   }
 };
 
-// Queue.remove is a no-op for a missing/finished job and only throws when the
-// job is active (locked). That case is expected — the worker guards it — so we
-// log at debug rather than swallow silently.
 const removeJob = async (job: Pick<Job, "id" | "remove">, queueName: string): Promise<void> => {
   try {
     await job.remove();
@@ -148,8 +145,6 @@ const removeJobById = async (queue: Queue, jobId: string): Promise<void> => {
   }
 };
 
-// Best-effort removal of not-yet-started jobs for a canceled build. Queued jobs
-// are dropped so they never run; active jobs stay and are guarded in the worker.
 export const cancelBuildJobs = async (
   buildId: string,
   diffIds: string[],
@@ -161,9 +156,6 @@ export const cancelBuildJobs = async (
   const finalizeQueue = new Queue(QueueName.BUILD_FINALIZE, { connection });
 
   try {
-    // Extract and finalize jobs are keyed by buildId; diff jobs by diffId.
-    // Capture group jobs have generated ids, so match them by buildId in their
-    // payload across the not-yet-running states.
     await Promise.all([
       removeJobById(extractQueue, buildId),
       removeJobById(finalizeQueue, buildId),

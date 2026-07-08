@@ -95,8 +95,6 @@ export const updateReviewStatusMany = async (ids: string[], reviewStatus: DiffRe
   return db.update(diffs).set({ reviewStatus }).where(inArray(diffs.id, ids)).returning();
 };
 
-// Transitions a build's still-pending diffs to a terminal status (error when
-// reaped, canceled when a build is canceled), leaving finished diffs as-is.
 export const markPendingAs = async (
   buildId: string,
   status: DiffProcessingStatus,

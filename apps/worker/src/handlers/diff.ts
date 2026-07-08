@@ -14,7 +14,6 @@ export const failed = async (job: DiffJob): Promise<void> => {
     return;
   }
 
-  // A diff canceled while in flight is terminal — don't flip it back to error.
   if (diff.processingStatus === "canceled") {
     return;
   }

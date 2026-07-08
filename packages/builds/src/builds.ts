@@ -120,8 +120,6 @@ export const cancelBuild = async (
 
   logger.info({ buildId, canceledBy }, "canceled build");
 
-  // Best-effort: drop not-yet-started jobs so they never run. Active jobs are
-  // guarded in the worker, and a queue failure must not undo the cancellation.
   try {
     await cancelBuildJobs(buildId, result);
   } catch (error) {
@@ -154,7 +152,6 @@ const computeBuildReviewStatus = (diffs: BuildDiff[]): BuildReviewStatus => {
 };
 
 export const finalizeBuild = async (buildId: string): Promise<void> => {
-  // A late job finishing must not resurrect a canceled build to success/error.
   const build = await dbClient.builds.findById(buildId);
   if (build?.processingStatus === "canceled") {
     return;

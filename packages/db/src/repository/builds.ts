@@ -51,8 +51,6 @@ export const updateProcessingStatus = async (
   return build;
 };
 
-// Cancels the build only while it is still queued or processing; returns
-// undefined when it has already finished, so callers can no-op safely.
 export const cancelIfInProgress = async (id: string, canceledBy: string, tx: DbClient = db) => {
   const [build] = await tx
     .update(builds)
