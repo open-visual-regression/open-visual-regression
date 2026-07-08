@@ -102,27 +102,24 @@ export const cancelBuild = async (
   buildId: string,
   canceledBy: string,
 ): Promise<Result<void, "BUILD_NOT_FOUND" | "NOT_CANCELABLE">> => {
-  const build = await dbClient.builds.findById(buildId);
-
-  if (!build) {
-    return { status: "error", error: "BUILD_NOT_FOUND" };
-  }
-
-  // cancelIfInProgress returns undefined once the build has already finished,
-  // so a build that isn't cancelable leaves everything untouched.
-  const canceled = await dbClient.transaction(async (tx) => {
+  // cancelIfInProgress returns undefined once the build has already finished
+  // (or doesn't exist), so a build that isn't cancelable leaves everything
+  // untouched. findById is only needed on that path, to tell NOT_FOUND apart
+  // from NOT_CANCELABLE, keeping the common (successful) path to one query.
+  const result = await dbClient.transaction(async (tx) => {
     const canceledBuild = await dbClient.builds.cancelIfInProgress(buildId, canceledBy, tx);
     if (!canceledBuild) {
-      return false;
+      return null;
     }
 
     await dbClient.snapshots.markUnfinishedAs(buildId, "canceled", tx);
-    await dbClient.diffs.markPendingAs(buildId, "canceled", tx);
-    return true;
+    const diffIds = await dbClient.diffs.markPendingAs(buildId, "canceled", tx);
+    return diffIds;
   });
 
-  if (!canceled) {
-    return { status: "error", error: "NOT_CANCELABLE" };
+  if (!result) {
+    const build = await dbClient.builds.findById(buildId);
+    return { status: "error", error: build ? "NOT_CANCELABLE" : "BUILD_NOT_FOUND" };
   }
 
   logger.info({ buildId, canceledBy }, "canceled build");
@@ -130,8 +127,7 @@ export const cancelBuild = async (
   // Best-effort: drop not-yet-started jobs so they never run. Active jobs are
   // guarded in the worker, and a queue failure must not undo the cancellation.
   try {
-    const diffIds = (await dbClient.diffs.findByBuild(buildId)).map((diff) => diff.id);
-    await cancelBuildJobs(buildId, diffIds);
+    await cancelBuildJobs(buildId, result);
   } catch (error) {
     logger.error({ err: error, buildId }, "failed to remove queued jobs for canceled build");
   }

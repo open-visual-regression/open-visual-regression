@@ -9,6 +9,7 @@ import {
   inArray,
   isNotNull,
   lt,
+  ne,
   notExists,
   or,
   sql,
@@ -36,6 +37,8 @@ export const create = async ({ tx = db, ...values }: CreateInput) => {
 export const findById = (id: string) =>
   db.query.builds.findFirst({ where: (builds, { eq }) => eq(builds.id, id) });
 
+// A build canceled mid-flight is terminal; a late job's status write must not
+// resurrect it. The returned row is undefined when the build was canceled.
 export const updateProcessingStatus = async (
   id: string,
   processingStatus: BuildProcessingStatus,
@@ -45,7 +48,7 @@ export const updateProcessingStatus = async (
   const [build] = await tx
     .update(builds)
     .set({ processingStatus, errorMessage })
-    .where(eq(builds.id, id))
+    .where(and(eq(builds.id, id), ne(builds.processingStatus, "canceled")))
     .returning();
   return build;
 };
@@ -67,8 +70,14 @@ type UpdateResultInput = {
   errorMessage?: string | null;
 };
 
+// Same canceled guard as updateProcessingStatus — a build canceled between
+// finalizeBuild's read and this write must not be flipped to success/error.
 export const updateResult = async (id: string, result: UpdateResultInput) => {
-  const [build] = await db.update(builds).set(result).where(eq(builds.id, id)).returning();
+  const [build] = await db
+    .update(builds)
+    .set(result)
+    .where(and(eq(builds.id, id), ne(builds.processingStatus, "canceled")))
+    .returning();
   return build;
 };
 

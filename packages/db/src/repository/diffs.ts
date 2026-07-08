@@ -1,4 +1,4 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, ne } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
 import { db, type DbClient } from "../db";
@@ -56,6 +56,8 @@ export const findByBuild = async (buildId: string, opts: FindByBuildOptions = {}
   return rows.map((row) => row.diff);
 };
 
+// A diff canceled mid-flight is terminal; a late job's status write must not
+// resurrect it. The returned row is undefined when the diff was canceled.
 export const updateProcessingStatus = async (
   id: string,
   processingStatus: DiffProcessingStatus,
@@ -63,7 +65,7 @@ export const updateProcessingStatus = async (
   const [diff] = await db
     .update(diffs)
     .set({ processingStatus })
-    .where(eq(diffs.id, id))
+    .where(and(eq(diffs.id, id), ne(diffs.processingStatus, "canceled")))
     .returning();
   return diff;
 };
@@ -97,11 +99,13 @@ export const updateReviewStatusMany = async (ids: string[], reviewStatus: DiffRe
 
 // Transitions a build's still-pending diffs to a terminal status (error when
 // reaped, canceled when a build is canceled), leaving finished diffs as-is.
+// Returns the transitioned ids so callers don't need a separate query to find
+// them (e.g. to remove their queued jobs).
 export const markPendingAs = async (
   buildId: string,
   status: DiffProcessingStatus,
   tx: DbClient = db,
-): Promise<void> => {
+): Promise<string[]> => {
   const rows = await tx
     .select({ id: diffs.id })
     .from(diffs)
@@ -110,10 +114,11 @@ export const markPendingAs = async (
 
   const ids = rows.map((row) => row.id);
   if (ids.length === 0) {
-    return;
+    return ids;
   }
 
   await tx.update(diffs).set({ processingStatus: status }).where(inArray(diffs.id, ids));
+  return ids;
 };
 
 export const hasAllDoneForBuild = async (buildId: string) => {

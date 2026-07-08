@@ -70,7 +70,7 @@ export const BuildHeader = ({ build, snapshotCounts, storybookHref }: BuildHeade
             <Typography variant="caption">
               {formatRelativeDateTime(new Date(build.createdAt))}
             </Typography>
-            {build.status === "canceled" && build.canceledBy ? (
+            {isCanceled && build.canceledBy ? (
               <Typography variant="caption" className="flex items-center gap-1">
                 <Icon icon={CircleSlash2Icon} size={10} />
                 canceled by {build.canceledBy}
@@ -79,8 +79,9 @@ export const BuildHeader = ({ build, snapshotCounts, storybookHref }: BuildHeade
           </div>
         </div>
         <div className="flex flex-row gap-2">
-          {isCancelable ? <BuildCancelButton buildId={build.id} /> : null}
-          {!isCancelable && !isCanceled ? (
+          {isCancelable ? (
+            <BuildCancelButton buildId={build.id} />
+          ) : isCanceled ? null : (
             <>
               <BuildRejectButton
                 buildId={build.id}
@@ -93,7 +94,7 @@ export const BuildHeader = ({ build, snapshotCounts, storybookHref }: BuildHeade
                 disabled={!hasReviewable}
               />
             </>
-          ) : null}
+          )}
         </div>
       </div>
       {build.errorMessage ? (

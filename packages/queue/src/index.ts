@@ -162,18 +162,23 @@ export const cancelBuildJobs = async (
 
   try {
     // Extract and finalize jobs are keyed by buildId; diff jobs by diffId.
-    await removeJobById(extractQueue, buildId);
-    await removeJobById(finalizeQueue, buildId);
-    await Promise.all(diffIds.map((diffId) => removeJobById(diffQueue, diffId)));
-
     // Capture group jobs have generated ids, so match them by buildId in their
-    // payload across the not-yet-running states.
-    const captureJobs = await captureQueue.getJobs(["waiting", "delayed", "prioritized", "paused"]);
-    await Promise.all(
-      captureJobs
-        .filter((job) => (job.data as CaptureGroupJobPayload).buildId === buildId)
-        .map((job) => removeJob(job, captureQueue.name)),
-    );
+    // payload across the not-yet-running states. All four queues are
+    // independent, so remove from them concurrently.
+    await Promise.all([
+      removeJobById(extractQueue, buildId),
+      removeJobById(finalizeQueue, buildId),
+      ...diffIds.map((diffId) => removeJobById(diffQueue, diffId)),
+      captureQueue
+        .getJobs(["waiting", "delayed", "prioritized", "paused"])
+        .then((captureJobs) =>
+          Promise.all(
+            captureJobs
+              .filter((job) => (job.data as CaptureGroupJobPayload).buildId === buildId)
+              .map((job) => removeJob(job, captureQueue.name)),
+          ),
+        ),
+    ]);
   } finally {
     await Promise.all([
       extractQueue.close(),

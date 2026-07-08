@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, ilike, inArray, ne, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, inArray, ne, notInArray, or, sql } from "drizzle-orm";
 
 import { db, type DbClient } from "../db";
 import { diffs, snapshots, type SnapshotStatus } from "../schema";
@@ -31,11 +31,14 @@ export const findByBuild = (buildId: string) =>
 export const findById = (id: string) =>
   db.query.snapshots.findFirst({ where: (snapshots, { eq }) => eq(snapshots.id, id) });
 
+// A snapshot canceled mid-flight is terminal; a late job's status write must
+// not resurrect it. The returned row is undefined when the snapshot was
+// canceled.
 export const updateStatus = async (id: string, status: SnapshotStatus) => {
   const [snapshot] = await db
     .update(snapshots)
     .set({ status })
-    .where(eq(snapshots.id, id))
+    .where(and(eq(snapshots.id, id), ne(snapshots.status, "canceled")))
     .returning();
   return snapshot;
 };
@@ -63,6 +66,8 @@ export const updateCaptureResult = async (
 
 // Transitions snapshots still queued or in flight to a terminal status (error
 // when reaped, canceled when a build is canceled), leaving finished ones as-is.
+// Excludes by terminal status rather than whitelisting ["queued","processing"]
+// so a future non-terminal status is covered automatically.
 export const markUnfinishedAs = async (
   buildId: string,
   status: SnapshotStatus,
@@ -72,7 +77,10 @@ export const markUnfinishedAs = async (
     .update(snapshots)
     .set({ status })
     .where(
-      and(eq(snapshots.buildId, buildId), inArray(snapshots.status, ["queued", "processing"])),
+      and(
+        eq(snapshots.buildId, buildId),
+        notInArray(snapshots.status, ["success", "error", "canceled"]),
+      ),
     );
 };
 
