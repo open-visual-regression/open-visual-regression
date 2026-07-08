@@ -675,14 +675,14 @@ describe("builds", () => {
         createdBy: user.id,
       });
 
-      const passedBuild = await dbClient.builds.create({
+      const unchangedBuild = await dbClient.builds.create({
         projectId: project.id,
         branch: "main",
         commitSha: "b".repeat(40),
         artifactPath: "builds/b/artifact",
         createdBy: user.id,
       });
-      await dbClient.builds.updateResult(passedBuild!.id, {
+      await dbClient.builds.updateResult(unchangedBuild!.id, {
         processingStatus: "success",
         reviewStatus: "not_required",
       });
@@ -713,7 +713,7 @@ describe("builds", () => {
 
       const statuses = await dbClient.builds.findStatuses(project.id);
 
-      expect(statuses).toEqual(["queued", "needs_review", "passed"]);
+      expect(statuses).toEqual(["queued", "needs_review", "unchanged"]);
     });
 
     test("should not return statuses for a different project", async ({
