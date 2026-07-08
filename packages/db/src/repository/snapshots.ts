@@ -66,8 +66,6 @@ export const updateCaptureResult = async (
 
 // Transitions snapshots still queued or in flight to a terminal status (error
 // when reaped, canceled when a build is canceled), leaving finished ones as-is.
-// Excludes by terminal status rather than whitelisting ["queued","processing"]
-// so a future non-terminal status is covered automatically.
 export const markUnfinishedAs = async (
   buildId: string,
   status: SnapshotStatus,

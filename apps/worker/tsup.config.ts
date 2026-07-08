@@ -24,9 +24,8 @@ export default defineConfig((options) => ({
     "pixelmatch",
     "pngjs",
     "pg",
-    // pino's internals rely on dynamic require() of node builtins (e.g. "os"),
-    // which breaks when bundled into ESM output — keep it external like the
-    // other native/CJS-heavy deps above.
+    // pino's internals dynamically require() node builtins, which breaks when
+    // bundled into ESM output.
     "pino",
     "pino-pretty",
   ],

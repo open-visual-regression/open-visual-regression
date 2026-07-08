@@ -163,8 +163,7 @@ export const cancelBuildJobs = async (
   try {
     // Extract and finalize jobs are keyed by buildId; diff jobs by diffId.
     // Capture group jobs have generated ids, so match them by buildId in their
-    // payload across the not-yet-running states. All four queues are
-    // independent, so remove from them concurrently.
+    // payload across the not-yet-running states.
     await Promise.all([
       removeJobById(extractQueue, buildId),
       removeJobById(finalizeQueue, buildId),

@@ -99,8 +99,7 @@ export const updateReviewStatusMany = async (ids: string[], reviewStatus: DiffRe
 
 // Transitions a build's still-pending diffs to a terminal status (error when
 // reaped, canceled when a build is canceled), leaving finished diffs as-is.
-// Returns the transitioned ids so callers don't need a separate query to find
-// them (e.g. to remove their queued jobs).
+// Returns the transitioned ids.
 export const markPendingAs = async (
   buildId: string,
   status: DiffProcessingStatus,
