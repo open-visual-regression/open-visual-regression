@@ -3,7 +3,7 @@ import { v7 as uuidv7 } from "uuid";
 import { dbClient } from "@ovr/db/client";
 import type { BuildReviewStatus, BuildType } from "@ovr/db/schema";
 import { createLogger } from "@ovr/logger";
-import { cancelBuildJobs, enqueueExtract } from "@ovr/queue/producer";
+import { cancelBuildJobs, enqueueExtract, enqueuePublishStatus } from "@ovr/queue/producer";
 import { storage } from "@ovr/storage";
 
 import type { Result } from "./types";
@@ -38,6 +38,14 @@ export const DEFAULT_DIFF_THRESHOLD = 0.05;
 export const getArtifactPath = (projectId: string, buildId: string): string =>
   `${projectId}/builds/${buildId}/artifact.tar.gz`;
 
+const publishStatus = async (buildId: string): Promise<void> => {
+  try {
+    await enqueuePublishStatus({ buildId });
+  } catch (error) {
+    logger.error({ err: error, buildId }, "failed to enqueue git status publish");
+  }
+};
+
 export const createBuild = async (
   input: CreateBuildInput,
   callerId: string,
@@ -63,6 +71,8 @@ export const createBuild = async (
     artifactPath: getArtifactPath(input.projectId, buildId),
     createdBy: callerId,
   });
+
+  await publishStatus(buildId);
 
   return { status: "ok", data: buildId };
 };
@@ -160,12 +170,21 @@ export const finalizeBuild = async (buildId: string): Promise<void> => {
   const diffs = await dbClient.diffs.findByBuild(buildId);
 
   const hasProcessingError = diffs.some((diff) => diff.processingStatus === "error");
+  const processingStatus = hasProcessingError ? "error" : "success";
+  const reviewStatus = computeBuildReviewStatus(diffs);
 
   await dbClient.builds.updateResult(buildId, {
-    processingStatus: hasProcessingError ? "error" : "success",
-    reviewStatus: computeBuildReviewStatus(diffs),
+    processingStatus,
+    reviewStatus,
     errorMessage: hasProcessingError
       ? "One or more snapshots failed to diff against their baseline"
       : null,
   });
+
+  const changed =
+    build?.processingStatus !== processingStatus || build?.reviewStatus !== reviewStatus;
+
+  if (changed) {
+    await publishStatus(buildId);
+  }
 };
