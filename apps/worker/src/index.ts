@@ -5,15 +5,19 @@ import { z } from "zod";
 
 import { CAPTURE_GROUP_SIZE } from "@ovr/capture/extract";
 import { CAPTURE_JOB_TIMEOUT_MS } from "@ovr/capture/lib/captureTimeouts";
+import { assertEncryptionKey } from "@ovr/git-status/crypto";
 import { QueueName, scheduleReaper, schedulePurge } from "@ovr/queue";
 
 import * as capture from "./handlers/capture";
 import * as diff from "./handlers/diff";
 import * as extract from "./handlers/extract";
 import * as finalize from "./handlers/finalize";
+import * as publishStatus from "./handlers/publishStatus";
 import * as purge from "./handlers/purge";
 import * as purgeDispatch from "./handlers/purgeDispatch";
 import * as reaper from "./handlers/reaper";
+
+assertEncryptionKey();
 
 const connection = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379", {
   maxRetriesPerRequest: null,
@@ -40,6 +44,9 @@ const purgeDispatchWorker = new Worker(QueueName.BUILD_PURGE_DISPATCH, purgeDisp
 });
 const purgeWorker = new Worker(QueueName.BUILD_PURGE, purge.run, { connection });
 const reaperWorker = new Worker(QueueName.BUILD_REAPER, reaper.run, { connection });
+const publishStatusWorker = new Worker(QueueName.GIT_STATUS_PUBLISH, publishStatus.run, {
+  connection,
+});
 
 const isFinalAttempt = (job: Job<unknown>): boolean => job.attemptsMade >= (job.opts.attempts ?? 1);
 
@@ -74,6 +81,7 @@ const workers = [
   purgeDispatchWorker,
   purgeWorker,
   reaperWorker,
+  publishStatusWorker,
 ];
 
 try {
