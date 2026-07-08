@@ -1,3 +1,12 @@
+export const register = async () => {
+  if (process.env.NEXT_RUNTIME !== "nodejs") {
+    return;
+  }
+
+  const { assertEncryptionKey } = await import("@ovr/git-status/crypto");
+  assertEncryptionKey();
+};
+
 export const onRequestError = async (
   error: unknown,
   request: Readonly<{ path: string; method: string; headers: NodeJS.Dict<string | string[]> }>,
