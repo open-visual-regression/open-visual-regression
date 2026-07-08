@@ -83,6 +83,21 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
     ],
   });
 
+  const test = useServerAction(serverClient.gitIntegrations.testConnection, {
+    interceptors: [
+      onSuccess((result) => {
+        if (result.ok) {
+          toast.success("connection ok");
+        } else {
+          toast.error(result.error ?? "connection failed");
+        }
+      }),
+      onError((err) => {
+        toast.error(err.message);
+      }),
+    ],
+  });
+
   const disconnect = useServerAction(serverClient.gitIntegrations.remove, {
     interceptors: [
       onSuccess(() => {
@@ -184,6 +199,16 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
                 onClick={() => disconnect.execute({ projectId })}
               >
                 disconnect
+              </Button>
+            ) : null}
+            {integration ? (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={test.status === "pending"}
+                onClick={() => test.execute({ projectId })}
+              >
+                {test.status === "pending" ? "testing..." : "test connection"}
               </Button>
             ) : null}
           </div>
