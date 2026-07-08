@@ -7,7 +7,8 @@ const PROJECT_ID = "018f0000-0000-7000-8000-000000000000";
 
 const STATUS_OPTIONS = [
   { value: "needs_review" as const, label: "needs review" },
-  { value: "passed" as const, label: "passed" },
+  { value: "unchanged" as const, label: "unchanged" },
+  { value: "auto_approved" as const, label: "auto approved" },
   { value: "error" as const, label: "error" },
 ];
 
