@@ -64,8 +64,14 @@ export type HttpRequest = {
   body: Record<string, unknown>;
 };
 
+export type VerifyRequest = {
+  url: string;
+  headers: Record<string, string>;
+};
+
 export type Adapter = {
   buildRequest: (config: AdapterConfig, request: PublishRequest) => HttpRequest;
+  buildVerifyRequest: (config: AdapterConfig) => VerifyRequest;
 };
 
 export type PublishOutcome = {
@@ -76,6 +82,32 @@ export type PublishOutcome = {
 };
 
 const TERMINAL_STATUSES = new Set([400, 401, 403, 404, 422]);
+
+export type VerifyOutcome = {
+  ok: boolean;
+  httpStatus: number | null;
+  error: string | null;
+};
+
+export const verify = async (request: VerifyRequest): Promise<VerifyOutcome> => {
+  try {
+    const response = await fetch(request.url, { method: "GET", headers: request.headers });
+    if (response.ok) {
+      return { ok: true, httpStatus: response.status, error: null };
+    }
+    return {
+      ok: false,
+      httpStatus: response.status,
+      error: `provider responded with ${response.status}`,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      httpStatus: null,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+};
 
 export const send = async (request: HttpRequest): Promise<PublishOutcome> => {
   try {

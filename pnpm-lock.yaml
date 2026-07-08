@@ -151,6 +151,9 @@ importers:
       '@ovr/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@ovr/git-status':
+        specifier: workspace:*
+        version: link:../../packages/git-status
       '@ovr/logger':
         specifier: workspace:*
         version: link:../../packages/logger

@@ -1,6 +1,18 @@
-import type { Adapter, AdapterConfig, HttpRequest, PublishRequest } from "../publisher";
+import type {
+  Adapter,
+  AdapterConfig,
+  HttpRequest,
+  PublishRequest,
+  VerifyRequest,
+} from "../publisher";
 
 const GITHUB_API_VERSION = "2022-11-28";
+
+const headers = (token: string): Record<string, string> => ({
+  authorization: `Bearer ${token}`,
+  accept: "application/json",
+  "x-github-api-version": GITHUB_API_VERSION,
+});
 
 const trimTrailingSlash = (value: string): string => value.replace(/\/+$/, "");
 
@@ -28,11 +40,7 @@ const resolveApiBase = ({ provider, baseUrl }: AdapterConfig): string => {
 
 const buildRequest = (config: AdapterConfig, request: PublishRequest): HttpRequest => ({
   url: `${resolveApiBase(config)}/repos/${config.repoIdentifier}/statuses/${request.sha}`,
-  headers: {
-    authorization: `Bearer ${config.token}`,
-    accept: "application/json",
-    "x-github-api-version": GITHUB_API_VERSION,
-  },
+  headers: headers(config.token),
   body: {
     state: request.state,
     context: request.context,
@@ -41,4 +49,9 @@ const buildRequest = (config: AdapterConfig, request: PublishRequest): HttpReque
   },
 });
 
-export const githubFamilyAdapter: Adapter = { buildRequest };
+const buildVerifyRequest = (config: AdapterConfig): VerifyRequest => ({
+  url: `${resolveApiBase(config)}/repos/${config.repoIdentifier}`,
+  headers: headers(config.token),
+});
+
+export const githubFamilyAdapter: Adapter = { buildRequest, buildVerifyRequest };
