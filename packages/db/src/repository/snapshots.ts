@@ -31,9 +31,6 @@ export const findByBuild = (buildId: string) =>
 export const findById = (id: string) =>
   db.query.snapshots.findFirst({ where: (snapshots, { eq }) => eq(snapshots.id, id) });
 
-// A snapshot canceled mid-flight is terminal; a late job's status write must
-// not resurrect it. The returned row is undefined when the snapshot was
-// canceled.
 export const updateStatus = async (id: string, status: SnapshotStatus) => {
   const [snapshot] = await db
     .update(snapshots)

@@ -7,7 +7,6 @@ type ExtractJob = { data: ExtractJobPayload };
 export const run = async (job: ExtractJob): Promise<void> => {
   const build = await dbClient.builds.updateProcessingStatus(job.data.buildId, "processing");
 
-  // The build was canceled before this job started — skip the extract work.
   if (!build) {
     return;
   }

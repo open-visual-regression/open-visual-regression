@@ -24,8 +24,6 @@ export default defineConfig((options) => ({
     "pixelmatch",
     "pngjs",
     "pg",
-    // pino's internals dynamically require() node builtins, which breaks when
-    // bundled into ESM output.
     "pino",
     "pino-pretty",
   ],

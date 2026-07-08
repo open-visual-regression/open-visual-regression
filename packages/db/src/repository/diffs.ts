@@ -56,8 +56,6 @@ export const findByBuild = async (buildId: string, opts: FindByBuildOptions = {}
   return rows.map((row) => row.diff);
 };
 
-// A diff canceled mid-flight is terminal; a late job's status write must not
-// resurrect it. The returned row is undefined when the diff was canceled.
 export const updateProcessingStatus = async (
   id: string,
   processingStatus: DiffProcessingStatus,
@@ -99,7 +97,6 @@ export const updateReviewStatusMany = async (ids: string[], reviewStatus: DiffRe
 
 // Transitions a build's still-pending diffs to a terminal status (error when
 // reaped, canceled when a build is canceled), leaving finished diffs as-is.
-// Returns the transitioned ids.
 export const markPendingAs = async (
   buildId: string,
   status: DiffProcessingStatus,

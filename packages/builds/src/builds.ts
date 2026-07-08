@@ -102,8 +102,6 @@ export const cancelBuild = async (
   buildId: string,
   canceledBy: string,
 ): Promise<Result<void, "BUILD_NOT_FOUND" | "NOT_CANCELABLE">> => {
-  // cancelIfInProgress returns undefined for a build that's already finished
-  // or doesn't exist; findById there tells the two cases apart.
   const result = await dbClient.transaction(async (tx) => {
     const canceledBuild = await dbClient.builds.cancelIfInProgress(buildId, canceledBy, tx);
     if (!canceledBuild) {
