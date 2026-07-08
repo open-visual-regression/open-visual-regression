@@ -332,6 +332,9 @@ importers:
       '@ovr/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@ovr/git-status':
+        specifier: workspace:*
+        version: link:../../packages/git-status
       '@ovr/queue':
         specifier: workspace:*
         version: link:../../packages/queue

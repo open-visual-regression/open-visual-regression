@@ -7,12 +7,14 @@ import {
   enqueueDiff as enqueueDiffJob,
   enqueueExtract as enqueueExtractJob,
   enqueueFinalize as enqueueFinalizeJob,
+  enqueuePublishStatus as enqueuePublishStatusJob,
   enqueuePurge as enqueuePurgeJob,
   enqueuePurgeMany as enqueuePurgeManyJob,
   type CaptureGroupJobPayload,
   type DiffJobPayload,
   type ExtractJobPayload,
   type FinalizeJobPayload,
+  type GitStatusPublishJobPayload,
   type PurgeJobPayload,
 } from "./index";
 
@@ -36,6 +38,10 @@ export const enqueueFinalize = (payload: FinalizeJobPayload): Promise<Job<Finali
 
 export const enqueuePurge = (payload: PurgeJobPayload): Promise<Job<PurgeJobPayload>> =>
   enqueuePurgeJob(payload, connection);
+
+export const enqueuePublishStatus = (
+  payload: GitStatusPublishJobPayload,
+): Promise<Job<GitStatusPublishJobPayload>> => enqueuePublishStatusJob(payload, connection);
 
 export const enqueuePurgeMany = (payloads: PurgeJobPayload[]): Promise<void> =>
   enqueuePurgeManyJob(payloads, connection);
