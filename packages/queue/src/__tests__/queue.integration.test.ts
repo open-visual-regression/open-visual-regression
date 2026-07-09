@@ -6,6 +6,7 @@ import {
   enqueueDiff,
   enqueueExtract,
   enqueueFinalize,
+  enqueuePublishStatus,
   QueueName,
   type CaptureGroupJobPayload,
   type DiffJobPayload,
@@ -117,6 +118,19 @@ describe("queue", () => {
       );
 
       expect(data).toEqual(payload);
+    });
+  });
+
+  describe("enqueuePublishStatus", () => {
+    test("should remove the job on final failure so a later publish for the same build isn't dropped", async ({
+      connection,
+    }) => {
+      const job = await enqueuePublishStatus({ buildId: "build-removeonfail" }, connection);
+      try {
+        expect(job.opts.removeOnFail).toBe(true);
+      } finally {
+        await job.remove();
+      }
     });
   });
 });

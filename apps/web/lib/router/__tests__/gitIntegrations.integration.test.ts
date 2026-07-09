@@ -178,4 +178,28 @@ describe("gitIntegrations", () => {
       expect(result?.integration).toBeNull();
     });
   });
+
+  describe("testConnection", () => {
+    test("should return UNAUTHORIZED when no session cookie is provided", async () => {
+      const [error] = await serverClient.gitIntegrations.testConnection({
+        projectId: FAKE_PROJECT_ID,
+      });
+      expect(error?.code).toBe("UNAUTHORIZED");
+    });
+
+    test("should return FORBIDDEN when the session user is not an admin", async ({ user: _ }) => {
+      const [error] = await serverClient.gitIntegrations.testConnection({
+        projectId: FAKE_PROJECT_ID,
+      });
+      expect(error?.code).toBe("FORBIDDEN");
+    });
+
+    test("should return BAD_REQUEST when no integration is configured", async ({ admin: _ }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+
+      const [error] = await serverClient.gitIntegrations.testConnection({ projectId });
+      expect(error?.code).toBe("BAD_REQUEST");
+    });
+  });
 });
