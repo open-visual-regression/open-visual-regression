@@ -9,6 +9,14 @@ import { verifyIntegration } from "@ovr/git-status/verifyIntegration";
 import { adminMiddleware, authenticatedMiddleware, projectMiddleware } from "./middleware";
 import { os } from "./os";
 
+const tryDecryptToken = (encryptedToken: string): string | null => {
+  try {
+    return decryptToken(encryptedToken);
+  } catch {
+    return null;
+  }
+};
+
 export const get = os.gitIntegrations.get
   .use(authenticatedMiddleware)
   .use(adminMiddleware)
@@ -80,11 +88,20 @@ export const testConnection = os.gitIntegrations.testConnection
       throw new ORPCError("BAD_REQUEST", { message: "No git integration configured" });
     }
 
+    const token = tryDecryptToken(integration.encryptedToken);
+    if (token === null) {
+      return {
+        ok: false,
+        httpStatus: null,
+        error: "stored token could not be decrypted, re-enter it",
+      };
+    }
+
     return verifyIntegration({
       provider: integration.provider,
       baseUrl: integration.baseUrl,
       repoIdentifier: integration.repoIdentifier,
-      token: decryptToken(integration.encryptedToken),
+      token,
     });
   })
   .actionable();

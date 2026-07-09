@@ -67,6 +67,17 @@ export class GitStatusPublishError extends Error {
   }
 }
 
+const tryDecryptToken = (
+  decrypt: (payload: string) => string,
+  encryptedToken: string,
+): string | null => {
+  try {
+    return decrypt(encryptedToken);
+  } catch {
+    return null;
+  }
+};
+
 export const publishBuildStatus = async (
   buildId: string,
   deps: PublishBuildStatusDeps = defaultDeps(),
@@ -85,12 +96,30 @@ export const publishBuildStatus = async (
   const adapter = deps.resolveAdapter(integration.provider);
   const targetUrl = `${deps.baseUrl}/projects/${build.projectId}/builds/${build.id}`;
 
+  const token = tryDecryptToken(deps.decryptToken, integration.encryptedToken);
+  if (token === null) {
+    await deps.recordPublication({
+      buildId: build.id,
+      commitSha: build.commitSha,
+      context: integration.checkContext,
+      state,
+      outcome: "error",
+      httpStatus: null,
+      error: "token could not be decrypted",
+    });
+    logger.error(
+      { buildId: build.id, provider: integration.provider },
+      "token could not be decrypted",
+    );
+    return;
+  }
+
   const request = adapter.buildRequest(
     {
       provider: integration.provider,
       baseUrl: integration.baseUrl,
       repoIdentifier: integration.repoIdentifier,
-      token: deps.decryptToken(integration.encryptedToken),
+      token,
     },
     { sha: build.commitSha, state, context: integration.checkContext, description, targetUrl },
   );

@@ -1,6 +1,11 @@
-import type { BuildProcessingStatus, BuildReviewStatus, GitProvider } from "@ovr/db/schema";
+import type {
+  BuildProcessingStatus,
+  BuildReviewStatus,
+  GitProvider,
+  GitStatusState,
+} from "@ovr/db/schema";
 
-export type GitStatusState = "pending" | "success" | "failure" | "error";
+export type { GitStatusState };
 
 export type BuildStatusInput = {
   processingStatus: BuildProcessingStatus;

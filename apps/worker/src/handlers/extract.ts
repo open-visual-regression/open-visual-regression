@@ -1,3 +1,4 @@
+import { publishStatus } from "@ovr/builds/builds";
 import { extractBuild } from "@ovr/capture/extract";
 import { dbClient } from "@ovr/db/client";
 import type { ExtractJobPayload } from "@ovr/queue";
@@ -21,4 +22,5 @@ export const run = async (job: ExtractJob): Promise<void> => {
 
 export const failed = async (job: ExtractJob, error?: Error): Promise<void> => {
   await dbClient.builds.updateProcessingStatus(job.data.buildId, "error", error?.message);
+  await publishStatus(job.data.buildId);
 };
