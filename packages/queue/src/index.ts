@@ -70,6 +70,7 @@ const JOB_OPTIONS: Record<QueueName, JobsOptions> = {
     attempts: 5,
     backoff: { type: "exponential", delay: 5000 },
     removeOnComplete: true,
+    removeOnFail: true,
   },
 };
 

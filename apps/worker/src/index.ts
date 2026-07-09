@@ -72,6 +72,7 @@ finalizeWorker.on("failed", guard(finalize.failed));
 purgeDispatchWorker.on("failed", guard(purgeDispatch.failed));
 purgeWorker.on("failed", guard(purge.failed));
 reaperWorker.on("failed", guard(reaper.failed));
+publishStatusWorker.on("failed", guard(publishStatus.failed));
 
 const workers = [
   extractWorker,

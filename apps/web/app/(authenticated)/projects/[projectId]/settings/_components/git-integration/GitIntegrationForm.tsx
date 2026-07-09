@@ -188,7 +188,7 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
           </FieldGroup>
           <FieldError errors={[errors.root]} />
         </CardContent>
-        <CardFooter className="flex flex-row justify-between">
+        <CardFooter className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-row gap-2">
             {integration ? (
               <Button
@@ -197,6 +197,7 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
                 color="red"
                 disabled={disconnect.status === "pending"}
                 onClick={() => disconnect.execute({ projectId })}
+                className="flex-1 sm:flex-none"
               >
                 disconnect
               </Button>
@@ -207,12 +208,13 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
                 variant="outline"
                 disabled={test.status === "pending"}
                 onClick={() => test.execute({ projectId })}
+                className="flex-1 sm:flex-none"
               >
                 {test.status === "pending" ? "testing..." : "test connection"}
               </Button>
             ) : null}
           </div>
-          <Button type="submit" disabled={isSaving}>
+          <Button type="submit" disabled={isSaving} className="w-full sm:w-auto">
             <Icon icon={CheckIcon} />
             {isSaving ? "saving..." : "save"}
           </Button>

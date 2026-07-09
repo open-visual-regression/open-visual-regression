@@ -38,7 +38,7 @@ export const DEFAULT_DIFF_THRESHOLD = 0.05;
 export const getArtifactPath = (projectId: string, buildId: string): string =>
   `${projectId}/builds/${buildId}/artifact.tar.gz`;
 
-const publishStatus = async (buildId: string): Promise<void> => {
+export const publishStatus = async (buildId: string): Promise<void> => {
   try {
     await enqueuePublishStatus({ buildId });
   } catch (error) {
@@ -139,6 +139,8 @@ export const cancelBuild = async (
   } catch (error) {
     logger.error({ err: error, buildId }, "failed to remove queued jobs for canceled build");
   }
+
+  await publishStatus(buildId);
 
   return { status: "ok", data: undefined };
 };
