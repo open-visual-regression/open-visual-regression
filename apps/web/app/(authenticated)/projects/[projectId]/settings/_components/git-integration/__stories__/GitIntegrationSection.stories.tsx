@@ -27,20 +27,9 @@ export const NotConnected: Story = {
   },
 };
 
-export const ConnectedGithub: Story = {
+export const Connected: Story = {
   args: {
     integration: mocks.gitIntegration.generateGitIntegration({
-      provider: "github",
-      repoIdentifier: "acme/web",
-    }),
-  },
-};
-
-export const ConnectedGitea: Story = {
-  args: {
-    integration: mocks.gitIntegration.generateGitIntegration({
-      provider: "gitea",
-      baseUrl: "https://gitea.acme.com",
       repoIdentifier: "acme/web",
     }),
   },
