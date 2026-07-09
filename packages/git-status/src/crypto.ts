@@ -19,12 +19,7 @@ const getKey = (): Buffer => {
     throw new MissingEncryptionKeyError("is required but not set");
   }
 
-  let key: Buffer;
-  try {
-    key = Buffer.from(raw, "base64");
-  } catch {
-    throw new MissingEncryptionKeyError("must be valid base64");
-  }
+  const key = Buffer.from(raw, "base64");
 
   if (key.length !== KEY_BYTES) {
     throw new MissingEncryptionKeyError(`must decode to ${KEY_BYTES} bytes (got ${key.length})`);
