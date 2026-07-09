@@ -74,7 +74,7 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
   const save = useServerAction(serverClient.gitIntegrations.upsert, {
     interceptors: [
       onSuccess(() => {
-        toast.success("ci status check saved");
+        toast.success("git integration saved");
       }),
       onError((err) => setError("root", { message: err.message })),
     ],
@@ -98,7 +98,7 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
   const disconnect = useServerAction(serverClient.gitIntegrations.remove, {
     interceptors: [
       onSuccess(() => {
-        toast.success("ci status check removed");
+        toast.success("git integration removed");
       }),
     ],
   });
