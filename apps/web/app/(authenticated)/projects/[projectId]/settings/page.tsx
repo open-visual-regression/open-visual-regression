@@ -7,6 +7,7 @@ import { verifyRole } from "@/lib/utils/authorization";
 import { serverError } from "@/lib/utils/errors";
 
 import { ApiKeysSection } from "./_components/api-keys-section/ApiKeysSection";
+import { GitIntegrationSection } from "./_components/git-integration/GitIntegrationSection";
 import { UpdateProjectForm } from "./_components/update-project-form/UpdateProjectForm";
 
 export type ProjectSettingsPageProps = PageProps<"/projects/[projectId]/settings">;
@@ -24,16 +25,21 @@ export default async function ProjectSettingsPage(props: ProjectSettingsPageProp
     notFound();
   }
 
-  const [[projectError, projectResult], [apiKeysError, apiKeysResult]] = await Promise.all([
+  const [
+    [projectError, projectResult],
+    [apiKeysError, apiKeysResult],
+    [gitIntegrationError, gitIntegrationResult],
+  ] = await Promise.all([
     serverClient.projects.getOne({ projectId }),
     serverClient.apiKeys.list({ projectId }),
+    serverClient.gitIntegrations.get({ projectId }),
   ]);
 
   if (projectError?.code === "NOT_FOUND") {
     return notFound();
   }
 
-  if (projectError || apiKeysError) {
+  if (projectError || apiKeysError || gitIntegrationError) {
     serverError();
   }
 
@@ -44,6 +50,10 @@ export default async function ProjectSettingsPage(props: ProjectSettingsPageProp
       </Typography>
       <div className="flex flex-col gap-6 w-full md:w-3/4 lg:w-2/3">
         <UpdateProjectForm project={projectResult.project} />
+        <GitIntegrationSection
+          projectId={projectId}
+          integration={gitIntegrationResult.integration}
+        />
         <ApiKeysSection projectId={projectId} apiKeys={apiKeysResult.apiKeys} />
       </div>
     </div>

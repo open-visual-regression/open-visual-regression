@@ -197,6 +197,13 @@
       "when": 1783353360482,
       "tag": "0027_peaceful_giant_man",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1783553124209,
+      "tag": "0028_goofy_quasar",
+      "breakpoints": true
     }
   ]
 }

@@ -27,6 +27,7 @@
     "@ovr/api": "workspace:*",
     "@ovr/builds": "workspace:*",
     "@ovr/db": "workspace:*",
+    "@ovr/git-status": "workspace:*",
     "@ovr/logger": "workspace:*",
     "@ovr/reviews": "workspace:*",
     "@ovr/storage": "workspace:*",

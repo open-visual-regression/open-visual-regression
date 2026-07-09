@@ -8,6 +8,8 @@ x-app-env: &app-env
   STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY:-rustfsadmin}
   STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY:-rustfsadmin}
   LOG_LEVEL: ${LOG_LEVEL:-info}
+  BASE_URL: ${BASE_URL:-http://localhost:3000}
+  OVR_GIT_TOKEN_ENCRYPTION_KEY: ${OVR_GIT_TOKEN_ENCRYPTION_KEY:?set OVR_GIT_TOKEN_ENCRYPTION_KEY in your .env}
 
 services:
   db:
