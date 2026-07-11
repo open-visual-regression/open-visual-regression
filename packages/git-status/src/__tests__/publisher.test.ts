@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { mapBuildStatus, send } from "../publisher";
+import { mapBuildStatus, send, verify } from "../publisher";
 
 describe("mapBuildStatus", () => {
   it("maps in-flight processing to pending", () => {
@@ -60,5 +60,40 @@ describe("send", () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("ECONNREFUSED")));
     const result = await send(request);
     expect(result).toMatchObject({ outcome: "error", retryable: true });
+  });
+});
+
+const verifyRequest = { url: "https://api.example.com/repos/acme/web", headers: {} };
+
+describe("verify", () => {
+  it("is ok when the token has push access", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(Response.json({ permissions: { push: true } })),
+    );
+    const result = await verify(verifyRequest);
+    expect(result).toEqual({ ok: true, httpStatus: 200, error: null });
+  });
+
+  it("is not ok when the token lacks push access (e.g. a public repo read-only token)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(Response.json({ permissions: { push: false } })),
+    );
+    const result = await verify(verifyRequest);
+    expect(result.ok).toBe(false);
+    expect(result.httpStatus).toBe(200);
+  });
+
+  it("is not ok on a non-2xx response", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 404 })));
+    const result = await verify(verifyRequest);
+    expect(result).toMatchObject({ ok: false, httpStatus: 404 });
+  });
+
+  it("reports a network failure", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("ECONNREFUSED")));
+    const result = await verify(verifyRequest);
+    expect(result).toMatchObject({ ok: false, httpStatus: null, error: "ECONNREFUSED" });
   });
 });

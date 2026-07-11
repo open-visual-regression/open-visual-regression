@@ -94,17 +94,32 @@ export type VerifyOutcome = {
   error: string | null;
 };
 
+type RepoResponse = { permissions?: { push?: boolean } };
+
 export const verify = async (request: VerifyRequest): Promise<VerifyOutcome> => {
   try {
     const response = await fetch(request.url, { method: "GET", headers: request.headers });
-    if (response.ok) {
-      return { ok: true, httpStatus: response.status, error: null };
+    if (!response.ok) {
+      return {
+        ok: false,
+        httpStatus: response.status,
+        error: `provider responded with ${response.status}`,
+      };
     }
-    return {
-      ok: false,
-      httpStatus: response.status,
-      error: `provider responded with ${response.status}`,
-    };
+
+    // A 200 alone only proves the repo is reachable — public repos read fine with a bad or
+    // missing token. Require the authenticated `permissions.push` (github + gitea) so a
+    // read-only token isn't reported as a working integration.
+    const body = (await response.json().catch(() => null)) as RepoResponse | null;
+    if (body?.permissions?.push !== true) {
+      return {
+        ok: false,
+        httpStatus: response.status,
+        error: "the token cannot write commit statuses to this repository",
+      };
+    }
+
+    return { ok: true, httpStatus: response.status, error: null };
   } catch (error) {
     return {
       ok: false,

@@ -3,19 +3,11 @@
 import { ORPCError } from "@orpc/client";
 
 import { dbClient } from "@ovr/db/client";
-import { decryptToken, encryptToken } from "@ovr/git-status/crypto";
+import { encryptToken, tryDecryptToken } from "@ovr/git-status/crypto";
 import { verifyIntegration } from "@ovr/git-status/verifyIntegration";
 
 import { adminMiddleware, authenticatedMiddleware, projectMiddleware } from "./middleware";
 import { os } from "./os";
-
-const tryDecryptToken = (encryptedToken: string): string | null => {
-  try {
-    return decryptToken(encryptedToken);
-  } catch {
-    return null;
-  }
-};
 
 export const get = os.gitIntegrations.get
   .use(authenticatedMiddleware)

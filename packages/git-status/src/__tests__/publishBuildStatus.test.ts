@@ -32,7 +32,9 @@ const makeDeps = (overrides: Partial<PublishBuildStatusDeps> = {}): PublishBuild
     .fn<PublishBuildStatusDeps["recordPublication"]>()
     .mockResolvedValue(undefined),
   resolveAdapter,
-  decryptToken: vi.fn<PublishBuildStatusDeps["decryptToken"]>().mockReturnValue("plain-token"),
+  tryDecryptToken: vi
+    .fn<PublishBuildStatusDeps["tryDecryptToken"]>()
+    .mockReturnValue("plain-token"),
   send: vi
     .fn<PublishBuildStatusDeps["send"]>()
     .mockResolvedValue({ outcome: "ok", httpStatus: 201, retryable: false }),

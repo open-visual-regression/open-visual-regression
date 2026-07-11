@@ -3,7 +3,7 @@ import type { BuildProcessingStatus, BuildReviewStatus, GitProvider } from "@ovr
 import { createLogger } from "@ovr/logger";
 
 import { resolveAdapter } from "./adapters";
-import { decryptToken } from "./crypto";
+import { tryDecryptToken } from "./crypto";
 import {
   mapBuildStatus,
   send,
@@ -45,7 +45,7 @@ export type PublishBuildStatusDeps = {
   findIntegration: (projectId: string) => Promise<IntegrationForPublish | undefined>;
   recordPublication: (values: PublicationRecord) => Promise<unknown>;
   resolveAdapter: (provider: GitProvider) => Adapter;
-  decryptToken: (payload: string) => string;
+  tryDecryptToken: (payload: string) => string | null;
   send: (request: Parameters<typeof send>[0]) => Promise<PublishOutcome>;
   baseUrl: string;
 };
@@ -55,7 +55,7 @@ const defaultDeps = (): PublishBuildStatusDeps => ({
   findIntegration: dbClient.gitIntegrations.findByProject,
   recordPublication: dbClient.gitStatusPublications.record,
   resolveAdapter,
-  decryptToken,
+  tryDecryptToken,
   send,
   baseUrl: process.env.BASE_URL ?? "http://localhost:3000",
 });
@@ -66,17 +66,6 @@ export class GitStatusPublishError extends Error {
     this.name = "GitStatusPublishError";
   }
 }
-
-const tryDecryptToken = (
-  decrypt: (payload: string) => string,
-  encryptedToken: string,
-): string | null => {
-  try {
-    return decrypt(encryptedToken);
-  } catch {
-    return null;
-  }
-};
 
 export const publishBuildStatus = async (
   buildId: string,
@@ -96,7 +85,7 @@ export const publishBuildStatus = async (
   const adapter = deps.resolveAdapter(integration.provider);
   const targetUrl = `${deps.baseUrl}/projects/${build.projectId}/builds/${build.id}`;
 
-  const token = tryDecryptToken(deps.decryptToken, integration.encryptedToken);
+  const token = deps.tryDecryptToken(integration.encryptedToken);
   if (token === null) {
     await deps.recordPublication({
       buildId: build.id,
