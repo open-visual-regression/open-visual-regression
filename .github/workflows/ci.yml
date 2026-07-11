@@ -162,9 +162,6 @@ jobs:
           load: ${{ env.SHOULD_PUSH != 'true' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # Attach max-mode SLSA provenance and an SBOM when publishing.
-          # Only on push: attestations produce a multi-manifest index that
-          # `load: true` (the fork/PR-local path) cannot import into dockerd.
           provenance: ${{ env.SHOULD_PUSH == 'true' && 'mode=max' || 'false' }}
           sbom: ${{ env.SHOULD_PUSH == 'true' }}
           cache-from: type=gha,scope=${{ matrix.image.name }}
