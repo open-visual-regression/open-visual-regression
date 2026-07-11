@@ -17,7 +17,7 @@ export default defineConfig((options) => ({
     "../../packages/reviews/src",
     "../../packages/storage/src",
   ],
-  noExternal: [/^@ovr\//],
+  noExternal: [/^@ovr\/(?!logger)/],
   external: [
     "playwright",
     "playwright-core",
@@ -27,7 +27,5 @@ export default defineConfig((options) => ({
     "pixelmatch",
     "pngjs",
     "pg",
-    "pino",
-    "pino-pretty",
   ],
 }));
