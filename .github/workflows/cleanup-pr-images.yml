@@ -1,0 +1,75 @@
+name: Cleanup PR images
+
+# When a PR closes (merged or not), delete the ephemeral `pr-<n>` image
+# tags it pushed to GHCR so the registry doesn't accumulate stale builds.
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  packages: write
+
+jobs:
+  delete-pr-images:
+    name: Delete pr-${{ github.event.pull_request.number }} images
+    runs-on: ubuntu-latest
+    # Only same-repo PRs ever pushed images; fork PRs never did.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [web, worker]
+    steps:
+      - name: Delete pr-${{ github.event.pull_request.number }} versions of ${{ matrix.image }}
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const isOrg = context.payload.repository.owner.type === 'Organization';
+            const package_type = 'container';
+            const package_name = '${{ matrix.image }}';
+            const prTag = `pr-${context.payload.pull_request.number}`;
+
+            const listFn = isOrg
+              ? github.rest.packages.getAllPackageVersionsForPackageOwnedByOrg
+              : github.rest.packages.getAllPackageVersionsForPackageOwnedByUser;
+            const ownerArg = isOrg ? { org: owner } : { username: owner };
+
+            let versions;
+            try {
+              versions = await github.paginate(listFn, {
+                package_type,
+                package_name,
+                ...ownerArg,
+                per_page: 100,
+              });
+            } catch (err) {
+              if (err.status === 404) {
+                core.info(`Package ${package_name} not found; nothing to clean up.`);
+                return;
+              }
+              throw err;
+            }
+
+            const toDelete = versions.filter((v) =>
+              (v.metadata?.container?.tags || []).includes(prTag)
+            );
+
+            if (toDelete.length === 0) {
+              core.info(`No ${package_name} versions tagged ${prTag}.`);
+              return;
+            }
+
+            const deleteFn = isOrg
+              ? github.rest.packages.deletePackageVersionForOrg
+              : github.rest.packages.deletePackageVersionForUser;
+
+            for (const v of toDelete) {
+              await deleteFn({
+                package_type,
+                package_name,
+                ...ownerArg,
+                package_version_id: v.id,
+              });
+              core.info(`Deleted ${package_name} version ${v.id} (tag ${prTag}).`);
+            }
