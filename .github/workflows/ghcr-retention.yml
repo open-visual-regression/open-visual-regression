@@ -1,0 +1,29 @@
+name: GHCR retention
+
+# GHCR has no native retention policy, so run one on a schedule.
+# Deletes untagged image versions older than the cut-off — these are
+# superseded PR builds (each new PR commit orphans the previous image)
+# and leftover multi-arch/attestation manifests. Tagged images
+# (releases, latest, main, sha-, pr-<n>) are left untouched, and v3
+# will not delete untagged manifests that belong to a tagged image.
+on:
+  schedule:
+    - cron: "0 3 * * 0" # Sundays 03:00 UTC
+  workflow_dispatch:
+
+permissions:
+  packages: write
+
+jobs:
+  clean:
+    name: Prune untagged GHCR images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: snok/container-retention-policy@v3
+        with:
+          account: ${{ github.repository_owner }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          image-names: "web worker"
+          tag-selection: untagged
+          cut-off: 1w
+          dry-run: false
