@@ -75,6 +75,21 @@ describe("GitIntegrationForm", () => {
     expect(await screen.findByText("git integration saved")).toBeVisible();
   });
 
+  it("should update an existing integration without re-entering the token", async ({ user }) => {
+    mockUpsert.mockResolvedValue([null, { ...INTEGRATION, repoIdentifier: "acme/renamed" }]);
+    renderComponent(INTEGRATION);
+
+    await user.clear(screen.getByLabelText(/repository/i));
+    await user.type(screen.getByLabelText(/repository/i), "acme/renamed");
+    await user.click(screen.getByRole("button", { name: /^save$/i }));
+
+    await waitFor(() =>
+      expect(mockUpsert).toHaveBeenCalledWith(
+        expect.objectContaining({ repoIdentifier: "acme/renamed", token: undefined }),
+      ),
+    );
+  });
+
   it("should disconnect the integration", async ({ user }) => {
     mockRemove.mockResolvedValue([null, undefined]);
     renderComponent(INTEGRATION);

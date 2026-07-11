@@ -28,7 +28,7 @@ export const upsertGitIntegrationInputSchema = z.object({
   provider: gitProviderSchema,
   baseUrl: z.url().nullable(),
   repoIdentifier: z.string().min(1).max(512),
-  token: z.string().min(1),
+  token: z.string().min(1).optional(),
   checkContext: z.string().min(1).max(255).optional(),
 });
 

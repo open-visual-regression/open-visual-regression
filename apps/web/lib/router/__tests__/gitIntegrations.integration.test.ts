@@ -85,6 +85,41 @@ describe("gitIntegrations", () => {
       expect(getResult?.integration).toMatchObject({ hasToken: true, repoIdentifier: "acme/web" });
     });
 
+    test("should update fields without re-sending the token", async ({ admin: _ }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+
+      await serverClient.gitIntegrations.upsert({
+        projectId,
+        provider: "github",
+        baseUrl: null,
+        repoIdentifier: "acme/web",
+        token: "a-secret-token",
+      });
+
+      const [error, result] = await serverClient.gitIntegrations.upsert({
+        projectId,
+        provider: "github",
+        baseUrl: null,
+        repoIdentifier: "acme/renamed",
+      });
+      expect(error).toBeNull();
+      expect(result).toMatchObject({ repoIdentifier: "acme/renamed", hasToken: true });
+    });
+
+    test("should reject a first-time save without a token", async ({ admin: _ }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+
+      const [error] = await serverClient.gitIntegrations.upsert({
+        projectId,
+        provider: "github",
+        baseUrl: null,
+        repoIdentifier: "acme/web",
+      });
+      expect(error?.code).toBe("BAD_REQUEST");
+    });
+
     test("should replace an existing integration for the project", async ({ admin: _ }) => {
       const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
       const projectId = addResult!.projectId;

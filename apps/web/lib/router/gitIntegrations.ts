@@ -36,17 +36,25 @@ export const upsert = os.gitIntegrations.upsert
   .use(adminMiddleware)
   .use(projectMiddleware)
   .handler(async ({ input }) => {
-    const integration = await dbClient.gitIntegrations.upsert({
-      projectId: input.projectId,
-      provider: input.provider,
-      baseUrl: input.baseUrl,
-      repoIdentifier: input.repoIdentifier,
-      encryptedToken: encryptToken(input.token),
-      checkContext: input.checkContext,
-    });
+    const integration = input.token
+      ? await dbClient.gitIntegrations.upsert({
+          projectId: input.projectId,
+          provider: input.provider,
+          baseUrl: input.baseUrl,
+          repoIdentifier: input.repoIdentifier,
+          encryptedToken: encryptToken(input.token),
+          checkContext: input.checkContext,
+        })
+      : await dbClient.gitIntegrations.updateFields({
+          projectId: input.projectId,
+          provider: input.provider,
+          baseUrl: input.baseUrl,
+          repoIdentifier: input.repoIdentifier,
+          checkContext: input.checkContext,
+        });
 
     if (!integration) {
-      throw new ORPCError("INTERNAL_SERVER_ERROR");
+      throw new ORPCError("BAD_REQUEST", { message: "An access token is required" });
     }
 
     return {

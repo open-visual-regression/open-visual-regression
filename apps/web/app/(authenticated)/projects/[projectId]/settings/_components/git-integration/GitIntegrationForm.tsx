@@ -30,24 +30,27 @@ const PROVIDERS: { value: GitProviderSchema; label: string }[] = [
 
 const SELF_HOSTED: GitProviderSchema[] = ["gitea"];
 
-const gitIntegrationSchema = z
-  .object({
-    provider: z.enum(["github", "gitea"]),
-    baseUrl: z.string().max(512),
-    repoIdentifier: z.string().min(1, "you must enter a repository").max(512),
-    token: z.string().min(1, "you must enter an access token"),
-  })
-  .superRefine((values, ctx) => {
-    if (SELF_HOSTED.includes(values.provider) && values.baseUrl.trim() === "") {
-      ctx.addIssue({
-        code: "custom",
-        path: ["baseUrl"],
-        message: "a base url is required for self-hosted providers",
-      });
-    }
-  });
+const makeGitIntegrationSchema = (isEditing: boolean) =>
+  z
+    .object({
+      provider: z.enum(["github", "gitea"]),
+      baseUrl: z.string().max(512),
+      repoIdentifier: z.string().min(1, "you must enter a repository").max(512),
+      token: isEditing
+        ? z.string().max(512)
+        : z.string().min(1, "you must enter an access token").max(512),
+    })
+    .superRefine((values, ctx) => {
+      if (SELF_HOSTED.includes(values.provider) && values.baseUrl.trim() === "") {
+        ctx.addIssue({
+          code: "custom",
+          path: ["baseUrl"],
+          message: "a base url is required for self-hosted providers",
+        });
+      }
+    });
 
-type GitIntegrationFormValues = z.infer<typeof gitIntegrationSchema>;
+type GitIntegrationFormValues = z.infer<ReturnType<typeof makeGitIntegrationSchema>>;
 
 type GitIntegrationFormProps = {
   projectId: string;
@@ -62,7 +65,7 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
     setError,
     formState: { errors },
   } = useForm<GitIntegrationFormValues>({
-    resolver: zodResolver(gitIntegrationSchema),
+    resolver: zodResolver(makeGitIntegrationSchema(!!integration)),
     defaultValues: {
       provider: integration?.provider ?? "github",
       baseUrl: integration?.baseUrl ?? "",
@@ -94,7 +97,7 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
       provider: values.provider,
       baseUrl: values.baseUrl.trim() === "" ? null : values.baseUrl.trim(),
       repoIdentifier: values.repoIdentifier,
-      token: values.token,
+      token: values.token.trim() === "" ? undefined : values.token,
     });
   };
 
