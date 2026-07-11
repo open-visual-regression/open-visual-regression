@@ -1,3 +1,5 @@
+"use client";
+
 import { type BuildStatus } from "@ovr/api/contracts/builds";
 
 import { FacetBar } from "@/lib/components/facet/FacetBar";

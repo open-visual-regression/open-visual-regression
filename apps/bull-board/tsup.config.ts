@@ -6,6 +6,6 @@ export default defineConfig((options) => ({
   target: "node22",
   clean: true,
   watch: options.watch && ["src", "../../packages/queue/src"],
-  noExternal: [/^@ovr\//],
+  noExternal: [/^@ovr\/(?!logger)/],
   external: ["bullmq", "ioredis", "express"],
 }));
