@@ -16,6 +16,7 @@ export const projectSchema = z.object({
   gitMainBranch: z.string().min(1).max(255),
   retentionDays: z.number().int().min(1),
   requiredReviewerCount: z.number().int().min(1),
+  totalBuildsCount: z.number().int().nonnegative(),
   creator: projectCreatorSchema,
   createdAt: z.string().nonempty(),
 });

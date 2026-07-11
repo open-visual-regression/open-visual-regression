@@ -89,6 +89,20 @@ describe("builds", () => {
       expect(await findExtractJob(connection, buildId)).toBeUndefined();
     });
 
+    test("increments the project's total builds count", async ({ project, user }) => {
+      await createBuild(
+        { projectId: project.id, branch: "main", commitSha: "a".repeat(40) },
+        user.id,
+      );
+      await createBuild(
+        { projectId: project.id, branch: "main", commitSha: "b".repeat(40) },
+        user.id,
+      );
+
+      const updated = await dbClient.projects.findById(project.id);
+      expect(updated?.totalBuildsCount).toBe(project.totalBuildsCount + 2);
+    });
+
     test("returns PROJECT_NOT_FOUND when the project does not exist", async ({ user }) => {
       const result = await createBuild(
         { projectId: crypto.randomUUID(), branch: "main", commitSha: "a".repeat(40) },

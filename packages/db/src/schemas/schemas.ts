@@ -27,6 +27,7 @@ export const projects = pgTable("projects", {
     .references(() => user.id, { onDelete: "cascade" })
     .notNull(),
   retentionDays: integer("retention_days").notNull().default(90),
+  totalBuildsCount: integer("total_builds_count").notNull().default(0),
   createdAt: utcTimestamp("created_at")
     .default(sql`now()`)
     .notNull(),

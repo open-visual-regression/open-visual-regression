@@ -1,6 +1,6 @@
 import { and, count, desc, eq, sql } from "drizzle-orm";
 
-import { db } from "../db";
+import { db, type DbClient } from "../db";
 import { projects } from "../schema";
 
 export const findById = (id: string) =>
@@ -20,6 +20,7 @@ export const getProject = async ({ projectId, organizationId }: GetProjectInput)
       gitMainBranch: true,
       retentionDays: true,
       requiredReviewerCount: true,
+      totalBuildsCount: true,
       createdAt: true,
     },
     with: { creator: { columns: { id: true, name: true, email: true } } },
@@ -48,6 +49,7 @@ export const listProjects = ({ organizationId, limit, offset }: ListProjectsInpu
       gitMainBranch: true,
       retentionDays: true,
       requiredReviewerCount: true,
+      totalBuildsCount: true,
       createdAt: true,
     },
     with: { creator: { columns: { id: true, name: true, email: true } } },
@@ -84,6 +86,7 @@ export const findAll = async ({ organizationId, limit, cursor }: FindAllInput) =
       gitMainBranch: true,
       retentionDays: true,
       requiredReviewerCount: true,
+      totalBuildsCount: true,
       createdAt: true,
     },
     with: { creator: { columns: { id: true, name: true, email: true } } },
@@ -119,6 +122,13 @@ export const addProject = async (values: typeof projects.$inferInsert) => {
 export const updateProject = async (id: string, patch: Partial<typeof projects.$inferInsert>) => {
   const [project] = await db.update(projects).set(patch).where(eq(projects.id, id)).returning();
   return project;
+};
+
+export const incrementTotalBuildsCount = async (projectId: string, tx: DbClient = db) => {
+  await tx
+    .update(projects)
+    .set({ totalBuildsCount: sql`${projects.totalBuildsCount} + 1` })
+    .where(eq(projects.id, projectId));
 };
 
 export const deleteProject = async (id: string) => {

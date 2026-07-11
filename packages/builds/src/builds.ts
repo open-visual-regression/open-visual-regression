@@ -50,18 +50,22 @@ export const createBuild = async (
 
   const buildId = uuidv7();
 
-  await dbClient.builds.create({
-    id: buildId,
-    projectId: input.projectId,
-    branch: input.branch,
-    commitSha: input.commitSha,
-    name: input.name,
-    author: input.author,
-    processingStatus: "queued",
-    captureMode: "worker",
-    buildType: input.buildType ?? "storybook",
-    artifactPath: getArtifactPath(input.projectId, buildId),
-    createdBy: callerId,
+  await dbClient.transaction(async (tx) => {
+    await dbClient.builds.create({
+      tx,
+      id: buildId,
+      projectId: input.projectId,
+      branch: input.branch,
+      commitSha: input.commitSha,
+      name: input.name,
+      author: input.author,
+      processingStatus: "queued",
+      captureMode: "worker",
+      buildType: input.buildType ?? "storybook",
+      artifactPath: getArtifactPath(input.projectId, buildId),
+      createdBy: callerId,
+    });
+    await dbClient.projects.incrementTotalBuildsCount(input.projectId, tx);
   });
 
   return { status: "ok", data: buildId };
