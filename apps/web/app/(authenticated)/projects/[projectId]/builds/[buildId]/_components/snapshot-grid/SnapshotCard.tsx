@@ -1,11 +1,9 @@
-import Link from "next/link";
-
 import { type BuildSnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { GlobeIcon, Icon } from "@ovr/ui/components/icon";
 import { ResolutionIcon } from "@ovr/ui/components/resolution-icon";
 import { Typography } from "@ovr/ui/components/typography";
-import { cn } from "@ovr/ui/lib/utils";
 
+import { CardLink } from "@/lib/components/card-link/CardLink";
 import { Image } from "@/lib/components/image/Image";
 import { SnapshotStatusBadge } from "@/lib/components/SnapshotStatusBadge";
 import { getStoragePath } from "@/lib/utils/storage";
@@ -19,8 +17,11 @@ type SnapshotCardProps = {
 export const SnapshotCard = ({ snapshot, projectId, buildId }: SnapshotCardProps) => {
   const imagePath = getStoragePath(snapshot.imagePath);
 
-  const content = (
-    <>
+  return (
+    <CardLink
+      href={`/projects/${projectId}/builds/${buildId}/snapshots/${snapshot.id}`}
+      className="gap-0 py-0"
+    >
       <div className="relative h-40 overflow-hidden border-b border-ovr-border-subtle bg-ovr-inset bg-pixel-grid">
         {imagePath ? (
           <Image
@@ -56,21 +57,6 @@ export const SnapshotCard = ({ snapshot, projectId, buildId }: SnapshotCardProps
           {snapshot.viewportName}
         </Typography>
       </div>
-    </>
-  );
-
-  const cardClassName =
-    "flex flex-col overflow-hidden rounded-card border border-ovr-border bg-ovr-elevated";
-
-  return (
-    <Link
-      href={`/projects/${projectId}/builds/${buildId}/snapshots/${snapshot.id}`}
-      className={cn(
-        cardClassName,
-        "hover:border-ovr-border-strong focus-visible:border-ovr-accent focus-visible:ring-2 focus-visible:ring-ovr-accent/35 focus-visible:outline-none hover:scale-101 focus-visible:scale-101",
-      )}
-    >
-      {content}
-    </Link>
+    </CardLink>
   );
 };
