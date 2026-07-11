@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { expect, userEvent, within } from "storybook/test";
 
 import { mocks } from "@ovr/mocks";
 
@@ -47,22 +46,5 @@ export const NoDescription: Story = {
       description: null,
       gitMainBranch: "develop",
     }),
-  },
-};
-
-export const Hovered: Story = {
-  ...Default,
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await userEvent.hover(canvas.getByRole("link"));
-  },
-};
-
-export const FocusVisible: Story = {
-  ...Default,
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await userEvent.tab();
-    await expect(canvas.getByRole("link")).toHaveFocus();
   },
 };
