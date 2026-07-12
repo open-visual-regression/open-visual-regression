@@ -28,6 +28,7 @@ export const serverClient: typeof RealServerClient = {
           gitMainBranch: "main",
           retentionDays: 30,
           requiredReviewerCount: 1,
+          totalBuildsCount: 0,
           creator: { id: "", name: "", email: "" },
           createdAt: new Date().toISOString(),
         },

@@ -34,10 +34,10 @@ export const ProjectCardListItem = ({ project }: ProjectCardListItemProps) => {
             <DescriptionList>
               <DescriptionListItem>
                 <DescriptionTerm>
-                  <Typography variant="body-muted">runs:</Typography>
+                  <Typography variant="body-muted">builds:</Typography>
                 </DescriptionTerm>
                 <DescriptionDetails>
-                  <Typography variant="body">0</Typography>
+                  <Typography variant="body">{project.totalBuildsCount}</Typography>
                 </DescriptionDetails>
               </DescriptionListItem>
               <DescriptionListItem>

@@ -9,6 +9,7 @@ export const generateProject = (overrides?: Partial<ProjectDto>): ProjectDto => 
   gitMainBranch: "main",
   retentionDays: 90,
   requiredReviewerCount: 1,
+  totalBuildsCount: 0,
   creator: {
     id: faker.string.uuid(),
     name: faker.person.fullName(),
