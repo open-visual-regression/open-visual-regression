@@ -19,9 +19,7 @@ COPY . .
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile
 
-RUN --mount=type=secret,id=better_auth_secret \
-    export BETTER_AUTH_SECRET="$(cat /run/secrets/better_auth_secret 2>/dev/null)"; \
-    export BETTER_AUTH_SECRET="${BETTER_AUTH_SECRET:-Yb3nK9pQ2wR7tV1xZ4aC6eF8gH0jL5mN3oP7qS9uW2y}"; \
+RUN BETTER_AUTH_SECRET="$(node -e 'process.stdout.write(require("crypto").randomBytes(32).toString("base64url"))')" \
     pnpm exec turbo run build --filter=@ovr/web
 
 FROM node:${NODE_VERSION}-slim AS runner
