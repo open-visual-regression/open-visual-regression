@@ -1,3 +1,4 @@
+import { relations } from "drizzle-orm";
 import {
   boolean,
   index,
@@ -209,6 +210,13 @@ export const diffReviews = pgTable(
     uniqueIndex("diff_reviews_diffId_reviewerId_uidx").on(table.diffId, table.reviewerId),
   ],
 );
+
+export const diffReviewsRelations = relations(diffReviews, ({ one }) => ({
+  reviewer: one(user, {
+    fields: [diffReviews.reviewerId],
+    references: [user.id],
+  }),
+}));
 
 export const baselines = pgTable(
   "baselines",

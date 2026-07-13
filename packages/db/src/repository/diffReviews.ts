@@ -36,10 +36,31 @@ export const removeVote = async (diffId: string, reviewerId: string) => {
     .where(and(eq(diffReviews.diffId, diffId), eq(diffReviews.reviewerId, reviewerId)));
 };
 
-export const findByDiff = (diffId: string) =>
-  db.query.diffReviews.findMany({
-    where: (diffReviews, { eq }) => eq(diffReviews.diffId, diffId),
+const reviewerColumns = { id: true, name: true, image: true } as const;
+
+export type DiffReviewDbSchema = typeof diffReviews.$inferSelect;
+
+export type DiffReviewWithReviewerDbSchema = DiffReviewDbSchema & {
+  reviewer: { id: string; name: string; image: string | null };
+};
+
+export type FindByDiffOptions = { withReviewers?: boolean };
+
+export function findByDiff(diffId: string): Promise<DiffReviewDbSchema[]>;
+export function findByDiff(
+  diffId: string,
+  options: { withReviewers: true },
+): Promise<DiffReviewWithReviewerDbSchema[]>;
+export function findByDiff(
+  diffId: string,
+  options: FindByDiffOptions = {},
+): Promise<DiffReviewDbSchema[] | DiffReviewWithReviewerDbSchema[]> {
+  return db.query.diffReviews.findMany({
+    where: eq(diffReviews.diffId, diffId),
+    orderBy: (diffReviews, { asc }) => asc(diffReviews.reviewedAt),
+    with: options.withReviewers ? { reviewer: { columns: reviewerColumns } } : undefined,
   });
+}
 
 export const findByDiffs = (diffIds: string[]) => {
   if (diffIds.length === 0) {
@@ -50,5 +71,3 @@ export const findByDiffs = (diffIds: string[]) => {
     where: inArray(diffReviews.diffId, diffIds),
   });
 };
-
-export type DiffReviewDbSchema = Awaited<ReturnType<typeof findByDiff>>[number];

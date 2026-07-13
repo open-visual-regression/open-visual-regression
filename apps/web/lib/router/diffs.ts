@@ -71,3 +71,26 @@ export const getOne = os.diffs.getOne
     };
   })
   .actionable();
+
+export const listReviews = os.diffs.listReviews
+  .use(authenticatedMiddleware)
+  .use(organizationSnapshotMiddleware)
+  .handler(async ({ context }) => {
+    const diff = await dbClient.diffs.findBySnapshot(context.snapshot.id);
+
+    const reviews = diff
+      ? await dbClient.diffReviews.findByDiff(diff.id, { withReviewers: true })
+      : [];
+
+    return {
+      reviews: reviews.map((review) => ({
+        reviewerId: review.reviewer.id,
+        name: review.reviewer.name,
+        image: review.reviewer.image,
+        vote: review.vote,
+        reviewedAt: review.reviewedAt,
+      })),
+      requiredReviewerCount: context.project.requiredReviewerCount,
+    };
+  })
+  .actionable();

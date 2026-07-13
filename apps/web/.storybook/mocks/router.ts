@@ -94,6 +94,9 @@ export const serverClient: typeof RealServerClient = {
     removeVote: os.diffs.removeVote.handler(() => undefined).actionable(),
     bulkCastVote: os.diffs.bulkCastVote.handler(() => undefined).actionable(),
     getOne: os.diffs.getOne.handler(() => ({ diff: null })).actionable(),
+    listReviews: os.diffs.listReviews
+      .handler(() => ({ reviews: [], requiredReviewerCount: 1 }))
+      .actionable(),
   },
   snapshots: {
     getOne: os.snapshots.getOne
