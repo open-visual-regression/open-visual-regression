@@ -1,6 +1,7 @@
 packages:
   - "apps/*"
   - "packages/*"
+injectWorkspacePackages: true
 allowBuilds:
   "@fission-ai/openspec": true
   cpu-features: true
