@@ -2,30 +2,12 @@ import type { DiffReviewSchema } from "@ovr/api/contracts/diffs";
 import { Badge } from "@ovr/ui/components/badge";
 import { Typography } from "@ovr/ui/components/typography";
 
+import { Avatar } from "@/lib/components/avatar/Avatar";
 import { formatRelativeDateTime } from "@/lib/utils/date";
-import { getMonogram } from "@/lib/utils/monogram";
 
 export type SnapshotReviewsProps = {
   reviews: DiffReviewSchema[];
   requiredReviewerCount: number;
-};
-
-const ReviewerAvatar = ({ name, image }: Pick<DiffReviewSchema, "name" | "image">) => {
-  if (image) {
-    return (
-      <img
-        src={image}
-        alt={name}
-        className="size-7 shrink-0 rounded-sm border border-ovr-border object-cover"
-      />
-    );
-  }
-
-  return (
-    <span className="flex size-7 shrink-0 items-center justify-center rounded-sm border border-ovr-border text-badge font-semibold uppercase">
-      {getMonogram(name)}
-    </span>
-  );
 };
 
 export const SnapshotReviews = ({ reviews, requiredReviewerCount }: SnapshotReviewsProps) => {
@@ -43,7 +25,7 @@ export const SnapshotReviews = ({ reviews, requiredReviewerCount }: SnapshotRevi
       <ul className="flex flex-col gap-3">
         {reviews.map((review) => (
           <li key={review.reviewerId} className="flex items-center gap-3">
-            <ReviewerAvatar name={review.name} image={review.image} />
+            <Avatar name={review.name} image={review.image} />
             <div className="flex min-w-0 flex-1 flex-col">
               <Typography variant="body" className="truncate">
                 {review.name}
