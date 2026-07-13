@@ -19,10 +19,7 @@ COPY . .
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile
 
-# next build runs as NODE_ENV=production, where Better Auth throws if no
-# secret is set. This value is never baked into the output (BETTER_AUTH_SECRET
-# is not NEXT_PUBLIC, so it is read from the environment at runtime), so a
-# throwaway keeps the build working while the real secret stays runtime only.
+# Throwaway secret so Better Auth's prod init does not throw; not baked in, real one is set at runtime.
 RUN BETTER_AUTH_SECRET="$(node -e 'process.stdout.write(require("crypto").randomBytes(32).toString("base64url"))')" \
     pnpm exec turbo run build --filter=@ovr/web
 
