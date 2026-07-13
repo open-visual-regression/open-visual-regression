@@ -96,10 +96,8 @@ describe("diffReviews", () => {
       const votes = await dbClient.diffReviews.findByDiff(diffA!.id);
       expect(votes.map((vote) => vote.diffId)).toEqual([diffA!.id]);
     });
-  });
 
-  describe("findByDiff with withReviewers", () => {
-    test("joins each vote with the reviewer profile", async ({
+    test("joins each vote with the reviewer profile when withReviewers is set", async ({
       build,
       captureConfiguration,
       user,
@@ -121,35 +119,6 @@ describe("diffReviews", () => {
         vote: "approve",
         reviewer: { id: user.id, name: user.name, image: user.image },
       });
-    });
-
-    test("returns only the reviews for the given diff", async ({
-      build,
-      captureConfiguration,
-      user,
-    }) => {
-      const [snapshotA, snapshotB] = await dbClient.snapshots.createMany({
-        values: [
-          { buildId: build.id, ...captureConfiguration, targetId: "a" },
-          { buildId: build.id, ...captureConfiguration, targetId: "b" },
-        ],
-      });
-      const diffA = await dbClient.diffs.create({ snapshotId: snapshotA!.id });
-      const diffB = await dbClient.diffs.create({ snapshotId: snapshotB!.id });
-      await dbClient.diffReviews.upsertVote({
-        diffId: diffA!.id,
-        reviewerId: user.id,
-        vote: "approve",
-      });
-      await dbClient.diffReviews.upsertVote({
-        diffId: diffB!.id,
-        reviewerId: user.id,
-        vote: "reject",
-      });
-
-      const reviews = await dbClient.diffReviews.findByDiff(diffA!.id, { withReviewers: true });
-
-      expect(reviews.map((review) => review.diffId)).toEqual([diffA!.id]);
     });
 
     test("orders reviews by reviewedAt ascending", async ({
