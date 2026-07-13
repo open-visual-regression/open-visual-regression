@@ -5,14 +5,6 @@ import { db } from "../db";
 import { user as userTable } from "../schema";
 import { describe, expect, test } from "./fixtures";
 
-const createReviewer = async (name: string) => {
-  const [created] = await db
-    .insert(userTable)
-    .values({ id: uuidv7(), name, email: `${uuidv7()}@example.com` })
-    .returning();
-  return created!;
-};
-
 describe("diffReviews", () => {
   describe("upsertVote", () => {
     test("should create a vote", async ({ build, captureConfiguration, user }) => {
@@ -165,7 +157,10 @@ describe("diffReviews", () => {
       captureConfiguration,
       user,
     }) => {
-      const secondReviewer = await createReviewer("Second Reviewer");
+      const [secondReviewer] = await db
+        .insert(userTable)
+        .values({ id: uuidv7(), name: "Second Reviewer", email: `${uuidv7()}@example.com` })
+        .returning();
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [{ buildId: build.id, ...captureConfiguration, targetId: "a" }],
       });
@@ -177,7 +172,7 @@ describe("diffReviews", () => {
       });
       await dbClient.diffReviews.upsertVote({
         diffId: diff!.id,
-        reviewerId: secondReviewer.id,
+        reviewerId: secondReviewer!.id,
         vote: "reject",
       });
 

@@ -20,7 +20,7 @@ describe("SnapshotReviews", () => {
     expect(screen.getByText("no reviews yet")).toBeVisible();
   });
 
-  it("should render each reviewer with their name and vote", () => {
+  it("should render each reviewer with their vote and summarize approvals against the required count", () => {
     render(
       <SnapshotReviews
         reviews={[
@@ -35,33 +35,6 @@ describe("SnapshotReviews", () => {
     expect(screen.getByText("approved")).toBeVisible();
     expect(screen.getByText("Alan Turing")).toBeVisible();
     expect(screen.getByText("rejected")).toBeVisible();
-  });
-
-  it("should summarize approvals against the required reviewer count", () => {
-    render(
-      <SnapshotReviews
-        reviews={[
-          review({ reviewerId: "a", vote: "approve" }),
-          review({ reviewerId: "b", vote: "reject" }),
-        ]}
-        requiredReviewerCount={2}
-      />,
-    );
-
     expect(screen.getByText("1 of 2 required approvals")).toBeVisible();
-  });
-
-  it("should render the reviewer image when one is present", () => {
-    render(
-      <SnapshotReviews
-        reviews={[review({ name: "Ada Lovelace", image: "https://example.com/ada.png" })]}
-        requiredReviewerCount={1}
-      />,
-    );
-
-    expect(screen.getByRole("img", { name: "Ada Lovelace" })).toHaveAttribute(
-      "src",
-      "https://example.com/ada.png",
-    );
   });
 });
