@@ -274,6 +274,28 @@ describe("diffs", () => {
       expect(error).toBeNull();
       expect(result?.reviews).toEqual([]);
     });
+
+    test("shows a single rejected entry when the reviewer approves then rejects", async ({
+      admin,
+    }) => {
+      const { build, captureConfiguration } = await createProjectAndBuild(admin);
+      const diff = await createAwaitingDiff(build.id, captureConfiguration, "story-a");
+
+      await serverClient.diffs.castVote({ diffId: diff!.id, vote: "approve" });
+      await serverClient.diffs.castVote({ diffId: diff!.id, vote: "reject" });
+
+      const [error, result] = await serverClient.diffs.listReviews({
+        snapshotId: diff!.snapshotId,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.reviews).toEqual([
+        expect.objectContaining({ reviewerId: admin.id, vote: "reject" }),
+      ]);
+      expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
+        reviewStatus: "rejected",
+      });
+    });
   });
 
   describe("projects.update", () => {
