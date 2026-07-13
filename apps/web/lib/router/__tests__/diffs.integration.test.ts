@@ -230,6 +230,74 @@ describe("diffs", () => {
     });
   });
 
+  describe("listReviews", () => {
+    test("should return UNAUTHORIZED when no session cookie is provided", async () => {
+      const [error] = await serverClient.diffs.listReviews({ snapshotId: uuidv7() });
+      expect(error?.code).toBe("UNAUTHORIZED");
+    });
+
+    test("returns NOT_FOUND for a missing snapshot id", async ({ admin: _ }) => {
+      const [error] = await serverClient.diffs.listReviews({ snapshotId: uuidv7() });
+      expect(error?.code).toBe("NOT_FOUND");
+    });
+
+    test("returns the reviewers and required reviewer count for a reviewed snapshot", async ({
+      admin,
+    }) => {
+      const { build, captureConfiguration } = await createProjectAndBuild(admin, 2);
+      const diff = await createAwaitingDiff(build.id, captureConfiguration, "story-a");
+      await dbClient.diffReviews.upsertVote({
+        diffId: diff!.id,
+        reviewerId: admin.id,
+        vote: "approve",
+      });
+
+      const [error, result] = await serverClient.diffs.listReviews({
+        snapshotId: diff!.snapshotId,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.requiredReviewerCount).toBe(2);
+      expect(result?.reviews).toEqual([
+        expect.objectContaining({ reviewerId: admin.id, name: admin.name, vote: "approve" }),
+      ]);
+    });
+
+    test("returns an empty review list when nobody has voted", async ({ admin }) => {
+      const { build, captureConfiguration } = await createProjectAndBuild(admin);
+      const diff = await createAwaitingDiff(build.id, captureConfiguration, "story-a");
+
+      const [error, result] = await serverClient.diffs.listReviews({
+        snapshotId: diff!.snapshotId,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.reviews).toEqual([]);
+    });
+
+    test("shows a single rejected entry when the reviewer approves then rejects", async ({
+      admin,
+    }) => {
+      const { build, captureConfiguration } = await createProjectAndBuild(admin);
+      const diff = await createAwaitingDiff(build.id, captureConfiguration, "story-a");
+
+      await serverClient.diffs.castVote({ diffId: diff!.id, vote: "approve" });
+      await serverClient.diffs.castVote({ diffId: diff!.id, vote: "reject" });
+
+      const [error, result] = await serverClient.diffs.listReviews({
+        snapshotId: diff!.snapshotId,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.reviews).toEqual([
+        expect.objectContaining({ reviewerId: admin.id, vote: "reject" }),
+      ]);
+      expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
+        reviewStatus: "rejected",
+      });
+    });
+  });
+
   describe("projects.update", () => {
     test("can set and read back requiredReviewerCount", async ({ admin: _ }) => {
       const [, addResult] = await serverClient.projects.add(TEST_PROJECT);

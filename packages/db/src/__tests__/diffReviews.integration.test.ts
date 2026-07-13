@@ -1,4 +1,8 @@
+import { v7 as uuidv7 } from "uuid";
+
 import { dbClient } from "../client";
+import { db } from "../db";
+import { user as userTable } from "../schema";
 import { describe, expect, test } from "./fixtures";
 
 describe("diffReviews", () => {
@@ -91,6 +95,73 @@ describe("diffReviews", () => {
 
       const votes = await dbClient.diffReviews.findByDiff(diffA!.id);
       expect(votes.map((vote) => vote.diffId)).toEqual([diffA!.id]);
+    });
+
+    test("joins each vote with the reviewer profile when withReviewers is set", async ({
+      build,
+      captureConfiguration,
+      user,
+    }) => {
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: build.id, ...captureConfiguration, targetId: "a" }],
+      });
+      const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
+      await dbClient.diffReviews.upsertVote({
+        diffId: diff!.id,
+        reviewerId: user.id,
+        vote: "approve",
+      });
+
+      const [review] = await dbClient.diffReviews.findByDiff(diff!.id, { withReviewers: true });
+
+      expect(review).toMatchObject({
+        reviewerId: user.id,
+        vote: "approve",
+        reviewer: { id: user.id, name: user.name, image: user.image },
+      });
+    });
+
+    test("orders reviews by reviewedAt ascending", async ({
+      build,
+      captureConfiguration,
+      user,
+    }) => {
+      const [secondReviewer] = await db
+        .insert(userTable)
+        .values({ id: uuidv7(), name: "Second Reviewer", email: `${uuidv7()}@example.com` })
+        .returning();
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: build.id, ...captureConfiguration, targetId: "a" }],
+      });
+      const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
+      await dbClient.diffReviews.upsertVote({
+        diffId: diff!.id,
+        reviewerId: user.id,
+        vote: "approve",
+      });
+      await dbClient.diffReviews.upsertVote({
+        diffId: diff!.id,
+        reviewerId: secondReviewer!.id,
+        vote: "reject",
+      });
+
+      const reviews = await dbClient.diffReviews.findByDiff(diff!.id, { withReviewers: true });
+
+      expect(reviews).toHaveLength(2);
+      const timestamps = reviews.map((review) => review.reviewedAt);
+      expect([...timestamps].sort()).toEqual(timestamps);
+    });
+
+    test("returns an empty array when the diff has no reviews", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: build.id, ...captureConfiguration, targetId: "a" }],
+      });
+      const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
+
+      expect(await dbClient.diffReviews.findByDiff(diff!.id, { withReviewers: true })).toEqual([]);
     });
   });
 });
