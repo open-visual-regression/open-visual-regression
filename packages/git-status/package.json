@@ -21,6 +21,7 @@
   "devDependencies": {
     "@ovr/typescript-config": "workspace:*",
     "@types/node": "^22.15.3",
+    "msw": "^2.14.6",
     "typescript": "6.0.3",
     "vitest": "^4.1.7"
   }

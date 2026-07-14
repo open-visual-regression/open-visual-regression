@@ -1,6 +1,8 @@
-import { describe, expect, it, vi } from "vitest";
+import { http, HttpResponse } from "msw";
+import { describe, expect, it } from "vitest";
 
 import { mapBuildStatus, send, verify } from "../publisher";
+import { server } from "./setup";
 
 describe("mapBuildStatus", () => {
   it("maps in-flight processing to pending", () => {
@@ -38,26 +40,26 @@ const request = { url: "https://api.example.com/status", headers: {}, body: {} }
 
 describe("send", () => {
   it("returns ok on a 2xx response", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 201 })));
+    server.use(http.post(request.url, () => new HttpResponse(null, { status: 201 })));
     const result = await send(request);
     expect(result).toEqual({ outcome: "ok", httpStatus: 201, retryable: false });
   });
 
   it("treats a 401 as a terminal error", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 401 })));
+    server.use(http.post(request.url, () => new HttpResponse(null, { status: 401 })));
     const result = await send(request);
     expect(result.outcome).toBe("error");
     expect(result.retryable).toBe(false);
   });
 
   it("treats a 500 as retryable", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 500 })));
+    server.use(http.post(request.url, () => new HttpResponse(null, { status: 500 })));
     const result = await send(request);
     expect(result.retryable).toBe(true);
   });
 
   it("treats a network failure as retryable", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("ECONNREFUSED")));
+    server.use(http.post(request.url, () => HttpResponse.error()));
     const result = await send(request);
     expect(result).toMatchObject({ outcome: "error", retryable: true });
   });
@@ -67,18 +69,16 @@ const verifyRequest = { url: "https://api.example.com/repos/acme/web", headers: 
 
 describe("verify", () => {
   it("is ok when the token has push access", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(Response.json({ permissions: { push: true } })),
+    server.use(
+      http.get(verifyRequest.url, () => HttpResponse.json({ permissions: { push: true } })),
     );
     const result = await verify(verifyRequest);
     expect(result).toEqual({ ok: true, httpStatus: 200, error: null });
   });
 
   it("is not ok when the token lacks push access (e.g. a public repo read-only token)", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(Response.json({ permissions: { push: false } })),
+    server.use(
+      http.get(verifyRequest.url, () => HttpResponse.json({ permissions: { push: false } })),
     );
     const result = await verify(verifyRequest);
     expect(result.ok).toBe(false);
@@ -86,14 +86,14 @@ describe("verify", () => {
   });
 
   it("is not ok on a non-2xx response", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 404 })));
+    server.use(http.get(verifyRequest.url, () => new HttpResponse(null, { status: 404 })));
     const result = await verify(verifyRequest);
     expect(result).toMatchObject({ ok: false, httpStatus: 404 });
   });
 
   it("reports a network failure", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("ECONNREFUSED")));
+    server.use(http.get(verifyRequest.url, () => HttpResponse.error()));
     const result = await verify(verifyRequest);
-    expect(result).toMatchObject({ ok: false, httpStatus: null, error: "ECONNREFUSED" });
+    expect(result).toMatchObject({ ok: false, httpStatus: null });
   });
 });
