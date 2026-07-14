@@ -38,7 +38,7 @@ export const SnapshotSidebarContent = async ({
           requiredReviewerCount={reviews.requiredReviewerCount}
           diffId={diffId}
           currentUserId={session?.user.id}
-          isAdmin={session?.user.role === "admin"}
+          role={session?.user.role}
         />
       </TabsContent>
       <TabsContent value="logs" className="pt-3">

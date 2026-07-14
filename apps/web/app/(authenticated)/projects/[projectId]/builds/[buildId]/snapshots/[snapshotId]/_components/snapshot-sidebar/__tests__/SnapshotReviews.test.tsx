@@ -89,7 +89,7 @@ describe("SnapshotReviews", () => {
         requiredReviewerCount={2}
         diffId={diffId}
         currentUserId="someone-else"
-        isAdmin
+        role="admin"
       />,
     );
 
@@ -103,7 +103,7 @@ describe("SnapshotReviews", () => {
         requiredReviewerCount={1}
         diffId={null}
         currentUserId="a"
-        isAdmin
+        role="admin"
       />,
     );
 

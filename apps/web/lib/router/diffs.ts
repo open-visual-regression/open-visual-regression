@@ -44,7 +44,7 @@ export const removeVote = os.diffs.removeVote
     const result = await removeVoteService({
       diffId: input.diffId,
       requesterId: context.user.id,
-      isAdmin: context.user.role === "admin",
+      requesterRole: context.user.role,
       targetReviewerId: input.reviewerId,
     });
 

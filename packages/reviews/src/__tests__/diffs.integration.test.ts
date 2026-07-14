@@ -172,7 +172,6 @@ describe("diffs", () => {
       const result = await removeVote({
         diffId: diff!.id,
         requesterId: user.id,
-        isAdmin: false,
       });
 
       assert(result.status === "ok");
@@ -206,7 +205,7 @@ describe("diffs", () => {
       await castVote(diff!.id, user.id, "reject");
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({ reviewStatus: "rejected" });
 
-      await removeVote({ diffId: diff!.id, requesterId: user.id, isAdmin: false });
+      await removeVote({ diffId: diff!.id, requesterId: user.id });
 
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({ reviewStatus: "approved" });
     });
@@ -231,7 +230,7 @@ describe("diffs", () => {
       const result = await removeVote({
         diffId: diff!.id,
         requesterId: admin.id,
-        isAdmin: true,
+        requesterRole: "admin",
         targetReviewerId: user.id,
       });
 
@@ -260,7 +259,6 @@ describe("diffs", () => {
       const result = await removeVote({
         diffId: diff!.id,
         requesterId: user.id,
-        isAdmin: false,
         targetReviewerId: otherReviewer.id,
       });
 

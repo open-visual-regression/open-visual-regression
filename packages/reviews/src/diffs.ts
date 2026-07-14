@@ -68,21 +68,21 @@ export const castVote = async (
 export type RemoveVoteParams = {
   diffId: string;
   requesterId: string;
-  isAdmin: boolean;
+  requesterRole?: string | null;
   targetReviewerId?: string;
 };
 
 export const removeVote = async ({
   diffId,
   requesterId,
-  isAdmin,
+  requesterRole,
   targetReviewerId,
 }: RemoveVoteParams): Promise<
   Result<void, "DIFF_NOT_FOUND" | "REVIEW_NOT_REQUIRED" | "FORBIDDEN">
 > => {
   const reviewerId = targetReviewerId ?? requesterId;
 
-  if (reviewerId !== requesterId && !isAdmin) {
+  if (reviewerId !== requesterId && requesterRole !== "admin") {
     return { status: "error", error: "FORBIDDEN" };
   }
 

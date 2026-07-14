@@ -77,6 +77,6 @@ export const AsOwnReviewer: Story = {
 export const AsAdmin: Story = {
   args: {
     ...Default.args,
-    isAdmin: true,
+    role: "admin",
   },
 };

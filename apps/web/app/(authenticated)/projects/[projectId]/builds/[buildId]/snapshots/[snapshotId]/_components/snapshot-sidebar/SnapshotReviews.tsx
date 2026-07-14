@@ -12,7 +12,7 @@ export type SnapshotReviewsProps = {
   requiredReviewerCount: number;
   diffId: string | null;
   currentUserId?: string;
-  isAdmin?: boolean;
+  role?: string | null;
 };
 
 export const SnapshotReviews = ({
@@ -20,7 +20,7 @@ export const SnapshotReviews = ({
   requiredReviewerCount,
   diffId,
   currentUserId,
-  isAdmin = false,
+  role,
 }: SnapshotReviewsProps) => {
   if (reviews.length === 0) {
     return <Typography variant="body-muted">no reviews yet</Typography>;
@@ -36,7 +36,7 @@ export const SnapshotReviews = ({
       <ul className="flex flex-col gap-3">
         {reviews.map((review) => {
           const isOwnReview = review.reviewerId === currentUserId;
-          const canRemove = diffId !== null && (isOwnReview || isAdmin);
+          const canRemove = diffId !== null && (isOwnReview || role === "admin");
 
           return (
             <li key={review.reviewerId} className="flex items-center gap-3">
