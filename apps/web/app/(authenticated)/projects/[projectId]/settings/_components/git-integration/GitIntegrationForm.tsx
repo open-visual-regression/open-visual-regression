@@ -197,7 +197,7 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
                 color="red"
                 disabled={disconnect.status === "pending"}
                 onClick={() => disconnect.execute({ projectId })}
-                className="flex-1 sm:flex-none"
+                className="min-w-0 flex-1 sm:flex-none"
               >
                 disconnect
               </Button>
@@ -208,7 +208,7 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
                 variant="outline"
                 disabled={test.status === "pending"}
                 onClick={() => test.execute({ projectId })}
-                className="flex-1 sm:flex-none"
+                className="min-w-0 flex-1 sm:flex-none"
               >
                 {test.status === "pending" ? "testing..." : "test connection"}
               </Button>
