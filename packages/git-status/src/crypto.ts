@@ -51,3 +51,11 @@ export const decryptToken = (payload: string): string => {
   decipher.setAuthTag(authTag);
   return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString("utf8");
 };
+
+export const tryDecryptToken = (payload: string): string | null => {
+  try {
+    return decryptToken(payload);
+  } catch {
+    return null;
+  }
+};

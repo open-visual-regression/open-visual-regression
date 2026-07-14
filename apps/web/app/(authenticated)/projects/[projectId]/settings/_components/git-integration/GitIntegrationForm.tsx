@@ -30,24 +30,27 @@ const PROVIDERS: { value: GitProviderSchema; label: string }[] = [
 
 const SELF_HOSTED: GitProviderSchema[] = ["gitea"];
 
-const gitIntegrationSchema = z
-  .object({
-    provider: z.enum(["github", "gitea"]),
-    baseUrl: z.string().max(512),
-    repoIdentifier: z.string().min(1, "you must enter a repository").max(512),
-    token: z.string().min(1, "you must enter an access token"),
-  })
-  .superRefine((values, ctx) => {
-    if (SELF_HOSTED.includes(values.provider) && values.baseUrl.trim() === "") {
-      ctx.addIssue({
-        code: "custom",
-        path: ["baseUrl"],
-        message: "a base url is required for self-hosted providers",
-      });
-    }
-  });
+const makeGitIntegrationSchema = (isEditing: boolean) =>
+  z
+    .object({
+      provider: z.enum(["github", "gitea"]),
+      baseUrl: z.string().max(512),
+      repoIdentifier: z.string().min(1, "you must enter a repository").max(512),
+      token: isEditing
+        ? z.string().max(512)
+        : z.string().min(1, "you must enter an access token").max(512),
+    })
+    .superRefine((values, ctx) => {
+      if (SELF_HOSTED.includes(values.provider) && values.baseUrl.trim() === "") {
+        ctx.addIssue({
+          code: "custom",
+          path: ["baseUrl"],
+          message: "a base url is required for self-hosted providers",
+        });
+      }
+    });
 
-type GitIntegrationFormValues = z.infer<typeof gitIntegrationSchema>;
+type GitIntegrationFormValues = z.infer<ReturnType<typeof makeGitIntegrationSchema>>;
 
 type GitIntegrationFormProps = {
   projectId: string;
@@ -62,7 +65,7 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
     setError,
     formState: { errors },
   } = useForm<GitIntegrationFormValues>({
-    resolver: zodResolver(gitIntegrationSchema),
+    resolver: zodResolver(makeGitIntegrationSchema(!!integration)),
     defaultValues: {
       provider: integration?.provider ?? "github",
       baseUrl: integration?.baseUrl ?? "",
@@ -80,6 +83,21 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
     ],
   });
 
+  const test = useServerAction(serverClient.gitIntegrations.testConnection, {
+    interceptors: [
+      onSuccess((result) => {
+        if (result.ok) {
+          toast.success("connection ok");
+        } else {
+          toast.error(result.error ?? "connection failed");
+        }
+      }),
+      onError((err) => {
+        toast.error(err.message);
+      }),
+    ],
+  });
+
   const disconnect = useServerAction(serverClient.gitIntegrations.remove, {
     interceptors: [
       onSuccess(() => {
@@ -94,7 +112,7 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
       provider: values.provider,
       baseUrl: values.baseUrl.trim() === "" ? null : values.baseUrl.trim(),
       repoIdentifier: values.repoIdentifier,
-      token: values.token,
+      token: values.token.trim() === "" ? undefined : values.token,
     });
   };
 
@@ -170,7 +188,7 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
           </FieldGroup>
           <FieldError errors={[errors.root]} />
         </CardContent>
-        <CardFooter className="flex flex-row justify-between">
+        <CardFooter className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-row gap-2">
             {integration ? (
               <Button
@@ -179,12 +197,24 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
                 color="red"
                 disabled={disconnect.status === "pending"}
                 onClick={() => disconnect.execute({ projectId })}
+                className="min-w-0 flex-1 sm:flex-none"
               >
                 disconnect
               </Button>
             ) : null}
+            {integration ? (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={test.status === "pending"}
+                onClick={() => test.execute({ projectId })}
+                className="min-w-0 flex-1 sm:flex-none"
+              >
+                {test.status === "pending" ? "testing..." : "test connection"}
+              </Button>
+            ) : null}
           </div>
-          <Button type="submit" disabled={isSaving}>
+          <Button type="submit" disabled={isSaving} className="w-full sm:w-auto">
             <Icon icon={CheckIcon} />
             {isSaving ? "saving..." : "save"}
           </Button>

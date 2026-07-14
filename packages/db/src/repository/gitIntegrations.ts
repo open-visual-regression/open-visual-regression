@@ -35,6 +35,28 @@ export const upsert = async (values: UpsertInput) => {
   return integration;
 };
 
+type UpdateFieldsInput = {
+  projectId: string;
+  provider: typeof gitIntegrations.$inferInsert.provider;
+  baseUrl: string | null;
+  repoIdentifier: string;
+  checkContext?: string;
+};
+
+export const updateFields = async (values: UpdateFieldsInput) => {
+  const [integration] = await db
+    .update(gitIntegrations)
+    .set({
+      provider: values.provider,
+      baseUrl: values.baseUrl,
+      repoIdentifier: values.repoIdentifier,
+      checkContext: values.checkContext,
+    })
+    .where(eq(gitIntegrations.projectId, values.projectId))
+    .returning();
+  return integration;
+};
+
 export const remove = async (projectId: string) => {
   await db.delete(gitIntegrations).where(eq(gitIntegrations.projectId, projectId));
 };

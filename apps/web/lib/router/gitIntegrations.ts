@@ -3,7 +3,8 @@
 import { ORPCError } from "@orpc/client";
 
 import { dbClient } from "@ovr/db/client";
-import { encryptToken } from "@ovr/git-status/crypto";
+import { encryptToken, tryDecryptToken } from "@ovr/git-status/crypto";
+import { verifyIntegration } from "@ovr/git-status/verifyIntegration";
 
 import { adminMiddleware, authenticatedMiddleware, projectMiddleware } from "./middleware";
 import { os } from "./os";
@@ -36,17 +37,25 @@ export const upsert = os.gitIntegrations.upsert
   .use(adminMiddleware)
   .use(projectMiddleware)
   .handler(async ({ input }) => {
-    const integration = await dbClient.gitIntegrations.upsert({
-      projectId: input.projectId,
-      provider: input.provider,
-      baseUrl: input.baseUrl,
-      repoIdentifier: input.repoIdentifier,
-      encryptedToken: encryptToken(input.token),
-      checkContext: input.checkContext,
-    });
+    const integration = input.token
+      ? await dbClient.gitIntegrations.upsert({
+          projectId: input.projectId,
+          provider: input.provider,
+          baseUrl: input.baseUrl,
+          repoIdentifier: input.repoIdentifier,
+          encryptedToken: encryptToken(input.token),
+          checkContext: input.checkContext,
+        })
+      : await dbClient.gitIntegrations.updateFields({
+          projectId: input.projectId,
+          provider: input.provider,
+          baseUrl: input.baseUrl,
+          repoIdentifier: input.repoIdentifier,
+          checkContext: input.checkContext,
+        });
 
     if (!integration) {
-      throw new ORPCError("INTERNAL_SERVER_ERROR");
+      throw new ORPCError("BAD_REQUEST", { message: "An access token is required" });
     }
 
     return {
@@ -65,5 +74,34 @@ export const remove = os.gitIntegrations.remove
   .use(projectMiddleware)
   .handler(async ({ input }) => {
     await dbClient.gitIntegrations.remove(input.projectId);
+  })
+  .actionable();
+
+export const testConnection = os.gitIntegrations.testConnection
+  .use(authenticatedMiddleware)
+  .use(adminMiddleware)
+  .use(projectMiddleware)
+  .handler(async ({ input }) => {
+    const integration = await dbClient.gitIntegrations.findByProject(input.projectId);
+
+    if (!integration) {
+      throw new ORPCError("BAD_REQUEST", { message: "No git integration configured" });
+    }
+
+    const token = tryDecryptToken(integration.encryptedToken);
+    if (token === null) {
+      return {
+        ok: false,
+        httpStatus: null,
+        error: "stored token could not be decrypted, re-enter it",
+      };
+    }
+
+    return verifyIntegration({
+      provider: integration.provider,
+      baseUrl: integration.baseUrl,
+      repoIdentifier: integration.repoIdentifier,
+      token,
+    });
   })
   .actionable();

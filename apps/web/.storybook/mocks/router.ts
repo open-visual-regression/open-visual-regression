@@ -101,6 +101,9 @@ export const serverClient: typeof RealServerClient = {
       }))
       .actionable(),
     remove: os.gitIntegrations.remove.handler(() => undefined).actionable(),
+    testConnection: os.gitIntegrations.testConnection
+      .handler(() => ({ ok: true, httpStatus: 200, error: null }))
+      .actionable(),
   },
   diffs: {
     castVote: os.diffs.castVote.handler(() => undefined).actionable(),

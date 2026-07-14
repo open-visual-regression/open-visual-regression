@@ -28,7 +28,7 @@ export const upsertGitIntegrationInputSchema = z.object({
   provider: gitProviderSchema,
   baseUrl: z.url().nullable(),
   repoIdentifier: z.string().min(1).max(512),
-  token: z.string().min(1),
+  token: z.string().min(1).optional(),
   checkContext: z.string().min(1).max(255).optional(),
 });
 
@@ -38,8 +38,15 @@ export const removeGitIntegrationInputSchema = z.object({
   projectId: z.uuidv7(),
 });
 
+export const testGitIntegrationOutputSchema = z.object({
+  ok: z.boolean(),
+  httpStatus: z.number().int().nullable(),
+  error: z.string().nullable(),
+});
+
 export const contract = {
   get: oc.input(getGitIntegrationInputSchema).output(getGitIntegrationOutputSchema),
   upsert: oc.input(upsertGitIntegrationInputSchema).output(gitIntegrationSchema),
   remove: oc.input(removeGitIntegrationInputSchema),
+  testConnection: oc.input(removeGitIntegrationInputSchema).output(testGitIntegrationOutputSchema),
 } as const;
