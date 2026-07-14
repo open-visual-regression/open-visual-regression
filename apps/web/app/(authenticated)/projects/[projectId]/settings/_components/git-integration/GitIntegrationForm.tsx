@@ -128,30 +128,32 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
               <FieldError errors={[errors.provider]} />
             </Field>
           </FieldGroup>
-          <FieldGroup>
-            <Field data-invalid={!!errors.baseUrl}>
-              <FieldLabel htmlFor="baseUrl">base url</FieldLabel>
-              <Input
-                id="baseUrl"
-                placeholder="https://git.example.com"
-                aria-invalid={!!errors.baseUrl}
-                {...register("baseUrl")}
-              />
-              <FieldError errors={[errors.baseUrl]} />
-            </Field>
-          </FieldGroup>
-          <FieldGroup>
-            <Field data-invalid={!!errors.repoIdentifier}>
-              <FieldLabel htmlFor="repoIdentifier">repository</FieldLabel>
-              <Input
-                id="repoIdentifier"
-                placeholder="owner/repo"
-                aria-invalid={!!errors.repoIdentifier}
-                {...register("repoIdentifier")}
-              />
-              <FieldError errors={[errors.repoIdentifier]} />
-            </Field>
-          </FieldGroup>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <FieldGroup>
+              <Field data-invalid={!!errors.baseUrl}>
+                <FieldLabel htmlFor="baseUrl">base url</FieldLabel>
+                <Input
+                  id="baseUrl"
+                  placeholder="https://git.example.com"
+                  aria-invalid={!!errors.baseUrl}
+                  {...register("baseUrl")}
+                />
+                <FieldError errors={[errors.baseUrl]} />
+              </Field>
+            </FieldGroup>
+            <FieldGroup>
+              <Field data-invalid={!!errors.repoIdentifier}>
+                <FieldLabel htmlFor="repoIdentifier">repository</FieldLabel>
+                <Input
+                  id="repoIdentifier"
+                  placeholder="owner/repo"
+                  aria-invalid={!!errors.repoIdentifier}
+                  {...register("repoIdentifier")}
+                />
+                <FieldError errors={[errors.repoIdentifier]} />
+              </Field>
+            </FieldGroup>
+          </div>
           <FieldGroup>
             <Field data-invalid={!!errors.token}>
               <FieldLabel htmlFor="token">access token</FieldLabel>
