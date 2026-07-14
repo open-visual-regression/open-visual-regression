@@ -13,14 +13,10 @@ import { serverClient } from "@/lib/router";
 export type RemoveReviewButtonProps = {
   diffId: string;
   reviewerId: string;
-  isOwnReview: boolean;
+  label: string;
 };
 
-export const RemoveReviewButton = ({
-  diffId,
-  reviewerId,
-  isOwnReview,
-}: RemoveReviewButtonProps) => {
+export const RemoveReviewButton = ({ diffId, reviewerId, label }: RemoveReviewButtonProps) => {
   const router = useRouter();
 
   const { execute, status } = useServerAction(serverClient.diffs.removeVote, {
@@ -39,7 +35,7 @@ export const RemoveReviewButton = ({
       size="icon-sm"
       disabled={status === "pending"}
       onClick={() => execute({ diffId, reviewerId })}
-      aria-label={isOwnReview ? "remove your review" : "remove review"}
+      aria-label={label}
     >
       <Icon icon={Trash2Icon} />
     </Button>

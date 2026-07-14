@@ -56,7 +56,7 @@ export const SnapshotReviews = ({
                 <RemoveReviewButton
                   diffId={diffId}
                   reviewerId={review.reviewerId}
-                  isOwnReview={isOwnReview}
+                  label={isOwnReview ? "remove your review" : "remove review"}
                 />
               ) : null}
             </li>
