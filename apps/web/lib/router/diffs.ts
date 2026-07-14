@@ -9,12 +9,19 @@ import {
   removeVote as removeVoteService,
 } from "@ovr/reviews/diffs";
 
-import { authenticatedMiddleware, organizationSnapshotMiddleware } from "./middleware";
+import {
+  authenticatedMiddleware,
+  organizationDiffMiddleware,
+  organizationSnapshotMiddleware,
+} from "./middleware";
 import { os } from "./os";
 
-const throwOnError = (error: "DIFF_NOT_FOUND" | "REVIEW_NOT_REQUIRED"): never => {
+const throwOnError = (error: "DIFF_NOT_FOUND" | "REVIEW_NOT_REQUIRED" | "FORBIDDEN"): never => {
   if (error === "DIFF_NOT_FOUND") {
     throw new ORPCError("NOT_FOUND");
+  }
+  if (error === "FORBIDDEN") {
+    throw new ORPCError("FORBIDDEN");
   }
   throw new ORPCError("BAD_REQUEST");
 };
@@ -32,8 +39,14 @@ export const castVote = os.diffs.castVote
 
 export const removeVote = os.diffs.removeVote
   .use(authenticatedMiddleware)
+  .use(organizationDiffMiddleware)
   .handler(async ({ input, context }) => {
-    const result = await removeVoteService(input.diffId, context.user.id);
+    const result = await removeVoteService({
+      diffId: input.diffId,
+      requesterId: context.user.id,
+      isAdmin: context.user.role === "admin",
+      targetReviewerId: input.reviewerId,
+    });
 
     if (result.status === "error") {
       throwOnError(result.error);

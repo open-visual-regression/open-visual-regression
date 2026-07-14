@@ -1,3 +1,5 @@
+import { convertSetCookieToCookie } from "better-auth/test";
+import { headers } from "next/headers";
 import { v7 as uuidv7 } from "uuid";
 import { vi } from "vitest";
 
@@ -6,11 +8,35 @@ import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
 import { organization, projects } from "@ovr/db/schema";
 
+import { auth } from "@/lib/auth/auth";
 import type { User } from "@/lib/auth/auth";
 import { serverClient } from "@/lib/router";
 import { test, describe, expect } from "@/lib/testing/fixtures";
 
 vi.mock("next/headers");
+
+const TEST_PASSWORD = "securepass123";
+
+const signUpAndSignIn = async (): Promise<User> => {
+  const email = `${uuidv7()}@example.com`;
+  const { user } = await auth.api.signUpEmail({
+    body: { name: "Other Reviewer", email, password: TEST_PASSWORD },
+  });
+  const response = await auth.api.signInEmail({
+    body: { email, password: TEST_PASSWORD },
+    asResponse: true,
+  });
+  vi.mocked(headers).mockResolvedValue(convertSetCookieToCookie(response.headers));
+  return user;
+};
+
+const signInAs = async (user: Pick<User, "email">) => {
+  const response = await auth.api.signInEmail({
+    body: { email: user.email, password: TEST_PASSWORD },
+    asResponse: true,
+  });
+  vi.mocked(headers).mockResolvedValue(convertSetCookieToCookie(response.headers));
+};
 
 const TEST_PROJECT: AddProjectInputSchema = {
   projectName: "Test Project",
@@ -110,6 +136,55 @@ describe("diffs", () => {
   });
 
   describe("removeVote", () => {
+    test("should return UNAUTHORIZED when no session cookie is provided", async () => {
+      const [error] = await serverClient.diffs.removeVote({ diffId: uuidv7() });
+      expect(error?.code).toBe("UNAUTHORIZED");
+    });
+
+    test("returns NOT_FOUND for a missing diff id", async ({ admin: _ }) => {
+      const [error] = await serverClient.diffs.removeVote({ diffId: uuidv7() });
+
+      expect(error?.code).toBe("NOT_FOUND");
+    });
+
+    test("returns NOT_FOUND for a diff belonging to a different organization", async ({
+      admin,
+    }) => {
+      const [otherOrg] = await db
+        .insert(organization)
+        .values({
+          id: crypto.randomUUID(),
+          name: "Other Org",
+          slug: crypto.randomUUID(),
+          createdAt: new Date(),
+        })
+        .returning();
+
+      const [otherProject] = await db
+        .insert(projects)
+        .values({
+          name: "Other Org Project",
+          gitMainBranch: "main",
+          organizationId: otherOrg!.id,
+          creatorId: admin.id,
+        })
+        .returning();
+
+      const otherBuild = await dbClient.builds.create({
+        projectId: otherProject!.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/other/artifact",
+        createdBy: admin.id,
+      });
+
+      const diff = await createAwaitingDiff(otherBuild!.id, VIEWPORT, "story-a");
+
+      const [error] = await serverClient.diffs.removeVote({ diffId: diff!.id });
+
+      expect(error?.code).toBe("NOT_FOUND");
+    });
+
     test("clears the caller's vote and recomputes the review status", async ({ admin }) => {
       const { build, captureConfiguration } = await createProjectAndBuild(admin, 1);
       const diff = await createAwaitingDiff(build.id, captureConfiguration, "story-a");
@@ -123,6 +198,63 @@ describe("diffs", () => {
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
         reviewStatus: "needs_review",
       });
+    });
+
+    test("allows a regular user to remove their own vote", async ({ admin }) => {
+      const { build, captureConfiguration } = await createProjectAndBuild(admin, 1);
+      const diff = await createAwaitingDiff(build.id, captureConfiguration, "story-a");
+
+      await signUpAndSignIn();
+      await serverClient.diffs.castVote({ diffId: diff!.id, vote: "reject" });
+      expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({ reviewStatus: "rejected" });
+
+      const [error] = await serverClient.diffs.removeVote({ diffId: diff!.id });
+
+      expect(error).toBeNull();
+      expect(await dbClient.diffReviews.findByDiff(diff!.id)).toHaveLength(0);
+      expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
+        reviewStatus: "needs_review",
+      });
+    });
+
+    test("allows an admin to remove another reviewer's vote", async ({ admin }) => {
+      const { build, captureConfiguration } = await createProjectAndBuild(admin, 1);
+      const diff = await createAwaitingDiff(build.id, captureConfiguration, "story-a");
+
+      const reviewer = await signUpAndSignIn();
+      await serverClient.diffs.castVote({ diffId: diff!.id, vote: "reject" });
+      expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({ reviewStatus: "rejected" });
+
+      await signInAs(admin);
+      const [error] = await serverClient.diffs.removeVote({
+        diffId: diff!.id,
+        reviewerId: reviewer.id,
+      });
+
+      expect(error).toBeNull();
+      expect(await dbClient.diffReviews.findByDiff(diff!.id)).toHaveLength(0);
+      expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
+        reviewStatus: "needs_review",
+      });
+    });
+
+    test("returns FORBIDDEN when a regular user tries to remove another reviewer's vote", async ({
+      admin,
+    }) => {
+      const { build, captureConfiguration } = await createProjectAndBuild(admin, 1);
+      const diff = await createAwaitingDiff(build.id, captureConfiguration, "story-a");
+
+      await serverClient.diffs.castVote({ diffId: diff!.id, vote: "reject" });
+
+      await signUpAndSignIn();
+
+      const [error] = await serverClient.diffs.removeVote({
+        diffId: diff!.id,
+        reviewerId: admin.id,
+      });
+
+      expect(error?.code).toBe("FORBIDDEN");
+      expect(await dbClient.diffReviews.findByDiff(diff!.id)).toHaveLength(1);
     });
   });
 

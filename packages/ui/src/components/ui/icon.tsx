@@ -22,6 +22,7 @@ export {
   CircleSlash2Icon,
   SmartphoneIcon,
   TabletIcon,
+  Trash2Icon,
   UserIcon,
   UsersIcon,
   XIcon,

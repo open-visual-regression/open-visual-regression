@@ -65,10 +65,27 @@ export const castVote = async (
   return { status: "ok", data: undefined };
 };
 
-export const removeVote = async (
-  diffId: string,
-  reviewerId: string,
-): Promise<Result<void, "DIFF_NOT_FOUND" | "REVIEW_NOT_REQUIRED">> => {
+export type RemoveVoteParams = {
+  diffId: string;
+  requesterId: string;
+  isAdmin: boolean;
+  targetReviewerId?: string;
+};
+
+export const removeVote = async ({
+  diffId,
+  requesterId,
+  isAdmin,
+  targetReviewerId,
+}: RemoveVoteParams): Promise<
+  Result<void, "DIFF_NOT_FOUND" | "REVIEW_NOT_REQUIRED" | "FORBIDDEN">
+> => {
+  const reviewerId = targetReviewerId ?? requesterId;
+
+  if (reviewerId !== requesterId && !isAdmin) {
+    return { status: "error", error: "FORBIDDEN" };
+  }
+
   const diff = await dbClient.diffs.findById(diffId);
   if (!diff) {
     return { status: "error", error: "DIFF_NOT_FOUND" };
