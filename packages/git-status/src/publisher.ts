@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 import type {
   BuildProcessingStatus,
   BuildReviewStatus,
@@ -94,7 +96,9 @@ export type VerifyOutcome = {
   error: string | null;
 };
 
-type RepoResponse = { permissions?: { push?: boolean } };
+const repoResponseSchema = z.object({
+  permissions: z.object({ push: z.boolean() }).optional(),
+});
 
 export const verify = async (request: VerifyRequest): Promise<VerifyOutcome> => {
   try {
@@ -107,11 +111,10 @@ export const verify = async (request: VerifyRequest): Promise<VerifyOutcome> => 
       };
     }
 
-    // A 200 alone only proves the repo is reachable — public repos read fine with a bad or
-    // missing token. Require the authenticated `permissions.push` (github + gitea) so a
-    // read-only token isn't reported as a working integration.
-    const body = (await response.json().catch(() => null)) as RepoResponse | null;
-    if (body?.permissions?.push !== true) {
+    // A public repo returns 200 even with a bad token, so reachability isn't enough —
+    // confirm the token has push access before we call the integration healthy.
+    const parsed = repoResponseSchema.safeParse(await response.json().catch(() => null));
+    if (!parsed.success || parsed.data.permissions?.push !== true) {
       return {
         ok: false,
         httpStatus: response.status,

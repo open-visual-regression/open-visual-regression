@@ -586,6 +586,9 @@ importers:
       '@ovr/logger':
         specifier: workspace:*
         version: link:../logger
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
     devDependencies:
       '@ovr/typescript-config':
         specifier: workspace:*

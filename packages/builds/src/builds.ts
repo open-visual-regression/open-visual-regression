@@ -38,8 +38,8 @@ export const DEFAULT_DIFF_THRESHOLD = 0.05;
 export const getArtifactPath = (projectId: string, buildId: string): string =>
   `${projectId}/builds/${buildId}/artifact.tar.gz`;
 
-// Coalesced per build via jobId; the worker reads the build's current state at run time, so
-// overlapping transitions converge on the latest verdict instead of publishing a stale one.
+// One publish job per build (keyed by build id). The worker re-reads the build when it runs,
+// so updates that land close together collapse into a single publish of the latest state.
 export const publishStatus = async (buildId: string): Promise<void> => {
   try {
     await enqueuePublishStatus({ buildId });

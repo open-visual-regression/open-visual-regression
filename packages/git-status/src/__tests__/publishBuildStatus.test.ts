@@ -47,11 +47,14 @@ describe("publishBuildStatus", () => {
     const deps = makeDeps();
     await publishBuildStatus("build-1", deps);
 
-    const sentRequest = vi.mocked(deps.send).mock.calls[0]![0];
-    expect(sentRequest.url).toBe("https://api.github.com/repos/acme/web/statuses/abc123");
-    expect(sentRequest.body.state).toBe("failure");
-    expect(sentRequest.body.target_url).toBe(
-      "https://ovr.example.com/projects/project-1/builds/build-1",
+    expect(deps.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: "https://api.github.com/repos/acme/web/statuses/abc123",
+        body: expect.objectContaining({
+          state: "failure",
+          target_url: "https://ovr.example.com/projects/project-1/builds/build-1",
+        }),
+      }),
     );
     expect(deps.recordPublication).toHaveBeenCalledWith(
       expect.objectContaining({ buildId: "build-1", state: "failure", outcome: "ok" }),
@@ -94,7 +97,10 @@ describe("publishBuildStatus", () => {
   it("never passes the encrypted token to the adapter", async () => {
     const deps = makeDeps();
     await publishBuildStatus("build-1", deps);
-    const sentRequest = vi.mocked(deps.send).mock.calls[0]![0];
-    expect(sentRequest.headers.authorization).toBe("Bearer plain-token");
+    expect(deps.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        headers: expect.objectContaining({ authorization: "Bearer plain-token" }),
+      }),
+    );
   });
 });
