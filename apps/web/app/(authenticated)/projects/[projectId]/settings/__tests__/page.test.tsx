@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { vi } from "vitest";
+import { beforeEach, vi } from "vitest";
 
 import { mocks } from "@ovr/mocks";
 
@@ -18,6 +18,7 @@ vi.mock("@/lib/router");
 const mockGetSession = vi.mocked(auth.api.getSession);
 const mockGetProject = vi.mocked(serverClient.projects.getOne);
 const mockListApiKeys = vi.mocked(serverClient.apiKeys.list);
+const mockGetGitIntegration = vi.mocked(serverClient.gitIntegrations.get);
 const mockNotFound = vi.mocked(notFound);
 
 const PROJECT_ID = "01900000-0000-7000-8000-000000000099";
@@ -27,6 +28,10 @@ const pageProps: ProjectSettingsPageProps = {
 };
 
 describe("ProjectSettingsPage", () => {
+  beforeEach(() => {
+    mockGetGitIntegration.mockResolvedValue([null, { integration: null }]);
+  });
+
   it("should show the settings page for admins with no api keys", async () => {
     const project = mocks.project.generateProject({ id: PROJECT_ID });
     mockGetSession.mockResolvedValue({
