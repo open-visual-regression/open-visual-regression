@@ -40,9 +40,30 @@ export const getOneInputSchema = z.object({ snapshotId: z.uuidv7() });
 export const getOneOutputSchema = z.object({ diff: diffSchema.nullable() });
 export const getOneContract = oc.input(getOneInputSchema).output(getOneOutputSchema);
 
+export const diffReviewSchema = z.object({
+  reviewerId: z.string().min(1),
+  name: z.string().min(1),
+  image: z.string().nullable(),
+  vote: diffReviewVoteSchema,
+  reviewedAt: z.string().nonempty(),
+});
+
+export type DiffReviewSchema = z.infer<typeof diffReviewSchema>;
+
+export const listReviewsInputSchema = z.object({ snapshotId: z.uuidv7() });
+export const listReviewsOutputSchema = z.object({
+  reviews: z.array(diffReviewSchema),
+  requiredReviewerCount: z.number().int().positive(),
+});
+
+export type ListReviewsOutputSchema = z.infer<typeof listReviewsOutputSchema>;
+
+export const listReviewsContract = oc.input(listReviewsInputSchema).output(listReviewsOutputSchema);
+
 export const contract = {
   castVote: castVoteContract,
   removeVote: removeVoteContract,
   bulkCastVote: bulkCastVoteContract,
   getOne: getOneContract,
+  listReviews: listReviewsContract,
 } as const;

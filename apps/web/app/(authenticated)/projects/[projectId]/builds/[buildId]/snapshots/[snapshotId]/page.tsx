@@ -18,23 +18,26 @@ export default async function SnapshotPage(props: SnapshotPageProps) {
     [snapshotError, snapshotResult],
     [diffError, diffResult],
     [adjacentError, adjacentResult],
+    [reviewsError, reviewsResult],
   ] = await Promise.all([
     serverClient.builds.getOne({ buildId }),
     serverClient.snapshots.getOne({ snapshotId }),
     serverClient.diffs.getOne({ snapshotId }),
     serverClient.snapshots.getAdjacent({ snapshotId }),
+    serverClient.diffs.listReviews({ snapshotId }),
   ]);
 
   if (
     buildError?.code === "NOT_FOUND" ||
     snapshotError?.code === "NOT_FOUND" ||
     diffError?.code === "NOT_FOUND" ||
-    adjacentError?.code === "NOT_FOUND"
+    adjacentError?.code === "NOT_FOUND" ||
+    reviewsError?.code === "NOT_FOUND"
   ) {
     notFound();
   }
 
-  if (buildError || snapshotError || diffError || adjacentError) {
+  if (buildError || snapshotError || diffError || adjacentError || reviewsError) {
     serverError();
   }
 
@@ -53,7 +56,7 @@ export default async function SnapshotPage(props: SnapshotPageProps) {
       nextSnapshotId={nextSnapshotId}
       position={position}
       total={total}
-      sidebar={<SnapshotSidebarContent snapshot={snapshot} />}
+      sidebar={<SnapshotSidebarContent snapshot={snapshot} reviews={reviewsResult} />}
     >
       <SnapshotHeader snapshot={snapshot} build={build} />
       <SnapshotComparisonSection snapshot={snapshot} diff={diff} />
