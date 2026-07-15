@@ -1,5 +1,7 @@
 import { dbClient } from "@ovr/db/client";
 
+import { publishStatus } from "./builds";
+
 const REAPER_BATCH_LIMIT = 100;
 
 export const resolveStaleBuilds = async (staleMinutes: number): Promise<void> => {
@@ -17,5 +19,7 @@ export const resolveStaleBuilds = async (staleMinutes: number): Promise<void> =>
         tx,
       );
     });
+
+    await publishStatus(buildId);
   }
 };

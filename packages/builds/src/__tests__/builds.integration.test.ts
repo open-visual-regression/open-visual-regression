@@ -41,6 +41,15 @@ const findExtractJob = async (connection: Redis, buildId: string) => {
   }
 };
 
+const findPublishStatusJob = async (connection: Redis, buildId: string) => {
+  const queue = new Queue(QueueName.GIT_STATUS_PUBLISH, { connection });
+  try {
+    return await queue.getJob(buildId);
+  } finally {
+    await queue.close();
+  }
+};
+
 type SeedDiffStatus = {
   processingStatus: DiffProcessingStatus;
   reviewStatus: DiffReviewStatus;
@@ -260,6 +269,18 @@ describe("builds", () => {
       expect(await dbClient.diffs.findById(doneDiff!.id)).toMatchObject({
         processingStatus: "success",
       });
+    });
+
+    test("enqueues a status publish so the commit check reflects the cancellation", async ({
+      featureBuild,
+      user,
+      connection,
+    }) => {
+      await dbClient.builds.updateProcessingStatus(featureBuild.id, "processing");
+
+      await cancelBuild(featureBuild.id, user.id);
+
+      expect(await findPublishStatusJob(connection, featureBuild.id)).toBeDefined();
     });
 
     test("returns NOT_CANCELABLE when the build has already finished", async ({

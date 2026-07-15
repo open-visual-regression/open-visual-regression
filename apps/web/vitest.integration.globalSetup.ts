@@ -33,6 +33,8 @@ export async function setup() {
   await createBucket(rustfs, "ovr");
 
   process.env.REDIS_URL = `redis://${valkey.host}:${valkey.port}`;
+
+  process.env.OVR_GIT_TOKEN_ENCRYPTION_KEY = Buffer.from("0".repeat(32), "utf8").toString("base64");
 }
 
 export async function teardown() {
