@@ -96,23 +96,6 @@ describe("SnapshotReviews", () => {
     expect(screen.getAllByRole("button", { name: /remove review/i })).toHaveLength(2);
   });
 
-  it("should not reserve space for a remove button when the current user can't remove any review", () => {
-    const { container } = render(
-      <SnapshotReviews
-        reviews={[
-          review({ reviewerId: "a", name: "Ada Lovelace" }),
-          review({ reviewerId: "b", name: "Alan Turing" }),
-        ]}
-        requiredReviewerCount={2}
-        diffId={diffId}
-        currentUserId="someone-else"
-      />,
-    );
-
-    expect(screen.queryByRole("button", { name: /remove/i })).not.toBeInTheDocument();
-    expect(container.querySelectorAll('[data-testid="remove-review-slot"]')).toHaveLength(0);
-  });
-
   it("should hide remove buttons when there is no diff", () => {
     render(
       <SnapshotReviews

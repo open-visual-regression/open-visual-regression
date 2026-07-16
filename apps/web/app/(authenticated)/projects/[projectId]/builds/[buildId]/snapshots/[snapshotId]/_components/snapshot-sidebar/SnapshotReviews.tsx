@@ -56,10 +56,7 @@ export const SnapshotReviews = ({
                 {review.vote === "approve" ? "approved" : "rejected"}
               </Badge>
               {canRemoveAny ? (
-                <div
-                  data-testid="remove-review-slot"
-                  className="flex size-7 shrink-0 items-center justify-center"
-                >
+                <div className="flex size-7 shrink-0 items-center justify-center">
                   {canRemove ? (
                     <RemoveReviewButton
                       diffId={diffId}
