@@ -27,6 +27,9 @@ export const SnapshotReviews = ({
   }
 
   const approvals = reviews.filter((review) => review.vote === "approve").length;
+  const canRemoveAny =
+    diffId !== null &&
+    (role === "admin" || reviews.some((review) => review.reviewerId === currentUserId));
 
   return (
     <div className="flex flex-col gap-4">
@@ -52,12 +55,19 @@ export const SnapshotReviews = ({
               <Badge color={review.vote === "approve" ? "green" : "red"}>
                 {review.vote === "approve" ? "approved" : "rejected"}
               </Badge>
-              {canRemove ? (
-                <RemoveReviewButton
-                  diffId={diffId}
-                  reviewerId={review.reviewerId}
-                  label={isOwnReview ? "remove your review" : "remove review"}
-                />
+              {canRemoveAny ? (
+                <div
+                  data-testid="remove-review-slot"
+                  className="flex size-7 shrink-0 items-center justify-center"
+                >
+                  {canRemove ? (
+                    <RemoveReviewButton
+                      diffId={diffId}
+                      reviewerId={review.reviewerId}
+                      label={isOwnReview ? "remove your review" : "remove review"}
+                    />
+                  ) : null}
+                </div>
               ) : null}
             </li>
           );

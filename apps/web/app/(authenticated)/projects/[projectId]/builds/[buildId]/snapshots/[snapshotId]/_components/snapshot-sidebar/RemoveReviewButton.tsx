@@ -5,7 +5,7 @@ import { useServerAction } from "@orpc/react/hooks";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@ovr/ui/components/button";
-import { Icon, Trash2Icon } from "@ovr/ui/components/icon";
+import { Icon, XIcon } from "@ovr/ui/components/icon";
 import { toast } from "@ovr/ui/components/toast";
 
 import { serverClient } from "@/lib/router";
@@ -31,13 +31,13 @@ export const RemoveReviewButton = ({ diffId, reviewerId, label }: RemoveReviewBu
   return (
     <Button
       variant="ghost"
-      color="red"
+      color="neutral"
       size="icon-sm"
       disabled={status === "pending"}
       onClick={() => execute({ diffId, reviewerId })}
       aria-label={label}
     >
-      <Icon icon={Trash2Icon} />
+      <Icon icon={XIcon} />
     </Button>
   );
 };
