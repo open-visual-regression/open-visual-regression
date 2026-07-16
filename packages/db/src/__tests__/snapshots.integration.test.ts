@@ -212,6 +212,7 @@ describe("snapshots", () => {
         processingStatus: "success",
         reviewStatus: "not_required",
         pixelDiffCount: 128,
+        diffPercent: 5,
       });
       await dbClient.diffs.create({
         snapshotId: needsReview!.id,
