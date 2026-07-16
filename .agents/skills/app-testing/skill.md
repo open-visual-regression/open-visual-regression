@@ -1,6 +1,6 @@
 ---
 name: app-testing
-description: How to stand up the full OVR stack locally with Docker Compose and drive its core golden path (setup, project + API key, Storybook ingest, review) to verify a change actually works end to end. Apply whenever validating a UI, API, or workflow change against the running app rather than trusting unit tests or a screenshot alone.
+description: How to stand up the full OVR stack locally with Docker Compose and drive its core happy path (setup, project + API key, Storybook ingest, review) to verify a change actually works end to end. Apply whenever validating a UI, API, or workflow change against the running app rather than trusting unit tests or a screenshot alone.
 license: MIT
 metadata:
   author: claude
