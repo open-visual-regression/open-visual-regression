@@ -11,8 +11,11 @@ const meta: Meta<typeof SnapshotReviews> = {
 export default meta;
 type Story = StoryObj<typeof SnapshotReviews>;
 
+const diffId = "019edfc7-e040-7492-86b2-ccfdc00cf6e1";
+
 export const Default: Story = {
   args: {
+    diffId,
     requiredReviewerCount: 2,
     reviews: [
       {
@@ -42,6 +45,7 @@ export const Default: Story = {
 
 export const SingleApproval: Story = {
   args: {
+    diffId,
     requiredReviewerCount: 1,
     reviews: [
       {
@@ -57,7 +61,22 @@ export const SingleApproval: Story = {
 
 export const Empty: Story = {
   args: {
+    diffId,
     requiredReviewerCount: 1,
     reviews: [],
+  },
+};
+
+export const AsOwnReviewer: Story = {
+  args: {
+    ...Default.args,
+    currentUserId: "019edfc7-e040-7492-86b2-ccfdc00cf6e2",
+  },
+};
+
+export const AsAdmin: Story = {
+  args: {
+    ...Default.args,
+    role: "admin",
   },
 };

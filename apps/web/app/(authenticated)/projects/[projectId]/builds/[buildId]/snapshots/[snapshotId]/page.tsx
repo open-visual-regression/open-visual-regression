@@ -56,7 +56,13 @@ export default async function SnapshotPage(props: SnapshotPageProps) {
       nextSnapshotId={nextSnapshotId}
       position={position}
       total={total}
-      sidebar={<SnapshotSidebarContent snapshot={snapshot} reviews={reviewsResult} />}
+      sidebar={
+        <SnapshotSidebarContent
+          snapshot={snapshot}
+          diffId={diff?.id ?? null}
+          reviews={reviewsResult}
+        />
+      }
     >
       <SnapshotHeader snapshot={snapshot} build={build} />
       <SnapshotComparisonSection snapshot={snapshot} diff={diff} />
