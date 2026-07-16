@@ -19,9 +19,9 @@ COPY . .
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile
 
-ARG BETTER_AUTH_SECRET="build-time-placeholder"
-ENV BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
-RUN pnpm exec turbo run build --filter=@ovr/web
+# Throwaway secret so Better Auth's prod init does not throw; not baked in, real one is set at runtime.
+RUN BETTER_AUTH_SECRET="$(node -e 'process.stdout.write(require("crypto").randomBytes(32).toString("base64url"))')" \
+    pnpm exec turbo run build --filter=@ovr/web
 
 FROM node:${NODE_VERSION}-slim AS runner
 ARG UID=1001

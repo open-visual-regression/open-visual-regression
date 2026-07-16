@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": false,
   "bin": {
-    "ovr": "./dist/index.js"
+    "ovr": "./bin/ovr.mjs"
   },
   "type": "module",
   "exports": {

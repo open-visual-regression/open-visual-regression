@@ -169,7 +169,10 @@ describe("diffs", () => {
       await castVote(diff!.id, user.id, "reject");
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({ reviewStatus: "rejected" });
 
-      const result = await removeVote(diff!.id, user.id);
+      const result = await removeVote({
+        diffId: diff!.id,
+        requesterId: user.id,
+      });
 
       assert(result.status === "ok");
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
@@ -202,9 +205,66 @@ describe("diffs", () => {
       await castVote(diff!.id, user.id, "reject");
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({ reviewStatus: "rejected" });
 
-      await removeVote(diff!.id, user.id);
+      await removeVote({ diffId: diff!.id, requesterId: user.id });
 
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({ reviewStatus: "approved" });
+    });
+
+    test("reverts to needs_review when an admin removes another reviewer's vote", async ({
+      mainBuild,
+      captureConfiguration,
+      user,
+    }) => {
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "a" }],
+      });
+      const diff = await dbClient.diffs.create({
+        snapshotId: snapshot!.id,
+        reviewStatus: "needs_review",
+      });
+
+      await castVote(diff!.id, user.id, "reject");
+      expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({ reviewStatus: "rejected" });
+
+      const admin = await createUser();
+      const result = await removeVote({
+        diffId: diff!.id,
+        requesterId: admin.id,
+        requesterRole: "admin",
+        targetReviewerId: user.id,
+      });
+
+      assert(result.status === "ok");
+      expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
+        reviewStatus: "needs_review",
+      });
+    });
+
+    test("returns FORBIDDEN when a non-admin tries to remove another reviewer's vote", async ({
+      mainBuild,
+      captureConfiguration,
+      user,
+    }) => {
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "a" }],
+      });
+      const diff = await dbClient.diffs.create({
+        snapshotId: snapshot!.id,
+        reviewStatus: "needs_review",
+      });
+
+      const otherReviewer = await createUser();
+      await castVote(diff!.id, otherReviewer.id, "approve");
+
+      const result = await removeVote({
+        diffId: diff!.id,
+        requesterId: user.id,
+        targetReviewerId: otherReviewer.id,
+      });
+
+      assert(result.status === "error");
+      expect(result.error).toBe("FORBIDDEN");
+      expect(await dbClient.diffReviews.findByDiff(diff!.id)).toHaveLength(1);
     });
   });
 
