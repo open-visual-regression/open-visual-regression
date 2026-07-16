@@ -16,6 +16,7 @@
     "@ovr/builds": "workspace:*",
     "@ovr/capture": "workspace:*",
     "@ovr/db": "workspace:*",
+    "@ovr/git-status": "workspace:*",
     "@ovr/logger": "workspace:*",
     "@ovr/queue": "workspace:*",
     "bullmq": "^5.78.0",

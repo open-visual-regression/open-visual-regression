@@ -1,0 +1,28 @@
+{
+  "name": "@ovr/git-status",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "tsc": "tsc --noEmit",
+    "lint": "oxlint src",
+    "format": "oxfmt src",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@ovr/db": "workspace:*",
+    "@ovr/logger": "workspace:*",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@ovr/typescript-config": "workspace:*",
+    "@types/node": "^22.15.3",
+    "msw": "^2.14.6",
+    "typescript": "6.0.3",
+    "vitest": "^4.1.7"
+  }
+}

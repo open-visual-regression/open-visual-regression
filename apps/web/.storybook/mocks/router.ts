@@ -89,6 +89,22 @@ export const serverClient: typeof RealServerClient = {
       .actionable(),
     acceptInvitation: os.invitations.acceptInvitation.handler(() => undefined).actionable(),
   },
+  gitIntegrations: {
+    get: os.gitIntegrations.get.handler(() => ({ integration: null })).actionable(),
+    upsert: os.gitIntegrations.upsert
+      .handler(() => ({
+        provider: "github" as const,
+        baseUrl: null,
+        repoIdentifier: "",
+        checkContext: "ovr/visual-review",
+        hasToken: true as const,
+      }))
+      .actionable(),
+    remove: os.gitIntegrations.remove.handler(() => undefined).actionable(),
+    testConnection: os.gitIntegrations.testConnection
+      .handler(() => ({ ok: true, httpStatus: 200, error: null }))
+      .actionable(),
+  },
   diffs: {
     castVote: os.diffs.castVote.handler(() => undefined).actionable(),
     removeVote: os.diffs.removeVote.handler(() => undefined).actionable(),

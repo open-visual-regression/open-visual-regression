@@ -22,7 +22,7 @@ RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
 RUN pnpm exec turbo run build --filter=@ovr/worker
 
 RUN cp -r packages/db/src/migrations apps/worker/dist/migrations
-RUN pnpm --filter @ovr/worker deploy --prod --legacy /prod
+RUN pnpm --filter @ovr/worker deploy --prod /prod
 
 FROM mcr.microsoft.com/playwright:v${PLAYWRIGHT_VERSION}-noble AS runner
 ARG UID=1001
