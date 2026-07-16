@@ -17,25 +17,20 @@ vi.mock("next/headers");
 
 const TEST_PASSWORD = "securepass123";
 
-const signUpAndSignIn = async (): Promise<User> => {
-  const email = `${uuidv7()}@example.com`;
-  const { user } = await auth.api.signUpEmail({
-    body: { name: "Other Reviewer", email, password: TEST_PASSWORD },
-  });
-  const response = await auth.api.signInEmail({
-    body: { email, password: TEST_PASSWORD },
-    asResponse: true,
-  });
-  vi.mocked(headers).mockResolvedValue(convertSetCookieToCookie(response.headers));
-  return user;
-};
-
-const signInAs = async (user: Pick<User, "email">) => {
+const signIn = async (user: Pick<User, "email">) => {
   const response = await auth.api.signInEmail({
     body: { email: user.email, password: TEST_PASSWORD },
     asResponse: true,
   });
   vi.mocked(headers).mockResolvedValue(convertSetCookieToCookie(response.headers));
+};
+
+const signUp = async (): Promise<User> => {
+  const email = `${uuidv7()}@example.com`;
+  const { user } = await auth.api.signUpEmail({
+    body: { name: "Other Reviewer", email, password: TEST_PASSWORD },
+  });
+  return user;
 };
 
 const TEST_PROJECT: AddProjectInputSchema = {
@@ -204,7 +199,7 @@ describe("diffs", () => {
       const { build, captureConfiguration } = await createProjectAndBuild(admin, 1);
       const diff = await createAwaitingDiff(build.id, captureConfiguration, "story-a");
 
-      await signUpAndSignIn();
+      await signIn(await signUp());
       await serverClient.diffs.castVote({ diffId: diff!.id, vote: "reject" });
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({ reviewStatus: "rejected" });
 
@@ -221,11 +216,12 @@ describe("diffs", () => {
       const { build, captureConfiguration } = await createProjectAndBuild(admin, 1);
       const diff = await createAwaitingDiff(build.id, captureConfiguration, "story-a");
 
-      const reviewer = await signUpAndSignIn();
+      const reviewer = await signUp();
+      await signIn(reviewer);
       await serverClient.diffs.castVote({ diffId: diff!.id, vote: "reject" });
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({ reviewStatus: "rejected" });
 
-      await signInAs(admin);
+      await signIn(admin);
       const [error] = await serverClient.diffs.removeVote({
         diffId: diff!.id,
         reviewerId: reviewer.id,
@@ -246,7 +242,7 @@ describe("diffs", () => {
 
       await serverClient.diffs.castVote({ diffId: diff!.id, vote: "reject" });
 
-      await signUpAndSignIn();
+      await signIn(await signUp());
 
       const [error] = await serverClient.diffs.removeVote({
         diffId: diff!.id,
