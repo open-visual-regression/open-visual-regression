@@ -97,7 +97,7 @@ Skills in `.agents/skills/` provide context and rules for AI agents working in t
 | `testing-best-practices` | Vitest + Testing Library patterns |
 | `playwright-best-practices` | E2E testing with Playwright |
 | `vercel-react-best-practices` | React/Next.js performance patterns |
-| `app-testing` | Standing up the stack locally and verifying a change end to end |
+| `pulling-images` | Fixing Docker image pulls in a restricted network (compose, testcontainers) |
 
 ## Useful Links
 
