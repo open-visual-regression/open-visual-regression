@@ -54,6 +54,7 @@ type SeedDiffStatus = {
   processingStatus: DiffProcessingStatus;
   reviewStatus: DiffReviewStatus;
   pixelDiffCount?: number;
+  diffPercent?: number;
 };
 type Viewport = {
   browser: string;
@@ -455,13 +456,50 @@ describe("builds", () => {
       });
     });
 
-    test("marks the build review status as auto_approved when any auto-resolved diff had pixel changes", async ({
+    test("marks the build review status as unchanged when an auto-resolved diff changed within the threshold", async ({
       mainBuild,
       captureConfiguration,
     }) => {
       await seedDiffs(mainBuild.id, captureConfiguration, [
-        { processingStatus: "success", reviewStatus: "not_required", pixelDiffCount: 0 },
-        { processingStatus: "success", reviewStatus: "not_required", pixelDiffCount: 320 },
+        {
+          processingStatus: "success",
+          reviewStatus: "not_required",
+          pixelDiffCount: 0,
+          diffPercent: 0,
+        },
+        {
+          processingStatus: "success",
+          reviewStatus: "not_required",
+          pixelDiffCount: 320,
+          diffPercent: 0.01,
+        },
+      ]);
+
+      await finalizeBuild(mainBuild.id);
+
+      expect(await dbClient.builds.findById(mainBuild.id)).toMatchObject({
+        processingStatus: "success",
+        reviewStatus: "unchanged",
+      });
+    });
+
+    test("marks the build review status as auto_approved when an auto-resolved diff exceeded the threshold", async ({
+      mainBuild,
+      captureConfiguration,
+    }) => {
+      await seedDiffs(mainBuild.id, captureConfiguration, [
+        {
+          processingStatus: "success",
+          reviewStatus: "not_required",
+          pixelDiffCount: 0,
+          diffPercent: 0,
+        },
+        {
+          processingStatus: "success",
+          reviewStatus: "not_required",
+          pixelDiffCount: 320,
+          diffPercent: 5,
+        },
       ]);
 
       await finalizeBuild(mainBuild.id);

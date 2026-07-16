@@ -43,7 +43,7 @@ type FindByBuildOptions = {
 
 export const findByBuild = async (buildId: string, opts: FindByBuildOptions = {}) => {
   const rows = await db
-    .select({ diff: diffs })
+    .select({ diff: diffs, diffThreshold: snapshots.diffThreshold })
     .from(diffs)
     .innerJoin(snapshots, eq(diffs.snapshotId, snapshots.id))
     .where(
@@ -53,7 +53,7 @@ export const findByBuild = async (buildId: string, opts: FindByBuildOptions = {}
       ),
     );
 
-  return rows.map((row) => row.diff);
+  return rows.map((row) => ({ ...row.diff, diffThreshold: row.diffThreshold }));
 };
 
 export const updateProcessingStatus = async (

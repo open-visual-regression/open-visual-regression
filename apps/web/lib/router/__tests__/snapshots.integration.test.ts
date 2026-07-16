@@ -184,7 +184,7 @@ describe("snapshots", () => {
       expect(result?.snapshot.status).toBe("unchanged");
     });
 
-    test("returns an 'auto_approved' status for a captured snapshot whose diff had pixel changes", async ({
+    test("returns an 'auto_approved' status for a captured snapshot whose diff exceeded the threshold", async ({
       admin,
     }) => {
       const { build } = await createProjectAndBuild(admin);
@@ -205,6 +205,7 @@ describe("snapshots", () => {
         processingStatus: "success",
         reviewStatus: "not_required",
         pixelDiffCount: 512,
+        diffPercent: 5,
       });
 
       const [error, result] = await serverClient.snapshots.getOne({
@@ -213,6 +214,38 @@ describe("snapshots", () => {
 
       expect(error).toBeNull();
       expect(result?.snapshot.status).toBe("auto_approved");
+    });
+
+    test("returns an 'unchanged' status for a captured snapshot whose diff changed within the threshold", async ({
+      admin,
+    }) => {
+      const { build } = await createProjectAndBuild(admin);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            ...VIEWPORT,
+            targetId: "story-a",
+            status: "success",
+            imagePath: "projects/p/builds/b/snapshots/s.png",
+          },
+        ],
+      });
+
+      await dbClient.diffs.create({
+        snapshotId: snapshot!.id,
+        processingStatus: "success",
+        reviewStatus: "not_required",
+        pixelDiffCount: 512,
+        diffPercent: 0.01,
+      });
+
+      const [error, result] = await serverClient.snapshots.getOne({
+        snapshotId: snapshot!.id,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.snapshot.status).toBe("unchanged");
     });
   });
 
@@ -369,6 +402,7 @@ describe("snapshots", () => {
         processingStatus: "success",
         reviewStatus: "not_required",
         pixelDiffCount: 256,
+        diffPercent: 5,
       });
       await dbClient.diffs.create({
         snapshotId: approved!.id,

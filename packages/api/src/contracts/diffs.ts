@@ -6,7 +6,10 @@ export const diffReviewVoteSchema = z.enum(["approve", "reject"]);
 export const castVoteInputSchema = z.object({ diffId: z.uuidv7(), vote: diffReviewVoteSchema });
 export const castVoteContract = oc.input(castVoteInputSchema).output(z.void());
 
-export const removeVoteInputSchema = z.object({ diffId: z.uuidv7() });
+export const removeVoteInputSchema = z.object({
+  diffId: z.uuidv7(),
+  reviewerId: z.string().min(1).optional(),
+});
 export const removeVoteContract = oc.input(removeVoteInputSchema).output(z.void());
 
 export const bulkCastVoteInputSchema = z.object({
