@@ -1,0 +1,105 @@
+name: E2E
+
+on:
+  workflow_call:
+    inputs:
+      mode:
+        description: "How to obtain the stack: 'build' from source or 'pull' published images"
+        type: string
+        default: build
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "How to obtain the stack"
+        type: choice
+        options: [build, pull]
+        default: build
+
+concurrency:
+  group: e2e-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    name: E2E (${{ inputs.mode }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: read
+    env:
+      PLAYWRIGHT_BASE_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Write ephemeral compose secrets
+        run: |
+          {
+            echo "BETTER_AUTH_SECRET=$(openssl rand -base64 32)"
+            echo "OVR_GIT_TOKEN_ENCRYPTION_KEY=$(openssl rand -base64 32)"
+          } >> .env
+      - name: Log in to GHCR
+        if: inputs.mode == 'pull'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Start the stack (published images)
+        if: inputs.mode == 'pull'
+        env:
+          IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}
+        run: |
+          export IMAGE_TAG="sha-${GITHUB_SHA::7}"
+          docker compose pull --quiet
+          docker compose up -d
+      - name: Start the stack (build from source)
+        if: inputs.mode == 'build'
+        run: docker compose up -d --build
+      - name: Wait for the web app
+        run: |
+          for _ in $(seq 1 60); do
+            if curl -fsS "$PLAYWRIGHT_BASE_URL" >/dev/null 2>&1; then
+              echo "web is up"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "web did not become ready" >&2
+          docker compose logs --no-color
+          exit 1
+      - name: Build the artifacts to ingest
+        run: |
+          pnpm --filter @ovr/ui build-storybook
+          pnpm --filter @ovr/cli build
+      - name: Install Playwright browser
+        run: pnpm --filter @ovr/e2e exec playwright install --with-deps chromium
+      - name: Run E2E tests
+        run: pnpm --filter @ovr/e2e test:e2e
+      - name: Dump stack logs on failure
+        if: failure()
+        run: docker compose logs --no-color
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/e2e/playwright-report/
+          retention-days: 30
+          if-no-files-found: ignore
+      - name: Upload Playwright traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results
+          path: apps/e2e/test-results/
+          retention-days: 30
+          if-no-files-found: ignore
+      - name: Stop the stack
+        if: always()
+        run: docker compose down -v

@@ -166,3 +166,14 @@ jobs:
           sbom: ${{ env.SHOULD_PUSH == 'true' }}
           cache-from: type=gha,scope=${{ matrix.image.name }}
           cache-to: type=gha,mode=max,scope=${{ matrix.image.name }}
+
+  e2e:
+    name: E2E
+    needs: [docker]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: read
+    uses: ./.github/workflows/e2e.yml
+    with:
+      mode: pull
