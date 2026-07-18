@@ -5,8 +5,7 @@ import { storage } from "@ovr/storage";
 import type { SeedClient } from "../seed/client";
 import { ingestStorybook } from "./ingest";
 
-// A branch other than the project's gitMainBranch ("main"), so the build is
-// reviewed rather than auto-promoting its captures as the new baseline.
+// Not the project's gitMainBranch, so captures are reviewed rather than promoted.
 const FEATURE_BRANCH = "feature/e2e-review";
 
 const SNAPSHOT_LIST_LIMIT = 100;
@@ -51,26 +50,20 @@ const findBuildIdByCommit = async (
   return build.id;
 };
 
-// Produces a snapshot that lands in "needs_review" so the review UI can be
-// exercised end to end. Storybook renders deterministically, so re-ingesting the
-// same build never diffs against itself; instead we overwrite one target's
-// stored baseline image with another target's image, so the next capture of that
-// target diverges past the diff threshold. This drives the real capture + diff
-// pipeline (no hand-inserted rows) and yields the full comparison view.
+// Seeds a snapshot in "needs_review". Storybook renders deterministically, so a
+// build never diffs against a re-ingest of itself; overwriting one target's
+// baseline image with another's forces that target's next capture to diff.
 export const seedReviewableSnapshot = async ({
   client,
   projectId,
   apiKey,
 }: SeedReviewableSnapshotOptions): Promise<ReviewableSnapshot> => {
-  // 1. Ingest on main to establish a promoted baseline for every target.
   const baseline = await ingestStorybook({ apiKey, branch: "main" });
   if (baseline.exitCode !== 0) {
     throw new Error(`Baseline ingest failed (exit ${baseline.exitCode}): ${baseline.stderr}`);
   }
   const baselineBuildId = await findBuildIdByCommit(client, projectId, "main", baseline.commitSha);
 
-  // 2. Pick two visually distinct baseline captures and overwrite the target's
-  //    stored image with the donor's, guaranteeing a large diff on re-capture.
   const { snapshots } = await client.snapshots.list({
     buildId: baselineBuildId,
     limit: SNAPSHOT_LIST_LIMIT,
@@ -86,10 +79,7 @@ export const seedReviewableSnapshot = async ({
   const donorImage = await streamToBuffer(await storage.getFileStream(donor.imagePath));
   await storage.uploadFile(target.imagePath, donorImage, "image/png");
 
-  // 3. Re-ingest the same Storybook on a feature branch. The tampered baseline
-  //    now differs from the real capture, so the target needs review. The CLI
-  //    exits non-zero for a needs-review build, which ingestStorybook surfaces
-  //    without throwing.
+  // A needs-review build exits non-zero, which ingestStorybook returns without throwing.
   const candidate = await ingestStorybook({ apiKey, branch: FEATURE_BRANCH });
   const buildId = await findBuildIdByCommit(client, projectId, FEATURE_BRANCH, candidate.commitSha);
 
