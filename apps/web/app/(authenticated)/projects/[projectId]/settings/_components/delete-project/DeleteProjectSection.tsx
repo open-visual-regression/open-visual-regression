@@ -12,7 +12,7 @@ export const DeleteProjectSection = ({ project }: DeleteProjectSectionProps) => 
     <Typography variant="label" className="text-ovr-remove">
       danger zone
     </Typography>
-    <div className="flex flex-col gap-4 rounded-lg border border-ovr-remove p-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col items-start gap-4 rounded-lg border border-ovr-remove p-4 lg:flex-row lg:items-center lg:justify-between">
       <div className="flex flex-col gap-1">
         <Typography>delete project</Typography>
         <Typography variant="body-muted">
