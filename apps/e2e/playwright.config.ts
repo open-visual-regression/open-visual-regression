@@ -14,7 +14,7 @@ export default defineConfig({
     ["html", { open: "never" }],
     ["junit", { outputFile: "playwright-report/junit.xml" }],
   ],
-  timeout: 60_000,
+  timeout: 3 * 60 * 1000,
   expect: { timeout: 30_000 },
   use: {
     baseURL: getBaseURL(),

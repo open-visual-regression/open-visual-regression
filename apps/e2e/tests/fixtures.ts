@@ -5,10 +5,14 @@ import { test as base } from "@playwright/test";
 
 import { SEED_ARTIFACT, type SeedData } from "./constants";
 import { ProjectBuildsPage } from "./pages/ProjectBuildsPage";
+import { SnapshotReviewPage } from "./pages/SnapshotReviewPage";
+import { seedClientForContext, type SeedClient } from "./seed/client";
 
 type TestFixtures = {
   seed: SeedData;
+  seedClient: SeedClient;
   projectBuildsPage: ProjectBuildsPage;
+  snapshotReviewPage: SnapshotReviewPage;
 };
 
 export const test = base.extend<TestFixtures>({
@@ -17,8 +21,14 @@ export const test = base.extend<TestFixtures>({
     const data = JSON.parse(readFileSync(SEED_ARTIFACT, "utf-8")) as SeedData;
     await use(data);
   },
+  seedClient: async ({ context }, use) => {
+    await use(await seedClientForContext(context));
+  },
   projectBuildsPage: async ({ page }, use) => {
     await use(new ProjectBuildsPage(page));
+  },
+  snapshotReviewPage: async ({ page }, use) => {
+    await use(new SnapshotReviewPage(page));
   },
 });
 
