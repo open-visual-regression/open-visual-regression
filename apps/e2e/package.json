@@ -1,0 +1,24 @@
+{
+  "name": "@ovr/e2e",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "tsc": "tsc --noEmit",
+    "lint": "oxlint tests",
+    "format": "oxfmt tests"
+  },
+  "dependencies": {
+    "@orpc/client": "^1.14.6",
+    "@orpc/contract": "^1.14.6",
+    "@ovr/api": "workspace:*",
+    "@ovr/cli": "workspace:*"
+  },
+  "devDependencies": {
+    "@ovr/typescript-config": "workspace:*",
+    "@playwright/test": "^1.61.0",
+    "@types/node": "^22.15.3",
+    "typescript": "6.0.3"
+  }
+}
