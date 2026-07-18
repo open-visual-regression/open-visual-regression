@@ -28,6 +28,8 @@ Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-proje
   `storage.deletePrefix(\`${job.data.projectId}/\`)`; `failed(job, error)` logs.
 - [ ] 2.2 `apps/worker/src/index.ts` — register a `Worker(QueueName.PROJECT_PURGE,
   projectPurge.run, { connection })` and wire `.on("failed", guard(projectPurge.failed))`.
+- [ ] 2.3 Handler test: `run` calls `storage.deletePrefix` with exactly
+  `${projectId}/` (the prefix is the job's whole contract).
 
 ## DB repository (packages/db)
 
@@ -36,9 +38,9 @@ Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-proje
     `DELETE FROM projects WHERE id = ? AND organization_id = ?` `.returning()`
     so the handler knows whether a row was actually removed.
   - Add `getDeletionCounts({ projectId, organizationId })` returning
-    `{ buildCount, snapshotCount, diffCount, baselineCount }` (builds from
-    `projects.totalBuildsCount` or a `COUNT`; snapshots/diffs via `COUNT` joined
-    through `builds`; baselines by `project_id`).
+    `{ buildCount, snapshotCount, baselineCount }` (builds from
+    `projects.totalBuildsCount`; snapshots via `COUNT` joined through `builds`;
+    baselines by `project_id`). No byte-size — not shown in the UI.
 - [ ] 3.2 `packages/db/src/repository/storageOutbox.ts` — add
   `removeByProject(tx, projectId)` (`DELETE FROM storage_outbox WHERE project_id = ?`),
   since these rows have no FK and do not cascade.
@@ -51,7 +53,7 @@ Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-proje
 
 - [ ] 4.1 `packages/api/src/contracts/projects.ts` — add `deleteProjectContract`
   (input `{ id: z.uuidv7() }`; output
-  `{ buildCount, snapshotCount, diffCount, baselineCount }`, all
+  `{ buildCount, snapshotCount, baselineCount }`, all
   `z.number().int().nonnegative()`) and register it on the `contract` object.
 
 ## Router handler (apps/web)
@@ -73,25 +75,50 @@ Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-proje
 
 ## UI — settings danger zone (apps/web)
 
-- [ ] 6.1 `settings/page.tsx` — pre-fetch deletion counts (extend the existing
-  `Promise.all`) and render a danger-zone `<section>` at the bottom with the
-  destructive "delete project…" button + `DeleteProjectDialog`, passing the
-  project and counts as props. Already admin-gated by the page's `verifyRole`.
-- [ ] 6.2 `settings/_components/delete-project/DeleteProjectDialog.tsx`
+Copy is all lowercase; **UI says "runs", not "builds"** (naming convention).
+Full copy lives in `design.md` → "UI copy".
+
+- [ ] 6.1 `settings/_components/delete-project/DeleteProjectSection.tsx` — the
+  danger-zone card: red uppercase `danger zone` eyebrow, `delete project` title,
+  description "permanently removes this project, its runs, snapshots, and all
+  files stored for it. this cannot be undone.", and the destructive
+  `delete project…` button that opens the dialog. Takes `project` + counts props.
+- [ ] 6.2 `settings/page.tsx` — pre-fetch deletion counts (extend the existing
+  `Promise.all`) and render `<DeleteProjectSection>` at the bottom, passing the
+  project and counts. Already admin-gated by the page's `verifyRole`.
+- [ ] 6.3 `settings/_components/delete-project/DeleteProjectDialog.tsx`
   (`"use client"`), following `RevokeApiKeyButton`:
-  - `AlertDialog` titled `delete {project.name}?`, destructive tone.
-  - Evidence list: `N builds`, `N snapshots`, `N baselines`, `all stored files`;
-    body copy "this will permanently delete the project and everything stored
-    under it. cannot be undone."
-  - Type-to-confirm `Input`; `AlertDialogAction` disabled until
-    `typedName === project.name` (and while pending).
+  - `AlertDialog` titled `delete {project.name}?`, destructive tone; body "this
+    will permanently delete this project and everything stored under it. this
+    cannot be undone."
+  - Evidence list: `{buildCount} runs`, `{snapshotCount} snapshots`,
+    `{baselineCount} baselines`, `all stored files`.
+  - Type-to-confirm `Input` labelled `type {project.name} to confirm`;
+    `AlertDialogAction` (`delete project`) disabled until `typed === project.name`
+    (and while pending); cancel labelled `keep project`.
   - `useServerAction(serverClient.projects.deleteProject, { interceptors:
     [onSuccess(() => router.push("/projects")), onError(setError)] })`.
-- [ ] 6.3 Component tests
-  (`settings/_components/delete-project/__tests__/DeleteProjectDialog.test.tsx`):
-  renders name + counts; confirm disabled by default; wrong name → still
-  disabled; exact name → enabled; confirm executes the action and redirects.
+
+## Tests & stories (apps/web)
+
+- [ ] 7.1 Extend `apps/web/lib/router/__tests__/projects.integration.test.ts`
+  (real containers): returns correct counts; project + cascading rows +
+  `storage_outbox` rows deleted; `user` → FORBIDDEN, no session → UNAUTHORIZED;
+  cross-org project → NOT_FOUND and its rows survive; `enqueueProjectPurge`
+  (mock `@ovr/queue/producer`) called once with `{ projectId }`.
+- [ ] 7.2 `DeleteProjectDialog.test.tsx` (Testing Library via `@/test-utils`,
+  mock `@/lib/router` + `next/navigation`) — user-facing only, no implementation
+  details: button opens dialog; name + "N runs / N snapshots / N baselines"
+  shown; confirm disabled initially; wrong name stays disabled; exact name
+  enables; confirm calls the action with `{ id }` and redirects to `/projects`;
+  action error surfaces an inline message.
+- [ ] 7.3 Stories for OVR dogfooding:
+  `__stories__/DeleteProjectSection.stories.tsx` (default + large-counts) and
+  `__stories__/DeleteProjectDialog.stories.tsx` (open+disabled, and name-typed+
+  enabled), with the server action mocked so the stories are inert.
+- [ ] 7.4 No E2E spec — the router integration + component tests cover the two
+  seams; see `design.md` → "Do we need E2E?".
 
 ## Verify
 
-- [ ] 7.1 `pnpm check-types`, `pnpm lint`, and the affected Vitest projects pass.
+- [ ] 8.1 `pnpm check-types`, `pnpm lint`, and the affected Vitest projects pass.

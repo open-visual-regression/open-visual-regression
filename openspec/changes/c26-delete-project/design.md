@@ -67,27 +67,49 @@ Reviewing the shipped code turned up four problems in the first draft of
 
 ## Chosen architecture
 
-### Storage cleanup — dedicated `PROJECT_PURGE` queue job (reliable)
+### Storage cleanup — dedicated `PROJECT_PURGE` queue job
 
-Rather than deleting from S3 inline, the handler enqueues a `PROJECT_PURGE` job
-after the DB transaction commits; the worker calls
-`storage.deletePrefix(\`${projectId}/\`)`. This mirrors how the rest of the app
-defers heavy/fallible storage work to the worker and gives us **BullMQ retries
-with exponential backoff** for free (same `attempts: 3` policy as `BUILD_PURGE`).
+Two things are conflated by the word "outbox"; keep them separate:
+
+- **A transactional outbox** (write the purge intent in the delete transaction,
+  a sweeper drains it) — **not used.** It's real crash-safety insurance, but the
+  existing `storage_outbox` can't serve it: its drainer
+  (`purgeExpiredBuilds` → `drainStorageOutbox`) early-returns when the project
+  row is gone, and `build_id` is `NOT NULL`. Making it project-aware is more
+  machinery than this feature warrants. Left as a documented follow-up.
+- **A queue job** (handler enqueues, worker deletes) — **used.**
+
+Why not just `await storage.deletePrefix()` inline in the handler? Two reasons,
+both of which matter more because the storage layer is any S3-compatible service,
+not just local RustFS:
+
+1. **Unbounded request time.** `deletePrefix` pages `ListObjectsV2` (1000
+   keys/page) then `DeleteObjects` (1000/batch). A project with thousands of
+   snapshots/diffs/artifacts is many serial round-trips — seconds to minutes
+   against a remote bucket. Inlining that blocks the Server Action and risks
+   platform/gateway request timeouts.
+2. **No retry on failure.** If the S3 call fails partway, the DB rows are already
+   gone, so retention can never reclaim the orphans (it only sweeps live
+   projects). The objects leak permanently.
+
+So the handler enqueues a `PROJECT_PURGE` job after the DB transaction commits;
+the worker calls `storage.deletePrefix(\`${projectId}/\`)`. This mirrors how the
+rest of the app defers heavy/fallible storage work to the worker and gives us
+**BullMQ retries with exponential backoff** for free (same `attempts: 3` policy
+as `BUILD_PURGE`). It's ~30 lines reusing existing infra.
 
 Ordering: **commit the DB delete first, then enqueue.** Enqueuing before the
 commit could delete storage for a project that fails to delete; enqueuing after
 commit means a still-referenced project is never touched.
 
 Residual risk: if Redis is unreachable in the window *after* commit, the job is
-never queued and the objects leak. This is the same failure surface the
-retention path accepts, and the blast radius is orphaned bytes, not data
-corruption. A transactional-outbox hardening (write the purge intent in the
-delete transaction, drain it from a sweeper that tolerates deleted projects) is
-possible but out of scope here — noted as a follow-up. The `storage_outbox`
-table as it exists today cannot serve this: its drainer
-(`purgeExpiredBuilds` → `drainStorageOutbox`) early-returns when the project row
-is gone, so an outbox row written for a deleted project would never drain.
+never queued and the objects leak — the same failure surface the retention path
+already accepts, and the blast radius is orphaned bytes, not data corruption.
+(The transactional-outbox follow-up above is what would close it.)
+
+Simpler alternative if we want to cut scope: inline `await deletePrefix()` with
+a caught-and-logged failure. Acceptable for small deployments; the two reasons
+above are why the plan doesn't default to it.
 
 ### Layering (per `openspec/config.yaml` architecture rules)
 
@@ -106,12 +128,42 @@ DeleteProjectDialog ("use client")
 
 ### Counts for the confirmation UI
 
-The dialog shows what will be destroyed. `builds` is already denormalized on
-`projects.totalBuildsCount`; snapshots and diffs need a `COUNT` joined through
-`builds`; baselines are counted by `project_id` directly. These are gathered in
-one repository call (`projects.getDeletionCounts`) and returned by the handler.
-The settings page pre-fetches them in the RSC and passes them to the dialog as
-props (no client fetch on open).
+The dialog shows what will be destroyed: **runs, snapshots, baselines** (no byte
+size — it would require an extra `ListObjects` sweep on open, and it isn't worth
+the cost/latency). `builds` is already denormalized on
+`projects.totalBuildsCount`; snapshots need a `COUNT` joined through `builds`;
+baselines are counted by `project_id` directly. Gathered in one repository call
+(`projects.getDeletionCounts`) and returned by the handler as
+`{ buildCount, snapshotCount, baselineCount }`. The settings page pre-fetches
+them in the RSC and passes them to the dialog as props (no client fetch on open).
+
+### UI copy
+
+The app's copy is all lowercase, and per the naming convention **UI labels say
+"runs", never "builds"** (only URLs use `/builds`). So `buildCount` renders as
+"N runs".
+
+**Danger-zone section** (bottom of the settings page):
+
+- red uppercase eyebrow: `danger zone`
+- row title: `delete project`
+- description: `permanently removes this project, its runs, snapshots, and all
+  files stored for it. this cannot be undone.`
+- destructive button: `delete project…`
+
+**Confirmation dialog:**
+
+- title: `delete {project.name}?`
+- body: `this will permanently delete this project and everything stored under
+  it. this cannot be undone.`
+- evidence list (what will be destroyed):
+  - `{buildCount} runs`
+  - `{snapshotCount} snapshots`
+  - `{baselineCount} baselines`
+  - `all stored files`
+- input label: `type {project.name} to confirm`
+- confirm button: `delete project` (disabled until the typed value === name)
+- cancel button: `keep project`
 
 ## Alternatives considered
 
@@ -131,12 +183,70 @@ props (no client fetch on open).
 
 ## Testing
 
-- **Handler integration** (`apps/web/lib/router/__tests__/projects.integration.test.ts`):
-  returns correct counts; project + all cascading rows deleted; `storage_outbox`
-  rows for the project deleted; a project in another org is **not** deletable
-  (NOT_FOUND); `enqueueProjectPurge` invoked with the project id.
-- **Worker** (`apps/worker` / `packages/…`): `PROJECT_PURGE` handler calls
-  `deletePrefix("${projectId}/")`.
-- **Dialog component tests**: renders with project name + counts; confirm
-  disabled by default and while the typed name ≠ project name; enabled on exact
-  match; confirm executes the action and redirects to `/projects`.
+Two layers carry the coverage — router integration + dialog component — matching
+how the rest of the settings features are tested. E2E is deliberately **not**
+added (see rationale below).
+
+### Router integration (real containers, no mocks of our own code)
+
+Extend `apps/web/lib/router/__tests__/projects.integration.test.ts` (runs against
+real Postgres via Testcontainers, drives `serverClient` with the `admin`/`user`
+fixtures). This is the real cascade + authorization surface:
+
+- returns `{ buildCount, snapshotCount, baselineCount }` matching seeded data;
+- project row + all cascading rows (builds/snapshots/snapshot_logs/diffs/
+  diff_reviews/baselines) are gone afterward;
+- the project's `storage_outbox` rows are gone (they don't cascade);
+- a **non-admin** `user` gets `FORBIDDEN`; no session gets `UNAUTHORIZED`;
+- a project in **another organization** is not deletable — `NOT_FOUND`, and that
+  project's rows survive (the cross-org guard);
+- the storage purge is scheduled: mock `@ovr/queue/producer`'s
+  `enqueueProjectPurge` and assert it was called once with `{ projectId }`.
+  (Its actual effect — `deletePrefix` — is asserted in the worker test, so we
+  don't couple this test to S3.)
+
+### Worker handler unit test
+
+`PROJECT_PURGE` handler calls `storage.deletePrefix` with exactly `${projectId}/`
+— the prefix is the whole contract of the job, and the biggest bug we're fixing,
+so it gets a direct assertion.
+
+### Dialog component test (Testing Library, user-facing only)
+
+`DeleteProjectDialog.test.tsx` under `@/test-utils`, mocking `@/lib/router` and
+`next/navigation` (the same seam `CreateApiKeyModal.test.tsx` uses). Drive it the
+way a person would — by visible text, roles, and labels; assert on what they'd
+see. No reading of state, props, or handlers:
+
+- the danger-zone button (`/delete project/i`) opens the dialog;
+- the dialog shows the project name and the "N runs / N snapshots / N baselines"
+  it's about to destroy;
+- the confirm button is **disabled** initially;
+- typing a wrong name leaves it disabled; typing the exact name enables it;
+- clicking confirm calls the delete action with `{ id }` and, on success,
+  routes to `/projects`;
+- an action error surfaces an inline message and keeps the user on the page.
+
+### Stories (OVR dogfooding)
+
+OVR screenshots its own Storybook, so the delete UI needs stories that render its
+meaningful states for visual regression:
+
+- `DeleteProjectSection.stories.tsx` — the danger-zone card (default; and a
+  large-counts variant to check number formatting/layout).
+- `DeleteProjectDialog.stories.tsx` — dialog **open** (via `play`/`args` with the
+  trigger clicked or `defaultOpen`), showing the evidence list and the disabled
+  confirm state; a second story with the name typed so the enabled/destructive
+  confirm is captured. Mock the server action in the story context so the story
+  is inert.
+
+### Do we need E2E?
+
+Recommendation: **no**, not for this change. The two E2E specs that exist
+(`ingest-storybook`, `snapshots`) cover the multi-service capture→diff pipeline,
+where the value of a real browser + worker is high. Project deletion has no such
+cross-service choreography: the DB cascade is exercised for real by the router
+integration test, the authorization is too, and the dialog interaction is covered
+by the component test. A Playwright spec would re-verify the same two seams more
+slowly and flakily. Revisit only if we later add a user-visible async state to
+the purge (e.g. a "deleting…" progress surface) that spans web + worker.
