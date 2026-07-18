@@ -1,5 +1,9 @@
 # 25 · Project settings
 
+> Status: ARCHIVED — settings page delivered; the tabbed sub-nav was dropped. The settings page
+> ships with the general/update form, API keys, and git-integration sections. The settings sub-nav
+> tab layout (runs/settings/api/logs) + `?created=1` toast (1.2) was not built and is not planned.
+
 Gate: settings page renders general form + capture configurations table; saving form persists changes; adding/removing capture configurations persists to DB; `?created=1` shows "next step" toast.
 
 Depends on: c24-new-project

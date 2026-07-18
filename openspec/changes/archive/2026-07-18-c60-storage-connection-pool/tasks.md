@@ -48,11 +48,11 @@ unboundedly opening new sockets under concurrent load.
 
 ## Tasks
 
-- [ ] 1.1 Read `packages/storage/src/index.ts` in full first — it's a small
+- [x] 1.1 Read `packages/storage/src/index.ts` in full first — it's a small
   file. Find the existing `NodeHttpHandler` construction (imported from
   `@smithy/node-http-handler`) that already sets `connectionTimeout`.
 
-- [ ] 1.2 Add a Node `http.Agent`/`https.Agent` (pick based on whatever
+- [x] 1.2 Add a Node `http.Agent`/`https.Agent` (pick based on whatever
   `STORAGE_ENDPOINT` scheme is actually used in this deployment — check
   `.env.example` or how `STORAGE_ENDPOINT` is documented; rustfs in dev
   typically runs over plain HTTP) with `keepAlive: true` and a bounded
@@ -65,7 +65,7 @@ unboundedly opening new sockets under concurrent load.
   `package.json`; confirm the exact option name against the installed
   version rather than assuming).
 
-- [ ] 1.3 Do **not** change `connectionTimeout`. Do not add a
+- [x] 1.3 Do **not** change `connectionTimeout`. Do not add a
   `socketTimeout` change either unless you find concrete evidence (not
   present as of this writing) that it's currently causing failures — this
   slice is scoped to connection reuse only.

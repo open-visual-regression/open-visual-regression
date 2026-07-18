@@ -1,5 +1,13 @@
 # 47 · Cold-start verification
 
+> Status: SUPERSEDED / mostly delivered — cold start works via compose: `migrate`
+> (`node dist/migrate.js`, from `packages/db/src/scripts/migrate.ts` → `runMigrations`) and a
+> `createbuckets` aws-cli service bootstrap the DB and object-storage bucket before web/worker start.
+> Differences from the tasks below: no standalone `migrate-entrypoint.ts` or `scripts/rustfs-init.js`
+> (handled by the compose services above), and **`DEPLOYMENT.md` was not created** (task 1.4 not
+> done) — deployment/env docs live in `.env.example` and the README instead. Recommend archiving as
+> superseded, or split out just the "write DEPLOYMENT.md" task if that doc is still wanted.
+
 Gate: `docker compose up` with only `POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET`, `STORAGE_SECRET_KEY` set reaches `/setup` in a browser; completing setup redirects to `/projects`.
 
 Depends on: c45-dockerfile, c46-docker-compose

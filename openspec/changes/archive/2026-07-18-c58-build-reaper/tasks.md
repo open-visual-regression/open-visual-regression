@@ -1,5 +1,12 @@
 # 58 · Build reaper (no-strand guarantee)
 
+> Status: DONE (implemented outside OpenSpec). `updatedAt` added to `builds`/`snapshots`/`diffs`;
+> `findStale` on the builds repository; business logic in `packages/builds/src/reaper.ts`
+> (`resolveStaleBuilds`); the stuck-row updates ship as `snapshots.markUnfinishedAs` /
+> `diffs.markPendingAs` (not `markStuckAsError*`) — same effect. `BUILD_REAPER` queue +
+> `scheduleReaper` on worker startup; handler at `apps/worker/src/handlers/reaper.ts`; covered by
+> `builds.integration.test.ts` and `reaper.integration.test.ts`.
+
 Gate: `findStale` returns exactly the builds that are genuinely stuck (stale
 age + no child-row activity), and excludes both fresh builds and
 builds that are large-but-actively-progressing; a `build-reaper` repeatable
@@ -90,32 +97,32 @@ it first).
 
 ## Tasks
 
-- [ ] 1.1 `packages/db/src/schemas/builds.ts` — add `updatedAt` (Drizzle
+- [x] 1.1 `packages/db/src/schemas/builds.ts` — add `updatedAt` (Drizzle
   `$onUpdate(() => new Date())`, default `sql\`now()\``, matching the
   existing `createdAt` column's style in this file) to the `builds`,
   `snapshots`, and `diffs` table definitions.
 
-- [ ] 1.2 Generate the migration: run the repo's Drizzle migration
+- [x] 1.2 Generate the migration: run the repo's Drizzle migration
   generation command (see `package.json` `db:generate` script) — do **not**
   hand-write the SQL file. Confirm the generated migration only adds three
   nullable-then-defaulted `updated_at` columns and doesn't touch anything
   else. Run it against a local/test DB to confirm it applies cleanly.
 
-- [ ] 1.3 `packages/db/src/repository/builds.ts` — add
+- [x] 1.3 `packages/db/src/repository/builds.ts` — add
   `findStale(staleMinutes: number, limit: number): Promise<string[]>`
   implementing the query above. Follow the existing style of
   `findExpiredPage` in this file for the `NOT EXISTS` join pattern.
 
-- [ ] 1.4 `packages/db/src/repository/snapshots.ts` — add
+- [x] 1.4 `packages/db/src/repository/snapshots.ts` — add
   `markStuckAsError(buildId: string): Promise<void>` — bulk
   `UPDATE snapshots SET status = 'error' WHERE build_id = $1 AND status NOT IN ('success', 'error')`.
 
-- [ ] 1.5 `packages/db/src/repository/diffs.ts` — add
+- [x] 1.5 `packages/db/src/repository/diffs.ts` — add
   `markStuckAsErrorForBuild(buildId: string): Promise<void>` — same shape,
   joined through `snapshots` to filter by `buildId` (diffs don't have a
   direct `buildId` column — check `diffs.snapshotId → snapshots.buildId`).
 
-- [ ] 1.6 `packages/queue/src/index.ts` — add:
+- [x] 1.6 `packages/queue/src/index.ts` — add:
   - `QueueName.BUILD_REAPER = "build-reaper"` (string value convention:
     match the kebab-case style already used for the other queue names in
     this enum, e.g. `"build-purge-dispatch"`)
@@ -130,7 +137,7 @@ it first).
   - a `JOB_OPTIONS[QueueName.BUILD_REAPER]` entry (`attempts: 3`,
     exponential backoff, matching the other entries in that map)
 
-- [ ] 1.7 `apps/worker/src/handlers/reaper.ts` (new file) — `run(job)`:
+- [x] 1.7 `apps/worker/src/handlers/reaper.ts` (new file) — `run(job)`:
   - `const staleMinutes = Number(process.env.REAPER_STALE_MINUTES ?? 30)`
   - `const staleBuildIds = await dbClient.builds.findStale(staleMinutes, BATCH_LIMIT)`
     (pick a sane `BATCH_LIMIT` constant, e.g. 100, so one reaper tick can't
@@ -144,14 +151,14 @@ it first).
     wrapper in `apps/worker/src/index.ts` expects every handler module to
     export both `run` and `failed`.
 
-- [ ] 1.8 `apps/worker/src/index.ts` — register a `reaperWorker = new Worker(QueueName.BUILD_REAPER, reaper.run, { connection })`
+- [x] 1.8 `apps/worker/src/index.ts` — register a `reaperWorker = new Worker(QueueName.BUILD_REAPER, reaper.run, { connection })`
   alongside the other `Worker` instances, wire its `"failed"` event through
   the existing `guard(reaper.failed)` pattern, add it to the `workers` array
   used for graceful shutdown, and call `await scheduleReaper(connection)`
   alongside the existing `schedulePurge(connection)` call (same try/catch
   wrapping style already used there).
 
-- [ ] 1.9 Tests — `packages/db/src/__tests__/builds.integration.test.ts`
+- [x] 1.9 Tests — `packages/db/src/__tests__/builds.integration.test.ts`
   (existing file, extend it): cover `findStale` with builds at varying
   ages/statuses/child-row-activity combinations. Must include an explicit
   negative case named something like
@@ -161,7 +168,7 @@ it first).
   returned regardless of age; a build younger than the stale window is never
   returned regardless of activity.
 
-- [ ] 1.10 Tests —
+- [x] 1.10 Tests —
   `apps/worker/src/handlers/__tests__/reaper.integration.test.ts` (new,
   match the existing pattern used by sibling files in that directory, e.g.
   `capture.integration.test.ts`, `diff.integration.test.ts` — real DB via

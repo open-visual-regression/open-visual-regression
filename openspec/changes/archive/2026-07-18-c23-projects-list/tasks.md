@@ -1,5 +1,10 @@
 # 23 · /projects list page
 
+> Status: ARCHIVED — core delivered; remaining items intentionally dropped. The card grid and
+> empty state ship (`ProjectCardsList` / `ProjectCardListItem` / `NoProjectsSection`); the card
+> shows a builds count + baseline branch. The changed-count badge (1.4) and the recent-run
+> status-icon + relative-timestamp row (1.5) were not built and are not planned.
+
 Gate: authenticated user sees project card grid; zero projects shows empty state with CTA; changed-count badge visible when > 0.
 
 Depends on: c21-project-schema (done)
