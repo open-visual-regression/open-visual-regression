@@ -12,13 +12,13 @@ Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-build
 
 - [x] 1.2 Make full row a link to `/projects/[projectId]/builds/[buildId]`
 
-- [ ] 1.3 Filter tab bar above the table:
-  - Tabs: "all (N)" · "changed (N)" · "pass (N)" · "fail (N)" · "pending (N)"
-  - Active filter passed as `searchParams.filter`; page re-fetches filtered list
-  - "clear filter" link when filter active and no results
+- [x] 1.3 Filter tab bar above the table:
+  - Implemented differently — shipped as a faceted filter bar (`BuildsFilters` + `FacetBar`:
+    status / branch / author facets) plus `BuildsSearchField`, not a fixed status-tab strip.
+    Functionally satisfies the gate ("filters narrow the list"); the "all/changed/pass/fail/pending"
+    tabs with inline counts were superseded by the richer multi-facet UI.
 
-- [ ] 1.4 Component tests:
-  - All filter tabs render with correct counts
-  - Each row shows DiffStrip with correct status color
-  - Active filter tab is highlighted
-  - Row click navigates to run detail URL
+- [x] 1.4 Component tests:
+  - Covered by `builds-section/__tests__/{BuildsSection,BuildsTable,BuildsFilters}.test.tsx`
+    (facet filtering + table rendering). The literal "active tab highlighted" assertion no longer
+    applies (no tabs); filtering behaviour is tested via the facet bar instead.

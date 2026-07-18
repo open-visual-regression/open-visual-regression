@@ -1,5 +1,14 @@
 # 46 · docker-compose.yml
 
+> Status: SUPERSEDED / mostly delivered — a production `docker-compose.yml` ships with
+> db · valkey · rustfs · createbuckets · migrate · web · worker · bull-board · adminer, health
+> checks, and `depends_on` ordering (migrate/createbuckets gate web+worker). A rich `.env.example`
+> ships (task 1.4 done). Differences from the tasks below: storage is `rustfs/rustfs` (not minio),
+> bucket bootstrap is a `createbuckets` (aws-cli) service (not `rustfs-init`), migration runs via
+> `node dist/migrate.js` (not an `OVR_ROLE` switch), and there is **no `/api/health` route** (task
+> 1.3 not done — compose uses per-service healthchecks instead), and the dev compose was not split
+> into `docker-compose.dev.yml` (task 1.1 not done). Recommend archiving as superseded.
+
 Gate: `docker compose up` starts all 7 services; app service passes health check; migrate service exits 0 before app starts.
 
 The existing `docker-compose.yml` is a dev-only file (postgres, adminer, valkey). Rename it and add the production compose alongside it.

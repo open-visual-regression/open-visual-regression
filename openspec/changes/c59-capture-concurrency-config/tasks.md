@@ -47,7 +47,7 @@ to reach load average 27 processing a single 45-snapshot build).
 
 ## Tasks
 
-- [ ] 1.1 `apps/worker/src/index.ts` — `captureWorker`'s `concurrency`
+- [x] 1.1 `apps/worker/src/index.ts` — `captureWorker`'s `concurrency`
   option should read from `Number(process.env.CAPTURE_GROUP_CONCURRENCY ?? 2)`.
   Guard against `NaN` (e.g. a malformed env value) by falling back to the
   default `2` in that case too — don't let `Number("garbage")` silently
@@ -55,12 +55,12 @@ to reach load average 27 processing a single 45-snapshot build).
   `apps/worker/src/env.ts` for whatever env-parsing convention already
   exists in this app before writing a new one from scratch.
 
-- [ ] 1.2 `packages/capture/src/extract.ts` — replace the hardcoded
+- [x] 1.2 `packages/capture/src/extract.ts` — replace the hardcoded
   `const CAPTURE_GROUP_SIZE = 10;` with an env-driven read, same
   `NaN`-guarded pattern as above, default `10` (the current hardcoded
   value — don't change the default's magnitude, only make it configurable).
 
-- [ ] 1.3 Document both env vars. Check whether this repo has a `.env.example`
+- [x] 1.3 Document both env vars. Check whether this repo has a `.env.example`
   or a README table listing worker env vars (search for where
   `VALKEY_URL`/`DATABASE_URL`/`STORAGE_ENDPOINT` etc. are documented) and
   add `CAPTURE_GROUP_CONCURRENCY` and `CAPTURE_GROUP_SIZE` there in the same

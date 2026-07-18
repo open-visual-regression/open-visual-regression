@@ -1,5 +1,14 @@
 # 45 · Dockerfile
 
+> Status: SUPERSEDED — deployment shipped with a different structure than the tasks below.
+> Instead of one root multi-stage Dockerfile with `app`/`worker` targets, the repo ships a
+> per-app Dockerfile (`apps/web/Dockerfile`, `apps/worker/Dockerfile`, `apps/bull-board/Dockerfile`).
+> `output: "standalone"` is set in `apps/web/next.config.ts` (task 1.4 done). The entrypoint-script
+> approach (`scripts/entrypoint-*.sh`, `OVR_ROLE` switch) was replaced by explicit compose
+> `command:` overrides. The tasks below describe the abandoned single-Dockerfile design; the
+> deployment goal (buildable app + worker images, browsers only in the worker) is met differently.
+> Recommend archiving as superseded (or rewriting to match the shipped layout).
+
 Gate: `docker build --target app .` and `docker build --target worker .` both succeed; app image does not contain Playwright browser binaries; worker image does.
 
 - [ ] 1.1 Create `Dockerfile` at repo root with 4 stages:
