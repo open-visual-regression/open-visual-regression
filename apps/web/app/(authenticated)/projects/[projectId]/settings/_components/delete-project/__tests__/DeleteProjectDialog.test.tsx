@@ -22,9 +22,6 @@ const renderComponent = () => render(<DeleteProjectDialog project={project} />);
 const CONFIRM_LABEL = /type checkout-flow to confirm/i;
 const DELETE_BUTTON = { name: /^delete project$/i };
 
-// Open the dialog and return scoped queries — the trigger and the confirm
-// button share the name "delete project", so the confirm must be resolved
-// from within the dialog to stay unambiguous.
 const openDialog = async (user: { click: (el: Element) => Promise<void> }) => {
   await user.click(screen.getByRole("button", DELETE_BUTTON));
   const dialog = await screen.findByRole("alertdialog");

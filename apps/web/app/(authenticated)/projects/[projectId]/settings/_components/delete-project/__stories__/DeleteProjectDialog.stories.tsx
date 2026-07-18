@@ -26,14 +26,12 @@ const meta: Meta<typeof DeleteProjectDialog> = {
 export default meta;
 type Story = StoryObj<typeof DeleteProjectDialog>;
 
-// Open with an empty confirmation field — the destructive action stays disabled.
 export const Open: Story = {
   play: async ({ canvasElement }) => {
     await userEvent.click(within(canvasElement).getByRole("button", { name: /^delete project$/i }));
   },
 };
 
-// The project name has been typed exactly, so the destructive action is enabled.
 export const NameEntered: Story = {
   play: async ({ canvasElement }) => {
     await userEvent.click(within(canvasElement).getByRole("button", { name: /^delete project$/i }));

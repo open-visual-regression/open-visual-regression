@@ -6,11 +6,6 @@ import type { Result } from "./types";
 
 const logger = createLogger("projects");
 
-// Deleting a project removes the project row (Postgres cascades its builds,
-// snapshots, diffs, baselines, ...) and its storage_outbox rows, which carry no
-// foreign key and would otherwise be orphaned. Object storage is purged
-// asynchronously by the worker: the delete could span thousands of objects, and
-// deferring it keeps the request bounded and lets a transient failure retry.
 export const deleteProject = async (
   projectId: string,
   organizationId: string,
@@ -34,8 +29,6 @@ export const deleteProject = async (
   try {
     await enqueueProjectPurge({ projectId });
   } catch (error) {
-    // The project is already gone; a failed enqueue only leaves orphaned objects
-    // in storage, so log it rather than failing the deletion.
     logger.error({ err: error, projectId }, "failed to enqueue project storage purge");
   }
 
