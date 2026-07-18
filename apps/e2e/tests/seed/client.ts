@@ -18,7 +18,6 @@ export const createSeedClient = (baseURL: string, cookie: string): SeedClient =>
   return createORPCClient(link);
 };
 
-// Builds a seed client that reuses the browser context's signed-in session.
 export const seedClientForContext = async (context: BrowserContext): Promise<SeedClient> => {
   const cookie = (await context.cookies()).map(({ name, value }) => `${name}=${value}`).join("; ");
   return createSeedClient(getBaseURL(), cookie);

@@ -1,7 +1,6 @@
 import type { SeedClient } from "../seed/client";
 import { ingestStorybook } from "./ingest";
 
-// Not the project's gitMainBranch, so captures are reviewed rather than promoted.
 const FEATURE_BRANCH = "feature/e2e-review";
 
 const LIST_LIMIT = 100;
@@ -14,8 +13,6 @@ export type ReviewableSnapshot = {
   targetName: string;
 };
 
-// A fresh project has no baselines, so a feature-branch build reviews every
-// capture as a new snapshot rather than auto-promoting it.
 export const seedReviewableSnapshot = async (client: SeedClient): Promise<ReviewableSnapshot> => {
   const { projectId } = await client.projects.add({
     projectName: `E2E Review ${Date.now()}`,
