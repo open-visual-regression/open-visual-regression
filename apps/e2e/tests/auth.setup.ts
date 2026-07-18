@@ -3,10 +3,10 @@ import path from "node:path";
 
 import { expect, test as setup } from "@playwright/test";
 
-import { getBaseURL, SEED_ARTIFACT, STORAGE_STATE, TEST_ADMIN } from "./constants";
+import { SEED_ARTIFACT, STORAGE_STATE, TEST_ADMIN } from "./constants";
 import { LoginPage } from "./pages/LoginPage";
 import { SetupPage } from "./pages/SetupPage";
-import { createSeedClient } from "./seed/client";
+import { seedClientForContext } from "./seed/client";
 
 setup("provision the test fixtures", async ({ page, context }) => {
   const setupPage = new SetupPage(page);
@@ -41,9 +41,7 @@ setup("provision the test fixtures", async ({ page, context }) => {
   await context.storageState({ path: STORAGE_STATE });
 
   // Provision the project and API key over the API with the signed-in session.
-  const cookies = await context.cookies();
-  const cookieHeader = cookies.map((cookie) => `${cookie.name}=${cookie.value}`).join("; ");
-  const client = createSeedClient(getBaseURL(), cookieHeader);
+  const client = await seedClientForContext(context);
 
   const { projectId } = await client.projects.add({
     projectName: "E2E Storybook",
