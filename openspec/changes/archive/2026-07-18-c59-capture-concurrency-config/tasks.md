@@ -1,5 +1,10 @@
 # 59 · Capture concurrency env config for horizontal scaling
 
+> Status: ARCHIVED — delivered. `OVR_CAPTURE_GROUP_CONCURRENCY` and `OVR_CAPTURE_GROUP_SIZE` are read
+> from env with NaN-safe zod `.catch()` defaults (`apps/worker/src/index.ts`,
+> `packages/capture/src/extract.ts`) and documented in `.env.example`. The dedicated fallback unit
+> test (1.4) was not added — the `.catch(default)` parse makes the fallback structurally guaranteed.
+
 Gate: `CAPTURE_GROUP_CONCURRENCY` and `CAPTURE_GROUP_SIZE` are read from
 `process.env` with sane defaults matching today's hardcoded values; invalid
 or unset env values fall back cleanly (no crash, no `NaN` concurrency).

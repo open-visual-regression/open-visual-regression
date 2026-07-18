@@ -1,5 +1,9 @@
 # 43 · Diff viewer keyboard shortcuts + navigation
 
+> Status: ARCHIVED — not implemented and not planned. The diff viewer was reimagined as a static
+> side-by-side snapshot comparison (`snapshot-comparison-section`), so J/K/A/R keyboard navigation,
+> the prev/next changed-diff navigation, and the `changed-diffs` route were dropped.
+
 Gate: pressing J/K navigates to next/previous changed snapshot; prev/next buttons work; A/R trigger approve/reject (approve/reject Server Actions wired in 44).
 
 - [ ] 1.1 Create `apps/web/app/api/builds/[buildId]/changed-diffs/route.ts`:

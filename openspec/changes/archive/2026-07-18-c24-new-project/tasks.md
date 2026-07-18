@@ -1,5 +1,9 @@
 # 24 · New project
 
+> Status: ARCHIVED — feature delivered; the `?created=1` handoff was dropped. `NewProjectForm`
+> creates the project and redirects to `/projects` (not `/projects/[id]/settings?created=1`). The
+> "next step" toast flow (1.1–1.2) was superseded and is not planned.
+
 Gate: submitting the new-project form creates the project and redirects to its settings page with a "next step" hint.
 
 Depends on: c21-project-schema (done)
