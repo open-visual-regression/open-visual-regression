@@ -7,34 +7,6 @@ export class SnapshotReviewPage {
     await this.page.goto(`/projects/${projectId}/builds/${buildId}/snapshots/${snapshotId}`);
   }
 
-  heading(): Locator {
-    return this.page.getByRole("heading", { level: 1 });
-  }
-
-  statusBadge(label: string): Locator {
-    return this.page.getByText(label, { exact: true });
-  }
-
-  baselineLabel(): Locator {
-    return this.page.getByText("baseline", { exact: true });
-  }
-
-  newLabel(): Locator {
-    return this.page.getByText("new", { exact: true });
-  }
-
-  baselineImage(): Locator {
-    return this.page.getByRole("img", { name: /^baseline snapshot of/i });
-  }
-
-  diffOverlay(): Locator {
-    return this.page.getByRole("img", { name: /^diff overlay of/i });
-  }
-
-  showDiffSwitch(): Locator {
-    return this.page.getByRole("switch");
-  }
-
   approveButton(): Locator {
     return this.page.getByRole("button", { name: "approve", exact: true });
   }
@@ -47,8 +19,8 @@ export class SnapshotReviewPage {
     return this.page.getByRole("button", { name: "reject", exact: true });
   }
 
-  async approve() {
-    await this.approveButton().click();
+  rejectedButton(): Locator {
+    return this.page.getByRole("button", { name: "rejected", exact: true });
   }
 
   async expandSidebar() {
@@ -59,15 +31,11 @@ export class SnapshotReviewPage {
     return this.page.getByRole("complementary");
   }
 
+  async removeReview() {
+    await this.sidebar().getByRole("button", { name: "remove your review" }).click();
+  }
+
   emptyReviews(): Locator {
     return this.sidebar().getByText("no reviews yet");
-  }
-
-  reviewsSummary(): Locator {
-    return this.sidebar().getByText(/\d+ of \d+ required approvals/);
-  }
-
-  reviewer(name: string): Locator {
-    return this.sidebar().getByText(name);
   }
 }

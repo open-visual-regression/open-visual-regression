@@ -1,31 +1,13 @@
 # End-to-end tests
 
-Playwright E2E suite for the web app. The suite drives the **full stack** the way
-a real deployment runs it (web + worker + db + valkey + storage), because the
-first test ingests a build through the CLI and the worker captures it.
+Playwright E2E suite for the web app. The specs drive the **full stack** the way
+a real deployment runs it (web + worker + db + valkey + storage): they ingest
+Storybook builds through the CLI and exercise the resulting UI.
 
-## What runs
-
-- `auth.setup.ts` (setup project): completes first-run setup, logs in and saves
-  the session to `playwright/.auth/user.json`, then provisions a project
-  (`gitMainBranch: "main"`) and an API key, writing them to
-  `playwright/.artifacts/seed.json`.
-- `ingest-storybook.spec.ts`: runs `ovr snapshot storybook` against the running
-  stack to ingest a Storybook build on the **main** branch, then asserts through
-  the UI that the build was ingested and resolved to `unchanged`.
-- `snapshot-review.spec.ts`: seeds a snapshot that needs review, then drives the
-  whole snapshot page — baseline vs new comparison, the diff-overlay toggle, the
-  reviews sidebar, and approving the snapshot.
-
-> Ingesting on the project's main branch is deliberate: it promotes baselines and
-> resolves the build to a completed state instead of `needs_review`.
-
-> Storybook renders deterministically, so re-ingesting the same build never diffs
-> against itself. `snapshot-review.spec.ts` ingests a baseline on main, overwrites
-> one target's stored baseline image with another's, then re-ingests on a feature
-> branch so that target diverges past the diff threshold and lands in
-> `needs_review`. Overwriting the stored image needs S3 access from the host (see
-> the `STORAGE_*` env below).
+`auth.setup.ts` (the setup project) runs first: it completes first-run setup, logs
+in and saves the session to `playwright/.auth/user.json`, then provisions a project
+(`gitMainBranch: "main"`) and an API key, writing them to
+`playwright/.artifacts/seed.json` for the specs to use.
 
 ## Running locally
 
@@ -74,15 +56,3 @@ pnpm --filter @ovr/e2e test:e2e
 
 Point the suite at any running deployment with `PLAYWRIGHT_BASE_URL`. Override the
 ingested artifacts with `OVR_CLI_ENTRY` / `OVR_STORYBOOK_DIR` / `OVR_STORYBOOK_PKG_DIR`.
-
-`snapshot-review.spec.ts` also needs S3 access from the host to seed its diff.
-With the bundled `docker compose` stack these are the defaults (match your `.env`
-if you changed them):
-
-```bash
-STORAGE_ENDPOINT=http://localhost:9000 \
-STORAGE_ACCESS_KEY=rustfsadmin \
-STORAGE_SECRET_KEY=rustfsadmin \
-STORAGE_BUCKET=ovr \
-  pnpm --filter @ovr/e2e test:e2e
-```

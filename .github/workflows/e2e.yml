@@ -80,15 +80,6 @@ jobs:
       - name: Install Playwright browser
         run: pnpm --filter @ovr/e2e exec playwright install --with-deps chromium
       - name: Run E2E tests
-        env:
-          # The snapshot-review test seeds a diff by overwriting a stored
-          # baseline image, so the host runner talks to the published storage
-          # port with the compose defaults.
-          STORAGE_ENDPOINT: http://localhost:9000
-          STORAGE_ACCESS_KEY: rustfsadmin
-          STORAGE_SECRET_KEY: rustfsadmin
-          STORAGE_BUCKET: ovr
-          STORAGE_REGION: us-east-1
         run: pnpm --filter @ovr/e2e test:e2e
       - name: Dump stack logs on failure
         if: failure()
