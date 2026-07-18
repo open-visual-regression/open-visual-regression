@@ -8,6 +8,7 @@ import {
   enqueueExtract as enqueueExtractJob,
   enqueueFinalize as enqueueFinalizeJob,
   enqueuePublishStatus as enqueuePublishStatusJob,
+  enqueueProjectPurge as enqueueProjectPurgeJob,
   enqueuePurge as enqueuePurgeJob,
   enqueuePurgeMany as enqueuePurgeManyJob,
   type CaptureGroupJobPayload,
@@ -15,6 +16,7 @@ import {
   type ExtractJobPayload,
   type FinalizeJobPayload,
   type GitStatusPublishJobPayload,
+  type ProjectPurgeJobPayload,
   type PurgeJobPayload,
 } from "./index";
 
@@ -38,6 +40,10 @@ export const enqueueFinalize = (payload: FinalizeJobPayload): Promise<Job<Finali
 
 export const enqueuePurge = (payload: PurgeJobPayload): Promise<Job<PurgeJobPayload>> =>
   enqueuePurgeJob(payload, connection);
+
+export const enqueueProjectPurge = (
+  payload: ProjectPurgeJobPayload,
+): Promise<Job<ProjectPurgeJobPayload>> => enqueueProjectPurgeJob(payload, connection);
 
 export const enqueuePublishStatus = (
   payload: GitStatusPublishJobPayload,

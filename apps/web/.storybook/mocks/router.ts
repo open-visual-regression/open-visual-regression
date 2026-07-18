@@ -38,6 +38,7 @@ export const serverClient: typeof RealServerClient = {
     count: os.projects.count.handler(() => ({ total: 0 })).actionable(),
     add: os.projects.add.handler(() => ({ projectId: fakeUuid })).actionable(),
     update: os.projects.update.handler(() => undefined).actionable(),
+    deleteProject: os.projects.deleteProject.handler(() => undefined).actionable(),
   },
   storage: {
     getObject: os.storage.getObject

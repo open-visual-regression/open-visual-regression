@@ -247,6 +247,9 @@ importers:
       '@ovr/mocks':
         specifier: workspace:*
         version: link:../../packages/mocks
+      '@ovr/queue':
+        specifier: workspace:*
+        version: link:../../packages/queue
       '@ovr/testing':
         specifier: workspace:*
         version: link:../../packages/testing
@@ -373,6 +376,9 @@ importers:
       '@ovr/queue':
         specifier: workspace:*
         version: link:../../packages/queue
+      '@ovr/storage':
+        specifier: workspace:*
+        version: link:../../packages/storage
       bullmq:
         specifier: ^5.78.0
         version: 5.78.0

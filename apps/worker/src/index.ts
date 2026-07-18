@@ -12,6 +12,7 @@ import * as capture from "./handlers/capture";
 import * as diff from "./handlers/diff";
 import * as extract from "./handlers/extract";
 import * as finalize from "./handlers/finalize";
+import * as projectPurge from "./handlers/projectPurge";
 import * as publishStatus from "./handlers/publishStatus";
 import * as purge from "./handlers/purge";
 import * as purgeDispatch from "./handlers/purgeDispatch";
@@ -43,6 +44,7 @@ const purgeDispatchWorker = new Worker(QueueName.BUILD_PURGE_DISPATCH, purgeDisp
   connection,
 });
 const purgeWorker = new Worker(QueueName.BUILD_PURGE, purge.run, { connection });
+const projectPurgeWorker = new Worker(QueueName.PROJECT_PURGE, projectPurge.run, { connection });
 const reaperWorker = new Worker(QueueName.BUILD_REAPER, reaper.run, { connection });
 const publishStatusWorker = new Worker(QueueName.GIT_STATUS_PUBLISH, publishStatus.run, {
   connection,
@@ -71,6 +73,7 @@ diffWorker.on("failed", guard(diff.failed));
 finalizeWorker.on("failed", guard(finalize.failed));
 purgeDispatchWorker.on("failed", guard(purgeDispatch.failed));
 purgeWorker.on("failed", guard(purge.failed));
+projectPurgeWorker.on("failed", guard(projectPurge.failed));
 reaperWorker.on("failed", guard(reaper.failed));
 publishStatusWorker.on("failed", guard(publishStatus.failed));
 
@@ -81,6 +84,7 @@ const workers = [
   finalizeWorker,
   purgeDispatchWorker,
   purgeWorker,
+  projectPurgeWorker,
   reaperWorker,
   publishStatusWorker,
 ];

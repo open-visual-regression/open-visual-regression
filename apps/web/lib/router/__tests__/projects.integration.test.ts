@@ -1,11 +1,13 @@
 import { vi } from "vitest";
 
 import type { AddProjectInputSchema } from "@ovr/api/contracts/projects";
+import { enqueueProjectPurge } from "@ovr/queue/producer";
 
 import { serverClient } from "@/lib/router";
 import { test, describe, expect } from "@/lib/testing/fixtures";
 
 vi.mock("next/headers");
+vi.mock("@ovr/queue/producer");
 
 const NONEXISTENT_PROJECT_ID = "01900000-0000-7000-8000-000000000000";
 
@@ -218,6 +220,37 @@ describe("projects", () => {
 
       const [, getResult] = await serverClient.projects.getOne({ projectId });
       expect(getResult?.project).toMatchObject({ name: "Updated Name", retentionDays: 30 });
+    });
+  });
+
+  describe("deleteProject", () => {
+    test("should return UNAUTHORIZED when no session cookie is provided", async () => {
+      const [error] = await serverClient.projects.deleteProject({ id: NONEXISTENT_PROJECT_ID });
+      expect(error?.code).toBe("UNAUTHORIZED");
+    });
+
+    test("should return FORBIDDEN when the session user is not an admin", async ({ user: _ }) => {
+      const [error] = await serverClient.projects.deleteProject({ id: NONEXISTENT_PROJECT_ID });
+      expect(error?.code).toBe("FORBIDDEN");
+    });
+
+    test("should return NOT_FOUND for an unknown project ID", async ({ admin: _ }) => {
+      const [error] = await serverClient.projects.deleteProject({ id: NONEXISTENT_PROJECT_ID });
+      expect(error?.code).toBe("NOT_FOUND");
+      expect(enqueueProjectPurge).not.toHaveBeenCalled();
+    });
+
+    test("should delete the project and schedule its storage purge", async ({ admin: _ }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+
+      const [error] = await serverClient.projects.deleteProject({ id: projectId });
+
+      expect(error).toBeNull();
+      expect(enqueueProjectPurge).toHaveBeenCalledWith({ projectId });
+
+      const [getError] = await serverClient.projects.getOne({ projectId });
+      expect(getError?.code).toBe("NOT_FOUND");
     });
   });
 });

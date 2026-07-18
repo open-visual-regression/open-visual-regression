@@ -131,8 +131,12 @@ export const incrementTotalBuildsCount = async (projectId: string, tx: DbClient 
     .where(eq(projects.id, projectId));
 };
 
-export const deleteProject = async (id: string) => {
-  await db.delete(projects).where(eq(projects.id, id));
+export const deleteProject = async (id: string, organizationId: string, tx: DbClient = db) => {
+  const [deleted] = await tx
+    .delete(projects)
+    .where(and(eq(projects.id, id), eq(projects.organizationId, organizationId)))
+    .returning();
+  return deleted;
 };
 
 export type ListProjectsResultDbSchema = Awaited<ReturnType<typeof listProjects>>;
