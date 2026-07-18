@@ -131,6 +131,9 @@ importers:
       '@ovr/cli':
         specifier: workspace:*
         version: link:../cli
+      '@ovr/storage':
+        specifier: workspace:*
+        version: link:../../packages/storage
     devDependencies:
       '@ovr/typescript-config':
         specifier: workspace:*

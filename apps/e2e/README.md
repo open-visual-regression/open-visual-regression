@@ -13,9 +13,19 @@ first test ingests a build through the CLI and the worker captures it.
 - `ingest-storybook.spec.ts`: runs `ovr snapshot storybook` against the running
   stack to ingest a Storybook build on the **main** branch, then asserts through
   the UI that the build was ingested and resolved to `unchanged`.
+- `snapshot-review.spec.ts`: seeds a snapshot that needs review, then drives the
+  whole snapshot page — baseline vs new comparison, the diff-overlay toggle, the
+  reviews sidebar, and approving the snapshot.
 
 > Ingesting on the project's main branch is deliberate: it promotes baselines and
 > resolves the build to a completed state instead of `needs_review`.
+
+> Storybook renders deterministically, so re-ingesting the same build never diffs
+> against itself. `snapshot-review.spec.ts` ingests a baseline on main, overwrites
+> one target's stored baseline image with another's, then re-ingests on a feature
+> branch so that target diverges past the diff threshold and lands in
+> `needs_review`. Overwriting the stored image needs S3 access from the host (see
+> the `STORAGE_*` env below).
 
 ## Running locally
 
@@ -64,3 +74,15 @@ pnpm --filter @ovr/e2e test:e2e
 
 Point the suite at any running deployment with `PLAYWRIGHT_BASE_URL`. Override the
 ingested artifacts with `OVR_CLI_ENTRY` / `OVR_STORYBOOK_DIR` / `OVR_STORYBOOK_PKG_DIR`.
+
+`snapshot-review.spec.ts` also needs S3 access from the host to seed its diff.
+With the bundled `docker compose` stack these are the defaults (match your `.env`
+if you changed them):
+
+```bash
+STORAGE_ENDPOINT=http://localhost:9000 \
+STORAGE_ACCESS_KEY=rustfsadmin \
+STORAGE_SECRET_KEY=rustfsadmin \
+STORAGE_BUCKET=ovr \
+  pnpm --filter @ovr/e2e test:e2e
+```

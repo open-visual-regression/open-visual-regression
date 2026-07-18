@@ -5,10 +5,12 @@ import { test as base } from "@playwright/test";
 
 import { SEED_ARTIFACT, type SeedData } from "./constants";
 import { ProjectBuildsPage } from "./pages/ProjectBuildsPage";
+import { SnapshotReviewPage } from "./pages/SnapshotReviewPage";
 
 type TestFixtures = {
   seed: SeedData;
   projectBuildsPage: ProjectBuildsPage;
+  snapshotReviewPage: SnapshotReviewPage;
 };
 
 export const test = base.extend<TestFixtures>({
@@ -19,6 +21,9 @@ export const test = base.extend<TestFixtures>({
   },
   projectBuildsPage: async ({ page }, use) => {
     await use(new ProjectBuildsPage(page));
+  },
+  snapshotReviewPage: async ({ page }, use) => {
+    await use(new SnapshotReviewPage(page));
   },
 });
 

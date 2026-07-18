@@ -13,7 +13,8 @@
     "@orpc/client": "^1.14.6",
     "@orpc/contract": "^1.14.6",
     "@ovr/api": "workspace:*",
-    "@ovr/cli": "workspace:*"
+    "@ovr/cli": "workspace:*",
+    "@ovr/storage": "workspace:*"
   },
   "devDependencies": {
     "@ovr/typescript-config": "workspace:*",
