@@ -14,7 +14,9 @@ export default defineConfig({
     ["html", { open: "never" }],
     ["junit", { outputFile: "playwright-report/junit.xml" }],
   ],
-  timeout: 60_000,
+  // Generous per-test timeout: specs ingest a Storybook build and wait on the
+  // worker to capture it.
+  timeout: 15 * 60 * 1000,
   expect: { timeout: 30_000 },
   use: {
     baseURL: getBaseURL(),

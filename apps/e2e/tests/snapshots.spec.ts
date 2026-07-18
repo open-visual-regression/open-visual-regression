@@ -1,11 +1,7 @@
 import { expect, test } from "./fixtures";
 import { seedReviewableSnapshot } from "./support/seedReviewableSnapshot";
 
-const REVIEW_TIMEOUT_MS = 15 * 60 * 1000;
-
-test.describe("Snapshot review", () => {
-  test.describe.configure({ timeout: REVIEW_TIMEOUT_MS });
-
+test.describe("Snapshots", () => {
   test("should approve, reject, and remove a review for a snapshot", async ({
     seedClient,
     snapshotReviewPage,

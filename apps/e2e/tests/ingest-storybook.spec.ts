@@ -1,11 +1,7 @@
 import { expect, test } from "./fixtures";
 import { ingestStorybook } from "./support/ingest";
 
-const INGEST_TIMEOUT_MS = 15 * 60 * 1000;
-
 test.describe("Storybook ingestion", () => {
-  test.describe.configure({ timeout: INGEST_TIMEOUT_MS });
-
   test("should ingest a Storybook build on the main branch via the CLI and mark it complete", async ({
     projectBuildsPage,
     seed,
