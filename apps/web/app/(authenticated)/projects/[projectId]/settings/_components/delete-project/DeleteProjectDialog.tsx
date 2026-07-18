@@ -54,7 +54,7 @@ export const DeleteProjectDialog = ({ project }: DeleteProjectDialogProps) => {
   return (
     <AlertDialog open={open} onOpenChange={handleOpenChange}>
       <AlertDialogTrigger render={<Button variant="outline" color="red" size="md" />}>
-        delete project…
+        delete project
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>

@@ -5,7 +5,7 @@ import { mocks } from "@ovr/mocks";
 
 import { serverClient } from "@/lib/router";
 import { createORPCError } from "@/lib/testing/orpc";
-import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
+import { describe, expect, it, render, screen, waitFor, within } from "@/test-utils";
 
 import { DeleteProjectDialog } from "../DeleteProjectDialog";
 
@@ -20,6 +20,19 @@ const project = mocks.project.generateProject({ name: "checkout-flow" });
 const renderComponent = () => render(<DeleteProjectDialog project={project} />);
 
 const CONFIRM_LABEL = /type checkout-flow to confirm/i;
+const DELETE_BUTTON = { name: /^delete project$/i };
+
+// Open the dialog and return scoped queries — the trigger and the confirm
+// button share the name "delete project", so the confirm must be resolved
+// from within the dialog to stay unambiguous.
+const openDialog = async (user: { click: (el: Element) => Promise<void> }) => {
+  await user.click(screen.getByRole("button", DELETE_BUTTON));
+  const dialog = await screen.findByRole("alertdialog");
+  return {
+    input: within(dialog).getByLabelText(CONFIRM_LABEL),
+    confirm: within(dialog).getByRole("button", DELETE_BUTTON),
+  };
+};
 
 describe("DeleteProjectDialog", () => {
   it("should keep the confirm button disabled until the exact project name is typed", async ({
@@ -27,9 +40,7 @@ describe("DeleteProjectDialog", () => {
   }) => {
     renderComponent();
 
-    await user.click(screen.getByRole("button", { name: /delete project…/i }));
-    const input = await screen.findByLabelText(CONFIRM_LABEL);
-    const confirm = screen.getByRole("button", { name: /^delete project$/i });
+    const { input, confirm } = await openDialog(user);
     expect(confirm).toBeDisabled();
 
     await user.type(input, "checkout");
@@ -44,9 +55,9 @@ describe("DeleteProjectDialog", () => {
     mockDelete.mockResolvedValue([null, undefined]);
     renderComponent();
 
-    await user.click(screen.getByRole("button", { name: /delete project…/i }));
-    await user.type(await screen.findByLabelText(CONFIRM_LABEL), "checkout-flow");
-    await user.click(screen.getByRole("button", { name: /^delete project$/i }));
+    const { input, confirm } = await openDialog(user);
+    await user.type(input, "checkout-flow");
+    await user.click(confirm);
 
     expect(mockDelete).toHaveBeenCalledWith({ id: project.id });
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/projects"));
@@ -56,9 +67,9 @@ describe("DeleteProjectDialog", () => {
     mockDelete.mockResolvedValue([createORPCError("INTERNAL_SERVER_ERROR"), undefined]);
     renderComponent();
 
-    await user.click(screen.getByRole("button", { name: /delete project…/i }));
-    await user.type(await screen.findByLabelText(CONFIRM_LABEL), "checkout-flow");
-    await user.click(screen.getByRole("button", { name: /^delete project$/i }));
+    const { input, confirm } = await openDialog(user);
+    await user.type(input, "checkout-flow");
+    await user.click(confirm);
 
     expect(await screen.findByRole("alert")).toHaveTextContent("INTERNAL_SERVER_ERROR");
     expect(mockPush).not.toHaveBeenCalled();

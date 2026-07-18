@@ -77,7 +77,7 @@ Full copy lives in `design.md` → "UI copy".
 - [ ] 6.1 `settings/_components/delete-project/DeleteProjectSection.tsx` — the
   danger-zone card: red uppercase `danger zone` eyebrow, `delete project` title,
   description "permanently deletes this project and everything stored for it.
-  this cannot be undone.", and the destructive `delete project…` button that
+  this cannot be undone.", and the destructive `delete project` button that
   opens the dialog. Takes the `project` as its only prop.
 - [ ] 6.2 `settings/page.tsx` — render `<DeleteProjectSection project={…}>` at the
   bottom (no extra data fetch). Already admin-gated by the page's `verifyRole`.

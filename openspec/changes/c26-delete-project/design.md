@@ -142,7 +142,7 @@ builds/snapshots/baselines.
 - row title: `delete project`
 - description: `permanently deletes this project and everything stored for it.
   this cannot be undone.`
-- destructive button: `delete project…`
+- destructive button: `delete project`
 
 **Confirmation dialog:**
 
