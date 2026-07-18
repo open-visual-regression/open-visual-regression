@@ -118,37 +118,30 @@ DeleteProjectDialog ("use client")
   → useServerAction(serverClient.projects.deleteProject)
     → oRPC handler  (authenticatedMiddleware + adminMiddleware)
         1. verify project ∈ organizationId          → NOT_FOUND
-        2. gather counts (builds/snapshots/diffs/baselines)
-        3. dbClient.transaction: delete project rows + delete storage_outbox rows
-        4. enqueueProjectPurge({ projectId })        (after commit)
-        5. revalidatePath("/", "layout")
-      → returns { buildCount, snapshotCount, diffCount, baselineCount }
+        2. dbClient.transaction: delete project rows + delete storage_outbox rows
+        3. enqueueProjectPurge({ projectId })        (after commit)
+        4. revalidatePath("/", "layout")
+      → returns void
     → onSuccess: router.push("/projects")
 ```
 
-### Counts for the confirmation UI
-
-The dialog shows what will be destroyed: **runs, snapshots, baselines** (no byte
-size — it would require an extra `ListObjects` sweep on open, and it isn't worth
-the cost/latency). `builds` is already denormalized on
-`projects.totalBuildsCount`; snapshots need a `COUNT` joined through `builds`;
-baselines are counted by `project_id` directly. Gathered in one repository call
-(`projects.getDeletionCounts`) and returned by the handler as
-`{ buildCount, snapshotCount, baselineCount }`. The settings page pre-fetches
-them in the RSC and passes them to the dialog as props (no client fetch on open).
+The dialog does **not** enumerate or count what will be deleted — a single
+general warning carries the weight, and the type-the-name gate is the real
+safeguard. That means no `getDeletionCounts` query, no counts in the contract,
+and no RSC pre-fetch: the settings page just renders the section with the
+project.
 
 ### UI copy
 
-The app's copy is all lowercase, and per the naming convention **UI labels say
-"runs", never "builds"** (only URLs use `/builds`). So `buildCount` renders as
-"N runs".
+Copy is all lowercase, and the warning stays general — it does not itemize
+builds/snapshots/baselines.
 
 **Danger-zone section** (bottom of the settings page):
 
 - red uppercase eyebrow: `danger zone`
 - row title: `delete project`
-- description: `permanently removes this project, its runs, snapshots, and all
-  files stored for it. this cannot be undone.`
+- description: `permanently deletes this project and everything stored for it.
+  this cannot be undone.`
 - destructive button: `delete project…`
 
 **Confirmation dialog:**
@@ -156,11 +149,6 @@ The app's copy is all lowercase, and per the naming convention **UI labels say
 - title: `delete {project.name}?`
 - body: `this will permanently delete this project and everything stored under
   it. this cannot be undone.`
-- evidence list (what will be destroyed):
-  - `{buildCount} runs`
-  - `{snapshotCount} snapshots`
-  - `{baselineCount} baselines`
-  - `all stored files`
 - input label: `type {project.name} to confirm`
 - confirm button: `delete project` (disabled until the typed value === name)
 - cancel button: `keep project`
@@ -193,7 +181,6 @@ Extend `apps/web/lib/router/__tests__/projects.integration.test.ts` (runs agains
 real Postgres via Testcontainers, drives `serverClient` with the `admin`/`user`
 fixtures). This is the real cascade + authorization surface:
 
-- returns `{ buildCount, snapshotCount, baselineCount }` matching seeded data;
 - project row + all cascading rows (builds/snapshots/snapshot_logs/diffs/
   diff_reviews/baselines) are gone afterward;
 - the project's `storage_outbox` rows are gone (they don't cascade);
@@ -219,8 +206,7 @@ way a person would — by visible text, roles, and labels; assert on what they'd
 see. No reading of state, props, or handlers:
 
 - the danger-zone button (`/delete project/i`) opens the dialog;
-- the dialog shows the project name and the "N runs / N snapshots / N baselines"
-  it's about to destroy;
+- the dialog shows the project name and the irreversible-delete warning;
 - the confirm button is **disabled** initially;
 - typing a wrong name leaves it disabled; typing the exact name enables it;
 - clicking confirm calls the delete action with `{ id }` and, on success,
@@ -232,13 +218,11 @@ see. No reading of state, props, or handlers:
 OVR screenshots its own Storybook, so the delete UI needs stories that render its
 meaningful states for visual regression:
 
-- `DeleteProjectSection.stories.tsx` — the danger-zone card (default; and a
-  large-counts variant to check number formatting/layout).
+- `DeleteProjectSection.stories.tsx` — the danger-zone card.
 - `DeleteProjectDialog.stories.tsx` — dialog **open** (via `play`/`args` with the
-  trigger clicked or `defaultOpen`), showing the evidence list and the disabled
-  confirm state; a second story with the name typed so the enabled/destructive
-  confirm is captured. Mock the server action in the story context so the story
-  is inert.
+  trigger clicked or `defaultOpen`), showing the disabled confirm state; a second
+  story with the name typed so the enabled/destructive confirm is captured. Mock
+  the server action in the story context so the story is inert.
 
 ### Do we need E2E?
 
