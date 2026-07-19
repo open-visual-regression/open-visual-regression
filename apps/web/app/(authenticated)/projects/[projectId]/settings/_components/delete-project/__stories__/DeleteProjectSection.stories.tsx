@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import { userEvent, within } from "storybook/test";
 
 import { mocks } from "@ovr/mocks";
 
@@ -33,3 +34,9 @@ export default meta;
 type Story = StoryObj<typeof DeleteProjectSection>;
 
 export const Default: Story = {};
+
+export const OpenDeleteProjectDialog: Story = {
+  play: async ({ canvasElement }) => {
+    await userEvent.click(within(canvasElement).getByRole("button", { name: /^delete project$/i }));
+  },
+};

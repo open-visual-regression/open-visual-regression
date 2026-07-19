@@ -19,15 +19,12 @@ const project = mocks.project.generateProject({ name: "checkout-flow" });
 
 const renderComponent = () => render(<DeleteProjectDialog project={project} />);
 
-const CONFIRM_LABEL = /type checkout-flow to confirm/i;
-const DELETE_BUTTON = { name: /^delete project$/i };
-
 const openDialog = async (user: { click: (el: Element) => Promise<void> }) => {
-  await user.click(screen.getByRole("button", DELETE_BUTTON));
+  await user.click(screen.getByRole("button", { name: /^delete project$/i }));
   const dialog = await screen.findByRole("alertdialog");
   return {
-    input: within(dialog).getByLabelText(CONFIRM_LABEL),
-    confirm: within(dialog).getByRole("button", DELETE_BUTTON),
+    input: within(dialog).getByLabelText(/type checkout-flow to confirm/i),
+    confirm: within(dialog).getByRole("button", { name: /^delete project$/i }),
   };
 };
 
