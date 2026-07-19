@@ -5,7 +5,6 @@ import { vi } from "vitest";
 import { mocks } from "@ovr/mocks";
 import { Toaster } from "@ovr/ui/components/sonner";
 
-import { orpc } from "@/lib/orpc/client";
 import { serverClient } from "@/lib/router";
 import { createORPCError } from "@/lib/testing/orpc";
 import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
@@ -34,13 +33,7 @@ const renderComponent = ({
     processing: 0,
   },
 }: Partial<BuildHeaderProps> = {}) => {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false, staleTime: Infinity } },
-  });
-  queryClient.setQueryData(
-    orpc.builds.watchStatus.experimental_liveKey({ input: { buildId: build.id } }),
-    { status: build.status },
-  );
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
   return render(
     <QueryClientProvider client={queryClient}>

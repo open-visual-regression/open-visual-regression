@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
-
 import type { BuildStatus } from "@ovr/api/contracts/builds";
 import type { BuildProcessingStatus, BuildReviewStatus } from "@ovr/db/schema";
+
+import { describe, expect, it } from "@/test-utils";
 
 import { getBuildStatusOutput, isTerminalBuildStatus } from "../buildStatus";
 
@@ -13,8 +13,8 @@ const source = (processingStatus: BuildProcessingStatus, reviewStatus: BuildRevi
   errorMessage: null,
 });
 
-describe("isTerminalBuildStatus", () => {
-  const cases: [BuildStatus, boolean][] = [
+describe("buildStatus", () => {
+  it.each([
     ["queued", false],
     ["processing", false],
     ["needs_review", false],
@@ -24,31 +24,24 @@ describe("isTerminalBuildStatus", () => {
     ["rejected", true],
     ["error", true],
     ["canceled", true],
-  ];
-
-  it.each(cases)("treats %s as terminal=%s", (status, expected) => {
+  ] satisfies [BuildStatus, boolean][])("should report %s as terminal=%s", (status, expected) => {
     expect(isTerminalBuildStatus(status)).toBe(expected);
   });
-});
 
-describe("getBuildStatusOutput", () => {
-  it("includes a review url when the build needs review", () => {
-    const output = getBuildStatusOutput(source("success", "needs_review"));
-    expect(output.status).toBe("needs_review");
-    expect(output.reviewUrl).toBe(
-      "http://localhost:3000/projects/018f0000-0000-7000-8000-000000000001/builds/018f0000-0000-7000-8000-000000000000",
-    );
-  });
-
-  it("includes the error message when the build errored", () => {
-    const output = getBuildStatusOutput({
-      ...source("error", "not_required"),
-      errorMessage: "boom",
+  it("should include a review url when the build needs review", () => {
+    expect(getBuildStatusOutput(source("success", "needs_review"))).toEqual({
+      status: "needs_review",
+      reviewUrl:
+        "http://localhost:3000/projects/018f0000-0000-7000-8000-000000000001/builds/018f0000-0000-7000-8000-000000000000",
     });
-    expect(output).toEqual({ status: "error", errorMessage: "boom" });
   });
 
-  it("returns only the status for settled builds", () => {
+  it("should include the error message when the build errored", () => {
+    const build = { ...source("error", "not_required"), errorMessage: "boom" };
+    expect(getBuildStatusOutput(build)).toEqual({ status: "error", errorMessage: "boom" });
+  });
+
+  it("should return only the status for settled builds", () => {
     expect(getBuildStatusOutput(source("success", "approved"))).toEqual({ status: "approved" });
   });
 });

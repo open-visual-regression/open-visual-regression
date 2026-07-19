@@ -1,4 +1,5 @@
 /* eslint-disable react-hooks/rules-of-hooks -- Playwright's `use` is not a React hook */
+import { type ChildProcess } from "node:child_process";
 import { readFileSync } from "node:fs";
 
 import { test as base } from "@playwright/test";
@@ -8,6 +9,7 @@ import { BuildPage } from "./pages/BuildPage";
 import { ProjectBuildsPage } from "./pages/ProjectBuildsPage";
 import { SnapshotReviewPage } from "./pages/SnapshotReviewPage";
 import { seedClientForContext, type SeedClient } from "./seed/client";
+import { spawnIngest, type IngestOptions } from "./support/ingest";
 
 type TestFixtures = {
   seed: SeedData;
@@ -15,6 +17,7 @@ type TestFixtures = {
   projectBuildsPage: ProjectBuildsPage;
   snapshotReviewPage: SnapshotReviewPage;
   buildPage: BuildPage;
+  ingestBuild: (options: IngestOptions & { commitSha: string }) => ChildProcess;
 };
 
 export const test = base.extend<TestFixtures>({
@@ -34,6 +37,18 @@ export const test = base.extend<TestFixtures>({
   },
   buildPage: async ({ page }, use) => {
     await use(new BuildPage(page));
+  },
+  // eslint-disable-next-line no-empty-pattern -- fixture takes no dependencies
+  ingestBuild: async ({}, use) => {
+    const processes: ChildProcess[] = [];
+    await use((options) => {
+      const child = spawnIngest(options);
+      processes.push(child);
+      return child;
+    });
+    for (const child of processes) {
+      child.kill();
+    }
   },
 });
 

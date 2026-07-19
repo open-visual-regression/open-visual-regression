@@ -1,35 +1,30 @@
+import { vi } from "vitest";
+
 import {
   createBuildStatusSubscriber,
   publishBuildStatusEvent,
   type BuildStatusEvent,
-  type BuildStatusSubscriber,
 } from "../events";
 import { describe, expect, test } from "./fixtures";
 
 const redisUrl = (): string => `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`;
 
-describe("build status events", () => {
-  test("delivers a published event to a subscriber", async ({ connection }) => {
+describe("createBuildStatusSubscriber", () => {
+  test("should deliver a published event to the subscriber", async ({ connection }) => {
     const event: BuildStatusEvent = {
       buildId: "build-1",
       processingStatus: "success",
       reviewStatus: "approved",
       errorMessage: null,
     };
+    const onEvent = vi.fn<(event: BuildStatusEvent) => void>();
+    const subscriber = createBuildStatusSubscriber(onEvent, redisUrl());
 
-    let subscriber: BuildStatusSubscriber | undefined;
-    const received = new Promise<BuildStatusEvent>((resolve) => {
-      subscriber = createBuildStatusSubscriber(resolve, redisUrl());
-    });
+    await subscriber.ready;
+    await publishBuildStatusEvent(event, connection);
 
-    // Redis drops messages published before the subscription is active, so keep retrying.
-    const publisher = setInterval(() => void publishBuildStatusEvent(event, connection), 50);
+    await vi.waitFor(() => expect(onEvent).toHaveBeenCalledWith(event));
 
-    try {
-      await expect(received).resolves.toEqual(event);
-    } finally {
-      clearInterval(publisher);
-      await subscriber?.close();
-    }
+    await subscriber.close();
   });
 });

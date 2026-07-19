@@ -28,6 +28,7 @@ export const publishBuildStatusEvent = async (
 };
 
 export type BuildStatusSubscriber = {
+  ready: Promise<void>;
   close: () => Promise<void>;
 };
 
@@ -38,7 +39,8 @@ export const createBuildStatusSubscriber = (
 ): BuildStatusSubscriber => {
   const connection = new Redis(redisUrl, { maxRetriesPerRequest: null });
 
-  void connection.psubscribe(BUILD_STATUS_CHANNEL_PATTERN).catch((error) => {
+  const ready = connection.psubscribe(BUILD_STATUS_CHANNEL_PATTERN).then(() => undefined);
+  void ready.catch((error) => {
     logger.error({ err: error }, "failed to subscribe to build status events");
   });
 
@@ -51,6 +53,7 @@ export const createBuildStatusSubscriber = (
   });
 
   return {
+    ready,
     close: async () => {
       await connection.quit();
     },

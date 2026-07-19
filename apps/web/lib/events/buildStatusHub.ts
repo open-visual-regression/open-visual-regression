@@ -1,80 +1,45 @@
 "server only";
 
+import { EventEmitter, on } from "node:events";
+
 import {
   createBuildStatusSubscriber,
   type BuildStatusEvent,
   type BuildStatusSubscriber,
 } from "@ovr/queue/events";
 
-type Listener = (event: BuildStatusEvent) => void;
+type SubscriberFactory = (onEvent: (event: BuildStatusEvent) => void) => BuildStatusSubscriber;
 
-type SubscriberFactory = (onEvent: Listener) => BuildStatusSubscriber;
+// `on()` buffers events from the moment it is called, so unwrapping it in a
+// separate generator keeps the listener attached synchronously in `subscribe`
+// while still tolerating an aborted signal.
+async function* unwrap(
+  source: AsyncIterable<unknown[]>,
+  signal?: AbortSignal,
+): AsyncGenerator<BuildStatusEvent> {
+  try {
+    for await (const [event] of source) {
+      yield event as BuildStatusEvent;
+    }
+  } catch (error) {
+    if (!signal?.aborted) {
+      throw error;
+    }
+  }
+}
 
 export class BuildStatusHub {
+  private readonly emitter = new EventEmitter();
   private subscriber: BuildStatusSubscriber | null = null;
-  private readonly listeners = new Map<string, Set<Listener>>();
 
-  constructor(private readonly createSubscriber: SubscriberFactory = createBuildStatusSubscriber) {}
-
-  private ensureSubscriber(): void {
-    this.subscriber ??= this.createSubscriber((event) => {
-      const listeners = this.listeners.get(event.buildId);
-      if (!listeners) {
-        return;
-      }
-      for (const listener of [...listeners]) {
-        listener(event);
-      }
-    });
+  constructor(private readonly createSubscriber: SubscriberFactory = createBuildStatusSubscriber) {
+    // One listener per open build page; there is no meaningful ceiling.
+    this.emitter.setMaxListeners(0);
   }
 
-  subscribe(buildId: string, signal?: AbortSignal): AsyncIterable<BuildStatusEvent> {
-    this.ensureSubscriber();
-
-    const queue: BuildStatusEvent[] = [];
-    let notify: (() => void) | null = null;
-
-    const listener: Listener = (event) => {
-      queue.push(event);
-      notify?.();
-      notify = null;
-    };
-
-    const listeners = this.listeners.get(buildId) ?? new Set<Listener>();
-    listeners.add(listener);
-    this.listeners.set(buildId, listeners);
-
-    const onAbort = () => {
-      notify?.();
-      notify = null;
-    };
-    signal?.addEventListener("abort", onAbort);
-
-    const cleanup = () => {
-      listeners.delete(listener);
-      if (listeners.size === 0) {
-        this.listeners.delete(buildId);
-      }
-      signal?.removeEventListener("abort", onAbort);
-    };
-
-    return {
-      async *[Symbol.asyncIterator]() {
-        try {
-          while (!signal?.aborted) {
-            if (queue.length > 0) {
-              yield queue.shift()!;
-              continue;
-            }
-            await new Promise<void>((resolve) => {
-              notify = resolve;
-            });
-          }
-        } finally {
-          cleanup();
-        }
-      },
-    };
+  subscribe(buildId: string, signal?: AbortSignal): AsyncGenerator<BuildStatusEvent> {
+    this.subscriber ??= this.createSubscriber((event) => this.emitter.emit(event.buildId, event));
+    return unwrap(on(this.emitter, buildId, { signal }), signal);
   }
 }
 
