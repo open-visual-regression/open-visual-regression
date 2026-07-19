@@ -11,13 +11,13 @@ import {
 import { SegmentedProgress } from "@ovr/ui/components/segmented-progress";
 import { Typography } from "@ovr/ui/components/typography";
 
-import { BuildStatusBadge } from "@/lib/components/BuildStatus";
 import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
 import { formatRelativeDateTime } from "@/lib/utils/date";
 
 import { BuildApproveButton } from "./BuildApproveButton";
 import { BuildCancelButton } from "./BuildCancelButton";
 import { BuildRejectButton } from "./BuildRejectButton";
+import { BuildStatusStream } from "./BuildStatusStream";
 
 export type BuildHeaderProps = {
   build: BuildDetailSchema;
@@ -40,7 +40,7 @@ export const BuildHeader = ({ build, snapshotCounts, storybookHref }: BuildHeade
             {build.name}
           </Typography>
           <div className="flex flex-row flex-wrap items-center gap-4 text-xs">
-            <BuildStatusBadge status={build.status} />
+            <BuildStatusStream buildId={build.id} initialStatus={build.status} />
             {storybookHref ? (
               <ButtonLink
                 href={storybookHref}

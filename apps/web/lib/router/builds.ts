@@ -12,13 +12,20 @@ import {
 import { dbClient } from "@ovr/db/client";
 import { storage } from "@ovr/storage";
 
+import { buildStatusHub } from "@/lib/events/buildStatusHub";
+
 import {
   apiKeyMiddleware,
   authenticatedMiddleware,
   organizationBuildMiddleware,
 } from "./middleware";
 import { os } from "./os";
-import { getBuildDisplayStatus, getBuildStatusFilters } from "./utils/buildStatus";
+import {
+  getBuildDisplayStatus,
+  getBuildStatusFilters,
+  getBuildStatusOutput,
+  isTerminalBuildStatus,
+} from "./utils/buildStatus";
 
 const UPLOAD_URL_TTL_SECONDS = 3600;
 
@@ -87,24 +94,33 @@ export const getBuildStatus = os.builds.getBuildStatus
       throw new ORPCError("FORBIDDEN");
     }
 
-    const status = getBuildDisplayStatus(build);
+    return getBuildStatusOutput(build);
+  })
+  .actionable();
 
-    if (status === "needs_review") {
-      const baseUrl = process.env.BASE_URL ?? "http://localhost:3000";
-      return {
-        status,
-        reviewUrl: `${baseUrl}/projects/${build.projectId}/builds/${build.id}`,
-      };
+export const watchStatus = os.builds.watchStatus
+  .use(authenticatedMiddleware)
+  .use(organizationBuildMiddleware)
+  .handler(async function* ({ context, signal }) {
+    const { build } = context;
+    const events = buildStatusHub.subscribe(build.id, signal);
+
+    const current = (await dbClient.builds.findById(build.id)) ?? build;
+    let output = getBuildStatusOutput(current);
+    yield output;
+
+    if (isTerminalBuildStatus(output.status)) {
+      return;
     }
 
-    if (status === "error") {
-      return {
-        status,
-        errorMessage: build.errorMessage ?? undefined,
-      };
-    }
+    for await (const event of events) {
+      output = getBuildStatusOutput({ ...event, id: build.id, projectId: build.projectId });
+      yield output;
 
-    return { status };
+      if (isTerminalBuildStatus(output.status)) {
+        return;
+      }
+    }
   })
   .actionable();
 
