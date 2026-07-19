@@ -2,6 +2,10 @@ import type { Job } from "bullmq";
 import { Redis } from "ioredis";
 
 import {
+  publishBuildStatusEvent as publishBuildStatusEventCmd,
+  type BuildStatusEvent,
+} from "./events";
+import {
   cancelBuildJobs as cancelBuildJobsJob,
   enqueueCaptureGroup as enqueueCaptureGroupJob,
   enqueueDiff as enqueueDiffJob,
@@ -48,6 +52,9 @@ export const enqueueProjectPurge = (
 export const enqueuePublishStatus = (
   payload: GitStatusPublishJobPayload,
 ): Promise<Job<GitStatusPublishJobPayload>> => enqueuePublishStatusJob(payload, connection);
+
+export const publishBuildStatusEvent = (event: BuildStatusEvent): Promise<void> =>
+  publishBuildStatusEventCmd(event, connection);
 
 export const enqueuePurgeMany = (payloads: PurgeJobPayload[]): Promise<void> =>
   enqueuePurgeManyJob(payloads, connection);
