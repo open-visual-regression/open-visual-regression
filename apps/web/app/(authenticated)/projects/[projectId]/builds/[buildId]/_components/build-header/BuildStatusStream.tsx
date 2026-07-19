@@ -1,16 +1,14 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 
 import { type BuildStatus } from "@ovr/api/contracts/builds";
 
 import { BuildStatusBadge } from "@/lib/components/BuildStatus";
-import { client } from "@/lib/orpc/client";
+import { orpc } from "@/lib/orpc/client";
 
-// The badge reflects each streamed status immediately; the rest of the page (counts,
-// snapshots, action buttons) is refreshed from the server, debounced so a burst of
-// transitions collapses into a single refetch.
 const REFRESH_DEBOUNCE_MS = 400;
 
 type BuildStatusStreamProps = {
@@ -20,43 +18,29 @@ type BuildStatusStreamProps = {
 
 export const BuildStatusStream = ({ buildId, initialStatus }: BuildStatusStreamProps) => {
   const router = useRouter();
-  const [status, setStatus] = useState(initialStatus);
+  const { data } = useQuery(
+    orpc.builds.watchStatus.experimental_liveOptions({
+      input: { buildId },
+      initialData: { status: initialStatus },
+      staleTime: 0,
+      context: { retry: Number.POSITIVE_INFINITY },
+    }),
+  );
+  const status = data.status;
 
+  const refreshedStatus = useRef(status);
   useEffect(() => {
-    setStatus(initialStatus);
-  }, [initialStatus]);
+    if (status === refreshedStatus.current) {
+      return;
+    }
+    refreshedStatus.current = status;
+    const timeout = setTimeout(() => router.refresh(), REFRESH_DEBOUNCE_MS);
+    return () => clearTimeout(timeout);
+  }, [status, router]);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    let refreshTimer: ReturnType<typeof setTimeout> | undefined;
-
-    const scheduleRefresh = () => {
-      clearTimeout(refreshTimer);
-      refreshTimer = setTimeout(() => router.refresh(), REFRESH_DEBOUNCE_MS);
-    };
-
-    const consume = async () => {
-      try {
-        const events = await client.builds.watchStatus(
-          { buildId },
-          { signal: controller.signal, context: { retry: Number.POSITIVE_INFINITY } },
-        );
-        for await (const event of events) {
-          setStatus(event.status);
-          scheduleRefresh();
-        }
-      } catch {
-        // Aborted on unmount, or the stream ended after exhausting reconnect attempts.
-      }
-    };
-
-    void consume();
-
-    return () => {
-      controller.abort();
-      clearTimeout(refreshTimer);
-    };
-  }, [buildId, router]);
-
-  return <BuildStatusBadge status={status} />;
+  return (
+    <span role="status">
+      <BuildStatusBadge status={status} />
+    </span>
+  );
 };

@@ -1,9 +1,11 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { vi } from "vitest";
 
 import { mocks } from "@ovr/mocks";
 import { Toaster } from "@ovr/ui/components/sonner";
 
+import { orpc } from "@/lib/orpc/client";
 import { serverClient } from "@/lib/router";
 import { createORPCError } from "@/lib/testing/orpc";
 import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
@@ -31,13 +33,22 @@ const renderComponent = ({
     queued: 4,
     processing: 0,
   },
-}: Partial<BuildHeaderProps> = {}) =>
-  render(
-    <>
+}: Partial<BuildHeaderProps> = {}) => {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false, staleTime: Infinity } },
+  });
+  queryClient.setQueryData(
+    orpc.builds.watchStatus.experimental_liveKey({ input: { buildId: build.id } }),
+    { status: build.status },
+  );
+
+  return render(
+    <QueryClientProvider client={queryClient}>
       <BuildHeader build={build} snapshotCounts={snapshotCounts} storybookHref={storybookHref} />
       <Toaster />
-    </>,
+    </QueryClientProvider>,
   );
+};
 
 describe("BuildHeader", () => {
   it("should render the SegmentedProgress segments with the correct counts", () => {

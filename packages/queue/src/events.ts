@@ -31,8 +31,7 @@ export type BuildStatusSubscriber = {
   close: () => Promise<void>;
 };
 
-// Subscribing requires a dedicated connection: a Redis client in subscribe mode
-// cannot issue other commands. One subscriber fans out to every build via the pattern.
+// A connection in subscribe mode cannot issue other commands, so this owns its own.
 export const createBuildStatusSubscriber = (
   onEvent: (event: BuildStatusEvent) => void,
   redisUrl = process.env.REDIS_URL ?? "redis://localhost:6379",

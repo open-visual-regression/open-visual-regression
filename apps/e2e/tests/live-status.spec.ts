@@ -9,8 +9,6 @@ const CLI_ENTRY = path.join(REPO_ROOT, "apps/cli/dist/index.js");
 const STORYBOOK_PKG_DIR = path.join(REPO_ROOT, "packages/ui");
 const STORYBOOK_DIR = path.join(STORYBOOK_PKG_DIR, "storybook-static");
 
-// Kick off the CLI ingest without waiting for it to finish, so the page can be
-// opened while the build is still queued/processing.
 const startIngest = (apiKey: string, commitSha: string) =>
   spawn(
     "node",
@@ -35,37 +33,31 @@ const startIngest = (apiKey: string, commitSha: string) =>
   );
 
 test("build page reflects live status without a manual reload", async ({
-  page,
+  buildPage,
   seed,
   seedClient,
 }) => {
   const commitSha = "c0ffee".padEnd(40, "0");
   const ingest = startIngest(seed.apiKey, commitSha);
 
-  // Grab the build id as soon as it exists — well before it settles.
-  let buildId: string | undefined;
-  await expect
-    .poll(
-      async () => {
-        const { builds } = await seedClient.builds.list({ projectIds: [seed.projectId] });
-        buildId = builds.find((build) => build.commitSha === commitSha)?.id;
-        return buildId ?? null;
-      },
-      { timeout: 60_000, intervals: [500] },
-    )
-    .not.toBeNull();
+  const findBuildId = async () => {
+    const { builds } = await seedClient.builds.list({ projectIds: [seed.projectId] });
+    return builds.find((build) => build.commitSha === commitSha)?.id ?? null;
+  };
+  await expect.poll(findBuildId, { timeout: 60_000, intervals: [500] }).not.toBeNull();
+  const buildId = await findBuildId();
 
-  await page.goto(`/projects/${seed.projectId}/builds/${buildId}`);
-  const statusBadge = page.getByText(/^(queued|processing|unchanged|error)$/).first();
+  await buildPage.goto(seed.projectId, buildId ?? "");
 
-  // The page opens while the build is still running.
-  await expect(statusBadge).toHaveText(/queued|processing/);
+  // The page opens mid-flight.
+  await expect(buildPage.status()).toHaveText(/queued|processing/);
+  await expect(buildPage.cancelButton()).toBeVisible();
 
-  // Without ever reloading, the badge settles, the progress summary fills in, and
-  // snapshots appear — driven entirely by the live status stream.
-  await expect(page.getByText("unchanged", { exact: true })).toBeVisible({ timeout: 120_000 });
-  await expect(page.getByText(/\d+ snapshots/i)).toBeVisible();
-  await expect(page.locator('a[href*="/snapshots/"]').first()).toBeVisible();
+  // Everything below settles in place, without the test ever reloading the page.
+  await expect(buildPage.status()).toHaveText("unchanged", { timeout: 120_000 });
+  await expect(buildPage.cancelButton()).toBeHidden();
+  await expect(buildPage.snapshotProgress()).toBeVisible();
+  await expect(buildPage.snapshots().first()).toBeVisible();
 
   ingest.kill();
 });

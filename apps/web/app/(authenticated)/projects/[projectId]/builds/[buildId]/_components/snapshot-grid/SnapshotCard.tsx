@@ -22,6 +22,9 @@ export const SnapshotCard = ({ snapshot, projectId, buildId }: SnapshotCardProps
       href={`/projects/${projectId}/builds/${buildId}/snapshots/${snapshot.id}`}
       className="gap-0 py-0"
     >
+      <span className="sr-only">
+        view snapshot {snapshot.targetTitle} {snapshot.targetName}
+      </span>
       <div className="relative h-40 overflow-hidden border-b border-ovr-border-subtle bg-ovr-inset bg-pixel-grid">
         {imagePath ? (
           <Image

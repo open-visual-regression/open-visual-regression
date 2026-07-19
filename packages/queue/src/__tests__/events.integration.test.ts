@@ -22,8 +22,7 @@ describe("build status events", () => {
       subscriber = createBuildStatusSubscriber(resolve, redisUrl());
     });
 
-    // Re-publish until the subscription is active: Redis pub/sub drops messages
-    // that have no subscriber yet.
+    // Redis drops messages published before the subscription is active, so keep retrying.
     const publisher = setInterval(() => void publishBuildStatusEvent(event, connection), 50);
 
     try {

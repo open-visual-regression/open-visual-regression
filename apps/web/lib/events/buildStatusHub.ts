@@ -10,9 +10,6 @@ type Listener = (event: BuildStatusEvent) => void;
 
 type SubscriberFactory = (onEvent: Listener) => BuildStatusSubscriber;
 
-// A single Redis subscriber per process fans out to every open stream. Listeners are
-// registered synchronously in `subscribe`, so a caller can read the current build state
-// right after subscribing without missing a transition that lands in between.
 export class BuildStatusHub {
   private subscriber: BuildStatusSubscriber | null = null;
   private readonly listeners = new Map<string, Set<Listener>>();

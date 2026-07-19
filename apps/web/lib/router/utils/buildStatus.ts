@@ -56,8 +56,6 @@ export const getBuildDisplayStatus = (build: {
   return "unchanged";
 };
 
-// A build stays streamable while it can still change: queued/processing move forward,
-// and needs_review can flip once reviewers vote. Everything else is a settled outcome.
 const NON_TERMINAL_BUILD_STATUSES = new Set<BuildStatus>(["queued", "processing", "needs_review"]);
 
 export const isTerminalBuildStatus = (status: BuildStatus): boolean =>

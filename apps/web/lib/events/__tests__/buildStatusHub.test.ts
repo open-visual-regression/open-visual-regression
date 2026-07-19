@@ -16,16 +16,13 @@ const makeEvent = (
 });
 
 const createHub = () => {
-  let emit: (event: BuildStatusEvent) => void = () => {};
   const close = vi.fn().mockResolvedValue(undefined);
-  const createSubscriber = vi.fn((onEvent: (event: BuildStatusEvent) => void) => {
-    emit = onEvent;
-    return { close };
-  });
-
+  const createSubscriber = vi.fn((_onEvent: (event: BuildStatusEvent) => void) => ({ close }));
   const hub = new BuildStatusHub(createSubscriber);
 
-  return { hub, emit: (event: BuildStatusEvent) => emit(event), createSubscriber, close };
+  const emit = (event: BuildStatusEvent) => createSubscriber.mock.calls[0]?.[0](event);
+
+  return { hub, emit, createSubscriber, close };
 };
 
 const settled = () => new Promise((resolve) => setTimeout(resolve, 20));

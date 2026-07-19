@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { test as base } from "@playwright/test";
 
 import { SEED_ARTIFACT, type SeedData } from "./constants";
+import { BuildPage } from "./pages/BuildPage";
 import { ProjectBuildsPage } from "./pages/ProjectBuildsPage";
 import { SnapshotReviewPage } from "./pages/SnapshotReviewPage";
 import { seedClientForContext, type SeedClient } from "./seed/client";
@@ -13,6 +14,7 @@ type TestFixtures = {
   seedClient: SeedClient;
   projectBuildsPage: ProjectBuildsPage;
   snapshotReviewPage: SnapshotReviewPage;
+  buildPage: BuildPage;
 };
 
 export const test = base.extend<TestFixtures>({
@@ -29,6 +31,9 @@ export const test = base.extend<TestFixtures>({
   },
   snapshotReviewPage: async ({ page }, use) => {
     await use(new SnapshotReviewPage(page));
+  },
+  buildPage: async ({ page }, use) => {
+    await use(new BuildPage(page));
   },
 });
 

@@ -1,78 +1,58 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { vi } from "vitest";
 
-import { type GetBuildStatusOutput } from "@ovr/api/contracts/builds";
+import { type BuildStatus } from "@ovr/api/contracts/builds";
 
-import { client } from "@/lib/orpc/client";
-import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
+import { orpc } from "@/lib/orpc/client";
+import { act, describe, expect, it, render, screen, waitFor } from "@/test-utils";
 
 import { BuildStatusStream } from "../BuildStatusStream";
 
 vi.mock("next/navigation");
-vi.mock("@/lib/orpc/client", () => ({
-  client: { builds: { watchStatus: vi.fn() } },
-}));
 
-const mockWatchStatus = vi.mocked(client.builds.watchStatus);
 const mockRefresh = vi.mocked(useRouter)().refresh;
 
-const createStream = () => {
-  const buffer: GetBuildStatusOutput[] = [];
-  const resolvers: ((result: IteratorResult<GetBuildStatusOutput>) => void)[] = [];
+const liveKey = (buildId: string) =>
+  orpc.builds.watchStatus.experimental_liveKey({ input: { buildId } });
 
-  const iterable: AsyncIterable<GetBuildStatusOutput> = {
-    [Symbol.asyncIterator]: () => ({
-      next: () => {
-        const queued = buffer.shift();
-        if (queued) {
-          return Promise.resolve({ value: queued, done: false });
-        }
-        return new Promise((resolve) => resolvers.push(resolve));
-      },
+const renderStream = (buildId: string, initialStatus: BuildStatus, status: BuildStatus) => {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false, staleTime: Infinity } },
+  });
+  queryClient.setQueryData(liveKey(buildId), { status });
+
+  return {
+    queryClient,
+    ...render(<BuildStatusStream buildId={buildId} initialStatus={initialStatus} />, {
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      ),
     }),
   };
-
-  const push = (event: GetBuildStatusOutput) => {
-    const resolve = resolvers.shift();
-    if (resolve) {
-      resolve({ value: event, done: false });
-    } else {
-      buffer.push(event);
-    }
-  };
-
-  return { iterable, push };
 };
 
 describe("BuildStatusStream", () => {
-  it("renders the initial status", () => {
-    mockWatchStatus.mockResolvedValue(createStream().iterable as never);
-    render(<BuildStatusStream buildId="b1" initialStatus="processing" />);
+  it("renders the streamed status", () => {
+    renderStream("build-1", "processing", "processing");
 
-    expect(screen.getByText("processing")).toBeVisible();
+    expect(screen.getByRole("status")).toHaveTextContent("processing");
   });
 
-  it("updates the badge from each streamed status", async () => {
-    const stream = createStream();
-    mockWatchStatus.mockResolvedValue(stream.iterable as never);
-    render(<BuildStatusStream buildId="b1" initialStatus="processing" />);
+  it("updates the badge and refreshes the page when the status changes", async () => {
+    const { queryClient } = renderStream("build-1", "processing", "processing");
 
-    stream.push({ status: "approved" });
+    act(() => {
+      queryClient.setQueryData(liveKey("build-1"), { status: "unchanged" });
+    });
 
-    expect(await screen.findByText("approved")).toBeVisible();
+    expect(await screen.findByText("unchanged")).toBeVisible();
+    await waitFor(() => expect(mockRefresh).toHaveBeenCalledTimes(1));
   });
 
-  it("refreshes once for a burst of transitions", async () => {
-    const stream = createStream();
-    mockWatchStatus.mockResolvedValue(stream.iterable as never);
-    render(<BuildStatusStream buildId="b1" initialStatus="queued" />);
+  it("does not refresh the page for the initial status", () => {
+    renderStream("build-1", "processing", "processing");
 
-    stream.push({ status: "processing" });
-    stream.push({ status: "needs_review" });
-    stream.push({ status: "approved" });
-
-    await screen.findByText("approved");
-    await waitFor(() => expect(mockRefresh).toHaveBeenCalled());
-    expect(mockRefresh).toHaveBeenCalledTimes(1);
+    expect(mockRefresh).not.toHaveBeenCalled();
   });
 });
