@@ -13,6 +13,7 @@ export enum QueueName {
   BUILD_FINALIZE = "build-finalize",
   BUILD_PURGE_DISPATCH = "build-purge-dispatch",
   BUILD_PURGE = "build-purge",
+  PROJECT_PURGE = "project-purge",
   BUILD_REAPER = "build-reaper",
   GIT_STATUS_PUBLISH = "git-status-publish",
 }
@@ -52,6 +53,10 @@ export type PurgeJobPayload = {
   projectId: string;
 };
 
+export type ProjectPurgeJobPayload = {
+  projectId: string;
+};
+
 export type ReaperJobPayload = Record<string, never>;
 
 export type GitStatusPublishJobPayload = {
@@ -65,6 +70,7 @@ const JOB_OPTIONS: Record<QueueName, JobsOptions> = {
   [QueueName.BUILD_FINALIZE]: { attempts: 3, backoff: { type: "fixed", delay: 1000 } },
   [QueueName.BUILD_PURGE_DISPATCH]: { attempts: 3, backoff: { type: "exponential", delay: 5000 } },
   [QueueName.BUILD_PURGE]: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
+  [QueueName.PROJECT_PURGE]: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
   [QueueName.BUILD_REAPER]: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
   [QueueName.GIT_STATUS_PUBLISH]: {
     attempts: 5,
@@ -115,6 +121,12 @@ export const enqueuePurge = (
   payload: PurgeJobPayload,
   connection: IORedis,
 ): Promise<Job<PurgeJobPayload>> => enqueue(QueueName.BUILD_PURGE, payload, connection);
+
+export const enqueueProjectPurge = (
+  payload: ProjectPurgeJobPayload,
+  connection: IORedis,
+): Promise<Job<ProjectPurgeJobPayload>> =>
+  enqueue(QueueName.PROJECT_PURGE, payload, connection, { jobId: payload.projectId });
 
 export const enqueuePublishStatus = (
   payload: GitStatusPublishJobPayload,

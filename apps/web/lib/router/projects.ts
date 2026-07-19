@@ -3,6 +3,7 @@
 import { ORPCError } from "@orpc/client";
 import { revalidatePath } from "next/cache";
 
+import { deleteProject as deleteProjectService } from "@ovr/builds/projects";
 import { dbClient } from "@ovr/db/client";
 
 import { adminMiddleware, authenticatedMiddleware } from "./middleware";
@@ -86,5 +87,19 @@ export const update = os.projects.update
     }
 
     await dbClient.projects.updateProject(input.id, input.patch);
+  })
+  .actionable();
+
+export const deleteProject = os.projects.deleteProject
+  .use(authenticatedMiddleware)
+  .use(adminMiddleware)
+  .handler(async ({ input, context }) => {
+    const result = await deleteProjectService(input.id, context.organizationId);
+
+    if (result.status === "error") {
+      throw new ORPCError("NOT_FOUND", { message: "Project not found" });
+    }
+
+    revalidatePath("/", "layout");
   })
   .actionable();

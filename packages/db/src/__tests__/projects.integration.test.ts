@@ -255,4 +255,63 @@ describe("projects", () => {
       expect(total).toBe(1);
     });
   });
+
+  describe("deleteProject", () => {
+    test("should delete the project and cascade its builds and snapshots", async ({
+      project,
+      build,
+      captureConfiguration,
+    }) => {
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: build.id, ...captureConfiguration, targetId: "story-a" }],
+      });
+
+      const deleted = await dbClient.projects.deleteProject(project.id, project.organizationId);
+
+      expect(deleted?.id).toBe(project.id);
+      expect(await dbClient.projects.findById(project.id)).toBeUndefined();
+      expect(await dbClient.builds.findById(build.id)).toBeUndefined();
+      expect(await dbClient.snapshots.findById(snapshot!.id)).toBeUndefined();
+    });
+
+    test("should not delete a project belonging to another organization", async ({ project }) => {
+      const [otherOrg] = await db
+        .insert(organizationTable)
+        .values({ id: uuidv7(), name: "Other Org", slug: uuidv7(), createdAt: new Date() })
+        .returning();
+
+      const deleted = await dbClient.projects.deleteProject(project.id, otherOrg!.id);
+
+      expect(deleted).toBeUndefined();
+      expect(await dbClient.projects.findById(project.id)).toMatchObject({ id: project.id });
+    });
+  });
+
+  describe("storageOutbox.removeByProject", () => {
+    test("should remove only the given project's outbox rows", async ({ project, build }) => {
+      const [otherProject] = await db
+        .insert(projects)
+        .values({
+          name: "Other Project",
+          gitMainBranch: "main",
+          organizationId: project.organizationId,
+          creatorId: project.creatorId,
+        })
+        .returning();
+
+      await dbClient.storageOutbox.insertMany(db, [
+        { projectId: project.id, buildId: build.id, prefix: `${project.id}/builds/${build.id}/` },
+        {
+          projectId: otherProject!.id,
+          buildId: build.id,
+          prefix: `${otherProject!.id}/builds/${build.id}/`,
+        },
+      ]);
+
+      await dbClient.storageOutbox.removeByProject(db, project.id);
+
+      expect(await dbClient.storageOutbox.findByProject(project.id)).toHaveLength(0);
+      expect(await dbClient.storageOutbox.findByProject(otherProject!.id)).toHaveLength(1);
+    });
+  });
 });

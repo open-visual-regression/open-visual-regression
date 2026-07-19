@@ -7,6 +7,7 @@ import { verifyRole } from "@/lib/utils/authorization";
 import { serverError } from "@/lib/utils/errors";
 
 import { ApiKeysSection } from "./_components/api-keys-section/ApiKeysSection";
+import { DeleteProjectSection } from "./_components/delete-project/DeleteProjectSection";
 import { GitIntegrationSection } from "./_components/git-integration/GitIntegrationSection";
 import { UpdateProjectForm } from "./_components/update-project-form/UpdateProjectForm";
 
@@ -55,6 +56,7 @@ export default async function ProjectSettingsPage(props: ProjectSettingsPageProp
           integration={gitIntegrationResult.integration}
         />
         <ApiKeysSection projectId={projectId} apiKeys={apiKeysResult.apiKeys} />
+        <DeleteProjectSection project={projectResult.project} />
       </div>
     </div>
   );

@@ -89,10 +89,19 @@ export const updateProjectInputSchema = z.object({
 
 export const updateProjectContract = oc.input(updateProjectInputSchema).output(z.void());
 
+export const deleteProjectInputSchema = z.object({
+  id: z.uuidv7(),
+});
+
+export type DeleteProjectInputSchema = z.infer<typeof deleteProjectInputSchema>;
+
+export const deleteProjectContract = oc.input(deleteProjectInputSchema).output(z.void());
+
 export const contract = {
   getOne: getOneContract,
   list: listProjectsContract,
   count: countProjectsContract,
   add: addProjectContract,
   update: updateProjectContract,
+  deleteProject: deleteProjectContract,
 } as const;

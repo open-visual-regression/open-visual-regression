@@ -27,3 +27,7 @@ export const findByProject = (projectId: string): Promise<StorageOutboxEntry[]> 
 export const remove = async (id: string): Promise<void> => {
   await db.delete(storageOutbox).where(eq(storageOutbox.id, id));
 };
+
+export const removeByProject = async (tx: DbClient, projectId: string): Promise<void> => {
+  await tx.delete(storageOutbox).where(eq(storageOutbox.projectId, projectId));
+};
