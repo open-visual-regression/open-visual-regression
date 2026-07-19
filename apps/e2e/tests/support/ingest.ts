@@ -1,4 +1,4 @@
-import { execFile } from "node:child_process";
+import { execFile, spawn, type ChildProcess } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -29,29 +29,37 @@ export type IngestResult = {
   stderr: string;
 };
 
+const buildArgs = (commitSha: string, options: IngestOptions): string[] => [
+  CLI_ENTRY,
+  "snapshot",
+  "storybook",
+  "--dir",
+  STORYBOOK_DIR,
+  "--server-url",
+  getBaseURL(),
+  "--branch",
+  options.branch ?? "main",
+  "--commit",
+  commitSha,
+  "--name",
+  options.name ?? `e2e ingest ${commitSha.slice(0, 7)}`,
+  "--timeout",
+  "600",
+];
+
+// Starts an ingest without waiting for it to finish, so a caller can observe the
+// build while it is still processing.
+export const spawnIngest = (options: IngestOptions & { commitSha: string }): ChildProcess =>
+  spawn("node", buildArgs(options.commitSha, options), {
+    cwd: STORYBOOK_PKG_DIR,
+    env: { ...process.env, OVR_API_KEY: options.apiKey },
+  });
+
 // Ingests the Storybook build via the CLI and returns the outcome without
 // throwing, so callers can assert on any exit code (e.g. a needs-review build).
 export const ingestStorybook = async (options: IngestOptions): Promise<IngestResult> => {
   const commitSha = options.commitSha ?? randomBytes(20).toString("hex");
   const shortSha = commitSha.slice(0, 7);
-
-  const args = [
-    CLI_ENTRY,
-    "snapshot",
-    "storybook",
-    "--dir",
-    STORYBOOK_DIR,
-    "--server-url",
-    getBaseURL(),
-    "--branch",
-    options.branch ?? "main",
-    "--commit",
-    commitSha,
-    "--name",
-    options.name ?? `e2e ingest ${shortSha}`,
-    "--timeout",
-    "600",
-  ];
 
   const options_ = {
     cwd: STORYBOOK_PKG_DIR,
@@ -60,7 +68,7 @@ export const ingestStorybook = async (options: IngestOptions): Promise<IngestRes
   };
 
   try {
-    const { stdout, stderr } = await execFileAsync("node", args, options_);
+    const { stdout, stderr } = await execFileAsync("node", buildArgs(commitSha, options), options_);
     return { commitSha, shortSha, exitCode: 0, stdout, stderr };
   } catch (error) {
     const failure = error as { code?: number | string; stdout?: string; stderr?: string };

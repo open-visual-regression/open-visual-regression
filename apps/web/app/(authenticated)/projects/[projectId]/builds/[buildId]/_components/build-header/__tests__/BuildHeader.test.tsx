@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { vi } from "vitest";
 
@@ -31,13 +32,16 @@ const renderComponent = ({
     queued: 4,
     processing: 0,
   },
-}: Partial<BuildHeaderProps> = {}) =>
-  render(
-    <>
+}: Partial<BuildHeaderProps> = {}) => {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+  return render(
+    <QueryClientProvider client={queryClient}>
       <BuildHeader build={build} snapshotCounts={snapshotCounts} storybookHref={storybookHref} />
       <Toaster />
-    </>,
+    </QueryClientProvider>,
   );
+};
 
 describe("BuildHeader", () => {
   it("should render the SegmentedProgress segments with the correct counts", () => {
