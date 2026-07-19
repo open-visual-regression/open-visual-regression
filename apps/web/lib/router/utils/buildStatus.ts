@@ -1,4 +1,4 @@
-import type { BuildStatus } from "@ovr/api/contracts/builds";
+import type { BuildStatus, GetBuildStatusOutput } from "@ovr/api/contracts/builds";
 import type { StatusFilter } from "@ovr/db/repository/builds";
 import type { BuildProcessingStatus, BuildReviewStatus } from "@ovr/db/schema";
 
@@ -54,4 +54,35 @@ export const getBuildDisplayStatus = (build: {
   }
 
   return "unchanged";
+};
+
+const NON_TERMINAL_BUILD_STATUSES = new Set<BuildStatus>(["queued", "processing", "needs_review"]);
+
+export const isTerminalBuildStatus = (status: BuildStatus): boolean =>
+  !NON_TERMINAL_BUILD_STATUSES.has(status);
+
+type BuildStatusSource = {
+  id: string;
+  projectId: string;
+  processingStatus: BuildProcessingStatus;
+  reviewStatus: BuildReviewStatus;
+  errorMessage: string | null;
+};
+
+export const getBuildStatusOutput = (build: BuildStatusSource): GetBuildStatusOutput => {
+  const status = getBuildDisplayStatus(build);
+
+  if (status === "needs_review") {
+    const baseUrl = process.env.BASE_URL ?? "http://localhost:3000";
+    return {
+      status,
+      reviewUrl: `${baseUrl}/projects/${build.projectId}/builds/${build.id}`,
+    };
+  }
+
+  if (status === "error") {
+    return { status, errorMessage: build.errorMessage ?? undefined };
+  }
+
+  return { status };
 };
