@@ -21,12 +21,11 @@ export const BuildStatusStream = ({ buildId, initialStatus }: BuildStatusStreamP
   const { data } = useQuery(
     orpc.builds.watchStatus.experimental_liveOptions({
       input: { buildId },
-      initialData: { status: initialStatus },
-      staleTime: 0,
+      placeholderData: { status: initialStatus },
       context: { retry: Number.POSITIVE_INFINITY },
     }),
   );
-  const status = data.status;
+  const status = data?.status ?? initialStatus;
 
   const refreshedStatus = useRef(status);
   useEffect(() => {

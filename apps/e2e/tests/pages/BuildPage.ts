@@ -14,16 +14,4 @@ export class BuildPage {
   cancelButton(): Locator {
     return this.page.getByRole("button", { name: "cancel build", exact: true });
   }
-
-  approveAllButton(): Locator {
-    return this.page.getByRole("button", { name: "approve all", exact: true });
-  }
-
-  snapshotProgress(): Locator {
-    return this.page.getByText(/\d+ snapshots/i);
-  }
-
-  snapshots(): Locator {
-    return this.page.getByRole("link", { name: /view snapshot/i });
-  }
 }

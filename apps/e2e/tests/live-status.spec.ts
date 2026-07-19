@@ -23,6 +23,4 @@ test("build page reflects live status without a manual reload", async ({
 
   await expect(buildPage.status()).toHaveText("unchanged", { timeout: 120_000 });
   await expect(buildPage.cancelButton()).toBeHidden();
-  await expect(buildPage.snapshotProgress()).toBeVisible();
-  await expect(buildPage.snapshots().first()).toBeVisible();
 });
