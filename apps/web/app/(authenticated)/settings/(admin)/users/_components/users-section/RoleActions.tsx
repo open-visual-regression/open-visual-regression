@@ -40,9 +40,9 @@ export const RoleActions = ({ userId, name, role, disabled = false }: RoleAction
     ],
   });
 
-  const handleValueChange = (value: string) => {
+  const handleValueChange = (value: Role) => {
     if (value !== role) {
-      execute({ userId, role: value as Role });
+      execute({ userId, role: value });
     }
   };
 
