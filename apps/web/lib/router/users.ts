@@ -5,7 +5,7 @@ import { ORPCError } from "@orpc/client";
 import { dbClient } from "@ovr/db/client";
 
 import { authServerClient } from "../auth";
-import { authenticatedMiddleware, adminMiddleware } from "./middleware";
+import { authenticatedMiddleware, adminMiddleware, currentUserMiddleware } from "./middleware";
 import { os } from "./os";
 
 export const list = os.users.list
@@ -99,6 +99,23 @@ export const remove = os.users.remove
     );
 
     const [error] = results.find(([error]) => error) ?? [];
+
+    if (error) {
+      throw new ORPCError("BAD_REQUEST", { message: error.message });
+    }
+  })
+  .actionable();
+
+export const changeRole = os.users.changeRole
+  .use(authenticatedMiddleware)
+  .use(adminMiddleware)
+  .use(currentUserMiddleware)
+  .handler(async ({ input, context }) => {
+    const [error] = await authServerClient.setRole({
+      userId: input.userId,
+      role: input.role,
+      headers: context.headers,
+    });
 
     if (error) {
       throw new ORPCError("BAD_REQUEST", { message: error.message });

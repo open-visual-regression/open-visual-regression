@@ -62,8 +62,16 @@ export const removeUsersInputSchema = z.object({
   users: z.array(removeUserInputSchema).min(1),
 });
 
+export const changeRoleInputSchema = z.object({
+  userId: z.string(),
+  role: z.enum(["user", "admin"]),
+});
+
+export type ChangeRoleInputSchema = z.infer<typeof changeRoleInputSchema>;
+
 export const contract = {
   list: oc.input(listUsersInputSchema.optional()).output(listUsersOutputSchema),
   invite: oc.input(inviteUserInputSchema).output(inviteUserOutputSchema),
   remove: oc.input(removeUsersInputSchema),
+  changeRole: oc.input(changeRoleInputSchema),
 } as const;

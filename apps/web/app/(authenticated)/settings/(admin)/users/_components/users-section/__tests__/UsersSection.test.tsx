@@ -45,19 +45,51 @@ describe("UsersSection", () => {
   });
 
   it("should show the role for each user", () => {
-    const admin = mocks.user.generateUser({ role: "admin" });
-    const user = mocks.user.generateUser({ role: "user" });
+    const admin = mocks.user.generateUser({ name: "ari shapiro", role: "admin" });
+    const user = mocks.user.generateUser({ name: "sam chen", role: "user" });
     render(<UsersSection users={[admin, user]} currentUserId={CURRENT_USER_ID} />);
 
-    expect(screen.getByRole("cell", { name: "admin" })).toBeVisible();
-    expect(screen.getByRole("cell", { name: "user" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "change role for ari shapiro" })).toHaveTextContent(
+      "admin",
+    );
+    expect(screen.getByRole("button", { name: "change role for sam chen" })).toHaveTextContent(
+      "user",
+    );
   });
 
   it("should treat a null role as a regular user", () => {
-    const user = mocks.user.generateUser({ role: null });
+    const user = mocks.user.generateUser({ name: "sam chen", role: null });
     render(<UsersSection users={[user]} currentUserId={CURRENT_USER_ID} />);
 
-    expect(screen.getByRole("cell", { name: "user" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "change role for sam chen" })).toHaveTextContent(
+      "user",
+    );
+  });
+
+  it("should render a role switcher for other active users", () => {
+    const user = mocks.user.generateUser({ name: "sam chen", status: "active" });
+    render(<UsersSection users={[user]} currentUserId={CURRENT_USER_ID} />);
+
+    expect(screen.getByRole("button", { name: "change role for sam chen" })).toBeVisible();
+  });
+
+  it("should not render a role switcher for your own row", () => {
+    const admin = mocks.user.generateUser({ name: "ari shapiro", role: "admin", status: "active" });
+    render(<UsersSection users={[admin]} currentUserId={admin.id} />);
+
+    expect(
+      screen.queryByRole("button", { name: `change role for ${admin.name}` }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("cell", { name: "admin" })).toBeVisible();
+  });
+
+  it("should not render a role switcher for invited users", () => {
+    const invited = mocks.user.generateUser({ name: "kira vance", status: "invited" });
+    render(<UsersSection users={[invited]} currentUserId={CURRENT_USER_ID} />);
+
+    expect(
+      screen.queryByRole("button", { name: `change role for ${invited.name}` }),
+    ).not.toBeInTheDocument();
   });
 
   it("should show an active status badge for active users", () => {
