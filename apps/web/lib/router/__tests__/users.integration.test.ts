@@ -194,14 +194,14 @@ describe("users", () => {
     });
 
     test("should return FORBIDDEN when an admin targets their own role", async ({ admin }) => {
-      const [error] = await serverClient.users.changeRole({ userId: admin.id, role: "user" });
+      const [error] = await serverClient.users.changeRole({ userId: admin.id, role: "viewer" });
       expect(error?.code).toBe("FORBIDDEN");
     });
 
     test("should promote another user to admin", async ({ admin: _ }) => {
       const { name, email } = mocks.user.generateAuthUser();
       const { user: target } = await auth.api.createUser({
-        body: { name, email, password: TEST_PASSWORD, role: "user" },
+        body: { name, email, password: TEST_PASSWORD, role: "reviewer" },
       });
 
       const [error] = await serverClient.users.changeRole({ userId: target.id, role: "admin" });
@@ -211,17 +211,17 @@ describe("users", () => {
       expect(updated?.role).toBe("admin");
     });
 
-    test("should demote another user to a regular user", async ({ admin: _ }) => {
+    test("should demote another user to a viewer", async ({ admin: _ }) => {
       const { name, email } = mocks.user.generateAuthUser();
       const { user: target } = await auth.api.createUser({
         body: { name, email, password: TEST_PASSWORD, role: "admin" },
       });
 
-      const [error] = await serverClient.users.changeRole({ userId: target.id, role: "user" });
+      const [error] = await serverClient.users.changeRole({ userId: target.id, role: "viewer" });
 
       expect(error).toBeNull();
       const updated = await dbClient.users.findById(target.id);
-      expect(updated?.role).toBe("user");
+      expect(updated?.role).toBe("viewer");
     });
   });
 });

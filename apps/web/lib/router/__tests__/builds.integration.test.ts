@@ -281,6 +281,12 @@ describe("builds", () => {
 
       expect(error?.code).toBe("NOT_FOUND");
     });
+
+    test("should return FORBIDDEN for a viewer", async ({ viewer: _ }) => {
+      const [error] = await serverClient.builds.cancel({ buildId: uuidv7() });
+
+      expect(error?.code).toBe("FORBIDDEN");
+    });
   });
 
   describe("list", () => {

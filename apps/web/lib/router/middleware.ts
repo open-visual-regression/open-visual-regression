@@ -6,6 +6,7 @@ import { dbClient } from "@ovr/db/client";
 
 import { auth } from "../auth/auth";
 import { type Session, type User } from "../auth/auth";
+import { canReview } from "../auth/roles";
 import { type RequestContext } from "./os";
 
 export type AuthenticatedContext = RequestContext & {
@@ -49,6 +50,16 @@ export const adminMiddleware = os
   .$context<AuthenticatedContext>()
   .middleware(async ({ context, next }) => {
     if (context.user.role !== "admin") {
+      throw new ORPCError("FORBIDDEN");
+    }
+
+    return next();
+  });
+
+export const reviewerMiddleware = os
+  .$context<AuthenticatedContext>()
+  .middleware(async ({ context, next }) => {
+    if (!canReview(context.user.role)) {
       throw new ORPCError("FORBIDDEN");
     }
 

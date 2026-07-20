@@ -15,11 +15,10 @@ import {
 import { ChevronDownIcon, Icon } from "@ovr/ui/components/icon";
 import { toast } from "@ovr/ui/components/toast";
 
+import { ROLES, type Role } from "@/lib/auth/roles";
 import { serverClient } from "@/lib/router";
 
-import { type Role } from "./role";
-
-const roles: Role[] = ["admin", "user"];
+const roles: readonly Role[] = ROLES;
 
 type RoleActionsProps = {
   userId: string;

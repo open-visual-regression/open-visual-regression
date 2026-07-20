@@ -39,7 +39,7 @@ export type CancelInvitationInput = {
 
 export type SetRoleInput = {
   userId: string;
-  role: "user" | "admin";
+  role: "viewer" | "reviewer" | "admin";
   headers: Headers;
 };
 

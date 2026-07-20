@@ -64,7 +64,7 @@ export const removeUsersInputSchema = z.object({
 
 export const changeRoleInputSchema = z.object({
   userId: z.string(),
-  role: z.enum(["user", "admin"]),
+  role: z.enum(["viewer", "reviewer", "admin"]),
 });
 
 export type ChangeRoleInputSchema = z.infer<typeof changeRoleInputSchema>;

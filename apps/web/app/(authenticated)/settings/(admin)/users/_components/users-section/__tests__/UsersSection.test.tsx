@@ -37,7 +37,7 @@ describe("UsersSection", () => {
 
   it("should render a row for each user", () => {
     const admin = mocks.user.generateUser({ name: "ari shapiro", role: "admin" });
-    const user = mocks.user.generateUser({ name: "sam chen", role: "user" });
+    const user = mocks.user.generateUser({ name: "sam chen", role: "reviewer" });
     render(<UsersSection users={[admin, user]} currentUserId={CURRENT_USER_ID} />);
 
     expect(screen.getByRole("cell", { name: admin.name })).toBeVisible();
@@ -46,23 +46,23 @@ describe("UsersSection", () => {
 
   it("should show the role for each user", () => {
     const admin = mocks.user.generateUser({ name: "ari shapiro", role: "admin" });
-    const user = mocks.user.generateUser({ name: "sam chen", role: "user" });
-    render(<UsersSection users={[admin, user]} currentUserId={CURRENT_USER_ID} />);
+    const reviewer = mocks.user.generateUser({ name: "sam chen", role: "reviewer" });
+    render(<UsersSection users={[admin, reviewer]} currentUserId={CURRENT_USER_ID} />);
 
     expect(screen.getByRole("button", { name: "change role for ari shapiro" })).toHaveTextContent(
       "admin",
     );
     expect(screen.getByRole("button", { name: "change role for sam chen" })).toHaveTextContent(
-      "user",
+      "reviewer",
     );
   });
 
-  it("should treat a null role as a regular user", () => {
+  it("should treat a null role as a reviewer", () => {
     const user = mocks.user.generateUser({ name: "sam chen", role: null });
     render(<UsersSection users={[user]} currentUserId={CURRENT_USER_ID} />);
 
     expect(screen.getByRole("button", { name: "change role for sam chen" })).toHaveTextContent(
-      "user",
+      "reviewer",
     );
   });
 

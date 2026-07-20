@@ -17,6 +17,7 @@ export type SnapshotLayoutProps = {
   nextSnapshotId: string | null;
   position: number | null;
   total: number | null;
+  canReview: boolean;
   sidebar: React.ReactNode;
   children: React.ReactNode;
 };
@@ -30,6 +31,7 @@ export const SnapshotLayout = ({
   nextSnapshotId,
   position,
   total,
+  canReview,
   sidebar,
   children,
 }: SnapshotLayoutProps) => {
@@ -46,6 +48,7 @@ export const SnapshotLayout = ({
         nextSnapshotId={nextSnapshotId}
         position={position}
         total={total}
+        canReview={canReview}
         sidebarCollapsed={sidebarCollapsed}
         onToggleSidebar={() => setSidebarCollapsed((collapsed) => !collapsed)}
       />

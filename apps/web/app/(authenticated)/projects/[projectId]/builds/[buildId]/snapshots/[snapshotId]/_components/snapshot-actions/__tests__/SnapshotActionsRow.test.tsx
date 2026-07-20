@@ -53,6 +53,7 @@ const renderComponent = (
     nextSnapshotId: string | null;
     position: number | null;
     total: number | null;
+    canReview: boolean;
     sidebarCollapsed: boolean;
     onToggleSidebar: () => void;
   }> = {},
@@ -68,6 +69,7 @@ const renderComponent = (
         nextSnapshotId={nextSnapshotId}
         position={3}
         total={5}
+        canReview={true}
         sidebarCollapsed={true}
         onToggleSidebar={vi.fn()}
         {...props}
@@ -143,6 +145,13 @@ describe("SnapshotActionsRow", () => {
 
   it("should hide approve and reject when the snapshot failed to render, even if the diff needs review", () => {
     renderComponent({ snapshot: { ...snapshot, status: "error" } });
+
+    expect(screen.queryByRole("button", { name: /^approve$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^reject$/i })).not.toBeInTheDocument();
+  });
+
+  it("should hide approve and reject for a viewer", () => {
+    renderComponent({ canReview: false });
 
     expect(screen.queryByRole("button", { name: /^approve$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^reject$/i })).not.toBeInTheDocument();

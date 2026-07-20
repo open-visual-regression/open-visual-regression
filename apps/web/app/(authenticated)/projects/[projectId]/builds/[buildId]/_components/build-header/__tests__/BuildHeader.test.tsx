@@ -32,12 +32,18 @@ const renderComponent = ({
     queued: 4,
     processing: 0,
   },
+  canReview = true,
 }: Partial<BuildHeaderProps> = {}) => {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <BuildHeader build={build} snapshotCounts={snapshotCounts} storybookHref={storybookHref} />
+      <BuildHeader
+        build={build}
+        snapshotCounts={snapshotCounts}
+        storybookHref={storybookHref}
+        canReview={canReview}
+      />
       <Toaster />
     </QueryClientProvider>,
   );
@@ -268,6 +274,25 @@ describe("BuildHeader", () => {
 
     expect(screen.queryByRole("button", { name: /approve all/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /reject all/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /cancel build/i })).not.toBeInTheDocument();
+  });
+
+  it("should not render the review actions for a viewer", () => {
+    renderComponent({
+      build: mocks.build.generateBuild({ status: "needs_review" }),
+      canReview: false,
+    });
+
+    expect(screen.queryByRole("button", { name: /approve all/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /reject all/i })).not.toBeInTheDocument();
+  });
+
+  it("should not render the cancel action for a viewer", () => {
+    renderComponent({
+      build: mocks.build.generateBuild({ status: "processing" }),
+      canReview: false,
+    });
+
     expect(screen.queryByRole("button", { name: /cancel build/i })).not.toBeInTheDocument();
   });
 

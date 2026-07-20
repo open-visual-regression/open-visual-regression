@@ -23,9 +23,15 @@ export type BuildHeaderProps = {
   build: BuildDetailSchema;
   snapshotCounts: Record<SnapshotDisplayStatus, number>;
   storybookHref: string | null;
+  canReview: boolean;
 };
 
-export const BuildHeader = ({ build, snapshotCounts, storybookHref }: BuildHeaderProps) => {
+export const BuildHeader = ({
+  build,
+  snapshotCounts,
+  storybookHref,
+  canReview,
+}: BuildHeaderProps) => {
   const total = Object.values(snapshotCounts).reduce((sum, count) => sum + count, 0);
   const hasReviewable =
     snapshotCounts.approved + snapshotCounts.rejected + snapshotCounts.needs_review > 0;
@@ -78,24 +84,26 @@ export const BuildHeader = ({ build, snapshotCounts, storybookHref }: BuildHeade
             ) : null}
           </div>
         </div>
-        <div className="flex flex-row gap-2">
-          {isCancelable ? (
-            <BuildCancelButton buildId={build.id} />
-          ) : isCanceled ? null : (
-            <>
-              <BuildRejectButton
-                buildId={build.id}
-                rejected={build.status === "rejected"}
-                disabled={!hasReviewable}
-              />
-              <BuildApproveButton
-                buildId={build.id}
-                approved={build.status === "approved"}
-                disabled={!hasReviewable}
-              />
-            </>
-          )}
-        </div>
+        {canReview ? (
+          <div className="flex flex-row gap-2">
+            {isCancelable ? (
+              <BuildCancelButton buildId={build.id} />
+            ) : isCanceled ? null : (
+              <>
+                <BuildRejectButton
+                  buildId={build.id}
+                  rejected={build.status === "rejected"}
+                  disabled={!hasReviewable}
+                />
+                <BuildApproveButton
+                  buildId={build.id}
+                  approved={build.status === "approved"}
+                  disabled={!hasReviewable}
+                />
+              </>
+            )}
+          </div>
+        ) : null}
       </div>
       {build.errorMessage ? (
         <Alert color="red">
