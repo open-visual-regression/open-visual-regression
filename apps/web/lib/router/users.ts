@@ -105,3 +105,23 @@ export const remove = os.users.remove
     }
   })
   .actionable();
+
+export const changeRole = os.users.changeRole
+  .use(authenticatedMiddleware)
+  .use(adminMiddleware)
+  .handler(async ({ input, context }) => {
+    if (input.userId === context.user.id) {
+      throw new ORPCError("FORBIDDEN", { message: "you cannot change your own role" });
+    }
+
+    const [error] = await authServerClient.setRole({
+      userId: input.userId,
+      role: input.role,
+      headers: context.headers,
+    });
+
+    if (error) {
+      throw new ORPCError("BAD_REQUEST", { message: error.message });
+    }
+  })
+  .actionable();

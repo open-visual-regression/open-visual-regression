@@ -8,6 +8,7 @@ import {
   rowSelectionFeature,
 } from "@tanstack/react-table";
 import { useTanStackTableDevtools } from "@tanstack/react-table-devtools";
+import { useMemo } from "react";
 
 import { type UserSchema } from "@ovr/api/contracts/users";
 import { Badge } from "@ovr/ui/components/badge";
@@ -26,55 +27,12 @@ import {
 
 import { CopyButton } from "@/lib/components/copy-button/CopyButton";
 
+import { toRole } from "./role";
+import { RoleActions } from "./RoleActions";
 import { UsersTableBulkActions } from "./UsersTableBulkActions";
 
 const features = tableFeatures({ rowSelectionFeature });
 const columnHelper = createColumnHelper<typeof features, UserSchema>();
-
-const columns = columnHelper.columns([
-  columnHelper.display({
-    id: "select",
-    meta: { className: "w-px" },
-    cell: ({ row }) =>
-      row.getCanSelect() ? (
-        <Checkbox
-          aria-label={`select ${row.original.name}`}
-          checked={row.getIsSelected()}
-          onCheckedChange={(checked) => row.toggleSelected(checked)}
-        />
-      ) : null,
-  }),
-  columnHelper.accessor("name", { header: "Name" }),
-  columnHelper.accessor("email", { header: "Email" }),
-  columnHelper.accessor("role", {
-    header: "Role",
-    meta: { className: "text-center" },
-    cell: ({ getValue }) =>
-      getValue() === "admin" ? (
-        <Badge color="amber">admin</Badge>
-      ) : (
-        <Badge color="neutral">user</Badge>
-      ),
-  }),
-  columnHelper.accessor("status", {
-    header: "Status",
-    meta: { className: "text-center" },
-    cell: ({ getValue }) =>
-      getValue() === "invited" ? (
-        <Badge color="gray">invited</Badge>
-      ) : (
-        <Badge color="green">active</Badge>
-      ),
-  }),
-  columnHelper.display({
-    id: "actions",
-    meta: { className: "w-px text-center" },
-    cell: ({ row }) =>
-      row.original.status === "invited" ? (
-        <CopyButton text={row.original.invitationUrl}>copy invite</CopyButton>
-      ) : null,
-  }),
-]);
 
 type UsersTableProps = {
   data: UserSchema[];
@@ -83,6 +41,56 @@ type UsersTableProps = {
 };
 
 export const UsersTable = ({ data, currentUserId, search }: UsersTableProps) => {
+  const columns = useMemo(
+    () =>
+      columnHelper.columns([
+        columnHelper.display({
+          id: "select",
+          meta: { className: "w-px" },
+          cell: ({ row }) =>
+            row.getCanSelect() ? (
+              <Checkbox
+                aria-label={`select ${row.original.name}`}
+                checked={row.getIsSelected()}
+                onCheckedChange={(checked) => row.toggleSelected(checked)}
+              />
+            ) : null,
+        }),
+        columnHelper.accessor("name", { header: "Name" }),
+        columnHelper.accessor("email", { header: "Email" }),
+        columnHelper.accessor("role", {
+          header: "Role",
+          cell: ({ row }) => (
+            <RoleActions
+              userId={row.original.id}
+              name={row.original.name}
+              role={toRole(row.original.role)}
+              disabled={row.original.status !== "active" || row.original.id === currentUserId}
+            />
+          ),
+        }),
+        columnHelper.accessor("status", {
+          header: "Status",
+          meta: { className: "text-center" },
+          cell: ({ getValue }) =>
+            getValue() === "invited" ? (
+              <Badge color="gray">invited</Badge>
+            ) : (
+              <Badge color="green">active</Badge>
+            ),
+        }),
+        columnHelper.display({
+          id: "actions",
+          meta: { className: "w-px text-center" },
+          cell: ({ row }) =>
+            row.original.status === "invited" ? (
+              <CopyButton text={row.original.invitationUrl}>copy invite</CopyButton>
+            ) : null,
+        }),
+      ]),
+    [currentUserId],
+  );
+
   const table = useTable({
     key: "users-table",
     columns,

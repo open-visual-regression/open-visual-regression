@@ -1,9 +1,15 @@
 import { vi } from "vitest";
 
+import { dbClient } from "@ovr/db/client";
+import { mocks } from "@ovr/mocks";
+
+import { auth } from "@/lib/auth/auth";
 import { serverClient } from "@/lib/router";
 import { test, describe, expect } from "@/lib/testing/fixtures";
 
 vi.mock("next/headers");
+
+const TEST_PASSWORD = "securepass123";
 
 describe("users", () => {
   describe("list", () => {
@@ -167,6 +173,55 @@ describe("users", () => {
 
       const [error] = await serverClient.users.invite({ email: "duplicate@example.com" });
       expect(error?.code).toBe("BAD_REQUEST");
+    });
+  });
+
+  describe("changeRole", () => {
+    test("should return UNAUTHORIZED when no session cookie is provided", async () => {
+      const [error] = await serverClient.users.changeRole({
+        userId: "00000000-0000-0000-0000-000000000000",
+        role: "admin",
+      });
+      expect(error?.code).toBe("UNAUTHORIZED");
+    });
+
+    test("should return FORBIDDEN when the session user is not an admin", async ({ user: _ }) => {
+      const [error] = await serverClient.users.changeRole({
+        userId: "00000000-0000-0000-0000-000000000000",
+        role: "admin",
+      });
+      expect(error?.code).toBe("FORBIDDEN");
+    });
+
+    test("should return FORBIDDEN when an admin targets their own role", async ({ admin }) => {
+      const [error] = await serverClient.users.changeRole({ userId: admin.id, role: "user" });
+      expect(error?.code).toBe("FORBIDDEN");
+    });
+
+    test("should promote another user to admin", async ({ admin: _ }) => {
+      const { name, email } = mocks.user.generateAuthUser();
+      const { user: target } = await auth.api.createUser({
+        body: { name, email, password: TEST_PASSWORD, role: "user" },
+      });
+
+      const [error] = await serverClient.users.changeRole({ userId: target.id, role: "admin" });
+
+      expect(error).toBeNull();
+      const updated = await dbClient.users.findById(target.id);
+      expect(updated?.role).toBe("admin");
+    });
+
+    test("should demote another user to a regular user", async ({ admin: _ }) => {
+      const { name, email } = mocks.user.generateAuthUser();
+      const { user: target } = await auth.api.createUser({
+        body: { name, email, password: TEST_PASSWORD, role: "admin" },
+      });
+
+      const [error] = await serverClient.users.changeRole({ userId: target.id, role: "user" });
+
+      expect(error).toBeNull();
+      const updated = await dbClient.users.findById(target.id);
+      expect(updated?.role).toBe("user");
     });
   });
 });
