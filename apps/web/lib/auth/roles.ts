@@ -7,6 +7,4 @@ export const DEFAULT_ROLE: Role = "reviewer";
 export const toRole = (role: string | null | undefined): Role =>
   role === "admin" ? "admin" : role === "viewer" ? "viewer" : "reviewer";
 
-export const isAdmin = (role: string | null | undefined): boolean => toRole(role) === "admin";
-
 export const canReview = (role: string | null | undefined): boolean => toRole(role) !== "viewer";
