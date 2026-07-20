@@ -1,15 +1,45 @@
 ---
 name: pulling-images
-description: How to get Docker image pulls working — for docker compose, ad-hoc docker pull, and testcontainers-based integration tests — when a sandboxed or restricted network environment blocks part of the registry path. Apply whenever an image pull fails, hangs, or times out while setting up the app or running integration tests.
+description: How to get Docker working — for docker compose, ad-hoc docker pull, and testcontainers-based integration tests — in a sandboxed environment where the daemon is not started or the network blocks part of the registry path. Apply whenever a `docker` command fails to connect to the daemon, or an image pull fails, hangs, or times out while setting up the app or running integration tests.
 license: MIT
 metadata:
   author: claude
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
-# Pulling Images in a Restricted Network
+# Running Docker in a Restricted Sandbox
 
 ## Rules
+
+### `start-the-daemon-before-concluding-its-unavailable` — CRITICAL
+
+A `docker` command that fails with `Cannot connect to the Docker daemon at
+unix:///var/run/docker.sock. Is the docker daemon running?` means the daemon
+is **not started** — not that Docker is unavailable. These sandboxes ship the
+Docker binaries but do not auto-start the daemon. Never report Docker,
+`docker compose`, or testcontainers as unavailable based on one failed
+command; confirm the binaries first, then start the daemon yourself.
+
+Confirm Docker is actually installed before deciding it is missing:
+
+```bash
+which dockerd docker   # if dockerd is on PATH, Docker is available — just not running
+```
+
+Start the daemon. With systemd, `systemctl start docker`. In minimal
+sandboxes without systemd, launch `dockerd` directly in the background and
+wait for the socket to come up:
+
+```bash
+nohup dockerd >/var/log/dockerd.log 2>&1 &
+until docker info >/dev/null 2>&1; do sleep 1; done
+```
+
+Running as root is normal here; the daemon needs it. Once `docker info`
+succeeds the daemon is ready — apply the registry-mirror rules below so the
+first pull does not fail. Configure the mirror in `/etc/docker/daemon.json`
+**before** starting the daemon (or restart it after) so the mirror is in
+effect for the very first pull.
 
 ### `recognize-the-symptom` — HIGH
 
@@ -76,6 +106,9 @@ registry) instead of disabling verification or forcing the connection.
 
 | Task | Command |
 |------|---------|
+| Check the daemon is running | `docker info` (connection error = not started, not unavailable) |
+| Confirm Docker is installed at all | `which dockerd docker` |
+| Start the daemon without systemd | `nohup dockerd >/var/log/dockerd.log 2>&1 &` then `until docker info >/dev/null 2>&1; do sleep 1; done` |
 | Check configured mirrors | `docker info \| grep -A2 "Registry Mirrors"` |
 | Add a mirror | edit `/etc/docker/daemon.json` → `"registry-mirrors": [...]`, restart the daemon |
 | Force Testcontainers through a mirror | `TESTCONTAINERS_HUB_IMAGE_NAME_PREFIX=<mirror-host>` |
