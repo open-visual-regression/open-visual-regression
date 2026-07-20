@@ -18,7 +18,9 @@ describe("users", () => {
       expect(error?.code).toBe("UNAUTHORIZED");
     });
 
-    test("should return FORBIDDEN when the session user is not an admin", async ({ user: _ }) => {
+    test("should return FORBIDDEN when the session user is not an admin", async ({
+      reviewer: _,
+    }) => {
       const [error] = await serverClient.users.list();
       expect(error?.code).toBe("FORBIDDEN");
     });
@@ -156,7 +158,9 @@ describe("users", () => {
       expect(error?.code).toBe("UNAUTHORIZED");
     });
 
-    test("should return FORBIDDEN when the session user is not an admin", async ({ user: _ }) => {
+    test("should return FORBIDDEN when the session user is not an admin", async ({
+      reviewer: _,
+    }) => {
       const [error] = await serverClient.users.invite({ email: "new.user@example.com" });
       expect(error?.code).toBe("FORBIDDEN");
     });
@@ -185,7 +189,9 @@ describe("users", () => {
       expect(error?.code).toBe("UNAUTHORIZED");
     });
 
-    test("should return FORBIDDEN when the session user is not an admin", async ({ user: _ }) => {
+    test("should return FORBIDDEN when the session user is not an admin", async ({
+      reviewer: _,
+    }) => {
       const [error] = await serverClient.users.changeRole({
         userId: "00000000-0000-0000-0000-000000000000",
         role: "admin",

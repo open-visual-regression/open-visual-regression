@@ -22,7 +22,9 @@ describe("gitIntegrations", () => {
       expect(error?.code).toBe("UNAUTHORIZED");
     });
 
-    test("should return FORBIDDEN when the session user is not an admin", async ({ user: _ }) => {
+    test("should return FORBIDDEN when the session user is not an admin", async ({
+      reviewer: _,
+    }) => {
       const [error] = await serverClient.gitIntegrations.get({ projectId: FAKE_PROJECT_ID });
       expect(error?.code).toBe("FORBIDDEN");
     });
@@ -54,7 +56,9 @@ describe("gitIntegrations", () => {
       expect(error?.code).toBe("UNAUTHORIZED");
     });
 
-    test("should return FORBIDDEN when the session user is not an admin", async ({ user: _ }) => {
+    test("should return FORBIDDEN when the session user is not an admin", async ({
+      reviewer: _,
+    }) => {
       const [error] = await serverClient.gitIntegrations.upsert({
         projectId: FAKE_PROJECT_ID,
         provider: "github",
@@ -154,7 +158,9 @@ describe("gitIntegrations", () => {
       expect(error?.code).toBe("UNAUTHORIZED");
     });
 
-    test("should return FORBIDDEN when the session user is not an admin", async ({ user: _ }) => {
+    test("should return FORBIDDEN when the session user is not an admin", async ({
+      reviewer: _,
+    }) => {
       const [error] = await serverClient.gitIntegrations.remove({ projectId: FAKE_PROJECT_ID });
       expect(error?.code).toBe("FORBIDDEN");
     });
@@ -187,7 +193,9 @@ describe("gitIntegrations", () => {
       expect(error?.code).toBe("UNAUTHORIZED");
     });
 
-    test("should return FORBIDDEN when the session user is not an admin", async ({ user: _ }) => {
+    test("should return FORBIDDEN when the session user is not an admin", async ({
+      reviewer: _,
+    }) => {
       const [error] = await serverClient.gitIntegrations.testConnection({
         projectId: FAKE_PROJECT_ID,
       });

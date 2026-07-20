@@ -13,7 +13,7 @@ const TEST_PASSWORD = "securepass123";
 
 export const test = vitest.extend<{
   admin: User;
-  user: User;
+  reviewer: User;
   viewer: User;
 }>({
   // eslint-disable-next-line no-empty-pattern
@@ -36,9 +36,11 @@ export const test = vitest.extend<{
   },
 
   // eslint-disable-next-line no-empty-pattern
-  user: async ({}, use) => {
+  reviewer: async ({}, use) => {
     const { name, email } = mocks.user.generateAuthUser();
-    const { user } = await auth.api.signUpEmail({ body: { name, email, password: TEST_PASSWORD } });
+    const { user } = await auth.api.createUser({
+      body: { name, email, password: TEST_PASSWORD, role: "reviewer" },
+    });
     const org = mocks.organization.generateOrganization();
     await auth.api.createOrganization({
       body: { name: org.name, slug: org.slug, userId: user.id },

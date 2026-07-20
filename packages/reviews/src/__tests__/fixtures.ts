@@ -16,7 +16,7 @@ type Viewport = {
 };
 
 type Fixtures = {
-  user: typeof userTable.$inferSelect;
+  reviewer: typeof userTable.$inferSelect;
   organization: typeof organization.$inferSelect;
   project: typeof projects.$inferSelect;
   captureConfiguration: Viewport;
@@ -27,10 +27,15 @@ type Fixtures = {
 
 export const test = vitest.extend<Fixtures>({
   // eslint-disable-next-line no-empty-pattern
-  user: async ({}, use) => {
+  reviewer: async ({}, use) => {
     const [created] = await db
       .insert(userTable)
-      .values({ id: uuidv7(), name: "Test User", email: `${uuidv7()}@example.com` })
+      .values({
+        id: uuidv7(),
+        name: "Test Reviewer",
+        email: `${uuidv7()}@example.com`,
+        role: "reviewer",
+      })
       .returning();
     await use(created!);
   },
@@ -44,14 +49,14 @@ export const test = vitest.extend<Fixtures>({
     await use(created!);
   },
 
-  project: async ({ user, organization }, use) => {
+  project: async ({ reviewer, organization }, use) => {
     const [created] = await db
       .insert(projects)
       .values({
         name: "Test Project",
         gitMainBranch: "main",
         organizationId: organization.id,
-        creatorId: user.id,
+        creatorId: reviewer.id,
       })
       .returning();
     await use(created!);
@@ -67,24 +72,24 @@ export const test = vitest.extend<Fixtures>({
     });
   },
 
-  mainBuild: async ({ project, user }, use) => {
+  mainBuild: async ({ project, reviewer }, use) => {
     const created = await dbClient.builds.create({
       projectId: project.id,
       branch: "main",
       commitSha: "a".repeat(40),
       artifactPath: "builds/seed/artifact",
-      createdBy: user.id,
+      createdBy: reviewer.id,
     });
     await use(created!);
   },
 
-  featureBuild: async ({ project, user }, use) => {
+  featureBuild: async ({ project, reviewer }, use) => {
     const created = await dbClient.builds.create({
       projectId: project.id,
       branch: "feature/test",
       commitSha: "a".repeat(40),
       artifactPath: "builds/seed/artifact",
-      createdBy: user.id,
+      createdBy: reviewer.id,
     });
     await use(created!);
   },

@@ -308,7 +308,7 @@ describe("builds", () => {
       expect(result?.total).toBe(0);
     });
 
-    test("should be accessible to a non-admin user", async ({ user: _ }) => {
+    test("should be accessible to a non-admin user", async ({ reviewer: _ }) => {
       const [error] = await serverClient.builds.list();
 
       expect(error).toBeNull();
