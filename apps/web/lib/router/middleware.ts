@@ -55,16 +55,6 @@ export const adminMiddleware = os
     return next();
   });
 
-export const currentUserMiddleware = os
-  .$context<AuthenticatedContext>()
-  .middleware(async ({ context, next }, input: { userId: string }) => {
-    if (input.userId === context.user.id) {
-      throw new ORPCError("FORBIDDEN");
-    }
-
-    return next();
-  });
-
 export const apiKeyMiddleware = os
   .$context<RequestContext>()
   .middleware(async ({ context, next }) => {

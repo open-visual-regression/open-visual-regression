@@ -5,7 +5,7 @@ import { ORPCError } from "@orpc/client";
 import { dbClient } from "@ovr/db/client";
 
 import { authServerClient } from "../auth";
-import { authenticatedMiddleware, adminMiddleware, currentUserMiddleware } from "./middleware";
+import { authenticatedMiddleware, adminMiddleware } from "./middleware";
 import { os } from "./os";
 
 export const list = os.users.list
@@ -109,8 +109,11 @@ export const remove = os.users.remove
 export const changeRole = os.users.changeRole
   .use(authenticatedMiddleware)
   .use(adminMiddleware)
-  .use(currentUserMiddleware)
   .handler(async ({ input, context }) => {
+    if (input.userId === context.user.id) {
+      throw new ORPCError("FORBIDDEN", { message: "you cannot change your own role" });
+    }
+
     const [error] = await authServerClient.setRole({
       userId: input.userId,
       role: input.role,
