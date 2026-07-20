@@ -17,7 +17,7 @@ import { toast } from "@ovr/ui/components/toast";
 
 import { serverClient } from "@/lib/router";
 
-import { RoleBadge, type Role } from "./RoleBadge";
+import { type Role } from "./role";
 
 const roles: Role[] = ["admin", "user"];
 
@@ -25,9 +25,10 @@ type RoleActionsProps = {
   userId: string;
   name: string;
   role: Role;
+  disabled?: boolean;
 };
 
-export const RoleActions = ({ userId, name, role }: RoleActionsProps) => {
+export const RoleActions = ({ userId, name, role, disabled = false }: RoleActionsProps) => {
   const router = useRouter();
 
   const { execute, status } = useServerAction(serverClient.users.changeRole, {
@@ -48,13 +49,21 @@ export const RoleActions = ({ userId, name, role }: RoleActionsProps) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        render={<Button variant="ghost" size="sm" disabled={status === "pending"} />}
+        render={
+          <Button
+            variant="outline"
+            color="neutral"
+            size="sm"
+            disabled={disabled || status === "pending"}
+            className="w-full justify-between"
+          />
+        }
         aria-label={`change role for ${name}`}
       >
-        <RoleBadge role={role} />
+        {role}
         <Icon icon={ChevronDownIcon} size={12} />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="center">
+      <DropdownMenuContent>
         <DropdownMenuRadioGroup value={role} onValueChange={handleValueChange}>
           {roles.map((option) => (
             <DropdownMenuRadioItem key={option} value={option}>

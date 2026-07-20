@@ -27,8 +27,8 @@ import {
 
 import { CopyButton } from "@/lib/components/copy-button/CopyButton";
 
+import { toRole } from "./role";
 import { RoleActions } from "./RoleActions";
-import { RoleBadge, toRole } from "./RoleBadge";
 import { UsersTableBulkActions } from "./UsersTableBulkActions";
 
 const features = tableFeatures({ rowSelectionFeature });
@@ -60,16 +60,14 @@ export const UsersTable = ({ data, currentUserId, search }: UsersTableProps) => 
         columnHelper.accessor("email", { header: "Email" }),
         columnHelper.accessor("role", {
           header: "Role",
-          meta: { className: "text-center" },
-          cell: ({ row }) => {
-            const role = toRole(row.original.role);
-
-            return row.original.status === "active" && row.original.id !== currentUserId ? (
-              <RoleActions userId={row.original.id} name={row.original.name} role={role} />
-            ) : (
-              <RoleBadge role={role} />
-            );
-          },
+          cell: ({ row }) => (
+            <RoleActions
+              userId={row.original.id}
+              name={row.original.name}
+              role={toRole(row.original.role)}
+              disabled={row.original.status !== "active" || row.original.id === currentUserId}
+            />
+          ),
         }),
         columnHelper.accessor("status", {
           header: "Status",
