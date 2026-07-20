@@ -7,8 +7,8 @@ Gate: admin can remove an active member or cancel a pending invitation; self-tar
 - [x] `UsersTableBulkActions.tsx` + `RemoveUsersModal.tsx` — bulk-select rows, confirm removal in modal; calls `useServerAction(router.users.remove)`
 
 - [x] 1.1 `packages/api/src/contracts/users.ts`: add `changeRole` contract (input: `{ userId, role: "user" | "admin" }`; output: void); update index
-- [x] 1.2 `apps/web/lib/router/users.ts`: `changeRole` handler `.use(authenticatedMiddleware).use(adminMiddleware).use(currentUserMiddleware)` + `.actionable()`:
-  - `currentUserMiddleware` (new, in `middleware.ts`) blocks self-targeting → `throw new ORPCError("FORBIDDEN")`; handler calls `authServerClient.setRole({ userId, role })`
+- [x] 1.2 `apps/web/lib/router/users.ts`: `changeRole` handler `.use(authenticatedMiddleware).use(adminMiddleware)` + `.actionable()`:
+  - inline self-target guard → `throw new ORPCError("FORBIDDEN")`; handler calls `authServerClient.setRole({ userId, role })`
 - [x] 1.3 Integration tests:
   - `changeRole` unauthenticated → `UNAUTHORIZED`; non-admin → `FORBIDDEN`
   - `changeRole` targeting self → `FORBIDDEN`
