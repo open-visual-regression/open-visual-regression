@@ -127,6 +127,25 @@ describe("GET /api/storybook/[...path]", () => {
     expect(await response.text()).toBe(html);
   });
 
+  test("should serve index.html when a storybook `?path=` deep-link query is present", async ({
+    admin,
+  }) => {
+    // Storybook's manager deep-links a story with `index.html?path=/story/<id>`.
+    // That `path` query must not be treated as the file path (which would resolve
+    // to an absolute `/story/<id>` and 403) — the browser keeps it for client-side
+    // routing while the server still serves index.html.
+    const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+    const build = await createStorybookBuild(addResult!.projectId, admin.id);
+    const html = "<html><body>storybook</body></html>";
+    await uploadArtifact(build.artifactPath, { "index.html": html });
+
+    const response = await buildRequest(build.id, "index.html?path=/story/ui-alert--kitchen-sink");
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("text/html");
+    expect(await response.text()).toBe(html);
+  });
+
   test("should stream a nested asset with its own content type", async ({ admin }) => {
     const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
     const build = await createStorybookBuild(addResult!.projectId, admin.id);

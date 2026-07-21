@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth/auth";
 import { canReview } from "@/lib/auth/roles";
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
+import { getStorybookStoryPath, hasHostedStorybook } from "@/lib/utils/storage";
 
 import { SnapshotComparisonSection } from "./_components/snapshot-comparison-section/SnapshotComparisonSection";
 import { SnapshotHeader } from "./_components/snapshot-header/SnapshotHeader";
@@ -51,6 +52,10 @@ export default async function SnapshotPage(props: SnapshotPageProps) {
 
   const session = await auth.api.getSession({ headers: await headers() });
 
+  const storybookHref = hasHostedStorybook(build)
+    ? getStorybookStoryPath(build.id, snapshot.targetId)
+    : null;
+
   return (
     <SnapshotLayout
       snapshot={snapshot}
@@ -70,7 +75,7 @@ export default async function SnapshotPage(props: SnapshotPageProps) {
         />
       }
     >
-      <SnapshotHeader snapshot={snapshot} build={build} />
+      <SnapshotHeader snapshot={snapshot} build={build} storybookHref={storybookHref} />
       <SnapshotComparisonSection snapshot={snapshot} diff={diff} />
     </SnapshotLayout>
   );

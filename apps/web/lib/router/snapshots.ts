@@ -24,6 +24,7 @@ export const getOne = os.snapshots.getOne
     return {
       snapshot: {
         id: snapshot.id,
+        targetId: snapshot.targetId,
         targetName: snapshot.targetName,
         targetTitle: snapshot.targetTitle,
         imagePath: snapshot.imagePath,

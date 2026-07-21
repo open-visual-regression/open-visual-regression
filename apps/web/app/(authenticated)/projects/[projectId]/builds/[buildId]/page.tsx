@@ -9,7 +9,7 @@ import { canReview } from "@/lib/auth/roles";
 import { getSnapshotStatusLabel } from "@/lib/components/SnapshotStatusBadge";
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
-import { getStorybookPath } from "@/lib/utils/storage";
+import { getStorybookPath, hasHostedStorybook } from "@/lib/utils/storage";
 
 import { BuildHeader } from "./_components/build-header/BuildHeader";
 import { SnapshotFilters } from "./_components/snapshot-grid/SnapshotFilters";
@@ -98,12 +98,7 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
   const session = await auth.api.getSession({ headers: await headers() });
 
   const { build } = buildResult;
-  const hasStorybook =
-    build.buildType === "storybook" &&
-    build.status !== "queued" &&
-    build.status !== "processing" &&
-    build.status !== "error";
-  const storybookHref = hasStorybook ? getStorybookPath(build.id) : null;
+  const storybookHref = hasHostedStorybook(build) ? getStorybookPath(build.id) : null;
 
   return (
     <div className="flex flex-col gap-6">
