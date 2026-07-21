@@ -96,6 +96,7 @@ describe("getBreadcrumbSegments", () => {
           viewportWidth: snapshot.viewportWidth,
           viewportHeight: snapshot.viewportHeight,
           viewportName: snapshot.viewportName,
+          targetId: snapshot.targetId,
           targetName: snapshot.targetName,
           targetTitle: snapshot.targetTitle,
           imagePath: snapshot.imagePath,

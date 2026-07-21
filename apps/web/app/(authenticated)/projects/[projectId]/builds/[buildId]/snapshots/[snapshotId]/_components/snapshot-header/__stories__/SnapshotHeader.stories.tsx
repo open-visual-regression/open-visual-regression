@@ -10,6 +10,9 @@ const meta: Meta<typeof SnapshotHeader> = {
   title: "Web/SnapshotHeader",
   component: SnapshotHeader,
   tags: ["autodocs"],
+  args: {
+    storybookHref: "/api/storybook/mock-build/index.html?path=/story/ui-button--kitchen-sink",
+  },
   parameters: {
     ovr: {
       viewports: ["desktop", "tablet", "mobile"],
@@ -26,6 +29,7 @@ const snapshot: SnapshotSchema = {
   viewportWidth: 1280,
   viewportHeight: 800,
   viewportName: "desktop",
+  targetId: "ui-button--kitchen-sink",
   targetName: "Kitchen Sink",
   targetTitle: "UI/Button",
   imagePath: "new.png",
@@ -72,5 +76,13 @@ export const Errored: Story = {
   args: {
     snapshot: { ...snapshot, status: "error" },
     build: mocks.build.generateBuild(buildOverrides),
+  },
+};
+
+export const NoStorybook: Story = {
+  args: {
+    snapshot,
+    build: mocks.build.generateBuild(buildOverrides),
+    storybookHref: null,
   },
 };

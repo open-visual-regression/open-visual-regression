@@ -128,6 +128,7 @@ export const serverClient: typeof RealServerClient = {
           browser: "chromium",
           viewportWidth: 1280,
           viewportHeight: null,
+          targetId: "story--id",
           targetName: "",
           targetTitle: "",
           imagePath: null,

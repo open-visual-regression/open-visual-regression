@@ -23,6 +23,7 @@ const newSnapshot = {
   viewportWidth: 1280,
   viewportHeight: 720,
   viewportName: "desktop",
+  targetId: "button--primary",
   targetName: "Primary",
   targetTitle: "Button",
   imagePath: "new-desktop.png",
