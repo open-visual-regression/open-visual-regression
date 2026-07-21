@@ -79,8 +79,6 @@ export const Errored: Story = {
   },
 };
 
-// A snapshot that does not originate from a hosted Storybook (e.g. a future raw
-// image upload) has no story to link to, so the "view story" link is hidden.
 export const NoStorybook: Story = {
   args: {
     snapshot,
