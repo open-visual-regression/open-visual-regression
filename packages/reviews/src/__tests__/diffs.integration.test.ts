@@ -12,7 +12,12 @@ import { describe, expect, test } from "./fixtures";
 const createUser = async () => {
   const [created] = await db
     .insert(userTable)
-    .values({ id: uuidv7(), name: "Other Reviewer", email: `${uuidv7()}@example.com` })
+    .values({
+      id: uuidv7(),
+      name: "Other Reviewer",
+      email: `${uuidv7()}@example.com`,
+      role: "reviewer",
+    })
     .returning();
   return created!;
 };
@@ -22,7 +27,7 @@ describe("diffs", () => {
     test("approves a diff once requiredReviewerCount distinct approvals are cast", async ({
       mainBuild,
       captureConfiguration,
-      user,
+      reviewer,
     }) => {
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "a" }],
@@ -32,7 +37,7 @@ describe("diffs", () => {
         reviewStatus: "needs_review",
       });
 
-      const result = await castVote(diff!.id, user.id, "approve");
+      const result = await castVote(diff!.id, reviewer.id, "approve");
 
       assert(result.status === "ok");
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({ reviewStatus: "approved" });
@@ -42,7 +47,7 @@ describe("diffs", () => {
       project,
       mainBuild,
       captureConfiguration,
-      user,
+      reviewer,
     }) => {
       await dbClient.projects.updateProject(project.id, { requiredReviewerCount: 2 });
 
@@ -54,7 +59,7 @@ describe("diffs", () => {
         reviewStatus: "needs_review",
       });
 
-      await castVote(diff!.id, user.id, "approve");
+      await castVote(diff!.id, reviewer.id, "approve");
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
         reviewStatus: "needs_review",
       });
@@ -68,7 +73,7 @@ describe("diffs", () => {
     test("a single reject vetoes regardless of existing approvals", async ({
       mainBuild,
       captureConfiguration,
-      user,
+      reviewer,
     }) => {
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "a" }],
@@ -85,7 +90,7 @@ describe("diffs", () => {
         vote: "approve",
       });
 
-      const result = await castVote(diff!.id, user.id, "reject");
+      const result = await castVote(diff!.id, reviewer.id, "reject");
 
       assert(result.status === "ok");
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({ reviewStatus: "rejected" });
@@ -94,7 +99,7 @@ describe("diffs", () => {
     test("the same reviewer voting again replaces their previous vote", async ({
       mainBuild,
       captureConfiguration,
-      user,
+      reviewer,
     }) => {
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "a" }],
@@ -104,30 +109,30 @@ describe("diffs", () => {
         reviewStatus: "needs_review",
       });
 
-      await castVote(diff!.id, user.id, "approve");
+      await castVote(diff!.id, reviewer.id, "approve");
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({ reviewStatus: "approved" });
 
-      await castVote(diff!.id, user.id, "reject");
+      await castVote(diff!.id, reviewer.id, "reject");
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({ reviewStatus: "rejected" });
     });
 
     test("returns REVIEW_NOT_REQUIRED for a diff that doesn't need review", async ({
       mainBuild,
       captureConfiguration,
-      user,
+      reviewer,
     }) => {
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "a" }],
       });
       const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
 
-      const result = await castVote(diff!.id, user.id, "approve");
+      const result = await castVote(diff!.id, reviewer.id, "approve");
 
       expect(result).toEqual({ status: "error", error: "REVIEW_NOT_REQUIRED" });
     });
 
-    test("returns DIFF_NOT_FOUND for a missing diff id", async ({ user }) => {
-      const result = await castVote(crypto.randomUUID(), user.id, "approve");
+    test("returns DIFF_NOT_FOUND for a missing diff id", async ({ reviewer }) => {
+      const result = await castVote(crypto.randomUUID(), reviewer.id, "approve");
 
       expect(result).toEqual({ status: "error", error: "DIFF_NOT_FOUND" });
     });
@@ -135,7 +140,7 @@ describe("diffs", () => {
     test("finalizes the build once the last needs_review diff is approved", async ({
       mainBuild,
       captureConfiguration,
-      user,
+      reviewer,
     }) => {
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "a" }],
@@ -146,7 +151,7 @@ describe("diffs", () => {
         reviewStatus: "needs_review",
       });
 
-      await castVote(diff!.id, user.id, "approve");
+      await castVote(diff!.id, reviewer.id, "approve");
 
       expect((await dbClient.builds.findById(mainBuild.id))?.reviewStatus).toBe("approved");
     });
@@ -156,7 +161,7 @@ describe("diffs", () => {
     test("reverts to needs_review once the only reject is removed", async ({
       mainBuild,
       captureConfiguration,
-      user,
+      reviewer,
     }) => {
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "a" }],
@@ -166,12 +171,12 @@ describe("diffs", () => {
         reviewStatus: "needs_review",
       });
 
-      await castVote(diff!.id, user.id, "reject");
+      await castVote(diff!.id, reviewer.id, "reject");
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({ reviewStatus: "rejected" });
 
       const result = await removeVote({
         diffId: diff!.id,
-        requesterId: user.id,
+        requesterId: reviewer.id,
       });
 
       assert(result.status === "ok");
@@ -184,7 +189,7 @@ describe("diffs", () => {
       project,
       mainBuild,
       captureConfiguration,
-      user,
+      reviewer,
     }) => {
       await dbClient.projects.updateProject(project.id, { requiredReviewerCount: 1 });
 
@@ -202,10 +207,10 @@ describe("diffs", () => {
         reviewerId: otherReviewer.id,
         vote: "approve",
       });
-      await castVote(diff!.id, user.id, "reject");
+      await castVote(diff!.id, reviewer.id, "reject");
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({ reviewStatus: "rejected" });
 
-      await removeVote({ diffId: diff!.id, requesterId: user.id });
+      await removeVote({ diffId: diff!.id, requesterId: reviewer.id });
 
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({ reviewStatus: "approved" });
     });
@@ -213,7 +218,7 @@ describe("diffs", () => {
     test("reverts to needs_review when an admin removes another reviewer's vote", async ({
       mainBuild,
       captureConfiguration,
-      user,
+      reviewer,
     }) => {
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "a" }],
@@ -223,7 +228,7 @@ describe("diffs", () => {
         reviewStatus: "needs_review",
       });
 
-      await castVote(diff!.id, user.id, "reject");
+      await castVote(diff!.id, reviewer.id, "reject");
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({ reviewStatus: "rejected" });
 
       const admin = await createUser();
@@ -231,7 +236,7 @@ describe("diffs", () => {
         diffId: diff!.id,
         requesterId: admin.id,
         requesterRole: "admin",
-        targetReviewerId: user.id,
+        targetReviewerId: reviewer.id,
       });
 
       assert(result.status === "ok");
@@ -243,7 +248,7 @@ describe("diffs", () => {
     test("returns FORBIDDEN when a non-admin tries to remove another reviewer's vote", async ({
       mainBuild,
       captureConfiguration,
-      user,
+      reviewer,
     }) => {
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "a" }],
@@ -258,7 +263,7 @@ describe("diffs", () => {
 
       const result = await removeVote({
         diffId: diff!.id,
-        requesterId: user.id,
+        requesterId: reviewer.id,
         targetReviewerId: otherReviewer.id,
       });
 
@@ -272,7 +277,7 @@ describe("diffs", () => {
     test("casts the vote across every reviewable diff, leaving not_required diffs untouched", async ({
       mainBuild,
       captureConfiguration,
-      user,
+      reviewer,
     }) => {
       const [snapshotA, snapshotB, snapshotC] = await dbClient.snapshots.createMany({
         values: [
@@ -294,7 +299,7 @@ describe("diffs", () => {
         reviewStatus: "not_required",
       });
 
-      await bulkCastVote(mainBuild.id, user.id, "approve");
+      await bulkCastVote(mainBuild.id, reviewer.id, "approve");
 
       expect(await dbClient.diffs.findById(awaitingDiff!.id)).toMatchObject({
         reviewStatus: "approved",
@@ -310,7 +315,7 @@ describe("diffs", () => {
     test("overrides already-decided diffs with the new vote", async ({
       mainBuild,
       captureConfiguration,
-      user,
+      reviewer,
     }) => {
       const [snapshotA, snapshotB] = await dbClient.snapshots.createMany({
         values: [
@@ -327,7 +332,7 @@ describe("diffs", () => {
         reviewStatus: "rejected",
       });
 
-      await bulkCastVote(mainBuild.id, user.id, "reject");
+      await bulkCastVote(mainBuild.id, reviewer.id, "reject");
 
       expect(await dbClient.diffs.findById(approvedDiff!.id)).toMatchObject({
         reviewStatus: "rejected",
@@ -340,14 +345,14 @@ describe("diffs", () => {
     test("finalizes the build once every needs_review diff is approved", async ({
       mainBuild,
       captureConfiguration,
-      user,
+      reviewer,
     }) => {
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "a" }],
       });
       await dbClient.diffs.create({ snapshotId: snapshot!.id, reviewStatus: "needs_review" });
 
-      await bulkCastVote(mainBuild.id, user.id, "approve");
+      await bulkCastVote(mainBuild.id, reviewer.id, "approve");
 
       expect((await dbClient.builds.findById(mainBuild.id))?.reviewStatus).toBe("approved");
     });
@@ -356,7 +361,7 @@ describe("diffs", () => {
       project,
       mainBuild,
       captureConfiguration,
-      user,
+      reviewer,
     }) => {
       await dbClient.projects.updateProject(project.id, { requiredReviewerCount: 2 });
 
@@ -382,7 +387,7 @@ describe("diffs", () => {
         vote: "approve",
       });
 
-      await bulkCastVote(mainBuild.id, user.id, "approve");
+      await bulkCastVote(mainBuild.id, reviewer.id, "approve");
 
       expect(await dbClient.diffs.findById(alreadyApprovedOnceDiff!.id)).toMatchObject({
         reviewStatus: "approved",

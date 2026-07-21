@@ -25,7 +25,9 @@ describe("apiKeys", () => {
       expect(error?.code).toBe("UNAUTHORIZED");
     });
 
-    test("should return FORBIDDEN when the session user is not an admin", async ({ user: _ }) => {
+    test("should return FORBIDDEN when the session user is not an admin", async ({
+      reviewer: _,
+    }) => {
       const [error] = await serverClient.apiKeys.create({
         projectId: FAKE_PROJECT_ID,
         name: "my key",
@@ -57,7 +59,9 @@ describe("apiKeys", () => {
       expect(error?.code).toBe("UNAUTHORIZED");
     });
 
-    test("should return FORBIDDEN when the session user is not an admin", async ({ user: _ }) => {
+    test("should return FORBIDDEN when the session user is not an admin", async ({
+      reviewer: _,
+    }) => {
       const [error] = await serverClient.apiKeys.list({ projectId: FAKE_PROJECT_ID });
       expect(error?.code).toBe("FORBIDDEN");
     });
@@ -128,7 +132,9 @@ describe("apiKeys", () => {
       expect(error?.code).toBe("UNAUTHORIZED");
     });
 
-    test("should return FORBIDDEN when the session user is not an admin", async ({ user: _ }) => {
+    test("should return FORBIDDEN when the session user is not an admin", async ({
+      reviewer: _,
+    }) => {
       const [error] = await serverClient.apiKeys.revoke({ keyId: "fake-id" });
       expect(error?.code).toBe("FORBIDDEN");
     });

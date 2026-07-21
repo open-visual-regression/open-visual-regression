@@ -53,7 +53,7 @@ type Story = StoryObj<typeof NavigationBarMobileMenu>;
 
 export const Projects: Story = {
   args: {
-    role: "user",
+    role: "reviewer",
     projects: PROJECTS,
     builds: BUILDS,
     projectsTotal: PROJECTS.length,
@@ -66,7 +66,7 @@ export const Projects: Story = {
 
 export const WithViewAllLink: Story = {
   args: {
-    role: "user",
+    role: "reviewer",
     projects: PROJECTS,
     builds: BUILDS,
     projectsTotal: 12,

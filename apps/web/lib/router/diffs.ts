@@ -13,6 +13,7 @@ import {
   authenticatedMiddleware,
   organizationDiffMiddleware,
   organizationSnapshotMiddleware,
+  reviewerMiddleware,
 } from "./middleware";
 import { os } from "./os";
 
@@ -28,6 +29,7 @@ const throwOnError = (error: "DIFF_NOT_FOUND" | "REVIEW_NOT_REQUIRED" | "FORBIDD
 
 export const castVote = os.diffs.castVote
   .use(authenticatedMiddleware)
+  .use(reviewerMiddleware)
   .handler(async ({ input, context }) => {
     const result = await castVoteService(input.diffId, context.user.id, input.vote);
 
@@ -39,6 +41,7 @@ export const castVote = os.diffs.castVote
 
 export const removeVote = os.diffs.removeVote
   .use(authenticatedMiddleware)
+  .use(reviewerMiddleware)
   .use(organizationDiffMiddleware)
   .handler(async ({ input, context }) => {
     const result = await removeVoteService({
@@ -56,6 +59,7 @@ export const removeVote = os.diffs.removeVote
 
 export const bulkCastVote = os.diffs.bulkCastVote
   .use(authenticatedMiddleware)
+  .use(reviewerMiddleware)
   .handler(async ({ input, context }) => {
     await bulkCastVoteService(input.buildId, context.user.id, input.vote);
   })

@@ -147,7 +147,9 @@ describe("projects", () => {
       expect(error?.code).toBe("UNAUTHORIZED");
     });
 
-    test("should return FORBIDDEN when the session user is not an admin", async ({ user: _ }) => {
+    test("should return FORBIDDEN when the session user is not an admin", async ({
+      reviewer: _,
+    }) => {
       const [error] = await serverClient.projects.add(TEST_PROJECT);
       expect(error?.code).toBe("FORBIDDEN");
     });
@@ -179,7 +181,9 @@ describe("projects", () => {
       expect(error?.code).toBe("UNAUTHORIZED");
     });
 
-    test("should return FORBIDDEN when the session user is not an admin", async ({ user: _ }) => {
+    test("should return FORBIDDEN when the session user is not an admin", async ({
+      reviewer: _,
+    }) => {
       const [error] = await serverClient.projects.update({
         id: NONEXISTENT_PROJECT_ID,
         patch: { retentionDays: 30 },
@@ -229,7 +233,9 @@ describe("projects", () => {
       expect(error?.code).toBe("UNAUTHORIZED");
     });
 
-    test("should return FORBIDDEN when the session user is not an admin", async ({ user: _ }) => {
+    test("should return FORBIDDEN when the session user is not an admin", async ({
+      reviewer: _,
+    }) => {
       const [error] = await serverClient.projects.deleteProject({ id: NONEXISTENT_PROJECT_ID });
       expect(error?.code).toBe("FORBIDDEN");
     });

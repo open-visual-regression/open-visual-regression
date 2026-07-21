@@ -3,10 +3,9 @@
 import { headers } from "next/headers";
 
 import { auth } from "@/lib/auth/auth";
+import { type Role } from "@/lib/auth/roles";
 
 import { Result } from "../types";
-
-type Role = "admin" | "user";
 
 export const verifyRole = async (role: Role): Promise<Result<boolean>> => {
   try {

@@ -128,6 +128,12 @@ describe("diffs", () => {
 
       expect(error?.code).toBe("NOT_FOUND");
     });
+
+    test("returns FORBIDDEN for a viewer", async ({ viewer: _ }) => {
+      const [error] = await serverClient.diffs.castVote({ diffId: uuidv7(), vote: "approve" });
+
+      expect(error?.code).toBe("FORBIDDEN");
+    });
   });
 
   describe("removeVote", () => {
@@ -252,6 +258,12 @@ describe("diffs", () => {
       expect(error?.code).toBe("FORBIDDEN");
       expect(await dbClient.diffReviews.findByDiff(diff!.id)).toHaveLength(1);
     });
+
+    test("returns FORBIDDEN for a viewer", async ({ viewer: _ }) => {
+      const [error] = await serverClient.diffs.removeVote({ diffId: uuidv7() });
+
+      expect(error?.code).toBe("FORBIDDEN");
+    });
   });
 
   describe("bulkCastVote", () => {
@@ -283,6 +295,12 @@ describe("diffs", () => {
       expect(await dbClient.diffs.findById(notRequiredDiff!.id)).toMatchObject({
         reviewStatus: "not_required",
       });
+    });
+
+    test("returns FORBIDDEN for a viewer", async ({ viewer: _ }) => {
+      const [error] = await serverClient.diffs.bulkCastVote({ buildId: uuidv7(), vote: "approve" });
+
+      expect(error?.code).toBe("FORBIDDEN");
     });
   });
 

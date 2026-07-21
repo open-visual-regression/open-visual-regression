@@ -18,6 +18,7 @@ import {
   apiKeyMiddleware,
   authenticatedMiddleware,
   organizationBuildMiddleware,
+  reviewerMiddleware,
 } from "./middleware";
 import { os } from "./os";
 import {
@@ -126,6 +127,7 @@ export const watchStatus = os.builds.watchStatus
 
 export const cancel = os.builds.cancel
   .use(authenticatedMiddleware)
+  .use(reviewerMiddleware)
   .use(organizationBuildMiddleware)
   .handler(async ({ context }) => {
     const result = await cancelBuildService(context.build.id, context.user.id);

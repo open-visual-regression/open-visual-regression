@@ -23,33 +23,33 @@ describe("account", () => {
       expect(error?.code).toBe("UNAUTHORIZED");
     });
 
-    test("should update the user's name", async ({ user }) => {
+    test("should update the user's name", async ({ reviewer }) => {
       const [error] = await serverClient.account.updateAccountInformation({
         name: "Updated Name",
-        email: user.email,
+        email: reviewer.email,
       });
 
       expect(error).toBeNull();
 
-      const updated = await dbClient.users.findByEmail(user.email);
+      const updated = await dbClient.users.findByEmail(reviewer.email);
       expect(updated?.name).toBe("Updated Name");
     });
 
-    test("should update the user's email", async ({ user }) => {
+    test("should update the user's email", async ({ reviewer }) => {
       const newEmail = "updated-email@openvisualregression.com";
 
       const [error] = await serverClient.account.updateAccountInformation({
-        name: user.name,
+        name: reviewer.name,
         email: newEmail,
       });
 
       expect(error).toBeNull();
 
       const updated = await dbClient.users.findByEmail(newEmail);
-      expect(updated?.id).toBe(user.id);
+      expect(updated?.id).toBe(reviewer.id);
     });
 
-    test("should return CONFLICT when the email belongs to another user", async ({ user }) => {
+    test("should return CONFLICT when the email belongs to another user", async ({ reviewer }) => {
       const generated = mocks.user.generateAuthUser();
       const other = { ...generated, email: generated.email.toLowerCase() };
       await auth.api.signUpEmail({
@@ -57,7 +57,7 @@ describe("account", () => {
       });
 
       const [error] = await serverClient.account.updateAccountInformation({
-        name: user.name,
+        name: reviewer.name,
         email: other.email,
       });
 
@@ -65,7 +65,7 @@ describe("account", () => {
       expect(error?.message).toBe("this email is already in use");
     });
 
-    test("should not modify another user's record", async ({ user }) => {
+    test("should not modify another user's record", async ({ reviewer }) => {
       const generated = mocks.user.generateAuthUser();
       const other = { ...generated, email: generated.email.toLowerCase() };
       await auth.api.signUpEmail({
@@ -74,7 +74,7 @@ describe("account", () => {
 
       const [error] = await serverClient.account.updateAccountInformation({
         name: "Updated Name",
-        email: user.email,
+        email: reviewer.email,
       });
 
       expect(error).toBeNull();
@@ -94,7 +94,7 @@ describe("account", () => {
       expect(error?.code).toBe("UNAUTHORIZED");
     });
 
-    test("should update the user's password", async ({ user }) => {
+    test("should update the user's password", async ({ reviewer }) => {
       const [error] = await serverClient.account.updatePassword({
         currentPassword: TEST_PASSWORD,
         newPassword: "newsecurepass456",
@@ -105,14 +105,14 @@ describe("account", () => {
       vi.mocked(headers).mockResolvedValue(new Headers());
 
       const signInResult = await auth.api.signInEmail({
-        body: { email: user.email, password: "newsecurepass456" },
+        body: { email: reviewer.email, password: "newsecurepass456" },
       });
 
-      expect(signInResult.user.id).toBe(user.id);
+      expect(signInResult.user.id).toBe(reviewer.id);
     });
 
     test("should return BAD_REQUEST when the current password is incorrect", async ({
-      user: _user,
+      reviewer: _reviewer,
     }) => {
       const [error] = await serverClient.account.updatePassword({
         currentPassword: "wrongpassword123",

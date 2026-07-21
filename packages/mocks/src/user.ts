@@ -35,7 +35,7 @@ export const generateUser = (overrides?: UserOverrides): UserSchema => {
     id: overrides?.id ?? faker.string.uuid(),
     name: overrides?.name ?? faker.person.fullName(),
     email: overrides?.email ?? faker.internet.email(),
-    role: overrides?.role !== undefined ? overrides.role : "user",
+    role: overrides?.role !== undefined ? overrides.role : "reviewer",
     createdAt: overrides?.createdAt ?? faker.date.past(),
   };
 

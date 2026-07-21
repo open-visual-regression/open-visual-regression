@@ -18,7 +18,7 @@ describe("baselines", () => {
       project,
       captureConfiguration,
       mainBuild,
-      user,
+      reviewer,
     }) => {
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
@@ -34,7 +34,7 @@ describe("baselines", () => {
         ...captureConfiguration,
         targetId: "story-a",
         snapshotId: snapshot!.id,
-        approvedBy: user.id,
+        approvedBy: reviewer.id,
       });
 
       const result = await getBaseline(project.id, captureConfiguration, "story-a");
@@ -48,7 +48,7 @@ describe("baselines", () => {
       project,
       captureConfiguration,
       mainBuild,
-      user,
+      reviewer,
     }) => {
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
@@ -61,23 +61,23 @@ describe("baselines", () => {
       });
       const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
 
-      await promoteBaseline(diff!.id, user.id);
+      await promoteBaseline(diff!.id, reviewer.id);
 
       const baseline = await getBaseline(project.id, captureConfiguration, "story-a");
-      expect(baseline).toMatchObject({ snapshotId: snapshot!.id, approvedBy: user.id });
+      expect(baseline).toMatchObject({ snapshotId: snapshot!.id, approvedBy: reviewer.id });
     });
 
     test("should not let an approval on a feature branch change what future stories are compared against", async ({
       project,
       captureConfiguration,
-      user,
+      reviewer,
     }) => {
       const featureBuild = await dbClient.builds.create({
         projectId: project.id,
         branch: "feature/x",
         commitSha: "b".repeat(40),
         artifactPath: "builds/feature/artifact",
-        createdBy: user.id,
+        createdBy: reviewer.id,
       });
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
@@ -90,7 +90,7 @@ describe("baselines", () => {
       });
       const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
 
-      await promoteBaseline(diff!.id, user.id);
+      await promoteBaseline(diff!.id, reviewer.id);
 
       const baseline = await getBaseline(project.id, captureConfiguration, "story-b");
       expect(baseline).toBeUndefined();

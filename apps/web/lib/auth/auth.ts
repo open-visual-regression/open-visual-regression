@@ -5,10 +5,20 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { admin, organization } from "better-auth/plugins";
+import { createAccessControl } from "better-auth/plugins/access";
+import { adminAc, defaultStatements, userAc } from "better-auth/plugins/admin/access";
 
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
 import * as schema from "@ovr/db/schema";
+
+const ac = createAccessControl(defaultStatements);
+
+const roles = {
+  admin: ac.newRole(adminAc.statements),
+  reviewer: ac.newRole(userAc.statements),
+  viewer: ac.newRole(userAc.statements),
+};
 
 export const auth = betterAuth({
   emailAndPassword: {
@@ -25,7 +35,7 @@ export const auth = betterAuth({
     schema,
   }),
   plugins: [
-    admin(),
+    admin({ ac, roles, defaultRole: "reviewer" }),
     apiKey({
       defaultPrefix: "ovr_api_key_",
       enableMetadata: true,
