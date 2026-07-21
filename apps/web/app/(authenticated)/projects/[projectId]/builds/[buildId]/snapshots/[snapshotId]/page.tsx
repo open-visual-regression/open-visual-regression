@@ -1,5 +1,8 @@
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 
+import { auth } from "@/lib/auth/auth";
+import { canReview } from "@/lib/auth/roles";
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
 
@@ -46,6 +49,8 @@ export default async function SnapshotPage(props: SnapshotPageProps) {
   const { diff } = diffResult;
   const { prevSnapshotId, nextSnapshotId, position, total } = adjacentResult;
 
+  const session = await auth.api.getSession({ headers: await headers() });
+
   return (
     <SnapshotLayout
       snapshot={snapshot}
@@ -56,6 +61,7 @@ export default async function SnapshotPage(props: SnapshotPageProps) {
       nextSnapshotId={nextSnapshotId}
       position={position}
       total={total}
+      canReview={canReview(session?.user.role)}
       sidebar={
         <SnapshotSidebarContent
           snapshot={snapshot}

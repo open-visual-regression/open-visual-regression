@@ -32,7 +32,7 @@ describe("NavigationBarMobileMenu", () => {
     vi.mocked(usePathname).mockReturnValue("/");
 
     render(
-      <NavigationBarMobileMenu role="user" projects={PROJECTS} projectsTotal={2} builds={[]} />,
+      <NavigationBarMobileMenu role="reviewer" projects={PROJECTS} projectsTotal={2} builds={[]} />,
     );
 
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
@@ -56,7 +56,7 @@ describe("NavigationBarMobileMenu", () => {
     vi.mocked(usePathname).mockReturnValue("/projects");
 
     render(
-      <NavigationBarMobileMenu role="user" projects={PROJECTS} projectsTotal={2} builds={[]} />,
+      <NavigationBarMobileMenu role="reviewer" projects={PROJECTS} projectsTotal={2} builds={[]} />,
     );
 
     await user.click(screen.getByRole("button", { name: /open projects navigation/i }));
@@ -71,7 +71,12 @@ describe("NavigationBarMobileMenu", () => {
     vi.mocked(usePathname).mockReturnValue("/projects");
 
     render(
-      <NavigationBarMobileMenu role="user" projects={PROJECTS} projectsTotal={2} builds={BUILDS} />,
+      <NavigationBarMobileMenu
+        role="reviewer"
+        projects={PROJECTS}
+        projectsTotal={2}
+        builds={BUILDS}
+      />,
     );
 
     await user.click(screen.getByRole("button", { name: /open projects navigation/i }));
@@ -100,7 +105,7 @@ describe("NavigationBarMobileMenu", () => {
     vi.mocked(usePathname).mockReturnValue("/projects");
 
     render(
-      <NavigationBarMobileMenu role="user" projects={PROJECTS} projectsTotal={5} builds={[]} />,
+      <NavigationBarMobileMenu role="reviewer" projects={PROJECTS} projectsTotal={5} builds={[]} />,
     );
 
     await user.click(screen.getByRole("button", { name: /open projects navigation/i }));

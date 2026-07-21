@@ -1,8 +1,11 @@
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 
 import { snapshotDisplayStatusSchema } from "@ovr/api/contracts/builds";
 
+import { auth } from "@/lib/auth/auth";
+import { canReview } from "@/lib/auth/roles";
 import { getSnapshotStatusLabel } from "@/lib/components/SnapshotStatusBadge";
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
@@ -92,6 +95,8 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
     label: viewport,
   }));
 
+  const session = await auth.api.getSession({ headers: await headers() });
+
   const { build } = buildResult;
   const hasStorybook =
     build.buildType === "storybook" &&
@@ -102,7 +107,12 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
 
   return (
     <div className="flex flex-col gap-6">
-      <BuildHeader build={build} snapshotCounts={snapshotCounts} storybookHref={storybookHref} />
+      <BuildHeader
+        build={build}
+        snapshotCounts={snapshotCounts}
+        storybookHref={storybookHref}
+        canReview={canReview(session?.user.role)}
+      />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <SnapshotFilters
           statuses={statuses}

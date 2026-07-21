@@ -26,7 +26,7 @@ describe("verifyRole", () => {
 
   it("should deny access when the user does not have the required role", async () => {
     mockGetSession.mockResolvedValue({
-      user: mocks.user.generateAuthUser({ role: "user" }),
+      user: mocks.user.generateAuthUser({ role: "reviewer" }),
       session: mocks.session.generateSession(),
     });
 

@@ -56,7 +56,7 @@ describe("SettingsUsersPage", () => {
 
   it("should show a not found page for non-admins", async () => {
     mockGetSession.mockResolvedValue({
-      user: mocks.user.generateAuthUser({ role: "user" }),
+      user: mocks.user.generateAuthUser({ role: "reviewer" }),
       session: mocks.session.generateSession(),
     });
 

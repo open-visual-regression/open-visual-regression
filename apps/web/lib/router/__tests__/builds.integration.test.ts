@@ -281,6 +281,12 @@ describe("builds", () => {
 
       expect(error?.code).toBe("NOT_FOUND");
     });
+
+    test("should return FORBIDDEN for a viewer", async ({ viewer: _ }) => {
+      const [error] = await serverClient.builds.cancel({ buildId: uuidv7() });
+
+      expect(error?.code).toBe("FORBIDDEN");
+    });
   });
 
   describe("list", () => {
@@ -302,7 +308,7 @@ describe("builds", () => {
       expect(result?.total).toBe(0);
     });
 
-    test("should be accessible to a non-admin user", async ({ user: _ }) => {
+    test("should be accessible to a non-admin user", async ({ reviewer: _ }) => {
       const [error] = await serverClient.builds.list();
 
       expect(error).toBeNull();

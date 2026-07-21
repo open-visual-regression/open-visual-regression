@@ -18,6 +18,7 @@ type ActionsRowProps = {
   nextSnapshotId: string | null;
   position: number | null;
   total: number | null;
+  canReview: boolean;
   sidebarCollapsed: boolean;
   onToggleSidebar: () => void;
 };
@@ -31,6 +32,7 @@ export const SnapshotActionsRow = ({
   nextSnapshotId,
   position,
   total,
+  canReview,
   sidebarCollapsed,
   onToggleSidebar,
 }: ActionsRowProps) => {
@@ -43,7 +45,10 @@ export const SnapshotActionsRow = ({
           <Icon icon={ChevronLeftIcon} />
           back
         </ButtonLink>
-        {diff && diff.reviewStatus !== "not_required" && snapshot.status !== "error" ? (
+        {canReview &&
+        diff &&
+        diff.reviewStatus !== "not_required" &&
+        snapshot.status !== "error" ? (
           <>
             <SnapshotRejectButton diffId={diff.id} rejected={snapshot.status === "rejected"} />
             <SnapshotApproveButton diffId={diff.id} approved={snapshot.status === "approved"} />

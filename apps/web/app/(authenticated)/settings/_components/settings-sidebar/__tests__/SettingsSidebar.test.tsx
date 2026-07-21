@@ -22,7 +22,7 @@ describe("SettingsSidebar", () => {
   it("should hide the admin section for a non-admin user", () => {
     vi.mocked(usePathname).mockReturnValue("/settings/account");
 
-    render(<SettingsSidebar role="user" />);
+    render(<SettingsSidebar role="reviewer" />);
 
     expect(screen.getByRole("heading", { name: "personal" })).toBeVisible();
     expect(screen.queryByRole("heading", { name: "admin" })).not.toBeInTheDocument();

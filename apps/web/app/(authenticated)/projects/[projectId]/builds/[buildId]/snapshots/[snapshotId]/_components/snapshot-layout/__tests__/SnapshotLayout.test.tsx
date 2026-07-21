@@ -33,6 +33,7 @@ const renderComponent = () =>
       nextSnapshotId={null}
       position={null}
       total={null}
+      canReview={true}
       sidebar={<div>sidebar contents</div>}
     >
       <div>snapshot contents</div>

@@ -2,6 +2,7 @@ import type { DiffReviewSchema } from "@ovr/api/contracts/diffs";
 import { Badge } from "@ovr/ui/components/badge";
 import { Typography } from "@ovr/ui/components/typography";
 
+import { canReview } from "@/lib/auth/roles";
 import { Avatar } from "@/lib/components/avatar/Avatar";
 import { formatRelativeDateTime } from "@/lib/utils/date";
 
@@ -29,6 +30,7 @@ export const SnapshotReviews = ({
   const approvals = reviews.filter((review) => review.vote === "approve").length;
   const canRemoveAny =
     diffId !== null &&
+    canReview(role) &&
     (role === "admin" || reviews.some((review) => review.reviewerId === currentUserId));
 
   return (
