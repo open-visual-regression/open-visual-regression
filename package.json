@@ -16,9 +16,14 @@
     "db:migrate": "pnpm --filter @ovr/db db:migrate",
     "db:push": "pnpm --filter @ovr/db db:push",
     "db:studio": "pnpm --filter @ovr/db db:studio",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "changeset publish",
     "prepare": "husky"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "^0.5.1",
+    "@changesets/cli": "^2.29.7",
     "@fission-ai/openspec": "^1.4.1",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.5",
