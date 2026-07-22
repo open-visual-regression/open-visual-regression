@@ -1,10 +1,11 @@
-import { Redis } from "ioredis";
+import type { Redis } from "ioredis";
 import { v7 as uuidv7 } from "uuid";
 import { test as vitest } from "vitest";
 
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
 import { organization, projects, user as userTable } from "@ovr/db/schema";
+import { buildRedisConnection } from "@ovr/queue";
 
 export { describe, expect } from "vitest";
 
@@ -91,7 +92,7 @@ export const test = vitest.extend<Fixtures>({
 
   // eslint-disable-next-line no-empty-pattern
   connection: async ({}, use) => {
-    const connection = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379", {
+    const connection = buildRedisConnection(process.env.REDIS_URL ?? "redis://localhost:6379", {
       maxRetriesPerRequest: null,
     });
 

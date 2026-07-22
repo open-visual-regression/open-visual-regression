@@ -1,12 +1,11 @@
 import "./env";
 import { Worker, type Job } from "bullmq";
-import { Redis } from "ioredis";
 import { z } from "zod";
 
 import { CAPTURE_GROUP_SIZE } from "@ovr/capture/extract";
 import { CAPTURE_JOB_TIMEOUT_MS } from "@ovr/capture/lib/captureTimeouts";
 import { assertEncryptionKey } from "@ovr/git-status/crypto";
-import { QueueName, scheduleReaper, schedulePurge } from "@ovr/queue";
+import { QueueName, buildRedisConnection, scheduleReaper, schedulePurge } from "@ovr/queue";
 
 import * as capture from "./handlers/capture";
 import * as diff from "./handlers/diff";
@@ -20,7 +19,7 @@ import * as reaper from "./handlers/reaper";
 
 assertEncryptionKey();
 
-const connection = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379", {
+const connection = buildRedisConnection(process.env.REDIS_URL ?? "redis://localhost:6379", {
   maxRetriesPerRequest: null,
 });
 

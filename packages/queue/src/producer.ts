@@ -1,5 +1,4 @@
 import type { Job } from "bullmq";
-import { Redis } from "ioredis";
 
 import {
   publishBuildStatusEvent as publishBuildStatusEventCmd,
@@ -22,9 +21,10 @@ import {
   type GitStatusPublishJobPayload,
   type ProjectPurgeJobPayload,
   type PurgeJobPayload,
+  buildRedisConnection,
 } from "./index";
 
-const connection = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379", {
+const connection = buildRedisConnection(process.env.REDIS_URL ?? "redis://localhost:6379", {
   maxRetriesPerRequest: null,
   lazyConnect: true,
 });

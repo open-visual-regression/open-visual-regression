@@ -4,13 +4,12 @@ import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { ExpressAdapter } from "@bull-board/express";
 import { Queue } from "bullmq";
 import express from "express";
-import { Redis } from "ioredis";
 
-import { QueueName } from "@ovr/queue";
+import { QueueName, buildRedisConnection } from "@ovr/queue";
 
 const PORT = Number(process.env.BULL_BOARD_PORT ?? 3001);
 
-const connection = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379", {
+const connection = buildRedisConnection(process.env.REDIS_URL ?? "redis://localhost:6379", {
   maxRetriesPerRequest: null,
 });
 
