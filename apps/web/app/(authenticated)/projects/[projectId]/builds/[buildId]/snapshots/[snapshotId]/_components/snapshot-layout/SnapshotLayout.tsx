@@ -6,6 +6,7 @@ import type { DiffSchema } from "@ovr/api/contracts/diffs";
 import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 
 import { SnapshotActionsRow } from "../snapshot-actions/SnapshotActionsRow";
+import { ComparisonModeProvider } from "../snapshot-comparison-section/comparison-view/comparison-mode";
 import { SnapshotSidebar } from "../snapshot-sidebar/SnapshotSidebar";
 
 export type SnapshotLayoutProps = {
@@ -54,7 +55,7 @@ export const SnapshotLayout = ({
       />
       <div className="flex min-h-0 flex-1 flex-row">
         <div className="flex min-w-0 flex-1 flex-col gap-6 overflow-y-auto px-5 py-3 md:px-6 md:py-4 lg:px-10 lg:py-6">
-          {children}
+          <ComparisonModeProvider>{children}</ComparisonModeProvider>
         </div>
         {sidebarCollapsed ? null : <SnapshotSidebar>{sidebar}</SnapshotSidebar>}
       </div>

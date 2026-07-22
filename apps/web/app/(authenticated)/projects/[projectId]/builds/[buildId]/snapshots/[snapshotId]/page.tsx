@@ -7,6 +7,7 @@ import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
 import { getStorybookStoryPath, hasHostedStorybook } from "@/lib/utils/storage";
 
+import { ComparisonControls } from "./_components/snapshot-comparison-section/comparison-view/ComparisonControls";
 import { SnapshotComparisonSection } from "./_components/snapshot-comparison-section/SnapshotComparisonSection";
 import { SnapshotHeader } from "./_components/snapshot-header/SnapshotHeader";
 import { SnapshotLayout } from "./_components/snapshot-layout/SnapshotLayout";
@@ -75,7 +76,16 @@ export default async function SnapshotPage(props: SnapshotPageProps) {
         />
       }
     >
-      <SnapshotHeader snapshot={snapshot} build={build} storybookHref={storybookHref} />
+      <SnapshotHeader
+        snapshot={snapshot}
+        build={build}
+        storybookHref={storybookHref}
+        controls={
+          diff?.baselineSnapshot ? (
+            <ComparisonControls hasDiff={diff.diffImagePath !== null} />
+          ) : null
+        }
+      />
       <SnapshotComparisonSection snapshot={snapshot} diff={diff} />
     </SnapshotLayout>
   );

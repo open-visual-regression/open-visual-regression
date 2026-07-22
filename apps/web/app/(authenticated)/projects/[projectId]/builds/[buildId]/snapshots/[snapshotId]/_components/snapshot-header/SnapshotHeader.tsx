@@ -12,9 +12,15 @@ export type SnapshotHeaderProps = {
   snapshot: SnapshotSchema;
   build: BuildSchema;
   storybookHref: string | null;
+  controls?: React.ReactNode;
 };
 
-export const SnapshotHeader = ({ snapshot, build, storybookHref }: SnapshotHeaderProps) => (
+export const SnapshotHeader = ({
+  snapshot,
+  build,
+  storybookHref,
+  controls,
+}: SnapshotHeaderProps) => (
   <div className="flex flex-col gap-6">
     <div className="flex flex-col gap-2">
       <Typography variant="h1" as="h1">
@@ -40,6 +46,7 @@ export const SnapshotHeader = ({ snapshot, build, storybookHref }: SnapshotHeade
           {snapshot.browser} · <ResolutionIcon width={snapshot.viewportWidth} size={12} />
           {snapshot.viewportName}
         </Typography>
+        {controls}
       </div>
     </div>
     {snapshot.status === "error" ? (
