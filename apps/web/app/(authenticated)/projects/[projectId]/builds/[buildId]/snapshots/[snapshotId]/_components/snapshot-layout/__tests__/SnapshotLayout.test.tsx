@@ -15,6 +15,7 @@ const snapshot: SnapshotSchema = {
   viewportWidth: 1280,
   viewportHeight: 800,
   viewportName: "desktop",
+  targetId: "ui-button--primary",
   targetName: "Kitchen Sink",
   targetTitle: "UI/Button",
   imagePath: "new.png",

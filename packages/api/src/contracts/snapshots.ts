@@ -16,6 +16,7 @@ export const snapshotSchema = z.object({
   viewportWidth: z.number().int(),
   viewportHeight: z.number().int().nullable(),
   viewportName: z.string().min(1),
+  targetId: z.string().min(1),
   targetName: z.string(),
   targetTitle: z.string(),
   imagePath: z.string().nullable(),
