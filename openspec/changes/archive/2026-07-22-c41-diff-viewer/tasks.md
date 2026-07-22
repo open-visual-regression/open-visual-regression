@@ -1,5 +1,16 @@
 # 41 · Diff viewer — side + overlay modes
 
+> Status: ARCHIVED — superseded. The per-diff viewer at a `builds/[buildId]/diffs/[diffId]` route
+> with a mode-switching `DiffToolbar` (side/overlay/slider) was reimagined as a per-snapshot
+> comparison page: `builds/[buildId]/snapshots/[snapshotId]` →
+> `_components/snapshot-comparison-section`. The substance of this change ships there, decomposed
+> differently: side-by-side is `comparison-view/SplitPanes.tsx` (baseline | new); the overlay + an
+> overlay on/off toggle is `comparison-view/NewSnapshotDiffPane.tsx` (diff image overlaid on the new
+> snapshot with a "show diff" Switch); approve/reject ship as `snapshot-actions/`. Differences from
+> the tasks below: the `diffs/[diffId]` route was never created, there is no unified mode-switcher
+> toolbar (side and overlay coexist rather than toggle), and the slider mode (c42) was not built.
+> Tasks are left unchecked because they describe the abandoned diff-viewer structure.
+
 Gate: diff viewer page loads; side and overlay modes render baseline and current images; diff region overlays toggle on/off.
 
 Read: `openspec/designs/screens/open-visual-regression/project/kit/screens-builds.jsx` (DiffScreen)

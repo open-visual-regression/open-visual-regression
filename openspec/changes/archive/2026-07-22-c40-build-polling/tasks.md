@@ -1,5 +1,13 @@
 # 40 · Build status polling
 
+> Status: ARCHIVED — superseded / delivered by another means. Live build status shipped as a push
+> stream, not periodic polling: an oRPC event iterator over Valkey pub/sub drives `BuildStatusStream`
+> (`_components/build-header/BuildStatusStream.tsx`, PR #17), so the run/build detail header updates
+> live and stops when the build reaches a terminal status. `@tanstack/react-query` +
+> `QueryClientProvider` are wired in `apps/web`, but there is no 5s `refetchInterval` polling and no
+> `GET /api/builds/[buildId]/status` REST route — the streaming approach replaced both. Tasks below
+> are left unchecked because they describe the abandoned polling design, not the shipped one.
+
 Gate: run detail page with a pending build polls every 5s; SegmentedProgress updates live; polling stops when build reaches terminal status.
 
 - [ ] 1.1 Install `@tanstack/react-query` in `apps/web`; wrap `(authenticated)/layout.tsx` with `QueryClientProvider` (client component wrapper)
