@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, userEvent, within } from "storybook/test";
 
+import { ComparisonModeProvider } from "../comparison-view/comparison-mode";
+import { ComparisonControls } from "../comparison-view/ComparisonControls";
 import { SnapshotComparisonSection } from "../SnapshotComparisonSection";
 
 const meta: Meta<typeof SnapshotComparisonSection> = {
@@ -12,6 +14,14 @@ const meta: Meta<typeof SnapshotComparisonSection> = {
       viewports: ["desktop", "tablet", "mobile"],
     },
   },
+  render: (args) => (
+    <ComparisonModeProvider>
+      {args.diff?.baselineSnapshot ? (
+        <ComparisonControls hasDiff={args.diff.diffImagePath !== null} />
+      ) : null}
+      <SnapshotComparisonSection {...args} />
+    </ComparisonModeProvider>
+  ),
 };
 
 export default meta;
@@ -77,5 +87,40 @@ export const NewWithBaselineAndDiff: Story = {
 
     await userEvent.click(canvas.getByRole("switch"));
     await expect(diffImage).toHaveStyle({ opacity: "1" });
+  },
+};
+
+export const SliderView: Story = {
+  args: {
+    snapshot: newSnapshot,
+    diff: {
+      id: "01970000-0000-7000-8000-000000000004",
+      processingStatus: "success",
+      reviewStatus: "needs_review",
+      diffImagePath: "diff-desktop.png",
+      pixelDiffCount: 120,
+      diffPercent: 0.4,
+      baselineSnapshot: { imagePath: "baseline-desktop.png" },
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    // Switching to slider view drops the diff toggle and shows a draggable handle.
+    await userEvent.click(canvas.getByRole("tab", { name: "slider" }));
+
+    const handle = canvas.getByRole("slider");
+    await expect(handle).toBeVisible();
+    await expect(canvas.queryByRole("switch")).not.toBeInTheDocument();
+
+    // The handle is keyboard operable.
+    const startPosition = Number(handle.getAttribute("aria-valuenow"));
+    handle.focus();
+    await userEvent.keyboard("{ArrowLeft}");
+    await expect(Number(handle.getAttribute("aria-valuenow"))).toBeLessThan(startPosition);
+
+    // Switching back restores the split view and its diff toggle.
+    await userEvent.click(canvas.getByRole("tab", { name: "split" }));
+    await expect(canvas.getByRole("switch")).toBeVisible();
   },
 };

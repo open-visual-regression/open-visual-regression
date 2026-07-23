@@ -3,6 +3,7 @@ import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 
 import { describe, expect, it, render, screen } from "@/test-utils";
 
+import { ComparisonModeProvider } from "../comparison-view/comparison-mode";
 import { SnapshotComparisonSection } from "../SnapshotComparisonSection";
 
 const snapshot: SnapshotSchema = {
@@ -29,44 +30,45 @@ const diff: DiffSchema = {
   baselineSnapshot: { imagePath: "baseline.png" },
 };
 
+const renderSection = (diffInput: DiffSchema | null) =>
+  render(
+    <ComparisonModeProvider>
+      <SnapshotComparisonSection snapshot={snapshot} diff={diffInput} />
+    </ComparisonModeProvider>,
+  );
+
 describe("SnapshotComparisonSection", () => {
   it.each([
     ["there is no diff", null],
     ["the diff has no baseline", { ...diff, baselineSnapshot: null }],
-  ])(
-    "should show only the new snapshot, with no baseline and no diff controls, when %s",
-    (_description, diffInput) => {
-      render(<SnapshotComparisonSection snapshot={snapshot} diff={diffInput} />);
+  ])("should show only the new snapshot, with no baseline, when %s", (_description, diffInput) => {
+    renderSection(diffInput);
 
-      expect(screen.getByRole("img", { name: "snapshot of UI/Button Kitchen Sink" })).toBeVisible();
-      expect(screen.queryByText("baseline")).not.toBeInTheDocument();
-      expect(screen.queryByRole("switch")).not.toBeInTheDocument();
-    },
-  );
-
-  it("should show the baseline alongside the new snapshot with a diff toggle when there is a visible diff", () => {
-    render(<SnapshotComparisonSection snapshot={snapshot} diff={diff} />);
-
-    expect(
-      screen.getByRole("img", {
-        name: "baseline snapshot of UI/Button Kitchen Sink",
-      }),
-    ).toBeVisible();
     expect(screen.getByRole("img", { name: "snapshot of UI/Button Kitchen Sink" })).toBeVisible();
-    expect(screen.getByRole("switch", { checked: true })).toBeVisible();
+    expect(screen.queryByText("baseline")).not.toBeInTheDocument();
   });
 
-  it("should show the baseline alongside the new snapshot with no diff toggle when there is a baseline but no visible diff", () => {
-    render(
-      <SnapshotComparisonSection snapshot={snapshot} diff={{ ...diff, diffImagePath: null }} />,
-    );
+  it("should show the baseline, the new snapshot, and the diff overlay when there is a visible diff", () => {
+    renderSection(diff);
 
     expect(
-      screen.getByRole("img", {
-        name: "baseline snapshot of UI/Button Kitchen Sink",
-      }),
+      screen.getByRole("img", { name: "baseline snapshot of UI/Button Kitchen Sink" }),
     ).toBeVisible();
     expect(screen.getByRole("img", { name: "snapshot of UI/Button Kitchen Sink" })).toBeVisible();
-    expect(screen.queryByRole("switch")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: "diff overlay of snapshot of UI/Button Kitchen Sink" }),
+    ).toBeVisible();
+  });
+
+  it("should show the baseline and new snapshot without a diff overlay when there is no visible diff", () => {
+    renderSection({ ...diff, diffImagePath: null });
+
+    expect(
+      screen.getByRole("img", { name: "baseline snapshot of UI/Button Kitchen Sink" }),
+    ).toBeVisible();
+    expect(screen.getByRole("img", { name: "snapshot of UI/Button Kitchen Sink" })).toBeVisible();
+    expect(
+      screen.queryByRole("img", { name: "diff overlay of snapshot of UI/Button Kitchen Sink" }),
+    ).not.toBeInTheDocument();
   });
 });

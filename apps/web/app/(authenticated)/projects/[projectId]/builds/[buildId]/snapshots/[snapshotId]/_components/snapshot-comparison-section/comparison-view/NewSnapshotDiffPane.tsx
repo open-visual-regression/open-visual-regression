@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 
-import { Switch } from "@ovr/ui/components/switch";
 import { Typography } from "@ovr/ui/components/typography";
 import { cn } from "@ovr/ui/lib/utils";
 
@@ -16,6 +15,7 @@ export type NewSnapshotDiffPaneProps = {
   imagePath: string | null;
   diffImagePath: string;
   alt: string;
+  showDiff: boolean;
 };
 
 export const NewSnapshotDiffPane = ({
@@ -23,8 +23,8 @@ export const NewSnapshotDiffPane = ({
   imagePath,
   diffImagePath,
   alt,
+  showDiff,
 }: NewSnapshotDiffPaneProps) => {
-  const [showDiff, setShowDiff] = useState(true);
   const [diffNaturalWidth, setDiffNaturalWidth] = useState<number | null>(null);
   const [imageNaturalWidth, setImageNaturalWidth] = useState<number | null>(null);
 
@@ -33,12 +33,8 @@ export const NewSnapshotDiffPane = ({
 
   return (
     <SnapshotPane>
-      <SnapshotPaneHeader className="justify-between">
+      <SnapshotPaneHeader>
         <Typography variant="label">{label}</Typography>
-        <label className="flex items-center gap-2">
-          <Typography variant="caption">show diff</Typography>
-          <Switch checked={showDiff} onCheckedChange={setShowDiff} />
-        </label>
       </SnapshotPaneHeader>
       <div className="relative min-h-64 overflow-hidden rounded-card border border-ovr-border bg-ovr-inset bg-pixel-grid lg:min-h-96">
         {imagePath ? (
