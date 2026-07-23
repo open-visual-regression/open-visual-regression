@@ -1,10 +1,25 @@
 import { Queue } from "bullmq";
 import type { Job, JobsOptions } from "bullmq";
+import { Redis } from "ioredis";
 import type IORedis from "ioredis";
+import type { RedisOptions } from "ioredis";
 
 import { createLogger } from "@ovr/logger";
 
 const logger = createLogger("queue");
+
+export const buildRedisConnection = (redisUrl: string, options?: RedisOptions): IORedis => {
+  const url = new URL(redisUrl);
+  return new Redis({
+    host: url.hostname,
+    port: Number(url.port) || 6379,
+    username: url.username || undefined,
+    password: url.password || undefined,
+    db: url.pathname.length > 1 ? Number(url.pathname.slice(1)) : undefined,
+    tls: url.protocol === "rediss:" ? {} : undefined,
+    ...options,
+  });
+};
 
 export enum QueueName {
   BUILD_EXTRACT = "build-extract",

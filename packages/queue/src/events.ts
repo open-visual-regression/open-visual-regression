@@ -1,8 +1,9 @@
-import { Redis } from "ioredis";
 import type IORedis from "ioredis";
 
 import type { BuildProcessingStatus, BuildReviewStatus } from "@ovr/db/schema";
 import { createLogger } from "@ovr/logger";
+
+import { buildRedisConnection } from "./index";
 
 const logger = createLogger("queue");
 
@@ -37,7 +38,7 @@ export const createBuildStatusSubscriber = (
   onEvent: (event: BuildStatusEvent) => void,
   redisUrl = process.env.REDIS_URL ?? "redis://localhost:6379",
 ): BuildStatusSubscriber => {
-  const connection = new Redis(redisUrl, { maxRetriesPerRequest: null });
+  const connection = buildRedisConnection(redisUrl, { maxRetriesPerRequest: null });
 
   const ready = connection.psubscribe(BUILD_STATUS_CHANNEL_PATTERN).then(() => undefined);
   void ready.catch((error) => {

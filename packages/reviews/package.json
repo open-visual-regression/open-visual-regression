@@ -18,6 +18,7 @@
     "@ovr/db": "workspace:*"
   },
   "devDependencies": {
+    "@ovr/queue": "workspace:*",
     "@ovr/testing": "workspace:*",
     "@ovr/typescript-config": "workspace:*",
     "@testcontainers/postgresql": "^12.0.1",
