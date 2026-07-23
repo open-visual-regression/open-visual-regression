@@ -5,6 +5,10 @@
   "bin": {
     "ovr": "./bin/ovr.mjs"
   },
+  "files": [
+    "dist",
+    "bin"
+  ],
   "type": "module",
   "exports": {
     ".": "./dist/index.js",
@@ -13,24 +17,29 @@
       "default": "./dist/defineConfig.js"
     }
   },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
     "tsc": "tsc --noEmit",
     "lint": "oxlint src",
     "format": "oxfmt src",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prepack": "tsup"
   },
   "dependencies": {
     "@orpc/client": "^1.14.6",
     "@orpc/contract": "^1.14.6",
-    "@ovr/api": "workspace:*",
     "commander": "^15.0.0",
     "jiti": "^2.7.0",
     "ky": "^2.0.2",
     "tar": "^7.5.16"
   },
   "devDependencies": {
+    "@ovr/api": "workspace:*",
     "@ovr/typescript-config": "workspace:*",
     "@types/node": "^22.15.3",
     "tsup": "^8.5.1",
