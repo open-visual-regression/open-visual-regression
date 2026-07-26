@@ -1,5 +1,7 @@
 "use server";
 
+import { ORPCError } from "@orpc/server";
+
 import { db, sql } from "@ovr/db/db";
 import { createLogger } from "@ovr/logger";
 import { buildRedisConnection } from "@ovr/queue";
@@ -22,7 +24,10 @@ const checkRedis = async (): Promise<"ok" | "error"> => {
   const connection = buildRedisConnection(process.env.REDIS_URL ?? "redis://localhost:6379", {
     lazyConnect: true,
     maxRetriesPerRequest: 1,
+    retryStrategy: () => null,
   });
+
+  connection.on("error", () => {});
 
   try {
     await connection.connect();
@@ -39,14 +44,12 @@ const checkRedis = async (): Promise<"ok" | "error"> => {
 export const check = os.health.check
   .handler(async () => {
     const [dbStatus, redisStatus] = await Promise.all([checkDb(), checkRedis()]);
-    const healthy = dbStatus === "ok" && redisStatus === "ok";
+    const checks = { db: dbStatus, redis: redisStatus };
 
-    return {
-      status: healthy ? (200 as const) : (503 as const),
-      body: {
-        status: healthy ? ("ok" as const) : ("error" as const),
-        checks: { db: dbStatus, redis: redisStatus },
-      },
-    };
+    if (dbStatus !== "ok" || redisStatus !== "ok") {
+      throw new ORPCError("SERVICE_UNAVAILABLE", { data: { checks } });
+    }
+
+    return { status: "ok" as const, checks };
   })
   .actionable();

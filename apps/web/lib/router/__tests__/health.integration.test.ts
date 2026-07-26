@@ -11,24 +11,20 @@ describe("health", () => {
       const [error, data] = await serverClient.health.check();
 
       expect(error).toBeNull();
-      expect(data).toEqual({
-        status: 200,
-        body: { status: "ok", checks: { db: "ok", redis: "ok" } },
-      });
+      expect(data).toEqual({ status: "ok", checks: { db: "ok", redis: "ok" } });
     });
 
-    test("should return error status when redis is unreachable", async () => {
+    test("should return a 503 SERVICE_UNAVAILABLE error when redis is unreachable", async () => {
       const originalRedisUrl = process.env.REDIS_URL;
       process.env.REDIS_URL = "redis://127.0.0.1:1";
 
       try {
         const [error, data] = await serverClient.health.check();
 
-        expect(error).toBeNull();
-        expect(data).toEqual({
-          status: 503,
-          body: { status: "error", checks: { db: "ok", redis: "error" } },
-        });
+        expect(data).toBeUndefined();
+        expect(error?.code).toBe("SERVICE_UNAVAILABLE");
+        expect(error?.status).toBe(503);
+        expect(error?.data).toEqual({ checks: { db: "ok", redis: "error" } });
       } finally {
         process.env.REDIS_URL = originalRedisUrl;
       }
