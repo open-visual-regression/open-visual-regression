@@ -1,5 +1,7 @@
 import { vi } from "vitest";
 
+import { db } from "@ovr/db/db";
+
 import { serverClient } from "@/lib/router";
 import { test, describe, expect } from "@/lib/testing/fixtures";
 
@@ -12,6 +14,17 @@ describe("health", () => {
 
       expect(error).toBeNull();
       expect(data).toEqual({ status: "ok", checks: { db: "ok", redis: "ok" } });
+    });
+
+    test("should return a 503 SERVICE_UNAVAILABLE error when the db is unreachable", async () => {
+      vi.spyOn(db, "execute").mockRejectedValueOnce(new Error("simulated db failure"));
+
+      const [error, data] = await serverClient.health.check();
+
+      expect(data).toBeUndefined();
+      expect(error?.code).toBe("SERVICE_UNAVAILABLE");
+      expect(error?.status).toBe(503);
+      expect(error?.data).toEqual({ checks: { db: "error", redis: "ok" } });
     });
 
     test("should return a 503 SERVICE_UNAVAILABLE error when redis is unreachable", async () => {
