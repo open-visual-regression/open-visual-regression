@@ -3,6 +3,7 @@ import * as apiKeys from "./apiKeys";
 import * as builds from "./builds";
 import * as diffs from "./diffs";
 import * as gitIntegrations from "./gitIntegrations";
+import * as health from "./health";
 import * as invitations from "./invitations";
 import * as projects from "./projects";
 import * as setup from "./setup";
@@ -13,6 +14,7 @@ import * as users from "./users";
 
 export const serverClient = {
   apiKeys,
+  health,
   setup,
   projects,
   storage,

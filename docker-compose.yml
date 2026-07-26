@@ -119,6 +119,17 @@ services:
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET in your .env}
       BASE_URL: ${BASE_URL:-http://localhost:3000}
       PORT: ${WEB_PORT:-3000}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:${WEB_PORT:-3000}/api/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     ports:
       - ${WEB_PORT:-3000}:${WEB_PORT:-3000}
 

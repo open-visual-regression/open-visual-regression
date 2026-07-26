@@ -195,6 +195,9 @@ importers:
       '@ovr/logger':
         specifier: workspace:*
         version: link:../../packages/logger
+      '@ovr/queue':
+        specifier: workspace:*
+        version: link:../../packages/queue
       '@ovr/reviews':
         specifier: workspace:*
         version: link:../../packages/reviews
@@ -256,9 +259,6 @@ importers:
       '@ovr/mocks':
         specifier: workspace:*
         version: link:../../packages/mocks
-      '@ovr/queue':
-        specifier: workspace:*
-        version: link:../../packages/queue
       '@ovr/testing':
         specifier: workspace:*
         version: link:../../packages/testing
