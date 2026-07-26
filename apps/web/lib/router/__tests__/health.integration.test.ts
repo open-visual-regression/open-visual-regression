@@ -15,19 +15,14 @@ describe("health", () => {
     });
 
     test("should return a 503 SERVICE_UNAVAILABLE error when redis is unreachable", async () => {
-      const originalRedisUrl = process.env.REDIS_URL;
-      process.env.REDIS_URL = "redis://127.0.0.1:1";
+      vi.stubEnv("REDIS_URL", "redis://127.0.0.1:1");
 
-      try {
-        const [error, data] = await serverClient.health.check();
+      const [error, data] = await serverClient.health.check();
 
-        expect(data).toBeUndefined();
-        expect(error?.code).toBe("SERVICE_UNAVAILABLE");
-        expect(error?.status).toBe(503);
-        expect(error?.data).toEqual({ checks: { db: "ok", redis: "error" } });
-      } finally {
-        process.env.REDIS_URL = originalRedisUrl;
-      }
+      expect(data).toBeUndefined();
+      expect(error?.code).toBe("SERVICE_UNAVAILABLE");
+      expect(error?.status).toBe(503);
+      expect(error?.data).toEqual({ checks: { db: "ok", redis: "error" } });
     });
   });
 });
