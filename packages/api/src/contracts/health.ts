@@ -11,9 +11,7 @@ export const healthCheckOutputSchema = z.object({
   }),
 });
 
-export const healthCheckContract = oc
-  .route({ method: "GET", path: "/" })
-  .output(healthCheckOutputSchema);
+export const healthCheckContract = oc.route({ method: "GET" }).output(healthCheckOutputSchema);
 
 export const contract = {
   check: healthCheckContract,
