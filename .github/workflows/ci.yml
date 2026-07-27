@@ -72,8 +72,14 @@ jobs:
       - run: pnpm format -- --check
 
   build-storybook:
-    name: Build Storybook
+    name: Build Storybook (${{ matrix.package.name }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - { name: ui, filter: "@ovr/ui", apiKeySecret: OVR_API_KEY_UI }
+          - { name: web, filter: "@ovr/web", apiKeySecret: OVR_API_KEY_WEB }
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -82,7 +88,17 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @ovr/ui build-storybook
+      - run: pnpm --filter ${{ matrix.package.filter }} build-storybook
+      - run: pnpm --filter @open-visual-regression/cli build
+      - name: Publish snapshot to OVR
+        env:
+          OVR_API_KEY: ${{ secrets[matrix.package.apiKeySecret] }}
+        run: >
+          pnpm --filter ${{ matrix.package.filter }} exec ovr snapshot storybook
+          --dir storybook-static
+          --server-url https://openvisualregression.com
+          --branch "${{ github.head_ref || github.ref_name }}"
+          --commit "${{ github.event.pull_request.head.sha || github.sha }}"
 
   test:
     name: Test
