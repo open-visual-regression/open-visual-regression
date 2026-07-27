@@ -32,6 +32,9 @@ export default defineConfig({
           setupFiles: ["./vitest.setup.ts"],
           include: ["app/**/*.test.{ts,tsx}", "lib/**/*.test.{ts,tsx}"],
           exclude: ["app/**/*.integration.test.{ts,tsx}", "lib/**/*.integration.test.ts"],
+          // Not restoreMocks: several component tests capture automocked exports at
+          // module scope (e.g. vi.mocked(useRouter)().refresh), which restoring
+          // between tests would leave pointing at a stale mock.
           clearMocks: true,
           env: {
             BASE_URL: "http://localhost:3000",
@@ -48,7 +51,7 @@ export default defineConfig({
           setupFiles: ["./vitest.integration.setup.ts"],
           fileParallelism: false,
           testTimeout: 30_000,
-          clearMocks: true,
+          restoreMocks: true,
           unstubEnvs: true,
           env: {
             BASE_URL: "http://localhost:3000",

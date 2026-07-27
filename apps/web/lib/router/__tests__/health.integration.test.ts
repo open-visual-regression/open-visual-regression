@@ -18,6 +18,15 @@ describe("health", () => {
       expect(data).toEqual({ status: "ok" });
       expect(executeSpy).not.toHaveBeenCalled();
     });
+
+    test("should stay ok while the db is unreachable", async () => {
+      vi.spyOn(db, "execute").mockRejectedValue(new Error("simulated db failure"));
+
+      const [error, data] = await serverClient.health.live();
+
+      expect(error).toBeNull();
+      expect(data).toEqual({ status: "ok" });
+    });
   });
 
   describe("health.ready", () => {
