@@ -10,10 +10,10 @@
     "format": "oxfmt tests"
   },
   "dependencies": {
+    "@open-visual-regression/cli": "workspace:*",
     "@orpc/client": "^1.14.6",
     "@orpc/contract": "^1.14.6",
-    "@ovr/api": "workspace:*",
-    "@ovr/cli": "workspace:*"
+    "@ovr/api": "workspace:*"
   },
   "devDependencies": {
     "@ovr/typescript-config": "workspace:*",

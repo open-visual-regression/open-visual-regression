@@ -50,7 +50,7 @@
   "devDependencies": {
     "@better-auth/core": "^1.6.11",
     "@chromatic-com/storybook": "^5.2.1",
-    "@ovr/cli": "workspace:*",
+    "@open-visual-regression/cli": "workspace:*",
     "@ovr/mocks": "workspace:*",
     "@ovr/testing": "workspace:*",
     "@ovr/typescript-config": "workspace:*",
