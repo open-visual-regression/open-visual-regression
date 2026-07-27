@@ -66,11 +66,6 @@ const checkRedis = async (): Promise<"ok" | "error"> => {
   }
 };
 
-/**
- * Liveness deliberately touches no dependency. Every replica shares one database
- * and one Redis, so failing this on a dependency outage would restart the whole
- * fleet into CrashLoopBackOff over something a restart cannot fix.
- */
 export const live = os.health.live.handler(() => ({ status: "ok" as const })).actionable();
 
 export const ready = os.health.ready
@@ -78,15 +73,10 @@ export const ready = os.health.ready
     const [dbStatus, redisStatus] = await Promise.all([checkDb(), checkRedis()]);
     const checks = { db: dbStatus, redis: redisStatus };
 
-    // Postgres is a hard dependency: a session is resolved from it on every
-    // authenticated request, so a replica that cannot reach it serves nothing.
     if (dbStatus !== "ok") {
       throw new ORPCError("SERVICE_UNAVAILABLE", { data: { checks } });
     }
 
-    // Redis only backs job enqueueing and live build-status streaming. Reporting
-    // it keeps the outage visible without pulling every replica out of rotation
-    // for a partial loss of function.
     return { status: redisStatus === "ok" ? ("ok" as const) : ("degraded" as const), checks };
   })
   .actionable();
