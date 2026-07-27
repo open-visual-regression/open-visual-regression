@@ -125,7 +125,7 @@ services:
           "CMD",
           "node",
           "-e",
-          "fetch('http://localhost:${WEB_PORT:-3000}/api/rpc/health/check').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+          "fetch('http://localhost:${WEB_PORT:-3000}/api/rpc/health/ready').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
         ]
       interval: 5s
       timeout: 5s

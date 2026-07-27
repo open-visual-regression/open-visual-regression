@@ -1,18 +1,25 @@
 import { oc } from "@orpc/contract";
 import { z } from "zod";
 
-const healthCheckStatusSchema = z.enum(["ok", "error"]);
+const dependencyStatusSchema = z.enum(["ok", "error"]);
 
-export const healthCheckOutputSchema = z.object({
+export const livenessOutputSchema = z.object({
   status: z.literal("ok"),
+});
+
+export const readinessOutputSchema = z.object({
+  status: z.enum(["ok", "degraded"]),
   checks: z.object({
-    db: healthCheckStatusSchema,
-    redis: healthCheckStatusSchema,
+    db: dependencyStatusSchema,
+    redis: dependencyStatusSchema,
   }),
 });
 
-export const healthCheckContract = oc.route({ method: "GET" }).output(healthCheckOutputSchema);
+export const livenessContract = oc.route({ method: "GET" }).output(livenessOutputSchema);
+
+export const readinessContract = oc.route({ method: "GET" }).output(readinessOutputSchema);
 
 export const contract = {
-  check: healthCheckContract,
+  live: livenessContract,
+  ready: readinessContract,
 } as const;
