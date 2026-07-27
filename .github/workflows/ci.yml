@@ -78,8 +78,8 @@ jobs:
       fail-fast: false
       matrix:
         package:
-          - { name: ui, filter: "@ovr/ui", apiKeySecret: OVR_API_KEY_UI }
-          - { name: web, filter: "@ovr/web", apiKeySecret: OVR_API_KEY_WEB }
+          - { name: ui, filter: "@ovr/ui" }
+          - { name: web, filter: "@ovr/web" }
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -90,9 +90,20 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter ${{ matrix.package.filter }} build-storybook
       - run: pnpm --filter @open-visual-regression/cli build
-      - name: Publish snapshot to OVR
+      - name: Publish snapshot to OVR (ui)
+        if: matrix.package.name == 'ui'
         env:
-          OVR_API_KEY: ${{ secrets[matrix.package.apiKeySecret] }}
+          OVR_API_KEY: ${{ secrets.OVR_API_KEY_UI }}
+        run: >
+          pnpm --filter ${{ matrix.package.filter }} exec ovr snapshot storybook
+          --dir storybook-static
+          --server-url https://openvisualregression.com
+          --branch "${{ github.head_ref || github.ref_name }}"
+          --commit "${{ github.event.pull_request.head.sha || github.sha }}"
+      - name: Publish snapshot to OVR (web)
+        if: matrix.package.name == 'web'
+        env:
+          OVR_API_KEY: ${{ secrets.OVR_API_KEY_WEB }}
         run: >
           pnpm --filter ${{ matrix.package.filter }} exec ovr snapshot storybook
           --dir storybook-static
