@@ -25,7 +25,7 @@ docker compose up -d --build
 
 # 2. build the artifacts the CLI ingests
 pnpm --filter @ovr/ui build-storybook
-pnpm --filter @ovr/cli build
+pnpm --filter @open-visual-regression/cli build
 
 # 3. first time only: get the browser for the test runner
 pnpm --filter @ovr/e2e exec playwright install chromium

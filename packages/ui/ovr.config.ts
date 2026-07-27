@@ -1,4 +1,4 @@
-import { type OvrConfig } from "@ovr/cli/config";
+import { type OvrConfig } from "@open-visual-regression/cli/config";
 
 export default {
   viewports: [

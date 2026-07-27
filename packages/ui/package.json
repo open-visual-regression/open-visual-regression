@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^5.2.1",
-    "@ovr/cli": "workspace:*",
+    "@open-visual-regression/cli": "workspace:*",
     "@ovr/typescript-config": "workspace:*",
     "@storybook/addon-a11y": "^10.4.1",
     "@storybook/addon-docs": "^10.4.1",

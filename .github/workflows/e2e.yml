@@ -76,7 +76,7 @@ jobs:
       - name: Build the artifacts to ingest
         run: |
           pnpm --filter @ovr/ui build-storybook
-          pnpm --filter @ovr/cli build
+          pnpm --filter @open-visual-regression/cli build
       - name: Install Playwright browser
         run: pnpm --filter @ovr/e2e exec playwright install --with-deps chromium
       - name: Run E2E tests

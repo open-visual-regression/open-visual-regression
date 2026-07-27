@@ -125,6 +125,9 @@ importers:
 
   apps/e2e:
     dependencies:
+      '@open-visual-regression/cli':
+        specifier: workspace:*
+        version: link:../cli
       '@orpc/client':
         specifier: ^1.14.6
         version: 1.14.6
@@ -134,9 +137,6 @@ importers:
       '@ovr/api':
         specifier: workspace:*
         version: link:../../packages/api
-      '@ovr/cli':
-        specifier: workspace:*
-        version: link:../cli
     devDependencies:
       '@ovr/typescript-config':
         specifier: workspace:*
@@ -253,7 +253,7 @@ importers:
       '@chromatic-com/storybook':
         specifier: ^5.2.1
         version: 5.2.1(storybook@10.4.1(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@testing-library/dom@10.4.1)(@types/react@19.2.2)(prettier@2.8.8)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
-      '@ovr/cli':
+      '@open-visual-regression/cli':
         specifier: workspace:*
         version: link:../cli
       '@ovr/mocks':
@@ -856,7 +856,7 @@ importers:
       '@chromatic-com/storybook':
         specifier: ^5.2.1
         version: 5.2.1(storybook@10.4.1(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@testing-library/dom@10.4.1)(@types/react@19.2.2)(prettier@2.8.8)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
-      '@ovr/cli':
+      '@open-visual-regression/cli':
         specifier: workspace:*
         version: link:../../apps/cli
       '@ovr/typescript-config':
