@@ -37,6 +37,7 @@ export const BuildHeader = ({
     snapshotCounts.approved + snapshotCounts.rejected + snapshotCounts.needs_review > 0;
   const isCancelable = build.status === "queued" || build.status === "processing";
   const isCanceled = build.status === "canceled";
+  const hasProcessingError = build.status === "error";
 
   return (
     <div className="flex flex-col gap-6">
@@ -88,7 +89,7 @@ export const BuildHeader = ({
           <div className="flex flex-row gap-2">
             {isCancelable ? (
               <BuildCancelButton buildId={build.id} />
-            ) : isCanceled ? null : (
+            ) : isCanceled || hasProcessingError ? null : (
               <>
                 <BuildRejectButton
                   buildId={build.id}

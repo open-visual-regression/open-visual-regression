@@ -193,6 +193,29 @@ describe("BuildHeader", () => {
     );
   });
 
+  it("should hide the bulk review actions when the build has processing errors, even with reviewable snapshots", () => {
+    renderComponent({
+      build: mocks.build.generateBuild({
+        status: "error",
+        errorMessage: "One or more snapshots failed to diff against their baseline",
+      }),
+      snapshotCounts: {
+        unchanged: 0,
+        auto_approved: 0,
+        approved: 0,
+        needs_review: 30,
+        rejected: 0,
+        error: 3,
+        canceled: 0,
+        queued: 0,
+        processing: 0,
+      },
+    });
+
+    expect(screen.queryByRole("button", { name: /approve all/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /reject all/i })).not.toBeInTheDocument();
+  });
+
   it("should not show the error alert when the build has no error message", () => {
     renderComponent({
       build: mocks.build.generateBuild({ status: "needs_review", errorMessage: null }),
