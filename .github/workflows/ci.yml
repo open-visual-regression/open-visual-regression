@@ -92,6 +92,7 @@ jobs:
       - run: pnpm --filter @open-visual-regression/cli build
       - name: Publish snapshot to OVR (ui)
         if: matrix.package.name == 'ui'
+        continue-on-error: true
         env:
           OVR_API_KEY: ${{ secrets.OVR_API_KEY_UI }}
         run: >
@@ -102,6 +103,7 @@ jobs:
           --commit "${{ github.event.pull_request.head.sha || github.sha }}"
       - name: Publish snapshot to OVR (web)
         if: matrix.package.name == 'web'
+        continue-on-error: true
         env:
           OVR_API_KEY: ${{ secrets.OVR_API_KEY_WEB }}
         run: >
