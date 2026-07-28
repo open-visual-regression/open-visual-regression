@@ -179,7 +179,7 @@ const waitForStorybookTargetPlayed = ({
     channel.emit("setCurrentStory", { storyId: targetId, viewMode: "story" });
   });
 
-export const storybookCaptureStrategy: CaptureStrategy = {
+const storybookCaptureStrategy: CaptureStrategy = {
   waitForBoot: async (page, timeoutMs) => {
     await page.waitForSelector("#storybook-root, #root", { timeout: timeoutMs, state: "attached" });
     await page.waitForFunction(() => Boolean(globalThis.__STORYBOOK_ADDONS_CHANNEL__), undefined, {

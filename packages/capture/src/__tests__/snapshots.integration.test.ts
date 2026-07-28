@@ -124,6 +124,41 @@ describe("snapshots", () => {
       expect(logs.length).toBeGreaterThan(0);
     });
 
+    test("should still flag a render error when the story throws but Storybook reports it finished successfully", async ({
+      mainBuild,
+      captureConfiguration,
+    }) => {
+      // Storybook's error boundary swallows a render exception, so it reports
+      // storyThrewException separately and still finishes with status "success".
+      await uploadArtifactWithIframe(
+        mainBuild.artifactPath,
+        IFRAME_HTML.replace(
+          'for (const listener of this._l["storyFinished"] || []) {',
+          `for (const listener of this._l["storyThrewException"] || []) {
+            listener({ message: "No QueryClient set, use QueryClientProvider to set one" });
+          }
+          for (const listener of this._l["storyFinished"] || []) {`,
+        ),
+      );
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: mainBuild.id,
+            ...captureConfiguration,
+            targetId: "story-a",
+          },
+        ],
+      });
+
+      await captureBuildGroup(mainBuild.id, captureConfiguration.browser, [snapshot!.id]);
+
+      const captured = await dbClient.snapshots.findById(snapshot!.id);
+      expect(captured).toMatchObject({ status: "success", hasRenderError: true });
+
+      const logs = await dbClient.snapshotLogs.findBySnapshot(snapshot!.id);
+      expect(logs.some((log) => log.message.includes("No QueryClient set"))).toBe(true);
+    });
+
     test("should let a reviewer see the story as captured when the app logs a console error without an uncaught exception", async ({
       mainBuild,
       captureConfiguration,
