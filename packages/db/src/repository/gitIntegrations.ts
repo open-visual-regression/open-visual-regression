@@ -14,7 +14,7 @@ type UpsertInput = {
   baseUrl: string | null;
   repoIdentifier: string;
   encryptedToken: string;
-  checkContext?: string;
+  checkContext: string;
 };
 
 export const upsert = async (values: UpsertInput) => {
@@ -40,7 +40,7 @@ type UpdateFieldsInput = {
   provider: typeof gitIntegrations.$inferInsert.provider;
   baseUrl: string | null;
   repoIdentifier: string;
-  checkContext?: string;
+  checkContext: string;
 };
 
 export const updateFields = async (values: UpdateFieldsInput) => {
