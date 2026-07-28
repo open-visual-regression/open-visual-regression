@@ -6,7 +6,7 @@ export const generateGitIntegration = (
   provider: "github",
   baseUrl: null,
   repoIdentifier: "acme/web",
-  checkContext: "ovr/visual-review",
+  checkContext: "Open Visual Regression / Web",
   hasToken: true,
   ...overrides,
 });

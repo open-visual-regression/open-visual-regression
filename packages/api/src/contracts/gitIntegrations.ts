@@ -29,7 +29,6 @@ export const upsertGitIntegrationInputSchema = z.object({
   baseUrl: z.url().nullable(),
   repoIdentifier: z.string().min(1).max(512),
   token: z.string().min(1).optional(),
-  checkContext: z.string().min(1).max(255).optional(),
 });
 
 export type UpsertGitIntegrationInputSchema = z.infer<typeof upsertGitIntegrationInputSchema>;

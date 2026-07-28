@@ -89,6 +89,45 @@ describe("gitIntegrations", () => {
       expect(getResult?.integration).toMatchObject({ hasToken: true, repoIdentifier: "acme/web" });
     });
 
+    test("should derive the check context from the project name", async ({ admin: _ }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+
+      const [, result] = await serverClient.gitIntegrations.upsert({
+        projectId,
+        provider: "github",
+        baseUrl: null,
+        repoIdentifier: "acme/web",
+        token: "a-secret-token",
+      });
+      expect(result).toMatchObject({ checkContext: "Open Visual Regression / Test Project" });
+    });
+
+    test("should give distinct projects distinct check contexts", async ({ admin: _ }) => {
+      const [, firstProject] = await serverClient.projects.add(TEST_PROJECT);
+      const [, secondProject] = await serverClient.projects.add({
+        ...TEST_PROJECT,
+        projectName: "Other Project",
+      });
+
+      const [, firstResult] = await serverClient.gitIntegrations.upsert({
+        projectId: firstProject!.projectId,
+        provider: "github",
+        baseUrl: null,
+        repoIdentifier: "acme/web",
+        token: "a-secret-token",
+      });
+      const [, secondResult] = await serverClient.gitIntegrations.upsert({
+        projectId: secondProject!.projectId,
+        provider: "github",
+        baseUrl: null,
+        repoIdentifier: "acme/web",
+        token: "a-secret-token",
+      });
+
+      expect(firstResult?.checkContext).not.toBe(secondResult?.checkContext);
+    });
+
     test("should update fields without re-sending the token", async ({ admin: _ }) => {
       const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
       const projectId = addResult!.projectId;

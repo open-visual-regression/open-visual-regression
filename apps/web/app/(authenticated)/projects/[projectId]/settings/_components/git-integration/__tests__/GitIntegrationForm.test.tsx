@@ -19,7 +19,7 @@ const INTEGRATION = {
   provider: "github" as const,
   baseUrl: null,
   repoIdentifier: "acme/web",
-  checkContext: "ovr/visual-review",
+  checkContext: "Open Visual Regression / Web",
   hasToken: true as const,
 };
 
