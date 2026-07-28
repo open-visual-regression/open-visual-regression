@@ -2,8 +2,6 @@ import "./env";
 import { Worker, type Job } from "bullmq";
 import { z } from "zod";
 
-import { CAPTURE_GROUP_SIZE } from "@ovr/capture/extract";
-import { CAPTURE_JOB_TIMEOUT_MS } from "@ovr/capture/lib/captureTimeouts";
 import { assertEncryptionKey } from "@ovr/git-status/crypto";
 import { QueueName, buildRedisConnection, scheduleReaper, schedulePurge } from "@ovr/queue";
 
@@ -30,12 +28,23 @@ const CAPTURE_GROUP_CONCURRENCY = z.coerce
   .catch(2)
   .parse(process.env.OVR_CAPTURE_GROUP_CONCURRENCY);
 
+// How long a capture group stays locked once its worker stops renewing the lock.
+// BullMQ renews locks of in-flight jobs on a timer, so this is not a cap on how
+// long a job may run — it is how quickly a crashed worker's group is reclaimed.
+// Raise it if a CPU-starved worker misses renewals and its group gets picked up
+// twice; lower it to reclaim work sooner after a worker dies.
+const CAPTURE_LOCK_DURATION_MS = z.coerce
+  .number()
+  .int()
+  .positive()
+  .catch(120_000)
+  .parse(process.env.OVR_CAPTURE_LOCK_DURATION_MS);
+
 const extractWorker = new Worker(QueueName.BUILD_EXTRACT, extract.run, { connection });
 const captureWorker = new Worker(QueueName.SNAPSHOT_CAPTURE, capture.run, {
   connection,
   concurrency: CAPTURE_GROUP_CONCURRENCY,
-  // A group job budgets CAPTURE_JOB_TIMEOUT_MS per snapshot; the lock must outlive that.
-  lockDuration: CAPTURE_JOB_TIMEOUT_MS * CAPTURE_GROUP_SIZE,
+  lockDuration: CAPTURE_LOCK_DURATION_MS,
 });
 const diffWorker = new Worker(QueueName.SNAPSHOT_DIFF, diff.run, { connection });
 const finalizeWorker = new Worker(QueueName.BUILD_FINALIZE, finalize.run, { connection });
