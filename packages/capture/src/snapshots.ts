@@ -133,7 +133,11 @@ export const captureBuildGroup = async (
     (signal) =>
       withExtractedBundle(build.artifactPath, async (bundleDir) => {
         const proxy = await startStaticProxy(bundleDir);
-        const launchedBrowser = await getBrowserLauncher(browser).launch();
+        // Chromium-only: the worker's /dev/shm is deliberately small in production,
+        // which otherwise causes renderer crashes under memory pressure.
+        const launchedBrowser = await getBrowserLauncher(browser).launch(
+          browser === "chromium" ? { args: ["--disable-dev-shm-usage"] } : undefined,
+        );
 
         try {
           const context = await launchedBrowser.newContext({ deviceScaleFactor: 1 });

@@ -51,7 +51,7 @@ export const readStoryParameterOverrides = async (
   targetIds: string[],
 ): Promise<StoryParameterOverrides> => {
   const proxy = await startStaticProxy(bundleDir);
-  const browser = await chromium.launch();
+  const browser = await chromium.launch({ args: ["--disable-dev-shm-usage"] });
 
   try {
     const context = await browser.newContext();
