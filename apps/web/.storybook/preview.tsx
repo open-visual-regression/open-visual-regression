@@ -1,6 +1,7 @@
 import "../app/globals.css";
-
 import type { Preview } from "@storybook/nextjs-vite";
+
+import { QueryProvider } from "@/lib/providers/QueryProvider";
 
 const preview: Preview = {
   parameters: {
@@ -30,6 +31,11 @@ const preview: Preview = {
       document.documentElement.classList.add("dark");
       return <Story />;
     },
+    (Story) => (
+      <QueryProvider>
+        <Story />
+      </QueryProvider>
+    ),
   ],
 };
 
