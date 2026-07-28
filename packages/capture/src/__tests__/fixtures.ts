@@ -1,4 +1,9 @@
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
+
 import type { Redis } from "ioredis";
+import * as tar from "tar";
 import { v7 as uuidv7 } from "uuid";
 import { test as vitest } from "vitest";
 
@@ -6,8 +11,30 @@ import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
 import { organization, projects, user as userTable } from "@ovr/db/schema";
 import { buildRedisConnection } from "@ovr/queue";
+import { storage } from "@ovr/storage";
 
 export { describe, expect } from "vitest";
+
+export const uploadArtifactWithIframe = async (
+  artifactPath: string,
+  iframeHtml: string,
+): Promise<void> => {
+  const sourceDir = await mkdtemp(path.join(tmpdir(), "ovr-snapshot-fixture-"));
+
+  try {
+    await writeFile(path.join(sourceDir, "iframe.html"), iframeHtml);
+    await writeFile(path.join(sourceDir, "index.json"), JSON.stringify({ v: 3, entries: {} }));
+
+    const tarballPath = path.join(sourceDir, "..", `${path.basename(sourceDir)}.tar.gz`);
+    await tar.create({ gzip: true, file: tarballPath, cwd: sourceDir }, ["."]);
+    const tarball = await readFile(tarballPath);
+    await rm(tarballPath, { force: true });
+
+    await storage.uploadFile(artifactPath, tarball, "application/gzip");
+  } finally {
+    await rm(sourceDir, { recursive: true, force: true });
+  }
+};
 
 type Viewport = {
   browser: string;

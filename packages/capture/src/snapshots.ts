@@ -1,5 +1,5 @@
 import pixelmatch from "pixelmatch";
-import { chromium, firefox, webkit, type Browser, type Page } from "playwright";
+import { chromium, firefox, webkit, type Page } from "playwright";
 import { PNG } from "pngjs";
 
 import { dbClient } from "@ovr/db/client";
@@ -129,16 +129,11 @@ export const captureBuildGroup = async (
     throw new Error(`Missing build: ${buildId}`);
   }
 
-  let activeBrowser: Browser | undefined;
-  let activeProxy: { close: () => void } | undefined;
-
   await withTimeout(
-    () =>
+    (signal) =>
       withExtractedBundle(build.artifactPath, async (bundleDir) => {
         const proxy = await startStaticProxy(bundleDir);
-        activeProxy = proxy;
         const launchedBrowser = await getBrowserLauncher(browser).launch();
-        activeBrowser = launchedBrowser;
 
         try {
           const context = await launchedBrowser.newContext({ deviceScaleFactor: 1 });
@@ -170,6 +165,10 @@ export const captureBuildGroup = async (
           await strategy.waitForBoot(page, BOOT_TIMEOUT_MS);
 
           for (const snapshotId of snapshotIds) {
+            if (signal.aborted) {
+              break;
+            }
+
             try {
               await captureSnapshotOnPage(page, strategy, build, snapshotId, pageLogState);
             } catch (error) {
@@ -185,10 +184,6 @@ export const captureBuildGroup = async (
         }
       }),
     CAPTURE_JOB_TIMEOUT_MS * snapshotIds.length,
-    () => {
-      activeBrowser?.close().catch(() => {});
-      activeProxy?.close();
-    },
   );
 };
 
