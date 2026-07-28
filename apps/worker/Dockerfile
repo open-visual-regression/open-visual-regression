@@ -33,7 +33,7 @@ WORKDIR /app
 
 RUN groupmod --gid ${GID} pwuser && usermod --uid ${UID} --gid ${GID} pwuser
 
-# tini reaps orphaned Chromium children; without it they zombie and exhaust pids cgroup.
+# Reaps orphaned Chromium children — otherwise they zombie and exhaust the pids cgroup.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends tini && \
     rm -rf /var/lib/apt/lists/*
