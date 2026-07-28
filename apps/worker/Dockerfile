@@ -33,8 +33,15 @@ WORKDIR /app
 
 RUN groupmod --gid ${GID} pwuser && usermod --uid ${UID} --gid ${GID} pwuser
 
+# tini is PID 1 so it reaps zombie children (e.g. crashed Chromium zygote/renderer
+# processes) that would otherwise accumulate and exhaust the container's pids cgroup.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends tini && \
+    rm -rf /var/lib/apt/lists/*
+
 COPY --from=builder --chown=pwuser:pwuser /prod/node_modules ./node_modules
 COPY --from=builder --chown=pwuser:pwuser /app/apps/worker/dist ./dist
 
 USER pwuser
+ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["node", "dist/index.js"]
