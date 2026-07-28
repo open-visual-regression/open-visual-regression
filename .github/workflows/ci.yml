@@ -7,6 +7,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -72,17 +75,52 @@ jobs:
       - run: pnpm format -- --check
 
   build-storybook:
-    name: Build Storybook
+    name: Publish Storybook to Open Visual Regression (${{ matrix.package.name }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - { name: ui, filter: "@ovr/ui" }
+          - { name: web, filter: "@ovr/web" }
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @ovr/ui build-storybook
+      - run: pnpm --filter ${{ matrix.package.filter }} build-storybook
+      - run: pnpm --filter @open-visual-regression/cli build
+      - name: Publish snapshot to OVR (ui)
+        if: matrix.package.name == 'ui'
+        continue-on-error: true
+        env:
+          OVR_API_KEY: ${{ secrets.OVR_API_KEY_UI }}
+        run: >
+          pnpm --filter ${{ matrix.package.filter }} exec ovr snapshot storybook
+          --dir storybook-static
+          --server-url https://openvisualregression.com
+          --branch "${{ github.head_ref || github.ref_name }}"
+          --commit "${{ github.event.pull_request.head.sha || github.sha }}"
+          --name "$(git log -1 --pretty=%s)"
+          --author "$(git log -1 --pretty=%an)"
+      - name: Publish snapshot to OVR (web)
+        if: matrix.package.name == 'web'
+        continue-on-error: true
+        env:
+          OVR_API_KEY: ${{ secrets.OVR_API_KEY_WEB }}
+        run: >
+          pnpm --filter ${{ matrix.package.filter }} exec ovr snapshot storybook
+          --dir storybook-static
+          --server-url https://openvisualregression.com
+          --branch "${{ github.head_ref || github.ref_name }}"
+          --commit "${{ github.event.pull_request.head.sha || github.sha }}"
+          --name "$(git log -1 --pretty=%s)"
+          --author "$(git log -1 --pretty=%an)"
 
   test:
     name: Test
