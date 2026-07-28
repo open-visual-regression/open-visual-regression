@@ -2,8 +2,7 @@ export const BOOT_TIMEOUT_MS = 10_000;
 export const RENDER_TIMEOUT_MS = 30_000;
 export const CAPTURE_JOB_TIMEOUT_MS = 2 * 60 * 1000;
 
-// Bounds how long we wait for aborted work to unwind, so a retry cannot start
-// while the previous attempt still holds a browser open.
+// Max time to wait for aborted work to unwind before a retry can start.
 export const CLEANUP_GRACE_MS = 30_000;
 
 export class TimeoutError extends Error {
@@ -21,8 +20,7 @@ export const withTimeout = async <T>(
   let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
 
   const workPromise = work(controller.signal);
-  // Prevent an unhandled rejection if `work` rejects after the race below
-  // has already settled (e.g. during grace-period cleanup).
+  // Avoid an unhandled rejection if work rejects after the race settles.
   workPromise.catch(() => {});
 
   const timeout = new Promise<never>((_, reject) => {

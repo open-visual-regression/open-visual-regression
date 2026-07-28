@@ -28,11 +28,8 @@ const CAPTURE_GROUP_CONCURRENCY = z.coerce
   .catch(2)
   .parse(process.env.OVR_CAPTURE_GROUP_CONCURRENCY);
 
-// How long a capture group stays locked once its worker stops renewing the lock.
-// BullMQ renews locks of in-flight jobs on a timer, so this is not a cap on how
-// long a job may run — it is how quickly a crashed worker's group is reclaimed.
-// Raise it if a CPU-starved worker misses renewals and its group gets picked up
-// twice; lower it to reclaim work sooner after a worker dies.
+// BullMQ renews this lock on a timer, so it only matters if the worker dies:
+// how long until another worker can pick up the group.
 const CAPTURE_LOCK_DURATION_MS = z.coerce
   .number()
   .int()
