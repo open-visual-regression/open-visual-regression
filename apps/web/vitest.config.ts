@@ -30,7 +30,11 @@ export default defineConfig({
           environment: "jsdom",
           globals: true,
           setupFiles: ["./vitest.setup.ts"],
-          include: ["app/**/*.test.{ts,tsx}", "lib/**/*.test.{ts,tsx}"],
+          include: [
+            "app/**/*.test.{ts,tsx}",
+            "lib/**/*.test.{ts,tsx}",
+            ".storybook/**/*.test.{ts,tsx}",
+          ],
           exclude: ["app/**/*.integration.test.{ts,tsx}", "lib/**/*.integration.test.ts"],
           clearMocks: true,
           restoreMocks: true,
