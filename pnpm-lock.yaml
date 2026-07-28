@@ -520,6 +520,9 @@ importers:
       '@ovr/db':
         specifier: workspace:*
         version: link:../db
+      '@ovr/logger':
+        specifier: workspace:*
+        version: link:../logger
       '@ovr/queue':
         specifier: workspace:*
         version: link:../queue

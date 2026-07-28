@@ -1,3 +1,7 @@
+import { createLogger } from "@ovr/logger";
+
+const logger = createLogger("capture");
+
 export const BOOT_TIMEOUT_MS = 10_000;
 export const RENDER_TIMEOUT_MS = 30_000;
 export const CAPTURE_JOB_TIMEOUT_MS = 2 * 60 * 1000;
@@ -18,13 +22,21 @@ export const withTimeout = async <T>(
 ): Promise<T> => {
   const controller = new AbortController();
   let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+  let timedOut = false;
 
   const workPromise = work(controller.signal);
-  // Avoid an unhandled rejection if work rejects after the race settles.
-  workPromise.catch(() => {});
+  workPromise.catch((error: unknown) => {
+    // Once the timeout has won the race, this rejection reason would
+    // otherwise never reach the caller. Log it, then swallow it — an
+    // unhandled rejection here would crash the process.
+    if (timedOut) {
+      logger.error({ err: error }, "work failed after its timeout had already fired");
+    }
+  });
 
   const timeout = new Promise<never>((_, reject) => {
     timeoutHandle = setTimeout(() => {
+      timedOut = true;
       controller.abort();
       reject(new TimeoutError(`Operation timed out after ${timeoutMs}ms`));
     }, timeoutMs);

@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@ovr/db": "workspace:*",
+    "@ovr/logger": "workspace:*",
     "@ovr/queue": "workspace:*",
     "@ovr/reviews": "workspace:*",
     "@ovr/storage": "workspace:*",
