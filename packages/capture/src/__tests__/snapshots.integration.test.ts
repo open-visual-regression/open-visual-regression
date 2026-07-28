@@ -1,5 +1,4 @@
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -7,7 +6,6 @@ import { Worker } from "bullmq";
 import type { Redis } from "ioredis";
 import { chromium } from "playwright";
 import { PNG } from "pngjs";
-import * as tar from "tar";
 import { vi } from "vitest";
 
 import { dbClient } from "@ovr/db/client";
@@ -15,31 +13,10 @@ import { QueueName, type DiffJobPayload } from "@ovr/queue";
 import { storage } from "@ovr/storage";
 
 import { captureBuildGroup, diffSnapshot, enqueueSnapshotDiff } from "../snapshots";
-import { describe, expect, test } from "./fixtures";
+import { describe, expect, test, uploadArtifactWithIframe } from "./fixtures";
 
 const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
 const IFRAME_HTML = await readFile(path.join(TEST_DIR, "html/iframe-static.html"), "utf-8");
-
-const uploadArtifactWithIframe = async (
-  artifactPath: string,
-  iframeHtml: string,
-): Promise<void> => {
-  const sourceDir = await mkdtemp(path.join(tmpdir(), "ovr-snapshot-fixture-"));
-
-  try {
-    await writeFile(path.join(sourceDir, "iframe.html"), iframeHtml);
-    await writeFile(path.join(sourceDir, "index.json"), JSON.stringify({ v: 3, entries: {} }));
-
-    const tarballPath = path.join(sourceDir, "..", `${path.basename(sourceDir)}.tar.gz`);
-    await tar.create({ gzip: true, file: tarballPath, cwd: sourceDir }, ["."]);
-    const tarball = await readFile(tarballPath);
-    await rm(tarballPath, { force: true });
-
-    await storage.uploadFile(artifactPath, tarball, "application/gzip");
-  } finally {
-    await rm(sourceDir, { recursive: true, force: true });
-  }
-};
 
 const uploadPng = async (path: string, fill: number, width = 2, height = 2): Promise<void> => {
   const png = new PNG({ width, height });
