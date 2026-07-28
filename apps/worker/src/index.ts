@@ -28,8 +28,7 @@ const CAPTURE_GROUP_CONCURRENCY = z.coerce
   .catch(2)
   .parse(process.env.OVR_CAPTURE_GROUP_CONCURRENCY);
 
-// BullMQ renews this lock on a timer, so it only matters if the worker dies:
-// how long until another worker can pick up the group.
+// Not a job-runtime cap — BullMQ renews this lock while the worker is alive.
 const CAPTURE_LOCK_DURATION_MS = z.coerce
   .number()
   .int()

@@ -6,7 +6,6 @@ export const BOOT_TIMEOUT_MS = 10_000;
 export const RENDER_TIMEOUT_MS = 30_000;
 export const CAPTURE_JOB_TIMEOUT_MS = 2 * 60 * 1000;
 
-// Max time to wait for aborted work to unwind before a retry can start.
 export const CLEANUP_GRACE_MS = 30_000;
 
 export class TimeoutError extends Error {
@@ -26,9 +25,6 @@ export const withTimeout = async <T>(
 
   const workPromise = work(controller.signal);
   workPromise.catch((error: unknown) => {
-    // Once the timeout has won the race, this rejection reason would
-    // otherwise never reach the caller. Log it, then swallow it — an
-    // unhandled rejection here would crash the process.
     if (timedOut) {
       logger.error({ err: error }, "work failed after its timeout had already fired");
     }
