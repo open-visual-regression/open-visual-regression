@@ -75,7 +75,7 @@ const captureSnapshotOnPage = async (
     });
   }
 
-  const screenshot = await page.screenshot({ fullPage });
+  const screenshot = await page.screenshot({ fullPage, animations: "disabled" });
   const hasRenderError = !renderResult.ok || pageLogState.hasPageError;
   const imagePath = `${build.projectId}/builds/${build.id}/snapshots/${snapshotId}.png`;
   await storage.uploadFile(imagePath, screenshot, "image/png");
