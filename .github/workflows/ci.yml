@@ -72,7 +72,7 @@ jobs:
       - run: pnpm format -- --check
 
   build-storybook:
-    name: Build Storybook (${{ matrix.package.name }})
+    name: Publish Storybook to Open Visual Regression (${{ matrix.package.name }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
