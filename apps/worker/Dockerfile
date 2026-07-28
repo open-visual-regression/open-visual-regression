@@ -33,8 +33,7 @@ WORKDIR /app
 
 RUN groupmod --gid ${GID} pwuser && usermod --uid ${UID} --gid ${GID} pwuser
 
-# tini is PID 1 so it reaps zombie children (e.g. crashed Chromium zygote/renderer
-# processes) that would otherwise accumulate and exhaust the container's pids cgroup.
+# tini reaps orphaned Chromium children; without it they zombie and exhaust pids cgroup.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends tini && \
     rm -rf /var/lib/apt/lists/*
