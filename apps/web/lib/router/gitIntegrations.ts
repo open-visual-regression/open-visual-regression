@@ -3,6 +3,7 @@
 import { ORPCError } from "@orpc/client";
 
 import { dbClient } from "@ovr/db/client";
+import { formatCheckContext } from "@ovr/git-status/checkContext";
 import { encryptToken, tryDecryptToken } from "@ovr/git-status/crypto";
 import { verifyIntegration } from "@ovr/git-status/verifyIntegration";
 
@@ -36,7 +37,9 @@ export const upsert = os.gitIntegrations.upsert
   .use(authenticatedMiddleware)
   .use(adminMiddleware)
   .use(projectMiddleware)
-  .handler(async ({ input }) => {
+  .handler(async ({ input, context }) => {
+    const checkContext = formatCheckContext(context.project.name);
+
     const integration = input.token
       ? await dbClient.gitIntegrations.upsert({
           projectId: input.projectId,
@@ -44,14 +47,14 @@ export const upsert = os.gitIntegrations.upsert
           baseUrl: input.baseUrl,
           repoIdentifier: input.repoIdentifier,
           encryptedToken: encryptToken(input.token),
-          checkContext: input.checkContext,
+          checkContext,
         })
       : await dbClient.gitIntegrations.updateFields({
           projectId: input.projectId,
           provider: input.provider,
           baseUrl: input.baseUrl,
           repoIdentifier: input.repoIdentifier,
-          checkContext: input.checkContext,
+          checkContext,
         });
 
     if (!integration) {

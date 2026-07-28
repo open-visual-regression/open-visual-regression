@@ -102,7 +102,7 @@ export const serverClient: typeof RealServerClient = {
         provider: "github" as const,
         baseUrl: null,
         repoIdentifier: "",
-        checkContext: "ovr/visual-review",
+        checkContext: "Open Visual Regression / Storybook",
         hasToken: true as const,
       }))
       .actionable(),
