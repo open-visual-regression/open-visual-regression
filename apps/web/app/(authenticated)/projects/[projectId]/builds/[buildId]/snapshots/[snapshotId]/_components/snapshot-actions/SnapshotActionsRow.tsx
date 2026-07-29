@@ -6,7 +6,7 @@ import {
   ArrowRightToLineIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  CornerUpLeftIcon,
+  CornerLeftUpIcon,
   Icon,
 } from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
@@ -47,7 +47,7 @@ export const SnapshotActionsRow = ({
   return (
     <div className="bg-ovr-elevated border-b px-5 md:px-6 lg:px-10 py-2 flex flex-row justify-between shrink-0">
       <div className="flex items-center flex-row gap-2">
-        <ResponsiveActionButton href="../" icon={CornerUpLeftIcon}>
+        <ResponsiveActionButton href="../" icon={CornerLeftUpIcon}>
           back
         </ResponsiveActionButton>
         {prevSnapshotId || nextSnapshotId ? (

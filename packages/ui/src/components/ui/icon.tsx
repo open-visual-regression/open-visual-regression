@@ -7,7 +7,7 @@ export {
   ChevronLeftIcon,
   ChevronRightIcon,
   CopyIcon,
-  CornerUpLeftIcon,
+  CornerLeftUpIcon,
   FolderIcon,
   GitBranchIcon,
   GitCommitHorizontalIcon,

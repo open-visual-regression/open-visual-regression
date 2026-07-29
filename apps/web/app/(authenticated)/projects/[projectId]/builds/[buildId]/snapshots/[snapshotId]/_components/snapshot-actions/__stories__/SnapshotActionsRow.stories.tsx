@@ -52,8 +52,6 @@ const diff: DiffSchema = {
 const prevSnapshotId = "019edfc7-e040-7492-86b2-ccfdc00cf6e4";
 const nextSnapshotId = "019edfc7-e040-7492-86b2-ccfdc00cf6e5";
 
-// Exercises the full button set (back, prev/count/next, reject, approve, sidebar
-// toggle) since it's the most likely to overflow — kept at all three viewports.
 export const NeedsReview: Story = {
   args: {
     snapshot,
@@ -67,8 +65,6 @@ export const NeedsReview: Story = {
   },
 };
 
-// Only the sidebar toggle icon differs here, and it's icon-only at every
-// breakpoint, so one viewport is enough to catch a regression.
 export const SidebarExpanded: Story = {
   args: {
     ...NeedsReview.args,
