@@ -128,8 +128,6 @@ describe("snapshots", () => {
       mainBuild,
       captureConfiguration,
     }) => {
-      // Storybook's error boundary swallows a render exception, so it reports
-      // storyThrewException separately and still finishes with status "success".
       await uploadArtifactWithIframe(
         mainBuild.artifactPath,
         IFRAME_HTML.replace(
@@ -156,7 +154,14 @@ describe("snapshots", () => {
       expect(captured).toMatchObject({ status: "success", hasRenderError: true });
 
       const logs = await dbClient.snapshotLogs.findBySnapshot(snapshot!.id);
-      expect(logs.some((log) => log.message.includes("No QueryClient set"))).toBe(true);
+      expect(logs).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            level: "error",
+            message: expect.stringContaining("No QueryClient set"),
+          }),
+        ]),
+      );
     });
 
     test("should let a reviewer see the story as captured when the app logs a console error without an uncaught exception", async ({
