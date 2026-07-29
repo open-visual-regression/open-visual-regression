@@ -48,12 +48,17 @@ describe("BuildsTable", () => {
 
   it("should expose exactly one accessible link per build row", () => {
     const builds = [
-      mocks.build.generateBuild(),
-      mocks.build.generateBuild(),
-      mocks.build.generateBuild(),
+      mocks.build.generateBuild({ commitSha: "1111111abcdef" }),
+      mocks.build.generateBuild({ commitSha: "2222222abcdef" }),
+      mocks.build.generateBuild({ commitSha: "3333333abcdef" }),
     ];
     renderTable(builds);
 
+    for (const build of builds) {
+      expect(
+        screen.getByRole("link", { name: `view build ${build.commitSha.slice(0, 7)}` }),
+      ).toHaveAttribute("href", `/projects/${build.project.id}/builds/${build.id}`);
+    }
     expect(screen.getAllByRole("link")).toHaveLength(builds.length);
   });
 
