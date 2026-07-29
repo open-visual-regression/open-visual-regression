@@ -11,6 +11,7 @@ declare module "@tanstack/table-core" {
     TValue extends CellData = CellData,
   > {
     className?: string;
+    disableRowLink?: boolean;
   }
 }
 

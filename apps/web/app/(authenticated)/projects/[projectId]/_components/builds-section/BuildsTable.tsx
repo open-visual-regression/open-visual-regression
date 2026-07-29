@@ -8,7 +8,6 @@ import {
   type Column,
 } from "@tanstack/react-table";
 import { useTanStackTableDevtools } from "@tanstack/react-table-devtools";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer";
 
@@ -27,6 +26,8 @@ import {
 import { Typography } from "@ovr/ui/components/typography";
 
 import { BuildStatusBadge, BuildStatusStripe } from "@/lib/components/BuildStatus";
+import { TableRowLink } from "@/lib/components/table-row-link/TableRowLink";
+import { TableRowLinkCell } from "@/lib/components/table-row-link/TableRowLinkCell";
 import { formatRelativeDateTime } from "@/lib/utils/date";
 
 const features = tableFeatures({});
@@ -37,7 +38,7 @@ const INITIAL_SKELETON_ROW_COUNT = 8;
 const columns = columnHelper.columns([
   columnHelper.display({
     id: "statusStripe",
-    meta: { className: "w-1 min-w-1 p-0 relative" },
+    meta: { className: "w-1 min-w-1 p-0 relative", disableRowLink: true },
     cell: ({ row }) => <BuildStatusStripe status={row.original.status} />,
   }),
   columnHelper.display({
@@ -50,12 +51,6 @@ const columns = columnHelper.columns([
     header: "Commit",
     cell: ({ row }) => (
       <div className="flex flex-row gap-2">
-        <Link
-          href={`/projects/${row.original.project.id}/builds/${row.original.id}`}
-          className="absolute inset-0 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ovr-accent"
-        >
-          <span className="sr-only">view build {row.original.commitSha.slice(0, 7)}</span>
-        </Link>
         <Typography variant="body-muted">{row.original.commitSha.slice(0, 7)}</Typography>
         {row.original.name ? <Typography>{row.original.name}</Typography> : null}
       </div>
@@ -161,15 +156,20 @@ export const BuildsTable = ({
               {search ? `no builds found matching "${search}"` : "no builds found"}
             </TableEmpty>
           ) : (
-            rows.map((row) => (
-              <TableRow key={row.id} className="relative has-[a:hover]:bg-ovr-hover">
-                {row.getAllCells().map((cell) => (
-                  <TableCell key={cell.id} className={cell.column.columnDef.meta?.className}>
-                    <table.FlexRender cell={cell} />
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))
+            rows.map((row) => {
+              const href = `/projects/${row.original.project.id}/builds/${row.original.id}`;
+              const label = `view build ${row.original.commitSha.slice(0, 7)}`;
+
+              return (
+                <TableRowLink key={row.id} href={href} label={label} labelColumnId="name">
+                  {row.getAllCells().map((cell) => (
+                    <TableRowLinkCell key={cell.id} cell={cell}>
+                      <table.FlexRender cell={cell} />
+                    </TableRowLinkCell>
+                  ))}
+                </TableRowLink>
+              );
+            })
           )}
           {!isLoading && hasNextPage ? (
             <SkeletonRow ref={sentinelRef} leafColumns={leafColumns} />
