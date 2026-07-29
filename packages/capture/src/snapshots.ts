@@ -6,6 +6,7 @@ import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
 import type { BuildDbSchema } from "@ovr/db/repository/builds";
 import type { SnapshotDbSchema } from "@ovr/db/repository/snapshots";
+import { createLogger } from "@ovr/logger";
 import { enqueueDiff, enqueueFinalize } from "@ovr/queue/producer";
 import { promoteBaseline } from "@ovr/reviews/baselines";
 import { storage } from "@ovr/storage";
@@ -21,9 +22,45 @@ import {
 } from "./lib/captureTimeouts";
 import { startStaticProxy } from "./lib/staticProxy";
 
+const logger = createLogger("capture");
+
 const DEFAULT_PIXELMATCH_THRESHOLD = 0.1;
 
 const DEFAULT_VIEWPORT_HEIGHT = 800;
+
+type CapturePhase = "render" | "screenshot" | "upload";
+
+type CaptureTimings = Record<CapturePhase, number>;
+
+type SnapshotLogContext = {
+  buildId: string;
+  snapshotId: string;
+  storyId: string;
+  viewportWidth: number;
+  viewportHeight: number;
+  fullPage: boolean;
+};
+
+class CapturePhaseError extends Error {
+  constructor(
+    readonly phase: CapturePhase,
+    readonly durationMs: number,
+    cause: unknown,
+  ) {
+    super(cause instanceof Error ? cause.message : String(cause), { cause });
+    this.name = "CapturePhaseError";
+  }
+}
+
+const runPhase = async <T>(phase: CapturePhase, run: () => Promise<T>): Promise<[T, number]> => {
+  const start = performance.now();
+  try {
+    const result = await run();
+    return [result, Math.round(performance.now() - start)];
+  } catch (cause) {
+    throw new CapturePhaseError(phase, Math.round(performance.now() - start), cause);
+  }
+};
 
 const BROWSER_LAUNCHERS = { chromium, firefox, webkit };
 
@@ -63,48 +100,94 @@ const captureSnapshotOnPage = async (
     height: fullPage ? DEFAULT_VIEWPORT_HEIGHT : snapshot.viewportHeight,
   });
 
-  const renderResult = await page.evaluate(strategy.waitForTargetPlayed, {
-    targetId: snapshot.targetId,
-    timeoutMs: RENDER_TIMEOUT_MS,
-  });
+  const startedAt = performance.now();
+  const context: SnapshotLogContext = {
+    buildId: build.id,
+    snapshotId,
+    storyId: snapshot.targetId,
+    viewportWidth: snapshot.viewportWidth,
+    viewportHeight: snapshot.viewportHeight,
+    fullPage,
+  };
 
-  if (!renderResult.ok) {
-    pageLogState.logs.push({
-      level: "error",
-      message: renderResult.error ?? "target failed to render",
-    });
-  }
+  try {
+    const [renderResult, renderMs] = await runPhase("render", () =>
+      page.evaluate(strategy.waitForTargetPlayed, {
+        targetId: snapshot.targetId,
+        timeoutMs: RENDER_TIMEOUT_MS,
+      }),
+    );
 
-  const screenshot = await page.screenshot({ fullPage, animations: "disabled" });
-  const hasRenderError = !renderResult.ok || pageLogState.hasPageError;
-  const imagePath = `${build.projectId}/builds/${build.id}/snapshots/${snapshotId}.png`;
-  await storage.uploadFile(imagePath, screenshot, "image/png");
-
-  const captured = await db.transaction(async (tx) => {
-    if (pageLogState.logs.length > 0) {
-      await dbClient.snapshotLogs.createMany({
-        values: pageLogState.logs.map((log) => ({
-          snapshotId,
-          level: log.level,
-          message: log.message,
-        })),
-        tx,
+    if (!renderResult.ok) {
+      pageLogState.logs.push({
+        level: "error",
+        message: renderResult.error ?? "target failed to render",
       });
     }
 
-    return dbClient.snapshots.updateCaptureResult(snapshotId, {
-      status: "success",
-      imagePath,
-      hasRenderError,
-      tx,
+    const imagePath = `${build.projectId}/builds/${build.id}/snapshots/${snapshotId}.png`;
+
+    const [screenshot, screenshotMs] = await runPhase("screenshot", () =>
+      page.screenshot({ fullPage, animations: "disabled" }),
+    );
+
+    const [, uploadMs] = await runPhase("upload", () =>
+      storage.uploadFile(imagePath, screenshot, "image/png"),
+    );
+
+    const hasRenderError = !renderResult.ok || pageLogState.hasPageError;
+
+    const captured = await db.transaction(async (tx) => {
+      if (pageLogState.logs.length > 0) {
+        await dbClient.snapshotLogs.createMany({
+          values: pageLogState.logs.map((log) => ({
+            snapshotId,
+            level: log.level,
+            message: log.message,
+          })),
+          tx,
+        });
+      }
+
+      return dbClient.snapshots.updateCaptureResult(snapshotId, {
+        status: "success",
+        imagePath,
+        hasRenderError,
+        tx,
+      });
     });
-  });
 
-  if (!captured) {
-    return;
+    const timings: CaptureTimings = {
+      render: renderMs,
+      screenshot: screenshotMs,
+      upload: uploadMs,
+    };
+    logger.info(
+      { ...context, timings, totalMs: Math.round(performance.now() - startedAt), hasRenderError },
+      "snapshot captured",
+    );
+
+    if (!captured) {
+      return;
+    }
+
+    await enqueueSnapshotDiff(snapshotId);
+  } catch (error) {
+    const failedPhase = error instanceof CapturePhaseError ? error.phase : undefined;
+    const failedPhaseMs = error instanceof CapturePhaseError ? error.durationMs : undefined;
+    const cause = error instanceof CapturePhaseError ? error.cause : error;
+    logger.error(
+      {
+        ...context,
+        failedPhase,
+        failedPhaseMs,
+        totalMs: Math.round(performance.now() - startedAt),
+        err: cause,
+      },
+      "snapshot capture failed",
+    );
+    throw cause;
   }
-
-  await enqueueSnapshotDiff(snapshotId);
 };
 
 export const markSnapshotErrored = async (snapshotId: string, error: unknown): Promise<void> => {
@@ -164,8 +247,18 @@ export const captureBuildGroup = async (
           });
 
           const strategy = await detectCaptureStrategy(proxy.origin);
+          const bootStart = performance.now();
           await page.goto(`${proxy.origin}/iframe.html`, { waitUntil: "load" });
           await strategy.waitForBoot(page, BOOT_TIMEOUT_MS);
+          logger.info(
+            {
+              buildId,
+              browser,
+              snapshotCount: snapshotIds.length,
+              bootMs: Math.round(performance.now() - bootStart),
+            },
+            "capture group booted",
+          );
 
           for (const snapshotId of snapshotIds) {
             if (signal.aborted) {

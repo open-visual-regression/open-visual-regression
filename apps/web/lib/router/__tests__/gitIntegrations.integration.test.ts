@@ -49,7 +49,6 @@ describe("gitIntegrations", () => {
       const [error] = await serverClient.gitIntegrations.upsert({
         projectId: FAKE_PROJECT_ID,
         provider: "github",
-        baseUrl: null,
         repoIdentifier: "acme/web",
         token: "a-token",
       });
@@ -62,7 +61,6 @@ describe("gitIntegrations", () => {
       const [error] = await serverClient.gitIntegrations.upsert({
         projectId: FAKE_PROJECT_ID,
         provider: "github",
-        baseUrl: null,
         repoIdentifier: "acme/web",
         token: "a-token",
       });
@@ -76,7 +74,6 @@ describe("gitIntegrations", () => {
       const [error, result] = await serverClient.gitIntegrations.upsert({
         projectId,
         provider: "github",
-        baseUrl: null,
         repoIdentifier: "acme/web",
         token: "a-secret-token",
       });
@@ -96,7 +93,6 @@ describe("gitIntegrations", () => {
       const [, result] = await serverClient.gitIntegrations.upsert({
         projectId,
         provider: "github",
-        baseUrl: null,
         repoIdentifier: "acme/web",
         token: "a-secret-token",
       });
@@ -113,14 +109,12 @@ describe("gitIntegrations", () => {
       const [, firstResult] = await serverClient.gitIntegrations.upsert({
         projectId: firstProject!.projectId,
         provider: "github",
-        baseUrl: null,
         repoIdentifier: "acme/web",
         token: "a-secret-token",
       });
       const [, secondResult] = await serverClient.gitIntegrations.upsert({
         projectId: secondProject!.projectId,
         provider: "github",
-        baseUrl: null,
         repoIdentifier: "acme/web",
         token: "a-secret-token",
       });
@@ -135,7 +129,6 @@ describe("gitIntegrations", () => {
       await serverClient.gitIntegrations.upsert({
         projectId,
         provider: "github",
-        baseUrl: null,
         repoIdentifier: "acme/web",
         token: "a-secret-token",
       });
@@ -143,7 +136,6 @@ describe("gitIntegrations", () => {
       const [error, result] = await serverClient.gitIntegrations.upsert({
         projectId,
         provider: "github",
-        baseUrl: null,
         repoIdentifier: "acme/renamed",
       });
       expect(error).toBeNull();
@@ -157,7 +149,6 @@ describe("gitIntegrations", () => {
       const [error] = await serverClient.gitIntegrations.upsert({
         projectId,
         provider: "github",
-        baseUrl: null,
         repoIdentifier: "acme/web",
       });
       expect(error?.code).toBe("BAD_REQUEST");
@@ -170,22 +161,19 @@ describe("gitIntegrations", () => {
       await serverClient.gitIntegrations.upsert({
         projectId,
         provider: "github",
-        baseUrl: null,
         repoIdentifier: "acme/web",
         token: "first-token",
       });
       await serverClient.gitIntegrations.upsert({
         projectId,
-        provider: "gitea",
-        baseUrl: "https://gitea.acme.com",
+        provider: "github",
         repoIdentifier: "acme/other",
         token: "second-token",
       });
 
       const [, result] = await serverClient.gitIntegrations.get({ projectId });
       expect(result?.integration).toMatchObject({
-        provider: "gitea",
-        baseUrl: "https://gitea.acme.com",
+        provider: "github",
         repoIdentifier: "acme/other",
       });
     });
@@ -211,7 +199,6 @@ describe("gitIntegrations", () => {
       await serverClient.gitIntegrations.upsert({
         projectId,
         provider: "github",
-        baseUrl: null,
         repoIdentifier: "acme/web",
         token: "a-token",
       });

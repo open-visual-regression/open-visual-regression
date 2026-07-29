@@ -24,6 +24,8 @@ const readOvrOverrides = async (targetIds: string[]): Promise<OverrideReadResult
     return { entries: [], failures: [] };
   }
 
+  await preview.initializationPromise;
+
   const entries: [string, OvrStoryParameters][] = [];
   const failures: [string, string][] = [];
   for (const storyId of targetIds) {
