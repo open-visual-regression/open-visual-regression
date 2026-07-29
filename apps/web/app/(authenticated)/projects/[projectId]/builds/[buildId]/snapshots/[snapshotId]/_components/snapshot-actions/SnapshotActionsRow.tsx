@@ -1,7 +1,13 @@
 import { DiffSchema } from "@ovr/api/contracts/diffs";
 import { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { Button } from "@ovr/ui/components/button";
-import { ChevronLeftIcon, ChevronRightIcon, Icon } from "@ovr/ui/components/icon";
+import {
+  ArrowLeftToLineIcon,
+  ArrowRightFromLineIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  Icon,
+} from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
 
 import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
@@ -41,21 +47,16 @@ export const SnapshotActionsRow = ({
   return (
     <div className="bg-ovr-elevated border-b px-5 md:px-6 lg:px-10 py-2 flex flex-row justify-between shrink-0">
       <div className="flex items-center flex-row gap-2">
-        <ButtonLink href="../" variant="outline" color="neutral" size="sm">
+        <ButtonLink
+          href="../"
+          variant="outline"
+          color="neutral"
+          size="sm"
+          className="w-7 gap-0 px-0 lg:w-auto lg:gap-1 lg:px-2.5"
+        >
           <Icon icon={ChevronLeftIcon} />
-          back
+          <span className="sr-only lg:not-sr-only">back</span>
         </ButtonLink>
-        {canReview &&
-        diff &&
-        diff.reviewStatus !== "not_required" &&
-        snapshot.status !== "error" ? (
-          <>
-            <SnapshotRejectButton diffId={diff.id} rejected={snapshot.status === "rejected"} />
-            <SnapshotApproveButton diffId={diff.id} approved={snapshot.status === "approved"} />
-          </>
-        ) : null}
-      </div>
-      <div className="flex items-center flex-row gap-2">
         {prevSnapshotId || nextSnapshotId ? (
           <>
             <ButtonLink
@@ -64,9 +65,10 @@ export const SnapshotActionsRow = ({
               variant="outline"
               color="neutral"
               size="sm"
+              className="w-7 gap-0 px-0 lg:w-auto lg:gap-1 lg:px-2.5"
             >
               <Icon icon={ChevronLeftIcon} />
-              prev
+              <span className="sr-only lg:not-sr-only">prev</span>
             </ButtonLink>
             {position !== null && total !== null ? (
               <Typography variant="caption" className="tabular-nums">
@@ -79,10 +81,22 @@ export const SnapshotActionsRow = ({
               variant="outline"
               color="neutral"
               size="sm"
+              className="w-7 gap-0 px-0 lg:w-auto lg:gap-1 lg:px-2.5"
             >
-              next
+              <span className="sr-only lg:not-sr-only">next</span>
               <Icon icon={ChevronRightIcon} />
             </ButtonLink>
+          </>
+        ) : null}
+      </div>
+      <div className="flex items-center flex-row gap-2">
+        {canReview &&
+        diff &&
+        diff.reviewStatus !== "not_required" &&
+        snapshot.status !== "error" ? (
+          <>
+            <SnapshotRejectButton diffId={diff.id} rejected={snapshot.status === "rejected"} />
+            <SnapshotApproveButton diffId={diff.id} approved={snapshot.status === "approved"} />
           </>
         ) : null}
         <Button
@@ -92,7 +106,7 @@ export const SnapshotActionsRow = ({
           onClick={onToggleSidebar}
           aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          <Icon icon={sidebarCollapsed ? ChevronLeftIcon : ChevronRightIcon} />
+          <Icon icon={sidebarCollapsed ? ArrowRightFromLineIcon : ArrowLeftToLineIcon} />
         </Button>
       </div>
     </div>

@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@ovr/ui/components/button";
 import { Icon, XIcon } from "@ovr/ui/components/icon";
 import { toast } from "@ovr/ui/components/toast";
+import { cn } from "@ovr/ui/lib/utils";
 
 import { serverClient } from "@/lib/router";
 
@@ -34,16 +35,17 @@ export const SnapshotRejectButton = ({ diffId, rejected }: SnapshotRejectButtonP
       variant="outline"
       color="neutral"
       disabled={pending || rejected}
-      className={
-        rejected
-          ? "disabled:bg-ovr-red disabled:text-ovr-on-solid disabled:border-transparent"
-          : undefined
-      }
+      className={cn(
+        "w-7 gap-0 px-0 lg:w-auto lg:gap-1 lg:px-2.5",
+        rejected && "disabled:bg-ovr-red disabled:text-ovr-on-solid disabled:border-transparent",
+      )}
       onClick={() => execute({ diffId, vote: "reject" })}
       size="sm"
     >
       <Icon icon={XIcon} />
-      {rejected ? "rejected" : pending ? "rejecting..." : "reject"}
+      <span className="sr-only lg:not-sr-only">
+        {rejected ? "rejected" : pending ? "rejecting..." : "reject"}
+      </span>
     </Button>
   );
 };

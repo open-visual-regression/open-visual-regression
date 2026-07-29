@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@ovr/ui/components/button";
 import { Icon, CheckIcon } from "@ovr/ui/components/icon";
 import { toast } from "@ovr/ui/components/toast";
+import { cn } from "@ovr/ui/lib/utils";
 
 import { serverClient } from "@/lib/router";
 
@@ -34,16 +35,18 @@ export const SnapshotApproveButton = ({ diffId, approved }: SnapshotApproveButto
       variant="outline"
       color="green"
       disabled={pending || approved}
-      className={
-        approved
-          ? "disabled:bg-ovr-diff-add disabled:text-ovr-on-accent disabled:border-transparent"
-          : undefined
-      }
+      className={cn(
+        "w-7 gap-0 px-0 lg:w-auto lg:gap-1 lg:px-2.5",
+        approved &&
+          "disabled:bg-ovr-diff-add disabled:text-ovr-on-accent disabled:border-transparent",
+      )}
       onClick={() => execute({ diffId, vote: "approve" })}
       size="sm"
     >
       <Icon icon={CheckIcon} />
-      {approved ? "approved" : pending ? "approving..." : "approve"}
+      <span className="sr-only lg:not-sr-only">
+        {approved ? "approved" : pending ? "approving..." : "approve"}
+      </span>
     </Button>
   );
 };
