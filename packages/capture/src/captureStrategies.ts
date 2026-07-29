@@ -129,7 +129,7 @@ const waitForStorybookTargetPlayed = ({
           return;
         }
         cleanup();
-        if (payload.status === "success") {
+        if (payload.status === "success" && errorMessages.length === 0) {
           resolve({ ok: true });
           return;
         }
