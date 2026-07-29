@@ -10,8 +10,7 @@ import {
 } from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
 
-import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
-
+import { ResponsiveActionButton } from "./ResponsiveActionButton";
 import { SnapshotApproveButton } from "./SnapshotApproveButton";
 import { SnapshotRejectButton } from "./SnapshotRejectButton";
 
@@ -47,45 +46,31 @@ export const SnapshotActionsRow = ({
   return (
     <div className="bg-ovr-elevated border-b px-5 md:px-6 lg:px-10 py-2 flex flex-row justify-between shrink-0">
       <div className="flex items-center flex-row gap-2">
-        <ButtonLink
-          href="../"
-          variant="outline"
-          color="neutral"
-          size="sm"
-          className="w-7 gap-0 px-0 lg:w-auto lg:gap-1 lg:px-2.5"
-        >
-          <Icon icon={ChevronLeftIcon} />
-          <span className="sr-only lg:not-sr-only">back</span>
-        </ButtonLink>
+        <ResponsiveActionButton href="../" icon={ChevronLeftIcon}>
+          back
+        </ResponsiveActionButton>
         {prevSnapshotId || nextSnapshotId ? (
           <>
-            <ButtonLink
+            <ResponsiveActionButton
               href={prevSnapshotId ? snapshotHref(prevSnapshotId) : null}
               disabled={!prevSnapshotId}
-              variant="outline"
-              color="neutral"
-              size="sm"
-              className="w-7 gap-0 px-0 lg:w-auto lg:gap-1 lg:px-2.5"
+              icon={ChevronLeftIcon}
             >
-              <Icon icon={ChevronLeftIcon} />
-              <span className="sr-only lg:not-sr-only">prev</span>
-            </ButtonLink>
+              prev
+            </ResponsiveActionButton>
             {position !== null && total !== null ? (
               <Typography variant="caption" className="tabular-nums">
                 {position}/{total}
               </Typography>
             ) : null}
-            <ButtonLink
+            <ResponsiveActionButton
               href={nextSnapshotId ? snapshotHref(nextSnapshotId) : null}
               disabled={!nextSnapshotId}
-              variant="outline"
-              color="neutral"
-              size="sm"
-              className="w-7 gap-0 px-0 lg:w-auto lg:gap-1 lg:px-2.5"
+              icon={ChevronRightIcon}
+              iconPosition="end"
             >
-              <span className="sr-only lg:not-sr-only">next</span>
-              <Icon icon={ChevronRightIcon} />
-            </ButtonLink>
+              next
+            </ResponsiveActionButton>
           </>
         ) : null}
       </div>

@@ -4,12 +4,12 @@ import { onError, onSuccess } from "@orpc/client";
 import { useServerAction } from "@orpc/react/hooks";
 import { useRouter } from "next/navigation";
 
-import { Button } from "@ovr/ui/components/button";
-import { Icon, CheckIcon } from "@ovr/ui/components/icon";
+import { CheckIcon } from "@ovr/ui/components/icon";
 import { toast } from "@ovr/ui/components/toast";
-import { cn } from "@ovr/ui/lib/utils";
 
 import { serverClient } from "@/lib/router";
+
+import { ResponsiveActionButton } from "./ResponsiveActionButton";
 
 export type SnapshotApproveButtonProps = {
   diffId: string;
@@ -31,22 +31,18 @@ export const SnapshotApproveButton = ({ diffId, approved }: SnapshotApproveButto
   const pending = status === "pending";
 
   return (
-    <Button
-      variant="outline"
+    <ResponsiveActionButton
+      icon={CheckIcon}
       color="green"
       disabled={pending || approved}
-      className={cn(
-        "w-7 gap-0 px-0 lg:w-auto lg:gap-1 lg:px-2.5",
-        approved &&
-          "disabled:bg-ovr-diff-add disabled:text-ovr-on-accent disabled:border-transparent",
-      )}
+      className={
+        approved
+          ? "disabled:bg-ovr-diff-add disabled:text-ovr-on-accent disabled:border-transparent"
+          : undefined
+      }
       onClick={() => execute({ diffId, vote: "approve" })}
-      size="sm"
     >
-      <Icon icon={CheckIcon} />
-      <span className="sr-only lg:not-sr-only">
-        {approved ? "approved" : pending ? "approving..." : "approve"}
-      </span>
-    </Button>
+      {approved ? "approved" : pending ? "approving..." : "approve"}
+    </ResponsiveActionButton>
   );
 };
