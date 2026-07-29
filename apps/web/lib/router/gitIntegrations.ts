@@ -24,7 +24,6 @@ export const get = os.gitIntegrations.get
     return {
       integration: {
         provider: integration.provider,
-        baseUrl: integration.baseUrl,
         repoIdentifier: integration.repoIdentifier,
         checkContext: integration.checkContext,
         hasToken: true as const,
@@ -44,7 +43,6 @@ export const upsert = os.gitIntegrations.upsert
       ? await dbClient.gitIntegrations.upsert({
           projectId: input.projectId,
           provider: input.provider,
-          baseUrl: input.baseUrl,
           repoIdentifier: input.repoIdentifier,
           encryptedToken: encryptToken(input.token),
           checkContext,
@@ -52,7 +50,6 @@ export const upsert = os.gitIntegrations.upsert
       : await dbClient.gitIntegrations.updateFields({
           projectId: input.projectId,
           provider: input.provider,
-          baseUrl: input.baseUrl,
           repoIdentifier: input.repoIdentifier,
           checkContext,
         });
@@ -63,7 +60,6 @@ export const upsert = os.gitIntegrations.upsert
 
     return {
       provider: integration.provider,
-      baseUrl: integration.baseUrl,
       repoIdentifier: integration.repoIdentifier,
       checkContext: integration.checkContext,
       hasToken: true as const,
@@ -102,7 +98,6 @@ export const testConnection = os.gitIntegrations.testConnection
 
     return verifyIntegration({
       provider: integration.provider,
-      baseUrl: integration.baseUrl,
       repoIdentifier: integration.repoIdentifier,
       token,
     });
