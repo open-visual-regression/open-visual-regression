@@ -232,6 +232,13 @@
       "when": 1784000100000,
       "tag": "0032_backfill_check_context",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1785326282706,
+      "tag": "0033_remove_gitea_and_base_url",
+      "breakpoints": true
     }
   ]
 }

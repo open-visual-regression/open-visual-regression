@@ -24,7 +24,6 @@ type BuildForPublish = {
 
 type IntegrationForPublish = {
   provider: GitProvider;
-  baseUrl: string | null;
   repoIdentifier: string;
   encryptedToken: string;
   checkContext: string;
@@ -106,7 +105,6 @@ export const publishBuildStatus = async (
   const request = adapter.buildRequest(
     {
       provider: integration.provider,
-      baseUrl: integration.baseUrl,
       repoIdentifier: integration.repoIdentifier,
       token,
     },

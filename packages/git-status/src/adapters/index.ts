@@ -6,7 +6,6 @@ import { githubFamilyAdapter } from "./githubFamily";
 export const resolveAdapter = (provider: GitProvider): Adapter => {
   switch (provider) {
     case "github":
-    case "gitea":
       return githubFamilyAdapter;
   }
 };

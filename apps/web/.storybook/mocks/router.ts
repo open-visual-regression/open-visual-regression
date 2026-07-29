@@ -100,7 +100,6 @@ export const serverClient: typeof RealServerClient = {
     upsert: os.gitIntegrations.upsert
       .handler(() => ({
         provider: "github" as const,
-        baseUrl: null,
         repoIdentifier: "",
         checkContext: "Open Visual Regression / Storybook",
         hasToken: true as const,
