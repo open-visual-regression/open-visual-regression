@@ -2,10 +2,11 @@ import { DiffSchema } from "@ovr/api/contracts/diffs";
 import { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { Button } from "@ovr/ui/components/button";
 import {
-  ArrowLeftToLineIcon,
-  ArrowRightFromLineIcon,
+  ArrowLeftFromLineIcon,
+  ArrowRightToLineIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  CornerUpLeftIcon,
   Icon,
 } from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
@@ -46,7 +47,7 @@ export const SnapshotActionsRow = ({
   return (
     <div className="bg-ovr-elevated border-b px-5 md:px-6 lg:px-10 py-2 flex flex-row justify-between shrink-0">
       <div className="flex items-center flex-row gap-2">
-        <ResponsiveActionButton href="../" icon={ChevronLeftIcon}>
+        <ResponsiveActionButton href="../" icon={CornerUpLeftIcon}>
           back
         </ResponsiveActionButton>
         {prevSnapshotId || nextSnapshotId ? (
@@ -91,7 +92,7 @@ export const SnapshotActionsRow = ({
           onClick={onToggleSidebar}
           aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          <Icon icon={sidebarCollapsed ? ArrowRightFromLineIcon : ArrowLeftToLineIcon} />
+          <Icon icon={sidebarCollapsed ? ArrowLeftFromLineIcon : ArrowRightToLineIcon} />
         </Button>
       </div>
     </div>
