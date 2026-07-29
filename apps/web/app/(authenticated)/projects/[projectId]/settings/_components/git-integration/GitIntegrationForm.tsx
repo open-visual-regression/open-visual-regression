@@ -25,30 +25,16 @@ import { serverClient } from "@/lib/router";
 
 const PROVIDERS: { value: GitProviderSchema; label: string }[] = [
   { value: "github", label: "github" },
-  { value: "gitea", label: "gitea" },
 ];
 
-const SELF_HOSTED: GitProviderSchema[] = ["gitea"];
-
 const makeGitIntegrationSchema = (isEditing: boolean) =>
-  z
-    .object({
-      provider: z.enum(["github", "gitea"]),
-      baseUrl: z.string().max(512),
-      repoIdentifier: z.string().min(1, "you must enter a repository").max(512),
-      token: isEditing
-        ? z.string().max(512)
-        : z.string().min(1, "you must enter an access token").max(512),
-    })
-    .superRefine((values, ctx) => {
-      if (SELF_HOSTED.includes(values.provider) && values.baseUrl.trim() === "") {
-        ctx.addIssue({
-          code: "custom",
-          path: ["baseUrl"],
-          message: "a base url is required for self-hosted providers",
-        });
-      }
-    });
+  z.object({
+    provider: z.enum(["github"]),
+    repoIdentifier: z.string().min(1, "you must enter a repository").max(512),
+    token: isEditing
+      ? z.string().max(512)
+      : z.string().min(1, "you must enter an access token").max(512),
+  });
 
 type GitIntegrationFormValues = z.infer<ReturnType<typeof makeGitIntegrationSchema>>;
 
@@ -68,7 +54,6 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
     resolver: zodResolver(makeGitIntegrationSchema(!!integration)),
     defaultValues: {
       provider: integration?.provider ?? "github",
-      baseUrl: integration?.baseUrl ?? "",
       repoIdentifier: integration?.repoIdentifier ?? "",
       token: "",
     },
@@ -110,7 +95,6 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
     save.execute({
       projectId,
       provider: values.provider,
-      baseUrl: values.baseUrl.trim() === "" ? null : values.baseUrl.trim(),
       repoIdentifier: values.repoIdentifier,
       token: values.token.trim() === "" ? undefined : values.token,
     });
@@ -146,32 +130,18 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
               <FieldError errors={[errors.provider]} />
             </Field>
           </FieldGroup>
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-            <FieldGroup>
-              <Field data-invalid={!!errors.baseUrl}>
-                <FieldLabel htmlFor="baseUrl">base url</FieldLabel>
-                <Input
-                  id="baseUrl"
-                  placeholder="https://git.example.com"
-                  aria-invalid={!!errors.baseUrl}
-                  {...register("baseUrl")}
-                />
-                <FieldError errors={[errors.baseUrl]} />
-              </Field>
-            </FieldGroup>
-            <FieldGroup>
-              <Field data-invalid={!!errors.repoIdentifier}>
-                <FieldLabel htmlFor="repoIdentifier">repository</FieldLabel>
-                <Input
-                  id="repoIdentifier"
-                  placeholder="owner/repo"
-                  aria-invalid={!!errors.repoIdentifier}
-                  {...register("repoIdentifier")}
-                />
-                <FieldError errors={[errors.repoIdentifier]} />
-              </Field>
-            </FieldGroup>
-          </div>
+          <FieldGroup>
+            <Field data-invalid={!!errors.repoIdentifier}>
+              <FieldLabel htmlFor="repoIdentifier">repository</FieldLabel>
+              <Input
+                id="repoIdentifier"
+                placeholder="owner/repo"
+                aria-invalid={!!errors.repoIdentifier}
+                {...register("repoIdentifier")}
+              />
+              <FieldError errors={[errors.repoIdentifier]} />
+            </Field>
+          </FieldGroup>
           <FieldGroup>
             <Field data-invalid={!!errors.token}>
               <FieldLabel htmlFor="token">access token</FieldLabel>

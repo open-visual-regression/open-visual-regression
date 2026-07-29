@@ -17,7 +17,6 @@ const build = {
 
 const integration = {
   provider: "github" as const,
-  baseUrl: null,
   repoIdentifier: "acme/web",
   encryptedToken: "encrypted",
   checkContext: "ovr/visual-review",

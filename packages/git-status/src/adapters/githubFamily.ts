@@ -14,19 +14,10 @@ const headers = (token: string): Record<string, string> => ({
   "x-github-api-version": GITHUB_API_VERSION,
 });
 
-const trimTrailingSlash = (value: string): string => value.replace(/\/+$/, "");
-
-const resolveApiBase = ({ provider, baseUrl }: AdapterConfig): string => {
-  const trimmed = baseUrl ? trimTrailingSlash(baseUrl) : null;
-
+const resolveApiBase = ({ provider }: AdapterConfig): string => {
   switch (provider) {
     case "github":
       return "https://api.github.com";
-    case "gitea":
-      if (!trimmed) {
-        throw new Error("gitea requires a base URL");
-      }
-      return `${trimmed}/api/v1`;
   }
 };
 

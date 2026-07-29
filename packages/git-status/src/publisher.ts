@@ -52,7 +52,6 @@ export const mapBuildStatus = ({
 
 export type AdapterConfig = {
   provider: GitProvider;
-  baseUrl: string | null;
   repoIdentifier: string;
   token: string;
 };
