@@ -28,10 +28,38 @@ const DEFAULT_PIXELMATCH_THRESHOLD = 0.1;
 
 const DEFAULT_VIEWPORT_HEIGHT = 800;
 
-const timed = async <T>(run: () => Promise<T>): Promise<[T, number]> => {
+type CapturePhase = "render" | "screenshot" | "upload";
+
+type CaptureTimings = Record<CapturePhase, number>;
+
+type SnapshotLogContext = {
+  buildId: string;
+  snapshotId: string;
+  storyId: string;
+  viewportWidth: number;
+  viewportHeight: number;
+  fullPage: boolean;
+};
+
+class CapturePhaseError extends Error {
+  constructor(
+    readonly phase: CapturePhase,
+    readonly durationMs: number,
+    cause: unknown,
+  ) {
+    super(cause instanceof Error ? cause.message : String(cause), { cause });
+    this.name = "CapturePhaseError";
+  }
+}
+
+const runPhase = async <T>(phase: CapturePhase, run: () => Promise<T>): Promise<[T, number]> => {
   const start = performance.now();
-  const result = await run();
-  return [result, Math.round(performance.now() - start)];
+  try {
+    const result = await run();
+    return [result, Math.round(performance.now() - start)];
+  } catch (cause) {
+    throw new CapturePhaseError(phase, Math.round(performance.now() - start), cause);
+  }
 };
 
 const BROWSER_LAUNCHERS = { chromium, firefox, webkit };
@@ -72,11 +100,8 @@ const captureSnapshotOnPage = async (
     height: fullPage ? DEFAULT_VIEWPORT_HEIGHT : snapshot.viewportHeight,
   });
 
-  const phaseMs: { render?: number; screenshot?: number; upload?: number } = {};
   const startedAt = performance.now();
-  let phase: "render" | "screenshot" | "upload" = "render";
-
-  const logContext = {
+  const context: SnapshotLogContext = {
     buildId: build.id,
     snapshotId,
     storyId: snapshot.targetId,
@@ -86,13 +111,12 @@ const captureSnapshotOnPage = async (
   };
 
   try {
-    const [renderResult, renderMs] = await timed(() =>
+    const [renderResult, renderMs] = await runPhase("render", () =>
       page.evaluate(strategy.waitForTargetPlayed, {
         targetId: snapshot.targetId,
         timeoutMs: RENDER_TIMEOUT_MS,
       }),
     );
-    phaseMs.render = renderMs;
 
     if (!renderResult.ok) {
       pageLogState.logs.push({
@@ -101,18 +125,17 @@ const captureSnapshotOnPage = async (
       });
     }
 
-    phase = "screenshot";
-    const [screenshot, screenshotMs] = await timed(() =>
-      page.screenshot({ fullPage, animations: "disabled" }),
-    );
-    phaseMs.screenshot = screenshotMs;
-
-    const hasRenderError = !renderResult.ok || pageLogState.hasPageError;
     const imagePath = `${build.projectId}/builds/${build.id}/snapshots/${snapshotId}.png`;
 
-    phase = "upload";
-    const [, uploadMs] = await timed(() => storage.uploadFile(imagePath, screenshot, "image/png"));
-    phaseMs.upload = uploadMs;
+    const [screenshot, screenshotMs] = await runPhase("screenshot", () =>
+      page.screenshot({ fullPage, animations: "disabled" }),
+    );
+
+    const [, uploadMs] = await runPhase("upload", () =>
+      storage.uploadFile(imagePath, screenshot, "image/png"),
+    );
+
+    const hasRenderError = !renderResult.ok || pageLogState.hasPageError;
 
     const captured = await db.transaction(async (tx) => {
       if (pageLogState.logs.length > 0) {
@@ -134,13 +157,13 @@ const captureSnapshotOnPage = async (
       });
     });
 
+    const timings: CaptureTimings = {
+      render: renderMs,
+      screenshot: screenshotMs,
+      upload: uploadMs,
+    };
     logger.info(
-      {
-        ...logContext,
-        phaseMs,
-        totalMs: Math.round(performance.now() - startedAt),
-        hasRenderError,
-      },
+      { ...context, timings, totalMs: Math.round(performance.now() - startedAt), hasRenderError },
       "snapshot captured",
     );
 
@@ -150,17 +173,20 @@ const captureSnapshotOnPage = async (
 
     await enqueueSnapshotDiff(snapshotId);
   } catch (error) {
+    const failedPhase = error instanceof CapturePhaseError ? error.phase : undefined;
+    const failedPhaseMs = error instanceof CapturePhaseError ? error.durationMs : undefined;
+    const cause = error instanceof CapturePhaseError ? error.cause : error;
     logger.error(
       {
-        ...logContext,
-        failedPhase: phase,
-        phaseMs,
+        ...context,
+        failedPhase,
+        failedPhaseMs,
         totalMs: Math.round(performance.now() - startedAt),
-        err: error,
+        err: cause,
       },
       "snapshot capture failed",
     );
-    throw error;
+    throw cause;
   }
 };
 
@@ -221,12 +247,16 @@ export const captureBuildGroup = async (
           });
 
           const strategy = await detectCaptureStrategy(proxy.origin);
-          const [, bootMs] = await timed(async () => {
-            await page.goto(`${proxy.origin}/iframe.html`, { waitUntil: "load" });
-            await strategy.waitForBoot(page, BOOT_TIMEOUT_MS);
-          });
+          const bootStart = performance.now();
+          await page.goto(`${proxy.origin}/iframe.html`, { waitUntil: "load" });
+          await strategy.waitForBoot(page, BOOT_TIMEOUT_MS);
           logger.info(
-            { buildId, browser, snapshotCount: snapshotIds.length, bootMs },
+            {
+              buildId,
+              browser,
+              snapshotCount: snapshotIds.length,
+              bootMs: Math.round(performance.now() - bootStart),
+            },
             "capture group booted",
           );
 
