@@ -111,9 +111,7 @@ const captureSnapshotOnPage = async (
     const imagePath = `${build.projectId}/builds/${build.id}/snapshots/${snapshotId}.png`;
 
     phase = "upload";
-    const [, uploadMs] = await timed(() =>
-      storage.uploadFile(imagePath, screenshot, "image/png"),
-    );
+    const [, uploadMs] = await timed(() => storage.uploadFile(imagePath, screenshot, "image/png"));
     phaseMs.upload = uploadMs;
 
     const captured = await db.transaction(async (tx) => {
@@ -137,7 +135,12 @@ const captureSnapshotOnPage = async (
     });
 
     logger.info(
-      { ...logContext, phaseMs, totalMs: Math.round(performance.now() - startedAt), hasRenderError },
+      {
+        ...logContext,
+        phaseMs,
+        totalMs: Math.round(performance.now() - startedAt),
+        hasRenderError,
+      },
       "snapshot captured",
     );
 
@@ -222,7 +225,10 @@ export const captureBuildGroup = async (
             await page.goto(`${proxy.origin}/iframe.html`, { waitUntil: "load" });
             await strategy.waitForBoot(page, BOOT_TIMEOUT_MS);
           });
-          logger.info({ buildId, browser, snapshotCount: snapshotIds.length, bootMs }, "capture group booted");
+          logger.info(
+            { buildId, browser, snapshotCount: snapshotIds.length, bootMs },
+            "capture group booted",
+          );
 
           for (const snapshotId of snapshotIds) {
             if (signal.aborted) {
