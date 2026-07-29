@@ -17,7 +17,6 @@ const PROJECT_ID = "project-id";
 
 const INTEGRATION = {
   provider: "github" as const,
-  baseUrl: null,
   repoIdentifier: "acme/web",
   checkContext: "Open Visual Regression / Web",
   hasToken: true as const,

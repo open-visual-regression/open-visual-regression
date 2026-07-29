@@ -14,7 +14,7 @@ import { v7 as uuidv7 } from "uuid";
 import { builds } from "./builds";
 import { projects, utcTimestamp } from "./schemas";
 
-export const gitProviderEnum = pgEnum("git_provider", ["github", "gitea"]);
+export const gitProviderEnum = pgEnum("git_provider", ["github"]);
 
 export type GitProvider = (typeof gitProviderEnum.enumValues)[number];
 
@@ -39,7 +39,6 @@ export const gitIntegrations = pgTable(
       .references(() => projects.id, { onDelete: "cascade" })
       .notNull(),
     provider: gitProviderEnum().notNull(),
-    baseUrl: text("base_url"),
     repoIdentifier: varchar("repo_identifier", { length: 512 }).notNull(),
     encryptedToken: text("encrypted_token").notNull(),
     checkContext: varchar("check_context", { length: 255 }).notNull().default("ovr/visual-review"),
