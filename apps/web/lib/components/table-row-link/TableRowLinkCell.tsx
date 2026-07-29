@@ -1,6 +1,6 @@
 "use client";
 
-import type { CellData, Cell, RowData, TableFeatures } from "@tanstack/table-core";
+import type { Cell, RowData, TableFeatures } from "@tanstack/react-table";
 import Link from "next/link";
 import { type ReactNode } from "react";
 
@@ -8,17 +8,6 @@ import { TableCell } from "@ovr/ui/components/table";
 import { cn } from "@ovr/ui/lib/utils";
 
 import { useTableRowLinkContext } from "./TableRowLinkContext";
-
-declare module "@tanstack/table-core" {
-  // oxlint-disable-next-line typescript/consistent-type-definitions -- module augmentation requires `interface`
-  interface ColumnMeta<
-    TFeatures extends TableFeatures,
-    TData extends RowData,
-    TValue extends CellData = CellData,
-  > {
-    disableRowLink?: boolean;
-  }
-}
 
 type TableRowLinkCellProps<TFeatures extends TableFeatures, TData extends RowData> = {
   cell: Cell<TFeatures, TData, unknown>;
