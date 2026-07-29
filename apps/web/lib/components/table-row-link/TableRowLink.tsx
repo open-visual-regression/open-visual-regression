@@ -12,9 +12,6 @@ type TableRowLinkProps = Omit<ComponentProps<typeof TableRow>, "children"> &
     children: ReactNode;
   };
 
-// Renders a <tr> whose cells (via TableRowLinkCell) each link to `href`, so the whole
-// row is clickable. `labelColumnId` picks which cell's link carries the accessible name
-// and tab stop for keyboard/screen-reader users; the rest are hidden duplicates.
 export const TableRowLink = ({
   href,
   label,

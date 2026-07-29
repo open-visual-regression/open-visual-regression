@@ -16,8 +16,6 @@ declare module "@tanstack/table-core" {
     TData extends RowData,
     TValue extends CellData = CellData,
   > {
-    // Opt a column out of the row link, e.g. a purely decorative column with no content
-    // of its own. Columns default to being part of the row link.
     disableRowLink?: boolean;
   }
 }
@@ -27,10 +25,6 @@ type TableRowLinkCellProps<TFeatures extends TableFeatures, TData extends RowDat
   children: ReactNode;
 };
 
-// Drop-in replacement for TableCell inside a TableRowLink row: renders the cell's own
-// link, scoped to just this <td> (a reliable containing block in every browser, unlike
-// relying on the <tr>). Columns marked `disableRowLink` in their meta render as a plain
-// TableCell instead.
 export const TableRowLinkCell = <TFeatures extends TableFeatures, TData extends RowData>({
   cell,
   children,
