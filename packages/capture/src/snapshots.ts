@@ -1,5 +1,5 @@
 import pixelmatch from "pixelmatch";
-import { chromium, firefox, webkit, type Page } from "playwright";
+import { chromium, firefox, webkit, type Browser, type Page } from "playwright";
 import { PNG } from "pngjs";
 
 import { dbClient } from "@ovr/db/client";
@@ -20,7 +20,7 @@ import {
   RENDER_TIMEOUT_MS,
   withTimeout,
 } from "./lib/captureTimeouts";
-import { startStaticProxy } from "./lib/staticProxy";
+import { startStaticProxy, type StaticProxy } from "./lib/staticProxy";
 
 const logger = createLogger("capture");
 
@@ -74,6 +74,56 @@ const getBrowserLauncher = (browser: string) => {
 
 type CaptureLog = { level: string; message: string };
 type PageLogState = { logs: CaptureLog[]; hasPageError: boolean };
+
+type CapturePage = { browser: Browser; page: Page; pageLogState: PageLogState };
+
+const launchCapturePage = async (
+  buildId: string,
+  browserName: string,
+  proxy: StaticProxy,
+  strategy: CaptureStrategy,
+): Promise<CapturePage> => {
+  const browser = await getBrowserLauncher(browserName).launch(
+    // /dev/shm is sized small on the worker node; Chromium falls back to disk instead of crashing.
+    browserName === "chromium" ? { args: ["--disable-dev-shm-usage"] } : undefined,
+  );
+  browser.on("disconnected", () => {
+    logger.error({ buildId, browser: browserName }, "capture browser disconnected");
+  });
+
+  const context = await browser.newContext({ deviceScaleFactor: 1 });
+  const page = await newPage(context);
+  page.on("crash", () => {
+    logger.error({ buildId, browser: browserName }, "capture page crashed");
+  });
+
+  await page.route("**/*", (route) => {
+    const url = new URL(route.request().url());
+    if (url.origin === proxy.origin || url.protocol === "data:" || url.protocol === "blob:") {
+      return route.continue();
+    }
+    return route.abort();
+  });
+
+  const pageLogState: PageLogState = { logs: [], hasPageError: false };
+  page.on("console", (message) => {
+    pageLogState.logs.push({ level: message.type(), message: message.text() });
+  });
+  page.on("pageerror", (error) => {
+    pageLogState.hasPageError = true;
+    pageLogState.logs.push({ level: "error", message: error.message });
+  });
+
+  const bootStart = performance.now();
+  await page.goto(`${proxy.origin}/iframe.html`, { waitUntil: "load" });
+  await strategy.waitForBoot(page, BOOT_TIMEOUT_MS);
+  logger.info(
+    { buildId, browser: browserName, bootMs: Math.round(performance.now() - bootStart) },
+    "capture page booted",
+  );
+
+  return { browser, page, pageLogState };
+};
 
 const captureSnapshotOnPage = async (
   page: Page,
@@ -216,66 +266,62 @@ export const captureBuildGroup = async (
     (signal) =>
       withExtractedBundle(build.artifactPath, async (bundleDir) => {
         const proxy = await startStaticProxy(bundleDir);
-        // /dev/shm is sized small on the worker node; Chromium falls back to disk instead of crashing.
-        const launchedBrowser = await getBrowserLauncher(browser).launch(
-          browser === "chromium" ? { args: ["--disable-dev-shm-usage"] } : undefined,
+        const strategy = await detectCaptureStrategy(proxy.origin);
+
+        logger.info(
+          { buildId, browser, snapshotCount: snapshotIds.length },
+          "capture group started",
         );
 
+        let capturePage = await launchCapturePage(buildId, browser, proxy, strategy);
+
         try {
-          const context = await launchedBrowser.newContext({ deviceScaleFactor: 1 });
-          const page = await newPage(context);
-
-          await page.route("**/*", (route) => {
-            const url = new URL(route.request().url());
-            if (
-              url.origin === proxy.origin ||
-              url.protocol === "data:" ||
-              url.protocol === "blob:"
-            ) {
-              return route.continue();
-            }
-            return route.abort();
-          });
-
-          const pageLogState: PageLogState = { logs: [], hasPageError: false };
-          page.on("console", (message) => {
-            pageLogState.logs.push({ level: message.type(), message: message.text() });
-          });
-          page.on("pageerror", (error) => {
-            pageLogState.hasPageError = true;
-            pageLogState.logs.push({ level: "error", message: error.message });
-          });
-
-          const strategy = await detectCaptureStrategy(proxy.origin);
-          const bootStart = performance.now();
-          await page.goto(`${proxy.origin}/iframe.html`, { waitUntil: "load" });
-          await strategy.waitForBoot(page, BOOT_TIMEOUT_MS);
-          logger.info(
-            {
-              buildId,
-              browser,
-              snapshotCount: snapshotIds.length,
-              bootMs: Math.round(performance.now() - bootStart),
-            },
-            "capture group booted",
-          );
-
-          for (const snapshotId of snapshotIds) {
+          for (let i = 0; i < snapshotIds.length; i++) {
             if (signal.aborted) {
               break;
             }
+            const snapshotId = snapshotIds[i]!;
 
             try {
-              await captureSnapshotOnPage(page, strategy, build, snapshotId, pageLogState);
+              await captureSnapshotOnPage(
+                capturePage.page,
+                strategy,
+                build,
+                snapshotId,
+                capturePage.pageLogState,
+              );
             } catch (error) {
               await markSnapshotErrored(snapshotId, error);
+
+              if (!capturePage.page.isClosed()) {
+                continue;
+              }
+
+              logger.error(
+                { buildId, browser, snapshotId },
+                "capture browser closed mid-group, relaunching for remaining snapshots",
+              );
+              await capturePage.browser.close().catch(() => undefined);
+
+              try {
+                capturePage = await launchCapturePage(buildId, browser, proxy, strategy);
+              } catch (relaunchError) {
+                logger.error(
+                  { buildId, browser, err: relaunchError },
+                  "failed to relaunch capture browser, aborting remaining snapshots",
+                );
+                for (const remainingId of snapshotIds.slice(i + 1)) {
+                  await markSnapshotErrored(remainingId, relaunchError);
+                }
+                return;
+              }
             } finally {
-              pageLogState.logs = [];
-              pageLogState.hasPageError = false;
+              capturePage.pageLogState.logs = [];
+              capturePage.pageLogState.hasPageError = false;
             }
           }
         } finally {
-          await launchedBrowser.close();
+          await capturePage.browser.close();
           proxy.close();
         }
       }),
