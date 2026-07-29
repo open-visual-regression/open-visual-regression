@@ -1,5 +1,5 @@
 import pixelmatch from "pixelmatch";
-import { chromium, firefox, webkit, type Browser, type Page } from "playwright";
+import { chromium, firefox, webkit, type Page } from "playwright";
 import { PNG } from "pngjs";
 
 import { dbClient } from "@ovr/db/client";
@@ -75,7 +75,11 @@ const getBrowserLauncher = (browser: string) => {
 type CaptureLog = { level: string; message: string };
 type PageLogState = { logs: CaptureLog[]; hasPageError: boolean };
 
-type CapturePage = { browser: Browser; page: Page; pageLogState: PageLogState };
+type CapturePage = {
+  page: Page;
+  pageLogState: PageLogState;
+  close: () => Promise<void>;
+};
 
 const launchCapturePage = async (
   buildId: string,
@@ -84,11 +88,15 @@ const launchCapturePage = async (
   strategy: CaptureStrategy,
 ): Promise<CapturePage> => {
   const browser = await getBrowserLauncher(browserName).launch(
-    // /dev/shm is sized small on the worker node; Chromium falls back to disk instead of crashing.
     browserName === "chromium" ? { args: ["--disable-dev-shm-usage"] } : undefined,
   );
+
+  let closeRequested = false;
   browser.on("disconnected", () => {
-    logger.error({ buildId, browser: browserName }, "capture browser disconnected");
+    if (closeRequested) {
+      return;
+    }
+    logger.error({ buildId, browser: browserName }, "capture browser disconnected unexpectedly");
   });
 
   const context = await browser.newContext({ deviceScaleFactor: 1 });
@@ -122,7 +130,14 @@ const launchCapturePage = async (
     "capture page booted",
   );
 
-  return { browser, page, pageLogState };
+  return {
+    page,
+    pageLogState,
+    close: async () => {
+      closeRequested = true;
+      await browser.close();
+    },
+  };
 };
 
 const captureSnapshotOnPage = async (
@@ -276,11 +291,10 @@ export const captureBuildGroup = async (
         let capturePage = await launchCapturePage(buildId, browser, proxy, strategy);
 
         try {
-          for (let i = 0; i < snapshotIds.length; i++) {
+          for (const [index, snapshotId] of snapshotIds.entries()) {
             if (signal.aborted) {
               break;
             }
-            const snapshotId = snapshotIds[i]!;
 
             try {
               await captureSnapshotOnPage(
@@ -301,7 +315,7 @@ export const captureBuildGroup = async (
                 { buildId, browser, snapshotId },
                 "capture browser closed mid-group, relaunching for remaining snapshots",
               );
-              await capturePage.browser.close().catch(() => undefined);
+              await capturePage.close().catch(() => undefined);
 
               try {
                 capturePage = await launchCapturePage(buildId, browser, proxy, strategy);
@@ -310,7 +324,7 @@ export const captureBuildGroup = async (
                   { buildId, browser, err: relaunchError },
                   "failed to relaunch capture browser, aborting remaining snapshots",
                 );
-                for (const remainingId of snapshotIds.slice(i + 1)) {
+                for (const remainingId of snapshotIds.slice(index + 1)) {
                   await markSnapshotErrored(remainingId, relaunchError);
                 }
                 return;
@@ -321,7 +335,7 @@ export const captureBuildGroup = async (
             }
           }
         } finally {
-          await capturePage.browser.close();
+          await capturePage.close();
           proxy.close();
         }
       }),
