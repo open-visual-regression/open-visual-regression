@@ -12,7 +12,7 @@ import { storage } from "@ovr/storage";
 
 import { detectCaptureStrategy, type CaptureStrategy } from "./captureStrategies";
 import { withExtractedBundle } from "./lib/artifact";
-import { newPage } from "./lib/browser";
+import { CHROMIUM_LAUNCH_ARGS, newPage } from "./lib/browser";
 import {
   BOOT_TIMEOUT_MS,
   CAPTURE_JOB_TIMEOUT_MS,
@@ -133,9 +133,8 @@ export const captureBuildGroup = async (
     (signal) =>
       withExtractedBundle(build.artifactPath, async (bundleDir) => {
         const proxy = await startStaticProxy(bundleDir);
-        // /dev/shm is sized small on the worker node; Chromium falls back to disk instead of crashing.
         const launchedBrowser = await getBrowserLauncher(browser).launch(
-          browser === "chromium" ? { args: ["--disable-dev-shm-usage"] } : undefined,
+          browser === "chromium" ? { args: CHROMIUM_LAUNCH_ARGS } : undefined,
         );
 
         try {
