@@ -26,7 +26,8 @@ import {
 import { Typography } from "@ovr/ui/components/typography";
 
 import { BuildStatusBadge, BuildStatusStripe } from "@/lib/components/BuildStatus";
-import { TableRowLink, TableRowLinkCell } from "@/lib/components/table-row-link/TableRowLink";
+import { TableRowLink } from "@/lib/components/table-row-link/TableRowLink";
+import { TableRowLinkCell } from "@/lib/components/table-row-link/TableRowLinkCell";
 import { formatRelativeDateTime } from "@/lib/utils/date";
 
 const features = tableFeatures({});
@@ -160,23 +161,12 @@ export const BuildsTable = ({
               const label = `view build ${row.original.commitSha.slice(0, 7)}`;
 
               return (
-                <TableRowLink key={row.id}>
-                  {row.getAllCells().map((cell) =>
-                    cell.column.columnDef.meta?.disableRowLink ? (
-                      <TableCell key={cell.id} className={cell.column.columnDef.meta?.className}>
-                        <table.FlexRender cell={cell} />
-                      </TableCell>
-                    ) : (
-                      <TableRowLinkCell
-                        key={cell.id}
-                        href={href}
-                        label={cell.column.id === "name" ? label : undefined}
-                        className={cell.column.columnDef.meta?.className}
-                      >
-                        <table.FlexRender cell={cell} />
-                      </TableRowLinkCell>
-                    ),
-                  )}
+                <TableRowLink key={row.id} href={href} label={label} labelColumnId="name">
+                  {row.getAllCells().map((cell) => (
+                    <TableRowLinkCell key={cell.id} cell={cell}>
+                      <table.FlexRender cell={cell} />
+                    </TableRowLinkCell>
+                  ))}
                 </TableRowLink>
               );
             })

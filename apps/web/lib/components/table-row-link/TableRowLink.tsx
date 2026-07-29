@@ -1,44 +1,31 @@
-import type { CellData, RowData, TableFeatures } from "@tanstack/table-core";
-import Link from "next/link";
+"use client";
+
 import { type ComponentProps, type ReactNode } from "react";
 
-import { TableCell, TableRow } from "@ovr/ui/components/table";
+import { TableRow } from "@ovr/ui/components/table";
 import { cn } from "@ovr/ui/lib/utils";
 
-declare module "@tanstack/table-core" {
-  // oxlint-disable-next-line typescript/consistent-type-definitions -- module augmentation requires `interface`
-  interface ColumnMeta<
-    TFeatures extends TableFeatures,
-    TData extends RowData,
-    TValue extends CellData = CellData,
-  > {
-    disableRowLink?: boolean;
-  }
-}
+import { TableRowLinkContext, type TableRowLinkContextValue } from "./TableRowLinkContext";
 
-type TableRowLinkProps = ComponentProps<typeof TableRow>;
+type TableRowLinkProps = Omit<ComponentProps<typeof TableRow>, "children"> &
+  TableRowLinkContextValue & {
+    children: ReactNode;
+  };
 
-export const TableRowLink = ({ className, ...props }: TableRowLinkProps) => (
-  <TableRow className={cn("has-[a:hover,a:focus-visible]:bg-ovr-hover", className)} {...props} />
-);
-
-type TableRowLinkCellProps = {
-  href: string;
-  label?: string;
-  className?: string;
-  children: ReactNode;
-};
-
-export const TableRowLinkCell = ({ href, label, className, children }: TableRowLinkCellProps) => (
-  <TableCell className={cn("relative", className)}>
-    <Link
-      href={href}
-      tabIndex={label ? undefined : -1}
-      aria-hidden={label ? undefined : true}
-      className="absolute inset-0 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ovr-accent"
-    >
-      {label ? <span className="sr-only">{label}</span> : null}
-    </Link>
-    {children}
-  </TableCell>
+// Renders a <tr> whose cells (via TableRowLinkCell) each link to `href`, so the whole
+// row is clickable. `labelColumnId` picks which cell's link carries the accessible name
+// and tab stop for keyboard/screen-reader users; the rest are hidden duplicates.
+export const TableRowLink = ({
+  href,
+  label,
+  labelColumnId,
+  className,
+  children,
+  ...props
+}: TableRowLinkProps) => (
+  <TableRowLinkContext.Provider value={{ href, label, labelColumnId }}>
+    <TableRow className={cn("has-[a:hover,a:focus-visible]:bg-ovr-hover", className)} {...props}>
+      {children}
+    </TableRow>
+  </TableRowLinkContext.Provider>
 );
