@@ -8,6 +8,7 @@ import {
   type Column,
 } from "@tanstack/react-table";
 import { useTanStackTableDevtools } from "@tanstack/react-table-devtools";
+import type { CellData, RowData, TableFeatures } from "@tanstack/table-core";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer";
@@ -25,9 +26,21 @@ import {
   TableEmpty,
 } from "@ovr/ui/components/table";
 import { Typography } from "@ovr/ui/components/typography";
+import { cn } from "@ovr/ui/lib/utils";
 
 import { BuildStatusBadge, BuildStatusStripe } from "@/lib/components/BuildStatus";
 import { formatRelativeDateTime } from "@/lib/utils/date";
+
+declare module "@tanstack/table-core" {
+  // oxlint-disable-next-line typescript/consistent-type-definitions -- module augmentation requires `interface`
+  interface ColumnMeta<
+    TFeatures extends TableFeatures,
+    TData extends RowData,
+    TValue extends CellData = CellData,
+  > {
+    disableRowLink?: boolean;
+  }
+}
 
 const features = tableFeatures({});
 const columnHelper = createColumnHelper<typeof features, BuildSchema>();
@@ -37,7 +50,7 @@ const INITIAL_SKELETON_ROW_COUNT = 8;
 const columns = columnHelper.columns([
   columnHelper.display({
     id: "statusStripe",
-    meta: { className: "w-1 min-w-1 p-0 relative" },
+    meta: { className: "w-1 min-w-1 p-0 relative", disableRowLink: true },
     cell: ({ row }) => <BuildStatusStripe status={row.original.status} />,
   }),
   columnHelper.display({
@@ -50,12 +63,6 @@ const columns = columnHelper.columns([
     header: "Commit",
     cell: ({ row }) => (
       <div className="flex flex-row gap-2">
-        <Link
-          href={`/projects/${row.original.project.id}/builds/${row.original.id}`}
-          className="absolute inset-0 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ovr-accent"
-        >
-          <span className="sr-only">view build {row.original.commitSha.slice(0, 7)}</span>
-        </Link>
         <Typography variant="body-muted">{row.original.commitSha.slice(0, 7)}</Typography>
         {row.original.name ? <Typography>{row.original.name}</Typography> : null}
       </div>
@@ -86,6 +93,31 @@ const SkeletonRow = ({ leafColumns, ref }: SkeletonRowProps) => (
       </TableCell>
     ))}
   </TableRow>
+);
+
+type RowLinkCellProps = {
+  href: string;
+  label?: string;
+  className?: string;
+  children: React.ReactNode;
+};
+
+// Every cell in a row gets its own link scoped to that cell so tapping anywhere in the
+// row navigates to the row's build. Only one link per row keeps its accessible name and
+// tab stop; the rest are hidden from keyboard/screen-reader users to avoid duplicate
+// announcements of the same destination.
+const RowLinkCell = ({ href, label, className, children }: RowLinkCellProps) => (
+  <TableCell className={cn("relative", className)}>
+    <Link
+      href={href}
+      tabIndex={label ? undefined : -1}
+      aria-hidden={label ? undefined : true}
+      className="absolute inset-0 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ovr-accent"
+    >
+      {label ? <span className="sr-only">{label}</span> : null}
+    </Link>
+    {children}
+  </TableCell>
 );
 
 type BuildsTableProps = {
@@ -161,15 +193,31 @@ export const BuildsTable = ({
               {search ? `no builds found matching "${search}"` : "no builds found"}
             </TableEmpty>
           ) : (
-            rows.map((row) => (
-              <TableRow key={row.id} className="relative has-[a:hover]:bg-ovr-hover">
-                {row.getAllCells().map((cell) => (
-                  <TableCell key={cell.id} className={cell.column.columnDef.meta?.className}>
-                    <table.FlexRender cell={cell} />
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))
+            rows.map((row) => {
+              const href = `/projects/${row.original.project.id}/builds/${row.original.id}`;
+              const label = `view build ${row.original.commitSha.slice(0, 7)}`;
+
+              return (
+                <TableRow key={row.id} className="has-[a:hover,a:focus-visible]:bg-ovr-hover">
+                  {row.getAllCells().map((cell) =>
+                    cell.column.columnDef.meta?.disableRowLink ? (
+                      <TableCell key={cell.id} className={cell.column.columnDef.meta?.className}>
+                        <table.FlexRender cell={cell} />
+                      </TableCell>
+                    ) : (
+                      <RowLinkCell
+                        key={cell.id}
+                        href={href}
+                        label={cell.column.id === "name" ? label : undefined}
+                        className={cell.column.columnDef.meta?.className}
+                      >
+                        <table.FlexRender cell={cell} />
+                      </RowLinkCell>
+                    ),
+                  )}
+                </TableRow>
+              );
+            })
           )}
           {!isLoading && hasNextPage ? (
             <SkeletonRow ref={sentinelRef} leafColumns={leafColumns} />
