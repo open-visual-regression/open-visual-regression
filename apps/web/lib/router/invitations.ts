@@ -18,11 +18,14 @@ export const getInvitation = os.invitations.getInvitation
       });
     }
 
+    const existingUser = await dbClient.users.findByEmail(invitation.email);
+
     return {
       email: invitation.email,
       organizationName: invitation.organization.name,
       role: invitation.role,
       expiresAt: invitation.expiresAt,
+      hasAccount: !!existingUser,
     };
   })
   .actionable();
@@ -38,20 +41,34 @@ export const acceptInvitation = os.invitations.acceptInvitation
       });
     }
 
-    const [signUpError] = await authServerClient.signUpEmail({
-      name: input.name,
-      email: invitation.email,
-      password: input.password,
-    });
+    const existingUser = await dbClient.users.findByEmail(invitation.email);
 
-    if (signUpError) {
-      throw new ORPCError("BAD_REQUEST", { message: signUpError.message });
+    if (!existingUser) {
+      if (!input.name) {
+        throw new ORPCError("BAD_REQUEST", { message: "name is required" });
+      }
+
+      const [signUpError] = await authServerClient.signUpEmail({
+        name: input.name,
+        email: invitation.email,
+        password: input.password,
+      });
+
+      if (signUpError) {
+        throw new ORPCError("BAD_REQUEST", { message: signUpError.message });
+      }
     }
 
-    const signInResponse = await authServerClient.signInEmail({
+    const [signInError, signInResponse] = await authServerClient.signInEmail({
       email: invitation.email,
       password: input.password,
     });
+
+    if (signInError || !signInResponse.ok) {
+      throw new ORPCError("BAD_REQUEST", {
+        message: "that password does not match the existing account for this email",
+      });
+    }
 
     const sessionCookie = signInResponse.headers
       .getSetCookie()

@@ -34,6 +34,7 @@ export default async function InvitationPage(props: InvitationPageProps) {
         email={invitation.email}
         organizationName={invitation.organizationName}
         role={invitation.role}
+        hasAccount={invitation.hasAccount}
       />
     </CenteredFormSection>
   );

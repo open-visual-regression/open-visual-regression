@@ -96,7 +96,7 @@ export const signUpEmail = ({ name, email, password }: SignUpEmailInput) =>
   safeAuth(auth.api.signUpEmail({ body: { name, email, password } }));
 
 export const signInEmail = ({ email, password }: SignInEmailInput) =>
-  auth.api.signInEmail({ body: { email, password }, asResponse: true });
+  safeAuth(auth.api.signInEmail({ body: { email, password }, asResponse: true }));
 
 export const acceptInvitation = ({ invitationId, headers }: AcceptInvitationInput) =>
   safeAuth(auth.api.acceptInvitation({ body: { invitationId }, headers }));

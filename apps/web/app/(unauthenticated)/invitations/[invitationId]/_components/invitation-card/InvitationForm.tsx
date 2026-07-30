@@ -12,14 +12,27 @@ import { Input } from "@ovr/ui/components/input";
 
 import { serverClient } from "@/lib/router";
 
-import { acceptInvitationSchema, type AcceptInvitationFormValues } from "./schema";
+import {
+  createAccountSchema,
+  signInSchema,
+  type CreateAccountFormValues,
+  type SignInFormValues,
+} from "./schema";
 
 type InvitationFormProps = {
   invitationId: string;
   email: string;
+  hasAccount: boolean;
 };
 
-export const InvitationForm = ({ invitationId, email }: InvitationFormProps) => {
+const EmailField = ({ email }: { email: string }) => (
+  <Field>
+    <FieldLabel htmlFor="email">email</FieldLabel>
+    <Input id="email" type="email" value={email} disabled readOnly />
+  </Field>
+);
+
+const CreateAccountForm = ({ invitationId, email }: Omit<InvitationFormProps, "hasAccount">) => {
   const router = useRouter();
 
   const {
@@ -27,8 +40,8 @@ export const InvitationForm = ({ invitationId, email }: InvitationFormProps) => 
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<AcceptInvitationFormValues>({
-    resolver: zodResolver(acceptInvitationSchema),
+  } = useForm<CreateAccountFormValues>({
+    resolver: zodResolver(createAccountSchema),
     defaultValues: { name: "", password: "", confirmPassword: "" },
   });
 
@@ -39,19 +52,17 @@ export const InvitationForm = ({ invitationId, email }: InvitationFormProps) => 
     ],
   });
 
-  const onSubmit = (values: AcceptInvitationFormValues) => {
-    execute({ invitationId, name: values.name, password: values.password });
-  };
-
   const isPending = status === "pending" || isSubmitting;
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate>
+    <form
+      onSubmit={handleSubmit((values) =>
+        execute({ invitationId, name: values.name, password: values.password }),
+      )}
+      noValidate
+    >
       <FieldGroup>
-        <Field>
-          <FieldLabel htmlFor="email">email</FieldLabel>
-          <Input id="email" type="email" value={email} disabled readOnly />
-        </Field>
+        <EmailField email={email} />
         <Field data-invalid={!!errors.name}>
           <FieldLabel htmlFor="name">name</FieldLabel>
           <Input
@@ -95,3 +106,61 @@ export const InvitationForm = ({ invitationId, email }: InvitationFormProps) => 
     </form>
   );
 };
+
+const SignInForm = ({ invitationId, email }: Omit<InvitationFormProps, "hasAccount">) => {
+  const router = useRouter();
+
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<SignInFormValues>({
+    resolver: zodResolver(signInSchema),
+    defaultValues: { password: "" },
+  });
+
+  const { execute, status } = useServerAction(serverClient.invitations.acceptInvitation, {
+    interceptors: [
+      onSuccess(() => router.push("/")),
+      onError((err) => setError("root", { message: err.message })),
+    ],
+  });
+
+  const isPending = status === "pending" || isSubmitting;
+
+  return (
+    <form
+      onSubmit={handleSubmit((values) => execute({ invitationId, password: values.password }))}
+      noValidate
+    >
+      <FieldGroup>
+        <EmailField email={email} />
+        <Field data-invalid={!!errors.password}>
+          <FieldLabel htmlFor="password">password</FieldLabel>
+          <Input
+            id="password"
+            type="password"
+            autoComplete="current-password"
+            placeholder="enter your existing password"
+            autoFocus
+            aria-invalid={!!errors.password}
+            {...register("password")}
+          />
+          <FieldError errors={[errors.password]} />
+        </Field>
+        <FieldError errors={[errors.root]} />
+        <Button type="submit" size="lg" className="w-full" disabled={isPending}>
+          {isPending ? "joining…" : "sign in and join"}
+        </Button>
+      </FieldGroup>
+    </form>
+  );
+};
+
+export const InvitationForm = ({ invitationId, email, hasAccount }: InvitationFormProps) =>
+  hasAccount ? (
+    <SignInForm invitationId={invitationId} email={email} />
+  ) : (
+    <CreateAccountForm invitationId={invitationId} email={email} />
+  );

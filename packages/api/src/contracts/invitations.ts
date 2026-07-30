@@ -10,14 +10,15 @@ export const getInvitationOutputSchema = z.object({
   organizationName: z.string(),
   role: z.string().nullable(),
   expiresAt: z.date(),
+  hasAccount: z.boolean(),
 });
 
 export type GetInvitationOutputSchema = z.infer<typeof getInvitationOutputSchema>;
 
 export const acceptInvitationInputSchema = z.object({
   invitationId: z.string(),
-  name: z.string().min(1, "name is required"),
-  password: z.string().min(8, "password must be at least 8 characters"),
+  name: z.string().min(1, "name is required").optional(),
+  password: z.string().min(1, "password is required"),
 });
 
 export const contract = {

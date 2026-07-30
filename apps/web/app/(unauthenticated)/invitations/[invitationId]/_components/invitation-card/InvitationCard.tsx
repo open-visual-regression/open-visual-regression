@@ -8,6 +8,7 @@ type InvitationCardProps = {
   email: string;
   organizationName: string;
   role: string | null;
+  hasAccount: boolean;
 };
 
 export const InvitationCard = ({
@@ -15,11 +16,12 @@ export const InvitationCard = ({
   email,
   organizationName,
   role,
+  hasAccount,
 }: InvitationCardProps) => (
   <Card className="w-full">
     <CardHeader>
       <Typography variant="h2" as="h1">
-        create your account
+        {hasAccount ? "accept your invitation" : "create your account"}
       </Typography>
       <Typography className="text-muted-foreground">
         invited to <span className="text-foreground">{organizationName}</span>
@@ -29,11 +31,13 @@ export const InvitationCard = ({
             as <span className="text-ovr-accent">{role}</span>
           </>
         ) : null}
-        . set a name and password to finish.
+        {hasAccount
+          ? ". this email already has an account — sign in to join."
+          : ". set a name and password to finish."}
       </Typography>
     </CardHeader>
     <CardContent>
-      <InvitationForm invitationId={invitationId} email={email} />
+      <InvitationForm invitationId={invitationId} email={email} hasAccount={hasAccount} />
     </CardContent>
   </Card>
 );

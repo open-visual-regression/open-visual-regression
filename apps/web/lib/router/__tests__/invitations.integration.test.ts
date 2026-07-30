@@ -145,24 +145,73 @@ describe("invitations", () => {
       expect(error?.code).toBe("BAD_REQUEST");
     });
 
-    test("should return BAD_REQUEST when an account already exists for the invited email", async ({
+    test("should let an existing account claim the invitation with its own password", async ({
+      admin,
+    }) => {
+      const invitationId = await inviteUser("existing@example.com");
+      await auth.api.signUpEmail({
+        body: { name: "Existing", email: "existing@example.com", password: TEST_PASSWORD },
+      });
+      const existingUser = await dbClient.users.findByEmail("existing@example.com");
+
+      vi.mocked(headers).mockResolvedValue(new Headers());
+
+      const [error] = await serverClient.invitations.acceptInvitation({
+        invitationId,
+        password: TEST_PASSWORD,
+      });
+
+      expect(error).toBeNull();
+
+      const adminSignIn = await auth.api.signInEmail({
+        body: { email: admin.email, password: TEST_PASSWORD },
+        asResponse: true,
+      });
+      vi.mocked(headers).mockResolvedValue(convertSetCookieToCookie(adminSignIn.headers));
+
+      const [, result] = await serverClient.users.list();
+      expect(result?.users).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: existingUser!.id, status: "active" }),
+        ]),
+      );
+    });
+
+    test("should return BAD_REQUEST when the password does not match the existing account", async ({
       admin: _,
     }) => {
-      const invitationId = await inviteUser("taken@example.com");
+      const invitationId = await inviteUser("wrong-password@example.com");
       await auth.api.signUpEmail({
-        body: { name: "Taken", email: "taken@example.com", password: TEST_PASSWORD },
+        body: { name: "Existing", email: "wrong-password@example.com", password: TEST_PASSWORD },
       });
 
       vi.mocked(headers).mockResolvedValue(new Headers());
 
       const [error] = await serverClient.invitations.acceptInvitation({
         invitationId,
-        name: "Taken",
-        password: TEST_PASSWORD,
+        password: "not-the-right-password",
       });
 
       expect(error?.code).toBe("BAD_REQUEST");
-      expect(await dbClient.users.findByEmail("taken@example.com")).not.toBeUndefined();
+      expect(await dbClient.users.findByEmail("wrong-password@example.com")).not.toBeUndefined();
+    });
+
+    test("should report whether the invited email already has an account", async ({ admin: _ }) => {
+      const withoutAccount = await inviteUser("no-account@example.com");
+      const withAccount = await inviteUser("has-account@example.com");
+      await auth.api.signUpEmail({
+        body: { name: "Has Account", email: "has-account@example.com", password: TEST_PASSWORD },
+      });
+
+      const [, missing] = await serverClient.invitations.getInvitation({
+        invitationId: withoutAccount,
+      });
+      const [, present] = await serverClient.invitations.getInvitation({
+        invitationId: withAccount,
+      });
+
+      expect(missing?.hasAccount).toBe(false);
+      expect(present?.hasAccount).toBe(true);
     });
   });
 });
