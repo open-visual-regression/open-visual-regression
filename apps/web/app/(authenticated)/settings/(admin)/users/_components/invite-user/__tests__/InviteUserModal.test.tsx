@@ -22,13 +22,13 @@ describe("InviteUserModal", () => {
     renderComponent();
 
     await user.click(screen.getByRole("button", { name: /invite user/i }));
-    await user.click(screen.getByRole("button", { name: /^send invite$/i }));
+    await user.click(screen.getByRole("button", { name: /^create invite$/i }));
 
     expect(await screen.findByText("invalid email address")).toBeVisible();
     expect(mockInvite).not.toHaveBeenCalled();
   });
 
-  it("should send an invitation and show the invitation link in a reveal view", async ({
+  it("should create an invitation and show the invitation link in a reveal view", async ({
     user,
   }) => {
     mockInvite.mockResolvedValue([null, { invitationUrl: INVITATION_URL }]);
@@ -36,9 +36,9 @@ describe("InviteUserModal", () => {
 
     await user.click(screen.getByRole("button", { name: /invite user/i }));
     await user.type(screen.getByLabelText(/email/i), "new.user@example.com");
-    await user.click(screen.getByRole("button", { name: /^send invite$/i }));
+    await user.click(screen.getByRole("button", { name: /^create invite$/i }));
 
-    expect(await screen.findByRole("heading", { name: /invitation sent/i })).toBeVisible();
+    expect(await screen.findByRole("heading", { name: /invitation created/i })).toBeVisible();
     expect(screen.getByText(INVITATION_URL)).toBeVisible();
     expect(mockInvite).toHaveBeenCalledWith({ email: "new.user@example.com" });
   });
@@ -49,7 +49,7 @@ describe("InviteUserModal", () => {
 
     await user.click(screen.getByRole("button", { name: /invite user/i }));
     await user.type(screen.getByLabelText(/email/i), "new.user@example.com");
-    await user.click(screen.getByRole("button", { name: /^send invite$/i }));
+    await user.click(screen.getByRole("button", { name: /^create invite$/i }));
 
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, "clipboard", {
@@ -69,20 +69,20 @@ describe("InviteUserModal", () => {
 
     await user.click(screen.getByRole("button", { name: /invite user/i }));
     await user.type(screen.getByLabelText(/email/i), "new.user@example.com");
-    await user.click(screen.getByRole("button", { name: /^send invite$/i }));
+    await user.click(screen.getByRole("button", { name: /^create invite$/i }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("INTERNAL_SERVER_ERROR");
   });
 
-  it("should disable the submit button while sending the invitation", async ({ user }) => {
+  it("should disable the submit button while creating the invitation", async ({ user }) => {
     mockInvite.mockReturnValue(new Promise(() => {}));
     renderComponent();
 
     await user.click(screen.getByRole("button", { name: /invite user/i }));
     await user.type(screen.getByLabelText(/email/i), "new.user@example.com");
-    await user.click(screen.getByRole("button", { name: /^send invite$/i }));
+    await user.click(screen.getByRole("button", { name: /^create invite$/i }));
 
-    await waitFor(() => expect(screen.getByRole("button", { name: /sending/i })).toBeDisabled());
+    await waitFor(() => expect(screen.getByRole("button", { name: /creating/i })).toBeDisabled());
   });
 
   it("should show the invite form again after closing and reopening the reveal view", async ({
@@ -93,7 +93,7 @@ describe("InviteUserModal", () => {
 
     await user.click(screen.getByRole("button", { name: /invite user/i }));
     await user.type(screen.getByLabelText(/email/i), "new.user@example.com");
-    await user.click(screen.getByRole("button", { name: /^send invite$/i }));
+    await user.click(screen.getByRole("button", { name: /^create invite$/i }));
     await user.click(await screen.findByRole("button", { name: /^done$/i }));
 
     await user.click(screen.getByRole("button", { name: /invite user/i }));

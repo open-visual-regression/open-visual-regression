@@ -49,7 +49,7 @@ export const InviteUserModalForm = () => {
     return (
       <>
         <DialogHeader>
-          <DialogTitle>invitation sent</DialogTitle>
+          <DialogTitle>invitation created</DialogTitle>
         </DialogHeader>
         <InviteUserModalReveal invitationUrl={invitationUrl} />
       </>
@@ -66,7 +66,7 @@ export const InviteUserModalForm = () => {
     <>
       <DialogHeader>
         <DialogTitle>invite user</DialogTitle>
-        <DialogDescription>send an invitation to join this organization</DialogDescription>
+        <DialogDescription>create an invitation to join this organization</DialogDescription>
       </DialogHeader>
       <form onSubmit={handleSubmit(handleFormSubmit)} noValidate>
         <FieldGroup className="pb-6">
@@ -85,7 +85,7 @@ export const InviteUserModalForm = () => {
         </FieldGroup>
         <DialogFooter showCloseButton>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "sending..." : "send invite"}
+            {isSubmitting ? "creating..." : "create invite"}
           </Button>
         </DialogFooter>
       </form>
