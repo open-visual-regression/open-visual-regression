@@ -2,6 +2,7 @@
   "name": "@open-visual-regression/cli",
   "version": "0.1.1",
   "private": false,
+  "license": "Elastic-2.0",
   "bin": {
     "ovr": "./bin/ovr.mjs"
   },
