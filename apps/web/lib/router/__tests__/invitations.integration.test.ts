@@ -2,6 +2,8 @@ import { convertSetCookieToCookie } from "better-auth/test";
 import { headers } from "next/headers";
 import { vi } from "vitest";
 
+import { dbClient } from "@ovr/db/client";
+
 import { auth } from "@/lib/auth/auth";
 import { serverClient } from "@/lib/router";
 import { test, describe, expect } from "@/lib/testing/fixtures";
@@ -143,41 +145,24 @@ describe("invitations", () => {
       expect(error?.code).toBe("BAD_REQUEST");
     });
 
-    test("should replace the account left behind by an earlier failed attempt", async ({
-      admin,
+    test("should return BAD_REQUEST when an account already exists for the invited email", async ({
+      admin: _,
     }) => {
-      const invitationId = await inviteUser("retried@example.com");
+      const invitationId = await inviteUser("taken@example.com");
       await auth.api.signUpEmail({
-        body: { name: "Retried", email: "retried@example.com", password: "an-old-password" },
+        body: { name: "Taken", email: "taken@example.com", password: TEST_PASSWORD },
       });
 
       vi.mocked(headers).mockResolvedValue(new Headers());
 
       const [error] = await serverClient.invitations.acceptInvitation({
         invitationId,
-        name: "Retried",
+        name: "Taken",
         password: TEST_PASSWORD,
       });
 
-      expect(error).toBeNull();
-
-      const signInResult = await auth.api.signInEmail({
-        body: { email: "retried@example.com", password: TEST_PASSWORD },
-      });
-      expect(signInResult.user.email).toBe("retried@example.com");
-
-      const adminSignIn = await auth.api.signInEmail({
-        body: { email: admin.email, password: TEST_PASSWORD },
-        asResponse: true,
-      });
-      vi.mocked(headers).mockResolvedValue(convertSetCookieToCookie(adminSignIn.headers));
-
-      const [, result] = await serverClient.users.list();
-      expect(result?.users).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ email: "retried@example.com", status: "active" }),
-        ]),
-      );
+      expect(error?.code).toBe("BAD_REQUEST");
+      expect(await dbClient.users.findByEmail("taken@example.com")).not.toBeUndefined();
     });
   });
 });
