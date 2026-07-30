@@ -27,8 +27,6 @@ out/
 build
 dist
 
-apps/cli/LICENSE
-
 
 # Debug
 npm-debug.log*
