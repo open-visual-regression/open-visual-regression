@@ -92,13 +92,12 @@ export const remove = os.users.remove
 
       const [error] = result;
 
-      // a failed accept-invitation attempt can leave a user account with no
-      // membership behind; clean it up so the email can be re-invited
       if (!error && invitation) {
-        const orphanedUser = await dbClient.users.findOrphanedUserByEmail(invitation.email);
-        if (orphanedUser) {
+        const existingUser = await dbClient.users.findByEmail(invitation.email);
+
+        if (existingUser && (await dbClient.users.getMembershipCount(existingUser.id)) === 0) {
           await authServerClient.removeUser({
-            userId: orphanedUser.id,
+            userId: existingUser.id,
             headers: context.headers,
           });
         }

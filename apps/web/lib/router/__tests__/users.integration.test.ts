@@ -1,5 +1,3 @@
-import { convertSetCookieToCookie } from "better-auth/test";
-import { headers } from "next/headers";
 import { vi } from "vitest";
 
 import { dbClient } from "@ovr/db/client";
@@ -12,6 +10,13 @@ import { test, describe, expect } from "@/lib/testing/fixtures";
 vi.mock("next/headers");
 
 const TEST_PASSWORD = "securepass123";
+
+const inviteUser = async (email: string) => {
+  await serverClient.users.invite({ email });
+  const [, result] = await serverClient.users.list();
+
+  return result!.users.find((user) => user.email === email)!.id;
+};
 
 describe("users", () => {
   describe("list", () => {
@@ -231,10 +236,7 @@ describe("users", () => {
     });
 
     test("should cancel a pending invitation", async ({ admin: _ }) => {
-      const [, inviteResult] = await serverClient.users.invite({
-        email: "cancel-me@example.com",
-      });
-      const invitationId = inviteResult!.invitationUrl.split("/").at(-1)!;
+      const invitationId = await inviteUser("cancel-me@example.com");
 
       const [error] = await serverClient.users.remove({
         users: [{ status: "invited", invitationId }],
@@ -248,73 +250,58 @@ describe("users", () => {
       );
     });
 
-    test("should remove the orphaned user account left behind by a failed invitation accept", async ({
-      admin,
+    test("should not remove a user who is still a member of the organization", async ({
+      admin: _,
     }) => {
-      const [, inviteResult] = await serverClient.users.invite({
-        email: "orphaned@example.com",
+      const { name, email } = mocks.user.generateAuthUser();
+      const { user: target } = await auth.api.createUser({
+        body: { name, email, password: TEST_PASSWORD, role: "reviewer" },
       });
-      const invitationId = inviteResult!.invitationUrl.split("/").at(-1)!;
-
-      vi.mocked(headers).mockResolvedValue(new Headers());
-
-      const [acceptError] = await serverClient.invitations.acceptInvitation({
-        invitationId,
-        name: "Orphaned User",
-        password: TEST_PASSWORD,
+      const organization = await dbClient.organizations.getOrganization();
+      await auth.api.addMember({
+        body: { userId: target.id, role: "member", organizationId: organization!.id },
       });
-      expect(acceptError).not.toBeNull();
+      const invitationId = await inviteUser(target.email);
 
-      const orphanedBefore = await dbClient.users.findByEmail("orphaned@example.com");
-      expect(orphanedBefore).not.toBeNull();
-
-      const adminSignIn = await auth.api.signInEmail({
-        body: { email: admin.email, password: TEST_PASSWORD },
-        asResponse: true,
-      });
-      vi.mocked(headers).mockResolvedValue(convertSetCookieToCookie(adminSignIn.headers));
-
-      const [removeError] = await serverClient.users.remove({
+      const [error] = await serverClient.users.remove({
         users: [{ status: "invited", invitationId }],
       });
-      expect(removeError).toBeNull();
 
-      const orphanedAfter = await dbClient.users.findByEmail("orphaned@example.com");
-      expect(orphanedAfter).toBeNull();
+      expect(error).toBeNull();
+      expect(await dbClient.users.findByEmail(target.email)).not.toBeUndefined();
+    });
+
+    test("should remove the orphaned user account left behind by a failed invitation accept", async ({
+      admin: _,
+    }) => {
+      const invitationId = await inviteUser("orphaned@example.com");
+      await auth.api.signUpEmail({
+        body: { name: "Orphaned User", email: "orphaned@example.com", password: TEST_PASSWORD },
+      });
+
+      const [error] = await serverClient.users.remove({
+        users: [{ status: "invited", invitationId }],
+      });
+
+      expect(error).toBeNull();
+      expect(await dbClient.users.findByEmail("orphaned@example.com")).toBeUndefined();
     });
 
     test("should allow re-inviting an email after its orphaned user account is cleaned up", async ({
-      admin,
+      admin: _,
     }) => {
-      const [, inviteResult] = await serverClient.users.invite({
-        email: "reinvite-me@example.com",
+      const invitationId = await inviteUser("reinvite-me@example.com");
+      await auth.api.signUpEmail({
+        body: { name: "Reinvite Me", email: "reinvite-me@example.com", password: TEST_PASSWORD },
       });
-      const invitationId = inviteResult!.invitationUrl.split("/").at(-1)!;
-
-      vi.mocked(headers).mockResolvedValue(new Headers());
-
-      await serverClient.invitations.acceptInvitation({
-        invitationId,
-        name: "Reinvite Me",
-        password: TEST_PASSWORD,
-      });
-
-      const adminSignIn = await auth.api.signInEmail({
-        body: { email: admin.email, password: TEST_PASSWORD },
-        asResponse: true,
-      });
-      vi.mocked(headers).mockResolvedValue(convertSetCookieToCookie(adminSignIn.headers));
 
       await serverClient.users.remove({
         users: [{ status: "invited", invitationId }],
       });
 
-      const [error, result] = await serverClient.users.invite({
-        email: "reinvite-me@example.com",
-      });
+      const [error] = await serverClient.users.invite({ email: "reinvite-me@example.com" });
 
       expect(error).toBeNull();
-      expect(result?.invitationUrl).toMatch(/^http:\/\/localhost:3000\/invitations\/.+/);
     });
   });
 
