@@ -4,11 +4,12 @@ import { onError, onSuccess } from "@orpc/client";
 import { useServerAction } from "@orpc/react/hooks";
 import { useRouter } from "next/navigation";
 
-import { Button } from "@ovr/ui/components/button";
-import { Icon, XIcon } from "@ovr/ui/components/icon";
+import { XIcon } from "@ovr/ui/components/icon";
 import { toast } from "@ovr/ui/components/toast";
 
 import { serverClient } from "@/lib/router";
+
+import { ResponsiveActionButton } from "./ResponsiveActionButton";
 
 export type SnapshotRejectButtonProps = {
   diffId: string;
@@ -30,9 +31,8 @@ export const SnapshotRejectButton = ({ diffId, rejected }: SnapshotRejectButtonP
   const pending = status === "pending";
 
   return (
-    <Button
-      variant="outline"
-      color="neutral"
+    <ResponsiveActionButton
+      icon={XIcon}
       disabled={pending || rejected}
       className={
         rejected
@@ -40,10 +40,8 @@ export const SnapshotRejectButton = ({ diffId, rejected }: SnapshotRejectButtonP
           : undefined
       }
       onClick={() => execute({ diffId, vote: "reject" })}
-      size="sm"
     >
-      <Icon icon={XIcon} />
       {rejected ? "rejected" : pending ? "rejecting..." : "reject"}
-    </Button>
+    </ResponsiveActionButton>
   );
 };

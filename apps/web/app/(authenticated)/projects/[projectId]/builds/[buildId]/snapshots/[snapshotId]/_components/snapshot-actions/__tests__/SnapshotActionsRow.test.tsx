@@ -206,4 +206,16 @@ describe("SnapshotActionsRow", () => {
     expect(screen.queryByRole("button", { name: /prev/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /next/i })).not.toBeInTheDocument();
   });
+
+  it("should label the sidebar toggle as expand when the sidebar is collapsed", () => {
+    renderComponent({ sidebarCollapsed: true });
+
+    expect(screen.getByRole("button", { name: /expand sidebar/i })).toBeVisible();
+  });
+
+  it("should label the sidebar toggle as collapse when the sidebar is expanded", () => {
+    renderComponent({ sidebarCollapsed: false });
+
+    expect(screen.getByRole("button", { name: /collapse sidebar/i })).toBeVisible();
+  });
 });

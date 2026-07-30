@@ -1,10 +1,13 @@
 import type { LucideIcon } from "lucide-react";
 export {
+  ArrowLeftFromLineIcon,
+  ArrowRightToLineIcon,
   CheckIcon,
   ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   CopyIcon,
+  CornerLeftUpIcon,
   FolderIcon,
   GitBranchIcon,
   GitCommitHorizontalIcon,
