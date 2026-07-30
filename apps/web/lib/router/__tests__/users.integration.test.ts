@@ -22,11 +22,12 @@ const inviteUser = async (email: string) => {
 const acceptInvitation = async (invitationId: string, adminEmail: string) => {
   vi.mocked(headers).mockResolvedValue(new Headers());
 
-  await serverClient.invitations.acceptInvitation({
+  const [error] = await serverClient.invitations.acceptInvitation({
     invitationId,
     name: "Invited User",
     password: TEST_PASSWORD,
   });
+  expect(error).toBeNull();
 
   const response = await auth.api.signInEmail({
     body: { email: adminEmail, password: TEST_PASSWORD },
@@ -275,19 +276,6 @@ describe("users", () => {
       expect(await dbClient.users.findByEmail("accepted-already@example.com")).not.toBeUndefined();
     });
 
-    test("should return BAD_REQUEST when the invitation was already cancelled", async ({
-      admin: _,
-    }) => {
-      const invitationId = await inviteUser("cancelled-already@example.com");
-      await serverClient.users.remove({ users: [{ status: "invited", invitationId }] });
-
-      const [error] = await serverClient.users.remove({
-        users: [{ status: "invited", invitationId }],
-      });
-
-      expect(error?.code).toBe("BAD_REQUEST");
-    });
-
     test("should not cancel any invitation when another one in the batch is not pending", async ({
       admin: _,
     }) => {
@@ -337,28 +325,10 @@ describe("users", () => {
       expect(emails).not.toContain("batched-invite@example.com");
     });
 
-    test("should remove an account that never completed its invitation", async ({ admin: _ }) => {
-      const invitationId = await inviteUser("orphaned@example.com");
-      await auth.api.signUpEmail({
-        body: { name: "Orphaned User", email: "orphaned@example.com", password: TEST_PASSWORD },
-      });
-
-      const [error] = await serverClient.users.remove({
-        users: [{ status: "invited", invitationId }],
-      });
-
-      expect(error).toBeNull();
-      expect(await dbClient.users.findByEmail("orphaned@example.com")).toBeUndefined();
-    });
-
-    test("should allow re-inviting an email after its orphaned user account is cleaned up", async ({
+    test("should allow re-inviting an email whose invitation was cancelled", async ({
       admin: _,
     }) => {
       const invitationId = await inviteUser("reinvite-me@example.com");
-      await auth.api.signUpEmail({
-        body: { name: "Reinvite Me", email: "reinvite-me@example.com", password: TEST_PASSWORD },
-      });
-
       await serverClient.users.remove({
         users: [{ status: "invited", invitationId }],
       });

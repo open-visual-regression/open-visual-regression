@@ -10,7 +10,7 @@ vi.mock("next/headers");
 
 const TEST_PASSWORD = "securepass123";
 
-const createInvitation = async (email: string) => {
+const inviteUser = async (email: string) => {
   const [, result] = await serverClient.users.invite({ email });
   return result!.invitationId;
 };
@@ -18,7 +18,7 @@ const createInvitation = async (email: string) => {
 describe("invitations", () => {
   describe("getInvitation", () => {
     test("should return the invitation details for a pending invitation", async ({ admin: _ }) => {
-      const invitationId = await createInvitation("get-invitation@example.com");
+      const invitationId = await inviteUser("get-invitation@example.com");
 
       const [error, result] = await serverClient.invitations.getInvitation({ invitationId });
 
@@ -37,7 +37,7 @@ describe("invitations", () => {
     test("should return NOT_FOUND for an invitation that is no longer pending", async ({
       admin: _,
     }) => {
-      const invitationId = await createInvitation("no-longer-pending@example.com");
+      const invitationId = await inviteUser("no-longer-pending@example.com");
       await serverClient.users.remove({ users: [{ status: "invited", invitationId }] });
 
       const [error] = await serverClient.invitations.getInvitation({ invitationId });
@@ -48,7 +48,7 @@ describe("invitations", () => {
 
   describe("acceptInvitation", () => {
     test("should return FORBIDDEN when a session already exists", async ({ admin: _ }) => {
-      const invitationId = await createInvitation("already-signed-in@example.com");
+      const invitationId = await inviteUser("already-signed-in@example.com");
 
       const [error] = await serverClient.invitations.acceptInvitation({
         invitationId,
@@ -62,7 +62,7 @@ describe("invitations", () => {
     test("should accept a pending invitation without requiring email verification", async ({
       admin: _,
     }) => {
-      const invitationId = await createInvitation("accept-invitation@example.com");
+      const invitationId = await inviteUser("accept-invitation@example.com");
 
       vi.mocked(headers).mockResolvedValue(new Headers());
 
@@ -82,7 +82,7 @@ describe("invitations", () => {
     });
 
     test("should add the accepting user as an organization member", async ({ admin }) => {
-      const invitationId = await createInvitation("new-member@example.com");
+      const invitationId = await inviteUser("new-member@example.com");
 
       vi.mocked(headers).mockResolvedValue(new Headers());
 
@@ -123,7 +123,7 @@ describe("invitations", () => {
     test("should return BAD_REQUEST when the invitation was already accepted", async ({
       admin: _,
     }) => {
-      const invitationId = await createInvitation("accepted-twice@example.com");
+      const invitationId = await inviteUser("accepted-twice@example.com");
 
       vi.mocked(headers).mockResolvedValue(new Headers());
 
@@ -143,43 +143,41 @@ describe("invitations", () => {
       expect(error?.code).toBe("BAD_REQUEST");
     });
 
-    test("should return BAD_REQUEST when an account already exists for the invited email", async ({
-      admin: _,
+    test("should replace the account left behind by an earlier failed attempt", async ({
+      admin,
     }) => {
-      const invitationId = await createInvitation("taken@example.com");
+      const invitationId = await inviteUser("retried@example.com");
       await auth.api.signUpEmail({
-        body: { name: "Taken", email: "taken@example.com", password: TEST_PASSWORD },
+        body: { name: "Retried", email: "retried@example.com", password: "an-old-password" },
       });
 
       vi.mocked(headers).mockResolvedValue(new Headers());
 
       const [error] = await serverClient.invitations.acceptInvitation({
         invitationId,
-        name: "Taken",
+        name: "Retried",
         password: TEST_PASSWORD,
       });
 
-      expect(error?.code).toBe("BAD_REQUEST");
-    });
+      expect(error).toBeNull();
 
-    test("should return BAD_REQUEST when the invitation was already cancelled", async ({
-      admin: _,
-    }) => {
-      const invitationId = await createInvitation("cancelled-invitation@example.com");
-
-      await serverClient.users.remove({
-        users: [{ status: "invited", invitationId }],
+      const signInResult = await auth.api.signInEmail({
+        body: { email: "retried@example.com", password: TEST_PASSWORD },
       });
+      expect(signInResult.user.email).toBe("retried@example.com");
 
-      vi.mocked(headers).mockResolvedValue(new Headers());
-
-      const [error] = await serverClient.invitations.acceptInvitation({
-        invitationId,
-        name: "Invited User",
-        password: TEST_PASSWORD,
+      const adminSignIn = await auth.api.signInEmail({
+        body: { email: admin.email, password: TEST_PASSWORD },
+        asResponse: true,
       });
+      vi.mocked(headers).mockResolvedValue(convertSetCookieToCookie(adminSignIn.headers));
 
-      expect(error?.code).toBe("BAD_REQUEST");
+      const [, result] = await serverClient.users.list();
+      expect(result?.users).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ email: "retried@example.com", status: "active" }),
+        ]),
+      );
     });
   });
 });

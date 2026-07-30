@@ -37,11 +37,6 @@ export type CancelInvitationInput = {
   headers: Headers;
 };
 
-export type RemoveUserInput = {
-  userId: string;
-  headers: Headers;
-};
-
 export type SetRoleInput = {
   userId: string;
   role: "viewer" | "reviewer" | "admin";
@@ -93,9 +88,6 @@ export const removeMember = ({ email, organizationId, headers }: RemoveMemberInp
 
 export const cancelInvitation = ({ invitationId, headers }: CancelInvitationInput) =>
   safeAuth(auth.api.cancelInvitation({ body: { invitationId }, headers }));
-
-export const removeUser = ({ userId, headers }: RemoveUserInput) =>
-  safeAuth(auth.api.removeUser({ body: { userId }, headers }));
 
 export const setRole = ({ userId, role, headers }: SetRoleInput) =>
   safeAuth(auth.api.setRole({ body: { userId, role }, headers }));

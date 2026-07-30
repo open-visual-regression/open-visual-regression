@@ -14,6 +14,8 @@ export const findByEmail = (email: string) =>
 
 export const findById = (id: string) => db.query.user.findFirst({ where: eq(user.id, id) });
 
+export const deleteById = (id: string) => db.delete(user).where(eq(user.id, id));
+
 export const findInvitationById = (id: string) =>
   db.query.invitation.findFirst({ where: eq(invitation.id, id), with: { organization: true } });
 

@@ -86,48 +86,32 @@ export const remove = os.users.remove
       throw new ORPCError("BAD_REQUEST", { message: "you cannot remove yourself" });
     }
 
-    const removals = await Promise.all(
-      input.users.map(async (user) => {
-        if (user.status === "active") {
-          return () =>
-            authServerClient.removeMember({
+    const invitations = await Promise.all(
+      input.users
+        .filter((user) => user.status === "invited")
+        .map((user) => dbClient.users.findInvitationById(user.invitationId)),
+    );
+
+    if (invitations.some((invitation) => invitation?.status !== "pending")) {
+      throw new ORPCError("BAD_REQUEST", {
+        message: "this invitation has already been accepted or is no longer valid",
+      });
+    }
+
+    const results = await Promise.all(
+      input.users.map((user) =>
+        user.status === "active"
+          ? authServerClient.removeMember({
               email: user.email,
               organizationId: context.organizationId,
               headers: context.headers,
-            });
-        }
-
-        const invitation = await dbClient.users.findInvitationById(user.invitationId);
-
-        if (invitation?.status !== "pending") {
-          throw new ORPCError("BAD_REQUEST", {
-            message: "this invitation has already been accepted or is no longer valid",
-          });
-        }
-
-        return async () => {
-          const existingUser = await dbClient.users.findByEmail(invitation.email);
-
-          if (existingUser) {
-            const [error] = await authServerClient.removeUser({
-              userId: existingUser.id,
+            })
+          : authServerClient.cancelInvitation({
+              invitationId: user.invitationId,
               headers: context.headers,
-            });
-
-            if (error) {
-              return [error, null] as const;
-            }
-          }
-
-          return authServerClient.cancelInvitation({
-            invitationId: user.invitationId,
-            headers: context.headers,
-          });
-        };
-      }),
+            }),
+      ),
     );
-
-    const results = await Promise.all(removals.map((removal) => removal()));
 
     const [error] = results.find(([error]) => error) ?? [];
 

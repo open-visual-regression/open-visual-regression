@@ -38,8 +38,12 @@ export const acceptInvitation = os.invitations.acceptInvitation
       });
     }
 
-    // TODO: if signUpEmail succeeds but acceptInvitation fails, the user account exists with no
-    // org membership and cannot retry (email taken). Risk is low — sequential server-side calls.
+    const existingUser = await dbClient.users.findByEmail(invitation.email);
+
+    if (existingUser) {
+      await dbClient.users.deleteById(existingUser.id);
+    }
+
     const [signUpError] = await authServerClient.signUpEmail({
       name: input.name,
       email: invitation.email,
