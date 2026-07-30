@@ -41,7 +41,8 @@ export const auth = betterAuth({
       enableMetadata: true,
       rateLimit: { enabled: false },
     }),
-    organization(),
+    // this app never sends verification emails; invitations are trusted via their link instead
+    organization({ requireEmailVerificationOnInvitation: false }),
     nextCookies(),
   ],
   rateLimit: {
