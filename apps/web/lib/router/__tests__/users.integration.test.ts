@@ -250,10 +250,11 @@ describe("users", () => {
       );
     });
 
-    test("should not remove a user who is still a member of the organization", async ({
+    test("should not remove a user who became a member after being invited", async ({
       admin: _,
     }) => {
       const { name, email } = mocks.user.generateAuthUser();
+      const invitationId = await inviteUser(email);
       const { user: target } = await auth.api.createUser({
         body: { name, email, password: TEST_PASSWORD, role: "reviewer" },
       });
@@ -261,14 +262,13 @@ describe("users", () => {
       await auth.api.addMember({
         body: { userId: target.id, role: "member", organizationId: organization!.id },
       });
-      const invitationId = await inviteUser(target.email);
 
       const [error] = await serverClient.users.remove({
         users: [{ status: "invited", invitationId }],
       });
 
       expect(error).toBeNull();
-      expect(await dbClient.users.findByEmail(target.email)).not.toBeUndefined();
+      expect(await dbClient.users.findByEmail(email)).not.toBeUndefined();
     });
 
     test("should remove the orphaned user account left behind by a failed invitation accept", async ({
