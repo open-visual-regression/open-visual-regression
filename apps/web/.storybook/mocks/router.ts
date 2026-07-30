@@ -94,6 +94,7 @@ export const serverClient: typeof RealServerClient = {
       }))
       .actionable(),
     acceptInvitation: os.invitations.acceptInvitation.handler(() => undefined).actionable(),
+    signUp: os.invitations.signUp.handler(() => undefined).actionable(),
   },
   gitIntegrations: {
     get: os.gitIntegrations.get.handler(() => ({ integration: null })).actionable(),

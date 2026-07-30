@@ -178,4 +178,98 @@ describe("invitations", () => {
       expect(error?.code).toBe("BAD_REQUEST");
     });
   });
+
+  describe("signUp", () => {
+    test("should return FORBIDDEN when a session already exists", async ({ admin: _ }) => {
+      const invitationId = await inviteUser("has-session@example.com");
+
+      const [error] = await serverClient.invitations.signUp({
+        invitationId,
+        name: "Invited User",
+        password: TEST_PASSWORD,
+      });
+
+      expect(error?.code).toBe("FORBIDDEN");
+    });
+
+    test("should create the account and join the organization", async ({ admin }) => {
+      const invitationId = await inviteUser("signed-up@example.com");
+
+      vi.mocked(headers).mockResolvedValue(new Headers());
+
+      const [error] = await serverClient.invitations.signUp({
+        invitationId,
+        name: "Invited User",
+        password: TEST_PASSWORD,
+      });
+
+      expect(error).toBeNull();
+
+      await signInAs(admin.email);
+      const [, result] = await serverClient.users.list();
+
+      expect(result?.users).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ email: "signed-up@example.com", status: "active" }),
+        ]),
+      );
+    });
+
+    test("should let the new account sign in with the password they chose", async ({
+      admin: _,
+    }) => {
+      const invitationId = await inviteUser("can-sign-in@example.com");
+
+      vi.mocked(headers).mockResolvedValue(new Headers());
+      await serverClient.invitations.signUp({
+        invitationId,
+        name: "Invited User",
+        password: TEST_PASSWORD,
+      });
+
+      const signInResult = await auth.api.signInEmail({
+        body: { email: "can-sign-in@example.com", password: TEST_PASSWORD },
+      });
+
+      expect(signInResult.user.email).toBe("can-sign-in@example.com");
+    });
+
+    test("should return CONFLICT when an account already exists for the email", async ({
+      admin: _,
+    }) => {
+      const invitationId = await inviteUser("already-registered@example.com");
+      await createAccount("already-registered@example.com");
+
+      vi.mocked(headers).mockResolvedValue(new Headers());
+
+      const [error] = await serverClient.invitations.signUp({
+        invitationId,
+        name: "Invited User",
+        password: TEST_PASSWORD,
+      });
+
+      expect(error?.code).toBe("CONFLICT");
+      expect(
+        await dbClient.users.findByEmail("already-registered@example.com"),
+      ).not.toBeUndefined();
+    });
+
+    test("should return BAD_REQUEST for an invitation that is not pending", async ({
+      admin: _,
+    }) => {
+      const invitationId = await inviteUser("not-pending@example.com");
+      await serverClient.users.remove({ users: [{ status: "invited", invitationId }] });
+
+      vi.mocked(headers).mockResolvedValue(new Headers());
+
+      const [error] = await serverClient.invitations.signUp({
+        invitationId,
+        name: "Invited User",
+        password: TEST_PASSWORD,
+      });
+
+      expect(error?.code).toBe("BAD_REQUEST");
+      expect(await dbClient.users.findByEmail("not-pending@example.com")).toBeUndefined();
+    });
+  });
 });

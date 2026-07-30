@@ -9,7 +9,6 @@ import { Button } from "@ovr/ui/components/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@ovr/ui/components/field";
 import { Input } from "@ovr/ui/components/input";
 
-import { authClient } from "@/lib/auth/client";
 import { serverClient } from "@/lib/router";
 
 import { createAccountSchema, type CreateAccountFormValues } from "./schema";
@@ -30,7 +29,7 @@ export const CreateAccountForm = ({ invitationId, email }: CreateAccountFormProp
     defaultValues: { name: "", password: "", confirmPassword: "" },
   });
 
-  const { execute, status } = useServerAction(serverClient.invitations.acceptInvitation, {
+  const { execute, status } = useServerAction(serverClient.invitations.signUp, {
     interceptors: [
       onSuccess(() => {
         window.location.href = "/";
@@ -39,19 +38,8 @@ export const CreateAccountForm = ({ invitationId, email }: CreateAccountFormProp
     ],
   });
 
-  const onSubmit = async (values: CreateAccountFormValues) => {
-    const { error } = await authClient.signUp.email({
-      name: values.name,
-      email,
-      password: values.password,
-    });
-
-    if (error) {
-      setError("root", { message: error.message ?? "could not create your account" });
-      return;
-    }
-
-    execute({ invitationId });
+  const onSubmit = (values: CreateAccountFormValues) => {
+    execute({ invitationId, name: values.name, password: values.password });
   };
 
   const isPending = status === "pending" || isSubmitting;

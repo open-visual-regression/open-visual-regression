@@ -30,6 +30,7 @@ export const serverClient = {
   invitations: {
     getInvitation: vi.fn(),
     acceptInvitation: vi.fn(),
+    signUp: vi.fn(),
   },
   storage: {
     getObject: vi.fn(),

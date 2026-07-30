@@ -11,7 +11,7 @@ vi.mock("@/lib/router");
 vi.mock("@/lib/auth/client");
 
 const mockAcceptInvitation = vi.mocked(serverClient.invitations.acceptInvitation);
-const mockSignUp = vi.mocked(authClient.signUp.email);
+const mockSignUp = vi.mocked(serverClient.invitations.signUp);
 
 const INVITATION_ID = "test-invitation-id";
 const EMAIL = "invited@example.com";
@@ -73,9 +73,8 @@ describe("InvitationCard", () => {
       expect(mockSignUp).not.toHaveBeenCalled();
     });
 
-    it("should create the account and then accept the invitation", async ({ user }) => {
-      mockSignUp.mockResolvedValue({ error: null });
-      mockAcceptInvitation.mockResolvedValue([null, undefined]);
+    it("should create the account and join the organization", async ({ user }) => {
+      mockSignUp.mockResolvedValue([null, undefined]);
       renderComponent("create");
 
       await fillCreateAccountForm(user);
@@ -83,33 +82,20 @@ describe("InvitationCard", () => {
 
       await waitFor(() => expect(window.location.href).toBe("/"));
       expect(mockSignUp).toHaveBeenCalledWith({
+        invitationId: INVITATION_ID,
         name: "Jules Ortega",
-        email: EMAIL,
         password: "securepass123",
       });
-      expect(mockAcceptInvitation).toHaveBeenCalledWith({ invitationId: INVITATION_ID });
     });
 
-    it("should not accept the invitation when the sign up fails", async ({ user }) => {
-      mockSignUp.mockResolvedValue({ error: { message: "user already exists" } });
+    it("should show an error when the sign up fails", async ({ user }) => {
+      mockSignUp.mockResolvedValue([createORPCError("CONFLICT"), undefined]);
       renderComponent("create");
 
       await fillCreateAccountForm(user);
       await user.click(screen.getByRole("button", { name: /create account/i }));
 
-      expect(await screen.findByRole("alert")).toHaveTextContent("user already exists");
-      expect(mockAcceptInvitation).not.toHaveBeenCalled();
-    });
-
-    it("should show an error when accepting the invitation fails", async ({ user }) => {
-      mockSignUp.mockResolvedValue({ error: null });
-      mockAcceptInvitation.mockResolvedValue([createORPCError("BAD_REQUEST"), undefined]);
-      renderComponent("create");
-
-      await fillCreateAccountForm(user);
-      await user.click(screen.getByRole("button", { name: /create account/i }));
-
-      expect(await screen.findByRole("alert")).toHaveTextContent("BAD_REQUEST");
+      expect(await screen.findByRole("alert")).toHaveTextContent("CONFLICT");
     });
   });
 

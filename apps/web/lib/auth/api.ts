@@ -43,6 +43,17 @@ export type SetRoleInput = {
   headers: Headers;
 };
 
+export type SignUpEmailInput = {
+  name: string;
+  email: string;
+  password: string;
+};
+
+export type SignInEmailInput = {
+  email: string;
+  password: string;
+};
+
 export type AcceptInvitationInput = {
   invitationId: string;
   headers: Headers;
@@ -80,6 +91,12 @@ export const cancelInvitation = ({ invitationId, headers }: CancelInvitationInpu
 
 export const setRole = ({ userId, role, headers }: SetRoleInput) =>
   safeAuth(auth.api.setRole({ body: { userId, role }, headers }));
+
+export const signUpEmail = ({ name, email, password }: SignUpEmailInput) =>
+  safeAuth(auth.api.signUpEmail({ body: { name, email, password } }));
+
+export const signInEmail = ({ email, password }: SignInEmailInput) =>
+  safeAuth(auth.api.signInEmail({ body: { email, password }, asResponse: true }));
 
 export const acceptInvitation = ({ invitationId, headers }: AcceptInvitationInput) =>
   safeAuth(auth.api.acceptInvitation({ body: { invitationId }, headers }));

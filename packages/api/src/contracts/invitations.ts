@@ -19,7 +19,14 @@ export const acceptInvitationInputSchema = z.object({
   invitationId: z.string(),
 });
 
+export const signUpInputSchema = z.object({
+  invitationId: z.string(),
+  name: z.string().min(1, "name is required"),
+  password: z.string().min(8, "password must be at least 8 characters"),
+});
+
 export const contract = {
   getInvitation: oc.input(getInvitationInputSchema).output(getInvitationOutputSchema),
   acceptInvitation: oc.input(acceptInvitationInputSchema),
+  signUp: oc.input(signUpInputSchema),
 } as const;
