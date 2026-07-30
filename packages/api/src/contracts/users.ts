@@ -48,6 +48,7 @@ export const inviteUserInputSchema = z.object({
 export type InviteUserInputSchema = z.infer<typeof inviteUserInputSchema>;
 
 export const inviteUserOutputSchema = z.object({
+  invitationId: z.string(),
   invitationUrl: z.string(),
 });
 

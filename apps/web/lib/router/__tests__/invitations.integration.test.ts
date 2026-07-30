@@ -10,15 +10,15 @@ vi.mock("next/headers");
 
 const TEST_PASSWORD = "securepass123";
 
-const inviteAndGetInvitationId = async (email: string) => {
+const createInvitation = async (email: string) => {
   const [, result] = await serverClient.users.invite({ email });
-  return result!.invitationUrl.split("/").at(-1)!;
+  return result!.invitationId;
 };
 
 describe("invitations", () => {
   describe("getInvitation", () => {
     test("should return the invitation details for a pending invitation", async ({ admin: _ }) => {
-      const invitationId = await inviteAndGetInvitationId("get-invitation@example.com");
+      const invitationId = await createInvitation("get-invitation@example.com");
 
       const [error, result] = await serverClient.invitations.getInvitation({ invitationId });
 
@@ -37,7 +37,7 @@ describe("invitations", () => {
 
   describe("acceptInvitation", () => {
     test("should return FORBIDDEN when a session already exists", async ({ admin: _ }) => {
-      const invitationId = await inviteAndGetInvitationId("already-signed-in@example.com");
+      const invitationId = await createInvitation("already-signed-in@example.com");
 
       const [error] = await serverClient.invitations.acceptInvitation({
         invitationId,
@@ -51,7 +51,7 @@ describe("invitations", () => {
     test("should accept a pending invitation without requiring email verification", async ({
       admin: _,
     }) => {
-      const invitationId = await inviteAndGetInvitationId("accept-invitation@example.com");
+      const invitationId = await createInvitation("accept-invitation@example.com");
 
       vi.mocked(headers).mockResolvedValue(new Headers());
 
@@ -71,7 +71,7 @@ describe("invitations", () => {
     });
 
     test("should add the accepting user as an organization member", async ({ admin }) => {
-      const invitationId = await inviteAndGetInvitationId("new-member@example.com");
+      const invitationId = await createInvitation("new-member@example.com");
 
       vi.mocked(headers).mockResolvedValue(new Headers());
 
@@ -112,7 +112,7 @@ describe("invitations", () => {
     test("should return BAD_REQUEST when the invitation was already cancelled", async ({
       admin: _,
     }) => {
-      const invitationId = await inviteAndGetInvitationId("cancelled-invitation@example.com");
+      const invitationId = await createInvitation("cancelled-invitation@example.com");
 
       await serverClient.users.remove({
         users: [{ status: "invited", invitationId }],

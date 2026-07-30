@@ -67,7 +67,10 @@ export const invite = os.users.invite
 
     const baseUrl = process.env.BASE_URL ?? "http://localhost:3000";
 
-    return { invitationUrl: `${baseUrl}/invitations/${invitation.id}` };
+    return {
+      invitationId: invitation.id,
+      invitationUrl: `${baseUrl}/invitations/${invitation.id}`,
+    };
   })
   .actionable();
 

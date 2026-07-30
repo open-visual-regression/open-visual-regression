@@ -12,7 +12,8 @@ vi.mock("next/navigation");
 
 const mockInvite = vi.mocked(serverClient.users.invite);
 
-const INVITATION_URL = "http://localhost:3000/accept-invitation/test-invitation-id";
+const INVITATION_ID = "test-invitation-id";
+const INVITATION_URL = `http://localhost:3000/accept-invitation/${INVITATION_ID}`;
 
 const renderComponent = () =>
   render(<InviteUserModal trigger={<InviteUserModalButton>invite user</InviteUserModalButton>} />);
@@ -31,7 +32,10 @@ describe("InviteUserModal", () => {
   it("should send an invitation and show the invitation link in a reveal view", async ({
     user,
   }) => {
-    mockInvite.mockResolvedValue([null, { invitationUrl: INVITATION_URL }]);
+    mockInvite.mockResolvedValue([
+      null,
+      { invitationId: INVITATION_ID, invitationUrl: INVITATION_URL },
+    ]);
     renderComponent();
 
     await user.click(screen.getByRole("button", { name: /invite user/i }));
@@ -44,7 +48,10 @@ describe("InviteUserModal", () => {
   });
 
   it("should copy the invitation link to clipboard", async ({ user }) => {
-    mockInvite.mockResolvedValue([null, { invitationUrl: INVITATION_URL }]);
+    mockInvite.mockResolvedValue([
+      null,
+      { invitationId: INVITATION_ID, invitationUrl: INVITATION_URL },
+    ]);
     renderComponent();
 
     await user.click(screen.getByRole("button", { name: /invite user/i }));
@@ -88,7 +95,10 @@ describe("InviteUserModal", () => {
   it("should show the invite form again after closing and reopening the reveal view", async ({
     user,
   }) => {
-    mockInvite.mockResolvedValue([null, { invitationUrl: INVITATION_URL }]);
+    mockInvite.mockResolvedValue([
+      null,
+      { invitationId: INVITATION_ID, invitationUrl: INVITATION_URL },
+    ]);
     renderComponent();
 
     await user.click(screen.getByRole("button", { name: /invite user/i }));
