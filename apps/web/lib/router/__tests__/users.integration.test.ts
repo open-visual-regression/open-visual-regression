@@ -250,25 +250,17 @@ describe("users", () => {
       );
     });
 
-    test("should not remove a user who became a member after being invited", async ({
+    test("should return BAD_REQUEST when the invitation is no longer pending", async ({
       admin: _,
     }) => {
-      const { name, email } = mocks.user.generateAuthUser();
-      const invitationId = await inviteUser(email);
-      const { user: target } = await auth.api.createUser({
-        body: { name, email, password: TEST_PASSWORD, role: "reviewer" },
-      });
-      const organization = await dbClient.organizations.getOrganization();
-      await auth.api.addMember({
-        body: { userId: target.id, role: "member", organizationId: organization!.id },
-      });
+      const invitationId = await inviteUser("no-longer-pending@example.com");
+      await serverClient.users.remove({ users: [{ status: "invited", invitationId }] });
 
       const [error] = await serverClient.users.remove({
         users: [{ status: "invited", invitationId }],
       });
 
-      expect(error).toBeNull();
-      expect(await dbClient.users.findByEmail(email)).not.toBeUndefined();
+      expect(error?.code).toBe("BAD_REQUEST");
     });
 
     test("should remove the orphaned user account left behind by a failed invitation accept", async ({

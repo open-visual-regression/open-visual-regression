@@ -83,40 +83,48 @@ export const remove = os.users.remove
       throw new ORPCError("BAD_REQUEST", { message: "you cannot remove yourself" });
     }
 
-    const cancelInvitation = async (invitationId: string) => {
-      const invitation = await dbClient.users.findInvitationById(invitationId);
-      const result = await authServerClient.cancelInvitation({
-        invitationId,
-        headers: context.headers,
-      });
-
-      const [error] = result;
-
-      if (!error && invitation) {
-        const existingUser = await dbClient.users.findByEmail(invitation.email);
-
-        if (existingUser && (await dbClient.users.getMembershipCount(existingUser.id)) === 0) {
-          await authServerClient.removeUser({
-            userId: existingUser.id,
-            headers: context.headers,
-          });
-        }
-      }
-
-      return result;
-    };
-
-    const results = await Promise.all(
-      input.users.map((user) =>
-        user.status === "active"
-          ? authServerClient.removeMember({
+    const removals = await Promise.all(
+      input.users.map(async (user) => {
+        if (user.status === "active") {
+          return () =>
+            authServerClient.removeMember({
               email: user.email,
               organizationId: context.organizationId,
               headers: context.headers,
-            })
-          : cancelInvitation(user.invitationId),
-      ),
+            });
+        }
+
+        const invitation = await dbClient.users.findInvitationById(user.invitationId);
+
+        if (invitation?.status !== "pending") {
+          throw new ORPCError("BAD_REQUEST", {
+            message: "this invitation has already been accepted or is no longer valid",
+          });
+        }
+
+        return async () => {
+          const existingUser = await dbClient.users.findByEmail(invitation.email);
+
+          if (existingUser) {
+            const [error] = await authServerClient.removeUser({
+              userId: existingUser.id,
+              headers: context.headers,
+            });
+
+            if (error) {
+              return [error, null] as const;
+            }
+          }
+
+          return authServerClient.cancelInvitation({
+            invitationId: user.invitationId,
+            headers: context.headers,
+          });
+        };
+      }),
     );
+
+    const results = await Promise.all(removals.map((removal) => removal()));
 
     const [error] = results.find(([error]) => error) ?? [];
 

@@ -17,12 +17,6 @@ export const findById = (id: string) => db.query.user.findFirst({ where: eq(user
 export const findInvitationById = (id: string) =>
   db.query.invitation.findFirst({ where: eq(invitation.id, id), with: { organization: true } });
 
-export const getMembershipCount = async (userId: string): Promise<number> => {
-  const [row] = await db.select({ count: count() }).from(member).where(eq(member.userId, userId));
-
-  return row?.count ?? 0;
-};
-
 export type UsersSortField = "name" | "email" | "createdAt" | "status";
 
 export type SortDirection = "asc" | "desc";
