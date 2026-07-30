@@ -17,7 +17,11 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-export const LoginForm = () => {
+type LoginFormProps = {
+  redirectTo: string;
+};
+
+export const LoginForm = ({ redirectTo }: LoginFormProps) => {
   const {
     register,
     handleSubmit,
@@ -42,7 +46,7 @@ export const LoginForm = () => {
       return;
     }
 
-    window.location.href = "/projects";
+    window.location.href = redirectTo;
   };
 
   return (

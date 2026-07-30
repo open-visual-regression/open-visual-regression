@@ -3,44 +3,55 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { onError, onSuccess } from "@orpc/client";
 import { useServerAction } from "@orpc/react/hooks";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 
 import { Button } from "@ovr/ui/components/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@ovr/ui/components/field";
 import { Input } from "@ovr/ui/components/input";
 
+import { authClient } from "@/lib/auth/client";
 import { serverClient } from "@/lib/router";
 
-import { acceptInvitationSchema, type AcceptInvitationFormValues } from "./schema";
+import { createAccountSchema, type CreateAccountFormValues } from "./schema";
 
-type InvitationFormProps = {
+type CreateAccountFormProps = {
   invitationId: string;
   email: string;
 };
 
-export const InvitationForm = ({ invitationId, email }: InvitationFormProps) => {
-  const router = useRouter();
-
+export const CreateAccountForm = ({ invitationId, email }: CreateAccountFormProps) => {
   const {
     register,
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<AcceptInvitationFormValues>({
-    resolver: zodResolver(acceptInvitationSchema),
+  } = useForm<CreateAccountFormValues>({
+    resolver: zodResolver(createAccountSchema),
     defaultValues: { name: "", password: "", confirmPassword: "" },
   });
 
   const { execute, status } = useServerAction(serverClient.invitations.acceptInvitation, {
     interceptors: [
-      onSuccess(() => router.push("/")),
+      onSuccess(() => {
+        window.location.href = "/";
+      }),
       onError((err) => setError("root", { message: err.message })),
     ],
   });
 
-  const onSubmit = (values: AcceptInvitationFormValues) => {
-    execute({ invitationId, name: values.name, password: values.password });
+  const onSubmit = async (values: CreateAccountFormValues) => {
+    const { error } = await authClient.signUp.email({
+      name: values.name,
+      email,
+      password: values.password,
+    });
+
+    if (error) {
+      setError("root", { message: error.message ?? "could not create your account" });
+      return;
+    }
+
+    execute({ invitationId });
   };
 
   const isPending = status === "pending" || isSubmitting;

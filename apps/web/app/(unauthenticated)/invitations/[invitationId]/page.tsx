@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { redirect, notFound } from "next/navigation";
+import { notFound } from "next/navigation";
 
 import { auth } from "@/lib/auth/auth";
 import { serverClient } from "@/lib/router";
@@ -19,21 +19,27 @@ export default async function InvitationPage(props: InvitationPageProps) {
     auth.api.getSession({ headers: await headers() }),
   ]);
 
-  if (session) {
-    redirect("/projects");
-  }
-
   if (error || !invitation) {
     notFound();
   }
 
+  const mode = session
+    ? session.user.email === invitation.email
+      ? "accept"
+      : "wrongAccount"
+    : invitation.hasAccount
+      ? "signIn"
+      : "create";
+
   return (
     <CenteredFormSection>
       <InvitationCard
+        mode={mode}
         invitationId={invitationId}
         email={invitation.email}
         organizationName={invitation.organizationName}
         role={invitation.role}
+        sessionEmail={session?.user.email ?? null}
       />
     </CenteredFormSection>
   );

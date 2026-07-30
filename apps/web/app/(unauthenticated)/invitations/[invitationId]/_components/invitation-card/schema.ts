@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const acceptInvitationSchema = z
+export const createAccountSchema = z
   .object({
     name: z.string().min(1, "name is required"),
     password: z.string().min(8, "password must be at least 8 characters"),
@@ -16,4 +16,4 @@ export const acceptInvitationSchema = z
     }
   });
 
-export type AcceptInvitationFormValues = z.infer<typeof acceptInvitationSchema>;
+export type CreateAccountFormValues = z.infer<typeof createAccountSchema>;

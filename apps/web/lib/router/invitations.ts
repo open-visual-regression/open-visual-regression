@@ -5,7 +5,7 @@ import { ORPCError } from "@orpc/client";
 import { dbClient } from "@ovr/db/client";
 
 import { authServerClient } from "../auth";
-import { unauthenticatedMiddleware } from "./middleware";
+import { authenticatedMiddleware } from "./middleware";
 import { os } from "./os";
 
 export const getInvitation = os.invitations.getInvitation
@@ -18,18 +18,21 @@ export const getInvitation = os.invitations.getInvitation
       });
     }
 
+    const existingUser = await dbClient.users.findByEmail(invitation.email);
+
     return {
       email: invitation.email,
       organizationName: invitation.organization.name,
       role: invitation.role,
       expiresAt: invitation.expiresAt,
+      hasAccount: !!existingUser,
     };
   })
   .actionable();
 
 export const acceptInvitation = os.invitations.acceptInvitation
-  .use(unauthenticatedMiddleware)
-  .handler(async ({ input }) => {
+  .use(authenticatedMiddleware)
+  .handler(async ({ input, context }) => {
     const invitation = await dbClient.users.findInvitationById(input.invitationId);
 
     if (!invitation || invitation.status !== "pending" || invitation.expiresAt < new Date()) {
@@ -38,33 +41,19 @@ export const acceptInvitation = os.invitations.acceptInvitation
       });
     }
 
-    const [signUpError] = await authServerClient.signUpEmail({
-      name: input.name,
-      email: invitation.email,
-      password: input.password,
-    });
-
-    if (signUpError) {
-      throw new ORPCError("BAD_REQUEST", { message: signUpError.message });
+    if (invitation.email !== context.user.email) {
+      throw new ORPCError("FORBIDDEN", {
+        message: `this invitation was sent to ${invitation.email}`,
+      });
     }
 
-    const signInResponse = await authServerClient.signInEmail({
-      email: invitation.email,
-      password: input.password,
-    });
-
-    const sessionCookie = signInResponse.headers
-      .getSetCookie()
-      .map((c) => c.split(";")[0])
-      .join("; ");
-
-    const [acceptError] = await authServerClient.acceptInvitation({
+    const [error] = await authServerClient.acceptInvitation({
       invitationId: input.invitationId,
-      headers: new Headers({ cookie: sessionCookie }),
+      headers: context.headers,
     });
 
-    if (acceptError) {
-      throw new ORPCError("BAD_REQUEST", { message: acceptError.message });
+    if (error) {
+      throw new ORPCError("BAD_REQUEST", { message: error.message });
     }
   })
   .actionable();

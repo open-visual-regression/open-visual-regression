@@ -10,8 +10,16 @@ import { LoginCard } from "./_components/login-card/LoginCard";
 
 export const dynamic = "force-dynamic";
 
-export default async function LoginPage() {
-  const [[error, setupStatusResult], session] = await Promise.all([
+type LoginPageProps = PageProps<"/login">;
+
+const toSafeRedirect = (redirectTo: string | string[] | undefined) =>
+  typeof redirectTo === "string" && redirectTo.startsWith("/") && !redirectTo.startsWith("//")
+    ? redirectTo
+    : "/projects";
+
+export default async function LoginPage(props: LoginPageProps) {
+  const [{ redirect: redirectParam }, [error, setupStatusResult], session] = await Promise.all([
+    props.searchParams,
     serverClient.setup.status(),
     auth.api.getSession({ headers: await headers() }),
   ]);
@@ -24,13 +32,15 @@ export default async function LoginPage() {
     redirect("/setup");
   }
 
+  const redirectTo = toSafeRedirect(redirectParam);
+
   if (session) {
-    redirect("/projects");
+    redirect(redirectTo);
   }
 
   return (
     <CenteredFormSection>
-      <LoginCard />
+      <LoginCard redirectTo={redirectTo} />
     </CenteredFormSection>
   );
 }

@@ -19,21 +19,24 @@ const inviteUser = async (email: string) => {
   return result!.invitationId;
 };
 
-const acceptInvitation = async (invitationId: string, adminEmail: string) => {
-  vi.mocked(headers).mockResolvedValue(new Headers());
-
-  const [error] = await serverClient.invitations.acceptInvitation({
-    invitationId,
-    name: "Invited User",
-    password: TEST_PASSWORD,
-  });
-  expect(error).toBeNull();
-
+const signInAs = async (email: string) => {
   const response = await auth.api.signInEmail({
-    body: { email: adminEmail, password: TEST_PASSWORD },
+    body: { email, password: TEST_PASSWORD },
     asResponse: true,
   });
   vi.mocked(headers).mockResolvedValue(convertSetCookieToCookie(response.headers));
+};
+
+const acceptInvitation = async (invitationId: string, email: string, adminEmail: string) => {
+  await auth.api.signUpEmail({
+    body: { name: "Invited User", email, password: TEST_PASSWORD },
+  });
+  await signInAs(email);
+
+  const [error] = await serverClient.invitations.acceptInvitation({ invitationId });
+  expect(error).toBeNull();
+
+  await signInAs(adminEmail);
 };
 
 describe("users", () => {
@@ -233,7 +236,7 @@ describe("users", () => {
 
     test("should remove an active member from the organization", async ({ admin }) => {
       const invitationId = await inviteUser("active-member@example.com");
-      await acceptInvitation(invitationId, admin.email);
+      await acceptInvitation(invitationId, "active-member@example.com", admin.email);
 
       const [error] = await serverClient.users.remove({
         users: [{ status: "active", email: "active-member@example.com" }],
@@ -266,7 +269,7 @@ describe("users", () => {
       admin,
     }) => {
       const invitationId = await inviteUser("accepted-already@example.com");
-      await acceptInvitation(invitationId, admin.email);
+      await acceptInvitation(invitationId, "accepted-already@example.com", admin.email);
 
       const [error] = await serverClient.users.remove({
         users: [{ status: "invited", invitationId }],
@@ -306,7 +309,7 @@ describe("users", () => {
       admin,
     }) => {
       const acceptedInvitationId = await inviteUser("batched-member@example.com");
-      await acceptInvitation(acceptedInvitationId, admin.email);
+      await acceptInvitation(acceptedInvitationId, "batched-member@example.com", admin.email);
       const invitationId = await inviteUser("batched-invite@example.com");
 
       const [error] = await serverClient.users.remove({
