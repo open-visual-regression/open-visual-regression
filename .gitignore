@@ -27,7 +27,6 @@ out/
 build
 dist
 
-# Generated at publish time
 apps/cli/LICENSE
 
 
