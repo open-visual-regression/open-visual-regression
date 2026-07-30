@@ -27,6 +27,9 @@ out/
 build
 dist
 
+# Generated at publish time
+apps/cli/LICENSE
+
 
 # Debug
 npm-debug.log*

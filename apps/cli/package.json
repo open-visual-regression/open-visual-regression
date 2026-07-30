@@ -2,12 +2,14 @@
   "name": "@open-visual-regression/cli",
   "version": "0.1.1",
   "private": false,
+  "license": "Elastic-2.0",
   "bin": {
     "ovr": "./bin/ovr.mjs"
   },
   "files": [
     "dist",
-    "bin"
+    "bin",
+    "LICENSE"
   ],
   "type": "module",
   "exports": {
@@ -28,7 +30,7 @@
     "lint": "oxlint src",
     "format": "oxfmt src",
     "test": "vitest run",
-    "prepack": "tsup"
+    "prepack": "cp ../../LICENSE ./LICENSE && tsup"
   },
   "dependencies": {
     "@orpc/client": "^1.14.6",
