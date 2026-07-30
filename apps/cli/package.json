@@ -8,8 +8,7 @@
   },
   "files": [
     "dist",
-    "bin",
-    "LICENSE"
+    "bin"
   ],
   "type": "module",
   "exports": {
@@ -30,7 +29,7 @@
     "lint": "oxlint src",
     "format": "oxfmt src",
     "test": "vitest run",
-    "prepack": "cp ../../LICENSE ./LICENSE && tsup"
+    "prepack": "tsup"
   },
   "dependencies": {
     "@orpc/client": "^1.14.6",
