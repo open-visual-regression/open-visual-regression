@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { type PgColumn, unionAll } from "drizzle-orm/pg-core";
 
 import { db } from "../db";
@@ -16,6 +16,17 @@ export const findById = (id: string) => db.query.user.findFirst({ where: eq(user
 
 export const findInvitationById = (id: string) =>
   db.query.invitation.findFirst({ where: eq(invitation.id, id), with: { organization: true } });
+
+export const findOrphanedUserByEmail = async (email: string) => {
+  const [row] = await db
+    .select({ id: user.id })
+    .from(user)
+    .leftJoin(member, eq(member.userId, user.id))
+    .where(and(eq(user.email, email), isNull(member.id)))
+    .limit(1);
+
+  return row ?? null;
+};
 
 export type UsersSortField = "name" | "email" | "createdAt" | "status";
 

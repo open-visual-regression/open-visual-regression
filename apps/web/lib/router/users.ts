@@ -83,6 +83,30 @@ export const remove = os.users.remove
       throw new ORPCError("BAD_REQUEST", { message: "you cannot remove yourself" });
     }
 
+    const cancelInvitation = async (invitationId: string) => {
+      const invitation = await dbClient.users.findInvitationById(invitationId);
+      const result = await authServerClient.cancelInvitation({
+        invitationId,
+        headers: context.headers,
+      });
+
+      const [error] = result;
+
+      // a failed accept-invitation attempt can leave a user account with no
+      // membership behind; clean it up so the email can be re-invited
+      if (!error && invitation) {
+        const orphanedUser = await dbClient.users.findOrphanedUserByEmail(invitation.email);
+        if (orphanedUser) {
+          await authServerClient.removeUser({
+            userId: orphanedUser.id,
+            headers: context.headers,
+          });
+        }
+      }
+
+      return result;
+    };
+
     const results = await Promise.all(
       input.users.map((user) =>
         user.status === "active"
@@ -91,10 +115,7 @@ export const remove = os.users.remove
               organizationId: context.organizationId,
               headers: context.headers,
             })
-          : authServerClient.cancelInvitation({
-              invitationId: user.invitationId,
-              headers: context.headers,
-            }),
+          : cancelInvitation(user.invitationId),
       ),
     );
 
