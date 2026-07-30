@@ -1,3 +1,5 @@
+import { convertSetCookieToCookie } from "better-auth/test";
+import { headers } from "next/headers";
 import { vi } from "vitest";
 
 import { dbClient } from "@ovr/db/client";
@@ -12,10 +14,25 @@ vi.mock("next/headers");
 const TEST_PASSWORD = "securepass123";
 
 const inviteUser = async (email: string) => {
-  await serverClient.users.invite({ email });
-  const [, result] = await serverClient.users.list();
+  const [, result] = await serverClient.users.invite({ email });
 
-  return result!.users.find((user) => user.email === email)!.id;
+  return result!.invitationId;
+};
+
+const acceptInvitation = async (invitationId: string, adminEmail: string) => {
+  vi.mocked(headers).mockResolvedValue(new Headers());
+
+  await serverClient.invitations.acceptInvitation({
+    invitationId,
+    name: "Invited User",
+    password: TEST_PASSWORD,
+  });
+
+  const response = await auth.api.signInEmail({
+    body: { email: adminEmail, password: TEST_PASSWORD },
+    asResponse: true,
+  });
+  vi.mocked(headers).mockResolvedValue(convertSetCookieToCookie(response.headers));
 };
 
 describe("users", () => {
@@ -213,25 +230,19 @@ describe("users", () => {
       expect(error?.code).toBe("BAD_REQUEST");
     });
 
-    test("should remove an active member from the organization", async ({ admin: _ }) => {
-      const { name, email } = mocks.user.generateAuthUser();
-      const { user: target } = await auth.api.createUser({
-        body: { name, email, password: TEST_PASSWORD, role: "reviewer" },
-      });
-      const organization = await dbClient.organizations.getOrganization();
-      await auth.api.addMember({
-        body: { userId: target.id, role: "member", organizationId: organization!.id },
-      });
+    test("should remove an active member from the organization", async ({ admin }) => {
+      const invitationId = await inviteUser("active-member@example.com");
+      await acceptInvitation(invitationId, admin.email);
 
       const [error] = await serverClient.users.remove({
-        users: [{ status: "active", email: target.email }],
+        users: [{ status: "active", email: "active-member@example.com" }],
       });
 
       expect(error).toBeNull();
 
       const [, result] = await serverClient.users.list();
       expect(result?.users).not.toEqual(
-        expect.arrayContaining([expect.objectContaining({ email: target.email })]),
+        expect.arrayContaining([expect.objectContaining({ email: "active-member@example.com" })]),
       );
     });
 
@@ -250,10 +261,24 @@ describe("users", () => {
       );
     });
 
-    test("should return BAD_REQUEST when the invitation is no longer pending", async ({
+    test("should return BAD_REQUEST when the invitation has already been accepted", async ({
+      admin,
+    }) => {
+      const invitationId = await inviteUser("accepted-already@example.com");
+      await acceptInvitation(invitationId, admin.email);
+
+      const [error] = await serverClient.users.remove({
+        users: [{ status: "invited", invitationId }],
+      });
+
+      expect(error?.code).toBe("BAD_REQUEST");
+      expect(await dbClient.users.findByEmail("accepted-already@example.com")).not.toBeUndefined();
+    });
+
+    test("should return BAD_REQUEST when the invitation was already cancelled", async ({
       admin: _,
     }) => {
-      const invitationId = await inviteUser("no-longer-pending@example.com");
+      const invitationId = await inviteUser("cancelled-already@example.com");
       await serverClient.users.remove({ users: [{ status: "invited", invitationId }] });
 
       const [error] = await serverClient.users.remove({
@@ -290,21 +315,15 @@ describe("users", () => {
     });
 
     test("should remove active members and pending invitations in a single call", async ({
-      admin: _,
+      admin,
     }) => {
-      const { name, email } = mocks.user.generateAuthUser();
-      const { user: target } = await auth.api.createUser({
-        body: { name, email, password: TEST_PASSWORD, role: "reviewer" },
-      });
-      const organization = await dbClient.organizations.getOrganization();
-      await auth.api.addMember({
-        body: { userId: target.id, role: "member", organizationId: organization!.id },
-      });
-      const invitationId = await inviteUser("batched@example.com");
+      const acceptedInvitationId = await inviteUser("batched-member@example.com");
+      await acceptInvitation(acceptedInvitationId, admin.email);
+      const invitationId = await inviteUser("batched-invite@example.com");
 
       const [error] = await serverClient.users.remove({
         users: [
-          { status: "active", email: target.email },
+          { status: "active", email: "batched-member@example.com" },
           { status: "invited", invitationId },
         ],
       });
@@ -314,8 +333,8 @@ describe("users", () => {
       const [, result] = await serverClient.users.list();
       const emails = result?.users.map((user) => user.email) ?? [];
 
-      expect(emails).not.toContain(target.email);
-      expect(emails).not.toContain("batched@example.com");
+      expect(emails).not.toContain("batched-member@example.com");
+      expect(emails).not.toContain("batched-invite@example.com");
     });
 
     test("should remove an account that never completed its invitation", async ({ admin: _ }) => {
