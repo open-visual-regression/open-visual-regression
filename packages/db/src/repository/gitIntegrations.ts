@@ -11,10 +11,9 @@ export const findByProject = (projectId: string) =>
 type UpsertInput = {
   projectId: string;
   provider: typeof gitIntegrations.$inferInsert.provider;
-  baseUrl: string | null;
   repoIdentifier: string;
   encryptedToken: string;
-  checkContext?: string;
+  checkContext: string;
 };
 
 export const upsert = async (values: UpsertInput) => {
@@ -25,7 +24,6 @@ export const upsert = async (values: UpsertInput) => {
       target: gitIntegrations.projectId,
       set: {
         provider: values.provider,
-        baseUrl: values.baseUrl,
         repoIdentifier: values.repoIdentifier,
         encryptedToken: values.encryptedToken,
         checkContext: values.checkContext,
@@ -38,9 +36,8 @@ export const upsert = async (values: UpsertInput) => {
 type UpdateFieldsInput = {
   projectId: string;
   provider: typeof gitIntegrations.$inferInsert.provider;
-  baseUrl: string | null;
   repoIdentifier: string;
-  checkContext?: string;
+  checkContext: string;
 };
 
 export const updateFields = async (values: UpdateFieldsInput) => {
@@ -48,7 +45,6 @@ export const updateFields = async (values: UpdateFieldsInput) => {
     .update(gitIntegrations)
     .set({
       provider: values.provider,
-      baseUrl: values.baseUrl,
       repoIdentifier: values.repoIdentifier,
       checkContext: values.checkContext,
     })

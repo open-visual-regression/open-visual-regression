@@ -15,7 +15,6 @@ describe("github-family adapter", () => {
   it("targets api.github.com for github", () => {
     const config: AdapterConfig = {
       provider: "github",
-      baseUrl: null,
       repoIdentifier: "acme/web",
       token: "t",
     };
@@ -24,26 +23,5 @@ describe("github-family adapter", () => {
     expect(built.headers.authorization).toBe("Bearer t");
     expect(built.body.state).toBe("failure");
     expect(built.body.target_url).toBe(request.targetUrl);
-  });
-
-  it("uses the /api/v1 base for a self-hosted gitea instance", () => {
-    const config: AdapterConfig = {
-      provider: "gitea",
-      baseUrl: "https://gitea.acme.com/",
-      repoIdentifier: "acme/web",
-      token: "t",
-    };
-    const built = resolveAdapter("gitea").buildRequest(config, request);
-    expect(built.url).toBe("https://gitea.acme.com/api/v1/repos/acme/web/statuses/abc123");
-  });
-
-  it("requires a base URL for gitea", () => {
-    const config: AdapterConfig = {
-      provider: "gitea",
-      baseUrl: null,
-      repoIdentifier: "acme/web",
-      token: "t",
-    };
-    expect(() => resolveAdapter("gitea").buildRequest(config, request)).toThrow(/base URL/);
   });
 });

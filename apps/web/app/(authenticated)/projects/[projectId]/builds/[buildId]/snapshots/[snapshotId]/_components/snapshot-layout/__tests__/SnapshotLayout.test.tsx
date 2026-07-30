@@ -45,7 +45,7 @@ describe("SnapshotLayout", () => {
   it("should hide the sidebar until the toggle is clicked", () => {
     renderComponent();
 
-    expect(screen.queryByText("sidebar contents")).not.toBeInTheDocument();
+    expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
   });
 
   it("should open the sidebar when the expand toggle is clicked", async ({ user }) => {
@@ -53,7 +53,7 @@ describe("SnapshotLayout", () => {
 
     await user.click(screen.getByRole("button", { name: /expand sidebar/i }));
 
-    expect(screen.getByText("sidebar contents")).toBeVisible();
+    expect(screen.getByRole("complementary")).toHaveTextContent("sidebar contents");
   });
 
   it("should close the sidebar when the collapse toggle is clicked", async ({ user }) => {
@@ -62,6 +62,6 @@ describe("SnapshotLayout", () => {
     await user.click(screen.getByRole("button", { name: /expand sidebar/i }));
     await user.click(screen.getByRole("button", { name: /collapse sidebar/i }));
 
-    expect(screen.queryByText("sidebar contents")).not.toBeInTheDocument();
+    expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
   });
 });

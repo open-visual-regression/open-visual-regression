@@ -1,13 +1,12 @@
 import { oc } from "@orpc/contract";
 import { z } from "zod";
 
-export const gitProviderSchema = z.enum(["github", "gitea"]);
+export const gitProviderSchema = z.enum(["github"]);
 
 export type GitProviderSchema = z.infer<typeof gitProviderSchema>;
 
 export const gitIntegrationSchema = z.object({
   provider: gitProviderSchema,
-  baseUrl: z.string().nullable(),
   repoIdentifier: z.string(),
   checkContext: z.string(),
   hasToken: z.literal(true),
@@ -26,10 +25,8 @@ export const getGitIntegrationOutputSchema = z.object({
 export const upsertGitIntegrationInputSchema = z.object({
   projectId: z.uuidv7(),
   provider: gitProviderSchema,
-  baseUrl: z.url().nullable(),
   repoIdentifier: z.string().min(1).max(512),
   token: z.string().min(1).optional(),
-  checkContext: z.string().min(1).max(255).optional(),
 });
 
 export type UpsertGitIntegrationInputSchema = z.infer<typeof upsertGitIntegrationInputSchema>;

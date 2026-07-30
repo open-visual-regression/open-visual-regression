@@ -3,6 +3,7 @@
 import { ORPCError } from "@orpc/client";
 
 import { dbClient } from "@ovr/db/client";
+import { formatCheckContext } from "@ovr/git-status/checkContext";
 import { encryptToken, tryDecryptToken } from "@ovr/git-status/crypto";
 import { verifyIntegration } from "@ovr/git-status/verifyIntegration";
 
@@ -23,7 +24,6 @@ export const get = os.gitIntegrations.get
     return {
       integration: {
         provider: integration.provider,
-        baseUrl: integration.baseUrl,
         repoIdentifier: integration.repoIdentifier,
         checkContext: integration.checkContext,
         hasToken: true as const,
@@ -36,22 +36,22 @@ export const upsert = os.gitIntegrations.upsert
   .use(authenticatedMiddleware)
   .use(adminMiddleware)
   .use(projectMiddleware)
-  .handler(async ({ input }) => {
+  .handler(async ({ input, context }) => {
+    const checkContext = formatCheckContext(context.project.name);
+
     const integration = input.token
       ? await dbClient.gitIntegrations.upsert({
           projectId: input.projectId,
           provider: input.provider,
-          baseUrl: input.baseUrl,
           repoIdentifier: input.repoIdentifier,
           encryptedToken: encryptToken(input.token),
-          checkContext: input.checkContext,
+          checkContext,
         })
       : await dbClient.gitIntegrations.updateFields({
           projectId: input.projectId,
           provider: input.provider,
-          baseUrl: input.baseUrl,
           repoIdentifier: input.repoIdentifier,
-          checkContext: input.checkContext,
+          checkContext,
         });
 
     if (!integration) {
@@ -60,7 +60,6 @@ export const upsert = os.gitIntegrations.upsert
 
     return {
       provider: integration.provider,
-      baseUrl: integration.baseUrl,
       repoIdentifier: integration.repoIdentifier,
       checkContext: integration.checkContext,
       hasToken: true as const,
@@ -99,7 +98,6 @@ export const testConnection = os.gitIntegrations.testConnection
 
     return verifyIntegration({
       provider: integration.provider,
-      baseUrl: integration.baseUrl,
       repoIdentifier: integration.repoIdentifier,
       token,
     });

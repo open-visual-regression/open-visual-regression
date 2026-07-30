@@ -3,7 +3,7 @@ import { vi } from "vitest";
 
 import { mocks } from "@ovr/mocks";
 
-import { act, describe, expect, it, render, screen } from "@/test-utils";
+import { act, describe, expect, it, render, screen, within } from "@/test-utils";
 
 import { BuildsTable } from "../BuildsTable";
 
@@ -44,6 +44,36 @@ describe("BuildsTable", () => {
       "href",
       `/projects/${build.project.id}/builds/${build.id}`,
     );
+  });
+
+  it("should expose exactly one accessible link per build row", () => {
+    const builds = [
+      mocks.build.generateBuild({ commitSha: "1111111abcdef" }),
+      mocks.build.generateBuild({ commitSha: "2222222abcdef" }),
+      mocks.build.generateBuild({ commitSha: "3333333abcdef" }),
+    ];
+    renderTable(builds);
+
+    for (const build of builds) {
+      expect(
+        screen.getByRole("link", { name: `view build ${build.commitSha.slice(0, 7)}` }),
+      ).toHaveAttribute("href", `/projects/${build.project.id}/builds/${build.id}`);
+    }
+    expect(screen.getAllByRole("link")).toHaveLength(builds.length);
+  });
+
+  it("should link every cell in a row to that row's build, not another row's", () => {
+    const first = mocks.build.generateBuild({ branch: "main" });
+    const second = mocks.build.generateBuild({ branch: "pr/482" });
+    renderTable([first, second]);
+
+    const firstRow = screen.getByRole("row", { name: /main/ });
+    const firstRowLinks = within(firstRow).getAllByRole("link", { hidden: true });
+
+    expect(firstRowLinks.length).toBeGreaterThan(1);
+    for (const link of firstRowLinks) {
+      expect(link).toHaveAttribute("href", `/projects/${first.project.id}/builds/${first.id}`);
+    }
   });
 
   it("should show a no-results message when a search matches no builds", () => {

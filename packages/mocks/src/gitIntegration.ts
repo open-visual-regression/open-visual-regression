@@ -4,9 +4,8 @@ export const generateGitIntegration = (
   overrides?: Partial<GitIntegrationSchema>,
 ): GitIntegrationSchema => ({
   provider: "github",
-  baseUrl: null,
   repoIdentifier: "acme/web",
-  checkContext: "ovr/visual-review",
+  checkContext: "Open Visual Regression / Web",
   hasToken: true,
   ...overrides,
 });

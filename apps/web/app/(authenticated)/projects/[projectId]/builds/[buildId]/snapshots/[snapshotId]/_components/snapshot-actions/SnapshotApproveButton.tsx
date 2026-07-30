@@ -4,11 +4,12 @@ import { onError, onSuccess } from "@orpc/client";
 import { useServerAction } from "@orpc/react/hooks";
 import { useRouter } from "next/navigation";
 
-import { Button } from "@ovr/ui/components/button";
-import { Icon, CheckIcon } from "@ovr/ui/components/icon";
+import { CheckIcon } from "@ovr/ui/components/icon";
 import { toast } from "@ovr/ui/components/toast";
 
 import { serverClient } from "@/lib/router";
+
+import { ResponsiveActionButton } from "./ResponsiveActionButton";
 
 export type SnapshotApproveButtonProps = {
   diffId: string;
@@ -30,8 +31,8 @@ export const SnapshotApproveButton = ({ diffId, approved }: SnapshotApproveButto
   const pending = status === "pending";
 
   return (
-    <Button
-      variant="outline"
+    <ResponsiveActionButton
+      icon={CheckIcon}
       color="green"
       disabled={pending || approved}
       className={
@@ -40,10 +41,8 @@ export const SnapshotApproveButton = ({ diffId, approved }: SnapshotApproveButto
           : undefined
       }
       onClick={() => execute({ diffId, vote: "approve" })}
-      size="sm"
     >
-      <Icon icon={CheckIcon} />
       {approved ? "approved" : pending ? "approving..." : "approve"}
-    </Button>
+    </ResponsiveActionButton>
   );
 };

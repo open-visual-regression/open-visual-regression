@@ -1,11 +1,17 @@
 import { DiffSchema } from "@ovr/api/contracts/diffs";
 import { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { Button } from "@ovr/ui/components/button";
-import { ChevronLeftIcon, ChevronRightIcon, Icon } from "@ovr/ui/components/icon";
+import {
+  ArrowLeftFromLineIcon,
+  ArrowRightToLineIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  CornerLeftUpIcon,
+  Icon,
+} from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
 
-import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
-
+import { ResponsiveActionButton } from "./ResponsiveActionButton";
 import { SnapshotApproveButton } from "./SnapshotApproveButton";
 import { SnapshotRejectButton } from "./SnapshotRejectButton";
 
@@ -41,10 +47,35 @@ export const SnapshotActionsRow = ({
   return (
     <div className="bg-ovr-elevated border-b px-5 md:px-6 lg:px-10 py-2 flex flex-row justify-between shrink-0">
       <div className="flex items-center flex-row gap-2">
-        <ButtonLink href="../" variant="outline" color="neutral" size="sm">
-          <Icon icon={ChevronLeftIcon} />
+        <ResponsiveActionButton href="../" icon={CornerLeftUpIcon}>
           back
-        </ButtonLink>
+        </ResponsiveActionButton>
+        {prevSnapshotId || nextSnapshotId ? (
+          <>
+            <ResponsiveActionButton
+              href={prevSnapshotId ? snapshotHref(prevSnapshotId) : null}
+              disabled={!prevSnapshotId}
+              icon={ChevronLeftIcon}
+            >
+              prev
+            </ResponsiveActionButton>
+            {position !== null && total !== null ? (
+              <Typography variant="caption" className="tabular-nums">
+                {position}/{total}
+              </Typography>
+            ) : null}
+            <ResponsiveActionButton
+              href={nextSnapshotId ? snapshotHref(nextSnapshotId) : null}
+              disabled={!nextSnapshotId}
+              icon={ChevronRightIcon}
+              iconPosition="end"
+            >
+              next
+            </ResponsiveActionButton>
+          </>
+        ) : null}
+      </div>
+      <div className="flex items-center flex-row gap-2">
         {canReview &&
         diff &&
         diff.reviewStatus !== "not_required" &&
@@ -54,37 +85,6 @@ export const SnapshotActionsRow = ({
             <SnapshotApproveButton diffId={diff.id} approved={snapshot.status === "approved"} />
           </>
         ) : null}
-      </div>
-      <div className="flex items-center flex-row gap-2">
-        {prevSnapshotId || nextSnapshotId ? (
-          <>
-            <ButtonLink
-              href={prevSnapshotId ? snapshotHref(prevSnapshotId) : null}
-              disabled={!prevSnapshotId}
-              variant="outline"
-              color="neutral"
-              size="sm"
-            >
-              <Icon icon={ChevronLeftIcon} />
-              prev
-            </ButtonLink>
-            {position !== null && total !== null ? (
-              <Typography variant="caption" className="tabular-nums">
-                {position}/{total}
-              </Typography>
-            ) : null}
-            <ButtonLink
-              href={nextSnapshotId ? snapshotHref(nextSnapshotId) : null}
-              disabled={!nextSnapshotId}
-              variant="outline"
-              color="neutral"
-              size="sm"
-            >
-              next
-              <Icon icon={ChevronRightIcon} />
-            </ButtonLink>
-          </>
-        ) : null}
         <Button
           variant="outline"
           color="neutral"
@@ -92,7 +92,7 @@ export const SnapshotActionsRow = ({
           onClick={onToggleSidebar}
           aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          <Icon icon={sidebarCollapsed ? ChevronLeftIcon : ChevronRightIcon} />
+          <Icon icon={sidebarCollapsed ? ArrowLeftFromLineIcon : ArrowRightToLineIcon} />
         </Button>
       </div>
     </div>

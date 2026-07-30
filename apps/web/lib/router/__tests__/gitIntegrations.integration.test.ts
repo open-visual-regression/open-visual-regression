@@ -49,7 +49,6 @@ describe("gitIntegrations", () => {
       const [error] = await serverClient.gitIntegrations.upsert({
         projectId: FAKE_PROJECT_ID,
         provider: "github",
-        baseUrl: null,
         repoIdentifier: "acme/web",
         token: "a-token",
       });
@@ -62,7 +61,6 @@ describe("gitIntegrations", () => {
       const [error] = await serverClient.gitIntegrations.upsert({
         projectId: FAKE_PROJECT_ID,
         provider: "github",
-        baseUrl: null,
         repoIdentifier: "acme/web",
         token: "a-token",
       });
@@ -76,7 +74,6 @@ describe("gitIntegrations", () => {
       const [error, result] = await serverClient.gitIntegrations.upsert({
         projectId,
         provider: "github",
-        baseUrl: null,
         repoIdentifier: "acme/web",
         token: "a-secret-token",
       });
@@ -89,6 +86,42 @@ describe("gitIntegrations", () => {
       expect(getResult?.integration).toMatchObject({ hasToken: true, repoIdentifier: "acme/web" });
     });
 
+    test("should derive the check context from the project name", async ({ admin: _ }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+
+      const [, result] = await serverClient.gitIntegrations.upsert({
+        projectId,
+        provider: "github",
+        repoIdentifier: "acme/web",
+        token: "a-secret-token",
+      });
+      expect(result).toMatchObject({ checkContext: "Open Visual Regression / Test Project" });
+    });
+
+    test("should give distinct projects distinct check contexts", async ({ admin: _ }) => {
+      const [, firstProject] = await serverClient.projects.add(TEST_PROJECT);
+      const [, secondProject] = await serverClient.projects.add({
+        ...TEST_PROJECT,
+        projectName: "Other Project",
+      });
+
+      const [, firstResult] = await serverClient.gitIntegrations.upsert({
+        projectId: firstProject!.projectId,
+        provider: "github",
+        repoIdentifier: "acme/web",
+        token: "a-secret-token",
+      });
+      const [, secondResult] = await serverClient.gitIntegrations.upsert({
+        projectId: secondProject!.projectId,
+        provider: "github",
+        repoIdentifier: "acme/web",
+        token: "a-secret-token",
+      });
+
+      expect(firstResult?.checkContext).not.toBe(secondResult?.checkContext);
+    });
+
     test("should update fields without re-sending the token", async ({ admin: _ }) => {
       const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
       const projectId = addResult!.projectId;
@@ -96,7 +129,6 @@ describe("gitIntegrations", () => {
       await serverClient.gitIntegrations.upsert({
         projectId,
         provider: "github",
-        baseUrl: null,
         repoIdentifier: "acme/web",
         token: "a-secret-token",
       });
@@ -104,7 +136,6 @@ describe("gitIntegrations", () => {
       const [error, result] = await serverClient.gitIntegrations.upsert({
         projectId,
         provider: "github",
-        baseUrl: null,
         repoIdentifier: "acme/renamed",
       });
       expect(error).toBeNull();
@@ -118,7 +149,6 @@ describe("gitIntegrations", () => {
       const [error] = await serverClient.gitIntegrations.upsert({
         projectId,
         provider: "github",
-        baseUrl: null,
         repoIdentifier: "acme/web",
       });
       expect(error?.code).toBe("BAD_REQUEST");
@@ -131,22 +161,19 @@ describe("gitIntegrations", () => {
       await serverClient.gitIntegrations.upsert({
         projectId,
         provider: "github",
-        baseUrl: null,
         repoIdentifier: "acme/web",
         token: "first-token",
       });
       await serverClient.gitIntegrations.upsert({
         projectId,
-        provider: "gitea",
-        baseUrl: "https://gitea.acme.com",
+        provider: "github",
         repoIdentifier: "acme/other",
         token: "second-token",
       });
 
       const [, result] = await serverClient.gitIntegrations.get({ projectId });
       expect(result?.integration).toMatchObject({
-        provider: "gitea",
-        baseUrl: "https://gitea.acme.com",
+        provider: "github",
         repoIdentifier: "acme/other",
       });
     });
@@ -172,7 +199,6 @@ describe("gitIntegrations", () => {
       await serverClient.gitIntegrations.upsert({
         projectId,
         provider: "github",
-        baseUrl: null,
         repoIdentifier: "acme/web",
         token: "a-token",
       });
