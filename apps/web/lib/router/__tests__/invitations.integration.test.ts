@@ -33,6 +33,17 @@ describe("invitations", () => {
 
       expect(error?.code).toBe("NOT_FOUND");
     });
+
+    test("should return NOT_FOUND for an invitation that is no longer pending", async ({
+      admin: _,
+    }) => {
+      const invitationId = await createInvitation("no-longer-pending@example.com");
+      await serverClient.users.remove({ users: [{ status: "invited", invitationId }] });
+
+      const [error] = await serverClient.invitations.getInvitation({ invitationId });
+
+      expect(error?.code).toBe("NOT_FOUND");
+    });
   });
 
   describe("acceptInvitation", () => {
@@ -103,6 +114,48 @@ describe("invitations", () => {
       const [error] = await serverClient.invitations.acceptInvitation({
         invitationId: "00000000-0000-0000-0000-000000000000",
         name: "Invited User",
+        password: TEST_PASSWORD,
+      });
+
+      expect(error?.code).toBe("BAD_REQUEST");
+    });
+
+    test("should return BAD_REQUEST when the invitation was already accepted", async ({
+      admin: _,
+    }) => {
+      const invitationId = await createInvitation("accepted-twice@example.com");
+
+      vi.mocked(headers).mockResolvedValue(new Headers());
+
+      const [firstError] = await serverClient.invitations.acceptInvitation({
+        invitationId,
+        name: "Invited User",
+        password: TEST_PASSWORD,
+      });
+      expect(firstError).toBeNull();
+
+      const [error] = await serverClient.invitations.acceptInvitation({
+        invitationId,
+        name: "Invited User",
+        password: TEST_PASSWORD,
+      });
+
+      expect(error?.code).toBe("BAD_REQUEST");
+    });
+
+    test("should return BAD_REQUEST when an account already exists for the invited email", async ({
+      admin: _,
+    }) => {
+      const invitationId = await createInvitation("taken@example.com");
+      await auth.api.signUpEmail({
+        body: { name: "Taken", email: "taken@example.com", password: TEST_PASSWORD },
+      });
+
+      vi.mocked(headers).mockResolvedValue(new Headers());
+
+      const [error] = await serverClient.invitations.acceptInvitation({
+        invitationId,
+        name: "Taken",
         password: TEST_PASSWORD,
       });
 
