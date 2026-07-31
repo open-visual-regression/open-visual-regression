@@ -41,7 +41,7 @@ export const auth = betterAuth({
       enableMetadata: true,
       rateLimit: { enabled: false },
     }),
-    organization(),
+    organization({ requireEmailVerificationOnInvitation: false }),
     nextCookies(),
   ],
   rateLimit: {
