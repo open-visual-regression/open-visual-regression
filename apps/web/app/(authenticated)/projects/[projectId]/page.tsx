@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { z } from "zod";
 
 import { buildStatusSchema } from "@ovr/api/contracts/builds";
-import { Typography } from "@ovr/ui/components/typography";
 
 import { auth } from "@/lib/auth/auth";
 import { toRole } from "@/lib/auth/roles";
@@ -18,7 +17,7 @@ import { serverError } from "@/lib/utils/errors";
 import { BuildsFilters } from "./_components/builds-section/BuildsFilters";
 import { BuildsSearchField } from "./_components/builds-section/BuildsSearchField";
 import { BuildsSection } from "./_components/builds-section/BuildsSection";
-import { ProjectSettingsButton } from "./_components/project-settings-button/ProjectSettingsButton";
+import { ProjectHeader } from "./_components/project-header/ProjectHeader";
 
 type ProjectPageProps = PageProps<"/projects/[projectId]">;
 
@@ -84,12 +83,11 @@ export default async function ProjectPage(props: ProjectPageProps) {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3">
-      <div className="flex items-center gap-3">
-        <Typography variant="h1" as="h1" className="min-w-0 flex-1 truncate">
-          {projectResult.project.name}
-        </Typography>
-        <ProjectSettingsButton projectId={projectId} role={toRole(session?.user.role)} />
-      </div>
+      <ProjectHeader
+        projectId={projectId}
+        projectName={projectResult.project.name}
+        role={toRole(session?.user.role)}
+      />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <BuildsFilters
           projectId={projectId}
