@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { z } from "zod";
 
 import { buildStatusSchema } from "@ovr/api/contracts/builds";
+import { Typography } from "@ovr/ui/components/typography";
 
 import { auth } from "@/lib/auth/auth";
 import { getBuildStatusLabel } from "@/lib/components/BuildStatus";
@@ -16,7 +17,7 @@ import { serverError } from "@/lib/utils/errors";
 import { BuildsFilters } from "./_components/builds-section/BuildsFilters";
 import { BuildsSearchField } from "./_components/builds-section/BuildsSearchField";
 import { BuildsSection } from "./_components/builds-section/BuildsSection";
-import { ProjectHeader } from "./_components/project-header/ProjectHeader";
+import { ProjectSettingsButton } from "./_components/project-settings-button/ProjectSettingsButton";
 
 type ProjectPageProps = PageProps<"/projects/[projectId]">;
 
@@ -82,11 +83,12 @@ export default async function ProjectPage(props: ProjectPageProps) {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3">
-      <ProjectHeader
-        projectId={projectId}
-        projectName={projectResult.project.name}
-        role={session?.user.role}
-      />
+      <div className="flex flex-wrap items-center gap-3">
+        <Typography variant="h1" as="h1" className="w-full min-w-0 truncate md:w-auto md:flex-1">
+          {projectResult.project.name}
+        </Typography>
+        <ProjectSettingsButton projectId={projectId} role={session?.user.role} />
+      </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <BuildsFilters
           projectId={projectId}
