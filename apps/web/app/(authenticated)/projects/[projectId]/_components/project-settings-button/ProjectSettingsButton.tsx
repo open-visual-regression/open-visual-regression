@@ -1,8 +1,8 @@
-import { Icon, SettingsIcon } from "@ovr/ui/components/icon";
+import { SettingsIcon } from "@ovr/ui/components/icon";
 
 import { type Role } from "@/lib/auth/roles";
 import { RequiresAdminRole } from "@/lib/components/authorization/RequiresAdminRole";
-import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
+import { ResponsiveActionButton } from "@/lib/components/responsive-action-button/ResponsiveActionButton";
 
 export type ProjectSettingsButtonProps = {
   projectId: string;
@@ -12,10 +12,9 @@ export type ProjectSettingsButtonProps = {
 export const ProjectSettingsButton = ({ projectId, role }: ProjectSettingsButtonProps) => {
   return (
     <RequiresAdminRole role={role}>
-      <ButtonLink href={`/projects/${projectId}/settings`} variant="outline" color="neutral">
-        <Icon icon={SettingsIcon} />
+      <ResponsiveActionButton href={`/projects/${projectId}/settings`} icon={SettingsIcon}>
         project settings
-      </ButtonLink>
+      </ResponsiveActionButton>
     </RequiresAdminRole>
   );
 };
