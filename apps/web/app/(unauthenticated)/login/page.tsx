@@ -17,7 +17,7 @@ export default async function LoginPage() {
   ]);
 
   if (error) {
-    serverError();
+    serverError(error);
   }
 
   if (setupStatusResult.status === "pending") {

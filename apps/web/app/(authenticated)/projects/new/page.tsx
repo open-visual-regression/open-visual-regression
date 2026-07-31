@@ -11,7 +11,7 @@ export default async function CreateProjectPage() {
   const verifyRoleResult = await verifyRole("admin");
 
   if (verifyRoleResult.status === "error") {
-    serverError();
+    serverError(verifyRoleResult.error);
   }
 
   if (!verifyRoleResult.data) {

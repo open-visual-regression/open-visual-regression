@@ -18,7 +18,7 @@ export default async function ProjectsSidebarSlot() {
     ]);
 
   if (listError || countError || buildsError) {
-    serverError();
+    serverError(listError || countError || buildsError);
   }
 
   const { projects } = listResult;

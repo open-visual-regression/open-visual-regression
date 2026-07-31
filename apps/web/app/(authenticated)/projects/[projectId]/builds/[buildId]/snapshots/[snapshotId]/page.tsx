@@ -43,7 +43,7 @@ export default async function SnapshotPage(props: SnapshotPageProps) {
   }
 
   if (buildError || snapshotError || diffError || adjacentError || reviewsError) {
-    serverError();
+    serverError(buildError || snapshotError || diffError || adjacentError || reviewsError);
   }
 
   const { build } = buildResult;

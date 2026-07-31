@@ -12,7 +12,7 @@ export default async function SetupPage() {
   const [error, setupStatusResult] = await serverClient.setup.status();
 
   if (error) {
-    serverError();
+    serverError(error);
   }
 
   if (setupStatusResult.status === "completed") {

@@ -16,7 +16,7 @@ export default async function SettingsUsersPage({ searchParams }: SettingsUsersP
   const verifyRoleResult = await verifyRole("admin");
 
   if (verifyRoleResult.status === "error") {
-    serverError();
+    serverError(verifyRoleResult.error);
   }
 
   if (!verifyRoleResult.data) {
@@ -31,7 +31,7 @@ export default async function SettingsUsersPage({ searchParams }: SettingsUsersP
   ]);
 
   if (error || !session) {
-    serverError();
+    serverError(error ?? "session missing after users list fetch");
   }
 
   return <UsersSection users={listResult.users} currentUserId={session.user.id} search={search} />;
