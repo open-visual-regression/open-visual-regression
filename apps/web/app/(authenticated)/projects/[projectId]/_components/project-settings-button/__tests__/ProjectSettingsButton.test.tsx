@@ -21,13 +21,12 @@ describe("ProjectSettingsButton", () => {
     );
   });
 
-  it.each([
-    ["a reviewer", "reviewer"],
-    ["a viewer", "viewer"],
-    ["no role", null],
-  ] as const)("should not show the project settings link for %s", (_description, role) => {
-    renderComponent({ role });
+  it.each(["reviewer", "viewer"] as const)(
+    "should not show the project settings link for a %s",
+    (role) => {
+      renderComponent({ role });
 
-    expect(screen.queryByRole("link", { name: /project settings/i })).not.toBeInTheDocument();
-  });
+      expect(screen.queryByRole("link", { name: /project settings/i })).not.toBeInTheDocument();
+    },
+  );
 });

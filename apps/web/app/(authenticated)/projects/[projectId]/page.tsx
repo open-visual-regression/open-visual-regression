@@ -7,6 +7,7 @@ import { buildStatusSchema } from "@ovr/api/contracts/builds";
 import { Typography } from "@ovr/ui/components/typography";
 
 import { auth } from "@/lib/auth/auth";
+import { toRole } from "@/lib/auth/roles";
 import { getBuildStatusLabel } from "@/lib/components/BuildStatus";
 import { buildsListInfiniteOptions } from "@/lib/orpc/builds-query";
 import { getQueryClient } from "@/lib/orpc/query-client";
@@ -87,7 +88,7 @@ export default async function ProjectPage(props: ProjectPageProps) {
         <Typography variant="h1" as="h1" className="w-full min-w-0 truncate md:w-auto md:flex-1">
           {projectResult.project.name}
         </Typography>
-        <ProjectSettingsButton projectId={projectId} role={session?.user.role} />
+        <ProjectSettingsButton projectId={projectId} role={toRole(session?.user.role)} />
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <BuildsFilters

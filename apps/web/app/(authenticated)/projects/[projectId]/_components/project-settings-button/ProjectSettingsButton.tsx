@@ -1,11 +1,12 @@
 import { Icon, SettingsIcon } from "@ovr/ui/components/icon";
 
+import { type Role } from "@/lib/auth/roles";
 import { RequiresAdminRole } from "@/lib/components/authorization/RequiresAdminRole";
 import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
 
 export type ProjectSettingsButtonProps = {
   projectId: string;
-  role: string | null | undefined;
+  role: Role;
 };
 
 export const ProjectSettingsButton = ({ projectId, role }: ProjectSettingsButtonProps) => {
