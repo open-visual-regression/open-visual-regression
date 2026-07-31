@@ -79,7 +79,9 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
   }
 
   if (error || countsError || statusesError || browsersError || viewportsError || snapshotsError) {
-    serverError();
+    serverError(
+      error || countsError || statusesError || browsersError || viewportsError || snapshotsError,
+    );
   }
 
   const statusOptions = statusesResult.statuses.map((status) => ({

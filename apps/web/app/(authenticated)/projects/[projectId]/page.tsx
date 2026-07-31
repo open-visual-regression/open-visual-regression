@@ -46,7 +46,7 @@ export default async function ProjectPage(props: ProjectPageProps) {
   }
 
   if (projectError) {
-    serverError();
+    serverError(projectError);
   }
 
   const queryClient = getQueryClient();

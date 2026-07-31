@@ -19,7 +19,7 @@ export default async function ProjectSettingsPage(props: ProjectSettingsPageProp
   const verifyRoleResult = await verifyRole("admin");
 
   if (verifyRoleResult.status === "error") {
-    serverError();
+    serverError(verifyRoleResult.error);
   }
 
   if (!verifyRoleResult.data) {
@@ -41,7 +41,7 @@ export default async function ProjectSettingsPage(props: ProjectSettingsPageProp
   }
 
   if (projectError || apiKeysError || gitIntegrationError) {
-    serverError();
+    serverError(projectError || apiKeysError || gitIntegrationError);
   }
 
   return (

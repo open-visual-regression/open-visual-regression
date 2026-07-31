@@ -27,7 +27,7 @@ export default async function ProjectsPage() {
   ]);
 
   if (countError) {
-    serverError();
+    serverError(countError);
   }
 
   const { total } = countResult;
