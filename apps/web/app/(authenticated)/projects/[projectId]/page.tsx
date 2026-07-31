@@ -1,13 +1,13 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 
 import { buildStatusSchema } from "@ovr/api/contracts/builds";
-import { Icon, SettingsIcon } from "@ovr/ui/components/icon";
-import { Typography } from "@ovr/ui/components/typography";
 
+import { auth } from "@/lib/auth/auth";
+import { toRole } from "@/lib/auth/roles";
 import { getBuildStatusLabel } from "@/lib/components/BuildStatus";
-import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
 import { buildsListInfiniteOptions } from "@/lib/orpc/builds-query";
 import { getQueryClient } from "@/lib/orpc/query-client";
 import { orpcServer } from "@/lib/orpc/server";
@@ -17,6 +17,7 @@ import { serverError } from "@/lib/utils/errors";
 import { BuildsFilters } from "./_components/builds-section/BuildsFilters";
 import { BuildsSearchField } from "./_components/builds-section/BuildsSearchField";
 import { BuildsSection } from "./_components/builds-section/BuildsSection";
+import { ProjectHeader } from "./_components/project-header/ProjectHeader";
 
 type ProjectPageProps = PageProps<"/projects/[projectId]">;
 
@@ -51,7 +52,8 @@ export default async function ProjectPage(props: ProjectPageProps) {
 
   const queryClient = getQueryClient();
 
-  const [statusesResult, branchesResult, authorsResult] = await Promise.all([
+  const [session, statusesResult, branchesResult, authorsResult] = await Promise.all([
+    auth.api.getSession({ headers: await headers() }),
     queryClient.fetchQuery(orpcServer.builds.listStatuses.queryOptions({ input: { projectId } })),
     queryClient.fetchQuery(
       orpcServer.builds.listBranches.queryOptions({ input: { projectId, search: undefined } }),
@@ -81,15 +83,11 @@ export default async function ProjectPage(props: ProjectPageProps) {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-3">
-        <Typography variant="h1" as="h1" className="w-full min-w-0 truncate md:w-auto md:flex-1">
-          {projectResult.project.name}
-        </Typography>
-        <ButtonLink href={`/projects/${projectId}/settings`} variant="outline" color="neutral">
-          <Icon icon={SettingsIcon} />
-          project settings
-        </ButtonLink>
-      </div>
+      <ProjectHeader
+        projectId={projectId}
+        projectName={projectResult.project.name}
+        role={toRole(session?.user.role)}
+      />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <BuildsFilters
           projectId={projectId}

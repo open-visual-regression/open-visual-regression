@@ -7,9 +7,8 @@ import { useRouter } from "next/navigation";
 import { XIcon } from "@ovr/ui/components/icon";
 import { toast } from "@ovr/ui/components/toast";
 
+import { ResponsiveActionButton } from "@/lib/components/responsive-action-button/ResponsiveActionButton";
 import { serverClient } from "@/lib/router";
-
-import { ResponsiveActionButton } from "./ResponsiveActionButton";
 
 export type SnapshotRejectButtonProps = {
   diffId: string;

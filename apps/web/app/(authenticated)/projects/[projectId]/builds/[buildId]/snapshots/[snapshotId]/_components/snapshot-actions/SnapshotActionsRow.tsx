@@ -11,7 +11,8 @@ import {
 } from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
 
-import { ResponsiveActionButton } from "./ResponsiveActionButton";
+import { ResponsiveActionButton } from "@/lib/components/responsive-action-button/ResponsiveActionButton";
+
 import { SnapshotApproveButton } from "./SnapshotApproveButton";
 import { SnapshotRejectButton } from "./SnapshotRejectButton";
 
