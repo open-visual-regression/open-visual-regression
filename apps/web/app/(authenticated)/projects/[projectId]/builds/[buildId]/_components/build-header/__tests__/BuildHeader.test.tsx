@@ -60,7 +60,7 @@ describe("BuildHeader", () => {
     expect(screen.getByRole("listitem", { name: "4 queued" })).toBeVisible();
   });
 
-  it("should disable both bulk actions when there are no reviewable snapshots", () => {
+  it("should hide both bulk actions when there are no reviewable snapshots", () => {
     renderComponent({
       build: mocks.build.generateBuild({ status: "needs_review" }),
       snapshotCounts: {
@@ -76,8 +76,8 @@ describe("BuildHeader", () => {
       },
     });
 
-    expect(screen.getByRole("button", { name: /approve all/i })).toBeDisabled();
-    expect(screen.getByRole("button", { name: /reject all/i })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: /approve all/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /reject all/i })).not.toBeInTheDocument();
   });
 
   it("should enable reject all when every reviewable snapshot is already approved", () => {

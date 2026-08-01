@@ -12,14 +12,9 @@ import { serverClient } from "@/lib/router";
 export type BuildRejectButtonProps = {
   buildId: string;
   rejected: boolean;
-  disabled?: boolean;
 };
 
-export const BuildRejectButton = ({
-  buildId,
-  rejected,
-  disabled = false,
-}: BuildRejectButtonProps) => {
+export const BuildRejectButton = ({ buildId, rejected }: BuildRejectButtonProps) => {
   const router = useRouter();
 
   const { execute, status } = useServerAction(serverClient.diffs.bulkCastVote, {
@@ -37,7 +32,7 @@ export const BuildRejectButton = ({
     <Button
       variant="outline"
       color="neutral"
-      disabled={pending || rejected || disabled}
+      disabled={pending || rejected}
       className={
         rejected
           ? "disabled:bg-ovr-red disabled:text-ovr-on-solid disabled:border-transparent"

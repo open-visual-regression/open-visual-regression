@@ -89,18 +89,10 @@ export const BuildHeader = ({
           <div className="flex flex-row gap-2">
             {isCancelable ? (
               <BuildCancelButton buildId={build.id} />
-            ) : isCanceled || hasProcessingError ? null : (
+            ) : isCanceled || hasProcessingError || !hasReviewable ? null : (
               <>
-                <BuildRejectButton
-                  buildId={build.id}
-                  rejected={build.status === "rejected"}
-                  disabled={!hasReviewable}
-                />
-                <BuildApproveButton
-                  buildId={build.id}
-                  approved={build.status === "approved"}
-                  disabled={!hasReviewable}
-                />
+                <BuildRejectButton buildId={build.id} rejected={build.status === "rejected"} />
+                <BuildApproveButton buildId={build.id} approved={build.status === "approved"} />
               </>
             )}
           </div>
