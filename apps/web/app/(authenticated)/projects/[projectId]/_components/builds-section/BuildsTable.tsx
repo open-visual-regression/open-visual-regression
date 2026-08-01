@@ -129,7 +129,11 @@ export const BuildsTable = ({
   const rows = table.getRowModel().rows;
 
   return (
-    <TableContainer ref={setScrollElement} className="min-h-0 flex-1 overflow-y-auto">
+    <TableContainer
+      ref={setScrollElement}
+      data-scroll-restoration-id="builds-table"
+      className="min-h-0 flex-1 overflow-y-auto"
+    >
       <Table>
         <TableHeader className="sticky top-0 z-10 [&_th]:bg-ovr-inset">
           {table.getHeaderGroups().map((headerGroup) => (
