@@ -97,6 +97,8 @@ jobs:
       - run: >
           pnpm turbo run build-storybook --filter=${{ matrix.package.filter }}
           ${{ github.event_name == 'pull_request' && '--affected' || '' }}
+        env:
+          TURBO_SCM_BASE: origin/${{ github.event.pull_request.base.ref }}
       - name: Publish snapshot to OVR (ui)
         if: matrix.package.name == 'ui' && hashFiles('packages/ui/storybook-static/**') != ''
         continue-on-error: true
