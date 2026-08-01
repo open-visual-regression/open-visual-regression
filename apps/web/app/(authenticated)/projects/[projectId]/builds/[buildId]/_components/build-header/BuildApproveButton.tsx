@@ -12,14 +12,9 @@ import { serverClient } from "@/lib/router";
 export type BuildApproveButtonProps = {
   buildId: string;
   approved: boolean;
-  disabled?: boolean;
 };
 
-export const BuildApproveButton = ({
-  buildId,
-  approved,
-  disabled = false,
-}: BuildApproveButtonProps) => {
+export const BuildApproveButton = ({ buildId, approved }: BuildApproveButtonProps) => {
   const router = useRouter();
 
   const { execute, status } = useServerAction(serverClient.diffs.bulkCastVote, {
@@ -37,7 +32,7 @@ export const BuildApproveButton = ({
     <Button
       variant="outline"
       color="green"
-      disabled={pending || approved || disabled}
+      disabled={pending || approved}
       className={
         approved
           ? "disabled:bg-ovr-diff-add disabled:text-ovr-on-accent disabled:border-transparent"

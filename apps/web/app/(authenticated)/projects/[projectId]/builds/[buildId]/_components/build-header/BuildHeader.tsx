@@ -38,6 +38,8 @@ export const BuildHeader = ({
   const isCancelable = build.status === "queued" || build.status === "processing";
   const isCanceled = build.status === "canceled";
   const hasProcessingError = build.status === "error";
+  const showActions =
+    canReview && (isCancelable || (!isCanceled && !hasProcessingError && hasReviewable));
 
   return (
     <div className="flex flex-col gap-6">
@@ -85,22 +87,14 @@ export const BuildHeader = ({
             ) : null}
           </div>
         </div>
-        {canReview ? (
+        {showActions ? (
           <div className="flex flex-row gap-2">
             {isCancelable ? (
               <BuildCancelButton buildId={build.id} />
-            ) : isCanceled || hasProcessingError ? null : (
+            ) : (
               <>
-                <BuildRejectButton
-                  buildId={build.id}
-                  rejected={build.status === "rejected"}
-                  disabled={!hasReviewable}
-                />
-                <BuildApproveButton
-                  buildId={build.id}
-                  approved={build.status === "approved"}
-                  disabled={!hasReviewable}
-                />
+                <BuildRejectButton buildId={build.id} rejected={build.status === "rejected"} />
+                <BuildApproveButton buildId={build.id} approved={build.status === "approved"} />
               </>
             )}
           </div>
