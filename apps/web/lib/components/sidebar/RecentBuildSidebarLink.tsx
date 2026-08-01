@@ -8,6 +8,7 @@ const RECENT_BUILD_ROW_HEIGHT_PX = 44;
 
 type RecentBuildSidebarLinkProps = {
   build: BuildSchema;
+  active?: boolean;
   className?: string;
   onClick?: () => void;
 };
@@ -24,12 +25,19 @@ const BUILD_STATUS_BORDER_CLASS: Record<BuildStatus, string> = {
   canceled: "border-ovr-gray",
 };
 
-const RecentBuildSidebarLink = ({ build, className, onClick }: RecentBuildSidebarLinkProps) => (
+const RecentBuildSidebarLink = ({
+  build,
+  active,
+  className,
+  onClick,
+}: RecentBuildSidebarLinkProps) => (
   <Link
     href={`/projects/${build.project.id}/builds/${build.id}`}
     onClick={onClick}
+    aria-current={active ? "page" : undefined}
     className={cn(
       "shrink-0 overflow-hidden transition-colors no-underline hover:bg-ovr-hover",
+      active && "bg-ovr-active",
       className,
     )}
   >

@@ -13,6 +13,7 @@ const SidebarCollapsedLink = ({ href, title, active, children }: SidebarCollapse
   <Link
     href={href}
     title={title}
+    aria-current={active ? "page" : undefined}
     className={cn(
       "flex h-8 items-center justify-center border-l-2 no-underline transition-colors relative",
       active ? "bg-ovr-active border-l-ovr-accent" : "border-l-transparent hover:bg-ovr-hover",
