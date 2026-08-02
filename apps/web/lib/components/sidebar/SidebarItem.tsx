@@ -17,6 +17,7 @@ const SidebarItem = ({ href, icon, label, changedCount, active, onClick }: Sideb
   <Link
     href={href}
     onClick={onClick}
+    aria-current={active ? "page" : undefined}
     className={cn(
       "flex items-center gap-2 h-7 pl-2.5 pr-3 text-body-sm border-l-2 transition-colors no-underline",
       active
