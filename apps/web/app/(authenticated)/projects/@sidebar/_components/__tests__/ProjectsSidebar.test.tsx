@@ -111,7 +111,7 @@ describe("ProjectsSidebar", () => {
 
     render(<ProjectsSidebar projects={PROJECTS} total={PROJECTS.length} builds={[activeBuild]} />);
 
-    expect(screen.getByRole("link", { name: "Alpha" })).toHaveClass("border-l-transparent");
+    expect(screen.queryByRole("link", { name: "Alpha", current: "page" })).not.toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /Fix the active build/, current: "page" }),
     ).toBeVisible();
