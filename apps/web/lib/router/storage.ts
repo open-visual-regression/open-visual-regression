@@ -8,6 +8,18 @@ import { storage } from "@ovr/storage";
 import { authenticatedMiddleware } from "./middleware";
 import { os } from "./os";
 
+/**
+ * How long a presigned URL stays valid.
+ *
+ * A build page renders up to 60 snapshots, each of which hits this route for a
+ * redirect. A 60s lifetime meant the browser could never reuse one, so every
+ * visit — and every scroll back — paid the full round trip again.
+ */
+const PRESIGNED_URL_TTL_SECONDS = 300;
+
+/** Kept under the URL lifetime so a cached redirect never outlives its signature. */
+const REDIRECT_CACHE_SECONDS = PRESIGNED_URL_TTL_SECONDS - 60;
+
 export const getObject = os.storage.getObject
   .use(authenticatedMiddleware)
   .handler(async ({ input, context }) => {
@@ -22,8 +34,14 @@ export const getObject = os.storage.getObject
       throw new ORPCError("FORBIDDEN");
     }
 
-    const url = await storage.getPresignedUrl(input.path, 60);
+    const url = await storage.getPresignedUrl(input.path, PRESIGNED_URL_TTL_SECONDS);
 
-    return { status: 302 as const, headers: { location: url } };
+    return {
+      status: 302 as const,
+      headers: {
+        location: url,
+        "cache-control": `private, max-age=${REDIRECT_CACHE_SECONDS}`,
+      },
+    };
   })
   .actionable();
