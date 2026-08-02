@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Typography } from "@ovr/ui/components/typography";
 
 import { serverClient } from "@/lib/router";
+import { cachedServerClient } from "@/lib/router/cached";
 import { verifyRole } from "@/lib/utils/authorization";
 import { serverError } from "@/lib/utils/errors";
 
@@ -31,7 +32,7 @@ export default async function ProjectSettingsPage(props: ProjectSettingsPageProp
     [apiKeysError, apiKeysResult],
     [gitIntegrationError, gitIntegrationResult],
   ] = await Promise.all([
-    serverClient.projects.getOne({ projectId }),
+    cachedServerClient.projects.getOne(projectId),
     serverClient.apiKeys.list({ projectId }),
     serverClient.gitIntegrations.get({ projectId }),
   ]);

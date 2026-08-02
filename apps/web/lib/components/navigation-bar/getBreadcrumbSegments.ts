@@ -1,6 +1,5 @@
-"server only";
-
-import { serverClient } from "@/lib/router";
+import "server-only";
+import { cachedServerClient } from "@/lib/router/cached";
 
 type BreadcrumbSegment = {
   label: string;
@@ -11,15 +10,15 @@ type SegmentResolver = (value: string) => Promise<string | undefined>;
 
 const SEGMENT_RESOLVERS: Record<string, SegmentResolver> = {
   "projects/*": async (projectId) => {
-    const [error, result] = await serverClient.projects.getOne({ projectId });
+    const [error, result] = await cachedServerClient.projects.getOne(projectId);
     return error ? projectId : result.project.name;
   },
   "projects/*/builds/*": async (buildId) => {
-    const [error, result] = await serverClient.builds.getOne({ buildId });
+    const [error, result] = await cachedServerClient.builds.getOne(buildId);
     return error ? buildId : (result.build.name ?? result.build.id);
   },
   "projects/*/builds/*/snapshots/*": async (snapshotId) => {
-    const [error, result] = await serverClient.snapshots.getOne({ snapshotId });
+    const [error, result] = await cachedServerClient.snapshots.getOne(snapshotId);
     return error ? snapshotId : `${result.snapshot.targetTitle} ${result.snapshot.targetName}`;
   },
 };

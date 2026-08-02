@@ -9,22 +9,19 @@ import { defineConfig } from "vitest/config";
 const dirname =
   typeof __dirname !== "undefined" ? __dirname : path.dirname(fileURLToPath(import.meta.url));
 
+const alias = {
+  "@": path.resolve(dirname, "."),
+  "server-only": path.resolve(dirname, "node_modules/server-only/empty.js"),
+};
+
 export default defineConfig({
-  resolve: {
-    alias: {
-      "@": path.resolve(dirname, "."),
-    },
-  },
+  resolve: { alias },
   test: {
     passWithNoTests: true,
     projects: [
       {
         plugins: [react()],
-        resolve: {
-          alias: {
-            "@": path.resolve(dirname, "."),
-          },
-        },
+        resolve: { alias },
         test: {
           name: "unit",
           environment: "jsdom",

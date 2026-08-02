@@ -7,6 +7,7 @@ import { canReview } from "@/lib/auth/roles";
 import { getCachedSession } from "@/lib/auth/session";
 import { getSnapshotStatusLabel } from "@/lib/components/SnapshotStatusBadge";
 import { serverClient } from "@/lib/router";
+import { cachedServerClient } from "@/lib/router/cached";
 import { serverError } from "@/lib/utils/errors";
 import { getStorybookPath, hasHostedStorybook } from "@/lib/utils/storage";
 
@@ -53,7 +54,7 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
     [snapshotsError, snapshotsResult],
   ] = await Promise.all([
     getCachedSession(),
-    serverClient.builds.getOne({ buildId }),
+    cachedServerClient.builds.getOne(buildId),
     serverClient.snapshots.getCounts({ buildId }),
     serverClient.snapshots.listStatuses({ buildId }),
     serverClient.snapshots.listBrowsers({ buildId }),

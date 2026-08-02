@@ -4,6 +4,7 @@ import { requireSession } from "@/lib/auth/session";
 import { QueryProvider } from "@/lib/providers/QueryProvider";
 import { ScrollRestoration } from "@/lib/providers/ScrollRestoration";
 
+import { AppNavigationBar } from "./_components/AppNavigationBar";
 import { DevTools } from "./_components/DevTools";
 
 type AppLayoutProps = Readonly<{
@@ -20,7 +21,7 @@ export default async function AppLayout({ navigation, children }: AppLayoutProps
         <ScrollRestoration />
       </Suspense>
       <div className="flex h-screen flex-col">
-        {navigation}
+        <AppNavigationBar breadcrumb={navigation} />
         <div className="flex flex-1 overflow-hidden">{children}</div>
         <DevTools />
       </div>

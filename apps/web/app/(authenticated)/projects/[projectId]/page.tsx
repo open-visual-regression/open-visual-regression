@@ -10,7 +10,7 @@ import { getBuildStatusLabel } from "@/lib/components/BuildStatus";
 import { buildsListInfiniteOptions } from "@/lib/orpc/builds-query";
 import { getQueryClient } from "@/lib/orpc/query-client";
 import { orpcServer } from "@/lib/orpc/server";
-import { serverClient } from "@/lib/router";
+import { cachedServerClient } from "@/lib/router/cached";
 import { serverError } from "@/lib/utils/errors";
 
 import { BuildsFilters } from "./_components/builds-section/BuildsFilters";
@@ -40,7 +40,7 @@ export default async function ProjectPage(props: ProjectPageProps) {
     author: authors = [],
   } = searchParamsSchema.parse(await props.searchParams);
 
-  const [projectError, projectResult] = await serverClient.projects.getOne({ projectId });
+  const [projectError, projectResult] = await cachedServerClient.projects.getOne(projectId);
 
   if (projectError?.status === 404) {
     notFound();

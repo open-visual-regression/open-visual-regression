@@ -1,29 +1,18 @@
 import { cookies } from "next/headers";
 
-import { serverClient } from "@/lib/router";
+import { getSidebarData } from "@/lib/components/sidebar/getSidebarData";
 import { getInitialSidebarCollapsed } from "@/lib/stores/sidebarCookie";
 import { serverError } from "@/lib/utils/errors";
 
 import { ProjectsSidebar } from "./_components/ProjectsSidebar";
 
-const SIDEBAR_PROJECTS_LIMIT = 10;
-const SIDEBAR_RECENT_BUILDS_LIMIT = 15;
-
 export default async function ProjectsSidebarSlot() {
-  const [[listError, listResult], [countError, countResult], [buildsError, buildsResult]] =
-    await Promise.all([
-      serverClient.projects.list({ limit: SIDEBAR_PROJECTS_LIMIT }),
-      serverClient.projects.count(),
-      serverClient.builds.list({ limit: SIDEBAR_RECENT_BUILDS_LIMIT }),
-    ]);
+  const { error, projects, total, builds } = await getSidebarData();
 
-  if (listError || countError || buildsError) {
-    serverError(listError || countError || buildsError);
+  if (error) {
+    serverError(error);
   }
 
-  const { projects } = listResult;
-  const { total } = countResult;
-  const { builds } = buildsResult;
   const initialCollapsed = getInitialSidebarCollapsed(await cookies());
 
   return (

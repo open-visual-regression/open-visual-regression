@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { canReview } from "@/lib/auth/roles";
 import { getCachedSession } from "@/lib/auth/session";
 import { serverClient } from "@/lib/router";
+import { cachedServerClient } from "@/lib/router/cached";
 import { serverError } from "@/lib/utils/errors";
 import { getStorybookStoryPath, hasHostedStorybook } from "@/lib/utils/storage";
 
@@ -26,8 +27,8 @@ export default async function SnapshotPage(props: SnapshotPageProps) {
     [reviewsError, reviewsResult],
   ] = await Promise.all([
     getCachedSession(),
-    serverClient.builds.getOne({ buildId }),
-    serverClient.snapshots.getOne({ snapshotId }),
+    cachedServerClient.builds.getOne(buildId),
+    cachedServerClient.snapshots.getOne(snapshotId),
     serverClient.diffs.getOne({ snapshotId }),
     serverClient.snapshots.getAdjacent({ snapshotId }),
     serverClient.diffs.listReviews({ snapshotId }),
