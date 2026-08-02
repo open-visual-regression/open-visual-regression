@@ -1,12 +1,11 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 
 import { buildStatusSchema } from "@ovr/api/contracts/builds";
 
-import { auth } from "@/lib/auth/auth";
 import { toRole } from "@/lib/auth/roles";
+import { getCachedSession } from "@/lib/auth/session";
 import { getBuildStatusLabel } from "@/lib/components/BuildStatus";
 import { buildsListInfiniteOptions } from "@/lib/orpc/builds-query";
 import { getQueryClient } from "@/lib/orpc/query-client";
@@ -53,7 +52,7 @@ export default async function ProjectPage(props: ProjectPageProps) {
   const queryClient = getQueryClient();
 
   const [session, statusesResult, branchesResult, authorsResult] = await Promise.all([
-    auth.api.getSession({ headers: await headers() }),
+    getCachedSession(),
     queryClient.fetchQuery(orpcServer.builds.listStatuses.queryOptions({ input: { projectId } })),
     queryClient.fetchQuery(
       orpcServer.builds.listBranches.queryOptions({ input: { projectId, search: undefined } }),

@@ -1,10 +1,8 @@
-import { headers } from "next/headers";
-
 import type { ListReviewsOutputSchema } from "@ovr/api/contracts/diffs";
 import { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@ovr/ui/components/tabs";
 
-import { auth } from "@/lib/auth/auth";
+import { getCachedSession } from "@/lib/auth/session";
 
 import { SnapshotReviews } from "./SnapshotReviews";
 import { SnapshotSidebarLogsContent } from "./SnapshotSidebarLogsContent";
@@ -20,7 +18,7 @@ export const SnapshotSidebarContent = async ({
   diffId,
   reviews,
 }: SnapshotSidebarContentProps) => {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getCachedSession();
 
   return (
     <Tabs defaultValue="reviews" className="gap-0">
