@@ -47,7 +47,7 @@ const RecentBuildSidebarLink = ({
         BUILD_STATUS_BORDER_CLASS[build.status],
       )}
     >
-      <Typography variant="body-sm" className="truncate text-ovr-fg-muted">
+      <Typography variant="body-sm" className="truncate text-ovr-fg-secondary">
         {build.project.name} · {build.branch}
       </Typography>
       <Typography className="truncate">{build.name ?? build.commitSha.slice(0, 7)}</Typography>
