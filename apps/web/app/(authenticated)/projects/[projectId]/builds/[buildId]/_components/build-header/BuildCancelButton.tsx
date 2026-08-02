@@ -18,7 +18,6 @@ import {
 } from "@ovr/ui/components/alert-dialog";
 import { Button } from "@ovr/ui/components/button";
 import { FieldError } from "@ovr/ui/components/field";
-import { CircleSlash2Icon, Icon } from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
 
 import { serverClient } from "@/lib/router";
@@ -56,8 +55,7 @@ export const BuildCancelButton = ({ buildId }: BuildCancelButtonProps) => {
       <AlertDialogTrigger
         render={<Button variant="outline" color="neutral" className="flex-1 md:flex-none" />}
       >
-        <Icon icon={CircleSlash2Icon} className="hidden md:inline lg:hidden" />
-        <span className="md:sr-only lg:not-sr-only">cancel build</span>
+        cancel build
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>

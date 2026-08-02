@@ -5,7 +5,6 @@ import { useServerAction } from "@orpc/react/hooks";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@ovr/ui/components/button";
-import { CheckIcon, Icon } from "@ovr/ui/components/icon";
 import { toast } from "@ovr/ui/components/toast";
 import { cn } from "@ovr/ui/lib/utils";
 
@@ -42,10 +41,7 @@ export const BuildApproveButton = ({ buildId, approved }: BuildApproveButtonProp
       )}
       onClick={() => execute({ buildId, vote: "approve" })}
     >
-      <Icon icon={CheckIcon} className="hidden md:inline lg:hidden" />
-      <span className="md:sr-only lg:not-sr-only">
-        {approved ? "approved" : pending ? "approving..." : "approve all"}
-      </span>
+      {approved ? "approved" : pending ? "approving..." : "approve all"}
     </Button>
   );
 };
