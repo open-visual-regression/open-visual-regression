@@ -23,5 +23,4 @@ const meta: Meta<typeof SnapshotPageSkeleton> = {
 export default meta;
 type Story = StoryObj<typeof SnapshotPageSkeleton>;
 
-/** Shown while a snapshot's comparison view and sidebar load. */
 export const Default: Story = {};

@@ -15,7 +15,6 @@ const SNAPSHOT_TIERS = [
   { columns: 5, className: "hidden xl:block" },
 ];
 
-/** Counts the items a breakpoint shows: its own tier plus every narrower one. */
 const visibleAt = (tiers: { columns: number; className: string }[], tierIndex: number) =>
   getSkeletonGridItems(tiers).filter(({ className }) =>
     tiers.slice(0, tierIndex + 1).some((tier) => tier.className === className),

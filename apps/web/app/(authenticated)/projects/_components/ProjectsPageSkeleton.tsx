@@ -2,7 +2,6 @@ import { cn } from "@ovr/ui/lib/utils";
 
 import { getSkeletonGridItems } from "@/lib/components/skeleton-grid/getSkeletonGridItems";
 
-/** Mirrors the column steps of `ProjectCardsList`. */
 const CARD_TIERS = [
   { columns: 1, className: "" },
   { columns: 2, className: "hidden md:block" },

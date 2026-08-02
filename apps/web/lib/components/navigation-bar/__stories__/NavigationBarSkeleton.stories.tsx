@@ -16,5 +16,4 @@ const meta: Meta<typeof NavigationBarSkeleton> = {
 export default meta;
 type Story = StoryObj<typeof NavigationBarSkeleton>;
 
-/** Shown while the navigation slot resolves the session and breadcrumb. */
 export const Default: Story = {};

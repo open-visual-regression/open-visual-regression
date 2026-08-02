@@ -23,5 +23,4 @@ const meta: Meta<typeof ProjectsPageSkeleton> = {
 export default meta;
 type Story = StoryObj<typeof ProjectsPageSkeleton>;
 
-/** Shown while the projects list and its count load. */
 export const Default: Story = {};

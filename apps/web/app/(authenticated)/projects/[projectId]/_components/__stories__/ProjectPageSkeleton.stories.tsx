@@ -23,5 +23,4 @@ const meta: Meta<typeof ProjectPageSkeleton> = {
 export default meta;
 type Story = StoryObj<typeof ProjectPageSkeleton>;
 
-/** Shown while a project's header, filters and builds table load. */
 export const Default: Story = {};

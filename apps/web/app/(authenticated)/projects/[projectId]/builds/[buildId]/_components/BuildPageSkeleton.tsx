@@ -2,7 +2,6 @@ import { cn } from "@ovr/ui/lib/utils";
 
 import { getSkeletonGridItems } from "@/lib/components/skeleton-grid/getSkeletonGridItems";
 
-/** Mirrors the column steps of `SnapshotGrid`. */
 const SNAPSHOT_TIERS = [
   { columns: 2, className: "" },
   { columns: 3, className: "hidden md:block" },

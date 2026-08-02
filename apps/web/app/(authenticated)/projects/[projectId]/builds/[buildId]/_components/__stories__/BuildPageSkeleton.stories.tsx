@@ -23,5 +23,4 @@ const meta: Meta<typeof BuildPageSkeleton> = {
 export default meta;
 type Story = StoryObj<typeof BuildPageSkeleton>;
 
-/** Shown while a build's header, filters and snapshot grid load. */
 export const Default: Story = {};
