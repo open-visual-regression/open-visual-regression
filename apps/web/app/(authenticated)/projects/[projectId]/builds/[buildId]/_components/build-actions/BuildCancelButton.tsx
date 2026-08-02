@@ -16,10 +16,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@ovr/ui/components/alert-dialog";
-import { Button } from "@ovr/ui/components/button";
 import { FieldError } from "@ovr/ui/components/field";
+import { CircleSlash2Icon } from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
 
+import { ResponsiveActionButton } from "@/lib/components/responsive-action-button/ResponsiveActionButton";
 import { serverClient } from "@/lib/router";
 
 export type BuildCancelButtonProps = {
@@ -52,7 +53,7 @@ export const BuildCancelButton = ({ buildId }: BuildCancelButtonProps) => {
 
   return (
     <AlertDialog open={open} onOpenChange={handleOpenChange}>
-      <AlertDialogTrigger render={<Button variant="outline" color="neutral" />}>
+      <AlertDialogTrigger render={<ResponsiveActionButton icon={CircleSlash2Icon} />}>
         cancel build
       </AlertDialogTrigger>
       <AlertDialogContent>

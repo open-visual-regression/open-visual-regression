@@ -4,9 +4,10 @@ import { onError, onSuccess } from "@orpc/client";
 import { useServerAction } from "@orpc/react/hooks";
 import { useRouter } from "next/navigation";
 
-import { Button } from "@ovr/ui/components/button";
+import { XIcon } from "@ovr/ui/components/icon";
 import { toast } from "@ovr/ui/components/toast";
 
+import { ResponsiveActionButton } from "@/lib/components/responsive-action-button/ResponsiveActionButton";
 import { serverClient } from "@/lib/router";
 
 export type BuildRejectButtonProps = {
@@ -29,9 +30,8 @@ export const BuildRejectButton = ({ buildId, rejected }: BuildRejectButtonProps)
   const pending = status === "pending";
 
   return (
-    <Button
-      variant="outline"
-      color="neutral"
+    <ResponsiveActionButton
+      icon={XIcon}
       disabled={pending || rejected}
       className={
         rejected
@@ -41,6 +41,6 @@ export const BuildRejectButton = ({ buildId, rejected }: BuildRejectButtonProps)
       onClick={() => execute({ buildId, vote: "reject" })}
     >
       {rejected ? "rejected" : pending ? "rejecting..." : "reject all"}
-    </Button>
+    </ResponsiveActionButton>
   );
 };

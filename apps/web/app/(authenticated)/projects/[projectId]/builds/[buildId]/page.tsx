@@ -11,6 +11,7 @@ import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
 import { getStorybookPath, hasHostedStorybook } from "@/lib/utils/storage";
 
+import { BuildActionsRow } from "./_components/build-actions/BuildActionsRow";
 import { BuildHeader } from "./_components/build-header/BuildHeader";
 import { SnapshotFilters } from "./_components/snapshot-grid/SnapshotFilters";
 import { SnapshotGrid } from "./_components/snapshot-grid/SnapshotGrid";
@@ -104,12 +105,13 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
 
   return (
     <div className="flex flex-col gap-6">
-      <BuildHeader
+      <BuildActionsRow
         build={build}
         snapshotCounts={snapshotCounts}
-        storybookHref={storybookHref}
+        projectId={projectId}
         canReview={canReview(session?.user.role)}
       />
+      <BuildHeader build={build} snapshotCounts={snapshotCounts} storybookHref={storybookHref} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <SnapshotFilters
           statuses={statuses}

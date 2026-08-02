@@ -4,9 +4,10 @@ import { onError, onSuccess } from "@orpc/client";
 import { useServerAction } from "@orpc/react/hooks";
 import { useRouter } from "next/navigation";
 
-import { Button } from "@ovr/ui/components/button";
+import { CheckIcon } from "@ovr/ui/components/icon";
 import { toast } from "@ovr/ui/components/toast";
 
+import { ResponsiveActionButton } from "@/lib/components/responsive-action-button/ResponsiveActionButton";
 import { serverClient } from "@/lib/router";
 
 export type BuildApproveButtonProps = {
@@ -29,8 +30,8 @@ export const BuildApproveButton = ({ buildId, approved }: BuildApproveButtonProp
   const pending = status === "pending";
 
   return (
-    <Button
-      variant="outline"
+    <ResponsiveActionButton
+      icon={CheckIcon}
       color="green"
       disabled={pending || approved}
       className={
@@ -41,6 +42,6 @@ export const BuildApproveButton = ({ buildId, approved }: BuildApproveButtonProp
       onClick={() => execute({ buildId, vote: "approve" })}
     >
       {approved ? "approved" : pending ? "approving..." : "approve all"}
-    </Button>
+    </ResponsiveActionButton>
   );
 };
