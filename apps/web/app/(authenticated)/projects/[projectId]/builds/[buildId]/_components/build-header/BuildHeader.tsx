@@ -44,7 +44,7 @@ export const BuildHeader = ({
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-start md:gap-x-4 md:gap-y-2">
-        <Typography variant="h1" as="h1" className="min-w-0 truncate md:order-1 md:flex-1">
+        <Typography variant="h1" as="h1" className="min-w-0 md:order-1 md:flex-1 md:truncate">
           {build.name}
         </Typography>
         <div className="flex flex-row flex-wrap items-center gap-4 text-xs md:order-3 md:basis-full">
