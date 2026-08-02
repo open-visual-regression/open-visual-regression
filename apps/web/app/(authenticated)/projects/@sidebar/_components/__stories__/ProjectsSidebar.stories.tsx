@@ -65,3 +65,19 @@ export const NoRecentBuilds: Story = {
     builds: [],
   },
 };
+
+export const OnBuildPage: Story = {
+  parameters: {
+    nextjs: {
+      appDirectory: true,
+      navigation: {
+        pathname: `/projects/${BUILDS[0]!.project.id}/builds/${BUILDS[0]!.id}`,
+      },
+    },
+  },
+  args: {
+    projects: PROJECTS,
+    total: PROJECTS.length,
+    builds: BUILDS,
+  },
+};

@@ -100,6 +100,23 @@ describe("ProjectsSidebar", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("should not mark the project as active when viewing one of its builds", () => {
+    const activeBuild = mocks.build.generateBuild({
+      project: { id: "project-1", name: "Alpha" },
+      name: "Fix the active build",
+    });
+    vi.mocked(usePathname).mockReturnValue(
+      `/projects/${activeBuild.project.id}/builds/${activeBuild.id}`,
+    );
+
+    render(<ProjectsSidebar projects={PROJECTS} total={PROJECTS.length} builds={[activeBuild]} />);
+
+    expect(screen.getByRole("link", { name: "Alpha" })).toHaveClass("border-l-transparent");
+    expect(
+      screen.getByRole("link", { name: /Fix the active build/, current: "page" }),
+    ).toBeVisible();
+  });
+
   it("should mark the recent build as active when viewing one of its snapshots", () => {
     const build = mocks.build.generateBuild({
       project: { id: "project-1", name: "Alpha" },
