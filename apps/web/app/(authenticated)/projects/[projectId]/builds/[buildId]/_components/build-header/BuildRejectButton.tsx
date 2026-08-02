@@ -35,7 +35,7 @@ export const BuildRejectButton = ({ buildId, rejected }: BuildRejectButtonProps)
       color="neutral"
       disabled={pending || rejected}
       className={cn(
-        "flex-1 lg:flex-none",
+        "flex-1 md:flex-none",
         rejected && "disabled:bg-ovr-red disabled:text-ovr-on-solid disabled:border-transparent",
       )}
       onClick={() => execute({ buildId, vote: "reject" })}

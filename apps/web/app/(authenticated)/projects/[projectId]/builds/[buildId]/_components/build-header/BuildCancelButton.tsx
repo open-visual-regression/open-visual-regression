@@ -53,7 +53,7 @@ export const BuildCancelButton = ({ buildId }: BuildCancelButtonProps) => {
   return (
     <AlertDialog open={open} onOpenChange={handleOpenChange}>
       <AlertDialogTrigger
-        render={<Button variant="outline" color="neutral" className="flex-1 lg:flex-none" />}
+        render={<Button variant="outline" color="neutral" className="flex-1 md:flex-none" />}
       >
         cancel build
       </AlertDialogTrigger>

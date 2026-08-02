@@ -35,7 +35,7 @@ export const BuildApproveButton = ({ buildId, approved }: BuildApproveButtonProp
       color="green"
       disabled={pending || approved}
       className={cn(
-        "flex-1 lg:flex-none",
+        "flex-1 md:flex-none",
         approved &&
           "disabled:bg-ovr-diff-add disabled:text-ovr-on-accent disabled:border-transparent",
       )}
