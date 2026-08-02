@@ -43,52 +43,50 @@ export const BuildHeader = ({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col lg:flex-row items-start gap-4">
-        <div className="flex flex-1 flex-col gap-2">
-          <Typography variant="h1" as="h1">
-            {build.name}
+      <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-start md:gap-x-4 md:gap-y-2">
+        <Typography variant="h1" as="h1" className="min-w-0 md:order-1 md:flex-1 md:truncate">
+          {build.name}
+        </Typography>
+        <div className="flex flex-row flex-wrap items-center gap-4 text-xs md:order-3 md:basis-full">
+          <BuildStatusStream buildId={build.id} initialStatus={build.status} />
+          {storybookHref ? (
+            <ButtonLink
+              href={storybookHref}
+              variant="link"
+              color="neutral"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Icon icon={ExternalLinkIcon} size={10} />
+              view storybook
+            </ButtonLink>
+          ) : null}
+          <Typography variant="caption" className="flex items-center gap-1">
+            <Icon icon={GitBranchIcon} size={10} />
+            {build.branch}
           </Typography>
-          <div className="flex flex-row flex-wrap items-center gap-4 text-xs">
-            <BuildStatusStream buildId={build.id} initialStatus={build.status} />
-            {storybookHref ? (
-              <ButtonLink
-                href={storybookHref}
-                variant="link"
-                color="neutral"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Icon icon={ExternalLinkIcon} size={10} />
-                view storybook
-              </ButtonLink>
-            ) : null}
+          <Typography variant="caption" className="flex items-center gap-1">
+            <Icon icon={GitCommitHorizontalIcon} size={10} />
+            {build.commitSha.slice(0, 7)}
+          </Typography>
+          {build.author ? (
             <Typography variant="caption" className="flex items-center gap-1">
-              <Icon icon={GitBranchIcon} size={10} />
-              {build.branch}
+              <Icon icon={UserIcon} size={10} />
+              {build.author}
             </Typography>
+          ) : null}
+          <Typography variant="caption">
+            {formatRelativeDateTime(new Date(build.createdAt))}
+          </Typography>
+          {isCanceled && build.canceledBy ? (
             <Typography variant="caption" className="flex items-center gap-1">
-              <Icon icon={GitCommitHorizontalIcon} size={10} />
-              {build.commitSha.slice(0, 7)}
+              <Icon icon={CircleSlash2Icon} size={10} />
+              canceled by {build.canceledBy}
             </Typography>
-            {build.author ? (
-              <Typography variant="caption" className="flex items-center gap-1">
-                <Icon icon={UserIcon} size={10} />
-                {build.author}
-              </Typography>
-            ) : null}
-            <Typography variant="caption">
-              {formatRelativeDateTime(new Date(build.createdAt))}
-            </Typography>
-            {isCanceled && build.canceledBy ? (
-              <Typography variant="caption" className="flex items-center gap-1">
-                <Icon icon={CircleSlash2Icon} size={10} />
-                canceled by {build.canceledBy}
-              </Typography>
-            ) : null}
-          </div>
+          ) : null}
         </div>
         {showActions ? (
-          <div className="flex flex-row gap-2">
+          <div className="flex w-full flex-row gap-2 md:order-2 md:w-auto">
             {isCancelable ? (
               <BuildCancelButton buildId={build.id} />
             ) : (
