@@ -49,14 +49,6 @@ export const auth = betterAuth({
     max: 100,
   },
   session: {
-    /**
-     * Serves the session from a signed cookie instead of the database.
-     *
-     * Requests that only need to know who is asking — every snapshot image on a
-     * build page goes through the authenticated storage route, 60 of them —
-     * otherwise pay a session + user lookup each. The window is deliberately
-     * short: a role change or a ban takes up to this long to take effect.
-     */
     cookieCache: {
       enabled: true,
       maxAge: 60,
