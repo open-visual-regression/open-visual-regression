@@ -43,25 +43,11 @@ export const BuildHeader = ({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <Typography variant="h1" as="h1" className="min-w-0 flex-1 truncate">
-            {build.name}
-          </Typography>
-          {showActions ? (
-            <div className="flex w-full flex-row gap-2 md:w-auto">
-              {isCancelable ? (
-                <BuildCancelButton buildId={build.id} />
-              ) : (
-                <>
-                  <BuildRejectButton buildId={build.id} rejected={build.status === "rejected"} />
-                  <BuildApproveButton buildId={build.id} approved={build.status === "approved"} />
-                </>
-              )}
-            </div>
-          ) : null}
-        </div>
-        <div className="flex flex-row flex-wrap items-center gap-4 text-xs">
+      <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-start md:gap-x-4 md:gap-y-2">
+        <Typography variant="h1" as="h1" className="min-w-0 truncate md:order-1 md:flex-1">
+          {build.name}
+        </Typography>
+        <div className="flex flex-row flex-wrap items-center gap-4 text-xs md:order-3 md:basis-full">
           <BuildStatusStream buildId={build.id} initialStatus={build.status} />
           {storybookHref ? (
             <ButtonLink
@@ -99,6 +85,18 @@ export const BuildHeader = ({
             </Typography>
           ) : null}
         </div>
+        {showActions ? (
+          <div className="flex w-full flex-row gap-2 md:order-2 md:w-auto">
+            {isCancelable ? (
+              <BuildCancelButton buildId={build.id} />
+            ) : (
+              <>
+                <BuildRejectButton buildId={build.id} rejected={build.status === "rejected"} />
+                <BuildApproveButton buildId={build.id} approved={build.status === "approved"} />
+              </>
+            )}
+          </div>
+        ) : null}
       </div>
       {build.errorMessage ? (
         <Alert color="red">

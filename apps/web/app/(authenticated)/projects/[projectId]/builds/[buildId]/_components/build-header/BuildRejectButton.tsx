@@ -5,6 +5,7 @@ import { useServerAction } from "@orpc/react/hooks";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@ovr/ui/components/button";
+import { Icon, XIcon } from "@ovr/ui/components/icon";
 import { toast } from "@ovr/ui/components/toast";
 import { cn } from "@ovr/ui/lib/utils";
 
@@ -40,7 +41,10 @@ export const BuildRejectButton = ({ buildId, rejected }: BuildRejectButtonProps)
       )}
       onClick={() => execute({ buildId, vote: "reject" })}
     >
-      {rejected ? "rejected" : pending ? "rejecting..." : "reject all"}
+      <Icon icon={XIcon} className="hidden md:inline lg:hidden" />
+      <span className="md:sr-only lg:not-sr-only">
+        {rejected ? "rejected" : pending ? "rejecting..." : "reject all"}
+      </span>
     </Button>
   );
 };
