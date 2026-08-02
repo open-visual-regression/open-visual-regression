@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "@ovr/ui/components/button";
 import { toast } from "@ovr/ui/components/toast";
+import { cn } from "@ovr/ui/lib/utils";
 
 import { serverClient } from "@/lib/router";
 
@@ -33,11 +34,10 @@ export const BuildRejectButton = ({ buildId, rejected }: BuildRejectButtonProps)
       variant="outline"
       color="neutral"
       disabled={pending || rejected}
-      className={
-        rejected
-          ? "disabled:bg-ovr-red disabled:text-ovr-on-solid disabled:border-transparent"
-          : undefined
-      }
+      className={cn(
+        "flex-1 lg:flex-none",
+        rejected && "disabled:bg-ovr-red disabled:text-ovr-on-solid disabled:border-transparent",
+      )}
       onClick={() => execute({ buildId, vote: "reject" })}
     >
       {rejected ? "rejected" : pending ? "rejecting..." : "reject all"}

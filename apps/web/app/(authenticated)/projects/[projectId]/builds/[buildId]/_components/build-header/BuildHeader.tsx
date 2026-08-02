@@ -88,7 +88,7 @@ export const BuildHeader = ({
           </div>
         </div>
         {showActions ? (
-          <div className="flex flex-row gap-2">
+          <div className="flex w-full flex-row gap-2 lg:w-auto">
             {isCancelable ? (
               <BuildCancelButton buildId={build.id} />
             ) : (
