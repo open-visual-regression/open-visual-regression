@@ -1,6 +1,7 @@
 import { db } from "./db";
 import * as apiKeys from "./repository/apiKeys";
 import * as baselines from "./repository/baselines";
+import * as buildExtractInputs from "./repository/buildExtractInputs";
 import * as builds from "./repository/builds";
 import * as diffReviews from "./repository/diffReviews";
 import * as diffs from "./repository/diffs";
@@ -19,6 +20,7 @@ export const dbClient = {
   projects,
   apiKeys,
   builds,
+  buildExtractInputs,
   snapshots,
   snapshotLogs,
   diffs,

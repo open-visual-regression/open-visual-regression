@@ -239,6 +239,13 @@
       "when": 1785326282706,
       "tag": "0033_remove_gitea_and_base_url",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1785786523312,
+      "tag": "0034_freezing_shadowcat",
+      "breakpoints": true
     }
   ]
 }

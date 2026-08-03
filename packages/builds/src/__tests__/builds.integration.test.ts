@@ -166,6 +166,40 @@ describe("builds", () => {
       });
     });
 
+    test("persists the extract input so it can be replayed later", async ({
+      project,
+      captureConfiguration,
+      user,
+    }) => {
+      const created = await createBuild(
+        { projectId: project.id, branch: "main", commitSha: "a".repeat(40) },
+        user.id,
+      );
+      assert(created.status === "ok");
+      const buildId = created.data;
+
+      await storage.uploadFile(
+        getArtifactPath(project.id, buildId),
+        Buffer.from(""),
+        "application/gzip",
+      );
+
+      const targets = [{ id: "story-a", title: "Story", name: "A" }];
+
+      await confirmBuildUpload(buildId, {
+        targets,
+        viewports: [captureConfiguration],
+        diffThreshold: 0.05,
+      });
+
+      expect(await dbClient.buildExtractInputs.findByBuild(buildId)).toMatchObject({
+        buildId,
+        targets,
+        viewports: [captureConfiguration],
+        diffThreshold: 0.05,
+      });
+    });
+
     test("returns ARTIFACT_MISSING when the artifact was never uploaded", async ({
       project,
       captureConfiguration,

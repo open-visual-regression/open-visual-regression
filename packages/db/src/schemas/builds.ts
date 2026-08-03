@@ -3,6 +3,7 @@ import {
   boolean,
   index,
   integer,
+  jsonb,
   numeric,
   pgEnum,
   pgTable,
@@ -110,8 +111,36 @@ export const builds = pgTable(
   },
   (table) => [
     index("builds_projectId_createdAt_id_idx").on(table.projectId, table.createdAt, table.id),
+    index("builds_projectId_branch_createdAt_id_idx").on(
+      table.projectId,
+      table.branch,
+      table.createdAt,
+      table.id,
+    ),
   ],
 );
+
+export type ExtractInputTarget = { id: string; title: string; name: string };
+
+export type ExtractInputViewport = {
+  name?: string;
+  browser: string;
+  viewportWidth: number;
+  viewportHeight?: number;
+  default?: boolean;
+};
+
+export const buildExtractInputs = pgTable("build_extract_inputs", {
+  buildId: uuid("build_id")
+    .primaryKey()
+    .references(() => builds.id, { onDelete: "cascade" }),
+  targets: jsonb().$type<ExtractInputTarget[]>().notNull(),
+  viewports: jsonb().$type<ExtractInputViewport[]>().notNull(),
+  diffThreshold: numeric("diff_threshold", { mode: "number", precision: 3, scale: 2 }).notNull(),
+  createdAt: utcTimestamp("created_at")
+    .default(sql`now()`)
+    .notNull(),
+});
 
 export const storageOutbox = pgTable(
   "storage_outbox",

@@ -42,6 +42,36 @@ describe("storage", () => {
     });
   });
 
+  test("copyObject copies an object to a new key, leaving the source intact", async ({
+    prefix,
+  }) => {
+    const sourceKey = `${prefix}source.png`;
+    const destinationKey = `${prefix}destination.png`;
+    const body = Buffer.from("fake-png-bytes");
+
+    await storage.uploadFile(sourceKey, body, "image/png");
+    await storage.copyObject(sourceKey, destinationKey);
+
+    const copied = await streamToBuffer(await storage.getFileStream(destinationKey));
+    expect(copied).toEqual(body);
+    expect(await storage.objectExists(sourceKey)).toBe(true);
+  });
+
+  test("a copied object survives the source prefix being deleted", async ({ prefix }) => {
+    const sourcePrefix = `${prefix}source/`;
+    const sourceKey = `${sourcePrefix}artifact.tar.gz`;
+    const destinationKey = `${prefix}destination/artifact.tar.gz`;
+    const body = Buffer.from("tarball-bytes");
+
+    await storage.uploadFile(sourceKey, body, "application/gzip");
+    await storage.copyObject(sourceKey, destinationKey);
+
+    await storage.deletePrefix(sourcePrefix);
+
+    const survived = await streamToBuffer(await storage.getFileStream(destinationKey));
+    expect(survived).toEqual(body);
+  });
+
   test("getPresignedUrl returns a URL that resolves", async ({ key }) => {
     await storage.uploadFile(key, Buffer.from("presigned"), "image/png");
 
