@@ -179,3 +179,15 @@ export const BuildsTable = ({
     </TableContainer>
   );
 };
+
+const noop = () => {};
+
+export const BuildsTableSkeleton = () => (
+  <BuildsTable
+    data={[]}
+    isLoading
+    hasNextPage={false}
+    isFetchingNextPage={false}
+    onLoadMore={noop}
+  />
+);
