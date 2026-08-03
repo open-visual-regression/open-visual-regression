@@ -9,12 +9,13 @@ import { z } from "zod";
 import type { ProjectDto } from "@ovr/api/contracts/projects";
 import { Button } from "@ovr/ui/components/button";
 import { Card, CardContent, CardFooter } from "@ovr/ui/components/card";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@ovr/ui/components/field";
+import { Field, FieldError, FieldGroup, FieldLabel, FieldSkeleton } from "@ovr/ui/components/field";
 import { CheckIcon, Icon } from "@ovr/ui/components/icon";
 import { Input } from "@ovr/ui/components/input";
+import { Skeleton } from "@ovr/ui/components/skeleton";
 import { Textarea } from "@ovr/ui/components/textarea";
 import { toast } from "@ovr/ui/components/toast";
-import { Typography } from "@ovr/ui/components/typography";
+import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 
 import { serverClient } from "@/lib/router";
 
@@ -145,7 +146,9 @@ export const UpdateProjectForm = ({ project }: UpdateProjectFormProps) => {
                     step="1"
                     placeholder="1"
                     aria-invalid={!!errors.requiredReviewerCount}
-                    {...register("requiredReviewerCount", { valueAsNumber: true })}
+                    {...register("requiredReviewerCount", {
+                      valueAsNumber: true,
+                    })}
                   />
                   <FieldError errors={[errors.requiredReviewerCount]} />
                 </Field>
@@ -164,3 +167,33 @@ export const UpdateProjectForm = ({ project }: UpdateProjectFormProps) => {
     </form>
   );
 };
+
+export const UpdateProjectFormSkeleton = () => (
+  <div aria-hidden className="flex flex-col gap-2">
+    <TypographySkeleton variant="label" className="w-16" />
+    <Card size="default">
+      <CardContent className="flex flex-col gap-5">
+        <FieldGroup>
+          <FieldSkeleton />
+        </FieldGroup>
+        <FieldGroup>
+          <FieldSkeleton className="h-16" />
+        </FieldGroup>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <FieldGroup>
+            <FieldSkeleton />
+          </FieldGroup>
+          <FieldGroup>
+            <FieldSkeleton />
+          </FieldGroup>
+          <FieldGroup>
+            <FieldSkeleton />
+          </FieldGroup>
+        </div>
+      </CardContent>
+      <CardFooter className="flex flex-row justify-end">
+        <Skeleton className="h-8 w-32 rounded-lg" />
+      </CardFooter>
+    </Card>
+  </div>
+);
