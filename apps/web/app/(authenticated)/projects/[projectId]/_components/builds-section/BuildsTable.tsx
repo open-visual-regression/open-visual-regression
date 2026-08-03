@@ -179,3 +179,45 @@ export const BuildsTable = ({
     </TableContainer>
   );
 };
+
+const BUILDS_TABLE_SKELETON_COLUMNS = [
+  { header: null, className: "w-1 min-w-1 p-0 relative" },
+  { header: "Status", className: "text-left w-px" },
+  { header: "Commit", className: undefined },
+  { header: "Branch", className: "w-px" },
+  { header: "Author", className: undefined },
+  { header: "Created", className: "text-right" },
+];
+
+type BuildsTableSkeletonProps = {
+  rows?: number;
+};
+
+export const BuildsTableSkeleton = ({
+  rows = INITIAL_SKELETON_ROW_COUNT,
+}: BuildsTableSkeletonProps = {}) => (
+  <TableContainer className="min-h-0 flex-1 overflow-y-auto">
+    <Table>
+      <TableHeader className="sticky top-0 z-10 [&_th]:bg-ovr-inset">
+        <TableRow>
+          {BUILDS_TABLE_SKELETON_COLUMNS.map((column, index) => (
+            <TableHead key={index} className={column.className}>
+              {column.header}
+            </TableHead>
+          ))}
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {Array.from({ length: rows }, (_, rowIndex) => (
+          <TableRow key={rowIndex} aria-hidden>
+            {BUILDS_TABLE_SKELETON_COLUMNS.map((column, columnIndex) => (
+              <TableCell key={columnIndex} className={column.className}>
+                {columnIndex === 0 ? null : <Skeleton className="h-4 w-full" />}
+              </TableCell>
+            ))}
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </TableContainer>
+);
