@@ -114,11 +114,16 @@ export const ApiKeysTable = ({ data }: ApiKeysTableProps) => {
   );
 };
 
-const API_KEYS_TABLE_SKELETON_COLUMNS = [
-  { header: "Name", className: undefined },
-  { header: "Owner", className: undefined },
-  { header: "Created at", className: undefined },
-  { header: "Last used", className: undefined },
+type ApiKeysTableSkeletonColumn = {
+  header: string | null;
+  className?: string;
+};
+
+const API_KEYS_TABLE_SKELETON_COLUMNS: ApiKeysTableSkeletonColumn[] = [
+  { header: "Name" },
+  { header: "Owner" },
+  { header: "Created at" },
+  { header: "Last used" },
   { header: null, className: "text-right" },
 ];
 
