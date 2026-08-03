@@ -200,6 +200,40 @@ describe("builds", () => {
       });
     });
 
+    test("stays successful when the client retries the same confirmation", async ({
+      project,
+      captureConfiguration,
+      user,
+    }) => {
+      const created = await createBuild(
+        { projectId: project.id, branch: "main", commitSha: "a".repeat(40) },
+        user.id,
+      );
+      assert(created.status === "ok");
+      const buildId = created.data;
+
+      await storage.uploadFile(
+        getArtifactPath(project.id, buildId),
+        Buffer.from(""),
+        "application/gzip",
+      );
+
+      const input = {
+        targets: [{ id: "story-a", title: "Story", name: "A" }],
+        viewports: [captureConfiguration],
+        diffThreshold: 0.05,
+      };
+
+      await confirmBuildUpload(buildId, input);
+      const retried = await confirmBuildUpload(buildId, input);
+
+      expect(retried).toEqual({ status: "ok", data: undefined });
+      expect(await dbClient.builds.findById(buildId)).toMatchObject({
+        processingStatus: "queued",
+        errorMessage: null,
+      });
+    });
+
     test("returns ARTIFACT_MISSING when the artifact was never uploaded", async ({
       project,
       captureConfiguration,

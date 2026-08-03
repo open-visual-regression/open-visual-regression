@@ -10,7 +10,7 @@ const VIEWPORTS = [{ name: "desktop", browser: "chromium", viewportWidth: 1280 }
 
 describe("buildExtractInputs", () => {
   describe("create", () => {
-    test("stores the extract input for a build", async ({ build }) => {
+    test("should store the extract input for a build", async ({ build }) => {
       await dbClient.buildExtractInputs.create({
         buildId: build.id,
         targets: TARGETS,
@@ -18,28 +18,45 @@ describe("buildExtractInputs", () => {
         diffThreshold: 0.05,
       });
 
-      const found = await dbClient.buildExtractInputs.findByBuild(build.id);
-      expect(found).toMatchObject({
+      expect(await dbClient.buildExtractInputs.findByBuild(build.id)).toMatchObject({
         buildId: build.id,
         targets: TARGETS,
         viewports: VIEWPORTS,
+        diffThreshold: 0.05,
+      });
+    });
+
+    test("should keep the first extract input when the upload is confirmed again", async ({
+      build,
+    }) => {
+      await dbClient.buildExtractInputs.create({
+        buildId: build.id,
+        targets: TARGETS,
+        viewports: VIEWPORTS,
+        diffThreshold: 0.05,
+      });
+
+      const retried = await dbClient.buildExtractInputs.create({
+        buildId: build.id,
+        targets: [{ id: "story-c", title: "Story", name: "C" }],
+        viewports: VIEWPORTS,
+        diffThreshold: 0.5,
+      });
+
+      expect(retried).toBeUndefined();
+      expect(await dbClient.buildExtractInputs.findByBuild(build.id)).toMatchObject({
+        targets: TARGETS,
         diffThreshold: 0.05,
       });
     });
   });
 
   describe("findByBuild", () => {
-    test("returns undefined when no extract input has been stored", async ({ build }) => {
+    test("should return undefined when no extract input has been stored", async ({ build }) => {
       expect(await dbClient.buildExtractInputs.findByBuild(build.id)).toBeUndefined();
     });
-  });
 
-  describe("copyToBuild", () => {
-    test("copies the source build's extract input to the destination build", async ({
-      project,
-      user,
-      build,
-    }) => {
+    test("should return undefined once the build has been purged", async ({ build }) => {
       await dbClient.buildExtractInputs.create({
         buildId: build.id,
         targets: TARGETS,
@@ -47,44 +64,9 @@ describe("buildExtractInputs", () => {
         diffThreshold: 0.05,
       });
 
-      const destination = await dbClient.builds.create({
-        projectId: project.id,
-        branch: "main",
-        commitSha: "b".repeat(40),
-        artifactPath: "builds/seed-2/artifact",
-        createdBy: user.id,
-      });
+      await dbClient.transaction((tx) => dbClient.builds.removeMany(tx, [build.id]));
 
-      await dbClient.buildExtractInputs.copyToBuild(build.id, destination!.id);
-
-      expect(await dbClient.buildExtractInputs.findByBuild(destination!.id)).toMatchObject({
-        buildId: destination!.id,
-        targets: TARGETS,
-        viewports: VIEWPORTS,
-        diffThreshold: 0.05,
-      });
-      expect(await dbClient.buildExtractInputs.findByBuild(build.id)).toMatchObject({
-        buildId: build.id,
-      });
-    });
-
-    test("returns undefined when the source build has no stored extract input", async ({
-      project,
-      user,
-      build,
-    }) => {
-      const destination = await dbClient.builds.create({
-        projectId: project.id,
-        branch: "main",
-        commitSha: "b".repeat(40),
-        artifactPath: "builds/seed-2/artifact",
-        createdBy: user.id,
-      });
-
-      const result = await dbClient.buildExtractInputs.copyToBuild(build.id, destination!.id);
-
-      expect(result).toBeUndefined();
-      expect(await dbClient.buildExtractInputs.findByBuild(destination!.id)).toBeUndefined();
+      expect(await dbClient.buildExtractInputs.findByBuild(build.id)).toBeUndefined();
     });
   });
 });
