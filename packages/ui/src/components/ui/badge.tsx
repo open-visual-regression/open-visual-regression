@@ -1,6 +1,7 @@
 import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "../../lib/utils";
+import { Skeleton } from "./skeleton";
 
 const badgeVariants = cva(
   "inline-flex items-center gap-1 rounded-lg border px-1.5 py-0.5 text-badge font-semibold tracking-label uppercase whitespace-nowrap",
@@ -63,5 +64,19 @@ const Badge = ({ variant, color, children, className }: BadgeProps) => {
   return <span className={cn(badgeVariants({ variant, color }), className)}>{children}</span>;
 };
 
-export { Badge, badgeVariants };
-export type { BadgeProps };
+type BadgeSkeletonProps = {
+  className?: string;
+} & VariantProps<typeof badgeVariants>;
+
+const BadgeSkeleton = ({ variant, color, className }: BadgeSkeletonProps) => (
+  <span
+    aria-hidden
+    className={cn(badgeVariants({ variant, color }), "relative border-transparent", className)}
+  >
+    &#8203;
+    <Skeleton className="absolute inset-0 rounded-lg" />
+  </span>
+);
+
+export { Badge, BadgeSkeleton, badgeVariants };
+export type { BadgeProps, BadgeSkeletonProps };

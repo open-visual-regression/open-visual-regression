@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import type { VariantProps } from "class-variance-authority";
 
-import { Badge, badgeVariants } from "../badge";
+import { Badge, BadgeSkeleton, badgeVariants } from "../badge";
 
 const meta: Meta<typeof Badge> = {
   title: "UI/Badge",
@@ -43,6 +43,25 @@ export const KitchenSink: Story = {
             <Badge key={color} variant={variant} color={color}>
               {color}
             </Badge>
+          ))}
+        </Section>
+      ))}
+    </div>
+  ),
+};
+
+export const Skeletons: Story = {
+  render: () => (
+    <div className="space-y-6 p-4">
+      {VARIANTS.map((variant) => (
+        <Section key={variant} label={`variant="${variant}"`}>
+          {COLORS.map((color) => (
+            <div key={color} className="flex flex-col items-start gap-1">
+              <Badge variant={variant} color={color}>
+                {color}
+              </Badge>
+              <BadgeSkeleton variant={variant} color={color} className="w-16" />
+            </div>
           ))}
         </Section>
       ))}

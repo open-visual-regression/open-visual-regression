@@ -2,6 +2,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import * as React from "react";
 
 import { cn } from "../../lib/utils";
+import { Skeleton } from "./skeleton";
 
 const typographyVariants = cva("font-mono", {
   variants: {
@@ -39,4 +40,19 @@ const Typography = ({ as: Component = "span", variant, className, ...props }: Ty
   );
 };
 
-export { Typography, typographyVariants };
+type TypographySkeletonProps = {
+  className?: string;
+} & VariantProps<typeof typographyVariants>;
+
+const TypographySkeleton = ({ variant, className }: TypographySkeletonProps) => (
+  <span
+    aria-hidden
+    className={cn("relative inline-block", typographyVariants({ variant }), className)}
+  >
+    &#8203;
+    <Skeleton className="absolute inset-y-0 left-0 my-auto h-[1em] w-full" />
+  </span>
+);
+
+export { Typography, TypographySkeleton, typographyVariants };
+export type { TypographySkeletonProps };

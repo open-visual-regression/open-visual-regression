@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-import { Typography } from "../typography";
+import { Typography, TypographySkeleton } from "../typography";
 
 const meta: Meta<typeof Typography> = {
   title: "UI/Typography",
@@ -82,6 +82,33 @@ export const KitchenSink: Story = {
           1,024 · 98.6% · 14Δ
         </Typography>
       </Section>
+    </div>
+  ),
+};
+
+const VARIANTS = [
+  "display",
+  "h1",
+  "h2",
+  "h3",
+  "body",
+  "body-sm",
+  "caption",
+  "label",
+  "code",
+] as const;
+
+export const Skeletons: Story = {
+  render: () => (
+    <div className="space-y-8 p-6">
+      {VARIANTS.map((variant) => (
+        <Section key={variant} label={`variant="${variant}"`}>
+          <div className="flex flex-col gap-1">
+            <Typography variant={variant}>open visual regression</Typography>
+            <TypographySkeleton variant={variant} className="w-56" />
+          </div>
+        </Section>
+      ))}
     </div>
   ),
 };

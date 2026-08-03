@@ -1,5 +1,6 @@
 import { type BuildDetailSchema, type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
 import { Alert, AlertDescription, AlertTitle } from "@ovr/ui/components/alert";
+import { BadgeSkeleton } from "@ovr/ui/components/badge";
 import {
   Icon,
   CircleSlash2Icon,
@@ -13,7 +14,7 @@ import {
   SegmentedProgressSkeleton,
 } from "@ovr/ui/components/segmented-progress";
 import { Skeleton } from "@ovr/ui/components/skeleton";
-import { Typography } from "@ovr/ui/components/typography";
+import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 
 import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
 import { formatRelativeDateTime } from "@/lib/utils/date";
@@ -131,17 +132,17 @@ export const BuildHeader = ({
 export const BuildHeaderSkeleton = () => (
   <div className="flex flex-col gap-6">
     <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-start md:gap-x-4 md:gap-y-2">
-      <Skeleton className="h-8 w-72 min-w-0 md:order-1 md:flex-1" />
+      <TypographySkeleton variant="h1" className="w-72 min-w-0 md:order-1 md:flex-1" />
       <div className="flex w-full flex-row gap-2 md:order-2 md:w-auto">
         <Skeleton className="h-8 flex-1 rounded-md md:w-20 md:flex-none" />
         <Skeleton className="h-8 flex-1 rounded-md md:w-24 md:flex-none" />
       </div>
-      <div className="flex flex-row flex-wrap items-center gap-4 md:order-3 md:basis-full">
-        <Skeleton className="h-5 w-20" />
-        <Skeleton className="h-3 w-24" />
-        <Skeleton className="h-3 w-16" />
-        <Skeleton className="h-3 w-20" />
-        <Skeleton className="h-3 w-24" />
+      <div className="flex flex-row flex-wrap items-center gap-4 text-xs md:order-3 md:basis-full">
+        <BadgeSkeleton className="w-20" />
+        <TypographySkeleton variant="caption" className="w-24" />
+        <TypographySkeleton variant="caption" className="w-16" />
+        <TypographySkeleton variant="caption" className="w-20" />
+        <TypographySkeleton variant="caption" className="w-24" />
       </div>
     </div>
     <SegmentedProgressSkeleton />

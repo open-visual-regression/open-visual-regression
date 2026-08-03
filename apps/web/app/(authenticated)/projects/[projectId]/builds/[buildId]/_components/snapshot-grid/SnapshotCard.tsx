@@ -1,11 +1,11 @@
 import { type BuildSnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { GlobeIcon, Icon } from "@ovr/ui/components/icon";
 import { ResolutionIcon } from "@ovr/ui/components/resolution-icon";
-import { Skeleton } from "@ovr/ui/components/skeleton";
-import { Typography } from "@ovr/ui/components/typography";
+import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 import { cn } from "@ovr/ui/lib/utils";
 
 import { CardLink } from "@/lib/components/card-link/CardLink";
+import { CardSurface } from "@/lib/components/card-link/CardSurface";
 import { Image } from "@/lib/components/image/Image";
 import { SnapshotStatusBadge } from "@/lib/components/SnapshotStatusBadge";
 import { getStoragePath } from "@/lib/utils/storage";
@@ -84,17 +84,12 @@ export const SnapshotCard = ({ snapshot, projectId, buildId }: SnapshotCardProps
 };
 
 export const SnapshotCardSkeleton = ({ className }: { className?: string }) => (
-  <div
-    className={cn(
-      "flex flex-col overflow-hidden rounded-card border border-ovr-border bg-ovr-elevated",
-      className,
-    )}
-  >
+  <CardSurface aria-hidden className={cn("gap-0 py-0", className)}>
     <SnapshotCardPreview />
     <SnapshotCardBody>
-      <Skeleton className="h-4.5 w-2/3" />
-      <Skeleton className="h-4.5 w-1/2" />
-      <Skeleton className="h-4.5 w-3/4" />
+      <TypographySkeleton variant="code" className="w-2/3" />
+      <TypographySkeleton variant="caption" className="w-1/2" />
+      <TypographySkeleton variant="caption" className="w-3/4" />
     </SnapshotCardBody>
-  </div>
+  </CardSurface>
 );
