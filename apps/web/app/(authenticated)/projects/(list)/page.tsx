@@ -1,10 +1,9 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { headers } from "next/headers";
 
 import { Icon, PlusIcon } from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
 
-import { auth } from "@/lib/auth/auth";
+import { getCachedSession } from "@/lib/auth/session";
 import { RequiresAdminRole } from "@/lib/components/authorization/RequiresAdminRole";
 import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
 import { projectsListInfiniteOptions } from "@/lib/orpc/projects-query";
@@ -21,7 +20,7 @@ export default async function ProjectsPage() {
 
   const [[countError, countResult], sessionResult] = await Promise.all([
     serverClient.projects.count(),
-    auth.api.getSession({ headers: await headers() }),
+    getCachedSession(),
     queryClient.prefetchInfiniteQuery(
       orpcServer.projects.list.infiniteOptions(projectsListInfiniteOptions()),
     ),

@@ -1,8 +1,6 @@
-import { headers } from "next/headers";
-
 import { Separator } from "@ovr/ui/components/separator";
 
-import { auth } from "@/lib/auth/auth";
+import { getCachedSession } from "@/lib/auth/session";
 import { getBreadcrumbSegments } from "@/lib/components/navigation-bar/getBreadcrumbSegments";
 import { NavigationBar } from "@/lib/components/navigation-bar/NavigationBar";
 import { NavigationBarActions } from "@/lib/components/navigation-bar/NavigationBarActions";
@@ -20,7 +18,7 @@ export default async function NavigationSlot({ params }: NavigationSlotProps) {
   const { pathname } = await params;
 
   const [session, segments] = await Promise.all([
-    auth.api.getSession({ headers: await headers() }).catch(() => null),
+    getCachedSession().catch(() => null),
     getBreadcrumbSegments(pathname ?? []),
   ]);
 

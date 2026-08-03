@@ -11,7 +11,8 @@ const meta: Meta<typeof SnapshotHeader> = {
   component: SnapshotHeader,
   tags: ["autodocs"],
   args: {
-    storybookHref: "/api/storybook/mock-build/index.html?path=/story/ui-button--kitchen-sink",
+    storybookHref:
+      "/api/storybook/mock-build/index.html?path=/story/web-skeletons-projectheaderskeleton--default",
   },
   parameters: {
     ovr: {
@@ -29,9 +30,9 @@ const snapshot: SnapshotSchema = {
   viewportWidth: 1280,
   viewportHeight: 800,
   viewportName: "desktop",
-  targetId: "ui-button--kitchen-sink",
-  targetName: "Kitchen Sink",
-  targetTitle: "UI/Button",
+  targetId: "web-skeletons-projectheaderskeleton--default",
+  targetName: "Default",
+  targetTitle: "Web/Skeletons/ProjectHeaderSkeleton",
   imagePath: "new.png",
   status: "unchanged",
   errorLogs: [],

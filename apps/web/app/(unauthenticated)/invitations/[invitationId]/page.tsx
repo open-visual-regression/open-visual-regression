@@ -1,7 +1,6 @@
-import { headers } from "next/headers";
 import { redirect, notFound } from "next/navigation";
 
-import { auth } from "@/lib/auth/auth";
+import { getCachedSession } from "@/lib/auth/session";
 import { serverClient } from "@/lib/router";
 
 import { CenteredFormSection } from "../../_components/CenteredFormSection";
@@ -16,7 +15,7 @@ export default async function InvitationPage(props: InvitationPageProps) {
 
   const [[error, invitation], session] = await Promise.all([
     serverClient.invitations.getInvitation({ invitationId }),
-    auth.api.getSession({ headers: await headers() }),
+    getCachedSession(),
   ]);
 
   if (session) {

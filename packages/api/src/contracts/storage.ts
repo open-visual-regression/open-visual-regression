@@ -7,7 +7,10 @@ export const getObjectInputSchema = z.object({
 
 export const getObjectOutputSchema = z.object({
   status: z.literal(302),
-  headers: z.object({ location: z.string() }),
+  headers: z.object({
+    location: z.string(),
+    "cache-control": z.string(),
+  }),
 });
 
 export const getObjectContract = oc

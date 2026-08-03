@@ -1,7 +1,6 @@
-import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 
-import { auth } from "@/lib/auth/auth";
+import { getCachedSession } from "@/lib/auth/session";
 import { serverClient } from "@/lib/router";
 import { verifyRole } from "@/lib/utils/authorization";
 import { serverError } from "@/lib/utils/errors";
@@ -27,7 +26,7 @@ export default async function SettingsUsersPage({ searchParams }: SettingsUsersP
 
   const [[error, listResult], session] = await Promise.all([
     serverClient.users.list({ search }),
-    auth.api.getSession({ headers: await headers() }),
+    getCachedSession(),
   ]);
 
   if (error || !session) {

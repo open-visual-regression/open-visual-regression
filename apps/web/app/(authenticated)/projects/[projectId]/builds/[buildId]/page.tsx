@@ -1,11 +1,10 @@
-import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 
 import { snapshotDisplayStatusSchema } from "@ovr/api/contracts/builds";
 
-import { auth } from "@/lib/auth/auth";
 import { canReview } from "@/lib/auth/roles";
+import { getCachedSession } from "@/lib/auth/session";
 import { getSnapshotStatusLabel } from "@/lib/components/SnapshotStatusBadge";
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
@@ -45,6 +44,7 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
   } = searchParamsSchema.parse(await searchParams);
 
   const [
+    session,
     [error, buildResult],
     [countsError, snapshotCounts],
     [statusesError, statusesResult],
@@ -52,6 +52,7 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
     [viewportsError, viewportsResult],
     [snapshotsError, snapshotsResult],
   ] = await Promise.all([
+    getCachedSession(),
     serverClient.builds.getOne({ buildId }),
     serverClient.snapshots.getCounts({ buildId }),
     serverClient.snapshots.listStatuses({ buildId }),
@@ -97,8 +98,6 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
     value: viewport,
     label: viewport,
   }));
-
-  const session = await auth.api.getSession({ headers: await headers() });
 
   const { build } = buildResult;
   const storybookHref = hasHostedStorybook(build) ? getStorybookPath(build.id) : null;
