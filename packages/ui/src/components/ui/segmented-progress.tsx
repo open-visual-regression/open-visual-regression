@@ -103,8 +103,8 @@ const SegmentedProgressSkeleton = ({
   className,
 }: SegmentedProgressSkeletonProps) => (
   <div className={cn("flex flex-col gap-1.5", className)}>
-    <div className="flex items-baseline gap-2">
-      <Skeleton className="h-4 w-28" />
+    <div className="flex h-4 items-center gap-2">
+      <Skeleton className="h-3 w-28" />
     </div>
     <Skeleton
       className={cn("rounded-xs", {
@@ -115,9 +115,9 @@ const SegmentedProgressSkeleton = ({
     />
     <ul className="flex flex-wrap gap-x-3.5 gap-y-1">
       {Array.from({ length: legendItems }, (_, i) => (
-        <li key={i} className="flex items-center gap-1">
+        <li key={i} className="flex h-4 items-center gap-1">
           <Skeleton className="size-2 shrink-0 rounded-none" />
-          <Skeleton className="h-4 w-14" />
+          <Skeleton className="h-2.5 w-14" />
         </li>
       ))}
     </ul>
