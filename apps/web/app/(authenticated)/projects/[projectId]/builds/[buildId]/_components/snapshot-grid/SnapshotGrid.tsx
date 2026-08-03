@@ -1,18 +1,21 @@
 import { type BuildSnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { Typography } from "@ovr/ui/components/typography";
-
-import { getSkeletonGridItems } from "@/lib/components/skeleton-grid/getSkeletonGridItems";
+import { cn } from "@ovr/ui/lib/utils";
 
 import { SnapshotCard, SnapshotCardSkeleton } from "./SnapshotCard";
 
-const GRID_CLASS_NAME = "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3";
+type SnapshotGridLayoutProps = {
+  className?: string;
+  children: React.ReactNode;
+};
 
-const COLUMN_TIERS = [
-  { columns: 2, className: "" },
-  { columns: 3, className: "hidden md:block" },
-  { columns: 4, className: "hidden lg:block" },
-  { columns: 5, className: "hidden xl:block" },
-];
+const SnapshotGridLayout = ({ className, children }: SnapshotGridLayoutProps) => (
+  <div
+    className={cn("grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5", className)}
+  >
+    {children}
+  </div>
+);
 
 type SnapshotGridProps = {
   snapshots: BuildSnapshotSchema[];
@@ -31,7 +34,7 @@ export const SnapshotGrid = ({ snapshots, projectId, buildId, search }: Snapshot
   }
 
   return (
-    <div className={GRID_CLASS_NAME}>
+    <SnapshotGridLayout>
       {snapshots.map((snapshot) => (
         <SnapshotCard
           key={snapshot.id}
@@ -40,14 +43,20 @@ export const SnapshotGrid = ({ snapshots, projectId, buildId, search }: Snapshot
           buildId={buildId}
         />
       ))}
-    </div>
+    </SnapshotGridLayout>
   );
 };
 
+const skeletonCards = (count: number, className?: string) =>
+  Array.from({ length: count }, (_, index) => (
+    <SnapshotCardSkeleton key={`${className ?? "base"}-${index}`} className={className} />
+  ));
+
 export const SnapshotGridSkeleton = () => (
-  <div className={GRID_CLASS_NAME}>
-    {getSkeletonGridItems(COLUMN_TIERS).map(({ key, className }) => (
-      <SnapshotCardSkeleton key={key} className={className} />
-    ))}
-  </div>
+  <SnapshotGridLayout>
+    {skeletonCards(6)}
+    {skeletonCards(3, "hidden md:block")}
+    {skeletonCards(3, "hidden lg:block")}
+    {skeletonCards(3, "hidden xl:block")}
+  </SnapshotGridLayout>
 );

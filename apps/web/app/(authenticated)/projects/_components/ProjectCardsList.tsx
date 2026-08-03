@@ -4,21 +4,23 @@ import { useEffect } from "react";
 import { useInView } from "react-intersection-observer";
 
 import { ProjectDto } from "@ovr/api/contracts/projects";
-
-import { getSkeletonGridItems } from "@/lib/components/skeleton-grid/getSkeletonGridItems";
+import { cn } from "@ovr/ui/lib/utils";
 
 import { ProjectCardListItem } from "./ProjectCardListItem";
 import { ProjectCardSkeleton } from "./ProjectCardSkeleton";
 
 const SKELETON_CARD_COUNT = 12;
 
-const GRID_CLASS_NAME = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
+type ProjectCardsLayoutProps = {
+  className?: string;
+  children: React.ReactNode;
+};
 
-const COLUMN_TIERS = [
-  { columns: 1, className: "" },
-  { columns: 2, className: "hidden md:block" },
-  { columns: 3, className: "hidden lg:block" },
-];
+const ProjectCardsLayout = ({ className, children }: ProjectCardsLayoutProps) => (
+  <ul className={cn("grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3", className)}>
+    {children}
+  </ul>
+);
 
 type ProjectCardsListProps = {
   projects: ProjectDto[];
@@ -47,7 +49,7 @@ export const ProjectCardsList = ({
   }, [inView, hasNextPage, isFetchingNextPage, onLoadMore]);
 
   return (
-    <ul className={GRID_CLASS_NAME}>
+    <ProjectCardsLayout>
       {isLoading
         ? Array.from({ length: SKELETON_CARD_COUNT }, (_, index) => (
             <ProjectCardSkeleton key={index} />
@@ -58,14 +60,19 @@ export const ProjectCardsList = ({
             <ProjectCardSkeleton key={index} ref={index === 0 ? sentinelRef : undefined} />
           ))
         : null}
-    </ul>
+    </ProjectCardsLayout>
   );
 };
 
+const skeletonCards = (count: number, className?: string) =>
+  Array.from({ length: count }, (_, index) => (
+    <ProjectCardSkeleton key={`${className ?? "base"}-${index}`} className={className} />
+  ));
+
 export const ProjectCardsListSkeleton = () => (
-  <ul className={GRID_CLASS_NAME}>
-    {getSkeletonGridItems(COLUMN_TIERS).map(({ key, className }) => (
-      <ProjectCardSkeleton key={key} className={className} />
-    ))}
-  </ul>
+  <ProjectCardsLayout>
+    {skeletonCards(3)}
+    {skeletonCards(3, "hidden md:block")}
+    {skeletonCards(3, "hidden lg:block")}
+  </ProjectCardsLayout>
 );
