@@ -23,7 +23,7 @@ export const SnapshotHeader = ({
 }: SnapshotHeaderProps) => (
   <div className="flex flex-col gap-6">
     <div className="flex flex-col gap-2">
-      <Typography variant="h1" as="h1">
+      <Typography variant="h1" as="h1" className="break-words">
         {snapshot.targetTitle} {snapshot.targetName}
       </Typography>
       <div className="flex flex-row flex-wrap items-center gap-4 text-xs">
