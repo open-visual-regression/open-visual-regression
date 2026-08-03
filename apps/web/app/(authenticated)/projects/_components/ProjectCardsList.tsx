@@ -5,10 +5,20 @@ import { useInView } from "react-intersection-observer";
 
 import { ProjectDto } from "@ovr/api/contracts/projects";
 
+import { getSkeletonGridItems } from "@/lib/components/skeleton-grid/getSkeletonGridItems";
+
 import { ProjectCardListItem } from "./ProjectCardListItem";
 import { ProjectCardSkeleton } from "./ProjectCardSkeleton";
 
 const SKELETON_CARD_COUNT = 12;
+
+const GRID_CLASS_NAME = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
+
+const COLUMN_TIERS = [
+  { columns: 1, className: "" },
+  { columns: 2, className: "hidden md:block" },
+  { columns: 3, className: "hidden lg:block" },
+];
 
 type ProjectCardsListProps = {
   projects: ProjectDto[];
@@ -37,7 +47,7 @@ export const ProjectCardsList = ({
   }, [inView, hasNextPage, isFetchingNextPage, onLoadMore]);
 
   return (
-    <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <ul className={GRID_CLASS_NAME}>
       {isLoading
         ? Array.from({ length: SKELETON_CARD_COUNT }, (_, index) => (
             <ProjectCardSkeleton key={index} />
@@ -51,3 +61,11 @@ export const ProjectCardsList = ({
     </ul>
   );
 };
+
+export const ProjectCardsListSkeleton = () => (
+  <ul className={GRID_CLASS_NAME}>
+    {getSkeletonGridItems(COLUMN_TIERS).map(({ key, className }) => (
+      <ProjectCardSkeleton key={key} className={className} />
+    ))}
+  </ul>
+);

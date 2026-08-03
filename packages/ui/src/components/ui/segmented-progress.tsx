@@ -1,4 +1,5 @@
 import { cn } from "../../lib/utils";
+import { Skeleton } from "./skeleton";
 
 export type SegmentedProgressSize = "sm" | "md" | "lg";
 
@@ -90,5 +91,38 @@ const SegmentedProgress = ({
   );
 };
 
-export { SegmentedProgress };
-export type { Segment, SegmentedProgressProps };
+type SegmentedProgressSkeletonProps = {
+  legendItems?: number;
+  size?: SegmentedProgressProps["size"];
+  className?: string;
+};
+
+const SegmentedProgressSkeleton = ({
+  legendItems = 4,
+  size = "md",
+  className,
+}: SegmentedProgressSkeletonProps) => (
+  <div className={cn("flex flex-col gap-1.5", className)}>
+    <div className="flex items-baseline gap-2">
+      <Skeleton className="h-4 w-28" />
+    </div>
+    <Skeleton
+      className={cn("rounded-xs", {
+        "h-2": size === "sm",
+        "h-4": size === "md",
+        "h-6": size === "lg",
+      })}
+    />
+    <ul className="flex flex-wrap gap-x-3.5 gap-y-1">
+      {Array.from({ length: legendItems }, (_, i) => (
+        <li key={i} className="flex items-center gap-1">
+          <Skeleton className="size-2 shrink-0 rounded-none" />
+          <Skeleton className="h-4 w-14" />
+        </li>
+      ))}
+    </ul>
+  </div>
+);
+
+export { SegmentedProgress, SegmentedProgressSkeleton };
+export type { Segment, SegmentedProgressProps, SegmentedProgressSkeletonProps };

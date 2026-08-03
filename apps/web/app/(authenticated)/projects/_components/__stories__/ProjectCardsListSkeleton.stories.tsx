@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
-import { ProjectsPageSkeleton } from "../ProjectsPageSkeleton";
+import { ProjectCardsListSkeleton } from "../ProjectCardsList";
 
-const meta: Meta<typeof ProjectsPageSkeleton> = {
-  title: "Web/Skeletons/ProjectsPageSkeleton",
-  component: ProjectsPageSkeleton,
+const meta: Meta<typeof ProjectCardsListSkeleton> = {
+  title: "Web/Skeletons/ProjectCardsListSkeleton",
+  component: ProjectCardsListSkeleton,
   tags: ["autodocs"],
   parameters: {
     ovr: {
@@ -21,6 +21,6 @@ const meta: Meta<typeof ProjectsPageSkeleton> = {
 };
 
 export default meta;
-type Story = StoryObj<typeof ProjectsPageSkeleton>;
+type Story = StoryObj<typeof ProjectCardsListSkeleton>;
 
 export const Default: Story = {};

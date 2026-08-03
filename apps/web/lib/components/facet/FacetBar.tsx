@@ -4,6 +4,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { Popover, PopoverContent } from "@ovr/ui/components/popover";
+import { Skeleton } from "@ovr/ui/components/skeleton";
 
 import { FacetMenuButton, type FacetMenuItem } from "./FacetMenuButton";
 import { FacetOptionsList, type FacetOption } from "./FacetOptionsList";
@@ -148,3 +149,21 @@ export const FacetBar = ({ facets, className }: FacetBarProps) => {
     </div>
   );
 };
+
+type FacetBarSkeletonProps = {
+  facets?: number;
+  className?: string;
+};
+
+export const FacetBarSkeleton = ({ facets = 3, className }: FacetBarSkeletonProps) => (
+  <div className={className}>
+    <div className="hidden items-center gap-2 lg:flex">
+      {Array.from({ length: facets }, (_, i) => (
+        <Skeleton key={i} className="h-8 w-28 rounded-md" />
+      ))}
+    </div>
+    <div className="lg:hidden">
+      <Skeleton className="size-8 rounded-md" />
+    </div>
+  </div>
+);

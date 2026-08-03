@@ -3,6 +3,7 @@ import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { Alert, AlertDescription, AlertTitle } from "@ovr/ui/components/alert";
 import { ExternalLinkIcon, GlobeIcon, Icon } from "@ovr/ui/components/icon";
 import { ResolutionIcon } from "@ovr/ui/components/resolution-icon";
+import { Skeleton } from "@ovr/ui/components/skeleton";
 import { Typography } from "@ovr/ui/components/typography";
 
 import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
@@ -55,5 +56,19 @@ export const SnapshotHeader = ({
         <AlertDescription>This snapshot failed to capture.</AlertDescription>
       </Alert>
     ) : null}
+  </div>
+);
+
+export const SnapshotHeaderSkeleton = () => (
+  <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-2">
+      <Skeleton className="h-7 w-80 max-w-full" />
+      <div className="flex flex-row flex-wrap items-center gap-4">
+        <Skeleton className="h-5 w-24" />
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="h-3 w-20" />
+        <Skeleton className="h-3 w-32" />
+      </div>
+    </div>
   </div>
 );

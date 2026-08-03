@@ -8,7 +8,11 @@ import {
   GitCommitHorizontalIcon,
   UserIcon,
 } from "@ovr/ui/components/icon";
-import { SegmentedProgress } from "@ovr/ui/components/segmented-progress";
+import {
+  SegmentedProgress,
+  SegmentedProgressSkeleton,
+} from "@ovr/ui/components/segmented-progress";
+import { Skeleton } from "@ovr/ui/components/skeleton";
 import { Typography } from "@ovr/ui/components/typography";
 
 import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
@@ -123,3 +127,23 @@ export const BuildHeader = ({
     </div>
   );
 };
+
+export const BuildHeaderSkeleton = () => (
+  <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-start md:gap-x-4 md:gap-y-2">
+      <Skeleton className="h-7 w-72 min-w-0 md:order-1 md:flex-1" />
+      <div className="flex w-full flex-row gap-2 md:order-2 md:w-auto">
+        <Skeleton className="h-8 flex-1 rounded-md md:w-20 md:flex-none" />
+        <Skeleton className="h-8 flex-1 rounded-md md:w-24 md:flex-none" />
+      </div>
+      <div className="flex flex-row flex-wrap items-center gap-4 md:order-3 md:basis-full">
+        <Skeleton className="h-5 w-20" />
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="h-3 w-16" />
+        <Skeleton className="h-3 w-20" />
+        <Skeleton className="h-3 w-24" />
+      </div>
+    </div>
+    <SegmentedProgressSkeleton />
+  </div>
+);

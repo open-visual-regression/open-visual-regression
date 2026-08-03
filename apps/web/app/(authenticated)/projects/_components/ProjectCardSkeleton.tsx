@@ -3,10 +3,11 @@ import { Skeleton } from "@ovr/ui/components/skeleton";
 
 type ProjectCardSkeletonProps = {
   ref?: React.Ref<HTMLLIElement>;
+  className?: string;
 };
 
-export const ProjectCardSkeleton = ({ ref }: ProjectCardSkeletonProps = {}) => (
-  <li ref={ref} aria-hidden>
+export const ProjectCardSkeleton = ({ ref, className }: ProjectCardSkeletonProps = {}) => (
+  <li ref={ref} aria-hidden className={className}>
     <Card>
       <CardHeader>
         <Skeleton className="h-5 w-2/3" />

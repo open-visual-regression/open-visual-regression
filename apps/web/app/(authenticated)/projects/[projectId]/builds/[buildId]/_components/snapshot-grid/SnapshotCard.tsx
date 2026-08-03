@@ -1,12 +1,18 @@
 import { type BuildSnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { GlobeIcon, Icon } from "@ovr/ui/components/icon";
 import { ResolutionIcon } from "@ovr/ui/components/resolution-icon";
+import { Skeleton } from "@ovr/ui/components/skeleton";
 import { Typography } from "@ovr/ui/components/typography";
+import { cn } from "@ovr/ui/lib/utils";
 
 import { CardLink } from "@/lib/components/card-link/CardLink";
 import { Image } from "@/lib/components/image/Image";
 import { SnapshotStatusBadge } from "@/lib/components/SnapshotStatusBadge";
 import { getStoragePath } from "@/lib/utils/storage";
+
+const PREVIEW_CLASS_NAME =
+  "relative h-40 overflow-hidden border-b border-ovr-border-subtle bg-ovr-inset bg-pixel-grid";
+const BODY_CLASS_NAME = "flex min-w-0 flex-col gap-1 px-3 py-2.5";
 
 type SnapshotCardProps = {
   snapshot: BuildSnapshotSchema;
@@ -22,7 +28,7 @@ export const SnapshotCard = ({ snapshot, projectId, buildId }: SnapshotCardProps
       href={`/projects/${projectId}/builds/${buildId}/snapshots/${snapshot.id}`}
       className="gap-0 py-0"
     >
-      <div className="relative h-40 overflow-hidden border-b border-ovr-border-subtle bg-ovr-inset bg-pixel-grid">
+      <div className={PREVIEW_CLASS_NAME}>
         {imagePath ? (
           <Image
             src={imagePath}
@@ -43,7 +49,7 @@ export const SnapshotCard = ({ snapshot, projectId, buildId }: SnapshotCardProps
           <SnapshotStatusBadge status={snapshot.status} filled />
         </div>
       </div>
-      <div className="flex min-w-0 flex-col gap-1 px-3 py-2.5">
+      <div className={BODY_CLASS_NAME}>
         <Typography variant="code" className="truncate">
           {snapshot.targetName}
         </Typography>
@@ -60,3 +66,19 @@ export const SnapshotCard = ({ snapshot, projectId, buildId }: SnapshotCardProps
     </CardLink>
   );
 };
+
+export const SnapshotCardSkeleton = ({ className }: { className?: string }) => (
+  <div
+    className={cn(
+      "flex flex-col overflow-hidden rounded-card border border-ovr-border bg-ovr-elevated",
+      className,
+    )}
+  >
+    <div className={PREVIEW_CLASS_NAME} />
+    <div className={BODY_CLASS_NAME}>
+      <Skeleton className="h-4 w-2/3" />
+      <Skeleton className="h-3 w-1/2" />
+      <Skeleton className="h-3 w-3/4" />
+    </div>
+  </div>
+);

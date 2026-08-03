@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
-import { SnapshotPageSkeleton } from "../SnapshotPageSkeleton";
+import { SnapshotGridSkeleton } from "../SnapshotGrid";
 
-const meta: Meta<typeof SnapshotPageSkeleton> = {
-  title: "Web/Skeletons/SnapshotPageSkeleton",
-  component: SnapshotPageSkeleton,
+const meta: Meta<typeof SnapshotGridSkeleton> = {
+  title: "Web/Skeletons/SnapshotGridSkeleton",
+  component: SnapshotGridSkeleton,
   tags: ["autodocs"],
   parameters: {
     ovr: {
@@ -13,7 +13,7 @@ const meta: Meta<typeof SnapshotPageSkeleton> = {
   },
   decorators: [
     (Story) => (
-      <main className="relative h-screen">
+      <main className="px-5 py-3 md:px-6 md:py-4 lg:px-10 lg:py-6">
         <Story />
       </main>
     ),
@@ -21,6 +21,6 @@ const meta: Meta<typeof SnapshotPageSkeleton> = {
 };
 
 export default meta;
-type Story = StoryObj<typeof SnapshotPageSkeleton>;
+type Story = StoryObj<typeof SnapshotGridSkeleton>;
 
 export const Default: Story = {};

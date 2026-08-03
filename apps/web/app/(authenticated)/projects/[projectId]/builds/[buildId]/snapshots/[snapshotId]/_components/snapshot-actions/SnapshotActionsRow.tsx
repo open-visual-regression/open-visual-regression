@@ -9,12 +9,16 @@ import {
   CornerLeftUpIcon,
   Icon,
 } from "@ovr/ui/components/icon";
+import { Skeleton } from "@ovr/ui/components/skeleton";
 import { Typography } from "@ovr/ui/components/typography";
 
 import { ResponsiveActionButton } from "@/lib/components/responsive-action-button/ResponsiveActionButton";
 
 import { SnapshotApproveButton } from "./SnapshotApproveButton";
 import { SnapshotRejectButton } from "./SnapshotRejectButton";
+
+const ROW_CLASS_NAME =
+  "bg-ovr-elevated border-b px-5 md:px-6 lg:px-10 py-2 flex flex-row justify-between shrink-0";
 
 type ActionsRowProps = {
   snapshot: SnapshotSchema;
@@ -46,7 +50,7 @@ export const SnapshotActionsRow = ({
   const snapshotHref = (id: string) => `/projects/${projectId}/builds/${buildId}/snapshots/${id}`;
 
   return (
-    <div className="bg-ovr-elevated border-b px-5 md:px-6 lg:px-10 py-2 flex flex-row justify-between shrink-0">
+    <div className={ROW_CLASS_NAME}>
       <div className="flex items-center flex-row gap-2">
         <ResponsiveActionButton href="../" icon={CornerLeftUpIcon}>
           back
@@ -99,3 +103,19 @@ export const SnapshotActionsRow = ({
     </div>
   );
 };
+
+export const SnapshotActionsRowSkeleton = () => (
+  <div className={ROW_CLASS_NAME}>
+    <div className="flex items-center flex-row gap-2">
+      <Skeleton className="h-7 w-7 rounded-md lg:w-16" />
+      <Skeleton className="h-7 w-7 rounded-md lg:w-16" />
+      <Skeleton className="h-3 w-8" />
+      <Skeleton className="h-7 w-7 rounded-md lg:w-16" />
+    </div>
+    <div className="flex items-center flex-row gap-2">
+      <Skeleton className="h-8 w-20 rounded-md" />
+      <Skeleton className="h-8 w-24 rounded-md" />
+      <Skeleton className="size-7 rounded-md" />
+    </div>
+  </div>
+);
