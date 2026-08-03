@@ -9,16 +9,25 @@ import { cn } from "@ovr/ui/lib/utils";
 import { ProjectCardListItem } from "./ProjectCardListItem";
 import { ProjectCardSkeleton } from "./ProjectCardSkeleton";
 
-const skeletonCards = (sentinelRef?: React.Ref<HTMLLIElement>) =>
-  [undefined, "hidden md:block", "hidden lg:block"].flatMap((className, tier) =>
-    Array.from({ length: 3 }, (_, index) => (
-      <ProjectCardSkeleton
-        key={`${tier}-${index}`}
-        className={className}
-        ref={tier === 0 && index === 0 ? sentinelRef : undefined}
-      />
-    )),
-  );
+type ProjectCardSkeletonRowProps = {
+  ref?: React.Ref<HTMLLIElement>;
+};
+
+const ProjectCardSkeletonRow = ({ ref }: ProjectCardSkeletonRowProps) => (
+  <>
+    <ProjectCardSkeleton ref={ref} />
+    <ProjectCardSkeleton className="hidden md:block" />
+    <ProjectCardSkeleton className="hidden lg:block" />
+  </>
+);
+
+const ProjectCardSkeletonRows = ({ ref }: ProjectCardSkeletonRowProps) => (
+  <>
+    <ProjectCardSkeletonRow ref={ref} />
+    <ProjectCardSkeletonRow />
+    <ProjectCardSkeletonRow />
+  </>
+);
 
 type ProjectCardsLayoutProps = {
   className?: string;
@@ -59,14 +68,18 @@ export const ProjectCardsList = ({
 
   return (
     <ProjectCardsLayout>
-      {isLoading
-        ? skeletonCards()
-        : projects.map((project) => <ProjectCardListItem key={project.id} project={project} />)}
-      {!isLoading && hasNextPage ? skeletonCards(sentinelRef) : null}
+      {isLoading ? (
+        <ProjectCardSkeletonRows />
+      ) : (
+        projects.map((project) => <ProjectCardListItem key={project.id} project={project} />)
+      )}
+      {!isLoading && hasNextPage ? <ProjectCardSkeletonRows ref={sentinelRef} /> : null}
     </ProjectCardsLayout>
   );
 };
 
 export const ProjectCardsListSkeleton = () => (
-  <ProjectCardsLayout>{skeletonCards()}</ProjectCardsLayout>
+  <ProjectCardsLayout>
+    <ProjectCardSkeletonRows />
+  </ProjectCardsLayout>
 );

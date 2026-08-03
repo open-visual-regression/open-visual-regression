@@ -66,15 +66,12 @@ const Badge = ({ variant, color, children, className }: BadgeProps) => {
 
 type BadgeSkeletonProps = {
   className?: string;
-} & VariantProps<typeof badgeVariants>;
+};
 
-const BadgeSkeleton = ({ variant, color, className }: BadgeSkeletonProps) => (
-  <span
-    aria-hidden
-    className={cn(badgeVariants({ variant, color }), "relative border-transparent", className)}
-  >
+const BadgeSkeleton = ({ className }: BadgeSkeletonProps) => (
+  <span aria-hidden className={cn(badgeVariants(), "relative border-transparent", className)}>
     &#8203;
-    <Skeleton className="absolute inset-0 rounded-lg" />
+    <Skeleton className="absolute -inset-px rounded-lg" />
   </span>
 );
 

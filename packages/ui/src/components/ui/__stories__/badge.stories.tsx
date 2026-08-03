@@ -53,18 +53,15 @@ export const KitchenSink: Story = {
 export const Skeletons: Story = {
   render: () => (
     <div className="space-y-6 p-4">
-      {VARIANTS.map((variant) => (
-        <Section key={variant} label={`variant="${variant}"`}>
-          {COLORS.map((color) => (
-            <div key={color} className="flex flex-col items-start gap-1">
-              <Badge variant={variant} color={color}>
-                {color}
-              </Badge>
-              <BadgeSkeleton variant={variant} color={color} className="w-16" />
-            </div>
-          ))}
-        </Section>
-      ))}
+      <Section label="badge vs skeleton">
+        <Badge>neutral</Badge>
+        <BadgeSkeleton className="w-16" />
+      </Section>
+      <Section label="widths">
+        <BadgeSkeleton className="w-10" />
+        <BadgeSkeleton className="w-16" />
+        <BadgeSkeleton className="w-24" />
+      </Section>
     </div>
   ),
 };

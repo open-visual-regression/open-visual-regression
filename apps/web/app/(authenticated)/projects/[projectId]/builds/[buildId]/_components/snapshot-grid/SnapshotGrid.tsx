@@ -47,16 +47,20 @@ export const SnapshotGrid = ({ snapshots, projectId, buildId, search }: Snapshot
   );
 };
 
-const skeletonCards = (count: number, className?: string) =>
-  Array.from({ length: count }, (_, index) => (
-    <SnapshotCardSkeleton key={`${className ?? "base"}-${index}`} className={className} />
-  ));
+const SnapshotCardSkeletonRow = () => (
+  <>
+    <SnapshotCardSkeleton />
+    <SnapshotCardSkeleton />
+    <SnapshotCardSkeleton className="hidden md:block" />
+    <SnapshotCardSkeleton className="hidden lg:block" />
+    <SnapshotCardSkeleton className="hidden xl:block" />
+  </>
+);
 
 export const SnapshotGridSkeleton = () => (
   <SnapshotGridLayout>
-    {skeletonCards(6)}
-    {skeletonCards(3, "hidden md:block")}
-    {skeletonCards(3, "hidden lg:block")}
-    {skeletonCards(3, "hidden xl:block")}
+    <SnapshotCardSkeletonRow />
+    <SnapshotCardSkeletonRow />
+    <SnapshotCardSkeletonRow />
   </SnapshotGridLayout>
 );
