@@ -7,6 +7,7 @@ const meta: Meta<typeof SnapshotGridSkeleton> = {
   component: SnapshotGridSkeleton,
   tags: ["autodocs"],
   parameters: {
+    layout: "fullscreen",
     ovr: {
       viewports: ["desktop", "tablet", "mobile"],
     },

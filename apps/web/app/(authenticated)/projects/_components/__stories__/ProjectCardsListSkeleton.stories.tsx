@@ -7,6 +7,7 @@ const meta: Meta<typeof ProjectCardsListSkeleton> = {
   component: ProjectCardsListSkeleton,
   tags: ["autodocs"],
   parameters: {
+    layout: "fullscreen",
     ovr: {
       viewports: ["desktop", "tablet", "mobile"],
     },

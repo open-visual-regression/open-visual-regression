@@ -7,6 +7,7 @@ const meta: Meta<typeof NavigationBarSkeleton> = {
   component: NavigationBarSkeleton,
   tags: ["autodocs"],
   parameters: {
+    layout: "fullscreen",
     ovr: {
       viewports: ["desktop", "tablet", "mobile"],
     },

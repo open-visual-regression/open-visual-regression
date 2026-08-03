@@ -7,6 +7,7 @@ const meta: Meta<typeof FacetBarSkeleton> = {
   component: FacetBarSkeleton,
   tags: ["autodocs"],
   parameters: {
+    layout: "fullscreen",
     ovr: {
       viewports: ["desktop", "tablet", "mobile"],
     },

@@ -13,7 +13,10 @@ import { Skeleton } from "@ovr/ui/components/skeleton";
 import { Typography } from "@ovr/ui/components/typography";
 import { cn } from "@ovr/ui/lib/utils";
 
-import { ResponsiveActionButton } from "@/lib/components/responsive-action-button/ResponsiveActionButton";
+import {
+  ResponsiveActionButton,
+  ResponsiveActionButtonSkeleton,
+} from "@/lib/components/responsive-action-button/ResponsiveActionButton";
 
 import { SnapshotApproveButton } from "./SnapshotApproveButton";
 import { SnapshotRejectButton } from "./SnapshotRejectButton";
@@ -120,16 +123,16 @@ export const SnapshotActionsRow = ({
 
 export const SnapshotActionsRowSkeleton = () => (
   <SnapshotActionsRowLayout>
-    <div className="flex items-center flex-row gap-2">
-      <Skeleton className="h-7 w-7 rounded-md lg:w-16" />
-      <Skeleton className="h-7 w-7 rounded-md lg:w-16" />
-      <Skeleton className="h-3 w-8" />
-      <Skeleton className="h-7 w-7 rounded-md lg:w-16" />
+    <div className="flex flex-row items-center gap-2">
+      <ResponsiveActionButtonSkeleton className="lg:w-16" />
+      <ResponsiveActionButtonSkeleton className="lg:w-16" />
+      <Skeleton className="h-4 w-6" />
+      <ResponsiveActionButtonSkeleton className="lg:w-16" />
     </div>
-    <div className="flex items-center flex-row gap-2">
-      <Skeleton className="h-8 w-20 rounded-md" />
-      <Skeleton className="h-8 w-24 rounded-md" />
-      <Skeleton className="size-7 rounded-md" />
+    <div className="flex flex-row items-center gap-2">
+      <ResponsiveActionButtonSkeleton className="lg:w-20" />
+      <ResponsiveActionButtonSkeleton className="lg:w-24" />
+      <Skeleton className="size-7 shrink-0 rounded-md" />
     </div>
   </SnapshotActionsRowLayout>
 );

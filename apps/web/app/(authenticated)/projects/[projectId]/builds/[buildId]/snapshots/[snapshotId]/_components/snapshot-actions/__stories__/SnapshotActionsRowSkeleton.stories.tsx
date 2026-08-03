@@ -7,6 +7,7 @@ const meta: Meta<typeof SnapshotActionsRowSkeleton> = {
   component: SnapshotActionsRowSkeleton,
   tags: ["autodocs"],
   parameters: {
+    layout: "fullscreen",
     ovr: {
       viewports: ["desktop", "tablet", "mobile"],
     },

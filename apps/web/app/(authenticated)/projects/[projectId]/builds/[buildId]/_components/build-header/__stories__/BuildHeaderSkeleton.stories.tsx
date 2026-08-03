@@ -7,6 +7,7 @@ const meta: Meta<typeof BuildHeaderSkeleton> = {
   component: BuildHeaderSkeleton,
   tags: ["autodocs"],
   parameters: {
+    layout: "fullscreen",
     ovr: {
       viewports: ["desktop", "tablet", "mobile"],
     },

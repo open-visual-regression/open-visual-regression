@@ -7,6 +7,7 @@ const meta: Meta<typeof SnapshotHeaderSkeleton> = {
   component: SnapshotHeaderSkeleton,
   tags: ["autodocs"],
   parameters: {
+    layout: "fullscreen",
     ovr: {
       viewports: ["desktop", "tablet", "mobile"],
     },
