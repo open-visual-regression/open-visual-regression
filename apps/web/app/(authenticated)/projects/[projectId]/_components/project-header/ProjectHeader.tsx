@@ -24,7 +24,7 @@ export const ProjectHeader = ({ projectId, projectName, role }: ProjectHeaderPro
 
 export const ProjectHeaderSkeleton = () => (
   <div className="flex items-center gap-3">
-    <Skeleton className="h-7 min-w-0 flex-1" />
+    <Skeleton className="h-8 min-w-0 flex-1" />
     <Skeleton className="h-7 w-7 rounded-md lg:w-24" />
   </div>
 );

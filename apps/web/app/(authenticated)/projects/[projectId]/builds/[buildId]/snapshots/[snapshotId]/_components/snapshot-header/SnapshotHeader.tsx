@@ -62,7 +62,7 @@ export const SnapshotHeader = ({
 export const SnapshotHeaderSkeleton = () => (
   <div className="flex flex-col gap-6">
     <div className="flex flex-col gap-2">
-      <Skeleton className="h-7 w-80 max-w-full" />
+      <Skeleton className="h-8 w-80 max-w-full" />
       <div className="flex flex-row flex-wrap items-center gap-4">
         <Skeleton className="h-5 w-24" />
         <Skeleton className="h-3 w-24" />

@@ -131,7 +131,7 @@ export const BuildHeader = ({
 export const BuildHeaderSkeleton = () => (
   <div className="flex flex-col gap-6">
     <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-start md:gap-x-4 md:gap-y-2">
-      <Skeleton className="h-7 w-72 min-w-0 md:order-1 md:flex-1" />
+      <Skeleton className="h-8 w-72 min-w-0 md:order-1 md:flex-1" />
       <div className="flex w-full flex-row gap-2 md:order-2 md:w-auto">
         <Skeleton className="h-8 flex-1 rounded-md md:w-20 md:flex-none" />
         <Skeleton className="h-8 flex-1 rounded-md md:w-24 md:flex-none" />

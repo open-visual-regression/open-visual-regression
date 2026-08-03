@@ -9,7 +9,16 @@ import { cn } from "@ovr/ui/lib/utils";
 import { ProjectCardListItem } from "./ProjectCardListItem";
 import { ProjectCardSkeleton } from "./ProjectCardSkeleton";
 
-const SKELETON_CARD_COUNT = 12;
+const skeletonCards = (sentinelRef?: React.Ref<HTMLLIElement>) =>
+  [undefined, "hidden md:block", "hidden lg:block"].flatMap((className, tier) =>
+    Array.from({ length: 3 }, (_, index) => (
+      <ProjectCardSkeleton
+        key={`${tier}-${index}`}
+        className={className}
+        ref={tier === 0 && index === 0 ? sentinelRef : undefined}
+      />
+    )),
+  );
 
 type ProjectCardsLayoutProps = {
   className?: string;
@@ -51,28 +60,13 @@ export const ProjectCardsList = ({
   return (
     <ProjectCardsLayout>
       {isLoading
-        ? Array.from({ length: SKELETON_CARD_COUNT }, (_, index) => (
-            <ProjectCardSkeleton key={index} />
-          ))
+        ? skeletonCards()
         : projects.map((project) => <ProjectCardListItem key={project.id} project={project} />)}
-      {!isLoading && hasNextPage
-        ? Array.from({ length: SKELETON_CARD_COUNT }, (_, index) => (
-            <ProjectCardSkeleton key={index} ref={index === 0 ? sentinelRef : undefined} />
-          ))
-        : null}
+      {!isLoading && hasNextPage ? skeletonCards(sentinelRef) : null}
     </ProjectCardsLayout>
   );
 };
 
-const skeletonCards = (count: number, className?: string) =>
-  Array.from({ length: count }, (_, index) => (
-    <ProjectCardSkeleton key={`${className ?? "base"}-${index}`} className={className} />
-  ));
-
 export const ProjectCardsListSkeleton = () => (
-  <ProjectCardsLayout>
-    {skeletonCards(3)}
-    {skeletonCards(3, "hidden md:block")}
-    {skeletonCards(3, "hidden lg:block")}
-  </ProjectCardsLayout>
+  <ProjectCardsLayout>{skeletonCards()}</ProjectCardsLayout>
 );
