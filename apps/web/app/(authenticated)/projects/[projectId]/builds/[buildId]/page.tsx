@@ -11,6 +11,7 @@ import { serverError } from "@/lib/utils/errors";
 import { getStorybookPath, hasHostedStorybook } from "@/lib/utils/storage";
 
 import { BuildHeader } from "./_components/build-header/BuildHeader";
+import { BuildPageShell } from "./_components/BuildPageShell";
 import { SnapshotFilters } from "./_components/snapshot-grid/SnapshotFilters";
 import { SnapshotGrid } from "./_components/snapshot-grid/SnapshotGrid";
 import { SnapshotsSearchField } from "./_components/snapshot-grid/SnapshotsSearchField";
@@ -102,14 +103,16 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
   const storybookHref = hasHostedStorybook(build) ? getStorybookPath(build.id) : null;
 
   return (
-    <div className="flex flex-col gap-6">
-      <BuildHeader
-        build={build}
-        snapshotCounts={snapshotCounts}
-        storybookHref={storybookHref}
-        canReview={canReview(session?.user.role)}
-      />
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <BuildPageShell
+      header={
+        <BuildHeader
+          build={build}
+          snapshotCounts={snapshotCounts}
+          storybookHref={storybookHref}
+          canReview={canReview(session?.user.role)}
+        />
+      }
+      filters={
         <SnapshotFilters
           statuses={statuses}
           browsers={browsers}
@@ -118,19 +121,23 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
           browserOptions={browserOptions}
           viewportOptions={viewportOptions}
         />
+      }
+      search={
         <SnapshotsSearchField
           projectId={projectId}
           buildId={buildId}
           search={search}
           className="min-w-0 flex-1 lg:w-64 lg:flex-none"
         />
-      </div>
-      <SnapshotGrid
-        snapshots={snapshotsResult.snapshots}
-        projectId={projectId}
-        buildId={buildId}
-        search={search}
-      />
-    </div>
+      }
+      grid={
+        <SnapshotGrid
+          snapshots={snapshotsResult.snapshots}
+          projectId={projectId}
+          buildId={buildId}
+          search={search}
+        />
+      }
+    />
   );
 }

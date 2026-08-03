@@ -2,6 +2,7 @@ import { ComponentProps } from "react";
 
 import { Button } from "@ovr/ui/components/button";
 import { Icon, type LucideIcon } from "@ovr/ui/components/icon";
+import { Skeleton } from "@ovr/ui/components/skeleton";
 import { cn } from "@ovr/ui/lib/utils";
 
 import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
@@ -50,3 +51,7 @@ export const ResponsiveActionButton = ({
     </Button>
   );
 };
+
+export const ResponsiveActionButtonSkeleton = ({ className }: { className?: string }) => (
+  <Skeleton className={cn("h-7 w-7 shrink-0 rounded-md", className)} />
+);

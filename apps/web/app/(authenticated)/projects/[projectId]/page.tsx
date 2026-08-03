@@ -17,6 +17,7 @@ import { BuildsFilters } from "./_components/builds-section/BuildsFilters";
 import { BuildsSearchField } from "./_components/builds-section/BuildsSearchField";
 import { BuildsSection } from "./_components/builds-section/BuildsSection";
 import { ProjectHeader } from "./_components/project-header/ProjectHeader";
+import { ProjectPageShell } from "./_components/ProjectPageShell";
 
 type ProjectPageProps = PageProps<"/projects/[projectId]">;
 
@@ -81,13 +82,15 @@ export default async function ProjectPage(props: ProjectPageProps) {
   }));
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3">
-      <ProjectHeader
-        projectId={projectId}
-        projectName={projectResult.project.name}
-        role={toRole(session?.user.role)}
-      />
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <ProjectPageShell
+      header={
+        <ProjectHeader
+          projectId={projectId}
+          projectName={projectResult.project.name}
+          role={toRole(session?.user.role)}
+        />
+      }
+      filters={
         <BuildsFilters
           projectId={projectId}
           statuses={statuses}
@@ -97,21 +100,25 @@ export default async function ProjectPage(props: ProjectPageProps) {
           branchOptions={branchOptions}
           authorOptions={authorOptions}
         />
+      }
+      search={
         <BuildsSearchField
           projectId={projectId}
           search={search}
           className="min-w-0 flex-1 lg:w-64 lg:flex-none"
         />
-      </div>
-      <HydrationBoundary state={dehydrate(queryClient)}>
-        <BuildsSection
-          projectId={projectId}
-          search={search}
-          statuses={statuses}
-          branches={branches}
-          authors={authors}
-        />
-      </HydrationBoundary>
-    </div>
+      }
+      content={
+        <HydrationBoundary state={dehydrate(queryClient)}>
+          <BuildsSection
+            projectId={projectId}
+            search={search}
+            statuses={statuses}
+            branches={branches}
+            authors={authors}
+          />
+        </HydrationBoundary>
+      }
+    />
   );
 }

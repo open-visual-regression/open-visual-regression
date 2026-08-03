@@ -1,9 +1,10 @@
 import type { BuildSchema } from "@ovr/api/contracts/builds";
 import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { Alert, AlertDescription, AlertTitle } from "@ovr/ui/components/alert";
+import { BadgeSkeleton } from "@ovr/ui/components/badge";
 import { ExternalLinkIcon, GlobeIcon, Icon } from "@ovr/ui/components/icon";
 import { ResolutionIcon } from "@ovr/ui/components/resolution-icon";
-import { Typography } from "@ovr/ui/components/typography";
+import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 
 import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
 import { SnapshotStatusBadge } from "@/lib/components/SnapshotStatusBadge";
@@ -55,5 +56,19 @@ export const SnapshotHeader = ({
         <AlertDescription>This snapshot failed to capture.</AlertDescription>
       </Alert>
     ) : null}
+  </div>
+);
+
+export const SnapshotHeaderSkeleton = () => (
+  <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-2">
+      <TypographySkeleton variant="h1" className="w-80 max-w-full" />
+      <div className="flex flex-row flex-wrap items-center gap-4 text-xs">
+        <BadgeSkeleton className="w-24" />
+        <TypographySkeleton variant="caption" className="w-24" />
+        <TypographySkeleton variant="caption" className="w-20" />
+        <TypographySkeleton variant="caption" className="w-32" />
+      </div>
+    </div>
   </div>
 );

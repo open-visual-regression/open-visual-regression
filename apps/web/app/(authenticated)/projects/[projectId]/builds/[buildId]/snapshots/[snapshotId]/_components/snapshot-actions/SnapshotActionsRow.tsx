@@ -9,12 +9,33 @@ import {
   CornerLeftUpIcon,
   Icon,
 } from "@ovr/ui/components/icon";
+import { Skeleton } from "@ovr/ui/components/skeleton";
 import { Typography } from "@ovr/ui/components/typography";
+import { cn } from "@ovr/ui/lib/utils";
 
-import { ResponsiveActionButton } from "@/lib/components/responsive-action-button/ResponsiveActionButton";
+import {
+  ResponsiveActionButton,
+  ResponsiveActionButtonSkeleton,
+} from "@/lib/components/responsive-action-button/ResponsiveActionButton";
 
 import { SnapshotApproveButton } from "./SnapshotApproveButton";
 import { SnapshotRejectButton } from "./SnapshotRejectButton";
+
+type SnapshotActionsRowLayoutProps = {
+  className?: string;
+  children: React.ReactNode;
+};
+
+const SnapshotActionsRowLayout = ({ className, children }: SnapshotActionsRowLayoutProps) => (
+  <div
+    className={cn(
+      "flex shrink-0 flex-row justify-between border-b bg-ovr-elevated px-5 py-2 md:px-6 lg:px-10",
+      className,
+    )}
+  >
+    {children}
+  </div>
+);
 
 type ActionsRowProps = {
   snapshot: SnapshotSchema;
@@ -46,7 +67,7 @@ export const SnapshotActionsRow = ({
   const snapshotHref = (id: string) => `/projects/${projectId}/builds/${buildId}/snapshots/${id}`;
 
   return (
-    <div className="bg-ovr-elevated border-b px-5 md:px-6 lg:px-10 py-2 flex flex-row justify-between shrink-0">
+    <SnapshotActionsRowLayout>
       <div className="flex items-center flex-row gap-2">
         <ResponsiveActionButton href="../" icon={CornerLeftUpIcon}>
           back
@@ -96,6 +117,22 @@ export const SnapshotActionsRow = ({
           <Icon icon={sidebarCollapsed ? ArrowLeftFromLineIcon : ArrowRightToLineIcon} />
         </Button>
       </div>
-    </div>
+    </SnapshotActionsRowLayout>
   );
 };
+
+export const SnapshotActionsRowSkeleton = () => (
+  <SnapshotActionsRowLayout>
+    <div className="flex flex-row items-center gap-2">
+      <ResponsiveActionButtonSkeleton className="lg:w-16" />
+      <ResponsiveActionButtonSkeleton className="lg:w-16" />
+      <Skeleton className="h-4 w-6" />
+      <ResponsiveActionButtonSkeleton className="lg:w-16" />
+    </div>
+    <div className="flex flex-row items-center gap-2">
+      <ResponsiveActionButtonSkeleton className="lg:w-20" />
+      <ResponsiveActionButtonSkeleton className="lg:w-24" />
+      <Skeleton className="size-7 shrink-0 rounded-md" />
+    </div>
+  </SnapshotActionsRowLayout>
+);

@@ -1,7 +1,21 @@
 import { type BuildSnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { Typography } from "@ovr/ui/components/typography";
+import { cn } from "@ovr/ui/lib/utils";
 
-import { SnapshotCard } from "./SnapshotCard";
+import { SnapshotCard, SnapshotCardSkeleton } from "./SnapshotCard";
+
+type SnapshotGridLayoutProps = {
+  className?: string;
+  children: React.ReactNode;
+};
+
+const SnapshotGridLayout = ({ className, children }: SnapshotGridLayoutProps) => (
+  <div
+    className={cn("grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5", className)}
+  >
+    {children}
+  </div>
+);
 
 type SnapshotGridProps = {
   snapshots: BuildSnapshotSchema[];
@@ -20,7 +34,7 @@ export const SnapshotGrid = ({ snapshots, projectId, buildId, search }: Snapshot
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+    <SnapshotGridLayout>
       {snapshots.map((snapshot) => (
         <SnapshotCard
           key={snapshot.id}
@@ -29,6 +43,24 @@ export const SnapshotGrid = ({ snapshots, projectId, buildId, search }: Snapshot
           buildId={buildId}
         />
       ))}
-    </div>
+    </SnapshotGridLayout>
   );
 };
+
+const SnapshotCardSkeletonRow = () => (
+  <>
+    <SnapshotCardSkeleton />
+    <SnapshotCardSkeleton />
+    <SnapshotCardSkeleton className="hidden md:block" />
+    <SnapshotCardSkeleton className="hidden lg:block" />
+    <SnapshotCardSkeleton className="hidden xl:block" />
+  </>
+);
+
+export const SnapshotGridSkeleton = () => (
+  <SnapshotGridLayout>
+    <SnapshotCardSkeletonRow />
+    <SnapshotCardSkeletonRow />
+    <SnapshotCardSkeletonRow />
+  </SnapshotGridLayout>
+);
