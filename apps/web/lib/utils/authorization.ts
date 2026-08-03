@@ -1,15 +1,13 @@
 "server only";
 
-import { headers } from "next/headers";
-
-import { auth } from "@/lib/auth/auth";
 import { type Role } from "@/lib/auth/roles";
+import { getCachedSession } from "@/lib/auth/session";
 
 import { Result } from "../types";
 
 export const verifyRole = async (role: Role): Promise<Result<boolean>> => {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
+    const session = await getCachedSession();
 
     return { status: "ok", data: session?.user.role === role };
   } catch (err) {

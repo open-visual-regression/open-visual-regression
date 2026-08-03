@@ -1,7 +1,6 @@
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { auth } from "@/lib/auth/auth";
+import { getCachedSession } from "@/lib/auth/session";
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
 
@@ -13,7 +12,7 @@ export const dynamic = "force-dynamic";
 export default async function LoginPage() {
   const [[error, setupStatusResult], session] = await Promise.all([
     serverClient.setup.status(),
-    auth.api.getSession({ headers: await headers() }),
+    getCachedSession(),
   ]);
 
   if (error) {

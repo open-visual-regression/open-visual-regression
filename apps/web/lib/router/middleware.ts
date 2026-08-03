@@ -7,6 +7,7 @@ import { dbClient } from "@ovr/db/client";
 import { auth } from "../auth/auth";
 import { type Session, type User } from "../auth/auth";
 import { canReview } from "../auth/roles";
+import { getCachedSession } from "../auth/session";
 import { type RequestContext } from "./os";
 
 export type AuthenticatedContext = RequestContext & {
@@ -17,8 +18,8 @@ export type AuthenticatedContext = RequestContext & {
 
 export const unauthenticatedMiddleware = os
   .$context<RequestContext>()
-  .middleware(async ({ context, next }) => {
-    const session = await auth.api.getSession({ headers: context.headers });
+  .middleware(async ({ next }) => {
+    const session = await getCachedSession();
 
     if (session) {
       throw new ORPCError("FORBIDDEN");
@@ -29,10 +30,8 @@ export const unauthenticatedMiddleware = os
 
 export const authenticatedMiddleware = os
   .$context<RequestContext>()
-  .middleware(async ({ context, next }) => {
-    const sessionResult = await auth.api.getSession({
-      headers: context.headers,
-    });
+  .middleware(async ({ next }) => {
+    const sessionResult = await getCachedSession();
 
     if (!sessionResult?.session.activeOrganizationId) {
       throw new ORPCError("UNAUTHORIZED");

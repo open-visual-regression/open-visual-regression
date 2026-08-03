@@ -1,8 +1,7 @@
-import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 
-import { auth } from "@/lib/auth/auth";
 import { canReview } from "@/lib/auth/roles";
+import { getCachedSession } from "@/lib/auth/session";
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
 import { getStorybookStoryPath, hasHostedStorybook } from "@/lib/utils/storage";
@@ -19,12 +18,14 @@ export default async function SnapshotPage(props: SnapshotPageProps) {
   const { projectId, buildId, snapshotId } = await props.params;
 
   const [
+    session,
     [buildError, buildResult],
     [snapshotError, snapshotResult],
     [diffError, diffResult],
     [adjacentError, adjacentResult],
     [reviewsError, reviewsResult],
   ] = await Promise.all([
+    getCachedSession(),
     serverClient.builds.getOne({ buildId }),
     serverClient.snapshots.getOne({ snapshotId }),
     serverClient.diffs.getOne({ snapshotId }),
@@ -50,8 +51,6 @@ export default async function SnapshotPage(props: SnapshotPageProps) {
   const { snapshot } = snapshotResult;
   const { diff } = diffResult;
   const { prevSnapshotId, nextSnapshotId, position, total } = adjacentResult;
-
-  const session = await auth.api.getSession({ headers: await headers() });
 
   const storybookHref = hasHostedStorybook(build)
     ? getStorybookStoryPath(build.id, snapshot.targetId)
