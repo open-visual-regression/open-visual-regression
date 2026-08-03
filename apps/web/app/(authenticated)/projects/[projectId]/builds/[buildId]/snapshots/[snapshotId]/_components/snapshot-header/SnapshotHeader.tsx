@@ -1,5 +1,3 @@
-import { Fragment } from "react";
-
 import type { BuildSchema } from "@ovr/api/contracts/builds";
 import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { Alert, AlertDescription, AlertTitle } from "@ovr/ui/components/alert";
@@ -26,17 +24,7 @@ export const SnapshotHeader = ({
   <div className="flex flex-col gap-6">
     <div className="flex flex-col gap-2">
       <Typography variant="h1" as="h1" className="break-words">
-        {snapshot.targetTitle.split("/").map((segment, index, segments) => (
-          <Fragment key={index}>
-            {segment}
-            {index < segments.length - 1 ? (
-              <>
-                /<wbr />
-              </>
-            ) : null}
-          </Fragment>
-        ))}{" "}
-        {snapshot.targetName}
+        {snapshot.targetTitle} {snapshot.targetName}
       </Typography>
       <div className="flex flex-row flex-wrap items-center gap-4 text-xs">
         <SnapshotStatusBadge status={snapshot.status} />
