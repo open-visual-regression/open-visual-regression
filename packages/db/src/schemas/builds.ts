@@ -120,9 +120,9 @@ export const builds = pgTable(
   ],
 );
 
-export type ExtractInputTarget = { id: string; title: string; name: string };
+export type BuildExtractDefaultTarget = { id: string; title: string; name: string };
 
-export type ExtractInputViewport = {
+export type BuildExtractDefaultViewport = {
   name?: string;
   browser: string;
   viewportWidth: number;
@@ -130,12 +130,12 @@ export type ExtractInputViewport = {
   default?: boolean;
 };
 
-export const buildExtractInputs = pgTable("build_extract_inputs", {
+export const buildExtractDefaults = pgTable("build_extract_defaults", {
   buildId: uuid("build_id")
     .primaryKey()
     .references(() => builds.id, { onDelete: "cascade" }),
-  targets: jsonb().$type<ExtractInputTarget[]>().notNull(),
-  viewports: jsonb().$type<ExtractInputViewport[]>().notNull(),
+  targets: jsonb().$type<BuildExtractDefaultTarget[]>().notNull(),
+  viewports: jsonb().$type<BuildExtractDefaultViewport[]>().notNull(),
   diffThreshold: numeric("diff_threshold", { mode: "number", precision: 3, scale: 2 }).notNull(),
   createdAt: utcTimestamp("created_at")
     .default(sql`now()`)

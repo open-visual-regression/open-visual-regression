@@ -8,17 +8,17 @@ const TARGETS = [
 
 const VIEWPORTS = [{ name: "desktop", browser: "chromium", viewportWidth: 1280 }];
 
-describe("buildExtractInputs", () => {
+describe("buildExtractDefaults", () => {
   describe("create", () => {
-    test("should store the extract input for a build", async ({ build }) => {
-      await dbClient.buildExtractInputs.create({
+    test("should store the extract defaults for a build", async ({ build }) => {
+      await dbClient.buildExtractDefaults.create({
         buildId: build.id,
         targets: TARGETS,
         viewports: VIEWPORTS,
         diffThreshold: 0.05,
       });
 
-      expect(await dbClient.buildExtractInputs.findByBuild(build.id)).toMatchObject({
+      expect(await dbClient.buildExtractDefaults.findByBuild(build.id)).toMatchObject({
         buildId: build.id,
         targets: TARGETS,
         viewports: VIEWPORTS,
@@ -26,17 +26,17 @@ describe("buildExtractInputs", () => {
       });
     });
 
-    test("should keep the first extract input when the upload is confirmed again", async ({
+    test("should keep the first extract defaults when the upload is confirmed again", async ({
       build,
     }) => {
-      await dbClient.buildExtractInputs.create({
+      await dbClient.buildExtractDefaults.create({
         buildId: build.id,
         targets: TARGETS,
         viewports: VIEWPORTS,
         diffThreshold: 0.05,
       });
 
-      const retried = await dbClient.buildExtractInputs.create({
+      const retried = await dbClient.buildExtractDefaults.create({
         buildId: build.id,
         targets: [{ id: "story-c", title: "Story", name: "C" }],
         viewports: VIEWPORTS,
@@ -44,7 +44,7 @@ describe("buildExtractInputs", () => {
       });
 
       expect(retried).toBeUndefined();
-      expect(await dbClient.buildExtractInputs.findByBuild(build.id)).toMatchObject({
+      expect(await dbClient.buildExtractDefaults.findByBuild(build.id)).toMatchObject({
         targets: TARGETS,
         diffThreshold: 0.05,
       });
@@ -52,12 +52,12 @@ describe("buildExtractInputs", () => {
   });
 
   describe("findByBuild", () => {
-    test("should return undefined when no extract input has been stored", async ({ build }) => {
-      expect(await dbClient.buildExtractInputs.findByBuild(build.id)).toBeUndefined();
+    test("should return undefined when no extract defaults have been stored", async ({ build }) => {
+      expect(await dbClient.buildExtractDefaults.findByBuild(build.id)).toBeUndefined();
     });
 
     test("should return undefined once the build has been purged", async ({ build }) => {
-      await dbClient.buildExtractInputs.create({
+      await dbClient.buildExtractDefaults.create({
         buildId: build.id,
         targets: TARGETS,
         viewports: VIEWPORTS,
@@ -66,7 +66,7 @@ describe("buildExtractInputs", () => {
 
       await dbClient.transaction((tx) => dbClient.builds.removeMany(tx, [build.id]));
 
-      expect(await dbClient.buildExtractInputs.findByBuild(build.id)).toBeUndefined();
+      expect(await dbClient.buildExtractDefaults.findByBuild(build.id)).toBeUndefined();
     });
   });
 });

@@ -1,5 +1,5 @@
 {
-  "id": "6185c564-d888-430c-bf36-9654261e145e",
+  "id": "1fd95623-25e9-47c7-86e7-2f8b11b171bc",
   "prevId": "0368a4d7-0b36-4c65-8ca2-a4709f8a8c83",
   "version": "7",
   "dialect": "postgresql",
@@ -1013,8 +1013,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.build_extract_inputs": {
-      "name": "build_extract_inputs",
+    "public.build_extract_defaults": {
+      "name": "build_extract_defaults",
       "schema": "",
       "columns": {
         "build_id": {
@@ -1051,9 +1051,9 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "build_extract_inputs_build_id_builds_id_fk": {
-          "name": "build_extract_inputs_build_id_builds_id_fk",
-          "tableFrom": "build_extract_inputs",
+        "build_extract_defaults_build_id_builds_id_fk": {
+          "name": "build_extract_defaults_build_id_builds_id_fk",
+          "tableFrom": "build_extract_defaults",
           "tableTo": "builds",
           "columnsFrom": ["build_id"],
           "columnsTo": ["id"],

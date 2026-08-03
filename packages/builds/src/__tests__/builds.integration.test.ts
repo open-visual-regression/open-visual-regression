@@ -166,7 +166,7 @@ describe("builds", () => {
       });
     });
 
-    test("persists the extract input so it can be replayed later", async ({
+    test("persists the extract defaults so extraction can be replayed later", async ({
       project,
       captureConfiguration,
       user,
@@ -192,7 +192,7 @@ describe("builds", () => {
         diffThreshold: 0.05,
       });
 
-      expect(await dbClient.buildExtractInputs.findByBuild(buildId)).toMatchObject({
+      expect(await dbClient.buildExtractDefaults.findByBuild(buildId)).toMatchObject({
         buildId,
         targets,
         viewports: [captureConfiguration],

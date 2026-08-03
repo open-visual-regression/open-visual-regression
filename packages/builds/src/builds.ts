@@ -117,7 +117,7 @@ export const confirmBuildUpload = async (
   }
 
   try {
-    await dbClient.buildExtractInputs.create({
+    await dbClient.buildExtractDefaults.create({
       buildId,
       targets: input.targets,
       viewports: input.viewports,
