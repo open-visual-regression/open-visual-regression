@@ -8,8 +8,6 @@ export class BuildPage {
   }
 
   status(): Locator {
-    // Loading skeletons also render role="status" (aria-label="loading"), and a
-    // navigation can still be streaming them in when a test asserts on this.
     return this.page.locator('[role="status"]:not([aria-label="loading"])');
   }
 

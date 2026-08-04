@@ -7,8 +7,6 @@ test("should rebuild a completed build into a new build with its own real snapsh
   seed,
   seedClient,
 }) => {
-  // Ingests packages/ui's actual built Storybook, so this exercises real component
-  // snapshots end to end rather than seeded rows.
   const { commitSha, exitCode, stderr, stdout } = await ingestStorybook({
     apiKey: seed.apiKey,
     branch: "main",

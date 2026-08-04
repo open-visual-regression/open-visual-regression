@@ -68,9 +68,11 @@ export const readStoryParameterOverrides = async (
     });
 
     await page.goto(`${proxy.origin}/iframe.html`, { waitUntil: "load" });
-    await page.waitForFunction(() => Boolean(globalThis.__STORYBOOK_PREVIEW__), undefined, {
-      timeout: BOOT_TIMEOUT_MS,
-    });
+    await page.waitForFunction(
+      () => Boolean(globalThis.__STORYBOOK_PREVIEW__?.initializationPromise),
+      undefined,
+      { timeout: BOOT_TIMEOUT_MS },
+    );
 
     const { entries, failures } = await page.evaluate(readOvrOverrides, targetIds);
     return { overrides: new Map(entries), failures: new Map(failures) };
