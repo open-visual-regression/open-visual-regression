@@ -99,66 +99,6 @@ describe("builds", () => {
     });
   });
 
-  describe("findBy", () => {
-    test("should only return builds matching the given branch", async ({
-      project,
-      user,
-      build: main,
-    }) => {
-      await dbClient.builds.create({
-        projectId: project.id,
-        branch: "feature",
-        commitSha: "b".repeat(40),
-        artifactPath: "builds/feature/artifact",
-        createdBy: user.id,
-      });
-
-      const builds = await dbClient.builds.findBy({ projectId: project.id, branch: "main" });
-      expect(builds.map((build) => build.id)).toEqual([main.id]);
-    });
-
-    test("should only return builds matching the given review status", async ({
-      project,
-      user,
-      build: main,
-    }) => {
-      await dbClient.builds.create({
-        projectId: project.id,
-        branch: "feature",
-        commitSha: "b".repeat(40),
-        artifactPath: "builds/feature/artifact",
-        createdBy: user.id,
-      });
-      await dbClient.builds.updateResult(main.id, {
-        processingStatus: "success",
-        reviewStatus: "approved",
-      });
-
-      const builds = await dbClient.builds.findBy({
-        projectId: project.id,
-        reviewStatus: "approved",
-      });
-      expect(builds.map((build) => build.id)).toEqual([main.id]);
-    });
-
-    test("should return all builds for the project when no filters are given", async ({
-      project,
-      user,
-      build: _main,
-    }) => {
-      await dbClient.builds.create({
-        projectId: project.id,
-        branch: "feature",
-        commitSha: "b".repeat(40),
-        artifactPath: "builds/feature/artifact",
-        createdBy: user.id,
-      });
-
-      const builds = await dbClient.builds.findBy({ projectId: project.id });
-      expect(builds).toHaveLength(2);
-    });
-  });
-
   describe("findAll", () => {
     test("should return builds across all projects in the organization, most recent first", async ({
       organization,

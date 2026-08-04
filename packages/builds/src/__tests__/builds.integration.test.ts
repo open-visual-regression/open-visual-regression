@@ -543,10 +543,12 @@ describe("builds", () => {
         withArtifact: false,
       });
 
+      const before = (await dbClient.projects.findById(project.id))?.totalBuildsCount;
+
       const result = await rebuildBuild(buildId, user.id);
 
       expect(result).toEqual({ status: "error", error: "ARTIFACT_MISSING" });
-      expect(await dbClient.builds.findBy({ projectId: project.id })).toHaveLength(1);
+      expect((await dbClient.projects.findById(project.id))?.totalBuildsCount).toBe(before);
     });
 
     test("returns BUILD_NOT_FOUND when the build does not exist", async ({ user }) => {

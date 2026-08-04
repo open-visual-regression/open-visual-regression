@@ -153,9 +153,6 @@ type ExtractDefaults = NonNullable<
   Awaited<ReturnType<typeof dbClient.buildExtractDefaults.findByBuild>>
 >;
 
-// Returns the defaults so a caller that goes on to rebuild does not read them twice.
-// Rebuilding is limited to the newest build on a branch so an old one cannot be replayed
-// to promote stale renders over the baselines a later build already established.
 export const checkRebuildable = async (
   build: RebuildCandidate,
 ): Promise<Result<ExtractDefaults, RebuildBlockedReason>> => {
@@ -204,8 +201,6 @@ export const rebuildBuild = async (
   const rebuildId = uuidv7();
   const artifactPath = getArtifactPath(source.projectId, rebuildId);
 
-  // The row is inserted before the artifact is copied so a failed copy surfaces on a
-  // build the reviewer can see, rather than as an object nothing points at.
   await dbClient.transaction(async (tx) => {
     await dbClient.builds.create({
       tx,

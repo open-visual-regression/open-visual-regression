@@ -103,24 +103,6 @@ export const updateResult = async (id: string, result: UpdateResultInput) => {
   return build;
 };
 
-type FindByInput = {
-  projectId?: string;
-  branch?: string;
-  processingStatus?: BuildProcessingStatus;
-  reviewStatus?: BuildReviewStatus;
-};
-
-export const findBy = (input: FindByInput = {}) =>
-  db.query.builds.findMany({
-    where: (builds, { and, eq }) =>
-      and(
-        input.projectId ? eq(builds.projectId, input.projectId) : undefined,
-        input.branch ? eq(builds.branch, input.branch) : undefined,
-        input.processingStatus ? eq(builds.processingStatus, input.processingStatus) : undefined,
-        input.reviewStatus ? eq(builds.reviewStatus, input.reviewStatus) : undefined,
-      ),
-  });
-
 export type BuildDbSchema = Awaited<ReturnType<typeof findById>>;
 
 export type SortDirection = "asc" | "desc";
