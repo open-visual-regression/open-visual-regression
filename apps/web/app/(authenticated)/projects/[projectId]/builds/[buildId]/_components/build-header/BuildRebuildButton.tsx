@@ -63,12 +63,9 @@ export const BuildRebuildButton = ({ buildId, projectId }: BuildRebuildButtonPro
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>rebuild?</AlertDialogTitle>
-          <AlertDialogDescription>this creates a new run.</AlertDialogDescription>
+          <AlertDialogDescription>this creates a new build.</AlertDialogDescription>
         </AlertDialogHeader>
-        <Typography>
-          this will take new snapshots and diffs of every story in this build. the current run is
-          left as-is.
-        </Typography>
+        <Typography>this will take new snapshots and diffs of every story.</Typography>
         <FieldError errors={[error]} />
         <AlertDialogFooter>
           <AlertDialogCancel>keep as-is</AlertDialogCancel>

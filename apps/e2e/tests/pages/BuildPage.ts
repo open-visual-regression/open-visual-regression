@@ -8,7 +8,9 @@ export class BuildPage {
   }
 
   status(): Locator {
-    return this.page.getByRole("status");
+    // Loading skeletons also render role="status" (aria-label="loading"), and a
+    // navigation can still be streaming them in when a test asserts on this.
+    return this.page.locator('[role="status"]:not([aria-label="loading"])');
   }
 
   cancelButton(): Locator {
@@ -25,5 +27,9 @@ export class BuildPage {
       .getByRole("alertdialog")
       .getByRole("button", { name: "rebuild", exact: true })
       .click();
+  }
+
+  snapshotThumbnails(): Locator {
+    return this.page.getByRole("img", { name: /^snapshot of/ });
   }
 }
