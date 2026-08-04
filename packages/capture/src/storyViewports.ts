@@ -24,7 +24,7 @@ const readOvrOverrides = async (targetIds: string[]): Promise<OverrideReadResult
     return { entries: [], failures: [] };
   }
 
-  await preview.initializationPromise;
+  await preview.storeInitializationPromise;
 
   const entries: [string, OvrStoryParameters][] = [];
   const failures: [string, string][] = [];
@@ -69,7 +69,7 @@ export const readStoryParameterOverrides = async (
 
     await page.goto(`${proxy.origin}/iframe.html`, { waitUntil: "load" });
     await page.waitForFunction(
-      () => Boolean(globalThis.__STORYBOOK_PREVIEW__?.initializationPromise),
+      () => Boolean(globalThis.__STORYBOOK_PREVIEW__?.storeInitializationPromise),
       undefined,
       { timeout: BOOT_TIMEOUT_MS },
     );
