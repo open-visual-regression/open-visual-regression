@@ -37,6 +37,39 @@ export const create = async ({ tx = db, ...values }: CreateInput) => {
 export const findById = (id: string) =>
   db.query.builds.findFirst({ where: (builds, { eq }) => eq(builds.id, id) });
 
+// Serializes rebuilds of the same build: the loser blocks here, then re-reads and
+// sees the rebuild the winner inserted.
+export const lockById = async (id: string, tx: DbClient) => {
+  const [build] = await tx.select().from(builds).where(eq(builds.id, id)).for("update");
+  return build;
+};
+
+type HasNewerOnBranchInput = {
+  id: string;
+  projectId: string;
+  branch: string;
+  createdAt: string;
+};
+
+export const hasNewerOnBranch = async (
+  { id, projectId, branch, createdAt }: HasNewerOnBranchInput,
+  tx: DbClient = db,
+): Promise<boolean> => {
+  const [newer] = await tx
+    .select({ id: builds.id })
+    .from(builds)
+    .where(
+      and(
+        eq(builds.projectId, projectId),
+        eq(builds.branch, branch),
+        sql`(${builds.createdAt}, ${builds.id}) > (${createdAt}::timestamp, ${id}::uuid)`,
+      ),
+    )
+    .limit(1);
+
+  return newer !== undefined;
+};
+
 export const updateProcessingStatus = async (
   id: string,
   processingStatus: BuildProcessingStatus,

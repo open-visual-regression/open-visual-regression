@@ -1,8 +1,9 @@
+import { eq } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
 
 import { dbClient } from "../client";
 import { db } from "../db";
-import { organization as organizationTable, projects } from "../schema";
+import { builds, organization as organizationTable, projects } from "../schema";
 import { describe, expect, test } from "./fixtures";
 
 describe("builds", () => {
@@ -36,6 +37,100 @@ describe("builds", () => {
     test("should update the build's processing status", async ({ build }) => {
       const updated = await dbClient.builds.updateProcessingStatus(build.id, "success");
       expect(updated?.processingStatus).toBe("success");
+    });
+  });
+
+  describe("hasNewerOnBranch", () => {
+    const seedBuild = async (
+      projectId: string,
+      userId: string,
+      branch = "main",
+    ): Promise<NonNullable<Awaited<ReturnType<typeof dbClient.builds.create>>>> => {
+      const created = await dbClient.builds.create({
+        projectId,
+        branch,
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/seed/artifact",
+        createdBy: userId,
+      });
+      return created!;
+    };
+
+    test("should return false for the newest build on the branch", async ({ build }) => {
+      expect(await dbClient.builds.hasNewerOnBranch(build)).toBe(false);
+    });
+
+    test("should return true once a newer build lands on the same branch", async ({
+      build,
+      project,
+      user,
+    }) => {
+      await seedBuild(project.id, user.id);
+
+      expect(await dbClient.builds.hasNewerOnBranch(build)).toBe(true);
+    });
+
+    test("should ignore a newer build on a different branch", async ({ build, project, user }) => {
+      await seedBuild(project.id, user.id, "feature/other");
+
+      expect(await dbClient.builds.hasNewerOnBranch(build)).toBe(false);
+    });
+
+    test("should ignore a newer build in a different project", async ({
+      build,
+      organization,
+      user,
+    }) => {
+      const otherProject = await dbClient.projects.addProject({
+        name: "Other Project",
+        gitMainBranch: "main",
+        organizationId: organization.id,
+        creatorId: user.id,
+      });
+      await seedBuild(otherProject!.id, user.id);
+
+      expect(await dbClient.builds.hasNewerOnBranch(build)).toBe(false);
+    });
+
+    test("should break a createdAt tie on the build id", async ({ build, project, user }) => {
+      const sameInstant = await seedBuild(project.id, user.id);
+      await db
+        .update(builds)
+        .set({ createdAt: build.createdAt })
+        .where(eq(builds.id, sameInstant.id));
+
+      expect(await dbClient.builds.hasNewerOnBranch(build)).toBe(true);
+      expect(
+        await dbClient.builds.hasNewerOnBranch({ ...sameInstant, createdAt: build.createdAt }),
+      ).toBe(false);
+    });
+  });
+
+  describe("lockById", () => {
+    test("should hold a second transaction until the first one commits", async ({ build }) => {
+      let secondAcquired = false;
+      let release = () => {};
+      const held = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+
+      const holder = dbClient.transaction(async (tx) => {
+        await dbClient.builds.lockById(build.id, tx);
+        await held;
+      });
+
+      const waiter = dbClient.transaction(async (tx) => {
+        await dbClient.builds.lockById(build.id, tx);
+        secondAcquired = true;
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      expect(secondAcquired).toBe(false);
+
+      release();
+      await Promise.all([holder, waiter]);
+
+      expect(secondAcquired).toBe(true);
     });
   });
 
