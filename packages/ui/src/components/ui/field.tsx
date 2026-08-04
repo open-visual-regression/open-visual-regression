@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { cn } from "../../lib/utils";
 import { Label } from "./label";
 import { Separator } from "./separator";
+import { Skeleton } from "./skeleton";
 
 const FieldSet = ({ className, ...props }: React.ComponentProps<"fieldset">) => (
   <fieldset
@@ -70,6 +71,17 @@ const Field = ({
     className={cn(fieldVariants({ orientation }), className)}
     {...props}
   />
+);
+
+type FieldSkeletonProps = {
+  className?: string;
+};
+
+const FieldSkeleton = ({ className }: FieldSkeletonProps) => (
+  <div aria-hidden data-slot="field" className="flex w-full flex-col gap-2">
+    <Skeleton className="h-3 w-20" />
+    <Skeleton className={cn("h-8 w-full rounded-lg", className)} />
+  </div>
 );
 
 const FieldContent = ({ className, ...props }: React.ComponentProps<"div">) => (
@@ -199,6 +211,8 @@ export {
   FieldLegend,
   FieldSeparator,
   FieldSet,
+  FieldSkeleton,
   FieldContent,
   FieldTitle,
 };
+export type { FieldSkeletonProps };

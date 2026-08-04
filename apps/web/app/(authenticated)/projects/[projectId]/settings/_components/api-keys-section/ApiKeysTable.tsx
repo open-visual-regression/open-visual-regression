@@ -8,6 +8,7 @@ import {
 } from "@tanstack/react-table";
 import { useTanStackTableDevtools } from "@tanstack/react-table-devtools";
 
+import { Skeleton } from "@ovr/ui/components/skeleton";
 import { StatusIcon } from "@ovr/ui/components/status-icon";
 import {
   Table,
@@ -112,3 +113,45 @@ export const ApiKeysTable = ({ data }: ApiKeysTableProps) => {
     </TableContainer>
   );
 };
+
+type ApiKeysTableSkeletonColumn = {
+  header: string | null;
+  className?: string;
+};
+
+const API_KEYS_TABLE_SKELETON_COLUMNS: ApiKeysTableSkeletonColumn[] = [
+  { header: "Name" },
+  { header: "Owner" },
+  { header: "Created at" },
+  { header: "Last used" },
+  { header: null, className: "text-right" },
+];
+
+const API_KEYS_SKELETON_ROW_COUNT = 3;
+
+export const ApiKeysTableSkeleton = () => (
+  <TableContainer aria-hidden>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          {API_KEYS_TABLE_SKELETON_COLUMNS.map((column, index) => (
+            <TableHead key={index} className={column.className}>
+              {column.header}
+            </TableHead>
+          ))}
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {Array.from({ length: API_KEYS_SKELETON_ROW_COUNT }, (_, rowIndex) => (
+          <TableRow key={rowIndex}>
+            {API_KEYS_TABLE_SKELETON_COLUMNS.map((column, columnIndex) => (
+              <TableCell key={columnIndex} className={column.className}>
+                <Skeleton className="h-4 w-full" />
+              </TableCell>
+            ))}
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </TableContainer>
+);
