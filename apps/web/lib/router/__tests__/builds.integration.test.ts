@@ -289,6 +289,101 @@ describe("builds", () => {
     });
   });
 
+  describe("rebuild", () => {
+    const seedRebuildableBuild = async (projectId: string, userId: string) => {
+      const build = await dbClient.builds.create({
+        projectId,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: `${projectId}/builds/seed/artifact.tar.gz`,
+        createdBy: userId,
+        processingStatus: "success",
+      });
+
+      await storage.uploadFile(build!.artifactPath, Buffer.from("artifact"), "application/gzip");
+      await dbClient.buildExtractDefaults.create({
+        buildId: build!.id,
+        targets: [{ id: "story-a", title: "Story", name: "A" }],
+        viewports: VIEWPORTS,
+        diffThreshold: 0.05,
+      });
+
+      return build!;
+    };
+
+    test("should return UNAUTHORIZED when no session cookie is provided", async () => {
+      vi.mocked(headers).mockResolvedValue(new Headers());
+
+      const [error] = await serverClient.builds.rebuild({ buildId: uuidv7() });
+
+      expect(error?.code).toBe("UNAUTHORIZED");
+    });
+
+    test("should return FORBIDDEN for a viewer", async ({ viewer: _ }) => {
+      const [error] = await serverClient.builds.rebuild({ buildId: uuidv7() });
+
+      expect(error?.code).toBe("FORBIDDEN");
+    });
+
+    test("should return NOT_FOUND for a build outside the user's organization", async ({
+      admin: _,
+    }) => {
+      const [error] = await serverClient.builds.rebuild({ buildId: uuidv7() });
+
+      expect(error?.code).toBe("NOT_FOUND");
+    });
+
+    test("rebuilds the build and returns the new build's id", async ({ admin }) => {
+      const [, project] = await serverClient.projects.add(TEST_PROJECT);
+      const build = await seedRebuildableBuild(project!.projectId, admin.id);
+
+      const [error, result] = await serverClient.builds.rebuild({ buildId: build.id });
+
+      expect(error).toBeNull();
+      expect(result?.buildId).not.toBe(build.id);
+      expect(await dbClient.builds.findById(result!.buildId)).toMatchObject({
+        commitSha: build.commitSha,
+        processingStatus: "queued",
+        createdBy: admin.id,
+      });
+    });
+
+    test("should return CONFLICT when the build is still running", async ({ admin }) => {
+      const [, project] = await serverClient.projects.add(TEST_PROJECT);
+      const build = await seedRebuildableBuild(project!.projectId, admin.id);
+      await dbClient.builds.updateProcessingStatus(build.id, "processing");
+
+      const [error] = await serverClient.builds.rebuild({ buildId: build.id });
+
+      expect(error?.code).toBe("CONFLICT");
+    });
+
+    test("should return CONFLICT when a newer build has landed on the branch", async ({
+      admin,
+    }) => {
+      const [, project] = await serverClient.projects.add(TEST_PROJECT);
+      const build = await seedRebuildableBuild(project!.projectId, admin.id);
+      await seedRebuildableBuild(project!.projectId, admin.id);
+
+      const [error] = await serverClient.builds.rebuild({ buildId: build.id });
+
+      expect(error?.code).toBe("CONFLICT");
+      expect(error?.message).toContain("newer build");
+    });
+
+    test("should return PRECONDITION_FAILED when the artifact has been purged", async ({
+      admin,
+    }) => {
+      const [, project] = await serverClient.projects.add(TEST_PROJECT);
+      const build = await seedRebuildableBuild(project!.projectId, admin.id);
+      await storage.deleteFile(build.artifactPath);
+
+      const [error] = await serverClient.builds.rebuild({ buildId: build.id });
+
+      expect(error?.code).toBe("PRECONDITION_FAILED");
+    });
+  });
+
   describe("list", () => {
     test("should return UNAUTHORIZED when no session cookie is provided", async () => {
       vi.mocked(headers).mockResolvedValue(new Headers());
@@ -583,7 +678,32 @@ describe("builds", () => {
         branch: "main",
         commitSha: "a".repeat(40),
         status: "queued",
+        isRebuildable: false,
       });
+    });
+
+    test("reports a settled build with stored extract defaults as rebuildable", async ({
+      admin,
+    }) => {
+      const [, project] = await serverClient.projects.add(TEST_PROJECT);
+      const build = await dbClient.builds.create({
+        projectId: project!.projectId,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: admin.id,
+        processingStatus: "success",
+      });
+      await dbClient.buildExtractDefaults.create({
+        buildId: build!.id,
+        targets: [{ id: "story-a", title: "Story", name: "A" }],
+        viewports: VIEWPORTS,
+        diffThreshold: 0.05,
+      });
+
+      const [, result] = await serverClient.builds.getOne({ buildId: build!.id });
+
+      expect(result?.build).toMatchObject({ isRebuildable: true });
     });
   });
 });

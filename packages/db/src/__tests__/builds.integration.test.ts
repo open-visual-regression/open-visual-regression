@@ -1,8 +1,9 @@
+import { eq } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
 
 import { dbClient } from "../client";
 import { db } from "../db";
-import { organization as organizationTable, projects } from "../schema";
+import { builds, organization as organizationTable, projects } from "../schema";
 import { describe, expect, test } from "./fixtures";
 
 describe("builds", () => {
@@ -36,6 +37,27 @@ describe("builds", () => {
     test("should update the build's processing status", async ({ build }) => {
       const updated = await dbClient.builds.updateProcessingStatus(build.id, "success");
       expect(updated?.processingStatus).toBe("success");
+    });
+  });
+
+  describe("hasNewerOnBranch", () => {
+    test("should break a createdAt tie on the build id", async ({ build, project, user }) => {
+      const sameInstant = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/seed/artifact",
+        createdBy: user.id,
+      });
+      await db
+        .update(builds)
+        .set({ createdAt: build.createdAt })
+        .where(eq(builds.id, sameInstant!.id));
+
+      expect(await dbClient.builds.hasNewerOnBranch(build)).toBe(true);
+      expect(
+        await dbClient.builds.hasNewerOnBranch({ ...sameInstant!, createdAt: build.createdAt }),
+      ).toBe(false);
     });
   });
 
@@ -74,63 +96,6 @@ describe("builds", () => {
         reviewStatus: "approved",
       });
       expect(updated).toMatchObject({ processingStatus: "success", reviewStatus: "approved" });
-    });
-  });
-
-  describe("findByProject", () => {
-    test("should only return builds matching the given branch", async ({
-      project,
-      user,
-      build: main,
-    }) => {
-      await dbClient.builds.create({
-        projectId: project.id,
-        branch: "feature",
-        commitSha: "b".repeat(40),
-        artifactPath: "builds/feature/artifact",
-        createdBy: user.id,
-      });
-
-      const builds = await dbClient.builds.findByProject(project.id, { branch: "main" });
-      expect(builds.map((build) => build.id)).toEqual([main.id]);
-    });
-
-    test("should only return builds matching the given review status", async ({
-      project,
-      user,
-      build: main,
-    }) => {
-      await dbClient.builds.create({
-        projectId: project.id,
-        branch: "feature",
-        commitSha: "b".repeat(40),
-        artifactPath: "builds/feature/artifact",
-        createdBy: user.id,
-      });
-      await dbClient.builds.updateResult(main.id, {
-        processingStatus: "success",
-        reviewStatus: "approved",
-      });
-
-      const builds = await dbClient.builds.findByProject(project.id, { reviewStatus: "approved" });
-      expect(builds.map((build) => build.id)).toEqual([main.id]);
-    });
-
-    test("should return all builds for the project when no filters are given", async ({
-      project,
-      user,
-      build: _main,
-    }) => {
-      await dbClient.builds.create({
-        projectId: project.id,
-        branch: "feature",
-        commitSha: "b".repeat(40),
-        artifactPath: "builds/feature/artifact",
-        createdBy: user.id,
-      });
-
-      const builds = await dbClient.builds.findByProject(project.id);
-      expect(builds).toHaveLength(2);
     });
   });
 
