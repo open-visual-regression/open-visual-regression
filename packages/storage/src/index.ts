@@ -1,6 +1,7 @@
 import { Readable } from "node:stream";
 
 import {
+  CopyObjectCommand,
   DeleteObjectCommand,
   DeleteObjectsCommand,
   GetObjectCommand,
@@ -76,6 +77,16 @@ export const storage = {
 
   deleteFile: async (key: string): Promise<void> => {
     await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
+  },
+
+  copyObject: async (sourceKey: string, destinationKey: string): Promise<void> => {
+    await client.send(
+      new CopyObjectCommand({
+        Bucket: bucket,
+        Key: destinationKey,
+        CopySource: `${bucket}/${sourceKey}`,
+      }),
+    );
   },
 
   deletePrefix: async (prefix: string): Promise<void> => {

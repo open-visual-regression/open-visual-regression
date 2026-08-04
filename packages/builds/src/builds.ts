@@ -117,6 +117,12 @@ export const confirmBuildUpload = async (
   }
 
   try {
+    await dbClient.buildExtractDefaults.create({
+      buildId,
+      targets: input.targets,
+      viewports: input.viewports,
+      diffThreshold: input.diffThreshold,
+    });
     await enqueueExtract({
       buildId,
       artifactPath: build.artifactPath,
