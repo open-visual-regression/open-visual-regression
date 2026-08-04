@@ -8,7 +8,7 @@ export class BuildPage {
   }
 
   status(): Locator {
-    return this.page.locator('[role="status"]:not([aria-label="loading"])');
+    return this.page.getByRole("status", { name: "build status" });
   }
 
   cancelButton(): Locator {

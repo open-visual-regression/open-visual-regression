@@ -1,7 +1,7 @@
 import { expect, test } from "./fixtures";
 import { ingestStorybook } from "./support/ingest";
 
-test("should rebuild a completed build into a new build with its own real snapshots", async ({
+test("rebuilding a completed build produces a new build with matching snapshots", async ({
   page,
   buildPage,
   seed,
