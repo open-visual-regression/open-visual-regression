@@ -37,13 +37,6 @@ export const create = async ({ tx = db, ...values }: CreateInput) => {
 export const findById = (id: string) =>
   db.query.builds.findFirst({ where: (builds, { eq }) => eq(builds.id, id) });
 
-// Serializes rebuilds of the same build: the loser blocks here, then re-reads and
-// sees the rebuild the winner inserted.
-export const lockById = async (id: string, tx: DbClient) => {
-  const [build] = await tx.select().from(builds).where(eq(builds.id, id)).for("update");
-  return build;
-};
-
 type HasNewerOnBranchInput = {
   id: string;
   projectId: string;
@@ -51,11 +44,13 @@ type HasNewerOnBranchInput = {
   createdAt: string;
 };
 
-export const hasNewerOnBranch = async (
-  { id, projectId, branch, createdAt }: HasNewerOnBranchInput,
-  tx: DbClient = db,
-): Promise<boolean> => {
-  const [newer] = await tx
+export const hasNewerOnBranch = async ({
+  id,
+  projectId,
+  branch,
+  createdAt,
+}: HasNewerOnBranchInput): Promise<boolean> => {
+  const [newer] = await db
     .select({ id: builds.id })
     .from(builds)
     .where(
@@ -108,20 +103,21 @@ export const updateResult = async (id: string, result: UpdateResultInput) => {
   return build;
 };
 
-type FindByProjectOptions = {
+type FindByInput = {
+  projectId?: string;
   branch?: string;
   processingStatus?: BuildProcessingStatus;
   reviewStatus?: BuildReviewStatus;
 };
 
-export const findByProject = (projectId: string, opts: FindByProjectOptions = {}) =>
+export const findBy = (input: FindByInput = {}) =>
   db.query.builds.findMany({
     where: (builds, { and, eq }) =>
       and(
-        eq(builds.projectId, projectId),
-        opts.branch ? eq(builds.branch, opts.branch) : undefined,
-        opts.processingStatus ? eq(builds.processingStatus, opts.processingStatus) : undefined,
-        opts.reviewStatus ? eq(builds.reviewStatus, opts.reviewStatus) : undefined,
+        input.projectId ? eq(builds.projectId, input.projectId) : undefined,
+        input.branch ? eq(builds.branch, input.branch) : undefined,
+        input.processingStatus ? eq(builds.processingStatus, input.processingStatus) : undefined,
+        input.reviewStatus ? eq(builds.reviewStatus, input.reviewStatus) : undefined,
       ),
   });
 

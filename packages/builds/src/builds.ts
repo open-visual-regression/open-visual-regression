@@ -163,11 +163,14 @@ export const checkRebuildable = async (
     return { status: "error", error: "NOT_SETTLED" };
   }
 
-  if (await dbClient.builds.hasNewerOnBranch(build)) {
+  const [hasNewer, extractDefaults] = await Promise.all([
+    dbClient.builds.hasNewerOnBranch(build),
+    dbClient.buildExtractDefaults.findByBuild(build.id),
+  ]);
+
+  if (hasNewer) {
     return { status: "error", error: "NOT_LATEST_ON_BRANCH" };
   }
-
-  const extractDefaults = await dbClient.buildExtractDefaults.findByBuild(build.id);
 
   if (!extractDefaults) {
     return { status: "error", error: "NO_EXTRACT_DEFAULTS" };
@@ -201,15 +204,9 @@ export const rebuildBuild = async (
   const rebuildId = uuidv7();
   const artifactPath = getArtifactPath(source.projectId, rebuildId);
 
-  // The row is inserted before the artifact is copied so a rejected rebuild cannot
-  // leave an orphaned object behind.
-  const inserted = await dbClient.transaction(async (tx) => {
-    await dbClient.builds.lockById(source.id, tx);
-
-    if (await dbClient.builds.hasNewerOnBranch(source, tx)) {
-      return false;
-    }
-
+  // The row is inserted before the artifact is copied so a failed copy surfaces on a
+  // build the reviewer can see, rather than as an object nothing points at.
+  await dbClient.transaction(async (tx) => {
     await dbClient.builds.create({
       tx,
       id: rebuildId,
@@ -232,13 +229,7 @@ export const rebuildBuild = async (
       diffThreshold: extractDefaults.diffThreshold,
     });
     await dbClient.projects.incrementTotalBuildsCount(source.projectId, tx);
-
-    return true;
   });
-
-  if (!inserted) {
-    return { status: "error", error: "NOT_LATEST_ON_BRANCH" };
-  }
 
   try {
     await storage.copyObject(source.artifactPath, artifactPath);

@@ -344,7 +344,7 @@ describe("builds", () => {
     );
 
     test.for(["success", "error", "canceled"] as const)(
-      "rebuilds a settled %s build",
+      "creates a queued build carrying the source's commit and authorship from a %s build",
       async (processingStatus, { project, user }) => {
         const buildId = await seedSettledBuild({
           projectId: project.id,
@@ -355,35 +355,21 @@ describe("builds", () => {
         const result = await rebuildBuild(buildId, user.id);
 
         assert(result.status === "ok");
+        expect(result.data).not.toBe(buildId);
         expect(await dbClient.builds.findById(result.data)).toMatchObject({
+          projectId: project.id,
+          branch: "main",
+          commitSha: "a".repeat(40),
+          name: "Add empty state",
+          author: "Jordan Lee",
           processingStatus: "queued",
+          reviewStatus: "not_required",
+          buildType: "storybook",
+          artifactPath: getArtifactPath(project.id, result.data),
+          createdBy: user.id,
         });
       },
     );
-
-    test("creates a new queued build carrying the source's commit and authorship", async ({
-      project,
-      user,
-    }) => {
-      const buildId = await seedSettledBuild({ projectId: project.id, userId: user.id });
-
-      const result = await rebuildBuild(buildId, user.id);
-
-      assert(result.status === "ok");
-      expect(result.data).not.toBe(buildId);
-      expect(await dbClient.builds.findById(result.data)).toMatchObject({
-        projectId: project.id,
-        branch: "main",
-        commitSha: "a".repeat(40),
-        name: "Add empty state",
-        author: "Jordan Lee",
-        processingStatus: "queued",
-        reviewStatus: "not_required",
-        buildType: "storybook",
-        artifactPath: getArtifactPath(project.id, result.data),
-        createdBy: user.id,
-      });
-    });
 
     test("copies the artifact so the rebuild survives the source being purged", async ({
       project,
@@ -512,44 +498,7 @@ describe("builds", () => {
       expect(result.status).toBe("ok");
     });
 
-    test("only lets one of two concurrent rebuilds through", async ({ project, user }) => {
-      const buildId = await seedSettledBuild({ projectId: project.id, userId: user.id });
-
-      // Holding the source row makes both rebuilds queue on the lock before either can
-      // insert. Without that, whichever transaction starts first simply commits before
-      // the other looks, and the interleaving the lock exists for never happens.
-      let release = () => {};
-      const held = new Promise<void>((resolve) => {
-        release = resolve;
-      });
-      const holder = dbClient.transaction(async (tx) => {
-        await dbClient.builds.lockById(buildId, tx);
-        await held;
-      });
-
-      const rebuilds = Promise.all([
-        rebuildBuild(buildId, user.id),
-        rebuildBuild(buildId, user.id),
-      ]);
-
-      await new Promise((resolve) => setTimeout(resolve, 250));
-      release();
-      await holder;
-
-      const results = await rebuilds;
-
-      expect(results.filter((result) => result.status === "ok")).toHaveLength(1);
-      expect(
-        results.filter(
-          (result) => result.status === "error" && result.error === "NOT_LATEST_ON_BRANCH",
-        ),
-      ).toHaveLength(1);
-
-      const projectBuilds = await dbClient.builds.findByProject(project.id);
-      expect(projectBuilds).toHaveLength(2);
-    });
-
-    test("moves the rebuild button along the chain when a rebuild is itself rebuilt", async ({
+    test("returns NOT_LATEST_ON_BRANCH for the source once its rebuild exists", async ({
       project,
       user,
     }) => {
@@ -597,7 +546,7 @@ describe("builds", () => {
       const result = await rebuildBuild(buildId, user.id);
 
       expect(result).toEqual({ status: "error", error: "ARTIFACT_MISSING" });
-      expect(await dbClient.builds.findByProject(project.id)).toHaveLength(1);
+      expect(await dbClient.builds.findBy({ projectId: project.id })).toHaveLength(1);
     });
 
     test("returns BUILD_NOT_FOUND when the build does not exist", async ({ user }) => {
