@@ -109,7 +109,7 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
           build={build}
           snapshotCounts={snapshotCounts}
           storybookHref={storybookHref}
-          canReview={canReview(session?.user.role)}
+          canManageBuild={canReview(session?.user.role)}
         />
       }
       filters={

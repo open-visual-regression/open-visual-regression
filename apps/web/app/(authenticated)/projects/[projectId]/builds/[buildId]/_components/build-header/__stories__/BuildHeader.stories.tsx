@@ -11,7 +11,7 @@ const meta: Meta<typeof BuildHeader> = {
   tags: ["autodocs"],
   args: {
     storybookHref: "/api/storybook/mock-build/index.html",
-    canReview: true,
+    canManageBuild: true,
   },
   parameters: {
     ovr: {
@@ -52,6 +52,39 @@ export const NeedsReview: Story = {
   },
 };
 
+export const Rebuildable: Story = {
+  args: {
+    build: mocks.build.generateBuild({
+      ...buildOverrides,
+      status: "needs_review",
+      isRebuildable: true,
+    }),
+    snapshotCounts,
+  },
+};
+
+export const RebuildableAfterError: Story = {
+  args: {
+    build: mocks.build.generateBuild({
+      ...buildOverrides,
+      status: "error",
+      errorMessage: "Build failed: unable to connect to the test runner.",
+      isRebuildable: true,
+    }),
+    snapshotCounts: {
+      unchanged: 0,
+      auto_approved: 0,
+      approved: 0,
+      needs_review: 0,
+      rejected: 0,
+      error: 0,
+      canceled: 0,
+      queued: 0,
+      processing: 0,
+    },
+  },
+};
+
 export const Viewer: Story = {
   args: {
     build: mocks.build.generateBuild({
@@ -59,7 +92,7 @@ export const Viewer: Story = {
       status: "needs_review",
     }),
     snapshotCounts,
-    canReview: false,
+    canManageBuild: false,
   },
 };
 

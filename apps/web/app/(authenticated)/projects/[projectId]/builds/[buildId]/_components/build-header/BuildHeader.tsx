@@ -21,6 +21,7 @@ import { formatRelativeDateTime } from "@/lib/utils/date";
 
 import { BuildApproveButton } from "./BuildApproveButton";
 import { BuildCancelButton } from "./BuildCancelButton";
+import { BuildRebuildButton } from "./BuildRebuildButton";
 import { BuildRejectButton } from "./BuildRejectButton";
 import { BuildStatusStream } from "./BuildStatusStream";
 
@@ -28,14 +29,14 @@ export type BuildHeaderProps = {
   build: BuildDetailSchema;
   snapshotCounts: Record<SnapshotDisplayStatus, number>;
   storybookHref: string | null;
-  canReview: boolean;
+  canManageBuild: boolean;
 };
 
 export const BuildHeader = ({
   build,
   snapshotCounts,
   storybookHref,
-  canReview,
+  canManageBuild,
 }: BuildHeaderProps) => {
   const total = Object.values(snapshotCounts).reduce((sum, count) => sum + count, 0);
   const hasReviewable =
@@ -43,8 +44,11 @@ export const BuildHeader = ({
   const isCancelable = build.status === "queued" || build.status === "processing";
   const isCanceled = build.status === "canceled";
   const hasProcessingError = build.status === "error";
-  const showActions =
-    canReview && (isCancelable || (!isCanceled && !hasProcessingError && hasReviewable));
+  const showCancel = canManageBuild && isCancelable;
+  const showRebuild = canManageBuild && !isCancelable && build.isRebuildable;
+  const showReviewActions =
+    canManageBuild && !isCancelable && !isCanceled && !hasProcessingError && hasReviewable;
+  const showActions = showCancel || showRebuild || showReviewActions;
 
   return (
     <div className="flex flex-col gap-6">
@@ -92,14 +96,16 @@ export const BuildHeader = ({
         </div>
         {showActions ? (
           <div className="flex w-full flex-row gap-2 md:order-2 md:w-auto">
-            {isCancelable ? (
-              <BuildCancelButton buildId={build.id} />
-            ) : (
+            {showCancel ? <BuildCancelButton buildId={build.id} /> : null}
+            {showRebuild ? (
+              <BuildRebuildButton buildId={build.id} projectId={build.project.id} />
+            ) : null}
+            {showReviewActions ? (
               <>
                 <BuildRejectButton buildId={build.id} rejected={build.status === "rejected"} />
                 <BuildApproveButton buildId={build.id} approved={build.status === "approved"} />
               </>
-            )}
+            ) : null}
           </div>
         ) : null}
       </div>
