@@ -11,14 +11,14 @@
   },
   "dependencies": {
     "@open-visual-regression/cli": "workspace:*",
-    "@orpc/client": "^1.14.6",
-    "@orpc/contract": "^1.14.6",
+    "@orpc/client": "^1.14.14",
+    "@orpc/contract": "^1.14.14",
     "@ovr/api": "workspace:*"
   },
   "devDependencies": {
     "@ovr/typescript-config": "workspace:*",
-    "@playwright/test": "^1.61.0",
-    "@types/node": "^22.15.3",
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^22.20.1",
     "typescript": "6.0.3"
   }
 }
