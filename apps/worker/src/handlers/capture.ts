@@ -4,9 +4,13 @@ import type { CaptureGroupJobPayload } from "@ovr/queue";
 
 type CaptureGroupJob = { data: CaptureGroupJobPayload };
 
-export const run = async (job: CaptureGroupJob): Promise<void> => {
-  await captureBuildGroup(job.data.buildId, job.data.browser, job.data.snapshotIds);
-};
+export const createRun =
+  (shutdownSignal: AbortSignal) =>
+  async (job: CaptureGroupJob): Promise<void> => {
+    await captureBuildGroup(job.data.buildId, job.data.browser, job.data.snapshotIds, {
+      shutdownSignal,
+    });
+  };
 
 export const failed = async (job: CaptureGroupJob, error: Error): Promise<void> => {
   for (const snapshotId of job.data.snapshotIds) {
