@@ -812,6 +812,38 @@ describe("snapshots", () => {
       const restarted = await dbClient.snapshots.listForBuild(build.id, { limit: 2 });
       expect(restarted.snapshots.map((row) => row.id)).toContain(promoted.id);
     });
+
+    test("orders by status tier before title/name/browser/viewport", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      await seedReviewQueue(build, captureConfiguration);
+
+      const results = await dbClient.snapshots.listForBuild(build.id, { limit: 10 });
+      expect(results.snapshots.map((row) => row.targetId)).toEqual(["d", "a", "b", "c"]);
+      expect(results.snapshots.map((row) => row.status)).toEqual([
+        "error",
+        "needs_review",
+        "rejected",
+        "unchanged",
+      ]);
+    });
+
+    test("preserves position when status changes within the same priority tier", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const { first } = await seedReviewQueue(build, captureConfiguration);
+
+      const before = await dbClient.snapshots.listForBuild(build.id, { limit: 10 });
+      expect(before.snapshots.map((row) => row.targetId)).toEqual(["d", "a", "b", "c"]);
+
+      const diff = await dbClient.diffs.findBySnapshot(first.id);
+      await dbClient.diffs.updateReviewStatus(diff!.id, "approved");
+
+      const after = await dbClient.snapshots.listForBuild(build.id, { limit: 10 });
+      expect(after.snapshots.map((row) => row.targetId)).toEqual(["d", "a", "b", "c"]);
+    });
   });
 
   describe("findStatuses", () => {
@@ -946,40 +978,6 @@ describe("snapshots", () => {
 
       const after = await dbClient.snapshots.findAdjacentReviewableIds(build.id, first.id);
       expect(after).toEqual({ prevId: null, nextId: second.id, position: 1, total: 2 });
-    });
-  });
-
-  describe("listForBuild default sort", () => {
-    test("orders by status tier before title/name/browser/viewport", async ({
-      build,
-      captureConfiguration,
-    }) => {
-      await seedReviewQueue(build, captureConfiguration);
-
-      const results = await dbClient.snapshots.listForBuild(build.id, { limit: 10 });
-      expect(results.snapshots.map((row) => row.targetId)).toEqual(["d", "a", "b", "c"]);
-      expect(results.snapshots.map((row) => row.status)).toEqual([
-        "error",
-        "needs_review",
-        "rejected",
-        "unchanged",
-      ]);
-    });
-
-    test("preserves position when status changes within the same priority tier", async ({
-      build,
-      captureConfiguration,
-    }) => {
-      const { first } = await seedReviewQueue(build, captureConfiguration);
-
-      const before = await dbClient.snapshots.listForBuild(build.id, { limit: 10 });
-      expect(before.snapshots.map((row) => row.targetId)).toEqual(["d", "a", "b", "c"]);
-
-      const diff = await dbClient.diffs.findBySnapshot(first.id);
-      await dbClient.diffs.updateReviewStatus(diff!.id, "approved");
-
-      const after = await dbClient.snapshots.listForBuild(build.id, { limit: 10 });
-      expect(after.snapshots.map((row) => row.targetId)).toEqual(["d", "a", "b", "c"]);
     });
   });
 });
