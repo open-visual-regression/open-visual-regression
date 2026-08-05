@@ -1,7 +1,7 @@
 import { type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
 import { type SnapshotsCursor } from "@ovr/api/contracts/snapshots";
 
-export const SNAPSHOTS_PAGE_SIZE = 36;
+export const SNAPSHOTS_PAGE_SIZE = 60;
 
 export type SnapshotsListFilters = {
   statuses?: SnapshotDisplayStatus[];
