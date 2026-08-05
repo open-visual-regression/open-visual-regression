@@ -350,7 +350,11 @@ describe("diffs", () => {
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "a" }],
       });
-      await dbClient.diffs.create({ snapshotId: snapshot!.id, reviewStatus: "needs_review" });
+      await dbClient.diffs.create({
+        snapshotId: snapshot!.id,
+        processingStatus: "success",
+        reviewStatus: "needs_review",
+      });
 
       await bulkCastVote(mainBuild.id, reviewer.id, "approve");
 

@@ -66,7 +66,11 @@ const createAwaitingDiff = async (buildId: string, viewport: typeof VIEWPORT, ta
   const [snapshot] = await dbClient.snapshots.createMany({
     values: [{ buildId, ...viewport, targetId }],
   });
-  return dbClient.diffs.create({ snapshotId: snapshot!.id, reviewStatus: "needs_review" });
+  return dbClient.diffs.create({
+    snapshotId: snapshot!.id,
+    processingStatus: "success",
+    reviewStatus: "needs_review",
+  });
 };
 
 describe("diffs", () => {
