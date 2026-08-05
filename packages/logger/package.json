@@ -23,8 +23,8 @@
   },
   "devDependencies": {
     "@ovr/typescript-config": "workspace:*",
-    "@types/node": "^22.15.3",
+    "@types/node": "^22.20.1",
     "typescript": "6.0.3",
-    "vitest": "^4.1.7"
+    "vitest": "^4.1.10"
   }
 }
