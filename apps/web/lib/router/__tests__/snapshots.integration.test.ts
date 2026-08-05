@@ -318,7 +318,7 @@ describe("snapshots", () => {
       expect(result?.snapshots).toHaveLength(3);
     });
 
-    test("paginates with limit/offset", async ({ admin }) => {
+    test("pages through every snapshot exactly once", async ({ admin }) => {
       const { build } = await createProjectAndBuild(admin);
 
       await dbClient.snapshots.createMany({
@@ -329,15 +329,44 @@ describe("snapshots", () => {
         ],
       });
 
-      const [error, result] = await serverClient.snapshots.list({
+      const [firstError, firstPage] = await serverClient.snapshots.list({
         buildId: build.id,
         limit: 2,
-        offset: 1,
       });
 
-      expect(error).toBeNull();
-      expect(result?.total).toBe(3);
-      expect(result?.snapshots).toHaveLength(2);
+      expect(firstError).toBeNull();
+      expect(firstPage?.total).toBe(3);
+      expect(firstPage?.snapshots).toHaveLength(2);
+      expect(firstPage?.nextCursor).not.toBeNull();
+
+      const [secondError, secondPage] = await serverClient.snapshots.list({
+        buildId: build.id,
+        limit: 2,
+        cursor: firstPage?.nextCursor ?? undefined,
+      });
+
+      expect(secondError).toBeNull();
+      expect(secondPage?.snapshots).toHaveLength(1);
+      expect(secondPage?.nextCursor).toBeNull();
+
+      const seen = [...firstPage!.snapshots, ...secondPage!.snapshots].map(
+        (snapshot) => snapshot.targetId,
+      );
+      expect(seen).toEqual(["a", "b", "c"]);
+    });
+
+    test("rejects a sortBy with mixed directions", async ({ admin }) => {
+      const { build } = await createProjectAndBuild(admin);
+
+      const [error] = await serverClient.snapshots.list({
+        buildId: build.id,
+        sortBy: [
+          { column: "targetTitle", direction: "asc" },
+          { column: "targetName", direction: "desc" },
+        ],
+      });
+
+      expect(error?.code).toBe("BAD_REQUEST");
     });
 
     test("sorts by the given sortBy column and direction", async ({ admin }) => {

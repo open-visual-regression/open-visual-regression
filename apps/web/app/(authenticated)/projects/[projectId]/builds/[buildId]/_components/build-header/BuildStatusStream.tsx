@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 
@@ -18,6 +18,7 @@ type BuildStatusStreamProps = {
 
 export const BuildStatusStream = ({ buildId, initialStatus }: BuildStatusStreamProps) => {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { data } = useQuery(
     orpc.builds.watchStatus.experimental_liveOptions({
       input: { buildId },
@@ -33,9 +34,16 @@ export const BuildStatusStream = ({ buildId, initialStatus }: BuildStatusStreamP
       return;
     }
     refreshedStatus.current = status;
-    const timeout = setTimeout(() => router.refresh(), REFRESH_DEBOUNCE_MS);
+    const timeout = setTimeout(() => {
+      router.refresh();
+      // The snapshot grid is owned by its own infinite query and seeded with
+      // `initialData`, so a route refresh alone leaves already-loaded cards
+      // showing stale statuses. Invalidating refetches every loaded page,
+      // re-deriving each cursor from the page before it.
+      void queryClient.invalidateQueries({ queryKey: orpc.snapshots.list.key() });
+    }, REFRESH_DEBOUNCE_MS);
     return () => clearTimeout(timeout);
-  }, [status, router]);
+  }, [status, router, queryClient]);
 
   return (
     <span role="status" aria-label="build status" className="inline-flex">

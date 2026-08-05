@@ -201,6 +201,10 @@ export const findViewports = async (buildId: string): Promise<string[]> => {
 // needs_review/rejected/approved share a tier so that reviewing a snapshot
 // (which changes its reviewStatus) can't move it past its neighbors and
 // reorder the grid or shift prev/next navigation underneath the reviewer.
+// The `else` is load-bearing, not defensive tidiness: this expression is the
+// first term of the keyset cursor's row-value comparison, and a NULL operand
+// there makes the whole comparison NULL — silently dropping the row from every
+// subsequent page.
 const statusPriorityExpr = sql<number>`case (${displayStatusExpr})
   when 'error' then 1
   when 'needs_review' then 2
@@ -211,6 +215,7 @@ const statusPriorityExpr = sql<number>`case (${displayStatusExpr})
   when 'processing' then 4
   when 'queued' then 5
   when 'canceled' then 6
+  else 7
 end`;
 
 export const snapshotSortColumns = {
@@ -235,6 +240,55 @@ export const defaultSnapshotSortBy: SnapshotSort[] = [
   { column: "viewportWidth", direction: "asc" },
 ];
 
+export type SnapshotsCursor = {
+  statusPriority: number;
+  targetTitle: string;
+  targetName: string;
+  browser: string;
+  viewportWidth: number;
+  id: string;
+};
+
+const cursorValues: Record<
+  SnapshotSortColumn,
+  (cursor: SnapshotsCursor) => ReturnType<typeof sql>
+> = {
+  status: (cursor) => sql`${cursor.statusPriority}::int`,
+  targetTitle: (cursor) => sql`${cursor.targetTitle}::text`,
+  targetName: (cursor) => sql`${cursor.targetName}::text`,
+  browser: (cursor) => sql`${cursor.browser}::text`,
+  viewportWidth: (cursor) => sql`${cursor.viewportWidth}::int`,
+};
+
+// The five sort keys are not unique, so rows tying on all of them are otherwise
+// ordered at the planner's discretion — which keyset pagination cannot tolerate.
+// `id` (uuidv7, primary key) makes the ordering total.
+const getOrderBy = (sortBy: SnapshotSort[]) => [
+  ...sortBy.map(({ column, direction }) =>
+    (direction === "desc" ? desc : asc)(snapshotSortColumns[column]),
+  ),
+  (sortBy[0]?.direction === "desc" ? desc : asc)(snapshots.id),
+];
+
+// Built from `sortBy` rather than the default column order, so a caller passing
+// a different sort can't leave the comparison misaligned with the ORDER BY.
+// Callers guarantee a uniform direction (enforced in the contract), which is
+// what lets this be a single row-value comparison.
+const getCursorFilter = (cursor: SnapshotsCursor, sortBy: SnapshotSort[]) => {
+  const columns = sql.join(
+    [...sortBy.map(({ column }) => snapshotSortColumns[column]), snapshots.id],
+    sql`, `,
+  );
+  const values = sql.join(
+    [...sortBy.map(({ column }) => cursorValues[column](cursor)), sql`${cursor.id}::uuid`],
+    sql`, `,
+  );
+
+  return sortBy[0]?.direction === "desc"
+    ? sql`(${columns}) < (${values})`
+    : sql`(${columns}) > (${values})`;
+};
+
 export type AdjacentSnapshotIds = {
   prevId: string | null;
   nextId: string | null;
@@ -246,10 +300,15 @@ export const findAdjacentReviewableIds = async (
   buildId: string,
   snapshotId: string,
 ): Promise<AdjacentSnapshotIds> => {
+  // Same total ordering the grid pages through, `id` tiebreaker included, so
+  // prev/next walks the list in exactly the order the user sees.
   const orderBy = sql.join(
-    defaultSnapshotSortBy.map(
-      ({ column, direction }) => sql`${snapshotSortColumns[column]} ${sql.raw(direction)}`,
-    ),
+    [
+      ...defaultSnapshotSortBy.map(
+        ({ column, direction }) => sql`${snapshotSortColumns[column]} ${sql.raw(direction)}`,
+      ),
+      sql`${snapshots.id} asc`,
+    ],
     sql`, `,
   );
 
@@ -286,10 +345,10 @@ export const findAdjacentReviewableIds = async (
 export type ListForBuildOptions = ListForBuildFilters & {
   sortBy?: SnapshotSort[];
   limit: number;
-  offset: number;
+  cursor?: SnapshotsCursor;
 };
 
-export const listForBuild = (
+export const listForBuild = async (
   buildId: string,
   {
     statuses,
@@ -298,10 +357,10 @@ export const listForBuild = (
     search,
     sortBy = defaultSnapshotSortBy,
     limit,
-    offset,
+    cursor,
   }: ListForBuildOptions,
-) =>
-  db
+) => {
+  const rows = await db
     .select({
       id: snapshots.id,
       targetId: snapshots.targetId,
@@ -313,20 +372,42 @@ export const listForBuild = (
       viewportName: snapshots.viewportName,
       imagePath: snapshots.imagePath,
       status: displayStatusExpr,
+      statusPriority: statusPriorityExpr,
       diffId: diffs.id,
       diffImagePath: diffs.diffImagePath,
       diffPercent: diffs.diffPercent,
     })
     .from(snapshots)
     .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
-    .where(listForBuildWhere(buildId, { statuses, browsers, viewports, search }))
-    .orderBy(
-      ...sortBy.map(({ column, direction }) =>
-        (direction === "desc" ? desc : asc)(snapshotSortColumns[column]),
+    .where(
+      and(
+        listForBuildWhere(buildId, { statuses, browsers, viewports, search }),
+        cursor ? getCursorFilter(cursor, sortBy) : undefined,
       ),
     )
-    .limit(limit)
-    .offset(offset);
+    .orderBy(...getOrderBy(sortBy))
+    // One extra row tells us whether another page exists without a second query.
+    .limit(limit + 1);
+
+  const hasMore = rows.length > limit;
+  const pageRows = hasMore ? rows.slice(0, limit) : rows;
+  const lastRow = pageRows.at(-1);
+
+  return {
+    snapshots: pageRows,
+    nextCursor:
+      hasMore && lastRow
+        ? {
+            statusPriority: Number(lastRow.statusPriority),
+            targetTitle: lastRow.targetTitle,
+            targetName: lastRow.targetName,
+            browser: lastRow.browser,
+            viewportWidth: lastRow.viewportWidth,
+            id: lastRow.id,
+          }
+        : null,
+  };
+};
 
 export const countForBuild = async (buildId: string, filters: ListForBuildFilters = {}) => {
   const [result] = await db

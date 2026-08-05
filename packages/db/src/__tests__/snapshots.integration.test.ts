@@ -1,4 +1,5 @@
 import { dbClient } from "../client";
+import { type SnapshotsCursor } from "../repository/snapshots";
 import { describe, expect, test } from "./fixtures";
 
 const seedReviewQueue = async (
@@ -442,9 +443,8 @@ describe("snapshots", () => {
       const needsReviewOnly = await dbClient.snapshots.listForBuild(build.id, {
         statuses: ["needs_review"],
         limit: 10,
-        offset: 0,
       });
-      expect(needsReviewOnly.map((row) => row.targetId)).toEqual(["checkout"]);
+      expect(needsReviewOnly.snapshots.map((row) => row.targetId)).toEqual(["checkout"]);
       expect(await dbClient.snapshots.countForBuild(build.id, { statuses: ["needs_review"] })).toBe(
         1,
       );
@@ -456,10 +456,9 @@ describe("snapshots", () => {
       const results = await dbClient.snapshots.listForBuild(build.id, {
         statuses: ["needs_review", "unchanged"],
         limit: 10,
-        offset: 0,
       });
 
-      expect(results.map((row) => row.targetId).sort()).toEqual(["checkout", "home"]);
+      expect(results.snapshots.map((row) => row.targetId).sort()).toEqual(["checkout", "home"]);
     });
 
     test("filters by search across target title and name", async ({
@@ -471,9 +470,8 @@ describe("snapshots", () => {
       const searched = await dbClient.snapshots.listForBuild(build.id, {
         search: "home",
         limit: 10,
-        offset: 0,
       });
-      expect(searched.map((row) => row.targetId)).toEqual(["home"]);
+      expect(searched.snapshots.map((row) => row.targetId)).toEqual(["home"]);
     });
 
     test("filters by browser", async ({ build, captureConfiguration }) => {
@@ -501,10 +499,9 @@ describe("snapshots", () => {
       const results = await dbClient.snapshots.listForBuild(build.id, {
         browsers: ["firefox"],
         limit: 10,
-        offset: 0,
       });
 
-      expect(results.map((row) => row.targetId)).toEqual(["checkout"]);
+      expect(results.snapshots.map((row) => row.targetId)).toEqual(["checkout"]);
       expect(await dbClient.snapshots.countForBuild(build.id, { browsers: ["firefox"] })).toBe(1);
     });
 
@@ -533,21 +530,28 @@ describe("snapshots", () => {
       const results = await dbClient.snapshots.listForBuild(build.id, {
         viewports: ["mobile"],
         limit: 10,
-        offset: 0,
       });
 
-      expect(results.map((row) => row.targetId)).toEqual(["checkout"]);
+      expect(results.snapshots.map((row) => row.targetId)).toEqual(["checkout"]);
       expect(await dbClient.snapshots.countForBuild(build.id, { viewports: ["mobile"] })).toBe(1);
     });
 
-    test("paginates results with limit and offset", async ({ build, captureConfiguration }) => {
+    test("pages through results with a cursor", async ({ build, captureConfiguration }) => {
       await seedHomeAndCheckout(build, captureConfiguration);
 
-      const firstPage = await dbClient.snapshots.listForBuild(build.id, { limit: 1, offset: 0 });
-      const secondPage = await dbClient.snapshots.listForBuild(build.id, { limit: 1, offset: 1 });
-      expect(firstPage).toHaveLength(1);
-      expect(secondPage).toHaveLength(1);
-      expect(firstPage[0]!.id).not.toBe(secondPage[0]!.id);
+      const firstPage = await dbClient.snapshots.listForBuild(build.id, { limit: 1 });
+      expect(firstPage.snapshots).toHaveLength(1);
+      expect(firstPage.nextCursor).not.toBeNull();
+
+      const secondPage = await dbClient.snapshots.listForBuild(build.id, {
+        limit: 1,
+        cursor: firstPage.nextCursor ?? undefined,
+      });
+      expect(secondPage.snapshots).toHaveLength(1);
+      expect(secondPage.snapshots[0]!.id).not.toBe(firstPage.snapshots[0]!.id);
+
+      // Only two snapshots exist, so the second page is the last one.
+      expect(secondPage.nextCursor).toBeNull();
       expect(await dbClient.snapshots.countForBuild(build.id)).toBe(2);
     });
 
@@ -637,8 +641,8 @@ describe("snapshots", () => {
 
       expect(errorSnapshot).toBeTruthy();
 
-      const results = await dbClient.snapshots.listForBuild(build.id, { limit: 10, offset: 0 });
-      expect(results.map((row) => row.targetId)).toEqual([
+      const results = await dbClient.snapshots.listForBuild(build.id, { limit: 10 });
+      expect(results.snapshots.map((row) => row.targetId)).toEqual([
         "error",
         "needs_review",
         "rejected",
@@ -671,8 +675,8 @@ describe("snapshots", () => {
         ],
       });
 
-      const results = await dbClient.snapshots.listForBuild(build.id, { limit: 10, offset: 0 });
-      expect(results.map((row) => row.targetId)).toEqual(["checkout", "home"]);
+      const results = await dbClient.snapshots.listForBuild(build.id, { limit: 10 });
+      expect(results.snapshots.map((row) => row.targetId)).toEqual(["checkout", "home"]);
     });
 
     const createSortableRows = (
@@ -713,9 +717,8 @@ describe("snapshots", () => {
       const results = await dbClient.snapshots.listForBuild(build.id, {
         sortBy: [{ column: "targetName", direction: "asc" }],
         limit: 10,
-        offset: 0,
       });
-      expect(results.map((row) => row.targetId)).toEqual(["row-b-title", "row-a-title"]);
+      expect(results.snapshots.map((row) => row.targetId)).toEqual(["row-b-title", "row-a-title"]);
     });
 
     test("sorts by browser when requested", async ({ build, captureConfiguration }) => {
@@ -724,9 +727,8 @@ describe("snapshots", () => {
       const results = await dbClient.snapshots.listForBuild(build.id, {
         sortBy: [{ column: "browser", direction: "asc" }],
         limit: 10,
-        offset: 0,
       });
-      expect(results.map((row) => row.targetId)).toEqual(["row-b-title", "row-a-title"]);
+      expect(results.snapshots.map((row) => row.targetId)).toEqual(["row-b-title", "row-a-title"]);
     });
 
     test("sorts by viewportWidth when requested", async ({ build, captureConfiguration }) => {
@@ -735,9 +737,8 @@ describe("snapshots", () => {
       const results = await dbClient.snapshots.listForBuild(build.id, {
         sortBy: [{ column: "viewportWidth", direction: "asc" }],
         limit: 10,
-        offset: 0,
       });
-      expect(results.map((row) => row.targetId)).toEqual(["row-a-title", "row-b-title"]);
+      expect(results.snapshots.map((row) => row.targetId)).toEqual(["row-a-title", "row-b-title"]);
     });
 
     test("reverses order when direction is desc", async ({ build, captureConfiguration }) => {
@@ -746,9 +747,8 @@ describe("snapshots", () => {
       const results = await dbClient.snapshots.listForBuild(build.id, {
         sortBy: [{ column: "targetTitle", direction: "desc" }],
         limit: 10,
-        offset: 0,
       });
-      expect(results.map((row) => row.targetId)).toEqual(["row-b-title", "row-a-title"]);
+      expect(results.snapshots.map((row) => row.targetId)).toEqual(["row-b-title", "row-a-title"]);
     });
   });
 
@@ -894,9 +894,9 @@ describe("snapshots", () => {
     }) => {
       await seedReviewQueue(build, captureConfiguration);
 
-      const results = await dbClient.snapshots.listForBuild(build.id, { limit: 10, offset: 0 });
-      expect(results.map((row) => row.targetId)).toEqual(["d", "a", "b", "c"]);
-      expect(results.map((row) => row.status)).toEqual([
+      const results = await dbClient.snapshots.listForBuild(build.id, { limit: 10 });
+      expect(results.snapshots.map((row) => row.targetId)).toEqual(["d", "a", "b", "c"]);
+      expect(results.snapshots.map((row) => row.status)).toEqual([
         "error",
         "needs_review",
         "rejected",
@@ -910,14 +910,166 @@ describe("snapshots", () => {
     }) => {
       const { first } = await seedReviewQueue(build, captureConfiguration);
 
-      const before = await dbClient.snapshots.listForBuild(build.id, { limit: 10, offset: 0 });
-      expect(before.map((row) => row.targetId)).toEqual(["d", "a", "b", "c"]);
+      const before = await dbClient.snapshots.listForBuild(build.id, { limit: 10 });
+      expect(before.snapshots.map((row) => row.targetId)).toEqual(["d", "a", "b", "c"]);
 
       const diff = await dbClient.diffs.findBySnapshot(first.id);
       await dbClient.diffs.updateReviewStatus(diff!.id, "approved");
 
-      const after = await dbClient.snapshots.listForBuild(build.id, { limit: 10, offset: 0 });
-      expect(after.map((row) => row.targetId)).toEqual(["d", "a", "b", "c"]);
+      const after = await dbClient.snapshots.listForBuild(build.id, { limit: 10 });
+      expect(after.snapshots.map((row) => row.targetId)).toEqual(["d", "a", "b", "c"]);
+    });
+  });
+
+  describe("listForBuild cursor pagination", () => {
+    // Walks every page the way the grid does, following each nextCursor.
+    const pageThrough = async (buildId: string, limit: number) => {
+      const seen: string[] = [];
+      let cursor: SnapshotsCursor | null = null;
+
+      do {
+        const page = await dbClient.snapshots.listForBuild(buildId, {
+          limit,
+          cursor: cursor ?? undefined,
+        });
+        seen.push(...page.snapshots.map((row) => row.targetId));
+        cursor = page.nextCursor;
+      } while (cursor);
+
+      return seen;
+    };
+
+    test("returns every snapshot exactly once across pages", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      await dbClient.snapshots.createMany({
+        values: Array.from({ length: 25 }, (_, index) => ({
+          buildId: build.id,
+          ...captureConfiguration,
+          targetId: `story-${String(index).padStart(2, "0")}`,
+          targetTitle: `Story ${String(index).padStart(2, "0")}`,
+          targetName: `story-${String(index).padStart(2, "0")}`,
+        })),
+      });
+
+      const seen = await pageThrough(build.id, 4);
+
+      expect(seen).toHaveLength(25);
+      expect(new Set(seen).size).toBe(25);
+    });
+
+    test("keeps paging correct when every sort key ties", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      // Identical on all five sort keys — only the `id` tiebreaker separates them.
+      await dbClient.snapshots.createMany({
+        values: Array.from({ length: 10 }, () => ({
+          buildId: build.id,
+          ...captureConfiguration,
+          targetId: "same",
+          targetTitle: "Same",
+          targetName: "same",
+        })),
+      });
+
+      const seen: string[] = [];
+      let cursor: SnapshotsCursor | null = null;
+
+      do {
+        const page = await dbClient.snapshots.listForBuild(build.id, {
+          limit: 3,
+          cursor: cursor ?? undefined,
+        });
+        seen.push(...page.snapshots.map((row) => row.id));
+        cursor = page.nextCursor;
+      } while (cursor);
+
+      expect(seen).toHaveLength(10);
+      expect(new Set(seen).size).toBe(10);
+    });
+
+    test("does not drop or duplicate a row when a snapshot is reviewed mid-scroll", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const created = await dbClient.snapshots.createMany({
+        values: Array.from({ length: 6 }, (_, index) => ({
+          buildId: build.id,
+          ...captureConfiguration,
+          targetId: `story-${index}`,
+          targetTitle: `Story ${index}`,
+          targetName: `story-${index}`,
+          status: "success" as const,
+        })),
+      });
+
+      for (const snapshot of created) {
+        await dbClient.diffs.create({
+          snapshotId: snapshot.id,
+          processingStatus: "success",
+          reviewStatus: "needs_review",
+        });
+      }
+
+      const firstPage = await dbClient.snapshots.listForBuild(build.id, { limit: 3 });
+
+      // Reviewing must not move a row between tiers — that is what makes the
+      // settled-build pagination guarantee hold.
+      const diff = await dbClient.diffs.findBySnapshot(firstPage.snapshots[0]!.id);
+      await dbClient.diffs.updateReviewStatus(diff!.id, "approved");
+
+      const secondPage = await dbClient.snapshots.listForBuild(build.id, {
+        limit: 3,
+        cursor: firstPage.nextCursor ?? undefined,
+      });
+
+      const seen = [...firstPage.snapshots, ...secondPage.snapshots].map((row) => row.targetId);
+      expect(seen).toHaveLength(6);
+      expect(new Set(seen).size).toBe(6);
+    });
+
+    test("drops a snapshot that finishes into a higher tier mid-scroll, until paging restarts", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      // Documents a known, accepted limitation rather than a guarantee: the sort
+      // key mutates while a build processes, so a row promoted above the cursor
+      // is missed by later pages. It reappears once paging starts over, which is
+      // what the build-status invalidation triggers. If the status tiers are ever
+      // reworked, this failing will be the signal to revisit pagination.
+      const created = await dbClient.snapshots.createMany({
+        values: Array.from({ length: 6 }, (_, index) => ({
+          buildId: build.id,
+          ...captureConfiguration,
+          targetId: `story-${index}`,
+          targetTitle: `Story ${index}`,
+          targetName: `story-${index}`,
+        })),
+      });
+
+      // All still `queued` (tier 5), so page 1 holds the lowest-sorting three.
+      const firstPage = await dbClient.snapshots.listForBuild(build.id, { limit: 3 });
+      const promoted = created.at(-1)!;
+
+      // Finishing promotes it to `needs_review` (tier 2) — above page 1's cursor.
+      await dbClient.snapshots.updateStatus(promoted.id, "success");
+      await dbClient.diffs.create({
+        snapshotId: promoted.id,
+        processingStatus: "success",
+        reviewStatus: "needs_review",
+      });
+
+      const secondPage = await dbClient.snapshots.listForBuild(build.id, {
+        limit: 3,
+        cursor: firstPage.nextCursor ?? undefined,
+      });
+
+      const paged = [...firstPage.snapshots, ...secondPage.snapshots].map((row) => row.id);
+      expect(paged).not.toContain(promoted.id);
+
+      expect(await pageThrough(build.id, 3)).toContain(promoted.targetId);
     });
   });
 });
