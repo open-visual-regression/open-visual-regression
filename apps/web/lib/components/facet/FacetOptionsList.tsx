@@ -40,7 +40,7 @@ export function FacetOptionsList<T extends string>({
     );
 
   const optionList = (
-    <div className="flex flex-col gap-0.5">
+    <div className="flex min-w-0 flex-col gap-0.5">
       {visibleOptions.map((option) => (
         <label
           key={option.value}
@@ -60,7 +60,7 @@ export function FacetOptionsList<T extends string>({
   );
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex min-w-0 flex-col gap-2">
       {searchable ? (
         <InputGroup>
           <InputGroupInput
@@ -74,7 +74,11 @@ export function FacetOptionsList<T extends string>({
           </InputGroupAddon>
         </InputGroup>
       ) : null}
-      {searchable ? <div className="max-h-64 overflow-y-auto">{optionList}</div> : optionList}
+      {searchable ? (
+        <div className="min-w-0 max-h-64 overflow-y-auto">{optionList}</div>
+      ) : (
+        optionList
+      )}
       <div className="flex justify-end gap-2 border-t border-ovr-border-subtle pt-2">
         <Button variant="ghost" color="neutral" size="sm" onClick={onClear}>
           clear
