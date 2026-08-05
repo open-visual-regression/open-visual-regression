@@ -33,8 +33,6 @@ const SnapshotCardSkeletonItem = ({ ref, className }: SnapshotCardSkeletonItemPr
   </li>
 );
 
-// The responsive `hidden` classes make this exactly one full row at every
-// breakpoint: two cards at base, then three, four and five.
 const SnapshotCardSkeletonRow = ({ ref }: { ref?: React.Ref<HTMLLIElement> }) => (
   <>
     <SnapshotCardSkeletonItem ref={ref} />
@@ -50,8 +48,6 @@ type SnapshotGridProps = {
   projectId: string;
   buildId: string;
   search?: string;
-  /** Snapshots matching the current filters, not the number loaded so far. */
-  total?: number;
   hasNextPage?: boolean;
   isFetchingNextPage?: boolean;
   onLoadMore?: () => void;
@@ -62,7 +58,6 @@ export const SnapshotGrid = ({
   projectId,
   buildId,
   search,
-  total,
   hasNextPage = false,
   isFetchingNextPage = false,
   onLoadMore,
@@ -87,25 +82,14 @@ export const SnapshotGrid = ({
   }
 
   return (
-    <>
-      {/* Pages arrive as the reader scrolls, which is otherwise silent to a
-          screen reader — and leaves no way to tell how much list is left. */}
-      <Typography role="status" aria-label="snapshot count" variant="caption" className="sr-only">
-        {total === undefined
-          ? `showing ${snapshots.length} snapshots`
-          : `showing ${snapshots.length} of ${total} snapshots`}
-      </Typography>
-      <SnapshotGridLayout>
-        {snapshots.map((snapshot) => (
-          <li key={snapshot.id}>
-            <SnapshotCard snapshot={snapshot} projectId={projectId} buildId={buildId} />
-          </li>
-        ))}
-        {/* Rendered whenever another page exists, not only while fetching: the
-            sentinel has to be in the DOM for the observer to see it. */}
-        {hasNextPage ? <SnapshotCardSkeletonRow ref={sentinelRef} /> : null}
-      </SnapshotGridLayout>
-    </>
+    <SnapshotGridLayout>
+      {snapshots.map((snapshot) => (
+        <li key={snapshot.id}>
+          <SnapshotCard snapshot={snapshot} projectId={projectId} buildId={buildId} />
+        </li>
+      ))}
+      {hasNextPage ? <SnapshotCardSkeletonRow ref={sentinelRef} /> : null}
+    </SnapshotGridLayout>
   );
 };
 

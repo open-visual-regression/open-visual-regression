@@ -57,8 +57,6 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
     serverClient.snapshots.listStatuses({ buildId }),
     serverClient.snapshots.listBrowsers({ buildId }),
     serverClient.snapshots.listViewports({ buildId }),
-    // The same options the client hook uses, so the page the server renders is
-    // exactly the page the client would have fetched for itself.
     serverClient.snapshots.list(
       snapshotsListInfiniteOptions(buildId, search, { statuses, browsers, viewports }).input(
         undefined,

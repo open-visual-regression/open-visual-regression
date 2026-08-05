@@ -92,9 +92,6 @@ describe("SnapshotsSection", () => {
     expect(screen.getByText("checkout-page")).toBeVisible();
   });
 
-  // The live build status re-renders this route. Seeding with `initialData`
-  // rather than a HydrationBoundary is what stops that from discarding the
-  // pages a reader has already scrolled through.
   it("should keep loaded pages when the page re-renders with a fresh first page", () => {
     const queryClient = createQueryClient();
     const options = snapshotsListInfiniteOptions(BUILD_ID, undefined, {});
@@ -134,13 +131,5 @@ describe("SnapshotsSection", () => {
     renderSection(toPage([]));
 
     expect(screen.getByText("no snapshots found")).toBeVisible();
-  });
-
-  it("should report the total matching the filters, not the number loaded", () => {
-    renderSection(toPage([mocks.build.generateBuildSnapshot()], 128));
-
-    expect(screen.getByRole("status", { name: "snapshot count" })).toHaveTextContent(
-      "showing 1 of 128 snapshots",
-    );
   });
 });

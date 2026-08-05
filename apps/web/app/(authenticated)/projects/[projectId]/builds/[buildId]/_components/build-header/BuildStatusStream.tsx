@@ -36,10 +36,6 @@ export const BuildStatusStream = ({ buildId, initialStatus }: BuildStatusStreamP
     refreshedStatus.current = status;
     const timeout = setTimeout(() => {
       router.refresh();
-      // The snapshot grid is owned by its own infinite query and seeded with
-      // `initialData`, so a route refresh alone leaves already-loaded cards
-      // showing stale statuses. Invalidating refetches every loaded page,
-      // re-deriving each cursor from the page before it.
       void queryClient.invalidateQueries({ queryKey: orpc.snapshots.list.key() });
     }, REFRESH_DEBOUNCE_MS);
     return () => clearTimeout(timeout);

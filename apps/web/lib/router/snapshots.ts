@@ -48,7 +48,7 @@ export const list = os.snapshots.list
   .use(authenticatedMiddleware)
   .use(organizationBuildMiddleware)
   .handler(async ({ input }) => {
-    const { buildId, statuses, browsers, viewports, search, sortBy, limit, cursor } = input;
+    const { buildId, statuses, browsers, viewports, search, limit, cursor } = input;
 
     const [{ snapshots: rows, nextCursor }, total] = await Promise.all([
       dbClient.snapshots.listForBuild(buildId, {
@@ -56,7 +56,6 @@ export const list = os.snapshots.list
         browsers,
         viewports,
         search,
-        sortBy,
         limit,
         cursor,
       }),
@@ -64,8 +63,6 @@ export const list = os.snapshots.list
     ]);
 
     return {
-      // `statusPriority` is a sort-ordering internal that only the cursor needs;
-      // it is deliberately not part of the snapshot the UI sees.
       snapshots: rows.map((row) => ({
         id: row.id,
         targetId: row.targetId,

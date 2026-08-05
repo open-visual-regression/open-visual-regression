@@ -54,20 +54,4 @@ export class BuildPage {
   snapshotThumbnails(): Locator {
     return this.page.getByRole("img", { name: /^snapshot of/ });
   }
-
-  snapshotCount(): Locator {
-    return this.page.getByRole("status", { name: "snapshot count" });
-  }
-
-  // The grid pages in as you scroll, so a build larger than one page only has
-  // its first page in the DOM. Scroll until the count stops growing.
-  async loadAllSnapshots() {
-    for (let i = 0; i < 40; i++) {
-      const before = await this.snapshotCards().count();
-      await this.scrollDown(2_000);
-      if ((await this.snapshotCards().count()) === before) {
-        return;
-      }
-    }
-  }
 }

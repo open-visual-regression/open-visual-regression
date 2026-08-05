@@ -1,9 +1,6 @@
 import { type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
 import { type SnapshotsCursor } from "@ovr/api/contracts/snapshots";
 
-// Fills whole rows at 2, 3 and 4 columns, and covers roughly two viewports of
-// cards at the widest breakpoint — enough that the first page rarely runs out
-// before the reader starts scrolling.
 export const SNAPSHOTS_PAGE_SIZE = 36;
 
 export type SnapshotsListFilters = {
@@ -30,11 +27,6 @@ type SnapshotsListInfiniteOptions = {
   }) => SnapshotsCursor | undefined;
 };
 
-/**
- * Shared by the server render and the client hook so both agree on the query
- * key — and so the first page the server fetches is the same page the client
- * would have fetched itself.
- */
 export const snapshotsListInfiniteOptions = (
   buildId: string,
   search?: string,

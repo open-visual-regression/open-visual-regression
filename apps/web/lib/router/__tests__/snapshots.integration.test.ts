@@ -355,21 +355,7 @@ describe("snapshots", () => {
       expect(seen).toEqual(["a", "b", "c"]);
     });
 
-    test("rejects a sortBy with mixed directions", async ({ admin }) => {
-      const { build } = await createProjectAndBuild(admin);
-
-      const [error] = await serverClient.snapshots.list({
-        buildId: build.id,
-        sortBy: [
-          { column: "targetTitle", direction: "asc" },
-          { column: "targetName", direction: "desc" },
-        ],
-      });
-
-      expect(error?.code).toBe("BAD_REQUEST");
-    });
-
-    test("sorts by the given sortBy column and direction", async ({ admin }) => {
+    test("orders by target title", async ({ admin }) => {
       const { build } = await createProjectAndBuild(admin);
 
       await dbClient.snapshots.createMany({
@@ -379,10 +365,7 @@ describe("snapshots", () => {
         ],
       });
 
-      const [error, result] = await serverClient.snapshots.list({
-        buildId: build.id,
-        sortBy: [{ column: "targetName", direction: "desc" }],
-      });
+      const [error, result] = await serverClient.snapshots.list({ buildId: build.id });
 
       expect(error).toBeNull();
       expect(result?.snapshots.map((snapshot) => snapshot.targetId)).toEqual(["b", "a"]);

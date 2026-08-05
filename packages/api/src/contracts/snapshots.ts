@@ -50,26 +50,6 @@ export const buildSnapshotSchema = z.object({
 
 export type BuildSnapshotSchema = z.infer<typeof buildSnapshotSchema>;
 
-export const snapshotSortColumnSchema = z.enum([
-  "status",
-  "targetTitle",
-  "targetName",
-  "browser",
-  "viewportWidth",
-]);
-
-export type SnapshotSortColumnSchema = z.infer<typeof snapshotSortColumnSchema>;
-
-export const snapshotSortSchema = z.object({
-  column: snapshotSortColumnSchema,
-  direction: z.enum(["asc", "desc"]),
-});
-
-export type SnapshotSortSchema = z.infer<typeof snapshotSortSchema>;
-
-// Keyset cursor over the full sort key, plus `id` to make the ordering unique.
-// Clients never build one of these — they only echo back the `nextCursor` the
-// previous page returned.
 export const snapshotsCursorSchema = z.object({
   statusPriority: z.number().int(),
   targetTitle: z.string(),
@@ -81,33 +61,15 @@ export const snapshotsCursorSchema = z.object({
 
 export type SnapshotsCursor = z.infer<typeof snapshotsCursorSchema>;
 
-export const listInputSchema = z
-  .object({
-    buildId: z.uuidv7(),
-    statuses: z.array(snapshotDisplayStatusSchema).optional(),
-    browsers: z.array(z.string()).optional(),
-    viewports: z.array(z.string()).optional(),
-    search: z.string().min(1).optional(),
-    sortBy: z
-      .array(snapshotSortSchema)
-      .min(1)
-      .default([
-        { column: "status", direction: "asc" },
-        { column: "targetTitle", direction: "asc" },
-        { column: "targetName", direction: "asc" },
-        { column: "browser", direction: "asc" },
-        { column: "viewportWidth", direction: "asc" },
-      ]),
-    limit: z.number().int().min(1).max(100).default(24),
-    cursor: snapshotsCursorSchema.optional(),
-  })
-  // The cursor is a row-value comparison, which compares lexicographically with
-  // a single operator — so it is only correct when every sort key shares a
-  // direction. Reject mixed directions rather than paginate them wrongly.
-  .refine(({ sortBy }) => sortBy.every(({ direction }) => direction === sortBy[0]?.direction), {
-    error: "every sortBy entry must share the same direction",
-    path: ["sortBy"],
-  });
+export const listInputSchema = z.object({
+  buildId: z.uuidv7(),
+  statuses: z.array(snapshotDisplayStatusSchema).optional(),
+  browsers: z.array(z.string()).optional(),
+  viewports: z.array(z.string()).optional(),
+  search: z.string().min(1).optional(),
+  limit: z.number().int().min(1).max(100).default(24),
+  cursor: snapshotsCursorSchema.optional(),
+});
 
 export type ListInputSchema = z.infer<typeof listInputSchema>;
 
