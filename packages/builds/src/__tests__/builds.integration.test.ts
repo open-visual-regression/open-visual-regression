@@ -4,16 +4,18 @@ import { Queue, Worker } from "bullmq";
 import type { Redis } from "ioredis";
 
 import { dbClient } from "@ovr/db/client";
-import type { DiffProcessingStatus, DiffReviewStatus } from "@ovr/db/schema";
+import type { BuildProcessingStatus, DiffProcessingStatus, DiffReviewStatus } from "@ovr/db/schema";
 import { QueueName, type ExtractJobPayload } from "@ovr/queue";
 import { storage } from "@ovr/storage";
 
 import {
   cancelBuild,
+  checkRebuildable,
   confirmBuildUpload,
   createBuild,
   finalizeBuild,
   getArtifactPath,
+  rebuildBuild,
 } from "../builds";
 import { describe, expect, test } from "./fixtures";
 
@@ -166,6 +168,74 @@ describe("builds", () => {
       });
     });
 
+    test("persists the extract defaults so extraction can be replayed later", async ({
+      project,
+      captureConfiguration,
+      user,
+    }) => {
+      const created = await createBuild(
+        { projectId: project.id, branch: "main", commitSha: "a".repeat(40) },
+        user.id,
+      );
+      assert(created.status === "ok");
+      const buildId = created.data;
+
+      await storage.uploadFile(
+        getArtifactPath(project.id, buildId),
+        Buffer.from(""),
+        "application/gzip",
+      );
+
+      const targets = [{ id: "story-a", title: "Story", name: "A" }];
+
+      await confirmBuildUpload(buildId, {
+        targets,
+        viewports: [captureConfiguration],
+        diffThreshold: 0.05,
+      });
+
+      expect(await dbClient.buildExtractDefaults.findByBuild(buildId)).toMatchObject({
+        buildId,
+        targets,
+        viewports: [captureConfiguration],
+        diffThreshold: 0.05,
+      });
+    });
+
+    test("stays successful when the client retries the same confirmation", async ({
+      project,
+      captureConfiguration,
+      user,
+    }) => {
+      const created = await createBuild(
+        { projectId: project.id, branch: "main", commitSha: "a".repeat(40) },
+        user.id,
+      );
+      assert(created.status === "ok");
+      const buildId = created.data;
+
+      await storage.uploadFile(
+        getArtifactPath(project.id, buildId),
+        Buffer.from(""),
+        "application/gzip",
+      );
+
+      const input = {
+        targets: [{ id: "story-a", title: "Story", name: "A" }],
+        viewports: [captureConfiguration],
+        diffThreshold: 0.05,
+      };
+
+      await confirmBuildUpload(buildId, input);
+      const retried = await confirmBuildUpload(buildId, input);
+
+      expect(retried).toEqual({ status: "ok", data: undefined });
+      expect(await dbClient.builds.findById(buildId)).toMatchObject({
+        processingStatus: "queued",
+        errorMessage: null,
+      });
+    });
+
     test("returns ARTIFACT_MISSING when the artifact was never uploaded", async ({
       project,
       captureConfiguration,
@@ -197,6 +267,292 @@ describe("builds", () => {
         viewports: [captureConfiguration],
         diffThreshold: 0.05,
       });
+
+      expect(result).toEqual({ status: "error", error: "BUILD_NOT_FOUND" });
+    });
+  });
+
+  describe("rebuildBuild", () => {
+    const TARGETS = [{ id: "story-a", title: "Story", name: "A" }];
+    const VIEWPORTS = [{ name: "desktop", browser: "chromium", viewportWidth: 1280 }];
+
+    type SeedBuildOptions = {
+      projectId: string;
+      userId: string;
+      branch?: string;
+      processingStatus?: BuildProcessingStatus;
+      withExtractDefaults?: boolean;
+      withArtifact?: boolean;
+    };
+
+    const seedSettledBuild = async ({
+      projectId,
+      userId,
+      branch = "main",
+      processingStatus = "success",
+      withExtractDefaults = true,
+      withArtifact = true,
+    }: SeedBuildOptions) => {
+      const created = await createBuild(
+        {
+          projectId,
+          branch,
+          commitSha: "a".repeat(40),
+          name: "Add empty state",
+          author: "Jordan Lee",
+        },
+        userId,
+      );
+      assert(created.status === "ok");
+      const buildId = created.data;
+
+      if (withArtifact) {
+        await storage.uploadFile(
+          getArtifactPath(projectId, buildId),
+          Buffer.from("artifact-bytes"),
+          "application/gzip",
+        );
+      }
+
+      if (withExtractDefaults) {
+        await dbClient.buildExtractDefaults.create({
+          buildId,
+          targets: TARGETS,
+          viewports: VIEWPORTS,
+          diffThreshold: 0.05,
+        });
+      }
+
+      await dbClient.builds.updateProcessingStatus(buildId, processingStatus);
+
+      return buildId;
+    };
+
+    test.for(["queued", "processing"] as const)(
+      "returns NOT_SETTLED for a build that is still %s",
+      async (processingStatus, { project, user }) => {
+        const buildId = await seedSettledBuild({
+          projectId: project.id,
+          userId: user.id,
+          processingStatus,
+        });
+
+        const result = await rebuildBuild(buildId, user.id);
+
+        expect(result).toEqual({ status: "error", error: "NOT_SETTLED" });
+      },
+    );
+
+    test.for(["success", "error", "canceled"] as const)(
+      "creates a queued build carrying the source's commit and authorship from a %s build",
+      async (processingStatus, { project, user }) => {
+        const buildId = await seedSettledBuild({
+          projectId: project.id,
+          userId: user.id,
+          processingStatus,
+        });
+
+        const result = await rebuildBuild(buildId, user.id);
+
+        assert(result.status === "ok");
+        expect(result.data).not.toBe(buildId);
+        expect(await dbClient.builds.findById(result.data)).toMatchObject({
+          projectId: project.id,
+          branch: "main",
+          commitSha: "a".repeat(40),
+          name: "Add empty state",
+          author: "Jordan Lee",
+          processingStatus: "queued",
+          reviewStatus: "not_required",
+          buildType: "storybook",
+          artifactPath: getArtifactPath(project.id, result.data),
+          createdBy: user.id,
+        });
+      },
+    );
+
+    test("copies the artifact so the rebuild survives the source being purged", async ({
+      project,
+      user,
+    }) => {
+      const buildId = await seedSettledBuild({ projectId: project.id, userId: user.id });
+
+      const result = await rebuildBuild(buildId, user.id);
+      assert(result.status === "ok");
+
+      await storage.deletePrefix(`${project.id}/builds/${buildId}/`);
+
+      expect(await storage.objectExists(getArtifactPath(project.id, result.data))).toBe(true);
+    });
+
+    test("copies the extract defaults so the rebuild can itself be rebuilt", async ({
+      project,
+      user,
+    }) => {
+      const buildId = await seedSettledBuild({ projectId: project.id, userId: user.id });
+
+      const result = await rebuildBuild(buildId, user.id);
+      assert(result.status === "ok");
+
+      expect(await dbClient.buildExtractDefaults.findByBuild(result.data)).toMatchObject({
+        targets: TARGETS,
+        viewports: VIEWPORTS,
+        diffThreshold: 0.05,
+      });
+    });
+
+    test("enqueues an extract job for the rebuild", async ({ project, user, connection }) => {
+      const buildId = await seedSettledBuild({ projectId: project.id, userId: user.id });
+
+      const result = await rebuildBuild(buildId, user.id);
+      assert(result.status === "ok");
+
+      const job = await findExtractJob(connection, result.data);
+      expect(job?.data).toEqual({
+        buildId: result.data,
+        artifactPath: getArtifactPath(project.id, result.data),
+        targets: TARGETS,
+        viewports: VIEWPORTS,
+        diffThreshold: 0.05,
+      });
+    });
+
+    test("increments the project's total builds count", async ({ project, user }) => {
+      const buildId = await seedSettledBuild({ projectId: project.id, userId: user.id });
+      const before = (await dbClient.projects.findById(project.id))?.totalBuildsCount ?? 0;
+
+      await rebuildBuild(buildId, user.id);
+
+      const after = (await dbClient.projects.findById(project.id))?.totalBuildsCount ?? 0;
+      expect(after).toBe(before + 1);
+    });
+
+    test("leaves the source build and its snapshots untouched", async ({
+      project,
+      user,
+      captureConfiguration,
+    }) => {
+      const buildId = await seedSettledBuild({ projectId: project.id, userId: user.id });
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId, ...captureConfiguration, targetId: "story-a", status: "success" }],
+      });
+      const diff = await dbClient.diffs.create({
+        snapshotId: snapshot!.id,
+        processingStatus: "success",
+        reviewStatus: "approved",
+      });
+      const sourceBefore = await dbClient.builds.findById(buildId);
+
+      await rebuildBuild(buildId, user.id);
+
+      expect(await dbClient.builds.findById(buildId)).toEqual(sourceBefore);
+      expect(await dbClient.snapshots.findByBuild(buildId)).toHaveLength(1);
+      expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
+        processingStatus: "success",
+        reviewStatus: "approved",
+      });
+      expect(await storage.objectExists(getArtifactPath(project.id, buildId))).toBe(true);
+    });
+
+    test("returns NOT_LATEST_ON_BRANCH when a newer build exists on the same branch", async ({
+      project,
+      user,
+    }) => {
+      const buildId = await seedSettledBuild({ projectId: project.id, userId: user.id });
+      await seedSettledBuild({ projectId: project.id, userId: user.id });
+
+      const result = await rebuildBuild(buildId, user.id);
+
+      expect(result).toEqual({ status: "error", error: "NOT_LATEST_ON_BRANCH" });
+    });
+
+    test("rebuilds when the newer build is on a different branch", async ({ project, user }) => {
+      const buildId = await seedSettledBuild({ projectId: project.id, userId: user.id });
+      await seedSettledBuild({
+        projectId: project.id,
+        userId: user.id,
+        branch: "feature/other",
+      });
+
+      const result = await rebuildBuild(buildId, user.id);
+
+      expect(result.status).toBe("ok");
+    });
+
+    test("rebuilds when the newer build belongs to a different project", async ({
+      organization,
+      project,
+      user,
+    }) => {
+      const buildId = await seedSettledBuild({ projectId: project.id, userId: user.id });
+      const otherProject = await dbClient.projects.addProject({
+        name: "Other Project",
+        gitMainBranch: "main",
+        organizationId: organization.id,
+        creatorId: user.id,
+      });
+      await seedSettledBuild({ projectId: otherProject!.id, userId: user.id });
+
+      const result = await rebuildBuild(buildId, user.id);
+
+      expect(result.status).toBe("ok");
+    });
+
+    test("returns NOT_LATEST_ON_BRANCH for the source once its rebuild exists", async ({
+      project,
+      user,
+    }) => {
+      const buildId = await seedSettledBuild({ projectId: project.id, userId: user.id });
+
+      const first = await rebuildBuild(buildId, user.id);
+      assert(first.status === "ok");
+      await dbClient.builds.updateProcessingStatus(first.data, "success");
+
+      const second = await rebuildBuild(first.data, user.id);
+      expect(second.status).toBe("ok");
+
+      const source = await dbClient.builds.findById(buildId);
+      expect(await checkRebuildable(source!)).toEqual({
+        status: "error",
+        error: "NOT_LATEST_ON_BRANCH",
+      });
+    });
+
+    test("returns NO_EXTRACT_DEFAULTS for a build captured before they were stored", async ({
+      project,
+      user,
+    }) => {
+      const buildId = await seedSettledBuild({
+        projectId: project.id,
+        userId: user.id,
+        withExtractDefaults: false,
+      });
+
+      const result = await rebuildBuild(buildId, user.id);
+
+      expect(result).toEqual({ status: "error", error: "NO_EXTRACT_DEFAULTS" });
+    });
+
+    test("returns ARTIFACT_MISSING when retention has already purged the storybook", async ({
+      project,
+      user,
+    }) => {
+      const buildId = await seedSettledBuild({
+        projectId: project.id,
+        userId: user.id,
+        withArtifact: false,
+      });
+
+      const before = (await dbClient.projects.findById(project.id))?.totalBuildsCount;
+
+      const result = await rebuildBuild(buildId, user.id);
+
+      expect(result).toEqual({ status: "error", error: "ARTIFACT_MISSING" });
+      expect((await dbClient.projects.findById(project.id))?.totalBuildsCount).toBe(before);
+    });
+
+    test("returns BUILD_NOT_FOUND when the build does not exist", async ({ user }) => {
+      const result = await rebuildBuild(crypto.randomUUID(), user.id);
 
       expect(result).toEqual({ status: "error", error: "BUILD_NOT_FOUND" });
     });

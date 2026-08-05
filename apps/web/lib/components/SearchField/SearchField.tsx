@@ -8,6 +8,7 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from "@ovr/ui/components/input-group";
+import { Skeleton } from "@ovr/ui/components/skeleton";
 
 export type SearchFieldProps = {
   action: string;
@@ -49,4 +50,10 @@ export const SearchField = ({
       </InputGroupAddon>
     </InputGroup>
   </Form>
+);
+
+export const SearchFieldSkeleton = ({ className }: { className?: string }) => (
+  <div className={className}>
+    <Skeleton className="h-8 w-full rounded-md" />
+  </div>
 );

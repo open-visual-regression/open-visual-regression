@@ -8,7 +8,7 @@ export class BuildPage {
   }
 
   status(): Locator {
-    return this.page.getByRole("status");
+    return this.page.getByRole("status", { name: "build status" });
   }
 
   cancelButton(): Locator {
@@ -37,5 +37,21 @@ export class BuildPage {
     await this.page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
     await this.page.mouse.wheel(0, deltaY);
     await this.page.waitForTimeout(500);
+  }
+
+  rebuildButton(): Locator {
+    return this.page.getByRole("button", { name: "rebuild", exact: true });
+  }
+
+  async confirmRebuild() {
+    await this.rebuildButton().click();
+    await this.page
+      .getByRole("alertdialog")
+      .getByRole("button", { name: "rebuild", exact: true })
+      .click();
+  }
+
+  snapshotThumbnails(): Locator {
+    return this.page.getByRole("img", { name: /^snapshot of/ });
   }
 }

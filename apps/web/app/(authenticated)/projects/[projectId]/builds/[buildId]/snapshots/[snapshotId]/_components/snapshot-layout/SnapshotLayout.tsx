@@ -8,6 +8,7 @@ import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { SnapshotActionsRow } from "../snapshot-actions/SnapshotActionsRow";
 import { ComparisonModeProvider } from "../snapshot-comparison-section/comparison-view/comparison-mode";
 import { SnapshotSidebar } from "../snapshot-sidebar/SnapshotSidebar";
+import { SnapshotShell } from "./SnapshotShell";
 
 export type SnapshotLayoutProps = {
   snapshot: SnapshotSchema;
@@ -39,26 +40,25 @@ export const SnapshotLayout = ({
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
 
   return (
-    <div className="absolute inset-0 flex flex-col">
-      <SnapshotActionsRow
-        diff={diff}
-        snapshot={snapshot}
-        projectId={projectId}
-        buildId={buildId}
-        prevSnapshotId={prevSnapshotId}
-        nextSnapshotId={nextSnapshotId}
-        position={position}
-        total={total}
-        canReview={canReview}
-        sidebarCollapsed={sidebarCollapsed}
-        onToggleSidebar={() => setSidebarCollapsed((collapsed) => !collapsed)}
-      />
-      <div className="relative flex min-h-0 flex-1 flex-row overflow-hidden">
-        <div className="flex min-w-0 flex-1 flex-col gap-6 overflow-y-auto px-5 py-3 md:px-6 md:py-4 lg:px-10 lg:py-6">
-          <ComparisonModeProvider>{children}</ComparisonModeProvider>
-        </div>
-        <SnapshotSidebar collapsed={sidebarCollapsed}>{sidebar}</SnapshotSidebar>
-      </div>
-    </div>
+    <SnapshotShell
+      actions={
+        <SnapshotActionsRow
+          diff={diff}
+          snapshot={snapshot}
+          projectId={projectId}
+          buildId={buildId}
+          prevSnapshotId={prevSnapshotId}
+          nextSnapshotId={nextSnapshotId}
+          position={position}
+          total={total}
+          canReview={canReview}
+          sidebarCollapsed={sidebarCollapsed}
+          onToggleSidebar={() => setSidebarCollapsed((collapsed) => !collapsed)}
+        />
+      }
+      sidebar={<SnapshotSidebar collapsed={sidebarCollapsed}>{sidebar}</SnapshotSidebar>}
+    >
+      <ComparisonModeProvider>{children}</ComparisonModeProvider>
+    </SnapshotShell>
   );
 };

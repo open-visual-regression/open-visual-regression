@@ -23,6 +23,7 @@ export {
   SettingsIcon,
   PlusIcon,
   CircleSlash2Icon,
+  RefreshCwIcon,
   SmartphoneIcon,
   TabletIcon,
   UserIcon,

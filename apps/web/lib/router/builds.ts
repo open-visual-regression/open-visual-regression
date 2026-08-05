@@ -4,10 +4,13 @@ import { ORPCError } from "@orpc/client";
 
 import {
   cancelBuild as cancelBuildService,
+  checkRebuildable,
   confirmBuildUpload,
   createBuild as createBuildService,
   DEFAULT_DIFF_THRESHOLD,
   getArtifactPath,
+  rebuildBuild as rebuildBuildService,
+  type RebuildBlockedReason,
 } from "@ovr/builds/builds";
 import { dbClient } from "@ovr/db/client";
 import { storage } from "@ovr/storage";
@@ -140,6 +143,35 @@ export const cancel = os.builds.cancel
   })
   .actionable();
 
+const REBUILD_ERROR_MESSAGES: Record<RebuildBlockedReason | "ARTIFACT_MISSING", string> = {
+  NOT_SETTLED: "this build is still running",
+  NOT_LATEST_ON_BRANCH: "a newer build has landed on this branch",
+  NO_EXTRACT_DEFAULTS: "this build was captured before rebuilding was supported",
+  ARTIFACT_MISSING: "this build's storybook has been cleaned up",
+};
+
+export const rebuild = os.builds.rebuild
+  .use(authenticatedMiddleware)
+  .use(reviewerMiddleware)
+  .use(organizationBuildMiddleware)
+  .handler(async ({ context }) => {
+    const result = await rebuildBuildService(context.build.id, context.user.id);
+
+    if (result.status === "error") {
+      if (result.error === "BUILD_NOT_FOUND") {
+        throw new ORPCError("NOT_FOUND");
+      }
+
+      throw new ORPCError(
+        result.error === "ARTIFACT_MISSING" ? "PRECONDITION_FAILED" : "CONFLICT",
+        { message: REBUILD_ERROR_MESSAGES[result.error] },
+      );
+    }
+
+    return { buildId: result.data };
+  })
+  .actionable();
+
 export const list = os.builds.list
   .use(authenticatedMiddleware)
   .handler(async ({ input, context }) => {
@@ -257,7 +289,10 @@ export const getOne = os.builds.getOne
   .handler(async ({ context }) => {
     const { build, project } = context;
 
-    const canceler = build.canceledBy ? await dbClient.users.findById(build.canceledBy) : null;
+    const [canceler, rebuildable] = await Promise.all([
+      build.canceledBy ? dbClient.users.findById(build.canceledBy) : null,
+      checkRebuildable(build),
+    ]);
 
     return {
       build: {
@@ -270,6 +305,7 @@ export const getOne = os.builds.getOne
         author: build.author,
         status: getBuildDisplayStatus(build),
         canceledBy: canceler?.name ?? null,
+        isRebuildable: rebuildable.status === "ok",
         buildType: build.buildType,
         createdAt: build.createdAt,
       },

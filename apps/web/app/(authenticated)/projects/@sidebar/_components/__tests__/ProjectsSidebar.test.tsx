@@ -70,4 +70,66 @@ describe("ProjectsSidebar", () => {
 
     expect(screen.queryByRole("heading", { name: "recent builds" })).not.toBeInTheDocument();
   });
+
+  it("should mark the recent build matching the current path as active", () => {
+    const activeBuild = mocks.build.generateBuild({
+      project: { id: "project-1", name: "Alpha" },
+      name: "Fix the active build",
+    });
+    const otherBuild = mocks.build.generateBuild({
+      project: { id: "project-2", name: "Beta" },
+      name: "Some other build",
+    });
+    vi.mocked(usePathname).mockReturnValue(
+      `/projects/${activeBuild.project.id}/builds/${activeBuild.id}`,
+    );
+
+    render(
+      <ProjectsSidebar
+        projects={PROJECTS}
+        total={PROJECTS.length}
+        builds={[activeBuild, otherBuild]}
+      />,
+    );
+
+    expect(
+      screen.getByRole("link", { name: /Fix the active build/, current: "page" }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("link", { name: /Some other build/, current: "page" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("should not mark the project as active when viewing one of its builds", () => {
+    const activeBuild = mocks.build.generateBuild({
+      project: { id: "project-1", name: "Alpha" },
+      name: "Fix the active build",
+    });
+    vi.mocked(usePathname).mockReturnValue(
+      `/projects/${activeBuild.project.id}/builds/${activeBuild.id}`,
+    );
+
+    render(<ProjectsSidebar projects={PROJECTS} total={PROJECTS.length} builds={[activeBuild]} />);
+
+    expect(screen.queryByRole("link", { name: "Alpha", current: "page" })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /Fix the active build/, current: "page" }),
+    ).toBeVisible();
+  });
+
+  it("should mark the recent build as active when viewing one of its snapshots", () => {
+    const build = mocks.build.generateBuild({
+      project: { id: "project-1", name: "Alpha" },
+      name: "Fix the active build",
+    });
+    vi.mocked(usePathname).mockReturnValue(
+      `/projects/${build.project.id}/builds/${build.id}/snapshots/snapshot-1`,
+    );
+
+    render(<ProjectsSidebar projects={PROJECTS} total={PROJECTS.length} builds={[build]} />);
+
+    expect(
+      screen.getByRole("link", { name: /Fix the active build/, current: "page" }),
+    ).toBeVisible();
+  });
 });

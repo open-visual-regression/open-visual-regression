@@ -35,6 +35,7 @@ export const generateBuild = (overrides?: Partial<BuildDetailSchema>): BuildDeta
   errorMessage: null,
   status: "unchanged",
   canceledBy: null,
+  isRebuildable: false,
   buildType: "storybook",
   createdAt: faker.date.recent().toISOString(),
   ...overrides,

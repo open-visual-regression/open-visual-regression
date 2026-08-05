@@ -37,6 +37,34 @@ export const create = async ({ tx = db, ...values }: CreateInput) => {
 export const findById = (id: string) =>
   db.query.builds.findFirst({ where: (builds, { eq }) => eq(builds.id, id) });
 
+type HasNewerOnBranchInput = {
+  id: string;
+  projectId: string;
+  branch: string;
+  createdAt: string;
+};
+
+export const hasNewerOnBranch = async ({
+  id,
+  projectId,
+  branch,
+  createdAt,
+}: HasNewerOnBranchInput): Promise<boolean> => {
+  const [newer] = await db
+    .select({ id: builds.id })
+    .from(builds)
+    .where(
+      and(
+        eq(builds.projectId, projectId),
+        eq(builds.branch, branch),
+        sql`(${builds.createdAt}, ${builds.id}) > (${createdAt}::timestamp, ${id}::uuid)`,
+      ),
+    )
+    .limit(1);
+
+  return newer !== undefined;
+};
+
 export const updateProcessingStatus = async (
   id: string,
   processingStatus: BuildProcessingStatus,
@@ -74,23 +102,6 @@ export const updateResult = async (id: string, result: UpdateResultInput) => {
     .returning();
   return build;
 };
-
-type FindByProjectOptions = {
-  branch?: string;
-  processingStatus?: BuildProcessingStatus;
-  reviewStatus?: BuildReviewStatus;
-};
-
-export const findByProject = (projectId: string, opts: FindByProjectOptions = {}) =>
-  db.query.builds.findMany({
-    where: (builds, { and, eq }) =>
-      and(
-        eq(builds.projectId, projectId),
-        opts.branch ? eq(builds.branch, opts.branch) : undefined,
-        opts.processingStatus ? eq(builds.processingStatus, opts.processingStatus) : undefined,
-        opts.reviewStatus ? eq(builds.reviewStatus, opts.reviewStatus) : undefined,
-      ),
-  });
 
 export type BuildDbSchema = Awaited<ReturnType<typeof findById>>;
 

@@ -1,7 +1,7 @@
 import { v7 as uuidv7 } from "uuid";
 
 import { dbClient } from "@ovr/db/client";
-import type { BuildReviewStatus, BuildType } from "@ovr/db/schema";
+import type { BuildProcessingStatus, BuildReviewStatus, BuildType } from "@ovr/db/schema";
 import { createLogger } from "@ovr/logger";
 import {
   cancelBuildJobs,
@@ -117,6 +117,12 @@ export const confirmBuildUpload = async (
   }
 
   try {
+    await dbClient.buildExtractDefaults.create({
+      buildId,
+      targets: input.targets,
+      viewports: input.viewports,
+      diffThreshold: input.diffThreshold,
+    });
     await enqueueExtract({
       buildId,
       artifactPath: build.artifactPath,
@@ -131,6 +137,116 @@ export const confirmBuildUpload = async (
   }
 
   return { status: "ok", data: undefined };
+};
+
+export type RebuildBlockedReason = "NOT_SETTLED" | "NOT_LATEST_ON_BRANCH" | "NO_EXTRACT_DEFAULTS";
+
+type RebuildCandidate = {
+  id: string;
+  projectId: string;
+  branch: string;
+  createdAt: string;
+  processingStatus: BuildProcessingStatus;
+};
+
+type ExtractDefaults = NonNullable<
+  Awaited<ReturnType<typeof dbClient.buildExtractDefaults.findByBuild>>
+>;
+
+export const checkRebuildable = async (
+  build: RebuildCandidate,
+): Promise<Result<ExtractDefaults, RebuildBlockedReason>> => {
+  if (build.processingStatus === "queued" || build.processingStatus === "processing") {
+    return { status: "error", error: "NOT_SETTLED" };
+  }
+
+  const [hasNewer, extractDefaults] = await Promise.all([
+    dbClient.builds.hasNewerOnBranch(build),
+    dbClient.buildExtractDefaults.findByBuild(build.id),
+  ]);
+
+  if (hasNewer) {
+    return { status: "error", error: "NOT_LATEST_ON_BRANCH" };
+  }
+
+  if (!extractDefaults) {
+    return { status: "error", error: "NO_EXTRACT_DEFAULTS" };
+  }
+
+  return { status: "ok", data: extractDefaults };
+};
+
+export const rebuildBuild = async (
+  buildId: string,
+  requestedBy: string,
+): Promise<Result<string, "BUILD_NOT_FOUND" | "ARTIFACT_MISSING" | RebuildBlockedReason>> => {
+  const source = await dbClient.builds.findById(buildId);
+
+  if (!source) {
+    return { status: "error", error: "BUILD_NOT_FOUND" };
+  }
+
+  const rebuildable = await checkRebuildable(source);
+
+  if (rebuildable.status === "error") {
+    return rebuildable;
+  }
+
+  const extractDefaults = rebuildable.data;
+
+  if (!(await storage.objectExists(source.artifactPath))) {
+    return { status: "error", error: "ARTIFACT_MISSING" };
+  }
+
+  const rebuildId = uuidv7();
+  const artifactPath = getArtifactPath(source.projectId, rebuildId);
+
+  await dbClient.transaction(async (tx) => {
+    await dbClient.builds.create({
+      tx,
+      id: rebuildId,
+      projectId: source.projectId,
+      branch: source.branch,
+      commitSha: source.commitSha,
+      name: source.name,
+      author: source.author,
+      processingStatus: "queued",
+      captureMode: source.captureMode,
+      buildType: source.buildType,
+      artifactPath,
+      createdBy: requestedBy,
+    });
+    await dbClient.buildExtractDefaults.create({
+      tx,
+      buildId: rebuildId,
+      targets: extractDefaults.targets,
+      viewports: extractDefaults.viewports,
+      diffThreshold: extractDefaults.diffThreshold,
+    });
+    await dbClient.projects.incrementTotalBuildsCount(source.projectId, tx);
+  });
+
+  try {
+    await storage.copyObject(source.artifactPath, artifactPath);
+    await enqueueExtract({
+      buildId: rebuildId,
+      artifactPath,
+      targets: extractDefaults.targets,
+      viewports: extractDefaults.viewports,
+      diffThreshold: extractDefaults.diffThreshold,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    await dbClient.builds.updateProcessingStatus(rebuildId, "error", message);
+    await publishStatus(rebuildId);
+    throw error;
+  }
+
+  logger.info({ buildId: rebuildId, sourceBuildId: source.id, requestedBy }, "rebuilt build");
+
+  await publishStatus(rebuildId);
+
+  return { status: "ok", data: rebuildId };
 };
 
 export const cancelBuild = async (

@@ -1,10 +1,9 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { headers } from "next/headers";
 
 import { Icon, PlusIcon } from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
 
-import { auth } from "@/lib/auth/auth";
+import { getCachedSession } from "@/lib/auth/session";
 import { RequiresAdminRole } from "@/lib/components/authorization/RequiresAdminRole";
 import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
 import { projectsListInfiniteOptions } from "@/lib/orpc/projects-query";
@@ -13,14 +12,15 @@ import { orpcServer } from "@/lib/orpc/server";
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
 
-import { ProjectsSection } from "./_components/ProjectsSection";
+import { ProjectsPageShell } from "../_components/ProjectsPageShell";
+import { ProjectsSection } from "../_components/ProjectsSection";
 
 export default async function ProjectsPage() {
   const queryClient = getQueryClient();
 
   const [[countError, countResult], sessionResult] = await Promise.all([
     serverClient.projects.count(),
-    auth.api.getSession({ headers: await headers() }),
+    getCachedSession(),
     queryClient.prefetchInfiniteQuery(
       orpcServer.projects.list.infiniteOptions(projectsListInfiniteOptions()),
     ),
@@ -33,8 +33,8 @@ export default async function ProjectsPage() {
   const { total } = countResult;
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex justify-between items-center">
+    <ProjectsPageShell
+      heading={
         <div className="flex flex-row gap-2 items-end-safe">
           <Typography variant="h1" as="h1">
             projects
@@ -43,16 +43,20 @@ export default async function ProjectsPage() {
             ({total})
           </Typography>
         </div>
+      }
+      action={
         <RequiresAdminRole role={sessionResult?.user.role}>
           <ButtonLink href="/projects/new">
             <Icon icon={PlusIcon} />
             new project
           </ButtonLink>
         </RequiresAdminRole>
-      </div>
-      <HydrationBoundary state={dehydrate(queryClient)}>
-        <ProjectsSection role={sessionResult?.user.role} />
-      </HydrationBoundary>
-    </div>
+      }
+      content={
+        <HydrationBoundary state={dehydrate(queryClient)}>
+          <ProjectsSection role={sessionResult?.user.role} />
+        </HydrationBoundary>
+      }
+    />
   );
 }

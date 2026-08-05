@@ -138,6 +138,7 @@ export type BuildSchema = z.infer<typeof buildSchema>;
 
 export const buildDetailSchema = buildSchema.extend({
   canceledBy: z.string().min(1).nullable(),
+  isRebuildable: z.boolean(),
 });
 
 export type BuildDetailSchema = z.infer<typeof buildDetailSchema>;
@@ -246,11 +247,24 @@ export const cancelBuildOutputSchema = z.object({
 
 export const cancelBuildContract = oc.input(cancelBuildInputSchema).output(cancelBuildOutputSchema);
 
+export const rebuildBuildInputSchema = z.object({
+  buildId: z.uuidv7(),
+});
+
+export const rebuildBuildOutputSchema = z.object({
+  buildId: z.uuidv7(),
+});
+
+export const rebuildBuildContract = oc
+  .input(rebuildBuildInputSchema)
+  .output(rebuildBuildOutputSchema);
+
 export const contract = {
   createBuild: createBuildContract,
   confirmUpload: confirmUploadContract,
   getBuildStatus: getBuildStatusContract,
   cancel: cancelBuildContract,
+  rebuild: rebuildBuildContract,
   list: listBuildsContract,
   getOne: getBuildContract,
   watchStatus: watchBuildStatusContract,

@@ -48,6 +48,12 @@ export const auth = betterAuth({
     window: 60,
     max: 100,
   },
+  session: {
+    cookieCache: {
+      enabled: true,
+      maxAge: 60,
+    },
+  },
   baseURL: process.env.BASE_URL ?? "http://localhost:3000",
   trustedOrigins: [process.env.BASE_URL ?? "http://localhost:3000"],
   databaseHooks: {

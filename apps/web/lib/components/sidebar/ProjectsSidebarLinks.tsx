@@ -17,7 +17,8 @@ type ProjectsSidebarLinksProps = {
 };
 
 const isProjectActive = (pathname: string, projectId: string) =>
-  pathname.startsWith(`/projects/${projectId}`);
+  pathname.startsWith(`/projects/${projectId}`) &&
+  !pathname.startsWith(`/projects/${projectId}/builds`);
 
 const ProjectsSidebarLinks = ({ projects, total, onNavigate }: ProjectsSidebarLinksProps) => {
   const pathname = usePathname();

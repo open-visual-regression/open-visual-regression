@@ -9,7 +9,7 @@ import { z } from "zod";
 import type { GitIntegrationSchema, GitProviderSchema } from "@ovr/api/contracts/gitIntegrations";
 import { Button } from "@ovr/ui/components/button";
 import { Card, CardContent, CardFooter } from "@ovr/ui/components/card";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@ovr/ui/components/field";
+import { Field, FieldError, FieldGroup, FieldLabel, FieldSkeleton } from "@ovr/ui/components/field";
 import { CheckIcon, Icon } from "@ovr/ui/components/icon";
 import { Input } from "@ovr/ui/components/input";
 import {
@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@ovr/ui/components/select";
+import { Skeleton } from "@ovr/ui/components/skeleton";
 import { toast } from "@ovr/ui/components/toast";
 
 import { serverClient } from "@/lib/router";
@@ -193,3 +194,22 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
     </form>
   );
 };
+
+export const GitIntegrationFormSkeleton = () => (
+  <Card size="default" aria-hidden>
+    <CardContent className="flex flex-col gap-5">
+      <FieldGroup>
+        <FieldSkeleton />
+      </FieldGroup>
+      <FieldGroup>
+        <FieldSkeleton />
+      </FieldGroup>
+      <FieldGroup>
+        <FieldSkeleton />
+      </FieldGroup>
+    </CardContent>
+    <CardFooter className="flex flex-row justify-end">
+      <Skeleton className="h-8 w-16 rounded-lg" />
+    </CardFooter>
+  </Card>
+);
