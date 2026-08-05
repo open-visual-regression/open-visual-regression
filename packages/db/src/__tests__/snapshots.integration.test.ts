@@ -669,6 +669,14 @@ describe("snapshots", () => {
         "unchanged",
         "queued",
       ]);
+      expect(results.snapshots.map((row) => row.status)).toEqual([
+        "error",
+        "needs_review",
+        "rejected",
+        "approved",
+        "unchanged",
+        "queued",
+      ]);
     });
 
     test("falls back to target title when status priority is tied", async ({
@@ -811,22 +819,6 @@ describe("snapshots", () => {
 
       const restarted = await dbClient.snapshots.listForBuild(build.id, { limit: 2 });
       expect(restarted.snapshots.map((row) => row.id)).toContain(promoted.id);
-    });
-
-    test("orders by status tier before title/name/browser/viewport", async ({
-      build,
-      captureConfiguration,
-    }) => {
-      await seedReviewQueue(build, captureConfiguration);
-
-      const results = await dbClient.snapshots.listForBuild(build.id, { limit: 10 });
-      expect(results.snapshots.map((row) => row.targetId)).toEqual(["d", "a", "b", "c"]);
-      expect(results.snapshots.map((row) => row.status)).toEqual([
-        "error",
-        "needs_review",
-        "rejected",
-        "unchanged",
-      ]);
     });
 
     test("preserves position when status changes within the same priority tier", async ({
