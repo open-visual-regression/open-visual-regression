@@ -15,7 +15,7 @@ type StorybookChannel = {
 };
 
 type StorybookPreview = {
-  initializationPromise?: Promise<unknown>;
+  storeInitializationPromise?: Promise<unknown>;
   loadStory: (args: {
     storyId: string;
   }) => Promise<{ parameters?: Record<string, unknown> } | undefined>;

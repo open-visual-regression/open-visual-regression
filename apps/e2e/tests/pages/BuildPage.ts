@@ -8,10 +8,26 @@ export class BuildPage {
   }
 
   status(): Locator {
-    return this.page.getByRole("status");
+    return this.page.getByRole("status", { name: "build status" });
   }
 
   cancelButton(): Locator {
     return this.page.getByRole("button", { name: "cancel build", exact: true });
+  }
+
+  rebuildButton(): Locator {
+    return this.page.getByRole("button", { name: "rebuild", exact: true });
+  }
+
+  async confirmRebuild() {
+    await this.rebuildButton().click();
+    await this.page
+      .getByRole("alertdialog")
+      .getByRole("button", { name: "rebuild", exact: true })
+      .click();
+  }
+
+  snapshotThumbnails(): Locator {
+    return this.page.getByRole("img", { name: /^snapshot of/ });
   }
 }
