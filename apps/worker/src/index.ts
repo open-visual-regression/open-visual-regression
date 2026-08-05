@@ -2,6 +2,7 @@ import "./env";
 import { Worker, type Job } from "bullmq";
 import { z } from "zod";
 
+import { beginShutdown } from "@ovr/capture/lib/shutdown";
 import { assertEncryptionKey } from "@ovr/git-status/crypto";
 import { QueueName, buildRedisConnection, scheduleReaper, schedulePurge } from "@ovr/queue";
 
@@ -106,6 +107,7 @@ try {
 }
 
 process.on("SIGTERM", async () => {
+  beginShutdown();
   await Promise.all(workers.map((worker) => worker.close()));
   process.exit(0);
 });

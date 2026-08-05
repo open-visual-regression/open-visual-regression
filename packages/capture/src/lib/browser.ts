@@ -1,4 +1,10 @@
-import type { BrowserContext, Page } from "playwright";
+import type { BrowserContext, LaunchOptions, Page } from "playwright";
+
+export const SIGNAL_HANDLING_OPTIONS: LaunchOptions = {
+  handleSIGINT: false,
+  handleSIGTERM: false,
+  handleSIGHUP: false,
+};
 
 export const newPage = async (context: BrowserContext): Promise<Page> => {
   const page = await context.newPage();

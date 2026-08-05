@@ -1,7 +1,7 @@
 import { chromium } from "playwright";
 
 import type { OvrStoryParameterViewport, OvrStoryParameters } from "./captureStrategies";
-import { newPage } from "./lib/browser";
+import { SIGNAL_HANDLING_OPTIONS, newPage } from "./lib/browser";
 import { BOOT_TIMEOUT_MS } from "./lib/captureTimeouts";
 import { startStaticProxy } from "./lib/staticProxy";
 
@@ -53,7 +53,10 @@ export const readStoryParameterOverrides = async (
   targetIds: string[],
 ): Promise<StoryParameterOverrides> => {
   const proxy = await startStaticProxy(bundleDir);
-  const browser = await chromium.launch({ args: ["--disable-dev-shm-usage"] });
+  const browser = await chromium.launch({
+    ...SIGNAL_HANDLING_OPTIONS,
+    args: ["--disable-dev-shm-usage"],
+  });
 
   try {
     const context = await browser.newContext();

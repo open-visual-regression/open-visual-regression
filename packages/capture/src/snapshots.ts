@@ -13,13 +13,14 @@ import { storage } from "@ovr/storage";
 
 import { detectCaptureStrategy, type CaptureStrategy } from "./captureStrategies";
 import { withExtractedBundle } from "./lib/artifact";
-import { newPage } from "./lib/browser";
+import { SIGNAL_HANDLING_OPTIONS, newPage } from "./lib/browser";
 import {
   BOOT_TIMEOUT_MS,
   CAPTURE_JOB_TIMEOUT_MS,
   RENDER_TIMEOUT_MS,
   withTimeout,
 } from "./lib/captureTimeouts";
+import { isShuttingDown } from "./lib/shutdown";
 import { startStaticProxy, type StaticProxy } from "./lib/staticProxy";
 
 const logger = createLogger("capture");
@@ -87,9 +88,10 @@ const launchCapturePage = async (
   proxy: StaticProxy,
   strategy: CaptureStrategy,
 ): Promise<CapturePage> => {
-  const browser = await getBrowserLauncher(browserName).launch(
-    browserName === "chromium" ? { args: ["--disable-dev-shm-usage"] } : undefined,
-  );
+  const browser = await getBrowserLauncher(browserName).launch({
+    ...SIGNAL_HANDLING_OPTIONS,
+    ...(browserName === "chromium" ? { args: ["--disable-dev-shm-usage"] } : {}),
+  });
 
   let closeRequested = false;
   browser.on("disconnected", () => {
@@ -305,6 +307,14 @@ export const captureBuildGroup = async (
                 capturePage.pageLogState,
               );
             } catch (error) {
+              if (isShuttingDown()) {
+                logger.error(
+                  { buildId, browser, snapshotId, err: error },
+                  "capture interrupted by shutdown, leaving the group for a retry",
+                );
+                throw error;
+              }
+
               await markSnapshotErrored(snapshotId, error);
 
               if (!capturePage.page.isClosed()) {

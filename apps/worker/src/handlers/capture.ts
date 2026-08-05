@@ -1,3 +1,4 @@
+import { isShuttingDown } from "@ovr/capture/lib/shutdown";
 import { captureBuildGroup, enqueueSnapshotDiff } from "@ovr/capture/snapshots";
 import { dbClient } from "@ovr/db/client";
 import type { CaptureGroupJobPayload } from "@ovr/queue";
@@ -9,6 +10,10 @@ export const run = async (job: CaptureGroupJob): Promise<void> => {
 };
 
 export const failed = async (job: CaptureGroupJob, error: Error): Promise<void> => {
+  if (isShuttingDown()) {
+    return;
+  }
+
   for (const snapshotId of job.data.snapshotIds) {
     const snapshot = await dbClient.snapshots.findById(snapshotId);
     if (snapshot?.status === "success" || snapshot?.status === "canceled") {
