@@ -13,7 +13,7 @@ import { storage } from "@ovr/storage";
 
 import { detectCaptureStrategy, type CaptureStrategy } from "./captureStrategies";
 import { withExtractedBundle } from "./lib/artifact";
-import { newPage } from "./lib/browser";
+import { SIGNAL_HANDLING_OPTIONS, newPage } from "./lib/browser";
 import {
   BOOT_TIMEOUT_MS,
   CAPTURE_JOB_TIMEOUT_MS,
@@ -40,6 +40,13 @@ type SnapshotLogContext = {
   viewportHeight: number;
   fullPage: boolean;
 };
+
+export class ShutdownInterruptError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ShutdownInterruptError";
+  }
+}
 
 class CapturePhaseError extends Error {
   constructor(
@@ -87,9 +94,10 @@ const launchCapturePage = async (
   proxy: StaticProxy,
   strategy: CaptureStrategy,
 ): Promise<CapturePage> => {
-  const browser = await getBrowserLauncher(browserName).launch(
-    browserName === "chromium" ? { args: ["--disable-dev-shm-usage"] } : undefined,
-  );
+  const browser = await getBrowserLauncher(browserName).launch({
+    ...SIGNAL_HANDLING_OPTIONS,
+    ...(browserName === "chromium" ? { args: ["--disable-dev-shm-usage"] } : {}),
+  });
 
   let closeRequested = false;
   browser.on("disconnected", () => {
@@ -267,10 +275,15 @@ export const markSnapshotErrored = async (snapshotId: string, error: unknown): P
   await enqueueSnapshotDiff(snapshotId);
 };
 
+type CaptureBuildGroupOptions = {
+  shutdownSignal?: AbortSignal;
+};
+
 export const captureBuildGroup = async (
   buildId: string,
   browser: string,
   snapshotIds: string[],
+  { shutdownSignal }: CaptureBuildGroupOptions = {},
 ): Promise<void> => {
   const build = await dbClient.builds.findById(buildId);
   if (!build) {
@@ -292,6 +305,12 @@ export const captureBuildGroup = async (
 
         try {
           for (const [index, snapshotId] of snapshotIds.entries()) {
+            if (shutdownSignal?.aborted) {
+              throw new ShutdownInterruptError(
+                `Capture group interrupted by worker shutdown: ${buildId}`,
+              );
+            }
+
             if (signal.aborted) {
               break;
             }
@@ -305,6 +324,14 @@ export const captureBuildGroup = async (
                 capturePage.pageLogState,
               );
             } catch (error) {
+              if (shutdownSignal?.aborted) {
+                logger.warn(
+                  { buildId, browser, snapshotId, err: error },
+                  "capture interrupted by shutdown, leaving the group for a retry",
+                );
+                throw error;
+              }
+
               await markSnapshotErrored(snapshotId, error);
 
               if (!capturePage.page.isClosed()) {

@@ -36,8 +36,10 @@ const CAPTURE_LOCK_DURATION_MS = z.coerce
   .catch(120_000)
   .parse(process.env.OVR_CAPTURE_LOCK_DURATION_MS);
 
+const shutdown = new AbortController();
+
 const extractWorker = new Worker(QueueName.BUILD_EXTRACT, extract.run, { connection });
-const captureWorker = new Worker(QueueName.SNAPSHOT_CAPTURE, capture.run, {
+const captureWorker = new Worker(QueueName.SNAPSHOT_CAPTURE, capture.createRun(shutdown.signal), {
   connection,
   concurrency: CAPTURE_GROUP_CONCURRENCY,
   lockDuration: CAPTURE_LOCK_DURATION_MS,
@@ -105,7 +107,15 @@ try {
   console.error("Failed to schedule the build reaper job:", error);
 }
 
-process.on("SIGTERM", async () => {
+const onShutdown = async (): Promise<void> => {
+  if (shutdown.signal.aborted) {
+    return;
+  }
+
+  shutdown.abort();
   await Promise.all(workers.map((worker) => worker.close()));
   process.exit(0);
-});
+};
+
+process.on("SIGTERM", onShutdown);
+process.on("SIGINT", onShutdown);
