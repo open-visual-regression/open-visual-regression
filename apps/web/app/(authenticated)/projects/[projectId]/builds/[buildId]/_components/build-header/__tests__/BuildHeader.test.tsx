@@ -16,7 +16,9 @@ vi.mock("next/navigation");
 
 const mockBulkCastVote = vi.mocked(serverClient.diffs.bulkCastVote);
 const mockCancel = vi.mocked(serverClient.builds.cancel);
+const mockRebuild = vi.mocked(serverClient.builds.rebuild);
 const mockRefresh = vi.mocked(useRouter)().refresh;
+const mockPush = vi.mocked(useRouter)().push;
 
 const renderComponent = ({
   build = mocks.build.generateBuild(),
@@ -32,7 +34,7 @@ const renderComponent = ({
     queued: 4,
     processing: 0,
   },
-  canReview = true,
+  canManageBuild = true,
 }: Partial<BuildHeaderProps> = {}) => {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
@@ -42,7 +44,7 @@ const renderComponent = ({
         build={build}
         snapshotCounts={snapshotCounts}
         storybookHref={storybookHref}
-        canReview={canReview}
+        canManageBuild={canManageBuild}
       />
       <Toaster />
     </QueryClientProvider>,
@@ -284,6 +286,109 @@ describe("BuildHeader", () => {
     expect(mockRefresh).not.toHaveBeenCalled();
   });
 
+  it("should not show the rebuild button when the build is not rebuildable", () => {
+    renderComponent({
+      build: mocks.build.generateBuild({ status: "needs_review", isRebuildable: false }),
+    });
+
+    expect(screen.queryByRole("button", { name: /^rebuild$/i })).not.toBeInTheDocument();
+  });
+
+  it("should not show the rebuild button while the build is still queued or processing", () => {
+    renderComponent({
+      build: mocks.build.generateBuild({ status: "processing", isRebuildable: true }),
+    });
+
+    expect(screen.queryByRole("button", { name: /^rebuild$/i })).not.toBeInTheDocument();
+  });
+
+  it("should show the rebuild button alongside the review actions", () => {
+    renderComponent({
+      build: mocks.build.generateBuild({ status: "needs_review", isRebuildable: true }),
+    });
+
+    expect(screen.getByRole("button", { name: /^rebuild$/i })).toBeVisible();
+    expect(screen.getByRole("button", { name: /approve all/i })).toBeVisible();
+    expect(screen.getByRole("button", { name: /^reject all$/i })).toBeVisible();
+  });
+
+  it("should show the rebuild button for a rebuildable build with a processing error, even without reviewable snapshots", () => {
+    renderComponent({
+      build: mocks.build.generateBuild({
+        status: "error",
+        errorMessage: "One or more snapshots failed to diff against their baseline",
+        isRebuildable: true,
+      }),
+      snapshotCounts: {
+        unchanged: 0,
+        auto_approved: 0,
+        approved: 0,
+        needs_review: 0,
+        rejected: 0,
+        error: 3,
+        canceled: 0,
+        queued: 0,
+        processing: 0,
+      },
+    });
+
+    expect(screen.getByRole("button", { name: /^rebuild$/i })).toBeVisible();
+    expect(screen.queryByRole("button", { name: /approve all/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /reject all/i })).not.toBeInTheDocument();
+  });
+
+  it("should show the rebuild button for a rebuildable canceled build", () => {
+    renderComponent({
+      build: mocks.build.generateBuild({ status: "canceled", isRebuildable: true }),
+    });
+
+    expect(screen.getByRole("button", { name: /^rebuild$/i })).toBeVisible();
+  });
+
+  it("should rebuild the build and go to the new build's page when confirmed", async ({ user }) => {
+    mockRebuild.mockResolvedValue([null, { buildId: "019edfc7-e040-7492-86b2-ccfdc00cf6e2" }]);
+    const build = mocks.build.generateBuild({ status: "needs_review", isRebuildable: true });
+    renderComponent({ build });
+
+    await user.click(screen.getByRole("button", { name: /^rebuild$/i }));
+    expect(await screen.findByRole("alertdialog", { name: /rebuild\?/i })).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: /^rebuild$/i }));
+
+    expect(mockRebuild).toHaveBeenCalledWith({ buildId: build.id });
+    await waitFor(() =>
+      expect(mockPush).toHaveBeenCalledWith(
+        `/projects/${build.project.id}/builds/019edfc7-e040-7492-86b2-ccfdc00cf6e2`,
+      ),
+    );
+  });
+
+  it("should not rebuild the build when the confirmation is dismissed", async ({ user }) => {
+    renderComponent({
+      build: mocks.build.generateBuild({ status: "needs_review", isRebuildable: true }),
+    });
+
+    await user.click(screen.getByRole("button", { name: /^rebuild$/i }));
+    expect(await screen.findByRole("alertdialog", { name: /rebuild\?/i })).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: /keep as-is/i }));
+
+    expect(mockRebuild).not.toHaveBeenCalled();
+  });
+
+  it("should show an inline error if rebuilding fails", async ({ user }) => {
+    mockRebuild.mockResolvedValue([createORPCError("CONFLICT"), undefined]);
+    renderComponent({
+      build: mocks.build.generateBuild({ status: "needs_review", isRebuildable: true }),
+    });
+
+    await user.click(screen.getByRole("button", { name: /^rebuild$/i }));
+    await user.click(screen.getByRole("button", { name: /^rebuild$/i }));
+
+    expect(await screen.findByText("CONFLICT")).toBeVisible();
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
   it("should show who canceled the build", () => {
     renderComponent({
       build: mocks.build.generateBuild({ status: "canceled", canceledBy: "Jordan Lee" }),
@@ -303,7 +408,7 @@ describe("BuildHeader", () => {
   it("should not render the review actions for a viewer", () => {
     renderComponent({
       build: mocks.build.generateBuild({ status: "needs_review" }),
-      canReview: false,
+      canManageBuild: false,
     });
 
     expect(screen.queryByRole("button", { name: /approve all/i })).not.toBeInTheDocument();
@@ -313,10 +418,19 @@ describe("BuildHeader", () => {
   it("should not render the cancel action for a viewer", () => {
     renderComponent({
       build: mocks.build.generateBuild({ status: "processing" }),
-      canReview: false,
+      canManageBuild: false,
     });
 
     expect(screen.queryByRole("button", { name: /cancel build/i })).not.toBeInTheDocument();
+  });
+
+  it("should not render the rebuild action for a viewer", () => {
+    renderComponent({
+      build: mocks.build.generateBuild({ status: "needs_review", isRebuildable: true }),
+      canManageBuild: false,
+    });
+
+    expect(screen.queryByRole("button", { name: /^rebuild$/i })).not.toBeInTheDocument();
   });
 
   it("should render the view storybook link when a storybook build exists", () => {
