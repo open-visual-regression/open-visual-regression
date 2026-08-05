@@ -685,6 +685,49 @@ describe("builds", () => {
       });
     });
 
+    test("does not settle the build while a snapshot has not finished diffing yet", async ({
+      mainBuild,
+      captureConfiguration,
+    }) => {
+      await dbClient.builds.updateProcessingStatus(mainBuild.id, "processing");
+      await seedDiffs(mainBuild.id, captureConfiguration, [
+        { processingStatus: "success", reviewStatus: "needs_review" },
+      ]);
+      await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: mainBuild.id,
+            ...captureConfiguration,
+            targetId: crypto.randomUUID(),
+            status: "processing",
+          },
+        ],
+      });
+
+      await finalizeBuild(mainBuild.id);
+
+      expect(await dbClient.builds.findById(mainBuild.id)).toMatchObject({
+        processingStatus: "processing",
+      });
+    });
+
+    test("does not settle the build while a diff row exists but hasn't finished computing", async ({
+      mainBuild,
+      captureConfiguration,
+    }) => {
+      await dbClient.builds.updateProcessingStatus(mainBuild.id, "processing");
+      await seedDiffs(mainBuild.id, captureConfiguration, [
+        { processingStatus: "success", reviewStatus: "needs_review" },
+        { processingStatus: "pending", reviewStatus: "not_required" },
+      ]);
+
+      await finalizeBuild(mainBuild.id);
+
+      expect(await dbClient.builds.findById(mainBuild.id)).toMatchObject({
+        processingStatus: "processing",
+      });
+    });
+
     test("marks the build as error when any diff errored", async ({
       mainBuild,
       captureConfiguration,

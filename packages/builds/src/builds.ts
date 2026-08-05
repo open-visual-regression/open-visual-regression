@@ -310,7 +310,17 @@ export const finalizeBuild = async (buildId: string): Promise<void> => {
     return;
   }
 
-  const diffs = await dbClient.diffs.findByBuild(buildId);
+  const [diffs, snapshotCount] = await Promise.all([
+    dbClient.diffs.findByBuild(buildId),
+    dbClient.snapshots.countByBuild(buildId),
+  ]);
+
+  const allDiffed =
+    diffs.length === snapshotCount && diffs.every((diff) => diff.processingStatus !== "pending");
+
+  if (!allDiffed) {
+    return;
+  }
 
   const hasProcessingError = diffs.some((diff) => diff.processingStatus === "error");
   const processingStatus = hasProcessingError ? "error" : "success";
