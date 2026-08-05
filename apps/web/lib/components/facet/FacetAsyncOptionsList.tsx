@@ -46,7 +46,7 @@ export function FacetAsyncOptionsList<T extends string>({
   const visibleOptions = [...selectedOptions, ...resultOptions];
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex min-w-0 flex-col gap-2">
       <InputGroup>
         <InputGroupInput
           aria-label="search options"
@@ -58,8 +58,8 @@ export function FacetAsyncOptionsList<T extends string>({
           <Icon icon={SearchIcon} />
         </InputGroupAddon>
       </InputGroup>
-      <div className="max-h-[var(--available-height,70vh)] overflow-y-auto">
-        <div className="flex flex-col gap-0.5 py-2">
+      <div className="min-w-0 max-h-[var(--available-height,70vh)] overflow-y-auto">
+        <div className="flex min-w-0 flex-col gap-0.5 py-2">
           {visibleOptions.map((option) => (
             <label
               key={option.value}

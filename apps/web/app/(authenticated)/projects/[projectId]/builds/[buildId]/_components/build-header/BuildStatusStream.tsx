@@ -38,7 +38,7 @@ export const BuildStatusStream = ({ buildId, initialStatus }: BuildStatusStreamP
   }, [status, router]);
 
   return (
-    <span role="status" className="inline-flex">
+    <span role="status" aria-label="build status" className="inline-flex">
       <BuildStatusBadge status={status} />
     </span>
   );
