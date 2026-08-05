@@ -20,8 +20,6 @@ const BRANCH_OPTIONS = [
   { value: "develop", label: "develop" },
 ];
 
-// Long branch names, with and without spaces, that should truncate rather than
-// overflow the facet popover/dialog.
 const LONG_BRANCH_OPTIONS = [
   { value: "main", label: "main" },
   { value: "develop", label: "develop" },
@@ -35,13 +33,13 @@ const LONG_BRANCH_OPTIONS = [
   },
 ];
 
-const seedLongBranches = () => {
+const setBranchesQueryData = (branches: string[]) => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: Infinity } },
   });
   queryClient.setQueryData(
     orpc.builds.listBranches.queryKey({ input: { projectId: PROJECT_ID, search: undefined } }),
-    { branches: LONG_BRANCH_OPTIONS.map((option) => option.value) },
+    { branches },
   );
   return queryClient;
 };
@@ -160,7 +158,9 @@ export const BranchPopoverOpen: Story = {
   },
   decorators: [
     (Story) => (
-      <QueryClientProvider client={seedLongBranches()}>
+      <QueryClientProvider
+        client={setBranchesQueryData(LONG_BRANCH_OPTIONS.map((option) => option.value))}
+      >
         <Story />
       </QueryClientProvider>
     ),
@@ -190,7 +190,9 @@ export const MobileBranchFacetDialogOpen: Story = {
   },
   decorators: [
     (Story) => (
-      <QueryClientProvider client={seedLongBranches()}>
+      <QueryClientProvider
+        client={setBranchesQueryData(LONG_BRANCH_OPTIONS.map((option) => option.value))}
+      >
         <Story />
       </QueryClientProvider>
     ),
