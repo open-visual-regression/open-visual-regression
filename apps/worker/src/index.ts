@@ -2,7 +2,6 @@ import "./env";
 import { Worker, type Job } from "bullmq";
 import { z } from "zod";
 
-import { beginShutdown } from "@ovr/capture/lib/shutdown";
 import { assertEncryptionKey } from "@ovr/git-status/crypto";
 import { QueueName, buildRedisConnection, scheduleReaper, schedulePurge } from "@ovr/queue";
 
@@ -15,6 +14,7 @@ import * as publishStatus from "./handlers/publishStatus";
 import * as purge from "./handlers/purge";
 import * as purgeDispatch from "./handlers/purgeDispatch";
 import * as reaper from "./handlers/reaper";
+import { beginShutdown, shutdownSignal } from "./shutdown";
 
 assertEncryptionKey();
 
@@ -106,8 +106,18 @@ try {
   console.error("Failed to schedule the build reaper job:", error);
 }
 
-process.on("SIGTERM", async () => {
+// Playwright's own signal handlers are disabled at launch (SIGNAL_HANDLING_OPTIONS)
+// so the worker owns shutdown ordering. That makes handling SIGINT here mandatory:
+// Node's default SIGINT termination skips 'exit' hooks and would orphan browsers.
+const onShutdown = async (): Promise<void> => {
+  if (shutdownSignal.aborted) {
+    return;
+  }
+
   beginShutdown();
   await Promise.all(workers.map((worker) => worker.close()));
   process.exit(0);
-});
+};
+
+process.on("SIGTERM", onShutdown);
+process.on("SIGINT", onShutdown);

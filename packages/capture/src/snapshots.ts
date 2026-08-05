@@ -20,7 +20,6 @@ import {
   RENDER_TIMEOUT_MS,
   withTimeout,
 } from "./lib/captureTimeouts";
-import { isShuttingDown } from "./lib/shutdown";
 import { startStaticProxy, type StaticProxy } from "./lib/staticProxy";
 
 const logger = createLogger("capture");
@@ -41,6 +40,13 @@ type SnapshotLogContext = {
   viewportHeight: number;
   fullPage: boolean;
 };
+
+export class ShutdownInterruptError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ShutdownInterruptError";
+  }
+}
 
 class CapturePhaseError extends Error {
   constructor(
@@ -269,10 +275,20 @@ export const markSnapshotErrored = async (snapshotId: string, error: unknown): P
   await enqueueSnapshotDiff(snapshotId);
 };
 
+type CaptureBuildGroupOptions = {
+  /**
+   * Aborted when the worker starts draining. The group then stops before the
+   * next snapshot and throws, so BullMQ retries it on another pod instead of
+   * stamping snapshots the rollout interrupted as terminal failures.
+   */
+  shutdownSignal?: AbortSignal;
+};
+
 export const captureBuildGroup = async (
   buildId: string,
   browser: string,
   snapshotIds: string[],
+  { shutdownSignal }: CaptureBuildGroupOptions = {},
 ): Promise<void> => {
   const build = await dbClient.builds.findById(buildId);
   if (!build) {
@@ -294,6 +310,14 @@ export const captureBuildGroup = async (
 
         try {
           for (const [index, snapshotId] of snapshotIds.entries()) {
+            // A shutdown has to fail the job so BullMQ retries the whole group,
+            // while a timeout breaks and lets withTimeout throw on its own.
+            if (shutdownSignal?.aborted) {
+              throw new ShutdownInterruptError(
+                `Capture group interrupted by worker shutdown: ${buildId}`,
+              );
+            }
+
             if (signal.aborted) {
               break;
             }
@@ -307,8 +331,8 @@ export const captureBuildGroup = async (
                 capturePage.pageLogState,
               );
             } catch (error) {
-              if (isShuttingDown()) {
-                logger.error(
+              if (shutdownSignal?.aborted) {
+                logger.warn(
                   { buildId, browser, snapshotId, err: error },
                   "capture interrupted by shutdown, leaving the group for a retry",
                 );
