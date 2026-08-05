@@ -1,13 +1,13 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-import { type BuildSnapshotSchema } from "@ovr/api/contracts/snapshots";
+import { type BuildSnapshotSchema, type ListOutputSchema } from "@ovr/api/contracts/snapshots";
 import { mocks } from "@ovr/mocks";
 
 import { orpc } from "@/lib/orpc/client";
 import { snapshotsListInfiniteOptions } from "@/lib/orpc/snapshots-query";
 import { describe, expect, it, render, screen } from "@/test-utils";
 
-import { SnapshotsSection, type SnapshotsPage } from "../SnapshotsSection";
+import { SnapshotsSection } from "../SnapshotsSection";
 
 const BUILD_ID = "018f0000-0000-7000-8000-000000000000";
 const PROJECT_ID = "018f0000-0000-7000-8000-000000000001";
@@ -21,7 +21,7 @@ const CURSOR = {
   id: "018f0000-0000-7000-8000-0000000000ff",
 };
 
-const toPage = (snapshots: BuildSnapshotSchema[], total = snapshots.length): SnapshotsPage => ({
+const toPage = (snapshots: BuildSnapshotSchema[], total = snapshots.length): ListOutputSchema => ({
   snapshots,
   total,
   nextCursor: null,
@@ -36,7 +36,7 @@ type RenderOptions = {
 };
 
 const renderSection = (
-  initialPage: SnapshotsPage,
+  initialPage: ListOutputSchema,
   { queryClient = createQueryClient(), search }: RenderOptions = {},
 ) =>
   render(

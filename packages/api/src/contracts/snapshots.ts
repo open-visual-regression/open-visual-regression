@@ -79,6 +79,8 @@ export const listOutputSchema = z.object({
   nextCursor: snapshotsCursorSchema.nullable(),
 });
 
+export type ListOutputSchema = z.infer<typeof listOutputSchema>;
+
 export const listContract = oc.input(listInputSchema).output(listOutputSchema);
 
 export const snapshotCountsSchema = z.object({

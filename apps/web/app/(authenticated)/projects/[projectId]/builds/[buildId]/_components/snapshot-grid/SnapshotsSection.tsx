@@ -3,23 +3,17 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 
 import { type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
-import { type BuildSnapshotSchema, type SnapshotsCursor } from "@ovr/api/contracts/snapshots";
+import { type ListOutputSchema } from "@ovr/api/contracts/snapshots";
 
 import { orpc } from "@/lib/orpc/client";
 import { snapshotsListInfiniteOptions } from "@/lib/orpc/snapshots-query";
 
 import { SnapshotGrid } from "./SnapshotGrid";
 
-export type SnapshotsPage = {
-  snapshots: BuildSnapshotSchema[];
-  total: number;
-  nextCursor: SnapshotsCursor | null;
-};
-
 type SnapshotsSectionProps = {
   projectId: string;
   buildId: string;
-  initialPage: SnapshotsPage;
+  initialPage: ListOutputSchema;
   search?: string;
   statuses?: SnapshotDisplayStatus[];
   browsers?: string[];
@@ -35,12 +29,12 @@ export const SnapshotsSection = ({
   browsers,
   viewports,
 }: SnapshotsSectionProps) => {
-  const { data, hasNextPage, isFetchingNextPage, fetchNextPage } = useInfiniteQuery({
-    ...orpc.snapshots.list.infiniteOptions(
-      snapshotsListInfiniteOptions(buildId, search, { statuses, browsers, viewports }),
-    ),
-    initialData: { pages: [initialPage], pageParams: [undefined] },
-  });
+  const { data, hasNextPage, isFetchingNextPage, fetchNextPage } = useInfiniteQuery(
+    orpc.snapshots.list.infiniteOptions({
+      ...snapshotsListInfiniteOptions(buildId, search, { statuses, browsers, viewports }),
+      initialData: { pages: [initialPage], pageParams: [undefined] },
+    }),
+  );
 
   const snapshots = data.pages.flatMap((page) => page.snapshots);
 

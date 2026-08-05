@@ -213,16 +213,7 @@ const statusPriorityExpr = sql<number>`case (${displayStatusExpr})
   when 'canceled' then 6
 end`;
 
-const snapshotOrderBy = [
-  asc(statusPriorityExpr),
-  asc(snapshots.targetTitle),
-  asc(snapshots.targetName),
-  asc(snapshots.browser),
-  asc(snapshots.viewportWidth),
-  asc(snapshots.id),
-];
-
-const snapshotOrderBySql = sql`
+const snapshotOrderBy = sql`
   ${statusPriorityExpr} asc,
   ${snapshots.targetTitle} asc,
   ${snapshots.targetName} asc,
@@ -240,21 +231,9 @@ export type SnapshotsCursor = {
   id: string;
 };
 
-const getCursorFilter = (cursor: SnapshotsCursor) => sql`(
-    ${statusPriorityExpr},
-    ${snapshots.targetTitle},
-    ${snapshots.targetName},
-    ${snapshots.browser},
-    ${snapshots.viewportWidth},
-    ${snapshots.id}
-  ) > (
-    ${cursor.statusPriority}::int,
-    ${cursor.targetTitle}::text,
-    ${cursor.targetName}::text,
-    ${cursor.browser}::text,
-    ${cursor.viewportWidth}::int,
-    ${cursor.id}::uuid
-  )`;
+const getCursorFilter = (cursor: SnapshotsCursor) =>
+  sql`(${statusPriorityExpr}, ${snapshots.targetTitle}, ${snapshots.targetName}, ${snapshots.browser}, ${snapshots.viewportWidth}, ${snapshots.id})
+      > (${cursor.statusPriority}::int, ${cursor.targetTitle}::text, ${cursor.targetName}::text, ${cursor.browser}::text, ${cursor.viewportWidth}::int, ${cursor.id}::uuid)`;
 
 export type AdjacentSnapshotIds = {
   prevId: string | null;
@@ -267,8 +246,6 @@ export const findAdjacentReviewableIds = async (
   buildId: string,
   snapshotId: string,
 ): Promise<AdjacentSnapshotIds> => {
-  const orderBy = snapshotOrderBySql;
-
   const { rows } = await db.execute<{
     prev_id: string | null;
     next_id: string | null;
@@ -278,10 +255,10 @@ export const findAdjacentReviewableIds = async (
     with ordered as (
       select
         ${snapshots.id} as id,
-        row_number() over (order by ${orderBy}) as position,
+        row_number() over (order by ${snapshotOrderBy}) as position,
         count(*) over () as total,
-        lag(${snapshots.id}) over (order by ${orderBy}) as prev_id,
-        lead(${snapshots.id}) over (order by ${orderBy}) as next_id
+        lag(${snapshots.id}) over (order by ${snapshotOrderBy}) as prev_id,
+        lead(${snapshots.id}) over (order by ${snapshotOrderBy}) as next_id
       from ${snapshots}
       left join ${diffs} on ${diffs.snapshotId} = ${snapshots.id}
       where ${snapshots.buildId} = ${buildId}
@@ -333,7 +310,7 @@ export const listForBuild = async (
         cursor ? getCursorFilter(cursor) : undefined,
       ),
     )
-    .orderBy(...snapshotOrderBy)
+    .orderBy(snapshotOrderBy)
     .limit(limit + 1);
 
   const hasMore = rows.length > limit;
@@ -345,7 +322,7 @@ export const listForBuild = async (
     nextCursor:
       hasMore && lastRow
         ? {
-            statusPriority: Number(lastRow.statusPriority),
+            statusPriority: lastRow.statusPriority,
             targetTitle: lastRow.targetTitle,
             targetName: lastRow.targetName,
             browser: lastRow.browser,

@@ -15,31 +15,24 @@ type SnapshotGridLayoutProps = {
 };
 
 const SnapshotGridLayout = ({ className, children }: SnapshotGridLayoutProps) => (
-  <ul
+  <div
     className={cn("grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5", className)}
   >
     {children}
-  </ul>
+  </div>
 );
 
-type SnapshotCardSkeletonItemProps = {
-  ref?: React.Ref<HTMLLIElement>;
-  className?: string;
+type SnapshotCardSkeletonRowProps = {
+  ref?: React.Ref<HTMLDivElement>;
 };
 
-const SnapshotCardSkeletonItem = ({ ref, className }: SnapshotCardSkeletonItemProps) => (
-  <li ref={ref} aria-hidden className={className}>
-    <SnapshotCardSkeleton />
-  </li>
-);
-
-const SnapshotCardSkeletonRow = ({ ref }: { ref?: React.Ref<HTMLLIElement> }) => (
+const SnapshotCardSkeletonRow = ({ ref }: SnapshotCardSkeletonRowProps) => (
   <>
-    <SnapshotCardSkeletonItem ref={ref} />
-    <SnapshotCardSkeletonItem />
-    <SnapshotCardSkeletonItem className="hidden md:block" />
-    <SnapshotCardSkeletonItem className="hidden lg:block" />
-    <SnapshotCardSkeletonItem className="hidden xl:block" />
+    <SnapshotCardSkeleton ref={ref} />
+    <SnapshotCardSkeleton />
+    <SnapshotCardSkeleton className="hidden md:block" />
+    <SnapshotCardSkeleton className="hidden lg:block" />
+    <SnapshotCardSkeleton className="hidden xl:block" />
   </>
 );
 
@@ -84,9 +77,12 @@ export const SnapshotGrid = ({
   return (
     <SnapshotGridLayout>
       {snapshots.map((snapshot) => (
-        <li key={snapshot.id}>
-          <SnapshotCard snapshot={snapshot} projectId={projectId} buildId={buildId} />
-        </li>
+        <SnapshotCard
+          key={snapshot.id}
+          snapshot={snapshot}
+          projectId={projectId}
+          buildId={buildId}
+        />
       ))}
       {hasNextPage ? <SnapshotCardSkeletonRow ref={sentinelRef} /> : null}
     </SnapshotGridLayout>
