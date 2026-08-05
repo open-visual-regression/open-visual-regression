@@ -436,6 +436,27 @@ describe("snapshots", () => {
       });
     };
 
+    const seedStories = (
+      build: { id: string },
+      captureConfiguration: {
+        browser: string;
+        viewportWidth: number;
+        viewportHeight: number;
+        viewportName: string;
+      },
+      count: number,
+    ) =>
+      dbClient.snapshots.createMany({
+        values: Array.from({ length: count }, (_, index) => ({
+          buildId: build.id,
+          ...captureConfiguration,
+          targetId: `story-${index}`,
+          targetTitle: `Story ${index}`,
+          targetName: `story-${index}`,
+          status: "success" as const,
+        })),
+      });
+
     test("filters by derived display status", async ({ build, captureConfiguration }) => {
       await seedHomeAndCheckout(build, captureConfiguration);
 
@@ -676,6 +697,121 @@ describe("snapshots", () => {
       const results = await dbClient.snapshots.listForBuild(build.id, { limit: 10 });
       expect(results.snapshots.map((row) => row.targetId)).toEqual(["checkout", "home"]);
     });
+
+    test("returns every snapshot exactly once across pages", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      await seedStories(build, captureConfiguration, 5);
+
+      const first = await dbClient.snapshots.listForBuild(build.id, { limit: 2 });
+      const second = await dbClient.snapshots.listForBuild(build.id, {
+        limit: 2,
+        cursor: first.nextCursor ?? undefined,
+      });
+      const third = await dbClient.snapshots.listForBuild(build.id, {
+        limit: 2,
+        cursor: second.nextCursor ?? undefined,
+      });
+
+      expect(first.snapshots.map((row) => row.targetId)).toEqual(["story-0", "story-1"]);
+      expect(second.snapshots.map((row) => row.targetId)).toEqual(["story-2", "story-3"]);
+      expect(third.snapshots.map((row) => row.targetId)).toEqual(["story-4"]);
+      expect(third.nextCursor).toBeNull();
+    });
+
+    test("keeps paging correct when every sort key ties", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const created = await dbClient.snapshots.createMany({
+        values: Array.from({ length: 4 }, () => ({
+          buildId: build.id,
+          ...captureConfiguration,
+          targetId: "same",
+          targetTitle: "Same",
+          targetName: "same",
+        })),
+      });
+
+      const first = await dbClient.snapshots.listForBuild(build.id, { limit: 2 });
+      const second = await dbClient.snapshots.listForBuild(build.id, {
+        limit: 2,
+        cursor: first.nextCursor ?? undefined,
+      });
+
+      const paged = [...first.snapshots, ...second.snapshots].map((row) => row.id);
+      expect(paged).toEqual(created.map((snapshot) => snapshot.id).sort());
+      expect(second.nextCursor).toBeNull();
+    });
+
+    test("does not drop or duplicate a row when a snapshot is reviewed mid-scroll", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const created = await seedStories(build, captureConfiguration, 4);
+      for (const snapshot of created) {
+        await dbClient.diffs.create({
+          snapshotId: snapshot.id,
+          processingStatus: "success",
+          reviewStatus: "needs_review",
+        });
+      }
+
+      const first = await dbClient.snapshots.listForBuild(build.id, { limit: 2 });
+
+      const diff = await dbClient.diffs.findBySnapshot(first.snapshots[0]!.id);
+      await dbClient.diffs.updateReviewStatus(diff!.id, "approved");
+
+      const second = await dbClient.snapshots.listForBuild(build.id, {
+        limit: 2,
+        cursor: first.nextCursor ?? undefined,
+      });
+
+      expect([...first.snapshots, ...second.snapshots].map((row) => row.targetId)).toEqual([
+        "story-0",
+        "story-1",
+        "story-2",
+        "story-3",
+      ]);
+    });
+
+    test("misses a snapshot promoted above the cursor while the build is processing", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const created = await dbClient.snapshots.createMany({
+        values: Array.from({ length: 4 }, (_, index) => ({
+          buildId: build.id,
+          ...captureConfiguration,
+          targetId: `story-${index}`,
+          targetTitle: `Story ${index}`,
+          targetName: `story-${index}`,
+        })),
+      });
+
+      const first = await dbClient.snapshots.listForBuild(build.id, { limit: 2 });
+
+      const promoted = created.at(-1)!;
+      await dbClient.snapshots.updateStatus(promoted.id, "success");
+      await dbClient.diffs.create({
+        snapshotId: promoted.id,
+        processingStatus: "success",
+        reviewStatus: "needs_review",
+      });
+
+      const second = await dbClient.snapshots.listForBuild(build.id, {
+        limit: 2,
+        cursor: first.nextCursor ?? undefined,
+      });
+
+      expect([...first.snapshots, ...second.snapshots].map((row) => row.id)).not.toContain(
+        promoted.id,
+      );
+
+      const restarted = await dbClient.snapshots.listForBuild(build.id, { limit: 2 });
+      expect(restarted.snapshots.map((row) => row.id)).toContain(promoted.id);
+    });
   });
 
   describe("findStatuses", () => {
@@ -844,144 +980,6 @@ describe("snapshots", () => {
 
       const after = await dbClient.snapshots.listForBuild(build.id, { limit: 10 });
       expect(after.snapshots.map((row) => row.targetId)).toEqual(["d", "a", "b", "c"]);
-    });
-  });
-
-  describe("listForBuild cursor pagination", () => {
-    const seedStories = (
-      build: { id: string },
-      captureConfiguration: {
-        browser: string;
-        viewportWidth: number;
-        viewportHeight: number;
-        viewportName: string;
-      },
-      count: number,
-    ) =>
-      dbClient.snapshots.createMany({
-        values: Array.from({ length: count }, (_, index) => ({
-          buildId: build.id,
-          ...captureConfiguration,
-          targetId: `story-${index}`,
-          targetTitle: `Story ${index}`,
-          targetName: `story-${index}`,
-          status: "success" as const,
-        })),
-      });
-
-    test("returns every snapshot exactly once across pages", async ({
-      build,
-      captureConfiguration,
-    }) => {
-      await seedStories(build, captureConfiguration, 5);
-
-      const first = await dbClient.snapshots.listForBuild(build.id, { limit: 2 });
-      const second = await dbClient.snapshots.listForBuild(build.id, {
-        limit: 2,
-        cursor: first.nextCursor ?? undefined,
-      });
-      const third = await dbClient.snapshots.listForBuild(build.id, {
-        limit: 2,
-        cursor: second.nextCursor ?? undefined,
-      });
-
-      expect(first.snapshots.map((row) => row.targetId)).toEqual(["story-0", "story-1"]);
-      expect(second.snapshots.map((row) => row.targetId)).toEqual(["story-2", "story-3"]);
-      expect(third.snapshots.map((row) => row.targetId)).toEqual(["story-4"]);
-      expect(third.nextCursor).toBeNull();
-    });
-
-    test("keeps paging correct when every sort key ties", async ({
-      build,
-      captureConfiguration,
-    }) => {
-      const created = await dbClient.snapshots.createMany({
-        values: Array.from({ length: 4 }, () => ({
-          buildId: build.id,
-          ...captureConfiguration,
-          targetId: "same",
-          targetTitle: "Same",
-          targetName: "same",
-        })),
-      });
-
-      const first = await dbClient.snapshots.listForBuild(build.id, { limit: 2 });
-      const second = await dbClient.snapshots.listForBuild(build.id, {
-        limit: 2,
-        cursor: first.nextCursor ?? undefined,
-      });
-
-      const paged = [...first.snapshots, ...second.snapshots].map((row) => row.id);
-      expect(paged).toEqual(created.map((snapshot) => snapshot.id).sort());
-      expect(second.nextCursor).toBeNull();
-    });
-
-    test("does not drop or duplicate a row when a snapshot is reviewed mid-scroll", async ({
-      build,
-      captureConfiguration,
-    }) => {
-      const created = await seedStories(build, captureConfiguration, 4);
-      for (const snapshot of created) {
-        await dbClient.diffs.create({
-          snapshotId: snapshot.id,
-          processingStatus: "success",
-          reviewStatus: "needs_review",
-        });
-      }
-
-      const first = await dbClient.snapshots.listForBuild(build.id, { limit: 2 });
-
-      const diff = await dbClient.diffs.findBySnapshot(first.snapshots[0]!.id);
-      await dbClient.diffs.updateReviewStatus(diff!.id, "approved");
-
-      const second = await dbClient.snapshots.listForBuild(build.id, {
-        limit: 2,
-        cursor: first.nextCursor ?? undefined,
-      });
-
-      expect([...first.snapshots, ...second.snapshots].map((row) => row.targetId)).toEqual([
-        "story-0",
-        "story-1",
-        "story-2",
-        "story-3",
-      ]);
-    });
-
-    test("misses a snapshot promoted above the cursor while the build is processing", async ({
-      build,
-      captureConfiguration,
-    }) => {
-      const created = await dbClient.snapshots.createMany({
-        values: Array.from({ length: 4 }, (_, index) => ({
-          buildId: build.id,
-          ...captureConfiguration,
-          targetId: `story-${index}`,
-          targetTitle: `Story ${index}`,
-          targetName: `story-${index}`,
-        })),
-      });
-
-      const first = await dbClient.snapshots.listForBuild(build.id, { limit: 2 });
-
-      const promoted = created.at(-1)!;
-      await dbClient.snapshots.updateStatus(promoted.id, "success");
-      await dbClient.diffs.create({
-        snapshotId: promoted.id,
-        processingStatus: "success",
-        reviewStatus: "needs_review",
-      });
-
-      const second = await dbClient.snapshots.listForBuild(build.id, {
-        limit: 2,
-        cursor: first.nextCursor ?? undefined,
-      });
-
-      expect([...first.snapshots, ...second.snapshots].map((row) => row.id)).not.toContain(
-        promoted.id,
-      );
-
-      const restarted = await dbClient.snapshots.listForBuild(build.id, { limit: 2 });
-      expect(restarted.snapshots.map((row) => row.id)).toContain(promoted.id);
     });
   });
 });
