@@ -14,7 +14,6 @@ import * as publishStatus from "./handlers/publishStatus";
 import * as purge from "./handlers/purge";
 import * as purgeDispatch from "./handlers/purgeDispatch";
 import * as reaper from "./handlers/reaper";
-import { beginShutdown, shutdownSignal } from "./shutdown";
 
 assertEncryptionKey();
 
@@ -37,8 +36,10 @@ const CAPTURE_LOCK_DURATION_MS = z.coerce
   .catch(120_000)
   .parse(process.env.OVR_CAPTURE_LOCK_DURATION_MS);
 
+const shutdown = new AbortController();
+
 const extractWorker = new Worker(QueueName.BUILD_EXTRACT, extract.run, { connection });
-const captureWorker = new Worker(QueueName.SNAPSHOT_CAPTURE, capture.run, {
+const captureWorker = new Worker(QueueName.SNAPSHOT_CAPTURE, capture.createRun(shutdown.signal), {
   connection,
   concurrency: CAPTURE_GROUP_CONCURRENCY,
   lockDuration: CAPTURE_LOCK_DURATION_MS,
@@ -106,15 +107,12 @@ try {
   console.error("Failed to schedule the build reaper job:", error);
 }
 
-// Playwright's own signal handlers are disabled at launch (SIGNAL_HANDLING_OPTIONS)
-// so the worker owns shutdown ordering. That makes handling SIGINT here mandatory:
-// Node's default SIGINT termination skips 'exit' hooks and would orphan browsers.
 const onShutdown = async (): Promise<void> => {
-  if (shutdownSignal.aborted) {
+  if (shutdown.signal.aborted) {
     return;
   }
 
-  beginShutdown();
+  shutdown.abort();
   await Promise.all(workers.map((worker) => worker.close()));
   process.exit(0);
 };

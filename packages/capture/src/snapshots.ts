@@ -276,11 +276,6 @@ export const markSnapshotErrored = async (snapshotId: string, error: unknown): P
 };
 
 type CaptureBuildGroupOptions = {
-  /**
-   * Aborted when the worker starts draining. The group then stops before the
-   * next snapshot and throws, so BullMQ retries it on another pod instead of
-   * stamping snapshots the rollout interrupted as terminal failures.
-   */
   shutdownSignal?: AbortSignal;
 };
 
@@ -310,8 +305,6 @@ export const captureBuildGroup = async (
 
         try {
           for (const [index, snapshotId] of snapshotIds.entries()) {
-            // A shutdown has to fail the job so BullMQ retries the whole group,
-            // while a timeout breaks and lets withTimeout throw on its own.
             if (shutdownSignal?.aborted) {
               throw new ShutdownInterruptError(
                 `Capture group interrupted by worker shutdown: ${buildId}`,

@@ -1,7 +1,5 @@
 import type { BrowserContext, LaunchOptions, Page } from "playwright";
 
-// Playwright kills every launched browser from its own signal handlers, racing the
-// worker's graceful drain. Disable them so the worker owns shutdown ordering.
 export const SIGNAL_HANDLING_OPTIONS = {
   handleSIGINT: false,
   handleSIGTERM: false,

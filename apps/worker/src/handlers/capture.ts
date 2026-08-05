@@ -2,15 +2,15 @@ import { captureBuildGroup, enqueueSnapshotDiff } from "@ovr/capture/snapshots";
 import { dbClient } from "@ovr/db/client";
 import type { CaptureGroupJobPayload } from "@ovr/queue";
 
-import { shutdownSignal } from "../shutdown";
-
 type CaptureGroupJob = { data: CaptureGroupJobPayload };
 
-export const run = async (job: CaptureGroupJob): Promise<void> => {
-  await captureBuildGroup(job.data.buildId, job.data.browser, job.data.snapshotIds, {
-    shutdownSignal,
-  });
-};
+export const createRun =
+  (shutdownSignal: AbortSignal) =>
+  async (job: CaptureGroupJob): Promise<void> => {
+    await captureBuildGroup(job.data.buildId, job.data.browser, job.data.snapshotIds, {
+      shutdownSignal,
+    });
+  };
 
 export const failed = async (job: CaptureGroupJob, error: Error): Promise<void> => {
   for (const snapshotId of job.data.snapshotIds) {

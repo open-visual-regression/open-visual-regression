@@ -69,8 +69,6 @@ describe("captureBuildGroup", () => {
       }),
     ).rejects.toThrow(ShutdownInterruptError);
 
-    // The snapshot that finished before the drain keeps its result; the one that
-    // never started stays queued for the retry on another pod.
     expect(await dbClient.snapshots.findById(first!.id)).toMatchObject({ status: "success" });
     expect(await dbClient.snapshots.findById(second!.id)).toMatchObject({ status: "queued" });
   }, 60_000);
