@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, ilike, inArray, ne, notInArray, or, sql } from "drizzle-orm";
+import { and, asc, count, eq, ilike, inArray, ne, notInArray, or, sql } from "drizzle-orm";
 
 import { db, type DbClient } from "../db";
 import { diffs, snapshots, type SnapshotStatus } from "../schema";
@@ -213,27 +213,27 @@ const statusPriorityExpr = sql<number>`case (${displayStatusExpr})
   when 'canceled' then 6
 end`;
 
-export const snapshotSortColumns = {
-  status: statusPriorityExpr,
-  targetTitle: snapshots.targetTitle,
-  targetName: snapshots.targetName,
-  browser: snapshots.browser,
-  viewportWidth: snapshots.viewportWidth,
-} as const;
+const snapshotOrderBy = sql`
+  ${statusPriorityExpr} asc,
+  ${snapshots.targetTitle} asc,
+  ${snapshots.targetName} asc,
+  ${snapshots.browser} asc,
+  ${snapshots.viewportWidth} asc,
+  ${snapshots.id} asc
+`;
 
-export type SnapshotSortColumn = keyof typeof snapshotSortColumns;
+export type SnapshotsCursor = {
+  statusPriority: number;
+  targetTitle: string;
+  targetName: string;
+  browser: string;
+  viewportWidth: number;
+  id: string;
+};
 
-export type SnapshotSortDirection = "asc" | "desc";
-
-export type SnapshotSort = { column: SnapshotSortColumn; direction: SnapshotSortDirection };
-
-export const defaultSnapshotSortBy: SnapshotSort[] = [
-  { column: "status", direction: "asc" },
-  { column: "targetTitle", direction: "asc" },
-  { column: "targetName", direction: "asc" },
-  { column: "browser", direction: "asc" },
-  { column: "viewportWidth", direction: "asc" },
-];
+const getCursorFilter = (cursor: SnapshotsCursor) =>
+  sql`(${statusPriorityExpr}, ${snapshots.targetTitle}, ${snapshots.targetName}, ${snapshots.browser}, ${snapshots.viewportWidth}, ${snapshots.id})
+      > (${cursor.statusPriority}::int, ${cursor.targetTitle}::text, ${cursor.targetName}::text, ${cursor.browser}::text, ${cursor.viewportWidth}::int, ${cursor.id}::uuid)`;
 
 export type AdjacentSnapshotIds = {
   prevId: string | null;
@@ -246,13 +246,6 @@ export const findAdjacentReviewableIds = async (
   buildId: string,
   snapshotId: string,
 ): Promise<AdjacentSnapshotIds> => {
-  const orderBy = sql.join(
-    defaultSnapshotSortBy.map(
-      ({ column, direction }) => sql`${snapshotSortColumns[column]} ${sql.raw(direction)}`,
-    ),
-    sql`, `,
-  );
-
   const { rows } = await db.execute<{
     prev_id: string | null;
     next_id: string | null;
@@ -262,10 +255,10 @@ export const findAdjacentReviewableIds = async (
     with ordered as (
       select
         ${snapshots.id} as id,
-        row_number() over (order by ${orderBy}) as position,
+        row_number() over (order by ${snapshotOrderBy}) as position,
         count(*) over () as total,
-        lag(${snapshots.id}) over (order by ${orderBy}) as prev_id,
-        lead(${snapshots.id}) over (order by ${orderBy}) as next_id
+        lag(${snapshots.id}) over (order by ${snapshotOrderBy}) as prev_id,
+        lead(${snapshots.id}) over (order by ${snapshotOrderBy}) as next_id
       from ${snapshots}
       left join ${diffs} on ${diffs.snapshotId} = ${snapshots.id}
       where ${snapshots.buildId} = ${buildId}
@@ -284,24 +277,15 @@ export const findAdjacentReviewableIds = async (
 };
 
 export type ListForBuildOptions = ListForBuildFilters & {
-  sortBy?: SnapshotSort[];
   limit: number;
-  offset: number;
+  cursor?: SnapshotsCursor;
 };
 
-export const listForBuild = (
+export const listForBuild = async (
   buildId: string,
-  {
-    statuses,
-    browsers,
-    viewports,
-    search,
-    sortBy = defaultSnapshotSortBy,
-    limit,
-    offset,
-  }: ListForBuildOptions,
-) =>
-  db
+  { statuses, browsers, viewports, search, limit, cursor }: ListForBuildOptions,
+) => {
+  const rows = await db
     .select({
       id: snapshots.id,
       targetId: snapshots.targetId,
@@ -313,20 +297,41 @@ export const listForBuild = (
       viewportName: snapshots.viewportName,
       imagePath: snapshots.imagePath,
       status: displayStatusExpr,
+      statusPriority: statusPriorityExpr,
       diffId: diffs.id,
       diffImagePath: diffs.diffImagePath,
       diffPercent: diffs.diffPercent,
     })
     .from(snapshots)
     .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
-    .where(listForBuildWhere(buildId, { statuses, browsers, viewports, search }))
-    .orderBy(
-      ...sortBy.map(({ column, direction }) =>
-        (direction === "desc" ? desc : asc)(snapshotSortColumns[column]),
+    .where(
+      and(
+        listForBuildWhere(buildId, { statuses, browsers, viewports, search }),
+        cursor ? getCursorFilter(cursor) : undefined,
       ),
     )
-    .limit(limit)
-    .offset(offset);
+    .orderBy(snapshotOrderBy)
+    .limit(limit + 1);
+
+  const hasMore = rows.length > limit;
+  const pageRows = hasMore ? rows.slice(0, limit) : rows;
+  const lastRow = pageRows.at(-1);
+
+  return {
+    snapshots: pageRows,
+    nextCursor:
+      hasMore && lastRow
+        ? {
+            statusPriority: lastRow.statusPriority,
+            targetTitle: lastRow.targetTitle,
+            targetName: lastRow.targetName,
+            browser: lastRow.browser,
+            viewportWidth: lastRow.viewportWidth,
+            id: lastRow.id,
+          }
+        : null,
+  };
+};
 
 export const countForBuild = async (buildId: string, filters: ListForBuildFilters = {}) => {
   const [result] = await db

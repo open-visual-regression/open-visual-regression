@@ -436,15 +436,35 @@ describe("snapshots", () => {
       });
     };
 
+    const seedStories = (
+      build: { id: string },
+      captureConfiguration: {
+        browser: string;
+        viewportWidth: number;
+        viewportHeight: number;
+        viewportName: string;
+      },
+      count: number,
+    ) =>
+      dbClient.snapshots.createMany({
+        values: Array.from({ length: count }, (_, index) => ({
+          buildId: build.id,
+          ...captureConfiguration,
+          targetId: `story-${index}`,
+          targetTitle: `Story ${index}`,
+          targetName: `story-${index}`,
+          status: "success" as const,
+        })),
+      });
+
     test("filters by derived display status", async ({ build, captureConfiguration }) => {
       await seedHomeAndCheckout(build, captureConfiguration);
 
       const needsReviewOnly = await dbClient.snapshots.listForBuild(build.id, {
         statuses: ["needs_review"],
         limit: 10,
-        offset: 0,
       });
-      expect(needsReviewOnly.map((row) => row.targetId)).toEqual(["checkout"]);
+      expect(needsReviewOnly.snapshots.map((row) => row.targetId)).toEqual(["checkout"]);
       expect(await dbClient.snapshots.countForBuild(build.id, { statuses: ["needs_review"] })).toBe(
         1,
       );
@@ -456,10 +476,9 @@ describe("snapshots", () => {
       const results = await dbClient.snapshots.listForBuild(build.id, {
         statuses: ["needs_review", "unchanged"],
         limit: 10,
-        offset: 0,
       });
 
-      expect(results.map((row) => row.targetId).sort()).toEqual(["checkout", "home"]);
+      expect(results.snapshots.map((row) => row.targetId).sort()).toEqual(["checkout", "home"]);
     });
 
     test("filters by search across target title and name", async ({
@@ -471,9 +490,8 @@ describe("snapshots", () => {
       const searched = await dbClient.snapshots.listForBuild(build.id, {
         search: "home",
         limit: 10,
-        offset: 0,
       });
-      expect(searched.map((row) => row.targetId)).toEqual(["home"]);
+      expect(searched.snapshots.map((row) => row.targetId)).toEqual(["home"]);
     });
 
     test("filters by browser", async ({ build, captureConfiguration }) => {
@@ -501,10 +519,9 @@ describe("snapshots", () => {
       const results = await dbClient.snapshots.listForBuild(build.id, {
         browsers: ["firefox"],
         limit: 10,
-        offset: 0,
       });
 
-      expect(results.map((row) => row.targetId)).toEqual(["checkout"]);
+      expect(results.snapshots.map((row) => row.targetId)).toEqual(["checkout"]);
       expect(await dbClient.snapshots.countForBuild(build.id, { browsers: ["firefox"] })).toBe(1);
     });
 
@@ -533,21 +550,27 @@ describe("snapshots", () => {
       const results = await dbClient.snapshots.listForBuild(build.id, {
         viewports: ["mobile"],
         limit: 10,
-        offset: 0,
       });
 
-      expect(results.map((row) => row.targetId)).toEqual(["checkout"]);
+      expect(results.snapshots.map((row) => row.targetId)).toEqual(["checkout"]);
       expect(await dbClient.snapshots.countForBuild(build.id, { viewports: ["mobile"] })).toBe(1);
     });
 
-    test("paginates results with limit and offset", async ({ build, captureConfiguration }) => {
+    test("pages through results with a cursor", async ({ build, captureConfiguration }) => {
       await seedHomeAndCheckout(build, captureConfiguration);
 
-      const firstPage = await dbClient.snapshots.listForBuild(build.id, { limit: 1, offset: 0 });
-      const secondPage = await dbClient.snapshots.listForBuild(build.id, { limit: 1, offset: 1 });
-      expect(firstPage).toHaveLength(1);
-      expect(secondPage).toHaveLength(1);
-      expect(firstPage[0]!.id).not.toBe(secondPage[0]!.id);
+      const firstPage = await dbClient.snapshots.listForBuild(build.id, { limit: 1 });
+      expect(firstPage.snapshots).toHaveLength(1);
+      expect(firstPage.nextCursor).not.toBeNull();
+
+      const secondPage = await dbClient.snapshots.listForBuild(build.id, {
+        limit: 1,
+        cursor: firstPage.nextCursor ?? undefined,
+      });
+      expect(secondPage.snapshots).toHaveLength(1);
+      expect(secondPage.snapshots[0]!.id).not.toBe(firstPage.snapshots[0]!.id);
+
+      expect(secondPage.nextCursor).toBeNull();
       expect(await dbClient.snapshots.countForBuild(build.id)).toBe(2);
     });
 
@@ -637,8 +660,16 @@ describe("snapshots", () => {
 
       expect(errorSnapshot).toBeTruthy();
 
-      const results = await dbClient.snapshots.listForBuild(build.id, { limit: 10, offset: 0 });
-      expect(results.map((row) => row.targetId)).toEqual([
+      const results = await dbClient.snapshots.listForBuild(build.id, { limit: 10 });
+      expect(results.snapshots.map((row) => row.targetId)).toEqual([
+        "error",
+        "needs_review",
+        "rejected",
+        "approved",
+        "unchanged",
+        "queued",
+      ]);
+      expect(results.snapshots.map((row) => row.status)).toEqual([
         "error",
         "needs_review",
         "rejected",
@@ -671,84 +702,139 @@ describe("snapshots", () => {
         ],
       });
 
-      const results = await dbClient.snapshots.listForBuild(build.id, { limit: 10, offset: 0 });
-      expect(results.map((row) => row.targetId)).toEqual(["checkout", "home"]);
+      const results = await dbClient.snapshots.listForBuild(build.id, { limit: 10 });
+      expect(results.snapshots.map((row) => row.targetId)).toEqual(["checkout", "home"]);
     });
 
-    const createSortableRows = (
-      build: { id: string },
-      captureConfiguration: {
-        browser: string;
-        viewportWidth: number;
-        viewportHeight: number;
-        viewportName: string;
-      },
-    ) =>
-      dbClient.snapshots.createMany({
-        values: [
-          {
-            buildId: build.id,
-            ...captureConfiguration,
-            browser: "chromium",
-            viewportWidth: 1920,
-            targetId: "row-b-title",
-            targetTitle: "B",
-            targetName: "a",
-          },
-          {
-            buildId: build.id,
-            ...captureConfiguration,
-            browser: "webkit",
-            viewportWidth: 375,
-            targetId: "row-a-title",
-            targetTitle: "A",
-            targetName: "z",
-          },
-        ],
+    test("returns every snapshot exactly once across pages", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      await seedStories(build, captureConfiguration, 5);
+
+      const first = await dbClient.snapshots.listForBuild(build.id, { limit: 2 });
+      const second = await dbClient.snapshots.listForBuild(build.id, {
+        limit: 2,
+        cursor: first.nextCursor ?? undefined,
+      });
+      const third = await dbClient.snapshots.listForBuild(build.id, {
+        limit: 2,
+        cursor: second.nextCursor ?? undefined,
       });
 
-    test("sorts by targetName when requested", async ({ build, captureConfiguration }) => {
-      await createSortableRows(build, captureConfiguration);
-
-      const results = await dbClient.snapshots.listForBuild(build.id, {
-        sortBy: [{ column: "targetName", direction: "asc" }],
-        limit: 10,
-        offset: 0,
-      });
-      expect(results.map((row) => row.targetId)).toEqual(["row-b-title", "row-a-title"]);
+      expect(first.snapshots.map((row) => row.targetId)).toEqual(["story-0", "story-1"]);
+      expect(second.snapshots.map((row) => row.targetId)).toEqual(["story-2", "story-3"]);
+      expect(third.snapshots.map((row) => row.targetId)).toEqual(["story-4"]);
+      expect(third.nextCursor).toBeNull();
     });
 
-    test("sorts by browser when requested", async ({ build, captureConfiguration }) => {
-      await createSortableRows(build, captureConfiguration);
-
-      const results = await dbClient.snapshots.listForBuild(build.id, {
-        sortBy: [{ column: "browser", direction: "asc" }],
-        limit: 10,
-        offset: 0,
+    test("keeps paging correct when every sort key ties", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const created = await dbClient.snapshots.createMany({
+        values: Array.from({ length: 4 }, () => ({
+          buildId: build.id,
+          ...captureConfiguration,
+          targetId: "same",
+          targetTitle: "Same",
+          targetName: "same",
+        })),
       });
-      expect(results.map((row) => row.targetId)).toEqual(["row-b-title", "row-a-title"]);
+
+      const first = await dbClient.snapshots.listForBuild(build.id, { limit: 2 });
+      const second = await dbClient.snapshots.listForBuild(build.id, {
+        limit: 2,
+        cursor: first.nextCursor ?? undefined,
+      });
+
+      const paged = [...first.snapshots, ...second.snapshots].map((row) => row.id);
+      expect(paged).toEqual(created.map((snapshot) => snapshot.id).sort());
+      expect(second.nextCursor).toBeNull();
     });
 
-    test("sorts by viewportWidth when requested", async ({ build, captureConfiguration }) => {
-      await createSortableRows(build, captureConfiguration);
+    test("does not drop or duplicate a row when a snapshot is reviewed mid-scroll", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const created = await seedStories(build, captureConfiguration, 4);
+      for (const snapshot of created) {
+        await dbClient.diffs.create({
+          snapshotId: snapshot.id,
+          processingStatus: "success",
+          reviewStatus: "needs_review",
+        });
+      }
 
-      const results = await dbClient.snapshots.listForBuild(build.id, {
-        sortBy: [{ column: "viewportWidth", direction: "asc" }],
-        limit: 10,
-        offset: 0,
+      const first = await dbClient.snapshots.listForBuild(build.id, { limit: 2 });
+
+      const diff = await dbClient.diffs.findBySnapshot(first.snapshots[0]!.id);
+      await dbClient.diffs.updateReviewStatus(diff!.id, "approved");
+
+      const second = await dbClient.snapshots.listForBuild(build.id, {
+        limit: 2,
+        cursor: first.nextCursor ?? undefined,
       });
-      expect(results.map((row) => row.targetId)).toEqual(["row-a-title", "row-b-title"]);
+
+      expect([...first.snapshots, ...second.snapshots].map((row) => row.targetId)).toEqual([
+        "story-0",
+        "story-1",
+        "story-2",
+        "story-3",
+      ]);
     });
 
-    test("reverses order when direction is desc", async ({ build, captureConfiguration }) => {
-      await createSortableRows(build, captureConfiguration);
-
-      const results = await dbClient.snapshots.listForBuild(build.id, {
-        sortBy: [{ column: "targetTitle", direction: "desc" }],
-        limit: 10,
-        offset: 0,
+    test("misses a snapshot promoted above the cursor while the build is processing", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const created = await dbClient.snapshots.createMany({
+        values: Array.from({ length: 4 }, (_, index) => ({
+          buildId: build.id,
+          ...captureConfiguration,
+          targetId: `story-${index}`,
+          targetTitle: `Story ${index}`,
+          targetName: `story-${index}`,
+        })),
       });
-      expect(results.map((row) => row.targetId)).toEqual(["row-b-title", "row-a-title"]);
+
+      const first = await dbClient.snapshots.listForBuild(build.id, { limit: 2 });
+
+      const promoted = created.at(-1)!;
+      await dbClient.snapshots.updateStatus(promoted.id, "success");
+      await dbClient.diffs.create({
+        snapshotId: promoted.id,
+        processingStatus: "success",
+        reviewStatus: "needs_review",
+      });
+
+      const second = await dbClient.snapshots.listForBuild(build.id, {
+        limit: 2,
+        cursor: first.nextCursor ?? undefined,
+      });
+
+      expect([...first.snapshots, ...second.snapshots].map((row) => row.id)).not.toContain(
+        promoted.id,
+      );
+
+      const restarted = await dbClient.snapshots.listForBuild(build.id, { limit: 2 });
+      expect(restarted.snapshots.map((row) => row.id)).toContain(promoted.id);
+    });
+
+    test("preserves position when status changes within the same priority tier", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const { first } = await seedReviewQueue(build, captureConfiguration);
+
+      const before = await dbClient.snapshots.listForBuild(build.id, { limit: 10 });
+      expect(before.snapshots.map((row) => row.targetId)).toEqual(["d", "a", "b", "c"]);
+
+      const diff = await dbClient.diffs.findBySnapshot(first.id);
+      await dbClient.diffs.updateReviewStatus(diff!.id, "approved");
+
+      const after = await dbClient.snapshots.listForBuild(build.id, { limit: 10 });
+      expect(after.snapshots.map((row) => row.targetId)).toEqual(["d", "a", "b", "c"]);
     });
   });
 
@@ -884,40 +970,6 @@ describe("snapshots", () => {
 
       const after = await dbClient.snapshots.findAdjacentReviewableIds(build.id, first.id);
       expect(after).toEqual({ prevId: null, nextId: second.id, position: 1, total: 2 });
-    });
-  });
-
-  describe("listForBuild default sort", () => {
-    test("orders by status tier before title/name/browser/viewport", async ({
-      build,
-      captureConfiguration,
-    }) => {
-      await seedReviewQueue(build, captureConfiguration);
-
-      const results = await dbClient.snapshots.listForBuild(build.id, { limit: 10, offset: 0 });
-      expect(results.map((row) => row.targetId)).toEqual(["d", "a", "b", "c"]);
-      expect(results.map((row) => row.status)).toEqual([
-        "error",
-        "needs_review",
-        "rejected",
-        "unchanged",
-      ]);
-    });
-
-    test("preserves position when status changes within the same priority tier", async ({
-      build,
-      captureConfiguration,
-    }) => {
-      const { first } = await seedReviewQueue(build, captureConfiguration);
-
-      const before = await dbClient.snapshots.listForBuild(build.id, { limit: 10, offset: 0 });
-      expect(before.map((row) => row.targetId)).toEqual(["d", "a", "b", "c"]);
-
-      const diff = await dbClient.diffs.findBySnapshot(first.id);
-      await dbClient.diffs.updateReviewStatus(diff!.id, "approved");
-
-      const after = await dbClient.snapshots.listForBuild(build.id, { limit: 10, offset: 0 });
-      expect(after.map((row) => row.targetId)).toEqual(["d", "a", "b", "c"]);
     });
   });
 });

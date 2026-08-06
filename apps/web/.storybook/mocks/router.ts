@@ -136,7 +136,9 @@ export const serverClient: typeof RealServerClient = {
         },
       }))
       .actionable(),
-    list: os.snapshots.list.handler(() => ({ snapshots: [], total: 0 })).actionable(),
+    list: os.snapshots.list
+      .handler(() => ({ snapshots: [], total: 0, nextCursor: null }))
+      .actionable(),
     getCounts: os.snapshots.getCounts
       .handler(() => ({
         unchanged: 0,
