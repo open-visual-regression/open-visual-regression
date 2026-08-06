@@ -48,17 +48,16 @@ export const list = os.snapshots.list
   .use(authenticatedMiddleware)
   .use(organizationBuildMiddleware)
   .handler(async ({ input }) => {
-    const { buildId, statuses, browsers, viewports, search, sortBy, limit, offset } = input;
+    const { buildId, statuses, browsers, viewports, search, limit, cursor } = input;
 
-    const [rows, total] = await Promise.all([
+    const [{ snapshots: rows, nextCursor }, total] = await Promise.all([
       dbClient.snapshots.listForBuild(buildId, {
         statuses,
         browsers,
         viewports,
         search,
-        sortBy,
         limit,
-        offset,
+        cursor,
       }),
       dbClient.snapshots.countForBuild(buildId, { statuses, browsers, viewports, search }),
     ]);
@@ -80,6 +79,7 @@ export const list = os.snapshots.list
         viewportName: row.viewportName,
       })),
       total,
+      nextCursor,
     };
   })
   .actionable();
