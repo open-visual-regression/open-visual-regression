@@ -1,7 +1,4 @@
-import { cookies } from "next/headers";
-
 import { serverClient } from "@/lib/router";
-import { getInitialSidebarCollapsed } from "@/lib/stores/sidebarCookie";
 import { serverError } from "@/lib/utils/errors";
 
 import { ProjectsSidebar } from "./_components/ProjectsSidebar";
@@ -24,7 +21,6 @@ export default async function ProjectsSidebarSlot() {
   const { projects } = listResult;
   const { total } = countResult;
   const { builds } = buildsResult;
-  const initialCollapsed = getInitialSidebarCollapsed(await cookies());
 
   return (
     <ProjectsSidebar
@@ -32,7 +28,6 @@ export default async function ProjectsSidebarSlot() {
       total={total}
       builds={builds}
       version={process.env.npm_package_version}
-      initialCollapsed={initialCollapsed}
     />
   );
 }
