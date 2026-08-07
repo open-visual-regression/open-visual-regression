@@ -53,6 +53,7 @@ export const SnapshotGrid = ({
 }: SnapshotGridProps) => {
   const listRef = useRef<HTMLDivElement>(null);
   const [scrollElement, setScrollElement] = useState<HTMLElement | null>(null);
+  const [chunkHeight, setChunkHeight] = useState(ESTIMATED_CHUNK_HEIGHT);
 
   useEffect(() => {
     setScrollElement(document.querySelector<HTMLElement>(SCROLL_CONTAINER));
@@ -63,10 +64,23 @@ export const SnapshotGrid = ({
   const virtualizer = useVirtualizer({
     count: scrollElement ? chunks.length + (hasNextPage ? 1 : 0) : 0,
     getScrollElement: () => scrollElement,
-    estimateSize: () => ESTIMATED_CHUNK_HEIGHT,
+    estimateSize: () => chunkHeight,
     scrollMargin: listRef.current?.offsetTop ?? 0,
     overscan: OVERSCAN_CHUNKS,
   });
+
+  const measureChunk = (node: HTMLDivElement | null) => {
+    virtualizer.measureElement(node);
+
+    if (!node || Number(node.dataset.index) >= chunks.length - 1) {
+      return;
+    }
+
+    const height = node.offsetHeight;
+    if (height > 0) {
+      setChunkHeight((current) => (current === height ? current : height));
+    }
+  };
 
   const items = virtualizer.getVirtualItems();
 
@@ -114,7 +128,7 @@ export const SnapshotGrid = ({
             }}
           >
             {items.map((item) => (
-              <div key={item.key} data-index={item.index} ref={virtualizer.measureElement}>
+              <div key={item.key} data-index={item.index} ref={measureChunk}>
                 <SnapshotGridLayout className="pb-3">{renderChunk(item.index)}</SnapshotGridLayout>
               </div>
             ))}
