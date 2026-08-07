@@ -83,13 +83,8 @@ export const SnapshotCard = ({ snapshot, projectId, buildId }: SnapshotCardProps
   );
 };
 
-type SnapshotCardSkeletonProps = {
-  ref?: React.Ref<HTMLDivElement>;
-  className?: string;
-};
-
-export const SnapshotCardSkeleton = ({ ref, className }: SnapshotCardSkeletonProps) => (
-  <CardSurface ref={ref} aria-hidden className={cn("gap-0 py-0", className)}>
+export const SnapshotCardSkeleton = ({ className }: { className?: string }) => (
+  <CardSurface aria-hidden className={cn("gap-0 py-0", className)}>
     <SnapshotCardPreview />
     <SnapshotCardBody>
       <TypographySkeleton variant="code" className="w-2/3" />
