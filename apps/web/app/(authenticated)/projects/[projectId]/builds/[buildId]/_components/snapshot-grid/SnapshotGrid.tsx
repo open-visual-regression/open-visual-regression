@@ -7,11 +7,11 @@ import { type BuildSnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { Typography } from "@ovr/ui/components/typography";
 import { cn } from "@ovr/ui/lib/utils";
 
+import { useScrollContainer } from "@/lib/providers/ScrollContainer";
 import { chunk } from "@/lib/utils/array";
 
 import { SnapshotCard, SnapshotCardSkeleton } from "./SnapshotCard";
 
-const SCROLL_CONTAINER = '[data-scroll-restoration-id="projects-main"]';
 const CHUNK_SIZE = 12;
 const ESTIMATED_CHUNK_HEIGHT = 768;
 const OVERSCAN_CHUNKS = 1;
@@ -52,12 +52,8 @@ export const SnapshotGrid = ({
   onLoadMore,
 }: SnapshotGridProps) => {
   const listRef = useRef<HTMLDivElement>(null);
-  const [scrollElement, setScrollElement] = useState<HTMLElement | null>(null);
+  const scrollElement = useScrollContainer();
   const [chunkHeight, setChunkHeight] = useState(ESTIMATED_CHUNK_HEIGHT);
-
-  useEffect(() => {
-    setScrollElement(document.querySelector<HTMLElement>(SCROLL_CONTAINER));
-  }, []);
 
   const chunks = chunk(snapshots, CHUNK_SIZE);
 
