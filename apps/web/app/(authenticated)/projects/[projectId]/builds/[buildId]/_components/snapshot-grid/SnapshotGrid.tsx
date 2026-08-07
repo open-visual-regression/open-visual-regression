@@ -8,7 +8,7 @@ import { Typography } from "@ovr/ui/components/typography";
 import { cn } from "@ovr/ui/lib/utils";
 
 import { useScrollContainer } from "@/lib/providers/ScrollContainer";
-import { chunk } from "@/lib/utils/array";
+import { chunk } from "@/lib/utils/chunk";
 
 import { SnapshotCard, SnapshotCardSkeleton } from "./SnapshotCard";
 
@@ -111,13 +111,10 @@ export const SnapshotGrid = ({
   return (
     <div ref={listRef}>
       {scrollElement ? (
-        <div style={{ height: virtualizer.getTotalSize(), width: "100%", position: "relative" }}>
+        <div className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
           <div
+            className="absolute inset-x-0 top-0"
             style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
               transform: `translateY(${
                 (items[0]?.start ?? 0) - virtualizer.options.scrollMargin
               }px)`,

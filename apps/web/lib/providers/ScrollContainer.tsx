@@ -1,18 +1,28 @@
 "use client";
 
-import { createContext, use, useState } from "react";
+import { ComponentProps, createContext, ElementType, use, useState } from "react";
 
 const ScrollContainerContext = createContext<HTMLElement | null>(null);
 
 /** The nearest scrollable region, or null when rendered outside one. */
 export const useScrollContainer = () => use(ScrollContainerContext);
 
-export const ScrollContainer = ({ children, ...props }: React.ComponentProps<"main">) => {
+type ScrollContainerProps<T extends ElementType> = {
+  as?: T;
+  children?: React.ReactNode;
+} & Omit<ComponentProps<T>, "as" | "children" | "ref">;
+
+export const ScrollContainer = <T extends ElementType = "div">({
+  as,
+  children,
+  ...props
+}: ScrollContainerProps<T>) => {
+  const Component = as ?? "div";
   const [element, setElement] = useState<HTMLElement | null>(null);
 
   return (
-    <main ref={setElement} {...props}>
+    <Component ref={setElement} {...props}>
       <ScrollContainerContext value={element}>{children}</ScrollContainerContext>
-    </main>
+    </Component>
   );
 };
