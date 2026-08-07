@@ -2,7 +2,6 @@
 
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useEffect, useRef } from "react";
-import { useInView } from "react-intersection-observer";
 
 import { type BuildSnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { Typography } from "@ovr/ui/components/typography";
@@ -31,13 +30,9 @@ const SnapshotGridLayout = ({ ref, className, children }: SnapshotGridLayoutProp
   </div>
 );
 
-type SnapshotCardSkeletonRowProps = {
-  ref?: React.Ref<HTMLDivElement>;
-};
-
-const SnapshotCardSkeletonRow = ({ ref }: SnapshotCardSkeletonRowProps) => (
+const SnapshotCardSkeletonRow = () => (
   <>
-    <SnapshotCardSkeleton ref={ref} />
+    <SnapshotCardSkeleton />
     <SnapshotCardSkeleton />
     <SnapshotCardSkeleton className="hidden md:block" />
     <SnapshotCardSkeleton className="hidden lg:block" />
@@ -69,17 +64,6 @@ export const SnapshotGrid = ({
   const grid = useGridColumns(probeRef);
   const scrollElement = useScrollContainer(listRef);
 
-  const { ref: sentinelRef, inView } = useInView({
-    rootMargin: "200px",
-    skip: !hasNextPage,
-  });
-
-  useEffect(() => {
-    if (inView && hasNextPage && !isFetchingNextPage) {
-      onLoadMore?.();
-    }
-  }, [inView, hasNextPage, isFetchingNextPage, onLoadMore]);
-
   const columns = grid?.columns ?? 1;
   const rowCount = grid ? Math.ceil(snapshots.length / columns) + (hasNextPage ? 1 : 0) : 0;
 
@@ -93,6 +77,15 @@ export const SnapshotGrid = ({
   });
 
   const rows = virtualizer.getVirtualItems();
+  const snapshotRows = Math.ceil(snapshots.length / columns);
+
+  useEffect(() => {
+    const lastRow = rows.at(-1);
+
+    if (lastRow && lastRow.index >= snapshotRows - 1 && hasNextPage && !isFetchingNextPage) {
+      onLoadMore?.();
+    }
+  }, [rows, snapshotRows, hasNextPage, isFetchingNextPage, onLoadMore]);
 
   if (snapshots.length === 0) {
     return (
@@ -106,7 +99,7 @@ export const SnapshotGrid = ({
     const isLoaderRow = rowIndex * columns >= snapshots.length;
 
     if (isLoaderRow) {
-      return <SnapshotCardSkeletonRow ref={sentinelRef} />;
+      return <SnapshotCardSkeletonRow />;
     }
 
     return snapshots
@@ -157,7 +150,7 @@ export const SnapshotGrid = ({
               buildId={buildId}
             />
           ))}
-          {hasNextPage ? <SnapshotCardSkeletonRow ref={sentinelRef} /> : null}
+          {hasNextPage ? <SnapshotCardSkeletonRow /> : null}
         </SnapshotGridLayout>
       )}
     </div>
