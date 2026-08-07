@@ -8,7 +8,6 @@ type SettingsNavItem = {
 
 type SettingsNavSection = {
   label: string;
-  collapsedLabel: string;
   access: "all" | "admin";
   items: SettingsNavItem[];
 };
@@ -16,13 +15,11 @@ type SettingsNavSection = {
 const SETTINGS_NAV_SECTIONS: SettingsNavSection[] = [
   {
     label: "personal",
-    collapsedLabel: "per",
     access: "all",
     items: [{ href: "/settings/account", icon: UserIcon, label: "account" }],
   },
   {
     label: "admin",
-    collapsedLabel: "adm",
     access: "admin",
     items: [
       { href: "/settings/general", icon: SettingsIcon, label: "general" },
