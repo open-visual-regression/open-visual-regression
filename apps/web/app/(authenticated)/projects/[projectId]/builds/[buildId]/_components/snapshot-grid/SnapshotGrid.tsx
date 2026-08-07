@@ -7,13 +7,13 @@ import { type BuildSnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { Typography } from "@ovr/ui/components/typography";
 import { cn } from "@ovr/ui/lib/utils";
 
-import { useGridColumns } from "@/lib/hooks/useGridColumns";
-import { useScrollContainer } from "@/lib/hooks/useScrollContainer";
+import { useGridLayout } from "@/lib/hooks/useGridLayout";
 
 import { SnapshotCard, SnapshotCardSkeleton } from "./SnapshotCard";
 
 const ESTIMATED_ROW_HEIGHT = 244;
 const OVERSCAN_ROWS = 2;
+const SCROLL_CONTAINER = '[data-scroll-restoration-id="projects-main"]';
 
 type SnapshotGridLayoutProps = {
   ref?: React.Ref<HTMLDivElement>;
@@ -61,15 +61,14 @@ export const SnapshotGrid = ({
 }: SnapshotGridProps) => {
   const listRef = useRef<HTMLDivElement>(null);
   const probeRef = useRef<HTMLDivElement>(null);
-  const grid = useGridColumns(probeRef);
-  const scrollElement = useScrollContainer(listRef);
+  const grid = useGridLayout(probeRef);
 
   const columns = grid?.columns ?? 1;
   const rowCount = grid ? Math.ceil(snapshots.length / columns) + (hasNextPage ? 1 : 0) : 0;
 
   const virtualizer = useVirtualizer({
     count: rowCount,
-    getScrollElement: () => scrollElement,
+    getScrollElement: () => document.querySelector<HTMLElement>(SCROLL_CONTAINER),
     estimateSize: () => ESTIMATED_ROW_HEIGHT,
     scrollMargin: listRef.current?.offsetTop ?? 0,
     gap: grid?.gap ?? 0,
