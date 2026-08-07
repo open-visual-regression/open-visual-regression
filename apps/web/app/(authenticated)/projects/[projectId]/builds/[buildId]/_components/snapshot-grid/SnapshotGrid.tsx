@@ -1,3 +1,8 @@
+"use client";
+
+import { useEffect } from "react";
+import { useInView } from "react-intersection-observer";
+
 import { type BuildSnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { Typography } from "@ovr/ui/components/typography";
 import { cn } from "@ovr/ui/lib/utils";
@@ -17,14 +22,50 @@ const SnapshotGridLayout = ({ className, children }: SnapshotGridLayoutProps) =>
   </div>
 );
 
+type SnapshotCardSkeletonRowProps = {
+  ref?: React.Ref<HTMLDivElement>;
+};
+
+const SnapshotCardSkeletonRow = ({ ref }: SnapshotCardSkeletonRowProps) => (
+  <>
+    <SnapshotCardSkeleton ref={ref} />
+    <SnapshotCardSkeleton />
+    <SnapshotCardSkeleton className="hidden md:block" />
+    <SnapshotCardSkeleton className="hidden lg:block" />
+    <SnapshotCardSkeleton className="hidden xl:block" />
+  </>
+);
+
 type SnapshotGridProps = {
   snapshots: BuildSnapshotSchema[];
   projectId: string;
   buildId: string;
   search?: string;
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
+  onLoadMore?: () => void;
 };
 
-export const SnapshotGrid = ({ snapshots, projectId, buildId, search }: SnapshotGridProps) => {
+export const SnapshotGrid = ({
+  snapshots,
+  projectId,
+  buildId,
+  search,
+  hasNextPage = false,
+  isFetchingNextPage = false,
+  onLoadMore,
+}: SnapshotGridProps) => {
+  const { ref: sentinelRef, inView } = useInView({
+    rootMargin: "200px",
+    skip: !hasNextPage,
+  });
+
+  useEffect(() => {
+    if (inView && hasNextPage && !isFetchingNextPage) {
+      onLoadMore?.();
+    }
+  }, [inView, hasNextPage, isFetchingNextPage, onLoadMore]);
+
   if (snapshots.length === 0) {
     return (
       <Typography variant="caption" className="py-12 text-center">
@@ -43,19 +84,10 @@ export const SnapshotGrid = ({ snapshots, projectId, buildId, search }: Snapshot
           buildId={buildId}
         />
       ))}
+      {hasNextPage ? <SnapshotCardSkeletonRow ref={sentinelRef} /> : null}
     </SnapshotGridLayout>
   );
 };
-
-const SnapshotCardSkeletonRow = () => (
-  <>
-    <SnapshotCardSkeleton />
-    <SnapshotCardSkeleton />
-    <SnapshotCardSkeleton className="hidden md:block" />
-    <SnapshotCardSkeleton className="hidden lg:block" />
-    <SnapshotCardSkeleton className="hidden xl:block" />
-  </>
-);
 
 export const SnapshotGridSkeleton = () => (
   <SnapshotGridLayout>

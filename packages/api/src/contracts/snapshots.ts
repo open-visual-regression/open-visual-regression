@@ -50,22 +50,16 @@ export const buildSnapshotSchema = z.object({
 
 export type BuildSnapshotSchema = z.infer<typeof buildSnapshotSchema>;
 
-export const snapshotSortColumnSchema = z.enum([
-  "status",
-  "targetTitle",
-  "targetName",
-  "browser",
-  "viewportWidth",
-]);
-
-export type SnapshotSortColumnSchema = z.infer<typeof snapshotSortColumnSchema>;
-
-export const snapshotSortSchema = z.object({
-  column: snapshotSortColumnSchema,
-  direction: z.enum(["asc", "desc"]),
+export const snapshotsCursorSchema = z.object({
+  statusPriority: z.number().int(),
+  targetTitle: z.string(),
+  targetName: z.string(),
+  browser: z.string(),
+  viewportWidth: z.number().int(),
+  id: z.uuidv7(),
 });
 
-export type SnapshotSortSchema = z.infer<typeof snapshotSortSchema>;
+export type SnapshotsCursor = z.infer<typeof snapshotsCursorSchema>;
 
 export const listInputSchema = z.object({
   buildId: z.uuidv7(),
@@ -73,18 +67,8 @@ export const listInputSchema = z.object({
   browsers: z.array(z.string()).optional(),
   viewports: z.array(z.string()).optional(),
   search: z.string().min(1).optional(),
-  sortBy: z
-    .array(snapshotSortSchema)
-    .min(1)
-    .default([
-      { column: "status", direction: "asc" },
-      { column: "targetTitle", direction: "asc" },
-      { column: "targetName", direction: "asc" },
-      { column: "browser", direction: "asc" },
-      { column: "viewportWidth", direction: "asc" },
-    ]),
   limit: z.number().int().min(1).max(100).default(24),
-  offset: z.number().int().min(0).default(0),
+  cursor: snapshotsCursorSchema.optional(),
 });
 
 export type ListInputSchema = z.infer<typeof listInputSchema>;
@@ -92,7 +76,10 @@ export type ListInputSchema = z.infer<typeof listInputSchema>;
 export const listOutputSchema = z.object({
   snapshots: z.array(buildSnapshotSchema),
   total: z.number().int().nonnegative(),
+  nextCursor: snapshotsCursorSchema.nullable(),
 });
+
+export type ListOutputSchema = z.infer<typeof listOutputSchema>;
 
 export const listContract = oc.input(listInputSchema).output(listOutputSchema);
 

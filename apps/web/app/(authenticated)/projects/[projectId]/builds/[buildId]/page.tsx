@@ -6,6 +6,7 @@ import { snapshotDisplayStatusSchema } from "@ovr/api/contracts/builds";
 import { canReview } from "@/lib/auth/roles";
 import { getCachedSession } from "@/lib/auth/session";
 import { getSnapshotStatusLabel } from "@/lib/components/SnapshotStatusBadge";
+import { snapshotsListInfiniteOptions } from "@/lib/orpc/snapshots-query";
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
 import { getStorybookPath, hasHostedStorybook } from "@/lib/utils/storage";
@@ -13,10 +14,8 @@ import { getStorybookPath, hasHostedStorybook } from "@/lib/utils/storage";
 import { BuildHeader } from "./_components/build-header/BuildHeader";
 import { BuildPageShell } from "./_components/BuildPageShell";
 import { SnapshotFilters } from "./_components/snapshot-grid/SnapshotFilters";
-import { SnapshotGrid } from "./_components/snapshot-grid/SnapshotGrid";
 import { SnapshotsSearchField } from "./_components/snapshot-grid/SnapshotsSearchField";
-
-const PAGE_SIZE = 60;
+import { SnapshotsSection } from "./_components/snapshot-grid/SnapshotsSection";
 
 type BuildPageProps = PageProps<"/projects/[projectId]/builds/[buildId]">;
 
@@ -58,15 +57,11 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
     serverClient.snapshots.listStatuses({ buildId }),
     serverClient.snapshots.listBrowsers({ buildId }),
     serverClient.snapshots.listViewports({ buildId }),
-    serverClient.snapshots.list({
-      buildId,
-      statuses,
-      browsers,
-      viewports,
-      search,
-      limit: PAGE_SIZE,
-      offset: 0,
-    }),
+    serverClient.snapshots.list(
+      snapshotsListInfiniteOptions(buildId, search, { statuses, browsers, viewports }).input(
+        undefined,
+      ),
+    ),
   ]);
 
   if (
@@ -131,11 +126,14 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
         />
       }
       grid={
-        <SnapshotGrid
-          snapshots={snapshotsResult.snapshots}
+        <SnapshotsSection
           projectId={projectId}
           buildId={buildId}
+          initialPage={snapshotsResult}
           search={search}
+          statuses={statuses}
+          browsers={browsers}
+          viewports={viewports}
         />
       }
     />

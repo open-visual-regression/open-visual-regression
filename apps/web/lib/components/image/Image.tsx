@@ -19,7 +19,6 @@ export const Image = ({ errorFallback, className, onLoad, onError, ...props }: I
   return (
     <>
       <img
-        loading="lazy"
         {...props}
         ref={(img) => {
           if (img?.complete) {
