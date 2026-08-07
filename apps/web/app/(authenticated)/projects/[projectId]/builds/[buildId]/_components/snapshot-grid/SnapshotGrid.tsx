@@ -7,6 +7,8 @@ import { type BuildSnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { Typography } from "@ovr/ui/components/typography";
 import { cn } from "@ovr/ui/lib/utils";
 
+import { chunk } from "@/lib/utils/array";
+
 import { SnapshotCard, SnapshotCardSkeleton } from "./SnapshotCard";
 
 const SCROLL_CONTAINER = '[data-scroll-restoration-id="projects-main"]';
@@ -29,11 +31,6 @@ const SnapshotGridLayout = ({ className, children }: SnapshotGridLayoutProps) =>
 
 const SnapshotCardSkeletons = ({ count }: { count: number }) =>
   Array.from({ length: count }, (_, index) => <SnapshotCardSkeleton key={index} />);
-
-const chunk = <T,>(items: T[], size: number): T[][] =>
-  Array.from({ length: Math.ceil(items.length / size) }, (_, index) =>
-    items.slice(index * size, index * size + size),
-  );
 
 type SnapshotGridProps = {
   snapshots: BuildSnapshotSchema[];
