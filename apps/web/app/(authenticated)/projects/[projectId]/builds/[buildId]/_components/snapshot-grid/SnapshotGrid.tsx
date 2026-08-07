@@ -1,44 +1,39 @@
 "use client";
 
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { type BuildSnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { Typography } from "@ovr/ui/components/typography";
 import { cn } from "@ovr/ui/lib/utils";
 
-import { useGridLayout } from "@/lib/hooks/useGridLayout";
-
 import { SnapshotCard, SnapshotCardSkeleton } from "./SnapshotCard";
 
-const ESTIMATED_ROW_HEIGHT = 244;
-const OVERSCAN_ROWS = 2;
 const SCROLL_CONTAINER = '[data-scroll-restoration-id="projects-main"]';
+const CHUNK_SIZE = 12;
+const ESTIMATED_CHUNK_HEIGHT = 768;
+const OVERSCAN_CHUNKS = 1;
 
 type SnapshotGridLayoutProps = {
-  ref?: React.Ref<HTMLDivElement>;
   className?: string;
   children?: React.ReactNode;
 };
 
-const SnapshotGridLayout = ({ ref, className, children }: SnapshotGridLayoutProps) => (
+const SnapshotGridLayout = ({ className, children }: SnapshotGridLayoutProps) => (
   <div
-    ref={ref}
-    className={cn("grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5", className)}
+    className={cn("grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6", className)}
   >
     {children}
   </div>
 );
 
-const SnapshotCardSkeletonRow = () => (
-  <>
-    <SnapshotCardSkeleton />
-    <SnapshotCardSkeleton />
-    <SnapshotCardSkeleton className="hidden md:block" />
-    <SnapshotCardSkeleton className="hidden lg:block" />
-    <SnapshotCardSkeleton className="hidden xl:block" />
-  </>
-);
+const SnapshotCardSkeletons = ({ count }: { count: number }) =>
+  Array.from({ length: count }, (_, index) => <SnapshotCardSkeleton key={index} />);
+
+const chunk = <T,>(items: T[], size: number): T[][] =>
+  Array.from({ length: Math.ceil(items.length / size) }, (_, index) =>
+    items.slice(index * size, index * size + size),
+  );
 
 type SnapshotGridProps = {
   snapshots: BuildSnapshotSchema[];
@@ -60,31 +55,31 @@ export const SnapshotGrid = ({
   onLoadMore,
 }: SnapshotGridProps) => {
   const listRef = useRef<HTMLDivElement>(null);
-  const probeRef = useRef<HTMLDivElement>(null);
-  const grid = useGridLayout(probeRef);
-
-  const columns = grid?.columns ?? 1;
-  const rowCount = grid ? Math.ceil(snapshots.length / columns) + (hasNextPage ? 1 : 0) : 0;
-
-  const virtualizer = useVirtualizer({
-    count: rowCount,
-    getScrollElement: () => document.querySelector<HTMLElement>(SCROLL_CONTAINER),
-    estimateSize: () => ESTIMATED_ROW_HEIGHT,
-    scrollMargin: listRef.current?.offsetTop ?? 0,
-    gap: grid?.gap ?? 0,
-    overscan: OVERSCAN_ROWS,
-  });
-
-  const rows = virtualizer.getVirtualItems();
-  const snapshotRows = Math.ceil(snapshots.length / columns);
+  const [scrollElement, setScrollElement] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
-    const lastRow = rows.at(-1);
+    setScrollElement(document.querySelector<HTMLElement>(SCROLL_CONTAINER));
+  }, []);
 
-    if (lastRow && lastRow.index >= snapshotRows - 1 && hasNextPage && !isFetchingNextPage) {
+  const chunks = chunk(snapshots, CHUNK_SIZE);
+
+  const virtualizer = useVirtualizer({
+    count: scrollElement ? chunks.length + (hasNextPage ? 1 : 0) : 0,
+    getScrollElement: () => scrollElement,
+    estimateSize: () => ESTIMATED_CHUNK_HEIGHT,
+    scrollMargin: listRef.current?.offsetTop ?? 0,
+    overscan: OVERSCAN_CHUNKS,
+  });
+
+  const items = virtualizer.getVirtualItems();
+
+  useEffect(() => {
+    const lastItem = items.at(-1);
+
+    if (lastItem && lastItem.index >= chunks.length - 1 && hasNextPage && !isFetchingNextPage) {
       onLoadMore?.();
     }
-  }, [rows, snapshotRows, hasNextPage, isFetchingNextPage, onLoadMore]);
+  }, [items, chunks.length, hasNextPage, isFetchingNextPage, onLoadMore]);
 
   if (snapshots.length === 0) {
     return (
@@ -94,29 +89,21 @@ export const SnapshotGrid = ({
     );
   }
 
-  const renderRow = (rowIndex: number) => {
-    const isLoaderRow = rowIndex * columns >= snapshots.length;
+  const renderChunk = (index: number) => {
+    const snapshotChunk = chunks[index];
 
-    if (isLoaderRow) {
-      return <SnapshotCardSkeletonRow />;
+    if (!snapshotChunk) {
+      return <SnapshotCardSkeletons count={CHUNK_SIZE} />;
     }
 
-    return snapshots
-      .slice(rowIndex * columns, rowIndex * columns + columns)
-      .map((snapshot) => (
-        <SnapshotCard
-          key={snapshot.id}
-          snapshot={snapshot}
-          projectId={projectId}
-          buildId={buildId}
-        />
-      ));
+    return snapshotChunk.map((snapshot) => (
+      <SnapshotCard key={snapshot.id} snapshot={snapshot} projectId={projectId} buildId={buildId} />
+    ));
   };
 
   return (
     <div ref={listRef}>
-      <SnapshotGridLayout ref={probeRef} aria-hidden className="h-0" />
-      {grid ? (
+      {scrollElement ? (
         <div style={{ height: virtualizer.getTotalSize(), width: "100%", position: "relative" }}>
           <div
             style={{
@@ -124,17 +111,14 @@ export const SnapshotGrid = ({
               top: 0,
               left: 0,
               width: "100%",
-              display: "flex",
-              flexDirection: "column",
-              gap: grid.gap,
               transform: `translateY(${
-                (rows[0]?.start ?? 0) - virtualizer.options.scrollMargin
+                (items[0]?.start ?? 0) - virtualizer.options.scrollMargin
               }px)`,
             }}
           >
-            {rows.map((row) => (
-              <div key={row.key} data-index={row.index} ref={virtualizer.measureElement}>
-                <SnapshotGridLayout>{renderRow(row.index)}</SnapshotGridLayout>
+            {items.map((item) => (
+              <div key={item.key} data-index={item.index} ref={virtualizer.measureElement}>
+                <SnapshotGridLayout className="pb-3">{renderChunk(item.index)}</SnapshotGridLayout>
               </div>
             ))}
           </div>
@@ -149,7 +133,7 @@ export const SnapshotGrid = ({
               buildId={buildId}
             />
           ))}
-          {hasNextPage ? <SnapshotCardSkeletonRow /> : null}
+          {hasNextPage ? <SnapshotCardSkeletons count={CHUNK_SIZE} /> : null}
         </SnapshotGridLayout>
       )}
     </div>
@@ -158,8 +142,6 @@ export const SnapshotGrid = ({
 
 export const SnapshotGridSkeleton = () => (
   <SnapshotGridLayout>
-    <SnapshotCardSkeletonRow />
-    <SnapshotCardSkeletonRow />
-    <SnapshotCardSkeletonRow />
+    <SnapshotCardSkeletons count={CHUNK_SIZE * 2} />
   </SnapshotGridLayout>
 );
