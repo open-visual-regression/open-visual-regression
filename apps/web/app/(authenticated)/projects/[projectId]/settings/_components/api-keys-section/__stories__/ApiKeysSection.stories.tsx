@@ -30,8 +30,18 @@ export const Empty: Story = {
 export const WithApiKeys: Story = {
   args: {
     apiKeys: [
-      mocks.apiKey.generateApiKey({ name: "ci", lastRequest: new Date() }),
-      mocks.apiKey.generateApiKey({ name: "local dev", lastRequest: null }),
+      mocks.apiKey.generateApiKey({
+        name: "ci",
+        ownerName: "Jamie Rivera",
+        createdAt: new Date("2026-05-01T09:00:00.000Z"),
+        lastRequest: new Date("2026-08-01T14:30:00.000Z"),
+      }),
+      mocks.apiKey.generateApiKey({
+        name: "local dev",
+        ownerName: "Sam Okafor",
+        createdAt: new Date("2026-06-15T16:45:00.000Z"),
+        lastRequest: null,
+      }),
     ],
   },
 };
