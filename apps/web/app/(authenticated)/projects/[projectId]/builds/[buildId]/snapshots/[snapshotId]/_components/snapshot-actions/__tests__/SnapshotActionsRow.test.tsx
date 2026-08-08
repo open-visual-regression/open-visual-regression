@@ -16,6 +16,7 @@ vi.mock("next/navigation");
 
 const mockCastVote = vi.mocked(serverClient.diffs.castVote);
 const mockRefresh = vi.mocked(useRouter)().refresh;
+const mockPush = vi.mocked(useRouter)().push;
 
 const snapshot: SnapshotSchema = {
   id: "019edfc7-e040-7492-86b2-ccfdc00cf6e2",
@@ -80,42 +81,80 @@ const renderComponent = (
   );
 
 describe("SnapshotActionsRow", () => {
-  it("should approve the diff", async ({ user }) => {
+  const nextSnapshotHref = `/projects/${projectId}/builds/${buildId}/snapshots/${nextSnapshotId}`;
+
+  it("should approve the diff and navigate to the next snapshot immediately, without waiting for the request", async ({
+    user,
+  }) => {
     mockCastVote.mockResolvedValue([null, undefined]);
     renderComponent();
 
     await user.click(screen.getByRole("button", { name: /^approve$/i }));
 
     expect(mockCastVote).toHaveBeenCalledWith({ diffId: diff.id, vote: "approve" });
-    await waitFor(() => expect(mockRefresh).toHaveBeenCalled());
+    expect(mockPush).toHaveBeenCalledWith(nextSnapshotHref);
+    expect(mockRefresh).not.toHaveBeenCalled();
   });
 
-  it("should reject the diff", async ({ user }) => {
+  it("should reject the diff and navigate to the next snapshot immediately, without waiting for the request", async ({
+    user,
+  }) => {
     mockCastVote.mockResolvedValue([null, undefined]);
     renderComponent();
 
     await user.click(screen.getByRole("button", { name: /^reject$/i }));
 
     expect(mockCastVote).toHaveBeenCalledWith({ diffId: diff.id, vote: "reject" });
+    expect(mockPush).toHaveBeenCalledWith(nextSnapshotHref);
+    expect(mockRefresh).not.toHaveBeenCalled();
+  });
+
+  it("should refresh instead of navigating when approving the last snapshot in the queue", async ({
+    user,
+  }) => {
+    mockCastVote.mockResolvedValue([null, undefined]);
+    renderComponent({ nextSnapshotId: null });
+
+    await user.click(screen.getByRole("button", { name: /^approve$/i }));
+
+    expect(mockPush).not.toHaveBeenCalled();
     await waitFor(() => expect(mockRefresh).toHaveBeenCalled());
   });
 
-  it("should show an error toast if approving fails", async ({ user }) => {
+  it("should refresh instead of navigating when rejecting the last snapshot in the queue", async ({
+    user,
+  }) => {
+    mockCastVote.mockResolvedValue([null, undefined]);
+    renderComponent({ nextSnapshotId: null });
+
+    await user.click(screen.getByRole("button", { name: /^reject$/i }));
+
+    expect(mockPush).not.toHaveBeenCalled();
+    await waitFor(() => expect(mockRefresh).toHaveBeenCalled());
+  });
+
+  it("should still navigate to the next snapshot optimistically, then show an error toast if approving fails", async ({
+    user,
+  }) => {
     mockCastVote.mockResolvedValue([createORPCError("INTERNAL_SERVER_ERROR"), undefined]);
     renderComponent();
 
     await user.click(screen.getByRole("button", { name: /^approve$/i }));
 
+    expect(mockPush).toHaveBeenCalledWith(nextSnapshotHref);
     expect(await screen.findByText("INTERNAL_SERVER_ERROR")).toBeVisible();
     expect(mockRefresh).not.toHaveBeenCalled();
   });
 
-  it("should show an error toast if rejecting fails", async ({ user }) => {
+  it("should still navigate to the next snapshot optimistically, then show an error toast if rejecting fails", async ({
+    user,
+  }) => {
     mockCastVote.mockResolvedValue([createORPCError("INTERNAL_SERVER_ERROR"), undefined]);
     renderComponent();
 
     await user.click(screen.getByRole("button", { name: /^reject$/i }));
 
+    expect(mockPush).toHaveBeenCalledWith(nextSnapshotHref);
     expect(await screen.findByText("INTERNAL_SERVER_ERROR")).toBeVisible();
     expect(mockRefresh).not.toHaveBeenCalled();
   });
