@@ -6,8 +6,7 @@ This repo is a [Turborepo](https://turborepo.dev/docs) monorepo managed with [pn
 
 - [nvm](https://github.com/nvm-sh/nvm): Node version manager
 - [pnpm](https://pnpm.io): package manager (`npm install -g pnpm`)
-- [Docker](https://docs.docker.com/get-docker/): for the bundled Postgres,
-  Redis, and object storage used in development and integration tests
+- [Docker](https://docs.docker.com/get-docker/): for the bundled Postgres, Redis, and object storage used in development and integration tests
 
 ## Setup
 

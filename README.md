@@ -24,14 +24,10 @@
 
 OVR captures screenshots from your UI and diffs them against approved baselines. It runs entirely on your own infrastructure: a web dashboard, a worker that captures and diffs snapshots with Playwright, and a CLI that CI pipelines run to upload a build.
 
-- **No separate test files.** Point it at a `storybook build` output instead
-  of writing and maintaining dedicated visual test files.
-- **Review workflow.** Visual diffs that cross the threshold go into a review
-  queue with a side-by-side and slider diff view, not an automatic fail.
-- **Git status checks.** Connect a project to GitHub and OVR posts build/review
-  status as a commit check, so a pull request can gate on it.
-- **Bring your own infra.** Postgres, Redis, and any S3-compatible storage.
-  Bundled defaults for local use, or point at managed services.
+- **No separate test files.** Point it at a `storybook build` output instead of writing and maintaining dedicated visual test files.
+- **Review workflow.** Visual diffs that cross the threshold go into a review queue with a side-by-side and slider diff view, not an automatic fail.
+- **Git status checks.** Connect a project to GitHub and OVR posts build/review status as a commit check, so a pull request can gate on it.
+- **Bring your own infra.** Postgres, Redis, and any S3-compatible storage. Bundled defaults for local use, or point at managed services.
 
 ## Why OVR?
 
