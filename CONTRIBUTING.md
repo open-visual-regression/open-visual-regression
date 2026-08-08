@@ -1,7 +1,6 @@
 # Contributing
 
-This repo is a [Turborepo](https://turborepo.dev/docs) monorepo managed with
-[pnpm](https://pnpm.io) workspaces. Each package is 100% TypeScript.
+This repo is a [Turborepo](https://turborepo.dev/docs) monorepo managed with [pnpm](https://pnpm.io) workspaces. Each package is 100% TypeScript.
 
 ## Prerequisites
 
@@ -23,8 +22,7 @@ pnpm install
 
 ## Development
 
-The fastest loop is running app processes on the host against just the
-bundled data services in Docker:
+The fastest loop is running app processes on the host against just the bundled data services in Docker:
 
 ```sh
 # Infra only (Postgres, Valkey, rustfs)
@@ -87,27 +85,21 @@ packages/
 
 ## Testing
 
-`pnpm test` runs unit and integration tests (Vitest, with Testcontainers for
-Postgres/Valkey/rustfs where needed).
+`pnpm test` runs unit and integration tests (Vitest, with Testcontainers for Postgres/Valkey/rustfs where needed).
 
-The end-to-end suite runs the full stack (web, worker, db, valkey, storage)
-and drives it through the CLI and the UI the way a real deployment would. See
-[`apps/e2e/README.md`](./apps/e2e/README.md) for how to run it locally.
+The end-to-end suite runs the full stack (web, worker, db, valkey, storage) and drives it through the CLI and the UI the way a real deployment would. See [`apps/e2e/README.md`](./apps/e2e/README.md) for how to run it locally.
 
 ## Node Version
 
-Node version is pinned in `.nvmrc`. Always run `nvm use` before running
-commands. In CI, use `node-version-file: .nvmrc` with your Node setup action.
+Node version is pinned in `.nvmrc`. Always run `nvm use` before running commands. In CI, use `node-version-file: .nvmrc` with your Node setup action.
 
 ## Package Manager
 
-This repo uses **pnpm** exclusively. Do not use `npm` or `yarn`. See
-`.agents/skills/pnpm/skill.md` for the full ruleset.
+This repo uses **pnpm** exclusively. Do not use `npm` or `yarn`. See `.agents/skills/pnpm/skill.md` for the full ruleset.
 
 ## AI Agent Skills
 
-Skills in `.agents/skills/` provide context and rules for AI agents working in
-this repo:
+Skills in `.agents/skills/` provide context and rules for AI agents working in this repo:
 
 | Skill | Purpose |
 |-------|---------|

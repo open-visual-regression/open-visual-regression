@@ -22,10 +22,7 @@
 
 ---
 
-OVR captures screenshots from your UI, diffs them against approved baselines,
-and gates CI on the result. It runs entirely on your own infrastructure: a web
-dashboard, a worker that captures and diffs snapshots with Playwright, and a
-CLI that CI pipelines run to upload a build and wait for the outcome.
+OVR captures screenshots from your UI, diffs them against approved baselines, and gates CI on the result. It runs entirely on your own infrastructure: a web dashboard, a worker that captures and diffs snapshots with Playwright, and a CLI that CI pipelines run to upload a build and wait for the outcome.
 
 - **No separate test files.** Point it at a `storybook build` output instead
   of writing and maintaining dedicated visual test files.
@@ -52,17 +49,12 @@ npx @open-visual-regression/cli snapshot storybook \
   --author "$(git log -1 --pretty=%an)"
 ```
 
-See the [docs](https://docs.openvisualregression.com) for self-hosting
-(Docker, Kubernetes, managed Postgres/Redis/S3), CLI configuration, and the
-API reference.
+See the [docs](https://docs.openvisualregression.com) for self-hosting (Docker, Kubernetes, managed Postgres/Redis/S3), CLI configuration, and the API reference.
 
 ## License
 
-[Elastic License 2.0](./LICENSE): source-available, free to self-host and
-modify. The one restriction: you may not offer OVR to third parties as a
-hosted or managed service.
+[Elastic License 2.0](./LICENSE): source-available, free to self-host and modify. The one restriction: you may not offer OVR to third parties as a hosted or managed service.
 
 ## Contributing
 
-This is a pnpm/Turborepo monorepo. See [CONTRIBUTING.md](./CONTRIBUTING.md) for
-local setup, workspace layout, and development workflow.
+This is a pnpm/Turborepo monorepo. See [CONTRIBUTING.md](./CONTRIBUTING.md) for local setup, workspace layout, and development workflow.
