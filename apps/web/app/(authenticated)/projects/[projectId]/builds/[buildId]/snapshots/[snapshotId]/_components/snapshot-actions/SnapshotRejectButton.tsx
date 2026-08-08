@@ -22,9 +22,9 @@ export const SnapshotRejectButton = ({ diffId, rejected, nextHref }: SnapshotRej
   const { execute, status } = useServerAction(serverClient.diffs.castVote, {
     interceptors: [
       onSuccess(() => {
-        // A next snapshot already navigated away optimistically, so the
-        // current route no longer needs a refresh.
-        if (!nextHref) router.refresh();
+        if (!nextHref) {
+          router.refresh();
+        }
       }),
       onError((err) => {
         toast.error(err.message);
@@ -36,9 +36,9 @@ export const SnapshotRejectButton = ({ diffId, rejected, nextHref }: SnapshotRej
 
   const handleClick = () => {
     execute({ diffId, vote: "reject" });
-    // Assume the vote succeeds and move on right away; onError above
-    // surfaces a toast if it didn't.
-    if (nextHref) router.push(nextHref);
+    if (nextHref) {
+      router.push(nextHref);
+    }
   };
 
   return (
