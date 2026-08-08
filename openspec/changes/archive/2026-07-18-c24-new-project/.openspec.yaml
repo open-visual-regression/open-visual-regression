@@ -1,4 +1,0 @@
-schema: spec-driven
-created: 2026-05-24
-title: "Projects: /projects/new page + inline slug conflict validation"
-depends_on: c23-projects-list

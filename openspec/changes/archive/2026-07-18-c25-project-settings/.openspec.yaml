@@ -1,4 +1,0 @@
-schema: spec-driven
-created: 2026-05-24
-title: "Projects: /projects/[slug]/settings — general form + variants table"
-depends_on: c22-projects-service

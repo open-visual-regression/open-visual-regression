@@ -1,4 +1,0 @@
-schema: spec-driven
-created: 2026-05-24
-title: "User Mgmt: /settings/users — members table + pending invitations table (read-only)"
-depends_on: c16-settings-layout
