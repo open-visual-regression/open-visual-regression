@@ -82,7 +82,7 @@ export const UpdateProjectForm = ({ project }: UpdateProjectFormProps) => {
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} noValidate>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-4">
         <Typography variant="h2">general</Typography>
         <Card size="default">
           <CardContent className="flex flex-col gap-5">
@@ -169,7 +169,7 @@ export const UpdateProjectForm = ({ project }: UpdateProjectFormProps) => {
 };
 
 export const UpdateProjectFormSkeleton = () => (
-  <div aria-hidden className="flex flex-col gap-2">
+  <div aria-hidden className="flex flex-col gap-4">
     <TypographySkeleton variant="h2" className="w-24" />
     <Card size="default">
       <CardContent className="flex flex-col gap-5">
