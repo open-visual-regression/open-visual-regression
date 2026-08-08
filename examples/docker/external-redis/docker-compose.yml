@@ -1,0 +1,128 @@
+x-app-env: &app-env
+  DATABASE_URL: postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-postgres}@db:5432/${DATABASE_NAME:-open_visual_regression}
+  REDIS_URL: ${REDIS_URL:?set REDIS_URL in your .env}
+  STORAGE_ENDPOINT: http://rustfs:9000
+  STORAGE_PUBLIC_ENDPOINT: ${STORAGE_PUBLIC_ENDPOINT:-http://localhost:${STORAGE_PORT:-9000}}
+  STORAGE_REGION: ${STORAGE_REGION:-us-east-1}
+  STORAGE_BUCKET: ${STORAGE_BUCKET:-ovr}
+  STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY:-rustfsadmin}
+  STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY:-rustfsadmin}
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  BASE_URL: ${BASE_URL:-http://localhost:3000}
+  OVR_GIT_TOKEN_ENCRYPTION_KEY: ${OVR_GIT_TOKEN_ENCRYPTION_KEY:?set OVR_GIT_TOKEN_ENCRYPTION_KEY in your .env}
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME:-open_visual_regression}
+      POSTGRES_USER: ${DATABASE_USER:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-postgres}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -d ${DATABASE_NAME:-open_visual_regression} -U ${DATABASE_USER:-postgres}",
+        ]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+    ports:
+      - ${DATABASE_PORT:-5432}:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  rustfs:
+    image: rustfs/rustfs:latest
+    restart: always
+    environment:
+      RUSTFS_ACCESS_KEY: ${STORAGE_ACCESS_KEY:-rustfsadmin}
+      RUSTFS_SECRET_KEY: ${STORAGE_SECRET_KEY:-rustfsadmin}
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_VOLUMES: /data
+    ports:
+      - ${STORAGE_PORT:-9000}:9000
+      - ${STORAGE_CONSOLE_PORT:-9001}:9001
+    volumes:
+      - rustfsdata:/data
+
+  createbuckets:
+    image: amazon/aws-cli
+    depends_on:
+      rustfs:
+        condition: service_started
+    environment:
+      AWS_ACCESS_KEY_ID: ${STORAGE_ACCESS_KEY:-rustfsadmin}
+      AWS_SECRET_ACCESS_KEY: ${STORAGE_SECRET_KEY:-rustfsadmin}
+      AWS_DEFAULT_REGION: ${STORAGE_REGION:-us-east-1}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        until aws --endpoint-url http://rustfs:9000 s3 ls >/dev/null 2>&1; do
+          echo "waiting for object storage..."
+          sleep 2
+        done
+        aws --endpoint-url http://rustfs:9000 s3 mb "s3://${STORAGE_BUCKET:-ovr}" 2>/dev/null || true
+    restart: "no"
+
+  migrate:
+    image: ${IMAGE_PREFIX:-ghcr.io/open-visual-regression}/worker:${IMAGE_TAG:-latest}
+    command: ["node", "dist/migrate.js"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      <<: *app-env
+    restart: "no"
+
+  web:
+    image: ${IMAGE_PREFIX:-ghcr.io/open-visual-regression}/web:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      createbuckets:
+        condition: service_completed_successfully
+    environment:
+      <<: *app-env
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET in your .env}
+      BASE_URL: ${BASE_URL:-http://localhost:3000}
+      PORT: ${WEB_PORT:-3000}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:${WEB_PORT:-3000}/api/rpc/health/ready').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - ${WEB_PORT:-3000}:${WEB_PORT:-3000}
+
+  worker:
+    image: ${IMAGE_PREFIX:-ghcr.io/open-visual-regression}/worker:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      createbuckets:
+        condition: service_completed_successfully
+    environment:
+      <<: *app-env
+      OVR_CAPTURE_GROUP_CONCURRENCY: ${OVR_CAPTURE_GROUP_CONCURRENCY:-2}
+    volumes:
+      - workertmp:/tmp
+
+volumes:
+  pgdata:
+  rustfsdata:
+  workertmp:

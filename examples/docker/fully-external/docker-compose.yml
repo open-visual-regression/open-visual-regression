@@ -1,0 +1,61 @@
+x-app-env: &app-env
+  DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL in your .env}
+  REDIS_URL: ${REDIS_URL:?set REDIS_URL in your .env}
+  STORAGE_ENDPOINT: ${STORAGE_ENDPOINT:-}
+  STORAGE_PUBLIC_ENDPOINT: ${STORAGE_PUBLIC_ENDPOINT:-}
+  STORAGE_REGION: ${STORAGE_REGION:?set STORAGE_REGION in your .env}
+  STORAGE_BUCKET: ${STORAGE_BUCKET:?set STORAGE_BUCKET in your .env}
+  STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY:-}
+  STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY:-}
+  STORAGE_FORCE_PATH_STYLE: ${STORAGE_FORCE_PATH_STYLE:-false}
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  BASE_URL: ${BASE_URL:-http://localhost:3000}
+  OVR_GIT_TOKEN_ENCRYPTION_KEY: ${OVR_GIT_TOKEN_ENCRYPTION_KEY:?set OVR_GIT_TOKEN_ENCRYPTION_KEY in your .env}
+
+services:
+  migrate:
+    image: ${IMAGE_PREFIX:-ghcr.io/open-visual-regression}/worker:${IMAGE_TAG:-latest}
+    command: ["node", "dist/migrate.js"]
+    environment:
+      <<: *app-env
+    restart: "no"
+
+  web:
+    image: ${IMAGE_PREFIX:-ghcr.io/open-visual-regression}/web:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      <<: *app-env
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET in your .env}
+      BASE_URL: ${BASE_URL:-http://localhost:3000}
+      PORT: ${WEB_PORT:-3000}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:${WEB_PORT:-3000}/api/rpc/health/ready').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - ${WEB_PORT:-3000}:${WEB_PORT:-3000}
+
+  worker:
+    image: ${IMAGE_PREFIX:-ghcr.io/open-visual-regression}/worker:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      <<: *app-env
+      OVR_CAPTURE_GROUP_CONCURRENCY: ${OVR_CAPTURE_GROUP_CONCURRENCY:-2}
+    volumes:
+      - workertmp:/tmp
+
+volumes:
+  workertmp:

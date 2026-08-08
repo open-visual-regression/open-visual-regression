@@ -1,0 +1,108 @@
+x-app-env: &app-env
+  DATABASE_URL: postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-postgres}@db:5432/${DATABASE_NAME:-open_visual_regression}
+  REDIS_URL: redis://valkey:6379
+  STORAGE_ENDPOINT: ${STORAGE_ENDPOINT:-}
+  STORAGE_PUBLIC_ENDPOINT: ${STORAGE_PUBLIC_ENDPOINT:-}
+  STORAGE_REGION: ${STORAGE_REGION:?set STORAGE_REGION in your .env}
+  STORAGE_BUCKET: ${STORAGE_BUCKET:?set STORAGE_BUCKET in your .env}
+  STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY:-}
+  STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY:-}
+  STORAGE_FORCE_PATH_STYLE: ${STORAGE_FORCE_PATH_STYLE:-false}
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  BASE_URL: ${BASE_URL:-http://localhost:3000}
+  OVR_GIT_TOKEN_ENCRYPTION_KEY: ${OVR_GIT_TOKEN_ENCRYPTION_KEY:?set OVR_GIT_TOKEN_ENCRYPTION_KEY in your .env}
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME:-open_visual_regression}
+      POSTGRES_USER: ${DATABASE_USER:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-postgres}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -d ${DATABASE_NAME:-open_visual_regression} -U ${DATABASE_USER:-postgres}",
+        ]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+    ports:
+      - ${DATABASE_PORT:-5432}:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  valkey:
+    image: valkey/valkey:8-alpine
+    restart: always
+    ports:
+      - ${REDIS_PORT:-6379}:6379
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - valkeydata:/data
+
+  migrate:
+    image: ${IMAGE_PREFIX:-ghcr.io/open-visual-regression}/worker:${IMAGE_TAG:-latest}
+    command: ["node", "dist/migrate.js"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      <<: *app-env
+    restart: "no"
+
+  web:
+    image: ${IMAGE_PREFIX:-ghcr.io/open-visual-regression}/web:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      <<: *app-env
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET in your .env}
+      BASE_URL: ${BASE_URL:-http://localhost:3000}
+      PORT: ${WEB_PORT:-3000}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:${WEB_PORT:-3000}/api/rpc/health/ready').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - ${WEB_PORT:-3000}:${WEB_PORT:-3000}
+
+  worker:
+    image: ${IMAGE_PREFIX:-ghcr.io/open-visual-regression}/worker:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      <<: *app-env
+      OVR_CAPTURE_GROUP_CONCURRENCY: ${OVR_CAPTURE_GROUP_CONCURRENCY:-2}
+    volumes:
+      - workertmp:/tmp
+
+volumes:
+  pgdata:
+  valkeydata:
+  workertmp:
