@@ -57,6 +57,7 @@ type SeedDiffStatus = {
   reviewStatus: DiffReviewStatus;
   pixelDiffCount?: number;
   diffPercent?: number;
+  baselineSnapshotId?: string;
 };
 type Viewport = {
   browser: string;
@@ -799,9 +800,23 @@ describe("builds", () => {
       mainBuild,
       captureConfiguration,
     }) => {
+      const [baselineSnapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: crypto.randomUUID() }],
+      });
+
       await seedDiffs(mainBuild.id, captureConfiguration, [
-        { processingStatus: "success", reviewStatus: "not_required", pixelDiffCount: 0 },
-        { processingStatus: "success", reviewStatus: "not_required", pixelDiffCount: 0 },
+        {
+          processingStatus: "success",
+          reviewStatus: "not_required",
+          pixelDiffCount: 0,
+          baselineSnapshotId: baselineSnapshot!.id,
+        },
+        {
+          processingStatus: "success",
+          reviewStatus: "not_required",
+          pixelDiffCount: 0,
+          baselineSnapshotId: baselineSnapshot!.id,
+        },
       ]);
 
       await finalizeBuild(mainBuild.id);
@@ -816,18 +831,24 @@ describe("builds", () => {
       mainBuild,
       captureConfiguration,
     }) => {
+      const [baselineSnapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: crypto.randomUUID() }],
+      });
+
       await seedDiffs(mainBuild.id, captureConfiguration, [
         {
           processingStatus: "success",
           reviewStatus: "not_required",
           pixelDiffCount: 0,
           diffPercent: 0,
+          baselineSnapshotId: baselineSnapshot!.id,
         },
         {
           processingStatus: "success",
           reviewStatus: "not_required",
           pixelDiffCount: 320,
           diffPercent: 0.01,
+          baselineSnapshotId: baselineSnapshot!.id,
         },
       ]);
 
@@ -855,6 +876,26 @@ describe("builds", () => {
           reviewStatus: "not_required",
           pixelDiffCount: 320,
           diffPercent: 5,
+        },
+      ]);
+
+      await finalizeBuild(mainBuild.id);
+
+      expect(await dbClient.builds.findById(mainBuild.id)).toMatchObject({
+        processingStatus: "success",
+        reviewStatus: "auto_approved",
+      });
+    });
+
+    test("marks the build review status as auto_approved when a new snapshot with no prior baseline was auto-resolved", async ({
+      mainBuild,
+      captureConfiguration,
+    }) => {
+      await seedDiffs(mainBuild.id, captureConfiguration, [
+        {
+          processingStatus: "success",
+          reviewStatus: "not_required",
+          baselineSnapshotId: undefined,
         },
       ]);
 

@@ -297,7 +297,11 @@ const computeBuildReviewStatus = (diffs: BuildDiff[]): BuildReviewStatus => {
     return "approved";
   }
 
-  if (diffs.some((diff) => (diff.diffPercent ?? 0) > diff.diffThreshold)) {
+  if (
+    diffs.some(
+      (diff) => diff.baselineSnapshotId == null || (diff.diffPercent ?? 0) > diff.diffThreshold,
+    )
+  ) {
     return "auto_approved";
   }
 
