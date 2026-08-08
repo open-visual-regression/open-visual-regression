@@ -1,8 +1,8 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/logo-dark.svg">
-    <source media="(prefers-color-scheme: light)" srcset=".github/assets/logo-light.svg">
-    <img alt="open visual regression" src=".github/assets/logo-light.svg" height="70">
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/logo-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset=".github/assets/logo-light.png">
+    <img alt="open visual regression" src=".github/assets/logo-light.png" height="64">
   </picture>
 </p>
 
@@ -26,7 +26,6 @@ OVR captures screenshots from your UI, diffs them against approved baselines,
 and gates CI on the result. It runs entirely on your own infrastructure: a web
 dashboard, a worker that captures and diffs snapshots with Playwright, and a
 CLI that CI pipelines run to upload a build and wait for the outcome.
-Storybook is the supported capture source today, with more planned.
 
 - **No separate test files.** Point it at a `storybook build` output instead
   of writing and maintaining dedicated visual test files.
