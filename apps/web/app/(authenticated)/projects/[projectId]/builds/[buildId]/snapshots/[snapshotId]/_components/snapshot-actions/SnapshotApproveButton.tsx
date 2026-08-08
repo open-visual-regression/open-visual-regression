@@ -13,14 +13,23 @@ import { serverClient } from "@/lib/router";
 export type SnapshotApproveButtonProps = {
   diffId: string;
   approved: boolean;
+  nextHref: string | null;
 };
 
-export const SnapshotApproveButton = ({ diffId, approved }: SnapshotApproveButtonProps) => {
+export const SnapshotApproveButton = ({
+  diffId,
+  approved,
+  nextHref,
+}: SnapshotApproveButtonProps) => {
   const router = useRouter();
 
   const { execute, status } = useServerAction(serverClient.diffs.castVote, {
     interceptors: [
-      onSuccess(() => router.refresh()),
+      onSuccess(() => {
+        if (!nextHref) {
+          router.refresh();
+        }
+      }),
       onError((err) => {
         toast.error(err.message);
       }),
@@ -28,6 +37,13 @@ export const SnapshotApproveButton = ({ diffId, approved }: SnapshotApproveButto
   });
 
   const pending = status === "pending";
+
+  const handleClick = () => {
+    execute({ diffId, vote: "approve" });
+    if (nextHref) {
+      router.push(nextHref);
+    }
+  };
 
   return (
     <ResponsiveActionButton
@@ -39,7 +55,7 @@ export const SnapshotApproveButton = ({ diffId, approved }: SnapshotApproveButto
           ? "disabled:bg-ovr-diff-add disabled:text-ovr-on-accent disabled:border-transparent"
           : undefined
       }
-      onClick={() => execute({ diffId, vote: "approve" })}
+      onClick={handleClick}
     >
       {approved ? "approved" : pending ? "approving..." : "approve"}
     </ResponsiveActionButton>

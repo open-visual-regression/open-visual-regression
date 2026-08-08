@@ -65,6 +65,7 @@ export const SnapshotActionsRow = ({
   onToggleSidebar,
 }: ActionsRowProps) => {
   const snapshotHref = (id: string) => `/projects/${projectId}/builds/${buildId}/snapshots/${id}`;
+  const nextHref = nextSnapshotId ? snapshotHref(nextSnapshotId) : null;
 
   return (
     <SnapshotActionsRowLayout>
@@ -103,8 +104,16 @@ export const SnapshotActionsRow = ({
         diff.reviewStatus !== "not_required" &&
         snapshot.status !== "error" ? (
           <>
-            <SnapshotRejectButton diffId={diff.id} rejected={snapshot.status === "rejected"} />
-            <SnapshotApproveButton diffId={diff.id} approved={snapshot.status === "approved"} />
+            <SnapshotRejectButton
+              diffId={diff.id}
+              rejected={snapshot.status === "rejected"}
+              nextHref={nextHref}
+            />
+            <SnapshotApproveButton
+              diffId={diff.id}
+              approved={snapshot.status === "approved"}
+              nextHref={nextHref}
+            />
           </>
         ) : null}
         <Button
