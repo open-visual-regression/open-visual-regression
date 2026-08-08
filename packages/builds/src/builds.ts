@@ -284,9 +284,6 @@ export const cancelBuild = async (
 
 type BuildDiff = Awaited<ReturnType<typeof dbClient.diffs.findByBuild>>[number];
 
-// A `not_required` diff is auto_approved rather than unchanged either because it moved enough to
-// exceed the threshold, or because it's a brand-new snapshot with no baseline to compare against
-// (baselineSnapshotId is only null on a not_required diff in that case).
 export const isDiffAutoApproved = (
   diff: { baselineSnapshotId: string | null; diffPercent: number | null },
   diffThreshold: number,
