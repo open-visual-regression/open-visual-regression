@@ -285,9 +285,10 @@ export const cancelBuild = async (
 type BuildDiff = Awaited<ReturnType<typeof dbClient.diffs.findByBuild>>[number];
 
 export const isDiffAutoApproved = (
-  diff: { baselineSnapshotId: string | null; diffPercent: number | null },
+  baselineSnapshotId: string | null,
+  diffPercent: number | null,
   diffThreshold: number,
-): boolean => diff.baselineSnapshotId == null || (diff.diffPercent ?? 0) > diffThreshold;
+): boolean => baselineSnapshotId === null || (diffPercent ?? 0) > diffThreshold;
 
 const computeBuildReviewStatus = (diffs: BuildDiff[]): BuildReviewStatus => {
   if (diffs.some((diff) => diff.reviewStatus === "rejected")) {
@@ -302,7 +303,11 @@ const computeBuildReviewStatus = (diffs: BuildDiff[]): BuildReviewStatus => {
     return "approved";
   }
 
-  if (diffs.some((diff) => isDiffAutoApproved(diff, diff.diffThreshold))) {
+  if (
+    diffs.some((diff) =>
+      isDiffAutoApproved(diff.baselineSnapshotId, diff.diffPercent, diff.diffThreshold),
+    )
+  ) {
     return "auto_approved";
   }
 
