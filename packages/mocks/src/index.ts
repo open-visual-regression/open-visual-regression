@@ -4,7 +4,6 @@ import * as gitIntegration from "./gitIntegration";
 import * as organization from "./organization";
 import * as project from "./project";
 import * as session from "./session";
-import * as snapshot from "./snapshot";
 import * as user from "./user";
 
 export const mocks = {
@@ -14,6 +13,5 @@ export const mocks = {
   organization,
   project,
   session,
-  snapshot,
   user,
 } as const;
