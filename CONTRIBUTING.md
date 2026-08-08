@@ -104,15 +104,6 @@ commands. In CI, use `node-version-file: .nvmrc` with your Node setup action.
 This repo uses **pnpm** exclusively. Do not use `npm` or `yarn`. See
 `.agents/skills/pnpm/skill.md` for the full ruleset.
 
-## Remote Caching
-
-Turborepo supports remote caching via Vercel (free for all plans):
-
-```sh
-pnpm exec turbo login
-pnpm exec turbo link
-```
-
 ## AI Agent Skills
 
 Skills in `.agents/skills/` provide context and rules for AI agents working in

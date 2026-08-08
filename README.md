@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  Self-hosted visual regression testing for Storybook.
+  Self-hosted visual regression testing, built for CI.
 </p>
 
 <p align="center">
@@ -22,49 +22,40 @@
 
 ---
 
-OVR captures screenshots of your Storybook stories, diffs them against approved
-baselines, and gates CI on the result. It runs entirely on your own
-infrastructure: a web dashboard, a worker that renders stories with Playwright,
-and a CLI that CI pipelines run to upload a build and wait for the outcome.
+OVR captures screenshots from your UI, diffs them against approved baselines,
+and gates CI on the result. It runs entirely on your own infrastructure: a web
+dashboard, a worker that captures and diffs snapshots with Playwright, and a
+CLI that CI pipelines run to upload a build and wait for the outcome.
+Storybook is the supported capture source today, with more planned.
 
-- **Storybook-native.** Point it at a `storybook build` output, no separate
-  test files to write or maintain.
+- **No separate test files.** Point it at a `storybook build` output instead
+  of writing and maintaining dedicated visual test files.
 - **CI gating.** The CLI exits non-zero on a failed or unreviewed build, so a
   pull request can block on it directly.
-- **Human review.** Visual diffs that cross the threshold go into a review
+- **Review workflow.** Visual diffs that cross the threshold go into a review
   queue with a side-by-side and slider diff view, not an automatic fail.
 - **Git status checks.** Connect a project to GitHub and OVR posts build/review
   status as a commit check.
 - **Bring your own infra.** Postgres, Redis, and any S3-compatible storage.
   Bundled defaults for local use, or point at managed services.
 
-## Quickstart
+## Usage
 
-```sh
-git clone https://github.com/open-visual-regression/open-visual-regression.git
-cd open-visual-regression
-cp .env.example .env
-# set BETTER_AUTH_SECRET and OVR_GIT_TOKEN_ENCRYPTION_KEY (each: openssl rand -base64 32)
-
-docker compose up -d
-```
-
-The dashboard is at `http://localhost:3000`. First run walks you through creating
-an organization and admin account.
-
-Once you have a project and an API key, ingest a Storybook build from CI:
+Once you have a project and an API key, upload a build from CI:
 
 ```sh
 npx @open-visual-regression/cli snapshot storybook \
   --dir storybook-static \
   --server-url https://ovr.example.com \
   --branch "$BRANCH" \
-  --commit "$COMMIT_SHA"
+  --commit "$COMMIT_SHA" \
+  --name "$(git log -1 --pretty=%s)" \
+  --author "$(git log -1 --pretty=%an)"
 ```
 
-See the [docs](https://docs.openvisualregression.com) for self-hosting options
-(Docker, Kubernetes, managed Postgres/Redis/S3), CLI configuration, and the API
-reference.
+See the [docs](https://docs.openvisualregression.com) for self-hosting
+(Docker, Kubernetes, managed Postgres/Redis/S3), CLI configuration, and the
+API reference.
 
 ## License
 
