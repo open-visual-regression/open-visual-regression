@@ -1,4 +1,0 @@
-schema: spec-driven
-created: 2026-06-19
-title: "Review voting service"
-depends_on: c54-branch-aware-diffing

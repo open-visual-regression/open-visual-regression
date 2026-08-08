@@ -1,4 +1,0 @@
-schema: spec-driven
-created: 2026-05-24
-title: "Auth: App chrome — TopBar, Sidebar, tablet + mobile variants"
-depends_on: 08-ui-barrel

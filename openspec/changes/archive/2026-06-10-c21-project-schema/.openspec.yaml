@@ -1,4 +1,0 @@
-schema: spec-driven
-created: 2026-05-24
-title: "Projects: project + capture configuration Drizzle schema + repositories + migration"
-depends_on: 09-db-setup

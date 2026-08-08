@@ -1,4 +1,0 @@
-schema: spec-driven
-created: 2026-05-24
-title: "Auth: Drizzle config + Better Auth schema generation + initial migration"
-depends_on: 01-oxlint-config

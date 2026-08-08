@@ -1,4 +1,0 @@
-schema: spec-driven
-created: 2026-06-09
-title: "Pipeline: builds oRPC contracts + router with API key auth middleware"
-depends_on: c36-orpc-api

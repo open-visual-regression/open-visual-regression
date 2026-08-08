@@ -1,4 +1,0 @@
-schema: spec-driven
-created: 2026-06-19
-title: "Fix finalizeBuild to handle rejected diffs"
-depends_on: c52-reviewer-schema

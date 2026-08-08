@@ -1,4 +1,0 @@
-schema: spec-driven
-created: 2026-06-19
-title: "Reviewer API contracts + router"
-depends_on: c55-review-voting-service
