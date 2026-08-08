@@ -1,6 +1,6 @@
 # External Postgres
 
-Redis and object storage are still bundled containers; Postgres is a managed instance (Neon, RDS, Cloud SQL, or anything else reachable over `postgresql://`) instead of the bundled container.
+Postgres is a managed instance (Neon, RDS, Cloud SQL, or anything else reachable over `postgresql://`) instead of a bundled container.
 
 ## Run it
 

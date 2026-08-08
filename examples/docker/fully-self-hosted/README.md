@@ -1,8 +1,6 @@
 # Fully self-hosted
 
-Everything runs in containers: Postgres, Valkey, and object storage (`rustfs`, S3-compatible) alongside the OVR `web` and `worker` images. No external accounts or services required.
-
-This is the same configuration as the root [`docker-compose.yml`](../../../docker-compose.yml), except it pulls the published `ghcr.io/open-visual-regression` images instead of building from source, so you don't need this repository checked out to run it.
+Everything runs in containers: Postgres, Valkey, and object storage (`rustfs`, S3-compatible) alongside the OVR `web` and `worker` images. No external accounts or services, and no repository checkout, required.
 
 ## Run it
 

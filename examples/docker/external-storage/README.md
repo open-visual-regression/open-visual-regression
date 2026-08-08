@@ -1,10 +1,10 @@
 # External object storage
 
-Postgres and Redis are still bundled containers; object storage is a real S3 bucket instead of the bundled `rustfs` container. Use this if you already have an AWS account (or another S3-compatible provider: R2, Spaces, GCS with S3 interop) and would rather not run object storage yourself.
+Object storage is a real S3 bucket instead of a bundled container. Use this if you already have an AWS account (or another S3-compatible provider: R2, Spaces, GCS with S3 interop) and would rather not run object storage yourself.
 
 ## Before you run it
 
-Create the bucket first; this example doesn't create it for you the way the fully self-hosted one does. Grant the credentials you use read/write access to that bucket.
+Create the bucket first; this example doesn't create it for you. Grant the credentials you use read/write access to that bucket.
 
 ## Run it
 
