@@ -35,6 +35,14 @@ OVR captures screenshots from your UI, diffs them against approved baselines, an
 - **Bring your own infra.** Postgres, Redis, and any S3-compatible storage.
   Bundled defaults for local use, or point at managed services.
 
+## Why OVR?
+
+Unit tests verify behavior, not appearance. A component can pass every test and still ship with broken spacing, a clipped label, or a layout that only breaks at one viewport width.
+
+That gap matters more as more UI code gets written by AI agents. A generated change can compile, pass its tests, and still be visually wrong in a way that's easy to miss in a text-based review. Asking an AI to look at a screenshot and judge whether it looks right helps, but that judgment is non-deterministic and rarely covers every breakpoint and state a change could touch.
+
+Pixel diffing is deterministic: every story, every configured viewport, every time. It won't tell you if a design is good, but it will tell you exactly what changed, and let a reviewer, human or automated, decide if that was intentional.
+
 ## Usage
 
 Once you have a project and an API key, upload a build from CI:
