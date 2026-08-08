@@ -5,13 +5,7 @@ import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
 
 import { LoginCard } from "../LoginCard";
 
-vi.mock("@/lib/auth/client", () => ({
-  authClient: {
-    signIn: {
-      email: vi.fn(),
-    },
-  },
-}));
+vi.mock("@/lib/auth/client");
 
 const mockSignIn = vi.mocked(authClient.signIn.email);
 
@@ -19,7 +13,6 @@ const renderComponent = () => render(<LoginCard />);
 
 describe("InvitationCard", () => {
   beforeEach(() => {
-    mockSignIn.mockReset();
     mockSignIn.mockResolvedValue({ error: null } as Awaited<
       ReturnType<typeof authClient.signIn.email>
     >);
