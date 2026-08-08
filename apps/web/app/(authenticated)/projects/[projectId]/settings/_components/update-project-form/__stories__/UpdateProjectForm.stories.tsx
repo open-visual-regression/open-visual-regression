@@ -14,7 +14,10 @@ const meta: Meta<typeof UpdateProjectForm> = {
     },
   },
   args: {
-    project: mocks.project.generateProject({ name: "checkout-flow" }),
+    project: mocks.project.generateProject({
+      name: "checkout-flow",
+      description: "visual regression coverage for the checkout flow.",
+    }),
   },
 };
 
