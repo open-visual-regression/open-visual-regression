@@ -7,9 +7,8 @@ import { getBaseURL, STORAGE_STATE } from "./tests/constants";
 export default defineConfig({
   testDir: "./tests",
   fullyParallel: true,
-  // One worker: the specs share a single seeded project, and a build ingested
-  // onto a branch cancels any earlier build still in flight on that branch. Two
-  // specs ingesting at once would supersede each other's builds.
+  // The specs share one seeded project, and ingesting onto a branch cancels any
+  // build still in flight on it, so ingestion must not overlap.
   workers: 1,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,

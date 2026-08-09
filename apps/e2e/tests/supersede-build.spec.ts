@@ -19,8 +19,6 @@ test("pushing a new commit to a branch cancels the build still running for the o
 
   ingestBuild({ apiKey: seed.apiKey, branch: BRANCH, commitSha: supersededSha });
 
-  // Push the second commit as soon as the first build exists, so the race is
-  // decided over the API rather than against a page load.
   await expect
     .poll(() => findBuild(supersededSha), { timeout: 60_000, intervals: [250] })
     .not.toBeNull();
@@ -38,9 +36,7 @@ test("pushing a new commit to a branch cancels the build still running for the o
   await expect(page.getByText(/canceled by the system/i)).toBeVisible();
   await expect(buildPage.cancelButton()).toBeHidden();
 
-  // The build that superseded it still runs to completion. Which review status
-  // it settles on depends on the project's baselines, so only assert that it
-  // finished and was not itself canceled.
+  // Which review status it settles on depends on the project's baselines.
   await expect
     .poll(async () => (await findBuild(latestSha))?.status, { timeout: 180_000 })
     .toMatch(/^(unchanged|auto_approved|needs_review)$/);

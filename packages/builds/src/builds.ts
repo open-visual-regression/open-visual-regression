@@ -68,9 +68,6 @@ export const publishStatus = async (buildId: string): Promise<void> => {
   }
 };
 
-// Shared by the user-facing cancel and by supersession: flips the build and all
-// of its unfinished work to canceled. Returns the diffs that were pending, or
-// null when the build was already settled and there was nothing to cancel.
 const cancelInProgressBuild = async (
   buildId: string,
   canceledBy: string | null,
@@ -92,12 +89,7 @@ type SupersedingBuild = {
   createdAt: string;
 };
 
-// A new build on a branch makes every older in-flight build on that branch
-// obsolete, so cancel them and hand the queue back to the build that matters.
-// Only strictly older builds are touched, which stops two builds created in the
-// same instant from canceling each other.
 export const supersedeInFlightBuilds = async (build: SupersedingBuild): Promise<string[]> => {
-  // Without a branch there is nothing to supersede against.
   if (!build.branch.trim()) {
     return [];
   }
@@ -192,8 +184,6 @@ export const confirmBuildUpload = async (
     return { status: "error", error: "BUILD_NOT_FOUND" };
   }
 
-  // A newer build on the branch can supersede this one while its artifact is
-  // still uploading. Extracting it would only put stale work back on the queue.
   if (build.processingStatus === "canceled") {
     return { status: "error", error: "BUILD_CANCELED" };
   }

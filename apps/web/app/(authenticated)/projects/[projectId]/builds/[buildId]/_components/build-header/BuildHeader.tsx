@@ -90,8 +90,6 @@ export const BuildHeader = ({
           {isCanceled ? (
             <Typography variant="caption" className="flex items-center gap-1">
               <Icon icon={CircleSlash2Icon} size={10} />
-              {/* No canceling user means the system canceled it — today that is a
-                  newer build superseding this one on the same branch. */}
               canceled by {build.canceledBy ?? "the system"}
             </Typography>
           ) : null}

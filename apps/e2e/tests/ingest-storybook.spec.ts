@@ -7,8 +7,7 @@ test.describe("Storybook ingestion", () => {
     seed,
   }) => {
     // The main branch promotes baselines, so the build passes without review:
-    // "auto approved" the first time these stories are seen, "unchanged" once a
-    // previous main build has already promoted baselines for them.
+    // "auto approved" until baselines exist for these stories, then "unchanged".
     const { shortSha, stdout, exitCode, stderr } = await ingestStorybook({
       apiKey: seed.apiKey,
       branch: "main",

@@ -51,8 +51,6 @@ export const updateProcessingStatus = async (
   return build;
 };
 
-// A null canceledBy means the system canceled the build rather than a person —
-// today that only happens when a newer build supersedes it on the same branch.
 export const cancelIfInProgress = async (
   id: string,
   canceledBy: string | null,
@@ -105,9 +103,6 @@ export type BuildFilters = {
   processingStatuses?: BuildProcessingStatus[];
   reviewStatus?: BuildReviewStatus;
   statuses?: StatusFilter[];
-  // Keyset comparisons on (createdAt, id). The same tuple backs list pagination
-  // and "is there a newer/older build on this branch", so it lives here rather
-  // than in a purpose-built query per caller.
   createdBefore?: BuildsCursor;
   createdAfter?: BuildsCursor;
 };

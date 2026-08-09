@@ -194,8 +194,6 @@ export type CanceledBuildJobs = {
   diffIds: string[];
 };
 
-// Takes every canceled build at once: capture jobs carry no job id, so they can
-// only be found by scanning the waiting set, and one scan covers them all.
 export const cancelBuildJobs = async (
   canceled: CanceledBuildJobs[],
   connection: IORedis,
