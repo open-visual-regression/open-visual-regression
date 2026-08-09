@@ -14,6 +14,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@ovr/api": "workspace:*",
     "@ovr/builds": "workspace:*",
     "@ovr/db": "workspace:*"
   },

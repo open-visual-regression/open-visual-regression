@@ -297,7 +297,7 @@ const computeBuildReviewStatus = (diffs: BuildDiff[]): BuildReviewStatus => {
     return "approved";
   }
 
-  if (diffs.some((diff) => (diff.diffPercent ?? 0) > diff.diffThreshold)) {
+  if (diffs.some((diff) => diff.reviewStatus === "auto_approved")) {
     return "auto_approved";
   }
 

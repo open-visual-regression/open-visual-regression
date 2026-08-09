@@ -57,7 +57,7 @@ const seedReviewQueue = async (
   await dbClient.diffs.create({
     snapshotId: noDiff!.id,
     processingStatus: "success",
-    reviewStatus: "not_required",
+    reviewStatus: "unchanged",
   });
 
   return { first: first!, second: second!, noDiff: noDiff!, errored: errored! };
@@ -204,15 +204,14 @@ describe("snapshots", () => {
       await dbClient.diffs.create({
         snapshotId: unchanged!.id,
         processingStatus: "success",
-        reviewStatus: "not_required",
+        reviewStatus: "unchanged",
         pixelDiffCount: 0,
       });
       await dbClient.diffs.create({
         snapshotId: autoApproved!.id,
         processingStatus: "success",
-        reviewStatus: "not_required",
+        reviewStatus: "auto_approved",
         pixelDiffCount: 128,
-        diffPercent: 5,
       });
       await dbClient.diffs.create({
         snapshotId: needsReview!.id,
@@ -427,7 +426,7 @@ describe("snapshots", () => {
       await dbClient.diffs.create({
         snapshotId: unchanged!.id,
         processingStatus: "success",
-        reviewStatus: "not_required",
+        reviewStatus: "unchanged",
       });
       await dbClient.diffs.create({
         snapshotId: needsReview!.id,
@@ -655,7 +654,7 @@ describe("snapshots", () => {
       await dbClient.diffs.create({
         snapshotId: unchangedSnapshot!.id,
         processingStatus: "success",
-        reviewStatus: "not_required",
+        reviewStatus: "unchanged",
       });
 
       expect(errorSnapshot).toBeTruthy();
@@ -843,7 +842,13 @@ describe("snapshots", () => {
       build,
       captureConfiguration,
     }) => {
-      await seedReviewQueue(build, captureConfiguration);
+      const { noDiff } = await seedReviewQueue(build, captureConfiguration);
+
+      const noDiffDiff = await dbClient.diffs.findBySnapshot(noDiff.id);
+      await dbClient.diffs.updateResult(noDiffDiff!.id, {
+        processingStatus: "success",
+        reviewStatus: "unchanged",
+      });
 
       const statuses = await dbClient.snapshots.findStatuses(build.id);
 

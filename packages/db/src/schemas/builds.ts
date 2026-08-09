@@ -61,6 +61,8 @@ export type DiffProcessingStatus = (typeof diffProcessingStatusEnum.enumValues)[
 
 export const diffReviewStatusEnum = pgEnum("diff_review_status", [
   "not_required",
+  "unchanged",
+  "auto_approved",
   "needs_review",
   "approved",
   "rejected",

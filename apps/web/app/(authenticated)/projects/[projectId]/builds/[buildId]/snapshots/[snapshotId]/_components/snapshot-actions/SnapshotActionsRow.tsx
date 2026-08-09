@@ -1,4 +1,4 @@
-import { DiffSchema } from "@ovr/api/contracts/diffs";
+import { DiffSchema, isDiffReviewable } from "@ovr/api/contracts/diffs";
 import { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { Button } from "@ovr/ui/components/button";
 import {
@@ -99,10 +99,7 @@ export const SnapshotActionsRow = ({
         ) : null}
       </div>
       <div className="flex items-center flex-row gap-2">
-        {canReview &&
-        diff &&
-        diff.reviewStatus !== "not_required" &&
-        snapshot.status !== "error" ? (
+        {canReview && diff && isDiffReviewable(diff.reviewStatus) && snapshot.status !== "error" ? (
           <>
             <SnapshotRejectButton
               diffId={diff.id}
