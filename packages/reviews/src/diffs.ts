@@ -1,3 +1,4 @@
+import { isDiffReviewable } from "@ovr/api/contracts/diffs";
 import { finalizeBuild } from "@ovr/builds/builds";
 import type { Result } from "@ovr/builds/types";
 import { dbClient } from "@ovr/db/client";
@@ -55,7 +56,7 @@ export const castVote = async (
     return { status: "error", error: "DIFF_NOT_FOUND" };
   }
 
-  if (diff.reviewStatus === "not_required") {
+  if (!isDiffReviewable(diff.reviewStatus)) {
     return { status: "error", error: "REVIEW_NOT_REQUIRED" };
   }
 
@@ -91,7 +92,7 @@ export const removeVote = async ({
     return { status: "error", error: "DIFF_NOT_FOUND" };
   }
 
-  if (diff.reviewStatus === "not_required") {
+  if (!isDiffReviewable(diff.reviewStatus)) {
     return { status: "error", error: "REVIEW_NOT_REQUIRED" };
   }
 
@@ -108,7 +109,7 @@ export const bulkCastVote = async (
 ): Promise<void> => {
   const diffs = await dbClient.diffs.findByBuild(buildId);
   const targetIds = diffs
-    .filter((diff) => diff.reviewStatus !== "not_required")
+    .filter((diff) => isDiffReviewable(diff.reviewStatus))
     .map((diff) => diff.id);
 
   if (targetIds.length === 0) {

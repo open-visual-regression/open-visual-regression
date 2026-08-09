@@ -175,7 +175,9 @@ describe("SnapshotActionsRow", () => {
 
   it.each([
     ["there is no diff", null],
-    ["the diff does not require review", { ...diff, reviewStatus: "not_required" as const }],
+    ["the diff has not been resolved yet", { ...diff, reviewStatus: "not_required" as const }],
+    ["the diff was unchanged", { ...diff, reviewStatus: "unchanged" as const }],
+    ["the diff was auto approved", { ...diff, reviewStatus: "auto_approved" as const }],
   ])("should hide approve and reject when %s", (_description, diffInput) => {
     renderComponent({ diff: diffInput });
 

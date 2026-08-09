@@ -22,10 +22,23 @@ export const bulkCastVoteContract = oc.input(bulkCastVoteInputSchema).output(z.v
 export const diffProcessingStatusSchema = z.enum(["pending", "success", "error", "canceled"]);
 export const diffReviewStatusSchema = z.enum([
   "not_required",
+  "unchanged",
+  "auto_approved",
   "needs_review",
   "approved",
   "rejected",
 ]);
+
+export type DiffReviewStatusSchema = z.infer<typeof diffReviewStatusSchema>;
+
+const REVIEWABLE_DIFF_REVIEW_STATUSES: readonly DiffReviewStatusSchema[] = [
+  "needs_review",
+  "approved",
+  "rejected",
+];
+
+export const isDiffReviewable = (reviewStatus: DiffReviewStatusSchema): boolean =>
+  REVIEWABLE_DIFF_REVIEW_STATUSES.includes(reviewStatus);
 
 export const diffSchema = z.object({
   id: z.uuidv7(),

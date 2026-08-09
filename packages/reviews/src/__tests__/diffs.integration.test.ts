@@ -274,7 +274,7 @@ describe("diffs", () => {
   });
 
   describe("bulkCastVote", () => {
-    test("casts the vote across every reviewable diff, leaving not_required diffs untouched", async ({
+    test("casts the vote across every reviewable diff, leaving auto-resolved diffs untouched", async ({
       mainBuild,
       captureConfiguration,
       reviewer,
@@ -294,9 +294,9 @@ describe("diffs", () => {
         snapshotId: snapshotB!.id,
         reviewStatus: "approved",
       });
-      const notRequiredDiff = await dbClient.diffs.create({
+      const autoApprovedDiff = await dbClient.diffs.create({
         snapshotId: snapshotC!.id,
-        reviewStatus: "not_required",
+        reviewStatus: "auto_approved",
       });
 
       await bulkCastVote(mainBuild.id, reviewer.id, "approve");
@@ -307,8 +307,8 @@ describe("diffs", () => {
       expect(await dbClient.diffs.findById(approvedDiff!.id)).toMatchObject({
         reviewStatus: "approved",
       });
-      expect(await dbClient.diffs.findById(notRequiredDiff!.id)).toMatchObject({
-        reviewStatus: "not_required",
+      expect(await dbClient.diffs.findById(autoApprovedDiff!.id)).toMatchObject({
+        reviewStatus: "auto_approved",
       });
     });
 

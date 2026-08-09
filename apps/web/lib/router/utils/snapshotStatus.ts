@@ -1,5 +1,4 @@
 import type { SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
-import { isDiffAutoApproved } from "@ovr/builds/builds";
 import type { DiffDbSchema } from "@ovr/db/repository/diffs";
 import type { SnapshotDbSchema } from "@ovr/db/repository/snapshots";
 
@@ -47,7 +46,7 @@ export const getSnapshotDisplayStatus = (
     return "approved";
   }
 
-  if (isDiffAutoApproved(diff.diffPercent, snapshot.diffThreshold)) {
+  if (diff.reviewStatus === "auto_approved") {
     return "auto_approved";
   }
 

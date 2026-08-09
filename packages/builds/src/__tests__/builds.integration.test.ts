@@ -675,7 +675,7 @@ describe("builds", () => {
       await cancelBuild(featureBuild.id, user.id);
 
       await seedDiffs(featureBuild.id, captureConfiguration, [
-        { processingStatus: "success", reviewStatus: "not_required" },
+        { processingStatus: "success", reviewStatus: "unchanged" },
       ]);
 
       await finalizeBuild(featureBuild.id);
@@ -690,7 +690,7 @@ describe("builds", () => {
       captureConfiguration,
     }) => {
       await seedDiffs(mainBuild.id, captureConfiguration, [
-        { processingStatus: "success", reviewStatus: "not_required" },
+        { processingStatus: "success", reviewStatus: "unchanged" },
         { processingStatus: "error", reviewStatus: "not_required" },
       ]);
 
@@ -723,7 +723,7 @@ describe("builds", () => {
       captureConfiguration,
     }) => {
       await seedDiffs(mainBuild.id, captureConfiguration, [
-        { processingStatus: "success", reviewStatus: "not_required" },
+        { processingStatus: "success", reviewStatus: "unchanged" },
         { processingStatus: "success", reviewStatus: "needs_review" },
       ]);
 
@@ -772,7 +772,7 @@ describe("builds", () => {
       captureConfiguration,
     }) => {
       await seedDiffs(mainBuild.id, captureConfiguration, [
-        { processingStatus: "success", reviewStatus: "not_required" },
+        { processingStatus: "success", reviewStatus: "unchanged" },
         { processingStatus: "success", reviewStatus: "approved" },
       ]);
 
@@ -795,23 +795,13 @@ describe("builds", () => {
       });
     });
 
-    test("marks the build review status as unchanged when every auto-resolved diff had no pixel changes", async ({
+    test("marks the build review status as unchanged when every auto-resolved diff was unchanged", async ({
       mainBuild,
       captureConfiguration,
     }) => {
       await seedDiffs(mainBuild.id, captureConfiguration, [
-        {
-          processingStatus: "success",
-          reviewStatus: "not_required",
-          pixelDiffCount: 0,
-          diffPercent: 0,
-        },
-        {
-          processingStatus: "success",
-          reviewStatus: "not_required",
-          pixelDiffCount: 0,
-          diffPercent: 0,
-        },
+        { processingStatus: "success", reviewStatus: "unchanged" },
+        { processingStatus: "success", reviewStatus: "unchanged" },
       ]);
 
       await finalizeBuild(mainBuild.id);
@@ -822,66 +812,13 @@ describe("builds", () => {
       });
     });
 
-    test("marks the build review status as unchanged when an auto-resolved diff changed within the threshold", async ({
+    test("marks the build review status as auto_approved when any auto-resolved diff was auto_approved", async ({
       mainBuild,
       captureConfiguration,
     }) => {
       await seedDiffs(mainBuild.id, captureConfiguration, [
-        {
-          processingStatus: "success",
-          reviewStatus: "not_required",
-          pixelDiffCount: 0,
-          diffPercent: 0,
-        },
-        {
-          processingStatus: "success",
-          reviewStatus: "not_required",
-          pixelDiffCount: 320,
-          diffPercent: 0.01,
-        },
-      ]);
-
-      await finalizeBuild(mainBuild.id);
-
-      expect(await dbClient.builds.findById(mainBuild.id)).toMatchObject({
-        processingStatus: "success",
-        reviewStatus: "unchanged",
-      });
-    });
-
-    test("marks the build review status as auto_approved when an auto-resolved diff exceeded the threshold", async ({
-      mainBuild,
-      captureConfiguration,
-    }) => {
-      await seedDiffs(mainBuild.id, captureConfiguration, [
-        {
-          processingStatus: "success",
-          reviewStatus: "not_required",
-          pixelDiffCount: 0,
-          diffPercent: 0,
-        },
-        {
-          processingStatus: "success",
-          reviewStatus: "not_required",
-          pixelDiffCount: 320,
-          diffPercent: 5,
-        },
-      ]);
-
-      await finalizeBuild(mainBuild.id);
-
-      expect(await dbClient.builds.findById(mainBuild.id)).toMatchObject({
-        processingStatus: "success",
-        reviewStatus: "auto_approved",
-      });
-    });
-
-    test("marks the build review status as auto_approved when a new snapshot with no prior baseline was auto-resolved", async ({
-      mainBuild,
-      captureConfiguration,
-    }) => {
-      await seedDiffs(mainBuild.id, captureConfiguration, [
-        { processingStatus: "success", reviewStatus: "not_required" },
+        { processingStatus: "success", reviewStatus: "unchanged" },
+        { processingStatus: "success", reviewStatus: "auto_approved" },
       ]);
 
       await finalizeBuild(mainBuild.id);

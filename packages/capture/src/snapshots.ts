@@ -423,9 +423,12 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
   const diff = await diffAgainstBaselineSnapshot(snapshot.imagePath, baselineSnapshot);
 
   if (isMainBranch) {
+    // No baseline means the target is brand new, not unchanged.
+    const changed = !diff || diff.diffPercent > snapshot.diffThreshold;
+
     await dbClient.diffs.updateResult(diffId, {
       processingStatus: "success",
-      reviewStatus: "not_required",
+      reviewStatus: changed ? "auto_approved" : "unchanged",
       ...(baselineSnapshot && { baselineSnapshotId: baselineSnapshot.id }),
       ...(diff && { pixelDiffCount: diff.pixelDiffCount, diffPercent: diff.diffPercent }),
     });
@@ -449,7 +452,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
   if (diffPercent === 0 || diffPercent <= snapshot.diffThreshold) {
     await dbClient.diffs.updateResult(diffId, {
       processingStatus: "success",
-      reviewStatus: "not_required",
+      reviewStatus: "unchanged",
       baselineSnapshotId: diff.baselineSnapshotId,
       pixelDiffCount,
       diffPercent,
