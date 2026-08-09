@@ -26,4 +26,39 @@ describe("SearchField", () => {
 
     expect(screen.getByRole("button", { name: "clear search" })).toHaveAttribute("href", "/users");
   });
+
+  it("should preserve other query params on the clear button when clearing search", () => {
+    render(
+      <SearchField
+        action="/users"
+        label="search users"
+        search="ari"
+        searchParams={{ search: "ari", status: "needs_review" }}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "clear search" })).toHaveAttribute(
+      "href",
+      "/users?status=needs_review",
+    );
+  });
+
+  it("should resubmit other query params as hidden fields when searching", () => {
+    render(
+      <SearchField
+        action="/users"
+        label="search users"
+        search="ari"
+        searchParams={{ search: "ari", status: ["needs_review", "error"] }}
+      />,
+    );
+
+    const form = screen.getByRole("search");
+    expect(form.querySelectorAll('input[type="hidden"][name="status"]')).toHaveLength(2);
+    expect(
+      Array.from(form.querySelectorAll('input[type="hidden"][name="status"]')).map(
+        (input) => (input as HTMLInputElement).value,
+      ),
+    ).toEqual(["needs_review", "error"]);
+  });
 });
