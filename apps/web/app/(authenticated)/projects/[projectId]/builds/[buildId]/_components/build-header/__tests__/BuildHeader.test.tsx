@@ -452,4 +452,27 @@ describe("BuildHeader", () => {
 
     expect(screen.queryByRole("link", { name: /view storybook/i })).not.toBeInTheDocument();
   });
+
+  it("should link the commit sha to the provider's commit page when a git integration is configured", () => {
+    renderComponent({
+      build: mocks.build.generateBuild({
+        commitSha: "abc1234def",
+        commitUrl: "https://github.com/acme/web/commit/abc1234def",
+      }),
+    });
+
+    expect(screen.getByRole("link", { name: /abc1234/i })).toHaveAttribute(
+      "href",
+      "https://github.com/acme/web/commit/abc1234def",
+    );
+  });
+
+  it("should render the commit sha as plain text when there is no git integration", () => {
+    renderComponent({
+      build: mocks.build.generateBuild({ commitSha: "abc1234def", commitUrl: null }),
+    });
+
+    expect(screen.getByText(/abc1234/i)).toBeVisible();
+    expect(screen.queryByRole("link", { name: /abc1234/i })).not.toBeInTheDocument();
+  });
 });

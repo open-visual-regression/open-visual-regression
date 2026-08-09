@@ -4,7 +4,6 @@ import { BadgeSkeleton } from "@ovr/ui/components/badge";
 import {
   Icon,
   CircleSlash2Icon,
-  ExternalLinkIcon,
   GitBranchIcon,
   GitCommitHorizontalIcon,
   UserIcon,
@@ -16,7 +15,7 @@ import {
 import { Skeleton } from "@ovr/ui/components/skeleton";
 import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 
-import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
+import { ExternalLink } from "@/lib/components/external-link/ExternalLink";
 import { formatRelativeDateTime } from "@/lib/utils/date";
 
 import { BuildApproveButton } from "./BuildApproveButton";
@@ -58,26 +57,22 @@ export const BuildHeader = ({
         </Typography>
         <div className="flex flex-row flex-wrap items-center gap-4 text-xs md:order-3 md:basis-full">
           <BuildStatusStream buildId={build.id} initialStatus={build.status} />
-          {storybookHref ? (
-            <ButtonLink
-              href={storybookHref}
-              variant="link"
-              color="neutral"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Icon icon={ExternalLinkIcon} size={10} />
-              view storybook
-            </ButtonLink>
-          ) : null}
+          {storybookHref ? <ExternalLink href={storybookHref}>view storybook</ExternalLink> : null}
           <Typography variant="caption" className="flex items-center gap-1">
             <Icon icon={GitBranchIcon} size={10} />
             {build.branch}
           </Typography>
-          <Typography variant="caption" className="flex items-center gap-1">
-            <Icon icon={GitCommitHorizontalIcon} size={10} />
-            {build.commitSha.slice(0, 7)}
-          </Typography>
+          {build.commitUrl ? (
+            <ExternalLink href={build.commitUrl}>
+              <Icon icon={GitCommitHorizontalIcon} size={10} />
+              {build.commitSha.slice(0, 7)}
+            </ExternalLink>
+          ) : (
+            <Typography variant="caption" className="flex items-center gap-1">
+              <Icon icon={GitCommitHorizontalIcon} size={10} />
+              {build.commitSha.slice(0, 7)}
+            </Typography>
+          )}
           {build.author ? (
             <Typography variant="caption" className="flex items-center gap-1">
               <Icon icon={UserIcon} size={10} />
