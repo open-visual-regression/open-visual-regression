@@ -1,7 +1,9 @@
+import { toRole } from "@/lib/auth/roles";
 import { getCachedSession } from "@/lib/auth/session";
 import { getBreadcrumbSegments } from "@/lib/components/navigation-bar/getBreadcrumbSegments";
-import { NavigationBarContent } from "@/lib/components/navigation-bar/NavigationBarContent";
 import { serverClient } from "@/lib/router";
+
+import { NavigationBarContent } from "./_components/navigation-bar-content/NavigationBarContent";
 
 type NavigationSlotProps = PageProps<"/[[...pathname]]">;
 
@@ -30,7 +32,7 @@ export default async function NavigationSlot({ params }: NavigationSlotProps) {
 
   return (
     <NavigationBarContent
-      role={session?.user?.role}
+      role={toRole(session?.user?.role)}
       projects={projects}
       projectsTotal={projectsTotal}
       builds={builds}

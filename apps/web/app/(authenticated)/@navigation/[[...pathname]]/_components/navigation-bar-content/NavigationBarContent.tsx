@@ -2,15 +2,16 @@ import type { BuildSchema } from "@ovr/api/contracts/builds";
 import type { ProjectDto } from "@ovr/api/contracts/projects";
 import { Separator } from "@ovr/ui/components/separator";
 
-import type { BreadcrumbSegment } from "./getBreadcrumbSegments";
-import { NavigationBar } from "./NavigationBar";
-import { NavigationBarActions } from "./NavigationBarActions";
-import { NavigationBarBreadcrumb } from "./NavigationBarBreadcrumb";
-import { NavigationBarLogo } from "./NavigationBarLogo";
-import { NavigationBarMobileMenu } from "./NavigationBarMobileMenu";
+import type { Role } from "@/lib/auth/roles";
+import type { BreadcrumbSegment } from "@/lib/components/navigation-bar/getBreadcrumbSegments";
+import { NavigationBar } from "@/lib/components/navigation-bar/NavigationBar";
+import { NavigationBarActions } from "@/lib/components/navigation-bar/NavigationBarActions";
+import { NavigationBarBreadcrumb } from "@/lib/components/navigation-bar/NavigationBarBreadcrumb";
+import { NavigationBarLogo } from "@/lib/components/navigation-bar/NavigationBarLogo";
+import { NavigationBarMobileMenu } from "@/lib/components/navigation-bar/NavigationBarMobileMenu";
 
 type NavigationBarContentProps = {
-  role: string | null | undefined;
+  role: Role;
   projects: Pick<ProjectDto, "id" | "name">[];
   projectsTotal: number;
   builds: BuildSchema[];
