@@ -19,13 +19,16 @@ export type SearchFieldProps = {
   className?: string;
 };
 
-const otherParamEntries = (searchParams: Record<string, string | string[] | undefined> = {}) =>
-  Object.entries(searchParams).flatMap(([name, value]) => {
-    if (name === "search" || value === undefined) {
-      return [];
-    }
-    return (Array.isArray(value) ? value : [value]).map((entry) => [name, entry] as const);
-  });
+const otherParamEntries = (
+  searchParams: Record<string, string | string[] | undefined> = {},
+): [string, string][] => {
+  const { search: _search, ...rest } = searchParams;
+  return Object.entries(rest).flatMap(([name, value]) =>
+    value === undefined
+      ? []
+      : (Array.isArray(value) ? value : [value]).map((entry): [string, string] => [name, entry]),
+  );
+};
 
 export const SearchField = ({
   action,
@@ -36,9 +39,7 @@ export const SearchField = ({
   className,
 }: SearchFieldProps) => {
   const entries = otherParamEntries(searchParams);
-  const params = new URLSearchParams();
-  entries.forEach(([name, value]) => params.append(name, value));
-  const query = params.toString();
+  const query = new URLSearchParams(entries).toString();
   const clearHref = query ? `${action}?${query}` : action;
 
   return (
