@@ -23,11 +23,17 @@ const otherParamEntries = (
   searchParams: Record<string, string | string[] | undefined> = {},
 ): [string, string][] => {
   const { search: _search, ...rest } = searchParams;
-  return Object.entries(rest).flatMap(([name, value]) =>
-    value === undefined
-      ? []
-      : (Array.isArray(value) ? value : [value]).map((entry): [string, string] => [name, entry]),
-  );
+  const entries: [string, string][] = [];
+
+  for (const [name, value] of Object.entries(rest)) {
+    for (const entry of Array.isArray(value) ? value : [value]) {
+      if (entry !== undefined) {
+        entries.push([name, entry]);
+      }
+    }
+  }
+
+  return entries;
 };
 
 export const SearchField = ({
