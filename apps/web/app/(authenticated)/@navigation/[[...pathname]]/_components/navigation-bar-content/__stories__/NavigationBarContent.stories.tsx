@@ -55,7 +55,10 @@ const meta: Meta<typeof NavigationBarContent> = {
     projects: PROJECTS,
     projectsTotal: PROJECTS.length,
     builds: BUILDS,
-    segments: [{ label: "projects", href: "/projects" }, { label: "Acme Web" }],
+    segments: [
+      { label: "projects", href: "/projects" },
+      { label: "Marketing Website Redesign and Component Library Overhaul" },
+    ],
     userName: "Jordan Lee",
   },
   parameters: {
