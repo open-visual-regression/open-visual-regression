@@ -405,3 +405,30 @@ export const finalizeBuild = async (buildId: string): Promise<void> => {
     await publishStatus(buildId);
   }
 };
+
+// Recomputes only the build's review status from its current diffs, leaving processingStatus
+// untouched. Casting a vote can happen on a diff whose snapshot finished early while other
+// snapshots in the same build are still queued/processing, so this must not mark the build
+// "success"/"error" out from under the still-running pipeline (that's finalizeBuild's job, run
+// once every diff has actually been created).
+export const updateBuildReviewStatus = async (buildId: string): Promise<void> => {
+  const build = await dbClient.builds.findById(buildId);
+  if (!build || build.processingStatus === "canceled") {
+    return;
+  }
+
+  const diffs = await dbClient.diffs.findByBuild(buildId);
+  const reviewStatus = computeBuildReviewStatus(diffs);
+
+  if (reviewStatus === build.reviewStatus) {
+    return;
+  }
+
+  await dbClient.builds.updateResult(buildId, {
+    processingStatus: build.processingStatus,
+    reviewStatus,
+    errorMessage: build.errorMessage,
+  });
+
+  await publishStatus(buildId);
+};
