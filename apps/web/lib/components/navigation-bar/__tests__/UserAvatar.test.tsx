@@ -47,7 +47,7 @@ describe("UserAvatar", () => {
   it("should redirect to login after successfully signing out", async ({ user }) => {
     mockSignOut.mockImplementation(async (options) => {
       await options?.fetchOptions?.onSuccess?.({} as never);
-      return {} as never;
+      return {};
     });
 
     render(<UserAvatar name="Tom Fischer" />);
@@ -63,7 +63,7 @@ describe("UserAvatar", () => {
   it("should still redirect to login if signing out fails", async ({ user }) => {
     mockSignOut.mockImplementation(async (options) => {
       await options?.fetchOptions?.onError?.({} as never);
-      return {} as never;
+      return {};
     });
 
     render(<UserAvatar name="Tom Fischer" />);
