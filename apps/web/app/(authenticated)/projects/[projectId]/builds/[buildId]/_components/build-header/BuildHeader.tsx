@@ -16,16 +16,14 @@ import { Skeleton } from "@ovr/ui/components/skeleton";
 import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 
 import { ExternalLink } from "@/lib/components/external-link/ExternalLink";
+import { TruncatedText } from "@/lib/components/truncated-text/TruncatedText";
 import { formatRelativeDateTime } from "@/lib/utils/date";
-import { truncate } from "@/lib/utils/text";
 
 import { BuildApproveButton } from "./BuildApproveButton";
 import { BuildCancelButton } from "./BuildCancelButton";
 import { BuildRebuildButton } from "./BuildRebuildButton";
 import { BuildRejectButton } from "./BuildRejectButton";
 import { BuildStatusStream } from "./BuildStatusStream";
-
-const BRANCH_TRUNCATE_LENGTH = 24;
 
 export type BuildHeaderProps = {
   build: BuildDetailSchema;
@@ -64,12 +62,12 @@ export const BuildHeader = ({
           {build.branchUrl ? (
             <ExternalLink href={build.branchUrl}>
               <Icon icon={GitBranchIcon} size={10} />
-              {truncate(build.branch, BRANCH_TRUNCATE_LENGTH)}
+              <TruncatedText>{build.branch}</TruncatedText>
             </ExternalLink>
           ) : (
             <Typography variant="caption" className="flex items-center gap-1">
               <Icon icon={GitBranchIcon} size={10} />
-              {truncate(build.branch, BRANCH_TRUNCATE_LENGTH)}
+              <TruncatedText>{build.branch}</TruncatedText>
             </Typography>
           )}
           {build.commitUrl ? (

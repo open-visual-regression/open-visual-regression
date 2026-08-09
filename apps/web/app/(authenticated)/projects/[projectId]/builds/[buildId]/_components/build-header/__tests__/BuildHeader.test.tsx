@@ -498,15 +498,4 @@ describe("BuildHeader", () => {
     expect(screen.getByText("main")).toBeVisible();
     expect(screen.queryByRole("link", { name: "main" })).not.toBeInTheDocument();
   });
-
-  it("should truncate a long branch name", () => {
-    renderComponent({
-      build: mocks.build.generateBuild({
-        branch: "feature/a-very-long-branch-name-that-should-be-truncated",
-        branchUrl: null,
-      }),
-    });
-
-    expect(screen.getByText("feature/a-very-long-bran…")).toBeVisible();
-  });
 });
