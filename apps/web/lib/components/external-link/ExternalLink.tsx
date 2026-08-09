@@ -13,7 +13,7 @@ type ExternalLinkProps = Omit<
 
 export const ExternalLink = ({ children, ...props }: ExternalLinkProps) => (
   <ButtonLink {...props} variant="link" color="neutral" target="_blank" rel="noopener noreferrer">
-    <Icon icon={ExternalLinkIcon} size={10} />
     {children}
+    <Icon icon={ExternalLinkIcon} size={10} />
   </ButtonLink>
 );
