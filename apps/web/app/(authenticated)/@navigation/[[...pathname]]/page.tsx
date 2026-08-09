@@ -1,12 +1,6 @@
-import { Separator } from "@ovr/ui/components/separator";
-
 import { getCachedSession } from "@/lib/auth/session";
 import { getBreadcrumbSegments } from "@/lib/components/navigation-bar/getBreadcrumbSegments";
-import { NavigationBar } from "@/lib/components/navigation-bar/NavigationBar";
-import { NavigationBarActions } from "@/lib/components/navigation-bar/NavigationBarActions";
-import { NavigationBarBreadcrumb } from "@/lib/components/navigation-bar/NavigationBarBreadcrumb";
-import { NavigationBarLogo } from "@/lib/components/navigation-bar/NavigationBarLogo";
-import { NavigationBarMobileMenu } from "@/lib/components/navigation-bar/NavigationBarMobileMenu";
+import { NavigationBarContent } from "@/lib/components/navigation-bar/NavigationBarContent";
 import { serverClient } from "@/lib/router";
 
 type NavigationSlotProps = PageProps<"/[[...pathname]]">;
@@ -35,19 +29,13 @@ export default async function NavigationSlot({ params }: NavigationSlotProps) {
   const builds = buildsError ? [] : buildsResult.builds;
 
   return (
-    <NavigationBar className="flex flex-row gap-3 justify-between items-center">
-      <div className="flex flex-row gap-3 items-center min-w-0">
-        <NavigationBarMobileMenu
-          role={session?.user?.role}
-          projects={projects}
-          projectsTotal={projectsTotal}
-          builds={builds}
-        />
-        <NavigationBarLogo />
-        <Separator orientation="vertical" className="h-5" />
-        <NavigationBarBreadcrumb segments={segments} />
-      </div>
-      <NavigationBarActions userName={userName} />
-    </NavigationBar>
+    <NavigationBarContent
+      role={session?.user?.role}
+      projects={projects}
+      projectsTotal={projectsTotal}
+      builds={builds}
+      segments={segments}
+      userName={userName}
+    />
   );
 }
