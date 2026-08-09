@@ -14,5 +14,10 @@ export const TruncatedText = <T extends ElementType = "span">({
 }: TruncatedTextProps<T>) => {
   const Component = as ?? "span";
 
-  return <Component className={cn("max-w-[24ch] truncate", className)} {...props} />;
+  return (
+    <Component
+      className={cn("max-w-[24ch] truncate [text-decoration-line:inherit]", className)}
+      {...props}
+    />
+  );
 };
