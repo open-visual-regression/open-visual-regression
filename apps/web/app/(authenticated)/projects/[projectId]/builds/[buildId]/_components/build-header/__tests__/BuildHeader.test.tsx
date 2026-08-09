@@ -475,4 +475,38 @@ describe("BuildHeader", () => {
     expect(screen.getByText(/abc1234/i)).toBeVisible();
     expect(screen.queryByRole("link", { name: /abc1234/i })).not.toBeInTheDocument();
   });
+
+  it("should link the branch to the provider's branch page when a git integration is configured", () => {
+    renderComponent({
+      build: mocks.build.generateBuild({
+        branch: "main",
+        branchUrl: "https://github.com/acme/web/tree/main",
+      }),
+    });
+
+    expect(screen.getByRole("link", { name: "main" })).toHaveAttribute(
+      "href",
+      "https://github.com/acme/web/tree/main",
+    );
+  });
+
+  it("should render the branch as plain text when there is no git integration", () => {
+    renderComponent({
+      build: mocks.build.generateBuild({ branch: "main", branchUrl: null }),
+    });
+
+    expect(screen.getByText("main")).toBeVisible();
+    expect(screen.queryByRole("link", { name: "main" })).not.toBeInTheDocument();
+  });
+
+  it("should truncate a long branch name", () => {
+    renderComponent({
+      build: mocks.build.generateBuild({
+        branch: "feature/a-very-long-branch-name-that-should-be-truncated",
+        branchUrl: null,
+      }),
+    });
+
+    expect(screen.getByText("feature/a-very-long-bran…")).toBeVisible();
+  });
 });

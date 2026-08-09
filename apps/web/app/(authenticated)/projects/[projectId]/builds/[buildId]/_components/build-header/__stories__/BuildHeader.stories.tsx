@@ -165,3 +165,30 @@ export const Processing: Story = {
     },
   },
 };
+
+export const WithGitIntegration: Story = {
+  args: {
+    build: mocks.build.generateBuild({
+      ...buildOverrides,
+      status: "needs_review",
+      branch: "main",
+      branchUrl: "https://github.com/acme/web/tree/main",
+      commitUrl: "https://github.com/acme/web/commit/a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0",
+    }),
+    snapshotCounts,
+  },
+};
+
+export const WithLongBranchName: Story = {
+  args: {
+    build: mocks.build.generateBuild({
+      ...buildOverrides,
+      status: "needs_review",
+      branch: "feature/a-very-long-branch-name-that-should-be-truncated",
+      branchUrl:
+        "https://github.com/acme/web/tree/feature/a-very-long-branch-name-that-should-be-truncated",
+      commitUrl: "https://github.com/acme/web/commit/a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0",
+    }),
+    snapshotCounts,
+  },
+};

@@ -17,12 +17,15 @@ import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 
 import { ExternalLink } from "@/lib/components/external-link/ExternalLink";
 import { formatRelativeDateTime } from "@/lib/utils/date";
+import { truncate } from "@/lib/utils/text";
 
 import { BuildApproveButton } from "./BuildApproveButton";
 import { BuildCancelButton } from "./BuildCancelButton";
 import { BuildRebuildButton } from "./BuildRebuildButton";
 import { BuildRejectButton } from "./BuildRejectButton";
 import { BuildStatusStream } from "./BuildStatusStream";
+
+const BRANCH_TRUNCATE_LENGTH = 24;
 
 export type BuildHeaderProps = {
   build: BuildDetailSchema;
@@ -58,10 +61,17 @@ export const BuildHeader = ({
         <div className="flex flex-row flex-wrap items-center gap-4 text-xs md:order-3 md:basis-full">
           <BuildStatusStream buildId={build.id} initialStatus={build.status} />
           {storybookHref ? <ExternalLink href={storybookHref}>view storybook</ExternalLink> : null}
-          <Typography variant="caption" className="flex items-center gap-1">
-            <Icon icon={GitBranchIcon} size={10} />
-            {build.branch}
-          </Typography>
+          {build.branchUrl ? (
+            <ExternalLink href={build.branchUrl}>
+              <Icon icon={GitBranchIcon} size={10} />
+              {truncate(build.branch, BRANCH_TRUNCATE_LENGTH)}
+            </ExternalLink>
+          ) : (
+            <Typography variant="caption" className="flex items-center gap-1">
+              <Icon icon={GitBranchIcon} size={10} />
+              {truncate(build.branch, BRANCH_TRUNCATE_LENGTH)}
+            </Typography>
+          )}
           {build.commitUrl ? (
             <ExternalLink href={build.commitUrl}>
               <Icon icon={GitCommitHorizontalIcon} size={10} />
