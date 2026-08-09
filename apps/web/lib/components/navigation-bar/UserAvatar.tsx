@@ -1,13 +1,16 @@
 "use client";
 
+import Link from "next/link";
+
 import { Button } from "@ovr/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@ovr/ui/components/dropdown-menu";
-import { Icon, LogOutIcon } from "@ovr/ui/components/icon";
+import { Icon, LogOutIcon, SettingsIcon } from "@ovr/ui/components/icon";
 
 import { authClient } from "@/lib/auth/client";
 import { getMonogram } from "@/lib/utils/monogram";
@@ -45,6 +48,11 @@ const UserAvatar = ({ name }: UserAvatarProps) => {
         {getMonogram(name)}
       </DropdownMenuTrigger>
       <DropdownMenuContent side="bottom" align="end">
+        <DropdownMenuItem render={<Link href="/settings" />}>
+          <Icon icon={SettingsIcon} size={14} />
+          settings
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut}>
           <Icon icon={LogOutIcon} size={14} />
           sign out
