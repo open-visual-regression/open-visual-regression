@@ -87,10 +87,12 @@ export const BuildHeader = ({
           <Typography variant="caption">
             {formatRelativeDateTime(new Date(build.createdAt))}
           </Typography>
-          {isCanceled && build.canceledBy ? (
+          {isCanceled ? (
             <Typography variant="caption" className="flex items-center gap-1">
               <Icon icon={CircleSlash2Icon} size={10} />
-              canceled by {build.canceledBy}
+              {/* No canceling user means the system canceled it — today that is a
+                  newer build superseding this one on the same branch. */}
+              canceled by {build.canceledBy ?? "the system"}
             </Typography>
           ) : null}
         </div>

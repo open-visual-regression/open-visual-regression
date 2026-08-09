@@ -189,11 +189,23 @@ const removeJobById = async (queue: Queue, jobId: string): Promise<void> => {
   }
 };
 
+export type CanceledBuildJobs = {
+  buildId: string;
+  diffIds: string[];
+};
+
+// Takes every canceled build at once: capture jobs carry no job id, so they can
+// only be found by scanning the waiting set, and one scan covers them all.
 export const cancelBuildJobs = async (
-  buildId: string,
-  diffIds: string[],
+  canceled: CanceledBuildJobs[],
   connection: IORedis,
 ): Promise<void> => {
+  if (canceled.length === 0) {
+    return;
+  }
+
+  const buildIds = new Set(canceled.map(({ buildId }) => buildId));
+
   const extractQueue = new Queue(QueueName.BUILD_EXTRACT, { connection });
   const captureQueue = new Queue(QueueName.SNAPSHOT_CAPTURE, { connection });
   const diffQueue = new Queue(QueueName.SNAPSHOT_DIFF, { connection });
@@ -201,15 +213,17 @@ export const cancelBuildJobs = async (
 
   try {
     await Promise.all([
-      removeJobById(extractQueue, buildId),
-      removeJobById(finalizeQueue, buildId),
-      ...diffIds.map((diffId) => removeJobById(diffQueue, diffId)),
+      ...canceled.flatMap(({ buildId, diffIds }) => [
+        removeJobById(extractQueue, buildId),
+        removeJobById(finalizeQueue, buildId),
+        ...diffIds.map((diffId) => removeJobById(diffQueue, diffId)),
+      ]),
       captureQueue
         .getJobs(["waiting", "delayed", "prioritized", "paused"])
         .then((captureJobs) =>
           Promise.all(
             captureJobs
-              .filter((job) => (job.data as CaptureGroupJobPayload).buildId === buildId)
+              .filter((job) => buildIds.has((job.data as CaptureGroupJobPayload).buildId))
               .map((job) => removeJob(job, captureQueue.name)),
           ),
         ),

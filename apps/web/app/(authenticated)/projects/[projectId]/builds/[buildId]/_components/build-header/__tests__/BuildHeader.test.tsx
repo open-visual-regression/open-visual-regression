@@ -397,6 +397,14 @@ describe("BuildHeader", () => {
     expect(screen.getByText(/canceled by Jordan Lee/i)).toBeVisible();
   });
 
+  it("should attribute the cancellation to the system when no user canceled it", () => {
+    renderComponent({
+      build: mocks.build.generateBuild({ status: "canceled", canceledBy: null }),
+    });
+
+    expect(screen.getByText(/canceled by the system/i)).toBeVisible();
+  });
+
   it("should not render the review or cancel actions when the build is canceled", () => {
     renderComponent({ build: mocks.build.generateBuild({ status: "canceled" }) });
 

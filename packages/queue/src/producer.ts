@@ -14,6 +14,7 @@ import {
   enqueueProjectPurge as enqueueProjectPurgeJob,
   enqueuePurge as enqueuePurgeJob,
   enqueuePurgeMany as enqueuePurgeManyJob,
+  type CanceledBuildJobs,
   type CaptureGroupJobPayload,
   type DiffJobPayload,
   type ExtractJobPayload,
@@ -59,5 +60,5 @@ export const publishBuildStatusEvent = (event: BuildStatusEvent): Promise<void> 
 export const enqueuePurgeMany = (payloads: PurgeJobPayload[]): Promise<void> =>
   enqueuePurgeManyJob(payloads, connection);
 
-export const cancelBuildJobs = (buildId: string, diffIds: string[]): Promise<void> =>
-  cancelBuildJobsJob(buildId, diffIds, connection);
+export const cancelBuildJobs = (canceled: CanceledBuildJobs[]): Promise<void> =>
+  cancelBuildJobsJob(canceled, connection);

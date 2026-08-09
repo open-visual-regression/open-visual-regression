@@ -3,7 +3,12 @@ import { v7 as uuidv7 } from "uuid";
 
 import { dbClient } from "../client";
 import { db } from "../db";
-import { builds, organization as organizationTable, projects } from "../schema";
+import {
+  builds,
+  organization as organizationTable,
+  projects,
+  type BuildProcessingStatus,
+} from "../schema";
 import { describe, expect, test } from "./fixtures";
 
 describe("builds", () => {
@@ -40,7 +45,7 @@ describe("builds", () => {
     });
   });
 
-  describe("hasNewerOnBranch", () => {
+  describe("findMany", () => {
     test("should break a createdAt tie on the build id", async ({ build, project, user }) => {
       const sameInstant = await dbClient.builds.create({
         projectId: project.id,
@@ -54,10 +59,49 @@ describe("builds", () => {
         .set({ createdAt: build.createdAt })
         .where(eq(builds.id, sameInstant!.id));
 
-      expect(await dbClient.builds.hasNewerOnBranch(build)).toBe(true);
-      expect(
-        await dbClient.builds.hasNewerOnBranch({ ...sameInstant!, createdAt: build.createdAt }),
-      ).toBe(false);
+      const newerThanFirst = await dbClient.builds.findMany({
+        projectIds: [project.id],
+        branches: ["main"],
+        createdAfter: { createdAt: build.createdAt, id: build.id },
+      });
+      const newerThanSecond = await dbClient.builds.findMany({
+        projectIds: [project.id],
+        branches: ["main"],
+        createdAfter: { createdAt: build.createdAt, id: sameInstant!.id },
+      });
+
+      expect(newerThanFirst.map(({ id }) => id)).toEqual([sameInstant!.id]);
+      expect(newerThanSecond).toEqual([]);
+    });
+
+    test("should only return older in-flight builds on the same branch", async ({
+      project,
+      user,
+    }) => {
+      const create = async (branch: string, processingStatus: BuildProcessingStatus) =>
+        (await dbClient.builds.create({
+          projectId: project.id,
+          branch,
+          commitSha: "a".repeat(40),
+          processingStatus,
+          artifactPath: "builds/seed/artifact",
+          createdBy: user.id,
+        }))!;
+
+      const queued = await create("feature", "queued");
+      const processing = await create("feature", "processing");
+      await create("feature", "success");
+      await create("other-branch", "queued");
+      const newest = await create("feature", "queued");
+
+      const stale = await dbClient.builds.findMany({
+        projectIds: [project.id],
+        branches: ["feature"],
+        processingStatuses: ["queued", "processing"],
+        createdBefore: { createdAt: newest.createdAt, id: newest.id },
+      });
+
+      expect(stale.map(({ id }) => id).sort()).toEqual([queued.id, processing.id].sort());
     });
   });
 
@@ -66,6 +110,12 @@ describe("builds", () => {
       const updated = await dbClient.builds.cancelIfInProgress(build.id, user.id);
 
       expect(updated).toMatchObject({ processingStatus: "canceled", canceledBy: user.id });
+    });
+
+    test("records no user when the system cancels the build", async ({ build }) => {
+      const updated = await dbClient.builds.cancelIfInProgress(build.id, null);
+
+      expect(updated).toMatchObject({ processingStatus: "canceled", canceledBy: null });
     });
 
     test("cancels a processing build", async ({ build, user }) => {

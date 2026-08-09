@@ -6,8 +6,9 @@ test.describe("Storybook ingestion", () => {
     projectBuildsPage,
     seed,
   }) => {
-    // The main branch promotes baselines, so the build resolves to "unchanged"
-    // rather than "needs_review".
+    // The main branch promotes baselines, so the build passes without review:
+    // "auto approved" the first time these stories are seen, "unchanged" once a
+    // previous main build has already promoted baselines for them.
     const { shortSha, stdout, exitCode, stderr } = await ingestStorybook({
       apiKey: seed.apiKey,
       branch: "main",
@@ -20,6 +21,6 @@ test.describe("Storybook ingestion", () => {
 
     const row = projectBuildsPage.buildRow(shortSha);
     await expect(row).toBeVisible();
-    await expect(row.getByText("unchanged", { exact: true })).toBeVisible();
+    await expect(row.getByText(/^(auto approved|unchanged)$/)).toBeVisible();
   });
 });
