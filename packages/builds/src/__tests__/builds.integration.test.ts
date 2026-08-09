@@ -57,7 +57,6 @@ type SeedDiffStatus = {
   reviewStatus: DiffReviewStatus;
   pixelDiffCount?: number;
   diffPercent?: number;
-  baselineSnapshotId?: string;
 };
 type Viewport = {
   browser: string;
@@ -800,22 +799,18 @@ describe("builds", () => {
       mainBuild,
       captureConfiguration,
     }) => {
-      const [baselineSnapshot] = await dbClient.snapshots.createMany({
-        values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: crypto.randomUUID() }],
-      });
-
       await seedDiffs(mainBuild.id, captureConfiguration, [
         {
           processingStatus: "success",
           reviewStatus: "not_required",
           pixelDiffCount: 0,
-          baselineSnapshotId: baselineSnapshot!.id,
+          diffPercent: 0,
         },
         {
           processingStatus: "success",
           reviewStatus: "not_required",
           pixelDiffCount: 0,
-          baselineSnapshotId: baselineSnapshot!.id,
+          diffPercent: 0,
         },
       ]);
 
@@ -831,24 +826,18 @@ describe("builds", () => {
       mainBuild,
       captureConfiguration,
     }) => {
-      const [baselineSnapshot] = await dbClient.snapshots.createMany({
-        values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: crypto.randomUUID() }],
-      });
-
       await seedDiffs(mainBuild.id, captureConfiguration, [
         {
           processingStatus: "success",
           reviewStatus: "not_required",
           pixelDiffCount: 0,
           diffPercent: 0,
-          baselineSnapshotId: baselineSnapshot!.id,
         },
         {
           processingStatus: "success",
           reviewStatus: "not_required",
           pixelDiffCount: 320,
           diffPercent: 0.01,
-          baselineSnapshotId: baselineSnapshot!.id,
         },
       ]);
 
@@ -892,11 +881,7 @@ describe("builds", () => {
       captureConfiguration,
     }) => {
       await seedDiffs(mainBuild.id, captureConfiguration, [
-        {
-          processingStatus: "success",
-          reviewStatus: "not_required",
-          baselineSnapshotId: undefined,
-        },
+        { processingStatus: "success", reviewStatus: "not_required" },
       ]);
 
       await finalizeBuild(mainBuild.id);

@@ -47,7 +47,7 @@ export const getSnapshotDisplayStatus = (
     return "approved";
   }
 
-  if (isDiffAutoApproved(diff.baselineSnapshotId, diff.diffPercent, snapshot.diffThreshold)) {
+  if (isDiffAutoApproved(diff.diffPercent, snapshot.diffThreshold)) {
     return "auto_approved";
   }
 

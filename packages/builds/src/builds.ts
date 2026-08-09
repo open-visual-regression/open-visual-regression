@@ -284,11 +284,13 @@ export const cancelBuild = async (
 
 type BuildDiff = Awaited<ReturnType<typeof dbClient.diffs.findByBuild>>[number];
 
-export const isDiffAutoApproved = (
-  baselineSnapshotId: string | null,
-  diffPercent: number | null,
-  diffThreshold: number,
-): boolean => baselineSnapshotId === null || (diffPercent ?? 0) > diffThreshold;
+// diffPercent is null when a `not_required` diff had no baseline to compare against (a new
+// snapshot merged straight to main) — that's a reviewable change, not "unchanged". We key off
+// diffPercent rather than baselineSnapshotId because retention can null baselineSnapshotId out
+// from under an already-settled diff (ON DELETE SET NULL) once its baseline build ages out,
+// while diffPercent is written once at diff time and never touched again.
+export const isDiffAutoApproved = (diffPercent: number | null, diffThreshold: number): boolean =>
+  diffPercent === null || diffPercent > diffThreshold;
 
 const computeBuildReviewStatus = (diffs: BuildDiff[]): BuildReviewStatus => {
   if (diffs.some((diff) => diff.reviewStatus === "rejected")) {
@@ -303,11 +305,7 @@ const computeBuildReviewStatus = (diffs: BuildDiff[]): BuildReviewStatus => {
     return "approved";
   }
 
-  if (
-    diffs.some((diff) =>
-      isDiffAutoApproved(diff.baselineSnapshotId, diff.diffPercent, diff.diffThreshold),
-    )
-  ) {
+  if (diffs.some((diff) => isDiffAutoApproved(diff.diffPercent, diff.diffThreshold))) {
     return "auto_approved";
   }
 

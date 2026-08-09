@@ -206,6 +206,7 @@ describe("snapshots", () => {
         processingStatus: "success",
         reviewStatus: "not_required",
         pixelDiffCount: 0,
+        diffPercent: 0,
       });
       await dbClient.diffs.create({
         snapshotId: autoApproved!.id,
@@ -428,6 +429,7 @@ describe("snapshots", () => {
         snapshotId: unchanged!.id,
         processingStatus: "success",
         reviewStatus: "not_required",
+        diffPercent: 0,
       });
       await dbClient.diffs.create({
         snapshotId: needsReview!.id,
@@ -656,6 +658,7 @@ describe("snapshots", () => {
         snapshotId: unchangedSnapshot!.id,
         processingStatus: "success",
         reviewStatus: "not_required",
+        diffPercent: 0,
       });
 
       expect(errorSnapshot).toBeTruthy();
@@ -843,7 +846,14 @@ describe("snapshots", () => {
       build,
       captureConfiguration,
     }) => {
-      await seedReviewQueue(build, captureConfiguration);
+      const { noDiff } = await seedReviewQueue(build, captureConfiguration);
+
+      const noDiffDiff = await dbClient.diffs.findBySnapshot(noDiff.id);
+      await dbClient.diffs.updateResult(noDiffDiff!.id, {
+        processingStatus: "success",
+        reviewStatus: "not_required",
+        diffPercent: 0,
+      });
 
       const statuses = await dbClient.snapshots.findStatuses(build.id);
 

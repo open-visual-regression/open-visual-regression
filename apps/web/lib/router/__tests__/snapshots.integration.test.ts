@@ -174,6 +174,7 @@ describe("snapshots", () => {
         processingStatus: "success",
         reviewStatus: "not_required",
         pixelDiffCount: 0,
+        diffPercent: 0,
       });
 
       const [error, result] = await serverClient.snapshots.getOne({
@@ -408,6 +409,7 @@ describe("snapshots", () => {
         processingStatus: "success",
         reviewStatus: "not_required",
         pixelDiffCount: 0,
+        diffPercent: 0,
       });
       await dbClient.diffs.create({
         snapshotId: autoApproved!.id,
