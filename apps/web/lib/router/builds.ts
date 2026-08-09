@@ -76,6 +76,12 @@ export const confirmUpload = os.builds.confirmUpload
     });
 
     if (result.status === "error") {
+      if (result.error === "BUILD_CANCELED") {
+        throw new ORPCError("CONFLICT", {
+          message: "this build was superseded by a newer build on the branch",
+        });
+      }
+
       throw new ORPCError(
         result.error === "ARTIFACT_MISSING" ? "PRECONDITION_FAILED" : "NOT_FOUND",
       );
