@@ -35,12 +35,13 @@ const searchParamsSchema = z.object({
 
 export default async function BuildPage({ params, searchParams }: BuildPageProps) {
   const { projectId, buildId } = await params;
+  const rawSearchParams = await searchParams;
   const {
     search,
     status: statuses = [],
     browser: browsers = [],
     viewport: viewports = [],
-  } = searchParamsSchema.parse(await searchParams);
+  } = searchParamsSchema.parse(rawSearchParams);
 
   const [
     session,
@@ -122,6 +123,7 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
           projectId={projectId}
           buildId={buildId}
           search={search}
+          searchParams={rawSearchParams}
           className="min-w-0 flex-1 lg:w-64 lg:flex-none"
         />
       }
