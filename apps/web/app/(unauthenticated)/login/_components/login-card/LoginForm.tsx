@@ -78,7 +78,7 @@ export const LoginForm = () => {
           className="w-full"
           disabled={isSubmitting || isSubmitSuccessful}
         >
-          sign in
+          {isSubmitting || isSubmitSuccessful ? "signing in..." : "sign in"}
         </Button>
       </FieldGroup>
     </form>

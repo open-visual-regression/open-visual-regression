@@ -94,7 +94,7 @@ const displayStatusExpr = sql<SnapshotDisplayStatus>`case
   when ${diffs.reviewStatus} = 'rejected' then 'rejected'
   when ${diffs.reviewStatus} = 'needs_review' then 'needs_review'
   when ${diffs.reviewStatus} = 'approved' then 'approved'
-  when ${diffs.diffPercent} > ${snapshots.diffThreshold} then 'auto_approved'
+  when ${diffs.reviewStatus} = 'auto_approved' then 'auto_approved'
   else 'unchanged'
 end`;
 

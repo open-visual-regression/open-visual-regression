@@ -33,12 +33,13 @@ const searchParamsSchema = z.object({
 
 export default async function ProjectPage(props: ProjectPageProps) {
   const { projectId } = await props.params;
+  const rawSearchParams = await props.searchParams;
   const {
     search,
     status: statuses = [],
     branch: branches = [],
     author: authors = [],
-  } = searchParamsSchema.parse(await props.searchParams);
+  } = searchParamsSchema.parse(rawSearchParams);
 
   const [projectError, projectResult] = await serverClient.projects.getOne({ projectId });
 
@@ -105,6 +106,7 @@ export default async function ProjectPage(props: ProjectPageProps) {
         <BuildsSearchField
           projectId={projectId}
           search={search}
+          searchParams={rawSearchParams}
           className="min-w-0 flex-1 lg:w-64 lg:flex-none"
         />
       }

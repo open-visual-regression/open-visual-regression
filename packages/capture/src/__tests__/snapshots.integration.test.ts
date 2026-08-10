@@ -391,7 +391,7 @@ describe("snapshots", () => {
 
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
         processingStatus: "success",
-        reviewStatus: "not_required",
+        reviewStatus: "unchanged",
         pixelDiffCount: 0,
         diffPercent: 0,
       });
@@ -520,7 +520,7 @@ describe("snapshots", () => {
 
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
         processingStatus: "success",
-        reviewStatus: "not_required",
+        reviewStatus: "auto_approved",
       });
 
       const baseline = await dbClient.baselines.find({
@@ -573,7 +573,7 @@ describe("snapshots", () => {
       const result = await dbClient.diffs.findById(diff!.id);
       expect(result).toMatchObject({
         processingStatus: "success",
-        reviewStatus: "not_required",
+        reviewStatus: "auto_approved",
       });
       expect(result!.pixelDiffCount).toBeGreaterThan(0);
 

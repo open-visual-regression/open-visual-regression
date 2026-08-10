@@ -172,8 +172,9 @@ describe("snapshots", () => {
       await dbClient.diffs.create({
         snapshotId: snapshot!.id,
         processingStatus: "success",
-        reviewStatus: "not_required",
+        reviewStatus: "unchanged",
         pixelDiffCount: 0,
+        diffPercent: 0,
       });
 
       const [error, result] = await serverClient.snapshots.getOne({
@@ -203,7 +204,7 @@ describe("snapshots", () => {
       await dbClient.diffs.create({
         snapshotId: snapshot!.id,
         processingStatus: "success",
-        reviewStatus: "not_required",
+        reviewStatus: "auto_approved",
         pixelDiffCount: 512,
         diffPercent: 5,
       });
@@ -235,7 +236,7 @@ describe("snapshots", () => {
       await dbClient.diffs.create({
         snapshotId: snapshot!.id,
         processingStatus: "success",
-        reviewStatus: "not_required",
+        reviewStatus: "unchanged",
         pixelDiffCount: 512,
         diffPercent: 0.01,
       });
@@ -406,13 +407,14 @@ describe("snapshots", () => {
       await dbClient.diffs.create({
         snapshotId: unchanged!.id,
         processingStatus: "success",
-        reviewStatus: "not_required",
+        reviewStatus: "unchanged",
         pixelDiffCount: 0,
+        diffPercent: 0,
       });
       await dbClient.diffs.create({
         snapshotId: autoApproved!.id,
         processingStatus: "success",
-        reviewStatus: "not_required",
+        reviewStatus: "auto_approved",
         pixelDiffCount: 256,
         diffPercent: 5,
       });
@@ -543,7 +545,7 @@ describe("snapshots", () => {
       await dbClient.diffs.create({
         snapshotId: noDiff!.id,
         processingStatus: "success",
-        reviewStatus: "not_required",
+        reviewStatus: "unchanged",
       });
 
       return { first: first!, second: second!, third: third!, noDiff: noDiff!, errored: errored! };

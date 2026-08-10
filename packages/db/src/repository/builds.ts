@@ -37,34 +37,6 @@ export const create = async ({ tx = db, ...values }: CreateInput) => {
 export const findById = (id: string) =>
   db.query.builds.findFirst({ where: (builds, { eq }) => eq(builds.id, id) });
 
-type HasNewerOnBranchInput = {
-  id: string;
-  projectId: string;
-  branch: string;
-  createdAt: string;
-};
-
-export const hasNewerOnBranch = async ({
-  id,
-  projectId,
-  branch,
-  createdAt,
-}: HasNewerOnBranchInput): Promise<boolean> => {
-  const [newer] = await db
-    .select({ id: builds.id })
-    .from(builds)
-    .where(
-      and(
-        eq(builds.projectId, projectId),
-        eq(builds.branch, branch),
-        sql`(${builds.createdAt}, ${builds.id}) > (${createdAt}::timestamp, ${id}::uuid)`,
-      ),
-    )
-    .limit(1);
-
-  return newer !== undefined;
-};
-
 export const updateProcessingStatus = async (
   id: string,
   processingStatus: BuildProcessingStatus,
@@ -79,7 +51,11 @@ export const updateProcessingStatus = async (
   return build;
 };
 
-export const cancelIfInProgress = async (id: string, canceledBy: string, tx: DbClient = db) => {
+export const cancelIfInProgress = async (
+  id: string,
+  canceledBy: string | null,
+  tx: DbClient = db,
+) => {
   const [build] = await tx
     .update(builds)
     .set({ processingStatus: "canceled", errorMessage: null, canceledBy })
@@ -107,7 +83,7 @@ export type BuildDbSchema = Awaited<ReturnType<typeof findById>>;
 
 export type SortDirection = "asc" | "desc";
 
-type BuildsCursor = {
+export type BuildsCursor = {
   createdAt: string;
   id: string;
 };
@@ -117,18 +93,18 @@ export type StatusFilter = {
   reviewStatus?: BuildReviewStatus;
 };
 
-type FindAllInput = {
-  organizationId: string;
+export type BuildFilters = {
+  organizationId?: string;
   projectIds?: string[];
-  processingStatus?: BuildProcessingStatus;
-  reviewStatus?: BuildReviewStatus;
-  statuses?: StatusFilter[];
   branches?: string[];
   authors?: string[];
   search?: string;
-  sortDirection?: SortDirection;
-  limit: number;
-  cursor?: BuildsCursor;
+  processingStatus?: BuildProcessingStatus;
+  processingStatuses?: BuildProcessingStatus[];
+  reviewStatus?: BuildReviewStatus;
+  statuses?: StatusFilter[];
+  createdBefore?: BuildsCursor;
+  createdAfter?: BuildsCursor;
 };
 
 const getStatusFilter = (statuses?: StatusFilter[]) =>
@@ -143,69 +119,113 @@ const getStatusFilter = (statuses?: StatusFilter[]) =>
       )
     : undefined;
 
-const getCursorFilter = (cursor: BuildsCursor, sortDirection: SortDirection) => {
-  if (sortDirection === "asc") {
-    return sql`(${builds.createdAt}, ${builds.id}) > (${cursor.createdAt}::timestamp, ${cursor.id}::uuid)`;
-  }
-  return sql`(${builds.createdAt}, ${builds.id}) < (${cursor.createdAt}::timestamp, ${cursor.id}::uuid)`;
-};
-
-export const findAll = async ({
+const getFilters = ({
   organizationId,
   projectIds,
-  processingStatus,
-  reviewStatus,
-  statuses,
   branches,
   authors,
   search,
-  sortDirection = "desc",
-  limit,
-  cursor,
-}: FindAllInput) => {
-  const baseFilter = and(
-    eq(projects.organizationId, organizationId),
+  processingStatus,
+  processingStatuses,
+  reviewStatus,
+  statuses,
+  createdBefore,
+  createdAfter,
+}: BuildFilters) =>
+  and(
+    organizationId ? eq(projects.organizationId, organizationId) : undefined,
     projectIds?.length ? inArray(builds.projectId, projectIds) : undefined,
-    processingStatus ? eq(builds.processingStatus, processingStatus) : undefined,
-    reviewStatus ? eq(builds.reviewStatus, reviewStatus) : undefined,
-    getStatusFilter(statuses),
     branches?.length ? inArray(builds.branch, branches) : undefined,
     authors?.length ? inArray(builds.author, authors) : undefined,
     search ? ilike(builds.name, `%${search}%`) : undefined,
+    processingStatus ? eq(builds.processingStatus, processingStatus) : undefined,
+    processingStatuses?.length ? inArray(builds.processingStatus, processingStatuses) : undefined,
+    reviewStatus ? eq(builds.reviewStatus, reviewStatus) : undefined,
+    getStatusFilter(statuses),
+    createdBefore
+      ? sql`(${builds.createdAt}, ${builds.id}) < (${createdBefore.createdAt}::timestamp, ${createdBefore.id}::uuid)`
+      : undefined,
+    createdAfter
+      ? sql`(${builds.createdAt}, ${builds.id}) > (${createdAfter.createdAt}::timestamp, ${createdAfter.id}::uuid)`
+      : undefined,
   );
 
-  // Keyset pagination on (createdAt, id): matches the composite index and stays
-  // stable when new builds are inserted at the top mid-scroll.
-  const cursorFilter = cursor ? getCursorFilter(cursor, sortDirection) : undefined;
+type FindManyOptions = {
+  limit?: number;
+  sortDirection?: SortDirection;
+};
 
+export const findMany = async (
+  filters: BuildFilters,
+  { limit, sortDirection = "desc" }: FindManyOptions = {},
+) => {
   const orderFn = sortDirection === "asc" ? asc : desc;
 
-  const [rows, [totalResult]] = await Promise.all([
-    db
-      .select({
-        id: builds.id,
-        projectId: builds.projectId,
-        projectName: projects.name,
-        branch: builds.branch,
-        errorMessage: builds.errorMessage,
-        commitSha: builds.commitSha,
-        name: builds.name,
-        author: builds.author,
-        processingStatus: builds.processingStatus,
-        reviewStatus: builds.reviewStatus,
-        buildType: builds.buildType,
-        createdAt: builds.createdAt,
-      })
-      .from(builds)
-      .innerJoin(projects, eq(builds.projectId, projects.id))
-      .where(and(baseFilter, cursorFilter))
-      .orderBy(orderFn(builds.createdAt), orderFn(builds.id))
-      .limit(limit + 1),
-    db
-      .select({ count: count() })
-      .from(builds)
-      .innerJoin(projects, eq(builds.projectId, projects.id))
-      .where(baseFilter),
+  const query = db
+    .select({
+      id: builds.id,
+      projectId: builds.projectId,
+      projectName: projects.name,
+      branch: builds.branch,
+      errorMessage: builds.errorMessage,
+      commitSha: builds.commitSha,
+      name: builds.name,
+      author: builds.author,
+      processingStatus: builds.processingStatus,
+      reviewStatus: builds.reviewStatus,
+      buildType: builds.buildType,
+      createdAt: builds.createdAt,
+    })
+    .from(builds)
+    .innerJoin(projects, eq(builds.projectId, projects.id))
+    .where(getFilters(filters))
+    .orderBy(orderFn(builds.createdAt), orderFn(builds.id));
+
+  return limit === undefined ? query : query.limit(limit);
+};
+
+const countMatching = async (filters: BuildFilters): Promise<number> => {
+  const [result] = await db
+    .select({ count: count() })
+    .from(builds)
+    .innerJoin(projects, eq(builds.projectId, projects.id))
+    .where(getFilters(filters));
+
+  return result?.count ?? 0;
+};
+
+type FindAllInput = Omit<BuildFilters, "createdBefore" | "createdAfter"> & {
+  organizationId: string;
+  sortDirection?: SortDirection;
+  limit: number;
+  cursor?: BuildsCursor;
+};
+
+// Keyset pagination on (createdAt, id): matches the composite index and stays
+// stable when new builds are inserted at the top mid-scroll.
+const getCursorFilter = (
+  cursor: BuildsCursor | undefined,
+  sortDirection: SortDirection,
+): Pick<BuildFilters, "createdAfter" | "createdBefore"> => {
+  if (!cursor) {
+    return {};
+  }
+
+  return sortDirection === "asc" ? { createdAfter: cursor } : { createdBefore: cursor };
+};
+
+export const findAll = async ({
+  sortDirection = "desc",
+  limit,
+  cursor,
+  ...filters
+}: FindAllInput) => {
+  const [rows, total] = await Promise.all([
+    findMany(
+      { ...filters, ...getCursorFilter(cursor, sortDirection) },
+      { limit: limit + 1, sortDirection },
+    ),
+    countMatching(filters),
   ]);
 
   const hasMore = rows.length > limit;
@@ -213,7 +233,7 @@ export const findAll = async ({
   const lastRow = pageRows.at(-1);
   const nextCursor = hasMore && lastRow ? { createdAt: lastRow.createdAt, id: lastRow.id } : null;
 
-  return { builds: pageRows, total: totalResult?.count ?? 0, nextCursor };
+  return { builds: pageRows, total, nextCursor };
 };
 
 export type FindAllResult = Awaited<ReturnType<typeof findAll>>;

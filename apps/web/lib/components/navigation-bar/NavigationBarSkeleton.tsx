@@ -12,7 +12,6 @@ export const NavigationBarSkeleton = () => (
     </div>
     <div className="flex shrink-0 items-center gap-1">
       <Skeleton className="size-7" />
-      <Skeleton className="size-7" />
     </div>
   </NavigationBar>
 );

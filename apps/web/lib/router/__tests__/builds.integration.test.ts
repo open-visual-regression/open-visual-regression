@@ -58,6 +58,31 @@ describe("builds", () => {
       expect(error?.code).toBe("UNAUTHORIZED");
     });
 
+    test("cancels the previous in-flight build on the branch it is pushed to", async ({
+      admin: _,
+    }) => {
+      const { apiKey } = await createProjectWithApiKey();
+      setApiKeyHeader(apiKey);
+
+      const [, superseded] = await serverClient.builds.createBuild({
+        branch: "feature/checkout",
+        commitSha: "a".repeat(40),
+      });
+
+      const [, latest] = await serverClient.builds.createBuild({
+        branch: "feature/checkout",
+        commitSha: "b".repeat(40),
+      });
+
+      expect(await dbClient.builds.findById(superseded!.buildId)).toMatchObject({
+        processingStatus: "canceled",
+        canceledBy: null,
+      });
+      expect(await dbClient.builds.findById(latest!.buildId)).toMatchObject({
+        processingStatus: "queued",
+      });
+    });
+
     test("creates a queued build under the project the key is scoped to", async ({ admin: _ }) => {
       const { projectId, apiKey } = await createProjectWithApiKey();
 
@@ -157,6 +182,35 @@ describe("builds", () => {
 
       expect(error).toBeNull();
       expect(result).toEqual({ ok: true });
+    });
+
+    test("should return CONFLICT when a newer build superseded this one mid-upload", async ({
+      admin: _,
+    }) => {
+      const { apiKey } = await createProjectWithApiKey();
+      setApiKeyHeader(apiKey);
+
+      const [, createResult] = await serverClient.builds.createBuild({
+        branch: "feature/checkout",
+        commitSha: "a".repeat(40),
+      });
+      const buildId = createResult!.buildId;
+
+      const build = await dbClient.builds.findById(buildId);
+      await storage.uploadFile(build!.artifactPath, Buffer.from(""), "application/gzip");
+
+      await serverClient.builds.createBuild({
+        branch: "feature/checkout",
+        commitSha: "b".repeat(40),
+      });
+
+      const [error] = await serverClient.builds.confirmUpload({
+        buildId,
+        targets: [{ id: "story-a", title: "Story", name: "A" }],
+        viewports: VIEWPORTS,
+      });
+
+      expect(error?.code).toBe("CONFLICT");
     });
   });
 

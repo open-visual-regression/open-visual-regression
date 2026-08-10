@@ -46,7 +46,7 @@ export const getSnapshotDisplayStatus = (
     return "approved";
   }
 
-  if ((diff.diffPercent ?? 0) > snapshot.diffThreshold) {
+  if (diff.reviewStatus === "auto_approved") {
     return "auto_approved";
   }
 

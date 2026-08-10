@@ -13,6 +13,8 @@ import {
   type RebuildBlockedReason,
 } from "@ovr/builds/builds";
 import { dbClient } from "@ovr/db/client";
+import { buildBranchUrl } from "@ovr/git-status/webBranchUrl";
+import { buildCommitUrl } from "@ovr/git-status/webCommitUrl";
 import { storage } from "@ovr/storage";
 
 import { buildStatusHub } from "@/lib/events/buildStatusHub";
@@ -76,6 +78,12 @@ export const confirmUpload = os.builds.confirmUpload
     });
 
     if (result.status === "error") {
+      if (result.error === "BUILD_CANCELED") {
+        throw new ORPCError("CONFLICT", {
+          message: "this build was superseded by a newer build on the branch",
+        });
+      }
+
       throw new ORPCError(
         result.error === "ARTIFACT_MISSING" ? "PRECONDITION_FAILED" : "NOT_FOUND",
       );
@@ -289,9 +297,10 @@ export const getOne = os.builds.getOne
   .handler(async ({ context }) => {
     const { build, project } = context;
 
-    const [canceler, rebuildable] = await Promise.all([
+    const [canceler, rebuildable, gitIntegration] = await Promise.all([
       build.canceledBy ? dbClient.users.findById(build.canceledBy) : null,
       checkRebuildable(build),
+      dbClient.gitIntegrations.findByProject(project.id),
     ]);
 
     return {
@@ -308,6 +317,12 @@ export const getOne = os.builds.getOne
         isRebuildable: rebuildable.status === "ok",
         buildType: build.buildType,
         createdAt: build.createdAt,
+        commitUrl: gitIntegration
+          ? buildCommitUrl(gitIntegration.provider, gitIntegration.repoIdentifier, build.commitSha)
+          : null,
+        branchUrl: gitIntegration
+          ? buildBranchUrl(gitIntegration.provider, gitIntegration.repoIdentifier, build.branch)
+          : null,
       },
     };
   })

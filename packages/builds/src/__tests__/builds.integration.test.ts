@@ -2,10 +2,12 @@ import assert from "node:assert";
 
 import { Queue, Worker } from "bullmq";
 import type { Redis } from "ioredis";
+import { vi } from "vitest";
 
 import { dbClient } from "@ovr/db/client";
 import type { BuildProcessingStatus, DiffProcessingStatus, DiffReviewStatus } from "@ovr/db/schema";
 import { QueueName, type ExtractJobPayload } from "@ovr/queue";
+import { createBuildStatusSubscriber, type BuildStatusEvent } from "@ovr/queue/events";
 import { storage } from "@ovr/storage";
 
 import {
@@ -16,6 +18,7 @@ import {
   finalizeBuild,
   getArtifactPath,
   rebuildBuild,
+  updateBuildReviewStatus,
 } from "../builds";
 import { describe, expect, test } from "./fixtures";
 
@@ -64,6 +67,22 @@ type Viewport = {
   viewportHeight: number;
   viewportName: string;
 };
+
+const BRANCH = "feature/checkout";
+
+const createBuildOnBranch = async (
+  projectId: string,
+  userId: string,
+  branch: string,
+  shaSeed: string,
+): Promise<string> => {
+  const result = await createBuild({ projectId, branch, commitSha: shaSeed.repeat(40) }, userId);
+  assert(result.status === "ok");
+  return result.data;
+};
+
+const uploadArtifact = (projectId: string, buildId: string) =>
+  storage.uploadFile(getArtifactPath(projectId, buildId), Buffer.from(""), "application/gzip");
 
 const seedDiffs = async (buildId: string, viewport: Viewport, statuses: SeedDiffStatus[]) => {
   for (const status of statuses) {
@@ -122,6 +141,124 @@ describe("builds", () => {
       );
 
       expect(result).toEqual({ status: "error", error: "PROJECT_NOT_FOUND" });
+    });
+
+    test("cancels the older in-flight build on the branch, along with its unfinished work", async ({
+      project,
+      captureConfiguration,
+      user,
+    }) => {
+      const superseded = await createBuildOnBranch(project.id, user.id, BRANCH, "a");
+      await dbClient.builds.updateProcessingStatus(superseded, "processing");
+
+      const [capturing] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: superseded, ...captureConfiguration, targetId: "story-a", status: "queued" },
+        ],
+      });
+      const [captured] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: superseded, ...captureConfiguration, targetId: "story-b", status: "success" },
+        ],
+      });
+      const pendingDiff = await dbClient.diffs.create({
+        snapshotId: captured!.id,
+        processingStatus: "pending",
+        reviewStatus: "not_required",
+      });
+
+      const latest = await createBuildOnBranch(project.id, user.id, BRANCH, "b");
+
+      expect(await dbClient.builds.findById(superseded)).toMatchObject({
+        processingStatus: "canceled",
+        canceledBy: null,
+      });
+      expect(await dbClient.snapshots.findById(capturing!.id)).toMatchObject({
+        status: "canceled",
+      });
+      expect(await dbClient.snapshots.findById(captured!.id)).toMatchObject({ status: "success" });
+      expect(await dbClient.diffs.findById(pendingDiff!.id)).toMatchObject({
+        processingStatus: "canceled",
+      });
+      expect(await dbClient.builds.findById(latest)).toMatchObject({ processingStatus: "queued" });
+    });
+
+    test("frees the queue by dropping the superseded build's extract job", async ({
+      project,
+      captureConfiguration,
+      user,
+      connection,
+    }) => {
+      const superseded = await createBuildOnBranch(project.id, user.id, BRANCH, "a");
+      await uploadArtifact(project.id, superseded);
+      await confirmBuildUpload(superseded, {
+        targets: [{ id: "story-a", title: "Story", name: "A" }],
+        viewports: [captureConfiguration],
+        diffThreshold: 0.05,
+      });
+      expect(await findExtractJob(connection, superseded)).toBeDefined();
+
+      await createBuildOnBranch(project.id, user.id, BRANCH, "b");
+
+      expect(await findExtractJob(connection, superseded)).toBeUndefined();
+    });
+
+    test("publishes the superseded build's canceled status so watchers stop waiting", async ({
+      project,
+      user,
+    }) => {
+      const superseded = await createBuildOnBranch(project.id, user.id, BRANCH, "a");
+
+      const events: BuildStatusEvent[] = [];
+      const subscriber = createBuildStatusSubscriber((event) => events.push(event));
+      await subscriber.ready;
+
+      try {
+        await createBuildOnBranch(project.id, user.id, BRANCH, "b");
+
+        await vi.waitFor(() =>
+          expect(events).toContainEqual(
+            expect.objectContaining({ buildId: superseded, processingStatus: "canceled" }),
+          ),
+        );
+      } finally {
+        await subscriber.close();
+      }
+    });
+
+    test("leaves an in-flight build on another branch running", async ({ project, user }) => {
+      const otherBranch = await createBuildOnBranch(project.id, user.id, "feature/other", "a");
+
+      await createBuildOnBranch(project.id, user.id, BRANCH, "b");
+
+      expect(await dbClient.builds.findById(otherBranch)).toMatchObject({
+        processingStatus: "queued",
+      });
+    });
+
+    test.for(["success", "error"] as const)(
+      "leaves a build that already finished as %s alone",
+      async (processingStatus, { project, user }) => {
+        const settled = await createBuildOnBranch(project.id, user.id, BRANCH, "a");
+        await dbClient.builds.updateProcessingStatus(settled, processingStatus);
+
+        await createBuildOnBranch(project.id, user.id, BRANCH, "b");
+
+        expect(await dbClient.builds.findById(settled)).toMatchObject({ processingStatus });
+      },
+    );
+
+    test("cancels nothing when the build has no branch to supersede on", async ({
+      project,
+      user,
+    }) => {
+      const inFlight = await createBuildOnBranch(project.id, user.id, "", "a");
+
+      await createBuildOnBranch(project.id, user.id, "", "b");
+
+      expect(await dbClient.builds.findById(inFlight)).toMatchObject({
+        processingStatus: "queued",
+      });
     });
   });
 
@@ -269,6 +406,27 @@ describe("builds", () => {
       });
 
       expect(result).toEqual({ status: "error", error: "BUILD_NOT_FOUND" });
+    });
+
+    test("returns BUILD_CANCELED without queueing work when a newer build superseded this one mid-upload", async ({
+      project,
+      captureConfiguration,
+      user,
+      connection,
+    }) => {
+      const superseded = await createBuildOnBranch(project.id, user.id, BRANCH, "a");
+      await uploadArtifact(project.id, superseded);
+
+      await createBuildOnBranch(project.id, user.id, BRANCH, "b");
+
+      const result = await confirmBuildUpload(superseded, {
+        targets: [{ id: "story-a", title: "Story", name: "A" }],
+        viewports: [captureConfiguration],
+        diffThreshold: 0.05,
+      });
+
+      expect(result).toEqual({ status: "error", error: "BUILD_CANCELED" });
+      expect(await findExtractJob(connection, superseded)).toBeUndefined();
     });
   });
 
@@ -675,7 +833,7 @@ describe("builds", () => {
       await cancelBuild(featureBuild.id, user.id);
 
       await seedDiffs(featureBuild.id, captureConfiguration, [
-        { processingStatus: "success", reviewStatus: "not_required" },
+        { processingStatus: "success", reviewStatus: "unchanged" },
       ]);
 
       await finalizeBuild(featureBuild.id);
@@ -690,7 +848,7 @@ describe("builds", () => {
       captureConfiguration,
     }) => {
       await seedDiffs(mainBuild.id, captureConfiguration, [
-        { processingStatus: "success", reviewStatus: "not_required" },
+        { processingStatus: "success", reviewStatus: "unchanged" },
         { processingStatus: "error", reviewStatus: "not_required" },
       ]);
 
@@ -723,7 +881,7 @@ describe("builds", () => {
       captureConfiguration,
     }) => {
       await seedDiffs(mainBuild.id, captureConfiguration, [
-        { processingStatus: "success", reviewStatus: "not_required" },
+        { processingStatus: "success", reviewStatus: "unchanged" },
         { processingStatus: "success", reviewStatus: "needs_review" },
       ]);
 
@@ -772,7 +930,7 @@ describe("builds", () => {
       captureConfiguration,
     }) => {
       await seedDiffs(mainBuild.id, captureConfiguration, [
-        { processingStatus: "success", reviewStatus: "not_required" },
+        { processingStatus: "success", reviewStatus: "unchanged" },
         { processingStatus: "success", reviewStatus: "approved" },
       ]);
 
@@ -795,13 +953,13 @@ describe("builds", () => {
       });
     });
 
-    test("marks the build review status as unchanged when every auto-resolved diff had no pixel changes", async ({
+    test("marks the build review status as unchanged when every auto-resolved diff was unchanged", async ({
       mainBuild,
       captureConfiguration,
     }) => {
       await seedDiffs(mainBuild.id, captureConfiguration, [
-        { processingStatus: "success", reviewStatus: "not_required", pixelDiffCount: 0 },
-        { processingStatus: "success", reviewStatus: "not_required", pixelDiffCount: 0 },
+        { processingStatus: "success", reviewStatus: "unchanged" },
+        { processingStatus: "success", reviewStatus: "unchanged" },
       ]);
 
       await finalizeBuild(mainBuild.id);
@@ -812,50 +970,13 @@ describe("builds", () => {
       });
     });
 
-    test("marks the build review status as unchanged when an auto-resolved diff changed within the threshold", async ({
+    test("marks the build review status as auto_approved when any auto-resolved diff was auto_approved", async ({
       mainBuild,
       captureConfiguration,
     }) => {
       await seedDiffs(mainBuild.id, captureConfiguration, [
-        {
-          processingStatus: "success",
-          reviewStatus: "not_required",
-          pixelDiffCount: 0,
-          diffPercent: 0,
-        },
-        {
-          processingStatus: "success",
-          reviewStatus: "not_required",
-          pixelDiffCount: 320,
-          diffPercent: 0.01,
-        },
-      ]);
-
-      await finalizeBuild(mainBuild.id);
-
-      expect(await dbClient.builds.findById(mainBuild.id)).toMatchObject({
-        processingStatus: "success",
-        reviewStatus: "unchanged",
-      });
-    });
-
-    test("marks the build review status as auto_approved when an auto-resolved diff exceeded the threshold", async ({
-      mainBuild,
-      captureConfiguration,
-    }) => {
-      await seedDiffs(mainBuild.id, captureConfiguration, [
-        {
-          processingStatus: "success",
-          reviewStatus: "not_required",
-          pixelDiffCount: 0,
-          diffPercent: 0,
-        },
-        {
-          processingStatus: "success",
-          reviewStatus: "not_required",
-          pixelDiffCount: 320,
-          diffPercent: 5,
-        },
+        { processingStatus: "success", reviewStatus: "unchanged" },
+        { processingStatus: "success", reviewStatus: "auto_approved" },
       ]);
 
       await finalizeBuild(mainBuild.id);
@@ -864,6 +985,84 @@ describe("builds", () => {
         processingStatus: "success",
         reviewStatus: "auto_approved",
       });
+    });
+  });
+
+  describe("updateBuildReviewStatus", () => {
+    test("leaves a still-processing build's processing status alone", async ({
+      mainBuild,
+      captureConfiguration,
+    }) => {
+      await dbClient.builds.updateProcessingStatus(mainBuild.id, "processing");
+      await seedDiffs(mainBuild.id, captureConfiguration, [
+        { processingStatus: "success", reviewStatus: "approved" },
+      ]);
+
+      await updateBuildReviewStatus(mainBuild.id);
+
+      expect(await dbClient.builds.findById(mainBuild.id)).toMatchObject({
+        processingStatus: "processing",
+        reviewStatus: "approved",
+      });
+    });
+
+    test("marks the build review status as rejected when any diff is rejected, even while other snapshots are still queued", async ({
+      mainBuild,
+      captureConfiguration,
+    }) => {
+      await dbClient.builds.updateProcessingStatus(mainBuild.id, "processing");
+      await seedDiffs(mainBuild.id, captureConfiguration, [
+        { processingStatus: "success", reviewStatus: "rejected" },
+      ]);
+      await dbClient.snapshots.createMany({
+        values: [
+          { buildId: mainBuild.id, ...captureConfiguration, targetId: "story-b", status: "queued" },
+        ],
+      });
+
+      await updateBuildReviewStatus(mainBuild.id);
+
+      expect(await dbClient.builds.findById(mainBuild.id)).toMatchObject({
+        processingStatus: "processing",
+        reviewStatus: "rejected",
+      });
+    });
+
+    test("leaves a canceled build canceled even when a diff is voted on", async ({
+      featureBuild,
+      captureConfiguration,
+      user,
+    }) => {
+      await dbClient.builds.updateProcessingStatus(featureBuild.id, "processing");
+      await cancelBuild(featureBuild.id, user.id);
+
+      await seedDiffs(featureBuild.id, captureConfiguration, [
+        { processingStatus: "success", reviewStatus: "approved" },
+      ]);
+
+      await updateBuildReviewStatus(featureBuild.id);
+
+      expect(await dbClient.builds.findById(featureBuild.id)).toMatchObject({
+        processingStatus: "canceled",
+      });
+    });
+
+    test("does not publish a status update when the review status is unchanged", async ({
+      mainBuild,
+      captureConfiguration,
+      connection,
+    }) => {
+      await seedDiffs(mainBuild.id, captureConfiguration, [
+        { processingStatus: "success", reviewStatus: "unchanged" },
+      ]);
+      await dbClient.builds.updateResult(mainBuild.id, {
+        processingStatus: "queued",
+        reviewStatus: "unchanged",
+      });
+
+      await updateBuildReviewStatus(mainBuild.id);
+
+      expect(await findPublishStatusJob(connection, mainBuild.id)).toBeUndefined();
     });
   });
 });

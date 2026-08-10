@@ -3,6 +3,7 @@ import { v7 as uuidv7 } from "uuid";
 import { dbClient } from "@ovr/db/client";
 import type { BuildProcessingStatus, BuildReviewStatus, BuildType } from "@ovr/db/schema";
 import { createLogger } from "@ovr/logger";
+import type { CanceledBuildJobs } from "@ovr/queue";
 import {
   cancelBuildJobs,
   enqueueExtract,
@@ -67,6 +68,72 @@ export const publishStatus = async (buildId: string): Promise<void> => {
   }
 };
 
+const cancelInProgressBuild = async (
+  buildId: string,
+  canceledBy: string | null,
+): Promise<string[] | null> =>
+  dbClient.transaction(async (tx) => {
+    const canceledBuild = await dbClient.builds.cancelIfInProgress(buildId, canceledBy, tx);
+    if (!canceledBuild) {
+      return null;
+    }
+
+    await dbClient.snapshots.markUnfinishedAs(buildId, "canceled", tx);
+    return dbClient.diffs.markPendingAs(buildId, "canceled", tx);
+  });
+
+type SupersedingBuild = {
+  id: string;
+  projectId: string;
+  branch: string;
+  createdAt: string;
+};
+
+export const supersedeInFlightBuilds = async (build: SupersedingBuild): Promise<string[]> => {
+  if (!build.branch.trim()) {
+    return [];
+  }
+
+  const stale = await dbClient.builds.findMany({
+    projectIds: [build.projectId],
+    branches: [build.branch],
+    processingStatuses: ["queued", "processing"],
+    createdBefore: { createdAt: build.createdAt, id: build.id },
+  });
+
+  const canceled: CanceledBuildJobs[] = [];
+
+  for (const staleBuild of stale) {
+    const diffIds = await cancelInProgressBuild(staleBuild.id, null);
+    if (diffIds) {
+      canceled.push({ buildId: staleBuild.id, diffIds });
+    }
+  }
+
+  if (canceled.length === 0) {
+    return [];
+  }
+
+  const supersededBuildIds = canceled.map(({ buildId }) => buildId);
+  logger.info(
+    { buildId: build.id, branch: build.branch, supersededBuildIds },
+    "superseded in-flight builds on the branch",
+  );
+
+  try {
+    await cancelBuildJobs(canceled);
+  } catch (error) {
+    logger.error(
+      { err: error, buildId: build.id },
+      "failed to remove queued jobs for superseded builds",
+    );
+  }
+
+  await Promise.all(supersededBuildIds.map((buildId) => publishStatus(buildId)));
+
+  return supersededBuildIds;
+};
+
 export const createBuild = async (
   input: CreateBuildInput,
   callerId: string,
@@ -79,8 +146,8 @@ export const createBuild = async (
 
   const buildId = uuidv7();
 
-  await dbClient.transaction(async (tx) => {
-    await dbClient.builds.create({
+  const build = await dbClient.transaction(async (tx) => {
+    const created = await dbClient.builds.create({
       tx,
       id: buildId,
       projectId: input.projectId,
@@ -95,7 +162,12 @@ export const createBuild = async (
       createdBy: callerId,
     });
     await dbClient.projects.incrementTotalBuildsCount(input.projectId, tx);
+    return created;
   });
+
+  if (build) {
+    await supersedeInFlightBuilds(build);
+  }
 
   await publishStatus(buildId);
 
@@ -105,11 +177,15 @@ export const createBuild = async (
 export const confirmBuildUpload = async (
   buildId: string,
   input: ConfirmBuildUploadInput,
-): Promise<Result<void, "BUILD_NOT_FOUND" | "ARTIFACT_MISSING">> => {
+): Promise<Result<void, "BUILD_NOT_FOUND" | "BUILD_CANCELED" | "ARTIFACT_MISSING">> => {
   const build = await dbClient.builds.findById(buildId);
 
   if (!build) {
     return { status: "error", error: "BUILD_NOT_FOUND" };
+  }
+
+  if (build.processingStatus === "canceled") {
+    return { status: "error", error: "BUILD_CANCELED" };
   }
 
   if (!(await storage.objectExists(build.artifactPath))) {
@@ -160,12 +236,19 @@ export const checkRebuildable = async (
     return { status: "error", error: "NOT_SETTLED" };
   }
 
-  const [hasNewer, extractDefaults] = await Promise.all([
-    dbClient.builds.hasNewerOnBranch(build),
+  const [newerOnBranch, extractDefaults] = await Promise.all([
+    dbClient.builds.findMany(
+      {
+        projectIds: [build.projectId],
+        branches: [build.branch],
+        createdAfter: { createdAt: build.createdAt, id: build.id },
+      },
+      { limit: 1 },
+    ),
     dbClient.buildExtractDefaults.findByBuild(build.id),
   ]);
 
-  if (hasNewer) {
+  if (newerOnBranch.length > 0) {
     return { status: "error", error: "NOT_LATEST_ON_BRANCH" };
   }
 
@@ -253,18 +336,9 @@ export const cancelBuild = async (
   buildId: string,
   canceledBy: string,
 ): Promise<Result<void, "BUILD_NOT_FOUND" | "NOT_CANCELABLE">> => {
-  const result = await dbClient.transaction(async (tx) => {
-    const canceledBuild = await dbClient.builds.cancelIfInProgress(buildId, canceledBy, tx);
-    if (!canceledBuild) {
-      return null;
-    }
+  const diffIds = await cancelInProgressBuild(buildId, canceledBy);
 
-    await dbClient.snapshots.markUnfinishedAs(buildId, "canceled", tx);
-    const diffIds = await dbClient.diffs.markPendingAs(buildId, "canceled", tx);
-    return diffIds;
-  });
-
-  if (!result) {
+  if (!diffIds) {
     const build = await dbClient.builds.findById(buildId);
     return { status: "error", error: build ? "NOT_CANCELABLE" : "BUILD_NOT_FOUND" };
   }
@@ -272,7 +346,7 @@ export const cancelBuild = async (
   logger.info({ buildId, canceledBy }, "canceled build");
 
   try {
-    await cancelBuildJobs(buildId, result);
+    await cancelBuildJobs([{ buildId, diffIds }]);
   } catch (error) {
     logger.error({ err: error, buildId }, "failed to remove queued jobs for canceled build");
   }
@@ -297,7 +371,7 @@ const computeBuildReviewStatus = (diffs: BuildDiff[]): BuildReviewStatus => {
     return "approved";
   }
 
-  if (diffs.some((diff) => (diff.diffPercent ?? 0) > diff.diffThreshold)) {
+  if (diffs.some((diff) => diff.reviewStatus === "auto_approved")) {
     return "auto_approved";
   }
 
@@ -330,4 +404,26 @@ export const finalizeBuild = async (buildId: string): Promise<void> => {
   if (changed) {
     await publishStatus(buildId);
   }
+};
+
+export const updateBuildReviewStatus = async (buildId: string): Promise<void> => {
+  const build = await dbClient.builds.findById(buildId);
+  if (!build || build.processingStatus === "canceled") {
+    return;
+  }
+
+  const diffs = await dbClient.diffs.findByBuild(buildId);
+  const reviewStatus = computeBuildReviewStatus(diffs);
+
+  if (reviewStatus === build.reviewStatus) {
+    return;
+  }
+
+  await dbClient.builds.updateResult(buildId, {
+    processingStatus: build.processingStatus,
+    reviewStatus,
+    errorMessage: build.errorMessage,
+  });
+
+  await publishStatus(buildId);
 };
