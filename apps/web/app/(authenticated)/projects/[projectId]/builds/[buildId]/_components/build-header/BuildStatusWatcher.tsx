@@ -9,7 +9,7 @@ import { BuildStatusBadge } from "@/lib/components/BuildStatus";
 import { orpc } from "@/lib/orpc/client";
 import { useReviewRefresh } from "@/lib/orpc/useReviewRefresh";
 
-const POLL_INTERVAL_MS = 3000;
+const POLL_INTERVAL_MS = 5000;
 const REFRESH_DEBOUNCE_MS = 400;
 
 type BuildStatusWatcherProps = {
