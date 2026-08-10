@@ -6,6 +6,7 @@ import { test as base } from "@playwright/test";
 
 import { SEED_ARTIFACT, type SeedData } from "./constants";
 import { BuildPage } from "./pages/BuildPage";
+import { OrganizationSettingsPage } from "./pages/OrganizationSettingsPage";
 import { ProjectBuildsPage } from "./pages/ProjectBuildsPage";
 import { SnapshotReviewPage } from "./pages/SnapshotReviewPage";
 import { seedClientForContext, type SeedClient } from "./seed/client";
@@ -17,6 +18,7 @@ type TestFixtures = {
   projectBuildsPage: ProjectBuildsPage;
   snapshotReviewPage: SnapshotReviewPage;
   buildPage: BuildPage;
+  organizationSettingsPage: OrganizationSettingsPage;
   ingestBuild: (options: IngestOptions & { commitSha: string }) => ChildProcess;
 };
 
@@ -37,6 +39,9 @@ export const test = base.extend<TestFixtures>({
   },
   buildPage: async ({ page }, use) => {
     await use(new BuildPage(page));
+  },
+  organizationSettingsPage: async ({ page }, use) => {
+    await use(new OrganizationSettingsPage(page));
   },
   // eslint-disable-next-line no-empty-pattern -- fixture takes no dependencies
   ingestBuild: async ({}, use) => {

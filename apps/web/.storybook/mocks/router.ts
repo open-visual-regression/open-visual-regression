@@ -40,6 +40,12 @@ export const serverClient: typeof RealServerClient = {
     update: os.projects.update.handler(() => undefined).actionable(),
     deleteProject: os.projects.deleteProject.handler(() => undefined).actionable(),
   },
+  organizations: {
+    getOne: os.organizations.getOne
+      .handler(() => ({ organization: { id: fakeUuid, name: "" } }))
+      .actionable(),
+    update: os.organizations.update.handler(() => undefined).actionable(),
+  },
   storage: {
     getObject: os.storage.getObject
       .handler(() => ({ status: 302 as const, headers: { location: "" } }))

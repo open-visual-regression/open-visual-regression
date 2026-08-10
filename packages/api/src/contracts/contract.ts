@@ -5,6 +5,7 @@ import { contract as diffsContract } from "./diffs";
 import { contract as gitIntegrationsContract } from "./gitIntegrations";
 import { contract as healthContract } from "./health";
 import { contract as invitationsContract } from "./invitations";
+import { contract as organizationsContract } from "./organizations";
 import { contract as projectsContract } from "./projects";
 import { contract as setupContract } from "./setup";
 import { contract as snapshotsContract } from "./snapshots";
@@ -17,6 +18,7 @@ export const contract = {
   health: { ...healthContract },
   setup: { ...setupContract },
   projects: { ...projectsContract },
+  organizations: { ...organizationsContract },
   storage: { ...storageContract },
   storybook: { ...storybookContract },
   builds: { ...buildsContract },
