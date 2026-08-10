@@ -1,0 +1,2 @@
+export const SIDEBAR_PROJECTS_LIMIT = 10;
+export const SIDEBAR_RECENT_BUILDS_LIMIT = 30;
