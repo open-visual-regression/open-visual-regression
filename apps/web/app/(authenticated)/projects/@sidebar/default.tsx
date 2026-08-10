@@ -1,10 +1,8 @@
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
 
+import { SIDEBAR_PROJECTS_LIMIT, SIDEBAR_RECENT_BUILDS_LIMIT } from "./_components/constants";
 import { ProjectsSidebar } from "./_components/ProjectsSidebar";
-
-const SIDEBAR_PROJECTS_LIMIT = 10;
-const SIDEBAR_RECENT_BUILDS_LIMIT = 15;
 
 export default async function ProjectsSidebarSlot() {
   const [[listError, listResult], [countError, countResult], [buildsError, buildsResult]] =
