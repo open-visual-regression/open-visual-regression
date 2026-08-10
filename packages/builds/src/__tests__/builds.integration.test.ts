@@ -18,6 +18,7 @@ import {
   finalizeBuild,
   getArtifactPath,
   rebuildBuild,
+  updateBuildReviewStatus,
 } from "../builds";
 import { describe, expect, test } from "./fixtures";
 
@@ -984,6 +985,84 @@ describe("builds", () => {
         processingStatus: "success",
         reviewStatus: "auto_approved",
       });
+    });
+  });
+
+  describe("updateBuildReviewStatus", () => {
+    test("leaves a still-processing build's processing status alone", async ({
+      mainBuild,
+      captureConfiguration,
+    }) => {
+      await dbClient.builds.updateProcessingStatus(mainBuild.id, "processing");
+      await seedDiffs(mainBuild.id, captureConfiguration, [
+        { processingStatus: "success", reviewStatus: "approved" },
+      ]);
+
+      await updateBuildReviewStatus(mainBuild.id);
+
+      expect(await dbClient.builds.findById(mainBuild.id)).toMatchObject({
+        processingStatus: "processing",
+        reviewStatus: "approved",
+      });
+    });
+
+    test("marks the build review status as rejected when any diff is rejected, even while other snapshots are still queued", async ({
+      mainBuild,
+      captureConfiguration,
+    }) => {
+      await dbClient.builds.updateProcessingStatus(mainBuild.id, "processing");
+      await seedDiffs(mainBuild.id, captureConfiguration, [
+        { processingStatus: "success", reviewStatus: "rejected" },
+      ]);
+      await dbClient.snapshots.createMany({
+        values: [
+          { buildId: mainBuild.id, ...captureConfiguration, targetId: "story-b", status: "queued" },
+        ],
+      });
+
+      await updateBuildReviewStatus(mainBuild.id);
+
+      expect(await dbClient.builds.findById(mainBuild.id)).toMatchObject({
+        processingStatus: "processing",
+        reviewStatus: "rejected",
+      });
+    });
+
+    test("leaves a canceled build canceled even when a diff is voted on", async ({
+      featureBuild,
+      captureConfiguration,
+      user,
+    }) => {
+      await dbClient.builds.updateProcessingStatus(featureBuild.id, "processing");
+      await cancelBuild(featureBuild.id, user.id);
+
+      await seedDiffs(featureBuild.id, captureConfiguration, [
+        { processingStatus: "success", reviewStatus: "approved" },
+      ]);
+
+      await updateBuildReviewStatus(featureBuild.id);
+
+      expect(await dbClient.builds.findById(featureBuild.id)).toMatchObject({
+        processingStatus: "canceled",
+      });
+    });
+
+    test("does not publish a status update when the review status is unchanged", async ({
+      mainBuild,
+      captureConfiguration,
+      connection,
+    }) => {
+      await seedDiffs(mainBuild.id, captureConfiguration, [
+        { processingStatus: "success", reviewStatus: "unchanged" },
+      ]);
+      await dbClient.builds.updateResult(mainBuild.id, {
+        processingStatus: "queued",
+        reviewStatus: "unchanged",
+      });
+
+      await updateBuildReviewStatus(mainBuild.id);
+
+      expect(await findPublishStatusJob(connection, mainBuild.id)).toBeUndefined();
     });
   });
 });

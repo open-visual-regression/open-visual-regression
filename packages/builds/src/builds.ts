@@ -405,3 +405,25 @@ export const finalizeBuild = async (buildId: string): Promise<void> => {
     await publishStatus(buildId);
   }
 };
+
+export const updateBuildReviewStatus = async (buildId: string): Promise<void> => {
+  const build = await dbClient.builds.findById(buildId);
+  if (!build || build.processingStatus === "canceled") {
+    return;
+  }
+
+  const diffs = await dbClient.diffs.findByBuild(buildId);
+  const reviewStatus = computeBuildReviewStatus(diffs);
+
+  if (reviewStatus === build.reviewStatus) {
+    return;
+  }
+
+  await dbClient.builds.updateResult(buildId, {
+    processingStatus: build.processingStatus,
+    reviewStatus,
+    errorMessage: build.errorMessage,
+  });
+
+  await publishStatus(buildId);
+};

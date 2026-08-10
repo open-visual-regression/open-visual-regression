@@ -1,5 +1,5 @@
 import { isDiffReviewable } from "@ovr/api/contracts/diffs";
-import { finalizeBuild } from "@ovr/builds/builds";
+import { updateBuildReviewStatus } from "@ovr/builds/builds";
 import type { Result } from "@ovr/builds/types";
 import { dbClient } from "@ovr/db/client";
 import type { DiffReviewDbSchema } from "@ovr/db/repository/diffReviews";
@@ -43,7 +43,7 @@ const recomputeReviewStatus = async (diffId: string): Promise<void> => {
   const reviewStatus = computeReviewStatus(votes, project.requiredReviewerCount);
 
   await dbClient.diffs.updateReviewStatus(diffId, reviewStatus);
-  await finalizeBuild(build.id);
+  await updateBuildReviewStatus(build.id);
 };
 
 export const castVote = async (
@@ -142,5 +142,5 @@ export const bulkCastVote = async (
     ),
   );
 
-  await finalizeBuild(buildId);
+  await updateBuildReviewStatus(buildId);
 };
