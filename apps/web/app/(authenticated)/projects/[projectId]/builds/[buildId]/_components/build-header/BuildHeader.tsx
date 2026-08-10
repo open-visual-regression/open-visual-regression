@@ -16,6 +16,7 @@ import { Skeleton } from "@ovr/ui/components/skeleton";
 import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 
 import { ExternalLink } from "@/lib/components/external-link/ExternalLink";
+import { TruncatedText } from "@/lib/components/truncated-text/TruncatedText";
 import { formatRelativeDateTime } from "@/lib/utils/date";
 
 import { BuildApproveButton } from "./BuildApproveButton";
@@ -58,10 +59,17 @@ export const BuildHeader = ({
         <div className="flex flex-row flex-wrap items-center gap-4 text-xs md:order-3 md:basis-full">
           <BuildStatusStream buildId={build.id} initialStatus={build.status} />
           {storybookHref ? <ExternalLink href={storybookHref}>view storybook</ExternalLink> : null}
-          <Typography variant="caption" className="flex items-center gap-1">
-            <Icon icon={GitBranchIcon} size={10} />
-            {build.branch}
-          </Typography>
+          {build.branchUrl ? (
+            <ExternalLink href={build.branchUrl}>
+              <Icon icon={GitBranchIcon} size={10} />
+              <TruncatedText>{build.branch}</TruncatedText>
+            </ExternalLink>
+          ) : (
+            <Typography variant="caption" className="flex items-center gap-1">
+              <Icon icon={GitBranchIcon} size={10} />
+              <TruncatedText>{build.branch}</TruncatedText>
+            </Typography>
+          )}
           {build.commitUrl ? (
             <ExternalLink href={build.commitUrl}>
               <Icon icon={GitCommitHorizontalIcon} size={10} />

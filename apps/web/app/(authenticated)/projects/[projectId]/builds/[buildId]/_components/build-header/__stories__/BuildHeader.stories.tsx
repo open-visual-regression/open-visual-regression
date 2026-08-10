@@ -37,6 +37,7 @@ const snapshotCounts = {
 
 const buildOverrides: Partial<BuildSchema> = {
   name: "Add empty state to projects table",
+  branch: "feature/a-very-long-branch-name-that-should-be-truncated",
   commitSha: "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0",
   author: "Jordan Lee",
   createdAt: "2026-06-20T12:00:00.000Z",
@@ -163,5 +164,18 @@ export const Processing: Story = {
       queued: 4,
       processing: 2,
     },
+  },
+};
+
+export const WithGitIntegration: Story = {
+  args: {
+    build: mocks.build.generateBuild({
+      ...buildOverrides,
+      status: "needs_review",
+      branchUrl:
+        "https://github.com/acme/web/tree/feature/a-very-long-branch-name-that-should-be-truncated",
+      commitUrl: "https://github.com/acme/web/commit/a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0",
+    }),
+    snapshotCounts,
   },
 };

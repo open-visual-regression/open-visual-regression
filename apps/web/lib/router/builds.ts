@@ -13,6 +13,7 @@ import {
   type RebuildBlockedReason,
 } from "@ovr/builds/builds";
 import { dbClient } from "@ovr/db/client";
+import { buildBranchUrl } from "@ovr/git-status/webBranchUrl";
 import { buildCommitUrl } from "@ovr/git-status/webCommitUrl";
 import { storage } from "@ovr/storage";
 
@@ -318,6 +319,9 @@ export const getOne = os.builds.getOne
         createdAt: build.createdAt,
         commitUrl: gitIntegration
           ? buildCommitUrl(gitIntegration.provider, gitIntegration.repoIdentifier, build.commitSha)
+          : null,
+        branchUrl: gitIntegration
+          ? buildBranchUrl(gitIntegration.provider, gitIntegration.repoIdentifier, build.branch)
           : null,
       },
     };
