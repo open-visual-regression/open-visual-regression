@@ -33,7 +33,7 @@ import { formatRelativeDateTime } from "@/lib/utils/date";
 const features = tableFeatures({});
 const columnHelper = createColumnHelper<typeof features, BuildSchema>();
 
-const INITIAL_SKELETON_ROW_COUNT = 8;
+const INITIAL_SKELETON_ROW_COUNT = 40;
 
 const columns = columnHelper.columns([
   columnHelper.display({
