@@ -15,6 +15,7 @@ import { SnapshotCard, SnapshotCardSkeleton } from "./SnapshotCard";
 const CHUNK_SIZE = 12;
 const ESTIMATED_CHUNK_HEIGHT = 768;
 const OVERSCAN_CHUNKS = 1;
+const PAGE_SKELETON_COUNT = 60;
 
 type SnapshotGridLayoutProps = {
   className?: string;
@@ -146,6 +147,6 @@ export const SnapshotGrid = ({
 
 export const SnapshotGridSkeleton = () => (
   <SnapshotGridLayout>
-    <SnapshotCardSkeletons count={CHUNK_SIZE * 2} />
+    <SnapshotCardSkeletons count={PAGE_SKELETON_COUNT} />
   </SnapshotGridLayout>
 );
