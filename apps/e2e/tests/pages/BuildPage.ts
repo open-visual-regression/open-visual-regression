@@ -1,5 +1,12 @@
 import type { Locator, Page } from "@playwright/test";
 
+export type SnapshotCardTarget = {
+  targetTitle: string;
+  targetName: string;
+  browser: string;
+  viewportName: string;
+};
+
 export class BuildPage {
   constructor(private readonly page: Page) {}
 
@@ -17,6 +24,35 @@ export class BuildPage {
 
   snapshotCards(): Locator {
     return this.page.getByRole("link", { name: /^snapshot of/i });
+  }
+
+  snapshotCard(snapshot: SnapshotCardTarget, status?: string): Locator {
+    const name = `snapshot of ${snapshot.targetTitle} ${snapshot.targetName}, ${snapshot.browser} ${snapshot.viewportName},`;
+
+    return this.page.getByRole("link", {
+      name: status === undefined ? name : `${name} ${status}`,
+      exact: status !== undefined,
+    });
+  }
+
+  approveAllButton(): Locator {
+    return this.page.getByRole("button", { name: "approve all", exact: true });
+  }
+
+  rejectAllButton(): Locator {
+    return this.page.getByRole("button", { name: "reject all", exact: true });
+  }
+
+  approvedButton(): Locator {
+    return this.page.getByRole("button", { name: "approved", exact: true });
+  }
+
+  rejectedButton(): Locator {
+    return this.page.getByRole("button", { name: "rejected", exact: true });
+  }
+
+  backButton(): Locator {
+    return this.page.getByRole("link", { name: "back", exact: true });
   }
 
   scrollContainer(): Locator {

@@ -17,8 +17,6 @@ import { buildBranchUrl } from "@ovr/git-status/webBranchUrl";
 import { buildCommitUrl } from "@ovr/git-status/webCommitUrl";
 import { storage } from "@ovr/storage";
 
-import { buildStatusHub } from "@/lib/events/buildStatusHub";
-
 import {
   apiKeyMiddleware,
   authenticatedMiddleware,
@@ -30,7 +28,6 @@ import {
   getBuildDisplayStatus,
   getBuildStatusFilters,
   getBuildStatusOutput,
-  isTerminalBuildStatus,
 } from "./utils/buildStatus";
 
 const UPLOAD_URL_TTL_SECONDS = 3600;
@@ -110,30 +107,10 @@ export const getBuildStatus = os.builds.getBuildStatus
   })
   .actionable();
 
-export const watchStatus = os.builds.watchStatus
+export const getStatus = os.builds.getStatus
   .use(authenticatedMiddleware)
   .use(organizationBuildMiddleware)
-  .handler(async function* ({ context, signal }) {
-    const { build } = context;
-    const events = buildStatusHub.subscribe(build.id, signal);
-
-    const current = (await dbClient.builds.findById(build.id)) ?? build;
-    let output = getBuildStatusOutput(current);
-    yield output;
-
-    if (isTerminalBuildStatus(output.status)) {
-      return;
-    }
-
-    for await (const event of events) {
-      output = getBuildStatusOutput({ ...event, id: build.id, projectId: build.projectId });
-      yield output;
-
-      if (isTerminalBuildStatus(output.status)) {
-        return;
-      }
-    }
-  })
+  .handler(({ context }) => getBuildStatusOutput(context.build))
   .actionable();
 
 export const cancel = os.builds.cancel

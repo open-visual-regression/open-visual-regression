@@ -2,12 +2,12 @@
 
 import { onError, onSuccess } from "@orpc/client";
 import { useServerAction } from "@orpc/react/hooks";
-import { useRouter } from "next/navigation";
 
 import { Button } from "@ovr/ui/components/button";
 import { Icon, XIcon } from "@ovr/ui/components/icon";
 import { toast } from "@ovr/ui/components/toast";
 
+import { useReviewRefresh } from "@/lib/orpc/useReviewRefresh";
 import { serverClient } from "@/lib/router";
 
 export type RemoveReviewButtonProps = {
@@ -17,11 +17,11 @@ export type RemoveReviewButtonProps = {
 };
 
 export const RemoveReviewButton = ({ diffId, reviewerId, label }: RemoveReviewButtonProps) => {
-  const router = useRouter();
+  const refreshReview = useReviewRefresh();
 
   const { execute, status } = useServerAction(serverClient.diffs.removeVote, {
     interceptors: [
-      onSuccess(() => router.refresh()),
+      onSuccess(() => refreshReview()),
       onError((err) => {
         toast.error(err.message);
       }),

@@ -11,6 +11,8 @@ export type ReviewableSnapshot = {
   snapshotId: string;
   targetTitle: string;
   targetName: string;
+  browser: string;
+  viewportName: string;
 };
 
 export const seedReviewableSnapshot = async (client: SeedClient): Promise<ReviewableSnapshot> => {
@@ -47,5 +49,7 @@ export const seedReviewableSnapshot = async (client: SeedClient): Promise<Review
     snapshotId: snapshot.id,
     targetTitle: snapshot.targetTitle,
     targetName: snapshot.targetName,
+    browser: snapshot.browser,
+    viewportName: snapshot.viewportName,
   };
 };

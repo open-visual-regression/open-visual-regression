@@ -7,7 +7,7 @@ import { cn } from "@ovr/ui/lib/utils";
 import { CardLink } from "@/lib/components/card-link/CardLink";
 import { CardSurface } from "@/lib/components/card-link/CardSurface";
 import { Image } from "@/lib/components/image/Image";
-import { SnapshotStatusBadge } from "@/lib/components/SnapshotStatusBadge";
+import { getSnapshotStatusLabel, SnapshotStatusBadge } from "@/lib/components/SnapshotStatusBadge";
 import { getStoragePath } from "@/lib/utils/storage";
 
 type SnapshotCardSlotProps = {
@@ -38,11 +38,13 @@ type SnapshotCardProps = {
 
 export const SnapshotCard = ({ snapshot, projectId, buildId }: SnapshotCardProps) => {
   const imagePath = getStoragePath(snapshot.imagePath);
+  const label = `snapshot of ${snapshot.targetTitle} ${snapshot.targetName}, ${snapshot.browser} ${snapshot.viewportName}, ${getSnapshotStatusLabel(snapshot.status)}`;
 
   return (
     <CardLink
       href={`/projects/${projectId}/builds/${buildId}/snapshots/${snapshot.id}`}
       className="gap-0 py-0"
+      aria-label={label}
     >
       <SnapshotCardPreview>
         {imagePath ? (

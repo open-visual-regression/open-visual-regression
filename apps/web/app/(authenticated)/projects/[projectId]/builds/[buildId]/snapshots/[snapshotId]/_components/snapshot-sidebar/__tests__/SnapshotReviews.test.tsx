@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { vi } from "vitest";
 
@@ -6,7 +7,7 @@ import { Toaster } from "@ovr/ui/components/sonner";
 
 import { serverClient } from "@/lib/router";
 import { createORPCError } from "@/lib/testing/orpc";
-import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
+import { describe, expect, it, render as baseRender, screen, waitFor } from "@/test-utils";
 
 import { SnapshotReviews } from "../SnapshotReviews";
 
@@ -17,6 +18,16 @@ const mockRemoveVote = vi.mocked(serverClient.diffs.removeVote);
 const mockRefresh = vi.mocked(useRouter)().refresh;
 
 const diffId = "019edfc7-e040-7492-86b2-ccfdc00cf6e1";
+
+const render = (ui: React.ReactElement) => {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+  return baseRender(ui, {
+    wrapper: ({ children }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    ),
+  });
+};
 
 const review = (overrides: Partial<DiffReviewSchema> = {}): DiffReviewSchema => ({
   reviewerId: "019edfc7-e040-7492-86b2-ccfdc00cf6e2",

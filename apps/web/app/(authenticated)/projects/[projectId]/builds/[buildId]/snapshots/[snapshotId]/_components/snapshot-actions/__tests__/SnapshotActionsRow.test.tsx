@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { vi } from "vitest";
 
@@ -61,7 +62,9 @@ const renderComponent = (
   }> = {},
 ) =>
   render(
-    <>
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
       <SnapshotActionsRow
         snapshot={snapshot}
         diff={diff}
@@ -77,7 +80,7 @@ const renderComponent = (
         {...props}
       />
       <Toaster />
-    </>,
+    </QueryClientProvider>,
   );
 
 describe("SnapshotActionsRow", () => {
@@ -93,7 +96,6 @@ describe("SnapshotActionsRow", () => {
 
     expect(mockCastVote).toHaveBeenCalledWith({ diffId: diff.id, vote: "approve" });
     expect(mockPush).toHaveBeenCalledWith(nextSnapshotHref);
-    expect(mockRefresh).not.toHaveBeenCalled();
   });
 
   it("should reject the diff and navigate to the next snapshot immediately, without waiting for the request", async ({
@@ -106,10 +108,19 @@ describe("SnapshotActionsRow", () => {
 
     expect(mockCastVote).toHaveBeenCalledWith({ diffId: diff.id, vote: "reject" });
     expect(mockPush).toHaveBeenCalledWith(nextSnapshotHref);
-    expect(mockRefresh).not.toHaveBeenCalled();
   });
 
-  it("should refresh instead of navigating when approving the last snapshot in the queue", async ({
+  it("should refresh the build page behind it after approving and moving on", async ({ user }) => {
+    mockCastVote.mockResolvedValue([null, undefined]);
+    renderComponent();
+
+    await user.click(screen.getByRole("button", { name: /^approve$/i }));
+
+    expect(mockPush).toHaveBeenCalledWith(nextSnapshotHref);
+    await waitFor(() => expect(mockRefresh).toHaveBeenCalled());
+  });
+
+  it("should refresh without navigating when approving the last snapshot in the queue", async ({
     user,
   }) => {
     mockCastVote.mockResolvedValue([null, undefined]);
@@ -121,7 +132,7 @@ describe("SnapshotActionsRow", () => {
     await waitFor(() => expect(mockRefresh).toHaveBeenCalled());
   });
 
-  it("should refresh instead of navigating when rejecting the last snapshot in the queue", async ({
+  it("should refresh without navigating when rejecting the last snapshot in the queue", async ({
     user,
   }) => {
     mockCastVote.mockResolvedValue([null, undefined]);

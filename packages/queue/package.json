@@ -5,8 +5,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./producer": "./src/producer.ts",
-    "./events": "./src/events.ts"
+    "./producer": "./src/producer.ts"
   },
   "scripts": {
     "build": "tsc",

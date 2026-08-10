@@ -1,4 +1,4 @@
-import { eventIterator, oc } from "@orpc/contract";
+import { oc } from "@orpc/contract";
 import { z } from "zod";
 
 export const buildProcessingStatusSchema = z.enum([
@@ -35,6 +35,15 @@ export const buildStatusSchema = z.enum([
 ]);
 
 export type BuildStatus = z.infer<typeof buildStatusSchema>;
+
+const NON_TERMINAL_BUILD_STATUSES: readonly BuildStatus[] = [
+  "queued",
+  "processing",
+  "needs_review",
+];
+
+export const isTerminalBuildStatus = (status: BuildStatus): boolean =>
+  !NON_TERMINAL_BUILD_STATUSES.includes(status);
 
 export const buildTypeSchema = z.enum(["storybook"]);
 
@@ -201,9 +210,9 @@ export const getBuildOutputSchema = z.object({
 
 export const getBuildContract = oc.input(getBuildInputSchema).output(getBuildOutputSchema);
 
-export const watchBuildStatusContract = oc
+export const getBuildDisplayStatusContract = oc
   .input(getBuildInputSchema)
-  .output(eventIterator(getBuildStatusOutputSchema));
+  .output(getBuildStatusOutputSchema);
 
 export const listBuildFilterOptionsInputSchema = z.object({
   projectId: z.uuidv7(),
@@ -269,7 +278,7 @@ export const contract = {
   rebuild: rebuildBuildContract,
   list: listBuildsContract,
   getOne: getBuildContract,
-  watchStatus: watchBuildStatusContract,
+  getStatus: getBuildDisplayStatusContract,
   listBranches: listBranchesContract,
   listAuthors: listAuthorsContract,
   listStatuses: listStatusesContract,

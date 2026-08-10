@@ -7,7 +7,6 @@ import { vi } from "vitest";
 import { dbClient } from "@ovr/db/client";
 import type { BuildProcessingStatus, DiffProcessingStatus, DiffReviewStatus } from "@ovr/db/schema";
 import { QueueName, type ExtractJobPayload } from "@ovr/queue";
-import { createBuildStatusSubscriber, type BuildStatusEvent } from "@ovr/queue/events";
 import { storage } from "@ovr/storage";
 
 import {
@@ -201,29 +200,6 @@ describe("builds", () => {
       await createBuildOnBranch(project.id, user.id, BRANCH, "b");
 
       expect(await findExtractJob(connection, superseded)).toBeUndefined();
-    });
-
-    test("publishes the superseded build's canceled status so watchers stop waiting", async ({
-      project,
-      user,
-    }) => {
-      const superseded = await createBuildOnBranch(project.id, user.id, BRANCH, "a");
-
-      const events: BuildStatusEvent[] = [];
-      const subscriber = createBuildStatusSubscriber((event) => events.push(event));
-      await subscriber.ready;
-
-      try {
-        await createBuildOnBranch(project.id, user.id, BRANCH, "b");
-
-        await vi.waitFor(() =>
-          expect(events).toContainEqual(
-            expect.objectContaining({ buildId: superseded, processingStatus: "canceled" }),
-          ),
-        );
-      } finally {
-        await subscriber.close();
-      }
     });
 
     test("leaves an in-flight build on another branch running", async ({ project, user }) => {

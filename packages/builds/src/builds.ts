@@ -4,12 +4,7 @@ import { dbClient } from "@ovr/db/client";
 import type { BuildProcessingStatus, BuildReviewStatus, BuildType } from "@ovr/db/schema";
 import { createLogger } from "@ovr/logger";
 import type { CanceledBuildJobs } from "@ovr/queue";
-import {
-  cancelBuildJobs,
-  enqueueExtract,
-  enqueuePublishStatus,
-  publishBuildStatusEvent,
-} from "@ovr/queue/producer";
+import { cancelBuildJobs, enqueueExtract, enqueuePublishStatus } from "@ovr/queue/producer";
 import { storage } from "@ovr/storage";
 
 import type { Result } from "./types";
@@ -51,20 +46,6 @@ export const publishStatus = async (buildId: string): Promise<void> => {
     await enqueuePublishStatus({ buildId });
   } catch (error) {
     logger.error({ err: error, buildId }, "failed to enqueue git status publish");
-  }
-
-  try {
-    const build = await dbClient.builds.findById(buildId);
-    if (build) {
-      await publishBuildStatusEvent({
-        buildId,
-        processingStatus: build.processingStatus,
-        reviewStatus: build.reviewStatus,
-        errorMessage: build.errorMessage,
-      });
-    }
-  } catch (error) {
-    logger.error({ err: error, buildId }, "failed to publish build status event");
   }
 };
 
