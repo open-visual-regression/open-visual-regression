@@ -53,7 +53,7 @@ export const UpdateOrganizationForm = ({ organization }: UpdateOrganizationFormP
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} noValidate>
-      <Card size="default">
+      <Card size="default" className="w-full md:w-2/3 lg:w-1/2">
         <CardContent className="flex flex-col gap-5">
           <FieldGroup>
             <Field data-invalid={!!errors.name}>
@@ -81,7 +81,7 @@ export const UpdateOrganizationForm = ({ organization }: UpdateOrganizationFormP
 };
 
 export const UpdateOrganizationFormSkeleton = () => (
-  <Card size="default" aria-hidden>
+  <Card size="default" aria-hidden className="w-full md:w-2/3 lg:w-1/2">
     <CardContent className="flex flex-col gap-5">
       <FieldGroup>
         <FieldSkeleton />

@@ -30,9 +30,7 @@ export default async function SettingsOrganizationPage() {
       <Typography variant="h1" as="h1">
         organization
       </Typography>
-      <div className="flex w-full flex-col gap-6 md:w-2/3 lg:w-1/2">
-        <UpdateOrganizationForm organization={orgResult.organization} />
-      </div>
+      <UpdateOrganizationForm organization={orgResult.organization} />
     </div>
   );
 }
