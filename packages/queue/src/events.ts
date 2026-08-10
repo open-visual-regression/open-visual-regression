@@ -1,0 +1,62 @@
+import type IORedis from "ioredis";
+
+import type { BuildProcessingStatus, BuildReviewStatus } from "@ovr/db/schema";
+import { createLogger } from "@ovr/logger";
+
+import { buildRedisConnection } from "./index";
+
+const logger = createLogger("queue");
+
+export type BuildStatusEvent = {
+  buildId: string;
+  processingStatus: BuildProcessingStatus;
+  reviewStatus: BuildReviewStatus;
+  errorMessage: string | null;
+};
+
+const BUILD_STATUS_CHANNEL_PREFIX = "build-status:";
+
+export const BUILD_STATUS_CHANNEL_PATTERN = `${BUILD_STATUS_CHANNEL_PREFIX}*`;
+
+export const buildStatusChannel = (buildId: string): string =>
+  `${BUILD_STATUS_CHANNEL_PREFIX}${buildId}`;
+
+export const publishBuildStatusEvent = async (
+  event: BuildStatusEvent,
+  connection: IORedis,
+): Promise<void> => {
+  await connection.publish(buildStatusChannel(event.buildId), JSON.stringify(event));
+};
+
+export type BuildStatusSubscriber = {
+  ready: Promise<void>;
+  close: () => Promise<void>;
+};
+
+// A connection in subscribe mode cannot issue other commands, so this owns its own.
+export const createBuildStatusSubscriber = (
+  onEvent: (event: BuildStatusEvent) => void,
+  redisUrl = process.env.REDIS_URL ?? "redis://localhost:6379",
+): BuildStatusSubscriber => {
+  const connection = buildRedisConnection(redisUrl, { maxRetriesPerRequest: null });
+
+  const ready = connection.psubscribe(BUILD_STATUS_CHANNEL_PATTERN).then(() => undefined);
+  void ready.catch((error) => {
+    logger.error({ err: error }, "failed to subscribe to build status events");
+  });
+
+  connection.on("pmessage", (_pattern, _channel, message) => {
+    try {
+      onEvent(JSON.parse(message) as BuildStatusEvent);
+    } catch (error) {
+      logger.error({ err: error }, "failed to parse build status event");
+    }
+  });
+
+  return {
+    ready,
+    close: async () => {
+      await connection.quit();
+    },
+  };
+};

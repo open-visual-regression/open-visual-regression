@@ -23,7 +23,7 @@ import { BuildApproveButton } from "./BuildApproveButton";
 import { BuildCancelButton } from "./BuildCancelButton";
 import { BuildRebuildButton } from "./BuildRebuildButton";
 import { BuildRejectButton } from "./BuildRejectButton";
-import { BuildStatusWatcher } from "./BuildStatusWatcher";
+import { BuildStatusStream } from "./BuildStatusStream";
 
 export type BuildHeaderProps = {
   build: BuildDetailSchema;
@@ -57,7 +57,7 @@ export const BuildHeader = ({
           {build.name}
         </Typography>
         <div className="flex flex-row flex-wrap items-center gap-4 text-xs md:order-3 md:basis-full">
-          <BuildStatusWatcher buildId={build.id} initialStatus={build.status} />
+          <BuildStatusStream buildId={build.id} initialStatus={build.status} />
           {storybookHref ? <ExternalLink href={storybookHref}>view storybook</ExternalLink> : null}
           {build.branchUrl ? (
             <ExternalLink href={build.branchUrl}>

@@ -1,9 +1,9 @@
-import { isTerminalBuildStatus, type BuildStatus } from "@ovr/api/contracts/builds";
+import type { BuildStatus } from "@ovr/api/contracts/builds";
 import type { BuildProcessingStatus, BuildReviewStatus } from "@ovr/db/schema";
 
 import { describe, expect, it } from "@/test-utils";
 
-import { getBuildStatusOutput } from "../buildStatus";
+import { getBuildStatusOutput, isTerminalBuildStatus } from "../buildStatus";
 
 const source = (processingStatus: BuildProcessingStatus, reviewStatus: BuildReviewStatus) => ({
   id: "018f0000-0000-7000-8000-000000000000",

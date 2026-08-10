@@ -67,7 +67,11 @@ export const serverClient: typeof RealServerClient = {
         },
       }))
       .actionable(),
-    getStatus: os.builds.getStatus.handler(() => ({ status: "queued" as const })).actionable(),
+    watchStatus: os.builds.watchStatus
+      .handler(async function* () {
+        yield { status: "queued" as const };
+      })
+      .actionable(),
   },
   account: {
     updateAccountInformation: os.account.updateAccountInformation

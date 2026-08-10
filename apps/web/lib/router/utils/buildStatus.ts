@@ -56,6 +56,11 @@ export const getBuildDisplayStatus = (build: {
   return "unchanged";
 };
 
+const NON_TERMINAL_BUILD_STATUSES = new Set<BuildStatus>(["queued", "processing", "needs_review"]);
+
+export const isTerminalBuildStatus = (status: BuildStatus): boolean =>
+  !NON_TERMINAL_BUILD_STATUSES.has(status);
+
 type BuildStatusSource = {
   id: string;
   projectId: string;
