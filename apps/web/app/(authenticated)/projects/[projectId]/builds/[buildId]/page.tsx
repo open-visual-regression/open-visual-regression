@@ -1,3 +1,4 @@
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 
@@ -6,6 +7,8 @@ import { snapshotDisplayStatusSchema } from "@ovr/api/contracts/builds";
 import { canReview } from "@/lib/auth/roles";
 import { getCachedSession } from "@/lib/auth/session";
 import { getSnapshotStatusLabel } from "@/lib/components/SnapshotStatusBadge";
+import { getQueryClient } from "@/lib/orpc/query-client";
+import { orpcServer } from "@/lib/orpc/server";
 import { snapshotsListInfiniteOptions } from "@/lib/orpc/snapshots-query";
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
@@ -43,6 +46,8 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
     viewport: viewports = [],
   } = searchParamsSchema.parse(rawSearchParams);
 
+  const queryClient = getQueryClient();
+
   const [
     session,
     [error, buildResult],
@@ -50,7 +55,6 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
     [statusesError, statusesResult],
     [browsersError, browsersResult],
     [viewportsError, viewportsResult],
-    [snapshotsError, snapshotsResult],
   ] = await Promise.all([
     getCachedSession(),
     serverClient.builds.getOne({ buildId }),
@@ -58,9 +62,9 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
     serverClient.snapshots.listStatuses({ buildId }),
     serverClient.snapshots.listBrowsers({ buildId }),
     serverClient.snapshots.listViewports({ buildId }),
-    serverClient.snapshots.list(
-      snapshotsListInfiniteOptions(buildId, search, { statuses, browsers, viewports }).input(
-        undefined,
+    queryClient.prefetchInfiniteQuery(
+      orpcServer.snapshots.list.infiniteOptions(
+        snapshotsListInfiniteOptions(buildId, search, { statuses, browsers, viewports }),
       ),
     ),
   ]);
@@ -70,16 +74,13 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
     countsError?.code === "NOT_FOUND" ||
     statusesError?.code === "NOT_FOUND" ||
     browsersError?.code === "NOT_FOUND" ||
-    viewportsError?.code === "NOT_FOUND" ||
-    snapshotsError?.code === "NOT_FOUND"
+    viewportsError?.code === "NOT_FOUND"
   ) {
     notFound();
   }
 
-  if (error || countsError || statusesError || browsersError || viewportsError || snapshotsError) {
-    serverError(
-      error || countsError || statusesError || browsersError || viewportsError || snapshotsError,
-    );
+  if (error || countsError || statusesError || browsersError || viewportsError) {
+    serverError(error || countsError || statusesError || browsersError || viewportsError);
   }
 
   const statusOptions = statusesResult.statuses.map((status) => ({
@@ -128,15 +129,16 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
         />
       }
       grid={
-        <SnapshotsSection
-          projectId={projectId}
-          buildId={buildId}
-          initialPage={snapshotsResult}
-          search={search}
-          statuses={statuses}
-          browsers={browsers}
-          viewports={viewports}
-        />
+        <HydrationBoundary state={dehydrate(queryClient)}>
+          <SnapshotsSection
+            projectId={projectId}
+            buildId={buildId}
+            search={search}
+            statuses={statuses}
+            browsers={browsers}
+            viewports={viewports}
+          />
+        </HydrationBoundary>
       }
     />
   );

@@ -8,6 +8,7 @@ import { XIcon } from "@ovr/ui/components/icon";
 import { toast } from "@ovr/ui/components/toast";
 
 import { ResponsiveActionButton } from "@/lib/components/responsive-action-button/ResponsiveActionButton";
+import { useReviewRefresh } from "@/lib/orpc/useReviewRefresh";
 import { serverClient } from "@/lib/router";
 
 export type SnapshotRejectButtonProps = {
@@ -18,14 +19,11 @@ export type SnapshotRejectButtonProps = {
 
 export const SnapshotRejectButton = ({ diffId, rejected, nextHref }: SnapshotRejectButtonProps) => {
   const router = useRouter();
+  const refreshReview = useReviewRefresh();
 
   const { execute, status } = useServerAction(serverClient.diffs.castVote, {
     interceptors: [
-      onSuccess(() => {
-        if (!nextHref) {
-          router.refresh();
-        }
-      }),
+      onSuccess(() => refreshReview()),
       onError((err) => {
         toast.error(err.message);
       }),

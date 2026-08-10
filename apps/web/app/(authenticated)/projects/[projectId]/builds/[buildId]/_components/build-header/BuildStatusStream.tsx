@@ -1,13 +1,13 @@
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 import { type BuildStatus } from "@ovr/api/contracts/builds";
 
 import { BuildStatusBadge } from "@/lib/components/BuildStatus";
 import { orpc } from "@/lib/orpc/client";
+import { useReviewRefresh } from "@/lib/orpc/useReviewRefresh";
 
 const REFRESH_DEBOUNCE_MS = 400;
 
@@ -17,33 +17,29 @@ type BuildStatusStreamProps = {
 };
 
 export const BuildStatusStream = ({ buildId, initialStatus }: BuildStatusStreamProps) => {
-  const router = useRouter();
-  const queryClient = useQueryClient();
+  const refreshReview = useReviewRefresh();
+
   const { data } = useQuery(
     orpc.builds.watchStatus.experimental_liveOptions({
       input: { buildId },
-      placeholderData: { status: initialStatus },
       context: { retry: Number.POSITIVE_INFINITY },
     }),
   );
-  const status = data?.status ?? initialStatus;
 
-  const refreshedStatus = useRef(status);
+  const streamedStatus = data?.status;
+
   useEffect(() => {
-    if (status === refreshedStatus.current) {
+    if (!streamedStatus || streamedStatus === initialStatus) {
       return;
     }
-    refreshedStatus.current = status;
-    const timeout = setTimeout(() => {
-      router.refresh();
-      void queryClient.invalidateQueries({ queryKey: orpc.snapshots.list.key() });
-    }, REFRESH_DEBOUNCE_MS);
+
+    const timeout = setTimeout(refreshReview, REFRESH_DEBOUNCE_MS);
     return () => clearTimeout(timeout);
-  }, [status, router, queryClient]);
+  }, [streamedStatus, initialStatus, refreshReview]);
 
   return (
     <span role="status" aria-label="build status" className="inline-flex">
-      <BuildStatusBadge status={status} />
+      <BuildStatusBadge status={initialStatus} />
     </span>
   );
 };

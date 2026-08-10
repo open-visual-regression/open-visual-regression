@@ -1,11 +1,16 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
 
 import { type BuildSnapshotSchema, type ListOutputSchema } from "@ovr/api/contracts/snapshots";
 import { mocks } from "@ovr/mocks";
 
 import { orpc } from "@/lib/orpc/client";
 import { snapshotsListInfiniteOptions } from "@/lib/orpc/snapshots-query";
-import { describe, expect, it, render, screen } from "@/test-utils";
+import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
 
 import { SnapshotsSection } from "../SnapshotsSection";
 
@@ -27,40 +32,42 @@ const toPage = (snapshots: BuildSnapshotSchema[], total = snapshots.length): Lis
   nextCursor: null,
 });
 
+const listKey = () =>
+  orpc.snapshots.list.infiniteKey(snapshotsListInfiniteOptions(BUILD_ID, undefined, {}));
+
 const createQueryClient = () =>
   new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
+
+const seedPages = (queryClient: QueryClient, pages: ListOutputSchema[], updatedAt?: number) =>
+  queryClient.setQueryData(
+    listKey(),
+    { pages, pageParams: pages.map((_, index) => (index === 0 ? undefined : CURSOR)) },
+    updatedAt === undefined ? undefined : { updatedAt },
+  );
 
 type RenderOptions = {
   queryClient?: QueryClient;
   search?: string;
 };
 
-const renderSection = (
-  initialPage: ListOutputSchema,
-  { queryClient = createQueryClient(), search }: RenderOptions = {},
-) =>
-  render(
-    <SnapshotsSection
-      projectId={PROJECT_ID}
-      buildId={BUILD_ID}
-      initialPage={initialPage}
-      search={search}
-    />,
-    {
-      wrapper: ({ children }) => (
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-      ),
-    },
-  );
+const renderSection = ({ queryClient = createQueryClient(), search }: RenderOptions = {}) =>
+  render(<SnapshotsSection projectId={PROJECT_ID} buildId={BUILD_ID} search={search} />, {
+    wrapper: ({ children }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    ),
+  });
 
 describe("SnapshotsSection", () => {
-  it("should render every snapshot from the server-rendered first page", () => {
-    renderSection(
+  it("should render every snapshot from the hydrated first page", () => {
+    const queryClient = createQueryClient();
+    seedPages(queryClient, [
       toPage([
         mocks.build.generateBuildSnapshot({ targetName: "home-page" }),
         mocks.build.generateBuildSnapshot({ targetName: "checkout-page" }),
       ]),
-    );
+    ]);
+
+    renderSection({ queryClient });
 
     expect(screen.getByText("home-page")).toBeVisible();
     expect(screen.getByText("checkout-page")).toBeVisible();
@@ -68,67 +75,55 @@ describe("SnapshotsSection", () => {
 
   it("should render the snapshots from every loaded page", () => {
     const queryClient = createQueryClient();
-    const options = snapshotsListInfiniteOptions(BUILD_ID, undefined, {});
+    seedPages(queryClient, [
+      {
+        snapshots: [mocks.build.generateBuildSnapshot({ targetName: "home-page" })],
+        total: 2,
+        nextCursor: CURSOR,
+      },
+      toPage([mocks.build.generateBuildSnapshot({ targetName: "checkout-page" })], 2),
+    ]);
 
-    queryClient.setQueryData(orpc.snapshots.list.infiniteKey(options), {
-      pages: [
-        {
-          snapshots: [mocks.build.generateBuildSnapshot({ targetName: "home-page" })],
-          total: 2,
-          nextCursor: CURSOR,
-        },
-        {
-          snapshots: [mocks.build.generateBuildSnapshot({ targetName: "checkout-page" })],
-          total: 2,
-          nextCursor: null,
-        },
-      ],
-      pageParams: [undefined, CURSOR],
-    });
-
-    renderSection(toPage([]), { queryClient });
+    renderSection({ queryClient });
 
     expect(screen.getByText("home-page")).toBeVisible();
     expect(screen.getByText("checkout-page")).toBeVisible();
   });
 
-  it("should keep loaded pages when the page re-renders with a fresh first page", () => {
+  it("should replace cached snapshots when the server hydrates a newer page", async () => {
     const queryClient = createQueryClient();
-    const options = snapshotsListInfiniteOptions(BUILD_ID, undefined, {});
-
-    queryClient.setQueryData(orpc.snapshots.list.infiniteKey(options), {
-      pages: [
-        {
-          snapshots: [mocks.build.generateBuildSnapshot({ targetName: "home-page" })],
-          total: 2,
-          nextCursor: CURSOR,
-        },
-        {
-          snapshots: [mocks.build.generateBuildSnapshot({ targetName: "checkout-page" })],
-          total: 2,
-          nextCursor: null,
-        },
+    seedPages(
+      queryClient,
+      [
+        toPage([
+          mocks.build.generateBuildSnapshot({ targetName: "home-page", status: "needs_review" }),
+        ]),
       ],
-      pageParams: [undefined, CURSOR],
-    });
+      Date.now() - 60_000,
+    );
 
-    const { rerender } = renderSection(toPage([]), { queryClient });
+    const serverQueryClient = createQueryClient();
+    seedPages(serverQueryClient, [
+      toPage([mocks.build.generateBuildSnapshot({ targetName: "home-page", status: "approved" })]),
+    ]);
 
-    rerender(
+    render(
       <QueryClientProvider client={queryClient}>
-        <SnapshotsSection
-          projectId={PROJECT_ID}
-          buildId={BUILD_ID}
-          initialPage={toPage([mocks.build.generateBuildSnapshot({ targetName: "home-page" })])}
-        />
+        <HydrationBoundary state={dehydrate(serverQueryClient)}>
+          <SnapshotsSection projectId={PROJECT_ID} buildId={BUILD_ID} />
+        </HydrationBoundary>
       </QueryClientProvider>,
     );
 
-    expect(screen.getByText("checkout-page")).toBeVisible();
+    await waitFor(() => expect(screen.getByText("approved")).toBeVisible());
+    expect(screen.queryByText("needs review")).not.toBeInTheDocument();
   });
 
   it("should show the empty state for a build with no snapshots", () => {
-    renderSection(toPage([]));
+    const queryClient = createQueryClient();
+    seedPages(queryClient, [toPage([])]);
+
+    renderSection({ queryClient });
 
     expect(screen.getByText("no snapshots found")).toBeVisible();
   });

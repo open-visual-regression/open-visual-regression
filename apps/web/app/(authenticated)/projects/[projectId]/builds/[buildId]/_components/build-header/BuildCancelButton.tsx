@@ -2,7 +2,6 @@
 
 import { onError, onSuccess } from "@orpc/client";
 import { useServerAction } from "@orpc/react/hooks";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import {
@@ -20,6 +19,7 @@ import { Button } from "@ovr/ui/components/button";
 import { FieldError } from "@ovr/ui/components/field";
 import { Typography } from "@ovr/ui/components/typography";
 
+import { useReviewRefresh } from "@/lib/orpc/useReviewRefresh";
 import { serverClient } from "@/lib/router";
 
 export type BuildCancelButtonProps = {
@@ -27,7 +27,7 @@ export type BuildCancelButtonProps = {
 };
 
 export const BuildCancelButton = ({ buildId }: BuildCancelButtonProps) => {
-  const router = useRouter();
+  const refreshReview = useReviewRefresh();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<{ message: string } | null>(null);
 
@@ -35,7 +35,7 @@ export const BuildCancelButton = ({ buildId }: BuildCancelButtonProps) => {
     interceptors: [
       onSuccess(() => {
         setOpen(false);
-        router.refresh();
+        refreshReview();
       }),
       onError((err) => setError({ message: err.message })),
     ],
