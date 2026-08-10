@@ -48,7 +48,7 @@ describe("NavigationBarMobileMenu", () => {
     await user.click(screen.getByRole("button", { name: /open settings navigation/i }));
 
     expect(screen.getByRole("link", { name: "account" })).toBeVisible();
-    expect(screen.getByRole("link", { name: "general" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "organization" })).toBeVisible();
     expect(screen.getByRole("link", { name: "users" })).toBeVisible();
   });
 

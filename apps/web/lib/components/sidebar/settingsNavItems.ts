@@ -22,7 +22,7 @@ const SETTINGS_NAV_SECTIONS: SettingsNavSection[] = [
     label: "admin",
     access: "admin",
     items: [
-      { href: "/settings/general", icon: SettingsIcon, label: "general" },
+      { href: "/settings/organization", icon: SettingsIcon, label: "organization" },
       { href: "/settings/users", icon: UsersIcon, label: "users" },
     ],
   },

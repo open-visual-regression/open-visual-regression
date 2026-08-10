@@ -5,6 +5,7 @@ import * as diffs from "./diffs";
 import * as gitIntegrations from "./gitIntegrations";
 import * as health from "./health";
 import * as invitations from "./invitations";
+import * as organizations from "./organizations";
 import * as projects from "./projects";
 import * as setup from "./setup";
 import * as snapshots from "./snapshots";
@@ -17,6 +18,7 @@ export const serverClient = {
   health,
   setup,
   projects,
+  organizations,
   storage,
   storybook,
   builds,

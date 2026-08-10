@@ -43,6 +43,12 @@ export type SetRoleInput = {
   headers: Headers;
 };
 
+export type UpdateOrganizationInput = {
+  organizationId: string;
+  name: string;
+  headers: Headers;
+};
+
 export type SignUpEmailInput = {
   name: string;
   email: string;
@@ -91,6 +97,9 @@ export const cancelInvitation = ({ invitationId, headers }: CancelInvitationInpu
 
 export const setRole = ({ userId, role, headers }: SetRoleInput) =>
   safeAuth(auth.api.setRole({ body: { userId, role }, headers }));
+
+export const updateOrganization = ({ organizationId, name, headers }: UpdateOrganizationInput) =>
+  safeAuth(auth.api.updateOrganization({ body: { organizationId, data: { name } }, headers }));
 
 export const signUpEmail = ({ name, email, password }: SignUpEmailInput) =>
   safeAuth(auth.api.signUpEmail({ body: { name, email, password } }));
