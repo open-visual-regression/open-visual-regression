@@ -31,9 +31,6 @@ export const UpdateOrganizationForm = ({ organization }: UpdateOrganizationFormP
     formState: { errors },
   } = useForm<UpdateOrganizationFormValues>({
     resolver: zodResolver(updateOrganizationFormSchema),
-    defaultValues: {
-      name: organization.name,
-    },
   });
 
   const { execute, status } = useServerAction(serverClient.organizations.update, {
@@ -58,10 +55,17 @@ export const UpdateOrganizationForm = ({ organization }: UpdateOrganizationFormP
           <FieldGroup>
             <Field data-invalid={!!errors.name}>
               <FieldLabel htmlFor="name">name</FieldLabel>
+              {/*
+                The name is rendered as the input's own default value rather than
+                through `useForm`'s `defaultValues`: that keeps it in the server
+                HTML, so the field is never briefly empty, and it leaves the DOM
+                as the source of truth for anything typed before hydration.
+              */}
               <Input
                 id="name"
                 placeholder="enter the organization name"
                 aria-invalid={!!errors.name}
+                defaultValue={organization.name}
                 {...register("name")}
               />
               <FieldError errors={[errors.name]} />
