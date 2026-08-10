@@ -12,7 +12,6 @@ import { CheckIcon, Icon } from "@ovr/ui/components/icon";
 import { Input } from "@ovr/ui/components/input";
 import { Skeleton } from "@ovr/ui/components/skeleton";
 import { toast } from "@ovr/ui/components/toast";
-import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 
 import { serverClient } from "@/lib/router";
 
@@ -54,48 +53,42 @@ export const UpdateOrganizationForm = ({ organization }: UpdateOrganizationFormP
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} noValidate>
-      <div className="flex flex-col gap-2">
-        <Typography variant="label">general</Typography>
-        <Card size="default">
-          <CardContent className="flex flex-col gap-5">
-            <FieldGroup>
-              <Field data-invalid={!!errors.name}>
-                <FieldLabel htmlFor="name">name</FieldLabel>
-                <Input
-                  id="name"
-                  placeholder="enter the organization name"
-                  aria-invalid={!!errors.name}
-                  {...register("name")}
-                />
-                <FieldError errors={[errors.name]} />
-              </Field>
-            </FieldGroup>
-            <FieldError errors={[errors.root]} />
-          </CardContent>
-          <CardFooter className="flex flex-row justify-end">
-            <Button type="submit" disabled={isSubmitting}>
-              <Icon icon={CheckIcon} />
-              {isSubmitting ? "saving..." : "save changes"}
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
+      <Card size="default">
+        <CardContent className="flex flex-col gap-5">
+          <FieldGroup>
+            <Field data-invalid={!!errors.name}>
+              <FieldLabel htmlFor="name">name</FieldLabel>
+              <Input
+                id="name"
+                placeholder="enter the organization name"
+                aria-invalid={!!errors.name}
+                {...register("name")}
+              />
+              <FieldError errors={[errors.name]} />
+            </Field>
+          </FieldGroup>
+          <FieldError errors={[errors.root]} />
+        </CardContent>
+        <CardFooter className="flex flex-row justify-end">
+          <Button type="submit" disabled={isSubmitting}>
+            <Icon icon={CheckIcon} />
+            {isSubmitting ? "saving..." : "save changes"}
+          </Button>
+        </CardFooter>
+      </Card>
     </form>
   );
 };
 
 export const UpdateOrganizationFormSkeleton = () => (
-  <div aria-hidden className="flex flex-col gap-2">
-    <TypographySkeleton variant="label" className="w-24" />
-    <Card size="default">
-      <CardContent className="flex flex-col gap-5">
-        <FieldGroup>
-          <FieldSkeleton />
-        </FieldGroup>
-      </CardContent>
-      <CardFooter className="flex flex-row justify-end">
-        <Skeleton className="h-8 w-32 rounded-lg" />
-      </CardFooter>
-    </Card>
-  </div>
+  <Card size="default" aria-hidden>
+    <CardContent className="flex flex-col gap-5">
+      <FieldGroup>
+        <FieldSkeleton />
+      </FieldGroup>
+    </CardContent>
+    <CardFooter className="flex flex-row justify-end">
+      <Skeleton className="h-8 w-32 rounded-lg" />
+    </CardFooter>
+  </Card>
 );

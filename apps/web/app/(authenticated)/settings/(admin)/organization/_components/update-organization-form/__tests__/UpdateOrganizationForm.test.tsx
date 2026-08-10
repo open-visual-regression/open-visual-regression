@@ -43,25 +43,25 @@ describe("UpdateOrganizationForm", () => {
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 
-  it("should submit the updated name", async ({ user }) => {
-    mockUpdate.mockResolvedValue([null, undefined]);
+  it("should submit the updated name and disable the button while saving", async ({ user }) => {
+    let resolveUpdate: (result: [null, undefined]) => void;
+    mockUpdate.mockReturnValue(
+      new Promise((resolve) => {
+        resolveUpdate = resolve;
+      }),
+    );
     renderComponent();
 
     await user.clear(screen.getByLabelText(/^name$/i));
     await user.type(screen.getByLabelText(/^name$/i), "New Org Name");
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
-    await waitFor(() => expect(mockUpdate).toHaveBeenCalledWith({ name: "New Org Name" }));
-    expect(await screen.findByText("organization updated")).toBeVisible();
-  });
-
-  it("should disable the submit button while saving", async ({ user }) => {
-    mockUpdate.mockReturnValue(new Promise(() => {}));
-    renderComponent();
-
-    await user.click(screen.getByRole("button", { name: /save changes/i }));
-
     await waitFor(() => expect(screen.getByRole("button", { name: /saving/i })).toBeDisabled());
+    expect(mockUpdate).toHaveBeenCalledWith({ name: "New Org Name" });
+
+    resolveUpdate!([null, undefined]);
+
+    expect(await screen.findByText("organization updated")).toBeVisible();
   });
 
   it("should show a root error message when saving fails", async ({ user }) => {
