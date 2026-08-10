@@ -34,7 +34,7 @@ export const seedReviewableSnapshot = async (client: SeedClient): Promise<Review
     statuses: ["needs_review"],
     limit: LIST_LIMIT,
   });
-  const snapshot = snapshots[0];
+  const snapshot = snapshots.at(-1);
   if (!snapshot) {
     throw new Error(
       `Ingest did not produce a needs_review snapshot (exit ${build.exitCode}): ${build.stderr}`,
