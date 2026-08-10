@@ -3,8 +3,8 @@ import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 
 import { getStoragePath } from "@/lib/utils/storage";
 
-import { SnapshotPaneImage } from "../snapshot-pane/SnapshotPaneImage";
 import { ComparisonView } from "./comparison-view/ComparisonView";
+import { NewSnapshotPane } from "./comparison-view/NewSnapshotPane";
 
 export type SnapshotComparisonSectionProps = {
   snapshot: SnapshotSchema;
@@ -15,7 +15,7 @@ export const SnapshotComparisonSection = ({ snapshot, diff }: SnapshotComparison
   const alt = `snapshot of ${snapshot.targetTitle} ${snapshot.targetName}`;
 
   if (!diff?.baselineSnapshot) {
-    return <SnapshotPaneImage imagePath={getStoragePath(snapshot.imagePath)} alt={alt} />;
+    return <NewSnapshotPane imagePath={getStoragePath(snapshot.imagePath)} alt={alt} />;
   }
 
   return (
