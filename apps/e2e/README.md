@@ -43,9 +43,9 @@ pnpm --filter @ovr/e2e test:e2e
 
 ### Running against published images instead of a local build
 
-To smoke-test the actual GHCR artifacts (e.g. what CI runs on merge to main),
-point compose at the registry instead of building — this is what the CI `e2e`
-job does:
+To smoke-test the actual GHCR artifacts (what CI runs for every pull request and
+push to main), point compose at the registry instead of building — this is what
+the CI `e2e` job does:
 
 ```bash
 echo "$CR_PAT" | docker login ghcr.io -u <user> --password-stdin   # PAT needs read:packages

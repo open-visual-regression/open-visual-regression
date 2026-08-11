@@ -185,6 +185,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
             type=sha,prefix=sha-
+            type=raw,value=ci-${{ github.run_id }}
             type=raw,value=latest,enable=${{ github.ref_type == 'tag' }}
       - name: Log in to GHCR
         if: env.SHOULD_PUSH == 'true'
@@ -210,10 +211,12 @@ jobs:
   e2e:
     name: E2E
     needs: [docker]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) }}
     permissions:
       contents: read
       packages: read
     uses: ./.github/workflows/e2e.yml
     with:
       mode: pull
+      image_prefix: ghcr.io/${{ github.repository_owner }}
+      image_tag: ci-${{ github.run_id }}
