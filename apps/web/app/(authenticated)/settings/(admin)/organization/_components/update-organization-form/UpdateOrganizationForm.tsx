@@ -55,12 +55,6 @@ export const UpdateOrganizationForm = ({ organization }: UpdateOrganizationFormP
           <FieldGroup>
             <Field data-invalid={!!errors.name}>
               <FieldLabel htmlFor="name">name</FieldLabel>
-              {/*
-                The name is rendered as the input's own default value rather than
-                through `useForm`'s `defaultValues`: that keeps it in the server
-                HTML, so the field is never briefly empty, and it leaves the DOM
-                as the source of truth for anything typed before hydration.
-              */}
               <Input
                 id="name"
                 placeholder="enter the organization name"

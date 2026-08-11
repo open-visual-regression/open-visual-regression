@@ -12,10 +12,7 @@ test.describe("Snapshots", () => {
     const goto = () =>
       snapshotReviewPage.goto(reviewable.projectId, reviewable.buildId, reviewable.snapshotId);
 
-    // Voting advances to the next snapshot, so a vote is only visible after
-    // coming back to the snapshot. The vote is still in flight when the page
-    // navigates away, hence the retry around the reload.
-    const expectReviewed = (button: Locator) =>
+    const expectReviewedOnReturn = (button: Locator) =>
       expect(async () => {
         await goto();
         await expect(button).toBeVisible({ timeout: 5_000 });
@@ -24,10 +21,10 @@ test.describe("Snapshots", () => {
     await goto();
 
     await snapshotReviewPage.approveButton().click();
-    await expectReviewed(snapshotReviewPage.approvedButton());
+    await expectReviewedOnReturn(snapshotReviewPage.approvedButton());
 
     await snapshotReviewPage.rejectButton().click();
-    await expectReviewed(snapshotReviewPage.rejectedButton());
+    await expectReviewedOnReturn(snapshotReviewPage.rejectedButton());
 
     await snapshotReviewPage.expandSidebar();
     await snapshotReviewPage.removeReview();
