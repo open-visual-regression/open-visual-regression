@@ -74,9 +74,6 @@ type BadgeSkeletonProps = {
   className?: string;
 };
 
-// A zero-width-space badge doesn't reproduce a real badge's height purely
-// from padding (the empty line box renders taller than the CSS line-height
-// suggests), so the skeleton pins it explicitly per size instead.
 const BADGE_SKELETON_HEIGHT: Record<NonNullable<BadgeProps["size"]>, string> = {
   md: "h-[21px]",
   sm: "h-[17px]",
