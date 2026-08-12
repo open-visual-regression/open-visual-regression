@@ -26,10 +26,8 @@ export const BuildRow = ({ build }: BuildRowProps) => {
           BUILD_STATUS_BORDER_CLASS[build.status],
         )}
       >
-        <div className="flex min-w-0 items-baseline gap-2">
-          <Typography variant="body-muted" className="shrink-0">
-            {shortSha}
-          </Typography>
+        <div className="flex min-w-0 items-center gap-2">
+          <BuildStatusBadge status={build.status} size="sm" />
           {build.name ? (
             <TruncatedText as={Typography} className="min-w-0 max-w-none w-full flex-1">
               {build.name}
@@ -37,9 +35,12 @@ export const BuildRow = ({ build }: BuildRowProps) => {
           ) : null}
         </div>
         <div className="flex flex-row flex-wrap items-center gap-x-1.5 gap-y-1">
-          <BuildStatusBadge status={build.status} size="sm" className="mr-2.5" />
           <TruncatedText as={Typography} variant="body-muted">
             {build.branch}
+          </TruncatedText>
+          <MetadataDot />
+          <TruncatedText as={Typography} variant="body-muted">
+            {shortSha}
           </TruncatedText>
           <MetadataDot />
           <TruncatedText as={Typography} variant="body-muted">
