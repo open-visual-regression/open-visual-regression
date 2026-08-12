@@ -65,37 +65,3 @@ export const Default: Story = {
     data: BUILDS,
   },
 };
-
-export const WithoutBuildName: Story = {
-  args: {
-    data: [
-      mocks.build.generateBuild({
-        project: PROJECT,
-        name: null,
-        branch: "main",
-        author: "Jordan Lee",
-        status: "unchanged",
-      }),
-    ],
-  },
-};
-
-export const LoadingMore: Story = {
-  args: {
-    data: BUILDS.slice(0, 6),
-    hasNextPage: true,
-  },
-};
-
-export const NoResults: Story = {
-  args: {
-    data: [],
-    search: "missing-commit",
-  },
-};
-
-export const NoBuilds: Story = {
-  args: {
-    data: [],
-  },
-};
