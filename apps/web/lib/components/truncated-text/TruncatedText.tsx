@@ -17,7 +17,7 @@ export const TruncatedText = <T extends ElementType = "span">({
   return (
     <Component
       className={cn(
-        "max-w-[24ch] overflow-x-clip overflow-y-visible text-ellipsis whitespace-nowrap",
+        "inline-block max-w-[24ch] overflow-x-clip overflow-y-visible text-ellipsis whitespace-nowrap",
         className,
       )}
       {...props}

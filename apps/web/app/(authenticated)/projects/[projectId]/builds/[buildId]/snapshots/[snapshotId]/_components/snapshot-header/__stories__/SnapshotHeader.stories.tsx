@@ -87,3 +87,13 @@ export const NoStorybook: Story = {
     storybookHref: null,
   },
 };
+
+export const LongBuildName: Story = {
+  args: {
+    snapshot: { ...snapshot, status: "needs_review" },
+    build: mocks.build.generateBuild({
+      ...buildOverrides,
+      name: "Refactor the checkout flow to support multiple currencies and payment providers",
+    }),
+  },
+};

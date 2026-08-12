@@ -56,7 +56,7 @@ export const BuildHeader = ({
         <Typography variant="h1" as="h1" className="min-w-0 md:order-1 md:flex-1 md:truncate">
           {build.name}
         </Typography>
-        <div className="flex flex-row flex-wrap items-center gap-4 text-xs md:order-3 md:basis-full">
+        <div className="flex flex-row flex-wrap items-center gap-x-4 gap-y-2 text-xs md:order-3 md:basis-full">
           <BuildStatusStream buildId={build.id} initialStatus={build.status} />
           {storybookHref ? <ExternalLink href={storybookHref}>view storybook</ExternalLink> : null}
           {build.branchUrl ? (
@@ -146,7 +146,7 @@ export const BuildHeaderSkeleton = () => (
         <Skeleton className="h-8 flex-1 rounded-md md:w-20 md:flex-none" />
         <Skeleton className="h-8 flex-1 rounded-md md:w-24 md:flex-none" />
       </div>
-      <div className="flex flex-row flex-wrap items-center gap-4 text-xs md:order-3 md:basis-full">
+      <div className="flex flex-row flex-wrap items-center gap-x-4 gap-y-2 text-xs md:order-3 md:basis-full">
         <BadgeSkeleton className="w-20" />
         <TypographySkeleton variant="caption" className="w-24" />
         <TypographySkeleton variant="caption" className="w-16" />

@@ -8,6 +8,7 @@ import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 
 import { ExternalLink } from "@/lib/components/external-link/ExternalLink";
 import { SnapshotStatusBadge } from "@/lib/components/SnapshotStatusBadge";
+import { TruncatedText } from "@/lib/components/truncated-text/TruncatedText";
 
 export type SnapshotHeaderProps = {
   snapshot: SnapshotSchema;
@@ -27,10 +28,12 @@ export const SnapshotHeader = ({
       <Typography variant="h1" as="h1" className="break-words">
         {snapshot.targetTitle} {snapshot.targetName}
       </Typography>
-      <div className="flex flex-row flex-wrap items-center gap-4 text-xs">
+      <div className="flex flex-row flex-wrap items-center gap-x-4 gap-y-2 text-xs">
         <SnapshotStatusBadge status={snapshot.status} />
         {storybookHref ? <ExternalLink href={storybookHref}>view story</ExternalLink> : null}
-        <Typography variant="caption">{build.name}</Typography>
+        <Typography variant="caption">
+          <TruncatedText>{build.name}</TruncatedText>
+        </Typography>
         <Typography variant="caption" className="flex items-center gap-1">
           <Icon icon={GlobeIcon} size={12} />
           {snapshot.browser} · <ResolutionIcon width={snapshot.viewportWidth} size={12} />
@@ -52,7 +55,7 @@ export const SnapshotHeaderSkeleton = () => (
   <div className="flex flex-col gap-6">
     <div className="flex flex-col gap-2">
       <TypographySkeleton variant="h1" className="w-80 max-w-full" />
-      <div className="flex flex-row flex-wrap items-center gap-4 text-xs">
+      <div className="flex flex-row flex-wrap items-center gap-x-4 gap-y-2 text-xs">
         <BadgeSkeleton className="w-24" />
         <TypographySkeleton variant="caption" className="w-24" />
         <TypographySkeleton variant="caption" className="w-20" />
