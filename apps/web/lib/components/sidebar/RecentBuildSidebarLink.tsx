@@ -1,8 +1,10 @@
 import Link from "next/link";
 
-import type { BuildSchema, BuildStatus } from "@ovr/api/contracts/builds";
+import type { BuildSchema } from "@ovr/api/contracts/builds";
 import { Typography } from "@ovr/ui/components/typography";
 import { cn } from "@ovr/ui/lib/utils";
+
+import { BUILD_STATUS_BORDER_CLASS } from "@/lib/components/BuildStatus";
 
 const RECENT_BUILD_ROW_HEIGHT_PX = 44;
 
@@ -11,18 +13,6 @@ type RecentBuildSidebarLinkProps = {
   active?: boolean;
   className?: string;
   onClick?: () => void;
-};
-
-const BUILD_STATUS_BORDER_CLASS: Record<BuildStatus, string> = {
-  queued: "border-ovr-gray",
-  processing: "border-ovr-purple",
-  needs_review: "border-ovr-accent",
-  unchanged: "border-ovr-blue",
-  auto_approved: "border-ovr-green",
-  approved: "border-ovr-green",
-  rejected: "border-ovr-remove",
-  error: "border-ovr-remove",
-  canceled: "border-ovr-gray",
 };
 
 const RecentBuildSidebarLink = ({

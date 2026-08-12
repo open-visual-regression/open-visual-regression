@@ -42,17 +42,17 @@ describe("BuildsSection", () => {
     expect(screen.getByRole("heading", { name: "no builds yet" })).toBeVisible();
   });
 
-  it("should render the builds table with a row for each build", () => {
+  it("should render the builds list with a row for each build", () => {
     const build = mocks.build.generateBuild({ name: "fix: cart total rounding" });
     renderSection([build]);
 
-    expect(screen.getByRole("cell", { name: /fix: cart total rounding/ })).toBeVisible();
+    expect(screen.getByText("fix: cart total rounding")).toBeVisible();
   });
 
   it("should show a no-results message instead of the onboarding state during a search", () => {
     renderSection([], { search: "missing" });
 
     expect(screen.queryByRole("heading", { name: "no builds yet" })).toBeNull();
-    expect(screen.getByRole("cell", { name: 'no builds found matching "missing"' })).toBeVisible();
+    expect(screen.getByText('no builds found matching "missing"')).toBeVisible();
   });
 });
