@@ -34,7 +34,7 @@ export const BuildRow = ({ build }: BuildRowProps) => {
             </TruncatedText>
           ) : null}
         </div>
-        <div className="flex flex-row flex-wrap items-center gap-x-1.5 gap-y-1">
+        <div className="flex flex-row flex-wrap items-center gap-x-1.5 gap-y-0">
           <TruncatedText as={Typography} variant="body-muted">
             {build.branch}
           </TruncatedText>

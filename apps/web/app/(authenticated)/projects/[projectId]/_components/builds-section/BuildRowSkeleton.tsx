@@ -13,7 +13,7 @@ export const BuildRowSkeleton = ({ ref, className }: BuildRowSkeletonProps = {})
         <BadgeSkeleton size="sm" className="w-20" />
         <TypographySkeleton className="min-w-0 w-full flex-1" />
       </div>
-      <div className="flex flex-row flex-wrap items-center gap-x-1.5 gap-y-1">
+      <div className="flex flex-row flex-wrap items-center gap-x-1.5 gap-y-0">
         <TypographySkeleton variant="body-muted" className="w-24" />
         <TypographySkeleton variant="body-muted" className="w-14" />
         <TypographySkeleton variant="body-muted" className="w-20" />
