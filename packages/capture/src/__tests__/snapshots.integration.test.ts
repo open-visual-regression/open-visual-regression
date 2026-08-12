@@ -24,8 +24,6 @@ const uploadPng = async (path: string, fill: number, width = 2, height = 2): Pro
   await storage.uploadFile(path, PNG.sync.write(png), "image/png");
 };
 
-// Fills a large image with `fill`, then flips a single pixel to `speckleFill` so the
-// resulting diff has a nonzero but tiny (well under 0.05%) diffPercent.
 const uploadSpeckledPng = async (
   path: string,
   fill: number,
@@ -413,7 +411,7 @@ describe("snapshots", () => {
       });
     });
 
-    test("still saves a diff image for an auto-approved below-threshold diff, so a reviewer can double-check what slipped by", async ({
+    test("saves a diff image for a story that renders within the diff threshold of the approved baseline", async ({
       featureBuild,
       project,
       captureConfiguration,
@@ -654,7 +652,7 @@ describe("snapshots", () => {
       expect(baseline?.snapshotId).toBe(captureSnapshotRow!.id);
     });
 
-    test("still saves a diff image for a main-branch build whose diff is below the review threshold", async ({
+    test("promotes the baseline and saves a diff image for a main-branch build whose diff is below the review threshold", async ({
       mainBuild,
       project,
       captureConfiguration,

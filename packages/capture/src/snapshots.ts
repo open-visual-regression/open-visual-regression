@@ -422,9 +422,6 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
   const baselineSnapshot = baseline ? await dbClient.snapshots.findById(baseline.snapshotId) : null;
   const diff = await diffAgainstBaselineSnapshot(snapshot.imagePath, baselineSnapshot);
 
-  // Persist a diff image whenever pixels actually differ, even if the difference is
-  // below the review threshold or auto-approved on a main-branch build. Reviewers can
-  // then spot-check what changed instead of the diff being hidden entirely.
   const diffImagePath = diff?.pixelDiffCount
     ? await uploadDiffImage(build.projectId, build.id, diffId, diff)
     : undefined;
