@@ -31,10 +31,15 @@ export const BUILD_STATUS_BORDER_CLASS: Record<BuildStatus, string> = {
 export const getBuildStatusLabel = (status: BuildStatus): string =>
   BUILD_STATUS_BADGE[status].label;
 
-export const BuildStatusBadge = ({ status }: { status: BuildStatus }) => {
+type BuildStatusBadgeProps = {
+  status: BuildStatus;
+  size?: StatusBadgeProps["size"];
+};
+
+export const BuildStatusBadge = ({ status, size }: BuildStatusBadgeProps) => {
   const { color, icon, label } = BUILD_STATUS_BADGE[status];
   return (
-    <StatusBadge variant="outline" color={color} icon={icon}>
+    <StatusBadge variant="outline" color={color} icon={icon} size={size}>
       {label}
     </StatusBadge>
   );

@@ -37,7 +37,7 @@ export const BuildRow = ({ build }: BuildRowProps) => {
           ) : null}
         </div>
         <div className="flex flex-row flex-wrap items-center gap-x-1.5 gap-y-1">
-          <BuildStatusBadge status={build.status} />
+          <BuildStatusBadge status={build.status} size="sm" />
           <MetadataDot />
           <TruncatedText as={Typography} variant="body-muted">
             {build.branch}

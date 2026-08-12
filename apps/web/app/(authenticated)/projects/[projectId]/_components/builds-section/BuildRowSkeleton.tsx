@@ -14,7 +14,7 @@ export const BuildRowSkeleton = ({ ref, className }: BuildRowSkeletonProps = {})
         <TypographySkeleton className="min-w-0 w-full flex-1" />
       </div>
       <div className="flex flex-row flex-wrap items-center gap-1.5">
-        <BadgeSkeleton className="w-24" />
+        <BadgeSkeleton size="sm" className="w-20" />
         <TypographySkeleton variant="body-muted" className="w-16" />
         <TypographySkeleton variant="body-muted" className="w-20" />
         <TypographySkeleton variant="body-muted" className="w-24" />
