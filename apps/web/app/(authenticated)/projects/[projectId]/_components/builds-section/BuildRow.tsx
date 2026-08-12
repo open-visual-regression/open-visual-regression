@@ -21,7 +21,7 @@ export const BuildRow = ({ build }: BuildRowProps) => {
       <Link
         href={`/projects/${build.project.id}/builds/${build.id}`}
         className={cn(
-          "flex min-w-0 flex-col gap-1.5 border-l-3 py-2.5 pr-4 pl-3 no-underline transition-colors",
+          "flex min-w-0 flex-col gap-1 border-l-3 py-2.5 pr-4 pl-3 no-underline transition-colors",
           "hover:bg-ovr-hover focus-visible:bg-ovr-hover focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ovr-accent",
           BUILD_STATUS_BORDER_CLASS[build.status],
         )}
