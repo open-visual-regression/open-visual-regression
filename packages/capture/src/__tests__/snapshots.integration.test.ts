@@ -24,6 +24,22 @@ const uploadPng = async (path: string, fill: number, width = 2, height = 2): Pro
   await storage.uploadFile(path, PNG.sync.write(png), "image/png");
 };
 
+// Fills a large image with `fill`, then flips a single pixel to `speckleFill` so the
+// resulting diff has a nonzero but tiny (well under 0.05%) diffPercent.
+const uploadSpeckledPng = async (
+  path: string,
+  fill: number,
+  speckleFill: number,
+  width = 100,
+  height = 100,
+): Promise<void> => {
+  const png = new PNG({ width, height });
+  png.data.fill(fill);
+  const speckleStart = 0;
+  png.data.fill(speckleFill, speckleStart, speckleStart + 4);
+  await storage.uploadFile(path, PNG.sync.write(png), "image/png");
+};
+
 const collectDiffJob = async (connection: Redis): Promise<DiffJobPayload> => {
   const worker = new Worker<DiffJobPayload>(QueueName.SNAPSHOT_DIFF, async (job) => job.data, {
     connection,
@@ -397,6 +413,56 @@ describe("snapshots", () => {
       });
     });
 
+    test("still saves a diff image for an auto-approved below-threshold diff, so a reviewer can double-check what slipped by", async ({
+      featureBuild,
+      project,
+      captureConfiguration,
+    }) => {
+      const baselinePath = `builds/${featureBuild.id}/snapshots/baseline-speckle.png`;
+      const capturePath = `builds/${featureBuild.id}/snapshots/capture-speckle.png`;
+      await uploadSpeckledPng(baselinePath, 0, 0);
+      await uploadSpeckledPng(capturePath, 0, 255);
+
+      const [baselineSnapshot, captureSnapshotRow] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: featureBuild.id,
+            ...captureConfiguration,
+            targetId: "story-speckle",
+            status: "success",
+            imagePath: baselinePath,
+          },
+          {
+            buildId: featureBuild.id,
+            ...captureConfiguration,
+            targetId: "story-speckle",
+            status: "success",
+            imagePath: capturePath,
+          },
+        ],
+      });
+      await dbClient.baselines.upsert({
+        projectId: project.id,
+        ...captureConfiguration,
+        targetId: "story-speckle",
+        snapshotId: baselineSnapshot!.id,
+        approvedBy: featureBuild.createdBy,
+      });
+      const diff = await dbClient.diffs.create({ snapshotId: captureSnapshotRow!.id });
+
+      await diffSnapshot(captureSnapshotRow!.id, diff!.id);
+
+      const result = await dbClient.diffs.findById(diff!.id);
+      expect(result).toMatchObject({ processingStatus: "success", reviewStatus: "unchanged" });
+      expect(result!.pixelDiffCount).toBeGreaterThan(0);
+      expect(result!.diffImagePath).toBe(
+        `${featureBuild.projectId}/builds/${featureBuild.id}/diffs/${diff!.id}.png`,
+      );
+
+      const diffImage = await storage.getFileStream(result!.diffImagePath!);
+      expect(diffImage).toBeDefined();
+    });
+
     test("should ask a reviewer to approve a story and show them what changed when it renders differently from the approved baseline", async ({
       featureBuild,
       project,
@@ -576,11 +642,68 @@ describe("snapshots", () => {
         reviewStatus: "auto_approved",
       });
       expect(result!.pixelDiffCount).toBeGreaterThan(0);
+      expect(result!.diffImagePath).toBe(
+        `${mainBuild.projectId}/builds/${mainBuild.id}/diffs/${diff!.id}.png`,
+      );
 
       const baseline = await dbClient.baselines.find({
         projectId: project.id,
         ...captureConfiguration,
         targetId: "story-d",
+      });
+      expect(baseline?.snapshotId).toBe(captureSnapshotRow!.id);
+    });
+
+    test("still saves a diff image for a main-branch build whose diff is below the review threshold", async ({
+      mainBuild,
+      project,
+      captureConfiguration,
+    }) => {
+      const baselinePath = `builds/${mainBuild.id}/snapshots/main-baseline-speckle.png`;
+      const capturePath = `builds/${mainBuild.id}/snapshots/main-capture-speckle.png`;
+      await uploadSpeckledPng(baselinePath, 0, 0);
+      await uploadSpeckledPng(capturePath, 0, 255);
+
+      const [baselineSnapshot, captureSnapshotRow] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: mainBuild.id,
+            ...captureConfiguration,
+            targetId: "story-e",
+            status: "success",
+            imagePath: baselinePath,
+          },
+          {
+            buildId: mainBuild.id,
+            ...captureConfiguration,
+            targetId: "story-e",
+            status: "success",
+            imagePath: capturePath,
+          },
+        ],
+      });
+      await dbClient.baselines.upsert({
+        projectId: project.id,
+        ...captureConfiguration,
+        targetId: "story-e",
+        snapshotId: baselineSnapshot!.id,
+        approvedBy: mainBuild.createdBy,
+      });
+      const diff = await dbClient.diffs.create({ snapshotId: captureSnapshotRow!.id });
+
+      await diffSnapshot(captureSnapshotRow!.id, diff!.id);
+
+      const result = await dbClient.diffs.findById(diff!.id);
+      expect(result).toMatchObject({ processingStatus: "success", reviewStatus: "unchanged" });
+      expect(result!.pixelDiffCount).toBeGreaterThan(0);
+      expect(result!.diffImagePath).toBe(
+        `${mainBuild.projectId}/builds/${mainBuild.id}/diffs/${diff!.id}.png`,
+      );
+
+      const baseline = await dbClient.baselines.find({
+        projectId: project.id,
+        ...captureConfiguration,
+        targetId: "story-e",
       });
       expect(baseline?.snapshotId).toBe(captureSnapshotRow!.id);
     });
