@@ -31,9 +31,6 @@ export const UpdateOrganizationForm = ({ organization }: UpdateOrganizationFormP
     formState: { errors },
   } = useForm<UpdateOrganizationFormValues>({
     resolver: zodResolver(updateOrganizationFormSchema),
-    defaultValues: {
-      name: organization.name,
-    },
   });
 
   const { execute, status } = useServerAction(serverClient.organizations.update, {
@@ -62,6 +59,7 @@ export const UpdateOrganizationForm = ({ organization }: UpdateOrganizationFormP
                 id="name"
                 placeholder="enter the organization name"
                 aria-invalid={!!errors.name}
+                defaultValue={organization.name}
                 {...register("name")}
               />
               <FieldError errors={[errors.name]} />

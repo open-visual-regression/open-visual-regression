@@ -7,6 +7,14 @@ on:
         description: "How to obtain the stack: 'build' from source or 'pull' published images"
         type: string
         default: build
+      image_prefix:
+        description: "Registry prefix for the published web and worker images"
+        type: string
+        default: ""
+      image_tag:
+        description: "Tag for the published web and worker images"
+        type: string
+        default: ""
   workflow_dispatch:
     inputs:
       mode:
@@ -53,9 +61,10 @@ jobs:
       - name: Start the stack (published images)
         if: inputs.mode == 'pull'
         env:
-          IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}
+          IMAGE_PREFIX: ${{ inputs.image_prefix || format('ghcr.io/{0}', github.repository_owner) }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
         run: |
-          export IMAGE_TAG="sha-${GITHUB_SHA::7}"
+          export IMAGE_TAG="${IMAGE_TAG:-sha-${GITHUB_SHA::7}}"
           docker compose pull --quiet
           docker compose up -d
       - name: Start the stack (build from source)

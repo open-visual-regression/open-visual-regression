@@ -1,3 +1,5 @@
+import type { Locator } from "@playwright/test";
+
 import { expect, test } from "./fixtures";
 import { seedReviewableSnapshot } from "./support/seedReviewableSnapshot";
 
@@ -7,14 +9,22 @@ test.describe("Snapshots", () => {
     snapshotReviewPage,
   }) => {
     const reviewable = await seedReviewableSnapshot(seedClient);
+    const goto = () =>
+      snapshotReviewPage.goto(reviewable.projectId, reviewable.buildId, reviewable.snapshotId);
 
-    await snapshotReviewPage.goto(reviewable.projectId, reviewable.buildId, reviewable.snapshotId);
+    const expectReviewedOnReturn = (button: Locator) =>
+      expect(async () => {
+        await goto();
+        await expect(button).toBeVisible({ timeout: 5_000 });
+      }).toPass({ timeout: 30_000 });
+
+    await goto();
 
     await snapshotReviewPage.approveButton().click();
-    await expect(snapshotReviewPage.approvedButton()).toBeVisible();
+    await expectReviewedOnReturn(snapshotReviewPage.approvedButton());
 
     await snapshotReviewPage.rejectButton().click();
-    await expect(snapshotReviewPage.rejectedButton()).toBeVisible();
+    await expectReviewedOnReturn(snapshotReviewPage.rejectedButton());
 
     await snapshotReviewPage.expandSidebar();
     await snapshotReviewPage.removeReview();
