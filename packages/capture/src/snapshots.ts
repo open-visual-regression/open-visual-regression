@@ -422,6 +422,10 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
   const baselineSnapshot = baseline ? await dbClient.snapshots.findById(baseline.snapshotId) : null;
   const diff = await diffAgainstBaselineSnapshot(snapshot.imagePath, baselineSnapshot);
 
+  const diffImagePath = diff?.pixelDiffCount
+    ? await uploadDiffImage(build.projectId, build.id, diffId, diff)
+    : undefined;
+
   if (isMainBranch) {
     // No baseline means the target is brand new, not unchanged.
     const changed = !diff || diff.diffPercent > snapshot.diffThreshold;
@@ -431,6 +435,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
       reviewStatus: changed ? "auto_approved" : "unchanged",
       ...(baselineSnapshot && { baselineSnapshotId: baselineSnapshot.id }),
       ...(diff && { pixelDiffCount: diff.pixelDiffCount, diffPercent: diff.diffPercent }),
+      ...(diffImagePath && { diffImagePath }),
     });
     await promoteBaseline(diffId, build.createdBy);
     await checkAllDoneAndFinalize(build.id);
@@ -456,28 +461,37 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
       baselineSnapshotId: diff.baselineSnapshotId,
       pixelDiffCount,
       diffPercent,
+      ...(diffImagePath && { diffImagePath }),
     });
     await checkAllDoneAndFinalize(build.id);
     return;
   }
 
-  const diffImagePath = `${build.projectId}/builds/${build.id}/diffs/${diffId}.png`;
-  await storage.uploadFile(
-    diffImagePath,
-    encodePng(diff.diffPixels, diff.width, diff.height),
-    "image/png",
-  );
-
   await dbClient.diffs.updateResult(diffId, {
     processingStatus: "success",
     reviewStatus: "needs_review",
     baselineSnapshotId: diff.baselineSnapshotId,
-    diffImagePath,
+    ...(diffImagePath && { diffImagePath }),
     pixelDiffCount,
     diffPercent,
   });
 
   await checkAllDoneAndFinalize(build.id);
+};
+
+const uploadDiffImage = async (
+  projectId: string,
+  buildId: string,
+  diffId: string,
+  diff: { width: number; height: number; diffPixels: Uint8Array },
+): Promise<string> => {
+  const diffImagePath = `${projectId}/builds/${buildId}/diffs/${diffId}.png`;
+  await storage.uploadFile(
+    diffImagePath,
+    encodePng(diff.diffPixels, diff.width, diff.height),
+    "image/png",
+  );
+  return diffImagePath;
 };
 
 const diffAgainstBaselineSnapshot = async (
