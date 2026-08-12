@@ -50,7 +50,7 @@ const meta: Meta<typeof BuildsList> = {
   },
   decorators: [
     (Story) => (
-      <div className="flex h-[600px] max-w-2xl flex-col py-3 px-5 md:py-4 md:px-6 lg:py-6 lg:px-10">
+      <div className="flex h-[600px] max-w-2xl flex-col">
         <Story />
       </div>
     ),
