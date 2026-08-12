@@ -34,12 +34,13 @@ export const getBuildStatusLabel = (status: BuildStatus): string =>
 type BuildStatusBadgeProps = {
   status: BuildStatus;
   size?: StatusBadgeProps["size"];
+  className?: string;
 };
 
-export const BuildStatusBadge = ({ status, size }: BuildStatusBadgeProps) => {
+export const BuildStatusBadge = ({ status, size, className }: BuildStatusBadgeProps) => {
   const { color, icon, label } = BUILD_STATUS_BADGE[status];
   return (
-    <StatusBadge variant="outline" color={color} icon={icon} size={size}>
+    <StatusBadge variant="outline" color={color} icon={icon} size={size} className={className}>
       {label}
     </StatusBadge>
   );
