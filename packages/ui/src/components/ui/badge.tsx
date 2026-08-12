@@ -74,15 +74,31 @@ type BadgeSkeletonProps = {
   className?: string;
 };
 
-const BadgeSkeleton = ({ size, className }: BadgeSkeletonProps) => (
-  <span
-    aria-hidden
-    className={cn(badgeVariants({ size }), "relative border-transparent", className)}
-  >
-    &#8203;
-    <Skeleton className="absolute -inset-px rounded-lg" />
-  </span>
-);
+// A zero-width-space badge doesn't reproduce a real badge's height purely
+// from padding (the empty line box renders taller than the CSS line-height
+// suggests), so the skeleton pins it explicitly per size instead.
+const BADGE_SKELETON_HEIGHT: Record<NonNullable<BadgeProps["size"]>, string> = {
+  md: "h-[21px]",
+  sm: "h-[17px]",
+};
+
+const BadgeSkeleton = ({ size, className }: BadgeSkeletonProps) => {
+  const resolvedSize = size ?? "md";
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        badgeVariants({ size: resolvedSize }),
+        BADGE_SKELETON_HEIGHT[resolvedSize],
+        "relative border-transparent",
+        className,
+      )}
+    >
+      &#8203;
+      <Skeleton className="absolute -inset-px rounded-lg" />
+    </span>
+  );
+};
 
 export { Badge, BadgeSkeleton, badgeVariants };
 export type { BadgeProps, BadgeSkeletonProps };
