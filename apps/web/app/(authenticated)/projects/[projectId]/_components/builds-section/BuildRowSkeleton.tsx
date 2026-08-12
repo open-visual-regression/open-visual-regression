@@ -13,11 +13,13 @@ export const BuildRowSkeleton = ({ ref, className }: BuildRowSkeletonProps = {})
         <TypographySkeleton variant="body-muted" className="w-14 shrink-0" />
         <TypographySkeleton className="min-w-0 w-full flex-1" />
       </div>
-      <div className="flex flex-row flex-wrap items-center gap-1.5">
+      <div className="flex flex-row flex-wrap items-center gap-x-5 gap-y-1">
         <BadgeSkeleton size="sm" className="w-20" />
-        <TypographySkeleton variant="body-muted" className="w-16" />
-        <TypographySkeleton variant="body-muted" className="w-20" />
-        <TypographySkeleton variant="body-muted" className="w-24" />
+        <div className="flex flex-row flex-wrap items-center gap-x-1.5 gap-y-1">
+          <TypographySkeleton variant="body-muted" className="w-16" />
+          <TypographySkeleton variant="body-muted" className="w-20" />
+          <TypographySkeleton variant="body-muted" className="w-24" />
+        </div>
       </div>
     </div>
   </li>
