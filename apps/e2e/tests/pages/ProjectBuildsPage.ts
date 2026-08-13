@@ -8,7 +8,7 @@ export class ProjectBuildsPage {
   }
 
   buildRow(shortSha: string): Locator {
-    return this.page.getByRole("link", {
+    return this.page.getByRole("main").getByRole("link", {
       name: new RegExp(shortSha, "i"),
     });
   }
