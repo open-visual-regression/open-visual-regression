@@ -21,6 +21,7 @@ const Section = ({ label, children }: { label: string; children: React.ReactNode
 
 type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>["variant"]>;
 type BadgeColor = NonNullable<VariantProps<typeof badgeVariants>["color"]>;
+type BadgeSize = NonNullable<VariantProps<typeof badgeVariants>["size"]>;
 
 const VARIANTS: BadgeVariant[] = ["solid", "outline"];
 const COLORS: BadgeColor[] = [
@@ -33,6 +34,7 @@ const COLORS: BadgeColor[] = [
   "purple",
   "neutral",
 ];
+const SIZES: BadgeSize[] = ["md", "sm"];
 
 export const KitchenSink: Story = {
   render: () => (
@@ -41,6 +43,22 @@ export const KitchenSink: Story = {
         <Section key={variant} label={`variant="${variant}"`}>
           {COLORS.map((color) => (
             <Badge key={color} variant={variant} color={color}>
+              {color}
+            </Badge>
+          ))}
+        </Section>
+      ))}
+    </div>
+  ),
+};
+
+export const Sizes: Story = {
+  render: () => (
+    <div className="space-y-6 p-4">
+      {SIZES.map((size) => (
+        <Section key={size} label={`size="${size}"`}>
+          {COLORS.map((color) => (
+            <Badge key={color} variant="outline" color={color} size={size}>
               {color}
             </Badge>
           ))}
@@ -61,6 +79,10 @@ export const Skeletons: Story = {
         <BadgeSkeleton className="w-10" />
         <BadgeSkeleton className="w-16" />
         <BadgeSkeleton className="w-24" />
+      </Section>
+      <Section label="sizes">
+        <BadgeSkeleton size="md" className="w-16" />
+        <BadgeSkeleton size="sm" className="w-16" />
       </Section>
     </div>
   ),

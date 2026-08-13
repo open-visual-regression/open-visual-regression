@@ -16,13 +16,31 @@ const BUILD_STATUS_BADGE: Record<
   canceled: { color: "gray", icon: "canceled", label: "canceled" },
 };
 
+export const BUILD_STATUS_BORDER_CLASS: Record<BuildStatus, string> = {
+  queued: "border-ovr-gray",
+  processing: "border-ovr-purple",
+  needs_review: "border-ovr-accent",
+  unchanged: "border-ovr-blue",
+  auto_approved: "border-ovr-green",
+  approved: "border-ovr-green",
+  rejected: "border-ovr-remove",
+  error: "border-ovr-remove",
+  canceled: "border-ovr-gray",
+};
+
 export const getBuildStatusLabel = (status: BuildStatus): string =>
   BUILD_STATUS_BADGE[status].label;
 
-export const BuildStatusBadge = ({ status }: { status: BuildStatus }) => {
+type BuildStatusBadgeProps = {
+  status: BuildStatus;
+  size?: StatusBadgeProps["size"];
+  className?: string;
+};
+
+export const BuildStatusBadge = ({ status, size, className }: BuildStatusBadgeProps) => {
   const { color, icon, label } = BUILD_STATUS_BADGE[status];
   return (
-    <StatusBadge variant="outline" color={color} icon={icon}>
+    <StatusBadge variant="outline" color={color} icon={icon} size={size} className={className}>
       {label}
     </StatusBadge>
   );

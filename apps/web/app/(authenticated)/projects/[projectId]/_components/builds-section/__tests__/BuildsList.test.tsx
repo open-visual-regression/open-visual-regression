@@ -3,18 +3,18 @@ import { vi } from "vitest";
 
 import { mocks } from "@ovr/mocks";
 
-import { act, describe, expect, it, render, screen, within } from "@/test-utils";
+import { act, describe, expect, it, render, screen } from "@/test-utils";
 
-import { BuildsTable } from "../BuildsTable";
+import { BuildsList } from "../BuildsList";
 
 const noop = () => {};
 
-const renderTable = (
+const renderList = (
   data: ReturnType<typeof mocks.build.generateBuild>[],
-  props: Partial<React.ComponentProps<typeof BuildsTable>> = {},
+  props: Partial<React.ComponentProps<typeof BuildsList>> = {},
 ) =>
   render(
-    <BuildsTable
+    <BuildsList
       data={data}
       isLoading={false}
       hasNextPage={false}
@@ -24,62 +24,61 @@ const renderTable = (
     />,
   );
 
-describe("BuildsTable", () => {
+describe("BuildsList", () => {
   it("should render a row for each build", () => {
     const builds = [
       mocks.build.generateBuild({ name: "fix: cart total rounding", branch: "pr/482" }),
       mocks.build.generateBuild({ name: "feat: add checkout", branch: "pr/483" }),
     ];
-    renderTable(builds);
+    renderList(builds);
 
-    expect(screen.getByRole("cell", { name: /fix: cart total rounding/ })).toBeVisible();
-    expect(screen.getByRole("cell", { name: /feat: add checkout/ })).toBeVisible();
+    expect(screen.getByText("fix: cart total rounding")).toBeVisible();
+    expect(screen.getByText("feat: add checkout")).toBeVisible();
+  });
+
+  it("should render the build's status, branch, and author", () => {
+    const build = mocks.build.generateBuild({
+      status: "needs_review",
+      branch: "pr/482",
+      author: "Jordan Lee",
+    });
+    renderList([build]);
+
+    expect(screen.getByText("needs review")).toBeVisible();
+    expect(screen.getByText("pr/482")).toBeVisible();
+    expect(screen.getByText("Jordan Lee")).toBeVisible();
   });
 
   it("should link each row to its build detail page", () => {
     const build = mocks.build.generateBuild({ commitSha: "4f2a91e1234567890" });
-    renderTable([build]);
+    renderList([build]);
 
-    expect(screen.getByRole("link", { name: "view build 4f2a91e" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /4f2a91e/ })).toHaveAttribute(
       "href",
       `/projects/${build.project.id}/builds/${build.id}`,
     );
   });
 
-  it("should expose exactly one accessible link per build row", () => {
+  it("should render exactly one accessible link per build row", () => {
     const builds = [
       mocks.build.generateBuild({ commitSha: "1111111abcdef" }),
       mocks.build.generateBuild({ commitSha: "2222222abcdef" }),
       mocks.build.generateBuild({ commitSha: "3333333abcdef" }),
     ];
-    renderTable(builds);
+    renderList(builds);
 
+    expect(screen.getAllByRole("link")).toHaveLength(builds.length);
     for (const build of builds) {
       expect(
-        screen.getByRole("link", { name: `view build ${build.commitSha.slice(0, 7)}` }),
+        screen.getByRole("link", { name: new RegExp(build.commitSha.slice(0, 7)) }),
       ).toHaveAttribute("href", `/projects/${build.project.id}/builds/${build.id}`);
-    }
-    expect(screen.getAllByRole("link")).toHaveLength(builds.length);
-  });
-
-  it("should link every cell in a row to that row's build, not another row's", () => {
-    const first = mocks.build.generateBuild({ branch: "main" });
-    const second = mocks.build.generateBuild({ branch: "pr/482" });
-    renderTable([first, second]);
-
-    const firstRow = screen.getByRole("row", { name: /main/ });
-    const firstRowLinks = within(firstRow).getAllByRole("link", { hidden: true });
-
-    expect(firstRowLinks.length).toBeGreaterThan(1);
-    for (const link of firstRowLinks) {
-      expect(link).toHaveAttribute("href", `/projects/${first.project.id}/builds/${first.id}`);
     }
   });
 
   it("should show a no-results message when a search matches no builds", () => {
-    renderTable([], { search: "missing" });
+    renderList([], { search: "missing" });
 
-    expect(screen.getByRole("cell", { name: 'no builds found matching "missing"' })).toBeVisible();
+    expect(screen.getByText('no builds found matching "missing"')).toBeVisible();
   });
 
   it("should load and append more builds when the user scrolls to the bottom", () => {
@@ -87,14 +86,14 @@ describe("BuildsTable", () => {
     const secondPage = mocks.build.generateBuild({ name: "second page build" });
     const onLoadMore = vi.fn();
 
-    const { rerender } = renderTable([firstPage], { hasNextPage: true, onLoadMore });
-    expect(screen.queryByRole("cell", { name: /second page build/ })).toBeNull();
+    const { rerender } = renderList([firstPage], { hasNextPage: true, onLoadMore });
+    expect(screen.queryByText("second page build")).toBeNull();
 
     act(() => mockAllIsIntersecting(true));
     expect(onLoadMore).toHaveBeenCalledOnce();
 
     rerender(
-      <BuildsTable
+      <BuildsList
         data={[firstPage, secondPage]}
         isLoading={false}
         hasNextPage={false}
@@ -102,12 +101,12 @@ describe("BuildsTable", () => {
         onLoadMore={onLoadMore}
       />,
     );
-    expect(screen.getByRole("cell", { name: /second page build/ })).toBeVisible();
+    expect(screen.getByText("second page build")).toBeVisible();
   });
 
   it("should not load more builds while a page is already loading", () => {
     const onLoadMore = vi.fn();
-    renderTable([mocks.build.generateBuild()], {
+    renderList([mocks.build.generateBuild()], {
       hasNextPage: true,
       isFetchingNextPage: true,
       onLoadMore,
@@ -120,7 +119,7 @@ describe("BuildsTable", () => {
 
   it("should not load more builds once the last page has been reached", () => {
     const onLoadMore = vi.fn();
-    renderTable([mocks.build.generateBuild()], { hasNextPage: false, onLoadMore });
+    renderList([mocks.build.generateBuild()], { hasNextPage: false, onLoadMore });
 
     act(() => mockAllIsIntersecting(true));
 

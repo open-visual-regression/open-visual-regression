@@ -7,7 +7,7 @@ import { type BuildStatus } from "@ovr/api/contracts/builds";
 import { buildsListInfiniteOptions } from "@/lib/orpc/builds-query";
 import { orpc } from "@/lib/orpc/client";
 
-import { BuildsTable } from "./BuildsTable";
+import { BuildsList } from "./BuildsList";
 import { NoBuildsSection } from "./NoBuildsSection";
 
 type BuildsSectionProps = {
@@ -41,7 +41,7 @@ export const BuildsSection = ({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <BuildsTable
+      <BuildsList
         data={builds}
         search={search}
         isLoading={isPending}

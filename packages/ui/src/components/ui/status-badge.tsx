@@ -1,21 +1,29 @@
 import { Badge, type BadgeProps } from "./badge";
 import { StatusIcon, type StatusVariant } from "./status-icon";
 
-type StatusBadgeProps = Pick<BadgeProps, "variant" | "color"> & {
+type StatusBadgeProps = Pick<BadgeProps, "variant" | "color" | "size" | "className"> & {
   icon: StatusVariant;
   children: React.ReactNode;
 };
 
-const StatusBadge = ({ variant, color, icon, children }: StatusBadgeProps) => (
-  <Badge variant={variant} color={color}>
-    <StatusIcon
-      variant={icon}
-      size={12}
-      className={variant === "solid" ? "text-current" : undefined}
-    />
-    {children}
-  </Badge>
-);
+const ICON_SIZE: Record<NonNullable<BadgeProps["size"]>, number> = {
+  md: 12,
+  sm: 10,
+};
+
+const StatusBadge = ({ variant, color, size, icon, children, className }: StatusBadgeProps) => {
+  const resolvedSize = size ?? "md";
+  return (
+    <Badge variant={variant} color={color} size={resolvedSize} className={className}>
+      <StatusIcon
+        variant={icon}
+        size={ICON_SIZE[resolvedSize]}
+        className={variant === "solid" ? "text-current" : undefined}
+      />
+      {children}
+    </Badge>
+  );
+};
 
 export { StatusBadge };
 export type { StatusBadgeProps };

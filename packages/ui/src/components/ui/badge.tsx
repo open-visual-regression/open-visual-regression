@@ -4,7 +4,7 @@ import { cn } from "../../lib/utils";
 import { Skeleton } from "./skeleton";
 
 const badgeVariants = cva(
-  "inline-flex items-center gap-1 rounded-lg border px-1.5 py-0.5 text-badge font-semibold tracking-label uppercase whitespace-nowrap",
+  "inline-flex items-center rounded-lg border text-badge font-semibold tracking-label uppercase whitespace-nowrap",
   {
     variants: {
       variant: {
@@ -20,6 +20,10 @@ const badgeVariants = cva(
         gray: "",
         purple: "",
         neutral: "",
+      },
+      size: {
+        md: "gap-1 px-1.5 py-0.5",
+        sm: "gap-0.5 px-1 py-0",
       },
     },
     compoundVariants: [
@@ -51,6 +55,7 @@ const badgeVariants = cva(
     defaultVariants: {
       variant: "outline",
       color: "neutral",
+      size: "md",
     },
   },
 );
@@ -60,20 +65,37 @@ type BadgeProps = VariantProps<typeof badgeVariants> & {
   className?: string;
 };
 
-const Badge = ({ variant, color, children, className }: BadgeProps) => {
-  return <span className={cn(badgeVariants({ variant, color }), className)}>{children}</span>;
+const Badge = ({ variant, color, size, children, className }: BadgeProps) => {
+  return <span className={cn(badgeVariants({ variant, color, size }), className)}>{children}</span>;
 };
 
 type BadgeSkeletonProps = {
+  size?: BadgeProps["size"];
   className?: string;
 };
 
-const BadgeSkeleton = ({ className }: BadgeSkeletonProps) => (
-  <span aria-hidden className={cn(badgeVariants(), "relative border-transparent", className)}>
-    &#8203;
-    <Skeleton className="absolute -inset-px rounded-lg" />
-  </span>
-);
+const BADGE_SKELETON_HEIGHT: Record<NonNullable<BadgeProps["size"]>, string> = {
+  md: "h-[21px]",
+  sm: "h-[17px]",
+};
+
+const BadgeSkeleton = ({ size, className }: BadgeSkeletonProps) => {
+  const resolvedSize = size ?? "md";
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        badgeVariants({ size: resolvedSize }),
+        BADGE_SKELETON_HEIGHT[resolvedSize],
+        "relative border-transparent",
+        className,
+      )}
+    >
+      &#8203;
+      <Skeleton className="absolute -inset-px rounded-lg" />
+    </span>
+  );
+};
 
 export { Badge, BadgeSkeleton, badgeVariants };
 export type { BadgeProps, BadgeSkeletonProps };
