@@ -7,13 +7,11 @@ export class ProjectBuildsPage {
     await this.page.goto(`/projects/${projectId}`);
   }
 
-  buildLink(shortSha: string): Locator {
+  // The whole build row is a single link, so there's nothing to find "the row"
+  // that isn't already inside "the link" — this locator serves as both.
+  buildRow(shortSha: string): Locator {
     return this.page.getByRole("link", {
       name: new RegExp(shortSha, "i"),
     });
-  }
-
-  buildRow(shortSha: string): Locator {
-    return this.page.getByRole("listitem").filter({ has: this.buildLink(shortSha) });
   }
 }
