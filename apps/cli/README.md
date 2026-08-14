@@ -81,10 +81,11 @@ ovr snapshot storybook \
 | `--commit <sha>` | yes | | Commit SHA |
 | `--name <name>` | no | | Build name, e.g. the commit message |
 | `--author <author>` | no | | Commit author |
-| `--timeout <seconds>` | no | `600` | Maximum seconds to wait for the build result |
+| `--wait` | no | `false` | Wait for the build to finish processing before exiting |
+| `--timeout <seconds>` | no | `600` | Maximum seconds to wait for the build result (with `--wait`) |
 | `-c, --config <path>` | no | auto-detected | Path to `ovr.config.ts`/`.js`/`.mjs` |
 
-The command uploads the build, then polls until it resolves or `--timeout` elapses. Exit code reflects the outcome: `0` if the build passed (unchanged or auto-approved), non-zero if it needs review, failed, or timed out.
+The command uploads the build, then prints the build page URL and exits `0` as soon as the build is published — it doesn't wait for processing or review. Pass `--wait` to block until the build resolves or `--timeout` elapses instead; exit code then reflects the outcome: `0` if the build passed (unchanged or auto-approved), non-zero if it needs review, failed, or timed out.
 
 ### Per-story overrides
 

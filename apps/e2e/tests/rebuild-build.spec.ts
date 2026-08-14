@@ -12,6 +12,7 @@ test("rebuilding a completed build produces a new build with matching snapshots"
     branch: "main",
   });
   expect(exitCode, stderr).toBe(0);
+  expect(stdout).toMatch(/Build published: https?:\/\/\S+/);
   expect(stdout).toContain("Build passed.");
 
   const { builds } = await seedClient.builds.list({ projectIds: [seed.projectId] });

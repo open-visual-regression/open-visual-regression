@@ -30,6 +30,7 @@ import {
   getBuildDisplayStatus,
   getBuildStatusFilters,
   getBuildStatusOutput,
+  getBuildUrl,
   isTerminalBuildStatus,
 } from "./utils/buildStatus";
 
@@ -58,7 +59,11 @@ export const createBuild = os.builds.createBuild
       UPLOAD_URL_TTL_SECONDS,
     );
 
-    return { buildId: result.data, uploadUrl };
+    return {
+      buildId: result.data,
+      uploadUrl,
+      buildUrl: getBuildUrl(context.projectId, result.data),
+    };
   })
   .actionable();
 

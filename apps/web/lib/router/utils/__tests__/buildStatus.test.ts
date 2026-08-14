@@ -3,7 +3,7 @@ import type { BuildProcessingStatus, BuildReviewStatus } from "@ovr/db/schema";
 
 import { describe, expect, it } from "@/test-utils";
 
-import { getBuildStatusOutput, isTerminalBuildStatus } from "../buildStatus";
+import { getBuildStatusOutput, getBuildUrl, isTerminalBuildStatus } from "../buildStatus";
 
 const source = (processingStatus: BuildProcessingStatus, reviewStatus: BuildReviewStatus) => ({
   id: "018f0000-0000-7000-8000-000000000000",
@@ -43,5 +43,13 @@ describe("buildStatus", () => {
 
   it("should return only the status for settled builds", () => {
     expect(getBuildStatusOutput(source("success", "approved"))).toEqual({ status: "approved" });
+  });
+
+  it("should build the build page url from a project and build id", () => {
+    expect(
+      getBuildUrl("018f0000-0000-7000-8000-000000000001", "018f0000-0000-7000-8000-000000000000"),
+    ).toBe(
+      "http://localhost:3000/projects/018f0000-0000-7000-8000-000000000001/builds/018f0000-0000-7000-8000-000000000000",
+    );
   });
 });

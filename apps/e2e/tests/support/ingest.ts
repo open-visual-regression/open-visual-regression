@@ -19,6 +19,7 @@ export type IngestOptions = {
   branch?: string;
   commitSha?: string;
   name?: string;
+  wait?: boolean;
 };
 
 export type IngestResult = {
@@ -43,8 +44,7 @@ const buildArgs = (commitSha: string, options: IngestOptions): string[] => [
   commitSha,
   "--name",
   options.name ?? `e2e ingest ${commitSha.slice(0, 7)}`,
-  "--timeout",
-  "600",
+  ...((options.wait ?? true) ? ["--wait", "--timeout", "600"] : []),
 ];
 
 // Starts an ingest without waiting for it to finish, so a caller can observe the
