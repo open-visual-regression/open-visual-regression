@@ -4,6 +4,15 @@
 #   docker build -f apps/web/Dockerfile -t open-visual-regression/web .
 
 ARG NODE_VERSION=24.16.0
+# Keep in sync with the "turbo" devDependency in the root package.json.
+ARG TURBO_VERSION=2.10.8
+
+FROM node:${NODE_VERSION}-slim AS pruner
+ARG TURBO_VERSION
+WORKDIR /app
+RUN npm install -g turbo@${TURBO_VERSION}
+COPY . .
+RUN turbo prune @ovr/web --docker
 
 FROM node:${NODE_VERSION}-slim AS builder
 ENV HUSKY=0 \
@@ -15,10 +24,12 @@ RUN corepack enable && \
     apt-get install -y --no-install-recommends python3 make g++ ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
-COPY . .
-RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
-    pnpm install --frozen-lockfile
+COPY --from=pruner /app/out/json/pnpm-lock.yaml .
+RUN pnpm fetch
 
+COPY --from=pruner /app/out/json/ .
+COPY --from=pruner /app/out/full/ .
+RUN pnpm install --frozen-lockfile --offline
 # Throwaway secret so Better Auth's prod init does not throw; not baked in, real one is set at runtime.
 RUN BETTER_AUTH_SECRET="$(node -e 'process.stdout.write(require("crypto").randomBytes(32).toString("base64url"))')" \
     pnpm exec turbo run build --filter=@ovr/web

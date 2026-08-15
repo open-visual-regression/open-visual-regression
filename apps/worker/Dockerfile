@@ -6,6 +6,15 @@
 ARG NODE_VERSION=24.16.0
 # Keep in sync with the pinned "playwright" version in apps/worker + packages/capture.
 ARG PLAYWRIGHT_VERSION=1.61.0
+# Keep in sync with the "turbo" devDependency in the root package.json.
+ARG TURBO_VERSION=2.10.8
+
+FROM node:${NODE_VERSION}-slim AS pruner
+ARG TURBO_VERSION
+WORKDIR /app
+RUN npm install -g turbo@${TURBO_VERSION}
+COPY . .
+RUN turbo prune @ovr/worker --docker
 
 FROM node:${NODE_VERSION}-slim AS builder
 ENV HUSKY=0 \
@@ -16,9 +25,12 @@ RUN corepack enable && \
     apt-get install -y --no-install-recommends python3 make g++ ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
-COPY . .
-RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
-    pnpm install --frozen-lockfile
+COPY --from=pruner /app/out/json/pnpm-lock.yaml .
+RUN pnpm fetch
+
+COPY --from=pruner /app/out/json/ .
+COPY --from=pruner /app/out/full/ .
+RUN pnpm install --frozen-lockfile --offline
 RUN pnpm exec turbo run build --filter=@ovr/worker
 
 RUN cp -r packages/db/src/migrations apps/worker/dist/migrations

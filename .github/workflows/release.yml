@@ -37,3 +37,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: "true"
+
+      - name: Tag docker release
+        run: |
+          version=$(node -p "require('./apps/web/package.json').version")
+          tag="v$version"
+          if git rev-parse "$tag" >/dev/null 2>&1; then
+            echo "$tag already exists, nothing to release"
+          else
+            git tag "$tag"
+            git push origin "$tag"
+          fi
