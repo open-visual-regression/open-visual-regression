@@ -158,7 +158,6 @@ services:
       - workertmp:/tmp
 
   bull-board:
-    image: ${IMAGE_PREFIX:-ovr}/bull-board:${IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: apps/bull-board/Dockerfile
