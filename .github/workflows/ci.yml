@@ -240,8 +240,6 @@ jobs:
             type=semver,pattern={{major}}
             type=raw,value=latest
       - name: Promote the tested image
-        env:
-          TAGS: ${{ steps.meta.outputs.tags }}
         run: |
           source="$IMAGE:sha-${GITHUB_SHA::7}"
           for _ in $(seq 1 60); do
@@ -252,11 +250,9 @@ jobs:
             echo "::error::$source was never published; refusing to release an untested image"
             exit 1
           fi
-          args=""
-          while IFS= read -r tag; do
-            [ -n "$tag" ] && args="$args --tag $tag"
-          done <<< "$TAGS"
-          docker buildx imagetools create $args "$source"
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            "$source"
 
   e2e:
     name: E2E
