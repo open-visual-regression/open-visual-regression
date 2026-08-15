@@ -19,6 +19,7 @@ type StorybookCommandOptions = {
   commit: string;
   name?: string;
   author?: string;
+  wait?: boolean;
   timeout: string;
   config?: string;
 };
@@ -31,7 +32,8 @@ export const storybookCommand = new Command("storybook")
   .requiredOption("--commit <sha>", "commit SHA")
   .option("--name <name>", "build name (e.g. commit message)")
   .option("--author <author>", "commit author")
-  .option("--timeout <seconds>", "maximum seconds to wait for build result", "600")
+  .option("--wait", "wait for the build to finish processing before exiting")
+  .option("--timeout <seconds>", "maximum seconds to wait for build result (with --wait)", "600")
   .option("-c, --config <path>", "path to ovr.config file")
   .action(async (options: StorybookCommandOptions) => {
     const apiKey = getApiKey();
@@ -46,7 +48,7 @@ export const storybookCommand = new Command("storybook")
       const client = createClient(options.serverUrl, apiKey);
 
       console.log(`Creating build for ${branch}@${commitSha} (${targets.length} stories)...`);
-      const { buildId, uploadUrl } = await client.builds.createBuild({
+      const { buildId, uploadUrl, buildUrl } = await client.builds.createBuild({
         branch,
         commitSha,
         name,
@@ -60,7 +62,13 @@ export const storybookCommand = new Command("storybook")
 
       await client.builds.confirmUpload({ buildId, targets, viewports, diffThreshold });
 
-      console.log(`Build ${buildId} created. Waiting for result...`);
+      console.log(`Build published: ${buildUrl}`);
+
+      if (!options.wait) {
+        process.exit(0);
+      }
+
+      console.log("Waiting for result...");
       await pollBuildStatus({
         client,
         buildId,

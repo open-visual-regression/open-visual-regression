@@ -75,6 +75,7 @@ export type CreateBuildInputSchema = z.infer<typeof createBuildInputSchema>;
 export const createBuildOutputSchema = z.object({
   buildId: z.string(),
   uploadUrl: z.string(),
+  buildUrl: z.string(),
 });
 
 export const createBuildContract = oc.input(createBuildInputSchema).output(createBuildOutputSchema);

@@ -69,14 +69,18 @@ type BuildStatusSource = {
   errorMessage: string | null;
 };
 
+export const getBuildUrl = (projectId: string, buildId: string): string => {
+  const baseUrl = process.env.BASE_URL ?? "http://localhost:3000";
+  return `${baseUrl}/projects/${projectId}/builds/${buildId}`;
+};
+
 export const getBuildStatusOutput = (build: BuildStatusSource): GetBuildStatusOutput => {
   const status = getBuildDisplayStatus(build);
 
   if (status === "needs_review") {
-    const baseUrl = process.env.BASE_URL ?? "http://localhost:3000";
     return {
       status,
-      reviewUrl: `${baseUrl}/projects/${build.projectId}/builds/${build.id}`,
+      reviewUrl: getBuildUrl(build.projectId, build.id),
     };
   }
 

@@ -14,6 +14,7 @@ test.describe("Storybook ingestion", () => {
     });
 
     expect(exitCode, stderr).toBe(0);
+    expect(stdout).toMatch(/Build published: https?:\/\/\S+/);
     expect(stdout).toContain("Build passed.");
 
     await projectBuildsPage.goto(seed.projectId);
@@ -21,5 +22,25 @@ test.describe("Storybook ingestion", () => {
     const row = projectBuildsPage.buildRow(shortSha);
     await expect(row).toBeVisible();
     await expect(row.getByText(/^(auto approved|unchanged)$/)).toBeVisible();
+  });
+
+  test("should print the build page URL and exit without waiting for processing", async ({
+    page,
+    seed,
+  }) => {
+    const { stdout, exitCode, stderr } = await ingestStorybook({
+      apiKey: seed.apiKey,
+      branch: "main",
+      wait: false,
+    });
+
+    expect(exitCode, stderr).toBe(0);
+    expect(stdout).not.toContain("Build passed.");
+
+    const buildUrl = stdout.match(/Build published: (\S+)/)?.[1];
+    expect(buildUrl, stdout).toBeDefined();
+
+    await page.goto(buildUrl!);
+    await expect(page.getByRole("status", { name: "build status" })).toBeVisible();
   });
 });
