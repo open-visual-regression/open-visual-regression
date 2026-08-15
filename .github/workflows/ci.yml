@@ -170,7 +170,6 @@ jobs:
         image:
           - { name: web, dockerfile: apps/web/Dockerfile }
           - { name: worker, dockerfile: apps/worker/Dockerfile }
-          - { name: bull-board, dockerfile: apps/bull-board/Dockerfile }
     steps:
       - uses: actions/checkout@v7
       - uses: docker/setup-buildx-action@v4

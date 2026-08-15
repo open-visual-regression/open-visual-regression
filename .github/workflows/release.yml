@@ -39,10 +39,10 @@ jobs:
           NPM_CONFIG_PROVENANCE: "true"
 
       - name: Tag docker release
-        # @ovr/web, @ovr/worker, and @ovr/bull-board are private, so `changeset publish`
-        # never tags them (it only tags packages it actually publishes to npm). Their
-        # version is what apps/web/package.json's version is, since it's a fixed group
-        # (see .changeset/config.json), which is what the sidebar displays and what the
+        # @ovr/web and @ovr/worker are private, so `changeset publish` never tags them
+        # (it only tags packages it actually publishes to npm). Their version is what
+        # apps/web/package.json's version is, since it's a fixed group (see
+        # .changeset/config.json), which is what the sidebar displays and what the
         # docker job in ci.yml re-tags images with on a "v*.*.*" push.
         run: |
           version=$(node -p "require('./apps/web/package.json').version")
