@@ -19,9 +19,11 @@ const BUILD_STATUSES = [
 ] as const;
 
 const buildOverrides: Partial<BuildSchema>[] = Array.from({ length: 24 }, (_, index) => ({
+  id: `018f0000-0000-7000-8000-${index.toString().padStart(12, "0")}`,
   project: PROJECT,
   name: `Build ${index + 1}: Update header layout with a much longer commit message that should truncate cleanly`,
   branch: `feature/this-is-a-really-long-branch-name-that-needs-to-truncate-${index}`,
+  commitSha: `${index.toString(16).padStart(2, "0")}b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0`,
   author: "Jordan Lee",
   createdAt: `2026-06-${String((index % 28) + 1).padStart(2, "0")}T12:00:00.000Z`,
   status: BUILD_STATUSES[index % BUILD_STATUSES.length],
