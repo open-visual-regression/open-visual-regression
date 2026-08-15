@@ -159,6 +159,7 @@ jobs:
     name: Docker image (${{ matrix.image.name }})
     runs-on: ubuntu-latest
     needs: [build, check-types, lint, format-check, test]
+    if: github.ref_type != 'tag'
     permissions:
       contents: read
       packages: write
@@ -172,6 +173,8 @@ jobs:
           - { name: worker, dockerfile: apps/worker/Dockerfile }
     steps:
       - uses: actions/checkout@v7
+      - uses: docker/setup-qemu-action@v4
+        if: env.SHOULD_PUSH == 'true'
       - uses: docker/setup-buildx-action@v4
       - name: Image metadata
         id: meta
@@ -181,12 +184,8 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
             type=sha,prefix=sha-
             type=raw,value=ci-${{ github.run_id }}
-            type=raw,value=latest,enable=${{ github.ref_type == 'tag' }}
       - name: Log in to GHCR
         if: env.SHOULD_PUSH == 'true'
         uses: docker/login-action@v4
@@ -199,6 +198,7 @@ jobs:
         with:
           context: .
           file: ${{ matrix.image.dockerfile }}
+          platforms: ${{ env.SHOULD_PUSH == 'true' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
           push: ${{ env.SHOULD_PUSH == 'true' }}
           load: ${{ env.SHOULD_PUSH != 'true' }}
           tags: ${{ steps.meta.outputs.tags }}
@@ -207,6 +207,56 @@ jobs:
           sbom: ${{ env.SHOULD_PUSH == 'true' }}
           cache-from: type=gha,scope=${{ matrix.image.name }}
           cache-to: type=gha,mode=max,scope=${{ matrix.image.name }}
+
+  promote:
+    name: Promote image (${{ matrix.image }})
+    runs-on: ubuntu-latest
+    if: github.ref_type == 'tag'
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [web, worker]
+    env:
+      IMAGE: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}
+    steps:
+      - uses: docker/setup-buildx-action@v4
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Release metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest
+      - name: Promote the tested image
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          source="$IMAGE:sha-${GITHUB_SHA::7}"
+          for _ in $(seq 1 60); do
+            docker buildx imagetools inspect "$source" >/dev/null 2>&1 && break
+            sleep 30
+          done
+          if ! docker buildx imagetools inspect "$source" >/dev/null 2>&1; then
+            echo "::error::$source was never published; refusing to release an untested image"
+            exit 1
+          fi
+          args=""
+          while IFS= read -r tag; do
+            [ -n "$tag" ] && args="$args --tag $tag"
+          done <<< "$TAGS"
+          docker buildx imagetools create $args "$source"
 
   e2e:
     name: E2E
