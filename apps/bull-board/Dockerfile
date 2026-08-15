@@ -23,15 +23,12 @@ RUN corepack enable && \
     apt-get install -y --no-install-recommends python3 make g++ ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
-COPY --from=pruner /app/out/json/ .
-RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
-    pnpm install --frozen-lockfile
+COPY --from=pruner /app/out/json/pnpm-lock.yaml .
+RUN pnpm fetch
 
+COPY --from=pruner /app/out/json/ .
 COPY --from=pruner /app/out/full/ .
-# Relink: pnpm hard-links peer-dependency-variant workspace packages at install time, before the source above exists.
-RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
-    rm -rf node_modules apps/*/node_modules packages/*/node_modules && \
-    pnpm install --frozen-lockfile --offline
+RUN pnpm install --frozen-lockfile --offline
 RUN pnpm exec turbo run build --filter=@ovr/bull-board
 RUN pnpm --filter @ovr/bull-board deploy --prod --legacy /prod
 
