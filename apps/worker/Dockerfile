@@ -25,18 +25,12 @@ RUN corepack enable && \
     apt-get install -y --no-install-recommends python3 make g++ ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
-# Installation dependencies first, so the layer above only reruns when a
-# dependency actually changes, not on every source edit.
 COPY --from=pruner /app/out/json/ .
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile
 
 COPY --from=pruner /app/out/full/ .
-# pnpm hard-links workspace packages that resolve as peer-dependency variants
-# into its virtual store at install time. Since that ran before the source
-# above existed, any such link points at a package.json-only stub; relink now
-# that the real source is present. --offline is safe and fast: the store
-# cache mount above already fetched everything pnpm needs from the registry.
+# Relink: pnpm hard-links peer-dependency-variant workspace packages at install time, before the source above exists.
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
     rm -rf node_modules apps/*/node_modules packages/*/node_modules && \
     pnpm install --frozen-lockfile --offline
