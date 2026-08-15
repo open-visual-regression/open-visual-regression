@@ -5,7 +5,7 @@
     { "repo": "open-visual-regression/open-visual-regression" }
   ],
   "commit": false,
-  "fixed": [],
+  "fixed": [["@ovr/web", "@ovr/worker", "@ovr/bull-board"]],
   "linked": [],
   "access": "public",
   "baseBranch": "main",

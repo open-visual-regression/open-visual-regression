@@ -37,3 +37,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: "true"
+
+      - name: Tag docker release
+        # @ovr/web, @ovr/worker, and @ovr/bull-board are private, so `changeset publish`
+        # never tags them (it only tags packages it actually publishes to npm). Their
+        # version is what apps/web/package.json's version is, since it's a fixed group
+        # (see .changeset/config.json), which is what the sidebar displays and what the
+        # docker job in ci.yml re-tags images with on a "v*.*.*" push.
+        run: |
+          version=$(node -p "require('./apps/web/package.json').version")
+          tag="v$version"
+          if git rev-parse "$tag" >/dev/null 2>&1; then
+            echo "$tag already exists, nothing to release"
+          else
+            git tag "$tag"
+            git push origin "$tag"
+          fi
