@@ -258,7 +258,7 @@ export const scheduleReaper = async (connection: IORedis): Promise<void> => {
   try {
     await queue.upsertJobScheduler(
       REAPER_JOB_ID,
-      { pattern: "*/5 * * * *" },
+      { pattern: "*/30 * * * *" },
       { name: QueueName.BUILD_REAPER, data: {} },
     );
   } finally {
