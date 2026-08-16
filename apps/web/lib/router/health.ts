@@ -1,8 +1,5 @@
 "use server";
 
-import { ORPCError } from "@orpc/server";
-
-import { db, sql } from "@ovr/db/db";
 import { createLogger } from "@ovr/logger";
 import { buildRedisConnection } from "@ovr/queue";
 
@@ -27,16 +24,6 @@ const withTimeout = async <T>(operation: Promise<T>, check: string): Promise<T> 
     ]);
   } finally {
     clearTimeout(timer);
-  }
-};
-
-const checkDb = async (): Promise<"ok" | "error"> => {
-  try {
-    await withTimeout(db.execute(sql`select 1`), "db");
-    return "ok";
-  } catch (err) {
-    logger.error({ err, check: "db" }, "health check failed");
-    return "error";
   }
 };
 
@@ -70,13 +57,11 @@ export const live = os.health.live.handler(() => ({ status: "ok" as const })).ac
 
 export const ready = os.health.ready
   .handler(async () => {
-    const [dbStatus, redisStatus] = await Promise.all([checkDb(), checkRedis()]);
-    const checks = { db: dbStatus, redis: redisStatus };
+    const redisStatus = await checkRedis();
 
-    if (dbStatus !== "ok") {
-      throw new ORPCError("SERVICE_UNAVAILABLE", { data: { checks } });
-    }
-
-    return { status: redisStatus === "ok" ? ("ok" as const) : ("degraded" as const), checks };
+    return {
+      status: redisStatus === "ok" ? ("ok" as const) : ("degraded" as const),
+      checks: { redis: redisStatus },
+    };
   })
   .actionable();

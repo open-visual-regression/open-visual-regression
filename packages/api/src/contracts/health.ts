@@ -10,7 +10,6 @@ export const livenessOutputSchema = z.object({
 export const readinessOutputSchema = z.object({
   status: z.enum(["ok", "degraded"]),
   checks: z.object({
-    db: dependencyStatusSchema,
     redis: dependencyStatusSchema,
   }),
 });
