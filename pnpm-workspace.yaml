@@ -7,10 +7,6 @@ overrides:
   sharp: ">=0.35.3"
   esbuild: ">=0.28.1"
   valibot: ">=1.4.2"
-  # @tanstack/react-table is pinned to the 9.0.0-beta.6 API; its own
-  # "^9.0.0-beta.5" range for table-core otherwise resolves to the
-  # incompatible 9.0.0 stable release now that it's published.
-  "@tanstack/table-core": "9.0.0-beta.5"
 allowBuilds:
   "@fission-ai/openspec": true
   cpu-features: true

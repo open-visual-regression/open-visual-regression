@@ -4,7 +4,6 @@ import {
   useTable,
   tableFeatures,
   createColumnHelper,
-  createCoreRowModel,
   rowSelectionFeature,
 } from "@tanstack/react-table";
 import { useTanStackTableDevtools } from "@tanstack/react-table-devtools";
@@ -96,7 +95,6 @@ export const UsersTable = ({ data, currentUserId, search }: UsersTableProps) => 
     columns,
     data,
     features,
-    rowModels: { coreRowModel: createCoreRowModel() },
     getRowId: (row) => row.id,
     enableRowSelection: (row) => row.original.id !== currentUserId,
   });

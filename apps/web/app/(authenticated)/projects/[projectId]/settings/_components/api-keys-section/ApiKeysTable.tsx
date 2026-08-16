@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  useTable,
-  tableFeatures,
-  createColumnHelper,
-  createCoreRowModel,
-} from "@tanstack/react-table";
+import { useTable, tableFeatures, createColumnHelper } from "@tanstack/react-table";
 import { useTanStackTableDevtools } from "@tanstack/react-table-devtools";
 
 import { Skeleton } from "@ovr/ui/components/skeleton";
@@ -74,7 +69,6 @@ export const ApiKeysTable = ({ data }: ApiKeysTableProps) => {
     columns,
     data,
     features,
-    rowModels: { coreRowModel: createCoreRowModel() },
     getRowId: (row) => row.id,
   });
 

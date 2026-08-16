@@ -10,7 +10,6 @@ overrides:
   sharp: '>=0.35.3'
   esbuild: '>=0.28.1'
   valibot: '>=1.4.2'
-  '@tanstack/table-core': 9.0.0-beta.5
 
 importers:
 
@@ -221,11 +220,11 @@ importers:
         specifier: ^5.101.4
         version: 5.101.4(react@19.2.8)
       '@tanstack/react-table':
-        specifier: 9.0.0-beta.6
-        version: 9.0.0-beta.6(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        specifier: 9.1.2
+        version: 9.1.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@tanstack/react-table-devtools':
-        specifier: 9.0.0-beta.6
-        version: 9.0.0-beta.6(@tanstack/react-devtools@0.10.9(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(csstype@3.2.3)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.14))(@tanstack/table-core@9.0.0-beta.5)(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(csstype@3.2.3)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.14)
+        specifier: 9.2.0
+        version: 9.2.0(@tanstack/react-devtools@0.10.9(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(csstype@3.2.3)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.14))(@tanstack/table-core@9.1.2)(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(csstype@3.2.3)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.14)
       '@tanstack/react-virtual':
         specifier: ^3.14.9
         version: 3.14.9(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -900,8 +899,8 @@ importers:
         specifier: ^4.3.3
         version: 4.3.3(vite@8.2.0(@types/node@22.20.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))
       '@tanstack/table-core':
-        specifier: 9.0.0-beta.5
-        version: 9.0.0-beta.5
+        specifier: ^9.1.2
+        version: 9.1.2
       '@types/node':
         specifier: ^22.20.1
         version: 22.20.1
@@ -3463,30 +3462,11 @@ packages:
     peerDependencies:
       solid-js: '>=1.9.7'
 
-  '@tanstack/devtools-utils@0.5.1':
-    resolution: {integrity: sha512-yXw2PNY7cOjvx5sU03vNQoH4LG0TSTT7d/TpUpJTpjQQHoehTTjBHQyki8RGIAW6iHJ7K4/DVZgrRiP7hicInQ==}
+  '@tanstack/devtools-ui@0.7.0':
+    resolution: {integrity: sha512-px/a+JgRSVHDj/hID1cwfsIi+ly5l7t3Yw7fLw4G556HXCNgDri36fupt9h7oBeEKntpsx3ep/XtZn51rrCv2g==}
     engines: {node: '>=18'}
-    hasBin: true
     peerDependencies:
-      '@angular/core': '>=19.0.0'
-      '@types/react': '>=17.0.0'
-      preact: '>=10.0.0'
-      react: '>=17.0.0'
       solid-js: '>=1.9.7'
-      vue: '>=3.2.0'
-    peerDependenciesMeta:
-      '@angular/core':
-        optional: true
-      '@types/react':
-        optional: true
-      preact:
-        optional: true
-      react:
-        optional: true
-      solid-js:
-        optional: true
-      vue:
-        optional: true
 
   '@tanstack/devtools-utils@0.6.0':
     resolution: {integrity: sha512-ebYkWwe/OqzkgQzqGlJ5fyjaNX/CSBKluGOAW9KvhKeAM6+/kQ7+BQGqWQUnXE5CQ6pjtjyyLkYBEQ2vmctaug==}
@@ -3555,20 +3535,20 @@ packages:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
-  '@tanstack/react-table-devtools@9.0.0-beta.6':
-    resolution: {integrity: sha512-2DfHZvPcfW9stUuuOreZn7xDV9i3jleo4L3KfhUsRpR5pQnpOl6ygPQ2pxDC5t/f1sshSsllzptdhsRn3jjQGA==}
-    engines: {node: '>=18'}
+  '@tanstack/react-table-devtools@9.2.0':
+    resolution: {integrity: sha512-V6NiJJ8HeSddi3vgctfbzvKz2QeTQUsafpvaaMpwtKMMN1MXhKqCyjnkELvIQP52k/I5RxqQ3Kop+afpIDK2Bw==}
+    engines: {node: '>=20'}
     peerDependencies:
       '@tanstack/react-devtools': '>=0.10.0'
-      '@tanstack/table-core': 9.0.0-beta.5
+      '@tanstack/table-core': ^9.0.0
       '@types/react': '>=18.0.0'
       '@types/react-dom': '>=18.0.0'
       react: '>=18'
       react-dom: '>=18'
 
-  '@tanstack/react-table@9.0.0-beta.6':
-    resolution: {integrity: sha512-ONIKQpWlSm+/pcRVmuUzQqhC6M7PDfa4iW/vsO2DkJu3+nML0N0iZcr9E2rJeCP5xLwi/AKBw2Qz8LkfRm7UKA==}
-    engines: {node: '>=16'}
+  '@tanstack/react-table@9.1.2':
+    resolution: {integrity: sha512-YQPZFJ1nIi/bjjwsPZVouABgahDcl7Gdm33CdTStUJBn0DjEVJ2uhSTVmIoWt9MVKdQziXGAsXipSzy949Hygg==}
+    engines: {node: '>=20'}
     peerDependencies:
       react: '>=18'
 
@@ -3578,23 +3558,26 @@ packages:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
-  '@tanstack/solid-store@0.11.0':
-    resolution: {integrity: sha512-2isL0ZnnyI1iN0V+QPrxE3OcPndohBgVlBcHZYoAOIAiU1WoWjVy0q5gb0suPu1Id0h5cKC23JnwzQTxWDZD0w==}
+  '@tanstack/solid-store@0.11.1':
+    resolution: {integrity: sha512-wzJsiqqLHyQacqbYPT8dKNfhR00NNu743vGeWz2lEpOyE/R+6AYIfFLhXsCIT/Kb+KKiT1KDkB2/35DhLEGx8g==}
     peerDependencies:
       solid-js: ^1.6.0
 
   '@tanstack/store@0.11.0':
     resolution: {integrity: sha512-WlzzCt3xi0G6pCAJu1U+2jiECwabETDpQDi3hfkFZvJii9AuZqEKbOiVarX1/bWhTNjU486yQtJCCasi/0q+Cw==}
 
-  '@tanstack/table-core@9.0.0-beta.5':
-    resolution: {integrity: sha512-C0xCtAET9lVOcmq+j0NXfRn5NlhGsERoazzWNOYlRzrtE7dN7Djkz5FaD5E/yPFC1D+q2XKCP/BfJInayLGNdg==}
-    engines: {node: '>=16'}
+  '@tanstack/store@0.11.1':
+    resolution: {integrity: sha512-mzTOBhypOuDJAy/D8n2MfUZ1HFkXnmSETviRyhqEC8LUE7/IZQExOTxMANj3KjTofYTkFNpBY67qaVrT41YccA==}
 
-  '@tanstack/table-devtools@9.0.0':
-    resolution: {integrity: sha512-YxP7ZLRAg+WILBSj+MTp8Oung7m2i5H1ODiAKjQIs6yFSqS8kqQOeQIEJsB+uDxwXEBR1ZVZixG1KpWmybLrEA==}
+  '@tanstack/table-core@9.1.2':
+    resolution: {integrity: sha512-ONpWQeass1sfg80CWF1NSwQ8r3GiqxA2lT/EdqIcrDEPZ0Z+0mM94eQoFYLPN0Kztzj8TQVb2+PrSZSItqA61g==}
+    engines: {node: '>=20'}
+
+  '@tanstack/table-devtools@9.2.0':
+    resolution: {integrity: sha512-O3ZzCllwfruklYzLR1FYybcsbqbKtYIbcNy7QzimX8dVhEDgDcyaI0WcOkYjiorQlQsTH6oLNaLjMwgXODibQQ==}
     engines: {node: '>=20'}
     peerDependencies:
-      '@tanstack/table-core': 9.0.0-beta.5
+      '@tanstack/table-core': ^9.0.0
 
   '@tanstack/virtual-core@3.17.7':
     resolution: {integrity: sha512-bp+v10y65sp2H7WpWfIMyxTNfl8ZVfxFTLRjPIFRryi6FV/J33z4IS53WO4pTk36KlvJ4iLiQz+oaydDC1xbcA==}
@@ -9550,11 +9533,14 @@ snapshots:
     transitivePeerDependencies:
       - csstype
 
-  '@tanstack/devtools-utils@0.5.1(@types/react@19.2.2)(react@19.2.8)(solid-js@1.9.14)':
-    optionalDependencies:
-      '@types/react': 19.2.2
-      react: 19.2.8
+  '@tanstack/devtools-ui@0.7.0(csstype@3.2.3)(solid-js@1.9.14)':
+    dependencies:
+      clsx: 2.1.1
+      dayjs: 1.11.21
+      goober: 2.1.19(csstype@3.2.3)
       solid-js: 1.9.14
+    transitivePeerDependencies:
+      - csstype
 
   '@tanstack/devtools-utils@0.6.0(@types/react@19.2.2)(react@19.2.8)(solid-js@1.9.14)':
     optionalDependencies:
@@ -9613,12 +9599,12 @@ snapshots:
       react-dom: 19.2.8(react@19.2.8)
       use-sync-external-store: 1.6.0(react@19.2.8)
 
-  '@tanstack/react-table-devtools@9.0.0-beta.6(@tanstack/react-devtools@0.10.9(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(csstype@3.2.3)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.14))(@tanstack/table-core@9.0.0-beta.5)(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(csstype@3.2.3)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.14)':
+  '@tanstack/react-table-devtools@9.2.0(@tanstack/react-devtools@0.10.9(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(csstype@3.2.3)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.14))(@tanstack/table-core@9.1.2)(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(csstype@3.2.3)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.14)':
     dependencies:
-      '@tanstack/devtools-utils': 0.5.1(@types/react@19.2.2)(react@19.2.8)(solid-js@1.9.14)
+      '@tanstack/devtools-utils': 0.6.0(@types/react@19.2.2)(react@19.2.8)(solid-js@1.9.14)
       '@tanstack/react-devtools': 0.10.9(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(csstype@3.2.3)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.14)
-      '@tanstack/table-core': 9.0.0-beta.5
-      '@tanstack/table-devtools': 9.0.0(@tanstack/table-core@9.0.0-beta.5)(@types/react@19.2.2)(csstype@3.2.3)(react@19.2.8)
+      '@tanstack/table-core': 9.1.2
+      '@tanstack/table-devtools': 9.2.0(@tanstack/table-core@9.1.2)(@types/react@19.2.2)(csstype@3.2.3)(react@19.2.8)
       '@types/react': 19.2.2
       '@types/react-dom': 19.2.2(@types/react@19.2.2)
       react: 19.2.8
@@ -9631,10 +9617,10 @@ snapshots:
       - svelte
       - vue
 
-  '@tanstack/react-table@9.0.0-beta.6(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@tanstack/react-table@9.1.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
       '@tanstack/react-store': 0.11.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      '@tanstack/table-core': 9.0.0-beta.5
+      '@tanstack/table-core': 9.1.2
       react: 19.2.8
     transitivePeerDependencies:
       - react-dom
@@ -9645,23 +9631,25 @@ snapshots:
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
 
-  '@tanstack/solid-store@0.11.0(solid-js@1.9.14)':
+  '@tanstack/solid-store@0.11.1(solid-js@1.9.14)':
     dependencies:
-      '@tanstack/store': 0.11.0
+      '@tanstack/store': 0.11.1
       solid-js: 1.9.14
 
   '@tanstack/store@0.11.0': {}
 
-  '@tanstack/table-core@9.0.0-beta.5':
+  '@tanstack/store@0.11.1': {}
+
+  '@tanstack/table-core@9.1.2':
     dependencies:
       '@tanstack/store': 0.11.0
 
-  '@tanstack/table-devtools@9.0.0(@tanstack/table-core@9.0.0-beta.5)(@types/react@19.2.2)(csstype@3.2.3)(react@19.2.8)':
+  '@tanstack/table-devtools@9.2.0(@tanstack/table-core@9.1.2)(@types/react@19.2.2)(csstype@3.2.3)(react@19.2.8)':
     dependencies:
-      '@tanstack/devtools-ui': 0.6.0(csstype@3.2.3)(solid-js@1.9.14)
+      '@tanstack/devtools-ui': 0.7.0(csstype@3.2.3)(solid-js@1.9.14)
       '@tanstack/devtools-utils': 0.6.0(@types/react@19.2.2)(react@19.2.8)(solid-js@1.9.14)
-      '@tanstack/solid-store': 0.11.0(solid-js@1.9.14)
-      '@tanstack/table-core': 9.0.0-beta.5
+      '@tanstack/solid-store': 0.11.1(solid-js@1.9.14)
+      '@tanstack/table-core': 9.1.2
       goober: 2.1.19(csstype@3.2.3)
       solid-js: 1.9.14
     transitivePeerDependencies:
