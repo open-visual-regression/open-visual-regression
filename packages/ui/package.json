@@ -41,7 +41,7 @@
     "@storybook/react-vite": "^10.5.6",
     "@storybook/test": "^8.6.15",
     "@tailwindcss/vite": "^4.3.3",
-    "@tanstack/table-core": "^9.0.0-beta.5",
+    "@tanstack/table-core": "^9.1.2",
     "@types/node": "^22.20.1",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
