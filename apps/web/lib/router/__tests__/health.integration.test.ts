@@ -30,22 +30,30 @@ describe("health", () => {
   });
 
   describe("health.ready", () => {
-    test("should return ok when the database and redis are reachable", async () => {
+    test("should return ok when redis is reachable", async () => {
       const [error, data] = await serverClient.health.ready();
 
       expect(error).toBeNull();
-      expect(data).toEqual({ status: "ok", checks: { db: "ok", redis: "ok" } });
+      expect(data).toEqual({ status: "ok", checks: { redis: "ok" } });
     });
 
-    test("should return a 503 SERVICE_UNAVAILABLE error when the database is unreachable", async () => {
-      vi.spyOn(db, "execute").mockRejectedValueOnce(new Error("simulated db failure"));
+    test("should return ok without querying the database", async () => {
+      const executeSpy = vi.spyOn(db, "execute");
 
       const [error, data] = await serverClient.health.ready();
 
-      expect(data).toBeUndefined();
-      expect(error?.code).toBe("SERVICE_UNAVAILABLE");
-      expect(error?.status).toBe(503);
-      expect(error?.data).toEqual({ checks: { db: "error", redis: "ok" } });
+      expect(error).toBeNull();
+      expect(data).toEqual({ status: "ok", checks: { redis: "ok" } });
+      expect(executeSpy).not.toHaveBeenCalled();
+    });
+
+    test("should return ok when the database is unreachable", async () => {
+      vi.spyOn(db, "execute").mockRejectedValue(new Error("simulated db failure"));
+
+      const [error, data] = await serverClient.health.ready();
+
+      expect(error).toBeNull();
+      expect(data).toEqual({ status: "ok", checks: { redis: "ok" } });
     });
 
     test("should return a degraded status when redis is unreachable", async () => {
@@ -54,7 +62,7 @@ describe("health", () => {
       const [error, data] = await serverClient.health.ready();
 
       expect(error).toBeNull();
-      expect(data).toEqual({ status: "degraded", checks: { db: "ok", redis: "error" } });
+      expect(data).toEqual({ status: "degraded", checks: { redis: "error" } });
     });
   });
 });
