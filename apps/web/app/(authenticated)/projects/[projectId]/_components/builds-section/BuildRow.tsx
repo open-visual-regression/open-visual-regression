@@ -36,15 +36,15 @@ export const BuildRow = ({ build }: BuildRowProps) => {
         </div>
         <div className="flex flex-row flex-wrap items-center gap-x-1.5 gap-y-0">
           <TruncatedText as={Typography} variant="body-muted">
+            {build.author ?? "unknown"}
+          </TruncatedText>
+          <MetadataDot />
+          <TruncatedText as={Typography} variant="body-muted">
             {build.branch}
           </TruncatedText>
           <MetadataDot />
           <TruncatedText as={Typography} variant="body-muted">
             {shortSha}
-          </TruncatedText>
-          <MetadataDot />
-          <TruncatedText as={Typography} variant="body-muted">
-            {build.author ?? "unknown"}
           </TruncatedText>
           <MetadataDot />
           <TruncatedText as={Typography} variant="body-muted">
