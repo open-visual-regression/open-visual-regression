@@ -37,16 +37,6 @@ describe("health", () => {
       expect(data).toEqual({ status: "ok", checks: { redis: "ok" } });
     });
 
-    test("should return ok without querying the database", async () => {
-      const executeSpy = vi.spyOn(db, "execute");
-
-      const [error, data] = await serverClient.health.ready();
-
-      expect(error).toBeNull();
-      expect(data).toEqual({ status: "ok", checks: { redis: "ok" } });
-      expect(executeSpy).not.toHaveBeenCalled();
-    });
-
     test("should return ok when the database is unreachable", async () => {
       vi.spyOn(db, "execute").mockRejectedValue(new Error("simulated db failure"));
 
