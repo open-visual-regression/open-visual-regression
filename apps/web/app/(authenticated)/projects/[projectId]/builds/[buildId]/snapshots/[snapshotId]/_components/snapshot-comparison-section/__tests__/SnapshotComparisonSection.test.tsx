@@ -27,7 +27,7 @@ const diff: DiffSchema = {
   diffImagePath: "diff.png",
   pixelDiffCount: 10,
   diffPercent: 1,
-  baselineSnapshot: { imagePath: "baseline.png" },
+  baselineSnapshot: { imagePath: "baseline.png", commitSha: null, commitUrl: null },
 };
 
 const renderSection = (diffInput: DiffSchema | null) =>

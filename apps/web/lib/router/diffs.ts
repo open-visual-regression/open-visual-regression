@@ -3,6 +3,7 @@
 import { ORPCError } from "@orpc/client";
 
 import { dbClient } from "@ovr/db/client";
+import { buildCommitUrl } from "@ovr/git-status/webCommitUrl";
 import {
   bulkCastVote as bulkCastVoteService,
   castVote as castVoteService,
@@ -25,6 +26,32 @@ const throwOnError = (error: "DIFF_NOT_FOUND" | "REVIEW_NOT_REQUIRED" | "FORBIDD
     throw new ORPCError("FORBIDDEN");
   }
   throw new ORPCError("BAD_REQUEST");
+};
+
+const buildBaselineSnapshot = async (
+  baselineSnapshot: { imagePath: string | null; buildId: string },
+  projectId: string,
+) => {
+  const [baselineBuild, gitIntegration] = await Promise.all([
+    dbClient.builds.findById(baselineSnapshot.buildId),
+    dbClient.gitIntegrations.findByProject(projectId),
+  ]);
+
+  if (!baselineBuild) {
+    return { imagePath: baselineSnapshot.imagePath, commitSha: null, commitUrl: null };
+  }
+
+  return {
+    imagePath: baselineSnapshot.imagePath,
+    commitSha: baselineBuild.commitSha,
+    commitUrl: gitIntegration
+      ? buildCommitUrl(
+          gitIntegration.provider,
+          gitIntegration.repoIdentifier,
+          baselineBuild.commitSha,
+        )
+      : null,
+  };
 };
 
 export const castVote = os.diffs.castVote
@@ -71,20 +98,24 @@ export const getOne = os.diffs.getOne
   .handler(async ({ context }) => {
     const row = await dbClient.diffs.findBySnapshotWithBaseline(context.snapshot.id);
 
+    if (!row) {
+      return { diff: null };
+    }
+
+    const baselineSnapshot = row.baselineSnapshot
+      ? await buildBaselineSnapshot(row.baselineSnapshot, context.project.id)
+      : null;
+
     return {
-      diff: row
-        ? {
-            id: row.diff.id,
-            processingStatus: row.diff.processingStatus,
-            reviewStatus: row.diff.reviewStatus,
-            diffImagePath: row.diff.diffImagePath,
-            pixelDiffCount: row.diff.pixelDiffCount,
-            diffPercent: row.diff.diffPercent,
-            baselineSnapshot: row.baselineSnapshot
-              ? { imagePath: row.baselineSnapshot.imagePath }
-              : null,
-          }
-        : null,
+      diff: {
+        id: row.diff.id,
+        processingStatus: row.diff.processingStatus,
+        reviewStatus: row.diff.reviewStatus,
+        diffImagePath: row.diff.diffImagePath,
+        pixelDiffCount: row.diff.pixelDiffCount,
+        diffPercent: row.diff.diffPercent,
+        baselineSnapshot,
+      },
     };
   })
   .actionable();

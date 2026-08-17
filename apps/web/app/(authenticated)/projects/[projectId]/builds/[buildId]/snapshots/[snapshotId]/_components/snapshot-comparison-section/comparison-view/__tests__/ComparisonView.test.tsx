@@ -5,10 +5,13 @@ import { ComparisonControls } from "../ComparisonControls";
 import { ComparisonView, type ComparisonViewProps } from "../ComparisonView";
 
 const props: ComparisonViewProps = {
-  baselineImagePath: "baseline.png",
-  baselineAlt: "baseline snapshot",
-  newImagePath: "new.png",
-  newAlt: "new snapshot",
+  baseline: {
+    imagePath: "baseline.png",
+    alt: "baseline snapshot",
+    commitSha: null,
+    commitUrl: null,
+  },
+  newSnapshot: { imagePath: "new.png", alt: "new snapshot" },
   diffImagePath: "diff.png",
 };
 

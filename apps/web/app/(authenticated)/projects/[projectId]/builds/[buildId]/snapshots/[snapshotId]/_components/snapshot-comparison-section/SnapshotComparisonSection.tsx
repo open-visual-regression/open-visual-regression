@@ -20,10 +20,13 @@ export const SnapshotComparisonSection = ({ snapshot, diff }: SnapshotComparison
 
   return (
     <ComparisonView
-      baselineImagePath={getStoragePath(diff.baselineSnapshot.imagePath)}
-      baselineAlt={`baseline ${alt}`}
-      newImagePath={getStoragePath(snapshot.imagePath)}
-      newAlt={alt}
+      baseline={{
+        imagePath: getStoragePath(diff.baselineSnapshot.imagePath),
+        alt: `baseline ${alt}`,
+        commitSha: diff.baselineSnapshot.commitSha,
+        commitUrl: diff.baselineSnapshot.commitUrl,
+      }}
+      newSnapshot={{ imagePath: getStoragePath(snapshot.imagePath), alt }}
       diffImagePath={getStoragePath(diff.diffImagePath)}
     />
   );

@@ -1,43 +1,27 @@
 "use client";
 
+import type { BaselineSnapshotPaneData, SnapshotPaneData } from "../../snapshot-pane/types";
 import { useComparisonMode } from "./comparison-mode";
 import { SliderView } from "./SliderView";
 import { SplitView } from "./SplitView";
 
 export type ComparisonViewProps = {
-  baselineImagePath: string | null;
-  baselineAlt: string;
-  newImagePath: string | null;
-  newAlt: string;
+  baseline: BaselineSnapshotPaneData;
+  newSnapshot: SnapshotPaneData;
   diffImagePath: string | null;
 };
 
-export const ComparisonView = ({
-  baselineImagePath,
-  baselineAlt,
-  newImagePath,
-  newAlt,
-  diffImagePath,
-}: ComparisonViewProps) => {
+export const ComparisonView = ({ baseline, newSnapshot, diffImagePath }: ComparisonViewProps) => {
   const { viewMode, showDiff } = useComparisonMode();
 
   if (viewMode === "slider") {
-    return (
-      <SliderView
-        baselineImagePath={baselineImagePath}
-        baselineAlt={baselineAlt}
-        newImagePath={newImagePath}
-        newAlt={newAlt}
-      />
-    );
+    return <SliderView baseline={baseline} newSnapshot={newSnapshot} />;
   }
 
   return (
     <SplitView
-      baselineImagePath={baselineImagePath}
-      baselineAlt={baselineAlt}
-      newImagePath={newImagePath}
-      newAlt={newAlt}
+      baseline={baseline}
+      newSnapshot={newSnapshot}
       diffImagePath={diffImagePath}
       showDiff={showDiff}
     />
