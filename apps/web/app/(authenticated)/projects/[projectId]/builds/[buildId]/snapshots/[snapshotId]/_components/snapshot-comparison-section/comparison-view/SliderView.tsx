@@ -6,6 +6,7 @@ import { Typography } from "@ovr/ui/components/typography";
 
 import { Image } from "@/lib/components/image/Image";
 
+import { BaselineCommitLink } from "../../snapshot-pane/BaselineCommitLink";
 import { SnapshotPane } from "../../snapshot-pane/SnapshotPane";
 import { SnapshotPaneHeader } from "../../snapshot-pane/SnapshotPaneHeader";
 
@@ -27,6 +28,8 @@ const SliderHandle = () => (
 export type SliderViewProps = {
   baselineImagePath: string | null;
   baselineAlt: string;
+  baselineCommitSha: string | null;
+  baselineCommitUrl: string | null;
   newImagePath: string | null;
   newAlt: string;
 };
@@ -59,12 +62,17 @@ const SliderImage = ({ imagePath, alt }: SliderImageProps) =>
 export const SliderView = ({
   baselineImagePath,
   baselineAlt,
+  baselineCommitSha,
+  baselineCommitUrl,
   newImagePath,
   newAlt,
 }: SliderViewProps) => (
   <SnapshotPane>
     <SnapshotPaneHeader className="justify-between">
-      <Typography variant="label">baseline</Typography>
+      <div className="flex items-center gap-2">
+        <Typography variant="label">baseline</Typography>
+        <BaselineCommitLink commitSha={baselineCommitSha} commitUrl={baselineCommitUrl} />
+      </div>
       <Typography variant="label">new</Typography>
     </SnapshotPaneHeader>
     <ReactCompareSlider

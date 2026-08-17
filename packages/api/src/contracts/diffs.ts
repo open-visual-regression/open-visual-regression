@@ -47,7 +47,13 @@ export const diffSchema = z.object({
   diffImagePath: z.string().nullable(),
   pixelDiffCount: z.number().int().nullable(),
   diffPercent: z.number().nullable(),
-  baselineSnapshot: z.object({ imagePath: z.string().nullable() }).nullable(),
+  baselineSnapshot: z
+    .object({
+      imagePath: z.string().nullable(),
+      commitSha: z.string().nullable(),
+      commitUrl: z.string().nullable(),
+    })
+    .nullable(),
 });
 
 export type DiffSchema = z.infer<typeof diffSchema>;

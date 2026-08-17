@@ -5,6 +5,8 @@ import { NewSnapshotPane } from "./NewSnapshotPane";
 export type SplitViewProps = {
   baselineImagePath: string | null;
   baselineAlt: string;
+  baselineCommitSha: string | null;
+  baselineCommitUrl: string | null;
   newImagePath: string | null;
   newAlt: string;
   diffImagePath: string | null;
@@ -14,6 +16,8 @@ export type SplitViewProps = {
 export const SplitView = ({
   baselineImagePath,
   baselineAlt,
+  baselineCommitSha,
+  baselineCommitUrl,
   newImagePath,
   newAlt,
   diffImagePath,
@@ -24,6 +28,8 @@ export const SplitView = ({
       imagePath={baselineImagePath}
       alt={baselineAlt}
       fill={diffImagePath !== null}
+      commitSha={baselineCommitSha}
+      commitUrl={baselineCommitUrl}
     />
     {diffImagePath ? (
       <NewSnapshotDiffPane

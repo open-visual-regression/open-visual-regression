@@ -7,6 +7,8 @@ import { ComparisonView, type ComparisonViewProps } from "../ComparisonView";
 const props: ComparisonViewProps = {
   baselineImagePath: "baseline.png",
   baselineAlt: "baseline snapshot",
+  baselineCommitSha: null,
+  baselineCommitUrl: null,
   newImagePath: "new.png",
   newAlt: "new snapshot",
   diffImagePath: "diff.png",

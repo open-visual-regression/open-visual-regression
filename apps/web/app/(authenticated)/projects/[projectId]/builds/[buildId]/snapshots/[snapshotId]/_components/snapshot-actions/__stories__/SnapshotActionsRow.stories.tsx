@@ -46,7 +46,11 @@ const diff: DiffSchema = {
   diffImagePath: "diff.png",
   pixelDiffCount: 10,
   diffPercent: 1,
-  baselineSnapshot: { imagePath: "baseline.png" },
+  baselineSnapshot: {
+    imagePath: "baseline.png",
+    commitSha: "abc1234567890",
+    commitUrl: "https://github.com/acme/web/commit/abc1234567890",
+  },
 };
 
 const prevSnapshotId = "019edfc7-e040-7492-86b2-ccfdc00cf6e4";

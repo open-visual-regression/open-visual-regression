@@ -7,6 +7,8 @@ import { SplitView } from "./SplitView";
 export type ComparisonViewProps = {
   baselineImagePath: string | null;
   baselineAlt: string;
+  baselineCommitSha: string | null;
+  baselineCommitUrl: string | null;
   newImagePath: string | null;
   newAlt: string;
   diffImagePath: string | null;
@@ -15,6 +17,8 @@ export type ComparisonViewProps = {
 export const ComparisonView = ({
   baselineImagePath,
   baselineAlt,
+  baselineCommitSha,
+  baselineCommitUrl,
   newImagePath,
   newAlt,
   diffImagePath,
@@ -26,6 +30,8 @@ export const ComparisonView = ({
       <SliderView
         baselineImagePath={baselineImagePath}
         baselineAlt={baselineAlt}
+        baselineCommitSha={baselineCommitSha}
+        baselineCommitUrl={baselineCommitUrl}
         newImagePath={newImagePath}
         newAlt={newAlt}
       />
@@ -36,6 +42,8 @@ export const ComparisonView = ({
     <SplitView
       baselineImagePath={baselineImagePath}
       baselineAlt={baselineAlt}
+      baselineCommitSha={baselineCommitSha}
+      baselineCommitUrl={baselineCommitUrl}
       newImagePath={newImagePath}
       newAlt={newAlt}
       diffImagePath={diffImagePath}

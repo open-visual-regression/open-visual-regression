@@ -3,6 +3,7 @@
 import { ORPCError } from "@orpc/client";
 
 import { dbClient } from "@ovr/db/client";
+import { buildCommitUrl } from "@ovr/git-status/webCommitUrl";
 import {
   bulkCastVote as bulkCastVoteService,
   castVote as castVoteService,
@@ -71,6 +72,13 @@ export const getOne = os.diffs.getOne
   .handler(async ({ context }) => {
     const row = await dbClient.diffs.findBySnapshotWithBaseline(context.snapshot.id);
 
+    const [baselineBuild, gitIntegration] = row?.baselineSnapshot
+      ? await Promise.all([
+          dbClient.builds.findById(row.baselineSnapshot.buildId),
+          dbClient.gitIntegrations.findByProject(context.project.id),
+        ])
+      : [null, null];
+
     return {
       diff: row
         ? {
@@ -81,7 +89,18 @@ export const getOne = os.diffs.getOne
             pixelDiffCount: row.diff.pixelDiffCount,
             diffPercent: row.diff.diffPercent,
             baselineSnapshot: row.baselineSnapshot
-              ? { imagePath: row.baselineSnapshot.imagePath }
+              ? {
+                  imagePath: row.baselineSnapshot.imagePath,
+                  commitSha: baselineBuild?.commitSha ?? null,
+                  commitUrl:
+                    baselineBuild && gitIntegration
+                      ? buildCommitUrl(
+                          gitIntegration.provider,
+                          gitIntegration.repoIdentifier,
+                          baselineBuild.commitSha,
+                        )
+                      : null,
+                }
               : null,
           }
         : null,

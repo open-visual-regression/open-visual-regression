@@ -58,7 +58,11 @@ export const NewWithBaseline: Story = {
       diffImagePath: null,
       pixelDiffCount: 0,
       diffPercent: 0,
-      baselineSnapshot: { imagePath: "baseline-desktop.png" },
+      baselineSnapshot: {
+        imagePath: "baseline-desktop.png",
+        commitSha: "abc1234567890",
+        commitUrl: "https://github.com/acme/web/commit/abc1234567890",
+      },
     },
   },
 };
@@ -73,7 +77,11 @@ export const NewWithBaselineAndDiff: Story = {
       diffImagePath: "diff-desktop.png",
       pixelDiffCount: 120,
       diffPercent: 0.4,
-      baselineSnapshot: { imagePath: "baseline-desktop.png" },
+      baselineSnapshot: {
+        imagePath: "baseline-desktop.png",
+        commitSha: "abc1234567890",
+        commitUrl: "https://github.com/acme/web/commit/abc1234567890",
+      },
     },
   },
   play: async ({ canvasElement }) => {
@@ -100,7 +108,11 @@ export const SliderView: Story = {
       diffImagePath: "diff-desktop.png",
       pixelDiffCount: 120,
       diffPercent: 0.4,
-      baselineSnapshot: { imagePath: "baseline-desktop.png" },
+      baselineSnapshot: {
+        imagePath: "baseline-desktop.png",
+        commitSha: "abc1234567890",
+        commitUrl: "https://github.com/acme/web/commit/abc1234567890",
+      },
     },
   },
   play: async ({ canvasElement }) => {

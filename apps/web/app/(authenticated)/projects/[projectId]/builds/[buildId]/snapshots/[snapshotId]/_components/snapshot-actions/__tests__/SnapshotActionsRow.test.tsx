@@ -40,7 +40,7 @@ const diff: DiffSchema = {
   diffImagePath: "diff.png",
   pixelDiffCount: 10,
   diffPercent: 1,
-  baselineSnapshot: { imagePath: "baseline.png" },
+  baselineSnapshot: { imagePath: "baseline.png", commitSha: null, commitUrl: null },
 };
 
 const projectId = "019edfc7-e040-7492-86b2-ccfdc00cf6e1";
