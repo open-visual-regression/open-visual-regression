@@ -9,6 +9,7 @@ import { Image } from "@/lib/components/image/Image";
 import { BaselineCommitLink } from "../../snapshot-pane/BaselineCommitLink";
 import { SnapshotPane } from "../../snapshot-pane/SnapshotPane";
 import { SnapshotPaneHeader } from "../../snapshot-pane/SnapshotPaneHeader";
+import type { BaselineSnapshotPaneData, SnapshotPaneData } from "../../snapshot-pane/types";
 
 // Amber accent divider with a square handle showing the drag glyph. The focus
 // ring is driven by the focusable slider root that wraps this handle.
@@ -26,12 +27,8 @@ const SliderHandle = () => (
 );
 
 export type SliderViewProps = {
-  baselineImagePath: string | null;
-  baselineAlt: string;
-  baselineCommitSha: string | null;
-  baselineCommitUrl: string | null;
-  newImagePath: string | null;
-  newAlt: string;
+  baseline: BaselineSnapshotPaneData;
+  newSnapshot: SnapshotPaneData;
 };
 
 type SliderImageProps = {
@@ -59,27 +56,20 @@ const SliderImage = ({ imagePath, alt }: SliderImageProps) =>
     </div>
   );
 
-export const SliderView = ({
-  baselineImagePath,
-  baselineAlt,
-  baselineCommitSha,
-  baselineCommitUrl,
-  newImagePath,
-  newAlt,
-}: SliderViewProps) => (
+export const SliderView = ({ baseline, newSnapshot }: SliderViewProps) => (
   <SnapshotPane>
     <SnapshotPaneHeader className="justify-between">
       <div className="flex items-center gap-2">
         <Typography variant="label">baseline</Typography>
-        <BaselineCommitLink commitSha={baselineCommitSha} commitUrl={baselineCommitUrl} />
+        <BaselineCommitLink commitSha={baseline.commitSha} commitUrl={baseline.commitUrl} />
       </div>
       <Typography variant="label">new</Typography>
     </SnapshotPaneHeader>
     <ReactCompareSlider
       className="min-h-64 cursor-ew-resize overflow-hidden rounded-card border border-ovr-border bg-ovr-inset bg-pixel-grid lg:min-h-96 [&_[role=slider]:focus-visible_[data-grip]]:ring-2 [&_[role=slider]:focus-visible_[data-grip]]:ring-ovr-fg [&_[role=slider]:focus-visible_[data-grip]]:ring-offset-2 [&_[role=slider]:focus-visible_[data-grip]]:ring-offset-ovr-inset"
       handle={<SliderHandle />}
-      itemOne={<SliderImage imagePath={baselineImagePath} alt={baselineAlt} />}
-      itemTwo={<SliderImage imagePath={newImagePath} alt={newAlt} />}
+      itemOne={<SliderImage imagePath={baseline.imagePath} alt={baseline.alt} />}
+      itemTwo={<SliderImage imagePath={newSnapshot.imagePath} alt={newSnapshot.alt} />}
     />
   </SnapshotPane>
 );
