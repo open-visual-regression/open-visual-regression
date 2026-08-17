@@ -1,0 +1,25 @@
+---
+title: Introduction
+description: Self-hosted, scalable visual regression testing.
+---
+
+OVR captures screenshots from your UI and diffs them against approved baselines. It runs entirely on your own infrastructure: a web dashboard, a worker that captures and diffs snapshots with Playwright, and a CLI that CI pipelines run to upload a build.
+
+## Why OVR?
+
+Unit tests verify behavior, not appearance. A component can pass every test and still ship with broken spacing, a clipped label, or a layout that only breaks at one viewport width.
+
+That gap matters more as more UI code gets written by AI agents. A generated change can compile, pass its tests, and still be visually wrong in a way that's easy to miss in a text-based review. Asking an AI to look at a screenshot and judge whether it looks right helps, but that judgment is non-deterministic and rarely covers every breakpoint and state a change could touch.
+
+Pixel diffing is deterministic: every story, every configured viewport, every time. It won't tell you if a design is good, but it will tell you exactly what changed, and let a reviewer, human or automated, decide if that was intentional.
+
+## How it works
+
+- **No separate test files.** Point the CLI at a `storybook build` output instead of writing and maintaining dedicated visual test files.
+- **Review workflow.** Visual diffs that cross the threshold go into a review queue.
+- **Git status checks.** Connect a project to your Git provider and OVR posts build/review status as a commit check, so a pull request can gate on it.
+- **Bring your own infra.** Postgres, Redis, and any S3-compatible storage. Self-hosted or managed, your call.
+
+## Source and license
+
+OVR is [source-available](https://github.com/open-visual-regression/open-visual-regression/blob/main/LICENSE) under the Elastic License 2.0: free to self-host and modify. The one restriction: you may not offer it to third parties as a hosted or managed service.

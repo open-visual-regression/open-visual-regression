@@ -1,0 +1,8 @@
+{
+  "name": "@ovr/docs",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npx mint@latest dev"
+  }
+}

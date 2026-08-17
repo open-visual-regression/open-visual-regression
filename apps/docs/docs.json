@@ -1,0 +1,36 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Open Visual Regression",
+  "colors": {
+    "primary": "#F9A300",
+    "light": "#F9A300",
+    "dark": "#F9A300"
+  },
+  "favicon": "/favicon.svg",
+  "logo": {
+    "light": "/logo/light.png",
+    "dark": "/logo/dark.png"
+  },
+  "navigation": {
+    "pages": [
+      {
+        "group": "Get Started",
+        "pages": ["index"]
+      }
+    ]
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "GitHub",
+        "href": "https://github.com/open-visual-regression/open-visual-regression"
+      }
+    ]
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/open-visual-regression/open-visual-regression"
+    }
+  }
+}
