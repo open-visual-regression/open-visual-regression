@@ -64,6 +64,7 @@ apps/
   web/          # Next.js dashboard, auth, API (@ovr/web)
   worker/       # BullMQ worker: captures stories with Playwright, diffs them (@ovr/worker)
   cli/          # ovr CLI, published to npm (@open-visual-regression/cli)
+  docs/         # Mintlify documentation site (@ovr/docs)
   bull-board/   # Optional queue inspector UI (@ovr/bull-board, compose "tools" profile)
   e2e/          # Playwright end-to-end suite against the full stack (@ovr/e2e)
 packages/
