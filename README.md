@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  Self-hosted tool built for visual regression testing.
+  Self-hosted, scalable visual regression testing.
 </p>
 
 <p align="center">
@@ -27,7 +27,7 @@ OVR captures screenshots from your UI and diffs them against approved baselines.
 - **No separate test files.** Point it at a `storybook build` output instead of writing and maintaining dedicated visual test files.
 - **Review workflow.** Visual diffs that cross the threshold go into a review queue.
 - **Git status checks.** Connect a project to your Git provider and OVR posts build/review status as a commit check, so a pull request can gate on it.
-- **Bring your own infra.** Postgres, Redis, and any S3-compatible storage. Host your own or use managed services.
+- **Bring your own infra.** Postgres, Redis, and any S3-compatible storage. Self-hosted or managed, your call.
 
 ## Why OVR?
 
