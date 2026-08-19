@@ -678,6 +678,46 @@ describe("snapshots", () => {
       ]);
     });
 
+    test("sorts auto approved snapshots before unchanged ones", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const [unchangedSnapshot, autoApprovedSnapshot] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            targetId: "unchanged",
+            targetTitle: "Story",
+            targetName: "Story",
+            status: "success",
+          },
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            targetId: "auto_approved",
+            targetTitle: "Story",
+            targetName: "Story",
+            status: "success",
+          },
+        ],
+      });
+
+      await dbClient.diffs.create({
+        snapshotId: unchangedSnapshot!.id,
+        processingStatus: "success",
+        reviewStatus: "unchanged",
+      });
+      await dbClient.diffs.create({
+        snapshotId: autoApprovedSnapshot!.id,
+        processingStatus: "success",
+        reviewStatus: "auto_approved",
+      });
+
+      const results = await dbClient.snapshots.listForBuild(build.id, { limit: 10 });
+      expect(results.snapshots.map((row) => row.targetId)).toEqual(["auto_approved", "unchanged"]);
+    });
+
     test("falls back to target title when status priority is tied", async ({
       build,
       captureConfiguration,

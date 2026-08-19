@@ -122,8 +122,8 @@ export const BuildHeader = ({
         <SegmentedProgress
           title={`${total} snapshots`}
           segments={[
-            { label: "unchanged", count: snapshotCounts.unchanged, color: "blue" },
             { label: "auto approved", count: snapshotCounts.auto_approved, color: "green" },
+            { label: "unchanged", count: snapshotCounts.unchanged, color: "blue" },
             { label: "approved", count: snapshotCounts.approved, color: "green" },
             { label: "needs review", count: snapshotCounts.needs_review, color: "amber" },
             { label: "rejected", count: snapshotCounts.rejected, color: "red" },

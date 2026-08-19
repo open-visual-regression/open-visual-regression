@@ -130,8 +130,8 @@ export const getDisplayStatusCounts = async (
 export type SnapshotDisplayStatus = keyof SnapshotDisplayStatusCounts;
 
 const statusDisplayOrder: SnapshotDisplayStatus[] = [
-  "unchanged",
   "auto_approved",
+  "unchanged",
   "approved",
   "needs_review",
   "rejected",
@@ -206,11 +206,11 @@ const statusPriorityExpr = sql<number>`case (${displayStatusExpr})
   when 'needs_review' then 2
   when 'rejected' then 2
   when 'approved' then 2
-  when 'unchanged' then 3
   when 'auto_approved' then 3
-  when 'processing' then 4
-  when 'queued' then 5
-  when 'canceled' then 6
+  when 'unchanged' then 4
+  when 'processing' then 5
+  when 'queued' then 6
+  when 'canceled' then 7
 end`;
 
 const snapshotOrderBy = sql`
