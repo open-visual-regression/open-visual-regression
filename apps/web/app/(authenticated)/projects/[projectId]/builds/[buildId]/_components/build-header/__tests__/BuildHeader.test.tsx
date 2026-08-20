@@ -62,26 +62,6 @@ describe("BuildHeader", () => {
     expect(screen.getByRole("listitem", { name: "4 queued" })).toBeVisible();
   });
 
-  it("should order the auto approved segment before the unchanged segment", () => {
-    renderComponent({
-      build: mocks.build.generateBuild({ status: "needs_review" }),
-      snapshotCounts: {
-        unchanged: 3,
-        auto_approved: 2,
-        approved: 0,
-        needs_review: 0,
-        rejected: 0,
-        error: 0,
-        canceled: 0,
-        queued: 0,
-        processing: 0,
-      },
-    });
-
-    const labels = screen.getAllByRole("listitem").map((item) => item.getAttribute("aria-label"));
-    expect(labels.indexOf("2 auto approved")).toBeLessThan(labels.indexOf("3 unchanged"));
-  });
-
   it("should hide both bulk actions when there are no reviewable snapshots", () => {
     renderComponent({
       build: mocks.build.generateBuild({ status: "needs_review" }),

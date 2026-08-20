@@ -129,8 +129,8 @@ export const BuildHeader = ({
             { label: "rejected", count: snapshotCounts.rejected, color: "red" },
             { label: "error", count: snapshotCounts.error, color: "red" },
             { label: "canceled", count: snapshotCounts.canceled, color: "gray" },
-            { label: "processing", count: snapshotCounts.processing, color: "purple" },
             { label: "queued", count: snapshotCounts.queued, color: "gray" },
+            { label: "processing", count: snapshotCounts.processing, color: "purple" },
           ]}
         />
       ) : null}
