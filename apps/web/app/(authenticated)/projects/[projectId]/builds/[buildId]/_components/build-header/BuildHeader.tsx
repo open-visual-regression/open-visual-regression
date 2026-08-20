@@ -122,15 +122,15 @@ export const BuildHeader = ({
         <SegmentedProgress
           title={`${total} snapshots`}
           segments={[
-            { label: "auto approved", count: snapshotCounts.auto_approved, color: "green" },
-            { label: "unchanged", count: snapshotCounts.unchanged, color: "blue" },
-            { label: "approved", count: snapshotCounts.approved, color: "green" },
+            { label: "error", count: snapshotCounts.error, color: "red" },
             { label: "needs review", count: snapshotCounts.needs_review, color: "amber" },
             { label: "rejected", count: snapshotCounts.rejected, color: "red" },
-            { label: "error", count: snapshotCounts.error, color: "red" },
-            { label: "canceled", count: snapshotCounts.canceled, color: "gray" },
-            { label: "queued", count: snapshotCounts.queued, color: "gray" },
+            { label: "approved", count: snapshotCounts.approved, color: "green" },
+            { label: "auto approved", count: snapshotCounts.auto_approved, color: "green" },
+            { label: "unchanged", count: snapshotCounts.unchanged, color: "blue" },
             { label: "processing", count: snapshotCounts.processing, color: "purple" },
+            { label: "queued", count: snapshotCounts.queued, color: "gray" },
+            { label: "canceled", count: snapshotCounts.canceled, color: "gray" },
           ]}
         />
       ) : null}
