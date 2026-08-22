@@ -15,6 +15,11 @@ import { storage } from "@ovr/storage";
 
 export { describe, expect } from "vitest";
 
+export const writeStorybookBuildMarkers = async (dir: string): Promise<void> => {
+  await writeFile(path.join(dir, "index.json"), JSON.stringify({ v: 5, entries: {} }));
+  await writeFile(path.join(dir, "project.json"), JSON.stringify({ storybookVersion: "10.5.10" }));
+};
+
 export const uploadArtifactWithIframe = async (
   artifactPath: string,
   iframeHtml: string,
@@ -23,7 +28,7 @@ export const uploadArtifactWithIframe = async (
 
   try {
     await writeFile(path.join(sourceDir, "iframe.html"), iframeHtml);
-    await writeFile(path.join(sourceDir, "index.json"), JSON.stringify({ v: 3, entries: {} }));
+    await writeStorybookBuildMarkers(sourceDir);
 
     const tarballPath = path.join(sourceDir, "..", `${path.basename(sourceDir)}.tar.gz`);
     await tar.create({ gzip: true, file: tarballPath, cwd: sourceDir }, ["."]);

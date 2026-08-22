@@ -1,6 +1,8 @@
 import { ORPCError } from "@orpc/client";
 import { Command } from "commander";
 
+import { readStoryTargets } from "@ovr/storybook-compat/manifest";
+
 import { createClient } from "../../client";
 import { getApiKey, loadOvrConfig, resolveDiffThreshold, resolveViewports } from "../../config";
 import { createArtifactTarball, uploadArtifact } from "./artifact";
@@ -10,7 +12,6 @@ import {
   BuildTimeoutError,
   pollBuildStatus,
 } from "./poll";
-import { readStoryTargets } from "./storybookManifest";
 
 type StorybookCommandOptions = {
   dir: string;

@@ -12,7 +12,7 @@ import { QueueName, type CaptureGroupJobPayload } from "@ovr/queue";
 import { storage } from "@ovr/storage";
 
 import { extractBuild } from "../extract";
-import { describe, expect, test } from "./fixtures";
+import { describe, expect, test, writeStorybookBuildMarkers } from "./fixtures";
 
 const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
 const IFRAME_TEMPLATE = await readFile(path.join(TEST_DIR, "html/iframe-template.html"), "utf-8");
@@ -59,6 +59,7 @@ const buildArtifactTarball = async (
       IFRAME_TEMPLATE.replace('"__OVR_STORY_PARAMETERS_JSON__"', JSON.stringify(storyParameters)),
     );
     await writeFile(path.join(sourceDir, "runtime.js"), "console.log('hi')");
+    await writeStorybookBuildMarkers(sourceDir);
 
     const tarballPath = path.join(sourceDir, "..", `${path.basename(sourceDir)}.tar.gz`);
     await tar.create({ gzip: true, file: tarballPath, cwd: sourceDir }, ["."]);
