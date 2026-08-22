@@ -45,6 +45,7 @@ jobs:
 
       - name: Install kubeconform
         run: |
+          set -euo pipefail
           curl -sSfL "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" \
             | sudo tar xz -C /usr/local/bin kubeconform
           kubeconform -v
@@ -53,6 +54,14 @@ jobs:
       # production deployment installs this as ovr-app.
       - name: Render every permutation
         run: |
+          # GitHub Actions' default shell is `bash -e {0}` -- no pipefail. A
+          # pipeline's exit status is its last command's, so a failing `helm
+          # template` piped into `tee | head` was invisible to -e: head still
+          # exits 0, tee still writes an (empty, or partial) file, and
+          # kubeconform "validates" whatever landed in it. Caught only because
+          # a bad values file rendered nothing and kubeconform reported 0
+          # resources as a clean pass rather than the render error it was.
+          set -euo pipefail
           mkdir -p rendered
           render() {
             name=$1; shift
