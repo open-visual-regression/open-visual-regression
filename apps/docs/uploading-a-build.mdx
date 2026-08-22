@@ -1,0 +1,105 @@
+---
+title: Uploading a build
+description: Send a Storybook build to OVR from CI and get a diff against your baseline.
+---
+
+The `ovr` CLI packages a Storybook build, uploads it to your OVR server, and diffs every story against the approved baseline for that branch.
+
+## Prerequisites
+
+- An OVR server your CI can reach, self-hosted or otherwise.
+- A project in the dashboard. Builds always upload into a project, and a project's git main branch is what OVR treats as the source of baselines.
+- An API key for that project.
+- A Storybook static build. The CLI only supports Storybook builds right now.
+
+## Create a project and API key
+
+1. In the dashboard, create a project and set its git main branch. This is the branch OVR pulls approved baselines from when diffing other branches.
+2. Open the project's settings and create an API key. The key value is shown once, so copy it before closing the dialog.
+3. Store the key as a secret in your CI provider, for example `OVR_API_KEY`.
+
+## Build Storybook
+
+```sh
+npx storybook build -o storybook-static
+```
+
+## Upload the build
+
+Install the CLI and run `snapshot storybook`, pointing `--dir` at the Storybook output:
+
+```sh
+OVR_API_KEY=*** npx @open-visual-regression/cli snapshot storybook \
+  --dir storybook-static \
+  --server-url https://ovr.example.com \
+  --branch "$BRANCH" \
+  --commit "$COMMIT_SHA" \
+  --name "$(git log -1 --pretty=%s)" \
+  --author "$(git log -1 --pretty=%an)"
+```
+
+The API key is read from the `OVR_API_KEY` environment variable, not a flag, so it never ends up in shell history or CI logs.
+
+| Flag | Required | Description |
+| --- | --- | --- |
+| `-d, --dir <path>` | Yes | Path to the Storybook static build |
+| `--server-url <url>` | Yes | Your OVR server's URL |
+| `--branch <name>` | Yes | Branch the build was produced from |
+| `--commit <sha>` | Yes | Commit SHA the build was produced from |
+| `--name <name>` | No | A label for the build, commonly the commit message |
+| `--author <author>` | No | Commit author |
+| `--wait` | No | Block until the build finishes processing instead of exiting immediately |
+| `--timeout <seconds>` | No | Max seconds to wait with `--wait`, default `600` |
+| `-c, --config <path>` | No | Path to an `ovr.config` file, if it's not in the working directory |
+
+Without `--wait`, the command exits as soon as the build uploads. With `--wait`, it polls until the build reaches a final status and exits non-zero if the build errors, gets rejected, times out, or needs review, so you can gate a pipeline on it:
+
+```sh
+npx @open-visual-regression/cli snapshot storybook \
+  --dir storybook-static \
+  --server-url https://ovr.example.com \
+  --branch "$BRANCH" \
+  --commit "$COMMIT_SHA" \
+  --wait \
+  --timeout 900
+```
+
+## Example: GitHub Actions
+
+```yaml
+- uses: actions/checkout@v7
+  with:
+    fetch-depth: 0
+- run: npx storybook build -o storybook-static
+- name: Publish snapshot to OVR
+  env:
+    OVR_API_KEY: ${{ secrets.OVR_API_KEY }}
+  run: >
+    npx @open-visual-regression/cli snapshot storybook
+    --dir storybook-static
+    --server-url https://ovr.example.com
+    --branch "${{ github.head_ref || github.ref_name }}"
+    --commit "${{ github.event.pull_request.head.sha || github.sha }}"
+    --name "$(git log -1 --pretty=%s)"
+    --author "$(git log -1 --pretty=%an)"
+```
+
+`fetch-depth: 0` matters here since `git log` needs history beyond the checked-out commit to read the commit message and author.
+
+## Configuring viewports and diff threshold
+
+By default the CLI captures one `chromium` viewport at 1280px wide and flags a story if more than 5% of its pixels differ from the baseline. To capture more viewports or change the threshold, add an `ovr.config.ts` next to where you run the CLI:
+
+```ts
+import { defineConfig } from "@open-visual-regression/cli/config";
+
+export default defineConfig({
+  viewports: [
+    { name: "desktop", width: 1280 },
+    { name: "mobile", width: 375, browser: "webkit" },
+  ],
+  diffThreshold: 0.02,
+});
+```
+
+A story can override viewports or the threshold, or skip itself entirely, via `parameters.ovr` in its Storybook story file.

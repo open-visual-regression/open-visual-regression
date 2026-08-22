@@ -16,7 +16,7 @@
     "pages": [
       {
         "group": "Get Started",
-        "pages": ["index"]
+        "pages": ["index", "uploading-a-build"]
       }
     ]
   },
