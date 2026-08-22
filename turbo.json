@@ -38,6 +38,9 @@
       "dependsOn": ["^build"],
       "outputs": ["storybook-static/**"]
     },
+    "check-links": {
+      "inputs": ["$TURBO_DEFAULT$"]
+    },
     "db:generate": {
       "cache": false,
       "inputs": ["src/schema/**"]
