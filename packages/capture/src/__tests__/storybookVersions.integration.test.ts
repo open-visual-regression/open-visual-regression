@@ -22,9 +22,8 @@ import { newPage } from "../lib/browser";
 import { startStaticProxy, type StaticProxy } from "../lib/staticProxy";
 import { captureBuildGroup } from "../snapshots";
 import { readStoryParameterOverrides } from "../storyViewports";
-import { describe, expect, test } from "./fixtures";
+import { describe, expect, test as baseTest } from "./fixtures";
 
-// Every story the fixtures define, at every supported Storybook major.
 const STORY_IDS = {
   default: "components-button--default",
   withOvrParameters: "components-button--with-ovr-parameters",
@@ -55,26 +54,29 @@ const uploadFixtureArtifact = async (
   }
 };
 
-// These specs are the support matrix for the Storybook versions we advertise:
-// each one runs the real capture code against a real `storybook build` output
-// of that major, so an upstream change to the manifest, the preview globals or
-// the channel events fails here rather than in a user's build.
 describe.skipIf(fixtures.length === 0)("Storybook version compatibility", () => {
   describe.each(fixtures)("Storybook $major", (fixture) => {
     let browser: Browser;
     let proxy: StaticProxy;
-    let page: Page;
 
     beforeAll(async () => {
       proxy = await startStaticProxy(fixture.buildDir);
       browser = await chromium.launch({ args: ["--disable-dev-shm-usage"] });
-      page = await newPage(await browser.newContext());
-      await page.goto(`${proxy.origin}/iframe.html`, { waitUntil: "load" });
     }, 180_000);
 
     afterAll(async () => {
       await browser?.close();
       proxy?.close();
+    });
+
+    const test = baseTest.extend<{ page: Page }>({
+      // eslint-disable-next-line no-empty-pattern
+      page: async ({}, use) => {
+        const page = await newPage(await browser.newContext());
+        await page.goto(`${proxy.origin}/iframe.html`, { waitUntil: "load" });
+        await use(page);
+        await page.close();
+      },
     });
 
     test("builds a bundle we recognise as a supported version", async () => {
@@ -93,16 +95,12 @@ describe.skipIf(fixtures.length === 0)("Storybook version compatibility", () => 
       expect(targets.every((target) => target.title === "Components/Button")).toBe(true);
     });
 
-    // Covers the two globals the capture page waits on before it will screenshot
-    // anything: the #storybook-root element and __STORYBOOK_ADDONS_CHANNEL__.
-    test("boots a capture page", async () => {
+    test("boots a capture page", async ({ page }) => {
       const strategy = await detectCaptureStrategy(fixture.buildDir);
 
       await expect(strategy.waitForBoot(page, BOOT_TIMEOUT_MS)).resolves.toBeUndefined();
     });
 
-    // Covers __STORYBOOK_PREVIEW__.storeInitializationPromise and loadStory,
-    // which is the only route `ovr` story parameters have into the extract step.
     test("exposes ovr story parameters through the preview", async () => {
       const { overrides, failures } = await readStoryParameterOverrides(
         fixture.buildDir,
@@ -118,8 +116,9 @@ describe.skipIf(fixtures.length === 0)("Storybook version compatibility", () => 
       expect(overrides.get(STORY_IDS.default)).toBeUndefined();
     }, 180_000);
 
-    test("renders a story", async () => {
+    test("renders a story", async ({ page }) => {
       const strategy = await detectCaptureStrategy(fixture.buildDir);
+      await strategy.waitForBoot(page, BOOT_TIMEOUT_MS);
 
       const result = await page.evaluate(strategy.waitForTargetRendered, {
         targetId: STORY_IDS.default,
@@ -129,10 +128,9 @@ describe.skipIf(fixtures.length === 0)("Storybook version compatibility", () => 
       expect(result).toEqual({ ok: true });
     });
 
-    // `storyFinished` is why the supported floor is 8.5: without it this wait
-    // never resolves and every story burns the render timeout.
-    test("waits out a play function", async () => {
+    test("waits out a play function", async ({ page }) => {
       const strategy = await detectCaptureStrategy(fixture.buildDir);
+      await strategy.waitForBoot(page, BOOT_TIMEOUT_MS);
 
       const result = await page.evaluate(strategy.waitForTargetPlayed, {
         targetId: STORY_IDS.withPlay,
@@ -142,11 +140,9 @@ describe.skipIf(fixtures.length === 0)("Storybook version compatibility", () => 
       expect(result).toEqual({ ok: true });
     });
 
-    // Storybook 9 and 10 report storyFinished with status "success" even when
-    // the play function threw, so the strategy has to decide from the error
-    // events that precede it. This catches a regression to trusting `status`.
-    test("fails a story whose play function throws", async () => {
+    test("fails a story whose play function throws", async ({ page }) => {
       const strategy = await detectCaptureStrategy(fixture.buildDir);
+      await strategy.waitForBoot(page, BOOT_TIMEOUT_MS);
 
       const result = await page.evaluate(strategy.waitForTargetPlayed, {
         targetId: STORY_IDS.playThrows,
@@ -174,11 +170,9 @@ describe.skipIf(fixtures.length === 0)("Storybook version compatibility", () => 
       const snapshots = await dbClient.snapshots.findByBuild(mainBuild.id);
       const byTarget = new Map(snapshots.map((snapshot) => [snapshot.targetId, snapshot]));
 
-      // `skip: true` keeps the story out of the build entirely.
       expect(byTarget.has(STORY_IDS.skipped)).toBe(false);
       expect(byTarget.has(STORY_IDS.default)).toBe(true);
 
-      // The viewport and threshold overrides come from the story's parameters.
       expect(byTarget.get(STORY_IDS.withOvrParameters)).toMatchObject({
         viewportWidth: 320,
         viewportHeight: 240,

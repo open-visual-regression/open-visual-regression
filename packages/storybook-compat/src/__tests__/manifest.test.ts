@@ -49,8 +49,6 @@ describe("readStoryTargets", () => {
     }
   });
 
-  // The version gate runs before parsing so an unsupported build is turned away
-  // with the reason, not with a confusing manifest error.
   it("rejects a Storybook build older than the supported minimum", async () => {
     const dir = await mkdtemp(path.join(tmpdir(), "ovr-storybook-manifest-"));
     await writeFile(path.join(dir, "index.json"), JSON.stringify({ v: 4, entries: {} }));

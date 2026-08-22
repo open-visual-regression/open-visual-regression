@@ -100,8 +100,6 @@ describe("assertSupportedStorybookBuild", () => {
     );
   });
 
-  // Storybook 7 is the one version we can still recognise without project.json,
-  // because it is the only supported-era major that writes index.json v4.
   it("rejects a Storybook 7 build from the manifest version alone", async () => {
     const dir = await writeBuild({ indexVersion: 4 });
 

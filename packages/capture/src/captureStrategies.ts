@@ -193,9 +193,6 @@ const storybookCaptureStrategy: CaptureStrategy = {
   waitForTargetPlayed: waitForStorybookTargetPlayed,
 };
 
-// Builds older than the supported minimum never emit `storyFinished`, so every
-// story in them would sit until the render timeout. Fail the capture group up
-// front with the version in the message instead.
 export const detectCaptureStrategy = async (bundleDir: string): Promise<CaptureStrategy> => {
   await assertSupportedStorybookBuild(bundleDir);
   return storybookCaptureStrategy;

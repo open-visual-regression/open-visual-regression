@@ -14,9 +14,6 @@ const EXPECTED_STORY_IDS = [
 
 const fixtures = availableStorybookFixtures();
 
-// The browser-level half of the compatibility matrix lives in @ovr/capture,
-// which needs infrastructure to run. These are the parts that only need the
-// build output on disk, so they stay cheap.
 describe.skipIf(fixtures.length === 0)("built Storybook fixtures", () => {
   describe.each(fixtures)("Storybook $major", (fixture) => {
     it("is built with the major it claims and is above the supported minimum", async () => {

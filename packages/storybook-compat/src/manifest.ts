@@ -13,8 +13,6 @@ export type StoryTarget = {
   name: string;
 };
 
-// Reads the stories to capture out of a static build's index.json, rejecting
-// builds from a Storybook older than we support before parsing them.
 export const readStoryTargets = async (dir: string): Promise<StoryTarget[]> => {
   await assertSupportedStorybookBuild(dir);
 
