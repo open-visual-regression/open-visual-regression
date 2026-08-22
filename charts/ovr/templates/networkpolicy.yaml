@@ -1,0 +1,57 @@
+{{- if .Values.networkPolicy.enabled }}
+{{- range $component := list "web" "worker" }}
+{{- $cfg := index $.Values $component }}
+{{- if $cfg.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "ovr.fullname" $ }}-{{ $component }}
+  labels:
+    {{- include "ovr.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $component }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "ovr.selectorLabels" (dict "Release" $.Release "Chart" $.Chart "Values" $.Values "component" $component) | nindent 6 }}
+  policyTypes:
+    - Ingress
+    - Egress
+  {{- if eq $component "web" }}
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: {{ $.Values.web.port }}
+      {{- with $.Values.networkPolicy.web.from }}
+      # Omitting `from` entirely admits traffic from anywhere in the cluster,
+      # which is what an unset networkPolicy.web.from means.
+      from:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  {{- else }}
+  # The worker serves nothing and is never addressed. Omitting the ingress key
+  # with Ingress in policyTypes denies all inbound traffic to it.
+  {{- end }}
+  egress:
+    # DNS, always. Without it every outbound hostname fails to resolve.
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    {{- with $.Values.networkPolicy.egress }}
+    {{- toYaml . | nindent 4 }}
+    {{- else }}
+    # Postgres, Redis and object storage are usually outside the cluster and
+    # differ per install, so egress is unrestricted unless networkPolicy.egress
+    # is set.
+    - {}
+    {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

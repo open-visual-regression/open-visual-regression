@@ -104,6 +104,36 @@ web:
     # Redirect plain HTTP to HTTPS when tls is set. Supported for className
     # traefik and nginx; other controllers need their own redirect config.
     redirectHttps: true
+  priorityClassName: ""
+  # Spread constraints, passed through verbatim. Include a labelSelector
+  # matching this component -- the chart does not inject one:
+  #
+  #   topologySpreadConstraints:
+  #     - maxSkew: 1
+  #       topologyKey: topology.kubernetes.io/zone
+  #       whenUnsatisfiable: ScheduleAnyway
+  #       labelSelector:
+  #         matchLabels:
+  #           app.kubernetes.io/name: ovr
+  #           app.kubernetes.io/component: web
+  topologySpreadConstraints: []
+  podDisruptionBudget:
+    enabled: false
+    # Set exactly one of these. Either may be a count or a percentage.
+    # minAvailable: 1 against a single replica blocks node drains outright.
+    maxUnavailable: 1
+    minAvailable: ""
+  # Requires resources.requests to be set -- utilization is a percentage of
+  # the request, so an HPA on a container without one never scales.
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: ""
+    # Additional autoscaling/v2 metrics, appended verbatim.
+    metrics: []
+    behavior: {}
 
 worker:
   enabled: true
@@ -139,6 +169,63 @@ worker:
   # Chromium needs real /dev/shm; the k8s default (64Mi) crashes on non-trivial
   # pages. Mounted as an in-memory emptyDir.
   shmSize: 1Gi
+  priorityClassName: ""
+  # Spread constraints, passed through verbatim. Include a labelSelector
+  # matching this component -- the chart does not inject one:
+  #
+  #   topologySpreadConstraints:
+  #     - maxSkew: 1
+  #       topologyKey: topology.kubernetes.io/zone
+  #       whenUnsatisfiable: ScheduleAnyway
+  #       labelSelector:
+  #         matchLabels:
+  #           app.kubernetes.io/name: ovr
+  #           app.kubernetes.io/component: worker
+  topologySpreadConstraints: []
+  podDisruptionBudget:
+    enabled: false
+    # Set exactly one of these. Either may be a count or a percentage.
+    # minAvailable: 1 against a single replica blocks node drains outright.
+    maxUnavailable: 1
+    minAvailable: ""
+  # CPU autoscaling for the worker is a poor fit -- a pod holding an idle
+  # browser between snapshots looks unloaded while it is very much busy.
+  # Prefer keda below, which scales on queue depth. Mutually exclusive with it.
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: ""
+    metrics: []
+    behavior: {}
+
+  # Queue-depth autoscaling. Requires KEDA installed in the cluster; the chart
+  # does not install it.
+  keda:
+    enabled: false
+    minReplicaCount: 1
+    maxReplicaCount: 5
+    pollingInterval: 30
+    # Must outlast the longest capture group, or KEDA scales away a pod still
+    # holding a browser. groupSize snapshots at up to 2 minutes each, so
+    # groupSize 4 wants ~480s here, and terminationGracePeriodSeconds has to
+    # cover the in-flight snapshot on top of that.
+    cooldownPeriod: 300
+    advanced: {}
+    # No default: the address format and authentication depend on your Redis.
+    # Capture work lands on the BullMQ snapshot-capture queue, whose waiting
+    # list is bull:snapshot-capture:wait.
+    #
+    #   triggers:
+    #     - type: redis
+    #       metadata:
+    #         address: valkey:6379
+    #         listName: bull:snapshot-capture:wait
+    #         listLength: "4"
+    #       authenticationRef:
+    #         name: ovr-redis-auth
+    triggers: []
 
 migrate:
   enabled: true
@@ -147,3 +234,24 @@ migrate:
 tests:
   enabled: true
   image: busybox:1.37
+
+# Off by default. Enabled, the worker gets a deny-all ingress policy -- it
+# serves nothing and is never addressed by anything -- and the web pod admits
+# traffic on its port. Egress always permits DNS, and is otherwise
+# unrestricted: Postgres, Redis and object storage are usually outside the
+# cluster and differ per install.
+networkPolicy:
+  enabled: false
+  web:
+    # Peers admitted to the web pod. Empty admits any pod in the cluster;
+    # narrow it to your ingress controller:
+    #
+    #   from:
+    #     - namespaceSelector:
+    #         matchLabels:
+    #           kubernetes.io/metadata.name: traefik
+    from: []
+  # Appended after the DNS allowance. Setting anything here replaces the
+  # default unrestricted egress, so it must list everything the pods reach:
+  # Postgres, Redis, object storage and any git forge.
+  egress: []

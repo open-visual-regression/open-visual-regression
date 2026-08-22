@@ -1,0 +1,26 @@
+{{- if and .Values.worker.enabled .Values.worker.keda.enabled }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "ovr.fullname" . }}-worker
+  labels:
+    {{- include "ovr.labels" . | nindent 4 }}
+    app.kubernetes.io/component: worker
+spec:
+  scaleTargetRef:
+    name: {{ include "ovr.fullname" . }}-worker
+  minReplicaCount: {{ .Values.worker.keda.minReplicaCount }}
+  maxReplicaCount: {{ .Values.worker.keda.maxReplicaCount }}
+  pollingInterval: {{ .Values.worker.keda.pollingInterval }}
+  cooldownPeriod: {{ .Values.worker.keda.cooldownPeriod }}
+  {{- with .Values.worker.keda.advanced }}
+  advanced:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  triggers:
+    {{- with .Values.worker.keda.triggers }}
+    {{- toYaml . | nindent 4 }}
+    {{- else }}
+    {{- fail "worker.keda.enabled is true but worker.keda.triggers is empty -- see values.yaml for a BullMQ example" }}
+    {{- end }}
+{{- end }}

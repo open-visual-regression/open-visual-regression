@@ -1,0 +1,55 @@
+# Every scaling and HA knob on at once, so the CI template job renders the
+# PodDisruptionBudget, HorizontalPodAutoscaler, ScaledObject and NetworkPolicy
+# paths rather than only their disabled branches.
+existingSecret: ovr-secrets
+
+web:
+  replicas: 3
+  resources:
+    requests: { cpu: 100m, memory: 160Mi }
+  priorityClassName: system-cluster-critical
+  podDisruptionBudget:
+    enabled: true
+    maxUnavailable: 1
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: topology.kubernetes.io/zone
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels:
+          app.kubernetes.io/name: ovr
+          app.kubernetes.io/component: web
+
+worker:
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+  keda:
+    enabled: true
+    minReplicaCount: 1
+    maxReplicaCount: 8
+    cooldownPeriod: 600
+    triggers:
+      - type: redis
+        metadata:
+          address: valkey:6379
+          listName: bull:snapshot-capture:wait
+          listLength: "4"
+
+networkPolicy:
+  enabled: true
+  web:
+    from:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: traefik
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except: [169.254.169.254/32]

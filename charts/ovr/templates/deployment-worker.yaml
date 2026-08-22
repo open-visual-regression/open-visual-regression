@@ -7,7 +7,11 @@ metadata:
     {{- include "ovr.labels" . | nindent 4 }}
     app.kubernetes.io/component: worker
 spec:
+  {{- if not (or .Values.worker.autoscaling.enabled .Values.worker.keda.enabled) }}
+  # Omitted while an autoscaler owns the replica count, so a sync does
+  # not fight it back down to this number.
   replicas: {{ .Values.worker.replicas }}
+  {{- end }}
   # RollingUpdate needs 2x this pod's requests free on its node; use Recreate otherwise.
   strategy:
     type: {{ .Values.worker.updateStrategy | default "RollingUpdate" }}
@@ -41,6 +45,13 @@ spec:
       {{- with .Values.worker.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.worker.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.worker.priorityClassName }}
+      priorityClassName: {{ . }}
       {{- end }}
       containers:
         - name: worker

@@ -1,0 +1,51 @@
+{{- range $component := list "web" "worker" }}
+{{- $cfg := index $.Values $component }}
+{{- $auto := $cfg.autoscaling }}
+{{- if and $cfg.enabled $auto.enabled }}
+{{- if and (eq $component "worker") $.Values.worker.keda.enabled }}
+{{- fail "worker.autoscaling.enabled and worker.keda.enabled are mutually exclusive: KEDA creates and owns its own HorizontalPodAutoscaler" }}
+{{- end }}
+{{- if not (or $auto.targetCPUUtilizationPercentage $auto.targetMemoryUtilizationPercentage $auto.metrics) }}
+{{- fail (printf "%s.autoscaling: set a target utilization or custom metrics, or the HPA has nothing to scale on" $component) }}
+{{- end }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "ovr.fullname" $ }}-{{ $component }}
+  labels:
+    {{- include "ovr.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $component }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "ovr.fullname" $ }}-{{ $component }}
+  minReplicas: {{ $auto.minReplicas }}
+  maxReplicas: {{ $auto.maxReplicas }}
+  metrics:
+    {{- with $auto.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ . }}
+    {{- end }}
+    {{- with $auto.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ . }}
+    {{- end }}
+    {{- with $auto.metrics }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with $auto.behavior }}
+  behavior:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}
+{{- end }}
