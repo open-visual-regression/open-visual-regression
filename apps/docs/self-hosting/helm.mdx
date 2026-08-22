@@ -1,0 +1,102 @@
+---
+title: Helm
+description: Deploy OVR to Kubernetes with the published Helm chart.
+---
+
+The chart deploys the OVR `web` and `worker` images, plus a migration Job that runs before each install and upgrade. It requires a Postgres database, a Redis-compatible instance, and an S3-compatible bucket already reachable from the cluster, the chart doesn't run any of them for you.
+
+## Requirements
+
+- A Kubernetes cluster. Any distribution works, including a single-node k3s or k0s install, this doesn't need to be a managed cluster.
+- Helm 3.8 or later (needed for OCI registry support).
+- A reachable Postgres database, Redis-compatible instance, and S3-compatible bucket. These can run in the same cluster (RustFS, Valkey, or anything else you self-host) or be managed services elsewhere. OVR only needs standard `postgresql://`, `redis://`, and S3 protocols, any compatible service works.
+- An ingress controller if you want the dashboard reachable outside the cluster. `kubectl port-forward` works for a quick check without one.
+
+## Install
+
+The chart is published as an OCI artifact:
+
+```sh
+helm install ovr oci://ghcr.io/open-visual-regression/charts/ovr \
+  --namespace ovr --create-namespace \
+  -f my-values.yaml
+```
+
+Add `--version <chart-version>` to pin an exact chart release. Without it, Helm resolves the highest published SemVer.
+
+Install fails with a message naming the missing value if a required one is left unset, instead of deploying pods that crash at startup.
+
+## Configure
+
+Copy the values below into `my-values.yaml`, or pass equivalents with `--set`.
+
+### Required
+
+| Value | Description |
+| --- | --- |
+| `env.baseUrl` | Public URL the app will be served at. |
+| `auth.betterAuthSecret` | Signs auth sessions. Generate with `openssl rand -base64 32`. |
+| `auth.gitTokenEncryptionKey` | Encrypts stored git provider tokens at rest. Generate with `openssl rand -base64 32`. Rotating it invalidates every stored token, they'll need to be re-entered. |
+| `database.url` | `postgresql://` connection string. |
+| `redis.url` | `redis://` or `rediss://` connection string. |
+| `storage.bucket` / `storage.region` | Bucket name and region. The bucket must already exist. |
+| `storage.accessKey` / `storage.secretKey` | Storage credentials. |
+
+### Object storage
+
+Any S3-compatible service works: AWS S3, Cloudflare R2, RustFS, MinIO, and others.
+
+| Value | Description |
+| --- | --- |
+| `storage.endpoint` | Internal address the app uses to reach storage. Leave empty for AWS S3. |
+| `storage.publicEndpoint` | Address baked into presigned URLs handed to CI and browsers. Leave empty for AWS S3. |
+| `storage.forcePathStyle` | `true` for RustFS, MinIO, R2, and most self-hosted S3-compatible services. `false` for AWS S3. |
+
+### Managing secrets yourself
+
+Set `existingSecret` to the name of a Secret you manage (Sealed Secrets, External Secrets, or created by hand) instead of putting credentials in values. It needs these keys: `DATABASE_URL`, `REDIS_URL`, `BETTER_AUTH_SECRET`, `OVR_GIT_TOKEN_ENCRYPTION_KEY`, `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`.
+
+### Other values
+
+| Value | Default | Description |
+| --- | --- | --- |
+| `env.logLevel` | `info` | Log verbosity. |
+
+## Sizing for a small cluster
+
+- `worker.concurrency` (default `2`) sets how many capture groups run at once, each one drives its own headless Chromium. Drop it to `1` on a small or single node.
+- `worker.groupSize` caps snapshots per capture-group job, empty uses the app default of 10.
+- `worker.shmSize` (default `1Gi`) is mounted as an in-memory `emptyDir` for Chromium.
+- `web.resources` and `worker.resources` default to `{}` (no requests or limits). Set them once you know your cluster's real headroom, the worker is the heavier of the two.
+- `web.updateStrategy` / `worker.updateStrategy` default to `Recreate`, which needs no spare capacity during a rollout. Switch to `RollingUpdate` only once a node has room for an old and new pod briefly overlapping.
+- `worker.terminationGracePeriodSeconds` defaults to `180`. A capture-group job holds a browser open across several snapshots, cutting it off early fails whatever was in flight.
+
+## Expose it
+
+Set `web.ingress.enabled: true` and `web.ingress.host`, plus `web.ingress.className` and `web.ingress.annotations` for your ingress controller and TLS setup (for example cert-manager). Or use `kubectl port-forward` for a quick check, see the `helm install` output for the exact command.
+
+Once `web.ingress.tls` is set, `web.ingress.redirectHttps` (default `true`) redirects plain HTTP to HTTPS. It's implemented for `className: traefik` and `className: nginx`. On any other controller, configure the redirect yourself.
+
+## Images
+
+Images are published at `ghcr.io/open-visual-regression/{web,worker}`. `image.tag` defaults to `main` (the moving branch build). Pin to a `sha-<short-sha>` tag, or a `vX.Y.Z` release tag (the only tags that also get `latest`), for anything you don't want to shift under you.
+
+`image.tag` / `image.digest` apply to both images. To pin them separately, since they don't share a digest, use `web.image.*` and `worker.image.*`, each supporting `tag`, `digest`, and `override` (a full image reference, highest precedence).
+
+## Update
+
+```sh
+helm upgrade ovr oci://ghcr.io/open-visual-regression/charts/ovr \
+  --namespace ovr \
+  -f my-values.yaml
+```
+
+The migration Job re-runs automatically as a pre-upgrade hook before the app updates. If you're tracking a moving tag like `main` with `pullPolicy: Always`, a rollout restart is what actually fetches a new image:
+
+```sh
+kubectl -n ovr rollout restart deployment/ovr-web deployment/ovr-worker
+```
+
+## Running as non-root
+
+`podSecurityContext` defaults to UID/GID `1001`, matching the images. The images declare their user by name, which the kubelet can't verify against `runAsNonRoot`, so a numeric UID is required here. Override it only if you build the images yourself with different UID/GID build args.
