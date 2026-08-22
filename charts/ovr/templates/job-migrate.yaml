@@ -21,11 +21,20 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      # Deliberately no serviceAccountName. This Job is a pre-install hook, so
+      # it runs before the chart's ServiceAccount exists. Migrations need only
+      # DATABASE_URL -- never object storage -- so they need no cloud identity
+      # and the default account is enough. It still gets no API token.
+      automountServiceAccountToken: false
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
       restartPolicy: Never
       containers:
         - name: migrate
           image: {{ include "ovr.image" (dict "Values" .Values "Chart" .Chart "name" "worker" "tag" .Values.worker.image.tag "digest" .Values.worker.image.digest "override" .Values.worker.image.override) }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
           command: ["node", "dist/migrate.js"]
           # No ConfigMap ref: this Job runs pre-install, before it exists.
           envFrom:

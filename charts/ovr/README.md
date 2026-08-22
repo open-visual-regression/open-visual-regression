@@ -70,6 +70,45 @@ declare their user by name, which the kubelet cannot verify against
 `runAsNonRoot`, so a numeric UID has to be supplied here. Override it if you
 build the images with different `UID`/`GID` build args.
 
+`containerSecurityContext` drops all capabilities, disables privilege
+escalation and sets a `RuntimeDefault` seccomp profile — enough for Pod
+Security Admission `restricted`. `readOnlyRootFilesystem` stays `false`:
+Next.js writes its cache and Chromium writes scratch files at runtime.
+
+The **worker overrides this and omits `seccompProfile`**. The app launches
+Chromium with its sandbox enabled, so the browser needs unprivileged user
+namespaces, and `RuntimeDefault` restricts the clone flags that sandbox
+depends on — the classic "Chromium won't start in Docker" failure. So the
+worker is not admissible to a `restricted` namespace as shipped. Running it
+in one means setting `worker.containerSecurityContext.seccompProfile` **and**
+launching Chromium with `--no-sandbox`, which trades the browser's sandbox
+for the kernel's. Set `web.containerSecurityContext` to override the web pod
+independently.
+
+## Object storage credentials
+
+`storage.accessKey`/`storage.secretKey` put static credentials in a Secret.
+Prefer binding a cloud IAM role to the chart's ServiceAccount instead:
+
+```yaml
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::111122223333:role/ovr
+storage:
+  accessKey: ""
+  secretKey: ""
+```
+
+Leaving both empty omits them from the Secret entirely, so the app falls
+through to the provider's default credential chain and picks up the role.
+Works the same for GKE Workload Identity, or anything else that binds an
+identity to a ServiceAccount.
+
+The migration Job deliberately does **not** use this ServiceAccount. It runs
+as a `pre-install` hook, before the ServiceAccount exists, and it only ever
+needs `DATABASE_URL` — never object storage — so it runs on the namespace's
+`default` account with no API token mounted.
+
 ## Resource naming
 
 Objects are named after the release alone — release `ovr-app` gives

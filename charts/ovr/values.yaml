@@ -22,6 +22,22 @@ imagePullSecrets: []
 # below (recommended if using GitOps / Sealed Secrets / External Secrets).
 existingSecret: ""
 
+# The web and worker pods never call the Kubernetes API. The ServiceAccount
+# exists so a cloud IAM role can be bound to it: annotate it for IRSA (EKS),
+# Workload Identity (GKE) or the equivalent, leave storage.accessKey and
+# storage.secretKey empty, and the app picks the role up through the
+# provider's default credential chain -- no static keys in a Secret at all.
+serviceAccount:
+  create: true
+  # Defaults to the release name. Set this with create: false to reuse a
+  # ServiceAccount you manage yourself.
+  name: ""
+  annotations: {}
+  # Nothing here talks to the API server, so no API token is mounted. IRSA and
+  # Workload Identity are unaffected: their admission webhooks inject a
+  # separate projected token volume of their own.
+  automountServiceAccountToken: false
+
 # The images set USER by name (nextjs / pwuser), which the kubelet cannot
 # verify against runAsNonRoot — it needs a numeric UID. Both resolve to 1001,
 # matching the UID/GID build args in the app's Dockerfiles.
@@ -29,6 +45,18 @@ podSecurityContext:
   runAsNonRoot: true
   runAsUser: 1001
   runAsGroup: 1001
+
+# Container-level securityContext, applied to every container unless the
+# component overrides it. These defaults satisfy Pod Security Admission
+# `restricted`. readOnlyRootFilesystem stays false: Next.js writes its cache
+# and Chromium writes scratch files at runtime.
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ["ALL"]
+  readOnlyRootFilesystem: false
+  seccompProfile:
+    type: RuntimeDefault
 
 env:
   # Public URL the app will be served at.
@@ -63,6 +91,8 @@ web:
   replicas: 1
   port: 3000
   resources: {}
+  # Empty inherits the shared containerSecurityContext above.
+  containerSecurityContext: {}
   # RollingUpdate needs 2x this component's requests free on its node during rollout.
   updateStrategy: RollingUpdate
   nodeSelector: {}
@@ -94,6 +124,22 @@ worker:
   # before its timeout fires. Empty uses the app default (10).
   groupSize: ""
   resources: {}
+  # Overrides the shared containerSecurityContext above, and deliberately
+  # omits seccompProfile. The app launches Chromium with its sandbox enabled
+  # (it passes --disable-dev-shm-usage, but not --no-sandbox), so the browser
+  # relies on unprivileged user namespaces. RuntimeDefault is the container
+  # runtime's own seccomp profile, which restricts the clone flags that
+  # sandbox needs -- the classic "Chromium will not start in Docker" failure.
+  #
+  # The consequence is that the worker as shipped is not admissible to a
+  # namespace enforcing Pod Security Admission `restricted`, which requires a
+  # seccompProfile. Running it there means setting one here AND launching
+  # Chromium with --no-sandbox, trading the browser sandbox for the kernel's.
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
+    readOnlyRootFilesystem: false
   # RollingUpdate needs 2x this component's requests free on its node during rollout.
   updateStrategy: RollingUpdate
   # A capture-group job holds one browser open across its snapshots; the k8s

@@ -76,6 +76,23 @@
       "type": "object",
       "description": "Pod-level securityContext, passed through verbatim."
     },
+    "containerSecurityContext": {
+      "type": "object",
+      "description": "Container-level securityContext, applied unless a component overrides it."
+    },
+    "serviceAccount": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "create": { "type": "boolean" },
+        "name": { "type": "string" },
+        "annotations": {
+          "$ref": "#/definitions/stringMap",
+          "description": "Annotate for IRSA, Workload Identity or the equivalent."
+        },
+        "automountServiceAccountToken": { "type": "boolean" }
+      }
+    },
 
     "env": {
       "type": "object",
@@ -129,6 +146,7 @@
         "nodeSelector": { "$ref": "#/definitions/stringMap" },
         "tolerations": { "$ref": "#/definitions/tolerations" },
         "affinity": { "type": "object" },
+        "containerSecurityContext": { "type": "object" },
         "image": { "$ref": "#/definitions/componentImage" },
         "service": {
           "type": "object",
@@ -188,6 +206,7 @@
         "tolerations": { "$ref": "#/definitions/tolerations" },
         "affinity": { "type": "object" },
         "image": { "$ref": "#/definitions/componentImage" },
+        "containerSecurityContext": { "type": "object" },
         "shmSize": {
           "type": "string",
           "description": "In-memory emptyDir for /dev/shm. Counts against the container memory limit."
