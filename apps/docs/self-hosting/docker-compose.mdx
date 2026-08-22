@@ -7,9 +7,17 @@ OVR runs as two containers, `web` and `worker`, plus a `migrate` container that 
 
 ## Requirements
 
-- Docker Engine with the Compose plugin (`docker compose`, not the older standalone `docker-compose`)
-- 2 vCPU / 4 GB RAM is enough for a small team. The worker is the heaviest part since it drives headless Chromium through Playwright. Lower `OVR_CAPTURE_GROUP_CONCURRENCY` if you're tight on resources.
-- Disk for whatever you bundle: Postgres data, Redis/Valkey data, object storage data, and the worker's local build cache (2 GB by default, see `OVR_STORYBOOK_CACHE_BYTES` below)
+- Docker Compose v2.20 or later, that's the version the migration step's `service_completed_successfully` dependency condition needs. Podman works too: `podman compose` (Podman 4.7+) and podman-compose 1.3.0+ both support the same condition.
+- Disk: Postgres and Redis/Valkey hold metadata and queue state, both stay small. Object storage is what grows, every snapshot is stored as a full-page PNG, so budget it against story count × viewport count × build frequency. Builds older than 90 days are purged automatically by default (configurable per project). The worker also uses up to `OVR_STORYBOOK_CACHE_BYTES` (2 GB by default) of local scratch space for its build cache.
+
+Sizing scales with how much you capture more than with headcount:
+
+| Team | Suggested baseline |
+| --- | --- |
+| Small, a handful of builds a day | 2 vCPU / 4 GB RAM |
+| Larger, dozens of builds a day | 4 vCPU / 8 GB RAM, or add worker capacity horizontally: `docker compose up -d --scale worker=3` |
+
+The worker is the heaviest part, it drives a real browser (Chromium, Firefox, or WebKit) per concurrent capture group. `OVR_CAPTURE_GROUP_CONCURRENCY` (default `2`) controls how many groups one worker container runs at once, lower it on smaller hardware, raise it before adding more CPU.
 
 ## Quick start
 
@@ -44,12 +52,16 @@ services:
       interval: 1s
       timeout: 5s
       retries: 10
+    ports:
+      - ${DATABASE_PORT:-5432}:5432
     volumes:
       - pgdata:/var/lib/postgresql/data
 
   valkey:
     image: valkey/valkey:8-alpine
     restart: always
+    ports:
+      - ${REDIS_PORT:-6379}:6379
     healthcheck:
       test: ["CMD", "valkey-cli", "ping"]
       interval: 1s
@@ -154,6 +166,8 @@ OVR_GIT_TOKEN_ENCRYPTION_KEY=
 BASE_URL=http://localhost:3000
 ```
 
+`WEB_PORT`, `DATABASE_PORT`, `REDIS_PORT`, `STORAGE_PORT`, and `STORAGE_CONSOLE_PORT` control the host-side port mappings above, add any of them to `.env` if the default collides with something already running on your machine. If you swap a named volume for a host bind mount, also set `PUID` / `PGID` to your host user so the containers don't write files you need `sudo` to touch.
+
 Then start it:
 
 ```sh
@@ -203,14 +217,10 @@ Any S3-compatible service works: AWS S3, Cloudflare R2, Backblaze B2, RustFS, Mi
 | --- | --- | --- |
 | `LOG_LEVEL` | `info` | Log verbosity. |
 | `LOG_FILE_PATH` | unset | Log to a file instead of stdout. |
-| `OVR_CAPTURE_GROUP_CONCURRENCY` | `2` | How many capture groups the worker processes in parallel. Each one drives its own headless browser, lower this on constrained hardware. |
+| `OVR_CAPTURE_GROUP_CONCURRENCY` | `2` | How many capture groups the worker processes in parallel. Each one drives its own browser instance, lower this on constrained hardware. |
 | `OVR_CAPTURE_GROUP_SIZE` | `10` | Snapshots per capture group. |
 | `OVR_REAPER_STALE_MINUTES` | `30` | Minutes before a stalled capture job is requeued. |
 | `OVR_STORYBOOK_CACHE_BYTES` | `2147483648` (2 GB) | Max size of the worker's local Storybook build cache. |
-
-### Ports, images, and container user
-
-`WEB_PORT`, `DATABASE_PORT`, `REDIS_PORT`, `STORAGE_PORT`, and `STORAGE_CONSOLE_PORT` control host-side port mappings for whatever you bundle. `IMAGE_PREFIX` / `IMAGE_TAG` pin a specific release instead of `latest`. `PUID` / `PGID` match the container user to your host user, useful if you mount volumes you also access from the host.
 
 ## Using external services
 
@@ -234,8 +244,9 @@ Ready-made Compose files for each combination are in the repo, pull one down ins
 
 ## Update
 
+Set `IMAGE_TAG` in `.env` to a specific release instead of tracking `latest` if you don't want it to shift under you (`IMAGE_PREFIX` only needs to change if you publish your own build of the images). Then:
+
 ```sh
-# edit IMAGE_TAG in .env to the release you want, then:
 docker compose pull
 docker compose up -d
 ```

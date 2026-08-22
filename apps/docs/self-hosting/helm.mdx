@@ -9,7 +9,7 @@ The chart deploys the OVR `web` and `worker` images, plus a migration Job that r
 
 - A Kubernetes cluster. Any distribution works, including a single-node k3s or k0s install, this doesn't need to be a managed cluster.
 - Helm 3.8 or later (needed for OCI registry support).
-- A reachable Postgres database, Redis-compatible instance, and S3-compatible bucket. These can run in the same cluster (RustFS, Valkey, or anything else you self-host) or be managed services elsewhere. OVR only needs standard `postgresql://`, `redis://`, and S3 protocols, any compatible service works.
+- A reachable Postgres database, a Redis-compatible instance, and an S3-compatible bucket. This chart doesn't run any of them, but self-hosting all three in the same cluster is well supported, it just isn't this chart's job. Deploy them with their own charts or operators, for example the official [Valkey Helm chart](https://valkey.io/valkey-helm/) and [RustFS Helm chart](https://charts.rustfs.com), and a Postgres operator like [CloudNativePG](https://cloudnative-pg.io). Or point at managed services (Neon, Upstash, AWS S3) instead, whichever you prefer. OVR only needs standard `postgresql://`, `redis://`, and S3 protocols, any compatible service works.
 - An ingress controller if you want the dashboard reachable outside the cluster. `kubectl port-forward` works for a quick check without one.
 
 ## Install
@@ -66,9 +66,9 @@ Set `existingSecret` to the name of a Secret you manage (Sealed Secrets, Externa
 
 | Value | Default | Guidance |
 | --- | --- | --- |
-| `worker.concurrency` | `2` | How many capture groups run at once, each one drives its own headless Chromium. Drop it to `1` on a small or single node. |
+| `worker.concurrency` | `2` | How many capture groups run at once, each one drives its own browser instance. Drop it to `1` on a small or single node. |
 | `worker.groupSize` | empty (app default `10`) | Snapshots per capture-group job. |
-| `worker.shmSize` | `1Gi` | Mounted as an in-memory `emptyDir` for Chromium. |
+| `worker.shmSize` | `1Gi` | Mounted as an in-memory `emptyDir` for the browser the worker launches. |
 | `web.resources` / `worker.resources` | `{}` (no requests or limits) | Set once you know your cluster's real headroom, the worker is the heavier of the two. |
 | `web.updateStrategy` / `worker.updateStrategy` | `Recreate` | Needs no spare capacity during a rollout. Switch to `RollingUpdate` only once a node has room for an old and new pod briefly overlapping. |
 | `worker.terminationGracePeriodSeconds` | `180` | A capture-group job holds a browser open across several snapshots, cutting it off early fails whatever was in flight. |
@@ -79,13 +79,9 @@ Set `web.ingress.enabled: true` and `web.ingress.host`, plus `web.ingress.classN
 
 Once `web.ingress.tls` is set, `web.ingress.redirectHttps` (default `true`) redirects plain HTTP to HTTPS. It's implemented for `className: traefik` and `className: nginx`. On any other controller, configure the redirect yourself.
 
-## Images
-
-Images are published at `ghcr.io/open-visual-regression/{web,worker}`. `image.tag` defaults to `main` (the moving branch build). Pin to a `sha-<short-sha>` tag, or a `vX.Y.Z` release tag (the only tags that also get `latest`), for anything you don't want to shift under you.
-
-`image.tag` / `image.digest` apply to both images. To pin them separately, since they don't share a digest, use `web.image.*` and `worker.image.*`, each supporting `tag`, `digest`, and `override` (a full image reference, highest precedence).
-
 ## Update
+
+Images are published at `ghcr.io/open-visual-regression/{web,worker}`. `image.tag` defaults to `main` (the moving branch build), pin it to a `sha-<short-sha>` tag or a `vX.Y.Z` release tag (the only tags that also get `latest`) for anything you don't want to shift under you. `image.tag` / `image.digest` apply to both images, to pin them separately, since they don't share a digest, use `web.image.*` and `worker.image.*` instead, each supporting `tag`, `digest`, and `override` (a full image reference, highest precedence).
 
 ```sh
 helm upgrade ovr oci://ghcr.io/open-visual-regression/charts/ovr \
