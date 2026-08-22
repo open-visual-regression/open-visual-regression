@@ -1,0 +1,13 @@
+OVR is deploying.
+
+Check status:
+  kubectl get pods -l app.kubernetes.io/instance={{ .Release.Name }}
+
+{{- if .Values.web.ingress.enabled }}
+App will be available at:
+  https://{{ .Values.web.ingress.host }}
+{{- else }}
+No ingress enabled. Reach the app with:
+  kubectl port-forward svc/{{ include "ovr.fullname" . }}-web {{ .Values.web.service.port }}:{{ .Values.web.service.port }}
+Then open http://localhost:{{ .Values.web.service.port }}
+{{- end }}

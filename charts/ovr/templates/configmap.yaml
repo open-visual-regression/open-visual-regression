@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ovr.fullname" . }}-config
+  labels:
+    {{- include "ovr.labels" . | nindent 4 }}
+data:
+  BASE_URL: {{ .Values.env.baseUrl | quote }}
+  LOG_LEVEL: {{ .Values.env.logLevel | quote }}
+  {{- with .Values.storage.endpoint }}
+  STORAGE_ENDPOINT: {{ . | quote }}
+  {{- end }}
+  {{- with .Values.storage.publicEndpoint }}
+  STORAGE_PUBLIC_ENDPOINT: {{ . | quote }}
+  {{- end }}
+  STORAGE_REGION: {{ .Values.storage.region | quote }}
+  STORAGE_BUCKET: {{ .Values.storage.bucket | quote }}
+  STORAGE_FORCE_PATH_STYLE: {{ .Values.storage.forcePathStyle | quote }}

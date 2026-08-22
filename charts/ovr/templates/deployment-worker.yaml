@@ -1,0 +1,68 @@
+{{- if .Values.worker.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ovr.fullname" . }}-worker
+  labels:
+    {{- include "ovr.labels" . | nindent 4 }}
+    app.kubernetes.io/component: worker
+spec:
+  replicas: {{ .Values.worker.replicas }}
+  # Recreate avoids briefly needing 2x memory during a rollout - safer on small instances.
+  # Only safe to switch to RollingUpdate if this component has real headroom on its node.
+  strategy:
+    type: {{ .Values.worker.updateStrategy | default "Recreate" }}
+  selector:
+    matchLabels:
+      {{- include "ovr.selectorLabels" (dict "Release" .Release "Chart" .Chart "component" "worker") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "ovr.selectorLabels" (dict "Release" .Release "Chart" .Chart "component" "worker") | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.worker.terminationGracePeriodSeconds }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- with .Values.worker.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.worker.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.worker.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: worker
+          image: {{ include "ovr.image" (dict "Values" .Values "name" "worker" "tag" .Values.worker.image.tag "digest" .Values.worker.image.digest "override" .Values.worker.image.override) }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "ovr.fullname" . }}-config
+            - secretRef:
+                name: {{ include "ovr.secretName" . }}
+          env:
+            - name: OVR_CAPTURE_GROUP_CONCURRENCY
+              value: {{ .Values.worker.concurrency | quote }}
+            {{- with .Values.worker.groupSize }}
+            - name: OVR_CAPTURE_GROUP_SIZE
+              value: {{ . | quote }}
+            {{- end }}
+          volumeMounts:
+            - name: dshm
+              mountPath: /dev/shm
+          resources:
+            {{- toYaml .Values.worker.resources | nindent 12 }}
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: {{ .Values.worker.shmSize }}
+{{- end }}
