@@ -21,6 +21,29 @@ Or set `existingSecret` to the name of a Secret you manage yourself with keys:
 ## 2. Install
 
 ```sh
+helm install ovr oci://ghcr.io/open-visual-regression/charts/ovr \
+  --version X.Y.Z -f my-values.yaml
+```
+
+Chart versions track app releases exactly, so `--version 1.4.2` installs app
+1.4.2 — the chart's `appVersion`, and therefore its default image tag, is
+stamped with the version it was published for. Released versions are listed on
+the [chart's GHCR package page](https://github.com/orgs/open-visual-regression/packages/container/package/charts%2Fovr);
+`helm show chart oci://ghcr.io/open-visual-regression/charts/ovr --version X.Y.Z`
+prints the metadata for one of them.
+
+Charts are signed with cosign keyless signing, so a published chart can be
+verified against the workflow that built it:
+
+```sh
+cosign verify ghcr.io/open-visual-regression/charts/ovr:X.Y.Z \
+  --certificate-identity-regexp '^https://github.com/open-visual-regression/open-visual-regression/' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+```
+
+To install from a checkout of this repo instead:
+
+```sh
 helm install ovr ./charts/ovr -f my-values.yaml
 ```
 
@@ -54,9 +77,10 @@ stamped at publish time with the app version the chart was released for. A
 released chart therefore installs a specific, immutable version, and
 `helm upgrade --version X.Y.Z` is what moves it.
 
-Set `image.tag` to pin something else: a `sha-<short-sha>` build, or a moving
-branch tag like `main` (which needs `pullPolicy: Always` to ever repull, since
-`IfNotPresent` will sit on a cached copy forever).
+Set `image.tag` to pin something else. Each release publishes `X.Y.Z`, `X.Y`,
+`X` and `latest`; every CI build also publishes `sha-<short-sha>`. A moving tag
+— `main`, `latest`, or a bare major — needs `pullPolicy: Always` to ever
+repull, since `IfNotPresent` will sit on a cached copy forever.
 
 `image.tag`/`image.digest` apply to both images. To pin them separately — they
 are different images and will not share a digest — use `web.image.*` and
