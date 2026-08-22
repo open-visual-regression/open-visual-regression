@@ -28,15 +28,21 @@ through — the manifest parser gives a better error for those.
 ## Fixtures
 
 `fixtures/v8`, `fixtures/v9` and `fixtures/v10` are standalone packages, each
-pinning one Storybook major and each with its own lockfile. Three Storybook
-majors cannot share a dependency tree, so they sit outside the pnpm workspace
-and are installed with `--ignore-workspace`.
+pinning one Storybook major. Three Storybook majors cannot share a dependency
+tree, so each carries its own `pnpm-workspace.yaml` and resolves independently
+of the repo workspace.
+
+Their lockfiles are committed. They are large and generated — `.gitattributes`
+marks them `linguist-generated` so review diffs collapse them — but a
+compatibility suite is only meaningful if every run tests the same Storybook
+build, and without a lockfile the version under test would drift with whatever
+was newest when a CI cache happened to be populated.
 
 `v8` pins the exact minimum (8.5.x) rather than the newest 8.x, so the floor we
 advertise is the floor that gets exercised.
 
-Every fixture defines the same stories, so the suite can assert identical
-behaviour across majors:
+The stories live once in `fixtures/stories` and are copied into each fixture by
+`fixtures:build`, so all three majors run identical story sources:
 
 | Story | What it covers |
 |---|---|
@@ -47,7 +53,7 @@ behaviour across majors:
 | `PlayThrows` | A play function that throws |
 | autodocs entry | Docs pages are filtered out of the story list |
 
-Build them (they are not committed):
+The builds themselves are not committed. Build them with:
 
 ```sh
 pnpm --filter @ovr/storybook-compat fixtures:build          # skips ones already built
@@ -72,10 +78,12 @@ failure instead of a silent skip.
 
 ## Adding a Storybook major
 
-1. Copy the newest fixture to `fixtures/v<major>` and pin the new version in its
-   `package.json`.
+1. Copy the newest fixture to `fixtures/v<major>` (without its `pnpm-lock.yaml`)
+   and pin the new version in its `package.json`.
 2. Add the major to `STORYBOOK_FIXTURES` in `src/fixtures.ts`.
-3. `pnpm --filter @ovr/storybook-compat fixtures:build` and run both suites.
+3. `pnpm --filter @ovr/storybook-compat fixtures:build` — with no lockfile
+   present it resolves and writes one. Commit it.
+4. Run both suites.
 
 Nothing else is version-aware: if a new major changes the manifest, the preview
 globals or the channel events, that is what the suite is there to catch.

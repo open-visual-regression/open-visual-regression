@@ -174,7 +174,7 @@ jobs:
           path: |
             packages/storybook-compat/fixtures/*/node_modules
             packages/storybook-compat/fixtures/*/storybook-static
-          key: storybook-fixtures-${{ runner.os }}-${{ hashFiles('packages/storybook-compat/fixtures/**/package.json', 'packages/storybook-compat/fixtures/stories/**') }}
+          key: storybook-fixtures-${{ runner.os }}-${{ hashFiles('packages/storybook-compat/fixtures/*/pnpm-lock.yaml', 'packages/storybook-compat/fixtures/stories/**') }}
       - name: Build the Storybook fixtures
         run: pnpm --filter @ovr/storybook-compat fixtures:build
       - run: pnpm --filter @ovr/capture exec playwright install --with-deps chromium
