@@ -176,6 +176,10 @@ docker compose up -d
 
 Visit `BASE_URL` (`http://localhost:3000` by default). First run walks you through creating an organization and admin account.
 
+<Note>
+If `docker compose up` fails with `service_completed_successfully is an invalid type, it should be a service_started, or a service_healthy`, your Compose is older than v2.20, see [Requirements](#requirements) above.
+</Note>
+
 ## Environment variables
 
 ### Required
