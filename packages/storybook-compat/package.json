@@ -10,8 +10,10 @@
     "build": "tsc",
     "tsc": "tsc --noEmit",
     "lint": "oxlint src",
-    "format": "oxfmt src",
-    "test": "vitest run"
+    "format": "oxfmt src scripts",
+    "test": "vitest run",
+    "fixtures:build": "node scripts/build-fixtures.mjs",
+    "fixtures:clean": "node scripts/build-fixtures.mjs --clean"
   },
   "devDependencies": {
     "@ovr/typescript-config": "workspace:*",

@@ -3,6 +3,8 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import type { Redis } from "ioredis";
+import type { Page } from "playwright";
+import { chromium } from "playwright";
 import * as tar from "tar";
 import { v7 as uuidv7 } from "uuid";
 import { test as vitest } from "vitest";
@@ -12,6 +14,9 @@ import { db } from "@ovr/db/db";
 import { organization, projects, user as userTable } from "@ovr/db/schema";
 import { buildRedisConnection } from "@ovr/queue";
 import { storage } from "@ovr/storage";
+
+import { newPage } from "../lib/browser";
+import { startStaticProxy } from "../lib/staticProxy";
 
 export { describe, expect } from "vitest";
 
@@ -38,6 +43,23 @@ export const uploadArtifactWithIframe = async (
     await storage.uploadFile(artifactPath, tarball, "application/gzip");
   } finally {
     await rm(sourceDir, { recursive: true, force: true });
+  }
+};
+
+export const withCapturePage = async (
+  buildDir: string,
+  run: (page: Page) => Promise<void>,
+): Promise<void> => {
+  const proxy = await startStaticProxy(buildDir);
+  const browser = await chromium.launch({ args: ["--disable-dev-shm-usage"] });
+
+  try {
+    const page = await newPage(await browser.newContext());
+    await page.goto(`${proxy.origin}/iframe.html`, { waitUntil: "load" });
+    await run(page);
+  } finally {
+    await browser.close();
+    proxy.close();
   }
 };
 
