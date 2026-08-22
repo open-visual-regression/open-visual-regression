@@ -1,0 +1,39 @@
+{{- if and .Values.web.enabled .Values.web.ingress.enabled }}
+{{- $redirect := and .Values.web.ingress.redirectHttps (not (empty .Values.web.ingress.tls)) }}
+{{- $autoAnnotations := dict }}
+{{- if $redirect }}
+  {{- if eq .Values.web.ingress.className "traefik" }}
+    {{- $autoAnnotations = dict "traefik.ingress.kubernetes.io/router.middlewares" (printf "%s-%s-web-redirect-https@kubernetescrd" .Release.Namespace (include "ovr.fullname" .)) }}
+  {{- else if eq .Values.web.ingress.className "nginx" }}
+    {{- $autoAnnotations = dict "nginx.ingress.kubernetes.io/force-ssl-redirect" "true" }}
+  {{- end }}
+{{- end }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "ovr.fullname" . }}-web
+  labels:
+    {{- include "ovr.labels" . | nindent 4 }}
+    app.kubernetes.io/component: web
+  annotations:
+    {{- toYaml (merge (deepCopy .Values.web.ingress.annotations) $autoAnnotations) | nindent 4 }}
+spec:
+  {{- with .Values.web.ingress.className }}
+  ingressClassName: {{ . }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.web.ingress.host | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "ovr.fullname" . }}-web
+                port:
+                  number: {{ .Values.web.service.port }}
+  {{- with .Values.web.ingress.tls }}
+  tls:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}

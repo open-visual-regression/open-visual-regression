@@ -1,0 +1,111 @@
+# Requires a Postgres database, a Redis-compatible instance, and an
+# S3-compatible bucket already reachable from the cluster. This chart runs none
+# of them — use managed services (Neon, RDS, AWS S3, R2) or deploy your own.
+
+image:
+  registry: ghcr.io/open-visual-regression
+  tag: main
+  # Pin an exact digest (sha256:...). Takes precedence over tag when set —
+  # deploy exactly what you tested, and roll pods only when it changes.
+  digest: ""
+  pullPolicy: IfNotPresent
+imagePullSecrets: []
+
+# Name of a Secret you create yourself with keys: DATABASE_URL, REDIS_URL,
+# BETTER_AUTH_SECRET, OVR_GIT_TOKEN_ENCRYPTION_KEY, STORAGE_ACCESS_KEY,
+# STORAGE_SECRET_KEY. Set this to use your own secret instead of the values
+# below (recommended if using GitOps / Sealed Secrets / External Secrets).
+existingSecret: ""
+
+# The images set USER by name (nextjs / pwuser), which the kubelet cannot
+# verify against runAsNonRoot — it needs a numeric UID. Both resolve to 1001,
+# matching the UID/GID build args in the app's Dockerfiles.
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  runAsGroup: 1001
+
+env:
+  # Public URL the app will be served at.
+  baseUrl: "https://ovr.example.com"
+  logLevel: info
+
+auth:
+  # Generate: openssl rand -base64 32
+  betterAuthSecret: ""
+  # Generate: openssl rand -base64 32
+  gitTokenEncryptionKey: ""
+
+database:
+  url: "" # postgresql://user:pass@host:5432/open_visual_regression
+
+redis:
+  url: "" # redis://host:6379
+
+storage:
+  # Leave endpoint/publicEndpoint empty and forcePathStyle false for AWS S3.
+  # Set them (and forcePathStyle true) for MinIO, rustfs, R2, etc.
+  endpoint: ""
+  publicEndpoint: ""
+  region: us-east-1
+  bucket: ovr
+  forcePathStyle: false
+  accessKey: ""
+  secretKey: ""
+
+web:
+  enabled: true
+  replicas: 1
+  port: 3000
+  resources: {}
+  # RollingUpdate needs 2x this component's requests free on its node during rollout.
+  updateStrategy: Recreate
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  image:
+    tag: ""
+    digest: ""
+    override: "" # full image reference; takes precedence over tag/digest above
+  service:
+    type: ClusterIP
+    port: 3000
+  ingress:
+    enabled: false
+    className: ""
+    host: ovr.example.com
+    annotations: {}
+    tls: []
+    # Redirect plain HTTP to HTTPS when tls is set. Supported for className
+    # traefik and nginx; other controllers need their own redirect config.
+    redirectHttps: true
+
+worker:
+  enabled: true
+  replicas: 1
+  concurrency: 2
+  # Snapshots per capture-group job. Each group holds one browser for up to
+  # 2 minutes per snapshot, so this also sets how long a stuck group runs
+  # before its timeout fires. Empty uses the app default (10).
+  groupSize: ""
+  resources: {}
+  # RollingUpdate needs 2x this component's requests free on its node during rollout.
+  updateStrategy: Recreate
+  # A capture-group job holds one browser open across its snapshots; the k8s
+  # default (30s) SIGKILLs the pod mid-capture on every rollout, permanently
+  # failing whatever snapshot was in flight. Give it real time to finish the
+  # current snapshot and let BullMQ hand the rest of the group to the next pod.
+  terminationGracePeriodSeconds: 180
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  image:
+    tag: ""
+    digest: ""
+    override: ""
+  # Chromium needs real /dev/shm; the k8s default (64Mi) crashes on non-trivial
+  # pages. Mounted as an in-memory emptyDir.
+  shmSize: 1Gi
+
+migrate:
+  enabled: true
