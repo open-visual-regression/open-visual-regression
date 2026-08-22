@@ -119,9 +119,14 @@ web:
   topologySpreadConstraints: []
   podDisruptionBudget:
     enabled: false
-    # Set exactly one of these. Either may be a count or a percentage.
-    # minAvailable: 1 against a single replica blocks node drains outright.
-    maxUnavailable: 1
+    # Set exactly one of these when enabling; the render fails on both or
+    # neither. Either may be a count or a percentage. Neither is defaulted:
+    # Helm coalesces maps, so a default here would merge with whichever one
+    # you set and trip the both-set check.
+    #
+    # maxUnavailable is usually what you want -- minAvailable: 1 against a
+    # single replica blocks node drains outright.
+    maxUnavailable: ""
     minAvailable: ""
   # Requires resources.requests to be set -- utilization is a percentage of
   # the request, so an HPA on a container without one never scales.
@@ -184,9 +189,14 @@ worker:
   topologySpreadConstraints: []
   podDisruptionBudget:
     enabled: false
-    # Set exactly one of these. Either may be a count or a percentage.
-    # minAvailable: 1 against a single replica blocks node drains outright.
-    maxUnavailable: 1
+    # Set exactly one of these when enabling; the render fails on both or
+    # neither. Either may be a count or a percentage. Neither is defaulted:
+    # Helm coalesces maps, so a default here would merge with whichever one
+    # you set and trip the both-set check.
+    #
+    # maxUnavailable is usually what you want -- minAvailable: 1 against a
+    # single replica blocks node drains outright.
+    maxUnavailable: ""
     minAvailable: ""
   # CPU autoscaling for the worker is a poor fit -- a pod holding an idle
   # browser between snapshots looks unloaded while it is very much busy.

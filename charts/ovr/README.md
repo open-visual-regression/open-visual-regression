@@ -162,8 +162,10 @@ its own HPA.
 
 **Disruption budgets** (`podDisruptionBudget.enabled`) take exactly one of
 `minAvailable` or `maxUnavailable`; setting both, or neither, fails the
-render. `minAvailable: 1` against a single replica blocks node drains
-outright, so `maxUnavailable: 1` is the default.
+render. Neither is defaulted — Helm coalesces maps, so a default would merge
+with whichever one you set and trip the both-set check. `maxUnavailable: 1` is
+usually the one you want: `minAvailable: 1` against a single replica blocks
+node drains outright.
 
 **Spreading** is `topologySpreadConstraints`, passed through verbatim — the
 chart does not inject a `labelSelector`, so include one matching the
