@@ -4,8 +4,10 @@ on:
   push:
     branches: [main]
     paths: ["charts/**", ".github/workflows/chart.yml"]
+  # No branches filter, deliberately. Chart work lands in stacks where each
+  # pull request targets the one below it, and restricting to main would mean
+  # nothing in the stack is linted until its base is already merged.
   pull_request:
-    branches: [main]
     paths: ["charts/**", ".github/workflows/chart.yml"]
 
 permissions:
