@@ -2,5 +2,44 @@ apiVersion: v2
 name: ovr
 description: Open Visual Regression — web and worker on Kubernetes
 type: application
-version: 0.1.0
+
+# version and appVersion are placeholders in-repo. The release workflow stamps
+# both from the app version being released (chart version and app version move
+# in lockstep), so `helm install --version X.Y.Z` gets app X.Y.Z. A chart
+# installed straight from a git checkout is unreleased by definition, and says
+# so: 0.0.0-dev tracking the main image tag.
+version: 0.0.0-dev
 appVersion: "main"
+
+home: https://openvisualregression.com
+icon: https://raw.githubusercontent.com/open-visual-regression/open-visual-regression/main/.github/assets/logo-light.png
+sources:
+  - https://github.com/open-visual-regression/open-visual-regression
+keywords:
+  - visual-regression
+  - screenshot-testing
+  - storybook
+  - ci
+  - testing
+
+maintainers:
+  - name: tgfischer
+    url: https://github.com/tgfischer
+
+# networking.k8s.io/v1 Ingress, policy/v1 PodDisruptionBudget and
+# autoscaling/v2 HorizontalPodAutoscaler are all stable by 1.23.
+kubeVersion: ">=1.23.0-0"
+
+annotations:
+  artifacthub.io/license: Elastic-2.0
+  artifacthub.io/links: |
+    - name: Source
+      url: https://github.com/open-visual-regression/open-visual-regression
+    - name: Documentation
+      url: https://openvisualregression.com
+  # Stamped with the released tag at publish time, alongside appVersion.
+  artifacthub.io/images: |
+    - name: web
+      image: ghcr.io/open-visual-regression/web:main
+    - name: worker
+      image: ghcr.io/open-visual-regression/worker:main

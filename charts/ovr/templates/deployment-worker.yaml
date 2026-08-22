@@ -8,17 +8,19 @@ metadata:
     app.kubernetes.io/component: worker
 spec:
   replicas: {{ .Values.worker.replicas }}
-  # Recreate avoids briefly needing 2x memory during a rollout - safer on small instances.
-  # Only safe to switch to RollingUpdate if this component has real headroom on its node.
+  # RollingUpdate needs room for two copies of this pod on its node during a
+  # rollout. Set Recreate instead on nodes without that headroom.
   strategy:
-    type: {{ .Values.worker.updateStrategy | default "Recreate" }}
+    type: {{ .Values.worker.updateStrategy | default "RollingUpdate" }}
   selector:
     matchLabels:
-      {{- include "ovr.selectorLabels" (dict "Release" .Release "Chart" .Chart "component" "worker") | nindent 6 }}
+      {{- include "ovr.selectorLabels" (dict "Release" .Release "Chart" .Chart "Values" .Values "component" "worker") | nindent 6 }}
   template:
     metadata:
+      annotations:
+        {{- include "ovr.configChecksums" . | nindent 8 }}
       labels:
-        {{- include "ovr.selectorLabels" (dict "Release" .Release "Chart" .Chart "component" "worker") | nindent 8 }}
+        {{- include "ovr.selectorLabels" (dict "Release" .Release "Chart" .Chart "Values" .Values "component" "worker") | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -41,7 +43,7 @@ spec:
       {{- end }}
       containers:
         - name: worker
-          image: {{ include "ovr.image" (dict "Values" .Values "name" "worker" "tag" .Values.worker.image.tag "digest" .Values.worker.image.digest "override" .Values.worker.image.override) }}
+          image: {{ include "ovr.image" (dict "Values" .Values "Chart" .Chart "name" "worker" "tag" .Values.worker.image.tag "digest" .Values.worker.image.digest "override" .Values.worker.image.override) }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           envFrom:
             - configMapRef:

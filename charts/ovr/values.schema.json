@@ -1,0 +1,212 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "OVR Helm chart values",
+  "description": "Type and typo checking for values. Required-ness is enforced in the templates instead, which can explain how to produce a missing value.",
+  "type": "object",
+  "additionalProperties": false,
+  "definitions": {
+    "quantityMap": {
+      "type": "object",
+      "additionalProperties": { "type": ["string", "integer", "number"] }
+    },
+    "resources": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "requests": { "$ref": "#/definitions/quantityMap" },
+        "limits": { "$ref": "#/definitions/quantityMap" },
+        "claims": { "type": "array", "items": { "type": "object" } }
+      }
+    },
+    "stringMap": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "tolerations": {
+      "type": "array",
+      "items": { "type": "object" }
+    },
+    "componentImage": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Per-component image pin. Precedence: override > digest > tag > chart appVersion.",
+      "properties": {
+        "tag": { "type": "string" },
+        "digest": {
+          "type": "string",
+          "pattern": "^(sha256:[a-f0-9]{64})?$",
+          "description": "Full digest including the sha256: prefix, or empty."
+        },
+        "override": { "type": "string" }
+      }
+    },
+    "updateStrategy": {
+      "enum": ["RollingUpdate", "Recreate"]
+    }
+  },
+  "properties": {
+    "global": {
+      "type": "object",
+      "description": "Reserved by Helm for cross-chart values. Unused here, but must be accepted."
+    },
+    "nameOverride": { "type": "string" },
+    "fullnameOverride": { "type": "string" },
+
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "registry": { "type": "string", "minLength": 1 },
+        "tag": { "type": "string" },
+        "digest": { "type": "string", "pattern": "^(sha256:[a-f0-9]{64})?$" },
+        "pullPolicy": { "enum": ["Always", "IfNotPresent", "Never"] }
+      }
+    },
+    "imagePullSecrets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": { "name": { "type": "string" } },
+        "required": ["name"]
+      }
+    },
+    "existingSecret": { "type": "string" },
+    "podSecurityContext": {
+      "type": "object",
+      "description": "Pod-level securityContext, passed through verbatim."
+    },
+
+    "env": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "baseUrl": { "type": "string" },
+        "logLevel": { "enum": ["trace", "debug", "info", "warn", "error", "fatal", "silent"] }
+      }
+    },
+    "auth": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "betterAuthSecret": { "type": "string" },
+        "gitTokenEncryptionKey": { "type": "string" }
+      }
+    },
+    "database": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "url": { "type": "string" } }
+    },
+    "redis": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "url": { "type": "string" } }
+    },
+    "storage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "endpoint": { "type": "string" },
+        "publicEndpoint": { "type": "string" },
+        "region": { "type": "string" },
+        "bucket": { "type": "string" },
+        "forcePathStyle": { "type": "boolean" },
+        "accessKey": { "type": "string" },
+        "secretKey": { "type": "string" }
+      }
+    },
+
+    "web": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "replicas": { "type": "integer", "minimum": 0 },
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "resources": { "$ref": "#/definitions/resources" },
+        "updateStrategy": { "$ref": "#/definitions/updateStrategy" },
+        "nodeSelector": { "$ref": "#/definitions/stringMap" },
+        "tolerations": { "$ref": "#/definitions/tolerations" },
+        "affinity": { "type": "object" },
+        "image": { "$ref": "#/definitions/componentImage" },
+        "service": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": { "enum": ["ClusterIP", "NodePort", "LoadBalancer", "ExternalName"] },
+            "port": { "type": "integer", "minimum": 1, "maximum": 65535 }
+          }
+        },
+        "ingress": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "className": { "type": "string" },
+            "host": { "type": "string" },
+            "annotations": { "$ref": "#/definitions/stringMap" },
+            "redirectHttps": {
+              "type": "boolean",
+              "description": "Only implemented for className traefik and nginx; a no-op elsewhere."
+            },
+            "tls": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "hosts": { "type": "array", "items": { "type": "string" } },
+                  "secretName": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "worker": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "replicas": { "type": "integer", "minimum": 0 },
+        "concurrency": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Capture groups run at once, each holding its own headless Chromium."
+        },
+        "groupSize": {
+          "type": ["string", "integer"],
+          "description": "Snapshots per capture group. Empty string uses the app default."
+        },
+        "resources": { "$ref": "#/definitions/resources" },
+        "updateStrategy": { "$ref": "#/definitions/updateStrategy" },
+        "terminationGracePeriodSeconds": { "type": "integer", "minimum": 0 },
+        "nodeSelector": { "$ref": "#/definitions/stringMap" },
+        "tolerations": { "$ref": "#/definitions/tolerations" },
+        "affinity": { "type": "object" },
+        "image": { "$ref": "#/definitions/componentImage" },
+        "shmSize": {
+          "type": "string",
+          "description": "In-memory emptyDir for /dev/shm. Counts against the container memory limit."
+        }
+      }
+    },
+
+    "migrate": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "enabled": { "type": "boolean" } }
+    },
+    "tests": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "image": { "type": "string" }
+      }
+    }
+  }
+}

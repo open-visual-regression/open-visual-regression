@@ -8,17 +8,19 @@ metadata:
     app.kubernetes.io/component: web
 spec:
   replicas: {{ .Values.web.replicas }}
-  # Recreate avoids briefly needing 2x memory during a rollout - safer on small instances.
-  # Only safe to switch to RollingUpdate if this component has real headroom on its node.
+  # RollingUpdate needs room for two copies of this pod on its node during a
+  # rollout. Set Recreate instead on nodes without that headroom.
   strategy:
-    type: {{ .Values.web.updateStrategy | default "Recreate" }}
+    type: {{ .Values.web.updateStrategy | default "RollingUpdate" }}
   selector:
     matchLabels:
-      {{- include "ovr.selectorLabels" (dict "Release" .Release "Chart" .Chart "component" "web") | nindent 6 }}
+      {{- include "ovr.selectorLabels" (dict "Release" .Release "Chart" .Chart "Values" .Values "component" "web") | nindent 6 }}
   template:
     metadata:
+      annotations:
+        {{- include "ovr.configChecksums" . | nindent 8 }}
       labels:
-        {{- include "ovr.selectorLabels" (dict "Release" .Release "Chart" .Chart "component" "web") | nindent 8 }}
+        {{- include "ovr.selectorLabels" (dict "Release" .Release "Chart" .Chart "Values" .Values "component" "web") | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -40,7 +42,7 @@ spec:
       {{- end }}
       containers:
         - name: web
-          image: {{ include "ovr.image" (dict "Values" .Values "name" "web" "tag" .Values.web.image.tag "digest" .Values.web.image.digest "override" .Values.web.image.override) }}
+          image: {{ include "ovr.image" (dict "Values" .Values "Chart" .Chart "name" "web" "tag" .Values.web.image.tag "digest" .Values.web.image.digest "override" .Values.web.image.override) }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           envFrom:
             - configMapRef:

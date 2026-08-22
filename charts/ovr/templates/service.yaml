@@ -14,5 +14,5 @@ spec:
       protocol: TCP
       name: http
   selector:
-    {{- include "ovr.selectorLabels" (dict "Release" .Release "Chart" .Chart "component" "web") | nindent 4 }}
+    {{- include "ovr.selectorLabels" (dict "Release" .Release "Chart" .Chart "Values" .Values "component" "web") | nindent 4 }}
 {{- end }}

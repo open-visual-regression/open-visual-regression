@@ -25,7 +25,12 @@ helm install ovr ./charts/ovr -f my-values.yaml
 ```
 
 Install fails with a message naming the missing value if any required one is
-unset, rather than deploying pods that crash at startup.
+unset, rather than deploying pods that crash at startup. Values are also
+checked against `values.schema.json` first, so a misspelled or wrongly typed
+key is an error rather than a setting that is silently ignored.
+
+Once it is up, `helm test <release>` runs a pod that checks the web readiness
+endpoint through its Service.
 
 A migration Job runs automatically before the app starts (pre-install/pre-upgrade hook).
 
@@ -42,10 +47,16 @@ configure the redirect yourself.
 
 ## Images
 
-Published at `ghcr.io/open-visual-regression/{web,worker}`. `image.tag` defaults
-to `main` (the moving branch build). Pin to a specific `sha-<short-sha>` tag, or
-to a `vX.Y.Z` release tag (the only tags that also get `latest`), for anything
-you don't want to shift under you.
+Published at `ghcr.io/open-visual-regression/{web,worker}`.
+
+`image.tag` is empty by default, which resolves to the chart's `appVersion` —
+stamped at publish time with the app version the chart was released for. A
+released chart therefore installs a specific, immutable version, and
+`helm upgrade --version X.Y.Z` is what moves it.
+
+Set `image.tag` to pin something else: a `sha-<short-sha>` build, or a moving
+branch tag like `main` (which needs `pullPolicy: Always` to ever repull, since
+`IfNotPresent` will sit on a cached copy forever).
 
 `image.tag`/`image.digest` apply to both images. To pin them separately — they
 are different images and will not share a digest — use `web.image.*` and
@@ -58,3 +69,14 @@ image reference, highest precedence).
 declare their user by name, which the kubelet cannot verify against
 `runAsNonRoot`, so a numeric UID has to be supplied here. Override it if you
 build the images with different `UID`/`GID` build args.
+
+## Resource naming
+
+Objects are named after the release alone — release `ovr-app` gives
+`ovr-app-web`, `ovr-app-worker` — rather than the more usual
+`<release>-<chart>`. `fullnameOverride` changes the prefix and `nameOverride`
+changes the `app.kubernetes.io/name` label.
+
+Both feed selectors, which Kubernetes will not let you change after an object
+is created. Set them at install time; changing either on an existing release
+means uninstalling and reinstalling.
