@@ -154,8 +154,41 @@ jobs:
       - run: pnpm --filter @ovr/capture exec playwright install --with-deps chromium
       - run: pnpm test
 
+  storybook-compat:
+    name: Storybook compatibility
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Each fixture is a standalone Storybook install, so the cache is keyed on
+      # the fixture lockfiles: it only misses when a pinned version changes.
+      - name: Restore Storybook fixture builds
+        id: fixtures
+        uses: actions/cache@v4
+        with:
+          path: |
+            packages/storybook-compat/fixtures/*/node_modules
+            packages/storybook-compat/fixtures/*/storybook-static
+          key: storybook-fixtures-${{ runner.os }}-${{ hashFiles('packages/storybook-compat/fixtures/*/pnpm-lock.yaml') }}
+      - name: Build the Storybook fixtures
+        run: pnpm --filter @ovr/storybook-compat fixtures:build
+      - run: pnpm --filter @ovr/capture exec playwright install --with-deps chromium
+      - name: Run the compatibility suite
+        env:
+          # Turn a missing fixture into a failure rather than a silent skip.
+          OVR_REQUIRE_STORYBOOK_FIXTURES: "1"
+        run: |
+          pnpm turbo run test --filter=@ovr/storybook-compat
+          pnpm turbo run build --filter=@ovr/capture...
+          pnpm --filter @ovr/capture exec vitest run src/__tests__/storybookVersions.integration.test.ts
+
   docker:
-    needs: [build, check-types, lint, format-check, test]
+    needs: [build, check-types, lint, format-check, test, storybook-compat]
     permissions:
       contents: read
       packages: write

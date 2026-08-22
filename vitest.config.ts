@@ -14,6 +14,7 @@ export default defineConfig({
       "packages/queue/vitest.config.ts",
       "packages/reviews/vitest.config.ts",
       "packages/storage/vitest.config.ts",
+      "packages/storybook-compat/vitest.config.ts",
       "packages/api/vitest.config.ts",
       "packages/ui/vitest.config.ts",
     ],

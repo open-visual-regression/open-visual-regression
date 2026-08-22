@@ -4,7 +4,7 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { readStoryTargets } from "../storybookManifest";
+import { readStoryTargets } from "../manifest";
 
 const writeManifest = async (entries: object): Promise<string> => {
   const dir = await mkdtemp(path.join(tmpdir(), "ovr-storybook-manifest-"));
@@ -44,6 +44,19 @@ describe("readStoryTargets", () => {
 
     try {
       await expect(readStoryTargets(dir)).rejects.toThrow(/missing "entries"/);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  // The version gate runs before parsing so an unsupported build is turned away
+  // with the reason, not with a confusing manifest error.
+  it("rejects a Storybook build older than the supported minimum", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "ovr-storybook-manifest-"));
+    await writeFile(path.join(dir, "index.json"), JSON.stringify({ v: 4, entries: {} }));
+
+    try {
+      await expect(readStoryTargets(dir)).rejects.toThrow(/requires Storybook 8\.5\.0 or newer/);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

@@ -294,7 +294,7 @@ export const captureBuildGroup = async (
     (signal) =>
       withExtractedBundle(build.artifactPath, async (bundleDir) => {
         const proxy = await startStaticProxy(bundleDir);
-        const strategy = await detectCaptureStrategy(proxy.origin);
+        const strategy = await detectCaptureStrategy(bundleDir);
 
         logger.info(
           { buildId, browser, snapshotCount: snapshotIds.length },

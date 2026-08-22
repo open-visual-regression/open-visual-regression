@@ -1,0 +1,24 @@
+{
+  "name": "@ovr/storybook-compat",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "tsc": "tsc --noEmit",
+    "lint": "oxlint src",
+    "format": "oxfmt src scripts",
+    "test": "vitest run",
+    "fixtures:build": "node scripts/build-fixtures.mjs",
+    "fixtures:clean": "node scripts/build-fixtures.mjs --clean"
+  },
+  "devDependencies": {
+    "@ovr/typescript-config": "workspace:*",
+    "@types/node": "^22.20.1",
+    "typescript": "6.0.3",
+    "vitest": "^4.1.10"
+  }
+}

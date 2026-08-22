@@ -57,7 +57,9 @@ Unnamed viewports (no `name`) are always opt-in: they can't be referenced by `de
 
 ## Storybook
 
-Requires a Storybook v7+ static build (`storybook build`).
+Requires a Storybook 8.5+ static build (`storybook build`). Older builds are rejected up
+front: before 8.5 the Storybook preview does not emit the `storyFinished` event that the
+capture step waits on, so stories would time out one by one instead of failing fast.
 
 ### Usage
 

@@ -73,6 +73,7 @@ packages/
   builds/             # Build domain logic (@ovr/builds)
   reviews/            # Diff review domain logic (@ovr/reviews)
   capture/            # Playwright-based Storybook story capture (@ovr/capture)
+  storybook-compat/   # Supported Storybook versions, manifest parsing, version fixtures (@ovr/storybook-compat)
   storage/            # S3-compatible object storage client (@ovr/storage)
   queue/              # BullMQ queue definitions (@ovr/queue)
   git-status/         # GitHub commit status publishing (@ovr/git-status)
@@ -86,6 +87,22 @@ packages/
 ## Testing
 
 `pnpm test` runs unit and integration tests (Vitest, with Testcontainers for Postgres/Valkey/rustfs where needed).
+
+### Storybook version compatibility
+
+The supported Storybook floor is **8.5**, and it is enforced by a suite that
+runs the real capture code against a real `storybook build` output for every
+supported major. Those fixtures are full Storybook installs, so they are built
+on demand rather than committed, and the suite skips when they are missing:
+
+```sh
+pnpm --filter @ovr/storybook-compat fixtures:build
+pnpm turbo run test --filter=@ovr/storybook-compat
+pnpm --filter @ovr/capture exec vitest run src/__tests__/storybookVersions.integration.test.ts
+```
+
+See [`packages/storybook-compat/README.md`](./packages/storybook-compat/README.md)
+for what each fixture covers and how to add a new major.
 
 The end-to-end suite runs the full stack (web, worker, db, valkey, storage) and drives it through the CLI and the UI the way a real deployment would. See [`apps/e2e/README.md`](./apps/e2e/README.md) for how to run it locally.
 

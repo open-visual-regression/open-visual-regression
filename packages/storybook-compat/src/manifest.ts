@@ -1,6 +1,8 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
+import { MINIMUM_STORYBOOK_VERSION, assertSupportedStorybookBuild } from "./version";
+
 type StorybookManifest = {
   entries?: Record<string, { id: string; title: string; name: string; type?: string }>;
 };
@@ -11,7 +13,11 @@ export type StoryTarget = {
   name: string;
 };
 
+// Reads the stories to capture out of a static build's index.json, rejecting
+// builds from a Storybook older than we support before parsing them.
 export const readStoryTargets = async (dir: string): Promise<StoryTarget[]> => {
+  await assertSupportedStorybookBuild(dir);
+
   const manifestPath = path.join(dir, "index.json");
 
   let raw: string;
@@ -19,7 +25,7 @@ export const readStoryTargets = async (dir: string): Promise<StoryTarget[]> => {
     raw = await readFile(manifestPath, "utf-8");
   } catch {
     throw new Error(
-      `Could not find "index.json" in "${dir}". --dir must point to a Storybook v7+ static build output (run "storybook build" first).`,
+      `Could not find "index.json" in "${dir}". --dir must point to a Storybook ${MINIMUM_STORYBOOK_VERSION}+ static build output (run "storybook build" first).`,
     );
   }
 
@@ -27,7 +33,7 @@ export const readStoryTargets = async (dir: string): Promise<StoryTarget[]> => {
 
   if (!manifest.entries) {
     throw new Error(
-      `"${manifestPath}" does not look like a Storybook v7+ index file (missing "entries").`,
+      `"${manifestPath}" does not look like a Storybook ${MINIMUM_STORYBOOK_VERSION}+ index file (missing "entries").`,
     );
   }
 
