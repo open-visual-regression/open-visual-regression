@@ -3,7 +3,7 @@ title: Docker Compose
 description: Run OVR with Docker Compose, from fully bundled to fully external.
 ---
 
-OVR ships as two images, `web` and `worker`, plus a `migrate` job that runs once at startup. Five example Compose files cover the range from fully bundled to fully external, so you only run the pieces you don't already have.
+OVR runs as two containers, `web` and `worker`, plus a `migrate` container that runs schema migrations once at startup and exits. Point it at a Postgres database, a Redis-compatible instance, and an S3-compatible bucket, bundled alongside it or already running elsewhere, and it's up.
 
 ## Requirements
 
@@ -11,91 +11,156 @@ OVR ships as two images, `web` and `worker`, plus a `migrate` job that runs once
 - 2 vCPU / 4 GB RAM is enough for a small team. The worker is the heaviest part since it drives headless Chromium through Playwright. Lower `OVR_CAPTURE_GROUP_CONCURRENCY` if you're tight on resources.
 - Disk for whatever you bundle: Postgres data, Redis/Valkey data, object storage data, and the worker's local build cache (2 GB by default, see `OVR_STORYBOOK_CACHE_BYTES` below)
 
-None of the examples require a full checkout of the repo. Each is two files you can pull down on their own.
+## Quick start
 
-## Pick a setup
+This runs everything, including Postgres, Redis, and object storage, in containers. No external accounts needed.
 
-| Setup | Postgres | Redis | Object storage |
-| --- | --- | --- | --- |
-| `fully-self-hosted` | bundled | bundled | bundled |
-| `external-postgres` | your own | bundled | bundled |
-| `external-redis` | bundled | your own | bundled |
-| `external-storage` | bundled | bundled | your own |
-| `fully-external` | your own | your own | your own |
+Create `docker-compose.yml`:
 
-"Bundled" runs Postgres, Valkey (Redis-compatible), and [RustFS](https://rustfs.com) (S3-compatible) as containers alongside OVR. "Your own" points OVR at a connection string or endpoint you already have, self-hosted or managed. OVR only needs standard `postgresql://`, `redis://`, and S3 protocols, any compatible service works.
+```yaml
+x-app-env: &app-env
+  DATABASE_URL: postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-postgres}@db:5432/${DATABASE_NAME:-open_visual_regression}
+  REDIS_URL: redis://valkey:6379
+  STORAGE_ENDPOINT: http://rustfs:9000
+  STORAGE_PUBLIC_ENDPOINT: ${STORAGE_PUBLIC_ENDPOINT:-http://localhost:${STORAGE_PORT:-9000}}
+  STORAGE_REGION: ${STORAGE_REGION:-us-east-1}
+  STORAGE_BUCKET: ${STORAGE_BUCKET:-ovr}
+  STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY:-rustfsadmin}
+  STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY:-rustfsadmin}
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  BASE_URL: ${BASE_URL:-http://localhost:3000}
+  OVR_GIT_TOKEN_ENCRYPTION_KEY: ${OVR_GIT_TOKEN_ENCRYPTION_KEY:?set OVR_GIT_TOKEN_ENCRYPTION_KEY in your .env}
 
-<Tabs>
-  <Tab title="Fully self-hosted">
-    Everything in containers. No external accounts needed.
+services:
+  db:
+    image: postgres:17-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME:-open_visual_regression}
+      POSTGRES_USER: ${DATABASE_USER:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-postgres}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d ${DATABASE_NAME:-open_visual_regression} -U ${DATABASE_USER:-postgres}"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - pgdata:/var/lib/postgresql/data
 
-    ```sh
-    curl -O https://raw.githubusercontent.com/open-visual-regression/open-visual-regression/main/examples/docker/fully-self-hosted/docker-compose.yml
-    curl -O https://raw.githubusercontent.com/open-visual-regression/open-visual-regression/main/examples/docker/fully-self-hosted/.env.example
-    ```
-  </Tab>
-  <Tab title="External Postgres">
-    Point at a managed Postgres (Neon, RDS, Cloud SQL, or your own) instead of the bundled container.
+  valkey:
+    image: valkey/valkey:8-alpine
+    restart: always
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - valkeydata:/data
 
-    ```sh
-    curl -O https://raw.githubusercontent.com/open-visual-regression/open-visual-regression/main/examples/docker/external-postgres/docker-compose.yml
-    curl -O https://raw.githubusercontent.com/open-visual-regression/open-visual-regression/main/examples/docker/external-postgres/.env.example
-    ```
+  rustfs:
+    image: rustfs/rustfs:latest
+    restart: always
+    environment:
+      RUSTFS_ACCESS_KEY: ${STORAGE_ACCESS_KEY:-rustfsadmin}
+      RUSTFS_SECRET_KEY: ${STORAGE_SECRET_KEY:-rustfsadmin}
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_VOLUMES: /data
+    ports:
+      - ${STORAGE_PORT:-9000}:9000
+      - ${STORAGE_CONSOLE_PORT:-9001}:9001
+    volumes:
+      - rustfsdata:/data
 
-    The `migrate` service runs schema migrations against `DATABASE_URL` on every startup. Make sure its credentials can create and alter tables.
-  </Tab>
-  <Tab title="External Redis">
-    Point at a managed Redis-compatible instance (Upstash, ElastiCache, Memorystore, or your own Valkey/Redis) instead of the bundled container.
+  createbuckets:
+    image: amazon/aws-cli
+    depends_on:
+      rustfs:
+        condition: service_started
+    environment:
+      AWS_ACCESS_KEY_ID: ${STORAGE_ACCESS_KEY:-rustfsadmin}
+      AWS_SECRET_ACCESS_KEY: ${STORAGE_SECRET_KEY:-rustfsadmin}
+      AWS_DEFAULT_REGION: ${STORAGE_REGION:-us-east-1}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        until aws --endpoint-url http://rustfs:9000 s3 ls >/dev/null 2>&1; do sleep 2; done
+        aws --endpoint-url http://rustfs:9000 s3 mb "s3://${STORAGE_BUCKET:-ovr}" 2>/dev/null || true
+    restart: "no"
 
-    ```sh
-    curl -O https://raw.githubusercontent.com/open-visual-regression/open-visual-regression/main/examples/docker/external-redis/docker-compose.yml
-    curl -O https://raw.githubusercontent.com/open-visual-regression/open-visual-regression/main/examples/docker/external-redis/.env.example
-    ```
+  migrate:
+    image: ghcr.io/open-visual-regression/worker:latest
+    command: ["node", "dist/migrate.js"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      <<: *app-env
+    restart: "no"
 
-    Redis backs the build queue. The worker won't process anything without a reachable instance.
-  </Tab>
-  <Tab title="External storage">
-    Point at a real S3-compatible bucket (AWS S3, R2, Spaces, GCS with S3 interop, your own MinIO/RustFS) instead of the bundled container.
+  web:
+    image: ghcr.io/open-visual-regression/web:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      createbuckets:
+        condition: service_completed_successfully
+    environment:
+      <<: *app-env
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET in your .env}
+      PORT: ${WEB_PORT:-3000}
+    ports:
+      - ${WEB_PORT:-3000}:${WEB_PORT:-3000}
 
-    ```sh
-    curl -O https://raw.githubusercontent.com/open-visual-regression/open-visual-regression/main/examples/docker/external-storage/docker-compose.yml
-    curl -O https://raw.githubusercontent.com/open-visual-regression/open-visual-regression/main/examples/docker/external-storage/.env.example
-    ```
+  worker:
+    image: ghcr.io/open-visual-regression/worker:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      createbuckets:
+        condition: service_completed_successfully
+    environment:
+      <<: *app-env
+      OVR_CAPTURE_GROUP_CONCURRENCY: ${OVR_CAPTURE_GROUP_CONCURRENCY:-2}
+    volumes:
+      - workertmp:/tmp
 
-    Create the bucket yourself first and grant your credentials read/write on it.
-  </Tab>
-  <Tab title="Fully external">
-    Postgres, Redis, and storage are all managed elsewhere. This only runs `web` and `worker`, nothing stateful.
+volumes:
+  pgdata:
+  valkeydata:
+  rustfsdata:
+  workertmp:
+```
 
-    ```sh
-    curl -O https://raw.githubusercontent.com/open-visual-regression/open-visual-regression/main/examples/docker/fully-external/docker-compose.yml
-    curl -O https://raw.githubusercontent.com/open-visual-regression/open-visual-regression/main/examples/docker/fully-external/.env.example
-    ```
+Create `.env` next to it:
 
-    Use this if you'd rather not run any stateful container yourself, for example running `web`/`worker` on ECS or Cloud Run in front of managed Postgres, Redis, and S3.
-  </Tab>
-</Tabs>
+```sh
+# Required, generate each with: openssl rand -base64 32
+BETTER_AUTH_SECRET=
+OVR_GIT_TOKEN_ENCRYPTION_KEY=
 
-## Run it
+# Public URL you'll reach the app at
+BASE_URL=http://localhost:3000
+```
 
-<Steps>
-  <Step title="Copy the environment file">
-    ```sh
-    cp .env.example .env
-    ```
-  </Step>
-  <Step title="Fill in the required values">
-    See [Environment variables](#environment-variables) below. At minimum you need `BETTER_AUTH_SECRET` and `OVR_GIT_TOKEN_ENCRYPTION_KEY`, plus any `DATABASE_URL` / `REDIS_URL` / `STORAGE_*` values your setup doesn't bundle.
-  </Step>
-  <Step title="Start it">
-    ```sh
-    docker compose up -d
-    ```
-  </Step>
-  <Step title="Open the dashboard">
-    Visit `http://localhost:3000` (or whatever you set `BASE_URL` to). First run walks you through creating an organization and admin account.
-  </Step>
-</Steps>
+Then start it:
+
+```sh
+docker compose up -d
+```
+
+Visit `BASE_URL` (`http://localhost:3000` by default). First run walks you through creating an organization and admin account.
 
 ## Environment variables
 
@@ -111,7 +176,7 @@ None of the examples require a full checkout of the repo. Each is two files you 
 
 | Variable | Description |
 | --- | --- |
-| `DATABASE_URL` | `postgresql://` connection string. Bundled setups derive this from `DATABASE_NAME` / `DATABASE_USER` / `DATABASE_PASSWORD` instead. |
+| `DATABASE_URL` | `postgresql://` connection string. The quick start above derives this from `DATABASE_NAME` / `DATABASE_USER` / `DATABASE_PASSWORD` instead, set it directly to use an external Postgres. |
 
 ### Redis
 
@@ -125,7 +190,7 @@ Any S3-compatible service works: AWS S3, Cloudflare R2, Backblaze B2, RustFS, Mi
 
 | Variable | Description |
 | --- | --- |
-| `STORAGE_BUCKET` | Bucket name. Must already exist for external storage, external setups don't create it for you. |
+| `STORAGE_BUCKET` | Bucket name. Must already exist, OVR doesn't create it for you against an external service. |
 | `STORAGE_REGION` | Bucket region. |
 | `STORAGE_ACCESS_KEY` / `STORAGE_SECRET_KEY` | Credentials. Leave both unset on AWS to use the default credential chain (IAM role, instance profile) instead of static keys. |
 | `STORAGE_ENDPOINT` | Internal address the app uses to reach storage. Leave unset for AWS S3. |
@@ -145,7 +210,27 @@ Any S3-compatible service works: AWS S3, Cloudflare R2, Backblaze B2, RustFS, Mi
 
 ### Ports, images, and container user
 
-The bundled examples also expose host-side port variables (`WEB_PORT`, `DATABASE_PORT`, `REDIS_PORT`, `STORAGE_PORT`, `STORAGE_CONSOLE_PORT`), `IMAGE_PREFIX` / `IMAGE_TAG` to pin a specific release, and `PUID` / `PGID` to match the container user to your host user for mounted volumes. Defaults are in each example's `.env.example`.
+`WEB_PORT`, `DATABASE_PORT`, `REDIS_PORT`, `STORAGE_PORT`, and `STORAGE_CONSOLE_PORT` control host-side port mappings for whatever you bundle. `IMAGE_PREFIX` / `IMAGE_TAG` pin a specific release instead of `latest`. `PUID` / `PGID` match the container user to your host user, useful if you mount volumes you also access from the host.
+
+## Using external services
+
+Swap any bundled dependency for one you already run, self-hosted or managed, by removing its container from `docker-compose.yml` and pointing the matching variable at it instead:
+
+| To use your own | Remove these services | Set |
+| --- | --- | --- |
+| Postgres | `db` | `DATABASE_URL` |
+| Redis | `valkey` | `REDIS_URL` |
+| Object storage | `rustfs`, `createbuckets` | `STORAGE_BUCKET`, `STORAGE_REGION`, `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, and `STORAGE_ENDPOINT` / `STORAGE_PUBLIC_ENDPOINT` / `STORAGE_FORCE_PATH_STYLE` for anything other than AWS S3 |
+
+Also drop the removed service from `depends_on` on `migrate`, `web`, and `worker`, and drop its volume from the `volumes:` block at the bottom. For object storage, create the bucket yourself first, external setups don't create it for you.
+
+Ready-made Compose files for each combination are in the repo, pull one down instead of assembling it by hand if you'd rather:
+
+- [`fully-self-hosted`](https://github.com/open-visual-regression/open-visual-regression/tree/main/examples/docker/fully-self-hosted) — everything bundled, matches the quick start above
+- [`external-postgres`](https://github.com/open-visual-regression/open-visual-regression/tree/main/examples/docker/external-postgres) — your own Postgres, Redis and storage bundled
+- [`external-redis`](https://github.com/open-visual-regression/open-visual-regression/tree/main/examples/docker/external-redis) — your own Redis, Postgres and storage bundled
+- [`external-storage`](https://github.com/open-visual-regression/open-visual-regression/tree/main/examples/docker/external-storage) — your own bucket, Postgres and Redis bundled
+- [`fully-external`](https://github.com/open-visual-regression/open-visual-regression/tree/main/examples/docker/fully-external) — Postgres, Redis, and storage all managed elsewhere, only `web` and `worker` run
 
 ## Update
 

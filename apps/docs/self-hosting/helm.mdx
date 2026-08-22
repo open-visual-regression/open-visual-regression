@@ -64,12 +64,14 @@ Set `existingSecret` to the name of a Secret you manage (Sealed Secrets, Externa
 
 ## Sizing for a small cluster
 
-- `worker.concurrency` (default `2`) sets how many capture groups run at once, each one drives its own headless Chromium. Drop it to `1` on a small or single node.
-- `worker.groupSize` caps snapshots per capture-group job, empty uses the app default of 10.
-- `worker.shmSize` (default `1Gi`) is mounted as an in-memory `emptyDir` for Chromium.
-- `web.resources` and `worker.resources` default to `{}` (no requests or limits). Set them once you know your cluster's real headroom, the worker is the heavier of the two.
-- `web.updateStrategy` / `worker.updateStrategy` default to `Recreate`, which needs no spare capacity during a rollout. Switch to `RollingUpdate` only once a node has room for an old and new pod briefly overlapping.
-- `worker.terminationGracePeriodSeconds` defaults to `180`. A capture-group job holds a browser open across several snapshots, cutting it off early fails whatever was in flight.
+| Value | Default | Guidance |
+| --- | --- | --- |
+| `worker.concurrency` | `2` | How many capture groups run at once, each one drives its own headless Chromium. Drop it to `1` on a small or single node. |
+| `worker.groupSize` | empty (app default `10`) | Snapshots per capture-group job. |
+| `worker.shmSize` | `1Gi` | Mounted as an in-memory `emptyDir` for Chromium. |
+| `web.resources` / `worker.resources` | `{}` (no requests or limits) | Set once you know your cluster's real headroom, the worker is the heavier of the two. |
+| `web.updateStrategy` / `worker.updateStrategy` | `Recreate` | Needs no spare capacity during a rollout. Switch to `RollingUpdate` only once a node has room for an old and new pod briefly overlapping. |
+| `worker.terminationGracePeriodSeconds` | `180` | A capture-group job holds a browser open across several snapshots, cutting it off early fails whatever was in flight. |
 
 ## Expose it
 
