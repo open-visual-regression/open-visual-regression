@@ -22,20 +22,13 @@ imagePullSecrets: []
 # below (recommended if using GitOps / Sealed Secrets / External Secrets).
 existingSecret: ""
 
-# The web and worker pods never call the Kubernetes API. The ServiceAccount
-# exists so a cloud IAM role can be bound to it: annotate it for IRSA (EKS),
-# Workload Identity (GKE) or the equivalent, leave storage.accessKey and
-# storage.secretKey empty, and the app picks the role up through the
-# provider's default credential chain -- no static keys in a Secret at all.
+# Annotate for IRSA/Workload Identity to bind a cloud IAM role instead of static keys.
 serviceAccount:
   create: true
-  # Defaults to the release name. Set this with create: false to reuse a
-  # ServiceAccount you manage yourself.
+  # Defaults to the release name.
   name: ""
   annotations: {}
-  # Nothing here talks to the API server, so no API token is mounted. IRSA and
-  # Workload Identity are unaffected: their admission webhooks inject a
-  # separate projected token volume of their own.
+  # Nothing here calls the API server, so no token is mounted.
   automountServiceAccountToken: false
 
 # The images set USER by name (nextjs / pwuser), which the kubelet cannot
@@ -46,10 +39,7 @@ podSecurityContext:
   runAsUser: 1001
   runAsGroup: 1001
 
-# Container-level securityContext, applied to every container unless the
-# component overrides it. These defaults satisfy Pod Security Admission
-# `restricted`. readOnlyRootFilesystem stays false: Next.js writes its cache
-# and Chromium writes scratch files at runtime.
+# Shared default; components below can override. readOnlyRootFilesystem stays false (both write scratch files).
 containerSecurityContext:
   allowPrivilegeEscalation: false
   capabilities:
@@ -124,17 +114,9 @@ worker:
   # before its timeout fires. Empty uses the app default (10).
   groupSize: ""
   resources: {}
-  # Overrides the shared containerSecurityContext above, and deliberately
-  # omits seccompProfile. The app launches Chromium with its sandbox enabled
-  # (it passes --disable-dev-shm-usage, but not --no-sandbox), so the browser
-  # relies on unprivileged user namespaces. RuntimeDefault is the container
-  # runtime's own seccomp profile, which restricts the clone flags that
-  # sandbox needs -- the classic "Chromium will not start in Docker" failure.
-  #
-  # The consequence is that the worker as shipped is not admissible to a
-  # namespace enforcing Pod Security Admission `restricted`, which requires a
-  # seccompProfile. Running it there means setting one here AND launching
-  # Chromium with --no-sandbox, trading the browser sandbox for the kernel's.
+  # Omits seccompProfile: Chromium runs with its own sandbox (no --no-sandbox),
+  # which RuntimeDefault seccomp blocks. Not admissible to a `restricted`
+  # namespace without also adding --no-sandbox to the app's launch args.
   containerSecurityContext:
     allowPrivilegeEscalation: false
     capabilities:

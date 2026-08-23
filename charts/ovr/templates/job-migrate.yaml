@@ -21,10 +21,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      # Deliberately no serviceAccountName. This Job is a pre-install hook, so
-      # it runs before the chart's ServiceAccount exists. Migrations need only
-      # DATABASE_URL -- never object storage -- so they need no cloud identity
-      # and the default account is enough. It still gets no API token.
+      # No serviceAccountName: runs pre-install, before the ServiceAccount exists.
       automountServiceAccountToken: false
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
