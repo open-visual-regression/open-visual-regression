@@ -3,25 +3,17 @@ title: Docker Compose
 description: Run OVR with Docker Compose, from fully bundled to fully external.
 ---
 
-OVR runs as two containers, `web` and `worker`, plus a `migrate` container that runs schema migrations once at startup and exits. Point it at a Postgres database, a Redis-compatible instance, and an S3-compatible bucket, bundled alongside it or already running elsewhere, and it's up.
+OVR runs as two containers, `web` and `worker`, plus a `migrate` container that applies schema migrations and exits. It needs Postgres, Redis, and an S3-compatible bucket, either bundled alongside it or running elsewhere.
 
 ## Requirements
 
-- Docker Compose v2.20 or later, that's the version the migration step's `service_completed_successfully` dependency condition needs. Podman works too: `podman compose` (Podman 4.7+) and podman-compose 1.3.0+ both support the same condition.
-- Disk: Postgres and Redis/Valkey hold metadata and queue state, both stay small. Object storage is what grows, every snapshot is stored as a full-page PNG, so budget it against story count × viewport count × build frequency. Builds older than 90 days are purged automatically by default (configurable per project). The worker also uses up to `OVR_STORYBOOK_CACHE_BYTES` (2 GB by default) of local scratch space for its build cache.
-
-Sizing scales with how much you capture more than with headcount:
-
-| Team | Suggested baseline |
-| --- | --- |
-| Small, a handful of builds a day | 2 vCPU / 4 GB RAM |
-| Larger, dozens of builds a day | 4 vCPU / 8 GB RAM, or add worker capacity horizontally: `docker compose up -d --scale worker=3` |
-
-The worker is the heaviest part, it drives a real browser (Chromium, Firefox, or WebKit) per concurrent capture group. `OVR_CAPTURE_GROUP_CONCURRENCY` (default `2`) controls how many groups one worker container runs at once, lower it on smaller hardware, raise it before adding more CPU.
+- Docker Compose v2.20+. Podman works too: `podman compose` (Podman 4.7+) or podman-compose 1.3.0+.
+- 2 vCPU / 4 GB RAM handles a few builds a day. 4 vCPU / 8 GB handles dozens. Past that, add workers: `docker compose up -d --scale worker=3`.
+- Storage sized against stories × viewports × builds. Every snapshot is a full-page PNG. Postgres and Redis stay small. Builds are purged after 90 days by default.
 
 ## Quick start
 
-This runs everything, including Postgres, Redis, and object storage, in containers. No external accounts needed.
+Runs everything in containers, including Postgres, Valkey, and object storage. No external accounts.
 
 Create `docker-compose.yml`:
 
@@ -172,7 +164,7 @@ Then start it:
 docker compose up -d
 ```
 
-Visit `BASE_URL` (`http://localhost:3000` by default). First run walks you through creating an organization and admin account.
+Visit `BASE_URL` (`http://localhost:3000` by default). First run creates your organization and admin account.
 
 <Note>
 If `docker compose up` fails with `service_completed_successfully is an invalid type, it should be a service_started, or a service_healthy`, your Compose is older than v2.20, see [Requirements](#requirements) above.
@@ -185,20 +177,20 @@ If `docker compose up` fails with `service_completed_successfully is an invalid 
 | Variable | Description |
 | --- | --- |
 | `BETTER_AUTH_SECRET` | Signs auth sessions. Generate with `openssl rand -base64 32`. |
-| `OVR_GIT_TOKEN_ENCRYPTION_KEY` | Encrypts stored git provider tokens at rest. Must decode to 32 bytes: `openssl rand -base64 32`. Rotating it invalidates every stored token, they'll need to be re-entered. |
-| `BASE_URL` | Public URL the app is served from. Defaults to `http://localhost:3000`, change it if you're not on localhost. |
+| `OVR_GIT_TOKEN_ENCRYPTION_KEY` | Encrypts stored git provider tokens at rest. Must decode to 32 bytes: `openssl rand -base64 32`. Rotating it invalidates every stored token. |
+| `BASE_URL` | Public URL the app is served from. Defaults to `http://localhost:3000`. |
 
 ### Database
 
 | Variable | Description |
 | --- | --- |
-| `DATABASE_URL` | `postgresql://` connection string. The quick start above derives this from `DATABASE_NAME` / `DATABASE_USER` / `DATABASE_PASSWORD` instead, set it directly to use an external Postgres. |
+| `DATABASE_URL` | `postgresql://` connection string. Set it directly to use an external Postgres. The quick start derives it from `DATABASE_NAME` / `DATABASE_USER` / `DATABASE_PASSWORD`. |
 
 ### Redis
 
 | Variable | Description |
 | --- | --- |
-| `REDIS_URL` | `redis://` or `rediss://` connection string. Backs the build queue, any Redis-compatible service works (Valkey, Redis, Upstash, ElastiCache, Memorystore). |
+| `REDIS_URL` | `redis://` or `rediss://` connection string. Backs the build queue. Any Redis-compatible service works. |
 
 ### Object storage
 
@@ -206,12 +198,12 @@ Any S3-compatible service works: AWS S3, Cloudflare R2, Backblaze B2, RustFS, Mi
 
 | Variable | Description |
 | --- | --- |
-| `STORAGE_BUCKET` | Bucket name. Must already exist, OVR doesn't create it for you against an external service. |
+| `STORAGE_BUCKET` | Bucket name. Must already exist. |
 | `STORAGE_REGION` | Bucket region. |
-| `STORAGE_ACCESS_KEY` / `STORAGE_SECRET_KEY` | Credentials. Leave both unset on AWS to use the default credential chain (IAM role, instance profile) instead of static keys. |
-| `STORAGE_ENDPOINT` | Internal address the app uses to reach storage. Leave unset for AWS S3. |
-| `STORAGE_PUBLIC_ENDPOINT` | Address baked into presigned URLs handed to CI and browsers. Leave unset for AWS S3. |
-| `STORAGE_FORCE_PATH_STYLE` | `true` for RustFS, MinIO, R2, and most self-hosted S3-compatible services. `false` for AWS S3. |
+| `STORAGE_ACCESS_KEY` / `STORAGE_SECRET_KEY` | Credentials. Leave both unset on AWS to use the default credential chain. |
+| `STORAGE_ENDPOINT` | Internal address the app uses to reach storage. Unset for AWS S3. |
+| `STORAGE_PUBLIC_ENDPOINT` | Address used in presigned URLs handed to CI and browsers. Unset for AWS S3. |
+| `STORAGE_FORCE_PATH_STYLE` | `true` for RustFS, MinIO, R2, and most self-hosted services. `false` for AWS S3. |
 
 ### Optional tuning
 
@@ -219,7 +211,7 @@ Any S3-compatible service works: AWS S3, Cloudflare R2, Backblaze B2, RustFS, Mi
 | --- | --- | --- |
 | `LOG_LEVEL` | `info` | Log verbosity. |
 | `LOG_FILE_PATH` | unset | Log to a file instead of stdout. |
-| `OVR_CAPTURE_GROUP_CONCURRENCY` | `2` | How many capture groups the worker processes in parallel. Each one drives its own browser instance, lower this on constrained hardware. |
+| `OVR_CAPTURE_GROUP_CONCURRENCY` | `2` | Capture groups run in parallel per worker. Each drives its own browser instance. |
 | `OVR_CAPTURE_GROUP_SIZE` | `10` | Snapshots per capture group. |
 | `OVR_REAPER_STALE_MINUTES` | `30` | Minutes before a stalled capture job is requeued. |
 | `OVR_STORYBOOK_CACHE_BYTES` | `2147483648` (2 GB) | Max size of the worker's local Storybook build cache. |
@@ -234,37 +226,37 @@ Any S3-compatible service works: AWS S3, Cloudflare R2, Backblaze B2, RustFS, Mi
 | `STORAGE_PORT` | `9000` | Host port for the object storage API. |
 | `STORAGE_CONSOLE_PORT` | `9001` | Host port for the object storage console. |
 
-Add any of these to `.env` if the default collides with something already running on your machine.
+Add any of these to `.env` if a default collides with something else on your machine.
 
 ## Using external services
 
-Swap any bundled dependency for one you already run, self-hosted or managed, by removing its container from `docker-compose.yml` and pointing the matching variable at it instead:
+To use a dependency you already run, remove its container from `docker-compose.yml` and point the matching variable at it:
 
-| To use your own | Remove these services | Set |
+| To use your own | Remove | Set |
 | --- | --- | --- |
 | Postgres | `db` | `DATABASE_URL` |
 | Redis | `valkey` | `REDIS_URL` |
-| Object storage | `rustfs`, `createbuckets` | `STORAGE_BUCKET`, `STORAGE_REGION`, `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, and `STORAGE_ENDPOINT` / `STORAGE_PUBLIC_ENDPOINT` / `STORAGE_FORCE_PATH_STYLE` for anything other than AWS S3 |
+| Object storage | `rustfs`, `createbuckets` | `STORAGE_BUCKET`, `STORAGE_REGION`, `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, plus `STORAGE_ENDPOINT` / `STORAGE_PUBLIC_ENDPOINT` / `STORAGE_FORCE_PATH_STYLE` for anything other than AWS S3 |
 
-Also drop the removed service from `depends_on` on `migrate`, `web`, and `worker`, and drop its volume from the `volumes:` block at the bottom. For object storage, create the bucket yourself first, external setups don't create it for you.
+Also drop the removed service from `depends_on` on `migrate`, `web`, and `worker`, and drop its volume. Create the bucket yourself first.
 
-Ready-made Compose files for each combination are in the repo, pull one down instead of assembling it by hand if you'd rather:
+Ready-made Compose files for each combination:
 
-- [`fully-self-hosted`](https://github.com/open-visual-regression/open-visual-regression/tree/main/examples/docker/fully-self-hosted) — everything bundled, matches the quick start above
-- [`external-postgres`](https://github.com/open-visual-regression/open-visual-regression/tree/main/examples/docker/external-postgres) — your own Postgres, Redis and storage bundled
-- [`external-redis`](https://github.com/open-visual-regression/open-visual-regression/tree/main/examples/docker/external-redis) — your own Redis, Postgres and storage bundled
-- [`external-storage`](https://github.com/open-visual-regression/open-visual-regression/tree/main/examples/docker/external-storage) — your own bucket, Postgres and Redis bundled
-- [`fully-external`](https://github.com/open-visual-regression/open-visual-regression/tree/main/examples/docker/fully-external) — Postgres, Redis, and storage all managed elsewhere, only `web` and `worker` run
+- [`fully-self-hosted`](https://github.com/open-visual-regression/open-visual-regression/tree/main/examples/docker/fully-self-hosted) — matches the quick start above
+- [`external-postgres`](https://github.com/open-visual-regression/open-visual-regression/tree/main/examples/docker/external-postgres)
+- [`external-redis`](https://github.com/open-visual-regression/open-visual-regression/tree/main/examples/docker/external-redis)
+- [`external-storage`](https://github.com/open-visual-regression/open-visual-regression/tree/main/examples/docker/external-storage)
+- [`fully-external`](https://github.com/open-visual-regression/open-visual-regression/tree/main/examples/docker/fully-external) — only `web` and `worker` run
 
 ## Update
-
-Set `IMAGE_TAG` in `.env` to a specific release instead of tracking `latest` if you don't want it to shift under you (`IMAGE_PREFIX` only needs to change if you publish your own build of the images). Then:
 
 ```sh
 docker compose pull
 docker compose up -d
 ```
 
+Set `IMAGE_TAG` in `.env` to pin a release instead of tracking `latest`.
+
 ## Back up your data
 
-Everything self-hosted lives in named Docker volumes (Postgres data, Redis/Valkey data, object storage data, the worker's temp cache). Back those up the way you'd back up any container volume, there's no separate export step.
+State lives in named volumes: `pgdata`, `valkeydata`, `rustfsdata`. Back them up like any container volume. There is no separate export step.
