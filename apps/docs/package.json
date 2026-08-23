@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "npx mint@latest dev"
+    "dev": "npx mint@latest dev",
+    "check-links": "npx mint@latest broken-links"
   }
 }

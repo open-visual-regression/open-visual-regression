@@ -1,0 +1,13 @@
+{{- if and .Values.web.enabled .Values.web.ingress.enabled .Values.web.ingress.redirectHttps (not (empty .Values.web.ingress.tls)) (eq .Values.web.ingress.className "traefik") }}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ include "ovr.fullname" . }}-web-redirect-https
+  labels:
+    {{- include "ovr.labels" . | nindent 4 }}
+    app.kubernetes.io/component: web
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+{{- end }}

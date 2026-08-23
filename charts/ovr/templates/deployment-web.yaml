@@ -1,0 +1,76 @@
+{{- if .Values.web.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ovr.fullname" . }}-web
+  labels:
+    {{- include "ovr.labels" . | nindent 4 }}
+    app.kubernetes.io/component: web
+spec:
+  replicas: {{ .Values.web.replicas }}
+  # RollingUpdate needs room for two copies of this pod on its node during a
+  # rollout. Set Recreate instead on nodes without that headroom.
+  strategy:
+    type: {{ .Values.web.updateStrategy | default "RollingUpdate" }}
+  selector:
+    matchLabels:
+      {{- include "ovr.selectorLabels" (dict "Release" .Release "Chart" .Chart "Values" .Values "component" "web") | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        {{- include "ovr.configChecksums" . | nindent 8 }}
+      labels:
+        {{- include "ovr.selectorLabels" (dict "Release" .Release "Chart" .Chart "Values" .Values "component" "web") | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- with .Values.web.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.web.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.web.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: web
+          image: {{ include "ovr.image" (dict "Values" .Values "Chart" .Chart "name" "web" "tag" .Values.web.image.tag "digest" .Values.web.image.digest "override" .Values.web.image.override) }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "ovr.fullname" . }}-config
+            - secretRef:
+                name: {{ include "ovr.secretName" . }}
+          env:
+            - name: PORT
+              value: {{ .Values.web.port | quote }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.web.port }}
+          readinessProbe:
+            httpGet:
+              path: /api/rpc/health/ready
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /api/rpc/health/live
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 6
+          resources:
+            {{- toYaml .Values.web.resources | nindent 12 }}
+{{- end }}

@@ -1,0 +1,20 @@
+# Ingress permutation used by the chart lint/template CI job.
+# Deliberately generic: no real hostname, no real cluster-issuer.
+database:
+  url: postgresql://ovr:ovr@postgres:5432/open_visual_regression
+redis:
+  url: redis://valkey:6379
+auth:
+  betterAuthSecret: ci-better-auth-secret-not-a-real-key
+  gitTokenEncryptionKey: ci-git-token-encryption-not-a-real-key
+
+web:
+  ingress:
+    enabled: true
+    className: traefik
+    host: ovr.example.com
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt
+    tls:
+      - hosts: [ovr.example.com]
+        secretName: ovr-tls

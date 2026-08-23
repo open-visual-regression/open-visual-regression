@@ -1,0 +1,21 @@
+# Patterns to ignore when building packages.
+.DS_Store
+.git/
+.gitignore
+*.swp
+*.bak
+*.tmp
+*.orig
+*~
+.project
+.idea/
+.vscode/
+
+# Values used only by chart-testing and by the lint/template CI job. They are
+# test fixtures, not something a consumer of the packaged chart should get.
+ci/
+
+# Never package a deployment's own values overlay. The OVR production overlay
+# lives in the manifests repo, outside this chart, for exactly this reason.
+values-prod.yaml
+values-*.local.yaml
