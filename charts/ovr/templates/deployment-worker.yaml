@@ -8,8 +8,7 @@ metadata:
     app.kubernetes.io/component: worker
 spec:
   replicas: {{ .Values.worker.replicas }}
-  # RollingUpdate needs room for two copies of this pod on its node during a
-  # rollout. Set Recreate instead on nodes without that headroom.
+  # RollingUpdate needs 2x this pod's requests free on its node; use Recreate otherwise.
   strategy:
     type: {{ .Values.worker.updateStrategy | default "RollingUpdate" }}
   selector:

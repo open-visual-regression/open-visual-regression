@@ -27,9 +27,7 @@ spec:
           image: {{ include "ovr.image" (dict "Values" .Values "Chart" .Chart "name" "worker" "tag" .Values.worker.image.tag "digest" .Values.worker.image.digest "override" .Values.worker.image.override) }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["node", "dist/migrate.js"]
-          # Only DATABASE_URL is needed (OVR_MIGRATIONS_DIR is baked into the
-          # image). Deliberately does not read the chart's ConfigMap: this Job
-          # is a pre-install hook, so it runs before that ConfigMap exists.
+          # No ConfigMap ref: this Job runs pre-install, before it exists.
           envFrom:
             - secretRef:
                 name: {{ include "ovr.secretName" . }}

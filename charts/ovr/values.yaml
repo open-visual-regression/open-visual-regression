@@ -2,18 +2,13 @@
 # S3-compatible bucket already reachable from the cluster. This chart runs none
 # of them — use managed services (Neon, RDS, AWS S3, R2) or deploy your own.
 
-# Override the generated resource names. The default prefix is the release
-# name alone, not the usual <release>-<chart>.
+# Overrides the generated resource name prefix (default: release name alone).
 nameOverride: ""
 fullnameOverride: ""
 
 image:
   registry: ghcr.io/open-visual-regression
-  # Empty means "use the chart's appVersion", which the release pipeline
-  # stamps with the app version this chart was published for -- so a released
-  # chart installs a real, immutable version by default. Set it to pin
-  # something else: a vX.Y.Z release, a sha-<short-sha> build, or a moving
-  # branch tag like main (which needs pullPolicy: Always to ever repull).
+  # Empty uses the chart's appVersion. Set to pin a different tag.
   tag: ""
   # Pin an exact digest (sha256:...). Takes precedence over tag when set —
   # deploy exactly what you tested, and roll pods only when it changes.
@@ -68,8 +63,7 @@ web:
   replicas: 1
   port: 3000
   resources: {}
-  # RollingUpdate needs 2x this component's requests free on its node during
-  # rollout. Set Recreate on nodes without that headroom.
+  # RollingUpdate needs 2x this component's requests free on its node during rollout.
   updateStrategy: RollingUpdate
   nodeSelector: {}
   tolerations: []
@@ -100,8 +94,7 @@ worker:
   # before its timeout fires. Empty uses the app default (10).
   groupSize: ""
   resources: {}
-  # RollingUpdate needs 2x this component's requests free on its node during
-  # rollout. Set Recreate on nodes without that headroom.
+  # RollingUpdate needs 2x this component's requests free on its node during rollout.
   updateStrategy: RollingUpdate
   # A capture-group job holds one browser open across its snapshots; the k8s
   # default (30s) SIGKILLs the pod mid-capture on every rollout, permanently
@@ -122,8 +115,7 @@ worker:
 migrate:
   enabled: true
 
-# `helm test` runs a pod that curls the web readiness endpoint through its
-# Service. Disable if pulling the test image is awkward in your environment.
+# helm test: curls the web readiness endpoint through its Service.
 tests:
   enabled: true
   image: busybox:1.37
