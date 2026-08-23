@@ -23,14 +23,12 @@ spec:
         - protocol: TCP
           port: {{ $.Values.web.port }}
       {{- with $.Values.networkPolicy.web.from }}
-      # Omitting `from` entirely admits traffic from anywhere in the cluster,
-      # which is what an unset networkPolicy.web.from means.
+      # Empty from admits traffic from anywhere in the cluster.
       from:
         {{- toYaml . | nindent 8 }}
       {{- end }}
   {{- else }}
-  # The worker serves nothing and is never addressed. Omitting the ingress key
-  # with Ingress in policyTypes denies all inbound traffic to it.
+  # No ingress rule + Ingress in policyTypes = deny all inbound.
   {{- end }}
   egress:
     # DNS, always. Without it every outbound hostname fails to resolve.
@@ -47,9 +45,7 @@ spec:
     {{- with $.Values.networkPolicy.egress }}
     {{- toYaml . | nindent 4 }}
     {{- else }}
-    # Postgres, Redis and object storage are usually outside the cluster and
-    # differ per install, so egress is unrestricted unless networkPolicy.egress
-    # is set.
+    # Unrestricted unless networkPolicy.egress is set (DB/storage vary per install).
     - {}
     {{- end }}
 {{- end }}

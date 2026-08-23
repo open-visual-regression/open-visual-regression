@@ -1,6 +1,4 @@
-# Every scaling and HA knob on at once, so the CI template job renders the
-# PodDisruptionBudget, HorizontalPodAutoscaler, ScaledObject and NetworkPolicy
-# paths rather than only their disabled branches.
+# Every scaling/HA knob on at once, for the CI render job.
 existingSecret: ovr-secrets
 
 web:
