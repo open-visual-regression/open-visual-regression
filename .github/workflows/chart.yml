@@ -4,9 +4,7 @@ on:
   push:
     branches: [main]
     paths: ["charts/**", ".github/workflows/chart.yml"]
-  # No branches filter, deliberately. Chart work lands in stacks where each
-  # pull request targets the one below it, and restricting to main would mean
-  # nothing in the stack is linted until its base is already merged.
+  # No branches filter: chart work lands in stacks, so this must run against any base.
   pull_request:
     paths: ["charts/**", ".github/workflows/chart.yml"]
 
@@ -50,15 +48,10 @@ jobs:
             | sudo tar xz -C /usr/local/bin kubeconform
           kubeconform -v
 
-      # The release name matters: resources are named after it alone, and the
-      # production deployment installs this as ovr-app.
+      # Release name matters: resources are named after it alone; prod uses ovr-app.
       - name: Render every permutation
         run: |
-          # GitHub Actions' default shell is `bash -e {0}` -- no pipefail. A
-          # pipeline's exit status is its last command's, so a failing `helm
-          # template` piped into `tee | head` would be invisible to -e: head
-          # still exits 0, and kubeconform would validate whatever partial
-          # file tee wrote instead of failing the job.
+          # pipefail: GitHub's default shell has none, and `helm template | tee | head` would otherwise hide a failing render.
           set -euo pipefail
           mkdir -p rendered
           render() {
@@ -87,9 +80,7 @@ jobs:
             render "$(basename "$f" .yaml)" --values "$f"
           done
 
-      # CRD-backed kinds (KEDA ScaledObject, Traefik Middleware) come from the
-      # catalog; -ignore-missing-schemas keeps an unlisted CRD from failing the
-      # build rather than silently skipping core kinds, which are always found.
+      # -ignore-missing-schemas covers CRD kinds (KEDA, Traefik) not in the default schema set.
       - name: Validate rendered manifests
         run: |
           kubeconform -strict -summary -verbose \

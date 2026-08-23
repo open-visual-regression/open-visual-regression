@@ -215,9 +215,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-  # One definition of "this main commit is a release", shared by everything
-  # downstream. Read from git rather than the working tree so nothing that
-  # rewrites package.json mid-run can influence it.
+  # Shared release detection; reads from git, not the working tree, so nothing mid-run can skew it.
   release-meta:
     name: Detect release commit
     runs-on: ubuntu-latest
@@ -282,10 +280,7 @@ jobs:
             $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
             "$IMAGE:ci-${{ github.run_id }}"
 
-  # Must follow promote: the chart's default appVersion is the released
-  # version, so the semver image tags have to exist before a chart pointing at
-  # them is publishable. Deliberately not triggered by a git tag -- that would
-  # race the promotion above.
+  # Must follow promote: the chart's default appVersion needs the semver image tags to exist first.
   publish-chart:
     name: Publish Helm chart
     runs-on: ubuntu-latest
@@ -306,9 +301,7 @@ jobs:
           version: v3.16.3
       - uses: sigstore/cosign-installer@v3
 
-      # Chart.yaml carries placeholders in-repo. Chart version and app version
-      # move in lockstep with the app, so `helm install --version X.Y.Z` gets
-      # app X.Y.Z.
+      # Chart and app versions move in lockstep.
       - name: Stamp the release version
         run: |
           images=$(printf -- '- name: web\n  image: ghcr.io/%s/web:%s\n- name: worker\n  image: ghcr.io/%s/worker:%s\n' \
