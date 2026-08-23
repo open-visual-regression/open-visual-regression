@@ -1,0 +1,263 @@
+---
+title: Docker Compose
+description: Run OVR with Docker Compose, from fully bundled to fully external.
+---
+
+OVR runs as two containers, `web` and `worker`, plus a `migrate` container that applies schema migrations and exits. It needs Postgres, Redis, and an S3-compatible bucket, either bundled alongside it or running elsewhere.
+
+## Requirements
+
+- Docker Compose v2.20+. Podman works too: `podman compose` (Podman 4.7+) or podman-compose 1.3.0+.
+- CPU and memory scale with concurrent captures, not total build volume. Each capture group in flight runs its own browser instance. `OVR_CAPTURE_GROUP_CONCURRENCY` (default `2`) caps how many a worker runs at once, and `docker compose up -d --scale worker=3` adds more workers.
+
+## Quick start
+
+Runs everything in containers, including Postgres, Valkey, and object storage. No external accounts.
+
+Create `docker-compose.yml`:
+
+```yaml
+x-app-env: &app-env
+  DATABASE_URL: postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-postgres}@db:5432/${DATABASE_NAME:-open_visual_regression}
+  REDIS_URL: redis://valkey:6379
+  STORAGE_ENDPOINT: http://rustfs:9000
+  STORAGE_PUBLIC_ENDPOINT: ${STORAGE_PUBLIC_ENDPOINT:-http://localhost:${STORAGE_PORT:-9000}}
+  STORAGE_REGION: ${STORAGE_REGION:-us-east-1}
+  STORAGE_BUCKET: ${STORAGE_BUCKET:-ovr}
+  STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY:-rustfsadmin}
+  STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY:-rustfsadmin}
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  BASE_URL: ${BASE_URL:-http://localhost:3000}
+  OVR_GIT_TOKEN_ENCRYPTION_KEY: ${OVR_GIT_TOKEN_ENCRYPTION_KEY:?set OVR_GIT_TOKEN_ENCRYPTION_KEY in your .env}
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME:-open_visual_regression}
+      POSTGRES_USER: ${DATABASE_USER:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-postgres}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d ${DATABASE_NAME:-open_visual_regression} -U ${DATABASE_USER:-postgres}"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+    ports:
+      - ${DATABASE_PORT:-5432}:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  valkey:
+    image: valkey/valkey:8-alpine
+    restart: always
+    ports:
+      - ${REDIS_PORT:-6379}:6379
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - valkeydata:/data
+
+  rustfs:
+    image: rustfs/rustfs:latest
+    restart: always
+    environment:
+      RUSTFS_ACCESS_KEY: ${STORAGE_ACCESS_KEY:-rustfsadmin}
+      RUSTFS_SECRET_KEY: ${STORAGE_SECRET_KEY:-rustfsadmin}
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_VOLUMES: /data
+    ports:
+      - ${STORAGE_PORT:-9000}:9000
+      - ${STORAGE_CONSOLE_PORT:-9001}:9001
+    volumes:
+      - rustfsdata:/data
+
+  createbuckets:
+    image: amazon/aws-cli
+    depends_on:
+      rustfs:
+        condition: service_started
+    environment:
+      AWS_ACCESS_KEY_ID: ${STORAGE_ACCESS_KEY:-rustfsadmin}
+      AWS_SECRET_ACCESS_KEY: ${STORAGE_SECRET_KEY:-rustfsadmin}
+      AWS_DEFAULT_REGION: ${STORAGE_REGION:-us-east-1}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        until aws --endpoint-url http://rustfs:9000 s3 ls >/dev/null 2>&1; do sleep 2; done
+        aws --endpoint-url http://rustfs:9000 s3 mb "s3://${STORAGE_BUCKET:-ovr}" 2>/dev/null || true
+    restart: "no"
+
+  migrate:
+    image: ghcr.io/open-visual-regression/worker:latest
+    command: ["node", "dist/migrate.js"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      <<: *app-env
+    restart: "no"
+
+  web:
+    image: ghcr.io/open-visual-regression/web:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      createbuckets:
+        condition: service_completed_successfully
+    environment:
+      <<: *app-env
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET in your .env}
+      PORT: ${WEB_PORT:-3000}
+    ports:
+      - ${WEB_PORT:-3000}:${WEB_PORT:-3000}
+
+  worker:
+    image: ghcr.io/open-visual-regression/worker:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      createbuckets:
+        condition: service_completed_successfully
+    environment:
+      <<: *app-env
+      OVR_CAPTURE_GROUP_CONCURRENCY: ${OVR_CAPTURE_GROUP_CONCURRENCY:-2}
+    volumes:
+      - workertmp:/tmp
+
+volumes:
+  pgdata:
+  valkeydata:
+  rustfsdata:
+  workertmp:
+```
+
+Create `.env` next to it:
+
+```sh
+# Required, generate each with: openssl rand -base64 32
+BETTER_AUTH_SECRET=
+OVR_GIT_TOKEN_ENCRYPTION_KEY=
+
+# Public URL you'll reach the app at
+BASE_URL=http://localhost:3000
+```
+
+Then start it:
+
+```sh
+docker compose up -d
+```
+
+Visit `BASE_URL` (`http://localhost:3000` by default). First run creates your organization and admin account.
+
+<Note>
+If `docker compose up` fails with `service_completed_successfully is an invalid type, it should be a service_started, or a service_healthy`, your Compose is older than v2.20, see [Requirements](#requirements) above.
+</Note>
+
+## Environment variables
+
+### Required
+
+| Variable | Description |
+| --- | --- |
+| `BETTER_AUTH_SECRET` | Signs auth sessions. Generate with `openssl rand -base64 32`. |
+| `OVR_GIT_TOKEN_ENCRYPTION_KEY` | Encrypts stored git provider tokens at rest. Must decode to 32 bytes: `openssl rand -base64 32`. Rotating it invalidates every stored token. |
+| `BASE_URL` | Public URL the app is served from. Defaults to `http://localhost:3000`. |
+
+### Database
+
+| Variable | Description |
+| --- | --- |
+| `DATABASE_URL` | `postgresql://` connection string. Set it directly to use an external Postgres. The quick start derives it from `DATABASE_NAME` / `DATABASE_USER` / `DATABASE_PASSWORD`. |
+
+### Redis
+
+| Variable | Description |
+| --- | --- |
+| `REDIS_URL` | `redis://` or `rediss://` connection string. Backs the build queue. Any Redis-compatible service works. |
+
+### Object storage
+
+Any S3-compatible service works: AWS S3, Cloudflare R2, Backblaze B2, RustFS, MinIO, and others.
+
+| Variable | Description |
+| --- | --- |
+| `STORAGE_BUCKET` | Bucket name. Must already exist. |
+| `STORAGE_REGION` | Bucket region. |
+| `STORAGE_ACCESS_KEY` / `STORAGE_SECRET_KEY` | Credentials. Leave both unset on AWS to use the default credential chain. |
+| `STORAGE_ENDPOINT` | Internal address the app uses to reach storage. Unset for AWS S3. |
+| `STORAGE_PUBLIC_ENDPOINT` | Address used in presigned URLs handed to CI and browsers. Unset for AWS S3. |
+| `STORAGE_FORCE_PATH_STYLE` | `true` for RustFS, MinIO, R2, and most self-hosted services. `false` for AWS S3. |
+
+### Optional tuning
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `LOG_LEVEL` | `info` | Log verbosity. |
+| `LOG_FILE_PATH` | unset | Log to a file instead of stdout. |
+| `OVR_CAPTURE_GROUP_CONCURRENCY` | `2` | Capture groups run in parallel per worker. Each drives its own browser instance. |
+| `OVR_CAPTURE_GROUP_SIZE` | `10` | Snapshots per capture group. |
+| `OVR_REAPER_STALE_MINUTES` | `30` | Minutes before a stalled capture job is requeued. |
+| `OVR_STORYBOOK_CACHE_BYTES` | `2147483648` (2 GB) | Max size of the worker's local Storybook build cache. |
+
+### Ports
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `WEB_PORT` | `3000` | Host port for the dashboard. |
+| `DATABASE_PORT` | `5432` | Host port for Postgres. |
+| `REDIS_PORT` | `6379` | Host port for Redis/Valkey. |
+| `STORAGE_PORT` | `9000` | Host port for the object storage API. |
+| `STORAGE_CONSOLE_PORT` | `9001` | Host port for the object storage console. |
+
+Add any of these to `.env` if a default collides with something else on your machine.
+
+## Using external services
+
+To use a dependency you already run, remove its container from `docker-compose.yml` and point the matching variable at it:
+
+| To use your own | Remove | Set |
+| --- | --- | --- |
+| Postgres | `db` | `DATABASE_URL` |
+| Redis | `valkey` | `REDIS_URL` |
+| Object storage | `rustfs` | `STORAGE_BUCKET`, `STORAGE_REGION`, `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, plus `STORAGE_ENDPOINT` / `STORAGE_PUBLIC_ENDPOINT` / `STORAGE_FORCE_PATH_STYLE` for anything other than AWS S3 |
+
+Also drop the removed service from `depends_on` on `migrate`, `web`, and `worker`, and drop its volume.
+
+`createbuckets` works against any S3-compatible endpoint. Point its `--endpoint-url` and credentials at your provider to keep it, or remove it and create the bucket yourself.
+
+Ready-made Compose files for each combination:
+
+- [`fully-self-hosted`](https://github.com/open-visual-regression/open-visual-regression/tree/main/examples/docker/fully-self-hosted) — matches the quick start above
+- [`external-postgres`](https://github.com/open-visual-regression/open-visual-regression/tree/main/examples/docker/external-postgres)
+- [`external-redis`](https://github.com/open-visual-regression/open-visual-regression/tree/main/examples/docker/external-redis)
+- [`external-storage`](https://github.com/open-visual-regression/open-visual-regression/tree/main/examples/docker/external-storage)
+- [`fully-external`](https://github.com/open-visual-regression/open-visual-regression/tree/main/examples/docker/fully-external) — only `web` and `worker` run
+
+## Update
+
+```sh
+docker compose pull
+docker compose up -d
+```
+
+Set `IMAGE_TAG` in `.env` to pin a release instead of tracking `latest`.
+
+## Back up your data
+
+State lives in named volumes: `pgdata`, `valkeydata`, `rustfsdata`. Back them up like any container volume.

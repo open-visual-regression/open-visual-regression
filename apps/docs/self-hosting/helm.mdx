@@ -1,0 +1,142 @@
+---
+title: Helm
+description: Deploy OVR to Kubernetes with the published Helm chart.
+---
+
+The chart deploys the OVR `web` and `worker` images, plus a migration Job that runs before each install and upgrade. Postgres, Redis, and object storage are yours to provide.
+
+## Requirements
+
+- Kubernetes 1.23+, any distribution.
+- Helm 3.8+, and [cosign](https://docs.sigstore.dev/cosign/installation/) to verify chart signatures.
+- Postgres, a Redis-compatible instance, and an S3-compatible bucket reachable from the cluster. Run them in-cluster with their own charts ([Valkey](https://valkey.io/valkey-helm/), [RustFS](https://charts.rustfs.com), [CloudNativePG](https://cloudnative-pg.io)) or use managed services.
+- An ingress controller, to reach the dashboard from outside the cluster. [Traefik](https://traefik.io) is the tested default. Avoid ingress-nginx, which is retired and unmaintained.
+
+## Install
+
+```sh
+helm install ovr oci://ghcr.io/open-visual-regression/charts/ovr \
+  --version X.Y.Z \
+  --namespace ovr --create-namespace \
+  -f my-values.yaml
+```
+
+Chart versions match app versions: `--version 1.4.2` installs app 1.4.2. Pin it explicitly, there is no floating tag. Published versions are listed on the [GHCR package page](https://github.com/orgs/open-visual-regression/packages/container/package/charts%2Fovr).
+
+Verify a chart before installing it:
+
+```sh
+cosign verify ghcr.io/open-visual-regression/charts/ovr:X.Y.Z \
+  --certificate-identity-regexp '^https://github.com/open-visual-regression/open-visual-regression/' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+```
+
+`helm test ovr` checks the web readiness endpoint through its Service.
+
+## Required values
+
+| Value | Description |
+| --- | --- |
+| `env.baseUrl` | Public URL the app will be served at. |
+| `auth.betterAuthSecret` | Signs auth sessions. Generate with `openssl rand -base64 32`. |
+| `auth.gitTokenEncryptionKey` | Encrypts stored git provider tokens at rest. Generate with `openssl rand -base64 32`. Rotating it invalidates every stored token. |
+| `database.url` | `postgresql://` connection string. |
+| `redis.url` | `redis://` or `rediss://` connection string. |
+| `storage.bucket` / `storage.region` | Bucket name and region. The bucket must already exist. |
+
+Set `existingSecret` to supply all of these from a Secret you manage (Sealed Secrets, External Secrets, or by hand) instead. It needs the keys `DATABASE_URL`, `REDIS_URL`, `BETTER_AUTH_SECRET`, `OVR_GIT_TOKEN_ENCRYPTION_KEY`, `STORAGE_ACCESS_KEY`, and `STORAGE_SECRET_KEY`.
+
+## Object storage
+
+Any S3-compatible service works: AWS S3, Cloudflare R2, RustFS, MinIO, and others.
+
+| Value | Description |
+| --- | --- |
+| `storage.endpoint` | Internal address the app uses to reach storage. Empty for AWS S3. |
+| `storage.publicEndpoint` | Address used in presigned URLs handed to CI and browsers. Empty for AWS S3. |
+| `storage.forcePathStyle` | `true` for RustFS, MinIO, R2, and most self-hosted services. `false` for AWS S3. |
+| `storage.accessKey` / `storage.secretKey` | Static credentials. Leave empty to use a cloud IAM role instead. |
+
+Empty credentials fall through to the provider's default credential chain, so annotating the ServiceAccount is enough to use IRSA or Workload Identity:
+
+```yaml
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::111122223333:role/ovr
+```
+
+## Sizing
+
+CPU and memory scale with concurrent captures, not total build volume. Each capture group in flight runs its own browser instance.
+
+| Value | Default | Description |
+| --- | --- | --- |
+| `worker.concurrency` | `2` | Capture groups a worker runs at once, each with its own browser instance. |
+| `worker.groupSize` | app default `10` | Snapshots per capture group. |
+| `worker.shmSize` | `1Gi` | In-memory `emptyDir` for the browser. |
+| `worker.terminationGracePeriodSeconds` | `180` | A capture group holds a browser open across snapshots. Cutting it off early fails the in-flight snapshot. |
+| `web.resources` / `worker.resources` | `{}` | No requests or limits by default. |
+| `web.updateStrategy` / `worker.updateStrategy` | `RollingUpdate` | Needs room for two copies of the pod during a rollout. Use `Recreate` without that headroom. |
+
+## Expose it
+
+Set `web.ingress.enabled: true` and `web.ingress.host`, plus `web.ingress.className` and `web.ingress.annotations` for your controller and TLS setup. Or use `kubectl port-forward`, see the `helm install` output for the command.
+
+With `web.ingress.tls` set, `web.ingress.redirectHttps` (default `true`) redirects HTTP to HTTPS. Implemented for `className: traefik` and `className: nginx`. Configure the redirect yourself on other controllers.
+
+## Scaling
+
+All off by default.
+
+| Value | Description |
+| --- | --- |
+| `web.autoscaling` | CPU-based HorizontalPodAutoscaler. Requires `web.resources.requests`, since targets are a percentage of the request. |
+| `worker.keda` | Queue-depth autoscaling via a [KEDA](https://keda.sh) `ScaledObject`. Requires KEDA in the cluster, the chart does not install it. Mutually exclusive with `worker.autoscaling`. |
+| `web.podDisruptionBudget` / `worker.podDisruptionBudget` | Set exactly one of `minAvailable` or `maxUnavailable`. `minAvailable: 1` against a single replica blocks node drains. |
+| `web.topologySpreadConstraints` / `worker.topologySpreadConstraints` | Passed through verbatim. Include a `labelSelector`, the chart does not inject one. |
+| `web.priorityClassName` / `worker.priorityClassName` | Passed through verbatim. |
+
+Scale the worker on queue depth rather than CPU. A pod holding an idle browser between snapshots looks unloaded while it is busy, so a CPU-based autoscaler will scale it away mid-capture. Capture work lands on the BullMQ `snapshot-capture` queue:
+
+```yaml
+worker:
+  keda:
+    enabled: true
+    maxReplicaCount: 8
+    cooldownPeriod: 600
+    triggers:
+      - type: redis
+        metadata:
+          address: valkey:6379
+          listName: bull:snapshot-capture:wait
+          listLength: "4"
+```
+
+`triggers` has no default, since the address and authentication depend on your Redis. `cooldownPeriod` must outlast the longest capture group, and `worker.terminationGracePeriodSeconds` must cover the in-flight snapshot on top of that.
+
+## Network policies
+
+`networkPolicy.enabled` adds a policy per component. The worker gets deny-all ingress. The web pod admits traffic on its port from anywhere in the cluster, narrow that with `networkPolicy.web.from`.
+
+Egress always allows DNS, and is otherwise unrestricted. Setting `networkPolicy.egress` replaces that default entirely, so it must list everything the pods reach: Postgres, Redis, object storage, and your git provider.
+
+## Security
+
+Containers run as UID/GID `1001`, drop all capabilities, and disable privilege escalation.
+
+The worker omits the `RuntimeDefault` seccomp profile that the other pods set, because its browser sandbox needs unprivileged user namespaces that the profile blocks. The worker is therefore not admissible to a Pod Security Admission `restricted` namespace as shipped. To run it in one, set `worker.containerSecurityContext.seccompProfile` and disable the browser sandbox.
+
+## Update
+
+```sh
+helm upgrade ovr oci://ghcr.io/open-visual-regression/charts/ovr \
+  --version X.Y.Z \
+  --namespace ovr \
+  -f my-values.yaml
+```
+
+The migration Job re-runs as a pre-upgrade hook. Bumping `--version` is the only thing that moves what runs, since a released chart pins its own image tag. Config changes without a version bump still roll the affected pods.
+
+## Full values reference
+
+`helm show values oci://ghcr.io/open-visual-regression/charts/ovr --version X.Y.Z` prints every value with its inline documentation.

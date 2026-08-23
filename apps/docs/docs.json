@@ -17,6 +17,10 @@
       {
         "group": "Get Started",
         "pages": ["index"]
+      },
+      {
+        "group": "Self-Hosting",
+        "pages": ["self-hosting/docker-compose", "self-hosting/helm"]
       }
     ]
   },

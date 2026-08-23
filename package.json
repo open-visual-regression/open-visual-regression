@@ -12,6 +12,7 @@
     "check-types": "turbo run tsc",
     "test": "turbo run test",
     "build-storybook": "turbo run build-storybook",
+    "check-links": "turbo run check-links",
     "db:generate": "pnpm --filter @ovr/db db:generate",
     "db:migrate": "pnpm --filter @ovr/db db:migrate",
     "db:push": "pnpm --filter @ovr/db db:push",
