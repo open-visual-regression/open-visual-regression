@@ -15,7 +15,7 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "ovr.selectorLabels" (dict "Release" .Release "Chart" .Chart "component" "migrate") | nindent 8 }}
+        {{- include "ovr.selectorLabels" (dict "Release" .Release "Chart" .Chart "Values" .Values "component" "migrate") | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -24,7 +24,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: migrate
-          image: {{ include "ovr.image" (dict "Values" .Values "name" "worker" "tag" .Values.worker.image.tag "digest" .Values.worker.image.digest "override" .Values.worker.image.override) }}
+          image: {{ include "ovr.image" (dict "Values" .Values "Chart" .Chart "name" "worker" "tag" .Values.worker.image.tag "digest" .Values.worker.image.digest "override" .Values.worker.image.override) }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["node", "dist/migrate.js"]
           # Only DATABASE_URL is needed (OVR_MIGRATIONS_DIR is baked into the

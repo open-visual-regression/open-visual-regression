@@ -1,0 +1,24 @@
+{{- if and .Values.web.enabled .Values.tests.enabled }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ include "ovr.fullname" . }}-test-web-ready
+  labels:
+    {{- include "ovr.labels" . | nindent 4 }}
+    app.kubernetes.io/component: test
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  securityContext:
+    {{- toYaml .Values.podSecurityContext | nindent 4 }}
+  containers:
+    - name: ready
+      image: {{ .Values.tests.image | quote }}
+      command: ["/bin/sh", "-c"]
+      args:
+        - >-
+          wget --spider -q -T 10
+          "http://{{ include "ovr.fullname" . }}-web:{{ .Values.web.service.port }}/api/rpc/health/ready"
+{{- end }}
