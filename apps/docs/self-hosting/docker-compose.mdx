@@ -166,8 +166,6 @@ OVR_GIT_TOKEN_ENCRYPTION_KEY=
 BASE_URL=http://localhost:3000
 ```
 
-`WEB_PORT`, `DATABASE_PORT`, `REDIS_PORT`, `STORAGE_PORT`, and `STORAGE_CONSOLE_PORT` control the host-side port mappings above, add any of them to `.env` if the default collides with something already running on your machine. If you swap a named volume for a host bind mount, also set `PUID` / `PGID` to your host user so the containers don't write files you need `sudo` to touch.
-
 Then start it:
 
 ```sh
@@ -225,6 +223,18 @@ Any S3-compatible service works: AWS S3, Cloudflare R2, Backblaze B2, RustFS, Mi
 | `OVR_CAPTURE_GROUP_SIZE` | `10` | Snapshots per capture group. |
 | `OVR_REAPER_STALE_MINUTES` | `30` | Minutes before a stalled capture job is requeued. |
 | `OVR_STORYBOOK_CACHE_BYTES` | `2147483648` (2 GB) | Max size of the worker's local Storybook build cache. |
+
+### Ports
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `WEB_PORT` | `3000` | Host port for the dashboard. |
+| `DATABASE_PORT` | `5432` | Host port for Postgres. |
+| `REDIS_PORT` | `6379` | Host port for Redis/Valkey. |
+| `STORAGE_PORT` | `9000` | Host port for the object storage API. |
+| `STORAGE_CONSOLE_PORT` | `9001` | Host port for the object storage console. |
+
+Add any of these to `.env` if the default collides with something already running on your machine.
 
 ## Using external services
 
