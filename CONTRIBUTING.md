@@ -73,6 +73,7 @@ packages/
   builds/             # Build domain logic (@ovr/builds)
   reviews/            # Diff review domain logic (@ovr/reviews)
   capture/            # Playwright-based Storybook story capture (@ovr/capture)
+  storybook-compat/   # Supported Storybook versions and static-build parsing (@ovr/storybook-compat)
   storage/            # S3-compatible object storage client (@ovr/storage)
   queue/              # BullMQ queue definitions (@ovr/queue)
   git-status/         # GitHub commit status publishing (@ovr/git-status)

@@ -1,5 +1,7 @@
 import type { Page } from "playwright";
 
+import { assertSupportedStorybookBuild } from "@ovr/storybook-compat/version";
+
 export type RenderResult = { ok: boolean; error?: string };
 
 export type CaptureStrategy = {
@@ -191,27 +193,7 @@ const storybookCaptureStrategy: CaptureStrategy = {
   waitForTargetPlayed: waitForStorybookTargetPlayed,
 };
 
-const DETECT_STRATEGY_TIMEOUT_MS = 10_000;
-
-const detectStorybookManifestVersion = async (proxyOrigin: string): Promise<number | undefined> => {
-  try {
-    const response = await fetch(`${proxyOrigin}/index.json`, {
-      signal: AbortSignal.timeout(DETECT_STRATEGY_TIMEOUT_MS),
-    });
-    if (!response.ok) {
-      return undefined;
-    }
-    const manifest = (await response.json()) as { v?: unknown };
-    return typeof manifest.v === "number" ? manifest.v : undefined;
-  } catch {
-    return undefined;
-  }
-};
-
-export const detectCaptureStrategy = async (proxyOrigin: string): Promise<CaptureStrategy> => {
-  const storybookManifestVersion = await detectStorybookManifestVersion(proxyOrigin);
-  switch (storybookManifestVersion) {
-    default:
-      return storybookCaptureStrategy;
-  }
+export const detectCaptureStrategy = async (bundleDir: string): Promise<CaptureStrategy> => {
+  await assertSupportedStorybookBuild(bundleDir);
+  return storybookCaptureStrategy;
 };

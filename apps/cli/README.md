@@ -57,7 +57,8 @@ Unnamed viewports (no `name`) are always opt-in: they can't be referenced by `de
 
 ## Storybook
 
-Requires a Storybook v7+ static build (`storybook build`).
+Requires a Storybook 8.5+ static build (`storybook build`). Older builds are rejected
+before upload, with the detected version in the error.
 
 ### Usage
 

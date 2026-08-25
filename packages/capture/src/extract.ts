@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { dbClient } from "@ovr/db/client";
 import { enqueueCaptureGroup } from "@ovr/queue/producer";
+import { assertSupportedStorybookBuild } from "@ovr/storybook-compat/version";
 
 import { withExtractedBundle } from "./lib/artifact";
 import { markSnapshotErrored } from "./snapshots";
@@ -104,11 +105,16 @@ export const extractBuild = async (
     throw new Error(`Build not found: ${buildId}`);
   }
 
-  const { overrides, failures } = await withExtractedBundle(build.artifactPath, (bundleDir) =>
-    readStoryParameterOverrides(
-      bundleDir,
-      targets.map((target) => target.id),
-    ),
+  const { overrides, failures } = await withExtractedBundle(
+    build.artifactPath,
+    async (bundleDir) => {
+      await assertSupportedStorybookBuild(bundleDir);
+
+      return readStoryParameterOverrides(
+        bundleDir,
+        targets.map((target) => target.id),
+      );
+    },
   );
 
   await dbClient.snapshots.createMany({
