@@ -2,26 +2,12 @@
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{/*
-Resource name prefix.
-
-Deliberately NOT the conventional "<release>-<chart>" fullname helper. This
-chart has always rendered a bare .Release.Name, so switching to the
-convention would rename every object in every existing install
-(ovr-app-web -> ovr-app-ovr-web). A pruning GitOps controller reads that as
-delete-and-recreate, which means downtime and a re-run of the migration
-hook. The override hook below is new; the default is unchanged.
-*/}}
+{{/* Bare .Release.Name, not <release>-<chart> -- changing it renames every existing install's objects. */}}
 {{- define "ovr.fullname" -}}
 {{- default .Release.Name .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{/*
-Labels for object metadata only. Safe to extend: none of these reach a
-selector, which is immutable after create. Pod templates carry
-ovr.selectorLabels alone, deliberately — putting helm.sh/chart on a pod
-would roll every workload on a chart version bump that changed nothing.
-*/}}
+{{/* Metadata only, never a selector (immutable after create) -- ovr.selectorLabels is separate for that reason. */}}
 {{- define "ovr.labels" -}}
 app.kubernetes.io/name: {{ include "ovr.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
@@ -33,11 +19,7 @@ app.kubernetes.io/version: {{ . | quote }}
 helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
 {{- end -}}
 
-{{/*
-Selector labels. Callers pass a synthetic dict, so it must carry Values for
-ovr.name's nameOverride lookup. Changing what this renders breaks upgrades
-of existing installs.
-*/}}
+{{/* Callers pass a synthetic dict; must carry Values for ovr.name's nameOverride lookup. */}}
 {{- define "ovr.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "ovr.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
@@ -52,12 +34,7 @@ app.kubernetes.io/component: {{ .component }}
 {{- end -}}
 {{- end -}}
 
-{{/*
-Image reference. Precedence: override > digest > tag > chart appVersion.
-appVersion is stamped from the app release at package time, so a published
-chart installs a real, immutable version by default rather than a moving
-branch tag.
-*/}}
+{{/* Precedence: override > digest > tag > chart appVersion. */}}
 {{- define "ovr.image" -}}
 {{- if .override -}}
 {{ .override }}
@@ -72,11 +49,7 @@ branch tag.
 {{- end -}}
 {{- end -}}
 
-{{/*
-Pod annotations that roll a workload when its configuration changes.
-An existingSecret is managed outside the chart, so there is nothing to
-checksum for it.
-*/}}
+{{/* Rolls a workload on config/secret change. No secret checksum when existingSecret is set -- it's not ours to hash. */}}
 {{- define "ovr.configChecksums" -}}
 checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
 {{- if not .Values.existingSecret }}
