@@ -21,11 +21,17 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      # No serviceAccountName: runs pre-install, before the ServiceAccount exists.
+      automountServiceAccountToken: false
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
       restartPolicy: Never
       containers:
         - name: migrate
           image: {{ include "ovr.image" (dict "Values" .Values "Chart" .Chart "name" "worker" "tag" .Values.worker.image.tag "digest" .Values.worker.image.digest "override" .Values.worker.image.override) }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
           command: ["node", "dist/migrate.js"]
           # No ConfigMap ref: this Job runs pre-install, before it exists.
           envFrom:

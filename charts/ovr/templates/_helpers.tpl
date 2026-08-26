@@ -56,3 +56,11 @@ checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sh
 checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
 {{- end }}
 {{- end -}}
+
+{{- define "ovr.serviceAccountName" -}}
+{{- if .Values.serviceAccount.create -}}
+{{ default (include "ovr.fullname" .) .Values.serviceAccount.name }}
+{{- else -}}
+{{ default "default" .Values.serviceAccount.name }}
+{{- end -}}
+{{- end -}}

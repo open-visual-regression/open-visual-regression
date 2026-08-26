@@ -25,6 +25,8 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      serviceAccountName: {{ include "ovr.serviceAccountName" . }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       {{- with .Values.web.nodeSelector }}
@@ -43,6 +45,8 @@ spec:
         - name: web
           image: {{ include "ovr.image" (dict "Values" .Values "Chart" .Chart "name" "web" "tag" .Values.web.image.tag "digest" .Values.web.image.digest "override" .Values.web.image.override) }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml (default .Values.containerSecurityContext .Values.web.containerSecurityContext) | nindent 12 }}
           envFrom:
             - configMapRef:
                 name: {{ include "ovr.fullname" . }}-config

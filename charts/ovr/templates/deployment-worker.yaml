@@ -25,6 +25,8 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      serviceAccountName: {{ include "ovr.serviceAccountName" . }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
       terminationGracePeriodSeconds: {{ .Values.worker.terminationGracePeriodSeconds }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
@@ -44,6 +46,8 @@ spec:
         - name: worker
           image: {{ include "ovr.image" (dict "Values" .Values "Chart" .Chart "name" "worker" "tag" .Values.worker.image.tag "digest" .Values.worker.image.digest "override" .Values.worker.image.override) }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml (default .Values.containerSecurityContext .Values.worker.containerSecurityContext) | nindent 12 }}
           envFrom:
             - configMapRef:
                 name: {{ include "ovr.fullname" . }}-config

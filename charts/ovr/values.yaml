@@ -22,6 +22,15 @@ imagePullSecrets: []
 # below (recommended if using GitOps / Sealed Secrets / External Secrets).
 existingSecret: ""
 
+# Annotate for IRSA/Workload Identity to bind a cloud IAM role instead of static keys.
+serviceAccount:
+  create: true
+  # Defaults to the release name.
+  name: ""
+  annotations: {}
+  # Nothing here calls the API server, so no token is mounted.
+  automountServiceAccountToken: false
+
 # The images set USER by name (nextjs / pwuser), which the kubelet cannot
 # verify against runAsNonRoot — it needs a numeric UID. Both resolve to 1001,
 # matching the UID/GID build args in the app's Dockerfiles.
@@ -29,6 +38,15 @@ podSecurityContext:
   runAsNonRoot: true
   runAsUser: 1001
   runAsGroup: 1001
+
+# Shared default; components below can override. readOnlyRootFilesystem stays false (both write scratch files).
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ["ALL"]
+  readOnlyRootFilesystem: false
+  seccompProfile:
+    type: RuntimeDefault
 
 env:
   # Public URL the app will be served at.
@@ -63,6 +81,8 @@ web:
   replicas: 1
   port: 3000
   resources: {}
+  # Empty inherits the shared containerSecurityContext above.
+  containerSecurityContext: {}
   # RollingUpdate needs 2x this component's requests free on its node during rollout.
   updateStrategy: RollingUpdate
   nodeSelector: {}
@@ -94,6 +114,14 @@ worker:
   # before its timeout fires. Empty uses the app default (10).
   groupSize: ""
   resources: {}
+  # Omits seccompProfile: Chromium runs with its own sandbox (no --no-sandbox),
+  # which RuntimeDefault seccomp blocks. Not admissible to a `restricted`
+  # namespace without also adding --no-sandbox to the app's launch args.
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
+    readOnlyRootFilesystem: false
   # RollingUpdate needs 2x this component's requests free on its node during rollout.
   updateStrategy: RollingUpdate
   # A capture-group job holds one browser open across its snapshots; the k8s
