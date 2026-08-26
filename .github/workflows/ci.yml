@@ -215,7 +215,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-  # Shared release detection; reads from git, not the working tree, so nothing mid-run can skew it.
   release-meta:
     name: Detect release commit
     runs-on: ubuntu-latest
@@ -280,7 +279,6 @@ jobs:
             $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
             "$IMAGE:ci-${{ github.run_id }}"
 
-  # Must follow promote: the chart's default appVersion needs the semver image tags to exist first.
   publish-chart:
     name: Publish Helm chart
     runs-on: ubuntu-latest
@@ -301,7 +299,6 @@ jobs:
           version: v3.16.3
       - uses: sigstore/cosign-installer@v3
 
-      # Chart and app versions move in lockstep.
       - name: Stamp the release version
         run: |
           images=$(printf -- '- name: web\n  image: ghcr.io/%s/web:%s\n- name: worker\n  image: ghcr.io/%s/worker:%s\n' \

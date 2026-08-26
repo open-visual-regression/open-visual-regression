@@ -4,7 +4,6 @@ on:
   push:
     branches: [main]
     paths: ["charts/**", ".github/workflows/chart.yml"]
-  # No branches filter: chart work lands in stacks, so this must run against any base.
   pull_request:
     paths: ["charts/**", ".github/workflows/chart.yml"]
 
@@ -48,10 +47,8 @@ jobs:
             | sudo tar xz -C /usr/local/bin kubeconform
           kubeconform -v
 
-      # Release name matters: resources are named after it alone; prod uses ovr-app.
       - name: Render every permutation
         run: |
-          # pipefail: GitHub's default shell has none, and `helm template | tee | head` would otherwise hide a failing render.
           set -euo pipefail
           mkdir -p rendered
           render() {
@@ -80,7 +77,6 @@ jobs:
             render "$(basename "$f" .yaml)" --values "$f"
           done
 
-      # -ignore-missing-schemas covers CRD kinds (KEDA, Traefik) not in the default schema set.
       - name: Validate rendered manifests
         run: |
           kubeconform -strict -summary -verbose \

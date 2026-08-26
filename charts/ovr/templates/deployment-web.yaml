@@ -10,7 +10,6 @@ spec:
   {{- if not .Values.web.autoscaling.enabled }}
   replicas: {{ .Values.web.replicas }}
   {{- end }}
-  # RollingUpdate needs 2x this pod's requests free on its node; use Recreate otherwise.
   strategy:
     type: {{ .Values.web.updateStrategy | default "RollingUpdate" }}
   selector:

@@ -3,7 +3,6 @@ name: ovr
 description: Open Visual Regression — web and worker on Kubernetes
 type: application
 
-# Stamped by the release workflow; 0.0.0-dev marks an unreleased checkout.
 version: 0.0.0-dev
 appVersion: "main"
 
