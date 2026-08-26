@@ -324,6 +324,7 @@ jobs:
       - name: Push
         id: push
         run: |
+          set -euo pipefail
           helm push "dist/ovr-${VERSION}.tgz" "oci://${CHART_REPO}" 2>&1 | tee push.log
           digest=$(awk '/^Digest: /{print $2}' push.log)
           test -n "$digest"

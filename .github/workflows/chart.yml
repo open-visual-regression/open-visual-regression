@@ -54,7 +54,8 @@ jobs:
           render() {
             name=$1; shift
             echo "::group::helm template ($name)"
-            helm template ovr-app charts/ovr "$@" | tee "rendered/$name.yaml" | head -n 5
+            helm template ovr-app charts/ovr "$@" > "rendered/$name.yaml"
+            head -n 5 "rendered/$name.yaml"
             echo "::endgroup::"
           }
           inline=(--set database.url=postgresql://u:p@h:5432/d
