@@ -2,7 +2,6 @@
 # S3-compatible bucket already reachable from the cluster. This chart runs none
 # of them — use managed services (Neon, RDS, AWS S3, R2) or deploy your own.
 
-# Overrides the generated resource name prefix (default: release name alone).
 nameOverride: ""
 fullnameOverride: ""
 
@@ -119,7 +118,6 @@ web:
     maxReplicas: 5
     targetCPUUtilizationPercentage: 80
     targetMemoryUtilizationPercentage: ""
-    # Appended verbatim.
     metrics: []
     behavior: {}
 
@@ -198,7 +196,6 @@ worker:
 migrate:
   enabled: true
 
-# helm test: curls the web readiness endpoint through its Service.
 tests:
   enabled: true
   image: busybox:1.37

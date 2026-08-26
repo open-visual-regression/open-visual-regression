@@ -31,7 +31,6 @@ spec:
   # No ingress rule + Ingress in policyTypes = deny all inbound.
   {{- end }}
   egress:
-    # DNS, always. Without it every outbound hostname fails to resolve.
     - to:
         - namespaceSelector: {}
           podSelector:
