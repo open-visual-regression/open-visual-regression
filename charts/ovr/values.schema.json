@@ -42,6 +42,34 @@
     },
     "updateStrategy": {
       "enum": ["RollingUpdate", "Recreate"]
+    },
+    "objectList": {
+      "type": "array",
+      "items": { "type": "object" }
+    },
+    "podDisruptionBudget": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Set exactly one of minAvailable or maxUnavailable; the template fails otherwise.",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "minAvailable": { "type": ["string", "integer"] },
+        "maxUnavailable": { "type": ["string", "integer"] }
+      }
+    },
+    "autoscaling": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Utilization targets are a percentage of the container's request, so requests must be set.",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "minReplicas": { "type": "integer", "minimum": 1 },
+        "maxReplicas": { "type": "integer", "minimum": 1 },
+        "targetCPUUtilizationPercentage": { "type": ["string", "integer"] },
+        "targetMemoryUtilizationPercentage": { "type": ["string", "integer"] },
+        "metrics": { "$ref": "#/definitions/objectList" },
+        "behavior": { "type": "object" }
+      }
     }
   },
   "properties": {
@@ -146,6 +174,10 @@
         "nodeSelector": { "$ref": "#/definitions/stringMap" },
         "tolerations": { "$ref": "#/definitions/tolerations" },
         "affinity": { "type": "object" },
+        "priorityClassName": { "type": "string" },
+        "topologySpreadConstraints": { "$ref": "#/definitions/objectList" },
+        "podDisruptionBudget": { "$ref": "#/definitions/podDisruptionBudget" },
+        "autoscaling": { "$ref": "#/definitions/autoscaling" },
         "containerSecurityContext": { "type": "object" },
         "image": { "$ref": "#/definitions/componentImage" },
         "service": {
@@ -206,7 +238,25 @@
         "tolerations": { "$ref": "#/definitions/tolerations" },
         "affinity": { "type": "object" },
         "image": { "$ref": "#/definitions/componentImage" },
+        "priorityClassName": { "type": "string" },
+        "topologySpreadConstraints": { "$ref": "#/definitions/objectList" },
+        "podDisruptionBudget": { "$ref": "#/definitions/podDisruptionBudget" },
+        "autoscaling": { "$ref": "#/definitions/autoscaling" },
         "containerSecurityContext": { "type": "object" },
+        "keda": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Queue-depth autoscaling. Requires KEDA in the cluster; mutually exclusive with autoscaling.",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "minReplicaCount": { "type": "integer", "minimum": 0 },
+            "maxReplicaCount": { "type": "integer", "minimum": 1 },
+            "pollingInterval": { "type": "integer", "minimum": 1 },
+            "cooldownPeriod": { "type": "integer", "minimum": 0 },
+            "advanced": { "type": "object" },
+            "triggers": { "$ref": "#/definitions/objectList" }
+          }
+        },
         "shmSize": {
           "type": "string",
           "description": "In-memory emptyDir for /dev/shm. Counts against the container memory limit."
@@ -214,6 +264,19 @@
       }
     },
 
+    "networkPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "web": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "from": { "$ref": "#/definitions/objectList" } }
+        },
+        "egress": { "$ref": "#/definitions/objectList" }
+      }
+    },
     "migrate": {
       "type": "object",
       "additionalProperties": false,

@@ -1,0 +1,53 @@
+{{- if .Values.networkPolicy.enabled }}
+{{- range $component := list "web" "worker" }}
+{{- $cfg := index $.Values $component }}
+{{- if $cfg.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "ovr.fullname" $ }}-{{ $component }}
+  labels:
+    {{- include "ovr.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $component }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "ovr.selectorLabels" (dict "Release" $.Release "Chart" $.Chart "Values" $.Values "component" $component) | nindent 6 }}
+  policyTypes:
+    - Ingress
+    - Egress
+  {{- if eq $component "web" }}
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: {{ $.Values.web.port }}
+      {{- with $.Values.networkPolicy.web.from }}
+      # Empty from admits traffic from anywhere in the cluster.
+      from:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  {{- else }}
+  # No ingress rule + Ingress in policyTypes = deny all inbound.
+  {{- end }}
+  egress:
+    # DNS, always. Without it every outbound hostname fails to resolve.
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    {{- with $.Values.networkPolicy.egress }}
+    {{- toYaml . | nindent 4 }}
+    {{- else }}
+    # Unrestricted unless networkPolicy.egress is set (DB/storage vary per install).
+    - {}
+    {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,30 @@
+{{- range $component := list "web" "worker" }}
+{{- $cfg := index $.Values $component }}
+{{- $pdb := $cfg.podDisruptionBudget }}
+{{- if and $cfg.enabled $pdb.enabled }}
+{{- if and $pdb.minAvailable $pdb.maxUnavailable }}
+{{- fail (printf "%s.podDisruptionBudget: set minAvailable or maxUnavailable, not both" $component) }}
+{{- end }}
+{{- if not (or $pdb.minAvailable $pdb.maxUnavailable) }}
+{{- fail (printf "%s.podDisruptionBudget: set one of minAvailable or maxUnavailable" $component) }}
+{{- end }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "ovr.fullname" $ }}-{{ $component }}
+  labels:
+    {{- include "ovr.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $component }}
+spec:
+  {{- with $pdb.minAvailable }}
+  minAvailable: {{ . }}
+  {{- end }}
+  {{- with $pdb.maxUnavailable }}
+  maxUnavailable: {{ . }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "ovr.selectorLabels" (dict "Release" $.Release "Chart" $.Chart "Values" $.Values "component" $component) | nindent 6 }}
+{{- end }}
+{{- end }}

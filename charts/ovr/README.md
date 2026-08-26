@@ -119,3 +119,67 @@ changes the `app.kubernetes.io/name` label.
 Both feed selectors, which Kubernetes will not let you change after an object
 is created. Set them at install time; changing either on an existing release
 means uninstalling and reinstalling.
+
+## Scaling
+
+Everything here is off by default and changes nothing until you enable it.
+
+**Web** scales on CPU. `web.autoscaling.enabled` creates an `autoscaling/v2`
+HPA, and the Deployment stops rendering `replicas` so a GitOps sync can't
+fight the autoscaler back down. Utilization targets are a percentage of the
+container's *request*, so `web.resources.requests` must be set or the HPA
+never scales.
+
+**Worker** should scale on queue depth, not CPU. A pod holding an idle browser
+between snapshots looks unloaded while it's very much busy, so an HPA reading
+CPU will scale it away mid-capture. `worker.keda.enabled` creates a KEDA
+`ScaledObject` instead — KEDA has to be installed separately; the chart does
+not install it. Capture work lands on the BullMQ `snapshot-capture` queue,
+whose waiting list is `bull:snapshot-capture:wait`:
+
+```yaml
+worker:
+  keda:
+    enabled: true
+    maxReplicaCount: 8
+    cooldownPeriod: 600
+    triggers:
+      - type: redis
+        metadata:
+          address: valkey:6379
+          listName: bull:snapshot-capture:wait
+          listLength: "4"
+```
+
+`triggers` has no default because the address format and authentication
+depend on your Redis. Two settings need care together: `cooldownPeriod` must
+outlast the longest capture group (`worker.groupSize` snapshots at up to two
+minutes each), and `worker.terminationGracePeriodSeconds` must cover the
+in-flight snapshot on top of that — otherwise a scale-down kills a pod
+holding a browser. `worker.autoscaling` and `worker.keda` are mutually
+exclusive and the templates fail if both are on, since KEDA creates and owns
+its own HPA.
+
+**Disruption budgets** (`podDisruptionBudget.enabled`) take exactly one of
+`minAvailable` or `maxUnavailable`; setting both, or neither, fails the
+render. Neither is defaulted — Helm coalesces maps, so a default would merge
+with whichever one you set and trip the both-set check. `maxUnavailable: 1` is
+usually the one you want: `minAvailable: 1` against a single replica blocks
+node drains outright.
+
+**Spreading** is `topologySpreadConstraints`, passed through verbatim — the
+chart does not inject a `labelSelector`, so include one matching the
+component. `priorityClassName` is available on both components.
+
+## Network policies
+
+`networkPolicy.enabled` writes a policy per component. The worker gets
+deny-all ingress, which is simply true of it: it serves nothing and nothing
+addresses it. The web pod admits traffic on its port, from anywhere in the
+cluster unless you narrow `networkPolicy.web.from` to your ingress
+controller.
+
+Egress always permits DNS. Beyond that it is unrestricted by default, because
+Postgres, Redis and object storage usually live outside the cluster and differ
+per install. Setting `networkPolicy.egress` replaces that default entirely, so
+it has to list everything the pods reach.

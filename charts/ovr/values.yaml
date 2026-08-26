@@ -104,6 +104,24 @@ web:
     # Redirect plain HTTP to HTTPS when tls is set. Supported for className
     # traefik and nginx; other controllers need their own redirect config.
     redirectHttps: true
+  priorityClassName: ""
+  # Passed through verbatim; include your own labelSelector.
+  topologySpreadConstraints: []
+  podDisruptionBudget:
+    enabled: false
+    # Set exactly one of these when enabling; the render fails on both or neither.
+    maxUnavailable: ""
+    minAvailable: ""
+  # Requires resources.requests to be set (utilization is a % of the request).
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: ""
+    # Appended verbatim.
+    metrics: []
+    behavior: {}
 
 worker:
   enabled: true
@@ -139,6 +157,43 @@ worker:
   # Chromium needs real /dev/shm; the k8s default (64Mi) crashes on non-trivial
   # pages. Mounted as an in-memory emptyDir.
   shmSize: 1Gi
+  priorityClassName: ""
+  # Passed through verbatim; include your own labelSelector.
+  topologySpreadConstraints: []
+  podDisruptionBudget:
+    enabled: false
+    # Set exactly one of these when enabling; the render fails on both or neither.
+    maxUnavailable: ""
+    minAvailable: ""
+  # A poor fit here -- prefer keda below. Mutually exclusive with it.
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: ""
+    metrics: []
+    behavior: {}
+
+  # Requires KEDA installed in the cluster; not installed by this chart.
+  keda:
+    enabled: false
+    minReplicaCount: 1
+    maxReplicaCount: 5
+    pollingInterval: 30
+    # Must outlast the longest capture group, or KEDA scales away a pod mid-capture.
+    cooldownPeriod: 300
+    advanced: {}
+    # No default -- depends on your Redis. Capture jobs queue at bull:snapshot-capture:wait.
+    #   triggers:
+    #     - type: redis
+    #       metadata:
+    #         address: valkey:6379
+    #         listName: bull:snapshot-capture:wait
+    #         listLength: "4"
+    #       authenticationRef:
+    #         name: ovr-redis-auth
+    triggers: []
 
 migrate:
   enabled: true
@@ -147,3 +202,16 @@ migrate:
 tests:
   enabled: true
   image: busybox:1.37
+
+# Off by default. Worker gets deny-all ingress (serves nothing); web admits its port.
+networkPolicy:
+  enabled: false
+  web:
+    # Empty admits any pod in the cluster; narrow to your ingress controller:
+    #   from:
+    #     - namespaceSelector:
+    #         matchLabels:
+    #           kubernetes.io/metadata.name: traefik
+    from: []
+  # Replaces the default unrestricted egress -- must list everything the pods reach.
+  egress: []
