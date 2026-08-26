@@ -160,6 +160,7 @@ jobs:
           - 5432:5432
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/open_visual_regression
+      OVR_REQUIRE_STORYBOOK_FIXTURES: "1"
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -170,6 +171,12 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @ovr/db db:migrate
       - run: pnpm --filter @ovr/capture exec playwright install --with-deps chromium
+      - name: Restore Storybook fixture builds
+        uses: actions/cache@v4
+        with:
+          path: packages/storybook-compat/fixtures/*/storybook-static
+          key: storybook-fixtures-${{ runner.os }}-${{ hashFiles('packages/storybook-compat/fixtures/*/pnpm-lock.yaml', 'packages/storybook-compat/fixtures/stories/**') }}
+      - run: pnpm --filter @ovr/storybook-compat fixtures:build
       - run: pnpm test
 
   docker:
