@@ -23,15 +23,12 @@ spec:
         - protocol: TCP
           port: {{ $.Values.web.port }}
       {{- with $.Values.networkPolicy.web.from }}
-      # Empty from admits traffic from anywhere in the cluster.
       from:
         {{- toYaml . | nindent 8 }}
       {{- end }}
   {{- else }}
-  # No ingress rule + Ingress in policyTypes = deny all inbound.
   {{- end }}
   egress:
-    # DNS, always. Without it every outbound hostname fails to resolve.
     - to:
         - namespaceSelector: {}
           podSelector:
@@ -45,7 +42,6 @@ spec:
     {{- with $.Values.networkPolicy.egress }}
     {{- toYaml . | nindent 4 }}
     {{- else }}
-    # Unrestricted unless networkPolicy.egress is set (DB/storage vary per install).
     - {}
     {{- end }}
 {{- end }}

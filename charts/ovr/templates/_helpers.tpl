@@ -2,12 +2,10 @@
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{/* Bare .Release.Name, not <release>-<chart> -- changing it renames every existing install's objects. */}}
 {{- define "ovr.fullname" -}}
 {{- default .Release.Name .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{/* Metadata only, never a selector (immutable after create) -- ovr.selectorLabels is separate for that reason. */}}
 {{- define "ovr.labels" -}}
 app.kubernetes.io/name: {{ include "ovr.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
@@ -19,7 +17,6 @@ app.kubernetes.io/version: {{ . | quote }}
 helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
 {{- end -}}
 
-{{/* Callers pass a synthetic dict; must carry Values for ovr.name's nameOverride lookup. */}}
 {{- define "ovr.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "ovr.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
@@ -34,7 +31,6 @@ app.kubernetes.io/component: {{ .component }}
 {{- end -}}
 {{- end -}}
 
-{{/* Precedence: override > digest > tag > chart appVersion. */}}
 {{- define "ovr.image" -}}
 {{- if .override -}}
 {{ .override }}
@@ -49,7 +45,6 @@ app.kubernetes.io/component: {{ .component }}
 {{- end -}}
 {{- end -}}
 
-{{/* Rolls a workload on config/secret change. No secret checksum when existingSecret is set -- it's not ours to hash. */}}
 {{- define "ovr.configChecksums" -}}
 checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
 {{- if not .Values.existingSecret }}

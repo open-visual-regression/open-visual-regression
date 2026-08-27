@@ -1,5 +1,3 @@
-# Ingress permutation used by the chart lint/template CI job.
-# Deliberately generic: no real hostname, no real cluster-issuer.
 database:
   url: postgresql://ovr:ovr@postgres:5432/open_visual_regression
 redis:

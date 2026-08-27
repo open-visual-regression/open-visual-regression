@@ -2,13 +2,11 @@
 # S3-compatible bucket already reachable from the cluster. This chart runs none
 # of them — use managed services (Neon, RDS, AWS S3, R2) or deploy your own.
 
-# Overrides the generated resource name prefix (default: release name alone).
 nameOverride: ""
 fullnameOverride: ""
 
 image:
   registry: ghcr.io/open-visual-regression
-  # Empty uses the chart's appVersion. Set to pin a different tag.
   tag: ""
   # Pin an exact digest (sha256:...). Takes precedence over tag when set —
   # deploy exactly what you tested, and roll pods only when it changes.
@@ -22,13 +20,10 @@ imagePullSecrets: []
 # below (recommended if using GitOps / Sealed Secrets / External Secrets).
 existingSecret: ""
 
-# Annotate for IRSA/Workload Identity to bind a cloud IAM role instead of static keys.
 serviceAccount:
   create: true
-  # Defaults to the release name.
   name: ""
   annotations: {}
-  # Nothing here calls the API server, so no token is mounted.
   automountServiceAccountToken: false
 
 # The images set USER by name (nextjs / pwuser), which the kubelet cannot
@@ -39,7 +34,6 @@ podSecurityContext:
   runAsUser: 1001
   runAsGroup: 1001
 
-# Shared default; components below can override. readOnlyRootFilesystem stays false (both write scratch files).
 containerSecurityContext:
   allowPrivilegeEscalation: false
   capabilities:
@@ -81,9 +75,7 @@ web:
   replicas: 1
   port: 3000
   resources: {}
-  # Empty inherits the shared containerSecurityContext above.
   containerSecurityContext: {}
-  # RollingUpdate needs 2x this component's requests free on its node during rollout.
   updateStrategy: RollingUpdate
   nodeSelector: {}
   tolerations: []
@@ -105,21 +97,17 @@ web:
     # traefik and nginx; other controllers need their own redirect config.
     redirectHttps: true
   priorityClassName: ""
-  # Passed through verbatim; include your own labelSelector.
   topologySpreadConstraints: []
   podDisruptionBudget:
     enabled: false
-    # Set exactly one of these when enabling; the render fails on both or neither.
     maxUnavailable: ""
     minAvailable: ""
-  # Requires resources.requests to be set (utilization is a % of the request).
   autoscaling:
     enabled: false
     minReplicas: 1
     maxReplicas: 5
     targetCPUUtilizationPercentage: 80
     targetMemoryUtilizationPercentage: ""
-    # Appended verbatim.
     metrics: []
     behavior: {}
 
@@ -132,15 +120,11 @@ worker:
   # before its timeout fires. Empty uses the app default (10).
   groupSize: ""
   resources: {}
-  # Omits seccompProfile: Chromium runs with its own sandbox (no --no-sandbox),
-  # which RuntimeDefault seccomp blocks. Not admissible to a `restricted`
-  # namespace without also adding --no-sandbox to the app's launch args.
   containerSecurityContext:
     allowPrivilegeEscalation: false
     capabilities:
       drop: ["ALL"]
     readOnlyRootFilesystem: false
-  # RollingUpdate needs 2x this component's requests free on its node during rollout.
   updateStrategy: RollingUpdate
   # A capture-group job holds one browser open across its snapshots; the k8s
   # default (30s) SIGKILLs the pod mid-capture on every rollout, permanently
@@ -158,14 +142,11 @@ worker:
   # pages. Mounted as an in-memory emptyDir.
   shmSize: 1Gi
   priorityClassName: ""
-  # Passed through verbatim; include your own labelSelector.
   topologySpreadConstraints: []
   podDisruptionBudget:
     enabled: false
-    # Set exactly one of these when enabling; the render fails on both or neither.
     maxUnavailable: ""
     minAvailable: ""
-  # A poor fit here -- prefer keda below. Mutually exclusive with it.
   autoscaling:
     enabled: false
     minReplicas: 1
@@ -175,43 +156,24 @@ worker:
     metrics: []
     behavior: {}
 
-  # Requires KEDA installed in the cluster; not installed by this chart.
   keda:
     enabled: false
     minReplicaCount: 1
     maxReplicaCount: 5
     pollingInterval: 30
-    # Must outlast the longest capture group, or KEDA scales away a pod mid-capture.
     cooldownPeriod: 300
     advanced: {}
-    # No default -- depends on your Redis. Capture jobs queue at bull:snapshot-capture:wait.
-    #   triggers:
-    #     - type: redis
-    #       metadata:
-    #         address: valkey:6379
-    #         listName: bull:snapshot-capture:wait
-    #         listLength: "4"
-    #       authenticationRef:
-    #         name: ovr-redis-auth
     triggers: []
 
 migrate:
   enabled: true
 
-# helm test: curls the web readiness endpoint through its Service.
 tests:
   enabled: true
   image: busybox:1.37
 
-# Off by default. Worker gets deny-all ingress (serves nothing); web admits its port.
 networkPolicy:
   enabled: false
   web:
-    # Empty admits any pod in the cluster; narrow to your ingress controller:
-    #   from:
-    #     - namespaceSelector:
-    #         matchLabels:
-    #           kubernetes.io/metadata.name: traefik
     from: []
-  # Replaces the default unrestricted egress -- must list everything the pods reach.
   egress: []

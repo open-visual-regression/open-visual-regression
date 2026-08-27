@@ -21,7 +21,6 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      # No serviceAccountName: runs pre-install, before the ServiceAccount exists.
       automountServiceAccountToken: false
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
@@ -33,7 +32,6 @@ spec:
           securityContext:
             {{- toYaml .Values.containerSecurityContext | nindent 12 }}
           command: ["node", "dist/migrate.js"]
-          # No ConfigMap ref: this Job runs pre-install, before it exists.
           envFrom:
             - secretRef:
                 name: {{ include "ovr.secretName" . }}

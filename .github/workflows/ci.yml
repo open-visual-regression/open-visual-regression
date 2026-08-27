@@ -215,11 +215,35 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+  release-meta:
+    name: Detect release commit
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    outputs:
+      released: ${{ steps.detect.outputs.released }}
+      version: ${{ steps.detect.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+      - id: detect
+        run: |
+          current=$(git show "HEAD:apps/web/package.json" | jq -r .version)
+          previous=$(git show "HEAD^:apps/web/package.json" | jq -r .version)
+          if [ "$current" = "$previous" ]; then
+            echo "released=false" >> "$GITHUB_OUTPUT"
+            echo "not a release commit (still $current)"
+          else
+            echo "released=true" >> "$GITHUB_OUTPUT"
+            echo "version=$current" >> "$GITHUB_OUTPUT"
+            echo "release commit: $previous -> $current"
+          fi
+
   promote:
     name: Promote release (${{ matrix.image }})
     runs-on: ubuntu-latest
-    needs: [docker, e2e]
-    if: github.ref == 'refs/heads/main'
+    needs: [docker, e2e, release-meta]
+    if: needs.release-meta.outputs.released == 'true'
     permissions:
       contents: read
       packages: write
@@ -229,25 +253,11 @@ jobs:
         image: [web, worker]
     env:
       IMAGE: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}
+      VERSION: ${{ needs.release-meta.outputs.version }}
     steps:
       - uses: actions/checkout@v7
-        with:
-          fetch-depth: 2
-      - name: Detect release commit
-        id: release
-        run: |
-          current=$(jq -r .version apps/web/package.json)
-          previous=$(git show "HEAD^:apps/web/package.json" | jq -r .version)
-          if [ "$current" = "$previous" ]; then
-            echo "released=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "released=true" >> "$GITHUB_OUTPUT"
-            echo "version=$current" >> "$GITHUB_OUTPUT"
-          fi
       - uses: docker/setup-buildx-action@v4
-        if: steps.release.outputs.released == 'true'
       - name: Log in to GHCR
-        if: steps.release.outputs.released == 'true'
         uses: docker/login-action@v4
         with:
           registry: ghcr.io
@@ -255,21 +265,74 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Release metadata
         id: meta
-        if: steps.release.outputs.released == 'true'
         uses: docker/metadata-action@v6
         with:
           images: ${{ env.IMAGE }}
           tags: |
-            type=semver,pattern={{version}},value=${{ steps.release.outputs.version }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ steps.release.outputs.version }}
-            type=semver,pattern={{major}},value=${{ steps.release.outputs.version }}
+            type=semver,pattern={{version}},value=${{ env.VERSION }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ env.VERSION }}
+            type=semver,pattern={{major}},value=${{ env.VERSION }}
             type=raw,value=latest
       - name: Promote the tested image
-        if: steps.release.outputs.released == 'true'
         run: |
           docker buildx imagetools create \
             $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
             "$IMAGE:ci-${{ github.run_id }}"
+
+  publish-chart:
+    name: Publish Helm chart
+    runs-on: ubuntu-latest
+    needs: [release-meta, promote]
+    if: needs.release-meta.outputs.released == 'true'
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    env:
+      VERSION: ${{ needs.release-meta.outputs.version }}
+      CHART_REPO: ghcr.io/${{ github.repository_owner }}/charts
+      OWNER: ${{ github.repository_owner }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.16.3
+      - uses: sigstore/cosign-installer@v3
+
+      - name: Stamp the release version
+        run: |
+          images=$(printf -- '- name: web\n  image: ghcr.io/%s/web:%s\n- name: worker\n  image: ghcr.io/%s/worker:%s\n' \
+            "$OWNER" "$VERSION" "$OWNER" "$VERSION")
+          IMAGES="$images" yq -i '
+            .version = strenv(VERSION)
+            | .appVersion = strenv(VERSION)
+            | .annotations."artifacthub.io/images" = strenv(IMAGES)
+          ' charts/ovr/Chart.yaml
+          cat charts/ovr/Chart.yaml
+
+      - name: Lint and package
+        run: |
+          helm lint charts/ovr --strict --set existingSecret=lint
+          helm package charts/ovr --destination dist
+          test -f "dist/ovr-${VERSION}.tgz"
+
+      - name: Log in to GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io \
+            --username "${{ github.actor }}" --password-stdin
+
+      - name: Push
+        id: push
+        run: |
+          set -euo pipefail
+          helm push "dist/ovr-${VERSION}.tgz" "oci://${CHART_REPO}" 2>&1 | tee push.log
+          digest=$(awk '/^Digest: /{print $2}' push.log)
+          test -n "$digest"
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          echo "Published ${CHART_REPO}/ovr:${VERSION}@${digest}" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Sign
+        run: cosign sign --yes "${CHART_REPO}/ovr@${{ steps.push.outputs.digest }}"
 
   e2e:
     name: E2E
