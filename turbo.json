@@ -26,8 +26,7 @@
     },
     "test": {
       "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$"],
-      "outputs": ["coverage/**"]
+      "inputs": ["$TURBO_DEFAULT$"]
     },
     "storybook": {
       "cache": false,

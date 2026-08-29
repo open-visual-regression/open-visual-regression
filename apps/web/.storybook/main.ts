@@ -1,10 +1,8 @@
-import type { StorybookConfig } from "@storybook/nextjs-vite";
-
-import tailwindcss from "@tailwindcss/vite";
-
 import { dirname, resolve } from "path";
-
 import { fileURLToPath } from "url";
+
+import type { StorybookConfig } from "@storybook/nextjs-vite";
+import tailwindcss from "@tailwindcss/vite";
 
 const storybookDir = dirname(fileURLToPath(import.meta.url));
 
@@ -13,7 +11,7 @@ const getAbsolutePath = (value: string) => {
 };
 
 const config: StorybookConfig = {
-  stories: ["../**/__stories__/**/*.mdx", "../**/__stories__/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
+  stories: ["../**/__stories__/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
   staticDirs: [{ from: "./static/images", to: "/api/storage" }],
   addons: [
     getAbsolutePath("@chromatic-com/storybook"),

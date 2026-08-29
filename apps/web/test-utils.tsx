@@ -1,4 +1,5 @@
 import { test as base } from "vitest";
+
 import { user } from "@/lib/testing/user";
 
 export const it = base.extend<{ user: typeof user }>({
