@@ -3,7 +3,9 @@ existingSecret: ovr-secrets
 web:
   replicas: 3
   resources:
-    requests: { cpu: 100m, memory: 160Mi }
+    requests:
+      cpu: 100m
+      memory: 160Mi
   priorityClassName: system-cluster-critical
   podDisruptionBudget:
     enabled: true

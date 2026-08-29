@@ -3,9 +3,9 @@ name: Chart
 on:
   push:
     branches: [main]
-    paths: ["charts/**", ".github/workflows/chart.yml"]
+    paths: ["charts/**", "ct.yaml", ".github/workflows/chart.yml"]
   pull_request:
-    paths: ["charts/**", ".github/workflows/chart.yml"]
+    paths: ["charts/**", "ct.yaml", ".github/workflows/chart.yml"]
 
 permissions:
   contents: read
@@ -24,21 +24,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
       - uses: azure/setup-helm@v4
         with:
           version: ${{ env.HELM_VERSION }}
 
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+          check-latest: true
+
+      - uses: helm/chart-testing-action@v2.8.0
+
       - name: Lint
-        run: |
-          helm lint charts/ovr --strict \
-            --set database.url=postgresql://u:p@h:5432/d \
-            --set redis.url=redis://h:6379 \
-            --set auth.betterAuthSecret=lint --set auth.gitTokenEncryptionKey=lint
-          for f in charts/ovr/ci/*.yaml; do
-            echo "::group::helm lint --values $f"
-            helm lint charts/ovr --strict --values "$f"
-            echo "::endgroup::"
-          done
+        run: ct lint --all
 
       - name: Install kubeconform
         run: |
@@ -51,31 +52,12 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p rendered
-          render() {
-            name=$1; shift
+          for f in charts/ovr/ci/*-values.yaml; do
+            name=$(basename "$f" -values.yaml)
             echo "::group::helm template ($name)"
-            helm template ovr-app charts/ovr "$@" > "rendered/$name.yaml"
+            helm template ovr-app charts/ovr --values "$f" > "rendered/$name.yaml"
             head -n 5 "rendered/$name.yaml"
             echo "::endgroup::"
-          }
-          inline=(--set database.url=postgresql://u:p@h:5432/d
-                  --set redis.url=redis://h:6379
-                  --set auth.betterAuthSecret=render
-                  --set auth.gitTokenEncryptionKey=render)
-
-          render inline-secret "${inline[@]}"
-          render existing-secret --set existingSecret=ovr-secrets
-          render no-worker --set existingSecret=ovr-secrets --set worker.enabled=false
-          render no-web --set existingSecret=ovr-secrets --set web.enabled=false
-          render no-migrate --set existingSecret=ovr-secrets --set migrate.enabled=false
-          render digest-pinned --set existingSecret=ovr-secrets \
-            --set image.digest=sha256:0000000000000000000000000000000000000000000000000000000000000000
-          render nginx-ingress --set existingSecret=ovr-secrets \
-            --set web.ingress.enabled=true --set web.ingress.className=nginx \
-            --set web.ingress.tls[0].secretName=tls \
-            --set web.ingress.tls[0].hosts[0]=ovr.example.com
-          for f in charts/ovr/ci/*.yaml; do
-            render "$(basename "$f" .yaml)" --values "$f"
           done
 
       - name: Validate rendered manifests

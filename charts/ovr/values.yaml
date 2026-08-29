@@ -54,10 +54,10 @@ auth:
   gitTokenEncryptionKey: ""
 
 database:
-  url: "" # postgresql://user:pass@host:5432/open_visual_regression
+  url: ""  # postgresql://user:pass@host:5432/open_visual_regression
 
 redis:
-  url: "" # redis://host:6379
+  url: ""  # redis://host:6379
 
 storage:
   # Leave endpoint/publicEndpoint empty and forcePathStyle false for AWS S3.
@@ -83,7 +83,7 @@ web:
   image:
     tag: ""
     digest: ""
-    override: "" # full image reference; takes precedence over tag/digest above
+    override: ""  # full image reference; takes precedence over tag/digest above
   service:
     type: ClusterIP
     port: 3000
