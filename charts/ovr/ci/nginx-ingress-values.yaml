@@ -1,0 +1,9 @@
+existingSecret: ovr-secrets
+web:
+  ingress:
+    enabled: true
+    className: nginx
+    host: ovr.example.com
+    tls:
+      - hosts: [ovr.example.com]
+        secretName: ovr-tls
