@@ -5,7 +5,10 @@ import { ExpressAdapter } from "@bull-board/express";
 import { Queue } from "bullmq";
 import express from "express";
 
+import { createLogger } from "@ovr/logger";
 import { QueueName, buildRedisConnection } from "@ovr/queue";
+
+const logger = createLogger("bull-board");
 
 const PORT = Number(process.env.BULL_BOARD_PORT ?? 3001);
 
@@ -26,5 +29,5 @@ createBullBoard({
 const app = express();
 app.use("/", serverAdapter.getRouter());
 app.listen(PORT, () => {
-  console.log(`Bull Board running at http://localhost:${PORT}`);
+  logger.info({ port: PORT }, "bull board listening");
 });
