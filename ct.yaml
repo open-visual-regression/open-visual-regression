@@ -1,9 +1,5 @@
 chart-dirs:
   - charts
 target-branch: main
-# The in-repo chart version is a 0.0.0-dev placeholder stamped at publish
-# time, so it never increments here.
 check-version-increment: false
-# One static, known-good maintainer; the check costs an unauthenticated
-# GitHub API call from a shared runner IP on every run.
 validate-maintainers: false
