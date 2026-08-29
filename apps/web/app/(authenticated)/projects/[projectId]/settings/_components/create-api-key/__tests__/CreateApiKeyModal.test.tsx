@@ -3,7 +3,7 @@ import { vi } from "vitest";
 
 import { serverClient } from "@/lib/router";
 import { createORPCError } from "@/lib/testing/orpc";
-import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
+import { act, describe, expect, it, render, screen, waitFor } from "@/test-utils";
 
 import { CreateApiKeyModal } from "../CreateApiKeyModal";
 import { CreateApiKeyModalButton } from "../CreateApiKeyModalButton";
@@ -95,7 +95,7 @@ describe("CreateApiKeyModal", () => {
       await user.click(await screen.findByRole("button", { name: /^copy$/i }));
       expect(await screen.findByRole("button", { name: /^copied$/i })).toBeVisible();
 
-      await vi.advanceTimersByTimeAsync(2100);
+      await act(() => vi.advanceTimersByTimeAsync(2100));
 
       expect(await screen.findByRole("button", { name: /^copy$/i })).toBeVisible();
     } finally {

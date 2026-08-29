@@ -11,6 +11,9 @@ import { adminAc, defaultStatements, userAc } from "better-auth/plugins/admin/ac
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
 import * as schema from "@ovr/db/schema";
+import { createLogger } from "@ovr/logger";
+
+const authLogger = createLogger("auth");
 
 const ac = createAccessControl(defaultStatements);
 
@@ -21,6 +24,9 @@ const roles = {
 };
 
 export const auth = betterAuth({
+  logger: {
+    log: (level, message, ...args) => authLogger[level](args.length > 0 ? { args } : {}, message),
+  },
   emailAndPassword: {
     enabled: true,
   },
