@@ -36,6 +36,7 @@ export default defineConfig({
           restoreMocks: true,
           env: {
             BASE_URL: "http://localhost:3000",
+            LOG_LEVEL: "silent",
           },
         },
       },
@@ -54,6 +55,7 @@ export default defineConfig({
           unstubEnvs: true,
           env: {
             BASE_URL: "http://localhost:3000",
+            LOG_LEVEL: "silent",
           },
         },
       },
