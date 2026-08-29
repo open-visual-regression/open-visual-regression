@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@orpc/contract": "^1.14.14",
-    "zod": "^4.4.3"
+    "zod": "^4.5.4"
   },
   "devDependencies": {
     "@ovr/typescript-config": "workspace:*",

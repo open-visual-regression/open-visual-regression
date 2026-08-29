@@ -16,3 +16,5 @@ allowBuilds:
   protobufjs: true
   sharp: true
   ssh2: true
+minimumReleaseAgeExclude:
+  - zod@4.5.4
