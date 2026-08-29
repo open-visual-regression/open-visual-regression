@@ -334,6 +334,55 @@ jobs:
       - name: Sign
         run: cosign sign --yes "${CHART_REPO}/ovr@${{ steps.push.outputs.digest }}"
 
+  github-release:
+    name: Create GitHub release
+    runs-on: ubuntu-latest
+    needs: [release-meta, promote, publish-chart]
+    if: needs.release-meta.outputs.released == 'true'
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.release-meta.outputs.version }}
+      OWNER: ${{ github.repository_owner }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Assemble notes
+        run: |
+          set -euo pipefail
+          section() {
+            [ -f "$1" ] || return 0
+            awk -v ver="## $VERSION" '
+              $0 == ver { found = 1; next }
+              found && /^## / { exit }
+              found { print }
+            ' "$1" | sed '/./,$!d'
+          }
+          {
+            for pkg in web worker; do
+              body=$(section "apps/$pkg/CHANGELOG.md")
+              if [ -n "${body//[[:space:]]/}" ]; then
+                printf '## %s\n\n%s\n\n' "$pkg" "$body"
+              fi
+            done
+            printf '## Artifacts\n\nImages:\n\n    ghcr.io/%s/web:%s\n    ghcr.io/%s/worker:%s\n\nInstall the chart:\n\n    helm install ovr oci://ghcr.io/%s/charts/ovr --version %s\n' \
+              "$OWNER" "$VERSION" "$OWNER" "$VERSION" "$OWNER" "$VERSION"
+          } > notes.md
+          cat notes.md
+
+      - name: Create or update the release
+        run: |
+          set -euo pipefail
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            gh release edit "v$VERSION" --title "v$VERSION" --notes-file notes.md
+            echo "Updated release v$VERSION" >> "$GITHUB_STEP_SUMMARY"
+          else
+            gh release create "v$VERSION" --target "$GITHUB_SHA" \
+              --title "v$VERSION" --notes-file notes.md
+            echo "Created release v$VERSION" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
   e2e:
     name: E2E
     needs: [docker]
