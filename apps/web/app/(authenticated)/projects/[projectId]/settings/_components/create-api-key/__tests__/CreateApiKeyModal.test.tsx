@@ -89,9 +89,6 @@ describe("CreateApiKeyModal", () => {
       configurable: true,
     });
 
-    // Let the create action settle on real timers first — under fake timers the reveal is awaited
-    // through a timer-advancing `waitFor` that is not act-wrapped, so the resulting state update
-    // lands outside act. Fake timers only need to cover the copied-label countdown below.
     const copyButton = await screen.findByRole("button", { name: /^copy$/i });
 
     vi.useFakeTimers();
