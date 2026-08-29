@@ -16,7 +16,7 @@
   "dependencies": {
     "@ovr/db": "workspace:*",
     "@ovr/logger": "workspace:*",
-    "zod": "^4.4.3"
+    "zod": "^4.5.1"
   },
   "devDependencies": {
     "@ovr/typescript-config": "workspace:*",

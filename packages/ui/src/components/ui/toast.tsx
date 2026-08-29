@@ -126,6 +126,11 @@ const toast = Object.assign(showToast, {
       color: "red",
       title,
     }),
+  dismissAll: () => {
+    for (const { id } of sonnerToast.getHistory()) {
+      sonnerToast.dismiss(id);
+    }
+  },
 });
 
 export { Toast, ToastContainer, toastVariants, toast };
