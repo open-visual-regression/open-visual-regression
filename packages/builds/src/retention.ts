@@ -1,8 +1,11 @@
 import { dbClient } from "@ovr/db/client";
+import { createLogger } from "@ovr/logger";
 import { enqueuePurgeMany } from "@ovr/queue/producer";
 import { storage } from "@ovr/storage";
 
 import { mapWithConcurrency } from "./lib/concurrency";
+
+const logger = createLogger("builds");
 
 const RETENTION_PAGE_SIZE = 500;
 const STORAGE_DELETE_CONCURRENCY = 10;
@@ -21,7 +24,10 @@ export const dispatchPurgeJobs = async (): Promise<void> => {
 
       await enqueuePurgeMany(projects.map((project) => ({ projectId: project.id })));
     } catch (error) {
-      console.error(`Failed to dispatch purge jobs for organization ${organization.id}:`, error);
+      logger.error(
+        { err: error, organizationId: organization.id },
+        "failed to dispatch purge jobs for organization",
+      );
       errors.push(error);
     }
   }
@@ -54,11 +60,13 @@ const drainStorageOutbox = async (projectId: string): Promise<void> => {
   const failures = results.filter((result) => !result.ok);
 
   if (failures.length > 0) {
-    console.error(
-      `purgeExpiredBuilds: failed to delete storage for ${failures.length} purged build(s) in ` +
-        `project ${projectId} (will retry on the next run): ` +
-        failures.map((failure) => failure.entry.prefix).join(", "),
-      failures.map((failure) => failure.error),
+    logger.error(
+      {
+        errs: failures.map((failure) => failure.error),
+        projectId,
+        prefixes: failures.map((failure) => failure.entry.prefix),
+      },
+      "failed to delete storage for purged builds; will retry on the next run",
     );
   }
 };
@@ -104,8 +112,8 @@ export const purgeExpiredBuilds = async (projectId: string): Promise<void> => {
     }
   }
 
-  console.warn(
-    `purgeExpiredBuilds: hit the ${MAX_PAGES_PER_RUN}-page safety cap for project ${projectId} ` +
-      "before exhausting expired builds; remaining builds will be purged on the next run.",
+  logger.warn(
+    { projectId, maxPages: MAX_PAGES_PER_RUN },
+    "hit the page safety cap before exhausting expired builds; the rest purge on the next run",
   );
 };

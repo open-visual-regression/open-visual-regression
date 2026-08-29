@@ -3,6 +3,7 @@ import { Worker, type Job } from "bullmq";
 import { z } from "zod";
 
 import { assertEncryptionKey } from "@ovr/git-status/crypto";
+import { createLogger } from "@ovr/logger";
 import { QueueName, buildRedisConnection, scheduleReaper, schedulePurge } from "@ovr/queue";
 
 import * as capture from "./handlers/capture";
@@ -14,6 +15,8 @@ import * as publishStatus from "./handlers/publishStatus";
 import * as purge from "./handlers/purge";
 import * as purgeDispatch from "./handlers/purgeDispatch";
 import * as reaper from "./handlers/reaper";
+
+const logger = createLogger("worker");
 
 assertEncryptionKey();
 
@@ -64,12 +67,15 @@ const guard =
     if (!job) {
       return;
     }
-    console.error(`Job ${job.id} (${job.queueName}) failed on attempt ${job.attemptsMade}:`, error);
+    logger.error(
+      { err: error, jobId: job.id, queue: job.queueName, attempt: job.attemptsMade },
+      "job failed",
+    );
     if (!isFinalAttempt(job)) {
       return;
     }
     fn(job, error).catch((handlerError: unknown) => {
-      console.error("Error while handling job failure:", handlerError);
+      logger.error({ err: handlerError }, "error while handling job failure");
     });
   };
 
@@ -98,13 +104,13 @@ const workers = [
 try {
   await schedulePurge(connection);
 } catch (error) {
-  console.error("Failed to schedule the daily purge dispatch job:", error);
+  logger.error({ err: error }, "failed to schedule the daily purge dispatch job");
 }
 
 try {
   await scheduleReaper(connection);
 } catch (error) {
-  console.error("Failed to schedule the build reaper job:", error);
+  logger.error({ err: error }, "failed to schedule the build reaper job");
 }
 
 const onShutdown = async (): Promise<void> => {
