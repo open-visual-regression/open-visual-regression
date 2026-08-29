@@ -17,8 +17,5 @@ beforeEach(() => {
 
 afterEach(() => {
   resetIntersectionMocking();
-  // Sonner's toast store lives outside React and isn't cleared by unmounting a `Toaster`, so a
-  // toast raised in one test would otherwise still be "active" and get replayed into the next
-  // test's `Toaster` if it mounts within the same test file before the toast's duration elapses.
   toast.dismissAll();
 });

@@ -126,10 +126,6 @@ const toast = Object.assign(showToast, {
       color: "red",
       title,
     }),
-  // Sonner replays any toast that hasn't expired yet to every newly mounted `Toaster`, so a
-  // toast from a previous test would otherwise bleed into the next one that mounts within the
-  // same duration window. `dismiss(id)` marks a toast dismissed immediately, unlike the no-id
-  // form which only animates it out once a `Toaster` is mounted to observe it.
   dismissAll: () => {
     for (const { id } of sonnerToast.getHistory()) {
       sonnerToast.dismiss(id);
