@@ -3,7 +3,7 @@ import { vi } from "vitest";
 
 import { serverClient } from "@/lib/router";
 import { createORPCError } from "@/lib/testing/orpc";
-import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
+import { act, describe, expect, it, render, screen, waitFor } from "@/test-utils";
 
 import { CreateApiKeyModal } from "../CreateApiKeyModal";
 import { CreateApiKeyModalButton } from "../CreateApiKeyModalButton";
@@ -77,25 +77,27 @@ describe("CreateApiKeyModal", () => {
   });
 
   it("should revert the copy button back to 'copy' after a few seconds", async ({ user }) => {
+    mockCreate.mockResolvedValue([null, { key: API_KEY }]);
+    renderComponent();
+
+    await user.click(screen.getByRole("button", { name: /new api key/i }));
+    await user.type(screen.getByLabelText(/name/i), "local dev");
+    await user.click(screen.getByRole("button", { name: /^create$/i }));
+
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: vi.fn().mockResolvedValue(undefined) },
+      configurable: true,
+    });
+
+    const copyButton = await screen.findByRole("button", { name: /^copy$/i });
+
     vi.useFakeTimers();
 
     try {
-      mockCreate.mockResolvedValue([null, { key: API_KEY }]);
-      renderComponent();
-
-      await user.click(screen.getByRole("button", { name: /new api key/i }));
-      await user.type(screen.getByLabelText(/name/i), "local dev");
-      await user.click(screen.getByRole("button", { name: /^create$/i }));
-
-      Object.defineProperty(navigator, "clipboard", {
-        value: { writeText: vi.fn().mockResolvedValue(undefined) },
-        configurable: true,
-      });
-
-      await user.click(await screen.findByRole("button", { name: /^copy$/i }));
+      await user.click(copyButton);
       expect(await screen.findByRole("button", { name: /^copied$/i })).toBeVisible();
 
-      await vi.advanceTimersByTimeAsync(2100);
+      await act(() => vi.advanceTimersByTimeAsync(2100));
 
       expect(await screen.findByRole("button", { name: /^copy$/i })).toBeVisible();
     } finally {

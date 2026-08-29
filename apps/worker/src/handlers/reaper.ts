@@ -1,7 +1,10 @@
 import { z } from "zod";
 
 import { resolveStaleBuilds } from "@ovr/builds/reaper";
+import { createLogger } from "@ovr/logger";
 import type { ReaperJobPayload } from "@ovr/queue";
+
+const logger = createLogger("worker");
 
 const REAPER_STALE_MINUTES = z.coerce
   .number()
@@ -17,5 +20,5 @@ export const run = async (_job: ReaperJob): Promise<void> => {
 };
 
 export const failed = async (_job: ReaperJob, error?: Error): Promise<void> => {
-  console.error("Reaper job failed:", error);
+  logger.error({ err: error }, "reaper job failed");
 };

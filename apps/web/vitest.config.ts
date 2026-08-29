@@ -1,13 +1,11 @@
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { storybookTest } from "@storybook/addon-vitest/vitest-plugin";
 import react from "@vitejs/plugin-react";
 import { playwright } from "@vitest/browser-playwright";
 import { defineConfig } from "vitest/config";
 
-const dirname =
-  typeof __dirname !== "undefined" ? __dirname : path.dirname(fileURLToPath(import.meta.url));
+const dirname = import.meta.dirname;
 
 export default defineConfig({
   resolve: {
@@ -23,6 +21,7 @@ export default defineConfig({
         resolve: {
           alias: {
             "@": path.resolve(dirname, "."),
+            "next/link": path.resolve(dirname, "lib/testing/nextLink.tsx"),
           },
         },
         test: {
@@ -36,6 +35,7 @@ export default defineConfig({
           restoreMocks: true,
           env: {
             BASE_URL: "http://localhost:3000",
+            LOG_LEVEL: "silent",
           },
         },
       },
@@ -54,6 +54,7 @@ export default defineConfig({
           unstubEnvs: true,
           env: {
             BASE_URL: "http://localhost:3000",
+            LOG_LEVEL: "silent",
           },
         },
       },
