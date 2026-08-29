@@ -1,4 +1,4 @@
-# @open-visual-regression/cli
+# @ovr/worker
 
 ## 0.2.0
 
@@ -11,9 +11,3 @@
   `ovr snapshot storybook` reports the problem before uploading, and the server
   refuses the build before starting work on it. The error names the version it
   found.
-
-## 0.1.1
-
-### Patch Changes
-
-- [#30](https://github.com/open-visual-regression/open-visual-regression/pull/30) [`2000424`](https://github.com/open-visual-regression/open-visual-regression/commit/20004242b2f33c92b8a6cdf10beb032de5295f71) Thanks [@tgfischer](https://github.com/tgfischer)! - Publish under the `@open-visual-regression` npm organization scope (previously `@ovr/cli`, never published).
