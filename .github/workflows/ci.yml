@@ -316,6 +316,16 @@ jobs:
           helm package charts/ovr --destination dist
           test -f "dist/ovr-${VERSION}.tgz"
 
+      # helm registry login writes to its own config
+      # (~/.config/helm/registry/config.json by default), not the Docker
+      # config cosign's keychain reads (~/.docker/config.json). Point
+      # HELM_REGISTRY_CONFIG at that path so login, push, and the Sign step
+      # below all resolve credentials from the same file.
+      - name: Point Helm at the Docker credential store
+        run: |
+          mkdir -p "$HOME/.docker"
+          echo "HELM_REGISTRY_CONFIG=$HOME/.docker/config.json" >> "$GITHUB_ENV"
+
       - name: Log in to GHCR
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io \
