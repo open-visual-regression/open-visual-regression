@@ -23,6 +23,7 @@ export default defineConfig({
         resolve: {
           alias: {
             "@": path.resolve(dirname, "."),
+            "next/link": path.resolve(dirname, "lib/testing/nextLink.tsx"),
           },
         },
         test: {
