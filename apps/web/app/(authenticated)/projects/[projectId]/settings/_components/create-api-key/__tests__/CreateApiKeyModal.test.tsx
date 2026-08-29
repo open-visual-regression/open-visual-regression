@@ -77,22 +77,27 @@ describe("CreateApiKeyModal", () => {
   });
 
   it("should revert the copy button back to 'copy' after a few seconds", async ({ user }) => {
+    mockCreate.mockResolvedValue([null, { key: API_KEY }]);
+    renderComponent();
+
+    await user.click(screen.getByRole("button", { name: /new api key/i }));
+    await user.type(screen.getByLabelText(/name/i), "local dev");
+    await user.click(screen.getByRole("button", { name: /^create$/i }));
+
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: vi.fn().mockResolvedValue(undefined) },
+      configurable: true,
+    });
+
+    // Let the create action settle on real timers first — under fake timers the reveal is awaited
+    // through a timer-advancing `waitFor` that is not act-wrapped, so the resulting state update
+    // lands outside act. Fake timers only need to cover the copied-label countdown below.
+    const copyButton = await screen.findByRole("button", { name: /^copy$/i });
+
     vi.useFakeTimers();
 
     try {
-      mockCreate.mockResolvedValue([null, { key: API_KEY }]);
-      renderComponent();
-
-      await user.click(screen.getByRole("button", { name: /new api key/i }));
-      await user.type(screen.getByLabelText(/name/i), "local dev");
-      await user.click(screen.getByRole("button", { name: /^create$/i }));
-
-      Object.defineProperty(navigator, "clipboard", {
-        value: { writeText: vi.fn().mockResolvedValue(undefined) },
-        configurable: true,
-      });
-
-      await user.click(await screen.findByRole("button", { name: /^copy$/i }));
+      await user.click(copyButton);
       expect(await screen.findByRole("button", { name: /^copied$/i })).toBeVisible();
 
       await act(() => vi.advanceTimersByTimeAsync(2100));
