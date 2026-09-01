@@ -2,7 +2,14 @@
   "name": "@open-visual-regression/cli",
   "version": "0.2.0",
   "private": false,
+  "homepage": "https://openvisualregression.com",
+  "bugs": "https://github.com/open-visual-regression/open-visual-regression/issues",
   "license": "Elastic-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/open-visual-regression/open-visual-regression.git",
+    "directory": "apps/cli"
+  },
   "bin": {
     "ovr": "./bin/ovr.mjs"
   },
