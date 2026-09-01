@@ -316,6 +316,11 @@ jobs:
           helm package charts/ovr --destination dist
           test -f "dist/ovr-${VERSION}.tgz"
 
+      - name: Point Helm at the Docker credential store
+        run: |
+          mkdir -p "$HOME/.docker"
+          echo "HELM_REGISTRY_CONFIG=$HOME/.docker/config.json" >> "$GITHUB_ENV"
+
       - name: Log in to GHCR
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io \
