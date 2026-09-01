@@ -1,6 +1,6 @@
-# @ovr/web
+# @ovr/builds
 
-## 0.2.1
+## 0.1.1
 
 ### Patch Changes
 
@@ -13,18 +13,3 @@
 
   The `ovr` CLI and the database migrate script still write to `console`, since
   that output is the program's own interface rather than logging.
-
-- Updated dependencies [[`81b2201`](https://github.com/open-visual-regression/open-visual-regression/commit/81b220148f98e4e35ac49462af112719c088d1ff)]:
-  - @ovr/builds@0.1.1
-  - @ovr/reviews@0.1.1
-
-## 0.2.0
-
-### Minor Changes
-
-- [#113](https://github.com/open-visual-regression/open-visual-regression/pull/113) [`7dcfe9a`](https://github.com/open-visual-regression/open-visual-regression/commit/7dcfe9a2d85e1096956c6b7616fb97ed5a89ef6d) Thanks [@tgfischer](https://github.com/tgfischer)! - Show the running version in the sidebar, and publish `linux/arm64` images alongside `linux/amd64`.
-
-### Patch Changes
-
-- Updated dependencies []:
-  - @ovr/ui@0.0.0
