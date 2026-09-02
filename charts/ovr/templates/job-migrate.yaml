@@ -33,6 +33,8 @@ spec:
             {{- toYaml .Values.containerSecurityContext | nindent 12 }}
           command: ["node", "dist/migrate.js"]
           envFrom:
+            - configMapRef:
+                name: {{ include "ovr.fullname" . }}-config
             - secretRef:
                 name: {{ include "ovr.secretName" . }}
 {{- end }}
