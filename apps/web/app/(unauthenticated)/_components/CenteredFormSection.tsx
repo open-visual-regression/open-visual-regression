@@ -3,6 +3,7 @@ import React from "react";
 import { Typography } from "@ovr/ui/components/typography";
 
 import { LogoFull } from "@/lib/components/logo/Logo";
+import { APP_VERSION } from "@/lib/utils/version";
 
 type CenteredFormSectionProps = {
   children: React.ReactNode;
@@ -13,9 +14,7 @@ export const CenteredFormSection = ({ children }: CenteredFormSectionProps) => (
     <div className="w-full max-w-115 flex flex-col items-center gap-6">
       <LogoFull />
       {children}
-      <Typography variant="caption">
-        open visual regression · v{process.env.npm_package_version ?? "0.0.0"}
-      </Typography>
+      <Typography variant="caption">open visual regression · v{APP_VERSION}</Typography>
     </div>
   </div>
 );
