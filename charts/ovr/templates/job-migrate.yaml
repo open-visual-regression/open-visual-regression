@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "ovr.fullname" . }}-migrate
+  name: {{ include "ovr.migrateJobName" . }}
   labels:
     {{- include "ovr.labels" . | nindent 4 }}
     app.kubernetes.io/component: migrate
