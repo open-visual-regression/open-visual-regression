@@ -8,9 +8,6 @@ fullnameOverride: ""
 image:
   registry: ghcr.io/open-visual-regression
   tag: ""
-  # Pin an exact digest (sha256:...). Takes precedence over tag when set —
-  # deploy exactly what you tested, and roll pods only when it changes.
-  digest: ""
   pullPolicy: IfNotPresent
 imagePullSecrets: []
 
