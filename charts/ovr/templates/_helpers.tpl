@@ -45,6 +45,15 @@ app.kubernetes.io/component: {{ .component }}
 {{- end -}}
 {{- end -}}
 
+{{- define "ovr.migrateJobName" -}}
+{{- $base := printf "%s-migrate" (include "ovr.fullname" .) -}}
+{{- with .Chart.AppVersion -}}
+{{- printf "%s-%s" $base (. | lower | replace "+" "-") | trunc 63 | trimSuffix "-" | trimSuffix "." -}}
+{{- else -}}
+{{- $base -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "ovr.configChecksums" -}}
 checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
 {{- if not .Values.existingSecret }}

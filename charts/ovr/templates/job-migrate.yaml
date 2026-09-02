@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "ovr.fullname" . }}-migrate-{{ .Release.Revision }}
+  name: {{ include "ovr.migrateJobName" . }}
   labels:
     {{- include "ovr.labels" . | nindent 4 }}
     app.kubernetes.io/component: migrate
@@ -33,6 +33,8 @@ spec:
             {{- toYaml .Values.containerSecurityContext | nindent 12 }}
           command: ["node", "dist/migrate.js"]
           envFrom:
+            - configMapRef:
+                name: {{ include "ovr.fullname" . }}-config
             - secretRef:
                 name: {{ include "ovr.secretName" . }}
 {{- end }}
