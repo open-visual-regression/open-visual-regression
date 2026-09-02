@@ -82,9 +82,10 @@ Set `image.tag` to pin something else. Each release publishes `X.Y.Z`, `X.Y`,
 — `main`, `latest`, or a bare major — needs `pullPolicy: Always` to ever
 repull, since `IfNotPresent` will sit on a cached copy forever.
 
-`image.tag`/`image.digest` apply to both images. To pin them separately — they
-are different images and will not share a digest — use `web.image.*` and
-`worker.image.*`, each supporting `tag`, `digest`, and `override` (a complete
+`image.tag` applies to both images when neither has its own tag set. `web` and
+`worker` are different images and will not share a digest, so digests can only
+be pinned per component — use `web.image.digest` and `worker.image.digest`.
+Both `web.image.*` and `worker.image.*` also support `override` (a complete
 image reference, highest precedence).
 
 ## Running as non-root

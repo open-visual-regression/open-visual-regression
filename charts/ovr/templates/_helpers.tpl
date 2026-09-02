@@ -35,7 +35,7 @@ app.kubernetes.io/component: {{ .component }}
 {{- if .override -}}
 {{ .override }}
 {{- else -}}
-{{- $digest := .digest | default .Values.image.digest -}}
+{{- $digest := .digest -}}
 {{- $tag := .tag | default .Values.image.tag | default .Chart.AppVersion | required "no image tag: set image.tag, or use a chart with appVersion set" -}}
 {{- if $digest -}}
 {{ .Values.image.registry }}/{{ .name }}@{{ $digest }}
