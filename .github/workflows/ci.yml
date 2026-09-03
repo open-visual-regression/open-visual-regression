@@ -20,15 +20,19 @@ jobs:
     environment: development
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm build
+      - run: pnpm turbo run build --affected
         env:
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
 
   check-types:
     name: Type check
@@ -36,6 +40,9 @@ jobs:
     environment: development
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
@@ -45,20 +52,27 @@ jobs:
       - run: pnpm turbo run build --filter=@ovr/web...
         env:
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
-      - run: pnpm check-types
+      - run: pnpm turbo run tsc --affected
+        env:
+          TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
 
   lint:
     name: Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm lint:ci
+      - run: pnpm turbo run lint --affected -- --deny-warnings
+        env:
+          TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
 
   format-check:
     name: Format check
@@ -163,6 +177,9 @@ jobs:
       OVR_REQUIRE_STORYBOOK_FIXTURES: "1"
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
@@ -177,10 +194,41 @@ jobs:
           path: packages/storybook-compat/fixtures/*/storybook-static
           key: storybook-fixtures-${{ runner.os }}-${{ hashFiles('packages/storybook-compat/fixtures/*/pnpm-lock.yaml', 'packages/storybook-compat/fixtures/stories/**') }}
       - run: pnpm --filter @ovr/storybook-compat fixtures:build
-      - run: pnpm test
+      - run: pnpm turbo run test --affected
+        env:
+          TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+
+  detect-affected:
+    name: Detect affected apps
+    runs-on: ubuntu-latest
+    outputs:
+      # web and worker are `fixed` together in .changeset/config.json, so any
+      # real release bumps both apps' package.json in the same commit and is
+      # always caught here — this only skips docker/e2e for changes (docs,
+      # storybook, the Helm chart, etc.) that never touch apps/web or
+      # apps/worker at all.
+      apps_affected: ${{ steps.web.outcome == 'failure' || steps.worker.outcome == 'failure' }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - id: web
+        continue-on-error: true
+        run: pnpm dlx turbo-ignore@2 @ovr/web --fallback="${{ github.event.pull_request.base.sha || github.event.before }}"
+      - id: worker
+        continue-on-error: true
+        run: pnpm dlx turbo-ignore@2 @ovr/worker --fallback="${{ github.event.pull_request.base.sha || github.event.before }}"
 
   docker:
-    needs: [build, check-types, lint, format-check, test]
+    needs: [build, check-types, lint, format-check, test, detect-affected]
+    if: needs.detect-affected.outputs.apps_affected == 'true'
     permissions:
       contents: read
       packages: write
