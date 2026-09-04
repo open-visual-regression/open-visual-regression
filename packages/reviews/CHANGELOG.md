@@ -1,5 +1,12 @@
 # @ovr/reviews
 
+## 0.1.2
+
+### Patch Changes
+
+- Updated dependencies [[`fed2be3`](https://github.com/open-visual-regression/open-visual-regression/commit/fed2be3a3af19ae4f7ff3dd764e0905128f33855)]:
+  - @ovr/builds@0.1.2
+
 ## 0.1.1
 
 ### Patch Changes
