@@ -230,6 +230,10 @@
           "type": ["string", "integer"],
           "description": "Snapshots per capture group. Empty string uses the app default."
         },
+        "diffConcurrency": {
+          "type": ["string", "integer"],
+          "description": "Snapshots compared against their baseline at once. Empty string uses the app default."
+        },
         "resources": { "$ref": "#/definitions/resources" },
         "updateStrategy": { "$ref": "#/definitions/updateStrategy" },
         "terminationGracePeriodSeconds": { "type": "integer", "minimum": 0 },
