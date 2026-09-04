@@ -24,8 +24,6 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
       - uses: pnpm/action-setup@v6
-        with:
-          standalone: true
       - uses: actions/setup-node@v7
         with:
           node-version: 24
@@ -46,8 +44,6 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
       - uses: pnpm/action-setup@v6
-        with:
-          standalone: true
       - uses: actions/setup-node@v7
         with:
           node-version: 24
@@ -69,8 +65,6 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
       - uses: pnpm/action-setup@v6
-        with:
-          standalone: true
       - uses: actions/setup-node@v7
         with:
           node-version: 24
@@ -86,8 +80,6 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
-        with:
-          standalone: true
       - uses: actions/setup-node@v7
         with:
           node-version: 24
@@ -104,8 +96,6 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
       - uses: pnpm/action-setup@v6
-        with:
-          standalone: true
       - uses: actions/setup-node@v7
         with:
           node-version: 24
@@ -130,8 +120,6 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
       - uses: pnpm/action-setup@v6
-        with:
-          standalone: true
       - uses: actions/setup-node@v7
         with:
           node-version: 24
@@ -193,8 +181,6 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
       - uses: pnpm/action-setup@v6
-        with:
-          standalone: true
       - uses: actions/setup-node@v7
         with:
           node-version: 24
@@ -223,8 +209,6 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
       - uses: pnpm/action-setup@v6
-        with:
-          standalone: true
       - uses: actions/setup-node@v7
         with:
           node-version: 24
