@@ -31,6 +31,13 @@ const CAPTURE_GROUP_CONCURRENCY = z.coerce
   .catch(2)
   .parse(process.env.OVR_CAPTURE_GROUP_CONCURRENCY);
 
+const DIFF_CONCURRENCY = z.coerce
+  .number()
+  .int()
+  .positive()
+  .catch(4)
+  .parse(process.env.OVR_DIFF_CONCURRENCY);
+
 // Not a job-runtime cap — BullMQ renews this lock while the worker is alive.
 const CAPTURE_LOCK_DURATION_MS = z.coerce
   .number()
@@ -47,7 +54,10 @@ const captureWorker = new Worker(QueueName.SNAPSHOT_CAPTURE, capture.createRun(s
   concurrency: CAPTURE_GROUP_CONCURRENCY,
   lockDuration: CAPTURE_LOCK_DURATION_MS,
 });
-const diffWorker = new Worker(QueueName.SNAPSHOT_DIFF, diff.run, { connection });
+const diffWorker = new Worker(QueueName.SNAPSHOT_DIFF, diff.run, {
+  connection,
+  concurrency: DIFF_CONCURRENCY,
+});
 const finalizeWorker = new Worker(QueueName.BUILD_FINALIZE, finalize.run, { connection });
 const purgeDispatchWorker = new Worker(QueueName.BUILD_PURGE_DISPATCH, purgeDispatch.run, {
   connection,
