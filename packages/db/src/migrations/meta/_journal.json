@@ -267,6 +267,13 @@
       "when": 1787504486809,
       "tag": "0037_add_account_issuer",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1788485548183,
+      "tag": "0038_add_sso_provider",
+      "breakpoints": true
     }
   ]
 }
