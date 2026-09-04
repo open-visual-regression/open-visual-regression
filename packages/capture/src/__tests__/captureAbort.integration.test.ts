@@ -6,7 +6,6 @@ import { chromium } from "playwright";
 import { vi } from "vitest";
 
 import { dbClient } from "@ovr/db/client";
-import { storage } from "@ovr/storage";
 
 import { TimeoutError } from "../lib/captureTimeouts";
 import { captureBuildGroup } from "../snapshots";
@@ -20,7 +19,7 @@ vi.mock("../lib/captureTimeouts", async (importOriginal) => {
 });
 
 const SNAPSHOT_COUNT = 3;
-const STALLED_UPLOAD_MS = CAPTURE_JOB_TIMEOUT_MS * (SNAPSHOT_COUNT + 1);
+const STALLED_CAPTURE_MS = CAPTURE_JOB_TIMEOUT_MS * (SNAPSHOT_COUNT + 1);
 
 const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
 const IFRAME_HTML = await readFile(path.join(TEST_DIR, "html/iframe-static.html"), "utf-8");
@@ -39,14 +38,10 @@ describe("captureBuildGroup", () => {
       ],
     });
 
-    const uploadFile = storage.uploadFile;
-    let uploads = 0;
-    vi.spyOn(storage, "uploadFile").mockImplementation(async (...args) => {
-      uploads += 1;
-      if (uploads === 1) {
-        await new Promise((resolve) => setTimeout(resolve, STALLED_UPLOAD_MS));
-      }
-      return uploadFile(...args);
+    const updateStatus = dbClient.snapshots.updateStatus;
+    vi.spyOn(dbClient.snapshots, "updateStatus").mockImplementationOnce(async (id, status) => {
+      await new Promise((resolve) => setTimeout(resolve, STALLED_CAPTURE_MS));
+      return updateStatus(id, status);
     });
 
     const launch = vi.spyOn(chromium, "launch");

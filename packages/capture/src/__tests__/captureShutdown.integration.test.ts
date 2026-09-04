@@ -36,7 +36,7 @@ describe("captureBuildGroup", () => {
       captureBuildGroup(mainBuild.id, captureConfiguration.browser, [first!.id, second!.id], {
         shutdownSignal: shutdown.signal,
       }),
-    ).rejects.toThrow("upload interrupted");
+    ).rejects.toThrow(ShutdownInterruptError);
 
     expect(await dbClient.snapshots.findById(first!.id)).toMatchObject({ status: "processing" });
     expect(await dbClient.snapshots.findById(second!.id)).toMatchObject({ status: "queued" });
@@ -56,11 +56,10 @@ describe("captureBuildGroup", () => {
     });
 
     const shutdown = new AbortController();
-    const uploadFile = storage.uploadFile;
-    vi.spyOn(storage, "uploadFile").mockImplementationOnce(async (...args) => {
-      const result = await uploadFile(...args);
+    const updateStatus = dbClient.snapshots.updateStatus;
+    vi.spyOn(dbClient.snapshots, "updateStatus").mockImplementationOnce(async (id, status) => {
       shutdown.abort();
-      return result;
+      return updateStatus(id, status);
     });
 
     await expect(
@@ -71,6 +70,28 @@ describe("captureBuildGroup", () => {
 
     expect(await dbClient.snapshots.findById(first!.id)).toMatchObject({ status: "success" });
     expect(await dbClient.snapshots.findById(second!.id)).toMatchObject({ status: "queued" });
+  }, 60_000);
+
+  test("fails the group when a failed upload cannot be recorded, so the job is retried", async ({
+    mainBuild,
+    captureConfiguration,
+  }) => {
+    await uploadArtifactWithIframe(mainBuild.artifactPath, IFRAME_HTML);
+    const [first, second] = await dbClient.snapshots.createMany({
+      values: [
+        { buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" },
+        { buildId: mainBuild.id, ...captureConfiguration, targetId: "story-b" },
+      ],
+    });
+
+    vi.spyOn(storage, "uploadFile").mockRejectedValue(new Error("storage is unreachable"));
+    vi.spyOn(dbClient.snapshotLogs, "createMany").mockRejectedValue(
+      new Error("database is unreachable"),
+    );
+
+    await expect(
+      captureBuildGroup(mainBuild.id, captureConfiguration.browser, [first!.id, second!.id]),
+    ).rejects.toThrow("database is unreachable");
   }, 60_000);
 
   test("still marks a failing snapshot errored when the worker is not shutting down", async ({
@@ -94,5 +115,6 @@ describe("captureBuildGroup", () => {
 
     expect(await dbClient.snapshots.findById(first!.id)).toMatchObject({ status: "error" });
     expect(await dbClient.snapshots.findById(second!.id)).toMatchObject({ status: "success" });
+    expect(await dbClient.diffs.findBySnapshot(first!.id)).toBeDefined();
   }, 60_000);
 });

@@ -21,12 +21,15 @@ import {
   withTimeout,
 } from "./lib/captureTimeouts";
 import { startStaticProxy, type StaticProxy } from "./lib/staticProxy";
+import { createUploadQueue } from "./lib/uploadQueue";
 
 const logger = createLogger("capture");
 
 const DEFAULT_PIXELMATCH_THRESHOLD = 0.1;
 
 const DEFAULT_VIEWPORT_HEIGHT = 800;
+
+const MAX_PENDING_UPLOADS = 2;
 
 type CapturePhase = "render" | "screenshot" | "upload";
 
@@ -148,20 +151,32 @@ const launchCapturePage = async (
   };
 };
 
+type CapturedSnapshot = {
+  snapshotId: string;
+  imagePath: string;
+  screenshot: Buffer;
+  logs: CaptureLog[];
+  hasRenderError: boolean;
+  renderMs: number;
+  screenshotMs: number;
+  startedAt: number;
+  context: SnapshotLogContext;
+};
+
 const captureSnapshotOnPage = async (
   page: Page,
   strategy: CaptureStrategy,
   build: NonNullable<BuildDbSchema>,
   snapshotId: string,
   pageLogState: PageLogState,
-): Promise<void> => {
+): Promise<CapturedSnapshot | undefined> => {
   const snapshot = await dbClient.snapshots.findById(snapshotId);
   if (!snapshot) {
     throw new Error(`Snapshot not found: ${snapshotId}`);
   }
 
   if (snapshot.status === "success" || snapshot.status === "canceled") {
-    return;
+    return undefined;
   }
 
   await dbClient.snapshots.updateStatus(snapshotId, "processing");
@@ -204,16 +219,52 @@ const captureSnapshotOnPage = async (
       page.screenshot({ fullPage, animations: "disabled" }),
     );
 
+    return {
+      snapshotId,
+      imagePath,
+      screenshot,
+      logs: [...pageLogState.logs],
+      hasRenderError: !renderResult.ok || pageLogState.hasPageError,
+      renderMs,
+      screenshotMs,
+      startedAt,
+      context,
+    };
+  } catch (error) {
+    const failedPhase = error instanceof CapturePhaseError ? error.phase : undefined;
+    const failedPhaseMs = error instanceof CapturePhaseError ? error.durationMs : undefined;
+    const cause = error instanceof CapturePhaseError ? error.cause : error;
+    logger.error(
+      {
+        ...context,
+        failedPhase,
+        failedPhaseMs,
+        totalMs: Math.round(performance.now() - startedAt),
+        err: cause,
+      },
+      "snapshot capture failed",
+    );
+    throw cause;
+  }
+};
+
+type PersistOutcome = "stored" | "errored" | "interrupted";
+
+const persistCapturedSnapshot = async (
+  captured: CapturedSnapshot,
+  shutdownSignal: AbortSignal | undefined,
+): Promise<PersistOutcome> => {
+  const { snapshotId, imagePath, hasRenderError, context, startedAt } = captured;
+
+  try {
     const [, uploadMs] = await runPhase("upload", () =>
-      storage.uploadFile(imagePath, screenshot, "image/png"),
+      storage.uploadFile(imagePath, captured.screenshot, "image/png"),
     );
 
-    const hasRenderError = !renderResult.ok || pageLogState.hasPageError;
-
-    const captured = await db.transaction(async (tx) => {
-      if (pageLogState.logs.length > 0) {
+    const stored = await db.transaction(async (tx) => {
+      if (captured.logs.length > 0) {
         await dbClient.snapshotLogs.createMany({
-          values: pageLogState.logs.map((log) => ({
+          values: captured.logs.map((log) => ({
             snapshotId,
             level: log.level,
             message: log.message,
@@ -231,8 +282,8 @@ const captureSnapshotOnPage = async (
     });
 
     const timings: CaptureTimings = {
-      render: renderMs,
-      screenshot: screenshotMs,
+      render: captured.renderMs,
+      screenshot: captured.screenshotMs,
       upload: uploadMs,
     };
     logger.info(
@@ -240,11 +291,11 @@ const captureSnapshotOnPage = async (
       "snapshot captured",
     );
 
-    if (!captured) {
-      return;
+    if (stored) {
+      await enqueueSnapshotDiff(snapshotId);
     }
 
-    await enqueueSnapshotDiff(snapshotId);
+    return "stored";
   } catch (error) {
     const failedPhase = error instanceof CapturePhaseError ? error.phase : undefined;
     const failedPhaseMs = error instanceof CapturePhaseError ? error.durationMs : undefined;
@@ -259,7 +310,14 @@ const captureSnapshotOnPage = async (
       },
       "snapshot capture failed",
     );
-    throw cause;
+
+    if (shutdownSignal?.aborted) {
+      logger.warn(context, "upload interrupted by shutdown, leaving the snapshot for a retry");
+      return "interrupted";
+    }
+
+    await markSnapshotErrored(snapshotId, cause);
+    return "errored";
   }
 };
 
@@ -302,6 +360,8 @@ export const captureBuildGroup = async (
         );
 
         let capturePage = await launchCapturePage(buildId, browser, proxy, strategy);
+        const uploads = createUploadQueue(MAX_PENDING_UPLOADS);
+        let uploadInterrupted = false;
 
         try {
           for (const [index, snapshotId] of snapshotIds.entries()) {
@@ -316,13 +376,20 @@ export const captureBuildGroup = async (
             }
 
             try {
-              await captureSnapshotOnPage(
+              const captured = await captureSnapshotOnPage(
                 capturePage.page,
                 strategy,
                 build,
                 snapshotId,
                 capturePage.pageLogState,
               );
+
+              if (captured) {
+                await uploads.add(async () => {
+                  const outcome = await persistCapturedSnapshot(captured, shutdownSignal);
+                  uploadInterrupted ||= outcome === "interrupted";
+                });
+              }
             } catch (error) {
               if (shutdownSignal?.aborted) {
                 logger.warn(
@@ -354,16 +421,25 @@ export const captureBuildGroup = async (
                 for (const remainingId of snapshotIds.slice(index + 1)) {
                   await markSnapshotErrored(remainingId, relaunchError);
                 }
-                return;
+                break;
               }
             } finally {
               capturePage.pageLogState.logs = [];
               capturePage.pageLogState.hasPageError = false;
             }
           }
+
+          await uploads.drain();
+
+          if (uploadInterrupted) {
+            throw new ShutdownInterruptError(
+              `Capture group interrupted by worker shutdown: ${buildId}`,
+            );
+          }
         } finally {
           await capturePage.close();
           proxy.close();
+          await uploads.drain().catch(() => undefined);
         }
       }),
     CAPTURE_JOB_TIMEOUT_MS * snapshotIds.length,
