@@ -10,5 +10,7 @@ export default defineConfig({
     setupFiles: ["./vitest.integration.setup.ts"],
     fileParallelism: false,
     testTimeout: 30_000,
+    restoreMocks: true,
+    unstubEnvs: true,
   },
 });

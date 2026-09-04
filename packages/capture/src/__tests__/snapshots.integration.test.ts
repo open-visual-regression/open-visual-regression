@@ -235,6 +235,34 @@ describe("snapshots", () => {
       }
     });
 
+    test("downloads the storybook bundle once for a build split across capture groups", async ({
+      mainBuild,
+      captureConfiguration,
+    }) => {
+      await uploadArtifactWithIframe(mainBuild.artifactPath, IFRAME_HTML);
+      const snapshots = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" },
+          { buildId: mainBuild.id, ...captureConfiguration, targetId: "story-b" },
+        ],
+      });
+
+      const downloadSpy = vi.spyOn(storage, "getFileStream");
+
+      for (const snapshot of snapshots) {
+        await captureBuildGroup(mainBuild.id, captureConfiguration.browser, [snapshot!.id]);
+      }
+
+      expect(downloadSpy).toHaveBeenCalledTimes(1);
+
+      for (const snapshot of snapshots) {
+        expect(await dbClient.snapshots.findById(snapshot!.id)).toMatchObject({
+          status: "success",
+          hasRenderError: false,
+        });
+      }
+    });
+
     test("captures the same story at multiple viewports in one group without a render error", async ({
       mainBuild,
       captureConfiguration,

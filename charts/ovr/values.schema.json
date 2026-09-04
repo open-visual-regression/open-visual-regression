@@ -230,6 +230,10 @@
           "type": ["string", "integer"],
           "description": "Snapshots per capture group. Empty string uses the app default."
         },
+        "storybookCacheBytes": {
+          "type": ["string", "integer"],
+          "description": "Local disk for extracted Storybook builds. Empty string uses the app default."
+        },
         "resources": { "$ref": "#/definitions/resources" },
         "updateStrategy": { "$ref": "#/definitions/updateStrategy" },
         "terminationGracePeriodSeconds": { "type": "integer", "minimum": 0 },

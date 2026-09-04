@@ -116,6 +116,8 @@ worker:
   # 2 minutes per snapshot, so this also sets how long a stuck group runs
   # before its timeout fires. Empty uses the app default (10).
   groupSize: ""
+  # Local disk for extracted Storybook builds. Empty uses the app default (2 GB).
+  storybookCacheBytes: ""
   resources: {}
   containerSecurityContext:
     allowPrivilegeEscalation: false
