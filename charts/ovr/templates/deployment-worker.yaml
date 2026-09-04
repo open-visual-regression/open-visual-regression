@@ -68,6 +68,10 @@ spec:
             - name: OVR_CAPTURE_GROUP_SIZE
               value: {{ . | quote }}
             {{- end }}
+            {{- with .Values.worker.storybookCacheBytes }}
+            - name: OVR_STORYBOOK_CACHE_BYTES
+              value: {{ . | quote }}
+            {{- end }}
           volumeMounts:
             - name: dshm
               mountPath: /dev/shm
