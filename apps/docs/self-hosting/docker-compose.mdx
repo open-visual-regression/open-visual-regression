@@ -212,7 +212,7 @@ Any S3-compatible service works: AWS S3, Cloudflare R2, Backblaze B2, RustFS, Mi
 | `LOG_FILE_PATH` | unset | Log to a file instead of stdout. |
 | `OVR_CAPTURE_GROUP_CONCURRENCY` | `2` | Capture groups run in parallel per worker. Each drives its own browser instance. |
 | `OVR_CAPTURE_GROUP_SIZE` | `10` | Snapshots per capture group. |
-| `OVR_DIFF_CONCURRENCY` | `4` | Snapshots compared against their baseline in parallel per worker. Each holds two images and a diff mask in memory. |
+| `OVR_DIFF_CONCURRENCY` | `4` | Snapshots compared against their baseline in parallel per worker. |
 | `OVR_REAPER_STALE_MINUTES` | `30` | Minutes before a stalled capture job is requeued. |
 | `OVR_STORYBOOK_CACHE_BYTES` | `2147483648` (2 GB) | Max size of the worker's local Storybook build cache. |
 
