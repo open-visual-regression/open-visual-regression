@@ -119,6 +119,8 @@ worker:
   # Snapshots compared against their baseline at once. Empty uses the app
   # default (4).
   diffConcurrency: ""
+  # Local disk for extracted Storybook builds. Empty uses the app default (2 GB).
+  storybookCacheBytes: ""
   resources: {}
   containerSecurityContext:
     allowPrivilegeEscalation: false

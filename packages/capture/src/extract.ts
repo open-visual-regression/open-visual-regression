@@ -1,10 +1,10 @@
 import { z } from "zod";
 
+import { withBundleDir } from "@ovr/builds/storybookBundleCache";
 import { dbClient } from "@ovr/db/client";
 import { enqueueCaptureGroup } from "@ovr/queue/producer";
 import { assertSupportedStorybookBuild } from "@ovr/storybook-compat/version";
 
-import { withExtractedBundle } from "./lib/artifact";
 import { markSnapshotErrored } from "./snapshots";
 import {
   readStoryParameterOverrides,
@@ -105,7 +105,8 @@ export const extractBuild = async (
     throw new Error(`Build not found: ${buildId}`);
   }
 
-  const { overrides, failures } = await withExtractedBundle(
+  const { overrides, failures } = await withBundleDir(
+    buildId,
     build.artifactPath,
     async (bundleDir) => {
       await assertSupportedStorybookBuild(bundleDir);

@@ -11,16 +11,31 @@ import { storage } from "@ovr/storage";
 
 const logger = createLogger("storybook-cache");
 
-const CACHE_ROOT = path.join(tmpdir(), "ovr-storybook-cache");
+const cacheRoot = (): string => path.join(tmpdir(), "ovr-storybook-cache");
 
-const parseMaxBytes = () => {
+const bundleDirFor = (buildId: string): string => path.join(cacheRoot(), buildId);
+
+const maxCacheBytes = (): number => {
   const parsed = Number(process.env.OVR_STORYBOOK_CACHE_BYTES);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 2 * 1024 ** 3;
 };
 
-const MAX_CACHE_BYTES = parseMaxBytes();
-
 const inflight = new Map<string, Promise<string>>();
+
+const leased = new Map<string, number>();
+
+const lease = (bundleDir: string): void => {
+  leased.set(bundleDir, (leased.get(bundleDir) ?? 0) + 1);
+};
+
+const release = (bundleDir: string): void => {
+  const remaining = (leased.get(bundleDir) ?? 0) - 1;
+  if (remaining > 0) {
+    leased.set(bundleDir, remaining);
+  } else {
+    leased.delete(bundleDir);
+  }
+};
 
 const statOrNull = (target: string) => stat(target).catch(() => null);
 
@@ -39,11 +54,14 @@ const directorySize = async (dir: string): Promise<number> => {
 };
 
 const evictIfOverCap = async (keep: string): Promise<void> => {
+  const root = cacheRoot();
+  const maxBytes = maxCacheBytes();
+
   try {
-    const names = await readdir(CACHE_ROOT);
+    const names = await readdir(root);
     const dirs = await Promise.all(
       names.map(async (name) => {
-        const fullPath = path.join(CACHE_ROOT, name);
+        const fullPath = path.join(root, name);
         const stats = await statOrNull(fullPath);
         if (!stats?.isDirectory()) {
           return null;
@@ -56,10 +74,10 @@ const evictIfOverCap = async (keep: string): Promise<void> => {
     let total = present.reduce((sum, dir) => sum + dir.size, 0);
 
     for (const dir of present.sort((a, b) => a.mtimeMs - b.mtimeMs)) {
-      if (total <= MAX_CACHE_BYTES) {
+      if (total <= maxBytes) {
         break;
       }
-      if (dir.fullPath === keep) {
+      if (dir.fullPath === keep || leased.has(dir.fullPath)) {
         continue;
       }
       await rm(dir.fullPath, { recursive: true, force: true }).catch((err: unknown) => {
@@ -77,9 +95,10 @@ const materialize = async (
   artifactPath: string,
   bundleDir: string,
 ): Promise<string> => {
-  const workDir = await mkdtemp(path.join(CACHE_ROOT, `${buildId}-`));
+  const workDir = await mkdtemp(path.join(tmpdir(), `ovr-bundle-${buildId}-`));
   const tarballPath = path.join(workDir, "artifact.tar.gz");
   const stagingDir = path.join(workDir, "bundle");
+  const startedAt = performance.now();
 
   try {
     const artifactStream = await storage.getFileStream(artifactPath);
@@ -96,7 +115,12 @@ const materialize = async (
       }
     }
 
-    void evictIfOverCap(bundleDir);
+    logger.info(
+      { buildId, downloadMs: Math.round(performance.now() - startedAt) },
+      "storybook bundle downloaded and extracted",
+    );
+
+    await evictIfOverCap(bundleDir);
     return bundleDir;
   } finally {
     await rm(workDir, { recursive: true, force: true }).catch((err: unknown) => {
@@ -106,9 +130,9 @@ const materialize = async (
 };
 
 export const getBundleDir = async (buildId: string, artifactPath: string): Promise<string> => {
-  await mkdir(CACHE_ROOT, { recursive: true });
+  await mkdir(cacheRoot(), { recursive: true });
 
-  const bundleDir = path.join(CACHE_ROOT, buildId);
+  const bundleDir = bundleDirFor(buildId);
 
   const cached = await statOrNull(bundleDir);
   if (cached?.isDirectory()) {
@@ -126,4 +150,19 @@ export const getBundleDir = async (buildId: string, artifactPath: string): Promi
   const job = materialize(buildId, artifactPath, bundleDir).finally(() => inflight.delete(buildId));
   inflight.set(buildId, job);
   return job;
+};
+
+export const withBundleDir = async <T>(
+  buildId: string,
+  artifactPath: string,
+  fn: (bundleDir: string) => Promise<T>,
+): Promise<T> => {
+  const bundleDir = bundleDirFor(buildId);
+
+  lease(bundleDir);
+  try {
+    return await fn(await getBundleDir(buildId, artifactPath));
+  } finally {
+    release(bundleDir);
+  }
 };

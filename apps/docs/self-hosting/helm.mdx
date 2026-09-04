@@ -74,6 +74,7 @@ CPU and memory scale with concurrent captures, not total build volume. Each capt
 | `worker.concurrency` | `2` | Capture groups a worker runs at once, each with its own browser instance. |
 | `worker.groupSize` | app default `10` | Snapshots per capture group. |
 | `worker.diffConcurrency` | app default `4` | Snapshots compared against their baseline at once. |
+| `worker.storybookCacheBytes` | app default 2 GB | Pod-local disk for extracted Storybook builds. Counts against the pod's ephemeral storage. |
 | `worker.shmSize` | `1Gi` | In-memory `emptyDir` for the browser. |
 | `worker.terminationGracePeriodSeconds` | `180` | A capture group holds a browser open across snapshots. Cutting it off early fails the in-flight snapshot. |
 | `web.resources` / `worker.resources` | `{}` | No requests or limits by default. |

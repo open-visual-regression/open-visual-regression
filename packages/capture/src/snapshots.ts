@@ -2,6 +2,7 @@ import pixelmatch from "pixelmatch";
 import { chromium, firefox, webkit, type Page } from "playwright";
 import { PNG } from "pngjs";
 
+import { withBundleDir } from "@ovr/builds/storybookBundleCache";
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
 import type { BuildDbSchema } from "@ovr/db/repository/builds";
@@ -12,7 +13,6 @@ import { promoteBaseline } from "@ovr/reviews/baselines";
 import { storage } from "@ovr/storage";
 
 import { detectCaptureStrategy, type CaptureStrategy } from "./captureStrategies";
-import { withExtractedBundle } from "./lib/artifact";
 import { SIGNAL_HANDLING_OPTIONS, newPage } from "./lib/browser";
 import {
   BOOT_TIMEOUT_MS,
@@ -292,7 +292,7 @@ export const captureBuildGroup = async (
 
   await withTimeout(
     (signal) =>
-      withExtractedBundle(build.artifactPath, async (bundleDir) => {
+      withBundleDir(build.id, build.artifactPath, async (bundleDir) => {
         const proxy = await startStaticProxy(bundleDir);
         const strategy = await detectCaptureStrategy(bundleDir);
 

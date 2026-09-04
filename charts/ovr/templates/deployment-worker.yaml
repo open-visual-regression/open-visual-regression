@@ -72,6 +72,10 @@ spec:
             - name: OVR_DIFF_CONCURRENCY
               value: {{ . | quote }}
             {{- end }}
+            {{- with .Values.worker.storybookCacheBytes }}
+            - name: OVR_STORYBOOK_CACHE_BYTES
+              value: {{ . | quote }}
+            {{- end }}
           volumeMounts:
             - name: dshm
               mountPath: /dev/shm
