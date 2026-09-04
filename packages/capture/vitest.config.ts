@@ -5,7 +5,7 @@ export default defineConfig({
     name: "capture",
     env: { LOG_LEVEL: "silent" },
     environment: "node",
-    include: ["src/__tests__/**/*.integration.test.ts"],
+    include: ["src/__tests__/**/*.test.ts"],
     globalSetup: ["./vitest.integration.globalSetup.ts"],
     setupFiles: ["./vitest.integration.setup.ts"],
     fileParallelism: false,
