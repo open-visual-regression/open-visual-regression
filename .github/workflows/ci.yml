@@ -202,7 +202,7 @@ jobs:
     name: Detect affected apps
     runs-on: ubuntu-latest
     outputs:
-      apps_affected: ${{ steps.web.outcome == 'failure' || steps.worker.outcome == 'failure' }}
+      apps_affected: ${{ steps.detect.outputs.affected }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -214,12 +214,15 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - id: web
-        continue-on-error: true
-        run: pnpm dlx turbo-ignore@2 @ovr/web --fallback="${{ github.event.pull_request.base.sha || github.event.before }}"
-      - id: worker
-        continue-on-error: true
-        run: pnpm dlx turbo-ignore@2 @ovr/worker --fallback="${{ github.event.pull_request.base.sha || github.event.before }}"
+      - id: detect
+        env:
+          TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          set -euo pipefail
+          packages=$(pnpm turbo run build --affected --filter=@ovr/web --filter=@ovr/worker --dry=json | jq -c '[.packages[] | select(. != "//")]')
+          echo "affected packages: $packages"
+          affected=$(jq -e 'length > 0' <<<"$packages" >/dev/null && echo true || echo false)
+          echo "affected=$affected" >> "$GITHUB_OUTPUT"
 
   docker:
     needs: [build, check-types, lint, format-check, test, detect-affected]
