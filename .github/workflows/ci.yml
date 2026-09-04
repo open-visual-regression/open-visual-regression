@@ -202,11 +202,6 @@ jobs:
     name: Detect affected apps
     runs-on: ubuntu-latest
     outputs:
-      # web and worker are `fixed` together in .changeset/config.json, so any
-      # real release bumps both apps' package.json in the same commit and is
-      # always caught here — this only skips docker/e2e for changes (docs,
-      # storybook, the Helm chart, etc.) that never touch apps/web or
-      # apps/worker at all.
       apps_affected: ${{ steps.web.outcome == 'failure' || steps.worker.outcome == 'failure' }}
     steps:
       - uses: actions/checkout@v7
