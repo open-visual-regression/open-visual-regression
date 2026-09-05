@@ -3,7 +3,6 @@ import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 
 import { getStoragePath } from "@/lib/utils/storage";
 
-import { SnapshotFitProvider } from "../snapshot-pane/snapshot-fit";
 import { ComparisonView } from "./comparison-view/ComparisonView";
 import { NewSnapshotPane } from "./comparison-view/NewSnapshotPane";
 
@@ -15,9 +14,11 @@ export type SnapshotComparisonSectionProps = {
 export const SnapshotComparisonSection = ({ snapshot, diff }: SnapshotComparisonSectionProps) => {
   const alt = `snapshot of ${snapshot.targetTitle} ${snapshot.targetName}`;
 
-  const comparison = !diff?.baselineSnapshot ? (
-    <NewSnapshotPane imagePath={getStoragePath(snapshot.imagePath)} alt={alt} />
-  ) : (
+  if (!diff?.baselineSnapshot) {
+    return <NewSnapshotPane imagePath={getStoragePath(snapshot.imagePath)} alt={alt} />;
+  }
+
+  return (
     <ComparisonView
       baseline={{
         imagePath: getStoragePath(diff.baselineSnapshot.imagePath),
@@ -29,6 +30,4 @@ export const SnapshotComparisonSection = ({ snapshot, diff }: SnapshotComparison
       diffImagePath={getStoragePath(diff.diffImagePath)}
     />
   );
-
-  return <SnapshotFitProvider>{comparison}</SnapshotFitProvider>;
 };

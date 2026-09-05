@@ -7,12 +7,8 @@ import { cn } from "@ovr/ui/lib/utils";
 
 import { Image } from "@/lib/components/image/Image";
 
-import {
-  FIT_BOX_CLASS,
-  FIT_IMAGE_CLASS,
-  useReportAspectRatio,
-} from "../../snapshot-pane/snapshot-fit";
 import { SnapshotPane } from "../../snapshot-pane/SnapshotPane";
+import { SnapshotPaneCanvas } from "../../snapshot-pane/SnapshotPaneCanvas";
 import { SnapshotPaneHeader } from "../../snapshot-pane/SnapshotPaneHeader";
 
 export type NewSnapshotDiffPaneProps = {
@@ -30,37 +26,35 @@ export const NewSnapshotDiffPane = ({
   alt,
   showDiff,
 }: NewSnapshotDiffPaneProps) => {
-  const [diffNaturalWidth, setDiffNaturalWidth] = useState<number | null>(null);
+  const [diffNaturalSize, setDiffNaturalSize] = useState<{ width: number; height: number } | null>(
+    null,
+  );
   const [imageNaturalWidth, setImageNaturalWidth] = useState<number | null>(null);
-  const reportSnapshotAspectRatio = useReportAspectRatio();
-  const reportDiffAspectRatio = useReportAspectRatio();
 
   const imageWidthPercent =
-    diffNaturalWidth && imageNaturalWidth ? (imageNaturalWidth / diffNaturalWidth) * 100 : 100;
+    diffNaturalSize && imageNaturalWidth ? (imageNaturalWidth / diffNaturalSize.width) * 100 : 100;
 
   return (
     <SnapshotPane>
       <SnapshotPaneHeader>
         <Typography variant="label">{label}</Typography>
       </SnapshotPaneHeader>
-      <div
-        className={cn(
-          "overflow-hidden rounded-card border border-ovr-border bg-ovr-inset bg-pixel-grid",
-          FIT_BOX_CLASS,
-        )}
-      >
-        {/* The diff overlay sizes the pair; the snapshot is laid over it. */}
-        <div className={cn("relative w-full", FIT_IMAGE_CLASS)}>
+      <SnapshotPaneCanvas>
+        <div
+          className="relative w-full lg:max-h-full lg:w-auto lg:max-w-full"
+          style={
+            diffNaturalSize
+              ? { aspectRatio: `${diffNaturalSize.width}/${diffNaturalSize.height}` }
+              : undefined
+          }
+        >
           {imagePath ? (
             <Image
               src={imagePath}
               alt={alt}
               className="absolute top-0 left-0 block h-auto"
               style={{ width: `${imageWidthPercent}%` }}
-              onLoaded={(image) => {
-                setImageNaturalWidth(image.naturalWidth);
-                reportSnapshotAspectRatio(image);
-              }}
+              onLoad={(event) => setImageNaturalWidth(event.currentTarget.naturalWidth)}
               errorFallback={
                 <div className="absolute inset-0 flex items-center justify-center">
                   <Typography variant="caption">failed to load snapshot</Typography>
@@ -75,14 +69,19 @@ export const NewSnapshotDiffPane = ({
           <img
             src={diffImagePath}
             alt={`diff overlay of ${alt}`}
-            className={cn("relative block h-auto w-full", showDiff ? "opacity-100" : "opacity-0")}
-            onLoad={(event) => {
-              setDiffNaturalWidth(event.currentTarget.naturalWidth);
-              reportDiffAspectRatio(event.currentTarget);
-            }}
+            className={cn(
+              "relative block h-auto w-full lg:h-full",
+              showDiff ? "opacity-100" : "opacity-0",
+            )}
+            onLoad={(event) =>
+              setDiffNaturalSize({
+                width: event.currentTarget.naturalWidth,
+                height: event.currentTarget.naturalHeight,
+              })
+            }
           />
         </div>
-      </div>
+      </SnapshotPaneCanvas>
     </SnapshotPane>
   );
 };

@@ -1,7 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { expect, userEvent, waitFor, within } from "storybook/test";
-
-import { ScrollContainer } from "@/lib/providers/ScrollContainer";
+import { expect, userEvent, within } from "storybook/test";
 
 import { ComparisonModeProvider } from "../comparison-view/comparison-mode";
 import { ComparisonControls } from "../comparison-view/ComparisonControls";
@@ -16,19 +14,12 @@ const meta: Meta<typeof SnapshotComparisonSection> = {
       viewports: ["desktop", "tablet", "mobile"],
     },
   },
-  // Stands in for the snapshot page shell: a scroll region of a fixed height
-  // that the comparison has to fit into.
   render: (args) => (
     <ComparisonModeProvider>
-      <ScrollContainer
-        data-testid="scroll-region"
-        className="flex h-[600px] flex-col gap-6 overflow-y-auto p-4"
-      >
-        {args.diff?.baselineSnapshot ? (
-          <ComparisonControls hasDiff={args.diff.diffImagePath !== null} />
-        ) : null}
-        <SnapshotComparisonSection {...args} />
-      </ScrollContainer>
+      {args.diff?.baselineSnapshot ? (
+        <ComparisonControls hasDiff={args.diff.diffImagePath !== null} />
+      ) : null}
+      <SnapshotComparisonSection {...args} />
     </ComparisonModeProvider>
   ),
 };
@@ -48,14 +39,6 @@ const newSnapshot = {
   imagePath: "new-desktop.png",
   status: "unchanged" as const,
   errorLogs: [],
-};
-
-const mobileSnapshot = {
-  ...newSnapshot,
-  viewportWidth: 375,
-  viewportHeight: 812,
-  viewportName: "mobile",
-  imagePath: "new-mobile.png",
 };
 
 export const NewOnly: Story = {
@@ -151,81 +134,5 @@ export const SliderView: Story = {
     // Switching back restores the split view and its diff toggle.
     await userEvent.click(canvas.getByRole("tab", { name: "split" }));
     await expect(canvas.getByRole("switch")).toBeVisible();
-  },
-};
-
-// A mobile snapshot is far taller than it is wide, so rendering it at the width
-// of its pane would run it several screens down the page.
-export const TallSnapshots: Story = {
-  args: {
-    snapshot: mobileSnapshot,
-    diff: {
-      id: "01970000-0000-7000-8000-000000000005",
-      processingStatus: "success",
-      reviewStatus: "needs_review",
-      diffImagePath: "diff-mobile.png",
-      pixelDiffCount: 60_272,
-      diffPercent: 11.5,
-      baselineSnapshot: {
-        imagePath: "baseline-mobile.png",
-        commitSha: "abc1234567890",
-        commitUrl: "https://github.com/acme/web/commit/abc1234567890",
-      },
-    },
-  },
-  play: async ({ canvasElement }) => {
-    // Snapshots are only fitted from `lg` up, where there is width to trade.
-    if (window.innerWidth < 1024) {
-      return;
-    }
-
-    const canvas = within(canvasElement);
-    const scrollRegion = canvas.getByTestId("scroll-region");
-
-    // Both snapshots fit in what is left of the scroll region, at the same
-    // scale, rather than running off the bottom of it.
-    const baseline = await canvas.findByRole("img", {
-      name: "baseline snapshot of Button Primary",
-    });
-    await waitFor(() => {
-      const image = baseline.getBoundingClientRect();
-      expect(image.height).toBeGreaterThan(0);
-      expect(image.bottom).toBeLessThanOrEqual(scrollRegion.getBoundingClientRect().bottom);
-    });
-
-    const newSnapshotImage = await canvas.findByRole("img", {
-      name: "snapshot of Button Primary",
-    });
-    expect(newSnapshotImage.getBoundingClientRect().width).toBeCloseTo(
-      baseline.getBoundingClientRect().width,
-      0,
-    );
-
-    // The dotted box keeps the width of its pane, with the snapshot centred in
-    // it rather than filling it.
-    const box = baseline.closest("[class*=bg-pixel-grid]") as HTMLElement;
-    const boxRect = box.getBoundingClientRect();
-    const imageRect = baseline.getBoundingClientRect();
-    expect(boxRect.width).toBeGreaterThan(imageRect.width * 2);
-    expect((imageRect.left + imageRect.right) / 2).toBeCloseTo(
-      (boxRect.left + boxRect.right) / 2,
-      0,
-    );
-    expect((imageRect.top + imageRect.bottom) / 2).toBeCloseTo(
-      (boxRect.top + boxRect.bottom) / 2,
-      0,
-    );
-
-    // The slider view fits the same way.
-    await userEvent.click(canvas.getByRole("tab", { name: "slider" }));
-
-    const sliderBaseline = await canvas.findByRole("img", {
-      name: "baseline snapshot of Button Primary",
-    });
-    await waitFor(() => {
-      const image = sliderBaseline.getBoundingClientRect();
-      expect(image.height).toBeGreaterThan(0);
-      expect(image.bottom).toBeLessThanOrEqual(scrollRegion.getBoundingClientRect().bottom);
-    });
   },
 };

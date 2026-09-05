@@ -11,7 +11,7 @@ export type SplitViewProps = {
 };
 
 export const SplitView = ({ baseline, newSnapshot, diffImagePath, showDiff }: SplitViewProps) => (
-  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+  <div className="grid grid-cols-1 gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-2 lg:grid-rows-[minmax(0,1fr)]">
     <BaselineSnapshotPane {...baseline} fill={diffImagePath !== null} />
     {diffImagePath ? (
       <NewSnapshotDiffPane
