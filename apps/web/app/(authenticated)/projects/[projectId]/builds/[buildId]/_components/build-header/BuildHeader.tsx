@@ -21,6 +21,7 @@ import { formatRelativeDateTime } from "@/lib/utils/date";
 
 import { BuildApproveButton } from "./BuildApproveButton";
 import { BuildCancelButton } from "./BuildCancelButton";
+import { BuildDuration } from "./BuildDuration";
 import { BuildRebuildButton } from "./BuildRebuildButton";
 import { BuildRejectButton } from "./BuildRejectButton";
 import { BuildStatusStream } from "./BuildStatusStream";
@@ -90,6 +91,13 @@ export const BuildHeader = ({
           <Typography variant="caption">
             {formatRelativeDateTime(new Date(build.createdAt))}
           </Typography>
+          <Typography variant="caption">
+            <BuildDuration
+              createdAt={build.createdAt}
+              startedAt={build.startedAt}
+              finishedAt={build.finishedAt}
+            />
+          </Typography>
           {isCanceled ? (
             <Typography variant="caption" className="flex items-center gap-1">
               <Icon icon={CircleSlash2Icon} size={10} />
@@ -152,6 +160,7 @@ export const BuildHeaderSkeleton = () => (
         <TypographySkeleton variant="caption" className="w-16" />
         <TypographySkeleton variant="caption" className="w-20" />
         <TypographySkeleton variant="caption" className="w-24" />
+        <TypographySkeleton variant="caption" className="w-12" />
       </div>
     </div>
     <SegmentedProgressSkeleton />

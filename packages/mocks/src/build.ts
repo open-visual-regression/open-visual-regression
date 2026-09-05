@@ -22,23 +22,31 @@ export const generateBuildSnapshot = (
   ...overrides,
 });
 
-export const generateBuild = (overrides?: Partial<BuildDetailSchema>): BuildDetailSchema => ({
-  id: faker.string.uuid(),
-  project: {
+export const generateBuild = (overrides?: Partial<BuildDetailSchema>): BuildDetailSchema => {
+  const createdAt = overrides?.createdAt ? new Date(overrides.createdAt) : faker.date.recent();
+  const startedAt = new Date(createdAt.getTime() + 12_000);
+  const finishedAt = new Date(startedAt.getTime() + 100_000);
+
+  return {
     id: faker.string.uuid(),
-    name: faker.company.name(),
-  },
-  branch: "main",
-  commitSha: faker.git.commitSha(),
-  name: faker.git.commitMessage(),
-  author: faker.person.fullName(),
-  errorMessage: null,
-  status: "unchanged",
-  canceledBy: null,
-  isRebuildable: false,
-  commitUrl: null,
-  branchUrl: null,
-  buildType: "storybook",
-  createdAt: faker.date.recent().toISOString(),
-  ...overrides,
-});
+    project: {
+      id: faker.string.uuid(),
+      name: faker.company.name(),
+    },
+    branch: "main",
+    commitSha: faker.git.commitSha(),
+    name: faker.git.commitMessage(),
+    author: faker.person.fullName(),
+    errorMessage: null,
+    status: "unchanged",
+    canceledBy: null,
+    isRebuildable: false,
+    commitUrl: null,
+    branchUrl: null,
+    buildType: "storybook",
+    createdAt: createdAt.toISOString(),
+    startedAt: startedAt.toISOString(),
+    finishedAt: finishedAt.toISOString(),
+    ...overrides,
+  };
+};
