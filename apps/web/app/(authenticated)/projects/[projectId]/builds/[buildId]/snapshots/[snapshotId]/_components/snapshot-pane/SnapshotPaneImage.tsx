@@ -19,7 +19,7 @@ export const SnapshotPaneImage = ({ imagePath, alt, fill = false }: SnapshotPane
         alt={alt}
         className={cn(
           "block h-auto lg:max-h-full lg:w-auto lg:max-w-full",
-          fill ? "w-full" : "mx-auto max-w-full",
+          fill ? "w-full" : "max-w-full",
         )}
         errorFallback={
           <div className="absolute inset-0 flex items-center justify-center">

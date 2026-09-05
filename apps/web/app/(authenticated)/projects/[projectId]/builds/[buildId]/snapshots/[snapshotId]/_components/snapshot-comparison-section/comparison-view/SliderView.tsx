@@ -38,16 +38,22 @@ type SliderImageProps = {
 };
 
 const SliderImage = ({ imagePath, alt }: SliderImageProps) => (
-  <div className="flex h-full w-full items-center justify-center">
+  <div className="flex h-full w-full items-start justify-start">
     {imagePath ? (
       <Image
         src={imagePath}
         alt={alt}
         className="block h-auto w-full lg:max-h-full lg:w-auto lg:max-w-full"
-        errorFallback={<Typography variant="caption">failed to load snapshot</Typography>}
+        errorFallback={
+          <Typography variant="caption" className="m-auto">
+            failed to load snapshot
+          </Typography>
+        }
       />
     ) : (
-      <Typography variant="caption">no preview</Typography>
+      <Typography variant="caption" className="m-auto">
+        no preview
+      </Typography>
     )}
   </div>
 );

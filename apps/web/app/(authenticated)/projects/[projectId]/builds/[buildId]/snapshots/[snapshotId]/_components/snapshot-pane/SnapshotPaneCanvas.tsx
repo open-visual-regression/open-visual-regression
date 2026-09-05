@@ -8,7 +8,7 @@ export const SnapshotPaneCanvas = ({ className, children, ...props }: SnapshotPa
   <div
     {...props}
     className={cn(
-      "relative flex min-h-64 items-center justify-center overflow-hidden rounded-card border border-ovr-border bg-ovr-inset bg-pixel-grid lg:flex-1",
+      "relative flex min-h-64 items-start justify-start overflow-hidden rounded-card border border-ovr-border bg-ovr-inset bg-pixel-grid lg:flex-1",
       className,
     )}
   >
