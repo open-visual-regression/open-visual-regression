@@ -12,17 +12,21 @@ import { SnapshotPaneHeader } from "../../snapshot-pane/SnapshotPaneHeader";
 import type { BaselineSnapshotPaneData, SnapshotPaneData } from "../../snapshot-pane/types";
 
 // Amber accent divider with a square handle showing the drag glyph. The focus
-// ring is driven by the focusable slider root that wraps this handle.
+// ring is driven by the focusable slider root that wraps this handle. That
+// slider root has pointer-events disabled (react-compare-slider only
+// re-enables dragging from within the handle on touch devices), so the
+// visible pieces below need pointer-events-auto or touch drags fall through
+// to the images underneath and the slider becomes unresponsive on mobile.
 const SliderHandle = () => (
   <div className="flex h-full cursor-ew-resize flex-col items-center">
-    <div className="w-0.5 grow bg-ovr-accent" />
+    <div className="pointer-events-auto w-0.5 grow bg-ovr-accent" />
     <div
       data-grip
-      className="flex size-9 items-center justify-center rounded-lg bg-ovr-accent text-xl leading-none font-semibold text-ovr-on-accent"
+      className="pointer-events-auto flex size-9 items-center justify-center rounded-lg bg-ovr-accent text-xl leading-none font-semibold text-ovr-on-accent"
     >
       ↔
     </div>
-    <div className="w-0.5 grow bg-ovr-accent" />
+    <div className="pointer-events-auto w-0.5 grow bg-ovr-accent" />
   </div>
 );
 
