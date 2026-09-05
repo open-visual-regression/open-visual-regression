@@ -322,6 +322,8 @@ export const getOne = os.builds.getOne
         isRebuildable: rebuildable.status === "ok",
         buildType: build.buildType,
         createdAt: build.createdAt,
+        startedAt: build.startedAt,
+        finishedAt: build.finishedAt,
         commitUrl: gitIntegration
           ? buildCommitUrl(gitIntegration.provider, gitIntegration.repoIdentifier, build.commitSha)
           : null,

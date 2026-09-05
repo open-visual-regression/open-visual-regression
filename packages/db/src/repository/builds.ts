@@ -37,6 +37,17 @@ export const create = async ({ tx = db, ...values }: CreateInput) => {
 export const findById = (id: string) =>
   db.query.builds.findFirst({ where: (builds, { eq }) => eq(builds.id, id) });
 
+const TERMINAL_PROCESSING_STATUSES: BuildProcessingStatus[] = ["success", "error", "canceled"];
+
+const lifecycleTimestamps = (processingStatus: BuildProcessingStatus) => ({
+  ...(processingStatus === "processing" && {
+    startedAt: sql`coalesce(${builds.startedAt}, now())`,
+  }),
+  ...(TERMINAL_PROCESSING_STATUSES.includes(processingStatus) && {
+    finishedAt: sql`coalesce(${builds.finishedAt}, now())`,
+  }),
+});
+
 export const updateProcessingStatus = async (
   id: string,
   processingStatus: BuildProcessingStatus,
@@ -45,7 +56,7 @@ export const updateProcessingStatus = async (
 ) => {
   const [build] = await tx
     .update(builds)
-    .set({ processingStatus, errorMessage })
+    .set({ processingStatus, errorMessage, ...lifecycleTimestamps(processingStatus) })
     .where(and(eq(builds.id, id), ne(builds.processingStatus, "canceled")))
     .returning();
   return build;
@@ -58,7 +69,12 @@ export const cancelIfInProgress = async (
 ) => {
   const [build] = await tx
     .update(builds)
-    .set({ processingStatus: "canceled", errorMessage: null, canceledBy })
+    .set({
+      processingStatus: "canceled",
+      errorMessage: null,
+      canceledBy,
+      ...lifecycleTimestamps("canceled"),
+    })
     .where(and(eq(builds.id, id), inArray(builds.processingStatus, ["queued", "processing"])))
     .returning();
   return build;
@@ -73,7 +89,7 @@ type UpdateResultInput = {
 export const updateResult = async (id: string, result: UpdateResultInput) => {
   const [build] = await db
     .update(builds)
-    .set(result)
+    .set({ ...result, ...lifecycleTimestamps(result.processingStatus) })
     .where(and(eq(builds.id, id), ne(builds.processingStatus, "canceled")))
     .returning();
   return build;

@@ -142,6 +142,8 @@ export const buildDetailSchema = buildSchema.extend({
   isRebuildable: z.boolean(),
   commitUrl: z.string().nullable(),
   branchUrl: z.string().nullable(),
+  startedAt: z.string().nonempty().nullable(),
+  finishedAt: z.string().nonempty().nullable(),
 });
 
 export type BuildDetailSchema = z.infer<typeof buildDetailSchema>;
