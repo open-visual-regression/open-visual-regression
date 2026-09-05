@@ -7,6 +7,7 @@ import { cn } from "@ovr/ui/lib/utils";
 
 import { Image } from "@/lib/components/image/Image";
 
+import { useReportAspectRatio } from "../../snapshot-pane/snapshot-fit";
 import { SnapshotPane } from "../../snapshot-pane/SnapshotPane";
 import { SnapshotPaneHeader } from "../../snapshot-pane/SnapshotPaneHeader";
 
@@ -27,6 +28,8 @@ export const NewSnapshotDiffPane = ({
 }: NewSnapshotDiffPaneProps) => {
   const [diffNaturalWidth, setDiffNaturalWidth] = useState<number | null>(null);
   const [imageNaturalWidth, setImageNaturalWidth] = useState<number | null>(null);
+  const reportSnapshotAspectRatio = useReportAspectRatio();
+  const reportDiffAspectRatio = useReportAspectRatio();
 
   const imageWidthPercent =
     diffNaturalWidth && imageNaturalWidth ? (imageNaturalWidth / diffNaturalWidth) * 100 : 100;
@@ -43,7 +46,10 @@ export const NewSnapshotDiffPane = ({
             alt={alt}
             className="absolute top-0 left-0 block h-auto"
             style={{ width: `${imageWidthPercent}%` }}
-            onLoad={(event) => setImageNaturalWidth(event.currentTarget.naturalWidth)}
+            onLoaded={(image) => {
+              setImageNaturalWidth(image.naturalWidth);
+              reportSnapshotAspectRatio(image);
+            }}
             errorFallback={
               <div className="absolute inset-0 flex items-center justify-center">
                 <Typography variant="caption">failed to load snapshot</Typography>
@@ -59,7 +65,10 @@ export const NewSnapshotDiffPane = ({
           src={diffImagePath}
           alt={`diff overlay of ${alt}`}
           className={cn("relative block h-auto w-full", showDiff ? "opacity-100" : "opacity-0")}
-          onLoad={(event) => setDiffNaturalWidth(event.currentTarget.naturalWidth)}
+          onLoad={(event) => {
+            setDiffNaturalWidth(event.currentTarget.naturalWidth);
+            reportDiffAspectRatio(event.currentTarget);
+          }}
         />
       </div>
     </SnapshotPane>

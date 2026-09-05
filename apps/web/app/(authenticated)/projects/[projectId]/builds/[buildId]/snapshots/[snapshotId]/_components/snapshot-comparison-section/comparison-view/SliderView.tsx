@@ -7,6 +7,7 @@ import { Typography } from "@ovr/ui/components/typography";
 import { Image } from "@/lib/components/image/Image";
 
 import { BaselineCommitLink } from "../../snapshot-pane/BaselineCommitLink";
+import { FIT_WIDTH_CLASS, useReportAspectRatio } from "../../snapshot-pane/snapshot-fit";
 import { SnapshotPane } from "../../snapshot-pane/SnapshotPane";
 import { SnapshotPaneHeader } from "../../snapshot-pane/SnapshotPaneHeader";
 import type { BaselineSnapshotPaneData, SnapshotPaneData } from "../../snapshot-pane/types";
@@ -38,11 +39,14 @@ type SliderImageProps = {
 
 // Both images share the container width and are top-aligned so the comparison
 // stays lined up even when the baseline and new snapshots differ in height.
-const SliderImage = ({ imagePath, alt }: SliderImageProps) =>
-  imagePath ? (
+const SliderImage = ({ imagePath, alt }: SliderImageProps) => {
+  const reportAspectRatio = useReportAspectRatio();
+
+  return imagePath ? (
     <Image
       src={imagePath}
       alt={alt}
+      onLoaded={reportAspectRatio}
       className="block h-auto w-full"
       errorFallback={
         <div className="flex min-h-64 items-center justify-center lg:min-h-96">
@@ -55,11 +59,12 @@ const SliderImage = ({ imagePath, alt }: SliderImageProps) =>
       <Typography variant="caption">no preview</Typography>
     </div>
   );
+};
 
 export const SliderView = ({ baseline, newSnapshot }: SliderViewProps) => (
-  <SnapshotPane>
+  <SnapshotPane className={FIT_WIDTH_CLASS}>
     <SnapshotPaneHeader className="justify-between">
-      <div className="flex items-center gap-2">
+      <div className="flex min-w-0 items-center gap-2 overflow-hidden">
         <Typography variant="label">baseline</Typography>
         <BaselineCommitLink commitSha={baseline.commitSha} commitUrl={baseline.commitUrl} />
       </div>

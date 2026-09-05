@@ -7,9 +7,18 @@ import { cn } from "@ovr/ui/lib/utils";
 
 export type ImageProps = React.ComponentProps<"img"> & {
   errorFallback: React.ReactNode;
+  /** Runs once the image has loaded, including when it was cached before mount. */
+  onLoaded?: (image: HTMLImageElement) => void;
 };
 
-export const Image = ({ errorFallback, className, onLoad, onError, ...props }: ImageProps) => {
+export const Image = ({
+  errorFallback,
+  className,
+  onLoad,
+  onError,
+  onLoaded,
+  ...props
+}: ImageProps) => {
   const [status, setStatus] = useState<"loading" | "loaded" | "error">("loading");
 
   if (status === "error") {
@@ -21,13 +30,17 @@ export const Image = ({ errorFallback, className, onLoad, onError, ...props }: I
       <img
         {...props}
         ref={(img) => {
-          if (img?.complete) {
+          if (img?.complete && status === "loading") {
             setStatus(img.naturalWidth > 0 ? "loaded" : "error");
+            if (img.naturalWidth > 0) {
+              onLoaded?.(img);
+            }
           }
         }}
         className={cn(className, status === "loading" && "invisible")}
         onLoad={(event) => {
           setStatus("loaded");
+          onLoaded?.(event.currentTarget);
           onLoad?.(event);
         }}
         onError={(event) => {
