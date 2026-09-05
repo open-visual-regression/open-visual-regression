@@ -5,7 +5,7 @@ import { cn } from "@ovr/ui/lib/utils";
 
 import { Image } from "@/lib/components/image/Image";
 
-import { useReportAspectRatio } from "./snapshot-fit";
+import { FIT_BOX_CLASS, FIT_IMAGE_CLASS, useReportAspectRatio } from "./snapshot-fit";
 
 export type SnapshotPaneImageProps = {
   imagePath: string | null;
@@ -17,13 +17,18 @@ export const SnapshotPaneImage = ({ imagePath, alt, fill = false }: SnapshotPane
   const reportAspectRatio = useReportAspectRatio();
 
   return (
-    <div className="relative min-h-64 overflow-hidden rounded-card border border-ovr-border bg-ovr-inset bg-pixel-grid lg:min-h-96">
+    <div
+      className={cn(
+        "relative overflow-hidden rounded-card border border-ovr-border bg-ovr-inset bg-pixel-grid",
+        FIT_BOX_CLASS,
+      )}
+    >
       {imagePath ? (
         <Image
           src={imagePath}
           alt={alt}
           onLoaded={reportAspectRatio}
-          className={cn("h-auto block", fill ? "w-full" : "max-w-full mx-auto")}
+          className={cn("h-auto block", fill ? "w-full" : "max-w-full", FIT_IMAGE_CLASS)}
           errorFallback={
             <div className="absolute inset-0 flex items-center justify-center">
               <Typography variant="caption">failed to load snapshot</Typography>

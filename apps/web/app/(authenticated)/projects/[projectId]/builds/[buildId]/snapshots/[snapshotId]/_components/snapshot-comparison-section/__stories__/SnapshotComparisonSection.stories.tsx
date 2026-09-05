@@ -201,6 +201,21 @@ export const TallSnapshots: Story = {
       0,
     );
 
+    // The dotted box keeps the width of its pane, with the snapshot centred in
+    // it rather than filling it.
+    const box = baseline.closest("[class*=bg-pixel-grid]") as HTMLElement;
+    const boxRect = box.getBoundingClientRect();
+    const imageRect = baseline.getBoundingClientRect();
+    expect(boxRect.width).toBeGreaterThan(imageRect.width * 2);
+    expect((imageRect.left + imageRect.right) / 2).toBeCloseTo(
+      (boxRect.left + boxRect.right) / 2,
+      0,
+    );
+    expect((imageRect.top + imageRect.bottom) / 2).toBeCloseTo(
+      (boxRect.top + boxRect.bottom) / 2,
+      0,
+    );
+
     // The slider view fits the same way.
     await userEvent.click(canvas.getByRole("tab", { name: "slider" }));
 

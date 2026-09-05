@@ -4,28 +4,33 @@ import { createContext, use, useCallback, useEffect, useId, useMemo, useState } 
 
 import { useAvailableHeight } from "@/lib/hooks/useAvailableHeight";
 
-// Width the panes cap their images at. Left unset while it cannot be worked
-// out, which resolves the classes below to no cap at all.
+// The height an image box may take up, and the width that keeps the tallest
+// image inside it. Both are left unset while they cannot be worked out, which
+// falls the classes below back to the sizing they had before.
+const FIT_HEIGHT_VARIABLE = "--ovr-snapshot-fit-height";
 const FIT_WIDTH_VARIABLE = "--ovr-snapshot-fit-width";
 
 /**
- * Caps a single pane so its image fits in the space left on screen. Only from
- * `lg` up: on a narrow screen there is no width to trade for height, and
- * scrolling a full width snapshot beats squinting at a thumbnail of it.
+ * Gives an image box the space left on screen and centres what it holds, so a
+ * snapshot sits in the middle of the dotted backdrop rather than filling it.
  */
-export const FIT_WIDTH_CLASS = "mx-auto w-full lg:max-w-[var(--ovr-snapshot-fit-width)]";
+export const FIT_BOX_CLASS =
+  "flex min-h-64 items-center justify-center lg:min-h-[var(--ovr-snapshot-fit-height,24rem)]";
 
-/** Caps a pair of side by side panes at two images plus the `gap-4` between them. */
-export const FIT_WIDTH_TWO_UP_CLASS =
-  "mx-auto w-full lg:max-w-[calc(var(--ovr-snapshot-fit-width)*2+1rem)]";
+/**
+ * Holds an image to the width that keeps it inside its box. Only from `lg` up:
+ * on a narrow screen there is no width to trade for height, and scrolling a
+ * full width snapshot beats squinting at a thumbnail of it.
+ */
+export const FIT_IMAGE_CLASS = "lg:max-w-[min(100%,var(--ovr-snapshot-fit-width,100%))]";
 
-// What a pane spends on chrome before the image itself: the `h-7` label row
-// above it and the 1px border around it.
-const PANE_CHROME_HEIGHT = 30;
+// The `h-7` label row above the image box, and the 1px border around it.
+const PANE_HEADER_HEIGHT = 28;
+const BOX_BORDER_HEIGHT = 2;
 
 // Past this there is not enough image left to review, so it is allowed to
 // overflow and scroll instead.
-const MIN_IMAGE_HEIGHT = 256;
+const MIN_BOX_HEIGHT = 256;
 
 type SnapshotFit = {
   reportAspectRatio: (id: string, aspectRatio: number | null) => void;
@@ -57,10 +62,10 @@ export const useReportAspectRatio = () => {
 /**
  * Fits the snapshots it wraps into the space left on screen. Snapshots are
  * rendered at the width of their pane, so a portrait one — a mobile viewport,
- * say — ends up several screens tall with only a sliver of it visible. Capping
- * the width of the panes instead of the height of the images keeps every
- * snapshot in the comparison at the same scale, which is the point of a
- * comparison.
+ * say — ends up several screens tall with only a sliver of it visible. The
+ * boxes keep their full width and take the height that is left, and the images
+ * are held to the width that keeps the tallest of them inside that height, so
+ * every snapshot in the comparison stays at the same scale.
  */
 export const SnapshotFitProvider = ({ children }: { children: React.ReactNode }) => {
   const [element, setElement] = useState<HTMLDivElement | null>(null);
@@ -84,27 +89,27 @@ export const SnapshotFitProvider = ({ children }: { children: React.ReactNode })
 
   const fit = useMemo(() => ({ reportAspectRatio }), [reportAspectRatio]);
 
-  // The tallest image for its width is the one that has to fit; every other
-  // image is capped to the same width, so they all shrink together.
+  // The tallest image for its width is the one that has to fit; holding every
+  // other image to the same width keeps them all at one scale.
   const ratios = Object.values(aspectRatios);
-  const imageHeight =
+  const boxHeight =
     availableHeight === null
       ? null
-      : Math.max(availableHeight - PANE_CHROME_HEIGHT, MIN_IMAGE_HEIGHT);
+      : Math.max(availableHeight - PANE_HEADER_HEIGHT, MIN_BOX_HEIGHT);
   const fitWidth =
-    imageHeight === null || ratios.length === 0
+    boxHeight === null || ratios.length === 0
       ? null
-      : Math.round(imageHeight * Math.min(...ratios));
+      : // Rounded down, so the image it is derived from cannot end up a fraction
+        // of a pixel taller than the box holding it.
+        Math.floor((boxHeight - BOX_BORDER_HEIGHT) * Math.min(...ratios));
+
+  const fitStyle = {
+    ...(boxHeight === null ? {} : { [FIT_HEIGHT_VARIABLE]: `${boxHeight}px` }),
+    ...(fitWidth === null ? {} : { [FIT_WIDTH_VARIABLE]: `${fitWidth}px` }),
+  } as React.CSSProperties;
 
   return (
-    <div
-      ref={setElement}
-      style={
-        fitWidth === null
-          ? undefined
-          : ({ [FIT_WIDTH_VARIABLE]: `${fitWidth}px` } as React.CSSProperties)
-      }
-    >
+    <div ref={setElement} style={fitStyle}>
       <SnapshotFitContext value={fit}>{children}</SnapshotFitContext>
     </div>
   );

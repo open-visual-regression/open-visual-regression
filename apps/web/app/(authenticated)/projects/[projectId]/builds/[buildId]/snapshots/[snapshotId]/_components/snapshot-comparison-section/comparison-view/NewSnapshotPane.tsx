@@ -7,11 +7,10 @@ import { SnapshotPaneImage } from "../../snapshot-pane/SnapshotPaneImage";
 export type NewSnapshotPaneProps = {
   imagePath: string | null;
   alt: string;
-  className?: string;
 };
 
-export const NewSnapshotPane = ({ imagePath, alt, className }: NewSnapshotPaneProps) => (
-  <SnapshotPane className={className}>
+export const NewSnapshotPane = ({ imagePath, alt }: NewSnapshotPaneProps) => (
+  <SnapshotPane>
     <SnapshotPaneHeader>
       <Typography variant="label">new</Typography>
     </SnapshotPaneHeader>

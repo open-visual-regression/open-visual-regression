@@ -39,7 +39,7 @@ const stubLayout = ({
   });
 };
 
-const fitWidthOf = (alt: string) =>
+const fitStyleOf = (alt: string) =>
   screen.getByAltText(alt).closest("div[style]")?.getAttribute("style");
 
 afterEach(() => {
@@ -61,8 +61,10 @@ describe("SnapshotFitProvider", () => {
       </ScrollContainer>,
     );
 
-    // (800 - 30 of pane chrome) * 375 / 1400
-    expect(fitWidthOf("snapshot")).toContain("--ovr-snapshot-fit-width: 206px");
+    // 800 less the pane's label row, and the width that keeps a 375x1400
+    // snapshot inside a box that tall.
+    expect(fitStyleOf("snapshot")).toContain("--ovr-snapshot-fit-height: 772px");
+    expect(fitStyleOf("snapshot")).toContain("--ovr-snapshot-fit-width: 206px");
   });
 
   it("should cap every pane at the width the tallest snapshot needs, so they share a scale", () => {
@@ -83,10 +85,10 @@ describe("SnapshotFitProvider", () => {
       </ScrollContainer>,
     );
 
-    expect(fitWidthOf("baseline snapshot")).toContain("--ovr-snapshot-fit-width: 206px");
+    expect(fitStyleOf("baseline snapshot")).toContain("--ovr-snapshot-fit-width: 206px");
   });
 
-  it("should leave the panes uncapped when there is no scroll region to fit them into", () => {
+  it("should leave the boxes unsized when there is no scroll region to fit them into", () => {
     stubLayout({ scrollHeight: 800, images: { "new.png": { width: 375, height: 1400 } } });
 
     render(
@@ -95,6 +97,6 @@ describe("SnapshotFitProvider", () => {
       </SnapshotFitProvider>,
     );
 
-    expect(fitWidthOf("snapshot")).toBeUndefined();
+    expect(fitStyleOf("snapshot")).toBeUndefined();
   });
 });

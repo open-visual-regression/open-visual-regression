@@ -3,11 +3,16 @@
 import { ReactCompareSlider } from "react-compare-slider";
 
 import { Typography } from "@ovr/ui/components/typography";
+import { cn } from "@ovr/ui/lib/utils";
 
 import { Image } from "@/lib/components/image/Image";
 
 import { BaselineCommitLink } from "../../snapshot-pane/BaselineCommitLink";
-import { FIT_WIDTH_CLASS, useReportAspectRatio } from "../../snapshot-pane/snapshot-fit";
+import {
+  FIT_BOX_CLASS,
+  FIT_IMAGE_CLASS,
+  useReportAspectRatio,
+} from "../../snapshot-pane/snapshot-fit";
 import { SnapshotPane } from "../../snapshot-pane/SnapshotPane";
 import { SnapshotPaneHeader } from "../../snapshot-pane/SnapshotPaneHeader";
 import type { BaselineSnapshotPaneData, SnapshotPaneData } from "../../snapshot-pane/types";
@@ -49,32 +54,43 @@ const SliderImage = ({ imagePath, alt }: SliderImageProps) => {
       onLoaded={reportAspectRatio}
       className="block h-auto w-full"
       errorFallback={
-        <div className="flex min-h-64 items-center justify-center lg:min-h-96">
+        <div className="flex min-h-64 items-center justify-center">
           <Typography variant="caption">failed to load snapshot</Typography>
         </div>
       }
     />
   ) : (
-    <div className="flex min-h-64 items-center justify-center lg:min-h-96">
+    <div className="flex min-h-64 items-center justify-center">
       <Typography variant="caption">no preview</Typography>
     </div>
   );
 };
 
 export const SliderView = ({ baseline, newSnapshot }: SliderViewProps) => (
-  <SnapshotPane className={FIT_WIDTH_CLASS}>
+  <SnapshotPane>
     <SnapshotPaneHeader className="justify-between">
-      <div className="flex min-w-0 items-center gap-2 overflow-hidden">
+      <div className="flex items-center gap-2">
         <Typography variant="label">baseline</Typography>
         <BaselineCommitLink commitSha={baseline.commitSha} commitUrl={baseline.commitUrl} />
       </div>
       <Typography variant="label">new</Typography>
     </SnapshotPaneHeader>
-    <ReactCompareSlider
-      className="min-h-64 cursor-ew-resize overflow-hidden rounded-card border border-ovr-border bg-ovr-inset bg-pixel-grid lg:min-h-96 [&_[role=slider]:focus-visible_[data-grip]]:ring-2 [&_[role=slider]:focus-visible_[data-grip]]:ring-ovr-fg [&_[role=slider]:focus-visible_[data-grip]]:ring-offset-2 [&_[role=slider]:focus-visible_[data-grip]]:ring-offset-ovr-inset"
-      handle={<SliderHandle />}
-      itemOne={<SliderImage imagePath={baseline.imagePath} alt={baseline.alt} />}
-      itemTwo={<SliderImage imagePath={newSnapshot.imagePath} alt={newSnapshot.alt} />}
-    />
+    <div
+      className={cn(
+        "overflow-hidden rounded-card border border-ovr-border bg-ovr-inset bg-pixel-grid",
+        FIT_BOX_CLASS,
+      )}
+    >
+      {/* The slider sets its own `max-width` inline, so the fitted width goes
+          on a wrapper it cannot overrule. */}
+      <div className={cn("w-full", FIT_IMAGE_CLASS)}>
+        <ReactCompareSlider
+          className="w-full cursor-ew-resize [&_[role=slider]:focus-visible_[data-grip]]:ring-2 [&_[role=slider]:focus-visible_[data-grip]]:ring-ovr-fg [&_[role=slider]:focus-visible_[data-grip]]:ring-offset-2 [&_[role=slider]:focus-visible_[data-grip]]:ring-offset-ovr-inset"
+          handle={<SliderHandle />}
+          itemOne={<SliderImage imagePath={baseline.imagePath} alt={baseline.alt} />}
+          itemTwo={<SliderImage imagePath={newSnapshot.imagePath} alt={newSnapshot.alt} />}
+        />
+      </div>
+    </div>
   </SnapshotPane>
 );

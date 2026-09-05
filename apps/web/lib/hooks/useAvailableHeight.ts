@@ -27,7 +27,9 @@ export const useAvailableHeight = (element: HTMLElement | null) => {
       scrollContainer.getBoundingClientRect().top +
       scrollContainer.scrollTop;
     const paddingBottom = Number.parseFloat(getComputedStyle(scrollContainer).paddingBottom) || 0;
-    const height = scrollContainer.clientHeight - offsetTop - paddingBottom;
+    // Rounded down: a fraction of a pixel over is enough to start the region
+    // scrolling, which is the thing being avoided.
+    const height = Math.floor(scrollContainer.clientHeight - offsetTop - paddingBottom);
 
     setAvailableHeight((current) => (current === height ? current : height));
   }, [element, scrollContainer]);

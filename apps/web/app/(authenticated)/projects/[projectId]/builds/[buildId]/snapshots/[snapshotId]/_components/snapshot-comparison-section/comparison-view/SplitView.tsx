@@ -1,6 +1,3 @@
-import { cn } from "@ovr/ui/lib/utils";
-
-import { FIT_WIDTH_TWO_UP_CLASS } from "../../snapshot-pane/snapshot-fit";
 import type { BaselineSnapshotPaneData, SnapshotPaneData } from "../../snapshot-pane/types";
 import { BaselineSnapshotPane } from "./BaselineSnapshotPane";
 import { NewSnapshotDiffPane } from "./NewSnapshotDiffPane";
@@ -14,7 +11,7 @@ export type SplitViewProps = {
 };
 
 export const SplitView = ({ baseline, newSnapshot, diffImagePath, showDiff }: SplitViewProps) => (
-  <div className={cn("grid grid-cols-1 gap-4 lg:grid-cols-2", FIT_WIDTH_TWO_UP_CLASS)}>
+  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
     <BaselineSnapshotPane {...baseline} fill={diffImagePath !== null} />
     {diffImagePath ? (
       <NewSnapshotDiffPane
