@@ -1,5 +1,19 @@
 # @ovr/web
 
+## 0.3.2
+
+### Patch Changes
+
+- [#162](https://github.com/open-visual-regression/open-visual-regression/pull/162) [`9b914ca`](https://github.com/open-visual-regression/open-visual-regression/commit/9b914ca72526a09489160cabe6fd9c224173d300) Thanks [@tgfischer](https://github.com/tgfischer)! - Fit tall snapshots into the space left on screen instead of running them off the bottom of it.
+
+  A snapshot taller than it is wide — a mobile viewport most of all — was rendered
+  at the full width of its pane, which left it several screens tall with only a
+  sliver of it visible in the split and slider views. From the `lg` breakpoint up,
+  each pane now takes the height left below the page header and scales its
+  snapshot to fit, anchored to the top left of the dotted backdrop so the panes
+  line up with each other. The backdrop keeps the full width of its pane, and a
+  narrower screen keeps the full width snapshot and scrolls.
+
 ## 0.3.1
 
 ### Patch Changes
