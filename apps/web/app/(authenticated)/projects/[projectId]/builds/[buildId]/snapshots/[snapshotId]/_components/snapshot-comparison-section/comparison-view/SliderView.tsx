@@ -8,6 +8,7 @@ import { Image } from "@/lib/components/image/Image";
 
 import { BaselineCommitLink } from "../../snapshot-pane/BaselineCommitLink";
 import { SnapshotPane } from "../../snapshot-pane/SnapshotPane";
+import { SnapshotPaneCanvas } from "../../snapshot-pane/SnapshotPaneCanvas";
 import { SnapshotPaneHeader } from "../../snapshot-pane/SnapshotPaneHeader";
 import type { BaselineSnapshotPaneData, SnapshotPaneData } from "../../snapshot-pane/types";
 
@@ -34,25 +35,26 @@ type SliderImageProps = {
   alt: string;
 };
 
-// Both images share the container width and are top-aligned so the comparison
-// stays lined up even when the baseline and new snapshots differ in height.
-const SliderImage = ({ imagePath, alt }: SliderImageProps) =>
-  imagePath ? (
-    <Image
-      src={imagePath}
-      alt={alt}
-      className="block h-auto w-full"
-      errorFallback={
-        <div className="flex min-h-64 items-center justify-center lg:min-h-96">
-          <Typography variant="caption">failed to load snapshot</Typography>
-        </div>
-      }
-    />
-  ) : (
-    <div className="flex min-h-64 items-center justify-center lg:min-h-96">
-      <Typography variant="caption">no preview</Typography>
-    </div>
-  );
+const SliderImage = ({ imagePath, alt }: SliderImageProps) => (
+  <div className="flex h-full w-full items-start justify-start">
+    {imagePath ? (
+      <Image
+        src={imagePath}
+        alt={alt}
+        className="block h-auto w-full lg:max-h-full lg:w-auto lg:max-w-full"
+        errorFallback={
+          <Typography variant="caption" className="m-auto">
+            failed to load snapshot
+          </Typography>
+        }
+      />
+    ) : (
+      <Typography variant="caption" className="m-auto">
+        no preview
+      </Typography>
+    )}
+  </div>
+);
 
 export const SliderView = ({ baseline, newSnapshot }: SliderViewProps) => (
   <SnapshotPane>
@@ -63,11 +65,13 @@ export const SliderView = ({ baseline, newSnapshot }: SliderViewProps) => (
       </div>
       <Typography variant="label">new</Typography>
     </SnapshotPaneHeader>
-    <ReactCompareSlider
-      className="min-h-64 cursor-ew-resize overflow-hidden rounded-card border border-ovr-border bg-ovr-inset bg-pixel-grid lg:min-h-96 [&_[role=slider]:focus-visible_[data-grip]]:ring-2 [&_[role=slider]:focus-visible_[data-grip]]:ring-ovr-fg [&_[role=slider]:focus-visible_[data-grip]]:ring-offset-2 [&_[role=slider]:focus-visible_[data-grip]]:ring-offset-ovr-inset"
-      handle={<SliderHandle />}
-      itemOne={<SliderImage imagePath={baseline.imagePath} alt={baseline.alt} />}
-      itemTwo={<SliderImage imagePath={newSnapshot.imagePath} alt={newSnapshot.alt} />}
-    />
+    <SnapshotPaneCanvas>
+      <ReactCompareSlider
+        className="h-full w-full cursor-ew-resize [&_[role=slider]:focus-visible_[data-grip]]:ring-2 [&_[role=slider]:focus-visible_[data-grip]]:ring-ovr-fg [&_[role=slider]:focus-visible_[data-grip]]:ring-offset-2 [&_[role=slider]:focus-visible_[data-grip]]:ring-offset-ovr-inset"
+        handle={<SliderHandle />}
+        itemOne={<SliderImage imagePath={baseline.imagePath} alt={baseline.alt} />}
+        itemTwo={<SliderImage imagePath={newSnapshot.imagePath} alt={newSnapshot.alt} />}
+      />
+    </SnapshotPaneCanvas>
   </SnapshotPane>
 );

@@ -41,6 +41,14 @@ const newSnapshot = {
   errorLogs: [],
 };
 
+const mobileSnapshot = {
+  ...newSnapshot,
+  viewportWidth: 375,
+  viewportHeight: 812,
+  viewportName: "mobile",
+  imagePath: "new-mobile.png",
+};
+
 export const NewOnly: Story = {
   args: {
     snapshot: newSnapshot,
@@ -134,5 +142,24 @@ export const SliderView: Story = {
     // Switching back restores the split view and its diff toggle.
     await userEvent.click(canvas.getByRole("tab", { name: "split" }));
     await expect(canvas.getByRole("switch")).toBeVisible();
+  },
+};
+
+export const MobileWithBaselineAndDiff: Story = {
+  args: {
+    snapshot: mobileSnapshot,
+    diff: {
+      id: "01970000-0000-7000-8000-000000000005",
+      processingStatus: "success",
+      reviewStatus: "needs_review",
+      diffImagePath: "diff-mobile.png",
+      pixelDiffCount: 60_272,
+      diffPercent: 11.5,
+      baselineSnapshot: {
+        imagePath: "baseline-mobile.png",
+        commitSha: "abc1234567890",
+        commitUrl: "https://github.com/acme/web/commit/abc1234567890",
+      },
+    },
   },
 };
