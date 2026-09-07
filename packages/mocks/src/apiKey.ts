@@ -6,6 +6,7 @@ export const generateApiKey = (overrides?: Partial<ApiKeySchema>): ApiKeySchema 
   id: faker.string.uuid(),
   name: faker.word.noun(),
   ownerName: faker.person.fullName(),
+  preset: "ci_upload",
   createdAt: faker.date.past(),
   lastRequest: null,
   ...overrides,

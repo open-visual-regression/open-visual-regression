@@ -2,6 +2,11 @@
 
 import { ORPCError } from "@orpc/client";
 
+import {
+  API_KEY_PRESET_PERMISSIONS,
+  parseApiKeyPermissions,
+  toApiKeyPreset,
+} from "@ovr/api/contracts/apiKeys";
 import { dbClient } from "@ovr/db/client";
 
 import { auth } from "../auth/auth";
@@ -27,6 +32,7 @@ export const create = os.apiKeys.create
         prefix: "ovr_api_key_",
         userId: context.user.id,
         metadata: { projectId: input.projectId },
+        permissions: API_KEY_PRESET_PERMISSIONS[input.preset],
       },
     });
     return { key: result.key };
@@ -59,6 +65,7 @@ export const list = os.apiKeys.list
         // this app has one — better-auth's column type is nullable, but ours never is.
         name: k.name!,
         ownerName: k.ownerName,
+        preset: toApiKeyPreset(k.permissions ? parseApiKeyPermissions(k.permissions) : null),
         createdAt: k.createdAt,
         lastRequest: k.lastRequest,
       })),

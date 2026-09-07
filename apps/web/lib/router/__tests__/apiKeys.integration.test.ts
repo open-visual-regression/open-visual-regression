@@ -1,6 +1,7 @@
 import { vi } from "vitest";
 
 import type { AddProjectInputSchema } from "@ovr/api/contracts/projects";
+import { db, sql } from "@ovr/db/db";
 
 import { auth } from "@/lib/auth/auth";
 import { serverClient } from "@/lib/router";
@@ -76,6 +77,45 @@ describe("apiKeys", () => {
       });
       expect(verified.valid).toBe(false);
     });
+
+    test("should grant an agent read key permission to read builds but not write them", async ({
+      admin: _,
+    }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+
+      const [, result] = await serverClient.apiKeys.create({
+        projectId,
+        name: "my key",
+        preset: "agent_read",
+      });
+
+      const read = await auth.api.verifyApiKey({
+        body: { key: result!.key, permissions: { builds: ["read"] } },
+      });
+      expect(read.valid).toBe(true);
+
+      const write = await auth.api.verifyApiKey({
+        body: { key: result!.key, permissions: { builds: ["write"] } },
+      });
+      expect(write.valid).toBe(false);
+    });
+
+    test("should grant an agent review key permission to write reviews", async ({ admin: _ }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+
+      const [, result] = await serverClient.apiKeys.create({
+        projectId,
+        name: "my key",
+        preset: "agent_review",
+      });
+
+      const verified = await auth.api.verifyApiKey({
+        body: { key: result!.key, permissions: { builds: ["read"], reviews: ["write"] } },
+      });
+      expect(verified.valid).toBe(true);
+    });
   });
 
   describe("list", () => {
@@ -118,6 +158,42 @@ describe("apiKeys", () => {
       expect(result?.apiKeys).toHaveLength(2);
       expect(result?.total).toBe(2);
       expect(result?.apiKeys[0]).toMatchObject({ ownerName: admin.name });
+    });
+
+    test("should return the preset each key was created with", async ({ admin: _ }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+
+      await serverClient.apiKeys.create({ projectId, name: "ci" });
+      await serverClient.apiKeys.create({ projectId, name: "agent", preset: "agent_review" });
+
+      const [, result] = await serverClient.apiKeys.list({ projectId });
+      expect(result?.apiKeys).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ name: "ci", preset: "ci_upload" }),
+          expect.objectContaining({ name: "agent", preset: "agent_review" }),
+        ]),
+      );
+    });
+
+    test("should return the other keys as custom when one key's permissions are malformed", async ({
+      admin: _,
+    }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+
+      await serverClient.apiKeys.create({ projectId, name: "ci" });
+      await serverClient.apiKeys.create({ projectId, name: "corrupted" });
+      await db.execute(sql`UPDATE apikey SET permissions = 'not json' WHERE name = 'corrupted'`);
+
+      const [error, result] = await serverClient.apiKeys.list({ projectId });
+      expect(error).toBeNull();
+      expect(result?.apiKeys).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ name: "ci", preset: "ci_upload" }),
+          expect.objectContaining({ name: "corrupted", preset: null }),
+        ]),
+      );
     });
 
     test("should respect the limit and offset params", async ({ admin: _ }) => {

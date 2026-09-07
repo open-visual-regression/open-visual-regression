@@ -19,6 +19,7 @@ export const findByProject = async ({ projectId, limit, offset }: FindByProjectI
         name: apikey.name,
         prefix: apikey.prefix,
         ownerName: user.name,
+        permissions: apikey.permissions,
         createdAt: apikey.createdAt,
         lastRequest: apikey.lastRequest,
       })
