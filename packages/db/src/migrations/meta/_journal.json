@@ -274,6 +274,13 @@
       "when": 1788485548183,
       "tag": "0038_add_sso_provider",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1788617534079,
+      "tag": "0039_open_hex",
+      "breakpoints": true
     }
   ]
 }

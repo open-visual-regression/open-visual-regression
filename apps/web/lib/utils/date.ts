@@ -34,6 +34,30 @@ const formatRelativeDuration = (
   return formatRelativeDuration(durationSeconds / division.amount, remainingDivisions);
 };
 
+const MS_PER_SECOND = 1000;
+const MS_PER_MINUTE = 60 * MS_PER_SECOND;
+const MS_PER_HOUR = 60 * MS_PER_MINUTE;
+
+export const formatDuration = (durationMs: number): string => {
+  if (durationMs < MS_PER_SECOND) {
+    return "0s";
+  }
+
+  if (durationMs < MS_PER_MINUTE) {
+    return `${Math.floor(durationMs / MS_PER_SECOND)}s`;
+  }
+
+  if (durationMs < MS_PER_HOUR) {
+    const minutes = Math.floor(durationMs / MS_PER_MINUTE);
+    const seconds = Math.floor((durationMs % MS_PER_MINUTE) / MS_PER_SECOND);
+    return seconds === 0 ? `${minutes}m` : `${minutes}m ${seconds}s`;
+  }
+
+  const hours = Math.floor(durationMs / MS_PER_HOUR);
+  const minutes = Math.floor((durationMs % MS_PER_HOUR) / MS_PER_MINUTE);
+  return minutes === 0 ? `${hours}h` : `${hours}h ${minutes}m`;
+};
+
 /** Relative time (e.g. "5 minutes ago") within 24h, otherwise an absolute date/time. */
 export const formatRelativeDateTime = (date: Date): string => {
   const diffMs = date.getTime() - Date.now();
