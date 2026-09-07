@@ -102,6 +102,8 @@ export const builds = pgTable(
     createdAt: utcTimestamp("created_at")
       .default(sql`now()`)
       .notNull(),
+    startedAt: utcTimestamp("started_at"),
+    finishedAt: utcTimestamp("finished_at"),
     updatedAt: utcTimestamp("updated_at")
       .default(sql`now()`)
       .$onUpdate(() => sql`now()`)

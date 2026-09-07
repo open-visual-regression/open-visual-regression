@@ -2,9 +2,48 @@ import { afterEach, beforeEach, vi } from "vitest";
 
 import { describe, expect, it } from "@/test-utils";
 
-import { formatDateTime, formatRelativeDateTime } from "../date";
+import { formatDateTime, formatDuration, formatRelativeDateTime } from "../date";
+
+const SECOND = 1000;
+const MINUTE = 60 * SECOND;
+const HOUR = 60 * MINUTE;
 
 describe("date", () => {
+  describe("formatDuration", () => {
+    it("should show whole seconds under a minute", () => {
+      expect(formatDuration(45 * SECOND)).toBe("45s");
+    });
+
+    it("should truncate sub-second precision", () => {
+      expect(formatDuration(45.9 * SECOND)).toBe("45s");
+    });
+
+    it("should show minutes and seconds under an hour", () => {
+      expect(formatDuration(MINUTE + 52 * SECOND)).toBe("1m 52s");
+    });
+
+    it("should drop the seconds when a duration lands on a whole minute", () => {
+      expect(formatDuration(3 * MINUTE)).toBe("3m");
+    });
+
+    it("should show hours and minutes past an hour", () => {
+      expect(formatDuration(2 * HOUR + 5 * MINUTE)).toBe("2h 5m");
+    });
+
+    it("should drop the minutes when a duration lands on a whole hour", () => {
+      expect(formatDuration(2 * HOUR)).toBe("2h");
+    });
+
+    it("should drop seconds past an hour rather than showing three units", () => {
+      expect(formatDuration(HOUR + 30 * SECOND)).toBe("1h");
+    });
+
+    it("should clamp sub-second and negative durations to zero", () => {
+      expect(formatDuration(400)).toBe("0s");
+      expect(formatDuration(-5000)).toBe("0s");
+    });
+  });
+
   describe("formatDateTime", () => {
     it("should format a date as YYYY-MM-DD and a 12-hour time", () => {
       expect(formatDateTime(new Date("2026-06-15T16:30:00.000Z"))).toMatch(

@@ -43,6 +43,78 @@ describe("builds", () => {
       const updated = await dbClient.builds.updateProcessingStatus(build.id, "success");
       expect(updated?.processingStatus).toBe("success");
     });
+
+    test("should leave both lifecycle timestamps unset while the build is queued", async ({
+      build,
+    }) => {
+      expect(build.startedAt).toBeNull();
+      expect(build.finishedAt).toBeNull();
+    });
+
+    test("should stamp startedAt when the build starts processing", async ({ build }) => {
+      const updated = await dbClient.builds.updateProcessingStatus(build.id, "processing");
+
+      expect(updated?.startedAt).not.toBeNull();
+      expect(updated?.finishedAt).toBeNull();
+    });
+
+    test("should keep the original startedAt when the extract job is retried", async ({
+      build,
+    }) => {
+      const first = await dbClient.builds.updateProcessingStatus(build.id, "processing");
+      const retried = await dbClient.builds.updateProcessingStatus(build.id, "processing");
+
+      expect(retried?.startedAt).toBe(first?.startedAt);
+    });
+
+    test("should stamp finishedAt when the build reaches a terminal status", async ({ build }) => {
+      await dbClient.builds.updateProcessingStatus(build.id, "processing");
+      const errored = await dbClient.builds.updateProcessingStatus(build.id, "error", "boom");
+
+      expect(errored?.startedAt).not.toBeNull();
+      expect(errored?.finishedAt).not.toBeNull();
+    });
+  });
+
+  describe("cancelIfInProgress", () => {
+    test("should stamp finishedAt but leave startedAt unset for a build canceled while queued", async ({
+      build,
+    }) => {
+      const canceled = await dbClient.builds.cancelIfInProgress(build.id, null);
+
+      expect(canceled?.startedAt).toBeNull();
+      expect(canceled?.finishedAt).not.toBeNull();
+    });
+  });
+
+  describe("updateResult", () => {
+    test("should stamp finishedAt when the build is finalized", async ({ build }) => {
+      await dbClient.builds.updateProcessingStatus(build.id, "processing");
+      const finalized = await dbClient.builds.updateResult(build.id, {
+        processingStatus: "success",
+        reviewStatus: "needs_review",
+      });
+
+      expect(finalized?.finishedAt).not.toBeNull();
+    });
+
+    test("should keep the original finishedAt when a later review changes the review status", async ({
+      build,
+    }) => {
+      await dbClient.builds.updateProcessingStatus(build.id, "processing");
+      const finalized = await dbClient.builds.updateResult(build.id, {
+        processingStatus: "success",
+        reviewStatus: "needs_review",
+      });
+
+      const reviewed = await dbClient.builds.updateResult(build.id, {
+        processingStatus: "success",
+        reviewStatus: "approved",
+      });
+
+      expect(reviewed?.reviewStatus).toBe("approved");
+      expect(reviewed?.finishedAt).toBe(finalized?.finishedAt);
+    });
   });
 
   describe("findMany", () => {
