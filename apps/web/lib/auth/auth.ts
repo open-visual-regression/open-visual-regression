@@ -46,6 +46,7 @@ export const auth = betterAuth({
       defaultPrefix: "ovr_api_key_",
       enableMetadata: true,
       rateLimit: { enabled: false },
+      permissions: { defaultPermissions: { builds: ["write"] } },
     }),
     organization({ requireEmailVerificationOnInvitation: false }),
     nextCookies(),
