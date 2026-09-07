@@ -3,6 +3,7 @@
 import { useTable, tableFeatures, createColumnHelper } from "@tanstack/react-table";
 import { useTanStackTableDevtools } from "@tanstack/react-table-devtools";
 
+import { type ApiKeyPresetSchema } from "@ovr/api/contracts/apiKeys";
 import { Skeleton } from "@ovr/ui/components/skeleton";
 import { StatusIcon } from "@ovr/ui/components/status-icon";
 import {
@@ -15,6 +16,7 @@ import {
   TableCell,
 } from "@ovr/ui/components/table";
 
+import { formatApiKeyPreset } from "@/lib/utils/apiKey";
 import { formatDateTime } from "@/lib/utils/date";
 
 import { RevokeApiKeyButton } from "./RevokeApiKeyButton";
@@ -23,6 +25,7 @@ type ApiKeyTableRow = {
   id: string;
   name: string;
   ownerName: string;
+  preset: ApiKeyPresetSchema | null;
   createdAt: Date;
   lastRequest: Date | null;
 };
@@ -33,6 +36,10 @@ const columnHelper = createColumnHelper<typeof features, ApiKeyTableRow>();
 const columns = columnHelper.columns([
   columnHelper.accessor("name", { header: "Name" }),
   columnHelper.accessor("ownerName", { header: "Owner" }),
+  columnHelper.accessor("preset", {
+    header: "Permissions",
+    cell: ({ getValue }) => formatApiKeyPreset(getValue()),
+  }),
   columnHelper.accessor("createdAt", {
     header: "Created at",
     cell: ({ getValue }) => formatDateTime(getValue()),
@@ -116,6 +123,7 @@ type ApiKeysTableSkeletonColumn = {
 const API_KEYS_TABLE_SKELETON_COLUMNS: ApiKeysTableSkeletonColumn[] = [
   { header: "Name" },
   { header: "Owner" },
+  { header: "Permissions" },
   { header: "Created at" },
   { header: "Last used" },
   { header: null, className: "text-right" },

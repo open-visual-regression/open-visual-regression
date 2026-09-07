@@ -33,12 +33,21 @@ export const WithApiKeys: Story = {
       mocks.apiKey.generateApiKey({
         name: "ci",
         ownerName: "Jamie Rivera",
+        preset: "ci_upload",
         createdAt: new Date("2026-05-01T09:00:00.000Z"),
         lastRequest: new Date("2026-08-01T14:30:00.000Z"),
       }),
       mocks.apiKey.generateApiKey({
+        name: "claude",
+        ownerName: "Jamie Rivera",
+        preset: "agent_review",
+        createdAt: new Date("2026-05-02T09:00:00.000Z"),
+        lastRequest: new Date("2026-08-02T11:15:00.000Z"),
+      }),
+      mocks.apiKey.generateApiKey({
         name: "local dev",
         ownerName: "Sam Okafor",
+        preset: "agent_read",
         createdAt: new Date("2026-06-15T16:45:00.000Z"),
         lastRequest: null,
       }),

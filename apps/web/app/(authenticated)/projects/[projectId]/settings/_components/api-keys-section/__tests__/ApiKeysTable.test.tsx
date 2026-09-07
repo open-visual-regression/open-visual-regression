@@ -33,6 +33,20 @@ describe("ApiKeysTable", () => {
     expect(screen.queryByRole("cell", { name: "never" })).not.toBeInTheDocument();
   });
 
+  it("should show what the key is allowed to do", () => {
+    const apiKey = mocks.apiKey.generateApiKey({ preset: "agent_review" });
+    render(<ApiKeysTable data={[apiKey]} />);
+
+    expect(screen.getByRole("cell", { name: "agent · read & review" })).toBeVisible();
+  });
+
+  it("should show a key whose permissions match no preset as custom", () => {
+    const apiKey = mocks.apiKey.generateApiKey({ preset: null });
+    render(<ApiKeysTable data={[apiKey]} />);
+
+    expect(screen.getByRole("cell", { name: "custom" })).toBeVisible();
+  });
+
   it("should revoke the api key when confirmed", async ({ user }) => {
     mockRevoke.mockResolvedValue([null, undefined]);
     const apiKey = mocks.apiKey.generateApiKey({ name: "ci · github actions" });

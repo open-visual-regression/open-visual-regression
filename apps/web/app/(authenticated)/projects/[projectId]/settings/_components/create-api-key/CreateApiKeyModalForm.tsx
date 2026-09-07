@@ -4,10 +4,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { onError, onSuccess } from "@orpc/client";
 import { useServerAction } from "@orpc/react/hooks";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { API_KEY_NAME_MAX_LENGTH } from "@ovr/api/contracts/apiKeys";
+import { API_KEY_NAME_MAX_LENGTH, apiKeyPresetSchema } from "@ovr/api/contracts/apiKeys";
 import { Button } from "@ovr/ui/components/button";
 import {
   DialogDescription,
@@ -23,8 +23,16 @@ import {
   FieldLabel,
 } from "@ovr/ui/components/field";
 import { Input } from "@ovr/ui/components/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@ovr/ui/components/select";
 
 import { serverClient } from "@/lib/router";
+import { API_KEY_PRESET_LABELS } from "@/lib/utils/apiKey";
 
 import { CreateApiKeyModalReveal } from "./CreateApiKeyModalReveal";
 
@@ -36,6 +44,7 @@ const createApiKeyFormSchema = z.object({
       API_KEY_NAME_MAX_LENGTH,
       `the name must be less than ${API_KEY_NAME_MAX_LENGTH} characters`,
     ),
+  preset: apiKeyPresetSchema,
 });
 
 type CreateApiKeyFormValues = z.infer<typeof createApiKeyFormSchema>;
@@ -49,11 +58,12 @@ export const CreateApiKeyModalForm = ({ projectId }: CreateApiKeyModalFormProps)
   const {
     register,
     handleSubmit,
+    control,
     setError,
     formState: { errors },
   } = useForm<CreateApiKeyFormValues>({
     resolver: zodResolver(createApiKeyFormSchema),
-    defaultValues: { name: "" },
+    defaultValues: { name: "", preset: "ci_upload" },
   });
 
   const { execute, status } = useServerAction(serverClient.apiKeys.create, {
@@ -84,7 +94,9 @@ export const CreateApiKeyModalForm = ({ projectId }: CreateApiKeyModalFormProps)
     <>
       <DialogHeader>
         <DialogTitle>new api key</DialogTitle>
-        <DialogDescription>used to authenticate uploads for this project</DialogDescription>
+        <DialogDescription>
+          used to authenticate this project&apos;s ci uploads and agents
+        </DialogDescription>
       </DialogHeader>
       <form onSubmit={handleSubmit(handleFormSubmit)}>
         <FieldGroup className="pb-6">
@@ -98,6 +110,33 @@ export const CreateApiKeyModalForm = ({ projectId }: CreateApiKeyModalFormProps)
             />
             <FieldDescription>a label to help identify this api key later</FieldDescription>
             <FieldError errors={[errors.name]} />
+          </Field>
+          <Field data-invalid={!!errors.preset}>
+            <FieldLabel htmlFor="preset">permissions</FieldLabel>
+            <Controller
+              control={control}
+              name="preset"
+              render={({ field }) => (
+                <Select
+                  items={API_KEY_PRESET_LABELS}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                >
+                  <SelectTrigger id="preset" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {apiKeyPresetSchema.options.map((preset) => (
+                      <SelectItem key={preset} value={preset}>
+                        {API_KEY_PRESET_LABELS[preset]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            <FieldDescription>what this key is allowed to do</FieldDescription>
+            <FieldError errors={[errors.preset]} />
           </Field>
           <FieldError errors={[errors.root]} />
         </FieldGroup>

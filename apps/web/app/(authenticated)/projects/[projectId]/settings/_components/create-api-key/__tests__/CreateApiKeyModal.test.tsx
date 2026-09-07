@@ -48,12 +48,43 @@ describe("CreateApiKeyModal", () => {
 
     expect(await screen.findByRole("heading", { name: /api key created/i })).toBeVisible();
     expect(screen.getByText(API_KEY)).toBeVisible();
-    expect(mockCreate).toHaveBeenCalledWith({ projectId: PROJECT_ID, name: "ci · github actions" });
+    expect(mockCreate).toHaveBeenCalledWith({
+      projectId: PROJECT_ID,
+      name: "ci · github actions",
+      preset: "ci_upload",
+    });
     expect(mockRefresh).not.toHaveBeenCalled();
 
     await user.click(screen.getByRole("button", { name: /^done$/i }));
 
     await waitFor(() => expect(mockRefresh).toHaveBeenCalled());
+  });
+
+  it("should default to a ci upload key", async ({ user }) => {
+    renderComponent();
+
+    await user.click(screen.getByRole("button", { name: /new api key/i }));
+
+    expect(screen.getByRole("combobox", { name: /permissions/i })).toHaveTextContent("ci upload");
+  });
+
+  it("should create a key with the chosen permissions", async ({ user }) => {
+    mockCreate.mockResolvedValue([null, { key: API_KEY }]);
+    renderComponent();
+
+    await user.click(screen.getByRole("button", { name: /new api key/i }));
+    await user.type(screen.getByLabelText(/name/i), "claude");
+    await user.click(screen.getByRole("combobox", { name: /permissions/i }));
+    await user.click(await screen.findByRole("option", { name: /agent · read & review/i }));
+    await user.click(screen.getByRole("button", { name: /^create$/i }));
+
+    await waitFor(() =>
+      expect(mockCreate).toHaveBeenCalledWith({
+        projectId: PROJECT_ID,
+        name: "claude",
+        preset: "agent_review",
+      }),
+    );
   });
 
   it("should copy the api key to clipboard", async ({ user }) => {
