@@ -2,6 +2,7 @@ import { vi } from "vitest";
 
 import type { AddProjectInputSchema } from "@ovr/api/contracts/projects";
 
+import { auth } from "@/lib/auth/auth";
 import { serverClient } from "@/lib/router";
 import { test, describe, expect } from "@/lib/testing/fixtures";
 
@@ -50,6 +51,30 @@ describe("apiKeys", () => {
       const [error, result] = await serverClient.apiKeys.create({ projectId, name: "my key" });
       expect(error).toBeNull();
       expect(result?.key).toMatch(/^ovr_api_key_/);
+    });
+
+    test("should grant the created key permission to write builds", async ({ admin: _ }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+
+      const [, result] = await serverClient.apiKeys.create({ projectId, name: "my key" });
+
+      const verified = await auth.api.verifyApiKey({
+        body: { key: result!.key, permissions: { builds: ["write"] } },
+      });
+      expect(verified.valid).toBe(true);
+    });
+
+    test("should withhold permissions the created key was not granted", async ({ admin: _ }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+
+      const [, result] = await serverClient.apiKeys.create({ projectId, name: "my key" });
+
+      const verified = await auth.api.verifyApiKey({
+        body: { key: result!.key, permissions: { reviews: ["write"] } },
+      });
+      expect(verified.valid).toBe(false);
     });
   });
 

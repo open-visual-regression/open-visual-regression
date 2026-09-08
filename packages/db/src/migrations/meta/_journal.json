@@ -281,6 +281,13 @@
       "when": 1788805111499,
       "tag": "0039_normalize_api_key_metadata",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1788805190638,
+      "tag": "0040_backfill_api_key_permissions",
+      "breakpoints": true
     }
   ]
 }
