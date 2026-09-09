@@ -8,6 +8,7 @@ ARG NODE_VERSION=24.16.0
 ARG PLAYWRIGHT_VERSION=1.61.0
 # Keep in sync with the "turbo" devDependency in the root package.json.
 ARG TURBO_VERSION=2.10.8
+ARG PNPM_VERSION=11.9.0
 
 FROM node:${NODE_VERSION}-slim AS pruner
 ARG TURBO_VERSION
@@ -17,15 +18,17 @@ COPY . .
 RUN turbo prune @ovr/worker --docker
 
 FROM node:${NODE_VERSION}-slim AS builder
+ARG PNPM_VERSION
 ENV HUSKY=0 \
     CI=1
 WORKDIR /app
 RUN corepack enable && \
+    corepack prepare pnpm@${PNPM_VERSION} --activate && \
     apt-get update && \
     apt-get install -y --no-install-recommends python3 make g++ ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
-COPY --from=pruner /app/out/json/pnpm-lock.yaml .
+COPY --from=pruner /app/out/json/pnpm-lock.yaml /app/out/json/pnpm-workspace.yaml ./
 RUN pnpm fetch
 
 COPY --from=pruner /app/out/json/ .
