@@ -97,9 +97,6 @@ importers:
       '@orpc/contract':
         specifier: ^1.14.14
         version: 1.14.14
-      '@ovr/storybook-compat':
-        specifier: workspace:*
-        version: link:../../packages/storybook-compat
       commander:
         specifier: ^15.0.0
         version: 15.0.0
@@ -116,6 +113,9 @@ importers:
       '@ovr/api':
         specifier: workspace:*
         version: link:../../packages/api
+      '@ovr/storybook-compat':
+        specifier: workspace:*
+        version: link:../../packages/storybook-compat
       '@ovr/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config

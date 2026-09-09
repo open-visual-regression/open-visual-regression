@@ -41,7 +41,6 @@
   "dependencies": {
     "@orpc/client": "^1.14.14",
     "@orpc/contract": "^1.14.14",
-    "@ovr/storybook-compat": "workspace:*",
     "commander": "^15.0.0",
     "jiti": "^2.7.0",
     "ky": "^2.0.2",
@@ -49,6 +48,7 @@
   },
   "devDependencies": {
     "@ovr/api": "workspace:*",
+    "@ovr/storybook-compat": "workspace:*",
     "@ovr/typescript-config": "workspace:*",
     "@types/node": "^22.20.1",
     "tsup": "^8.5.1",
