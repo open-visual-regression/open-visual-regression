@@ -17,6 +17,8 @@ const snapshot: SnapshotSchema = {
   targetTitle: "UI/Button",
   imagePath: "new.png",
   status: "unchanged",
+  renderErrorMessage: null,
+  hasUncaughtPageError: false,
   errorLogs: [],
 };
 

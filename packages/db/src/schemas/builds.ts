@@ -176,6 +176,14 @@ export const snapshots = pgTable(
     status: snapshotStatusEnum().notNull().default("queued"),
     imagePath: text("image_path"),
     hasRenderError: boolean("has_render_error").notNull().default(false),
+    // Set when the story/play function itself threw, errored, timed out, or was reported
+    // missing by Storybook — i.e. hasRenderError is true, or capture failed outright.
+    renderErrorMessage: text("render_error_message"),
+    // An uncaught exception was observed on the page (e.g. via an error boundary that also
+    // triggers React's dev-mode window.onerror) even though Storybook reported the story
+    // finished successfully. Tracked separately from hasRenderError so a component that
+    // recovers from an error doesn't get flagged the same way as one that actually failed.
+    hasUncaughtPageError: boolean("has_uncaught_page_error").notNull().default(false),
     diffThreshold: numeric("diff_threshold", { mode: "number", precision: 3, scale: 2 })
       .notNull()
       .default(0.05),

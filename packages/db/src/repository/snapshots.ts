@@ -44,6 +44,8 @@ type UpdateCaptureResultInput = {
   status: SnapshotStatus;
   imagePath: string;
   hasRenderError: boolean;
+  renderErrorMessage: string | null;
+  hasUncaughtPageError: boolean;
   tx?: DbClient;
 };
 
@@ -54,6 +56,15 @@ export const updateCaptureResult = async (
   const [snapshot] = await tx
     .update(snapshots)
     .set(result)
+    .where(and(eq(snapshots.id, id), ne(snapshots.status, "canceled")))
+    .returning();
+  return snapshot;
+};
+
+export const markErrored = async (id: string, message: string) => {
+  const [snapshot] = await db
+    .update(snapshots)
+    .set({ status: "error", renderErrorMessage: message })
     .where(and(eq(snapshots.id, id), ne(snapshots.status, "canceled")))
     .returning();
   return snapshot;
@@ -74,6 +85,22 @@ export const markUnfinishedAs = async (
       ),
     );
 };
+
+export const findErroredForBuild = (buildId: string) =>
+  db.query.snapshots.findMany({
+    where: (snapshots, { and, eq, or }) =>
+      and(
+        eq(snapshots.buildId, buildId),
+        or(eq(snapshots.status, "error"), eq(snapshots.hasRenderError, true)),
+      ),
+    columns: {
+      targetTitle: true,
+      targetName: true,
+      status: true,
+      hasRenderError: true,
+      renderErrorMessage: true,
+    },
+  });
 
 export const countByBuild = async (buildId: string) => {
   const [result] = await db

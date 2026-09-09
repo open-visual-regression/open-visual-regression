@@ -378,6 +378,41 @@ const computeBuildReviewStatus = (diffs: BuildDiff[]): BuildReviewStatus => {
   return "unchanged";
 };
 
+const describeSnapshot = (snapshot: { targetTitle: string; targetName: string }): string =>
+  `${snapshot.targetTitle} ${snapshot.targetName}`.trim();
+
+const pluralize = (count: number, noun: string): string =>
+  `${count} ${noun}${count === 1 ? "" : "s"}`;
+
+export const buildProcessingErrorMessage = async (buildId: string): Promise<string> => {
+  const errored = await dbClient.snapshots.findErroredForBuild(buildId);
+
+  const renderFailures = errored.filter((snapshot) => snapshot.hasRenderError);
+  const captureFailures = errored.filter((snapshot) => snapshot.status === "error");
+
+  const parts: string[] = [];
+
+  if (renderFailures.length > 0) {
+    const [first] = renderFailures;
+    const detail = first?.renderErrorMessage ? `: ${first.renderErrorMessage}` : "";
+    parts.push(
+      `${pluralize(renderFailures.length, "snapshot")} failed to render (e.g. "${describeSnapshot(first!)}"${detail})`,
+    );
+  }
+
+  if (captureFailures.length > 0) {
+    const [first] = captureFailures;
+    const detail = first?.renderErrorMessage ? `: ${first.renderErrorMessage}` : "";
+    parts.push(
+      `${pluralize(captureFailures.length, "snapshot")} failed to capture (e.g. "${describeSnapshot(first!)}"${detail})`,
+    );
+  }
+
+  return parts.length > 0
+    ? parts.join("; ")
+    : "One or more snapshots failed to diff against their baseline";
+};
+
 export const finalizeBuild = async (buildId: string): Promise<void> => {
   const build = await dbClient.builds.findById(buildId);
   if (build?.processingStatus === "canceled") {
@@ -393,9 +428,7 @@ export const finalizeBuild = async (buildId: string): Promise<void> => {
   await dbClient.builds.updateResult(buildId, {
     processingStatus,
     reviewStatus,
-    errorMessage: hasProcessingError
-      ? "One or more snapshots failed to diff against their baseline"
-      : null,
+    errorMessage: hasProcessingError ? await buildProcessingErrorMessage(buildId) : null,
   });
 
   const changed =

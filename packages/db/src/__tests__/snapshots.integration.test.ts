@@ -385,6 +385,8 @@ describe("snapshots", () => {
         status: "success",
         imagePath: "some/path.png",
         hasRenderError: false,
+        renderErrorMessage: null,
+        hasUncaughtPageError: false,
       });
 
       expect(updated).toBeUndefined();

@@ -101,6 +101,8 @@ describe("getBreadcrumbSegments", () => {
           targetTitle: snapshot.targetTitle,
           imagePath: snapshot.imagePath,
           status: snapshot.status,
+          renderErrorMessage: null,
+          hasUncaughtPageError: false,
           errorLogs: [],
         },
       },

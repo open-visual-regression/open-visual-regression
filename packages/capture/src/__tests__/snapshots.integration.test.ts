@@ -205,6 +205,47 @@ describe("snapshots", () => {
       expect(logs.some((log) => log.level === "error")).toBe(true);
     });
 
+    test("should flag an uncaught page error separately from a render error when Storybook still reports success", async ({
+      mainBuild,
+      captureConfiguration,
+    }) => {
+      await uploadArtifactWithIframe(
+        mainBuild.artifactPath,
+        IFRAME_HTML.replace(
+          "</body>",
+          '<script>throw new Error("uncaught but recovered");</script></body>',
+        ),
+      );
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: mainBuild.id,
+            ...captureConfiguration,
+            targetId: "story-a",
+          },
+        ],
+      });
+
+      await captureBuildGroup(mainBuild.id, captureConfiguration.browser, [snapshot!.id]);
+
+      const captured = await dbClient.snapshots.findById(snapshot!.id);
+      expect(captured).toMatchObject({
+        status: "success",
+        hasRenderError: false,
+        hasUncaughtPageError: true,
+      });
+
+      const logs = await dbClient.snapshotLogs.findBySnapshot(snapshot!.id);
+      expect(logs).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            level: "error",
+            message: expect.stringContaining("uncaught but recovered"),
+          }),
+        ]),
+      );
+    });
+
     test("captures every snapshot in a group using a single browser launch", async ({
       mainBuild,
       captureConfiguration,

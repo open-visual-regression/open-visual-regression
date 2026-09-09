@@ -288,6 +288,13 @@
       "when": 1788805190638,
       "tag": "0040_backfill_api_key_permissions",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1788996321606,
+      "tag": "0041_add_snapshot_render_error_details",
+      "breakpoints": true
     }
   ]
 }

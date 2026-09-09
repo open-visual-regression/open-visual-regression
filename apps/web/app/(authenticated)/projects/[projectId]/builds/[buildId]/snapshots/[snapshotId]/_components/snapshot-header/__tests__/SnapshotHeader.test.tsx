@@ -16,6 +16,8 @@ const snapshot: SnapshotSchema = {
   targetTitle: "UI/Button",
   imagePath: "new.png",
   status: "needs_review",
+  renderErrorMessage: null,
+  hasUncaughtPageError: false,
   errorLogs: [],
 };
 
@@ -39,6 +41,37 @@ describe("SnapshotHeader", () => {
 
     expect(screen.getByText("Error")).toBeVisible();
     expect(screen.getByText("This snapshot failed to capture.")).toBeVisible();
+  });
+
+  it("should show the specific render error message when one was captured", () => {
+    const build = mocks.build.generateBuild();
+    render(
+      <SnapshotHeader
+        snapshot={{
+          ...snapshot,
+          status: "error",
+          renderErrorMessage: "Cannot read properties of undefined (reading 'items')",
+        }}
+        build={build}
+        storybookHref={null}
+      />,
+    );
+
+    expect(screen.getByText("Error")).toBeVisible();
+    expect(screen.getByText("Cannot read properties of undefined (reading 'items')")).toBeVisible();
+  });
+
+  it("should show a warning when an uncaught page error occurred but the snapshot still captured", () => {
+    const build = mocks.build.generateBuild();
+    render(
+      <SnapshotHeader
+        snapshot={{ ...snapshot, status: "unchanged", hasUncaughtPageError: true }}
+        build={build}
+        storybookHref={null}
+      />,
+    );
+
+    expect(screen.getByText("Warning")).toBeVisible();
   });
 
   it("should not show the error alert when the snapshot did not fail to capture", () => {

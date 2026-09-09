@@ -157,6 +157,8 @@ type CapturedSnapshot = {
   screenshot: Buffer;
   logs: CaptureLog[];
   hasRenderError: boolean;
+  renderErrorMessage: string | null;
+  hasUncaughtPageError: boolean;
   renderMs: number;
   screenshotMs: number;
   startedAt: number;
@@ -206,11 +208,12 @@ const captureSnapshotOnPage = async (
       }),
     );
 
-    if (!renderResult.ok) {
-      pageLogState.logs.push({
-        level: "error",
-        message: renderResult.error ?? "target failed to render",
-      });
+    const renderErrorMessage = renderResult.ok
+      ? null
+      : (renderResult.error ?? "target failed to render");
+
+    if (renderErrorMessage) {
+      pageLogState.logs.push({ level: "error", message: renderErrorMessage });
     }
 
     const imagePath = `${build.projectId}/builds/${build.id}/snapshots/${snapshotId}.png`;
@@ -224,7 +227,17 @@ const captureSnapshotOnPage = async (
       imagePath,
       screenshot,
       logs: [...pageLogState.logs],
-      hasRenderError: !renderResult.ok || pageLogState.hasPageError,
+      // Storybook itself reported the story/play function as failed (threw, errored,
+      // missing, or timed out) — this is a genuine render failure, not just a log.
+      hasRenderError: !renderResult.ok,
+      renderErrorMessage,
+      // An uncaught exception surfaced on the page (e.g. via Playwright's `pageerror`)
+      // even though Storybook reported the story finished successfully — this can happen
+      // when a component's error boundary recovers from a thrown error, since React's dev
+      // build re-surfaces the error to the browser for stack traces. Tracked separately so
+      // a component that merely logs/recovers from an error isn't treated the same as one
+      // that actually failed to render.
+      hasUncaughtPageError: pageLogState.hasPageError,
       renderMs,
       screenshotMs,
       startedAt,
@@ -254,7 +267,15 @@ const persistCapturedSnapshot = async (
   captured: CapturedSnapshot,
   shutdownSignal: AbortSignal | undefined,
 ): Promise<PersistOutcome> => {
-  const { snapshotId, imagePath, hasRenderError, context, startedAt } = captured;
+  const {
+    snapshotId,
+    imagePath,
+    hasRenderError,
+    renderErrorMessage,
+    hasUncaughtPageError,
+    context,
+    startedAt,
+  } = captured;
 
   try {
     const [, uploadMs] = await runPhase("upload", () =>
@@ -277,6 +298,8 @@ const persistCapturedSnapshot = async (
         status: "success",
         imagePath,
         hasRenderError,
+        renderErrorMessage,
+        hasUncaughtPageError,
         tx,
       });
     });
@@ -329,7 +352,7 @@ export const markSnapshotErrored = async (snapshotId: string, error: unknown): P
 
   const message = error instanceof Error ? error.message : String(error);
   await dbClient.snapshotLogs.createMany({ values: [{ snapshotId, level: "error", message }] });
-  await dbClient.snapshots.updateStatus(snapshotId, "error");
+  await dbClient.snapshots.markErrored(snapshotId, message);
   await enqueueSnapshotDiff(snapshotId);
 };
 
