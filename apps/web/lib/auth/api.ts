@@ -1,5 +1,7 @@
 import { isAPIError } from "better-auth/api";
 
+import { personalTokenMetadata } from "@ovr/db/repository/accessTokens";
+
 import { auth } from "./auth";
 
 export type SafeAuthResult<TData> = [error: Error, data: null] | [error: null, data: TData];
@@ -65,6 +67,17 @@ export type AcceptInvitationInput = {
   headers: Headers;
 };
 
+export type CreateAccessTokenInput = {
+  name: string;
+  userId: string;
+  permissions: Record<string, string[]>;
+};
+
+export type DeleteAccessTokenInput = {
+  tokenId: string;
+  headers: Headers;
+};
+
 const safeAuth = async <TData>(promise: Promise<TData>): Promise<SafeAuthResult<TData>> => {
   try {
     return [null, await promise];
@@ -109,3 +122,19 @@ export const signInEmail = ({ email, password }: SignInEmailInput) =>
 
 export const acceptInvitation = ({ invitationId, headers }: AcceptInvitationInput) =>
   safeAuth(auth.api.acceptInvitation({ body: { invitationId }, headers }));
+
+export const createAccessToken = ({ name, userId, permissions }: CreateAccessTokenInput) =>
+  safeAuth(
+    auth.api.createApiKey({
+      body: {
+        name,
+        prefix: "ovr_pat_",
+        userId,
+        permissions,
+        metadata: personalTokenMetadata(),
+      },
+    }),
+  );
+
+export const deleteAccessToken = ({ tokenId, headers }: DeleteAccessTokenInput) =>
+  safeAuth(auth.api.deleteApiKey({ body: { keyId: tokenId }, headers }));
