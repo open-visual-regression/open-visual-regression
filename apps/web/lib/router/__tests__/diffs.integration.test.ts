@@ -27,8 +27,8 @@ const signIn = async (user: Pick<User, "email">) => {
 
 const signUp = async (): Promise<User> => {
   const email = `${uuidv7()}@example.com`;
-  const { user } = await auth.api.signUpEmail({
-    body: { name: "Other Reviewer", email, password: TEST_PASSWORD },
+  const { user } = await auth.api.createUser({
+    body: { name: "Other Reviewer", email, password: TEST_PASSWORD, role: "reviewer" },
   });
   return user;
 };
