@@ -126,6 +126,27 @@ export const Errored: Story = {
   },
 };
 
+export const ErroredWithFailedSnapshots: Story = {
+  args: {
+    build: mocks.build.generateBuild({
+      ...buildOverrides,
+      status: "error",
+      errorMessage: "2 snapshots failed to render and 1 snapshot failed to capture",
+    }),
+    snapshotCounts: {
+      unchanged: 4,
+      auto_approved: 0,
+      approved: 0,
+      needs_review: 0,
+      rejected: 0,
+      error: 3,
+      canceled: 0,
+      queued: 0,
+      processing: 0,
+    },
+  },
+};
+
 export const Canceled: Story = {
   args: {
     build: mocks.build.generateBuild({

@@ -390,7 +390,7 @@ const buildErrorMessage = async (buildId: string): Promise<string> => {
   ].filter((part) => part !== null);
 
   return parts.length > 0
-    ? `${parts.join(" and ")}. Open a failed snapshot to see why.`
+    ? parts.join(" and ")
     : "One or more snapshots failed to diff against their baseline";
 };
 
