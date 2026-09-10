@@ -176,8 +176,6 @@ export const snapshots = pgTable(
     status: snapshotStatusEnum().notNull().default("queued"),
     imagePath: text("image_path"),
     hasRenderError: boolean("has_render_error").notNull().default(false),
-    // An uncaught exception reached the page while the story still rendered, so the
-    // capture is usable and only worth flagging.
     hasUncaughtPageError: boolean("has_uncaught_page_error").notNull().default(false),
     errorMessage: text("error_message"),
     diffThreshold: numeric("diff_threshold", { mode: "number", precision: 3, scale: 2 })
