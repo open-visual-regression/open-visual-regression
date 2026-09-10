@@ -35,7 +35,7 @@ const snapshot: SnapshotSchema = {
   targetTitle: "Web/Skeletons/ProjectHeaderSkeleton",
   imagePath: "new.png",
   status: "unchanged",
-  renderErrorMessage: null,
+  errorMessage: null,
   hasUncaughtPageError: false,
   errorLogs: [],
 };
@@ -80,7 +80,7 @@ export const Errored: Story = {
     snapshot: {
       ...snapshot,
       status: "error",
-      renderErrorMessage: "Cannot read properties of undefined (reading 'items')",
+      errorMessage: "Cannot read properties of undefined (reading 'items')",
     },
     build: mocks.build.generateBuild(buildOverrides),
   },

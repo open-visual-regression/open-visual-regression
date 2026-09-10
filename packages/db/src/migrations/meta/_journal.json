@@ -292,8 +292,8 @@
     {
       "idx": 41,
       "version": "7",
-      "when": 1788996321606,
-      "tag": "0041_add_snapshot_render_error_details",
+      "when": 1788999461650,
+      "tag": "0041_add_snapshot_error_details",
       "breakpoints": true
     }
   ]

@@ -43,16 +43,14 @@ export const SnapshotHeader = ({
       <Alert color="red">
         <AlertTitle>Error</AlertTitle>
         <AlertDescription>
-          {snapshot.renderErrorMessage ?? "This snapshot failed to capture."}
+          {snapshot.errorMessage ?? "This snapshot failed to capture."}
         </AlertDescription>
       </Alert>
     ) : snapshot.hasUncaughtPageError ? (
       <Alert color="amber">
         <AlertTitle>Warning</AlertTitle>
         <AlertDescription>
-          An uncaught error occurred on the page while this story rendered, but Storybook reported
-          it finished successfully. This snapshot was still captured — check the logs below for
-          details.
+          This story rendered with an uncaught error. See the logs for details.
         </AlertDescription>
       </Alert>
     ) : null}

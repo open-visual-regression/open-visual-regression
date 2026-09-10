@@ -385,7 +385,7 @@ describe("snapshots", () => {
         status: "success",
         imagePath: "some/path.png",
         hasRenderError: false,
-        renderErrorMessage: null,
+        errorMessage: null,
         hasUncaughtPageError: false,
       });
 

@@ -38,7 +38,7 @@ const newSnapshot = {
   targetTitle: "Button",
   imagePath: "new-desktop.png",
   status: "unchanged" as const,
-  renderErrorMessage: null,
+  errorMessage: null,
   hasUncaughtPageError: false,
   errorLogs: [],
 };

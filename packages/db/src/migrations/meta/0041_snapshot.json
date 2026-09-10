@@ -1,5 +1,5 @@
 {
-  "id": "841b6080-11b1-479c-9893-0bdfa7e542f1",
+  "id": "d6bdbcd1-9bb5-49ce-915d-19b0704bb2df",
   "prevId": "950867d0-c9c5-4326-bcb6-634dd1567c7b",
   "version": "7",
   "dialect": "postgresql",
@@ -1757,18 +1757,18 @@
           "notNull": true,
           "default": false
         },
-        "render_error_message": {
-          "name": "render_error_message",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
         "has_uncaught_page_error": {
           "name": "has_uncaught_page_error",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
           "default": false
+        },
+        "error_message": {
+          "name": "error_message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "diff_threshold": {
           "name": "diff_threshold",

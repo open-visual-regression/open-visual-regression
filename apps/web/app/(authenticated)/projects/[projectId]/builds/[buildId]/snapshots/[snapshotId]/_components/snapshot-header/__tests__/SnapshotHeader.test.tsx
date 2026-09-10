@@ -16,7 +16,7 @@ const snapshot: SnapshotSchema = {
   targetTitle: "UI/Button",
   imagePath: "new.png",
   status: "needs_review",
-  renderErrorMessage: null,
+  errorMessage: null,
   hasUncaughtPageError: false,
   errorLogs: [],
 };
@@ -50,7 +50,7 @@ describe("SnapshotHeader", () => {
         snapshot={{
           ...snapshot,
           status: "error",
-          renderErrorMessage: "Cannot read properties of undefined (reading 'items')",
+          errorMessage: "Cannot read properties of undefined (reading 'items')",
         }}
         build={build}
         storybookHref={null}
