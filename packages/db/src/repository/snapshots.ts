@@ -86,20 +86,6 @@ export const markUnfinishedAs = async (
     );
 };
 
-export type SnapshotErrorCounts = { renderErrors: number; captureErrors: number };
-
-export const countErrorsForBuild = async (buildId: string): Promise<SnapshotErrorCounts> => {
-  const [result] = await db
-    .select({
-      renderErrors: count(sql`case when ${snapshots.hasRenderError} then 1 end`),
-      captureErrors: count(sql`case when ${snapshots.status} = 'error' then 1 end`),
-    })
-    .from(snapshots)
-    .where(eq(snapshots.buildId, buildId));
-
-  return result ?? { renderErrors: 0, captureErrors: 0 };
-};
-
 export const countByBuild = async (buildId: string) => {
   const [result] = await db
     .select({ count: count() })

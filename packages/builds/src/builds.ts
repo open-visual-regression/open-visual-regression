@@ -378,21 +378,7 @@ const computeBuildReviewStatus = (diffs: BuildDiff[]): BuildReviewStatus => {
   return "unchanged";
 };
 
-const pluralize = (count: number, noun: string): string =>
-  `${count} ${noun}${count === 1 ? "" : "s"}`;
-
-const buildErrorMessage = async (buildId: string): Promise<string> => {
-  const { renderErrors, captureErrors } = await dbClient.snapshots.countErrorsForBuild(buildId);
-
-  const parts = [
-    renderErrors > 0 ? `${pluralize(renderErrors, "snapshot")} failed to render` : null,
-    captureErrors > 0 ? `${pluralize(captureErrors, "snapshot")} failed to capture` : null,
-  ].filter((part) => part !== null);
-
-  return parts.length > 0
-    ? parts.join(" and ")
-    : "One or more snapshots failed to diff against their baseline";
-};
+const SNAPSHOT_ERROR_MESSAGE = "Some snapshots encountered an error";
 
 export const finalizeBuild = async (buildId: string): Promise<void> => {
   const build = await dbClient.builds.findById(buildId);
@@ -409,7 +395,7 @@ export const finalizeBuild = async (buildId: string): Promise<void> => {
   await dbClient.builds.updateResult(buildId, {
     processingStatus,
     reviewStatus,
-    errorMessage: hasProcessingError ? await buildErrorMessage(buildId) : null,
+    errorMessage: hasProcessingError ? SNAPSHOT_ERROR_MESSAGE : null,
   });
 
   const changed =

@@ -131,7 +131,7 @@ export const ErroredWithFailedSnapshots: Story = {
     build: mocks.build.generateBuild({
       ...buildOverrides,
       status: "error",
-      errorMessage: "2 snapshots failed to render and 1 snapshot failed to capture",
+      errorMessage: "Some snapshots encountered an error",
     }),
     snapshotCounts: {
       unchanged: 4,
