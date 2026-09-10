@@ -101,9 +101,6 @@ export const setRole = ({ userId, role, headers }: SetRoleInput) =>
 export const updateOrganization = ({ organizationId, name, headers }: UpdateOrganizationInput) =>
   safeAuth(auth.api.updateOrganization({ body: { organizationId, data: { name } }, headers }));
 
-// Sign-up is disabled (see emailAndPassword.disableSignUp in auth.ts) to block anonymous
-// self-registration. Trusted, server-side flows (e.g. accepting an invitation) create the
-// account directly via the admin API instead, which is exempt from that restriction.
 export const createUser = ({ name, email, password }: CreateUserInput) =>
   safeAuth(auth.api.createUser({ body: { name, email, password } }));
 
