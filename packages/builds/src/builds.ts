@@ -378,6 +378,8 @@ const computeBuildReviewStatus = (diffs: BuildDiff[]): BuildReviewStatus => {
   return "unchanged";
 };
 
+const SNAPSHOT_ERROR_MESSAGE = "Some snapshots encountered an error";
+
 export const finalizeBuild = async (buildId: string): Promise<void> => {
   const build = await dbClient.builds.findById(buildId);
   if (build?.processingStatus === "canceled") {
@@ -393,9 +395,7 @@ export const finalizeBuild = async (buildId: string): Promise<void> => {
   await dbClient.builds.updateResult(buildId, {
     processingStatus,
     reviewStatus,
-    errorMessage: hasProcessingError
-      ? "One or more snapshots failed to diff against their baseline"
-      : null,
+    errorMessage: hasProcessingError ? SNAPSHOT_ERROR_MESSAGE : null,
   });
 
   const changed =

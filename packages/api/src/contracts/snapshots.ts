@@ -21,6 +21,8 @@ export const snapshotSchema = z.object({
   targetTitle: z.string(),
   imagePath: z.string().nullable(),
   status: snapshotDisplayStatusSchema,
+  hasUncaughtPageError: z.boolean(),
+  errorMessage: z.string().nullable(),
   errorLogs: z.array(snapshotLogSchema),
 });
 

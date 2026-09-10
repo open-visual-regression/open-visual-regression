@@ -42,7 +42,16 @@ export const SnapshotHeader = ({
     {snapshot.status === "error" ? (
       <Alert color="red">
         <AlertTitle>Error</AlertTitle>
-        <AlertDescription>This snapshot failed to capture.</AlertDescription>
+        <AlertDescription>
+          {snapshot.errorMessage ?? "This snapshot failed to capture."}
+        </AlertDescription>
+      </Alert>
+    ) : snapshot.hasUncaughtPageError ? (
+      <Alert color="amber">
+        <AlertTitle>Warning</AlertTitle>
+        <AlertDescription>
+          This story rendered with an uncaught error. See the logs for details.
+        </AlertDescription>
       </Alert>
     ) : null}
   </div>

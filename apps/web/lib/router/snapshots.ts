@@ -33,6 +33,8 @@ export const getOne = os.snapshots.getOne
         viewportHeight: snapshot.viewportHeight === 0 ? null : snapshot.viewportHeight,
         viewportName: snapshot.viewportName,
         status: getSnapshotDisplayStatus(snapshot, diff),
+        hasUncaughtPageError: snapshot.hasUncaughtPageError,
+        errorMessage: snapshot.errorMessage,
         errorLogs: errorLogs.map((log) => ({
           id: log.id,
           level: log.level,

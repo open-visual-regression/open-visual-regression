@@ -44,6 +44,8 @@ type UpdateCaptureResultInput = {
   status: SnapshotStatus;
   imagePath: string;
   hasRenderError: boolean;
+  hasUncaughtPageError: boolean;
+  errorMessage: string | null;
   tx?: DbClient;
 };
 
@@ -54,6 +56,15 @@ export const updateCaptureResult = async (
   const [snapshot] = await tx
     .update(snapshots)
     .set(result)
+    .where(and(eq(snapshots.id, id), ne(snapshots.status, "canceled")))
+    .returning();
+  return snapshot;
+};
+
+export const markErrored = async (id: string, errorMessage: string) => {
+  const [snapshot] = await db
+    .update(snapshots)
+    .set({ status: "error", errorMessage })
     .where(and(eq(snapshots.id, id), ne(snapshots.status, "canceled")))
     .returning();
   return snapshot;

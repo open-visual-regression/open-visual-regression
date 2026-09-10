@@ -176,6 +176,8 @@ export const snapshots = pgTable(
     status: snapshotStatusEnum().notNull().default("queued"),
     imagePath: text("image_path"),
     hasRenderError: boolean("has_render_error").notNull().default(false),
+    hasUncaughtPageError: boolean("has_uncaught_page_error").notNull().default(false),
+    errorMessage: text("error_message"),
     diffThreshold: numeric("diff_threshold", { mode: "number", precision: 3, scale: 2 })
       .notNull()
       .default(0.05),

@@ -22,7 +22,7 @@ export const failed = async (job: CaptureGroupJob, error: Error): Promise<void> 
     await dbClient.snapshotLogs.createMany({
       values: [{ snapshotId, level: "error", message: error.message }],
     });
-    await dbClient.snapshots.updateStatus(snapshotId, "error");
+    await dbClient.snapshots.markErrored(snapshotId, error.message);
     await enqueueSnapshotDiff(snapshotId);
   }
 };

@@ -140,6 +140,8 @@ export const serverClient: typeof RealServerClient = {
           targetTitle: "",
           imagePath: null,
           status: "pending" as const,
+          errorMessage: null,
+          hasUncaughtPageError: false,
           errorLogs: [],
         },
       }))
