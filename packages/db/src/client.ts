@@ -1,4 +1,5 @@
 import { db } from "./db";
+import * as accessTokens from "./repository/accessTokens";
 import * as apiKeys from "./repository/apiKeys";
 import * as baselines from "./repository/baselines";
 import * as buildExtractDefaults from "./repository/buildExtractDefaults";
@@ -19,6 +20,7 @@ export const dbClient = {
   users,
   projects,
   apiKeys,
+  accessTokens,
   builds,
   buildExtractDefaults,
   snapshots,

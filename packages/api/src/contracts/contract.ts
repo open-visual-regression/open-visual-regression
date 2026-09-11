@@ -1,3 +1,4 @@
+import { contract as accessTokensContract } from "./accessTokens";
 import { contract as accountContract } from "./account";
 import { contract as apiKeysContract } from "./apiKeys";
 import { contract as buildsContract } from "./builds";
@@ -28,4 +29,5 @@ export const contract = {
   diffs: { ...diffsContract },
   snapshots: { ...snapshotsContract },
   gitIntegrations: { ...gitIntegrationsContract },
+  accessTokens: { ...accessTokensContract },
 } as const;

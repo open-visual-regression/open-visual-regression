@@ -1,3 +1,4 @@
+import * as accessTokens from "./accessTokens";
 import * as account from "./account";
 import * as apiKeys from "./apiKeys";
 import * as builds from "./builds";
@@ -28,4 +29,5 @@ export const serverClient = {
   diffs,
   snapshots,
   gitIntegrations,
+  accessTokens,
 } as const;
