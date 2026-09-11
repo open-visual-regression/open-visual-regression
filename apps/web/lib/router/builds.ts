@@ -20,6 +20,7 @@ import { storage } from "@ovr/storage";
 import { buildStatusHub } from "@/lib/events/buildStatusHub";
 
 import {
+  callerMiddleware,
   apiKeyMiddleware,
   authenticatedMiddleware,
   organizationBuildMiddleware,
@@ -186,7 +187,7 @@ export const rebuild = os.builds.rebuild
   .actionable();
 
 export const list = os.builds.list
-  .use(authenticatedMiddleware)
+  .use(callerMiddleware("builds", "read"))
   .handler(async ({ input, context }) => {
     const {
       projectIds,
@@ -297,7 +298,7 @@ export const listStatuses = os.builds.listStatuses
   .actionable();
 
 export const getOne = os.builds.getOne
-  .use(authenticatedMiddleware)
+  .use(callerMiddleware("builds", "read"))
   .use(organizationBuildMiddleware)
   .handler(async ({ context }) => {
     const { build, project } = context;

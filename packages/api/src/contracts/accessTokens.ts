@@ -5,6 +5,10 @@ export const ACCESS_TOKEN_NAME_MAX_LENGTH = 32;
 
 export const ACCESS_TOKEN_PERMISSIONS: Record<string, string[]> = { builds: ["read"] };
 
+export const tokenPermissionsSchema = z.record(z.string(), z.array(z.string()));
+
+export type TokenPermissions = z.infer<typeof tokenPermissionsSchema>;
+
 export const accessTokenSchema = z.object({
   id: z.string(),
   name: z.string(),
