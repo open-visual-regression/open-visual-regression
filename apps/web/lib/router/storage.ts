@@ -5,14 +5,14 @@ import { ORPCError } from "@orpc/client";
 import { dbClient } from "@ovr/db/client";
 import { storage } from "@ovr/storage";
 
-import { authenticatedMiddleware } from "./middleware";
+import { callerMiddleware } from "./middleware";
 import { os } from "./os";
 
 const PRESIGNED_URL_TTL_SECONDS = 300;
 const REDIRECT_CACHE_SECONDS = PRESIGNED_URL_TTL_SECONDS - 60;
 
 export const getObject = os.storage.getObject
-  .use(authenticatedMiddleware)
+  .use(callerMiddleware("builds", "read"))
   .handler(async ({ input, context }) => {
     const projectId = input.path.split("/")[0]!;
 

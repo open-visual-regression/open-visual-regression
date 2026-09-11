@@ -21,6 +21,10 @@ const TEST_PROJECT: AddProjectInputSchema = {
 const buildRequest = async (path: string[]) =>
   GET(new Request(`http://localhost/api/storage/${path.join("/")}`, { headers: await headers() }));
 
+const asBearer = (token: string) => {
+  vi.mocked(headers).mockResolvedValue(new Headers({ authorization: `Bearer ${token}` }));
+};
+
 describe("GET /api/storage/[...path]", () => {
   test("should return 401 when there is no session", async () => {
     const response = await buildRequest([NONEXISTENT_PROJECT_ID, "snapshots", "foo.png"]);
@@ -37,6 +41,19 @@ describe("GET /api/storage/[...path]", () => {
   test("should redirect to a presigned url for an authorized request", async ({ admin: _ }) => {
     const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
     const projectId = addResult!.projectId;
+
+    const response = await buildRequest([projectId, "snapshots", "foo.png"]);
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get("location")).toContain(`${projectId}/snapshots/foo.png`);
+  });
+
+  test("should redirect to a presigned url for a personal access token", async ({ admin: _ }) => {
+    const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+    const projectId = addResult!.projectId;
+    const [, token] = await serverClient.accessTokens.create({ name: "cursor" });
+
+    asBearer(token!.token);
 
     const response = await buildRequest([projectId, "snapshots", "foo.png"]);
 
