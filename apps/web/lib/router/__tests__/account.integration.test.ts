@@ -52,8 +52,8 @@ describe("account", () => {
     test("should return CONFLICT when the email belongs to another user", async ({ reviewer }) => {
       const generated = mocks.user.generateAuthUser();
       const other = { ...generated, email: generated.email.toLowerCase() };
-      await auth.api.signUpEmail({
-        body: { name: other.name, email: other.email, password: TEST_PASSWORD },
+      await auth.api.createUser({
+        body: { name: other.name, email: other.email, password: TEST_PASSWORD, role: "reviewer" },
       });
 
       const [error] = await serverClient.account.updateAccountInformation({
@@ -68,8 +68,8 @@ describe("account", () => {
     test("should not modify another user's record", async ({ reviewer }) => {
       const generated = mocks.user.generateAuthUser();
       const other = { ...generated, email: generated.email.toLowerCase() };
-      await auth.api.signUpEmail({
-        body: { name: other.name, email: other.email, password: TEST_PASSWORD },
+      await auth.api.createUser({
+        body: { name: other.name, email: other.email, password: TEST_PASSWORD, role: "reviewer" },
       });
 
       const [error] = await serverClient.account.updateAccountInformation({

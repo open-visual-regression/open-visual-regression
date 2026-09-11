@@ -38,16 +38,16 @@ export const acceptInvitation = os.invitations.acceptInvitation
       });
     }
 
-    // TODO: if signUpEmail succeeds but acceptInvitation fails, the user account exists with no
+    // TODO: if createUser succeeds but acceptInvitation fails, the user account exists with no
     // org membership and cannot retry (email taken). Risk is low — sequential server-side calls.
-    const [signUpError] = await authServerClient.signUpEmail({
+    const [createUserError] = await authServerClient.createUser({
       name: input.name,
       email: invitation.email,
       password: input.password,
     });
 
-    if (signUpError) {
-      throw new ORPCError("BAD_REQUEST", { message: signUpError.message });
+    if (createUserError) {
+      throw new ORPCError("BAD_REQUEST", { message: createUserError.message });
     }
 
     const signInResponse = await authServerClient.signInEmail({
