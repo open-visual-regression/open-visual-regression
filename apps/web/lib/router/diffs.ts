@@ -12,6 +12,7 @@ import {
 
 import {
   authenticatedMiddleware,
+  callerMiddleware,
   organizationDiffMiddleware,
   organizationSnapshotMiddleware,
   reviewerMiddleware,
@@ -93,7 +94,7 @@ export const bulkCastVote = os.diffs.bulkCastVote
   .actionable();
 
 export const getOne = os.diffs.getOne
-  .use(authenticatedMiddleware)
+  .use(callerMiddleware("builds", "read"))
   .use(organizationSnapshotMiddleware)
   .handler(async ({ context }) => {
     const row = await dbClient.diffs.findBySnapshotWithBaseline(context.snapshot.id);
@@ -121,7 +122,7 @@ export const getOne = os.diffs.getOne
   .actionable();
 
 export const listReviews = os.diffs.listReviews
-  .use(authenticatedMiddleware)
+  .use(callerMiddleware("builds", "read"))
   .use(organizationSnapshotMiddleware)
   .handler(async ({ context }) => {
     const diff = await dbClient.diffs.findBySnapshot(context.snapshot.id);

@@ -4,6 +4,7 @@ import { dbClient } from "@ovr/db/client";
 
 import {
   authenticatedMiddleware,
+  callerMiddleware,
   organizationBuildMiddleware,
   organizationSnapshotMiddleware,
 } from "./middleware";
@@ -11,7 +12,7 @@ import { os } from "./os";
 import { getSnapshotDisplayStatus } from "./utils/snapshotStatus";
 
 export const getOne = os.snapshots.getOne
-  .use(authenticatedMiddleware)
+  .use(callerMiddleware("builds", "read"))
   .use(organizationSnapshotMiddleware)
   .handler(async ({ context }) => {
     const { snapshot } = context;
@@ -47,7 +48,7 @@ export const getOne = os.snapshots.getOne
   .actionable();
 
 export const list = os.snapshots.list
-  .use(authenticatedMiddleware)
+  .use(callerMiddleware("builds", "read"))
   .use(organizationBuildMiddleware)
   .handler(async ({ input }) => {
     const { buildId, statuses, browsers, viewports, search, limit, cursor } = input;
@@ -87,7 +88,7 @@ export const list = os.snapshots.list
   .actionable();
 
 export const getCounts = os.snapshots.getCounts
-  .use(authenticatedMiddleware)
+  .use(callerMiddleware("builds", "read"))
   .use(organizationBuildMiddleware)
   .handler(async ({ input }) => dbClient.snapshots.getDisplayStatusCounts(input.buildId))
   .actionable();

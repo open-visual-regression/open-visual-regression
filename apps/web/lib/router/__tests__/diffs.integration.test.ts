@@ -33,6 +33,10 @@ const signUp = async (): Promise<User> => {
   return user;
 };
 
+const asBearer = (token: string) => {
+  vi.mocked(headers).mockResolvedValue(new Headers({ authorization: `Bearer ${token}` }));
+};
+
 const TEST_PROJECT: AddProjectInputSchema = {
   projectName: "Test Project",
   projectDescription: "A test project",
@@ -315,6 +319,19 @@ describe("diffs", () => {
       expect(error?.code).toBe("NOT_FOUND");
     });
 
+    test("should let a personal access token read a diff", async ({ admin }) => {
+      const { build, captureConfiguration } = await createProjectAndBuild(admin);
+      const diff = await createAwaitingDiff(build.id, captureConfiguration, "story-a");
+      const [, token] = await serverClient.accessTokens.create({ name: "cursor" });
+
+      asBearer(token!.token);
+
+      const [error, result] = await serverClient.diffs.getOne({ snapshotId: diff!.snapshotId });
+
+      expect(error).toBeNull();
+      expect(result?.diff).toMatchObject({ id: diff!.id });
+    });
+
     test("returns NOT_FOUND for a snapshot belonging to a different organization", async ({
       admin,
     }) => {
@@ -385,6 +402,29 @@ describe("diffs", () => {
     test("returns NOT_FOUND for a missing snapshot id", async ({ admin: _ }) => {
       const [error] = await serverClient.diffs.listReviews({ snapshotId: uuidv7() });
       expect(error?.code).toBe("NOT_FOUND");
+    });
+
+    test("should let a personal access token list a diff's reviews", async ({ admin }) => {
+      const { build, captureConfiguration } = await createProjectAndBuild(admin, 2);
+      const diff = await createAwaitingDiff(build.id, captureConfiguration, "story-a");
+      await dbClient.diffReviews.upsertVote({
+        diffId: diff!.id,
+        reviewerId: admin.id,
+        vote: "approve",
+      });
+      const [, token] = await serverClient.accessTokens.create({ name: "cursor" });
+
+      asBearer(token!.token);
+
+      const [error, result] = await serverClient.diffs.listReviews({
+        snapshotId: diff!.snapshotId,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.requiredReviewerCount).toBe(2);
+      expect(result?.reviews).toEqual([
+        expect.objectContaining({ reviewerId: admin.id, vote: "approve" }),
+      ]);
     });
 
     test("returns the reviewers and required reviewer count for a reviewed snapshot", async ({

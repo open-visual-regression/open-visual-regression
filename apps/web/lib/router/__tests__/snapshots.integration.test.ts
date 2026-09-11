@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { v7 as uuidv7 } from "uuid";
 import { vi } from "vitest";
 
@@ -16,6 +17,10 @@ const TEST_PROJECT: AddProjectInputSchema = {
   projectName: "Test Project",
   projectDescription: "A test project",
   gitMainBranch: "main",
+};
+
+const asBearer = (token: string) => {
+  vi.mocked(headers).mockResolvedValue(new Headers({ authorization: `Bearer ${token}` }));
 };
 
 const VIEWPORT = {
@@ -54,6 +59,23 @@ describe("snapshots", () => {
         snapshotId: uuidv7(),
       });
       expect(error?.code).toBe("NOT_FOUND");
+    });
+
+    test("should let a personal access token read a snapshot", async ({ admin }) => {
+      const { build } = await createProjectAndBuild(admin);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: build.id, ...VIEWPORT, targetId: "story-a" }],
+      });
+      const [, token] = await serverClient.accessTokens.create({ name: "cursor" });
+
+      asBearer(token!.token);
+
+      const [error, result] = await serverClient.snapshots.getOne({
+        snapshotId: snapshot!.id,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.snapshot.id).toBe(snapshot!.id);
     });
 
     test("returns NOT_FOUND for a snapshot belonging to a different organization", async ({
@@ -251,6 +273,29 @@ describe("snapshots", () => {
   });
 
   describe("list", () => {
+    test("should let a personal access token list a build's snapshots", async ({ admin }) => {
+      const { build } = await createProjectAndBuild(admin);
+      await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            ...VIEWPORT,
+            targetId: "story-a",
+            targetTitle: "Story A",
+            targetName: "story-a",
+          },
+        ],
+      });
+      const [, token] = await serverClient.accessTokens.create({ name: "cursor" });
+
+      asBearer(token!.token);
+
+      const [error, result] = await serverClient.snapshots.list({ buildId: build.id });
+
+      expect(error).toBeNull();
+      expect(result?.snapshots).toHaveLength(1);
+    });
+
     test("maps diffs to 'needs_review' or 'rejected' based on their review status", async ({
       admin,
     }) => {
@@ -374,6 +419,21 @@ describe("snapshots", () => {
   });
 
   describe("getCounts", () => {
+    test("should let a personal access token read a build's snapshot counts", async ({ admin }) => {
+      const { build } = await createProjectAndBuild(admin);
+      await dbClient.snapshots.createMany({
+        values: [{ buildId: build.id, ...VIEWPORT, targetId: "story-a" }],
+      });
+      const [, token] = await serverClient.accessTokens.create({ name: "cursor" });
+
+      asBearer(token!.token);
+
+      const [error, result] = await serverClient.snapshots.getCounts({ buildId: build.id });
+
+      expect(error).toBeNull();
+      expect(result?.queued).toBe(1);
+    });
+
     test("should return NOT_FOUND for a build that does not exist", async ({ admin: _ }) => {
       const [error] = await serverClient.snapshots.getCounts({
         buildId: "019edfc7-e040-7492-86b2-ccfdc00cf6e2",
