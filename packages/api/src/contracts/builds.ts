@@ -159,6 +159,7 @@ export const listBuildsInputSchema = z.object({
   reviewStatus: buildReviewStatusSchema.optional(),
   statuses: z.array(buildStatusSchema).optional(),
   branches: z.array(z.string()).optional(),
+  commitShas: z.array(z.string()).optional(),
   authors: z.array(z.string()).optional(),
   search: z.string().optional(),
   sortDirection: z.enum(["asc", "desc"]).default("desc"),
