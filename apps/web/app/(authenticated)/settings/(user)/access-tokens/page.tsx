@@ -17,7 +17,7 @@ export default async function AccessTokensPage() {
       <Typography variant="h1" as="h1">
         access tokens
       </Typography>
-      <div className="flex w-full flex-col gap-6 md:w-2/3 lg:w-1/2">
+      <div className="flex w-full flex-col gap-6 md:w-3/4 lg:w-2/3">
         <AccessTokensSection accessTokens={result.accessTokens} />
       </div>
     </div>
