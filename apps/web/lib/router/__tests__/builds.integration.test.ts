@@ -533,6 +533,32 @@ describe("builds", () => {
       expect(result?.builds.map((build) => build.id)).toEqual([buildB!.id]);
     });
 
+    test("should only return builds for the given commit shas", async ({ admin }) => {
+      const [, project] = await serverClient.projects.add(TEST_PROJECT);
+
+      await dbClient.builds.create({
+        projectId: project!.projectId,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: admin.id,
+      });
+
+      const matchingBuild = await dbClient.builds.create({
+        projectId: project!.projectId,
+        branch: "main",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/b/artifact",
+        createdBy: admin.id,
+      });
+
+      const [error, result] = await serverClient.builds.list({ commitShas: ["b".repeat(40)] });
+
+      expect(error).toBeNull();
+      expect(result?.total).toBe(1);
+      expect(result?.builds.map((build) => build.id)).toEqual([matchingBuild!.id]);
+    });
+
     test("should only return builds with a name matching the search term", async ({ admin }) => {
       const [, project] = await serverClient.projects.add(TEST_PROJECT);
 

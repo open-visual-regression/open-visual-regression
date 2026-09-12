@@ -97,6 +97,7 @@ export type BuildFilters = {
   organizationId?: string;
   projectIds?: string[];
   branches?: string[];
+  commitShas?: string[];
   authors?: string[];
   search?: string;
   processingStatus?: BuildProcessingStatus;
@@ -123,6 +124,7 @@ const getFilters = ({
   organizationId,
   projectIds,
   branches,
+  commitShas,
   authors,
   search,
   processingStatus,
@@ -136,6 +138,7 @@ const getFilters = ({
     organizationId ? eq(projects.organizationId, organizationId) : undefined,
     projectIds?.length ? inArray(builds.projectId, projectIds) : undefined,
     branches?.length ? inArray(builds.branch, branches) : undefined,
+    commitShas?.length ? inArray(builds.commitSha, commitShas) : undefined,
     authors?.length ? inArray(builds.author, authors) : undefined,
     search ? ilike(builds.name, `%${search}%`) : undefined,
     processingStatus ? eq(builds.processingStatus, processingStatus) : undefined,
