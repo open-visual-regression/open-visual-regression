@@ -12,7 +12,7 @@ const meta: Meta<typeof CreateAccessTokenModal> = {
   tags: ["autodocs"],
   parameters: {
     ovr: {
-      viewports: ["desktop", "tablet", "mobile"],
+      viewports: ["desktop"],
     },
   },
   args: {
@@ -27,8 +27,6 @@ const meta: Meta<typeof CreateAccessTokenModal> = {
 
 export default meta;
 type Story = StoryObj<typeof CreateAccessTokenModal>;
-
-export const Closed: Story = {};
 
 export const Form: Story = {
   play: async ({ canvasElement }) => {

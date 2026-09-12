@@ -15,13 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@ovr/ui/components/dialog";
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@ovr/ui/components/field";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@ovr/ui/components/field";
 import { Input } from "@ovr/ui/components/input";
 
 import { serverClient } from "@/lib/router";
@@ -92,7 +86,6 @@ export const CreateAccessTokenModalForm = () => {
               aria-invalid={!!errors.name}
               {...register("name")}
             />
-            <FieldDescription>a label to help identify this access token later</FieldDescription>
             <FieldError errors={[errors.name]} />
           </Field>
           <FieldError errors={[errors.root]} />
