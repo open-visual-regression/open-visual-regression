@@ -17,9 +17,9 @@ export const AccessTokensSection = ({ accessTokens }: AccessTokensSectionProps) 
       <Typography variant="h2">access tokens</Typography>
       <CreateAccessTokenModal
         trigger={
-          <CreateAccessTokenModalButton>
+          <CreateAccessTokenModalButton className="w-8 gap-0 px-0 sm:w-auto sm:gap-1 sm:px-3.5">
             <Icon icon={PlusIcon} />
-            new access token
+            <span className="sr-only sm:not-sr-only">new access token</span>
           </CreateAccessTokenModalButton>
         }
       />
