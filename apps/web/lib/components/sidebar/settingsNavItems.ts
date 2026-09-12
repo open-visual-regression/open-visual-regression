@@ -1,4 +1,10 @@
-import { SettingsIcon, type LucideIcon, UserIcon, UsersIcon } from "@ovr/ui/components/icon";
+import {
+  KeyRoundIcon,
+  SettingsIcon,
+  type LucideIcon,
+  UserIcon,
+  UsersIcon,
+} from "@ovr/ui/components/icon";
 
 type SettingsNavItem = {
   href: string;
@@ -16,7 +22,10 @@ const SETTINGS_NAV_SECTIONS: SettingsNavSection[] = [
   {
     label: "personal",
     access: "all",
-    items: [{ href: "/settings/account", icon: UserIcon, label: "account" }],
+    items: [
+      { href: "/settings/account", icon: UserIcon, label: "account" },
+      { href: "/settings/access-tokens", icon: KeyRoundIcon, label: "access tokens" },
+    ],
   },
   {
     label: "admin",

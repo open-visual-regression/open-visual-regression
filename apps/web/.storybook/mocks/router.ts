@@ -14,6 +14,13 @@ export const serverClient: typeof RealServerClient = {
     list: os.apiKeys.list.handler(() => ({ apiKeys: [], total: 0 })).actionable(),
     revoke: os.apiKeys.revoke.handler(() => undefined).actionable(),
   },
+  accessTokens: {
+    create: os.accessTokens.create
+      .handler(() => ({ token: "ovr_pat_3f9a8c2b1d0e4f5a6b7c8d9e0f1a2b3c4d5e6f7a" }))
+      .actionable(),
+    list: os.accessTokens.list.handler(() => ({ accessTokens: [], total: 0 })).actionable(),
+    revoke: os.accessTokens.revoke.handler(() => undefined).actionable(),
+  },
   setup: {
     status: os.setup.status.handler(() => ({ status: "completed" as const })).actionable(),
     exec: os.setup.exec.handler(() => undefined).actionable(),
