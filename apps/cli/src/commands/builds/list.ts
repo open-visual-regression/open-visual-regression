@@ -10,6 +10,7 @@ type BuildsListCommandOptions = {
   branch?: string;
   commit?: string;
   config?: string;
+  json?: boolean;
 };
 
 export const listCommand = new Command("list")
@@ -18,6 +19,7 @@ export const listCommand = new Command("list")
   .option("--branch <name>", "filter to builds on this branch")
   .option("--commit <sha>", "filter to builds for this commit")
   .option("-c, --config <path>", "path to ovr.config file")
+  .option("--json", "print results as JSON instead of a table")
   .action(async (options: BuildsListCommandOptions) => {
     const apiKey = getApiKey();
     const serverUrl = await getServerUrl(process.cwd(), options.serverUrl, options.config);
@@ -29,6 +31,11 @@ export const listCommand = new Command("list")
         branches: options.branch ? [options.branch] : undefined,
         commitShas: options.commit ? [options.commit] : undefined,
       });
+
+      if (options.json) {
+        console.log(JSON.stringify(builds, null, 2));
+        return;
+      }
 
       if (builds.length === 0) {
         console.log("No builds found.");

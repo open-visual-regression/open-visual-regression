@@ -8,6 +8,7 @@ import { formatBuildDetail } from "./detail";
 type BuildsGetCommandOptions = {
   serverUrl?: string;
   config?: string;
+  json?: boolean;
 };
 
 export const getCommand = new Command("get")
@@ -15,6 +16,7 @@ export const getCommand = new Command("get")
   .argument("<buildId>", "build id")
   .option("--server-url <url>", "OVR server URL (defaults to ovr.config's serverUrl)")
   .option("-c, --config <path>", "path to ovr.config file")
+  .option("--json", "print the build as JSON instead of formatted text")
   .action(async (buildId: string, options: BuildsGetCommandOptions) => {
     const apiKey = getApiKey();
     const serverUrl = await getServerUrl(process.cwd(), options.serverUrl, options.config);
@@ -23,6 +25,11 @@ export const getCommand = new Command("get")
       const client = createClient(serverUrl, apiKey);
 
       const { build } = await client.builds.getOne({ buildId });
+
+      if (options.json) {
+        console.log(JSON.stringify(build, null, 2));
+        return;
+      }
 
       console.log(
         formatBuildDetail({
