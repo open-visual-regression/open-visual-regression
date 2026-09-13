@@ -19,6 +19,10 @@
         "pages": ["index"]
       },
       {
+        "group": "Configuration",
+        "pages": ["configuration/story-parameters"]
+      },
+      {
         "group": "Self-Hosting",
         "pages": ["self-hosting/docker-compose", "self-hosting/helm"]
       }

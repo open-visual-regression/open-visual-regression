@@ -26,7 +26,15 @@ export type OvrConfig = {
   diffThreshold?: number;
 };
 
-/** Per-story override, set via Storybook `parameters.ovr` on a story. */
+/**
+ * Per-story override, set via Storybook `parameters.ovr`. Storybook merges
+ * parameters global -> component -> story, so setting these on a `meta` default
+ * export applies them to every story in the file.
+ *
+ * Declared here rather than imported because this package is published to npm:
+ * `@ovr/storybook-compat/parameters` holds the canonical type the worker
+ * resolves, and `src/__tests__/storyParameters.test.ts` keeps the two in sync.
+ */
 export type OvrStoryParameters = {
   /**
    * Replaces (not merges with) the config's default viewport list for this
@@ -37,7 +45,11 @@ export type OvrStoryParameters = {
   viewports?: (string | Omit<Viewport, "name">)[];
   /** Replaces the config's `diffThreshold` for this story only. */
   diffThreshold?: number;
-  /** Skips this story entirely — no snapshots are taken for it. */
+  /**
+   * Skips this story entirely — no snapshots are taken, so it never shows up in
+   * a build. Existing baselines are left alone: unskipping the story later
+   * diffs it against the last baseline it had.
+   */
   skip?: boolean;
 };
 

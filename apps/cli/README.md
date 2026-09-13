@@ -110,6 +110,36 @@ export const Primary: Story = {
 | `diffThreshold` | `number` | Replaces the config's `diffThreshold` for this story only |
 | `skip` | `boolean` | Skips this story entirely; no snapshots are taken |
 
+Storybook merges parameters global -> component -> story, so the same block on a
+`meta` default export covers every story in the file, and in
+`.storybook/preview.ts` it covers every story in the project:
+
+```tsx
+// Icons.stories.tsx - skip every story in this file
+const meta = {
+  component: Icon,
+  parameters: { ovr: { skip: true } },
+} satisfies Meta<typeof Icon>;
+
+export default meta;
+```
+
+### Skipping stories
+
+`skip` keeps a story out of OVR completely: no snapshot is created for it, so
+nothing is captured, uploaded, diffed, or shown on the build. Two things to know:
+
+- **Baselines are kept.** Skipping doesn't delete the baselines a story already
+  had. Unskipping it later diffs it against the last baseline it had rather than
+  treating it as brand new.
+- **A story that can't load can't be skipped this way.** OVR reads
+  `parameters.ovr` from the built bundle, which means loading the story. If that
+  throws, OVR can't see the story's parameters and reports it as a failed
+  snapshot instead. Fix the story, or drop it from the Storybook build.
+
+A build where every story is skipped is valid: it resolves as unchanged with no
+snapshots.
+
 ## CI example
 
 ```yaml
