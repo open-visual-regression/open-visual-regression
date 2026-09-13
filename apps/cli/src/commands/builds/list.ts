@@ -3,7 +3,7 @@ import { Command } from "commander";
 
 import { createClient } from "../../client";
 import { getApiKey, getServerUrl } from "../../config";
-import { formatBuildsTable } from "./table";
+import { formatBuildsOutput } from "./table";
 
 type BuildsListCommandOptions = {
   serverUrl?: string;
@@ -32,28 +32,7 @@ export const listCommand = new Command("list")
         commitShas: options.commit ? [options.commit] : undefined,
       });
 
-      if (options.json) {
-        console.log(JSON.stringify(builds, null, 2));
-        return;
-      }
-
-      if (builds.length === 0) {
-        console.log("No builds found.");
-        return;
-      }
-
-      console.log(
-        formatBuildsTable(
-          builds.map((build) => ({
-            id: build.id,
-            status: build.status,
-            branch: build.branch,
-            commit: build.commitSha,
-            project: build.project.name,
-            name: build.name ?? "",
-          })),
-        ),
-      );
+      console.log(formatBuildsOutput(builds, options.json));
     } catch (error) {
       if (error instanceof ORPCError) {
         console.error(

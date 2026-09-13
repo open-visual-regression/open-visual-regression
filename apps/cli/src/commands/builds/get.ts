@@ -3,7 +3,7 @@ import { Command } from "commander";
 
 import { createClient } from "../../client";
 import { getApiKey, getServerUrl } from "../../config";
-import { formatBuildDetail } from "./detail";
+import { formatBuildOutput } from "./detail";
 
 type BuildsGetCommandOptions = {
   serverUrl?: string;
@@ -26,25 +26,7 @@ export const getCommand = new Command("get")
 
       const { build } = await client.builds.getOne({ buildId });
 
-      if (options.json) {
-        console.log(JSON.stringify(build, null, 2));
-        return;
-      }
-
-      console.log(
-        formatBuildDetail({
-          id: build.id,
-          status: build.status,
-          branch: build.branch,
-          commitSha: build.commitSha,
-          project: build.project.name,
-          name: build.name,
-          author: build.author,
-          createdAt: build.createdAt,
-          errorMessage: build.errorMessage,
-          canceledBy: build.canceledBy,
-        }),
-      );
+      console.log(formatBuildOutput(build, options.json));
     } catch (error) {
       if (error instanceof ORPCError) {
         console.error(
