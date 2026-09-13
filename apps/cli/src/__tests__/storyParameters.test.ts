@@ -4,9 +4,6 @@ import type { OvrStoryParameters as ResolvedStoryParameters } from "@ovr/storybo
 
 import type { OvrStoryParameters as PublishedStoryParameters } from "../defineConfig";
 
-// The published type is declared separately from the one the worker resolves,
-// because this package cannot depend on a private one. Both literals below are
-// checked for missing and excess keys, so `tsc` fails if the two ever diverge.
 type Declared<T> = { [K in keyof Required<T>]: true };
 
 const publishedParameters: Declared<PublishedStoryParameters> = {

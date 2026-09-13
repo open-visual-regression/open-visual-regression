@@ -150,7 +150,6 @@ export const extractBuild = async (
   const snapshots = await dbClient.snapshots.findByBuild(buildId);
 
   if (snapshots.length === 0) {
-    // No snapshots means no diffs, and diffs are what finalize a build.
     await enqueueFinalize({ buildId });
     return;
   }
