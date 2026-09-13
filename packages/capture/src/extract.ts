@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { withBundleDir } from "@ovr/builds/storybookBundleCache";
 import { dbClient } from "@ovr/db/client";
-import { enqueueCaptureGroup } from "@ovr/queue/producer";
+import { enqueueCaptureGroup, enqueueFinalize } from "@ovr/queue/producer";
 import { assertSupportedStorybookBuild } from "@ovr/storybook-compat/version";
 
 import { markSnapshotErrored } from "./snapshots";
@@ -148,6 +148,16 @@ export const extractBuild = async (
   await failUnreadableTargets(buildId, targets, viewports, diffThreshold, failures);
 
   const snapshots = await dbClient.snapshots.findByBuild(buildId);
+
+  if (snapshots.length === 0) {
+    // Every target opted out via `parameters.ovr.skip`. Nothing will be captured
+    // and no diff will run, so no diff-completion check would ever finalize this
+    // build: resolve it here instead of leaving it processing until the reaper
+    // times it out.
+    await enqueueFinalize({ buildId });
+    return;
+  }
+
   const groupedByBrowser = groupSnapshotIdsByBrowser(
     snapshots.filter((snapshot) => snapshot.status === "queued"),
   );

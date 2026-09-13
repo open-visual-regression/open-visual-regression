@@ -8,7 +8,7 @@ import type { Redis } from "ioredis";
 import * as tar from "tar";
 
 import { dbClient } from "@ovr/db/client";
-import { QueueName, type CaptureGroupJobPayload } from "@ovr/queue";
+import { QueueName, type CaptureGroupJobPayload, type FinalizeJobPayload } from "@ovr/queue";
 import { storage } from "@ovr/storage";
 
 import { extractBuild } from "../extract";
@@ -17,19 +17,16 @@ import { describe, expect, test, writeStorybookBuildMarkers } from "./fixtures";
 const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
 const IFRAME_TEMPLATE = await readFile(path.join(TEST_DIR, "html/iframe-template.html"), "utf-8");
 
-const collectCaptureGroupJobs = async (
+const collectJobs = async <T>(
   connection: Redis,
+  queueName: QueueName,
   count: number,
-): Promise<CaptureGroupJobPayload[]> => {
-  const worker = new Worker<CaptureGroupJobPayload>(
-    QueueName.SNAPSHOT_CAPTURE,
-    async (job) => job.data,
-    { connection },
-  );
+): Promise<T[]> => {
+  const worker = new Worker<T>(queueName, async (job) => job.data, { connection });
 
   try {
-    return await new Promise<CaptureGroupJobPayload[]>((resolve, reject) => {
-      const jobs: CaptureGroupJobPayload[] = [];
+    return await new Promise<T[]>((resolve, reject) => {
+      const jobs: T[] = [];
 
       worker.on("completed", (job) => {
         jobs.push(job.data);
@@ -44,6 +41,12 @@ const collectCaptureGroupJobs = async (
     await worker.close();
   }
 };
+
+const collectCaptureGroupJobs = (
+  connection: Redis,
+  count: number,
+): Promise<CaptureGroupJobPayload[]> =>
+  collectJobs<CaptureGroupJobPayload>(connection, QueueName.SNAPSHOT_CAPTURE, count);
 
 const buildArtifactTarball = async (
   storyParameters: Record<
@@ -253,5 +256,31 @@ describe("extractBuild", () => {
 
     const snapshots = await dbClient.snapshots.findByBuild(mainBuild.id);
     expect(snapshots.map((snapshot) => snapshot.targetId)).toEqual(["story-b"]);
+  });
+
+  test("finalizes a build when every story is skipped, instead of leaving it processing", async ({
+    mainBuild,
+    captureConfiguration,
+    connection,
+  }) => {
+    const tarball = await buildArtifactTarball({
+      "story-a": { skip: true },
+      "story-b": { skip: true },
+    });
+    await storage.uploadFile(mainBuild.artifactPath, tarball, "application/gzip");
+
+    const targets = [
+      { id: "story-a", title: "Story", name: "A" },
+      { id: "story-b", title: "Story", name: "B" },
+    ];
+
+    await extractBuild(mainBuild.id, targets, [captureConfiguration], 0.05);
+
+    expect(await dbClient.snapshots.findByBuild(mainBuild.id)).toEqual([]);
+
+    // Nothing is captured and nothing is diffed, so the finalize job is the only
+    // thing that can resolve the build before the reaper times it out.
+    const [job] = await collectJobs<FinalizeJobPayload>(connection, QueueName.BUILD_FINALIZE, 1);
+    expect(job).toEqual({ buildId: mainBuild.id });
   });
 });
