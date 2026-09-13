@@ -2,25 +2,30 @@ import { ORPCError } from "@orpc/client";
 import { Command } from "commander";
 
 import { createClient } from "../../client";
-import { getApiKey } from "../../config";
+import { getApiKey, loadServerUrl } from "../../config";
 import { formatBuildsTable } from "./table";
 
 type BuildsListCommandOptions = {
-  serverUrl: string;
+  serverUrl?: string;
   branch?: string;
   commit?: string;
+  config?: string;
 };
 
 export const listCommand = new Command("list")
   .description("List builds")
-  .requiredOption("--server-url <url>", "OVR server URL")
+  .option("--server-url <url>", "OVR server URL (defaults to ovr.config's serverUrl)")
   .option("--branch <name>", "filter to builds on this branch")
   .option("--commit <sha>", "filter to builds for this commit")
+  .option("-c, --config <path>", "path to ovr.config file")
   .action(async (options: BuildsListCommandOptions) => {
     const apiKey = getApiKey();
+    let serverUrl: string | undefined;
 
     try {
-      const client = createClient(options.serverUrl, apiKey);
+      serverUrl = await loadServerUrl(process.cwd(), options.serverUrl, options.config);
+
+      const client = createClient(serverUrl, apiKey);
 
       const { builds } = await client.builds.list({
         branches: options.branch ? [options.branch] : undefined,
@@ -47,7 +52,7 @@ export const listCommand = new Command("list")
     } catch (error) {
       if (error instanceof ORPCError) {
         console.error(
-          `Request to ${options.serverUrl} failed: ${error.status} ${error.code} - ${error.message}`,
+          `Request to ${serverUrl} failed: ${error.status} ${error.code} - ${error.message}`,
         );
       } else {
         console.error(error instanceof Error ? error.message : String(error));

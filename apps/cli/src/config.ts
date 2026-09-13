@@ -60,6 +60,22 @@ export const loadOvrConfig = async (
   return loaded.default;
 };
 
+export const resolveServerUrl = (config: OvrConfig | undefined, override?: string): string => {
+  const serverUrl = override ?? config?.serverUrl;
+
+  if (!serverUrl) {
+    throw new Error('No server URL provided. Pass --server-url or set "serverUrl" in ovr.config.');
+  }
+
+  return serverUrl;
+};
+
+export const loadServerUrl = async (
+  cwd: string = process.cwd(),
+  override?: string,
+  configPath?: string,
+): Promise<string> => resolveServerUrl(await loadOvrConfig(cwd, configPath), override);
+
 export const DEFAULT_DIFF_THRESHOLD = 0.05;
 
 export const resolveDiffThreshold = (config: OvrConfig | undefined): number => {
