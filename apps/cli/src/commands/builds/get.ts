@@ -2,7 +2,7 @@ import { ORPCError } from "@orpc/client";
 import { Command } from "commander";
 
 import { createClient } from "../../client";
-import { getApiKey, loadServerUrl } from "../../config";
+import { getApiKey, getServerUrl } from "../../config";
 import { formatBuildDetail } from "./detail";
 
 type BuildsGetCommandOptions = {
@@ -17,11 +17,9 @@ export const getCommand = new Command("get")
   .option("-c, --config <path>", "path to ovr.config file")
   .action(async (buildId: string, options: BuildsGetCommandOptions) => {
     const apiKey = getApiKey();
-    let serverUrl: string | undefined;
+    const serverUrl = await getServerUrl(process.cwd(), options.serverUrl, options.config);
 
     try {
-      serverUrl = await loadServerUrl(process.cwd(), options.serverUrl, options.config);
-
       const client = createClient(serverUrl, apiKey);
 
       const { build } = await client.builds.getOne({ buildId });

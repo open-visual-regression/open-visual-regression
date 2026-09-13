@@ -76,6 +76,19 @@ export const loadServerUrl = async (
   configPath?: string,
 ): Promise<string> => resolveServerUrl(await loadOvrConfig(cwd, configPath), override);
 
+export const getServerUrl = async (
+  cwd: string,
+  override: string | undefined,
+  configPath?: string,
+): Promise<string> => {
+  try {
+    return await loadServerUrl(cwd, override, configPath);
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  }
+};
+
 export const DEFAULT_DIFF_THRESHOLD = 0.05;
 
 export const resolveDiffThreshold = (config: OvrConfig | undefined): number => {

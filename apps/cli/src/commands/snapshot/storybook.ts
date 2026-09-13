@@ -6,9 +6,9 @@ import { readStoryTargets } from "@ovr/storybook-compat/manifest";
 import { createClient } from "../../client";
 import {
   getApiKey,
+  getServerUrl,
   loadOvrConfig,
   resolveDiffThreshold,
-  resolveServerUrl,
   resolveViewports,
 } from "../../config";
 import { createArtifactTarball, uploadArtifact } from "./artifact";
@@ -44,14 +44,13 @@ export const storybookCommand = new Command("storybook")
   .option("-c, --config <path>", "path to ovr.config file")
   .action(async (options: StorybookCommandOptions) => {
     const apiKey = getApiKey();
-    let serverUrl: string | undefined;
+    const serverUrl = await getServerUrl(process.cwd(), options.serverUrl, options.config);
 
     try {
       const targets = await readStoryTargets(options.dir);
       const config = await loadOvrConfig(process.cwd(), options.config);
       const viewports = resolveViewports(config);
       const diffThreshold = resolveDiffThreshold(config);
-      serverUrl = resolveServerUrl(config, options.serverUrl);
       const { branch, commit: commitSha, name, author } = options;
 
       const client = createClient(serverUrl, apiKey);
