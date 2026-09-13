@@ -278,8 +278,6 @@ describe("extractBuild", () => {
 
     expect(await dbClient.snapshots.findByBuild(mainBuild.id)).toEqual([]);
 
-    // Nothing is captured and nothing is diffed, so the finalize job is the only
-    // thing that can resolve the build before the reaper times it out.
     const [job] = await collectJobs<FinalizeJobPayload>(connection, QueueName.BUILD_FINALIZE, 1);
     expect(job).toEqual({ buildId: mainBuild.id });
   });

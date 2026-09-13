@@ -1,13 +1,9 @@
 ---
 title: Per-story parameters
-description: Override viewports, diff threshold, and skip stories with Storybook's parameters.ovr.
+description: Override viewports and diff threshold, or skip a story entirely.
 ---
 
-Most of what OVR captures is decided once, in the [`ovr.config.ts`](https://github.com/open-visual-regression/open-visual-regression/blob/main/apps/cli/README.md#config)
-the CLI reads: the viewports every story is captured at, and the diff threshold
-that decides when a change needs review. A story that doesn't fit those defaults
-overrides them for itself with Storybook's `parameters.ovr`, set in the story
-source and read back out of the build you upload.
+`ovr.config.ts` sets the viewports every story is captured at and the diff threshold that decides when a change needs review. A story that doesn't fit those defaults overrides them with Storybook's `parameters.ovr`, which OVR reads out of the build you upload.
 
 ```tsx
 // Button.stories.tsx
@@ -27,72 +23,20 @@ export const Primary: Story = {
 | `diffThreshold` | `number` | Replaces the config's `diffThreshold` for this story, as a fraction of pixels that may differ |
 | `skip` | `boolean` | Skips this story entirely; no snapshots are taken |
 
-They take effect on the next build, with nothing to configure server-side.
-
-## Where to set them
-
-Storybook merges parameters global → component → story, and OVR reads the merged
-result. The same block therefore works at three levels:
-
-<CodeGroup>
-
-```tsx One story
-export const Primary: Story = {
-  parameters: { ovr: { skip: true } },
-};
-```
-
-```tsx Every story in a file
-const meta = {
-  component: Icon,
-  parameters: { ovr: { skip: true } },
-} satisfies Meta<typeof Icon>;
-
-export default meta;
-```
-
-```tsx Every story in the project
-// .storybook/preview.ts
-const preview: Preview = {
-  parameters: { ovr: { diffThreshold: 0.02 } },
-};
-
-export default preview;
-```
-
-</CodeGroup>
-
-A story-level value wins over a component-level one, which wins over a global one.
+Storybook merges parameters global → component → story, so the same block on a `meta` default export covers every story in the file, and in `.storybook/preview.ts` every story in the project. The most specific level wins.
 
 ## Skipping stories
 
-`skip: true` keeps a story out of OVR completely. No snapshot record is created
-for it, so it is never captured, never uploaded, never diffed, and never appears
-on a build or in a review queue.
-
-It's the right tool for stories that can't produce a stable screenshot or that
-aren't worth one:
+`skip: true` keeps a story out of OVR: it is never captured, diffed, or shown on a build or in a review queue. Use it for stories that can't produce a stable screenshot.
 
 ```tsx
-// A story driven by live data, animation, or randomness
 export const LiveFeed: Story = {
   parameters: { ovr: { skip: true } },
 };
 ```
 
-Two things worth knowing:
-
-<Note>
-  **Baselines are kept.** Skipping a story doesn't delete baselines it already has. Unskipping it
-  later diffs it against the last baseline it had rather than treating it as a brand-new story.
-</Note>
+Skipping doesn't delete baselines the story already has, so unskipping it later diffs against the baseline it had rather than treating it as new. A build where every story is skipped resolves as unchanged.
 
 <Warning>
-  **A story that can't load can't be skipped this way.** OVR reads `parameters.ovr` from the built
-  bundle, which means loading the story. If loading it throws, OVR never sees its parameters and
-  reports it as a failed snapshot instead. Fix the story, or exclude it from the Storybook build
-  with Storybook's own `stories` globs.
+A story that throws while loading can't be skipped this way. OVR reads `parameters.ovr` out of the built bundle, which means loading the story, so a story that fails to load is reported as a failed snapshot instead. Fix it, or drop it from the Storybook build.
 </Warning>
-
-A build where every story is skipped is valid: it finishes with no snapshots and
-resolves as unchanged, so a commit status gated on it still passes.

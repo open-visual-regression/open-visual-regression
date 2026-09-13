@@ -4,16 +4,9 @@ import type { OvrStoryParameters as ResolvedStoryParameters } from "@ovr/storybo
 
 import type { OvrStoryParameters as PublishedStoryParameters } from "../defineConfig";
 
-/**
- * The CLI ships to npm, so it cannot import the private `@ovr/storybook-compat`
- * package and re-declares the story parameters it documents. The worker reads
- * the canonical type out of a real bundle, so a field added to one side and not
- * the other would be documented but never applied (or applied but undocumented).
- *
- * `Declared<T>` requires every key of `T`, and both object literals are checked
- * for excess properties, so `tsc --noEmit` (`pnpm check-types` in CI) fails as
- * soon as either type gains or loses a field.
- */
+// The published type is declared separately from the one the worker resolves,
+// because this package cannot depend on a private one. Both literals below are
+// checked for missing and excess keys, so `tsc` fails if the two ever diverge.
 type Declared<T> = { [K in keyof Required<T>]: true };
 
 const publishedParameters: Declared<PublishedStoryParameters> = {
@@ -34,8 +27,6 @@ describe("parameters.ovr", () => {
   });
 
   it("should type a story the worker can resolve", () => {
-    // The published type only narrows the canonical one (`browser` to the
-    // browsers that actually launch), so anything it accepts must resolve.
     const parameters = {
       viewports: ["mobile", { browser: "webkit", width: 1440 }],
       diffThreshold: 0.02,
