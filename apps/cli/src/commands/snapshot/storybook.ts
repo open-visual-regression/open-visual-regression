@@ -4,7 +4,13 @@ import { Command } from "commander";
 import { readStoryTargets } from "@ovr/storybook-compat/manifest";
 
 import { createClient } from "../../client";
-import { getApiKey, loadOvrConfig, resolveDiffThreshold, resolveViewports } from "../../config";
+import {
+  getApiKey,
+  getServerUrl,
+  loadOvrConfig,
+  resolveDiffThreshold,
+  resolveViewports,
+} from "../../config";
 import { createArtifactTarball, uploadArtifact } from "./artifact";
 import {
   BuildFailedError,
@@ -15,7 +21,7 @@ import {
 
 type StorybookCommandOptions = {
   dir: string;
-  serverUrl: string;
+  serverUrl?: string;
   branch: string;
   commit: string;
   name?: string;
@@ -28,7 +34,7 @@ type StorybookCommandOptions = {
 export const storybookCommand = new Command("storybook")
   .description("Snapshot a Storybook static build")
   .requiredOption("-d, --dir <path>", "path to storybook-static output directory")
-  .requiredOption("--server-url <url>", "OVR server URL")
+  .option("--server-url <url>", "OVR server URL (defaults to ovr.config's serverUrl)")
   .requiredOption("--branch <name>", "branch name")
   .requiredOption("--commit <sha>", "commit SHA")
   .option("--name <name>", "build name (e.g. commit message)")
@@ -38,6 +44,7 @@ export const storybookCommand = new Command("storybook")
   .option("-c, --config <path>", "path to ovr.config file")
   .action(async (options: StorybookCommandOptions) => {
     const apiKey = getApiKey();
+    const serverUrl = await getServerUrl(process.cwd(), options.serverUrl, options.config);
 
     try {
       const targets = await readStoryTargets(options.dir);
@@ -46,7 +53,7 @@ export const storybookCommand = new Command("storybook")
       const diffThreshold = resolveDiffThreshold(config);
       const { branch, commit: commitSha, name, author } = options;
 
-      const client = createClient(options.serverUrl, apiKey);
+      const client = createClient(serverUrl, apiKey);
 
       console.log(`Creating build for ${branch}@${commitSha} (${targets.length} stories)...`);
       const { buildId, uploadUrl, buildUrl } = await client.builds.createBuild({
@@ -88,7 +95,7 @@ export const storybookCommand = new Command("storybook")
         console.error(error.message);
       } else if (error instanceof ORPCError) {
         console.error(
-          `Request to ${options.serverUrl} failed: ${error.status} ${error.code} - ${error.message}`,
+          `Request to ${serverUrl} failed: ${error.status} ${error.code} - ${error.message}`,
         );
       } else {
         console.error(error instanceof Error ? error.message : String(error));

@@ -7,6 +7,8 @@ export type Viewport = {
 };
 
 export type OvrConfig = {
+  /** OVR server URL. Overridden by a command's `--server-url` flag. */
+  serverUrl?: string;
   /** Every viewport available, named or not. */
   viewports?: readonly Viewport[];
   /**
@@ -43,6 +45,8 @@ type ViewportName<V extends readonly Viewport[]> = Extract<V[number]["name"], st
 
 /** `viewports` must be an inline array literal — assigning it to a variable first loses the name types `defaultViewports` is checked against. */
 export const defineConfig = <const V extends readonly Viewport[] = []>(config: {
+  /** OVR server URL. Overridden by a command's `--server-url` flag. */
+  serverUrl?: string;
   /** Every viewport available, named or not. */
   viewports?: V;
   /**

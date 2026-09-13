@@ -2,22 +2,25 @@ import { ORPCError } from "@orpc/client";
 import { Command } from "commander";
 
 import { createClient } from "../../client";
-import { getApiKey } from "../../config";
+import { getApiKey, getServerUrl } from "../../config";
 import { formatBuildDetail } from "./detail";
 
 type BuildsGetCommandOptions = {
-  serverUrl: string;
+  serverUrl?: string;
+  config?: string;
 };
 
 export const getCommand = new Command("get")
   .description("Show a single build")
   .argument("<buildId>", "build id")
-  .requiredOption("--server-url <url>", "OVR server URL")
+  .option("--server-url <url>", "OVR server URL (defaults to ovr.config's serverUrl)")
+  .option("-c, --config <path>", "path to ovr.config file")
   .action(async (buildId: string, options: BuildsGetCommandOptions) => {
     const apiKey = getApiKey();
+    const serverUrl = await getServerUrl(process.cwd(), options.serverUrl, options.config);
 
     try {
-      const client = createClient(options.serverUrl, apiKey);
+      const client = createClient(serverUrl, apiKey);
 
       const { build } = await client.builds.getOne({ buildId });
 
@@ -38,7 +41,7 @@ export const getCommand = new Command("get")
     } catch (error) {
       if (error instanceof ORPCError) {
         console.error(
-          `Request to ${options.serverUrl} failed: ${error.status} ${error.code} - ${error.message}`,
+          `Request to ${serverUrl} failed: ${error.status} ${error.code} - ${error.message}`,
         );
       } else {
         console.error(error instanceof Error ? error.message : String(error));
