@@ -1,3 +1,5 @@
+import type { BuildDetailSchema } from "@ovr/api/contracts/builds";
+
 export type BuildDetailFields = {
   id: string;
   status: string;
@@ -34,4 +36,23 @@ export const formatBuildDetail = (build: BuildDetailFields): string => {
   const labelWidth = Math.max(...rows.map(([label]) => label.length));
 
   return rows.map(([label, value]) => `${`${label}:`.padEnd(labelWidth + 1)} ${value}`).join("\n");
+};
+
+export const formatBuildOutput = (build: BuildDetailSchema, json: boolean | undefined): string => {
+  if (json) {
+    return JSON.stringify(build, null, 2);
+  }
+
+  return formatBuildDetail({
+    id: build.id,
+    status: build.status,
+    branch: build.branch,
+    commitSha: build.commitSha,
+    project: build.project.name,
+    name: build.name,
+    author: build.author,
+    createdAt: build.createdAt,
+    errorMessage: build.errorMessage,
+    canceledBy: build.canceledBy,
+  });
 };

@@ -1,3 +1,5 @@
+import type { BuildSchema } from "@ovr/api/contracts/builds";
+
 export type BuildsTableRow = {
   id: string;
   status: string;
@@ -32,4 +34,25 @@ export const formatBuildsTable = (rows: BuildsTableRow[]): string => {
       .trimEnd();
 
   return [formatRow(HEADERS), ...cells.map(formatRow)].join("\n");
+};
+
+export const formatBuildsOutput = (builds: BuildSchema[], json: boolean | undefined): string => {
+  if (json) {
+    return JSON.stringify(builds, null, 2);
+  }
+
+  if (builds.length === 0) {
+    return "No builds found.";
+  }
+
+  return formatBuildsTable(
+    builds.map((build) => ({
+      id: build.id,
+      status: build.status,
+      branch: build.branch,
+      commit: build.commitSha,
+      project: build.project.name,
+      name: build.name ?? "",
+    })),
+  );
 };

@@ -3,11 +3,12 @@ import { Command } from "commander";
 
 import { createClient } from "../../client";
 import { getApiKey, getServerUrl } from "../../config";
-import { formatBuildDetail } from "./detail";
+import { formatBuildOutput } from "./detail";
 
 type BuildsGetCommandOptions = {
   serverUrl?: string;
   config?: string;
+  json?: boolean;
 };
 
 export const getCommand = new Command("get")
@@ -15,6 +16,7 @@ export const getCommand = new Command("get")
   .argument("<buildId>", "build id")
   .option("--server-url <url>", "OVR server URL (defaults to ovr.config's serverUrl)")
   .option("-c, --config <path>", "path to ovr.config file")
+  .option("--json", "print the build as JSON instead of formatted text")
   .action(async (buildId: string, options: BuildsGetCommandOptions) => {
     const apiKey = getApiKey();
     const serverUrl = await getServerUrl(process.cwd(), options.serverUrl, options.config);
@@ -24,20 +26,7 @@ export const getCommand = new Command("get")
 
       const { build } = await client.builds.getOne({ buildId });
 
-      console.log(
-        formatBuildDetail({
-          id: build.id,
-          status: build.status,
-          branch: build.branch,
-          commitSha: build.commitSha,
-          project: build.project.name,
-          name: build.name,
-          author: build.author,
-          createdAt: build.createdAt,
-          errorMessage: build.errorMessage,
-          canceledBy: build.canceledBy,
-        }),
-      );
+      console.log(formatBuildOutput(build, options.json));
     } catch (error) {
       if (error instanceof ORPCError) {
         console.error(
