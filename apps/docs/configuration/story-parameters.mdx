@@ -1,0 +1,40 @@
+---
+title: Per-story parameters
+description: Override viewports and diff threshold, or skip a story entirely.
+---
+
+`ovr.config.ts` sets the viewports every story is captured at and the diff threshold that decides when a change needs review. A story that doesn't fit those defaults overrides them with Storybook's `parameters.ovr`, which OVR reads out of the build you upload.
+
+```tsx
+// Button.stories.tsx
+export const Primary: Story = {
+  parameters: {
+    ovr: {
+      viewports: ["mobile", { width: 1440 }],
+      diffThreshold: 0.02,
+    },
+  },
+};
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `viewports` | `(string \| { browser?, width, height? })[]` | Replaces (not merges with) the config's default viewport list for this story. String entries reference a `name` from `ovr.config.ts`; object entries define a one-off viewport inline |
+| `diffThreshold` | `number` | Replaces the config's `diffThreshold` for this story, as a fraction of pixels that may differ |
+| `skip` | `boolean` | Skips this story; it is listed on the build as skipped, never captured or diffed |
+
+Storybook merges parameters global → component → story, so the same block on a `meta` default export covers every story in the file, and in `.storybook/preview.ts` every story in the project. The most specific level wins.
+
+## Skipping stories
+
+`skip: true` takes a story out of the capture pipeline: no screenshot, no diff, and nothing to review. It still appears on the build as `skipped`, so a story that stopped being checked is visible rather than silently missing. Use it for stories that can't produce a stable screenshot.
+
+```tsx
+export const LiveFeed: Story = {
+  parameters: { ovr: { skip: true } },
+};
+```
+
+A skipped story gets one entry on the build rather than one per viewport, since `skip` applies to the story as a whole.
+
+Skipping doesn't delete baselines the story already has, so unskipping it later diffs against the baseline it had rather than treating it as new. A build where every story is skipped resolves as unchanged.

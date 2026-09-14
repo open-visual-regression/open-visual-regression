@@ -46,6 +46,7 @@ export const snapshotStatusEnum = pgEnum("snapshot_status", [
   "success",
   "error",
   "canceled",
+  "skipped",
 ]);
 
 export type SnapshotStatus = (typeof snapshotStatusEnum.enumValues)[number];

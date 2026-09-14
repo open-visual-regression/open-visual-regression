@@ -26,7 +26,7 @@ export type OvrConfig = {
   diffThreshold?: number;
 };
 
-/** Per-story override, set via Storybook `parameters.ovr` on a story. */
+/** Per-story override, set via Storybook `parameters.ovr` on a story or its `meta`. */
 export type OvrStoryParameters = {
   /**
    * Replaces (not merges with) the config's default viewport list for this
@@ -37,7 +37,7 @@ export type OvrStoryParameters = {
   viewports?: (string | Omit<Viewport, "name">)[];
   /** Replaces the config's `diffThreshold` for this story only. */
   diffThreshold?: number;
-  /** Skips this story entirely — no snapshots are taken for it. */
+  /** Skips this story — listed on the build as skipped, never captured, baselines kept. */
   skip?: boolean;
 };
 

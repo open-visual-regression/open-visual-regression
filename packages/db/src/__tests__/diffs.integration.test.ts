@@ -210,5 +210,21 @@ describe("diffs", () => {
     test("should return false for a build with no diffs", async ({ build }) => {
       expect(await dbClient.diffs.hasAllDoneForBuild(build.id)).toBe(false);
     });
+
+    test("should ignore skipped snapshots, which never get a diff", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const [captured] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, ...captureConfiguration, targetId: "a" },
+          { buildId: build.id, ...captureConfiguration, targetId: "b", status: "skipped" },
+        ],
+      });
+      const diff = await dbClient.diffs.create({ snapshotId: captured!.id });
+
+      await dbClient.diffs.updateProcessingStatus(diff!.id, "success");
+      expect(await dbClient.diffs.hasAllDoneForBuild(build.id)).toBe(true);
+    });
   });
 });

@@ -207,6 +207,21 @@ describe("snapshots", () => {
       expect(result?.snapshot.status).toBe("unchanged");
     });
 
+    test("returns a 'skipped' status for a story that was never captured", async ({ admin }) => {
+      const { build } = await createProjectAndBuild(admin);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: build.id, ...VIEWPORT, targetId: "story-a", status: "skipped" }],
+      });
+
+      const [error, result] = await serverClient.snapshots.getOne({
+        snapshotId: snapshot!.id,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.snapshot.status).toBe("skipped");
+      expect(result?.snapshot.imagePath).toBeNull();
+    });
+
     test("returns an 'auto_approved' status for a captured snapshot whose diff exceeded the threshold", async ({
       admin,
     }) => {
@@ -512,6 +527,7 @@ describe("snapshots", () => {
         rejected: 1,
         error: 1,
         canceled: 0,
+        skipped: 0,
         queued: 1,
         processing: 0,
       });

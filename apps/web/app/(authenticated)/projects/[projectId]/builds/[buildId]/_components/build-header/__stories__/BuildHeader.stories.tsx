@@ -23,17 +23,15 @@ const meta: Meta<typeof BuildHeader> = {
 export default meta;
 type Story = StoryObj<typeof BuildHeader>;
 
-const snapshotCounts = {
+const snapshotCounts = mocks.build.generateSnapshotCounts({
   unchanged: 3,
   auto_approved: 2,
   approved: 1,
   needs_review: 2,
-  rejected: 0,
   error: 1,
-  canceled: 0,
   queued: 3,
   processing: 1,
-};
+});
 
 const buildOverrides: Partial<BuildSchema> = {
   name: "Add empty state to projects table",
@@ -112,17 +110,7 @@ export const Errored: Story = {
       status: "error",
       errorMessage: "Build failed: unable to connect to the test runner.",
     }),
-    snapshotCounts: {
-      unchanged: 0,
-      auto_approved: 0,
-      approved: 0,
-      needs_review: 0,
-      rejected: 0,
-      error: 0,
-      canceled: 0,
-      queued: 0,
-      processing: 0,
-    },
+    snapshotCounts: mocks.build.generateSnapshotCounts(),
   },
 };
 
@@ -133,17 +121,7 @@ export const ErroredWithFailedSnapshots: Story = {
       status: "error",
       errorMessage: "Some snapshots encountered an error",
     }),
-    snapshotCounts: {
-      unchanged: 4,
-      auto_approved: 0,
-      approved: 0,
-      needs_review: 0,
-      rejected: 0,
-      error: 3,
-      canceled: 0,
-      queued: 0,
-      processing: 0,
-    },
+    snapshotCounts: mocks.build.generateSnapshotCounts({ unchanged: 4, error: 3 }),
   },
 };
 
@@ -154,17 +132,11 @@ export const Canceled: Story = {
       status: "canceled",
       canceledBy: "Alex Kim",
     }),
-    snapshotCounts: {
+    snapshotCounts: mocks.build.generateSnapshotCounts({
       unchanged: 2,
       auto_approved: 1,
-      approved: 0,
-      needs_review: 0,
-      rejected: 0,
-      error: 0,
       canceled: 4,
-      queued: 0,
-      processing: 0,
-    },
+    }),
   },
 };
 
@@ -174,17 +146,7 @@ export const Processing: Story = {
       ...buildOverrides,
       status: "processing",
     }),
-    snapshotCounts: {
-      unchanged: 1,
-      auto_approved: 0,
-      approved: 0,
-      needs_review: 0,
-      rejected: 0,
-      error: 0,
-      canceled: 0,
-      queued: 4,
-      processing: 2,
-    },
+    snapshotCounts: mocks.build.generateSnapshotCounts({ unchanged: 1, queued: 4, processing: 2 }),
   },
 };
 

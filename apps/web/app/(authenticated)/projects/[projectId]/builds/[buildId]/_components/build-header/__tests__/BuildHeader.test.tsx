@@ -23,17 +23,12 @@ const mockPush = vi.mocked(useRouter)().push;
 const renderComponent = ({
   build = mocks.build.generateBuild(),
   storybookHref = null,
-  snapshotCounts = {
+  snapshotCounts = mocks.build.generateSnapshotCounts({
     unchanged: 3,
-    auto_approved: 0,
-    approved: 0,
     needs_review: 2,
-    rejected: 0,
     error: 1,
-    canceled: 0,
     queued: 4,
-    processing: 0,
-  },
+  }),
   canManageBuild = true,
 }: Partial<BuildHeaderProps> = {}) => {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -65,17 +60,7 @@ describe("BuildHeader", () => {
   it("should hide both bulk actions when there are no reviewable snapshots", () => {
     renderComponent({
       build: mocks.build.generateBuild({ status: "needs_review" }),
-      snapshotCounts: {
-        unchanged: 3,
-        auto_approved: 0,
-        approved: 0,
-        needs_review: 0,
-        rejected: 0,
-        error: 1,
-        canceled: 0,
-        queued: 4,
-        processing: 0,
-      },
+      snapshotCounts: mocks.build.generateSnapshotCounts({ unchanged: 3, error: 1, queued: 4 }),
     });
 
     expect(screen.queryByRole("button", { name: /approve all/i })).not.toBeInTheDocument();
@@ -85,17 +70,12 @@ describe("BuildHeader", () => {
   it("should enable reject all when every reviewable snapshot is already approved", () => {
     renderComponent({
       build: mocks.build.generateBuild({ status: "approved" }),
-      snapshotCounts: {
+      snapshotCounts: mocks.build.generateSnapshotCounts({
         unchanged: 3,
-        auto_approved: 0,
         approved: 2,
-        needs_review: 0,
-        rejected: 0,
         error: 1,
-        canceled: 0,
         queued: 4,
-        processing: 0,
-      },
+      }),
     });
 
     expect(screen.getByRole("button", { name: /^approved$/i })).toBeDisabled();
@@ -105,17 +85,13 @@ describe("BuildHeader", () => {
   it("should enable approve all when at least one snapshot is rejected but others are still approved", () => {
     renderComponent({
       build: mocks.build.generateBuild({ status: "rejected" }),
-      snapshotCounts: {
+      snapshotCounts: mocks.build.generateSnapshotCounts({
         unchanged: 3,
-        auto_approved: 0,
         approved: 1,
-        needs_review: 0,
         rejected: 1,
         error: 1,
-        canceled: 0,
         queued: 4,
-        processing: 0,
-      },
+      }),
     });
 
     expect(screen.getByRole("button", { name: /^rejected$/i })).toBeDisabled();
@@ -177,17 +153,7 @@ describe("BuildHeader", () => {
         status: "error",
         errorMessage: "Build failed: unable to connect to the test runner.",
       }),
-      snapshotCounts: {
-        unchanged: 0,
-        auto_approved: 0,
-        approved: 0,
-        needs_review: 0,
-        rejected: 0,
-        error: 0,
-        canceled: 0,
-        queued: 0,
-        processing: 0,
-      },
+      snapshotCounts: mocks.build.generateSnapshotCounts(),
     });
 
     expect(screen.getByRole("alert")).toHaveTextContent(
@@ -201,17 +167,7 @@ describe("BuildHeader", () => {
         status: "error",
         errorMessage: "One or more snapshots failed to diff against their baseline",
       }),
-      snapshotCounts: {
-        unchanged: 0,
-        auto_approved: 0,
-        approved: 0,
-        needs_review: 30,
-        rejected: 0,
-        error: 3,
-        canceled: 0,
-        queued: 0,
-        processing: 0,
-      },
+      snapshotCounts: mocks.build.generateSnapshotCounts({ needs_review: 30, error: 3 }),
     });
 
     expect(screen.queryByRole("button", { name: /approve all/i })).not.toBeInTheDocument();
@@ -319,17 +275,7 @@ describe("BuildHeader", () => {
         errorMessage: "One or more snapshots failed to diff against their baseline",
         isRebuildable: true,
       }),
-      snapshotCounts: {
-        unchanged: 0,
-        auto_approved: 0,
-        approved: 0,
-        needs_review: 0,
-        rejected: 0,
-        error: 3,
-        canceled: 0,
-        queued: 0,
-        processing: 0,
-      },
+      snapshotCounts: mocks.build.generateSnapshotCounts({ error: 3 }),
     });
 
     expect(screen.getByRole("button", { name: /^rebuild$/i })).toBeVisible();

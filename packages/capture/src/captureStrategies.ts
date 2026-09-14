@@ -28,16 +28,6 @@ declare global {
   var __STORYBOOK_PREVIEW__: StorybookPreview | undefined;
 }
 
-export type OvrStoryParameterViewport =
-  | string
-  | { browser?: string; width: number; height?: number };
-
-export type OvrStoryParameters = {
-  viewports?: OvrStoryParameterViewport[];
-  diffThreshold?: number;
-  skip?: boolean;
-};
-
 const waitForStorybookTargetRendered = ({
   targetId,
   timeoutMs,

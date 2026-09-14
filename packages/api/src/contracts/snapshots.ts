@@ -93,6 +93,7 @@ export const snapshotCountsSchema = z.object({
   rejected: z.number().int().nonnegative(),
   error: z.number().int().nonnegative(),
   canceled: z.number().int().nonnegative(),
+  skipped: z.number().int().nonnegative(),
   queued: z.number().int().nonnegative(),
   processing: z.number().int().nonnegative(),
 });

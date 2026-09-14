@@ -8,7 +8,7 @@ import type { Redis } from "ioredis";
 import * as tar from "tar";
 
 import { dbClient } from "@ovr/db/client";
-import { QueueName, type CaptureGroupJobPayload } from "@ovr/queue";
+import { QueueName, type CaptureGroupJobPayload, type FinalizeJobPayload } from "@ovr/queue";
 import { storage } from "@ovr/storage";
 
 import { extractBuild } from "../extract";
@@ -17,19 +17,16 @@ import { describe, expect, test, writeStorybookBuildMarkers } from "./fixtures";
 const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
 const IFRAME_TEMPLATE = await readFile(path.join(TEST_DIR, "html/iframe-template.html"), "utf-8");
 
-const collectCaptureGroupJobs = async (
+const collectJobs = async <T>(
   connection: Redis,
+  queueName: QueueName,
   count: number,
-): Promise<CaptureGroupJobPayload[]> => {
-  const worker = new Worker<CaptureGroupJobPayload>(
-    QueueName.SNAPSHOT_CAPTURE,
-    async (job) => job.data,
-    { connection },
-  );
+): Promise<T[]> => {
+  const worker = new Worker<T>(queueName, async (job) => job.data, { connection });
 
   try {
-    return await new Promise<CaptureGroupJobPayload[]>((resolve, reject) => {
-      const jobs: CaptureGroupJobPayload[] = [];
+    return await new Promise<T[]>((resolve, reject) => {
+      const jobs: T[] = [];
 
       worker.on("completed", (job) => {
         jobs.push(job.data);
@@ -44,6 +41,12 @@ const collectCaptureGroupJobs = async (
     await worker.close();
   }
 };
+
+const collectCaptureGroupJobs = (
+  connection: Redis,
+  count: number,
+): Promise<CaptureGroupJobPayload[]> =>
+  collectJobs<CaptureGroupJobPayload>(connection, QueueName.SNAPSHOT_CAPTURE, count);
 
 const buildArtifactTarball = async (
   storyParameters: Record<
@@ -152,7 +155,7 @@ describe("extractBuild", () => {
     expect(snapshot!.viewportName).toBe("1280xauto");
   });
 
-  test("marks a story's snapshot as errored when its overrides cannot be read", async ({
+  test("marks a story's snapshot as errored when the story fails to load", async ({
     mainBuild,
     captureConfiguration,
   }) => {
@@ -170,7 +173,12 @@ describe("extractBuild", () => {
     expect(snapshot).toMatchObject({ targetId: "story-a", status: "error" });
 
     const logs = await dbClient.snapshotLogs.findBySnapshot(snapshot!.id);
-    expect(logs.some((log) => log.level === "error")).toBe(true);
+    expect(logs).toContainEqual(
+      expect.objectContaining({
+        level: "error",
+        message: expect.stringContaining("failed to load"),
+      }),
+    );
   });
 
   test("captures the readable stories while excluding an unreadable one from the group", async ({
@@ -237,9 +245,10 @@ describe("extractBuild", () => {
     expect(snapshot!.diffThreshold).toBe(0.2);
   });
 
-  test("skips creating snapshots for a story with parameters.ovr.skip set", async ({
+  test("marks a story with parameters.ovr.skip as skipped instead of capturing it", async ({
     mainBuild,
     captureConfiguration,
+    connection,
   }) => {
     const tarball = await buildArtifactTarball({ "story-a": { skip: true } });
     await storage.uploadFile(mainBuild.artifactPath, tarball, "application/gzip");
@@ -252,6 +261,60 @@ describe("extractBuild", () => {
     await extractBuild(mainBuild.id, targets, [captureConfiguration], 0.05);
 
     const snapshots = await dbClient.snapshots.findByBuild(mainBuild.id);
-    expect(snapshots.map((snapshot) => snapshot.targetId)).toEqual(["story-b"]);
+    const statusByTarget = Object.fromEntries(
+      snapshots.map((snapshot) => [snapshot.targetId, snapshot.status]),
+    );
+    expect(statusByTarget).toEqual({ "story-a": "skipped", "story-b": "queued" });
+
+    const [job] = await collectCaptureGroupJobs(connection, 1);
+    expect(job!.snapshotIds).toEqual([
+      snapshots.find((snapshot) => snapshot.targetId === "story-b")!.id,
+    ]);
+  });
+
+  test("creates one skipped snapshot per story, not one per viewport", async ({ mainBuild }) => {
+    const tarball = await buildArtifactTarball({ "story-a": { skip: true } });
+    await storage.uploadFile(mainBuild.artifactPath, tarball, "application/gzip");
+
+    const viewports = [
+      { name: "desktop", browser: "chromium", viewportWidth: 1280, viewportHeight: 0 },
+      { name: "mobile", browser: "chromium", viewportWidth: 390, viewportHeight: 0 },
+    ];
+
+    await extractBuild(
+      mainBuild.id,
+      [{ id: "story-a", title: "Story", name: "A" }],
+      viewports,
+      0.05,
+    );
+
+    const snapshots = await dbClient.snapshots.findByBuild(mainBuild.id);
+    expect(snapshots).toHaveLength(1);
+    expect(snapshots[0]).toMatchObject({ status: "skipped", viewportName: "desktop" });
+  });
+
+  test("finalizes a build when every story is skipped, instead of leaving it processing", async ({
+    mainBuild,
+    captureConfiguration,
+    connection,
+  }) => {
+    const tarball = await buildArtifactTarball({
+      "story-a": { skip: true },
+      "story-b": { skip: true },
+    });
+    await storage.uploadFile(mainBuild.artifactPath, tarball, "application/gzip");
+
+    const targets = [
+      { id: "story-a", title: "Story", name: "A" },
+      { id: "story-b", title: "Story", name: "B" },
+    ];
+
+    await extractBuild(mainBuild.id, targets, [captureConfiguration], 0.05);
+
+    const snapshots = await dbClient.snapshots.findByBuild(mainBuild.id);
+    expect(snapshots.every((snapshot) => snapshot.status === "skipped")).toBe(true);
+
+    const [job] = await collectJobs<FinalizeJobPayload>(connection, QueueName.BUILD_FINALIZE, 1);
+    expect(job).toEqual({ buildId: mainBuild.id });
   });
 });

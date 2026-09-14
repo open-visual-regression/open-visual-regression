@@ -120,7 +120,7 @@ export const hasAllDoneForBuild = async (buildId: string) => {
     .select({ processingStatus: diffs.processingStatus })
     .from(snapshots)
     .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
-    .where(eq(snapshots.buildId, buildId));
+    .where(and(eq(snapshots.buildId, buildId), ne(snapshots.status, "skipped")));
 
   return (
     rows.length > 0 &&

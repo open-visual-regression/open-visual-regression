@@ -11,6 +11,7 @@ export type SnapshotDisplayStatusCounts = {
   rejected: number;
   error: number;
   canceled: number;
+  skipped: number;
   queued: number;
   processing: number;
 };
@@ -81,7 +82,7 @@ export const markUnfinishedAs = async (
     .where(
       and(
         eq(snapshots.buildId, buildId),
-        notInArray(snapshots.status, ["success", "error", "canceled"]),
+        notInArray(snapshots.status, ["success", "error", "canceled", "skipped"]),
       ),
     );
 };
@@ -95,6 +96,7 @@ export const countByBuild = async (buildId: string) => {
 };
 
 const displayStatusExpr = sql<SnapshotDisplayStatus>`case
+  when ${snapshots.status} = 'skipped' then 'skipped'
   when ${snapshots.status} = 'error' or ${snapshots.hasRenderError} then 'error'
   when ${snapshots.status} = 'canceled' then 'canceled'
   when ${snapshots.status} = 'queued' then 'queued'
@@ -127,6 +129,7 @@ export const getDisplayStatusCounts = async (
     rejected: 0,
     error: 0,
     canceled: 0,
+    skipped: 0,
     queued: 0,
     processing: 0,
   };
@@ -148,6 +151,7 @@ const statusDisplayOrder: SnapshotDisplayStatus[] = [
   "rejected",
   "error",
   "canceled",
+  "skipped",
   "queued",
   "processing",
 ];
@@ -219,9 +223,10 @@ const statusPriorityExpr = sql<number>`case (${displayStatusExpr})
   when 'approved' then 2
   when 'auto_approved' then 3
   when 'unchanged' then 4
-  when 'processing' then 5
-  when 'queued' then 6
-  when 'canceled' then 7
+  when 'skipped' then 5
+  when 'processing' then 6
+  when 'queued' then 7
+  when 'canceled' then 8
 end`;
 
 const snapshotOrderBy = sql`

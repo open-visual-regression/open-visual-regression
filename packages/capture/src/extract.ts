@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { withBundleDir } from "@ovr/builds/storybookBundleCache";
 import { dbClient } from "@ovr/db/client";
-import { enqueueCaptureGroup } from "@ovr/queue/producer";
+import { enqueueCaptureGroup, enqueueFinalize } from "@ovr/queue/producer";
 import { assertSupportedStorybookBuild } from "@ovr/storybook-compat/version";
 
 import { markSnapshotErrored } from "./snapshots";
@@ -42,6 +42,35 @@ const groupSnapshotIdsByBrowser = (
     return groups;
   }, new Map<string, string[]>());
 
+const resolveDefaultViewport = (viewports: NamedViewport[]): NamedViewport | undefined => {
+  const [defaultViewport] = resolveTargetViewports(viewports, undefined);
+  return defaultViewport ?? viewports[0];
+};
+
+const toUncapturedSnapshot = (
+  buildId: string,
+  target: Target,
+  viewport: NamedViewport | undefined,
+  diffThreshold: number,
+  status: "queued" | "skipped",
+) => {
+  const viewportWidth = viewport?.viewportWidth ?? 1280;
+  const viewportHeight = viewport?.viewportHeight ?? 0;
+
+  return {
+    buildId,
+    browser: viewport?.browser ?? "chromium",
+    viewportWidth,
+    viewportHeight,
+    viewportName: toViewportName({ name: viewport?.name, viewportWidth, viewportHeight }),
+    targetId: target.id,
+    targetTitle: target.title,
+    targetName: target.name,
+    status,
+    diffThreshold,
+  };
+};
+
 const failUnreadableTargets = async (
   buildId: string,
   targets: Target[],
@@ -53,8 +82,7 @@ const failUnreadableTargets = async (
     return;
   }
 
-  const [defaultViewport] = resolveTargetViewports(viewports, undefined);
-  const viewport = defaultViewport ?? viewports[0];
+  const viewport = resolveDefaultViewport(viewports);
 
   for (const target of targets) {
     const message = failures.get(target.id);
@@ -62,34 +90,11 @@ const failUnreadableTargets = async (
       continue;
     }
 
-    const resolvedViewportWidth = viewport?.viewportWidth ?? 1280;
-    const resolvedViewportHeight = viewport?.viewportHeight ?? 0;
-
     const [snapshot] = await dbClient.snapshots.createMany({
-      values: [
-        {
-          buildId,
-          browser: viewport?.browser ?? "chromium",
-          viewportWidth: resolvedViewportWidth,
-          viewportHeight: resolvedViewportHeight,
-          viewportName: toViewportName({
-            name: viewport?.name,
-            viewportWidth: resolvedViewportWidth,
-            viewportHeight: resolvedViewportHeight,
-          }),
-          targetId: target.id,
-          targetTitle: target.title,
-          targetName: target.name,
-          status: "queued" as const,
-          diffThreshold,
-        },
-      ],
+      values: [toUncapturedSnapshot(buildId, target, viewport, diffThreshold, "queued")],
     });
 
-    await markSnapshotErrored(
-      snapshot!.id,
-      new Error(`Could not read viewport overrides: ${message}`),
-    );
+    await markSnapshotErrored(snapshot!.id, new Error(`Story failed to load: ${message}`));
   }
 };
 
@@ -127,7 +132,15 @@ export const extractBuild = async (
       const override = overrides.get(target.id);
 
       if (override?.skip) {
-        return [];
+        return [
+          toUncapturedSnapshot(
+            buildId,
+            target,
+            resolveDefaultViewport(viewports),
+            diffThreshold,
+            "skipped",
+          ),
+        ];
       }
 
       return resolveTargetViewports(viewports, override?.viewports).map((viewport) => ({
@@ -148,6 +161,12 @@ export const extractBuild = async (
   await failUnreadableTargets(buildId, targets, viewports, diffThreshold, failures);
 
   const snapshots = await dbClient.snapshots.findByBuild(buildId);
+
+  if (snapshots.every((snapshot) => snapshot.status === "skipped")) {
+    await enqueueFinalize({ buildId });
+    return;
+  }
+
   const groupedByBrowser = groupSnapshotIdsByBrowser(
     snapshots.filter((snapshot) => snapshot.status === "queued"),
   );

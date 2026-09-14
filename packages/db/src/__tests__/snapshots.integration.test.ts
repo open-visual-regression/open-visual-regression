@@ -155,6 +155,7 @@ describe("snapshots", () => {
         rejected: 0,
         error: 0,
         canceled: 0,
+        skipped: 0,
         queued: 0,
         processing: 0,
       });
@@ -235,6 +236,7 @@ describe("snapshots", () => {
         rejected: 1,
         error: 1,
         canceled: 0,
+        skipped: 0,
         queued: 1,
         processing: 0,
       });
@@ -270,6 +272,7 @@ describe("snapshots", () => {
         rejected: 0,
         error: 1,
         canceled: 0,
+        skipped: 0,
         queued: 0,
         processing: 0,
       });
@@ -297,6 +300,7 @@ describe("snapshots", () => {
         rejected: 0,
         error: 1,
         canceled: 0,
+        skipped: 0,
         queued: 0,
         processing: 0,
       });
@@ -334,6 +338,7 @@ describe("snapshots", () => {
         rejected: 0,
         error: 0,
         canceled: 2,
+        skipped: 0,
         queued: 0,
         processing: 0,
       });
@@ -469,6 +474,35 @@ describe("snapshots", () => {
       expect(await dbClient.snapshots.countForBuild(build.id, { statuses: ["needs_review"] })).toBe(
         1,
       );
+    });
+
+    test("lists a skipped snapshot as skipped and filters to it", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      await seedHomeAndCheckout(build, captureConfiguration);
+      await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            targetId: "pricing",
+            targetTitle: "Pricing Page",
+            targetName: "pricing",
+            status: "skipped",
+          },
+        ],
+      });
+
+      const skipped = await dbClient.snapshots.listForBuild(build.id, {
+        statuses: ["skipped"],
+        limit: 10,
+      });
+      expect(skipped.snapshots.map((row) => row.targetId)).toEqual(["pricing"]);
+      expect(skipped.snapshots[0]?.status).toBe("skipped");
+
+      const all = await dbClient.snapshots.listForBuild(build.id, { limit: 10 });
+      expect(all.snapshots.map((row) => row.targetId)).toEqual(["checkout", "home", "pricing"]);
     });
 
     test("filters by more than one status", async ({ build, captureConfiguration }) => {

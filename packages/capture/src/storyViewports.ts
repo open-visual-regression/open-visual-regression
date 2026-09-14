@@ -1,6 +1,10 @@
 import { chromium } from "playwright";
 
-import type { OvrStoryParameterViewport, OvrStoryParameters } from "./captureStrategies";
+import type {
+  OvrStoryParameterViewport,
+  OvrStoryParameters,
+} from "@ovr/storybook-compat/parameters";
+
 import { SIGNAL_HANDLING_OPTIONS, newPage } from "./lib/browser";
 import { BOOT_TIMEOUT_MS } from "./lib/captureTimeouts";
 import { startStaticProxy } from "./lib/staticProxy";
