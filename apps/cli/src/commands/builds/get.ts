@@ -1,8 +1,8 @@
-import { ORPCError } from "@orpc/client";
 import { Command } from "commander";
 
 import { createClient } from "../../client";
 import { getApiKey, getServerUrl } from "../../config";
+import { formatCliError } from "../../errors";
 import { formatBuildOutput } from "./detail";
 
 type BuildsGetCommandOptions = {
@@ -28,14 +28,7 @@ export const getCommand = new Command("get")
 
       console.log(formatBuildOutput(build, options.json));
     } catch (error) {
-      if (error instanceof ORPCError) {
-        console.error(
-          `Request to ${serverUrl} failed: ${error.status} ${error.code} - ${error.message}`,
-        );
-      } else {
-        console.error(error instanceof Error ? error.message : String(error));
-      }
-
+      console.error(formatCliError(error, serverUrl));
       process.exit(1);
     }
   });
