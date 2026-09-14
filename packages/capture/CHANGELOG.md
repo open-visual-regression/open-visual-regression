@@ -1,5 +1,38 @@
 # @ovr/capture
 
+## 0.2.0
+
+### Minor Changes
+
+- [#189](https://github.com/open-visual-regression/open-visual-regression/pull/189) [`bf346a2`](https://github.com/open-visual-regression/open-visual-regression/commit/bf346a26490a2b02589f94ce714dd8ac54cebf94) Thanks [@tgfischer](https://github.com/tgfischer)! - Show a skipped story on the build as `skipped`.
+
+  A story with `parameters.ovr.skip` produced no snapshot at all, so it vanished
+  from the build with nothing to say it had ever been there. It now gets one
+  snapshot per story, in a new `skipped` status: nothing is captured, diffed, or
+  queued for review, but the story is visible on the build, in the status filter,
+  and in the build's snapshot counts.
+
+  The diff-completion check ignores skipped snapshots, so they neither hold a
+  build open nor get swept up when one is canceled or reaped.
+
+### Patch Changes
+
+- [#189](https://github.com/open-visual-regression/open-visual-regression/pull/189) [`bf346a2`](https://github.com/open-visual-regression/open-visual-regression/commit/bf346a26490a2b02589f94ce714dd8ac54cebf94) Thanks [@tgfischer](https://github.com/tgfischer)! - Finalize a build when every story is skipped.
+
+  A build whose stories all set `parameters.ovr.skip` has nothing to capture, and
+  so no diffs to finalize it. It stayed in `processing` until the reaper timed it
+  out; it now resolves as unchanged.
+
+  A story that fails to load now reports that, rather than "Could not read
+  viewport overrides".
+
+- Updated dependencies [[`4d82876`](https://github.com/open-visual-regression/open-visual-regression/commit/4d828762aa9e5a8e49345d58f2276d18f3467127), [`bf346a2`](https://github.com/open-visual-regression/open-visual-regression/commit/bf346a26490a2b02589f94ce714dd8ac54cebf94), [`bf346a2`](https://github.com/open-visual-regression/open-visual-regression/commit/bf346a26490a2b02589f94ce714dd8ac54cebf94)]:
+  - @ovr/db@0.2.0
+  - @ovr/storybook-compat@0.2.0
+  - @ovr/reviews@0.1.4
+  - @ovr/builds@0.1.4
+  - @ovr/queue@0.1.2
+
 ## 0.1.3
 
 ### Patch Changes
