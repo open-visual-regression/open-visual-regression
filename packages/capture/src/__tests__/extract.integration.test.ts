@@ -155,7 +155,7 @@ describe("extractBuild", () => {
     expect(snapshot!.viewportName).toBe("1280xauto");
   });
 
-  test("marks a story's snapshot as errored when its overrides cannot be read", async ({
+  test("marks a story's snapshot as errored when the story fails to load", async ({
     mainBuild,
     captureConfiguration,
   }) => {
@@ -173,7 +173,12 @@ describe("extractBuild", () => {
     expect(snapshot).toMatchObject({ targetId: "story-a", status: "error" });
 
     const logs = await dbClient.snapshotLogs.findBySnapshot(snapshot!.id);
-    expect(logs.some((log) => log.level === "error")).toBe(true);
+    expect(logs).toContainEqual(
+      expect.objectContaining({
+        level: "error",
+        message: expect.stringContaining("failed to load"),
+      }),
+    );
   });
 
   test("captures the readable stories while excluding an unreadable one from the group", async ({

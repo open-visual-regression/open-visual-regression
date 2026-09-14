@@ -110,10 +110,6 @@ export const Primary: Story = {
 | `diffThreshold` | `number` | Replaces the config's `diffThreshold` for this story only |
 | `skip` | `boolean` | Skips this story entirely; no snapshots are taken |
 
-Storybook merges parameters global → component → story, so the same block on a `meta` default export covers every story in the file, and in `.storybook/preview.ts` every story in the project.
-
-A skipped story is never captured, diffed, or shown on a build. Its existing baselines are kept, so unskipping it later diffs against the baseline it had. A story that throws while loading can't be skipped this way — OVR reads `parameters.ovr` out of the built bundle, so it reports a failed snapshot instead.
-
 ## CI example
 
 ```yaml

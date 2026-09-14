@@ -36,7 +36,3 @@ export const LiveFeed: Story = {
 ```
 
 Skipping doesn't delete baselines the story already has, so unskipping it later diffs against the baseline it had rather than treating it as new. A build where every story is skipped resolves as unchanged.
-
-<Warning>
-A story that throws while loading can't be skipped this way. OVR reads `parameters.ovr` out of the built bundle, which means loading the story, so a story that fails to load is reported as a failed snapshot instead. Fix it, or drop it from the Storybook build.
-</Warning>

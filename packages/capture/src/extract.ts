@@ -86,10 +86,7 @@ const failUnreadableTargets = async (
       ],
     });
 
-    await markSnapshotErrored(
-      snapshot!.id,
-      new Error(`Could not read viewport overrides: ${message}`),
-    );
+    await markSnapshotErrored(snapshot!.id, new Error(`Story failed to load: ${message}`));
   }
 };
 
