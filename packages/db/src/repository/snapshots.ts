@@ -223,10 +223,10 @@ const statusPriorityExpr = sql<number>`case (${displayStatusExpr})
   when 'approved' then 2
   when 'auto_approved' then 3
   when 'unchanged' then 4
-  when 'processing' then 5
-  when 'queued' then 6
-  when 'canceled' then 7
-  when 'skipped' then 8
+  when 'skipped' then 5
+  when 'processing' then 6
+  when 'queued' then 7
+  when 'canceled' then 8
 end`;
 
 const snapshotOrderBy = sql`

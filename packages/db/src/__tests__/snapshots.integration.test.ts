@@ -476,6 +476,35 @@ describe("snapshots", () => {
       );
     });
 
+    test("lists a skipped snapshot as skipped and filters to it", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      await seedHomeAndCheckout(build, captureConfiguration);
+      await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            targetId: "pricing",
+            targetTitle: "Pricing Page",
+            targetName: "pricing",
+            status: "skipped",
+          },
+        ],
+      });
+
+      const skipped = await dbClient.snapshots.listForBuild(build.id, {
+        statuses: ["skipped"],
+        limit: 10,
+      });
+      expect(skipped.snapshots.map((row) => row.targetId)).toEqual(["pricing"]);
+      expect(skipped.snapshots[0]?.status).toBe("skipped");
+
+      const all = await dbClient.snapshots.listForBuild(build.id, { limit: 10 });
+      expect(all.snapshots.map((row) => row.targetId)).toEqual(["checkout", "home", "pricing"]);
+    });
+
     test("filters by more than one status", async ({ build, captureConfiguration }) => {
       await seedHomeAndCheckout(build, captureConfiguration);
 
