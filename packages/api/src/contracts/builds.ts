@@ -187,6 +187,7 @@ export const snapshotDisplayStatusSchema = z.enum([
   "rejected",
   "error",
   "canceled",
+  "skipped",
   "queued",
   "processing",
 ]);

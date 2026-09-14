@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker";
 
 import type { BuildDetailSchema } from "@ovr/api/contracts/builds";
-import type { BuildSnapshotSchema } from "@ovr/api/contracts/snapshots";
+import type { BuildSnapshotSchema, SnapshotCountsSchema } from "@ovr/api/contracts/snapshots";
 
 export const generateBuildSnapshot = (
   overrides?: Partial<BuildSnapshotSchema>,
@@ -40,5 +40,21 @@ export const generateBuild = (overrides?: Partial<BuildDetailSchema>): BuildDeta
   branchUrl: null,
   buildType: "storybook",
   createdAt: faker.date.recent().toISOString(),
+  ...overrides,
+});
+
+export const generateSnapshotCounts = (
+  overrides?: Partial<SnapshotCountsSchema>,
+): SnapshotCountsSchema => ({
+  unchanged: 0,
+  auto_approved: 0,
+  approved: 0,
+  needs_review: 0,
+  rejected: 0,
+  error: 0,
+  canceled: 0,
+  skipped: 0,
+  queued: 0,
+  processing: 0,
   ...overrides,
 });

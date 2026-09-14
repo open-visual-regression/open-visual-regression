@@ -245,9 +245,10 @@ describe("extractBuild", () => {
     expect(snapshot!.diffThreshold).toBe(0.2);
   });
 
-  test("skips creating snapshots for a story with parameters.ovr.skip set", async ({
+  test("marks a story with parameters.ovr.skip as skipped instead of capturing it", async ({
     mainBuild,
     captureConfiguration,
+    connection,
   }) => {
     const tarball = await buildArtifactTarball({ "story-a": { skip: true } });
     await storage.uploadFile(mainBuild.artifactPath, tarball, "application/gzip");
@@ -260,7 +261,36 @@ describe("extractBuild", () => {
     await extractBuild(mainBuild.id, targets, [captureConfiguration], 0.05);
 
     const snapshots = await dbClient.snapshots.findByBuild(mainBuild.id);
-    expect(snapshots.map((snapshot) => snapshot.targetId)).toEqual(["story-b"]);
+    const statusByTarget = Object.fromEntries(
+      snapshots.map((snapshot) => [snapshot.targetId, snapshot.status]),
+    );
+    expect(statusByTarget).toEqual({ "story-a": "skipped", "story-b": "queued" });
+
+    const [job] = await collectCaptureGroupJobs(connection, 1);
+    expect(job!.snapshotIds).toEqual([
+      snapshots.find((snapshot) => snapshot.targetId === "story-b")!.id,
+    ]);
+  });
+
+  test("creates one skipped snapshot per story, not one per viewport", async ({ mainBuild }) => {
+    const tarball = await buildArtifactTarball({ "story-a": { skip: true } });
+    await storage.uploadFile(mainBuild.artifactPath, tarball, "application/gzip");
+
+    const viewports = [
+      { name: "desktop", browser: "chromium", viewportWidth: 1280, viewportHeight: 0 },
+      { name: "mobile", browser: "chromium", viewportWidth: 390, viewportHeight: 0 },
+    ];
+
+    await extractBuild(
+      mainBuild.id,
+      [{ id: "story-a", title: "Story", name: "A" }],
+      viewports,
+      0.05,
+    );
+
+    const snapshots = await dbClient.snapshots.findByBuild(mainBuild.id);
+    expect(snapshots).toHaveLength(1);
+    expect(snapshots[0]).toMatchObject({ status: "skipped", viewportName: "desktop" });
   });
 
   test("finalizes a build when every story is skipped, instead of leaving it processing", async ({
@@ -281,7 +311,8 @@ describe("extractBuild", () => {
 
     await extractBuild(mainBuild.id, targets, [captureConfiguration], 0.05);
 
-    expect(await dbClient.snapshots.findByBuild(mainBuild.id)).toEqual([]);
+    const snapshots = await dbClient.snapshots.findByBuild(mainBuild.id);
+    expect(snapshots.every((snapshot) => snapshot.status === "skipped")).toBe(true);
 
     const [job] = await collectJobs<FinalizeJobPayload>(connection, QueueName.BUILD_FINALIZE, 1);
     expect(job).toEqual({ buildId: mainBuild.id });

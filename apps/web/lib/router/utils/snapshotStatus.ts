@@ -6,6 +6,10 @@ export const getSnapshotDisplayStatus = (
   snapshot: SnapshotDbSchema,
   diff: DiffDbSchema | undefined,
 ): SnapshotDisplayStatus => {
+  if (snapshot.status === "skipped") {
+    return "skipped";
+  }
+
   if (snapshot.status === "error" || snapshot.hasRenderError) {
     return "error";
   }

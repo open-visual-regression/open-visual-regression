@@ -155,6 +155,7 @@ describe("snapshots", () => {
         rejected: 0,
         error: 0,
         canceled: 0,
+        skipped: 0,
         queued: 0,
         processing: 0,
       });
@@ -235,6 +236,7 @@ describe("snapshots", () => {
         rejected: 1,
         error: 1,
         canceled: 0,
+        skipped: 0,
         queued: 1,
         processing: 0,
       });
@@ -270,6 +272,7 @@ describe("snapshots", () => {
         rejected: 0,
         error: 1,
         canceled: 0,
+        skipped: 0,
         queued: 0,
         processing: 0,
       });
@@ -297,6 +300,7 @@ describe("snapshots", () => {
         rejected: 0,
         error: 1,
         canceled: 0,
+        skipped: 0,
         queued: 0,
         processing: 0,
       });
@@ -334,6 +338,7 @@ describe("snapshots", () => {
         rejected: 0,
         error: 0,
         canceled: 2,
+        skipped: 0,
         queued: 0,
         processing: 0,
       });

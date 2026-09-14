@@ -37,7 +37,7 @@ export type OvrStoryParameters = {
   viewports?: (string | Omit<Viewport, "name">)[];
   /** Replaces the config's `diffThreshold` for this story only. */
   diffThreshold?: number;
-  /** Skips this story entirely — no snapshots are taken, and existing baselines are kept. */
+  /** Skips this story — listed on the build as skipped, never captured, baselines kept. */
   skip?: boolean;
 };
 

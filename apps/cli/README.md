@@ -108,7 +108,7 @@ export const Primary: Story = {
 |-------|------|-------------|
 | `viewports` | `(string \| { browser?, width, height? })[]` | Replaces (not merges with) the config's default viewport list for this story only. String entries reference a `name` from `ovr.config.ts`; object entries define a one-off viewport inline |
 | `diffThreshold` | `number` | Replaces the config's `diffThreshold` for this story only |
-| `skip` | `boolean` | Skips this story entirely; no snapshots are taken |
+| `skip` | `boolean` | Skips this story; it is listed on the build as skipped, never captured or diffed |
 
 ## CI example
 
