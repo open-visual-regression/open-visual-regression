@@ -1,5 +1,28 @@
 # @ovr/web
 
+## 0.4.0
+
+### Minor Changes
+
+- [#186](https://github.com/open-visual-regression/open-visual-regression/pull/186) [`4d82876`](https://github.com/open-visual-regression/open-visual-regression/commit/4d828762aa9e5a8e49345d58f2276d18f3467127) Thanks [@tgfischer](https://github.com/tgfischer)! - Add a personal access token management page under user settings.
+
+  Users can create and revoke `ovr_pat_...` tokens scoped to their own account
+  rather than a project, for AI agents and other tools that need to read build
+  results without a human relaying them. Unlike project API keys, personal
+  access tokens carry the caller's own permissions and are rejected outright by
+  any endpoint that requires a specific token type.
+
+### Patch Changes
+
+- Updated dependencies [[`4d82876`](https://github.com/open-visual-regression/open-visual-regression/commit/4d828762aa9e5a8e49345d58f2276d18f3467127), [`bf346a2`](https://github.com/open-visual-regression/open-visual-regression/commit/bf346a26490a2b02589f94ce714dd8ac54cebf94)]:
+  - @ovr/api@0.2.0
+  - @ovr/db@0.2.0
+  - @ovr/ui@0.1.0
+  - @ovr/reviews@0.1.4
+  - @ovr/builds@0.1.4
+  - @ovr/git-status@0.1.2
+  - @ovr/queue@0.1.2
+
 ## 0.3.3
 
 ### Patch Changes

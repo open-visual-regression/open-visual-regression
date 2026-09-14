@@ -1,5 +1,27 @@
 # @ovr/api
 
+## 0.2.0
+
+### Minor Changes
+
+- [#186](https://github.com/open-visual-regression/open-visual-regression/pull/186) [`4d82876`](https://github.com/open-visual-regression/open-visual-regression/commit/4d828762aa9e5a8e49345d58f2276d18f3467127) Thanks [@tgfischer](https://github.com/tgfischer)! - Let `builds.list` filter by commit SHA.
+
+  Adds a `commitShas` filter alongside the existing `branches` and `authors`
+  filters, so a caller that already knows a commit (an agent in a repo
+  checkout, say) can look up its build directly instead of filtering client-side
+  through a full branch listing.
+
+- [#189](https://github.com/open-visual-regression/open-visual-regression/pull/189) [`bf346a2`](https://github.com/open-visual-regression/open-visual-regression/commit/bf346a26490a2b02589f94ce714dd8ac54cebf94) Thanks [@tgfischer](https://github.com/tgfischer)! - Show a skipped story on the build as `skipped`.
+
+  A story with `parameters.ovr.skip` produced no snapshot at all, so it vanished
+  from the build with nothing to say it had ever been there. It now gets one
+  snapshot per story, in a new `skipped` status: nothing is captured, diffed, or
+  queued for review, but the story is visible on the build, in the status filter,
+  and in the build's snapshot counts.
+
+  The diff-completion check ignores skipped snapshots, so they neither hold a
+  build open nor get swept up when one is canceled or reaped.
+
 ## 0.1.1
 
 ### Patch Changes
