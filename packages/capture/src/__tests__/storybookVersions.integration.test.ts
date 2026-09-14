@@ -100,7 +100,7 @@ describe.skipIf(fixtures.length === 0)("Storybook version compatibility", () => 
       const snapshots = await dbClient.snapshots.findByBuild(mainBuild.id);
       const byTarget = new Map(snapshots.map((snapshot) => [snapshot.targetId, snapshot]));
 
-      expect(byTarget.has(STORY_IDS.skipped)).toBe(false);
+      expect(byTarget.get(STORY_IDS.skipped)).toMatchObject({ status: "skipped", imagePath: null });
       expect(byTarget.get(STORY_IDS.withOvrParameters)).toMatchObject({
         viewportWidth: 320,
         viewportHeight: 240,
