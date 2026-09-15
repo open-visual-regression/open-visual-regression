@@ -13,6 +13,10 @@
           this._l[e] = (this._l[e] || []).filter((x) => x !== l);
         },
         emit(e, payload) {
+          if (e === "forceRemount") {
+            this._render(payload);
+            return;
+          }
           if (e !== "setCurrentStory") return;
           if (this._current === payload.storyId) {
             for (const listener of this._l["storyUnchanged"] || []) {
@@ -21,7 +25,12 @@
             return;
           }
           this._current = payload.storyId;
-          document.getElementById("storybook-root").textContent = "rendered: " + payload.storyId;
+          this._render(payload);
+        },
+        _render(payload) {
+          this._renders = (this._renders || 0) + 1;
+          document.getElementById("storybook-root").textContent =
+            "rendered: " + payload.storyId + " #" + this._renders;
           for (const listener of this._l["storyRendered"] || []) {
             listener(payload);
           }
