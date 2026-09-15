@@ -100,7 +100,7 @@ describe("settlePage", () => {
 
   test("stops counting a request that outlived the budget, so it cannot stall later snapshots", async () => {
     const page = await newPage(await browser.newContext());
-    const activity = trackNetworkActivity(page);
+    const activity = trackNetworkActivity(page, GIVE_UP_TIMEOUT_MS);
 
     await page.goto(`${origin}/?image=/hang.png`, { waitUntil: "domcontentloaded" });
 
