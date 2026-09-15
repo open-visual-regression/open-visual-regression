@@ -1,5 +1,30 @@
 # @ovr/web
 
+## 0.4.1
+
+### Patch Changes
+
+- [#194](https://github.com/open-visual-regression/open-visual-regression/pull/194) [`6b79d4c`](https://github.com/open-visual-regression/open-visual-regression/commit/6b79d4c3e2fd1430e4c762cf26dc1a311358191b) Thanks [@tgfischer](https://github.com/tgfischer)! - Fall back to session auth when the `Authorization` header is not an OVR token.
+
+  An OIDC reverse proxy in front of OVR (oauth2-proxy and friends, configured to
+  pass the authorization header) forwards its own `Bearer <id_token>` on every
+  request. `callerMiddleware` treated any bearer as an OVR credential, so Better
+  Auth rejected the proxy's token and every route behind it — builds, snapshots,
+  diffs, and the screenshots served by `storage.getObject` — returned
+  `UNAUTHORIZED` for logged-in users. `apiKeyMiddleware` had the same flaw.
+
+  Both now look at the bearer's prefix first: one that is not an OVR token is
+  treated as if no bearer were sent, so `callerMiddleware` authenticates the
+  session and `apiKeyMiddleware` still reports missing credentials. Validation of
+  a bearer that does carry an OVR prefix is unchanged.
+
+- Updated dependencies [[`270db0e`](https://github.com/open-visual-regression/open-visual-regression/commit/270db0e0d44f4b62716df326198c6366b71ee3b3)]:
+  - @ovr/db@0.2.1
+  - @ovr/builds@0.1.5
+  - @ovr/git-status@0.1.3
+  - @ovr/queue@0.1.3
+  - @ovr/reviews@0.1.5
+
 ## 0.4.0
 
 ### Minor Changes
