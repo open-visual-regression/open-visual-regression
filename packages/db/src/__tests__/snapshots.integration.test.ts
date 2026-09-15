@@ -108,6 +108,42 @@ describe("snapshots", () => {
       const found = await dbClient.snapshots.findByBuild(build.id);
       expect(found).toHaveLength(2);
     });
+
+    test("should return the snapshots in a stable order regardless of insertion order", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            targetId: "button--secondary",
+            viewportWidth: 1280,
+          },
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            targetId: "button--primary",
+            viewportWidth: 1280,
+          },
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            targetId: "button--primary",
+            viewportWidth: 375,
+          },
+        ],
+      });
+
+      const found = await dbClient.snapshots.findByBuild(build.id);
+
+      expect(found.map((snapshot) => [snapshot.targetId, snapshot.viewportWidth])).toEqual([
+        ["button--primary", 375],
+        ["button--primary", 1280],
+        ["button--secondary", 1280],
+      ]);
+    });
   });
 
   describe("countByBuild", () => {

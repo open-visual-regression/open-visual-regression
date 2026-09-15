@@ -27,7 +27,16 @@ export const createMany = async ({ values, tx = db }: CreateManyInput) => {
 };
 
 export const findByBuild = (buildId: string) =>
-  db.query.snapshots.findMany({ where: (snapshots, { eq }) => eq(snapshots.buildId, buildId) });
+  db.query.snapshots.findMany({
+    where: (snapshots, { eq }) => eq(snapshots.buildId, buildId),
+    orderBy: (snapshots, { asc }) => [
+      asc(snapshots.targetId),
+      asc(snapshots.browser),
+      asc(snapshots.viewportWidth),
+      asc(snapshots.viewportHeight),
+      asc(snapshots.id),
+    ],
+  });
 
 export const findById = (id: string) =>
   db.query.snapshots.findFirst({ where: (snapshots, { eq }) => eq(snapshots.id, id) });
