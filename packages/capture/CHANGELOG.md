@@ -1,5 +1,42 @@
 # @ovr/capture
 
+## 0.2.1
+
+### Patch Changes
+
+- [#192](https://github.com/open-visual-regression/open-visual-regression/pull/192) [`9313ec5`](https://github.com/open-visual-regression/open-visual-regression/commit/9313ec5922380c62f09d53116de8c0cc25ae816b) Thanks [@tgfischer](https://github.com/tgfischer)! - Wait for a story's images and network requests before screenshotting it.
+
+  Capture gated the screenshot on Storybook's `storyFinished` event, which fires
+  once the component has rendered — it says nothing about whether an `<img>` has
+  loaded or a `fetch` in an effect has resolved. Stories that load images or call
+  an API were screenshotted mid-flight, so the same story could come out with its
+  content one run and a skeleton the next.
+
+  Capture now adds a settle phase between the render and the screenshot: it waits
+  for the page's in-flight requests to go quiet, for webfonts to be ready, and for
+  the resulting paint to land. The phase is bounded, so a story that never goes
+  quiet is still captured rather than failed, and its time shows up alongside the
+  existing render and screenshot timings.
+
+- [#193](https://github.com/open-visual-regression/open-visual-regression/pull/193) [`de97317`](https://github.com/open-visual-regression/open-visual-regression/commit/de97317558e17710728384dfe93a5f65ba4b57c2) Thanks [@tgfischer](https://github.com/tgfischer)! - Re-render a story Storybook reports as unchanged.
+
+  A story captured at more than one viewport is asked for twice on the same page.
+  The second request made Storybook emit `storyUnchanged`, which capture treated
+  as a successful render — so the screenshot was taken with no re-render, no play
+  function, and no settling time after the viewport resize. Responsive images and
+  anything the resize kicked off were caught mid-flight, which is why a story
+  could look right at one viewport and unloaded at another.
+
+  Capture now forces a remount when Storybook reports the story unchanged, so
+  every snapshot waits on a real render and its play function regardless of what
+  the page was showing before.
+
+- Updated dependencies [[`270db0e`](https://github.com/open-visual-regression/open-visual-regression/commit/270db0e0d44f4b62716df326198c6366b71ee3b3)]:
+  - @ovr/db@0.2.1
+  - @ovr/builds@0.1.5
+  - @ovr/queue@0.1.3
+  - @ovr/reviews@0.1.5
+
 ## 0.2.0
 
 ### Minor Changes
