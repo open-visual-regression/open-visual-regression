@@ -58,6 +58,19 @@ describe("builds", () => {
       expect(error?.code).toBe("UNAUTHORIZED");
     });
 
+    test("should return UNAUTHORIZED for a bearer forwarded by an sso proxy", async () => {
+      setApiKeyHeader(
+        "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwMDB1MSIsImVtYWlsIjoidXNlckBleGFtcGxlLmNvbSJ9.c2lnbmF0dXJl",
+      );
+
+      const [error] = await serverClient.builds.createBuild({
+        branch: "main",
+        commitSha: "a".repeat(40),
+      });
+
+      expect(error?.code).toBe("UNAUTHORIZED");
+    });
+
     test("cancels the previous in-flight build on the branch it is pushed to", async ({
       admin: _,
     }) => {

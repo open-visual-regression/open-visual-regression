@@ -5,6 +5,7 @@ import { ORPCError } from "@orpc/client";
 import { dbClient } from "@ovr/db/client";
 
 import { auth } from "../auth/auth";
+import { API_KEY_PREFIX } from "../auth/tokens";
 import { authenticatedMiddleware, adminMiddleware } from "./middleware";
 import { os } from "./os";
 
@@ -24,7 +25,7 @@ export const create = os.apiKeys.create
     const result = await auth.api.createApiKey({
       body: {
         name: input.name,
-        prefix: "ovr_api_key_",
+        prefix: API_KEY_PREFIX,
         userId: context.user.id,
         metadata: { projectId: input.projectId },
       },
