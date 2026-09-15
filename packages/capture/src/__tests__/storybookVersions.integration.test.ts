@@ -67,6 +67,26 @@ describe.skipIf(fixtures.length === 0)("Storybook version compatibility", () => 
       });
     });
 
+    test("re-renders a story it has already rendered", async () => {
+      const strategy = await detectCaptureStrategy(fixture.buildDir);
+
+      await withCapturePage(fixture.buildDir, async (page) => {
+        await strategy.waitForBoot(page, BOOT_TIMEOUT_MS);
+
+        const first = await page.evaluate(strategy.waitForTargetPlayed, {
+          targetId: STORY_IDS.withPlay,
+          timeoutMs: RENDER_TIMEOUT_MS,
+        });
+        const second = await page.evaluate(strategy.waitForTargetPlayed, {
+          targetId: STORY_IDS.withPlay,
+          timeoutMs: RENDER_TIMEOUT_MS,
+        });
+
+        expect(first).toEqual({ ok: true });
+        expect(second).toEqual({ ok: true });
+      });
+    });
+
     test("fails a story whose play function throws", async () => {
       const strategy = await detectCaptureStrategy(fixture.buildDir);
 

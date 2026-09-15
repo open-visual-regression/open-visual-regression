@@ -55,14 +55,21 @@ const waitForStorybookTargetRendered = ({
       }
     };
 
+    let remounted = false;
+
     const listeners: Record<string, (...args: never[]) => void> = {
       storyRendered: () => {
         cleanup();
         resolve({ ok: true });
       },
       storyUnchanged: () => {
-        cleanup();
-        resolve({ ok: true });
+        if (remounted) {
+          cleanup();
+          resolve({ ok: true });
+          return;
+        }
+        remounted = true;
+        channel.emit("forceRemount", { storyId: targetId });
       },
       storyErrored: (payload?: { description?: string }) => {
         cleanup();
@@ -115,6 +122,7 @@ const waitForStorybookTargetPlayed = ({
     };
 
     const errorMessages: string[] = [];
+    let remounted = false;
 
     const listeners: Record<string, (...args: never[]) => void> = {
       storyFinished: (payload?: { storyId?: string; status?: "error" | "success" }) => {
@@ -132,8 +140,13 @@ const waitForStorybookTargetPlayed = ({
         });
       },
       storyUnchanged: () => {
-        cleanup();
-        resolve({ ok: true });
+        if (remounted) {
+          cleanup();
+          resolve({ ok: true });
+          return;
+        }
+        remounted = true;
+        channel.emit("forceRemount", { storyId: targetId });
       },
       storyErrored: (payload?: { description?: string }) => {
         if (payload?.description) {
