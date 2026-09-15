@@ -18,8 +18,10 @@ import {
   BOOT_TIMEOUT_MS,
   CAPTURE_JOB_TIMEOUT_MS,
   RENDER_TIMEOUT_MS,
+  SETTLE_TIMEOUT_MS,
   withTimeout,
 } from "./lib/captureTimeouts";
+import { settlePage, trackNetworkActivity, type NetworkActivity } from "./lib/settle";
 import { startStaticProxy, type StaticProxy } from "./lib/staticProxy";
 import { createUploadQueue } from "./lib/uploadQueue";
 
@@ -31,7 +33,7 @@ const DEFAULT_VIEWPORT_HEIGHT = 800;
 
 const MAX_PENDING_UPLOADS = 2;
 
-type CapturePhase = "render" | "screenshot" | "upload";
+type CapturePhase = "render" | "settle" | "screenshot" | "upload";
 
 type CaptureTimings = Record<CapturePhase, number>;
 
@@ -88,6 +90,7 @@ type PageLogState = { logs: CaptureLog[]; hasPageError: boolean };
 type CapturePage = {
   page: Page;
   pageLogState: PageLogState;
+  networkActivity: NetworkActivity;
   close: () => Promise<void>;
 };
 
@@ -141,11 +144,15 @@ const launchCapturePage = async (
     "capture page booted",
   );
 
+  const networkActivity = trackNetworkActivity(page);
+
   return {
     page,
     pageLogState,
+    networkActivity,
     close: async () => {
       closeRequested = true;
+      networkActivity.dispose();
       await browser.close();
     },
   };
@@ -160,17 +167,17 @@ type CapturedSnapshot = {
   hasUncaughtPageError: boolean;
   errorMessage: string | null;
   renderMs: number;
+  settleMs: number;
   screenshotMs: number;
   startedAt: number;
   context: SnapshotLogContext;
 };
 
 const captureSnapshotOnPage = async (
-  page: Page,
+  { page, pageLogState, networkActivity }: CapturePage,
   strategy: CaptureStrategy,
   build: NonNullable<BuildDbSchema>,
   snapshotId: string,
-  pageLogState: PageLogState,
 ): Promise<CapturedSnapshot | undefined> => {
   const snapshot = await dbClient.snapshots.findById(snapshotId);
   if (!snapshot) {
@@ -214,6 +221,14 @@ const captureSnapshotOnPage = async (
       pageLogState.logs.push({ level: "error", message: errorMessage });
     }
 
+    const [settled, settleMs] = renderResult.ok
+      ? await runPhase("settle", () => settlePage(page, networkActivity, SETTLE_TIMEOUT_MS))
+      : ([false, 0] as const);
+
+    if (renderResult.ok && !settled) {
+      logger.warn(context, "snapshot still had pending work when its settle budget ran out");
+    }
+
     const imagePath = `${build.projectId}/builds/${build.id}/snapshots/${snapshotId}.png`;
 
     const [screenshot, screenshotMs] = await runPhase("screenshot", () =>
@@ -229,6 +244,7 @@ const captureSnapshotOnPage = async (
       hasUncaughtPageError: pageLogState.hasPageError,
       errorMessage,
       renderMs,
+      settleMs,
       screenshotMs,
       startedAt,
       context,
@@ -296,6 +312,7 @@ const persistCapturedSnapshot = async (
 
     const timings: CaptureTimings = {
       render: captured.renderMs,
+      settle: captured.settleMs,
       screenshot: captured.screenshotMs,
       upload: uploadMs,
     };
@@ -390,11 +407,10 @@ export const captureBuildGroup = async (
 
             try {
               const captured = await captureSnapshotOnPage(
-                capturePage.page,
+                capturePage,
                 strategy,
                 build,
                 snapshotId,
-                capturePage.pageLogState,
               );
 
               if (captured) {
