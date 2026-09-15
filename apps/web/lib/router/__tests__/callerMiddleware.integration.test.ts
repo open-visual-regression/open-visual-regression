@@ -20,6 +20,15 @@ const asBearer = (token: string) => {
   vi.mocked(headers).mockResolvedValue(new Headers({ authorization: `Bearer ${token}` }));
 };
 
+const withProxyBearer = async (token: string) => {
+  const proxied = new Headers(await headers());
+  proxied.set("authorization", `Bearer ${token}`);
+  vi.mocked(headers).mockResolvedValue(proxied);
+};
+
+const OIDC_ID_TOKEN =
+  "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwMDB1MSIsImVtYWlsIjoidXNlckBleGFtcGxlLmNvbSJ9.c2lnbmF0dXJl";
+
 describe("callerMiddleware", () => {
   test("should return UNAUTHORIZED without a session or a token", async () => {
     const [error] = await serverClient.builds.list();
@@ -92,6 +101,23 @@ describe("callerMiddleware", () => {
 
     const [error] = await serverClient.builds.list();
     expect(error?.code).toBe("FORBIDDEN");
+  });
+
+  test("should let a session list builds behind a proxy that forwards its own bearer", async ({
+    reviewer: _,
+  }) => {
+    await withProxyBearer(OIDC_ID_TOKEN);
+
+    const [error, result] = await serverClient.builds.list();
+    expect(error).toBeNull();
+    expect(result?.builds).toHaveLength(0);
+  });
+
+  test("should return UNAUTHORIZED for a proxy bearer without a session", async () => {
+    asBearer(OIDC_ID_TOKEN);
+
+    const [error] = await serverClient.builds.list();
+    expect(error?.code).toBe("UNAUTHORIZED");
   });
 
   test("should return UNAUTHORIZED for a token that is not a real key", async () => {

@@ -3,6 +3,7 @@ import { isAPIError } from "better-auth/api";
 import { personalTokenMetadata } from "@ovr/db/repository/accessTokens";
 
 import { auth } from "./auth";
+import { PERSONAL_TOKEN_PREFIX } from "./tokens";
 
 export type SafeAuthResult<TData> = [error: Error, data: null] | [error: null, data: TData];
 
@@ -128,7 +129,7 @@ export const createAccessToken = ({ name, userId, permissions }: CreateAccessTok
     auth.api.createApiKey({
       body: {
         name,
-        prefix: "ovr_pat_",
+        prefix: PERSONAL_TOKEN_PREFIX,
         userId,
         permissions,
         metadata: personalTokenMetadata(),

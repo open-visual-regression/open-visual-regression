@@ -10,6 +10,7 @@ import { auth } from "../auth/auth";
 import { type Session, type User } from "../auth/auth";
 import { canReview } from "../auth/roles";
 import { getCachedSession } from "../auth/session";
+import { API_KEY_PREFIX, OVR_TOKEN_PREFIXES, readBearerToken } from "../auth/tokens";
 import { type RequestContext } from "./os";
 
 export type OrganizationScopedContext = RequestContext & {
@@ -130,7 +131,7 @@ export const reviewerMiddleware = os
 export const apiKeyMiddleware = os
   .$context<RequestContext>()
   .middleware(async ({ context, next }) => {
-    const bearer = context.headers.get("authorization")?.replace("Bearer ", "");
+    const bearer = readBearerToken(context.headers, [API_KEY_PREFIX]);
 
     if (!bearer) {
       throw new ORPCError("UNAUTHORIZED");
@@ -157,7 +158,7 @@ export const apiKeyMiddleware = os
 
 export const callerMiddleware = (resource: string, action: string) =>
   os.$context<RequestContext>().middleware(async ({ context, next }) => {
-    const bearer = context.headers.get("authorization")?.replace("Bearer ", "");
+    const bearer = readBearerToken(context.headers, OVR_TOKEN_PREFIXES);
 
     const caller = bearer
       ? await resolveTokenCaller(bearer, resource, action)

@@ -13,6 +13,8 @@ import { db } from "@ovr/db/db";
 import * as schema from "@ovr/db/schema";
 import { createLogger } from "@ovr/logger";
 
+import { API_KEY_PREFIX } from "./tokens";
+
 const authLogger = createLogger("auth");
 
 const ac = createAccessControl(defaultStatements);
@@ -44,7 +46,7 @@ export const auth = betterAuth({
   plugins: [
     admin({ ac, roles, defaultRole: "reviewer" }),
     apiKey({
-      defaultPrefix: "ovr_api_key_",
+      defaultPrefix: API_KEY_PREFIX,
       enableMetadata: true,
       rateLimit: { enabled: false },
       permissions: { defaultPermissions: { builds: ["write"] } },
