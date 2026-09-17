@@ -1,0 +1,47 @@
+---
+title: ovr.config
+description: Set the server URL, capture viewports, and diff threshold for a project.
+---
+
+An `ovr.config.ts` (or `.js`/`.mjs`) file in the directory you run the CLI from configures the server URL, capture viewports, and diff threshold for a project.
+
+```ts
+// ovr.config.ts
+import { defineConfig } from "@open-visual-regression/cli/config";
+
+export default defineConfig({
+  serverUrl: "https://ovr.example.com",
+  viewports: [
+    { name: "desktop", width: 1280 },
+    { name: "mobile", width: 375, browser: "webkit" },
+  ],
+  defaultViewports: ["desktop"],
+  diffThreshold: 0.05,
+});
+```
+
+## Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `serverUrl` | `string` | | OVR server URL. Overridden by a command's `--server-url` flag |
+| `viewports` | `Viewport[]` | `[]` | Every viewport available, named or not |
+| `defaultViewports` | `string[]` | every named viewport | Names from `viewports` captured automatically for every story |
+| `diffThreshold` | `number`, `(0, 1]` | `0.05` | Fraction of pixels that may differ before a snapshot needs review |
+
+If `viewports` is omitted, OVR falls back to a single default: 1280px wide, full page, in Chromium.
+
+## Viewports
+
+Each entry in `viewports` describes one capture target:
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `name` | `string` | | References this viewport from `defaultViewports` or a story override |
+| `browser` | `"chromium" \| "firefox" \| "webkit"` | `"chromium"` | |
+| `width` | `number` | | |
+| `height` | `number` | full page | Omit to capture the full page height instead of a fixed crop |
+
+Unnamed viewports (no `name`) are always opt-in: they can't be referenced by `defaultViewports`, only added inline via a story override.
+
+A story can override `defaultViewports` and `diffThreshold`, or skip itself entirely — see [Per-story parameters](/configuration/story-parameters).
