@@ -29,7 +29,9 @@ export default defineConfig({
 | `defaultViewports` | `string[]` | every named viewport | Names from `viewports` captured automatically for every story |
 | `diffThreshold` | `number`, `(0, 1]` | `0.05` | Fraction of pixels that may differ before a snapshot needs review |
 
+<Note>
 If `viewports` is omitted, OVR falls back to a single default: 1280px wide, full page, in Chromium.
+</Note>
 
 ## Viewports
 
