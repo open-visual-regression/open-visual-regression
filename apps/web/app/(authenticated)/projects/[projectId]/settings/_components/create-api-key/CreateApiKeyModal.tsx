@@ -8,10 +8,10 @@ import { CreateApiKeyModalForm } from "./CreateApiKeyModalForm";
 
 type CreateApiKeyModalProps = {
   projectId: string;
-  trigger: React.ReactNode;
+  children: React.ReactNode;
 };
 
-export const CreateApiKeyModal = ({ projectId, trigger }: CreateApiKeyModalProps) => {
+export const CreateApiKeyModal = ({ projectId, children }: CreateApiKeyModalProps) => {
   const router = useRouter();
 
   const handleOpenChange = (open: boolean) => {
@@ -22,7 +22,7 @@ export const CreateApiKeyModal = ({ projectId, trigger }: CreateApiKeyModalProps
 
   return (
     <Dialog onOpenChange={handleOpenChange}>
-      {trigger}
+      {children}
       <DialogContent>
         <CreateApiKeyModalForm projectId={projectId} />
       </DialogContent>
