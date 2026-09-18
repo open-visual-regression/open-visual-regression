@@ -1,13 +1,9 @@
 import { type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
 import { type SnapshotsCursor } from "@ovr/api/contracts/snapshots";
 
-export const SNAPSHOTS_PAGE_SIZE = 60;
+import { type SnapshotFilters } from "@/lib/utils/snapshotFilters";
 
-export type SnapshotsListFilters = {
-  statuses?: SnapshotDisplayStatus[];
-  browsers?: string[];
-  viewports?: string[];
-};
+export const SNAPSHOTS_PAGE_SIZE = 60;
 
 type SnapshotsListInput = {
   buildId: string;
@@ -29,15 +25,14 @@ type SnapshotsListInfiniteOptions = {
 
 export const snapshotsListInfiniteOptions = (
   buildId: string,
-  search?: string,
-  filters: SnapshotsListFilters = {},
+  { search, statuses, browsers, viewports }: SnapshotFilters,
 ): SnapshotsListInfiniteOptions => ({
   input: (cursor) => ({
     buildId,
     search,
-    statuses: filters.statuses,
-    browsers: filters.browsers,
-    viewports: filters.viewports,
+    statuses,
+    browsers,
+    viewports,
     limit: SNAPSHOTS_PAGE_SIZE,
     cursor,
   }),

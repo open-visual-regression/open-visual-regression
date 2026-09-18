@@ -1,4 +1,5 @@
 import { dbClient } from "../client";
+import { type ListForBuildFilters } from "../repository/snapshots";
 import { describe, expect, test } from "./fixtures";
 
 const seedReviewQueue = async (
@@ -987,66 +988,71 @@ describe("snapshots", () => {
     });
   });
 
-  describe("findAdjacentReviewableIds", () => {
-    test("returns the next reviewable id in sort order", async ({
+  describe("findAdjacentIds", () => {
+    test("walks every snapshot in the build when no filters are applied", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const { first, errored } = await seedReviewQueue(build, captureConfiguration);
+
+      const result = await dbClient.snapshots.findAdjacentIds(build.id, errored.id);
+      expect(result).toEqual({ prevId: null, nextId: first.id, position: 1, total: 4 });
+    });
+
+    test("returns the previous id in sort order", async ({ build, captureConfiguration }) => {
+      const { second, noDiff } = await seedReviewQueue(build, captureConfiguration);
+
+      const result = await dbClient.snapshots.findAdjacentIds(build.id, noDiff.id);
+      expect(result).toEqual({ prevId: second.id, nextId: null, position: 4, total: 4 });
+    });
+
+    test("narrows navigation to the snapshots matching a status filter", async ({
       build,
       captureConfiguration,
     }) => {
       const { first, second } = await seedReviewQueue(build, captureConfiguration);
 
-      const result = await dbClient.snapshots.findAdjacentReviewableIds(build.id, first.id);
+      const result = await dbClient.snapshots.findAdjacentIds(build.id, first.id, {
+        statuses: ["needs_review", "rejected"],
+      });
       expect(result).toEqual({ prevId: null, nextId: second.id, position: 1, total: 2 });
     });
 
-    test("returns the previous reviewable id in sort order", async ({
+    test("narrows navigation to the snapshots matching a search", async ({
       build,
       captureConfiguration,
     }) => {
-      const { first, second } = await seedReviewQueue(build, captureConfiguration);
+      const { second } = await seedReviewQueue(build, captureConfiguration);
 
-      const result = await dbClient.snapshots.findAdjacentReviewableIds(build.id, second.id);
-      expect(result).toEqual({ prevId: first.id, nextId: null, position: 2, total: 2 });
-    });
-
-    test("returns nulls for a snapshot that does not require review", async ({
-      build,
-      captureConfiguration,
-    }) => {
-      const { noDiff } = await seedReviewQueue(build, captureConfiguration);
-
-      const result = await dbClient.snapshots.findAdjacentReviewableIds(build.id, noDiff.id);
-      expect(result).toEqual({ prevId: null, nextId: null, position: null, total: null });
-    });
-
-    test("excludes errored snapshots even when their diff needs review", async ({
-      build,
-      captureConfiguration,
-    }) => {
-      const { second, errored } = await seedReviewQueue(build, captureConfiguration);
-      await dbClient.diffs.create({
-        snapshotId: errored.id,
-        processingStatus: "success",
-        reviewStatus: "needs_review",
+      const result = await dbClient.snapshots.findAdjacentIds(build.id, second.id, {
+        search: "B",
       });
-
-      const result = await dbClient.snapshots.findAdjacentReviewableIds(build.id, second.id);
-      expect(result.nextId).toBeNull();
+      expect(result).toEqual({ prevId: null, nextId: null, position: 1, total: 1 });
     });
 
-    test("preserves position when status changes within the same priority tier", async ({
+    test("holds the viewed snapshot in place when a review drops it out of the filter", async ({
       build,
       captureConfiguration,
     }) => {
       const { first, second } = await seedReviewQueue(build, captureConfiguration);
+      const filters: ListForBuildFilters = { statuses: ["needs_review", "rejected"] };
       const diff = await dbClient.diffs.findBySnapshot(first.id);
 
-      const before = await dbClient.snapshots.findAdjacentReviewableIds(build.id, first.id);
+      const before = await dbClient.snapshots.findAdjacentIds(build.id, first.id, filters);
       expect(before).toEqual({ prevId: null, nextId: second.id, position: 1, total: 2 });
 
       await dbClient.diffs.updateReviewStatus(diff!.id, "approved");
 
-      const after = await dbClient.snapshots.findAdjacentReviewableIds(build.id, first.id);
+      const after = await dbClient.snapshots.findAdjacentIds(build.id, first.id, filters);
       expect(after).toEqual({ prevId: null, nextId: second.id, position: 1, total: 2 });
+    });
+
+    test("returns nulls for a snapshot that does not exist", async ({ build }) => {
+      const result = await dbClient.snapshots.findAdjacentIds(
+        build.id,
+        "019edfc7-e040-7492-86b2-ccfdc00cf6e4",
+      );
+      expect(result).toEqual({ prevId: null, nextId: null, position: null, total: null });
     });
   });
 });

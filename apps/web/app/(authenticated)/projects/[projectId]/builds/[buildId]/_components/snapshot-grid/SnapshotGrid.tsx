@@ -9,6 +9,7 @@ import { cn } from "@ovr/ui/lib/utils";
 
 import { useScrollContainer } from "@/lib/providers/ScrollContainer";
 import { chunk } from "@/lib/utils/chunk";
+import { type SnapshotFilters } from "@/lib/utils/snapshotFilters";
 
 import { SnapshotCard, SnapshotCardSkeleton } from "./SnapshotCard";
 
@@ -37,7 +38,7 @@ type SnapshotGridProps = {
   snapshots: BuildSnapshotSchema[];
   projectId: string;
   buildId: string;
-  search?: string;
+  filters?: SnapshotFilters;
   hasNextPage?: boolean;
   isFetchingNextPage?: boolean;
   onLoadMore?: () => void;
@@ -47,7 +48,7 @@ export const SnapshotGrid = ({
   snapshots,
   projectId,
   buildId,
-  search,
+  filters,
   hasNextPage = false,
   isFetchingNextPage = false,
   onLoadMore,
@@ -92,7 +93,7 @@ export const SnapshotGrid = ({
   if (snapshots.length === 0) {
     return (
       <Typography variant="caption" className="py-12 text-center">
-        {search ? `no snapshots found matching "${search}"` : "no snapshots found"}
+        {filters?.search ? `no snapshots found matching "${filters.search}"` : "no snapshots found"}
       </Typography>
     );
   }
@@ -105,7 +106,13 @@ export const SnapshotGrid = ({
     }
 
     return snapshotChunk.map((snapshot) => (
-      <SnapshotCard key={snapshot.id} snapshot={snapshot} projectId={projectId} buildId={buildId} />
+      <SnapshotCard
+        key={snapshot.id}
+        snapshot={snapshot}
+        projectId={projectId}
+        buildId={buildId}
+        filters={filters}
+      />
     ));
   };
 
@@ -136,6 +143,7 @@ export const SnapshotGrid = ({
               snapshot={snapshot}
               projectId={projectId}
               buildId={buildId}
+              filters={filters}
             />
           ))}
           {hasNextPage ? <SnapshotCardSkeletons count={CHUNK_SIZE} /> : null}

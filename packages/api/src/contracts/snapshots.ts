@@ -63,12 +63,17 @@ export const snapshotsCursorSchema = z.object({
 
 export type SnapshotsCursor = z.infer<typeof snapshotsCursorSchema>;
 
-export const listInputSchema = z.object({
-  buildId: z.uuidv7(),
+export const snapshotFiltersSchema = z.object({
   statuses: z.array(snapshotDisplayStatusSchema).optional(),
   browsers: z.array(z.string()).optional(),
   viewports: z.array(z.string()).optional(),
   search: z.string().min(1).optional(),
+});
+
+export type SnapshotFiltersSchema = z.infer<typeof snapshotFiltersSchema>;
+
+export const listInputSchema = snapshotFiltersSchema.extend({
+  buildId: z.uuidv7(),
   limit: z.number().int().min(1).max(100).default(24),
   cursor: snapshotsCursorSchema.optional(),
 });
@@ -106,7 +111,7 @@ export const getCountsInputSchema = z.object({
 
 export const getCountsContract = oc.input(getCountsInputSchema).output(snapshotCountsSchema);
 
-export const getAdjacentInputSchema = z.object({ snapshotId: z.uuidv7() });
+export const getAdjacentInputSchema = snapshotFiltersSchema.extend({ snapshotId: z.uuidv7() });
 
 export const getAdjacentOutputSchema = z.object({
   prevSnapshotId: z.uuidv7().nullable(),

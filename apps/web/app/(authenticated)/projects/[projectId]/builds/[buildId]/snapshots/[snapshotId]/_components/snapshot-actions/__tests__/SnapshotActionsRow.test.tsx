@@ -8,6 +8,7 @@ import { Toaster } from "@ovr/ui/components/sonner";
 
 import { serverClient } from "@/lib/router";
 import { createORPCError } from "@/lib/testing/orpc";
+import { type SnapshotFilters } from "@/lib/utils/snapshotFilters";
 import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
 
 import { SnapshotActionsRow } from "../SnapshotActionsRow";
@@ -58,6 +59,7 @@ const renderComponent = (
     nextSnapshotId: string | null;
     position: number | null;
     total: number | null;
+    filters: SnapshotFilters;
     canReview: boolean;
     sidebarCollapsed: boolean;
     onToggleSidebar: () => void;
@@ -228,6 +230,39 @@ describe("SnapshotActionsRow", () => {
       "href",
       `/projects/${projectId}/builds/${buildId}/snapshots/${nextSnapshotId}`,
     );
+  });
+
+  it("should link back to the build", () => {
+    renderComponent();
+
+    expect(screen.getByRole("link", { name: /back/i })).toHaveAttribute(
+      "href",
+      `/projects/${projectId}/builds/${buildId}`,
+    );
+  });
+
+  it.each([
+    [/prev/i, `/projects/${projectId}/builds/${buildId}/snapshots/${prevSnapshotId}`],
+    [/next/i, `/projects/${projectId}/builds/${buildId}/snapshots/${nextSnapshotId}`],
+    [/back/i, `/projects/${projectId}/builds/${buildId}`],
+  ])("should keep the build's filters on the %s link", (name, href) => {
+    renderComponent({
+      filters: { statuses: ["needs_review"], browsers: ["chromium"], viewports: [] },
+    });
+
+    expect(screen.getByRole("link", { name })).toHaveAttribute(
+      "href",
+      `${href}?status=needs_review&browser=chromium`,
+    );
+  });
+
+  it("should keep the build's filters when moving on after a review", async ({ user }) => {
+    mockCastVote.mockResolvedValue([null, undefined]);
+    renderComponent({ filters: { statuses: ["needs_review"], browsers: [], viewports: [] } });
+
+    await user.click(screen.getByRole("button", { name: /^approve$/i }));
+
+    expect(mockPush).toHaveBeenCalledWith(`${nextSnapshotHref}?status=needs_review`);
   });
 
   it("should disable prev when there is no previous snapshot", () => {

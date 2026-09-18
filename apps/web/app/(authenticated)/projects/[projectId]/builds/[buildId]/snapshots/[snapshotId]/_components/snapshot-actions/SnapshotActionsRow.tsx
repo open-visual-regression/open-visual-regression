@@ -17,6 +17,7 @@ import {
   ResponsiveActionButton,
   ResponsiveActionButtonSkeleton,
 } from "@/lib/components/responsive-action-button/ResponsiveActionButton";
+import { type SnapshotFilters, withSnapshotFilters } from "@/lib/utils/snapshotFilters";
 
 import { SnapshotApproveButton } from "./SnapshotApproveButton";
 import { SnapshotRejectButton } from "./SnapshotRejectButton";
@@ -46,6 +47,7 @@ type ActionsRowProps = {
   nextSnapshotId: string | null;
   position: number | null;
   total: number | null;
+  filters?: SnapshotFilters;
   canReview: boolean;
   sidebarCollapsed: boolean;
   onToggleSidebar: () => void;
@@ -60,17 +62,20 @@ export const SnapshotActionsRow = ({
   nextSnapshotId,
   position,
   total,
+  filters,
   canReview,
   sidebarCollapsed,
   onToggleSidebar,
 }: ActionsRowProps) => {
-  const snapshotHref = (id: string) => `/projects/${projectId}/builds/${buildId}/snapshots/${id}`;
+  const buildHref = withSnapshotFilters(`/projects/${projectId}/builds/${buildId}`, filters);
+  const snapshotHref = (id: string) =>
+    withSnapshotFilters(`/projects/${projectId}/builds/${buildId}/snapshots/${id}`, filters);
   const nextHref = nextSnapshotId ? snapshotHref(nextSnapshotId) : null;
 
   return (
     <SnapshotActionsRowLayout>
       <div className="flex items-center flex-row gap-2">
-        <ResponsiveActionButton href="../" icon={CornerLeftUpIcon}>
+        <ResponsiveActionButton href={buildHref} icon={CornerLeftUpIcon}>
           back
         </ResponsiveActionButton>
         {prevSnapshotId || nextSnapshotId ? (

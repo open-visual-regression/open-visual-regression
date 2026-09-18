@@ -4,6 +4,7 @@ import { canReview } from "@/lib/auth/roles";
 import { getCachedSession } from "@/lib/auth/session";
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
+import { parseSnapshotFilters } from "@/lib/utils/snapshotFilters";
 import { getStorybookStoryPath, hasHostedStorybook } from "@/lib/utils/storage";
 
 import { ComparisonControls } from "./_components/snapshot-comparison-section/comparison-view/ComparisonControls";
@@ -16,6 +17,8 @@ type SnapshotPageProps = PageProps<"/projects/[projectId]/builds/[buildId]/snaps
 
 export default async function SnapshotPage(props: SnapshotPageProps) {
   const { projectId, buildId, snapshotId } = await props.params;
+  const filters = parseSnapshotFilters(await props.searchParams);
+  const { search, statuses, browsers, viewports } = filters;
 
   const [
     session,
@@ -29,7 +32,7 @@ export default async function SnapshotPage(props: SnapshotPageProps) {
     serverClient.builds.getOne({ buildId }),
     serverClient.snapshots.getOne({ snapshotId }),
     serverClient.diffs.getOne({ snapshotId }),
-    serverClient.snapshots.getAdjacent({ snapshotId }),
+    serverClient.snapshots.getAdjacent({ snapshotId, statuses, browsers, viewports, search }),
     serverClient.diffs.listReviews({ snapshotId }),
   ]);
 
@@ -66,6 +69,7 @@ export default async function SnapshotPage(props: SnapshotPageProps) {
       nextSnapshotId={nextSnapshotId}
       position={position}
       total={total}
+      filters={filters}
       canReview={canReview(session?.user.role)}
       sidebar={
         <SnapshotSidebarContent
