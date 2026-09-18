@@ -43,6 +43,8 @@ describe("BuildsPage", () => {
 
     expect(screen.getByText("acme web build")).toBeVisible();
     expect(screen.getByText("acme admin build")).toBeVisible();
+    expect(screen.getByText("Acme Web")).toBeVisible();
+    expect(screen.getByText("Acme Admin")).toBeVisible();
 
     for (const build of builds) {
       expect(

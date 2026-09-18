@@ -63,6 +63,14 @@ describe("ProjectsSidebar", () => {
     expect(screen.getByRole("heading", { name: "recent builds" })).toBeVisible();
   });
 
+  it("should link the recent builds heading to the all-builds page", () => {
+    vi.mocked(usePathname).mockReturnValue("/projects");
+
+    render(<ProjectsSidebar projects={PROJECTS} total={PROJECTS.length} builds={BUILDS} />);
+
+    expect(screen.getByRole("link", { name: "recent builds" })).toHaveAttribute("href", "/builds");
+  });
+
   it("should not render the recent builds section when there are no builds", () => {
     vi.mocked(usePathname).mockReturnValue("/projects");
 

@@ -96,6 +96,26 @@ describe("NavigationBarMobileMenu", () => {
     expect(screen.getByRole("link", { name: /build 1/i })).toBeVisible();
   });
 
+  it("should close the menu after following the recent builds heading", async ({ user }) => {
+    vi.mocked(usePathname).mockReturnValue("/projects");
+
+    render(
+      <NavigationBarMobileMenu
+        role="reviewer"
+        projects={PROJECTS}
+        projectsTotal={2}
+        builds={BUILDS}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /open projects navigation/i }));
+    await user.click(screen.getByRole("link", { name: "recent builds" }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole("link", { name: "recent builds" })).not.toBeInTheDocument();
+    });
+  });
+
   it("should close the menu after clicking a nav link", async ({ user }) => {
     vi.mocked(usePathname).mockReturnValue("/settings/account");
 

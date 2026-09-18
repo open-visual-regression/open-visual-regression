@@ -40,6 +40,10 @@ export const BuildRow = ({ build }: BuildRowProps) => {
           </TruncatedText>
           <MetadataDot />
           <TruncatedText as={Typography} variant="body-muted">
+            {build.project.name}
+          </TruncatedText>
+          <MetadataDot />
+          <TruncatedText as={Typography} variant="body-muted">
             {build.branch}
           </TruncatedText>
           <MetadataDot />
