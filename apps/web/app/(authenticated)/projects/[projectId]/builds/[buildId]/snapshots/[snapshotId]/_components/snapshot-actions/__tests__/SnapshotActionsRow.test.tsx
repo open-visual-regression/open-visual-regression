@@ -58,6 +58,7 @@ const renderComponent = (
     nextSnapshotId: string | null;
     position: number | null;
     total: number | null;
+    filtersQuery: string;
     canReview: boolean;
     sidebarCollapsed: boolean;
     onToggleSidebar: () => void;
@@ -228,6 +229,42 @@ describe("SnapshotActionsRow", () => {
       "href",
       `/projects/${projectId}/builds/${buildId}/snapshots/${nextSnapshotId}`,
     );
+  });
+
+  it("should link back to the build", () => {
+    renderComponent();
+
+    expect(screen.getByRole("link", { name: /back/i })).toHaveAttribute(
+      "href",
+      `/projects/${projectId}/builds/${buildId}`,
+    );
+  });
+
+  it("should keep the build's filters on the prev, next and back links", () => {
+    renderComponent({ filtersQuery: "status=needs_review&browser=chromium" });
+
+    const query = "?status=needs_review&browser=chromium";
+    expect(screen.getByRole("link", { name: /prev/i })).toHaveAttribute(
+      "href",
+      `/projects/${projectId}/builds/${buildId}/snapshots/${prevSnapshotId}${query}`,
+    );
+    expect(screen.getByRole("link", { name: /next/i })).toHaveAttribute(
+      "href",
+      `/projects/${projectId}/builds/${buildId}/snapshots/${nextSnapshotId}${query}`,
+    );
+    expect(screen.getByRole("link", { name: /back/i })).toHaveAttribute(
+      "href",
+      `/projects/${projectId}/builds/${buildId}${query}`,
+    );
+  });
+
+  it("should keep the build's filters when moving on after a review", async ({ user }) => {
+    mockCastVote.mockResolvedValue([null, undefined]);
+    renderComponent({ filtersQuery: "status=needs_review" });
+
+    await user.click(screen.getByRole("button", { name: /^approve$/i }));
+
+    expect(mockPush).toHaveBeenCalledWith(`${nextSnapshotHref}?status=needs_review`);
   });
 
   it("should disable prev when there is no previous snapshot", () => {

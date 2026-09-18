@@ -96,12 +96,14 @@ export const getCounts = os.snapshots.getCounts
 export const getAdjacent = os.snapshots.getAdjacent
   .use(authenticatedMiddleware)
   .use(organizationSnapshotMiddleware)
-  .handler(async ({ context }) => {
+  .handler(async ({ input, context }) => {
     const { snapshot } = context;
+    const { statuses, browsers, viewports, search } = input;
 
-    const { prevId, nextId, position, total } = await dbClient.snapshots.findAdjacentReviewableIds(
+    const { prevId, nextId, position, total } = await dbClient.snapshots.findAdjacentIds(
       snapshot.buildId,
       snapshot.id,
+      { statuses, browsers, viewports, search },
     );
 
     return { prevSnapshotId: prevId, nextSnapshotId: nextId, position, total };

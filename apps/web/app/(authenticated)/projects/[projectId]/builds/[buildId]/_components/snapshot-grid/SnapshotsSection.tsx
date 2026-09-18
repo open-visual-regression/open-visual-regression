@@ -16,6 +16,7 @@ type SnapshotsSectionProps = {
   statuses?: SnapshotDisplayStatus[];
   browsers?: string[];
   viewports?: string[];
+  filtersQuery?: string;
 };
 
 export const SnapshotsSection = ({
@@ -25,6 +26,7 @@ export const SnapshotsSection = ({
   statuses,
   browsers,
   viewports,
+  filtersQuery,
 }: SnapshotsSectionProps) => {
   const { data, isPending, hasNextPage, isFetchingNextPage, fetchNextPage } = useInfiniteQuery(
     orpc.snapshots.list.infiniteOptions(
@@ -44,6 +46,7 @@ export const SnapshotsSection = ({
       projectId={projectId}
       buildId={buildId}
       search={search}
+      filtersQuery={filtersQuery}
       hasNextPage={hasNextPage}
       isFetchingNextPage={isFetchingNextPage}
       onLoadMore={fetchNextPage}

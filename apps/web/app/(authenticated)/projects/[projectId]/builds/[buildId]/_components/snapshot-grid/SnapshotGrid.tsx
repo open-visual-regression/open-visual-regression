@@ -38,6 +38,7 @@ type SnapshotGridProps = {
   projectId: string;
   buildId: string;
   search?: string;
+  filtersQuery?: string;
   hasNextPage?: boolean;
   isFetchingNextPage?: boolean;
   onLoadMore?: () => void;
@@ -48,6 +49,7 @@ export const SnapshotGrid = ({
   projectId,
   buildId,
   search,
+  filtersQuery,
   hasNextPage = false,
   isFetchingNextPage = false,
   onLoadMore,
@@ -105,7 +107,13 @@ export const SnapshotGrid = ({
     }
 
     return snapshotChunk.map((snapshot) => (
-      <SnapshotCard key={snapshot.id} snapshot={snapshot} projectId={projectId} buildId={buildId} />
+      <SnapshotCard
+        key={snapshot.id}
+        snapshot={snapshot}
+        projectId={projectId}
+        buildId={buildId}
+        filtersQuery={filtersQuery}
+      />
     ));
   };
 
@@ -136,6 +144,7 @@ export const SnapshotGrid = ({
               snapshot={snapshot}
               projectId={projectId}
               buildId={buildId}
+              filtersQuery={filtersQuery}
             />
           ))}
           {hasNextPage ? <SnapshotCardSkeletons count={CHUNK_SIZE} /> : null}

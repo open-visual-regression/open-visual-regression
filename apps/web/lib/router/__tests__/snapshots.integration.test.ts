@@ -627,88 +627,39 @@ describe("snapshots", () => {
       return { first: first!, second: second!, third: third!, noDiff: noDiff!, errored: errored! };
     };
 
-    test("returns the next snapshot awaiting review", async ({ admin }) => {
+    test("navigates every snapshot in the build when no filters are given", async ({ admin }) => {
+      const { build } = await createProjectAndBuild(admin);
+      const { first, second, errored } = await seedReviewQueue(build.id);
+
+      const [error, result] = await serverClient.snapshots.getAdjacent({
+        snapshotId: first.id,
+      });
+
+      expect(error).toBeNull();
+      expect(result).toEqual({
+        prevSnapshotId: errored.id,
+        nextSnapshotId: second.id,
+        position: 2,
+        total: 5,
+      });
+    });
+
+    test("navigates only the snapshots matching the given filters", async ({ admin }) => {
       const { build } = await createProjectAndBuild(admin);
       const { first, second } = await seedReviewQueue(build.id);
 
       const [error, result] = await serverClient.snapshots.getAdjacent({
         snapshotId: first.id,
-      });
-
-      expect(error).toBeNull();
-      expect(result?.nextSnapshotId).toBe(second.id);
-    });
-
-    test("returns the previous snapshot awaiting review", async ({ admin }) => {
-      const { build } = await createProjectAndBuild(admin);
-      const { second, third } = await seedReviewQueue(build.id);
-
-      const [error, result] = await serverClient.snapshots.getAdjacent({
-        snapshotId: third.id,
-      });
-
-      expect(error).toBeNull();
-      expect(result?.prevSnapshotId).toBe(second.id);
-    });
-
-    test("returns null prevSnapshotId for the first snapshot in the build", async ({ admin }) => {
-      const { build } = await createProjectAndBuild(admin);
-      const { first } = await seedReviewQueue(build.id);
-
-      const [error, result] = await serverClient.snapshots.getAdjacent({
-        snapshotId: first.id,
-      });
-
-      expect(error).toBeNull();
-      expect(result?.prevSnapshotId).toBeNull();
-    });
-
-    test("returns null nextSnapshotId for the last snapshot in the build", async ({ admin }) => {
-      const { build } = await createProjectAndBuild(admin);
-      const { third } = await seedReviewQueue(build.id);
-
-      const [error, result] = await serverClient.snapshots.getAdjacent({
-        snapshotId: third.id,
-      });
-
-      expect(error).toBeNull();
-      expect(result?.nextSnapshotId).toBeNull();
-    });
-
-    test("returns null for both when the snapshot doesn't require review", async ({ admin }) => {
-      const { build } = await createProjectAndBuild(admin);
-      const { noDiff } = await seedReviewQueue(build.id);
-
-      const [error, result] = await serverClient.snapshots.getAdjacent({
-        snapshotId: noDiff.id,
+        statuses: ["needs_review", "rejected"],
       });
 
       expect(error).toBeNull();
       expect(result).toEqual({
         prevSnapshotId: null,
-        nextSnapshotId: null,
-        position: null,
-        total: null,
+        nextSnapshotId: second.id,
+        position: 1,
+        total: 2,
       });
-    });
-
-    test("excludes errored snapshots from the review queue, even with a needs_review diff", async ({
-      admin,
-    }) => {
-      const { build } = await createProjectAndBuild(admin);
-      const { third, errored } = await seedReviewQueue(build.id);
-      await dbClient.diffs.create({
-        snapshotId: errored.id,
-        processingStatus: "success",
-        reviewStatus: "needs_review",
-      });
-
-      const [error, result] = await serverClient.snapshots.getAdjacent({
-        snapshotId: third.id,
-      });
-
-      expect(error).toBeNull();
-      expect(result?.nextSnapshotId).toBeNull();
     });
   });
 });

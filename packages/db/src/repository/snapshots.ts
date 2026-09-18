@@ -165,7 +165,7 @@ const statusDisplayOrder: SnapshotDisplayStatus[] = [
   "processing",
 ];
 
-type ListForBuildFilters = {
+export type ListForBuildFilters = {
   statuses?: SnapshotDisplayStatus[];
   browsers?: string[];
   viewports?: string[];
@@ -267,37 +267,87 @@ export type AdjacentSnapshotIds = {
   total: number | null;
 };
 
-export const findAdjacentReviewableIds = async (
+const sortKeyExprs = {
+  status_priority: statusPriorityExpr,
+  target_title: snapshots.targetTitle,
+  target_name: snapshots.targetName,
+  browser: snapshots.browser,
+  viewport_width: snapshots.viewportWidth,
+  id: snapshots.id,
+};
+
+const sortKeyColumns = Object.keys(sortKeyExprs);
+
+const sortKeyProjection = sql.join(
+  Object.entries(sortKeyExprs).map(([column, expr]) => sql`${expr} as ${sql.raw(column)}`),
+  sql`, `,
+);
+
+const sortKey = (alias: string) =>
+  sql.raw(`(${sortKeyColumns.map((column) => `${alias}.${column}`).join(", ")})`);
+
+const sortKeyOrder = (alias: string, direction: "asc" | "desc") =>
+  sql.raw(sortKeyColumns.map((column) => `${alias}.${column} ${direction}`).join(", "));
+
+// Neighbors come from sort position rather than set membership, and the viewed
+// snapshot is counted at its own position even once a review drops it out of
+// the filters, so reviewing never blanks prev/next or shrinks the count.
+export const findAdjacentIds = async (
   buildId: string,
   snapshotId: string,
+  filters: ListForBuildFilters = {},
 ): Promise<AdjacentSnapshotIds> => {
   const { rows } = await db.execute<{
     prev_id: string | null;
     next_id: string | null;
-    position: number;
-    total: number;
+    preceding: number;
+    filtered_total: number;
+    in_filtered_set: boolean;
   }>(sql`
-    with ordered as (
-      select
-        ${snapshots.id} as id,
-        row_number() over (order by ${snapshotOrderBy}) as position,
-        count(*) over () as total,
-        lag(${snapshots.id}) over (order by ${snapshotOrderBy}) as prev_id,
-        lead(${snapshots.id}) over (order by ${snapshotOrderBy}) as next_id
+    with current as (
+      select ${sortKeyProjection}
       from ${snapshots}
       left join ${diffs} on ${diffs.snapshotId} = ${snapshots.id}
-      where ${snapshots.buildId} = ${buildId}
-        and ${displayStatusExpr} in ('needs_review', 'rejected', 'approved')
+      where ${snapshots.id} = ${snapshotId} and ${snapshots.buildId} = ${buildId}
+    ),
+    filtered as (
+      select ${sortKeyProjection}
+      from ${snapshots}
+      left join ${diffs} on ${diffs.snapshotId} = ${snapshots.id}
+      where ${listForBuildWhere(buildId, filters)}
     )
-    select position, total, prev_id, next_id from ordered where id = ${snapshotId}
+    select
+      (
+        select f.id from filtered f
+        where ${sortKey("f")} < ${sortKey("c")}
+        order by ${sortKeyOrder("f", "desc")}
+        limit 1
+      ) as prev_id,
+      (
+        select f.id from filtered f
+        where ${sortKey("f")} > ${sortKey("c")}
+        order by ${sortKeyOrder("f", "asc")}
+        limit 1
+      ) as next_id,
+      (
+        select count(*) from filtered f where ${sortKey("f")} <= ${sortKey("c")}
+      ) as preceding,
+      (select count(*) from filtered) as filtered_total,
+      exists (select 1 from filtered f where f.id = c.id) as in_filtered_set
+    from current c
   `);
 
   const row = rows[0];
+  if (!row) {
+    return { prevId: null, nextId: null, position: null, total: null };
+  }
+
+  const offset = row.in_filtered_set ? 0 : 1;
   return {
-    prevId: row?.prev_id ?? null,
-    nextId: row?.next_id ?? null,
-    position: row ? Number(row.position) : null,
-    total: row ? Number(row.total) : null,
+    prevId: row.prev_id,
+    nextId: row.next_id,
+    position: Number(row.preceding) + offset,
+    total: Number(row.filtered_total) + offset,
   };
 };
 

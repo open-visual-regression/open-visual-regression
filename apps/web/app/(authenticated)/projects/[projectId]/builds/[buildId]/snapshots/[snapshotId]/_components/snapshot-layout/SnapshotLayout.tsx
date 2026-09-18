@@ -19,6 +19,7 @@ export type SnapshotLayoutProps = {
   nextSnapshotId: string | null;
   position: number | null;
   total: number | null;
+  filtersQuery?: string;
   canReview: boolean;
   sidebar: React.ReactNode;
   children: React.ReactNode;
@@ -33,6 +34,7 @@ export const SnapshotLayout = ({
   nextSnapshotId,
   position,
   total,
+  filtersQuery,
   canReview,
   sidebar,
   children,
@@ -51,6 +53,7 @@ export const SnapshotLayout = ({
           nextSnapshotId={nextSnapshotId}
           position={position}
           total={total}
+          filtersQuery={filtersQuery}
           canReview={canReview}
           sidebarCollapsed={sidebarCollapsed}
           onToggleSidebar={() => setSidebarCollapsed((collapsed) => !collapsed)}

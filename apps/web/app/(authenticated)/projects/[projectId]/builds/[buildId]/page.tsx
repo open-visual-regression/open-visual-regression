@@ -1,8 +1,5 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { notFound } from "next/navigation";
-import { z } from "zod";
-
-import { snapshotDisplayStatusSchema } from "@ovr/api/contracts/builds";
 
 import { canReview } from "@/lib/auth/roles";
 import { getCachedSession } from "@/lib/auth/session";
@@ -12,6 +9,7 @@ import { orpcServer } from "@/lib/orpc/server";
 import { snapshotsListInfiniteOptions } from "@/lib/orpc/snapshots-query";
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
+import { parseSnapshotFilters, snapshotFiltersQuery } from "@/lib/utils/snapshotFilters";
 import { getStorybookPath, hasHostedStorybook } from "@/lib/utils/storage";
 
 import { BuildHeader } from "./_components/build-header/BuildHeader";
@@ -22,29 +20,11 @@ import { SnapshotsSection } from "./_components/snapshot-grid/SnapshotsSection";
 
 type BuildPageProps = PageProps<"/projects/[projectId]/builds/[buildId]">;
 
-const toArray = (value: string | string[] | undefined) =>
-  value === undefined ? undefined : Array.isArray(value) ? value : [value];
-
-const searchParamsSchema = z.object({
-  search: z
-    .string()
-    .optional()
-    .catch(undefined)
-    .transform((value) => value || undefined),
-  status: z.preprocess(toArray, z.array(snapshotDisplayStatusSchema)).optional().catch(undefined),
-  browser: z.preprocess(toArray, z.array(z.string())).optional().catch(undefined),
-  viewport: z.preprocess(toArray, z.array(z.string())).optional().catch(undefined),
-});
-
 export default async function BuildPage({ params, searchParams }: BuildPageProps) {
   const { projectId, buildId } = await params;
   const rawSearchParams = await searchParams;
-  const {
-    search,
-    status: statuses = [],
-    browser: browsers = [],
-    viewport: viewports = [],
-  } = searchParamsSchema.parse(rawSearchParams);
+  const filters = parseSnapshotFilters(rawSearchParams);
+  const { search, statuses, browsers, viewports } = filters;
 
   const queryClient = getQueryClient();
 
@@ -137,6 +117,7 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
             statuses={statuses}
             browsers={browsers}
             viewports={viewports}
+            filtersQuery={snapshotFiltersQuery(filters)}
           />
         </HydrationBoundary>
       }
