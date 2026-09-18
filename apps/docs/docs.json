@@ -20,7 +20,12 @@
       },
       {
         "group": "CLI",
-        "pages": ["cli/installation", "cli/snapshot-storybook", "cli/builds"]
+        "pages": [
+          "cli/installation",
+          "cli/authentication",
+          "cli/snapshot-storybook",
+          "cli/builds"
+        ]
       },
       {
         "group": "Configuration",

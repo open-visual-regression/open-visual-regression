@@ -5,6 +5,8 @@ description: Upload a Storybook build and report the visual regression result.
 
 Requires a Storybook 8.5+ static build (`storybook build`). Older builds are rejected before upload, with the detected version in the error.
 
+Authenticates with a [project API key](/cli/authentication) — a personal access token is rejected.
+
 ```sh
 ovr snapshot storybook \
   --dir storybook-static \

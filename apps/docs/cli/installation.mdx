@@ -1,6 +1,6 @@
 ---
 title: Installation
-description: Install the CLI and authenticate it against your OVR server.
+description: Install the CLI and point it at your OVR server.
 ---
 
 <CodeGroup>
@@ -39,11 +39,7 @@ yarn dlx @open-visual-regression/cli
 
 ## Authentication
 
-Every command requires `OVR_API_KEY`, a project-scoped key created from the project's settings page in OVR.
-
-```sh
-export OVR_API_KEY=...
-```
+Every command reads its credential from `OVR_API_KEY`. See [Authentication](/cli/authentication) for the two kinds of token and which commands take which.
 
 ## Server URL
 
