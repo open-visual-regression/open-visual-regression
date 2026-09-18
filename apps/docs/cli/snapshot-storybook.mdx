@@ -1,0 +1,64 @@
+---
+title: ovr snapshot storybook
+description: Upload a Storybook build and report the visual regression result.
+---
+
+Requires a Storybook 8.5+ static build (`storybook build`). Older builds are rejected before upload, with the detected version in the error.
+
+Authenticates with a [project API key](/cli/authentication) — a personal access token is rejected.
+
+```sh
+ovr snapshot storybook \
+  --dir storybook-static \
+  --server-url https://ovr.example.com \
+  --branch "$BRANCH" \
+  --commit "$COMMIT_SHA" \
+  --name "$(git log -1 --pretty=%s)" \
+  --author "$(git log -1 --pretty=%an)"
+```
+
+## Flags
+
+| Flag | Required | Default | Description |
+|------|----------|---------|-------------|
+| `-d, --dir <path>` | yes | | Path to the Storybook static build output |
+| `--server-url <url>` | no | `ovr.config`'s `serverUrl` | OVR server URL |
+| `--branch <name>` | yes | | Branch name |
+| `--commit <sha>` | yes | | Commit SHA |
+| `--name <name>` | no | | Build name, e.g. the commit message |
+| `--author <author>` | no | | Commit author |
+| `--wait` | no | `false` | Wait for the build to finish processing before exiting |
+| `--timeout <seconds>` | no | `600` | Maximum seconds to wait for the build result (with `--wait`) |
+| `-c, --config <path>` | no | auto-detected | Path to `ovr.config.ts`/`.js`/`.mjs` |
+
+By default the command uploads the build, then prints the build page URL and exits `0` as soon as the build is published — it doesn't wait for processing or review.
+
+Pass `--wait` to block until the build resolves or `--timeout` elapses instead. Exit code then reflects the outcome:
+
+| Outcome | Exit code |
+|---------|-----------|
+| Unchanged, auto-approved, or already approved | `0` |
+| Needs review | non-zero |
+| Failed | non-zero |
+| Timed out | non-zero |
+
+## CI example
+
+```yaml
+- name: Build Storybook
+  run: pnpm build-storybook
+
+- name: Snapshot with OVR
+  env:
+    OVR_API_KEY: ${{ secrets.OVR_API_KEY }}
+  run: |
+    npx @open-visual-regression/cli snapshot storybook \
+      --dir storybook-static \
+      --server-url https://ovr.example.com \
+      --branch "${{ github.head_ref || github.ref_name }}" \
+      --commit "${{ github.event.pull_request.head.sha || github.sha }}" \
+      --name "$(git log -1 --pretty=%s)" \
+      --author "$(git log -1 --pretty=%an)"
+```
+
+Every story is captured at the viewports from [`ovr.config`](/configuration/config), unless overridden with [per-story parameters](/configuration/story-parameters).
