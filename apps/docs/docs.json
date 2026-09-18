@@ -20,7 +20,7 @@
       },
       {
         "group": "Configuration",
-        "pages": ["configuration/story-parameters"]
+        "pages": ["configuration/config", "configuration/story-parameters"]
       },
       {
         "group": "Self-Hosting",
