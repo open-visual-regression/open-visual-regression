@@ -19,10 +19,9 @@ const API_KEY = "ovr_api_key_3f9a8c2b1d0e4f5a6b7c8d9e0f1a2b3c";
 
 const renderComponent = () =>
   render(
-    <CreateApiKeyModal
-      projectId={PROJECT_ID}
-      trigger={<CreateApiKeyModalButton>new api key</CreateApiKeyModalButton>}
-    />,
+    <CreateApiKeyModal projectId={PROJECT_ID}>
+      <CreateApiKeyModalButton>new api key</CreateApiKeyModalButton>
+    </CreateApiKeyModal>,
   );
 
 describe("CreateApiKeyModal", () => {
