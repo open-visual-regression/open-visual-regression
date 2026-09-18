@@ -29,9 +29,10 @@ const NavigationBarMobileMenu = ({
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
+  // `/builds` shares the projects sidebar, so it opens the same menu.
   const section = pathname.startsWith("/settings")
     ? "settings"
-    : pathname.startsWith("/projects")
+    : pathname.startsWith("/projects") || pathname.startsWith("/builds")
       ? "projects"
       : null;
 

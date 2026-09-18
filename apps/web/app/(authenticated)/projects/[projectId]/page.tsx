@@ -6,6 +6,7 @@ import { buildStatusSchema } from "@ovr/api/contracts/builds";
 
 import { toRole } from "@/lib/auth/roles";
 import { getCachedSession } from "@/lib/auth/session";
+import { BuildsSection } from "@/lib/components/builds-section/BuildsSection";
 import { getBuildStatusLabel } from "@/lib/components/BuildStatus";
 import { buildsListInfiniteOptions } from "@/lib/orpc/builds-query";
 import { getQueryClient } from "@/lib/orpc/query-client";
@@ -15,7 +16,7 @@ import { serverError } from "@/lib/utils/errors";
 
 import { BuildsFilters } from "./_components/builds-section/BuildsFilters";
 import { BuildsSearchField } from "./_components/builds-section/BuildsSearchField";
-import { BuildsSection } from "./_components/builds-section/BuildsSection";
+import { NoBuildsSection } from "./_components/builds-section/NoBuildsSection";
 import { ProjectHeader } from "./_components/project-header/ProjectHeader";
 import { ProjectPageShell } from "./_components/ProjectPageShell";
 
@@ -64,7 +65,13 @@ export default async function ProjectPage(props: ProjectPageProps) {
     ),
     queryClient.prefetchInfiniteQuery(
       orpcServer.builds.list.infiniteOptions(
-        buildsListInfiniteOptions(projectId, search, { statuses, branches, authors }),
+        buildsListInfiniteOptions({
+          projectIds: [projectId],
+          search,
+          statuses,
+          branches,
+          authors,
+        }),
       ),
     ),
   ]);
@@ -113,11 +120,12 @@ export default async function ProjectPage(props: ProjectPageProps) {
       content={
         <HydrationBoundary state={dehydrate(queryClient)}>
           <BuildsSection
-            projectId={projectId}
+            projectIds={[projectId]}
             search={search}
             statuses={statuses}
             branches={branches}
             authors={authors}
+            emptyState={<NoBuildsSection />}
           />
         </HydrationBoundary>
       }

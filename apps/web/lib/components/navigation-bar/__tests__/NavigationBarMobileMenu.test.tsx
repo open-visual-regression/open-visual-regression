@@ -65,6 +65,18 @@ describe("NavigationBarMobileMenu", () => {
     expect(screen.getByRole("link", { name: "Beta" })).toBeVisible();
   });
 
+  it("should open the projects nav links from the all-builds page", async ({ user }) => {
+    vi.mocked(usePathname).mockReturnValue("/builds");
+
+    render(
+      <NavigationBarMobileMenu role="reviewer" projects={PROJECTS} projectsTotal={2} builds={[]} />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /open projects navigation/i }));
+
+    expect(screen.getByRole("link", { name: "Alpha" })).toBeVisible();
+  });
+
   it("should show recent builds in the projects nav links from the mobile menu", async ({
     user,
   }) => {

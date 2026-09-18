@@ -1,7 +1,7 @@
+import { BuildsListSkeleton } from "@/lib/components/builds-section/BuildsList";
 import { FacetBarSkeleton } from "@/lib/components/facet/FacetBar";
 import { SearchFieldSkeleton } from "@/lib/components/SearchField/SearchField";
 
-import { BuildsListSkeleton } from "./_components/builds-section/BuildsList";
 import { ProjectHeaderSkeleton } from "./_components/project-header/ProjectHeader";
 import { ProjectPageShell } from "./_components/ProjectPageShell";
 

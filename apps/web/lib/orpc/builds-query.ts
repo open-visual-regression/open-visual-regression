@@ -3,13 +3,16 @@ import { type BuildStatus, type BuildsCursor } from "@ovr/api/contracts/builds";
 const BUILDS_PAGE_SIZE = 50;
 
 export type BuildsListFilters = {
+  /** Omit to list every build the caller can read, across all projects. */
+  projectIds?: string[];
+  search?: string;
   statuses?: BuildStatus[];
   branches?: string[];
   authors?: string[];
 };
 
 type BuildsListInput = {
-  projectIds: string[];
+  projectIds: string[] | undefined;
   search: string | undefined;
   statuses: BuildStatus[] | undefined;
   branches: string[] | undefined;
@@ -24,17 +27,19 @@ type BuildsListInfiniteOptions = {
   getNextPageParam: (lastPage: { nextCursor: BuildsCursor | null }) => BuildsCursor | undefined;
 };
 
-export const buildsListInfiniteOptions = (
-  projectId: string,
-  search?: string,
-  filters: BuildsListFilters = {},
-): BuildsListInfiniteOptions => ({
+export const buildsListInfiniteOptions = ({
+  projectIds,
+  search,
+  statuses,
+  branches,
+  authors,
+}: BuildsListFilters = {}): BuildsListInfiniteOptions => ({
   input: (cursor) => ({
-    projectIds: [projectId],
+    projectIds,
     search,
-    statuses: filters.statuses,
-    branches: filters.branches,
-    authors: filters.authors,
+    statuses,
+    branches,
+    authors,
     limit: BUILDS_PAGE_SIZE,
     cursor,
   }),

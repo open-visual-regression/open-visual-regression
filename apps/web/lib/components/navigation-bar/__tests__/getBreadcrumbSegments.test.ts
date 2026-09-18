@@ -58,6 +58,10 @@ describe("getBreadcrumbSegments", () => {
     ]);
   });
 
+  it("should return a single segment for the all-builds page", async () => {
+    expect(await getBreadcrumbSegments(["builds"])).toEqual([{ label: "builds" }]);
+  });
+
   it("should humanize static segments outside of projects", async () => {
     expect(await getBreadcrumbSegments(["settings", "profile"])).toEqual([
       { label: "settings", href: "/settings" },
