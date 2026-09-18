@@ -19,6 +19,10 @@
         "pages": ["index"]
       },
       {
+        "group": "CLI",
+        "pages": ["cli/installation", "cli/snapshot-storybook", "cli/builds"]
+      },
+      {
         "group": "Configuration",
         "pages": ["configuration/config", "configuration/story-parameters"]
       },

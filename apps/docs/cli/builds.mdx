@@ -1,0 +1,34 @@
+---
+title: ovr builds
+description: List builds and inspect a single build's status.
+---
+
+## `ovr builds list`
+
+```sh
+ovr builds list --branch main
+```
+
+| Flag | Description |
+|------|-------------|
+| `--server-url <url>` | OVR server URL (defaults to `ovr.config`'s `serverUrl`) |
+| `--branch <name>` | Filter to builds on this branch |
+| `--commit <sha>` | Filter to builds for this commit |
+| `-c, --config <path>` | Path to `ovr.config` file |
+| `--json` | Print results as JSON instead of a table |
+
+Prints one row per build: build ID, status, branch, commit, project, and name.
+
+## `ovr builds get`
+
+```sh
+ovr builds get <buildId>
+```
+
+| Flag | Description |
+|------|-------------|
+| `--server-url <url>` | OVR server URL (defaults to `ovr.config`'s `serverUrl`) |
+| `-c, --config <path>` | Path to `ovr.config` file |
+| `--json` | Print the build as JSON instead of formatted text |
+
+Prints the build's ID, status, branch, commit, project, name, author, and creation time, plus an error message or canceling user when relevant.

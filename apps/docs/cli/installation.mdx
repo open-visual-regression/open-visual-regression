@@ -1,0 +1,27 @@
+---
+title: Installation
+description: Install the CLI and authenticate it against your OVR server.
+---
+
+```sh
+npm install -D @open-visual-regression/cli
+```
+
+Or run it without installing via `npx @open-visual-regression/cli`.
+
+## Authentication
+
+Every command requires `OVR_API_KEY`, a project-scoped key created from the project's settings page in OVR.
+
+```sh
+export OVR_API_KEY=...
+```
+
+## Server URL
+
+Every command needs an OVR server URL. Resolved in order: a command's `--server-url` flag, then `serverUrl` in [`ovr.config`](/configuration/config).
+
+## Commands
+
+- [`ovr snapshot storybook`](/cli/snapshot-storybook) uploads a Storybook build and reports the result
+- [`ovr builds`](/cli/builds) lists and inspects builds
