@@ -5,6 +5,8 @@ import { useState } from "react";
 import type { DiffSchema } from "@ovr/api/contracts/diffs";
 import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 
+import { type SnapshotFilters } from "@/lib/utils/snapshotFilters";
+
 import { SnapshotActionsRow } from "../snapshot-actions/SnapshotActionsRow";
 import { ComparisonModeProvider } from "../snapshot-comparison-section/comparison-view/comparison-mode";
 import { SnapshotSidebar } from "../snapshot-sidebar/SnapshotSidebar";
@@ -19,7 +21,7 @@ export type SnapshotLayoutProps = {
   nextSnapshotId: string | null;
   position: number | null;
   total: number | null;
-  filtersQuery?: string;
+  filters?: SnapshotFilters;
   canReview: boolean;
   sidebar: React.ReactNode;
   children: React.ReactNode;
@@ -34,7 +36,7 @@ export const SnapshotLayout = ({
   nextSnapshotId,
   position,
   total,
-  filtersQuery,
+  filters,
   canReview,
   sidebar,
   children,
@@ -53,7 +55,7 @@ export const SnapshotLayout = ({
           nextSnapshotId={nextSnapshotId}
           position={position}
           total={total}
-          filtersQuery={filtersQuery}
+          filters={filters}
           canReview={canReview}
           sidebarCollapsed={sidebarCollapsed}
           onToggleSidebar={() => setSidebarCollapsed((collapsed) => !collapsed)}

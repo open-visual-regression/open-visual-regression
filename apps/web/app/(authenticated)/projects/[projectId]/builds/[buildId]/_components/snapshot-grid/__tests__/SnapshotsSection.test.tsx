@@ -10,6 +10,7 @@ import { mocks } from "@ovr/mocks";
 
 import { orpc } from "@/lib/orpc/client";
 import { snapshotsListInfiniteOptions } from "@/lib/orpc/snapshots-query";
+import { type SnapshotFilters } from "@/lib/utils/snapshotFilters";
 import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
 
 import { SnapshotsSection } from "../SnapshotsSection";
@@ -32,8 +33,10 @@ const toPage = (snapshots: BuildSnapshotSchema[], total = snapshots.length): Lis
   nextCursor: null,
 });
 
+const NO_FILTERS: SnapshotFilters = { statuses: [], browsers: [], viewports: [] };
+
 const listKey = () =>
-  orpc.snapshots.list.infiniteKey(snapshotsListInfiniteOptions(BUILD_ID, undefined, {}));
+  orpc.snapshots.list.infiniteKey(snapshotsListInfiniteOptions(BUILD_ID, NO_FILTERS));
 
 const createQueryClient = () =>
   new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
@@ -47,11 +50,10 @@ const seedPages = (queryClient: QueryClient, pages: ListOutputSchema[], updatedA
 
 type RenderOptions = {
   queryClient?: QueryClient;
-  search?: string;
 };
 
-const renderSection = ({ queryClient = createQueryClient(), search }: RenderOptions = {}) =>
-  render(<SnapshotsSection projectId={PROJECT_ID} buildId={BUILD_ID} search={search} />, {
+const renderSection = ({ queryClient = createQueryClient() }: RenderOptions = {}) =>
+  render(<SnapshotsSection projectId={PROJECT_ID} buildId={BUILD_ID} filters={NO_FILTERS} />, {
     wrapper: ({ children }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     ),
@@ -110,7 +112,7 @@ describe("SnapshotsSection", () => {
     render(
       <QueryClientProvider client={queryClient}>
         <HydrationBoundary state={dehydrate(serverQueryClient)}>
-          <SnapshotsSection projectId={PROJECT_ID} buildId={BUILD_ID} />
+          <SnapshotsSection projectId={PROJECT_ID} buildId={BUILD_ID} filters={NO_FILTERS} />
         </HydrationBoundary>
       </QueryClientProvider>,
     );

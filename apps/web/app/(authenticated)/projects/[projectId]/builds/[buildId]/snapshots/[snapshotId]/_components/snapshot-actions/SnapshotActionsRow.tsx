@@ -17,7 +17,7 @@ import {
   ResponsiveActionButton,
   ResponsiveActionButtonSkeleton,
 } from "@/lib/components/responsive-action-button/ResponsiveActionButton";
-import { withSnapshotFiltersQuery } from "@/lib/utils/snapshotFilters";
+import { type SnapshotFilters, withSnapshotFilters } from "@/lib/utils/snapshotFilters";
 
 import { SnapshotApproveButton } from "./SnapshotApproveButton";
 import { SnapshotRejectButton } from "./SnapshotRejectButton";
@@ -47,7 +47,7 @@ type ActionsRowProps = {
   nextSnapshotId: string | null;
   position: number | null;
   total: number | null;
-  filtersQuery?: string;
+  filters?: SnapshotFilters;
   canReview: boolean;
   sidebarCollapsed: boolean;
   onToggleSidebar: () => void;
@@ -62,20 +62,14 @@ export const SnapshotActionsRow = ({
   nextSnapshotId,
   position,
   total,
-  filtersQuery = "",
+  filters,
   canReview,
   sidebarCollapsed,
   onToggleSidebar,
 }: ActionsRowProps) => {
-  const buildHref = withSnapshotFiltersQuery(
-    `/projects/${projectId}/builds/${buildId}`,
-    filtersQuery,
-  );
+  const buildHref = withSnapshotFilters(`/projects/${projectId}/builds/${buildId}`, filters);
   const snapshotHref = (id: string) =>
-    withSnapshotFiltersQuery(
-      `/projects/${projectId}/builds/${buildId}/snapshots/${id}`,
-      filtersQuery,
-    );
+    withSnapshotFilters(`/projects/${projectId}/builds/${buildId}/snapshots/${id}`, filters);
   const nextHref = nextSnapshotId ? snapshotHref(nextSnapshotId) : null;
 
   return (

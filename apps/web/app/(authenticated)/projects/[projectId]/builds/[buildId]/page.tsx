@@ -9,7 +9,7 @@ import { orpcServer } from "@/lib/orpc/server";
 import { snapshotsListInfiniteOptions } from "@/lib/orpc/snapshots-query";
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
-import { parseSnapshotFilters, snapshotFiltersQuery } from "@/lib/utils/snapshotFilters";
+import { parseSnapshotFilters } from "@/lib/utils/snapshotFilters";
 import { getStorybookPath, hasHostedStorybook } from "@/lib/utils/storage";
 
 import { BuildHeader } from "./_components/build-header/BuildHeader";
@@ -43,9 +43,7 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
     serverClient.snapshots.listBrowsers({ buildId }),
     serverClient.snapshots.listViewports({ buildId }),
     queryClient.prefetchInfiniteQuery(
-      orpcServer.snapshots.list.infiniteOptions(
-        snapshotsListInfiniteOptions(buildId, search, { statuses, browsers, viewports }),
-      ),
+      orpcServer.snapshots.list.infiniteOptions(snapshotsListInfiniteOptions(buildId, filters)),
     ),
   ]);
 
@@ -110,15 +108,7 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
       }
       grid={
         <HydrationBoundary state={dehydrate(queryClient)}>
-          <SnapshotsSection
-            projectId={projectId}
-            buildId={buildId}
-            search={search}
-            statuses={statuses}
-            browsers={browsers}
-            viewports={viewports}
-            filtersQuery={snapshotFiltersQuery(filters)}
-          />
+          <SnapshotsSection projectId={projectId} buildId={buildId} filters={filters} />
         </HydrationBoundary>
       }
     />

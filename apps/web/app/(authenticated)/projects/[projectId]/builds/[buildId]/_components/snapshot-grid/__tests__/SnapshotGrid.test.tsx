@@ -24,7 +24,14 @@ describe("SnapshotGrid", () => {
   });
 
   it("should show the search term when no snapshots match", () => {
-    render(<SnapshotGrid snapshots={[]} projectId="project-1" buildId="build-1" search="home" />);
+    render(
+      <SnapshotGrid
+        snapshots={[]}
+        projectId="project-1"
+        buildId="build-1"
+        filters={{ search: "home", statuses: [], browsers: [], viewports: [] }}
+      />,
+    );
 
     expect(screen.getByText('no snapshots found matching "home"')).toBeVisible();
   });

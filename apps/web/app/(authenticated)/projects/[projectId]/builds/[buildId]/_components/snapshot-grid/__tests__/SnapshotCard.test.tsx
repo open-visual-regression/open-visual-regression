@@ -22,7 +22,7 @@ describe("SnapshotCard", () => {
         snapshot={snapshot}
         projectId="project-1"
         buildId="build-1"
-        filtersQuery="status=needs_review&browser=chromium"
+        filters={{ statuses: ["needs_review"], browsers: ["chromium"], viewports: [] }}
       />,
     );
 

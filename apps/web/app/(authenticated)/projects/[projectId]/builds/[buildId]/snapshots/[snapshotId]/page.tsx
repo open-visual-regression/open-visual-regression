@@ -4,7 +4,7 @@ import { canReview } from "@/lib/auth/roles";
 import { getCachedSession } from "@/lib/auth/session";
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
-import { parseSnapshotFilters, snapshotFiltersQuery } from "@/lib/utils/snapshotFilters";
+import { parseSnapshotFilters } from "@/lib/utils/snapshotFilters";
 import { getStorybookStoryPath, hasHostedStorybook } from "@/lib/utils/storage";
 
 import { ComparisonControls } from "./_components/snapshot-comparison-section/comparison-view/ComparisonControls";
@@ -69,7 +69,7 @@ export default async function SnapshotPage(props: SnapshotPageProps) {
       nextSnapshotId={nextSnapshotId}
       position={position}
       total={total}
-      filtersQuery={snapshotFiltersQuery(filters)}
+      filters={filters}
       canReview={canReview(session?.user.role)}
       sidebar={
         <SnapshotSidebarContent

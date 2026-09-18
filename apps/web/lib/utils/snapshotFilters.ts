@@ -38,23 +38,20 @@ export const parseSnapshotFilters = (
   return { search, statuses: status, browsers: browser, viewports: viewport };
 };
 
-export const snapshotFiltersQuery = ({
-  search,
-  statuses,
-  browsers,
-  viewports,
-}: SnapshotFilters): string => {
+export const withSnapshotFilters = (path: string, filters?: SnapshotFilters): string => {
+  if (!filters) {
+    return path;
+  }
+
   const params = new URLSearchParams();
 
-  if (search) {
-    params.set("search", search);
+  if (filters.search) {
+    params.set("search", filters.search);
   }
-  statuses.forEach((status) => params.append("status", status));
-  browsers.forEach((browser) => params.append("browser", browser));
-  viewports.forEach((viewport) => params.append("viewport", viewport));
+  filters.statuses.forEach((status) => params.append("status", status));
+  filters.browsers.forEach((browser) => params.append("browser", browser));
+  filters.viewports.forEach((viewport) => params.append("viewport", viewport));
 
-  return params.toString();
+  const query = params.toString();
+  return query ? `${path}?${query}` : path;
 };
-
-export const withSnapshotFiltersQuery = (path: string, query: string): string =>
-  query ? `${path}?${query}` : path;

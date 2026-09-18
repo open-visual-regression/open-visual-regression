@@ -8,7 +8,7 @@ import { CardLink } from "@/lib/components/card-link/CardLink";
 import { CardSurface } from "@/lib/components/card-link/CardSurface";
 import { Image } from "@/lib/components/image/Image";
 import { getSnapshotStatusLabel, SnapshotStatusBadge } from "@/lib/components/SnapshotStatusBadge";
-import { withSnapshotFiltersQuery } from "@/lib/utils/snapshotFilters";
+import { type SnapshotFilters, withSnapshotFilters } from "@/lib/utils/snapshotFilters";
 import { getStoragePath } from "@/lib/utils/storage";
 
 type SnapshotCardSlotProps = {
@@ -35,23 +35,18 @@ type SnapshotCardProps = {
   snapshot: BuildSnapshotSchema;
   projectId: string;
   buildId: string;
-  filtersQuery?: string;
+  filters?: SnapshotFilters;
 };
 
-export const SnapshotCard = ({
-  snapshot,
-  projectId,
-  buildId,
-  filtersQuery = "",
-}: SnapshotCardProps) => {
+export const SnapshotCard = ({ snapshot, projectId, buildId, filters }: SnapshotCardProps) => {
   const imagePath = getStoragePath(snapshot.imagePath);
   const label = `snapshot of ${snapshot.targetTitle} ${snapshot.targetName}, ${snapshot.browser} ${snapshot.viewportName}, ${getSnapshotStatusLabel(snapshot.status)}`;
 
   return (
     <CardLink
-      href={withSnapshotFiltersQuery(
+      href={withSnapshotFilters(
         `/projects/${projectId}/builds/${buildId}/snapshots/${snapshot.id}`,
-        filtersQuery,
+        filters,
       )}
       className="gap-0 py-0"
       aria-label={label}

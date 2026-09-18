@@ -2,36 +2,21 @@
 
 import { useInfiniteQuery } from "@tanstack/react-query";
 
-import { type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
-
 import { orpc } from "@/lib/orpc/client";
 import { snapshotsListInfiniteOptions } from "@/lib/orpc/snapshots-query";
+import { type SnapshotFilters } from "@/lib/utils/snapshotFilters";
 
 import { SnapshotGrid, SnapshotGridSkeleton } from "./SnapshotGrid";
 
 type SnapshotsSectionProps = {
   projectId: string;
   buildId: string;
-  search?: string;
-  statuses?: SnapshotDisplayStatus[];
-  browsers?: string[];
-  viewports?: string[];
-  filtersQuery?: string;
+  filters: SnapshotFilters;
 };
 
-export const SnapshotsSection = ({
-  projectId,
-  buildId,
-  search,
-  statuses,
-  browsers,
-  viewports,
-  filtersQuery,
-}: SnapshotsSectionProps) => {
+export const SnapshotsSection = ({ projectId, buildId, filters }: SnapshotsSectionProps) => {
   const { data, isPending, hasNextPage, isFetchingNextPage, fetchNextPage } = useInfiniteQuery(
-    orpc.snapshots.list.infiniteOptions(
-      snapshotsListInfiniteOptions(buildId, search, { statuses, browsers, viewports }),
-    ),
+    orpc.snapshots.list.infiniteOptions(snapshotsListInfiniteOptions(buildId, filters)),
   );
 
   if (isPending) {
@@ -45,8 +30,7 @@ export const SnapshotsSection = ({
       snapshots={snapshots}
       projectId={projectId}
       buildId={buildId}
-      search={search}
-      filtersQuery={filtersQuery}
+      filters={filters}
       hasNextPage={hasNextPage}
       isFetchingNextPage={isFetchingNextPage}
       onLoadMore={fetchNextPage}

@@ -8,6 +8,7 @@ import { Toaster } from "@ovr/ui/components/sonner";
 
 import { serverClient } from "@/lib/router";
 import { createORPCError } from "@/lib/testing/orpc";
+import { type SnapshotFilters } from "@/lib/utils/snapshotFilters";
 import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
 
 import { SnapshotActionsRow } from "../SnapshotActionsRow";
@@ -58,7 +59,7 @@ const renderComponent = (
     nextSnapshotId: string | null;
     position: number | null;
     total: number | null;
-    filtersQuery: string;
+    filters: SnapshotFilters;
     canReview: boolean;
     sidebarCollapsed: boolean;
     onToggleSidebar: () => void;
@@ -240,27 +241,24 @@ describe("SnapshotActionsRow", () => {
     );
   });
 
-  it("should keep the build's filters on the prev, next and back links", () => {
-    renderComponent({ filtersQuery: "status=needs_review&browser=chromium" });
+  it.each([
+    [/prev/i, `/projects/${projectId}/builds/${buildId}/snapshots/${prevSnapshotId}`],
+    [/next/i, `/projects/${projectId}/builds/${buildId}/snapshots/${nextSnapshotId}`],
+    [/back/i, `/projects/${projectId}/builds/${buildId}`],
+  ])("should keep the build's filters on the %s link", (name, href) => {
+    renderComponent({
+      filters: { statuses: ["needs_review"], browsers: ["chromium"], viewports: [] },
+    });
 
-    const query = "?status=needs_review&browser=chromium";
-    expect(screen.getByRole("link", { name: /prev/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name })).toHaveAttribute(
       "href",
-      `/projects/${projectId}/builds/${buildId}/snapshots/${prevSnapshotId}${query}`,
-    );
-    expect(screen.getByRole("link", { name: /next/i })).toHaveAttribute(
-      "href",
-      `/projects/${projectId}/builds/${buildId}/snapshots/${nextSnapshotId}${query}`,
-    );
-    expect(screen.getByRole("link", { name: /back/i })).toHaveAttribute(
-      "href",
-      `/projects/${projectId}/builds/${buildId}${query}`,
+      `${href}?status=needs_review&browser=chromium`,
     );
   });
 
   it("should keep the build's filters when moving on after a review", async ({ user }) => {
     mockCastVote.mockResolvedValue([null, undefined]);
-    renderComponent({ filtersQuery: "status=needs_review" });
+    renderComponent({ filters: { statuses: ["needs_review"], browsers: [], viewports: [] } });
 
     await user.click(screen.getByRole("button", { name: /^approve$/i }));
 
