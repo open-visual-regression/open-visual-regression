@@ -24,7 +24,8 @@
           "cli/installation",
           "cli/authentication",
           "cli/snapshot-storybook",
-          "cli/builds"
+          "cli/builds",
+          "cli/snapshots"
         ]
       },
       {

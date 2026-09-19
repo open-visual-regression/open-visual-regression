@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { BuildSchema } from "@ovr/api/contracts/builds";
 
-import { formatAppliedFilters, formatBuildsOutput } from "../table";
+import { formatBuildsOutput } from "../table";
 
 const BUILD: BuildSchema = {
   id: "01a092d6-b0aa-71bf-9312-dd8ef48a22fb",
@@ -73,21 +73,5 @@ describe("formatBuildsOutput", () => {
     expect(formatBuildsOutput({ builds: [BUILD], total: 42, nextCursor: "abc" }, false)).toContain(
       "Showing 1 of 42. Next page: --cursor abc",
     );
-  });
-});
-
-describe("formatAppliedFilters", () => {
-  it("should return undefined when no filters were applied", () => {
-    expect(formatAppliedFilters(undefined)).toBeUndefined();
-  });
-
-  it("should ignore flags that were not passed", () => {
-    expect(formatAppliedFilters({ branch: undefined, status: [], search: "cart" })).toBe(
-      "Filters: search=cart",
-    );
-  });
-
-  it("should join the values of a repeated flag", () => {
-    expect(formatAppliedFilters({ branch: ["main", "next"] })).toBe("Filters: branch=main,next");
   });
 });

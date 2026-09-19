@@ -1,4 +1,5 @@
 import { buildsCursorSchema, type BuildsCursor } from "@ovr/api/contracts/builds";
+import { snapshotsCursorSchema, type SnapshotsCursor } from "@ovr/api/contracts/snapshots";
 
 const INVALID_CURSOR_MESSAGE =
   "Invalid --cursor value. Pass the cursor printed by a previous run of this command.";
@@ -18,6 +19,18 @@ export const encodeBuildsCursor = (cursor: BuildsCursor): string => encode(curso
 
 export const decodeBuildsCursor = (token: string): BuildsCursor => {
   const parsed = buildsCursorSchema.safeParse(decode(token));
+
+  if (!parsed.success) {
+    throw new Error(INVALID_CURSOR_MESSAGE);
+  }
+
+  return parsed.data;
+};
+
+export const encodeSnapshotsCursor = (cursor: SnapshotsCursor): string => encode(cursor);
+
+export const decodeSnapshotsCursor = (token: string): SnapshotsCursor => {
+  const parsed = snapshotsCursorSchema.safeParse(decode(token));
 
   if (!parsed.success) {
     throw new Error(INVALID_CURSOR_MESSAGE);
