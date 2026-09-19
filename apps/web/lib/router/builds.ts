@@ -241,8 +241,6 @@ export const list = os.builds.list
   })
   .actionable();
 
-// Without a projectId the options span every project in the organization, so
-// there is no project to authorize — the organization scope is the boundary.
 const getFilterOptionsScope = async (projectId: string | undefined, organizationId: string) => {
   if (!projectId) {
     return { organizationId };

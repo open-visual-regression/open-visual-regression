@@ -278,8 +278,6 @@ const buildStatusDisplayOrder: BuildDisplayStatus[] = [
   "canceled",
 ];
 
-// Filter options are always scoped to an organization; omitting projectId widens
-// them to every project in it, which is what the cross-project builds page needs.
 export type BuildOptionsScope = {
   organizationId: string;
   projectId?: string;
