@@ -49,7 +49,7 @@ const NavigationBarMobileMenu = ({
       >
         <Icon icon={MenuIcon} size={14} />
       </SheetTrigger>
-      <SheetContent side="left" className="gap-0 bg-background p-0">
+      <SheetContent side="left" className="gap-0 bg-background p-0" showCloseButton={false}>
         <SheetTitle className="sr-only">{section} navigation</SheetTitle>
         {section === "settings" ? (
           <SettingsSidebarLinks role={role} onNavigate={onNavigate} />
