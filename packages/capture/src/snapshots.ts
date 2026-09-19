@@ -126,9 +126,6 @@ const launchCapturePage = async (
       return route.continue();
     }
 
-    // Stories can reference genuinely external content (CDN-hosted images, fonts,
-    // an MSW handler that passes through to a real backend). Allow that, but keep
-    // the capture browser from being used to reach internal/private infrastructure.
     if (await isSafeExternalUrl(url)) {
       return route.continue();
     }
