@@ -29,3 +29,10 @@ export const formatAppliedFilters = (filters: AppliedFilters | undefined): strin
 
 export const formatNextPageHint = (shown: number, total: number, nextCursor: string): string =>
   `Showing ${shown} of ${total}. Next page: --cursor ${nextCursor}`;
+
+/** Renders `[label, value]` pairs as aligned `label: value` lines, e.g. for a `get` command's detail view. */
+export const formatKeyValueRows = (rows: [string, string][]): string => {
+  const labelWidth = Math.max(...rows.map(([label]) => label.length));
+
+  return rows.map(([label, value]) => `${`${label}:`.padEnd(labelWidth + 1)} ${value}`).join("\n");
+};
