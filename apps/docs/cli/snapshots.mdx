@@ -1,0 +1,79 @@
+---
+title: ovr snapshots
+description: List a build's snapshots and count them by status.
+---
+
+Authenticates with a [personal access token](/cli/authentication) — a project API key is rejected.
+
+These commands answer "which snapshots in this build changed, and by how much" without
+opening the dashboard, which is what makes them useful for triaging a failing build
+from CI or a terminal.
+
+## `ovr snapshots counts`
+
+```sh
+ovr snapshots counts <buildId>
+```
+
+| Flag | Description |
+|------|-------------|
+| `--server-url <url>` | OVR server URL (defaults to `ovr.config`'s `serverUrl`) |
+| `-c, --config <path>` | Path to `ovr.config` file |
+| `--json` | Print the counts as JSON instead of a table |
+
+Counts the build's snapshots by status, so you can see the shape of a build before
+listing anything:
+
+```
+STATUS        COUNT
+unchanged     41
+needs_review  3
+error         1
+TOTAL         45
+```
+
+Only the statuses the build actually has are printed. `--json` returns every status,
+including the ones at zero.
+
+## `ovr snapshots list`
+
+```sh
+ovr snapshots list <buildId> --status needs_review
+```
+
+| Flag | Description |
+|------|-------------|
+| `--server-url <url>` | OVR server URL (defaults to `ovr.config`'s `serverUrl`) |
+| `--status <status...>` | Filter to snapshots with these statuses |
+| `--browser <name...>` | Filter to snapshots captured in these browsers |
+| `--viewport <name...>` | Filter to snapshots captured at these viewports |
+| `--search <text>` | Filter to snapshots matching this text |
+| `--limit <count>` | Snapshots per page, 1–100 (default `24`) |
+| `--cursor <cursor>` | Fetch the page following this cursor |
+| `--all` | Fetch every page instead of just the first |
+| `-c, --config <path>` | Path to `ovr.config` file |
+| `--json` | Print results as JSON instead of a table |
+
+Prints one row per snapshot: snapshot ID, status, story, browser, viewport, and the
+percentage of pixels that differ from the baseline.
+
+```
+SNAPSHOT                              STATUS        STORY                        BROWSER   VIEWPORT           DIFF%
+01a092d6-b0aa-71bf-9312-dd8ef48a22fb  needs_review  Components/Button / Primary  chromium  desktop 1280x800   1.23
+```
+
+`DIFF%` is `-` when the snapshot was never diffed — a first snapshot with no baseline,
+or one that errored — and `0.00` when it was diffed and nothing differed. A viewport
+captured at the story's full page height rather than a fixed crop prints its height as
+`full`.
+
+`--status` accepts `unchanged`, `auto_approved`, `approved`, `needs_review`, `rejected`,
+`error`, `canceled`, `skipped`, `queued`, and `processing`; anything else is rejected
+before the request is sent. When filters match nothing, the applied filters are printed
+alongside `No snapshots found.` so a mistyped browser or viewport is visible.
+
+### Pagination
+
+Pagination works the same way as [`ovr builds list`](/cli/builds): a page at a time,
+with the next page's cursor printed when more snapshots match, `--cursor` to resume,
+and `--all` to fetch every page at once.

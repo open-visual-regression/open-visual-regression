@@ -6,13 +6,11 @@ import { createClient } from "../../client";
 import { getApiKey, getServerUrl } from "../../config";
 import { decodeBuildsCursor, encodeBuildsCursor } from "../../cursor";
 import { formatCliError } from "../../errors";
-import { parseEnumOption } from "../../filters";
+import { MAX_LIMIT, parseEnumOption, parseLimit } from "../../filters";
 import { collectAllPages } from "../../paginate";
 import { formatBuildsOutput } from "./table";
 
 const SORT_DIRECTIONS = ["asc", "desc"] as const;
-
-const MAX_LIMIT = 100;
 
 const DEFAULT_LIMIT = "20";
 
@@ -29,16 +27,6 @@ type BuildsListCommandOptions = {
   all?: boolean;
   config?: string;
   json?: boolean;
-};
-
-const parseLimit = (limit: string): number => {
-  const parsed = Number(limit);
-
-  if (!Number.isInteger(parsed) || parsed < 1 || parsed > MAX_LIMIT) {
-    throw new Error(`--limit must be an integer between 1 and ${MAX_LIMIT}.`);
-  }
-
-  return parsed;
 };
 
 export const listCommand = new Command("list")
