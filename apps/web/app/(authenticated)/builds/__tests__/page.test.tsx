@@ -7,7 +7,6 @@ import { describe, expect, it, render, screen } from "@/test-utils";
 
 const { listBuilds } = vi.hoisted(() => ({ listBuilds: vi.fn() }));
 
-// The real module is server-only, and it is the page's single data dependency.
 vi.mock("@/lib/orpc/server", async () => {
   const { createTanstackQueryUtils } = await import("@orpc/tanstack-query");
   return { orpcServer: createTanstackQueryUtils({ builds: { list: listBuilds } }) };
