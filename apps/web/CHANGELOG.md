@@ -1,5 +1,59 @@
 # @ovr/web
 
+## 0.5.0
+
+### Minor Changes
+
+- [#201](https://github.com/open-visual-regression/open-visual-regression/pull/201) [`f40afc2`](https://github.com/open-visual-regression/open-visual-regression/commit/f40afc28689e5afb1cd1b3c8f795f1e7c930a668) Thanks [@tgfischer](https://github.com/tgfischer)! - Add an all-builds page at `/builds`.
+
+  It lists every build the caller can read, newest first, in the same infinite
+  scrolling table the project page uses, and each row links to that build under
+  its own project. Build rows now carry the project name in their metadata,
+  after the author, and the sidebar's "recent builds" heading links to the new
+  page.
+
+  The list, its rows and the projects sidebar now live in `lib/components`,
+  shared by both pages; filters and search stay project-scoped for now.
+
+- [#204](https://github.com/open-visual-regression/open-visual-regression/pull/204) [`653118e`](https://github.com/open-visual-regression/open-visual-regression/commit/653118e3d6f0ae0dd81043e156cc3a723a67c14d) Thanks [@tgfischer](https://github.com/tgfischer)! - Filter and search the all-builds page at `/builds`.
+
+  The status, branch and author dropdowns and the search box that the project
+  page already had now sit on the all-builds page too, where their options span
+  every project in the organization rather than a single one. Filters read from
+  and write to the url, so a filtered view stays shareable and survives a
+  reload.
+
+  The filters, the search field and their facet popovers move to
+  `lib/components`, shared by both pages, alongside the list and rows that moved
+  there earlier.
+
+- [#198](https://github.com/open-visual-regression/open-visual-regression/pull/198) [`0bf7208`](https://github.com/open-visual-regression/open-visual-regression/commit/0bf7208ef6b3e14543f78a85fdaf40b3445ab11c) Thanks [@tgfischer](https://github.com/tgfischer)! - Navigate every snapshot from the review page, following the build page's filters.
+
+  Forward/back were pinned to the review tier, so a build made entirely of
+  errored, unchanged, or auto-approved snapshots had no navigation at all. The
+  navigable set is now whatever the build page is showing — the same filters
+  (status, browser, viewport, search) the grid and its count already use, which
+  with no filters is every snapshot in the build.
+
+  Reviewing a snapshot under a filter (approving the last "needs review" item,
+  say) no longer blanks the controls or shrinks the count out from under the
+  reviewer: neighbors come from sort position rather than filter membership, and
+  the snapshot being viewed holds its place even once it stops matching.
+
+### Patch Changes
+
+- [#199](https://github.com/open-visual-regression/open-visual-regression/pull/199) [`884bca3`](https://github.com/open-visual-regression/open-visual-regression/commit/884bca36b3ff6f188d4a130a2cc97d385fc94c6d) Thanks [@tgfischer](https://github.com/tgfischer)! - Keep the new api key on screen after it is created.
+
+  Creating a key runs a server action, and Next.js re-renders the settings page
+  with its result. For the first key in a project that swaps the "no api keys yet"
+  empty state for the table — and the dialog lived inside that empty state, so it
+  unmounted along with it. The reveal flashed on screen and vanished before the key
+  could be copied, and because the key is only ever shown once it was lost for good.
+
+  The dialog now wraps the whole api keys section instead of sitting next to one
+  button, so both the header and empty state triggers open the same dialog and it
+  stays open until it is dismissed, whatever the list underneath it does.
+
 ## 0.4.1
 
 ### Patch Changes
