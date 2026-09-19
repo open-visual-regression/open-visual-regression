@@ -20,21 +20,24 @@ export const isPublicAddress = (address: string): boolean => {
   return parsed.range() === "unicast";
 };
 
-export const isSafeExternalUrl = async (url: URL): Promise<boolean> => {
-  if (url.protocol !== "http:" && url.protocol !== "https:") {
-    return false;
+export const resolvePublicAddress = async (hostname: string): Promise<string | null> => {
+  const literal = unwrapIpv6(hostname);
+
+  if (ipaddr.isValid(literal)) {
+    return isPublicAddress(literal) ? literal : null;
   }
 
-  const hostname = unwrapIpv6(url.hostname);
-
-  if (ipaddr.isValid(hostname)) {
-    return isPublicAddress(hostname);
-  }
-
+  let records;
   try {
-    const records = await dns.lookup(hostname, { all: true });
-    return records.length > 0 && records.every((record) => isPublicAddress(record.address));
+    records = await dns.lookup(literal, { all: true });
   } catch {
-    return false;
+    return null;
   }
+
+  const addresses = records.map((record) => record.address);
+  if (addresses.length === 0 || !addresses.every(isPublicAddress)) {
+    return null;
+  }
+
+  return addresses[0] ?? null;
 };

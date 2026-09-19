@@ -3,7 +3,7 @@ import dns from "node:dns/promises";
 
 import { describe, expect, test, vi } from "vitest";
 
-import { isPublicAddress, isSafeExternalUrl } from "../lib/networkGuard";
+import { isPublicAddress, resolvePublicAddress } from "../lib/networkGuard";
 
 const mockLookupAll = (records: LookupAddress[]) =>
   vi
@@ -41,44 +41,39 @@ describe("isPublicAddress", () => {
   );
 });
 
-describe("isSafeExternalUrl", () => {
-  test("rejects non-http(s) protocols", async () => {
-    expect(await isSafeExternalUrl(new URL("file:///etc/passwd"))).toBe(false);
-    expect(await isSafeExternalUrl(new URL("ws://example.com"))).toBe(false);
-  });
-
-  test("allows a hostname that only resolves to public addresses", async () => {
+describe("resolvePublicAddress", () => {
+  test("pins the address a public hostname resolves to", async () => {
     mockLookupAll([{ address: "93.184.216.34", family: 4 }]);
-    expect(await isSafeExternalUrl(new URL("https://example.com/image.png"))).toBe(true);
+    expect(await resolvePublicAddress("example.com")).toBe("93.184.216.34");
   });
 
-  test("blocks a hostname that resolves to a private address", async () => {
+  test("refuses a hostname that resolves to a private address", async () => {
     mockLookupAll([{ address: "169.254.169.254", family: 4 }]);
-    expect(await isSafeExternalUrl(new URL("http://metadata.internal/latest"))).toBe(false);
+    expect(await resolvePublicAddress("metadata.internal")).toBeNull();
   });
 
-  test("blocks a hostname with any private address among multiple resolved records", async () => {
+  test("refuses a hostname with any private address among multiple records", async () => {
     mockLookupAll([
       { address: "93.184.216.34", family: 4 },
       { address: "10.0.0.1", family: 4 },
     ]);
-    expect(await isSafeExternalUrl(new URL("https://mixed.example.com"))).toBe(false);
+    expect(await resolvePublicAddress("mixed.example.com")).toBeNull();
   });
 
-  test("blocks a hostname that fails to resolve", async () => {
+  test("refuses a hostname that fails to resolve", async () => {
     vi.spyOn(dns, "lookup").mockRejectedValueOnce(new Error("ENOTFOUND"));
-    expect(await isSafeExternalUrl(new URL("https://does-not-exist.invalid"))).toBe(false);
+    expect(await resolvePublicAddress("does-not-exist.invalid")).toBeNull();
   });
 
   test.each([
-    ["http://127.0.0.1:9999/", false],
-    ["http://[::1]/", false],
-    ["http://[::ffff:7f00:1]:8080/", false],
-    ["https://1.1.1.1/", true],
-    ["https://[2606:4700:4700::1111]/", true],
-  ])("resolves the literal address in %s without a DNS lookup", async (url, expected) => {
+    ["127.0.0.1", null],
+    ["[::1]", null],
+    ["[::ffff:7f00:1]", null],
+    ["1.1.1.1", "1.1.1.1"],
+    ["[2606:4700:4700::1111]", "2606:4700:4700::1111"],
+  ])("resolves the literal address %s without a DNS lookup", async (hostname, expected) => {
     const lookup = vi.spyOn(dns, "lookup");
-    expect(await isSafeExternalUrl(new URL(url))).toBe(expected);
+    expect(await resolvePublicAddress(hostname)).toBe(expected);
     expect(lookup).not.toHaveBeenCalled();
   });
 });
