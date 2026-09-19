@@ -9,7 +9,7 @@ import { BuildsAuthorFacetContent } from "./BuildsAuthorFacetContent";
 import { BuildsBranchFacetContent } from "./BuildsBranchFacetContent";
 
 type BuildsFiltersProps = {
-  projectId: string;
+  projectId?: string;
   statuses: BuildStatus[];
   branches: string[];
   authors: string[];
