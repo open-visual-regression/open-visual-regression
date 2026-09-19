@@ -133,7 +133,7 @@ describe("NavigationBarMobileMenu", () => {
     });
   });
 
-  it("should close the menu after clicking the view all projects link", async ({ user }) => {
+  it("should close the menu after clicking the projects heading link", async ({ user }) => {
     vi.mocked(usePathname).mockReturnValue("/projects");
 
     render(
@@ -141,10 +141,10 @@ describe("NavigationBarMobileMenu", () => {
     );
 
     await user.click(screen.getByRole("button", { name: /open projects navigation/i }));
-    await user.click(screen.getByRole("link", { name: "view all projects" }));
+    await user.click(screen.getByRole("link", { name: /^projects/ }));
 
     await waitFor(() => {
-      expect(screen.queryByRole("link", { name: "view all projects" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: /^projects/ })).not.toBeInTheDocument();
     });
   });
 });

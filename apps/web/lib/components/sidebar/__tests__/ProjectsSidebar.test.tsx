@@ -44,15 +44,12 @@ describe("ProjectsSidebar", () => {
     expect(screen.getByText("(5)")).toBeVisible();
   });
 
-  it("should always render a link to view all projects, even when every project is already shown", () => {
+  it("should link the projects heading to the all-projects page", () => {
     vi.mocked(usePathname).mockReturnValue("/projects");
 
     render(<ProjectsSidebar projects={PROJECTS} total={PROJECTS.length} builds={BUILDS} />);
 
-    expect(screen.getByRole("link", { name: "view all projects" })).toHaveAttribute(
-      "href",
-      "/projects",
-    );
+    expect(screen.getByRole("link", { name: /^projects/ })).toHaveAttribute("href", "/projects");
   });
 
   it("should render the recent builds section when builds are provided", () => {
