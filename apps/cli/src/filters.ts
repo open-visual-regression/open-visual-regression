@@ -29,3 +29,13 @@ export const parseLimit = (limit: string): number => {
 
   return parsed;
 };
+
+export const parseThreshold = (threshold: string): number => {
+  const parsed = Number(threshold);
+
+  if (!Number.isFinite(parsed) || parsed <= 0 || parsed > 1) {
+    throw new Error("--threshold must be greater than 0 and at most 1.");
+  }
+
+  return parsed;
+};

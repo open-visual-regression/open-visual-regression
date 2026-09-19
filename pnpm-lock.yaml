@@ -106,6 +106,12 @@ importers:
       ky:
         specifier: ^2.0.2
         version: 2.1.0
+      pixelmatch:
+        specifier: ^7.2.0
+        version: 7.2.0
+      pngjs:
+        specifier: ^7.0.0
+        version: 7.0.0
       tar:
         specifier: ^7.5.22
         version: 7.5.22
@@ -113,6 +119,9 @@ importers:
       '@ovr/api':
         specifier: workspace:*
         version: link:../../packages/api
+      '@ovr/image-diff':
+        specifier: workspace:*
+        version: link:../../packages/image-diff
       '@ovr/storybook-compat':
         specifier: workspace:*
         version: link:../../packages/storybook-compat
@@ -122,6 +131,12 @@ importers:
       '@types/node':
         specifier: ^22.20.1
         version: 22.20.1
+      '@types/pixelmatch':
+        specifier: ^5.2.6
+        version: 5.2.6
+      '@types/pngjs':
+        specifier: ^6.0.5
+        version: 6.0.5
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.26)(tsx@4.23.5)(typescript@6.0.3)(yaml@2.9.0)
