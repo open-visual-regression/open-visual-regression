@@ -1,11 +1,11 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { notFound } from "next/navigation";
-import { z } from "zod";
-
-import { buildStatusSchema } from "@ovr/api/contracts/builds";
 
 import { toRole } from "@/lib/auth/roles";
 import { getCachedSession } from "@/lib/auth/session";
+import { BuildsFilters } from "@/lib/components/builds-section/BuildsFilters";
+import { BuildsSearchField } from "@/lib/components/builds-section/BuildsSearchField";
+import { parseBuildsSearchParams } from "@/lib/components/builds-section/buildsSearchParams";
 import { BuildsSection } from "@/lib/components/builds-section/BuildsSection";
 import { getBuildStatusLabel } from "@/lib/components/BuildStatus";
 import { buildsListInfiniteOptions } from "@/lib/orpc/builds-query";
@@ -14,33 +14,16 @@ import { orpcServer } from "@/lib/orpc/server";
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
 
-import { BuildsFilters } from "./_components/builds-section/BuildsFilters";
-import { BuildsSearchField } from "./_components/builds-section/BuildsSearchField";
 import { NoBuildsSection } from "./_components/builds-section/NoBuildsSection";
 import { ProjectHeader } from "./_components/project-header/ProjectHeader";
 import { ProjectPageShell } from "./_components/ProjectPageShell";
 
 type ProjectPageProps = PageProps<"/projects/[projectId]">;
 
-const toArray = (value: string | string[] | undefined) =>
-  value === undefined ? undefined : Array.isArray(value) ? value : [value];
-
-const searchParamsSchema = z.object({
-  search: z.string().optional().catch(undefined),
-  status: z.preprocess(toArray, z.array(buildStatusSchema)).optional().catch(undefined),
-  branch: z.preprocess(toArray, z.array(z.string())).optional().catch(undefined),
-  author: z.preprocess(toArray, z.array(z.string())).optional().catch(undefined),
-});
-
 export default async function ProjectPage(props: ProjectPageProps) {
   const { projectId } = await props.params;
   const rawSearchParams = await props.searchParams;
-  const {
-    search,
-    status: statuses = [],
-    branch: branches = [],
-    author: authors = [],
-  } = searchParamsSchema.parse(rawSearchParams);
+  const { search, statuses, branches, authors } = parseBuildsSearchParams(rawSearchParams);
 
   const [projectError, projectResult] = await serverClient.projects.getOne({ projectId });
 

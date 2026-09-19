@@ -278,11 +278,23 @@ const buildStatusDisplayOrder: BuildDisplayStatus[] = [
   "canceled",
 ];
 
-export const findStatuses = async (projectId: string): Promise<BuildDisplayStatus[]> => {
+export type BuildOptionsScope = {
+  organizationId: string;
+  projectId?: string;
+};
+
+const getScopeFilter = ({ organizationId, projectId }: BuildOptionsScope) =>
+  and(
+    eq(projects.organizationId, organizationId),
+    projectId ? eq(builds.projectId, projectId) : undefined,
+  );
+
+export const findStatuses = async (scope: BuildOptionsScope): Promise<BuildDisplayStatus[]> => {
   const rows = await db
     .selectDistinct({ status: buildDisplayStatusExpr })
     .from(builds)
-    .where(eq(builds.projectId, projectId));
+    .innerJoin(projects, eq(builds.projectId, projects.id))
+    .where(getScopeFilter(scope));
 
   const present = new Set(rows.map((row) => row.status));
   return buildStatusDisplayOrder.filter((status) => present.has(status));
@@ -294,18 +306,14 @@ type SearchOptions = {
 };
 
 export const findBranches = async (
-  projectId: string,
+  scope: BuildOptionsScope,
   { search, limit }: SearchOptions,
 ): Promise<string[]> => {
   const rows = await db
     .selectDistinct({ branch: builds.branch })
     .from(builds)
-    .where(
-      and(
-        eq(builds.projectId, projectId),
-        search ? ilike(builds.branch, `%${search}%`) : undefined,
-      ),
-    )
+    .innerJoin(projects, eq(builds.projectId, projects.id))
+    .where(and(getScopeFilter(scope), search ? ilike(builds.branch, `%${search}%`) : undefined))
     .orderBy(asc(builds.branch))
     .limit(limit);
 
@@ -313,15 +321,16 @@ export const findBranches = async (
 };
 
 export const findAuthors = async (
-  projectId: string,
+  scope: BuildOptionsScope,
   { search, limit }: SearchOptions,
 ): Promise<string[]> => {
   const rows = await db
     .selectDistinct({ author: builds.author })
     .from(builds)
+    .innerJoin(projects, eq(builds.projectId, projects.id))
     .where(
       and(
-        eq(builds.projectId, projectId),
+        getScopeFilter(scope),
         isNotNull(builds.author),
         search ? ilike(builds.author, `%${search}%`) : undefined,
       ),
