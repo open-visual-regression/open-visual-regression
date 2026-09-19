@@ -21,6 +21,7 @@ import {
   SETTLE_TIMEOUT_MS,
   withTimeout,
 } from "./lib/captureTimeouts";
+import { isSafeExternalUrl } from "./lib/networkGuard";
 import { settlePage, trackNetworkActivity, type NetworkActivity } from "./lib/settle";
 import { startStaticProxy, type StaticProxy } from "./lib/staticProxy";
 import { createUploadQueue } from "./lib/uploadQueue";
@@ -119,11 +120,20 @@ const launchCapturePage = async (
     logger.error({ buildId, browser: browserName }, "capture page crashed");
   });
 
-  await page.route("**/*", (route) => {
+  await page.route("**/*", async (route) => {
     const url = new URL(route.request().url());
     if (url.origin === proxy.origin || url.protocol === "data:" || url.protocol === "blob:") {
       return route.continue();
     }
+
+    // Stories can reference genuinely external content (CDN-hosted images, fonts,
+    // an MSW handler that passes through to a real backend). Allow that, but keep
+    // the capture browser from being used to reach internal/private infrastructure.
+    if (await isSafeExternalUrl(url)) {
+      return route.continue();
+    }
+
+    logger.warn({ buildId, url: url.toString() }, "blocked capture page request to unsafe target");
     return route.abort();
   });
 
