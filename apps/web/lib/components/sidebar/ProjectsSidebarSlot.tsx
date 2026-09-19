@@ -5,7 +5,6 @@ import { APP_VERSION } from "@/lib/utils/version";
 import { SIDEBAR_PROJECTS_LIMIT, SIDEBAR_RECENT_BUILDS_LIMIT } from "./constants";
 import { ProjectsSidebar } from "./ProjectsSidebar";
 
-/** The `@sidebar` slot shared by every route that renders {@link SidebarLayout}. */
 export default async function ProjectsSidebarSlot() {
   const [[listError, listResult], [countError, countResult], [buildsError, buildsResult]] =
     await Promise.all([

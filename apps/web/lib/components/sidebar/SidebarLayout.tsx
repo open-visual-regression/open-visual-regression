@@ -2,7 +2,6 @@ import { ScrollContainer } from "@/lib/providers/ScrollContainer";
 
 type SidebarLayoutProps = Readonly<{
   sidebar: React.ReactNode;
-  /** Identifies the scrollable main region to `useScrollRestoration`. */
   scrollRestorationId: string;
   children: React.ReactNode;
 }>;

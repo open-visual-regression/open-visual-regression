@@ -4,7 +4,6 @@ import { cn } from "@ovr/ui/lib/utils";
 
 type SidebarSectionProps = {
   label: string;
-  /** Turns the section's heading into a link to the full listing. */
   href?: string;
   onNavigate?: () => void;
   count?: number;

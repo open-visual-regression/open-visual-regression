@@ -10,13 +10,11 @@ import { orpc } from "@/lib/orpc/client";
 import { BuildsList } from "./BuildsList";
 
 type BuildsSectionProps = {
-  /** Omit to show builds from every project. */
   projectIds?: string[];
   search?: string;
   statuses?: BuildStatus[];
   branches?: string[];
   authors?: string[];
-  /** Rendered in place of the list when nothing has been built yet. */
   emptyState?: React.ReactNode;
 };
 

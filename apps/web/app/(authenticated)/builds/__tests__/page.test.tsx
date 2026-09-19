@@ -15,8 +15,6 @@ vi.mock("@/lib/orpc/server", async () => {
 const { default: BuildsPage } = await import("../page");
 
 describe("BuildsPage", () => {
-  // `getQueryClient` memoizes one client per browser session, so the prefetched
-  // page can only be rendered once per module.
   it("should list every project's builds, each linking to its own build page", async () => {
     const builds = [
       mocks.build.generateBuild({

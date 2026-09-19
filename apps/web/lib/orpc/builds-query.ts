@@ -3,7 +3,6 @@ import { type BuildStatus, type BuildsCursor } from "@ovr/api/contracts/builds";
 const BUILDS_PAGE_SIZE = 50;
 
 export type BuildsListFilters = {
-  /** Omit to list every build the caller can read, across all projects. */
   projectIds?: string[];
   search?: string;
   statuses?: BuildStatus[];
