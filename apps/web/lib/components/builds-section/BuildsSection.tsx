@@ -8,35 +8,36 @@ import { buildsListInfiniteOptions } from "@/lib/orpc/builds-query";
 import { orpc } from "@/lib/orpc/client";
 
 import { BuildsList } from "./BuildsList";
-import { NoBuildsSection } from "./NoBuildsSection";
 
 type BuildsSectionProps = {
-  projectId: string;
+  projectIds?: string[];
   search?: string;
   statuses?: BuildStatus[];
   branches?: string[];
   authors?: string[];
+  emptyState?: React.ReactNode;
 };
 
 export const BuildsSection = ({
-  projectId,
+  projectIds,
   search,
   statuses,
   branches,
   authors,
+  emptyState,
 }: BuildsSectionProps) => {
   const hasFilters = Boolean(statuses?.length || branches?.length || authors?.length);
 
   const { data, isPending, hasNextPage, isFetchingNextPage, fetchNextPage } = useInfiniteQuery(
     orpc.builds.list.infiniteOptions(
-      buildsListInfiniteOptions(projectId, search, { statuses, branches, authors }),
+      buildsListInfiniteOptions({ projectIds, search, statuses, branches, authors }),
     ),
   );
 
   const builds = data?.pages.flatMap((page) => page.builds) ?? [];
 
-  if (!isPending && builds.length === 0 && !search && !hasFilters) {
-    return <NoBuildsSection />;
+  if (emptyState && !isPending && builds.length === 0 && !search && !hasFilters) {
+    return emptyState;
   }
 
   return (

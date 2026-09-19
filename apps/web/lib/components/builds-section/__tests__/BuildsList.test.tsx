@@ -36,15 +36,17 @@ describe("BuildsList", () => {
     expect(screen.getByText("feat: add checkout")).toBeVisible();
   });
 
-  it("should render the build's status, branch, and author", () => {
+  it("should render the build's status, project, branch, and author", () => {
     const build = mocks.build.generateBuild({
       status: "needs_review",
+      project: { id: "018f0000-0000-7000-8000-000000000000", name: "Acme Web" },
       branch: "pr/482",
       author: "Jordan Lee",
     });
     renderList([build]);
 
     expect(screen.getByText("needs review")).toBeVisible();
+    expect(screen.getByText("Acme Web")).toBeVisible();
     expect(screen.getByText("pr/482")).toBeVisible();
     expect(screen.getByText("Jordan Lee")).toBeVisible();
   });

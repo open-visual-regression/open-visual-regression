@@ -31,7 +31,7 @@ const NavigationBarMobileMenu = ({
 
   const section = pathname.startsWith("/settings")
     ? "settings"
-    : pathname.startsWith("/projects")
+    : pathname.startsWith("/projects") || pathname.startsWith("/builds")
       ? "projects"
       : null;
 
