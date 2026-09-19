@@ -241,19 +241,28 @@ export const list = os.builds.list
   })
   .actionable();
 
+// Without a projectId the options span every project in the organization, so
+// there is no project to authorize — the organization scope is the boundary.
+const getFilterOptionsScope = async (projectId: string | undefined, organizationId: string) => {
+  if (!projectId) {
+    return { organizationId };
+  }
+
+  const project = await dbClient.projects.getProject({ projectId, organizationId });
+
+  if (!project) {
+    throw new ORPCError("NOT_FOUND");
+  }
+
+  return { organizationId, projectId };
+};
+
 export const listBranches = os.builds.listBranches
   .use(authenticatedMiddleware)
   .handler(async ({ input, context }) => {
-    const project = await dbClient.projects.getProject({
-      projectId: input.projectId,
-      organizationId: context.organizationId,
-    });
+    const scope = await getFilterOptionsScope(input.projectId, context.organizationId);
 
-    if (!project) {
-      throw new ORPCError("NOT_FOUND");
-    }
-
-    const branches = await dbClient.builds.findBranches(input.projectId, {
+    const branches = await dbClient.builds.findBranches(scope, {
       search: input.search,
       limit: input.limit,
     });
@@ -265,16 +274,9 @@ export const listBranches = os.builds.listBranches
 export const listAuthors = os.builds.listAuthors
   .use(authenticatedMiddleware)
   .handler(async ({ input, context }) => {
-    const project = await dbClient.projects.getProject({
-      projectId: input.projectId,
-      organizationId: context.organizationId,
-    });
+    const scope = await getFilterOptionsScope(input.projectId, context.organizationId);
 
-    if (!project) {
-      throw new ORPCError("NOT_FOUND");
-    }
-
-    const authors = await dbClient.builds.findAuthors(input.projectId, {
+    const authors = await dbClient.builds.findAuthors(scope, {
       search: input.search,
       limit: input.limit,
     });
@@ -286,16 +288,9 @@ export const listAuthors = os.builds.listAuthors
 export const listStatuses = os.builds.listStatuses
   .use(authenticatedMiddleware)
   .handler(async ({ input, context }) => {
-    const project = await dbClient.projects.getProject({
-      projectId: input.projectId,
-      organizationId: context.organizationId,
-    });
+    const scope = await getFilterOptionsScope(input.projectId, context.organizationId);
 
-    if (!project) {
-      throw new ORPCError("NOT_FOUND");
-    }
-
-    return { statuses: await dbClient.builds.findStatuses(input.projectId) };
+    return { statuses: await dbClient.builds.findStatuses(scope) };
   })
   .actionable();
 

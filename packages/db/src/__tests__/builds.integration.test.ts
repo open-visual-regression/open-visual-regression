@@ -546,6 +546,7 @@ describe("builds", () => {
 
   describe("findBranches", () => {
     test("should return the distinct branches captured for the project, sorted alphabetically", async ({
+      organization,
       project,
       user,
     }) => {
@@ -571,12 +572,19 @@ describe("builds", () => {
         createdBy: user.id,
       });
 
-      const branches = await dbClient.builds.findBranches(project.id, { limit: 20 });
+      const branches = await dbClient.builds.findBranches(
+        { organizationId: organization.id, projectId: project.id },
+        { limit: 20 },
+      );
 
       expect(branches).toEqual(["develop", "main"]);
     });
 
-    test("should only return branches matching the search term", async ({ project, user }) => {
+    test("should only return branches matching the search term", async ({
+      organization,
+      project,
+      user,
+    }) => {
       await dbClient.builds.create({
         projectId: project.id,
         branch: "main",
@@ -592,15 +600,19 @@ describe("builds", () => {
         createdBy: user.id,
       });
 
-      const branches = await dbClient.builds.findBranches(project.id, {
-        search: "feat",
-        limit: 20,
-      });
+      const branches = await dbClient.builds.findBranches(
+        { organizationId: organization.id, projectId: project.id },
+        { search: "feat", limit: 20 },
+      );
 
       expect(branches).toEqual(["feature/onboarding"]);
     });
 
-    test("should cap the number of branches at the given limit", async ({ project, user }) => {
+    test("should cap the number of branches at the given limit", async ({
+      organization,
+      project,
+      user,
+    }) => {
       for (let index = 0; index < 5; index++) {
         await dbClient.builds.create({
           projectId: project.id,
@@ -611,7 +623,10 @@ describe("builds", () => {
         });
       }
 
-      const branches = await dbClient.builds.findBranches(project.id, { limit: 3 });
+      const branches = await dbClient.builds.findBranches(
+        { organizationId: organization.id, projectId: project.id },
+        { limit: 3 },
+      );
 
       expect(branches).toEqual(["branch-0", "branch-1", "branch-2"]);
     });
@@ -639,13 +654,17 @@ describe("builds", () => {
         createdBy: user.id,
       });
 
-      const branches = await dbClient.builds.findBranches(project.id, { limit: 20 });
+      const branches = await dbClient.builds.findBranches(
+        { organizationId: organization.id, projectId: project.id },
+        { limit: 20 },
+      );
       expect(branches).toEqual([]);
     });
   });
 
   describe("findAuthors", () => {
     test("should return the distinct non-null authors captured for the project, sorted alphabetically", async ({
+      organization,
       project,
       user,
     }) => {
@@ -673,12 +692,19 @@ describe("builds", () => {
         createdBy: user.id,
       });
 
-      const authors = await dbClient.builds.findAuthors(project.id, { limit: 20 });
+      const authors = await dbClient.builds.findAuthors(
+        { organizationId: organization.id, projectId: project.id },
+        { limit: 20 },
+      );
 
       expect(authors).toEqual(["Alex Kim", "Jordan Lee"]);
     });
 
-    test("should only return authors matching the search term", async ({ project, user }) => {
+    test("should only return authors matching the search term", async ({
+      organization,
+      project,
+      user,
+    }) => {
       await dbClient.builds.create({
         projectId: project.id,
         branch: "main",
@@ -696,10 +722,10 @@ describe("builds", () => {
         author: "Alex Kim",
       });
 
-      const authors = await dbClient.builds.findAuthors(project.id, {
-        search: "kim",
-        limit: 20,
-      });
+      const authors = await dbClient.builds.findAuthors(
+        { organizationId: organization.id, projectId: project.id },
+        { search: "kim", limit: 20 },
+      );
 
       expect(authors).toEqual(["Alex Kim"]);
     });
@@ -707,6 +733,7 @@ describe("builds", () => {
 
   describe("findStatuses", () => {
     test("should return the distinct derived display statuses present in the project, in canonical order", async ({
+      organization,
       project,
       user,
     }) => {
@@ -754,7 +781,10 @@ describe("builds", () => {
         reviewStatus: "needs_review",
       });
 
-      const statuses = await dbClient.builds.findStatuses(project.id);
+      const statuses = await dbClient.builds.findStatuses({
+        organizationId: organization.id,
+        projectId: project.id,
+      });
 
       expect(statuses).toEqual(["queued", "needs_review", "unchanged"]);
     });
@@ -782,7 +812,10 @@ describe("builds", () => {
         createdBy: user.id,
       });
 
-      const statuses = await dbClient.builds.findStatuses(project.id);
+      const statuses = await dbClient.builds.findStatuses({
+        organizationId: organization.id,
+        projectId: project.id,
+      });
       expect(statuses).toEqual([]);
     });
   });

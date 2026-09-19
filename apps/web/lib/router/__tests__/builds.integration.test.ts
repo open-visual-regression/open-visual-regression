@@ -707,6 +707,378 @@ describe("builds", () => {
     });
   });
 
+  const seedOtherOrgProject = async (creatorId: string) => {
+    const [otherOrg] = await db
+      .insert(organization)
+      .values({
+        id: crypto.randomUUID(),
+        name: "Other Org",
+        slug: crypto.randomUUID(),
+        createdAt: new Date(),
+      })
+      .returning();
+
+    const [otherProject] = await db
+      .insert(projects)
+      .values({
+        name: "Other Org Project",
+        gitMainBranch: "main",
+        organizationId: otherOrg!.id,
+        creatorId,
+      })
+      .returning();
+
+    return otherProject!;
+  };
+
+  describe("listBranches", () => {
+    test("should return UNAUTHORIZED when no session cookie is provided", async () => {
+      vi.mocked(headers).mockResolvedValue(new Headers());
+
+      const [error] = await serverClient.builds.listBranches({});
+
+      expect(error?.code).toBe("UNAUTHORIZED");
+    });
+
+    test("should return branches across every project in the organization when no project is given", async ({
+      admin,
+    }) => {
+      const [, projectA] = await serverClient.projects.add(TEST_PROJECT);
+      const [, projectB] = await serverClient.projects.add({
+        ...TEST_PROJECT,
+        projectName: "Project B",
+      });
+
+      await dbClient.builds.create({
+        projectId: projectA!.projectId,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: admin.id,
+      });
+      await dbClient.builds.create({
+        projectId: projectB!.projectId,
+        branch: "develop",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/b/artifact",
+        createdBy: admin.id,
+      });
+
+      const [error, result] = await serverClient.builds.listBranches({});
+
+      expect(error).toBeNull();
+      expect(result?.branches).toEqual(["develop", "main"]);
+    });
+
+    test("should only return branches for the given project", async ({ admin }) => {
+      const [, projectA] = await serverClient.projects.add(TEST_PROJECT);
+      const [, projectB] = await serverClient.projects.add({
+        ...TEST_PROJECT,
+        projectName: "Project B",
+      });
+
+      await dbClient.builds.create({
+        projectId: projectA!.projectId,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: admin.id,
+      });
+      await dbClient.builds.create({
+        projectId: projectB!.projectId,
+        branch: "develop",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/b/artifact",
+        createdBy: admin.id,
+      });
+
+      const [error, result] = await serverClient.builds.listBranches({
+        projectId: projectB!.projectId,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.branches).toEqual(["develop"]);
+    });
+
+    test("should only return branches matching the search term", async ({ admin }) => {
+      const [, project] = await serverClient.projects.add(TEST_PROJECT);
+
+      await dbClient.builds.create({
+        projectId: project!.projectId,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: admin.id,
+      });
+      await dbClient.builds.create({
+        projectId: project!.projectId,
+        branch: "feature/onboarding",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/b/artifact",
+        createdBy: admin.id,
+      });
+
+      const [error, result] = await serverClient.builds.listBranches({ search: "feat" });
+
+      expect(error).toBeNull();
+      expect(result?.branches).toEqual(["feature/onboarding"]);
+    });
+
+    test("should not return branches belonging to another organization", async ({ admin }) => {
+      const [, project] = await serverClient.projects.add(TEST_PROJECT);
+
+      await dbClient.builds.create({
+        projectId: project!.projectId,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: admin.id,
+      });
+
+      const otherProject = await seedOtherOrgProject(admin.id);
+      await dbClient.builds.create({
+        projectId: otherProject.id,
+        branch: "leaked",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/b/artifact",
+        createdBy: admin.id,
+      });
+
+      const [error, result] = await serverClient.builds.listBranches({});
+
+      expect(error).toBeNull();
+      expect(result?.branches).toEqual(["main"]);
+    });
+
+    test("should return NOT_FOUND for a project belonging to another organization", async ({
+      admin,
+    }) => {
+      const otherProject = await seedOtherOrgProject(admin.id);
+
+      const [error] = await serverClient.builds.listBranches({ projectId: otherProject.id });
+
+      expect(error?.code).toBe("NOT_FOUND");
+    });
+  });
+
+  describe("listAuthors", () => {
+    test("should return UNAUTHORIZED when no session cookie is provided", async () => {
+      vi.mocked(headers).mockResolvedValue(new Headers());
+
+      const [error] = await serverClient.builds.listAuthors({});
+
+      expect(error?.code).toBe("UNAUTHORIZED");
+    });
+
+    test("should return authors across every project in the organization when no project is given", async ({
+      admin,
+    }) => {
+      const [, projectA] = await serverClient.projects.add(TEST_PROJECT);
+      const [, projectB] = await serverClient.projects.add({
+        ...TEST_PROJECT,
+        projectName: "Project B",
+      });
+
+      await dbClient.builds.create({
+        projectId: projectA!.projectId,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: admin.id,
+        author: "Jordan Lee",
+      });
+      await dbClient.builds.create({
+        projectId: projectB!.projectId,
+        branch: "main",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/b/artifact",
+        createdBy: admin.id,
+        author: "Alex Kim",
+      });
+
+      const [error, result] = await serverClient.builds.listAuthors({});
+
+      expect(error).toBeNull();
+      expect(result?.authors).toEqual(["Alex Kim", "Jordan Lee"]);
+    });
+
+    test("should only return authors for the given project", async ({ admin }) => {
+      const [, projectA] = await serverClient.projects.add(TEST_PROJECT);
+      const [, projectB] = await serverClient.projects.add({
+        ...TEST_PROJECT,
+        projectName: "Project B",
+      });
+
+      await dbClient.builds.create({
+        projectId: projectA!.projectId,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: admin.id,
+        author: "Jordan Lee",
+      });
+      await dbClient.builds.create({
+        projectId: projectB!.projectId,
+        branch: "main",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/b/artifact",
+        createdBy: admin.id,
+        author: "Alex Kim",
+      });
+
+      const [error, result] = await serverClient.builds.listAuthors({
+        projectId: projectB!.projectId,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.authors).toEqual(["Alex Kim"]);
+    });
+
+    test("should not return authors belonging to another organization", async ({ admin }) => {
+      const [, project] = await serverClient.projects.add(TEST_PROJECT);
+
+      await dbClient.builds.create({
+        projectId: project!.projectId,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: admin.id,
+        author: "Jordan Lee",
+      });
+
+      const otherProject = await seedOtherOrgProject(admin.id);
+      await dbClient.builds.create({
+        projectId: otherProject.id,
+        branch: "main",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/b/artifact",
+        createdBy: admin.id,
+        author: "Leaked Author",
+      });
+
+      const [error, result] = await serverClient.builds.listAuthors({});
+
+      expect(error).toBeNull();
+      expect(result?.authors).toEqual(["Jordan Lee"]);
+    });
+
+    test("should return NOT_FOUND for a project belonging to another organization", async ({
+      admin,
+    }) => {
+      const otherProject = await seedOtherOrgProject(admin.id);
+
+      const [error] = await serverClient.builds.listAuthors({ projectId: otherProject.id });
+
+      expect(error?.code).toBe("NOT_FOUND");
+    });
+  });
+
+  describe("listStatuses", () => {
+    test("should return UNAUTHORIZED when no session cookie is provided", async () => {
+      vi.mocked(headers).mockResolvedValue(new Headers());
+
+      const [error] = await serverClient.builds.listStatuses({});
+
+      expect(error?.code).toBe("UNAUTHORIZED");
+    });
+
+    test("should return statuses across every project in the organization when no project is given", async ({
+      admin,
+    }) => {
+      const [, projectA] = await serverClient.projects.add(TEST_PROJECT);
+      const [, projectB] = await serverClient.projects.add({
+        ...TEST_PROJECT,
+        projectName: "Project B",
+      });
+
+      await dbClient.builds.create({
+        projectId: projectA!.projectId,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: admin.id,
+      });
+
+      const reviewedBuild = await dbClient.builds.create({
+        projectId: projectB!.projectId,
+        branch: "main",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/b/artifact",
+        createdBy: admin.id,
+      });
+      await dbClient.builds.updateResult(reviewedBuild!.id, {
+        processingStatus: "success",
+        reviewStatus: "needs_review",
+      });
+
+      const [error, result] = await serverClient.builds.listStatuses({});
+
+      expect(error).toBeNull();
+      expect(result?.statuses).toEqual(["queued", "needs_review"]);
+    });
+
+    test("should only return statuses for the given project", async ({ admin }) => {
+      const [, projectA] = await serverClient.projects.add(TEST_PROJECT);
+      const [, projectB] = await serverClient.projects.add({
+        ...TEST_PROJECT,
+        projectName: "Project B",
+      });
+
+      await dbClient.builds.create({
+        projectId: projectA!.projectId,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: admin.id,
+      });
+
+      const reviewedBuild = await dbClient.builds.create({
+        projectId: projectB!.projectId,
+        branch: "main",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/b/artifact",
+        createdBy: admin.id,
+      });
+      await dbClient.builds.updateResult(reviewedBuild!.id, {
+        processingStatus: "success",
+        reviewStatus: "needs_review",
+      });
+
+      const [error, result] = await serverClient.builds.listStatuses({
+        projectId: projectB!.projectId,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.statuses).toEqual(["needs_review"]);
+    });
+
+    test("should not return statuses belonging to another organization", async ({ admin }) => {
+      const otherProject = await seedOtherOrgProject(admin.id);
+      await dbClient.builds.create({
+        projectId: otherProject.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: admin.id,
+      });
+
+      const [error, result] = await serverClient.builds.listStatuses({});
+
+      expect(error).toBeNull();
+      expect(result?.statuses).toEqual([]);
+    });
+
+    test("should return NOT_FOUND for a project belonging to another organization", async ({
+      admin,
+    }) => {
+      const otherProject = await seedOtherOrgProject(admin.id);
+
+      const [error] = await serverClient.builds.listStatuses({ projectId: otherProject.id });
+
+      expect(error?.code).toBe("NOT_FOUND");
+    });
+  });
+
   describe("getOne", () => {
     test("should return NOT_FOUND for a build that does not exist", async ({ admin: _ }) => {
       const [error] = await serverClient.builds.getOne({
