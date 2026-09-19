@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import type { Redis } from "ioredis";
-import type { Page } from "playwright";
+import type { LaunchOptions, Page } from "playwright";
 import { chromium } from "playwright";
 import * as tar from "tar";
 import { v7 as uuidv7 } from "uuid";
@@ -46,12 +46,20 @@ export const uploadArtifactWithIframe = async (
   }
 };
 
+type CapturePageOptions = {
+  launch?: (proxyOrigin: string) => LaunchOptions | Promise<LaunchOptions>;
+};
+
 export const withCapturePage = async (
   buildDir: string,
   run: (page: Page) => Promise<void>,
+  { launch }: CapturePageOptions = {},
 ): Promise<void> => {
   const proxy = await startStaticProxy(buildDir);
-  const browser = await chromium.launch({ args: ["--disable-dev-shm-usage"] });
+  const browser = await chromium.launch({
+    args: ["--disable-dev-shm-usage"],
+    ...(await launch?.(proxy.origin)),
+  });
 
   try {
     const page = await newPage(await browser.newContext());

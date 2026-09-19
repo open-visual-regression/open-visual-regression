@@ -21,6 +21,7 @@ import {
   SETTLE_TIMEOUT_MS,
   withTimeout,
 } from "./lib/captureTimeouts";
+import { startEgressProxy, type EgressProxy } from "./lib/egressProxy";
 import { settlePage, trackNetworkActivity, type NetworkActivity } from "./lib/settle";
 import { startStaticProxy, type StaticProxy } from "./lib/staticProxy";
 import { createUploadQueue } from "./lib/uploadQueue";
@@ -98,11 +99,13 @@ const launchCapturePage = async (
   buildId: string,
   browserName: string,
   proxy: StaticProxy,
+  egress: EgressProxy,
   strategy: CaptureStrategy,
 ): Promise<CapturePage> => {
   const browser = await getBrowserLauncher(browserName).launch({
     ...SIGNAL_HANDLING_OPTIONS,
     ...(browserName === "chromium" ? { args: ["--disable-dev-shm-usage"] } : {}),
+    proxy: { server: egress.server },
   });
 
   let closeRequested = false;
@@ -117,14 +120,6 @@ const launchCapturePage = async (
   const page = await newPage(context);
   page.on("crash", () => {
     logger.error({ buildId, browser: browserName }, "capture page crashed");
-  });
-
-  await page.route("**/*", (route) => {
-    const url = new URL(route.request().url());
-    if (url.origin === proxy.origin || url.protocol === "data:" || url.protocol === "blob:") {
-      return route.continue();
-    }
-    return route.abort();
   });
 
   const pageLogState: PageLogState = { logs: [], hasPageError: false };
@@ -382,6 +377,7 @@ export const captureBuildGroup = async (
     (signal) =>
       withBundleDir(build.id, build.artifactPath, async (bundleDir) => {
         const proxy = await startStaticProxy(bundleDir);
+        const egress = await startEgressProxy(proxy.origin);
         const strategy = await detectCaptureStrategy(bundleDir);
 
         logger.info(
@@ -389,7 +385,7 @@ export const captureBuildGroup = async (
           "capture group started",
         );
 
-        let capturePage = await launchCapturePage(buildId, browser, proxy, strategy);
+        let capturePage = await launchCapturePage(buildId, browser, proxy, egress, strategy);
         const uploads = createUploadQueue(MAX_PENDING_UPLOADS);
         let uploadInterrupted = false;
 
@@ -441,7 +437,7 @@ export const captureBuildGroup = async (
               await capturePage.close().catch(() => undefined);
 
               try {
-                capturePage = await launchCapturePage(buildId, browser, proxy, strategy);
+                capturePage = await launchCapturePage(buildId, browser, proxy, egress, strategy);
               } catch (relaunchError) {
                 logger.error(
                   { buildId, browser, err: relaunchError },
@@ -467,6 +463,7 @@ export const captureBuildGroup = async (
           }
         } finally {
           await capturePage.close();
+          egress.close();
           proxy.close();
           await uploads.drain().catch(() => undefined);
         }
