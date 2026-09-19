@@ -25,7 +25,8 @@
           "cli/authentication",
           "cli/upload-storybook",
           "cli/builds",
-          "cli/snapshots"
+          "cli/snapshots",
+          "cli/diffs"
         ]
       },
       {
