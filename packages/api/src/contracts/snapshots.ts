@@ -124,6 +124,22 @@ export type GetAdjacentOutputSchema = z.infer<typeof getAdjacentOutputSchema>;
 
 export const getAdjacentContract = oc.input(getAdjacentInputSchema).output(getAdjacentOutputSchema);
 
+export const snapshotImageUrlsSchema = z.object({
+  current: z.string().nullable(),
+  baseline: z.string().nullable(),
+  diff: z.string().nullable(),
+});
+
+export type SnapshotImageUrlsSchema = z.infer<typeof snapshotImageUrlsSchema>;
+
+export const getImageUrlsInputSchema = z.object({ snapshotId: z.uuidv7() });
+
+export const getImageUrlsOutputSchema = z.object({ urls: snapshotImageUrlsSchema });
+
+export const getImageUrlsContract = oc
+  .input(getImageUrlsInputSchema)
+  .output(getImageUrlsOutputSchema);
+
 export const listSnapshotFilterOptionsInputSchema = z.object({ buildId: z.uuidv7() });
 
 export const listStatusesOutputSchema = z.object({
@@ -152,6 +168,7 @@ export const listViewportsContract = oc
 
 export const contract = {
   getOne: getOneContract,
+  getImageUrls: getImageUrlsContract,
   list: listContract,
   getCounts: getCountsContract,
   getAdjacent: getAdjacentContract,

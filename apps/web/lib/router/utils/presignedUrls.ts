@@ -1,0 +1,1 @@
+export const PRESIGNED_URL_TTL_SECONDS = 300;

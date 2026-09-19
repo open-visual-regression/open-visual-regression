@@ -1,6 +1,7 @@
 "use server";
 
 import { dbClient } from "@ovr/db/client";
+import { storage } from "@ovr/storage";
 
 import {
   authenticatedMiddleware,
@@ -9,6 +10,7 @@ import {
   organizationSnapshotMiddleware,
 } from "./middleware";
 import { os } from "./os";
+import { PRESIGNED_URL_TTL_SECONDS } from "./utils/presignedUrls";
 import { getSnapshotDisplayStatus } from "./utils/snapshotStatus";
 
 export const getOne = os.snapshots.getOne
@@ -44,6 +46,27 @@ export const getOne = os.snapshots.getOne
         })),
       },
     };
+  })
+  .actionable();
+
+const presignImage = async (path: string | null): Promise<string | null> =>
+  path ? storage.getPresignedUrl(path, PRESIGNED_URL_TTL_SECONDS) : null;
+
+export const getImageUrls = os.snapshots.getImageUrls
+  .use(callerMiddleware("builds", "read"))
+  .use(organizationSnapshotMiddleware)
+  .handler(async ({ context }) => {
+    const { snapshot } = context;
+
+    const row = await dbClient.diffs.findBySnapshotWithBaseline(snapshot.id);
+
+    const [current, baseline, diff] = await Promise.all([
+      presignImage(snapshot.imagePath),
+      presignImage(row?.baselineSnapshot?.imagePath ?? null),
+      presignImage(row?.diff.diffImagePath ?? null),
+    ]);
+
+    return { urls: { current, baseline, diff } };
   })
   .actionable();
 
