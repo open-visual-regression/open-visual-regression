@@ -73,3 +73,37 @@ alongside `No snapshots found.` so a mistyped browser or viewport is visible.
 Pagination works the same way as [`ovr builds list`](/cli/builds): a page at a time,
 with the next page's cursor printed when more snapshots match, `--cursor` to resume,
 and `--all` to fetch every page at once.
+
+## `ovr snapshots get`
+
+```sh
+ovr snapshots get <snapshotId>
+```
+
+| Flag | Description |
+|------|-------------|
+| `--server-url <url>` | OVR server URL (defaults to `ovr.config`'s `serverUrl`) |
+| `-c, --config <path>` | Path to `ovr.config` file |
+| `--json` | Print the snapshot as JSON instead of formatted text |
+
+Prints the snapshot's ID, status, story, browser, viewport, and image path, plus
+whether the page under test threw an uncaught error and its error message when one
+was captured.
+
+This is the only place the CLI surfaces a snapshot's captured console output. When
+the snapshot recorded any console or error logs during capture, they're printed
+underneath as a `Logs:` section, one line per entry:
+
+```
+Snapshot: 01a092d6-b0aa-71bf-9312-dd8ef48a22fb
+Status:   error
+Story:    Components/Button / Primary
+Browser:  chromium
+Viewport: desktop 1280x800
+Image:
+Uncaught error: yes
+Error:    story threw during render
+
+Logs:
+  [error] TypeError: Cannot read properties of undefined (2026-09-12T10:43:15Z)
+```
