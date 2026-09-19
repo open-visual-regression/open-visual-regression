@@ -8,18 +8,51 @@ Authenticates with a [personal access token](/cli/authentication) — a project 
 ## `ovr builds list`
 
 ```sh
-ovr builds list --branch main
+ovr builds list --branch main --status needs_review
 ```
 
 | Flag | Description |
 |------|-------------|
 | `--server-url <url>` | OVR server URL (defaults to `ovr.config`'s `serverUrl`) |
-| `--branch <name>` | Filter to builds on this branch |
-| `--commit <sha>` | Filter to builds for this commit |
+| `--branch <name...>` | Filter to builds on these branches |
+| `--commit <sha...>` | Filter to builds for these commits |
+| `--status <status...>` | Filter to builds with these statuses |
+| `--author <author...>` | Filter to builds by these authors |
+| `--search <text>` | Filter to builds matching this text |
+| `--sort <direction>` | Sort by creation time, `asc` or `desc` (default `desc`) |
+| `--limit <count>` | Builds per page, 1–100 (default `20`) |
+| `--cursor <cursor>` | Fetch the page following this cursor |
+| `--all` | Fetch every page instead of just the first |
 | `-c, --config <path>` | Path to `ovr.config` file |
 | `--json` | Print results as JSON instead of a table |
 
 Prints one row per build: build ID, status, branch, commit, project, and name.
+
+The repeatable filters (`--branch`, `--commit`, `--status`, `--author`) match a
+build if it matches any of the values given. `--status` accepts `queued`,
+`processing`, `needs_review`, `unchanged`, `auto_approved`, `approved`,
+`rejected`, `error`, and `canceled`; anything else is rejected before the
+request is sent. When filters match nothing, the applied filters are printed
+alongside `No builds found.` so a mistyped branch or author is visible.
+
+### Pagination
+
+One page is returned at a time. When more builds match than fit on the page,
+the cursor for the next page is printed:
+
+```
+Showing 20 of 137. Next page: --cursor eyJjcmVhdGVkQXQiOiIyMDI2...
+```
+
+Pass that value back as `--cursor` to fetch the following page, or use `--all`
+to fetch every page in one command.
+
+`--json` prints an object carrying the page and its pagination state, where
+`nextCursor` is `null` on the last page:
+
+```json
+{ "builds": [], "total": 137, "nextCursor": "eyJjcmVhdGVkQXQiOiIyMDI2..." }
+```
 
 ## `ovr builds get`
 

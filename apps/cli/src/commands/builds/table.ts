@@ -36,16 +36,39 @@ export const formatBuildsTable = (rows: BuildsTableRow[]): string => {
   return [formatRow(HEADERS), ...cells.map(formatRow)].join("\n");
 };
 
-export const formatBuildsOutput = (builds: BuildSchema[], json: boolean | undefined): string => {
+export type BuildsFilters = Record<string, string | string[] | undefined>;
+
+export type BuildsOutput = {
+  builds: BuildSchema[];
+  total: number;
+  nextCursor: string | null;
+  filters?: BuildsFilters;
+};
+
+export const formatAppliedFilters = (filters: BuildsFilters | undefined): string | undefined => {
+  const applied = Object.entries(filters ?? {}).flatMap(([key, value]) => {
+    const values = Array.isArray(value) ? value : [value];
+    const present = values.filter((entry) => entry !== undefined && entry !== "");
+
+    return present.length > 0 ? [`${key}=${present.join(",")}`] : [];
+  });
+
+  return applied.length > 0 ? `Filters: ${applied.join(", ")}` : undefined;
+};
+
+export const formatBuildsOutput = (
+  { builds, total, nextCursor, filters }: BuildsOutput,
+  json: boolean | undefined,
+): string => {
   if (json) {
-    return JSON.stringify(builds, null, 2);
+    return JSON.stringify({ builds, total, nextCursor }, null, 2);
   }
 
   if (builds.length === 0) {
-    return "No builds found.";
+    return [`No builds found.`, formatAppliedFilters(filters)].filter(Boolean).join("\n");
   }
 
-  return formatBuildsTable(
+  const table = formatBuildsTable(
     builds.map((build) => ({
       id: build.id,
       status: build.status,
@@ -55,4 +78,10 @@ export const formatBuildsOutput = (builds: BuildSchema[], json: boolean | undefi
       name: build.name ?? "",
     })),
   );
+
+  if (!nextCursor) {
+    return table;
+  }
+
+  return `${table}\n\nShowing ${builds.length} of ${total}. Next page: --cursor ${nextCursor}`;
 };
