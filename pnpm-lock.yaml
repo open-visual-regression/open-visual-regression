@@ -537,6 +537,9 @@ importers:
       '@ovr/db':
         specifier: workspace:*
         version: link:../db
+      '@ovr/image-diff':
+        specifier: workspace:*
+        version: link:../image-diff
       '@ovr/logger':
         specifier: workspace:*
         version: link:../logger
@@ -552,9 +555,6 @@ importers:
       '@ovr/storybook-compat':
         specifier: workspace:*
         version: link:../storybook-compat
-      pixelmatch:
-        specifier: ^7.2.0
-        version: 7.2.0
       playwright:
         specifier: 1.61.0
         version: 1.61.0
@@ -583,9 +583,6 @@ importers:
       '@types/pg':
         specifier: ^8.20.3
         version: 8.20.3
-      '@types/pixelmatch':
-        specifier: ^5.2.6
-        version: 5.2.6
       '@types/pngjs':
         specifier: ^6.0.5
         version: 6.0.5
@@ -669,6 +666,34 @@ importers:
       msw:
         specifier: ^2.15.0
         version: 2.15.0(@types/node@22.20.1)(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.10(@types/node@22.20.1)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(jsdom@29.1.1(@noble/hashes@2.4.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.0(@types/node@22.20.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))
+
+  packages/image-diff:
+    dependencies:
+      pixelmatch:
+        specifier: ^7.2.0
+        version: 7.2.0
+      pngjs:
+        specifier: ^7.0.0
+        version: 7.0.0
+    devDependencies:
+      '@ovr/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: ^22.20.1
+        version: 22.20.1
+      '@types/pixelmatch':
+        specifier: ^5.2.6
+        version: 5.2.6
+      '@types/pngjs':
+        specifier: ^6.0.5
+        version: 6.0.5
       typescript:
         specifier: 6.0.3
         version: 6.0.3
@@ -8755,6 +8780,7 @@ snapshots:
 
   '@ovr/db@file:packages/db(@types/pg@8.20.3)(kysely@0.29.4)':
     dependencies:
+      '@ovr/logger': file:packages/logger
       drizzle-orm: 0.45.2(@types/pg@8.20.3)(kysely@0.29.4)(pg@8.22.0)
       pg: 8.22.0
       uuid: 14.0.1
