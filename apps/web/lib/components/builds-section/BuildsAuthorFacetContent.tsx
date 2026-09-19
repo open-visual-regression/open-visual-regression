@@ -6,29 +6,29 @@ import { useState } from "react";
 import { FacetAsyncOptionsList } from "@/lib/components/facet/FacetAsyncOptionsList";
 import { orpc } from "@/lib/orpc/client";
 
-type BuildsBranchFacetContentProps = {
-  projectId: string;
+type BuildsAuthorFacetContentProps = {
+  projectId?: string;
   selected: string[];
   onApply: (next: string[]) => void;
   onClear: () => void;
 };
 
-export const BuildsBranchFacetContent = ({
+export const BuildsAuthorFacetContent = ({
   projectId,
   selected,
   onApply,
   onClear,
-}: BuildsBranchFacetContentProps) => {
+}: BuildsAuthorFacetContentProps) => {
   const [search, setSearch] = useState("");
 
   const { data, isLoading } = useQuery({
-    ...orpc.builds.listBranches.queryOptions({
+    ...orpc.builds.listAuthors.queryOptions({
       input: { projectId, search: search || undefined },
     }),
     placeholderData: keepPreviousData,
   });
 
-  const options = (data?.branches ?? []).map((branch) => ({ value: branch, label: branch }));
+  const options = (data?.authors ?? []).map((author) => ({ value: author, label: author }));
 
   return (
     <FacetAsyncOptionsList

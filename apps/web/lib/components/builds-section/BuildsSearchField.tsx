@@ -1,7 +1,7 @@
 import { SearchField, type SearchFieldProps } from "@/lib/components/SearchField/SearchField";
 
 type BuildsSearchFieldProps = {
-  projectId: string;
+  projectId?: string;
   search?: string;
   searchParams?: SearchFieldProps["searchParams"];
   className?: string;
@@ -14,7 +14,7 @@ export const BuildsSearchField = ({
   className,
 }: BuildsSearchFieldProps) => (
   <SearchField
-    action={`/projects/${projectId}`}
+    action={projectId ? `/projects/${projectId}` : "/builds"}
     label="search builds"
     placeholder="search builds..."
     search={search}
