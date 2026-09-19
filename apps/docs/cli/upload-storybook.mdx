@@ -1,5 +1,5 @@
 ---
-title: ovr snapshot storybook
+title: ovr upload storybook
 description: Upload a Storybook build and report the visual regression result.
 ---
 
@@ -7,8 +7,14 @@ Requires a Storybook 8.5+ static build (`storybook build`). Older builds are rej
 
 Authenticates with a [project API key](/cli/authentication) — a personal access token is rejected.
 
+<Note>
+  This command was called `ovr snapshot storybook` before. That name still works and
+  behaves identically, but it prints a deprecation notice and will be removed in a
+  future release.
+</Note>
+
 ```sh
-ovr snapshot storybook \
+ovr upload storybook \
   --dir storybook-static \
   --server-url https://ovr.example.com \
   --branch "$BRANCH" \
@@ -52,7 +58,7 @@ Pass `--wait` to block until the build resolves or `--timeout` elapses instead. 
   env:
     OVR_API_KEY: ${{ secrets.OVR_API_KEY }}
   run: |
-    npx @open-visual-regression/cli snapshot storybook \
+    npx @open-visual-regression/cli upload storybook \
       --dir storybook-static \
       --server-url https://ovr.example.com \
       --branch "${{ github.head_ref || github.ref_name }}" \

@@ -22,7 +22,7 @@ OVR has two kinds of tokens. A command accepts only one kind and rejects the oth
 
 | Token | Created from | Used by |
 |-------|--------------|---------|
-| Project API key | A project's settings page | `ovr snapshot storybook` |
+| Project API key | A project's settings page | `ovr upload storybook` |
 | Personal access token | Your account's access tokens settings page | every `ovr builds` and `ovr snapshots` command |
 
 A personal access token belongs to you, not a project — it can read builds across every project you have access to. For now it only grants read access to builds.
@@ -69,10 +69,14 @@ Unnamed viewports (no `name`) are always opt-in: they can't be referenced by `de
 Requires a Storybook 8.5+ static build (`storybook build`). Older builds are rejected
 before upload, with the detected version in the error.
 
+This command was called `ovr snapshot storybook` before. That name still works and
+behaves identically, but it prints a deprecation notice and will be removed in a future
+release.
+
 ### Usage
 
 ```sh
-ovr snapshot storybook \
+ovr upload storybook \
   --dir storybook-static \
   --server-url https://ovr.example.com \
   --branch "$BRANCH" \
@@ -129,7 +133,7 @@ export const Primary: Story = {
   env:
     OVR_API_KEY: ${{ secrets.OVR_API_KEY }}
   run: |
-    npx @open-visual-regression/cli snapshot storybook \
+    npx @open-visual-regression/cli upload storybook \
       --dir storybook-static \
       --server-url https://ovr.example.com \
       --branch "${{ github.head_ref || github.ref_name }}" \

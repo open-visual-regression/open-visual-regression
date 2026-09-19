@@ -23,7 +23,7 @@
         "pages": [
           "cli/installation",
           "cli/authentication",
-          "cli/snapshot-storybook",
+          "cli/upload-storybook",
           "cli/builds",
           "cli/snapshots"
         ]
@@ -50,5 +50,11 @@
     "socials": {
       "github": "https://github.com/open-visual-regression/open-visual-regression"
     }
-  }
+  },
+  "redirects": [
+    {
+      "source": "/cli/snapshot-storybook",
+      "destination": "/cli/upload-storybook"
+    }
+  ]
 }
