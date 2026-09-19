@@ -1,45 +1,61 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { collectAllPages, type Page } from "../paginate";
 
+const fakeSource = (pages: Record<string, Page<string, string>>, firstCursor: string) => {
+  const fetchPage = async (cursor: string | undefined): Promise<Page<string, string>> => {
+    const key = cursor ?? firstCursor;
+    const page = pages[key];
+
+    if (!page) {
+      throw new Error(`No page for cursor ${key}`);
+    }
+
+    return page;
+  };
+
+  return fetchPage;
+};
+
 describe("collectAllPages", () => {
   it("should return the only page when there is no next cursor", async () => {
-    const fetchPage = vi
-      .fn<(cursor: string | undefined) => Promise<Page<string, string>>>()
-      .mockResolvedValue({ items: ["a", "b"], nextCursor: null });
+    const fetchPage = fakeSource({ first: { items: ["a", "b"], nextCursor: null } }, "first");
 
     await expect(collectAllPages({ fetchPage })).resolves.toEqual({
       items: ["a", "b"],
       nextCursor: null,
     });
-    expect(fetchPage).toHaveBeenCalledTimes(1);
-    expect(fetchPage).toHaveBeenCalledWith(undefined);
   });
 
   it("should follow every cursor and concatenate the pages in order", async () => {
-    const fetchPage = vi
-      .fn<(cursor: string | undefined) => Promise<Page<string, string>>>()
-      .mockResolvedValueOnce({ items: ["a"], nextCursor: "page-2" })
-      .mockResolvedValueOnce({ items: ["b"], nextCursor: "page-3" })
-      .mockResolvedValueOnce({ items: ["c"], nextCursor: null });
+    const fetchPage = fakeSource(
+      {
+        first: { items: ["a"], nextCursor: "second" },
+        second: { items: ["b"], nextCursor: "third" },
+        third: { items: ["c"], nextCursor: null },
+      },
+      "first",
+    );
 
     await expect(collectAllPages({ fetchPage })).resolves.toEqual({
       items: ["a", "b", "c"],
       nextCursor: null,
     });
-    expect(fetchPage).toHaveBeenNthCalledWith(2, "page-2");
-    expect(fetchPage).toHaveBeenNthCalledWith(3, "page-3");
   });
 
   it("should stop at maxPages and return the cursor it did not follow", async () => {
-    const fetchPage = vi
-      .fn<(cursor: string | undefined) => Promise<Page<string, string>>>()
-      .mockResolvedValue({ items: ["a"], nextCursor: "page-2" });
+    const fetchPage = fakeSource(
+      {
+        first: { items: ["a"], nextCursor: "second" },
+        second: { items: ["b"], nextCursor: "third" },
+        third: { items: ["c"], nextCursor: null },
+      },
+      "first",
+    );
 
     await expect(collectAllPages({ fetchPage, maxPages: 2 })).resolves.toEqual({
-      items: ["a", "a"],
-      nextCursor: "page-2",
+      items: ["a", "b"],
+      nextCursor: "third",
     });
-    expect(fetchPage).toHaveBeenCalledTimes(2);
   });
 });
