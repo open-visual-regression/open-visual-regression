@@ -134,7 +134,7 @@ jobs:
         env:
           OVR_API_KEY: ${{ secrets.OVR_API_KEY_UI }}
         run: >
-          pnpm --filter ${{ matrix.package.filter }} exec ovr snapshot storybook
+          pnpm --filter ${{ matrix.package.filter }} exec ovr upload storybook
           --dir storybook-static
           --server-url https://openvisualregression.com
           --branch "${{ github.head_ref || github.ref_name }}"
@@ -147,7 +147,7 @@ jobs:
         env:
           OVR_API_KEY: ${{ secrets.OVR_API_KEY_WEB }}
         run: >
-          pnpm --filter ${{ matrix.package.filter }} exec ovr snapshot storybook
+          pnpm --filter ${{ matrix.package.filter }} exec ovr upload storybook
           --dir storybook-static
           --server-url https://openvisualregression.com
           --branch "${{ github.head_ref || github.ref_name }}"
