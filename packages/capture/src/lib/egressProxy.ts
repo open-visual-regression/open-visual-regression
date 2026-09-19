@@ -10,20 +10,13 @@ const logger = createLogger("capture");
 
 export type EgressProxy = { server: string; close: () => void };
 
-// `hostname` is exactly as it appeared in the authority, so an IPv6 literal
-// is still bracket-wrapped (e.g. "[::1]").
+/** `hostname` keeps its brackets when it's an IPv6 literal, e.g. "[::1]". */
 type Target = { hostname: string; port: number };
 
-// Matches an HTTP authority ("host[:port]" — a Host header or a CONNECT
-// target). Group 1 is the host: either a bracketed IPv6 literal kept intact
-// ("[::1]"), or everything up to the first colon. Group 2 is the optional
-// port.
+/** An HTTP authority ("host[:port]"): a bracketed IPv6 literal or bare host, plus an optional port. */
 const AUTHORITY = /^(\[[^\]]+\]|[^:]+)(?::(\d+))?$/;
 
-// Splits an HTTP authority into a hostname/port pair. Falls back to
-// `defaultPort` when the authority omits one, which happens for plain HTTP
-// requests but never for CONNECT (its target always includes a port).
-// Returns null for anything that fails to parse as a valid host or port.
+/** Parses "host[:port]", falling back to `defaultPort` when omitted. Null if the host or port is invalid. */
 const parseAuthority = (authority: string, defaultPort: number): Target | null => {
   const match = AUTHORITY.exec(authority);
   if (!match?.[1]) {
