@@ -106,3 +106,30 @@ Error:    story threw during render
 Logs:
   [error] TypeError: Cannot read properties of undefined (2026-09-12T10:43:15Z)
 ```
+
+## `ovr snapshots download`
+
+```sh
+ovr snapshots download <snapshotId> --out ./snapshot-images
+```
+
+| Flag | Description |
+|------|-------------|
+| `--out <dir>` | Directory to write the images into (default `.`) |
+| `--server-url <url>` | OVR server URL (defaults to `ovr.config`'s `serverUrl`) |
+| `-c, --config <path>` | Path to `ovr.config` file |
+| `--json` | Print the written paths as JSON instead of formatted text |
+
+Writes the snapshot's three images — `current.png`, `baseline.png` and `diff.png` —
+into `--out` as ordinary PNGs, creating the directory if it doesn't exist.
+
+```
+Wrote ./snapshot-images/current.png
+Wrote ./snapshot-images/baseline.png
+Wrote ./snapshot-images/diff.png
+```
+
+An image the snapshot doesn't have is skipped rather than written empty, and named in
+the output — a first snapshot with no baseline prints `No baseline or diff image for
+this snapshot.` A snapshot with no images at all prints
+`No images to download for this snapshot.` rather than failing.
