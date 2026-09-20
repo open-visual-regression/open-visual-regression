@@ -1,5 +1,7 @@
 import type { BuildDetailSchema } from "@ovr/api/contracts/builds";
 
+import { formatKeyValueRows } from "../../table";
+
 export type BuildDetailFields = {
   id: string;
   status: string;
@@ -33,9 +35,7 @@ export const formatBuildDetail = (build: BuildDetailFields): string => {
     rows.push(["Canceled by", build.canceledBy]);
   }
 
-  const labelWidth = Math.max(...rows.map(([label]) => label.length));
-
-  return rows.map(([label, value]) => `${`${label}:`.padEnd(labelWidth + 1)} ${value}`).join("\n");
+  return formatKeyValueRows(rows);
 };
 
 export const formatBuildOutput = (build: BuildDetailSchema, json: boolean | undefined): string => {
