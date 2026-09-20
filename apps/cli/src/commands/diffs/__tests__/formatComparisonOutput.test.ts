@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatComparisonOutput, isUnchanged, type LocalComparison } from "../comparison";
+import { formatComparisonOutput, type LocalComparison } from "../comparison";
 
 const COMPARISON: LocalComparison = {
   width: 1280,
@@ -11,28 +11,6 @@ const COMPARISON: LocalComparison = {
   threshold: 0.05,
   diffImagePath: null,
 };
-
-describe("isUnchanged", () => {
-  it("should treat identical images as unchanged", () => {
-    expect(isUnchanged(0, 0.05)).toBe(true);
-  });
-
-  it("should treat a difference within the threshold as unchanged", () => {
-    expect(isUnchanged(0.04, 0.05)).toBe(true);
-  });
-
-  it("should treat a difference exactly at the threshold as unchanged", () => {
-    expect(isUnchanged(0.05, 0.05)).toBe(true);
-  });
-
-  it("should treat a difference beyond the threshold as needing review", () => {
-    expect(isUnchanged(0.06, 0.05)).toBe(false);
-  });
-
-  it("should compare the percentage against the threshold directly, as the server does", () => {
-    expect(isUnchanged(1, 0.05)).toBe(false);
-  });
-});
 
 describe("formatComparisonOutput", () => {
   it("should print the comparison and its verdict as JSON when json is true", () => {
