@@ -1,6 +1,6 @@
 # @open-visual-regression/cli
 
-CLI for [Open Visual Regression](https://github.com/open-visual-regression/open-visual-regression). Uploads a build to an OVR server and reports the result.
+CLI for [Open Visual Regression](https://github.com/open-visual-regression/open-visual-regression). Uploads a Storybook build, and lists and inspects builds afterward.
 
 ## Install
 
@@ -12,11 +12,25 @@ Or run it without installing via `npx @open-visual-regression/cli`.
 
 ## Authentication
 
-Every command requires `OVR_API_KEY`, a project-scoped key created from the project's settings page in OVR.
+Every command reads its credential from `OVR_API_KEY`:
 
 ```sh
 export OVR_API_KEY=...
 ```
+
+OVR has two kinds of tokens. A command accepts only one kind and rejects the other.
+
+| Token | Created from | Used by |
+|-------|--------------|---------|
+| Project API key | A project's settings page | `ovr snapshot storybook` |
+| Personal access token | Your account's access tokens settings page | `ovr builds list`, `ovr builds get` |
+
+A personal access token belongs to you, not a project — it can read builds across every project you have access to. For now it only grants read access to builds.
+
+## Commands
+
+- `ovr snapshot storybook` uploads a Storybook build and reports the result — see [Storybook](#storybook) below
+- `ovr builds` lists and inspects builds — full reference at [docs.openvisualregression.com](https://docs.openvisualregression.com/cli/builds)
 
 ## Config
 
