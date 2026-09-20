@@ -1,3 +1,5 @@
+export const MAX_LIMIT = 100;
+
 export const parseEnumOption = <T extends string>(
   flag: string,
   values: string[] | undefined,
@@ -16,4 +18,14 @@ export const parseEnumOption = <T extends string>(
   }
 
   return values as T[];
+};
+
+export const parseLimit = (limit: string): number => {
+  const parsed = Number(limit);
+
+  if (!Number.isInteger(parsed) || parsed < 1 || parsed > MAX_LIMIT) {
+    throw new Error(`--limit must be an integer between 1 and ${MAX_LIMIT}.`);
+  }
+
+  return parsed;
 };
