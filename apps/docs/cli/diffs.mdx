@@ -38,3 +38,43 @@ Baseline commit URL: https://github.com/example/repo/commit/a1b2c3d
 A snapshot with no diff — one with no baseline to compare against, or one that
 errored before it could be diffed — prints `No diff for this snapshot.` (or `null`
 with `--json`) rather than an error.
+
+## `ovr diffs compare`
+
+```sh
+ovr diffs compare baseline.png capture.png --out diff.png
+```
+
+| Flag | Description |
+|------|-------------|
+| `--out <file>` | Write the diff mask to this PNG file |
+| `--threshold <fraction>` | Override `ovr.config`'s `diffThreshold` |
+| `-c, --config <path>` | Path to `ovr.config` file |
+| `--json` | Print the comparison as JSON instead of formatted text |
+
+Compares two local PNG files using the same pixel diffing the server runs, so you can
+check a change without uploading a build and waiting for CI. This command talks to
+nothing — it needs no server and no `OVR_API_KEY`.
+
+```
+Compared:   1280x800
+Pixel diff: 1234
+Diff %:     1.23
+Threshold:  0.05
+Result:     needs review
+Diff image: diff.png
+```
+
+Images of different sizes are compared on a canvas large enough for both, with the
+uncovered area counting as differing — the same way the server handles a capture whose
+dimensions changed.
+
+The exit code reflects the verdict: `0` when the difference is within the threshold,
+`1` when it exceeds it, so the command can gate a script the way
+[`ovr upload storybook --wait`](/cli/upload-storybook) gates CI.
+
+<Note>
+  `diffThreshold` is compared against the diff **percentage** directly, so the default
+  of `0.05` means 0.05% of pixels may differ — 5 pixels in a 100×100 image — not 5%.
+  This command mirrors that comparison exactly so its verdict matches the server's.
+</Note>
