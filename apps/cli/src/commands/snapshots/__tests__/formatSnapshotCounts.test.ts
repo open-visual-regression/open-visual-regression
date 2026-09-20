@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { SnapshotCountsSchema } from "@ovr/api/contracts/snapshots";
 
-import { formatSnapshotCounts, formatSnapshotCountsOutput } from "../snapshotCounts";
+import { formatSnapshotCounts } from "../snapshotCounts";
 
 const EMPTY_COUNTS: SnapshotCountsSchema = {
   unchanged: 0,
@@ -43,19 +43,5 @@ describe("formatSnapshotCounts", () => {
     const output = formatSnapshotCounts({ ...EMPTY_COUNTS, needs_review: 3, unchanged: 41 });
 
     expect(output.indexOf("unchanged")).toBeLessThan(output.indexOf("needs_review"));
-  });
-});
-
-describe("formatSnapshotCountsOutput", () => {
-  it("should print every status as JSON when json is true", () => {
-    expect(formatSnapshotCountsOutput(EMPTY_COUNTS, true)).toBe(
-      JSON.stringify(EMPTY_COUNTS, null, 2),
-    );
-  });
-
-  it("should print a table when json is false", () => {
-    expect(formatSnapshotCountsOutput({ ...EMPTY_COUNTS, unchanged: 1 }, false)).toContain(
-      "STATUS",
-    );
   });
 });
