@@ -1,5 +1,76 @@
 # @open-visual-regression/cli
 
+## 0.4.0
+
+### Minor Changes
+
+- [#208](https://github.com/open-visual-regression/open-visual-regression/pull/208) [`f7210db`](https://github.com/open-visual-regression/open-visual-regression/commit/f7210db2b9c93147fe6414209124cb721d2194b5) Thanks [@tgfischer](https://github.com/tgfischer)! - Filter and paginate `builds list`.
+
+  The command only ever returned the first twenty builds and dropped the server's
+  next-page cursor, so there was no way to reach an older build from the CLI, and
+  it exposed two of the filters the API accepts. It now takes `--status`,
+  `--author` and `--search` as well, `--branch` and `--commit` accept several
+  values apiece, `--sort` picks the direction, and `--limit`, `--cursor` and
+  `--all` walk the pages. A status the server does not recognize is rejected
+  before the request is sent, and an empty result reports the filters that
+  produced it so a mistyped branch or author is visible rather than silent.
+
+  `--json` now prints `{ builds, total, nextCursor }` instead of a bare array,
+  since the page alone cannot say whether more builds match or where to resume.
+
+- [#212](https://github.com/open-visual-regression/open-visual-regression/pull/212) [`4f68d6c`](https://github.com/open-visual-regression/open-visual-regression/commit/4f68d6ccbfdd780bc24d32c55bfec9dcd8378dae) Thanks [@tgfischer](https://github.com/tgfischer)! - Add `ovr diffs get`.
+
+  A snapshot's diff — its pixel diff count, diff percentage and baseline — was
+  only visible in the dashboard, so confirming whether a `needs_review` snapshot
+  is a real regression or an intentional change meant leaving the terminal.
+  `ovr diffs get <snapshotId>` prints all of it, including the baseline's commit
+  and a link to it when the project has a git integration, so a diff can be
+  sized up from the CLI before deciding whether to open the review page.
+
+- [#209](https://github.com/open-visual-regression/open-visual-regression/pull/209) [`b85db41`](https://github.com/open-visual-regression/open-visual-regression/commit/b85db413bc52d096e48bda83aee74e9be9802a6f) Thanks [@tgfischer](https://github.com/tgfischer)! - Add `ovr snapshots list` and `ovr snapshots counts`.
+
+  A failing build could be found from the CLI but not opened: `builds get` reports
+  that a build needs review without saying which of its snapshots changed, so the
+  only way from a build ID to an actual regression was the dashboard.
+
+  `snapshots counts` breaks a build down by status, and `snapshots list` prints a
+  row per snapshot carrying its story, browser, viewport and the percentage of
+  pixels that differ from its baseline. Both take a personal access token, and
+  `list` accepts the same filters the dashboard uses — `--status`, `--browser`,
+  `--viewport` and `--search` — so `--status needs_review` narrows a build to just
+  the snapshots waiting on a decision. Pages are walked with `--limit`, `--cursor`
+  and `--all`.
+
+- [#211](https://github.com/open-visual-regression/open-visual-regression/pull/211) [`98243cb`](https://github.com/open-visual-regression/open-visual-regression/commit/98243cb2b6501550f02174ab3d752d60e2beb4e3) Thanks [@tgfischer](https://github.com/tgfischer)! - Add `ovr snapshots get`.
+
+  A snapshot's console and error logs are captured on every build but were not
+  reachable from anywhere in the CLI — the dashboard was the only way to see why a
+  story errored. `ovr snapshots get <snapshotId>` prints the snapshot's status,
+  story, browser, viewport and image path, whether the page threw an uncaught
+  error, and its captured logs, so a failing snapshot can be root-caused from a
+  build id without opening a browser.
+
+- [#210](https://github.com/open-visual-regression/open-visual-regression/pull/210) [`ebeb1dd`](https://github.com/open-visual-regression/open-visual-regression/commit/ebeb1ddb83c935cd3f0efd6e3b735543c2022c62) Thanks [@tgfischer](https://github.com/tgfischer)! - Rename `ovr snapshot storybook` to `ovr upload storybook`.
+
+  The CLI does not capture anything — it uploads a Storybook build and the server
+  screenshots and diffs it — so `snapshot` described the pipeline rather than the
+  command, and it sat one letter away from the new `ovr snapshots` group for
+  inspecting a build's snapshots.
+
+  `ovr snapshot storybook` still works and behaves identically, including its exit
+  codes, but prints a deprecation notice on stderr so stdout stays parseable. It
+  will be removed in the next major release.
+
+### Patch Changes
+
+- [#207](https://github.com/open-visual-regression/open-visual-regression/pull/207) [`fac1a51`](https://github.com/open-visual-regression/open-visual-regression/commit/fac1a51aea0200e5df2ed0e1700acff5096c7625) Thanks [@tgfischer](https://github.com/tgfischer)! - Correct the README's documented authentication requirements.
+
+  It claimed every command takes a project-scoped API key, which has not been
+  true since `builds list` and `builds get` landed — those read builds through a
+  personal access token and reject a project API key outright. The README now
+  describes both token kinds and which commands accept each, matching the
+  authentication reference page in the docs.
+
 ## 0.3.0
 
 ### Minor Changes
