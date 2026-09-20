@@ -42,7 +42,7 @@ Pixel diffing is deterministic: every story, every configured viewport, every ti
 Once you have a project and an API key, upload a build from CI:
 
 ```sh
-npx @open-visual-regression/cli snapshot storybook \
+npx @open-visual-regression/cli upload storybook \
   --dir storybook-static \
   --server-url https://ovr.example.com \
   --branch "$BRANCH" \

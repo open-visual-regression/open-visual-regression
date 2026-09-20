@@ -32,7 +32,7 @@ export type IngestResult = {
 
 const buildArgs = (commitSha: string, options: IngestOptions): string[] => [
   CLI_ENTRY,
-  "snapshot",
+  "upload",
   "storybook",
   "--dir",
   STORYBOOK_DIR,
