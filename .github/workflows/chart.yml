@@ -3,9 +3,7 @@ name: Chart
 on:
   push:
     branches: [main]
-    paths: ["charts/**", "ct.yaml", ".github/workflows/chart.yml"]
   pull_request:
-    paths: ["charts/**", "ct.yaml", ".github/workflows/chart.yml"]
 
 permissions:
   contents: read
@@ -19,8 +17,35 @@ env:
   KUBECONFORM_VERSION: v0.6.7
 
 jobs:
+  detect-changes:
+    name: Detect chart changes
+    runs-on: ubuntu-latest
+    outputs:
+      charts_changed: ${{ steps.detect.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - id: detect
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          set -euo pipefail
+          if [ -z "$BASE_SHA" ] || ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+            echo "no usable base commit, linting the chart"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          files=$(git diff --name-only "$BASE_SHA...HEAD" -- charts ct.yaml .github/workflows/chart.yml)
+          echo "changed chart files: ${files:-none}"
+          changed=$([ -n "$files" ] && echo true || echo false)
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+
   lint:
     name: Lint and render
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.charts_changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
