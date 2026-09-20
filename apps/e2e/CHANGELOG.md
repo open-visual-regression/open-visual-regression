@@ -1,5 +1,12 @@
 # @ovr/e2e
 
+## 0.1.6
+
+### Patch Changes
+
+- Updated dependencies [[`f7210db`](https://github.com/open-visual-regression/open-visual-regression/commit/f7210db2b9c93147fe6414209124cb721d2194b5), [`4f68d6c`](https://github.com/open-visual-regression/open-visual-regression/commit/4f68d6ccbfdd780bc24d32c55bfec9dcd8378dae), [`fac1a51`](https://github.com/open-visual-regression/open-visual-regression/commit/fac1a51aea0200e5df2ed0e1700acff5096c7625), [`b85db41`](https://github.com/open-visual-regression/open-visual-regression/commit/b85db413bc52d096e48bda83aee74e9be9802a6f), [`98243cb`](https://github.com/open-visual-regression/open-visual-regression/commit/98243cb2b6501550f02174ab3d752d60e2beb4e3), [`ebeb1dd`](https://github.com/open-visual-regression/open-visual-regression/commit/ebeb1ddb83c935cd3f0efd6e3b735543c2022c62)]:
+  - @open-visual-regression/cli@0.4.0
+
 ## 0.1.5
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "@open-visual-regression/cli",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": false,
   "homepage": "https://openvisualregression.com",
   "bugs": "https://github.com/open-visual-regression/open-visual-regression/issues",
