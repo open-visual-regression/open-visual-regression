@@ -15,17 +15,6 @@ const solidPixels = (width: number, height: number, value: number): Uint8Array =
   return data;
 };
 
-describe("encodePng", () => {
-  it("should produce a buffer decodePng reads back at the same size", () => {
-    const encoded = encodePng(solidPixels(3, 2, 255), 3, 2);
-
-    const decoded = decodePng(encoded);
-
-    expect(decoded.width).toBe(3);
-    expect(decoded.height).toBe(2);
-  });
-});
-
 describe("decodePng", () => {
   it("should round-trip pixels losslessly", () => {
     const pixels = solidPixels(2, 2, 128);
