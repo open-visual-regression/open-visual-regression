@@ -287,6 +287,141 @@ describe("snapshots", () => {
     });
   });
 
+  describe("getImageUrls", () => {
+    const IMAGE_PATH = "project/builds/build/snapshots/current.png";
+    const BASELINE_IMAGE_PATH = "project/builds/baseline-build/snapshots/baseline.png";
+    const DIFF_IMAGE_PATH = "project/builds/build/diffs/diff.png";
+
+    test("should return UNAUTHORIZED when no session cookie is provided", async () => {
+      const [error] = await serverClient.snapshots.getImageUrls({ snapshotId: uuidv7() });
+
+      expect(error?.code).toBe("UNAUTHORIZED");
+    });
+
+    test("should return NOT_FOUND for a missing snapshot id", async ({ admin: _ }) => {
+      const [error] = await serverClient.snapshots.getImageUrls({ snapshotId: uuidv7() });
+
+      expect(error?.code).toBe("NOT_FOUND");
+    });
+
+    test("should return NOT_FOUND for a snapshot belonging to a different organization", async ({
+      admin,
+    }) => {
+      const [otherOrg] = await db
+        .insert(organization)
+        .values({
+          id: crypto.randomUUID(),
+          name: "Other Org",
+          slug: crypto.randomUUID(),
+          createdAt: new Date(),
+        })
+        .returning();
+
+      const [otherProject] = await db
+        .insert(projects)
+        .values({
+          name: "Other Org Project",
+          gitMainBranch: "main",
+          organizationId: otherOrg!.id,
+          creatorId: admin.id,
+        })
+        .returning();
+
+      const otherBuild = await dbClient.builds.create({
+        projectId: otherProject!.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/other/artifact",
+        createdBy: admin.id,
+      });
+
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: otherBuild!.id, ...VIEWPORT, targetId: "story-a", imagePath: IMAGE_PATH },
+        ],
+      });
+
+      const [error] = await serverClient.snapshots.getImageUrls({ snapshotId: snapshot!.id });
+
+      expect(error?.code).toBe("NOT_FOUND");
+    });
+
+    test("should let a personal access token read a snapshot's image urls", async ({ admin }) => {
+      const { build } = await createProjectAndBuild(admin);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: build.id, ...VIEWPORT, targetId: "story-a", imagePath: IMAGE_PATH }],
+      });
+      const [, token] = await serverClient.accessTokens.create({ name: "cursor" });
+
+      asBearer(token!.token);
+
+      const [error, result] = await serverClient.snapshots.getImageUrls({
+        snapshotId: snapshot!.id,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.urls.current).toContain(IMAGE_PATH);
+    });
+
+    test("returns a null url for every image the snapshot does not have", async ({ admin }) => {
+      const { build } = await createProjectAndBuild(admin);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: build.id, ...VIEWPORT, targetId: "story-a" }],
+      });
+
+      const [error, result] = await serverClient.snapshots.getImageUrls({
+        snapshotId: snapshot!.id,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.urls).toEqual({ current: null, baseline: null, diff: null });
+    });
+
+    test("returns a presigned url for the capture, its baseline and its diff", async ({
+      admin,
+    }) => {
+      const { projectId, build } = await createProjectAndBuild(admin);
+
+      const baselineBuild = await dbClient.builds.create({
+        projectId,
+        branch: "main",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/baseline/artifact",
+        createdBy: admin.id,
+      });
+
+      const [baselineSnapshot] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: baselineBuild!.id,
+            ...VIEWPORT,
+            targetId: "story-a",
+            imagePath: BASELINE_IMAGE_PATH,
+          },
+        ],
+      });
+
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: build.id, ...VIEWPORT, targetId: "story-a", imagePath: IMAGE_PATH }],
+      });
+
+      await dbClient.diffs.create({
+        snapshotId: snapshot!.id,
+        baselineSnapshotId: baselineSnapshot!.id,
+        diffImagePath: DIFF_IMAGE_PATH,
+      });
+
+      const [error, result] = await serverClient.snapshots.getImageUrls({
+        snapshotId: snapshot!.id,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.urls.current).toContain(IMAGE_PATH);
+      expect(result?.urls.baseline).toContain(BASELINE_IMAGE_PATH);
+      expect(result?.urls.diff).toContain(DIFF_IMAGE_PATH);
+    });
+  });
+
   describe("list", () => {
     test("should let a personal access token list a build's snapshots", async ({ admin }) => {
       const { build } = await createProjectAndBuild(admin);

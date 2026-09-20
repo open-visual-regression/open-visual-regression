@@ -7,8 +7,8 @@ import { storage } from "@ovr/storage";
 
 import { callerMiddleware } from "./middleware";
 import { os } from "./os";
+import { PRESIGNED_URL_TTL_SECONDS } from "./utils/presignedUrls";
 
-const PRESIGNED_URL_TTL_SECONDS = 300;
 const REDIRECT_CACHE_SECONDS = PRESIGNED_URL_TTL_SECONDS - 60;
 
 export const getObject = os.storage.getObject
