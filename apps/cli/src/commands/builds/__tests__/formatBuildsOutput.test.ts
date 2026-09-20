@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { BuildSchema } from "@ovr/api/contracts/builds";
 
-import { formatBuildsOutput, formatBuildsTable } from "../table";
+import { formatBuildsOutput } from "../table";
 
 const BUILD: BuildSchema = {
   id: "01a092d6-b0aa-71bf-9312-dd8ef48a22fb",
@@ -18,30 +18,78 @@ const BUILD: BuildSchema = {
 };
 
 describe("formatBuildsOutput", () => {
-  it("should print the raw builds as JSON when json is true", () => {
-    expect(formatBuildsOutput([BUILD], true)).toBe(JSON.stringify([BUILD], null, 2));
+  it("should print the builds, total and next cursor as JSON when json is true", () => {
+    expect(formatBuildsOutput({ builds: [BUILD], total: 42, nextCursor: "abc" }, true)).toBe(
+      JSON.stringify({ builds: [BUILD], total: 42, nextCursor: "abc" }, null, 2),
+    );
   });
 
-  it("should print an empty JSON array when json is true and there are no builds", () => {
-    expect(formatBuildsOutput([], true)).toBe("[]");
+  it("should print an empty result as JSON when json is true and there are no builds", () => {
+    expect(formatBuildsOutput({ builds: [], total: 0, nextCursor: null }, true)).toBe(
+      JSON.stringify({ builds: [], total: 0, nextCursor: null }, null, 2),
+    );
+  });
+
+  it("should leave the applied filters out of the JSON", () => {
+    const output = formatBuildsOutput(
+      { builds: [], total: 0, nextCursor: null, filters: { branch: "main" } },
+      true,
+    );
+
+    expect(JSON.parse(output)).not.toHaveProperty("filters");
   });
 
   it("should print 'No builds found.' when json is false and there are no builds", () => {
-    expect(formatBuildsOutput([], false)).toBe("No builds found.");
+    expect(formatBuildsOutput({ builds: [], total: 0, nextCursor: null }, false)).toBe(
+      "No builds found.",
+    );
+  });
+
+  it("should report the filters that produced an empty result", () => {
+    expect(
+      formatBuildsOutput(
+        { builds: [], total: 0, nextCursor: null, filters: { branch: "mian", status: ["error"] } },
+        false,
+      ),
+    ).toBe("No builds found.\nFilters: branch=mian, status=error");
+  });
+
+  it("should ignore filter flags that were not passed", () => {
+    expect(
+      formatBuildsOutput(
+        { builds: [], total: 0, nextCursor: null, filters: { branch: undefined, status: [] } },
+        false,
+      ),
+    ).toBe("No builds found.");
+  });
+
+  it("should join the values of a repeated filter flag", () => {
+    expect(
+      formatBuildsOutput(
+        { builds: [], total: 0, nextCursor: null, filters: { branch: ["main", "next"] } },
+        false,
+      ),
+    ).toBe("No builds found.\nFilters: branch=main,next");
   });
 
   it("should print a table when json is false and there are builds", () => {
-    expect(formatBuildsOutput([BUILD], false)).toBe(
-      formatBuildsTable([
-        {
-          id: BUILD.id,
-          status: BUILD.status,
-          branch: BUILD.branch,
-          commit: BUILD.commitSha,
-          project: BUILD.project.name,
-          name: BUILD.name ?? "",
-        },
-      ]),
+    const output = formatBuildsOutput({ builds: [BUILD], total: 1, nextCursor: null }, false);
+
+    expect(output.split("\n")).toHaveLength(2);
+    expect(output).toContain("BUILD");
+    expect(output).toContain(BUILD.id);
+    expect(output).toContain("fix: cart total rounding");
+  });
+
+  it("should not invite a next page when there is no next cursor", () => {
+    expect(
+      formatBuildsOutput({ builds: [BUILD], total: 1, nextCursor: null }, false),
+    ).not.toContain("--cursor");
+  });
+
+  it("should print the cursor for the next page when there is one", () => {
+    expect(formatBuildsOutput({ builds: [BUILD], total: 42, nextCursor: "abc" }, false)).toContain(
+      "Showing 1 of 42. Next page: --cursor abc",
     );
   });
 });
