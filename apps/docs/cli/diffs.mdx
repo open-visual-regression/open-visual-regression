@@ -1,0 +1,40 @@
+---
+title: ovr diffs
+description: Inspect a snapshot's diff against its baseline.
+---
+
+Authenticates with a [personal access token](/cli/authentication) — a project API key is rejected.
+
+## `ovr diffs get`
+
+```sh
+ovr diffs get <snapshotId>
+```
+
+| Flag | Description |
+|------|-------------|
+| `--server-url <url>` | OVR server URL (defaults to `ovr.config`'s `serverUrl`) |
+| `-c, --config <path>` | Path to `ovr.config` file |
+| `--json` | Print the diff as JSON instead of formatted text |
+
+Takes a snapshot ID — find one with [`ovr snapshots list`](/cli/snapshots) — and
+prints how that snapshot's capture compares to its baseline: the diff's ID, review
+status, processing status, pixel diff count, diff percentage, and diff image path.
+When the snapshot has a baseline, its image path is included too, along with its
+commit and a link to that commit when the project has a git integration configured.
+
+```
+Diff:       01a092d6-b0aa-71bf-9312-dd8ef48a22fb
+Review:     needs_review
+Processing: success
+Pixel diff: 1234
+Diff %:     1.23
+Diff image: project/builds/build/diffs/diff.png
+Baseline image: project/builds/prior-build/snapshots/baseline.png
+Baseline commit: a1b2c3d
+Baseline commit URL: https://github.com/example/repo/commit/a1b2c3d
+```
+
+A snapshot with no diff — one with no baseline to compare against, or one that
+errored before it could be diffed — prints `No diff for this snapshot.` (or `null`
+with `--json`) rather than an error.
