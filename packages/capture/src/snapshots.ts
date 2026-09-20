@@ -1,4 +1,3 @@
-import pixelmatch from "pixelmatch";
 import { chromium, firefox, webkit, type Page } from "playwright";
 import { PNG } from "pngjs";
 
@@ -7,6 +6,8 @@ import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
 import type { BuildDbSchema } from "@ovr/db/repository/builds";
 import type { SnapshotDbSchema } from "@ovr/db/repository/snapshots";
+import { diffImages } from "@ovr/image-diff/diffImages";
+import { encodePng } from "@ovr/image-diff/png";
 import { createLogger } from "@ovr/logger";
 import { enqueueDiff, enqueueFinalize } from "@ovr/queue/producer";
 import { promoteBaseline } from "@ovr/reviews/baselines";
@@ -26,8 +27,6 @@ import { startStaticProxy, type StaticProxy } from "./lib/staticProxy";
 import { createUploadQueue } from "./lib/uploadQueue";
 
 const logger = createLogger("capture");
-
-const DEFAULT_PIXELMATCH_THRESHOLD = 0.1;
 
 const DEFAULT_VIEWPORT_HEIGHT = 800;
 
@@ -611,50 +610,13 @@ const diffAgainstBaselineSnapshot = async (
   return { ...diffResult, baselineSnapshotId: baselineSnapshot.id };
 };
 
-const computeDiffAgainstBaseline = async (
-  capturePath: string,
-  baselinePath: string,
-): Promise<{
-  width: number;
-  height: number;
-  pixelDiffCount: number;
-  diffPercent: number;
-  diffPixels: Uint8Array;
-}> => {
+const computeDiffAgainstBaseline = async (capturePath: string, baselinePath: string) => {
   const [capturePixels, baselinePixels] = await Promise.all([
     readPng(capturePath),
     readPng(baselinePath),
   ]);
 
-  const width = Math.max(capturePixels.width, baselinePixels.width);
-  const height = Math.max(capturePixels.height, baselinePixels.height);
-
-  const capturePadded = padToCanvas(capturePixels, width, height);
-  const baselinePadded = padToCanvas(baselinePixels, width, height);
-  const diffPixels = new Uint8Array(width * height * 4);
-
-  const pixelDiffCount = pixelmatch(baselinePadded, capturePadded, diffPixels, width, height, {
-    threshold: DEFAULT_PIXELMATCH_THRESHOLD,
-    diffMask: true,
-  });
-
-  const diffPercent = (pixelDiffCount / (width * height)) * 100;
-
-  return { width, height, pixelDiffCount, diffPercent, diffPixels };
-};
-
-const padToCanvas = (pixels: PNG, width: number, height: number): Uint8Array => {
-  if (pixels.width === width && pixels.height === height) {
-    return pixels.data;
-  }
-
-  const padded = new Uint8Array(width * height * 4);
-  for (let y = 0; y < pixels.height; y++) {
-    const srcStart = y * pixels.width * 4;
-    const destStart = y * width * 4;
-    padded.set(pixels.data.subarray(srcStart, srcStart + pixels.width * 4), destStart);
-  }
-  return padded;
+  return diffImages(baselinePixels, capturePixels);
 };
 
 export const checkAllDoneAndFinalize = async (buildId: string): Promise<void> => {
@@ -689,10 +651,4 @@ const readPng = async (imagePath: string): Promise<PNG> => {
       .on("parsed", () => done(png))
       .on("error", done);
   });
-};
-
-const encodePng = (pixels: Uint8Array, width: number, height: number): Buffer => {
-  const png = new PNG({ width, height });
-  png.data = Buffer.from(pixels);
-  return PNG.sync.write(png);
 };

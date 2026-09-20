@@ -77,6 +77,7 @@ packages/
   storage/            # S3-compatible object storage client (@ovr/storage)
   queue/              # BullMQ queue definitions (@ovr/queue)
   git-status/         # GitHub commit status publishing (@ovr/git-status)
+  image-diff/         # Pixel diffing and PNG encoding, shared by the worker and CLI (@ovr/image-diff)
   logger/             # Shared logger (@ovr/logger)
   ui/                 # Shared React component library (@ovr/ui)
   mocks/              # Shared MSW mocks for tests (@ovr/mocks)
