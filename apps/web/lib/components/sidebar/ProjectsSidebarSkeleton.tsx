@@ -6,7 +6,7 @@ export const ProjectsSidebarSkeleton = () => (
       <div className="h-3 w-14 rounded-sm bg-ovr-border-subtle" />
     </div>
     <div className="flex flex-col gap-1">
-      {Array.from({ length: SIDEBAR_PROJECTS_LIMIT }).map((_, i) => (
+      {Array.from({ length: SIDEBAR_PROJECTS_LIMIT / 2 }).map((_, i) => (
         <div
           key={i}
           className="flex h-7 items-center gap-2 border-l-2 border-l-transparent pl-2.5 pr-3"
