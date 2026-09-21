@@ -1,5 +1,11 @@
 # @ovr/web
 
+## 0.5.1
+
+### Patch Changes
+
+- [#220](https://github.com/open-visual-regression/open-visual-regression/pull/220) [`0a18f34`](https://github.com/open-visual-regression/open-visual-regression/commit/0a18f345eaf12488e8d1e8875447e6f05bc01439) Thanks [@tgfischer](https://github.com/tgfischer)! - Fix the builds/projects sidebar showing the main content's loading skeleton instead of its own.
+
 ## 0.5.0
 
 ### Minor Changes
