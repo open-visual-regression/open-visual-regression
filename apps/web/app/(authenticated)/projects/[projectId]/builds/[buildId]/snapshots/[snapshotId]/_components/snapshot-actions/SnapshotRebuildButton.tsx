@@ -23,17 +23,17 @@ import { ResponsiveActionButton } from "@/lib/components/responsive-action-butto
 import { useReviewRefresh } from "@/lib/orpc/useReviewRefresh";
 import { serverClient } from "@/lib/router";
 
-export type SnapshotRerunButtonProps = {
+export type SnapshotRebuildButtonProps = {
   buildId: string;
   snapshotId: string;
 };
 
-export const SnapshotRerunButton = ({ buildId, snapshotId }: SnapshotRerunButtonProps) => {
+export const SnapshotRebuildButton = ({ buildId, snapshotId }: SnapshotRebuildButtonProps) => {
   const refreshReview = useReviewRefresh();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<{ message: string } | null>(null);
 
-  const { execute, status } = useServerAction(serverClient.snapshots.rerun, {
+  const { execute, status } = useServerAction(serverClient.snapshots.rebuild, {
     interceptors: [
       onSuccess(() => {
         setOpen(false);
@@ -55,11 +55,11 @@ export const SnapshotRerunButton = ({ buildId, snapshotId }: SnapshotRerunButton
   return (
     <AlertDialog open={open} onOpenChange={handleOpenChange}>
       <AlertDialogTrigger render={<ResponsiveActionButton icon={RefreshCwIcon} />}>
-        re-run
+        rebuild
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>re-run this snapshot?</AlertDialogTitle>
+          <AlertDialogTitle>rebuild this snapshot?</AlertDialogTitle>
           <AlertDialogDescription>this captures the story again.</AlertDialogDescription>
         </AlertDialogHeader>
         <Typography>
@@ -75,7 +75,7 @@ export const SnapshotRerunButton = ({ buildId, snapshotId }: SnapshotRerunButton
             disabled={pending}
             onClick={() => execute({ buildId, snapshotIds: [snapshotId] })}
           >
-            {pending ? "re-running..." : "re-run"}
+            {pending ? "rebuilding..." : "rebuild"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

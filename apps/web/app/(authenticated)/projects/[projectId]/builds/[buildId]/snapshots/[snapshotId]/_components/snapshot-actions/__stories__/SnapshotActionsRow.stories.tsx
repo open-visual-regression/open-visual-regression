@@ -84,17 +84,17 @@ export const SidebarExpanded: Story = {
   },
 };
 
-export const Rerunnable: Story = {
+export const Rebuildable: Story = {
   args: {
     ...NeedsReview.args,
-    snapshot: { ...snapshot, isRerunnable: true },
+    snapshot: { ...snapshot, isRebuildable: true },
   },
 };
 
-export const ErroredAndRerunnable: Story = {
+export const ErroredAndRebuildable: Story = {
   args: {
     ...NeedsReview.args,
-    snapshot: { ...snapshot, status: "error", isRerunnable: true },
+    snapshot: { ...snapshot, status: "error", isRebuildable: true },
     diff: null,
   },
 };

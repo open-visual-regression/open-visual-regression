@@ -20,8 +20,8 @@ import {
 import { type SnapshotFilters, withSnapshotFilters } from "@/lib/utils/snapshotFilters";
 
 import { SnapshotApproveButton } from "./SnapshotApproveButton";
+import { SnapshotRebuildButton } from "./SnapshotRebuildButton";
 import { SnapshotRejectButton } from "./SnapshotRejectButton";
-import { SnapshotRerunButton } from "./SnapshotRerunButton";
 
 type SnapshotActionsRowLayoutProps = {
   className?: string;
@@ -105,8 +105,8 @@ export const SnapshotActionsRow = ({
         ) : null}
       </div>
       <div className="flex items-center flex-row gap-2">
-        {canReview && snapshot.isRerunnable ? (
-          <SnapshotRerunButton buildId={buildId} snapshotId={snapshot.id} />
+        {canReview && snapshot.isRebuildable ? (
+          <SnapshotRebuildButton buildId={buildId} snapshotId={snapshot.id} />
         ) : null}
         {canReview && diff && isDiffReviewable(diff.reviewStatus) && snapshot.status !== "error" ? (
           <>

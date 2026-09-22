@@ -3,7 +3,7 @@ import { seedReviewableSnapshot } from "./support/seedReviewableSnapshot";
 
 const LIST_LIMIT = 100;
 
-test("re-running a snapshot captures it again and leaves the rest of the build alone", async ({
+test("rebuilding a snapshot captures it again and leaves the rest of the build alone", async ({
   seedClient,
   snapshotReviewPage,
 }) => {
@@ -22,7 +22,7 @@ test("re-running a snapshot captures it again and leaves the rest of the build a
   expect(untouched.length).toBeGreaterThan(0);
 
   await snapshotReviewPage.goto(reviewable.projectId, reviewable.buildId, reviewable.snapshotId);
-  await snapshotReviewPage.confirmRerun();
+  await snapshotReviewPage.confirmRebuild();
 
   await expect(async () => {
     const { snapshot } = await seedClient.snapshots.getOne({

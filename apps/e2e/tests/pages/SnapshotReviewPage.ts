@@ -23,15 +23,15 @@ export class SnapshotReviewPage {
     return this.page.getByRole("button", { name: "rejected", exact: true });
   }
 
-  rerunButton(): Locator {
-    return this.page.getByRole("button", { name: "re-run", exact: true });
+  rebuildButton(): Locator {
+    return this.page.getByRole("button", { name: "rebuild", exact: true });
   }
 
-  async confirmRerun() {
-    await this.rerunButton().click();
+  async confirmRebuild() {
+    await this.rebuildButton().click();
     await this.page
       .getByRole("alertdialog")
-      .getByRole("button", { name: "re-run", exact: true })
+      .getByRole("button", { name: "rebuild", exact: true })
       .click();
   }
 
