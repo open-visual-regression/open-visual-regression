@@ -3,9 +3,9 @@
 import { ORPCError } from "@orpc/client";
 
 import {
-  checkSnapshotsRerunnable,
-  rerunSnapshots as rerunSnapshotsService,
-  type SnapshotRerunBlockedReason,
+  checkSnapshotsRebuildable,
+  rebuildSnapshots as rebuildSnapshotsService,
+  type SnapshotRebuildBlockedReason,
 } from "@ovr/builds/builds";
 import { dbClient } from "@ovr/db/client";
 
@@ -25,10 +25,10 @@ export const getOne = os.snapshots.getOne
   .handler(async ({ context }) => {
     const { snapshot, build } = context;
 
-    const [errorLogs, diff, rerunnable] = await Promise.all([
+    const [errorLogs, diff, rebuildable] = await Promise.all([
       dbClient.snapshotLogs.findBySnapshot(snapshot.id),
       dbClient.diffs.findBySnapshot(snapshot.id),
-      checkSnapshotsRerunnable(build, [snapshot]),
+      checkSnapshotsRebuildable(build, [snapshot]),
     ]);
 
     return {
@@ -45,7 +45,7 @@ export const getOne = os.snapshots.getOne
         status: getSnapshotDisplayStatus(snapshot, diff),
         hasUncaughtPageError: snapshot.hasUncaughtPageError,
         errorMessage: snapshot.errorMessage,
-        isRerunnable: rerunnable.status === "ok",
+        isRebuildable: rebuildable.status === "ok",
         errorLogs: errorLogs.map((log) => ({
           id: log.id,
           level: log.level,
@@ -144,7 +144,7 @@ export const listViewports = os.snapshots.listViewports
   }))
   .actionable();
 
-const RERUN_ERROR_MESSAGES: Record<SnapshotRerunBlockedReason | "ARTIFACT_MISSING", string> = {
+const REBUILD_ERROR_MESSAGES: Record<SnapshotRebuildBlockedReason | "ARTIFACT_MISSING", string> = {
   NOT_SETTLED: "this build is still running",
   BUILD_CANCELED: "this build was canceled",
   NOT_LATEST_ON_BRANCH: "a newer build has landed on this branch",
@@ -152,12 +152,12 @@ const RERUN_ERROR_MESSAGES: Record<SnapshotRerunBlockedReason | "ARTIFACT_MISSIN
   ARTIFACT_MISSING: "this build's storybook has been cleaned up",
 };
 
-export const rerun = os.snapshots.rerun
+export const rebuild = os.snapshots.rebuild
   .use(authenticatedMiddleware)
   .use(reviewerMiddleware)
   .use(organizationBuildMiddleware)
   .handler(async ({ input, context }) => {
-    const result = await rerunSnapshotsService(
+    const result = await rebuildSnapshotsService(
       context.build.id,
       input.snapshotIds,
       context.user.id,
@@ -170,7 +170,7 @@ export const rerun = os.snapshots.rerun
 
       throw new ORPCError(
         result.error === "ARTIFACT_MISSING" ? "PRECONDITION_FAILED" : "CONFLICT",
-        { message: RERUN_ERROR_MESSAGES[result.error] },
+        { message: REBUILD_ERROR_MESSAGES[result.error] },
       );
     }
 

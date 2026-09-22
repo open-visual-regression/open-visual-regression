@@ -663,8 +663,8 @@ describe("snapshots", () => {
       });
     });
   });
-  describe("rerun", () => {
-    const seedRerunnableSnapshot = async (admin: User) => {
+  describe("rebuild", () => {
+    const seedRebuildableSnapshot = async (admin: User) => {
       const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
       const projectId = addResult!.projectId;
 
@@ -689,7 +689,7 @@ describe("snapshots", () => {
     test("should return UNAUTHORIZED when no session cookie is provided", async () => {
       vi.mocked(headers).mockResolvedValue(new Headers());
 
-      const [error] = await serverClient.snapshots.rerun({
+      const [error] = await serverClient.snapshots.rebuild({
         buildId: uuidv7(),
         snapshotIds: [uuidv7()],
       });
@@ -698,7 +698,7 @@ describe("snapshots", () => {
     });
 
     test("should return FORBIDDEN for a viewer", async ({ viewer: _ }) => {
-      const [error] = await serverClient.snapshots.rerun({
+      const [error] = await serverClient.snapshots.rebuild({
         buildId: uuidv7(),
         snapshotIds: [uuidv7()],
       });
@@ -709,7 +709,7 @@ describe("snapshots", () => {
     test("should return NOT_FOUND for a build outside the user's organization", async ({
       admin: _,
     }) => {
-      const [error] = await serverClient.snapshots.rerun({
+      const [error] = await serverClient.snapshots.rebuild({
         buildId: uuidv7(),
         snapshotIds: [uuidv7()],
       });
@@ -718,9 +718,9 @@ describe("snapshots", () => {
     });
 
     test("requeues the snapshot and puts its build back to processing", async ({ admin }) => {
-      const { build, snapshot } = await seedRerunnableSnapshot(admin);
+      const { build, snapshot } = await seedRebuildableSnapshot(admin);
 
-      const [error, result] = await serverClient.snapshots.rerun({
+      const [error, result] = await serverClient.snapshots.rebuild({
         buildId: build.id,
         snapshotIds: [snapshot.id],
       });
@@ -736,10 +736,10 @@ describe("snapshots", () => {
       });
     });
 
-    test("should let a reviewer re-run a snapshot", async ({ reviewer }) => {
-      const { build, snapshot } = await seedRerunnableSnapshot(reviewer);
+    test("should let a reviewer rebuild a snapshot", async ({ reviewer }) => {
+      const { build, snapshot } = await seedRebuildableSnapshot(reviewer);
 
-      const [error] = await serverClient.snapshots.rerun({
+      const [error] = await serverClient.snapshots.rebuild({
         buildId: build.id,
         snapshotIds: [snapshot.id],
       });
@@ -748,10 +748,10 @@ describe("snapshots", () => {
     });
 
     test("should return CONFLICT while the build is still running", async ({ admin }) => {
-      const { build, snapshot } = await seedRerunnableSnapshot(admin);
+      const { build, snapshot } = await seedRebuildableSnapshot(admin);
       await dbClient.builds.updateProcessingStatus(build.id, "processing");
 
-      const [error] = await serverClient.snapshots.rerun({
+      const [error] = await serverClient.snapshots.rebuild({
         buildId: build.id,
         snapshotIds: [snapshot.id],
       });
@@ -761,10 +761,10 @@ describe("snapshots", () => {
     });
 
     test("should return NOT_FOUND for a snapshot belonging to another build", async ({ admin }) => {
-      const { build } = await seedRerunnableSnapshot(admin);
-      const other = await seedRerunnableSnapshot(admin);
+      const { build } = await seedRebuildableSnapshot(admin);
+      const other = await seedRebuildableSnapshot(admin);
 
-      const [error] = await serverClient.snapshots.rerun({
+      const [error] = await serverClient.snapshots.rebuild({
         buildId: build.id,
         snapshotIds: [other.snapshot.id],
       });
@@ -775,10 +775,10 @@ describe("snapshots", () => {
     test("should return PRECONDITION_FAILED once the storybook has been cleaned up", async ({
       admin,
     }) => {
-      const { build, snapshot } = await seedRerunnableSnapshot(admin);
+      const { build, snapshot } = await seedRebuildableSnapshot(admin);
       await storage.deletePrefix(build.artifactPath);
 
-      const [error] = await serverClient.snapshots.rerun({
+      const [error] = await serverClient.snapshots.rebuild({
         buildId: build.id,
         snapshotIds: [snapshot.id],
       });
