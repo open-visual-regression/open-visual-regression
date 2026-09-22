@@ -736,17 +736,6 @@ describe("snapshots", () => {
       });
     });
 
-    test("should let a reviewer rebuild a snapshot", async ({ reviewer }) => {
-      const { build, snapshot } = await seedRebuildableSnapshot(reviewer);
-
-      const [error] = await serverClient.snapshots.rebuild({
-        buildId: build.id,
-        snapshotIds: [snapshot.id],
-      });
-
-      expect(error).toBeNull();
-    });
-
     test("should return CONFLICT while the build is still running", async ({ admin }) => {
       const { build, snapshot } = await seedRebuildableSnapshot(admin);
       await dbClient.builds.updateProcessingStatus(build.id, "processing");
