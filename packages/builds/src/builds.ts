@@ -346,16 +346,16 @@ export const rebuildBuild = async (
   return { status: "ok", data: rebuildId };
 };
 
-export type SnapshotRerunBlockedReason =
+export type SnapshotRebuildBlockedReason =
   | "NOT_SETTLED"
   | "BUILD_CANCELED"
   | "NOT_LATEST_ON_BRANCH"
   | "SNAPSHOT_SKIPPED";
 
-export const checkSnapshotsRerunnable = async (
+export const checkSnapshotsRebuildable = async (
   build: BuildCandidate,
   snapshots: { status: SnapshotStatus }[],
-): Promise<Result<void, SnapshotRerunBlockedReason>> => {
+): Promise<Result<void, SnapshotRebuildBlockedReason>> => {
   if (build.processingStatus === "queued" || build.processingStatus === "processing") {
     return { status: "error", error: "NOT_SETTLED" };
   }
@@ -375,14 +375,14 @@ export const checkSnapshotsRerunnable = async (
   return { status: "ok", data: undefined };
 };
 
-export const rerunSnapshots = async (
+export const rebuildSnapshots = async (
   buildId: string,
   snapshotIds: string[],
   requestedBy: string,
 ): Promise<
   Result<
     void,
-    "BUILD_NOT_FOUND" | "SNAPSHOT_NOT_FOUND" | "ARTIFACT_MISSING" | SnapshotRerunBlockedReason
+    "BUILD_NOT_FOUND" | "SNAPSHOT_NOT_FOUND" | "ARTIFACT_MISSING" | SnapshotRebuildBlockedReason
   >
 > => {
   const build = await dbClient.builds.findById(buildId);
@@ -399,10 +399,10 @@ export const rerunSnapshots = async (
     return { status: "error", error: "SNAPSHOT_NOT_FOUND" };
   }
 
-  const rerunnable = await checkSnapshotsRerunnable(build, snapshots);
+  const rebuildable = await checkSnapshotsRebuildable(build, snapshots);
 
-  if (rerunnable.status === "error") {
-    return rerunnable;
+  if (rebuildable.status === "error") {
+    return rebuildable;
   }
 
   if (!(await storage.objectExists(build.artifactPath))) {
@@ -413,7 +413,7 @@ export const rerunSnapshots = async (
     for (const snapshot of snapshots) {
       await dbClient.diffs.removeBySnapshot(snapshot.id, tx);
       await dbClient.snapshotLogs.removeBySnapshot(snapshot.id, tx);
-      await dbClient.snapshots.resetForRerun(snapshot.id, tx);
+      await dbClient.snapshots.resetForRebuild(snapshot.id, tx);
     }
 
     await dbClient.builds.updateProcessingStatus(buildId, "processing", null, tx);
@@ -432,7 +432,7 @@ export const rerunSnapshots = async (
     throw error;
   }
 
-  logger.info({ buildId, snapshotIds, requestedBy }, "re-ran snapshots");
+  logger.info({ buildId, snapshotIds, requestedBy }, "rebuilt snapshots");
 
   await publishStatus(buildId);
 

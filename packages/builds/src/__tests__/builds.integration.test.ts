@@ -19,7 +19,7 @@ import {
   finalizeBuild,
   getArtifactPath,
   rebuildBuild,
-  rerunSnapshots,
+  rebuildSnapshots,
   updateBuildReviewStatus,
 } from "../builds";
 import { describe, expect, test } from "./fixtures";
@@ -740,8 +740,8 @@ describe("builds", () => {
     });
   });
 
-  describe("rerunSnapshots", () => {
-    type SeedRerunOptions = {
+  describe("rebuildSnapshots", () => {
+    type SeedRebuildOptions = {
       projectId: string;
       userId: string;
       viewport: Viewport;
@@ -763,7 +763,7 @@ describe("builds", () => {
       withArtifact = true,
       browsers = ["chromium"],
       snapshotStatus = "success",
-    }: SeedRerunOptions) => {
+    }: SeedRebuildOptions) => {
       const created = await createBuild({ projectId, branch, commitSha: "b".repeat(40) }, userId);
       assert(created.status === "ok");
       const buildId = created.data;
@@ -806,7 +806,7 @@ describe("builds", () => {
           processingStatus,
         });
 
-        const result = await rerunSnapshots(buildId, [snapshots[0]!.id], user.id);
+        const result = await rebuildSnapshots(buildId, [snapshots[0]!.id], user.id);
 
         expect(result).toEqual({ status: "error", error: "NOT_SETTLED" });
       },
@@ -824,7 +824,7 @@ describe("builds", () => {
         processingStatus: "canceled",
       });
 
-      const result = await rerunSnapshots(buildId, [snapshots[0]!.id], user.id);
+      const result = await rebuildSnapshots(buildId, [snapshots[0]!.id], user.id);
 
       expect(result).toEqual({ status: "error", error: "BUILD_CANCELED" });
     });
@@ -841,7 +841,7 @@ describe("builds", () => {
       });
       await createBuildOnBranch(project.id, user.id, "main", "c");
 
-      const result = await rerunSnapshots(buildId, [snapshots[0]!.id], user.id);
+      const result = await rebuildSnapshots(buildId, [snapshots[0]!.id], user.id);
 
       expect(result).toEqual({ status: "error", error: "NOT_LATEST_ON_BRANCH" });
     });
@@ -858,7 +858,7 @@ describe("builds", () => {
         snapshotStatus: "skipped",
       });
 
-      const result = await rerunSnapshots(buildId, [snapshots[0]!.id], user.id);
+      const result = await rebuildSnapshots(buildId, [snapshots[0]!.id], user.id);
 
       expect(result).toEqual({ status: "error", error: "SNAPSHOT_SKIPPED" });
     });
@@ -880,7 +880,7 @@ describe("builds", () => {
         branch: "feature/other",
       });
 
-      const result = await rerunSnapshots(buildId, [other.snapshots[0]!.id], user.id);
+      const result = await rebuildSnapshots(buildId, [other.snapshots[0]!.id], user.id);
 
       expect(result).toEqual({ status: "error", error: "SNAPSHOT_NOT_FOUND" });
     });
@@ -897,13 +897,13 @@ describe("builds", () => {
         withArtifact: false,
       });
 
-      const result = await rerunSnapshots(buildId, [snapshots[0]!.id], user.id);
+      const result = await rebuildSnapshots(buildId, [snapshots[0]!.id], user.id);
 
       expect(result).toEqual({ status: "error", error: "ARTIFACT_MISSING" });
     });
 
     test("returns BUILD_NOT_FOUND when the build does not exist", async ({ user }) => {
-      const result = await rerunSnapshots(crypto.randomUUID(), [crypto.randomUUID()], user.id);
+      const result = await rebuildSnapshots(crypto.randomUUID(), [crypto.randomUUID()], user.id);
 
       expect(result).toEqual({ status: "error", error: "BUILD_NOT_FOUND" });
     });
@@ -929,7 +929,7 @@ describe("builds", () => {
         values: [{ snapshotId: snapshot.id, level: "error", message: "flaked" }],
       });
 
-      const result = await rerunSnapshots(buildId, [snapshot.id], user.id);
+      const result = await rebuildSnapshots(buildId, [snapshot.id], user.id);
 
       assert(result.status === "ok");
       expect(await dbClient.snapshots.findById(snapshot.id)).toMatchObject({
@@ -956,7 +956,7 @@ describe("builds", () => {
         errorMessage: "Some snapshots encountered an error",
       });
 
-      const result = await rerunSnapshots(buildId, [snapshots[0]!.id], user.id);
+      const result = await rebuildSnapshots(buildId, [snapshots[0]!.id], user.id);
 
       assert(result.status === "ok");
       expect(await dbClient.builds.findById(buildId)).toMatchObject({
@@ -979,7 +979,7 @@ describe("builds", () => {
       });
       const [chromium, firefox] = snapshots;
 
-      const result = await rerunSnapshots(buildId, [chromium!.id, firefox!.id], user.id);
+      const result = await rebuildSnapshots(buildId, [chromium!.id, firefox!.id], user.id);
 
       assert(result.status === "ok");
       const groups = await findCaptureGroups(connection, buildId);
@@ -992,7 +992,7 @@ describe("builds", () => {
       );
     });
 
-    test("leaves the snapshots it was not asked to re-run alone", async ({
+    test("leaves the snapshots it was not asked to rebuild alone", async ({
       project,
       user,
       captureConfiguration,
@@ -1005,7 +1005,7 @@ describe("builds", () => {
       });
       const [target, untouched] = snapshots;
 
-      const result = await rerunSnapshots(buildId, [target!.id], user.id);
+      const result = await rebuildSnapshots(buildId, [target!.id], user.id);
 
       assert(result.status === "ok");
       expect(await dbClient.snapshots.findById(untouched!.id)).toMatchObject({
@@ -1029,7 +1029,7 @@ describe("builds", () => {
       });
       await enqueueFinalize({ buildId });
 
-      const result = await rerunSnapshots(buildId, [snapshots[0]!.id], user.id);
+      const result = await rebuildSnapshots(buildId, [snapshots[0]!.id], user.id);
 
       assert(result.status === "ok");
       expect(await findFinalizeJob(connection, buildId)).toBeUndefined();
