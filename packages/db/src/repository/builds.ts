@@ -40,7 +40,7 @@ export const findById = (id: string) =>
 export const updateProcessingStatus = async (
   id: string,
   processingStatus: BuildProcessingStatus,
-  errorMessage?: string,
+  errorMessage?: string | null,
   tx: DbClient = db,
 ) => {
   const [build] = await tx
