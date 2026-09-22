@@ -1,5 +1,19 @@
 # @ovr/queue
 
+## 0.1.4
+
+### Patch Changes
+
+- [#222](https://github.com/open-visual-regression/open-visual-regression/pull/222) [`2273afc`](https://github.com/open-visual-regression/open-visual-regression/commit/2273afc3e92f607a538bb5ca7c7f931495b476d1) Thanks [@tgfischer](https://github.com/tgfischer)! - Add `clearFinalizeJob`, which drops the finalize job a build has already
+  completed.
+
+  Finalize jobs are keyed by build id and BullMQ keeps completed jobs, so
+  enqueuing a second finalize for the same build is silently dropped. Clearing the
+  job first lets a build that has more work to do finalize again.
+
+- Updated dependencies [[`9ba80f1`](https://github.com/open-visual-regression/open-visual-regression/commit/9ba80f10bf007bd5741f58ca1c5282f88b4e92b6), [`2273afc`](https://github.com/open-visual-regression/open-visual-regression/commit/2273afc3e92f607a538bb5ca7c7f931495b476d1)]:
+  - @ovr/db@0.2.2
+
 ## 0.1.3
 
 ### Patch Changes

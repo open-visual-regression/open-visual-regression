@@ -1,5 +1,15 @@
 # @ovr/api
 
+## 0.2.1
+
+### Patch Changes
+
+- [#224](https://github.com/open-visual-regression/open-visual-regression/pull/224) [`c07442d`](https://github.com/open-visual-regression/open-visual-regression/commit/c07442d355afa70ef5a81e9b35936ac5b9e3347f) Thanks [@tgfischer](https://github.com/tgfischer)! - Expose `snapshots.rebuild`, which re-captures the given snapshots of a build.
+
+  Reviewers and admins can rebuild up to 100 snapshots of a build at a time.
+  `snapshots.getOne` now reports `isRebuildable` so a caller can tell whether a
+  snapshot can be rebuilt before asking.
+
 ## 0.2.0
 
 ### Minor Changes
