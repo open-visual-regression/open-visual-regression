@@ -107,6 +107,7 @@ describe("getBreadcrumbSegments", () => {
           status: snapshot.status,
           errorMessage: null,
           hasUncaughtPageError: false,
+          isRebuildable: false,
           errorLogs: [],
         },
       },

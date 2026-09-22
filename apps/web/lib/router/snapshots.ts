@@ -1,5 +1,12 @@
 "use server";
 
+import { ORPCError } from "@orpc/client";
+
+import {
+  checkSnapshotsRebuildable,
+  rebuildSnapshots as rebuildSnapshotsService,
+  type SnapshotRebuildBlockedReason,
+} from "@ovr/builds/builds";
 import { dbClient } from "@ovr/db/client";
 
 import {
@@ -7,6 +14,7 @@ import {
   callerMiddleware,
   organizationBuildMiddleware,
   organizationSnapshotMiddleware,
+  reviewerMiddleware,
 } from "./middleware";
 import { os } from "./os";
 import { getSnapshotDisplayStatus } from "./utils/snapshotStatus";
@@ -15,11 +23,12 @@ export const getOne = os.snapshots.getOne
   .use(callerMiddleware("builds", "read"))
   .use(organizationSnapshotMiddleware)
   .handler(async ({ context }) => {
-    const { snapshot } = context;
+    const { snapshot, build } = context;
 
-    const [errorLogs, diff] = await Promise.all([
+    const [errorLogs, diff, rebuildable] = await Promise.all([
       dbClient.snapshotLogs.findBySnapshot(snapshot.id),
       dbClient.diffs.findBySnapshot(snapshot.id),
+      checkSnapshotsRebuildable(build, [snapshot]),
     ]);
 
     return {
@@ -36,6 +45,7 @@ export const getOne = os.snapshots.getOne
         status: getSnapshotDisplayStatus(snapshot, diff),
         hasUncaughtPageError: snapshot.hasUncaughtPageError,
         errorMessage: snapshot.errorMessage,
+        isRebuildable: rebuildable.status === "ok",
         errorLogs: errorLogs.map((log) => ({
           id: log.id,
           level: log.level,
@@ -132,4 +142,38 @@ export const listViewports = os.snapshots.listViewports
   .handler(async ({ input }) => ({
     viewports: await dbClient.snapshots.findViewports(input.buildId),
   }))
+  .actionable();
+
+const REBUILD_ERROR_MESSAGES: Record<SnapshotRebuildBlockedReason | "ARTIFACT_MISSING", string> = {
+  NOT_SETTLED: "this build is still running",
+  BUILD_CANCELED: "this build was canceled",
+  NOT_LATEST_ON_BRANCH: "a newer build has landed on this branch",
+  SNAPSHOT_SKIPPED: "this story is skipped",
+  ARTIFACT_MISSING: "this build's storybook has been cleaned up",
+};
+
+export const rebuild = os.snapshots.rebuild
+  .use(authenticatedMiddleware)
+  .use(reviewerMiddleware)
+  .use(organizationBuildMiddleware)
+  .handler(async ({ input, context }) => {
+    const result = await rebuildSnapshotsService(
+      context.build.id,
+      input.snapshotIds,
+      context.user.id,
+    );
+
+    if (result.status === "error") {
+      if (result.error === "BUILD_NOT_FOUND" || result.error === "SNAPSHOT_NOT_FOUND") {
+        throw new ORPCError("NOT_FOUND");
+      }
+
+      throw new ORPCError(
+        result.error === "ARTIFACT_MISSING" ? "PRECONDITION_FAILED" : "CONFLICT",
+        { message: REBUILD_ERROR_MESSAGES[result.error] },
+      );
+    }
+
+    return { ok: true as const };
+  })
   .actionable();

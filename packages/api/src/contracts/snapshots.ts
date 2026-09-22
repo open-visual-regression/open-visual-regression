@@ -3,6 +3,8 @@ import { z } from "zod";
 
 import { snapshotDisplayStatusSchema } from "./builds";
 
+export const MAX_REBUILD_SNAPSHOTS = 100;
+
 export const snapshotLogSchema = z.object({
   id: z.uuidv7(),
   level: z.string().min(1),
@@ -23,6 +25,7 @@ export const snapshotSchema = z.object({
   status: snapshotDisplayStatusSchema,
   hasUncaughtPageError: z.boolean(),
   errorMessage: z.string().nullable(),
+  isRebuildable: z.boolean(),
   errorLogs: z.array(snapshotLogSchema),
 });
 
@@ -150,6 +153,17 @@ export const listViewportsContract = oc
   .input(listSnapshotFilterOptionsInputSchema)
   .output(listViewportsOutputSchema);
 
+export const rebuildInputSchema = z.object({
+  buildId: z.uuidv7(),
+  snapshotIds: z.array(z.uuidv7()).min(1).max(MAX_REBUILD_SNAPSHOTS),
+});
+
+export const rebuildOutputSchema = z.object({
+  ok: z.literal(true),
+});
+
+export const rebuildContract = oc.input(rebuildInputSchema).output(rebuildOutputSchema);
+
 export const contract = {
   getOne: getOneContract,
   list: listContract,
@@ -158,4 +172,5 @@ export const contract = {
   listStatuses: listStatusesContract,
   listBrowsers: listBrowsersContract,
   listViewports: listViewportsContract,
+  rebuild: rebuildContract,
 } as const;
