@@ -30,7 +30,7 @@ export class SnapshotReviewPage {
   async confirmRebuild() {
     await this.rebuildButton().click();
     await this.page
-      .getByRole("alertdialog")
+      .getByRole("alertdialog", { name: "rebuild this snapshot?" })
       .getByRole("button", { name: "rebuild", exact: true })
       .click();
   }
