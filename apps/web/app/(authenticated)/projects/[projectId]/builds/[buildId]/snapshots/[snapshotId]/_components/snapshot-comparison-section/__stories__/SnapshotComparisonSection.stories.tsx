@@ -40,6 +40,7 @@ const newSnapshot = {
   status: "unchanged" as const,
   errorMessage: null,
   hasUncaughtPageError: false,
+  isRerunnable: false,
   errorLogs: [],
 };
 

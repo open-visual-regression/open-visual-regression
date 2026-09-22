@@ -6,6 +6,7 @@ import type { AddProjectInputSchema } from "@ovr/api/contracts/projects";
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
 import { organization, projects } from "@ovr/db/schema";
+import { storage } from "@ovr/storage";
 
 import type { User } from "@/lib/auth/auth";
 import { serverClient } from "@/lib/router";
@@ -660,6 +661,129 @@ describe("snapshots", () => {
         position: 1,
         total: 2,
       });
+    });
+  });
+  describe("rerun", () => {
+    const seedRerunnableSnapshot = async (admin: User) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+
+      const build = await dbClient.builds.create({
+        projectId,
+        branch: "feature/test",
+        commitSha: "a".repeat(40),
+        artifactPath: `${projectId}/builds/seed/artifact.tar.gz`,
+        createdBy: admin.id,
+        processingStatus: "success",
+      });
+      await storage.uploadFile(build!.artifactPath, Buffer.from("artifact"), "application/gzip");
+
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: build!.id, ...VIEWPORT, targetId: "story-a", status: "success" }],
+      });
+      await dbClient.diffs.create({ snapshotId: snapshot!.id, processingStatus: "success" });
+
+      return { projectId, build: build!, snapshot: snapshot! };
+    };
+
+    test("should return UNAUTHORIZED when no session cookie is provided", async () => {
+      vi.mocked(headers).mockResolvedValue(new Headers());
+
+      const [error] = await serverClient.snapshots.rerun({
+        buildId: uuidv7(),
+        snapshotIds: [uuidv7()],
+      });
+
+      expect(error?.code).toBe("UNAUTHORIZED");
+    });
+
+    test("should return FORBIDDEN for a viewer", async ({ viewer: _ }) => {
+      const [error] = await serverClient.snapshots.rerun({
+        buildId: uuidv7(),
+        snapshotIds: [uuidv7()],
+      });
+
+      expect(error?.code).toBe("FORBIDDEN");
+    });
+
+    test("should return NOT_FOUND for a build outside the user's organization", async ({
+      admin: _,
+    }) => {
+      const [error] = await serverClient.snapshots.rerun({
+        buildId: uuidv7(),
+        snapshotIds: [uuidv7()],
+      });
+
+      expect(error?.code).toBe("NOT_FOUND");
+    });
+
+    test("requeues the snapshot and puts its build back to processing", async ({ admin }) => {
+      const { build, snapshot } = await seedRerunnableSnapshot(admin);
+
+      const [error, result] = await serverClient.snapshots.rerun({
+        buildId: build.id,
+        snapshotIds: [snapshot.id],
+      });
+
+      expect(error).toBeNull();
+      expect(result).toEqual({ ok: true });
+      expect(await dbClient.snapshots.findById(snapshot.id)).toMatchObject({
+        status: "queued",
+        captureAttempt: 2,
+      });
+      expect(await dbClient.builds.findById(build.id)).toMatchObject({
+        processingStatus: "processing",
+      });
+    });
+
+    test("should let a reviewer re-run a snapshot", async ({ reviewer }) => {
+      const { build, snapshot } = await seedRerunnableSnapshot(reviewer);
+
+      const [error] = await serverClient.snapshots.rerun({
+        buildId: build.id,
+        snapshotIds: [snapshot.id],
+      });
+
+      expect(error).toBeNull();
+    });
+
+    test("should return CONFLICT while the build is still running", async ({ admin }) => {
+      const { build, snapshot } = await seedRerunnableSnapshot(admin);
+      await dbClient.builds.updateProcessingStatus(build.id, "processing");
+
+      const [error] = await serverClient.snapshots.rerun({
+        buildId: build.id,
+        snapshotIds: [snapshot.id],
+      });
+
+      expect(error?.code).toBe("CONFLICT");
+      expect(error?.message).toContain("still running");
+    });
+
+    test("should return NOT_FOUND for a snapshot belonging to another build", async ({ admin }) => {
+      const { build } = await seedRerunnableSnapshot(admin);
+      const other = await seedRerunnableSnapshot(admin);
+
+      const [error] = await serverClient.snapshots.rerun({
+        buildId: build.id,
+        snapshotIds: [other.snapshot.id],
+      });
+
+      expect(error?.code).toBe("NOT_FOUND");
+    });
+
+    test("should return PRECONDITION_FAILED once the storybook has been cleaned up", async ({
+      admin,
+    }) => {
+      const { build, snapshot } = await seedRerunnableSnapshot(admin);
+      await storage.deletePrefix(build.artifactPath);
+
+      const [error] = await serverClient.snapshots.rerun({
+        buildId: build.id,
+        snapshotIds: [snapshot.id],
+      });
+
+      expect(error?.code).toBe("PRECONDITION_FAILED");
     });
   });
 });

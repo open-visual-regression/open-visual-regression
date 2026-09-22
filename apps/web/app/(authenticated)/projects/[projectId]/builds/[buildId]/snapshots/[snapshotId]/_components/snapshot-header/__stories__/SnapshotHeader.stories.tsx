@@ -37,6 +37,7 @@ const snapshot: SnapshotSchema = {
   status: "unchanged",
   errorMessage: null,
   hasUncaughtPageError: false,
+  isRerunnable: false,
   errorLogs: [],
 };
 

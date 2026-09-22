@@ -33,6 +33,7 @@ const snapshot: SnapshotSchema = {
   status: "needs_review",
   errorMessage: null,
   hasUncaughtPageError: false,
+  isRerunnable: false,
   errorLogs: [],
 };
 
