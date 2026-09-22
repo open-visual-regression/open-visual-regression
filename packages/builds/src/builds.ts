@@ -426,8 +426,12 @@ export const rebuildSnapshots = async (
       toCaptureGroups(snapshots).map((group) => enqueueCaptureGroup({ buildId, ...group })),
     );
   } catch (error) {
+    logger.error({ err: error, buildId, snapshotIds }, "failed to queue rebuilt snapshots");
     const message = error instanceof Error ? error.message : String(error);
-    await dbClient.builds.updateProcessingStatus(buildId, "error", message);
+    await dbClient.transaction(async (tx) => {
+      await dbClient.snapshots.markUnfinishedAs(buildId, "error", tx);
+      await dbClient.builds.updateProcessingStatus(buildId, "error", message, tx);
+    });
     await publishStatus(buildId);
     throw error;
   }

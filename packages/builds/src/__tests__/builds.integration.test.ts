@@ -8,7 +8,7 @@ import { dbClient } from "@ovr/db/client";
 import type { BuildProcessingStatus, DiffProcessingStatus, DiffReviewStatus } from "@ovr/db/schema";
 import { QueueName, type CaptureGroupJobPayload, type ExtractJobPayload } from "@ovr/queue";
 import { createBuildStatusSubscriber, type BuildStatusEvent } from "@ovr/queue/events";
-import { enqueueFinalize } from "@ovr/queue/producer";
+import { enqueueCaptureGroup, enqueueFinalize } from "@ovr/queue/producer";
 import { storage } from "@ovr/storage";
 
 import {
@@ -23,6 +23,11 @@ import {
   updateBuildReviewStatus,
 } from "../builds";
 import { describe, expect, test } from "./fixtures";
+
+vi.mock("@ovr/queue/producer", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@ovr/queue/producer")>();
+  return { ...actual, enqueueCaptureGroup: vi.fn(actual.enqueueCaptureGroup) };
+});
 
 const collectExtractJob = async (connection: Redis): Promise<ExtractJobPayload> => {
   const worker = new Worker<ExtractJobPayload>(QueueName.BUILD_EXTRACT, async (job) => job.data, {
@@ -1033,6 +1038,31 @@ describe("builds", () => {
 
       assert(result.status === "ok");
       expect(await findFinalizeJob(connection, buildId)).toBeUndefined();
+    });
+
+    test("errors the build and its requeued snapshots when their capture can't be queued", async ({
+      project,
+      user,
+      captureConfiguration,
+    }) => {
+      const { buildId, snapshots } = await seedFinalizedBuild({
+        projectId: project.id,
+        userId: user.id,
+        viewport: captureConfiguration,
+      });
+      vi.mocked(enqueueCaptureGroup).mockRejectedValueOnce(new Error("queue unavailable"));
+
+      await expect(rebuildSnapshots(buildId, [snapshots[0]!.id], user.id)).rejects.toThrow(
+        "queue unavailable",
+      );
+
+      expect(await dbClient.builds.findById(buildId)).toMatchObject({
+        processingStatus: "error",
+        errorMessage: "queue unavailable",
+      });
+      expect(await dbClient.snapshots.findById(snapshots[0]!.id)).toMatchObject({
+        status: "error",
+      });
     });
   });
 
