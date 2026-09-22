@@ -436,7 +436,7 @@ describe("snapshots", () => {
     });
   });
 
-  describe("resetForRerun", () => {
+  describe("resetForRebuild", () => {
     test("clears the previous capture and bumps the attempt", async ({
       build,
       captureConfiguration,
@@ -456,7 +456,7 @@ describe("snapshots", () => {
         ],
       });
 
-      const reset = await dbClient.snapshots.resetForRerun(snapshot!.id);
+      const reset = await dbClient.snapshots.resetForRebuild(snapshot!.id);
 
       expect(reset).toMatchObject({
         status: "queued",

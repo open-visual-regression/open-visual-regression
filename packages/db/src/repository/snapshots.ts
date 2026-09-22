@@ -80,7 +80,7 @@ export const markErrored = async (id: string, errorMessage: string) => {
   return snapshot;
 };
 
-export const resetForRerun = async (id: string, tx: DbClient = db) => {
+export const resetForRebuild = async (id: string, tx: DbClient = db) => {
   const [snapshot] = await tx
     .update(snapshots)
     .set({
