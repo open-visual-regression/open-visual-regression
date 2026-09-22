@@ -2,6 +2,7 @@ import { Queue, Worker } from "bullmq";
 import type { Redis } from "ioredis";
 
 import {
+  clearFinalizeJob,
   enqueueCaptureGroup,
   enqueueDiff,
   enqueueExtract,
@@ -118,6 +119,30 @@ describe("queue", () => {
       );
 
       expect(data).toEqual(payload);
+    });
+  });
+
+  describe("clearFinalizeJob", () => {
+    test("should let a build be finalized again after its completed job is cleared", async ({
+      connection,
+    }) => {
+      const payload: FinalizeJobPayload = { buildId: "build-refinalize" };
+
+      await processedByWorker<FinalizeJobPayload>(QueueName.BUILD_FINALIZE, connection, () =>
+        enqueueFinalize(payload, connection),
+      );
+
+      const deduped = await enqueueFinalize(payload, connection);
+      expect(await deduped.isCompleted()).toBe(true);
+
+      await clearFinalizeJob(payload.buildId, connection);
+
+      const requeued = await enqueueFinalize(payload, connection);
+      try {
+        expect(await requeued.isWaiting()).toBe(true);
+      } finally {
+        await requeued.remove();
+      }
     });
   });
 

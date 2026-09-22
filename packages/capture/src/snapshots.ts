@@ -40,6 +40,7 @@ type CaptureTimings = Record<CapturePhase, number>;
 type SnapshotLogContext = {
   buildId: string;
   snapshotId: string;
+  captureAttempt: number;
   storyId: string;
   viewportWidth: number;
   viewportHeight: number;
@@ -201,6 +202,7 @@ const captureSnapshotOnPage = async (
   const context: SnapshotLogContext = {
     buildId: build.id,
     snapshotId,
+    captureAttempt: snapshot.captureAttempt,
     storyId: snapshot.targetId,
     viewportWidth: snapshot.viewportWidth,
     viewportHeight: snapshot.viewportHeight,
@@ -229,7 +231,7 @@ const captureSnapshotOnPage = async (
       logger.warn(context, "snapshot still had pending work when its settle budget ran out");
     }
 
-    const imagePath = `${build.projectId}/builds/${build.id}/snapshots/${snapshotId}.png`;
+    const imagePath = `${build.projectId}/builds/${build.id}/snapshots/${snapshotId}-${snapshot.captureAttempt}.png`;
 
     const [screenshot, screenshotMs] = await runPhase("screenshot", () =>
       page.screenshot({ fullPage, animations: "disabled" }),

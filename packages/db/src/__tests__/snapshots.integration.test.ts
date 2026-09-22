@@ -436,6 +436,39 @@ describe("snapshots", () => {
     });
   });
 
+  describe("requeue", () => {
+    test("clears the previous capture and bumps the attempt", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            targetId: "a",
+            status: "error",
+            imagePath: "some/path-1.png",
+            hasRenderError: true,
+            hasUncaughtPageError: true,
+            errorMessage: "boom",
+          },
+        ],
+      });
+
+      const requeued = await dbClient.snapshots.requeue(snapshot!.id);
+
+      expect(requeued).toMatchObject({
+        status: "queued",
+        captureAttempt: 2,
+        imagePath: null,
+        hasRenderError: false,
+        hasUncaughtPageError: false,
+        errorMessage: null,
+      });
+    });
+  });
+
   describe("listForBuild / countForBuild", () => {
     const seedHomeAndCheckout = async (
       build: { id: string },

@@ -101,6 +101,32 @@ describe("diffs", () => {
     });
   });
 
+  describe("removeBySnapshot", () => {
+    test("deletes the diff along with the votes cast on it", async ({
+      build,
+      captureConfiguration,
+      user,
+    }) => {
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: build.id, ...captureConfiguration, targetId: "a" }],
+      });
+      const diff = await dbClient.diffs.create({
+        snapshotId: snapshot!.id,
+        reviewStatus: "needs_review",
+      });
+      await dbClient.diffReviews.upsertVote({
+        diffId: diff!.id,
+        reviewerId: user.id,
+        vote: "approve",
+      });
+
+      await dbClient.diffs.removeBySnapshot(snapshot!.id);
+
+      expect(await dbClient.diffs.findBySnapshot(snapshot!.id)).toBeUndefined();
+      expect(await dbClient.diffReviews.findByDiff(diff!.id)).toEqual([]);
+    });
+  });
+
   describe("markPendingAs", () => {
     test("transitions pending diffs but leaves completed and errored ones untouched", async ({
       build,

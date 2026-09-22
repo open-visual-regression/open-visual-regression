@@ -1,3 +1,5 @@
+import { eq } from "drizzle-orm";
+
 import { db, type DbClient } from "../db";
 import { snapshotLogs } from "../schema";
 
@@ -15,3 +17,7 @@ export const findBySnapshot = (snapshotId: string) =>
   db.query.snapshotLogs.findMany({
     where: (snapshotLogs, { eq }) => eq(snapshotLogs.snapshotId, snapshotId),
   });
+
+export const removeBySnapshot = async (snapshotId: string, tx: DbClient = db): Promise<void> => {
+  await tx.delete(snapshotLogs).where(eq(snapshotLogs.snapshotId, snapshotId));
+};
