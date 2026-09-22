@@ -26,7 +26,10 @@ import { describe, expect, test } from "./fixtures";
 
 vi.mock("@ovr/queue/producer", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@ovr/queue/producer")>();
-  return { ...actual, enqueueCaptureGroup: vi.fn(actual.enqueueCaptureGroup) };
+  return {
+    ...actual,
+    enqueueCaptureGroup: vi.fn<typeof actual.enqueueCaptureGroup>(actual.enqueueCaptureGroup),
+  };
 });
 
 const collectExtractJob = async (connection: Redis): Promise<ExtractJobPayload> => {
