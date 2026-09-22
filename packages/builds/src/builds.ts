@@ -413,7 +413,7 @@ export const rebuildSnapshots = async (
     for (const snapshot of snapshots) {
       await dbClient.diffs.removeBySnapshot(snapshot.id, tx);
       await dbClient.snapshotLogs.removeBySnapshot(snapshot.id, tx);
-      await dbClient.snapshots.resetForRebuild(snapshot.id, tx);
+      await dbClient.snapshots.requeue(snapshot.id, tx);
     }
 
     await dbClient.builds.updateProcessingStatus(buildId, "processing", null, tx);
