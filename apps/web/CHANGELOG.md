@@ -1,5 +1,30 @@
 # @ovr/web
 
+## 0.5.2
+
+### Patch Changes
+
+- [#225](https://github.com/open-visual-regression/open-visual-regression/pull/225) [`36a6db1`](https://github.com/open-visual-regression/open-visual-regression/commit/36a6db1153c53e1abb0b929fcf2ca71706c6da74) Thanks [@tgfischer](https://github.com/tgfischer)! - Add a rebuild button to the snapshot page.
+
+  A reviewer can re-capture a single snapshot without rebuilding the whole
+  build. The confirmation spells out that the screenshot, logs, diff and any
+  review on it are replaced, and the button also shows for an errored
+  snapshot, which has nothing to review.
+
+- [#224](https://github.com/open-visual-regression/open-visual-regression/pull/224) [`c07442d`](https://github.com/open-visual-regression/open-visual-regression/commit/c07442d355afa70ef5a81e9b35936ac5b9e3347f) Thanks [@tgfischer](https://github.com/tgfischer)! - Expose `snapshots.rebuild`, which re-captures the given snapshots of a build.
+
+  Reviewers and admins can rebuild up to 100 snapshots of a build at a time.
+  `snapshots.getOne` now reports `isRebuildable` so a caller can tell whether a
+  snapshot can be rebuilt before asking.
+
+- Updated dependencies [[`2273afc`](https://github.com/open-visual-regression/open-visual-regression/commit/2273afc3e92f607a538bb5ca7c7f931495b476d1), [`c07442d`](https://github.com/open-visual-regression/open-visual-regression/commit/c07442d355afa70ef5a81e9b35936ac5b9e3347f), [`9ba80f1`](https://github.com/open-visual-regression/open-visual-regression/commit/9ba80f10bf007bd5741f58ca1c5282f88b4e92b6), [`2273afc`](https://github.com/open-visual-regression/open-visual-regression/commit/2273afc3e92f607a538bb5ca7c7f931495b476d1)]:
+  - @ovr/queue@0.1.4
+  - @ovr/api@0.2.1
+  - @ovr/builds@0.1.6
+  - @ovr/db@0.2.2
+  - @ovr/reviews@0.1.6
+  - @ovr/git-status@0.1.4
+
 ## 0.5.1
 
 ### Patch Changes

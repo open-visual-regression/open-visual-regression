@@ -1,5 +1,23 @@
 # @ovr/builds
 
+## 0.1.6
+
+### Patch Changes
+
+- [#223](https://github.com/open-visual-regression/open-visual-regression/pull/223) [`9ba80f1`](https://github.com/open-visual-regression/open-visual-regression/commit/9ba80f10bf007bd5741f58ca1c5282f88b4e92b6) Thanks [@tgfischer](https://github.com/tgfischer)! - Add `rebuildSnapshots`, which re-captures individual snapshots of a settled
+  build in place.
+
+  Each snapshot is requeued and its previous capture, logs, diff and review
+  votes are discarded, the build returns to `processing`, and the capture
+  groups the snapshots belong to are queued again. A rebuild is refused while
+  the build is still running, once it has been canceled, once a newer build
+  has landed on the branch (its baseline stands), and for stories the build
+  was told to skip.
+
+- Updated dependencies [[`2273afc`](https://github.com/open-visual-regression/open-visual-regression/commit/2273afc3e92f607a538bb5ca7c7f931495b476d1), [`9ba80f1`](https://github.com/open-visual-regression/open-visual-regression/commit/9ba80f10bf007bd5741f58ca1c5282f88b4e92b6), [`2273afc`](https://github.com/open-visual-regression/open-visual-regression/commit/2273afc3e92f607a538bb5ca7c7f931495b476d1)]:
+  - @ovr/queue@0.1.4
+  - @ovr/db@0.2.2
+
 ## 0.1.5
 
 ### Patch Changes
