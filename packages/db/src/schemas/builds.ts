@@ -175,6 +175,7 @@ export const snapshots = pgTable(
     targetTitle: varchar("target_title", { length: 255 }).notNull().default(""),
     targetName: varchar("target_name", { length: 255 }).notNull().default(""),
     status: snapshotStatusEnum().notNull().default("queued"),
+    captureAttempt: integer("capture_attempt").notNull().default(1),
     imagePath: text("image_path"),
     hasRenderError: boolean("has_render_error").notNull().default(false),
     hasUncaughtPageError: boolean("has_uncaught_page_error").notNull().default(false),

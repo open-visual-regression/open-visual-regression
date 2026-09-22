@@ -1,0 +1,1 @@
+ALTER TABLE "snapshots" ADD COLUMN "capture_attempt" integer DEFAULT 1 NOT NULL;

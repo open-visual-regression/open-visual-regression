@@ -189,6 +189,15 @@ const removeJobById = async (queue: Queue, jobId: string): Promise<void> => {
   }
 };
 
+export const clearFinalizeJob = async (buildId: string, connection: IORedis): Promise<void> => {
+  const queue = new Queue(QueueName.BUILD_FINALIZE, { connection });
+  try {
+    await removeJobById(queue, buildId);
+  } finally {
+    await queue.close();
+  }
+};
+
 export type CanceledBuildJobs = {
   buildId: string;
   diffIds: string[];

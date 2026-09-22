@@ -76,7 +76,7 @@ describe("snapshots", () => {
       const captured = await dbClient.snapshots.findById(snapshot!.id);
       expect(captured).toMatchObject({ status: "success", hasRenderError: false });
       expect(captured!.imagePath).toBe(
-        `${mainBuild.projectId}/builds/${mainBuild.id}/snapshots/${snapshot!.id}.png`,
+        `${mainBuild.projectId}/builds/${mainBuild.id}/snapshots/${snapshot!.id}-1.png`,
       );
 
       const imageStream = await storage.getFileStream(captured!.imagePath!);

@@ -80,6 +80,22 @@ export const markErrored = async (id: string, errorMessage: string) => {
   return snapshot;
 };
 
+export const resetForRerun = async (id: string, tx: DbClient = db) => {
+  const [snapshot] = await tx
+    .update(snapshots)
+    .set({
+      status: "queued",
+      captureAttempt: sql`${snapshots.captureAttempt} + 1`,
+      imagePath: null,
+      hasRenderError: false,
+      hasUncaughtPageError: false,
+      errorMessage: null,
+    })
+    .where(eq(snapshots.id, id))
+    .returning();
+  return snapshot;
+};
+
 export const markUnfinishedAs = async (
   buildId: string,
   status: SnapshotStatus,

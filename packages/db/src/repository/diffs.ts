@@ -95,6 +95,10 @@ export const updateReviewStatusMany = async (ids: string[], reviewStatus: DiffRe
   return db.update(diffs).set({ reviewStatus }).where(inArray(diffs.id, ids)).returning();
 };
 
+export const removeBySnapshot = async (snapshotId: string, tx: DbClient = db): Promise<void> => {
+  await tx.delete(diffs).where(eq(diffs.snapshotId, snapshotId));
+};
+
 export const markPendingAs = async (
   buildId: string,
   status: DiffProcessingStatus,

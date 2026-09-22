@@ -229,7 +229,7 @@ const captureSnapshotOnPage = async (
       logger.warn(context, "snapshot still had pending work when its settle budget ran out");
     }
 
-    const imagePath = `${build.projectId}/builds/${build.id}/snapshots/${snapshotId}.png`;
+    const imagePath = `${build.projectId}/builds/${build.id}/snapshots/${snapshotId}-${snapshot.captureAttempt}.png`;
 
     const [screenshot, screenshotMs] = await runPhase("screenshot", () =>
       page.screenshot({ fullPage, animations: "disabled" }),
