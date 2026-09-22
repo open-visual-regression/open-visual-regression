@@ -497,6 +497,9 @@ importers:
       uuid:
         specifier: ^14.0.1
         version: 14.0.1
+      zod:
+        specifier: ^4.5.1
+        version: 4.5.1
     devDependencies:
       '@ovr/testing':
         specifier: workspace:*
@@ -8755,6 +8758,7 @@ snapshots:
 
   '@ovr/db@file:packages/db(@types/pg@8.20.3)(kysely@0.29.4)':
     dependencies:
+      '@ovr/logger': file:packages/logger
       drizzle-orm: 0.45.2(@types/pg@8.20.3)(kysely@0.29.4)(pg@8.22.0)
       pg: 8.22.0
       uuid: 14.0.1

@@ -1,5 +1,4 @@
-import { z } from "zod";
-
+import { toCaptureGroups } from "@ovr/builds/lib/captureGroups";
 import { withBundleDir } from "@ovr/builds/storybookBundleCache";
 import { dbClient } from "@ovr/db/client";
 import { enqueueCaptureGroup, enqueueFinalize } from "@ovr/queue/producer";
@@ -20,27 +19,6 @@ const toViewportName = (viewport: {
   viewportWidth: number;
   viewportHeight?: number;
 }): string => viewport.name ?? `${viewport.viewportWidth}x${viewport.viewportHeight || "auto"}`;
-
-// Max snapshots sharing one warm browser per capture-group job.
-export const CAPTURE_GROUP_SIZE = z.coerce
-  .number()
-  .int()
-  .positive()
-  .catch(10)
-  .parse(process.env.OVR_CAPTURE_GROUP_SIZE);
-
-const chunk = <T>(items: T[], size: number): T[][] =>
-  Array.from({ length: Math.ceil(items.length / size) }, (_, index) =>
-    items.slice(index * size, index * size + size),
-  );
-
-const groupSnapshotIdsByBrowser = (
-  snapshots: { id: string; browser: string }[],
-): Map<string, string[]> =>
-  snapshots.reduce((groups, snapshot) => {
-    groups.set(snapshot.browser, [...(groups.get(snapshot.browser) ?? []), snapshot.id]);
-    return groups;
-  }, new Map<string, string[]>());
 
 const resolveDefaultViewport = (viewports: NamedViewport[]): NamedViewport | undefined => {
   const [defaultViewport] = resolveTargetViewports(viewports, undefined);
@@ -167,15 +145,7 @@ export const extractBuild = async (
     return;
   }
 
-  const groupedByBrowser = groupSnapshotIdsByBrowser(
-    snapshots.filter((snapshot) => snapshot.status === "queued"),
-  );
+  const groups = toCaptureGroups(snapshots.filter((snapshot) => snapshot.status === "queued"));
 
-  await Promise.all(
-    Array.from(groupedByBrowser.entries()).flatMap(([browser, snapshotIds]) =>
-      chunk(snapshotIds, CAPTURE_GROUP_SIZE).map((group) =>
-        enqueueCaptureGroup({ buildId, browser, snapshotIds: group }),
-      ),
-    ),
-  );
+  await Promise.all(groups.map((group) => enqueueCaptureGroup({ buildId, ...group })));
 };

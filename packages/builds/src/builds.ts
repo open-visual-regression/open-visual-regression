@@ -1,17 +1,25 @@
 import { v7 as uuidv7 } from "uuid";
 
 import { dbClient } from "@ovr/db/client";
-import type { BuildProcessingStatus, BuildReviewStatus, BuildType } from "@ovr/db/schema";
+import type {
+  BuildProcessingStatus,
+  BuildReviewStatus,
+  BuildType,
+  SnapshotStatus,
+} from "@ovr/db/schema";
 import { createLogger } from "@ovr/logger";
 import type { CanceledBuildJobs } from "@ovr/queue";
 import {
   cancelBuildJobs,
+  clearFinalizeJob,
+  enqueueCaptureGroup,
   enqueueExtract,
   enqueuePublishStatus,
   publishBuildStatusEvent,
 } from "@ovr/queue/producer";
 import { storage } from "@ovr/storage";
 
+import { toCaptureGroups } from "./lib/captureGroups";
 import type { Result } from "./types";
 
 const logger = createLogger("builds");
@@ -217,7 +225,7 @@ export const confirmBuildUpload = async (
 
 export type RebuildBlockedReason = "NOT_SETTLED" | "NOT_LATEST_ON_BRANCH" | "NO_EXTRACT_DEFAULTS";
 
-type RebuildCandidate = {
+type BuildCandidate = {
   id: string;
   projectId: string;
   branch: string;
@@ -229,26 +237,32 @@ type ExtractDefaults = NonNullable<
   Awaited<ReturnType<typeof dbClient.buildExtractDefaults.findByBuild>>
 >;
 
+const hasNewerBuildOnBranch = async (build: BuildCandidate): Promise<boolean> => {
+  const newer = await dbClient.builds.findMany(
+    {
+      projectIds: [build.projectId],
+      branches: [build.branch],
+      createdAfter: { createdAt: build.createdAt, id: build.id },
+    },
+    { limit: 1 },
+  );
+
+  return newer.length > 0;
+};
+
 export const checkRebuildable = async (
-  build: RebuildCandidate,
+  build: BuildCandidate,
 ): Promise<Result<ExtractDefaults, RebuildBlockedReason>> => {
   if (build.processingStatus === "queued" || build.processingStatus === "processing") {
     return { status: "error", error: "NOT_SETTLED" };
   }
 
   const [newerOnBranch, extractDefaults] = await Promise.all([
-    dbClient.builds.findMany(
-      {
-        projectIds: [build.projectId],
-        branches: [build.branch],
-        createdAfter: { createdAt: build.createdAt, id: build.id },
-      },
-      { limit: 1 },
-    ),
+    hasNewerBuildOnBranch(build),
     dbClient.buildExtractDefaults.findByBuild(build.id),
   ]);
 
-  if (newerOnBranch.length > 0) {
+  if (newerOnBranch) {
     return { status: "error", error: "NOT_LATEST_ON_BRANCH" };
   }
 
@@ -330,6 +344,99 @@ export const rebuildBuild = async (
   await publishStatus(rebuildId);
 
   return { status: "ok", data: rebuildId };
+};
+
+export type SnapshotRerunBlockedReason =
+  | "NOT_SETTLED"
+  | "BUILD_CANCELED"
+  | "NOT_LATEST_ON_BRANCH"
+  | "SNAPSHOT_SKIPPED";
+
+export const checkSnapshotsRerunnable = async (
+  build: BuildCandidate,
+  snapshots: { status: SnapshotStatus }[],
+): Promise<Result<void, SnapshotRerunBlockedReason>> => {
+  if (build.processingStatus === "queued" || build.processingStatus === "processing") {
+    return { status: "error", error: "NOT_SETTLED" };
+  }
+
+  if (build.processingStatus === "canceled") {
+    return { status: "error", error: "BUILD_CANCELED" };
+  }
+
+  if (snapshots.some((snapshot) => snapshot.status === "skipped")) {
+    return { status: "error", error: "SNAPSHOT_SKIPPED" };
+  }
+
+  if (await hasNewerBuildOnBranch(build)) {
+    return { status: "error", error: "NOT_LATEST_ON_BRANCH" };
+  }
+
+  return { status: "ok", data: undefined };
+};
+
+export const rerunSnapshots = async (
+  buildId: string,
+  snapshotIds: string[],
+  requestedBy: string,
+): Promise<
+  Result<
+    void,
+    "BUILD_NOT_FOUND" | "SNAPSHOT_NOT_FOUND" | "ARTIFACT_MISSING" | SnapshotRerunBlockedReason
+  >
+> => {
+  const build = await dbClient.builds.findById(buildId);
+
+  if (!build) {
+    return { status: "error", error: "BUILD_NOT_FOUND" };
+  }
+
+  const requested = new Set(snapshotIds);
+  const buildSnapshots = await dbClient.snapshots.findByBuild(buildId);
+  const snapshots = buildSnapshots.filter((snapshot) => requested.has(snapshot.id));
+
+  if (snapshots.length !== requested.size) {
+    return { status: "error", error: "SNAPSHOT_NOT_FOUND" };
+  }
+
+  const rerunnable = await checkSnapshotsRerunnable(build, snapshots);
+
+  if (rerunnable.status === "error") {
+    return rerunnable;
+  }
+
+  if (!(await storage.objectExists(build.artifactPath))) {
+    return { status: "error", error: "ARTIFACT_MISSING" };
+  }
+
+  await dbClient.transaction(async (tx) => {
+    for (const snapshot of snapshots) {
+      await dbClient.diffs.removeBySnapshot(snapshot.id, tx);
+      await dbClient.snapshotLogs.removeBySnapshot(snapshot.id, tx);
+      await dbClient.snapshots.resetForRerun(snapshot.id, tx);
+    }
+
+    await dbClient.builds.updateProcessingStatus(buildId, "processing", null, tx);
+  });
+
+  try {
+    // BullMQ drops a repeat of a completed job id, so the build could not finalize again.
+    await clearFinalizeJob(buildId);
+    await Promise.all(
+      toCaptureGroups(snapshots).map((group) => enqueueCaptureGroup({ buildId, ...group })),
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    await dbClient.builds.updateProcessingStatus(buildId, "error", message);
+    await publishStatus(buildId);
+    throw error;
+  }
+
+  logger.info({ buildId, snapshotIds, requestedBy }, "re-ran snapshots");
+
+  await publishStatus(buildId);
+
+  return { status: "ok", data: undefined };
 };
 
 export const cancelBuild = async (

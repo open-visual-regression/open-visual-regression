@@ -6,8 +6,9 @@ import { vi } from "vitest";
 
 import { dbClient } from "@ovr/db/client";
 import type { BuildProcessingStatus, DiffProcessingStatus, DiffReviewStatus } from "@ovr/db/schema";
-import { QueueName, type ExtractJobPayload } from "@ovr/queue";
+import { QueueName, type CaptureGroupJobPayload, type ExtractJobPayload } from "@ovr/queue";
 import { createBuildStatusSubscriber, type BuildStatusEvent } from "@ovr/queue/events";
+import { enqueueFinalize } from "@ovr/queue/producer";
 import { storage } from "@ovr/storage";
 
 import {
@@ -18,6 +19,7 @@ import {
   finalizeBuild,
   getArtifactPath,
   rebuildBuild,
+  rerunSnapshots,
   updateBuildReviewStatus,
 } from "../builds";
 import { describe, expect, test } from "./fixtures";
@@ -41,6 +43,28 @@ const findExtractJob = async (connection: Redis, buildId: string) => {
   const queue = new Queue(QueueName.BUILD_EXTRACT, { connection });
   try {
     return await queue.getJob(buildId);
+  } finally {
+    await queue.close();
+  }
+};
+
+const findFinalizeJob = async (connection: Redis, buildId: string) => {
+  const queue = new Queue(QueueName.BUILD_FINALIZE, { connection });
+  try {
+    return await queue.getJob(buildId);
+  } finally {
+    await queue.close();
+  }
+};
+
+const findCaptureGroups = async (
+  connection: Redis,
+  buildId: string,
+): Promise<CaptureGroupJobPayload[]> => {
+  const queue = new Queue<CaptureGroupJobPayload>(QueueName.SNAPSHOT_CAPTURE, { connection });
+  try {
+    const jobs = await queue.getJobs(["waiting", "delayed", "prioritized", "paused"]);
+    return jobs.map((job) => job.data).filter((data) => data.buildId === buildId);
   } finally {
     await queue.close();
   }
@@ -713,6 +737,302 @@ describe("builds", () => {
       const result = await rebuildBuild(crypto.randomUUID(), user.id);
 
       expect(result).toEqual({ status: "error", error: "BUILD_NOT_FOUND" });
+    });
+  });
+
+  describe("rerunSnapshots", () => {
+    type SeedRerunOptions = {
+      projectId: string;
+      userId: string;
+      viewport: Viewport;
+      branch?: string;
+      processingStatus?: BuildProcessingStatus;
+      errorMessage?: string;
+      withArtifact?: boolean;
+      browsers?: string[];
+      snapshotStatus?: "success" | "skipped";
+    };
+
+    const seedFinalizedBuild = async ({
+      projectId,
+      userId,
+      viewport,
+      branch = "main",
+      processingStatus = "success",
+      errorMessage,
+      withArtifact = true,
+      browsers = ["chromium"],
+      snapshotStatus = "success",
+    }: SeedRerunOptions) => {
+      const created = await createBuild({ projectId, branch, commitSha: "b".repeat(40) }, userId);
+      assert(created.status === "ok");
+      const buildId = created.data;
+
+      if (withArtifact) {
+        await uploadArtifact(projectId, buildId);
+      }
+
+      const snapshots = await dbClient.snapshots.createMany({
+        values: browsers.map((browser, index) => ({
+          buildId,
+          ...viewport,
+          browser,
+          targetId: `story-${index}`,
+          status: snapshotStatus,
+          imagePath: `${projectId}/builds/${buildId}/snapshots/story-${index}-1.png`,
+        })),
+      });
+
+      for (const snapshot of snapshots) {
+        await dbClient.diffs.create({
+          snapshotId: snapshot.id,
+          processingStatus: "success",
+          reviewStatus: "needs_review",
+        });
+      }
+
+      await dbClient.builds.updateProcessingStatus(buildId, processingStatus, errorMessage);
+
+      return { buildId, snapshots };
+    };
+
+    test.for(["queued", "processing"] as const)(
+      "returns NOT_SETTLED while the build is still %s",
+      async (processingStatus, { project, user, captureConfiguration }) => {
+        const { buildId, snapshots } = await seedFinalizedBuild({
+          projectId: project.id,
+          userId: user.id,
+          viewport: captureConfiguration,
+          processingStatus,
+        });
+
+        const result = await rerunSnapshots(buildId, [snapshots[0]!.id], user.id);
+
+        expect(result).toEqual({ status: "error", error: "NOT_SETTLED" });
+      },
+    );
+
+    test("returns BUILD_CANCELED for a canceled build, whose writes the pipeline discards", async ({
+      project,
+      user,
+      captureConfiguration,
+    }) => {
+      const { buildId, snapshots } = await seedFinalizedBuild({
+        projectId: project.id,
+        userId: user.id,
+        viewport: captureConfiguration,
+        processingStatus: "canceled",
+      });
+
+      const result = await rerunSnapshots(buildId, [snapshots[0]!.id], user.id);
+
+      expect(result).toEqual({ status: "error", error: "BUILD_CANCELED" });
+    });
+
+    test("returns NOT_LATEST_ON_BRANCH once a newer build lands, so its baseline stands", async ({
+      project,
+      user,
+      captureConfiguration,
+    }) => {
+      const { buildId, snapshots } = await seedFinalizedBuild({
+        projectId: project.id,
+        userId: user.id,
+        viewport: captureConfiguration,
+      });
+      await createBuildOnBranch(project.id, user.id, "main", "c");
+
+      const result = await rerunSnapshots(buildId, [snapshots[0]!.id], user.id);
+
+      expect(result).toEqual({ status: "error", error: "NOT_LATEST_ON_BRANCH" });
+    });
+
+    test("returns SNAPSHOT_SKIPPED for a story the build was told not to capture", async ({
+      project,
+      user,
+      captureConfiguration,
+    }) => {
+      const { buildId, snapshots } = await seedFinalizedBuild({
+        projectId: project.id,
+        userId: user.id,
+        viewport: captureConfiguration,
+        snapshotStatus: "skipped",
+      });
+
+      const result = await rerunSnapshots(buildId, [snapshots[0]!.id], user.id);
+
+      expect(result).toEqual({ status: "error", error: "SNAPSHOT_SKIPPED" });
+    });
+
+    test("returns SNAPSHOT_NOT_FOUND for a snapshot that belongs to another build", async ({
+      project,
+      user,
+      captureConfiguration,
+    }) => {
+      const { buildId } = await seedFinalizedBuild({
+        projectId: project.id,
+        userId: user.id,
+        viewport: captureConfiguration,
+      });
+      const other = await seedFinalizedBuild({
+        projectId: project.id,
+        userId: user.id,
+        viewport: captureConfiguration,
+        branch: "feature/other",
+      });
+
+      const result = await rerunSnapshots(buildId, [other.snapshots[0]!.id], user.id);
+
+      expect(result).toEqual({ status: "error", error: "SNAPSHOT_NOT_FOUND" });
+    });
+
+    test("returns ARTIFACT_MISSING once the storybook has been cleaned up", async ({
+      project,
+      user,
+      captureConfiguration,
+    }) => {
+      const { buildId, snapshots } = await seedFinalizedBuild({
+        projectId: project.id,
+        userId: user.id,
+        viewport: captureConfiguration,
+        withArtifact: false,
+      });
+
+      const result = await rerunSnapshots(buildId, [snapshots[0]!.id], user.id);
+
+      expect(result).toEqual({ status: "error", error: "ARTIFACT_MISSING" });
+    });
+
+    test("returns BUILD_NOT_FOUND when the build does not exist", async ({ user }) => {
+      const result = await rerunSnapshots(crypto.randomUUID(), [crypto.randomUUID()], user.id);
+
+      expect(result).toEqual({ status: "error", error: "BUILD_NOT_FOUND" });
+    });
+
+    test("requeues the snapshot and discards the capture it is replacing", async ({
+      project,
+      user,
+      captureConfiguration,
+    }) => {
+      const { buildId, snapshots } = await seedFinalizedBuild({
+        projectId: project.id,
+        userId: user.id,
+        viewport: captureConfiguration,
+      });
+      const snapshot = snapshots[0]!;
+      const diff = await dbClient.diffs.findBySnapshot(snapshot.id);
+      await dbClient.diffReviews.upsertVote({
+        diffId: diff!.id,
+        reviewerId: user.id,
+        vote: "approve",
+      });
+      await dbClient.snapshotLogs.createMany({
+        values: [{ snapshotId: snapshot.id, level: "error", message: "flaked" }],
+      });
+
+      const result = await rerunSnapshots(buildId, [snapshot.id], user.id);
+
+      assert(result.status === "ok");
+      expect(await dbClient.snapshots.findById(snapshot.id)).toMatchObject({
+        status: "queued",
+        captureAttempt: 2,
+        imagePath: null,
+        errorMessage: null,
+      });
+      expect(await dbClient.diffs.findBySnapshot(snapshot.id)).toBeUndefined();
+      expect(await dbClient.diffReviews.findByDiff(diff!.id)).toEqual([]);
+      expect(await dbClient.snapshotLogs.findBySnapshot(snapshot.id)).toEqual([]);
+    });
+
+    test("puts the build back to processing and clears the error it reported", async ({
+      project,
+      user,
+      captureConfiguration,
+    }) => {
+      const { buildId, snapshots } = await seedFinalizedBuild({
+        projectId: project.id,
+        userId: user.id,
+        viewport: captureConfiguration,
+        processingStatus: "error",
+        errorMessage: "Some snapshots encountered an error",
+      });
+
+      const result = await rerunSnapshots(buildId, [snapshots[0]!.id], user.id);
+
+      assert(result.status === "ok");
+      expect(await dbClient.builds.findById(buildId)).toMatchObject({
+        processingStatus: "processing",
+        errorMessage: null,
+      });
+    });
+
+    test("queues a capture group per browser, holding only the requested snapshots", async ({
+      project,
+      user,
+      captureConfiguration,
+      connection,
+    }) => {
+      const { buildId, snapshots } = await seedFinalizedBuild({
+        projectId: project.id,
+        userId: user.id,
+        viewport: captureConfiguration,
+        browsers: ["chromium", "firefox", "webkit"],
+      });
+      const [chromium, firefox] = snapshots;
+
+      const result = await rerunSnapshots(buildId, [chromium!.id, firefox!.id], user.id);
+
+      assert(result.status === "ok");
+      const groups = await findCaptureGroups(connection, buildId);
+      expect(groups).toHaveLength(2);
+      expect(groups).toEqual(
+        expect.arrayContaining([
+          { buildId, browser: "chromium", snapshotIds: [chromium!.id] },
+          { buildId, browser: "firefox", snapshotIds: [firefox!.id] },
+        ]),
+      );
+    });
+
+    test("leaves the snapshots it was not asked to re-run alone", async ({
+      project,
+      user,
+      captureConfiguration,
+    }) => {
+      const { buildId, snapshots } = await seedFinalizedBuild({
+        projectId: project.id,
+        userId: user.id,
+        viewport: captureConfiguration,
+        browsers: ["chromium", "firefox"],
+      });
+      const [target, untouched] = snapshots;
+
+      const result = await rerunSnapshots(buildId, [target!.id], user.id);
+
+      assert(result.status === "ok");
+      expect(await dbClient.snapshots.findById(untouched!.id)).toMatchObject({
+        status: "success",
+        captureAttempt: 1,
+        imagePath: untouched!.imagePath,
+      });
+      expect(await dbClient.diffs.findBySnapshot(untouched!.id)).toBeDefined();
+    });
+
+    test("clears the finalize job the build already used up", async ({
+      project,
+      user,
+      captureConfiguration,
+      connection,
+    }) => {
+      const { buildId, snapshots } = await seedFinalizedBuild({
+        projectId: project.id,
+        userId: user.id,
+        viewport: captureConfiguration,
+      });
+      await enqueueFinalize({ buildId });
+
+      const result = await rerunSnapshots(buildId, [snapshots[0]!.id], user.id);
+
+      assert(result.status === "ok");
+      expect(await findFinalizeJob(connection, buildId)).toBeUndefined();
     });
   });
 
