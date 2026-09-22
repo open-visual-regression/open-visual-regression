@@ -309,6 +309,7 @@ describe("SnapshotActionsRow", () => {
 
     expect(screen.getByRole("button", { name: /collapse sidebar/i })).toBeVisible();
   });
+
   it("should not show the rebuild button when the snapshot cannot be rebuilt", () => {
     renderComponent({ snapshot: { ...snapshot, isRebuildable: false } });
 
