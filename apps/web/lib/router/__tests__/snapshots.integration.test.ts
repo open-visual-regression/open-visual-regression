@@ -663,6 +663,7 @@ describe("snapshots", () => {
       });
     });
   });
+
   describe("rebuild", () => {
     const seedRebuildableSnapshot = async (admin: User) => {
       const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
