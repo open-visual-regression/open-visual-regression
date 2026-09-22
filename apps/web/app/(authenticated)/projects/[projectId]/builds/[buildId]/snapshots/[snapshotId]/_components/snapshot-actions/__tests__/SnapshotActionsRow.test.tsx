@@ -17,6 +17,7 @@ vi.mock("@/lib/router");
 vi.mock("next/navigation");
 
 const mockCastVote = vi.mocked(serverClient.diffs.castVote);
+const mockRebuild = vi.mocked(serverClient.snapshots.rebuild);
 const mockRefresh = vi.mocked(useRouter)().refresh;
 const mockPush = vi.mocked(useRouter)().push;
 
@@ -307,5 +308,63 @@ describe("SnapshotActionsRow", () => {
     renderComponent({ sidebarCollapsed: false });
 
     expect(screen.getByRole("button", { name: /collapse sidebar/i })).toBeVisible();
+  });
+
+  it("should not show the rebuild button when the snapshot cannot be rebuilt", () => {
+    renderComponent({ snapshot: { ...snapshot, isRebuildable: false } });
+
+    expect(screen.queryByRole("button", { name: /^rebuild$/i })).not.toBeInTheDocument();
+  });
+
+  it("should not show the rebuild button to a viewer", () => {
+    renderComponent({ snapshot: { ...snapshot, isRebuildable: true }, canReview: false });
+
+    expect(screen.queryByRole("button", { name: /^rebuild$/i })).not.toBeInTheDocument();
+  });
+
+  it("should show the rebuild button for an errored snapshot, which has nothing to review", () => {
+    renderComponent({ snapshot: { ...snapshot, status: "error", isRebuildable: true } });
+
+    expect(screen.getByRole("button", { name: /^rebuild$/i })).toBeVisible();
+    expect(screen.queryByRole("button", { name: /^approve$/i })).not.toBeInTheDocument();
+  });
+
+  it("should rebuild the snapshot and refresh when confirmed", async ({ user }) => {
+    mockRebuild.mockResolvedValue([null, { ok: true }]);
+    renderComponent({ snapshot: { ...snapshot, isRebuildable: true } });
+
+    await user.click(screen.getByRole("button", { name: /^rebuild$/i }));
+    expect(
+      await screen.findByRole("alertdialog", { name: /rebuild this snapshot\?/i }),
+    ).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: /^rebuild$/i }));
+
+    expect(mockRebuild).toHaveBeenCalledWith({ buildId, snapshotIds: [snapshot.id] });
+    await waitFor(() => expect(mockRefresh).toHaveBeenCalled());
+  });
+
+  it("should not rebuild the snapshot when the confirmation is dismissed", async ({ user }) => {
+    renderComponent({ snapshot: { ...snapshot, isRebuildable: true } });
+
+    await user.click(screen.getByRole("button", { name: /^rebuild$/i }));
+    expect(
+      await screen.findByRole("alertdialog", { name: /rebuild this snapshot\?/i }),
+    ).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: /keep as-is/i }));
+
+    expect(mockRebuild).not.toHaveBeenCalled();
+  });
+
+  it("should show an inline error if the rebuild is refused", async ({ user }) => {
+    mockRebuild.mockResolvedValue([createORPCError("CONFLICT"), undefined]);
+    renderComponent({ snapshot: { ...snapshot, isRebuildable: true } });
+
+    await user.click(screen.getByRole("button", { name: /^rebuild$/i }));
+    await user.click(screen.getByRole("button", { name: /^rebuild$/i }));
+
+    expect(await screen.findByText("CONFLICT")).toBeVisible();
+    expect(mockRefresh).not.toHaveBeenCalled();
   });
 });

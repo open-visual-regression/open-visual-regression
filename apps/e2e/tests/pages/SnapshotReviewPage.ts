@@ -23,6 +23,18 @@ export class SnapshotReviewPage {
     return this.page.getByRole("button", { name: "rejected", exact: true });
   }
 
+  rebuildButton(): Locator {
+    return this.page.getByRole("button", { name: "rebuild", exact: true });
+  }
+
+  async confirmRebuild() {
+    await this.rebuildButton().click();
+    await this.page
+      .getByRole("alertdialog", { name: "rebuild this snapshot?" })
+      .getByRole("button", { name: "rebuild", exact: true })
+      .click();
+  }
+
   async expandSidebar() {
     await this.page.getByRole("button", { name: "Expand sidebar" }).click();
   }
