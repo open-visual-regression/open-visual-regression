@@ -1,8 +1,4 @@
-import { Suspense } from "react";
-
 import { ScrollContainer } from "@/lib/providers/ScrollContainer";
-
-import { ProjectsSidebarSkeleton } from "./ProjectsSidebarSkeleton";
 
 type SidebarLayoutProps = Readonly<{
   sidebar: React.ReactNode;
@@ -12,9 +8,7 @@ type SidebarLayoutProps = Readonly<{
 
 export const SidebarLayout = ({ sidebar, scrollRestorationId, children }: SidebarLayoutProps) => (
   <>
-    <div className="hidden shrink-0 md:block">
-      <Suspense fallback={<ProjectsSidebarSkeleton />}>{sidebar}</Suspense>
-    </div>
+    <div className="hidden shrink-0 md:block">{sidebar}</div>
     <ScrollContainer
       as="main"
       data-scroll-restoration-id={scrollRestorationId}
