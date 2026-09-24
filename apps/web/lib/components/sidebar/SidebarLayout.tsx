@@ -8,7 +8,9 @@ type SidebarLayoutProps = Readonly<{
 
 export const SidebarLayout = ({ sidebar, scrollRestorationId, children }: SidebarLayoutProps) => (
   <>
-    <div className="hidden shrink-0 md:block">{sidebar}</div>
+    <div data-slot="sidebar" className="hidden shrink-0 md:block">
+      {sidebar}
+    </div>
     <ScrollContainer
       as="main"
       data-scroll-restoration-id={scrollRestorationId}

@@ -1,27 +1,24 @@
-import { serverClient } from "@/lib/router";
-import { serverError } from "@/lib/utils/errors";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+
+import { getQueryClient } from "@/lib/orpc/query-client";
+import { orpcServer } from "@/lib/orpc/server";
 import { APP_VERSION } from "@/lib/utils/version";
 
-import { SIDEBAR_PROJECTS_LIMIT, SIDEBAR_RECENT_BUILDS_LIMIT } from "./constants";
-import { ProjectsSidebar } from "./ProjectsSidebar";
+import { SIDEBAR_PROJECTS_QUERY, SIDEBAR_RECENT_BUILDS_QUERY } from "./constants";
+import { ProjectsSidebarContainer } from "./ProjectsSidebarContainer";
 
-export default async function ProjectsSidebarSlot() {
-  const [[listError, listResult], [countError, countResult], [buildsError, buildsResult]] =
-    await Promise.all([
-      serverClient.projects.list({ limit: SIDEBAR_PROJECTS_LIMIT }),
-      serverClient.projects.count(),
-      serverClient.builds.list({ limit: SIDEBAR_RECENT_BUILDS_LIMIT }),
-    ]);
+// Prefetches without awaiting: the pending queries stream to the client, so the route never waits
+// on the sidebar and only the sidebar's own Suspense boundary shows while they load.
+export default function ProjectsSidebarSlot() {
+  const queryClient = getQueryClient();
 
-  if (listError || countError || buildsError) {
-    serverError(listError || countError || buildsError);
-  }
-
-  const { projects } = listResult;
-  const { total } = countResult;
-  const { builds } = buildsResult;
+  void queryClient.prefetchQuery(orpcServer.projects.list.queryOptions(SIDEBAR_PROJECTS_QUERY));
+  void queryClient.prefetchQuery(orpcServer.projects.count.queryOptions());
+  void queryClient.prefetchQuery(orpcServer.builds.list.queryOptions(SIDEBAR_RECENT_BUILDS_QUERY));
 
   return (
-    <ProjectsSidebar projects={projects} total={total} builds={builds} version={APP_VERSION} />
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <ProjectsSidebarContainer version={APP_VERSION} />
+    </HydrationBoundary>
   );
 }

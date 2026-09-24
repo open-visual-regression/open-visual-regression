@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 import { test as base } from "@playwright/test";
 
 import { SEED_ARTIFACT, type SeedData } from "./constants";
+import { AppSidebar } from "./pages/AppSidebar";
 import { BuildPage } from "./pages/BuildPage";
 import { OrganizationSettingsPage } from "./pages/OrganizationSettingsPage";
 import { ProjectBuildsPage } from "./pages/ProjectBuildsPage";
@@ -19,6 +20,7 @@ type TestFixtures = {
   snapshotReviewPage: SnapshotReviewPage;
   buildPage: BuildPage;
   organizationSettingsPage: OrganizationSettingsPage;
+  sidebar: AppSidebar;
   ingestBuild: (options: IngestOptions & { commitSha: string }) => ChildProcess;
 };
 
@@ -42,6 +44,11 @@ export const test = base.extend<TestFixtures>({
   },
   organizationSettingsPage: async ({ page }, use) => {
     await use(new OrganizationSettingsPage(page));
+  },
+  sidebar: async ({ page }, use) => {
+    const sidebar = new AppSidebar(page);
+    await sidebar.watch();
+    await use(sidebar);
   },
   // eslint-disable-next-line no-empty-pattern -- fixture takes no dependencies
   ingestBuild: async ({}, use) => {
