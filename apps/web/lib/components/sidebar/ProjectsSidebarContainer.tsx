@@ -32,7 +32,6 @@ const ProjectsSidebarData = ({ version }: ProjectsSidebarContainerProps) => {
   );
 };
 
-// The sidebar owns its loading state, so no route-level loading.tsx fallback ever renders here.
 const ProjectsSidebarContainer = ({ version }: ProjectsSidebarContainerProps) => (
   <Suspense fallback={<ProjectsSidebarSkeleton />}>
     <ProjectsSidebarData version={version} />

@@ -7,8 +7,6 @@ import { APP_VERSION } from "@/lib/utils/version";
 import { SIDEBAR_PROJECTS_QUERY, SIDEBAR_RECENT_BUILDS_QUERY } from "./constants";
 import { ProjectsSidebarContainer } from "./ProjectsSidebarContainer";
 
-// Prefetches without awaiting: the pending queries stream to the client, so the route never waits
-// on the sidebar and only the sidebar's own Suspense boundary shows while they load.
 export default function ProjectsSidebarSlot() {
   const queryClient = getQueryClient();
 
