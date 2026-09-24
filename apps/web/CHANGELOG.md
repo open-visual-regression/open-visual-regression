@@ -1,5 +1,11 @@
 # @ovr/web
 
+## 0.5.4
+
+### Patch Changes
+
+- [#230](https://github.com/open-visual-regression/open-visual-regression/pull/230) [`aa1d4ee`](https://github.com/open-visual-regression/open-visual-regression/commit/aa1d4eeeba1989b5cd4470dd8a4c80a98bbc056b) Thanks [@tgfischer](https://github.com/tgfischer)! - The sidebar no longer shows the builds page's loading skeleton, stays in place when moving between projects and builds, and no longer holds up navigation while it loads.
+
 ## 0.5.3
 
 ### Patch Changes
