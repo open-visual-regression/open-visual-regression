@@ -165,7 +165,10 @@ worker:
     pollingInterval: 30
     cooldownPeriod: 300
     advanced: {}
-    triggers: []
+    redisAddress: ""  # host:6379, as reachable from KEDA
+    listLength: 4
+    authenticationRef: {}  # { name: <TriggerAuthentication> } for a password or TLS
+    triggers: []  # replaces the generated trigger
 
 migrate:
   enabled: true

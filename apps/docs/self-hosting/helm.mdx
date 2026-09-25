@@ -98,7 +98,7 @@ All off by default.
 | `web.topologySpreadConstraints` / `worker.topologySpreadConstraints` | Passed through verbatim. Include a `labelSelector`, the chart does not inject one. |
 | `web.priorityClassName` / `worker.priorityClassName` | Passed through verbatim. |
 
-Scale the worker on queue depth rather than CPU. A pod holding an idle browser between snapshots looks unloaded while it is busy, so a CPU-based autoscaler will scale it away mid-capture. Capture work lands on the BullMQ `snapshot-capture` queue:
+Scale the worker on queue depth rather than CPU. A pod holding an idle browser between snapshots looks unloaded while it is busy, so a CPU-based autoscaler will scale it away mid-capture. KEDA scales on waiting capture groups:
 
 ```yaml
 worker:
@@ -106,15 +106,15 @@ worker:
     enabled: true
     maxReplicaCount: 8
     cooldownPeriod: 600
-    triggers:
-      - type: redis
-        metadata:
-          address: valkey:6379
-          listName: bull:snapshot-capture:wait
-          listLength: "4"
+    redisAddress: valkey:6379
+    listLength: 4
 ```
 
-`triggers` has no default, since the address and authentication depend on your Redis. `cooldownPeriod` must outlast the longest capture group, and `worker.terminationGracePeriodSeconds` must cover the in-flight snapshot on top of that.
+If Redis needs a password or TLS, point `worker.keda.authenticationRef` at a KEDA [`TriggerAuthentication`](https://keda.sh/docs/latest/scalers/redis-lists/#authentication-parameters). `worker.keda.triggers` replaces the generated trigger entirely.
+
+<Warning>
+`cooldownPeriod` must outlast the longest capture group, and `worker.terminationGracePeriodSeconds` must cover the in-flight snapshot on top of that. Otherwise a scale-down stops a worker mid-capture.
+</Warning>
 
 ## Network policies
 
