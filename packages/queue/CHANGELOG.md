@@ -1,5 +1,11 @@
 # @ovr/queue
 
+## 0.1.5
+
+### Patch Changes
+
+- [#233](https://github.com/open-visual-regression/open-visual-regression/pull/233) [`7237920`](https://github.com/open-visual-regression/open-visual-regression/commit/72379203107e43351fbcc25628fccd0d1295bde7) Thanks [@tgfischer](https://github.com/tgfischer)! - Support Redis Cluster. Set `REDIS_MODE=cluster`, or `redis.mode: cluster` in the Helm chart.
+
 ## 0.1.4
 
 ### Patch Changes
