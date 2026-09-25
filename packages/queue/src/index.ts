@@ -1,25 +1,61 @@
 import { Queue } from "bullmq";
 import type { Job, JobsOptions } from "bullmq";
-import { Redis } from "ioredis";
-import type IORedis from "ioredis";
+import { Cluster, Redis } from "ioredis";
 import type { RedisOptions } from "ioredis";
+import { z } from "zod";
 
 import { createLogger } from "@ovr/logger";
 
 const logger = createLogger("queue");
 
-export const buildRedisConnection = (redisUrl: string, options?: RedisOptions): IORedis => {
+export type RedisConnection = Redis | Cluster;
+
+// No `.catch`: a mistyped mode must fail rather than fall back to standalone.
+const redisModeSchema = z
+  .enum(["standalone", "cluster"], { error: "REDIS_MODE must be standalone or cluster" })
+  .default("standalone");
+
+export const buildRedisConnection = (
+  redisUrl: string,
+  options: RedisOptions = {},
+): RedisConnection => {
   const url = new URL(redisUrl);
-  return new Redis({
-    host: url.hostname,
-    port: Number(url.port) || 6379,
+  const host = url.hostname;
+  const port = Number(url.port) || 6379;
+  const auth = {
     username: url.username || undefined,
     password: url.password || undefined,
-    db: url.pathname.length > 1 ? Number(url.pathname.slice(1)) : undefined,
     tls: url.protocol === "rediss:" ? {} : undefined,
-    ...options,
+  };
+
+  if (redisModeSchema.parse(process.env.REDIS_MODE || undefined) === "standalone") {
+    return new Redis({
+      host,
+      port,
+      ...auth,
+      db: url.pathname.length > 1 ? Number(url.pathname.slice(1)) : undefined,
+      ...options,
+    });
+  }
+
+  const { lazyConnect, retryStrategy, enableOfflineQueue, ...redisOptions } = options;
+  return new Cluster([{ host, port }], {
+    // Keep hostnames so TLS certificates validate.
+    dnsLookup: (address, callback) => callback(null, address),
+    lazyConnect,
+    enableOfflineQueue,
+    clusterRetryStrategy: retryStrategy,
+    redisOptions: { ...auth, ...redisOptions },
   });
 };
+
+// The hash tag keeps each queue's keys in one cluster slot, avoiding CROSSSLOT.
+export const queueOptions = (
+  connection: RedisConnection,
+): { connection: RedisConnection; prefix: string } => ({
+  connection,
+  prefix: connection.isCluster ? "{bull}" : "bull",
+});
 
 export enum QueueName {
   BUILD_EXTRACT = "build-extract",
@@ -98,10 +134,10 @@ const JOB_OPTIONS: Record<QueueName, JobsOptions> = {
 const enqueue = async <T>(
   queueName: QueueName,
   payload: T,
-  connection: IORedis,
+  connection: RedisConnection,
   extraOpts?: JobsOptions,
 ): Promise<Job<T>> => {
-  const queue = new Queue<T, void, string, T, void, string>(queueName, { connection });
+  const queue = new Queue<T, void, string, T, void, string>(queueName, queueOptions(connection));
   try {
     return await queue.add(queueName, payload, { ...JOB_OPTIONS[queueName], ...extraOpts });
   } finally {
@@ -111,47 +147,47 @@ const enqueue = async <T>(
 
 export const enqueueExtract = (
   payload: ExtractJobPayload,
-  connection: IORedis,
+  connection: RedisConnection,
 ): Promise<Job<ExtractJobPayload>> =>
   enqueue(QueueName.BUILD_EXTRACT, payload, connection, { jobId: payload.buildId });
 
 export const enqueueCaptureGroup = (
   payload: CaptureGroupJobPayload,
-  connection: IORedis,
+  connection: RedisConnection,
 ): Promise<Job<CaptureGroupJobPayload>> => enqueue(QueueName.SNAPSHOT_CAPTURE, payload, connection);
 
 export const enqueueDiff = (
   payload: DiffJobPayload,
-  connection: IORedis,
+  connection: RedisConnection,
 ): Promise<Job<DiffJobPayload>> =>
   enqueue(QueueName.SNAPSHOT_DIFF, payload, connection, { jobId: payload.diffId });
 
 export const enqueueFinalize = (
   payload: FinalizeJobPayload,
-  connection: IORedis,
+  connection: RedisConnection,
 ): Promise<Job<FinalizeJobPayload>> =>
   enqueue(QueueName.BUILD_FINALIZE, payload, connection, { jobId: payload.buildId });
 
 export const enqueuePurge = (
   payload: PurgeJobPayload,
-  connection: IORedis,
+  connection: RedisConnection,
 ): Promise<Job<PurgeJobPayload>> => enqueue(QueueName.BUILD_PURGE, payload, connection);
 
 export const enqueueProjectPurge = (
   payload: ProjectPurgeJobPayload,
-  connection: IORedis,
+  connection: RedisConnection,
 ): Promise<Job<ProjectPurgeJobPayload>> =>
   enqueue(QueueName.PROJECT_PURGE, payload, connection, { jobId: payload.projectId });
 
 export const enqueuePublishStatus = (
   payload: GitStatusPublishJobPayload,
-  connection: IORedis,
+  connection: RedisConnection,
 ): Promise<Job<GitStatusPublishJobPayload>> =>
   enqueue(QueueName.GIT_STATUS_PUBLISH, payload, connection, { jobId: payload.buildId });
 
 export const enqueuePurgeMany = async (
   payloads: PurgeJobPayload[],
-  connection: IORedis,
+  connection: RedisConnection,
 ): Promise<void> => {
   if (payloads.length === 0) {
     return;
@@ -159,7 +195,7 @@ export const enqueuePurgeMany = async (
 
   const queue = new Queue<PurgeJobPayload, void, string, PurgeJobPayload, void, string>(
     QueueName.BUILD_PURGE,
-    { connection },
+    queueOptions(connection),
   );
   try {
     await queue.addBulk(
@@ -189,8 +225,11 @@ const removeJobById = async (queue: Queue, jobId: string): Promise<void> => {
   }
 };
 
-export const clearFinalizeJob = async (buildId: string, connection: IORedis): Promise<void> => {
-  const queue = new Queue(QueueName.BUILD_FINALIZE, { connection });
+export const clearFinalizeJob = async (
+  buildId: string,
+  connection: RedisConnection,
+): Promise<void> => {
+  const queue = new Queue(QueueName.BUILD_FINALIZE, queueOptions(connection));
   try {
     await removeJobById(queue, buildId);
   } finally {
@@ -205,7 +244,7 @@ export type CanceledBuildJobs = {
 
 export const cancelBuildJobs = async (
   canceled: CanceledBuildJobs[],
-  connection: IORedis,
+  connection: RedisConnection,
 ): Promise<void> => {
   if (canceled.length === 0) {
     return;
@@ -213,10 +252,10 @@ export const cancelBuildJobs = async (
 
   const buildIds = new Set(canceled.map(({ buildId }) => buildId));
 
-  const extractQueue = new Queue(QueueName.BUILD_EXTRACT, { connection });
-  const captureQueue = new Queue(QueueName.SNAPSHOT_CAPTURE, { connection });
-  const diffQueue = new Queue(QueueName.SNAPSHOT_DIFF, { connection });
-  const finalizeQueue = new Queue(QueueName.BUILD_FINALIZE, { connection });
+  const extractQueue = new Queue(QueueName.BUILD_EXTRACT, queueOptions(connection));
+  const captureQueue = new Queue(QueueName.SNAPSHOT_CAPTURE, queueOptions(connection));
+  const diffQueue = new Queue(QueueName.SNAPSHOT_DIFF, queueOptions(connection));
+  const finalizeQueue = new Queue(QueueName.BUILD_FINALIZE, queueOptions(connection));
 
   try {
     await Promise.all([
@@ -247,8 +286,11 @@ export const cancelBuildJobs = async (
 
 const PURGE_DISPATCH_JOB_ID = "build-purge-dispatch";
 
-export const schedulePurge = async (connection: IORedis): Promise<void> => {
-  const queue = new Queue<PurgeDispatchJobPayload>(QueueName.BUILD_PURGE_DISPATCH, { connection });
+export const schedulePurge = async (connection: RedisConnection): Promise<void> => {
+  const queue = new Queue<PurgeDispatchJobPayload>(
+    QueueName.BUILD_PURGE_DISPATCH,
+    queueOptions(connection),
+  );
   try {
     await queue.upsertJobScheduler(
       PURGE_DISPATCH_JOB_ID,
@@ -262,8 +304,8 @@ export const schedulePurge = async (connection: IORedis): Promise<void> => {
 
 const REAPER_JOB_ID = "build-reaper";
 
-export const scheduleReaper = async (connection: IORedis): Promise<void> => {
-  const queue = new Queue<ReaperJobPayload>(QueueName.BUILD_REAPER, { connection });
+export const scheduleReaper = async (connection: RedisConnection): Promise<void> => {
+  const queue = new Queue<ReaperJobPayload>(QueueName.BUILD_REAPER, queueOptions(connection));
   try {
     await queue.upsertJobScheduler(
       REAPER_JOB_ID,

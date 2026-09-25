@@ -7,6 +7,7 @@ metadata:
 data:
   BASE_URL: {{ .Values.env.baseUrl | quote }}
   LOG_LEVEL: {{ .Values.env.logLevel | quote }}
+  REDIS_MODE: {{ .Values.redis.mode | quote }}
   {{- with .Values.storage.endpoint }}
   STORAGE_ENDPOINT: {{ . | quote }}
   {{- end }}

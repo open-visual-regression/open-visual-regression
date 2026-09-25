@@ -9,7 +9,7 @@ somewhere reachable from the cluster — this chart does not provision them.
 Copy `values.yaml`, or pass `--set`, filling in:
 
 - `database.url`
-- `redis.url`
+- `redis.url`, plus `redis.mode: cluster` for a Redis Cluster
 - `storage.*` (endpoint, bucket, access/secret key)
 - `auth.betterAuthSecret` / `auth.gitTokenEncryptionKey` — each `openssl rand -base64 32`
 - `env.baseUrl` — public URL the app will be served at
@@ -144,6 +144,11 @@ changes the `app.kubernetes.io/name` label.
 Both feed selectors, which Kubernetes will not let you change after an object
 is created. Set them at install time; changing either on an existing release
 means uninstalling and reinstalling.
+
+## Redis
+
+The queue requires `maxmemory-policy noeviction`. Managed Redis services often
+default to an eviction policy, which can silently drop queued jobs.
 
 ## Scaling
 

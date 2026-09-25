@@ -55,6 +55,7 @@ database:
 
 redis:
   url: "" # redis://host:6379
+  mode: standalone # or cluster
 
 storage:
   # Leave endpoint/publicEndpoint empty and forcePathStyle false for AWS S3.

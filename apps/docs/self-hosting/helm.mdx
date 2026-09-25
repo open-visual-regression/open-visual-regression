@@ -42,6 +42,7 @@ cosign verify ghcr.io/open-visual-regression/charts/ovr:X.Y.Z \
 | `auth.gitTokenEncryptionKey` | Encrypts stored git provider tokens at rest. Generate with `openssl rand -base64 32`. Rotating it invalidates every stored token. |
 | `database.url` | `postgresql://` connection string. |
 | `redis.url` | `redis://` or `rediss://` connection string. |
+| `redis.mode` | `standalone` (default) or `cluster`. |
 | `storage.bucket` / `storage.region` | Bucket name and region. The bucket must already exist. |
 
 Set `existingSecret` to supply all of these from a Secret you manage (Sealed Secrets, External Secrets, or by hand) instead. It needs the keys `DATABASE_URL`, `REDIS_URL`, `BETTER_AUTH_SECRET`, `OVR_GIT_TOKEN_ENCRYPTION_KEY`, `STORAGE_ACCESS_KEY`, and `STORAGE_SECRET_KEY`.

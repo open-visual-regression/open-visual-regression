@@ -21,10 +21,11 @@ spec:
     {{- with .Values.worker.keda.triggers }}
     {{- toYaml . | nindent 4 }}
     {{- else }}
-    - type: redis
+    {{- $cluster := eq .Values.redis.mode "cluster" }}
+    - type: {{ ternary "redis-cluster" "redis" $cluster }}
       metadata:
-        address: {{ required "worker.keda.redisAddress is required when worker.keda.enabled is true (or set worker.keda.triggers)" .Values.worker.keda.redisAddress | quote }}
-        listName: bull:snapshot-capture:wait
+        {{ ternary "addresses" "address" $cluster }}: {{ required "worker.keda.redisAddress is required when worker.keda.enabled is true (or set worker.keda.triggers)" .Values.worker.keda.redisAddress | quote }}
+        listName: {{ printf "%s:snapshot-capture:wait" (ternary "{bull}" "bull" $cluster) | quote }}
         listLength: {{ .Values.worker.keda.listLength | quote }}
       {{- with .Values.worker.keda.authenticationRef }}
       authenticationRef:
