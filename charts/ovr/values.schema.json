@@ -261,6 +261,9 @@
             "pollingInterval": { "type": "integer", "minimum": 1 },
             "cooldownPeriod": { "type": "integer", "minimum": 0 },
             "advanced": { "type": "object" },
+            "redisAddress": { "type": "string" },
+            "listLength": { "type": "integer", "minimum": 1 },
+            "authenticationRef": { "type": "object" },
             "triggers": { "$ref": "#/definitions/objectList" }
           }
         },

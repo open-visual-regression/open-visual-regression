@@ -33,12 +33,9 @@ worker:
     minReplicaCount: 1
     maxReplicaCount: 8
     cooldownPeriod: 600
-    triggers:
-      - type: redis
-        metadata:
-          address: valkey:6379
-          listName: bull:snapshot-capture:wait
-          listLength: "4"
+    redisAddress: valkey:6379
+    authenticationRef:
+      name: ovr-redis
 
 networkPolicy:
   enabled: true

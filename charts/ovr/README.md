@@ -159,8 +159,7 @@ never scales.
 between snapshots looks unloaded while it's very much busy, so an HPA reading
 CPU will scale it away mid-capture. `worker.keda.enabled` creates a KEDA
 `ScaledObject` instead — KEDA has to be installed separately; the chart does
-not install it. Capture work lands on the BullMQ `snapshot-capture` queue,
-whose waiting list is `bull:snapshot-capture:wait`:
+not install it. It scales on waiting capture groups:
 
 ```yaml
 worker:
@@ -168,16 +167,15 @@ worker:
     enabled: true
     maxReplicaCount: 8
     cooldownPeriod: 600
-    triggers:
-      - type: redis
-        metadata:
-          address: valkey:6379
-          listName: bull:snapshot-capture:wait
-          listLength: "4"
+    redisAddress: valkey:6379
+    listLength: 4
 ```
 
-`triggers` has no default because the address format and authentication
-depend on your Redis. Two settings need care together: `cooldownPeriod` must
+If Redis needs a password or TLS, point `worker.keda.authenticationRef` at a
+KEDA `TriggerAuthentication`. `worker.keda.triggers` replaces the generated
+trigger entirely.
+
+Two settings need care together: `cooldownPeriod` must
 outlast the longest capture group (`worker.groupSize` snapshots at up to two
 minutes each), and `worker.terminationGracePeriodSeconds` must cover the
 in-flight snapshot on top of that — otherwise a scale-down kills a pod

@@ -21,6 +21,14 @@ spec:
     {{- with .Values.worker.keda.triggers }}
     {{- toYaml . | nindent 4 }}
     {{- else }}
-    {{- fail "worker.keda.enabled is true but worker.keda.triggers is empty -- see values.yaml for a BullMQ example" }}
+    - type: redis
+      metadata:
+        address: {{ required "worker.keda.redisAddress is required when worker.keda.enabled is true (or set worker.keda.triggers)" .Values.worker.keda.redisAddress | quote }}
+        listName: bull:snapshot-capture:wait
+        listLength: {{ .Values.worker.keda.listLength | quote }}
+      {{- with .Values.worker.keda.authenticationRef }}
+      authenticationRef:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     {{- end }}
 {{- end }}
