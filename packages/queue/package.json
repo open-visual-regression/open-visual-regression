@@ -19,7 +19,8 @@
     "@ovr/db": "workspace:*",
     "@ovr/logger": "workspace:*",
     "bullmq": "^5.81.3",
-    "ioredis": "5.11.1"
+    "ioredis": "5.11.1",
+    "zod": "^4.5.1"
   },
   "devDependencies": {
     "@ovr/testing": "workspace:*",

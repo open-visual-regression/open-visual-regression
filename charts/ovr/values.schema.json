@@ -145,7 +145,10 @@
     "redis": {
       "type": "object",
       "additionalProperties": false,
-      "properties": { "url": { "type": "string" } }
+      "properties": {
+        "url": { "type": "string" },
+        "mode": { "type": "string", "enum": ["standalone", "cluster"] }
+      }
     },
     "storage": {
       "type": "object",
