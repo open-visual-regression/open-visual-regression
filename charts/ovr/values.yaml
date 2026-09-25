@@ -51,11 +51,11 @@ auth:
   gitTokenEncryptionKey: ""
 
 database:
-  url: "" # postgresql://user:pass@host:5432/open_visual_regression
+  url: ""  # postgresql://user:pass@host:5432/open_visual_regression
 
 redis:
-  url: "" # redis://host:6379
-  mode: standalone # or cluster
+  url: ""  # redis://host:6379
+  mode: standalone  # or cluster
 
 storage:
   # Leave endpoint/publicEndpoint empty and forcePathStyle false for AWS S3.
@@ -81,7 +81,7 @@ web:
   image:
     tag: ""
     digest: ""
-    override: "" # full image reference; takes precedence over tag/digest above
+    override: ""  # full image reference; takes precedence over tag/digest above
   service:
     type: ClusterIP
     port: 3000
@@ -166,14 +166,10 @@ worker:
     pollingInterval: 30
     cooldownPeriod: 300
     advanced: {}
-    # host:port of the Redis the worker uses, as reachable from KEDA.
-    redisAddress: ""
-    # Waiting capture groups per worker replica.
+    redisAddress: ""  # host:6379, as reachable from KEDA
     listLength: 4
-    # TriggerAuthentication for a Redis password or TLS, e.g. { name: ovr-redis }.
-    authenticationRef: {}
-    # Replaces the generated trigger entirely.
-    triggers: []
+    authenticationRef: {}  # { name: <TriggerAuthentication> } for a password or TLS
+    triggers: []  # replaces the generated trigger
 
 migrate:
   enabled: true

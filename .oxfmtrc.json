@@ -17,5 +17,5 @@
       "unknown"
     ]
   },
-  "ignorePatterns": ["charts/*/templates/**"]
+  "ignorePatterns": ["charts/**"]
 }
