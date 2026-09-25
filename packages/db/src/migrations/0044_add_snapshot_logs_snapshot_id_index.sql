@@ -1,0 +1,1 @@
+CREATE INDEX "snapshot_logs_snapshotId_idx" ON "snapshot_logs" USING btree ("snapshot_id");
