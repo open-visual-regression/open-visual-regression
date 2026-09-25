@@ -1,5 +1,17 @@
 # @ovr/capture
 
+## 0.2.4
+
+### Patch Changes
+
+- [#238](https://github.com/open-visual-regression/open-visual-regression/pull/238) [`f57ceab`](https://github.com/open-visual-regression/open-visual-regression/commit/f57ceabfe6d4d9b1b8007b7c71b69721cb62c59d) Thanks [@tgfischer](https://github.com/tgfischer)! - Serve captured Storybooks from `localhost` instead of `127.0.0.1`, fixing invalid API subdomain URLs some stories derive from the page host.
+
+- Updated dependencies [[`9edbf39`](https://github.com/open-visual-regression/open-visual-regression/commit/9edbf39d9dc6b56d1529668611c54d557067bbe8)]:
+  - @ovr/db@0.2.3
+  - @ovr/builds@0.1.8
+  - @ovr/queue@0.1.6
+  - @ovr/reviews@0.1.8
+
 ## 0.2.3
 
 ### Patch Changes
