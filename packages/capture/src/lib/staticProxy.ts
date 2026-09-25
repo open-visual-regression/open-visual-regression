@@ -38,7 +38,9 @@ export const startStaticProxy = (rootDir: string): Promise<StaticProxy> =>
         throw new Error("Expected the static proxy server to bind to a TCP port");
       }
       resolve({
-        origin: `http://127.0.0.1:${address.port}`,
+        // Advertise `localhost` rather than the IP: stories that derive API hosts by
+        // prefixing a subdomain get `api.localhost` (still loopback) instead of `api.127.0.0.1`.
+        origin: `http://localhost:${address.port}`,
         close: () => server.close(),
       });
     });
