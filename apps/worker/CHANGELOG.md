@@ -1,5 +1,21 @@
 # @ovr/worker
 
+## 0.6.0
+
+### Minor Changes
+
+- [#232](https://github.com/open-visual-regression/open-visual-regression/pull/232) [`7db17cc`](https://github.com/open-visual-regression/open-visual-regression/commit/7db17cca880a36a6731400f7232fec4c6788c609) Thanks [@tgfischer](https://github.com/tgfischer)! - Set up worker autoscaling with KEDA by setting `worker.keda.redisAddress` in the
+  Helm chart. Existing `worker.keda.triggers` values keep working.
+
+### Patch Changes
+
+- [#233](https://github.com/open-visual-regression/open-visual-regression/pull/233) [`7237920`](https://github.com/open-visual-regression/open-visual-regression/commit/72379203107e43351fbcc25628fccd0d1295bde7) Thanks [@tgfischer](https://github.com/tgfischer)! - Support Redis Cluster. Set `REDIS_MODE=cluster`, or `redis.mode: cluster` in the Helm chart.
+
+- Updated dependencies [[`7237920`](https://github.com/open-visual-regression/open-visual-regression/commit/72379203107e43351fbcc25628fccd0d1295bde7)]:
+  - @ovr/queue@0.1.5
+  - @ovr/builds@0.1.7
+  - @ovr/capture@0.2.3
+
 ## 0.5.4
 
 ## 0.5.3
