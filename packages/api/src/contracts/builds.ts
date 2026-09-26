@@ -105,7 +105,6 @@ export const confirmUploadContract = oc
   .output(confirmUploadOutputSchema);
 
 export const findAncestorBuildInputSchema = z.object({
-  /** Commits reachable from the one being built, nearest first. */
   commitShas: z.array(z.string().min(1)).min(1).max(1000),
 });
 
