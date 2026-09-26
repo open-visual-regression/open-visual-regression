@@ -6,8 +6,14 @@ import { useState } from "react";
 import { BuildSchema } from "@ovr/api/contracts/builds";
 import { ProjectDto } from "@ovr/api/contracts/projects";
 import { Button } from "@ovr/ui/components/button";
-import { Icon, MenuIcon } from "@ovr/ui/components/icon";
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@ovr/ui/components/sheet";
+import { Icon, MenuIcon, XIcon } from "@ovr/ui/components/icon";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetTitle,
+  SheetTrigger,
+} from "@ovr/ui/components/sheet";
 
 import { ProjectsSidebarLinks } from "@/lib/components/sidebar/ProjectsSidebarLinks";
 import { RecentBuildsSidebarLinks } from "@/lib/components/sidebar/RecentBuildsSidebarLinks";
@@ -51,6 +57,14 @@ const NavigationBarMobileMenu = ({
       </SheetTrigger>
       <SheetContent side="left" className="gap-0 bg-background p-0" showCloseButton={false}>
         <SheetTitle className="sr-only">{section} navigation</SheetTitle>
+        <div className="flex shrink-0 justify-end px-2 pt-2">
+          <SheetClose
+            render={<Button variant="ghost" color="neutral" size="icon-sm" />}
+            aria-label={`Close ${section} navigation`}
+          >
+            <Icon icon={XIcon} size={14} />
+          </SheetClose>
+        </div>
         {section === "settings" ? (
           <SettingsSidebarLinks role={role} onNavigate={onNavigate} />
         ) : (
