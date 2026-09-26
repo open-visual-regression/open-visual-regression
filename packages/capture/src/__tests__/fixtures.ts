@@ -2,7 +2,6 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import type { Redis } from "ioredis";
 import type { Page } from "playwright";
 import { chromium } from "playwright";
 import * as tar from "tar";
@@ -12,7 +11,7 @@ import { test as vitest } from "vitest";
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
 import { organization, projects, user as userTable } from "@ovr/db/schema";
-import { buildRedisConnection } from "@ovr/queue";
+import { buildRedisConnection, type RedisConnection } from "@ovr/queue";
 import { storage } from "@ovr/storage";
 
 import { newPage } from "../lib/browser";
@@ -77,7 +76,7 @@ type Fixtures = {
   captureConfiguration: Viewport;
   mainBuild: NonNullable<Awaited<ReturnType<typeof dbClient.builds.create>>>;
   featureBuild: NonNullable<Awaited<ReturnType<typeof dbClient.builds.create>>>;
-  connection: Redis;
+  connection: RedisConnection;
 };
 
 export const test = vitest.extend<Fixtures>({

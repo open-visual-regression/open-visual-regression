@@ -1,11 +1,10 @@
-import type { Redis } from "ioredis";
 import { v7 as uuidv7 } from "uuid";
 import { test as vitest } from "vitest";
 
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
 import { organization, projects, user as userTable } from "@ovr/db/schema";
-import { buildRedisConnection } from "@ovr/queue";
+import { buildRedisConnection, type RedisConnection } from "@ovr/queue";
 
 export { describe, expect } from "vitest";
 
@@ -23,7 +22,7 @@ type Fixtures = {
   captureConfiguration: Viewport;
   mainBuild: NonNullable<Awaited<ReturnType<typeof dbClient.builds.create>>>;
   featureBuild: NonNullable<Awaited<ReturnType<typeof dbClient.builds.create>>>;
-  connection: Redis;
+  connection: RedisConnection;
 };
 
 export const test = vitest.extend<Fixtures>({

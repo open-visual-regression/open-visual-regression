@@ -8,6 +8,7 @@ import { SEED_ARTIFACT, type SeedData } from "./constants";
 import { BuildPage } from "./pages/BuildPage";
 import { OrganizationSettingsPage } from "./pages/OrganizationSettingsPage";
 import { ProjectBuildsPage } from "./pages/ProjectBuildsPage";
+import { Sidebar } from "./pages/Sidebar";
 import { SnapshotReviewPage } from "./pages/SnapshotReviewPage";
 import { seedClientForContext, type SeedClient } from "./seed/client";
 import { spawnIngest, type IngestOptions } from "./support/ingest";
@@ -19,6 +20,7 @@ type TestFixtures = {
   snapshotReviewPage: SnapshotReviewPage;
   buildPage: BuildPage;
   organizationSettingsPage: OrganizationSettingsPage;
+  sidebar: Sidebar;
   ingestBuild: (options: IngestOptions & { commitSha: string }) => ChildProcess;
 };
 
@@ -42,6 +44,9 @@ export const test = base.extend<TestFixtures>({
   },
   organizationSettingsPage: async ({ page }, use) => {
     await use(new OrganizationSettingsPage(page));
+  },
+  sidebar: async ({ page }, use) => {
+    await use(new Sidebar(page));
   },
   // eslint-disable-next-line no-empty-pattern -- fixture takes no dependencies
   ingestBuild: async ({}, use) => {

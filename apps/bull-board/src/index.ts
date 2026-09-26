@@ -6,7 +6,7 @@ import { Queue } from "bullmq";
 import express from "express";
 
 import { createLogger } from "@ovr/logger";
-import { QueueName, buildRedisConnection } from "@ovr/queue";
+import { QueueName, buildRedisConnection, queueOptions } from "@ovr/queue";
 
 const logger = createLogger("bull-board");
 
@@ -21,7 +21,7 @@ serverAdapter.setBasePath("/");
 
 createBullBoard({
   queues: Object.values(QueueName).map(
-    (name) => new BullMQAdapter(new Queue(name, { connection })),
+    (name) => new BullMQAdapter(new Queue(name, queueOptions(connection))),
   ),
   serverAdapter,
 });
