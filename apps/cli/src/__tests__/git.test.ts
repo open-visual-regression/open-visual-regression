@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -83,6 +84,14 @@ describe("git", () => {
     git("commit", "-q", "-m", "rename");
 
     expect((await listChangedFiles(repo, base)).sort()).toEqual(["src/new.ts", "src/old.ts"]);
+  });
+
+  it("treats an option-like base as a revision", async () => {
+    await commit({ "a.ts": "1" });
+    const output = path.join(repo, "written-by-git");
+
+    await expect(listChangedFiles(repo, `--output=${output}`)).rejects.toThrow(/output/);
+    expect(existsSync(output)).toBe(false);
   });
 
   it("ignores untracked files that are gitignored", async () => {
