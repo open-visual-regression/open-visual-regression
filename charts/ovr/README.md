@@ -9,7 +9,7 @@ somewhere reachable from the cluster — this chart does not provision them.
 Copy `values.yaml`, or pass `--set`, filling in:
 
 - `database.url`
-- `redis.url`
+- `redis.url`, plus `redis.mode: cluster` for a Redis Cluster
 - `storage.*` (endpoint, bucket, access/secret key)
 - `auth.betterAuthSecret` / `auth.gitTokenEncryptionKey` — each `openssl rand -base64 32`
 - `env.baseUrl` — public URL the app will be served at
@@ -145,6 +145,11 @@ Both feed selectors, which Kubernetes will not let you change after an object
 is created. Set them at install time; changing either on an existing release
 means uninstalling and reinstalling.
 
+## Redis
+
+The queue requires `maxmemory-policy noeviction`. Managed Redis services often
+default to an eviction policy, which can silently drop queued jobs.
+
 ## Scaling
 
 Everything here is off by default and changes nothing until you enable it.
@@ -159,8 +164,7 @@ never scales.
 between snapshots looks unloaded while it's very much busy, so an HPA reading
 CPU will scale it away mid-capture. `worker.keda.enabled` creates a KEDA
 `ScaledObject` instead — KEDA has to be installed separately; the chart does
-not install it. Capture work lands on the BullMQ `snapshot-capture` queue,
-whose waiting list is `bull:snapshot-capture:wait`:
+not install it. It scales on waiting capture groups:
 
 ```yaml
 worker:
@@ -168,16 +172,15 @@ worker:
     enabled: true
     maxReplicaCount: 8
     cooldownPeriod: 600
-    triggers:
-      - type: redis
-        metadata:
-          address: valkey:6379
-          listName: bull:snapshot-capture:wait
-          listLength: "4"
+    redisAddress: valkey:6379
+    listLength: 4
 ```
 
-`triggers` has no default because the address format and authentication
-depend on your Redis. Two settings need care together: `cooldownPeriod` must
+If Redis needs a password or TLS, point `worker.keda.authenticationRef` at a
+KEDA `TriggerAuthentication`. `worker.keda.triggers` replaces the generated
+trigger entirely.
+
+Two settings need care together: `cooldownPeriod` must
 outlast the longest capture group (`worker.groupSize` snapshots at up to two
 minutes each), and `worker.terminationGracePeriodSeconds` must cover the
 in-flight snapshot on top of that — otherwise a scale-down kills a pod

@@ -3,13 +3,12 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { Worker } from "bullmq";
-import type { Redis } from "ioredis";
 import { chromium } from "playwright";
 import { PNG } from "pngjs";
 import { vi } from "vitest";
 
 import { dbClient } from "@ovr/db/client";
-import { QueueName, type DiffJobPayload } from "@ovr/queue";
+import { QueueName, type RedisConnection, type DiffJobPayload } from "@ovr/queue";
 import { storage } from "@ovr/storage";
 
 import { captureBuildGroup, diffSnapshot, enqueueSnapshotDiff } from "../snapshots";
@@ -38,7 +37,7 @@ const uploadSpeckledPng = async (
   await storage.uploadFile(path, PNG.sync.write(png), "image/png");
 };
 
-const collectDiffJob = async (connection: Redis): Promise<DiffJobPayload> => {
+const collectDiffJob = async (connection: RedisConnection): Promise<DiffJobPayload> => {
   const worker = new Worker<DiffJobPayload>(QueueName.SNAPSHOT_DIFF, async (job) => job.data, {
     connection,
   });

@@ -1,5 +1,11 @@
 # @ovr/db
 
+## 0.2.3
+
+### Patch Changes
+
+- [#236](https://github.com/open-visual-regression/open-visual-regression/pull/236) [`9edbf39`](https://github.com/open-visual-regression/open-visual-regression/commit/9edbf39d9dc6b56d1529668611c54d557067bbe8) Thanks [@tgfischer](https://github.com/tgfischer)! - Index `snapshot_logs.snapshot_id` to speed up loading the snapshot page.
+
 ## 0.2.2
 
 ### Patch Changes

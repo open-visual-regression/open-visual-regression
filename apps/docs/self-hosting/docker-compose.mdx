@@ -190,6 +190,11 @@ If `docker compose up` fails with `service_completed_successfully is an invalid 
 | Variable | Description |
 | --- | --- |
 | `REDIS_URL` | `redis://` or `rediss://` connection string. Backs the build queue. Any Redis-compatible service works. |
+| `REDIS_MODE` | `standalone` (default) or `cluster`. Set `cluster` for a Redis Cluster, with `REDIS_URL` pointing at its configuration endpoint. |
+
+<Warning>
+The queue requires `maxmemory-policy noeviction`. Managed Redis services often default to an eviction policy, which can silently drop queued jobs.
+</Warning>
 
 ### Object storage
 
