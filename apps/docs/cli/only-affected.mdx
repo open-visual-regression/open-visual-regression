@@ -1,0 +1,96 @@
+---
+title: Only affected stories
+description: Capture only the stories a change can affect with ovr upload storybook --only-affected.
+---
+
+`ovr upload storybook --only-affected` captures and diffs only the stories a change can affect. Every other story is listed on the build as skipped and keeps its baselines, so a pull request that touches one component doesn't re-capture the whole Storybook.
+
+```sh
+storybook build --stats-json
+
+ovr upload storybook --dir storybook-static --only-affected \
+  --branch "$BRANCH" --commit "$COMMIT_SHA"
+```
+
+## Requirements
+
+- **A module graph.** Build Storybook with `--stats-json` so the output includes `preview-stats.json`. Vite and webpack builders both write it.
+- **Git history back to the last main-branch build.** In GitHub Actions, check out with `fetch-depth: 0`. A shallow clone prints a warning, and when the history doesn't reach a main-branch build, every story is captured.
+- **A successful build on the main branch.** Changes are measured against the last main-branch build in the current commit's history that finished without errors. Until one exists, every story is captured.
+
+## How it decides
+
+1. The CLI asks OVR for the last successful build on the project's main branch among the current commit's ancestors.
+2. It lists every file that differs between that build's commit and the working tree, uncommitted and untracked files included.
+3. It walks each changed JavaScript or TypeScript module up through its importers, using `preview-stats.json`, until it reaches story files. Every story in a reached file is captured. A change in another workspace package counts too, as long as the Storybook imports it, however indirectly.
+
+The CLI prints how many stories are affected and which changed file reached each story file.
+
+### When every story is captured
+
+The graph only describes JavaScript and TypeScript imports. Anything the CLI cannot trace captures every story instead of risking a missed regression, and the CLI prints the reason:
+
+| Change | Why |
+|--------|-----|
+| A module the preview loads (`preview.tsx`, global CSS, decorators) | It renders around every story |
+| Storybook configuration (`.storybook/`) | |
+| A lockfile (`pnpm-lock.yaml`, `package-lock.json`, `yarn.lock`, `bun.lock`) | Any dependency may have changed |
+| Build configuration (`*.config.*`, `tsconfig*.json`) at the repository root or in a package the Storybook uses | |
+| Any other non-code file in a package the Storybook uses (CSS pulled in by `@import`, JSON, fonts, `package.json`) | Tools inline these without them becoming modules |
+| `preview-stats.json` missing, or not matching the build's stories | |
+
+These changes are ignored: code that no story imports (tests, server code), Markdown, and files in packages the Storybook never uses.
+
+### Tuning it
+
+Some files affect rendering without being imported, such as a `staticDirs` folder outside `.storybook/`. List them in [`onlyAffected.externals`](/configuration/config#only-affected) so a change to one captures every story. List files that can never affect rendering in `onlyAffected.untraced`.
+
+```ts
+// ovr.config.ts
+export default defineConfig({
+  onlyAffected: {
+    externals: ["public/**"],
+    untraced: ["fixtures/**/*.json"],
+  },
+});
+```
+
+## Baselines
+
+A story that is skipped keeps the baseline it already has. When a change that affects one story out of a hundred merges, the main-branch build updates that one baseline and the other ninety-nine stay as they were.
+
+A story is still captured on any viewport where it has no baseline yet, so new stories and newly added viewports are never skipped.
+
+## Recommended CI setup
+
+Use `--only-affected` for pull request builds, and capture everything on the main branch. Main-branch builds don't block anyone, and a full capture there refreshes every baseline, picks up browser or font changes in OVR's worker, and catches anything the module graph could not see.
+
+```yaml
+- uses: actions/checkout@v4
+  with:
+    fetch-depth: 0
+
+- name: Build Storybook
+  run: pnpm build-storybook --stats-json
+
+- name: Upload to OVR
+  env:
+    OVR_API_KEY: ${{ secrets.OVR_API_KEY }}
+  run: |
+    npx @open-visual-regression/cli upload storybook \
+      --dir storybook-static \
+      --branch "${{ github.head_ref || github.ref_name }}" \
+      --commit "${{ github.event.pull_request.head.sha || github.sha }}" \
+      ${{ github.event_name == 'pull_request' && '--only-affected' || '' }}
+```
+
+## Limitations
+
+The module graph cannot see everything that affects a story. A skipped story can miss a change when:
+
+- a story reads data at runtime (`fetch`, environment variables) that changed;
+- a file is served from a static folder that isn't listed in `externals`;
+- a file matched by `import.meta.glob` or `require.context` is deleted, without any importer changing;
+- OVR's worker renders differently after an upgrade (a new browser or fonts).
+
+A full capture on the main branch catches all of these the next time it runs.

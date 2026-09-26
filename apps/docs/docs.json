@@ -24,6 +24,7 @@
           "cli/installation",
           "cli/authentication",
           "cli/upload-storybook",
+          "cli/only-affected",
           "cli/builds",
           "cli/snapshots",
           "cli/diffs"
