@@ -192,7 +192,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: packages/storybook-compat/fixtures/*/storybook-static
-          key: storybook-fixtures-${{ runner.os }}-${{ hashFiles('packages/storybook-compat/fixtures/*/pnpm-lock.yaml', 'packages/storybook-compat/fixtures/stories/**') }}
+          key: storybook-fixtures-${{ runner.os }}-${{ hashFiles('packages/storybook-compat/fixtures/*/pnpm-lock.yaml', 'packages/storybook-compat/fixtures/stories/**', 'packages/storybook-compat/scripts/build-fixtures.mjs') }}
       - run: pnpm --filter @ovr/storybook-compat fixtures:build
       - run: pnpm turbo run test --affected
         env:

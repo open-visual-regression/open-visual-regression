@@ -1,5 +1,9 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { describe, expect, it } from "vitest";
 
+import { findAffectedStories } from "../affectedStories";
 import { availableStorybookFixtures } from "../fixtures";
 import { readStoryTargets } from "../manifest";
 import { assertSupportedStorybookBuild, readStorybookBuildVersion } from "../version";
@@ -33,4 +37,36 @@ describe.skipIf(fixtures.length === 0)("built Storybook fixtures", () => {
     expect(targets.every((target) => target.title === "Components/Button")).toBe(true);
     expect(targets.map((target) => target.name)).toContain("Default");
   });
+
+  it.each(fixtures)(
+    "Storybook $major traces a component change to its stories",
+    async (fixture) => {
+      const repoRoot = path.resolve(fileURLToPath(import.meta.url), "../../../../..");
+      const component = path.relative(repoRoot, path.join(fixture.dir, "src/Button.jsx"));
+
+      const result = await findAffectedStories({
+        storybookDir: fixture.buildDir,
+        repoRoot,
+        changedFiles: [component],
+      });
+
+      expect(result.mode === "some" && result.storyIds.sort()).toEqual(EXPECTED_STORY_IDS);
+    },
+  );
+
+  it.each(fixtures)(
+    "Storybook $major captures everything when preview changes",
+    async (fixture) => {
+      const repoRoot = path.resolve(fileURLToPath(import.meta.url), "../../../../..");
+      const preview = path.relative(repoRoot, path.join(fixture.dir, ".storybook/preview.js"));
+
+      const result = await findAffectedStories({
+        storybookDir: fixture.buildDir,
+        repoRoot,
+        changedFiles: [preview],
+      });
+
+      expect(result.mode).toBe("all");
+    },
+  );
 });
