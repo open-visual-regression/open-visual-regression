@@ -13,7 +13,6 @@ let repoRoot: string;
 
 const webDir = (): string => path.join(repoRoot, "apps/web");
 
-// A monorepo with a Storybook in apps/web that bundles packages/ui from source.
 const createRepo = async (files: string[]): Promise<string> => {
   repoRoot = await realpath(await mkdtemp(path.join(tmpdir(), "ovr-affected-stories-")));
 
@@ -61,7 +60,6 @@ const writeBuild = async (
 
 const STORIES_INDEX = "/virtual:/@storybook/builder-vite/storybook-stories.js";
 
-// Vite-shaped graph: paths relative to apps/web, preview.tsx only ever appears as a reason.
 const viteGraph: Graph = {
   [STORIES_INDEX]: ["/virtual:/@storybook/builder-vite/vite-app.js"],
   "./src/Button.stories.tsx": [STORIES_INDEX],
@@ -201,7 +199,6 @@ describe("findAffectedStories", () => {
   });
 
   it("captures everything when a non-code file changes in a package the bundle uses", async () => {
-    // e.g. a CSS file inlined by another stylesheet's @import, which never becomes a module
     const result = await trace(["packages/ui/src/tokens.css"]);
 
     expect(result).toMatchObject({ mode: "all" });
