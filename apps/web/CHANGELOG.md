@@ -1,5 +1,11 @@
 # @ovr/web
 
+## 0.6.2
+
+### Patch Changes
+
+- [#246](https://github.com/open-visual-regression/open-visual-regression/pull/246) [`e2ae5d8`](https://github.com/open-visual-regression/open-visual-regression/commit/e2ae5d884253dffbd996b4bbd946b6b9d4778cc6) Thanks [@tgfischer](https://github.com/tgfischer)! - Restore the close button on the mobile navigation sheet, on its own row above the sidebar links so it no longer overlaps the projects heading link.
+
 ## 0.6.1
 
 ### Patch Changes
