@@ -1,11 +1,10 @@
 import { Worker } from "bullmq";
-import type { Redis } from "ioredis";
 import { v7 as uuidv7 } from "uuid";
 
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
 import { organization as organizationTable, projects } from "@ovr/db/schema";
-import { QueueName, type PurgeJobPayload } from "@ovr/queue";
+import { QueueName, type RedisConnection, type PurgeJobPayload } from "@ovr/queue";
 import { storage } from "@ovr/storage";
 
 import { dispatchPurgeJobs, purgeExpiredBuilds } from "../retention";
@@ -15,7 +14,10 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 const daysAgo = (days: number): string => new Date(Date.now() - days * DAY_MS).toISOString();
 
-const collectPurgeJobs = async (connection: Redis, count: number): Promise<PurgeJobPayload[]> => {
+const collectPurgeJobs = async (
+  connection: RedisConnection,
+  count: number,
+): Promise<PurgeJobPayload[]> => {
   const worker = new Worker<PurgeJobPayload>(QueueName.BUILD_PURGE, async (job) => job.data, {
     connection,
   });

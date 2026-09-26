@@ -1,0 +1,9 @@
+existingSecret: ovr-secrets
+
+redis:
+  mode: cluster
+
+worker:
+  keda:
+    enabled: true
+    redisAddress: redis-cluster:6379
