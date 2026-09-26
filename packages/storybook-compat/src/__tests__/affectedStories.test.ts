@@ -1,15 +1,17 @@
-import { mkdir, mkdtemp, realpath, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { findAffectedStories, globToRegExp } from "../affectedStories";
+import { findAffectedStories } from "../affectedStories";
 import type { AffectedStoriesInput } from "../affectedStories";
 
 type Graph = Record<string, (string | null)[]>;
 
 let repoRoot: string;
+
+const webDir = (): string => path.join(repoRoot, "apps/web");
 
 // A monorepo with a Storybook in apps/web that bundles packages/ui from source.
 const createRepo = async (files: string[]): Promise<string> => {
@@ -95,7 +97,13 @@ const trace = async (
 ): Promise<Awaited<ReturnType<typeof findAffectedStories>>> => {
   await createRepo(viteRepoFiles);
   const storybookDir = await writeBuild(viteGraph, viteEntries);
-  return findAffectedStories({ storybookDir, repoRoot, changedFiles, ...options });
+  return findAffectedStories({
+    storybookDir,
+    projectDir: webDir(),
+    repoRoot,
+    changedFiles,
+    ...options,
+  });
 };
 
 afterEach(async () => {
@@ -164,26 +172,12 @@ describe("findAffectedStories", () => {
 
     const result = await findAffectedStories({
       storybookDir,
+      projectDir: webDir(),
       repoRoot,
       changedFiles: ["apps/web/src/setup.ts"],
     });
 
     expect(result).toMatchObject({ mode: "all" });
-  });
-
-  it("treats a custom config directory as Storybook configuration", async () => {
-    const result = await trace(["apps/web/config/storybook/main.ts"], {
-      configDir: "/nonexistent",
-    });
-    expect(result).toMatchObject({ mode: "some" });
-
-    const custom = await findAffectedStories({
-      storybookDir: path.join(repoRoot, "apps/web/storybook-static"),
-      repoRoot,
-      configDir: path.join(repoRoot, "apps/web/config/storybook"),
-      changedFiles: ["apps/web/config/storybook/main.ts"],
-    });
-    expect(custom).toMatchObject({ mode: "all" });
   });
 
   it("captures everything when Storybook configuration outside the graph changes", async () => {
@@ -277,19 +271,29 @@ describe("findAffectedStories", () => {
     await createRepo(viteRepoFiles);
     const storybookDir = await writeBuild(viteGraph, viteEntries, { stats: false });
 
-    const result = await findAffectedStories({ storybookDir, repoRoot, changedFiles: [] });
+    const result = await findAffectedStories({
+      storybookDir,
+      projectDir: webDir(),
+      repoRoot,
+      changedFiles: [],
+    });
 
     expect(result).toEqual({
       mode: "all",
-      reason: "preview-stats.json is missing; build Storybook with --stats-json",
+      reason: "preview-stats.json or index.json is missing; build Storybook with --stats-json",
     });
   });
 
-  it("captures everything when the story files cannot be found in the repository", async () => {
-    await createRepo([]);
+  it("captures everything when run from somewhere other than where Storybook was built", async () => {
+    await createRepo(viteRepoFiles);
     const storybookDir = await writeBuild(viteGraph, viteEntries);
 
-    const result = await findAffectedStories({ storybookDir, repoRoot, changedFiles: [] });
+    const result = await findAffectedStories({
+      storybookDir,
+      projectDir: repoRoot,
+      repoRoot,
+      changedFiles: ["apps/web/src/Form.tsx"],
+    });
 
     expect(result).toMatchObject({ mode: "all" });
   });
@@ -301,26 +305,14 @@ describe("findAffectedStories", () => {
     );
     const storybookDir = await writeBuild(withoutForm, viteEntries);
 
-    const result = await findAffectedStories({ storybookDir, repoRoot, changedFiles: [] });
-
-    expect(result).toMatchObject({ mode: "all" });
-  });
-
-  it("finds the project from the working directory when the build is written elsewhere", async () => {
-    await createRepo(viteRepoFiles);
-    const built = await writeBuild(viteGraph, viteEntries);
-    const storybookDir = path.join(repoRoot, "dist/storybook");
-    await mkdir(path.dirname(storybookDir), { recursive: true });
-    await symlink(built, storybookDir);
-
     const result = await findAffectedStories({
       storybookDir,
+      projectDir: webDir(),
       repoRoot,
-      cwd: path.join(repoRoot, "apps/web"),
-      changedFiles: ["apps/web/src/Form.tsx"],
+      changedFiles: [],
     });
 
-    expect(result).toMatchObject({ mode: "some", storyIds: ["form--default"] });
+    expect(result).toMatchObject({ mode: "all" });
   });
 
   it("follows stories that import other stories", async () => {
@@ -336,6 +328,7 @@ describe("findAffectedStories", () => {
 
     const result = await findAffectedStories({
       storybookDir,
+      projectDir: webDir(),
       repoRoot,
       changedFiles: ["apps/web/src/Button.stories.tsx"],
     });
@@ -359,86 +352,11 @@ describe("findAffectedStories", () => {
 
     const result = await findAffectedStories({
       storybookDir,
+      projectDir: webDir(),
       repoRoot,
       changedFiles: ["apps/web/src/Logo.tsx"],
     });
 
     expect(result).toMatchObject({ mode: "some", storyIds: [], storyFiles: [] });
-  });
-
-  it("resolves a workspace package linked through node_modules to its source", async () => {
-    await createRepo(viteRepoFiles);
-    await mkdir(path.join(repoRoot, "apps/web/node_modules/@acme"), { recursive: true });
-    await symlink(
-      path.join(repoRoot, "packages/ui"),
-      path.join(repoRoot, "apps/web/node_modules/@acme/ui"),
-    );
-    const linked = Object.fromEntries(
-      Object.entries(viteGraph).filter(([name]) => !name.includes("packages/ui")),
-    );
-    const storybookDir = await writeBuild(
-      { ...linked, "./node_modules/@acme/ui/src/utils.ts": ["./src/Form.tsx"] },
-      viteEntries,
-    );
-
-    const result = await findAffectedStories({
-      storybookDir,
-      repoRoot,
-      changedFiles: ["packages/ui/src/utils.ts"],
-    });
-
-    expect(result).toMatchObject({ mode: "some", storyIds: ["form--default"] });
-  });
-
-  it("reads webpack stats, with loader prefixes, concatenated modules and entry reasons", async () => {
-    await createRepo([...viteRepoFiles, "apps/web/.storybook/preview.js"]);
-    const storybookDir = await writeBuild({}, viteEntries);
-    const context = "./src sync recursive \\.stories\\.tsx$";
-    await writeFile(
-      path.join(storybookDir, "preview-stats.json"),
-      JSON.stringify({
-        modules: [
-          { name: "./storybook-stories.js", reasons: [{ moduleName: null }] },
-          { name: context, reasons: [{ moduleName: "./storybook-stories.js" }] },
-          { name: "./src/Button.stories.tsx", reasons: [{ moduleName: context }] },
-          { name: "./src/Form.stories.tsx", reasons: [{ moduleName: context }] },
-          {
-            name: "./src/Form.tsx + 1 modules",
-            reasons: [{ moduleName: "./src/Form.stories.tsx" }],
-            modules: [{ name: "./src/Form.tsx" }, { name: "./src/Field.tsx" }],
-          },
-          {
-            name: "css-loader!./src/globals.css",
-            reasons: [{ moduleName: "./.storybook/preview.js" }],
-          },
-          { name: "./.storybook/preview.js", reasons: [{ moduleName: null }] },
-        ],
-      }),
-    );
-
-    const traceWebpack = (changedFiles: string[]) =>
-      findAffectedStories({ storybookDir, repoRoot, changedFiles });
-
-    expect(await traceWebpack(["apps/web/src/Field.tsx"])).toMatchObject({
-      mode: "some",
-      storyIds: ["form--default"],
-    });
-    expect(await traceWebpack(["apps/web/src/globals.css"])).toMatchObject({ mode: "all" });
-    expect(await traceWebpack(["apps/web/.storybook/main.js"])).toMatchObject({ mode: "all" });
-  });
-});
-
-describe("globToRegExp", () => {
-  it.each([
-    ["public/**", "public/a/b.png", true],
-    ["public/**", "public", false],
-    ["**/*.css", "a/b/c.css", true],
-    ["**/*.css", "c.css", true],
-    ["src/*.json", "src/a.json", true],
-    ["src/*.json", "src/a/b.json", false],
-    ["file?.txt", "file1.txt", true],
-    ["a.b", "axb", false],
-  ])("%s matches %s: %s", (glob, file, expected) => {
-    expect(globToRegExp(glob).test(file)).toBe(expected);
   });
 });

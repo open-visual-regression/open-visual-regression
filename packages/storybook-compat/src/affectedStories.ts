@@ -1,29 +1,20 @@
-import { existsSync, realpathSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-type StatsReason = { moduleName?: string | null };
-
-type StatsModule = {
-  name?: string;
-  reasons?: StatsReason[];
-  // webpack nests modules it concatenated into one under their root module
-  modules?: StatsModule[];
-};
+type StatsModule = { name: string; reasons?: { moduleName: string }[] };
 
 type IndexEntry = { id: string; importPath: string; type?: string };
 
 export type AffectedStoriesInput = {
   /** The `storybook build` output, built with `--stats-json`. */
   storybookDir: string;
+  /** The directory `storybook build` ran in; the stats' paths are relative to it. */
+  projectDir: string;
   /** Absolute path of the git repository the Storybook is built from. */
   repoRoot: string;
   /** Files changed since the comparison commit, relative to `repoRoot`. */
   changedFiles: string[];
-  /** Storybook's config directory, when it is not `.storybook` next to the stories' project. */
-  configDir?: string;
-  /** Where the CLI runs, tried as the build's project directory alongside the output's parents. */
-  cwd?: string;
   /** Globs (relative to `repoRoot`) that re-capture every story when they change. */
   externals?: string[];
   /** Globs (relative to `repoRoot`) whose changes never affect a story. */
@@ -49,102 +40,11 @@ export type AffectedStories =
 
 export const STATS_FILENAME = "preview-stats.json";
 
-const ROOT = "(entry)";
 const CODE_FILE = /\.[cm]?[jt]sx?$/;
 const LOCKFILE =
   /(^|\/)(package-lock\.json|npm-shrinkwrap\.json|pnpm-lock\.yaml|yarn\.lock|bun\.lockb?)$/;
-const CONFIG_FILE =
-  /(^|\/)([^/]+\.config\.[cm]?[jt]s|tsconfig[^/]*\.json|\.babelrc[^/]*|\.browserslistrc|\.postcssrc[^/]*)$/;
-const PREVIEW_FILE = /(^|\/)preview\.[cm]?[jt]sx?$/;
-const NON_RENDERING = [
-  /\.md$/,
-  /(^|\/)\.(github|changeset|vscode|idea)\//,
-  /(^|\/)(LICENSE|CODEOWNERS|\.gitignore|\.gitattributes)$/,
-];
-
-const toPosix = (file: string): string => file.split(path.sep).join("/");
-
-export const globToRegExp = (glob: string): RegExp => {
-  let source = "";
-
-  for (let i = 0; i < glob.length; i++) {
-    const char = glob[i]!;
-
-    if (char === "*" && glob[i + 1] === "*") {
-      const slash = glob[i + 2] === "/";
-      source += slash ? "(?:.*/)?" : ".*";
-      i += slash ? 2 : 1;
-    } else if (char === "*") {
-      source += "[^/]*";
-    } else if (char === "?") {
-      source += "[^/]";
-    } else {
-      source += char.replace(/[.+^${}()|[\]\\]/g, "\\$&");
-    }
-  }
-
-  return new RegExp(`^${source}$`);
-};
-
-const matchesAny = (file: string, globs: RegExp[]): boolean =>
-  globs.some((glob) => glob.test(file));
-
-const flattenModules = (modules: StatsModule[]): { name: string; importers: string[] }[] =>
-  modules.flatMap((module) => {
-    const name = module.name;
-    if (!name) {
-      return [];
-    }
-
-    const importers = (module.reasons ?? []).map((reason) => reason.moduleName ?? ROOT);
-    const root = { name, importers };
-    // A concatenated module's parts are imported through its root module.
-    const parts = (module.modules ?? []).flatMap((part) =>
-      part.name && part.name !== name ? [{ name: part.name, importers: [name] }] : [],
-    );
-
-    return [root, ...parts];
-  });
-
-const isRawVirtual = (name: string): boolean =>
-  name === ROOT ||
-  name.includes("\0") ||
-  name.startsWith("/virtual:") ||
-  !(name.startsWith("./") || name.startsWith("../") || path.isAbsolute(name));
-
-// Normalized names are repo-relative paths; anything else is tagged so it never matches a file.
-const VIRTUAL_PREFIX = "virtual:";
-const isVirtual = (name: string): boolean => name.startsWith(VIRTUAL_PREFIX);
-
-const createNormalizer = (projectDir: string, repoRoot: string) => {
-  const cache = new Map<string, string>();
-
-  return (rawName: string): string => {
-    const cached = cache.get(rawName);
-    if (cached !== undefined) {
-      return cached;
-    }
-
-    // webpack prefixes loaders ("css-loader!./a.css") and names concatenations ("./a.ts + 3 modules")
-    const name = rawName
-      .slice(rawName.lastIndexOf("!") + 1)
-      .replace(/ \+ \d+ modules?$/, "")
-      .split("?")[0]!;
-
-    let normalized = `${VIRTUAL_PREFIX}${name}`;
-    if (!isRawVirtual(name)) {
-      let absolute = path.resolve(projectDir, name);
-      // Symlinked workspace packages resolve back to the source files git reports.
-      if (absolute.includes(`${path.sep}node_modules${path.sep}`) && existsSync(absolute)) {
-        absolute = realpathSync(absolute);
-      }
-      normalized = toPosix(path.relative(repoRoot, absolute));
-    }
-
-    cache.set(rawName, normalized);
-    return normalized;
-  };
-};
+const CONFIG_FILE = /(^|\/)([^/]+\.config\.[cm]?[jt]s|tsconfig[^/]*\.json)$/;
+const NON_RENDERING = /\.md$|(^|\/)\.(github|changeset)\//;
 
 const readJson = async <T>(file: string): Promise<T | undefined> => {
   try {
@@ -154,191 +54,127 @@ const readJson = async <T>(file: string): Promise<T | undefined> => {
   }
 };
 
-const parentDirs = (from: string, repoRoot: string): string[] => {
-  const dirs: string[] = [];
-  for (
-    let dir = from;
-    dir === repoRoot || dir.startsWith(`${repoRoot}${path.sep}`);
-    dir = path.dirname(dir)
-  ) {
-    dirs.push(dir);
-    if (dir === repoRoot) {
-      break;
-    }
-  }
-  return dirs;
-};
-
-// Stats paths are relative to the directory the build ran in, which the output does not record.
-const findProjectDir = (candidates: string[], importPaths: string[]): string | undefined =>
-  candidates.find((dir) =>
-    importPaths.every((importPath) => existsSync(path.resolve(dir, importPath))),
-  );
-
 export const findAffectedStories = async ({
   storybookDir,
+  projectDir,
   repoRoot,
   changedFiles,
   externals = [],
   untraced = [],
-  cwd,
-  configDir,
 }: AffectedStoriesInput): Promise<AffectedStories> => {
   const all = (reason: string): AffectedStories => ({ mode: "all", reason });
 
   const stats = await readJson<{ modules?: StatsModule[] }>(
     path.join(storybookDir, STATS_FILENAME),
   );
-  if (!stats?.modules) {
-    return all(`${STATS_FILENAME} is missing; build Storybook with --stats-json`);
-  }
-
   const index = await readJson<{ entries?: Record<string, IndexEntry> }>(
     path.join(storybookDir, "index.json"),
   );
-  if (!index?.entries) {
-    return all("index.json is missing or has no entries");
+  if (!stats?.modules || !index?.entries) {
+    return all(`${STATS_FILENAME} or index.json is missing; build Storybook with --stats-json`);
   }
 
-  const entries = Object.values(index.entries);
-  // Compare real paths: symlinked workspace packages are resolved to theirs below.
-  const real = (dir: string): string => (existsSync(dir) ? realpathSync(dir) : path.resolve(dir));
-  const root = real(repoRoot);
-  const candidates = [
-    ...(cwd ? [real(cwd)] : []),
-    ...parentDirs(path.dirname(real(storybookDir)), root),
-  ];
-  const projectDir = findProjectDir(
-    candidates,
-    entries.map((entry) => entry.importPath),
+  // Stats and index paths are relative to the project ("./src/a.tsx"); anything else is virtual.
+  const toRepoPath = (name: string): string =>
+    name.startsWith(".")
+      ? path.relative(repoRoot, path.resolve(projectDir, name)).split(path.sep).join("/")
+      : name;
+
+  const importers = new Map(
+    stats.modules.map((module) => [
+      toRepoPath(module.name),
+      (module.reasons ?? [])
+        .filter((reason) => reason.moduleName !== module.name)
+        .map((reason) => toRepoPath(reason.moduleName)),
+    ]),
   );
-  if (!projectDir) {
-    return all("could not find the story files of this build inside the repository");
-  }
-
-  const normalize = createNormalizer(projectDir, root);
-
-  const importers = new Map<string, Set<string>>();
-  for (const module of flattenModules(stats.modules)) {
-    const name = normalize(module.name);
-    const set = importers.get(name) ?? new Set();
-    for (const importer of module.importers) {
-      const normalized = normalize(importer);
-      if (normalized !== name) {
-        set.add(normalized);
-      }
-    }
-    importers.set(name, set);
-  }
 
   // Story and docs files are where tracing ends: every story in them is affected.
   const storiesByFile = new Map<string, string[]>();
-  for (const entry of entries) {
-    const file = normalize(entry.importPath);
+  for (const entry of Object.values(index.entries)) {
+    const file = toRepoPath(entry.importPath);
     const stories = storiesByFile.get(file) ?? [];
-    if (entry.type !== "docs") {
-      stories.push(entry.id);
-    }
-    storiesByFile.set(file, stories);
+    storiesByFile.set(file, entry.type === "docs" ? stories : [...stories, entry.id]);
   }
 
-  if ([...storiesByFile.keys()].some((file) => !importers.has(file))) {
-    return all(`${STATS_FILENAME} does not match index.json; rebuild Storybook with --stats-json`);
+  const storyFiles = [...storiesByFile.keys()];
+  if (storyFiles.some((file) => !existsSync(path.join(repoRoot, file)))) {
+    return all(`this build's story files are not under ${projectDir}; run from where it was built`);
+  }
+  if (storyFiles.some((file) => !importers.has(file))) {
+    return all(`${STATS_FILENAME} does not match index.json; rebuild with --stats-json`);
   }
 
-  const graphFiles = [...importers.keys()].filter((name) => !isVirtual(name));
-  // A preview file that imports nothing never shows up in the graph, so also assume the default.
-  const configDirs = new Set([
-    toPosix(
-      path.relative(
-        root,
-        configDir ? path.resolve(configDir) : path.join(projectDir, ".storybook"),
-      ),
-    ),
-    ...[...graphFiles, ...[...importers.values()].flatMap((set) => [...set])]
-      .filter(
-        (name) => !isVirtual(name) && PREVIEW_FILE.test(name) && !name.includes("node_modules/"),
-      )
-      .map((name) => path.posix.dirname(name)),
-  ]);
-
-  const packageDirCache = new Map<string, string>();
   const packageDirOf = (file: string): string => {
-    const dir = path.posix.dirname(file);
-    const cached = packageDirCache.get(dir);
-    if (cached !== undefined) {
-      return cached;
+    let dir = path.posix.dirname(file);
+    while (dir !== "." && !existsSync(path.join(repoRoot, dir, "package.json"))) {
+      dir = path.posix.dirname(dir);
     }
-
-    const found =
-      dir === "." || existsSync(path.join(root, dir, "package.json")) ? dir : packageDirOf(dir);
-    packageDirCache.set(dir, found);
-    return found;
+    return dir;
   };
 
   // Packages whose source is bundled: a non-code file there may be inlined without being a module.
-  const contributing = new Set(
-    graphFiles
-      .filter((file) => !file.startsWith("../") && !file.includes("node_modules/"))
+  const bundledPackages = new Set(
+    [...importers.keys()]
+      .filter((file) => !file.startsWith("/") && !file.includes("node_modules/"))
       .map(packageDirOf),
   );
+  const storybookConfigDir = path.relative(repoRoot, path.join(projectDir, ".storybook"));
+  const matches = (file: string, globs: string[]) =>
+    globs.some((glob) => path.matchesGlob(file, glob));
 
-  const externalGlobs = externals.map(globToRegExp);
-  const untracedGlobs = untraced.map(globToRegExp);
   const seeds: string[] = [];
   const ignoredFiles: string[] = [];
 
-  for (const file of changedFiles.map(toPosix)) {
-    const inContributing = contributing.has(packageDirOf(file));
+  for (const file of changedFiles) {
+    const isRootFile = !file.includes("/");
+    const inBundledPackage = bundledPackages.has(packageDirOf(file));
 
-    if (matchesAny(file, untracedGlobs)) {
+    if (matches(file, untraced)) {
       ignoredFiles.push(file);
-    } else if (matchesAny(file, externalGlobs)) {
+    } else if (matches(file, externals)) {
       return all(`${file} matches "externals"`);
     } else if (importers.has(file)) {
       seeds.push(file);
-    } else if ([...configDirs].some((dir) => file.startsWith(`${dir}/`))) {
+    } else if (file.startsWith(`${storybookConfigDir}/`)) {
       return all(`${file} is Storybook configuration`);
-    } else if (NON_RENDERING.some((pattern) => pattern.test(file))) {
+    } else if (NON_RENDERING.test(file)) {
       ignoredFiles.push(file);
-    } else if (LOCKFILE.test(file) && (inContributing || !file.includes("/"))) {
+    } else if (LOCKFILE.test(file) && (isRootFile || inBundledPackage)) {
       return all(`dependencies changed (${file})`);
-    } else if (CONFIG_FILE.test(file) && (inContributing || !file.includes("/"))) {
+    } else if (CONFIG_FILE.test(file) && (isRootFile || inBundledPackage)) {
       return all(`build configuration changed (${file})`);
     } else if (CODE_FILE.test(file)) {
       // Code only affects a story by being imported, which would put it in the graph.
       ignoredFiles.push(file);
-    } else if (inContributing) {
+    } else if (inBundledPackage) {
       return all(`${file} is not traceable but is in a package the Storybook bundles`);
     } else {
       ignoredFiles.push(file);
     }
   }
 
-  const via = new Map<string, string | null>(seeds.map((seed) => [seed, null]));
+  // Walk up from each changed module, remembering how each file was reached.
+  const reachedFrom = new Map<string, string | null>(seeds.map((seed) => [seed, null]));
   const chainTo = (file: string): string[] => {
     const chain: string[] = [];
-    for (let node: string | null | undefined = file; node; node = via.get(node)) {
+    for (let node: string | null | undefined = file; node; node = reachedFrom.get(node)) {
       chain.unshift(node);
     }
     return chain;
   };
 
-  const reached: string[] = [];
+  const reachedStoryFiles: string[] = [];
   const queue = [...seeds];
 
   while (queue.length > 0) {
     const node = queue.shift()!;
     const isStoryFile = storiesByFile.has(node);
+    const parents = importers.get(node) ?? [];
 
     if (isStoryFile) {
-      reached.push(node);
-    }
-
-    const parents = importers.get(node) ?? new Set<string>();
-
-    if (!isStoryFile && parents.size === 0) {
-      // Nothing imports it, so it is an entry of the preview itself.
+      reachedStoryFiles.push(node);
+    } else if (parents.length === 0) {
       return all(`${chainTo(node).join(" <- ")} is an entry of the Storybook preview`);
     }
 
@@ -349,25 +185,25 @@ export const findAffectedStories = async ({
       }
 
       if (!importers.has(parent)) {
-        // The preview entry, an addon or a builder entry: it renders around every story.
+        // The preview (preview.tsx) or a builder entry: it renders around every story.
         return all(`${chainTo(node).join(" <- ")} is loaded by ${parent}`);
       }
 
-      if (!via.has(parent)) {
-        via.set(parent, node);
+      if (!reachedFrom.has(parent)) {
+        reachedFrom.set(parent, node);
         queue.push(parent);
       }
     }
   }
 
-  const storyFiles = reached
+  const affectedStoryFiles = reachedStoryFiles
     .map((file) => ({ file, storyIds: storiesByFile.get(file)!, via: chainTo(file) }))
     .filter((storyFile) => storyFile.storyIds.length > 0);
 
   return {
     mode: "some",
-    storyIds: storyFiles.flatMap((storyFile) => storyFile.storyIds),
-    storyFiles,
+    storyIds: affectedStoryFiles.flatMap((storyFile) => storyFile.storyIds),
+    storyFiles: affectedStoryFiles,
     ignoredFiles,
   };
 };
