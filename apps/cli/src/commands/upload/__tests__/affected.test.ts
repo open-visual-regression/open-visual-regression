@@ -162,6 +162,17 @@ describe("findUnaffectedTargets", () => {
     expect(output).toContain("the server could not find a build to compare against (Not Found)");
   });
 
+  it("captures everything when the server returns a build outside this commit's history", async () => {
+    commitAll();
+
+    const { unaffected, output } = await run(
+      clientFor({ id: "build-1", commitSha: "--output=/tmp/ovr-owned" }),
+    );
+
+    expect(unaffected).toEqual([]);
+    expect(output).toContain("the server returned a build that is not in this commit's history");
+  });
+
   it("captures everything when the tracer cannot explain a change", async () => {
     const base = commitAll();
     await write("pnpm-lock.yaml", "changed");

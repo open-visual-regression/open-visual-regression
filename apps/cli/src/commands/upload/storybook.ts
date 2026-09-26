@@ -1,5 +1,6 @@
 import { Command } from "commander";
 
+import { STATS_FILENAME } from "@ovr/storybook-compat/affectedStories";
 import { readStoryTargets } from "@ovr/storybook-compat/manifest";
 
 import { createClient } from "../../client";
@@ -82,7 +83,7 @@ export const createStorybookCommand = (): Command =>
         });
 
         console.log("Uploading build artifact...");
-        const artifact = await createArtifactTarball(options.dir);
+        const artifact = await createArtifactTarball(options.dir, [STATS_FILENAME]);
         await uploadArtifact(uploadUrl, artifact);
 
         await client.builds.confirmUpload({

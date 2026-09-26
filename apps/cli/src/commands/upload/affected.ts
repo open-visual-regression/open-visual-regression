@@ -67,6 +67,10 @@ export const findUnaffectedTargets = async ({
     return captureAll("no successful main-branch build was found in this commit's history");
   }
 
+  if (!commits.includes(base.commitSha)) {
+    return captureAll("the server returned a build that is not in this commit's history");
+  }
+
   let changedFiles: string[];
   try {
     changedFiles = await listChangedFiles(cwd, base.commitSha);
