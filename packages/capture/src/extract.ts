@@ -84,7 +84,6 @@ const baselineKey = (snapshot: {
 }): string =>
   [snapshot.targetId, snapshot.browser, snapshot.viewportWidth, snapshot.viewportHeight].join(":");
 
-// An unaffected target is only left uncaptured where it has a baseline to keep.
 const findBaselineKeys = async (projectId: string, unaffected: Set<string>) =>
   unaffected.size === 0
     ? new Set<string>()
