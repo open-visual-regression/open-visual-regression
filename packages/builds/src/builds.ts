@@ -229,10 +229,6 @@ export const confirmBuildUpload = async (
   return { status: "ok", data: undefined };
 };
 
-/**
- * The build an upload can compare its changes against: the successful main-branch build on the
- * nearest of `commitShas`. Its captures are what the project's baselines were last taken from.
- */
 export const findAncestorBuild = async (
   projectId: string,
   commitShas: string[],
@@ -250,7 +246,6 @@ export const findAncestorBuild = async (
     processingStatuses: ["success"],
   });
 
-  // Newest first, so the first build seen for a commit is its latest.
   const nearest = commitShas
     .map((commitSha) => candidates.find((build) => build.commitSha === commitSha))
     .find((build) => build !== undefined);

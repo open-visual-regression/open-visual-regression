@@ -7,24 +7,18 @@ type StatsModule = { name: string; reasons?: { moduleName: string }[] };
 type IndexEntry = { id: string; importPath: string; type?: string };
 
 export type AffectedStoriesInput = {
-  /** The `storybook build` output, built with `--stats-json`. */
   storybookDir: string;
-  /** The directory `storybook build` ran in; the stats' paths are relative to it. */
+  /** Where `storybook build` ran; the stats' paths are relative to it. */
   projectDir: string;
-  /** Absolute path of the git repository the Storybook is built from. */
   repoRoot: string;
-  /** Files changed since the comparison commit, relative to `repoRoot`. */
   changedFiles: string[];
-  /** Globs (relative to `repoRoot`) that re-capture every story when they change. */
   externals?: string[];
-  /** Globs (relative to `repoRoot`) whose changes never affect a story. */
   untraced?: string[];
 };
 
 export type AffectedStoryFile = {
   file: string;
   storyIds: string[];
-  /** Import chain from a changed file to this story file. */
   via: string[];
 };
 
@@ -34,7 +28,6 @@ export type AffectedStories =
       mode: "some";
       storyIds: string[];
       storyFiles: AffectedStoryFile[];
-      /** Changed files that cannot affect a story. */
       ignoredFiles: string[];
     };
 
@@ -74,7 +67,6 @@ export const findAffectedStories = async ({
     return all(`${STATS_FILENAME} or index.json is missing; build Storybook with --stats-json`);
   }
 
-  // Stats and index paths are relative to the project ("./src/a.tsx"); anything else is virtual.
   const toRepoPath = (name: string): string =>
     name.startsWith(".")
       ? path.relative(repoRoot, path.resolve(projectDir, name)).split(path.sep).join("/")
@@ -89,7 +81,6 @@ export const findAffectedStories = async ({
     ]),
   );
 
-  // Story and docs files are where tracing ends: every story in them is affected.
   const storiesByFile = new Map<string, string[]>();
   for (const entry of Object.values(index.entries)) {
     const file = toRepoPath(entry.importPath);
@@ -113,7 +104,6 @@ export const findAffectedStories = async ({
     return dir;
   };
 
-  // Packages whose source is bundled: a non-code file there may be inlined without being a module.
   const bundledPackages = new Set(
     [...importers.keys()]
       .filter((file) => !file.startsWith("/") && !file.includes("node_modules/"))
@@ -145,7 +135,6 @@ export const findAffectedStories = async ({
     } else if (CONFIG_FILE.test(file) && (isRootFile || inBundledPackage)) {
       return all(`build configuration changed (${file})`);
     } else if (CODE_FILE.test(file)) {
-      // Code only affects a story by being imported, which would put it in the graph.
       ignoredFiles.push(file);
     } else if (inBundledPackage) {
       return all(`${file} is not traceable but is in a package the Storybook bundles`);
@@ -154,7 +143,6 @@ export const findAffectedStories = async ({
     }
   }
 
-  // Walk up from each changed module, remembering how each file was reached.
   const reachedFrom = new Map<string, string | null>(seeds.map((seed) => [seed, null]));
   const chainTo = (file: string): string[] => {
     const chain: string[] = [];
@@ -179,13 +167,12 @@ export const findAffectedStories = async ({
     }
 
     for (const parent of parents) {
-      // Above a story file is only the story index, except for stories that import other stories.
+      // Only stories that import other stories continue past a story file.
       if (isStoryFile && !storiesByFile.has(parent)) {
         continue;
       }
 
       if (!importers.has(parent)) {
-        // The preview (preview.tsx) or a builder entry: it renders around every story.
         return all(`${chainTo(node).join(" <- ")} is loaded by ${parent}`);
       }
 
