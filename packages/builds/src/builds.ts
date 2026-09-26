@@ -229,6 +229,38 @@ export const confirmBuildUpload = async (
   return { status: "ok", data: undefined };
 };
 
+/**
+ * The build an upload can compare its changes against: the successful main-branch build on the
+ * nearest of `commitShas`. Its captures are what the project's baselines were last taken from.
+ */
+export const findAncestorBuild = async (
+  projectId: string,
+  commitShas: string[],
+): Promise<Result<{ id: string; commitSha: string } | null, "PROJECT_NOT_FOUND">> => {
+  const project = await dbClient.projects.findById(projectId);
+
+  if (!project) {
+    return { status: "error", error: "PROJECT_NOT_FOUND" };
+  }
+
+  const candidates = await dbClient.builds.findMany({
+    projectIds: [projectId],
+    branches: [project.gitMainBranch],
+    commitShas,
+    processingStatuses: ["success"],
+  });
+
+  // Newest first, so the first build seen for a commit is its latest.
+  const nearest = commitShas
+    .map((commitSha) => candidates.find((build) => build.commitSha === commitSha))
+    .find((build) => build !== undefined);
+
+  return {
+    status: "ok",
+    data: nearest ? { id: nearest.id, commitSha: nearest.commitSha } : null,
+  };
+};
+
 export type RebuildBlockedReason = "NOT_SETTLED" | "NOT_LATEST_ON_BRANCH" | "NO_EXTRACT_DEFAULTS";
 
 type BuildCandidate = {

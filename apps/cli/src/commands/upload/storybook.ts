@@ -11,6 +11,7 @@ import {
   resolveViewports,
 } from "../../config";
 import { formatCliError } from "../../errors";
+import { findUnaffectedTargets } from "./affected";
 import { createArtifactTarball, uploadArtifact } from "./artifact";
 import {
   BuildFailedError,
@@ -27,6 +28,7 @@ type StorybookCommandOptions = {
   name?: string;
   author?: string;
   wait?: boolean;
+  onlyAffected?: boolean;
   timeout: string;
   config?: string;
 };
@@ -41,6 +43,10 @@ export const createStorybookCommand = (): Command =>
     .option("--name <name>", "build name (e.g. commit message)")
     .option("--author <author>", "commit author")
     .option("--wait", "wait for the build to finish processing before exiting")
+    .option(
+      "--only-affected",
+      "only capture stories affected by changes since the last main-branch build (needs storybook build --stats-json)",
+    )
     .option("--timeout <seconds>", "maximum seconds to wait for build result (with --wait)", "600")
     .option("-c, --config <path>", "path to ovr.config file")
     .action(async (options: StorybookCommandOptions) => {
@@ -56,6 +62,16 @@ export const createStorybookCommand = (): Command =>
 
         const client = createClient(serverUrl, apiKey);
 
+        const unaffectedTargetIds = options.onlyAffected
+          ? await findUnaffectedTargets({
+              client,
+              storybookDir: options.dir,
+              cwd: process.cwd(),
+              targets,
+              config: config?.onlyAffected,
+            })
+          : [];
+
         console.log(`Creating build for ${branch}@${commitSha} (${targets.length} stories)...`);
         const { buildId, uploadUrl, buildUrl } = await client.builds.createBuild({
           branch,
@@ -69,7 +85,13 @@ export const createStorybookCommand = (): Command =>
         const artifact = await createArtifactTarball(options.dir);
         await uploadArtifact(uploadUrl, artifact);
 
-        await client.builds.confirmUpload({ buildId, targets, viewports, diffThreshold });
+        await client.builds.confirmUpload({
+          buildId,
+          targets,
+          viewports,
+          diffThreshold,
+          ...(unaffectedTargetIds.length > 0 && { unaffectedTargetIds }),
+        });
 
         console.log(`Build published: ${buildUrl}`);
 

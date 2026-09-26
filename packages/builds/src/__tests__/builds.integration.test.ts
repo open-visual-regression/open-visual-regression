@@ -16,6 +16,7 @@ import {
   checkRebuildable,
   confirmBuildUpload,
   createBuild,
+  findAncestorBuild,
   finalizeBuild,
   getArtifactPath,
   rebuildBuild,
@@ -496,6 +497,73 @@ describe("builds", () => {
 
       expect(result).toEqual({ status: "error", error: "BUILD_CANCELED" });
       expect(await findExtractJob(connection, superseded)).toBeUndefined();
+    });
+  });
+
+  describe("findAncestorBuild", () => {
+    const seed = async (
+      projectId: string,
+      userId: string,
+      commitSha: string,
+      { branch = "main", processingStatus = "success" as BuildProcessingStatus } = {},
+    ) => {
+      const build = await dbClient.builds.create({
+        projectId,
+        branch,
+        commitSha,
+        processingStatus,
+        artifactPath: "builds/seed/artifact",
+        createdBy: userId,
+      });
+      return build!.id;
+    };
+
+    test("returns the successful main build on the nearest listed commit", async ({
+      project,
+      user,
+    }) => {
+      await seed(project.id, user.id, "c1");
+      const nearest = await seed(project.id, user.id, "c2");
+
+      const result = await findAncestorBuild(project.id, ["c3", "c2", "c1"]);
+
+      expect(result).toEqual({ status: "ok", data: { id: nearest, commitSha: "c2" } });
+    });
+
+    test("skips builds that did not finish successfully", async ({ project, user }) => {
+      const older = await seed(project.id, user.id, "c1");
+      await seed(project.id, user.id, "c2", { processingStatus: "error" });
+      await seed(project.id, user.id, "c3", { processingStatus: "canceled" });
+      await seed(project.id, user.id, "c4", { processingStatus: "processing" });
+
+      const result = await findAncestorBuild(project.id, ["c4", "c3", "c2", "c1"]);
+
+      expect(result).toEqual({ status: "ok", data: { id: older, commitSha: "c1" } });
+    });
+
+    test("only considers the project's main branch", async ({ project, user }) => {
+      await seed(project.id, user.id, "c1", { branch: "feature" });
+
+      expect(await findAncestorBuild(project.id, ["c1"])).toEqual({ status: "ok", data: null });
+    });
+
+    test("picks the latest build when a commit was built more than once", async ({
+      project,
+      user,
+    }) => {
+      await seed(project.id, user.id, "c1");
+      const latest = await seed(project.id, user.id, "c1");
+
+      const result = await findAncestorBuild(project.id, ["c1"]);
+
+      expect(result).toEqual({ status: "ok", data: { id: latest, commitSha: "c1" } });
+    });
+
+    test("returns PROJECT_NOT_FOUND when the project does not exist", async () => {
+      expect(await findAncestorBuild(crypto.randomUUID(), ["c1"])).toEqual({
+        status: "error",
+        error: "PROJECT_NOT_FOUND",
+      });
     });
   });
 
