@@ -46,6 +46,7 @@ describe.skipIf(fixtures.length === 0)("built Storybook fixtures", () => {
 
       const result = await findAffectedStories({
         storybookDir: fixture.buildDir,
+        projectDir: fixture.dir,
         repoRoot,
         changedFiles: [component],
       });
@@ -62,6 +63,7 @@ describe.skipIf(fixtures.length === 0)("built Storybook fixtures", () => {
 
       const result = await findAffectedStories({
         storybookDir: fixture.buildDir,
+        projectDir: fixture.dir,
         repoRoot,
         changedFiles: [preview],
       });

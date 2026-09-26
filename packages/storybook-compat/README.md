@@ -46,7 +46,7 @@ make that a failure instead.
 `findAffectedStories` (`src/affectedStories.ts`) works out which stories a set of
 changed files can affect, so an upload can capture only those. It reads the
 module graph Storybook writes with `storybook build --stats-json`
-(`preview-stats.json`, Vite and webpack builders) and walks each changed module
+(`preview-stats.json`, Vite builder) from the directory it was built in, and walks each changed module
 up through its importers to the story files that reach it.
 
 It only traces JavaScript and TypeScript. Anything it cannot explain captures
