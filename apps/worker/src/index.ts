@@ -4,7 +4,13 @@ import { z } from "zod";
 
 import { assertEncryptionKey } from "@ovr/git-status/crypto";
 import { createLogger } from "@ovr/logger";
-import { QueueName, buildRedisConnection, scheduleReaper, schedulePurge } from "@ovr/queue";
+import {
+  QueueName,
+  buildRedisConnection,
+  queueOptions,
+  scheduleReaper,
+  schedulePurge,
+} from "@ovr/queue";
 
 import * as capture from "./handlers/capture";
 import * as diff from "./handlers/diff";
@@ -23,6 +29,7 @@ assertEncryptionKey();
 const connection = buildRedisConnection(process.env.REDIS_URL ?? "redis://localhost:6379", {
   maxRetriesPerRequest: null,
 });
+const options = queueOptions(connection);
 
 const CAPTURE_GROUP_CONCURRENCY = z.coerce
   .number()
@@ -48,26 +55,22 @@ const CAPTURE_LOCK_DURATION_MS = z.coerce
 
 const shutdown = new AbortController();
 
-const extractWorker = new Worker(QueueName.BUILD_EXTRACT, extract.run, { connection });
+const extractWorker = new Worker(QueueName.BUILD_EXTRACT, extract.run, options);
 const captureWorker = new Worker(QueueName.SNAPSHOT_CAPTURE, capture.createRun(shutdown.signal), {
-  connection,
+  ...options,
   concurrency: CAPTURE_GROUP_CONCURRENCY,
   lockDuration: CAPTURE_LOCK_DURATION_MS,
 });
 const diffWorker = new Worker(QueueName.SNAPSHOT_DIFF, diff.run, {
-  connection,
+  ...options,
   concurrency: DIFF_CONCURRENCY,
 });
-const finalizeWorker = new Worker(QueueName.BUILD_FINALIZE, finalize.run, { connection });
-const purgeDispatchWorker = new Worker(QueueName.BUILD_PURGE_DISPATCH, purgeDispatch.run, {
-  connection,
-});
-const purgeWorker = new Worker(QueueName.BUILD_PURGE, purge.run, { connection });
-const projectPurgeWorker = new Worker(QueueName.PROJECT_PURGE, projectPurge.run, { connection });
-const reaperWorker = new Worker(QueueName.BUILD_REAPER, reaper.run, { connection });
-const publishStatusWorker = new Worker(QueueName.GIT_STATUS_PUBLISH, publishStatus.run, {
-  connection,
-});
+const finalizeWorker = new Worker(QueueName.BUILD_FINALIZE, finalize.run, options);
+const purgeDispatchWorker = new Worker(QueueName.BUILD_PURGE_DISPATCH, purgeDispatch.run, options);
+const purgeWorker = new Worker(QueueName.BUILD_PURGE, purge.run, options);
+const projectPurgeWorker = new Worker(QueueName.PROJECT_PURGE, projectPurge.run, options);
+const reaperWorker = new Worker(QueueName.BUILD_REAPER, reaper.run, options);
+const publishStatusWorker = new Worker(QueueName.GIT_STATUS_PUBLISH, publishStatus.run, options);
 
 const isFinalAttempt = (job: Job<unknown>): boolean => job.attemptsMade >= (job.opts.attempts ?? 1);
 

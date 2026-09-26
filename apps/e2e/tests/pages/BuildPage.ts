@@ -56,7 +56,7 @@ export class BuildPage {
   }
 
   scrollContainer(): Locator {
-    return this.page.locator('[data-scroll-restoration-id="projects-main"]');
+    return this.page.locator('[data-scroll-restoration-id="main"]');
   }
 
   scrollOffset(): Promise<number> {
