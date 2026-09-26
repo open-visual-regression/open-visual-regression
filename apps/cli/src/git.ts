@@ -21,12 +21,14 @@ export const listAncestorCommits = async (
   head: string,
   limit: number,
 ): Promise<string[]> =>
-  (await git(cwd, ["rev-list", `--max-count=${limit}`, head])).split("\n").filter(Boolean);
+  (await git(cwd, ["rev-list", `--max-count=${limit}`, "--end-of-options", head]))
+    .split("\n")
+    .filter(Boolean);
 
 export const listChangedFiles = async (cwd: string, base: string): Promise<string[]> => {
   const root = await getRepoRoot(cwd);
   const [changed, untracked] = await Promise.all([
-    git(root, ["diff", "--name-only", "--no-renames", "-z", base, "--"]),
+    git(root, ["diff", "--name-only", "--no-renames", "-z", "--end-of-options", base, "--"]),
     git(root, ["ls-files", "--others", "--exclude-standard", "-z"]),
   ]);
 
