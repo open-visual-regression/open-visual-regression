@@ -40,3 +40,9 @@ make that a failure instead.
    lockfile, and commit it. Builds install `--frozen-lockfile`.
 3. Add the major to `STORYBOOK_FIXTURES` in `src/fixtures.ts`.
 4. `pnpm --filter @ovr/storybook-compat fixtures:build`, then `pnpm test`.
+
+## Affected stories
+
+`findAffectedStories` (`src/affectedStories.ts`) maps changed files to the
+stories they can affect, using the module graph from `storybook build
+--stats-json`. When it cannot tell, it returns every story.

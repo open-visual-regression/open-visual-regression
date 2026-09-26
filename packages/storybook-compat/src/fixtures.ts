@@ -17,7 +17,9 @@ export const STORYBOOK_FIXTURES: StorybookFixture[] = [8, 9, 10].map((major) => 
 });
 
 export const isFixtureBuilt = (fixture: StorybookFixture): boolean =>
-  existsSync(path.join(fixture.buildDir, "index.json"));
+  ["index.json", "preview-stats.json"].every((file) =>
+    existsSync(path.join(fixture.buildDir, file)),
+  );
 
 export const availableStorybookFixtures = (): StorybookFixture[] => {
   const built = STORYBOOK_FIXTURES.filter(isFixtureBuilt);
