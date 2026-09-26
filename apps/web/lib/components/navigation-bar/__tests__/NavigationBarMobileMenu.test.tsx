@@ -147,4 +147,34 @@ describe("NavigationBarMobileMenu", () => {
       expect(screen.queryByRole("link", { name: /^projects/ })).not.toBeInTheDocument();
     });
   });
+
+  it("should close the projects menu from the close button", async ({ user }) => {
+    vi.mocked(usePathname).mockReturnValue("/projects");
+
+    render(
+      <NavigationBarMobileMenu role="reviewer" projects={PROJECTS} projectsTotal={2} builds={[]} />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /open projects navigation/i }));
+    await user.click(screen.getByRole("button", { name: /close projects navigation/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole("link", { name: "Alpha" })).not.toBeInTheDocument();
+    });
+  });
+
+  it("should close the settings menu from the close button", async ({ user }) => {
+    vi.mocked(usePathname).mockReturnValue("/settings/account");
+
+    render(
+      <NavigationBarMobileMenu role="admin" projects={PROJECTS} projectsTotal={2} builds={[]} />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /open settings navigation/i }));
+    await user.click(screen.getByRole("button", { name: /close settings navigation/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole("link", { name: "account" })).not.toBeInTheDocument();
+    });
+  });
 });
