@@ -76,11 +76,26 @@ const failUnreadableTargets = async (
   }
 };
 
+const baselineKey = (snapshot: {
+  targetId: string;
+  browser: string;
+  viewportWidth: number;
+  viewportHeight: number;
+}): string =>
+  [snapshot.targetId, snapshot.browser, snapshot.viewportWidth, snapshot.viewportHeight].join(":");
+
+// An unaffected target is only left uncaptured where it has a baseline to keep.
+const findBaselineKeys = async (projectId: string, unaffected: Set<string>) =>
+  unaffected.size === 0
+    ? new Set<string>()
+    : new Set((await dbClient.baselines.findByProject(projectId)).map(baselineKey));
+
 export const extractBuild = async (
   buildId: string,
   targets: Target[],
   viewports: NamedViewport[],
   diffThreshold: number,
+  unaffectedTargetIds: string[] = [],
 ): Promise<void> => {
   const build = await dbClient.builds.findById(buildId);
 
@@ -100,6 +115,9 @@ export const extractBuild = async (
       );
     },
   );
+
+  const unaffected = new Set(unaffectedTargetIds);
+  const baselineKeys = await findBaselineKeys(build.projectId, unaffected);
 
   await dbClient.snapshots.createMany({
     values: targets.flatMap((target) => {
@@ -121,18 +139,22 @@ export const extractBuild = async (
         ];
       }
 
-      return resolveTargetViewports(viewports, override?.viewports).map((viewport) => ({
-        buildId,
-        browser: viewport.browser,
-        viewportWidth: viewport.viewportWidth,
-        viewportHeight: viewport.viewportHeight ?? 0,
-        viewportName: toViewportName(viewport),
-        targetId: target.id,
-        targetTitle: target.title,
-        targetName: target.name,
-        status: "queued" as const,
-        diffThreshold: resolveTargetDiffThreshold(diffThreshold, override),
-      }));
+      return resolveTargetViewports(viewports, override?.viewports).map((viewport) => {
+        const snapshot = {
+          buildId,
+          browser: viewport.browser,
+          viewportWidth: viewport.viewportWidth,
+          viewportHeight: viewport.viewportHeight ?? 0,
+          viewportName: toViewportName(viewport),
+          targetId: target.id,
+          targetTitle: target.title,
+          targetName: target.name,
+          diffThreshold: resolveTargetDiffThreshold(diffThreshold, override),
+        };
+        const keepsBaseline = unaffected.has(target.id) && baselineKeys.has(baselineKey(snapshot));
+
+        return { ...snapshot, status: keepsBaseline ? ("skipped" as const) : ("queued" as const) };
+      });
     }),
   });
 

@@ -45,6 +45,8 @@ export type ExtractJobPayload = {
     default?: boolean;
   }[];
   diffThreshold: number;
+  /** Absent on jobs queued before targets could be marked unaffected. */
+  unaffectedTargetIds?: string[];
 };
 
 export type CaptureGroupJobPayload = {

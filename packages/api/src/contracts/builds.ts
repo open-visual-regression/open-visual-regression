@@ -91,6 +91,11 @@ export const confirmUploadInputSchema = z.object({
       { message: "viewport names must be unique" },
     ),
   diffThreshold: z.number().min(0.01).max(1).optional(),
+  /**
+   * Ids from `targets` that the uploader determined this build's changes cannot affect. They are
+   * listed on the build as skipped and keep their baselines, unless one has no baseline yet.
+   */
+  unaffectedTargetIds: z.array(z.string().min(1)).optional(),
 });
 
 export type ConfirmUploadInputSchema = z.infer<typeof confirmUploadInputSchema>;

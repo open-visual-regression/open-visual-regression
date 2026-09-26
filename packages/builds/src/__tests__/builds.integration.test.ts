@@ -334,6 +334,43 @@ describe("builds", () => {
         targets,
         viewports: [captureConfiguration],
         diffThreshold: 0.05,
+        unaffectedTargetIds: [],
+      });
+    });
+
+    test("forwards and persists the unaffected targets that belong to the build", async ({
+      project,
+      captureConfiguration,
+      user,
+      connection,
+    }) => {
+      const created = await createBuild(
+        { projectId: project.id, branch: "feature", commitSha: "a".repeat(40) },
+        user.id,
+      );
+      assert(created.status === "ok");
+      const buildId = created.data;
+
+      await storage.uploadFile(
+        getArtifactPath(project.id, buildId),
+        Buffer.from(""),
+        "application/gzip",
+      );
+
+      await confirmBuildUpload(buildId, {
+        targets: [
+          { id: "story-a", title: "Story", name: "A" },
+          { id: "story-b", title: "Story", name: "B" },
+        ],
+        viewports: [captureConfiguration],
+        diffThreshold: 0.05,
+        unaffectedTargetIds: ["story-a", "not-in-this-build"],
+      });
+
+      const job = await collectExtractJob(connection);
+      expect(job.unaffectedTargetIds).toEqual(["story-a"]);
+      expect(await dbClient.buildExtractDefaults.findByBuild(buildId)).toMatchObject({
+        unaffectedTargetIds: ["story-a"],
       });
     });
 
@@ -473,6 +510,7 @@ describe("builds", () => {
       processingStatus?: BuildProcessingStatus;
       withExtractDefaults?: boolean;
       withArtifact?: boolean;
+      unaffectedTargetIds?: string[];
     };
 
     const seedSettledBuild = async ({
@@ -482,6 +520,7 @@ describe("builds", () => {
       processingStatus = "success",
       withExtractDefaults = true,
       withArtifact = true,
+      unaffectedTargetIds = [],
     }: SeedBuildOptions) => {
       const created = await createBuild(
         {
@@ -510,6 +549,7 @@ describe("builds", () => {
           targets: TARGETS,
           viewports: VIEWPORTS,
           diffThreshold: 0.05,
+          unaffectedTargetIds,
         });
       }
 
@@ -604,6 +644,28 @@ describe("builds", () => {
         targets: TARGETS,
         viewports: VIEWPORTS,
         diffThreshold: 0.05,
+        unaffectedTargetIds: [],
+      });
+    });
+
+    test("keeps the source build's unaffected targets, rebuilding what it captured", async ({
+      project,
+      user,
+      connection,
+    }) => {
+      const buildId = await seedSettledBuild({
+        projectId: project.id,
+        userId: user.id,
+        unaffectedTargetIds: ["story-a"],
+      });
+
+      const result = await rebuildBuild(buildId, user.id);
+      assert(result.status === "ok");
+
+      const job = await findExtractJob(connection, result.data);
+      expect(job?.data.unaffectedTargetIds).toEqual(["story-a"]);
+      expect(await dbClient.buildExtractDefaults.findByBuild(result.data)).toMatchObject({
+        unaffectedTargetIds: ["story-a"],
       });
     });
 
