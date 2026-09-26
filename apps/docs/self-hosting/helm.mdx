@@ -42,6 +42,7 @@ cosign verify ghcr.io/open-visual-regression/charts/ovr:X.Y.Z \
 | `auth.gitTokenEncryptionKey` | Encrypts stored git provider tokens at rest. Generate with `openssl rand -base64 32`. Rotating it invalidates every stored token. |
 | `database.url` | `postgresql://` connection string. |
 | `redis.url` | `redis://` or `rediss://` connection string. |
+| `redis.mode` | `standalone` (default) or `cluster`. |
 | `storage.bucket` / `storage.region` | Bucket name and region. The bucket must already exist. |
 
 Set `existingSecret` to supply all of these from a Secret you manage (Sealed Secrets, External Secrets, or by hand) instead. It needs the keys `DATABASE_URL`, `REDIS_URL`, `BETTER_AUTH_SECRET`, `OVR_GIT_TOKEN_ENCRYPTION_KEY`, `STORAGE_ACCESS_KEY`, and `STORAGE_SECRET_KEY`.
@@ -98,7 +99,7 @@ All off by default.
 | `web.topologySpreadConstraints` / `worker.topologySpreadConstraints` | Passed through verbatim. Include a `labelSelector`, the chart does not inject one. |
 | `web.priorityClassName` / `worker.priorityClassName` | Passed through verbatim. |
 
-Scale the worker on queue depth rather than CPU. A pod holding an idle browser between snapshots looks unloaded while it is busy, so a CPU-based autoscaler will scale it away mid-capture. Capture work lands on the BullMQ `snapshot-capture` queue:
+Scale the worker on queue depth rather than CPU. A pod holding an idle browser between snapshots looks unloaded while it is busy, so a CPU-based autoscaler will scale it away mid-capture. KEDA scales on waiting capture groups:
 
 ```yaml
 worker:
@@ -106,15 +107,15 @@ worker:
     enabled: true
     maxReplicaCount: 8
     cooldownPeriod: 600
-    triggers:
-      - type: redis
-        metadata:
-          address: valkey:6379
-          listName: bull:snapshot-capture:wait
-          listLength: "4"
+    redisAddress: valkey:6379
+    listLength: 4
 ```
 
-`triggers` has no default, since the address and authentication depend on your Redis. `cooldownPeriod` must outlast the longest capture group, and `worker.terminationGracePeriodSeconds` must cover the in-flight snapshot on top of that.
+If Redis needs a password or TLS, point `worker.keda.authenticationRef` at a KEDA [`TriggerAuthentication`](https://keda.sh/docs/latest/scalers/redis-lists/#authentication-parameters). `worker.keda.triggers` replaces the generated trigger entirely.
+
+<Warning>
+`cooldownPeriod` must outlast the longest capture group, and `worker.terminationGracePeriodSeconds` must cover the in-flight snapshot on top of that. Otherwise a scale-down stops a worker mid-capture.
+</Warning>
 
 ## Network policies
 

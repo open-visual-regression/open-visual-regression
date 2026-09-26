@@ -7,5 +7,6 @@ export default defineConfig({
     include: ["src/__tests__/**/*.integration.test.ts"],
     globalSetup: ["./vitest.integration.globalSetup.ts"],
     testTimeout: 30000,
+    unstubEnvs: true,
   },
 });

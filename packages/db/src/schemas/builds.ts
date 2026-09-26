@@ -192,17 +192,21 @@ export const snapshots = pgTable(
   (table) => [index("snapshots_buildId_idx").on(table.buildId)],
 );
 
-export const snapshotLogs = pgTable("snapshot_logs", {
-  id: uuid().primaryKey().$defaultFn(uuidv7),
-  snapshotId: uuid("snapshot_id")
-    .references(() => snapshots.id, { onDelete: "cascade" })
-    .notNull(),
-  level: varchar({ length: 50 }).notNull(),
-  message: text().notNull(),
-  timestamp: utcTimestamp()
-    .default(sql`now()`)
-    .notNull(),
-});
+export const snapshotLogs = pgTable(
+  "snapshot_logs",
+  {
+    id: uuid().primaryKey().$defaultFn(uuidv7),
+    snapshotId: uuid("snapshot_id")
+      .references(() => snapshots.id, { onDelete: "cascade" })
+      .notNull(),
+    level: varchar({ length: 50 }).notNull(),
+    message: text().notNull(),
+    timestamp: utcTimestamp()
+      .default(sql`now()`)
+      .notNull(),
+  },
+  (table) => [index("snapshot_logs_snapshotId_idx").on(table.snapshotId)],
+);
 
 export const diffs = pgTable(
   "diffs",

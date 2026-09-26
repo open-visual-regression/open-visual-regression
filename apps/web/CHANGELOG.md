@@ -1,5 +1,39 @@
 # @ovr/web
 
+## 0.6.1
+
+### Patch Changes
+
+- Updated dependencies [[`9edbf39`](https://github.com/open-visual-regression/open-visual-regression/commit/9edbf39d9dc6b56d1529668611c54d557067bbe8)]:
+  - @ovr/db@0.2.3
+  - @ovr/builds@0.1.8
+  - @ovr/git-status@0.1.5
+  - @ovr/queue@0.1.6
+  - @ovr/reviews@0.1.8
+
+## 0.6.0
+
+### Patch Changes
+
+- [#233](https://github.com/open-visual-regression/open-visual-regression/pull/233) [`7237920`](https://github.com/open-visual-regression/open-visual-regression/commit/72379203107e43351fbcc25628fccd0d1295bde7) Thanks [@tgfischer](https://github.com/tgfischer)! - Support Redis Cluster. Set `REDIS_MODE=cluster`, or `redis.mode: cluster` in the Helm chart.
+
+- Updated dependencies [[`7237920`](https://github.com/open-visual-regression/open-visual-regression/commit/72379203107e43351fbcc25628fccd0d1295bde7)]:
+  - @ovr/queue@0.1.5
+  - @ovr/builds@0.1.7
+  - @ovr/reviews@0.1.7
+
+## 0.5.4
+
+### Patch Changes
+
+- [#230](https://github.com/open-visual-regression/open-visual-regression/pull/230) [`aa1d4ee`](https://github.com/open-visual-regression/open-visual-regression/commit/aa1d4eeeba1989b5cd4470dd8a4c80a98bbc056b) Thanks [@tgfischer](https://github.com/tgfischer)! - The sidebar no longer shows the builds page's loading skeleton, stays in place when moving between projects and builds, and no longer holds up navigation while it loads.
+
+## 0.5.3
+
+### Patch Changes
+
+- [#228](https://github.com/open-visual-regression/open-visual-regression/pull/228) [`0c2eb33`](https://github.com/open-visual-regression/open-visual-regression/commit/0c2eb33694fd316b8004d6a4ca7706379d2ebc0e) Thanks [@tgfischer](https://github.com/tgfischer)! - Fix the sidebar sometimes showing the main content's loading skeleton instead of its own.
+
 ## 0.5.2
 
 ### Patch Changes
