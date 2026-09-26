@@ -24,6 +24,15 @@ export type OvrConfig = {
    * @default 0.05
    */
   diffThreshold?: number;
+  /** Options for `upload storybook --only-affected`. */
+  onlyAffected?: OnlyAffectedConfig;
+};
+
+export type OnlyAffectedConfig = {
+  /** Globs of files that affect every story when they change, e.g. a static folder. */
+  externals?: string[];
+  /** Globs of files that never affect a story. */
+  untraced?: string[];
 };
 
 /** Per-story override, set via Storybook `parameters.ovr` on a story or its `meta`. */
@@ -62,4 +71,6 @@ export const defineConfig = <const V extends readonly Viewport[] = []>(config: {
    * @default 0.05
    */
   diffThreshold?: number;
+  /** Options for `upload storybook --only-affected`. */
+  onlyAffected?: OnlyAffectedConfig;
 }): OvrConfig => config;

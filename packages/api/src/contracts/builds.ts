@@ -104,6 +104,20 @@ export const confirmUploadContract = oc
   .input(confirmUploadInputSchema)
   .output(confirmUploadOutputSchema);
 
+export const findAncestorBuildInputSchema = z.object({
+  commitShas: z.array(z.string().min(1)).min(1).max(1000),
+});
+
+export const findAncestorBuildOutputSchema = z.object({
+  build: z.object({ id: z.uuidv7(), commitSha: z.string().min(1) }).nullable(),
+});
+
+export type FindAncestorBuildOutput = z.infer<typeof findAncestorBuildOutputSchema>;
+
+export const findAncestorBuildContract = oc
+  .input(findAncestorBuildInputSchema)
+  .output(findAncestorBuildOutputSchema);
+
 export const getBuildStatusInputSchema = z.object({
   buildId: z.string(),
 });
@@ -268,6 +282,7 @@ export const rebuildBuildContract = oc
 export const contract = {
   createBuild: createBuildContract,
   confirmUpload: confirmUploadContract,
+  findAncestorBuild: findAncestorBuildContract,
   getBuildStatus: getBuildStatusContract,
   cancel: cancelBuildContract,
   rebuild: rebuildBuildContract,
