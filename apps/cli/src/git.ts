@@ -16,7 +16,6 @@ export const getRepoRoot = async (cwd: string): Promise<string> =>
 export const isShallowRepository = async (cwd: string): Promise<boolean> =>
   (await git(cwd, ["rev-parse", "--is-shallow-repository"])).trim() === "true";
 
-/** Commits reachable from `head`, newest first. */
 export const listAncestorCommits = async (
   cwd: string,
   head: string,
@@ -24,11 +23,6 @@ export const listAncestorCommits = async (
 ): Promise<string[]> =>
   (await git(cwd, ["rev-list", `--max-count=${limit}`, head])).split("\n").filter(Boolean);
 
-/**
- * Files that differ between `base` and the working tree, relative to the repository root. The
- * working tree is what was just built, so uncommitted and untracked files count too. Renames are
- * reported as their old and new paths so a removed file is never missed.
- */
 export const listChangedFiles = async (cwd: string, base: string): Promise<string[]> => {
   const root = await getRepoRoot(cwd);
   const [changed, untracked] = await Promise.all([

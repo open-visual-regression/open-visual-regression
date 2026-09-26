@@ -31,7 +31,6 @@ const targets = [
   { id: "form--default", title: "Form", name: "Default" },
 ];
 
-// apps/web is a Storybook whose Button and Form stories share nothing but Form's own component.
 const writeStorybookBuild = async (): Promise<string> => {
   const storybookDir = path.join(projectDir, "storybook-static");
   await mkdir(storybookDir, { recursive: true });

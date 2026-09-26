@@ -7,7 +7,6 @@ import type { OvrClient } from "../../client";
 import type { OnlyAffectedConfig } from "../../defineConfig";
 import { getRepoRoot, isShallowRepository, listAncestorCommits, listChangedFiles } from "../../git";
 
-// How far back to look for a main-branch build to compare against.
 const MAX_ANCESTORS = 1000;
 const MAX_LISTED_STORY_FILES = 20;
 
@@ -23,16 +22,11 @@ type FindUnaffectedTargetsInput = {
 const describeError = (error: unknown): string =>
   error instanceof Error ? error.message.split("\n")[0]! : String(error);
 
-// Config globs are written relative to where `ovr` runs; the tracer matches repository paths.
 const toRepoGlobs = (globs: string[] | undefined, repoRoot: string, cwd: string): string[] => {
   const prefix = path.relative(repoRoot, cwd).split(path.sep).join("/");
   return (globs ?? []).map((glob) => (prefix ? path.posix.join(prefix, glob) : glob));
 };
 
-/**
- * Ids of the stories that nothing changed since the last successful main-branch build can affect.
- * Anything that stops it from telling returns none, so every story is captured.
- */
 export const findUnaffectedTargets = async ({
   client,
   storybookDir,
