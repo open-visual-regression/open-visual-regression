@@ -321,4 +321,149 @@ describe("extractBuild", () => {
     const [job] = await collectJobs<FinalizeJobPayload>(connection, QueueName.BUILD_FINALIZE, 1);
     expect(job).toEqual({ buildId: mainBuild.id });
   });
+
+  describe("unaffected targets", () => {
+    const seedBaseline = async (
+      build: { id: string; projectId: string; createdBy: string },
+      targetId: string,
+      viewport: { browser: string; viewportWidth: number; viewportHeight: number },
+    ): Promise<void> => {
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            ...viewport,
+            viewportName: "baseline",
+            targetId,
+            targetTitle: "Story",
+            targetName: targetId,
+            status: "success",
+            diffThreshold: 0.05,
+          },
+        ],
+      });
+      await dbClient.baselines.upsert({
+        projectId: build.projectId,
+        ...viewport,
+        targetId,
+        snapshotId: snapshot!.id,
+        approvedBy: build.createdBy,
+      });
+    };
+
+    const desktop = { browser: "chromium", viewportWidth: 1280, viewportHeight: 0 };
+    const mobile = { browser: "chromium", viewportWidth: 390, viewportHeight: 0 };
+    const viewports = [
+      { name: "desktop", ...desktop },
+      { name: "mobile", ...mobile },
+    ];
+    const targets = [
+      { id: "story-a", title: "Story", name: "A" },
+      { id: "story-b", title: "Story", name: "B" },
+    ];
+
+    test("keeps the baselines of an unaffected target by skipping each of its viewports", async ({
+      mainBuild,
+      featureBuild,
+      connection,
+    }) => {
+      await seedBaseline(mainBuild, "story-a", desktop);
+      await seedBaseline(mainBuild, "story-a", mobile);
+      await storage.uploadFile(
+        featureBuild.artifactPath,
+        await buildArtifactTarball(),
+        "application/gzip",
+      );
+
+      await extractBuild(featureBuild.id, targets, viewports, 0.05, ["story-a"]);
+
+      const snapshots = await dbClient.snapshots.findByBuild(featureBuild.id);
+      const statuses = snapshots
+        .map((snapshot) => `${snapshot.targetId}@${snapshot.viewportName}:${snapshot.status}`)
+        .sort();
+      expect(statuses).toEqual([
+        "story-a@desktop:skipped",
+        "story-a@mobile:skipped",
+        "story-b@desktop:queued",
+        "story-b@mobile:queued",
+      ]);
+
+      const [job] = await collectCaptureGroupJobs(connection, 1);
+      expect(job!.snapshotIds.sort()).toEqual(
+        snapshots
+          .filter((snapshot) => snapshot.targetId === "story-b")
+          .map((snapshot) => snapshot.id)
+          .sort(),
+      );
+    });
+
+    test("captures an unaffected target on any viewport that has no baseline yet", async ({
+      mainBuild,
+      featureBuild,
+    }) => {
+      await seedBaseline(mainBuild, "story-a", desktop);
+      await storage.uploadFile(
+        featureBuild.artifactPath,
+        await buildArtifactTarball(),
+        "application/gzip",
+      );
+
+      await extractBuild(featureBuild.id, [targets[0]!], viewports, 0.05, ["story-a"]);
+
+      const snapshots = await dbClient.snapshots.findByBuild(featureBuild.id);
+      const statusByViewport = Object.fromEntries(
+        snapshots.map((snapshot) => [snapshot.viewportName, snapshot.status]),
+      );
+      expect(statusByViewport).toEqual({ desktop: "skipped", mobile: "queued" });
+    });
+
+    test("does not use another project's baselines", async ({
+      featureBuild,
+      user,
+      organization,
+    }) => {
+      const otherProject = await dbClient.projects.addProject({
+        name: "Other",
+        gitMainBranch: "main",
+        organizationId: organization.id,
+        creatorId: user.id,
+      });
+      const otherBuild = await dbClient.builds.create({
+        projectId: otherProject!.id,
+        branch: "main",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/other/artifact",
+        createdBy: user.id,
+      });
+      await seedBaseline(otherBuild!, "story-a", desktop);
+      await storage.uploadFile(
+        featureBuild.artifactPath,
+        await buildArtifactTarball(),
+        "application/gzip",
+      );
+
+      await extractBuild(featureBuild.id, [targets[0]!], [viewports[0]!], 0.05, ["story-a"]);
+
+      const [snapshot] = await dbClient.snapshots.findByBuild(featureBuild.id);
+      expect(snapshot!.status).toBe("queued");
+    });
+
+    test("finalizes the build when every target is unaffected and has its baselines", async ({
+      mainBuild,
+      featureBuild,
+      connection,
+    }) => {
+      await seedBaseline(mainBuild, "story-a", desktop);
+      await storage.uploadFile(
+        featureBuild.artifactPath,
+        await buildArtifactTarball(),
+        "application/gzip",
+      );
+
+      await extractBuild(featureBuild.id, [targets[0]!], [viewports[0]!], 0.05, ["story-a"]);
+
+      const [job] = await collectJobs<FinalizeJobPayload>(connection, QueueName.BUILD_FINALIZE, 1);
+      expect(job).toEqual({ buildId: featureBuild.id });
+    });
+  });
 });
