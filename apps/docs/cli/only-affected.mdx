@@ -14,7 +14,8 @@ ovr upload storybook --dir storybook-static --only-affected \
 
 ## Requirements
 
-- **A module graph.** Build Storybook with `--stats-json` so the output includes `preview-stats.json`. Vite and webpack builders both write it.
+- **A Vite module graph.** Build Storybook with the Vite builder and `--stats-json`, so the output includes `preview-stats.json`. Other builders capture every story.
+- **The same directory.** Run `ovr` from the directory `storybook build` ran in; the graph's paths are relative to it.
 - **Git history back to the last main-branch build.** In GitHub Actions, check out with `fetch-depth: 0`. A shallow clone prints a warning, and when the history doesn't reach a main-branch build, every story is captured.
 - **A successful build on the main branch.** Changes are measured against the last main-branch build in the current commit's history that finished without errors. Until one exists, every story is captured.
 

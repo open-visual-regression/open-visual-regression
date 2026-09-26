@@ -85,7 +85,7 @@ export const findUnaffectedTargets = async ({
   const result = await findAffectedStories({
     storybookDir,
     repoRoot,
-    cwd,
+    projectDir: cwd,
     changedFiles,
     externals: toRepoGlobs(config?.externals, repoRoot, cwd),
     untraced: toRepoGlobs(config?.untraced, repoRoot, cwd),
