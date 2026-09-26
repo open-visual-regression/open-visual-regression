@@ -40,7 +40,7 @@
       "oxlint"
     ],
     "!(pnpm-lock).{css,json,yaml,yml}": [
-      "oxfmt"
+      "oxfmt --no-error-on-unmatched-pattern"
     ]
   },
   "engines": {

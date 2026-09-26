@@ -1,9 +1,7 @@
-import type IORedis from "ioredis";
-
 import type { BuildProcessingStatus, BuildReviewStatus } from "@ovr/db/schema";
 import { createLogger } from "@ovr/logger";
 
-import { buildRedisConnection } from "./index";
+import { buildRedisConnection, type RedisConnection } from "./index";
 
 const logger = createLogger("queue");
 
@@ -23,7 +21,7 @@ export const buildStatusChannel = (buildId: string): string =>
 
 export const publishBuildStatusEvent = async (
   event: BuildStatusEvent,
-  connection: IORedis,
+  connection: RedisConnection,
 ): Promise<void> => {
   await connection.publish(buildStatusChannel(event.buildId), JSON.stringify(event));
 };

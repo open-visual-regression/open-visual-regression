@@ -1,12 +1,16 @@
 import assert from "node:assert";
 
 import { Queue, Worker } from "bullmq";
-import type { Redis } from "ioredis";
 import { vi } from "vitest";
 
 import { dbClient } from "@ovr/db/client";
 import type { BuildProcessingStatus, DiffProcessingStatus, DiffReviewStatus } from "@ovr/db/schema";
-import { QueueName, type CaptureGroupJobPayload, type ExtractJobPayload } from "@ovr/queue";
+import {
+  QueueName,
+  type RedisConnection,
+  type CaptureGroupJobPayload,
+  type ExtractJobPayload,
+} from "@ovr/queue";
 import { createBuildStatusSubscriber, type BuildStatusEvent } from "@ovr/queue/events";
 import { enqueueCaptureGroup, enqueueFinalize } from "@ovr/queue/producer";
 import { storage } from "@ovr/storage";
@@ -33,7 +37,7 @@ vi.mock("@ovr/queue/producer", async (importOriginal) => {
   };
 });
 
-const collectExtractJob = async (connection: Redis): Promise<ExtractJobPayload> => {
+const collectExtractJob = async (connection: RedisConnection): Promise<ExtractJobPayload> => {
   const worker = new Worker<ExtractJobPayload>(QueueName.BUILD_EXTRACT, async (job) => job.data, {
     connection,
   });
@@ -48,7 +52,7 @@ const collectExtractJob = async (connection: Redis): Promise<ExtractJobPayload> 
   }
 };
 
-const findExtractJob = async (connection: Redis, buildId: string) => {
+const findExtractJob = async (connection: RedisConnection, buildId: string) => {
   const queue = new Queue(QueueName.BUILD_EXTRACT, { connection });
   try {
     return await queue.getJob(buildId);
@@ -57,7 +61,7 @@ const findExtractJob = async (connection: Redis, buildId: string) => {
   }
 };
 
-const findFinalizeJob = async (connection: Redis, buildId: string) => {
+const findFinalizeJob = async (connection: RedisConnection, buildId: string) => {
   const queue = new Queue(QueueName.BUILD_FINALIZE, { connection });
   try {
     return await queue.getJob(buildId);
@@ -67,7 +71,7 @@ const findFinalizeJob = async (connection: Redis, buildId: string) => {
 };
 
 const findCaptureGroups = async (
-  connection: Redis,
+  connection: RedisConnection,
   buildId: string,
 ): Promise<CaptureGroupJobPayload[]> => {
   const queue = new Queue<CaptureGroupJobPayload>(QueueName.SNAPSHOT_CAPTURE, { connection });
@@ -79,7 +83,7 @@ const findCaptureGroups = async (
   }
 };
 
-const findPublishStatusJob = async (connection: Redis, buildId: string) => {
+const findPublishStatusJob = async (connection: RedisConnection, buildId: string) => {
   const queue = new Queue(QueueName.GIT_STATUS_PUBLISH, { connection });
   try {
     return await queue.getJob(buildId);

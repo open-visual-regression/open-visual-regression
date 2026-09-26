@@ -4,11 +4,15 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { Worker } from "bullmq";
-import type { Redis } from "ioredis";
 import * as tar from "tar";
 
 import { dbClient } from "@ovr/db/client";
-import { QueueName, type CaptureGroupJobPayload, type FinalizeJobPayload } from "@ovr/queue";
+import {
+  QueueName,
+  type RedisConnection,
+  type CaptureGroupJobPayload,
+  type FinalizeJobPayload,
+} from "@ovr/queue";
 import { storage } from "@ovr/storage";
 
 import { extractBuild } from "../extract";
@@ -18,7 +22,7 @@ const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
 const IFRAME_TEMPLATE = await readFile(path.join(TEST_DIR, "html/iframe-template.html"), "utf-8");
 
 const collectJobs = async <T>(
-  connection: Redis,
+  connection: RedisConnection,
   queueName: QueueName,
   count: number,
 ): Promise<T[]> => {
@@ -43,7 +47,7 @@ const collectJobs = async <T>(
 };
 
 const collectCaptureGroupJobs = (
-  connection: Redis,
+  connection: RedisConnection,
   count: number,
 ): Promise<CaptureGroupJobPayload[]> =>
   collectJobs<CaptureGroupJobPayload>(connection, QueueName.SNAPSHOT_CAPTURE, count);
