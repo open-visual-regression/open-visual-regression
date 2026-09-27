@@ -61,7 +61,9 @@ It needs:
 
 When any of these is missing, or a change could affect every story (Storybook or build configuration, dependencies, global styles), every story is captured and the CLI prints why. Use [`onlyAffected`](/configuration/config#only-affected) in `ovr.config` for files that affect stories without being imported.
 
-We recommend it for pull requests only, and capturing every story on the main branch. In GitHub Actions, add `${{ github.event_name == 'pull_request' && '--only-affected' || '' }}` to the command.
+<Note>
+  We recommend it for pull requests only, and capturing every story on the main branch.
+</Note>
 
 ## CI example
 
