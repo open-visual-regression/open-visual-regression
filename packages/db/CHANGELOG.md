@@ -1,5 +1,11 @@
 # @ovr/db
 
+## 0.2.4
+
+### Patch Changes
+
+- [#241](https://github.com/open-visual-regression/open-visual-regression/pull/241) [`16d2294`](https://github.com/open-visual-regression/open-visual-regression/commit/16d22944b317faf70e5b54f256231c4f73816aee) Thanks [@tgfischer](https://github.com/tgfischer)! - Let an upload skip targets its changes can't affect. Skipped targets keep their baselines.
+
 ## 0.2.3
 
 ### Patch Changes
