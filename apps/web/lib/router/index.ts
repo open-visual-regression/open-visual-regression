@@ -1,6 +1,7 @@
 import * as accessTokens from "./accessTokens";
 import * as account from "./account";
 import * as apiKeys from "./apiKeys";
+import * as baseline from "./baseline";
 import * as builds from "./builds";
 import * as diffs from "./diffs";
 import * as gitIntegrations from "./gitIntegrations";
@@ -22,6 +23,7 @@ export const serverClient = {
   organizations,
   storage,
   storybook,
+  baseline,
   builds,
   account,
   users,

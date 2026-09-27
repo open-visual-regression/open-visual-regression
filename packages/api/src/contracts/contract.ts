@@ -1,6 +1,7 @@
 import { contract as accessTokensContract } from "./accessTokens";
 import { contract as accountContract } from "./account";
 import { contract as apiKeysContract } from "./apiKeys";
+import { contract as baselineContract } from "./baseline";
 import { contract as buildsContract } from "./builds";
 import { contract as diffsContract } from "./diffs";
 import { contract as gitIntegrationsContract } from "./gitIntegrations";
@@ -22,6 +23,7 @@ export const contract = {
   organizations: { ...organizationsContract },
   storage: { ...storageContract },
   storybook: { ...storybookContract },
+  baseline: { ...baselineContract },
   builds: { ...buildsContract },
   account: { ...accountContract },
   users: { ...usersContract },

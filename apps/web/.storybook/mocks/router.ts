@@ -59,6 +59,14 @@ export const serverClient: typeof RealServerClient = {
       .handler(() => ({ status: 302 as const, headers: { location: "" } }))
       .actionable(),
   },
+  baseline: {
+    getBuild: os.baseline.getBuild
+      .handler(() => ({ status: 302 as const, headers: { location: "", "cache-control": "" } }))
+      .actionable(),
+    getStorybook: os.baseline.getStorybook
+      .handler(() => ({ status: 302 as const, headers: { location: "", "cache-control": "" } }))
+      .actionable(),
+  },
   builds: {
     createBuild: os.builds.createBuild
       .handler(() => ({ buildId: "", uploadUrl: "", buildUrl: "" }))
