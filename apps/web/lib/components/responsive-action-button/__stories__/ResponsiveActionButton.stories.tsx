@@ -34,5 +34,5 @@ export const IconEnd: Story = {
 };
 
 export const Skeleton: Story = {
-  render: () => <ResponsiveActionButtonSkeleton />,
+  render: () => <ResponsiveActionButtonSkeleton className="lg:w-28" />,
 };
