@@ -34,6 +34,7 @@ ovr upload storybook \
 | `--name <name>` | no | | Build name, e.g. the commit message |
 | `--author <author>` | no | | Commit author |
 | `--wait` | no | `false` | Wait for the build to finish processing before exiting |
+| `--only-affected` | no | `false` | Only capture the stories a change can affect. See [below](#only-affected-stories) |
 | `--timeout <seconds>` | no | `600` | Maximum seconds to wait for the build result (with `--wait`) |
 | `-c, --config <path>` | no | auto-detected | Path to `ovr.config.ts`/`.js`/`.mjs` |
 
@@ -47,6 +48,20 @@ Pass `--wait` to block until the build resolves or `--timeout` elapses instead. 
 | Needs review | non-zero |
 | Failed | non-zero |
 | Timed out | non-zero |
+
+## Only affected stories
+
+Pass `--only-affected` to capture only the stories a change can affect. Every other story is listed on the build as skipped and keeps its baseline. Stories without a baseline for a viewport are always captured.
+
+It needs:
+
+- Storybook built with the Vite builder and `--stats-json`, and `ovr` run from the directory it was built in.
+- The full git history. In GitHub Actions, check out with `fetch-depth: 0`.
+- A successful build on the project's main branch in the commit's history to compare against.
+
+When any of these is missing, or a change could affect every story (Storybook or build configuration, dependencies, global styles), every story is captured and the CLI prints why. Use [`onlyAffected`](/configuration/config#only-affected) in `ovr.config` for files that affect stories without being imported.
+
+We recommend it for pull requests only, and capturing every story on the main branch. In GitHub Actions, add `${{ github.event_name == 'pull_request' && '--only-affected' || '' }}` to the command.
 
 ## CI example
 

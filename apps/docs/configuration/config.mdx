@@ -28,6 +28,7 @@ export default defineConfig({
 | `viewports` | `Viewport[]` | `[]` | Every viewport available, named or not |
 | `defaultViewports` | `string[]` | every named viewport | Names from `viewports` captured automatically for every story |
 | `diffThreshold` | `number`, `(0, 1]` | `0.05` | Fraction of pixels that may differ before a snapshot needs review |
+| `onlyAffected` | `object` | | Options for [`--only-affected`](/cli/upload-storybook#only-affected-stories). See [below](#only-affected) |
 
 <Note>
 If `viewports` is omitted, OVR falls back to a single default: 1280px wide, full page, in Chromium.
@@ -47,3 +48,12 @@ Each entry in `viewports` describes one capture target:
 Unnamed viewports (no `name`) are always opt-in: they can't be referenced by `defaultViewports`, only added inline via a story override.
 
 A story can override `defaultViewports` and `diffThreshold`, or skip itself entirely — see [Per-story parameters](/configuration/story-parameters).
+
+## Only affected
+
+Options for [`ovr upload storybook --only-affected`](/cli/upload-storybook#only-affected-stories). Globs are relative to the directory you run the CLI from.
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `externals` | `string[]` | `[]` | Files that affect every story when they change, such as a static folder |
+| `untraced` | `string[]` | `[]` | Files that never affect a story |
