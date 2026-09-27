@@ -1,5 +1,15 @@
 # @ovr/api
 
+## 0.2.3
+
+### Patch Changes
+
+- [#249](https://github.com/open-visual-regression/open-visual-regression/pull/249) [`73f7fda`](https://github.com/open-visual-regression/open-visual-regression/commit/73f7fda61041627356c9ad7a183efb4007f47ac0) Thanks [@tgfischer](https://github.com/tgfischer)! - Add an endpoint that returns a project's baseline build: the latest successful build on its main branch.
+
+- [#257](https://github.com/open-visual-regression/open-visual-regression/pull/257) [`4177ca9`](https://github.com/open-visual-regression/open-visual-regression/commit/4177ca9e0503839b9c40b34041ef9e981076edf4) Thanks [@tgfischer](https://github.com/tgfischer)! - Show a warning badge on snapshot cards when the story rendered with an uncaught error.
+
+- [#252](https://github.com/open-visual-regression/open-visual-regression/pull/252) [`9e51c55`](https://github.com/open-visual-regression/open-visual-regression/commit/9e51c5526547457dd7519d79d7854fa99ee773ed) Thanks [@tgfischer](https://github.com/tgfischer)! - Add stable links to a project's baseline build and baseline Storybook.
+
 ## 0.2.2
 
 ### Patch Changes

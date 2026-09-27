@@ -1,5 +1,13 @@
 # @ovr/ui
 
+## 0.1.1
+
+### Patch Changes
+
+- [#257](https://github.com/open-visual-regression/open-visual-regression/pull/257) [`4177ca9`](https://github.com/open-visual-regression/open-visual-regression/commit/4177ca9e0503839b9c40b34041ef9e981076edf4) Thanks [@tgfischer](https://github.com/tgfischer)! - Show a warning badge on snapshot cards when the story rendered with an uncaught error.
+
+- [#251](https://github.com/open-visual-regression/open-visual-regression/pull/251) [`12bbb1e`](https://github.com/open-visual-regression/open-visual-regression/commit/12bbb1ee61ebf33b75e1a0741b871ae144376eaf) Thanks [@tgfischer](https://github.com/tgfischer)! - Add a "view baseline" button to the project builds page.
+
 ## 0.1.0
 
 ### Minor Changes
