@@ -1,3 +1,4 @@
+import { useRouter } from "next/navigation";
 import { vi } from "vitest";
 
 import { Toaster } from "@ovr/ui/components/sonner";
@@ -8,10 +9,12 @@ import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
 import { GitIntegrationForm } from "../GitIntegrationForm";
 
 vi.mock("@/lib/router");
+vi.mock("next/navigation");
 
 const mockUpsert = vi.mocked(serverClient.gitIntegrations.upsert);
 const mockRemove = vi.mocked(serverClient.gitIntegrations.remove);
 const mockTestConnection = vi.mocked(serverClient.gitIntegrations.testConnection);
+const mockRefresh = vi.mocked(useRouter)().refresh;
 
 const PROJECT_ID = "project-id";
 
@@ -75,6 +78,7 @@ describe("GitIntegrationForm", () => {
       ),
     );
     expect(await screen.findByText("git integration saved")).toBeVisible();
+    expect(mockRefresh).toHaveBeenCalled();
   });
 
   it("should update an existing integration without re-entering the token", async ({ user }) => {
@@ -100,6 +104,7 @@ describe("GitIntegrationForm", () => {
 
     await waitFor(() => expect(mockRemove).toHaveBeenCalledWith({ projectId: PROJECT_ID }));
     expect(await screen.findByText("git integration removed")).toBeVisible();
+    expect(mockRefresh).toHaveBeenCalled();
   });
 
   it("should show the result of testing the connection", async ({ user }) => {

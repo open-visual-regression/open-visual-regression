@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { onError, onSuccess } from "@orpc/client";
 import { useServerAction } from "@orpc/react/hooks";
+import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -45,6 +46,8 @@ type GitIntegrationFormProps = {
 };
 
 export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFormProps) => {
+  const router = useRouter();
+
   const {
     register,
     handleSubmit,
@@ -64,6 +67,7 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
     interceptors: [
       onSuccess(() => {
         toast.success("git integration saved");
+        router.refresh();
       }),
       onError((err) => setError("root", { message: err.message })),
     ],
@@ -88,6 +92,7 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
     interceptors: [
       onSuccess(() => {
         toast.success("git integration removed");
+        router.refresh();
       }),
     ],
   });
