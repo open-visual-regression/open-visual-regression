@@ -5,12 +5,23 @@ import path from "node:path";
 import ky from "ky";
 import * as tar from "tar";
 
-export const createArtifactTarball = async (dir: string): Promise<Buffer> => {
+export const createArtifactTarball = async (
+  dir: string,
+  exclude: string[] = [],
+): Promise<Buffer> => {
   const tmpDir = await mkdtemp(path.join(tmpdir(), "ovr-"));
   const tarballPath = path.join(tmpDir, "artifact.tar.gz");
 
   try {
-    await tar.create({ gzip: true, file: tarballPath, cwd: dir }, ["."]);
+    await tar.create(
+      {
+        gzip: true,
+        file: tarballPath,
+        cwd: dir,
+        filter: (file) => !exclude.includes(path.posix.normalize(file)),
+      },
+      ["."],
+    );
     return await readFile(tarballPath);
   } finally {
     await rm(tmpDir, { recursive: true, force: true });

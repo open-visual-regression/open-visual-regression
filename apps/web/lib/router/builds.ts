@@ -8,6 +8,7 @@ import {
   confirmBuildUpload,
   createBuild as createBuildService,
   DEFAULT_DIFF_THRESHOLD,
+  findAncestorBuild as findAncestorBuildService,
   getArtifactPath,
   rebuildBuild as rebuildBuildService,
   type RebuildBlockedReason,
@@ -97,6 +98,19 @@ export const confirmUpload = os.builds.confirmUpload
     }
 
     return { ok: true as const };
+  })
+  .actionable();
+
+export const findAncestorBuild = os.builds.findAncestorBuild
+  .use(apiKeyMiddleware)
+  .handler(async ({ input, context }) => {
+    const result = await findAncestorBuildService(context.projectId, input.commitShas);
+
+    if (result.status === "error") {
+      throw new ORPCError("NOT_FOUND");
+    }
+
+    return { build: result.data };
   })
   .actionable();
 

@@ -256,6 +256,43 @@ describe("builds", () => {
     });
   });
 
+  describe("findAncestorBuild", () => {
+    test("should return UNAUTHORIZED when no api key is provided", async () => {
+      setApiKeyHeader();
+
+      const [error] = await serverClient.builds.findAncestorBuild({ commitShas: ["a"] });
+
+      expect(error?.code).toBe("UNAUTHORIZED");
+    });
+
+    test("finds the key's project's main build among the given commits", async ({ admin: _ }) => {
+      const { projectId, apiKey } = await createProjectWithApiKey();
+      const { apiKey: otherApiKey } = await createProjectWithApiKey();
+      const project = await dbClient.projects.findById(projectId);
+      const build = await dbClient.builds.create({
+        projectId,
+        branch: project!.gitMainBranch,
+        commitSha: "c".repeat(40),
+        processingStatus: "success",
+        artifactPath: "builds/seed/artifact",
+        createdBy: project!.creatorId,
+      });
+
+      setApiKeyHeader(apiKey);
+      const [error, result] = await serverClient.builds.findAncestorBuild({
+        commitShas: ["d".repeat(40), "c".repeat(40)],
+      });
+      expect(error).toBeNull();
+      expect(result).toEqual({ build: { id: build!.id, commitSha: "c".repeat(40) } });
+
+      setApiKeyHeader(otherApiKey);
+      const [, otherResult] = await serverClient.builds.findAncestorBuild({
+        commitShas: ["c".repeat(40)],
+      });
+      expect(otherResult).toEqual({ build: null });
+    });
+  });
+
   describe("getBuildStatus", () => {
     test("should return UNAUTHORIZED when no api key is provided", async () => {
       setApiKeyHeader();
