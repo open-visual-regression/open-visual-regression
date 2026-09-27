@@ -1,5 +1,11 @@
 # @open-visual-regression/cli
 
+## 0.5.0
+
+### Minor Changes
+
+- [#242](https://github.com/open-visual-regression/open-visual-regression/pull/242) [`aff53e1`](https://github.com/open-visual-regression/open-visual-regression/commit/aff53e1caa0235dd8c7283d0f8c6eef7cc2352a3) Thanks [@tgfischer](https://github.com/tgfischer)! - Add `upload storybook --only-affected` to capture only the stories a change can affect.
+
 ## 0.4.0
 
 ### Minor Changes

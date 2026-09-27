@@ -1,5 +1,18 @@
 # @ovr/worker
 
+## 0.6.2
+
+### Patch Changes
+
+- [#241](https://github.com/open-visual-regression/open-visual-regression/pull/241) [`16d2294`](https://github.com/open-visual-regression/open-visual-regression/commit/16d22944b317faf70e5b54f256231c4f73816aee) Thanks [@tgfischer](https://github.com/tgfischer)! - Let an upload skip targets its changes can't affect. Skipped targets keep their baselines.
+
+- Updated dependencies [[`aff53e1`](https://github.com/open-visual-regression/open-visual-regression/commit/aff53e1caa0235dd8c7283d0f8c6eef7cc2352a3), [`16d2294`](https://github.com/open-visual-regression/open-visual-regression/commit/16d22944b317faf70e5b54f256231c4f73816aee)]:
+  - @ovr/builds@0.1.9
+  - @ovr/db@0.2.4
+  - @ovr/capture@0.2.5
+  - @ovr/queue@0.1.7
+  - @ovr/git-status@0.1.6
+
 ## 0.6.1
 
 ### Patch Changes
