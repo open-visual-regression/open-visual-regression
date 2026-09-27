@@ -8,6 +8,7 @@ const meta: Meta<typeof ProjectHeader> = {
   tags: ["autodocs"],
   args: {
     projectId: "019edfc7-e040-7492-86b2-ccfdc00cf6e1",
+    baselineBuildId: "019edfc7-e040-7492-86b2-ccfdc00cf6e2",
     role: "admin",
   },
   parameters: {
@@ -24,5 +25,12 @@ export const LongProjectName: Story = {
   args: {
     projectName:
       "The Design System Component Library for the Marketing Website and Internal Admin Dashboard",
+  },
+};
+
+export const NoBaseline: Story = {
+  args: {
+    projectName: "Design System",
+    baselineBuildId: null,
   },
 };

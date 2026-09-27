@@ -25,14 +25,17 @@ export default async function ProjectPage(props: ProjectPageProps) {
   const rawSearchParams = await props.searchParams;
   const { search, statuses, branches, authors } = parseBuildsSearchParams(rawSearchParams);
 
-  const [projectError, projectResult] = await serverClient.projects.getOne({ projectId });
+  const [[projectError, projectResult], [baselineError, baselineResult]] = await Promise.all([
+    serverClient.projects.getOne({ projectId }),
+    serverClient.projects.getBaselineBuild({ projectId }),
+  ]);
 
-  if (projectError?.status === 404) {
+  if (projectError?.status === 404 || baselineError?.status === 404) {
     notFound();
   }
 
-  if (projectError) {
-    serverError(projectError);
+  if (projectError || baselineError) {
+    serverError(projectError || baselineError);
   }
 
   const queryClient = getQueryClient();
@@ -78,6 +81,7 @@ export default async function ProjectPage(props: ProjectPageProps) {
         <ProjectHeader
           projectId={projectId}
           projectName={projectResult.project.name}
+          baselineBuildId={baselineResult.build?.id ?? null}
           role={toRole(session?.user.role)}
         />
       }

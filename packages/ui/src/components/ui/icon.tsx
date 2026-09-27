@@ -18,6 +18,7 @@ export {
   LogOutIcon,
   MailIcon,
   MenuIcon,
+  MilestoneIcon,
   MonitorIcon,
   SearchIcon,
   SettingsIcon,
