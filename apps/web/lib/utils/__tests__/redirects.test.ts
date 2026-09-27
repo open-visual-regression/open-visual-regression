@@ -6,7 +6,7 @@ describe("redirects", () => {
   describe("getLoginPath", () => {
     it("should encode the path to return to", () => {
       expect(getLoginPath("/projects/1/baseline/storybook?path=/story/a")).toBe(
-        "/login?next=%2Fprojects%2F1%2Fbaseline%2Fstorybook%3Fpath%3D%2Fstory%2Fa",
+        "/login?callback_url=%2Fprojects%2F1%2Fbaseline%2Fstorybook%3Fpath%3D%2Fstory%2Fa",
       );
     });
   });

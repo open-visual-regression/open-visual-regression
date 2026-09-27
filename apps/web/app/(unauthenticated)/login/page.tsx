@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getCachedSession } from "@/lib/auth/session";
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
-import { getSafeRedirectPath } from "@/lib/utils/redirects";
+import { getSafeRedirectPath, CALLBACK_URL_PARAM } from "@/lib/utils/redirects";
 
 import { CenteredFormSection } from "../_components/CenteredFormSection";
 import { LoginCard } from "./_components/login-card/LoginCard";
@@ -13,8 +13,8 @@ export const dynamic = "force-dynamic";
 type LoginPageProps = PageProps<"/login">;
 
 export default async function LoginPage(props: LoginPageProps) {
-  const { next } = await props.searchParams;
-  const redirectPath = getSafeRedirectPath(next);
+  const searchParams = await props.searchParams;
+  const redirectPath = getSafeRedirectPath(searchParams[CALLBACK_URL_PARAM]);
 
   const [[error, setupStatusResult], session] = await Promise.all([
     serverClient.setup.status(),
