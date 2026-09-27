@@ -1,6 +1,7 @@
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 
 import { serverClient } from "@/lib/router";
+import { getLoginPath } from "@/lib/utils/redirects";
 
 const handler = new OpenAPIHandler(serverClient.baseline);
 
@@ -12,7 +13,12 @@ const serve = async (request: Request) => {
   }
 
   if (response.status === 401) {
-    return new Response(null, { status: 302, headers: { location: "/login" } });
+    const { pathname, search } = new URL(request.url);
+
+    return new Response(null, {
+      status: 302,
+      headers: { location: getLoginPath(`${pathname}${search}`) },
+    });
   }
 
   return response;

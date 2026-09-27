@@ -6,6 +6,7 @@ import { dbClient } from "@ovr/db/client";
 
 import { serverClient } from "@/lib/router";
 import { describe, expect, test } from "@/lib/testing/fixtures";
+import { getLoginPath } from "@/lib/utils/redirects";
 
 import { GET } from "../route";
 
@@ -38,13 +39,15 @@ const createProjectWithBaseline = async (createdBy: string) => {
 };
 
 describe("GET /api/baseline/[...path]", () => {
-  test.each(["", "/storybook"])(
-    "should redirect to login when there is no session for %j",
+  test.each(["", "/storybook?path=/story/ui-button--primary"])(
+    "should redirect to login and back when there is no session for %j",
     async (suffix) => {
       const response = await buildRequest(`${NONEXISTENT_PROJECT_ID}${suffix}`);
 
       expect(response.status).toBe(302);
-      expect(response.headers.get("location")).toBe("/login");
+      expect(response.headers.get("location")).toBe(
+        getLoginPath(`/api/baseline/${NONEXISTENT_PROJECT_ID}${suffix}`),
+      );
     },
   );
 
