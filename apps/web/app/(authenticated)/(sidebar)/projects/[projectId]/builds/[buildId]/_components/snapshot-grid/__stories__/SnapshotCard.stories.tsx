@@ -74,3 +74,16 @@ export const NoPreview: Story = {
     }),
   },
 };
+
+export const WithWarning: Story = {
+  args: {
+    snapshot: mocks.build.generateBuildSnapshot({
+      id: "snapshot-4",
+      targetName: "Primary",
+      targetTitle: "Button",
+      imagePath: "new-desktop.png",
+      status: "unchanged",
+      hasUncaughtPageError: true,
+    }),
+  },
+};

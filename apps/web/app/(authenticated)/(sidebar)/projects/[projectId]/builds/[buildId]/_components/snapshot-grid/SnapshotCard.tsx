@@ -1,5 +1,6 @@
 import { type BuildSnapshotSchema } from "@ovr/api/contracts/snapshots";
-import { GlobeIcon, Icon } from "@ovr/ui/components/icon";
+import { Badge } from "@ovr/ui/components/badge";
+import { GlobeIcon, Icon, TriangleAlertIcon } from "@ovr/ui/components/icon";
 import { ResolutionIcon } from "@ovr/ui/components/resolution-icon";
 import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 import { cn } from "@ovr/ui/lib/utils";
@@ -40,7 +41,7 @@ type SnapshotCardProps = {
 
 export const SnapshotCard = ({ snapshot, projectId, buildId, filters }: SnapshotCardProps) => {
   const imagePath = getStoragePath(snapshot.imagePath);
-  const label = `snapshot of ${snapshot.targetTitle} ${snapshot.targetName}, ${snapshot.browser} ${snapshot.viewportName}, ${getSnapshotStatusLabel(snapshot.status)}`;
+  const label = `snapshot of ${snapshot.targetTitle} ${snapshot.targetName}, ${snapshot.browser} ${snapshot.viewportName}, ${getSnapshotStatusLabel(snapshot.status)}${snapshot.hasUncaughtPageError ? ", has warnings" : ""}`;
 
   return (
     <CardLink
@@ -68,7 +69,12 @@ export const SnapshotCard = ({ snapshot, projectId, buildId, filters }: Snapshot
             <Typography variant="caption">no preview</Typography>
           </div>
         )}
-        <div className="absolute bottom-2 right-2">
+        <div className="absolute bottom-2 right-2 flex items-center gap-1">
+          {snapshot.hasUncaughtPageError ? (
+            <Badge variant="solid" color="amber" className="self-stretch">
+              <Icon icon={TriangleAlertIcon} size={12} role="img" aria-label="warning" />
+            </Badge>
+          ) : null}
           <SnapshotStatusBadge status={snapshot.status} filled />
         </div>
       </SnapshotCardPreview>

@@ -387,6 +387,7 @@ export const listForBuild = async (
       viewportHeight: snapshots.viewportHeight,
       viewportName: snapshots.viewportName,
       imagePath: snapshots.imagePath,
+      hasUncaughtPageError: snapshots.hasUncaughtPageError,
       status: displayStatusExpr,
       statusPriority: statusPriorityExpr,
       diffId: diffs.id,
