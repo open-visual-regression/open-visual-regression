@@ -3,6 +3,7 @@
 import { ORPCError } from "@orpc/client";
 import { revalidatePath } from "next/cache";
 
+import { findBaselineBuild } from "@ovr/builds/builds";
 import { deleteProject as deleteProjectService } from "@ovr/builds/projects";
 import { dbClient } from "@ovr/db/client";
 
@@ -22,6 +23,22 @@ export const getOne = os.projects.getOne
     }
 
     return { project };
+  })
+  .actionable();
+
+export const getBaselineBuild = os.projects.getBaselineBuild
+  .use(authenticatedMiddleware)
+  .handler(async ({ input, context }) => {
+    const project = await dbClient.projects.getProject({
+      projectId: input.projectId,
+      organizationId: context.organizationId,
+    });
+
+    if (!project) {
+      throw new ORPCError("NOT_FOUND", { message: "Project not found" });
+    }
+
+    return { build: await findBaselineBuild(project) };
   })
   .actionable();
 

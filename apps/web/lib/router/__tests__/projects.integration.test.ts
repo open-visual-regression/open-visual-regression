@@ -1,6 +1,7 @@
 import { vi } from "vitest";
 
 import type { AddProjectInputSchema } from "@ovr/api/contracts/projects";
+import { dbClient } from "@ovr/db/client";
 import { enqueueProjectPurge } from "@ovr/queue/producer";
 
 import { serverClient } from "@/lib/router";
@@ -137,6 +138,53 @@ describe("projects", () => {
         id: admin.id,
         name: admin.name,
         email: admin.email,
+      });
+    });
+  });
+
+  describe("getBaselineBuild", () => {
+    test("should return UNAUTHORIZED when no session cookie is provided", async () => {
+      const [error] = await serverClient.projects.getBaselineBuild({
+        projectId: NONEXISTENT_PROJECT_ID,
+      });
+      expect(error?.code).toBe("UNAUTHORIZED");
+    });
+
+    test("should return NOT_FOUND for an unknown project ID", async ({ admin: _ }) => {
+      const [error] = await serverClient.projects.getBaselineBuild({
+        projectId: NONEXISTENT_PROJECT_ID,
+      });
+      expect(error?.code).toBe("NOT_FOUND");
+    });
+
+    test("should return null when the project has no baseline build", async ({ admin: _ }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+
+      const [error, result] = await serverClient.projects.getBaselineBuild({
+        projectId: addResult!.projectId,
+      });
+
+      expect(error).toBeNull();
+      expect(result).toEqual({ build: null });
+    });
+
+    test("should return the latest successful main branch build", async ({ admin }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+      const build = await dbClient.builds.create({
+        projectId,
+        branch: TEST_PROJECT.gitMainBranch,
+        commitSha: "c".repeat(40),
+        processingStatus: "success",
+        artifactPath: "builds/seed/artifact",
+        createdBy: admin.id,
+      });
+
+      const [error, result] = await serverClient.projects.getBaselineBuild({ projectId });
+
+      expect(error).toBeNull();
+      expect(result).toEqual({
+        build: { id: build!.id, commitSha: build!.commitSha, createdAt: build!.createdAt },
       });
     });
   });

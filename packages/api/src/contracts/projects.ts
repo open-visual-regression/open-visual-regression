@@ -76,6 +76,26 @@ export const getOneOutputSchema = z.object({
 
 export const getOneContract = oc.input(getOneInputSchema).output(getOneOutputSchema);
 
+export const getBaselineBuildInputSchema = z.object({
+  projectId: z.uuidv7(),
+});
+
+export const getBaselineBuildOutputSchema = z.object({
+  build: z
+    .object({
+      id: z.uuidv7(),
+      commitSha: z.string().min(1),
+      createdAt: z.string().nonempty(),
+    })
+    .nullable(),
+});
+
+export type GetBaselineBuildOutput = z.infer<typeof getBaselineBuildOutputSchema>;
+
+export const getBaselineBuildContract = oc
+  .input(getBaselineBuildInputSchema)
+  .output(getBaselineBuildOutputSchema);
+
 export const updateProjectInputSchema = z.object({
   id: z.uuidv7(),
   patch: z.object({
@@ -99,6 +119,7 @@ export const deleteProjectContract = oc.input(deleteProjectInputSchema).output(z
 
 export const contract = {
   getOne: getOneContract,
+  getBaselineBuild: getBaselineBuildContract,
   list: listProjectsContract,
   count: countProjectsContract,
   add: addProjectContract,
