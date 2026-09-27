@@ -69,13 +69,15 @@ export const SnapshotCard = ({ snapshot, projectId, buildId, filters }: Snapshot
             <Typography variant="caption">no preview</Typography>
           </div>
         )}
-        <div className="absolute bottom-2 right-2 flex items-center gap-1">
-          {snapshot.hasUncaughtPageError ? (
-            <Badge variant="solid" color="amber" className="self-stretch">
-              <Icon icon={TriangleAlertIcon} size={12} role="img" aria-label="warning" />
-            </Badge>
-          ) : null}
-          <SnapshotStatusBadge status={snapshot.status} filled />
+        <div className="absolute bottom-2 right-2">
+          <div className="inline-flex gap-1">
+            {snapshot.hasUncaughtPageError ? (
+              <Badge variant="solid" color="amber" className="self-stretch">
+                <Icon icon={TriangleAlertIcon} size={12} role="img" aria-label="warning" />
+              </Badge>
+            ) : null}
+            <SnapshotStatusBadge status={snapshot.status} filled />
+          </div>
         </div>
       </SnapshotCardPreview>
       <SnapshotCardBody>

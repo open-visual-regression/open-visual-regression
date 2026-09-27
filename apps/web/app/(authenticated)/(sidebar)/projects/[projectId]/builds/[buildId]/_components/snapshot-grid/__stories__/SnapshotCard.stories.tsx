@@ -17,9 +17,6 @@ const meta: Meta<typeof SnapshotCard> = {
       appDirectory: true,
       navigation: { pathname: "/projects/project-1/builds/build-1" },
     },
-    ovr: {
-      viewports: ["desktop", "mobile"],
-    },
   },
   decorators: [
     (Story) => (
