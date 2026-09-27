@@ -33,12 +33,6 @@ export const IconEnd: Story = {
   },
 };
 
-export const AsButton: Story = {
-  args: {
-    href: undefined,
-  },
-};
-
 export const Skeleton: Story = {
   render: () => <ResponsiveActionButtonSkeleton />,
 };
