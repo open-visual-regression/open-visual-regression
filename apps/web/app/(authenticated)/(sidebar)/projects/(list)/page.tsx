@@ -1,11 +1,11 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 
-import { Icon, PlusIcon } from "@ovr/ui/components/icon";
+import { PlusIcon } from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
 
 import { getCachedSession } from "@/lib/auth/session";
 import { RequiresAdminRole } from "@/lib/components/authorization/RequiresAdminRole";
-import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
+import { ResponsiveActionButton } from "@/lib/components/responsive-action-button/ResponsiveActionButton";
 import { projectsListInfiniteOptions } from "@/lib/orpc/projects-query";
 import { getQueryClient } from "@/lib/orpc/query-client";
 import { orpcServer } from "@/lib/orpc/server";
@@ -46,10 +46,9 @@ export default async function ProjectsPage() {
       }
       action={
         <RequiresAdminRole role={sessionResult?.user.role}>
-          <ButtonLink href="/projects/new">
-            <Icon icon={PlusIcon} />
+          <ResponsiveActionButton href="/projects/new" icon={PlusIcon}>
             new project
-          </ButtonLink>
+          </ResponsiveActionButton>
         </RequiresAdminRole>
       }
       content={
