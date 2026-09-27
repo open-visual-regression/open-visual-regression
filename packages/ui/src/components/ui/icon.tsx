@@ -26,6 +26,7 @@ export {
   RefreshCwIcon,
   SmartphoneIcon,
   TabletIcon,
+  TriangleAlertIcon,
   UserIcon,
   UsersIcon,
   XIcon,

@@ -90,6 +90,7 @@ export const list = os.snapshots.list
         viewportWidth: row.viewportWidth,
         viewportHeight: row.viewportHeight === 0 ? null : row.viewportHeight,
         viewportName: row.viewportName,
+        hasUncaughtPageError: row.hasUncaughtPageError,
       })),
       total,
       nextCursor,

@@ -51,6 +51,7 @@ export const buildSnapshotSchema = z.object({
   viewportWidth: z.number().int(),
   viewportHeight: z.number().int().nullable(),
   viewportName: z.string().min(1),
+  hasUncaughtPageError: z.boolean(),
 });
 
 export type BuildSnapshotSchema = z.infer<typeof buildSnapshotSchema>;

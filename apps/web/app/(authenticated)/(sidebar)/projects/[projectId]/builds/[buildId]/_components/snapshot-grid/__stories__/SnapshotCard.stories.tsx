@@ -17,9 +17,6 @@ const meta: Meta<typeof SnapshotCard> = {
       appDirectory: true,
       navigation: { pathname: "/projects/project-1/builds/build-1" },
     },
-    ovr: {
-      viewports: ["desktop", "mobile"],
-    },
   },
   decorators: [
     (Story) => (
@@ -71,6 +68,19 @@ export const NoPreview: Story = {
       targetTitle: "Layout",
       imagePath: "",
       status: "queued",
+    }),
+  },
+};
+
+export const WithWarning: Story = {
+  args: {
+    snapshot: mocks.build.generateBuildSnapshot({
+      id: "snapshot-4",
+      targetName: "Primary",
+      targetTitle: "Button",
+      imagePath: "new-desktop.png",
+      status: "unchanged",
+      hasUncaughtPageError: true,
     }),
   },
 };

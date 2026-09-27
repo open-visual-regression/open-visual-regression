@@ -18,6 +18,7 @@ const SNAPSHOT: BuildSnapshotSchema = {
   viewportWidth: 1280,
   viewportHeight: 800,
   viewportName: "desktop",
+  hasUncaughtPageError: false,
 };
 
 describe("formatSnapshotsOutput", () => {

@@ -31,4 +31,18 @@ describe("SnapshotCard", () => {
       "/projects/project-1/builds/build-1/snapshots/snapshot-1?status=needs_review&browser=chromium",
     );
   });
+
+  it("should show a warning badge when the snapshot has an uncaught page error", () => {
+    const snapshot = mocks.build.generateBuildSnapshot({ hasUncaughtPageError: true });
+    render(<SnapshotCard snapshot={snapshot} projectId="project-1" buildId="build-1" />);
+
+    expect(screen.getByRole("img", { name: "warning" })).toBeInTheDocument();
+  });
+
+  it("should not show a warning badge when the snapshot has no warnings", () => {
+    const snapshot = mocks.build.generateBuildSnapshot({ hasUncaughtPageError: false });
+    render(<SnapshotCard snapshot={snapshot} projectId="project-1" buildId="build-1" />);
+
+    expect(screen.queryByRole("img", { name: "warning" })).not.toBeInTheDocument();
+  });
 });
