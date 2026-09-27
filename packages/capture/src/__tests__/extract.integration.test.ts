@@ -3,12 +3,13 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { Worker } from "bullmq";
+import { Queue, Worker } from "bullmq";
 import * as tar from "tar";
 
 import { dbClient } from "@ovr/db/client";
 import {
   QueueName,
+  queueOptions,
   type RedisConnection,
   type CaptureGroupJobPayload,
   type FinalizeJobPayload,
@@ -110,6 +111,38 @@ describe("extractBuild", () => {
       snapshotIds: expect.arrayContaining(snapshots.map((snapshot) => snapshot.id)),
     });
     expect(job!.snapshotIds).toHaveLength(2);
+  });
+
+  test("cancels the snapshots it creates and skips enqueuing capture when the build was superseded mid-extract", async ({
+    mainBuild,
+    captureConfiguration,
+    connection,
+  }) => {
+    const tarball = await buildArtifactTarball();
+    await storage.uploadFile(mainBuild.artifactPath, tarball, "application/gzip");
+
+    // Simulates a supersede landing while extractBuild was still reading the artifact
+    // bundle: by the time it inserts snapshots, the build is already canceled, but its
+    // cleanup ran too early to have canceled these (they didn't exist yet).
+    await dbClient.builds.cancelIfInProgress(mainBuild.id, null);
+
+    await extractBuild(
+      mainBuild.id,
+      [{ id: "story-a", title: "Story", name: "A" }],
+      [captureConfiguration],
+      0.05,
+    );
+
+    const [snapshot] = await dbClient.snapshots.findByBuild(mainBuild.id);
+    expect(snapshot!.status).toBe("canceled");
+
+    const captureQueue = new Queue(QueueName.SNAPSHOT_CAPTURE, queueOptions(connection));
+    try {
+      const waiting = await captureQueue.getJobs(["waiting", "delayed", "prioritized"]);
+      expect(waiting).toHaveLength(0);
+    } finally {
+      await captureQueue.close();
+    }
   });
 
   test("resolves a story's parameters.ovr.viewports override into one snapshot per named viewport", async ({
