@@ -1,17 +1,14 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 
-import { PlusIcon } from "@ovr/ui/components/icon";
-import { Typography } from "@ovr/ui/components/typography";
-
 import { getCachedSession } from "@/lib/auth/session";
-import { RequiresAdminRole } from "@/lib/components/authorization/RequiresAdminRole";
-import { ResponsiveActionButton } from "@/lib/components/responsive-action-button/ResponsiveActionButton";
 import { projectsListInfiniteOptions } from "@/lib/orpc/projects-query";
 import { getQueryClient } from "@/lib/orpc/query-client";
 import { orpcServer } from "@/lib/orpc/server";
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
 
+import { NewProjectButton } from "../_components/new-project-button/NewProjectButton";
+import { ProjectsHeading } from "../_components/ProjectsHeading";
 import { ProjectsPageShell } from "../_components/ProjectsPageShell";
 import { ProjectsSection } from "../_components/ProjectsSection";
 
@@ -34,23 +31,8 @@ export default async function ProjectsPage() {
 
   return (
     <ProjectsPageShell
-      heading={
-        <div className="flex flex-row gap-2 items-end-safe">
-          <Typography variant="h1" as="h1">
-            projects
-          </Typography>
-          <Typography variant="h2" className="text-muted-foreground" as="p">
-            ({total})
-          </Typography>
-        </div>
-      }
-      action={
-        <RequiresAdminRole role={sessionResult?.user.role}>
-          <ResponsiveActionButton href="/projects/new" icon={PlusIcon}>
-            new project
-          </ResponsiveActionButton>
-        </RequiresAdminRole>
-      }
+      heading={<ProjectsHeading total={total} />}
+      action={<NewProjectButton role={sessionResult?.user.role} />}
       content={
         <HydrationBoundary state={dehydrate(queryClient)}>
           <ProjectsSection role={sessionResult?.user.role} />
