@@ -45,6 +45,7 @@ type ConfirmBuildUploadInput = {
   targets: { id: string; title: string; name: string }[];
   viewports: Viewport[];
   diffThreshold: number;
+  unaffectedTargetIds?: string[];
 };
 
 export const DEFAULT_DIFF_THRESHOLD = 0.05;
@@ -200,12 +201,16 @@ export const confirmBuildUpload = async (
     return { status: "error", error: "ARTIFACT_MISSING" };
   }
 
+  const targetIds = new Set(input.targets.map((target) => target.id));
+  const unaffectedTargetIds = (input.unaffectedTargetIds ?? []).filter((id) => targetIds.has(id));
+
   try {
     await dbClient.buildExtractDefaults.create({
       buildId,
       targets: input.targets,
       viewports: input.viewports,
       diffThreshold: input.diffThreshold,
+      unaffectedTargetIds,
     });
     await enqueueExtract({
       buildId,
@@ -213,6 +218,7 @@ export const confirmBuildUpload = async (
       targets: input.targets,
       viewports: input.viewports,
       diffThreshold: input.diffThreshold,
+      unaffectedTargetIds,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -319,6 +325,7 @@ export const rebuildBuild = async (
       targets: extractDefaults.targets,
       viewports: extractDefaults.viewports,
       diffThreshold: extractDefaults.diffThreshold,
+      unaffectedTargetIds: extractDefaults.unaffectedTargetIds,
     });
     await dbClient.projects.incrementTotalBuildsCount(source.projectId, tx);
   });
@@ -331,6 +338,7 @@ export const rebuildBuild = async (
       targets: extractDefaults.targets,
       viewports: extractDefaults.viewports,
       diffThreshold: extractDefaults.diffThreshold,
+      unaffectedTargetIds: extractDefaults.unaffectedTargetIds,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

@@ -140,6 +140,7 @@ export const buildExtractDefaults = pgTable("build_extract_defaults", {
   targets: jsonb().$type<BuildExtractDefaultTarget[]>().notNull(),
   viewports: jsonb().$type<BuildExtractDefaultViewport[]>().notNull(),
   diffThreshold: numeric("diff_threshold", { mode: "number", precision: 3, scale: 2 }).notNull(),
+  unaffectedTargetIds: jsonb("unaffected_target_ids").$type<string[]>().notNull().default([]),
   createdAt: utcTimestamp("created_at")
     .default(sql`now()`)
     .notNull(),

@@ -197,6 +197,35 @@ describe("builds", () => {
       expect(result).toEqual({ ok: true });
     });
 
+    test("records the targets the uploader marked unaffected", async ({ admin: _ }) => {
+      const { apiKey } = await createProjectWithApiKey();
+      setApiKeyHeader(apiKey);
+
+      const [, createResult] = await serverClient.builds.createBuild({
+        branch: "feature/checkout",
+        commitSha: "a".repeat(40),
+      });
+      const buildId = createResult!.buildId;
+
+      const build = await dbClient.builds.findById(buildId);
+      await storage.uploadFile(build!.artifactPath, Buffer.from(""), "application/gzip");
+
+      const [error] = await serverClient.builds.confirmUpload({
+        buildId,
+        targets: [
+          { id: "story-a", title: "Story", name: "A" },
+          { id: "story-b", title: "Story", name: "B" },
+        ],
+        viewports: VIEWPORTS,
+        unaffectedTargetIds: ["story-b"],
+      });
+
+      expect(error).toBeNull();
+      expect(await dbClient.buildExtractDefaults.findByBuild(buildId)).toMatchObject({
+        unaffectedTargetIds: ["story-b"],
+      });
+    });
+
     test("should return CONFLICT when a newer build superseded this one mid-upload", async ({
       admin: _,
     }) => {

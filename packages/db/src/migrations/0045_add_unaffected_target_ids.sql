@@ -1,0 +1,1 @@
+ALTER TABLE "build_extract_defaults" ADD COLUMN "unaffected_target_ids" jsonb DEFAULT '[]'::jsonb NOT NULL;
