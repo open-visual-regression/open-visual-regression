@@ -9,7 +9,8 @@ vi.mock("@/lib/auth/client");
 
 const mockSignIn = vi.mocked(authClient.signIn.email);
 
-const renderComponent = () => render(<LoginCard />);
+const renderComponent = ({ redirectPath = "/projects" }: { redirectPath?: string } = {}) =>
+  render(<LoginCard redirectPath={redirectPath} />);
 
 describe("InvitationCard", () => {
   beforeEach(() => {
@@ -51,6 +52,18 @@ describe("InvitationCard", () => {
     expect(mockSignIn).toHaveBeenCalledWith({
       email,
       password,
+    });
+  });
+
+  it("should return to the redirect path after signing in", async ({ user }) => {
+    renderComponent({ redirectPath: "/projects/1/baseline" });
+
+    await user.type(screen.getByLabelText("email"), "tom@openvisualregression.com");
+    await user.type(screen.getByLabelText("password"), "hunter123");
+    await user.click(screen.getByRole("button", { name: "sign in" }));
+
+    await waitFor(() => {
+      expect(window.location.href).toBe("http://localhost:3000/projects/1/baseline");
     });
   });
 

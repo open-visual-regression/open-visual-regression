@@ -3,7 +3,11 @@ import { Typography } from "@ovr/ui/components/typography";
 
 import { LoginForm } from "./LoginForm";
 
-export const LoginCard = () => (
+type LoginCardProps = {
+  redirectPath: string;
+};
+
+export const LoginCard = ({ redirectPath }: LoginCardProps) => (
   <Card className="w-full">
     <CardHeader>
       <Typography variant="h2" as="h1">
@@ -11,7 +15,7 @@ export const LoginCard = () => (
       </Typography>
     </CardHeader>
     <CardContent>
-      <LoginForm />
+      <LoginForm redirectPath={redirectPath} />
     </CardContent>
   </Card>
 );
