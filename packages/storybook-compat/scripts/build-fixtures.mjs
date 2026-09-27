@@ -44,7 +44,11 @@ for (const fixture of fixtures) {
     continue;
   }
 
-  if (!force && existsSync(path.join(buildDir, "index.json"))) {
+  const built = ["index.json", "preview-stats.json"].every((file) =>
+    existsSync(path.join(buildDir, file)),
+  );
+
+  if (!force && built) {
     console.log(`${name}: already built, skipping (pass --force to rebuild)`);
     continue;
   }
@@ -56,5 +60,9 @@ for (const fixture of fixtures) {
   await rm(storiesDir, { recursive: true, force: true });
   await cp(STORIES_DIR, storiesDir, { recursive: true });
   await rm(buildDir, { recursive: true, force: true });
-  await run("pnpm", ["exec", "storybook", "build", "--quiet", "--disable-telemetry"], fixture);
+  await run(
+    "pnpm",
+    ["exec", "storybook", "build", "--quiet", "--disable-telemetry", "--stats-json"],
+    fixture,
+  );
 }
