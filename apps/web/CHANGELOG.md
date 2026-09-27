@@ -1,5 +1,30 @@
 # @ovr/web
 
+## 0.6.3
+
+### Patch Changes
+
+- [#249](https://github.com/open-visual-regression/open-visual-regression/pull/249) [`73f7fda`](https://github.com/open-visual-regression/open-visual-regression/commit/73f7fda61041627356c9ad7a183efb4007f47ac0) Thanks [@tgfischer](https://github.com/tgfischer)! - Add an endpoint that returns a project's baseline build: the latest successful build on its main branch.
+
+- [#248](https://github.com/open-visual-regression/open-visual-regression/pull/248) [`020759a`](https://github.com/open-visual-regression/open-visual-regression/commit/020759aceccb7baaa47641a9527b5a73b0af3275) Thanks [@tgfischer](https://github.com/tgfischer)! - Show the test connection and disconnect actions right after saving a git integration, and hide them after disconnecting, without reloading the page.
+
+- [#253](https://github.com/open-visual-regression/open-visual-regression/pull/253) [`6f929cc`](https://github.com/open-visual-regression/open-visual-regression/commit/6f929cc8f4803bcafc678d21da5c63fad0e40b29) Thanks [@tgfischer](https://github.com/tgfischer)! - Return to the page you opened after signing in.
+
+- [#257](https://github.com/open-visual-regression/open-visual-regression/pull/257) [`4177ca9`](https://github.com/open-visual-regression/open-visual-regression/commit/4177ca9e0503839b9c40b34041ef9e981076edf4) Thanks [@tgfischer](https://github.com/tgfischer)! - Show a warning badge on snapshot cards when the story rendered with an uncaught error.
+
+- [#252](https://github.com/open-visual-regression/open-visual-regression/pull/252) [`9e51c55`](https://github.com/open-visual-regression/open-visual-regression/commit/9e51c5526547457dd7519d79d7854fa99ee773ed) Thanks [@tgfischer](https://github.com/tgfischer)! - Add stable links to a project's baseline build and baseline Storybook.
+
+- [#251](https://github.com/open-visual-regression/open-visual-regression/pull/251) [`12bbb1e`](https://github.com/open-visual-regression/open-visual-regression/commit/12bbb1ee61ebf33b75e1a0741b871ae144376eaf) Thanks [@tgfischer](https://github.com/tgfischer)! - Add a "view baseline" button to the project builds page.
+
+- Updated dependencies [[`73f7fda`](https://github.com/open-visual-regression/open-visual-regression/commit/73f7fda61041627356c9ad7a183efb4007f47ac0), [`4177ca9`](https://github.com/open-visual-regression/open-visual-regression/commit/4177ca9e0503839b9c40b34041ef9e981076edf4), [`9e51c55`](https://github.com/open-visual-regression/open-visual-regression/commit/9e51c5526547457dd7519d79d7854fa99ee773ed), [`12bbb1e`](https://github.com/open-visual-regression/open-visual-regression/commit/12bbb1ee61ebf33b75e1a0741b871ae144376eaf)]:
+  - @ovr/api@0.2.3
+  - @ovr/builds@0.1.10
+  - @ovr/db@0.2.5
+  - @ovr/ui@0.1.1
+  - @ovr/reviews@0.1.10
+  - @ovr/git-status@0.1.7
+  - @ovr/queue@0.1.8
+
 ## 0.6.2
 
 ### Patch Changes

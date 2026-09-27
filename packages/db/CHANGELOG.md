@@ -1,5 +1,11 @@
 # @ovr/db
 
+## 0.2.5
+
+### Patch Changes
+
+- [#257](https://github.com/open-visual-regression/open-visual-regression/pull/257) [`4177ca9`](https://github.com/open-visual-regression/open-visual-regression/commit/4177ca9e0503839b9c40b34041ef9e981076edf4) Thanks [@tgfischer](https://github.com/tgfischer)! - Show a warning badge on snapshot cards when the story rendered with an uncaught error.
+
 ## 0.2.4
 
 ### Patch Changes

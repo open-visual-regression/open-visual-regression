@@ -1,5 +1,15 @@
 # @ovr/builds
 
+## 0.1.10
+
+### Patch Changes
+
+- [#249](https://github.com/open-visual-regression/open-visual-regression/pull/249) [`73f7fda`](https://github.com/open-visual-regression/open-visual-regression/commit/73f7fda61041627356c9ad7a183efb4007f47ac0) Thanks [@tgfischer](https://github.com/tgfischer)! - Add an endpoint that returns a project's baseline build: the latest successful build on its main branch.
+
+- Updated dependencies [[`4177ca9`](https://github.com/open-visual-regression/open-visual-regression/commit/4177ca9e0503839b9c40b34041ef9e981076edf4)]:
+  - @ovr/db@0.2.5
+  - @ovr/queue@0.1.8
+
 ## 0.1.9
 
 ### Patch Changes
