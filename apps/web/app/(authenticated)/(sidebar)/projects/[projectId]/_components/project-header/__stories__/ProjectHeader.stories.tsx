@@ -27,10 +27,3 @@ export const LongProjectName: Story = {
       "The Design System Component Library for the Marketing Website and Internal Admin Dashboard",
   },
 };
-
-export const NoBaseline: Story = {
-  args: {
-    projectName: "Design System",
-    baselineBuildId: null,
-  },
-};
