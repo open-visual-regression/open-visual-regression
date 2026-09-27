@@ -159,9 +159,6 @@ export const extractBuild = async (
 
   await failUnreadableTargets(buildId, targets, viewports, diffThreshold, failures);
 
-  // A supersede can cancel the build while we were reading the artifact bundle above.
-  // Its cleanup only cancels snapshots that existed at that moment, so the ones just
-  // created here would otherwise be captured for a build that's already canceled.
   const current = await dbClient.builds.findById(buildId);
   if (current?.processingStatus === "canceled") {
     await dbClient.snapshots.markUnfinishedAs(buildId, "canceled");

@@ -121,9 +121,6 @@ describe("extractBuild", () => {
     const tarball = await buildArtifactTarball();
     await storage.uploadFile(mainBuild.artifactPath, tarball, "application/gzip");
 
-    // Simulates a supersede landing while extractBuild was still reading the artifact
-    // bundle: by the time it inserts snapshots, the build is already canceled, but its
-    // cleanup ran too early to have canceled these (they didn't exist yet).
     await dbClient.builds.cancelIfInProgress(mainBuild.id, null);
 
     await extractBuild(
