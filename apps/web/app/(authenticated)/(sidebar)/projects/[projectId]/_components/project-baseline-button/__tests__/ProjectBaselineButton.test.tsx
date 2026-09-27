@@ -22,10 +22,10 @@ describe("ProjectBaselineButton", () => {
     );
   });
 
-  it("should be disabled when the project has no baseline build", () => {
+  it("should not show the button when the project has no baseline build", () => {
     renderComponent({ baselineBuildId: null });
 
     expect(screen.queryByRole("link", { name: /view baseline/i })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /view baseline/i })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: /view baseline/i })).not.toBeInTheDocument();
   });
 });

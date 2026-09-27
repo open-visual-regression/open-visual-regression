@@ -7,14 +7,12 @@ export type ProjectBaselineButtonProps = {
   baselineBuildId: string | null;
 };
 
-export const ProjectBaselineButton = ({
-  projectId,
-  baselineBuildId,
-}: ProjectBaselineButtonProps) => (
-  <ResponsiveActionButton
-    href={baselineBuildId ? `/projects/${projectId}/builds/${baselineBuildId}` : null}
-    icon={MilestoneIcon}
-  >
-    view baseline
-  </ResponsiveActionButton>
-);
+export const ProjectBaselineButton = ({ projectId, baselineBuildId }: ProjectBaselineButtonProps) =>
+  baselineBuildId ? (
+    <ResponsiveActionButton
+      href={`/projects/${projectId}/builds/${baselineBuildId}`}
+      icon={MilestoneIcon}
+    >
+      view baseline
+    </ResponsiveActionButton>
+  ) : null;
