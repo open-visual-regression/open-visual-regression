@@ -41,6 +41,7 @@ export const serverClient: typeof RealServerClient = {
         },
       }))
       .actionable(),
+    getBaselineBuild: os.projects.getBaselineBuild.handler(() => ({ build: null })).actionable(),
     list: os.projects.list.handler(() => ({ projects: [], nextCursor: null })).actionable(),
     count: os.projects.count.handler(() => ({ total: 0 })).actionable(),
     add: os.projects.add.handler(() => ({ projectId: fakeUuid })).actionable(),

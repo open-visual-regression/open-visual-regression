@@ -256,6 +256,19 @@ export const findAncestorBuild = async (
   };
 };
 
+export const findBaselineBuild = async (project: { id: string; gitMainBranch: string }) => {
+  const [build] = await dbClient.builds.findMany(
+    {
+      projectIds: [project.id],
+      branches: [project.gitMainBranch],
+      processingStatuses: ["success"],
+    },
+    { limit: 1 },
+  );
+
+  return build ? { id: build.id, commitSha: build.commitSha, createdAt: build.createdAt } : null;
+};
+
 export type RebuildBlockedReason = "NOT_SETTLED" | "NOT_LATEST_ON_BRANCH" | "NO_EXTRACT_DEFAULTS";
 
 type BuildCandidate = {

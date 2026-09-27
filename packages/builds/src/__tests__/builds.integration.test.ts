@@ -21,6 +21,7 @@ import {
   confirmBuildUpload,
   createBuild,
   findAncestorBuild,
+  findBaselineBuild,
   finalizeBuild,
   getArtifactPath,
   rebuildBuild,
@@ -568,6 +569,53 @@ describe("builds", () => {
         status: "error",
         error: "PROJECT_NOT_FOUND",
       });
+    });
+  });
+
+  describe("findBaselineBuild", () => {
+    const seed = async (
+      projectId: string,
+      userId: string,
+      { branch = "main", processingStatus = "success" as BuildProcessingStatus } = {},
+    ) => {
+      const build = await dbClient.builds.create({
+        projectId,
+        branch,
+        commitSha: "a".repeat(40),
+        processingStatus,
+        artifactPath: "builds/seed/artifact",
+        createdBy: userId,
+      });
+      return build!;
+    };
+
+    test("returns the latest successful build on the project's main branch", async ({
+      project,
+      user,
+    }) => {
+      await seed(project.id, user.id);
+      const latest = await seed(project.id, user.id);
+
+      expect(await findBaselineBuild(project)).toEqual({
+        id: latest.id,
+        commitSha: latest.commitSha,
+        createdAt: latest.createdAt,
+      });
+    });
+
+    test("skips builds that did not finish successfully", async ({ project, user }) => {
+      const baseline = await seed(project.id, user.id);
+      await seed(project.id, user.id, { processingStatus: "error" });
+      await seed(project.id, user.id, { processingStatus: "canceled" });
+      await seed(project.id, user.id, { processingStatus: "processing" });
+
+      expect(await findBaselineBuild(project)).toMatchObject({ id: baseline.id });
+    });
+
+    test("only considers the project's main branch", async ({ project, user }) => {
+      await seed(project.id, user.id, { branch: "feature" });
+
+      expect(await findBaselineBuild(project)).toBeNull();
     });
   });
 
