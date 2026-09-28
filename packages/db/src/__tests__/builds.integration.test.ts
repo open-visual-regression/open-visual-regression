@@ -105,6 +105,24 @@ describe("builds", () => {
     });
   });
 
+  describe("startProcessing", () => {
+    test("moves a queued build to processing", async ({ build }) => {
+      const updated = await dbClient.builds.startProcessing(build.id);
+
+      expect(updated?.processingStatus).toBe("processing");
+    });
+
+    test.for(["success", "error", "canceled"] as const)(
+      "leaves a %s build as it is",
+      async (processingStatus, { build }) => {
+        await dbClient.builds.updateProcessingStatus(build.id, processingStatus);
+
+        expect(await dbClient.builds.startProcessing(build.id)).toBeUndefined();
+        expect((await dbClient.builds.findById(build.id))?.processingStatus).toBe(processingStatus);
+      },
+    );
+  });
+
   describe("cancelIfInProgress", () => {
     test("cancels a queued build and records who canceled it", async ({ build, user }) => {
       const updated = await dbClient.builds.cancelIfInProgress(build.id, user.id);

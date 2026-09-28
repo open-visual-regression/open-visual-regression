@@ -51,6 +51,15 @@ export const updateProcessingStatus = async (
   return build;
 };
 
+export const startProcessing = async (id: string) => {
+  const [build] = await db
+    .update(builds)
+    .set({ processingStatus: "processing" })
+    .where(and(eq(builds.id, id), inArray(builds.processingStatus, ["queued", "processing"])))
+    .returning();
+  return build;
+};
+
 export const cancelIfInProgress = async (
   id: string,
   canceledBy: string | null,
