@@ -217,7 +217,12 @@ describe("snapshots", () => {
 
       const captureLogs = async (
         mainBuild: { id: string; artifactPath: string },
-        captureConfiguration: { browser: string },
+        captureConfiguration: {
+          browser: string;
+          viewportWidth: number;
+          viewportHeight?: number;
+          viewportName: string;
+        },
         waitForTimeout: number,
       ) => {
         await uploadArtifactWithIframe(mainBuild.artifactPath, iframeWithLateLog);
