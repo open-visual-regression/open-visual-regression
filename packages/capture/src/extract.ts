@@ -159,6 +159,12 @@ export const extractBuild = async (
 
   await failUnreadableTargets(buildId, targets, viewports, diffThreshold, failures);
 
+  const current = await dbClient.builds.findById(buildId);
+  if (current?.processingStatus === "canceled") {
+    await dbClient.snapshots.markUnfinishedAs(buildId, "canceled");
+    return;
+  }
+
   const snapshots = await dbClient.snapshots.findByBuild(buildId);
 
   if (snapshots.every((snapshot) => snapshot.status === "skipped")) {
