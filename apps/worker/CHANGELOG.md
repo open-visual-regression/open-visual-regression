@@ -1,5 +1,24 @@
 # @ovr/worker
 
+## 0.6.4
+
+### Patch Changes
+
+- [#263](https://github.com/open-visual-regression/open-visual-regression/pull/263) [`01010bd`](https://github.com/open-visual-regression/open-visual-regression/commit/01010bdea54b07eda9bb4b2b131abd1055ee82a1) Thanks [@tgfischer](https://github.com/tgfischer)! - Fix a build staying in processing when it needed to finalize again after an earlier finalize had already run.
+
+- [#264](https://github.com/open-visual-regression/open-visual-regression/pull/264) [`0efe1bf`](https://github.com/open-visual-regression/open-visual-regression/commit/0efe1bff767da41dd466e66a55e515c277559eb5) Thanks [@tgfischer](https://github.com/tgfischer)! - Log worker errors and stalled jobs, such as a job that loses its lock and will run again, instead of leaving them out of the worker's logs.
+
+- [#262](https://github.com/open-visual-regression/open-visual-regression/pull/262) [`4ecd06f`](https://github.com/open-visual-regression/open-visual-regression/commit/4ecd06f3927efe6b17865e6d877e7f5692164238) Thanks [@tgfischer](https://github.com/tgfischer)! - Fix a finished build occasionally getting every snapshot twice and going back to processing when its extract job ran again, for example after the worker restarted mid-extract.
+
+- [#260](https://github.com/open-visual-regression/open-visual-regression/pull/260) [`bcb52a1`](https://github.com/open-visual-regression/open-visual-regression/commit/bcb52a12e3304e9ed250c5b1926bef9014526d7b) Thanks [@tgfischer](https://github.com/tgfischer)! - Fix a superseded build occasionally continuing to capture snapshots after being canceled, which could slow down or destabilize the build that superseded it.
+
+- Updated dependencies [[`01010bd`](https://github.com/open-visual-regression/open-visual-regression/commit/01010bdea54b07eda9bb4b2b131abd1055ee82a1), [`4ecd06f`](https://github.com/open-visual-regression/open-visual-regression/commit/4ecd06f3927efe6b17865e6d877e7f5692164238), [`bcb52a1`](https://github.com/open-visual-regression/open-visual-regression/commit/bcb52a12e3304e9ed250c5b1926bef9014526d7b)]:
+  - @ovr/builds@0.1.11
+  - @ovr/queue@0.1.9
+  - @ovr/db@0.2.6
+  - @ovr/capture@0.2.7
+  - @ovr/git-status@0.1.8
+
 ## 0.6.3
 
 ### Patch Changes

@@ -1,5 +1,17 @@
 # @ovr/capture
 
+## 0.2.7
+
+### Patch Changes
+
+- [#260](https://github.com/open-visual-regression/open-visual-regression/pull/260) [`bcb52a1`](https://github.com/open-visual-regression/open-visual-regression/commit/bcb52a12e3304e9ed250c5b1926bef9014526d7b) Thanks [@tgfischer](https://github.com/tgfischer)! - Fix a superseded build occasionally continuing to capture snapshots after being canceled, which could slow down or destabilize the build that superseded it.
+
+- Updated dependencies [[`01010bd`](https://github.com/open-visual-regression/open-visual-regression/commit/01010bdea54b07eda9bb4b2b131abd1055ee82a1), [`4ecd06f`](https://github.com/open-visual-regression/open-visual-regression/commit/4ecd06f3927efe6b17865e6d877e7f5692164238)]:
+  - @ovr/builds@0.1.11
+  - @ovr/queue@0.1.9
+  - @ovr/db@0.2.6
+  - @ovr/reviews@0.1.11
+
 ## 0.2.6
 
 ### Patch Changes

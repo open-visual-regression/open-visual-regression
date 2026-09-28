@@ -1,5 +1,11 @@
 # @ovr/db
 
+## 0.2.6
+
+### Patch Changes
+
+- [#262](https://github.com/open-visual-regression/open-visual-regression/pull/262) [`4ecd06f`](https://github.com/open-visual-regression/open-visual-regression/commit/4ecd06f3927efe6b17865e6d877e7f5692164238) Thanks [@tgfischer](https://github.com/tgfischer)! - Fix a finished build occasionally getting every snapshot twice and going back to processing when its extract job ran again, for example after the worker restarted mid-extract.
+
 ## 0.2.5
 
 ### Patch Changes
