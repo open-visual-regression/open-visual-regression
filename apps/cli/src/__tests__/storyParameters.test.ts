@@ -9,12 +9,14 @@ type Declared<T> = { [K in keyof Required<T>]: true };
 const publishedParameters: Declared<PublishedStoryParameters> = {
   viewports: true,
   diffThreshold: true,
+  waitForTimeout: true,
   skip: true,
 };
 
 const resolvedParameters: Declared<ResolvedStoryParameters> = {
   viewports: true,
   diffThreshold: true,
+  waitForTimeout: true,
   skip: true,
 };
 
@@ -27,6 +29,7 @@ describe("parameters.ovr", () => {
     const parameters = {
       viewports: ["mobile", { browser: "webkit", width: 1440 }],
       diffThreshold: 0.02,
+      waitForTimeout: 2000,
       skip: false,
     } satisfies PublishedStoryParameters satisfies ResolvedStoryParameters;
 

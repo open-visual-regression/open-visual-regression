@@ -81,6 +81,8 @@ export type ExtractJobPayload = {
     default?: boolean;
   }[];
   diffThreshold: number;
+  /** Absent on jobs queued before stories could wait before capture. */
+  waitForTimeout?: number;
   /** Absent on jobs queued before targets could be marked unaffected. */
   unaffectedTargetIds?: string[];
 };

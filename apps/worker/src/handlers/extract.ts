@@ -18,6 +18,7 @@ export const run = async (job: ExtractJob): Promise<void> => {
     job.data.viewports,
     job.data.diffThreshold,
     job.data.unaffectedTargetIds,
+    job.data.waitForTimeout,
   );
 };
 

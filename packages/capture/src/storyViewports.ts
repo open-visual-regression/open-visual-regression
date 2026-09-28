@@ -1,8 +1,9 @@
 import { chromium } from "playwright";
 
-import type {
-  OvrStoryParameterViewport,
-  OvrStoryParameters,
+import {
+  MAX_WAIT_FOR_TIMEOUT_MS,
+  type OvrStoryParameterViewport,
+  type OvrStoryParameters,
 } from "@ovr/storybook-compat/parameters";
 
 import { SIGNAL_HANDLING_OPTIONS, newPage } from "./lib/browser";
@@ -118,3 +119,16 @@ export const resolveTargetDiffThreshold = (
   buildDefault: number,
   override: OvrStoryParameters | undefined,
 ): number => override?.diffThreshold ?? buildDefault;
+
+// Story parameters aren't validated at upload, so a bad value falls back to the build
+// default and an out-of-range one is clamped rather than failing the whole build.
+export const resolveTargetWaitForTimeout = (
+  buildDefault: number,
+  override: OvrStoryParameters | undefined,
+): number => {
+  const waitForTimeout = override?.waitForTimeout;
+  if (typeof waitForTimeout !== "number" || !Number.isFinite(waitForTimeout)) {
+    return buildDefault;
+  }
+  return Math.min(Math.max(Math.round(waitForTimeout), 0), MAX_WAIT_FOR_TIMEOUT_MS);
+};

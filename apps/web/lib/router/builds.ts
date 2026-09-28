@@ -82,6 +82,7 @@ export const confirmUpload = os.builds.confirmUpload
       targets: input.targets,
       viewports: input.viewports,
       diffThreshold: input.diffThreshold ?? DEFAULT_DIFF_THRESHOLD,
+      waitForTimeout: input.waitForTimeout,
       unaffectedTargetIds: input.unaffectedTargetIds,
     });
 

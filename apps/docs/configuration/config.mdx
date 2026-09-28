@@ -28,6 +28,7 @@ export default defineConfig({
 | `viewports` | `Viewport[]` | `[]` | Every viewport available, named or not |
 | `defaultViewports` | `string[]` | every named viewport | Names from `viewports` captured automatically for every story |
 | `diffThreshold` | `number`, `(0, 1]` | `0.05` | Fraction of pixels that may differ before a snapshot needs review |
+| `waitForTimeout` | `number`, `[0, 30000]` | `0` | Milliseconds to wait before each screenshot, e.g. for slow-loading data or images |
 | `onlyAffected` | `object` | | Options for [`--only-affected`](/cli/upload-storybook#only-affected-stories). See [below](#only-affected) |
 
 <Note>
@@ -47,7 +48,7 @@ Each entry in `viewports` describes one capture target:
 
 Unnamed viewports (no `name`) are always opt-in: they can't be referenced by `defaultViewports`, only added inline via a story override.
 
-A story can override `defaultViewports` and `diffThreshold`, or skip itself entirely — see [Per-story parameters](/configuration/story-parameters).
+Individual stories can override some of these options, or skip capture entirely — see [Per-story parameters](/configuration/story-parameters).
 
 ## Only affected
 

@@ -395,6 +395,7 @@ describe("builds", () => {
         targets,
         viewports: [captureConfiguration],
         diffThreshold: 0.05,
+        waitForTimeout: 1500,
       });
 
       expect(await dbClient.buildExtractDefaults.findByBuild(buildId)).toMatchObject({
@@ -402,6 +403,7 @@ describe("builds", () => {
         targets,
         viewports: [captureConfiguration],
         diffThreshold: 0.05,
+        waitForTimeout: 1500,
       });
     });
 
@@ -660,6 +662,7 @@ describe("builds", () => {
           targets: TARGETS,
           viewports: VIEWPORTS,
           diffThreshold: 0.05,
+          waitForTimeout: 1500,
           unaffectedTargetIds,
         });
       }
@@ -739,6 +742,7 @@ describe("builds", () => {
         targets: TARGETS,
         viewports: VIEWPORTS,
         diffThreshold: 0.05,
+        waitForTimeout: 1500,
       });
     });
 
@@ -755,6 +759,7 @@ describe("builds", () => {
         targets: TARGETS,
         viewports: VIEWPORTS,
         diffThreshold: 0.05,
+        waitForTimeout: 1500,
         unaffectedTargetIds: [],
       });
     });

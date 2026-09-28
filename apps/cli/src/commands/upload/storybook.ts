@@ -10,6 +10,7 @@ import {
   loadOvrConfig,
   resolveDiffThreshold,
   resolveViewports,
+  resolveWaitForTimeout,
 } from "../../config";
 import { formatCliError } from "../../errors";
 import { findUnaffectedTargets } from "./affected";
@@ -59,6 +60,7 @@ export const createStorybookCommand = (): Command =>
         const config = await loadOvrConfig(process.cwd(), options.config);
         const viewports = resolveViewports(config);
         const diffThreshold = resolveDiffThreshold(config);
+        const waitForTimeout = resolveWaitForTimeout(config);
         const { branch, commit: commitSha, name, author } = options;
 
         const client = createClient(serverUrl, apiKey);
@@ -91,6 +93,7 @@ export const createStorybookCommand = (): Command =>
           targets,
           viewports,
           diffThreshold,
+          ...(waitForTimeout > 0 && { waitForTimeout }),
           ...(unaffectedTargetIds.length > 0 && { unaffectedTargetIds }),
         });
 

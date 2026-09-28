@@ -140,6 +140,7 @@ export const buildExtractDefaults = pgTable("build_extract_defaults", {
   targets: jsonb().$type<BuildExtractDefaultTarget[]>().notNull(),
   viewports: jsonb().$type<BuildExtractDefaultViewport[]>().notNull(),
   diffThreshold: numeric("diff_threshold", { mode: "number", precision: 3, scale: 2 }).notNull(),
+  waitForTimeout: integer("wait_for_timeout").notNull().default(0),
   unaffectedTargetIds: jsonb("unaffected_target_ids").$type<string[]>().notNull().default([]),
   createdAt: utcTimestamp("created_at")
     .default(sql`now()`)
@@ -184,6 +185,7 @@ export const snapshots = pgTable(
     diffThreshold: numeric("diff_threshold", { mode: "number", precision: 3, scale: 2 })
       .notNull()
       .default(0.05),
+    waitForTimeout: integer("wait_for_timeout").notNull().default(0),
     updatedAt: utcTimestamp("updated_at")
       .default(sql`now()`)
       .$onUpdate(() => sql`now()`)

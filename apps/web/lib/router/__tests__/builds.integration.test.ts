@@ -226,6 +226,48 @@ describe("builds", () => {
       });
     });
 
+    test("records the uploader's wait before capture, defaulting to none", async ({ admin: _ }) => {
+      const { apiKey } = await createProjectWithApiKey();
+      setApiKeyHeader(apiKey);
+
+      const confirm = async (waitForTimeout?: number) => {
+        const [, createResult] = await serverClient.builds.createBuild({
+          branch: "main",
+          commitSha: "a".repeat(40),
+        });
+        const buildId = createResult!.buildId;
+        const build = await dbClient.builds.findById(buildId);
+        await storage.uploadFile(build!.artifactPath, Buffer.from(""), "application/gzip");
+
+        const [error] = await serverClient.builds.confirmUpload({
+          buildId,
+          targets: [{ id: "story-a", title: "Story", name: "A" }],
+          viewports: VIEWPORTS,
+          waitForTimeout,
+        });
+        expect(error).toBeNull();
+
+        return dbClient.buildExtractDefaults.findByBuild(buildId);
+      };
+
+      expect(await confirm(1500)).toMatchObject({ waitForTimeout: 1500 });
+      expect(await confirm()).toMatchObject({ waitForTimeout: 0 });
+    });
+
+    test("should reject a wait before capture longer than 30 seconds", async ({ admin: _ }) => {
+      const { apiKey } = await createProjectWithApiKey();
+      setApiKeyHeader(apiKey);
+
+      const [error] = await serverClient.builds.confirmUpload({
+        buildId: crypto.randomUUID(),
+        targets: [{ id: "story-a", title: "Story", name: "A" }],
+        viewports: VIEWPORTS,
+        waitForTimeout: 30_001,
+      });
+
+      expect(error?.code).toBe("BAD_REQUEST");
+    });
+
     test("should return CONFLICT when a newer build superseded this one mid-upload", async ({
       admin: _,
     }) => {

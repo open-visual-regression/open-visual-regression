@@ -24,6 +24,12 @@ export type OvrConfig = {
    * @default 0.05
    */
   diffThreshold?: number;
+  /**
+   * Milliseconds to wait before each screenshot, up to 30000. Override per
+   * story via `parameters.ovr.waitForTimeout`.
+   * @default 0
+   */
+  waitForTimeout?: number;
   /** Options for `upload storybook --only-affected`. */
   onlyAffected?: OnlyAffectedConfig;
 };
@@ -46,6 +52,8 @@ export type OvrStoryParameters = {
   viewports?: (string | Omit<Viewport, "name">)[];
   /** Replaces the config's `diffThreshold` for this story only. */
   diffThreshold?: number;
+  /** Replaces the config's `waitForTimeout` for this story only. */
+  waitForTimeout?: number;
   /** Skips this story — listed on the build as skipped, never captured, baselines kept. */
   skip?: boolean;
 };
@@ -71,6 +79,12 @@ export const defineConfig = <const V extends readonly Viewport[] = []>(config: {
    * @default 0.05
    */
   diffThreshold?: number;
+  /**
+   * Milliseconds to wait before each screenshot, up to 30000. Override per
+   * story via `parameters.ovr.waitForTimeout`.
+   * @default 0
+   */
+  waitForTimeout?: number;
   /** Options for `upload storybook --only-affected`. */
   onlyAffected?: OnlyAffectedConfig;
 }): OvrConfig => config;

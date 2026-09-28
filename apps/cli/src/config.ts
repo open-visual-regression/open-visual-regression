@@ -4,6 +4,8 @@ import { pathToFileURL } from "node:url";
 
 import { createJiti } from "jiti";
 
+import { MAX_WAIT_FOR_TIMEOUT_MS } from "@ovr/storybook-compat/parameters";
+
 import type { OvrConfig, Viewport as ConfigViewport } from "./defineConfig";
 
 export const getApiKey = (): string => {
@@ -109,6 +111,26 @@ export const loadDiffThreshold = async (
   cwd: string = process.cwd(),
   configPath?: string,
 ): Promise<number> => resolveDiffThreshold(await loadOvrConfig(cwd, configPath));
+
+export const resolveWaitForTimeout = (config: OvrConfig | undefined): number => {
+  const waitForTimeout = config?.waitForTimeout;
+
+  if (waitForTimeout === undefined) {
+    return 0;
+  }
+
+  if (
+    !Number.isInteger(waitForTimeout) ||
+    waitForTimeout < 0 ||
+    waitForTimeout > MAX_WAIT_FOR_TIMEOUT_MS
+  ) {
+    throw new Error(
+      `ovr.config: "waitForTimeout" must be a whole number of milliseconds from 0 to ${MAX_WAIT_FOR_TIMEOUT_MS}`,
+    );
+  }
+
+  return waitForTimeout;
+};
 
 export const resolveViewports = (config: OvrConfig | undefined): ResolvedViewport[] => {
   const viewports = config?.viewports;
