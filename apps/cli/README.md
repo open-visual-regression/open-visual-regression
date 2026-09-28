@@ -59,7 +59,7 @@ export default defineConfig({
 | `viewports` | `Viewport[]` | `[]` | Every viewport available, named or not |
 | `defaultViewports` | `string[]` | every named viewport | Names from `viewports` captured automatically for every story |
 | `diffThreshold` | `number`, `(0, 1]` | `0.05` | Fraction of pixels that may differ before a snapshot needs review |
-| `waitForTimeout` | `number`, `[0, 30000]` | `0` | Milliseconds to wait after a story has rendered and settled, before taking its screenshot. Useful for stories whose data or images take a while to load |
+| `waitForTimeout` | `number`, `[0, 30000]` | `0` | Milliseconds to wait before each screenshot, e.g. for slow-loading data or images |
 
 ### `Viewport` fields
 

@@ -185,7 +185,6 @@ export const snapshots = pgTable(
     diffThreshold: numeric("diff_threshold", { mode: "number", precision: 3, scale: 2 })
       .notNull()
       .default(0.05),
-    // Milliseconds to wait after the story settles, before taking the screenshot.
     waitForTimeout: integer("wait_for_timeout").notNull().default(0),
     updatedAt: utcTimestamp("updated_at")
       .default(sql`now()`)

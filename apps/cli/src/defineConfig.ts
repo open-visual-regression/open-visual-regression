@@ -25,9 +25,8 @@ export type OvrConfig = {
    */
   diffThreshold?: number;
   /**
-   * Milliseconds to wait after a story has rendered and settled, before taking
-   * its screenshot. Useful for stories whose data or images take a while to
-   * load. Override per story via `parameters.ovr.waitForTimeout`. At most 30000.
+   * Milliseconds to wait before each screenshot, up to 30000. Override per
+   * story via `parameters.ovr.waitForTimeout`.
    * @default 0
    */
   waitForTimeout?: number;
@@ -81,9 +80,8 @@ export const defineConfig = <const V extends readonly Viewport[] = []>(config: {
    */
   diffThreshold?: number;
   /**
-   * Milliseconds to wait after a story has rendered and settled, before taking
-   * its screenshot. Useful for stories whose data or images take a while to
-   * load. Override per story via `parameters.ovr.waitForTimeout`. At most 30000.
+   * Milliseconds to wait before each screenshot, up to 30000. Override per
+   * story via `parameters.ovr.waitForTimeout`.
    * @default 0
    */
   waitForTimeout?: number;
