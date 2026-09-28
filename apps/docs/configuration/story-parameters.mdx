@@ -1,6 +1,6 @@
 ---
 title: Per-story parameters
-description: Override viewports and diff threshold, or skip a story entirely.
+description: Override viewports, diff threshold, and wait before capture, or skip a story entirely.
 ---
 
 `ovr.config.ts` sets the viewports every story is captured at and the diff threshold that decides when a change needs review. A story that doesn't fit those defaults overrides them with Storybook's `parameters.ovr`, which OVR reads out of the build you upload.
@@ -21,9 +21,22 @@ export const Primary: Story = {
 |-------|------|-------------|
 | `viewports` | `(string \| { browser?, width, height? })[]` | Replaces (not merges with) the config's default viewport list for this story. String entries reference a `name` from `ovr.config.ts`; object entries define a one-off viewport inline |
 | `diffThreshold` | `number` | Replaces the config's `diffThreshold` for this story, as a fraction of pixels that may differ |
+| `waitForTimeout` | `number` | Replaces the config's `waitForTimeout` for this story, in milliseconds. Set `0` to opt a story out of a config-wide wait |
 | `skip` | `boolean` | Skips this story; it is listed on the build as skipped, never captured or diffed |
 
 Storybook merges parameters global → component → story, so the same block on a `meta` default export covers every story in the file, and in `.storybook/preview.ts` every story in the project. The most specific level wins.
+
+## Waiting before capture
+
+OVR takes a story's screenshot once it has rendered and its network requests have gone quiet. A story that keeps changing after that, such as one that loads data on a timer or fades in large images, can be captured too early. `waitForTimeout` adds a fixed wait, in milliseconds, before the screenshot:
+
+```tsx
+export const Dashboard: Story = {
+  parameters: { ovr: { waitForTimeout: 2000 } },
+};
+```
+
+The wait is capped at 30 seconds (a larger value is clamped to 30000) and adds to every capture of the story, so keep it as short as the story needs. Set it in `ovr.config.ts` instead to apply it to every story.
 
 ## Skipping stories
 

@@ -91,6 +91,7 @@ export const confirmUploadInputSchema = z.object({
       { message: "viewport names must be unique" },
     ),
   diffThreshold: z.number().min(0.01).max(1).optional(),
+  waitForTimeout: z.number().int().min(0).max(30_000).optional(),
   unaffectedTargetIds: z.array(z.string().min(1)).optional(),
 });
 

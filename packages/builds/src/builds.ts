@@ -44,6 +44,7 @@ type ConfirmBuildUploadInput = {
   targets: { id: string; title: string; name: string }[];
   viewports: Viewport[];
   diffThreshold: number;
+  waitForTimeout?: number;
   unaffectedTargetIds?: string[];
 };
 
@@ -209,6 +210,7 @@ export const confirmBuildUpload = async (
       targets: input.targets,
       viewports: input.viewports,
       diffThreshold: input.diffThreshold,
+      waitForTimeout: input.waitForTimeout,
       unaffectedTargetIds,
     });
     await enqueueExtract({
@@ -217,6 +219,7 @@ export const confirmBuildUpload = async (
       targets: input.targets,
       viewports: input.viewports,
       diffThreshold: input.diffThreshold,
+      waitForTimeout: input.waitForTimeout,
       unaffectedTargetIds,
     });
   } catch (error) {
@@ -364,6 +367,7 @@ export const rebuildBuild = async (
       targets: extractDefaults.targets,
       viewports: extractDefaults.viewports,
       diffThreshold: extractDefaults.diffThreshold,
+      waitForTimeout: extractDefaults.waitForTimeout,
       unaffectedTargetIds: extractDefaults.unaffectedTargetIds,
     });
     await dbClient.projects.incrementTotalBuildsCount(source.projectId, tx);
@@ -377,6 +381,7 @@ export const rebuildBuild = async (
       targets: extractDefaults.targets,
       viewports: extractDefaults.viewports,
       diffThreshold: extractDefaults.diffThreshold,
+      waitForTimeout: extractDefaults.waitForTimeout,
       unaffectedTargetIds: extractDefaults.unaffectedTargetIds,
     });
   } catch (error) {

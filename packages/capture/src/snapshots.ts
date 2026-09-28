@@ -33,7 +33,7 @@ const DEFAULT_VIEWPORT_HEIGHT = 800;
 
 const MAX_PENDING_UPLOADS = 2;
 
-type CapturePhase = "render" | "settle" | "screenshot" | "upload";
+type CapturePhase = "render" | "settle" | "wait" | "screenshot" | "upload";
 
 type CaptureTimings = Record<CapturePhase, number>;
 
@@ -169,6 +169,7 @@ type CapturedSnapshot = {
   errorMessage: string | null;
   renderMs: number;
   settleMs: number;
+  waitMs: number;
   screenshotMs: number;
   startedAt: number;
   context: SnapshotLogContext;
@@ -231,6 +232,11 @@ const captureSnapshotOnPage = async (
       logger.warn(context, "snapshot still had pending work when its settle budget ran out");
     }
 
+    const [, waitMs] =
+      renderResult.ok && snapshot.waitForTimeout > 0
+        ? await runPhase("wait", () => page.waitForTimeout(snapshot.waitForTimeout))
+        : ([undefined, 0] as const);
+
     const imagePath = `${build.projectId}/builds/${build.id}/snapshots/${snapshotId}-${snapshot.captureAttempt}.png`;
 
     const [screenshot, screenshotMs] = await runPhase("screenshot", () =>
@@ -247,6 +253,7 @@ const captureSnapshotOnPage = async (
       errorMessage,
       renderMs,
       settleMs,
+      waitMs,
       screenshotMs,
       startedAt,
       context,
@@ -315,6 +322,7 @@ const persistCapturedSnapshot = async (
     const timings: CaptureTimings = {
       render: captured.renderMs,
       settle: captured.settleMs,
+      wait: captured.waitMs,
       screenshot: captured.screenshotMs,
       upload: uploadMs,
     };

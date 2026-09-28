@@ -56,7 +56,13 @@ const collectCaptureGroupJobs = (
 const buildArtifactTarball = async (
   storyParameters: Record<
     string,
-    { viewports?: string[]; diffThreshold?: number; skip?: boolean; __throw?: boolean }
+    {
+      viewports?: string[];
+      diffThreshold?: number;
+      waitForTimeout?: number;
+      skip?: boolean;
+      __throw?: boolean;
+    }
   > = {},
 ): Promise<Buffer> => {
   const sourceDir = await mkdtemp(path.join(tmpdir(), "ovr-extract-fixture-"));
@@ -277,6 +283,46 @@ describe("extractBuild", () => {
 
     const [snapshot] = await dbClient.snapshots.findByBuild(mainBuild.id);
     expect(snapshot!.diffThreshold).toBe(0.2);
+  });
+
+  test("uses the build default wait when a story has no override", async ({
+    mainBuild,
+    captureConfiguration,
+  }) => {
+    const tarball = await buildArtifactTarball();
+    await storage.uploadFile(mainBuild.artifactPath, tarball, "application/gzip");
+
+    await extractBuild(
+      mainBuild.id,
+      [{ id: "story-a", title: "Story", name: "A" }],
+      [captureConfiguration],
+      0.1,
+      [],
+      500,
+    );
+
+    const [snapshot] = await dbClient.snapshots.findByBuild(mainBuild.id);
+    expect(snapshot!.waitForTimeout).toBe(500);
+  });
+
+  test("resolves a story's parameters.ovr.waitForTimeout override onto its snapshots", async ({
+    mainBuild,
+    captureConfiguration,
+  }) => {
+    const tarball = await buildArtifactTarball({ "story-a": { waitForTimeout: 2000 } });
+    await storage.uploadFile(mainBuild.artifactPath, tarball, "application/gzip");
+
+    await extractBuild(
+      mainBuild.id,
+      [{ id: "story-a", title: "Story", name: "A" }],
+      [captureConfiguration],
+      0.1,
+      [],
+      500,
+    );
+
+    const [snapshot] = await dbClient.snapshots.findByBuild(mainBuild.id);
+    expect(snapshot!.waitForTimeout).toBe(2000);
   });
 
   test("marks a story with parameters.ovr.skip as skipped instead of capturing it", async ({

@@ -204,6 +204,58 @@ describe("snapshots", () => {
       expect(logs.some((log) => log.level === "error")).toBe(true);
     });
 
+    describe("waitForTimeout", () => {
+      const LATE_LOG = "late data loaded";
+      const iframeWithLateLog = IFRAME_HTML.replace(
+        "</body>",
+        `<script>
+          window.__STORYBOOK_ADDONS_CHANNEL__.on("storyFinished", () => {
+            setTimeout(() => console.log(${JSON.stringify(LATE_LOG)}), 2000);
+          });
+        </script></body>`,
+      );
+
+      const captureLogs = async (
+        mainBuild: { id: string; artifactPath: string },
+        captureConfiguration: { browser: string },
+        waitForTimeout: number,
+      ) => {
+        await uploadArtifactWithIframe(mainBuild.artifactPath, iframeWithLateLog);
+        const [snapshot] = await dbClient.snapshots.createMany({
+          values: [
+            {
+              buildId: mainBuild.id,
+              ...captureConfiguration,
+              targetId: "story-a",
+              waitForTimeout,
+            },
+          ],
+        });
+
+        await captureBuildGroup(mainBuild.id, captureConfiguration.browser, [snapshot!.id]);
+
+        const captured = await dbClient.snapshots.findById(snapshot!.id);
+        expect(captured).toMatchObject({ status: "success", hasRenderError: false });
+        return dbClient.snapshotLogs.findBySnapshot(snapshot!.id);
+      };
+
+      test("should take the screenshot before late-loading work finishes when no wait is set", async ({
+        mainBuild,
+        captureConfiguration,
+      }) => {
+        const logs = await captureLogs(mainBuild, captureConfiguration, 0);
+        expect(logs.map((log) => log.message)).not.toContain(LATE_LOG);
+      });
+
+      test("should wait for the snapshot's waitForTimeout before taking the screenshot", async ({
+        mainBuild,
+        captureConfiguration,
+      }) => {
+        const logs = await captureLogs(mainBuild, captureConfiguration, 2500);
+        expect(logs.map((log) => log.message)).toContain(LATE_LOG);
+      });
+    });
+
     test("should flag an uncaught page error separately from a render error when Storybook still reports success", async ({
       mainBuild,
       captureConfiguration,

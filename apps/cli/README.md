@@ -36,7 +36,7 @@ A personal access token belongs to you, not a project — it can read builds acr
 
 ## Config
 
-An `ovr.config.ts` (or `.js`/`.mjs`) file in the directory you run the CLI from controls capture viewports and the diff threshold:
+An `ovr.config.ts` (or `.js`/`.mjs`) file in the directory you run the CLI from controls capture viewports, the diff threshold, and how long to wait before each screenshot:
 
 ```ts
 // ovr.config.ts
@@ -59,6 +59,7 @@ export default defineConfig({
 | `viewports` | `Viewport[]` | `[]` | Every viewport available, named or not |
 | `defaultViewports` | `string[]` | every named viewport | Names from `viewports` captured automatically for every story |
 | `diffThreshold` | `number`, `(0, 1]` | `0.05` | Fraction of pixels that may differ before a snapshot needs review |
+| `waitForTimeout` | `number`, `[0, 30000]` | `0` | Milliseconds to wait after a story has rendered and settled, before taking its screenshot. Useful for stories whose data or images take a while to load |
 
 ### `Viewport` fields
 
@@ -128,6 +129,7 @@ export const Primary: Story = {
 |-------|------|-------------|
 | `viewports` | `(string \| { browser?, width, height? })[]` | Replaces (not merges with) the config's default viewport list for this story only. String entries reference a `name` from `ovr.config.ts`; object entries define a one-off viewport inline |
 | `diffThreshold` | `number` | Replaces the config's `diffThreshold` for this story only |
+| `waitForTimeout` | `number` | Replaces the config's `waitForTimeout` for this story only. Set `0` to opt a story out of a config-wide wait |
 | `skip` | `boolean` | Skips this story; it is listed on the build as skipped, never captured or diffed |
 
 ## CI example

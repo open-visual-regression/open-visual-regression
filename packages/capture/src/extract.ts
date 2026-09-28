@@ -9,6 +9,7 @@ import {
   readStoryParameterOverrides,
   resolveTargetDiffThreshold,
   resolveTargetViewports,
+  resolveTargetWaitForTimeout,
 } from "./storyViewports";
 import type { NamedViewport } from "./storyViewports";
 
@@ -95,6 +96,7 @@ export const extractBuild = async (
   viewports: NamedViewport[],
   diffThreshold: number,
   unaffectedTargetIds: string[] = [],
+  waitForTimeout = 0,
 ): Promise<void> => {
   const build = await dbClient.builds.findById(buildId);
 
@@ -149,6 +151,7 @@ export const extractBuild = async (
           targetTitle: target.title,
           targetName: target.name,
           diffThreshold: resolveTargetDiffThreshold(diffThreshold, override),
+          waitForTimeout: resolveTargetWaitForTimeout(waitForTimeout, override),
         };
         const keepsBaseline = unaffected.has(target.id) && baselineKeys.has(baselineKey(snapshot));
 
