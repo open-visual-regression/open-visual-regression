@@ -11,7 +11,6 @@ import { createLogger } from "@ovr/logger";
 import type { CanceledBuildJobs } from "@ovr/queue";
 import {
   cancelBuildJobs,
-  clearFinalizeJob,
   enqueueCaptureGroup,
   enqueueExtract,
   enqueuePublishStatus,
@@ -468,8 +467,6 @@ export const rebuildSnapshots = async (
   });
 
   try {
-    // BullMQ drops a repeat of a completed job id, so the build could not finalize again.
-    await clearFinalizeJob(buildId);
     await Promise.all(
       toCaptureGroups(snapshots).map((group) => enqueueCaptureGroup({ buildId, ...group })),
     );

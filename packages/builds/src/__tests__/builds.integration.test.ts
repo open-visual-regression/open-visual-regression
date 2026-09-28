@@ -12,7 +12,7 @@ import {
   type ExtractJobPayload,
 } from "@ovr/queue";
 import { createBuildStatusSubscriber, type BuildStatusEvent } from "@ovr/queue/events";
-import { enqueueCaptureGroup, enqueueFinalize } from "@ovr/queue/producer";
+import { enqueueCaptureGroup } from "@ovr/queue/producer";
 import { storage } from "@ovr/storage";
 
 import {
@@ -55,15 +55,6 @@ const collectExtractJob = async (connection: RedisConnection): Promise<ExtractJo
 
 const findExtractJob = async (connection: RedisConnection, buildId: string) => {
   const queue = new Queue(QueueName.BUILD_EXTRACT, { connection });
-  try {
-    return await queue.getJob(buildId);
-  } finally {
-    await queue.close();
-  }
-};
-
-const findFinalizeJob = async (connection: RedisConnection, buildId: string) => {
-  const queue = new Queue(QueueName.BUILD_FINALIZE, { connection });
   try {
     return await queue.getJob(buildId);
   } finally {
@@ -1204,25 +1195,6 @@ describe("builds", () => {
         imagePath: untouched!.imagePath,
       });
       expect(await dbClient.diffs.findBySnapshot(untouched!.id)).toBeDefined();
-    });
-
-    test("clears the finalize job the build already used up", async ({
-      project,
-      user,
-      captureConfiguration,
-      connection,
-    }) => {
-      const { buildId, snapshots } = await seedFinalizedBuild({
-        projectId: project.id,
-        userId: user.id,
-        viewport: captureConfiguration,
-      });
-      await enqueueFinalize({ buildId });
-
-      const result = await rebuildSnapshots(buildId, [snapshots[0]!.id], user.id);
-
-      assert(result.status === "ok");
-      expect(await findFinalizeJob(connection, buildId)).toBeUndefined();
     });
 
     test("errors the build and its requeued snapshots when their capture can't be queued", async ({

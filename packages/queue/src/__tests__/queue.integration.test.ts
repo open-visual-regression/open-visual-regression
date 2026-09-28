@@ -2,7 +2,6 @@ import { Queue, Worker } from "bullmq";
 import type { Redis } from "ioredis";
 
 import {
-  clearFinalizeJob,
   enqueueCaptureGroup,
   enqueueDiff,
   enqueueExtract,
@@ -122,8 +121,8 @@ describe("queue", () => {
     });
   });
 
-  describe("clearFinalizeJob", () => {
-    test("should let a build be finalized again after its completed job is cleared", async ({
+  describe("enqueueFinalize again for the same build", () => {
+    test("should finalize the build again after its earlier finalize completed", async ({
       connection,
     }) => {
       const payload: FinalizeJobPayload = { buildId: "build-refinalize" };
@@ -132,16 +131,23 @@ describe("queue", () => {
         enqueueFinalize(payload, connection),
       );
 
-      const deduped = await enqueueFinalize(payload, connection);
-      expect(await deduped.isCompleted()).toBe(true);
+      const data = await processedByWorker<FinalizeJobPayload>(
+        QueueName.BUILD_FINALIZE,
+        connection,
+        () => enqueueFinalize(payload, connection),
+      );
 
-      await clearFinalizeJob(payload.buildId, connection);
+      expect(data).toEqual(payload);
+    });
 
-      const requeued = await enqueueFinalize(payload, connection);
+    test("should remove the job on final failure so a later finalize for the same build isn't dropped", async ({
+      connection,
+    }) => {
+      const job = await enqueueFinalize({ buildId: "build-refinalize-failed" }, connection);
       try {
-        expect(await requeued.isWaiting()).toBe(true);
+        expect(job.opts.removeOnFail).toBe(true);
       } finally {
-        await requeued.remove();
+        await job.remove();
       }
     });
   });

@@ -6,7 +6,6 @@ import {
 } from "./events";
 import {
   cancelBuildJobs as cancelBuildJobsJob,
-  clearFinalizeJob as clearFinalizeJobCmd,
   enqueueCaptureGroup as enqueueCaptureGroupJob,
   enqueueDiff as enqueueDiffJob,
   enqueueExtract as enqueueExtractJob,
@@ -63,6 +62,3 @@ export const enqueuePurgeMany = (payloads: PurgeJobPayload[]): Promise<void> =>
 
 export const cancelBuildJobs = (canceled: CanceledBuildJobs[]): Promise<void> =>
   cancelBuildJobsJob(canceled, connection);
-
-export const clearFinalizeJob = (buildId: string): Promise<void> =>
-  clearFinalizeJobCmd(buildId, connection);
