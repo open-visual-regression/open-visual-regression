@@ -114,6 +114,15 @@ const workers = [
   publishStatusWorker,
 ];
 
+for (const worker of workers) {
+  worker.on("error", (err) => {
+    logger.error({ err, queue: worker.name }, "worker error");
+  });
+  worker.on("stalled", (jobId, prev) => {
+    logger.warn({ jobId, queue: worker.name, prev }, "job stalled and will run again");
+  });
+}
+
 try {
   await schedulePurge(connection);
 } catch (error) {
