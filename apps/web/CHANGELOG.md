@@ -1,5 +1,16 @@
 # @ovr/web
 
+## 0.7.0
+
+### Minor Changes
+
+- [#266](https://github.com/open-visual-regression/open-visual-regression/pull/266) [`562186d`](https://github.com/open-visual-regression/open-visual-regression/commit/562186d5828bac42e2f0068b4f3750beb016f0a5) Thanks [@tgfischer](https://github.com/tgfischer)! - Add a `waitForTimeout` option to wait a fixed number of milliseconds before a story's screenshot is taken, for stories whose data or images take a while to load. Set it for every story in `ovr.config.ts`, or for one story with `parameters.ovr.waitForTimeout`. Defaults to `0`, at most `30000`.
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @ovr/ui@0.1.1
+
 ## 0.6.4
 
 ### Patch Changes
