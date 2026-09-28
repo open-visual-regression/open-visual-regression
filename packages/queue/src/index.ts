@@ -120,7 +120,12 @@ const JOB_OPTIONS: Record<QueueName, JobsOptions> = {
   [QueueName.BUILD_EXTRACT]: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
   [QueueName.SNAPSHOT_CAPTURE]: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
   [QueueName.SNAPSHOT_DIFF]: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
-  [QueueName.BUILD_FINALIZE]: { attempts: 3, backoff: { type: "fixed", delay: 1000 } },
+  [QueueName.BUILD_FINALIZE]: {
+    attempts: 3,
+    backoff: { type: "fixed", delay: 1000 },
+    removeOnComplete: true,
+    removeOnFail: true,
+  },
   [QueueName.BUILD_PURGE_DISPATCH]: { attempts: 3, backoff: { type: "exponential", delay: 5000 } },
   [QueueName.BUILD_PURGE]: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
   [QueueName.PROJECT_PURGE]: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
@@ -224,18 +229,6 @@ const removeJobById = async (queue: Queue, jobId: string): Promise<void> => {
   const job = await queue.getJob(jobId);
   if (job) {
     await removeJob(job, queue.name);
-  }
-};
-
-export const clearFinalizeJob = async (
-  buildId: string,
-  connection: RedisConnection,
-): Promise<void> => {
-  const queue = new Queue(QueueName.BUILD_FINALIZE, queueOptions(connection));
-  try {
-    await removeJobById(queue, buildId);
-  } finally {
-    await queue.close();
   }
 };
 
