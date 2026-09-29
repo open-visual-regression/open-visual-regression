@@ -62,12 +62,12 @@ export const listProjects = ({ organizationId, limit, offset }: ListProjectsInpu
 export type ListProjectsResult = Awaited<ReturnType<typeof listProjects>>;
 
 type ProjectsCursor = {
-  createdAt: string;
+  totalBuildsCount: number;
   id: string;
 };
 
 const getCursorFilter = (cursor: ProjectsCursor) =>
-  sql`(${projects.createdAt}, ${projects.id}) < (${cursor.createdAt}::timestamp, ${cursor.id}::uuid)`;
+  sql`(${projects.totalBuildsCount}, ${projects.id}) < (${cursor.totalBuildsCount}::integer, ${cursor.id}::uuid)`;
 
 type FindAllInput = ProjectsFilter & {
   limit: number;
@@ -91,14 +91,14 @@ export const findAll = async ({ organizationId, limit, cursor }: FindAllInput) =
     },
     with: { creator: { columns: { id: true, name: true, email: true } } },
     where: and(baseFilter, cursorFilter),
-    orderBy: [desc(projects.createdAt), desc(projects.id)],
+    orderBy: [desc(projects.totalBuildsCount), desc(projects.id)],
     limit: limit + 1,
   });
 
   const hasMore = rows.length > limit;
   const pageRows = hasMore ? rows.slice(0, limit) : rows;
   const lastRow = pageRows.at(-1);
-  const nextCursor = hasMore && lastRow ? { createdAt: lastRow.createdAt, id: lastRow.id } : null;
+  const nextCursor = hasMore && lastRow ? { totalBuildsCount: lastRow.totalBuildsCount, id: lastRow.id } : null;
 
   return { projects: pageRows, nextCursor };
 };

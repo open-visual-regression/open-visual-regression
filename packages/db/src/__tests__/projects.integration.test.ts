@@ -33,7 +33,7 @@ describe("projects", () => {
       expect(found.map((p) => p.id)).toEqual([project.id]);
     });
 
-    test("should return the most recently created project first", async ({
+    test("should return the project with the most builds first", async ({
       organization,
       user,
     }) => {
@@ -44,7 +44,7 @@ describe("projects", () => {
           gitMainBranch: "main",
           organizationId: organization.id,
           creatorId: user.id,
-          createdAt: "2024-01-01T00:00:00.000Z",
+          totalBuildsCount: 1,
         })
         .returning();
 
@@ -78,7 +78,7 @@ describe("projects", () => {
               gitMainBranch: "main",
               organizationId: organization.id,
               creatorId: user.id,
-              createdAt: `2024-01-0${i + 1}T00:00:00.000Z`,
+              totalBuildsCount: i + 1,
             })
             .returning(),
         ),
@@ -142,7 +142,7 @@ describe("projects", () => {
       expect(found.map((p) => p.id)).toEqual([project.id]);
     });
 
-    test("should return the most recently created project first", async ({
+    test("should return the project with the most builds first", async ({
       organization,
       user,
     }) => {
@@ -153,7 +153,7 @@ describe("projects", () => {
           gitMainBranch: "main",
           organizationId: organization.id,
           creatorId: user.id,
-          createdAt: "2024-01-01T00:00:00.000Z",
+          totalBuildsCount: 1,
         })
         .returning();
 
@@ -164,7 +164,7 @@ describe("projects", () => {
           gitMainBranch: "main",
           organizationId: organization.id,
           creatorId: user.id,
-          createdAt: "2024-01-02T00:00:00.000Z",
+          totalBuildsCount: 5,
         })
         .returning();
 
@@ -186,7 +186,7 @@ describe("projects", () => {
               gitMainBranch: "main",
               organizationId: organization.id,
               creatorId: user.id,
-              createdAt: `2024-01-0${i + 1}T00:00:00.000Z`,
+              totalBuildsCount: i + 1,
             })
             .returning(),
         ),
