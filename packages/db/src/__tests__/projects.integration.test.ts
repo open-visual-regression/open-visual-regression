@@ -33,10 +33,7 @@ describe("projects", () => {
       expect(found.map((p) => p.id)).toEqual([project.id]);
     });
 
-    test("should return the project with the most builds first", async ({
-      organization,
-      user,
-    }) => {
+    test("should return the project with the most builds first", async ({ organization, user }) => {
       const [older] = await db
         .insert(projects)
         .values({
@@ -142,10 +139,7 @@ describe("projects", () => {
       expect(found.map((p) => p.id)).toEqual([project.id]);
     });
 
-    test("should return the project with the most builds first", async ({
-      organization,
-      user,
-    }) => {
+    test("should return the project with the most builds first", async ({ organization, user }) => {
       const [older] = await db
         .insert(projects)
         .values({
@@ -174,6 +168,116 @@ describe("projects", () => {
       });
 
       expect(found.map((p) => p.id)).toEqual([newer!.id, older!.id]);
+    });
+
+    test("should sort by name in both directions", async ({ organization, user }) => {
+      for (const name of ["banana", "Cherry", "apple"]) {
+        await db.insert(projects).values({
+          name,
+          gitMainBranch: "main",
+          organizationId: organization.id,
+          creatorId: user.id,
+        });
+      }
+
+      const asc = await dbClient.projects.findAll({
+        organizationId: organization.id,
+        limit: 10,
+        sortBy: "name",
+        sortDirection: "asc",
+      });
+      const desc = await dbClient.projects.findAll({
+        organizationId: organization.id,
+        limit: 10,
+        sortBy: "name",
+        sortDirection: "desc",
+      });
+
+      expect(asc.projects.map((p) => p.name)).toEqual(["apple", "banana", "Cherry"]);
+      expect(desc.projects.map((p) => p.name)).toEqual(["Cherry", "banana", "apple"]);
+    });
+
+    test("should sort by createdAt ascending", async ({ organization, user }) => {
+      const [older] = await db
+        .insert(projects)
+        .values({
+          name: "Older",
+          gitMainBranch: "main",
+          organizationId: organization.id,
+          creatorId: user.id,
+          createdAt: "2024-01-01T00:00:00.000Z",
+        })
+        .returning();
+      const [newer] = await db
+        .insert(projects)
+        .values({
+          name: "Newer",
+          gitMainBranch: "main",
+          organizationId: organization.id,
+          creatorId: user.id,
+          createdAt: "2024-01-02T00:00:00.000Z",
+        })
+        .returning();
+
+      const { projects: found } = await dbClient.projects.findAll({
+        organizationId: organization.id,
+        limit: 10,
+        sortBy: "createdAt",
+        sortDirection: "asc",
+      });
+
+      expect(found.map((p) => p.id)).toEqual([older!.id, newer!.id]);
+    });
+
+    test("should paginate across ties using the id tiebreaker", async ({ organization, user }) => {
+      await db.insert(projects).values(
+        [0, 1, 2].map((i) => ({
+          name: `Tied ${i}`,
+          gitMainBranch: "main",
+          organizationId: organization.id,
+          creatorId: user.id,
+          totalBuildsCount: 3,
+        })),
+      );
+
+      const firstPage = await dbClient.projects.findAll({
+        organizationId: organization.id,
+        limit: 2,
+      });
+      const secondPage = await dbClient.projects.findAll({
+        organizationId: organization.id,
+        limit: 2,
+        cursor: firstPage.nextCursor!,
+      });
+
+      const ids = [...firstPage.projects, ...secondPage.projects].map((p) => p.id);
+      expect(new Set(ids).size).toBe(3);
+      expect(secondPage.nextCursor).toBeNull();
+    });
+
+    test("should reject a cursor created with a different sort", async ({ organization, user }) => {
+      await db.insert(projects).values(
+        [0, 1].map((i) => ({
+          name: `P ${i}`,
+          gitMainBranch: "main",
+          organizationId: organization.id,
+          creatorId: user.id,
+        })),
+      );
+
+      const firstPage = await dbClient.projects.findAll({
+        organizationId: organization.id,
+        limit: 1,
+      });
+
+      await expect(
+        dbClient.projects.findAll({
+          organizationId: organization.id,
+          limit: 1,
+          sortBy: "name",
+          cursor: firstPage.nextCursor!,
+        }),
+      ).rejects.toThrow("different sort");
     });
 
     test("should paginate with the limit and cursor params", async ({ organization, user }) => {

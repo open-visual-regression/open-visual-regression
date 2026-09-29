@@ -1,4 +1,4 @@
-import { and, count, desc, eq, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, sql } from "drizzle-orm";
 
 import { db, type DbClient } from "../db";
 import { projects } from "../schema";
@@ -61,22 +61,67 @@ export const listProjects = ({ organizationId, limit, offset }: ListProjectsInpu
 
 export type ListProjectsResult = Awaited<ReturnType<typeof listProjects>>;
 
+export type ProjectsSortBy = "name" | "totalBuildsCount" | "createdAt";
+export type ProjectsSortDirection = "asc" | "desc";
+
+type SortableRow = Pick<typeof projects.$inferSelect, "name" | "totalBuildsCount" | "createdAt">;
+
+const SORT_CONFIG = {
+  name: {
+    expression: sql`lower(${projects.name})`,
+    cast: sql.raw("text"),
+    toCursorValue: (row: SortableRow) => row.name.toLowerCase(),
+  },
+  totalBuildsCount: {
+    expression: sql`${projects.totalBuildsCount}`,
+    cast: sql.raw("integer"),
+    toCursorValue: (row: SortableRow) => row.totalBuildsCount,
+  },
+  createdAt: {
+    expression: sql`${projects.createdAt}`,
+    cast: sql.raw("timestamp"),
+    toCursorValue: (row: SortableRow) => row.createdAt,
+  },
+} satisfies Record<ProjectsSortBy, unknown>;
+
 type ProjectsCursor = {
-  totalBuildsCount: number;
+  sortBy: ProjectsSortBy;
+  value: string | number;
   id: string;
 };
-
-const getCursorFilter = (cursor: ProjectsCursor) =>
-  sql`(${projects.totalBuildsCount}, ${projects.id}) < (${cursor.totalBuildsCount}::integer, ${cursor.id}::uuid)`;
 
 type FindAllInput = ProjectsFilter & {
   limit: number;
   cursor?: ProjectsCursor;
+  sortBy?: ProjectsSortBy;
+  sortDirection?: ProjectsSortDirection;
 };
 
-export const findAll = async ({ organizationId, limit, cursor }: FindAllInput) => {
+export class ProjectsCursorMismatchError extends Error {
+  constructor() {
+    super("Cursor was created with a different sort");
+  }
+}
+
+export const findAll = async ({
+  organizationId,
+  limit,
+  cursor,
+  sortBy = "totalBuildsCount",
+  sortDirection = "desc",
+}: FindAllInput) => {
+  if (cursor && cursor.sortBy !== sortBy) {
+    throw new ProjectsCursorMismatchError();
+  }
+
+  const config = SORT_CONFIG[sortBy];
+  const order = sortDirection === "asc" ? asc : desc;
+  const operator = sql.raw(sortDirection === "asc" ? ">" : "<");
+
   const baseFilter = buildProjectsFilter({ organizationId });
-  const cursorFilter = cursor ? getCursorFilter(cursor) : undefined;
+  const cursorFilter = cursor
+    ? sql`(${config.expression}, ${projects.id}) ${operator} (${cursor.value}::${config.cast}, ${cursor.id}::uuid)`
+    : undefined;
 
   const rows = await db.query.projects.findMany({
     columns: {
@@ -91,14 +136,15 @@ export const findAll = async ({ organizationId, limit, cursor }: FindAllInput) =
     },
     with: { creator: { columns: { id: true, name: true, email: true } } },
     where: and(baseFilter, cursorFilter),
-    orderBy: [desc(projects.totalBuildsCount), desc(projects.id)],
+    orderBy: [order(config.expression), order(projects.id)],
     limit: limit + 1,
   });
 
   const hasMore = rows.length > limit;
   const pageRows = hasMore ? rows.slice(0, limit) : rows;
   const lastRow = pageRows.at(-1);
-  const nextCursor = hasMore && lastRow ? { totalBuildsCount: lastRow.totalBuildsCount, id: lastRow.id } : null;
+  const nextCursor: ProjectsCursor | null =
+    hasMore && lastRow ? { sortBy, value: config.toCursorValue(lastRow), id: lastRow.id } : null;
 
   return { projects: pageRows, nextCursor };
 };

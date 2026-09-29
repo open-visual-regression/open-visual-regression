@@ -22,7 +22,11 @@ export default async function NavigationSlot({ params }: NavigationSlotProps) {
 
   const [[listError, listResult], [countError, countResult], [buildsError, buildsResult]] =
     await Promise.all([
-      serverClient.projects.list({ limit: NAVIGATION_PROJECTS_LIMIT }),
+      serverClient.projects.list({
+        limit: NAVIGATION_PROJECTS_LIMIT,
+        sortBy: "createdAt",
+        sortDirection: "desc",
+      }),
       serverClient.projects.count(),
       serverClient.builds.list({ limit: NAVIGATION_RECENT_BUILDS_LIMIT }),
     ]);

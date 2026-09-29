@@ -23,8 +23,17 @@ export const projectSchema = z.object({
 
 export type ProjectDto = z.infer<typeof projectSchema>;
 
+export const projectsSortBySchema = z.enum(["name", "totalBuildsCount", "createdAt"]);
+
+export type ProjectsSortBy = z.infer<typeof projectsSortBySchema>;
+
+export const projectsSortDirectionSchema = z.enum(["asc", "desc"]);
+
+export type ProjectsSortDirection = z.infer<typeof projectsSortDirectionSchema>;
+
 export const projectsCursorSchema = z.object({
-  totalBuildsCount: z.number().int().nonnegative(),
+  sortBy: projectsSortBySchema,
+  value: z.union([z.string(), z.number()]),
   id: z.uuidv7(),
 });
 
@@ -33,6 +42,8 @@ export type ProjectsCursor = z.infer<typeof projectsCursorSchema>;
 export const listProjectsInputSchema = z.object({
   limit: z.number().int().min(1).max(100).default(20),
   cursor: projectsCursorSchema.optional(),
+  sortBy: projectsSortBySchema.default("totalBuildsCount"),
+  sortDirection: projectsSortDirectionSchema.default("desc"),
 });
 
 export type ListProjectsInputSchema = z.infer<typeof listProjectsInputSchema>;

@@ -45,12 +45,18 @@ export const getBaselineBuild = os.projects.getBaselineBuild
 export const list = os.projects.list
   .use(authenticatedMiddleware)
   .handler(async ({ input, context }) => {
-    const { limit = 20, cursor } = input ?? {};
+    const { limit = 20, cursor, sortBy, sortDirection } = input ?? {};
+
+    if (cursor && sortBy && cursor.sortBy !== sortBy) {
+      throw new ORPCError("BAD_REQUEST", { message: "Cursor was created with a different sort" });
+    }
 
     const { projects, nextCursor } = await dbClient.projects.findAll({
       organizationId: context.organizationId,
       limit,
       cursor,
+      sortBy,
+      sortDirection,
     });
 
     return { projects, nextCursor };
