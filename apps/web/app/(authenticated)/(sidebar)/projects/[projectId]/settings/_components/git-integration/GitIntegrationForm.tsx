@@ -25,7 +25,7 @@ import { toast } from "@ovr/ui/components/toast";
 
 import { serverClient } from "@/lib/router";
 
-import { DisableStatusChecksButton } from "./DisableStatusChecksButton";
+import { StatusChecksToggleButton } from "./StatusChecksToggleButton";
 
 const PROVIDERS: { value: GitProviderSchema; label: string }[] = [
   { value: "github", label: "github" },
@@ -95,18 +95,6 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
       onSuccess(() => {
         toast.success("git integration removed");
         router.refresh();
-      }),
-    ],
-  });
-
-  const enable = useServerAction(serverClient.gitIntegrations.setStatusChecks, {
-    interceptors: [
-      onSuccess(() => {
-        toast.success("ci checks enabled");
-        router.refresh();
-      }),
-      onError((err) => {
-        toast.error(err.message);
       }),
     ],
   });
@@ -203,19 +191,12 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
                 {test.status === "pending" ? "testing..." : "test connection"}
               </Button>
             ) : null}
-            {integration?.statusChecksEnabled ? (
-              <DisableStatusChecksButton projectId={projectId} className="w-full sm:w-auto" />
-            ) : null}
-            {integration && !integration.statusChecksEnabled ? (
-              <Button
-                type="button"
-                variant="outline"
-                disabled={enable.status === "pending"}
-                onClick={() => enable.execute({ projectId, enabled: true })}
+            {integration ? (
+              <StatusChecksToggleButton
+                projectId={projectId}
+                enabled={integration.statusChecksEnabled}
                 className="w-full sm:w-auto"
-              >
-                {enable.status === "pending" ? "enabling..." : "enable"}
-              </Button>
+              />
             ) : null}
           </div>
           <Button type="submit" disabled={isSaving} className="w-full sm:w-auto">
