@@ -11,7 +11,7 @@ import type { GitIntegrationSchema, GitProviderSchema } from "@ovr/api/contracts
 import { Button } from "@ovr/ui/components/button";
 import { Card, CardContent, CardFooter } from "@ovr/ui/components/card";
 import { Field, FieldError, FieldGroup, FieldLabel, FieldSkeleton } from "@ovr/ui/components/field";
-import { CheckIcon, Icon } from "@ovr/ui/components/icon";
+import { CheckIcon, Icon, Trash2Icon } from "@ovr/ui/components/icon";
 import { Input } from "@ovr/ui/components/input";
 import {
   Select,
@@ -166,8 +166,8 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
           </FieldGroup>
           <FieldError errors={[errors.root]} />
         </CardContent>
-        <CardFooter className="flex flex-col items-stretch gap-2 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-col gap-2 lg:flex-row">
+        <CardFooter className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between md:max-xl:flex-col md:max-xl:items-stretch">
+          <div className="flex flex-col gap-2 sm:flex-row md:max-xl:*:flex-auto md:max-xl:*:px-2">
             {integration ? (
               <Button
                 type="button"
@@ -175,10 +175,18 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
                 color="red"
                 disabled={disconnect.status === "pending"}
                 onClick={() => disconnect.execute({ projectId })}
-                className="w-full lg:w-auto"
+                className="w-full sm:w-auto"
               >
+                <Icon icon={Trash2Icon} className="md:max-xl:hidden" />
                 disconnect
               </Button>
+            ) : null}
+            {integration ? (
+              <StatusChecksToggleButton
+                projectId={projectId}
+                enabled={integration.statusChecksEnabled}
+                className="w-full sm:w-auto"
+              />
             ) : null}
             {integration ? (
               <Button
@@ -186,20 +194,13 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
                 variant="outline"
                 disabled={test.status === "pending"}
                 onClick={() => test.execute({ projectId })}
-                className="w-full lg:w-auto"
+                className="w-full sm:w-auto"
               >
                 {test.status === "pending" ? "testing..." : "test connection"}
               </Button>
             ) : null}
-            {integration ? (
-              <StatusChecksToggleButton
-                projectId={projectId}
-                enabled={integration.statusChecksEnabled}
-                className="w-full lg:w-auto"
-              />
-            ) : null}
           </div>
-          <Button type="submit" disabled={isSaving} className="w-full lg:w-auto">
+          <Button type="submit" disabled={isSaving} className="w-full sm:w-auto md:max-xl:self-end">
             <Icon icon={CheckIcon} />
             {isSaving ? "saving..." : "save"}
           </Button>

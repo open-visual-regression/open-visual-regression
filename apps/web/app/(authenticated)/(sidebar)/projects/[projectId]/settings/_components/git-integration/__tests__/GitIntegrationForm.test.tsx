@@ -117,6 +117,7 @@ describe("GitIntegrationForm", () => {
     expect(mockSetStatusChecks).not.toHaveBeenCalled();
 
     const dialog = await screen.findByRole("alertdialog");
+    expect(within(dialog).getByText("disable git integration?")).toBeVisible();
     await user.click(within(dialog).getByRole("button", { name: /^disable$/i }));
 
     await waitFor(() =>

@@ -5,6 +5,7 @@ import { useServerAction } from "@orpc/react/hooks";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@ovr/ui/components/button";
+import { Icon, LockOpenIcon } from "@ovr/ui/components/icon";
 import { toast } from "@ovr/ui/components/toast";
 
 import { serverClient } from "@/lib/router";
@@ -40,6 +41,7 @@ export const EnableStatusChecksButton = ({
       onClick={() => execute({ projectId, enabled: true })}
       className={className}
     >
+      <Icon icon={LockOpenIcon} className="md:max-xl:hidden" />
       {status === "pending" ? "enabling..." : "enable"}
     </Button>
   );
