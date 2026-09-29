@@ -6,6 +6,7 @@ export {
   ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  ClockIcon,
   CopyIcon,
   CornerLeftUpIcon,
   FolderIcon,
