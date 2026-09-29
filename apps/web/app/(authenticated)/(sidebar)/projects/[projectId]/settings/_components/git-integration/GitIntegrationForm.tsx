@@ -166,8 +166,8 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
           </FieldGroup>
           <FieldError errors={[errors.root]} />
         </CardContent>
-        <CardFooter className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-col gap-2 sm:flex-row">
+        <CardFooter className="flex flex-col items-stretch gap-2 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-2 lg:flex-row">
             {integration ? (
               <Button
                 type="button"
@@ -175,7 +175,7 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
                 color="red"
                 disabled={disconnect.status === "pending"}
                 onClick={() => disconnect.execute({ projectId })}
-                className="w-full sm:w-auto"
+                className="w-full lg:w-auto"
               >
                 disconnect
               </Button>
@@ -186,7 +186,7 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
                 variant="outline"
                 disabled={test.status === "pending"}
                 onClick={() => test.execute({ projectId })}
-                className="w-full sm:w-auto"
+                className="w-full lg:w-auto"
               >
                 {test.status === "pending" ? "testing..." : "test connection"}
               </Button>
@@ -195,11 +195,11 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
               <StatusChecksToggleButton
                 projectId={projectId}
                 enabled={integration.statusChecksEnabled}
-                className="w-full sm:w-auto"
+                className="w-full lg:w-auto"
               />
             ) : null}
           </div>
-          <Button type="submit" disabled={isSaving} className="w-full sm:w-auto">
+          <Button type="submit" disabled={isSaving} className="w-full lg:w-auto">
             <Icon icon={CheckIcon} />
             {isSaving ? "saving..." : "save"}
           </Button>
