@@ -179,6 +179,61 @@ describe("gitIntegrations", () => {
     });
   });
 
+  describe("setStatusChecks", () => {
+    test("should return UNAUTHORIZED when no session cookie is provided", async () => {
+      const [error] = await serverClient.gitIntegrations.setStatusChecks({
+        projectId: FAKE_PROJECT_ID,
+        enabled: false,
+      });
+      expect(error?.code).toBe("UNAUTHORIZED");
+    });
+
+    test("should return FORBIDDEN when the session user is not an admin", async ({
+      reviewer: _,
+    }) => {
+      const [error] = await serverClient.gitIntegrations.setStatusChecks({
+        projectId: FAKE_PROJECT_ID,
+        enabled: false,
+      });
+      expect(error?.code).toBe("FORBIDDEN");
+    });
+
+    test("should return BAD_REQUEST when no integration is configured", async ({ admin: _ }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+
+      const [error] = await serverClient.gitIntegrations.setStatusChecks({
+        projectId: addResult!.projectId,
+        enabled: false,
+      });
+      expect(error?.code).toBe("BAD_REQUEST");
+    });
+
+    test("should toggle status checks for the project", async ({ admin: _ }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+
+      await serverClient.gitIntegrations.upsert({
+        projectId,
+        provider: "github",
+        repoIdentifier: "acme/web",
+        token: "a-token",
+      });
+
+      const [error, disabled] = await serverClient.gitIntegrations.setStatusChecks({
+        projectId,
+        enabled: false,
+      });
+      expect(error).toBeNull();
+      expect(disabled?.statusChecksEnabled).toBe(false);
+
+      const [, result] = await serverClient.gitIntegrations.get({ projectId });
+      expect(result?.integration).toMatchObject({
+        repoIdentifier: "acme/web",
+        statusChecksEnabled: false,
+      });
+    });
+  });
+
   describe("remove", () => {
     test("should return UNAUTHORIZED when no session cookie is provided", async () => {
       const [error] = await serverClient.gitIntegrations.remove({ projectId: FAKE_PROJECT_ID });

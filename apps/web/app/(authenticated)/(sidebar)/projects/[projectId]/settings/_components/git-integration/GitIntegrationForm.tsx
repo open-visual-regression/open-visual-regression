@@ -25,6 +25,8 @@ import { toast } from "@ovr/ui/components/toast";
 
 import { serverClient } from "@/lib/router";
 
+import { DisableStatusChecksButton } from "./DisableStatusChecksButton";
+
 const PROVIDERS: { value: GitProviderSchema; label: string }[] = [
   { value: "github", label: "github" },
 ];
@@ -97,6 +99,18 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
     ],
   });
 
+  const enable = useServerAction(serverClient.gitIntegrations.setStatusChecks, {
+    interceptors: [
+      onSuccess(() => {
+        toast.success("ci checks enabled");
+        router.refresh();
+      }),
+      onError((err) => {
+        toast.error(err.message);
+      }),
+    ],
+  });
+
   const handleFormSubmit = (values: GitIntegrationFormValues) => {
     save.execute({
       projectId,
@@ -165,7 +179,7 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
           <FieldError errors={[errors.root]} />
         </CardContent>
         <CardFooter className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-row gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             {integration ? (
               <Button
                 type="button"
@@ -173,7 +187,7 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
                 color="red"
                 disabled={disconnect.status === "pending"}
                 onClick={() => disconnect.execute({ projectId })}
-                className="min-w-0 flex-1 sm:flex-none"
+                className="w-full sm:w-auto"
               >
                 disconnect
               </Button>
@@ -184,9 +198,23 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
                 variant="outline"
                 disabled={test.status === "pending"}
                 onClick={() => test.execute({ projectId })}
-                className="min-w-0 flex-1 sm:flex-none"
+                className="w-full sm:w-auto"
               >
                 {test.status === "pending" ? "testing..." : "test connection"}
+              </Button>
+            ) : null}
+            {integration?.statusChecksEnabled ? (
+              <DisableStatusChecksButton projectId={projectId} className="w-full sm:w-auto" />
+            ) : null}
+            {integration && !integration.statusChecksEnabled ? (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={enable.status === "pending"}
+                onClick={() => enable.execute({ projectId, enabled: true })}
+                className="w-full sm:w-auto"
+              >
+                {enable.status === "pending" ? "enabling..." : "enable"}
               </Button>
             ) : null}
           </div>

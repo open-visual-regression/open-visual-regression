@@ -20,6 +20,7 @@ const integration = {
   repoIdentifier: "acme/web",
   encryptedToken: "encrypted",
   checkContext: "ovr/visual-review",
+  statusChecksEnabled: true,
 };
 
 const makeDeps = (overrides: Partial<PublishBuildStatusDeps> = {}): PublishBuildStatusDeps => ({
@@ -58,6 +59,18 @@ describe("publishBuildStatus", () => {
     expect(deps.recordPublication).toHaveBeenCalledWith(
       expect.objectContaining({ buildId: "build-1", state: "failure", outcome: "ok" }),
     );
+  });
+
+  it("skips when status checks are disabled", async () => {
+    const deps = makeDeps({
+      findIntegration: vi
+        .fn<PublishBuildStatusDeps["findIntegration"]>()
+        .mockResolvedValue({ ...integration, statusChecksEnabled: false }),
+    });
+    await publishBuildStatus("build-1", deps);
+
+    expect(deps.send).not.toHaveBeenCalled();
+    expect(deps.recordPublication).not.toHaveBeenCalled();
   });
 
   it("skips when no integration is configured", async () => {

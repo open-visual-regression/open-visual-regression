@@ -26,6 +26,7 @@ export const get = os.gitIntegrations.get
         provider: integration.provider,
         repoIdentifier: integration.repoIdentifier,
         checkContext: integration.checkContext,
+        statusChecksEnabled: integration.statusChecksEnabled,
         hasToken: true as const,
       },
     };
@@ -62,6 +63,31 @@ export const upsert = os.gitIntegrations.upsert
       provider: integration.provider,
       repoIdentifier: integration.repoIdentifier,
       checkContext: integration.checkContext,
+      statusChecksEnabled: integration.statusChecksEnabled,
+      hasToken: true as const,
+    };
+  })
+  .actionable();
+
+export const setStatusChecks = os.gitIntegrations.setStatusChecks
+  .use(authenticatedMiddleware)
+  .use(adminMiddleware)
+  .use(projectMiddleware)
+  .handler(async ({ input }) => {
+    const integration = await dbClient.gitIntegrations.setStatusChecksEnabled(
+      input.projectId,
+      input.enabled,
+    );
+
+    if (!integration) {
+      throw new ORPCError("BAD_REQUEST", { message: "No git integration configured" });
+    }
+
+    return {
+      provider: integration.provider,
+      repoIdentifier: integration.repoIdentifier,
+      checkContext: integration.checkContext,
+      statusChecksEnabled: integration.statusChecksEnabled,
       hasToken: true as const,
     };
   })

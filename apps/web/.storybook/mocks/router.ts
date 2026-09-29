@@ -126,6 +126,16 @@ export const serverClient: typeof RealServerClient = {
         provider: "github" as const,
         repoIdentifier: "",
         checkContext: "Open Visual Regression / Storybook",
+        statusChecksEnabled: true,
+        hasToken: true as const,
+      }))
+      .actionable(),
+    setStatusChecks: os.gitIntegrations.setStatusChecks
+      .handler(({ input }) => ({
+        provider: "github" as const,
+        repoIdentifier: "",
+        checkContext: "Open Visual Regression / Storybook",
+        statusChecksEnabled: input.enabled,
         hasToken: true as const,
       }))
       .actionable(),

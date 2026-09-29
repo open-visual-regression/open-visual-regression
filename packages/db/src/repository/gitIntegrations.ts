@@ -53,6 +53,15 @@ export const updateFields = async (values: UpdateFieldsInput) => {
   return integration;
 };
 
+export const setStatusChecksEnabled = async (projectId: string, enabled: boolean) => {
+  const [integration] = await db
+    .update(gitIntegrations)
+    .set({ statusChecksEnabled: enabled })
+    .where(eq(gitIntegrations.projectId, projectId))
+    .returning();
+  return integration;
+};
+
 export const remove = async (projectId: string) => {
   await db.delete(gitIntegrations).where(eq(gitIntegrations.projectId, projectId));
 };
