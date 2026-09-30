@@ -1,5 +1,11 @@
 # @ovr/web
 
+## 0.9.1
+
+### Patch Changes
+
+- [#278](https://github.com/open-visual-regression/open-visual-regression/pull/278) [`d920581`](https://github.com/open-visual-regression/open-visual-regression/commit/d920581f468ad7a21f7a8596bc964625096528e0) Thanks [@tgfischer](https://github.com/tgfischer)! - The login page no longer queries the database on every visit once setup is complete, and signed-in sessions are re-checked against the database every 5 minutes instead of every minute. Idle deployments on scale-to-zero databases stay asleep longer.
+
 ## 0.9.0
 
 ### Minor Changes
