@@ -154,29 +154,27 @@ describe("queue", () => {
   });
 
   describe("job retention", () => {
-    test("should bound how many finished diff jobs are kept", async ({ connection }) => {
-      const job = await enqueueDiff(
-        { snapshotId: "snapshot-retention", diffId: "diff-retention" },
-        connection,
+    test("should bound how many finished diff jobs are kept", async ({ connection, trackJob }) => {
+      const job = trackJob(
+        await enqueueDiff(
+          { snapshotId: "snapshot-retention", diffId: "diff-retention" },
+          connection,
+        ),
       );
-      try {
-        expect(job.opts.removeOnComplete).toEqual({ age: 60 * 60, count: 1000 });
-        expect(job.opts.removeOnFail).toEqual({ age: 7 * 24 * 60 * 60, count: 1000 });
-      } finally {
-        await job.remove();
-      }
+
+      expect(job.opts.removeOnComplete).toEqual({ age: 60 * 60, count: 1000 });
+      expect(job.opts.removeOnFail).toEqual({ age: 7 * 24 * 60 * 60, count: 1000 });
     });
 
-    test("should bound how many finished reaper runs are kept", async ({ connection }) => {
+    test("should bound how many finished reaper runs are kept", async ({
+      connection,
+      openQueue,
+    }) => {
       await scheduleReaper(connection);
 
-      const queue = new Queue(QueueName.BUILD_REAPER, { connection });
-      try {
-        const [scheduler] = await queue.getJobSchedulers();
-        expect(scheduler?.template?.opts?.removeOnComplete).toEqual({ age: 60 * 60, count: 1000 });
-      } finally {
-        await queue.close();
-      }
+      const [scheduler] = await openQueue(QueueName.BUILD_REAPER).getJobSchedulers();
+
+      expect(scheduler?.template?.opts?.removeOnComplete).toEqual({ age: 60 * 60, count: 1000 });
     });
   });
 
