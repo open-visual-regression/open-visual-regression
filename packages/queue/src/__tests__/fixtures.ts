@@ -1,6 +1,6 @@
 import { Queue } from "bullmq";
 import type { Job } from "bullmq";
-import { Redis } from "ioredis";
+import { Redis, type RedisOptions } from "ioredis";
 import { test as vitest, vi } from "vitest";
 
 import { buildRedisConnection, type QueueName, type RedisConnection } from "../index";
@@ -9,6 +9,7 @@ export { describe, expect } from "vitest";
 
 type Fixtures = {
   connection: Redis;
+  openConnection: (options?: RedisOptions) => Redis;
   clusterUrl: string;
   clusterConnection: RedisConnection;
   openQueue: (name: QueueName) => Queue;
@@ -27,6 +28,27 @@ export const test = vitest.extend<Fixtures>({
     await use(connection);
 
     await connection.quit();
+  },
+
+  // eslint-disable-next-line no-empty-pattern
+  openConnection: async ({}, use) => {
+    const connections: Redis[] = [];
+
+    await use((options) => {
+      const connection = new Redis({
+        host: process.env.REDIS_HOST,
+        port: Number(process.env.REDIS_PORT),
+        maxRetriesPerRequest: null,
+        ...options,
+      });
+      connection.on("error", () => undefined);
+      connections.push(connection);
+      return connection;
+    });
+
+    for (const connection of connections) {
+      connection.disconnect();
+    }
   },
 
   openQueue: async ({ connection }, use) => {
