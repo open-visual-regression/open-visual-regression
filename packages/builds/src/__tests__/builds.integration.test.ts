@@ -7,12 +7,13 @@ import { dbClient } from "@ovr/db/client";
 import type { BuildProcessingStatus, DiffProcessingStatus, DiffReviewStatus } from "@ovr/db/schema";
 import {
   QueueName,
+  QueueUnavailableError,
   type RedisConnection,
   type CaptureGroupJobPayload,
   type ExtractJobPayload,
 } from "@ovr/queue";
 import { createBuildStatusSubscriber, type BuildStatusEvent } from "@ovr/queue/events";
-import { enqueueCaptureGroup } from "@ovr/queue/producer";
+import { enqueueCaptureGroup, enqueueExtract } from "@ovr/queue/producer";
 import { storage } from "@ovr/storage";
 
 import {
@@ -35,6 +36,7 @@ vi.mock("@ovr/queue/producer", async (importOriginal) => {
   return {
     ...actual,
     enqueueCaptureGroup: vi.fn<typeof actual.enqueueCaptureGroup>(actual.enqueueCaptureGroup),
+    enqueueExtract: vi.fn<typeof actual.enqueueExtract>(actual.enqueueExtract),
   };
 });
 
@@ -438,6 +440,44 @@ describe("builds", () => {
       expect(await dbClient.builds.findById(buildId)).toMatchObject({
         processingStatus: "queued",
         errorMessage: null,
+      });
+    });
+
+    test("marks the build as failed with the reason when the queue is unavailable", async ({
+      project,
+      captureConfiguration,
+      user,
+    }) => {
+      const created = await createBuild(
+        { projectId: project.id, branch: "main", commitSha: "a".repeat(40) },
+        user.id,
+      );
+      assert(created.status === "ok");
+      const buildId = created.data;
+      await uploadArtifact(project.id, buildId);
+      vi.mocked(enqueueExtract).mockRejectedValueOnce(new QueueUnavailableError());
+
+      const input = {
+        targets: [{ id: "story-a", title: "Story", name: "A" }],
+        viewports: [captureConfiguration],
+        diffThreshold: 0.05,
+      };
+
+      expect(await confirmBuildUpload(buildId, input)).toEqual({
+        status: "error",
+        error: "QUEUE_UNAVAILABLE",
+      });
+      expect(await dbClient.builds.findById(buildId)).toMatchObject({
+        processingStatus: "error",
+        errorMessage: "The build queue is unavailable: could not reach Redis",
+      });
+
+      expect(await confirmBuildUpload(buildId, input)).toEqual({
+        status: "error",
+        error: "BUILD_FAILED",
+      });
+      expect(await dbClient.builds.findById(buildId)).toMatchObject({
+        errorMessage: "The build queue is unavailable: could not reach Redis",
       });
     });
 
