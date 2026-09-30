@@ -130,6 +130,62 @@ describe("builds", () => {
     });
   });
 
+  describe("createBuild retries", () => {
+    test("returns the same build when the client retries with the same build id", async ({
+      admin: _,
+    }) => {
+      const { apiKey } = await createProjectWithApiKey();
+      setApiKeyHeader(apiKey);
+      const input = { buildId: uuidv7(), branch: "main", commitSha: "a".repeat(40) };
+
+      const [firstError, first] = await serverClient.builds.createBuild(input);
+      const [retryError, retried] = await serverClient.builds.createBuild(input);
+
+      expect(firstError).toBeNull();
+      expect(retryError).toBeNull();
+      expect(first?.buildId).toBe(input.buildId);
+      expect(retried?.buildId).toBe(input.buildId);
+    });
+
+    test("should not hand out an upload url for a build whose upload was confirmed", async ({
+      admin: _,
+    }) => {
+      const { apiKey } = await createProjectWithApiKey();
+      setApiKeyHeader(apiKey);
+      const input = { buildId: uuidv7(), branch: "main", commitSha: "a".repeat(40) };
+
+      await serverClient.builds.createBuild(input);
+      const build = await dbClient.builds.findById(input.buildId);
+      await storage.uploadFile(build!.artifactPath, Buffer.from(""), "application/gzip");
+      await serverClient.builds.confirmUpload({
+        buildId: input.buildId,
+        targets: [{ id: "story-a", title: "Story", name: "A" }],
+        viewports: VIEWPORTS,
+      });
+
+      const [error, result] = await serverClient.builds.createBuild(input);
+
+      expect(error?.code).toBe("CONFLICT");
+      expect(result).toBeUndefined();
+    });
+
+    test("should return CONFLICT when the build id belongs to another project", async ({
+      admin: _,
+    }) => {
+      const projectA = await createProjectWithApiKey();
+      const projectB = await createProjectWithApiKey();
+      const input = { buildId: uuidv7(), branch: "main", commitSha: "a".repeat(40) };
+
+      setApiKeyHeader(projectA.apiKey);
+      await serverClient.builds.createBuild(input);
+
+      setApiKeyHeader(projectB.apiKey);
+      const [error] = await serverClient.builds.createBuild(input);
+
+      expect(error?.code).toBe("CONFLICT");
+    });
+  });
+
   describe("confirmUpload", () => {
     test("should return UNAUTHORIZED when no api key is provided", async () => {
       setApiKeyHeader();

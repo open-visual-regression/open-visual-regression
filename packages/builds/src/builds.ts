@@ -32,6 +32,7 @@ type Viewport = {
 };
 
 type CreateBuildInput = {
+  buildId?: string;
   projectId: string;
   branch: string;
   commitSha: string;
@@ -143,20 +144,42 @@ export const supersedeInFlightBuilds = async (build: SupersedingBuild): Promise<
   return supersededBuildIds;
 };
 
+const RETRY_WINDOW_MS = 60 * 60 * 1000;
+
+const isRetryOfPendingUpload = async (
+  buildId: string,
+  projectId: string,
+  callerId: string,
+): Promise<boolean> => {
+  const existing = await dbClient.builds.findById(buildId);
+
+  if (
+    !existing ||
+    existing.projectId !== projectId ||
+    existing.createdBy !== callerId ||
+    existing.processingStatus !== "queued" ||
+    Date.now() - new Date(existing.createdAt).getTime() > RETRY_WINDOW_MS
+  ) {
+    return false;
+  }
+
+  return !(await dbClient.buildExtractDefaults.findByBuild(buildId));
+};
+
 export const createBuild = async (
   input: CreateBuildInput,
   callerId: string,
-): Promise<Result<string, "PROJECT_NOT_FOUND">> => {
+): Promise<Result<string, "PROJECT_NOT_FOUND" | "BUILD_ID_CONFLICT">> => {
   const project = await dbClient.projects.findById(input.projectId);
 
   if (!project) {
     return { status: "error", error: "PROJECT_NOT_FOUND" };
   }
 
-  const buildId = uuidv7();
+  const buildId = input.buildId ?? uuidv7();
 
   const build = await dbClient.transaction(async (tx) => {
-    const created = await dbClient.builds.create({
+    const created = await dbClient.builds.createIfAbsent({
       tx,
       id: buildId,
       projectId: input.projectId,
@@ -170,14 +193,19 @@ export const createBuild = async (
       artifactPath: getArtifactPath(input.projectId, buildId),
       createdBy: callerId,
     });
-    await dbClient.projects.incrementTotalBuildsCount(input.projectId, tx);
+    if (created) {
+      await dbClient.projects.incrementTotalBuildsCount(input.projectId, tx);
+    }
     return created;
   });
 
-  if (build) {
-    await supersedeInFlightBuilds(build);
+  if (!build) {
+    return (await isRetryOfPendingUpload(buildId, input.projectId, callerId))
+      ? { status: "ok", data: buildId }
+      : { status: "error", error: "BUILD_ID_CONFLICT" };
   }
 
+  await supersedeInFlightBuilds(build);
   await publishStatus(buildId);
 
   return { status: "ok", data: buildId };
