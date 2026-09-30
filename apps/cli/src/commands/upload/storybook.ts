@@ -1,4 +1,5 @@
 import { Command } from "commander";
+import { v7 as uuidv7 } from "uuid";
 
 import { STATS_FILENAME } from "@ovr/storybook-compat/affectedStories";
 import { readStoryTargets } from "@ovr/storybook-compat/manifest";
@@ -77,6 +78,7 @@ export const createStorybookCommand = (): Command =>
 
         console.log(`Creating build for ${branch}@${commitSha} (${targets.length} stories)...`);
         const { buildId, uploadUrl, buildUrl } = await client.builds.createBuild({
+          buildId: uuidv7(),
           branch,
           commitSha,
           name,

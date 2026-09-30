@@ -63,6 +63,7 @@ export const targetSchema = z.object({
 export type TargetSchema = z.infer<typeof targetSchema>;
 
 export const createBuildInputSchema = z.object({
+  buildId: z.uuidv7().optional(),
   branch: z.string().min(1),
   commitSha: z.string().min(1),
   name: z.string().min(1).optional(),

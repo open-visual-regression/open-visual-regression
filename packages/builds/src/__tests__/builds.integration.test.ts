@@ -1,10 +1,17 @@
 import assert from "node:assert";
 
 import { Queue, Worker } from "bullmq";
+import { v7 as uuidv7 } from "uuid";
 import { vi } from "vitest";
 
 import { dbClient } from "@ovr/db/client";
-import type { BuildProcessingStatus, DiffProcessingStatus, DiffReviewStatus } from "@ovr/db/schema";
+import { db } from "@ovr/db/db";
+import {
+  projects,
+  type BuildProcessingStatus,
+  type DiffProcessingStatus,
+  type DiffReviewStatus,
+} from "@ovr/db/schema";
 import {
   QueueName,
   QueueUnavailableError,
@@ -163,6 +170,60 @@ describe("builds", () => {
 
       const updated = await dbClient.projects.findById(project.id);
       expect(updated?.totalBuildsCount).toBe(project.totalBuildsCount + 2);
+    });
+
+    test("returns the existing build when the same build id is created again", async ({
+      project,
+      user,
+    }) => {
+      const input = {
+        buildId: uuidv7(),
+        projectId: project.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+      };
+
+      const first = await createBuild(input, user.id);
+      const retried = await createBuild(input, user.id);
+
+      expect(first).toEqual({ status: "ok", data: input.buildId });
+      expect(retried).toEqual({ status: "ok", data: input.buildId });
+      expect(await dbClient.builds.findById(input.buildId)).toMatchObject({
+        processingStatus: "queued",
+      });
+      expect(await dbClient.builds.findMany({ projectIds: [project.id] })).toHaveLength(1);
+      expect((await dbClient.projects.findById(project.id))?.totalBuildsCount).toBe(
+        project.totalBuildsCount + 1,
+      );
+    });
+
+    test("returns BUILD_ID_CONFLICT when the build id belongs to another project", async ({
+      project,
+      organization,
+      user,
+    }) => {
+      const [otherProject] = await db
+        .insert(projects)
+        .values({
+          name: "Other Project",
+          gitMainBranch: "main",
+          organizationId: organization.id,
+          creatorId: user.id,
+        })
+        .returning();
+      const buildId = uuidv7();
+
+      await createBuild(
+        { buildId, projectId: project.id, branch: "main", commitSha: "a".repeat(40) },
+        user.id,
+      );
+      const result = await createBuild(
+        { buildId, projectId: otherProject!.id, branch: "main", commitSha: "a".repeat(40) },
+        user.id,
+      );
+
+      expect(result).toEqual({ status: "error", error: "BUILD_ID_CONFLICT" });
+      expect(await dbClient.builds.findById(buildId)).toMatchObject({ projectId: project.id });
     });
 
     test("returns PROJECT_NOT_FOUND when the project does not exist", async ({ user }) => {

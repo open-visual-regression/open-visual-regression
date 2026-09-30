@@ -32,6 +32,7 @@ type Viewport = {
 };
 
 type CreateBuildInput = {
+  buildId?: string;
   projectId: string;
   branch: string;
   commitSha: string;
@@ -146,17 +147,17 @@ export const supersedeInFlightBuilds = async (build: SupersedingBuild): Promise<
 export const createBuild = async (
   input: CreateBuildInput,
   callerId: string,
-): Promise<Result<string, "PROJECT_NOT_FOUND">> => {
+): Promise<Result<string, "PROJECT_NOT_FOUND" | "BUILD_ID_CONFLICT">> => {
   const project = await dbClient.projects.findById(input.projectId);
 
   if (!project) {
     return { status: "error", error: "PROJECT_NOT_FOUND" };
   }
 
-  const buildId = uuidv7();
+  const buildId = input.buildId ?? uuidv7();
 
   const build = await dbClient.transaction(async (tx) => {
-    const created = await dbClient.builds.create({
+    const created = await dbClient.builds.createIfAbsent({
       tx,
       id: buildId,
       projectId: input.projectId,
@@ -170,14 +171,20 @@ export const createBuild = async (
       artifactPath: getArtifactPath(input.projectId, buildId),
       createdBy: callerId,
     });
-    await dbClient.projects.incrementTotalBuildsCount(input.projectId, tx);
+    if (created) {
+      await dbClient.projects.incrementTotalBuildsCount(input.projectId, tx);
+    }
     return created;
   });
 
-  if (build) {
-    await supersedeInFlightBuilds(build);
+  if (!build) {
+    const existing = await dbClient.builds.findById(buildId);
+    return existing?.projectId === input.projectId
+      ? { status: "ok", data: buildId }
+      : { status: "error", error: "BUILD_ID_CONFLICT" };
   }
 
+  await supersedeInFlightBuilds(build);
   await publishStatus(buildId);
 
   return { status: "ok", data: buildId };
