@@ -8,6 +8,7 @@ import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
 import {
   projects,
+  user as userTable,
   type BuildProcessingStatus,
   type DiffProcessingStatus,
   type DiffReviewStatus,
@@ -195,6 +196,93 @@ describe("builds", () => {
       expect((await dbClient.projects.findById(project.id))?.totalBuildsCount).toBe(
         project.totalBuildsCount + 1,
       );
+    });
+
+    test("returns BUILD_ID_CONFLICT once the build's upload has been confirmed", async ({
+      project,
+      captureConfiguration,
+      user,
+    }) => {
+      const input = {
+        buildId: uuidv7(),
+        projectId: project.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+      };
+      await createBuild(input, user.id);
+      await dbClient.buildExtractDefaults.create({
+        buildId: input.buildId,
+        targets: [{ id: "story-a", title: "Story", name: "A" }],
+        viewports: [captureConfiguration],
+        diffThreshold: 0.05,
+        unaffectedTargetIds: [],
+      });
+
+      expect(await createBuild(input, user.id)).toEqual({
+        status: "error",
+        error: "BUILD_ID_CONFLICT",
+      });
+    });
+
+    test("returns BUILD_ID_CONFLICT when another user retries the build id", async ({
+      project,
+      user,
+    }) => {
+      const [otherUser] = await db
+        .insert(userTable)
+        .values({ id: uuidv7(), name: "Other User", email: `${uuidv7()}@example.com` })
+        .returning();
+      const input = {
+        buildId: uuidv7(),
+        projectId: project.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+      };
+      await createBuild(input, user.id);
+
+      expect(await createBuild(input, otherUser!.id)).toEqual({
+        status: "error",
+        error: "BUILD_ID_CONFLICT",
+      });
+    });
+
+    test("returns BUILD_ID_CONFLICT when the build is no longer queued", async ({
+      project,
+      user,
+    }) => {
+      const input = {
+        buildId: uuidv7(),
+        projectId: project.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+      };
+      await createBuild(input, user.id);
+      await dbClient.builds.updateProcessingStatus(input.buildId, "success");
+
+      expect(await createBuild(input, user.id)).toEqual({
+        status: "error",
+        error: "BUILD_ID_CONFLICT",
+      });
+    });
+
+    test("returns BUILD_ID_CONFLICT when the retry window has passed", async ({
+      project,
+      user,
+      advanceClock,
+    }) => {
+      const input = {
+        buildId: uuidv7(),
+        projectId: project.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+      };
+      await createBuild(input, user.id);
+      advanceClock(2 * 60 * 60 * 1000);
+
+      expect(await createBuild(input, user.id)).toEqual({
+        status: "error",
+        error: "BUILD_ID_CONFLICT",
+      });
     });
 
     test("returns BUILD_ID_CONFLICT when the build id belongs to another project", async ({

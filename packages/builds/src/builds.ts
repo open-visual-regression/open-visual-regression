@@ -144,6 +144,28 @@ export const supersedeInFlightBuilds = async (build: SupersedingBuild): Promise<
   return supersededBuildIds;
 };
 
+const RETRY_WINDOW_MS = 60 * 60 * 1000;
+
+const isRetryOfPendingUpload = async (
+  buildId: string,
+  projectId: string,
+  callerId: string,
+): Promise<boolean> => {
+  const existing = await dbClient.builds.findById(buildId);
+
+  if (
+    !existing ||
+    existing.projectId !== projectId ||
+    existing.createdBy !== callerId ||
+    existing.processingStatus !== "queued" ||
+    Date.now() - new Date(existing.createdAt).getTime() > RETRY_WINDOW_MS
+  ) {
+    return false;
+  }
+
+  return !(await dbClient.buildExtractDefaults.findByBuild(buildId));
+};
+
 export const createBuild = async (
   input: CreateBuildInput,
   callerId: string,
@@ -178,8 +200,7 @@ export const createBuild = async (
   });
 
   if (!build) {
-    const existing = await dbClient.builds.findById(buildId);
-    return existing?.projectId === input.projectId
+    return (await isRetryOfPendingUpload(buildId, input.projectId, callerId))
       ? { status: "ok", data: buildId }
       : { status: "error", error: "BUILD_ID_CONFLICT" };
   }
