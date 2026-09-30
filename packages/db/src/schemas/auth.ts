@@ -51,6 +51,9 @@ export const account = pgTable(
   "account",
   {
     id: text("id").primaryKey(),
+    // Deprecated: written by better-auth 1.7.0-1.7.2 only. Kept nullable so an older release can
+    // still read and write it during a rolling deploy or rollback; drop it in a later release.
+    issuer: text("issuer"),
     accountId: text("account_id").notNull(),
     providerId: text("provider_id").notNull(),
     userId: text("user_id")
