@@ -6,12 +6,21 @@ import type { AddProjectInputSchema } from "@ovr/api/contracts/projects";
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
 import { organization, projects } from "@ovr/db/schema";
+import { QueueUnavailableError } from "@ovr/queue";
+import { enqueueExtract } from "@ovr/queue/producer";
 import { storage } from "@ovr/storage";
 
 import { serverClient } from "@/lib/router";
 import { test, describe, expect } from "@/lib/testing/fixtures";
 
 vi.mock("next/headers");
+vi.mock("@ovr/queue/producer", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@ovr/queue/producer")>();
+  return {
+    ...actual,
+    enqueueExtract: vi.fn<typeof actual.enqueueExtract>(actual.enqueueExtract),
+  };
+});
 
 const TEST_PROJECT: AddProjectInputSchema = {
   projectName: "Test Project",
@@ -121,6 +130,62 @@ describe("builds", () => {
     });
   });
 
+  describe("createBuild retries", () => {
+    test("returns the same build when the client retries with the same build id", async ({
+      admin: _,
+    }) => {
+      const { apiKey } = await createProjectWithApiKey();
+      setApiKeyHeader(apiKey);
+      const input = { buildId: uuidv7(), branch: "main", commitSha: "a".repeat(40) };
+
+      const [firstError, first] = await serverClient.builds.createBuild(input);
+      const [retryError, retried] = await serverClient.builds.createBuild(input);
+
+      expect(firstError).toBeNull();
+      expect(retryError).toBeNull();
+      expect(first?.buildId).toBe(input.buildId);
+      expect(retried?.buildId).toBe(input.buildId);
+    });
+
+    test("should not hand out an upload url for a build whose upload was confirmed", async ({
+      admin: _,
+    }) => {
+      const { apiKey } = await createProjectWithApiKey();
+      setApiKeyHeader(apiKey);
+      const input = { buildId: uuidv7(), branch: "main", commitSha: "a".repeat(40) };
+
+      await serverClient.builds.createBuild(input);
+      const build = await dbClient.builds.findById(input.buildId);
+      await storage.uploadFile(build!.artifactPath, Buffer.from(""), "application/gzip");
+      await serverClient.builds.confirmUpload({
+        buildId: input.buildId,
+        targets: [{ id: "story-a", title: "Story", name: "A" }],
+        viewports: VIEWPORTS,
+      });
+
+      const [error, result] = await serverClient.builds.createBuild(input);
+
+      expect(error?.code).toBe("CONFLICT");
+      expect(result).toBeUndefined();
+    });
+
+    test("should return CONFLICT when the build id belongs to another project", async ({
+      admin: _,
+    }) => {
+      const projectA = await createProjectWithApiKey();
+      const projectB = await createProjectWithApiKey();
+      const input = { buildId: uuidv7(), branch: "main", commitSha: "a".repeat(40) };
+
+      setApiKeyHeader(projectA.apiKey);
+      await serverClient.builds.createBuild(input);
+
+      setApiKeyHeader(projectB.apiKey);
+      const [error] = await serverClient.builds.createBuild(input);
+
+      expect(error?.code).toBe("CONFLICT");
+    });
+  });
+
   describe("confirmUpload", () => {
     test("should return UNAUTHORIZED when no api key is provided", async () => {
       setApiKeyHeader();
@@ -195,6 +260,38 @@ describe("builds", () => {
 
       expect(error).toBeNull();
       expect(result).toEqual({ ok: true });
+    });
+
+    test("should return SERVICE_UNAVAILABLE and then CONFLICT with the reason when the queue is down", async ({
+      admin: _,
+    }) => {
+      const { apiKey } = await createProjectWithApiKey();
+      setApiKeyHeader(apiKey);
+
+      const [, createResult] = await serverClient.builds.createBuild({
+        branch: "main",
+        commitSha: "a".repeat(40),
+      });
+      const buildId = createResult!.buildId;
+
+      const build = await dbClient.builds.findById(buildId);
+      await storage.uploadFile(build!.artifactPath, Buffer.from(""), "application/gzip");
+      vi.mocked(enqueueExtract).mockRejectedValueOnce(new QueueUnavailableError());
+
+      const input = {
+        buildId,
+        targets: [{ id: "story-a", title: "Story", name: "A" }],
+        viewports: VIEWPORTS,
+      };
+
+      const [error] = await serverClient.builds.confirmUpload(input);
+      expect(error?.code).toBe("SERVICE_UNAVAILABLE");
+
+      const [retryError] = await serverClient.builds.confirmUpload(input);
+      expect(retryError?.code).toBe("CONFLICT");
+      expect(retryError?.message).toBe(
+        "this build has already failed: The build queue is unavailable: could not reach Redis",
+      );
     });
 
     test("records the targets the uploader marked unaffected", async ({ admin: _ }) => {

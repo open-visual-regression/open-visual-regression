@@ -34,6 +34,11 @@ export const create = async ({ tx = db, ...values }: CreateInput) => {
   return build;
 };
 
+export const createIfAbsent = async ({ tx = db, ...values }: CreateInput) => {
+  const [build] = await tx.insert(builds).values(values).onConflictDoNothing().returning();
+  return build;
+};
+
 export const findById = (id: string) =>
   db.query.builds.findFirst({ where: (builds, { eq }) => eq(builds.id, id) });
 

@@ -1,4 +1,5 @@
 import { Command } from "commander";
+import { v7 as uuidv7 } from "uuid";
 
 import { STATS_FILENAME } from "@ovr/storybook-compat/affectedStories";
 import { readStoryTargets } from "@ovr/storybook-compat/manifest";
@@ -12,7 +13,7 @@ import {
   resolveViewports,
   resolveWaitForTimeout,
 } from "../../config";
-import { formatCliError } from "../../errors";
+import { formatCliError, runStep } from "../../errors";
 import { findUnaffectedTargets } from "./affected";
 import { createArtifactTarball, uploadArtifact } from "./artifact";
 import {
@@ -76,26 +77,31 @@ export const createStorybookCommand = (): Command =>
           : [];
 
         console.log(`Creating build for ${branch}@${commitSha} (${targets.length} stories)...`);
-        const { buildId, uploadUrl, buildUrl } = await client.builds.createBuild({
-          branch,
-          commitSha,
-          name,
-          author,
-          buildType: "storybook",
-        });
+        const { buildId, uploadUrl, buildUrl } = await runStep("creating the build", () =>
+          client.builds.createBuild({
+            buildId: uuidv7(),
+            branch,
+            commitSha,
+            name,
+            author,
+            buildType: "storybook",
+          }),
+        );
 
         console.log("Uploading build artifact...");
         const artifact = await createArtifactTarball(options.dir, [STATS_FILENAME]);
-        await uploadArtifact(uploadUrl, artifact);
+        await runStep("uploading the build artifact", () => uploadArtifact(uploadUrl, artifact));
 
-        await client.builds.confirmUpload({
-          buildId,
-          targets,
-          viewports,
-          diffThreshold,
-          ...(waitForTimeout > 0 && { waitForTimeout }),
-          ...(unaffectedTargetIds.length > 0 && { unaffectedTargetIds }),
-        });
+        await runStep("confirming the upload", () =>
+          client.builds.confirmUpload({
+            buildId,
+            targets,
+            viewports,
+            diffThreshold,
+            ...(waitForTimeout > 0 && { waitForTimeout }),
+            ...(unaffectedTargetIds.length > 0 && { unaffectedTargetIds }),
+          }),
+        );
 
         console.log(`Build published: ${buildUrl}`);
 

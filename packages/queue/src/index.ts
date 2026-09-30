@@ -49,6 +49,62 @@ export const buildRedisConnection = (
   });
 };
 
+export class QueueUnavailableError extends Error {
+  constructor(cause?: unknown) {
+    super("The build queue is unavailable: could not reach Redis", { cause });
+    this.name = "QueueUnavailableError";
+  }
+}
+
+const isConnected = (connection: RedisConnection): boolean =>
+  connection.status === "ready" ||
+  (connection instanceof Cluster && connection.status === "connect");
+
+export const waitForConnection = async (
+  connection: RedisConnection,
+  timeoutMs: number,
+): Promise<void> => {
+  if (isConnected(connection)) {
+    return;
+  }
+
+  if (connection.status === "end") {
+    throw new QueueUnavailableError();
+  }
+
+  if (connection.status === "wait") {
+    connection.connect().catch(() => undefined);
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    let lastError: unknown;
+
+    const onReady = (): void => {
+      cleanup();
+      resolve();
+    };
+    const onError = (error: unknown): void => {
+      lastError = error;
+    };
+    const timer = setTimeout(() => {
+      cleanup();
+      reject(new QueueUnavailableError(lastError));
+    }, timeoutMs);
+    const cleanup = (): void => {
+      clearTimeout(timer);
+      connection.off("ready", onReady);
+      connection.off("error", onError);
+    };
+
+    connection.on("ready", onReady);
+    connection.on("error", onError);
+
+    if (isConnected(connection)) {
+      onReady();
+    }
+  });
+};
+
 // The hash tag keeps each queue's keys in one cluster slot, avoiding CROSSSLOT.
 export const queueOptions = (
   connection: RedisConnection,
@@ -118,20 +174,53 @@ export type GitStatusPublishJobPayload = {
   buildId: string;
 };
 
+const RETENTION: Pick<JobsOptions, "removeOnComplete" | "removeOnFail"> = {
+  removeOnComplete: { age: 60 * 60, count: 1000 },
+  removeOnFail: { age: 7 * 24 * 60 * 60, count: 1000 },
+};
+
 const JOB_OPTIONS: Record<QueueName, JobsOptions> = {
-  [QueueName.BUILD_EXTRACT]: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
-  [QueueName.SNAPSHOT_CAPTURE]: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
-  [QueueName.SNAPSHOT_DIFF]: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
+  [QueueName.BUILD_EXTRACT]: {
+    attempts: 3,
+    backoff: { type: "exponential", delay: 2000 },
+    ...RETENTION,
+  },
+  [QueueName.SNAPSHOT_CAPTURE]: {
+    attempts: 3,
+    backoff: { type: "exponential", delay: 2000 },
+    ...RETENTION,
+  },
+  [QueueName.SNAPSHOT_DIFF]: {
+    attempts: 3,
+    backoff: { type: "exponential", delay: 2000 },
+    ...RETENTION,
+  },
   [QueueName.BUILD_FINALIZE]: {
     attempts: 3,
     backoff: { type: "fixed", delay: 1000 },
     removeOnComplete: true,
     removeOnFail: true,
   },
-  [QueueName.BUILD_PURGE_DISPATCH]: { attempts: 3, backoff: { type: "exponential", delay: 5000 } },
-  [QueueName.BUILD_PURGE]: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
-  [QueueName.PROJECT_PURGE]: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
-  [QueueName.BUILD_REAPER]: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
+  [QueueName.BUILD_PURGE_DISPATCH]: {
+    attempts: 3,
+    backoff: { type: "exponential", delay: 5000 },
+    ...RETENTION,
+  },
+  [QueueName.BUILD_PURGE]: {
+    attempts: 3,
+    backoff: { type: "exponential", delay: 2000 },
+    ...RETENTION,
+  },
+  [QueueName.PROJECT_PURGE]: {
+    attempts: 3,
+    backoff: { type: "exponential", delay: 2000 },
+    ...RETENTION,
+  },
+  [QueueName.BUILD_REAPER]: {
+    attempts: 3,
+    backoff: { type: "exponential", delay: 2000 },
+    ...RETENTION,
+  },
   [QueueName.GIT_STATUS_PUBLISH]: {
     attempts: 5,
     backoff: { type: "exponential", delay: 5000 },
@@ -292,7 +381,11 @@ export const schedulePurge = async (connection: RedisConnection): Promise<void> 
     await queue.upsertJobScheduler(
       PURGE_DISPATCH_JOB_ID,
       { pattern: "0 3 * * *" },
-      { name: QueueName.BUILD_PURGE_DISPATCH, data: {} },
+      {
+        name: QueueName.BUILD_PURGE_DISPATCH,
+        data: {},
+        opts: JOB_OPTIONS[QueueName.BUILD_PURGE_DISPATCH],
+      },
     );
   } finally {
     await queue.close();
@@ -307,7 +400,7 @@ export const scheduleReaper = async (connection: RedisConnection): Promise<void>
     await queue.upsertJobScheduler(
       REAPER_JOB_ID,
       { pattern: "*/30 * * * *" },
-      { name: QueueName.BUILD_REAPER, data: {} },
+      { name: QueueName.BUILD_REAPER, data: {}, opts: JOB_OPTIONS[QueueName.BUILD_REAPER] },
     );
   } finally {
     await queue.close();
