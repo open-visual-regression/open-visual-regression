@@ -161,11 +161,12 @@ describe("BuildHeader", () => {
     );
   });
 
-  it("should hide the bulk review actions when the build has processing errors, even with reviewable snapshots", () => {
+  it("should hide the bulk review actions when the build is not reviewable, even with reviewable snapshots", () => {
     renderComponent({
       build: mocks.build.generateBuild({
         status: "error",
         errorMessage: "One or more snapshots failed to diff against their baseline",
+        isReviewable: false,
       }),
       snapshotCounts: mocks.build.generateSnapshotCounts({ needs_review: 30, error: 3 }),
     });
@@ -192,7 +193,7 @@ describe("BuildHeader", () => {
   it.each(["queued", "processing"] as const)(
     "should show the cancel build button instead of the bulk actions when the build is %s",
     (status) => {
-      renderComponent({ build: mocks.build.generateBuild({ status }) });
+      renderComponent({ build: mocks.build.generateBuild({ status, isReviewable: false }) });
 
       expect(screen.getByRole("button", { name: /cancel build/i })).toBeVisible();
       expect(screen.queryByRole("button", { name: /approve all/i })).not.toBeInTheDocument();
@@ -353,7 +354,9 @@ describe("BuildHeader", () => {
   });
 
   it("should not render the review or cancel actions when the build is canceled", () => {
-    renderComponent({ build: mocks.build.generateBuild({ status: "canceled" }) });
+    renderComponent({
+      build: mocks.build.generateBuild({ status: "canceled", isReviewable: false }),
+    });
 
     expect(screen.queryByRole("button", { name: /approve all/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /reject all/i })).not.toBeInTheDocument();

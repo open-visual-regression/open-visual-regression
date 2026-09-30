@@ -191,20 +191,15 @@ describe("SnapshotActionsRow", () => {
     expect(screen.getByRole("button", { name: /^approve$/i })).toBeEnabled();
   });
 
-  it.each([
-    ["there is no diff", null],
-    ["the diff has not been resolved yet", { ...diff, reviewStatus: "not_required" as const }],
-    ["the diff was unchanged", { ...diff, reviewStatus: "unchanged" as const }],
-    ["the diff was auto approved", { ...diff, reviewStatus: "auto_approved" as const }],
-  ])("should hide approve and reject when %s", (_description, diffInput) => {
-    renderComponent({ diff: diffInput });
+  it("should hide approve and reject when there is no diff", () => {
+    renderComponent({ diff: null });
 
     expect(screen.queryByRole("button", { name: /^approve$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^reject$/i })).not.toBeInTheDocument();
   });
 
-  it("should hide approve and reject when the snapshot failed to render, even if the diff needs review", () => {
-    renderComponent({ snapshot: { ...snapshot, status: "error" } });
+  it("should hide approve and reject when the snapshot is not reviewable", () => {
+    renderComponent({ snapshot: { ...snapshot, isReviewable: false } });
 
     expect(screen.queryByRole("button", { name: /^approve$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^reject$/i })).not.toBeInTheDocument();
@@ -324,7 +319,9 @@ describe("SnapshotActionsRow", () => {
   });
 
   it("should show the rebuild button for an errored snapshot, which has nothing to review", () => {
-    renderComponent({ snapshot: { ...snapshot, status: "error", isRebuildable: true } });
+    renderComponent({
+      snapshot: { ...snapshot, status: "error", isRebuildable: true, isReviewable: false },
+    });
 
     expect(screen.getByRole("button", { name: /^rebuild$/i })).toBeVisible();
     expect(screen.queryByRole("button", { name: /^approve$/i })).not.toBeInTheDocument();

@@ -17,6 +17,7 @@ import {
 import { dbClient } from "@ovr/db/client";
 import { buildBranchUrl } from "@ovr/git-status/webBranchUrl";
 import { buildCommitUrl } from "@ovr/git-status/webCommitUrl";
+import { checkBuildReviewable } from "@ovr/reviews/reviewable";
 import { storage } from "@ovr/storage";
 
 import { buildStatusHub } from "@/lib/events/buildStatusHub";
@@ -332,10 +333,11 @@ export const getOne = os.builds.getOne
   .handler(async ({ context }) => {
     const { build, project } = context;
 
-    const [canceler, rebuildable, hasNewerBuild, gitIntegration] = await Promise.all([
+    const hasNewerBuild = await hasNewerBuildOnBranch(build);
+    const [canceler, rebuildable, reviewable, gitIntegration] = await Promise.all([
       build.canceledBy ? dbClient.users.findById(build.canceledBy) : null,
-      checkRebuildable(build),
-      hasNewerBuildOnBranch(build),
+      checkRebuildable(build, { hasNewerBuild }),
+      checkBuildReviewable(build, { hasNewerBuild }),
       dbClient.gitIntegrations.findByProject(project.id),
     ]);
 
@@ -351,7 +353,7 @@ export const getOne = os.builds.getOne
         status: getBuildDisplayStatus(build),
         canceledBy: canceler?.name ?? null,
         isRebuildable: rebuildable.status === "ok",
-        isReviewable: !hasNewerBuild,
+        isReviewable: reviewable.status === "ok",
         buildType: build.buildType,
         createdAt: build.createdAt,
         commitUrl: gitIntegration

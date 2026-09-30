@@ -9,6 +9,10 @@ import {
   castVote as castVoteService,
   removeVote as removeVoteService,
 } from "@ovr/reviews/diffs";
+import type {
+  BuildReviewBlockedReason,
+  SnapshotReviewBlockedReason,
+} from "@ovr/reviews/reviewable";
 
 import {
   authenticatedMiddleware,
@@ -19,13 +23,24 @@ import {
 } from "./middleware";
 import { os } from "./os";
 
+const REVIEW_BLOCKED_MESSAGES: Record<
+  Exclude<BuildReviewBlockedReason | SnapshotReviewBlockedReason, "REVIEW_NOT_REQUIRED">,
+  string
+> = {
+  NOT_SETTLED: "this build is still running",
+  BUILD_CANCELED: "this build was canceled",
+  BUILD_FAILED: "this build failed",
+  NOT_LATEST_ON_BRANCH: "a newer build has landed on this branch",
+  SNAPSHOT_FAILED: "this snapshot failed",
+};
+
 const throwOnError = (
   error:
     | "DIFF_NOT_FOUND"
     | "BUILD_NOT_FOUND"
-    | "REVIEW_NOT_REQUIRED"
     | "FORBIDDEN"
-    | "NOT_LATEST_ON_BRANCH",
+    | BuildReviewBlockedReason
+    | SnapshotReviewBlockedReason,
 ): never => {
   if (error === "DIFF_NOT_FOUND" || error === "BUILD_NOT_FOUND") {
     throw new ORPCError("NOT_FOUND");
@@ -33,10 +48,10 @@ const throwOnError = (
   if (error === "FORBIDDEN") {
     throw new ORPCError("FORBIDDEN");
   }
-  if (error === "NOT_LATEST_ON_BRANCH") {
-    throw new ORPCError("CONFLICT", { message: "a newer build has landed on this branch" });
+  if (error === "REVIEW_NOT_REQUIRED") {
+    throw new ORPCError("BAD_REQUEST");
   }
-  throw new ORPCError("BAD_REQUEST");
+  throw new ORPCError("CONFLICT", { message: REVIEW_BLOCKED_MESSAGES[error] });
 };
 
 const buildBaselineSnapshot = async (

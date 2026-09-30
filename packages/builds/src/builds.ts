@@ -343,15 +343,19 @@ export const hasNewerBuildOnBranch = async (
   return newer.length > 0;
 };
 
+// Callers that already know whether a newer build exists pass it in to skip the query.
+type RebuildableOptions = { hasNewerBuild?: boolean };
+
 export const checkRebuildable = async (
   build: BuildCandidate,
+  options: RebuildableOptions = {},
 ): Promise<Result<ExtractDefaults, RebuildBlockedReason>> => {
   if (build.processingStatus === "queued" || build.processingStatus === "processing") {
     return { status: "error", error: "NOT_SETTLED" };
   }
 
   const [newerOnBranch, extractDefaults] = await Promise.all([
-    hasNewerBuildOnBranch(build),
+    options.hasNewerBuild ?? hasNewerBuildOnBranch(build),
     dbClient.buildExtractDefaults.findByBuild(build.id),
   ]);
 
@@ -452,6 +456,7 @@ export type SnapshotRebuildBlockedReason =
 export const checkSnapshotsRebuildable = async (
   build: BuildCandidate,
   snapshots: { status: SnapshotStatus }[],
+  options: RebuildableOptions = {},
 ): Promise<Result<void, SnapshotRebuildBlockedReason>> => {
   if (build.processingStatus === "queued" || build.processingStatus === "processing") {
     return { status: "error", error: "NOT_SETTLED" };
@@ -465,7 +470,7 @@ export const checkSnapshotsRebuildable = async (
     return { status: "error", error: "SNAPSHOT_SKIPPED" };
   }
 
-  if (await hasNewerBuildOnBranch(build)) {
+  if (await (options.hasNewerBuild ?? hasNewerBuildOnBranch(build))) {
     return { status: "error", error: "NOT_LATEST_ON_BRANCH" };
   }
 

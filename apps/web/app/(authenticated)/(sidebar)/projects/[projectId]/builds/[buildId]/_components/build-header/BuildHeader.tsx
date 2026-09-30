@@ -43,16 +43,9 @@ export const BuildHeader = ({
     snapshotCounts.approved + snapshotCounts.rejected + snapshotCounts.needs_review > 0;
   const isCancelable = build.status === "queued" || build.status === "processing";
   const isCanceled = build.status === "canceled";
-  const hasProcessingError = build.status === "error";
   const showCancel = canReview && isCancelable;
   const showRebuild = canReview && !isCancelable && build.isRebuildable;
-  const showReviewActions =
-    canReview &&
-    build.isReviewable &&
-    !isCancelable &&
-    !isCanceled &&
-    !hasProcessingError &&
-    hasReviewable;
+  const showReviewActions = canReview && build.isReviewable && hasReviewable;
   const showActions = showCancel || showRebuild || showReviewActions;
 
   return (

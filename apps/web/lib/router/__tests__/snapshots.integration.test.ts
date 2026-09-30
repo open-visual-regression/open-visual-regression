@@ -286,6 +286,45 @@ describe("snapshots", () => {
       expect(error).toBeNull();
       expect(result?.snapshot.status).toBe("unchanged");
     });
+
+    test("reports a snapshot awaiting review as reviewable until a newer build lands on its branch", async ({
+      admin,
+    }) => {
+      const { projectId, build } = await createProjectAndBuild(admin);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: build.id, ...VIEWPORT, targetId: "story-a", status: "success" }],
+      });
+      await dbClient.diffs.create({
+        snapshotId: snapshot!.id,
+        processingStatus: "success",
+        reviewStatus: "needs_review",
+      });
+
+      const [, before] = await serverClient.snapshots.getOne({ snapshotId: snapshot!.id });
+      expect(before?.snapshot.isReviewable).toBe(true);
+
+      await dbClient.builds.create({
+        projectId,
+        branch: build.branch,
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/seed/newer",
+        createdBy: admin.id,
+      });
+
+      const [, after] = await serverClient.snapshots.getOne({ snapshotId: snapshot!.id });
+      expect(after?.snapshot.isReviewable).toBe(false);
+    });
+
+    test("reports a snapshot without a diff as not reviewable", async ({ admin }) => {
+      const { build } = await createProjectAndBuild(admin);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: build.id, ...VIEWPORT, targetId: "story-a" }],
+      });
+
+      const [, result] = await serverClient.snapshots.getOne({ snapshotId: snapshot!.id });
+
+      expect(result?.snapshot.isReviewable).toBe(false);
+    });
   });
 
   describe("list", () => {
