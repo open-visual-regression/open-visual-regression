@@ -47,7 +47,7 @@ export const SnapshotZoomDialog = ({
       </DialogTrigger>
       <DialogContent
         showCloseButton={false}
-        className="top-2 left-2 flex h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-none sm:top-4 sm:left-4 sm:h-[calc(100dvh-2rem)] sm:w-[calc(100vw-2rem)] translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden p-0 sm:max-w-none"
+        className="top-0 left-0 flex h-dvh w-screen max-w-none rounded-none sm:top-4 sm:left-4 sm:h-[calc(100dvh-2rem)] sm:w-[calc(100vw-2rem)] sm:rounded-xl translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden p-0 sm:max-w-none"
       >
         <TransformWrapper minScale={0.05} maxScale={16} limitToBounds={false} centerOnInit>
           <SnapshotZoomToolbar

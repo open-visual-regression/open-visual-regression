@@ -44,7 +44,7 @@ export const NewSnapshotDiffPane = ({
         <Typography variant="label">{label}</Typography>
         <div className="ml-auto flex items-center gap-2">
           <label className="flex items-center gap-2">
-            <Typography variant="caption">show diff</Typography>
+            <Typography variant="caption">diff</Typography>
             <Switch checked={showDiff} onCheckedChange={onShowDiffChange} />
           </label>
           <SnapshotZoomDialog

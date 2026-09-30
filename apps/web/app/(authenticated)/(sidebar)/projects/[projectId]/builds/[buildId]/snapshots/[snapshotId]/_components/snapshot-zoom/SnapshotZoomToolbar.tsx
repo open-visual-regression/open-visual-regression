@@ -42,7 +42,7 @@ export const SnapshotZoomToolbar = ({
       </div>
       {hasDiff ? (
         <label className="flex items-center gap-2">
-          <Typography variant="caption">show diff</Typography>
+          <Typography variant="caption">diff</Typography>
           <Switch checked={showDiff} onCheckedChange={onShowDiffChange} />
         </label>
       ) : null}
@@ -56,7 +56,7 @@ export const SnapshotZoomToolbar = ({
         >
           <Icon icon={MinusIcon} size={12} />
         </Button>
-        <Typography variant="num" className="min-w-9 text-center text-label" role="status">
+        <Typography variant="num" className="min-w-[4ch] text-center text-label" role="status">
           {Math.round(scale * 100)}%
         </Typography>
         <Button
