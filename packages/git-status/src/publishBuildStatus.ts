@@ -27,6 +27,7 @@ type IntegrationForPublish = {
   repoIdentifier: string;
   encryptedToken: string;
   checkContext: string;
+  statusChecksEnabled: boolean;
 };
 
 type PublicationRecord = {
@@ -76,7 +77,7 @@ export const publishBuildStatus = async (
   }
 
   const integration = await deps.findIntegration(build.projectId);
-  if (!integration) {
+  if (!integration?.statusChecksEnabled) {
     return;
   }
 

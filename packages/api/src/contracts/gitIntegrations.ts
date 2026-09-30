@@ -9,6 +9,7 @@ export const gitIntegrationSchema = z.object({
   provider: gitProviderSchema,
   repoIdentifier: z.string(),
   checkContext: z.string(),
+  statusChecksEnabled: z.boolean(),
   hasToken: z.literal(true),
 });
 
@@ -35,6 +36,11 @@ export const removeGitIntegrationInputSchema = z.object({
   projectId: z.uuidv7(),
 });
 
+export const setGitStatusChecksInputSchema = z.object({
+  projectId: z.uuidv7(),
+  enabled: z.boolean(),
+});
+
 export const testGitIntegrationOutputSchema = z.object({
   ok: z.boolean(),
   httpStatus: z.number().int().nullable(),
@@ -44,6 +50,7 @@ export const testGitIntegrationOutputSchema = z.object({
 export const contract = {
   get: oc.input(getGitIntegrationInputSchema).output(getGitIntegrationOutputSchema),
   upsert: oc.input(upsertGitIntegrationInputSchema).output(gitIntegrationSchema),
+  setStatusChecks: oc.input(setGitStatusChecksInputSchema).output(gitIntegrationSchema),
   remove: oc.input(removeGitIntegrationInputSchema),
   testConnection: oc.input(removeGitIntegrationInputSchema).output(testGitIntegrationOutputSchema),
 } as const;

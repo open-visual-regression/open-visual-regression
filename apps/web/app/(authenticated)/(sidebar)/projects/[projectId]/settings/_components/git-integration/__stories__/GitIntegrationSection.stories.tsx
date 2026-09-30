@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import { userEvent, within } from "storybook/test";
 
 import { mocks } from "@ovr/mocks";
 
@@ -12,6 +13,10 @@ const meta: Meta<typeof GitIntegrationSection> = {
     projectId: "00000000-0000-7000-8000-000000000000",
   },
   parameters: {
+    nextjs: {
+      appDirectory: true,
+      navigation: { pathname: "/projects/mock-project/settings" },
+    },
     ovr: {
       viewports: ["desktop", "tablet", "mobile"],
     },
@@ -32,5 +37,21 @@ export const Connected: Story = {
     integration: mocks.gitIntegration.generateGitIntegration({
       repoIdentifier: "acme/web",
     }),
+  },
+};
+
+export const ChecksDisabled: Story = {
+  args: {
+    integration: mocks.gitIntegration.generateGitIntegration({
+      repoIdentifier: "acme/web",
+      statusChecksEnabled: false,
+    }),
+  },
+};
+
+export const OpenDisableDialog: Story = {
+  args: Connected.args,
+  play: async ({ canvasElement }) => {
+    await userEvent.click(within(canvasElement).getByRole("button", { name: /^disable$/i }));
   },
 };

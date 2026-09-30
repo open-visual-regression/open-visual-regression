@@ -1,0 +1,1 @@
+ALTER TABLE "git_integrations" ADD COLUMN "status_checks_enabled" boolean DEFAULT true NOT NULL;

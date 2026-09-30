@@ -1,4 +1,5 @@
 import {
+  boolean,
   index,
   integer,
   pgEnum,
@@ -41,6 +42,7 @@ export const gitIntegrations = pgTable(
     provider: gitProviderEnum().notNull(),
     repoIdentifier: varchar("repo_identifier", { length: 512 }).notNull(),
     encryptedToken: text("encrypted_token").notNull(),
+    statusChecksEnabled: boolean("status_checks_enabled").notNull().default(true),
     checkContext: varchar("check_context", { length: 255 }).notNull().default("ovr/visual-review"),
     createdAt: utcTimestamp("created_at")
       .default(sql`now()`)

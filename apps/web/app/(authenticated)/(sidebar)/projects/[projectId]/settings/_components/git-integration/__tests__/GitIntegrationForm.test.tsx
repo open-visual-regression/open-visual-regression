@@ -4,7 +4,7 @@ import { vi } from "vitest";
 import { Toaster } from "@ovr/ui/components/sonner";
 
 import { serverClient } from "@/lib/router";
-import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
+import { describe, expect, it, render, screen, waitFor, within } from "@/test-utils";
 
 import { GitIntegrationForm } from "../GitIntegrationForm";
 
@@ -13,6 +13,7 @@ vi.mock("next/navigation");
 
 const mockUpsert = vi.mocked(serverClient.gitIntegrations.upsert);
 const mockRemove = vi.mocked(serverClient.gitIntegrations.remove);
+const mockSetStatusChecks = vi.mocked(serverClient.gitIntegrations.setStatusChecks);
 const mockTestConnection = vi.mocked(serverClient.gitIntegrations.testConnection);
 const mockRefresh = vi.mocked(useRouter)().refresh;
 
@@ -22,6 +23,7 @@ const INTEGRATION = {
   provider: "github" as const,
   repoIdentifier: "acme/web",
   checkContext: "Open Visual Regression / Web",
+  statusChecksEnabled: true,
   hasToken: true as const,
 };
 
@@ -105,6 +107,52 @@ describe("GitIntegrationForm", () => {
     await waitFor(() => expect(mockRemove).toHaveBeenCalledWith({ projectId: PROJECT_ID }));
     expect(await screen.findByText("git integration removed")).toBeVisible();
     expect(mockRefresh).toHaveBeenCalled();
+  });
+
+  it("should disable ci checks after confirming", async ({ user }) => {
+    mockSetStatusChecks.mockResolvedValue([null, { ...INTEGRATION, statusChecksEnabled: false }]);
+    renderComponent(INTEGRATION);
+
+    await user.click(screen.getByRole("button", { name: /^disable$/i }));
+    expect(mockSetStatusChecks).not.toHaveBeenCalled();
+
+    const dialog = await screen.findByRole("alertdialog");
+    expect(within(dialog).getByText("disable git integration?")).toBeVisible();
+    await user.click(within(dialog).getByRole("button", { name: /^disable$/i }));
+
+    await waitFor(() =>
+      expect(mockSetStatusChecks).toHaveBeenCalledWith({ projectId: PROJECT_ID, enabled: false }),
+    );
+    expect(await screen.findByText("ci checks disabled")).toBeVisible();
+    expect(mockRefresh).toHaveBeenCalled();
+  });
+
+  it("should not disable ci checks when the dialog is cancelled", async ({ user }) => {
+    renderComponent(INTEGRATION);
+
+    await user.click(screen.getByRole("button", { name: /^disable$/i }));
+    await user.click(await screen.findByRole("button", { name: /cancel/i }));
+
+    expect(mockSetStatusChecks).not.toHaveBeenCalled();
+  });
+
+  it("should offer to enable ci checks when they are disabled", async ({ user }) => {
+    mockSetStatusChecks.mockResolvedValue([null, INTEGRATION]);
+    renderComponent({ ...INTEGRATION, statusChecksEnabled: false });
+
+    expect(screen.queryByRole("button", { name: /^disable$/i })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /^enable$/i }));
+
+    await waitFor(() =>
+      expect(mockSetStatusChecks).toHaveBeenCalledWith({ projectId: PROJECT_ID, enabled: true }),
+    );
+    expect(await screen.findByText("ci checks enabled")).toBeVisible();
+  });
+
+  it("should not show disable when no integration is configured", () => {
+    renderComponent(null);
+
+    expect(screen.queryByRole("button", { name: /^disable$/i })).not.toBeInTheDocument();
   });
 
   it("should show the result of testing the connection", async ({ user }) => {
