@@ -15,10 +15,10 @@ const props: ComparisonViewProps = {
   diffImagePath: "diff.png",
 };
 
-const renderComparison = (overrides: Partial<typeof props> = {}, hasDiff = true) =>
+const renderComparison = (overrides: Partial<typeof props> = {}) =>
   render(
     <ComparisonModeProvider>
-      <ComparisonControls hasDiff={hasDiff} />
+      <ComparisonControls />
       <ComparisonView {...props} {...overrides} />
     </ComparisonModeProvider>,
   );
@@ -58,7 +58,7 @@ describe("ComparisonView", () => {
   });
 
   it("should not show the diff toggle in split view when there is no diff image", () => {
-    renderComparison({ diffImagePath: null }, false);
+    renderComparison({ diffImagePath: null });
 
     expect(screen.getByRole("tab", { name: "split" })).toBeVisible();
     expect(screen.queryByRole("switch")).not.toBeInTheDocument();
@@ -67,7 +67,7 @@ describe("ComparisonView", () => {
   it("should still offer the slider view when there is a baseline but no diff image", async ({
     user,
   }) => {
-    renderComparison({ diffImagePath: null }, false);
+    renderComparison({ diffImagePath: null });
 
     await user.click(screen.getByRole("tab", { name: "slider" }));
 

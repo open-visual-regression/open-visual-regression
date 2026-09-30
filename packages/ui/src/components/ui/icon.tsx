@@ -17,8 +17,10 @@ export {
   ListFilterIcon,
   LogOutIcon,
   MailIcon,
+  Maximize2Icon,
   MenuIcon,
   MilestoneIcon,
+  MinusIcon,
   MonitorIcon,
   SearchIcon,
   SettingsIcon,
@@ -31,6 +33,7 @@ export {
   UserIcon,
   UsersIcon,
   XIcon,
+  ScanIcon,
 } from "lucide-react";
 
 type IconProps = React.SVGProps<SVGSVGElement> & {
