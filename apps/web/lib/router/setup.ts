@@ -17,10 +17,12 @@ const hasSetupBeenCompleted = async () => {
   return organization != null && userCount > 0;
 };
 
+let setupCompleted = false;
+
 export const status = os.setup.status
   .handler(async () => {
-    const isCompleted = await hasSetupBeenCompleted();
-    return { status: isCompleted ? "completed" : "pending" };
+    setupCompleted ||= await hasSetupBeenCompleted();
+    return { status: setupCompleted ? "completed" : "pending" };
   })
   .actionable();
 

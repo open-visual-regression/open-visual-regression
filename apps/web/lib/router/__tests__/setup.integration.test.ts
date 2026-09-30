@@ -2,6 +2,7 @@ import { vi } from "vitest";
 
 import { type ExecSetupInputSchema } from "@ovr/api/contracts/setup";
 import { dbClient } from "@ovr/db/client";
+import { db, sql } from "@ovr/db/db";
 
 import { serverClient } from "@/lib/router";
 import { test, describe, expect } from "@/lib/testing/fixtures";
@@ -46,6 +47,19 @@ describe("setup", () => {
 
       const [error2] = await serverClient.setup.exec({ ...TEST_INPUT, email: "other@example.com" });
       expect(error2?.code).toBe("FORBIDDEN");
+    });
+  });
+
+  describe("setup.status", () => {
+    test("should keep reporting completed without re-checking the database", async () => {
+      await serverClient.setup.exec(TEST_INPUT);
+      const [, completed] = await serverClient.setup.status();
+      expect(completed?.status).toBe("completed");
+
+      await db.execute(sql`TRUNCATE "organization", "user" CASCADE`);
+
+      const [, cached] = await serverClient.setup.status();
+      expect(cached?.status).toBe("completed");
     });
   });
 });
