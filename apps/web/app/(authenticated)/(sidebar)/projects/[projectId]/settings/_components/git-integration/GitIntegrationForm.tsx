@@ -11,7 +11,7 @@ import type { GitIntegrationSchema, GitProviderSchema } from "@ovr/api/contracts
 import { Button } from "@ovr/ui/components/button";
 import { Card, CardContent, CardFooter } from "@ovr/ui/components/card";
 import { Field, FieldError, FieldGroup, FieldLabel, FieldSkeleton } from "@ovr/ui/components/field";
-import { CheckIcon, Icon, Trash2Icon } from "@ovr/ui/components/icon";
+import { CheckIcon, Icon } from "@ovr/ui/components/icon";
 import { Input } from "@ovr/ui/components/input";
 import {
   Select,
@@ -112,7 +112,7 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} noValidate>
-      <Card size="default">
+      <Card size="default" className="@container">
         <CardContent className="flex flex-col gap-5">
           <FieldGroup>
             <Field data-invalid={!!errors.provider}>
@@ -166,44 +166,43 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
           </FieldGroup>
           <FieldError errors={[errors.root]} />
         </CardContent>
-        <CardFooter className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between md:max-xl:flex-col md:max-xl:items-stretch">
-          <div className="flex flex-col gap-2 sm:flex-row md:max-xl:*:flex-auto md:max-xl:*:px-2">
-            {integration ? (
+        <CardFooter className="flex flex-col items-stretch gap-2 @lg:flex-row @lg:items-center @lg:justify-between">
+          {integration ? (
+            <div className="flex flex-col gap-2 @lg:flex-row">
               <Button
                 type="button"
                 variant="outline"
                 color="red"
                 disabled={disconnect.status === "pending"}
                 onClick={() => disconnect.execute({ projectId })}
-                className="w-full sm:w-auto"
+                className="w-full @lg:w-auto"
               >
-                <Icon icon={Trash2Icon} className="md:max-xl:hidden" />
                 disconnect
               </Button>
-            ) : null}
-            {integration ? (
               <StatusChecksToggleButton
                 projectId={projectId}
                 enabled={integration.statusChecksEnabled}
-                className="w-full sm:w-auto"
+                className="w-full @lg:w-auto"
               />
-            ) : null}
+            </div>
+          ) : null}
+          <div className="flex flex-col gap-2 @lg:ml-auto @lg:flex-row">
             {integration ? (
               <Button
                 type="button"
                 variant="outline"
                 disabled={test.status === "pending"}
                 onClick={() => test.execute({ projectId })}
-                className="w-full sm:w-auto"
+                className="w-full @lg:w-auto"
               >
                 {test.status === "pending" ? "testing..." : "test connection"}
               </Button>
             ) : null}
+            <Button type="submit" disabled={isSaving} className="w-full @lg:w-auto">
+              <Icon icon={CheckIcon} />
+              {isSaving ? "saving..." : "save"}
+            </Button>
           </div>
-          <Button type="submit" disabled={isSaving} className="w-full sm:w-auto md:max-xl:self-end">
-            <Icon icon={CheckIcon} />
-            {isSaving ? "saving..." : "save"}
-          </Button>
         </CardFooter>
       </Card>
     </form>

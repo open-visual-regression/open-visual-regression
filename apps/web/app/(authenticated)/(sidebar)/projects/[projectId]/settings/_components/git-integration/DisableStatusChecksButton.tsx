@@ -18,7 +18,6 @@ import {
 } from "@ovr/ui/components/alert-dialog";
 import { Button } from "@ovr/ui/components/button";
 import { FieldError } from "@ovr/ui/components/field";
-import { Icon, LockIcon } from "@ovr/ui/components/icon";
 import { toast } from "@ovr/ui/components/toast";
 import { Typography } from "@ovr/ui/components/typography";
 
@@ -62,7 +61,6 @@ export const DisableStatusChecksButton = ({
       <AlertDialogTrigger
         render={<Button type="button" variant="outline" color="red" className={className} />}
       >
-        <Icon icon={LockIcon} className="md:max-xl:hidden" />
         disable
       </AlertDialogTrigger>
       <AlertDialogContent>
