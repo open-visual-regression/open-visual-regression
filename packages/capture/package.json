@@ -33,7 +33,6 @@
     "@testcontainers/postgresql": "^12.2.0",
     "@types/node": "^22.20.4",
     "@types/pg": "^8.23.1",
-    "@types/pixelmatch": "^5.2.6",
     "@types/pngjs": "^6.0.5",
     "bullmq": "^5.81.5",
     "ioredis": "5.11.1",

@@ -21,7 +21,7 @@
     "@ovr/queue": "workspace:*",
     "@ovr/storage": "workspace:*",
     "bullmq": "^5.81.5",
-    "dotenv": "^17.4.2",
+    "dotenv": "^18.0.4",
     "ioredis": "5.11.1",
     "pg": "8.21.0",
     "pixelmatch": "^7.2.0",
