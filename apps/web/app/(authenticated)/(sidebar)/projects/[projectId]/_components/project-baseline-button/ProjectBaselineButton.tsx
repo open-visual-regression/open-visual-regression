@@ -7,7 +7,10 @@ export type ProjectBaselineButtonProps = {
   baselineBuildId: string | null;
 };
 
-export const ProjectBaselineButton = ({ projectId, baselineBuildId }: ProjectBaselineButtonProps) =>
+export const ProjectBaselineButton = ({
+  projectId,
+  baselineBuildId,
+}: ProjectBaselineButtonProps) =>
   baselineBuildId ? (
     <ResponsiveActionButton
       href={`/projects/${projectId}/builds/${baselineBuildId}`}

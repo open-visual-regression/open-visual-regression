@@ -5,13 +5,13 @@
   "sortImports": {
     "customGroups": [
       { "groupName": "ovr", "elementNamePattern": ["@ovr/**"] },
-      { "groupName": "internal", "elementNamePattern": ["@/**"] }
+      { "groupName": "app", "elementNamePattern": ["@/**"] }
     ],
     "groups": [
       "builtin",
       "external",
       "ovr",
-      "internal",
+      "app",
       ["parent", "sibling", "index"],
       "style",
       "unknown"
