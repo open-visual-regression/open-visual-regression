@@ -26,6 +26,7 @@ export const snapshotSchema = z.object({
   hasUncaughtPageError: z.boolean(),
   errorMessage: z.string().nullable(),
   isRebuildable: z.boolean(),
+  hasNewerBuild: z.boolean(),
   errorLogs: z.array(snapshotLogSchema),
 });
 

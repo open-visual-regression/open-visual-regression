@@ -157,6 +157,7 @@ export type BuildSchema = z.infer<typeof buildSchema>;
 export const buildDetailSchema = buildSchema.extend({
   canceledBy: z.string().min(1).nullable(),
   isRebuildable: z.boolean(),
+  hasNewerBuild: z.boolean(),
   commitUrl: z.string().nullable(),
   branchUrl: z.string().nullable(),
 });

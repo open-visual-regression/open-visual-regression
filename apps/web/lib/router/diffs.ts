@@ -19,12 +19,22 @@ import {
 } from "./middleware";
 import { os } from "./os";
 
-const throwOnError = (error: "DIFF_NOT_FOUND" | "REVIEW_NOT_REQUIRED" | "FORBIDDEN"): never => {
-  if (error === "DIFF_NOT_FOUND") {
+const throwOnError = (
+  error:
+    | "DIFF_NOT_FOUND"
+    | "BUILD_NOT_FOUND"
+    | "REVIEW_NOT_REQUIRED"
+    | "FORBIDDEN"
+    | "NOT_LATEST_ON_BRANCH",
+): never => {
+  if (error === "DIFF_NOT_FOUND" || error === "BUILD_NOT_FOUND") {
     throw new ORPCError("NOT_FOUND");
   }
   if (error === "FORBIDDEN") {
     throw new ORPCError("FORBIDDEN");
+  }
+  if (error === "NOT_LATEST_ON_BRANCH") {
+    throw new ORPCError("CONFLICT", { message: "a newer build has landed on this branch" });
   }
   throw new ORPCError("BAD_REQUEST");
 };
@@ -89,7 +99,11 @@ export const bulkCastVote = os.diffs.bulkCastVote
   .use(authenticatedMiddleware)
   .use(reviewerMiddleware)
   .handler(async ({ input, context }) => {
-    await bulkCastVoteService(input.buildId, context.user.id, input.vote);
+    const result = await bulkCastVoteService(input.buildId, context.user.id, input.vote);
+
+    if (result.status === "error") {
+      throwOnError(result.error);
+    }
   })
   .actionable();
 

@@ -57,6 +57,7 @@ export const Rebuildable: Story = {
       ...buildOverrides,
       status: "needs_review",
       isRebuildable: true,
+      hasNewerBuild: false,
     }),
     snapshotCounts,
   },

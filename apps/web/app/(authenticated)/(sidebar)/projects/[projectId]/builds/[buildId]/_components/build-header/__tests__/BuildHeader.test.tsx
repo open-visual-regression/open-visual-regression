@@ -274,6 +274,7 @@ describe("BuildHeader", () => {
         status: "error",
         errorMessage: "One or more snapshots failed to diff against their baseline",
         isRebuildable: true,
+        hasNewerBuild: false,
       }),
       snapshotCounts: mocks.build.generateSnapshotCounts({ error: 3 }),
     });

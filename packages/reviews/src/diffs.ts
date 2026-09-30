@@ -1,5 +1,5 @@
 import { isDiffReviewable } from "@ovr/api/contracts/diffs";
-import { updateBuildReviewStatus } from "@ovr/builds/builds";
+import { hasNewerBuildOnBranch, updateBuildReviewStatus } from "@ovr/builds/builds";
 import type { Result } from "@ovr/builds/types";
 import { dbClient } from "@ovr/db/client";
 import type { DiffReviewDbSchema } from "@ovr/db/repository/diffReviews";
@@ -46,14 +46,32 @@ const recomputeReviewStatus = async (diffId: string): Promise<void> => {
   await updateBuildReviewStatus(build.id);
 };
 
+const hasNewerBuildForDiff = async (snapshotId: string): Promise<boolean> => {
+  const snapshot = await dbClient.snapshots.findById(snapshotId);
+  if (!snapshot) {
+    throw new Error(`Snapshot not found: ${snapshotId}`);
+  }
+
+  const build = await dbClient.builds.findById(snapshot.buildId);
+  if (!build) {
+    throw new Error(`Build not found for snapshot: ${snapshot.id}`);
+  }
+
+  return hasNewerBuildOnBranch(build);
+};
+
 export const castVote = async (
   diffId: string,
   reviewerId: string,
   vote: DiffReviewVote,
-): Promise<Result<void, "DIFF_NOT_FOUND" | "REVIEW_NOT_REQUIRED">> => {
+): Promise<Result<void, "DIFF_NOT_FOUND" | "REVIEW_NOT_REQUIRED" | "NOT_LATEST_ON_BRANCH">> => {
   const diff = await dbClient.diffs.findById(diffId);
   if (!diff) {
     return { status: "error", error: "DIFF_NOT_FOUND" };
+  }
+
+  if (await hasNewerBuildForDiff(diff.snapshotId)) {
+    return { status: "error", error: "NOT_LATEST_ON_BRANCH" };
   }
 
   if (!isDiffReviewable(diff.reviewStatus)) {
@@ -79,7 +97,7 @@ export const removeVote = async ({
   requesterRole,
   targetReviewerId,
 }: RemoveVoteParams): Promise<
-  Result<void, "DIFF_NOT_FOUND" | "REVIEW_NOT_REQUIRED" | "FORBIDDEN">
+  Result<void, "DIFF_NOT_FOUND" | "REVIEW_NOT_REQUIRED" | "FORBIDDEN" | "NOT_LATEST_ON_BRANCH">
 > => {
   const reviewerId = targetReviewerId ?? requesterId;
 
@@ -90,6 +108,10 @@ export const removeVote = async ({
   const diff = await dbClient.diffs.findById(diffId);
   if (!diff) {
     return { status: "error", error: "DIFF_NOT_FOUND" };
+  }
+
+  if (await hasNewerBuildForDiff(diff.snapshotId)) {
+    return { status: "error", error: "NOT_LATEST_ON_BRANCH" };
   }
 
   if (!isDiffReviewable(diff.reviewStatus)) {
@@ -106,19 +128,23 @@ export const bulkCastVote = async (
   buildId: string,
   reviewerId: string,
   vote: DiffReviewVote,
-): Promise<void> => {
+): Promise<Result<void, "BUILD_NOT_FOUND" | "NOT_LATEST_ON_BRANCH">> => {
+  const build = await dbClient.builds.findById(buildId);
+  if (!build) {
+    return { status: "error", error: "BUILD_NOT_FOUND" };
+  }
+
+  if (await hasNewerBuildOnBranch(build)) {
+    return { status: "error", error: "NOT_LATEST_ON_BRANCH" };
+  }
+
   const diffs = await dbClient.diffs.findByBuild(buildId);
   const targetIds = diffs
     .filter((diff) => isDiffReviewable(diff.reviewStatus))
     .map((diff) => diff.id);
 
   if (targetIds.length === 0) {
-    return;
-  }
-
-  const build = await dbClient.builds.findById(buildId);
-  if (!build) {
-    throw new Error(`Build not found: ${buildId}`);
+    return { status: "ok", data: undefined };
   }
 
   const project = await dbClient.projects.findById(build.projectId);
@@ -143,4 +169,6 @@ export const bulkCastVote = async (
   );
 
   await updateBuildReviewStatus(buildId);
+
+  return { status: "ok", data: undefined };
 };

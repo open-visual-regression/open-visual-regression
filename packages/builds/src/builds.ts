@@ -328,7 +328,9 @@ type ExtractDefaults = NonNullable<
   Awaited<ReturnType<typeof dbClient.buildExtractDefaults.findByBuild>>
 >;
 
-const hasNewerBuildOnBranch = async (build: BuildCandidate): Promise<boolean> => {
+export const hasNewerBuildOnBranch = async (
+  build: Pick<BuildCandidate, "id" | "projectId" | "branch" | "createdAt">,
+): Promise<boolean> => {
   const newer = await dbClient.builds.findMany(
     {
       projectIds: [build.projectId],

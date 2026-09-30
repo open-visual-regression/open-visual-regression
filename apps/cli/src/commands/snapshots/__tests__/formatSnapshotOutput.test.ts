@@ -18,6 +18,7 @@ const SNAPSHOT: SnapshotSchema = {
   hasUncaughtPageError: false,
   errorMessage: null,
   isRebuildable: false,
+  hasNewerBuild: false,
   errorLogs: [],
 };
 

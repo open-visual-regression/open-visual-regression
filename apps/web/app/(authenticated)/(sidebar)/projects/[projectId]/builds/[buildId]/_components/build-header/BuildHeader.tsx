@@ -45,9 +45,15 @@ export const BuildHeader = ({
   const isCanceled = build.status === "canceled";
   const hasProcessingError = build.status === "error";
   const showCancel = canManageBuild && isCancelable;
-  const showRebuild = canManageBuild && !isCancelable && build.isRebuildable;
+  const showRebuild =
+    canManageBuild && !isCancelable && !build.hasNewerBuild && build.isRebuildable;
   const showReviewActions =
-    canManageBuild && !isCancelable && !isCanceled && !hasProcessingError && hasReviewable;
+    canManageBuild &&
+    !build.hasNewerBuild &&
+    !isCancelable &&
+    !isCanceled &&
+    !hasProcessingError &&
+    hasReviewable;
   const showActions = showCancel || showRebuild || showReviewActions;
 
   return (
