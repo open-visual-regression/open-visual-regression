@@ -102,6 +102,21 @@ export const WithDiff: Story = {
   },
 };
 
+export const WithDiffHidden: Story = {
+  args: diffArgs,
+  play: async ({ canvasElement }) => {
+    const { dialog } = await openDialog(canvasElement);
+    const diffImage = within(dialog).getByRole("img", {
+      name: "diff overlay of snapshot of Button Primary",
+    });
+
+    await userEvent.click(within(dialog).getByRole("switch"));
+
+    await expect(within(dialog).getByRole("switch")).not.toBeChecked();
+    await expect(diffImage).toHaveStyle({ opacity: "0" });
+  },
+};
+
 export const NoDiffZoomedAndPanned: Story = {
   play: async ({ canvasElement }) => {
     await zoomAndPan(canvasElement);
