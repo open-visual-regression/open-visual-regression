@@ -8,6 +8,8 @@ import { Icon, MinusIcon, PlusIcon, ScanIcon, XIcon } from "@ovr/ui/components/i
 import { Switch } from "@ovr/ui/components/switch";
 import { Typography } from "@ovr/ui/components/typography";
 
+import { ResponsiveActionButton } from "@/lib/components/responsive-action-button/ResponsiveActionButton";
+
 import { BaselineCommitLink } from "../snapshot-pane/BaselineCommitLink";
 
 export type SnapshotZoomToolbarProps = {
@@ -31,7 +33,7 @@ export const SnapshotZoomToolbar = ({
   const scale = useTransformComponent(({ state }) => state.scale);
 
   return (
-    <div className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2 border-b border-ovr-border-subtle px-4 py-2">
+    <div className="flex shrink-0 flex-wrap items-center gap-x-1 gap-y-2 border-b border-ovr-border-subtle px-2 py-2 sm:gap-x-4 sm:px-4">
       <div className="mr-auto flex items-center gap-2">
         <DialogTitle>
           <Typography variant="label">{title}</Typography>
@@ -68,18 +70,22 @@ export const SnapshotZoomToolbar = ({
         </Button>
       </div>
       <div className="flex items-center gap-1">
-        <Button variant="ghost" color="neutral" size="sm" onClick={() => centerView(1)}>
-          100%
-        </Button>
         <Button
           variant="ghost"
           color="neutral"
           size="sm"
+          className="px-1.5 sm:px-2.5"
+          onClick={() => centerView(1)}
+        >
+          100%
+        </Button>
+        <ResponsiveActionButton
+          icon={ScanIcon}
+          variant="ghost"
           onClick={() => fitToView({ maxScale: 1 })}
         >
-          <Icon icon={ScanIcon} size={12} />
           fit
-        </Button>
+        </ResponsiveActionButton>
       </div>
       <DialogClose
         render={<Button variant="ghost" color="neutral" size="icon-sm" aria-label="close" />}
