@@ -39,19 +39,19 @@
     "prepack": "tsup"
   },
   "dependencies": {
-    "@orpc/client": "^1.14.14",
-    "@orpc/contract": "^1.14.14",
+    "@orpc/client": "^1.15.4",
+    "@orpc/contract": "^1.15.4",
     "commander": "^15.0.0",
     "jiti": "^2.7.0",
-    "ky": "^2.0.2",
+    "ky": "^2.1.0",
     "tar": "^7.5.22",
-    "uuid": "^14.0.1"
+    "uuid": "^14.0.2"
   },
   "devDependencies": {
     "@ovr/api": "workspace:*",
     "@ovr/storybook-compat": "workspace:*",
     "@ovr/typescript-config": "workspace:*",
-    "@types/node": "^22.20.1",
+    "@types/node": "^22.20.4",
     "tsup": "^8.5.1",
     "typescript": "6.0.3",
     "vitest": "^4.1.11"

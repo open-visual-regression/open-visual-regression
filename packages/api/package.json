@@ -13,8 +13,8 @@
     "format": "oxfmt src"
   },
   "dependencies": {
-    "@orpc/contract": "^1.14.14",
-    "zod": "^4.5.1"
+    "@orpc/contract": "^1.15.4",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@ovr/typescript-config": "workspace:*",

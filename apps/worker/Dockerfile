@@ -5,9 +5,9 @@
 
 ARG NODE_VERSION=24.16.0
 # Keep in sync with the pinned "playwright" version in apps/worker + packages/capture.
-ARG PLAYWRIGHT_VERSION=1.61.0
+ARG PLAYWRIGHT_VERSION=1.63.0
 # Keep in sync with the "turbo" devDependency in the root package.json.
-ARG TURBO_VERSION=2.10.8
+ARG TURBO_VERSION=2.11.5
 ARG PNPM_VERSION=11.9.0
 
 FROM node:${NODE_VERSION}-slim AS pruner

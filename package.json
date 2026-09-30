@@ -25,12 +25,12 @@
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.2",
     "@changesets/cli": "^2.31.1",
-    "@fission-ai/openspec": "^1.7.0",
+    "@fission-ai/openspec": "^1.13.2",
     "husky": "^9.1.7",
-    "lint-staged": "^17.3.0",
+    "lint-staged": "^17.6.0",
     "oxfmt": "^0.51.0",
-    "oxlint": "^1.77.0",
-    "turbo": "^2.10.8",
+    "oxlint": "^1.86.0",
+    "turbo": "^2.11.5",
     "typescript": "6.0.3",
     "vitest": "^4.1.11"
   },

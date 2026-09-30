@@ -16,11 +16,11 @@
   "dependencies": {
     "@ovr/db": "workspace:*",
     "@ovr/logger": "workspace:*",
-    "zod": "^4.5.1"
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@ovr/typescript-config": "workspace:*",
-    "@types/node": "^22.20.1",
+    "@types/node": "^22.20.4",
     "msw": "^2.15.0",
     "typescript": "6.0.3",
     "vitest": "^4.1.11"
