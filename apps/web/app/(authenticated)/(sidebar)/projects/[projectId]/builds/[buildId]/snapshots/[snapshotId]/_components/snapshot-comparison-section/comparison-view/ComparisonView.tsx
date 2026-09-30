@@ -12,7 +12,7 @@ export type ComparisonViewProps = {
 };
 
 export const ComparisonView = ({ baseline, newSnapshot, diffImagePath }: ComparisonViewProps) => {
-  const { viewMode, showDiff } = useComparisonMode();
+  const { viewMode, showDiff, setShowDiff } = useComparisonMode();
 
   if (viewMode === "slider") {
     return <SliderView baseline={baseline} newSnapshot={newSnapshot} />;
@@ -24,6 +24,7 @@ export const ComparisonView = ({ baseline, newSnapshot, diffImagePath }: Compari
       newSnapshot={newSnapshot}
       diffImagePath={diffImagePath}
       showDiff={showDiff}
+      onShowDiffChange={setShowDiff}
     />
   );
 };

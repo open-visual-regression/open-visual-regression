@@ -16,9 +16,7 @@ const meta: Meta<typeof SnapshotComparisonSection> = {
   },
   render: (args) => (
     <ComparisonModeProvider>
-      {args.diff?.baselineSnapshot ? (
-        <ComparisonControls hasDiff={args.diff.diffImagePath !== null} />
-      ) : null}
+      {args.diff?.baselineSnapshot ? <ComparisonControls /> : null}
       <SnapshotComparisonSection {...args} />
     </ComparisonModeProvider>
   ),

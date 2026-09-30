@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { Switch } from "@ovr/ui/components/switch";
 import { Typography } from "@ovr/ui/components/typography";
 import { cn } from "@ovr/ui/lib/utils";
 
@@ -10,6 +11,7 @@ import { Image } from "@/lib/components/image/Image";
 import { SnapshotPane } from "../../snapshot-pane/SnapshotPane";
 import { SnapshotPaneCanvas } from "../../snapshot-pane/SnapshotPaneCanvas";
 import { SnapshotPaneHeader } from "../../snapshot-pane/SnapshotPaneHeader";
+import { SnapshotZoomDialog } from "../../snapshot-zoom/SnapshotZoomDialog";
 
 export type NewSnapshotDiffPaneProps = {
   label: string;
@@ -17,6 +19,7 @@ export type NewSnapshotDiffPaneProps = {
   diffImagePath: string;
   alt: string;
   showDiff: boolean;
+  onShowDiffChange: (showDiff: boolean) => void;
 };
 
 export const NewSnapshotDiffPane = ({
@@ -25,6 +28,7 @@ export const NewSnapshotDiffPane = ({
   diffImagePath,
   alt,
   showDiff,
+  onShowDiffChange,
 }: NewSnapshotDiffPaneProps) => {
   const [diffNaturalSize, setDiffNaturalSize] = useState<{ width: number; height: number } | null>(
     null,
@@ -38,6 +42,18 @@ export const NewSnapshotDiffPane = ({
     <SnapshotPane>
       <SnapshotPaneHeader>
         <Typography variant="label">{label}</Typography>
+        <div className="ml-auto flex items-center gap-2">
+          <label className="flex items-center gap-2">
+            <Typography variant="caption">diff</Typography>
+            <Switch checked={showDiff} onCheckedChange={onShowDiffChange} />
+          </label>
+          <SnapshotZoomDialog
+            title={label}
+            imagePath={imagePath}
+            alt={alt}
+            diffImagePath={diffImagePath}
+          />
+        </div>
       </SnapshotPaneHeader>
       <SnapshotPaneCanvas>
         <div
