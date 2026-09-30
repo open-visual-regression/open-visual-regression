@@ -1,5 +1,22 @@
 # @ovr/web
 
+## 0.8.0
+
+### Minor Changes
+
+- [#268](https://github.com/open-visual-regression/open-visual-regression/pull/268) [`8f7e318`](https://github.com/open-visual-regression/open-visual-regression/commit/8f7e318ce56656f36cc206fa58341652c7662080) Thanks [@tgfischer](https://github.com/tgfischer)! - Add a "disable" button to a project's git integration that stops it from updating CI checks, with a matching "enable" button to turn it back on. Commit and branch links keep working while it's disabled.
+
+### Patch Changes
+
+- [#270](https://github.com/open-visual-regression/open-visual-regression/pull/270) [`8d521a4`](https://github.com/open-visual-regression/open-visual-regression/commit/8d521a4e94f47700f8ed5123accfabd248392c8c) Thanks [@tgfischer](https://github.com/tgfischer)! - Retrying `ovr upload` after a network error no longer creates a duplicate build that cancels the first one.
+
+- [#269](https://github.com/open-visual-regression/open-visual-regression/pull/269) [`c4b462c`](https://github.com/open-visual-regression/open-visual-regression/commit/c4b462c7faeae38b34d440c17d15afcc7fe39ebb) Thanks [@tgfischer](https://github.com/tgfischer)! - When the build queue can't be reached, uploads now fail within seconds and the build is marked as failed with the reason, instead of hanging and staying queued.
+
+- [#274](https://github.com/open-visual-regression/open-visual-regression/pull/274) [`7d343ab`](https://github.com/open-visual-regression/open-visual-regression/commit/7d343ab479b8c49c71237d1edaa70b88862b49ba) Thanks [@tgfischer](https://github.com/tgfischer)! - Finished queue jobs are now removed from Redis after an hour (failed ones after a week), instead of being kept forever and eventually exhausting Redis memory.
+
+- Updated dependencies []:
+  - @ovr/ui@0.1.1
+
 ## 0.7.0
 
 ### Minor Changes
