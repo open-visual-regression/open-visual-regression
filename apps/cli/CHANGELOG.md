@@ -1,5 +1,13 @@
 # @open-visual-regression/cli
 
+## 0.6.1
+
+### Patch Changes
+
+- [#271](https://github.com/open-visual-regression/open-visual-regression/pull/271) [`2c8e18d`](https://github.com/open-visual-regression/open-visual-regression/commit/2c8e18dc1a2150f614239d31e843b90980f9aa54) Thanks [@tgfischer](https://github.com/tgfischer)! - `ovr upload` now says which step failed and why, logs each retry, and gives up on a request with no response after 60 seconds.
+
+- [#270](https://github.com/open-visual-regression/open-visual-regression/pull/270) [`8d521a4`](https://github.com/open-visual-regression/open-visual-regression/commit/8d521a4e94f47700f8ed5123accfabd248392c8c) Thanks [@tgfischer](https://github.com/tgfischer)! - Retrying `ovr upload` after a network error no longer creates a duplicate build that cancels the first one.
+
 ## 0.6.0
 
 ### Minor Changes
