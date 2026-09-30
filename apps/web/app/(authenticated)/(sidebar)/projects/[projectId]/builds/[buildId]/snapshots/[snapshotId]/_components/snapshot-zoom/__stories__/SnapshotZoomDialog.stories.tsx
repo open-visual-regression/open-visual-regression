@@ -103,6 +103,7 @@ export const WithDiff: Story = {
 };
 
 export const WithDiffHidden: Story = {
+  parameters: { ovr: { viewports: ["desktop"] } },
   args: diffArgs,
   play: async ({ canvasElement }) => {
     const { dialog } = await openDialog(canvasElement);
@@ -118,12 +119,14 @@ export const WithDiffHidden: Story = {
 };
 
 export const NoDiffZoomedAndPanned: Story = {
+  parameters: { ovr: { viewports: ["desktop"] } },
   play: async ({ canvasElement }) => {
     await zoomAndPan(canvasElement);
   },
 };
 
 export const WithDiffZoomedAndPanned: Story = {
+  parameters: { ovr: { viewports: ["desktop"] } },
   args: diffArgs,
   play: async ({ canvasElement }) => {
     await zoomAndPan(canvasElement);
