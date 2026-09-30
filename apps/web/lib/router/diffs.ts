@@ -42,16 +42,17 @@ const throwOnError = (
     | BuildReviewBlockedReason
     | SnapshotReviewBlockedReason,
 ): never => {
-  if (error === "DIFF_NOT_FOUND" || error === "BUILD_NOT_FOUND") {
-    throw new ORPCError("NOT_FOUND");
+  switch (error) {
+    case "DIFF_NOT_FOUND":
+    case "BUILD_NOT_FOUND":
+      throw new ORPCError("NOT_FOUND");
+    case "FORBIDDEN":
+      throw new ORPCError("FORBIDDEN");
+    case "REVIEW_NOT_REQUIRED":
+      throw new ORPCError("BAD_REQUEST");
+    default:
+      throw new ORPCError("CONFLICT", { message: REVIEW_BLOCKED_MESSAGES[error] });
   }
-  if (error === "FORBIDDEN") {
-    throw new ORPCError("FORBIDDEN");
-  }
-  if (error === "REVIEW_NOT_REQUIRED") {
-    throw new ORPCError("BAD_REQUEST");
-  }
-  throw new ORPCError("CONFLICT", { message: REVIEW_BLOCKED_MESSAGES[error] });
 };
 
 const buildBaselineSnapshot = async (
