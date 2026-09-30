@@ -8,6 +8,7 @@ import {
   enqueueFinalize,
   enqueuePublishStatus,
   QueueName,
+  scheduleReaper,
   type CaptureGroupJobPayload,
   type DiffJobPayload,
   type ExtractJobPayload,
@@ -149,6 +150,31 @@ describe("queue", () => {
       } finally {
         await job.remove();
       }
+    });
+  });
+
+  describe("job retention", () => {
+    test("should bound how many finished diff jobs are kept", async ({ connection, trackJob }) => {
+      const job = trackJob(
+        await enqueueDiff(
+          { snapshotId: "snapshot-retention", diffId: "diff-retention" },
+          connection,
+        ),
+      );
+
+      expect(job.opts.removeOnComplete).toEqual({ age: 60 * 60, count: 1000 });
+      expect(job.opts.removeOnFail).toEqual({ age: 7 * 24 * 60 * 60, count: 1000 });
+    });
+
+    test("should bound how many finished reaper runs are kept", async ({
+      connection,
+      openQueue,
+    }) => {
+      await scheduleReaper(connection);
+
+      const [scheduler] = await openQueue(QueueName.BUILD_REAPER).getJobSchedulers();
+
+      expect(scheduler?.template?.opts?.removeOnComplete).toEqual({ age: 60 * 60, count: 1000 });
     });
   });
 
