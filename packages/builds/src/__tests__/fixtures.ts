@@ -1,5 +1,5 @@
 import { v7 as uuidv7 } from "uuid";
-import { test as vitest } from "vitest";
+import { test as vitest, vi } from "vitest";
 
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
@@ -23,9 +23,19 @@ type Fixtures = {
   mainBuild: NonNullable<Awaited<ReturnType<typeof dbClient.builds.create>>>;
   featureBuild: NonNullable<Awaited<ReturnType<typeof dbClient.builds.create>>>;
   connection: RedisConnection;
+  advanceClock: (ms: number) => void;
 };
 
 export const test = vitest.extend<Fixtures>({
+  // eslint-disable-next-line no-empty-pattern
+  advanceClock: async ({}, use) => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+
+    await use((ms) => vi.setSystemTime(Date.now() + ms));
+
+    vi.useRealTimers();
+  },
+
   // eslint-disable-next-line no-empty-pattern
   user: async ({}, use) => {
     const [created] = await db

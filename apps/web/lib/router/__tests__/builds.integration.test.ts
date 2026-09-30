@@ -147,6 +147,28 @@ describe("builds", () => {
       expect(retried?.buildId).toBe(input.buildId);
     });
 
+    test("should not hand out an upload url for a build whose upload was confirmed", async ({
+      admin: _,
+    }) => {
+      const { apiKey } = await createProjectWithApiKey();
+      setApiKeyHeader(apiKey);
+      const input = { buildId: uuidv7(), branch: "main", commitSha: "a".repeat(40) };
+
+      await serverClient.builds.createBuild(input);
+      const build = await dbClient.builds.findById(input.buildId);
+      await storage.uploadFile(build!.artifactPath, Buffer.from(""), "application/gzip");
+      await serverClient.builds.confirmUpload({
+        buildId: input.buildId,
+        targets: [{ id: "story-a", title: "Story", name: "A" }],
+        viewports: VIEWPORTS,
+      });
+
+      const [error, result] = await serverClient.builds.createBuild(input);
+
+      expect(error?.code).toBe("CONFLICT");
+      expect(result).toBeUndefined();
+    });
+
     test("should return CONFLICT when the build id belongs to another project", async ({
       admin: _,
     }) => {
