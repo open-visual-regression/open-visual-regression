@@ -166,39 +166,39 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
           </FieldGroup>
           <FieldError errors={[errors.root]} />
         </CardContent>
-        <CardFooter className="flex flex-col items-stretch gap-2 @lg:flex-row @lg:items-center @lg:justify-between">
+        <CardFooter className="flex flex-col items-stretch gap-2 @md:flex-row @md:items-center @md:justify-between">
           {integration ? (
-            <div className="flex flex-col gap-2 @lg:flex-row">
+            <div className="flex flex-col gap-2 @md:flex-row">
               <Button
                 type="button"
                 variant="outline"
                 color="red"
                 disabled={disconnect.status === "pending"}
                 onClick={() => disconnect.execute({ projectId })}
-                className="w-full @lg:w-auto"
+                className="w-full @md:w-auto"
               >
                 disconnect
               </Button>
               <StatusChecksToggleButton
                 projectId={projectId}
                 enabled={integration.statusChecksEnabled}
-                className="w-full @lg:w-auto"
+                className="w-full @md:w-auto"
               />
             </div>
           ) : null}
-          <div className="flex flex-col gap-2 @lg:ml-auto @lg:flex-row">
+          <div className="flex flex-col gap-2 @md:ml-auto @md:flex-row">
             {integration ? (
               <Button
                 type="button"
                 variant="outline"
                 disabled={test.status === "pending"}
                 onClick={() => test.execute({ projectId })}
-                className="w-full @lg:w-auto"
+                className="w-full @md:w-auto"
               >
                 {test.status === "pending" ? "testing..." : "test connection"}
               </Button>
             ) : null}
-            <Button type="submit" disabled={isSaving} className="w-full @lg:w-auto">
+            <Button type="submit" disabled={isSaving} className="w-full @md:w-auto">
               <Icon icon={CheckIcon} />
               {isSaving ? "saving..." : "save"}
             </Button>
