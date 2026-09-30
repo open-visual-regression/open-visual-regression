@@ -4,7 +4,7 @@ import { ORPCError } from "@orpc/client";
 
 import {
   checkSnapshotsRebuildable,
-  hasNewerBuildOnBranch,
+  checkHasNewerBuildOnBranch,
   rebuildSnapshots as rebuildSnapshotsService,
   type SnapshotRebuildBlockedReason,
 } from "@ovr/builds/builds";
@@ -30,7 +30,7 @@ export const getOne = os.snapshots.getOne
     const [errorLogs, diff, hasNewerBuild] = await Promise.all([
       dbClient.snapshotLogs.findBySnapshot(snapshot.id),
       dbClient.diffs.findBySnapshot(snapshot.id),
-      hasNewerBuildOnBranch(build),
+      checkHasNewerBuildOnBranch(build),
     ]);
     const [rebuildable, reviewable] = await Promise.all([
       checkSnapshotsRebuildable(build, [snapshot], { hasNewerBuild }),

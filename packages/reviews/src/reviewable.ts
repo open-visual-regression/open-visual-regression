@@ -1,5 +1,5 @@
 import { isDiffReviewable } from "@ovr/api/contracts/diffs";
-import { hasNewerBuildOnBranch } from "@ovr/builds/builds";
+import { checkHasNewerBuildOnBranch } from "@ovr/builds/builds";
 import type { Result } from "@ovr/builds/types";
 import type { BuildDbSchema } from "@ovr/db/repository/builds";
 import type { DiffDbSchema } from "@ovr/db/repository/diffs";
@@ -43,7 +43,7 @@ export const checkBuildReviewable = async (
     return { status: "error", error: "BUILD_FAILED" };
   }
 
-  if (await (options.hasNewerBuild ?? hasNewerBuildOnBranch(build))) {
+  if (await (options.hasNewerBuild ?? checkHasNewerBuildOnBranch(build))) {
     return { status: "error", error: "NOT_LATEST_ON_BRANCH" };
   }
 
@@ -58,7 +58,7 @@ export const checkSnapshotReviewable = async (
   diff: Pick<NonNullable<DiffDbSchema>, "processingStatus" | "reviewStatus"> | undefined,
   options: ReviewableOptions = {},
 ): Promise<Result<void, SnapshotReviewBlockedReason>> => {
-  if (await (options.hasNewerBuild ?? hasNewerBuildOnBranch(build))) {
+  if (await (options.hasNewerBuild ?? checkHasNewerBuildOnBranch(build))) {
     return { status: "error", error: "NOT_LATEST_ON_BRANCH" };
   }
 

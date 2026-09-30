@@ -328,7 +328,7 @@ type ExtractDefaults = NonNullable<
   Awaited<ReturnType<typeof dbClient.buildExtractDefaults.findByBuild>>
 >;
 
-export const hasNewerBuildOnBranch = async (
+export const checkHasNewerBuildOnBranch = async (
   build: Pick<BuildCandidate, "id" | "projectId" | "branch" | "createdAt">,
 ): Promise<boolean> => {
   const newer = await dbClient.builds.findMany(
@@ -355,7 +355,7 @@ export const checkRebuildable = async (
   }
 
   const [newerOnBranch, extractDefaults] = await Promise.all([
-    options.hasNewerBuild ?? hasNewerBuildOnBranch(build),
+    options.hasNewerBuild ?? checkHasNewerBuildOnBranch(build),
     dbClient.buildExtractDefaults.findByBuild(build.id),
   ]);
 
@@ -470,7 +470,7 @@ export const checkSnapshotsRebuildable = async (
     return { status: "error", error: "SNAPSHOT_SKIPPED" };
   }
 
-  if (await (options.hasNewerBuild ?? hasNewerBuildOnBranch(build))) {
+  if (await (options.hasNewerBuild ?? checkHasNewerBuildOnBranch(build))) {
     return { status: "error", error: "NOT_LATEST_ON_BRANCH" };
   }
 
