@@ -129,8 +129,9 @@ jobs:
         env:
           TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
       - name: Publish snapshot to OVR (ui)
-        if: matrix.package.name == 'ui' && hashFiles('packages/ui/storybook-static/**') != ''
-        continue-on-error: true
+        if: >-
+          matrix.package.name == 'ui' && hashFiles('packages/ui/storybook-static/**') != '' &&
+          (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         env:
           OVR_API_KEY: ${{ secrets.OVR_API_KEY_UI }}
         run: >
@@ -143,8 +144,9 @@ jobs:
           --author "$(git log -1 --pretty=%an)"
           ${{ github.event_name == 'pull_request' && '--only-affected' || '' }}
       - name: Publish snapshot to OVR (web)
-        if: matrix.package.name == 'web' && hashFiles('apps/web/storybook-static/**') != ''
-        continue-on-error: true
+        if: >-
+          matrix.package.name == 'web' && hashFiles('apps/web/storybook-static/**') != '' &&
+          (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         env:
           OVR_API_KEY: ${{ secrets.OVR_API_KEY_WEB }}
         run: >
