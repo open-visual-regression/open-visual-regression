@@ -8,7 +8,7 @@ import type {
   SnapshotStatus,
 } from "@ovr/db/schema";
 import { createLogger } from "@ovr/logger";
-import type { CanceledBuildJobs } from "@ovr/queue";
+import { QueueUnavailableError, type CanceledBuildJobs } from "@ovr/queue";
 import {
   cancelBuildJobs,
   enqueueCaptureGroup,
@@ -186,7 +186,12 @@ export const createBuild = async (
 export const confirmBuildUpload = async (
   buildId: string,
   input: ConfirmBuildUploadInput,
-): Promise<Result<void, "BUILD_NOT_FOUND" | "BUILD_CANCELED" | "ARTIFACT_MISSING">> => {
+): Promise<
+  Result<
+    void,
+    "BUILD_NOT_FOUND" | "BUILD_CANCELED" | "BUILD_FAILED" | "ARTIFACT_MISSING" | "QUEUE_UNAVAILABLE"
+  >
+> => {
   const build = await dbClient.builds.findById(buildId);
 
   if (!build) {
@@ -195,6 +200,10 @@ export const confirmBuildUpload = async (
 
   if (build.processingStatus === "canceled") {
     return { status: "error", error: "BUILD_CANCELED" };
+  }
+
+  if (build.processingStatus === "error") {
+    return { status: "error", error: "BUILD_FAILED" };
   }
 
   if (!(await storage.objectExists(build.artifactPath))) {
@@ -225,6 +234,12 @@ export const confirmBuildUpload = async (
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     await dbClient.builds.updateProcessingStatus(buildId, "error", message);
+    await publishStatus(buildId);
+
+    if (error instanceof QueueUnavailableError) {
+      return { status: "error", error: "QUEUE_UNAVAILABLE" };
+    }
+
     throw error;
   }
 

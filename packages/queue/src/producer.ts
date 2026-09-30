@@ -23,42 +23,54 @@ import {
   type ProjectPurgeJobPayload,
   type PurgeJobPayload,
   buildRedisConnection,
+  waitForConnection,
 } from "./index";
+
+const QUEUE_TIMEOUT_MS = 5_000;
 
 const connection = buildRedisConnection(process.env.REDIS_URL ?? "redis://localhost:6379", {
   maxRetriesPerRequest: null,
   lazyConnect: true,
+  commandTimeout: QUEUE_TIMEOUT_MS,
 });
 
+const whenConnected = async <T>(send: () => Promise<T>): Promise<T> => {
+  await waitForConnection(connection, QUEUE_TIMEOUT_MS);
+  return send();
+};
+
 export const enqueueExtract = (payload: ExtractJobPayload): Promise<Job<ExtractJobPayload>> =>
-  enqueueExtractJob(payload, connection);
+  whenConnected(() => enqueueExtractJob(payload, connection));
 
 export const enqueueCaptureGroup = (
   payload: CaptureGroupJobPayload,
-): Promise<Job<CaptureGroupJobPayload>> => enqueueCaptureGroupJob(payload, connection);
+): Promise<Job<CaptureGroupJobPayload>> =>
+  whenConnected(() => enqueueCaptureGroupJob(payload, connection));
 
 export const enqueueDiff = (payload: DiffJobPayload): Promise<Job<DiffJobPayload>> =>
-  enqueueDiffJob(payload, connection);
+  whenConnected(() => enqueueDiffJob(payload, connection));
 
 export const enqueueFinalize = (payload: FinalizeJobPayload): Promise<Job<FinalizeJobPayload>> =>
-  enqueueFinalizeJob(payload, connection);
+  whenConnected(() => enqueueFinalizeJob(payload, connection));
 
 export const enqueuePurge = (payload: PurgeJobPayload): Promise<Job<PurgeJobPayload>> =>
-  enqueuePurgeJob(payload, connection);
+  whenConnected(() => enqueuePurgeJob(payload, connection));
 
 export const enqueueProjectPurge = (
   payload: ProjectPurgeJobPayload,
-): Promise<Job<ProjectPurgeJobPayload>> => enqueueProjectPurgeJob(payload, connection);
+): Promise<Job<ProjectPurgeJobPayload>> =>
+  whenConnected(() => enqueueProjectPurgeJob(payload, connection));
 
 export const enqueuePublishStatus = (
   payload: GitStatusPublishJobPayload,
-): Promise<Job<GitStatusPublishJobPayload>> => enqueuePublishStatusJob(payload, connection);
+): Promise<Job<GitStatusPublishJobPayload>> =>
+  whenConnected(() => enqueuePublishStatusJob(payload, connection));
 
 export const publishBuildStatusEvent = (event: BuildStatusEvent): Promise<void> =>
-  publishBuildStatusEventCmd(event, connection);
+  whenConnected(() => publishBuildStatusEventCmd(event, connection));
 
 export const enqueuePurgeMany = (payloads: PurgeJobPayload[]): Promise<void> =>
-  enqueuePurgeManyJob(payloads, connection);
+  whenConnected(() => enqueuePurgeManyJob(payloads, connection));
 
 export const cancelBuildJobs = (canceled: CanceledBuildJobs[]): Promise<void> =>
-  cancelBuildJobsJob(canceled, connection);
+  whenConnected(() => cancelBuildJobsJob(canceled, connection));

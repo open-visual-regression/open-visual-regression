@@ -49,6 +49,62 @@ export const buildRedisConnection = (
   });
 };
 
+export class QueueUnavailableError extends Error {
+  constructor(cause?: unknown) {
+    super("The build queue is unavailable: could not reach Redis", { cause });
+    this.name = "QueueUnavailableError";
+  }
+}
+
+const isConnected = (connection: RedisConnection): boolean =>
+  connection.status === "ready" ||
+  (connection instanceof Cluster && connection.status === "connect");
+
+export const waitForConnection = async (
+  connection: RedisConnection,
+  timeoutMs: number,
+): Promise<void> => {
+  if (isConnected(connection)) {
+    return;
+  }
+
+  if (connection.status === "end") {
+    throw new QueueUnavailableError();
+  }
+
+  if (connection.status === "wait") {
+    connection.connect().catch(() => undefined);
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    let lastError: unknown;
+
+    const onReady = (): void => {
+      cleanup();
+      resolve();
+    };
+    const onError = (error: unknown): void => {
+      lastError = error;
+    };
+    const timer = setTimeout(() => {
+      cleanup();
+      reject(new QueueUnavailableError(lastError));
+    }, timeoutMs);
+    const cleanup = (): void => {
+      clearTimeout(timer);
+      connection.off("ready", onReady);
+      connection.off("error", onError);
+    };
+
+    connection.on("ready", onReady);
+    connection.on("error", onError);
+
+    if (isConnected(connection)) {
+      onReady();
+    }
+  });
+};
+
 // The hash tag keeps each queue's keys in one cluster slot, avoiding CROSSSLOT.
 export const queueOptions = (
   connection: RedisConnection,

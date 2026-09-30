@@ -93,6 +93,18 @@ export const confirmUpload = os.builds.confirmUpload
         });
       }
 
+      if (result.error === "BUILD_FAILED") {
+        throw new ORPCError("CONFLICT", {
+          message: `this build has already failed: ${build.errorMessage ?? "unknown error"}`,
+        });
+      }
+
+      if (result.error === "QUEUE_UNAVAILABLE") {
+        throw new ORPCError("SERVICE_UNAVAILABLE", {
+          message: "the build queue is unavailable, so the build was marked as failed",
+        });
+      }
+
       throw new ORPCError(
         result.error === "ARTIFACT_MISSING" ? "PRECONDITION_FAILED" : "NOT_FOUND",
       );
