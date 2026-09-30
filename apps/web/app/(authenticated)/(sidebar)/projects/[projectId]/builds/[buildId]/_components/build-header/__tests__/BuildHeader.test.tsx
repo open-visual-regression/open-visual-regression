@@ -29,7 +29,7 @@ const renderComponent = ({
     error: 1,
     queued: 4,
   }),
-  canManageBuild = true,
+  canReview = true,
 }: Partial<BuildHeaderProps> = {}) => {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
@@ -39,7 +39,7 @@ const renderComponent = ({
         build={build}
         snapshotCounts={snapshotCounts}
         storybookHref={storybookHref}
-        canManageBuild={canManageBuild}
+        canReview={canReview}
       />
       <Toaster />
     </QueryClientProvider>,
@@ -274,7 +274,7 @@ describe("BuildHeader", () => {
         status: "error",
         errorMessage: "One or more snapshots failed to diff against their baseline",
         isRebuildable: true,
-        hasNewerBuild: false,
+        isReviewable: true,
       }),
       snapshotCounts: mocks.build.generateSnapshotCounts({ error: 3 }),
     });
@@ -363,7 +363,7 @@ describe("BuildHeader", () => {
   it("should not render the review actions for a viewer", () => {
     renderComponent({
       build: mocks.build.generateBuild({ status: "needs_review" }),
-      canManageBuild: false,
+      canReview: false,
     });
 
     expect(screen.queryByRole("button", { name: /approve all/i })).not.toBeInTheDocument();
@@ -373,7 +373,7 @@ describe("BuildHeader", () => {
   it("should not render the cancel action for a viewer", () => {
     renderComponent({
       build: mocks.build.generateBuild({ status: "processing" }),
-      canManageBuild: false,
+      canReview: false,
     });
 
     expect(screen.queryByRole("button", { name: /cancel build/i })).not.toBeInTheDocument();
@@ -382,7 +382,7 @@ describe("BuildHeader", () => {
   it("should not render the rebuild action for a viewer", () => {
     renderComponent({
       build: mocks.build.generateBuild({ status: "needs_review", isRebuildable: true }),
-      canManageBuild: false,
+      canReview: false,
     });
 
     expect(screen.queryByRole("button", { name: /^rebuild$/i })).not.toBeInTheDocument();

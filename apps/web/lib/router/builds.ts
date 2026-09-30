@@ -351,7 +351,7 @@ export const getOne = os.builds.getOne
         status: getBuildDisplayStatus(build),
         canceledBy: canceler?.name ?? null,
         isRebuildable: rebuildable.status === "ok",
-        hasNewerBuild,
+        isReviewable: !hasNewerBuild,
         buildType: build.buildType,
         createdAt: build.createdAt,
         commitUrl: gitIntegration

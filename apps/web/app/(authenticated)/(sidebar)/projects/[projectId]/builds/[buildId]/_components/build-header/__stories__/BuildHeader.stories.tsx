@@ -11,7 +11,7 @@ const meta: Meta<typeof BuildHeader> = {
   tags: ["autodocs"],
   args: {
     storybookHref: "/api/storybook/mock-build/index.html",
-    canManageBuild: true,
+    canReview: true,
   },
   parameters: {
     ovr: {
@@ -57,7 +57,7 @@ export const Rebuildable: Story = {
       ...buildOverrides,
       status: "needs_review",
       isRebuildable: true,
-      hasNewerBuild: false,
+      isReviewable: true,
     }),
     snapshotCounts,
   },
@@ -70,7 +70,7 @@ export const Viewer: Story = {
       status: "needs_review",
     }),
     snapshotCounts,
-    canManageBuild: false,
+    canReview: false,
   },
 };
 

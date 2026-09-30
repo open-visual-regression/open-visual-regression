@@ -1349,7 +1349,7 @@ describe("builds", () => {
         commitSha: "a".repeat(40),
         status: "queued",
         isRebuildable: false,
-        hasNewerBuild: false,
+        isReviewable: true,
       });
     });
 

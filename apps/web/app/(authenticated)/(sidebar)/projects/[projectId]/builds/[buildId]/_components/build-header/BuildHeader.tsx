@@ -29,14 +29,14 @@ export type BuildHeaderProps = {
   build: BuildDetailSchema;
   snapshotCounts: Record<SnapshotDisplayStatus, number>;
   storybookHref: string | null;
-  canManageBuild: boolean;
+  canReview: boolean;
 };
 
 export const BuildHeader = ({
   build,
   snapshotCounts,
   storybookHref,
-  canManageBuild,
+  canReview,
 }: BuildHeaderProps) => {
   const total = Object.values(snapshotCounts).reduce((sum, count) => sum + count, 0);
   const hasReviewable =
@@ -44,12 +44,11 @@ export const BuildHeader = ({
   const isCancelable = build.status === "queued" || build.status === "processing";
   const isCanceled = build.status === "canceled";
   const hasProcessingError = build.status === "error";
-  const showCancel = canManageBuild && isCancelable;
-  const showRebuild =
-    canManageBuild && !isCancelable && !build.hasNewerBuild && build.isRebuildable;
+  const showCancel = canReview && isCancelable;
+  const showRebuild = canReview && !isCancelable && build.isRebuildable;
   const showReviewActions =
-    canManageBuild &&
-    !build.hasNewerBuild &&
+    canReview &&
+    build.isReviewable &&
     !isCancelable &&
     !isCanceled &&
     !hasProcessingError &&

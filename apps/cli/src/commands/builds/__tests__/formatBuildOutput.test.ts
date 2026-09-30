@@ -17,7 +17,7 @@ const BUILD: BuildDetailSchema = {
   createdAt: "2026-09-12T10:43:15Z",
   canceledBy: null,
   isRebuildable: false,
-  hasNewerBuild: false,
+  isReviewable: true,
   commitUrl: null,
   branchUrl: null,
 };

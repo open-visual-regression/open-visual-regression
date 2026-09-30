@@ -105,11 +105,11 @@ export const SnapshotActionsRow = ({
         ) : null}
       </div>
       <div className="flex items-center flex-row gap-2">
-        {canReview && !snapshot.hasNewerBuild && snapshot.isRebuildable ? (
+        {canReview && snapshot.isRebuildable ? (
           <SnapshotRebuildButton buildId={buildId} snapshotId={snapshot.id} />
         ) : null}
         {canReview &&
-        !snapshot.hasNewerBuild &&
+        snapshot.isReviewable &&
         diff &&
         isDiffReviewable(diff.reviewStatus) &&
         snapshot.status !== "error" ? (

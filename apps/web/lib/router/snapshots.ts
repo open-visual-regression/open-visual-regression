@@ -48,7 +48,7 @@ export const getOne = os.snapshots.getOne
         hasUncaughtPageError: snapshot.hasUncaughtPageError,
         errorMessage: snapshot.errorMessage,
         isRebuildable: rebuildable.status === "ok",
-        hasNewerBuild,
+        isReviewable: !hasNewerBuild,
         errorLogs: errorLogs.map((log) => ({
           id: log.id,
           level: log.level,
