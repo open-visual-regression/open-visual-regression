@@ -78,7 +78,7 @@ const findCaptureGroups = async (
 ): Promise<CaptureGroupJobPayload[]> => {
   const queue = new Queue<CaptureGroupJobPayload>(QueueName.SNAPSHOT_CAPTURE, { connection });
   try {
-    const jobs = await queue.getJobs(["waiting", "delayed", "prioritized", "paused"]);
+    const jobs = await queue.getJobs(["waiting", "delayed", "prioritized"]);
     return jobs.map((job) => job.data).filter((data) => data.buildId === buildId);
   } finally {
     await queue.close();

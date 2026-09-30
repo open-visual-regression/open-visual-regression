@@ -351,7 +351,7 @@ export const cancelBuildJobs = async (
         ...diffIds.map((diffId) => removeJobById(diffQueue, diffId)),
       ]),
       captureQueue
-        .getJobs(["waiting", "delayed", "prioritized", "paused"])
+        .getJobs(["waiting", "delayed", "prioritized"])
         .then((captureJobs) =>
           Promise.all(
             captureJobs

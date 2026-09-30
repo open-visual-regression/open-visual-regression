@@ -25,7 +25,7 @@
     "@testcontainers/postgresql": "^12.2.0",
     "@types/node": "^22.20.4",
     "@types/pg": "^8.23.1",
-    "ioredis": "5.11.1",
+    "ioredis": "6.0.0",
     "pg": "^8.23.0",
     "typescript": "6.0.3",
     "uuid": "^14.0.2",
