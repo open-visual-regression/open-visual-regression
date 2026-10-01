@@ -1349,6 +1349,7 @@ describe("builds", () => {
         commitSha: "a".repeat(40),
         status: "queued",
         isRebuildable: false,
+        isReviewable: false,
       });
     });
 
@@ -1374,6 +1375,34 @@ describe("builds", () => {
       const [, result] = await serverClient.builds.getOne({ buildId: build!.id });
 
       expect(result?.build).toMatchObject({ isRebuildable: true });
+    });
+
+    test("reports a settled build as reviewable until a newer build lands on its branch", async ({
+      admin,
+    }) => {
+      const [, project] = await serverClient.projects.add(TEST_PROJECT);
+      const build = await dbClient.builds.create({
+        projectId: project!.projectId,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: admin.id,
+        processingStatus: "success",
+      });
+
+      const [, before] = await serverClient.builds.getOne({ buildId: build!.id });
+      expect(before?.build).toMatchObject({ isReviewable: true });
+
+      await dbClient.builds.create({
+        projectId: project!.projectId,
+        branch: "main",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/b/artifact",
+        createdBy: admin.id,
+      });
+
+      const [, after] = await serverClient.builds.getOne({ buildId: build!.id });
+      expect(after?.build).toMatchObject({ isReviewable: false });
     });
   });
 });

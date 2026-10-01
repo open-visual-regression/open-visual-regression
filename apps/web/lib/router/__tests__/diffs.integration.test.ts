@@ -61,6 +61,7 @@ const createProjectAndBuild = async (admin: User, requiredReviewerCount = 1) => 
     commitSha: "a".repeat(40),
     artifactPath: "builds/seed/artifact",
     createdBy: admin.id,
+    processingStatus: "success",
   });
 
   return { projectId, captureConfiguration: VIEWPORT, build: build! };
@@ -137,6 +138,25 @@ describe("diffs", () => {
       const [error] = await serverClient.diffs.castVote({ diffId: uuidv7(), vote: "approve" });
 
       expect(error?.code).toBe("FORBIDDEN");
+    });
+
+    test("returns CONFLICT once a newer build lands on the branch", async ({ admin }) => {
+      const { projectId, build, captureConfiguration } = await createProjectAndBuild(admin);
+      const diff = await createAwaitingDiff(build.id, captureConfiguration, "story-a");
+      await dbClient.builds.create({
+        projectId,
+        branch: build.branch,
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/seed/newer",
+        createdBy: admin.id,
+      });
+
+      const [error] = await serverClient.diffs.castVote({ diffId: diff!.id, vote: "approve" });
+
+      expect(error).toMatchObject({
+        code: "CONFLICT",
+        message: "a newer build has landed on this branch",
+      });
     });
   });
 
@@ -305,6 +325,19 @@ describe("diffs", () => {
       const [error] = await serverClient.diffs.bulkCastVote({ buildId: uuidv7(), vote: "approve" });
 
       expect(error?.code).toBe("FORBIDDEN");
+    });
+
+    test("returns CONFLICT while the build is still running", async ({ admin }) => {
+      const { build, captureConfiguration } = await createProjectAndBuild(admin);
+      await dbClient.builds.updateProcessingStatus(build.id, "processing");
+      const awaitingDiff = await createAwaitingDiff(build.id, captureConfiguration, "story-a");
+
+      const [error] = await serverClient.diffs.bulkCastVote({ buildId: build.id, vote: "approve" });
+
+      expect(error).toMatchObject({ code: "CONFLICT", message: "this build is still running" });
+      expect(await dbClient.diffs.findById(awaitingDiff!.id)).toMatchObject({
+        reviewStatus: "needs_review",
+      });
     });
   });
 

@@ -37,6 +37,7 @@ export const generateBuild = (overrides?: Partial<BuildDetailSchema>): BuildDeta
   status: "unchanged",
   canceledBy: null,
   isRebuildable: false,
+  isReviewable: true,
   commitUrl: null,
   branchUrl: null,
   buildType: "storybook",

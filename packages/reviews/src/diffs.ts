@@ -1,9 +1,16 @@
 import { isDiffReviewable } from "@ovr/api/contracts/diffs";
-import { updateBuildReviewStatus } from "@ovr/builds/builds";
+import { checkIsLatestBuild, updateBuildReviewStatus } from "@ovr/builds/builds";
 import type { Result } from "@ovr/builds/types";
 import { dbClient } from "@ovr/db/client";
 import type { DiffReviewDbSchema } from "@ovr/db/repository/diffReviews";
 import type { DiffReviewStatus, DiffReviewVote } from "@ovr/db/schema";
+
+import {
+  checkBuildReviewable,
+  checkSnapshotReviewable,
+  type BuildReviewBlockedReason,
+  type SnapshotReviewBlockedReason,
+} from "./reviewable";
 
 const computeReviewStatus = (
   votes: DiffReviewDbSchema[],
@@ -46,18 +53,38 @@ const recomputeReviewStatus = async (diffId: string): Promise<void> => {
   await updateBuildReviewStatus(build.id);
 };
 
+const findDiffWithParents = async (diffId: string) => {
+  const diff = await dbClient.diffs.findById(diffId);
+  if (!diff) {
+    return null;
+  }
+
+  const snapshot = await dbClient.snapshots.findById(diff.snapshotId);
+  if (!snapshot) {
+    throw new Error(`Snapshot not found for diff: ${diffId}`);
+  }
+
+  const build = await dbClient.builds.findById(snapshot.buildId);
+  if (!build) {
+    throw new Error(`Build not found for snapshot: ${snapshot.id}`);
+  }
+
+  return { diff, snapshot, build };
+};
+
 export const castVote = async (
   diffId: string,
   reviewerId: string,
   vote: DiffReviewVote,
-): Promise<Result<void, "DIFF_NOT_FOUND" | "REVIEW_NOT_REQUIRED">> => {
-  const diff = await dbClient.diffs.findById(diffId);
-  if (!diff) {
+): Promise<Result<void, "DIFF_NOT_FOUND" | SnapshotReviewBlockedReason>> => {
+  const found = await findDiffWithParents(diffId);
+  if (!found) {
     return { status: "error", error: "DIFF_NOT_FOUND" };
   }
 
-  if (!isDiffReviewable(diff.reviewStatus)) {
-    return { status: "error", error: "REVIEW_NOT_REQUIRED" };
+  const reviewable = await checkSnapshotReviewable(found.build, found.snapshot, found.diff);
+  if (reviewable.status === "error") {
+    return reviewable;
   }
 
   await dbClient.diffReviews.upsertVote({ diffId, reviewerId, vote });
@@ -79,7 +106,7 @@ export const removeVote = async ({
   requesterRole,
   targetReviewerId,
 }: RemoveVoteParams): Promise<
-  Result<void, "DIFF_NOT_FOUND" | "REVIEW_NOT_REQUIRED" | "FORBIDDEN">
+  Result<void, "DIFF_NOT_FOUND" | "REVIEW_NOT_REQUIRED" | "FORBIDDEN" | "NOT_LATEST_ON_BRANCH">
 > => {
   const reviewerId = targetReviewerId ?? requesterId;
 
@@ -87,12 +114,16 @@ export const removeVote = async ({
     return { status: "error", error: "FORBIDDEN" };
   }
 
-  const diff = await dbClient.diffs.findById(diffId);
-  if (!diff) {
+  const found = await findDiffWithParents(diffId);
+  if (!found) {
     return { status: "error", error: "DIFF_NOT_FOUND" };
   }
 
-  if (!isDiffReviewable(diff.reviewStatus)) {
+  if (!(await checkIsLatestBuild(found.build))) {
+    return { status: "error", error: "NOT_LATEST_ON_BRANCH" };
+  }
+
+  if (!isDiffReviewable(found.diff.reviewStatus)) {
     return { status: "error", error: "REVIEW_NOT_REQUIRED" };
   }
 
@@ -106,19 +137,24 @@ export const bulkCastVote = async (
   buildId: string,
   reviewerId: string,
   vote: DiffReviewVote,
-): Promise<void> => {
+): Promise<Result<void, "BUILD_NOT_FOUND" | BuildReviewBlockedReason>> => {
+  const build = await dbClient.builds.findById(buildId);
+  if (!build) {
+    return { status: "error", error: "BUILD_NOT_FOUND" };
+  }
+
+  const reviewable = await checkBuildReviewable(build);
+  if (reviewable.status === "error") {
+    return reviewable;
+  }
+
   const diffs = await dbClient.diffs.findByBuild(buildId);
   const targetIds = diffs
     .filter((diff) => isDiffReviewable(diff.reviewStatus))
     .map((diff) => diff.id);
 
   if (targetIds.length === 0) {
-    return;
-  }
-
-  const build = await dbClient.builds.findById(buildId);
-  if (!build) {
-    throw new Error(`Build not found: ${buildId}`);
+    return { status: "ok", data: undefined };
   }
 
   const project = await dbClient.projects.findById(build.projectId);
@@ -143,4 +179,6 @@ export const bulkCastVote = async (
   );
 
   await updateBuildReviewStatus(buildId);
+
+  return { status: "ok", data: undefined };
 };

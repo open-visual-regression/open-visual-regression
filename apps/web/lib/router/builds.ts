@@ -10,12 +10,14 @@ import {
   DEFAULT_DIFF_THRESHOLD,
   findAncestorBuild as findAncestorBuildService,
   getArtifactPath,
+  checkIsLatestBuild,
   rebuildBuild as rebuildBuildService,
   type RebuildBlockedReason,
 } from "@ovr/builds/builds";
 import { dbClient } from "@ovr/db/client";
 import { buildBranchUrl } from "@ovr/git-status/webBranchUrl";
 import { buildCommitUrl } from "@ovr/git-status/webCommitUrl";
+import { checkBuildReviewable } from "@ovr/reviews/reviewable";
 import { storage } from "@ovr/storage";
 
 import { buildStatusHub } from "@/lib/events/buildStatusHub";
@@ -331,9 +333,11 @@ export const getOne = os.builds.getOne
   .handler(async ({ context }) => {
     const { build, project } = context;
 
-    const [canceler, rebuildable, gitIntegration] = await Promise.all([
+    const isLatestBuild = await checkIsLatestBuild(build);
+    const [canceler, rebuildable, reviewable, gitIntegration] = await Promise.all([
       build.canceledBy ? dbClient.users.findById(build.canceledBy) : null,
-      checkRebuildable(build),
+      checkRebuildable(build, { isLatestBuild }),
+      checkBuildReviewable(build, { isLatestBuild }),
       dbClient.gitIntegrations.findByProject(project.id),
     ]);
 
@@ -349,6 +353,7 @@ export const getOne = os.builds.getOne
         status: getBuildDisplayStatus(build),
         canceledBy: canceler?.name ?? null,
         isRebuildable: rebuildable.status === "ok",
+        isReviewable: reviewable.status === "ok",
         buildType: build.buildType,
         createdAt: build.createdAt,
         commitUrl: gitIntegration

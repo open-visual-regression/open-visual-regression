@@ -23,6 +23,7 @@ const snapshot: SnapshotSchema = {
   errorMessage: null,
   hasUncaughtPageError: false,
   isRebuildable: false,
+  isReviewable: true,
   errorLogs: [],
 };
 

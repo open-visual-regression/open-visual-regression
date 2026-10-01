@@ -328,7 +328,9 @@ type ExtractDefaults = NonNullable<
   Awaited<ReturnType<typeof dbClient.buildExtractDefaults.findByBuild>>
 >;
 
-const hasNewerBuildOnBranch = async (build: BuildCandidate): Promise<boolean> => {
+export const checkIsLatestBuild = async (
+  build: Pick<BuildCandidate, "id" | "projectId" | "branch" | "createdAt">,
+): Promise<boolean> => {
   const newer = await dbClient.builds.findMany(
     {
       projectIds: [build.projectId],
@@ -338,22 +340,25 @@ const hasNewerBuildOnBranch = async (build: BuildCandidate): Promise<boolean> =>
     { limit: 1 },
   );
 
-  return newer.length > 0;
+  return newer.length === 0;
 };
+
+type RebuildableOptions = { isLatestBuild?: boolean };
 
 export const checkRebuildable = async (
   build: BuildCandidate,
+  options: RebuildableOptions = {},
 ): Promise<Result<ExtractDefaults, RebuildBlockedReason>> => {
   if (build.processingStatus === "queued" || build.processingStatus === "processing") {
     return { status: "error", error: "NOT_SETTLED" };
   }
 
-  const [newerOnBranch, extractDefaults] = await Promise.all([
-    hasNewerBuildOnBranch(build),
+  const [isLatestBuild, extractDefaults] = await Promise.all([
+    options.isLatestBuild ?? checkIsLatestBuild(build),
     dbClient.buildExtractDefaults.findByBuild(build.id),
   ]);
 
-  if (newerOnBranch) {
+  if (!isLatestBuild) {
     return { status: "error", error: "NOT_LATEST_ON_BRANCH" };
   }
 
@@ -450,6 +455,7 @@ export type SnapshotRebuildBlockedReason =
 export const checkSnapshotsRebuildable = async (
   build: BuildCandidate,
   snapshots: { status: SnapshotStatus }[],
+  options: RebuildableOptions = {},
 ): Promise<Result<void, SnapshotRebuildBlockedReason>> => {
   if (build.processingStatus === "queued" || build.processingStatus === "processing") {
     return { status: "error", error: "NOT_SETTLED" };
@@ -463,7 +469,7 @@ export const checkSnapshotsRebuildable = async (
     return { status: "error", error: "SNAPSHOT_SKIPPED" };
   }
 
-  if (await hasNewerBuildOnBranch(build)) {
+  if (!(await (options.isLatestBuild ?? checkIsLatestBuild(build)))) {
     return { status: "error", error: "NOT_LATEST_ON_BRANCH" };
   }
 

@@ -4,10 +4,12 @@ import { ORPCError } from "@orpc/client";
 
 import {
   checkSnapshotsRebuildable,
+  checkIsLatestBuild,
   rebuildSnapshots as rebuildSnapshotsService,
   type SnapshotRebuildBlockedReason,
 } from "@ovr/builds/builds";
 import { dbClient } from "@ovr/db/client";
+import { checkSnapshotReviewable } from "@ovr/reviews/reviewable";
 
 import {
   authenticatedMiddleware,
@@ -25,10 +27,14 @@ export const getOne = os.snapshots.getOne
   .handler(async ({ context }) => {
     const { snapshot, build } = context;
 
-    const [errorLogs, diff, rebuildable] = await Promise.all([
+    const [errorLogs, diff, isLatestBuild] = await Promise.all([
       dbClient.snapshotLogs.findBySnapshot(snapshot.id),
       dbClient.diffs.findBySnapshot(snapshot.id),
-      checkSnapshotsRebuildable(build, [snapshot]),
+      checkIsLatestBuild(build),
+    ]);
+    const [rebuildable, reviewable] = await Promise.all([
+      checkSnapshotsRebuildable(build, [snapshot], { isLatestBuild }),
+      checkSnapshotReviewable(build, snapshot, diff, { isLatestBuild }),
     ]);
 
     return {
@@ -46,6 +52,7 @@ export const getOne = os.snapshots.getOne
         hasUncaughtPageError: snapshot.hasUncaughtPageError,
         errorMessage: snapshot.errorMessage,
         isRebuildable: rebuildable.status === "ok",
+        isReviewable: reviewable.status === "ok",
         errorLogs: errorLogs.map((log) => ({
           id: log.id,
           level: log.level,

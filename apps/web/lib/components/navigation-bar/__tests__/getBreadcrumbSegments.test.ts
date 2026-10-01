@@ -108,6 +108,7 @@ describe("getBreadcrumbSegments", () => {
           errorMessage: null,
           hasUncaughtPageError: false,
           isRebuildable: false,
+          isReviewable: true,
           errorLogs: [],
         },
       },

@@ -39,6 +39,7 @@ const newSnapshot = {
   errorMessage: null,
   hasUncaughtPageError: false,
   isRebuildable: false,
+  isReviewable: true,
   errorLogs: [],
 };
 

@@ -22,6 +22,15 @@ const createUser = async () => {
   return created!;
 };
 
+const createNewerBuild = (build: { projectId: string; branch: string; createdBy: string }) =>
+  dbClient.builds.create({
+    projectId: build.projectId,
+    branch: build.branch,
+    createdBy: build.createdBy,
+    commitSha: "b".repeat(40),
+    artifactPath: "builds/seed/newer",
+  });
+
 describe("diffs", () => {
   describe("castVote", () => {
     test("approves a diff once requiredReviewerCount distinct approvals are cast", async ({
@@ -155,6 +164,55 @@ describe("diffs", () => {
 
       expect((await dbClient.builds.findById(mainBuild.id))?.reviewStatus).toBe("approved");
     });
+
+    test("returns NOT_LATEST_ON_BRANCH once a newer build lands on the branch", async ({
+      mainBuild,
+      captureConfiguration,
+      reviewer,
+    }) => {
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "a" }],
+      });
+      const diff = await dbClient.diffs.create({
+        snapshotId: snapshot!.id,
+        reviewStatus: "needs_review",
+      });
+      await createNewerBuild(mainBuild);
+
+      const result = await castVote(diff!.id, reviewer.id, "approve");
+
+      expect(result).toEqual({ status: "error", error: "NOT_LATEST_ON_BRANCH" });
+      expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
+        reviewStatus: "needs_review",
+      });
+    });
+
+    test.for([
+      ["the snapshot errored", { status: "error" as const }, {}],
+      ["the snapshot hit a render error", { hasRenderError: true }, {}],
+      ["the diff failed to process", {}, { processingStatus: "error" as const }],
+    ] as const)(
+      "returns SNAPSHOT_FAILED when %s",
+      async (
+        [_description, snapshotValues, diffValues],
+        { mainBuild, captureConfiguration, reviewer },
+      ) => {
+        const [snapshot] = await dbClient.snapshots.createMany({
+          values: [
+            { buildId: mainBuild.id, ...captureConfiguration, targetId: "a", ...snapshotValues },
+          ],
+        });
+        const diff = await dbClient.diffs.create({
+          snapshotId: snapshot!.id,
+          reviewStatus: "needs_review",
+          ...diffValues,
+        });
+
+        const result = await castVote(diff!.id, reviewer.id, "approve");
+
+        expect(result).toEqual({ status: "error", error: "SNAPSHOT_FAILED" });
+      },
+    );
   });
 
   describe("removeVote", () => {
@@ -271,6 +329,31 @@ describe("diffs", () => {
       expect(result.error).toBe("FORBIDDEN");
       expect(await dbClient.diffReviews.findByDiff(diff!.id)).toHaveLength(1);
     });
+
+    test("returns NOT_LATEST_ON_BRANCH once a newer build lands on the branch", async ({
+      mainBuild,
+      captureConfiguration,
+      reviewer,
+    }) => {
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "a" }],
+      });
+      const diff = await dbClient.diffs.create({
+        snapshotId: snapshot!.id,
+        reviewStatus: "rejected",
+      });
+      await dbClient.diffReviews.upsertVote({
+        diffId: diff!.id,
+        reviewerId: reviewer.id,
+        vote: "reject",
+      });
+      await createNewerBuild(mainBuild);
+
+      const result = await removeVote({ diffId: diff!.id, requesterId: reviewer.id });
+
+      expect(result).toEqual({ status: "error", error: "NOT_LATEST_ON_BRANCH" });
+      expect(await dbClient.diffReviews.findByDiff(diff!.id)).toHaveLength(1);
+    });
   });
 
   describe("bulkCastVote", () => {
@@ -279,6 +362,7 @@ describe("diffs", () => {
       captureConfiguration,
       reviewer,
     }) => {
+      await dbClient.builds.updateProcessingStatus(mainBuild.id, "success");
       const [snapshotA, snapshotB, snapshotC] = await dbClient.snapshots.createMany({
         values: [
           { buildId: mainBuild.id, ...captureConfiguration, targetId: "a" },
@@ -317,6 +401,7 @@ describe("diffs", () => {
       captureConfiguration,
       reviewer,
     }) => {
+      await dbClient.builds.updateProcessingStatus(mainBuild.id, "success");
       const [snapshotA, snapshotB] = await dbClient.snapshots.createMany({
         values: [
           { buildId: mainBuild.id, ...captureConfiguration, targetId: "a" },
@@ -347,6 +432,7 @@ describe("diffs", () => {
       captureConfiguration,
       reviewer,
     }) => {
+      await dbClient.builds.updateProcessingStatus(mainBuild.id, "success");
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "a" }],
       });
@@ -363,6 +449,7 @@ describe("diffs", () => {
       captureConfiguration,
       reviewer,
     }) => {
+      await dbClient.builds.updateProcessingStatus(mainBuild.id, "success");
       await dbClient.projects.updateProject(project.id, { requiredReviewerCount: 2 });
 
       const [snapshotA, snapshotB] = await dbClient.snapshots.createMany({
@@ -393,6 +480,55 @@ describe("diffs", () => {
         reviewStatus: "approved",
       });
       expect(await dbClient.diffs.findById(noVotesYetDiff!.id)).toMatchObject({
+        reviewStatus: "needs_review",
+      });
+    });
+
+    test.for([
+      ["NOT_SETTLED", "queued"],
+      ["NOT_SETTLED", "processing"],
+      ["BUILD_CANCELED", "canceled"],
+      ["BUILD_FAILED", "error"],
+    ] as const)(
+      "returns %s for a %s build without casting any votes",
+      async ([error, processingStatus], { mainBuild, captureConfiguration, reviewer }) => {
+        await dbClient.builds.updateProcessingStatus(mainBuild.id, processingStatus);
+        const [snapshot] = await dbClient.snapshots.createMany({
+          values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "a" }],
+        });
+        const diff = await dbClient.diffs.create({
+          snapshotId: snapshot!.id,
+          reviewStatus: "needs_review",
+        });
+
+        const result = await bulkCastVote(mainBuild.id, reviewer.id, "approve");
+
+        expect(result).toEqual({ status: "error", error });
+        expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
+          reviewStatus: "needs_review",
+        });
+      },
+    );
+
+    test("returns NOT_LATEST_ON_BRANCH once a newer build lands on the branch", async ({
+      mainBuild,
+      captureConfiguration,
+      reviewer,
+    }) => {
+      await dbClient.builds.updateProcessingStatus(mainBuild.id, "success");
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "a" }],
+      });
+      const diff = await dbClient.diffs.create({
+        snapshotId: snapshot!.id,
+        reviewStatus: "needs_review",
+      });
+      await createNewerBuild(mainBuild);
+
+      const result = await bulkCastVote(mainBuild.id, reviewer.id, "approve");
+
+      expect(result).toEqual({ status: "error", error: "NOT_LATEST_ON_BRANCH" });
+      expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
         reviewStatus: "needs_review",
       });
     });

@@ -9,6 +9,10 @@ import {
   castVote as castVoteService,
   removeVote as removeVoteService,
 } from "@ovr/reviews/diffs";
+import type {
+  BuildReviewBlockedReason,
+  SnapshotReviewBlockedReason,
+} from "@ovr/reviews/reviewable";
 
 import {
   authenticatedMiddleware,
@@ -19,14 +23,36 @@ import {
 } from "./middleware";
 import { os } from "./os";
 
-const throwOnError = (error: "DIFF_NOT_FOUND" | "REVIEW_NOT_REQUIRED" | "FORBIDDEN"): never => {
-  if (error === "DIFF_NOT_FOUND") {
-    throw new ORPCError("NOT_FOUND");
+const REVIEW_BLOCKED_MESSAGES: Record<
+  Exclude<BuildReviewBlockedReason | SnapshotReviewBlockedReason, "REVIEW_NOT_REQUIRED">,
+  string
+> = {
+  NOT_SETTLED: "this build is still running",
+  BUILD_CANCELED: "this build was canceled",
+  BUILD_FAILED: "this build failed",
+  NOT_LATEST_ON_BRANCH: "a newer build has landed on this branch",
+  SNAPSHOT_FAILED: "this snapshot failed",
+};
+
+const throwOnError = (
+  error:
+    | "DIFF_NOT_FOUND"
+    | "BUILD_NOT_FOUND"
+    | "FORBIDDEN"
+    | BuildReviewBlockedReason
+    | SnapshotReviewBlockedReason,
+): never => {
+  switch (error) {
+    case "DIFF_NOT_FOUND":
+    case "BUILD_NOT_FOUND":
+      throw new ORPCError("NOT_FOUND");
+    case "FORBIDDEN":
+      throw new ORPCError("FORBIDDEN");
+    case "REVIEW_NOT_REQUIRED":
+      throw new ORPCError("BAD_REQUEST");
+    default:
+      throw new ORPCError("CONFLICT", { message: REVIEW_BLOCKED_MESSAGES[error] });
   }
-  if (error === "FORBIDDEN") {
-    throw new ORPCError("FORBIDDEN");
-  }
-  throw new ORPCError("BAD_REQUEST");
 };
 
 const buildBaselineSnapshot = async (
@@ -89,7 +115,11 @@ export const bulkCastVote = os.diffs.bulkCastVote
   .use(authenticatedMiddleware)
   .use(reviewerMiddleware)
   .handler(async ({ input, context }) => {
-    await bulkCastVoteService(input.buildId, context.user.id, input.vote);
+    const result = await bulkCastVoteService(input.buildId, context.user.id, input.vote);
+
+    if (result.status === "error") {
+      throwOnError(result.error);
+    }
   })
   .actionable();
 

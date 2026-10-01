@@ -1,4 +1,4 @@
-import { DiffSchema, isDiffReviewable } from "@ovr/api/contracts/diffs";
+import { DiffSchema } from "@ovr/api/contracts/diffs";
 import { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { Button } from "@ovr/ui/components/button";
 import {
@@ -108,7 +108,7 @@ export const SnapshotActionsRow = ({
         {canReview && snapshot.isRebuildable ? (
           <SnapshotRebuildButton buildId={buildId} snapshotId={snapshot.id} />
         ) : null}
-        {canReview && diff && isDiffReviewable(diff.reviewStatus) && snapshot.status !== "error" ? (
+        {canReview && snapshot.isReviewable && diff ? (
           <>
             <SnapshotRejectButton
               diffId={diff.id}
