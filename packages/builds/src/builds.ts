@@ -343,7 +343,6 @@ export const checkIsLatestBuild = async (
   return newer.length === 0;
 };
 
-// Callers that already know whether this is the latest build pass it in to skip the query.
 type RebuildableOptions = { isLatestBuild?: boolean };
 
 export const checkRebuildable = async (

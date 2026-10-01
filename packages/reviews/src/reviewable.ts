@@ -22,11 +22,9 @@ type ReviewCandidateBuild = Pick<
 >;
 
 type ReviewableOptions = {
-  // Callers that already know whether this is the latest build pass it in to skip the query.
   isLatestBuild?: boolean;
 };
 
-// Whether the build as a whole can be bulk-reviewed.
 export const checkBuildReviewable = async (
   build: ReviewCandidateBuild,
   options: ReviewableOptions = {},
@@ -50,8 +48,6 @@ export const checkBuildReviewable = async (
   return { status: "ok", data: undefined };
 };
 
-// Whether a single snapshot's diff can be voted on. Unlike bulk review, this is allowed while the
-// build is still running, so reviewers can work through diffs as they land.
 export const checkSnapshotReviewable = async (
   build: ReviewCandidateBuild,
   snapshot: Pick<SnapshotDbSchema, "status" | "hasRenderError">,
