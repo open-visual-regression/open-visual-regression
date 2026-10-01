@@ -1,5 +1,5 @@
 import { isDiffReviewable } from "@ovr/api/contracts/diffs";
-import { checkHasNewerBuildOnBranch, updateBuildReviewStatus } from "@ovr/builds/builds";
+import { checkIsLatestBuild, updateBuildReviewStatus } from "@ovr/builds/builds";
 import type { Result } from "@ovr/builds/types";
 import { dbClient } from "@ovr/db/client";
 import type { DiffReviewDbSchema } from "@ovr/db/repository/diffReviews";
@@ -119,7 +119,7 @@ export const removeVote = async ({
     return { status: "error", error: "DIFF_NOT_FOUND" };
   }
 
-  if (await checkHasNewerBuildOnBranch(found.build)) {
+  if (!(await checkIsLatestBuild(found.build))) {
     return { status: "error", error: "NOT_LATEST_ON_BRANCH" };
   }
 

@@ -10,7 +10,7 @@ import {
   DEFAULT_DIFF_THRESHOLD,
   findAncestorBuild as findAncestorBuildService,
   getArtifactPath,
-  checkHasNewerBuildOnBranch,
+  checkIsLatestBuild,
   rebuildBuild as rebuildBuildService,
   type RebuildBlockedReason,
 } from "@ovr/builds/builds";
@@ -333,11 +333,11 @@ export const getOne = os.builds.getOne
   .handler(async ({ context }) => {
     const { build, project } = context;
 
-    const hasNewerBuild = await checkHasNewerBuildOnBranch(build);
+    const isLatestBuild = await checkIsLatestBuild(build);
     const [canceler, rebuildable, reviewable, gitIntegration] = await Promise.all([
       build.canceledBy ? dbClient.users.findById(build.canceledBy) : null,
-      checkRebuildable(build, { hasNewerBuild }),
-      checkBuildReviewable(build, { hasNewerBuild }),
+      checkRebuildable(build, { isLatestBuild }),
+      checkBuildReviewable(build, { isLatestBuild }),
       dbClient.gitIntegrations.findByProject(project.id),
     ]);
 

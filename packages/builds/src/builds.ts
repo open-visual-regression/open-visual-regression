@@ -328,7 +328,7 @@ type ExtractDefaults = NonNullable<
   Awaited<ReturnType<typeof dbClient.buildExtractDefaults.findByBuild>>
 >;
 
-export const checkHasNewerBuildOnBranch = async (
+export const checkIsLatestBuild = async (
   build: Pick<BuildCandidate, "id" | "projectId" | "branch" | "createdAt">,
 ): Promise<boolean> => {
   const newer = await dbClient.builds.findMany(
@@ -340,11 +340,11 @@ export const checkHasNewerBuildOnBranch = async (
     { limit: 1 },
   );
 
-  return newer.length > 0;
+  return newer.length === 0;
 };
 
-// Callers that already know whether a newer build exists pass it in to skip the query.
-type RebuildableOptions = { hasNewerBuild?: boolean };
+// Callers that already know whether this is the latest build pass it in to skip the query.
+type RebuildableOptions = { isLatestBuild?: boolean };
 
 export const checkRebuildable = async (
   build: BuildCandidate,
@@ -354,12 +354,12 @@ export const checkRebuildable = async (
     return { status: "error", error: "NOT_SETTLED" };
   }
 
-  const [newerOnBranch, extractDefaults] = await Promise.all([
-    options.hasNewerBuild ?? checkHasNewerBuildOnBranch(build),
+  const [isLatestBuild, extractDefaults] = await Promise.all([
+    options.isLatestBuild ?? checkIsLatestBuild(build),
     dbClient.buildExtractDefaults.findByBuild(build.id),
   ]);
 
-  if (newerOnBranch) {
+  if (!isLatestBuild) {
     return { status: "error", error: "NOT_LATEST_ON_BRANCH" };
   }
 
@@ -470,7 +470,7 @@ export const checkSnapshotsRebuildable = async (
     return { status: "error", error: "SNAPSHOT_SKIPPED" };
   }
 
-  if (await (options.hasNewerBuild ?? checkHasNewerBuildOnBranch(build))) {
+  if (!(await (options.isLatestBuild ?? checkIsLatestBuild(build)))) {
     return { status: "error", error: "NOT_LATEST_ON_BRANCH" };
   }
 

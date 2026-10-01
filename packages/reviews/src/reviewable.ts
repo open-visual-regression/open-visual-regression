@@ -1,5 +1,5 @@
 import { isDiffReviewable } from "@ovr/api/contracts/diffs";
-import { checkHasNewerBuildOnBranch } from "@ovr/builds/builds";
+import { checkIsLatestBuild } from "@ovr/builds/builds";
 import type { Result } from "@ovr/builds/types";
 import type { BuildDbSchema } from "@ovr/db/repository/builds";
 import type { DiffDbSchema } from "@ovr/db/repository/diffs";
@@ -22,8 +22,8 @@ type ReviewCandidateBuild = Pick<
 >;
 
 type ReviewableOptions = {
-  // Callers that already know whether a newer build exists pass it in to skip the query.
-  hasNewerBuild?: boolean;
+  // Callers that already know whether this is the latest build pass it in to skip the query.
+  isLatestBuild?: boolean;
 };
 
 // Whether the build as a whole can be bulk-reviewed.
@@ -43,7 +43,7 @@ export const checkBuildReviewable = async (
     return { status: "error", error: "BUILD_FAILED" };
   }
 
-  if (await (options.hasNewerBuild ?? checkHasNewerBuildOnBranch(build))) {
+  if (!(await (options.isLatestBuild ?? checkIsLatestBuild(build)))) {
     return { status: "error", error: "NOT_LATEST_ON_BRANCH" };
   }
 
@@ -58,7 +58,7 @@ export const checkSnapshotReviewable = async (
   diff: Pick<NonNullable<DiffDbSchema>, "processingStatus" | "reviewStatus"> | undefined,
   options: ReviewableOptions = {},
 ): Promise<Result<void, SnapshotReviewBlockedReason>> => {
-  if (await (options.hasNewerBuild ?? checkHasNewerBuildOnBranch(build))) {
+  if (!(await (options.isLatestBuild ?? checkIsLatestBuild(build)))) {
     return { status: "error", error: "NOT_LATEST_ON_BRANCH" };
   }
 
