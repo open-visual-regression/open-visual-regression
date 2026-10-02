@@ -1,10 +1,17 @@
 "use client";
 
 import { useEffect, useEffectEvent, useState } from "react";
-import { TransformComponent, useControls } from "react-zoom-pan-pinch";
+import { TransformComponent, useControls, useTransformContext } from "react-zoom-pan-pinch";
 
 import { Typography } from "@ovr/ui/components/typography";
 import { cn } from "@ovr/ui/lib/utils";
+
+// react-zoom-pan-pinch zooms additively (scale += deltaY * step), which makes a single wheel
+// notch jump from 185% to 5%. Zoom exponentially instead, with each event's delta clamped so a
+// free-spinning wheel (e.g. MX Master) can't leap, e.g. a 100 deltaY notch is ~22% per event.
+const WHEEL_ZOOM_SPEED = 0.002;
+const MAX_WHEEL_DELTA = 100;
+const WHEEL_LINE_HEIGHT = 16;
 
 export type SnapshotZoomViewportProps = {
   imagePath: string | null;
@@ -21,7 +28,8 @@ export const SnapshotZoomViewport = ({
   alt,
   showDiff,
 }: SnapshotZoomViewportProps) => {
-  const { fitToView } = useControls();
+  const { fitToView, zoomToPoint } = useControls();
+  const { wrapperComponent, state } = useTransformContext();
   const [imageWidth, setImageWidth] = useState<number | null>(null);
   const [diffSize, setDiffSize] = useState<Size | null>(null);
 
@@ -34,6 +42,30 @@ export const SnapshotZoomViewport = ({
       fitOnReady();
     }
   }, [isReady]);
+
+  const hasImage = imagePath !== null;
+
+  useEffect(() => {
+    if (!wrapperComponent) return;
+
+    const handleWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      const delta =
+        event.deltaMode === WheelEvent.DOM_DELTA_LINE
+          ? event.deltaY * WHEEL_LINE_HEIGHT
+          : event.deltaY;
+      const clamped = Math.max(-MAX_WHEEL_DELTA, Math.min(MAX_WHEEL_DELTA, delta));
+      zoomToPoint(
+        state.scale * Math.exp(-clamped * WHEEL_ZOOM_SPEED),
+        event.clientX,
+        event.clientY,
+        0,
+      );
+    };
+
+    wrapperComponent.addEventListener("wheel", handleWheel, { passive: false });
+    return () => wrapperComponent.removeEventListener("wheel", handleWheel);
+  }, [wrapperComponent, hasImage, state, zoomToPoint]);
 
   if (!imagePath) {
     return (
