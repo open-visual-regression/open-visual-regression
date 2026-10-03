@@ -7,7 +7,7 @@ import { organization, projects, user as userTable } from "../schema";
 
 export { describe, expect } from "vitest";
 
-type Viewport = {
+export type Viewport = {
   browser: string;
   viewportWidth: number;
   viewportHeight: number;
