@@ -1,0 +1,3 @@
+ALTER TABLE "diffs" ADD COLUMN "matched_variant_id" uuid;--> statement-breakpoint
+ALTER TABLE "diffs" ADD CONSTRAINT "diffs_matched_variant_id_snapshot_variants_id_fk" FOREIGN KEY ("matched_variant_id") REFERENCES "public"."snapshot_variants"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "diffs_matchedVariantId_idx" ON "diffs" USING btree ("matched_variant_id");

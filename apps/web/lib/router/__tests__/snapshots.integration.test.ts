@@ -338,6 +338,48 @@ describe("snapshots", () => {
       expect(result?.snapshot.isFlaky).toBe(true);
     });
 
+    test("reports a snapshot as flaky when its change matches an earlier look of the story on main", async ({
+      admin,
+    }) => {
+      const { projectId, build } = await createProjectAndBuild(admin);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            ...VIEWPORT,
+            targetId: "story-a",
+            targetTitle: "Story A",
+            targetName: "story-a",
+            status: "success",
+          },
+        ],
+      });
+      const variant = await dbClient.snapshotVariants.create({
+        projectId,
+        browser: VIEWPORT.browser,
+        viewportWidth: VIEWPORT.viewportWidth,
+        viewportHeight: VIEWPORT.viewportHeight,
+        targetId: "story-a",
+        snapshotId: snapshot!.id,
+      });
+      await dbClient.diffs.create({
+        snapshotId: snapshot!.id,
+        processingStatus: "success",
+        reviewStatus: "needs_review",
+        matchedVariantId: variant!.id,
+      });
+
+      const [[getOneError, getOneResult], [listError, listResult]] = await Promise.all([
+        serverClient.snapshots.getOne({ snapshotId: snapshot!.id }),
+        serverClient.snapshots.list({ buildId: build.id }),
+      ]);
+
+      expect(getOneError).toBeNull();
+      expect(getOneResult?.snapshot.isFlaky).toBe(true);
+      expect(listError).toBeNull();
+      expect(listResult?.snapshots[0]?.isFlaky).toBe(true);
+    });
+
     test("reports a snapshot as not flaky when its story has not been flagged", async ({
       admin,
     }) => {

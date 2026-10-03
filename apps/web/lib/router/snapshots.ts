@@ -57,7 +57,7 @@ export const getOne = os.snapshots.getOne
         viewportName: snapshot.viewportName,
         status: getSnapshotDisplayStatus(snapshot, diff),
         hasUncaughtPageError: snapshot.hasUncaughtPageError,
-        isFlaky: flakySnapshot !== undefined,
+        isFlaky: flakySnapshot !== undefined || diff?.matchedVariantId != null,
         errorMessage: snapshot.errorMessage,
         isRebuildable: rebuildable.status === "ok",
         isReviewable: reviewable.status === "ok",

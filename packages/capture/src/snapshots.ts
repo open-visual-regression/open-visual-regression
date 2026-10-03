@@ -590,11 +590,16 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
     return;
   }
 
+  const matchedVariantId = isFlakyDetectionEnabled()
+    ? await findEarlierMainVariant(snapshot, build.projectId, baselineSnapshot?.variantId ?? null)
+    : null;
+
   await dbClient.diffs.updateResult(diffId, {
     processingStatus: "success",
     reviewStatus: "needs_review",
     baselineSnapshotId: diff.baselineSnapshotId,
     ...(diffImagePath && { diffImagePath }),
+    ...(matchedVariantId && { matchedVariantId }),
     pixelDiffCount,
     diffPercent,
   });
@@ -617,17 +622,14 @@ const toVariantKey = (snapshot: SnapshotDbSchema, projectId: string): VariantKey
   targetId: snapshot.targetId,
 });
 
-const findMatchingVariant = async (
+type VariantCandidate = Awaited<
+  ReturnType<typeof dbClient.snapshotVariants.findRecentForKey>
+>[number];
+
+const findMatchingCandidate = async (
   snapshot: SnapshotDbSchema,
-  key: VariantKey,
-  baselineVariantId: string | null,
+  candidates: VariantCandidate[],
 ): Promise<string | null> => {
-  const candidates = await dbClient.snapshotVariants.findRecentForKey(key, MAX_VARIANT_CANDIDATES);
-
-  if (baselineVariantId && candidates.some(({ id }) => id === baselineVariantId)) {
-    return baselineVariantId;
-  }
-
   const identical = candidates.find(
     ({ imageHash }) => imageHash !== null && imageHash === snapshot.imageHash,
   );
@@ -647,6 +649,41 @@ const findMatchingVariant = async (
   }
 
   return null;
+};
+
+const findMatchingVariant = async (
+  snapshot: SnapshotDbSchema,
+  key: VariantKey,
+  baselineVariantId: string | null,
+): Promise<string | null> => {
+  const candidates = await dbClient.snapshotVariants.findRecentForKey(key, MAX_VARIANT_CANDIDATES);
+
+  if (baselineVariantId && candidates.some(({ id }) => id === baselineVariantId)) {
+    return baselineVariantId;
+  }
+
+  return findMatchingCandidate(snapshot, candidates);
+};
+
+const findEarlierMainVariant = async (
+  snapshot: SnapshotDbSchema,
+  projectId: string,
+  baselineVariantId: string | null,
+): Promise<string | null> => {
+  try {
+    const candidates = await dbClient.snapshotVariants.findRecentForKey(
+      toVariantKey(snapshot, projectId),
+      MAX_VARIANT_CANDIDATES,
+    );
+
+    return await findMatchingCandidate(
+      snapshot,
+      candidates.filter(({ id }) => id !== baselineVariantId),
+    );
+  } catch (error) {
+    logger.warn({ err: error, snapshotId: snapshot.id }, "failed to match an earlier main variant");
+    return null;
+  }
 };
 
 const assignSnapshotVariant = async (

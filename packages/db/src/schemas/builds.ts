@@ -298,12 +298,18 @@ export const diffs = pgTable(
     diffImagePath: text("diff_image_path"),
     pixelDiffCount: integer("pixel_diff_count"),
     diffPercent: real("diff_percent"),
+    matchedVariantId: uuid("matched_variant_id").references(() => snapshotVariants.id, {
+      onDelete: "set null",
+    }),
     updatedAt: utcTimestamp("updated_at")
       .default(sql`now()`)
       .$onUpdate(() => sql`now()`)
       .notNull(),
   },
-  (table) => [uniqueIndex("diffs_snapshotId_uidx").on(table.snapshotId)],
+  (table) => [
+    uniqueIndex("diffs_snapshotId_uidx").on(table.snapshotId),
+    index("diffs_matchedVariantId_idx").on(table.matchedVariantId),
+  ],
 );
 
 export const diffReviews = pgTable(
