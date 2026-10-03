@@ -46,6 +46,35 @@ const createProjectAndBuild = async (admin: User) => {
   return { projectId, build: build! };
 };
 
+const flagStory = (projectId: string, targetId: string) =>
+  db.insert(flakySnapshots).values({
+    projectId,
+    browser: VIEWPORT.browser,
+    viewportWidth: VIEWPORT.viewportWidth,
+    viewportHeight: VIEWPORT.viewportHeight,
+    targetId,
+    sampleCount: 30,
+    changeCount: 9,
+    revertCount: 6,
+    sameCommitMismatchCount: 0,
+  });
+
+// a: no flags, b: flaky, c: warning, d: flaky with a warning.
+const seedFlags = async (projectId: string, buildId: string) => {
+  const [a, b, c, d] = await dbClient.snapshots.createMany({
+    values: [
+      { targetId: "a", targetTitle: "A", targetName: "a" },
+      { targetId: "b", targetTitle: "B", targetName: "b" },
+      { targetId: "c", targetTitle: "C", targetName: "c", hasUncaughtPageError: true },
+      { targetId: "d", targetTitle: "D", targetName: "d", hasUncaughtPageError: true },
+    ].map((story) => ({ buildId, ...VIEWPORT, ...story })),
+  });
+  await flagStory(projectId, "b");
+  await flagStory(projectId, "d");
+
+  return { a: a!, b: b!, c: c!, d: d! };
+};
+
 describe("snapshots", () => {
   describe("getOne", () => {
     test("should return UNAUTHORIZED when no session cookie is provided", async () => {
@@ -538,6 +567,23 @@ describe("snapshots", () => {
       expect(result?.snapshots).toHaveLength(3);
     });
 
+    test("filters by flag", async ({ admin }) => {
+      const { projectId, build } = await createProjectAndBuild(admin);
+      await seedFlags(projectId, build.id);
+
+      const [[flakyError, flaky], [eitherError, either]] = await Promise.all([
+        serverClient.snapshots.list({ buildId: build.id, flags: ["flaky"] }),
+        serverClient.snapshots.list({ buildId: build.id, flags: ["flaky", "warning"] }),
+      ]);
+
+      expect(flakyError).toBeNull();
+      expect(flaky?.total).toBe(2);
+      expect(flaky?.snapshots.map((snapshot) => snapshot.targetId)).toEqual(["b", "d"]);
+      expect(eitherError).toBeNull();
+      expect(either?.total).toBe(3);
+      expect(either?.snapshots.map((snapshot) => snapshot.targetId)).toEqual(["b", "c", "d"]);
+    });
+
     test("pages through every snapshot exactly once", async ({ admin }) => {
       const { build } = await createProjectAndBuild(admin);
 
@@ -819,6 +865,48 @@ describe("snapshots", () => {
         position: 1,
         total: 2,
       });
+    });
+
+    test("navigates only the snapshots matching a flag filter", async ({ admin }) => {
+      const { projectId, build } = await createProjectAndBuild(admin);
+      const { b, d } = await seedFlags(projectId, build.id);
+
+      const [error, result] = await serverClient.snapshots.getAdjacent({
+        snapshotId: b.id,
+        flags: ["flaky"],
+      });
+
+      expect(error).toBeNull();
+      expect(result).toEqual({
+        prevSnapshotId: null,
+        nextSnapshotId: d.id,
+        position: 1,
+        total: 2,
+      });
+    });
+  });
+
+  describe("listFlags", () => {
+    test("lists the flags present in the build", async ({ admin }) => {
+      const { projectId, build } = await createProjectAndBuild(admin);
+      await seedFlags(projectId, build.id);
+
+      const [error, result] = await serverClient.snapshots.listFlags({ buildId: build.id });
+
+      expect(error).toBeNull();
+      expect(result).toEqual({ flags: ["flaky", "warning"] });
+    });
+
+    test("lists no flags when no snapshot carries one", async ({ admin }) => {
+      const { build } = await createProjectAndBuild(admin);
+      await dbClient.snapshots.createMany({
+        values: [{ buildId: build.id, ...VIEWPORT, targetId: "a" }],
+      });
+
+      const [error, result] = await serverClient.snapshots.listFlags({ buildId: build.id });
+
+      expect(error).toBeNull();
+      expect(result).toEqual({ flags: [] });
     });
   });
 

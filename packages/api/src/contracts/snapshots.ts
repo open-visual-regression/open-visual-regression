@@ -70,10 +70,15 @@ export const snapshotsCursorSchema = z.object({
 
 export type SnapshotsCursor = z.infer<typeof snapshotsCursorSchema>;
 
+export const snapshotFlagSchema = z.enum(["flaky", "warning"]);
+
+export type SnapshotFlag = z.infer<typeof snapshotFlagSchema>;
+
 export const snapshotFiltersSchema = z.object({
   statuses: z.array(snapshotDisplayStatusSchema).optional(),
   browsers: z.array(z.string()).optional(),
   viewports: z.array(z.string()).optional(),
+  flags: z.array(snapshotFlagSchema).optional(),
   search: z.string().min(1).optional(),
 });
 
@@ -157,6 +162,14 @@ export const listViewportsContract = oc
   .input(listSnapshotFilterOptionsInputSchema)
   .output(listViewportsOutputSchema);
 
+export const listFlagsOutputSchema = z.object({
+  flags: z.array(snapshotFlagSchema),
+});
+
+export const listFlagsContract = oc
+  .input(listSnapshotFilterOptionsInputSchema)
+  .output(listFlagsOutputSchema);
+
 export const rebuildInputSchema = z.object({
   buildId: z.uuidv7(),
   snapshotIds: z.array(z.uuidv7()).min(1).max(MAX_REBUILD_SNAPSHOTS),
@@ -176,5 +189,6 @@ export const contract = {
   listStatuses: listStatusesContract,
   listBrowsers: listBrowsersContract,
   listViewports: listViewportsContract,
+  listFlags: listFlagsContract,
   rebuild: rebuildContract,
 } as const;
