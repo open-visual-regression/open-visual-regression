@@ -1,5 +1,11 @@
 # @ovr/ui
 
+## 0.1.2
+
+### Patch Changes
+
+- [#289](https://github.com/open-visual-regression/open-visual-regression/pull/289) [`1550283`](https://github.com/open-visual-regression/open-visual-regression/commit/1550283a9514748c485b49f8084004d1d598b9d6) Thanks [@tgfischer](https://github.com/tgfischer)! - Show a flaky badge on snapshots of flaky stories.
+
 ## 0.1.1
 
 ### Patch Changes

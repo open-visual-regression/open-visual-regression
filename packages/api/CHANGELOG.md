@@ -1,5 +1,11 @@
 # @ovr/api
 
+## 0.2.5
+
+### Patch Changes
+
+- [#288](https://github.com/open-visual-regression/open-visual-regression/pull/288) [`1651aaf`](https://github.com/open-visual-regression/open-visual-regression/commit/1651aaf99b25db20472c486080bbc87b0b13588e) Thanks [@tgfischer](https://github.com/tgfischer)! - Report whether each snapshot is flaky.
+
 ## 0.2.4
 
 ### Patch Changes
