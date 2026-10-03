@@ -43,6 +43,7 @@ ovr snapshots list <buildId> --status needs_review
 | `--status <status...>` | Filter to snapshots with these statuses |
 | `--browser <name...>` | Filter to snapshots captured in these browsers |
 | `--viewport <name...>` | Filter to snapshots captured at these viewports |
+| `--flag <flag...>` | Filter to snapshots with these flags |
 | `--search <text>` | Filter to snapshots matching this text |
 | `--limit <count>` | Snapshots per page, 1–100 (default `24`) |
 | `--cursor <cursor>` | Fetch the page following this cursor |
@@ -65,8 +66,11 @@ captured at the story's full page height rather than a fixed crop prints its hei
 
 `--status` accepts `unchanged`, `auto_approved`, `approved`, `needs_review`, `rejected`,
 `error`, `canceled`, `skipped`, `queued`, and `processing`; anything else is rejected
-before the request is sent. When filters match nothing, the applied filters are printed
-alongside `No snapshots found.` so a mistyped browser or viewport is visible.
+before the request is sent. `--flag` accepts `flaky` for snapshots of
+[flaky stories](/flaky-snapshots) and `warning` for snapshots whose story threw an
+uncaught error while rendering, and is validated the same way. When filters match
+nothing, the applied filters are printed alongside `No snapshots found.` so a mistyped
+browser or viewport is visible.
 
 ### Pagination
 
