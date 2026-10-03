@@ -1,7 +1,7 @@
 import { Command } from "commander";
 
 import { snapshotDisplayStatusSchema } from "@ovr/api/contracts/builds";
-import type { SnapshotsCursor } from "@ovr/api/contracts/snapshots";
+import { snapshotFlagSchema, type SnapshotsCursor } from "@ovr/api/contracts/snapshots";
 
 import { createClient } from "../../client";
 import { getApiKey, getServerUrl } from "../../config";
@@ -18,6 +18,7 @@ type SnapshotsListCommandOptions = {
   status?: string[];
   browser?: string[];
   viewport?: string[];
+  flag?: string[];
   search?: string;
   limit: string;
   cursor?: string;
@@ -33,6 +34,7 @@ export const listCommand = new Command("list")
   .option("--status <status...>", "filter to snapshots with these statuses")
   .option("--browser <name...>", "filter to snapshots captured in these browsers")
   .option("--viewport <name...>", "filter to snapshots captured at these viewports")
+  .option("--flag <flag...>", "filter to snapshots with any of these flags (flaky, warning)")
   .option("--search <text>", "filter to snapshots matching this text")
   .option("--limit <count>", `snapshots per page (1-${MAX_LIMIT})`, DEFAULT_LIMIT)
   .option("--cursor <cursor>", "fetch the page following this cursor")
@@ -49,6 +51,7 @@ export const listCommand = new Command("list")
         statuses: parseEnumOption("--status", options.status, snapshotDisplayStatusSchema.options),
         browsers: options.browser,
         viewports: options.viewport,
+        flags: parseEnumOption("--flag", options.flag, snapshotFlagSchema.options),
         search: options.search,
         limit: parseLimit(options.limit),
       };
@@ -79,6 +82,7 @@ export const listCommand = new Command("list")
               status: options.status,
               browser: options.browser,
               viewport: options.viewport,
+              flag: options.flag,
               search: options.search,
             },
           },

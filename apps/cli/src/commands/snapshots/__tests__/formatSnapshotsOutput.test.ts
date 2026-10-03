@@ -53,6 +53,15 @@ describe("formatSnapshotsOutput", () => {
     ).toBe("No snapshots found.\nFilters: browser=safari");
   });
 
+  it("should report every flag that produced an empty result", () => {
+    expect(
+      formatSnapshotsOutput(
+        { snapshots: [], total: 0, nextCursor: null, filters: { flag: ["flaky", "warning"] } },
+        false,
+      ),
+    ).toBe("No snapshots found.\nFilters: flag=flaky,warning");
+  });
+
   it("should print a row carrying the story, viewport and diff percentage", () => {
     const output = formatSnapshotsOutput(
       { snapshots: [SNAPSHOT], total: 1, nextCursor: null },
