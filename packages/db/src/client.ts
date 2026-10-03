@@ -6,6 +6,7 @@ import * as buildExtractDefaults from "./repository/buildExtractDefaults";
 import * as builds from "./repository/builds";
 import * as diffReviews from "./repository/diffReviews";
 import * as diffs from "./repository/diffs";
+import * as flakySnapshots from "./repository/flakySnapshots";
 import * as gitIntegrations from "./repository/gitIntegrations";
 import * as gitStatusPublications from "./repository/gitStatusPublications";
 import * as organizations from "./repository/organizations";
@@ -27,6 +28,7 @@ export const dbClient = {
   snapshots,
   snapshotLogs,
   snapshotVariants,
+  flakySnapshots,
   diffs,
   diffReviews,
   baselines,

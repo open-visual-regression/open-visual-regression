@@ -237,6 +237,36 @@ export const snapshotVariants = pgTable(
   ],
 );
 
+export const flakySnapshots = pgTable(
+  "flaky_snapshots",
+  {
+    id: uuid().primaryKey().$defaultFn(uuidv7),
+    projectId: uuid("project_id")
+      .references(() => projects.id, { onDelete: "cascade" })
+      .notNull(),
+    browser: varchar({ length: 50 }).notNull(),
+    viewportWidth: integer("viewport_width").notNull(),
+    viewportHeight: integer("viewport_height").notNull(),
+    targetId: varchar("target_id", { length: 255 }).notNull(),
+    sampleCount: integer("sample_count").notNull(),
+    changeCount: integer("change_count").notNull(),
+    revertCount: integer("revert_count").notNull(),
+    sameCommitMismatchCount: integer("same_commit_mismatch_count").notNull(),
+    evaluatedAt: utcTimestamp("evaluated_at")
+      .default(sql`now()`)
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("flaky_snapshots_project_browser_viewport_target_uidx").on(
+      table.projectId,
+      table.browser,
+      table.viewportWidth,
+      table.viewportHeight,
+      table.targetId,
+    ),
+  ],
+);
+
 export const snapshotLogs = pgTable(
   "snapshot_logs",
   {

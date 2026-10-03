@@ -28,6 +28,7 @@ export const projects = pgTable("projects", {
     .notNull(),
   retentionDays: integer("retention_days").notNull().default(90),
   totalBuildsCount: integer("total_builds_count").notNull().default(0),
+  flakyScannedAt: utcTimestamp("flaky_scanned_at"),
   createdAt: utcTimestamp("created_at")
     .default(sql`now()`)
     .notNull(),
