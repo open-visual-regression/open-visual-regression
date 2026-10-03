@@ -16,6 +16,7 @@ const SNAPSHOT: SnapshotSchema = {
   imagePath: "project/builds/build/snapshots/snap.png",
   status: "needs_review",
   hasUncaughtPageError: false,
+  isFlaky: false,
   errorMessage: null,
   isRebuildable: false,
   isReviewable: true,

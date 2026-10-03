@@ -24,6 +24,7 @@ export const snapshotSchema = z.object({
   imagePath: z.string().nullable(),
   status: snapshotDisplayStatusSchema,
   hasUncaughtPageError: z.boolean(),
+  isFlaky: z.boolean(),
   errorMessage: z.string().nullable(),
   isRebuildable: z.boolean(),
   isReviewable: z.boolean(),
@@ -53,6 +54,7 @@ export const buildSnapshotSchema = z.object({
   viewportHeight: z.number().int().nullable(),
   viewportName: z.string().min(1),
   hasUncaughtPageError: z.boolean(),
+  isFlaky: z.boolean(),
 });
 
 export type BuildSnapshotSchema = z.infer<typeof buildSnapshotSchema>;

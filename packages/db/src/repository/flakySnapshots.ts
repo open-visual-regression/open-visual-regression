@@ -138,6 +138,32 @@ export const recomputeForProject = async (
   });
 };
 
+type FlakySnapshotKey = {
+  projectId: string;
+  browser: string;
+  viewportWidth: number;
+  viewportHeight: number;
+  targetId: string;
+};
+
+export const find = ({
+  projectId,
+  browser,
+  viewportWidth,
+  viewportHeight,
+  targetId,
+}: FlakySnapshotKey) =>
+  db.query.flakySnapshots.findFirst({
+    where: (flakySnapshots, { and, eq }) =>
+      and(
+        eq(flakySnapshots.projectId, projectId),
+        eq(flakySnapshots.browser, browser),
+        eq(flakySnapshots.viewportWidth, viewportWidth),
+        eq(flakySnapshots.viewportHeight, viewportHeight),
+        eq(flakySnapshots.targetId, targetId),
+      ),
+  });
+
 export const findByProject = (projectId: string) =>
   db.query.flakySnapshots.findMany({
     where: (flakySnapshots, { eq }) => eq(flakySnapshots.projectId, projectId),
