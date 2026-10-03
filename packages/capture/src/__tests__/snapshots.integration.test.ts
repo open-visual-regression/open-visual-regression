@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -79,7 +80,8 @@ describe("snapshots", () => {
       );
 
       const imageStream = await storage.getFileStream(captured!.imagePath!);
-      expect(imageStream).toBeDefined();
+      const image = Buffer.concat(await imageStream.toArray());
+      expect(captured!.imageHash).toBe(createHash("sha256").update(image).digest("hex"));
 
       const job = await collectDiffJob(connection);
       expect(job.snapshotId).toBe(snapshot!.id);

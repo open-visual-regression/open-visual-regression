@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import pixelmatch from "pixelmatch";
 import { chromium, firefox, webkit, type Page } from "playwright";
 import { PNG } from "pngjs";
@@ -312,6 +314,7 @@ const persistCapturedSnapshot = async (
       return dbClient.snapshots.updateCaptureResult(snapshotId, {
         status: "success",
         imagePath,
+        imageHash: createHash("sha256").update(captured.screenshot).digest("hex"),
         hasRenderError,
         hasUncaughtPageError,
         errorMessage,

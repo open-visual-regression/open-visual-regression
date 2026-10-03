@@ -426,6 +426,7 @@ describe("snapshots", () => {
       const updated = await dbClient.snapshots.updateCaptureResult(snapshot!.id, {
         status: "success",
         imagePath: "some/path.png",
+        imageHash: "a".repeat(64),
         hasRenderError: false,
         errorMessage: null,
         hasUncaughtPageError: false,
@@ -449,6 +450,7 @@ describe("snapshots", () => {
             targetId: "a",
             status: "error",
             imagePath: "some/path-1.png",
+            imageHash: "a".repeat(64),
             hasRenderError: true,
             hasUncaughtPageError: true,
             errorMessage: "boom",
@@ -462,6 +464,7 @@ describe("snapshots", () => {
         status: "queued",
         captureAttempt: 2,
         imagePath: null,
+        imageHash: null,
         hasRenderError: false,
         hasUncaughtPageError: false,
         errorMessage: null,
