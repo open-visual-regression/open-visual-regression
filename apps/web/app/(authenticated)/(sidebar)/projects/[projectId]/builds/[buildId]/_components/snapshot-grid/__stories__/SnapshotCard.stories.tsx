@@ -84,3 +84,16 @@ export const WithWarning: Story = {
     }),
   },
 };
+
+export const Flaky: Story = {
+  args: {
+    snapshot: mocks.build.generateBuildSnapshot({
+      id: "snapshot-5",
+      targetName: "Primary",
+      targetTitle: "Button",
+      imagePath: "new-desktop.png",
+      status: "needs_review",
+      isFlaky: true,
+    }),
+  },
+};

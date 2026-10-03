@@ -1,0 +1,20 @@
+---
+title: Flaky snapshots
+description: See which stories render differently between builds without a code change.
+---
+
+A story is flaky when it doesn't render the same way every time, for example because an animation is caught at a different frame or data loads in a different order. Flaky stories show up as changes that need review even when nothing about them changed.
+
+When flaky detection is enabled, OVR watches each story's screenshots across recent builds on the main branch and marks a story as flaky when it:
+
+- keeps returning to a look it had before,
+- renders differently for the same commit, or
+- changes on most builds.
+
+Flaky stories show a badge on their snapshot card on the build page and next to the status on the snapshot page. The badge reflects the story's current history, so it also appears on older builds.
+
+## Enabling detection
+
+Flaky detection is off by default. Set `OVR_FLAKY_DETECTION_ENABLED=true` on the worker, or `worker.flakyDetection.enabled: true` in the Helm chart, to turn it on. Stories are re-evaluated hourly by default. See [Docker Compose](/self-hosting/docker-compose#optional-tuning) or [Helm](/self-hosting/helm#flaky-detection) for every setting.
+
+Detection only uses main-branch builds captured after it was turned on, so it takes a few builds before stories can be flagged.

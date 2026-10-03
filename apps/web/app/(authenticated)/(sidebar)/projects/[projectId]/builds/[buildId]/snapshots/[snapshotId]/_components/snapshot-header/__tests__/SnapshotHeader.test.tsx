@@ -32,6 +32,26 @@ describe("SnapshotHeader", () => {
     expect(screen.getByText("needs review")).toBeVisible();
   });
 
+  it("should show a flaky badge when the story has been flagged", () => {
+    const build = mocks.build.generateBuild();
+    render(
+      <SnapshotHeader
+        snapshot={{ ...snapshot, isFlaky: true }}
+        build={build}
+        storybookHref={null}
+      />,
+    );
+
+    expect(screen.getByText("flaky")).toBeVisible();
+  });
+
+  it("should not show a flaky badge when the story has not been flagged", () => {
+    const build = mocks.build.generateBuild();
+    render(<SnapshotHeader snapshot={snapshot} build={build} storybookHref={null} />);
+
+    expect(screen.queryByText("flaky")).not.toBeInTheDocument();
+  });
+
   it("should show the error alert when the snapshot failed to capture", () => {
     const build = mocks.build.generateBuild();
     render(

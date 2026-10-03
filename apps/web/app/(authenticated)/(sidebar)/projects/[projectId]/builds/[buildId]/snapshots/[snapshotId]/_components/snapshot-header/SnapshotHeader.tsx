@@ -7,6 +7,7 @@ import { ResolutionIcon } from "@ovr/ui/components/resolution-icon";
 import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 
 import { ExternalLink } from "@/lib/components/external-link/ExternalLink";
+import { FlakyBadge } from "@/lib/components/FlakyBadge";
 import { SnapshotStatusBadge } from "@/lib/components/SnapshotStatusBadge";
 
 export type SnapshotHeaderProps = {
@@ -28,7 +29,10 @@ export const SnapshotHeader = ({
         {snapshot.targetTitle} {snapshot.targetName}
       </Typography>
       <div className="flex flex-row flex-wrap items-center gap-4 text-xs">
-        <SnapshotStatusBadge status={snapshot.status} />
+        <div className="inline-flex gap-1">
+          <SnapshotStatusBadge status={snapshot.status} />
+          {snapshot.isFlaky ? <FlakyBadge /> : null}
+        </div>
         {storybookHref ? <ExternalLink href={storybookHref}>view story</ExternalLink> : null}
         <Typography variant="caption">{build.name}</Typography>
         <Typography variant="caption" className="flex items-center gap-1">
