@@ -59,7 +59,6 @@ const flagStory = (projectId: string, targetId: string) =>
     sameCommitMismatchCount: 0,
   });
 
-// a: no flags, b: flaky, c: warning, d: flaky with a warning.
 const seedFlags = async (projectId: string, buildId: string) => {
   const [a, b, c, d] = await dbClient.snapshots.createMany({
     values: [
