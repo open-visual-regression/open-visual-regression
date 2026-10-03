@@ -79,8 +79,6 @@ const flagStory = (projectId: string, captureConfiguration: Viewport, targetId: 
     sameCommitMismatchCount: 0,
   });
 
-// One snapshot per way a snapshot can (or can't) carry a flag, all in the same
-// status tier so they sort by title: plain, flagged, matched, warning, both.
 const seedFlags = async (
   build: { id: string },
   project: typeof projects.$inferSelect,
@@ -122,7 +120,6 @@ const seedFlags = async (
   await flagStory(project.id, captureConfiguration, "flagged");
   await flagStory(project.id, captureConfiguration, "both");
 
-  // Flagged in another project only, so it must not count as flaky here.
   const [otherProject] = await db
     .insert(projects)
     .values({

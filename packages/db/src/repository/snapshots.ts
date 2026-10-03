@@ -204,9 +204,6 @@ const statusDisplayOrder: SnapshotDisplayStatus[] = [
   "processing",
 ];
 
-// A story is flaky when its recent main-branch history flagged it, or when this
-// change matches a look the story already had on main. Kept self-contained (no
-// joins beyond diffs) so it works in every query that filters build snapshots.
 const isFlakyExpr = sql<boolean>`(${diffs.matchedVariantId} is not null or exists (
   select 1 from ${flakySnapshots}
   where ${flakySnapshots.projectId} = (select ${builds.projectId} from ${builds} where ${builds.id} = ${snapshots.buildId})
