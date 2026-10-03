@@ -1,5 +1,22 @@
 # @ovr/web
 
+## 0.9.4
+
+### Patch Changes
+
+- [#295](https://github.com/open-visual-regression/open-visual-regression/pull/295) [`756a5b3`](https://github.com/open-visual-regression/open-visual-regression/commit/756a5b38e9fee5c07525daf34227cca2c934842f) Thanks [@tgfischer](https://github.com/tgfischer)! - Accept a `flags` filter on `snapshots.list` and `snapshots.getAdjacent`, and list the flags present in a build with `snapshots.listFlags`.
+
+- [#296](https://github.com/open-visual-regression/open-visual-regression/pull/296) [`a24ad49`](https://github.com/open-visual-regression/open-visual-regression/commit/a24ad4986e4c12df320bb6e4df3d448e62318e25) Thanks [@tgfischer](https://github.com/tgfischer)! - Filter a build's snapshots to flaky ones or ones with warnings from a new flags filter.
+
+- Updated dependencies [[`756a5b3`](https://github.com/open-visual-regression/open-visual-regression/commit/756a5b38e9fee5c07525daf34227cca2c934842f), [`43e1f76`](https://github.com/open-visual-regression/open-visual-regression/commit/43e1f763904fd2d3b7f807205faad089a8db9db9)]:
+  - @ovr/api@0.2.6
+  - @ovr/db@0.2.8
+  - @ovr/reviews@0.1.14
+  - @ovr/ui@0.1.2
+  - @ovr/builds@0.1.14
+  - @ovr/git-status@0.1.10
+  - @ovr/queue@0.1.11
+
 ## 0.9.3
 
 ### Patch Changes

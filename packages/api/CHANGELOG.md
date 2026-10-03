@@ -1,5 +1,11 @@
 # @ovr/api
 
+## 0.2.6
+
+### Patch Changes
+
+- [#295](https://github.com/open-visual-regression/open-visual-regression/pull/295) [`756a5b3`](https://github.com/open-visual-regression/open-visual-regression/commit/756a5b38e9fee5c07525daf34227cca2c934842f) Thanks [@tgfischer](https://github.com/tgfischer)! - Accept a `flags` filter on `snapshots.list` and `snapshots.getAdjacent`, and list the flags present in a build with `snapshots.listFlags`.
+
 ## 0.2.5
 
 ### Patch Changes
