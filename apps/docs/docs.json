@@ -16,7 +16,7 @@
     "pages": [
       {
         "group": "Get Started",
-        "pages": ["index", "baselines"]
+        "pages": ["index", "baselines", "flaky-snapshots"]
       },
       {
         "group": "CLI",

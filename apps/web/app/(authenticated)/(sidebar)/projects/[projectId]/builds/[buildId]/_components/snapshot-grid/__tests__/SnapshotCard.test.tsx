@@ -45,4 +45,19 @@ describe("SnapshotCard", () => {
 
     expect(screen.queryByRole("img", { name: "warning" })).not.toBeInTheDocument();
   });
+
+  it("should show a flaky badge when the story has been flagged as flaky", () => {
+    const snapshot = mocks.build.generateBuildSnapshot({ isFlaky: true });
+    render(<SnapshotCard snapshot={snapshot} projectId="project-1" buildId="build-1" />);
+
+    expect(screen.getByRole("img", { name: "flaky" })).toBeInTheDocument();
+    expect(screen.getByRole("link")).toHaveAccessibleName(expect.stringContaining(", flaky"));
+  });
+
+  it("should not show a flaky badge when the story has not been flagged", () => {
+    const snapshot = mocks.build.generateBuildSnapshot({ isFlaky: false });
+    render(<SnapshotCard snapshot={snapshot} projectId="project-1" buildId="build-1" />);
+
+    expect(screen.queryByRole("img", { name: "flaky" })).not.toBeInTheDocument();
+  });
 });

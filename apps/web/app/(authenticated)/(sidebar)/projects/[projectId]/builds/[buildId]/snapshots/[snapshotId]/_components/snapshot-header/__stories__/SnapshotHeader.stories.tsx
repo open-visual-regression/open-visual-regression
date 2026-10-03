@@ -71,6 +71,17 @@ export const NeedsReview: Story = {
   },
 };
 
+export const Flaky: Story = {
+  args: {
+    snapshot: {
+      ...snapshot,
+      status: "needs_review",
+      isFlaky: true,
+    },
+    build: mocks.build.generateBuild(buildOverrides),
+  },
+};
+
 export const Rejected: Story = {
   args: {
     snapshot: { ...snapshot, status: "rejected" },

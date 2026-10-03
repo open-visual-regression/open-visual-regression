@@ -7,6 +7,7 @@ import { cn } from "@ovr/ui/lib/utils";
 
 import { CardLink } from "@/lib/components/card-link/CardLink";
 import { CardSurface } from "@/lib/components/card-link/CardSurface";
+import { FlakyBadge } from "@/lib/components/FlakyBadge";
 import { Image } from "@/lib/components/image/Image";
 import { getSnapshotStatusLabel, SnapshotStatusBadge } from "@/lib/components/SnapshotStatusBadge";
 import { type SnapshotFilters, withSnapshotFilters } from "@/lib/utils/snapshotFilters";
@@ -41,7 +42,7 @@ type SnapshotCardProps = {
 
 export const SnapshotCard = ({ snapshot, projectId, buildId, filters }: SnapshotCardProps) => {
   const imagePath = getStoragePath(snapshot.imagePath);
-  const label = `snapshot of ${snapshot.targetTitle} ${snapshot.targetName}, ${snapshot.browser} ${snapshot.viewportName}, ${getSnapshotStatusLabel(snapshot.status)}${snapshot.hasUncaughtPageError ? ", has warnings" : ""}`;
+  const label = `snapshot of ${snapshot.targetTitle} ${snapshot.targetName}, ${snapshot.browser} ${snapshot.viewportName}, ${getSnapshotStatusLabel(snapshot.status)}${snapshot.hasUncaughtPageError ? ", has warnings" : ""}${snapshot.isFlaky ? ", flaky" : ""}`;
 
   return (
     <CardLink
@@ -76,6 +77,7 @@ export const SnapshotCard = ({ snapshot, projectId, buildId, filters }: Snapshot
                 <Icon icon={TriangleAlertIcon} size={12} role="img" aria-label="warning" />
               </Badge>
             ) : null}
+            {snapshot.isFlaky ? <FlakyBadge filled /> : null}
             <SnapshotStatusBadge status={snapshot.status} filled />
           </div>
         </div>
