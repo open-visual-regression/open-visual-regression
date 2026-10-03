@@ -72,6 +72,15 @@ export const updateCaptureResult = async (
   return snapshot;
 };
 
+export const setVariant = async (id: string, variantId: string, tx: DbClient = db) => {
+  const [snapshot] = await tx
+    .update(snapshots)
+    .set({ variantId })
+    .where(eq(snapshots.id, id))
+    .returning();
+  return snapshot;
+};
+
 export const markErrored = async (id: string, errorMessage: string) => {
   const [snapshot] = await db
     .update(snapshots)

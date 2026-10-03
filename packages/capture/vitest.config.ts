@@ -11,5 +11,6 @@ export default defineConfig({
     fileParallelism: false,
     testTimeout: 30_000,
     restoreMocks: true,
+    unstubEnvs: true,
   },
 });

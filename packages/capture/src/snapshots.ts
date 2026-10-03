@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 
 import { chromium, firefox, webkit, type Page } from "playwright";
 
+import { isFlakyDetectionEnabled } from "@ovr/builds/flakiness";
 import { withBundleDir } from "@ovr/builds/storybookBundleCache";
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
@@ -553,6 +554,13 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
       ...(diffImagePath && { diffImagePath }),
     });
     await promoteBaseline(diffId, build.createdBy);
+    if (isFlakyDetectionEnabled()) {
+      await assignSnapshotVariant(
+        snapshot,
+        build.projectId,
+        !changed && baselineSnapshot ? baselineSnapshot.variantId : null,
+      );
+    }
     await checkAllDoneAndFinalize(build.id);
     return;
   }
@@ -592,6 +600,84 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
   });
 
   await checkAllDoneAndFinalize(build.id);
+};
+
+const MAX_VARIANT_CANDIDATES = 5;
+
+type VariantKey = Pick<
+  SnapshotDbSchema,
+  "browser" | "viewportWidth" | "viewportHeight" | "targetId"
+> & { projectId: string };
+
+const toVariantKey = (snapshot: SnapshotDbSchema, projectId: string): VariantKey => ({
+  projectId,
+  browser: snapshot.browser,
+  viewportWidth: snapshot.viewportWidth,
+  viewportHeight: snapshot.viewportHeight,
+  targetId: snapshot.targetId,
+});
+
+const findMatchingVariant = async (
+  snapshot: SnapshotDbSchema,
+  key: VariantKey,
+  baselineVariantId: string | null,
+): Promise<string | null> => {
+  const candidates = await dbClient.snapshotVariants.findRecentForKey(key, MAX_VARIANT_CANDIDATES);
+
+  if (baselineVariantId && candidates.some(({ id }) => id === baselineVariantId)) {
+    return baselineVariantId;
+  }
+
+  const identical = candidates.find(
+    ({ imageHash }) => imageHash !== null && imageHash === snapshot.imageHash,
+  );
+  if (identical) {
+    return identical.id;
+  }
+
+  for (const candidate of candidates) {
+    if (!snapshot.imagePath || !candidate.imagePath) {
+      continue;
+    }
+
+    const { diffPercent } = await compareImages(snapshot.imagePath, candidate.imagePath);
+    if (diffPercent <= snapshot.diffThreshold) {
+      return candidate.id;
+    }
+  }
+
+  return null;
+};
+
+const assignSnapshotVariant = async (
+  snapshot: SnapshotDbSchema,
+  projectId: string,
+  baselineVariantId: string | null,
+): Promise<void> => {
+  const key = toVariantKey(snapshot, projectId);
+
+  try {
+    const matchedVariantId = await findMatchingVariant(snapshot, key, baselineVariantId);
+
+    await db.transaction(async (tx) => {
+      const variant = matchedVariantId
+        ? await dbClient.snapshotVariants.recordSighting(
+            matchedVariantId,
+            { snapshotId: snapshot.id, imageHash: snapshot.imageHash },
+            tx,
+          )
+        : await dbClient.snapshotVariants.create(
+            { ...key, snapshotId: snapshot.id, imageHash: snapshot.imageHash },
+            tx,
+          );
+
+      if (variant) {
+        await dbClient.snapshots.setVariant(snapshot.id, variant.id, tx);
+      }
+    });
+  } catch (error) {
+    logger.warn({ err: error, snapshotId: snapshot.id }, "failed to assign snapshot variant");
+  }
 };
 
 const uploadDiffImage = async (
