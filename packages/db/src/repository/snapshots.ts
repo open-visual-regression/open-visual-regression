@@ -3,8 +3,10 @@ import {
   asc,
   count,
   eq,
+  exists,
   ilike,
   inArray,
+  isNotNull,
   ne,
   notInArray,
   or,
@@ -204,20 +206,30 @@ const statusDisplayOrder: SnapshotDisplayStatus[] = [
   "processing",
 ];
 
-const isFlakyExpr = sql<boolean>`(${diffs.matchedVariantId} is not null or exists (
-  select 1 from ${flakySnapshots}
-  where ${flakySnapshots.projectId} = (select ${builds.projectId} from ${builds} where ${builds.id} = ${snapshots.buildId})
-    and ${flakySnapshots.browser} = ${snapshots.browser}
-    and ${flakySnapshots.viewportWidth} = ${snapshots.viewportWidth}
-    and ${flakySnapshots.viewportHeight} = ${snapshots.viewportHeight}
-    and ${flakySnapshots.targetId} = ${snapshots.targetId}
-))`;
+const isFlaky = or(
+  isNotNull(diffs.matchedVariantId),
+  exists(
+    db
+      .select({ id: flakySnapshots.id })
+      .from(flakySnapshots)
+      .innerJoin(builds, eq(builds.projectId, flakySnapshots.projectId))
+      .where(
+        and(
+          eq(builds.id, snapshots.buildId),
+          eq(flakySnapshots.browser, snapshots.browser),
+          eq(flakySnapshots.viewportWidth, snapshots.viewportWidth),
+          eq(flakySnapshots.viewportHeight, snapshots.viewportHeight),
+          eq(flakySnapshots.targetId, snapshots.targetId),
+        ),
+      ),
+  ),
+)!.mapWith(Boolean);
 
 export type SnapshotFlag = "flaky" | "warning";
 
-const flagExprs: Record<SnapshotFlag, SQL<boolean>> = {
-  flaky: isFlakyExpr,
-  warning: sql<boolean>`${snapshots.hasUncaughtPageError}`,
+const flagConditions: Record<SnapshotFlag, SQL> = {
+  flaky: isFlaky,
+  warning: eq(snapshots.hasUncaughtPageError, true),
 };
 
 const flagDisplayOrder: SnapshotFlag[] = ["flaky", "warning"];
@@ -241,7 +253,7 @@ const listForBuildWhere = (
       : undefined,
     browsers?.length ? inArray(snapshots.browser, browsers) : undefined,
     viewports?.length ? inArray(snapshots.viewportName, viewports) : undefined,
-    flags?.length ? or(...flags.map((flag) => flagExprs[flag])) : undefined,
+    flags?.length ? or(...flags.map((flag) => flagConditions[flag])) : undefined,
     search
       ? or(ilike(snapshots.targetTitle, `%${search}%`), ilike(snapshots.targetName, `%${search}%`))
       : undefined,
@@ -282,16 +294,16 @@ export const findViewports = async (buildId: string): Promise<string[]> => {
 };
 
 export const findFlags = async (buildId: string): Promise<SnapshotFlag[]> => {
-  const [row] = await db
-    .select({
-      flaky: sql<boolean>`coalesce(bool_or(${flagExprs.flaky}), false)`,
-      warning: sql<boolean>`coalesce(bool_or(${flagExprs.warning}), false)`,
+  const rows = await db
+    .selectDistinct({
+      flaky: isFlaky,
+      warning: snapshots.hasUncaughtPageError,
     })
     .from(snapshots)
     .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
     .where(eq(snapshots.buildId, buildId));
 
-  return flagDisplayOrder.filter((flag) => row?.[flag]);
+  return flagDisplayOrder.filter((flag) => rows.some((row) => row[flag]));
 };
 
 // needs_review/rejected/approved share a tier so that reviewing a snapshot
@@ -449,7 +461,7 @@ export const listForBuild = async (
       diffId: diffs.id,
       diffImagePath: diffs.diffImagePath,
       diffPercent: diffs.diffPercent,
-      isFlaky: isFlakyExpr,
+      isFlaky,
     })
     .from(snapshots)
     .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
