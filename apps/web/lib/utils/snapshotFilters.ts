@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { snapshotDisplayStatusSchema, type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
+import { snapshotFlagSchema, type SnapshotFlag } from "@ovr/api/contracts/snapshots";
 
 export type SnapshotFiltersSearchParams = Record<string, string | string[] | undefined>;
 
@@ -9,6 +10,7 @@ export type SnapshotFilters = {
   statuses: SnapshotDisplayStatus[];
   browsers: string[];
   viewports: string[];
+  flags: SnapshotFlag[];
 };
 
 const toArray = (value: string | string[] | undefined) =>
@@ -23,6 +25,7 @@ const searchParamsSchema = z.object({
   status: z.preprocess(toArray, z.array(snapshotDisplayStatusSchema)).optional().catch(undefined),
   browser: z.preprocess(toArray, z.array(z.string())).optional().catch(undefined),
   viewport: z.preprocess(toArray, z.array(z.string())).optional().catch(undefined),
+  flag: z.preprocess(toArray, z.array(snapshotFlagSchema)).optional().catch(undefined),
 });
 
 export const parseSnapshotFilters = (
@@ -33,9 +36,10 @@ export const parseSnapshotFilters = (
     status = [],
     browser = [],
     viewport = [],
+    flag = [],
   } = searchParamsSchema.parse(searchParams);
 
-  return { search, statuses: status, browsers: browser, viewports: viewport };
+  return { search, statuses: status, browsers: browser, viewports: viewport, flags: flag };
 };
 
 export const withSnapshotFilters = (path: string, filters?: SnapshotFilters): string => {
@@ -51,6 +55,7 @@ export const withSnapshotFilters = (path: string, filters?: SnapshotFilters): st
   filters.statuses.forEach((status) => params.append("status", status));
   filters.browsers.forEach((browser) => params.append("browser", browser));
   filters.viewports.forEach((viewport) => params.append("viewport", viewport));
+  filters.flags.forEach((flag) => params.append("flag", flag));
 
   const query = params.toString();
   return query ? `${path}?${query}` : path;

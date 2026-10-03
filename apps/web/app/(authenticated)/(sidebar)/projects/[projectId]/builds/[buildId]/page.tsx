@@ -24,7 +24,7 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
   const { projectId, buildId } = await params;
   const rawSearchParams = await searchParams;
   const filters = parseSnapshotFilters(rawSearchParams);
-  const { search, statuses, browsers, viewports } = filters;
+  const { search, statuses, browsers, viewports, flags } = filters;
 
   const queryClient = getQueryClient();
 
@@ -35,6 +35,7 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
     [statusesError, statusesResult],
     [browsersError, browsersResult],
     [viewportsError, viewportsResult],
+    [flagsError, flagsResult],
   ] = await Promise.all([
     getCachedSession(),
     serverClient.builds.getOne({ buildId }),
@@ -42,6 +43,7 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
     serverClient.snapshots.listStatuses({ buildId }),
     serverClient.snapshots.listBrowsers({ buildId }),
     serverClient.snapshots.listViewports({ buildId }),
+    serverClient.snapshots.listFlags({ buildId }),
     queryClient.prefetchInfiniteQuery(
       orpcServer.snapshots.list.infiniteOptions(snapshotsListInfiniteOptions(buildId, filters)),
     ),
@@ -52,13 +54,16 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
     countsError?.code === "NOT_FOUND" ||
     statusesError?.code === "NOT_FOUND" ||
     browsersError?.code === "NOT_FOUND" ||
-    viewportsError?.code === "NOT_FOUND"
+    viewportsError?.code === "NOT_FOUND" ||
+    flagsError?.code === "NOT_FOUND"
   ) {
     notFound();
   }
 
-  if (error || countsError || statusesError || browsersError || viewportsError) {
-    serverError(error || countsError || statusesError || browsersError || viewportsError);
+  if (error || countsError || statusesError || browsersError || viewportsError || flagsError) {
+    serverError(
+      error || countsError || statusesError || browsersError || viewportsError || flagsError,
+    );
   }
 
   const statusOptions = statusesResult.statuses.map((status) => ({
@@ -73,6 +78,8 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
     value: viewport,
     label: viewport,
   }));
+
+  const flagOptions = flagsResult.flags.map((flag) => ({ value: flag, label: flag }));
 
   const { build } = buildResult;
   const storybookHref = hasHostedStorybook(build) ? getStorybookPath(build.id) : null;
@@ -92,9 +99,11 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
           statuses={statuses}
           browsers={browsers}
           viewports={viewports}
+          flags={flags}
           statusOptions={statusOptions}
           browserOptions={browserOptions}
           viewportOptions={viewportOptions}
+          flagOptions={flagOptions}
         />
       }
       search={

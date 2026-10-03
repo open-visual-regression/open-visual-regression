@@ -246,7 +246,7 @@ describe("SnapshotActionsRow", () => {
     [/back/i, `/projects/${projectId}/builds/${buildId}`],
   ])("should keep the build's filters on the %s link", (name, href) => {
     renderComponent({
-      filters: { statuses: ["needs_review"], browsers: ["chromium"], viewports: [] },
+      filters: { statuses: ["needs_review"], browsers: ["chromium"], viewports: [], flags: [] },
     });
 
     expect(screen.getByRole("link", { name })).toHaveAttribute(
@@ -257,7 +257,9 @@ describe("SnapshotActionsRow", () => {
 
   it("should keep the build's filters when moving on after a review", async ({ user }) => {
     mockCastVote.mockResolvedValue([null, undefined]);
-    renderComponent({ filters: { statuses: ["needs_review"], browsers: [], viewports: [] } });
+    renderComponent({
+      filters: { statuses: ["needs_review"], browsers: [], viewports: [], flags: [] },
+    });
 
     await user.click(screen.getByRole("button", { name: /^approve$/i }));
 

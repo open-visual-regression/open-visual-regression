@@ -24,6 +24,7 @@ export type FacetConfig = {
   // so async facets still pass a first page here even though the popover searches.
   options: FacetOption<string>[];
   selected: string[];
+  minOptions?: number;
   // Overrides the default FacetOptionsList body, e.g. for a facet whose options
   // are searched against the server rather than filtered client-side.
   renderContent?: (props: FacetContentProps) => React.ReactNode;
@@ -129,7 +130,7 @@ export const FacetBar = ({ facets, className }: FacetBarProps) => {
   };
 
   const visibleFacets = facets
-    .filter((facet) => facet.options.length > 1)
+    .filter((facet) => facet.options.length >= (facet.minOptions ?? 2))
     .map((facet) => ({ ...facet, onApply: (next: string[]) => commit(facet.param, next) }));
 
   if (visibleFacets.length === 0) {

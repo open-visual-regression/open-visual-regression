@@ -29,7 +29,7 @@ describe("SnapshotGrid", () => {
         snapshots={[]}
         projectId="project-1"
         buildId="build-1"
-        filters={{ search: "home", statuses: [], browsers: [], viewports: [] }}
+        filters={{ search: "home", statuses: [], browsers: [], viewports: [], flags: [] }}
       />,
     );
 
