@@ -10,6 +10,10 @@ import { Icon, Maximize2Icon } from "@ovr/ui/components/icon";
 import { SnapshotZoomToolbar } from "./SnapshotZoomToolbar";
 import { SnapshotZoomViewport } from "./SnapshotZoomViewport";
 
+// The library zooms additively (scale += step * |deltaY|), so a fixed step jumps from 185% to 5% in
+// one wheel notch. Scaling the step by the current zoom makes each notch (~100 deltaY) a ~20% change.
+const WHEEL_ZOOM_STEP = 0.002;
+
 export type SnapshotZoomDialogProps = {
   title: string;
   imagePath: string | null;
@@ -28,6 +32,7 @@ export const SnapshotZoomDialog = ({
   commitUrl = null,
 }: SnapshotZoomDialogProps) => {
   const [showDiff, setShowDiff] = useState(true);
+  const [scale, setScale] = useState(1);
 
   return (
     <Dialog>
@@ -54,7 +59,8 @@ export const SnapshotZoomDialog = ({
           maxScale={16}
           limitToBounds={false}
           centerOnInit
-          wheel={{ disabled: true }}
+          wheel={{ step: WHEEL_ZOOM_STEP * scale }}
+          onTransform={(_, state) => setScale(state.scale)}
         >
           <SnapshotZoomToolbar
             title={title}
