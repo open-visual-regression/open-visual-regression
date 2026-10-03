@@ -1,5 +1,6 @@
 import { relations } from "drizzle-orm";
 import {
+  type AnyPgColumn,
   boolean,
   index,
   integer,
@@ -180,6 +181,9 @@ export const snapshots = pgTable(
     captureAttempt: integer("capture_attempt").notNull().default(1),
     imagePath: text("image_path"),
     imageHash: varchar("image_hash", { length: 64 }),
+    variantId: uuid("variant_id").references((): AnyPgColumn => snapshotVariants.id, {
+      onDelete: "set null",
+    }),
     hasRenderError: boolean("has_render_error").notNull().default(false),
     hasUncaughtPageError: boolean("has_uncaught_page_error").notNull().default(false),
     errorMessage: text("error_message"),
@@ -192,7 +196,45 @@ export const snapshots = pgTable(
       .$onUpdate(() => sql`now()`)
       .notNull(),
   },
-  (table) => [index("snapshots_buildId_idx").on(table.buildId)],
+  (table) => [
+    index("snapshots_buildId_idx").on(table.buildId),
+    index("snapshots_variantId_idx").on(table.variantId),
+  ],
+);
+
+export const snapshotVariants = pgTable(
+  "snapshot_variants",
+  {
+    id: uuid().primaryKey().$defaultFn(uuidv7),
+    projectId: uuid("project_id")
+      .references(() => projects.id, { onDelete: "cascade" })
+      .notNull(),
+    browser: varchar({ length: 50 }).notNull(),
+    viewportWidth: integer("viewport_width").notNull(),
+    viewportHeight: integer("viewport_height").notNull(),
+    targetId: varchar("target_id", { length: 255 }).notNull(),
+    snapshotId: uuid("snapshot_id")
+      .references(() => snapshots.id, { onDelete: "cascade" })
+      .notNull(),
+    imageHash: varchar("image_hash", { length: 64 }),
+    firstSeenAt: utcTimestamp("first_seen_at")
+      .default(sql`now()`)
+      .notNull(),
+    lastSeenAt: utcTimestamp("last_seen_at")
+      .default(sql`now()`)
+      .notNull(),
+  },
+  (table) => [
+    index("snapshot_variants_project_browser_viewport_target_lastSeenAt_idx").on(
+      table.projectId,
+      table.browser,
+      table.viewportWidth,
+      table.viewportHeight,
+      table.targetId,
+      table.lastSeenAt,
+    ),
+    index("snapshot_variants_snapshotId_idx").on(table.snapshotId),
+  ],
 );
 
 export const snapshotLogs = pgTable(

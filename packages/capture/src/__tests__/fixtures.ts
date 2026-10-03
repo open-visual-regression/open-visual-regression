@@ -62,7 +62,7 @@ export const withCapturePage = async (
   }
 };
 
-type Viewport = {
+export type Viewport = {
   browser: string;
   viewportWidth: number;
   viewportHeight: number;

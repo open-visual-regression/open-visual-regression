@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,11 +9,12 @@ import { PNG } from "pngjs";
 import { vi } from "vitest";
 
 import { dbClient } from "@ovr/db/client";
+import type { BuildDbSchema } from "@ovr/db/repository/builds";
 import { QueueName, type RedisConnection, type DiffJobPayload } from "@ovr/queue";
 import { storage } from "@ovr/storage";
 
 import { captureBuildGroup, diffSnapshot, enqueueSnapshotDiff } from "../snapshots";
-import { describe, expect, test, uploadArtifactWithIframe } from "./fixtures";
+import { describe, expect, test, uploadArtifactWithIframe, type Viewport } from "./fixtures";
 
 const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
 const IFRAME_HTML = await readFile(path.join(TEST_DIR, "html/iframe-static.html"), "utf-8");
@@ -36,6 +37,35 @@ const uploadSpeckledPng = async (
   const speckleStart = 0;
   png.data.fill(speckleFill, speckleStart, speckleStart + 4);
   await storage.uploadFile(path, PNG.sync.write(png), "image/png");
+};
+
+const diffCapture = async (
+  build: NonNullable<BuildDbSchema>,
+  captureConfiguration: Viewport,
+  targetId: string,
+  upload: (path: string) => Promise<void>,
+) => {
+  const imagePath = `builds/${build.id}/snapshots/${randomUUID()}.png`;
+  await upload(imagePath);
+  const image = Buffer.concat(await (await storage.getFileStream(imagePath)).toArray());
+
+  const [snapshot] = await dbClient.snapshots.createMany({
+    values: [
+      {
+        buildId: build.id,
+        ...captureConfiguration,
+        targetId,
+        status: "success",
+        imagePath,
+        imageHash: createHash("sha256").update(image).digest("hex"),
+      },
+    ],
+  });
+  const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
+
+  await diffSnapshot(snapshot!.id, diff!.id);
+
+  return (await dbClient.snapshots.findById(snapshot!.id))!;
 };
 
 const collectDiffJob = async (connection: RedisConnection): Promise<DiffJobPayload> => {
@@ -861,6 +891,74 @@ describe("snapshots", () => {
         reviewStatus: "not_required",
         pixelDiffCount: null,
       });
+    });
+  });
+
+  describe("snapshot variants", () => {
+    test("groups a main-branch capture that returns to an earlier look with that earlier capture", async ({
+      mainBuild,
+      captureConfiguration,
+    }) => {
+      vi.stubEnv("OVR_FLAKY_DETECTION_ENABLED", "true");
+
+      const first = await diffCapture(mainBuild, captureConfiguration, "story-flip", (path) =>
+        uploadPng(path, 0),
+      );
+      const second = await diffCapture(mainBuild, captureConfiguration, "story-flip", (path) =>
+        uploadPng(path, 255),
+      );
+      const third = await diffCapture(mainBuild, captureConfiguration, "story-flip", (path) =>
+        uploadPng(path, 0),
+      );
+
+      expect(first.variantId).not.toBeNull();
+      expect(second.variantId).not.toBeNull();
+      expect(second.variantId).not.toBe(first.variantId);
+      expect(third.variantId).toBe(first.variantId);
+    });
+
+    test("groups a main-branch capture with an earlier look it matches within the diff threshold, even when the pixels are not identical", async ({
+      mainBuild,
+      captureConfiguration,
+    }) => {
+      vi.stubEnv("OVR_FLAKY_DETECTION_ENABLED", "true");
+
+      const first = await diffCapture(mainBuild, captureConfiguration, "story-noise", (path) =>
+        uploadSpeckledPng(path, 0, 0),
+      );
+      await diffCapture(mainBuild, captureConfiguration, "story-noise", (path) =>
+        uploadSpeckledPng(path, 255, 255),
+      );
+      const third = await diffCapture(mainBuild, captureConfiguration, "story-noise", (path) =>
+        uploadSpeckledPng(path, 0, 255),
+      );
+
+      expect(third.imageHash).not.toBe(first.imageHash);
+      expect(third.variantId).toBe(first.variantId);
+    });
+
+    test("does not record variants for feature-branch captures", async ({
+      featureBuild,
+      captureConfiguration,
+    }) => {
+      vi.stubEnv("OVR_FLAKY_DETECTION_ENABLED", "true");
+
+      const snapshot = await diffCapture(featureBuild, captureConfiguration, "story-pr", (path) =>
+        uploadPng(path, 0),
+      );
+
+      expect(snapshot.variantId).toBeNull();
+    });
+
+    test("does not record variants when flaky detection is disabled", async ({
+      mainBuild,
+      captureConfiguration,
+    }) => {
+      const snapshot = await diffCapture(mainBuild, captureConfiguration, "story-off", (path) =>
+        uploadPng(path, 0),
+      );
+
+      expect(snapshot.variantId).toBeNull();
     });
   });
 });

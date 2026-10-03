@@ -344,6 +344,13 @@
       "when": 1790995001897,
       "tag": "0048_add_snapshot_image_hash",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1790995329424,
+      "tag": "0049_add_snapshot_variants",
+      "breakpoints": true
     }
   ]
 }
