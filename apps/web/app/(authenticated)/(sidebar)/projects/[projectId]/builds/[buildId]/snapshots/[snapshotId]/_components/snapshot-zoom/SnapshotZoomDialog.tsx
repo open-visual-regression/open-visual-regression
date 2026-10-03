@@ -10,6 +10,8 @@ import { Icon, Maximize2Icon } from "@ovr/ui/components/icon";
 import { SnapshotZoomToolbar } from "./SnapshotZoomToolbar";
 import { SnapshotZoomViewport } from "./SnapshotZoomViewport";
 
+const WHEEL_ZOOM_STEP = 0.002;
+
 export type SnapshotZoomDialogProps = {
   title: string;
   imagePath: string | null;
@@ -28,6 +30,7 @@ export const SnapshotZoomDialog = ({
   commitUrl = null,
 }: SnapshotZoomDialogProps) => {
   const [showDiff, setShowDiff] = useState(true);
+  const [scale, setScale] = useState(1);
 
   return (
     <Dialog>
@@ -49,7 +52,14 @@ export const SnapshotZoomDialog = ({
         showCloseButton={false}
         className="top-0 left-0 flex h-dvh w-screen max-w-none rounded-none sm:top-4 sm:left-4 sm:h-[calc(100dvh-2rem)] sm:w-[calc(100vw-2rem)] sm:rounded-xl translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden p-0 sm:max-w-none"
       >
-        <TransformWrapper minScale={0.05} maxScale={16} limitToBounds={false} centerOnInit>
+        <TransformWrapper
+          minScale={0.05}
+          maxScale={16}
+          limitToBounds={false}
+          centerOnInit
+          wheel={{ step: WHEEL_ZOOM_STEP * scale }}
+          onTransform={(_, state) => setScale(state.scale)}
+        >
           <SnapshotZoomToolbar
             title={title}
             commitSha={commitSha}

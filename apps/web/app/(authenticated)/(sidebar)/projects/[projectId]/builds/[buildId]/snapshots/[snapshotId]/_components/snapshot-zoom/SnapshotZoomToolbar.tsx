@@ -12,6 +12,8 @@ import { ResponsiveActionButton } from "@/lib/components/responsive-action-butto
 
 import { BaselineCommitLink } from "../snapshot-pane/BaselineCommitLink";
 
+const BUTTON_ZOOM_RATIO = 1.25;
+
 export type SnapshotZoomToolbarProps = {
   title: string;
   commitSha: string | null;
@@ -52,7 +54,7 @@ export const SnapshotZoomToolbar = ({
           color="neutral"
           size="icon-sm"
           aria-label="zoom out"
-          onClick={() => zoomOut()}
+          onClick={() => zoomOut(scale * (1 - 1 / BUTTON_ZOOM_RATIO))}
         >
           <Icon icon={MinusIcon} size={12} />
         </Button>
@@ -64,7 +66,7 @@ export const SnapshotZoomToolbar = ({
           color="neutral"
           size="icon-sm"
           aria-label="zoom in"
-          onClick={() => zoomIn()}
+          onClick={() => zoomIn(scale * (BUTTON_ZOOM_RATIO - 1))}
         >
           <Icon icon={PlusIcon} size={12} />
         </Button>
