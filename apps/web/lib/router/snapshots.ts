@@ -27,10 +27,17 @@ export const getOne = os.snapshots.getOne
   .handler(async ({ context }) => {
     const { snapshot, build } = context;
 
-    const [errorLogs, diff, isLatestBuild] = await Promise.all([
+    const [errorLogs, diff, isLatestBuild, flakySnapshot] = await Promise.all([
       dbClient.snapshotLogs.findBySnapshot(snapshot.id),
       dbClient.diffs.findBySnapshot(snapshot.id),
       checkIsLatestBuild(build),
+      dbClient.flakySnapshots.find({
+        projectId: build.projectId,
+        browser: snapshot.browser,
+        viewportWidth: snapshot.viewportWidth,
+        viewportHeight: snapshot.viewportHeight,
+        targetId: snapshot.targetId,
+      }),
     ]);
     const [rebuildable, reviewable] = await Promise.all([
       checkSnapshotsRebuildable(build, [snapshot], { isLatestBuild }),
@@ -50,6 +57,7 @@ export const getOne = os.snapshots.getOne
         viewportName: snapshot.viewportName,
         status: getSnapshotDisplayStatus(snapshot, diff),
         hasUncaughtPageError: snapshot.hasUncaughtPageError,
+        isFlaky: flakySnapshot !== undefined,
         errorMessage: snapshot.errorMessage,
         isRebuildable: rebuildable.status === "ok",
         isReviewable: reviewable.status === "ok",
@@ -98,6 +106,7 @@ export const list = os.snapshots.list
         viewportHeight: row.viewportHeight === 0 ? null : row.viewportHeight,
         viewportName: row.viewportName,
         hasUncaughtPageError: row.hasUncaughtPageError,
+        isFlaky: row.isFlaky,
       })),
       total,
       nextCursor,

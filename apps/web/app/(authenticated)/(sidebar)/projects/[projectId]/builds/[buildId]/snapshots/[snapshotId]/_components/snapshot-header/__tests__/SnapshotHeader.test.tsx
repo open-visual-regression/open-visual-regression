@@ -18,6 +18,7 @@ const snapshot: SnapshotSchema = {
   status: "needs_review",
   errorMessage: null,
   hasUncaughtPageError: false,
+  isFlaky: false,
   isRebuildable: false,
   isReviewable: true,
   errorLogs: [],

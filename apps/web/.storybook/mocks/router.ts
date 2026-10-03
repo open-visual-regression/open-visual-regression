@@ -168,6 +168,7 @@ export const serverClient: typeof RealServerClient = {
           status: "pending" as const,
           errorMessage: null,
           hasUncaughtPageError: false,
+          isFlaky: false,
           errorLogs: [],
         },
       }))

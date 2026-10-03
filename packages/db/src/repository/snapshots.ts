@@ -1,7 +1,7 @@
 import { and, asc, count, eq, ilike, inArray, ne, notInArray, or, sql } from "drizzle-orm";
 
 import { db, type DbClient } from "../db";
-import { diffs, snapshots, type SnapshotStatus } from "../schema";
+import { builds, diffs, flakySnapshots, snapshots, type SnapshotStatus } from "../schema";
 
 export type SnapshotDisplayStatusCounts = {
   unchanged: number;
@@ -404,9 +404,21 @@ export const listForBuild = async (
       diffId: diffs.id,
       diffImagePath: diffs.diffImagePath,
       diffPercent: diffs.diffPercent,
+      isFlaky: sql<boolean>`${flakySnapshots.id} is not null`,
     })
     .from(snapshots)
     .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
+    .innerJoin(builds, eq(builds.id, snapshots.buildId))
+    .leftJoin(
+      flakySnapshots,
+      and(
+        eq(flakySnapshots.projectId, builds.projectId),
+        eq(flakySnapshots.browser, snapshots.browser),
+        eq(flakySnapshots.viewportWidth, snapshots.viewportWidth),
+        eq(flakySnapshots.viewportHeight, snapshots.viewportHeight),
+        eq(flakySnapshots.targetId, snapshots.targetId),
+      ),
+    )
     .where(
       and(
         listForBuildWhere(buildId, { statuses, browsers, viewports, search }),

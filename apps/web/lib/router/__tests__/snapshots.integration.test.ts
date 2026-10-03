@@ -5,7 +5,7 @@ import { vi } from "vitest";
 import type { AddProjectInputSchema } from "@ovr/api/contracts/projects";
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
-import { organization, projects } from "@ovr/db/schema";
+import { flakySnapshots, organization, projects } from "@ovr/db/schema";
 import { storage } from "@ovr/storage";
 
 import type { User } from "@/lib/auth/auth";
@@ -315,6 +315,43 @@ describe("snapshots", () => {
       expect(after?.snapshot.isReviewable).toBe(false);
     });
 
+    test("reports a snapshot as flaky when its story has been flagged", async ({ admin }) => {
+      const { projectId, build } = await createProjectAndBuild(admin);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: build.id, ...VIEWPORT, targetId: "story-a" }],
+      });
+      await db.insert(flakySnapshots).values({
+        projectId,
+        browser: VIEWPORT.browser,
+        viewportWidth: VIEWPORT.viewportWidth,
+        viewportHeight: VIEWPORT.viewportHeight,
+        targetId: "story-a",
+        sampleCount: 30,
+        changeCount: 9,
+        revertCount: 6,
+        sameCommitMismatchCount: 0,
+      });
+
+      const [error, result] = await serverClient.snapshots.getOne({ snapshotId: snapshot!.id });
+
+      expect(error).toBeNull();
+      expect(result?.snapshot.isFlaky).toBe(true);
+    });
+
+    test("reports a snapshot as not flaky when its story has not been flagged", async ({
+      admin,
+    }) => {
+      const { build } = await createProjectAndBuild(admin);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: build.id, ...VIEWPORT, targetId: "story-a" }],
+      });
+
+      const [error, result] = await serverClient.snapshots.getOne({ snapshotId: snapshot!.id });
+
+      expect(error).toBeNull();
+      expect(result?.snapshot.isFlaky).toBe(false);
+    });
+
     test("reports a snapshot without a diff as not reviewable", async ({ admin }) => {
       const { build } = await createProjectAndBuild(admin);
       const [snapshot] = await dbClient.snapshots.createMany({
@@ -349,6 +386,46 @@ describe("snapshots", () => {
 
       expect(error).toBeNull();
       expect(result?.snapshots).toHaveLength(1);
+    });
+
+    test("marks only the snapshots of stories flagged as flaky in the build's own project", async ({
+      admin,
+    }) => {
+      const { projectId, build } = await createProjectAndBuild(admin);
+      const { projectId: otherProjectId } = await createProjectAndBuild(admin);
+      await dbClient.snapshots.createMany({
+        values: ["story-a", "story-b", "story-c"].map((targetId) => ({
+          buildId: build.id,
+          ...VIEWPORT,
+          targetId,
+          targetTitle: targetId,
+          targetName: targetId,
+        })),
+      });
+      const flag = {
+        browser: VIEWPORT.browser,
+        viewportWidth: VIEWPORT.viewportWidth,
+        viewportHeight: VIEWPORT.viewportHeight,
+        sampleCount: 12,
+        changeCount: 11,
+        revertCount: 0,
+        sameCommitMismatchCount: 0,
+      };
+      await db.insert(flakySnapshots).values([
+        { ...flag, projectId, targetId: "story-a" },
+        { ...flag, projectId: otherProjectId, targetId: "story-b" },
+      ]);
+
+      const [error, result] = await serverClient.snapshots.list({ buildId: build.id });
+
+      expect(error).toBeNull();
+      expect(result?.snapshots.map(({ targetId, isFlaky }) => ({ targetId, isFlaky }))).toEqual(
+        expect.arrayContaining([
+          { targetId: "story-a", isFlaky: true },
+          { targetId: "story-b", isFlaky: false },
+          { targetId: "story-c", isFlaky: false },
+        ]),
+      );
     });
 
     test("maps diffs to 'needs_review' or 'rejected' based on their review status", async ({

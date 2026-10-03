@@ -20,6 +20,7 @@ export const generateBuildSnapshot = (
   viewportHeight: 800,
   viewportName: "desktop",
   hasUncaughtPageError: false,
+  isFlaky: false,
   ...overrides,
 });
 
