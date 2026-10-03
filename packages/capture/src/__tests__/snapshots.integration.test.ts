@@ -937,6 +937,55 @@ describe("snapshots", () => {
       expect(third.variantId).toBe(first.variantId);
     });
 
+    test("flags a feature-branch change that matches a look the story had earlier on main", async ({
+      mainBuild,
+      featureBuild,
+      captureConfiguration,
+    }) => {
+      vi.stubEnv("OVR_FLAKY_DETECTION_ENABLED", "true");
+
+      const earlier = await diffCapture(mainBuild, captureConfiguration, "story-pr-flip", (path) =>
+        uploadPng(path, 0),
+      );
+      await diffCapture(mainBuild, captureConfiguration, "story-pr-flip", (path) =>
+        uploadPng(path, 255),
+      );
+      const featureSnapshot = await diffCapture(
+        featureBuild,
+        captureConfiguration,
+        "story-pr-flip",
+        (path) => uploadPng(path, 0),
+      );
+
+      expect(await dbClient.diffs.findBySnapshot(featureSnapshot.id)).toMatchObject({
+        reviewStatus: "needs_review",
+        matchedVariantId: earlier.variantId,
+      });
+    });
+
+    test("does not flag a feature-branch change that main has never shown", async ({
+      mainBuild,
+      featureBuild,
+      captureConfiguration,
+    }) => {
+      vi.stubEnv("OVR_FLAKY_DETECTION_ENABLED", "true");
+
+      await diffCapture(mainBuild, captureConfiguration, "story-pr-new", (path) =>
+        uploadPng(path, 0),
+      );
+      const featureSnapshot = await diffCapture(
+        featureBuild,
+        captureConfiguration,
+        "story-pr-new",
+        (path) => uploadPng(path, 255),
+      );
+
+      expect(await dbClient.diffs.findBySnapshot(featureSnapshot.id)).toMatchObject({
+        reviewStatus: "needs_review",
+        matchedVariantId: null,
+      });
+    });
+
     test("does not record variants for feature-branch captures", async ({
       featureBuild,
       captureConfiguration,

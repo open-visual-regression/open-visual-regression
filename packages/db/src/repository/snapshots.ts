@@ -404,7 +404,7 @@ export const listForBuild = async (
       diffId: diffs.id,
       diffImagePath: diffs.diffImagePath,
       diffPercent: diffs.diffPercent,
-      isFlaky: sql<boolean>`${flakySnapshots.id} is not null`,
+      isFlaky: sql<boolean>`${flakySnapshots.id} is not null or ${diffs.matchedVariantId} is not null`,
     })
     .from(snapshots)
     .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
