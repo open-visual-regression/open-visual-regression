@@ -24,9 +24,6 @@ export type FacetConfig = {
   // so async facets still pass a first page here even though the popover searches.
   options: FacetOption<string>[];
   selected: string[];
-  // Fewest options the facet needs before it shows. Defaults to 2, since picking
-  // the only value of a facet like browser filters nothing out; a facet whose
-  // options don't partition the results (e.g. flags) still filters with one.
   minOptions?: number;
   // Overrides the default FacetOptionsList body, e.g. for a facet whose options
   // are searched against the server rather than filtered client-side.
