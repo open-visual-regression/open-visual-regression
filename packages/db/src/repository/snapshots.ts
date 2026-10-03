@@ -1,4 +1,16 @@
-import { and, asc, count, eq, ilike, inArray, ne, notInArray, or, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  eq,
+  ilike,
+  inArray,
+  ne,
+  notInArray,
+  or,
+  type SQL,
+  sql,
+} from "drizzle-orm";
 
 import { db, type DbClient } from "../db";
 import { builds, diffs, flakySnapshots, snapshots, type SnapshotStatus } from "../schema";
@@ -192,16 +204,38 @@ const statusDisplayOrder: SnapshotDisplayStatus[] = [
   "processing",
 ];
 
+// A story is flaky when its recent main-branch history flagged it, or when this
+// change matches a look the story already had on main. Kept self-contained (no
+// joins beyond diffs) so it works in every query that filters build snapshots.
+const isFlakyExpr = sql<boolean>`(${diffs.matchedVariantId} is not null or exists (
+  select 1 from ${flakySnapshots}
+  where ${flakySnapshots.projectId} = (select ${builds.projectId} from ${builds} where ${builds.id} = ${snapshots.buildId})
+    and ${flakySnapshots.browser} = ${snapshots.browser}
+    and ${flakySnapshots.viewportWidth} = ${snapshots.viewportWidth}
+    and ${flakySnapshots.viewportHeight} = ${snapshots.viewportHeight}
+    and ${flakySnapshots.targetId} = ${snapshots.targetId}
+))`;
+
+export type SnapshotFlag = "flaky" | "warning";
+
+const flagExprs: Record<SnapshotFlag, SQL<boolean>> = {
+  flaky: isFlakyExpr,
+  warning: sql<boolean>`${snapshots.hasUncaughtPageError}`,
+};
+
+const flagDisplayOrder: SnapshotFlag[] = ["flaky", "warning"];
+
 export type ListForBuildFilters = {
   statuses?: SnapshotDisplayStatus[];
   browsers?: string[];
   viewports?: string[];
+  flags?: SnapshotFlag[];
   search?: string;
 };
 
 const listForBuildWhere = (
   buildId: string,
-  { statuses, browsers, viewports, search }: ListForBuildFilters,
+  { statuses, browsers, viewports, flags, search }: ListForBuildFilters,
 ) =>
   and(
     eq(snapshots.buildId, buildId),
@@ -210,6 +244,7 @@ const listForBuildWhere = (
       : undefined,
     browsers?.length ? inArray(snapshots.browser, browsers) : undefined,
     viewports?.length ? inArray(snapshots.viewportName, viewports) : undefined,
+    flags?.length ? or(...flags.map((flag) => flagExprs[flag])) : undefined,
     search
       ? or(ilike(snapshots.targetTitle, `%${search}%`), ilike(snapshots.targetName, `%${search}%`))
       : undefined,
@@ -247,6 +282,19 @@ export const findViewports = async (buildId: string): Promise<string[]> => {
     .orderBy(asc(snapshots.viewportWidth), asc(snapshots.viewportName));
 
   return rows.map((row) => row.viewportName);
+};
+
+export const findFlags = async (buildId: string): Promise<SnapshotFlag[]> => {
+  const [row] = await db
+    .select({
+      flaky: sql<boolean>`coalesce(bool_or(${flagExprs.flaky}), false)`,
+      warning: sql<boolean>`coalesce(bool_or(${flagExprs.warning}), false)`,
+    })
+    .from(snapshots)
+    .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
+    .where(eq(snapshots.buildId, buildId));
+
+  return flagDisplayOrder.filter((flag) => row?.[flag]);
 };
 
 // needs_review/rejected/approved share a tier so that reviewing a snapshot
@@ -385,7 +433,7 @@ export type ListForBuildOptions = ListForBuildFilters & {
 
 export const listForBuild = async (
   buildId: string,
-  { statuses, browsers, viewports, search, limit, cursor }: ListForBuildOptions,
+  { statuses, browsers, viewports, flags, search, limit, cursor }: ListForBuildOptions,
 ) => {
   const rows = await db
     .select({
@@ -404,24 +452,13 @@ export const listForBuild = async (
       diffId: diffs.id,
       diffImagePath: diffs.diffImagePath,
       diffPercent: diffs.diffPercent,
-      isFlaky: sql<boolean>`${flakySnapshots.id} is not null or ${diffs.matchedVariantId} is not null`,
+      isFlaky: isFlakyExpr,
     })
     .from(snapshots)
     .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
-    .innerJoin(builds, eq(builds.id, snapshots.buildId))
-    .leftJoin(
-      flakySnapshots,
-      and(
-        eq(flakySnapshots.projectId, builds.projectId),
-        eq(flakySnapshots.browser, snapshots.browser),
-        eq(flakySnapshots.viewportWidth, snapshots.viewportWidth),
-        eq(flakySnapshots.viewportHeight, snapshots.viewportHeight),
-        eq(flakySnapshots.targetId, snapshots.targetId),
-      ),
-    )
     .where(
       and(
-        listForBuildWhere(buildId, { statuses, browsers, viewports, search }),
+        listForBuildWhere(buildId, { statuses, browsers, viewports, flags, search }),
         cursor ? getCursorFilter(cursor) : undefined,
       ),
     )

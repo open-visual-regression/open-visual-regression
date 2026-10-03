@@ -1,6 +1,8 @@
 import { dbClient } from "../client";
+import { db } from "../db";
 import { type ListForBuildFilters } from "../repository/snapshots";
-import { describe, expect, test } from "./fixtures";
+import { flakySnapshots, projects } from "../schema";
+import { describe, expect, test, type Viewport } from "./fixtures";
 
 const seedReviewQueue = async (
   build: { id: string },
@@ -62,6 +64,83 @@ const seedReviewQueue = async (
   });
 
   return { first: first!, second: second!, noDiff: noDiff!, errored: errored! };
+};
+
+const flagStory = (projectId: string, captureConfiguration: Viewport, targetId: string) =>
+  db.insert(flakySnapshots).values({
+    projectId,
+    browser: captureConfiguration.browser,
+    viewportWidth: captureConfiguration.viewportWidth,
+    viewportHeight: captureConfiguration.viewportHeight,
+    targetId,
+    sampleCount: 30,
+    changeCount: 9,
+    revertCount: 6,
+    sameCommitMismatchCount: 0,
+  });
+
+// One snapshot per way a snapshot can (or can't) carry a flag, all in the same
+// status tier so they sort by title: plain, flagged, matched, warning, both.
+const seedFlags = async (
+  build: { id: string },
+  project: typeof projects.$inferSelect,
+  captureConfiguration: Viewport,
+) => {
+  const [plain, flagged, matched, warning, both] = await dbClient.snapshots.createMany({
+    values: [
+      { targetId: "plain", targetTitle: "A" },
+      { targetId: "flagged", targetTitle: "B" },
+      { targetId: "matched", targetTitle: "C" },
+      { targetId: "warning", targetTitle: "D", hasUncaughtPageError: true },
+      { targetId: "both", targetTitle: "E", hasUncaughtPageError: true },
+    ].map((story) => ({
+      buildId: build.id,
+      ...captureConfiguration,
+      ...story,
+      status: "success" as const,
+    })),
+  });
+
+  const variant = await dbClient.snapshotVariants.create({
+    projectId: project.id,
+    browser: captureConfiguration.browser,
+    viewportWidth: captureConfiguration.viewportWidth,
+    viewportHeight: captureConfiguration.viewportHeight,
+    targetId: "matched",
+    snapshotId: matched!.id,
+  });
+
+  for (const snapshot of [plain, flagged, matched, warning, both]) {
+    await dbClient.diffs.create({
+      snapshotId: snapshot!.id,
+      processingStatus: "success",
+      reviewStatus: "needs_review",
+      matchedVariantId: snapshot === matched ? variant!.id : undefined,
+    });
+  }
+
+  await flagStory(project.id, captureConfiguration, "flagged");
+  await flagStory(project.id, captureConfiguration, "both");
+
+  // Flagged in another project only, so it must not count as flaky here.
+  const [otherProject] = await db
+    .insert(projects)
+    .values({
+      name: "Other Project",
+      gitMainBranch: "main",
+      organizationId: project.organizationId,
+      creatorId: project.creatorId,
+    })
+    .returning();
+  await flagStory(otherProject!.id, captureConfiguration, "plain");
+
+  return {
+    plain: plain!,
+    flagged: flagged!,
+    matched: matched!,
+    warning: warning!,
+    both: both!,
+  };
 };
 
 describe("snapshots", () => {
@@ -944,6 +1023,111 @@ describe("snapshots", () => {
       const after = await dbClient.snapshots.listForBuild(build.id, { limit: 10 });
       expect(after.snapshots.map((row) => row.targetId)).toEqual(["d", "a", "b", "c"]);
     });
+
+    test("reports whether each snapshot is flaky", async ({
+      build,
+      project,
+      captureConfiguration,
+    }) => {
+      await seedFlags(build, project, captureConfiguration);
+
+      const result = await dbClient.snapshots.listForBuild(build.id, { limit: 10 });
+
+      expect(result.snapshots.map((row) => [row.targetId, row.isFlaky])).toEqual([
+        ["plain", false],
+        ["flagged", true],
+        ["matched", true],
+        ["warning", false],
+        ["both", true],
+      ]);
+    });
+
+    test("filters to flaky snapshots", async ({ build, project, captureConfiguration }) => {
+      await seedFlags(build, project, captureConfiguration);
+
+      const result = await dbClient.snapshots.listForBuild(build.id, {
+        flags: ["flaky"],
+        limit: 10,
+      });
+
+      expect(result.snapshots.map((row) => row.targetId)).toEqual(["flagged", "matched", "both"]);
+      expect(await dbClient.snapshots.countForBuild(build.id, { flags: ["flaky"] })).toBe(3);
+    });
+
+    test("filters to snapshots with warnings", async ({ build, project, captureConfiguration }) => {
+      await seedFlags(build, project, captureConfiguration);
+
+      const result = await dbClient.snapshots.listForBuild(build.id, {
+        flags: ["warning"],
+        limit: 10,
+      });
+
+      expect(result.snapshots.map((row) => row.targetId)).toEqual(["warning", "both"]);
+      expect(await dbClient.snapshots.countForBuild(build.id, { flags: ["warning"] })).toBe(2);
+    });
+
+    test("matches any of several flags", async ({ build, project, captureConfiguration }) => {
+      await seedFlags(build, project, captureConfiguration);
+
+      const result = await dbClient.snapshots.listForBuild(build.id, {
+        flags: ["flaky", "warning"],
+        limit: 10,
+      });
+
+      expect(result.snapshots.map((row) => row.targetId)).toEqual([
+        "flagged",
+        "matched",
+        "warning",
+        "both",
+      ]);
+      expect(
+        await dbClient.snapshots.countForBuild(build.id, { flags: ["flaky", "warning"] }),
+      ).toBe(4);
+    });
+
+    test("combines a flag filter with other filters", async ({
+      build,
+      project,
+      captureConfiguration,
+    }) => {
+      await seedFlags(build, project, captureConfiguration);
+
+      const filters: ListForBuildFilters = { flags: ["flaky"], search: "E" };
+      const result = await dbClient.snapshots.listForBuild(build.id, { ...filters, limit: 10 });
+
+      expect(result.snapshots.map((row) => row.targetId)).toEqual(["both"]);
+      expect(await dbClient.snapshots.countForBuild(build.id, filters)).toBe(1);
+    });
+  });
+
+  describe("findFlags", () => {
+    test("returns the flags present in the build", async ({
+      build,
+      project,
+      captureConfiguration,
+    }) => {
+      await seedFlags(build, project, captureConfiguration);
+
+      expect(await dbClient.snapshots.findFlags(build.id)).toEqual(["flaky", "warning"]);
+    });
+
+    test("returns only the flags some snapshot carries", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, ...captureConfiguration, targetId: "a" },
+          { buildId: build.id, ...captureConfiguration, targetId: "b", hasUncaughtPageError: true },
+        ],
+      });
+
+      expect(await dbClient.snapshots.findFlags(build.id)).toEqual(["warning"]);
+    });
+
+    test("returns no flags for a build without snapshots", async ({ build }) => {
+      expect(await dbClient.snapshots.findFlags(build.id)).toEqual([]);
+    });
   });
 
   describe("findStatuses", () => {
@@ -1052,6 +1236,19 @@ describe("snapshots", () => {
         statuses: ["needs_review", "rejected"],
       });
       expect(result).toEqual({ prevId: null, nextId: second.id, position: 1, total: 2 });
+    });
+
+    test("narrows navigation to the snapshots matching a flag filter", async ({
+      build,
+      project,
+      captureConfiguration,
+    }) => {
+      const { flagged, matched, both } = await seedFlags(build, project, captureConfiguration);
+
+      const result = await dbClient.snapshots.findAdjacentIds(build.id, matched.id, {
+        flags: ["flaky"],
+      });
+      expect(result).toEqual({ prevId: flagged.id, nextId: both.id, position: 2, total: 3 });
     });
 
     test("narrows navigation to the snapshots matching a search", async ({
