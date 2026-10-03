@@ -12,8 +12,6 @@ import { ResponsiveActionButton } from "@/lib/components/responsive-action-butto
 
 import { BaselineCommitLink } from "../snapshot-pane/BaselineCommitLink";
 
-// Button zoom is a constant ratio (zoomOut exactly undoes zoomIn): the library step is additive,
-// so it is derived from the current scale.
 const BUTTON_ZOOM_RATIO = 1.25;
 
 export type SnapshotZoomToolbarProps = {
