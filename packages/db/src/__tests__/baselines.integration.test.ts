@@ -70,6 +70,49 @@ describe("baselines", () => {
       expect(replaced?.id).toBe(created?.id);
       expect(replaced?.snapshotId).toBe(snapshotB!.id);
     });
+
+    test("should keep the baseline from a newer build when an older build is promoted after it", async ({
+      project,
+      captureConfiguration,
+      build,
+      user,
+    }) => {
+      const newerBuild = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/seed/artifact",
+        createdBy: user.id,
+      });
+      const [olderSnapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: build.id, ...captureConfiguration, targetId: "button--primary" }],
+      });
+      const [newerSnapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: newerBuild!.id, ...captureConfiguration, targetId: "button--primary" }],
+      });
+
+      await dbClient.baselines.upsert({
+        projectId: project.id,
+        ...captureConfiguration,
+        targetId: "button--primary",
+        snapshotId: newerSnapshot!.id,
+        approvedBy: user.id,
+      });
+      await dbClient.baselines.upsert({
+        projectId: project.id,
+        ...captureConfiguration,
+        targetId: "button--primary",
+        snapshotId: olderSnapshot!.id,
+        approvedBy: user.id,
+      });
+
+      const found = await dbClient.baselines.find({
+        projectId: project.id,
+        ...captureConfiguration,
+        targetId: "button--primary",
+      });
+      expect(found?.snapshotId).toBe(newerSnapshot!.id);
+    });
   });
 
   describe("find", () => {
