@@ -1,0 +1,1 @@
+ALTER TABLE "snapshots" ADD COLUMN "image_hash" varchar(64);

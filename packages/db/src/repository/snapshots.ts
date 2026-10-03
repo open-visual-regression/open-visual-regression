@@ -53,6 +53,7 @@ export const updateStatus = async (id: string, status: SnapshotStatus) => {
 type UpdateCaptureResultInput = {
   status: SnapshotStatus;
   imagePath: string;
+  imageHash: string;
   hasRenderError: boolean;
   hasUncaughtPageError: boolean;
   errorMessage: string | null;
@@ -87,6 +88,7 @@ export const requeue = async (id: string, tx: DbClient = db) => {
       status: "queued",
       captureAttempt: sql`${snapshots.captureAttempt} + 1`,
       imagePath: null,
+      imageHash: null,
       hasRenderError: false,
       hasUncaughtPageError: false,
       errorMessage: null,

@@ -337,6 +337,13 @@
       "when": 1790681024098,
       "tag": "0047_add_git_status_checks_enabled",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1790995001897,
+      "tag": "0048_add_snapshot_image_hash",
+      "breakpoints": true
     }
   ]
 }
