@@ -1,5 +1,7 @@
+import { type AnyColumn, eq, gte } from "drizzle-orm";
+
 import { db } from "../db";
-import { baselines } from "../schema";
+import { baselines, builds, snapshots } from "../schema";
 
 type FindInput = {
   projectId: string;
@@ -21,6 +23,16 @@ export const find = ({ projectId, browser, viewportWidth, viewportHeight, target
       ),
   });
 
+const selectBuildCreatedAt = (snapshotId: string | AnyColumn) =>
+  db
+    .select({ createdAt: builds.createdAt })
+    .from(snapshots)
+    .innerJoin(builds, eq(builds.id, snapshots.buildId))
+    .where(eq(snapshots.id, snapshotId));
+
+const getNotOlderBuildFilter = (snapshotId: string) =>
+  gte(selectBuildCreatedAt(snapshotId), selectBuildCreatedAt(baselines.snapshotId));
+
 export const upsert = async (values: typeof baselines.$inferInsert) => {
   const [baseline] = await db
     .insert(baselines)
@@ -38,6 +50,7 @@ export const upsert = async (values: typeof baselines.$inferInsert) => {
         approvedAt: values.approvedAt,
         approvedBy: values.approvedBy,
       },
+      setWhere: getNotOlderBuildFilter(values.snapshotId),
     })
     .returning();
   return baseline;
