@@ -76,18 +76,19 @@ export const list = os.snapshots.list
   .use(callerMiddleware("builds", "read"))
   .use(organizationBuildMiddleware)
   .handler(async ({ input }) => {
-    const { buildId, statuses, browsers, viewports, search, limit, cursor } = input;
+    const { buildId, statuses, browsers, viewports, flags, search, limit, cursor } = input;
 
     const [{ snapshots: rows, nextCursor }, total] = await Promise.all([
       dbClient.snapshots.listForBuild(buildId, {
         statuses,
         browsers,
         viewports,
+        flags,
         search,
         limit,
         cursor,
       }),
-      dbClient.snapshots.countForBuild(buildId, { statuses, browsers, viewports, search }),
+      dbClient.snapshots.countForBuild(buildId, { statuses, browsers, viewports, flags, search }),
     ]);
 
     return {
@@ -125,12 +126,12 @@ export const getAdjacent = os.snapshots.getAdjacent
   .use(organizationSnapshotMiddleware)
   .handler(async ({ input, context }) => {
     const { snapshot } = context;
-    const { statuses, browsers, viewports, search } = input;
+    const { statuses, browsers, viewports, flags, search } = input;
 
     const { prevId, nextId, position, total } = await dbClient.snapshots.findAdjacentIds(
       snapshot.buildId,
       snapshot.id,
-      { statuses, browsers, viewports, search },
+      { statuses, browsers, viewports, flags, search },
     );
 
     return { prevSnapshotId: prevId, nextSnapshotId: nextId, position, total };
@@ -158,6 +159,14 @@ export const listViewports = os.snapshots.listViewports
   .use(organizationBuildMiddleware)
   .handler(async ({ input }) => ({
     viewports: await dbClient.snapshots.findViewports(input.buildId),
+  }))
+  .actionable();
+
+export const listFlags = os.snapshots.listFlags
+  .use(authenticatedMiddleware)
+  .use(organizationBuildMiddleware)
+  .handler(async ({ input }) => ({
+    flags: await dbClient.snapshots.findFlags(input.buildId),
   }))
   .actionable();
 
