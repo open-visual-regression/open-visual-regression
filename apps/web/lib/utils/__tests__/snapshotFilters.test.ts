@@ -11,12 +11,14 @@ describe("snapshotFilters", () => {
           status: ["needs_review", "error"],
           browser: "chromium",
           viewport: ["desktop", "mobile"],
+          flag: ["flaky", "warning"],
         }),
       ).toEqual({
         search: "button",
         statuses: ["needs_review", "error"],
         browsers: ["chromium"],
         viewports: ["desktop", "mobile"],
+        flags: ["flaky", "warning"],
       });
     });
 
@@ -26,11 +28,16 @@ describe("snapshotFilters", () => {
         statuses: [],
         browsers: [],
         viewports: [],
+        flags: [],
       });
     });
 
     it("should drop an unrecognised status rather than failing the page", () => {
       expect(parseSnapshotFilters({ status: "not-a-status" }).statuses).toEqual([]);
+    });
+
+    it("should drop an unrecognised flag rather than failing the page", () => {
+      expect(parseSnapshotFilters({ flag: "not-a-flag" }).flags).toEqual([]);
     });
 
     it("should treat an empty search as no search", () => {
@@ -46,14 +53,17 @@ describe("snapshotFilters", () => {
           statuses: ["needs_review", "error"],
           browsers: ["chromium"],
           viewports: [],
+          flags: ["flaky"],
         }),
-      ).toBe("/builds/1?search=button&status=needs_review&status=error&browser=chromium");
+      ).toBe(
+        "/builds/1?search=button&status=needs_review&status=error&browser=chromium&flag=flaky",
+      );
     });
 
     it("should leave the path untouched when nothing is filtered", () => {
-      expect(withSnapshotFilters("/builds/1", { statuses: [], browsers: [], viewports: [] })).toBe(
-        "/builds/1",
-      );
+      expect(
+        withSnapshotFilters("/builds/1", { statuses: [], browsers: [], viewports: [], flags: [] }),
+      ).toBe("/builds/1");
     });
 
     it("should leave the path untouched when there are no filters", () => {

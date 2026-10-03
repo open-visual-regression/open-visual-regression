@@ -18,7 +18,7 @@ type SnapshotPageProps = PageProps<"/projects/[projectId]/builds/[buildId]/snaps
 export default async function SnapshotPage(props: SnapshotPageProps) {
   const { projectId, buildId, snapshotId } = await props.params;
   const filters = parseSnapshotFilters(await props.searchParams);
-  const { search, statuses, browsers, viewports } = filters;
+  const { search, statuses, browsers, viewports, flags } = filters;
 
   const [
     session,
@@ -32,7 +32,14 @@ export default async function SnapshotPage(props: SnapshotPageProps) {
     serverClient.builds.getOne({ buildId }),
     serverClient.snapshots.getOne({ snapshotId }),
     serverClient.diffs.getOne({ snapshotId }),
-    serverClient.snapshots.getAdjacent({ snapshotId, statuses, browsers, viewports, search }),
+    serverClient.snapshots.getAdjacent({
+      snapshotId,
+      statuses,
+      browsers,
+      viewports,
+      flags,
+      search,
+    }),
     serverClient.diffs.listReviews({ snapshotId }),
   ]);
 

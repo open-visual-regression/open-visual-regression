@@ -13,6 +13,8 @@ When flaky detection is enabled, OVR watches each story's screenshots across rec
 
 Flaky stories show a badge on their snapshot card on the build page and next to the status on the snapshot page. The badge reflects the story's current history, so it also appears on older builds.
 
+To review only flaky snapshots, pick **flaky** in the **flags** filter on the build page. The same filter also offers **warning** for snapshots whose story threw an uncaught error while rendering.
+
 ## Enabling detection
 
 Flaky detection is off by default. Set `OVR_FLAKY_DETECTION_ENABLED=true` on the worker, or `worker.flakyDetection.enabled: true` in the Helm chart, to turn it on. Stories are re-evaluated hourly by default. See [Docker Compose](/self-hosting/docker-compose#optional-tuning) or [Helm](/self-hosting/helm#flaky-detection) for every setting.

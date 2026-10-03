@@ -33,7 +33,7 @@ const toPage = (snapshots: BuildSnapshotSchema[], total = snapshots.length): Lis
   nextCursor: null,
 });
 
-const NO_FILTERS: SnapshotFilters = { statuses: [], browsers: [], viewports: [] };
+const NO_FILTERS: SnapshotFilters = { statuses: [], browsers: [], viewports: [], flags: [] };
 
 const listKey = () =>
   orpc.snapshots.list.infiniteKey(snapshotsListInfiniteOptions(BUILD_ID, NO_FILTERS));
