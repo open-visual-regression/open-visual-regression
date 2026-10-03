@@ -1,5 +1,6 @@
 import { Queue } from "bullmq";
 import type { Job, JobsOptions } from "bullmq";
+import cronParser from "cron-parser";
 import { Cluster, Redis } from "ioredis";
 import type { RedisOptions } from "ioredis";
 import { z } from "zod";
@@ -123,6 +124,8 @@ export enum QueueName {
   PROJECT_PURGE = "project-purge",
   BUILD_REAPER = "build-reaper",
   GIT_STATUS_PUBLISH = "git-status-publish",
+  FLAKY_SNAPSHOT_DISPATCH = "flaky-snapshot-dispatch",
+  FLAKY_SNAPSHOT_SCAN = "flaky-snapshot-scan",
 }
 
 export type ExtractJobPayload = {
@@ -172,6 +175,12 @@ export type ReaperJobPayload = Record<string, never>;
 
 export type GitStatusPublishJobPayload = {
   buildId: string;
+};
+
+export type FlakySnapshotDispatchJobPayload = Record<string, never>;
+
+export type FlakySnapshotScanJobPayload = {
+  projectId: string;
 };
 
 const RETENTION: Pick<JobsOptions, "removeOnComplete" | "removeOnFail"> = {
@@ -226,6 +235,16 @@ const JOB_OPTIONS: Record<QueueName, JobsOptions> = {
     backoff: { type: "exponential", delay: 5000 },
     removeOnComplete: true,
     removeOnFail: true,
+  },
+  [QueueName.FLAKY_SNAPSHOT_DISPATCH]: {
+    attempts: 3,
+    backoff: { type: "exponential", delay: 5000 },
+    ...RETENTION,
+  },
+  [QueueName.FLAKY_SNAPSHOT_SCAN]: {
+    attempts: 3,
+    backoff: { type: "exponential", delay: 2000 },
+    ...RETENTION,
   },
 };
 
@@ -301,6 +320,38 @@ export const enqueuePurgeMany = async (
         name: QueueName.BUILD_PURGE,
         data: payload,
         opts: JOB_OPTIONS[QueueName.BUILD_PURGE],
+      })),
+    );
+  } finally {
+    await queue.close();
+  }
+};
+
+export const enqueueFlakySnapshotScanMany = async (
+  payloads: FlakySnapshotScanJobPayload[],
+  connection: RedisConnection,
+): Promise<void> => {
+  if (payloads.length === 0) {
+    return;
+  }
+
+  const queue = new Queue<
+    FlakySnapshotScanJobPayload,
+    void,
+    string,
+    FlakySnapshotScanJobPayload,
+    void,
+    string
+  >(QueueName.FLAKY_SNAPSHOT_SCAN, queueOptions(connection));
+  try {
+    await queue.addBulk(
+      payloads.map((payload) => ({
+        name: QueueName.FLAKY_SNAPSHOT_SCAN,
+        data: payload,
+        opts: {
+          ...JOB_OPTIONS[QueueName.FLAKY_SNAPSHOT_SCAN],
+          deduplication: { id: payload.projectId },
+        },
       })),
     );
   } finally {
@@ -401,6 +452,50 @@ export const scheduleReaper = async (connection: RedisConnection): Promise<void>
       REAPER_JOB_ID,
       { pattern: "*/30 * * * *" },
       { name: QueueName.BUILD_REAPER, data: {}, opts: JOB_OPTIONS[QueueName.BUILD_REAPER] },
+    );
+  } finally {
+    await queue.close();
+  }
+};
+
+const FLAKY_SNAPSHOT_DISPATCH_JOB_ID = "flaky-snapshot-dispatch";
+
+const isCronPattern = (pattern: string): boolean => {
+  try {
+    cronParser.parseExpression(pattern);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+export const cronPatternSchema = z
+  .string()
+  .trim()
+  .refine(isCronPattern, { error: "must be a valid cron pattern" });
+
+export const scheduleFlakySnapshotDispatch = async (
+  connection: RedisConnection,
+  pattern: string | null,
+): Promise<void> => {
+  const queue = new Queue<FlakySnapshotDispatchJobPayload>(
+    QueueName.FLAKY_SNAPSHOT_DISPATCH,
+    queueOptions(connection),
+  );
+  try {
+    if (!pattern) {
+      await queue.removeJobScheduler(FLAKY_SNAPSHOT_DISPATCH_JOB_ID);
+      return;
+    }
+
+    await queue.upsertJobScheduler(
+      FLAKY_SNAPSHOT_DISPATCH_JOB_ID,
+      { pattern },
+      {
+        name: QueueName.FLAKY_SNAPSHOT_DISPATCH,
+        data: {},
+        opts: JOB_OPTIONS[QueueName.FLAKY_SNAPSHOT_DISPATCH],
+      },
     );
   } finally {
     await queue.close();

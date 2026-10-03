@@ -2,12 +2,14 @@ import "./env";
 import { Worker, type Job } from "bullmq";
 import { z } from "zod";
 
+import { getFlakyDetectionCron, isFlakyDetectionEnabled } from "@ovr/builds/flakiness";
 import { assertEncryptionKey } from "@ovr/git-status/crypto";
 import { createLogger } from "@ovr/logger";
 import {
   QueueName,
   buildRedisConnection,
   queueOptions,
+  scheduleFlakySnapshotDispatch,
   scheduleReaper,
   schedulePurge,
 } from "@ovr/queue";
@@ -16,6 +18,8 @@ import * as capture from "./handlers/capture";
 import * as diff from "./handlers/diff";
 import * as extract from "./handlers/extract";
 import * as finalize from "./handlers/finalize";
+import * as flakySnapshotDispatch from "./handlers/flakySnapshotDispatch";
+import * as flakySnapshotScan from "./handlers/flakySnapshotScan";
 import * as projectPurge from "./handlers/projectPurge";
 import * as publishStatus from "./handlers/publishStatus";
 import * as purge from "./handlers/purge";
@@ -71,6 +75,16 @@ const purgeWorker = new Worker(QueueName.BUILD_PURGE, purge.run, options);
 const projectPurgeWorker = new Worker(QueueName.PROJECT_PURGE, projectPurge.run, options);
 const reaperWorker = new Worker(QueueName.BUILD_REAPER, reaper.run, options);
 const publishStatusWorker = new Worker(QueueName.GIT_STATUS_PUBLISH, publishStatus.run, options);
+const flakySnapshotDispatchWorker = new Worker(
+  QueueName.FLAKY_SNAPSHOT_DISPATCH,
+  flakySnapshotDispatch.run,
+  options,
+);
+const flakySnapshotScanWorker = new Worker(
+  QueueName.FLAKY_SNAPSHOT_SCAN,
+  flakySnapshotScan.run,
+  options,
+);
 
 const isFinalAttempt = (job: Job<unknown>): boolean => job.attemptsMade >= (job.opts.attempts ?? 1);
 
@@ -101,6 +115,8 @@ purgeWorker.on("failed", guard(purge.failed));
 projectPurgeWorker.on("failed", guard(projectPurge.failed));
 reaperWorker.on("failed", guard(reaper.failed));
 publishStatusWorker.on("failed", guard(publishStatus.failed));
+flakySnapshotDispatchWorker.on("failed", guard(flakySnapshotDispatch.failed));
+flakySnapshotScanWorker.on("failed", guard(flakySnapshotScan.failed));
 
 const workers = [
   extractWorker,
@@ -112,6 +128,8 @@ const workers = [
   projectPurgeWorker,
   reaperWorker,
   publishStatusWorker,
+  flakySnapshotDispatchWorker,
+  flakySnapshotScanWorker,
 ];
 
 for (const worker of workers) {
@@ -133,6 +151,15 @@ try {
   await scheduleReaper(connection);
 } catch (error) {
   logger.error({ err: error }, "failed to schedule the build reaper job");
+}
+
+try {
+  await scheduleFlakySnapshotDispatch(
+    connection,
+    isFlakyDetectionEnabled() ? getFlakyDetectionCron() : null,
+  );
+} catch (error) {
+  logger.error({ err: error }, "failed to schedule the flaky snapshot dispatch job");
 }
 
 const onShutdown = async (): Promise<void> => {

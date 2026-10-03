@@ -241,6 +241,36 @@
           "type": ["string", "integer"],
           "description": "Local disk for extracted Storybook builds. Empty string uses the app default."
         },
+        "flakyDetection": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Flag stories whose screenshots keep changing between main-branch builds."
+            },
+            "cron": {
+              "type": "string",
+              "description": "Cron pattern for re-evaluating stories. Empty string uses the app default."
+            },
+            "windowBuilds": {
+              "type": ["string", "integer"],
+              "description": "Recent main-branch builds considered per story. Empty string uses the app default."
+            },
+            "minReverts": {
+              "type": ["string", "integer"],
+              "description": "Returns to an earlier look that mark a story flaky. Empty string uses the app default."
+            },
+            "minSamples": {
+              "type": ["string", "integer"],
+              "description": "Captures needed before a high change rate alone marks a story flaky. Empty string uses the app default."
+            },
+            "minChangeRate": {
+              "type": ["string", "number"],
+              "description": "Share of builds a story must change in to be marked flaky. Empty string uses the app default."
+            }
+          }
+        },
         "resources": { "$ref": "#/definitions/resources" },
         "updateStrategy": { "$ref": "#/definitions/updateStrategy" },
         "terminationGracePeriodSeconds": { "type": "integer", "minimum": 0 },

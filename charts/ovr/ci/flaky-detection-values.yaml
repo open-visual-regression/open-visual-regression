@@ -1,0 +1,10 @@
+existingSecret: ovr-secrets
+
+worker:
+  flakyDetection:
+    enabled: true
+    cron: "0 */6 * * *"
+    windowBuilds: 50
+    minReverts: 3
+    minSamples: 20
+    minChangeRate: 0.6
