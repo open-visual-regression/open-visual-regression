@@ -1,7 +1,7 @@
-import { and, count, desc, eq, sql } from "drizzle-orm";
+import { and, count, desc, eq, exists, gt, isNull, or, sql } from "drizzle-orm";
 
 import { db, type DbClient } from "../db";
-import { projects } from "../schema";
+import { builds, projects } from "../schema";
 
 export const findById = (id: string) =>
   db.query.projects.findFirst({ where: (projects, { eq }) => eq(projects.id, id) });
@@ -144,3 +144,24 @@ export type ListProjectsResultDbSchema = Awaited<ReturnType<typeof listProjects>
 export type ProjectDbSchema = ListProjectsResultDbSchema[number];
 
 export type ProjectCreatorDbSchema = ProjectDbSchema["creator"];
+
+export const findIdsNeedingFlakyScan = async (): Promise<string[]> => {
+  const rows = await db
+    .select({ id: projects.id })
+    .from(projects)
+    .where(
+      exists(
+        db
+          .select({ one: sql`1` })
+          .from(builds)
+          .where(
+            and(
+              eq(builds.projectId, projects.id),
+              eq(builds.branch, projects.gitMainBranch),
+              or(isNull(projects.flakyScannedAt), gt(builds.updatedAt, projects.flakyScannedAt)),
+            ),
+          ),
+      ),
+    );
+  return rows.map((row) => row.id);
+};

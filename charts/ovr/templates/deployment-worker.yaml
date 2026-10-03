@@ -76,6 +76,30 @@ spec:
             - name: OVR_STORYBOOK_CACHE_BYTES
               value: {{ . | quote }}
             {{- end }}
+            {{- with .Values.worker.flakyDetection }}
+            - name: OVR_FLAKY_DETECTION_ENABLED
+              value: {{ .enabled | quote }}
+            {{- with .cron }}
+            - name: OVR_FLAKY_DETECTION_CRON
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .windowBuilds }}
+            - name: OVR_FLAKY_DETECTION_WINDOW_BUILDS
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .minReverts }}
+            - name: OVR_FLAKY_DETECTION_MIN_REVERTS
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .minSamples }}
+            - name: OVR_FLAKY_DETECTION_MIN_SAMPLES
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .minChangeRate }}
+            - name: OVR_FLAKY_DETECTION_MIN_CHANGE_RATE
+              value: {{ . | quote }}
+            {{- end }}
+            {{- end }}
           volumeMounts:
             - name: dshm
               mountPath: /dev/shm

@@ -2,12 +2,15 @@ import { Queue, Worker } from "bullmq";
 import type { Redis } from "ioredis";
 
 import {
+  cronPatternSchema,
   enqueueCaptureGroup,
   enqueueDiff,
   enqueueExtract,
   enqueueFinalize,
+  enqueueFlakySnapshotScanMany,
   enqueuePublishStatus,
   QueueName,
+  scheduleFlakySnapshotDispatch,
   scheduleReaper,
   type CaptureGroupJobPayload,
   type DiffJobPayload,
@@ -188,6 +191,61 @@ describe("queue", () => {
       } finally {
         await job.remove();
       }
+    });
+  });
+
+  describe("enqueueFlakySnapshotScanMany", () => {
+    test("should queue one scan per project even when a project is dispatched again before its scan runs", async ({
+      connection,
+      openQueue,
+    }) => {
+      const queue = openQueue(QueueName.FLAKY_SNAPSHOT_SCAN);
+
+      await enqueueFlakySnapshotScanMany(
+        [{ projectId: "project-a" }, { projectId: "project-b" }],
+        connection,
+      );
+      await enqueueFlakySnapshotScanMany([{ projectId: "project-a" }], connection);
+
+      try {
+        const waiting = await queue.getWaiting();
+        expect(waiting.map((job) => job.data.projectId).sort()).toEqual(["project-a", "project-b"]);
+      } finally {
+        await queue.obliterate({ force: true });
+      }
+    });
+  });
+
+  describe("scheduleFlakySnapshotDispatch", () => {
+    test("should run the dispatch on a configured cron pattern", async ({
+      connection,
+      openQueue,
+    }) => {
+      await scheduleFlakySnapshotDispatch(connection, "0 */6 * * *");
+
+      const [scheduler] = await openQueue(QueueName.FLAKY_SNAPSHOT_DISPATCH).getJobSchedulers();
+
+      expect(scheduler?.pattern).toBe("0 */6 * * *");
+    });
+
+    test("should stop running the dispatch once no cron pattern is configured", async ({
+      connection,
+      openQueue,
+    }) => {
+      await scheduleFlakySnapshotDispatch(connection, "0 */6 * * *");
+      await scheduleFlakySnapshotDispatch(connection, null);
+
+      expect(await openQueue(QueueName.FLAKY_SNAPSHOT_DISPATCH).getJobSchedulers()).toEqual([]);
+    });
+  });
+
+  describe("cronPatternSchema", () => {
+    test.each(["17 * * * *", "0 */6 * * *", "0 3 * * 1-5"])("should accept %s", (pattern) => {
+      expect(cronPatternSchema.safeParse(pattern).success).toBe(true);
+    });
+
+    test.each(["hourly", "61 * * * *", "* * * *  * * *"])("should reject %s", (pattern) => {
+      expect(cronPatternSchema.safeParse(pattern).success).toBe(false);
     });
   });
 });
