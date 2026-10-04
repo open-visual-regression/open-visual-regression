@@ -1,4 +1,4 @@
-import { pgTable, text, uuid, varchar, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, uuid, varchar, integer, jsonb } from "drizzle-orm/pg-core";
 import { customType } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm/relations";
 import { sql } from "drizzle-orm/sql";
@@ -40,3 +40,14 @@ export const projectsRelations = relations(projects, ({ one }) => ({
     references: [user.id],
   }),
 }));
+
+export type JobName = "flaky_detection";
+
+export const jobSettings = pgTable("job_settings", {
+  job: text().$type<JobName>().primaryKey(),
+  settings: jsonb().$type<Record<string, unknown>>().notNull(),
+  updatedBy: text("updated_by").references(() => user.id, { onDelete: "set null" }),
+  updatedAt: utcTimestamp("updated_at")
+    .default(sql`now()`)
+    .notNull(),
+});

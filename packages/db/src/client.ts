@@ -9,6 +9,7 @@ import * as diffs from "./repository/diffs";
 import * as flakySnapshots from "./repository/flakySnapshots";
 import * as gitIntegrations from "./repository/gitIntegrations";
 import * as gitStatusPublications from "./repository/gitStatusPublications";
+import * as jobSettings from "./repository/jobSettings";
 import * as organizations from "./repository/organizations";
 import * as projects from "./repository/projects";
 import * as snapshotLogs from "./repository/snapshotLogs";
@@ -35,5 +36,6 @@ export const dbClient = {
   storageOutbox,
   gitIntegrations,
   gitStatusPublications,
+  jobSettings,
   transaction: db.transaction.bind(db),
 } as const;
