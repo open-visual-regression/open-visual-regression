@@ -14,7 +14,14 @@ import { QueueName, type RedisConnection, type DiffJobPayload } from "@ovr/queue
 import { storage } from "@ovr/storage";
 
 import { captureBuildGroup, diffSnapshot, enqueueSnapshotDiff } from "../snapshots";
-import { describe, expect, test, uploadArtifactWithIframe, type Viewport } from "./fixtures";
+import {
+  describe,
+  enableFlakyDetection,
+  expect,
+  test,
+  uploadArtifactWithIframe,
+  type Viewport,
+} from "./fixtures";
 
 const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
 const IFRAME_HTML = await readFile(path.join(TEST_DIR, "html/iframe-static.html"), "utf-8");
@@ -898,8 +905,9 @@ describe("snapshots", () => {
     test("groups a main-branch capture that returns to an earlier look with that earlier capture", async ({
       mainBuild,
       captureConfiguration,
+      user,
     }) => {
-      vi.stubEnv("OVR_FLAKY_DETECTION_ENABLED", "true");
+      await enableFlakyDetection(user.id);
 
       const first = await diffCapture(mainBuild, captureConfiguration, "story-flip", (path) =>
         uploadPng(path, 0),
@@ -920,8 +928,9 @@ describe("snapshots", () => {
     test("groups a main-branch capture with an earlier look it matches within the diff threshold, even when the pixels are not identical", async ({
       mainBuild,
       captureConfiguration,
+      user,
     }) => {
-      vi.stubEnv("OVR_FLAKY_DETECTION_ENABLED", "true");
+      await enableFlakyDetection(user.id);
 
       const first = await diffCapture(mainBuild, captureConfiguration, "story-noise", (path) =>
         uploadSpeckledPng(path, 0, 0),
@@ -941,8 +950,9 @@ describe("snapshots", () => {
       mainBuild,
       featureBuild,
       captureConfiguration,
+      user,
     }) => {
-      vi.stubEnv("OVR_FLAKY_DETECTION_ENABLED", "true");
+      await enableFlakyDetection(user.id);
 
       const earlier = await diffCapture(mainBuild, captureConfiguration, "story-pr-flip", (path) =>
         uploadPng(path, 0),
@@ -967,8 +977,9 @@ describe("snapshots", () => {
       mainBuild,
       featureBuild,
       captureConfiguration,
+      user,
     }) => {
-      vi.stubEnv("OVR_FLAKY_DETECTION_ENABLED", "true");
+      await enableFlakyDetection(user.id);
 
       await diffCapture(mainBuild, captureConfiguration, "story-pr-new", (path) =>
         uploadPng(path, 0),
@@ -989,8 +1000,9 @@ describe("snapshots", () => {
     test("does not record variants for feature-branch captures", async ({
       featureBuild,
       captureConfiguration,
+      user,
     }) => {
-      vi.stubEnv("OVR_FLAKY_DETECTION_ENABLED", "true");
+      await enableFlakyDetection(user.id);
 
       const snapshot = await diffCapture(featureBuild, captureConfiguration, "story-pr", (path) =>
         uploadPng(path, 0),

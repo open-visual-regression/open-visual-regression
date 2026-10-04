@@ -554,7 +554,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
       ...(diffImagePath && { diffImagePath }),
     });
     await promoteBaseline(diffId, build.createdBy);
-    if (isFlakyDetectionEnabled()) {
+    if (await isFlakyDetectionEnabled()) {
       await assignSnapshotVariant(
         snapshot,
         build.projectId,
@@ -590,7 +590,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
     return;
   }
 
-  const matchedVariantId = isFlakyDetectionEnabled()
+  const matchedVariantId = (await isFlakyDetectionEnabled())
     ? await findEarlierMainVariant(snapshot, build.projectId, baselineSnapshot?.variantId ?? null)
     : null;
 

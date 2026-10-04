@@ -4,6 +4,7 @@ import { Cluster, Redis } from "ioredis";
 import type { RedisOptions } from "ioredis";
 import { z } from "zod";
 
+import type { JobName } from "@ovr/db/schema";
 import { createLogger } from "@ovr/logger";
 
 const logger = createLogger("queue");
@@ -457,30 +458,32 @@ export const scheduleReaper = async (connection: RedisConnection): Promise<void>
   }
 };
 
-const FLAKY_SNAPSHOT_DISPATCH_JOB_ID = "flaky-snapshot-dispatch";
+// Each configurable job's recurring dispatch. Keep the scheduler ids stable so a
+// reschedule replaces the existing scheduler instead of adding a second one.
+const JOB_SCHEDULERS = {
+  flaky_detection: {
+    queueName: QueueName.FLAKY_SNAPSHOT_DISPATCH,
+    schedulerId: "flaky-snapshot-dispatch",
+  },
+} as const satisfies Record<JobName, { queueName: QueueName; schedulerId: string }>;
 
-export const scheduleFlakySnapshotDispatch = async (
+export const scheduleJob = async (
   connection: RedisConnection,
+  job: JobName,
   pattern: string | null,
 ): Promise<void> => {
-  const queue = new Queue<FlakySnapshotDispatchJobPayload>(
-    QueueName.FLAKY_SNAPSHOT_DISPATCH,
-    queueOptions(connection),
-  );
+  const { queueName, schedulerId } = JOB_SCHEDULERS[job];
+  const queue = new Queue<FlakySnapshotDispatchJobPayload>(queueName, queueOptions(connection));
   try {
     if (!pattern) {
-      await queue.removeJobScheduler(FLAKY_SNAPSHOT_DISPATCH_JOB_ID);
+      await queue.removeJobScheduler(schedulerId);
       return;
     }
 
     await queue.upsertJobScheduler(
-      FLAKY_SNAPSHOT_DISPATCH_JOB_ID,
+      schedulerId,
       { pattern },
-      {
-        name: QueueName.FLAKY_SNAPSHOT_DISPATCH,
-        data: {},
-        opts: JOB_OPTIONS[QueueName.FLAKY_SNAPSHOT_DISPATCH],
-      },
+      { name: queueName, data: {}, opts: JOB_OPTIONS[queueName] },
     );
   } finally {
     await queue.close();

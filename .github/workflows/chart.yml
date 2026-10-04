@@ -104,7 +104,6 @@ jobs:
           fails --set worker.concurency=4
           fails --set web.ingress.enabled=yes
           fails --set web.updateStrategy=Rolling
-          fails --set worker.flakyDetection.enabeld=true
 
       - name: Package
         run: helm package charts/ovr --destination dist && ls -l dist

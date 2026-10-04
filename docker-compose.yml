@@ -154,8 +154,6 @@ services:
     environment:
       <<: *app-env
       OVR_CAPTURE_GROUP_CONCURRENCY: ${OVR_CAPTURE_GROUP_CONCURRENCY:-2}
-      OVR_FLAKY_DETECTION_ENABLED: ${OVR_FLAKY_DETECTION_ENABLED:-false}
-      OVR_FLAKY_DETECTION_CRON: ${OVR_FLAKY_DETECTION_CRON:-}
     volumes:
       - workertmp:/tmp
 

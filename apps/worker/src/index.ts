@@ -2,14 +2,13 @@ import "./env";
 import { Worker, type Job } from "bullmq";
 import { z } from "zod";
 
-import { getFlakyDetectionCron, isFlakyDetectionEnabled } from "@ovr/builds/flakiness";
+import { scheduleFlakyDetection } from "@ovr/builds/flakiness";
 import { assertEncryptionKey } from "@ovr/git-status/crypto";
 import { createLogger } from "@ovr/logger";
 import {
   QueueName,
   buildRedisConnection,
   queueOptions,
-  scheduleFlakySnapshotDispatch,
   scheduleReaper,
   schedulePurge,
 } from "@ovr/queue";
@@ -154,10 +153,7 @@ try {
 }
 
 try {
-  await scheduleFlakySnapshotDispatch(
-    connection,
-    isFlakyDetectionEnabled() ? getFlakyDetectionCron() : null,
-  );
+  await scheduleFlakyDetection(connection);
 } catch (error) {
   logger.error({ err: error }, "failed to schedule the flaky snapshot dispatch job");
 }
