@@ -1,6 +1,5 @@
 import { Queue } from "bullmq";
 import type { Job, JobsOptions } from "bullmq";
-import cronParser from "cron-parser";
 import { Cluster, Redis } from "ioredis";
 import type { RedisOptions } from "ioredis";
 import { z } from "zod";
@@ -459,20 +458,6 @@ export const scheduleReaper = async (connection: RedisConnection): Promise<void>
 };
 
 const FLAKY_SNAPSHOT_DISPATCH_JOB_ID = "flaky-snapshot-dispatch";
-
-const isCronPattern = (pattern: string): boolean => {
-  try {
-    cronParser.parseExpression(pattern);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-export const cronPatternSchema = z
-  .string()
-  .trim()
-  .refine(isCronPattern, { error: "must be a valid cron pattern" });
 
 export const scheduleFlakySnapshotDispatch = async (
   connection: RedisConnection,

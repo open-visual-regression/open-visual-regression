@@ -19,7 +19,6 @@
     "@ovr/db": "workspace:*",
     "@ovr/logger": "workspace:*",
     "bullmq": "^5.81.3",
-    "cron-parser": "4.9.0",
     "ioredis": "5.11.1",
     "zod": "^4.5.1"
   },
