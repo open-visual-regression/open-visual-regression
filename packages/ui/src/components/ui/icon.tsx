@@ -30,6 +30,7 @@ export {
   RefreshCwIcon,
   SmartphoneIcon,
   TabletIcon,
+  TimerIcon,
   TriangleAlertIcon,
   UserIcon,
   UsersIcon,
