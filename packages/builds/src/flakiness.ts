@@ -1,25 +1,19 @@
 import { z } from "zod";
 
-import { DEFAULT_FLAKY_DETECTION_SETTINGS, cronPatternSchema } from "@ovr/api/contracts/jobs";
+import { cronPatternSchema } from "@ovr/api/contracts/jobs";
 import { dbClient } from "@ovr/db/client";
 import { createLogger } from "@ovr/logger";
 import { enqueueFlakySnapshotScanMany } from "@ovr/queue/producer";
 
 const logger = createLogger("builds");
 
-const {
-  cron: DEFAULT_FLAKY_DETECTION_CRON,
-  windowBuilds,
-  minReverts,
-  minSamples,
-  minChangeRate,
-} = DEFAULT_FLAKY_DETECTION_SETTINGS;
+const DEFAULT_FLAKY_DETECTION_CRON = "17 * * * *";
 
 const settings = z.object({
-  windowBuilds: z.coerce.number().int().positive().catch(windowBuilds),
-  minReverts: z.coerce.number().int().positive().catch(minReverts),
-  minSamples: z.coerce.number().int().min(2).catch(minSamples),
-  minChangeRate: z.coerce.number().positive().max(1).catch(minChangeRate),
+  windowBuilds: z.coerce.number().int().positive().catch(30),
+  minReverts: z.coerce.number().int().positive().catch(2),
+  minSamples: z.coerce.number().int().min(2).catch(10),
+  minChangeRate: z.coerce.number().positive().max(1).catch(0.5),
 });
 
 export const isFlakyDetectionEnabled = (): boolean =>

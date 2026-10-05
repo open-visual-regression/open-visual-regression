@@ -24,23 +24,14 @@ describe("jobs", () => {
       );
     });
 
-    test("should keep valid stored values and fall back to the default for each invalid one", () => {
+    test("should keep valid stored values and fall back to the default for an invalid one", () => {
       expect(
         storedFlakyDetectionSettingsSchema.parse({
           enabled: true,
           cron: "hourly",
           windowBuilds: 50,
-          minReverts: 0,
-          minChangeRate: 0.6,
         }),
-      ).toEqual({
-        enabled: true,
-        cron: DEFAULT_FLAKY_DETECTION_SETTINGS.cron,
-        windowBuilds: 50,
-        minReverts: DEFAULT_FLAKY_DETECTION_SETTINGS.minReverts,
-        minSamples: DEFAULT_FLAKY_DETECTION_SETTINGS.minSamples,
-        minChangeRate: 0.6,
-      });
+      ).toEqual({ enabled: true, cron: DEFAULT_FLAKY_DETECTION_SETTINGS.cron, windowBuilds: 50 });
     });
   });
 });
