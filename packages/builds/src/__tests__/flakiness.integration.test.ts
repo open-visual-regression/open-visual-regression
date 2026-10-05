@@ -39,16 +39,16 @@ const scheduleAndCollectPatterns = async (connection: RedisConnection): Promise<
   }
 };
 
-// Captures one story on consecutive main-branch commits, alternating between two looks.
-const seedFlippingStory = async (
+const seedCaptures = async (
   project: typeof projects.$inferSelect,
   user: typeof userTable.$inferSelect,
   captureConfiguration: Viewport,
   targetId: string,
+  looks: number[],
 ): Promise<void> => {
   const variantIds: string[] = [];
 
-  for (const [index, look] of [0, 1, 0, 1, 0].entries()) {
+  for (const [index, look] of looks.entries()) {
     const build = await dbClient.builds.create({
       projectId: project.id,
       branch: "main",
@@ -111,13 +111,13 @@ describe("flakiness", () => {
   });
 
   describe("scheduleFlakyDetection", () => {
-    test("runs hourly when detection is enabled without a saved schedule", async ({
+    test("runs at 7am and 7pm when detection is enabled without a saved schedule", async ({
       user,
       connection,
     }) => {
       await enableFlakyDetection(user.id);
 
-      expect(await scheduleAndCollectPatterns(connection)).toEqual(["17 * * * *"]);
+      expect(await scheduleAndCollectPatterns(connection)).toEqual(["0 7,19 * * *"]);
     });
 
     test("uses the saved schedule", async ({ user, connection }) => {
@@ -126,13 +126,13 @@ describe("flakiness", () => {
       expect(await scheduleAndCollectPatterns(connection)).toEqual(["0 */6 * * *"]);
     });
 
-    test("falls back to hourly when the saved schedule is not a valid cron pattern", async ({
+    test("falls back to 7am and 7pm when the saved schedule is not a valid cron pattern", async ({
       user,
       connection,
     }) => {
       await enableFlakyDetection(user.id, { cron: "hourly" });
 
-      expect(await scheduleAndCollectPatterns(connection)).toEqual(["17 * * * *"]);
+      expect(await scheduleAndCollectPatterns(connection)).toEqual(["0 7,19 * * *"]);
     });
 
     test("does not schedule anything when flaky detection is disabled", async ({ connection }) => {
@@ -146,7 +146,7 @@ describe("flakiness", () => {
       user,
       captureConfiguration,
     }) => {
-      await seedFlippingStory(project, user, captureConfiguration, "story-flaky");
+      await seedCaptures(project, user, captureConfiguration, "story-flaky", [0, 1, 0, 1, 0]);
 
       await scanFlakySnapshots(project.id);
 
@@ -155,13 +155,13 @@ describe("flakiness", () => {
       ]);
     });
 
-    test("uses the thresholds saved in settings", async ({
+    test("only considers the number of recent builds saved in settings", async ({
       project,
       user,
       captureConfiguration,
     }) => {
-      await seedFlippingStory(project, user, captureConfiguration, "story-flaky");
-      await enableFlakyDetection(user.id, { minReverts: 4 });
+      await seedCaptures(project, user, captureConfiguration, "story-flaky", [0, 1, 0, 1, 0]);
+      await enableFlakyDetection(user.id, { windowBuilds: 2 });
 
       await scanFlakySnapshots(project.id);
 

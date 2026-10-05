@@ -8,6 +8,8 @@ import { enqueueFlakySnapshotScanMany, scheduleJob as rescheduleJob } from "@ovr
 
 import type { Result } from "./types";
 
+const FLAKY_THRESHOLDS = { minReverts: 2, minSamples: 10, minChangeRate: 0.5 };
+
 export const getFlakyDetectionSettings = async (): Promise<FlakyDetectionSettings> => {
   const stored = await dbClient.jobSettings.find("flaky_detection");
   return storedFlakyDetectionSettingsSchema.parse(stored?.settings);
@@ -51,12 +53,10 @@ export const dispatchFlakySnapshotScans = async (): Promise<void> => {
 };
 
 export const scanFlakySnapshots = async (projectId: string): Promise<void> => {
-  const { windowBuilds, minReverts, minSamples, minChangeRate } = await getFlakyDetectionSettings();
+  const { windowBuilds } = await getFlakyDetectionSettings();
 
   await dbClient.flakySnapshots.recomputeForProject(projectId, {
     windowBuilds,
-    minReverts,
-    minSamples,
-    minChangeRate,
+    ...FLAKY_THRESHOLDS,
   });
 };
