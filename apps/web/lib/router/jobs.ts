@@ -20,10 +20,7 @@ export const updateFlakyDetection = os.jobs.updateFlakyDetection
     const result = await saveFlakyDetectionSettings(input, context.user.id);
 
     if (result.status === "error") {
-      throw new ORPCError("SERVICE_UNAVAILABLE", {
-        message:
-          "the settings were saved, but the job queue is unavailable, so the new schedule applies once the worker restarts",
-      });
+      throw new ORPCError("SERVICE_UNAVAILABLE", { message: "the job queue is unavailable" });
     }
   })
   .actionable();

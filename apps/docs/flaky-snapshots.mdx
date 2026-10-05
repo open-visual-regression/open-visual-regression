@@ -17,12 +17,7 @@ To review only flaky snapshots, pick **flaky** in the **flags** filter on the bu
 
 ## Enabling detection
 
-Flaky detection is off by default. An admin turns it on under **Settings → Jobs**, where they can also choose how often stories are re-evaluated (hourly by default) and tune the thresholds:
-
-- **builds to look back on**: recent main-branch builds considered per story (default 30).
-- **returns to an earlier look**: times a story must go back to a look it had before to be marked flaky (default 2).
-- **captures before the change rate counts**: captures a story needs before a high change rate alone marks it flaky (default 10).
-- **change rate**: share of builds a story must change in to be marked flaky (default 0.5).
+Flaky detection is off by default. An admin turns it on under **Settings → Jobs**, where they can also set how often stories are re-evaluated, as a cron pattern (7am and 7pm by default), and how many recent main-branch builds are considered (30 by default).
 
 Changes apply on the next scheduled run, without restarting the worker.
 

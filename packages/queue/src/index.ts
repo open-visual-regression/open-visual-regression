@@ -458,8 +458,6 @@ export const scheduleReaper = async (connection: RedisConnection): Promise<void>
   }
 };
 
-// Each configurable job's recurring dispatch. Keep the scheduler ids stable so a
-// reschedule replaces the existing scheduler instead of adding a second one.
 const JOB_SCHEDULERS = {
   flaky_detection: {
     queueName: QueueName.FLAKY_SNAPSHOT_DISPATCH,

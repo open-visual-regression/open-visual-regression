@@ -23,9 +23,6 @@ const SETTINGS: FlakyDetectionSettings = {
   enabled: true,
   cron: "0 */6 * * *",
   windowBuilds: 50,
-  minReverts: 3,
-  minSamples: 20,
-  minChangeRate: 0.6,
 };
 
 describe("jobs", () => {
@@ -65,9 +62,8 @@ describe("jobs", () => {
 
     test.for<[string, Partial<FlakyDetectionSettings>]>([
       ["the schedule is not a cron pattern", { cron: "hourly" }],
-      ["the change rate is above 1", { minChangeRate: 1.5 }],
-      ["fewer than 2 samples are required", { minSamples: 1 }],
       ["the window is not a whole number of builds", { windowBuilds: 2.5 }],
+      ["the window is empty", { windowBuilds: 0 }],
     ])("should return BAD_REQUEST when %s", async ([, invalid], { admin: _ }) => {
       const [error] = await serverClient.jobs.updateFlakyDetection({ ...SETTINGS, ...invalid });
       expect(error?.code).toBe("BAD_REQUEST");
