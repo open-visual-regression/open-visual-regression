@@ -23,8 +23,6 @@ export const scheduleFlakyDetection = async (connection: RedisConnection): Promi
   await scheduleJob(connection, "flaky_detection", enabled ? cron : null);
 };
 
-// The settings are saved even when the queue is unavailable; the worker applies
-// the saved schedule the next time it starts.
 export const saveFlakyDetectionSettings = async (
   settings: FlakyDetectionSettings,
   updatedBy: string,
