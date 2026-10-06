@@ -9,11 +9,12 @@ import { z } from "zod";
 
 import { Button } from "@ovr/ui/components/button";
 import { Card, CardContent, CardFooter } from "@ovr/ui/components/card";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@ovr/ui/components/field";
+import { Field, FieldError, FieldGroup, FieldLabel, FieldSkeleton } from "@ovr/ui/components/field";
 import { Icon, PlusIcon } from "@ovr/ui/components/icon";
 import { Input } from "@ovr/ui/components/input";
+import { Skeleton } from "@ovr/ui/components/skeleton";
 import { Textarea } from "@ovr/ui/components/textarea";
-import { Typography } from "@ovr/ui/components/typography";
+import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 
 import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
 import { serverClient } from "@/lib/router";
@@ -128,3 +129,26 @@ export const NewProjectForm = () => {
     </form>
   );
 };
+
+export const NewProjectFormSkeleton = () => (
+  <div aria-hidden className="flex flex-col gap-2">
+    <TypographySkeleton variant="label" className="w-16" />
+    <Card size="default">
+      <CardContent className="flex flex-col gap-5">
+        <FieldGroup>
+          <FieldSkeleton />
+        </FieldGroup>
+        <FieldGroup>
+          <FieldSkeleton className="h-16" />
+        </FieldGroup>
+        <FieldGroup>
+          <FieldSkeleton />
+        </FieldGroup>
+      </CardContent>
+      <CardFooter className="flex flex-row gap-3 justify-between">
+        <Skeleton className="h-10 w-24 rounded-lg" />
+        <Skeleton className="h-10 w-36 rounded-lg" />
+      </CardFooter>
+    </Card>
+  </div>
+);

@@ -12,6 +12,7 @@ import { useMemo } from "react";
 import { type UserSchema } from "@ovr/api/contracts/users";
 import { Badge } from "@ovr/ui/components/badge";
 import { Checkbox } from "@ovr/ui/components/checkbox";
+import { Skeleton } from "@ovr/ui/components/skeleton";
 import {
   Table,
   TableContainer,
@@ -155,3 +156,46 @@ export const UsersTable = ({ data, currentUserId, search }: UsersTableProps) => 
     </TableContainer>
   );
 };
+
+type UsersTableSkeletonColumn = {
+  header: string | null;
+  className?: string;
+};
+
+const USERS_TABLE_SKELETON_COLUMNS: UsersTableSkeletonColumn[] = [
+  { header: null, className: "w-px" },
+  { header: "Name" },
+  { header: "Email" },
+  { header: "Role" },
+  { header: "Status", className: "text-center" },
+  { header: null, className: "w-px text-center" },
+];
+
+const USERS_SKELETON_ROW_COUNT = 3;
+
+export const UsersTableSkeleton = () => (
+  <TableContainer aria-hidden>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          {USERS_TABLE_SKELETON_COLUMNS.map((column, index) => (
+            <TableHead key={index} className={column.className}>
+              {column.header}
+            </TableHead>
+          ))}
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {Array.from({ length: USERS_SKELETON_ROW_COUNT }, (_, rowIndex) => (
+          <TableRow key={rowIndex}>
+            {USERS_TABLE_SKELETON_COLUMNS.map((column, columnIndex) => (
+              <TableCell key={columnIndex} className={column.className}>
+                <Skeleton className="h-4 w-full" />
+              </TableCell>
+            ))}
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </TableContainer>
+);
