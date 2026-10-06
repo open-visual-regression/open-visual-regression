@@ -104,6 +104,8 @@ export const update = os.projects.update
     }
 
     await dbClient.projects.updateProject(input.id, input.patch);
+
+    revalidatePath("/", "layout");
   })
   .actionable();
 
