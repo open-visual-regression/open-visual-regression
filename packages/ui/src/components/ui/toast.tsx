@@ -8,7 +8,7 @@ import { toast as sonnerToast } from "sonner";
 import { cn } from "../../lib/utils";
 
 const toastVariants = cva(
-  "group/toast relative flex items-stretch overflow-hidden rounded-lg bg-ovr-raised shadow-ovr-popover w-85",
+  "group/toast relative flex items-stretch overflow-hidden rounded-lg bg-ovr-raised shadow-ovr-popover w-85 max-[600px]:w-full",
   {
     variants: {
       color: {
