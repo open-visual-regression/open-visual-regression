@@ -1,5 +1,12 @@
 # @ovr/bull-board
 
+## 0.1.13
+
+### Patch Changes
+
+- Updated dependencies [[`1a46b57`](https://github.com/open-visual-regression/open-visual-regression/commit/1a46b5760e151026056a0f7b5162b8991e97806c)]:
+  - @ovr/queue@0.2.0
+
 ## 0.1.12
 
 ### Patch Changes
