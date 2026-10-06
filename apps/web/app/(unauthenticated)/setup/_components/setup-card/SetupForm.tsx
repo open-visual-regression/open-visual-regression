@@ -69,16 +69,7 @@ export const SetupForm = () => {
   };
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex gap-2 text-badge tracking-label uppercase">
-        {STEPS.map(({ id, label }) => (
-          <span key={id} className={step === id ? "text-ovr-accent" : "text-ovr-fg-muted"}>
-            {label}
-          </span>
-        ))}
-        <span className="ml-auto text-ovr-fg-muted">step {step} of 2</span>
-      </div>
-
+    <SetupFormLayout step={step}>
       {step === 1 ? (
         <OrganizationStep register={register} errors={errors} onSubmit={handleStep1Submit} />
       ) : (
@@ -91,6 +82,25 @@ export const SetupForm = () => {
           rootError={errors.root?.message}
         />
       )}
-    </div>
+    </SetupFormLayout>
   );
 };
+
+type SetupFormLayoutProps = {
+  step: Step;
+  children: React.ReactNode;
+};
+
+export const SetupFormLayout = ({ step, children }: SetupFormLayoutProps) => (
+  <div className="flex flex-col gap-5">
+    <div className="flex gap-2 text-badge tracking-label uppercase">
+      {STEPS.map(({ id, label }) => (
+        <span key={id} className={step === id ? "text-ovr-accent" : "text-ovr-fg-muted"}>
+          {label}
+        </span>
+      ))}
+      <span className="ml-auto text-ovr-fg-muted">step {step} of 2</span>
+    </div>
+    {children}
+  </div>
+);
