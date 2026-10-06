@@ -11,6 +11,7 @@ import { FlakyDetectionForm } from "../FlakyDetectionForm";
 vi.mock("@/lib/router");
 
 const mockUpdate = vi.mocked(serverClient.jobs.updateFlakyDetection);
+const mockRun = vi.mocked(serverClient.jobs.runFlakyDetection);
 
 const SETTINGS: FlakyDetectionSettings = {
   enabled: true,
@@ -30,7 +31,7 @@ describe("FlakyDetectionForm", () => {
   it("should show the saved settings", () => {
     renderComponent();
 
-    expect(screen.getByRole("switch", { name: /detect flaky stories/i })).toBeChecked();
+    expect(screen.getByRole("switch", { name: /enabled/i })).toBeChecked();
     expect(screen.getByLabelText(/schedule/i)).toHaveValue("0 7,19 * * *");
     expect(screen.getByLabelText(/builds to look back on/i)).toHaveValue(30);
   });
@@ -43,7 +44,7 @@ describe("FlakyDetectionForm", () => {
     expect(screen.getByLabelText(/schedule/i)).toBeDisabled();
     expect(screen.getByLabelText(/builds to look back on/i)).toBeDisabled();
 
-    await user.click(screen.getByRole("switch", { name: /detect flaky stories/i }));
+    await user.click(screen.getByRole("switch", { name: /enabled/i }));
 
     expect(screen.getByLabelText(/schedule/i)).toBeEnabled();
     expect(screen.getByLabelText(/builds to look back on/i)).toBeEnabled();
@@ -106,5 +107,21 @@ describe("FlakyDetectionForm", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("something went wrong");
     expect(screen.queryByText("flaky detection updated")).not.toBeInTheDocument();
+  });
+
+  it("should run the job and confirm when run now is clicked", async ({ user }) => {
+    mockRun.mockResolvedValue([null, undefined]);
+    renderComponent();
+
+    await user.click(screen.getByRole("button", { name: /run now/i }));
+
+    expect(mockRun).toHaveBeenCalled();
+    expect(await screen.findByText("flaky detection started")).toBeVisible();
+  });
+
+  it("should disable run now while detection is off", () => {
+    renderComponent({ ...SETTINGS, enabled: false });
+
+    expect(screen.getByRole("button", { name: /run now/i })).toBeDisabled();
   });
 });

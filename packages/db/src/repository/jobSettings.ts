@@ -26,4 +26,11 @@ export const upsert = async ({ job, settings, updatedBy }: UpsertInput) => {
   return row;
 };
 
+export const markRun = async (job: JobName, settings: Record<string, unknown>) => {
+  await db
+    .insert(jobSettings)
+    .values({ job, settings, lastRunAt: sql`now()` })
+    .onConflictDoUpdate({ target: jobSettings.job, set: { lastRunAt: sql`now()` } });
+};
+
 export type JobSettingsDbSchema = NonNullable<Awaited<ReturnType<typeof find>>>;

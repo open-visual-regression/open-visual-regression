@@ -327,6 +327,11 @@ export const enqueuePurgeMany = async (
   }
 };
 
+export const enqueueFlakySnapshotDispatch = (
+  connection: RedisConnection,
+): Promise<Job<FlakySnapshotDispatchJobPayload>> =>
+  enqueue(QueueName.FLAKY_SNAPSHOT_DISPATCH, {}, connection);
+
 export const enqueueFlakySnapshotScanMany = async (
   payloads: FlakySnapshotScanJobPayload[],
   connection: RedisConnection,

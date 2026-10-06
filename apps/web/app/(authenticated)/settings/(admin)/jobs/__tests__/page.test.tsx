@@ -28,14 +28,14 @@ describe("SettingsJobsPage", () => {
     });
     mockGetFlakyDetection.mockResolvedValue([
       null,
-      { settings: { ...DEFAULT_FLAKY_DETECTION_SETTINGS, enabled: true } },
+      { settings: { ...DEFAULT_FLAKY_DETECTION_SETTINGS, enabled: true }, lastRunAt: null },
     ]);
 
     render(await SettingsJobsPage());
 
     expect(screen.getByRole("heading", { name: /^jobs$/i })).toBeVisible();
     expect(screen.getByRole("heading", { name: /flaky detection/i })).toBeVisible();
-    expect(screen.getByRole("switch", { name: /detect flaky stories/i })).toBeChecked();
+    expect(screen.getByRole("switch", { name: /enabled/i })).toBeChecked();
   });
 
   it("should show a not found page for non-admins", async () => {

@@ -1,24 +1,35 @@
 import type { FlakyDetectionSettings } from "@ovr/api/contracts/jobs";
 import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 
+import { formatRelativeDateTime } from "@/lib/utils/date";
+
 import { FlakyDetectionForm, FlakyDetectionFormSkeleton } from "./FlakyDetectionForm";
 
 type FlakyDetectionSectionProps = {
   settings: FlakyDetectionSettings;
+  lastRunAt: string | null;
 };
 
-export const FlakyDetectionSection = ({ settings }: FlakyDetectionSectionProps) => (
+export const FlakyDetectionSection = ({ settings, lastRunAt }: FlakyDetectionSectionProps) => (
   <div className="flex flex-col gap-4">
-    <Typography variant="h2" as="h2">
-      flaky detection
-    </Typography>
+    <div className="flex flex-col gap-1">
+      <Typography variant="h2" as="h2">
+        flaky detection
+      </Typography>
+      <Typography variant="body-muted" as="p">
+        {lastRunAt ? `last run ${formatRelativeDateTime(new Date(lastRunAt))}` : "never run"}
+      </Typography>
+    </div>
     <FlakyDetectionForm settings={settings} />
   </div>
 );
 
 export const FlakyDetectionSectionSkeleton = () => (
   <div aria-hidden className="flex flex-col gap-4">
-    <TypographySkeleton variant="h2" className="w-40" />
+    <div className="flex flex-col gap-1">
+      <TypographySkeleton variant="h2" className="w-40" />
+      <TypographySkeleton variant="body-muted" className="w-32" />
+    </div>
     <FlakyDetectionFormSkeleton />
   </div>
 );

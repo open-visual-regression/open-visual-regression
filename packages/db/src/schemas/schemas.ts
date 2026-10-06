@@ -50,4 +50,5 @@ export const jobSettings = pgTable("job_settings", {
   updatedAt: utcTimestamp("updated_at")
     .default(sql`now()`)
     .notNull(),
+  lastRunAt: utcTimestamp("last_run_at"),
 });

@@ -16,7 +16,7 @@ import {
   FieldSet,
   FieldSkeleton,
 } from "@ovr/ui/components/field";
-import { CheckIcon, Icon } from "@ovr/ui/components/icon";
+import { CheckIcon, Icon, PlayIcon } from "@ovr/ui/components/icon";
 import { Input } from "@ovr/ui/components/input";
 import { Skeleton } from "@ovr/ui/components/skeleton";
 import { Switch } from "@ovr/ui/components/switch";
@@ -59,6 +59,22 @@ export const FlakyDetectionForm = ({ settings }: FlakyDetectionFormProps) => {
 
   const isSubmitting = status === "pending";
 
+  const { execute: runNow, status: runStatus } = useServerAction(
+    serverClient.jobs.runFlakyDetection,
+    {
+      interceptors: [
+        onSuccess(() => {
+          toast.success("flaky detection started");
+        }),
+        onError((err) => {
+          toast.error(err.message);
+        }),
+      ],
+    },
+  );
+
+  const isRunning = runStatus === "pending";
+
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} noValidate>
       <Card size="default" className="w-full md:w-2/3 lg:w-1/2">
@@ -71,7 +87,7 @@ export const FlakyDetectionForm = ({ settings }: FlakyDetectionFormProps) => {
                 <Switch id="enabled" checked={field.value} onCheckedChange={field.onChange} />
               )}
             />
-            <FieldLabel htmlFor="enabled">detect flaky stories</FieldLabel>
+            <FieldLabel htmlFor="enabled">enabled</FieldLabel>
           </Field>
           <FieldSet disabled={!enabled}>
             <FieldGroup>
@@ -101,7 +117,16 @@ export const FlakyDetectionForm = ({ settings }: FlakyDetectionFormProps) => {
           </FieldSet>
           <FieldError errors={[errors.root]} />
         </CardContent>
-        <CardFooter className="flex flex-row justify-end">
+        <CardFooter className="flex flex-row justify-between">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={!settings.enabled || isRunning}
+            onClick={() => runNow()}
+          >
+            <Icon icon={PlayIcon} />
+            {isRunning ? "starting..." : "run now"}
+          </Button>
           <Button type="submit" disabled={isSubmitting}>
             <Icon icon={CheckIcon} />
             {isSubmitting ? "saving..." : "save changes"}
@@ -121,7 +146,8 @@ export const FlakyDetectionFormSkeleton = () => (
         <FieldSkeleton />
       </FieldGroup>
     </CardContent>
-    <CardFooter className="flex flex-row justify-end">
+    <CardFooter className="flex flex-row justify-between">
+      <Skeleton className="h-8 w-28 rounded-lg" />
       <Skeleton className="h-8 w-32 rounded-lg" />
     </CardFooter>
   </Card>

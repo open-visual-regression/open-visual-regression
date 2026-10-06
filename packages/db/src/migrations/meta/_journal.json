@@ -372,6 +372,13 @@
       "when": 1791080309347,
       "tag": "0052_add_job_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1791166709347,
+      "tag": "0053_add_job_settings_last_run_at",
+      "breakpoints": true
     }
   ]
 }
