@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { onError, onSuccess } from "@orpc/client";
 import { useServerAction } from "@orpc/react/hooks";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 
 import type { FlakyDetectionSettings } from "@ovr/api/contracts/jobs";
@@ -17,7 +18,7 @@ import {
   FieldSet,
   FieldSkeleton,
 } from "@ovr/ui/components/field";
-import { CheckIcon, Icon, PlayIcon } from "@ovr/ui/components/icon";
+import { CheckIcon, Icon, PlayIcon, RefreshCwIcon } from "@ovr/ui/components/icon";
 import { Input } from "@ovr/ui/components/input";
 import { Skeleton } from "@ovr/ui/components/skeleton";
 import { Switch } from "@ovr/ui/components/switch";
@@ -27,11 +28,14 @@ import { serverClient } from "@/lib/router";
 
 import { flakyDetectionFormSchema, type FlakyDetectionFormValues } from "./schema";
 
+export const RUNNING_POLL_INTERVAL_MS = 2_000;
+
 export type FlakyDetectionFormProps = {
   settings: FlakyDetectionSettings;
+  running: boolean;
 };
 
-export const FlakyDetectionForm = ({ settings }: FlakyDetectionFormProps) => {
+export const FlakyDetectionForm = ({ settings, running }: FlakyDetectionFormProps) => {
   const router = useRouter();
   const {
     register,
@@ -77,7 +81,16 @@ export const FlakyDetectionForm = ({ settings }: FlakyDetectionFormProps) => {
     },
   );
 
-  const isRunning = runStatus === "pending";
+  const isRunning = running || runStatus === "pending";
+
+  useEffect(() => {
+    if (!running) {
+      return;
+    }
+
+    const interval = setInterval(() => router.refresh(), RUNNING_POLL_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [running, router]);
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} noValidate>
@@ -128,8 +141,12 @@ export const FlakyDetectionForm = ({ settings }: FlakyDetectionFormProps) => {
             disabled={!settings.enabled || isRunning}
             onClick={() => runNow()}
           >
-            <Icon icon={PlayIcon} />
-            {isRunning ? "starting..." : "run now"}
+            {isRunning ? (
+              <Icon icon={RefreshCwIcon} className="animate-spin" />
+            ) : (
+              <Icon icon={PlayIcon} />
+            )}
+            {isRunning ? "running..." : "run now"}
           </Button>
           <Button type="submit" disabled={isSubmitting}>
             <Icon icon={CheckIcon} />

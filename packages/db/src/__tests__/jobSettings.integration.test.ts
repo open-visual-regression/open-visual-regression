@@ -40,4 +40,30 @@ describe("jobSettings", () => {
       expect(saved?.settings).toEqual({ enabled: false });
     });
   });
+
+  describe("markRun", () => {
+    test("should record when the job last ran", async ({ user }) => {
+      await dbClient.jobSettings.upsert({
+        job: "flaky_detection",
+        settings: { enabled: true },
+        updatedBy: user.id,
+      });
+      const before = Date.now();
+
+      await dbClient.jobSettings.markRun("flaky_detection");
+
+      const saved = await dbClient.jobSettings.find("flaky_detection");
+      expect(new Date(saved!.lastRunAt!).getTime()).toBeGreaterThanOrEqual(before - 1_000);
+    });
+
+    test("should leave last run empty until the job has run", async ({ user }) => {
+      await dbClient.jobSettings.upsert({
+        job: "flaky_detection",
+        settings: { enabled: true },
+        updatedBy: user.id,
+      });
+
+      expect((await dbClient.jobSettings.find("flaky_detection"))?.lastRunAt).toBeNull();
+    });
+  });
 });

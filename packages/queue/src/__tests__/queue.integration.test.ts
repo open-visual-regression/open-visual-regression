@@ -6,7 +6,9 @@ import {
   enqueueDiff,
   enqueueExtract,
   enqueueFinalize,
+  enqueueFlakySnapshotDispatch,
   enqueueFlakySnapshotScanMany,
+  isJobRunning,
   enqueuePublishStatus,
   QueueName,
   scheduleJob,
@@ -235,6 +237,53 @@ describe("queue", () => {
       await scheduleJob(connection, "flaky_detection", null);
 
       expect(await openQueue(QueueName.FLAKY_SNAPSHOT_DISPATCH).getJobSchedulers()).toEqual([]);
+    });
+  });
+
+  describe("isJobRunning", () => {
+    test("should not count flaky detection as running when nothing is queued", async ({
+      connection,
+    }) => {
+      expect(await isJobRunning(connection, "flaky_detection")).toBe(false);
+    });
+
+    test("should not count the scheduler's next run as running", async ({
+      connection,
+      openQueue,
+    }) => {
+      await scheduleJob(connection, "flaky_detection", "0 */6 * * *");
+
+      try {
+        expect(await isJobRunning(connection, "flaky_detection")).toBe(false);
+      } finally {
+        await openQueue(QueueName.FLAKY_SNAPSHOT_DISPATCH).obliterate({ force: true });
+      }
+    });
+
+    test("should count flaky detection as running while a dispatch is queued", async ({
+      connection,
+      openQueue,
+    }) => {
+      await enqueueFlakySnapshotDispatch(connection);
+
+      try {
+        expect(await isJobRunning(connection, "flaky_detection")).toBe(true);
+      } finally {
+        await openQueue(QueueName.FLAKY_SNAPSHOT_DISPATCH).obliterate({ force: true });
+      }
+    });
+
+    test("should count flaky detection as running while project scans are queued", async ({
+      connection,
+      openQueue,
+    }) => {
+      await enqueueFlakySnapshotScanMany([{ projectId: "project-a" }], connection);
+
+      try {
+        expect(await isJobRunning(connection, "flaky_detection")).toBe(true);
+      } finally {
+        await openQueue(QueueName.FLAKY_SNAPSHOT_SCAN).obliterate({ force: true });
+      }
     });
   });
 });

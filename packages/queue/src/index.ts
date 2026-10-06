@@ -1,5 +1,5 @@
 import { Queue } from "bullmq";
-import type { Job, JobsOptions } from "bullmq";
+import type { Job, JobType, JobsOptions } from "bullmq";
 import { Cluster, Redis } from "ioredis";
 import type { RedisOptions } from "ioredis";
 import { z } from "zod";
@@ -469,6 +469,37 @@ const JOB_SCHEDULERS = {
     schedulerId: "flaky-snapshot-dispatch",
   },
 } as const satisfies Record<JobName, { queueName: QueueName; schedulerId: string }>;
+
+// The work a job's dispatch fans out to, so the job counts as running until it is done.
+const JOB_WORK_QUEUES = {
+  flaky_detection: [QueueName.FLAKY_SNAPSHOT_SCAN],
+} as const satisfies Record<JobName, readonly QueueName[]>;
+
+const countJobs = async (
+  connection: RedisConnection,
+  queueName: QueueName,
+  types: JobType[],
+): Promise<number> => {
+  const queue = new Queue(queueName, queueOptions(connection));
+  try {
+    const counts = await queue.getJobCounts(...types);
+    return Object.values(counts).reduce((sum, count) => sum + count, 0);
+  } finally {
+    await queue.close();
+  }
+};
+
+export const isJobRunning = async (connection: RedisConnection, job: JobName): Promise<boolean> => {
+  const counts = await Promise.all([
+    // The scheduler parks its next run as a delayed job, so only waiting or active dispatches count.
+    countJobs(connection, JOB_SCHEDULERS[job].queueName, ["waiting", "active", "prioritized"]),
+    // A delayed work job is a retry waiting on its backoff.
+    ...JOB_WORK_QUEUES[job].map((queueName) =>
+      countJobs(connection, queueName, ["waiting", "active", "prioritized", "delayed"]),
+    ),
+  ]);
+  return counts.some((count) => count > 0);
+};
 
 export const scheduleJob = async (
   connection: RedisConnection,

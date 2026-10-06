@@ -43,7 +43,10 @@ export const storedFlakyDetectionSettingsSchema = z
 export const getFlakyDetectionOutputSchema = z.object({
   settings: flakyDetectionSettingsSchema,
   lastRunAt: z.iso.datetime().nullable(),
+  running: z.boolean(),
 });
+
+export type FlakyDetection = z.infer<typeof getFlakyDetectionOutputSchema>;
 
 export const getFlakyDetectionContract = oc.output(getFlakyDetectionOutputSchema);
 

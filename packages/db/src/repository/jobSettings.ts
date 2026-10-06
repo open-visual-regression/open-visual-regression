@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 import { db } from "../db";
 import { jobSettings, type JobName } from "../schema";
@@ -26,11 +26,11 @@ export const upsert = async ({ job, settings, updatedBy }: UpsertInput) => {
   return row;
 };
 
-export const markRun = async (job: JobName, settings: Record<string, unknown>) => {
+export const markRun = async (job: JobName) => {
   await db
-    .insert(jobSettings)
-    .values({ job, settings, lastRunAt: sql`now()` })
-    .onConflictDoUpdate({ target: jobSettings.job, set: { lastRunAt: sql`now()` } });
+    .update(jobSettings)
+    .set({ lastRunAt: sql`now()` })
+    .where(eq(jobSettings.job, job));
 };
 
 export type JobSettingsDbSchema = NonNullable<Awaited<ReturnType<typeof find>>>;

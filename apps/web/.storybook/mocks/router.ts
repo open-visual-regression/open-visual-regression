@@ -193,7 +193,11 @@ export const serverClient: typeof RealServerClient = {
   },
   jobs: {
     getFlakyDetection: os.jobs.getFlakyDetection
-      .handler(() => ({ settings: DEFAULT_FLAKY_DETECTION_SETTINGS, lastRunAt: null }))
+      .handler(() => ({
+        settings: DEFAULT_FLAKY_DETECTION_SETTINGS,
+        lastRunAt: null,
+        running: false,
+      }))
       .actionable(),
     updateFlakyDetection: os.jobs.updateFlakyDetection.handler(() => undefined).actionable(),
     runFlakyDetection: os.jobs.runFlakyDetection.handler(() => undefined).actionable(),

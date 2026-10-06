@@ -28,7 +28,11 @@ describe("SettingsJobsPage", () => {
     });
     mockGetFlakyDetection.mockResolvedValue([
       null,
-      { settings: { ...DEFAULT_FLAKY_DETECTION_SETTINGS, enabled: true }, lastRunAt: null },
+      {
+        settings: { ...DEFAULT_FLAKY_DETECTION_SETTINGS, enabled: true },
+        lastRunAt: null,
+        running: false,
+      },
     ]);
 
     render(await SettingsJobsPage());

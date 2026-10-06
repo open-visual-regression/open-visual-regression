@@ -5,9 +5,10 @@ import type { FlakyDetectionSettings } from "@ovr/api/contracts/jobs";
 import { Toaster } from "@ovr/ui/components/sonner";
 
 import { serverClient } from "@/lib/router";
-import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
+import { createORPCError } from "@/lib/testing/orpc";
+import { act, describe, expect, it, render, screen, waitFor } from "@/test-utils";
 
-import { FlakyDetectionForm } from "../FlakyDetectionForm";
+import { FlakyDetectionForm, RUNNING_POLL_INTERVAL_MS } from "../FlakyDetectionForm";
 
 vi.mock("@/lib/router");
 vi.mock("next/navigation");
@@ -22,10 +23,10 @@ const SETTINGS: FlakyDetectionSettings = {
   windowBuilds: 30,
 };
 
-const renderComponent = (settings: FlakyDetectionSettings = SETTINGS) =>
+const renderComponent = (settings: FlakyDetectionSettings = SETTINGS, running = false) =>
   render(
     <>
-      <FlakyDetectionForm settings={settings} />
+      <FlakyDetectionForm settings={settings} running={running} />
       <Toaster />
     </>,
   );
@@ -128,5 +129,52 @@ describe("FlakyDetectionForm", () => {
     renderComponent({ ...SETTINGS, enabled: false });
 
     expect(screen.getByRole("button", { name: /run now/i })).toBeDisabled();
+  });
+
+  it("should show the error message when the job cannot be started", async ({ user }) => {
+    mockRun.mockResolvedValue([createORPCError("CONFLICT", 409), undefined]);
+    renderComponent();
+
+    await user.click(screen.getByRole("button", { name: /run now/i }));
+
+    expect(await screen.findByText("CONFLICT")).toBeVisible();
+    expect(screen.queryByText("flaky detection started")).not.toBeInTheDocument();
+  });
+
+  it("should disable run now and show a spinner while the job is running", () => {
+    renderComponent(SETTINGS, true);
+
+    const button = screen.getByRole("button", { name: /running/i });
+    expect(button).toBeDisabled();
+    expect(button.querySelector(".animate-spin")).toBeInTheDocument();
+  });
+
+  it("should keep refreshing while the job is running", async () => {
+    vi.useFakeTimers();
+
+    try {
+      renderComponent(SETTINGS, true);
+      expect(mockRefresh).not.toHaveBeenCalled();
+
+      await act(() => vi.advanceTimersByTimeAsync(RUNNING_POLL_INTERVAL_MS * 2));
+
+      expect(mockRefresh).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("should not refresh on its own while the job is idle", async () => {
+    vi.useFakeTimers();
+
+    try {
+      renderComponent();
+
+      await act(() => vi.advanceTimersByTimeAsync(RUNNING_POLL_INTERVAL_MS * 2));
+
+      expect(mockRefresh).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

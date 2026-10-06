@@ -1,5 +1,6 @@
 import {
   storedFlakyDetectionSettingsSchema,
+  type FlakyDetection,
   type FlakyDetectionSettings,
 } from "@ovr/api/contracts/jobs";
 import { dbClient } from "@ovr/db/client";
@@ -7,6 +8,7 @@ import { QueueUnavailableError, scheduleJob, type RedisConnection } from "@ovr/q
 import {
   enqueueFlakySnapshotDispatch,
   enqueueFlakySnapshotScanMany,
+  isJobRunning,
   scheduleJob as rescheduleJob,
 } from "@ovr/queue/producer";
 
@@ -19,8 +21,29 @@ export const getFlakyDetectionSettings = async (): Promise<FlakyDetectionSetting
   return storedFlakyDetectionSettingsSchema.parse(stored?.settings);
 };
 
-export const getFlakyDetectionLastRunAt = async (): Promise<string | null> =>
-  (await dbClient.jobSettings.find("flaky_detection"))?.lastRunAt ?? null;
+const isFlakyDetectionRunning = async (): Promise<boolean> => {
+  try {
+    return await isJobRunning("flaky_detection");
+  } catch (error) {
+    if (error instanceof QueueUnavailableError) {
+      return false;
+    }
+    throw error;
+  }
+};
+
+export const getFlakyDetection = async (): Promise<FlakyDetection> => {
+  const [stored, running] = await Promise.all([
+    dbClient.jobSettings.find("flaky_detection"),
+    isFlakyDetectionRunning(),
+  ]);
+
+  return {
+    settings: storedFlakyDetectionSettingsSchema.parse(stored?.settings),
+    lastRunAt: stored?.lastRunAt ?? null,
+    running,
+  };
+};
 
 export const isFlakyDetectionEnabled = async (): Promise<boolean> =>
   (await getFlakyDetectionSettings()).enabled;
@@ -48,8 +71,18 @@ export const saveFlakyDetectionSettings = async (
   return { status: "ok", data: undefined };
 };
 
-export const runFlakyDetectionNow = async (): Promise<Result<undefined, "QUEUE_UNAVAILABLE">> => {
+export const runFlakyDetectionNow = async (): Promise<
+  Result<undefined, "DISABLED" | "ALREADY_RUNNING" | "QUEUE_UNAVAILABLE">
+> => {
+  if (!(await isFlakyDetectionEnabled())) {
+    return { status: "error", error: "DISABLED" };
+  }
+
   try {
+    if (await isJobRunning("flaky_detection")) {
+      return { status: "error", error: "ALREADY_RUNNING" };
+    }
+
     await enqueueFlakySnapshotDispatch();
   } catch (error) {
     if (error instanceof QueueUnavailableError) {
@@ -62,16 +95,13 @@ export const runFlakyDetectionNow = async (): Promise<Result<undefined, "QUEUE_U
 };
 
 export const dispatchFlakySnapshotScans = async (): Promise<void> => {
-  const settings = await getFlakyDetectionSettings();
-
-  if (!settings.enabled) {
+  if (!(await isFlakyDetectionEnabled())) {
     return;
   }
 
-  await dbClient.jobSettings.markRun("flaky_detection", settings);
-
   const projectIds = await dbClient.projects.findIdsNeedingFlakyScan();
   await enqueueFlakySnapshotScanMany(projectIds.map((projectId) => ({ projectId })));
+  await dbClient.jobSettings.markRun("flaky_detection");
 };
 
 export const scanFlakySnapshots = async (projectId: string): Promise<void> => {

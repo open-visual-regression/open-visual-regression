@@ -30,10 +30,7 @@ export default async function SettingsJobsPage() {
       <Typography variant="h1" as="h1">
         jobs
       </Typography>
-      <FlakyDetectionSection
-        settings={flakyDetectionResult.settings}
-        lastRunAt={flakyDetectionResult.lastRunAt}
-      />
+      <FlakyDetectionSection {...flakyDetectionResult} />
     </div>
   );
 }

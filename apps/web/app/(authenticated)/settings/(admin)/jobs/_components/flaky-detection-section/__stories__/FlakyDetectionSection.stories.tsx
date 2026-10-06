@@ -22,6 +22,7 @@ export const Disabled: Story = {
   args: {
     settings: DEFAULT_FLAKY_DETECTION_SETTINGS,
     lastRunAt: null,
+    running: false,
   },
 };
 
@@ -29,5 +30,14 @@ export const Enabled: Story = {
   args: {
     settings: { enabled: true, cron: "0 */6 * * *", windowBuilds: 50 },
     lastRunAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    running: false,
+  },
+};
+
+export const Running: Story = {
+  args: {
+    settings: { enabled: true, cron: "0 */6 * * *", windowBuilds: 50 },
+    lastRunAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    running: true,
   },
 };
