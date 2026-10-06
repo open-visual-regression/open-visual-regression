@@ -61,7 +61,7 @@ export const FlakyDetectionForm = ({ settings }: FlakyDetectionFormProps) => {
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} noValidate>
-      <Card size="default" className="w-full">
+      <Card size="default" className="w-full md:w-2/3 lg:w-1/2">
         <CardContent className="flex flex-col gap-5">
           <Field orientation="horizontal">
             <Controller
@@ -113,7 +113,7 @@ export const FlakyDetectionForm = ({ settings }: FlakyDetectionFormProps) => {
 };
 
 export const FlakyDetectionFormSkeleton = () => (
-  <Card size="default" aria-hidden className="w-full">
+  <Card size="default" aria-hidden className="w-full md:w-2/3 lg:w-1/2">
     <CardContent className="flex flex-col gap-5">
       <Skeleton className="h-4 w-40" />
       <FieldGroup>
