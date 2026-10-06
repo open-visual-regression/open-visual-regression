@@ -536,11 +536,16 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
   }
 
   const baselineSnapshot = baseline ? await dbClient.snapshots.findById(baseline.snapshotId) : null;
-  const diff = await diffAgainstBaselineSnapshot(snapshot.imagePath, baselineSnapshot);
+  const diff = await diffAgainstBaselineSnapshot(
+    snapshot.imagePath,
+    snapshot.imageHash,
+    baselineSnapshot,
+  );
 
-  const diffImagePath = diff?.pixelDiffCount
-    ? await uploadDiffImage(build.projectId, build.id, diffId, diff)
-    : undefined;
+  const diffImagePath =
+    diff?.diffImage && diff.pixelDiffCount
+      ? await uploadDiffImage(build.projectId, build.id, diffId, diff.diffImage)
+      : undefined;
 
   if (isMainBranch) {
     // No baseline means the target is brand new, not unchanged.
@@ -734,14 +739,27 @@ const uploadDiffImage = async (
 
 const diffAgainstBaselineSnapshot = async (
   capturePath: string,
+  captureHash: string | null,
   baselineSnapshot: SnapshotDbSchema | null | undefined,
 ) => {
   if (!baselineSnapshot?.imagePath) {
     return null;
   }
 
-  const diffResult = await compareImages(capturePath, baselineSnapshot.imagePath);
-  return { ...diffResult, baselineSnapshotId: baselineSnapshot.id };
+  if (captureHash !== null && captureHash === baselineSnapshot.imageHash) {
+    return {
+      pixelDiffCount: 0,
+      diffPercent: 0,
+      diffImage: null,
+      baselineSnapshotId: baselineSnapshot.id,
+    };
+  }
+
+  const { pixelDiffCount, diffPercent, ...diffImage } = await compareImages(
+    capturePath,
+    baselineSnapshot.imagePath,
+  );
+  return { pixelDiffCount, diffPercent, diffImage, baselineSnapshotId: baselineSnapshot.id };
 };
 
 export const checkAllDoneAndFinalize = async (buildId: string): Promise<void> => {

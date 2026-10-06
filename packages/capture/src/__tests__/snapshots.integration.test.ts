@@ -575,6 +575,54 @@ describe("snapshots", () => {
       });
     });
 
+    test("should approve a story without reading either screenshot when its image hash matches the approved baseline", async ({
+      featureBuild,
+      project,
+      captureConfiguration,
+    }) => {
+      const imageHash = createHash("sha256").update("identical screenshot").digest("hex");
+
+      const [baselineSnapshot, captureSnapshotRow] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: featureBuild.id,
+            ...captureConfiguration,
+            targetId: "story-hash",
+            status: "success",
+            imagePath: `builds/${featureBuild.id}/snapshots/missing-baseline.png`,
+            imageHash,
+          },
+          {
+            buildId: featureBuild.id,
+            ...captureConfiguration,
+            targetId: "story-hash",
+            status: "success",
+            imagePath: `builds/${featureBuild.id}/snapshots/missing-capture.png`,
+            imageHash,
+          },
+        ],
+      });
+      await dbClient.baselines.upsert({
+        projectId: project.id,
+        ...captureConfiguration,
+        targetId: "story-hash",
+        snapshotId: baselineSnapshot!.id,
+        approvedBy: featureBuild.createdBy,
+      });
+      const diff = await dbClient.diffs.create({ snapshotId: captureSnapshotRow!.id });
+
+      await diffSnapshot(captureSnapshotRow!.id, diff!.id);
+
+      expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
+        processingStatus: "success",
+        reviewStatus: "unchanged",
+        baselineSnapshotId: baselineSnapshot!.id,
+        pixelDiffCount: 0,
+        diffPercent: 0,
+        diffImagePath: null,
+      });
+    });
+
     test("saves a diff image for a story that renders within the diff threshold of the approved baseline", async ({
       featureBuild,
       project,
