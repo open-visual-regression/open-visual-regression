@@ -1,7 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
-import { DEFAULT_FLAKY_DETECTION_SETTINGS } from "@ovr/api/contracts/jobs";
-
 import { FlakyDetectionSection } from "../FlakyDetectionSection";
 
 const meta: Meta<typeof FlakyDetectionSection> = {
@@ -18,14 +16,16 @@ const meta: Meta<typeof FlakyDetectionSection> = {
 export default meta;
 type Story = StoryObj<typeof FlakyDetectionSection>;
 
-export const Disabled: Story = {
-  args: {
-    settings: DEFAULT_FLAKY_DETECTION_SETTINGS,
-  },
+const args = {
+  settings: { enabled: true, cron: "0 */6 * * *", windowBuilds: 50 },
+  lastRunAt: "2026-06-20T12:00:00.000Z",
+  running: false,
 };
 
 export const Enabled: Story = {
-  args: {
-    settings: { enabled: true, cron: "0 */6 * * *", windowBuilds: 50 },
-  },
+  args,
+};
+
+export const Running: Story = {
+  args: { ...args, running: true },
 };

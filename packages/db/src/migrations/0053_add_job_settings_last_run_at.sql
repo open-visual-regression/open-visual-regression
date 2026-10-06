@@ -1,0 +1,1 @@
+ALTER TABLE "job_settings" ADD COLUMN "last_run_at" timestamp;

@@ -5,7 +5,7 @@ import {
   type FlakyDetectionSettings,
 } from "@ovr/api/contracts/jobs";
 import { QueueUnavailableError } from "@ovr/queue";
-import { scheduleJob } from "@ovr/queue/producer";
+import { enqueueFlakySnapshotDispatch, scheduleJob } from "@ovr/queue/producer";
 
 import { serverClient } from "@/lib/router";
 import { test, describe, expect } from "@/lib/testing/fixtures";
@@ -16,6 +16,7 @@ vi.mock("@ovr/queue/producer", async (importOriginal) => {
   return {
     ...actual,
     scheduleJob: vi.fn<typeof actual.scheduleJob>(actual.scheduleJob),
+    enqueueFlakySnapshotDispatch: vi.fn<typeof actual.enqueueFlakySnapshotDispatch>(),
   };
 });
 
@@ -44,6 +45,13 @@ describe("jobs", () => {
 
       expect(error).toBeNull();
       expect(result?.settings).toEqual(DEFAULT_FLAKY_DETECTION_SETTINGS);
+    });
+
+    test("should report that the job has never run and is not running", async ({ admin: _ }) => {
+      const [, result] = await serverClient.jobs.getFlakyDetection();
+
+      expect(result?.lastRunAt).toBeNull();
+      expect(result?.running).toBe(false);
     });
   });
 
@@ -102,6 +110,49 @@ describe("jobs", () => {
       expect(error?.code).toBe("SERVICE_UNAVAILABLE");
       const [, result] = await serverClient.jobs.getFlakyDetection();
       expect(result?.settings).toEqual(SETTINGS);
+    });
+  });
+
+  describe("runFlakyDetection", () => {
+    test("should return UNAUTHORIZED when no session cookie is provided", async () => {
+      const [error] = await serverClient.jobs.runFlakyDetection();
+      expect(error?.code).toBe("UNAUTHORIZED");
+    });
+
+    test("should return FORBIDDEN when the session user is not an admin", async ({
+      reviewer: _,
+    }) => {
+      const [error] = await serverClient.jobs.runFlakyDetection();
+      expect(error?.code).toBe("FORBIDDEN");
+    });
+
+    test("should return PRECONDITION_FAILED and not queue anything when detection is disabled", async ({
+      admin: _,
+    }) => {
+      const [error] = await serverClient.jobs.runFlakyDetection();
+
+      expect(error?.code).toBe("PRECONDITION_FAILED");
+      expect(enqueueFlakySnapshotDispatch).not.toHaveBeenCalled();
+    });
+
+    test("should queue a dispatch when detection is enabled", async ({ admin: _ }) => {
+      await serverClient.jobs.updateFlakyDetection(SETTINGS);
+
+      const [error] = await serverClient.jobs.runFlakyDetection();
+
+      expect(error).toBeNull();
+      expect(enqueueFlakySnapshotDispatch).toHaveBeenCalledOnce();
+    });
+
+    test("should return SERVICE_UNAVAILABLE when the queue is unavailable", async ({
+      admin: _,
+    }) => {
+      await serverClient.jobs.updateFlakyDetection(SETTINGS);
+      vi.mocked(enqueueFlakySnapshotDispatch).mockRejectedValueOnce(new QueueUnavailableError());
+
+      const [error] = await serverClient.jobs.runFlakyDetection();
+
+      expect(error?.code).toBe("SERVICE_UNAVAILABLE");
     });
   });
 });

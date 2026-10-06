@@ -12,17 +12,20 @@ import {
   enqueueDiff as enqueueDiffJob,
   enqueueExtract as enqueueExtractJob,
   enqueueFinalize as enqueueFinalizeJob,
+  enqueueFlakySnapshotDispatch as enqueueFlakySnapshotDispatchJob,
   enqueueFlakySnapshotScanMany as enqueueFlakySnapshotScanManyJob,
   enqueuePublishStatus as enqueuePublishStatusJob,
   enqueueProjectPurge as enqueueProjectPurgeJob,
   enqueuePurge as enqueuePurgeJob,
   enqueuePurgeMany as enqueuePurgeManyJob,
+  isJobRunning as isJobRunningCmd,
   scheduleJob as scheduleJobCmd,
   type CanceledBuildJobs,
   type CaptureGroupJobPayload,
   type DiffJobPayload,
   type ExtractJobPayload,
   type FinalizeJobPayload,
+  type FlakySnapshotDispatchJobPayload,
   type FlakySnapshotScanJobPayload,
   type GitStatusPublishJobPayload,
   type ProjectPurgeJobPayload,
@@ -77,6 +80,9 @@ export const publishBuildStatusEvent = (event: BuildStatusEvent): Promise<void> 
 export const enqueuePurgeMany = (payloads: PurgeJobPayload[]): Promise<void> =>
   whenConnected(() => enqueuePurgeManyJob(payloads, connection));
 
+export const enqueueFlakySnapshotDispatch = (): Promise<Job<FlakySnapshotDispatchJobPayload>> =>
+  whenConnected(() => enqueueFlakySnapshotDispatchJob(connection));
+
 export const enqueueFlakySnapshotScanMany = (
   payloads: FlakySnapshotScanJobPayload[],
 ): Promise<void> => whenConnected(() => enqueueFlakySnapshotScanManyJob(payloads, connection));
@@ -86,3 +92,6 @@ export const cancelBuildJobs = (canceled: CanceledBuildJobs[]): Promise<void> =>
 
 export const scheduleJob = (job: JobName, pattern: string | null): Promise<void> =>
   whenConnected(() => scheduleJobCmd(connection, job, pattern));
+
+export const isJobRunning = (job: JobName): Promise<boolean> =>
+  whenConnected(() => isJobRunningCmd(connection, job));

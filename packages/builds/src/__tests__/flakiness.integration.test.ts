@@ -6,6 +6,8 @@ import { QueueName, type FlakySnapshotScanJobPayload, type RedisConnection } fro
 
 import {
   dispatchFlakySnapshotScans,
+  getFlakyDetection,
+  runFlakyDetectionNow,
   scanFlakySnapshots,
   scheduleFlakyDetection,
 } from "../flakiness";
@@ -107,6 +109,67 @@ describe("flakiness", () => {
 
     test("queues nothing when flaky detection is disabled", async ({ mainBuild, connection }) => {
       expect(await dispatchAndCollectProjectIds(connection)).not.toContain(mainBuild.projectId);
+    });
+
+    test("records when it last ran", async ({ user, connection }) => {
+      await enableFlakyDetection(user.id);
+
+      await dispatchAndCollectProjectIds(connection);
+
+      expect((await getFlakyDetection()).lastRunAt).not.toBeNull();
+    });
+
+    test("does not record a run when flaky detection is disabled", async ({ user, connection }) => {
+      await enableFlakyDetection(user.id, { enabled: false });
+
+      await dispatchAndCollectProjectIds(connection);
+
+      expect((await getFlakyDetection()).lastRunAt).toBeNull();
+    });
+  });
+
+  describe("runFlakyDetectionNow", () => {
+    const openDispatchQueue = (connection: RedisConnection) =>
+      new Queue(QueueName.FLAKY_SNAPSHOT_DISPATCH, { connection });
+
+    test("queues a dispatch and reports the job as running", async ({ user, connection }) => {
+      await enableFlakyDetection(user.id);
+      const queue = openDispatchQueue(connection);
+
+      try {
+        expect(await runFlakyDetectionNow()).toEqual({ status: "ok", data: undefined });
+        expect(await queue.getWaitingCount()).toBe(1);
+        expect((await getFlakyDetection()).running).toBe(true);
+      } finally {
+        await queue.obliterate({ force: true });
+        await queue.close();
+      }
+    });
+
+    test("refuses to start while a run is already in progress", async ({ user, connection }) => {
+      await enableFlakyDetection(user.id);
+      const queue = openDispatchQueue(connection);
+
+      try {
+        await runFlakyDetectionNow();
+
+        expect(await runFlakyDetectionNow()).toEqual({ status: "error", error: "ALREADY_RUNNING" });
+        expect(await queue.getWaitingCount()).toBe(1);
+      } finally {
+        await queue.obliterate({ force: true });
+        await queue.close();
+      }
+    });
+
+    test("refuses to start when flaky detection is disabled", async ({ connection }) => {
+      const queue = openDispatchQueue(connection);
+
+      try {
+        expect(await runFlakyDetectionNow()).toEqual({ status: "error", error: "DISABLED" });
+        expect(await queue.getWaitingCount()).toBe(0);
+      } finally {
+        await queue.close();
+      }
     });
   });
 

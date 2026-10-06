@@ -8,7 +8,7 @@ export class JobsSettingsPage {
   }
 
   flakyDetectionSwitch(): Locator {
-    return this.page.getByRole("switch", { name: /detect flaky stories/i });
+    return this.page.getByRole("switch", { name: /enabled/i });
   }
 
   windowBuildsField(): Locator {

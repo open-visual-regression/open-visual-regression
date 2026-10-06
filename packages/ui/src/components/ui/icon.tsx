@@ -25,6 +25,7 @@ export {
   SearchIcon,
   SettingsIcon,
   SnowflakeIcon,
+  PlayIcon,
   PlusIcon,
   CircleSlash2Icon,
   RefreshCwIcon,

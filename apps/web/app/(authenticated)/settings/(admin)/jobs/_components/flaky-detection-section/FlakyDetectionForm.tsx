@@ -3,6 +3,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { onError, onSuccess } from "@orpc/client";
 import { useServerAction } from "@orpc/react/hooks";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 
 import type { FlakyDetectionSettings } from "@ovr/api/contracts/jobs";
@@ -16,7 +18,7 @@ import {
   FieldSet,
   FieldSkeleton,
 } from "@ovr/ui/components/field";
-import { CheckIcon, Icon } from "@ovr/ui/components/icon";
+import { CheckIcon, Icon, PlayIcon, RefreshCwIcon } from "@ovr/ui/components/icon";
 import { Input } from "@ovr/ui/components/input";
 import { Skeleton } from "@ovr/ui/components/skeleton";
 import { Switch } from "@ovr/ui/components/switch";
@@ -26,17 +28,22 @@ import { serverClient } from "@/lib/router";
 
 import { flakyDetectionFormSchema, type FlakyDetectionFormValues } from "./schema";
 
+export const RUNNING_POLL_INTERVAL_MS = 2_000;
+
 export type FlakyDetectionFormProps = {
   settings: FlakyDetectionSettings;
+  running: boolean;
 };
 
-export const FlakyDetectionForm = ({ settings }: FlakyDetectionFormProps) => {
+export const FlakyDetectionForm = ({ settings, running }: FlakyDetectionFormProps) => {
+  const router = useRouter();
   const {
     register,
     handleSubmit,
     control,
     setError,
-    formState: { errors },
+    reset,
+    formState: { errors, isDirty },
   } = useForm<FlakyDetectionFormValues>({
     resolver: zodResolver(flakyDetectionFormSchema),
     defaultValues: settings,
@@ -47,17 +54,65 @@ export const FlakyDetectionForm = ({ settings }: FlakyDetectionFormProps) => {
   const { execute, status } = useServerAction(serverClient.jobs.updateFlakyDetection, {
     interceptors: [
       onSuccess(() => {
-        toast.success("flaky detection updated");
+        router.refresh();
       }),
       onError((err) => setError("root", { message: err.message })),
     ],
   });
 
-  const handleFormSubmit = (values: FlakyDetectionFormValues) => {
-    execute(values);
+  const save = async (values: FlakyDetectionFormValues): Promise<boolean> => {
+    const [error] = await execute(values);
+
+    if (error) {
+      return false;
+    }
+
+    reset(values);
+    return true;
+  };
+
+  const handleFormSubmit = async (values: FlakyDetectionFormValues) => {
+    if (await save(values)) {
+      toast.success("flaky detection updated");
+    }
   };
 
   const isSubmitting = status === "pending";
+
+  const { execute: runNow, status: runStatus } = useServerAction(
+    serverClient.jobs.runFlakyDetection,
+    {
+      interceptors: [
+        onSuccess(() => {
+          toast.success("flaky detection started");
+          router.refresh();
+        }),
+        onError((err) => {
+          toast.error(err.message);
+        }),
+      ],
+    },
+  );
+
+  const isRunning = running || runStatus === "pending";
+
+  // Run with what is on screen, so unsaved changes are saved first.
+  const handleRunNow = handleSubmit(async (values) => {
+    if (isDirty && !(await save(values))) {
+      return;
+    }
+
+    await runNow();
+  });
+
+  useEffect(() => {
+    if (!running) {
+      return;
+    }
+
+    const interval = setInterval(() => router.refresh(), RUNNING_POLL_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [running, router]);
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} noValidate>
@@ -71,7 +126,7 @@ export const FlakyDetectionForm = ({ settings }: FlakyDetectionFormProps) => {
                 <Switch id="enabled" checked={field.value} onCheckedChange={field.onChange} />
               )}
             />
-            <FieldLabel htmlFor="enabled">detect flaky stories</FieldLabel>
+            <FieldLabel htmlFor="enabled">enabled</FieldLabel>
           </Field>
           <FieldSet disabled={!enabled}>
             <FieldGroup>
@@ -101,7 +156,20 @@ export const FlakyDetectionForm = ({ settings }: FlakyDetectionFormProps) => {
           </FieldSet>
           <FieldError errors={[errors.root]} />
         </CardContent>
-        <CardFooter className="flex flex-row justify-end">
+        <CardFooter className="flex flex-row justify-between">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={!enabled || isRunning || isSubmitting}
+            onClick={handleRunNow}
+          >
+            {isRunning ? (
+              <Icon icon={RefreshCwIcon} className="animate-spin" />
+            ) : (
+              <Icon icon={PlayIcon} />
+            )}
+            {isRunning ? "running..." : "run now"}
+          </Button>
           <Button type="submit" disabled={isSubmitting}>
             <Icon icon={CheckIcon} />
             {isSubmitting ? "saving..." : "save changes"}
@@ -121,7 +189,8 @@ export const FlakyDetectionFormSkeleton = () => (
         <FieldSkeleton />
       </FieldGroup>
     </CardContent>
-    <CardFooter className="flex flex-row justify-end">
+    <CardFooter className="flex flex-row justify-between">
+      <Skeleton className="h-8 w-28 rounded-lg" />
       <Skeleton className="h-8 w-32 rounded-lg" />
     </CardFooter>
   </Card>

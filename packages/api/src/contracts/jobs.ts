@@ -42,13 +42,20 @@ export const storedFlakyDetectionSettingsSchema = z
 
 export const getFlakyDetectionOutputSchema = z.object({
   settings: flakyDetectionSettingsSchema,
+  lastRunAt: z.iso.datetime().nullable(),
+  running: z.boolean(),
 });
+
+export type FlakyDetection = z.infer<typeof getFlakyDetectionOutputSchema>;
 
 export const getFlakyDetectionContract = oc.output(getFlakyDetectionOutputSchema);
 
 export const updateFlakyDetectionContract = oc.input(flakyDetectionSettingsSchema).output(z.void());
 
+export const runFlakyDetectionContract = oc.output(z.void());
+
 export const contract = {
   getFlakyDetection: getFlakyDetectionContract,
   updateFlakyDetection: updateFlakyDetectionContract,
+  runFlakyDetection: runFlakyDetectionContract,
 } as const;
