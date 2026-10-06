@@ -7,11 +7,12 @@ import { useForm } from "react-hook-form";
 
 import { Button } from "@ovr/ui/components/button";
 import { Card, CardContent, CardFooter } from "@ovr/ui/components/card";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@ovr/ui/components/field";
+import { Field, FieldError, FieldGroup, FieldLabel, FieldSkeleton } from "@ovr/ui/components/field";
 import { CheckIcon, Icon } from "@ovr/ui/components/icon";
 import { Input } from "@ovr/ui/components/input";
+import { Skeleton } from "@ovr/ui/components/skeleton";
 import { toast } from "@ovr/ui/components/toast";
-import { Typography } from "@ovr/ui/components/typography";
+import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 
 import { serverClient } from "@/lib/router";
 
@@ -115,3 +116,27 @@ export const UpdatePasswordForm = () => {
     </form>
   );
 };
+
+export const UpdatePasswordFormSkeleton = () => (
+  <div aria-hidden className="flex flex-col gap-2">
+    <TypographySkeleton variant="label" className="w-32" />
+    <Card size="default">
+      <CardContent className="flex flex-col gap-5">
+        <FieldGroup>
+          <FieldSkeleton />
+        </FieldGroup>
+        <div className="flex flex-col gap-5 sm:flex-row sm:gap-3">
+          <FieldGroup>
+            <FieldSkeleton />
+          </FieldGroup>
+          <FieldGroup>
+            <FieldSkeleton />
+          </FieldGroup>
+        </div>
+      </CardContent>
+      <CardFooter className="flex flex-row justify-end">
+        <Skeleton className="h-8 w-32 rounded-lg" />
+      </CardFooter>
+    </Card>
+  </div>
+);
