@@ -365,6 +365,13 @@
       "when": 1790998406542,
       "tag": "0051_add_diff_matched_variant",
       "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1791080309347,
+      "tag": "0052_add_job_settings",
+      "breakpoints": true
     }
   ]
 }
