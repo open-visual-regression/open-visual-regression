@@ -8,7 +8,14 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import type { FlakyDetectionSettings } from "@ovr/api/contracts/jobs";
 import { Button } from "@ovr/ui/components/button";
 import { Card, CardContent, CardFooter } from "@ovr/ui/components/card";
-import { Field, FieldError, FieldLabel, FieldSet, FieldSkeleton } from "@ovr/ui/components/field";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldSet,
+  FieldSkeleton,
+} from "@ovr/ui/components/field";
 import { CheckIcon, Icon } from "@ovr/ui/components/icon";
 import { Input } from "@ovr/ui/components/input";
 import { Skeleton } from "@ovr/ui/components/skeleton";
@@ -66,29 +73,31 @@ export const FlakyDetectionForm = ({ settings }: FlakyDetectionFormProps) => {
             />
             <FieldLabel htmlFor="enabled">detect flaky stories</FieldLabel>
           </Field>
-          <FieldSet disabled={!enabled} className="grid grid-cols-1 gap-5 md:grid-cols-2">
-            <Field data-invalid={!!errors.cron}>
-              <FieldLabel htmlFor="cron">schedule (cron)</FieldLabel>
-              <Input
-                id="cron"
-                placeholder="0 7,19 * * *"
-                aria-invalid={!!errors.cron}
-                {...register("cron")}
-              />
-              <FieldError errors={[errors.cron]} />
-            </Field>
-            <Field data-invalid={!!errors.windowBuilds}>
-              <FieldLabel htmlFor="windowBuilds">builds to look back on</FieldLabel>
-              <Input
-                id="windowBuilds"
-                type="number"
-                min={1}
-                step={1}
-                aria-invalid={!!errors.windowBuilds}
-                {...register("windowBuilds", { valueAsNumber: true })}
-              />
-              <FieldError errors={[errors.windowBuilds]} />
-            </Field>
+          <FieldSet disabled={!enabled}>
+            <FieldGroup>
+              <Field data-invalid={!!errors.cron}>
+                <FieldLabel htmlFor="cron">schedule (cron)</FieldLabel>
+                <Input
+                  id="cron"
+                  placeholder="0 7,19 * * *"
+                  aria-invalid={!!errors.cron}
+                  {...register("cron")}
+                />
+                <FieldError errors={[errors.cron]} />
+              </Field>
+              <Field data-invalid={!!errors.windowBuilds}>
+                <FieldLabel htmlFor="windowBuilds">builds to look back on</FieldLabel>
+                <Input
+                  id="windowBuilds"
+                  type="number"
+                  min={1}
+                  step={1}
+                  aria-invalid={!!errors.windowBuilds}
+                  {...register("windowBuilds", { valueAsNumber: true })}
+                />
+                <FieldError errors={[errors.windowBuilds]} />
+              </Field>
+            </FieldGroup>
           </FieldSet>
           <FieldError errors={[errors.root]} />
         </CardContent>
@@ -107,10 +116,10 @@ export const FlakyDetectionFormSkeleton = () => (
   <Card size="default" aria-hidden className="w-full">
     <CardContent className="flex flex-col gap-5">
       <Skeleton className="h-4 w-40" />
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+      <FieldGroup>
         <FieldSkeleton />
         <FieldSkeleton />
-      </div>
+      </FieldGroup>
     </CardContent>
     <CardFooter className="flex flex-row justify-end">
       <Skeleton className="h-8 w-32 rounded-lg" />
