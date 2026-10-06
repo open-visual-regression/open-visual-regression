@@ -54,7 +54,6 @@ export const FlakyDetectionForm = ({ settings, running }: FlakyDetectionFormProp
   const { execute, status } = useServerAction(serverClient.jobs.updateFlakyDetection, {
     interceptors: [
       onSuccess(() => {
-        toast.success("flaky detection updated");
         router.refresh();
       }),
       onError((err) => setError("root", { message: err.message })),
@@ -73,7 +72,9 @@ export const FlakyDetectionForm = ({ settings, running }: FlakyDetectionFormProp
   };
 
   const handleFormSubmit = async (values: FlakyDetectionFormValues) => {
-    await save(values);
+    if (await save(values)) {
+      toast.success("flaky detection updated");
+    }
   };
 
   const isSubmitting = status === "pending";

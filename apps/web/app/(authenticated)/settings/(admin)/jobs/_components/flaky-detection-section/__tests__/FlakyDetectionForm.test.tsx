@@ -159,7 +159,8 @@ describe("FlakyDetectionForm", () => {
     await user.type(screen.getByLabelText(/builds to look back on/i), "50");
     await user.click(screen.getByRole("button", { name: /run now/i }));
 
-    await waitFor(() => expect(mockRun).toHaveBeenCalled());
+    expect(await screen.findByText("flaky detection started")).toBeVisible();
+    expect(screen.queryByText("flaky detection updated")).not.toBeInTheDocument();
     expect(mockUpdate).toHaveBeenCalledWith({ ...SETTINGS, enabled: true, windowBuilds: 50 });
     expect(mockUpdate.mock.invocationCallOrder[0]).toBeLessThan(
       mockRun.mock.invocationCallOrder[0]!,
