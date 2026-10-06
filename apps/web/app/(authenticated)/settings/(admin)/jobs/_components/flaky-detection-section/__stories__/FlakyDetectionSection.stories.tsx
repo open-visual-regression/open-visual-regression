@@ -26,19 +26,6 @@ export const Disabled: Story = {
 
 export const Enabled: Story = {
   args: {
-    settings: {
-      enabled: true,
-      cron: "17 */6 * * *",
-      windowBuilds: 50,
-      minReverts: 3,
-      minSamples: 20,
-      minChangeRate: 0.6,
-    },
-  },
-};
-
-export const CustomSchedule: Story = {
-  args: {
-    settings: { ...DEFAULT_FLAKY_DETECTION_SETTINGS, enabled: true, cron: "0 */12 * * *" },
+    settings: { enabled: true, cron: "0 */6 * * *", windowBuilds: 50 },
   },
 };

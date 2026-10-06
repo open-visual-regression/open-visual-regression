@@ -11,8 +11,8 @@ export class JobsSettingsPage {
     return this.page.getByRole("switch", { name: /detect flaky stories/i });
   }
 
-  minRevertsField(): Locator {
-    return this.page.getByLabel(/returns to an earlier look/i);
+  windowBuildsField(): Locator {
+    return this.page.getByLabel(/builds to look back on/i);
   }
 
   saveButton(): Locator {
