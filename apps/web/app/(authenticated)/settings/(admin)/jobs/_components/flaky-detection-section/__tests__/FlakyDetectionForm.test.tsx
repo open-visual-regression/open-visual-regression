@@ -1,3 +1,4 @@
+import { useRouter } from "next/navigation";
 import { vi } from "vitest";
 
 import type { FlakyDetectionSettings } from "@ovr/api/contracts/jobs";
@@ -9,9 +10,11 @@ import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
 import { FlakyDetectionForm } from "../FlakyDetectionForm";
 
 vi.mock("@/lib/router");
+vi.mock("next/navigation");
 
 const mockUpdate = vi.mocked(serverClient.jobs.updateFlakyDetection);
 const mockRun = vi.mocked(serverClient.jobs.runFlakyDetection);
+const mockRefresh = vi.mocked(useRouter)().refresh;
 
 const SETTINGS: FlakyDetectionSettings = {
   enabled: true,
@@ -88,6 +91,7 @@ describe("FlakyDetectionForm", () => {
     resolveUpdate!([null, undefined]);
 
     expect(await screen.findByText("flaky detection updated")).toBeVisible();
+    expect(mockRefresh).toHaveBeenCalled();
   });
 
   it("should show the error message when saving fails", async ({ user }) => {
@@ -117,6 +121,7 @@ describe("FlakyDetectionForm", () => {
 
     expect(mockRun).toHaveBeenCalled();
     expect(await screen.findByText("flaky detection started")).toBeVisible();
+    expect(mockRefresh).toHaveBeenCalled();
   });
 
   it("should disable run now while detection is off", () => {

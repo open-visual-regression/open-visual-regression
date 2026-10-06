@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { onError, onSuccess } from "@orpc/client";
 import { useServerAction } from "@orpc/react/hooks";
+import { useRouter } from "next/navigation";
 import { Controller, useForm, useWatch } from "react-hook-form";
 
 import type { FlakyDetectionSettings } from "@ovr/api/contracts/jobs";
@@ -31,6 +32,7 @@ export type FlakyDetectionFormProps = {
 };
 
 export const FlakyDetectionForm = ({ settings }: FlakyDetectionFormProps) => {
+  const router = useRouter();
   const {
     register,
     handleSubmit,
@@ -48,6 +50,7 @@ export const FlakyDetectionForm = ({ settings }: FlakyDetectionFormProps) => {
     interceptors: [
       onSuccess(() => {
         toast.success("flaky detection updated");
+        router.refresh();
       }),
       onError((err) => setError("root", { message: err.message })),
     ],
@@ -65,6 +68,7 @@ export const FlakyDetectionForm = ({ settings }: FlakyDetectionFormProps) => {
       interceptors: [
         onSuccess(() => {
           toast.success("flaky detection started");
+          router.refresh();
         }),
         onError((err) => {
           toast.error(err.message);
