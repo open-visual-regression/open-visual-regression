@@ -1,3 +1,4 @@
+import { oc } from "@orpc/contract";
 import cronParser from "cron-parser";
 import { z } from "zod";
 
@@ -38,3 +39,16 @@ export const storedFlakyDetectionSettingsSchema = z
     windowBuilds: shape.windowBuilds.catch(DEFAULT_FLAKY_DETECTION_SETTINGS.windowBuilds),
   })
   .catch(DEFAULT_FLAKY_DETECTION_SETTINGS);
+
+export const getFlakyDetectionOutputSchema = z.object({
+  settings: flakyDetectionSettingsSchema,
+});
+
+export const getFlakyDetectionContract = oc.output(getFlakyDetectionOutputSchema);
+
+export const updateFlakyDetectionContract = oc.input(flakyDetectionSettingsSchema).output(z.void());
+
+export const contract = {
+  getFlakyDetection: getFlakyDetectionContract,
+  updateFlakyDetection: updateFlakyDetectionContract,
+} as const;

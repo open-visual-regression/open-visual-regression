@@ -1,5 +1,7 @@
 import type { Job } from "bullmq";
 
+import type { JobName } from "@ovr/db/schema";
+
 import {
   publishBuildStatusEvent as publishBuildStatusEventCmd,
   type BuildStatusEvent,
@@ -15,6 +17,7 @@ import {
   enqueueProjectPurge as enqueueProjectPurgeJob,
   enqueuePurge as enqueuePurgeJob,
   enqueuePurgeMany as enqueuePurgeManyJob,
+  scheduleJob as scheduleJobCmd,
   type CanceledBuildJobs,
   type CaptureGroupJobPayload,
   type DiffJobPayload,
@@ -80,3 +83,6 @@ export const enqueueFlakySnapshotScanMany = (
 
 export const cancelBuildJobs = (canceled: CanceledBuildJobs[]): Promise<void> =>
   whenConnected(() => cancelBuildJobsJob(canceled, connection));
+
+export const scheduleJob = (job: JobName, pattern: string | null): Promise<void> =>
+  whenConnected(() => scheduleJobCmd(connection, job, pattern));

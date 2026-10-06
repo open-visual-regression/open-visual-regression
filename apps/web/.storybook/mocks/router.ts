@@ -1,6 +1,7 @@
 import { implement } from "@orpc/server";
 
 import { contract } from "@ovr/api/contracts/contract";
+import { DEFAULT_FLAKY_DETECTION_SETTINGS } from "@ovr/api/contracts/jobs";
 
 import type { serverClient as RealServerClient } from "../../lib/router";
 
@@ -189,5 +190,11 @@ export const serverClient: typeof RealServerClient = {
         processing: 0,
       }))
       .actionable(),
+  },
+  jobs: {
+    getFlakyDetection: os.jobs.getFlakyDetection
+      .handler(() => ({ settings: DEFAULT_FLAKY_DETECTION_SETTINGS }))
+      .actionable(),
+    updateFlakyDetection: os.jobs.updateFlakyDetection.handler(() => undefined).actionable(),
   },
 } as const;

@@ -7,6 +7,7 @@ import * as diffs from "./diffs";
 import * as gitIntegrations from "./gitIntegrations";
 import * as health from "./health";
 import * as invitations from "./invitations";
+import * as jobs from "./jobs";
 import * as organizations from "./organizations";
 import * as projects from "./projects";
 import * as setup from "./setup";
@@ -32,4 +33,5 @@ export const serverClient = {
   snapshots,
   gitIntegrations,
   accessTokens,
+  jobs,
 } as const;
