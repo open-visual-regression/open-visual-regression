@@ -1,12 +1,18 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { CheckCircle2Icon, CircleDotIcon, InfoIcon, OctagonXIcon, ZapIcon } from "lucide-react";
 
-import { Toast, ToastContainer } from "../toast";
+import { Toaster } from "../sonner";
+import { Toast, ToastContainer, toast } from "../toast";
 
 const meta: Meta<typeof Toast> = {
   title: "UI/Toast",
   component: Toast,
   tags: ["autodocs"],
+  parameters: {
+    ovr: {
+      viewports: ["desktop", "tablet", "mobile"],
+    },
+  },
 };
 
 export default meta;
@@ -125,4 +131,22 @@ export const Stack: Story = {
       </ToastContainer>
     </div>
   ),
+};
+
+export const InApp: Story = {
+  name: "Toaster (as mounted in app)",
+  render: () => (
+    <div className="h-screen min-h-[480px]">
+      <Toaster expand duration={Infinity} />
+    </div>
+  ),
+  play: () => {
+    toast.dismissAll();
+    toast.success("Run approved", { description: "All snapshots accepted." });
+    toast.error("Regression detected", {
+      description: "Visual diffs exceed threshold on feature/navbar.",
+      actionLabel: "Review",
+      onAction: () => {},
+    });
+  },
 };
