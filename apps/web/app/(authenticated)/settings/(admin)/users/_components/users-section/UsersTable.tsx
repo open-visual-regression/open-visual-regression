@@ -10,8 +10,11 @@ import { useTanStackTableDevtools } from "@tanstack/react-table-devtools";
 import { useMemo } from "react";
 
 import { type UserSchema } from "@ovr/api/contracts/users";
-import { Badge } from "@ovr/ui/components/badge";
+import { Badge, BadgeSkeleton } from "@ovr/ui/components/badge";
+import { ButtonSkeleton } from "@ovr/ui/components/button";
 import { Checkbox } from "@ovr/ui/components/checkbox";
+import { ChevronDownIcon, Icon } from "@ovr/ui/components/icon";
+import { Skeleton } from "@ovr/ui/components/skeleton";
 import {
   Table,
   TableContainer,
@@ -38,15 +41,26 @@ type UsersTableProps = {
   currentUserId: string;
   search?: string;
   readOnly?: boolean;
+  // Renders each column's skeleton in place of its cells, for the loading state.
+  loading?: boolean;
 };
 
-export const UsersTable = ({ data, currentUserId, search, readOnly = false }: UsersTableProps) => {
+export const UsersTable = ({
+  data,
+  currentUserId,
+  search,
+  readOnly = false,
+  loading = false,
+}: UsersTableProps) => {
   const columns = useMemo(
     () =>
       columnHelper.columns([
         columnHelper.display({
           id: "select",
-          meta: { className: "w-px" },
+          meta: {
+            className: "w-px",
+            skeleton: <Skeleton className="size-3.5 rounded-lg" />,
+          },
           cell: ({ row }) =>
             row.getCanSelect() ? (
               <Checkbox
@@ -56,10 +70,24 @@ export const UsersTable = ({ data, currentUserId, search, readOnly = false }: Us
               />
             ) : null,
         }),
-        columnHelper.accessor("name", { header: "Name" }),
-        columnHelper.accessor("email", { header: "Email" }),
+        columnHelper.accessor("name", {
+          header: "Name",
+          meta: { skeleton: <Skeleton className="h-4 w-24" /> },
+        }),
+        columnHelper.accessor("email", {
+          header: "Email",
+          meta: { skeleton: <Skeleton className="h-4 w-40" /> },
+        }),
         columnHelper.accessor("role", {
           header: "Role",
+          meta: {
+            skeleton: (
+              <ButtonSkeleton size="sm" className="w-full justify-between">
+                member
+                <Icon icon={ChevronDownIcon} size={12} />
+              </ButtonSkeleton>
+            ),
+          },
           cell: ({ row }) => (
             <RoleActions
               userId={row.original.id}
@@ -73,7 +101,7 @@ export const UsersTable = ({ data, currentUserId, search, readOnly = false }: Us
         }),
         columnHelper.accessor("status", {
           header: "Status",
-          meta: { className: "text-center" },
+          meta: { className: "text-center", skeleton: <BadgeSkeleton className="w-14" /> },
           cell: ({ getValue }) =>
             getValue() === "invited" ? (
               <Badge color="gray">invited</Badge>
@@ -108,7 +136,7 @@ export const UsersTable = ({ data, currentUserId, search, readOnly = false }: Us
   const columnCount = table.getAllLeafColumns().length;
 
   return (
-    <TableContainer>
+    <TableContainer aria-hidden={loading || undefined}>
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
@@ -135,7 +163,11 @@ export const UsersTable = ({ data, currentUserId, search, readOnly = false }: Us
               <TableRow key={row.id} data-state={row.getIsSelected() ? "selected" : undefined}>
                 {row.getAllCells().map((cell) => (
                   <TableCell key={cell.id} className={cell.column.columnDef.meta?.className}>
-                    <table.FlexRender cell={cell} />
+                    {loading ? (
+                      cell.column.columnDef.meta?.skeleton
+                    ) : (
+                      <table.FlexRender cell={cell} />
+                    )}
                   </TableCell>
                 ))}
               </TableRow>
@@ -158,3 +190,12 @@ export const UsersTable = ({ data, currentUserId, search, readOnly = false }: Us
     </TableContainer>
   );
 };
+
+// Only the ids are read while loading; every cell shows its column's skeleton instead.
+const SKELETON_ROWS = Array.from({ length: 3 }, (_, index) => ({
+  id: `skeleton-${index}`,
+})) as UserSchema[];
+
+export const UsersTableSkeleton = () => (
+  <UsersTable data={SKELETON_ROWS} currentUserId="" readOnly loading />
+);

@@ -7,9 +7,9 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { Button } from "@ovr/ui/components/button";
+import { Button, ButtonSkeleton } from "@ovr/ui/components/button";
 import { Card, CardContent, CardFooter } from "@ovr/ui/components/card";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@ovr/ui/components/field";
+import { Field, FieldError, FieldGroup, FieldLabel, FieldSkeleton } from "@ovr/ui/components/field";
 import { Icon, PlusIcon } from "@ovr/ui/components/icon";
 import { Input } from "@ovr/ui/components/input";
 import { Textarea } from "@ovr/ui/components/textarea";
@@ -73,48 +73,45 @@ export const NewProjectForm = () => {
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)}>
-      <div className="flex flex-col gap-2">
-        <Typography variant="label">general</Typography>
-        <Card size="default">
-          <CardContent className="flex flex-col gap-5">
-            <FieldGroup>
-              <Field data-invalid={!!errors.projectName}>
-                <FieldLabel>name</FieldLabel>
-                <Input
-                  id="name"
-                  placeholder="enter the project name"
-                  aria-invalid={!!errors.projectName}
-                  {...register("projectName")}
-                />
-                <FieldError errors={[errors.projectName]} />
-              </Field>
-            </FieldGroup>
-            <FieldGroup>
-              <Field data-invalid={!!errors.projectDescription}>
-                <FieldLabel>description</FieldLabel>
-                <Textarea
-                  id="description"
-                  placeholder="enter the project description"
-                  aria-invalid={!!errors.projectDescription}
-                  {...register("projectDescription")}
-                />
-                <FieldError errors={[errors.projectDescription]} />
-              </Field>
-            </FieldGroup>
-            <FieldGroup>
-              <Field data-invalid={!!errors.gitMainBranch}>
-                <FieldLabel>git main branch</FieldLabel>
-                <Input
-                  id="gitMainBranch"
-                  placeholder="enter the baseline git branch"
-                  aria-invalid={!!errors.gitMainBranch}
-                  {...register("gitMainBranch")}
-                />
-                <FieldError errors={[errors.gitMainBranch]} />
-              </Field>
-            </FieldGroup>
-          </CardContent>
-          <CardFooter className="flex flex-row gap-3 justify-between">
+      <NewProjectFormLayout
+        name={
+          <Field data-invalid={!!errors.projectName}>
+            <FieldLabel>name</FieldLabel>
+            <Input
+              id="name"
+              placeholder="enter the project name"
+              aria-invalid={!!errors.projectName}
+              {...register("projectName")}
+            />
+            <FieldError errors={[errors.projectName]} />
+          </Field>
+        }
+        description={
+          <Field data-invalid={!!errors.projectDescription}>
+            <FieldLabel>description</FieldLabel>
+            <Textarea
+              id="description"
+              placeholder="enter the project description"
+              aria-invalid={!!errors.projectDescription}
+              {...register("projectDescription")}
+            />
+            <FieldError errors={[errors.projectDescription]} />
+          </Field>
+        }
+        gitMainBranch={
+          <Field data-invalid={!!errors.gitMainBranch}>
+            <FieldLabel>git main branch</FieldLabel>
+            <Input
+              id="gitMainBranch"
+              placeholder="enter the baseline git branch"
+              aria-invalid={!!errors.gitMainBranch}
+              {...register("gitMainBranch")}
+            />
+            <FieldError errors={[errors.gitMainBranch]} />
+          </Field>
+        }
+        actions={
+          <>
             <ButtonLink href="/projects" size="lg" variant="outline" color="neutral">
               cancel
             </ButtonLink>
@@ -122,9 +119,54 @@ export const NewProjectForm = () => {
               <Icon icon={PlusIcon} />
               {isSubmitting ? "creating..." : "create project"}
             </Button>
-          </CardFooter>
-        </Card>
-      </div>
+          </>
+        }
+      />
     </form>
   );
 };
+
+type NewProjectFormLayoutProps = {
+  name: React.ReactNode;
+  description: React.ReactNode;
+  gitMainBranch: React.ReactNode;
+  actions: React.ReactNode;
+};
+
+const NewProjectFormLayout = ({
+  name,
+  description,
+  gitMainBranch,
+  actions,
+}: NewProjectFormLayoutProps) => (
+  <div className="flex flex-col gap-2">
+    <Typography variant="label">general</Typography>
+    <Card size="default">
+      <CardContent className="flex flex-col gap-5">
+        <FieldGroup>{name}</FieldGroup>
+        <FieldGroup>{description}</FieldGroup>
+        <FieldGroup>{gitMainBranch}</FieldGroup>
+      </CardContent>
+      <CardFooter className="flex flex-row gap-3 justify-between">{actions}</CardFooter>
+    </Card>
+  </div>
+);
+
+export const NewProjectFormSkeleton = () => (
+  <div aria-hidden>
+    <NewProjectFormLayout
+      name={<FieldSkeleton label="name" />}
+      description={<FieldSkeleton label="description" className="h-16" />}
+      gitMainBranch={<FieldSkeleton label="git main branch" />}
+      actions={
+        <>
+          <ButtonSkeleton size="lg">cancel</ButtonSkeleton>
+          <ButtonSkeleton size="lg">
+            <Icon icon={PlusIcon} />
+            create project
+          </ButtonSkeleton>
+        </>
+      }
+    />
+  </div>
+);

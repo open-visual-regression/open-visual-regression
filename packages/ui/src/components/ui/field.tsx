@@ -74,12 +74,14 @@ const Field = ({
 );
 
 type FieldSkeletonProps = {
+  // Field labels are static, so pass the real one and the skeleton is exactly as tall as the field.
+  label?: React.ReactNode;
   className?: string;
 };
 
-const FieldSkeleton = ({ className }: FieldSkeletonProps) => (
+const FieldSkeleton = ({ label, className }: FieldSkeletonProps) => (
   <div aria-hidden data-slot="field" className="flex w-full flex-col gap-2">
-    <Skeleton className="h-3 w-20" />
+    {label ? <FieldLabel>{label}</FieldLabel> : <Skeleton className="h-3 w-20" />}
     <Skeleton className={cn("h-8 w-full rounded-lg", className)} />
   </div>
 );
