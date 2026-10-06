@@ -1,8 +1,8 @@
 import { z } from "zod";
 
+import { cronPatternSchema } from "@ovr/api/contracts/jobs";
 import { dbClient } from "@ovr/db/client";
 import { createLogger } from "@ovr/logger";
-import { cronPatternSchema } from "@ovr/queue";
 import { enqueueFlakySnapshotScanMany } from "@ovr/queue/producer";
 
 const logger = createLogger("builds");

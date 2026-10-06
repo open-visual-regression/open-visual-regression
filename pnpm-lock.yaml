@@ -476,6 +476,9 @@ importers:
       '@orpc/contract':
         specifier: ^1.14.14
         version: 1.14.14
+      cron-parser:
+        specifier: 4.9.0
+        version: 4.9.0
       zod:
         specifier: ^4.5.1
         version: 4.5.1
@@ -486,9 +489,15 @@ importers:
       typescript:
         specifier: 6.0.3
         version: 6.0.3
+      vitest:
+        specifier: ^4.1.11
+        version: 4.1.11(@types/node@22.20.1)(@vitest/browser-playwright@4.1.11)(@vitest/coverage-v8@4.1.11)(jsdom@29.1.1(@noble/hashes@2.4.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.0(@types/node@22.20.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))
 
   packages/builds:
     dependencies:
+      '@ovr/api':
+        specifier: workspace:*
+        version: link:../api
       '@ovr/db':
         specifier: workspace:*
         version: link:../db
@@ -744,9 +753,6 @@ importers:
       bullmq:
         specifier: ^5.81.3
         version: 5.81.3
-      cron-parser:
-        specifier: 4.9.0
-        version: 4.9.0
       ioredis:
         specifier: 5.11.1
         version: 5.11.1

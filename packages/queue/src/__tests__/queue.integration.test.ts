@@ -2,7 +2,6 @@ import { Queue, Worker } from "bullmq";
 import type { Redis } from "ioredis";
 
 import {
-  cronPatternSchema,
   enqueueCaptureGroup,
   enqueueDiff,
   enqueueExtract,
@@ -236,16 +235,6 @@ describe("queue", () => {
       await scheduleFlakySnapshotDispatch(connection, null);
 
       expect(await openQueue(QueueName.FLAKY_SNAPSHOT_DISPATCH).getJobSchedulers()).toEqual([]);
-    });
-  });
-
-  describe("cronPatternSchema", () => {
-    test.each(["17 * * * *", "0 */6 * * *", "0 3 * * 1-5"])("should accept %s", (pattern) => {
-      expect(cronPatternSchema.safeParse(pattern).success).toBe(true);
-    });
-
-    test.each(["hourly", "61 * * * *", "* * * *  * * *"])("should reject %s", (pattern) => {
-      expect(cronPatternSchema.safeParse(pattern).success).toBe(false);
     });
   });
 });
