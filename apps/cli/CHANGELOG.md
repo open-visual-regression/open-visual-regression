@@ -1,5 +1,11 @@
 # @open-visual-regression/cli
 
+## 0.7.0
+
+### Minor Changes
+
+- [#297](https://github.com/open-visual-regression/open-visual-regression/pull/297) [`3190674`](https://github.com/open-visual-regression/open-visual-regression/commit/3190674f6861f9907a17b18622a0535045167c24) Thanks [@tgfischer](https://github.com/tgfischer)! - Filter `ovr snapshots list` to flaky snapshots or ones with warnings with `--flag flaky` and `--flag warning`.
+
 ## 0.6.1
 
 ### Patch Changes

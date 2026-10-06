@@ -1,5 +1,15 @@
 # @ovr/api
 
+## 0.2.6
+
+### Patch Changes
+
+- [#303](https://github.com/open-visual-regression/open-visual-regression/pull/303) [`f059de4`](https://github.com/open-visual-regression/open-visual-regression/commit/f059de4dd22306ed975024b2680bd1d25d6fcfaa) Thanks [@tgfischer](https://github.com/tgfischer)! - Let admins read and update flaky detection settings through the API. Saving reschedules the flaky snapshot dispatch, so a new schedule applies without restarting the worker.
+
+- [#301](https://github.com/open-visual-regression/open-visual-regression/pull/301) [`990c406`](https://github.com/open-visual-regression/open-visual-regression/commit/990c406d9b44c6c258fcc84b05d97497381306fe) Thanks [@tgfischer](https://github.com/tgfischer)! - Share the flaky detection settings schema and its defaults between the worker and the API. `cronPatternSchema` moves from `@ovr/queue` to `@ovr/api/contracts/jobs`.
+
+- [#295](https://github.com/open-visual-regression/open-visual-regression/pull/295) [`756a5b3`](https://github.com/open-visual-regression/open-visual-regression/commit/756a5b38e9fee5c07525daf34227cca2c934842f) Thanks [@tgfischer](https://github.com/tgfischer)! - Accept a `flags` filter on `snapshots.list` and `snapshots.getAdjacent`, and list the flags present in a build with `snapshots.listFlags`.
+
 ## 0.2.5
 
 ### Patch Changes

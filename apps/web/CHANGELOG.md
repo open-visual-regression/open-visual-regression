@@ -1,5 +1,26 @@
 # @ovr/web
 
+## 0.9.4
+
+### Patch Changes
+
+- [#303](https://github.com/open-visual-regression/open-visual-regression/pull/303) [`f059de4`](https://github.com/open-visual-regression/open-visual-regression/commit/f059de4dd22306ed975024b2680bd1d25d6fcfaa) Thanks [@tgfischer](https://github.com/tgfischer)! - Let admins read and update flaky detection settings through the API. Saving reschedules the flaky snapshot dispatch, so a new schedule applies without restarting the worker.
+
+- [#304](https://github.com/open-visual-regression/open-visual-regression/pull/304) [`8eb78b5`](https://github.com/open-visual-regression/open-visual-regression/commit/8eb78b5d41a752f9e544adf3c2d975ec518de2fa) Thanks [@tgfischer](https://github.com/tgfischer)! - Add a jobs page to the admin settings where flaky detection can be turned on, scheduled and tuned.
+
+- [#295](https://github.com/open-visual-regression/open-visual-regression/pull/295) [`756a5b3`](https://github.com/open-visual-regression/open-visual-regression/commit/756a5b38e9fee5c07525daf34227cca2c934842f) Thanks [@tgfischer](https://github.com/tgfischer)! - Accept a `flags` filter on `snapshots.list` and `snapshots.getAdjacent`, and list the flags present in a build with `snapshots.listFlags`.
+
+- [#296](https://github.com/open-visual-regression/open-visual-regression/pull/296) [`a24ad49`](https://github.com/open-visual-regression/open-visual-regression/commit/a24ad4986e4c12df320bb6e4df3d448e62318e25) Thanks [@tgfischer](https://github.com/tgfischer)! - Filter a build's snapshots to flaky ones or ones with warnings from a new flags filter.
+
+- Updated dependencies [[`f059de4`](https://github.com/open-visual-regression/open-visual-regression/commit/f059de4dd22306ed975024b2680bd1d25d6fcfaa), [`c1f0578`](https://github.com/open-visual-regression/open-visual-regression/commit/c1f0578966bd70195900367943cc9db9511b2789), [`990c406`](https://github.com/open-visual-regression/open-visual-regression/commit/990c406d9b44c6c258fcc84b05d97497381306fe), [`8eb78b5`](https://github.com/open-visual-regression/open-visual-regression/commit/8eb78b5d41a752f9e544adf3c2d975ec518de2fa), [`839acca`](https://github.com/open-visual-regression/open-visual-regression/commit/839accaa17ba3e735f64cc62fdad9665a1e5d48c), [`756a5b3`](https://github.com/open-visual-regression/open-visual-regression/commit/756a5b38e9fee5c07525daf34227cca2c934842f), [`43e1f76`](https://github.com/open-visual-regression/open-visual-regression/commit/43e1f763904fd2d3b7f807205faad089a8db9db9)]:
+  - @ovr/api@0.2.6
+  - @ovr/builds@0.1.14
+  - @ovr/queue@0.1.11
+  - @ovr/db@0.2.8
+  - @ovr/ui@0.1.3
+  - @ovr/reviews@0.1.14
+  - @ovr/git-status@0.1.10
+
 ## 0.9.3
 
 ### Patch Changes

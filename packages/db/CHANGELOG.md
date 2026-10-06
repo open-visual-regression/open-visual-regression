@@ -1,5 +1,13 @@
 # @ovr/db
 
+## 0.2.8
+
+### Patch Changes
+
+- [#300](https://github.com/open-visual-regression/open-visual-regression/pull/300) [`c1f0578`](https://github.com/open-visual-regression/open-visual-regression/commit/c1f0578966bd70195900367943cc9db9511b2789) Thanks [@tgfischer](https://github.com/tgfischer)! - Store settings for background jobs so they can be configured from the app.
+
+- [#294](https://github.com/open-visual-regression/open-visual-regression/pull/294) [`43e1f76`](https://github.com/open-visual-regression/open-visual-regression/commit/43e1f763904fd2d3b7f807205faad089a8db9db9) Thanks [@tgfischer](https://github.com/tgfischer)! - Filter a build's snapshots by whether they are flaky or have warnings.
+
 ## 0.2.7
 
 ### Patch Changes
