@@ -3,6 +3,9 @@
 import { useTable, tableFeatures, createColumnHelper } from "@tanstack/react-table";
 import { useTanStackTableDevtools } from "@tanstack/react-table-devtools";
 
+import { ButtonSkeleton } from "@ovr/ui/components/button";
+import { Icon, XIcon } from "@ovr/ui/components/icon";
+import { Skeleton } from "@ovr/ui/components/skeleton";
 import { StatusIcon } from "@ovr/ui/components/status-icon";
 import {
   Table,
@@ -29,13 +32,19 @@ const features = tableFeatures({});
 const columnHelper = createColumnHelper<typeof features, AccessTokenTableRow>();
 
 const columns = columnHelper.columns([
-  columnHelper.accessor("name", { header: "Name" }),
+  columnHelper.accessor("name", {
+    header: "Name",
+    meta: { skeleton: <Skeleton className="h-4 w-20" /> },
+  }),
   columnHelper.accessor("createdAt", {
     header: "Created at",
+    meta: { skeleton: <Skeleton className="h-4 w-34" /> },
     cell: ({ getValue }) => formatDateTime(getValue()),
   }),
   columnHelper.accessor("lastRequest", {
     header: "Last used",
+    // Sized for a date: "never" only shows until a token's first use.
+    meta: { skeleton: <Skeleton className="h-4 w-34" /> },
     cell: ({ getValue }) => {
       const lastRequest = getValue();
       if (!lastRequest) {
@@ -51,7 +60,15 @@ const columns = columnHelper.columns([
   }),
   columnHelper.display({
     id: "actions",
-    meta: { className: "text-right" },
+    meta: {
+      className: "text-right",
+      skeleton: (
+        <ButtonSkeleton size="sm" className="ml-auto">
+          <Icon icon={XIcon} />
+          revoke
+        </ButtonSkeleton>
+      ),
+    },
     cell: ({ row }) => (
       <RevokeAccessTokenButton tokenId={row.original.id} tokenName={row.original.name} />
     ),
@@ -60,9 +77,11 @@ const columns = columnHelper.columns([
 
 type AccessTokensTableProps = {
   data: AccessTokenTableRow[];
+  // Renders each column's skeleton in place of its cells, for the loading state.
+  loading?: boolean;
 };
 
-export const AccessTokensTable = ({ data }: AccessTokensTableProps) => {
+export const AccessTokensTable = ({ data, loading = false }: AccessTokensTableProps) => {
   const table = useTable({
     key: "access-tokens-table",
     columns,
@@ -74,7 +93,7 @@ export const AccessTokensTable = ({ data }: AccessTokensTableProps) => {
   useTanStackTableDevtools(table);
 
   return (
-    <TableContainer>
+    <TableContainer aria-hidden={loading || undefined}>
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
@@ -96,7 +115,11 @@ export const AccessTokensTable = ({ data }: AccessTokensTableProps) => {
             <TableRow key={row.id}>
               {row.getAllCells().map((cell) => (
                 <TableCell key={cell.id} className={cell.column.columnDef.meta?.className}>
-                  <table.FlexRender cell={cell} />
+                  {loading ? (
+                    cell.column.columnDef.meta?.skeleton
+                  ) : (
+                    <table.FlexRender cell={cell} />
+                  )}
                 </TableCell>
               ))}
             </TableRow>
@@ -106,3 +129,12 @@ export const AccessTokensTable = ({ data }: AccessTokensTableProps) => {
     </TableContainer>
   );
 };
+
+const SKELETON_ROWS: AccessTokenTableRow[] = Array.from({ length: 3 }, (_, index) => ({
+  id: `skeleton-${index}`,
+  name: "",
+  createdAt: new Date(0),
+  lastRequest: null,
+}));
+
+export const AccessTokensTableSkeleton = () => <AccessTokensTable data={SKELETON_ROWS} loading />;
