@@ -17,6 +17,8 @@ To review only flaky snapshots, pick **flaky** in the **flags** filter on the bu
 
 ## Enabling detection
 
-Flaky detection is off by default. Its settings are stored in the database rather than read from environment variables. Stories are re-evaluated at 7am and 7pm by default.
+Flaky detection is off by default. An admin turns it on under **Settings → Jobs**, where they can also set how often stories are re-evaluated, as a cron pattern (7am and 7pm by default), and how many recent main-branch builds are considered (30 by default).
+
+Changes apply on the next scheduled run, without restarting the worker.
 
 Detection only uses main-branch builds captured after it was turned on, so it takes a few builds before stories can be flagged.
