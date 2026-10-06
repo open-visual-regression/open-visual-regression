@@ -1,9 +1,9 @@
-import pixelmatch from "pixelmatch";
+import { diff as blazediff } from "@blazediff/core";
 import { PNG } from "pngjs";
 
 import { storage } from "@ovr/storage";
 
-const DEFAULT_PIXELMATCH_THRESHOLD = 0.1;
+const COLOR_DELTA_THRESHOLD = 0.1;
 
 const PNG_READ_TIMEOUT_MS = 30_000;
 
@@ -63,8 +63,8 @@ export const compareImages = async (
   const baselinePadded = padToCanvas(baselinePixels, width, height);
   const diffPixels = new Uint8Array(width * height * 4);
 
-  const pixelDiffCount = pixelmatch(baselinePadded, capturePadded, diffPixels, width, height, {
-    threshold: DEFAULT_PIXELMATCH_THRESHOLD,
+  const pixelDiffCount = blazediff(baselinePadded, capturePadded, diffPixels, width, height, {
+    threshold: COLOR_DELTA_THRESHOLD,
     diffMask: true,
   });
 

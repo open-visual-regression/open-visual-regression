@@ -24,7 +24,7 @@ export default defineConfig((options) => ({
     "bullmq",
     "ioredis",
     "tar",
-    "pixelmatch",
+    "@blazediff/core",
     "pngjs",
     "pg",
   ],
