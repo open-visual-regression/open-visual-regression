@@ -17,6 +17,6 @@ To review only flaky snapshots, pick **flaky** in the **flags** filter on the bu
 
 ## Enabling detection
 
-Flaky detection is off by default. Set `OVR_FLAKY_DETECTION_ENABLED=true` on the worker, or `worker.flakyDetection.enabled: true` in the Helm chart, to turn it on. Stories are re-evaluated hourly by default. See [Docker Compose](/self-hosting/docker-compose#optional-tuning) or [Helm](/self-hosting/helm#flaky-detection) for every setting.
+Flaky detection is off by default. Its settings are stored in the database rather than read from environment variables. Stories are re-evaluated at 7am and 7pm by default.
 
 Detection only uses main-branch builds captured after it was turned on, so it takes a few builds before stories can be flagged.

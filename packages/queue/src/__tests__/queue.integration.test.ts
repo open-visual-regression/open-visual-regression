@@ -9,7 +9,7 @@ import {
   enqueueFlakySnapshotScanMany,
   enqueuePublishStatus,
   QueueName,
-  scheduleFlakySnapshotDispatch,
+  scheduleJob,
   scheduleReaper,
   type CaptureGroupJobPayload,
   type DiffJobPayload,
@@ -215,24 +215,24 @@ describe("queue", () => {
     });
   });
 
-  describe("scheduleFlakySnapshotDispatch", () => {
-    test("should run the dispatch on a configured cron pattern", async ({
+  describe("scheduleJob", () => {
+    test("should run the flaky detection dispatch on the given cron pattern", async ({
       connection,
       openQueue,
     }) => {
-      await scheduleFlakySnapshotDispatch(connection, "0 */6 * * *");
+      await scheduleJob(connection, "flaky_detection", "0 */6 * * *");
 
       const [scheduler] = await openQueue(QueueName.FLAKY_SNAPSHOT_DISPATCH).getJobSchedulers();
 
       expect(scheduler?.pattern).toBe("0 */6 * * *");
     });
 
-    test("should stop running the dispatch once no cron pattern is configured", async ({
+    test("should stop running the flaky detection dispatch once no cron pattern is given", async ({
       connection,
       openQueue,
     }) => {
-      await scheduleFlakySnapshotDispatch(connection, "0 */6 * * *");
-      await scheduleFlakySnapshotDispatch(connection, null);
+      await scheduleJob(connection, "flaky_detection", "0 */6 * * *");
+      await scheduleJob(connection, "flaky_detection", null);
 
       expect(await openQueue(QueueName.FLAKY_SNAPSHOT_DISPATCH).getJobSchedulers()).toEqual([]);
     });

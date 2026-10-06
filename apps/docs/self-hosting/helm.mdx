@@ -81,19 +81,6 @@ CPU and memory scale with concurrent captures, not total build volume. Each capt
 | `web.resources` / `worker.resources` | `{}` | No requests or limits by default. |
 | `web.updateStrategy` / `worker.updateStrategy` | `RollingUpdate` | Needs room for two copies of the pod during a rollout. Use `Recreate` without that headroom. |
 
-## Flaky detection
-
-Flag stories whose screenshots keep changing between main-branch builds.
-
-| Value | Default | Description |
-| --- | --- | --- |
-| `worker.flakyDetection.enabled` | `false` | Turn flaky detection on. |
-| `worker.flakyDetection.cron` | app default `17 * * * *` | How often stories are re-evaluated, as a cron pattern. An invalid pattern falls back to the default. |
-| `worker.flakyDetection.windowBuilds` | app default `30` | Recent main-branch builds considered when evaluating a story. |
-| `worker.flakyDetection.minReverts` | app default `2` | Times a story must return to an earlier look within the window to be marked flaky. |
-| `worker.flakyDetection.minSamples` | app default `10` | Captures a story needs within the window before a high change rate alone marks it flaky. |
-| `worker.flakyDetection.minChangeRate` | app default `0.5` | Share of builds in which a story must change to be marked flaky. |
-
 ## Expose it
 
 Set `web.ingress.enabled: true` and `web.ingress.host`, plus `web.ingress.className` and `web.ingress.annotations` for your controller and TLS setup. Or use `kubectl port-forward`, see the `helm install` output for the command.

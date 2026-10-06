@@ -122,20 +122,6 @@ worker:
   diffConcurrency: ""
   # Local disk for extracted Storybook builds. Empty uses the app default (2 GB).
   storybookCacheBytes: ""
-  # Flag stories whose screenshots keep changing between main-branch builds.
-  # Empty values use the app defaults.
-  flakyDetection:
-    enabled: false
-    # How often stories are re-evaluated, as a cron pattern (default hourly).
-    cron: ""
-    # Recent main-branch builds considered per story (default 30).
-    windowBuilds: ""
-    # Returns to an earlier look that mark a story flaky (default 2).
-    minReverts: ""
-    # Captures needed before a high change rate alone marks a story flaky (default 10).
-    minSamples: ""
-    # Share of builds a story must change in to be marked flaky (default 0.5).
-    minChangeRate: ""
   resources: {}
   containerSecurityContext:
     allowPrivilegeEscalation: false

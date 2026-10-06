@@ -1,38 +1,28 @@
-import { z } from "zod";
-
-import { cronPatternSchema } from "@ovr/api/contracts/jobs";
+import {
+  storedFlakyDetectionSettingsSchema,
+  type FlakyDetectionSettings,
+} from "@ovr/api/contracts/jobs";
 import { dbClient } from "@ovr/db/client";
-import { createLogger } from "@ovr/logger";
+import { scheduleJob, type RedisConnection } from "@ovr/queue";
 import { enqueueFlakySnapshotScanMany } from "@ovr/queue/producer";
 
-const logger = createLogger("builds");
+const FLAKY_THRESHOLDS = { minReverts: 2, minSamples: 10, minChangeRate: 0.5 };
 
-const DEFAULT_FLAKY_DETECTION_CRON = "17 * * * *";
+export const getFlakyDetectionSettings = async (): Promise<FlakyDetectionSettings> => {
+  const stored = await dbClient.jobSettings.find("flaky_detection");
+  return storedFlakyDetectionSettingsSchema.parse(stored?.settings);
+};
 
-const settings = z.object({
-  windowBuilds: z.coerce.number().int().positive().catch(30),
-  minReverts: z.coerce.number().int().positive().catch(2),
-  minSamples: z.coerce.number().int().min(2).catch(10),
-  minChangeRate: z.coerce.number().positive().max(1).catch(0.5),
-});
+export const isFlakyDetectionEnabled = async (): Promise<boolean> =>
+  (await getFlakyDetectionSettings()).enabled;
 
-export const isFlakyDetectionEnabled = (): boolean =>
-  z.stringbool().catch(false).parse(process.env.OVR_FLAKY_DETECTION_ENABLED);
-
-export const getFlakyDetectionCron = (): string =>
-  cronPatternSchema
-    .default(DEFAULT_FLAKY_DETECTION_CRON)
-    .catch(({ input }) => {
-      logger.warn(
-        { pattern: input, fallback: DEFAULT_FLAKY_DETECTION_CRON },
-        "OVR_FLAKY_DETECTION_CRON is not a valid cron pattern, using the default",
-      );
-      return DEFAULT_FLAKY_DETECTION_CRON;
-    })
-    .parse(process.env.OVR_FLAKY_DETECTION_CRON || undefined);
+export const scheduleFlakyDetection = async (connection: RedisConnection): Promise<void> => {
+  const { enabled, cron } = await getFlakyDetectionSettings();
+  await scheduleJob(connection, "flaky_detection", enabled ? cron : null);
+};
 
 export const dispatchFlakySnapshotScans = async (): Promise<void> => {
-  if (!isFlakyDetectionEnabled()) {
+  if (!(await isFlakyDetectionEnabled())) {
     return;
   }
 
@@ -41,13 +31,10 @@ export const dispatchFlakySnapshotScans = async (): Promise<void> => {
 };
 
 export const scanFlakySnapshots = async (projectId: string): Promise<void> => {
-  await dbClient.flakySnapshots.recomputeForProject(
-    projectId,
-    settings.parse({
-      windowBuilds: process.env.OVR_FLAKY_DETECTION_WINDOW_BUILDS,
-      minReverts: process.env.OVR_FLAKY_DETECTION_MIN_REVERTS,
-      minSamples: process.env.OVR_FLAKY_DETECTION_MIN_SAMPLES,
-      minChangeRate: process.env.OVR_FLAKY_DETECTION_MIN_CHANGE_RATE,
-    }),
-  );
+  const { windowBuilds } = await getFlakyDetectionSettings();
+
+  await dbClient.flakySnapshots.recomputeForProject(projectId, {
+    windowBuilds,
+    ...FLAKY_THRESHOLDS,
+  });
 };
