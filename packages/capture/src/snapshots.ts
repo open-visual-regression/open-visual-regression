@@ -746,7 +746,6 @@ const diffAgainstBaselineSnapshot = async (
     return null;
   }
 
-  // Byte-identical screenshots can't differ, so skip downloading and decoding them.
   if (captureHash !== null && captureHash === baselineSnapshot.imageHash) {
     return {
       pixelDiffCount: 0,

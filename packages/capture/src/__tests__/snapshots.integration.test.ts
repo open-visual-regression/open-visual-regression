@@ -580,7 +580,6 @@ describe("snapshots", () => {
       project,
       captureConfiguration,
     }) => {
-      // Neither image is uploaded, so the diff fails if it tries to read them.
       const imageHash = createHash("sha256").update("identical screenshot").digest("hex");
 
       const [baselineSnapshot, captureSnapshotRow] = await dbClient.snapshots.createMany({
