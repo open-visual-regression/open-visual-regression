@@ -1,5 +1,18 @@
 # @ovr/worker
 
+## 0.9.4
+
+### Patch Changes
+
+- [#302](https://github.com/open-visual-regression/open-visual-regression/pull/302) [`839acca`](https://github.com/open-visual-regression/open-visual-regression/commit/839accaa17ba3e735f64cc62fdad9665a1e5d48c) Thanks [@tgfischer](https://github.com/tgfischer)! - Read flaky detection settings (on or off, schedule, and how many recent builds to consider) from the database instead of the `OVR_FLAKY_DETECTION_*` environment variables, which are removed along with `worker.flakyDetection` in the Helm chart. Remove `worker.flakyDetection` from your Helm values before upgrading; the chart's schema now rejects it.
+
+- Updated dependencies [[`f059de4`](https://github.com/open-visual-regression/open-visual-regression/commit/f059de4dd22306ed975024b2680bd1d25d6fcfaa), [`c1f0578`](https://github.com/open-visual-regression/open-visual-regression/commit/c1f0578966bd70195900367943cc9db9511b2789), [`990c406`](https://github.com/open-visual-regression/open-visual-regression/commit/990c406d9b44c6c258fcc84b05d97497381306fe), [`839acca`](https://github.com/open-visual-regression/open-visual-regression/commit/839accaa17ba3e735f64cc62fdad9665a1e5d48c), [`43e1f76`](https://github.com/open-visual-regression/open-visual-regression/commit/43e1f763904fd2d3b7f807205faad089a8db9db9)]:
+  - @ovr/builds@0.1.14
+  - @ovr/queue@0.1.11
+  - @ovr/db@0.2.8
+  - @ovr/capture@0.3.3
+  - @ovr/git-status@0.1.10
+
 ## 0.9.3
 
 ### Patch Changes

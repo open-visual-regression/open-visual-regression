@@ -1,5 +1,11 @@
 # @ovr/ui
 
+## 0.1.3
+
+### Patch Changes
+
+- [#304](https://github.com/open-visual-regression/open-visual-regression/pull/304) [`8eb78b5`](https://github.com/open-visual-regression/open-visual-regression/commit/8eb78b5d41a752f9e544adf3c2d975ec518de2fa) Thanks [@tgfischer](https://github.com/tgfischer)! - Add a jobs page to the admin settings where flaky detection can be turned on, scheduled and tuned.
+
 ## 0.1.2
 
 ### Patch Changes
