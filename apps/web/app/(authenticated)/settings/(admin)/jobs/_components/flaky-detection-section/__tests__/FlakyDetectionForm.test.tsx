@@ -125,10 +125,68 @@ describe("FlakyDetectionForm", () => {
     expect(mockRefresh).toHaveBeenCalled();
   });
 
-  it("should disable run now while detection is off", () => {
+  it("should disable run now while detection is switched off", () => {
     renderComponent({ ...SETTINGS, enabled: false });
 
     expect(screen.getByRole("button", { name: /run now/i })).toBeDisabled();
+  });
+
+  it("should enable run now as soon as detection is switched on", async ({ user }) => {
+    renderComponent({ ...SETTINGS, enabled: false });
+
+    await user.click(screen.getByRole("switch", { name: /enabled/i }));
+
+    expect(screen.getByRole("button", { name: /run now/i })).toBeEnabled();
+  });
+
+  it("should run without saving when nothing has changed", async ({ user }) => {
+    mockRun.mockResolvedValue([null, undefined]);
+    renderComponent();
+
+    await user.click(screen.getByRole("button", { name: /run now/i }));
+
+    await waitFor(() => expect(mockRun).toHaveBeenCalled());
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it("should save unsaved changes before running", async ({ user }) => {
+    mockUpdate.mockResolvedValue([null, undefined]);
+    mockRun.mockResolvedValue([null, undefined]);
+    renderComponent({ ...SETTINGS, enabled: false });
+
+    await user.click(screen.getByRole("switch", { name: /enabled/i }));
+    await user.clear(screen.getByLabelText(/builds to look back on/i));
+    await user.type(screen.getByLabelText(/builds to look back on/i), "50");
+    await user.click(screen.getByRole("button", { name: /run now/i }));
+
+    await waitFor(() => expect(mockRun).toHaveBeenCalled());
+    expect(mockUpdate).toHaveBeenCalledWith({ ...SETTINGS, enabled: true, windowBuilds: 50 });
+    expect(mockUpdate.mock.invocationCallOrder[0]).toBeLessThan(
+      mockRun.mock.invocationCallOrder[0]!,
+    );
+  });
+
+  it("should not run when saving the unsaved changes fails", async ({ user }) => {
+    mockUpdate.mockResolvedValue([createORPCError("SERVICE_UNAVAILABLE", 503), undefined]);
+    renderComponent({ ...SETTINGS, enabled: false });
+
+    await user.click(screen.getByRole("switch", { name: /enabled/i }));
+    await user.click(screen.getByRole("button", { name: /run now/i }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("SERVICE_UNAVAILABLE");
+    expect(mockRun).not.toHaveBeenCalled();
+  });
+
+  it("should not save or run when the unsaved changes are invalid", async ({ user }) => {
+    renderComponent();
+
+    await user.clear(screen.getByLabelText(/schedule/i));
+    await user.type(screen.getByLabelText(/schedule/i), "twice a day");
+    await user.click(screen.getByRole("button", { name: /run now/i }));
+
+    expect(await screen.findByText("you must enter a valid cron pattern")).toBeVisible();
+    expect(mockUpdate).not.toHaveBeenCalled();
+    expect(mockRun).not.toHaveBeenCalled();
   });
 
   it("should show the error message when the job cannot be started", async ({ user }) => {

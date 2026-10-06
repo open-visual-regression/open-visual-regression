@@ -42,7 +42,8 @@ export const FlakyDetectionForm = ({ settings, running }: FlakyDetectionFormProp
     handleSubmit,
     control,
     setError,
-    formState: { errors },
+    reset,
+    formState: { errors, isDirty },
   } = useForm<FlakyDetectionFormValues>({
     resolver: zodResolver(flakyDetectionFormSchema),
     defaultValues: settings,
@@ -60,8 +61,19 @@ export const FlakyDetectionForm = ({ settings, running }: FlakyDetectionFormProp
     ],
   });
 
-  const handleFormSubmit = (values: FlakyDetectionFormValues) => {
-    execute(values);
+  const save = async (values: FlakyDetectionFormValues): Promise<boolean> => {
+    const [error] = await execute(values);
+
+    if (error) {
+      return false;
+    }
+
+    reset(values);
+    return true;
+  };
+
+  const handleFormSubmit = async (values: FlakyDetectionFormValues) => {
+    await save(values);
   };
 
   const isSubmitting = status === "pending";
@@ -82,6 +94,15 @@ export const FlakyDetectionForm = ({ settings, running }: FlakyDetectionFormProp
   );
 
   const isRunning = running || runStatus === "pending";
+
+  // Run with what is on screen, so unsaved changes are saved first.
+  const handleRunNow = handleSubmit(async (values) => {
+    if (isDirty && !(await save(values))) {
+      return;
+    }
+
+    await runNow();
+  });
 
   useEffect(() => {
     if (!running) {
@@ -138,8 +159,8 @@ export const FlakyDetectionForm = ({ settings, running }: FlakyDetectionFormProp
           <Button
             type="button"
             variant="outline"
-            disabled={!settings.enabled || isRunning}
-            onClick={() => runNow()}
+            disabled={!enabled || isRunning || isSubmitting}
+            onClick={handleRunNow}
           >
             {isRunning ? (
               <Icon icon={RefreshCwIcon} className="animate-spin" />
