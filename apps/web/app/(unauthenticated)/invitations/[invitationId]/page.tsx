@@ -6,8 +6,6 @@ import { serverClient } from "@/lib/router";
 import { CenteredFormSection } from "../../_components/CenteredFormSection";
 import { InvitationCard } from "./_components/invitation-card/InvitationCard";
 
-export const dynamic = "force-dynamic";
-
 type InvitationPageProps = PageProps<"/invitations/[invitationId]">;
 
 export default async function InvitationPage(props: InvitationPageProps) {
