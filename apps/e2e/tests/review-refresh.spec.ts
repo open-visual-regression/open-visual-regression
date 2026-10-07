@@ -16,6 +16,9 @@ test.describe("Review refresh", () => {
     await buildPage.snapshotCard(reviewable).click();
     await page.waitForURL(`**/snapshots/${reviewable.snapshotId}`);
     await snapshotReviewPage.approveButton().click();
+    // Approving moves on to the next snapshot. The router keeps the page it leaves
+    // mounted but hidden, so finding "back" before the move would pick that copy.
+    await page.waitForURL((url) => !url.pathname.endsWith(reviewable.snapshotId));
 
     await buildPage.backButton().click();
     await page.waitForURL(`**/builds/${reviewable.buildId}`);

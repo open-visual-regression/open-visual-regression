@@ -1,5 +1,7 @@
 "server only";
 
+import { unstable_rethrow } from "next/navigation";
+
 import { type Role } from "@/lib/auth/roles";
 import { getCachedSession } from "@/lib/auth/session";
 
@@ -11,6 +13,8 @@ export const verifyRole = async (role: Role): Promise<Result<boolean>> => {
 
     return { status: "ok", data: session?.user.role === role };
   } catch (err) {
+    unstable_rethrow(err);
+
     return {
       status: "error",
       error: err instanceof Error ? err.message : "Failed to verify the user's role",

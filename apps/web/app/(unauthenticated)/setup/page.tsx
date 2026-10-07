@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { connection } from "next/server";
 
 import { usesTrustedProxy } from "@/lib/auth/config";
 import { serverClient } from "@/lib/router";
@@ -7,9 +8,9 @@ import { serverError } from "@/lib/utils/errors";
 import { CenteredFormSection } from "../_components/CenteredFormSection";
 import { SetupCard } from "./_components/setup-card/SetupCard";
 
-export const dynamic = "force-dynamic";
-
 export default async function SetupPage() {
+  await connection();
+
   if (usesTrustedProxy()) {
     notFound();
   }

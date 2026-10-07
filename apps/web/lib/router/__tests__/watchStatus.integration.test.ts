@@ -9,6 +9,7 @@ import { serverClient } from "@/lib/router";
 import { describe, expect, test } from "@/lib/testing/fixtures";
 
 vi.mock("next/headers");
+vi.mock("next/server");
 
 const TEST_PROJECT: AddProjectInputSchema = {
   projectName: "Test Project",

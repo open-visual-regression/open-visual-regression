@@ -1,3 +1,5 @@
+import { connection } from "next/server";
+
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
 
@@ -5,6 +7,8 @@ import { AccessTokensSection } from "./_components/access-tokens-section/AccessT
 import { AccessTokensPageShell } from "./_components/AccessTokensPageShell";
 
 export default async function AccessTokensPage() {
+  await connection();
+
   const [error, result] = await serverClient.accessTokens.list({});
 
   if (error) {
