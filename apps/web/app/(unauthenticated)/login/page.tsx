@@ -8,8 +8,6 @@ import { getSafeRedirectPath, CALLBACK_URL_PARAM } from "@/lib/utils/redirects";
 import { CenteredFormSection } from "../_components/CenteredFormSection";
 import { LoginCard } from "./_components/login-card/LoginCard";
 
-export const dynamic = "force-dynamic";
-
 type LoginPageProps = PageProps<"/login">;
 
 export default async function LoginPage(props: LoginPageProps) {
