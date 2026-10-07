@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@/test-utils";
 
-import { getLoginPath, getSafeRedirectPath } from "../redirects";
+import { getLoginPath, getSafeRedirectPath, isPublicPath } from "../redirects";
 
 describe("redirects", () => {
   describe("getLoginPath", () => {
@@ -29,5 +29,21 @@ describe("redirects", () => {
     ])("should fall back to the projects page for %j", (next) => {
       expect(getSafeRedirectPath(next)).toBe("/projects");
     });
+  });
+
+  describe("isPublicPath", () => {
+    it.each(["/login", "/setup", "/invitations/01900000-0000-7000-8000-000000000000"])(
+      "should allow %s without a session",
+      (pathname) => {
+        expect(isPublicPath(pathname)).toBe(true);
+      },
+    );
+
+    it.each(["/projects", "/settings/account", "/login-help", "/invitations-list"])(
+      "should require a session for %s",
+      (pathname) => {
+        expect(isPublicPath(pathname)).toBe(false);
+      },
+    );
   });
 });
