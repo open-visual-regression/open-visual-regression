@@ -6,6 +6,7 @@ import { serverClient } from "@/lib/router";
 import { test, describe, expect } from "@/lib/testing/fixtures";
 
 vi.mock("next/headers");
+vi.mock("next/server");
 
 describe("organizations", () => {
   describe("getOne", () => {

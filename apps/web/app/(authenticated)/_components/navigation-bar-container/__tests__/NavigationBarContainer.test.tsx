@@ -14,6 +14,7 @@ import { describe, expect, it, render, screen } from "@/test-utils";
 import { NavigationBarContainer } from "../NavigationBarContainer";
 
 vi.mock("next/headers");
+vi.mock("next/server");
 vi.mock("next/navigation");
 vi.mock("@/lib/auth/auth");
 vi.mock("@/lib/router");

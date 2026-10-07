@@ -12,6 +12,7 @@ import { observeBuildsInProgress, observeQueues, observeStorageOutbox } from "@/
 import { describe, expect, test } from "@/lib/testing/fixtures";
 
 vi.mock("next/headers");
+vi.mock("next/server");
 
 const OLD_TIMESTAMP = "2020-01-01T00:00:00.000Z";
 

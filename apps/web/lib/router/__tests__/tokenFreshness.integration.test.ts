@@ -10,6 +10,7 @@ import { serverClient } from "@/lib/router";
 import { test, describe, expect } from "@/lib/testing/fixtures";
 
 vi.mock("next/headers");
+vi.mock("next/server");
 vi.mock("@/lib/auth/config", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/auth/config")>()),
   getAuthConfig: vi.fn(),

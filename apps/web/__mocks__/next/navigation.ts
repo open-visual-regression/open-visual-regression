@@ -1,7 +1,7 @@
+import { ReadonlyURLSearchParams, unstable_rethrow } from "next/navigation";
 import { vi } from "vitest";
-import { ReadonlyURLSearchParams } from "next/navigation";
 
-export { ReadonlyURLSearchParams };
+export { ReadonlyURLSearchParams, unstable_rethrow };
 export const redirect = vi.fn();
 export const notFound = vi.fn();
 export const useRouter = vi

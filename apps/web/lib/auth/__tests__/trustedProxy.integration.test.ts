@@ -11,6 +11,7 @@ import { getAuthConfig } from "../config";
 import { getCachedSession } from "../session";
 
 vi.mock("next/headers");
+vi.mock("next/server");
 vi.mock("@/lib/auth/config", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/auth/config")>()),
   getAuthConfig: vi.fn(),
