@@ -6,6 +6,11 @@ export const REQUEST_PATH_HEADER = "x-ovr-request-path";
 
 export const FORBIDDEN_PATH = "/forbidden";
 
+const PUBLIC_PATHS = ["/login", "/setup", "/invitations", FORBIDDEN_PATH];
+
+export const isPublicPath = (pathname: string) =>
+  PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+
 export const getLoginPath = (callbackUrl: string) =>
   `/login?${new URLSearchParams({ [CALLBACK_URL_PARAM]: callbackUrl })}`;
 
