@@ -12,6 +12,9 @@ const nextConfig: NextConfig = {
     // Avoids an endless prefetch loop: https://github.com/vercel/next.js/issues/97135
     optimisticRouting: false,
   },
+  async headers() {
+    return [{ source: "/:path*{/}?", headers: [{ key: "X-Accel-Buffering", value: "no" }] }];
+  },
   async redirects() {
     return [{ source: "/", destination: "/projects", permanent: false }];
   },

@@ -255,6 +255,10 @@ Ready-made Compose files for each combination:
 - [`external-storage`](https://github.com/open-visual-regression/open-visual-regression/tree/main/examples/docker/external-storage)
 - [`fully-external`](https://github.com/open-visual-regression/open-visual-regression/tree/main/examples/docker/fully-external) — only `web` and `worker` run
 
+## Reverse proxy
+
+Pages stream in as their data loads, so a proxy in front of the dashboard must not buffer responses. The dashboard sends `X-Accel-Buffering: no`, which nginx honors. For other proxies and load balancers, turn response buffering off for the dashboard.
+
 ## Update
 
 ```sh
