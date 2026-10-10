@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import { findAffectedStories } from "../affectedStories";
 import { availableStorybookFixtures } from "../fixtures";
 import { readStoryTargets } from "../manifest";
+import { readModuleGraph } from "../moduleGraph";
 import { assertSupportedStorybookBuild, readStorybookBuildVersion } from "../version";
 
 const EXPECTED_STORY_IDS = [
@@ -14,9 +15,37 @@ const EXPECTED_STORY_IDS = [
   "components-button--skipped",
   "components-button--with-ovr-parameters",
   "components-button--with-play",
+  "components-card--default",
+  "components-lazy--default",
+];
+
+const PROJECT_FILE = /^\.\/(src|\.storybook)\//;
+
+const PROJECT_EDGES = [
+  "./src/Button.css <- ./src/Button.jsx",
+  "./src/Button.jsx <- ./src/Button.stories.jsx",
+  "./src/Card.jsx <- ./src/Card.stories.jsx",
+  "./src/Card.jsx <- ./src/Lazy.stories.jsx",
+  "./src/global.css <- ./.storybook/preview.js",
+  "./src/tones.js <- ./src/Button.jsx",
+  "./src/tones.js <- ./src/Card.jsx",
 ];
 
 const fixtures = availableStorybookFixtures();
+
+const repoRoot = path.resolve(fileURLToPath(import.meta.url), "../../../../..");
+
+const readProjectEdges = async (storybookDir: string): Promise<string[]> => {
+  const graph = await readModuleGraph(storybookDir);
+  if (!graph || "reason" in graph) {
+    throw new Error(`could not read the module graph: ${graph?.reason ?? "missing"}`);
+  }
+
+  return [...graph.importers]
+    .flatMap(([name, parents]) => parents.map((parent) => `${name} <- ${parent}`))
+    .filter((edge) => edge.split(" <- ").every((file) => PROJECT_FILE.test(file)))
+    .sort();
+};
 
 describe.skipIf(fixtures.length === 0)("built Storybook fixtures", () => {
   it.each(fixtures)(
@@ -34,13 +63,32 @@ describe.skipIf(fixtures.length === 0)("built Storybook fixtures", () => {
     const targets = await readStoryTargets(fixture.buildDir);
 
     expect(targets.map((target) => target.id).sort()).toEqual(EXPECTED_STORY_IDS);
-    expect(targets.every((target) => target.title === "Components/Button")).toBe(true);
+    expect(targets.map((target) => target.title)).toContain("Components/Button");
     expect(targets.map((target) => target.name)).toContain("Default");
   });
 
+  it.each(fixtures)("Storybook $name reads the same project graph", async (fixture) => {
+    expect(await readProjectEdges(fixture.buildDir)).toEqual(PROJECT_EDGES);
+  });
+
+  it.each(fixtures)(
+    "Storybook $name traces a shared module to every story that imports it",
+    async (fixture) => {
+      const shared = path.relative(repoRoot, path.join(fixture.dir, "src/tones.js"));
+
+      const result = await findAffectedStories({
+        storybookDir: fixture.buildDir,
+        projectDir: fixture.dir,
+        repoRoot,
+        changedFiles: [shared],
+      });
+
+      expect(result.mode === "some" && result.storyIds.sort()).toEqual(EXPECTED_STORY_IDS);
+    },
+  );
+
   it.each(fixtures)("Storybook $name traces a component change to its stories", async (fixture) => {
-    const repoRoot = path.resolve(fileURLToPath(import.meta.url), "../../../../..");
-    const component = path.relative(repoRoot, path.join(fixture.dir, "src/Button.jsx"));
+    const component = path.relative(repoRoot, path.join(fixture.dir, "src/Card.jsx"));
 
     const result = await findAffectedStories({
       storybookDir: fixture.buildDir,
@@ -49,11 +97,13 @@ describe.skipIf(fixtures.length === 0)("built Storybook fixtures", () => {
       changedFiles: [component],
     });
 
-    expect(result.mode === "some" && result.storyIds.sort()).toEqual(EXPECTED_STORY_IDS);
+    expect(result.mode === "some" && result.storyIds.sort()).toEqual([
+      "components-card--default",
+      "components-lazy--default",
+    ]);
   });
 
   it.each(fixtures)("Storybook $name captures everything when preview changes", async (fixture) => {
-    const repoRoot = path.resolve(fileURLToPath(import.meta.url), "../../../../..");
     const preview = path.relative(repoRoot, path.join(fixture.dir, ".storybook/preview.js"));
 
     const result = await findAffectedStories({

@@ -16,7 +16,9 @@ editing the constant.
 Each fixture is named `<builder>-v<major>`, pins one major of one builder, and
 installs independently of the repo workspace: `vite-v8`, `vite-v9` and
 `vite-v10`. `vite-v8` pins 8.5.x, so the floor we advertise is the one
-exercised. All of them share the stories in `fixtures/stories`.
+exercised. All of them share the stories in `fixtures/stories`, which import
+CSS, a shared module and a lazy component, plus an MDX page. Every fixture must
+read the same graph of those files from its stats, whatever its builder.
 
 The builds are not committed:
 
