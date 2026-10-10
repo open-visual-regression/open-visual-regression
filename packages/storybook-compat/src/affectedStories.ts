@@ -57,7 +57,7 @@ export const findAffectedStories = async ({
 }: AffectedStoriesInput): Promise<AffectedStories> => {
   const all = (reason: string): AffectedStories => ({ mode: "all", reason });
 
-  const stats = await readJson<{ modules?: StatsModule[] }>(
+  const stats = await readJson<{ version?: string; modules?: StatsModule[] }>(
     path.join(storybookDir, STATS_FILENAME),
   );
   const index = await readJson<{ entries?: Record<string, IndexEntry> }>(
@@ -65,6 +65,9 @@ export const findAffectedStories = async ({
   );
   if (!stats?.modules || !index?.entries) {
     return all(`${STATS_FILENAME} or index.json is missing; build Storybook with --stats-json`);
+  }
+  if (stats.version) {
+    return all(`${STATS_FILENAME} was written by Webpack or Rspack; only Vite builds are traced`);
   }
 
   const toRepoPath = (name: string): string =>
