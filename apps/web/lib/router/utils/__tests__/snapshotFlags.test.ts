@@ -36,7 +36,7 @@ describe("getSnapshotFlagDetails", () => {
     ).toEqual([]);
   });
 
-  it("should include the flaky history of a flagged story", () => {
+  it("should include the flaky detection stats of a flagged story", () => {
     expect(
       getSnapshotFlagDetails({
         flakySnapshot,
@@ -46,19 +46,22 @@ describe("getSnapshotFlagDetails", () => {
     ).toEqual([
       {
         flag: "flaky",
-        history: { sampleCount: 30, changeCount: 9, revertCount: 6, sameCommitMismatchCount: 1 },
+        detection: { sampleCount: 30, changeCount: 9, revertCount: 6, sameCommitMismatchCount: 1 },
         matchesEarlierVariant: false,
       },
     ]);
   });
 
-  it("should flag a change that matches an earlier variant even without flaky history", () => {
+  it("should flag a change that matches an earlier variant even without flaky detection stats", () => {
     expect(
       getSnapshotFlagDetails({
         flakySnapshot: undefined,
         matchesEarlierVariant: true,
         hasUncaughtPageError: true,
       }),
-    ).toEqual([{ flag: "flaky", history: null, matchesEarlierVariant: true }, { flag: "warning" }]);
+    ).toEqual([
+      { flag: "flaky", detection: null, matchesEarlierVariant: true },
+      { flag: "warning" },
+    ]);
   });
 });

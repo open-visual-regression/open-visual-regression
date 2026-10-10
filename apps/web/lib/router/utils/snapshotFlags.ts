@@ -39,7 +39,7 @@ export const getSnapshotFlagDetails = ({
   if (flakySnapshot || matchesEarlierVariant) {
     flags.push({
       flag: "flaky",
-      history: flakySnapshot
+      detection: flakySnapshot
         ? {
             sampleCount: flakySnapshot.sampleCount,
             changeCount: flakySnapshot.changeCount,

@@ -16,17 +16,33 @@ export const snapshotFlagSchema = z.enum(["flaky", "warning"]);
 
 export type SnapshotFlag = z.infer<typeof snapshotFlagSchema>;
 
-export const flakyHistorySchema = z.object({
-  sampleCount: z.number().int().nonnegative(),
-  changeCount: z.number().int().nonnegative(),
-  revertCount: z.number().int().nonnegative(),
-  sameCommitMismatchCount: z.number().int().nonnegative(),
+export const flakyDetectionSchema = z.object({
+  sampleCount: z
+    .number()
+    .int()
+    .nonnegative()
+    .meta({ description: "Recent builds that captured this story" }),
+  changeCount: z
+    .number()
+    .int()
+    .nonnegative()
+    .meta({ description: "Times the screenshot changed from one build to the next" }),
+  revertCount: z.number().int().nonnegative().meta({
+    description: "Times the screenshot changed back to how it looked in an earlier build",
+  }),
+  sameCommitMismatchCount: z
+    .number()
+    .int()
+    .nonnegative()
+    .meta({ description: "Times the same code produced different screenshots" }),
 });
 
 export const flakyFlagDetailSchema = z.object({
   flag: z.literal("flaky"),
-  history: flakyHistorySchema.nullable(),
-  matchesEarlierVariant: z.boolean(),
+  detection: flakyDetectionSchema.nullable(),
+  matchesEarlierVariant: z.boolean().meta({
+    description: "Whether the screenshot matches how the story looked in an earlier build",
+  }),
 });
 
 export const warningFlagDetailSchema = z.object({

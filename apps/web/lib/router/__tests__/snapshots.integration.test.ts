@@ -367,7 +367,12 @@ describe("snapshots", () => {
       expect(result?.snapshot.flags).toEqual([
         {
           flag: "flaky",
-          history: { sampleCount: 30, changeCount: 9, revertCount: 6, sameCommitMismatchCount: 0 },
+          detection: {
+            sampleCount: 30,
+            changeCount: 9,
+            revertCount: 6,
+            sameCommitMismatchCount: 0,
+          },
           matchesEarlierVariant: false,
         },
       ]);
@@ -412,7 +417,7 @@ describe("snapshots", () => {
       expect(getOneError).toBeNull();
       expect(getOneResult?.snapshot.isFlaky).toBe(true);
       expect(getOneResult?.snapshot.flags).toEqual([
-        { flag: "flaky", history: null, matchesEarlierVariant: true },
+        { flag: "flaky", detection: null, matchesEarlierVariant: true },
       ]);
       expect(listError).toBeNull();
       expect(listResult?.snapshots[0]?.isFlaky).toBe(true);
