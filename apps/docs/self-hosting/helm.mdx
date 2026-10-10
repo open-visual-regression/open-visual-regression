@@ -87,6 +87,8 @@ Set `web.ingress.enabled: true` and `web.ingress.host`, plus `web.ingress.classN
 
 With `web.ingress.tls` set, `web.ingress.redirectHttps` (default `true`) redirects HTTP to HTTPS. Implemented for `className: traefik` and `className: nginx`. Configure the redirect yourself on other controllers.
 
+Pages stream in as their data loads, so the ingress must not buffer responses. The dashboard sends `X-Accel-Buffering: no`, which nginx honors. On other controllers, leave response buffering off for the dashboard.
+
 ## Scaling
 
 All off by default.
