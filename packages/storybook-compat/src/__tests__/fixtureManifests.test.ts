@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -40,7 +41,13 @@ const fixtures = availableStorybookFixtures();
 const repoRoot = path.resolve(fileURLToPath(import.meta.url), "../../../../..");
 
 const readProjectImporters = async (storybookDir: string): Promise<string[]> => {
-  const graph = await readModuleGraph(storybookDir);
+  const index = JSON.parse(await readFile(path.join(storybookDir, "index.json"), "utf-8")) as {
+    entries: Record<string, { importPath: string }>;
+  };
+  const graph = await readModuleGraph(
+    storybookDir,
+    new Set(Object.values(index.entries).map((entry) => entry.importPath)),
+  );
   if (!graph || "reason" in graph) {
     throw new Error(`could not read the module graph: ${graph?.reason ?? "missing"}`);
   }

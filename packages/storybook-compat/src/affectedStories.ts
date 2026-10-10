@@ -55,9 +55,12 @@ export const findAffectedStories = async ({
 }: AffectedStoriesInput): Promise<AffectedStories> => {
   const all = (reason: string): AffectedStories => ({ mode: "all", reason });
 
-  const graph = await readModuleGraph(storybookDir);
   const index = await readJson<{ entries?: Record<string, IndexEntry> }>(
     path.join(storybookDir, "index.json"),
+  );
+  const graph = await readModuleGraph(
+    storybookDir,
+    new Set(Object.values(index?.entries ?? {}).map((entry) => entry.importPath)),
   );
   if (!graph || !index?.entries) {
     return all(`${STATS_FILENAME} or index.json is missing; build Storybook with --stats-json`);
