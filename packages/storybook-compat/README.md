@@ -13,9 +13,10 @@ editing the constant.
 
 ## Fixtures
 
-`fixtures/v8`, `v9` and `v10` each pin one major and install independently of
-the repo workspace. `v8` pins 8.5.x, so the floor we advertise is the one
-exercised. All three share the stories in `fixtures/stories`.
+Each fixture is named `<builder>-v<major>`, pins one major of one builder, and
+installs independently of the repo workspace: `vite-v8`, `vite-v9` and
+`vite-v10`. `vite-v8` pins 8.5.x, so the floor we advertise is the one
+exercised. All of them share the stories in `fixtures/stories`.
 
 The builds are not committed:
 
@@ -34,10 +35,10 @@ make that a failure instead.
 
 ## Adding a major
 
-1. Copy the newest fixture to `fixtures/v<major>` without its `pnpm-lock.yaml`
-   and pin the new version.
-2. `pnpm --dir packages/storybook-compat/fixtures/v<major> install` to write the
-   lockfile, and commit it. Builds install `--frozen-lockfile`.
+1. Copy the newest fixture of each builder to `fixtures/<builder>-v<major>`
+   without its `pnpm-lock.yaml` and pin the new version.
+2. `pnpm --dir packages/storybook-compat/fixtures/<builder>-v<major> install`
+   to write the lockfile, and commit it. Builds install `--frozen-lockfile`.
 3. Add the major to `STORYBOOK_FIXTURES` in `src/fixtures.ts`.
 4. `pnpm --filter @ovr/storybook-compat fixtures:build`, then `pnpm test`.
 

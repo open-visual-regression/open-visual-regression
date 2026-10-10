@@ -20,7 +20,7 @@ const fixtures = availableStorybookFixtures();
 
 describe.skipIf(fixtures.length === 0)("built Storybook fixtures", () => {
   it.each(fixtures)(
-    "Storybook $major is built with the major it claims and is above the supported minimum",
+    "Storybook $name is built with the major it claims and is above the supported minimum",
     async (fixture) => {
       const detected = await readStorybookBuildVersion(fixture.buildDir);
 
@@ -30,7 +30,7 @@ describe.skipIf(fixtures.length === 0)("built Storybook fixtures", () => {
     },
   );
 
-  it.each(fixtures)("Storybook $major lists every story and no docs page", async (fixture) => {
+  it.each(fixtures)("Storybook $name lists every story and no docs page", async (fixture) => {
     const targets = await readStoryTargets(fixture.buildDir);
 
     expect(targets.map((target) => target.id).sort()).toEqual(EXPECTED_STORY_IDS);
@@ -38,37 +38,31 @@ describe.skipIf(fixtures.length === 0)("built Storybook fixtures", () => {
     expect(targets.map((target) => target.name)).toContain("Default");
   });
 
-  it.each(fixtures)(
-    "Storybook $major traces a component change to its stories",
-    async (fixture) => {
-      const repoRoot = path.resolve(fileURLToPath(import.meta.url), "../../../../..");
-      const component = path.relative(repoRoot, path.join(fixture.dir, "src/Button.jsx"));
+  it.each(fixtures)("Storybook $name traces a component change to its stories", async (fixture) => {
+    const repoRoot = path.resolve(fileURLToPath(import.meta.url), "../../../../..");
+    const component = path.relative(repoRoot, path.join(fixture.dir, "src/Button.jsx"));
 
-      const result = await findAffectedStories({
-        storybookDir: fixture.buildDir,
-        projectDir: fixture.dir,
-        repoRoot,
-        changedFiles: [component],
-      });
+    const result = await findAffectedStories({
+      storybookDir: fixture.buildDir,
+      projectDir: fixture.dir,
+      repoRoot,
+      changedFiles: [component],
+    });
 
-      expect(result.mode === "some" && result.storyIds.sort()).toEqual(EXPECTED_STORY_IDS);
-    },
-  );
+    expect(result.mode === "some" && result.storyIds.sort()).toEqual(EXPECTED_STORY_IDS);
+  });
 
-  it.each(fixtures)(
-    "Storybook $major captures everything when preview changes",
-    async (fixture) => {
-      const repoRoot = path.resolve(fileURLToPath(import.meta.url), "../../../../..");
-      const preview = path.relative(repoRoot, path.join(fixture.dir, ".storybook/preview.js"));
+  it.each(fixtures)("Storybook $name captures everything when preview changes", async (fixture) => {
+    const repoRoot = path.resolve(fileURLToPath(import.meta.url), "../../../../..");
+    const preview = path.relative(repoRoot, path.join(fixture.dir, ".storybook/preview.js"));
 
-      const result = await findAffectedStories({
-        storybookDir: fixture.buildDir,
-        projectDir: fixture.dir,
-        repoRoot,
-        changedFiles: [preview],
-      });
+    const result = await findAffectedStories({
+      storybookDir: fixture.buildDir,
+      projectDir: fixture.dir,
+      repoRoot,
+      changedFiles: [preview],
+    });
 
-      expect(result.mode).toBe("all");
-    },
-  );
+    expect(result.mode).toBe("all");
+  });
 });

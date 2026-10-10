@@ -43,7 +43,7 @@ const uploadFixtureArtifact = async (
 };
 
 describe.skipIf(fixtures.length === 0)("Storybook version compatibility", () => {
-  describe.each(fixtures)("Storybook $major", (fixture) => {
+  describe.each(fixtures)("Storybook $name", (fixture) => {
     test("boots a capture page", async () => {
       const strategy = await detectCaptureStrategy(fixture.buildDir);
 
