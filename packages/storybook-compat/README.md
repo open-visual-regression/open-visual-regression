@@ -45,5 +45,7 @@ make that a failure instead.
 ## Affected stories
 
 `findAffectedStories` (`src/affectedStories.ts`) maps changed files to the
-stories they can affect, using the module graph from `storybook build
---stats-json`. When it cannot tell, it returns every story.
+stories they can affect. It walks the module graph that `readModuleGraph`
+(`src/moduleGraph.ts`) reads from `storybook build --stats-json`, with one
+reader per builder (`src/viteStats.ts`). When it cannot tell, it returns every
+story.
