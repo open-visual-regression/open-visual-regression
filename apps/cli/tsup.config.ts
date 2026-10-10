@@ -7,6 +7,7 @@ export default defineConfig([
     target: "node22",
     clean: true,
     noExternal: ["@ovr/api", "@ovr/capture-browser", "@ovr/storybook-compat"],
+    external: ["playwright"],
     banner: {
       js: "#!/usr/bin/env node",
     },
