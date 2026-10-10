@@ -16,6 +16,7 @@ ovr diffs get <snapshotId>
 | `--server-url <url>` | OVR server URL (defaults to `ovr.config`'s `serverUrl`) |
 | `-c, --config <path>` | Path to `ovr.config` file |
 | `--json` | Print the diff as JSON instead of formatted text |
+| `--download <dir>` | Save the baseline, new and diff images to this directory |
 
 Takes a snapshot ID — find one with [`ovr snapshots list`](/cli/snapshots) — and
 prints how that snapshot's capture compares to its baseline: the diff's ID, review
@@ -38,3 +39,8 @@ Baseline commit URL: https://github.com/example/repo/commit/a1b2c3d
 A snapshot with no diff — one with no baseline to compare against, or one that
 errored before it could be diffed — prints `No diff for this snapshot.` (or `null`
 with `--json`) rather than an error.
+
+With `--download <dir>`, the baseline, new and diff images are saved as `baseline.png`,
+`new.png` and `diff.png` in that directory, which is created if needed. Images the
+snapshot doesn't have are skipped. Each saved path is printed to stderr, so `--json`
+output stays parseable.
