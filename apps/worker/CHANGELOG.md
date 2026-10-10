@@ -1,5 +1,14 @@
 # @ovr/worker
 
+## 0.10.1
+
+### Patch Changes
+
+- [#310](https://github.com/open-visual-regression/open-visual-regression/pull/310) [`240560a`](https://github.com/open-visual-regression/open-visual-regression/commit/240560ab38f14b922fccaad87618cc8d410fb8b8) Thanks [@tgfischer](https://github.com/tgfischer)! - Skip comparing screenshots that are identical to their baseline.
+
+- Updated dependencies [[`240560a`](https://github.com/open-visual-regression/open-visual-regression/commit/240560ab38f14b922fccaad87618cc8d410fb8b8)]:
+  - @ovr/capture@0.3.5
+
 ## 0.10.0
 
 ### Patch Changes
