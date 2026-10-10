@@ -5,6 +5,7 @@ import { pipeline } from "node:stream/promises";
 import { JSONParser } from "@streamparser/json-node";
 
 import { readViteImporters, type ViteStats } from "./viteStats";
+import { readWebpackImporters, type WebpackStats } from "./webpackStats";
 
 export const STATS_FILENAME = "preview-stats.json";
 
@@ -16,7 +17,7 @@ type StatsModule = {
   modules?: StatsModule[];
 };
 
-type Stats = { version?: string; modules: StatsModule[] };
+type Stats = { version?: string; rspackVersion?: string; modules: StatsModule[] };
 
 const toGraphModule = ({ name, reasons, modules }: StatsModule): StatsModule => ({
   name,
@@ -26,10 +27,15 @@ const toGraphModule = ({ name, reasons, modules }: StatsModule): StatsModule => 
 
 const readStats = async (file: string): Promise<Stats> => {
   const stats: Stats = { modules: [] };
-  const parser = new JSONParser({ paths: ["$.version", "$.modules.*"], keepStack: false });
+  const parser = new JSONParser({
+    paths: ["$.version", "$.rspackVersion", "$.modules.*"],
+    keepStack: false,
+  });
   parser.on("data", ({ key, value }) => {
     if (key === "version") {
       stats.version = value as string;
+    } else if (key === "rspackVersion") {
+      stats.rspackVersion = value as string;
     } else {
       stats.modules.push(toGraphModule(value as StatsModule));
     }
@@ -57,10 +63,13 @@ export const readModuleGraph = async (storybookDir: string): Promise<ModuleGraph
   if (stats.modules.length === 0) {
     return undefined;
   }
-  if (stats.version) {
+  if (stats.rspackVersion) {
     return {
-      reason: `${STATS_FILENAME} was written by Webpack or Rspack; only Vite builds are traced`,
+      reason: `${STATS_FILENAME} was written by Rspack; only Vite and Webpack builds are traced`,
     };
+  }
+  if (stats.version) {
+    return { importers: readWebpackImporters(stats as WebpackStats) };
   }
 
   return { importers: readViteImporters(stats as ViteStats) };

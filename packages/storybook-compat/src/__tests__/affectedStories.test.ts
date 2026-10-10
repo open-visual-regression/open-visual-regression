@@ -32,7 +32,7 @@ const createRepo = async (files: string[]): Promise<string> => {
 const writeBuild = async (
   graph: Graph,
   entries: { id: string; importPath: string; type?: string }[],
-  options: { stats?: boolean; version?: string } = {},
+  options: { stats?: boolean; version?: string; rspackVersion?: string } = {},
 ): Promise<string> => {
   const storybookDir = path.join(repoRoot, "apps/web/storybook-static");
   await mkdir(storybookDir, { recursive: true });
@@ -54,7 +54,7 @@ const writeBuild = async (
     }));
     await writeFile(
       path.join(storybookDir, "preview-stats.json"),
-      JSON.stringify({ version: options.version, modules }),
+      JSON.stringify({ version: options.version, rspackVersion: options.rspackVersion, modules }),
     );
   }
 
@@ -300,10 +300,34 @@ describe("findAffectedStories", () => {
     expect(result.mode === "all" && result.reason).toContain("could not parse preview-stats.json");
   });
 
-  it("captures everything when the stats were written by Webpack or Rspack", async () => {
+  it("traces stats written by Webpack", async () => {
     await createRepo(viteRepoFiles);
-    const storybookDir = await writeBuild({ ...viteGraph, [STORIES_INDEX]: [null] }, viteEntries, {
-      version: "5.101.0",
+    const { "./src/Form.stories.tsx": formStoryReasons, ...graph } = viteGraph;
+    const storybookDir = await writeBuild(
+      {
+        ...graph,
+        [STORIES_INDEX]: [null],
+        "./src/Form.stories.tsx + 1 modules": formStoryReasons!,
+      },
+      viteEntries,
+      { version: "5.101.0" },
+    );
+
+    const result = await findAffectedStories({
+      storybookDir,
+      projectDir: webDir(),
+      repoRoot,
+      changedFiles: ["apps/web/src/Form.tsx"],
+    });
+
+    expect(result).toMatchObject({ mode: "some", storyIds: ["form--default"] });
+  });
+
+  it("captures everything when the stats were written by Rspack", async () => {
+    await createRepo(viteRepoFiles);
+    const storybookDir = await writeBuild(viteGraph, viteEntries, {
+      version: "5.75.0",
+      rspackVersion: "1.7.12",
     });
 
     const result = await findAffectedStories({
@@ -315,7 +339,7 @@ describe("findAffectedStories", () => {
 
     expect(result).toEqual({
       mode: "all",
-      reason: "preview-stats.json was written by Webpack or Rspack; only Vite builds are traced",
+      reason: "preview-stats.json was written by Rspack; only Vite and Webpack builds are traced",
     });
   });
 
