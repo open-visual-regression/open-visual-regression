@@ -13,6 +13,12 @@ let server: ReturnType<typeof createServer>;
 let origin: string;
 let dir: string;
 
+const IMAGES = new Map([
+  ["/project/baseline.png", "baseline image"],
+  ["/project/diff.png", "diff image"],
+  ["/project/new.png", "new image"],
+]);
+
 const createStorageClient = () => ({
   storage: {
     getObject: vi.fn<OvrClient["storage"]["getObject"]>(async ({ path: imagePath }) => ({
@@ -24,7 +30,8 @@ const createStorageClient = () => ({
 
 beforeEach(async () => {
   server = createServer((request, response) => {
-    response.end(`image:${request.url}`);
+    const image = IMAGES.get(request.url ?? "");
+    response.writeHead(image ? 200 : 404, { "content-type": "image/png" }).end(image);
   });
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   origin = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
@@ -46,10 +53,8 @@ describe("downloadImages", () => {
     ]);
 
     expect(files).toEqual([path.join(dir, "baseline.png"), path.join(dir, "diff.png")]);
-    expect(await readFile(path.join(dir, "baseline.png"), "utf8")).toBe(
-      "image:/project/baseline.png",
-    );
-    expect(await readFile(path.join(dir, "diff.png"), "utf8")).toBe("image:/project/diff.png");
+    expect(await readFile(path.join(dir, "baseline.png"), "utf8")).toBe("baseline image");
+    expect(await readFile(path.join(dir, "diff.png"), "utf8")).toBe("diff image");
   });
 
   it("should skip targets without an image path", async () => {
