@@ -41,7 +41,7 @@ export const formatFlagDetail = (detail: SnapshotFlagDetail): string => {
     const { sampleCount, changeCount, revertCount, sameCommitMismatchCount } = detail.detection;
     reasons.push(
       `screenshot changed ${formatTimes(changeCount)} across the last ${sampleCount} builds`,
-      `changed back to an earlier look ${formatTimes(revertCount)}`,
+      `changed back to an earlier image ${formatTimes(revertCount)}`,
       `the same code produced different screenshots ${formatTimes(sameCommitMismatchCount)}`,
     );
   }
