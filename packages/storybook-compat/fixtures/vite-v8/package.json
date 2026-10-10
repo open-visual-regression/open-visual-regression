@@ -1,5 +1,5 @@
 {
-  "name": "@ovr/storybook-fixture-v8",
+  "name": "@ovr/storybook-fixture-vite-v8",
   "private": true,
   "type": "module",
   "scripts": {

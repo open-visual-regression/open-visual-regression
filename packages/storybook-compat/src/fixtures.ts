@@ -4,17 +4,25 @@ import { fileURLToPath } from "node:url";
 
 const FIXTURES_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), "../fixtures");
 
+export type StorybookBuilder = "vite";
+
 export type StorybookFixture = {
   name: string;
+  builder: StorybookBuilder;
   major: number;
   dir: string;
   buildDir: string;
 };
 
-export const STORYBOOK_FIXTURES: StorybookFixture[] = [8, 9, 10].map((major) => {
-  const dir = path.join(FIXTURES_DIR, `v${major}`);
-  return { name: `v${major}`, major, dir, buildDir: path.join(dir, "storybook-static") };
-});
+const createFixture = (builder: StorybookBuilder, major: number): StorybookFixture => {
+  const name = `${builder}-v${major}`;
+  const dir = path.join(FIXTURES_DIR, name);
+  return { name, builder, major, dir, buildDir: path.join(dir, "storybook-static") };
+};
+
+export const STORYBOOK_FIXTURES: StorybookFixture[] = [8, 9, 10].map((major) =>
+  createFixture("vite", major),
+);
 
 export const isFixtureBuilt = (fixture: StorybookFixture): boolean =>
   ["index.json", "preview-stats.json"].every((file) =>
