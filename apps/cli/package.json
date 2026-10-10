@@ -41,6 +41,7 @@
   "dependencies": {
     "@orpc/client": "^1.14.14",
     "@orpc/contract": "^1.14.14",
+    "@streamparser/json-node": "^0.0.26",
     "commander": "^15.0.0",
     "jiti": "^2.7.0",
     "ky": "^2.0.2",

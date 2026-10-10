@@ -284,6 +284,22 @@ describe("findAffectedStories", () => {
     });
   });
 
+  it("captures everything when the stats file is cut off", async () => {
+    await createRepo(viteRepoFiles);
+    const storybookDir = await writeBuild(viteGraph, viteEntries);
+    await writeFile(path.join(storybookDir, "preview-stats.json"), '{"modules": [{"name": ');
+
+    const result = await findAffectedStories({
+      storybookDir,
+      projectDir: webDir(),
+      repoRoot,
+      changedFiles: [],
+    });
+
+    expect(result).toMatchObject({ mode: "all" });
+    expect(result.mode === "all" && result.reason).toContain("could not parse preview-stats.json");
+  });
+
   it("captures everything when the stats were written by Webpack or Rspack", async () => {
     await createRepo(viteRepoFiles);
     const storybookDir = await writeBuild({ ...viteGraph, [STORIES_INDEX]: [null] }, viteEntries, {
