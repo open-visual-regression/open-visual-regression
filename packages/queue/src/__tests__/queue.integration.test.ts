@@ -8,6 +8,7 @@ import {
   enqueueFinalize,
   enqueueFlakySnapshotDispatch,
   enqueueFlakySnapshotScanMany,
+  getJobNextRunAt,
   isJobRunning,
   enqueuePublishStatus,
   QueueName,
@@ -237,6 +238,47 @@ describe("queue", () => {
       await scheduleJob(connection, "flaky_detection", null);
 
       expect(await openQueue(QueueName.FLAKY_SNAPSHOT_DISPATCH).getJobSchedulers()).toEqual([]);
+    });
+  });
+
+  describe("getJobNextRunAt", () => {
+    test("should report when the flaky detection dispatch is next scheduled to run", async ({
+      connection,
+      openQueue,
+    }) => {
+      await scheduleJob(connection, "flaky_detection", "0 */6 * * *");
+
+      try {
+        const [scheduler] = await openQueue(QueueName.FLAKY_SNAPSHOT_DISPATCH).getJobSchedulers();
+
+        expect(await getJobNextRunAt(connection, "flaky_detection")).toEqual(
+          new Date(scheduler!.next!),
+        );
+      } finally {
+        await openQueue(QueueName.FLAKY_SNAPSHOT_DISPATCH).obliterate({ force: true });
+      }
+    });
+
+    test("should keep the next scheduled run when a dispatch is run now", async ({
+      connection,
+      openQueue,
+    }) => {
+      await scheduleJob(connection, "flaky_detection", "0 */6 * * *");
+
+      try {
+        const nextRunAt = await getJobNextRunAt(connection, "flaky_detection");
+        await enqueueFlakySnapshotDispatch(connection);
+
+        expect(await getJobNextRunAt(connection, "flaky_detection")).toEqual(nextRunAt);
+      } finally {
+        await openQueue(QueueName.FLAKY_SNAPSHOT_DISPATCH).obliterate({ force: true });
+      }
+    });
+
+    test("should report no next run when flaky detection is not scheduled", async ({
+      connection,
+    }) => {
+      expect(await getJobNextRunAt(connection, "flaky_detection")).toBeNull();
     });
   });
 

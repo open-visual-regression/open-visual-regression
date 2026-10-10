@@ -173,6 +173,29 @@ describe("flakiness", () => {
     });
   });
 
+  describe("getFlakyDetection", () => {
+    test("reports when the schedule next runs", async ({ user, connection }) => {
+      await enableFlakyDetection(user.id, { cron: "0 */6 * * *" });
+      const queue = new Queue(QueueName.FLAKY_SNAPSHOT_DISPATCH, { connection });
+
+      try {
+        await scheduleFlakyDetection(connection);
+        const [scheduler] = await queue.getJobSchedulers();
+
+        expect((await getFlakyDetection()).nextRunAt).toBe(
+          new Date(scheduler!.next!).toISOString(),
+        );
+      } finally {
+        await queue.obliterate({ force: true });
+        await queue.close();
+      }
+    });
+
+    test("reports no next run when flaky detection is disabled", async () => {
+      expect((await getFlakyDetection()).nextRunAt).toBeNull();
+    });
+  });
+
   describe("scheduleFlakyDetection", () => {
     test("runs at 7am and 7pm when detection is enabled without a saved schedule", async ({
       user,
