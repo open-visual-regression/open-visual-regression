@@ -75,6 +75,27 @@ describe("formatSnapshotsOutput", () => {
     expect(output).toContain("1.23");
   });
 
+  it("should show each snapshot's flags", () => {
+    const output = formatSnapshotsOutput(
+      { snapshots: [{ ...SNAPSHOT, flags: ["flaky", "warning"] }], total: 1, nextCursor: null },
+      false,
+    );
+
+    expect(output).toContain("FLAGS");
+    expect(output).toContain("flaky, warning");
+  });
+
+  it("should derive flags from the deprecated booleans when the server sends no flags", () => {
+    const { flags: _flags, ...legacySnapshot } = { ...SNAPSHOT, isFlaky: true };
+
+    const output = formatSnapshotsOutput(
+      { snapshots: [legacySnapshot as BuildSnapshotSchema], total: 1, nextCursor: null },
+      false,
+    );
+
+    expect(output).toContain("flaky");
+  });
+
   it("should not invite a next page when there is no next cursor", () => {
     expect(
       formatSnapshotsOutput({ snapshots: [SNAPSHOT], total: 1, nextCursor: null }, false),

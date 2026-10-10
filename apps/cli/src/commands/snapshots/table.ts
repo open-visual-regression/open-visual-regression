@@ -6,6 +6,7 @@ import {
   formatTable,
   type AppliedFilters,
 } from "../../table";
+import { formatFlags, getSnapshotFlags } from "./flags";
 
 export type SnapshotsTableRow = {
   id: string;
@@ -14,9 +15,10 @@ export type SnapshotsTableRow = {
   browser: string;
   viewport: string;
   diffPercent: string;
+  flags: string;
 };
 
-const HEADERS = ["SNAPSHOT", "STATUS", "STORY", "BROWSER", "VIEWPORT", "DIFF%"];
+const HEADERS = ["SNAPSHOT", "STATUS", "STORY", "BROWSER", "VIEWPORT", "DIFF%", "FLAGS"];
 
 const DIFF_PERCENT_PRECISION = 2;
 
@@ -36,7 +38,15 @@ export const formatDiffPercent = (diffPercent: number | null): string =>
 export const formatSnapshotsTable = (rows: SnapshotsTableRow[]): string =>
   formatTable(
     HEADERS,
-    rows.map((row) => [row.id, row.status, row.story, row.browser, row.viewport, row.diffPercent]),
+    rows.map((row) => [
+      row.id,
+      row.status,
+      row.story,
+      row.browser,
+      row.viewport,
+      row.diffPercent,
+      row.flags,
+    ]),
   );
 
 export type SnapshotsOutput = {
@@ -66,6 +76,7 @@ export const formatSnapshotsOutput = (
       browser: snapshot.browser,
       viewport: formatViewport(snapshot),
       diffPercent: formatDiffPercent(snapshot.diffPercent),
+      flags: formatFlags(getSnapshotFlags(snapshot)),
     })),
   );
 
