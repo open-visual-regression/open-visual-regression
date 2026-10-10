@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { vi } from "vitest";
 
 import type { AddProjectInputSchema } from "@ovr/api/contracts/projects";
@@ -272,6 +273,18 @@ describe("projects", () => {
 
       const [, getResult] = await serverClient.projects.getOne({ projectId });
       expect(getResult?.project).toMatchObject({ name: "Updated Name", retentionDays: 30 });
+    });
+
+    test("should revalidate the layout after updating", async ({ admin: _ }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      vi.mocked(revalidatePath).mockClear();
+
+      await serverClient.projects.update({
+        id: addResult!.projectId,
+        patch: { name: "Updated Name" },
+      });
+
+      expect(revalidatePath).toHaveBeenCalledWith("/", "layout");
     });
   });
 
