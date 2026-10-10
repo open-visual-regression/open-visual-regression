@@ -17,7 +17,7 @@ type SnapshotsHistoryCommandOptions = {
 };
 
 export const historyCommand = new Command("history")
-  .description("Show a snapshot's story across recent builds")
+  .description("Show how a snapshot looked across recent builds")
   .argument("<snapshotId>", "snapshot id")
   .option("--server-url <url>", "OVR server URL (defaults to ovr.config's serverUrl)")
   .option("--branch <name>", "branch to look at (defaults to the project's main branch)")

@@ -55,7 +55,7 @@ export const formatHistoryOutput = (
   }
 
   if (history.snapshots.length === 0) {
-    return `No snapshots of this story on ${history.branch}.`;
+    return `No snapshots like this one on ${history.branch}.`;
   }
 
   const labels = getLookLabels(history.snapshots);

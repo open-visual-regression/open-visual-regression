@@ -73,9 +73,9 @@ describe("formatHistoryOutput", () => {
     );
   });
 
-  it("should say when the story has no snapshots on the branch", () => {
+  it("should say when there are no snapshots like it on the branch", () => {
     expect(formatHistoryOutput({ branch: "main", snapshots: [] }, false)).toBe(
-      "No snapshots of this story on main.",
+      "No snapshots like this one on main.",
     );
   });
 });
