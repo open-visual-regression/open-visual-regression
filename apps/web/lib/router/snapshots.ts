@@ -115,6 +115,27 @@ export const list = os.snapshots.list
   })
   .actionable();
 
+export const getHistory = os.snapshots.getHistory
+  .use(callerMiddleware("builds", "read"))
+  .use(organizationSnapshotMiddleware)
+  .handler(async ({ input, context }) => {
+    const { snapshot, project } = context;
+    const branch = input.branch ?? project.gitMainBranch;
+
+    const rows = await dbClient.snapshots.findHistory({
+      projectId: project.id,
+      branch,
+      browser: snapshot.browser,
+      viewportWidth: snapshot.viewportWidth,
+      viewportHeight: snapshot.viewportHeight,
+      targetId: snapshot.targetId,
+      limit: input.limit,
+    });
+
+    return { branch, snapshots: rows };
+  })
+  .actionable();
+
 export const getCounts = os.snapshots.getCounts
   .use(callerMiddleware("builds", "read"))
   .use(organizationBuildMiddleware)

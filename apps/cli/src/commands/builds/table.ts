@@ -18,7 +18,7 @@ export type BuildsTableRow = {
 
 const HEADERS = ["BUILD", "STATUS", "BRANCH", "COMMIT", "PROJECT", "NAME"];
 
-const SHORT_COMMIT_LENGTH = 7;
+export const SHORT_COMMIT_LENGTH = 7;
 
 export const formatBuildsTable = (rows: BuildsTableRow[]): string =>
   formatTable(

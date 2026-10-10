@@ -637,6 +637,100 @@ describe("snapshots", () => {
     });
   });
 
+  describe("getHistory", () => {
+    const createBuildWithStory = async (
+      projectId: string,
+      admin: User,
+      branch: string,
+      targetId = "story-a",
+    ) => {
+      const build = await dbClient.builds.create({
+        projectId,
+        branch,
+        commitSha: uuidv7().replaceAll("-", "").padEnd(40, "0"),
+        artifactPath: "builds/seed/artifact",
+        createdBy: admin.id,
+      });
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: build!.id, ...VIEWPORT, targetId, targetTitle: "A", targetName: "a" }],
+      });
+
+      return { build: build!, snapshot: snapshot! };
+    };
+
+    const setLook = async (projectId: string, snapshotId: string, variantId?: string) => {
+      const id =
+        variantId ??
+        (await dbClient.snapshotVariants.create({
+          projectId,
+          browser: VIEWPORT.browser,
+          viewportWidth: VIEWPORT.viewportWidth,
+          viewportHeight: VIEWPORT.viewportHeight,
+          targetId: "story-a",
+          snapshotId,
+        }))!.id;
+      await dbClient.snapshots.setVariant(snapshotId, id);
+
+      return id;
+    };
+
+    test("lists the story's snapshots on the main branch, newest first", async ({ admin }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+      const first = await createBuildWithStory(projectId, admin, "main");
+      const second = await createBuildWithStory(projectId, admin, "main");
+      const third = await createBuildWithStory(projectId, admin, "main");
+      await createBuildWithStory(projectId, admin, "feature/other");
+      await createBuildWithStory(projectId, admin, "main", "story-b");
+      const look = await setLook(projectId, first.snapshot.id);
+      await setLook(projectId, second.snapshot.id);
+      await setLook(projectId, third.snapshot.id, look);
+
+      const [error, result] = await serverClient.snapshots.getHistory({
+        snapshotId: first.snapshot.id,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.branch).toBe("main");
+      expect(result?.snapshots.map(({ id, buildId }) => ({ id, buildId }))).toEqual([
+        { id: third.snapshot.id, buildId: third.build.id },
+        { id: second.snapshot.id, buildId: second.build.id },
+        { id: first.snapshot.id, buildId: first.build.id },
+      ]);
+      expect(result?.snapshots[0]?.variantId).toBe(look);
+      expect(result?.snapshots[1]?.variantId).not.toBe(look);
+      expect(result?.snapshots[2]?.variantId).toBe(look);
+    });
+
+    test("lists the story's snapshots on the requested branch up to the limit", async ({
+      admin,
+    }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+      const { snapshot } = await createBuildWithStory(projectId, admin, "main");
+      await createBuildWithStory(projectId, admin, "feature/other");
+      const latest = await createBuildWithStory(projectId, admin, "feature/other");
+
+      const [error, result] = await serverClient.snapshots.getHistory({
+        snapshotId: snapshot.id,
+        branch: "feature/other",
+        limit: 1,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.branch).toBe("feature/other");
+      expect(result?.snapshots.map(({ id }) => id)).toEqual([latest.snapshot.id]);
+    });
+
+    test("should not find a snapshot that does not exist", async ({ admin: _ }) => {
+      const [error] = await serverClient.snapshots.getHistory({
+        snapshotId: "01900000-0000-7000-8000-000000000000",
+      });
+
+      expect(error?.code).toBe("NOT_FOUND");
+    });
+  });
+
   describe("getCounts", () => {
     test("should let a personal access token read a build's snapshot counts", async ({ admin }) => {
       const { build } = await createProjectAndBuild(admin);
