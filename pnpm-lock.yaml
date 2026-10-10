@@ -123,6 +123,9 @@ importers:
       '@ovr/api':
         specifier: workspace:*
         version: link:../../packages/api
+      '@ovr/capture-browser':
+        specifier: workspace:*
+        version: link:../../packages/capture-browser
       '@ovr/storybook-compat':
         specifier: workspace:*
         version: link:../../packages/storybook-compat
@@ -132,6 +135,9 @@ importers:
       '@types/node':
         specifier: ^22.20.1
         version: 22.20.1
+      playwright:
+        specifier: 1.61.0
+        version: 1.61.0
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.26)(tsx@4.23.5)(typescript@6.0.3)(yaml@2.9.0)
@@ -148,7 +154,7 @@ importers:
     dependencies:
       '@open-visual-regression/cli':
         specifier: workspace:*
-        version: link:../cli
+        version: file:apps/cli(playwright@1.62.1)
       '@orpc/client':
         specifier: ^1.14.14
         version: 1.14.14
@@ -282,7 +288,7 @@ importers:
         version: 5.2.1(storybook@10.5.6(@types/react@19.2.2)(prettier@2.8.8)(react@19.2.8))
       '@open-visual-regression/cli':
         specifier: workspace:*
-        version: link:../cli
+        version: file:apps/cli(playwright@1.62.1)
       '@ovr/mocks':
         specifier: workspace:*
         version: link:../../packages/mocks
@@ -968,7 +974,7 @@ importers:
         version: 5.2.1(storybook@10.5.6(@types/react@19.2.2)(prettier@2.8.8)(react@19.2.8))
       '@open-visual-regression/cli':
         specifier: workspace:*
-        version: link:../../apps/cli
+        version: file:apps/cli(playwright@1.62.1)
       '@ovr/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
@@ -2379,6 +2385,15 @@ packages:
 
   '@open-draft/until@2.1.0':
     resolution: {integrity: sha512-U69T3ItWHvLwGg5eJ0n3I62nWuE6ilHlmz7zM0npLBRvPRd7e6NYmg54vvRtP5mZG7kZqZCFVdsTWo7BPtBujg==}
+
+  '@open-visual-regression/cli@file:apps/cli':
+    resolution: {directory: apps/cli, type: directory}
+    hasBin: true
+    peerDependencies:
+      playwright: '>=1.61.0'
+    peerDependenciesMeta:
+      playwright:
+        optional: true
 
   '@opentelemetry/semantic-conventions@1.43.0':
     resolution: {integrity: sha512-eSYWTm620tTk45EKSedaUL8MFYI8hW164hIXsgIHyxu3VobUB3fFCu5t0hQby6OoWRPsG1KkKUG2M5UadiLiVg==}
@@ -8685,6 +8700,21 @@ snapshots:
       outvariant: 1.4.3
 
   '@open-draft/until@2.1.0': {}
+
+  '@open-visual-regression/cli@file:apps/cli(playwright@1.62.1)':
+    dependencies:
+      '@orpc/client': 1.14.14
+      '@orpc/contract': 1.14.14
+      '@streamparser/json-node': 0.0.26
+      commander: 15.0.0
+      jiti: 2.7.0
+      ky: 2.1.0
+      tar: 7.5.22
+      uuid: 14.0.1
+    optionalDependencies:
+      playwright: 1.62.1
+    transitivePeerDependencies:
+      - '@opentelemetry/api'
 
   '@opentelemetry/semantic-conventions@1.43.0': {}
 

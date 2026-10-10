@@ -2,6 +2,7 @@ import { Command } from "commander";
 
 import pkg from "../package.json" with { type: "json" };
 import { buildsCommand } from "./commands/builds";
+import { captureCommand } from "./commands/capture";
 import { deprecatedSnapshotCommand } from "./commands/deprecatedSnapshot";
 import { diffsCommand } from "./commands/diffs";
 import { snapshotsCommand } from "./commands/snapshots";
@@ -14,6 +15,7 @@ const program = new Command()
 
 program.addCommand(uploadCommand);
 program.addCommand(buildsCommand);
+program.addCommand(captureCommand);
 program.addCommand(snapshotsCommand);
 program.addCommand(diffsCommand);
 program.addCommand(deprecatedSnapshotCommand);

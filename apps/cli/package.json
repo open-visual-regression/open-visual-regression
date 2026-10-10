@@ -50,11 +50,21 @@
   },
   "devDependencies": {
     "@ovr/api": "workspace:*",
+    "@ovr/capture-browser": "workspace:*",
     "@ovr/storybook-compat": "workspace:*",
     "@ovr/typescript-config": "workspace:*",
     "@types/node": "^22.20.1",
+    "playwright": "1.61.0",
     "tsup": "^8.5.1",
     "typescript": "6.0.3",
     "vitest": "^4.1.11"
+  },
+  "peerDependencies": {
+    "playwright": ">=1.61.0"
+  },
+  "peerDependenciesMeta": {
+    "playwright": {
+      "optional": true
+    }
   }
 }
