@@ -2,7 +2,7 @@ import { ORPCError } from "@orpc/client";
 import { describe, expect, it } from "vitest";
 
 import { RequestTimeoutError } from "../client";
-import { CliStepError, formatCliError } from "../errors";
+import { CliStepError, formatCliError, UnsupportedByServerError } from "../errors";
 
 describe("formatCliError", () => {
   it("should format an ORPCError with the server URL, status, code, and message", () => {
@@ -10,6 +10,18 @@ describe("formatCliError", () => {
 
     expect(formatCliError(error, "http://localhost:3000")).toBe(
       "Request to http://localhost:3000 failed: 404 NOT_FOUND - Not Found",
+    );
+  });
+
+  it("should ask to upgrade a server that does not support the command", () => {
+    expect(formatCliError(new UnsupportedByServerError("0.10.0"), "http://localhost:3000")).toBe(
+      "The server at http://localhost:3000 (version 0.10.0) does not support this command. Upgrade the server to use it.",
+    );
+  });
+
+  it("should leave out the version of a server that does not report one", () => {
+    expect(formatCliError(new UnsupportedByServerError(null), "http://localhost:3000")).toBe(
+      "The server at http://localhost:3000 does not support this command. Upgrade the server to use it.",
     );
   });
 

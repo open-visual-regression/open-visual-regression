@@ -3,9 +3,9 @@ import { RPCLink } from "@orpc/client/fetch";
 import { ClientRetryPlugin } from "@orpc/client/plugins";
 import type { ContractRouterClient } from "@orpc/contract";
 
-import { contract } from "@ovr/api/contracts/contract";
+import { contract, SERVER_VERSION_HEADER } from "@ovr/api/contracts/contract";
 
-import { describeError } from "./errors";
+import { describeError, UnsupportedByServerError } from "./errors";
 
 export type OvrClient = ContractRouterClient<typeof contract>;
 
@@ -19,6 +19,9 @@ export class RequestTimeoutError extends Error {
   }
 }
 
+const isUnknownProcedure = (response: Response): boolean =>
+  response.status === 404 && !response.headers.get("content-type");
+
 export const createClient = (
   serverUrl: string,
   apiKey: string,
@@ -31,8 +34,9 @@ export const createClient = (
     }),
     fetch: async (request, init) => {
       const timeout = AbortSignal.timeout(timeoutMs);
+      let response: Response;
       try {
-        return await fetch(request, {
+        response = await fetch(request, {
           ...init,
           signal: AbortSignal.any([request.signal, timeout]),
         });
@@ -42,13 +46,21 @@ export const createClient = (
         }
         throw error;
       }
+
+      if (isUnknownProcedure(response)) {
+        throw new UnsupportedByServerError(response.headers.get(SERVER_VERSION_HEADER));
+      }
+
+      return response;
     },
     plugins: [
       new ClientRetryPlugin({
         default: {
           retry: MAX_RETRIES,
           retryDelay: ({ attemptIndex }) => Math.min(1000 * 2 ** attemptIndex, 10_000),
-          shouldRetry: ({ error }) => !(error instanceof ORPCError) || error.status >= 500,
+          shouldRetry: ({ error }) =>
+            !(error instanceof UnsupportedByServerError) &&
+            (!(error instanceof ORPCError) || error.status >= 500),
           onRetry: ({ path, attemptIndex, error }) => {
             console.error(
               `Request to ${path.join(".")} failed (${describeError(error)}), retrying (${attemptIndex + 1}/${MAX_RETRIES})...`,
