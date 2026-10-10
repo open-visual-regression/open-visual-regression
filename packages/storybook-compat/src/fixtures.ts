@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 
 const FIXTURES_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), "../fixtures");
 
-export type StorybookBuilder = "vite";
+export type StorybookBuilder = "vite" | "webpack";
 
 export type StorybookFixture = {
   name: string;
@@ -20,8 +20,8 @@ const createFixture = (builder: StorybookBuilder, major: number): StorybookFixtu
   return { name, builder, major, dir, buildDir: path.join(dir, "storybook-static") };
 };
 
-export const STORYBOOK_FIXTURES: StorybookFixture[] = [8, 9, 10].map((major) =>
-  createFixture("vite", major),
+export const STORYBOOK_FIXTURES: StorybookFixture[] = (["vite", "webpack"] as const).flatMap(
+  (builder) => [8, 9, 10].map((major) => createFixture(builder, major)),
 );
 
 export const isFixtureBuilt = (fixture: StorybookFixture): boolean =>
