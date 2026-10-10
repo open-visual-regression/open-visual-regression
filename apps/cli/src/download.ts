@@ -16,17 +16,22 @@ type StorageClient = {
   storage: Pick<OvrClient["storage"], "getObject">;
 };
 
+export const fetchImage = async (client: StorageClient, imagePath: string): Promise<Uint8Array> => {
+  const { headers } = await client.storage.getObject({ path: imagePath });
+  const image = await ky.get(headers.location, { retry: { limit: 3 } }).arrayBuffer();
+
+  return new Uint8Array(image);
+};
+
 const downloadImage = async (
   client: StorageClient,
   dir: string,
   name: string,
   imagePath: string,
 ): Promise<string> => {
-  const { headers } = await client.storage.getObject({ path: imagePath });
-  const image = await ky.get(headers.location, { retry: { limit: 3 } }).arrayBuffer();
   const file = path.join(dir, `${name}.png`);
 
-  await writeFile(file, new Uint8Array(image));
+  await writeFile(file, await fetchImage(client, imagePath));
 
   return file;
 };
