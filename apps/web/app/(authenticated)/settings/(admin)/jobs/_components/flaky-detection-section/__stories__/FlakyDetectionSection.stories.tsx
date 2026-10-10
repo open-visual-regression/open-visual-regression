@@ -19,6 +19,7 @@ type Story = StoryObj<typeof FlakyDetectionSection>;
 const args = {
   settings: { enabled: true, cron: "0 */6 * * *", windowBuilds: 50 },
   lastRunAt: "2026-06-20T12:00:00.000Z",
+  nextRunAt: "2026-06-20T18:00:00.000Z",
   running: false,
 };
 
