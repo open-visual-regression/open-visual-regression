@@ -1,13 +1,21 @@
 import type { SnapshotFlag, SnapshotFlagDetail } from "@ovr/api/contracts/snapshots";
 import type { FlakySnapshotDbSchema } from "@ovr/db/repository/flakySnapshots";
 
+export type SnapshotFlagFields = {
+  isFlaky: boolean;
+  hasUncaughtPageError: boolean;
+};
+
+export type SnapshotFlagDetailFields = {
+  flakySnapshot: FlakySnapshotDbSchema | undefined;
+  matchesEarlierVariant: boolean;
+  hasUncaughtPageError: boolean;
+};
+
 export const getSnapshotFlags = ({
   isFlaky,
   hasUncaughtPageError,
-}: {
-  isFlaky: boolean;
-  hasUncaughtPageError: boolean;
-}): SnapshotFlag[] => {
+}: SnapshotFlagFields): SnapshotFlag[] => {
   const flags: SnapshotFlag[] = [];
 
   if (isFlaky) {
@@ -25,11 +33,7 @@ export const getSnapshotFlagDetails = ({
   flakySnapshot,
   matchesEarlierVariant,
   hasUncaughtPageError,
-}: {
-  flakySnapshot: FlakySnapshotDbSchema | undefined;
-  matchesEarlierVariant: boolean;
-  hasUncaughtPageError: boolean;
-}): SnapshotFlagDetail[] => {
+}: SnapshotFlagDetailFields): SnapshotFlagDetail[] => {
   const flags: SnapshotFlagDetail[] = [];
 
   if (flakySnapshot || matchesEarlierVariant) {

@@ -23,13 +23,19 @@ export const flakyHistorySchema = z.object({
   sameCommitMismatchCount: z.number().int().nonnegative(),
 });
 
+export const flakyFlagDetailSchema = z.object({
+  flag: z.literal("flaky"),
+  history: flakyHistorySchema.nullable(),
+  matchesEarlierVariant: z.boolean(),
+});
+
+export const warningFlagDetailSchema = z.object({
+  flag: z.literal("warning"),
+});
+
 export const snapshotFlagDetailSchema = z.discriminatedUnion("flag", [
-  z.object({
-    flag: z.literal("flaky"),
-    history: flakyHistorySchema.nullable(),
-    matchesEarlierVariant: z.boolean(),
-  }),
-  z.object({ flag: z.literal("warning") }),
+  flakyFlagDetailSchema,
+  warningFlagDetailSchema,
 ]);
 
 export type SnapshotFlagDetail = z.infer<typeof snapshotFlagDetailSchema>;
