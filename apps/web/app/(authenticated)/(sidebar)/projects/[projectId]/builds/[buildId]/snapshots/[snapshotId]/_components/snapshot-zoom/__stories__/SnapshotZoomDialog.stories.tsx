@@ -28,16 +28,6 @@ const diffArgs = {
   alt: "snapshot of Button Primary",
 };
 
-const openDialog = async (canvasElement: HTMLElement) => {
-  await userEvent.click(within(canvasElement).getByRole("button", { name: "zoom new" }));
-
-  const dialog = await screen.findByRole("dialog", { name: "new" });
-  const image = await within(dialog).findByRole("img", { name: "snapshot of Button Primary" });
-  await waitFor(() => expect((image as HTMLImageElement).naturalWidth).toBeGreaterThan(0));
-
-  return { dialog, image };
-};
-
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const settle = async (element: Element) => {
@@ -52,6 +42,24 @@ const settle = async (element: Element) => {
     }
   };
   await isStable(position());
+};
+
+const openDialog = async (canvasElement: HTMLElement) => {
+  await userEvent.click(within(canvasElement).getByRole("button", { name: "zoom new" }));
+
+  const dialog = await screen.findByRole("dialog", { name: "new" });
+  const image = await within(dialog).findByRole("img", { name: "snapshot of Button Primary" });
+  // The dialog fits the view once every image has loaded, including the diff overlay.
+  await waitFor(() =>
+    expect(
+      within(dialog)
+        .getAllByRole("img")
+        .every((element) => (element as HTMLImageElement).naturalWidth > 0),
+    ).toBe(true),
+  );
+  await settle(image);
+
+  return { dialog, image };
 };
 
 const drag = async (
