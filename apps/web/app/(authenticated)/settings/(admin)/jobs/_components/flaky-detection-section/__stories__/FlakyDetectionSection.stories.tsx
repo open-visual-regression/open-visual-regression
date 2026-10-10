@@ -27,10 +27,6 @@ export const Enabled: Story = {
   args,
 };
 
-export const Disabled: Story = {
-  args: { ...args, settings: { ...args.settings, enabled: false }, nextRunAt: null },
-};
-
 export const Running: Story = {
   args: { ...args, running: true },
 };
