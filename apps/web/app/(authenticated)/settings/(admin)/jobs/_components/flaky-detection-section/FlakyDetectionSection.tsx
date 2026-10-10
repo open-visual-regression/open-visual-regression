@@ -7,9 +7,18 @@ import { FlakyDetectionForm, FlakyDetectionFormSkeleton } from "./FlakyDetection
 
 type FlakyDetectionSectionProps = FlakyDetection;
 
+const formatRuns = (lastRunAt: string | null, nextRunAt: string | null): string => {
+  const lastRun = `last run: ${lastRunAt ? formatRelativeDateTime(new Date(lastRunAt)) : "never"}`;
+
+  return nextRunAt
+    ? `${lastRun} · next run: ${formatRelativeDateTime(new Date(nextRunAt))}`
+    : lastRun;
+};
+
 export const FlakyDetectionSection = ({
   settings,
   lastRunAt,
+  nextRunAt,
   running,
 }: FlakyDetectionSectionProps) => (
   <div className="flex flex-col gap-4">
@@ -18,7 +27,7 @@ export const FlakyDetectionSection = ({
         flaky detection
       </Typography>
       <Typography variant="body-muted" as="p">
-        {lastRunAt ? `last run: ${formatRelativeDateTime(new Date(lastRunAt))}` : "last run: never"}
+        {formatRuns(lastRunAt, nextRunAt)}
       </Typography>
     </div>
     <FlakyDetectionForm settings={settings} running={running} />
