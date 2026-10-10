@@ -10,7 +10,11 @@ export type DownloadTarget = {
   imagePath: string | null;
 };
 
-type StorageClient = { storage: Pick<OvrClient["storage"], "getObject"> };
+type DownloadableTarget = DownloadTarget & { imagePath: string };
+
+type StorageClient = {
+  storage: Pick<OvrClient["storage"], "getObject">;
+};
 
 const downloadImage = async (
   client: StorageClient,
@@ -36,7 +40,7 @@ export const downloadImages = async (
 
   return Promise.all(
     targets
-      .filter((target): target is { name: string; imagePath: string } => target.imagePath !== null)
+      .filter((target): target is DownloadableTarget => target.imagePath !== null)
       .map(({ name, imagePath }) => downloadImage(client, dir, name, imagePath)),
   );
 };
