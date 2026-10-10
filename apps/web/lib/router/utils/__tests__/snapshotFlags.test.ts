@@ -36,7 +36,7 @@ describe("getSnapshotFlagDetails", () => {
     ).toEqual([]);
   });
 
-  it("should include the flaky detection stats of a flagged story", () => {
+  it("should include the flaky detection stats of a flagged snapshot", () => {
     expect(
       getSnapshotFlagDetails({
         flakySnapshot,

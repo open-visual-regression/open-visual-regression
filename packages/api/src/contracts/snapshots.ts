@@ -21,7 +21,7 @@ export const flakyDetectionSchema = z.object({
     .number()
     .int()
     .nonnegative()
-    .meta({ description: "Recent builds that captured this story" }),
+    .meta({ description: "Recent builds that captured this snapshot" }),
   changeCount: z
     .number()
     .int()
@@ -41,7 +41,7 @@ export const flakyFlagDetailSchema = z.object({
   flag: z.literal("flaky"),
   detection: flakyDetectionSchema.nullable(),
   matchesEarlierVariant: z.boolean().meta({
-    description: "Whether the screenshot matches how the story looked in an earlier build",
+    description: "Whether the screenshot matches how this snapshot looked in an earlier build",
   }),
 });
 
