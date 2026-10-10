@@ -53,7 +53,12 @@ describe("formatSnapshotDetail", () => {
       flags: [
         {
           flag: "flaky",
-          history: { sampleCount: 13, changeCount: 12, revertCount: 0, sameCommitMismatchCount: 1 },
+          detection: {
+            sampleCount: 13,
+            changeCount: 12,
+            revertCount: 0,
+            sameCommitMismatchCount: 1,
+          },
           matchesEarlierVariant: true,
         },
         { flag: "warning" },
@@ -62,7 +67,7 @@ describe("formatSnapshotDetail", () => {
 
     expect(output).toContain("Flags:    flaky, warning");
     expect(output).toContain(
-      "Flags:\n  flaky: changed 12 times across 13 main builds, reverted 0 times, 1 same-commit mismatches; matches an earlier main-branch variant\n  warning: the page threw an uncaught error",
+      "Flags:\n  flaky: screenshot changed 12 times across the last 13 builds; changed back to an earlier look 0 times; the same code produced different screenshots 1 time; matches how the story looked in an earlier build\n  warning: the page threw an uncaught error",
     );
   });
 

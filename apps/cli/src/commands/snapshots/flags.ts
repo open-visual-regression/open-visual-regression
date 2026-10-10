@@ -28,6 +28,8 @@ export const getSnapshotFlags = (snapshot: SnapshotFlagFields): SnapshotFlag[] =
 export const formatFlags = (flags: SnapshotFlag[]): string =>
   flags.length === 0 ? "-" : flags.join(", ");
 
+const formatTimes = (count: number): string => (count === 1 ? "1 time" : `${count} times`);
+
 export const formatFlagDetail = (detail: SnapshotFlagDetail): string => {
   if (detail.flag === "warning") {
     return "warning: the page threw an uncaught error";
@@ -35,15 +37,17 @@ export const formatFlagDetail = (detail: SnapshotFlagDetail): string => {
 
   const reasons: string[] = [];
 
-  if (detail.history) {
-    const { sampleCount, changeCount, revertCount, sameCommitMismatchCount } = detail.history;
+  if (detail.detection) {
+    const { sampleCount, changeCount, revertCount, sameCommitMismatchCount } = detail.detection;
     reasons.push(
-      `changed ${changeCount} times across ${sampleCount} main builds, reverted ${revertCount} times, ${sameCommitMismatchCount} same-commit mismatches`,
+      `screenshot changed ${formatTimes(changeCount)} across the last ${sampleCount} builds`,
+      `changed back to an earlier look ${formatTimes(revertCount)}`,
+      `the same code produced different screenshots ${formatTimes(sameCommitMismatchCount)}`,
     );
   }
 
   if (detail.matchesEarlierVariant) {
-    reasons.push("matches an earlier main-branch variant");
+    reasons.push("matches how the story looked in an earlier build");
   }
 
   return `flaky: ${reasons.join("; ")}`;
