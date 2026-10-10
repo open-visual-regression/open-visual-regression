@@ -51,12 +51,12 @@ ovr snapshots list <buildId> --status needs_review
 | `-c, --config <path>` | Path to `ovr.config` file |
 | `--json` | Print results as JSON instead of a table |
 
-Prints one row per snapshot: snapshot ID, status, story, browser, viewport, and the
-percentage of pixels that differ from the baseline.
+Prints one row per snapshot: snapshot ID, status, story, browser, viewport, the
+percentage of pixels that differ from the baseline, and the snapshot's flags.
 
 ```
-SNAPSHOT                              STATUS        STORY                        BROWSER   VIEWPORT           DIFF%
-01a092d6-b0aa-71bf-9312-dd8ef48a22fb  needs_review  Components/Button / Primary  chromium  desktop 1280x800   1.23
+SNAPSHOT                              STATUS        STORY                        BROWSER   VIEWPORT           DIFF%  FLAGS
+01a092d6-b0aa-71bf-9312-dd8ef48a22fb  needs_review  Components/Button / Primary  chromium  desktop 1280x800   1.23   flaky
 ```
 
 `DIFF%` is `-` when the snapshot was never diffed — a first snapshot with no baseline,
@@ -90,9 +90,11 @@ ovr snapshots get <snapshotId>
 | `-c, --config <path>` | Path to `ovr.config` file |
 | `--json` | Print the snapshot as JSON instead of formatted text |
 
-Prints the snapshot's ID, status, story, browser, viewport, and image path, plus
-whether the page under test threw an uncaught error and its error message when one
-was captured.
+Prints the snapshot's ID, status, story, browser, viewport, and image path, plus its
+flags and its error message when one was captured. Each flag is explained under a
+`Flags:` section: for `flaky`, how often the story changed across recent main-branch
+builds and whether the change matches an earlier main-branch variant; for `warning`,
+that the page threw an uncaught error.
 
 When the snapshot recorded any console or error logs during capture, they're printed
 underneath as a `Logs:` section, one line per entry:
@@ -104,8 +106,11 @@ Story:    Components/Button / Primary
 Browser:  chromium
 Viewport: desktop 1280x800
 Image:
-Uncaught error: yes
+Flags:    warning
 Error:    story threw during render
+
+Flags:
+  warning: the page threw an uncaught error
 
 Logs:
   [error] TypeError: Cannot read properties of undefined (2026-09-12T10:43:15Z)
