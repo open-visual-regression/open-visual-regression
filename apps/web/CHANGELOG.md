@@ -1,5 +1,14 @@
 # @ovr/web
 
+## 0.10.1
+
+### Patch Changes
+
+- [#333](https://github.com/open-visual-regression/open-visual-regression/pull/333) [`3c29cec`](https://github.com/open-visual-regression/open-visual-regression/commit/3c29cec506066fe5a7187a9dc2317679b813eb10) Thanks [@tgfischer](https://github.com/tgfischer)! - Show when flaky detection is next scheduled to run on the jobs settings page.
+
+- Updated dependencies []:
+  - @ovr/ui@0.1.4
+
 ## 0.10.0
 
 ### Minor Changes
