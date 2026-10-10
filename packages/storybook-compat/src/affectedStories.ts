@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-type StatsModule = { name: string; reasons?: { moduleName: string }[] };
+import { readModuleGraph, STATS_FILENAME } from "./moduleGraph";
 
 type IndexEntry = { id: string; importPath: string; type?: string };
 
@@ -31,8 +31,6 @@ export type AffectedStories =
       ignoredFiles: string[];
     };
 
-export const STATS_FILENAME = "preview-stats.json";
-
 const CODE_FILE = /\.[cm]?[jt]sx?$/;
 const LOCKFILE =
   /(^|\/)(package-lock\.json|npm-shrinkwrap\.json|pnpm-lock\.yaml|yarn\.lock|bun\.lockb?)$/;
@@ -57,17 +55,15 @@ export const findAffectedStories = async ({
 }: AffectedStoriesInput): Promise<AffectedStories> => {
   const all = (reason: string): AffectedStories => ({ mode: "all", reason });
 
-  const stats = await readJson<{ version?: string; modules?: StatsModule[] }>(
-    path.join(storybookDir, STATS_FILENAME),
-  );
+  const graph = await readModuleGraph(storybookDir);
   const index = await readJson<{ entries?: Record<string, IndexEntry> }>(
     path.join(storybookDir, "index.json"),
   );
-  if (!stats?.modules || !index?.entries) {
+  if (!graph || !index?.entries) {
     return all(`${STATS_FILENAME} or index.json is missing; build Storybook with --stats-json`);
   }
-  if (stats.version) {
-    return all(`${STATS_FILENAME} was written by Webpack or Rspack; only Vite builds are traced`);
+  if ("reason" in graph) {
+    return all(graph.reason);
   }
 
   const toRepoPath = (name: string): string =>
@@ -76,12 +72,7 @@ export const findAffectedStories = async ({
       : name;
 
   const importers = new Map(
-    stats.modules.map((module) => [
-      toRepoPath(module.name),
-      (module.reasons ?? [])
-        .filter((reason) => reason.moduleName !== module.name)
-        .map((reason) => toRepoPath(reason.moduleName)),
-    ]),
+    [...graph.importers].map(([name, parents]) => [toRepoPath(name), parents.map(toRepoPath)]),
   );
 
   const storiesByFile = new Map<string, string[]>();

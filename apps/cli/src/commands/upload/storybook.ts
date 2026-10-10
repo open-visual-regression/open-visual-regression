@@ -1,8 +1,8 @@
 import { Command } from "commander";
 import { v7 as uuidv7 } from "uuid";
 
-import { STATS_FILENAME } from "@ovr/storybook-compat/affectedStories";
 import { readStoryTargets } from "@ovr/storybook-compat/manifest";
+import { STATS_FILENAME } from "@ovr/storybook-compat/moduleGraph";
 
 import { createClient } from "../../client";
 import {
