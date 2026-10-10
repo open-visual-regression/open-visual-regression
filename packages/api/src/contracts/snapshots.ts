@@ -12,6 +12,28 @@ export const snapshotLogSchema = z.object({
   timestamp: z.string().nonempty(),
 });
 
+export const snapshotFlagSchema = z.enum(["flaky", "warning"]);
+
+export type SnapshotFlag = z.infer<typeof snapshotFlagSchema>;
+
+export const flakyHistorySchema = z.object({
+  sampleCount: z.number().int().nonnegative(),
+  changeCount: z.number().int().nonnegative(),
+  revertCount: z.number().int().nonnegative(),
+  sameCommitMismatchCount: z.number().int().nonnegative(),
+});
+
+export const snapshotFlagDetailSchema = z.discriminatedUnion("flag", [
+  z.object({
+    flag: z.literal("flaky"),
+    history: flakyHistorySchema.nullable(),
+    matchesEarlierVariant: z.boolean(),
+  }),
+  z.object({ flag: z.literal("warning") }),
+]);
+
+export type SnapshotFlagDetail = z.infer<typeof snapshotFlagDetailSchema>;
+
 export const snapshotSchema = z.object({
   id: z.uuidv7(),
   browser: z.string().min(1),
@@ -23,8 +45,9 @@ export const snapshotSchema = z.object({
   targetTitle: z.string(),
   imagePath: z.string().nullable(),
   status: snapshotDisplayStatusSchema,
-  hasUncaughtPageError: z.boolean(),
-  isFlaky: z.boolean(),
+  hasUncaughtPageError: z.boolean().meta({ deprecated: true }),
+  isFlaky: z.boolean().meta({ deprecated: true }),
+  flags: z.array(snapshotFlagDetailSchema),
   errorMessage: z.string().nullable(),
   isRebuildable: z.boolean(),
   isReviewable: z.boolean(),
@@ -53,8 +76,9 @@ export const buildSnapshotSchema = z.object({
   viewportWidth: z.number().int(),
   viewportHeight: z.number().int().nullable(),
   viewportName: z.string().min(1),
-  hasUncaughtPageError: z.boolean(),
-  isFlaky: z.boolean(),
+  hasUncaughtPageError: z.boolean().meta({ deprecated: true }),
+  isFlaky: z.boolean().meta({ deprecated: true }),
+  flags: z.array(snapshotFlagSchema),
 });
 
 export type BuildSnapshotSchema = z.infer<typeof buildSnapshotSchema>;
@@ -69,10 +93,6 @@ export const snapshotsCursorSchema = z.object({
 });
 
 export type SnapshotsCursor = z.infer<typeof snapshotsCursorSchema>;
-
-export const snapshotFlagSchema = z.enum(["flaky", "warning"]);
-
-export type SnapshotFlag = z.infer<typeof snapshotFlagSchema>;
 
 export const snapshotFiltersSchema = z.object({
   statuses: z.array(snapshotDisplayStatusSchema).optional(),
