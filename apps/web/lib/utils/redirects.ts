@@ -4,6 +4,11 @@ export const CALLBACK_URL_PARAM = "callback_url";
 
 export const REQUEST_PATH_HEADER = "x-ovr-request-path";
 
+const PUBLIC_PATHS = ["/login", "/setup", "/invitations"];
+
+export const isPublicPath = (pathname: string) =>
+  PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+
 export const getLoginPath = (callbackUrl: string) =>
   `/login?${new URLSearchParams({ [CALLBACK_URL_PARAM]: callbackUrl })}`;
 
