@@ -1,0 +1,20 @@
+{
+  "name": "@ovr/storybook-fixture-rsbuild-v9",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build-storybook": "storybook build --quiet --disable-telemetry"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@rsbuild/core": "^1.7.0",
+    "@rsbuild/plugin-react": "^1.4.0",
+    "@storybook/addon-docs": "^9.0.0",
+    "@storybook/react": "^9.0.0",
+    "storybook": "^9.0.0",
+    "storybook-react-rsbuild": "^2.1.6"
+  }
+}
