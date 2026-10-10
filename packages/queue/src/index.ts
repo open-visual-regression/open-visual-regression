@@ -501,6 +501,20 @@ export const isJobRunning = async (connection: RedisConnection, job: JobName): P
   return counts.some((count) => count > 0);
 };
 
+export const getJobNextRunAt = async (
+  connection: RedisConnection,
+  job: JobName,
+): Promise<Date | null> => {
+  const { queueName, schedulerId } = JOB_SCHEDULERS[job];
+  const queue = new Queue(queueName, queueOptions(connection));
+  try {
+    const scheduler = await queue.getJobScheduler(schedulerId);
+    return scheduler?.next ? new Date(scheduler.next) : null;
+  } finally {
+    await queue.close();
+  }
+};
+
 export const scheduleJob = async (
   connection: RedisConnection,
   job: JobName,
