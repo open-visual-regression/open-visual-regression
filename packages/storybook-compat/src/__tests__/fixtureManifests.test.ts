@@ -21,29 +21,47 @@ const EXPECTED_STORY_IDS = [
 
 const PROJECT_FILE = /^\.\/(src|\.storybook)\//;
 
-const PROJECT_EDGES = [
+const PROJECT_IMPORTERS = [
   "./src/Button.css <- ./src/Button.jsx",
+  "./src/Button.css <- ./src/Button.stories.jsx",
   "./src/Button.jsx <- ./src/Button.stories.jsx",
   "./src/Card.jsx <- ./src/Card.stories.jsx",
   "./src/Card.jsx <- ./src/Lazy.stories.jsx",
   "./src/global.css <- ./.storybook/preview.js",
   "./src/tones.js <- ./src/Button.jsx",
+  "./src/tones.js <- ./src/Button.stories.jsx",
   "./src/tones.js <- ./src/Card.jsx",
+  "./src/tones.js <- ./src/Card.stories.jsx",
+  "./src/tones.js <- ./src/Lazy.stories.jsx",
 ];
 
 const fixtures = availableStorybookFixtures();
 
 const repoRoot = path.resolve(fileURLToPath(import.meta.url), "../../../../..");
 
-const readProjectEdges = async (storybookDir: string): Promise<string[]> => {
+const readProjectImporters = async (storybookDir: string): Promise<string[]> => {
   const graph = await readModuleGraph(storybookDir);
   if (!graph || "reason" in graph) {
     throw new Error(`could not read the module graph: ${graph?.reason ?? "missing"}`);
   }
 
-  return [...graph.importers]
-    .flatMap(([name, parents]) => parents.map((parent) => `${name} <- ${parent}`))
-    .filter((edge) => edge.split(" <- ").every((file) => PROJECT_FILE.test(file)))
+  const importersOf = (name: string, found = new Set<string>()): Set<string> => {
+    for (const parent of graph.importers.get(name) ?? []) {
+      if (!found.has(parent)) {
+        found.add(parent);
+        importersOf(parent, found);
+      }
+    }
+    return found;
+  };
+
+  return [...graph.importers.keys()]
+    .filter((name) => PROJECT_FILE.test(name))
+    .flatMap((name) =>
+      [...importersOf(name)]
+        .filter((parent) => PROJECT_FILE.test(parent))
+        .map((parent) => `${name} <- ${parent}`),
+    )
     .sort();
 };
 
@@ -68,7 +86,7 @@ describe.skipIf(fixtures.length === 0)("built Storybook fixtures", () => {
   });
 
   it.each(fixtures)("Storybook $name reads the same project graph", async (fixture) => {
-    expect(await readProjectEdges(fixture.buildDir)).toEqual(PROJECT_EDGES);
+    expect(await readProjectImporters(fixture.buildDir)).toEqual(PROJECT_IMPORTERS);
   });
 
   it.each(fixtures)(

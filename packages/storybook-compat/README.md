@@ -14,9 +14,9 @@ editing the constant.
 ## Fixtures
 
 Each fixture is named `<builder>-v<major>`, pins one major of one builder, and
-installs independently of the repo workspace: `vite-v8`, `vite-v9` and
-`vite-v10`. `vite-v8` pins 8.5.x, so the floor we advertise is the one
-exercised. All of them share the stories in `fixtures/stories`, which import
+installs independently of the repo workspace: `vite-v8` to `vite-v10` and
+`webpack-v8` to `webpack-v10`. The `v8` fixtures pin 8.5.x, so the floor we
+advertise is the one exercised. All of them share the stories in `fixtures/stories`, which import
 CSS, a shared module and a lazy component, plus an MDX page. Every fixture must
 read the same graph of those files from its stats, whatever its builder.
 
@@ -43,6 +43,17 @@ make that a failure instead.
    to write the lockfile, and commit it. Builds install `--frozen-lockfile`.
 3. Add the major to `STORYBOOK_FIXTURES` in `src/fixtures.ts`.
 4. `pnpm --filter @ovr/storybook-compat fixtures:build`, then `pnpm test`.
+
+## Adding a builder
+
+1. Add `fixtures/<builder>-v<major>` for every supported major, following the
+   fixtures of an existing builder.
+2. Add the builder to `StorybookBuilder` and `STORYBOOK_FIXTURES` in
+   `src/fixtures.ts`.
+3. If its stats need one, add a reader next to `src/webpackStats.ts` and pick
+   it in `readModuleGraph`.
+4. `pnpm --filter @ovr/storybook-compat fixtures:build`, then `pnpm test`.
+   Every fixture must read the same project graph.
 
 ## Affected stories
 

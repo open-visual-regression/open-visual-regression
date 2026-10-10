@@ -1,0 +1,19 @@
+{
+  "name": "@ovr/storybook-fixture-webpack-v8",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build-storybook": "storybook build --quiet --disable-telemetry"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@storybook/addon-docs": "~8.5.0",
+    "@storybook/addon-webpack5-compiler-swc": "^1.0.6",
+    "@storybook/react": "~8.5.0",
+    "@storybook/react-webpack5": "~8.5.0",
+    "storybook": "~8.5.0"
+  }
+}
