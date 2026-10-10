@@ -196,6 +196,7 @@ export const serverClient: typeof RealServerClient = {
       .handler(() => ({
         settings: DEFAULT_FLAKY_DETECTION_SETTINGS,
         lastRunAt: null,
+        nextRunAt: null,
         running: false,
       }))
       .actionable(),
