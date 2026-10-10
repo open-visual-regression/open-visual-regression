@@ -55,7 +55,7 @@ Pass `--only-affected` to capture only the stories a change can affect. Every ot
 
 It needs:
 
-- Storybook built with the Vite builder and `--stats-json`, and `ovr` run from the directory it was built in.
+- Storybook built with `--stats-json` by the Vite, Webpack 5 or Rspack (`storybook-builder-rsbuild`) builder, and `ovr` run from the directory it was built in.
 - The full git history. In GitHub Actions, check out with `fetch-depth: 0`.
 - A successful build on the project's main branch in the commit's history to compare against.
 
