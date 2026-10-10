@@ -31,6 +31,7 @@ describe("SettingsJobsPage", () => {
       {
         settings: { ...DEFAULT_FLAKY_DETECTION_SETTINGS, enabled: true },
         lastRunAt: null,
+        nextRunAt: null,
         running: false,
       },
     ]);
@@ -40,6 +41,46 @@ describe("SettingsJobsPage", () => {
     expect(screen.getByRole("heading", { name: /^jobs$/i })).toBeVisible();
     expect(screen.getByRole("heading", { name: /flaky detection/i })).toBeVisible();
     expect(screen.getByRole("switch", { name: /enabled/i })).toBeChecked();
+  });
+
+  it("should show when flaky detection last ran and next runs", async () => {
+    mockGetSession.mockResolvedValue({
+      user: mocks.user.generateAuthUser({ role: "admin" }),
+      session: mocks.session.generateSession(),
+    });
+    mockGetFlakyDetection.mockResolvedValue([
+      null,
+      {
+        settings: { ...DEFAULT_FLAKY_DETECTION_SETTINGS, enabled: true },
+        lastRunAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+        nextRunAt: new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(),
+        running: false,
+      },
+    ]);
+
+    render(await SettingsJobsPage());
+
+    expect(screen.getByText("last run: 2 hours ago · next run: in 3 hours")).toBeVisible();
+  });
+
+  it("should not show a next run when flaky detection is not scheduled", async () => {
+    mockGetSession.mockResolvedValue({
+      user: mocks.user.generateAuthUser({ role: "admin" }),
+      session: mocks.session.generateSession(),
+    });
+    mockGetFlakyDetection.mockResolvedValue([
+      null,
+      {
+        settings: DEFAULT_FLAKY_DETECTION_SETTINGS,
+        lastRunAt: null,
+        nextRunAt: null,
+        running: false,
+      },
+    ]);
+
+    render(await SettingsJobsPage());
+
+    expect(screen.getByText("last run: never")).toBeVisible();
   });
 
   it("should show a not found page for non-admins", async () => {
