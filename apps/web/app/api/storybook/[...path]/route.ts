@@ -2,8 +2,6 @@ import { OpenAPIHandler } from "@orpc/openapi/fetch";
 
 import { serverClient } from "@/lib/router";
 
-export const runtime = "nodejs";
-
 const handler = new OpenAPIHandler(serverClient.storybook);
 
 const serve = async (request: Request) => {
