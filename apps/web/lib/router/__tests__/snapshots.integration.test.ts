@@ -708,7 +708,7 @@ describe("snapshots", () => {
       return id;
     };
 
-    test("lists the story's snapshots on the main branch, newest first", async ({ admin }) => {
+    test("lists the matching snapshots on the main branch, newest first", async ({ admin }) => {
       const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
       const projectId = addResult!.projectId;
       const first = await createBuildWithStory(projectId, admin, "main");
@@ -736,7 +736,7 @@ describe("snapshots", () => {
       expect(result?.snapshots[2]?.variantId).toBe(look);
     });
 
-    test("lists the story's snapshots on the requested branch up to the limit", async ({
+    test("lists the matching snapshots on the requested branch up to the limit", async ({
       admin,
     }) => {
       const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
