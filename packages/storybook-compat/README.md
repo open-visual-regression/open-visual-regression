@@ -14,9 +14,12 @@ editing the constant.
 ## Fixtures
 
 Each fixture is named `<builder>-v<major>`, pins one major of one builder, and
-installs independently of the repo workspace: `vite-v8` to `vite-v10` and
-`webpack-v8` to `webpack-v10`. The `v8` fixtures pin 8.5.x, so the floor we
-advertise is the one exercised. All of them share the stories in `fixtures/stories`, which import
+installs independently of the repo workspace: `vite-v8` to `vite-v10`,
+`webpack-v8` to `webpack-v10` and `rsbuild-v8` to `rsbuild-v10`. `vite-v8` and
+`webpack-v8` pin 8.5.x, so the floor we advertise is the one exercised.
+`rsbuild-v8` pins 8.6.x, the oldest `storybook-builder-rsbuild` builds with.
+`rsbuild-v10` pins `storybook-builder-rsbuild` 3.3 or newer, which rewrites its
+stats; the older majors cover the stats Rspack writes itself. All of them share the stories in `fixtures/stories`, which import
 CSS, a shared module and a lazy component, plus an MDX page. Every fixture must
 read the same graph of those files from its stats, whatever its builder.
 

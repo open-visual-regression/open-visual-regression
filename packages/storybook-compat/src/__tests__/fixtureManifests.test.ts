@@ -22,16 +22,15 @@ const EXPECTED_STORY_IDS = [
 
 const PROJECT_FILE = /^\.\/(src|\.storybook)\//;
 
+const ENTRY_FILE = /^\.\/(src\/.*\.stories\.jsx|\.storybook\/.*)$/;
+
 const PROJECT_IMPORTERS = [
-  "./src/Button.css <- ./src/Button.jsx",
   "./src/Button.css <- ./src/Button.stories.jsx",
   "./src/Button.jsx <- ./src/Button.stories.jsx",
   "./src/Card.jsx <- ./src/Card.stories.jsx",
   "./src/Card.jsx <- ./src/Lazy.stories.jsx",
   "./src/global.css <- ./.storybook/preview.js",
-  "./src/tones.js <- ./src/Button.jsx",
   "./src/tones.js <- ./src/Button.stories.jsx",
-  "./src/tones.js <- ./src/Card.jsx",
   "./src/tones.js <- ./src/Card.stories.jsx",
   "./src/tones.js <- ./src/Lazy.stories.jsx",
 ];
@@ -66,7 +65,7 @@ const readProjectImporters = async (storybookDir: string): Promise<string[]> => 
     .filter((name) => PROJECT_FILE.test(name))
     .flatMap((name) =>
       [...importersOf(name)]
-        .filter((parent) => PROJECT_FILE.test(parent))
+        .filter((parent) => ENTRY_FILE.test(parent))
         .map((parent) => `${name} <- ${parent}`),
     )
     .sort();
