@@ -8,6 +8,7 @@ import { QueueUnavailableError, scheduleJob, type RedisConnection } from "@ovr/q
 import {
   enqueueFlakySnapshotDispatch,
   enqueueFlakySnapshotScanMany,
+  getJobNextRunAt,
   isJobRunning,
   scheduleJob as rescheduleJob,
 } from "@ovr/queue/producer";
@@ -32,15 +33,28 @@ const isFlakyDetectionRunning = async (): Promise<boolean> => {
   }
 };
 
+const getFlakyDetectionNextRunAt = async (): Promise<Date | null> => {
+  try {
+    return await getJobNextRunAt("flaky_detection");
+  } catch (error) {
+    if (error instanceof QueueUnavailableError) {
+      return null;
+    }
+    throw error;
+  }
+};
+
 export const getFlakyDetection = async (): Promise<FlakyDetection> => {
-  const [stored, running] = await Promise.all([
+  const [stored, running, nextRunAt] = await Promise.all([
     dbClient.jobSettings.find("flaky_detection"),
     isFlakyDetectionRunning(),
+    getFlakyDetectionNextRunAt(),
   ]);
 
   return {
     settings: storedFlakyDetectionSettingsSchema.parse(stored?.settings),
     lastRunAt: stored?.lastRunAt ?? null,
+    nextRunAt: nextRunAt?.toISOString() ?? null,
     running,
   };
 };
