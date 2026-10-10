@@ -10,6 +10,13 @@ export class CliStepError extends Error {
   }
 }
 
+export class UnsupportedByServerError extends Error {
+  constructor(readonly serverVersion: string | null) {
+    super("the server does not support this command");
+    this.name = "UnsupportedByServerError";
+  }
+}
+
 export const runStep = async <T>(step: string, run: () => Promise<T>): Promise<T> => {
   try {
     return await run();
@@ -43,6 +50,11 @@ const isNetworkError = (error: unknown): boolean =>
 export const formatCliError = (error: unknown, serverUrl: string): string => {
   if (error instanceof CliStepError) {
     return `Failed while ${error.step}: ${formatCliError(error.cause, serverUrl)}`;
+  }
+
+  if (error instanceof UnsupportedByServerError) {
+    const version = error.serverVersion ? ` (version ${error.serverVersion})` : "";
+    return `The server at ${serverUrl}${version} does not support this command. Upgrade the server to use it.`;
   }
 
   if (error instanceof ORPCError) {

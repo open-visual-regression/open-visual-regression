@@ -35,3 +35,5 @@ export const contract = {
   accessTokens: { ...accessTokensContract },
   jobs: { ...jobsContract },
 } as const;
+
+export const SERVER_VERSION_HEADER = "x-ovr-version";
