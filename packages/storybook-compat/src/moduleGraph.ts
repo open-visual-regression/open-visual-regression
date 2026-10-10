@@ -1,5 +1,8 @@
-import { readFile } from "node:fs/promises";
+import { createReadStream, existsSync } from "node:fs";
 import path from "node:path";
+import { pipeline } from "node:stream/promises";
+
+import { JSONParser } from "@streamparser/json-node";
 
 import { readViteImporters, type ViteStats } from "./viteStats";
 
@@ -7,17 +10,51 @@ export const STATS_FILENAME = "preview-stats.json";
 
 export type ModuleGraph = { importers: Map<string, string[]> } | { reason: string };
 
-type Stats = { version?: string; modules?: unknown[] };
+type StatsModule = {
+  name?: string | null;
+  reasons?: { moduleName?: string | null }[];
+  modules?: StatsModule[];
+};
+
+type Stats = { version?: string; modules: StatsModule[] };
+
+const toGraphModule = ({ name, reasons, modules }: StatsModule): StatsModule => ({
+  name,
+  reasons: reasons?.map(({ moduleName }) => ({ moduleName })),
+  modules: modules?.map(toGraphModule),
+});
+
+const readStats = async (file: string): Promise<Stats> => {
+  const stats: Stats = { modules: [] };
+  const parser = new JSONParser({ paths: ["$.version", "$.modules.*"], keepStack: false });
+  parser.on("data", ({ key, value }) => {
+    if (key === "version") {
+      stats.version = value as string;
+    } else {
+      stats.modules.push(toGraphModule(value as StatsModule));
+    }
+  });
+
+  await pipeline(createReadStream(file), parser);
+  return stats;
+};
 
 export const readModuleGraph = async (storybookDir: string): Promise<ModuleGraph | undefined> => {
-  let stats: Stats | undefined;
-  try {
-    stats = JSON.parse(await readFile(path.join(storybookDir, STATS_FILENAME), "utf-8")) as Stats;
-  } catch {
+  const file = path.join(storybookDir, STATS_FILENAME);
+  if (!existsSync(file)) {
     return undefined;
   }
 
-  if (!stats?.modules) {
+  let stats: Stats;
+  try {
+    stats = await readStats(file);
+  } catch (error) {
+    return {
+      reason: `could not parse ${STATS_FILENAME} (${error instanceof Error ? error.message : String(error)})`,
+    };
+  }
+
+  if (stats.modules.length === 0) {
     return undefined;
   }
   if (stats.version) {
