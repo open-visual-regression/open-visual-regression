@@ -2,6 +2,7 @@ import {
   and,
   asc,
   count,
+  desc,
   eq,
   exists,
   ilike,
@@ -502,5 +503,51 @@ export const countForBuild = async (buildId: string, filters: ListForBuildFilter
     .where(listForBuildWhere(buildId, filters));
   return result?.count ?? 0;
 };
+
+export type FindHistoryOptions = {
+  projectId: string;
+  branch: string;
+  browser: string;
+  viewportWidth: number;
+  viewportHeight: number;
+  targetId: string;
+  limit: number;
+};
+
+export const findHistory = ({
+  projectId,
+  branch,
+  browser,
+  viewportWidth,
+  viewportHeight,
+  targetId,
+  limit,
+}: FindHistoryOptions) =>
+  db
+    .select({
+      id: snapshots.id,
+      buildId: builds.id,
+      buildName: builds.name,
+      commitSha: builds.commitSha,
+      createdAt: builds.createdAt,
+      status: displayStatusExpr,
+      diffPercent: diffs.diffPercent,
+      variantId: snapshots.variantId,
+    })
+    .from(builds)
+    .innerJoin(snapshots, eq(snapshots.buildId, builds.id))
+    .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
+    .where(
+      and(
+        eq(builds.projectId, projectId),
+        eq(builds.branch, branch),
+        eq(snapshots.browser, browser),
+        eq(snapshots.viewportWidth, viewportWidth),
+        eq(snapshots.viewportHeight, viewportHeight),
+        eq(snapshots.targetId, targetId),
+      ),
+    )
+    .orderBy(desc(builds.createdAt), desc(builds.id))
+    .limit(limit);
 
 export type SnapshotDbSchema = Awaited<ReturnType<typeof findByBuild>>[number];
