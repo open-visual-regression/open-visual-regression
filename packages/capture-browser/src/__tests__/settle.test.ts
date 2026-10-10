@@ -5,8 +5,8 @@ import { chromium, type Browser, type Page } from "playwright";
 import { PNG } from "pngjs";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
-import { newPage } from "../lib/browser";
-import { settlePage, trackNetworkActivity } from "../lib/settle";
+import { newPage } from "../browser";
+import { settlePage, trackNetworkActivity } from "../settle";
 
 const SLOW_RESPONSE_MS = 400;
 const GIVE_UP_TIMEOUT_MS = 500;

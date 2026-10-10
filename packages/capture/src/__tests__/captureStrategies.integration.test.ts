@@ -5,7 +5,11 @@ import { fileURLToPath } from "node:url";
 
 import { afterAll, beforeAll } from "vitest";
 
-import { detectCaptureStrategy, type CaptureStrategy } from "../captureStrategies";
+import {
+  detectCaptureStrategy,
+  type CaptureStrategy,
+} from "@ovr/capture-browser/captureStrategies";
+
 import { describe, expect, test, withCapturePage, writeStorybookBuildMarkers } from "./fixtures";
 
 const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));

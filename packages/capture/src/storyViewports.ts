@@ -1,14 +1,14 @@
 import { chromium } from "playwright";
 
+import { SIGNAL_HANDLING_OPTIONS, newPage } from "@ovr/capture-browser/browser";
+import { blockExternalRequests } from "@ovr/capture-browser/page";
+import { startStaticProxy } from "@ovr/capture-browser/staticProxy";
+import { BOOT_TIMEOUT_MS } from "@ovr/capture-browser/timeouts";
 import {
   MAX_WAIT_FOR_TIMEOUT_MS,
   type OvrStoryParameterViewport,
   type OvrStoryParameters,
 } from "@ovr/storybook-compat/parameters";
-
-import { SIGNAL_HANDLING_OPTIONS, newPage } from "./lib/browser";
-import { BOOT_TIMEOUT_MS } from "./lib/captureTimeouts";
-import { startStaticProxy } from "./lib/staticProxy";
 
 export type NamedViewport = {
   name?: string;
@@ -67,13 +67,7 @@ export const readStoryParameterOverrides = async (
     const context = await browser.newContext();
     const page = await newPage(context);
 
-    await page.route("**/*", (route) => {
-      const url = new URL(route.request().url());
-      if (url.origin === proxy.origin || url.protocol === "data:" || url.protocol === "blob:") {
-        return route.continue();
-      }
-      return route.abort();
-    });
+    await blockExternalRequests(page, proxy.origin);
 
     await page.goto(`${proxy.origin}/iframe.html`, { waitUntil: "load" });
     await page.waitForFunction(
