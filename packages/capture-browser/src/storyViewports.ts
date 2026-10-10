@@ -1,14 +1,15 @@
 import { chromium } from "playwright";
 
-import { SIGNAL_HANDLING_OPTIONS, newPage } from "@ovr/capture-browser/browser";
-import { blockExternalRequests } from "@ovr/capture-browser/page";
-import { startStaticProxy } from "@ovr/capture-browser/staticProxy";
-import { BOOT_TIMEOUT_MS } from "@ovr/capture-browser/timeouts";
 import {
   MAX_WAIT_FOR_TIMEOUT_MS,
   type OvrStoryParameterViewport,
   type OvrStoryParameters,
 } from "@ovr/storybook-compat/parameters";
+
+import { SIGNAL_HANDLING_OPTIONS, newPage } from "./browser";
+import { blockExternalRequests } from "./page";
+import { startStaticProxy } from "./staticProxy";
+import { BOOT_TIMEOUT_MS } from "./timeouts";
 
 export type NamedViewport = {
   name?: string;
