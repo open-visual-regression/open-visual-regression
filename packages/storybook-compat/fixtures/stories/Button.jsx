@@ -1,11 +1,10 @@
-const TONES = {
-  primary: "#2563eb",
-  danger: "#dc2626",
-};
+import "./Button.css";
+import { TONES } from "./tones";
 
 export const Button = ({ label, tone = "primary" }) => (
   <button
     type="button"
+    className="fixture-button"
     data-testid="fixture-button"
     style={{
       width: 200,

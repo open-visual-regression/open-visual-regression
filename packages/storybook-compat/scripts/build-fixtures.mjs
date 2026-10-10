@@ -44,6 +44,9 @@ for (const fixture of fixtures) {
     continue;
   }
 
+  await rm(storiesDir, { recursive: true, force: true });
+  await cp(STORIES_DIR, storiesDir, { recursive: true });
+
   const built = ["index.json", "preview-stats.json"].every((file) =>
     existsSync(path.join(buildDir, file)),
   );
@@ -57,8 +60,6 @@ for (const fixture of fixtures) {
   await run("pnpm", ["install", "--frozen-lockfile"], fixture);
 
   console.log(`${name}: building`);
-  await rm(storiesDir, { recursive: true, force: true });
-  await cp(STORIES_DIR, storiesDir, { recursive: true });
   await rm(buildDir, { recursive: true, force: true });
   await run(
     "pnpm",
