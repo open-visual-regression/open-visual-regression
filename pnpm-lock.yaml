@@ -113,6 +113,12 @@ importers:
       ky:
         specifier: ^2.0.2
         version: 2.1.0
+      pixelmatch:
+        specifier: ^7.2.0
+        version: 7.2.0
+      pngjs:
+        specifier: ^7.0.0
+        version: 7.0.0
       tar:
         specifier: ^7.5.22
         version: 7.5.22
@@ -135,6 +141,12 @@ importers:
       '@types/node':
         specifier: ^22.20.1
         version: 22.20.1
+      '@types/pixelmatch':
+        specifier: ^5.2.6
+        version: 5.2.6
+      '@types/pngjs':
+        specifier: ^6.0.5
+        version: 6.0.5
       playwright:
         specifier: 1.61.0
         version: 1.61.0
@@ -8709,6 +8721,8 @@ snapshots:
       commander: 15.0.0
       jiti: 2.7.0
       ky: 2.1.0
+      pixelmatch: 7.2.0
+      pngjs: 7.0.0
       tar: 7.5.22
       uuid: 14.0.1
     optionalDependencies:

@@ -27,6 +27,8 @@ import {
 import { startStaticProxy } from "@ovr/capture-browser/staticProxy";
 import { RENDER_TIMEOUT_MS, SETTLE_TIMEOUT_MS } from "@ovr/capture-browser/timeouts";
 
+import { getDiffPercent } from "./compare";
+
 const HASH_LENGTH = 12;
 
 export type CaptureTarget = {
@@ -36,11 +38,13 @@ export type CaptureTarget = {
   viewportWidth: number;
   viewportHeight: number;
   waitForTimeout: number;
+  diffThreshold: number;
 };
 
 export type CapturedImage = {
   hash: string;
   count: number;
+  diffPercent: number;
   file: string | null;
 };
 
@@ -49,6 +53,7 @@ export type CaptureResult = {
   browser: string;
   viewportName: string;
   runs: number;
+  diffThreshold: number;
   images: CapturedImage[];
   errors: string[];
 };
@@ -115,14 +120,18 @@ const captureOnce = async (
 
 const captureTarget = async (
   page: Page,
+  origin: string,
   networkActivity: NetworkActivity,
   target: CaptureTarget,
   { strategy, repeat, outDir }: CaptureRunOptions,
 ): Promise<CaptureResult> => {
   const images = new Map<string, CapturedImage>();
   const errors = new Set<string>();
+  let reference: Buffer | null = null;
 
   for (let run = 0; run < repeat; run++) {
+    // A fresh page per run, so no state carries over from the previous one.
+    await bootTargetPage(page, origin, strategy);
     const { screenshot, error } = await captureOnce(page, strategy, networkActivity, target);
     const hash = createHash("sha1").update(screenshot).digest("hex").slice(0, HASH_LENGTH);
     const image = images.get(hash);
@@ -136,11 +145,12 @@ const captureTarget = async (
       continue;
     }
 
+    reference ??= screenshot;
     const file = outDir ? path.join(outDir, toFileName(target, hash)) : null;
     if (file) {
       await writeFile(file, screenshot);
     }
-    images.set(hash, { hash, count: 1, file });
+    images.set(hash, { hash, count: 1, diffPercent: getDiffPercent(reference, screenshot), file });
   }
 
   return {
@@ -148,6 +158,7 @@ const captureTarget = async (
     browser: target.browser,
     viewportName: target.viewportName,
     runs: repeat,
+    diffThreshold: target.diffThreshold,
     images: [...images.values()],
     errors: [...errors],
   };
@@ -177,13 +188,12 @@ const captureWithBrowser = async (
     }
 
     await blockExternalRequests(page, origin);
-    await bootTargetPage(page, origin, options.strategy);
     const networkActivity = trackNetworkActivity(page);
 
     try {
       const results: CaptureResult[] = [];
       for (const target of targets) {
-        results.push(await captureTarget(page, networkActivity, target, options));
+        results.push(await captureTarget(page, origin, networkActivity, target, options));
       }
       return results;
     } finally {

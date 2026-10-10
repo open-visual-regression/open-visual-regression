@@ -2,7 +2,12 @@ import { Command } from "commander";
 
 import { readStoryTargets } from "@ovr/storybook-compat/manifest";
 
-import { loadOvrConfig, resolveViewports, resolveWaitForTimeout } from "../../config";
+import {
+  loadOvrConfig,
+  resolveDiffThreshold,
+  resolveViewports,
+  resolveWaitForTimeout,
+} from "../../config";
 import { describeError } from "../../errors";
 import { loadWithPlaywright } from "./loadPlaywright";
 import {
@@ -60,6 +65,7 @@ const captureStorybook = async (
   const config = await loadOvrConfig(process.cwd(), options.config);
   const viewports = resolveViewports(config);
   const waitForTimeout = resolveWaitForTimeout(config);
+  const diffThreshold = resolveDiffThreshold(config);
   const launchOptions = options.executablePath ? { executablePath: options.executablePath } : {};
 
   const stories = await readStoryTargets(options.dir);
@@ -109,6 +115,7 @@ const captureStorybook = async (
         viewportWidth: viewport.viewportWidth,
         viewportHeight: viewport.viewportHeight ?? 0,
         waitForTimeout: storyViewports.resolveTargetWaitForTimeout(waitForTimeout, override),
+        diffThreshold: storyViewports.resolveTargetDiffThreshold(diffThreshold, override),
       }))
       .filter((target) => !options.viewport || options.viewport.includes(target.viewportName));
   });

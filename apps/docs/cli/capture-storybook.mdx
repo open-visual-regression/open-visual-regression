@@ -5,9 +5,9 @@ description: Capture stories on your machine to check their screenshots are stab
 
 Captures stories from a Storybook 8.5+ static build the same way a build does — the
 same viewports from `ovr.config`, the same story `ovr` parameters, waiting for play
-functions and network activity to settle — and reports whether each one produces the
-same image every time. Use it to reproduce a flaky snapshot and to check a fix before
-pushing it. Nothing is uploaded, so it needs no token.
+functions and network activity to settle — and checks that each one looks the same every
+time, within the same diff threshold a build uses. Use it to reproduce a flaky snapshot
+and to check a fix before pushing it. Nothing is uploaded, so it needs no token.
 
 Needs [Playwright](https://playwright.dev) and a browser installed alongside the CLI:
 
@@ -37,20 +37,25 @@ ovr capture storybook --dir storybook-static --story components-dialog--open --r
 ## Output
 
 ```
-TARGET                   BROWSER   VIEWPORT  RUNS  IMAGES  RESULT
-components-dialog--open  chromium  desktop   10    3       unstable
+TARGET                   BROWSER   VIEWPORT  RUNS  IMAGES  MAX DIFF%  RESULT
+components-dialog--open  chromium  desktop   10    3       2.08       unstable
+components-button--primary  chromium  desktop   10    1       0.00       stable
 
-components-dialog--open (desktop): 6x out/components-dialog--open--desktop--1f0c2a9b3d4e.png
-components-dialog--open (desktop): 3x out/components-dialog--open--desktop--8a7e6d5c4b3a.png
-components-dialog--open (desktop): 1x out/components-dialog--open--desktop--0b1c2d3e4f5a.png
+components-dialog--open (desktop): 6x, 0.00% different: out/components-dialog--open--desktop--1f0c2a9b3d4e.png
+components-dialog--open (desktop): 3x, 2.08% different: out/components-dialog--open--desktop--8a7e6d5c4b3a.png
+components-dialog--open (desktop): 1x, 1.12% different: out/components-dialog--open--desktop--0b1c2d3e4f5a.png
 
-0 of 1 captures produced the same image on every run.
+1 of 2 captures stayed within their diff threshold on every run.
 ```
 
-`IMAGES` counts the distinct screenshots across runs. A capture is `stable` when every run
-produced the same image, `unstable` when they differed, and `error` when the story failed
-to render. With `--out`, each distinct image is saved once and listed with how many runs
-produced it. Stories skipped through their `ovr` parameters aren't captured.
+Every run is compared with the first run the same way a build compares a snapshot with its
+baseline. `IMAGES` counts the distinct screenshots, and `MAX DIFF%` is the largest
+difference from the first run. A capture is `stable` when every run is within the story's
+`diffThreshold` (from `ovr.config` or its `ovr` parameters), so differences too small for a
+build to flag don't count. It's `unstable` when a run goes over the threshold, and `error`
+when the story failed to render. With `--out`, each distinct image is saved once and, for
+unstable captures, listed with how many runs produced it. Stories skipped through their
+`ovr` parameters aren't captured.
 
 The command exits with status 1 when any capture is unstable or errored, or a story fails
 to load, so it can run in CI.

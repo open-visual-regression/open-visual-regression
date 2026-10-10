@@ -8,7 +8,8 @@ const RESULT: CaptureResult = {
   browser: "chromium",
   viewportName: "desktop",
   runs: 3,
-  images: [{ hash: "aaaaaaaaaaaa", count: 3, file: null }],
+  diffThreshold: 0.05,
+  images: [{ hash: "aaaaaaaaaaaa", count: 3, diffPercent: 0, file: null }],
   errors: [],
 };
 
@@ -16,8 +17,8 @@ const UNSTABLE: CaptureResult = {
   ...RESULT,
   targetId: "components-dialog--open",
   images: [
-    { hash: "aaaaaaaaaaaa", count: 2, file: "out/a.png" },
-    { hash: "bbbbbbbbbbbb", count: 1, file: "out/b.png" },
+    { hash: "aaaaaaaaaaaa", count: 2, diffPercent: 0, file: "out/a.png" },
+    { hash: "bbbbbbbbbbbb", count: 1, diffPercent: 1.5, file: "out/b.png" },
   ],
 };
 
@@ -36,9 +37,29 @@ describe("formatCaptureReport", () => {
     expect(lines[0]).toContain("RESULT");
     expect(lines[1]).toMatch(/components-button--primary .* stable$/);
     expect(lines[2]).toMatch(/components-dialog--open .* unstable$/);
-    expect(lines).toContain("components-dialog--open (desktop): 2x out/a.png");
-    expect(lines).toContain("components-dialog--open (desktop): 1x out/b.png");
-    expect(lines.at(-1)).toBe("1 of 2 captures produced the same image on every run.");
+    expect(lines[2]).toContain("1.50");
+    expect(lines).toContain("components-dialog--open (desktop): 2x, 0.00% different: out/a.png");
+    expect(lines).toContain("components-dialog--open (desktop): 1x, 1.50% different: out/b.png");
+    expect(lines.at(-1)).toBe("1 of 2 captures stayed within their diff threshold on every run.");
+  });
+
+  it("should treat differences within the diff threshold as stable", () => {
+    const withinThreshold: CaptureResult = {
+      ...UNSTABLE,
+      images: [
+        { hash: "aaaaaaaaaaaa", count: 2, diffPercent: 0, file: "out/a.png" },
+        { hash: "bbbbbbbbbbbb", count: 1, diffPercent: 0.002, file: "out/b.png" },
+      ],
+    };
+
+    const lines = formatCaptureReport({ results: [withinThreshold], issues: [] }, false).split(
+      "\n",
+    );
+
+    expect(lines[1]).toMatch(/ 2 +0\.00 +stable$/);
+    expect(lines).not.toContain(
+      "components-dialog--open (desktop): 1x, 0.00% different: out/b.png",
+    );
   });
 
   it("should report render errors and targets that could not be captured", () => {

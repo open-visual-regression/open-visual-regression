@@ -1,7 +1,9 @@
 import { formatTable } from "../../table";
 import type { CaptureResult } from "./run";
 
-const HEADERS = ["TARGET", "BROWSER", "VIEWPORT", "RUNS", "IMAGES", "RESULT"];
+const HEADERS = ["TARGET", "BROWSER", "VIEWPORT", "RUNS", "IMAGES", "MAX DIFF%", "RESULT"];
+
+const DIFF_PERCENT_PRECISION = 2;
 
 export type CaptureIssue = {
   targetId: string;
@@ -13,13 +15,19 @@ export type CaptureReport = {
   issues: CaptureIssue[];
 };
 
+export const getMaxDiffPercent = (result: CaptureResult): number =>
+  Math.max(0, ...result.images.map((image) => image.diffPercent));
+
 export const getCaptureResultStatus = (result: CaptureResult): string => {
   if (result.errors.length > 0) {
     return "error";
   }
 
-  return result.images.length > 1 ? "unstable" : "stable";
+  return getMaxDiffPercent(result) > result.diffThreshold ? "unstable" : "stable";
 };
+
+const formatDiffPercent = (diffPercent: number): string =>
+  diffPercent.toFixed(DIFF_PERCENT_PRECISION);
 
 export const isCaptureReportPassing = ({ results, issues }: CaptureReport): boolean =>
   issues.length === 0 && results.every((result) => getCaptureResultStatus(result) === "stable");
@@ -27,7 +35,7 @@ export const isCaptureReportPassing = ({ results, issues }: CaptureReport): bool
 const formatSummary = (results: CaptureResult[]): string => {
   const stable = results.filter((result) => getCaptureResultStatus(result) === "stable").length;
 
-  return `${stable} of ${results.length} captures produced the same image on every run.`;
+  return `${stable} of ${results.length} captures stayed within their diff threshold on every run.`;
 };
 
 export const formatCaptureReport = (report: CaptureReport, json: boolean | undefined): string => {
@@ -47,6 +55,7 @@ export const formatCaptureReport = (report: CaptureReport, json: boolean | undef
           result.viewportName,
           String(result.runs),
           String(result.images.length),
+          formatDiffPercent(getMaxDiffPercent(result)),
           getCaptureResultStatus(result),
         ]),
       ),
@@ -59,7 +68,8 @@ export const formatCaptureReport = (report: CaptureReport, json: boolean | undef
       ? result.images
           .filter((image) => image.file)
           .map(
-            (image) => `${result.targetId} (${result.viewportName}): ${image.count}x ${image.file}`,
+            (image) =>
+              `${result.targetId} (${result.viewportName}): ${image.count}x, ${formatDiffPercent(image.diffPercent)}% different: ${image.file}`,
           )
       : []),
   ]);
