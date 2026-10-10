@@ -5,8 +5,8 @@ description: Capture stories on your machine to check their screenshots are stab
 
 Captures stories from a Storybook 8.5+ static build on your machine, with the same
 viewports, story `ovr` parameters and diff threshold as a build, and checks that each one
-looks the same every time. Use it to reproduce a flaky snapshot and to check a fix before
-pushing it. Nothing is uploaded, so it needs no token.
+looks the same every time. Use it to reproduce a flaky snapshot. Nothing is uploaded, so
+it needs no token.
 
 Needs [Playwright](https://playwright.dev) and a browser installed alongside the CLI:
 
@@ -28,7 +28,7 @@ ovr capture storybook --dir storybook-static --story components-dialog--open --r
 | `--viewport <name...>` | no | each story's viewports | Only capture these viewports |
 | `--repeat <count>` | no | `1` | Times to capture each story and viewport, 1–100 |
 | `--out <dir>` | no | | Save each distinct image to this directory |
-| `--cpu-throttle <rate>` | no | | Slow the CPU down by this factor, to imitate a busy CI machine (Chromium only) |
+| `--cpu-throttle <rate>` | no | | Slow the CPU down by this factor (Chromium only) |
 | `--executable-path <path>` | no | | Browser executable to launch instead of Playwright's |
 | `-c, --config <path>` | no | `ovr.config` | Path to `ovr.config` file |
 | `--json` | no | | Print results as JSON instead of a table |
@@ -47,16 +47,12 @@ components-dialog--open (desktop): 1x, 1.12% different: out/components-dialog--o
 1 of 2 captures stayed within their diff threshold on every run.
 ```
 
-Every run is compared with the first run. `IMAGES` counts the distinct screenshots, and
-`MAX DIFF%` is the largest difference from the first run. A capture is `stable` when every
-run is within the story's `diffThreshold` (from `ovr.config` or its `ovr` parameters), so
-differences too small for a build to flag don't count. It's `unstable` when a run goes over
-the threshold, and `error` when the story failed to render. With `--out`, each distinct
-image is saved once and, for unstable captures, listed with how many runs produced it.
-Stories skipped through their `ovr` parameters aren't captured.
+`IMAGES` counts the distinct screenshots across runs, and `MAX DIFF%` is the largest
+difference from the first run. A capture is `stable` when every run is within the story's
+`diffThreshold`, `unstable` when a run goes over it, and `error` when the story failed to
+render. With `--out`, each distinct image is saved to that directory.
 
-The command exits with status 1 when any capture is unstable or errored, or a story fails
-to load, so it can run in CI.
+The command exits with status 1 if any capture is unstable or errored, so it can run in CI.
 
 <Note>
   Screenshots can differ slightly from a build's because of fonts and the operating
