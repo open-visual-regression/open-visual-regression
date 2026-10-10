@@ -32,7 +32,7 @@ const createRepo = async (files: string[]): Promise<string> => {
 const writeBuild = async (
   graph: Graph,
   entries: { id: string; importPath: string; type?: string }[],
-  options: { stats?: boolean; version?: string; rspackVersion?: string } = {},
+  options: { stats?: boolean; version?: string } = {},
 ): Promise<string> => {
   const storybookDir = path.join(repoRoot, "apps/web/storybook-static");
   await mkdir(storybookDir, { recursive: true });
@@ -54,7 +54,7 @@ const writeBuild = async (
     }));
     await writeFile(
       path.join(storybookDir, "preview-stats.json"),
-      JSON.stringify({ version: options.version, rspackVersion: options.rspackVersion, modules }),
+      JSON.stringify({ version: options.version, modules }),
     );
   }
 
@@ -321,26 +321,6 @@ describe("findAffectedStories", () => {
     });
 
     expect(result).toMatchObject({ mode: "some", storyIds: ["form--default"] });
-  });
-
-  it("captures everything when the stats were written by Rspack", async () => {
-    await createRepo(viteRepoFiles);
-    const storybookDir = await writeBuild(viteGraph, viteEntries, {
-      version: "5.75.0",
-      rspackVersion: "1.7.12",
-    });
-
-    const result = await findAffectedStories({
-      storybookDir,
-      projectDir: webDir(),
-      repoRoot,
-      changedFiles: ["apps/web/src/Form.tsx"],
-    });
-
-    expect(result).toEqual({
-      mode: "all",
-      reason: "preview-stats.json was written by Rspack; only Vite and Webpack builds are traced",
-    });
   });
 
   it("captures everything when run from somewhere other than where Storybook was built", async () => {

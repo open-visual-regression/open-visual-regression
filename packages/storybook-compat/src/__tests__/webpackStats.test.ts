@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import { readWebpackImporters, type WebpackStats } from "../webpackStats";
 
-const read = (modules: WebpackStats["modules"]): Record<string, string[]> =>
-  Object.fromEntries(readWebpackImporters({ modules }));
+const read = (
+  modules: WebpackStats["modules"],
+  storyFiles: string[] = [],
+): Record<string, string[]> =>
+  Object.fromEntries(readWebpackImporters({ modules }, new Set(storyFiles)));
 
 const STORIES_CONTEXT =
   "./src/ lazy ^\\.\\/.*$ include: (?:\\/src(?:\\/(?!\\.)(?:(?:(?!(?:^|\\/)\\.).)*?)\\/|\\/|$)(?!\\.)(?=.)[^/]*?\\.stories\\.jsx)$ chunkName: [request] namespace object";
@@ -61,18 +64,62 @@ describe("readWebpackImporters", () => {
 
   it("links a module loaded through a context module to what created the context", () => {
     expect(
-      read([
-        { name: STORIES_CONTEXT, reasons: [{ moduleName: "./storybook-stories.js" }] },
-        { name: "./src/Card.stories.jsx", reasons: [{ moduleName: STORIES_CONTEXT }] },
-        { name: "./src/icons sync ^\\.\\/.*\\.svg$", reasons: [{ moduleName: "./src/Icon.jsx" }] },
-        {
-          name: "./src/icons/star.svg",
-          reasons: [{ moduleName: "./src/icons sync ^\\.\\/.*\\.svg$" }],
-        },
-      ]),
+      read(
+        [
+          { name: STORIES_CONTEXT, reasons: [{ moduleName: "./storybook-stories.js" }] },
+          { name: "./src/Card.stories.jsx", reasons: [{ moduleName: STORIES_CONTEXT }] },
+          {
+            name: "./src/icons sync ^\\.\\/.*\\.svg$",
+            reasons: [{ moduleName: "./src/Icon.jsx" }],
+          },
+          {
+            name: "./src/icons/star.svg",
+            reasons: [{ moduleName: "./src/icons sync ^\\.\\/.*\\.svg$" }],
+          },
+        ],
+        ["./src/Card.stories.jsx"],
+      ),
     ).toEqual({
       "./src/Card.stories.jsx": ["./storybook-stories.js"],
       "./src/icons/star.svg": ["./src/Icon.jsx"],
+    });
+  });
+
+  it("reads the context modules Rspack writes", () => {
+    const context =
+      "./src|lazy|/^\\.\\/.*$/|include: /\\.stories\\.jsx$/|chunkName: [request]|namespace object";
+
+    expect(
+      read(
+        [
+          { name: context, reasons: [{ moduleName: "./storybook-stories.js" }] },
+          { name: "./src/Card.stories.jsx", reasons: [{ moduleName: context }] },
+        ],
+        ["./src/Card.stories.jsx"],
+      ),
+    ).toEqual({ "./src/Card.stories.jsx": ["./storybook-stories.js"] });
+  });
+
+  it("reads names written without a leading ./", () => {
+    expect(
+      read([{ name: "src/Button.jsx", reasons: [{ moduleName: "./src/Button.stories.jsx" }] }]),
+    ).toEqual({ "./src/Button.jsx": ["./src/Button.stories.jsx"] });
+  });
+
+  it("ignores a stories glob loading anything but a story file", () => {
+    expect(
+      read(
+        [
+          { name: STORIES_CONTEXT, reasons: [{ moduleName: "storybook-stories.js" }] },
+          { name: "./src/Button.stories.jsx", reasons: [{ moduleName: STORIES_CONTEXT }] },
+          { name: "./src/Button.jsx", reasons: [{ moduleName: STORIES_CONTEXT }] },
+          { name: "src/Button.jsx", reasons: [{ moduleName: "./src/Button.stories.jsx" }] },
+        ],
+        ["./src/Button.stories.jsx"],
+      ),
+    ).toEqual({
+      "./src/Button.stories.jsx": ["./storybook-stories.js"],
+      "./src/Button.jsx": ["./src/Button.stories.jsx"],
     });
   });
 

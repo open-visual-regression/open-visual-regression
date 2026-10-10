@@ -60,5 +60,5 @@ make that a failure instead.
 `findAffectedStories` (`src/affectedStories.ts`) maps changed files to the
 stories they can affect. It walks the module graph that `readModuleGraph`
 (`src/moduleGraph.ts`) reads from `storybook build --stats-json`, with one
-reader per builder (`src/viteStats.ts`, `src/webpackStats.ts`). When it cannot
-tell, it returns every story.
+reader per stats format: `src/viteStats.ts`, and `src/webpackStats.ts` for
+Webpack and Rspack. When it cannot tell, it returns every story.
