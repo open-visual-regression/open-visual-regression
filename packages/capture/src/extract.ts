@@ -1,17 +1,17 @@
 import { toCaptureGroups } from "@ovr/builds/lib/captureGroups";
 import { withBundleDir } from "@ovr/builds/storybookBundleCache";
-import { dbClient } from "@ovr/db/client";
-import { enqueueCaptureGroup, enqueueFinalize } from "@ovr/queue/producer";
-import { assertSupportedStorybookBuild } from "@ovr/storybook-compat/version";
-
-import { markSnapshotErrored } from "./snapshots";
 import {
   readStoryParameterOverrides,
   resolveTargetDiffThreshold,
   resolveTargetViewports,
   resolveTargetWaitForTimeout,
-} from "./storyViewports";
-import type { NamedViewport } from "./storyViewports";
+} from "@ovr/capture-browser/storyViewports";
+import type { NamedViewport } from "@ovr/capture-browser/storyViewports";
+import { dbClient } from "@ovr/db/client";
+import { enqueueCaptureGroup, enqueueFinalize } from "@ovr/queue/producer";
+import { assertSupportedStorybookBuild } from "@ovr/storybook-compat/version";
+
+import { markSnapshotErrored } from "./snapshots";
 
 type Target = { id: string; title: string; name: string };
 

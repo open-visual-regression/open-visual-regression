@@ -4,12 +4,12 @@ import path from "node:path";
 
 import * as tar from "tar";
 
+import { detectCaptureStrategy } from "@ovr/capture-browser/captureStrategies";
 import { dbClient } from "@ovr/db/client";
 import { storage } from "@ovr/storage";
 import { availableStorybookFixtures, type StorybookFixture } from "@ovr/storybook-compat/fixtures";
 import { readStoryTargets } from "@ovr/storybook-compat/manifest";
 
-import { detectCaptureStrategy } from "../captureStrategies";
 import { extractBuild } from "../extract";
 import { captureBuildGroup } from "../snapshots";
 import { describe, expect, test, withCapturePage } from "./fixtures";
