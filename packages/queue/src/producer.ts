@@ -18,6 +18,7 @@ import {
   enqueueProjectPurge as enqueueProjectPurgeJob,
   enqueuePurge as enqueuePurgeJob,
   enqueuePurgeMany as enqueuePurgeManyJob,
+  getJobNextRunAt as getJobNextRunAtCmd,
   isJobRunning as isJobRunningCmd,
   scheduleJob as scheduleJobCmd,
   type CanceledBuildJobs,
@@ -95,3 +96,6 @@ export const scheduleJob = (job: JobName, pattern: string | null): Promise<void>
 
 export const isJobRunning = (job: JobName): Promise<boolean> =>
   whenConnected(() => isJobRunningCmd(connection, job));
+
+export const getJobNextRunAt = (job: JobName): Promise<Date | null> =>
+  whenConnected(() => getJobNextRunAtCmd(connection, job));
