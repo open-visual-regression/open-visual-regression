@@ -34,12 +34,12 @@ export const blockExternalRequests = async (page: Page, origin: string): Promise
   });
 };
 
-export const bootStorybook = async (
+export const bootTargetPage = async (
   page: Page,
   origin: string,
   strategy: CaptureStrategy,
 ): Promise<void> => {
-  await page.goto(`${origin}/iframe.html`, { waitUntil: "load" });
+  await page.goto(`${origin}/${strategy.entryPath}`, { waitUntil: "load" });
   await strategy.waitForBoot(page, BOOT_TIMEOUT_MS);
 };
 

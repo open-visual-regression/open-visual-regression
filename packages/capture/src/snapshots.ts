@@ -11,7 +11,7 @@ import {
 } from "@ovr/capture-browser/captureStrategies";
 import {
   blockExternalRequests,
-  bootStorybook,
+  bootTargetPage,
   getCaptureViewport,
   takeScreenshot,
 } from "@ovr/capture-browser/page";
@@ -138,7 +138,7 @@ const launchCapturePage = async (
   });
 
   const bootStart = performance.now();
-  await bootStorybook(page, proxy.origin, strategy);
+  await bootTargetPage(page, proxy.origin, strategy);
   logger.info(
     { buildId, browser: browserName, bootMs: Math.round(performance.now() - bootStart) },
     "capture page booted",
