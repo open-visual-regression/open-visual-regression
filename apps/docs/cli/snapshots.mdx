@@ -110,3 +110,29 @@ Error:    story threw during render
 Logs:
   [error] TypeError: Cannot read properties of undefined (2026-09-12T10:43:15Z)
 ```
+
+## `ovr snapshots history`
+
+```sh
+ovr snapshots history <snapshotId>
+```
+
+| Flag | Description |
+|------|-------------|
+| `--server-url <url>` | OVR server URL (defaults to `ovr.config`'s `serverUrl`) |
+| `--branch <name>` | Branch to look at (defaults to the project's main branch) |
+| `--limit <count>` | Number of recent builds, 1–100 (default `30`) |
+| `-c, --config <path>` | Path to `ovr.config` file |
+| `--json` | Print the history as JSON instead of a table |
+
+Shows how the given snapshot looked across the most recent builds on a branch, newest
+first. Each distinct screenshot gets a letter in the `IMAGE` column.
+
+```
+SNAPSHOT                              BUILD                                 COMMIT   CREATED               STATUS         DIFF%  IMAGE
+01a1266c-7f4e-732a-93ea-9bbc9e97f3df  01a1266c-55b5-7729-8e1f-1b7c625b364b  278382f  2026-10-10T15:20:11Z  auto_approved  1.48   C
+01a11221-6061-71af-8a8a-56aad8d9a689  01a11221-4abe-7008-a90f-bf2c09b84f07  04b9a07  2026-10-08T09:02:45Z  auto_approved  2.07   B
+01a111e5-ac09-730b-9714-616d7397e056  01a111e5-8050-772d-9b46-19088f018444  04b9a07  2026-10-08T08:13:30Z  auto_approved  2.12   A
+
+Screenshot changed 2 times across the last 3 builds on main (3 distinct images).
+```

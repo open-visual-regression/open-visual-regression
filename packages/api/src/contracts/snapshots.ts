@@ -170,6 +170,39 @@ export const listFlagsContract = oc
   .input(listSnapshotFilterOptionsInputSchema)
   .output(listFlagsOutputSchema);
 
+export const MAX_SNAPSHOT_HISTORY = 100;
+
+export const snapshotHistoryEntrySchema = z.object({
+  id: z.uuidv7(),
+  buildId: z.uuidv7(),
+  buildName: z.string().nullable(),
+  commitSha: z.string().min(1),
+  createdAt: z.string().nonempty(),
+  status: snapshotDisplayStatusSchema,
+  diffPercent: z.number().nullable(),
+  variantId: z
+    .uuidv7()
+    .nullable()
+    .meta({ description: "Snapshots with the same value have identical screenshots" }),
+});
+
+export type SnapshotHistoryEntrySchema = z.infer<typeof snapshotHistoryEntrySchema>;
+
+export const getHistoryInputSchema = z.object({
+  snapshotId: z.uuidv7(),
+  branch: z.string().min(1).optional(),
+  limit: z.number().int().min(1).max(MAX_SNAPSHOT_HISTORY).default(30),
+});
+
+export const getHistoryOutputSchema = z.object({
+  branch: z.string().min(1),
+  snapshots: z.array(snapshotHistoryEntrySchema),
+});
+
+export type GetHistoryOutputSchema = z.infer<typeof getHistoryOutputSchema>;
+
+export const getHistoryContract = oc.input(getHistoryInputSchema).output(getHistoryOutputSchema);
+
 export const rebuildInputSchema = z.object({
   buildId: z.uuidv7(),
   snapshotIds: z.array(z.uuidv7()).min(1).max(MAX_REBUILD_SNAPSHOTS),
@@ -186,6 +219,7 @@ export const contract = {
   list: listContract,
   getCounts: getCountsContract,
   getAdjacent: getAdjacentContract,
+  getHistory: getHistoryContract,
   listStatuses: listStatusesContract,
   listBrowsers: listBrowsersContract,
   listViewports: listViewportsContract,
