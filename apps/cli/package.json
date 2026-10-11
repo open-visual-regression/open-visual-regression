@@ -53,6 +53,7 @@
   "devDependencies": {
     "@ovr/api": "workspace:*",
     "@ovr/capture-browser": "workspace:*",
+    "@ovr/diff-analysis": "workspace:*",
     "@ovr/storybook-compat": "workspace:*",
     "@ovr/typescript-config": "workspace:*",
     "@types/node": "^22.20.1",
