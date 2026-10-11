@@ -1,5 +1,32 @@
 # @ovr/web
 
+## 0.11.0
+
+### Minor Changes
+
+- [#338](https://github.com/open-visual-regression/open-visual-regression/pull/338) [`8f8c3fb`](https://github.com/open-visual-regression/open-visual-regression/commit/8f8c3fb945d6f91412f59d578b9bddf50a894048) Thanks [@tgfischer](https://github.com/tgfischer)! - API responses include the server's version in the `x-ovr-version` header, and the CLI says when a command needs a newer server.
+
+- [#336](https://github.com/open-visual-regression/open-visual-regression/pull/336) [`23dce06`](https://github.com/open-visual-regression/open-visual-regression/commit/23dce063717c0cbb8b78a6b8ee7048287057848c) Thanks [@tgfischer](https://github.com/tgfischer)! - Add `flags` to snapshot responses: flag names in `snapshots.list`, and each flag with its details in `snapshots.getOne`. `isFlaky` and `hasUncaughtPageError` are deprecated.
+
+- [#339](https://github.com/open-visual-regression/open-visual-regression/pull/339) [`dd78378`](https://github.com/open-visual-regression/open-visual-regression/commit/dd78378a08d5225a897ba1c8124bc0f8252f913b) Thanks [@tgfischer](https://github.com/tgfischer)! - Add `ovr snapshots history` to show a snapshot's screenshot across recent builds.
+
+### Patch Changes
+
+- [#333](https://github.com/open-visual-regression/open-visual-regression/pull/333) [`3c29cec`](https://github.com/open-visual-regression/open-visual-regression/commit/3c29cec506066fe5a7187a9dc2317679b813eb10) Thanks [@tgfischer](https://github.com/tgfischer)! - Show when flaky detection is next scheduled to run on the jobs settings page.
+
+- [#312](https://github.com/open-visual-regression/open-visual-regression/pull/312) [`1693f5d`](https://github.com/open-visual-regression/open-visual-regression/commit/1693f5dd5ee5bb38488cfcbd7df79892bf31d64a) Thanks [@tgfischer](https://github.com/tgfischer)! - Fix pages endlessly prefetching links in the background while they are open.
+
+- [#313](https://github.com/open-visual-regression/open-visual-regression/pull/313) [`98552ff`](https://github.com/open-visual-regression/open-visual-regression/commit/98552ff84d5c2cd19e77584c352996af7e14567d) Thanks [@tgfischer](https://github.com/tgfischer)! - Show a project's updated name and details in the navigation right after saving its settings.
+
+- Updated dependencies [[`8f8c3fb`](https://github.com/open-visual-regression/open-visual-regression/commit/8f8c3fb945d6f91412f59d578b9bddf50a894048), [`23dce06`](https://github.com/open-visual-regression/open-visual-regression/commit/23dce063717c0cbb8b78a6b8ee7048287057848c), [`dd78378`](https://github.com/open-visual-regression/open-visual-regression/commit/dd78378a08d5225a897ba1c8124bc0f8252f913b)]:
+  - @ovr/api@0.4.0
+  - @ovr/db@0.4.0
+  - @ovr/ui@0.1.4
+  - @ovr/builds@0.2.1
+  - @ovr/reviews@0.1.16
+  - @ovr/git-status@0.1.12
+  - @ovr/queue@0.2.1
+
 ## 0.10.0
 
 ### Minor Changes
