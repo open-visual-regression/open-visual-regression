@@ -5,4 +5,4 @@
 "@ovr/web": minor
 ---
 
-Add `ovr snapshots history` to show how a snapshot looked across recent builds.
+Add `ovr snapshots history` to show a snapshot's screenshot across recent builds.

@@ -17,10 +17,10 @@ type SnapshotsHistoryCommandOptions = {
 };
 
 export const historyCommand = new Command("history")
-  .description("Show how a snapshot looked across recent builds")
+  .description("Show a snapshot's screenshot across recent builds")
   .argument("<snapshotId>", "snapshot id")
   .option("--server-url <url>", "OVR server URL (defaults to ovr.config's serverUrl)")
-  .option("--branch <name>", "branch to look at (defaults to the project's main branch)")
+  .option("--branch <name>", "branch to variant at (defaults to the project's main branch)")
   .option("--limit <count>", `number of recent builds (1-${MAX_LIMIT})`, DEFAULT_LIMIT)
   .option("-c, --config <path>", "path to ovr.config file")
   .option("--json", "print the history as JSON instead of a table")

@@ -11,26 +11,26 @@ const HEADERS = ["SNAPSHOT", "BUILD", "COMMIT", "CREATED", "STATUS", "DIFF%", "I
 
 const ALPHABET_SIZE = 26;
 
-const formatImageLabel = (index: number): string => {
+const formatVariantLabel = (index: number): string => {
   const letter = String.fromCharCode(65 + (index % ALPHABET_SIZE));
   const rest = Math.floor(index / ALPHABET_SIZE);
 
-  return rest === 0 ? letter : `${formatImageLabel(rest - 1)}${letter}`;
+  return rest === 0 ? letter : `${formatVariantLabel(rest - 1)}${letter}`;
 };
 
-export const getImageLabels = (snapshots: SnapshotHistoryEntrySchema[]): Map<string, string> => {
+export const getVariantLabels = (snapshots: SnapshotHistoryEntrySchema[]): Map<string, string> => {
   const labels = new Map<string, string>();
 
   for (const { variantId } of [...snapshots].reverse()) {
     if (variantId && !labels.has(variantId)) {
-      labels.set(variantId, formatImageLabel(labels.size));
+      labels.set(variantId, formatVariantLabel(labels.size));
     }
   }
 
   return labels;
 };
 
-export const countImageChanges = (snapshots: SnapshotHistoryEntrySchema[]): number => {
+export const countVariantChanges = (snapshots: SnapshotHistoryEntrySchema[]): number => {
   const images = snapshots
     .map(({ variantId }) => variantId)
     .filter((variantId) => variantId !== null);
@@ -41,9 +41,9 @@ export const countImageChanges = (snapshots: SnapshotHistoryEntrySchema[]): numb
 const formatTimes = (count: number): string => (count === 1 ? "1 time" : `${count} times`);
 
 export const formatHistorySummary = ({ branch, snapshots }: GetHistoryOutputSchema): string => {
-  const images = getImageLabels(snapshots).size;
+  const images = getVariantLabels(snapshots).size;
 
-  return `Screenshot changed ${formatTimes(countImageChanges(snapshots))} across the last ${snapshots.length} builds on ${branch} (${images} distinct ${images === 1 ? "image" : "images"}).`;
+  return `Screenshot changed ${formatTimes(countVariantChanges(snapshots))} across the last ${snapshots.length} builds on ${branch} (${images} distinct ${images === 1 ? "image" : "images"}).`;
 };
 
 export const formatHistoryOutput = (
@@ -58,7 +58,7 @@ export const formatHistoryOutput = (
     return `No snapshots like this one on ${history.branch}.`;
   }
 
-  const labels = getImageLabels(history.snapshots);
+  const labels = getVariantLabels(history.snapshots);
   const table = formatTable(
     HEADERS,
     history.snapshots.map((snapshot) => [

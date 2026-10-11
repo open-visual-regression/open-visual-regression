@@ -7,8 +7,8 @@ import type {
 
 import { formatHistoryOutput } from "../historyTable";
 
-const IMAGE_A = "01a092d6-b0aa-71bf-9312-00000000000a";
-const IMAGE_B = "01a092d6-b0aa-71bf-9312-00000000000b";
+const VARIANT_A = "01a092d6-b0aa-71bf-9312-00000000000a";
+const VARIANT_B = "01a092d6-b0aa-71bf-9312-00000000000b";
 
 const entry = (
   id: string,
@@ -28,7 +28,12 @@ const entry = (
 
 const HISTORY: GetHistoryOutputSchema = {
   branch: "main",
-  snapshots: [entry("4", IMAGE_A), entry("3", IMAGE_B), entry("2", null), entry("1", IMAGE_A)],
+  snapshots: [
+    entry("4", VARIANT_A),
+    entry("3", VARIANT_B),
+    entry("2", null),
+    entry("1", VARIANT_A),
+  ],
 };
 
 describe("formatHistoryOutput", () => {

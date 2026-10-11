@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { SnapshotHistoryEntrySchema } from "@ovr/api/contracts/snapshots";
 
-import { getImageLabels } from "../historyTable";
+import { getVariantLabels } from "../historyTable";
 
 const variantId = (index: number) => `01a092d6-b0aa-71bf-9312-${String(index).padStart(12, "0")}`;
 
@@ -17,9 +17,9 @@ const entry = (variantId: string | null): SnapshotHistoryEntrySchema => ({
   variantId,
 });
 
-describe("getImageLabels", () => {
+describe("getVariantLabels", () => {
   it("should label each distinct image in the order it first appeared", () => {
-    const labels = getImageLabels([
+    const labels = getVariantLabels([
       entry(variantId(1)),
       entry(variantId(2)),
       entry(null),
@@ -37,6 +37,6 @@ describe("getImageLabels", () => {
   it("should continue past Z with two-letter labels", () => {
     const snapshots = Array.from({ length: 28 }, (_, index) => entry(variantId(index)));
 
-    expect([...getImageLabels(snapshots).values()].slice(-3)).toEqual(["Z", "AA", "AB"]);
+    expect([...getVariantLabels(snapshots).values()].slice(-3)).toEqual(["Z", "AA", "AB"]);
   });
 });

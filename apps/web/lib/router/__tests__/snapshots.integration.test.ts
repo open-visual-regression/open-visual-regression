@@ -692,7 +692,7 @@ describe("snapshots", () => {
       return { build: build!, snapshot: snapshot! };
     };
 
-    const setLook = async (projectId: string, snapshotId: string, variantId?: string) => {
+    const assignVariant = async (projectId: string, snapshotId: string, variantId?: string) => {
       const id =
         variantId ??
         (await dbClient.snapshotVariants.create({
@@ -716,9 +716,9 @@ describe("snapshots", () => {
       const third = await createBuildWithStory(projectId, admin, "main");
       await createBuildWithStory(projectId, admin, "feature/other");
       await createBuildWithStory(projectId, admin, "main", "story-b");
-      const look = await setLook(projectId, first.snapshot.id);
-      await setLook(projectId, second.snapshot.id);
-      await setLook(projectId, third.snapshot.id, look);
+      const variant = await assignVariant(projectId, first.snapshot.id);
+      await assignVariant(projectId, second.snapshot.id);
+      await assignVariant(projectId, third.snapshot.id, variant);
 
       const [error, result] = await serverClient.snapshots.getHistory({
         snapshotId: first.snapshot.id,
@@ -731,9 +731,9 @@ describe("snapshots", () => {
         { id: second.snapshot.id, buildId: second.build.id },
         { id: first.snapshot.id, buildId: first.build.id },
       ]);
-      expect(result?.snapshots[0]?.variantId).toBe(look);
-      expect(result?.snapshots[1]?.variantId).not.toBe(look);
-      expect(result?.snapshots[2]?.variantId).toBe(look);
+      expect(result?.snapshots[0]?.variantId).toBe(variant);
+      expect(result?.snapshots[1]?.variantId).not.toBe(variant);
+      expect(result?.snapshots[2]?.variantId).toBe(variant);
     });
 
     test("lists the matching snapshots on the requested branch up to the limit", async ({
