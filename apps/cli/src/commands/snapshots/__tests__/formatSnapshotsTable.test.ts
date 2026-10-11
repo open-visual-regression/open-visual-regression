@@ -12,14 +12,16 @@ describe("formatSnapshotsTable", () => {
         browser: "chromium",
         viewport: "desktop 1280x800",
         diffPercent: "1.23",
+        flags: "flaky",
       },
     ]);
     const lines = table.split("\n");
 
     expect(lines).toHaveLength(2);
     expect(lines[0]).toContain("SNAPSHOT");
-    expect(lines[0]).toContain("DIFF%");
+    expect(lines[0]).toContain("FLAGS");
     expect(lines[1]).toContain("Components/Button / Primary");
     expect(lines[1]).toContain("1.23");
+    expect(lines[1]).toContain("flaky");
   });
 });

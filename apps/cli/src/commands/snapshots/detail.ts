@@ -1,6 +1,7 @@
-import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
+import type { SnapshotFlagDetail, SnapshotSchema } from "@ovr/api/contracts/snapshots";
 
 import { formatKeyValueRows } from "../../table";
+import { formatFlagDetail, formatFlags, getSnapshotFlags } from "./flags";
 import { formatStory, formatViewport } from "./table";
 
 export type SnapshotDetailFields = {
@@ -13,7 +14,9 @@ export type SnapshotDetailFields = {
   viewportWidth: number;
   viewportHeight: number | null;
   imagePath: string | null;
+  isFlaky: boolean;
   hasUncaughtPageError: boolean;
+  flags?: SnapshotFlagDetail[];
   errorMessage: string | null;
   errorLogs: { id: string; level: string; message: string; timestamp: string }[];
 };
@@ -31,21 +34,29 @@ export const formatSnapshotDetail = (snapshot: SnapshotDetailFields): string => 
     ["Image", snapshot.imagePath ?? ""],
   ];
 
-  if (snapshot.hasUncaughtPageError) {
-    rows.push(["Uncaught error", "yes"]);
+  const flags = getSnapshotFlags(snapshot);
+
+  if (flags.length > 0) {
+    rows.push(["Flags", formatFlags(flags)]);
   }
 
   if (snapshot.errorMessage) {
     rows.push(["Error", snapshot.errorMessage]);
   }
 
-  const detail = formatKeyValueRows(rows);
+  const sections = [formatKeyValueRows(rows)];
 
-  if (snapshot.errorLogs.length === 0) {
-    return detail;
+  if (snapshot.flags && snapshot.flags.length > 0) {
+    sections.push(
+      `Flags:\n${snapshot.flags.map((flag) => `  ${formatFlagDetail(flag)}`).join("\n")}`,
+    );
   }
 
-  return `${detail}\n\nLogs:\n${snapshot.errorLogs.map(formatLog).join("\n")}`;
+  if (snapshot.errorLogs.length > 0) {
+    sections.push(`Logs:\n${snapshot.errorLogs.map(formatLog).join("\n")}`);
+  }
+
+  return sections.join("\n\n");
 };
 
 export const formatSnapshotOutput = (

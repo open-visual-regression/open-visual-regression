@@ -33,6 +33,7 @@ describe("formatSnapshotOutput", () => {
     const snapshot: SnapshotSchema = {
       ...SNAPSHOT,
       hasUncaughtPageError: true,
+      flags: [{ flag: "warning" }],
       errorMessage: "story threw during render",
       errorLogs: [
         { id: "log-1", level: "error", message: "story threw", timestamp: "2026-09-12T10:43:15Z" },
@@ -43,7 +44,7 @@ describe("formatSnapshotOutput", () => {
 
     expect(output).toContain(snapshot.id);
     expect(output).toContain("Components/Button / Primary");
-    expect(output).toContain("Uncaught error: yes");
+    expect(output).toContain("warning: the page threw an uncaught error");
     expect(output).toContain("story threw during render");
     expect(output).toContain("[error] story threw (2026-09-12T10:43:15Z)");
   });
