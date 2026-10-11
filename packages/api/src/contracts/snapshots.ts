@@ -28,7 +28,7 @@ export const flakyDetectionSchema = z.object({
     .nonnegative()
     .meta({ description: "Times the screenshot changed from one build to the next" }),
   revertCount: z.number().int().nonnegative().meta({
-    description: "Times the screenshot changed back to how it looked in an earlier build",
+    description: "Times the screenshot changed back to an earlier image",
   }),
   sameCommitMismatchCount: z
     .number()
@@ -41,7 +41,7 @@ export const flakyFlagDetailSchema = z.object({
   flag: z.literal("flaky"),
   detection: flakyDetectionSchema.nullable(),
   matchesEarlierVariant: z.boolean().meta({
-    description: "Whether the screenshot matches how this snapshot looked in an earlier build",
+    description: "Whether the screenshot matches an earlier image of this snapshot",
   }),
 });
 
