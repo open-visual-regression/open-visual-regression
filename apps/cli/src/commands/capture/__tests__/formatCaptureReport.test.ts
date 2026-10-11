@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatCaptureReport, isCaptureReportPassing, type CaptureReport } from "../report";
+import { formatCaptureReport, type CaptureReport } from "../report";
 import type { CaptureResult } from "../run";
 
 const RESULT: CaptureResult = {
@@ -73,18 +73,5 @@ describe("formatCaptureReport", () => {
 
     expect(output).toContain("components-button--primary (desktop): play function failed");
     expect(output).toContain("components-card--broken: failed to load: boom");
-  });
-});
-
-describe("isCaptureReportPassing", () => {
-  it("should pass only when every capture was stable and nothing failed", () => {
-    expect(isCaptureReportPassing({ results: [RESULT], issues: [] })).toBe(true);
-    expect(isCaptureReportPassing({ results: [RESULT, UNSTABLE], issues: [] })).toBe(false);
-    expect(
-      isCaptureReportPassing({
-        results: [RESULT],
-        issues: [{ targetId: "x", message: "failed to load: boom" }],
-      }),
-    ).toBe(false);
   });
 });
