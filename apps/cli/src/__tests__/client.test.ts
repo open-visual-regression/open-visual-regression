@@ -1,4 +1,5 @@
 import { createClient, RequestTimeoutError } from "../client";
+import { UnsupportedByServerError } from "../errors";
 import { describe, expect, test, vi } from "./fixtures";
 
 describe("createClient", () => {
@@ -17,4 +18,16 @@ describe("createClient", () => {
       "Request to builds.createBuild failed (no response after 0.1s), retrying (1/3)...",
     );
   }, 20_000);
+
+  test("should fail without retrying when the server does not have the procedure", async ({
+    unknownProcedureServer,
+  }) => {
+    const client = createClient(unknownProcedureServer.url, "key");
+
+    const request = client.snapshots.getOne({ snapshotId: "01a092d6-b0aa-71bf-9312-dd8ef48a22fb" });
+
+    await expect(request).rejects.toBeInstanceOf(UnsupportedByServerError);
+    await expect(request).rejects.toMatchObject({ serverVersion: "0.10.0" });
+    expect(unknownProcedureServer.requestCount()).toBe(1);
+  });
 });
