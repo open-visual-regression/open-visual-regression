@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@ovr/builds": "workspace:*",
+    "@ovr/capture-browser": "workspace:*",
     "@ovr/db": "workspace:*",
     "@ovr/logger": "workspace:*",
     "@ovr/queue": "workspace:*",

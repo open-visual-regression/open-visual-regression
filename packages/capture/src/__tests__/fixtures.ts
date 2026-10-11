@@ -8,14 +8,13 @@ import * as tar from "tar";
 import { v7 as uuidv7 } from "uuid";
 import { test as vitest } from "vitest";
 
+import { newPage } from "@ovr/capture-browser/browser";
+import { startStaticProxy } from "@ovr/capture-browser/staticProxy";
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
 import { organization, projects, user as userTable } from "@ovr/db/schema";
 import { buildRedisConnection, type RedisConnection } from "@ovr/queue";
 import { storage } from "@ovr/storage";
-
-import { newPage } from "../lib/browser";
-import { startStaticProxy } from "../lib/staticProxy";
 
 export { describe, expect } from "vitest";
 

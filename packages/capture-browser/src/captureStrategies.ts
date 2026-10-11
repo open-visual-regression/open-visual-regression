@@ -5,6 +5,7 @@ import { assertSupportedStorybookBuild } from "@ovr/storybook-compat/version";
 export type RenderResult = { ok: boolean; error?: string };
 
 export type CaptureStrategy = {
+  entryPath: string;
   waitForBoot: (page: Page, timeoutMs: number) => Promise<void>;
   waitForTargetRendered: (args: { targetId: string; timeoutMs: number }) => Promise<RenderResult>;
   waitForTargetPlayed: (args: { targetId: string; timeoutMs: number }) => Promise<RenderResult>;
@@ -186,6 +187,7 @@ const waitForStorybookTargetPlayed = ({
   });
 
 const storybookCaptureStrategy: CaptureStrategy = {
+  entryPath: "iframe.html",
   waitForBoot: async (page, timeoutMs) => {
     await page.waitForSelector("#storybook-root, #root", { timeout: timeoutMs, state: "attached" });
     await page.waitForFunction(() => Boolean(globalThis.__STORYBOOK_ADDONS_CHANNEL__), undefined, {

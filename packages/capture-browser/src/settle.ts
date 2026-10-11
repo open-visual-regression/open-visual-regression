@@ -1,6 +1,6 @@
 import type { Page, Request } from "playwright";
 
-import { NETWORK_QUIET_WINDOW_MS, SETTLE_TIMEOUT_MS } from "./captureTimeouts";
+import { NETWORK_QUIET_WINDOW_MS, SETTLE_TIMEOUT_MS } from "./timeouts";
 
 const MIN_PAINT_BUDGET_MS = 250;
 

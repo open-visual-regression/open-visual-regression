@@ -6,9 +6,10 @@ import {
   type OvrStoryParameters,
 } from "@ovr/storybook-compat/parameters";
 
-import { SIGNAL_HANDLING_OPTIONS, newPage } from "./lib/browser";
-import { BOOT_TIMEOUT_MS } from "./lib/captureTimeouts";
-import { startStaticProxy } from "./lib/staticProxy";
+import { SIGNAL_HANDLING_OPTIONS, newPage } from "./browser";
+import { blockExternalRequests } from "./page";
+import { startStaticProxy } from "./staticProxy";
+import { BOOT_TIMEOUT_MS } from "./timeouts";
 
 export type NamedViewport = {
   name?: string;
@@ -67,13 +68,7 @@ export const readStoryParameterOverrides = async (
     const context = await browser.newContext();
     const page = await newPage(context);
 
-    await page.route("**/*", (route) => {
-      const url = new URL(route.request().url());
-      if (url.origin === proxy.origin || url.protocol === "data:" || url.protocol === "blob:") {
-        return route.continue();
-      }
-      return route.abort();
-    });
+    await blockExternalRequests(page, proxy.origin);
 
     await page.goto(`${proxy.origin}/iframe.html`, { waitUntil: "load" });
     await page.waitForFunction(

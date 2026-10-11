@@ -4,6 +4,24 @@ import { chromium, firefox, webkit, type Page } from "playwright";
 
 import { isFlakyDetectionEnabled } from "@ovr/builds/flakiness";
 import { withBundleDir } from "@ovr/builds/storybookBundleCache";
+import { SIGNAL_HANDLING_OPTIONS, newPage } from "@ovr/capture-browser/browser";
+import {
+  detectCaptureStrategy,
+  type CaptureStrategy,
+} from "@ovr/capture-browser/captureStrategies";
+import {
+  blockExternalRequests,
+  bootTargetPage,
+  getCaptureViewport,
+  takeScreenshot,
+} from "@ovr/capture-browser/page";
+import {
+  settlePage,
+  trackNetworkActivity,
+  type NetworkActivity,
+} from "@ovr/capture-browser/settle";
+import { startStaticProxy, type StaticProxy } from "@ovr/capture-browser/staticProxy";
+import { RENDER_TIMEOUT_MS, SETTLE_TIMEOUT_MS } from "@ovr/capture-browser/timeouts";
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
 import type { BuildDbSchema } from "@ovr/db/repository/builds";
@@ -13,23 +31,11 @@ import { enqueueDiff, enqueueFinalize } from "@ovr/queue/producer";
 import { promoteBaseline } from "@ovr/reviews/baselines";
 import { storage } from "@ovr/storage";
 
-import { detectCaptureStrategy, type CaptureStrategy } from "./captureStrategies";
-import { SIGNAL_HANDLING_OPTIONS, newPage } from "./lib/browser";
-import {
-  BOOT_TIMEOUT_MS,
-  CAPTURE_JOB_TIMEOUT_MS,
-  RENDER_TIMEOUT_MS,
-  SETTLE_TIMEOUT_MS,
-  withTimeout,
-} from "./lib/captureTimeouts";
+import { CAPTURE_JOB_TIMEOUT_MS, withTimeout } from "./lib/captureTimeouts";
 import { compareImages, encodePng } from "./lib/images";
-import { settlePage, trackNetworkActivity, type NetworkActivity } from "./lib/settle";
-import { startStaticProxy, type StaticProxy } from "./lib/staticProxy";
 import { createUploadQueue } from "./lib/uploadQueue";
 
 const logger = createLogger("capture");
-
-const DEFAULT_VIEWPORT_HEIGHT = 800;
 
 const MAX_PENDING_UPLOADS = 2;
 
@@ -120,13 +126,7 @@ const launchCapturePage = async (
     logger.error({ buildId, browser: browserName }, "capture page crashed");
   });
 
-  await page.route("**/*", (route) => {
-    const url = new URL(route.request().url());
-    if (url.origin === proxy.origin || url.protocol === "data:" || url.protocol === "blob:") {
-      return route.continue();
-    }
-    return route.abort();
-  });
+  await blockExternalRequests(page, proxy.origin);
 
   const pageLogState: PageLogState = { logs: [], hasPageError: false };
   page.on("console", (message) => {
@@ -138,8 +138,7 @@ const launchCapturePage = async (
   });
 
   const bootStart = performance.now();
-  await page.goto(`${proxy.origin}/iframe.html`, { waitUntil: "load" });
-  await strategy.waitForBoot(page, BOOT_TIMEOUT_MS);
+  await bootTargetPage(page, proxy.origin, strategy);
   logger.info(
     { buildId, browser: browserName, bootMs: Math.round(performance.now() - bootStart) },
     "capture page booted",
@@ -192,12 +191,12 @@ const captureSnapshotOnPage = async (
 
   await dbClient.snapshots.updateStatus(snapshotId, "processing");
 
-  const fullPage = snapshot.viewportHeight === 0;
+  const { fullPage, width, height } = getCaptureViewport(
+    snapshot.viewportWidth,
+    snapshot.viewportHeight,
+  );
 
-  await page.setViewportSize({
-    width: snapshot.viewportWidth,
-    height: fullPage ? DEFAULT_VIEWPORT_HEIGHT : snapshot.viewportHeight,
-  });
+  await page.setViewportSize({ width, height });
 
   const startedAt = performance.now();
   const context: SnapshotLogContext = {
@@ -240,7 +239,7 @@ const captureSnapshotOnPage = async (
     const imagePath = `${build.projectId}/builds/${build.id}/snapshots/${snapshotId}-${snapshot.captureAttempt}.png`;
 
     const [screenshot, screenshotMs] = await runPhase("screenshot", () =>
-      page.screenshot({ fullPage, animations: "disabled" }),
+      takeScreenshot(page, fullPage),
     );
 
     return {
