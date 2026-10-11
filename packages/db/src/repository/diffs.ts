@@ -1,8 +1,14 @@
-import { and, eq, inArray, ne } from "drizzle-orm";
+import { and, eq, exists, inArray, isNull, ne, notExists, or, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
 import { db, type DbClient } from "../db";
-import { diffs, snapshots, type DiffProcessingStatus, type DiffReviewStatus } from "../schema";
+import {
+  builds,
+  diffs,
+  snapshots,
+  type DiffProcessingStatus,
+  type DiffReviewStatus,
+} from "../schema";
 
 export const create = async (values: typeof diffs.$inferInsert) => {
   const [diff] = await db.insert(diffs).values(values).returning();
@@ -121,16 +127,36 @@ export const markPendingAs = async (
 };
 
 export const hasAllDoneForBuild = async (buildId: string) => {
-  const rows = await db
-    .select({ processingStatus: diffs.processingStatus })
-    .from(snapshots)
-    .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
-    .where(and(eq(snapshots.buildId, buildId), ne(snapshots.status, "skipped")));
+  const capturedSnapshots = and(eq(snapshots.buildId, buildId), ne(snapshots.status, "skipped"));
 
-  return (
-    rows.length > 0 &&
-    rows.every((row) => row.processingStatus !== null && row.processingStatus !== "pending")
-  );
+  const [row] = await db
+    .select({ id: builds.id })
+    .from(builds)
+    .where(
+      and(
+        eq(builds.id, buildId),
+        exists(
+          db
+            .select({ one: sql`1` })
+            .from(snapshots)
+            .where(capturedSnapshots),
+        ),
+        notExists(
+          db
+            .select({ one: sql`1` })
+            .from(snapshots)
+            .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
+            .where(
+              and(
+                capturedSnapshots,
+                or(isNull(diffs.processingStatus), eq(diffs.processingStatus, "pending")),
+              ),
+            ),
+        ),
+      ),
+    );
+
+  return row !== undefined;
 };
 
 export type DiffDbSchema = Awaited<ReturnType<typeof findById>>;
