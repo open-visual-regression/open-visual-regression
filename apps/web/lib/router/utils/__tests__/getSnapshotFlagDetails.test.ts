@@ -2,7 +2,7 @@ import type { FlakySnapshotDbSchema } from "@ovr/db/repository/flakySnapshots";
 
 import { describe, expect, it } from "@/test-utils";
 
-import { getSnapshotFlagDetails, getSnapshotFlags } from "../snapshotFlags";
+import { getSnapshotFlagDetails } from "../snapshotFlags";
 
 const flakySnapshot = {
   sampleCount: 30,
@@ -10,20 +10,6 @@ const flakySnapshot = {
   revertCount: 6,
   sameCommitMismatchCount: 1,
 } as FlakySnapshotDbSchema;
-
-describe("getSnapshotFlags", () => {
-  it.each([
-    [false, false, []],
-    [true, false, ["flaky"]],
-    [false, true, ["warning"]],
-    [true, true, ["flaky", "warning"]],
-  ])(
-    "should flag isFlaky=%s hasUncaughtPageError=%s as %j",
-    (isFlaky, hasUncaughtPageError, expected) => {
-      expect(getSnapshotFlags({ isFlaky, hasUncaughtPageError })).toEqual(expected);
-    },
-  );
-});
 
 describe("getSnapshotFlagDetails", () => {
   it("should return no flags for a snapshot that is neither flaky nor warned", () => {
