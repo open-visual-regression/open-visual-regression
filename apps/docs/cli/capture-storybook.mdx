@@ -1,0 +1,60 @@
+---
+title: ovr capture storybook
+description: Capture stories on your machine to check their screenshots are stable.
+---
+
+Captures stories from a Storybook 8.5+ static build on your machine, with the same
+viewports, story `ovr` parameters and diff threshold as a build, and checks that each one
+looks the same every time. Use it to reproduce a flaky snapshot. Nothing is uploaded, so
+it needs no token.
+
+Needs [Playwright](https://playwright.dev) and a browser installed alongside the CLI:
+
+```sh
+npm install --save-dev playwright
+npx playwright install chromium
+```
+
+```sh
+ovr capture storybook --dir storybook-static --story components-dialog--open --repeat 10
+```
+
+## Flags
+
+| Flag | Required | Default | Description |
+|------|----------|---------|-------------|
+| `-d, --dir <path>` | yes | | Path to the Storybook static build output |
+| `--story <id...>` | no | every story | Stories to capture |
+| `--viewport <name...>` | no | each story's viewports | Only capture these viewports |
+| `--repeat <count>` | no | `1` | Times to capture each story and viewport, 1–100 |
+| `--out <dir>` | no | | Save each distinct image to this directory |
+| `--cpu-throttle <rate>` | no | | Slow the CPU down by this factor (Chromium only) |
+| `--executable-path <path>` | no | | Browser executable to launch instead of Playwright's |
+| `-c, --config <path>` | no | `ovr.config` | Path to `ovr.config` file |
+| `--json` | no | | Print results as JSON instead of a table |
+
+## Output
+
+```
+TARGET                      BROWSER   VIEWPORT  RUNS  IMAGES  MAX DIFF%  RESULT
+components-dialog--open     chromium  desktop   10    3       2.08       unstable
+components-button--primary  chromium  desktop   10    1       0.00       stable
+
+components-dialog--open (desktop): 6x, 0.00% different: out/components-dialog--open--desktop--1f0c2a9b3d4e.png
+components-dialog--open (desktop): 3x, 2.08% different: out/components-dialog--open--desktop--8a7e6d5c4b3a.png
+components-dialog--open (desktop): 1x, 1.12% different: out/components-dialog--open--desktop--0b1c2d3e4f5a.png
+
+1 of 2 captures stayed within their diff threshold on every run.
+```
+
+`IMAGES` counts the distinct screenshots across runs, and `MAX DIFF%` is the largest
+difference from the first run. A capture is `stable` when every run is within the story's
+`diffThreshold`, `unstable` when a run goes over it, and `error` when the story failed to
+render. With `--out`, each distinct image is saved to that directory.
+
+The command exits with status 1 if any capture is unstable or errored, so it can run in CI.
+
+<Note>
+  Screenshots can differ slightly from a build's because of fonts and the operating
+  system. Compare runs with each other, not with images from a build.
+</Note>
