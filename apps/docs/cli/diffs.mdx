@@ -17,6 +17,7 @@ ovr diffs get <snapshotId>
 | `-c, --config <path>` | Path to `ovr.config` file |
 | `--json` | Print the diff as JSON instead of formatted text |
 | `--download <dir>` | Save the baseline, new and diff images to this directory |
+| `--analyze` | Describe what changed, such as content that moved |
 
 Takes a snapshot ID — find one with [`ovr snapshots list`](/cli/snapshots) — and
 prints how that snapshot's capture compares to its baseline: the diff's ID, review
@@ -42,3 +43,15 @@ with `--json`) rather than an error.
 
 With `--download <dir>`, the images are saved as `baseline.png`, `new.png` and `diff.png`
 in that directory.
+
+With `--analyze`, the change is described under an `Analysis:` section: how many pixels
+changed and where, whether the content moved (and by how much), and whether the
+screenshot changed size.
+
+```
+Analysis:
+  15169 pixels changed within 337x718 at 347,61
+  Content moved 19px left (explains 100% of the change)
+```
+
+With `--json`, the analysis is added to the diff as an `analysis` field.
