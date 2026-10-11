@@ -12,6 +12,7 @@ const SNAPSHOT = {
   viewportWidth: 1280,
   viewportHeight: 800,
   imagePath: "project/builds/build/snapshots/snap.png",
+  isFlaky: false,
   hasUncaughtPageError: false,
   errorMessage: null,
   errorLogs: [],
@@ -32,17 +33,42 @@ describe("formatSnapshotDetail", () => {
     ]);
   });
 
-  it("should omit the uncaught-error and error lines when absent", () => {
+  it("should omit the flags and error lines when absent", () => {
     const output = formatSnapshotDetail(SNAPSHOT);
 
-    expect(output).not.toContain("Uncaught error:");
+    expect(output).not.toContain("Flags");
     expect(output).not.toContain("Error:");
   });
 
-  it("should flag an uncaught page error when present", () => {
-    const output = formatSnapshotDetail({ ...SNAPSHOT, hasUncaughtPageError: true });
+  it("should derive flags from the deprecated booleans when the server sends no flags", () => {
+    const output = formatSnapshotDetail({ ...SNAPSHOT, isFlaky: true, hasUncaughtPageError: true });
 
-    expect(output).toContain("Uncaught error: yes");
+    expect(output).toContain("Flags:    flaky, warning");
+    expect(output).not.toContain("Flags:\n");
+  });
+
+  it("should list each flag's details under a Flags section", () => {
+    const output = formatSnapshotDetail({
+      ...SNAPSHOT,
+      flags: [
+        {
+          flag: "flaky",
+          detection: {
+            sampleCount: 13,
+            changeCount: 12,
+            revertCount: 0,
+            sameCommitMismatchCount: 1,
+          },
+          matchesEarlierVariant: true,
+        },
+        { flag: "warning" },
+      ],
+    });
+
+    expect(output).toContain("Flags:    flaky, warning");
+    expect(output).toContain(
+      "Flags:\n  flaky: screenshot changed 12 times across the last 13 builds; changed back to an earlier image 0 times; the same code produced different screenshots 1 time; matches how this snapshot looked in an earlier build\n  warning: the page threw an uncaught error",
+    );
   });
 
   it("should include the error message when present", () => {
