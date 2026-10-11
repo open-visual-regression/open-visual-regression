@@ -1,5 +1,23 @@
 # @ovr/capture
 
+## 0.3.5
+
+### Patch Changes
+
+- [#341](https://github.com/open-visual-regression/open-visual-regression/pull/341) [`089a8d1`](https://github.com/open-visual-regression/open-visual-regression/commit/089a8d1834ae41b0768951360f03dd42e4f35307) Thanks [@tgfischer](https://github.com/tgfischer)! - Internal refactor with no change in behavior.
+
+- [#342](https://github.com/open-visual-regression/open-visual-regression/pull/342) [`eed3c48`](https://github.com/open-visual-regression/open-visual-regression/commit/eed3c48eb73163d0037ff240d32dddc579e6d3bf) Thanks [@tgfischer](https://github.com/tgfischer)! - Add `ovr capture storybook` to capture stories locally and check their screenshots are stable.
+
+- [#310](https://github.com/open-visual-regression/open-visual-regression/pull/310) [`240560a`](https://github.com/open-visual-regression/open-visual-regression/commit/240560ab38f14b922fccaad87618cc8d410fb8b8) Thanks [@tgfischer](https://github.com/tgfischer)! - Skip comparing screenshots that are identical to their baseline.
+
+- Updated dependencies [[`23e1da3`](https://github.com/open-visual-regression/open-visual-regression/commit/23e1da30b5606550e9d978e4ed9483907e94c870), [`fccbfcc`](https://github.com/open-visual-regression/open-visual-regression/commit/fccbfcc46567472de7a49078064e1a3bdb8cbb63), [`54c5823`](https://github.com/open-visual-regression/open-visual-regression/commit/54c5823f5c585f0b144ecaf0c60a59d056a7ad66), [`7a5880b`](https://github.com/open-visual-regression/open-visual-regression/commit/7a5880b45693cb7646e6012d4d3573a7041dc726), [`dd78378`](https://github.com/open-visual-regression/open-visual-regression/commit/dd78378a08d5225a897ba1c8124bc0f8252f913b)]:
+  - @ovr/storybook-compat@0.4.0
+  - @ovr/db@0.4.0
+  - @ovr/capture-browser@0.0.1
+  - @ovr/builds@0.2.1
+  - @ovr/reviews@0.1.16
+  - @ovr/queue@0.2.1
+
 ## 0.3.4
 
 ### Patch Changes

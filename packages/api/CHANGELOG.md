@@ -1,5 +1,15 @@
 # @ovr/api
 
+## 0.4.0
+
+### Minor Changes
+
+- [#338](https://github.com/open-visual-regression/open-visual-regression/pull/338) [`8f8c3fb`](https://github.com/open-visual-regression/open-visual-regression/commit/8f8c3fb945d6f91412f59d578b9bddf50a894048) Thanks [@tgfischer](https://github.com/tgfischer)! - API responses include the server's version in the `x-ovr-version` header, and the CLI says when a command needs a newer server.
+
+- [#336](https://github.com/open-visual-regression/open-visual-regression/pull/336) [`23dce06`](https://github.com/open-visual-regression/open-visual-regression/commit/23dce063717c0cbb8b78a6b8ee7048287057848c) Thanks [@tgfischer](https://github.com/tgfischer)! - Add `flags` to snapshot responses: flag names in `snapshots.list`, and each flag with its details in `snapshots.getOne`. `isFlaky` and `hasUncaughtPageError` are deprecated.
+
+- [#339](https://github.com/open-visual-regression/open-visual-regression/pull/339) [`dd78378`](https://github.com/open-visual-regression/open-visual-regression/commit/dd78378a08d5225a897ba1c8124bc0f8252f913b) Thanks [@tgfischer](https://github.com/tgfischer)! - Add `ovr snapshots history` to show a snapshot's screenshot across recent builds.
+
 ## 0.3.0
 
 ### Minor Changes

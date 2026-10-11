@@ -1,5 +1,31 @@
 # @open-visual-regression/cli
 
+## 0.8.0
+
+### Minor Changes
+
+- [#342](https://github.com/open-visual-regression/open-visual-regression/pull/342) [`eed3c48`](https://github.com/open-visual-regression/open-visual-regression/commit/eed3c48eb73163d0037ff240d32dddc579e6d3bf) Thanks [@tgfischer](https://github.com/tgfischer)! - Add `ovr capture storybook` to capture stories locally and check their screenshots are stable.
+
+- [#340](https://github.com/open-visual-regression/open-visual-regression/pull/340) [`f69b1b7`](https://github.com/open-visual-regression/open-visual-regression/commit/f69b1b7233ec7d12ce6d567b6be7b9826deb0619) Thanks [@tgfischer](https://github.com/tgfischer)! - Add `--analyze` to `ovr diffs get` to describe what changed, such as content that moved.
+
+- [#335](https://github.com/open-visual-regression/open-visual-regression/pull/335) [`1b0ed41`](https://github.com/open-visual-regression/open-visual-regression/commit/1b0ed41d23db4137e092959b4eea0c32b2be4473) Thanks [@tgfischer](https://github.com/tgfischer)! - Add `--download <dir>` to `ovr diffs get` and `ovr snapshots get` to save their images locally.
+
+- [#337](https://github.com/open-visual-regression/open-visual-regression/pull/337) [`116b5fa`](https://github.com/open-visual-regression/open-visual-regression/commit/116b5fa50894d3c3ccbef88eb1c1ae437feef5d8) Thanks [@tgfischer](https://github.com/tgfischer)! - Show snapshot flags in `ovr snapshots list` and explain them in `ovr snapshots get`.
+
+- [#329](https://github.com/open-visual-regression/open-visual-regression/pull/329) [`fccbfcc`](https://github.com/open-visual-regression/open-visual-regression/commit/fccbfcc46567472de7a49078064e1a3bdb8cbb63) Thanks [@tgfischer](https://github.com/tgfischer)! - `upload storybook --only-affected` traces Storybook builds made with Rspack through `storybook-builder-rsbuild`.
+
+- [#327](https://github.com/open-visual-regression/open-visual-regression/pull/327) [`7a5880b`](https://github.com/open-visual-regression/open-visual-regression/commit/7a5880b45693cb7646e6012d4d3573a7041dc726) Thanks [@tgfischer](https://github.com/tgfischer)! - `upload storybook --only-affected` traces Storybook builds made with Webpack.
+
+- [#338](https://github.com/open-visual-regression/open-visual-regression/pull/338) [`8f8c3fb`](https://github.com/open-visual-regression/open-visual-regression/commit/8f8c3fb945d6f91412f59d578b9bddf50a894048) Thanks [@tgfischer](https://github.com/tgfischer)! - API responses include the server's version in the `x-ovr-version` header, and the CLI says when a command needs a newer server.
+
+- [#339](https://github.com/open-visual-regression/open-visual-regression/pull/339) [`dd78378`](https://github.com/open-visual-regression/open-visual-regression/commit/dd78378a08d5225a897ba1c8124bc0f8252f913b) Thanks [@tgfischer](https://github.com/tgfischer)! - Add `ovr snapshots history` to show a snapshot's screenshot across recent builds.
+
+### Patch Changes
+
+- [#326](https://github.com/open-visual-regression/open-visual-regression/pull/326) [`23e1da3`](https://github.com/open-visual-regression/open-visual-regression/commit/23e1da30b5606550e9d978e4ed9483907e94c870) Thanks [@tgfischer](https://github.com/tgfischer)! - `upload storybook --only-affected` reads `preview-stats.json` files larger than 512 MB, and says when one can't be parsed instead of calling it missing.
+
+- [#322](https://github.com/open-visual-regression/open-visual-regression/pull/322) [`54c5823`](https://github.com/open-visual-regression/open-visual-regression/commit/54c5823f5c585f0b144ecaf0c60a59d056a7ad66) Thanks [@tgfischer](https://github.com/tgfischer)! - `upload storybook --only-affected` now captures every story for a Webpack or Rspack build instead of failing.
+
 ## 0.7.0
 
 ### Minor Changes

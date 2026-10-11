@@ -1,5 +1,20 @@
 # @ovr/worker
 
+## 0.11.0
+
+### Patch Changes
+
+- [#341](https://github.com/open-visual-regression/open-visual-regression/pull/341) [`089a8d1`](https://github.com/open-visual-regression/open-visual-regression/commit/089a8d1834ae41b0768951360f03dd42e4f35307) Thanks [@tgfischer](https://github.com/tgfischer)! - Internal refactor with no change in behavior.
+
+- [#310](https://github.com/open-visual-regression/open-visual-regression/pull/310) [`240560a`](https://github.com/open-visual-regression/open-visual-regression/commit/240560ab38f14b922fccaad87618cc8d410fb8b8) Thanks [@tgfischer](https://github.com/tgfischer)! - Skip comparing screenshots that are identical to their baseline.
+
+- Updated dependencies [[`089a8d1`](https://github.com/open-visual-regression/open-visual-regression/commit/089a8d1834ae41b0768951360f03dd42e4f35307), [`eed3c48`](https://github.com/open-visual-regression/open-visual-regression/commit/eed3c48eb73163d0037ff240d32dddc579e6d3bf), [`240560a`](https://github.com/open-visual-regression/open-visual-regression/commit/240560ab38f14b922fccaad87618cc8d410fb8b8), [`dd78378`](https://github.com/open-visual-regression/open-visual-regression/commit/dd78378a08d5225a897ba1c8124bc0f8252f913b)]:
+  - @ovr/capture@0.3.5
+  - @ovr/db@0.4.0
+  - @ovr/builds@0.2.1
+  - @ovr/git-status@0.1.12
+  - @ovr/queue@0.2.1
+
 ## 0.10.0
 
 ### Patch Changes

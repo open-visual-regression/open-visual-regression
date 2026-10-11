@@ -1,5 +1,11 @@
 # @ovr/db
 
+## 0.4.0
+
+### Minor Changes
+
+- [#339](https://github.com/open-visual-regression/open-visual-regression/pull/339) [`dd78378`](https://github.com/open-visual-regression/open-visual-regression/commit/dd78378a08d5225a897ba1c8124bc0f8252f913b) Thanks [@tgfischer](https://github.com/tgfischer)! - Add `ovr snapshots history` to show a snapshot's screenshot across recent builds.
+
 ## 0.3.0
 
 ### Minor Changes
