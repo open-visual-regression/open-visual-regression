@@ -19,6 +19,7 @@ import {
   reviewerMiddleware,
 } from "./middleware";
 import { os } from "./os";
+import { getSnapshotFlagDetails, getSnapshotFlags } from "./utils/snapshotFlags";
 import { getSnapshotDisplayStatus } from "./utils/snapshotStatus";
 
 export const getOne = os.snapshots.getOne
@@ -43,6 +44,7 @@ export const getOne = os.snapshots.getOne
       checkSnapshotsRebuildable(build, [snapshot], { isLatestBuild }),
       checkSnapshotReviewable(build, snapshot, diff, { isLatestBuild }),
     ]);
+    const matchesEarlierVariant = diff?.matchedVariantId != null;
 
     return {
       snapshot: {
@@ -57,7 +59,12 @@ export const getOne = os.snapshots.getOne
         viewportName: snapshot.viewportName,
         status: getSnapshotDisplayStatus(snapshot, diff),
         hasUncaughtPageError: snapshot.hasUncaughtPageError,
-        isFlaky: flakySnapshot !== undefined || diff?.matchedVariantId != null,
+        isFlaky: flakySnapshot !== undefined || matchesEarlierVariant,
+        flags: getSnapshotFlagDetails({
+          flakySnapshot,
+          matchesEarlierVariant,
+          hasUncaughtPageError: snapshot.hasUncaughtPageError,
+        }),
         errorMessage: snapshot.errorMessage,
         isRebuildable: rebuildable.status === "ok",
         isReviewable: reviewable.status === "ok",
@@ -108,6 +115,7 @@ export const list = os.snapshots.list
         viewportName: row.viewportName,
         hasUncaughtPageError: row.hasUncaughtPageError,
         isFlaky: row.isFlaky,
+        flags: getSnapshotFlags(row),
       })),
       total,
       nextCursor,

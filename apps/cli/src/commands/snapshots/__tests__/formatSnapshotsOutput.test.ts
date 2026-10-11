@@ -20,6 +20,7 @@ const SNAPSHOT: BuildSnapshotSchema = {
   viewportName: "desktop",
   hasUncaughtPageError: false,
   isFlaky: false,
+  flags: [],
 };
 
 describe("formatSnapshotsOutput", () => {

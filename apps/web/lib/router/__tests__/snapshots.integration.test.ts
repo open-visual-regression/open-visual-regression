@@ -364,6 +364,18 @@ describe("snapshots", () => {
 
       expect(error).toBeNull();
       expect(result?.snapshot.isFlaky).toBe(true);
+      expect(result?.snapshot.flags).toEqual([
+        {
+          flag: "flaky",
+          detection: {
+            sampleCount: 30,
+            changeCount: 9,
+            revertCount: 6,
+            sameCommitMismatchCount: 0,
+          },
+          matchesEarlierVariant: false,
+        },
+      ]);
     });
 
     test("reports a snapshot as flaky when its change matches an earlier look of the story on main", async ({
@@ -404,8 +416,12 @@ describe("snapshots", () => {
 
       expect(getOneError).toBeNull();
       expect(getOneResult?.snapshot.isFlaky).toBe(true);
+      expect(getOneResult?.snapshot.flags).toEqual([
+        { flag: "flaky", detection: null, matchesEarlierVariant: true },
+      ]);
       expect(listError).toBeNull();
       expect(listResult?.snapshots[0]?.isFlaky).toBe(true);
+      expect(listResult?.snapshots[0]?.flags).toEqual(["flaky"]);
     });
 
     test("reports a snapshot as not flaky when its story has not been flagged", async ({
@@ -420,6 +436,7 @@ describe("snapshots", () => {
 
       expect(error).toBeNull();
       expect(result?.snapshot.isFlaky).toBe(false);
+      expect(result?.snapshot.flags).toEqual([]);
     });
 
     test("reports a snapshot without a diff as not reviewable", async ({ admin }) => {
@@ -581,6 +598,23 @@ describe("snapshots", () => {
       expect(eitherError).toBeNull();
       expect(either?.total).toBe(3);
       expect(either?.snapshots.map((snapshot) => snapshot.targetId)).toEqual(["b", "c", "d"]);
+    });
+
+    test("lists each snapshot's flags", async ({ admin }) => {
+      const { projectId, build } = await createProjectAndBuild(admin);
+      await seedFlags(projectId, build.id);
+
+      const [error, result] = await serverClient.snapshots.list({ buildId: build.id });
+
+      expect(error).toBeNull();
+      expect(result?.snapshots.map(({ targetId, flags }) => ({ targetId, flags }))).toEqual(
+        expect.arrayContaining([
+          { targetId: "a", flags: [] },
+          { targetId: "b", flags: ["flaky"] },
+          { targetId: "c", flags: ["warning"] },
+          { targetId: "d", flags: ["flaky", "warning"] },
+        ]),
+      );
     });
 
     test("pages through every snapshot exactly once", async ({ admin }) => {
