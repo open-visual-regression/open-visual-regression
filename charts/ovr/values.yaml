@@ -113,7 +113,7 @@ worker:
   enabled: true
   replicas: 1
   concurrency: 2
-  # Snapshots per capture-group job. Each group holds one browser for up to
+  # Snapshots per capture-group job. Each group holds one browser page for up to
   # 2 minutes per snapshot, so this also sets how long a stuck group runs
   # before its timeout fires. Empty uses the app default (10).
   groupSize: ""
