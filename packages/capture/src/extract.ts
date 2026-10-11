@@ -5,6 +5,7 @@ import {
   resolveTargetDiffThreshold,
   resolveTargetViewports,
   resolveTargetWaitForTimeout,
+  toViewportName,
 } from "@ovr/capture-browser/storyViewports";
 import type { NamedViewport } from "@ovr/capture-browser/storyViewports";
 import { dbClient } from "@ovr/db/client";
@@ -14,12 +15,6 @@ import { assertSupportedStorybookBuild } from "@ovr/storybook-compat/version";
 import { markSnapshotErrored } from "./snapshots";
 
 type Target = { id: string; title: string; name: string };
-
-const toViewportName = (viewport: {
-  name?: string;
-  viewportWidth: number;
-  viewportHeight?: number;
-}): string => viewport.name ?? `${viewport.viewportWidth}x${viewport.viewportHeight || "auto"}`;
 
 const resolveDefaultViewport = (viewports: NamedViewport[]): NamedViewport | undefined => {
   const [defaultViewport] = resolveTargetViewports(viewports, undefined);

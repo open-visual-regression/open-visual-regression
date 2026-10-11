@@ -1,4 +1,4 @@
-import { chromium } from "playwright";
+import { chromium, type LaunchOptions } from "playwright";
 
 import {
   MAX_WAIT_FOR_TIMEOUT_MS,
@@ -54,14 +54,21 @@ export type StoryParameterOverrides = {
   failures: Map<string, string>;
 };
 
+type ViewportNameFields = Pick<NamedViewport, "name" | "viewportWidth" | "viewportHeight">;
+
+export const toViewportName = (viewport: ViewportNameFields): string =>
+  viewport.name ?? `${viewport.viewportWidth}x${viewport.viewportHeight || "auto"}`;
+
 export const readStoryParameterOverrides = async (
   bundleDir: string,
   targetIds: string[],
+  launchOptions: LaunchOptions = {},
 ): Promise<StoryParameterOverrides> => {
   const proxy = await startStaticProxy(bundleDir);
   const browser = await chromium.launch({
     ...SIGNAL_HANDLING_OPTIONS,
     args: ["--disable-dev-shm-usage"],
+    ...launchOptions,
   });
 
   try {
