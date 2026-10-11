@@ -47,7 +47,7 @@ export const formatFlagDetail = (detail: SnapshotFlagDetail): string => {
   }
 
   if (detail.matchesEarlierVariant) {
-    reasons.push("matches how this snapshot looked in an earlier build");
+    reasons.push("matches an earlier image of this snapshot");
   }
 
   return `flaky: ${reasons.join("; ")}`;
