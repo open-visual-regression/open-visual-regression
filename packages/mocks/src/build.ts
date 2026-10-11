@@ -21,6 +21,7 @@ export const generateBuildSnapshot = (
   viewportName: "desktop",
   hasUncaughtPageError: false,
   isFlaky: false,
+  flags: [],
   ...overrides,
 });
 
