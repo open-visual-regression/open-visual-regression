@@ -171,4 +171,66 @@ CREATE TABLE "children" ("id" integer PRIMARY KEY, "parent_id" integer REFERENCE
 
     expect(await findAppliedMigrations(databaseUrl)).toHaveLength(3);
   });
+
+  test("should retry a migration that times out waiting for a lock until the lock is released", async ({
+    databaseUrl,
+    createMigrationsFolder,
+  }) => {
+    const setup = { tag: "0000_setup", when: 1000, sql: `CREATE TABLE "items" ("id" integer);` };
+    await runMigrations(databaseUrl, createMigrationsFolder([setup]));
+
+    const app = new Client({ connectionString: databaseUrl });
+    await app.connect();
+    try {
+      await app.query("BEGIN");
+      await app.query(`SELECT * FROM "items"`);
+
+      const migrating = runMigrations(
+        databaseUrl,
+        createMigrationsFolder([
+          setup,
+          { tag: "0001_alter", when: 2000, sql: `ALTER TABLE "items" ADD COLUMN "a" integer;` },
+        ]),
+        { lockTimeoutMs: 100, maxAttempts: 20, retryDelayMs: 10 },
+      );
+
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await app.query("COMMIT");
+      await migrating;
+    } finally {
+      await app.end();
+    }
+
+    expect(await findAppliedMigrations(databaseUrl)).toHaveLength(2);
+  });
+
+  test("should give up on a migration that never gets its lock and leave it unapplied", async ({
+    databaseUrl,
+    createMigrationsFolder,
+  }) => {
+    const setup = { tag: "0000_setup", when: 1000, sql: `CREATE TABLE "items" ("id" integer);` };
+    await runMigrations(databaseUrl, createMigrationsFolder([setup]));
+
+    const app = new Client({ connectionString: databaseUrl });
+    await app.connect();
+    try {
+      await app.query("BEGIN");
+      await app.query(`SELECT * FROM "items"`);
+
+      await expect(
+        runMigrations(
+          databaseUrl,
+          createMigrationsFolder([
+            setup,
+            { tag: "0001_alter", when: 2000, sql: `ALTER TABLE "items" ADD COLUMN "a" integer;` },
+          ]),
+          { lockTimeoutMs: 50, maxAttempts: 3, retryDelayMs: 10 },
+        ),
+      ).rejects.toMatchObject({ code: "55P03" });
+    } finally {
+      await app.end();
+    }
+
+    expect(await findAppliedMigrations(databaseUrl)).toHaveLength(1);
+  });
 });
