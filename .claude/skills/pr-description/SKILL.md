@@ -29,3 +29,24 @@ Typecheck, lint, format, unit tests, builds, or "CI passes". CI has to pass anyw
 2. If the change is user-facing and the app can be run, verify it in the browser first so the Testing section reports something that actually happened. Never claim testing that wasn't done.
 3. Fill in the template and remove the HTML comments.
 4. After the PR is created, re-read the description. The server may append a Claude attribution footer (e.g. "🤖 Generated with Claude Code" and a session link). If present, update the PR body to remove it, and do this without being asked.
+
+## Example
+
+```md
+## Why
+
+Reviewers can't tell which baseline a build was compared against, so a surprising diff is hard to trace. Closes #123.
+
+## What changed
+
+- Build detail page now shows the baseline build and its branch in the header.
+- Baseline links open that build directly.
+- Builds with no baseline show "No baseline (first build)" instead of an empty field.
+
+## Testing
+
+- Opened a build with a baseline: header shows the branch and the link opens the right build.
+- Opened the first build for a project: shows the "no baseline" message.
+- Opened a build whose baseline was deleted: header falls back to the message, no error.
+- Checked the header at mobile width: baseline info wraps and nothing overflows.
+```
