@@ -28,7 +28,7 @@ The fastest loop is running app processes on the host against just the bundled d
 docker compose up -d db valkey rustfs createbuckets
 
 # App processes
-pnpm --filter @ovr/db db:migrate
+pnpm turbo run db:migrate --filter=@ovr/db
 pnpm dev
 ```
 

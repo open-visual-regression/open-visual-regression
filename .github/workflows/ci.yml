@@ -190,7 +190,7 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @ovr/db db:migrate
+      - run: pnpm turbo run db:migrate --filter=@ovr/db
       - run: pnpm --filter @ovr/capture exec playwright install --with-deps chromium
       - name: Restore Storybook fixture builds
         uses: actions/cache@v4
