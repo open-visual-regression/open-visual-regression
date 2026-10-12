@@ -45,7 +45,9 @@
       "inputs": ["src/schema/**"]
     },
     "db:migrate": {
-      "cache": false
+      "dependsOn": ["^build"],
+      "cache": false,
+      "passThroughEnv": ["DATABASE_*", "OVR_MIGRATIONS_DIR", "LOG_*"]
     },
     "db:push": {
       "cache": false
