@@ -8,7 +8,7 @@ OVR runs as two containers, `web` and `worker`, plus a `migrate` container that 
 ## Requirements
 
 - Docker Compose v2.20+. Podman works too: `podman compose` (Podman 4.7+) or podman-compose 1.3.0+.
-- CPU and memory scale with concurrent captures, not total build volume. Each capture group in flight runs its own browser instance. `OVR_CAPTURE_GROUP_CONCURRENCY` (default `2`) caps how many a worker runs at once, and `docker compose up -d --scale worker=3` adds more workers.
+- CPU and memory scale with concurrent captures, not total build volume. `OVR_CAPTURE_GROUP_CONCURRENCY` (default `2`) caps how many a worker runs at once, and `docker compose up -d --scale worker=3` adds more workers.
 
 ## Quick start
 
@@ -215,7 +215,7 @@ Any S3-compatible service works: AWS S3, Cloudflare R2, Backblaze B2, RustFS, Mi
 | --- | --- | --- |
 | `LOG_LEVEL` | `info` | Log verbosity. |
 | `LOG_FILE_PATH` | unset | Log to a file instead of stdout. |
-| `OVR_CAPTURE_GROUP_CONCURRENCY` | `2` | Capture groups run in parallel per worker. Each drives its own browser instance. |
+| `OVR_CAPTURE_GROUP_CONCURRENCY` | `2` | Capture groups run in parallel per worker. |
 | `OVR_CAPTURE_GROUP_SIZE` | `10` | Snapshots per capture group. |
 | `OVR_DIFF_CONCURRENCY` | `4` | Snapshots compared against their baseline in parallel per worker. |
 | `OVR_REAPER_STALE_MINUTES` | `30` | Minutes before a stalled capture job is requeued. |
