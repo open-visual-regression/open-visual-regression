@@ -1,11 +1,14 @@
 import { type UserSchema } from "@ovr/api/contracts/users";
 import { Icon, PlusIcon } from "@ovr/ui/components/icon";
-import { Typography } from "@ovr/ui/components/typography";
+import { Skeleton } from "@ovr/ui/components/skeleton";
+import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
+
+import { SearchFieldSkeleton } from "@/lib/components/SearchField/SearchField";
 
 import { InviteUserModal } from "../invite-user/InviteUserModal";
 import { InviteUserModalButton } from "../invite-user/InviteUserModalButton";
 import { UsersSearchField } from "./UsersSearchField";
-import { UsersTable } from "./UsersTable";
+import { UsersTable, UsersTableSkeleton } from "./UsersTable";
 
 type UsersSectionProps = {
   users: UserSchema[];
@@ -36,3 +39,16 @@ export const UsersSection = ({ users, currentUserId, search }: UsersSectionProps
     </div>
   );
 };
+
+export const UsersSectionSkeleton = () => (
+  <div aria-hidden className="flex flex-col gap-6">
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <TypographySkeleton variant="h1" className="w-40" />
+      <div className="flex w-full items-center gap-3 sm:w-auto">
+        <SearchFieldSkeleton className="flex-1 sm:w-64 sm:flex-none" />
+        <Skeleton className="h-8 w-8 rounded-lg sm:w-28" />
+      </div>
+    </div>
+    <UsersTableSkeleton />
+  </div>
+);
