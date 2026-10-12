@@ -7,6 +7,7 @@ import { test as base } from "@playwright/test";
 import { SEED_ARTIFACT, type SeedData } from "./constants";
 import { BuildPage } from "./pages/BuildPage";
 import { JobsSettingsPage } from "./pages/JobsSettingsPage";
+import { LoginPage } from "./pages/LoginPage";
 import { OrganizationSettingsPage } from "./pages/OrganizationSettingsPage";
 import { ProjectBuildsPage } from "./pages/ProjectBuildsPage";
 import { Sidebar } from "./pages/Sidebar";
@@ -21,6 +22,7 @@ type TestFixtures = {
   snapshotReviewPage: SnapshotReviewPage;
   buildPage: BuildPage;
   jobsSettingsPage: JobsSettingsPage;
+  loginPage: LoginPage;
   organizationSettingsPage: OrganizationSettingsPage;
   sidebar: Sidebar;
   ingestBuild: (options: IngestOptions & { commitSha: string }) => ChildProcess;
@@ -46,6 +48,9 @@ export const test = base.extend<TestFixtures>({
   },
   jobsSettingsPage: async ({ page }, use) => {
     await use(new JobsSettingsPage(page));
+  },
+  loginPage: async ({ page }, use) => {
+    await use(new LoginPage(page));
   },
   organizationSettingsPage: async ({ page }, use) => {
     await use(new OrganizationSettingsPage(page));
