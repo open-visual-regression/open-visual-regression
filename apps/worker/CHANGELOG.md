@@ -1,5 +1,20 @@
 # @ovr/worker
 
+## 0.11.2
+
+### Patch Changes
+
+- [#357](https://github.com/open-visual-regression/open-visual-regression/pull/357) [`6f32f54`](https://github.com/open-visual-regression/open-visual-regression/commit/6f32f54c5d60542e3c25fbdc6f6feb98a26373d9) Thanks [@tgfischer](https://github.com/tgfischer)! - Stop a database migration from stalling the running app while it waits for a table lock. A migration now gives up on a lock after 5 seconds and retries, instead of waiting indefinitely while every other query on that table queues behind it.
+
+- [#356](https://github.com/open-visual-regression/open-visual-regression/pull/356) [`ecf4162`](https://github.com/open-visual-regression/open-visual-regression/commit/ecf41625621ccb55b5953932a21058264af44c08) Thanks [@tgfischer](https://github.com/tgfischer)! - Apply each database migration in its own transaction instead of all pending migrations in one, so upgrading across several releases no longer deadlocks with the running web and worker pods. Only one migrator runs at a time.
+
+- Updated dependencies [[`6f32f54`](https://github.com/open-visual-regression/open-visual-regression/commit/6f32f54c5d60542e3c25fbdc6f6feb98a26373d9), [`ecf4162`](https://github.com/open-visual-regression/open-visual-regression/commit/ecf41625621ccb55b5953932a21058264af44c08)]:
+  - @ovr/db@0.4.2
+  - @ovr/builds@0.2.3
+  - @ovr/capture@0.3.7
+  - @ovr/git-status@0.1.14
+  - @ovr/queue@0.2.3
+
 ## 0.11.1
 
 ### Patch Changes
