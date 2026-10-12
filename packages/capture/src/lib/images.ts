@@ -1,88 +1,57 @@
-import pixelmatch from "pixelmatch";
-import { PNG } from "pngjs";
+import { Piscina } from "piscina";
 
-import { storage } from "@ovr/storage";
+import type { CompareImagesResult, CompareImagesTask } from "./compareImagesWorker";
+import { readImage } from "./imageCache";
 
-const DEFAULT_PIXELMATCH_THRESHOLD = 0.1;
+// The worker app bundles this module into dist/index.js, next to dist/compareImagesWorker.js.
+const COMPARE_WORKER_URL = new URL(
+  import.meta.url.endsWith(".ts") ? "./compareImagesWorker.ts" : "./compareImagesWorker.js",
+  import.meta.url,
+);
 
-const PNG_READ_TIMEOUT_MS = 30_000;
+let comparisons: Piscina<CompareImagesTask, CompareImagesResult> | undefined;
 
-const readPng = async (imagePath: string): Promise<PNG> => {
-  const stream = await storage.getFileStream(imagePath);
-  const png = new PNG();
-  return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      stream.destroy();
-      reject(new Error(`Timed out reading PNG: ${imagePath}`));
-    }, PNG_READ_TIMEOUT_MS);
-
-    const done = (result: PNG | Error) => {
-      clearTimeout(timeout);
-      if (result instanceof Error) {
-        reject(result);
-      } else {
-        resolve(result);
-      }
-    };
-
-    stream.on("error", done);
-    stream
-      .pipe(png)
-      .on("parsed", () => done(png))
-      .on("error", done);
+const getComparisons = (): Piscina<CompareImagesTask, CompareImagesResult> => {
+  comparisons ??= new Piscina({
+    filename: COMPARE_WORKER_URL.href,
+    minThreads: 1,
+    maxThreads: 1,
   });
-};
-
-export const encodePng = (pixels: Uint8Array, width: number, height: number): Buffer => {
-  const png = new PNG({ width, height });
-  png.data = Buffer.from(pixels);
-  return PNG.sync.write(png);
+  return comparisons;
 };
 
 type ImageComparison = {
-  width: number;
-  height: number;
   pixelDiffCount: number;
   diffPercent: number;
-  diffPixels: Uint8Array;
+  diffImage: Buffer | null;
+  cachedImages: number;
+  timings: { read: number; compare: number };
 };
 
 export const compareImages = async (
   capturePath: string,
   baselinePath: string,
+  { withDiffImage = false }: { withDiffImage?: boolean } = {},
 ): Promise<ImageComparison> => {
-  const [capturePixels, baselinePixels] = await Promise.all([
-    readPng(capturePath),
-    readPng(baselinePath),
-  ]);
-
-  const width = Math.max(capturePixels.width, baselinePixels.width);
-  const height = Math.max(capturePixels.height, baselinePixels.height);
-
-  const capturePadded = padToCanvas(capturePixels, width, height);
-  const baselinePadded = padToCanvas(baselinePixels, width, height);
-  const diffPixels = new Uint8Array(width * height * 4);
-
-  const pixelDiffCount = pixelmatch(baselinePadded, capturePadded, diffPixels, width, height, {
-    threshold: DEFAULT_PIXELMATCH_THRESHOLD,
-    diffMask: true,
+  const readStart = performance.now();
+  const [capture, baseline] = await Promise.all([readImage(capturePath), readImage(baselinePath)]);
+  const compareStart = performance.now();
+  const { pixelDiffCount, diffPercent, diffImage } = await getComparisons().run({
+    capture: capture.image,
+    baseline: baseline.image,
+    withDiffImage,
   });
 
-  const diffPercent = (pixelDiffCount / (width * height)) * 100;
-
-  return { width, height, pixelDiffCount, diffPercent, diffPixels };
-};
-
-const padToCanvas = (pixels: PNG, width: number, height: number): Uint8Array => {
-  if (pixels.width === width && pixels.height === height) {
-    return pixels.data;
-  }
-
-  const padded = new Uint8Array(width * height * 4);
-  for (let y = 0; y < pixels.height; y++) {
-    const srcStart = y * pixels.width * 4;
-    const destStart = y * width * 4;
-    padded.set(pixels.data.subarray(srcStart, srcStart + pixels.width * 4), destStart);
-  }
-  return padded;
+  return {
+    pixelDiffCount,
+    diffPercent,
+    diffImage: diffImage
+      ? Buffer.from(diffImage.buffer, diffImage.byteOffset, diffImage.byteLength)
+      : null,
+    cachedImages: Number(capture.cached) + Number(baseline.cached),
+    timings: {
+      read: Math.round(compareStart - readStart),
+      compare: Math.round(performance.now() - compareStart),
+    },
+  };
 };

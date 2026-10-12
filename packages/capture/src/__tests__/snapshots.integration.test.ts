@@ -832,6 +832,110 @@ describe("snapshots", () => {
       expect(diffImage).toBeDefined();
     });
 
+    test("compares later captures against an approved baseline without downloading it again", async ({
+      featureBuild,
+      captureConfiguration,
+      approveBaseline,
+    }) => {
+      const baselinePath = `builds/${featureBuild.id}/snapshots/baseline-cached.png`;
+      await uploadPng(baselinePath, 0);
+      await approveBaseline({
+        build: featureBuild,
+        targetId: "story-cached",
+        imagePath: baselinePath,
+      });
+
+      const download = vi.spyOn(storage, "getFileStream");
+
+      for (const fill of [128, 255]) {
+        const capturePath = `builds/${featureBuild.id}/snapshots/capture-${fill}.png`;
+        await uploadPng(capturePath, fill);
+        const [snapshot] = await dbClient.snapshots.createMany({
+          values: [
+            {
+              buildId: featureBuild.id,
+              ...captureConfiguration,
+              targetId: "story-cached",
+              status: "success",
+              imagePath: capturePath,
+            },
+          ],
+        });
+        const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
+
+        await diffSnapshot(snapshot!.id, diff!.id);
+
+        expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
+          processingStatus: "success",
+          reviewStatus: "needs_review",
+        });
+      }
+
+      expect(download.mock.calls.filter(([path]) => path === baselinePath)).toHaveLength(1);
+    });
+
+    test("diffs a story this worker just captured without downloading its screenshot", async ({
+      featureBuild,
+      captureConfiguration,
+      approveBaseline,
+    }) => {
+      await uploadArtifactWithIframe(featureBuild.artifactPath, IFRAME_HTML);
+      const baselinePath = `builds/${featureBuild.id}/snapshots/baseline-fresh.png`;
+      await uploadPng(baselinePath, 0);
+      await approveBaseline({ build: featureBuild, targetId: "story-a", imagePath: baselinePath });
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: featureBuild.id, ...captureConfiguration, targetId: "story-a" }],
+      });
+
+      await captureBuildGroup(featureBuild.id, captureConfiguration.browser, [snapshot!.id]);
+
+      const captured = await dbClient.snapshots.findById(snapshot!.id);
+      const diff = await dbClient.diffs.findBySnapshot(snapshot!.id);
+      const download = vi.spyOn(storage, "getFileStream");
+
+      await diffSnapshot(snapshot!.id, diff!.id);
+
+      expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
+        processingStatus: "success",
+        reviewStatus: "needs_review",
+      });
+      expect(download).not.toHaveBeenCalledWith(captured!.imagePath);
+    });
+
+    test("fails the diff when a screenshot cannot be decoded, so the job is retried", async ({
+      featureBuild,
+      captureConfiguration,
+      approveBaseline,
+    }) => {
+      const baselinePath = `builds/${featureBuild.id}/snapshots/baseline-corrupt.png`;
+      const capturePath = `builds/${featureBuild.id}/snapshots/capture-corrupt.png`;
+      await uploadPng(baselinePath, 0);
+      await storage.uploadFile(capturePath, Buffer.from("not a png"), "image/png");
+      await approveBaseline({
+        build: featureBuild,
+        targetId: "story-corrupt",
+        imagePath: baselinePath,
+      });
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: featureBuild.id,
+            ...captureConfiguration,
+            targetId: "story-corrupt",
+            status: "success",
+            imagePath: capturePath,
+          },
+        ],
+      });
+      const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
+
+      await expect(diffSnapshot(snapshot!.id, diff!.id)).rejects.toThrow();
+
+      expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
+        processingStatus: "pending",
+      });
+    });
+
     test("diffs against a differently-sized baseline instead of skipping the comparison", async ({
       featureBuild,
       project,

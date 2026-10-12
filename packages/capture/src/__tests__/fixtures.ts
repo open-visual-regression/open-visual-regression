@@ -79,6 +79,12 @@ type Fixtures = {
   featureBuild: NonNullable<Awaited<ReturnType<typeof dbClient.builds.create>>>;
   connection: RedisConnection;
   captureBrowsers: void;
+
+  approveBaseline: (input: {
+    build: NonNullable<Awaited<ReturnType<typeof dbClient.builds.create>>>;
+    targetId: string;
+    imagePath: string;
+  }) => Promise<void>;
 };
 
 export const test = vitest.extend<Fixtures>({
@@ -164,6 +170,23 @@ export const test = vitest.extend<Fixtures>({
     },
     { auto: true },
   ],
+
+  approveBaseline: async ({ project, captureConfiguration }, use) => {
+    await use(async ({ build, targetId, imagePath }) => {
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, ...captureConfiguration, targetId, status: "success", imagePath },
+        ],
+      });
+      await dbClient.baselines.upsert({
+        projectId: project.id,
+        ...captureConfiguration,
+        targetId,
+        snapshotId: snapshot!.id,
+        approvedBy: build.createdBy,
+      });
+    });
+  },
 });
 
 export const enableFlakyDetection = (userId: string, settings: Record<string, unknown> = {}) =>

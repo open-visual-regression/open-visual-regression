@@ -122,6 +122,8 @@ worker:
   diffConcurrency: ""
   # Local disk for extracted Storybook builds. Empty uses the app default (2 GB).
   storybookCacheBytes: ""
+  # Local disk for caching screenshots. Empty uses the app default (512 MB).
+  imageCacheBytes: ""
   resources: {}
   containerSecurityContext:
     allowPrivilegeEscalation: false

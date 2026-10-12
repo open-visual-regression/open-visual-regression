@@ -34,7 +34,8 @@ import { storage } from "@ovr/storage";
 
 import { acquireBrowser, closeBrowsers } from "./lib/browserPool";
 import { CAPTURE_JOB_TIMEOUT_MS, withTimeout } from "./lib/captureTimeouts";
-import { compareImages, encodePng } from "./lib/images";
+import { cacheImage } from "./lib/imageCache";
+import { compareImages } from "./lib/images";
 import { createUploadQueue } from "./lib/uploadQueue";
 
 const logger = createLogger("capture");
@@ -283,6 +284,7 @@ const persistCapturedSnapshot = async (
     const [, uploadMs] = await runPhase("upload", () =>
       storage.uploadFile(imagePath, captured.screenshot, "image/png"),
     );
+    await cacheImage(imagePath, captured.screenshot);
 
     const stored = await db.transaction(async (tx) => {
       if (captured.logs.length > 0) {
@@ -598,6 +600,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
 
   const baselineSnapshot = baseline ? await dbClient.snapshots.findById(baseline.snapshotId) : null;
   const diff = await diffAgainstBaselineSnapshot(
+    snapshotId,
     snapshot.imagePath,
     snapshot.imageHash,
     baselineSnapshot,
@@ -787,18 +790,15 @@ const uploadDiffImage = async (
   projectId: string,
   buildId: string,
   diffId: string,
-  diff: { width: number; height: number; diffPixels: Uint8Array },
+  diffImage: Buffer,
 ): Promise<string> => {
   const diffImagePath = `${projectId}/builds/${buildId}/diffs/${diffId}.png`;
-  await storage.uploadFile(
-    diffImagePath,
-    encodePng(diff.diffPixels, diff.width, diff.height),
-    "image/png",
-  );
+  await storage.uploadFile(diffImagePath, diffImage, "image/png");
   return diffImagePath;
 };
 
 const diffAgainstBaselineSnapshot = async (
+  snapshotId: string,
   capturePath: string,
   captureHash: string | null,
   baselineSnapshot: SnapshotDbSchema | null | undefined,
@@ -816,9 +816,14 @@ const diffAgainstBaselineSnapshot = async (
     };
   }
 
-  const { pixelDiffCount, diffPercent, ...diffImage } = await compareImages(
+  const { pixelDiffCount, diffPercent, diffImage, cachedImages, timings } = await compareImages(
     capturePath,
     baselineSnapshot.imagePath,
+    { withDiffImage: true },
+  );
+  logger.info(
+    { snapshotId, baselineSnapshotId: baselineSnapshot.id, pixelDiffCount, cachedImages, timings },
+    "snapshot compared against baseline",
   );
   return { pixelDiffCount, diffPercent, diffImage, baselineSnapshotId: baselineSnapshot.id };
 };
