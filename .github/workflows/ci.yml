@@ -228,8 +228,11 @@ jobs:
           affected=$(jq -e 'length > 0' <<<"$packages" >/dev/null && echo true || echo false)
           echo "affected=$affected" >> "$GITHUB_OUTPUT"
 
+  # Images build alongside the checks instead of after them, so E2E is not
+  # stuck behind the test job. promote still waits on every check, so an
+  # image that failed them is never released.
   docker:
-    needs: [build, check-types, lint, format-check, test, detect-affected]
+    needs: [detect-affected]
     if: needs.detect-affected.outputs.apps_affected == 'true'
     permissions:
       contents: read
@@ -246,7 +249,8 @@ jobs:
       job-name-prefix: "${{ matrix.image.name }} "
       output: image
       push: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
-      platforms: linux/amd64,linux/arm64
+      # E2E only pulls amd64, so PRs skip the arm64 build; main builds both.
+      platforms: ${{ github.event_name == 'pull_request' && 'linux/amd64' || 'linux/amd64,linux/arm64' }}
       context: .
       file: ${{ matrix.image.dockerfile }}
       meta-images: ghcr.io/${{ github.repository_owner }}/${{ matrix.image.name }}
@@ -292,7 +296,7 @@ jobs:
   promote:
     name: Promote release (${{ matrix.image }})
     runs-on: ubuntu-latest
-    needs: [docker, e2e, release-meta]
+    needs: [build, check-types, lint, format-check, test, docker, e2e, release-meta]
     if: needs.release-meta.outputs.released == 'true'
     permissions:
       contents: read
