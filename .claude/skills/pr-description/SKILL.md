@@ -30,7 +30,7 @@ Typecheck, lint, format, unit tests, builds, or "CI passes". CI has to pass anyw
 3. Fill in the template and remove the HTML comments.
 4. After the PR is created, re-read the description. The server may append a Claude attribution footer (e.g. "🤖 Generated with Claude Code" and a session link). If present, update the PR body to remove it, and do this without being asked.
 
-## Example
+## Good example
 
 ```md
 ## Why
@@ -50,3 +50,34 @@ Reviewers can't tell which baseline a build was compared against, so a surprisin
 - Opened a build whose baseline was deleted: header falls back to the message, no error.
 - Checked the header at mobile width: baseline info wraps and nothing overflows.
 ```
+
+## Bad example
+
+```md
+## Why
+
+I started by looking at the build detail page and noticed the header was missing baseline info. I first tried adding it to the API response, but that turned out to be unnecessary, so I moved it into the component instead.
+
+## What changed
+
+- Edited `BuildHeader.tsx` to add a `baselineBuild` prop and render it
+- Updated `getBuild` in `packages/api/src/builds.ts` to include the `baselineId` field
+- Added `BaselineLink.tsx` and exported it from `index.ts`
+- Fixed a few lint warnings and renamed some variables
+
+## Testing
+
+- `pnpm typecheck` passes
+- `pnpm lint` passes
+- `pnpm test` passes
+- Build succeeds
+
+🤖 Generated with Claude Code
+```
+
+What's wrong with it:
+
+- **Why** narrates the session and the dead ends instead of stating the problem.
+- **What changed** is a file-by-file list with names, and it includes unrelated noise.
+- **Testing** lists only checks CI already runs and says nothing about what was verified in the browser.
+- It ends with an attribution footer.
