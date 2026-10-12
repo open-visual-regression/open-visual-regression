@@ -13,7 +13,7 @@
       "persistent": true
     },
     "lint": {
-      "dependsOn": ["^lint"]
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/.oxlintrc.json"]
     },
     "format": {
       "cache": false
