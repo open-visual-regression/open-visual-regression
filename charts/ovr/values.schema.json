@@ -243,7 +243,7 @@
         },
         "imageCacheBytes": {
           "type": ["string", "integer"],
-          "description": "Local disk for screenshots and baselines read while diffing. Empty string uses the app default."
+          "description": "Local disk for caching screenshots. Empty string uses the app default."
         },
         "resources": { "$ref": "#/definitions/resources" },
         "updateStrategy": { "$ref": "#/definitions/updateStrategy" },
