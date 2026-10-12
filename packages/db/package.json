@@ -10,6 +10,7 @@
     "build": "tsc",
     "tsc": "tsc --noEmit",
     "lint": "oxlint src",
+    "lint:migrations": "squawk --no-error-on-unmatched-pattern 'src/migrations/*.sql' < /dev/null",
     "format": "oxfmt src",
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
@@ -30,6 +31,7 @@
     "@types/pg": "^8.20.3",
     "dotenv": "^17.4.2",
     "drizzle-kit": "^0.31.10",
+    "squawk-cli": "^2.68.0",
     "typescript": "6.0.3",
     "vitest": "^4.1.11"
   }

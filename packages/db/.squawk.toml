@@ -1,0 +1,15 @@
+pg_version = "16"
+assume_in_transaction = true
+excluded_rules = [
+  # Style preferences that do not affect locking.
+  "prefer-bigint-over-int",
+  "prefer-text-field",
+  "prefer-timestamp-tz",
+  # Covered by the migration runner.
+  "prefer-robust-stmts",
+  "require-lock-timeout",
+  "require-statement-timeout",
+  "ban-concurrent-index-creation-in-transaction",
+]
+# Migrations released before linting was added.
+excluded_paths = ["src/migrations/00[0-4]*.sql", "src/migrations/005[0-3]_*.sql"]
