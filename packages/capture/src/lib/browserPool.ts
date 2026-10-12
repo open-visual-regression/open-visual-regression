@@ -19,10 +19,15 @@ const launched = new Map<string, Promise<Browser>>();
 const closing = new Set<Browser>();
 
 const launchBrowser = async (browserName: string): Promise<Browser> => {
+  const launchStart = performance.now();
   const browser = await getBrowserLauncher(browserName).launch({
     ...SIGNAL_HANDLING_OPTIONS,
     ...(browserName === "chromium" ? { args: ["--disable-dev-shm-usage"] } : {}),
   });
+  logger.info(
+    { browser: browserName, launchMs: Math.round(performance.now() - launchStart) },
+    "capture browser launched",
+  );
 
   browser.on("disconnected", () => {
     if (closing.delete(browser)) {
