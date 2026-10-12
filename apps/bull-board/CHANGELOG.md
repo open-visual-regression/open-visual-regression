@@ -1,5 +1,12 @@
 # @ovr/bull-board
 
+## 0.1.15
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @ovr/queue@0.2.2
+
 ## 0.1.14
 
 ### Patch Changes

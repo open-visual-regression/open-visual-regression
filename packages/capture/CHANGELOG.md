@@ -1,5 +1,19 @@
 # @ovr/capture
 
+## 0.3.6
+
+### Patch Changes
+
+- [#350](https://github.com/open-visual-regression/open-visual-regression/pull/350) [`74426bf`](https://github.com/open-visual-regression/open-visual-regression/commit/74426bf80c8525a7f7ac6673dc33c916f7d5964f) Thanks [@tgfischer](https://github.com/tgfischer)! - Compare screenshots in a background thread so diffing no longer stalls captures, and keep recently read screenshots and baselines on local disk so a diff skips downloading the screenshot the worker just captured and a baseline it has already read. `OVR_IMAGE_CACHE_BYTES` (Helm: `worker.imageCacheBytes`) caps the cache, 512 MB by default.
+
+- [#349](https://github.com/open-visual-regression/open-visual-regression/pull/349) [`30bcf95`](https://github.com/open-visual-regression/open-visual-regression/commit/30bcf956aa99b924ae14da04e576f339561e4519) Thanks [@tgfischer](https://github.com/tgfischer)! - Share one browser per worker across capture groups, and reuse a build's booted Storybook page for its next capture group instead of relaunching the browser and reloading Storybook for every group.
+
+- Updated dependencies [[`0d851dc`](https://github.com/open-visual-regression/open-visual-regression/commit/0d851dc7ef40b62a768fde90552fc8bfec95b58f), [`f9be809`](https://github.com/open-visual-regression/open-visual-regression/commit/f9be809548dc835fcaf9b9b1ac9c8964fe1c50cd)]:
+  - @ovr/db@0.4.1
+  - @ovr/builds@0.2.2
+  - @ovr/queue@0.2.2
+  - @ovr/reviews@0.1.17
+
 ## 0.3.5
 
 ### Patch Changes

@@ -1,5 +1,15 @@
 # @ovr/builds
 
+## 0.2.2
+
+### Patch Changes
+
+- [#351](https://github.com/open-visual-regression/open-visual-regression/pull/351) [`f9be809`](https://github.com/open-visual-regression/open-visual-regression/commit/f9be809548dc835fcaf9b9b1ac9c8964fe1c50cd) Thanks [@tgfischer](https://github.com/tgfischer)! - Log how long each build pipeline job waited in the queue, and each build's total duration and snapshot count when it finishes.
+
+- Updated dependencies [[`0d851dc`](https://github.com/open-visual-regression/open-visual-regression/commit/0d851dc7ef40b62a768fde90552fc8bfec95b58f)]:
+  - @ovr/db@0.4.1
+  - @ovr/queue@0.2.2
+
 ## 0.2.1
 
 ### Patch Changes
