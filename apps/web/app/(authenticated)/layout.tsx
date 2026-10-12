@@ -1,21 +1,22 @@
 import { Suspense } from "react";
 
-import { requireSession } from "@/lib/auth/session";
 import { QueryProvider } from "@/lib/providers/QueryProvider";
 import { ScrollRestoration } from "@/lib/providers/ScrollRestoration";
 
 import { DevTools } from "./_components/DevTools";
+import { SessionGuard } from "./_components/SessionGuard";
 
 type AppLayoutProps = Readonly<{
   navigation: React.ReactNode;
   children: React.ReactNode;
 }>;
 
-export default async function AppLayout({ navigation, children }: AppLayoutProps) {
-  await requireSession();
-
+export default function AppLayout({ navigation, children }: AppLayoutProps) {
   return (
     <QueryProvider>
+      <Suspense fallback={null}>
+        <SessionGuard />
+      </Suspense>
       <Suspense fallback={null}>
         <ScrollRestoration />
       </Suspense>
