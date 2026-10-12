@@ -1,7 +1,11 @@
 import path from "node:path";
 
-import { readMigrationFiles } from "drizzle-orm/migrator";
-import { Client } from "pg";
+import { readMigrationFiles, type MigrationMeta } from "drizzle-orm/migrator";
+import { Client, DatabaseError } from "pg";
+
+import { createLogger } from "@ovr/logger";
+
+const logger = createLogger("migrate");
 
 // drizzle's own table, so either migrator can run against the same database.
 const MIGRATIONS_SCHEMA = "drizzle";
@@ -9,11 +13,48 @@ const MIGRATIONS_TABLE = `"${MIGRATIONS_SCHEMA}"."__drizzle_migrations"`;
 
 const MIGRATION_LOCK_KEY = 7_315_420_118;
 
+// While a migration waits for a lock, every new query on that table queues behind it.
+const LOCK_TIMEOUT_MS = 5_000;
+const MAX_ATTEMPTS = 10;
+const RETRY_DELAY_MS = 1_000;
+
+// lock_not_available and deadlock_detected
+const RETRYABLE_ERROR_CODES = new Set(["55P03", "40P01"]);
+
+type RunMigrationsOptions = {
+  lockTimeoutMs?: number;
+  maxAttempts?: number;
+  retryDelayMs?: number;
+};
+
+const applyMigration = async (client: Client, migration: MigrationMeta, lockTimeoutMs: number) => {
+  await client.query("BEGIN");
+  try {
+    await client.query(`SET LOCAL lock_timeout = ${lockTimeoutMs}`);
+    for (const statement of migration.sql) {
+      await client.query(statement);
+    }
+    await client.query(`INSERT INTO ${MIGRATIONS_TABLE} (hash, created_at) VALUES ($1, $2)`, [
+      migration.hash,
+      migration.folderMillis,
+    ]);
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  }
+};
+
 // drizzle's migrate() applies all pending migrations in one transaction, which
 // deadlocks with the running app when an upgrade spans several migrations.
 export const runMigrations = async (
   connectionString: string,
   migrationsFolder: string = path.resolve(import.meta.dirname, "migrations"),
+  {
+    lockTimeoutMs = LOCK_TIMEOUT_MS,
+    maxAttempts = MAX_ATTEMPTS,
+    retryDelayMs = RETRY_DELAY_MS,
+  }: RunMigrationsOptions = {},
 ) => {
   const migrations = readMigrationFiles({ migrationsFolder });
   const client = new Client({ connectionString });
@@ -41,19 +82,23 @@ export const runMigrations = async (
         continue;
       }
 
-      await client.query("BEGIN");
-      try {
-        for (const statement of migration.sql) {
-          await client.query(statement);
+      for (let attempt = 1; ; attempt++) {
+        try {
+          await applyMigration(client, migration, lockTimeoutMs);
+          break;
+        } catch (error) {
+          const retryable =
+            error instanceof DatabaseError && RETRYABLE_ERROR_CODES.has(error.code ?? "");
+          if (!retryable || attempt >= maxAttempts) {
+            throw error;
+          }
+
+          logger.warn(
+            { err: error, migration: migration.folderMillis, attempt },
+            "migration could not get its locks, retrying",
+          );
+          await new Promise((resolve) => setTimeout(resolve, retryDelayMs * attempt));
         }
-        await client.query(`INSERT INTO ${MIGRATIONS_TABLE} (hash, created_at) VALUES ($1, $2)`, [
-          migration.hash,
-          migration.folderMillis,
-        ]);
-        await client.query("COMMIT");
-      } catch (error) {
-        await client.query("ROLLBACK");
-        throw error;
       }
     }
   } finally {
