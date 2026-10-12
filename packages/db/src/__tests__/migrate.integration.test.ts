@@ -229,4 +229,63 @@ CREATE TABLE "children" ("id" integer PRIMARY KEY, "parent_id" integer REFERENCE
 
     expect(await findAppliedMigrations(databaseUrl)).toHaveLength(1);
   });
+
+  test("should run a migration marked no-transaction outside a transaction", async ({
+    databaseUrl,
+    createMigrationsFolder,
+  }) => {
+    await runMigrations(
+      databaseUrl,
+      createMigrationsFolder([
+        { tag: "0000_setup", when: 1000, sql: `CREATE TABLE "items" ("id" integer);` },
+        {
+          tag: "0001_index",
+          when: 2000,
+          sql: `-- ovr:no-transaction
+DROP INDEX CONCURRENTLY IF EXISTS "items_id_idx";--> statement-breakpoint
+CREATE INDEX CONCURRENTLY "items_id_idx" ON "items" USING btree ("id");`,
+        },
+      ]),
+    );
+
+    const [index] = await query<{ indisvalid: boolean }>(
+      databaseUrl,
+      `SELECT indisvalid FROM pg_index WHERE indexrelid = 'items_id_idx'::regclass`,
+    );
+    expect(index?.indisvalid).toBe(true);
+    expect(await findAppliedMigrations(databaseUrl)).toHaveLength(2);
+  });
+
+  test("should rerun a no-transaction migration from the top after it fails partway", async ({
+    databaseUrl,
+    createMigrationsFolder,
+  }) => {
+    const setup = { tag: "0000_setup", when: 1000, sql: `CREATE TABLE "items" ("id" integer);` };
+    const createIndex = `-- ovr:no-transaction
+DROP INDEX CONCURRENTLY IF EXISTS "items_id_idx";--> statement-breakpoint
+CREATE INDEX CONCURRENTLY "items_id_idx" ON "items" USING btree ("id");`;
+
+    await expect(
+      runMigrations(
+        databaseUrl,
+        createMigrationsFolder([
+          setup,
+          {
+            tag: "0001_index",
+            when: 2000,
+            sql: `${createIndex}--> statement-breakpoint
+CREATE TABLE "broken" ("id" not_a_type);`,
+          },
+        ]),
+      ),
+    ).rejects.toThrow(/not_a_type/);
+    expect(await findAppliedMigrations(databaseUrl)).toHaveLength(1);
+
+    await runMigrations(
+      databaseUrl,
+      createMigrationsFolder([setup, { tag: "0001_index", when: 2000, sql: createIndex }]),
+    );
+
+    expect(await findAppliedMigrations(databaseUrl)).toHaveLength(2);
+  });
 });
