@@ -1,9 +1,17 @@
 ---
 name: pr-description
-description: Write or update a pull request description using the repo's PR template. Use whenever creating a PR, opening a pull request, or asked to write, draft, or rewrite a PR description.
+description: Write or update a pull request title and description using the repo's PR template. Use whenever creating a PR, opening a pull request, or asked to write, draft, or rewrite a PR description.
 ---
 
-Write a short, high-level PR description that fills in `.github/pull_request_template.md`.
+Write a short, high-level PR description that fills in `.github/pull_request_template.md`, and give the PR a Conventional Commits title.
+
+## Title
+
+PRs are squash-merged, so the title becomes the commit message on `main`. Use [Conventional Commits](https://www.conventionalcommits.org): `type(scope): summary`.
+
+- **Type:** `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `ci`, `build`, or `chore`.
+- **Scope:** Optional. Use the app or package name the change lives in (`web`, `cli`, `api`, `capture`, `db`, `worker`, ...). Leave it off if the change spans several.
+- **Summary:** Lowercase, no trailing period, and written as a plain description of what the change does, e.g. `feat(web): show the baseline build in the build header` or `fix(web): stop the endless prefetch loop from the navigation slot`.
 
 ## Rules
 
