@@ -1,0 +1,93 @@
+---
+name: pr-description
+description: Write or update a pull request title and description using the repo's PR template. Use whenever creating a PR, opening a pull request, or asked to write, draft, or rewrite a PR description.
+---
+
+Write a short, high-level PR description that fills in `.github/pull_request_template.md`, and give the PR a Conventional Commits title.
+
+## Title
+
+PRs are squash-merged, so the title becomes the commit message on `main`. Use [Conventional Commits](https://www.conventionalcommits.org): `type(scope): summary`.
+
+- **Type:** `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `ci`, `build`, or `chore`.
+- **Scope:** Optional. Use the app or package name the change lives in (`web`, `cli`, `api`, `capture`, `db`, `worker`, ...). Leave it off if the change spans several.
+- **Summary:** Lowercase, no trailing period, and written as a plain description of what the change does, e.g. `feat(web): show the baseline build in the build header` or `fix(web): stop the endless prefetch loop from the navigation slot`.
+
+## Rules
+
+- **Length:** 200-300 words at most. A human has to read this, so keep it quick to digest, but don't cut anything a reviewer needs to know to review the change safely (risky areas, migrations, follow-ups).
+- **Altitude:** Describe the change, not the code. No file-by-file walkthroughs, function names, or implementation minutiae unless a reviewer needs them to understand the change.
+- **Not a history:** Don't narrate the AI session, the order things were tried, dead ends, or decisions made along the way. Describe the end state only.
+- **Sound like a person:** Write it the way a teammate would explain the change to another teammate. Use full, natural sentences with normal articles and connecting words ("so", "because", "which means"). Avoid clipped, telegraphic fragments like "Opened build: header shows branch", colon-heavy shorthand, and stock AI phrasing ("This PR introduces...", "seamlessly", "robust", "enhances", "ensures"). Bullets are fine, but each one should read like a sentence someone would actually say.
+- **No attribution:** Don't add "Generated with Claude Code", `Co-Authored-By`, or session links to the description.
+- **Sections:** Keep the template's headings (Why, What changed, Testing, Screenshots). Drop Screenshots if there is nothing visual.
+
+## Sections
+
+- **Why:** One or two sentences on the problem or goal. Link the issue if one exists.
+- **What changed:** A few bullets on the approach, at the level you'd explain it to a teammate.
+- **Testing:** What was exercised manually in the browser: the pages or flows visited and the behavior observed (including relevant edge cases). If the change has no user-facing surface, write "N/A" with a few words on why.
+
+## Never list as testing
+
+Typecheck, lint, format, unit tests, builds, or "CI passes". CI has to pass anyway, so these say nothing a reviewer doesn't already know.
+
+## Process
+
+1. Look at the full branch diff against the base branch, not just the latest commit.
+2. If the change is user-facing and the app can be run, verify it in the browser first so the Testing section reports something that actually happened. Never claim testing that wasn't done.
+3. Fill in the template and remove the HTML comments.
+4. After the PR is created, re-read the description. The server may append a Claude attribution footer (e.g. "🤖 Generated with Claude Code" and a session link). If present, update the PR body to remove it, and do this without being asked.
+
+## Good example
+
+```md
+## Why
+
+When a build shows a diff you weren't expecting, there's currently no way to tell which baseline it was compared against, so you end up guessing which build to go look at. Closes #123.
+
+## What changed
+
+- The build detail page now shows which build was used as the baseline, along with its branch, right in the header.
+- Clicking the baseline takes you straight to that build, so you can compare the two without hunting for it.
+- If a build doesn't have a baseline yet (usually the first build on a project), the header says so instead of leaving the field blank.
+
+## Testing
+
+- I opened a few builds that had baselines and checked that the header showed the right branch and that the link went to the correct build.
+- I opened the first build on a new project to make sure the "no baseline" message showed up.
+- I also tried a build whose baseline had been deleted. The header falls back to the same message and nothing errors out.
+- On a narrow mobile-sized window the baseline info wraps onto its own line, and nothing overflows.
+```
+
+## Bad example
+
+```md
+## Why
+
+I started by looking at the build detail page and noticed the header was missing baseline info. I first tried adding it to the API response, but that turned out to be unnecessary, so I moved it into the component instead.
+
+## What changed
+
+- Edited `BuildHeader.tsx` to add a `baselineBuild` prop and render it
+- Updated `getBuild` in `packages/api/src/builds.ts` to include the `baselineId` field
+- Added `BaselineLink.tsx` and exported it from `index.ts`
+- Fixed a few lint warnings and renamed some variables
+
+## Testing
+
+- `pnpm typecheck` passes
+- `pnpm lint` passes
+- `pnpm test` passes
+- Build succeeds
+
+🤖 Generated with Claude Code
+```
+
+What's wrong with it:
+
+- **Why** narrates the session and the dead ends instead of stating the problem.
+- **What changed** is a file-by-file list with names, and it includes unrelated noise.
+- The bullets are clipped and mechanical. They read like a changelog generated by a tool, not like something a person wrote to explain the change.
+- **Testing** lists only checks CI already runs and says nothing about what was verified in the browser.
+- It ends with an attribution footer.
