@@ -1,5 +1,11 @@
 # @ovr/db
 
+## 0.4.1
+
+### Patch Changes
+
+- [#348](https://github.com/open-visual-regression/open-visual-regression/pull/348) [`0d851dc`](https://github.com/open-visual-regression/open-visual-regression/commit/0d851dc7ef40b62a768fde90552fc8bfec95b58f) Thanks [@tgfischer](https://github.com/tgfischer)! - Check whether a build has finished processing with a single query instead of loading every snapshot after each diff.
+
 ## 0.4.0
 
 ### Minor Changes
