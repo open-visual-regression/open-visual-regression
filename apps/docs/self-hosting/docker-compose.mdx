@@ -220,6 +220,7 @@ Any S3-compatible service works: AWS S3, Cloudflare R2, Backblaze B2, RustFS, Mi
 | `OVR_DIFF_CONCURRENCY` | `4` | Snapshots compared against their baseline in parallel per worker. |
 | `OVR_REAPER_STALE_MINUTES` | `30` | Minutes before a stalled capture job is requeued. |
 | `OVR_STORYBOOK_CACHE_BYTES` | `2147483648` (2 GB) | Local disk for extracted Storybook builds. |
+| `OVR_IMAGE_CACHE_BYTES` | `536870912` (512 MB) | Local disk for screenshots and baselines read while diffing. |
 
 ### Ports
 

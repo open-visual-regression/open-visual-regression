@@ -4,6 +4,7 @@ export default defineConfig((options) => ({
   entry: {
     index: "src/index.ts",
     migrate: "../../packages/db/src/scripts/migrate.ts",
+    compareImagesWorker: "../../packages/capture/src/lib/compareImagesWorker.ts",
   },
   format: ["esm"],
   target: "node22",
@@ -27,6 +28,7 @@ export default defineConfig((options) => ({
     "tar",
     "pixelmatch",
     "pngjs",
+    "piscina",
     "pg",
   ],
 }));
