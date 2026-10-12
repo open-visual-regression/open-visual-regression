@@ -608,6 +608,17 @@ export const finalizeBuild = async (buildId: string): Promise<void> => {
     errorMessage: hasProcessingError ? SNAPSHOT_ERROR_MESSAGE : null,
   });
 
+  logger.info(
+    {
+      buildId,
+      processingStatus,
+      reviewStatus,
+      snapshotCount: diffs.length,
+      durationMs: build ? Date.now() - Date.parse(build.createdAt) : undefined,
+    },
+    "build finalized",
+  );
+
   const changed =
     build?.processingStatus !== processingStatus || build?.reviewStatus !== reviewStatus;
 

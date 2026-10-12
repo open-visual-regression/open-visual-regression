@@ -131,6 +131,20 @@ const workers = [
   flakySnapshotScanWorker,
 ];
 
+for (const worker of [extractWorker, captureWorker, diffWorker, finalizeWorker]) {
+  worker.on("active", (job) => {
+    logger.info(
+      {
+        jobId: job.id,
+        queue: worker.name,
+        attempt: job.attemptsStarted,
+        queuedMs: Date.now() - job.timestamp - (job.opts.delay ?? 0),
+      },
+      "job started",
+    );
+  });
+}
+
 for (const worker of workers) {
   worker.on("error", (err) => {
     logger.error({ err, queue: worker.name }, "worker error");
