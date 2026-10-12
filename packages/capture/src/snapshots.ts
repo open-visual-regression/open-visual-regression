@@ -600,6 +600,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
 
   const baselineSnapshot = baseline ? await dbClient.snapshots.findById(baseline.snapshotId) : null;
   const diff = await diffAgainstBaselineSnapshot(
+    snapshotId,
     snapshot.imagePath,
     snapshot.imageHash,
     baselineSnapshot,
@@ -797,6 +798,7 @@ const uploadDiffImage = async (
 };
 
 const diffAgainstBaselineSnapshot = async (
+  snapshotId: string,
   capturePath: string,
   captureHash: string | null,
   baselineSnapshot: SnapshotDbSchema | null | undefined,
@@ -814,10 +816,14 @@ const diffAgainstBaselineSnapshot = async (
     };
   }
 
-  const { pixelDiffCount, diffPercent, diffImage } = await compareImages(
+  const { pixelDiffCount, diffPercent, diffImage, cachedImages, timings } = await compareImages(
     capturePath,
     baselineSnapshot.imagePath,
     { withDiffImage: true },
+  );
+  logger.info(
+    { snapshotId, baselineSnapshotId: baselineSnapshot.id, pixelDiffCount, cachedImages, timings },
+    "snapshot compared against baseline",
   );
   return { pixelDiffCount, diffPercent, diffImage, baselineSnapshotId: baselineSnapshot.id };
 };

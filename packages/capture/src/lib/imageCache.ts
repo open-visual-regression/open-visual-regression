@@ -84,17 +84,17 @@ const downloadImage = async (imagePath: string): Promise<Buffer> => {
   }
 };
 
-export const readImage = async (imagePath: string): Promise<Buffer> => {
+export const readImage = async (imagePath: string): Promise<{ image: Buffer; cached: boolean }> => {
   const { entries, ready } = getIndex();
   await ready.catch(() => undefined);
 
   const cached = entries.get(imagePath);
   const image = cached && (await readFile(cached.filePath).catch(() => null));
   if (image) {
-    return image;
+    return { image, cached: true };
   }
 
   const downloaded = await downloadImage(imagePath);
   await cacheImage(imagePath, downloaded);
-  return downloaded;
+  return { image: downloaded, cached: false };
 };

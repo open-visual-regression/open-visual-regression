@@ -29,7 +29,7 @@ describe("imageCache", () => {
 
     const download = vi.spyOn(storage, "getFileStream");
 
-    const images = [await readImage(imagePath), await readImage(imagePath)];
+    const images = [(await readImage(imagePath)).image, (await readImage(imagePath)).image];
 
     expect(images.map(String)).toEqual(["baseline", "baseline"]);
     expect(download).toHaveBeenCalledTimes(1);
@@ -43,7 +43,7 @@ describe("imageCache", () => {
 
     await cacheImage(imagePath, Buffer.from("capture"));
 
-    expect(String(await readImage(imagePath))).toBe("capture");
+    expect(String((await readImage(imagePath)).image)).toBe("capture");
     expect(download).not.toHaveBeenCalled();
   });
 
@@ -57,9 +57,9 @@ describe("imageCache", () => {
 
     const download = vi.spyOn(storage, "getFileStream");
 
-    expect(String(await readImage(newerPath))).toBe("newer-1");
+    expect(String((await readImage(newerPath)).image)).toBe("newer-1");
     expect(download).not.toHaveBeenCalled();
-    expect(String(await readImage(olderPath))).toBe("older-1");
+    expect(String((await readImage(olderPath)).image)).toBe("older-1");
     expect(download).toHaveBeenCalledExactlyOnceWith(olderPath);
   });
 });

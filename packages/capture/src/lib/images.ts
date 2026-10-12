@@ -24,6 +24,8 @@ type ImageComparison = {
   pixelDiffCount: number;
   diffPercent: number;
   diffImage: Buffer | null;
+  cachedImages: number;
+  timings: { read: number; compare: number };
 };
 
 export const compareImages = async (
@@ -31,10 +33,12 @@ export const compareImages = async (
   baselinePath: string,
   { withDiffImage = false }: { withDiffImage?: boolean } = {},
 ): Promise<ImageComparison> => {
+  const readStart = performance.now();
   const [capture, baseline] = await Promise.all([readImage(capturePath), readImage(baselinePath)]);
+  const compareStart = performance.now();
   const { pixelDiffCount, diffPercent, diffImage } = await getComparisons().run({
-    capture,
-    baseline,
+    capture: capture.image,
+    baseline: baseline.image,
     withDiffImage,
   });
 
@@ -44,5 +48,10 @@ export const compareImages = async (
     diffImage: diffImage
       ? Buffer.from(diffImage.buffer, diffImage.byteOffset, diffImage.byteLength)
       : null,
+    cachedImages: Number(capture.cached) + Number(baseline.cached),
+    timings: {
+      read: Math.round(compareStart - readStart),
+      compare: Math.round(performance.now() - compareStart),
+    },
   };
 };
