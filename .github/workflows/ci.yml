@@ -228,9 +228,6 @@ jobs:
           affected=$(jq -e 'length > 0' <<<"$packages" >/dev/null && echo true || echo false)
           echo "affected=$affected" >> "$GITHUB_OUTPUT"
 
-  # Images build alongside the checks instead of after them, so E2E is not
-  # stuck behind the test job. promote still waits on every check, so an
-  # image that failed them is never released.
   docker:
     needs: [detect-affected]
     if: needs.detect-affected.outputs.apps_affected == 'true'
@@ -249,7 +246,6 @@ jobs:
       job-name-prefix: "${{ matrix.image.name }} "
       output: image
       push: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
-      # E2E only pulls amd64, so PRs skip the arm64 build; main builds both.
       platforms: ${{ github.event_name == 'pull_request' && 'linux/amd64' || 'linux/amd64,linux/arm64' }}
       context: .
       file: ${{ matrix.image.dockerfile }}
