@@ -57,6 +57,34 @@ pnpm --filter @ovr/ui build
 pnpm --filter @ovr/web lint
 ```
 
+## Database Migrations
+
+Change the schema in `packages/db/src/schema`, then generate a migration:
+
+```sh
+pnpm --filter @ovr/db db:generate
+```
+
+For data backfills or SQL that drizzle-kit can't generate, create an empty migration and write it by hand:
+
+```sh
+pnpm --filter @ovr/db db:generate --custom --name=backfill_something
+```
+
+Migrations run before an upgrade's new pods start, while the previous release is still serving traffic. Every migration has to keep working with the code from the previous release:
+
+- Add columns as nullable or with a default.
+- Don't drop or rename a column or table in the release that stops using it. Ship the code change first, and drop it in a later release.
+- To rename, add the new column, backfill it, switch the code over, and drop the old one in a later release.
+
+Each migration runs in its own transaction. For statements that can't run in a transaction, like `CREATE INDEX CONCURRENTLY` on a large table, start the file with `-- ovr:no-transaction`. Such a migration reruns from the top if it fails partway, so make every statement safe to repeat:
+
+```sql
+-- ovr:no-transaction
+DROP INDEX CONCURRENTLY IF EXISTS "snapshots_example_idx";--> statement-breakpoint
+CREATE INDEX CONCURRENTLY "snapshots_example_idx" ON "snapshots" USING btree ("example");
+```
+
 ## Workspace Structure
 
 ```
