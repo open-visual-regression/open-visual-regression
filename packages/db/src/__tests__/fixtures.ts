@@ -1,3 +1,8 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
+import { Client } from "pg";
 import { v7 as uuidv7 } from "uuid";
 import { test as vitest } from "vitest";
 
@@ -14,12 +19,30 @@ export type Viewport = {
   viewportName: string;
 };
 
+export type TestMigration = {
+  tag: string;
+  when: number;
+  sql: string;
+};
+
 type Fixtures = {
   user: typeof userTable.$inferSelect;
   organization: typeof organization.$inferSelect;
   project: typeof projects.$inferSelect;
   captureConfiguration: Viewport;
   build: NonNullable<Awaited<ReturnType<typeof dbClient.builds.create>>>;
+  databaseUrl: string;
+  createMigrationsFolder: (migrations: TestMigration[]) => string;
+};
+
+const withAdminClient = async (run: (client: Client) => Promise<unknown>) => {
+  const client = new Client({ connectionString: process.env.DATABASE_URL });
+  await client.connect();
+  try {
+    await run(client);
+  } finally {
+    await client.end();
+  }
 };
 
 export const test = vitest.extend<Fixtures>({
@@ -73,5 +96,50 @@ export const test = vitest.extend<Fixtures>({
       createdBy: user.id,
     });
     await use(created!);
+  },
+
+  // eslint-disable-next-line no-empty-pattern
+  databaseUrl: async ({}, use) => {
+    const name = `test_${uuidv7().replaceAll("-", "")}`;
+    await withAdminClient((client) => client.query(`CREATE DATABASE "${name}"`));
+
+    const url = new URL(process.env.DATABASE_URL!);
+    url.pathname = `/${name}`;
+    await use(url.toString());
+
+    await withAdminClient((client) => client.query(`DROP DATABASE "${name}" WITH (FORCE)`));
+  },
+
+  // eslint-disable-next-line no-empty-pattern
+  createMigrationsFolder: async ({}, use) => {
+    const folders: string[] = [];
+
+    await use((migrations) => {
+      const folder = mkdtempSync(join(tmpdir(), "ovr-migrations-"));
+      folders.push(folder);
+      mkdirSync(join(folder, "meta"));
+      writeFileSync(
+        join(folder, "meta", "_journal.json"),
+        JSON.stringify({
+          version: "7",
+          dialect: "postgresql",
+          entries: migrations.map(({ tag, when }, idx) => ({
+            idx,
+            version: "7",
+            when,
+            tag,
+            breakpoints: true,
+          })),
+        }),
+      );
+      for (const { tag, sql } of migrations) {
+        writeFileSync(join(folder, `${tag}.sql`), sql);
+      }
+      return folder;
+    });
+
+    for (const folder of folders) {
+      rmSync(folder, { recursive: true, force: true });
+    }
   },
 });
