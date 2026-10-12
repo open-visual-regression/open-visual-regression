@@ -730,6 +730,9 @@ importers:
       drizzle-kit:
         specifier: ^0.31.10
         version: 0.31.10
+      squawk-cli:
+        specifier: ^2.68.0
+        version: 2.68.0
       typescript:
         specifier: 6.0.3
         version: 6.0.3
@@ -3460,6 +3463,45 @@ packages:
     resolution: {integrity: sha512-ISSB5QX1qP2ynrheIpYwc4oKR5Ny4siNuUyf1qZniy+Il+p/PtDB0QK1Dnle8noiHpwRD3gpPdubOC3qI/Zamg==}
     peerDependencies:
       solid-js: ^1.6.12
+
+  '@squawk-cli/darwin-arm64@2.68.0':
+    resolution: {integrity: sha512-MDe5/uRqkoBvU4MVzPwRJZHoRxZ78vNhyYeoy/0mZKhZz64xH6zQozoJBM7W9pspHGjBQ2u+tEVf30gurBGS9A==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@squawk-cli/darwin-x64@2.68.0':
+    resolution: {integrity: sha512-NTuclGY2a/9H6jfGbxot401sdQH3su4MbQeBNrXY/EeH3CUKQtOXSyI6vMvR4wQut6lc/uU3TpofK2CVM8YpEA==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@squawk-cli/linux-arm64-musl@2.68.0':
+    resolution: {integrity: sha512-JbvhsK9WxLWN0eDUO8skclUKhn9qIcYPmAakiFrmnAKqvhCzwzBvVnQX1E5Y+BduaFJpap36eJq/4gEzVSHJ/g==}
+    cpu: [arm64]
+    os: [linux]
+    libc: [musl]
+
+  '@squawk-cli/linux-arm64@2.68.0':
+    resolution: {integrity: sha512-//HDEdhO4QSFY8VPvPfYBEcSgXaa4wyycyLSvdvJ9uC03REGy+0UvYZyGZy1qOwnoIoVr8aWukZ9b68Lsz0mtg==}
+    cpu: [arm64]
+    os: [linux]
+    libc: [glibc]
+
+  '@squawk-cli/linux-x64-musl@2.68.0':
+    resolution: {integrity: sha512-kBwXlCFhIRNaJaLN+gtI9pi4zS6p1QgVvD2Gf5yyQ3Z3tv5dzCZ0FcMETcxwE2CW+2Wa1lnevy0OUWktc0+Btw==}
+    cpu: [x64]
+    os: [linux]
+    libc: [musl]
+
+  '@squawk-cli/linux-x64@2.68.0':
+    resolution: {integrity: sha512-by8mRyKmVCrJ42fV3/wcAD8KdsupMHWIT/9ubmwxKHrl9TDetDgOtOo4xQKfND5n2RH5yBBsjgW1ailOgSl3QQ==}
+    cpu: [x64]
+    os: [linux]
+    libc: [glibc]
+
+  '@squawk-cli/win32-x64@2.68.0':
+    resolution: {integrity: sha512-++jd0uZ1UatYzdBz4wao8Ip525xjDTbvx+pJK+A21yeKfXZQTaB0RJXsIae7cofSFOgRAXvwVzlzK8PWzlpjsg==}
+    cpu: [x64]
+    os: [win32]
 
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
@@ -6788,6 +6830,10 @@ packages:
   sqids@0.3.0:
     resolution: {integrity: sha512-lOQK1ucVg+W6n3FhRwwSeUijxe93b51Bfz5PMRMihVf1iVkl82ePQG7V5vwrhzB11v0NtsR25PSZRGiSomJaJw==}
 
+  squawk-cli@2.68.0:
+    resolution: {integrity: sha512-hH+pvEPxPutJ1zDDP1DOY5sJv7wAngPAEW33Flta18yB1+/nLifbRTYpMvHHXtNneJIPZHHo941sc/mPzP8wQw==}
+    hasBin: true
+
   ssh-remote-port-forward@1.0.4:
     resolution: {integrity: sha512-x0LV1eVDwjf1gmG7TTnfqIzf+3VPRz7vrNIjX6oYLbeCrf/PeVY6hkT68Mg+q02qXxQhrLjB0jfgvhevoCRmLQ==}
 
@@ -9628,6 +9674,27 @@ snapshots:
   '@solid-primitives/utils@6.4.1(solid-js@1.9.14)':
     dependencies:
       solid-js: 1.9.14
+
+  '@squawk-cli/darwin-arm64@2.68.0':
+    optional: true
+
+  '@squawk-cli/darwin-x64@2.68.0':
+    optional: true
+
+  '@squawk-cli/linux-arm64-musl@2.68.0':
+    optional: true
+
+  '@squawk-cli/linux-arm64@2.68.0':
+    optional: true
+
+  '@squawk-cli/linux-x64-musl@2.68.0':
+    optional: true
+
+  '@squawk-cli/linux-x64@2.68.0':
+    optional: true
+
+  '@squawk-cli/win32-x64@2.68.0':
+    optional: true
 
   '@standard-schema/spec@1.1.0': {}
 
@@ -12969,6 +13036,16 @@ snapshots:
   sprintf-js@1.0.3: {}
 
   sqids@0.3.0: {}
+
+  squawk-cli@2.68.0:
+    optionalDependencies:
+      '@squawk-cli/darwin-arm64': 2.68.0
+      '@squawk-cli/darwin-x64': 2.68.0
+      '@squawk-cli/linux-arm64': 2.68.0
+      '@squawk-cli/linux-arm64-musl': 2.68.0
+      '@squawk-cli/linux-x64': 2.68.0
+      '@squawk-cli/linux-x64-musl': 2.68.0
+      '@squawk-cli/win32-x64': 2.68.0
 
   ssh-remote-port-forward@1.0.4:
     dependencies:
