@@ -3,10 +3,6 @@ import path from "node:path";
 import { readMigrationFiles, type MigrationMeta } from "drizzle-orm/migrator";
 import { Client, DatabaseError } from "pg";
 
-import { createLogger } from "@ovr/logger";
-
-const logger = createLogger("migrate");
-
 // drizzle's own table, so either migrator can run against the same database.
 const MIGRATIONS_SCHEMA = "drizzle";
 const MIGRATIONS_TABLE = `"${MIGRATIONS_SCHEMA}"."__drizzle_migrations"`;
@@ -124,9 +120,8 @@ export const runMigrations = async (
             throw error;
           }
 
-          logger.warn(
-            { err: error, migration: migration.folderMillis, attempt },
-            "migration could not get its locks, retrying",
+          console.warn(
+            `Migration ${migration.folderMillis} could not get its locks (attempt ${attempt}), retrying: ${error.message}`,
           );
           await new Promise((resolve) => setTimeout(resolve, retryDelayMs * attempt));
         }
