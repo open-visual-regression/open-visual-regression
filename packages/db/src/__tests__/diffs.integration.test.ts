@@ -233,6 +233,47 @@ describe("diffs", () => {
       expect(await dbClient.diffs.hasAllDoneForBuild(build.id)).toBe(true);
     });
 
+    test("should return false while a snapshot has not been given a diff yet", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const [captured] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, ...captureConfiguration, targetId: "a" },
+          { buildId: build.id, ...captureConfiguration, targetId: "b" },
+        ],
+      });
+      const diff = await dbClient.diffs.create({ snapshotId: captured!.id });
+
+      await dbClient.diffs.updateProcessingStatus(diff!.id, "success");
+      expect(await dbClient.diffs.hasAllDoneForBuild(build.id)).toBe(false);
+    });
+
+    test("should only consider snapshots from the given build", async ({
+      project,
+      user,
+      build,
+      captureConfiguration,
+    }) => {
+      const otherBuild = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/other/artifact",
+        createdBy: user.id,
+      });
+      const [captured] = await dbClient.snapshots.createMany({
+        values: [{ buildId: build.id, ...captureConfiguration, targetId: "a" }],
+      });
+      await dbClient.snapshots.createMany({
+        values: [{ buildId: otherBuild!.id, ...captureConfiguration, targetId: "a" }],
+      });
+      const diff = await dbClient.diffs.create({ snapshotId: captured!.id });
+
+      await dbClient.diffs.updateProcessingStatus(diff!.id, "success");
+      expect(await dbClient.diffs.hasAllDoneForBuild(build.id)).toBe(true);
+    });
+
     test("should return false for a build with no diffs", async ({ build }) => {
       expect(await dbClient.diffs.hasAllDoneForBuild(build.id)).toBe(false);
     });
