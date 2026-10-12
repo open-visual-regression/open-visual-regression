@@ -98,7 +98,6 @@ export const test = vitest.extend<Fixtures>({
     await use(created!);
   },
 
-  // An empty database of its own, for tests that run migrations from scratch.
   // eslint-disable-next-line no-empty-pattern
   databaseUrl: async ({}, use) => {
     const name = `test_${uuidv7().replaceAll("-", "")}`;
@@ -111,8 +110,6 @@ export const test = vitest.extend<Fixtures>({
     await withAdminClient((client) => client.query(`DROP DATABASE "${name}" WITH (FORCE)`));
   },
 
-  // Writes migrations in the layout drizzle-kit generates: one SQL file per
-  // migration plus meta/_journal.json.
   // eslint-disable-next-line no-empty-pattern
   createMigrationsFolder: async ({}, use) => {
     const folders: string[] = [];

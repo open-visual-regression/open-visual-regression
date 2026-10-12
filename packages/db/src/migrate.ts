@@ -7,18 +7,13 @@ import { createLogger } from "@ovr/logger";
 
 const logger = createLogger("migrate");
 
-// Same bookkeeping table as drizzle's migrator, so databases migrated by either
-// one are interchangeable.
+// drizzle's own table, so either migrator can run against the same database.
 const MIGRATIONS_SCHEMA = "drizzle";
 const MIGRATIONS_TABLE = `"${MIGRATIONS_SCHEMA}"."__drizzle_migrations"`;
 
-// Arbitrary key for the advisory lock that keeps two migrators from running at
-// once (for example a retried Job overlapping the previous attempt).
 const MIGRATION_LOCK_KEY = 7_315_420_118;
 
-// Postgres queues every new query on a table behind a pending lock request, so
-// a migration waiting indefinitely for a lock stalls the running app with it.
-// Give up after a few seconds instead and retry the migration.
+// While a migration waits for a lock, every new query on that table queues behind it.
 const LOCK_TIMEOUT_MS = 5_000;
 const MAX_ATTEMPTS = 10;
 const RETRY_DELAY_MS = 1_000;
@@ -50,10 +45,8 @@ const applyMigration = async (client: Client, migration: MigrationMeta, lockTime
   }
 };
 
-// Applies pending migrations one transaction per migration, unlike drizzle's
-// migrate(), which applies every pending migration in a single transaction.
-// Holding every lock until the last migration commits deadlocks against the
-// running app during an upgrade that spans several migrations.
+// drizzle's migrate() applies all pending migrations in one transaction, which
+// deadlocks with the running app when an upgrade spans several migrations.
 export const runMigrations = async (
   connectionString: string,
   migrationsFolder: string = path.resolve(import.meta.dirname, "migrations"),
@@ -109,7 +102,6 @@ export const runMigrations = async (
       }
     }
   } finally {
-    // Closing the session releases the advisory lock.
     await client.end();
   }
 };

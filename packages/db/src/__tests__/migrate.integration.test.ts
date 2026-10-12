@@ -121,10 +121,6 @@ describe("runMigrations", () => {
     expect(await findAppliedMigrations(databaseUrl)).toEqual(applied);
   });
 
-  // A running app transaction reads `parents`, the upgrade alters `children` and
-  // then `parents`, and the app then reads `children`. If every migration ran in
-  // one transaction, the upgrade would still hold its lock on `children` while
-  // waiting on `parents`, and the two would deadlock.
   test("should not deadlock with app transactions that lock tables in a different order", async ({
     databaseUrl,
     createMigrationsFolder,
