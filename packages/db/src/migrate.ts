@@ -27,23 +27,54 @@ type RunMigrationsOptions = {
   retryDelayMs?: number;
 };
 
-const applyMigration = async (client: Client, migration: MigrationMeta, lockTimeoutMs: number) => {
+// For statements like CREATE INDEX CONCURRENTLY. These migrations must be safe to rerun.
+const NO_TRANSACTION_MARKER = "-- ovr:no-transaction";
+
+const recordMigration = (client: Client, migration: MigrationMeta) =>
+  client.query(`INSERT INTO ${MIGRATIONS_TABLE} (hash, created_at) VALUES ($1, $2)`, [
+    migration.hash,
+    migration.folderMillis,
+  ]);
+
+const applyMigrationInTransaction = async (
+  client: Client,
+  migration: MigrationMeta,
+  lockTimeoutMs: number,
+) => {
   await client.query("BEGIN");
   try {
     await client.query(`SET LOCAL lock_timeout = ${lockTimeoutMs}`);
     for (const statement of migration.sql) {
       await client.query(statement);
     }
-    await client.query(`INSERT INTO ${MIGRATIONS_TABLE} (hash, created_at) VALUES ($1, $2)`, [
-      migration.hash,
-      migration.folderMillis,
-    ]);
+    await recordMigration(client, migration);
     await client.query("COMMIT");
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;
   }
 };
+
+const applyMigrationWithoutTransaction = async (
+  client: Client,
+  migration: MigrationMeta,
+  lockTimeoutMs: number,
+) => {
+  await client.query(`SET lock_timeout = ${lockTimeoutMs}`);
+  try {
+    for (const statement of migration.sql) {
+      await client.query(statement);
+    }
+    await recordMigration(client, migration);
+  } finally {
+    await client.query("RESET lock_timeout");
+  }
+};
+
+const applyMigration = (client: Client, migration: MigrationMeta, lockTimeoutMs: number) =>
+  migration.sql[0]?.trimStart().startsWith(NO_TRANSACTION_MARKER)
+    ? applyMigrationWithoutTransaction(client, migration, lockTimeoutMs)
+    : applyMigrationInTransaction(client, migration, lockTimeoutMs);
 
 // drizzle's migrate() applies all pending migrations in one transaction, which
 // deadlocks with the running app when an upgrade spans several migrations.
