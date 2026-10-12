@@ -3,19 +3,14 @@ import path from "node:path";
 import { readMigrationFiles } from "drizzle-orm/migrator";
 import { Client } from "pg";
 
-// Same bookkeeping table as drizzle's migrator, so databases migrated by either
-// one are interchangeable.
+// drizzle's own table, so either migrator can run against the same database.
 const MIGRATIONS_SCHEMA = "drizzle";
 const MIGRATIONS_TABLE = `"${MIGRATIONS_SCHEMA}"."__drizzle_migrations"`;
 
-// Arbitrary key for the advisory lock that keeps two migrators from running at
-// once (for example a retried Job overlapping the previous attempt).
 const MIGRATION_LOCK_KEY = 7_315_420_118;
 
-// Applies pending migrations one transaction per migration, unlike drizzle's
-// migrate(), which applies every pending migration in a single transaction.
-// Holding every lock until the last migration commits deadlocks against the
-// running app during an upgrade that spans several migrations.
+// drizzle's migrate() applies all pending migrations in one transaction, which
+// deadlocks with the running app when an upgrade spans several migrations.
 export const runMigrations = async (
   connectionString: string,
   migrationsFolder: string = path.resolve(import.meta.dirname, "migrations"),
@@ -62,7 +57,6 @@ export const runMigrations = async (
       }
     }
   } finally {
-    // Closing the session releases the advisory lock.
     await client.end();
   }
 };
