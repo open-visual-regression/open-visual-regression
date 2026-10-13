@@ -15,6 +15,7 @@ import { createLogger } from "@ovr/logger";
 
 import { usesTrustedProxy } from "./config";
 import { API_KEY_PREFIX } from "./tokens";
+import { trustedProxy as trustedProxyPlugin } from "./trustedProxy";
 
 const authLogger = createLogger("auth");
 
@@ -59,6 +60,11 @@ export const auth = betterAuth({
     disableSignUp: true,
   },
   disabledPaths: trustedProxy ? LOCAL_AUTH_PATHS : [],
+  account: {
+    accountLinking: {
+      disableImplicitLinking: trustedProxy,
+    },
+  },
   user: {
     changeEmail: {
       enabled: true,
@@ -78,6 +84,7 @@ export const auth = betterAuth({
       permissions: { defaultPermissions: { builds: ["write"] } },
     }),
     organization({ requireEmailVerificationOnInvitation: false }),
+    trustedProxyPlugin(),
     nextCookies(),
   ],
   rateLimit: {
