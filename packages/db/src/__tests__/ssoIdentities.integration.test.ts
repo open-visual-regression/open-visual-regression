@@ -54,4 +54,40 @@ describe("ssoIdentities", () => {
       expect(first?.id).not.toBe(second?.id);
     });
   });
+
+  describe("findAll", () => {
+    test("should return every identity ordered by email", async () => {
+      await dbClient.ssoIdentities.record({
+        ...identity,
+        subject: "00u2",
+        email: "zoe@example.com",
+      });
+      await dbClient.ssoIdentities.record(identity);
+
+      const identities = await dbClient.ssoIdentities.findAll();
+
+      expect(identities.map(({ email }) => email)).toEqual(["jane@example.com", "zoe@example.com"]);
+    });
+  });
+
+  describe("confirmUser", () => {
+    test("should link the identity to the confirmed user", async ({ user }) => {
+      const recorded = await dbClient.ssoIdentities.record(identity);
+
+      await dbClient.ssoIdentities.confirmUser({ id: recorded!.id, userId: user.id });
+
+      expect(await dbClient.ssoIdentities.findById(recorded!.id)).toMatchObject({
+        userId: user.id,
+      });
+    });
+
+    test("should keep the confirmed user when the identity is seen again", async ({ user }) => {
+      const recorded = await dbClient.ssoIdentities.record(identity);
+      await dbClient.ssoIdentities.confirmUser({ id: recorded!.id, userId: user.id });
+
+      await dbClient.ssoIdentities.record(identity);
+
+      expect(await dbClient.ssoIdentities.find(identity)).toMatchObject({ userId: user.id });
+    });
+  });
 });

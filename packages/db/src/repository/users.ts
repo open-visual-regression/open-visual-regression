@@ -14,6 +14,14 @@ export const findByEmail = (email: string) =>
 
 export const findById = (id: string) => db.query.user.findFirst({ where: eq(user.id, id) });
 
+export const findMembers = (organizationId: string) =>
+  db
+    .select({ id: user.id, name: user.name, email: user.email, role: user.role })
+    .from(user)
+    .innerJoin(member, eq(member.userId, user.id))
+    .where(eq(member.organizationId, organizationId))
+    .orderBy(asc(sql`lower(${user.email})`));
+
 export const findInvitationById = (id: string) =>
   db.query.invitation.findFirst({ where: eq(invitation.id, id), with: { organization: true } });
 

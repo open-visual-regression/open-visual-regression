@@ -5,8 +5,16 @@ import { ORPCError } from "@orpc/client";
 import { dbClient } from "@ovr/db/client";
 
 import { authServerClient } from "../auth";
+import { getAuthConfig } from "../auth/config";
 import { authenticatedMiddleware, adminMiddleware } from "./middleware";
 import { os } from "./os";
+import { getSsoReadinessRows } from "./utils/ssoReadiness";
+
+const requireShadowMode = () => {
+  if (getAuthConfig().mode !== "trusted-proxy-shadow") {
+    throw new ORPCError("PRECONDITION_FAILED", { message: "SSO shadow mode is not enabled" });
+  }
+};
 
 export const list = os.users.list
   .use(authenticatedMiddleware)
@@ -123,5 +131,42 @@ export const changeRole = os.users.changeRole
     if (error) {
       throw new ORPCError("BAD_REQUEST", { message: error.message });
     }
+  })
+  .actionable();
+
+export const listSsoReadiness = os.users.listSsoReadiness
+  .use(authenticatedMiddleware)
+  .use(adminMiddleware)
+  .handler(async ({ context }) => {
+    requireShadowMode();
+
+    const [members, identities] = await Promise.all([
+      dbClient.users.findMembers(context.organizationId),
+      dbClient.ssoIdentities.findAll(),
+    ]);
+
+    return { rows: getSsoReadinessRows(members, identities) };
+  })
+  .actionable();
+
+export const confirmSsoMatch = os.users.confirmSsoMatch
+  .use(authenticatedMiddleware)
+  .use(adminMiddleware)
+  .handler(async ({ input, context }) => {
+    requireShadowMode();
+
+    const [identity, membership] = await Promise.all([
+      dbClient.ssoIdentities.findById(input.identityId),
+      dbClient.organizations.findMembership({
+        userId: input.userId,
+        organizationId: context.organizationId,
+      }),
+    ]);
+
+    if (!identity || !membership) {
+      throw new ORPCError("NOT_FOUND");
+    }
+
+    await dbClient.ssoIdentities.confirmUser({ id: identity.id, userId: input.userId });
   })
   .actionable();

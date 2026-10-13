@@ -69,9 +69,43 @@ export const changeRoleInputSchema = z.object({
 
 export type ChangeRoleInputSchema = z.infer<typeof changeRoleInputSchema>;
 
+export const ssoReadinessRowSchema = z.object({
+  identity: z
+    .object({
+      id: z.string(),
+      email: z.string(),
+      name: z.string(),
+      role: z.string().nullable(),
+      lastSeenAt: z.iso.datetime(),
+    })
+    .nullable(),
+  user: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+      email: z.string(),
+      role: z.string().nullable(),
+    })
+    .nullable(),
+  match: z.enum(["confirmed", "email", "none"]),
+});
+
+export type SsoReadinessRowSchema = z.infer<typeof ssoReadinessRowSchema>;
+
+export const listSsoReadinessOutputSchema = z.object({
+  rows: z.array(ssoReadinessRowSchema),
+});
+
+export const confirmSsoMatchInputSchema = z.object({
+  identityId: z.string(),
+  userId: z.string(),
+});
+
 export const contract = {
   list: oc.input(listUsersInputSchema.optional()).output(listUsersOutputSchema),
   invite: oc.input(inviteUserInputSchema).output(inviteUserOutputSchema),
   remove: oc.input(removeUsersInputSchema),
   changeRole: oc.input(changeRoleInputSchema),
+  listSsoReadiness: oc.output(listSsoReadinessOutputSchema),
+  confirmSsoMatch: oc.input(confirmSsoMatchInputSchema),
 } as const;

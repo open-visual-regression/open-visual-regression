@@ -1,10 +1,12 @@
 import { notFound } from "next/navigation";
 
+import { getAuthConfig } from "@/lib/auth/config";
 import { getCachedSession } from "@/lib/auth/session";
 import { serverClient } from "@/lib/router";
 import { verifyRole } from "@/lib/utils/authorization";
 import { serverError } from "@/lib/utils/errors";
 
+import { SsoReadinessSection } from "./_components/sso-readiness-section/SsoReadinessSection";
 import { UsersSection } from "./_components/users-section/UsersSection";
 
 export type SettingsUsersPageProps = {
@@ -33,5 +35,24 @@ export default async function SettingsUsersPage({ searchParams }: SettingsUsersP
     serverError(error ?? "session missing after users list fetch");
   }
 
-  return <UsersSection users={listResult.users} currentUserId={session.user.id} search={search} />;
+  const users = (
+    <UsersSection users={listResult.users} currentUserId={session.user.id} search={search} />
+  );
+
+  if (getAuthConfig().mode !== "trusted-proxy-shadow") {
+    return users;
+  }
+
+  const [readinessError, readinessResult] = await serverClient.users.listSsoReadiness();
+
+  if (readinessError) {
+    serverError(readinessError);
+  }
+
+  return (
+    <div className="flex flex-col gap-10">
+      {users}
+      <SsoReadinessSection rows={readinessResult.rows} />
+    </div>
+  );
 }

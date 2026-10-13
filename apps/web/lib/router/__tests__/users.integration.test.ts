@@ -11,6 +11,14 @@ vi.mock("next/headers");
 
 const TEST_PASSWORD = "securepass123";
 
+const stubShadowMode = () => {
+  vi.stubEnv("OVR_AUTH_MODE", "trusted-proxy-shadow");
+  vi.stubEnv("OVR_AUTH_PROXY_TOKEN_HEADER", "x-forwarded-id-token");
+  vi.stubEnv("OVR_AUTH_PROXY_ISSUER", "https://example.okta.com");
+  vi.stubEnv("OVR_AUTH_PROXY_JWKS_URL", "https://example.okta.com/oauth2/v1/keys");
+  vi.stubEnv("OVR_AUTH_ROLE_GROUPS", JSON.stringify({ admin: ["ovr-admins"] }));
+};
+
 describe("users", () => {
   describe("list", () => {
     test("should return UNAUTHORIZED when no session cookie is provided", async () => {
@@ -228,6 +236,113 @@ describe("users", () => {
       expect(error).toBeNull();
       const updated = await dbClient.users.findById(target.id);
       expect(updated?.role).toBe("viewer");
+    });
+  });
+
+  describe("listSsoReadiness", () => {
+    test("should return PRECONDITION_FAILED outside shadow mode", async ({ admin: _ }) => {
+      const [error] = await serverClient.users.listSsoReadiness();
+      expect(error?.code).toBe("PRECONDITION_FAILED");
+    });
+
+    test("should return FORBIDDEN when the session user is not an admin", async ({
+      reviewer: _,
+    }) => {
+      stubShadowMode();
+
+      const [error] = await serverClient.users.listSsoReadiness();
+      expect(error?.code).toBe("FORBIDDEN");
+    });
+
+    test("should match recorded identities to members", async ({ admin }) => {
+      stubShadowMode();
+      await dbClient.ssoIdentities.record({
+        issuer: "https://example.okta.com",
+        subject: "00u1",
+        email: admin.email,
+        name: admin.name,
+        role: "admin",
+      });
+      await dbClient.ssoIdentities.record({
+        issuer: "https://example.okta.com",
+        subject: "00u2",
+        email: "new.hire@example.com",
+        name: "New Hire",
+        role: "viewer",
+      });
+
+      const [error, result] = await serverClient.users.listSsoReadiness();
+
+      expect(error).toBeNull();
+      expect(result?.rows).toHaveLength(2);
+      expect(result?.rows).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            identity: expect.objectContaining({ email: admin.email, role: "admin" }),
+            user: expect.objectContaining({ id: admin.id, role: "admin" }),
+            match: "email",
+          }),
+          expect.objectContaining({
+            identity: expect.objectContaining({ email: "new.hire@example.com" }),
+            user: null,
+            match: "none",
+          }),
+        ]),
+      );
+    });
+  });
+
+  describe("confirmSsoMatch", () => {
+    test("should return FORBIDDEN when the session user is not an admin", async ({ reviewer }) => {
+      stubShadowMode();
+
+      const [error] = await serverClient.users.confirmSsoMatch({
+        identityId: "00000000-0000-0000-0000-000000000000",
+        userId: reviewer.id,
+      });
+      expect(error?.code).toBe("FORBIDDEN");
+    });
+
+    test("should return NOT_FOUND for a user outside the organization", async ({ admin: _ }) => {
+      stubShadowMode();
+      const identity = await dbClient.ssoIdentities.record({
+        issuer: "https://example.okta.com",
+        subject: "00u1",
+        email: "jane@example.com",
+        name: "Jane Doe",
+        role: "reviewer",
+      });
+      const { name, email } = mocks.user.generateAuthUser();
+      const { user: outsider } = await auth.api.createUser({
+        body: { name, email, password: TEST_PASSWORD },
+      });
+
+      const [error] = await serverClient.users.confirmSsoMatch({
+        identityId: identity!.id,
+        userId: outsider.id,
+      });
+      expect(error?.code).toBe("NOT_FOUND");
+    });
+
+    test("should link the identity to the confirmed member", async ({ admin }) => {
+      stubShadowMode();
+      const identity = await dbClient.ssoIdentities.record({
+        issuer: "https://example.okta.com",
+        subject: "00u1",
+        email: "admin.alias@example.com",
+        name: admin.name,
+        role: "admin",
+      });
+
+      const [error] = await serverClient.users.confirmSsoMatch({
+        identityId: identity!.id,
+        userId: admin.id,
+      });
+
+      expect(error).toBeNull();
+      expect(await dbClient.ssoIdentities.findById(identity!.id)).toMatchObject({
+        userId: admin.id,
+      });
     });
   });
 });

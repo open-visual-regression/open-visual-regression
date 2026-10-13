@@ -26,6 +26,7 @@ export const serverClient = {
     list: vi.fn(),
     invite: vi.fn(),
     remove: vi.fn(),
+    confirmSsoMatch: vi.fn(),
   },
   invitations: {
     getInvitation: vi.fn(),
