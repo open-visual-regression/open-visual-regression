@@ -17,6 +17,7 @@ type NavigationBarContentProps = {
   builds: BuildSchema[];
   segments: BreadcrumbSegment[];
   userName: string;
+  signOutUrl?: string;
 };
 
 const NavigationBarContent = ({
@@ -26,6 +27,7 @@ const NavigationBarContent = ({
   builds,
   segments,
   userName,
+  signOutUrl,
 }: NavigationBarContentProps) => (
   <NavigationBar className="flex flex-row items-center justify-between gap-3">
     <div className="flex min-w-0 flex-row items-center gap-3">
@@ -39,7 +41,7 @@ const NavigationBarContent = ({
       <Separator orientation="vertical" className="h-5" />
       <NavigationBarBreadcrumb segments={segments} />
     </div>
-    <NavigationBarActions userName={userName} />
+    <NavigationBarActions userName={userName} signOutUrl={signOutUrl} />
   </NavigationBar>
 );
 

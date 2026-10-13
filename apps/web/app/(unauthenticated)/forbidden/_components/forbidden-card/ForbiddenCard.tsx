@@ -9,6 +9,7 @@ const MESSAGES: Record<ForbiddenReason, string> = {
   unconfirmed:
     "an OVR account already uses your email. an admin must confirm it is yours before you can sign in.",
   unverified: "your identity could not be verified. try again, or contact your administrator.",
+  "not-set-up": "OVR has not been set up yet. an admin needs to sign in first.",
 };
 
 type ForbiddenCardProps = {

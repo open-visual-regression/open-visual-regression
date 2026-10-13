@@ -2,7 +2,7 @@ import { afterEach, beforeEach, vi } from "vitest";
 
 import { describe, expect, it } from "@/test-utils";
 
-import { assertAuthConfig, getAuthConfig, InvalidAuthConfigError } from "../config";
+import { assertAuthConfig, getAuthConfig, getSignOutUrl, InvalidAuthConfigError } from "../config";
 
 const stubTrustedProxyEnv = () => {
   vi.stubEnv("OVR_AUTH_MODE", "trusted-proxy-shadow");
@@ -51,6 +51,7 @@ describe("config", () => {
         nameClaim: "name",
         groupsClaim: "groups",
         roleGroups: { admin: ["ovr-admins"] },
+        organizationName: "OVR",
       });
     });
 
@@ -111,6 +112,19 @@ describe("config", () => {
       vi.stubEnv("OVR_AUTH_MODE", "sso");
 
       expect(() => assertAuthConfig()).toThrow(InvalidAuthConfigError);
+    });
+  });
+
+  describe("getSignOutUrl", () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    it("should sign out to the login page outside trusted-proxy mode", () => {
+      stubTrustedProxyEnv();
+      vi.stubEnv("OVR_AUTH_PROXY_LOGOUT_URL", "https://sso.example.com/oauth2/sign_out");
+
+      expect(getSignOutUrl()).toBe("/login");
     });
   });
 });

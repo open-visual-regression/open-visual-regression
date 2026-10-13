@@ -5,6 +5,7 @@ import { ORPCError } from "@orpc/server";
 import { dbClient } from "@ovr/db/client";
 
 import { auth } from "../auth/auth";
+import { toSlug } from "../utils/slug";
 import { localAuthMiddleware, unauthenticatedMiddleware } from "./middleware";
 import { os } from "./os";
 
@@ -44,10 +45,7 @@ export const exec = os.setup.exec
       throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "Failed to create the admin user" });
     }
 
-    const slug = input.organizationName
-      .toLowerCase()
-      .replace(/\s+/g, "-")
-      .replace(/[^a-z0-9-]/g, "");
+    const slug = toSlug(input.organizationName);
 
     await auth.api.createOrganization({
       body: { name: input.organizationName, slug, userId: createUserResponse.user.id },

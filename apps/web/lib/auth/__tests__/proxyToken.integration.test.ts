@@ -19,6 +19,7 @@ const createConfig = (
   nameClaim: "name",
   groupsClaim: "groups",
   roleGroups: {},
+  organizationName: "OVR",
   ...overrides,
 });
 
