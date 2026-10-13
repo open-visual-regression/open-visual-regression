@@ -18,6 +18,7 @@ const ENV_VARS = {
   logoutUrl: "OVR_AUTH_PROXY_LOGOUT_URL",
   accessRequestUrl: "OVR_AUTH_ACCESS_REQUEST_URL",
   organizationName: "OVR_ORGANIZATION_NAME",
+  tokenIdleDays: "OVR_AUTH_TOKEN_IDLE_DAYS",
 } as const;
 
 const ALGORITHMS = [
@@ -96,6 +97,11 @@ const trustedProxySchema = z
     logoutUrl: urlSchema.optional(),
     accessRequestUrl: urlSchema.optional(),
     organizationName: z.string().default("OVR"),
+    tokenIdleDays: z.coerce
+      .number({ error: "must be a number of days" })
+      .int({ error: "must be a whole number of days" })
+      .positive({ error: "must be at least 1" })
+      .default(7),
   })
   .refine((config) => Boolean(config.jwksUrl) !== Boolean(config.keyUrl), {
     error: `or ${ENV_VARS.keyUrl} is required, but not both`,

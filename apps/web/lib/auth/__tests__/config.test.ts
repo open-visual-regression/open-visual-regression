@@ -52,6 +52,7 @@ describe("config", () => {
         groupsClaim: "groups",
         roleGroups: { admin: ["ovr-admins"] },
         organizationName: "OVR",
+        tokenIdleDays: 7,
       });
     });
 
@@ -83,6 +84,7 @@ describe("config", () => {
       ["OVR_AUTH_ROLE_GROUPS", '{"owner":["a"]}', "OVR_AUTH_ROLE_GROUPS must map"],
       ["OVR_AUTH_PROXY_ALGORITHMS", "HS256", "OVR_AUTH_PROXY_ALGORITHMS must only list"],
       ["OVR_AUTH_PROXY_KEY_URL", "https://keys.example.com", "must contain {kid}"],
+      ["OVR_AUTH_TOKEN_IDLE_DAYS", "0", "OVR_AUTH_TOKEN_IDLE_DAYS must be at least 1"],
       [
         "OVR_AUTH_PROXY_JWKS_URL",
         "",

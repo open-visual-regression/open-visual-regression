@@ -20,6 +20,7 @@ const createConfig = (
   groupsClaim: "groups",
   roleGroups: {},
   organizationName: "OVR",
+  tokenIdleDays: 7,
   ...overrides,
 });
 

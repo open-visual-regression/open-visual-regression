@@ -8,7 +8,7 @@ import { isPersonalTokenMetadata } from "@ovr/db/repository/accessTokens";
 
 import { auth } from "../auth/auth";
 import { type Session, type User } from "../auth/auth";
-import { usesTrustedProxy } from "../auth/config";
+import { getAuthConfig, usesTrustedProxy } from "../auth/config";
 import { canReview } from "../auth/roles";
 import { getCachedSession } from "../auth/session";
 import { API_KEY_PREFIX, OVR_TOKEN_PREFIXES, readBearerToken } from "../auth/tokens";
@@ -45,6 +45,25 @@ const resolveSessionCaller = async (): Promise<Caller> => {
   const { user, organizationId } = await requireSessionIdentity();
 
   return { user, organizationId };
+};
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const requireRecentProxyIdentity = async (userId: string) => {
+  const config = getAuthConfig();
+
+  if (config.mode !== "trusted-proxy") {
+    return;
+  }
+
+  const identity = await dbClient.ssoIdentities.findByUserId(userId);
+  const idleSince = Date.now() - config.tokenIdleDays * DAY_MS;
+
+  if (!identity?.role || new Date(identity.lastSeenAt).getTime() < idleSince) {
+    throw new ORPCError("UNAUTHORIZED", {
+      message: "this token's owner has not signed in through SSO recently",
+    });
+  }
 };
 
 const resolveTokenCaller = async (
@@ -91,6 +110,8 @@ const resolveTokenCaller = async (
   if (!owner || !membership) {
     throw new ORPCError("UNAUTHORIZED");
   }
+
+  await requireRecentProxyIdentity(owner.id);
 
   return { user: owner, organizationId: organization.id };
 };

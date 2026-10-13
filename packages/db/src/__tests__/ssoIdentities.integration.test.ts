@@ -1,4 +1,8 @@
+import { v7 as uuidv7 } from "uuid";
+
 import { dbClient } from "../client";
+import { db } from "../db";
+import { account } from "../schema";
 import { describe, expect, test } from "./fixtures";
 
 const identity = {
@@ -88,6 +92,36 @@ describe("ssoIdentities", () => {
       await dbClient.ssoIdentities.record(identity);
 
       expect(await dbClient.ssoIdentities.find(identity)).toMatchObject({ userId: user.id });
+    });
+  });
+
+  describe("findByUserId", () => {
+    test("should return the identity linked to the user's account", async ({ user }) => {
+      await db.insert(account).values({
+        id: uuidv7(),
+        issuer: identity.issuer,
+        accountId: identity.subject,
+        providerId: "trusted-proxy",
+        userId: user.id,
+        updatedAt: new Date(),
+      });
+      await dbClient.ssoIdentities.record(identity);
+      await dbClient.ssoIdentities.record({
+        ...identity,
+        subject: "00u2",
+        email: "zoe@example.com",
+      });
+
+      expect(await dbClient.ssoIdentities.findByUserId(user.id)).toMatchObject({
+        subject: identity.subject,
+        email: identity.email,
+      });
+    });
+
+    test("should return undefined for a user with no linked identity", async ({ user }) => {
+      await dbClient.ssoIdentities.record(identity);
+
+      expect(await dbClient.ssoIdentities.findByUserId(user.id)).toBeUndefined();
     });
   });
 });

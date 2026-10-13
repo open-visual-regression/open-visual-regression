@@ -2,6 +2,8 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 
+import { dbClient } from "@ovr/db/client";
+
 import { getLoginPath, REQUEST_PATH_HEADER } from "@/lib/utils/redirects";
 
 import { auth } from "./auth";
@@ -30,6 +32,14 @@ const getTrustedProxySession = async (requestHeaders: Headers, config: TrustedPr
   }
 
   const role = resolveRole(identity.groups, config.roleGroups);
+
+  await dbClient.ssoIdentities.record({
+    issuer: identity.issuer,
+    subject: identity.subject,
+    email: identity.email,
+    name: identity.name,
+    role,
+  });
 
   if (!role) {
     await internalAdapter.deleteUserSessions(session.user.id);

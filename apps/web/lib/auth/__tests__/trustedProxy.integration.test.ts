@@ -31,6 +31,7 @@ const signIn = async (identityProvider: IdentityProvider, claims: Record<string,
     groupsClaim: "groups",
     roleGroups: { admin: ["ovr-admins"], reviewer: ["ovr-reviewers"] },
     organizationName: "OVR",
+    tokenIdleDays: 7,
   });
 
   return auth.handler(

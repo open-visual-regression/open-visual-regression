@@ -1,7 +1,7 @@
-import { asc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, getTableColumns, sql } from "drizzle-orm";
 
 import { db } from "../db";
-import { ssoIdentities } from "../schema";
+import { account, ssoIdentities } from "../schema";
 
 export const find = ({ issuer, subject }: { issuer: string; subject: string }) =>
   db.query.ssoIdentities.findFirst({
@@ -11,6 +11,20 @@ export const find = ({ issuer, subject }: { issuer: string; subject: string }) =
 
 export const findById = (id: string) =>
   db.query.ssoIdentities.findFirst({ where: eq(ssoIdentities.id, id) });
+
+export const findByUserId = async (userId: string) => {
+  const [row] = await db
+    .select(getTableColumns(ssoIdentities))
+    .from(ssoIdentities)
+    .innerJoin(
+      account,
+      and(eq(account.issuer, ssoIdentities.issuer), eq(account.accountId, ssoIdentities.subject)),
+    )
+    .where(eq(account.userId, userId))
+    .orderBy(desc(ssoIdentities.lastSeenAt))
+    .limit(1);
+  return row;
+};
 
 export const findAll = () => db.query.ssoIdentities.findMany({ orderBy: asc(ssoIdentities.email) });
 
