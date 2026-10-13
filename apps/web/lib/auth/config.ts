@@ -70,9 +70,10 @@ const algorithmsSchema = z
   .default(["RS256", "ES256"]);
 
 const modeSchema = z
-  .enum(["local", "trusted-proxy-shadow"], {
-    error: "must be local or trusted-proxy-shadow",
+  .enum(["local", "trusted-proxy-shadow", "trusted-proxy"], {
+    error: "must be local, trusted-proxy-shadow or trusted-proxy",
   })
+  .refine((mode) => mode !== "trusted-proxy", { error: "trusted-proxy is not supported yet" })
   .default("local");
 
 const trustedProxySchema = z
@@ -103,7 +104,7 @@ export type TrustedProxyConfig = z.infer<typeof trustedProxySchema>;
 
 export type AuthConfig =
   | { mode: "local" }
-  | ({ mode: "trusted-proxy-shadow" } & TrustedProxyConfig);
+  | ({ mode: "trusted-proxy-shadow" | "trusted-proxy" } & TrustedProxyConfig);
 
 export class InvalidAuthConfigError extends Error {
   constructor(issues: z.core.$ZodIssue[]) {
@@ -144,6 +145,8 @@ export const getAuthConfig = (): AuthConfig => {
 
   return { mode, ...parse(trustedProxySchema, env) };
 };
+
+export const usesTrustedProxy = (): boolean => getAuthConfig().mode === "trusted-proxy";
 
 export const assertAuthConfig = (): void => {
   getAuthConfig();

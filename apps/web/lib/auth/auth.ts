@@ -13,9 +13,34 @@ import { db } from "@ovr/db/db";
 import * as schema from "@ovr/db/schema";
 import { createLogger } from "@ovr/logger";
 
+import { usesTrustedProxy } from "./config";
 import { API_KEY_PREFIX } from "./tokens";
 
 const authLogger = createLogger("auth");
+
+export const LOCAL_AUTH_PATHS = [
+  "/sign-in/email",
+  "/change-password",
+  "/change-email",
+  "/request-password-reset",
+  "/reset-password",
+  "/verify-password",
+  "/admin/create-user",
+  "/admin/remove-user",
+  "/admin/set-role",
+  "/admin/set-user-password",
+  "/admin/update-user",
+  "/organization/create",
+  "/organization/invite-member",
+  "/organization/accept-invitation",
+  "/organization/reject-invitation",
+  "/organization/cancel-invitation",
+  "/organization/remove-member",
+  "/organization/update-member-role",
+  "/organization/leave",
+];
+
+const trustedProxy = usesTrustedProxy();
 
 const ac = createAccessControl(defaultStatements);
 
@@ -30,9 +55,10 @@ export const auth = betterAuth({
     log: (level, message, ...args) => authLogger[level](args.length > 0 ? { args } : {}, message),
   },
   emailAndPassword: {
-    enabled: true,
+    enabled: !trustedProxy,
     disableSignUp: true,
   },
+  disabledPaths: trustedProxy ? LOCAL_AUTH_PATHS : [],
   user: {
     changeEmail: {
       enabled: true,

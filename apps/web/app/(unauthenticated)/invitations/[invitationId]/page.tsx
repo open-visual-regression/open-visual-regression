@@ -1,5 +1,6 @@
 import { redirect, notFound } from "next/navigation";
 
+import { usesTrustedProxy } from "@/lib/auth/config";
 import { getCachedSession } from "@/lib/auth/session";
 import { serverClient } from "@/lib/router";
 
@@ -11,6 +12,10 @@ export const dynamic = "force-dynamic";
 type InvitationPageProps = PageProps<"/invitations/[invitationId]">;
 
 export default async function InvitationPage(props: InvitationPageProps) {
+  if (usesTrustedProxy()) {
+    notFound();
+  }
+
   const { invitationId } = await props.params;
 
   const [[error, invitation], session] = await Promise.all([

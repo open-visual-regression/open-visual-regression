@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { getAuthConfig } from "@/lib/auth/config";
+import { getAuthConfig, usesTrustedProxy } from "@/lib/auth/config";
 import { getCachedSession } from "@/lib/auth/session";
 import { serverClient } from "@/lib/router";
 import { verifyRole } from "@/lib/utils/authorization";
@@ -36,7 +36,12 @@ export default async function SettingsUsersPage({ searchParams }: SettingsUsersP
   }
 
   const users = (
-    <UsersSection users={listResult.users} currentUserId={session.user.id} search={search} />
+    <UsersSection
+      users={listResult.users}
+      currentUserId={session.user.id}
+      search={search}
+      readOnly={usesTrustedProxy()}
+    />
   );
 
   if (getAuthConfig().mode !== "trusted-proxy-shadow") {

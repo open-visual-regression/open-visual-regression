@@ -6,7 +6,7 @@ import { dbClient } from "@ovr/db/client";
 
 import { authServerClient } from "../auth";
 import { getAuthConfig } from "../auth/config";
-import { authenticatedMiddleware, adminMiddleware } from "./middleware";
+import { authenticatedMiddleware, adminMiddleware, localAuthMiddleware } from "./middleware";
 import { os } from "./os";
 import { getSsoReadinessRows } from "./utils/ssoReadiness";
 
@@ -60,6 +60,7 @@ export const list = os.users.list
   .actionable();
 
 export const invite = os.users.invite
+  .use(localAuthMiddleware)
   .use(authenticatedMiddleware)
   .use(adminMiddleware)
   .handler(async ({ input, context }) => {
@@ -80,6 +81,7 @@ export const invite = os.users.invite
   .actionable();
 
 export const remove = os.users.remove
+  .use(localAuthMiddleware)
   .use(authenticatedMiddleware)
   .use(adminMiddleware)
   .handler(async ({ input, context }) => {
@@ -115,6 +117,7 @@ export const remove = os.users.remove
   .actionable();
 
 export const changeRole = os.users.changeRole
+  .use(localAuthMiddleware)
   .use(authenticatedMiddleware)
   .use(adminMiddleware)
   .handler(async ({ input, context }) => {

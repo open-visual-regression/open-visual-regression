@@ -22,9 +22,10 @@ export type UpdateAccountFormProps = {
     name: string;
     email: string;
   };
+  readOnly?: boolean;
 };
 
-export const UpdateAccountForm = ({ user }: UpdateAccountFormProps) => {
+export const UpdateAccountForm = ({ user, readOnly = false }: UpdateAccountFormProps) => {
   const {
     register,
     handleSubmit,
@@ -65,6 +66,7 @@ export const UpdateAccountForm = ({ user }: UpdateAccountFormProps) => {
                 <Input
                   id="name"
                   placeholder="enter your name"
+                  readOnly={readOnly}
                   aria-invalid={!!errors.name}
                   {...register("name")}
                 />
@@ -78,6 +80,7 @@ export const UpdateAccountForm = ({ user }: UpdateAccountFormProps) => {
                   id="email"
                   type="email"
                   placeholder="enter your email"
+                  readOnly={readOnly}
                   aria-invalid={!!errors.email}
                   {...register("email")}
                 />
@@ -85,13 +88,20 @@ export const UpdateAccountForm = ({ user }: UpdateAccountFormProps) => {
               </Field>
             </FieldGroup>
             <FieldError errors={[errors.root]} />
+            {readOnly && (
+              <Typography variant="body-muted" as="p">
+                your name and email are managed by your identity provider
+              </Typography>
+            )}
           </CardContent>
-          <CardFooter className="flex flex-row justify-end">
-            <Button type="submit" disabled={isSubmitting}>
-              <Icon icon={CheckIcon} />
-              {isSubmitting ? "saving..." : "save changes"}
-            </Button>
-          </CardFooter>
+          {!readOnly && (
+            <CardFooter className="flex flex-row justify-end">
+              <Button type="submit" disabled={isSubmitting}>
+                <Icon icon={CheckIcon} />
+                {isSubmitting ? "saving..." : "save changes"}
+              </Button>
+            </CardFooter>
+          )}
         </Card>
       </div>
     </form>

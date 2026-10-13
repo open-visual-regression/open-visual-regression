@@ -35,7 +35,7 @@ describe("config", () => {
     it("should reject trusted-proxy mode until it is supported", () => {
       vi.stubEnv("OVR_AUTH_MODE", "trusted-proxy");
 
-      expect(() => getAuthConfig()).toThrow("OVR_AUTH_MODE must be local or trusted-proxy-shadow");
+      expect(() => getAuthConfig()).toThrow("OVR_AUTH_MODE trusted-proxy is not supported yet");
     });
 
     it("should read a trusted proxy config with defaults", () => {
