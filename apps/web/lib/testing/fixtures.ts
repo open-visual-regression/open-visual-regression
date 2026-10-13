@@ -1,4 +1,9 @@
+import { randomUUID } from "node:crypto";
+
 import { convertSetCookieToCookie } from "better-auth/test";
+import { exportJWK, exportSPKI, generateKeyPair, SignJWT, type JWTPayload } from "jose";
+import { http, HttpResponse } from "msw";
+import { setupServer } from "msw/node";
 import { headers } from "next/headers";
 import { test as vitest, vi } from "vitest";
 
@@ -11,10 +16,23 @@ export { expect, describe } from "vitest";
 
 const TEST_PASSWORD = "securepass123";
 
+const IDENTITY_PROVIDER_ALGORITHM = "ES256";
+
+export type IdentityProvider = {
+  issuer: string;
+  jwksUrl: string;
+  keyUrl: string;
+  signToken: (
+    claims?: JWTPayload,
+    options?: { expiresIn?: string; header?: Record<string, unknown> },
+  ) => Promise<string>;
+};
+
 export const test = vitest.extend<{
   admin: User;
   reviewer: User;
   viewer: User;
+  identityProvider: IdentityProvider;
 }>({
   // eslint-disable-next-line no-empty-pattern
   admin: async ({}, use) => {
@@ -71,5 +89,41 @@ export const test = vitest.extend<{
     vi.mocked(headers).mockResolvedValue(convertSetCookieToCookie(response.headers));
     await use(user);
     vi.mocked(headers).mockResolvedValue(new Headers());
+  },
+
+  // eslint-disable-next-line no-empty-pattern
+  identityProvider: async ({}, use) => {
+    const issuer = `https://idp-${randomUUID()}.example.com`;
+    const kid = randomUUID();
+    const { publicKey, privateKey } = await generateKeyPair(IDENTITY_PROVIDER_ALGORITHM, {
+      extractable: true,
+    });
+    const jwk = { ...(await exportJWK(publicKey)), kid, alg: IDENTITY_PROVIDER_ALGORITHM };
+    const pem = await exportSPKI(publicKey);
+    const server = setupServer(
+      http.get(`${issuer}/keys`, () => HttpResponse.json({ keys: [jwk] })),
+      http.get(`${issuer}/keys/:kid`, ({ params }) =>
+        params.kid === kid ? HttpResponse.text(pem) : new HttpResponse(null, { status: 404 }),
+      ),
+    );
+    server.listen({ onUnhandledRequest: "error" });
+    await use({
+      issuer,
+      jwksUrl: `${issuer}/keys`,
+      keyUrl: `${issuer}/keys/{kid}`,
+      signToken: (claims = {}, { expiresIn = "5m", header = {} } = {}) =>
+        new SignJWT({
+          iss: issuer,
+          sub: "jane",
+          email: "jane@example.com",
+          name: "Jane Doe",
+          ...claims,
+        })
+          .setProtectedHeader({ alg: IDENTITY_PROVIDER_ALGORITHM, kid, ...header })
+          .setIssuedAt()
+          .setExpirationTime(expiresIn)
+          .sign(privateKey),
+    });
+    server.close();
   },
 });
