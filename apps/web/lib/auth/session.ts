@@ -5,12 +5,15 @@ import { cache } from "react";
 import { getLoginPath, REQUEST_PATH_HEADER } from "@/lib/utils/redirects";
 
 import { auth } from "./auth";
+import { recordProxyIdentity } from "./shadow";
 
 export const getCachedSession = cache(async () =>
   auth.api.getSession({ headers: await headers() }),
 );
 
 export const requireSession = async () => {
+  await recordProxyIdentity();
+
   const session = await getCachedSession();
 
   if (!session) {

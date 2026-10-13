@@ -15,6 +15,7 @@ import * as projects from "./repository/projects";
 import * as snapshotLogs from "./repository/snapshotLogs";
 import * as snapshots from "./repository/snapshots";
 import * as snapshotVariants from "./repository/snapshotVariants";
+import * as ssoIdentities from "./repository/ssoIdentities";
 import * as storageOutbox from "./repository/storageOutbox";
 import * as users from "./repository/users";
 
@@ -37,5 +38,6 @@ export const dbClient = {
   gitIntegrations,
   gitStatusPublications,
   jobSettings,
+  ssoIdentities,
   transaction: db.transaction.bind(db),
 } as const;
