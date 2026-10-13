@@ -1,0 +1,77 @@
+---
+title: SSO
+description: Sign in through the SSO proxy in front of OVR instead of OVR's own passwords.
+---
+
+If OVR sits behind a proxy that already signs people in with your identity provider (Okta, Entra ID, Google, and so on), OVR can trust that sign-in instead of asking for its own password. The proxy forwards a signed identity token on every request, and OVR verifies it, signs the person in, and sets their role from their groups.
+
+OVR never trusts plain identity headers like `X-Forwarded-Email`, since anything that reaches OVR without passing through the proxy could set them. It only accepts a token signed by the issuer you configure.
+
+## Modes
+
+`OVR_AUTH_MODE` (Helm: `auth.mode`) picks how people sign in.
+
+| Mode | Behavior |
+| --- | --- |
+| `local` | The default. OVR's own email and password sign-in. |
+| `trusted-proxy-shadow` | Sign-in stays local, but OVR records the identity the proxy forwards and shows admins how each user would sign in through SSO. Use it to prepare a cutover. |
+| `trusted-proxy` | People are signed in from the proxy's identity. Passwords, invitations and the setup page are turned off. |
+
+## Configure the proxy
+
+The proxy must authenticate every browser request and forward the identity provider's signed token in a header. Some examples:
+
+- **oauth2-proxy** forwards the token in one of two ways:
+  - `pass_authorization_header` sends the ID token as `Authorization: Bearer …`. Set `OVR_AUTH_PROXY_TOKEN_HEADER` to `authorization`. OVR tells the ID token apart from its own `ovr_` tokens in the same header. See [Let CI through](#let-ci-through) for the one extra setting this needs.
+  - `pass_access_token` sends the access token in `X-Forwarded-Access-Token`. Set `OVR_AUTH_PROXY_TOKEN_HEADER` to `x-forwarded-access-token`. This only works when your identity provider issues JWT access tokens, such as an Okta custom authorization server or Keycloak.
+- **AWS ALB** with an `authenticate-oidc` action: the token arrives in `x-amzn-oidc-data`, signed with ES256 by the load balancer. Set `OVR_AUTH_PROXY_KEY_URL` to `https://public-keys.auth.elb.<region>.amazonaws.com/{kid}` and `OVR_AUTH_PROXY_SIGNER` to the load balancer's ARN.
+- **Pomerium, Cloudflare Access, Google IAP**: each forwards a signed assertion header and publishes a JWKS. See your proxy's docs for the header name, issuer and JWKS URL.
+
+## Configure OVR
+
+| Variable | Helm value | Description |
+| --- | --- | --- |
+| `OVR_AUTH_MODE` | `auth.mode` | `local`, `trusted-proxy-shadow` or `trusted-proxy`. |
+| `OVR_AUTH_PROXY_TOKEN_HEADER` | `auth.trustedProxy.tokenHeader` | Header carrying the token. A `Bearer` prefix is stripped. |
+| `OVR_AUTH_PROXY_ISSUER` | `auth.trustedProxy.issuer` | Expected `iss` claim. |
+| `OVR_AUTH_PROXY_JWKS_URL` | `auth.trustedProxy.jwksUrl` | The issuer's JWKS. Set this or the key URL, not both. |
+| `OVR_AUTH_PROXY_KEY_URL` | `auth.trustedProxy.keyUrl` | A URL containing `{kid}` that returns one PEM key, as AWS ALB uses. |
+| `OVR_AUTH_PROXY_AUDIENCE` | `auth.trustedProxy.audience` | Optional. Expected `aud` claim. |
+| `OVR_AUTH_PROXY_SIGNER` | `auth.trustedProxy.signer` | Optional. Expected `signer` header, for AWS ALB. |
+| `OVR_AUTH_PROXY_ALGORITHMS` | `auth.trustedProxy.algorithms` | Allowed signing algorithms. Defaults to `RS256,ES256`. |
+| `OVR_AUTH_PROXY_EMAIL_CLAIM` / `_NAME_CLAIM` / `_GROUPS_CLAIM` | `auth.trustedProxy.emailClaim` / `nameClaim` / `groupsClaim` | Claim names. Default to `email`, `name` and `groups`. |
+| `OVR_AUTH_ROLE_GROUPS` | `auth.trustedProxy.roleGroups` | JSON mapping roles to groups, e.g. `{"admin":["ovr-admins"],"reviewer":["ovr-reviewers"],"viewer":["engineering"]}`. |
+| `OVR_AUTH_PROXY_LOGOUT_URL` | `auth.trustedProxy.logoutUrl` | Where signing out sends the browser, such as oauth2-proxy's `/oauth2/sign_out`. Without it, the proxy signs people straight back in. |
+| `OVR_AUTH_ACCESS_REQUEST_URL` | `auth.trustedProxy.accessRequestUrl` | Optional link shown to people with no access, such as your Opal app. |
+| `OVR_ORGANIZATION_NAME` | `auth.trustedProxy.organizationName` | Name for the organization on a fresh install. Defaults to `OVR`. |
+| `OVR_AUTH_TOKEN_IDLE_DAYS` | `auth.trustedProxy.tokenIdleDays` | Days a personal access token keeps working after its owner was last seen. Defaults to 7. |
+
+OVR refuses to start if the configuration is invalid, and the error names the variable at fault.
+
+## Roles and groups
+
+Each person's role comes from their groups claim on every request. The highest matching role wins, and someone in none of the mapped groups is shown a page explaining they don't have access, with the access request link if you set one.
+
+Make sure your identity provider puts a groups claim in the token. In Okta, add a `groups` claim to the app or authorization server, filtered to the groups OVR uses. If you grant access through Opal, have it manage membership of those groups. Granting or revoking access then takes effect in OVR on the person's next page load, and revoking it signs them out of OVR.
+
+## Let CI through
+
+CI uploads and the `ovr` CLI authenticate with OVR tokens (`Authorization: Bearer ovr_…`), and can't sign in to your identity provider. Let requests carrying that header bypass the proxy's sign-in, for example with an ALB listener rule matching the header, or oauth2-proxy's `skip_auth_routes` for `^/api/rpc/`. This is safe because OVR still checks the OVR token, and a request that skips the proxy carries no identity token for OVR to trust.
+
+With oauth2-proxy's `pass_authorization_header`, also set `skip_auth_strip_headers` to `false`. Otherwise oauth2-proxy strips the `Authorization` header from requests on skipped routes, because it's a header it would normally set itself, and the CLI's token never reaches OVR. Turning the stripping off is safe for OVR, which ignores identity headers it can't verify, but check whether anything else behind the same proxy trusts headers like `X-Forwarded-User`. A bypass at the ingress, before requests reach oauth2-proxy, avoids the question.
+
+## Personal access tokens
+
+In `trusted-proxy` mode, a personal access token only works while its owner keeps signing in through SSO. It stops working once they haven't been seen for `OVR_AUTH_TOKEN_IDLE_DAYS`, or as soon as their groups stop granting a role. Project API keys aren't tied to a person and aren't affected.
+
+## Moving an existing deployment to SSO
+
+1. Create the groups in your identity provider and add your current users to them, so they keep the roles they have today.
+2. Set `OVR_AUTH_MODE=trusted-proxy-shadow` with the rest of the configuration. Everyone keeps signing in with their password.
+3. Let people use OVR as usual, then open **Settings → Users**. The SSO readiness table pairs each OVR user with the identity they'll sign in as, and flags anyone who would lose access or change role.
+4. Confirm each suggested match. An identity whose email matches an existing user only signs in as that user once an admin confirms it. Otherwise that person is turned away at cutover rather than getting a second, empty account.
+5. Set `OVR_AUTH_MODE=trusted-proxy`. People are signed in from the proxy on their next page load, and keep their accounts, history and tokens.
+
+To roll back, set the mode back to `local`. Passwords were never deleted, so everyone who had one can sign in with it again. Users created through SSO have no password and need a new invitation.
+
+On a fresh install in `trusted-proxy` mode, the first person in an admin group to sign in creates the organization. Until then, everyone else is told OVR hasn't been set up yet.

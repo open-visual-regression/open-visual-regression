@@ -75,7 +75,6 @@ const modeSchema = z
   .enum(["local", "trusted-proxy-shadow", "trusted-proxy"], {
     error: "must be local, trusted-proxy-shadow or trusted-proxy",
   })
-  .refine((mode) => mode !== "trusted-proxy", { error: "trusted-proxy is not supported yet" })
   .default("local");
 
 const trustedProxySchema = z

@@ -47,6 +47,8 @@ cosign verify ghcr.io/open-visual-regression/charts/ovr:X.Y.Z \
 
 Set `existingSecret` to supply all of these from a Secret you manage (Sealed Secrets, External Secrets, or by hand) instead. It needs the keys `DATABASE_URL`, `REDIS_URL`, `BETTER_AUTH_SECRET`, `OVR_GIT_TOKEN_ENCRYPTION_KEY`, `STORAGE_ACCESS_KEY`, and `STORAGE_SECRET_KEY`.
 
+To sign people in through an SSO proxy in front of OVR instead of OVR's own passwords, set `auth.mode` and `auth.trustedProxy`. See [SSO](/self-hosting/sso).
+
 ## Object storage
 
 Any S3-compatible service works: AWS S3, Cloudflare R2, RustFS, MinIO, and others.

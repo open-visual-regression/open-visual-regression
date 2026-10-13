@@ -32,10 +32,11 @@ describe("config", () => {
       expect(getAuthConfig()).toEqual({ mode: "local" });
     });
 
-    it("should reject trusted-proxy mode until it is supported", () => {
+    it("should read trusted-proxy mode", () => {
+      stubTrustedProxyEnv();
       vi.stubEnv("OVR_AUTH_MODE", "trusted-proxy");
 
-      expect(() => getAuthConfig()).toThrow("OVR_AUTH_MODE trusted-proxy is not supported yet");
+      expect(getAuthConfig()).toMatchObject({ mode: "trusted-proxy" });
     });
 
     it("should read a trusted proxy config with defaults", () => {
@@ -120,6 +121,14 @@ describe("config", () => {
   describe("getSignOutUrl", () => {
     afterEach(() => {
       vi.unstubAllEnvs();
+    });
+
+    it("should sign out through the proxy in trusted-proxy mode", () => {
+      stubTrustedProxyEnv();
+      vi.stubEnv("OVR_AUTH_MODE", "trusted-proxy");
+      vi.stubEnv("OVR_AUTH_PROXY_LOGOUT_URL", "https://sso.example.com/oauth2/sign_out");
+
+      expect(getSignOutUrl()).toBe("https://sso.example.com/oauth2/sign_out");
     });
 
     it("should sign out to the login page outside trusted-proxy mode", () => {
