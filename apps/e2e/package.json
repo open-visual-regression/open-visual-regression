@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "test:e2e": "playwright test",
+    "test:e2e:sso": "playwright test --config playwright.sso.config.ts",
     "tsc": "tsc --noEmit",
     "lint": "oxlint tests",
     "format": "oxfmt tests"

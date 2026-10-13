@@ -5,6 +5,6 @@
     "types": ["node"],
     "ignoreDeprecations": "6.0"
   },
-  "include": ["tests", "playwright.config.ts"],
+  "include": ["tests", "playwright.config.ts", "playwright.sso.config.ts"],
   "exclude": ["node_modules"]
 }
