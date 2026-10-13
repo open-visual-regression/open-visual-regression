@@ -1,4 +1,4 @@
-import { pgTable, text, uuid, varchar, integer, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, uuid, varchar, integer, jsonb, uniqueIndex } from "drizzle-orm/pg-core";
 import { customType } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm/relations";
 import { sql } from "drizzle-orm/sql";
@@ -52,3 +52,30 @@ export const jobSettings = pgTable("job_settings", {
     .notNull(),
   lastRunAt: utcTimestamp("last_run_at"),
 });
+
+export const ssoIdentities = pgTable(
+  "sso_identities",
+  {
+    id: uuid().primaryKey().$defaultFn(uuidv7),
+    issuer: text().notNull(),
+    subject: text().notNull(),
+    email: text().notNull(),
+    name: text().notNull(),
+    role: text(),
+    userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+    firstSeenAt: utcTimestamp("first_seen_at")
+      .default(sql`now()`)
+      .notNull(),
+    lastSeenAt: utcTimestamp("last_seen_at")
+      .default(sql`now()`)
+      .notNull(),
+  },
+  (table) => [uniqueIndex("sso_identities_issuer_subject_uidx").on(table.issuer, table.subject)],
+);
+
+export const ssoIdentitiesRelations = relations(ssoIdentities, ({ one }) => ({
+  user: one(user, {
+    fields: [ssoIdentities.userId],
+    references: [user.id],
+  }),
+}));

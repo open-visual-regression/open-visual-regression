@@ -379,6 +379,13 @@
       "when": 1791250656010,
       "tag": "0053_add_job_settings_last_run_at",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1791891252775,
+      "tag": "0054_add_sso_identities",
+      "breakpoints": true
     }
   ]
 }
