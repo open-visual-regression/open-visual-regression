@@ -108,10 +108,6 @@ describe("config", () => {
   });
 
   describe("getSignOutUrl", () => {
-    afterEach(() => {
-      vi.unstubAllEnvs();
-    });
-
     it("should sign out through the proxy in trusted-proxy mode", () => {
       stubTrustedProxyEnv();
       vi.stubEnv("OVR_AUTH_PROXY_LOGOUT_URL", "https://sso.example.com/oauth2/sign_out");
