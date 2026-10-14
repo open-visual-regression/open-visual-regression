@@ -6,7 +6,7 @@ import { z } from "zod";
 
 import { dbClient } from "@ovr/db/client";
 
-import { getSafeRedirectPath } from "@/lib/utils/redirects";
+import { getForbiddenPath, getSafeRedirectPath } from "@/lib/utils/redirects";
 
 import { getAuthConfig } from "./config";
 import { resolveRole, verifyProxyToken } from "./proxyToken";
@@ -43,19 +43,13 @@ export const trustedProxy = () =>
           const [error, identity] = await verifyProxyToken(ctx.headers, config);
 
           if (error || !identity) {
-            throw new APIError("UNAUTHORIZED", {
-              code: "INVALID_PROXY_TOKEN",
-              message: "the identity forwarded by the proxy could not be verified",
-            });
+            throw ctx.redirect(getForbiddenPath("unverified"));
           }
 
           const role = resolveRole(identity.groups, config.roleGroups);
 
           if (!role) {
-            throw new APIError("FORBIDDEN", {
-              code: "NO_ROLE",
-              message: "you do not have access to OVR",
-            });
+            throw ctx.redirect(getForbiddenPath("no-role"));
           }
 
           const result = await handleOAuthUserInfo(ctx, {
