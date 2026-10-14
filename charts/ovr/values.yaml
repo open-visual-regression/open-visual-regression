@@ -49,6 +49,25 @@ auth:
   betterAuthSecret: ""
   # Generate: openssl rand -base64 32
   gitTokenEncryptionKey: ""
+  # local: OVR's own email/password sign-in.
+  # trusted-proxy: sign in from the identity token an SSO proxy forwards.
+  mode: local
+  trustedProxy:
+    tokenHeader: ""
+    issuer: ""
+    audience: ""
+    # Set exactly one of jwksUrl or keyUrl (a URL containing {kid}, as AWS ALB uses).
+    jwksUrl: ""
+    keyUrl: ""
+    signer: ""
+    algorithms: []
+    emailClaim: ""
+    nameClaim: ""
+    groupsClaim: ""
+    # Groups that grant each role, e.g. { admin: [ovr-admins], reviewer: [ovr-reviewers] }.
+    roleGroups: {}
+    logoutUrl: ""
+    organizationName: ""
 
 database:
   url: ""  # postgresql://user:pass@host:5432/open_visual_regression

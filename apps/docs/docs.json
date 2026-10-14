@@ -36,7 +36,7 @@
       },
       {
         "group": "Self-Hosting",
-        "pages": ["self-hosting/docker-compose", "self-hosting/helm"]
+        "pages": ["self-hosting/docker-compose", "self-hosting/helm", "self-hosting/sso"]
       }
     ]
   },

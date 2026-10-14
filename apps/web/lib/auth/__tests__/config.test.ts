@@ -99,12 +99,6 @@ describe("config", () => {
 
       expect(() => assertAuthConfig()).toThrow(InvalidAuthConfigError);
     });
-
-    it("should reject trusted-proxy mode until it is supported", () => {
-      stubTrustedProxyEnv();
-
-      expect(() => assertAuthConfig()).toThrow("OVR_AUTH_MODE trusted-proxy is not supported yet");
-    });
   });
 
   describe("getSignOutUrl", () => {

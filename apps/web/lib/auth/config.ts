@@ -152,13 +152,5 @@ export const getSignOutUrl = (): string => {
 };
 
 export const assertAuthConfig = (): void => {
-  parse(
-    z.object({
-      mode: modeSchema.refine((mode) => mode !== "trusted-proxy", {
-        error: "trusted-proxy is not supported yet",
-      }),
-    }),
-    readEnv(),
-  );
   getAuthConfig();
 };
