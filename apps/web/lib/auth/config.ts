@@ -16,6 +16,7 @@ const ENV_VARS = {
   groupsClaim: "OVR_AUTH_PROXY_GROUPS_CLAIM",
   roleGroups: "OVR_AUTH_ROLE_GROUPS",
   logoutUrl: "OVR_AUTH_PROXY_LOGOUT_URL",
+  organizationName: "OVR_ORGANIZATION_NAME",
 } as const;
 
 const ALGORITHMS = [
@@ -91,6 +92,7 @@ const trustedProxySchema = z
     groupsClaim: z.string().default("groups"),
     roleGroups: roleGroupsSchema,
     logoutUrl: urlSchema.optional(),
+    organizationName: z.string().default("OVR"),
   })
   .refine((config) => Boolean(config.jwksUrl) !== Boolean(config.keyUrl), {
     error: `or ${ENV_VARS.keyUrl} is required, but not both`,
@@ -142,6 +144,12 @@ export const getAuthConfig = (): AuthConfig => {
 };
 
 export const usesTrustedProxy = (): boolean => getAuthConfig().mode === "trusted-proxy";
+
+export const getSignOutUrl = (): string => {
+  const config = getAuthConfig();
+
+  return config.mode === "trusted-proxy" && config.logoutUrl ? config.logoutUrl : "/login";
+};
 
 export const assertAuthConfig = (): void => {
   parse(

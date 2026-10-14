@@ -8,6 +8,7 @@ import { dbClient } from "@ovr/db/client";
 import { createLogger } from "@ovr/logger";
 
 import { FORBIDDEN_PATH, getSafeRedirectPath } from "@/lib/utils/redirects";
+import { toSlug } from "@/lib/utils/slug";
 
 import { getAuthConfig } from "./config";
 import { resolveRole, verifyProxyToken } from "./proxyToken";
@@ -63,6 +64,27 @@ export const trustedProxy = () =>
             throw ctx.redirect(FORBIDDEN_PATH);
           }
 
+          const existingOrganization = await dbClient.organizations.getOrganization();
+
+          if (!existingOrganization && role !== "admin") {
+            logger.warn(
+              { email: identity.email, role },
+              "refused sign-in: OVR has not been set up by an admin yet",
+            );
+            throw ctx.redirect(FORBIDDEN_PATH);
+          }
+
+          const organization =
+            existingOrganization ??
+            (await ctx.context.adapter.create<{ id: string }>({
+              model: "organization",
+              data: {
+                name: config.organizationName,
+                slug: toSlug(config.organizationName),
+                createdAt: new Date(),
+              },
+            }));
+
           const result = await handleOAuthUserInfo(ctx, {
             userInfo: {
               id: identity.subject,
@@ -83,25 +105,21 @@ export const trustedProxy = () =>
           }
 
           const { session, user } = result.data;
-          const organization = await dbClient.organizations.getOrganization();
+          const membership = await dbClient.organizations.findMembership({
+            userId: user.id,
+            organizationId: organization.id,
+          });
 
-          if (organization) {
-            const membership = await dbClient.organizations.findMembership({
-              userId: user.id,
-              organizationId: organization.id,
+          if (!membership) {
+            await ctx.context.adapter.create({
+              model: "member",
+              data: {
+                organizationId: organization.id,
+                userId: user.id,
+                role: existingOrganization ? "member" : "owner",
+                createdAt: new Date(),
+              },
             });
-
-            if (!membership) {
-              await ctx.context.adapter.create({
-                model: "member",
-                data: {
-                  organizationId: organization.id,
-                  userId: user.id,
-                  role: "member",
-                  createdAt: new Date(),
-                },
-              });
-            }
           }
 
           await setSessionCookie(ctx, {

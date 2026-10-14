@@ -1,3 +1,4 @@
+import { getSignOutUrl } from "@/lib/auth/config";
 import { toRole } from "@/lib/auth/roles";
 import { getCachedSession } from "@/lib/auth/session";
 import { getBreadcrumbSegments } from "@/lib/components/navigation-bar/getBreadcrumbSegments";
@@ -38,6 +39,7 @@ export default async function NavigationSlot({ params }: NavigationSlotProps) {
       builds={builds}
       segments={segments}
       userName={userName}
+      signOutUrl={getSignOutUrl()}
     />
   );
 }

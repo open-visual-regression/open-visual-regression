@@ -2,7 +2,7 @@ import { beforeEach, vi } from "vitest";
 
 import { describe, expect, it } from "@/test-utils";
 
-import { assertAuthConfig, getAuthConfig, InvalidAuthConfigError } from "../config";
+import { assertAuthConfig, getAuthConfig, getSignOutUrl, InvalidAuthConfigError } from "../config";
 
 const stubTrustedProxyEnv = () => {
   vi.stubEnv("OVR_AUTH_MODE", "trusted-proxy");
@@ -41,6 +41,7 @@ describe("config", () => {
         nameClaim: "name",
         groupsClaim: "groups",
         roleGroups: { admin: ["ovr-admins"] },
+        organizationName: "OVR",
       });
     });
 
@@ -103,6 +104,23 @@ describe("config", () => {
       stubTrustedProxyEnv();
 
       expect(() => assertAuthConfig()).toThrow("OVR_AUTH_MODE trusted-proxy is not supported yet");
+    });
+  });
+
+  describe("getSignOutUrl", () => {
+    it("should sign out through the proxy in trusted-proxy mode", () => {
+      stubTrustedProxyEnv();
+      vi.stubEnv("OVR_AUTH_PROXY_LOGOUT_URL", "https://sso.example.com/oauth2/sign_out");
+
+      expect(getSignOutUrl()).toBe("https://sso.example.com/oauth2/sign_out");
+    });
+
+    it("should sign out to the login page outside trusted-proxy mode", () => {
+      stubTrustedProxyEnv();
+      vi.stubEnv("OVR_AUTH_MODE", "local");
+      vi.stubEnv("OVR_AUTH_PROXY_LOGOUT_URL", "https://sso.example.com/oauth2/sign_out");
+
+      expect(getSignOutUrl()).toBe("/login");
     });
   });
 });
