@@ -4,12 +4,7 @@ export const CALLBACK_URL_PARAM = "callback_url";
 
 export const REQUEST_PATH_HEADER = "x-ovr-request-path";
 
-export const FORBIDDEN_REASONS = ["no-role", "unverified", "not-set-up"] as const;
-
-export type ForbiddenReason = (typeof FORBIDDEN_REASONS)[number];
-
-export const getForbiddenPath = (reason: ForbiddenReason) =>
-  `/forbidden?${new URLSearchParams({ reason })}`;
+export const FORBIDDEN_PATH = "/forbidden";
 
 export const getLoginPath = (callbackUrl: string) =>
   `/login?${new URLSearchParams({ [CALLBACK_URL_PARAM]: callbackUrl })}`;
