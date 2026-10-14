@@ -17,17 +17,18 @@ import { getMonogram } from "@/lib/utils/monogram";
 
 type UserAvatarProps = {
   name: string;
+  signOutUrl?: string;
 };
 
-const UserAvatar = ({ name }: UserAvatarProps) => {
+const UserAvatar = ({ name, signOutUrl = "/login" }: UserAvatarProps) => {
   const handleSignOut = async () => {
     await authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
-          window.location.href = "/login";
+          window.location.href = signOutUrl;
         },
         onError: () => {
-          window.location.href = "/login";
+          window.location.href = signOutUrl;
         },
       },
     });

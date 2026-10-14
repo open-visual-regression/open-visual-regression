@@ -7,6 +7,7 @@ import type { ForbiddenReason } from "@/lib/utils/redirects";
 const MESSAGES: Record<ForbiddenReason, string> = {
   "no-role": "you are not in any of the groups that grant access to OVR.",
   unverified: "your identity could not be verified. try again, or contact your administrator.",
+  "not-set-up": "OVR has not been set up yet. an admin needs to sign in first.",
 };
 
 type ForbiddenCardProps = {

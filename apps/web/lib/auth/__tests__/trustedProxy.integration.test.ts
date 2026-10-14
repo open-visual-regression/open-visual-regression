@@ -30,6 +30,7 @@ const signIn = async (identityProvider: IdentityProvider, claims: Record<string,
     nameClaim: "name",
     groupsClaim: "groups",
     roleGroups: { admin: ["ovr-admins"], reviewer: ["ovr-reviewers"] },
+    organizationName: "OVR",
   });
 
   return auth.handler(
@@ -124,6 +125,33 @@ describe("trustedProxy", () => {
       });
 
       expect(response.headers.get("location")).toBe("/forbidden?reason=unverified");
+      expect(await dbClient.users.findByEmail("jane@example.com")).toBeUndefined();
+    });
+
+    test("should set up the organization when the first admin signs in", async ({
+      identityProvider,
+    }) => {
+      const response = await signIn(identityProvider, { groups: ["ovr-admins"] });
+
+      expect(response.headers.get("location")).toBe("/projects/1");
+      const organization = await dbClient.organizations.getOrganization();
+      expect(organization).toMatchObject({ name: "OVR", slug: "ovr" });
+      const user = await dbClient.users.findByEmail("jane@example.com");
+      expect(
+        await dbClient.organizations.findMembership({
+          userId: user!.id,
+          organizationId: organization!.id,
+        }),
+      ).toBeDefined();
+    });
+
+    test("should refuse anyone but an admin before the organization is set up", async ({
+      identityProvider,
+    }) => {
+      const response = await signIn(identityProvider, { groups: ["ovr-reviewers"] });
+
+      expect(response.headers.get("location")).toBe("/forbidden?reason=not-set-up");
+      expect(await dbClient.organizations.getOrganization()).toBeUndefined();
       expect(await dbClient.users.findByEmail("jane@example.com")).toBeUndefined();
     });
 

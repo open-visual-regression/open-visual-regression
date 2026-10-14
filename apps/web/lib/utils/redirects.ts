@@ -4,7 +4,7 @@ export const CALLBACK_URL_PARAM = "callback_url";
 
 export const REQUEST_PATH_HEADER = "x-ovr-request-path";
 
-export const FORBIDDEN_REASONS = ["no-role", "unverified"] as const;
+export const FORBIDDEN_REASONS = ["no-role", "unverified", "not-set-up"] as const;
 
 export type ForbiddenReason = (typeof FORBIDDEN_REASONS)[number];
 
