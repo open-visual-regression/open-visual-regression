@@ -41,14 +41,13 @@ The proxy must authenticate every browser request and forward the identity provi
 | `OVR_AUTH_PROXY_EMAIL_CLAIM` / `_NAME_CLAIM` / `_GROUPS_CLAIM` | `auth.trustedProxy.emailClaim` / `nameClaim` / `groupsClaim` | Claim names. Default to `email`, `name` and `groups`. |
 | `OVR_AUTH_ROLE_GROUPS` | `auth.trustedProxy.roleGroups` | JSON mapping roles to groups, e.g. `{"admin":["ovr-admins"],"reviewer":["ovr-reviewers"],"viewer":["engineering"]}`. |
 | `OVR_AUTH_PROXY_LOGOUT_URL` | `auth.trustedProxy.logoutUrl` | Where signing out sends the browser, such as oauth2-proxy's `/oauth2/sign_out`. Without it, the proxy signs people straight back in. |
-| `OVR_AUTH_ACCESS_REQUEST_URL` | `auth.trustedProxy.accessRequestUrl` | Optional link shown to people with no access, such as your Opal app. |
 | `OVR_ORGANIZATION_NAME` | `auth.trustedProxy.organizationName` | Name for the organization on a fresh install. Defaults to `OVR`. |
 
 OVR refuses to start if the configuration is invalid, and the error names the variable at fault.
 
 ## Roles and groups
 
-Each person's role comes from their groups claim on every request. The highest matching role wins, and someone in none of the mapped groups is shown a page explaining they don't have access, with the access request link if you set one.
+Each person's role comes from their groups claim on every request. The highest matching role wins, and someone in none of the mapped groups is shown a forbidden page. OVR logs why it turned someone away, so check the web logs when a person can't get in.
 
 Make sure your identity provider puts a groups claim in the token. In Okta, add a `groups` claim to the app or authorization server, filtered to the groups OVR uses. If you grant access through Opal, have it manage membership of those groups. Granting or revoking access then takes effect in OVR on the person's next page load, and revoking it signs them out of OVR.
 
@@ -70,4 +69,4 @@ In `trusted-proxy` mode, a personal access token only works while its owner has 
 
 To roll back, set the mode back to `local`. Passwords were never deleted, so everyone who had one can sign in with it again. Users created through SSO have no password and need a new invitation.
 
-On a fresh install in `trusted-proxy` mode, the first person in an admin group to sign in creates the organization. Until then, everyone else is told OVR hasn't been set up yet.
+On a fresh install in `trusted-proxy` mode, the first person in an admin group to sign in creates the organization. Until then, everyone else is shown the forbidden page.

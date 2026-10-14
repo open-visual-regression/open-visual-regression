@@ -160,7 +160,6 @@
               }
             },
             "logoutUrl": { "type": "string" },
-            "accessRequestUrl": { "type": "string" },
             "organizationName": { "type": "string" }
           }
         }
