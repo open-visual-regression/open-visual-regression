@@ -4,6 +4,8 @@ export const CALLBACK_URL_PARAM = "callback_url";
 
 export const REQUEST_PATH_HEADER = "x-ovr-request-path";
 
+export const FORBIDDEN_PATH = "/forbidden";
+
 export const getLoginPath = (callbackUrl: string) =>
   `/login?${new URLSearchParams({ [CALLBACK_URL_PARAM]: callbackUrl })}`;
 

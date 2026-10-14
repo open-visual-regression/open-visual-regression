@@ -5,11 +5,14 @@ import { handleOAuthUserInfo } from "better-auth/oauth2";
 import { z } from "zod";
 
 import { dbClient } from "@ovr/db/client";
+import { createLogger } from "@ovr/logger";
 
-import { getSafeRedirectPath } from "@/lib/utils/redirects";
+import { FORBIDDEN_PATH, getSafeRedirectPath } from "@/lib/utils/redirects";
 
 import { getAuthConfig } from "./config";
 import { resolveRole, verifyProxyToken } from "./proxyToken";
+
+const logger = createLogger("auth");
 
 export const TRUSTED_PROXY_PROVIDER_ID = "trusted-proxy";
 
@@ -43,19 +46,21 @@ export const trustedProxy = () =>
           const [error, identity] = await verifyProxyToken(ctx.headers, config);
 
           if (error || !identity) {
-            throw new APIError("UNAUTHORIZED", {
-              code: "INVALID_PROXY_TOKEN",
-              message: "the identity forwarded by the proxy could not be verified",
-            });
+            logger.warn(
+              { err: error },
+              "refused sign-in: the proxy identity could not be verified",
+            );
+            throw ctx.redirect(FORBIDDEN_PATH);
           }
 
           const role = resolveRole(identity.groups, config.roleGroups);
 
           if (!role) {
-            throw new APIError("FORBIDDEN", {
-              code: "NO_ROLE",
-              message: "you do not have access to OVR",
-            });
+            logger.warn(
+              { email: identity.email, groups: identity.groups },
+              "refused sign-in: no group grants a role",
+            );
+            throw ctx.redirect(FORBIDDEN_PATH);
           }
 
           const result = await handleOAuthUserInfo(ctx, {
