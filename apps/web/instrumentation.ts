@@ -5,6 +5,9 @@ export const register = async () => {
 
   const { assertEncryptionKey } = await import("@ovr/git-status/crypto");
   assertEncryptionKey();
+
+  const { assertAuthConfig } = await import("@/lib/auth/config");
+  assertAuthConfig();
 };
 
 export const onRequestError = async (
