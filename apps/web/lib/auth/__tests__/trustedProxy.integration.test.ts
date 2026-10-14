@@ -110,7 +110,7 @@ describe("trustedProxy", () => {
     }) => {
       const response = await signIn(identityProvider, { groups: ["marketing"] });
 
-      expect(response.headers.get("location")).toBe("/forbidden?reason=no-role");
+      expect(response.headers.get("location")).toBe("/forbidden");
       expect(await dbClient.users.findByEmail("jane@example.com")).toBeUndefined();
     });
 
@@ -123,7 +123,7 @@ describe("trustedProxy", () => {
         groups: ["ovr-admins"],
       });
 
-      expect(response.headers.get("location")).toBe("/forbidden?reason=unverified");
+      expect(response.headers.get("location")).toBe("/forbidden");
       expect(await dbClient.users.findByEmail("jane@example.com")).toBeUndefined();
     });
 
