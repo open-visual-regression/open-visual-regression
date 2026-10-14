@@ -16,10 +16,10 @@ const USER: UpdateAccountFormProps["user"] = {
   email: "tom@openvisualregression.com",
 };
 
-const renderComponent = () =>
+const renderComponent = (readOnly?: boolean) =>
   render(
     <>
-      <UpdateAccountForm user={USER} />
+      <UpdateAccountForm user={USER} readOnly={readOnly} />
       <Toaster />
     </>,
   );
@@ -30,6 +30,14 @@ describe("UpdateAccountForm", () => {
 
     expect(screen.getByLabelText(/^name$/i)).toHaveValue(USER.name);
     expect(screen.getByLabelText(/^email$/i)).toHaveValue(USER.email);
+  });
+
+  it("should not allow changes when the identity provider manages the account", () => {
+    renderComponent(true);
+
+    expect(screen.getByLabelText(/^name$/i)).toHaveAttribute("readonly");
+    expect(screen.getByLabelText(/^email$/i)).toHaveAttribute("readonly");
+    expect(screen.queryByRole("button", { name: /save changes/i })).not.toBeInTheDocument();
   });
 
   it("should show a validation error when the name is empty", async ({ user }) => {

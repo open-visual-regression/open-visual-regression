@@ -57,6 +57,15 @@ describe("UsersSection", () => {
     );
   });
 
+  it("should not allow managing users when the identity provider manages them", () => {
+    const reviewer = mocks.user.generateUser({ name: "sam chen", role: "reviewer" });
+    render(<UsersSection users={[reviewer]} currentUserId={CURRENT_USER_ID} readOnly />);
+
+    expect(screen.queryByRole("button", { name: /invite user/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("checkbox", { name: "select sam chen" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "change role for sam chen" })).toBeDisabled();
+  });
+
   it("should treat a null role as a reviewer", () => {
     const user = mocks.user.generateUser({ name: "sam chen", role: null });
     render(<UsersSection users={[user]} currentUserId={CURRENT_USER_ID} />);

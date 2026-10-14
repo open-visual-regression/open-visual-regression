@@ -5,10 +5,11 @@ import { ORPCError } from "@orpc/client";
 import { dbClient } from "@ovr/db/client";
 
 import { authServerClient } from "../auth";
-import { authenticatedMiddleware } from "./middleware";
+import { authenticatedMiddleware, localAuthMiddleware } from "./middleware";
 import { os } from "./os";
 
 export const updateAccountInformation = os.account.updateAccountInformation
+  .use(localAuthMiddleware)
   .use(authenticatedMiddleware)
   .handler(async ({ input, context }) => {
     const { user, headers } = context;
@@ -38,6 +39,7 @@ export const updateAccountInformation = os.account.updateAccountInformation
   .actionable();
 
 export const updatePassword = os.account.updatePassword
+  .use(localAuthMiddleware)
   .use(authenticatedMiddleware)
   .handler(async ({ input, context }) => {
     const { headers } = context;

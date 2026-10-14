@@ -1,5 +1,6 @@
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
+import { usesTrustedProxy } from "@/lib/auth/config";
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
 
@@ -9,6 +10,10 @@ import { SetupCard } from "./_components/setup-card/SetupCard";
 export const dynamic = "force-dynamic";
 
 export default async function SetupPage() {
+  if (usesTrustedProxy()) {
+    notFound();
+  }
+
   const [error, setupStatusResult] = await serverClient.setup.status();
 
   if (error) {

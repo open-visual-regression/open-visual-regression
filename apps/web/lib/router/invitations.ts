@@ -5,10 +5,11 @@ import { ORPCError } from "@orpc/client";
 import { dbClient } from "@ovr/db/client";
 
 import { authServerClient } from "../auth";
-import { unauthenticatedMiddleware } from "./middleware";
+import { localAuthMiddleware, unauthenticatedMiddleware } from "./middleware";
 import { os } from "./os";
 
 export const getInvitation = os.invitations.getInvitation
+  .use(localAuthMiddleware)
   .handler(async ({ input }) => {
     const invitation = await dbClient.users.findInvitationById(input.invitationId);
 
@@ -28,6 +29,7 @@ export const getInvitation = os.invitations.getInvitation
   .actionable();
 
 export const acceptInvitation = os.invitations.acceptInvitation
+  .use(localAuthMiddleware)
   .use(unauthenticatedMiddleware)
   .handler(async ({ input }) => {
     const invitation = await dbClient.users.findInvitationById(input.invitationId);

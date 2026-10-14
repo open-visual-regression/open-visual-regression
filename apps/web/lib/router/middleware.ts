@@ -8,6 +8,7 @@ import { isPersonalTokenMetadata } from "@ovr/db/repository/accessTokens";
 
 import { auth } from "../auth/auth";
 import { type Session, type User } from "../auth/auth";
+import { usesTrustedProxy } from "../auth/config";
 import { canReview } from "../auth/roles";
 import { getCachedSession } from "../auth/session";
 import { API_KEY_PREFIX, OVR_TOKEN_PREFIXES, readBearerToken } from "../auth/tokens";
@@ -105,6 +106,14 @@ export const unauthenticatedMiddleware = os
 
     return next();
   });
+
+export const localAuthMiddleware = os.$context<RequestContext>().middleware(async ({ next }) => {
+  if (usesTrustedProxy()) {
+    throw new ORPCError("FORBIDDEN", { message: "this is managed by your identity provider" });
+  }
+
+  return next();
+});
 
 export const authenticatedMiddleware = os
   .$context<RequestContext>()
