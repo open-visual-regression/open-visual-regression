@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 
+import { usesTrustedProxy } from "@/lib/auth/config";
 import { getCachedSession } from "@/lib/auth/session";
 import { serverClient } from "@/lib/router";
 import { verifyRole } from "@/lib/utils/authorization";
@@ -33,5 +34,12 @@ export default async function SettingsUsersPage({ searchParams }: SettingsUsersP
     serverError(error ?? "session missing after users list fetch");
   }
 
-  return <UsersSection users={listResult.users} currentUserId={session.user.id} search={search} />;
+  return (
+    <UsersSection
+      users={listResult.users}
+      currentUserId={session.user.id}
+      search={search}
+      readOnly={usesTrustedProxy()}
+    />
+  );
 }

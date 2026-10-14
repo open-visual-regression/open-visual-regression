@@ -141,6 +141,8 @@ export const getAuthConfig = (): AuthConfig => {
   return { mode, ...parse(trustedProxySchema, env) };
 };
 
+export const usesTrustedProxy = (): boolean => getAuthConfig().mode === "trusted-proxy";
+
 export const assertAuthConfig = (): void => {
   parse(
     z.object({

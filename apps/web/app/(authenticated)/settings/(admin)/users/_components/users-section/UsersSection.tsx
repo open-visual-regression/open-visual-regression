@@ -11,9 +11,15 @@ type UsersSectionProps = {
   users: UserSchema[];
   currentUserId: string;
   search?: string;
+  readOnly?: boolean;
 };
 
-export const UsersSection = ({ users, currentUserId, search }: UsersSectionProps) => {
+export const UsersSection = ({
+  users,
+  currentUserId,
+  search,
+  readOnly = false,
+}: UsersSectionProps) => {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -22,17 +28,19 @@ export const UsersSection = ({ users, currentUserId, search }: UsersSectionProps
         </Typography>
         <div className="flex w-full items-center gap-3 sm:w-auto">
           <UsersSearchField search={search} className="flex-1 sm:w-64 sm:flex-none" />
-          <InviteUserModal
-            trigger={
-              <InviteUserModalButton className="w-8 gap-0 px-0 sm:w-auto sm:gap-1 sm:px-3.5">
-                <Icon icon={PlusIcon} />
-                <span className="sr-only sm:not-sr-only">invite user</span>
-              </InviteUserModalButton>
-            }
-          />
+          {!readOnly && (
+            <InviteUserModal
+              trigger={
+                <InviteUserModalButton className="w-8 gap-0 px-0 sm:w-auto sm:gap-1 sm:px-3.5">
+                  <Icon icon={PlusIcon} />
+                  <span className="sr-only sm:not-sr-only">invite user</span>
+                </InviteUserModalButton>
+              }
+            />
+          )}
         </div>
       </div>
-      <UsersTable data={users} currentUserId={currentUserId} search={search} />
+      <UsersTable data={users} currentUserId={currentUserId} search={search} readOnly={readOnly} />
     </div>
   );
 };

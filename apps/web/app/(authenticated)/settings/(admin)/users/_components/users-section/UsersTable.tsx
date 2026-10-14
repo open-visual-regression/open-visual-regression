@@ -37,9 +37,10 @@ type UsersTableProps = {
   data: UserSchema[];
   currentUserId: string;
   search?: string;
+  readOnly?: boolean;
 };
 
-export const UsersTable = ({ data, currentUserId, search }: UsersTableProps) => {
+export const UsersTable = ({ data, currentUserId, search, readOnly = false }: UsersTableProps) => {
   const columns = useMemo(
     () =>
       columnHelper.columns([
@@ -64,7 +65,9 @@ export const UsersTable = ({ data, currentUserId, search }: UsersTableProps) => 
               userId={row.original.id}
               name={row.original.name}
               role={toRole(row.original.role)}
-              disabled={row.original.status !== "active" || row.original.id === currentUserId}
+              disabled={
+                readOnly || row.original.status !== "active" || row.original.id === currentUserId
+              }
             />
           ),
         }),
@@ -87,7 +90,7 @@ export const UsersTable = ({ data, currentUserId, search }: UsersTableProps) => 
             ) : null,
         }),
       ]),
-    [currentUserId],
+    [currentUserId, readOnly],
   );
 
   const table = useTable({
@@ -96,7 +99,7 @@ export const UsersTable = ({ data, currentUserId, search }: UsersTableProps) => 
     data,
     features,
     getRowId: (row) => row.id,
-    enableRowSelection: (row) => row.original.id !== currentUserId,
+    enableRowSelection: (row) => !readOnly && row.original.id !== currentUserId,
   });
 
   useTanStackTableDevtools(table);

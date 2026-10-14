@@ -5,7 +5,7 @@ import { ORPCError } from "@orpc/server";
 import { dbClient } from "@ovr/db/client";
 
 import { auth } from "../auth/auth";
-import { unauthenticatedMiddleware } from "./middleware";
+import { localAuthMiddleware, unauthenticatedMiddleware } from "./middleware";
 import { os } from "./os";
 
 const hasSetupBeenCompleted = async () => {
@@ -27,6 +27,7 @@ export const status = os.setup.status
   .actionable();
 
 export const exec = os.setup.exec
+  .use(localAuthMiddleware)
   .use(unauthenticatedMiddleware)
   .handler(async ({ input }) => {
     const isCompleted = await hasSetupBeenCompleted();
