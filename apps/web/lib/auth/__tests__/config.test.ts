@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, vi } from "vitest";
+import { beforeEach, vi } from "vitest";
 
 import { describe, expect, it } from "@/test-utils";
 
@@ -16,10 +16,6 @@ describe("config", () => {
   describe("getAuthConfig", () => {
     beforeEach(() => {
       vi.stubEnv("OVR_AUTH_MODE", "");
-    });
-
-    afterEach(() => {
-      vi.unstubAllEnvs();
     });
 
     it("should default to local mode", () => {
@@ -97,10 +93,6 @@ describe("config", () => {
   });
 
   describe("assertAuthConfig", () => {
-    afterEach(() => {
-      vi.unstubAllEnvs();
-    });
-
     it("should throw when the config is invalid", () => {
       vi.stubEnv("OVR_AUTH_MODE", "sso");
 
