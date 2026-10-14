@@ -6,11 +6,14 @@ import { test as base } from "@playwright/test";
 
 import { SEED_ARTIFACT, type SeedData } from "./constants";
 import { BuildPage } from "./pages/BuildPage";
+import { ForbiddenPage } from "./pages/ForbiddenPage";
+import { IdentityProviderLoginPage } from "./pages/IdentityProviderLoginPage";
 import { JobsSettingsPage } from "./pages/JobsSettingsPage";
 import { OrganizationSettingsPage } from "./pages/OrganizationSettingsPage";
 import { ProjectBuildsPage } from "./pages/ProjectBuildsPage";
 import { Sidebar } from "./pages/Sidebar";
 import { SnapshotReviewPage } from "./pages/SnapshotReviewPage";
+import { UsersSettingsPage } from "./pages/UsersSettingsPage";
 import { seedClientForContext, type SeedClient } from "./seed/client";
 import { spawnIngest, type IngestOptions } from "./support/ingest";
 
@@ -23,6 +26,9 @@ type TestFixtures = {
   jobsSettingsPage: JobsSettingsPage;
   organizationSettingsPage: OrganizationSettingsPage;
   sidebar: Sidebar;
+  identityProviderLoginPage: IdentityProviderLoginPage;
+  forbiddenPage: ForbiddenPage;
+  usersSettingsPage: UsersSettingsPage;
   ingestBuild: (options: IngestOptions & { commitSha: string }) => ChildProcess;
 };
 
@@ -52,6 +58,15 @@ export const test = base.extend<TestFixtures>({
   },
   sidebar: async ({ page }, use) => {
     await use(new Sidebar(page));
+  },
+  identityProviderLoginPage: async ({ page }, use) => {
+    await use(new IdentityProviderLoginPage(page));
+  },
+  forbiddenPage: async ({ page }, use) => {
+    await use(new ForbiddenPage(page));
+  },
+  usersSettingsPage: async ({ page }, use) => {
+    await use(new UsersSettingsPage(page));
   },
   // eslint-disable-next-line no-empty-pattern -- fixture takes no dependencies
   ingestBuild: async ({}, use) => {

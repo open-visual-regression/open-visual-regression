@@ -112,3 +112,85 @@ jobs:
       - name: Stop the stack
         if: always()
         run: docker compose down -v
+
+  e2e-sso:
+    name: E2E SSO (${{ inputs.mode }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: read
+    env:
+      PLAYWRIGHT_BASE_URL: http://localhost:4180
+      COMPOSE: docker compose --env-file .env --env-file apps/e2e/sso/sso.env --profile sso
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Write ephemeral compose secrets
+        run: |
+          {
+            echo "BETTER_AUTH_SECRET=$(openssl rand -base64 32)"
+            echo "OVR_GIT_TOKEN_ENCRYPTION_KEY=$(openssl rand -base64 32)"
+          } >> .env
+      - name: Log in to GHCR
+        if: inputs.mode == 'pull'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Start the stack (published images)
+        if: inputs.mode == 'pull'
+        env:
+          IMAGE_PREFIX: ${{ inputs.image_prefix || format('ghcr.io/{0}', github.repository_owner) }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
+        run: |
+          export IMAGE_TAG="${IMAGE_TAG:-sha-${GITHUB_SHA::7}}"
+          $COMPOSE pull --quiet
+          $COMPOSE up -d
+      - name: Start the stack (build from source)
+        if: inputs.mode == 'build'
+        run: $COMPOSE up -d --build
+      - name: Wait for the web app behind the proxy
+        run: |
+          for _ in $(seq 1 60); do
+            if curl -fsS "$PLAYWRIGHT_BASE_URL/api/rpc/health/ready" >/dev/null 2>&1; then
+              echo "web is up behind the proxy"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "web did not become ready behind the proxy" >&2
+          $COMPOSE logs --no-color
+          exit 1
+      - name: Install Playwright browser
+        run: pnpm --filter @ovr/e2e exec playwright install --with-deps chromium
+      - name: Run SSO E2E tests
+        run: pnpm --filter @ovr/e2e test:e2e:sso
+      - name: Dump stack logs on failure
+        if: failure()
+        run: $COMPOSE logs --no-color
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report-sso
+          path: apps/e2e/playwright-report/
+          retention-days: 30
+          if-no-files-found: ignore
+      - name: Upload Playwright traces
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-test-results-sso
+          path: apps/e2e/test-results/
+          retention-days: 30
+          if-no-files-found: ignore
+      - name: Stop the stack
+        if: always()
+        run: $COMPOSE down -v
