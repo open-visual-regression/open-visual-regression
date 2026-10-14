@@ -12,6 +12,8 @@ import { mocks } from "@ovr/mocks";
 import { auth } from "@/lib/auth/auth";
 import type { User } from "@/lib/auth/auth";
 
+type Organization = NonNullable<Awaited<ReturnType<typeof auth.api.createOrganization>>>;
+
 export { expect, describe } from "vitest";
 
 const TEST_PASSWORD = "securepass123";
@@ -32,6 +34,7 @@ export const test = vitest.extend<{
   admin: User;
   reviewer: User;
   viewer: User;
+  organization: Organization;
   identityProvider: IdentityProvider;
 }>({
   // eslint-disable-next-line no-empty-pattern
@@ -89,6 +92,19 @@ export const test = vitest.extend<{
     vi.mocked(headers).mockResolvedValue(convertSetCookieToCookie(response.headers));
     await use(user);
     vi.mocked(headers).mockResolvedValue(new Headers());
+  },
+
+  // eslint-disable-next-line no-empty-pattern
+  organization: async ({}, use) => {
+    const { name, email } = mocks.user.generateAuthUser();
+    const { user } = await auth.api.createUser({
+      body: { name, email, password: TEST_PASSWORD, role: "admin" },
+    });
+    const org = mocks.organization.generateOrganization();
+    const organization = await auth.api.createOrganization({
+      body: { name: org.name, slug: org.slug, userId: user.id },
+    });
+    await use(organization!);
   },
 
   // eslint-disable-next-line no-empty-pattern
