@@ -56,3 +56,21 @@ pnpm --filter @ovr/e2e test:e2e
 
 Point the suite at any running deployment with `PLAYWRIGHT_BASE_URL`. Override the
 ingested artifacts with `OVR_CLI_ENTRY` / `OVR_STORYBOOK_DIR` / `OVR_STORYBOOK_PKG_DIR`.
+
+## SSO suite
+
+`tests/sso` runs against a separate stack where OVR sits behind
+[oauth2-proxy](https://oauth2-proxy.github.io/oauth2-proxy/) and a Keycloak
+realm (`sso/realm.json`) with an admin, a reviewer, and a user in no group. It
+covers signing in without an OVR password, role mapping, the forbidden page,
+losing access when a group is removed, signing out through the proxy, and
+personal access tokens on routes the proxy lets through.
+
+```bash
+docker compose --env-file .env --env-file apps/e2e/sso/sso.env --profile sso up -d --build
+PLAYWRIGHT_BASE_URL=http://localhost:4180 pnpm --filter @ovr/e2e test:e2e:sso
+```
+
+The browser resolves `keycloak` to `127.0.0.1`, so the token issuer is the same
+for the browser and the containers. Run it on a fresh stack: the first admin to
+sign in sets up the organization.

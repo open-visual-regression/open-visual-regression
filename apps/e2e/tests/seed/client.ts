@@ -18,6 +18,15 @@ export const createSeedClient = (baseURL: string, cookie: string): SeedClient =>
   return createORPCClient(link);
 };
 
+export const createTokenClient = (baseURL: string, token: string): SeedClient => {
+  const link = new RPCLink({
+    url: `${baseURL}/api/rpc`,
+    headers: () => ({ authorization: `Bearer ${token}` }),
+  });
+
+  return createORPCClient(link);
+};
+
 export const seedClientForContext = async (context: BrowserContext): Promise<SeedClient> => {
   const cookie = (await context.cookies()).map(({ name, value }) => `${name}=${value}`).join("; ");
   return createSeedClient(getBaseURL(), cookie);

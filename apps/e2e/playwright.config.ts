@@ -6,6 +6,7 @@ import { getBaseURL, STORAGE_STATE } from "./tests/constants";
 // at PLAYWRIGHT_BASE_URL, not just the web app.
 export default defineConfig({
   testDir: "./tests",
+  testIgnore: "sso/**",
   fullyParallel: true,
   // The specs share one seeded project, and ingesting onto a branch cancels any
   // build still in flight on it, so ingestion must not overlap.
