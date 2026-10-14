@@ -33,6 +33,7 @@ export default defineConfig({
           exclude: ["app/**/*.integration.test.{ts,tsx}", "lib/**/*.integration.test.ts"],
           clearMocks: true,
           restoreMocks: true,
+          unstubEnvs: true,
           env: {
             BASE_URL: "http://localhost:3000",
             LOG_LEVEL: "silent",
