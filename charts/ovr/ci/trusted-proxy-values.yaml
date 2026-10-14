@@ -1,0 +1,15 @@
+existingSecret: ovr-secrets
+
+auth:
+  mode: trusted-proxy
+  trustedProxy:
+    tokenHeader: x-forwarded-id-token
+    issuer: https://example.okta.com
+    audience: ovr
+    jwksUrl: https://example.okta.com/oauth2/v1/keys
+    roleGroups:
+      admin: [ovr-admins]
+      reviewer: [ovr-reviewers]
+      viewer: [engineering]
+    logoutUrl: https://ovr.example.com/oauth2/sign_out
+    accessRequestUrl: https://app.opal.dev/apps/ovr

@@ -134,7 +134,36 @@
       "additionalProperties": false,
       "properties": {
         "betterAuthSecret": { "type": "string" },
-        "gitTokenEncryptionKey": { "type": "string" }
+        "gitTokenEncryptionKey": { "type": "string" },
+        "mode": { "type": "string", "enum": ["local", "trusted-proxy"] },
+        "trustedProxy": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "tokenHeader": { "type": "string" },
+            "issuer": { "type": "string" },
+            "audience": { "type": "string" },
+            "jwksUrl": { "type": "string" },
+            "keyUrl": { "type": "string" },
+            "signer": { "type": "string" },
+            "algorithms": { "type": "array", "items": { "type": "string" } },
+            "emailClaim": { "type": "string" },
+            "nameClaim": { "type": "string" },
+            "groupsClaim": { "type": "string" },
+            "roleGroups": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "admin": { "type": "array", "items": { "type": "string" } },
+                "reviewer": { "type": "array", "items": { "type": "string" } },
+                "viewer": { "type": "array", "items": { "type": "string" } }
+              }
+            },
+            "logoutUrl": { "type": "string" },
+            "accessRequestUrl": { "type": "string" },
+            "organizationName": { "type": "string" }
+          }
+        }
       }
     },
     "database": {

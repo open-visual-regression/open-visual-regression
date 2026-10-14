@@ -108,10 +108,10 @@ describe("config", () => {
       expect(() => assertAuthConfig()).toThrow(InvalidAuthConfigError);
     });
 
-    it("should reject trusted-proxy mode until it is supported", () => {
+    it("should accept a valid trusted-proxy config", () => {
       stubTrustedProxyEnv();
 
-      expect(() => assertAuthConfig()).toThrow("OVR_AUTH_MODE trusted-proxy is not supported yet");
+      expect(() => assertAuthConfig()).not.toThrow();
     });
   });
 

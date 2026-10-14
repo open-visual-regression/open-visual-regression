@@ -17,3 +17,44 @@ data:
   STORAGE_REGION: {{ .Values.storage.region | quote }}
   STORAGE_BUCKET: {{ .Values.storage.bucket | quote }}
   STORAGE_FORCE_PATH_STYLE: {{ .Values.storage.forcePathStyle | quote }}
+  OVR_AUTH_MODE: {{ .Values.auth.mode | quote }}
+  {{- if ne .Values.auth.mode "local" }}
+  {{- with .Values.auth.trustedProxy }}
+  OVR_AUTH_PROXY_TOKEN_HEADER: {{ .tokenHeader | quote }}
+  OVR_AUTH_PROXY_ISSUER: {{ .issuer | quote }}
+  OVR_AUTH_ROLE_GROUPS: {{ .roleGroups | toJson | quote }}
+  {{- with .audience }}
+  OVR_AUTH_PROXY_AUDIENCE: {{ . | quote }}
+  {{- end }}
+  {{- with .jwksUrl }}
+  OVR_AUTH_PROXY_JWKS_URL: {{ . | quote }}
+  {{- end }}
+  {{- with .keyUrl }}
+  OVR_AUTH_PROXY_KEY_URL: {{ . | quote }}
+  {{- end }}
+  {{- with .signer }}
+  OVR_AUTH_PROXY_SIGNER: {{ . | quote }}
+  {{- end }}
+  {{- with .algorithms }}
+  OVR_AUTH_PROXY_ALGORITHMS: {{ join "," . | quote }}
+  {{- end }}
+  {{- with .emailClaim }}
+  OVR_AUTH_PROXY_EMAIL_CLAIM: {{ . | quote }}
+  {{- end }}
+  {{- with .nameClaim }}
+  OVR_AUTH_PROXY_NAME_CLAIM: {{ . | quote }}
+  {{- end }}
+  {{- with .groupsClaim }}
+  OVR_AUTH_PROXY_GROUPS_CLAIM: {{ . | quote }}
+  {{- end }}
+  {{- with .logoutUrl }}
+  OVR_AUTH_PROXY_LOGOUT_URL: {{ . | quote }}
+  {{- end }}
+  {{- with .accessRequestUrl }}
+  OVR_AUTH_ACCESS_REQUEST_URL: {{ . | quote }}
+  {{- end }}
+  {{- with .organizationName }}
+  OVR_ORGANIZATION_NAME: {{ . | quote }}
+  {{- end }}
+  {{- end }}
+  {{- end }}
