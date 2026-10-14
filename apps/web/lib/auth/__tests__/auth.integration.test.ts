@@ -12,12 +12,18 @@ vi.mock("@/lib/auth/config", async (importOriginal) => ({
 const BASE_URL = "http://localhost:3000/api/auth";
 
 describe("auth with a trusted proxy", () => {
-  test.for(LOCAL_AUTH_PATHS)("should not serve %s", async (path) => {
+  test("should only disable routes that better-auth serves", () => {
+    const paths = Object.values(auth.api).map((endpoint) => endpoint.path);
+
+    expect(paths).toEqual(expect.arrayContaining([...LOCAL_AUTH_PATHS]));
+  });
+
+  test("should not serve password sign-in", async () => {
     const response = await auth.handler(
-      new Request(`${BASE_URL}${path}`, {
+      new Request(`${BASE_URL}/sign-in/email`, {
         method: "POST",
         headers: { "content-type": "application/json", origin: "http://localhost:3000" },
-        body: "{}",
+        body: JSON.stringify({ email: "admin@example.com", password: "securepass123" }),
       }),
     );
 
