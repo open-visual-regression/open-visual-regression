@@ -16,7 +16,6 @@ const ENV_VARS = {
   groupsClaim: "OVR_AUTH_PROXY_GROUPS_CLAIM",
   roleGroups: "OVR_AUTH_ROLE_GROUPS",
   logoutUrl: "OVR_AUTH_PROXY_LOGOUT_URL",
-  accessRequestUrl: "OVR_AUTH_ACCESS_REQUEST_URL",
 } as const;
 
 const ALGORITHMS = [
@@ -92,7 +91,6 @@ const trustedProxySchema = z
     groupsClaim: z.string().default("groups"),
     roleGroups: roleGroupsSchema,
     logoutUrl: urlSchema.optional(),
-    accessRequestUrl: urlSchema.optional(),
   })
   .refine((config) => Boolean(config.jwksUrl) !== Boolean(config.keyUrl), {
     error: `or ${ENV_VARS.keyUrl} is required, but not both`,
