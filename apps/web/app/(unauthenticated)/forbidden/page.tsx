@@ -1,39 +1,17 @@
-import { headers } from "next/headers";
-import { notFound } from "next/navigation";
+import { Typography } from "@ovr/ui/components/typography";
 
-import { getAuthConfig } from "@/lib/auth/config";
-import { verifyProxyToken } from "@/lib/auth/proxyToken";
-import { FORBIDDEN_REASONS, type ForbiddenReason } from "@/lib/utils/redirects";
+import { APP_VERSION } from "@/lib/utils/version";
 
-import { CenteredFormSection } from "../_components/CenteredFormSection";
-import { ForbiddenCard } from "./_components/forbidden-card/ForbiddenCard";
-
-export const dynamic = "force-dynamic";
-
-type ForbiddenPageProps = PageProps<"/forbidden">;
-
-const toReason = (reason: unknown): ForbiddenReason =>
-  FORBIDDEN_REASONS.find((known) => known === reason) ?? "no-role";
-
-export default async function ForbiddenPage(props: ForbiddenPageProps) {
-  const config = getAuthConfig();
-
-  if (config.mode !== "trusted-proxy") {
-    notFound();
-  }
-
-  const [{ reason }, [, identity]] = await Promise.all([
-    props.searchParams,
-    verifyProxyToken(await headers(), config),
-  ]);
-
+export default function ForbiddenPage() {
   return (
-    <CenteredFormSection>
-      <ForbiddenCard
-        reason={toReason(reason)}
-        email={identity?.email}
-        accessRequestUrl={config.accessRequestUrl}
-      />
-    </CenteredFormSection>
+    <div className="flex-1 flex flex-row justify-center items-center py-6 md:py-12 px-8">
+      <div className="w-full max-w-115 flex flex-col items-center gap-6">
+        <Typography variant="display" as="h1">
+          Forbidden
+        </Typography>
+        <Typography variant="body-muted">You don&apos;t have access to this page.</Typography>
+        <Typography variant="caption">open visual regression · v{APP_VERSION}</Typography>
+      </div>
+    </div>
   );
 }
