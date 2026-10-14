@@ -67,7 +67,6 @@ auth:
     # Groups that grant each role, e.g. { admin: [ovr-admins], reviewer: [ovr-reviewers] }.
     roleGroups: {}
     logoutUrl: ""
-    accessRequestUrl: ""
     organizationName: ""
 
 database:

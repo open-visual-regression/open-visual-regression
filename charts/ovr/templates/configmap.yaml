@@ -50,9 +50,6 @@ data:
   {{- with .logoutUrl }}
   OVR_AUTH_PROXY_LOGOUT_URL: {{ . | quote }}
   {{- end }}
-  {{- with .accessRequestUrl }}
-  OVR_AUTH_ACCESS_REQUEST_URL: {{ . | quote }}
-  {{- end }}
   {{- with .organizationName }}
   OVR_ORGANIZATION_NAME: {{ . | quote }}
   {{- end }}
