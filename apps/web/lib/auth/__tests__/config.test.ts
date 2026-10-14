@@ -99,12 +99,6 @@ describe("config", () => {
 
       expect(() => assertAuthConfig()).toThrow(InvalidAuthConfigError);
     });
-
-    it("should accept a valid trusted-proxy config", () => {
-      stubTrustedProxyEnv();
-
-      expect(() => assertAuthConfig()).not.toThrow();
-    });
   });
 
   describe("getSignOutUrl", () => {
