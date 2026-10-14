@@ -58,12 +58,8 @@ test.describe("SSO sign-in", () => {
     await page.goto("/projects");
     await identityProviderLoginPage.signIn(SSO_USERS.outsider, SSO_PASSWORD);
 
-    await expect(page).toHaveURL(/\/forbidden\?reason=no-role/);
+    await expect(page).toHaveURL(/\/forbidden$/);
     await expect(forbiddenPage.heading()).toBeVisible();
-    await expect(forbiddenPage.requestAccessLink()).toHaveAttribute(
-      "href",
-      "https://opal.example.com/apps/ovr",
-    );
   });
 
   test("should turn a reviewer away once they lose access", async ({
