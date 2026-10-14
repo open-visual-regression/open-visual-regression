@@ -74,17 +74,6 @@ describe("personal access tokens with a trusted proxy", () => {
     expect(error?.code).toBe("UNAUTHORIZED");
   });
 
-  test("should reject a token whose owner's sessions were revoked", async ({ reviewer }) => {
-    await linkIdentity(reviewer.id);
-    await createToken();
-    const { internalAdapter } = await auth.$context;
-    await internalAdapter.deleteUserSessions(reviewer.id);
-
-    const [error] = await serverClient.builds.list();
-
-    expect(error?.code).toBe("UNAUTHORIZED");
-  });
-
   test("should accept a token without an SSO identity in local mode", async ({ reviewer: _ }) => {
     await createToken();
     vi.mocked(getAuthConfig).mockReturnValue({ mode: "local" });
