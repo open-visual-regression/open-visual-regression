@@ -2,7 +2,7 @@ import type { BuildSchema } from "@ovr/api/contracts/builds";
 import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { Alert, AlertDescription, AlertTitle } from "@ovr/ui/components/alert";
 import { BadgeSkeleton } from "@ovr/ui/components/badge";
-import { ClockIcon, GlobeIcon, Icon, TimerIcon } from "@ovr/ui/components/icon";
+import { GlobeIcon, Icon, TimerIcon } from "@ovr/ui/components/icon";
 import { ResolutionIcon } from "@ovr/ui/components/resolution-icon";
 import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 
@@ -41,11 +41,6 @@ export const SnapshotHeader = ({
         <MetadataItem icon={<ResolutionIcon width={snapshot.viewportWidth} size={12} />}>
           {snapshot.viewportName}
         </MetadataItem>
-        {snapshot.queuedMs ? (
-          <MetadataItem icon={<Icon icon={ClockIcon} size={12} />}>
-            queued {formatDuration(snapshot.queuedMs)}
-          </MetadataItem>
-        ) : null}
         {snapshot.processingMs ? (
           <MetadataItem icon={<Icon icon={TimerIcon} size={12} />}>
             processing {formatDuration(snapshot.processingMs)}
