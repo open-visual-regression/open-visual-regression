@@ -300,10 +300,6 @@ export const enqueuePublishStatus = (
   payload: GitStatusPublishJobPayload,
   connection: RedisConnection,
 ): Promise<Job<GitStatusPublishJobPayload>> =>
-  // Deduplicate per build rather than by jobId: a jobId add is silently dropped while the
-  // previous publish is still running, so a build that finishes fast (e.g. every snapshot
-  // skipped) would leave the commit status stuck on pending. keepLastIfActive queues one
-  // follow-up publish instead, which re-reads the build's latest state when it runs.
   enqueue(QueueName.GIT_STATUS_PUBLISH, payload, connection, {
     deduplication: { id: payload.buildId, keepLastIfActive: true },
   });

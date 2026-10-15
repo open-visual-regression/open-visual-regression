@@ -1,5 +1,6 @@
 import { Queue, Worker } from "bullmq";
 import type { Redis } from "ioredis";
+import { vi } from "vitest";
 
 import {
   enqueueCaptureGroup,
@@ -18,6 +19,7 @@ import {
   type DiffJobPayload,
   type ExtractJobPayload,
   type FinalizeJobPayload,
+  type GitStatusPublishJobPayload,
 } from "../index";
 import { describe, expect, test } from "./fixtures";
 
@@ -195,49 +197,33 @@ describe("queue", () => {
       }
     });
 
-    test("should publish again when the build changes while its previous publish is running", async ({
+    test("should publish the build again when it changes while its earlier publish is running", async ({
       connection,
-      openQueue,
     }) => {
-      const buildId = "build-publish-while-active";
-      let runs = 0;
-      let releaseFirst = () => {};
-      const blocked = new Promise<void>((resolve) => (releaseFirst = resolve));
-      let firstStarted = () => {};
-      const started = new Promise<void>((resolve) => (firstStarted = resolve));
-
-      const worker = new Worker(
+      const payload: GitStatusPublishJobPayload = { buildId: "build-republish-while-active" };
+      let releaseFirstPublish = () => {};
+      const firstPublishReleased = new Promise<void>((resolve) => {
+        releaseFirstPublish = resolve;
+      });
+      const publish = vi
+        .fn<(payload: GitStatusPublishJobPayload) => Promise<void>>()
+        .mockReturnValueOnce(firstPublishReleased);
+      const worker = new Worker<GitStatusPublishJobPayload>(
         QueueName.GIT_STATUS_PUBLISH,
-        async () => {
-          runs += 1;
-          if (runs === 1) {
-            firstStarted();
-            await blocked;
-          }
-        },
+        async (job) => publish(job.data),
         { connection },
       );
 
       try {
-        const secondDone = new Promise<void>((resolve) => {
-          worker.on("completed", () => {
-            if (runs === 2) {
-              resolve();
-            }
-          });
-        });
+        await enqueuePublishStatus(payload, connection);
+        await vi.waitFor(() => expect(publish).toHaveBeenCalledTimes(1));
 
-        await enqueuePublishStatus({ buildId }, connection);
-        await started;
-        await enqueuePublishStatus({ buildId }, connection);
-        await enqueuePublishStatus({ buildId }, connection);
-        releaseFirst();
-        await secondDone;
+        await enqueuePublishStatus(payload, connection);
+        releaseFirstPublish();
 
-        expect(runs).toBe(2);
+        await vi.waitFor(() => expect(publish).toHaveBeenNthCalledWith(2, payload));
       } finally {
         await worker.close();
-        await openQueue(QueueName.GIT_STATUS_PUBLISH).obliterate({ force: true });
       }
     });
   });
