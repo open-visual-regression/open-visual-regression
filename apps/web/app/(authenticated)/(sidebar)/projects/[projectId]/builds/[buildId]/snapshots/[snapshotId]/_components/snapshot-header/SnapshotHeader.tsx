@@ -9,6 +9,7 @@ import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 import { ExternalLink } from "@/lib/components/external-link/ExternalLink";
 import { FlakyBadge } from "@/lib/components/FlakyBadge";
 import { MetadataItem } from "@/lib/components/metadata-item/MetadataItem";
+import { MetadataList } from "@/lib/components/metadata-list/MetadataList";
 import { SnapshotStatusBadge } from "@/lib/components/SnapshotStatusBadge";
 import { formatDuration } from "@/lib/utils/date";
 
@@ -30,7 +31,7 @@ export const SnapshotHeader = ({
       <Typography variant="h1" as="h1" className="break-words">
         {snapshot.targetTitle} {snapshot.targetName}
       </Typography>
-      <div className="flex flex-row flex-wrap items-center gap-4 text-xs">
+      <MetadataList>
         <div className="inline-flex gap-1">
           <SnapshotStatusBadge status={snapshot.status} />
           {snapshot.isFlaky ? <FlakyBadge /> : null}
@@ -49,7 +50,7 @@ export const SnapshotHeader = ({
           </MetadataItem>
         ) : null}
         {controls}
-      </div>
+      </MetadataList>
     </div>
     {snapshot.status === "error" ? (
       <Alert color="red">
@@ -73,13 +74,13 @@ export const SnapshotHeaderSkeleton = () => (
   <div className="flex flex-col gap-6">
     <div className="flex flex-col gap-2">
       <TypographySkeleton variant="h1" className="w-80 max-w-full" />
-      <div className="flex flex-row flex-wrap items-center gap-4 text-xs">
+      <MetadataList>
         <BadgeSkeleton className="w-24" />
         <TypographySkeleton variant="caption" className="w-24" />
         <TypographySkeleton variant="caption" className="w-20" />
         <TypographySkeleton variant="caption" className="w-32" />
         <TypographySkeleton variant="caption" className="w-36" />
-      </div>
+      </MetadataList>
     </div>
   </div>
 );
