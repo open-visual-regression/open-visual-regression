@@ -137,7 +137,8 @@ describe("SnapshotHeader", () => {
     const build = mocks.build.generateBuild();
     render(<SnapshotHeader snapshot={snapshot} build={build} storybookHref={null} />);
 
-    expect(screen.getByText("processing 3.4s")).toBeVisible();
+    expect(screen.getByRole("img", { name: "processing time" })).toBeVisible();
+    expect(screen.getByText("3.4s")).toBeVisible();
   });
 
   it("should not show how long the snapshot was queued", () => {
@@ -157,6 +158,6 @@ describe("SnapshotHeader", () => {
       />,
     );
 
-    expect(screen.queryByText(/processing \d/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: "processing time" })).not.toBeInTheDocument();
   });
 });

@@ -42,8 +42,10 @@ export const SnapshotHeader = ({
           {snapshot.viewportName}
         </MetadataItem>
         {snapshot.processingMs ? (
-          <MetadataItem icon={<Icon icon={TimerIcon} size={12} />}>
-            processing {formatDuration(snapshot.processingMs)}
+          <MetadataItem
+            icon={<Icon icon={TimerIcon} size={12} role="img" aria-label="processing time" />}
+          >
+            {formatDuration(snapshot.processingMs)}
           </MetadataItem>
         ) : null}
         {controls}
