@@ -97,3 +97,16 @@ export const Flaky: Story = {
     }),
   },
 };
+
+export const WithProcessingTime: Story = {
+  args: {
+    snapshot: mocks.build.generateBuildSnapshot({
+      id: "snapshot-6",
+      targetName: "Primary",
+      targetTitle: "Button",
+      imagePath: "new-desktop.png",
+      status: "unchanged",
+      processingMs: 2500,
+    }),
+  },
+};
