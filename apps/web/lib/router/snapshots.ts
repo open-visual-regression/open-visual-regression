@@ -118,6 +118,7 @@ export const list = os.snapshots.list
         hasUncaughtPageError: row.hasUncaughtPageError,
         isFlaky: row.isFlaky,
         flags: getSnapshotFlags(row),
+        processingMs: getSnapshotTimings(row).processingMs,
       })),
       total,
       nextCursor,

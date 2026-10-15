@@ -32,6 +32,20 @@ describe("SnapshotCard", () => {
     );
   });
 
+  it("should show the processing time when the snapshot has one", () => {
+    const snapshot = mocks.build.generateBuildSnapshot({ processingMs: 2500 });
+    render(<SnapshotCard snapshot={snapshot} projectId="project-1" buildId="build-1" />);
+
+    expect(screen.getByRole("img", { name: "processing time" })).toBeInTheDocument();
+  });
+
+  it("should not show the processing time when the snapshot has none", () => {
+    const snapshot = mocks.build.generateBuildSnapshot({ processingMs: null });
+    render(<SnapshotCard snapshot={snapshot} projectId="project-1" buildId="build-1" />);
+
+    expect(screen.queryByRole("img", { name: "processing time" })).not.toBeInTheDocument();
+  });
+
   it("should show a warning badge when the snapshot has an uncaught page error", () => {
     const snapshot = mocks.build.generateBuildSnapshot({ hasUncaughtPageError: true });
     render(<SnapshotCard snapshot={snapshot} projectId="project-1" buildId="build-1" />);

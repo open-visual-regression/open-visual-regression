@@ -1,3 +1,4 @@
+import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { v7 as uuidv7 } from "uuid";
 import { vi } from "vitest";
@@ -5,7 +6,7 @@ import { vi } from "vitest";
 import type { AddProjectInputSchema } from "@ovr/api/contracts/projects";
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
-import { flakySnapshots, organization, projects } from "@ovr/db/schema";
+import { flakySnapshots, organization, projects, snapshots } from "@ovr/db/schema";
 import { storage } from "@ovr/storage";
 
 import type { User } from "@/lib/auth/auth";
@@ -473,6 +474,35 @@ describe("snapshots", () => {
 
       expect(error).toBeNull();
       expect(result?.snapshots).toHaveLength(1);
+    });
+
+    test("returns how long each snapshot took to process, or null if it hasn't finished", async ({
+      admin,
+    }) => {
+      const { build } = await createProjectAndBuild(admin);
+      const [finished] = await dbClient.snapshots.createMany({
+        values: ["story-a", "story-b"].map((targetId) => ({
+          buildId: build.id,
+          ...VIEWPORT,
+          targetId,
+          targetTitle: targetId,
+          targetName: targetId,
+        })),
+      });
+      await db
+        .update(snapshots)
+        .set({ startedAt: "2026-01-01 00:00:00", completedAt: "2026-01-01 00:00:02.500" })
+        .where(eq(snapshots.id, finished!.id));
+
+      const [error, result] = await serverClient.snapshots.list({ buildId: build.id });
+
+      expect(error).toBeNull();
+      expect(result?.snapshots.map(({ id, processingMs }) => ({ id, processingMs }))).toEqual(
+        expect.arrayContaining([
+          { id: finished!.id, processingMs: 2500 },
+          { id: expect.any(String), processingMs: null },
+        ]),
+      );
     });
 
     test("marks only the snapshots of stories flagged as flaky in the build's own project", async ({

@@ -21,6 +21,7 @@ const SNAPSHOT: BuildSnapshotSchema = {
   hasUncaughtPageError: false,
   isFlaky: false,
   flags: [],
+  processingMs: 2500,
 };
 
 describe("formatSnapshotsOutput", () => {

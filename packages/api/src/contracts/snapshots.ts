@@ -103,6 +103,7 @@ export const buildSnapshotSchema = z.object({
   hasUncaughtPageError: z.boolean().meta({ deprecated: true }),
   isFlaky: z.boolean().meta({ deprecated: true }),
   flags: z.array(snapshotFlagSchema),
+  processingMs: z.number().int().nullable(),
 });
 
 export type BuildSnapshotSchema = z.infer<typeof buildSnapshotSchema>;
