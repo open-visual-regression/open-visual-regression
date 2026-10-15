@@ -1,15 +1,14 @@
 "use client";
 
-import { onError, onSuccess } from "@orpc/client";
-import { useServerAction } from "@orpc/react/hooks";
+import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 
 import { XIcon } from "@ovr/ui/components/icon";
 import { toast } from "@ovr/ui/components/toast";
 
 import { ResponsiveActionButton } from "@/lib/components/responsive-action-button/ResponsiveActionButton";
+import { orpc } from "@/lib/orpc/client";
 import { useReviewRefresh } from "@/lib/orpc/useReviewRefresh";
-import { serverClient } from "@/lib/router";
 
 export type SnapshotRejectButtonProps = {
   diffId: string;
@@ -21,19 +20,19 @@ export const SnapshotRejectButton = ({ diffId, rejected, nextHref }: SnapshotRej
   const router = useRouter();
   const refreshReview = useReviewRefresh();
 
-  const { execute, status } = useServerAction(serverClient.diffs.castVote, {
-    interceptors: [
-      onSuccess(() => refreshReview()),
-      onError((err) => {
+  // Sent over HTTP rather than as a server action: a server action runs inside a React
+  // transition, which holds back the router.push below until the vote has saved.
+  const { mutate, isPending: pending } = useMutation(
+    orpc.diffs.castVote.mutationOptions({
+      onSuccess: () => refreshReview(),
+      onError: (err) => {
         toast.error(err.message);
-      }),
-    ],
-  });
-
-  const pending = status === "pending";
+      },
+    }),
+  );
 
   const handleClick = () => {
-    execute({ diffId, vote: "reject" });
+    mutate({ diffId, vote: "reject" });
     if (nextHref) {
       router.push(nextHref);
     }
