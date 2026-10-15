@@ -194,6 +194,52 @@ describe("queue", () => {
         await job.remove();
       }
     });
+
+    test("should publish again when the build changes while its previous publish is running", async ({
+      connection,
+      openQueue,
+    }) => {
+      const buildId = "build-publish-while-active";
+      let runs = 0;
+      let releaseFirst = () => {};
+      const blocked = new Promise<void>((resolve) => (releaseFirst = resolve));
+      let firstStarted = () => {};
+      const started = new Promise<void>((resolve) => (firstStarted = resolve));
+
+      const worker = new Worker(
+        QueueName.GIT_STATUS_PUBLISH,
+        async () => {
+          runs += 1;
+          if (runs === 1) {
+            firstStarted();
+            await blocked;
+          }
+        },
+        { connection },
+      );
+
+      try {
+        const secondDone = new Promise<void>((resolve) => {
+          worker.on("completed", () => {
+            if (runs === 2) {
+              resolve();
+            }
+          });
+        });
+
+        await enqueuePublishStatus({ buildId }, connection);
+        await started;
+        await enqueuePublishStatus({ buildId }, connection);
+        await enqueuePublishStatus({ buildId }, connection);
+        releaseFirst();
+        await secondDone;
+
+        expect(runs).toBe(2);
+      } finally {
+        await worker.close();
+        await openQueue(QueueName.GIT_STATUS_PUBLISH).obliterate({ force: true });
+      }
+    });
   });
 
   describe("enqueueFlakySnapshotScanMany", () => {

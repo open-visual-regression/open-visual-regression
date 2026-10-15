@@ -88,7 +88,8 @@ const findCaptureGroups = async (
 const findPublishStatusJob = async (connection: RedisConnection, buildId: string) => {
   const queue = new Queue(QueueName.GIT_STATUS_PUBLISH, { connection });
   try {
-    return await queue.getJob(buildId);
+    const jobId = await queue.getDeduplicationJobId(buildId);
+    return jobId ? await queue.getJob(jobId) : undefined;
   } finally {
     await queue.close();
   }
