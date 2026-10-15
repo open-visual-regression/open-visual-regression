@@ -9,9 +9,11 @@ import { CardLink } from "@/lib/components/card-link/CardLink";
 import { CardSurface } from "@/lib/components/card-link/CardSurface";
 import { FlakyBadge } from "@/lib/components/FlakyBadge";
 import { Image } from "@/lib/components/image/Image";
+import { MetadataItem } from "@/lib/components/metadata-item/MetadataItem";
+import { MetadataList } from "@/lib/components/metadata-list/MetadataList";
 import { getSnapshotStatusLabel, SnapshotStatusBadge } from "@/lib/components/SnapshotStatusBadge";
-import { type SnapshotFilters, withSnapshotFilters } from "@/lib/utils/snapshotFilters";
 import { formatDuration } from "@/lib/utils/date";
+import { type SnapshotFilters, withSnapshotFilters } from "@/lib/utils/snapshotFilters";
 import { getStoragePath } from "@/lib/utils/storage";
 
 type SnapshotCardSlotProps = {
@@ -90,26 +92,31 @@ export const SnapshotCard = ({ snapshot, projectId, buildId, filters }: Snapshot
         <Typography variant="caption" className="truncate">
           {snapshot.targetTitle}
         </Typography>
-        <Typography variant="caption" className="flex items-center gap-1 truncate">
-          <Icon icon={GlobeIcon} size={12} className="shrink-0" />
-          {snapshot.browser} ·{" "}
-          <ResolutionIcon width={snapshot.viewportWidth} size={12} className="shrink-0" />
-          {snapshot.viewportName}
+        <MetadataList className="gap-x-3 gap-y-1">
+          <MetadataItem icon={<Icon icon={GlobeIcon} size={12} className="shrink-0" />}>
+            {snapshot.browser}
+          </MetadataItem>
+          <MetadataItem
+            icon={<ResolutionIcon width={snapshot.viewportWidth} size={12} className="shrink-0" />}
+          >
+            {snapshot.viewportName}
+          </MetadataItem>
           {snapshot.processingMs ? (
-            <>
-              {" "}
-              ·{" "}
-              <Icon
-                icon={TimerIcon}
-                size={12}
-                className="shrink-0"
-                role="img"
-                aria-label="processing time"
-              />
+            <MetadataItem
+              icon={
+                <Icon
+                  icon={TimerIcon}
+                  size={12}
+                  className="shrink-0"
+                  role="img"
+                  aria-label="processing time"
+                />
+              }
+            >
               {formatDuration(snapshot.processingMs)}
-            </>
+            </MetadataItem>
           ) : null}
-        </Typography>
+        </MetadataList>
       </SnapshotCardBody>
     </CardLink>
   );
