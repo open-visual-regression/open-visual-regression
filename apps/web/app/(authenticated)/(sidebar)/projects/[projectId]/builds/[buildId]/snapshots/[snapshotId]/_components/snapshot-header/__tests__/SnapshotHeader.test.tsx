@@ -137,7 +137,8 @@ describe("SnapshotHeader", () => {
     const build = mocks.build.generateBuild();
     render(<SnapshotHeader snapshot={snapshot} build={build} storybookHref={null} />);
 
-    expect(screen.getByText("queued 12s · processing 3.4s")).toBeVisible();
+    expect(screen.getByText("queued 12s")).toBeVisible();
+    expect(screen.getByText("processing 3.4s")).toBeVisible();
   });
 
   it("should show only the queued time while the snapshot is processing", () => {

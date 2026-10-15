@@ -2,12 +2,13 @@ import type { BuildSchema } from "@ovr/api/contracts/builds";
 import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { Alert, AlertDescription, AlertTitle } from "@ovr/ui/components/alert";
 import { BadgeSkeleton } from "@ovr/ui/components/badge";
-import { GlobeIcon, Icon, TimerIcon } from "@ovr/ui/components/icon";
+import { ClockIcon, GlobeIcon, Icon, TimerIcon } from "@ovr/ui/components/icon";
 import { ResolutionIcon } from "@ovr/ui/components/resolution-icon";
 import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 
 import { ExternalLink } from "@/lib/components/external-link/ExternalLink";
 import { FlakyBadge } from "@/lib/components/FlakyBadge";
+import { MetadataItem } from "@/lib/components/metadata-item/MetadataItem";
 import { SnapshotStatusBadge } from "@/lib/components/SnapshotStatusBadge";
 import { formatDuration } from "@/lib/utils/date";
 
@@ -16,27 +17,6 @@ export type SnapshotHeaderProps = {
   build: BuildSchema;
   storybookHref: string | null;
   controls?: React.ReactNode;
-};
-
-const SnapshotTimings = ({
-  queuedMs,
-  processingMs,
-}: Pick<SnapshotSchema, "queuedMs" | "processingMs">) => {
-  const timings = [
-    queuedMs ? `queued ${formatDuration(queuedMs)}` : null,
-    processingMs ? `processing ${formatDuration(processingMs)}` : null,
-  ].filter((timing) => timing !== null);
-
-  if (timings.length === 0) {
-    return null;
-  }
-
-  return (
-    <Typography variant="caption" className="flex items-center gap-1">
-      <Icon icon={TimerIcon} size={12} />
-      {timings.join(" · ")}
-    </Typography>
-  );
 };
 
 export const SnapshotHeader = ({
@@ -57,12 +37,20 @@ export const SnapshotHeader = ({
         </div>
         {storybookHref ? <ExternalLink href={storybookHref}>view story</ExternalLink> : null}
         <Typography variant="caption">{build.name}</Typography>
-        <Typography variant="caption" className="flex items-center gap-1">
-          <Icon icon={GlobeIcon} size={12} />
-          {snapshot.browser} · <ResolutionIcon width={snapshot.viewportWidth} size={12} />
+        <MetadataItem icon={<Icon icon={GlobeIcon} size={12} />}>{snapshot.browser}</MetadataItem>
+        <MetadataItem icon={<ResolutionIcon width={snapshot.viewportWidth} size={12} />}>
           {snapshot.viewportName}
-        </Typography>
-        <SnapshotTimings queuedMs={snapshot.queuedMs} processingMs={snapshot.processingMs} />
+        </MetadataItem>
+        {snapshot.queuedMs ? (
+          <MetadataItem icon={<Icon icon={ClockIcon} size={12} />}>
+            queued {formatDuration(snapshot.queuedMs)}
+          </MetadataItem>
+        ) : null}
+        {snapshot.processingMs ? (
+          <MetadataItem icon={<Icon icon={TimerIcon} size={12} />}>
+            processing {formatDuration(snapshot.processingMs)}
+          </MetadataItem>
+        ) : null}
         {controls}
       </div>
     </div>
