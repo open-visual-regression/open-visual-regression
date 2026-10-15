@@ -20,8 +20,6 @@ export const SnapshotRejectButton = ({ diffId, rejected, nextHref }: SnapshotRej
   const router = useRouter();
   const refreshReview = useReviewRefresh();
 
-  // Sent over HTTP rather than as a server action: a server action runs inside a React
-  // transition, which holds back the router.push below until the vote has saved.
   const { mutate, isPending: pending } = useMutation(
     orpc.diffs.castVote.mutationOptions({
       onSuccess: () => refreshReview(),
