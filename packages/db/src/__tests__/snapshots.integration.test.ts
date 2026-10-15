@@ -256,6 +256,26 @@ describe("snapshots", () => {
       const updated = await dbClient.snapshots.updateStatus(snapshot!.id, "success");
       expect(updated?.status).toBe("success");
     });
+
+    test("should record when processing started", async ({ build, captureConfiguration }) => {
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            targetId: "a",
+            status: "error",
+            completedAt: "2026-01-01T00:00:00.000Z",
+          },
+        ],
+      });
+
+      const updated = await dbClient.snapshots.updateStatus(snapshot!.id, "processing");
+
+      expect(updated?.queuedAt).not.toBeNull();
+      expect(updated?.startedAt).not.toBeNull();
+      expect(updated?.completedAt).toBeNull();
+    });
   });
 
   describe("getDisplayStatusCounts", () => {
@@ -486,6 +506,23 @@ describe("snapshots", () => {
       expect(await dbClient.snapshots.findById(success!.id)).toMatchObject({ status: "success" });
       expect(await dbClient.snapshots.findById(errored!.id)).toMatchObject({ status: "error" });
     });
+
+    test("records when transitioned snapshots completed", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const [queued, success] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, ...captureConfiguration, targetId: "queued", status: "queued" },
+          { buildId: build.id, ...captureConfiguration, targetId: "success", status: "success" },
+        ],
+      });
+
+      await dbClient.snapshots.markUnfinishedAs(build.id, "canceled");
+
+      expect((await dbClient.snapshots.findById(queued!.id))?.completedAt).not.toBeNull();
+      expect((await dbClient.snapshots.findById(success!.id))?.completedAt).toBeNull();
+    });
   });
 
   describe("updateCaptureResult", () => {
@@ -511,6 +548,40 @@ describe("snapshots", () => {
       expect(updated).toBeUndefined();
       expect(await dbClient.snapshots.findById(snapshot!.id)).toMatchObject({ status: "canceled" });
     });
+
+    test("records when the capture completed", async ({ build, captureConfiguration }) => {
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, ...captureConfiguration, targetId: "a", status: "processing" },
+        ],
+      });
+
+      const updated = await dbClient.snapshots.updateCaptureResult(snapshot!.id, {
+        status: "success",
+        imagePath: "some/path.png",
+        imageHash: "a".repeat(64),
+        hasRenderError: false,
+        errorMessage: null,
+        hasUncaughtPageError: false,
+      });
+
+      expect(updated?.completedAt).not.toBeNull();
+    });
+  });
+
+  describe("markErrored", () => {
+    test("records when the snapshot completed", async ({ build, captureConfiguration }) => {
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, ...captureConfiguration, targetId: "a", status: "processing" },
+        ],
+      });
+
+      const updated = await dbClient.snapshots.markErrored(snapshot!.id, "boom");
+
+      expect(updated).toMatchObject({ status: "error", errorMessage: "boom" });
+      expect(updated?.completedAt).not.toBeNull();
+    });
   });
 
   describe("requeue", () => {
@@ -530,6 +601,9 @@ describe("snapshots", () => {
             hasRenderError: true,
             hasUncaughtPageError: true,
             errorMessage: "boom",
+            queuedAt: "2026-01-01T00:00:00.000Z",
+            startedAt: "2026-01-01T00:00:01.000Z",
+            completedAt: "2026-01-01T00:00:02.000Z",
           },
         ],
       });
@@ -544,7 +618,10 @@ describe("snapshots", () => {
         hasRenderError: false,
         hasUncaughtPageError: false,
         errorMessage: null,
+        startedAt: null,
+        completedAt: null,
       });
+      expect(requeued?.queuedAt).not.toBe("2026-01-01T00:00:00.000Z");
     });
   });
 

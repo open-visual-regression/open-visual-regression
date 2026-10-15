@@ -59,7 +59,9 @@ export const findById = (id: string) =>
 export const updateStatus = async (id: string, status: SnapshotStatus) => {
   const [snapshot] = await db
     .update(snapshots)
-    .set({ status })
+    .set(
+      status === "processing" ? { status, startedAt: sql`now()`, completedAt: null } : { status },
+    )
     .where(and(eq(snapshots.id, id), ne(snapshots.status, "canceled")))
     .returning();
   return snapshot;
@@ -81,7 +83,7 @@ export const updateCaptureResult = async (
 ) => {
   const [snapshot] = await tx
     .update(snapshots)
-    .set(result)
+    .set({ ...result, completedAt: sql`now()` })
     .where(and(eq(snapshots.id, id), ne(snapshots.status, "canceled")))
     .returning();
   return snapshot;
@@ -99,7 +101,7 @@ export const setVariant = async (id: string, variantId: string, tx: DbClient = d
 export const markErrored = async (id: string, errorMessage: string) => {
   const [snapshot] = await db
     .update(snapshots)
-    .set({ status: "error", errorMessage })
+    .set({ status: "error", errorMessage, completedAt: sql`now()` })
     .where(and(eq(snapshots.id, id), ne(snapshots.status, "canceled")))
     .returning();
   return snapshot;
@@ -116,6 +118,9 @@ export const requeue = async (id: string, tx: DbClient = db) => {
       hasRenderError: false,
       hasUncaughtPageError: false,
       errorMessage: null,
+      queuedAt: sql`now()`,
+      startedAt: null,
+      completedAt: null,
     })
     .where(eq(snapshots.id, id))
     .returning();
@@ -129,7 +134,7 @@ export const markUnfinishedAs = async (
 ): Promise<void> => {
   await tx
     .update(snapshots)
-    .set({ status })
+    .set({ status, completedAt: sql`now()` })
     .where(
       and(
         eq(snapshots.buildId, buildId),

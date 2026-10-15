@@ -2,7 +2,7 @@ import { afterEach, beforeEach, vi } from "vitest";
 
 import { describe, expect, it } from "@/test-utils";
 
-import { formatDateTime, formatRelativeDateTime } from "../date";
+import { formatDateTime, formatDuration, formatRelativeDateTime } from "../date";
 
 describe("date", () => {
   describe("formatDateTime", () => {
@@ -40,6 +40,18 @@ describe("date", () => {
     it("should fall back to an absolute date/time for times a day or more ago", () => {
       const date = new Date("2026-06-13T12:00:00.000Z");
       expect(formatRelativeDateTime(date)).toBe(formatDateTime(date));
+    });
+  });
+
+  describe("formatDuration", () => {
+    it.each([
+      [450, "450ms"],
+      [3_456, "3.4s"],
+      [12_900, "12s"],
+      [65_000, "1m 5s"],
+      [7_380_000, "2h 3m"],
+    ])("should format %ims as %s", (ms, expected) => {
+      expect(formatDuration(ms)).toBe(expected);
     });
   });
 });

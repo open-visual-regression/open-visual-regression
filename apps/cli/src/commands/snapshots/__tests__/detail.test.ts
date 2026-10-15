@@ -16,6 +16,8 @@ const SNAPSHOT = {
   hasUncaughtPageError: false,
   errorMessage: null,
   errorLogs: [],
+  queuedMs: null,
+  processingMs: null,
 };
 
 describe("formatSnapshotDetail", () => {

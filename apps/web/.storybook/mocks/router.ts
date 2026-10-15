@@ -171,6 +171,8 @@ export const serverClient: typeof RealServerClient = {
           hasUncaughtPageError: false,
           isFlaky: false,
           errorLogs: [],
+          queuedMs: null,
+          processingMs: null,
         },
       }))
       .actionable(),

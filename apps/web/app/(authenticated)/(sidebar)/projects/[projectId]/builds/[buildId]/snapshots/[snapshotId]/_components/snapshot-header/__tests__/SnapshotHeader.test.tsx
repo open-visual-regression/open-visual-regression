@@ -23,6 +23,8 @@ const snapshot: SnapshotSchema = {
   isRebuildable: false,
   isReviewable: true,
   errorLogs: [],
+  queuedMs: 12_000,
+  processingMs: 3_400,
 };
 
 describe("SnapshotHeader", () => {
@@ -129,5 +131,33 @@ describe("SnapshotHeader", () => {
     render(<SnapshotHeader snapshot={snapshot} build={build} storybookHref={null} />);
 
     expect(screen.queryByRole("link", { name: /view story/i })).not.toBeInTheDocument();
+  });
+
+  it("should show how long the snapshot took to process", () => {
+    const build = mocks.build.generateBuild();
+    render(<SnapshotHeader snapshot={snapshot} build={build} storybookHref={null} />);
+
+    expect(screen.getByRole("img", { name: "processing time" })).toBeVisible();
+    expect(screen.getByText("3.4s")).toBeVisible();
+  });
+
+  it("should not show how long the snapshot was queued", () => {
+    const build = mocks.build.generateBuild();
+    render(<SnapshotHeader snapshot={snapshot} build={build} storybookHref={null} />);
+
+    expect(screen.queryByText(/queued \d/)).not.toBeInTheDocument();
+  });
+
+  it("should not show the processing time while the snapshot is still processing", () => {
+    const build = mocks.build.generateBuild();
+    render(
+      <SnapshotHeader
+        snapshot={{ ...snapshot, status: "processing", processingMs: null }}
+        build={build}
+        storybookHref={null}
+      />,
+    );
+
+    expect(screen.queryByRole("img", { name: "processing time" })).not.toBeInTheDocument();
   });
 });

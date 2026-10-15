@@ -44,3 +44,26 @@ export const formatRelativeDateTime = (date: Date): string => {
 
   return formatRelativeDuration(diffMs / 1000, RELATIVE_TIME_DIVISIONS);
 };
+
+export const formatDuration = (ms: number): string => {
+  if (ms < 1000) {
+    return `${Math.round(ms)}ms`;
+  }
+
+  const seconds = ms / 1000;
+  if (seconds < 10) {
+    return `${(Math.floor(seconds * 10) / 10).toString()}s`;
+  }
+
+  const totalSeconds = Math.floor(seconds);
+  if (totalSeconds < 60) {
+    return `${totalSeconds}s`;
+  }
+
+  const totalMinutes = Math.floor(totalSeconds / 60);
+  if (totalMinutes < 60) {
+    return `${totalMinutes}m ${totalSeconds % 60}s`;
+  }
+
+  return `${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m`;
+};
