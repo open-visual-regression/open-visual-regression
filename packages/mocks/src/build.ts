@@ -22,6 +22,7 @@ export const generateBuildSnapshot = (
   hasUncaughtPageError: false,
   isFlaky: false,
   flags: [],
+  processingMs: null,
   ...overrides,
 });
 

@@ -1,6 +1,6 @@
 import { type BuildSnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { Badge } from "@ovr/ui/components/badge";
-import { GlobeIcon, Icon, TriangleAlertIcon } from "@ovr/ui/components/icon";
+import { GlobeIcon, Icon, TimerIcon, TriangleAlertIcon } from "@ovr/ui/components/icon";
 import { ResolutionIcon } from "@ovr/ui/components/resolution-icon";
 import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 import { cn } from "@ovr/ui/lib/utils";
@@ -11,6 +11,7 @@ import { FlakyBadge } from "@/lib/components/FlakyBadge";
 import { Image } from "@/lib/components/image/Image";
 import { getSnapshotStatusLabel, SnapshotStatusBadge } from "@/lib/components/SnapshotStatusBadge";
 import { type SnapshotFilters, withSnapshotFilters } from "@/lib/utils/snapshotFilters";
+import { formatDuration } from "@/lib/utils/date";
 import { getStoragePath } from "@/lib/utils/storage";
 
 type SnapshotCardSlotProps = {
@@ -94,6 +95,20 @@ export const SnapshotCard = ({ snapshot, projectId, buildId, filters }: Snapshot
           {snapshot.browser} ·{" "}
           <ResolutionIcon width={snapshot.viewportWidth} size={12} className="shrink-0" />
           {snapshot.viewportName}
+          {snapshot.processingMs ? (
+            <>
+              {" "}
+              ·{" "}
+              <Icon
+                icon={TimerIcon}
+                size={12}
+                className="shrink-0"
+                role="img"
+                aria-label="processing time"
+              />
+              {formatDuration(snapshot.processingMs)}
+            </>
+          ) : null}
         </Typography>
       </SnapshotCardBody>
     </CardLink>

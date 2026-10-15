@@ -462,6 +462,8 @@ export const listForBuild = async (
       viewportName: snapshots.viewportName,
       imagePath: snapshots.imagePath,
       hasUncaughtPageError: snapshots.hasUncaughtPageError,
+      startedAt: snapshots.startedAt,
+      completedAt: snapshots.completedAt,
       status: displayStatusExpr,
       statusPriority: statusPriorityExpr,
       diffId: diffs.id,
