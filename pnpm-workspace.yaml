@@ -21,7 +21,5 @@ allowBuilds:
   sharp: true
   ssh2: true
 minimumReleaseAgeExclude:
-  - "@img/*"
-  - sharp@0.35.5
   - "@next/*"
   - next@16.4.1
