@@ -72,5 +72,6 @@ PLAYWRIGHT_BASE_URL=http://localhost:4180 pnpm --filter @ovr/e2e test:e2e:sso
 ```
 
 The browser resolves `keycloak` to `127.0.0.1`, so the token issuer is the same
-for the browser and the containers. Run it on a fresh stack: the first admin to
+for the browser and the containers. The specs call Keycloak's admin API from
+Node at `http://localhost:8081` (override with `OVR_E2E_IDP_URL`). Run it on a fresh stack: the first admin to
 sign in sets up the organization.
