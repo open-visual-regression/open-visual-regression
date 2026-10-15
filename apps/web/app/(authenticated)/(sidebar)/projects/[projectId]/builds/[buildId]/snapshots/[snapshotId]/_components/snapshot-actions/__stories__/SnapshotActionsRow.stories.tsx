@@ -43,6 +43,8 @@ const snapshot: SnapshotSchema = {
   isRebuildable: false,
   isReviewable: true,
   errorLogs: [],
+  queuedMs: null,
+  processingMs: null,
 };
 
 const diff: DiffSchema = {

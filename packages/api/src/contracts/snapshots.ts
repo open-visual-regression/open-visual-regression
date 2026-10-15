@@ -74,6 +74,8 @@ export const snapshotSchema = z.object({
   isRebuildable: z.boolean(),
   isReviewable: z.boolean(),
   errorLogs: z.array(snapshotLogSchema),
+  queuedMs: z.number().int().nullable(),
+  processingMs: z.number().int().nullable(),
 });
 
 export type SnapshotSchema = z.infer<typeof snapshotSchema>;

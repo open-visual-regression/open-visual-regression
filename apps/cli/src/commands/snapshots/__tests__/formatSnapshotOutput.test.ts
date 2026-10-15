@@ -22,6 +22,8 @@ const SNAPSHOT: SnapshotSchema = {
   isRebuildable: false,
   isReviewable: true,
   errorLogs: [],
+  queuedMs: null,
+  processingMs: null,
 };
 
 describe("formatSnapshotOutput", () => {

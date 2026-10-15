@@ -23,6 +23,8 @@ const snapshot: SnapshotSchema = {
   isRebuildable: false,
   isReviewable: true,
   errorLogs: [],
+  queuedMs: 12_000,
+  processingMs: 3_400,
 };
 
 describe("SnapshotHeader", () => {
@@ -129,5 +131,39 @@ describe("SnapshotHeader", () => {
     render(<SnapshotHeader snapshot={snapshot} build={build} storybookHref={null} />);
 
     expect(screen.queryByRole("link", { name: /view story/i })).not.toBeInTheDocument();
+  });
+
+  it("should show how long the snapshot was queued and processing", () => {
+    const build = mocks.build.generateBuild();
+    render(<SnapshotHeader snapshot={snapshot} build={build} storybookHref={null} />);
+
+    expect(screen.getByText("queued 12s · processing 3.4s")).toBeVisible();
+  });
+
+  it("should show only the queued time while the snapshot is processing", () => {
+    const build = mocks.build.generateBuild();
+    render(
+      <SnapshotHeader
+        snapshot={{ ...snapshot, status: "processing", processingMs: null }}
+        build={build}
+        storybookHref={null}
+      />,
+    );
+
+    expect(screen.getByText("queued 12s")).toBeVisible();
+    expect(screen.queryByText(/processing \d/)).not.toBeInTheDocument();
+  });
+
+  it("should not show timings that are unavailable", () => {
+    const build = mocks.build.generateBuild();
+    render(
+      <SnapshotHeader
+        snapshot={{ ...snapshot, status: "queued", queuedMs: null, processingMs: null }}
+        build={build}
+        storybookHref={null}
+      />,
+    );
+
+    expect(screen.queryByText(/queued \d/)).not.toBeInTheDocument();
   });
 });

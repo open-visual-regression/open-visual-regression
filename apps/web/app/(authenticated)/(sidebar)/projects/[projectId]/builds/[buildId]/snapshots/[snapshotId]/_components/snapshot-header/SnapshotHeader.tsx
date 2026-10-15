@@ -2,19 +2,41 @@ import type { BuildSchema } from "@ovr/api/contracts/builds";
 import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { Alert, AlertDescription, AlertTitle } from "@ovr/ui/components/alert";
 import { BadgeSkeleton } from "@ovr/ui/components/badge";
-import { GlobeIcon, Icon } from "@ovr/ui/components/icon";
+import { GlobeIcon, Icon, TimerIcon } from "@ovr/ui/components/icon";
 import { ResolutionIcon } from "@ovr/ui/components/resolution-icon";
 import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 
 import { ExternalLink } from "@/lib/components/external-link/ExternalLink";
 import { FlakyBadge } from "@/lib/components/FlakyBadge";
 import { SnapshotStatusBadge } from "@/lib/components/SnapshotStatusBadge";
+import { formatDuration } from "@/lib/utils/date";
 
 export type SnapshotHeaderProps = {
   snapshot: SnapshotSchema;
   build: BuildSchema;
   storybookHref: string | null;
   controls?: React.ReactNode;
+};
+
+const SnapshotTimings = ({
+  queuedMs,
+  processingMs,
+}: Pick<SnapshotSchema, "queuedMs" | "processingMs">) => {
+  const timings = [
+    queuedMs ? `queued ${formatDuration(queuedMs)}` : null,
+    processingMs ? `processing ${formatDuration(processingMs)}` : null,
+  ].filter((timing) => timing !== null);
+
+  if (timings.length === 0) {
+    return null;
+  }
+
+  return (
+    <Typography variant="caption" className="flex items-center gap-1">
+      <Icon icon={TimerIcon} size={12} />
+      {timings.join(" · ")}
+    </Typography>
+  );
 };
 
 export const SnapshotHeader = ({
@@ -40,6 +62,7 @@ export const SnapshotHeader = ({
           {snapshot.browser} · <ResolutionIcon width={snapshot.viewportWidth} size={12} />
           {snapshot.viewportName}
         </Typography>
+        <SnapshotTimings queuedMs={snapshot.queuedMs} processingMs={snapshot.processingMs} />
         {controls}
       </div>
     </div>
@@ -70,6 +93,7 @@ export const SnapshotHeaderSkeleton = () => (
         <TypographySkeleton variant="caption" className="w-24" />
         <TypographySkeleton variant="caption" className="w-20" />
         <TypographySkeleton variant="caption" className="w-32" />
+        <TypographySkeleton variant="caption" className="w-36" />
       </div>
     </div>
   </div>

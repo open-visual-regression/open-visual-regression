@@ -21,6 +21,7 @@ import {
 import { os } from "./os";
 import { getSnapshotFlagDetails, getSnapshotFlags } from "./utils/snapshotFlags";
 import { getSnapshotDisplayStatus } from "./utils/snapshotStatus";
+import { getSnapshotTimings } from "./utils/snapshotTimings";
 
 export const getOne = os.snapshots.getOne
   .use(callerMiddleware("builds", "read"))
@@ -74,6 +75,7 @@ export const getOne = os.snapshots.getOne
           message: log.message,
           timestamp: log.timestamp,
         })),
+        ...getSnapshotTimings(snapshot),
       },
     };
   })

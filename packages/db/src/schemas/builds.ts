@@ -191,6 +191,9 @@ export const snapshots = pgTable(
       .notNull()
       .default(0.05),
     waitForTimeout: integer("wait_for_timeout").notNull().default(0),
+    queuedAt: utcTimestamp("queued_at").default(sql`now()`),
+    startedAt: utcTimestamp("started_at"),
+    completedAt: utcTimestamp("completed_at"),
     updatedAt: utcTimestamp("updated_at")
       .default(sql`now()`)
       .$onUpdate(() => sql`now()`)

@@ -43,6 +43,8 @@ const newSnapshot = {
   isRebuildable: false,
   isReviewable: true,
   errorLogs: [],
+  queuedMs: null,
+  processingMs: null,
 };
 
 const mobileSnapshot = {

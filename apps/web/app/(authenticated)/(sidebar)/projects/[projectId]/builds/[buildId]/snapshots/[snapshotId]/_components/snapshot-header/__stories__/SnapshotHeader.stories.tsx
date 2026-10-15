@@ -42,6 +42,8 @@ const snapshot: SnapshotSchema = {
   isRebuildable: false,
   isReviewable: true,
   errorLogs: [],
+  queuedMs: 12_000,
+  processingMs: 3_400,
 };
 
 const buildOverrides: Partial<BuildSchema> = {
@@ -79,6 +81,13 @@ export const Flaky: Story = {
       status: "needs_review",
       isFlaky: true,
     },
+    build: mocks.build.generateBuild(buildOverrides),
+  },
+};
+
+export const Processing: Story = {
+  args: {
+    snapshot: { ...snapshot, status: "processing", processingMs: null },
     build: mocks.build.generateBuild(buildOverrides),
   },
 };

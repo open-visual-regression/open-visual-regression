@@ -112,6 +112,8 @@ describe("getBreadcrumbSegments", () => {
           isRebuildable: false,
           isReviewable: true,
           errorLogs: [],
+          queuedMs: null,
+          processingMs: null,
         },
       },
     ]);
