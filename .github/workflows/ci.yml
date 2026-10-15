@@ -223,7 +223,7 @@ jobs:
           TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: |
           set -euo pipefail
-          packages=$(pnpm turbo run build --affected --filter=@ovr/web --filter=@ovr/worker --dry=json | jq -c '[.packages[] | select(. != "//")]')
+          packages=$(pnpm turbo run build --affected --filter=@ovr/web --filter=@ovr/worker --filter=@ovr/e2e --dry=json | jq -c '[.packages[] | select(. != "//")]')
           echo "affected packages: $packages"
           affected=$(jq -e 'length > 0' <<<"$packages" >/dev/null && echo true || echo false)
           echo "affected=$affected" >> "$GITHUB_OUTPUT"

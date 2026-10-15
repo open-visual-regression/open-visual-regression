@@ -13,7 +13,7 @@ export const SSO_USERS = {
 } as const;
 
 export const getIdentityProviderURL = (): string =>
-  process.env.OVR_E2E_IDP_URL ?? "http://keycloak:8081";
+  process.env.OVR_E2E_IDP_URL ?? "http://localhost:8081";
 
 export const TEST_ADMIN = {
   organizationName: "E2E Org",
