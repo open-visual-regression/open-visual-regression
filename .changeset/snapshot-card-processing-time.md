@@ -1,5 +1,6 @@
 ---
+"@ovr/api": minor
 "@ovr/web": minor
 ---
 
-Snapshot cards in a build show how long each snapshot took to process, next to its browser and viewport. Snapshots that haven't finished processing show no time.
+Add `processingMs` to the snapshots in `snapshots.list`, and show it on snapshot cards in a build, next to the browser and viewport.
