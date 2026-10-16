@@ -17,19 +17,24 @@ export const SplitView = ({
   diffImagePath,
   showDiff,
   onShowDiffChange,
-}: SplitViewProps) => (
-  <div className="grid grid-cols-1 gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-2 lg:grid-rows-[minmax(0,1fr)]">
-    <BaselineSnapshotPane {...baseline} fill={diffImagePath !== null} />
-    {diffImagePath ? (
-      <NewSnapshotDiffPane
-        {...newSnapshot}
-        label="new"
-        diffImagePath={diffImagePath}
-        showDiff={showDiff}
-        onShowDiffChange={onShowDiffChange}
-      />
-    ) : (
-      <NewSnapshotPane {...newSnapshot} />
-    )}
-  </div>
-);
+}: SplitViewProps) => {
+  const canvasImagePaths = [baseline.imagePath, newSnapshot.imagePath];
+
+  return (
+    <div className="grid grid-cols-1 gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-2 lg:grid-rows-[minmax(0,1fr)]">
+      <BaselineSnapshotPane {...baseline} canvasImagePaths={canvasImagePaths} />
+      {diffImagePath ? (
+        <NewSnapshotDiffPane
+          {...newSnapshot}
+          label="new"
+          diffImagePath={diffImagePath}
+          canvasImagePaths={canvasImagePaths}
+          showDiff={showDiff}
+          onShowDiffChange={onShowDiffChange}
+        />
+      ) : (
+        <NewSnapshotPane {...newSnapshot} canvasImagePaths={canvasImagePaths} />
+      )}
+    </div>
+  );
+};

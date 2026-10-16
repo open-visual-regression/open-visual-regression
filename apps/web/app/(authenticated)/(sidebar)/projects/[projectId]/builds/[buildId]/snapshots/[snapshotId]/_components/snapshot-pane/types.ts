@@ -7,3 +7,8 @@ export type BaselineSnapshotPaneData = SnapshotPaneData & {
   commitSha: string | null;
   commitUrl: string | null;
 };
+
+export type SnapshotSize = {
+  width: number;
+  height: number;
+};

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { expect, userEvent, within } from "storybook/test";
+import { expect, userEvent, waitFor, within } from "storybook/test";
 
 import { ComparisonModeProvider } from "../comparison-view/comparison-mode";
 import { ComparisonControls } from "../comparison-view/ComparisonControls";
@@ -16,8 +16,10 @@ const meta: Meta<typeof SnapshotComparisonSection> = {
   },
   render: (args) => (
     <ComparisonModeProvider>
-      {args.diff?.baselineSnapshot ? <ComparisonControls /> : null}
-      <SnapshotComparisonSection {...args} />
+      <div className="flex flex-col gap-6 lg:h-[720px]">
+        {args.diff?.baselineSnapshot ? <ComparisonControls /> : null}
+        <SnapshotComparisonSection {...args} />
+      </div>
     </ComparisonModeProvider>
   ),
 };
@@ -167,5 +169,43 @@ export const MobileWithBaselineAndDiff: Story = {
         commitUrl: "https://github.com/acme/web/commit/abc1234567890",
       },
     },
+  },
+};
+
+export const SliderViewWithDifferentSizes: Story = {
+  parameters: { ovr: { viewports: ["desktop"] } },
+  args: {
+    snapshot: newSnapshot,
+    diff: {
+      id: "01970000-0000-7000-8000-000000000006",
+      processingStatus: "success",
+      reviewStatus: "needs_review",
+      diffImagePath: null,
+      pixelDiffCount: 0,
+      diffPercent: 0,
+      baselineSnapshot: {
+        imagePath: "baseline-mobile.png",
+        commitSha: "abc1234567890",
+        commitUrl: "https://github.com/acme/web/commit/abc1234567890",
+      },
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole("tab", { name: "slider" }));
+
+    const baselineImage = canvas.getByRole("img", { name: "baseline snapshot of Button Primary" });
+    const newImage = canvas.getByRole("img", { name: "snapshot of Button Primary" });
+
+    // Both snapshots share one canvas, so they line up at the top-left corner at the same scale.
+    await waitFor(() => {
+      const baselineBounds = baselineImage.getBoundingClientRect();
+      const newBounds = newImage.getBoundingClientRect();
+
+      expect(baselineBounds.left).toBe(newBounds.left);
+      expect(baselineBounds.top).toBe(newBounds.top);
+      expect(baselineBounds.width / newBounds.width).toBeCloseTo(375 / 1280, 2);
+    });
   },
 };

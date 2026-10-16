@@ -4,13 +4,14 @@ import { ReactCompareSlider } from "react-compare-slider";
 
 import { Typography } from "@ovr/ui/components/typography";
 
-import { Image } from "@/lib/components/image/Image";
-
 import { BaselineCommitLink } from "../../snapshot-pane/BaselineCommitLink";
+import { SnapshotFrameImage } from "../../snapshot-pane/SnapshotFrameImage";
 import { SnapshotPane } from "../../snapshot-pane/SnapshotPane";
 import { SnapshotPaneCanvas } from "../../snapshot-pane/SnapshotPaneCanvas";
+import { SnapshotPaneFrame } from "../../snapshot-pane/SnapshotPaneFrame";
 import { SnapshotPaneHeader } from "../../snapshot-pane/SnapshotPaneHeader";
 import type { BaselineSnapshotPaneData, SnapshotPaneData } from "../../snapshot-pane/types";
+import { useCanvasSize } from "../../snapshot-pane/useCanvasSize";
 
 const SliderHandle = () => (
   <div className="flex h-full cursor-ew-resize flex-col items-center">
@@ -30,48 +31,40 @@ export type SliderViewProps = {
   newSnapshot: SnapshotPaneData;
 };
 
-type SliderImageProps = {
-  imagePath: string | null;
-  alt: string;
+export const SliderView = ({ baseline, newSnapshot }: SliderViewProps) => {
+  const canvasSize = useCanvasSize([baseline.imagePath, newSnapshot.imagePath]);
+
+  return (
+    <SnapshotPane>
+      <SnapshotPaneHeader className="justify-between">
+        <div className="flex items-center gap-2">
+          <Typography variant="label">baseline</Typography>
+          <BaselineCommitLink commitSha={baseline.commitSha} commitUrl={baseline.commitUrl} />
+        </div>
+        <Typography variant="label">new</Typography>
+      </SnapshotPaneHeader>
+      <SnapshotPaneCanvas className="lg:@container-size">
+        <SnapshotPaneFrame canvasSize={canvasSize}>
+          <ReactCompareSlider
+            className="h-full w-full cursor-ew-resize [&_[role=slider]:focus-visible_[data-grip]]:ring-2 [&_[role=slider]:focus-visible_[data-grip]]:ring-ovr-fg [&_[role=slider]:focus-visible_[data-grip]]:ring-offset-2 [&_[role=slider]:focus-visible_[data-grip]]:ring-offset-ovr-inset"
+            handle={<SliderHandle />}
+            itemOne={
+              <SnapshotFrameImage
+                imagePath={baseline.imagePath}
+                alt={baseline.alt}
+                canvasSize={canvasSize}
+              />
+            }
+            itemTwo={
+              <SnapshotFrameImage
+                imagePath={newSnapshot.imagePath}
+                alt={newSnapshot.alt}
+                canvasSize={canvasSize}
+              />
+            }
+          />
+        </SnapshotPaneFrame>
+      </SnapshotPaneCanvas>
+    </SnapshotPane>
+  );
 };
-
-const SliderImage = ({ imagePath, alt }: SliderImageProps) => (
-  <div className="flex h-full w-full items-start justify-start">
-    {imagePath ? (
-      <Image
-        src={imagePath}
-        alt={alt}
-        className="block h-auto w-full lg:max-h-full lg:w-auto lg:max-w-full"
-        errorFallback={
-          <Typography variant="caption" className="m-auto">
-            failed to load snapshot
-          </Typography>
-        }
-      />
-    ) : (
-      <Typography variant="caption" className="m-auto">
-        no preview
-      </Typography>
-    )}
-  </div>
-);
-
-export const SliderView = ({ baseline, newSnapshot }: SliderViewProps) => (
-  <SnapshotPane>
-    <SnapshotPaneHeader className="justify-between">
-      <div className="flex items-center gap-2">
-        <Typography variant="label">baseline</Typography>
-        <BaselineCommitLink commitSha={baseline.commitSha} commitUrl={baseline.commitUrl} />
-      </div>
-      <Typography variant="label">new</Typography>
-    </SnapshotPaneHeader>
-    <SnapshotPaneCanvas>
-      <ReactCompareSlider
-        className="h-full w-full cursor-ew-resize [&_[role=slider]:focus-visible_[data-grip]]:ring-2 [&_[role=slider]:focus-visible_[data-grip]]:ring-ovr-fg [&_[role=slider]:focus-visible_[data-grip]]:ring-offset-2 [&_[role=slider]:focus-visible_[data-grip]]:ring-offset-ovr-inset"
-        handle={<SliderHandle />}
-        itemOne={<SliderImage imagePath={baseline.imagePath} alt={baseline.alt} />}
-        itemTwo={<SliderImage imagePath={newSnapshot.imagePath} alt={newSnapshot.alt} />}
-      />
-    </SnapshotPaneCanvas>
-  </SnapshotPane>
-);

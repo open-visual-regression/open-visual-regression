@@ -9,17 +9,17 @@ import { SnapshotZoomDialog } from "../../snapshot-zoom/SnapshotZoomDialog";
 export type BaselineSnapshotPaneProps = {
   imagePath: string | null;
   alt: string;
-  fill?: boolean;
   commitSha: string | null;
   commitUrl: string | null;
+  canvasImagePaths: (string | null)[];
 };
 
 export const BaselineSnapshotPane = ({
   imagePath,
   alt,
-  fill,
   commitSha,
   commitUrl,
+  canvasImagePaths,
 }: BaselineSnapshotPaneProps) => (
   <SnapshotPane>
     <SnapshotPaneHeader className="gap-2">
@@ -33,6 +33,6 @@ export const BaselineSnapshotPane = ({
         commitUrl={commitUrl}
       />
     </SnapshotPaneHeader>
-    <SnapshotPaneImage imagePath={imagePath} alt={alt} fill={fill} />
+    <SnapshotPaneImage imagePath={imagePath} alt={alt} canvasImagePaths={canvasImagePaths} />
   </SnapshotPane>
 );
