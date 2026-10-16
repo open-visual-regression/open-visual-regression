@@ -9,6 +9,7 @@ import { SnapshotZoomTrigger } from "../../snapshot-zoom/SnapshotZoomTrigger";
 export type BaselineSnapshotPaneProps = {
   imagePath: string | null;
   alt: string;
+  fill?: boolean;
   commitSha: string | null;
   commitUrl: string | null;
   canvasImagePaths: (string | null)[];
@@ -17,6 +18,7 @@ export type BaselineSnapshotPaneProps = {
 export const BaselineSnapshotPane = ({
   imagePath,
   alt,
+  fill,
   commitSha,
   commitUrl,
   canvasImagePaths,
@@ -26,7 +28,12 @@ export const BaselineSnapshotPane = ({
       <Typography variant="label">baseline</Typography>
       <BaselineCommitLink commitSha={commitSha} commitUrl={commitUrl} />
     </SnapshotPaneHeader>
-    <SnapshotPaneImage imagePath={imagePath} alt={alt} canvasImagePaths={canvasImagePaths}>
+    <SnapshotPaneImage
+      imagePath={imagePath}
+      alt={alt}
+      canvasImagePaths={canvasImagePaths}
+      fill={fill}
+    >
       <SnapshotZoomTrigger view="baseline" disabled={!imagePath} />
     </SnapshotPaneImage>
   </SnapshotPane>

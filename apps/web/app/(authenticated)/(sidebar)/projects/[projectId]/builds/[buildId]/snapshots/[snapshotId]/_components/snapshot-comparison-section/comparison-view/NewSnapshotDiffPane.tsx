@@ -34,7 +34,7 @@ export const NewSnapshotDiffPane = ({
         <Switch checked={showDiff} onCheckedChange={onShowDiffChange} />
       </label>
     </SnapshotPaneHeader>
-    <SnapshotPaneImage imagePath={imagePath} alt={alt} canvasImagePaths={canvasImagePaths}>
+    <SnapshotPaneImage imagePath={imagePath} alt={alt} canvasImagePaths={canvasImagePaths} fill>
       <img
         src={diffImagePath}
         alt={`diff overlay of ${alt}`}

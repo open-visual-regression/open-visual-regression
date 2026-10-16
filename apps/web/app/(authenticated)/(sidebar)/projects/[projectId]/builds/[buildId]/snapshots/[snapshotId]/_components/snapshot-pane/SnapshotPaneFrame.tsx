@@ -6,10 +6,12 @@ import type { SnapshotSize } from "./types";
 
 type SnapshotPaneFrameProps = JSX.IntrinsicElements["div"] & {
   canvasSize: SnapshotSize | null;
+  fill?: boolean;
 };
 
 export const SnapshotPaneFrame = ({
   canvasSize,
+  fill = false,
   className,
   children,
   ...props
@@ -18,8 +20,9 @@ export const SnapshotPaneFrame = ({
     {...props}
     className={cn(
       canvasSize
-        ? "relative aspect-(--canvas-aspect) w-[min(100%,var(--canvas-width))] lg:w-[min(100cqw,100cqh*var(--canvas-aspect),var(--canvas-width))]"
+        ? "relative aspect-(--canvas-aspect) lg:w-[min(100cqw,100cqh*var(--canvas-aspect),var(--canvas-width))]"
         : "absolute inset-0",
+      canvasSize && (fill ? "w-full" : "w-[min(100%,var(--canvas-width))]"),
       className,
     )}
     style={
