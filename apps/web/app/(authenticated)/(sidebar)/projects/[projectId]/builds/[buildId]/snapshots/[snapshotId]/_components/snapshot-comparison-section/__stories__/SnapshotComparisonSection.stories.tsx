@@ -16,7 +16,7 @@ const meta: Meta<typeof SnapshotComparisonSection> = {
   },
   render: (args) => (
     <ComparisonModeProvider>
-      <div className="flex flex-col gap-6 lg:h-[720px]">
+      <div className="flex flex-col lg:h-[720px]">
         {args.diff?.baselineSnapshot ? <ComparisonControls /> : null}
         <SnapshotComparisonSection {...args} />
       </div>
@@ -195,8 +195,10 @@ export const SliderViewWithDifferentSizes: Story = {
 
     await userEvent.click(canvas.getByRole("tab", { name: "slider" }));
 
-    const baselineImage = canvas.getByRole("img", { name: "baseline snapshot of Button Primary" });
-    const newImage = canvas.getByRole("img", { name: "snapshot of Button Primary" });
+    const baselineImage = await canvas.findByRole("img", {
+      name: "baseline snapshot of Button Primary",
+    });
+    const newImage = await canvas.findByRole("img", { name: "snapshot of Button Primary" });
 
     // Both snapshots share one canvas, so they line up at the top-left corner at the same scale.
     await waitFor(() => {
