@@ -1,6 +1,7 @@
 "use client";
 
 import type { BaselineSnapshotPaneData, SnapshotPaneData } from "../../snapshot-pane/types";
+import { SnapshotZoomDialog } from "../../snapshot-zoom/SnapshotZoomDialog";
 import { useComparisonMode } from "./comparison-mode";
 import { SliderView } from "./SliderView";
 import { SplitView } from "./SplitView";
@@ -19,12 +20,14 @@ export const ComparisonView = ({ baseline, newSnapshot, diffImagePath }: Compari
   }
 
   return (
-    <SplitView
-      baseline={baseline}
-      newSnapshot={newSnapshot}
-      diffImagePath={diffImagePath}
-      showDiff={showDiff}
-      onShowDiffChange={setShowDiff}
-    />
+    <SnapshotZoomDialog baseline={baseline} newSnapshot={newSnapshot} diffImagePath={diffImagePath}>
+      <SplitView
+        baseline={baseline}
+        newSnapshot={newSnapshot}
+        diffImagePath={diffImagePath}
+        showDiff={showDiff}
+        onShowDiffChange={setShowDiff}
+      />
+    </SnapshotZoomDialog>
   );
 };

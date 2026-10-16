@@ -1,4 +1,4 @@
-import { describe, expect, it, render, screen } from "@/test-utils";
+import { describe, expect, it, render, screen, within } from "@/test-utils";
 
 import { ComparisonModeProvider } from "../comparison-mode";
 import { ComparisonControls } from "../ComparisonControls";
@@ -73,5 +73,28 @@ describe("ComparisonView", () => {
 
     expect(screen.getByRole("slider")).toBeVisible();
     expect(screen.queryByRole("switch")).not.toBeInTheDocument();
+  });
+
+  it("should open the zoom dialog on the snapshot that was clicked", async ({ user }) => {
+    renderComparison();
+
+    await user.click(screen.getByRole("button", { name: "zoom baseline" }));
+
+    expect(screen.getByRole("dialog", { name: "baseline" })).toBeVisible();
+  });
+
+  it("should open the new snapshot with the diff shown or hidden to match the split view", async ({
+    user,
+  }) => {
+    renderComparison();
+
+    await user.click(screen.getByRole("switch"));
+    await user.click(screen.getByRole("button", { name: "zoom new" }));
+
+    const dialog = screen.getByRole("dialog", { name: "new" });
+    expect(within(dialog).getByRole("switch")).not.toBeChecked();
+    expect(within(dialog).getByRole("img", { name: "diff overlay of new snapshot" })).toHaveClass(
+      "opacity-0",
+    );
   });
 });

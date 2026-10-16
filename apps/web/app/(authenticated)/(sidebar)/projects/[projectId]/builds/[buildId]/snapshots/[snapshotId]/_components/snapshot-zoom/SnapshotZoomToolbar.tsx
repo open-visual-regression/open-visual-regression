@@ -5,28 +5,36 @@ import { useControls, useTransformComponent } from "react-zoom-pan-pinch";
 import { Button } from "@ovr/ui/components/button";
 import { DialogClose, DialogTitle } from "@ovr/ui/components/dialog";
 import { Icon, MinusIcon, PlusIcon, ScanIcon, XIcon } from "@ovr/ui/components/icon";
+import {
+  SegmentedTabs,
+  SegmentedTabsList,
+  SegmentedTabsTrigger,
+} from "@ovr/ui/components/segmented-tabs";
 import { Switch } from "@ovr/ui/components/switch";
 import { Typography } from "@ovr/ui/components/typography";
+import { cn } from "@ovr/ui/lib/utils";
 
 import { ResponsiveActionButton } from "@/lib/components/responsive-action-button/ResponsiveActionButton";
 
 import { BaselineCommitLink } from "../snapshot-pane/BaselineCommitLink";
+import type { BaselineSnapshotPaneData } from "../snapshot-pane/types";
+import type { SnapshotZoomView } from "./snapshot-zoom";
 
 const BUTTON_ZOOM_RATIO = 1.25;
 
 export type SnapshotZoomToolbarProps = {
-  title: string;
-  commitSha: string | null;
-  commitUrl: string | null;
+  view: SnapshotZoomView;
+  onViewChange: (view: SnapshotZoomView) => void;
+  baseline: BaselineSnapshotPaneData | null;
   hasDiff: boolean;
   showDiff: boolean;
   onShowDiffChange: (showDiff: boolean) => void;
 };
 
 export const SnapshotZoomToolbar = ({
-  title,
-  commitSha,
-  commitUrl,
+  view,
+  onViewChange,
+  baseline,
   hasDiff,
   showDiff,
   onShowDiffChange,
@@ -35,17 +43,34 @@ export const SnapshotZoomToolbar = ({
   const scale = useTransformComponent(({ state }) => state.scale);
 
   return (
-    <div className="flex shrink-0 flex-wrap items-center gap-x-1 gap-y-2 border-b border-ovr-border-subtle px-2 py-2 sm:gap-x-4 sm:px-4">
-      <div className="mr-auto flex items-center gap-2">
-        <DialogTitle>
-          <Typography variant="label">{title}</Typography>
+    <div className="flex shrink-0 flex-wrap items-center justify-end gap-x-1 gap-y-2 border-b border-ovr-border-subtle px-2 py-2 sm:gap-x-4 sm:px-4">
+      <div className={cn("mr-auto flex items-center gap-2", baseline && "w-full sm:w-auto")}>
+        <DialogTitle className={cn(baseline && "sr-only")}>
+          <Typography variant="label">{view}</Typography>
         </DialogTitle>
-        <BaselineCommitLink commitSha={commitSha} commitUrl={commitUrl} />
+        {baseline ? (
+          <SegmentedTabs
+            value={view}
+            onValueChange={(value) => onViewChange(value as SnapshotZoomView)}
+          >
+            <SegmentedTabsList>
+              <SegmentedTabsTrigger value="baseline">baseline</SegmentedTabsTrigger>
+              <SegmentedTabsTrigger value="new">new</SegmentedTabsTrigger>
+            </SegmentedTabsList>
+          </SegmentedTabs>
+        ) : null}
+        {baseline && view === "baseline" ? (
+          <BaselineCommitLink commitSha={baseline.commitSha} commitUrl={baseline.commitUrl} />
+        ) : null}
       </div>
       {hasDiff ? (
         <label className="flex items-center gap-2">
           <Typography variant="caption">diff</Typography>
-          <Switch checked={showDiff} onCheckedChange={onShowDiffChange} />
+          <Switch
+            checked={showDiff}
+            disabled={view === "baseline"}
+            onCheckedChange={onShowDiffChange}
+          />
         </label>
       ) : null}
       <div className="flex items-center gap-1">
