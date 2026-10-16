@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { expect, userEvent, within } from "storybook/test";
+import { expect, userEvent, waitFor, within } from "storybook/test";
 
 import { ComparisonModeProvider } from "../comparison-view/comparison-mode";
 import { ComparisonControls } from "../comparison-view/ComparisonControls";
@@ -16,8 +16,10 @@ const meta: Meta<typeof SnapshotComparisonSection> = {
   },
   render: (args) => (
     <ComparisonModeProvider>
-      {args.diff?.baselineSnapshot ? <ComparisonControls /> : null}
-      <SnapshotComparisonSection {...args} />
+      <div className="flex flex-col lg:h-[720px]">
+        {args.diff?.baselineSnapshot ? <ComparisonControls /> : null}
+        <SnapshotComparisonSection {...args} />
+      </div>
     </ComparisonModeProvider>
   ),
 };
@@ -167,5 +169,54 @@ export const MobileWithBaselineAndDiff: Story = {
         commitUrl: "https://github.com/acme/web/commit/abc1234567890",
       },
     },
+  },
+};
+
+export const DifferentSizes: Story = {
+  parameters: { ovr: { viewports: ["desktop"] } },
+  args: {
+    snapshot: newSnapshot,
+    diff: {
+      id: "01970000-0000-7000-8000-000000000006",
+      processingStatus: "success",
+      reviewStatus: "needs_review",
+      diffImagePath: null,
+      pixelDiffCount: 0,
+      diffPercent: 0,
+      baselineSnapshot: {
+        imagePath: "baseline-mobile.png",
+        commitSha: "abc1234567890",
+        commitUrl: "https://github.com/acme/web/commit/abc1234567890",
+      },
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const widthRatio = (baselineImage: HTMLElement, newImage: HTMLElement) =>
+      baselineImage.getBoundingClientRect().width / newImage.getBoundingClientRect().width;
+
+    const splitBaselineImage = await canvas.findByRole("img", {
+      name: "baseline snapshot of Button Primary",
+    });
+    const splitNewImage = await canvas.findByRole("img", { name: "snapshot of Button Primary" });
+    await waitFor(() =>
+      expect(widthRatio(splitBaselineImage, splitNewImage)).toBeCloseTo(375 / 1280, 2),
+    );
+
+    await userEvent.click(canvas.getByRole("tab", { name: "slider" }));
+
+    const sliderBaselineImage = await canvas.findByRole("img", {
+      name: "baseline snapshot of Button Primary",
+    });
+    const sliderNewImage = await canvas.findByRole("img", { name: "snapshot of Button Primary" });
+    await waitFor(() =>
+      expect(widthRatio(sliderBaselineImage, sliderNewImage)).toBeCloseTo(375 / 1280, 2),
+    );
+    await expect(sliderBaselineImage.getBoundingClientRect().left).toBe(
+      sliderNewImage.getBoundingClientRect().left,
+    );
+    await expect(sliderBaselineImage.getBoundingClientRect().top).toBe(
+      sliderNewImage.getBoundingClientRect().top,
+    );
   },
 };

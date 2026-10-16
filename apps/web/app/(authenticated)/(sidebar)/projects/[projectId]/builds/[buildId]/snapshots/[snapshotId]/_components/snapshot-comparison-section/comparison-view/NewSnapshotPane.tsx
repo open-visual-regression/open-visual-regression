@@ -8,14 +8,15 @@ import { SnapshotZoomDialog } from "../../snapshot-zoom/SnapshotZoomDialog";
 export type NewSnapshotPaneProps = {
   imagePath: string | null;
   alt: string;
+  canvasImagePaths?: (string | null)[];
 };
 
-export const NewSnapshotPane = ({ imagePath, alt }: NewSnapshotPaneProps) => (
+export const NewSnapshotPane = ({ imagePath, alt, canvasImagePaths }: NewSnapshotPaneProps) => (
   <SnapshotPane>
     <SnapshotPaneHeader>
       <Typography variant="label">new</Typography>
       <SnapshotZoomDialog title="new" imagePath={imagePath} alt={alt} />
     </SnapshotPaneHeader>
-    <SnapshotPaneImage imagePath={imagePath} alt={alt} />
+    <SnapshotPaneImage imagePath={imagePath} alt={alt} canvasImagePaths={canvasImagePaths} />
   </SnapshotPane>
 );

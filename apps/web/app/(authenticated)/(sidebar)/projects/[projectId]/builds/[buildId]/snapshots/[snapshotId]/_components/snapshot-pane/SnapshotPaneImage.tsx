@@ -1,36 +1,33 @@
-import { Typography } from "@ovr/ui/components/typography";
-import { cn } from "@ovr/ui/lib/utils";
+"use client";
 
-import { Image } from "@/lib/components/image/Image";
-
+import { SnapshotFrameImage } from "./SnapshotFrameImage";
 import { SnapshotPaneCanvas } from "./SnapshotPaneCanvas";
+import { SnapshotPaneFrame } from "./SnapshotPaneFrame";
+import { useCanvasSize } from "./useCanvasSize";
 
 export type SnapshotPaneImageProps = {
   imagePath: string | null;
   alt: string;
+  canvasImagePaths?: (string | null)[];
   fill?: boolean;
+  children?: React.ReactNode;
 };
 
-export const SnapshotPaneImage = ({ imagePath, alt, fill = false }: SnapshotPaneImageProps) => (
-  <SnapshotPaneCanvas>
-    {imagePath ? (
-      <Image
-        src={imagePath}
-        alt={alt}
-        className={cn(
-          "block h-auto lg:max-h-full lg:w-auto lg:max-w-full",
-          fill ? "w-full" : "max-w-full",
-        )}
-        errorFallback={
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Typography variant="caption">failed to load snapshot</Typography>
-          </div>
-        }
-      />
-    ) : (
-      <div className="absolute inset-0 flex items-center justify-center">
-        <Typography variant="caption">no preview</Typography>
-      </div>
-    )}
-  </SnapshotPaneCanvas>
-);
+export const SnapshotPaneImage = ({
+  imagePath,
+  alt,
+  canvasImagePaths = [imagePath],
+  fill,
+  children,
+}: SnapshotPaneImageProps) => {
+  const canvasSize = useCanvasSize(canvasImagePaths);
+
+  return (
+    <SnapshotPaneCanvas className="lg:@container-size">
+      <SnapshotPaneFrame canvasSize={canvasSize} fill={fill}>
+        <SnapshotFrameImage imagePath={imagePath} alt={alt} canvasSize={canvasSize} />
+        {children}
+      </SnapshotPaneFrame>
+    </SnapshotPaneCanvas>
+  );
+};

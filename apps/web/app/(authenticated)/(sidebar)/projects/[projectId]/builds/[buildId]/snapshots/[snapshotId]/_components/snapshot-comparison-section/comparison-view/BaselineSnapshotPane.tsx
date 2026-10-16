@@ -12,6 +12,7 @@ export type BaselineSnapshotPaneProps = {
   fill?: boolean;
   commitSha: string | null;
   commitUrl: string | null;
+  canvasImagePaths: (string | null)[];
 };
 
 export const BaselineSnapshotPane = ({
@@ -20,6 +21,7 @@ export const BaselineSnapshotPane = ({
   fill,
   commitSha,
   commitUrl,
+  canvasImagePaths,
 }: BaselineSnapshotPaneProps) => (
   <SnapshotPane>
     <SnapshotPaneHeader className="gap-2">
@@ -33,6 +35,11 @@ export const BaselineSnapshotPane = ({
         commitUrl={commitUrl}
       />
     </SnapshotPaneHeader>
-    <SnapshotPaneImage imagePath={imagePath} alt={alt} fill={fill} />
+    <SnapshotPaneImage
+      imagePath={imagePath}
+      alt={alt}
+      canvasImagePaths={canvasImagePaths}
+      fill={fill}
+    />
   </SnapshotPane>
 );
