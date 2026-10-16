@@ -1,3 +1,5 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
 import { describe, expect, it, render, screen } from "@/test-utils";
 
 import { ComparisonModeProvider } from "../comparison-mode";
@@ -17,10 +19,12 @@ const props: ComparisonViewProps = {
 
 const renderComparison = (overrides: Partial<typeof props> = {}) =>
   render(
-    <ComparisonModeProvider>
-      <ComparisonControls />
-      <ComparisonView {...props} {...overrides} />
-    </ComparisonModeProvider>,
+    <QueryClientProvider client={new QueryClient()}>
+      <ComparisonModeProvider>
+        <ComparisonControls />
+        <ComparisonView {...props} {...overrides} />
+      </ComparisonModeProvider>
+    </QueryClientProvider>,
   );
 
 describe("ComparisonView", () => {
