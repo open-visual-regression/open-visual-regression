@@ -10,8 +10,8 @@ export const SnapshotSidebar = ({ collapsed, children }: SnapshotSidebarProps) =
     aria-hidden={collapsed ? true : undefined}
     inert={collapsed ? true : undefined}
     className={cn(
-      "absolute inset-y-0 right-0 z-10 flex w-full flex-col overflow-hidden border-l border-ovr-border bg-background transition-transform duration-200 ease-in-out",
-      "lg:static lg:inset-auto lg:z-auto lg:w-120 lg:shrink-0 lg:translate-x-0 lg:transition-[width]",
+      "absolute inset-y-0 right-0 z-10 flex w-full flex-col overflow-hidden border-ovr-border bg-background transition-transform duration-200 ease-in-out",
+      "lg:static lg:border-llg:inset-auto lg:z-auto lg:w-120 lg:shrink-0 lg:translate-x-0 lg:transition-[width]",
       collapsed ? "translate-x-full lg:w-0 lg:border-l-0" : "translate-x-0",
     )}
   >
