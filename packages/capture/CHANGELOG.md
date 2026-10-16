@@ -1,5 +1,13 @@
 # @ovr/capture
 
+## 0.3.8
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @ovr/builds@0.2.4
+  - @ovr/reviews@0.1.19
+
 ## 0.3.7
 
 ### Patch Changes

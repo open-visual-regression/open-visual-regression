@@ -1,5 +1,24 @@
 # @ovr/web
 
+## 0.12.0
+
+### Minor Changes
+
+- [#389](https://github.com/open-visual-regression/open-visual-regression/pull/389) [`8e45f3a`](https://github.com/open-visual-regression/open-visual-regression/commit/8e45f3a709ea77e73beaad2fc96a1b1dcf407960) Thanks [@tgfischer](https://github.com/tgfischer)! - Add `processingMs` to the snapshots in `snapshots.list`, and show it on snapshot cards in a build, next to the browser and viewport.
+
+- [#387](https://github.com/open-visual-regression/open-visual-regression/pull/387) [`cc7d7e1`](https://github.com/open-visual-regression/open-visual-regression/commit/cc7d7e149a4fffec1c5852febce0111b6225d7cc) Thanks [@tgfischer](https://github.com/tgfischer)! - The snapshot page shows how long a snapshot took to process, next to its browser and viewport. The time appears once processing has finished. Snapshots captured before this release show no time.
+
+- [#383](https://github.com/open-visual-regression/open-visual-regression/pull/383) [`cb2a6e7`](https://github.com/open-visual-regression/open-visual-regression/commit/cb2a6e71cf356993afc3ff576632a66282916d22) Thanks [@tgfischer](https://github.com/tgfischer)! - OVR can sign people in from the identity an SSO proxy forwards, so deployments behind Okta or another identity provider no longer ask for a second password. Set `OVR_AUTH_MODE=trusted-proxy` (Helm: `auth.mode`) to turn it on. Existing users keep their accounts, matched by email. Roles come from the identity provider's groups and update on every request. See the SSO page in the self-hosting docs.
+
+### Patch Changes
+
+- [#391](https://github.com/open-visual-regression/open-visual-regression/pull/391) [`9abd039`](https://github.com/open-visual-regression/open-visual-regression/commit/9abd0397d51a44ee26bd98bccca762a3f47b874e) Thanks [@tgfischer](https://github.com/tgfischer)! - Approving or rejecting a snapshot now moves on to the next one immediately instead of waiting for the vote to save.
+
+- Updated dependencies [[`8e45f3a`](https://github.com/open-visual-regression/open-visual-regression/commit/8e45f3a709ea77e73beaad2fc96a1b1dcf407960)]:
+  - @ovr/api@0.5.0
+  - @ovr/builds@0.2.4
+  - @ovr/reviews@0.1.19
+
 ## 0.11.2
 
 ### Patch Changes
