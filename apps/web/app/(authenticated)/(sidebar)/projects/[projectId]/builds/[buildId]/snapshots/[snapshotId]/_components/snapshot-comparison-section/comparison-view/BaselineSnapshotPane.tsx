@@ -4,7 +4,7 @@ import { BaselineCommitLink } from "../../snapshot-pane/BaselineCommitLink";
 import { SnapshotPane } from "../../snapshot-pane/SnapshotPane";
 import { SnapshotPaneHeader } from "../../snapshot-pane/SnapshotPaneHeader";
 import { SnapshotPaneImage } from "../../snapshot-pane/SnapshotPaneImage";
-import { SnapshotZoomDialog } from "../../snapshot-zoom/SnapshotZoomDialog";
+import { SnapshotZoomTrigger } from "../../snapshot-zoom/SnapshotZoomTrigger";
 
 export type BaselineSnapshotPaneProps = {
   imagePath: string | null;
@@ -27,19 +27,13 @@ export const BaselineSnapshotPane = ({
     <SnapshotPaneHeader className="gap-2">
       <Typography variant="label">baseline</Typography>
       <BaselineCommitLink commitSha={commitSha} commitUrl={commitUrl} />
-      <SnapshotZoomDialog
-        title="baseline"
-        imagePath={imagePath}
-        alt={alt}
-        commitSha={commitSha}
-        commitUrl={commitUrl}
-      />
     </SnapshotPaneHeader>
     <SnapshotPaneImage
       imagePath={imagePath}
       alt={alt}
       canvasImagePaths={canvasImagePaths}
       fill={fill}
+      trigger={<SnapshotZoomTrigger view="baseline" disabled={!imagePath} />}
     />
   </SnapshotPane>
 );

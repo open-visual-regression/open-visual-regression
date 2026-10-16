@@ -5,7 +5,7 @@ import { cn } from "@ovr/ui/lib/utils";
 import { SnapshotPane } from "../../snapshot-pane/SnapshotPane";
 import { SnapshotPaneHeader } from "../../snapshot-pane/SnapshotPaneHeader";
 import { SnapshotPaneImage } from "../../snapshot-pane/SnapshotPaneImage";
-import { SnapshotZoomDialog } from "../../snapshot-zoom/SnapshotZoomDialog";
+import { SnapshotZoomTrigger } from "../../snapshot-zoom/SnapshotZoomTrigger";
 
 export type NewSnapshotDiffPaneProps = {
   label: string;
@@ -29,20 +29,18 @@ export const NewSnapshotDiffPane = ({
   <SnapshotPane>
     <SnapshotPaneHeader>
       <Typography variant="label">{label}</Typography>
-      <div className="ml-auto flex items-center gap-2">
-        <label className="flex items-center gap-2">
-          <Typography variant="caption">diff</Typography>
-          <Switch checked={showDiff} onCheckedChange={onShowDiffChange} />
-        </label>
-        <SnapshotZoomDialog
-          title={label}
-          imagePath={imagePath}
-          alt={alt}
-          diffImagePath={diffImagePath}
-        />
-      </div>
+      <label className="ml-auto flex items-center gap-2">
+        <Typography variant="caption">diff</Typography>
+        <Switch checked={showDiff} onCheckedChange={onShowDiffChange} />
+      </label>
     </SnapshotPaneHeader>
-    <SnapshotPaneImage imagePath={imagePath} alt={alt} canvasImagePaths={canvasImagePaths} fill>
+    <SnapshotPaneImage
+      imagePath={imagePath}
+      alt={alt}
+      canvasImagePaths={canvasImagePaths}
+      fill
+      trigger={<SnapshotZoomTrigger view="new" disabled={!imagePath} />}
+    >
       <img
         src={diffImagePath}
         alt={`diff overlay of ${alt}`}

@@ -1,31 +1,34 @@
 "use client";
 
-import { useEffect, useEffectEvent, useState } from "react";
+import { useEffect, useEffectEvent } from "react";
 import { TransformComponent, useControls } from "react-zoom-pan-pinch";
 
-import { Typography } from "@ovr/ui/components/typography";
 import { cn } from "@ovr/ui/lib/utils";
 
+import { SnapshotFrameImage } from "../snapshot-pane/SnapshotFrameImage";
+import type { BaselineSnapshotPaneData, SnapshotPaneData } from "../snapshot-pane/types";
+import { useCanvasSize } from "../snapshot-pane/useCanvasSize";
+import type { SnapshotZoomView } from "./snapshot-zoom";
+
 export type SnapshotZoomViewportProps = {
-  imagePath: string | null;
+  view: SnapshotZoomView;
+  baseline: BaselineSnapshotPaneData | null;
+  newSnapshot: SnapshotPaneData;
   diffImagePath: string | null;
-  alt: string;
   showDiff: boolean;
 };
 
-type Size = { width: number; height: number };
-
 export const SnapshotZoomViewport = ({
-  imagePath,
+  view,
+  baseline,
+  newSnapshot,
   diffImagePath,
-  alt,
   showDiff,
 }: SnapshotZoomViewportProps) => {
   const { fitToView } = useControls();
-  const [imageWidth, setImageWidth] = useState<number | null>(null);
-  const [diffSize, setDiffSize] = useState<Size | null>(null);
+  const canvasSize = useCanvasSize([baseline?.imagePath ?? null, newSnapshot.imagePath]);
 
-  const isReady = diffImagePath ? imageWidth !== null && diffSize !== null : imageWidth !== null;
+  const isReady = canvasSize !== null;
 
   const fitOnReady = useEffectEvent(() => fitToView({ maxScale: 1, animationTime: 0 }));
 
@@ -35,46 +38,38 @@ export const SnapshotZoomViewport = ({
     }
   }, [isReady]);
 
-  if (!imagePath) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <Typography variant="caption">no preview</Typography>
-      </div>
-    );
-  }
-
-  const imageWidthPercent =
-    diffSize && imageWidth ? `${(imageWidth / diffSize.width) * 100}%` : undefined;
-
   return (
     <TransformComponent
       wrapperClass="h-full! w-full! cursor-grab active:cursor-grabbing"
       contentClass="bg-pixel-grid"
     >
-      <div className="relative">
-        <img
-          src={imagePath}
-          alt={alt}
-          draggable={false}
-          className={cn("block max-w-none select-none", diffImagePath && "absolute top-0 left-0")}
-          style={diffImagePath ? { width: imageWidthPercent } : undefined}
-          onLoad={(event) => setImageWidth(event.currentTarget.naturalWidth)}
+      <div
+        className="relative"
+        style={canvasSize ? { width: canvasSize.width, height: canvasSize.height } : undefined}
+      >
+        {baseline ? (
+          <SnapshotFrameImage
+            imagePath={baseline.imagePath}
+            alt={baseline.alt}
+            canvasSize={canvasSize}
+            className={cn(view !== "baseline" && "invisible")}
+          />
+        ) : null}
+        <SnapshotFrameImage
+          imagePath={newSnapshot.imagePath}
+          alt={newSnapshot.alt}
+          canvasSize={canvasSize}
+          className={cn(view !== "new" && "invisible")}
         />
         {diffImagePath ? (
           <img
             src={diffImagePath}
-            alt={`diff overlay of ${alt}`}
+            alt={`diff overlay of ${newSnapshot.alt}`}
             draggable={false}
             className={cn(
-              "relative block max-w-none select-none",
-              showDiff ? "opacity-100" : "opacity-0",
+              "absolute inset-0 block size-full select-none",
+              view === "new" && showDiff ? "opacity-100" : "opacity-0",
             )}
-            onLoad={(event) =>
-              setDiffSize({
-                width: event.currentTarget.naturalWidth,
-                height: event.currentTarget.naturalHeight,
-              })
-            }
           />
         ) : null}
       </div>

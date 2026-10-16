@@ -3,51 +3,36 @@
 import { useState } from "react";
 import { TransformWrapper } from "react-zoom-pan-pinch";
 
-import { Button } from "@ovr/ui/components/button";
-import { Dialog, DialogContent, DialogTrigger } from "@ovr/ui/components/dialog";
-import { Icon, Maximize2Icon } from "@ovr/ui/components/icon";
+import { Dialog, DialogContent } from "@ovr/ui/components/dialog";
 
+import { useComparisonMode } from "../snapshot-comparison-section/comparison-view/comparison-mode";
+import type { BaselineSnapshotPaneData, SnapshotPaneData } from "../snapshot-pane/types";
+import { SnapshotZoomContext, type SnapshotZoomView } from "./snapshot-zoom";
 import { SnapshotZoomToolbar } from "./SnapshotZoomToolbar";
 import { SnapshotZoomViewport } from "./SnapshotZoomViewport";
 
 const WHEEL_ZOOM_STEP = 0.002;
 
 export type SnapshotZoomDialogProps = {
-  title: string;
-  imagePath: string | null;
-  alt: string;
-  diffImagePath?: string | null;
-  commitSha?: string | null;
-  commitUrl?: string | null;
+  baseline: BaselineSnapshotPaneData | null;
+  newSnapshot: SnapshotPaneData;
+  diffImagePath: string | null;
+  children: React.ReactNode;
 };
 
 export const SnapshotZoomDialog = ({
-  title,
-  imagePath,
-  alt,
-  diffImagePath = null,
-  commitSha = null,
-  commitUrl = null,
+  baseline,
+  newSnapshot,
+  diffImagePath,
+  children,
 }: SnapshotZoomDialogProps) => {
-  const [showDiff, setShowDiff] = useState(true);
+  const { showDiff, setShowDiff } = useComparisonMode();
+  const [view, setView] = useState<SnapshotZoomView>("new");
   const [scale, setScale] = useState(1);
 
   return (
     <Dialog>
-      <DialogTrigger
-        render={
-          <Button
-            variant="ghost"
-            color="neutral"
-            size="icon-xs"
-            className="ml-auto shrink-0"
-            aria-label={`zoom ${title}`}
-          />
-        }
-        disabled={!imagePath}
-      >
-        <Icon icon={Maximize2Icon} size={10} />
-      </DialogTrigger>
+      <SnapshotZoomContext.Provider value={{ setView }}>{children}</SnapshotZoomContext.Provider>
       <DialogContent
         showCloseButton={false}
         className="top-0 left-0 flex h-dvh w-screen max-w-none rounded-none sm:top-4 sm:left-4 sm:h-[calc(100dvh-2rem)] sm:w-[calc(100vw-2rem)] sm:rounded-xl translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden p-0 sm:max-w-none"
@@ -61,18 +46,19 @@ export const SnapshotZoomDialog = ({
           onTransform={(_, state) => setScale(state.scale)}
         >
           <SnapshotZoomToolbar
-            title={title}
-            commitSha={commitSha}
-            commitUrl={commitUrl}
+            view={view}
+            onViewChange={setView}
+            baseline={baseline}
             hasDiff={diffImagePath !== null}
             showDiff={showDiff}
             onShowDiffChange={setShowDiff}
           />
           <div className="min-h-0 flex-1 overflow-hidden bg-ovr-inset">
             <SnapshotZoomViewport
-              imagePath={imagePath}
+              view={view}
+              baseline={baseline}
+              newSnapshot={newSnapshot}
               diffImagePath={diffImagePath}
-              alt={alt}
               showDiff={showDiff}
             />
           </div>

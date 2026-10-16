@@ -3,7 +3,7 @@ import { Typography } from "@ovr/ui/components/typography";
 import { SnapshotPane } from "../../snapshot-pane/SnapshotPane";
 import { SnapshotPaneHeader } from "../../snapshot-pane/SnapshotPaneHeader";
 import { SnapshotPaneImage } from "../../snapshot-pane/SnapshotPaneImage";
-import { SnapshotZoomDialog } from "../../snapshot-zoom/SnapshotZoomDialog";
+import { SnapshotZoomTrigger } from "../../snapshot-zoom/SnapshotZoomTrigger";
 
 export type NewSnapshotPaneProps = {
   imagePath: string | null;
@@ -15,8 +15,12 @@ export const NewSnapshotPane = ({ imagePath, alt, canvasImagePaths }: NewSnapsho
   <SnapshotPane>
     <SnapshotPaneHeader>
       <Typography variant="label">new</Typography>
-      <SnapshotZoomDialog title="new" imagePath={imagePath} alt={alt} />
     </SnapshotPaneHeader>
-    <SnapshotPaneImage imagePath={imagePath} alt={alt} canvasImagePaths={canvasImagePaths} />
+    <SnapshotPaneImage
+      imagePath={imagePath}
+      alt={alt}
+      canvasImagePaths={canvasImagePaths}
+      trigger={<SnapshotZoomTrigger view="new" disabled={!imagePath} />}
+    />
   </SnapshotPane>
 );
