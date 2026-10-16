@@ -7,6 +7,7 @@ import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { Toaster } from "@ovr/ui/components/sonner";
 
 import { serverClient } from "@/lib/router";
+import { mockHandlers } from "@/lib/testing/mockHandlers";
 import { createORPCError } from "@/lib/testing/orpc";
 import { type SnapshotFilters } from "@/lib/utils/snapshotFilters";
 import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
@@ -16,7 +17,6 @@ import { SnapshotActionsRow } from "../SnapshotActionsRow";
 vi.mock("@/lib/router");
 vi.mock("next/navigation");
 
-const mockCastVote = vi.mocked(serverClient.diffs.castVote);
 const mockRebuild = vi.mocked(serverClient.snapshots.rebuild);
 const mockRefresh = vi.mocked(useRouter)().refresh;
 const mockPush = vi.mocked(useRouter)().push;
@@ -100,29 +100,43 @@ describe("SnapshotActionsRow", () => {
   it("should approve the diff and navigate to the next snapshot immediately, without waiting for the request", async ({
     user,
   }) => {
-    mockCastVote.mockResolvedValue([null, undefined]);
+    const mockCastVote = mockHandlers.mockCastVote();
     renderComponent();
 
     await user.click(screen.getByRole("button", { name: /^approve$/i }));
 
-    expect(mockCastVote).toHaveBeenCalledWith({ diffId: diff.id, vote: "approve" });
+    await waitFor(() =>
+      expect(mockCastVote).toHaveBeenCalledWith({ diffId: diff.id, vote: "approve" }),
+    );
     expect(mockPush).toHaveBeenCalledWith(nextSnapshotHref);
   });
 
   it("should reject the diff and navigate to the next snapshot immediately, without waiting for the request", async ({
     user,
   }) => {
-    mockCastVote.mockResolvedValue([null, undefined]);
+    const mockCastVote = mockHandlers.mockCastVote();
     renderComponent();
 
     await user.click(screen.getByRole("button", { name: /^reject$/i }));
 
-    expect(mockCastVote).toHaveBeenCalledWith({ diffId: diff.id, vote: "reject" });
+    await waitFor(() =>
+      expect(mockCastVote).toHaveBeenCalledWith({ diffId: diff.id, vote: "reject" }),
+    );
     expect(mockPush).toHaveBeenCalledWith(nextSnapshotHref);
   });
 
+  it("should navigate to the next snapshot while the vote is still in flight", async ({ user }) => {
+    mockHandlers.mockCastVote({ pending: true });
+    renderComponent();
+
+    await user.click(screen.getByRole("button", { name: /^approve$/i }));
+
+    expect(mockPush).toHaveBeenCalledWith(nextSnapshotHref);
+    expect(mockRefresh).not.toHaveBeenCalled();
+  });
+
   it("should refresh the build page behind it after approving and moving on", async ({ user }) => {
-    mockCastVote.mockResolvedValue([null, undefined]);
+    mockHandlers.mockCastVote();
     renderComponent();
 
     await user.click(screen.getByRole("button", { name: /^approve$/i }));
@@ -134,7 +148,7 @@ describe("SnapshotActionsRow", () => {
   it("should refresh without navigating when approving the last snapshot in the queue", async ({
     user,
   }) => {
-    mockCastVote.mockResolvedValue([null, undefined]);
+    mockHandlers.mockCastVote();
     renderComponent({ nextSnapshotId: null });
 
     await user.click(screen.getByRole("button", { name: /^approve$/i }));
@@ -146,7 +160,7 @@ describe("SnapshotActionsRow", () => {
   it("should refresh without navigating when rejecting the last snapshot in the queue", async ({
     user,
   }) => {
-    mockCastVote.mockResolvedValue([null, undefined]);
+    mockHandlers.mockCastVote();
     renderComponent({ nextSnapshotId: null });
 
     await user.click(screen.getByRole("button", { name: /^reject$/i }));
@@ -158,26 +172,26 @@ describe("SnapshotActionsRow", () => {
   it("should still navigate to the next snapshot optimistically, then show an error toast if approving fails", async ({
     user,
   }) => {
-    mockCastVote.mockResolvedValue([createORPCError("INTERNAL_SERVER_ERROR"), undefined]);
+    mockHandlers.mockCastVote({ error: createORPCError("CONFLICT", 409) });
     renderComponent();
 
     await user.click(screen.getByRole("button", { name: /^approve$/i }));
 
     expect(mockPush).toHaveBeenCalledWith(nextSnapshotHref);
-    expect(await screen.findByText("INTERNAL_SERVER_ERROR")).toBeVisible();
+    expect(await screen.findByText("CONFLICT")).toBeVisible();
     expect(mockRefresh).not.toHaveBeenCalled();
   });
 
   it("should still navigate to the next snapshot optimistically, then show an error toast if rejecting fails", async ({
     user,
   }) => {
-    mockCastVote.mockResolvedValue([createORPCError("INTERNAL_SERVER_ERROR"), undefined]);
+    mockHandlers.mockCastVote({ error: createORPCError("CONFLICT", 409) });
     renderComponent();
 
     await user.click(screen.getByRole("button", { name: /^reject$/i }));
 
     expect(mockPush).toHaveBeenCalledWith(nextSnapshotHref);
-    expect(await screen.findByText("INTERNAL_SERVER_ERROR")).toBeVisible();
+    expect(await screen.findByText("CONFLICT")).toBeVisible();
     expect(mockRefresh).not.toHaveBeenCalled();
   });
 
@@ -259,7 +273,7 @@ describe("SnapshotActionsRow", () => {
   });
 
   it("should keep the build's filters when moving on after a review", async ({ user }) => {
-    mockCastVote.mockResolvedValue([null, undefined]);
+    mockHandlers.mockCastVote();
     renderComponent({
       filters: { statuses: ["needs_review"], browsers: [], viewports: [], flags: [] },
     });
