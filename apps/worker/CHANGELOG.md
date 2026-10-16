@@ -1,5 +1,13 @@
 # @ovr/worker
 
+## 0.12.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @ovr/builds@0.2.4
+  - @ovr/capture@0.3.8
+
 ## 0.11.2
 
 ### Patch Changes
