@@ -1,5 +1,17 @@
 # @ovr/web
 
+## 0.13.0
+
+### Minor Changes
+
+- [#394](https://github.com/open-visual-regression/open-visual-regression/pull/394) [`2dfc905`](https://github.com/open-visual-regression/open-visual-regression/commit/2dfc905486a46e9ca878f1ddfa56b76b0c584e05) Thanks [@tgfischer](https://github.com/tgfischer)! - Click a snapshot to zoom in on it, and switch between the baseline and new snapshot in the zoom dialog to compare them. The new snapshot opens with the diff shown or hidden to match the split view.
+
+### Patch Changes
+
+- [#393](https://github.com/open-visual-regression/open-visual-regression/pull/393) [`bbef1f4`](https://github.com/open-visual-regression/open-visual-regression/commit/bbef1f4f2928cf45c079b139570f4fe9801e3ea5) Thanks [@tgfischer](https://github.com/tgfischer)! - The baseline and new snapshot now line up at the same scale in the slider and split views when they have different sizes.
+
+- [#396](https://github.com/open-visual-regression/open-visual-regression/pull/396) [`1555f79`](https://github.com/open-visual-regression/open-visual-regression/commit/1555f7939d6a8e136b06ae88c31f1565b5d843d9) Thanks [@tgfischer](https://github.com/tgfischer)! - Opening a build from the sidebar now shows the build page skeleton instead of the project builds list skeleton.
+
 ## 0.12.0
 
 ### Minor Changes
