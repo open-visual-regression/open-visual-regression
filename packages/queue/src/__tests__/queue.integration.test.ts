@@ -1,5 +1,6 @@
 import { Queue, Worker } from "bullmq";
 import type { Redis } from "ioredis";
+import { vi } from "vitest";
 
 import {
   enqueueCaptureGroup,
@@ -18,6 +19,7 @@ import {
   type DiffJobPayload,
   type ExtractJobPayload,
   type FinalizeJobPayload,
+  type GitStatusPublishJobPayload,
 } from "../index";
 import { describe, expect, test } from "./fixtures";
 
@@ -192,6 +194,36 @@ describe("queue", () => {
         expect(job.opts.removeOnFail).toBe(true);
       } finally {
         await job.remove();
+      }
+    });
+
+    test("should publish the build again when it changes while its earlier publish is running", async ({
+      connection,
+    }) => {
+      const payload: GitStatusPublishJobPayload = { buildId: "build-republish-while-active" };
+      let releaseFirstPublish = () => {};
+      const firstPublishReleased = new Promise<void>((resolve) => {
+        releaseFirstPublish = resolve;
+      });
+      const publish = vi
+        .fn<(payload: GitStatusPublishJobPayload) => Promise<void>>()
+        .mockReturnValueOnce(firstPublishReleased);
+      const worker = new Worker<GitStatusPublishJobPayload>(
+        QueueName.GIT_STATUS_PUBLISH,
+        async (job) => publish(job.data),
+        { connection },
+      );
+
+      try {
+        await enqueuePublishStatus(payload, connection);
+        await vi.waitFor(() => expect(publish).toHaveBeenCalledTimes(1));
+
+        await enqueuePublishStatus(payload, connection);
+        releaseFirstPublish();
+
+        await vi.waitFor(() => expect(publish).toHaveBeenNthCalledWith(2, payload));
+      } finally {
+        await worker.close();
       }
     });
   });

@@ -300,7 +300,9 @@ export const enqueuePublishStatus = (
   payload: GitStatusPublishJobPayload,
   connection: RedisConnection,
 ): Promise<Job<GitStatusPublishJobPayload>> =>
-  enqueue(QueueName.GIT_STATUS_PUBLISH, payload, connection, { jobId: payload.buildId });
+  enqueue(QueueName.GIT_STATUS_PUBLISH, payload, connection, {
+    deduplication: { id: payload.buildId, keepLastIfActive: true },
+  });
 
 export const enqueuePurgeMany = async (
   payloads: PurgeJobPayload[],
