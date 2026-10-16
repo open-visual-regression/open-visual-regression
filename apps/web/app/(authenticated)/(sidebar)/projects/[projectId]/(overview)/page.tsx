@@ -14,9 +14,9 @@ import { orpcServer } from "@/lib/orpc/server";
 import { serverClient } from "@/lib/router";
 import { serverError } from "@/lib/utils/errors";
 
-import { NoBuildsSection } from "./_components/builds-section/NoBuildsSection";
-import { ProjectHeader } from "./_components/project-header/ProjectHeader";
-import { ProjectPageShell } from "./_components/ProjectPageShell";
+import { NoBuildsSection } from "../_components/builds-section/NoBuildsSection";
+import { ProjectHeader } from "../_components/project-header/ProjectHeader";
+import { ProjectPageShell } from "../_components/ProjectPageShell";
 
 type ProjectPageProps = PageProps<"/projects/[projectId]">;
 
