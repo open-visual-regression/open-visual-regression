@@ -33,8 +33,7 @@ export const BaselineSnapshotPane = ({
       alt={alt}
       canvasImagePaths={canvasImagePaths}
       fill={fill}
-    >
-      <SnapshotZoomTrigger view="baseline" disabled={!imagePath} />
-    </SnapshotPaneImage>
+      trigger={<SnapshotZoomTrigger view="baseline" disabled={!imagePath} />}
+    />
   </SnapshotPane>
 );

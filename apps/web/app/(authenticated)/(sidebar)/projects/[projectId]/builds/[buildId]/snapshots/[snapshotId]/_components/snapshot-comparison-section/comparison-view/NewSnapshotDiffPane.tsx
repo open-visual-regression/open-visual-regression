@@ -34,7 +34,13 @@ export const NewSnapshotDiffPane = ({
         <Switch checked={showDiff} onCheckedChange={onShowDiffChange} />
       </label>
     </SnapshotPaneHeader>
-    <SnapshotPaneImage imagePath={imagePath} alt={alt} canvasImagePaths={canvasImagePaths} fill>
+    <SnapshotPaneImage
+      imagePath={imagePath}
+      alt={alt}
+      canvasImagePaths={canvasImagePaths}
+      fill
+      trigger={<SnapshotZoomTrigger view="new" disabled={!imagePath} />}
+    >
       <img
         src={diffImagePath}
         alt={`diff overlay of ${alt}`}
@@ -43,7 +49,6 @@ export const NewSnapshotDiffPane = ({
           showDiff ? "opacity-100" : "opacity-0",
         )}
       />
-      <SnapshotZoomTrigger view="new" disabled={!imagePath} />
     </SnapshotPaneImage>
   </SnapshotPane>
 );

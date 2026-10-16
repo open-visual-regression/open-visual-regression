@@ -16,8 +16,11 @@ export const NewSnapshotPane = ({ imagePath, alt, canvasImagePaths }: NewSnapsho
     <SnapshotPaneHeader>
       <Typography variant="label">new</Typography>
     </SnapshotPaneHeader>
-    <SnapshotPaneImage imagePath={imagePath} alt={alt} canvasImagePaths={canvasImagePaths}>
-      <SnapshotZoomTrigger view="new" disabled={!imagePath} />
-    </SnapshotPaneImage>
+    <SnapshotPaneImage
+      imagePath={imagePath}
+      alt={alt}
+      canvasImagePaths={canvasImagePaths}
+      trigger={<SnapshotZoomTrigger view="new" disabled={!imagePath} />}
+    />
   </SnapshotPane>
 );
