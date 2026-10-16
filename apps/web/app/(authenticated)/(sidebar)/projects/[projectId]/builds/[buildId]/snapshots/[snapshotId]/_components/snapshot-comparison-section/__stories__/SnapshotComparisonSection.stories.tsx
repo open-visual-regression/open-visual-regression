@@ -172,7 +172,7 @@ export const MobileWithBaselineAndDiff: Story = {
   },
 };
 
-export const SliderViewWithDifferentSizes: Story = {
+export const DifferentSizes: Story = {
   parameters: { ovr: { viewports: ["desktop"] } },
   args: {
     snapshot: newSnapshot,
@@ -192,22 +192,31 @@ export const SliderViewWithDifferentSizes: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    const widthRatio = (baselineImage: HTMLElement, newImage: HTMLElement) =>
+      baselineImage.getBoundingClientRect().width / newImage.getBoundingClientRect().width;
+
+    const splitBaselineImage = await canvas.findByRole("img", {
+      name: "baseline snapshot of Button Primary",
+    });
+    const splitNewImage = await canvas.findByRole("img", { name: "snapshot of Button Primary" });
+    await waitFor(() =>
+      expect(widthRatio(splitBaselineImage, splitNewImage)).toBeCloseTo(375 / 1280, 2),
+    );
 
     await userEvent.click(canvas.getByRole("tab", { name: "slider" }));
 
-    const baselineImage = await canvas.findByRole("img", {
+    const sliderBaselineImage = await canvas.findByRole("img", {
       name: "baseline snapshot of Button Primary",
     });
-    const newImage = await canvas.findByRole("img", { name: "snapshot of Button Primary" });
-
-    // Both snapshots share one canvas, so they line up at the top-left corner at the same scale.
-    await waitFor(() => {
-      const baselineBounds = baselineImage.getBoundingClientRect();
-      const newBounds = newImage.getBoundingClientRect();
-
-      expect(baselineBounds.left).toBe(newBounds.left);
-      expect(baselineBounds.top).toBe(newBounds.top);
-      expect(baselineBounds.width / newBounds.width).toBeCloseTo(375 / 1280, 2);
-    });
+    const sliderNewImage = await canvas.findByRole("img", { name: "snapshot of Button Primary" });
+    await waitFor(() =>
+      expect(widthRatio(sliderBaselineImage, sliderNewImage)).toBeCloseTo(375 / 1280, 2),
+    );
+    await expect(sliderBaselineImage.getBoundingClientRect().left).toBe(
+      sliderNewImage.getBoundingClientRect().left,
+    );
+    await expect(sliderBaselineImage.getBoundingClientRect().top).toBe(
+      sliderNewImage.getBoundingClientRect().top,
+    );
   },
 };

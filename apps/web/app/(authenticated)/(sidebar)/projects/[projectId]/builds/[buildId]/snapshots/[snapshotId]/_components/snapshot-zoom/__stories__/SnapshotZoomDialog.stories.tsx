@@ -88,6 +88,9 @@ export const NewWithDiff: Story = {
   play: async ({ canvasElement }) => {
     const { dialog } = await openDialog(canvasElement, "new");
     await expect(within(dialog).getByRole("switch")).toBeChecked();
+    await expect(
+      within(dialog).getByRole("img", { name: "diff overlay of snapshot of Button Primary" }),
+    ).toBeVisible();
   },
 };
 
@@ -103,7 +106,7 @@ export const NewWithDiffHidden: Story = {
     await userEvent.click(within(dialog).getByRole("switch"));
 
     await expect(within(dialog).getByRole("switch")).not.toBeChecked();
-    await expect(diffImage).toHaveStyle({ opacity: "0" });
+    await expect(diffImage).not.toBeVisible();
   },
 };
 

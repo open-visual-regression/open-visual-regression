@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useQueries } from "@tanstack/react-query";
 
 import type { SnapshotSize } from "./types";
 
@@ -14,39 +14,26 @@ const loadImageSize = (imagePath: string) =>
     image.src = imagePath;
   });
 
-// The smallest canvas that holds every image anchored to its top-left corner, matching how
-// the worker pads snapshots of different sizes before diffing them.
-export const useCanvasSize = (imagePaths: (string | null)[]) => {
-  const key = imagePaths.join("\n");
-  const [canvas, setCanvas] = useState<{ key: string; size: SnapshotSize | null } | null>(null);
+export const useCanvasSize = (imagePaths: (string | null)[]) =>
+  useQueries({
+    queries: imagePaths
+      .filter((imagePath) => imagePath !== null)
+      .map((imagePath) => ({
+        queryKey: ["image-size", imagePath],
+        queryFn: () => loadImageSize(imagePath),
+        staleTime: Infinity,
+        retry: false,
+      })),
+    combine: (results): SnapshotSize | null => {
+      const sizes = results.flatMap(({ data }) => (data ? [data] : []));
 
-  useEffect(() => {
-    let isCurrent = true;
-    const loadablePaths = key.split("\n").filter((imagePath) => imagePath !== "");
-
-    Promise.allSettled(loadablePaths.map(loadImageSize)).then((results) => {
-      const sizes = results.flatMap((result) =>
-        result.status === "fulfilled" ? [result.value] : [],
-      );
-
-      if (isCurrent) {
-        setCanvas({
-          key,
-          size:
-            sizes.length > 0
-              ? {
-                  width: Math.max(...sizes.map((size) => size.width)),
-                  height: Math.max(...sizes.map((size) => size.height)),
-                }
-              : null,
-        });
+      if (sizes.length === 0 || results.some(({ isPending }) => isPending)) {
+        return null;
       }
-    });
 
-    return () => {
-      isCurrent = false;
-    };
-  }, [key]);
-
-  return canvas?.key === key ? canvas.size : null;
-};
+      return {
+        width: Math.max(...sizes.map(({ width }) => width)),
+        height: Math.max(...sizes.map(({ height }) => height)),
+      };
+    },
+  });

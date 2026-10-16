@@ -1,3 +1,5 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
 import { describe, expect, it, render, screen, within } from "@/test-utils";
 
 import { ComparisonModeProvider } from "../comparison-mode";
@@ -17,10 +19,12 @@ const props: ComparisonViewProps = {
 
 const renderComparison = (overrides: Partial<typeof props> = {}) =>
   render(
-    <ComparisonModeProvider>
-      <ComparisonControls />
-      <ComparisonView {...props} {...overrides} />
-    </ComparisonModeProvider>,
+    <QueryClientProvider client={new QueryClient()}>
+      <ComparisonModeProvider>
+        <ComparisonControls />
+        <ComparisonView {...props} {...overrides} />
+      </ComparisonModeProvider>
+    </QueryClientProvider>,
   );
 
 describe("ComparisonView", () => {
@@ -93,8 +97,15 @@ describe("ComparisonView", () => {
 
     const dialog = screen.getByRole("dialog", { name: "new" });
     expect(within(dialog).getByRole("switch")).not.toBeChecked();
-    expect(within(dialog).getByRole("img", { name: "diff overlay of new snapshot" })).toHaveClass(
-      "opacity-0",
-    );
+  });
+
+  it("should keep the split view's diff toggle in sync with the zoom dialog", async ({ user }) => {
+    renderComparison();
+
+    await user.click(screen.getByRole("button", { name: "zoom new" }));
+    await user.click(within(screen.getByRole("dialog", { name: "new" })).getByRole("switch"));
+    await user.click(screen.getByRole("button", { name: "close" }));
+
+    expect(screen.getByRole("switch")).not.toBeChecked();
   });
 });

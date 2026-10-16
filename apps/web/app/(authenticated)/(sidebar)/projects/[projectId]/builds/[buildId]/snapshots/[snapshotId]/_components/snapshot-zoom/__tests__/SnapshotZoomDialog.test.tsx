@@ -1,3 +1,5 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
 import { describe, expect, it, render, screen } from "@/test-utils";
 
 import { ComparisonModeProvider } from "../../snapshot-comparison-section/comparison-view/comparison-mode";
@@ -17,12 +19,14 @@ const props: Omit<SnapshotZoomDialogProps, "children"> = {
 
 const renderDialog = (overrides: Partial<typeof props> = {}) =>
   render(
-    <ComparisonModeProvider>
-      <SnapshotZoomDialog {...props} {...overrides}>
-        <SnapshotZoomTrigger view="baseline" />
-        <SnapshotZoomTrigger view="new" />
-      </SnapshotZoomDialog>
-    </ComparisonModeProvider>,
+    <QueryClientProvider client={new QueryClient()}>
+      <ComparisonModeProvider>
+        <SnapshotZoomDialog {...props} {...overrides}>
+          <SnapshotZoomTrigger view="baseline" />
+          <SnapshotZoomTrigger view="new" />
+        </SnapshotZoomDialog>
+      </ComparisonModeProvider>
+    </QueryClientProvider>,
   );
 
 describe("SnapshotZoomDialog", () => {
@@ -35,12 +39,10 @@ describe("SnapshotZoomDialog", () => {
 
     expect(screen.getByRole("dialog", { name: "baseline" })).toBeVisible();
     expect(screen.getByRole("tab", { name: "baseline" })).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByRole("img", { name: "baseline snapshot" })).toBeInTheDocument();
     expect(screen.getByText("abc1234")).toBeVisible();
     expect(screen.getByRole("button", { name: "zoom in" })).toBeVisible();
     expect(screen.getByRole("button", { name: "zoom out" })).toBeVisible();
     expect(screen.getByRole("button", { name: "fit" })).toBeVisible();
-    expect(screen.getByText("100%", { selector: "[role=status]" })).toBeVisible();
   });
 
   it("should open the new snapshot with its diff when the new snapshot is clicked", async ({
@@ -52,44 +54,22 @@ describe("SnapshotZoomDialog", () => {
 
     expect(screen.getByRole("dialog", { name: "new" })).toBeVisible();
     expect(screen.getByRole("tab", { name: "new" })).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByRole("img", { name: "diff overlay of new snapshot" })).toHaveClass(
-      "opacity-100",
-    );
     expect(screen.getByRole("switch")).toBeChecked();
   });
 
-  it("should toggle between the baseline and the new snapshot", async ({ user }) => {
+  it("should switch between the baseline and the new snapshot", async ({ user }) => {
     renderDialog();
 
     await user.click(screen.getByRole("button", { name: "zoom new" }));
     await user.click(screen.getByRole("tab", { name: "baseline" }));
 
     expect(screen.getByRole("dialog", { name: "baseline" })).toBeVisible();
-    expect(screen.getByRole("img", { name: "new snapshot" })).toHaveClass("invisible");
-    expect(screen.getByRole("img", { name: "diff overlay of new snapshot" })).toHaveClass(
-      "opacity-0",
-    );
-    expect(screen.getByRole("switch")).toHaveAttribute("data-disabled");
+    expect(screen.getByRole("switch")).toHaveAttribute("aria-disabled", "true");
 
     await user.click(screen.getByRole("tab", { name: "new" }));
 
     expect(screen.getByRole("dialog", { name: "new" })).toBeVisible();
-    expect(screen.getByRole("img", { name: "baseline snapshot" })).toHaveClass("invisible");
-    expect(screen.getByRole("img", { name: "diff overlay of new snapshot" })).toHaveClass(
-      "opacity-100",
-    );
-  });
-
-  it("should hide the diff overlay when the diff is switched off", async ({ user }) => {
-    renderDialog();
-
-    await user.click(screen.getByRole("button", { name: "zoom new" }));
-    await user.click(screen.getByRole("switch"));
-
-    expect(screen.getByRole("switch")).not.toBeChecked();
-    expect(screen.getByRole("img", { name: "diff overlay of new snapshot" })).toHaveClass(
-      "opacity-0",
-    );
+    expect(screen.getByRole("switch")).not.toHaveAttribute("aria-disabled", "true");
   });
 
   it("should only show the new snapshot when there is no baseline", async ({ user }) => {

@@ -1,3 +1,5 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
 import type { DiffSchema } from "@ovr/api/contracts/diffs";
 import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 
@@ -40,9 +42,11 @@ const diff: DiffSchema = {
 
 const renderSection = (diffInput: DiffSchema | null) =>
   render(
-    <ComparisonModeProvider>
-      <SnapshotComparisonSection snapshot={snapshot} diff={diffInput} />
-    </ComparisonModeProvider>,
+    <QueryClientProvider client={new QueryClient()}>
+      <ComparisonModeProvider>
+        <SnapshotComparisonSection snapshot={snapshot} diff={diffInput} />
+      </ComparisonModeProvider>
+    </QueryClientProvider>,
   );
 
 describe("SnapshotComparisonSection", () => {
