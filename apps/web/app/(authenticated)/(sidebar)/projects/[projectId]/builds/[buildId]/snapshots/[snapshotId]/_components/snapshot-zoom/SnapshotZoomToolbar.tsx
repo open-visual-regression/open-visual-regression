@@ -92,14 +92,8 @@ export const SnapshotZoomToolbar = ({
           <Icon icon={PlusIcon} size={12} />
         </Button>
       </div>
-      <div className="flex items-center gap-1">
-        <Button
-          variant="ghost"
-          color="neutral"
-          size="sm"
-          className="px-1.5 sm:px-2.5"
-          onClick={() => centerView(1)}
-        >
+      <div className="hidden items-center gap-1 sm:flex">
+        <Button variant="ghost" color="neutral" size="sm" onClick={() => centerView(1)}>
           100%
         </Button>
         <ResponsiveActionButton
