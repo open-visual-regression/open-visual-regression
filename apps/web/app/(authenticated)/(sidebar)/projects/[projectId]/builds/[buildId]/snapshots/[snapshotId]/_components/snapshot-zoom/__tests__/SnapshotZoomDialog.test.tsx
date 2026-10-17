@@ -39,7 +39,7 @@ describe("SnapshotZoomDialog", () => {
 
     expect(screen.getByRole("dialog", { name: "baseline" })).toBeVisible();
     expect(screen.getByRole("tab", { name: "baseline" })).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByText("abc1234")).toBeVisible();
+    expect(screen.queryByText("abc1234")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "zoom in" })).toBeVisible();
     expect(screen.getByRole("button", { name: "zoom out" })).toBeVisible();
     expect(screen.getByRole("button", { name: "fit" })).toBeVisible();
