@@ -16,7 +16,6 @@ import { cn } from "@ovr/ui/lib/utils";
 
 import { ResponsiveActionButton } from "@/lib/components/responsive-action-button/ResponsiveActionButton";
 
-import { BaselineCommitLink } from "../snapshot-pane/BaselineCommitLink";
 import type { BaselineSnapshotPaneData } from "../snapshot-pane/types";
 import type { SnapshotZoomView } from "./snapshot-zoom";
 
@@ -44,7 +43,7 @@ export const SnapshotZoomToolbar = ({
 
   return (
     <div className="flex shrink-0 flex-wrap items-center justify-end gap-x-1 gap-y-2 border-b border-ovr-border-subtle px-2 py-2 sm:gap-x-4 sm:px-4">
-      <div className={cn("mr-auto flex items-center gap-2", baseline && "w-full sm:w-auto")}>
+      <div className="mr-auto flex items-center gap-2">
         <DialogTitle className={cn(baseline && "sr-only")}>
           <Typography variant="label">{view}</Typography>
         </DialogTitle>
@@ -58,9 +57,6 @@ export const SnapshotZoomToolbar = ({
               <SegmentedTabsTrigger value="new">new</SegmentedTabsTrigger>
             </SegmentedTabsList>
           </SegmentedTabs>
-        ) : null}
-        {baseline && view === "baseline" ? (
-          <BaselineCommitLink commitSha={baseline.commitSha} commitUrl={baseline.commitUrl} />
         ) : null}
       </div>
       {hasDiff ? (
