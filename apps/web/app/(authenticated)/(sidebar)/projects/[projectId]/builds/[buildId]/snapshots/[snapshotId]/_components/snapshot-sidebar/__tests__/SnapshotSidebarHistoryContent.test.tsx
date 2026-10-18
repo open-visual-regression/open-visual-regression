@@ -22,24 +22,21 @@ const PREVIOUS_CURSOR = { ...NEXT_CURSOR, direction: "previous" } as const;
 
 const toPage = (
   entries: GetHistoryOutputSchema["snapshots"],
-  cursors: Partial<Pick<GetHistoryOutputSchema, "nextCursor" | "previousCursor">> = {},
+  fields: Partial<Pick<GetHistoryOutputSchema, "nextCursor" | "previousCursor" | "latest">> = {},
 ): GetHistoryOutputSchema => ({
   branch: "main",
   snapshots: entries,
-  nextCursor: cursors.nextCursor ?? null,
-  previousCursor: cursors.previousCursor ?? null,
+  nextCursor: fields.nextCursor ?? null,
+  previousCursor: fields.previousCursor ?? null,
+  latest: fields.latest ?? null,
 });
 
 const createQueryClient = () =>
   new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
 
-const seedPages = (
-  queryClient: QueryClient,
-  pages: GetHistoryOutputSchema[],
-  startAt: "snapshot" | "latest" = "snapshot",
-) =>
+const seedPages = (queryClient: QueryClient, pages: GetHistoryOutputSchema[]) =>
   queryClient.setQueryData(
-    orpc.snapshots.getHistory.infiniteKey(snapshotHistoryInfiniteOptions(SNAPSHOT_ID, startAt)),
+    orpc.snapshots.getHistory.infiniteKey(snapshotHistoryInfiniteOptions(SNAPSHOT_ID)),
     { pages, pageParams: pages.map((_, index) => (index === 0 ? undefined : NEXT_CURSOR)) },
   );
 
@@ -84,24 +81,20 @@ describe("SnapshotSidebarHistoryContent", () => {
     expect(screen.queryByRole("button", { name: "jump to latest" })).not.toBeInTheDocument();
   });
 
-  it("should jump to the latest snapshots when there are newer ones", async ({ user }) => {
+  it("should link to the latest snapshot when there are newer ones", () => {
     const queryClient = createQueryClient();
     seedPages(queryClient, [
-      toPage([mocks.build.generateSnapshotHistoryEntry({ buildName: "Add checkout page" })], {
+      toPage([mocks.build.generateSnapshotHistoryEntry()], {
         previousCursor: PREVIOUS_CURSOR,
+        latest: { id: "snapshot-latest", buildId: "build-latest" },
       }),
     ]);
-    seedPages(
-      queryClient,
-      [toPage([mocks.build.generateSnapshotHistoryEntry({ buildName: "Release prep" })])],
-      "latest",
-    );
 
     renderContent(queryClient);
-    await user.click(screen.getByRole("button", { name: "jump to latest" }));
 
-    expect(screen.getByText("Release prep")).toBeVisible();
-    expect(screen.queryByText("Add checkout page")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "jump to latest" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "jump to latest" })).toHaveAttribute(
+      "href",
+      `/projects/${PROJECT_ID}/builds/build-latest/snapshots/snapshot-latest`,
+    );
   });
 });

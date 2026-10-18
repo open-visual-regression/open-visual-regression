@@ -1,13 +1,10 @@
 "use client";
 
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { useState } from "react";
 
-import { Button } from "@ovr/ui/components/button";
-
+import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
 import { orpc } from "@/lib/orpc/client";
 import { snapshotHistoryInfiniteOptions } from "@/lib/orpc/snapshots-query";
-import { useScrollContainer } from "@/lib/providers/ScrollContainer";
 
 import { SnapshotHistoryList, SnapshotHistoryListSkeleton } from "./SnapshotHistoryList";
 
@@ -20,8 +17,6 @@ export const SnapshotSidebarHistoryContent = ({
   projectId,
   snapshotId,
 }: SnapshotSidebarHistoryContentProps) => {
-  const scrollElement = useScrollContainer();
-  const [startAt, setStartAt] = useState<"snapshot" | "latest">("snapshot");
   const {
     data,
     isPending,
@@ -32,21 +27,23 @@ export const SnapshotSidebarHistoryContent = ({
     fetchNextPage,
     fetchPreviousPage,
   } = useInfiniteQuery(
-    orpc.snapshots.getHistory.infiniteOptions(snapshotHistoryInfiniteOptions(snapshotId, startAt)),
+    orpc.snapshots.getHistory.infiniteOptions(snapshotHistoryInfiniteOptions(snapshotId)),
   );
 
-  const jumpToLatest = () => {
-    setStartAt("latest");
-    scrollElement?.scrollTo({ top: 0 });
-  };
+  const latest = data?.pages[0]?.latest;
 
   return (
     <div className="px-3 pb-3">
-      {hasPreviousPage ? (
+      {hasPreviousPage && latest ? (
         <div className="sticky top-0 z-10 flex justify-center bg-background pb-3">
-          <Button variant="outline" color="neutral" size="sm" onClick={jumpToLatest}>
+          <ButtonLink
+            href={`/projects/${projectId}/builds/${latest.buildId}/snapshots/${latest.id}`}
+            variant="outline"
+            color="neutral"
+            size="sm"
+          >
             jump to latest
-          </Button>
+          </ButtonLink>
         </div>
       ) : null}
       {isPending ? (
