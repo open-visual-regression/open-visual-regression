@@ -23,6 +23,8 @@ const entry = (
   status: "auto_approved",
   diffPercent: 1.5,
   variantId,
+  imagePath: null,
+  flags: [],
   ...overrides,
 });
 
@@ -34,6 +36,7 @@ const HISTORY: GetHistoryOutputSchema = {
     entry("2", null),
     entry("1", VARIANT_A),
   ],
+  nextCursor: null,
 };
 
 describe("formatHistoryOutput", () => {
@@ -54,7 +57,7 @@ describe("formatHistoryOutput", () => {
   });
 
   it("should say when there are no snapshots like it on the branch", () => {
-    expect(formatHistoryOutput({ branch: "main", snapshots: [] }, false)).toBe(
+    expect(formatHistoryOutput({ branch: "main", snapshots: [], nextCursor: null }, false)).toBe(
       "No snapshots like this one on main.",
     );
   });

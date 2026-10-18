@@ -133,7 +133,7 @@ export const getHistory = os.snapshots.getHistory
     const { snapshot, project } = context;
     const branch = input.branch ?? project.gitMainBranch;
 
-    const rows = await dbClient.snapshots.findHistory({
+    const { snapshots: rows, nextCursor } = await dbClient.snapshots.findHistory({
       projectId: project.id,
       branch,
       browser: snapshot.browser,
@@ -141,9 +141,17 @@ export const getHistory = os.snapshots.getHistory
       viewportHeight: snapshot.viewportHeight,
       targetId: snapshot.targetId,
       limit: input.limit,
+      cursor: input.cursor,
     });
 
-    return { branch, snapshots: rows };
+    return {
+      branch,
+      snapshots: rows.map(({ hasUncaughtPageError, ...row }) => ({
+        ...row,
+        flags: getSnapshotFlags({ isFlaky: false, hasUncaughtPageError }),
+      })),
+      nextCursor,
+    };
   })
   .actionable();
 

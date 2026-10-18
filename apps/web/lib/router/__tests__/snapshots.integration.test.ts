@@ -707,6 +707,7 @@ describe("snapshots", () => {
       admin: User,
       branch: string,
       targetId = "story-a",
+      overrides: Partial<typeof snapshots.$inferInsert> = {},
     ) => {
       const build = await dbClient.builds.create({
         projectId,
@@ -716,7 +717,16 @@ describe("snapshots", () => {
         createdBy: admin.id,
       });
       const [snapshot] = await dbClient.snapshots.createMany({
-        values: [{ buildId: build!.id, ...VIEWPORT, targetId, targetTitle: "A", targetName: "a" }],
+        values: [
+          {
+            buildId: build!.id,
+            ...VIEWPORT,
+            targetId,
+            targetTitle: "A",
+            targetName: "a",
+            ...overrides,
+          },
+        ],
       });
 
       return { build: build!, snapshot: snapshot! };
@@ -784,6 +794,61 @@ describe("snapshots", () => {
       expect(error).toBeNull();
       expect(result?.branch).toBe("feature/other");
       expect(result?.snapshots.map(({ id }) => id)).toEqual([latest.snapshot.id]);
+    });
+
+    test("pages through the history with a cursor", async ({ admin }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+      const first = await createBuildWithStory(projectId, admin, "main");
+      const second = await createBuildWithStory(projectId, admin, "main");
+      const third = await createBuildWithStory(projectId, admin, "main");
+
+      const [firstError, firstPage] = await serverClient.snapshots.getHistory({
+        snapshotId: first.snapshot.id,
+        limit: 2,
+      });
+
+      expect(firstError).toBeNull();
+      expect(firstPage?.snapshots.map(({ id }) => id)).toEqual([
+        third.snapshot.id,
+        second.snapshot.id,
+      ]);
+      expect(firstPage?.nextCursor).toEqual({
+        createdAt: second.build.createdAt,
+        buildId: second.build.id,
+      });
+
+      const [secondError, secondPage] = await serverClient.snapshots.getHistory({
+        snapshotId: first.snapshot.id,
+        limit: 2,
+        cursor: firstPage!.nextCursor!,
+      });
+
+      expect(secondError).toBeNull();
+      expect(secondPage?.snapshots.map(({ id }) => id)).toEqual([first.snapshot.id]);
+      expect(secondPage?.nextCursor).toBeNull();
+    });
+
+    test("includes each snapshot's image and warning flag", async ({ admin }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+      const clean = await createBuildWithStory(projectId, admin, "main", "story-a", {
+        imagePath: "snapshots/clean.png",
+      });
+      await createBuildWithStory(projectId, admin, "main", "story-a", {
+        imagePath: "snapshots/warning.png",
+        hasUncaughtPageError: true,
+      });
+
+      const [error, result] = await serverClient.snapshots.getHistory({
+        snapshotId: clean.snapshot.id,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.snapshots.map(({ imagePath, flags }) => ({ imagePath, flags }))).toEqual([
+        { imagePath: "snapshots/warning.png", flags: ["warning"] },
+        { imagePath: "snapshots/clean.png", flags: [] },
+      ]);
     });
 
     test("should not find a snapshot that does not exist", async ({ admin: _ }) => {

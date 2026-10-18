@@ -512,6 +512,11 @@ export const countForBuild = async (buildId: string, filters: ListForBuildFilter
   return result?.count ?? 0;
 };
 
+export type SnapshotHistoryCursor = {
+  createdAt: string;
+  buildId: string;
+};
+
 export type FindHistoryOptions = {
   projectId: string;
   branch: string;
@@ -520,9 +525,10 @@ export type FindHistoryOptions = {
   viewportHeight: number;
   targetId: string;
   limit: number;
+  cursor?: SnapshotHistoryCursor;
 };
 
-export const findHistory = ({
+export const findHistory = async ({
   projectId,
   branch,
   browser,
@@ -530,8 +536,9 @@ export const findHistory = ({
   viewportHeight,
   targetId,
   limit,
-}: FindHistoryOptions) =>
-  db
+  cursor,
+}: FindHistoryOptions) => {
+  const rows = await db
     .select({
       id: snapshots.id,
       buildId: builds.id,
@@ -541,6 +548,8 @@ export const findHistory = ({
       status: displayStatusExpr,
       diffPercent: diffs.diffPercent,
       variantId: snapshots.variantId,
+      imagePath: snapshots.imagePath,
+      hasUncaughtPageError: snapshots.hasUncaughtPageError,
     })
     .from(builds)
     .innerJoin(snapshots, eq(snapshots.buildId, builds.id))
@@ -553,9 +562,23 @@ export const findHistory = ({
         eq(snapshots.viewportWidth, viewportWidth),
         eq(snapshots.viewportHeight, viewportHeight),
         eq(snapshots.targetId, targetId),
+        cursor
+          ? sql`(${builds.createdAt}, ${builds.id}) < (${cursor.createdAt}::timestamp, ${cursor.buildId}::uuid)`
+          : undefined,
       ),
     )
     .orderBy(desc(builds.createdAt), desc(builds.id))
-    .limit(limit);
+    .limit(limit + 1);
+
+  const hasMore = rows.length > limit;
+  const pageRows = hasMore ? rows.slice(0, limit) : rows;
+  const lastRow = pageRows.at(-1);
+
+  return {
+    snapshots: pageRows,
+    nextCursor:
+      hasMore && lastRow ? { createdAt: lastRow.createdAt, buildId: lastRow.buildId } : null,
+  };
+};
 
 export type SnapshotDbSchema = Awaited<ReturnType<typeof findByBuild>>[number];
