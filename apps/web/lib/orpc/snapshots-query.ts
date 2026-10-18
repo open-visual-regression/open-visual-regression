@@ -48,24 +48,33 @@ export const snapshotsListInfiniteOptions = (
   getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
 });
 
+type SnapshotHistoryStart = "latest" | "snapshot";
+
 type SnapshotHistoryInput = {
   snapshotId: string;
+  startAt: SnapshotHistoryStart;
   limit: number;
   cursor: SnapshotHistoryCursor | undefined;
+};
+
+type SnapshotHistoryPage = {
+  nextCursor: SnapshotHistoryCursor | null;
+  previousCursor: SnapshotHistoryCursor | null;
 };
 
 type SnapshotHistoryInfiniteOptions = {
   input: (cursor: SnapshotHistoryCursor | undefined) => SnapshotHistoryInput;
   initialPageParam: SnapshotHistoryCursor | undefined;
-  getNextPageParam: (lastPage: {
-    nextCursor: SnapshotHistoryCursor | null;
-  }) => SnapshotHistoryCursor | undefined;
+  getNextPageParam: (lastPage: SnapshotHistoryPage) => SnapshotHistoryCursor | undefined;
+  getPreviousPageParam: (firstPage: SnapshotHistoryPage) => SnapshotHistoryCursor | undefined;
 };
 
 export const snapshotHistoryInfiniteOptions = (
   snapshotId: string,
+  startAt: SnapshotHistoryStart,
 ): SnapshotHistoryInfiniteOptions => ({
-  input: (cursor) => ({ snapshotId, limit: SNAPSHOT_HISTORY_PAGE_SIZE, cursor }),
+  input: (cursor) => ({ snapshotId, startAt, limit: SNAPSHOT_HISTORY_PAGE_SIZE, cursor }),
   initialPageParam: undefined,
   getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+  getPreviousPageParam: (firstPage) => firstPage.previousCursor ?? undefined,
 });

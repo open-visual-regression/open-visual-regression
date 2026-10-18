@@ -1,7 +1,7 @@
 "use client";
 
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 
 import { type SnapshotHistoryEntrySchema } from "@ovr/api/contracts/snapshots";
 import { Typography } from "@ovr/ui/components/typography";
@@ -20,8 +20,11 @@ type SnapshotHistoryListProps = {
   projectId: string;
   snapshotId: string;
   hasNextPage?: boolean;
+  hasPreviousPage?: boolean;
   isFetchingNextPage?: boolean;
+  isFetchingPreviousPage?: boolean;
   onLoadMore?: () => void;
+  onLoadPrevious?: () => void;
 };
 
 export const SnapshotHistoryList = ({
@@ -30,21 +33,47 @@ export const SnapshotHistoryList = ({
   projectId,
   snapshotId,
   hasNextPage = false,
+  hasPreviousPage = false,
   isFetchingNextPage = false,
+  isFetchingPreviousPage = false,
   onLoadMore,
+  onLoadPrevious,
 }: SnapshotHistoryListProps) => {
   const listRef = useRef<HTMLDivElement>(null);
   const scrollElement = useScrollContainer();
+  const firstEntryId = entries[0]?.id;
+  const previousFirstEntryIdRef = useRef(firstEntryId);
 
   const virtualizer = useVirtualizer({
     count: scrollElement ? entries.length + (hasNextPage ? 1 : 0) : 0,
     getScrollElement: () => scrollElement,
     estimateSize: () => ESTIMATED_CARD_HEIGHT,
+    getItemKey: (index) => entries[index]?.id ?? "loading",
     scrollMargin: listRef.current?.offsetTop ?? 0,
     overscan: OVERSCAN_CARDS,
   });
 
   const items = virtualizer.getVirtualItems();
+
+  useLayoutEffect(() => {
+    const previousFirstEntryId = previousFirstEntryIdRef.current;
+    previousFirstEntryIdRef.current = firstEntryId;
+
+    const prependedCount = entries.findIndex((entry) => entry.id === previousFirstEntryId);
+    if (prependedCount > 0) {
+      virtualizer.scrollBy(prependedCount * ESTIMATED_CARD_HEIGHT);
+    }
+  }, [entries, firstEntryId, virtualizer]);
+
+  useEffect(() => {
+    if (!scrollElement || !hasPreviousPage || isFetchingPreviousPage) {
+      return;
+    }
+
+    if (scrollElement.scrollTop - virtualizer.options.scrollMargin < ESTIMATED_CARD_HEIGHT) {
+      onLoadPrevious?.();
+    }
+  }, [items, scrollElement, hasPreviousPage, isFetchingPreviousPage, onLoadPrevious, virtualizer]);
 
   useEffect(() => {
     const lastItem = items.at(-1);
