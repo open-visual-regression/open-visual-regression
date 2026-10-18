@@ -12,7 +12,7 @@ import { SnapshotHistoryCard, SnapshotHistoryCardSkeleton } from "./SnapshotHist
 
 const ESTIMATED_CARD_HEIGHT = 236;
 const OVERSCAN_CARDS = 3;
-const SKELETON_COUNT = 3;
+const SKELETON_COUNT = 8;
 
 type SnapshotHistoryListProps = {
   entries: SnapshotHistoryEntrySchema[];
