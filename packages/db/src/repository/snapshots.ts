@@ -512,6 +512,12 @@ export const countForBuild = async (buildId: string, filters: ListForBuildFilter
   return result?.count ?? 0;
 };
 
+export type SnapshotHistoryCursor = {
+  createdAt: string;
+  buildId: string;
+  direction: "next" | "previous";
+};
+
 export type FindHistoryOptions = {
   projectId: string;
   branch: string;
@@ -520,9 +526,29 @@ export type FindHistoryOptions = {
   viewportHeight: number;
   targetId: string;
   limit: number;
+  cursor: SnapshotHistoryCursor & { inclusive?: boolean };
 };
 
-export const findHistory = ({
+type HistoryBuildKey = Pick<SnapshotHistoryCursor, "createdAt" | "buildId">;
+
+const historyBuildComparison = (
+  operator: "<" | "<=" | ">",
+  { createdAt, buildId }: HistoryBuildKey,
+) =>
+  sql`(${builds.createdAt}, ${builds.id}) ${sql.raw(operator)} (${createdAt}::timestamp, ${buildId}::uuid)`;
+
+const getHistoryCursorOperator = ({
+  direction,
+  inclusive,
+}: NonNullable<FindHistoryOptions["cursor"]>): "<" | "<=" | ">" => {
+  if (direction === "previous") {
+    return ">";
+  }
+
+  return inclusive ? "<=" : "<";
+};
+
+export const findHistory = async ({
   projectId,
   branch,
   browser,
@@ -530,8 +556,28 @@ export const findHistory = ({
   viewportHeight,
   targetId,
   limit,
-}: FindHistoryOptions) =>
-  db
+  cursor,
+}: FindHistoryOptions) => {
+  const matchesStory = and(
+    eq(builds.projectId, projectId),
+    eq(builds.branch, branch),
+    eq(snapshots.browser, browser),
+    eq(snapshots.viewportWidth, viewportWidth),
+    eq(snapshots.viewportHeight, viewportHeight),
+    eq(snapshots.targetId, targetId),
+  );
+
+  const hasNewerStory = async (key: HistoryBuildKey) => {
+    const [row] = await db
+      .select({ id: snapshots.id })
+      .from(builds)
+      .innerJoin(snapshots, eq(snapshots.buildId, builds.id))
+      .where(and(matchesStory, historyBuildComparison(">", key)))
+      .limit(1);
+    return row !== undefined;
+  };
+
+  const rows = await db
     .select({
       id: snapshots.id,
       buildId: builds.id,
@@ -541,21 +587,51 @@ export const findHistory = ({
       status: displayStatusExpr,
       diffPercent: diffs.diffPercent,
       variantId: snapshots.variantId,
+      imagePath: snapshots.imagePath,
+      hasUncaughtPageError: snapshots.hasUncaughtPageError,
     })
     .from(builds)
     .innerJoin(snapshots, eq(snapshots.buildId, builds.id))
     .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
-    .where(
-      and(
-        eq(builds.projectId, projectId),
-        eq(builds.branch, branch),
-        eq(snapshots.browser, browser),
-        eq(snapshots.viewportWidth, viewportWidth),
-        eq(snapshots.viewportHeight, viewportHeight),
-        eq(snapshots.targetId, targetId),
-      ),
+    .where(and(matchesStory, historyBuildComparison(getHistoryCursorOperator(cursor), cursor)))
+    .orderBy(
+      ...(cursor.direction === "previous"
+        ? [asc(builds.createdAt), asc(builds.id)]
+        : [desc(builds.createdAt), desc(builds.id)]),
     )
-    .orderBy(desc(builds.createdAt), desc(builds.id))
-    .limit(limit);
+    .limit(limit + 1);
+
+  const hasMore = rows.length > limit;
+  const pageRows = hasMore ? rows.slice(0, limit) : rows;
+
+  if (cursor.direction === "previous") {
+    pageRows.reverse();
+  }
+
+  const newest = pageRows.at(0);
+  const oldest = pageRows.at(-1);
+
+  const toCursor = (key: HistoryBuildKey, direction: SnapshotHistoryCursor["direction"]) => ({
+    createdAt: key.createdAt,
+    buildId: key.buildId,
+    direction,
+  });
+
+  if (cursor.direction === "previous") {
+    return {
+      snapshots: pageRows,
+      nextCursor: toCursor(oldest ?? cursor, "next"),
+      previousCursor: hasMore && newest ? toCursor(newest, "previous") : null,
+    };
+  }
+
+  const hasNewer = cursor.inclusive ? await hasNewerStory(newest ?? cursor) : true;
+
+  return {
+    snapshots: pageRows,
+    nextCursor: hasMore && oldest ? toCursor(oldest, "next") : null,
+    previousCursor: hasNewer ? toCursor(newest ?? cursor, "previous") : null,
+  };
+};
 
 export type SnapshotDbSchema = Awaited<ReturnType<typeof findByBuild>>[number];

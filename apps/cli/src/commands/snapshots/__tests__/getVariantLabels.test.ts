@@ -15,6 +15,8 @@ const entry = (variantId: string | null): SnapshotHistoryEntrySchema => ({
   status: "auto_approved",
   diffPercent: 1.5,
   variantId,
+  imagePath: null,
+  flags: [],
 });
 
 describe("getVariantLabels", () => {

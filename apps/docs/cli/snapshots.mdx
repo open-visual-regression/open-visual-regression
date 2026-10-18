@@ -124,12 +124,12 @@ ovr snapshots history <snapshotId>
 |------|-------------|
 | `--server-url <url>` | OVR server URL (defaults to `ovr.config`'s `serverUrl`) |
 | `--branch <name>` | Branch to show (defaults to the project's main branch) |
-| `--limit <count>` | Number of recent builds, 1–100 (default `30`) |
+| `--limit <count>` | Builds to show, 1–100 (default `30`) |
 | `-c, --config <path>` | Path to `ovr.config` file |
 | `--json` | Print the history as JSON instead of a table |
 
-Shows the given snapshot's screenshot across the most recent builds on a branch, newest
-first. Each distinct screenshot gets a letter in the `IMAGE` column.
+Shows the given snapshot's screenshot in its own build and the builds before it on a branch,
+newest first. Each distinct screenshot gets a letter in the `IMAGE` column.
 
 ```
 SNAPSHOT                              BUILD                                 COMMIT   CREATED               STATUS         DIFF%  IMAGE

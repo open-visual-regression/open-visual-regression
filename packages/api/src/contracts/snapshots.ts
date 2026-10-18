@@ -229,19 +229,39 @@ export const snapshotHistoryEntrySchema = z.object({
     .uuidv7()
     .nullable()
     .meta({ description: "Snapshots with the same value have identical screenshots" }),
+  imagePath: z.string().nullable(),
+  flags: z.array(snapshotFlagSchema),
 });
 
 export type SnapshotHistoryEntrySchema = z.infer<typeof snapshotHistoryEntrySchema>;
+
+export const snapshotHistoryCursorSchema = z.object({
+  createdAt: z.string().nonempty(),
+  buildId: z.uuidv7(),
+  direction: z.enum(["next", "previous"]),
+});
+
+export type SnapshotHistoryCursor = z.infer<typeof snapshotHistoryCursorSchema>;
 
 export const getHistoryInputSchema = z.object({
   snapshotId: z.uuidv7(),
   branch: z.string().min(1).optional(),
   limit: z.number().int().min(1).max(MAX_SNAPSHOT_HISTORY).default(30),
+  cursor: snapshotHistoryCursorSchema.optional().meta({
+    description:
+      "nextCursor or previousCursor from an earlier page. Without it, the page starts at this snapshot",
+  }),
 });
 
 export const getHistoryOutputSchema = z.object({
   branch: z.string().min(1),
   snapshots: z.array(snapshotHistoryEntrySchema),
+  nextCursor: snapshotHistoryCursorSchema
+    .nullable()
+    .meta({ description: "Cursor for older snapshots, or null on the oldest page" }),
+  previousCursor: snapshotHistoryCursorSchema
+    .nullable()
+    .meta({ description: "Cursor for newer snapshots, or null on the newest page" }),
 });
 
 export type GetHistoryOutputSchema = z.infer<typeof getHistoryOutputSchema>;
