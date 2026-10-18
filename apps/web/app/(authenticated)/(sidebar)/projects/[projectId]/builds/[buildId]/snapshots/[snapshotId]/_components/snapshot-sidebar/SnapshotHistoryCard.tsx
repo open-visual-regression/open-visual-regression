@@ -7,7 +7,8 @@ import { CardSurface } from "@/lib/components/card-link/CardSurface";
 import { Image } from "@/lib/components/image/Image";
 import { MetadataDot } from "@/lib/components/metadata-dot/MetadataDot";
 import { SnapshotBadges } from "@/lib/components/SnapshotBadges";
-import { getSnapshotStatusLabel } from "@/lib/components/SnapshotStatusBadge";
+import { getSnapshotStatusLabel, SnapshotStatusBadge } from "@/lib/components/SnapshotStatusBadge";
+import { WarningBadge } from "@/lib/components/WarningBadge";
 import { formatRelativeDateTime } from "@/lib/utils/date";
 import { getStoragePath } from "@/lib/utils/storage";
 
@@ -68,7 +69,10 @@ export const SnapshotHistoryCard = ({ entry, projectId, current }: SnapshotHisto
           </div>
         )}
         <div className="absolute bottom-2 right-2">
-          <SnapshotBadges status={entry.status} warning={warning} />
+          <SnapshotBadges>
+            {warning ? <WarningBadge /> : null}
+            <SnapshotStatusBadge status={entry.status} filled />
+          </SnapshotBadges>
         </div>
       </SnapshotHistoryCardPreview>
       <SnapshotHistoryCardBody>
