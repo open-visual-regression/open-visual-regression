@@ -515,7 +515,7 @@ export const countForBuild = async (buildId: string, filters: ListForBuildFilter
 export type SnapshotHistoryCursor = {
   createdAt: string;
   buildId: string;
-  direction: "older" | "newer";
+  direction: "next" | "previous";
 };
 
 export type FindHistoryOptions = {
@@ -541,7 +541,7 @@ const getHistoryCursorOperator = ({
   direction,
   inclusive,
 }: NonNullable<FindHistoryOptions["cursor"]>): "<" | "<=" | ">" => {
-  if (direction === "newer") {
+  if (direction === "previous") {
     return ">";
   }
 
@@ -600,7 +600,7 @@ export const findHistory = async ({
       ),
     )
     .orderBy(
-      ...(cursor?.direction === "newer"
+      ...(cursor?.direction === "previous"
         ? [asc(builds.createdAt), asc(builds.id)]
         : [desc(builds.createdAt), desc(builds.id)]),
     )
@@ -609,7 +609,7 @@ export const findHistory = async ({
   const hasMore = rows.length > limit;
   const pageRows = hasMore ? rows.slice(0, limit) : rows;
 
-  if (cursor?.direction === "newer") {
+  if (cursor?.direction === "previous") {
     pageRows.reverse();
   }
 
@@ -622,11 +622,11 @@ export const findHistory = async ({
     direction,
   });
 
-  if (cursor?.direction === "newer") {
+  if (cursor?.direction === "previous") {
     return {
       snapshots: pageRows,
-      nextCursor: oldest ? toCursor(oldest, "older") : toCursor(cursor, "older"),
-      previousCursor: hasMore && newest ? toCursor(newest, "newer") : null,
+      nextCursor: oldest ? toCursor(oldest, "next") : toCursor(cursor, "next"),
+      previousCursor: hasMore && newest ? toCursor(newest, "previous") : null,
     };
   }
 
@@ -635,8 +635,8 @@ export const findHistory = async ({
 
   return {
     snapshots: pageRows,
-    nextCursor: hasMore && oldest ? toCursor(oldest, "older") : null,
-    previousCursor: hasNewer && newestKey ? toCursor(newestKey, "newer") : null,
+    nextCursor: hasMore && oldest ? toCursor(oldest, "next") : null,
+    previousCursor: hasNewer && newestKey ? toCursor(newestKey, "previous") : null,
   };
 };
 
