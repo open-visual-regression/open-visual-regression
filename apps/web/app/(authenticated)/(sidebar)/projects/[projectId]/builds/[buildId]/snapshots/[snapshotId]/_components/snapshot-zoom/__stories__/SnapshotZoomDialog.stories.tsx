@@ -56,6 +56,7 @@ const openDialog = async (canvasElement: HTMLElement, view: "baseline" | "new") 
   await userEvent.click(within(canvasElement).getByRole("button", { name: `zoom ${view}` }));
 
   const dialog = await screen.findByRole("dialog", { name: view });
+  await waitFor(() => expect(dialog).toBeVisible());
   const imageName =
     view === "baseline" ? "baseline snapshot of Button Primary" : "snapshot of Button Primary";
   const image = await within(dialog).findByRole("img", { name: imageName });
