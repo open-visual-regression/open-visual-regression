@@ -80,6 +80,7 @@ export default async function SnapshotPage(props: SnapshotPageProps) {
       canReview={canReview(session?.user.role)}
       sidebar={
         <SnapshotSidebarContent
+          projectId={projectId}
           snapshot={snapshot}
           diffId={diff?.id ?? null}
           reviews={reviewsResult}
