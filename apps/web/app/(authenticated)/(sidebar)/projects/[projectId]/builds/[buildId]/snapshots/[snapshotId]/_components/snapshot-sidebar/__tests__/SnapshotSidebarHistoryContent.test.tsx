@@ -18,17 +18,14 @@ const NEXT_CURSOR = {
   direction: "next",
 } as const;
 
-const PREVIOUS_CURSOR = { ...NEXT_CURSOR, direction: "previous" } as const;
-
 const toPage = (
   entries: GetHistoryOutputSchema["snapshots"],
-  fields: Partial<Pick<GetHistoryOutputSchema, "nextCursor" | "previousCursor" | "latest">> = {},
+  fields: Partial<Pick<GetHistoryOutputSchema, "nextCursor" | "previousCursor">> = {},
 ): GetHistoryOutputSchema => ({
   branch: "main",
   snapshots: entries,
   nextCursor: fields.nextCursor ?? null,
   previousCursor: fields.previousCursor ?? null,
-  latest: fields.latest ?? null,
 });
 
 const createQueryClient = () =>
@@ -70,31 +67,5 @@ describe("SnapshotSidebarHistoryContent", () => {
     renderContent(queryClient);
 
     expect(screen.getByText("no snapshots on main yet")).toBeVisible();
-  });
-
-  it("should not offer to jump to the latest snapshot when it is already loaded", () => {
-    const queryClient = createQueryClient();
-    seedPages(queryClient, [toPage([mocks.build.generateSnapshotHistoryEntry()])]);
-
-    renderContent(queryClient);
-
-    expect(screen.queryByRole("button", { name: "jump to latest" })).not.toBeInTheDocument();
-  });
-
-  it("should link to the latest snapshot when there are newer ones", () => {
-    const queryClient = createQueryClient();
-    seedPages(queryClient, [
-      toPage([mocks.build.generateSnapshotHistoryEntry()], {
-        previousCursor: PREVIOUS_CURSOR,
-        latest: { id: "snapshot-latest", buildId: "build-latest" },
-      }),
-    ]);
-
-    renderContent(queryClient);
-
-    expect(screen.getByRole("link", { name: "jump to latest" })).toHaveAttribute(
-      "href",
-      `/projects/${PROJECT_ID}/builds/build-latest/snapshots/snapshot-latest`,
-    );
   });
 });

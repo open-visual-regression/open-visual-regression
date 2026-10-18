@@ -2,7 +2,6 @@
 
 import { useInfiniteQuery } from "@tanstack/react-query";
 
-import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
 import { orpc } from "@/lib/orpc/client";
 import { snapshotHistoryInfiniteOptions } from "@/lib/orpc/snapshots-query";
 
@@ -30,22 +29,8 @@ export const SnapshotSidebarHistoryContent = ({
     orpc.snapshots.getHistory.infiniteOptions(snapshotHistoryInfiniteOptions(snapshotId)),
   );
 
-  const latest = data?.pages[0]?.latest;
-
   return (
     <div className="px-3 pb-3">
-      {hasPreviousPage && latest ? (
-        <div className="sticky top-0 z-10 flex justify-center bg-background pb-3">
-          <ButtonLink
-            href={`/projects/${projectId}/builds/${latest.buildId}/snapshots/${latest.id}`}
-            variant="outline"
-            color="neutral"
-            size="sm"
-          >
-            jump to latest
-          </ButtonLink>
-        </div>
-      ) : null}
       {isPending ? (
         <SnapshotHistoryListSkeleton />
       ) : (
