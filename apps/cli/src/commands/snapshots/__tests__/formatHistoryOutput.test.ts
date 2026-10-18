@@ -38,7 +38,6 @@ const HISTORY: GetHistoryOutputSchema = {
   ],
   nextCursor: null,
   previousCursor: null,
-  latest: null,
 };
 
 describe("formatHistoryOutput", () => {
@@ -61,7 +60,7 @@ describe("formatHistoryOutput", () => {
   it("should say when there are no snapshots like it on the branch", () => {
     expect(
       formatHistoryOutput(
-        { branch: "main", snapshots: [], nextCursor: null, previousCursor: null, latest: null },
+        { branch: "main", snapshots: [], nextCursor: null, previousCursor: null },
         false,
       ),
     ).toBe("No snapshots like this one on main.");
