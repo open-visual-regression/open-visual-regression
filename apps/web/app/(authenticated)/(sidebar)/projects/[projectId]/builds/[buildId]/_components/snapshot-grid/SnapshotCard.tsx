@@ -6,11 +6,13 @@ import { cn } from "@ovr/ui/lib/utils";
 
 import { CardLink } from "@/lib/components/card-link/CardLink";
 import { CardSurface } from "@/lib/components/card-link/CardSurface";
+import { FlakyBadge } from "@/lib/components/FlakyBadge";
 import { Image } from "@/lib/components/image/Image";
 import { MetadataItem } from "@/lib/components/metadata-item/MetadataItem";
 import { MetadataList } from "@/lib/components/metadata-list/MetadataList";
 import { SnapshotBadges } from "@/lib/components/SnapshotBadges";
-import { getSnapshotStatusLabel } from "@/lib/components/SnapshotStatusBadge";
+import { getSnapshotStatusLabel, SnapshotStatusBadge } from "@/lib/components/SnapshotStatusBadge";
+import { WarningBadge } from "@/lib/components/WarningBadge";
 import { formatDuration } from "@/lib/utils/date";
 import { type SnapshotFilters, withSnapshotFilters } from "@/lib/utils/snapshotFilters";
 import { getStoragePath } from "@/lib/utils/storage";
@@ -73,11 +75,11 @@ export const SnapshotCard = ({ snapshot, projectId, buildId, filters }: Snapshot
           </div>
         )}
         <div className="absolute bottom-2 right-2">
-          <SnapshotBadges
-            status={snapshot.status}
-            warning={snapshot.hasUncaughtPageError}
-            flaky={snapshot.isFlaky}
-          />
+          <SnapshotBadges>
+            {snapshot.hasUncaughtPageError ? <WarningBadge /> : null}
+            {snapshot.isFlaky ? <FlakyBadge filled /> : null}
+            <SnapshotStatusBadge status={snapshot.status} filled />
+          </SnapshotBadges>
         </div>
       </SnapshotCardPreview>
       <SnapshotCardBody>
