@@ -1,5 +1,26 @@
 # @ovr/web
 
+## 0.14.0
+
+### Minor Changes
+
+- [#401](https://github.com/open-visual-regression/open-visual-regression/pull/401) [`fd89747`](https://github.com/open-visual-regression/open-visual-regression/commit/fd897479d913a273fad01c5a8d8144288fb8c86a) Thanks [@tgfischer](https://github.com/tgfischer)! - Filter builds by commit on the builds page and the project page.
+
+- [#403](https://github.com/open-visual-regression/open-visual-regression/pull/403) [`174cc13`](https://github.com/open-visual-regression/open-visual-regression/commit/174cc13e5d17b30efe95bc856a02ccb24519d070) Thanks [@tgfischer](https://github.com/tgfischer)! - `snapshots.getHistory` starts at the given snapshot, pages to older and newer builds with `nextCursor` and `previousCursor`, and includes each snapshot's image path and flags.
+
+- [#405](https://github.com/open-visual-regression/open-visual-regression/pull/405) [`565920a`](https://github.com/open-visual-regression/open-visual-regression/commit/565920a6b7e0c9136d9a2cd9f3a450497d1bb63c) Thanks [@tgfischer](https://github.com/tgfischer)! - Add a History tab to the snapshot sidebar that shows the snapshot's screenshot in each main branch build, with its status and warnings. It opens at the snapshot you're viewing and loads more builds as you scroll. Click a screenshot to open that snapshot.
+
+### Patch Changes
+
+- [#402](https://github.com/open-visual-regression/open-visual-regression/pull/402) [`ba549ab`](https://github.com/open-visual-regression/open-visual-regression/commit/ba549abb4c13b42e7ef50ce9cb975e0ce89b1ac4) Thanks [@tgfischer](https://github.com/tgfischer)! - Speed up loading a snapshot's history, which scanned every snapshot on each page. The upgrade builds the new index without blocking the running app, and two migrators starting at once no longer deadlock on it.
+
+- [#398](https://github.com/open-visual-regression/open-visual-regression/pull/398) [`d7d110a`](https://github.com/open-visual-regression/open-visual-regression/commit/d7d110a36ab0310cd663ac9be8432c658c2675c3) Thanks [@tgfischer](https://github.com/tgfischer)! - The reviews and activity panel on the snapshot page no longer shows a left border on mobile, where it takes up the full width.
+
+- [#399](https://github.com/open-visual-regression/open-visual-regression/pull/399) [`c946060`](https://github.com/open-visual-regression/open-visual-regression/commit/c9460607190f859a7552ebb1f43cbb00d06b1b79) Thanks [@tgfischer](https://github.com/tgfischer)! - Keep the snapshot zoom toolbar on one line on mobile by hiding the 100% and fit buttons there, and drop the baseline commit from the zoom dialog since it already shows above the snapshot.
+
+- Updated dependencies []:
+  - @ovr/ui@0.1.4
+
 ## 0.13.0
 
 ### Minor Changes

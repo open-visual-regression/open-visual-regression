@@ -1,5 +1,11 @@
 # @open-visual-regression/cli
 
+## 0.9.0
+
+### Minor Changes
+
+- [#403](https://github.com/open-visual-regression/open-visual-regression/pull/403) [`174cc13`](https://github.com/open-visual-regression/open-visual-regression/commit/174cc13e5d17b30efe95bc856a02ccb24519d070) Thanks [@tgfischer](https://github.com/tgfischer)! - `ovr snapshots history` lists the given snapshot and the builds before it, instead of the newest builds on the branch.
+
 ## 0.8.0
 
 ### Minor Changes
