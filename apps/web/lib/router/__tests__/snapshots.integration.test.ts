@@ -748,7 +748,9 @@ describe("snapshots", () => {
       return id;
     };
 
-    test("lists the matching snapshots on the main branch, newest first", async ({ admin }) => {
+    test("lists the snapshot and the ones before it on the main branch, newest first", async ({
+      admin,
+    }) => {
       const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
       const projectId = addResult!.projectId;
       const first = await createBuildWithStory(projectId, admin, "main");
@@ -761,7 +763,7 @@ describe("snapshots", () => {
       await assignVariant(projectId, third.snapshot.id, variant);
 
       const [error, result] = await serverClient.snapshots.getHistory({
-        snapshotId: first.snapshot.id,
+        snapshotId: third.snapshot.id,
       });
 
       expect(error).toBeNull();
@@ -781,12 +783,12 @@ describe("snapshots", () => {
     }) => {
       const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
       const projectId = addResult!.projectId;
-      const { snapshot } = await createBuildWithStory(projectId, admin, "main");
+      await createBuildWithStory(projectId, admin, "main");
       await createBuildWithStory(projectId, admin, "feature/other");
       const latest = await createBuildWithStory(projectId, admin, "feature/other");
 
       const [error, result] = await serverClient.snapshots.getHistory({
-        snapshotId: snapshot.id,
+        snapshotId: latest.snapshot.id,
         branch: "feature/other",
         limit: 1,
       });
@@ -804,7 +806,7 @@ describe("snapshots", () => {
       const third = await createBuildWithStory(projectId, admin, "main");
 
       const [firstError, firstPage] = await serverClient.snapshots.getHistory({
-        snapshotId: first.snapshot.id,
+        snapshotId: third.snapshot.id,
         limit: 2,
       });
 
@@ -821,7 +823,7 @@ describe("snapshots", () => {
       expect(firstPage?.previousCursor).toBeNull();
 
       const [secondError, secondPage] = await serverClient.snapshots.getHistory({
-        snapshotId: first.snapshot.id,
+        snapshotId: third.snapshot.id,
         limit: 2,
         cursor: firstPage!.nextCursor!,
       });
@@ -842,7 +844,6 @@ describe("snapshots", () => {
 
       const [anchorError, anchorPage] = await serverClient.snapshots.getHistory({
         snapshotId: third.snapshot.id,
-        startAt: "snapshot",
         limit: 1,
       });
 
@@ -853,6 +854,7 @@ describe("snapshots", () => {
         buildId: third.build.id,
         direction: "next",
       });
+      expect(anchorPage?.latest).toEqual({ id: fifth.snapshot.id, buildId: fifth.build.id });
       expect(anchorPage?.previousCursor).toEqual({
         createdAt: third.build.createdAt,
         buildId: third.build.id,
@@ -861,7 +863,6 @@ describe("snapshots", () => {
 
       const [olderError, olderPage] = await serverClient.snapshots.getHistory({
         snapshotId: third.snapshot.id,
-        startAt: "snapshot",
         limit: 2,
         cursor: anchorPage!.nextCursor!,
       });
@@ -875,7 +876,6 @@ describe("snapshots", () => {
 
       const [newerError, newerPage] = await serverClient.snapshots.getHistory({
         snapshotId: third.snapshot.id,
-        startAt: "snapshot",
         limit: 1,
         cursor: anchorPage!.previousCursor!,
       });
@@ -890,7 +890,6 @@ describe("snapshots", () => {
 
       const [newestError, newestPage] = await serverClient.snapshots.getHistory({
         snapshotId: third.snapshot.id,
-        startAt: "snapshot",
         limit: 2,
         cursor: newerPage!.previousCursor!,
       });
@@ -913,12 +912,12 @@ describe("snapshots", () => {
 
       const [error, result] = await serverClient.snapshots.getHistory({
         snapshotId: latest.snapshot.id,
-        startAt: "snapshot",
       });
 
       expect(error).toBeNull();
       expect(result?.snapshots).toHaveLength(2);
       expect(result?.previousCursor).toBeNull();
+      expect(result?.latest).toEqual({ id: latest.snapshot.id, buildId: latest.build.id });
     });
 
     test("starts a feature branch snapshot at the main builds before it", async ({ admin }) => {
@@ -931,7 +930,6 @@ describe("snapshots", () => {
 
       const [error, result] = await serverClient.snapshots.getHistory({
         snapshotId: feature.snapshot.id,
-        startAt: "snapshot",
       });
 
       expect(error).toBeNull();
@@ -942,7 +940,6 @@ describe("snapshots", () => {
 
       const [newerError, newerPage] = await serverClient.snapshots.getHistory({
         snapshotId: feature.snapshot.id,
-        startAt: "snapshot",
         cursor: result!.previousCursor!,
       });
 
@@ -953,16 +950,16 @@ describe("snapshots", () => {
     test("includes each snapshot's image and warning flag", async ({ admin }) => {
       const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
       const projectId = addResult!.projectId;
-      const clean = await createBuildWithStory(projectId, admin, "main", "story-a", {
+      await createBuildWithStory(projectId, admin, "main", "story-a", {
         imagePath: "snapshots/clean.png",
       });
-      await createBuildWithStory(projectId, admin, "main", "story-a", {
+      const warning = await createBuildWithStory(projectId, admin, "main", "story-a", {
         imagePath: "snapshots/warning.png",
         hasUncaughtPageError: true,
       });
 
       const [error, result] = await serverClient.snapshots.getHistory({
-        snapshotId: clean.snapshot.id,
+        snapshotId: warning.snapshot.id,
       });
 
       expect(error).toBeNull();

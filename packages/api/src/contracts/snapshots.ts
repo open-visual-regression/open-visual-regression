@@ -247,11 +247,9 @@ export const getHistoryInputSchema = z.object({
   snapshotId: z.uuidv7(),
   branch: z.string().min(1).optional(),
   limit: z.number().int().min(1).max(MAX_SNAPSHOT_HISTORY).default(30),
-  startAt: z.enum(["latest", "snapshot"]).default("latest").meta({
-    description:
-      "Where the first page starts: the newest build, or this snapshot's build and the ones before it",
-  }),
-  cursor: snapshotHistoryCursorSchema.optional(),
+  cursor: snapshotHistoryCursorSchema
+    .optional()
+    .meta({ description: "Leave out to start at this snapshot and the builds before it" }),
 });
 
 export const getHistoryOutputSchema = z.object({
@@ -263,6 +261,10 @@ export const getHistoryOutputSchema = z.object({
   previousCursor: snapshotHistoryCursorSchema
     .nullable()
     .meta({ description: "Fetches the page of newer snapshots" }),
+  latest: z
+    .object({ id: z.uuidv7(), buildId: z.uuidv7() })
+    .nullable()
+    .meta({ description: "The newest snapshot like this one on the branch" }),
 });
 
 export type GetHistoryOutputSchema = z.infer<typeof getHistoryOutputSchema>;
