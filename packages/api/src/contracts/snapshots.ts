@@ -238,7 +238,7 @@ export type SnapshotHistoryEntrySchema = z.infer<typeof snapshotHistoryEntrySche
 export const snapshotHistoryCursorSchema = z.object({
   createdAt: z.string().nonempty(),
   buildId: z.uuidv7(),
-  direction: z.enum(["older", "newer"]),
+  direction: z.enum(["next", "previous"]),
 });
 
 export type SnapshotHistoryCursor = z.infer<typeof snapshotHistoryCursorSchema>;
