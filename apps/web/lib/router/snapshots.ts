@@ -137,7 +137,6 @@ export const getHistory = os.snapshots.getHistory
       snapshots: rows,
       nextCursor,
       previousCursor,
-      latest,
     } = await dbClient.snapshots.findHistory({
       projectId: project.id,
       branch,
@@ -162,7 +161,6 @@ export const getHistory = os.snapshots.getHistory
       })),
       nextCursor,
       previousCursor,
-      latest,
     };
   })
   .actionable();
