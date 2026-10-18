@@ -7,11 +7,12 @@ import { describe, expect, it, render, screen } from "@/test-utils";
 
 vi.mock("next/navigation");
 
-const { listBuilds, listStatuses, listBranches, listAuthors } = vi.hoisted(() => ({
+const { listBuilds, listStatuses, listBranches, listAuthors, listCommitShas } = vi.hoisted(() => ({
   listBuilds: vi.fn(),
   listStatuses: vi.fn(),
   listBranches: vi.fn(),
   listAuthors: vi.fn(),
+  listCommitShas: vi.fn(),
 }));
 
 vi.mock("@/lib/orpc/server", async () => {
@@ -23,6 +24,7 @@ vi.mock("@/lib/orpc/server", async () => {
         listStatuses,
         listBranches,
         listAuthors,
+        listCommitShas,
       },
     }),
   };
@@ -48,6 +50,7 @@ describe("BuildsPage", () => {
     listStatuses.mockResolvedValue({ statuses: ["queued", "needs_review"] });
     listBranches.mockResolvedValue({ branches: ["main", "develop"] });
     listAuthors.mockResolvedValue({ authors: ["Jordan Lee", "Alex Kim"] });
+    listCommitShas.mockResolvedValue({ commitShas: ["4f2a91e1234567890", "7c3b82f1234567890"] });
   });
 
   it("should list every project's builds, each linking to its own build page", async () => {
@@ -83,9 +86,10 @@ describe("BuildsPage", () => {
     expect(listStatuses).toHaveBeenCalledWith({}, expect.anything());
     expect(listBranches).toHaveBeenCalledWith({ search: undefined }, expect.anything());
     expect(listAuthors).toHaveBeenCalledWith({ search: undefined }, expect.anything());
+    expect(listCommitShas).toHaveBeenCalledWith({ search: undefined }, expect.anything());
   });
 
-  it("should offer a status, branch and author facet sourced from every project", async () => {
+  it("should offer a status, branch, author and commit facet sourced from every project", async () => {
     listBuilds.mockResolvedValue({ builds: [], total: 0, nextCursor: null });
 
     await renderPage();
@@ -93,22 +97,31 @@ describe("BuildsPage", () => {
     expect(screen.getByRole("button", { name: /^status\s+any$/i })).toBeVisible();
     expect(screen.getByRole("button", { name: /^branch\s+any$/i })).toBeVisible();
     expect(screen.getByRole("button", { name: /^author\s+any$/i })).toBeVisible();
+    expect(screen.getByRole("button", { name: /^commit\s+any$/i })).toBeVisible();
   });
 
   it("should apply the filters from the url to the builds query and the facet triggers", async () => {
     listBuilds.mockResolvedValue({ builds: [], total: 0, nextCursor: null });
 
-    await renderPage({ status: "queued", branch: "main", author: "Jordan Lee", search: "cart" });
+    await renderPage({
+      status: "queued",
+      branch: "main",
+      author: "Jordan Lee",
+      commit: "4f2a91e1234567890",
+      search: "cart",
+    });
 
     expect(screen.getByRole("button", { name: /^status\s+queued$/i })).toBeVisible();
     expect(screen.getByRole("button", { name: /^branch\s+main$/i })).toBeVisible();
     expect(screen.getByRole("button", { name: /^author\s+Jordan Lee$/i })).toBeVisible();
+    expect(screen.getByRole("button", { name: /^commit\s+4f2a91e$/i })).toBeVisible();
 
     expect(listBuilds).toHaveBeenCalledWith(
       expect.objectContaining({
         statuses: ["queued"],
         branches: ["main"],
         authors: ["Jordan Lee"],
+        commitShas: ["4f2a91e1234567890"],
         search: "cart",
       }),
       expect.anything(),

@@ -15,6 +15,7 @@ type BuildsSectionProps = {
   statuses?: BuildStatus[];
   branches?: string[];
   authors?: string[];
+  commitShas?: string[];
   emptyState?: React.ReactNode;
 };
 
@@ -24,13 +25,16 @@ export const BuildsSection = ({
   statuses,
   branches,
   authors,
+  commitShas,
   emptyState,
 }: BuildsSectionProps) => {
-  const hasFilters = Boolean(statuses?.length || branches?.length || authors?.length);
+  const hasFilters = Boolean(
+    statuses?.length || branches?.length || authors?.length || commitShas?.length,
+  );
 
   const { data, isPending, hasNextPage, isFetchingNextPage, fetchNextPage } = useInfiniteQuery(
     orpc.builds.list.infiniteOptions(
-      buildsListInfiniteOptions({ projectIds, search, statuses, branches, authors }),
+      buildsListInfiniteOptions({ projectIds, search, statuses, branches, authors, commitShas }),
     ),
   );
 

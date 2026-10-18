@@ -9,6 +9,7 @@ import {
   inArray,
   isNotNull,
   lt,
+  max,
   ne,
   notExists,
   or,
@@ -353,6 +354,22 @@ export const findAuthors = async (
     .limit(limit);
 
   return rows.map((row) => row.author!);
+};
+
+export const findCommitShas = async (
+  scope: BuildOptionsScope,
+  { search, limit }: SearchOptions,
+): Promise<string[]> => {
+  const rows = await db
+    .select({ commitSha: builds.commitSha })
+    .from(builds)
+    .innerJoin(projects, eq(builds.projectId, projects.id))
+    .where(and(getScopeFilter(scope), search ? ilike(builds.commitSha, `%${search}%`) : undefined))
+    .groupBy(builds.commitSha)
+    .orderBy(desc(max(builds.createdAt)))
+    .limit(limit);
+
+  return rows.map((row) => row.commitSha);
 };
 
 export const findExpiredPage = async (

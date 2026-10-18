@@ -31,6 +31,11 @@ const AUTHOR_OPTIONS: FacetOption<string>[] = [
   { value: "Alex Kim", label: "Alex Kim" },
 ];
 
+const COMMIT_SHA_OPTIONS: FacetOption<string>[] = [
+  { value: "4f2a91e1234567890", label: "4f2a91e" },
+  { value: "7c3b82f1234567890", label: "7c3b82f" },
+];
+
 const renderComponent = () =>
   render(
     <BuildsFilters
@@ -38,9 +43,11 @@ const renderComponent = () =>
       statuses={[]}
       branches={[]}
       authors={[]}
+      commitShas={[]}
       statusOptions={STATUS_OPTIONS}
       branchOptions={BRANCH_OPTIONS}
       authorOptions={AUTHOR_OPTIONS}
+      commitShaOptions={COMMIT_SHA_OPTIONS}
     />,
   );
 
@@ -51,6 +58,7 @@ describe("BuildsFilters", () => {
     expect(screen.getByRole("button", { name: /^status\s+any$/i })).toBeVisible();
     expect(screen.getByRole("button", { name: /^branch\s+any$/i })).toBeVisible();
     expect(screen.getByRole("button", { name: /^author\s+any$/i })).toBeVisible();
+    expect(screen.getByRole("button", { name: /^commit\s+any$/i })).toBeVisible();
   });
 
   it("should navigate with the selected statuses when the status facet is applied", async ({
@@ -83,9 +91,11 @@ describe("BuildsFilters", () => {
         statuses={[]}
         branches={[]}
         authors={[]}
+        commitShas={[]}
         statusOptions={STATUS_OPTIONS}
         branchOptions={BRANCH_OPTIONS}
         authorOptions={AUTHOR_OPTIONS}
+        commitShaOptions={COMMIT_SHA_OPTIONS}
       />,
       {
         wrapper: ({ children }) => (
@@ -109,9 +119,11 @@ describe("BuildsFilters", () => {
         statuses={[]}
         branches={["main"]}
         authors={[]}
+        commitShas={[]}
         statusOptions={STATUS_OPTIONS}
         branchOptions={BRANCH_OPTIONS}
         authorOptions={AUTHOR_OPTIONS}
+        commitShaOptions={COMMIT_SHA_OPTIONS}
       />,
     );
 
@@ -125,13 +137,33 @@ describe("BuildsFilters", () => {
         statuses={[]}
         branches={[]}
         authors={["Jordan Lee"]}
+        commitShas={[]}
         statusOptions={STATUS_OPTIONS}
         branchOptions={BRANCH_OPTIONS}
         authorOptions={AUTHOR_OPTIONS}
+        commitShaOptions={COMMIT_SHA_OPTIONS}
       />,
     );
 
     expect(screen.getByRole("button", { name: /^author\s+Jordan Lee$/i })).toBeVisible();
+  });
+
+  it("should reflect the applied commit on the commit facet trigger", () => {
+    render(
+      <BuildsFilters
+        projectId={PROJECT_ID}
+        statuses={[]}
+        branches={[]}
+        authors={[]}
+        commitShas={["4f2a91e1234567890"]}
+        statusOptions={STATUS_OPTIONS}
+        branchOptions={BRANCH_OPTIONS}
+        authorOptions={AUTHOR_OPTIONS}
+        commitShaOptions={COMMIT_SHA_OPTIONS}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: /^commit\s+4f2a91e$/i })).toBeVisible();
   });
 
   it("should mark the mobile filter menu button as active when a filter is applied", () => {
@@ -141,9 +173,11 @@ describe("BuildsFilters", () => {
         statuses={["queued"]}
         branches={[]}
         authors={[]}
+        commitShas={[]}
         statusOptions={STATUS_OPTIONS}
         branchOptions={BRANCH_OPTIONS}
         authorOptions={AUTHOR_OPTIONS}
+        commitShaOptions={COMMIT_SHA_OPTIONS}
       />,
     );
 
@@ -163,9 +197,11 @@ describe("BuildsFilters", () => {
         statuses={[]}
         branches={[]}
         authors={[]}
+        commitShas={[]}
         statusOptions={[{ value: "queued", label: "queued" }]}
         branchOptions={BRANCH_OPTIONS}
         authorOptions={[]}
+        commitShaOptions={[]}
       />,
     );
 
@@ -181,9 +217,11 @@ describe("BuildsFilters", () => {
         statuses={[]}
         branches={[]}
         authors={[]}
+        commitShas={[]}
         statusOptions={[{ value: "queued", label: "queued" }]}
         branchOptions={[]}
         authorOptions={[]}
+        commitShaOptions={[]}
       />,
     );
 

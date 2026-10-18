@@ -20,8 +20,15 @@ const renderSection = (
     defaultOptions: { queries: { retry: false, staleTime: Infinity } },
   });
 
-  const { projectIds, search, statuses, branches, authors } = props;
-  const filters: BuildsListFilters = { projectIds, search, statuses, branches, authors };
+  const { projectIds, search, statuses, branches, authors, commitShas } = props;
+  const filters: BuildsListFilters = {
+    projectIds,
+    search,
+    statuses,
+    branches,
+    authors,
+    commitShas,
+  };
   const options = buildsListInfiniteOptions(filters);
   queryClient.setQueryData(orpc.builds.list.infiniteKey(options), {
     pages: [{ builds, total: builds.length, nextCursor: null }],

@@ -49,6 +49,11 @@ const AUTHOR_OPTIONS = [
   { value: "Alex Kim", label: "Alex Kim" },
 ];
 
+const COMMIT_SHA_OPTIONS = [
+  { value: "4f2a91e1234567890", label: "4f2a91e" },
+  { value: "7c3b82f1234567890", label: "7c3b82f" },
+];
+
 const meta: Meta<typeof BuildsFilters> = {
   title: "Web/BuildsFilters",
   component: BuildsFilters,
@@ -58,6 +63,7 @@ const meta: Meta<typeof BuildsFilters> = {
     statusOptions: STATUS_OPTIONS,
     branchOptions: BRANCH_OPTIONS,
     authorOptions: AUTHOR_OPTIONS,
+    commitShaOptions: COMMIT_SHA_OPTIONS,
   },
   parameters: {
     nextjs: {
@@ -78,6 +84,7 @@ export const Default: Story = {
     statuses: [],
     branches: [],
     authors: [],
+    commitShas: [],
   },
 };
 
@@ -86,6 +93,7 @@ export const WithActiveFilters: Story = {
     statuses: ["needs_review", "error"],
     branches: ["main"],
     authors: ["Jordan Lee"],
+    commitShas: ["4f2a91e1234567890"],
   },
 };
 
@@ -94,6 +102,7 @@ export const StatusPopoverOpen: Story = {
     statuses: [],
     branches: [],
     authors: [],
+    commitShas: [],
   },
   parameters: {
     ovr: {
@@ -111,6 +120,7 @@ export const MobileMenuOpen: Story = {
     statuses: ["needs_review"],
     branches: [],
     authors: [],
+    commitShas: [],
   },
   parameters: {
     ovr: {
@@ -128,6 +138,7 @@ export const MobileFacetDialogOpen: Story = {
     statuses: ["needs_review"],
     branches: [],
     authors: [],
+    commitShas: [],
   },
   parameters: {
     ovr: {
@@ -149,6 +160,7 @@ export const BranchPopoverOpen: Story = {
     statuses: [],
     branches: [],
     authors: [],
+    commitShas: [],
     branchOptions: LONG_BRANCH_OPTIONS,
   },
   parameters: {
@@ -181,6 +193,7 @@ export const MobileBranchFacetDialogOpen: Story = {
     statuses: [],
     branches: [],
     authors: [],
+    commitShas: [],
     branchOptions: LONG_BRANCH_OPTIONS,
   },
   parameters: {

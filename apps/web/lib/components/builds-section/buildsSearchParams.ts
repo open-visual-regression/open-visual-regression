@@ -10,6 +10,7 @@ const buildsSearchParamsSchema = z.object({
   status: z.preprocess(toArray, z.array(buildStatusSchema)).optional().catch(undefined),
   branch: z.preprocess(toArray, z.array(z.string())).optional().catch(undefined),
   author: z.preprocess(toArray, z.array(z.string())).optional().catch(undefined),
+  commit: z.preprocess(toArray, z.array(z.string())).optional().catch(undefined),
 });
 
 export const parseBuildsSearchParams = (
@@ -20,7 +21,8 @@ export const parseBuildsSearchParams = (
     status: statuses = [],
     branch: branches = [],
     author: authors = [],
+    commit: commitShas = [],
   } = buildsSearchParamsSchema.parse(searchParams);
 
-  return { search, statuses, branches, authors };
+  return { search, statuses, branches, authors, commitShas };
 };

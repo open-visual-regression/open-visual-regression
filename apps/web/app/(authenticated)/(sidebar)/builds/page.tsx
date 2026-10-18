@@ -17,11 +17,12 @@ type BuildsPageProps = PageProps<"/builds">;
 
 export default async function BuildsPage(props: BuildsPageProps) {
   const rawSearchParams = await props.searchParams;
-  const { search, statuses, branches, authors } = parseBuildsSearchParams(rawSearchParams);
+  const { search, statuses, branches, authors, commitShas } =
+    parseBuildsSearchParams(rawSearchParams);
 
   const queryClient = getQueryClient();
 
-  const [statusesResult, branchesResult, authorsResult] = await Promise.all([
+  const [statusesResult, branchesResult, authorsResult, commitShasResult] = await Promise.all([
     queryClient.fetchQuery(orpcServer.builds.listStatuses.queryOptions({ input: {} })),
     queryClient.fetchQuery(
       orpcServer.builds.listBranches.queryOptions({ input: { search: undefined } }),
@@ -29,9 +30,12 @@ export default async function BuildsPage(props: BuildsPageProps) {
     queryClient.fetchQuery(
       orpcServer.builds.listAuthors.queryOptions({ input: { search: undefined } }),
     ),
+    queryClient.fetchQuery(
+      orpcServer.builds.listCommitShas.queryOptions({ input: { search: undefined } }),
+    ),
     queryClient.prefetchInfiniteQuery(
       orpcServer.builds.list.infiniteOptions(
-        buildsListInfiniteOptions({ search, statuses, branches, authors }),
+        buildsListInfiniteOptions({ search, statuses, branches, authors, commitShas }),
       ),
     ),
   ]);
@@ -48,6 +52,10 @@ export default async function BuildsPage(props: BuildsPageProps) {
     value: author,
     label: author,
   }));
+  const commitShaOptions = commitShasResult.commitShas.map((commitSha) => ({
+    value: commitSha,
+    label: commitSha.slice(0, 7),
+  }));
 
   return (
     <BuildsPageShell
@@ -61,9 +69,11 @@ export default async function BuildsPage(props: BuildsPageProps) {
           statuses={statuses}
           branches={branches}
           authors={authors}
+          commitShas={commitShas}
           statusOptions={statusOptions}
           branchOptions={branchOptions}
           authorOptions={authorOptions}
+          commitShaOptions={commitShaOptions}
         />
       }
       search={
@@ -80,6 +90,7 @@ export default async function BuildsPage(props: BuildsPageProps) {
             statuses={statuses}
             branches={branches}
             authors={authors}
+            commitShas={commitShas}
           />
         </HydrationBoundary>
       }
