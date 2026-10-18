@@ -854,7 +854,6 @@ describe("snapshots", () => {
         buildId: third.build.id,
         direction: "next",
       });
-      expect(anchorPage?.latest).toEqual({ id: fifth.snapshot.id, buildId: fifth.build.id });
       expect(anchorPage?.previousCursor).toEqual({
         createdAt: third.build.createdAt,
         buildId: third.build.id,
@@ -917,7 +916,6 @@ describe("snapshots", () => {
       expect(error).toBeNull();
       expect(result?.snapshots).toHaveLength(2);
       expect(result?.previousCursor).toBeNull();
-      expect(result?.latest).toEqual({ id: latest.snapshot.id, buildId: latest.build.id });
     });
 
     test("starts a feature branch snapshot at the main builds before it", async ({ admin }) => {

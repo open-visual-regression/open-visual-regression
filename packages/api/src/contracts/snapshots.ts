@@ -261,10 +261,6 @@ export const getHistoryOutputSchema = z.object({
   previousCursor: snapshotHistoryCursorSchema
     .nullable()
     .meta({ description: "Fetches the page of newer snapshots" }),
-  latest: z
-    .object({ id: z.uuidv7(), buildId: z.uuidv7() })
-    .nullable()
-    .meta({ description: "The newest snapshot like this one on the branch" }),
 });
 
 export type GetHistoryOutputSchema = z.infer<typeof getHistoryOutputSchema>;
