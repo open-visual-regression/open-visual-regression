@@ -12,13 +12,13 @@ import { SnapshotSidebarHistoryContent } from "../SnapshotSidebarHistoryContent"
 const PROJECT_ID = "018f0000-0000-7000-8000-000000000001";
 const SNAPSHOT_ID = "018f0000-0000-7000-8000-000000000002";
 
-const OLDER_CURSOR = {
+const NEXT_CURSOR = {
   createdAt: "2026-06-22T00:00:00.000Z",
   buildId: "018f0000-0000-7000-8000-0000000000ff",
-  direction: "older",
+  direction: "next",
 } as const;
 
-const NEWER_CURSOR = { ...OLDER_CURSOR, direction: "newer" } as const;
+const PREVIOUS_CURSOR = { ...NEXT_CURSOR, direction: "previous" } as const;
 
 const toPage = (
   entries: GetHistoryOutputSchema["snapshots"],
@@ -40,7 +40,7 @@ const seedPages = (
 ) =>
   queryClient.setQueryData(
     orpc.snapshots.getHistory.infiniteKey(snapshotHistoryInfiniteOptions(SNAPSHOT_ID, startAt)),
-    { pages, pageParams: pages.map((_, index) => (index === 0 ? undefined : OLDER_CURSOR)) },
+    { pages, pageParams: pages.map((_, index) => (index === 0 ? undefined : NEXT_CURSOR)) },
   );
 
 const renderContent = (queryClient: QueryClient) =>
@@ -55,7 +55,7 @@ describe("SnapshotSidebarHistoryContent", () => {
     const queryClient = createQueryClient();
     seedPages(queryClient, [
       toPage([mocks.build.generateSnapshotHistoryEntry({ buildName: "Add checkout page" })], {
-        nextCursor: OLDER_CURSOR,
+        nextCursor: NEXT_CURSOR,
       }),
       toPage([mocks.build.generateSnapshotHistoryEntry({ buildName: "Fix header spacing" })]),
     ]);
@@ -88,7 +88,7 @@ describe("SnapshotSidebarHistoryContent", () => {
     const queryClient = createQueryClient();
     seedPages(queryClient, [
       toPage([mocks.build.generateSnapshotHistoryEntry({ buildName: "Add checkout page" })], {
-        previousCursor: NEWER_CURSOR,
+        previousCursor: PREVIOUS_CURSOR,
       }),
     ]);
     seedPages(
