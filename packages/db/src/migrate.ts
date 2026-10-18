@@ -13,8 +13,8 @@ const MIGRATIONS_TABLE = `"${MIGRATIONS_SCHEMA}"."__drizzle_migrations"`;
 
 const MIGRATION_LOCK_KEY = 7_315_420_118;
 
-// Waiting inside pg_advisory_lock keeps a transaction open, which CREATE INDEX CONCURRENTLY
-// in the runner holding the lock would wait on in turn, so poll instead.
+// A runner blocked in pg_advisory_lock holds a transaction open, which deadlocks with
+// CREATE INDEX CONCURRENTLY in the runner that has the lock.
 const LOCK_POLL_INTERVAL_MS = 250;
 
 // While a migration waits for a lock, every new query on that table queues behind it.

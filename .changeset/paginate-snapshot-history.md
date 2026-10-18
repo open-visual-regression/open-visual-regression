@@ -2,4 +2,4 @@
 "@ovr/web": minor
 ---
 
-The snapshot history API now starts at the given snapshot and pages through older and newer builds with a cursor. Each entry includes its image path and flags.
+`snapshots.getHistory` starts at the given snapshot, pages to older and newer builds with `nextCursor` and `previousCursor`, and includes each snapshot's image path and flags.

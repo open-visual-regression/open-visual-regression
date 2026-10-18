@@ -247,9 +247,10 @@ export const getHistoryInputSchema = z.object({
   snapshotId: z.uuidv7(),
   branch: z.string().min(1).optional(),
   limit: z.number().int().min(1).max(MAX_SNAPSHOT_HISTORY).default(30),
-  cursor: snapshotHistoryCursorSchema
-    .optional()
-    .meta({ description: "Leave out to start at this snapshot and the builds before it" }),
+  cursor: snapshotHistoryCursorSchema.optional().meta({
+    description:
+      "nextCursor or previousCursor from an earlier page. Without it, the page starts at this snapshot",
+  }),
 });
 
 export const getHistoryOutputSchema = z.object({
@@ -257,10 +258,10 @@ export const getHistoryOutputSchema = z.object({
   snapshots: z.array(snapshotHistoryEntrySchema),
   nextCursor: snapshotHistoryCursorSchema
     .nullable()
-    .meta({ description: "Fetches the page of older snapshots" }),
+    .meta({ description: "Cursor for older snapshots, or null on the oldest page" }),
   previousCursor: snapshotHistoryCursorSchema
     .nullable()
-    .meta({ description: "Fetches the page of newer snapshots" }),
+    .meta({ description: "Cursor for newer snapshots, or null on the newest page" }),
 });
 
 export type GetHistoryOutputSchema = z.infer<typeof getHistoryOutputSchema>;
