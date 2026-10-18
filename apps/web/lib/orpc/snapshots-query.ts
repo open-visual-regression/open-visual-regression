@@ -1,9 +1,15 @@
 import { type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
-import { type SnapshotFlag, type SnapshotsCursor } from "@ovr/api/contracts/snapshots";
+import {
+  type SnapshotFlag,
+  type SnapshotHistoryCursor,
+  type SnapshotsCursor,
+} from "@ovr/api/contracts/snapshots";
 
 import { type SnapshotFilters } from "@/lib/utils/snapshotFilters";
 
 export const SNAPSHOTS_PAGE_SIZE = 60;
+
+export const SNAPSHOT_HISTORY_PAGE_SIZE = 30;
 
 type SnapshotsListInput = {
   buildId: string;
@@ -38,6 +44,28 @@ export const snapshotsListInfiniteOptions = (
     limit: SNAPSHOTS_PAGE_SIZE,
     cursor,
   }),
+  initialPageParam: undefined,
+  getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+});
+
+type SnapshotHistoryInput = {
+  snapshotId: string;
+  limit: number;
+  cursor: SnapshotHistoryCursor | undefined;
+};
+
+type SnapshotHistoryInfiniteOptions = {
+  input: (cursor: SnapshotHistoryCursor | undefined) => SnapshotHistoryInput;
+  initialPageParam: SnapshotHistoryCursor | undefined;
+  getNextPageParam: (lastPage: {
+    nextCursor: SnapshotHistoryCursor | null;
+  }) => SnapshotHistoryCursor | undefined;
+};
+
+export const snapshotHistoryInfiniteOptions = (
+  snapshotId: string,
+): SnapshotHistoryInfiniteOptions => ({
+  input: (cursor) => ({ snapshotId, limit: SNAPSHOT_HISTORY_PAGE_SIZE, cursor }),
   initialPageParam: undefined,
   getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
 });

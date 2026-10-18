@@ -1,7 +1,11 @@
 import { faker } from "@faker-js/faker";
 
 import type { BuildDetailSchema } from "@ovr/api/contracts/builds";
-import type { BuildSnapshotSchema, SnapshotCountsSchema } from "@ovr/api/contracts/snapshots";
+import type {
+  BuildSnapshotSchema,
+  SnapshotCountsSchema,
+  SnapshotHistoryEntrySchema,
+} from "@ovr/api/contracts/snapshots";
 
 export const generateBuildSnapshot = (
   overrides?: Partial<BuildSnapshotSchema>,
@@ -23,6 +27,22 @@ export const generateBuildSnapshot = (
   isFlaky: false,
   flags: [],
   processingMs: null,
+  ...overrides,
+});
+
+export const generateSnapshotHistoryEntry = (
+  overrides?: Partial<SnapshotHistoryEntrySchema>,
+): SnapshotHistoryEntrySchema => ({
+  id: faker.string.uuid(),
+  buildId: faker.string.uuid(),
+  buildName: faker.git.commitMessage(),
+  commitSha: faker.git.commitSha(),
+  createdAt: faker.date.recent().toISOString(),
+  status: "unchanged",
+  diffPercent: null,
+  variantId: faker.string.uuid(),
+  imagePath: faker.system.filePath(),
+  flags: [],
   ...overrides,
 });
 

@@ -1,5 +1,7 @@
 import { cn } from "@ovr/ui/lib/utils";
 
+import { ScrollContainer } from "@/lib/providers/ScrollContainer";
+
 export type SnapshotSidebarProps = {
   collapsed: boolean;
   children: React.ReactNode;
@@ -15,6 +17,8 @@ export const SnapshotSidebar = ({ collapsed, children }: SnapshotSidebarProps) =
       collapsed ? "translate-x-full lg:w-0 lg:border-l-0" : "translate-x-0",
     )}
   >
-    <div className="w-full flex-1 overflow-y-auto lg:w-120">{children}</div>
+    <ScrollContainer className="relative w-full flex-1 overflow-y-auto lg:w-120">
+      {children}
+    </ScrollContainer>
   </aside>
 );
