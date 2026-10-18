@@ -816,7 +816,7 @@ describe("snapshots", () => {
       expect(firstPage?.nextCursor).toEqual({
         createdAt: second.build.createdAt,
         buildId: second.build.id,
-        direction: "older",
+        direction: "next",
       });
       expect(firstPage?.previousCursor).toBeNull();
 
@@ -851,12 +851,12 @@ describe("snapshots", () => {
       expect(anchorPage?.nextCursor).toEqual({
         createdAt: third.build.createdAt,
         buildId: third.build.id,
-        direction: "older",
+        direction: "next",
       });
       expect(anchorPage?.previousCursor).toEqual({
         createdAt: third.build.createdAt,
         buildId: third.build.id,
-        direction: "newer",
+        direction: "previous",
       });
 
       const [olderError, olderPage] = await serverClient.snapshots.getHistory({
@@ -885,7 +885,7 @@ describe("snapshots", () => {
       expect(newerPage?.previousCursor).toEqual({
         createdAt: fourth.build.createdAt,
         buildId: fourth.build.id,
-        direction: "newer",
+        direction: "previous",
       });
 
       const [newestError, newestPage] = await serverClient.snapshots.getHistory({
@@ -901,7 +901,7 @@ describe("snapshots", () => {
       expect(newestPage?.nextCursor).toEqual({
         createdAt: fifth.build.createdAt,
         buildId: fifth.build.id,
-        direction: "older",
+        direction: "next",
       });
     });
 

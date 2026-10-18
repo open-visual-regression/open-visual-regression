@@ -147,7 +147,7 @@ export const getHistory = os.snapshots.getHistory
       targetId: snapshot.targetId,
       limit: input.limit,
       cursor: startsAtSnapshot
-        ? { createdAt: build.createdAt, buildId: build.id, direction: "older", inclusive: true }
+        ? { createdAt: build.createdAt, buildId: build.id, direction: "next", inclusive: true }
         : input.cursor,
     });
 
