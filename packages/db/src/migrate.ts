@@ -13,6 +13,10 @@ const MIGRATIONS_TABLE = `"${MIGRATIONS_SCHEMA}"."__drizzle_migrations"`;
 
 const MIGRATION_LOCK_KEY = 7_315_420_118;
 
+// A runner blocked in pg_advisory_lock holds a transaction open, which deadlocks with
+// CREATE INDEX CONCURRENTLY in the runner that has the lock.
+const LOCK_POLL_INTERVAL_MS = 250;
+
 // While a migration waits for a lock, every new query on that table queues behind it.
 const LOCK_TIMEOUT_MS = 5_000;
 const MAX_ATTEMPTS = 10;
@@ -71,6 +75,20 @@ const applyMigrationWithoutTransaction = async (
   }
 };
 
+const acquireMigrationLock = async (client: Client) => {
+  for (;;) {
+    const { rows } = await client.query<{ locked: boolean }>(
+      "SELECT pg_try_advisory_lock($1) AS locked",
+      [MIGRATION_LOCK_KEY],
+    );
+    if (rows[0]?.locked) {
+      return;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, LOCK_POLL_INTERVAL_MS));
+  }
+};
+
 const applyMigration = (client: Client, migration: MigrationMeta, lockTimeoutMs: number) =>
   migration.sql[0]?.trimStart().startsWith(NO_TRANSACTION_MARKER)
     ? applyMigrationWithoutTransaction(client, migration, lockTimeoutMs)
@@ -92,7 +110,7 @@ export const runMigrations = async (
   await client.connect();
 
   try {
-    await client.query("SELECT pg_advisory_lock($1)", [MIGRATION_LOCK_KEY]);
+    await acquireMigrationLock(client);
 
     await client.query(`CREATE SCHEMA IF NOT EXISTS "${MIGRATIONS_SCHEMA}"`);
     await client.query(`

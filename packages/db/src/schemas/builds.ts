@@ -202,6 +202,13 @@ export const snapshots = pgTable(
   (table) => [
     index("snapshots_buildId_idx").on(table.buildId),
     index("snapshots_variantId_idx").on(table.variantId),
+    index("snapshots_browser_viewport_target_buildId_idx").on(
+      table.browser,
+      table.viewportWidth,
+      table.viewportHeight,
+      table.targetId,
+      table.buildId,
+    ),
   ],
 );
 

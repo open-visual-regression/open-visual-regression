@@ -256,6 +256,26 @@ CREATE INDEX CONCURRENTLY "items_id_idx" ON "items" USING btree ("id");`,
     expect(await findAppliedMigrations(databaseUrl)).toHaveLength(2);
   });
 
+  test("should build an index concurrently while another runner waits its turn", async ({
+    databaseUrl,
+    createMigrationsFolder,
+  }) => {
+    const folder = createMigrationsFolder([
+      { tag: "0000_setup", when: 1000, sql: `CREATE TABLE "items" ("id" integer);` },
+      {
+        tag: "0001_index",
+        when: 2000,
+        sql: `-- ovr:no-transaction
+DROP INDEX CONCURRENTLY IF EXISTS "items_id_idx";--> statement-breakpoint
+CREATE INDEX CONCURRENTLY "items_id_idx" ON "items" USING btree ("id");`,
+      },
+    ]);
+
+    await Promise.all([runMigrations(databaseUrl, folder), runMigrations(databaseUrl, folder)]);
+
+    expect(await findAppliedMigrations(databaseUrl)).toHaveLength(2);
+  });
+
   test("should rerun a no-transaction migration from the top after it fails partway", async ({
     databaseUrl,
     createMigrationsFolder,
