@@ -515,6 +515,7 @@ export const countForBuild = async (buildId: string, filters: ListForBuildFilter
 export type SnapshotHistoryCursor = {
   createdAt: string;
   buildId: string;
+  direction: "older" | "newer";
 };
 
 export type FindHistoryOptions = {
@@ -525,7 +526,26 @@ export type FindHistoryOptions = {
   viewportHeight: number;
   targetId: string;
   limit: number;
-  cursor?: SnapshotHistoryCursor;
+  cursor?: SnapshotHistoryCursor & { inclusive?: boolean };
+};
+
+type HistoryBuildKey = Pick<SnapshotHistoryCursor, "createdAt" | "buildId">;
+
+const historyBuildComparison = (
+  operator: "<" | "<=" | ">",
+  { createdAt, buildId }: HistoryBuildKey,
+) =>
+  sql`(${builds.createdAt}, ${builds.id}) ${sql.raw(operator)} (${createdAt}::timestamp, ${buildId}::uuid)`;
+
+const getHistoryCursorOperator = ({
+  direction,
+  inclusive,
+}: NonNullable<FindHistoryOptions["cursor"]>): "<" | "<=" | ">" => {
+  if (direction === "newer") {
+    return ">";
+  }
+
+  return inclusive ? "<=" : "<";
 };
 
 export const findHistory = async ({
@@ -538,6 +558,25 @@ export const findHistory = async ({
   limit,
   cursor,
 }: FindHistoryOptions) => {
+  const matchesStory = and(
+    eq(builds.projectId, projectId),
+    eq(builds.branch, branch),
+    eq(snapshots.browser, browser),
+    eq(snapshots.viewportWidth, viewportWidth),
+    eq(snapshots.viewportHeight, viewportHeight),
+    eq(snapshots.targetId, targetId),
+  );
+
+  const hasNewerStory = async (key: HistoryBuildKey) => {
+    const [row] = await db
+      .select({ id: snapshots.id })
+      .from(builds)
+      .innerJoin(snapshots, eq(snapshots.buildId, builds.id))
+      .where(and(matchesStory, historyBuildComparison(">", key)))
+      .limit(1);
+    return row !== undefined;
+  };
+
   const rows = await db
     .select({
       id: snapshots.id,
@@ -556,28 +595,48 @@ export const findHistory = async ({
     .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
     .where(
       and(
-        eq(builds.projectId, projectId),
-        eq(builds.branch, branch),
-        eq(snapshots.browser, browser),
-        eq(snapshots.viewportWidth, viewportWidth),
-        eq(snapshots.viewportHeight, viewportHeight),
-        eq(snapshots.targetId, targetId),
-        cursor
-          ? sql`(${builds.createdAt}, ${builds.id}) < (${cursor.createdAt}::timestamp, ${cursor.buildId}::uuid)`
-          : undefined,
+        matchesStory,
+        cursor ? historyBuildComparison(getHistoryCursorOperator(cursor), cursor) : undefined,
       ),
     )
-    .orderBy(desc(builds.createdAt), desc(builds.id))
+    .orderBy(
+      ...(cursor?.direction === "newer"
+        ? [asc(builds.createdAt), asc(builds.id)]
+        : [desc(builds.createdAt), desc(builds.id)]),
+    )
     .limit(limit + 1);
 
   const hasMore = rows.length > limit;
   const pageRows = hasMore ? rows.slice(0, limit) : rows;
-  const lastRow = pageRows.at(-1);
+
+  if (cursor?.direction === "newer") {
+    pageRows.reverse();
+  }
+
+  const newest = pageRows.at(0);
+  const oldest = pageRows.at(-1);
+
+  const toCursor = (key: HistoryBuildKey, direction: SnapshotHistoryCursor["direction"]) => ({
+    createdAt: key.createdAt,
+    buildId: key.buildId,
+    direction,
+  });
+
+  if (cursor?.direction === "newer") {
+    return {
+      snapshots: pageRows,
+      nextCursor: oldest ? toCursor(oldest, "older") : toCursor(cursor, "older"),
+      previousCursor: hasMore && newest ? toCursor(newest, "newer") : null,
+    };
+  }
+
+  const hasNewer = cursor?.inclusive ? await hasNewerStory(newest ?? cursor) : cursor !== undefined;
+  const newestKey = newest ?? cursor;
 
   return {
     snapshots: pageRows,
-    nextCursor:
-      hasMore && lastRow ? { createdAt: lastRow.createdAt, buildId: lastRow.buildId } : null,
+    nextCursor: hasMore && oldest ? toCursor(oldest, "older") : null,
+    previousCursor: hasNewer && newestKey ? toCursor(newestKey, "newer") : null,
   };
 };
 

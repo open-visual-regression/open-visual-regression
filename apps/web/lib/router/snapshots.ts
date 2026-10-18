@@ -130,10 +130,15 @@ export const getHistory = os.snapshots.getHistory
   .use(callerMiddleware("builds", "read"))
   .use(organizationSnapshotMiddleware)
   .handler(async ({ input, context }) => {
-    const { snapshot, project } = context;
+    const { snapshot, build, project } = context;
     const branch = input.branch ?? project.gitMainBranch;
+    const startsAtSnapshot = input.startAt === "snapshot" && !input.cursor;
 
-    const { snapshots: rows, nextCursor } = await dbClient.snapshots.findHistory({
+    const {
+      snapshots: rows,
+      nextCursor,
+      previousCursor,
+    } = await dbClient.snapshots.findHistory({
       projectId: project.id,
       branch,
       browser: snapshot.browser,
@@ -141,7 +146,9 @@ export const getHistory = os.snapshots.getHistory
       viewportHeight: snapshot.viewportHeight,
       targetId: snapshot.targetId,
       limit: input.limit,
-      cursor: input.cursor,
+      cursor: startsAtSnapshot
+        ? { createdAt: build.createdAt, buildId: build.id, direction: "older", inclusive: true }
+        : input.cursor,
     });
 
     return {
@@ -151,6 +158,7 @@ export const getHistory = os.snapshots.getHistory
         flags: getSnapshotFlags({ isFlaky: false, hasUncaughtPageError }),
       })),
       nextCursor,
+      previousCursor,
     };
   })
   .actionable();

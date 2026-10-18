@@ -816,7 +816,9 @@ describe("snapshots", () => {
       expect(firstPage?.nextCursor).toEqual({
         createdAt: second.build.createdAt,
         buildId: second.build.id,
+        direction: "older",
       });
+      expect(firstPage?.previousCursor).toBeNull();
 
       const [secondError, secondPage] = await serverClient.snapshots.getHistory({
         snapshotId: first.snapshot.id,
@@ -827,6 +829,125 @@ describe("snapshots", () => {
       expect(secondError).toBeNull();
       expect(secondPage?.snapshots.map(({ id }) => id)).toEqual([first.snapshot.id]);
       expect(secondPage?.nextCursor).toBeNull();
+    });
+
+    test("starts at the snapshot and pages toward newer builds", async ({ admin }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+      const first = await createBuildWithStory(projectId, admin, "main");
+      const second = await createBuildWithStory(projectId, admin, "main");
+      const third = await createBuildWithStory(projectId, admin, "main");
+      const fourth = await createBuildWithStory(projectId, admin, "main");
+      const fifth = await createBuildWithStory(projectId, admin, "main");
+
+      const [anchorError, anchorPage] = await serverClient.snapshots.getHistory({
+        snapshotId: third.snapshot.id,
+        startAt: "snapshot",
+        limit: 1,
+      });
+
+      expect(anchorError).toBeNull();
+      expect(anchorPage?.snapshots.map(({ id }) => id)).toEqual([third.snapshot.id]);
+      expect(anchorPage?.nextCursor).toEqual({
+        createdAt: third.build.createdAt,
+        buildId: third.build.id,
+        direction: "older",
+      });
+      expect(anchorPage?.previousCursor).toEqual({
+        createdAt: third.build.createdAt,
+        buildId: third.build.id,
+        direction: "newer",
+      });
+
+      const [olderError, olderPage] = await serverClient.snapshots.getHistory({
+        snapshotId: third.snapshot.id,
+        startAt: "snapshot",
+        limit: 2,
+        cursor: anchorPage!.nextCursor!,
+      });
+
+      expect(olderError).toBeNull();
+      expect(olderPage?.snapshots.map(({ id }) => id)).toEqual([
+        second.snapshot.id,
+        first.snapshot.id,
+      ]);
+      expect(olderPage?.nextCursor).toBeNull();
+
+      const [newerError, newerPage] = await serverClient.snapshots.getHistory({
+        snapshotId: third.snapshot.id,
+        startAt: "snapshot",
+        limit: 1,
+        cursor: anchorPage!.previousCursor!,
+      });
+
+      expect(newerError).toBeNull();
+      expect(newerPage?.snapshots.map(({ id }) => id)).toEqual([fourth.snapshot.id]);
+      expect(newerPage?.previousCursor).toEqual({
+        createdAt: fourth.build.createdAt,
+        buildId: fourth.build.id,
+        direction: "newer",
+      });
+
+      const [newestError, newestPage] = await serverClient.snapshots.getHistory({
+        snapshotId: third.snapshot.id,
+        startAt: "snapshot",
+        limit: 2,
+        cursor: newerPage!.previousCursor!,
+      });
+
+      expect(newestError).toBeNull();
+      expect(newestPage?.snapshots.map(({ id }) => id)).toEqual([fifth.snapshot.id]);
+      expect(newestPage?.previousCursor).toBeNull();
+      expect(newestPage?.nextCursor).toEqual({
+        createdAt: fifth.build.createdAt,
+        buildId: fifth.build.id,
+        direction: "older",
+      });
+    });
+
+    test("has no newer page when the snapshot is the latest on the branch", async ({ admin }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+      await createBuildWithStory(projectId, admin, "main");
+      const latest = await createBuildWithStory(projectId, admin, "main");
+
+      const [error, result] = await serverClient.snapshots.getHistory({
+        snapshotId: latest.snapshot.id,
+        startAt: "snapshot",
+      });
+
+      expect(error).toBeNull();
+      expect(result?.snapshots).toHaveLength(2);
+      expect(result?.previousCursor).toBeNull();
+    });
+
+    test("starts a feature branch snapshot at the main builds before it", async ({ admin }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+      const first = await createBuildWithStory(projectId, admin, "main");
+      const second = await createBuildWithStory(projectId, admin, "main");
+      const feature = await createBuildWithStory(projectId, admin, "feature/other");
+      const third = await createBuildWithStory(projectId, admin, "main");
+
+      const [error, result] = await serverClient.snapshots.getHistory({
+        snapshotId: feature.snapshot.id,
+        startAt: "snapshot",
+      });
+
+      expect(error).toBeNull();
+      expect(result?.snapshots.map(({ id }) => id)).toEqual([
+        second.snapshot.id,
+        first.snapshot.id,
+      ]);
+
+      const [newerError, newerPage] = await serverClient.snapshots.getHistory({
+        snapshotId: feature.snapshot.id,
+        startAt: "snapshot",
+        cursor: result!.previousCursor!,
+      });
+
+      expect(newerError).toBeNull();
+      expect(newerPage?.snapshots.map(({ id }) => id)).toEqual([third.snapshot.id]);
     });
 
     test("includes each snapshot's image and warning flag", async ({ admin }) => {
