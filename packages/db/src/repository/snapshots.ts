@@ -526,7 +526,7 @@ export type FindHistoryOptions = {
   viewportHeight: number;
   targetId: string;
   limit: number;
-  cursor?: SnapshotHistoryCursor & { inclusive?: boolean };
+  cursor: SnapshotHistoryCursor & { inclusive?: boolean };
 };
 
 type HistoryBuildKey = Pick<SnapshotHistoryCursor, "createdAt" | "buildId">;
@@ -567,49 +567,43 @@ export const findHistory = async ({
     eq(snapshots.targetId, targetId),
   );
 
-  const hasNewerStory = async (key: HistoryBuildKey) => {
-    const [row] = await db
-      .select({ id: snapshots.id })
+  const [rows, [latest]] = await Promise.all([
+    db
+      .select({
+        id: snapshots.id,
+        buildId: builds.id,
+        buildName: builds.name,
+        commitSha: builds.commitSha,
+        createdAt: builds.createdAt,
+        status: displayStatusExpr,
+        diffPercent: diffs.diffPercent,
+        variantId: snapshots.variantId,
+        imagePath: snapshots.imagePath,
+        hasUncaughtPageError: snapshots.hasUncaughtPageError,
+      })
       .from(builds)
       .innerJoin(snapshots, eq(snapshots.buildId, builds.id))
-      .where(and(matchesStory, historyBuildComparison(">", key)))
-      .limit(1);
-    return row !== undefined;
-  };
-
-  const rows = await db
-    .select({
-      id: snapshots.id,
-      buildId: builds.id,
-      buildName: builds.name,
-      commitSha: builds.commitSha,
-      createdAt: builds.createdAt,
-      status: displayStatusExpr,
-      diffPercent: diffs.diffPercent,
-      variantId: snapshots.variantId,
-      imagePath: snapshots.imagePath,
-      hasUncaughtPageError: snapshots.hasUncaughtPageError,
-    })
-    .from(builds)
-    .innerJoin(snapshots, eq(snapshots.buildId, builds.id))
-    .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
-    .where(
-      and(
-        matchesStory,
-        cursor ? historyBuildComparison(getHistoryCursorOperator(cursor), cursor) : undefined,
-      ),
-    )
-    .orderBy(
-      ...(cursor?.direction === "previous"
-        ? [asc(builds.createdAt), asc(builds.id)]
-        : [desc(builds.createdAt), desc(builds.id)]),
-    )
-    .limit(limit + 1);
+      .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
+      .where(and(matchesStory, historyBuildComparison(getHistoryCursorOperator(cursor), cursor)))
+      .orderBy(
+        ...(cursor.direction === "previous"
+          ? [asc(builds.createdAt), asc(builds.id)]
+          : [desc(builds.createdAt), desc(builds.id)]),
+      )
+      .limit(limit + 1),
+    db
+      .select({ id: snapshots.id, buildId: builds.id })
+      .from(builds)
+      .innerJoin(snapshots, eq(snapshots.buildId, builds.id))
+      .where(matchesStory)
+      .orderBy(desc(builds.createdAt), desc(builds.id))
+      .limit(1),
+  ]);
 
   const hasMore = rows.length > limit;
   const pageRows = hasMore ? rows.slice(0, limit) : rows;
 
-  if (cursor?.direction === "previous") {
+  if (cursor.direction === "previous") {
     pageRows.reverse();
   }
 
@@ -622,21 +616,24 @@ export const findHistory = async ({
     direction,
   });
 
-  if (cursor?.direction === "previous") {
+  const latestKey = latest ? { id: latest.id, buildId: latest.buildId } : null;
+
+  if (cursor.direction === "previous") {
     return {
       snapshots: pageRows,
-      nextCursor: oldest ? toCursor(oldest, "next") : toCursor(cursor, "next"),
+      nextCursor: toCursor(oldest ?? cursor, "next"),
       previousCursor: hasMore && newest ? toCursor(newest, "previous") : null,
+      latest: latestKey,
     };
   }
 
-  const hasNewer = cursor?.inclusive ? await hasNewerStory(newest ?? cursor) : cursor !== undefined;
-  const newestKey = newest ?? cursor;
+  const hasNewer = cursor.inclusive ? latest !== undefined && latest.id !== newest?.id : true;
 
   return {
     snapshots: pageRows,
     nextCursor: hasMore && oldest ? toCursor(oldest, "next") : null,
-    previousCursor: hasNewer && newestKey ? toCursor(newestKey, "previous") : null,
+    previousCursor: hasNewer ? toCursor(newest ?? cursor, "previous") : null,
+    latest: latestKey,
   };
 };
 

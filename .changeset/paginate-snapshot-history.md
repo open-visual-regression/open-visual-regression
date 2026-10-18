@@ -2,4 +2,4 @@
 "@ovr/web": minor
 ---
 
-The snapshot history API now pages through results with a cursor in either direction, can start at the snapshot's own build instead of the newest one, and includes each entry's image path and flags.
+The snapshot history API now starts at the given snapshot and pages through older and newer builds with a cursor. Each entry includes its image path and flags, and the response points to the newest snapshot like it on the branch.

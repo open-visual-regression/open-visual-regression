@@ -132,12 +132,12 @@ export const getHistory = os.snapshots.getHistory
   .handler(async ({ input, context }) => {
     const { snapshot, build, project } = context;
     const branch = input.branch ?? project.gitMainBranch;
-    const startsAtSnapshot = input.startAt === "snapshot" && !input.cursor;
 
     const {
       snapshots: rows,
       nextCursor,
       previousCursor,
+      latest,
     } = await dbClient.snapshots.findHistory({
       projectId: project.id,
       branch,
@@ -146,9 +146,12 @@ export const getHistory = os.snapshots.getHistory
       viewportHeight: snapshot.viewportHeight,
       targetId: snapshot.targetId,
       limit: input.limit,
-      cursor: startsAtSnapshot
-        ? { createdAt: build.createdAt, buildId: build.id, direction: "next", inclusive: true }
-        : input.cursor,
+      cursor: input.cursor ?? {
+        createdAt: build.createdAt,
+        buildId: build.id,
+        direction: "next",
+        inclusive: true,
+      },
     });
 
     return {
@@ -159,6 +162,7 @@ export const getHistory = os.snapshots.getHistory
       })),
       nextCursor,
       previousCursor,
+      latest,
     };
   })
   .actionable();
