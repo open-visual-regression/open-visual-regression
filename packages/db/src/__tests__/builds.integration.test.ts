@@ -749,6 +749,71 @@ describe("builds", () => {
     });
   });
 
+  describe("findCommitShas", () => {
+    test("should return the distinct commit shas captured for the project, most recent first", async ({
+      organization,
+      project,
+      user,
+    }) => {
+      await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: user.id,
+      });
+      await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/b/artifact",
+        createdBy: user.id,
+      });
+      await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/c/artifact",
+        createdBy: user.id,
+      });
+
+      const commitShas = await dbClient.builds.findCommitShas(
+        { organizationId: organization.id, projectId: project.id },
+        { limit: 20 },
+      );
+
+      expect(commitShas).toEqual(["a".repeat(40), "b".repeat(40)]);
+    });
+
+    test("should only return commit shas matching the search term", async ({
+      organization,
+      project,
+      user,
+    }) => {
+      await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: user.id,
+      });
+      await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/b/artifact",
+        createdBy: user.id,
+      });
+
+      const commitShas = await dbClient.builds.findCommitShas(
+        { organizationId: organization.id, projectId: project.id },
+        { search: "bbb", limit: 20 },
+      );
+
+      expect(commitShas).toEqual(["b".repeat(40)]);
+    });
+  });
+
   describe("findStatuses", () => {
     test("should return the distinct derived display statuses present in the project, in canonical order", async ({
       organization,

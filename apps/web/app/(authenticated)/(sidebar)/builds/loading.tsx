@@ -10,7 +10,7 @@ export default function Loading() {
   return (
     <BuildsPageShell
       heading={<TypographySkeleton variant="h1" className="w-24" />}
-      filters={<FacetBarSkeleton />}
+      filters={<FacetBarSkeleton facets={4} />}
       search={<SearchFieldSkeleton className="min-w-0 flex-1 lg:w-64 lg:flex-none" />}
       content={<BuildsListSkeleton />}
     />

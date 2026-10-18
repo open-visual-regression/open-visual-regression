@@ -7,15 +7,18 @@ import { type FacetOption } from "@/lib/components/facet/FacetOptionsList";
 
 import { BuildsAuthorFacetContent } from "./BuildsAuthorFacetContent";
 import { BuildsBranchFacetContent } from "./BuildsBranchFacetContent";
+import { BuildsCommitFacetContent } from "./BuildsCommitFacetContent";
 
 type BuildsFiltersProps = {
   projectId?: string;
   statuses: BuildStatus[];
   branches: string[];
   authors: string[];
+  commitShas: string[];
   statusOptions: FacetOption<BuildStatus>[];
   branchOptions: FacetOption<string>[];
   authorOptions: FacetOption<string>[];
+  commitShaOptions: FacetOption<string>[];
   className?: string;
 };
 
@@ -24,9 +27,11 @@ export const BuildsFilters = ({
   statuses,
   branches,
   authors,
+  commitShas,
   statusOptions,
   branchOptions,
   authorOptions,
+  commitShaOptions,
   className,
 }: BuildsFiltersProps) => (
   <FacetBar
@@ -54,6 +59,20 @@ export const BuildsFilters = ({
         selected: authors,
         renderContent: ({ selected, onApply, onClear }) => (
           <BuildsAuthorFacetContent
+            projectId={projectId}
+            selected={selected}
+            onApply={onApply}
+            onClear={onClear}
+          />
+        ),
+      },
+      {
+        param: "commit",
+        label: "commit",
+        options: commitShaOptions,
+        selected: commitShas,
+        renderContent: ({ selected, onApply, onClear }) => (
+          <BuildsCommitFacetContent
             projectId={projectId}
             selected={selected}
             onApply={onApply}

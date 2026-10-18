@@ -1178,6 +1178,112 @@ describe("builds", () => {
     });
   });
 
+  describe("listCommitShas", () => {
+    test("should return UNAUTHORIZED when no session cookie is provided", async () => {
+      vi.mocked(headers).mockResolvedValue(new Headers());
+
+      const [error] = await serverClient.builds.listCommitShas({});
+
+      expect(error?.code).toBe("UNAUTHORIZED");
+    });
+
+    test("should return commit shas across every project in the organization when no project is given", async ({
+      admin,
+    }) => {
+      const [, projectA] = await serverClient.projects.add(TEST_PROJECT);
+      const [, projectB] = await serverClient.projects.add({
+        ...TEST_PROJECT,
+        projectName: "Project B",
+      });
+
+      await dbClient.builds.create({
+        projectId: projectA!.projectId,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: admin.id,
+      });
+      await dbClient.builds.create({
+        projectId: projectB!.projectId,
+        branch: "main",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/b/artifact",
+        createdBy: admin.id,
+      });
+
+      const [error, result] = await serverClient.builds.listCommitShas({});
+
+      expect(error).toBeNull();
+      expect(result?.commitShas).toEqual(["b".repeat(40), "a".repeat(40)]);
+    });
+
+    test("should only return commit shas for the given project", async ({ admin }) => {
+      const [, projectA] = await serverClient.projects.add(TEST_PROJECT);
+      const [, projectB] = await serverClient.projects.add({
+        ...TEST_PROJECT,
+        projectName: "Project B",
+      });
+
+      await dbClient.builds.create({
+        projectId: projectA!.projectId,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: admin.id,
+      });
+      await dbClient.builds.create({
+        projectId: projectB!.projectId,
+        branch: "main",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/b/artifact",
+        createdBy: admin.id,
+      });
+
+      const [error, result] = await serverClient.builds.listCommitShas({
+        projectId: projectB!.projectId,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.commitShas).toEqual(["b".repeat(40)]);
+    });
+
+    test("should not return commit shas belonging to another organization", async ({ admin }) => {
+      const [, project] = await serverClient.projects.add(TEST_PROJECT);
+
+      await dbClient.builds.create({
+        projectId: project!.projectId,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: admin.id,
+      });
+
+      const otherProject = await seedOtherOrgProject(admin.id);
+      await dbClient.builds.create({
+        projectId: otherProject.id,
+        branch: "main",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/b/artifact",
+        createdBy: admin.id,
+      });
+
+      const [error, result] = await serverClient.builds.listCommitShas({});
+
+      expect(error).toBeNull();
+      expect(result?.commitShas).toEqual(["a".repeat(40)]);
+    });
+
+    test("should return NOT_FOUND for a project belonging to another organization", async ({
+      admin,
+    }) => {
+      const otherProject = await seedOtherOrgProject(admin.id);
+
+      const [error] = await serverClient.builds.listCommitShas({ projectId: otherProject.id });
+
+      expect(error?.code).toBe("NOT_FOUND");
+    });
+  });
+
   describe("listStatuses", () => {
     test("should return UNAUTHORIZED when no session cookie is provided", async () => {
       vi.mocked(headers).mockResolvedValue(new Headers());

@@ -318,6 +318,20 @@ export const listAuthors = os.builds.listAuthors
   })
   .actionable();
 
+export const listCommitShas = os.builds.listCommitShas
+  .use(authenticatedMiddleware)
+  .handler(async ({ input, context }) => {
+    const scope = await getFilterOptionsScope(input.projectId, context.organizationId);
+
+    const commitShas = await dbClient.builds.findCommitShas(scope, {
+      search: input.search,
+      limit: input.limit,
+    });
+
+    return { commitShas };
+  })
+  .actionable();
+
 export const listStatuses = os.builds.listStatuses
   .use(authenticatedMiddleware)
   .handler(async ({ input, context }) => {

@@ -248,6 +248,14 @@ export const listAuthorsContract = oc
   .input(listBuildFilterOptionsInputSchema)
   .output(listAuthorsOutputSchema);
 
+export const listCommitShasOutputSchema = z.object({
+  commitShas: z.array(z.string()),
+});
+
+export const listCommitShasContract = oc
+  .input(listBuildFilterOptionsInputSchema)
+  .output(listCommitShasOutputSchema);
+
 export const listBuildStatusesInputSchema = z.object({
   projectId: z.uuidv7().optional(),
 });
@@ -294,5 +302,6 @@ export const contract = {
   watchStatus: watchBuildStatusContract,
   listBranches: listBranchesContract,
   listAuthors: listAuthorsContract,
+  listCommitShas: listCommitShasContract,
   listStatuses: listStatusesContract,
 } as const;

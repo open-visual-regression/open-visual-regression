@@ -8,6 +8,7 @@ export type BuildsListFilters = {
   statuses?: BuildStatus[];
   branches?: string[];
   authors?: string[];
+  commitShas?: string[];
 };
 
 type BuildsListInput = {
@@ -16,6 +17,7 @@ type BuildsListInput = {
   statuses: BuildStatus[] | undefined;
   branches: string[] | undefined;
   authors: string[] | undefined;
+  commitShas: string[] | undefined;
   limit: number;
   cursor: BuildsCursor | undefined;
 };
@@ -32,6 +34,7 @@ export const buildsListInfiniteOptions = ({
   statuses,
   branches,
   authors,
+  commitShas,
 }: BuildsListFilters = {}): BuildsListInfiniteOptions => ({
   input: (cursor) => ({
     projectIds,
@@ -39,6 +42,7 @@ export const buildsListInfiniteOptions = ({
     statuses,
     branches,
     authors,
+    commitShas,
     limit: BUILDS_PAGE_SIZE,
     cursor,
   }),
