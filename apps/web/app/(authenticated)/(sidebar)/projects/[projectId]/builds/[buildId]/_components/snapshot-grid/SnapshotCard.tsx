@@ -1,6 +1,5 @@
 import { type BuildSnapshotSchema } from "@ovr/api/contracts/snapshots";
-import { Badge } from "@ovr/ui/components/badge";
-import { GlobeIcon, Icon, TimerIcon, TriangleAlertIcon } from "@ovr/ui/components/icon";
+import { GlobeIcon, Icon, TimerIcon } from "@ovr/ui/components/icon";
 import { ResolutionIcon } from "@ovr/ui/components/resolution-icon";
 import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 import { cn } from "@ovr/ui/lib/utils";
@@ -11,7 +10,9 @@ import { FlakyBadge } from "@/lib/components/FlakyBadge";
 import { Image } from "@/lib/components/image/Image";
 import { MetadataItem } from "@/lib/components/metadata-item/MetadataItem";
 import { MetadataList } from "@/lib/components/metadata-list/MetadataList";
+import { SnapshotBadges } from "@/lib/components/SnapshotBadges";
 import { getSnapshotStatusLabel, SnapshotStatusBadge } from "@/lib/components/SnapshotStatusBadge";
+import { WarningBadge } from "@/lib/components/WarningBadge";
 import { formatDuration } from "@/lib/utils/date";
 import { type SnapshotFilters, withSnapshotFilters } from "@/lib/utils/snapshotFilters";
 import { getStoragePath } from "@/lib/utils/storage";
@@ -74,15 +75,11 @@ export const SnapshotCard = ({ snapshot, projectId, buildId, filters }: Snapshot
           </div>
         )}
         <div className="absolute bottom-2 right-2">
-          <div className="inline-flex gap-1">
-            {snapshot.hasUncaughtPageError ? (
-              <Badge variant="solid" color="amber" className="self-stretch">
-                <Icon icon={TriangleAlertIcon} size={12} role="img" aria-label="warning" />
-              </Badge>
-            ) : null}
+          <SnapshotBadges>
+            {snapshot.hasUncaughtPageError ? <WarningBadge /> : null}
             {snapshot.isFlaky ? <FlakyBadge filled /> : null}
             <SnapshotStatusBadge status={snapshot.status} filled />
-          </div>
+          </SnapshotBadges>
         </div>
       </SnapshotCardPreview>
       <SnapshotCardBody>
