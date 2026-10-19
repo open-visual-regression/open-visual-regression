@@ -25,7 +25,7 @@ const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
 const IFRAME_HTML = await readFile(path.join(TEST_DIR, "html/iframe-static.html"), "utf-8");
 
 describe("captureBuildGroup", () => {
-  test("closes the capture page and leaves the rest of the group uncaptured when it runs out of time", async ({
+  test("closes the browser and leaves the rest of the group uncaptured when it runs out of time", async ({
     mainBuild,
     captureConfiguration,
   }) => {
@@ -55,7 +55,7 @@ describe("captureBuildGroup", () => {
     ).rejects.toThrow(TimeoutError);
 
     const browser = await launch.mock.results[0]!.value;
-    expect(browser.contexts()).toHaveLength(0);
+    expect(browser.isConnected()).toBe(false);
 
     expect(await dbClient.snapshots.findById(first!.id)).toMatchObject({ status: "success" });
     expect(await dbClient.snapshots.findById(second!.id)).toMatchObject({ status: "queued" });

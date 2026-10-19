@@ -1,11 +1,10 @@
 import { createHash } from "node:crypto";
 
-import { LRUCache } from "lru-cache";
-import type { Page } from "playwright";
+import { chromium, firefox, webkit, type Page } from "playwright";
 
 import { isFlakyDetectionEnabled } from "@ovr/builds/flakiness";
 import { withBundleDir } from "@ovr/builds/storybookBundleCache";
-import { newPage } from "@ovr/capture-browser/browser";
+import { SIGNAL_HANDLING_OPTIONS, newPage } from "@ovr/capture-browser/browser";
 import {
   detectCaptureStrategy,
   type CaptureStrategy,
@@ -32,7 +31,6 @@ import { enqueueDiff, enqueueFinalize } from "@ovr/queue/producer";
 import { promoteBaseline } from "@ovr/reviews/baselines";
 import { storage } from "@ovr/storage";
 
-import { acquireBrowser, closeBrowsers } from "./lib/browserPool";
 import { CAPTURE_JOB_TIMEOUT_MS, withTimeout } from "./lib/captureTimeouts";
 import { cacheImage } from "./lib/imageCache";
 import { compareImages } from "./lib/images";
@@ -41,10 +39,6 @@ import { createUploadQueue } from "./lib/uploadQueue";
 const logger = createLogger("capture");
 
 const MAX_PENDING_UPLOADS = 2;
-
-const MAX_IDLE_CAPTURE_SESSIONS = 2;
-
-const CAPTURE_SESSION_IDLE_MS = 30_000;
 
 type CapturePhase = "render" | "settle" | "wait" | "screenshot" | "upload";
 
@@ -88,6 +82,16 @@ const runPhase = async <T>(phase: CapturePhase, run: () => Promise<T>): Promise<
   }
 };
 
+const BROWSER_LAUNCHERS = { chromium, firefox, webkit };
+
+const getBrowserLauncher = (browser: string) => {
+  const launcher = BROWSER_LAUNCHERS[browser as keyof typeof BROWSER_LAUNCHERS];
+  if (!launcher) {
+    throw new Error(`Unsupported browser: ${browser}`);
+  }
+  return launcher;
+};
+
 type CaptureLog = { level: string; message: string };
 type PageLogState = { logs: CaptureLog[]; hasPageError: boolean };
 
@@ -104,7 +108,19 @@ const launchCapturePage = async (
   proxy: StaticProxy,
   strategy: CaptureStrategy,
 ): Promise<CapturePage> => {
-  const browser = await acquireBrowser(browserName);
+  const browser = await getBrowserLauncher(browserName).launch({
+    ...SIGNAL_HANDLING_OPTIONS,
+    ...(browserName === "chromium" ? { args: ["--disable-dev-shm-usage"] } : {}),
+  });
+
+  let closeRequested = false;
+  browser.on("disconnected", () => {
+    if (closeRequested) {
+      return;
+    }
+    logger.error({ buildId, browser: browserName }, "capture browser disconnected unexpectedly");
+  });
+
   const context = await browser.newContext({ deviceScaleFactor: 1 });
   const page = await newPage(context);
   page.on("crash", () => {
@@ -126,7 +142,8 @@ const launchCapturePage = async (
   try {
     await bootTargetPage(page, proxy.origin, strategy);
   } catch (error) {
-    await context.close().catch(() => undefined);
+    closeRequested = true;
+    await browser.close().catch(() => undefined);
     throw error;
   }
   logger.info(
@@ -141,8 +158,9 @@ const launchCapturePage = async (
     pageLogState,
     networkActivity,
     close: async () => {
+      closeRequested = true;
       networkActivity.dispose();
-      await context.close();
+      await browser.close();
     },
   };
 };
@@ -363,63 +381,6 @@ export const markSnapshotErrored = async (snapshotId: string, error: unknown): P
   await enqueueSnapshotDiff(snapshotId);
 };
 
-type CaptureSession = {
-  proxy: StaticProxy;
-  strategy: CaptureStrategy;
-  capturePage: CapturePage;
-};
-
-const closeCaptureSession = async ({ proxy, capturePage }: CaptureSession): Promise<void> => {
-  await capturePage.close().catch(() => undefined);
-  proxy.close();
-};
-
-const idleSessions = new LRUCache<string, CaptureSession>({
-  max: MAX_IDLE_CAPTURE_SESSIONS,
-  ttl: CAPTURE_SESSION_IDLE_MS,
-  ttlAutopurge: true,
-  dispose: (session, _key, reason) => {
-    // "delete" means a capture group took the session to keep using it.
-    if (reason !== "delete") {
-      void closeCaptureSession(session);
-    }
-  },
-});
-
-const openCaptureSession = async (
-  buildId: string,
-  browser: string,
-  bundleDir: string,
-): Promise<CaptureSession> => {
-  const proxy = await startStaticProxy(bundleDir);
-
-  try {
-    const strategy = await detectCaptureStrategy(bundleDir);
-    const capturePage = await launchCapturePage(buildId, browser, proxy, strategy);
-    return { proxy, strategy, capturePage };
-  } catch (error) {
-    proxy.close();
-    throw error;
-  }
-};
-
-const takeIdleCaptureSession = async (key: string): Promise<CaptureSession | undefined> => {
-  const session = idleSessions.get(key);
-  idleSessions.delete(key);
-  if (session?.capturePage.page.isClosed()) {
-    await closeCaptureSession(session);
-    return undefined;
-  }
-  return session;
-};
-
-export const closeCaptureBrowsers = async (): Promise<void> => {
-  const sessions = [...idleSessions.values()];
-  idleSessions.clear();
-  await Promise.all(sessions.map(closeCaptureSession));
-  await closeBrowsers();
-};
-
 type CaptureBuildGroupOptions = {
   shutdownSignal?: AbortSignal;
 };
@@ -438,18 +399,17 @@ export const captureBuildGroup = async (
   await withTimeout(
     (signal) =>
       withBundleDir(build.id, build.artifactPath, async (bundleDir) => {
-        const sessionKey = `${buildId}:${browser}`;
-        const idleSession = await takeIdleCaptureSession(sessionKey);
-        const session = idleSession ?? (await openCaptureSession(buildId, browser, bundleDir));
+        const proxy = await startStaticProxy(bundleDir);
+        const strategy = await detectCaptureStrategy(bundleDir);
 
         logger.info(
-          { buildId, browser, snapshotCount: snapshotIds.length, warmPage: Boolean(idleSession) },
+          { buildId, browser, snapshotCount: snapshotIds.length },
           "capture group started",
         );
 
+        let capturePage = await launchCapturePage(buildId, browser, proxy, strategy);
         const uploads = createUploadQueue(MAX_PENDING_UPLOADS);
         let uploadInterrupted = false;
-        let completed = false;
 
         try {
           for (const [index, snapshotId] of snapshotIds.entries()) {
@@ -465,8 +425,8 @@ export const captureBuildGroup = async (
 
             try {
               const captured = await captureSnapshotOnPage(
-                session.capturePage,
-                session.strategy,
+                capturePage,
+                strategy,
                 build,
                 snapshotId,
               );
@@ -488,7 +448,7 @@ export const captureBuildGroup = async (
 
               await markSnapshotErrored(snapshotId, error);
 
-              if (!session.capturePage.page.isClosed()) {
+              if (!capturePage.page.isClosed()) {
                 continue;
               }
 
@@ -496,15 +456,10 @@ export const captureBuildGroup = async (
                 { buildId, browser, snapshotId },
                 "capture browser closed mid-group, relaunching for remaining snapshots",
               );
-              await session.capturePage.close().catch(() => undefined);
+              await capturePage.close().catch(() => undefined);
 
               try {
-                session.capturePage = await launchCapturePage(
-                  buildId,
-                  browser,
-                  session.proxy,
-                  session.strategy,
-                );
+                capturePage = await launchCapturePage(buildId, browser, proxy, strategy);
               } catch (relaunchError) {
                 logger.error(
                   { buildId, browser, err: relaunchError },
@@ -516,8 +471,8 @@ export const captureBuildGroup = async (
                 break;
               }
             } finally {
-              session.capturePage.pageLogState.logs = [];
-              session.capturePage.pageLogState.hasPageError = false;
+              capturePage.pageLogState.logs = [];
+              capturePage.pageLogState.hasPageError = false;
             }
           }
 
@@ -528,20 +483,9 @@ export const captureBuildGroup = async (
               `Capture group interrupted by worker shutdown: ${buildId}`,
             );
           }
-
-          completed = true;
         } finally {
-          const reusable =
-            completed &&
-            !signal.aborted &&
-            !shutdownSignal?.aborted &&
-            !session.capturePage.page.isClosed();
-
-          if (reusable) {
-            idleSessions.set(sessionKey, session);
-          } else {
-            await closeCaptureSession(session);
-          }
+          await capturePage.close();
+          proxy.close();
           await uploads.drain().catch(() => undefined);
         }
       }),
