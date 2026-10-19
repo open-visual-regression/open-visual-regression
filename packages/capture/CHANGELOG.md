@@ -1,5 +1,11 @@
 # @ovr/capture
 
+## 0.3.9
+
+### Patch Changes
+
+- [#410](https://github.com/open-visual-regression/open-visual-regression/pull/410) [`0f81d00`](https://github.com/open-visual-regression/open-visual-regression/commit/0f81d001e29e18ba8ba1a802022cf4caf81acc6b) Thanks [@tgfischer](https://github.com/tgfischer)! - Launch a fresh browser for each capture group again instead of sharing one browser per worker and parking booted Storybook pages between groups, which let worker memory grow until it ran out. A browser whose page fails to boot is now closed instead of leaked.
+
 ## 0.3.8
 
 ### Patch Changes
