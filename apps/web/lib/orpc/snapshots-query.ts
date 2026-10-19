@@ -52,6 +52,7 @@ type SnapshotHistoryInput = {
   snapshotId: string;
   limit: number;
   cursor: SnapshotHistoryCursor | undefined;
+  align: "center";
 };
 
 type SnapshotHistoryPage = {
@@ -69,7 +70,7 @@ type SnapshotHistoryInfiniteOptions = {
 export const snapshotHistoryInfiniteOptions = (
   snapshotId: string,
 ): SnapshotHistoryInfiniteOptions => ({
-  input: (cursor) => ({ snapshotId, limit: SNAPSHOT_HISTORY_PAGE_SIZE, cursor }),
+  input: (cursor) => ({ snapshotId, limit: SNAPSHOT_HISTORY_PAGE_SIZE, cursor, align: "center" }),
   initialPageParam: undefined,
   getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
   getPreviousPageParam: (firstPage) => firstPage.previousCursor ?? undefined,

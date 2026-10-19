@@ -251,6 +251,10 @@ export const getHistoryInputSchema = z.object({
     description:
       "nextCursor or previousCursor from an earlier page. Without it, the page starts at this snapshot",
   }),
+  align: z.enum(["start", "center"]).default("start").meta({
+    description:
+      "Where this snapshot sits on the first page: start lists it and older builds, center splits the page between newer and older builds",
+  }),
 });
 
 export const getHistoryOutputSchema = z.object({

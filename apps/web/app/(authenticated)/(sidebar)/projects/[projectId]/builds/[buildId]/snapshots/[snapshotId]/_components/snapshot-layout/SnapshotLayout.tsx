@@ -5,6 +5,7 @@ import { useState } from "react";
 import type { DiffSchema } from "@ovr/api/contracts/diffs";
 import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 
+import { useSnapshotHistoryPrefetch } from "@/lib/orpc/useSnapshotHistoryPrefetch";
 import { type SnapshotFilters } from "@/lib/utils/snapshotFilters";
 
 import { SnapshotActionsRow } from "../snapshot-actions/SnapshotActionsRow";
@@ -42,6 +43,15 @@ export const SnapshotLayout = ({
   children,
 }: SnapshotLayoutProps) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const prefetchHistory = useSnapshotHistoryPrefetch(snapshot.id);
+
+  const toggleSidebar = () => {
+    if (sidebarCollapsed) {
+      prefetchHistory();
+    }
+
+    setSidebarCollapsed((collapsed) => !collapsed);
+  };
 
   return (
     <SnapshotShell
@@ -58,7 +68,7 @@ export const SnapshotLayout = ({
           filters={filters}
           canReview={canReview}
           sidebarCollapsed={sidebarCollapsed}
-          onToggleSidebar={() => setSidebarCollapsed((collapsed) => !collapsed)}
+          onToggleSidebar={toggleSidebar}
         />
       }
       sidebar={<SnapshotSidebar collapsed={sidebarCollapsed}>{sidebar}</SnapshotSidebar>}

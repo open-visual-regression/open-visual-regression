@@ -1,8 +1,10 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { vi } from "vitest";
 
 import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 
-import { describe, expect, it, render, screen } from "@/test-utils";
+import { mockHandlers } from "@/lib/testing/mockHandlers";
+import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
 
 import { SnapshotLayout } from "../SnapshotLayout";
 
@@ -31,7 +33,10 @@ const snapshot: SnapshotSchema = {
   processingMs: null,
 };
 
-const renderComponent = () =>
+const createQueryClient = () =>
+  new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
+
+const renderComponent = (queryClient = createQueryClient()) =>
   render(
     <SnapshotLayout
       snapshot={snapshot}
@@ -47,6 +52,11 @@ const renderComponent = () =>
     >
       <div>snapshot contents</div>
     </SnapshotLayout>,
+    {
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      ),
+    },
   );
 
 describe("SnapshotLayout", () => {
@@ -71,5 +81,27 @@ describe("SnapshotLayout", () => {
     await user.click(screen.getByRole("button", { name: /collapse sidebar/i }));
 
     expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
+  });
+
+  it("should prefetch the snapshot history when the sidebar opens", async ({ user }) => {
+    const getHistory = mockHandlers.mockGetHistory();
+    renderComponent();
+
+    await user.click(screen.getByRole("button", { name: /expand sidebar/i }));
+
+    await waitFor(() =>
+      expect(getHistory).toHaveBeenCalledWith(expect.objectContaining({ snapshotId: snapshot.id })),
+    );
+  });
+
+  it("should not prefetch the snapshot history when the sidebar closes", async ({ user }) => {
+    const getHistory = mockHandlers.mockGetHistory();
+    renderComponent(new QueryClient({ defaultOptions: { queries: { retry: false } } }));
+
+    await user.click(screen.getByRole("button", { name: /expand sidebar/i }));
+    await waitFor(() => expect(getHistory).toHaveBeenCalledTimes(1));
+    await user.click(screen.getByRole("button", { name: /collapse sidebar/i }));
+
+    expect(getHistory).toHaveBeenCalledTimes(1);
   });
 });

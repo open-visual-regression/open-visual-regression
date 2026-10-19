@@ -57,4 +57,18 @@ describe("SnapshotHistoryList", () => {
 
     expect(screen.getByText("no snapshots on main yet")).toBeVisible();
   });
+
+  it("should not show the empty message while more history can still load", () => {
+    render(
+      <SnapshotHistoryList
+        entries={[]}
+        branch="main"
+        projectId="project-1"
+        snapshotId="snapshot-1"
+        hasPreviousPage
+      />,
+    );
+
+    expect(screen.queryByText("no snapshots on main yet")).not.toBeInTheDocument();
+  });
 });
