@@ -1,5 +1,11 @@
 # @ovr/web
 
+## 0.14.1
+
+### Patch Changes
+
+- [#408](https://github.com/open-visual-regression/open-visual-regression/pull/408) [`773d6ac`](https://github.com/open-visual-regression/open-visual-regression/commit/773d6ac0ba4c391cfac5f2ee7e8684f3bc03d7a0) Thanks [@tgfischer](https://github.com/tgfischer)! - The snapshot History tab loads in one request and opens with the snapshot you're viewing centered, instead of flashing an empty message or shifting the list as newer builds arrive. History starts loading when you open the sidebar or hover the tab. `snapshots.getHistory` takes `align: "center"` to return the builds on both sides of the snapshot in its first page.
+
 ## 0.14.0
 
 ### Minor Changes
