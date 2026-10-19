@@ -621,7 +621,7 @@ export const findHistory = async ({
     return {
       snapshots: pageRows,
       nextCursor: toCursor(oldest ?? cursor, "next"),
-      previousCursor: hasMore && newest ? toCursor(newest, "previous") : null,
+      previousCursor: hasMore ? toCursor(newest ?? cursor, "previous") : null,
     };
   }
 
@@ -631,6 +631,33 @@ export const findHistory = async ({
     snapshots: pageRows,
     nextCursor: hasMore && oldest ? toCursor(oldest, "next") : null,
     previousCursor: hasNewer ? toCursor(newest ?? cursor, "previous") : null,
+  };
+};
+
+export type FindHistoryAroundOptions = Omit<FindHistoryOptions, "cursor"> & {
+  anchor: HistoryBuildKey;
+};
+
+export const findHistoryAround = async ({
+  anchor,
+  limit,
+  ...options
+}: FindHistoryAroundOptions) => {
+  const newerLimit = Math.floor(limit / 2);
+
+  const [newer, older] = await Promise.all([
+    findHistory({ ...options, limit: newerLimit, cursor: { ...anchor, direction: "previous" } }),
+    findHistory({
+      ...options,
+      limit: limit - newerLimit,
+      cursor: { ...anchor, direction: "next", inclusive: true },
+    }),
+  ]);
+
+  return {
+    snapshots: [...newer.snapshots, ...older.snapshots],
+    nextCursor: older.nextCursor,
+    previousCursor: newer.previousCursor,
   };
 };
 

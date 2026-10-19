@@ -4,6 +4,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@ovr/ui/components/tab
 
 import { getCachedSession } from "@/lib/auth/session";
 
+import { SnapshotHistoryTabTrigger } from "./SnapshotHistoryTabTrigger";
 import { SnapshotReviews } from "./SnapshotReviews";
 import { SnapshotSidebarHistoryContent } from "./SnapshotSidebarHistoryContent";
 import { SnapshotSidebarLogsContent } from "./SnapshotSidebarLogsContent";
@@ -32,9 +33,7 @@ export const SnapshotSidebarContent = async ({
         <TabsTrigger className="px-5" value="logs">
           Logs
         </TabsTrigger>
-        <TabsTrigger className="px-5" value="history">
-          History
-        </TabsTrigger>
+        <SnapshotHistoryTabTrigger snapshotId={snapshot.id} />
       </TabsList>
       <TabsContent value="reviews" className="px-3 pt-3">
         <SnapshotReviews

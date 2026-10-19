@@ -1,7 +1,7 @@
 "use client";
 
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { type SnapshotHistoryEntrySchema } from "@ovr/api/contracts/snapshots";
 import { Typography } from "@ovr/ui/components/typography";
@@ -10,7 +10,7 @@ import { useScrollContainer } from "@/lib/providers/ScrollContainer";
 
 import { SnapshotHistoryCard, SnapshotHistoryCardSkeleton } from "./SnapshotHistoryCard";
 
-const ESTIMATED_CARD_HEIGHT = 236;
+const ESTIMATED_CARD_HEIGHT = 237;
 const OVERSCAN_CARDS = 3;
 const SKELETON_COUNT = 8;
 
@@ -39,17 +39,19 @@ export const SnapshotHistoryList = ({
   onLoadMore,
   onLoadPrevious,
 }: SnapshotHistoryListProps) => {
-  const listRef = useRef<HTMLDivElement>(null);
+  const [listElement, setListElement] = useState<HTMLDivElement | null>(null);
+  const [positionedSnapshotId, setPositionedSnapshotId] = useState<string>();
   const scrollElement = useScrollContainer();
   const firstEntryId = entries[0]?.id;
   const previousFirstEntryIdRef = useRef(firstEntryId);
+  const positioned = positionedSnapshotId === snapshotId;
 
   const virtualizer = useVirtualizer({
     count: scrollElement ? entries.length + (hasNextPage ? 1 : 0) : 0,
     getScrollElement: () => scrollElement,
     estimateSize: () => ESTIMATED_CARD_HEIGHT,
     getItemKey: (index) => entries[index]?.id ?? "loading",
-    scrollMargin: listRef.current?.offsetTop ?? 0,
+    scrollMargin: listElement?.offsetTop ?? 0,
     overscan: OVERSCAN_CARDS,
   });
 
@@ -65,23 +67,54 @@ export const SnapshotHistoryList = ({
     }
   }, [entries, firstEntryId, virtualizer]);
 
+  useLayoutEffect(() => {
+    if (!scrollElement || !listElement || positioned) {
+      return;
+    }
+
+    const currentIndex = entries.findIndex((entry) => entry.id === snapshotId);
+    if (currentIndex >= 0) {
+      virtualizer.scrollToIndex(currentIndex, { align: "center" });
+    }
+
+    setPositionedSnapshotId(snapshotId);
+  }, [entries, listElement, positioned, scrollElement, snapshotId, virtualizer]);
+
   useEffect(() => {
-    if (!scrollElement || !hasPreviousPage || isFetchingPreviousPage) {
+    if (!positioned || !scrollElement || !hasPreviousPage || isFetchingPreviousPage) {
       return;
     }
 
     if (scrollElement.scrollTop - virtualizer.options.scrollMargin < ESTIMATED_CARD_HEIGHT) {
       onLoadPrevious?.();
     }
-  }, [items, scrollElement, hasPreviousPage, isFetchingPreviousPage, onLoadPrevious, virtualizer]);
+  }, [
+    items,
+    positioned,
+    scrollElement,
+    hasPreviousPage,
+    isFetchingPreviousPage,
+    onLoadPrevious,
+    virtualizer,
+  ]);
 
   useEffect(() => {
     const lastItem = items.at(-1);
 
-    if (lastItem && lastItem.index >= entries.length - 1 && hasNextPage && !isFetchingNextPage) {
+    if (
+      positioned &&
+      lastItem &&
+      lastItem.index >= entries.length - 1 &&
+      hasNextPage &&
+      !isFetchingNextPage
+    ) {
       onLoadMore?.();
     }
-  }, [items, entries.length, hasNextPage, isFetchingNextPage, onLoadMore]);
+  }, [items, positioned, entries.length, hasNextPage, isFetchingNextPage, onLoadMore]);
+
+  if (entries.length === 0 && (hasPreviousPage || hasNextPage)) {
+    return <SnapshotHistoryListSkeleton />;
+  }
 
   if (entries.length === 0) {
     return (
@@ -101,7 +134,7 @@ export const SnapshotHistoryList = ({
   );
 
   return (
-    <div ref={listRef}>
+    <div ref={setListElement}>
       {scrollElement ? (
         <div className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
           <div

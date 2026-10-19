@@ -1,7 +1,10 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { vi } from "vitest";
 
 import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 
+import { orpc } from "@/lib/orpc/client";
+import { snapshotHistoryInfiniteOptions } from "@/lib/orpc/snapshots-query";
 import { describe, expect, it, render, screen } from "@/test-utils";
 
 import { SnapshotLayout } from "../SnapshotLayout";
@@ -31,7 +34,10 @@ const snapshot: SnapshotSchema = {
   processingMs: null,
 };
 
-const renderComponent = () =>
+const createQueryClient = () =>
+  new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
+
+const renderComponent = (queryClient = createQueryClient()) =>
   render(
     <SnapshotLayout
       snapshot={snapshot}
@@ -47,6 +53,11 @@ const renderComponent = () =>
     >
       <div>snapshot contents</div>
     </SnapshotLayout>,
+    {
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      ),
+    },
   );
 
 describe("SnapshotLayout", () => {
@@ -71,5 +82,36 @@ describe("SnapshotLayout", () => {
     await user.click(screen.getByRole("button", { name: /collapse sidebar/i }));
 
     expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
+  });
+
+  it("should prefetch the snapshot history when the sidebar opens", async ({ user }) => {
+    const queryClient = createQueryClient();
+    const prefetchInfiniteQuery = vi
+      .spyOn(queryClient, "prefetchInfiniteQuery")
+      .mockResolvedValue(undefined);
+    renderComponent(queryClient);
+
+    await user.click(screen.getByRole("button", { name: /expand sidebar/i }));
+
+    expect(prefetchInfiniteQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: orpc.snapshots.getHistory.infiniteKey(
+          snapshotHistoryInfiniteOptions(snapshot.id),
+        ),
+      }),
+    );
+  });
+
+  it("should not prefetch the snapshot history when the sidebar closes", async ({ user }) => {
+    const queryClient = createQueryClient();
+    const prefetchInfiniteQuery = vi
+      .spyOn(queryClient, "prefetchInfiniteQuery")
+      .mockResolvedValue(undefined);
+    renderComponent(queryClient);
+
+    await user.click(screen.getByRole("button", { name: /expand sidebar/i }));
+    await user.click(screen.getByRole("button", { name: /collapse sidebar/i }));
+
+    expect(prefetchInfiniteQuery).toHaveBeenCalledTimes(1);
   });
 });
