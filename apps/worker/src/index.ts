@@ -3,7 +3,6 @@ import { Worker, type Job } from "bullmq";
 import { z } from "zod";
 
 import { scheduleFlakyDetection } from "@ovr/builds/flakiness";
-import { closeCaptureBrowsers } from "@ovr/capture/snapshots";
 import { assertEncryptionKey } from "@ovr/git-status/crypto";
 import { createLogger } from "@ovr/logger";
 import {
@@ -180,7 +179,6 @@ const onShutdown = async (): Promise<void> => {
 
   shutdown.abort();
   await Promise.all(workers.map((worker) => worker.close()));
-  await closeCaptureBrowsers();
   process.exit(0);
 };
 

@@ -16,8 +16,6 @@ import { organization, projects, user as userTable } from "@ovr/db/schema";
 import { buildRedisConnection, type RedisConnection } from "@ovr/queue";
 import { storage } from "@ovr/storage";
 
-import { closeCaptureBrowsers } from "../snapshots";
-
 export { describe, expect } from "vitest";
 
 export const writeStorybookBuildMarkers = async (dir: string): Promise<void> => {
@@ -78,8 +76,6 @@ type Fixtures = {
   mainBuild: NonNullable<Awaited<ReturnType<typeof dbClient.builds.create>>>;
   featureBuild: NonNullable<Awaited<ReturnType<typeof dbClient.builds.create>>>;
   connection: RedisConnection;
-  captureBrowsers: void;
-
   approveBaseline: (input: {
     build: NonNullable<Awaited<ReturnType<typeof dbClient.builds.create>>>;
     targetId: string;
@@ -161,15 +157,6 @@ export const test = vitest.extend<Fixtures>({
 
     await connection.quit();
   },
-
-  captureBrowsers: [
-    // eslint-disable-next-line no-empty-pattern
-    async ({}, use) => {
-      await use();
-      await closeCaptureBrowsers();
-    },
-    { auto: true },
-  ],
 
   approveBaseline: async ({ project, captureConfiguration }, use) => {
     await use(async ({ build, targetId, imagePath }) => {
