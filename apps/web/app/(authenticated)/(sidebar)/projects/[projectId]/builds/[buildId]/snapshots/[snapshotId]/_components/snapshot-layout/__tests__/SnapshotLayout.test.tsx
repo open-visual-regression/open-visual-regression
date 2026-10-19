@@ -3,9 +3,8 @@ import { vi } from "vitest";
 
 import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 
-import { orpc } from "@/lib/orpc/client";
-import { snapshotHistoryInfiniteOptions } from "@/lib/orpc/snapshots-query";
-import { describe, expect, it, render, screen } from "@/test-utils";
+import { mockHandlers } from "@/lib/testing/mockHandlers";
+import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
 
 import { SnapshotLayout } from "../SnapshotLayout";
 
@@ -85,33 +84,24 @@ describe("SnapshotLayout", () => {
   });
 
   it("should prefetch the snapshot history when the sidebar opens", async ({ user }) => {
-    const queryClient = createQueryClient();
-    const prefetchInfiniteQuery = vi
-      .spyOn(queryClient, "prefetchInfiniteQuery")
-      .mockResolvedValue(undefined);
-    renderComponent(queryClient);
+    const getHistory = mockHandlers.mockGetHistory();
+    renderComponent();
 
     await user.click(screen.getByRole("button", { name: /expand sidebar/i }));
 
-    expect(prefetchInfiniteQuery).toHaveBeenCalledWith(
-      expect.objectContaining({
-        queryKey: orpc.snapshots.getHistory.infiniteKey(
-          snapshotHistoryInfiniteOptions(snapshot.id),
-        ),
-      }),
+    await waitFor(() =>
+      expect(getHistory).toHaveBeenCalledWith(expect.objectContaining({ snapshotId: snapshot.id })),
     );
   });
 
   it("should not prefetch the snapshot history when the sidebar closes", async ({ user }) => {
-    const queryClient = createQueryClient();
-    const prefetchInfiniteQuery = vi
-      .spyOn(queryClient, "prefetchInfiniteQuery")
-      .mockResolvedValue(undefined);
-    renderComponent(queryClient);
+    const getHistory = mockHandlers.mockGetHistory();
+    renderComponent(new QueryClient({ defaultOptions: { queries: { retry: false } } }));
 
     await user.click(screen.getByRole("button", { name: /expand sidebar/i }));
+    await waitFor(() => expect(getHistory).toHaveBeenCalledTimes(1));
     await user.click(screen.getByRole("button", { name: /collapse sidebar/i }));
 
-    expect(prefetchInfiniteQuery).toHaveBeenCalledTimes(1);
+    expect(getHistory).toHaveBeenCalledTimes(1);
   });
 });

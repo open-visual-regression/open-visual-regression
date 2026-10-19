@@ -41,4 +41,6 @@ const mockProcedure = <TInput>(
 export const mockHandlers = {
   mockCastVote: (options?: MockProcedureOptions) =>
     mockProcedure<Inputs["diffs"]["castVote"]>("diffs/castVote", options),
+  mockGetHistory: (options?: MockProcedureOptions) =>
+    mockProcedure<Inputs["snapshots"]["getHistory"]>("snapshots/getHistory", options),
 };
