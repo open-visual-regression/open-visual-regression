@@ -1,9 +1,9 @@
 import { FacetBarSkeleton } from "@/lib/components/facet/FacetBar";
 import { SearchFieldSkeleton } from "@/lib/components/SearchField/SearchField";
 
-import { BuildHeaderSkeleton } from "./_components/build-header/BuildHeader";
-import { BuildPageShell } from "./_components/BuildPageShell";
-import { SnapshotGridSkeleton } from "./_components/snapshot-grid/SnapshotGrid";
+import { BuildHeaderSkeleton } from "../_components/build-header/BuildHeader";
+import { BuildPageShell } from "../_components/BuildPageShell";
+import { SnapshotGridSkeleton } from "../_components/snapshot-grid/SnapshotGrid";
 
 export default function Loading() {
   return (
