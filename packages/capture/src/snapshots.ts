@@ -26,6 +26,7 @@ import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
 import type { BuildDbSchema } from "@ovr/db/repository/builds";
 import type { SnapshotDbSchema } from "@ovr/db/repository/snapshots";
+import type { BuildProcessingStatus } from "@ovr/db/schema";
 import { createLogger } from "@ovr/logger";
 import { enqueueDiff, enqueueFinalize } from "@ovr/queue/producer";
 import { promoteBaseline } from "@ovr/reviews/baselines";
@@ -39,6 +40,13 @@ import { createUploadQueue } from "./lib/uploadQueue";
 const logger = createLogger("capture");
 
 const MAX_PENDING_UPLOADS = 2;
+
+// Builds the reaper errored or a user canceled will never finalize from new work, so
+// capturing or diffing their snapshots only burns worker capacity.
+const TERMINAL_BUILD_STATUSES = new Set<BuildProcessingStatus>(["error", "canceled"]);
+
+const isTerminalBuild = (build: Pick<NonNullable<BuildDbSchema>, "processingStatus">): boolean =>
+  TERMINAL_BUILD_STATUSES.has(build.processingStatus);
 
 type CapturePhase = "render" | "settle" | "wait" | "screenshot" | "upload";
 
@@ -192,7 +200,19 @@ const captureSnapshotOnPage = async (
     throw new Error(`Snapshot not found: ${snapshotId}`);
   }
 
-  if (snapshot.status === "success" || snapshot.status === "canceled") {
+  // An errored snapshot is already resolved, by the reaper or an earlier attempt of this
+  // group whose diff was recorded as an error. Retrying one goes through requeue, which
+  // resets it to queued, so skipping errored snapshots here never drops a retry.
+  if (
+    snapshot.status === "success" ||
+    snapshot.status === "canceled" ||
+    snapshot.status === "error"
+  ) {
+    return undefined;
+  }
+
+  const currentBuild = await dbClient.builds.findById(build.id);
+  if (!currentBuild || isTerminalBuild(currentBuild)) {
     return undefined;
   }
 
@@ -396,6 +416,14 @@ export const captureBuildGroup = async (
     throw new Error(`Missing build: ${buildId}`);
   }
 
+  if (isTerminalBuild(build)) {
+    logger.info(
+      { buildId, browser, snapshotCount: snapshotIds.length, status: build.processingStatus },
+      "skipping capture group for a build that already finished",
+    );
+    return;
+  }
+
   await withTimeout(
     (signal) =>
       withBundleDir(build.id, build.artifactPath, async (bundleDir) => {
@@ -513,7 +541,16 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
     throw new Error(`Build not found for snapshot: ${snapshotId}`);
   }
 
-  if (build.processingStatus === "canceled" || snapshot.status === "canceled") {
+  if (snapshot.status === "canceled" || build.processingStatus === "canceled") {
+    return;
+  }
+
+  if (isTerminalBuild(build)) {
+    // Leave nothing pending on a build that will not finalize again.
+    const diff = await dbClient.diffs.findById(diffId);
+    if (diff?.processingStatus === "pending") {
+      await dbClient.diffs.updateProcessingStatus(diffId, "error");
+    }
     return;
   }
 
