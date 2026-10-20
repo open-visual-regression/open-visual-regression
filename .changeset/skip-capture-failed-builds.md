@@ -1,4 +1,6 @@
 ---
+"@ovr/builds": patch
+"@ovr/capture": patch
 "@ovr/worker": patch
 ---
 
