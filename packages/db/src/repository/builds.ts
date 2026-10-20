@@ -24,6 +24,7 @@ import {
   diffs,
   projects,
   snapshots,
+  type BuildOnlyAffected,
   type BuildProcessingStatus,
   type BuildReviewStatus,
 } from "../schema";
@@ -90,6 +91,15 @@ export const updateResult = async (id: string, result: UpdateResultInput) => {
     .update(builds)
     .set(result)
     .where(and(eq(builds.id, id), ne(builds.processingStatus, "canceled")))
+    .returning();
+  return build;
+};
+
+export const updateOnlyAffected = async (id: string, onlyAffected: BuildOnlyAffected) => {
+  const [build] = await db
+    .update(builds)
+    .set({ onlyAffected })
+    .where(eq(builds.id, id))
     .returning();
   return build;
 };

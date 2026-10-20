@@ -107,6 +107,43 @@ const trace = async (
   });
 };
 
+// Traces changes to files whose base and head contents both matter, like lockfiles.
+const traceVersions = async (
+  versions: Record<string, { base: string | undefined; head: string }>,
+  options: Partial<AffectedStoriesInput> = {},
+): Promise<Awaited<ReturnType<typeof findAffectedStories>>> => {
+  await createRepo(viteRepoFiles);
+  for (const [file, { head }] of Object.entries(versions)) {
+    await mkdir(path.join(repoRoot, path.dirname(file)), { recursive: true });
+    await writeFile(path.join(repoRoot, file), head);
+  }
+  const storybookDir = await writeBuild(viteGraph, viteEntries);
+  return findAffectedStories({
+    storybookDir,
+    projectDir: webDir(),
+    repoRoot,
+    changedFiles: Object.keys(versions),
+    readBaseFile: async (file) => versions[file]?.base,
+    ...options,
+  });
+};
+
+const yarnLock = (packages: Record<string, string>): string =>
+  [
+    "# yarn lockfile v1",
+    "",
+    ...Object.entries(packages).flatMap(([name, version]) => [
+      `"${name}@^${version.split(".")[0]}.0.0":`,
+      `  version "${version}"`,
+      `  resolved "https://registry.yarnpkg.com/${name}/-/${name.split("/").pop()}-${version}.tgz"`,
+      "",
+    ]),
+  ].join("\n");
+
+const packageJson = (fields: Record<string, unknown>): string => JSON.stringify(fields, null, 2);
+
+const CLI = "@open-visual-regression/cli";
+
 afterEach(async () => {
   await rm(repoRoot, { recursive: true, force: true });
 });
@@ -254,6 +291,96 @@ describe("findAffectedStories", () => {
 
     expect(result).toMatchObject({ mode: "some", storyIds: [] });
   });
+
+  it("ignores a lockfile change that only bumps a package outside the bundle, like the OVR CLI", async () => {
+    const result = await traceVersions({
+      "yarn.lock": {
+        base: yarnLock({ clsx: "2.1.1", [CLI]: "0.8.0", commander: "14.0.0" }),
+        head: yarnLock({ clsx: "2.1.1", [CLI]: "0.9.0", commander: "15.0.0" }),
+      },
+      "apps/web/package.json": {
+        base: packageJson({ name: "web", devDependencies: { [CLI]: "^0.8.0" } }),
+        head: packageJson({ name: "web", devDependencies: { [CLI]: "^0.9.0" } }),
+      },
+    });
+
+    expect(result).toMatchObject({
+      mode: "some",
+      storyIds: [],
+      ignoredFiles: ["yarn.lock", "apps/web/package.json"],
+    });
+  });
+
+  it("captures everything when a lockfile change bumps a package in the bundle", async () => {
+    const result = await traceVersions({
+      "yarn.lock": {
+        base: yarnLock({ clsx: "2.1.1", [CLI]: "0.8.0" }),
+        head: yarnLock({ clsx: "2.1.2", [CLI]: "0.9.0" }),
+      },
+    });
+
+    expect(result).toEqual({
+      mode: "all",
+      reason: "dependencies changed (yarn.lock): clsx (bundled by the Storybook)",
+    });
+  });
+
+  it("captures everything when a lockfile change bumps a package that builds the Storybook", async () => {
+    const result = await traceVersions({
+      "yarn.lock": {
+        base: yarnLock({ vite: "7.1.0", "@storybook/react-vite": "10.0.0" }),
+        head: yarnLock({ vite: "7.2.0", "@storybook/react-vite": "10.0.0" }),
+      },
+    });
+
+    expect(result).toEqual({
+      mode: "all",
+      reason: "dependencies changed (yarn.lock): vite (builds the Storybook)",
+    });
+  });
+
+  it("captures everything when a lockfile has no base version to compare against", async () => {
+    const result = await traceVersions({
+      "yarn.lock": { base: undefined, head: yarnLock({ clsx: "2.1.1" }) },
+    });
+
+    expect(result).toEqual({ mode: "all", reason: "dependencies changed (yarn.lock)" });
+  });
+
+  it("captures everything when a bundled package's manifest changes the range of a bundled dependency", async () => {
+    const result = await traceVersions({
+      "apps/web/package.json": {
+        base: packageJson({ dependencies: { clsx: "^2.0.0" } }),
+        head: packageJson({ dependencies: { clsx: "^2.1.0" } }),
+      },
+    });
+
+    expect(result).toEqual({
+      mode: "all",
+      reason: "apps/web/package.json changed the version range of clsx (bundled by the Storybook)",
+    });
+  });
+
+  it("captures everything when a bundled package's manifest changes how it resolves", async () => {
+    const result = await traceVersions({
+      "packages/ui/package.json": {
+        base: packageJson({ name: "ui", exports: { ".": "./src/index.ts" } }),
+        head: packageJson({ name: "ui", exports: { ".": "./dist/index.js" } }),
+      },
+    });
+
+    expect(result).toMatchObject({ mode: "all" });
+    expect(result.mode === "all" && result.reason).toContain('changed "exports"');
+  });
+
+  it.each(["apps/web/ovr.config.ts", "apps/web/ovr.config.mjs", "apps/docs/ovr.config.js"])(
+    "ignores %s, which the CLI reads and never bundles",
+    async (config) => {
+      const result = await trace([config]);
+
+      expect(result).toMatchObject({ mode: "some", storyIds: [], ignoredFiles: [config] });
+    },
+  );
 
   it("captures everything when a file matches externals", async () => {
     const result = await trace(["apps/web/public/logo.png"], { externals: ["apps/web/public/**"] });

@@ -33,7 +33,7 @@ const DEFAULT_VIEWPORTS: ResolvedViewport[] = [
 
 const CONFIG_FILENAMES = ["ovr.config.ts", "ovr.config.js", "ovr.config.mjs"];
 
-const findConfigPath = (cwd: string, configPath?: string): string | undefined => {
+export const findConfigPath = (cwd: string, configPath?: string): string | undefined => {
   if (configPath) {
     const resolved = path.resolve(cwd, configPath);
     if (!existsSync(resolved)) {
@@ -59,6 +59,18 @@ export const loadOvrConfig = async (
 
   const jiti = createJiti(pathToFileURL(path.join(cwd, "/")).href);
   const loaded = await jiti.import<{ default: OvrConfig }>(resolvedConfigPath);
+  return loaded.default;
+};
+
+/** Evaluates a config's source as if it were at `file`, e.g. to read it as of another commit. */
+export const evalOvrConfig = async (
+  source: string,
+  file: string,
+): Promise<OvrConfig | undefined> => {
+  const jiti = createJiti(pathToFileURL(file).href, { moduleCache: false, fsCache: false });
+  const loaded = (await jiti.evalModule(source, { filename: file, async: true })) as {
+    default?: OvrConfig;
+  };
   return loaded.default;
 };
 

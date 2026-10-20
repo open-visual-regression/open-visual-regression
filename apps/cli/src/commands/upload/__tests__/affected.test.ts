@@ -5,6 +5,7 @@ import path from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { loadOvrConfig } from "../../../config";
 import { findUnaffectedTargets } from "../affected";
 
 let repo: string;
@@ -60,6 +61,10 @@ const writeStorybookBuild = async (): Promise<string> => {
         { name: "./src/Form.stories.tsx", reasons: [{ moduleName: STORIES }] },
         { name: "./src/Form.tsx", reasons: [{ moduleName: "./src/Form.stories.tsx" }] },
         {
+          name: "./../../node_modules/clsx/dist/clsx.mjs",
+          reasons: [{ moduleName: "./src/Form.tsx" }],
+        },
+        {
           name: STORIES,
           reasons: [{ moduleName: "/virtual:/@storybook/builder-vite/vite-app.js" }],
         },
@@ -89,16 +94,35 @@ const run = async (
   config?: Parameters<typeof findUnaffectedTargets>[0]["config"],
 ) => {
   const log = vi.fn<(message: string) => void>();
-  const unaffected = await findUnaffectedTargets({
+  const configFile = path.join(projectDir, "ovr.config.ts");
+  const ovrConfig = await loadOvrConfig(projectDir);
+  const { unaffectedTargetIds: unaffected, summary } = await findUnaffectedTargets({
     client: client as never,
     storybookDir: await writeStorybookBuild(),
     cwd: projectDir,
     targets,
-    config,
+    config: config ?? ovrConfig?.onlyAffected,
+    ovrConfig: ovrConfig ? { file: configFile, config: ovrConfig } : undefined,
     log,
   });
-  return { unaffected, output: log.mock.calls.map(([line]) => line).join("\n") };
+  return { unaffected, summary, output: log.mock.calls.map(([line]) => line).join("\n") };
 };
+
+const yarnLock = (packages: Record<string, string>): string =>
+  [
+    "# yarn lockfile v1",
+    "",
+    ...Object.entries(packages).flatMap(([name, version]) => [
+      `"${name}@^${version}":`,
+      `  version "${version}"`,
+      "",
+    ]),
+  ].join("\n");
+
+const writeOvrConfig = (config: object): Promise<void> =>
+  write("apps/web/ovr.config.ts", `export default ${JSON.stringify(config, null, 2)};\n`);
+
+const CLI = "@open-visual-regression/cli";
 
 beforeEach(async () => {
   repo = await realpath(await mkdtemp(path.join(tmpdir(), "ovr-cli-affected-")));
@@ -204,6 +228,106 @@ describe("findUnaffectedTargets", () => {
     });
 
     expect(unaffected).toEqual(["button--default", "form--default"]);
+  });
+
+  it("records the base build and why every story was captured", async () => {
+    const base = commitAll();
+    await write("pnpm-lock.yaml", "changed");
+
+    const { summary, output } = await run(clientFor({ id: "build-1", commitSha: base }));
+
+    expect(output).toContain(`Comparing against main-branch build build-1 at ${base}.`);
+    expect(summary).toEqual({
+      baseBuildId: "build-1",
+      baseCommitSha: base,
+      captureAllReason: "dependencies changed (pnpm-lock.yaml)",
+    });
+  });
+
+  it("records the base build when only the affected stories are captured", async () => {
+    const base = commitAll();
+    await write("apps/web/src/Form.tsx", "changed");
+
+    const { summary } = await run(clientFor({ id: "build-1", commitSha: base }));
+
+    expect(summary).toEqual({
+      baseBuildId: "build-1",
+      baseCommitSha: base,
+      captureAllReason: null,
+    });
+  });
+
+  it("captures nothing for a bump of the OVR CLI, which is not in the bundle", async () => {
+    await write("yarn.lock", yarnLock({ clsx: "2.1.1", [CLI]: "0.8.0", tar: "7.5.1" }));
+    await write("apps/web/package.json", JSON.stringify({ devDependencies: { [CLI]: "^0.8.0" } }));
+    const base = commitAll();
+    await write("yarn.lock", yarnLock({ clsx: "2.1.1", [CLI]: "0.9.0", tar: "7.5.22" }));
+    await write("apps/web/package.json", JSON.stringify({ devDependencies: { [CLI]: "^0.9.0" } }));
+    commitAll();
+
+    const { unaffected, summary } = await run(clientFor({ id: "build-1", commitSha: base }));
+
+    expect(unaffected).toEqual(["button--default", "form--default"]);
+    expect(summary.captureAllReason).toBeNull();
+  });
+
+  it("captures everything when a package in the bundle changes version", async () => {
+    await write("yarn.lock", yarnLock({ clsx: "2.1.1", [CLI]: "0.8.0" }));
+    const base = commitAll();
+    await write("yarn.lock", yarnLock({ clsx: "2.1.2", [CLI]: "0.8.0" }));
+    commitAll();
+
+    const { unaffected, output } = await run(clientFor({ id: "build-1", commitSha: base }));
+
+    expect(unaffected).toEqual([]);
+    expect(output).toContain(
+      "Capturing every story: dependencies changed (yarn.lock): clsx (bundled by the Storybook).",
+    );
+  });
+
+  it("captures nothing when ovr.config only changes its untraced globs", async () => {
+    await writeOvrConfig({ onlyAffected: { untraced: [] } });
+    const base = commitAll();
+    await writeOvrConfig({ onlyAffected: { untraced: ["fixtures/**"] } });
+    commitAll();
+
+    const { unaffected, output } = await run(clientFor({ id: "build-1", commitSha: base }));
+
+    expect(unaffected).toEqual(["button--default", "form--default"]);
+    expect(output).not.toContain("Capturing every story");
+  });
+
+  it("leaves a viewport change to the server, which captures any viewport without a baseline", async () => {
+    await writeOvrConfig({ viewports: [{ name: "desktop", width: 1280 }] });
+    const base = commitAll();
+    await writeOvrConfig({
+      viewports: [
+        { name: "desktop", width: 1280 },
+        { name: "mobile", width: 375 },
+      ],
+    });
+    commitAll();
+
+    const { unaffected, output } = await run(clientFor({ id: "build-1", commitSha: base }));
+
+    expect(unaffected).toEqual(["button--default", "form--default"]);
+    expect(output).toContain(
+      "apps/web/ovr.config.ts changed the viewports; stories are captured at any viewport they have no baseline for.",
+    );
+  });
+
+  it("captures everything when ovr.config changes how every story renders", async () => {
+    await writeOvrConfig({ waitForTimeout: 0 });
+    const base = commitAll();
+    await writeOvrConfig({ waitForTimeout: 500 });
+    commitAll();
+
+    const { unaffected, output } = await run(clientFor({ id: "build-1", commitSha: base }));
+
+    expect(unaffected).toEqual([]);
+    expect(output).toContain(
+      'Capturing every story: apps/web/ovr.config.ts changed "waitForTimeout", which can change how every story renders.',
+    );
   });
 
   it("captures everything outside a git repository", async () => {

@@ -59,7 +59,13 @@ It needs:
 - The full git history. In GitHub Actions, check out with `fetch-depth: 0`.
 - A successful build on the project's main branch in the commit's history to compare against.
 
-When any of these is missing, or a change could affect every story (Storybook or build configuration, dependencies, global styles), every story is captured and the CLI prints why. Use [`onlyAffected`](/configuration/config#only-affected) in `ovr.config` for files that affect stories without being imported.
+When any of these is missing, or a change could affect every story (Storybook or build configuration, dependencies, global styles), every story is captured. The CLI prints the main-branch build it compared against and why, and the build page shows the same reason. Use [`onlyAffected`](/configuration/config#only-affected) in `ovr.config` for files that affect stories without being imported.
+
+Some changes only capture every story when they can change what renders:
+
+- **Lockfiles** (npm, pnpm and Yarn) are compared package by package. Every story is captured only when a package with modules in the Storybook bundle changed version, or a package that builds it (Storybook, the bundler, Babel, SWC, PostCSS, Tailwind, loaders and the like). Upgrading tools outside the bundle, such as the OVR CLI, captures nothing on its own. Bun lockfiles always capture every story.
+- **`package.json`** in a package the Storybook bundles captures every story when it changes the range of one of those packages, or a field that changes how the package resolves, like `exports` or `sideEffects`. Scripts, versions and other dependencies are ignored.
+- **`ovr.config`** captures every story only when it changes `waitForTimeout`. Viewport changes capture each story at any viewport it has no baseline for, and `onlyAffected`, `diffThreshold` and `serverUrl` changes capture nothing.
 
 <Note>
   We recommend it for pull requests only, and capturing every story on the main branch.

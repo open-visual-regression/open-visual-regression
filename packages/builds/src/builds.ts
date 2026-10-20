@@ -2,6 +2,7 @@ import { v7 as uuidv7 } from "uuid";
 
 import { dbClient } from "@ovr/db/client";
 import type {
+  BuildOnlyAffected,
   BuildProcessingStatus,
   BuildReviewStatus,
   BuildType,
@@ -47,6 +48,7 @@ type ConfirmBuildUploadInput = {
   diffThreshold: number;
   waitForTimeout?: number;
   unaffectedTargetIds?: string[];
+  onlyAffected?: BuildOnlyAffected;
 };
 
 export const DEFAULT_DIFF_THRESHOLD = 0.05;
@@ -242,6 +244,9 @@ export const confirmBuildUpload = async (
   const unaffectedTargetIds = (input.unaffectedTargetIds ?? []).filter((id) => targetIds.has(id));
 
   try {
+    if (input.onlyAffected) {
+      await dbClient.builds.updateOnlyAffected(buildId, input.onlyAffected);
+    }
     await dbClient.buildExtractDefaults.create({
       buildId,
       targets: input.targets,

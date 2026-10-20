@@ -4,11 +4,20 @@ import { findAffectedStories } from "@ovr/storybook-compat/affectedStories";
 import type { StoryTarget } from "@ovr/storybook-compat/manifest";
 
 import type { OvrClient } from "../../client";
-import type { OnlyAffectedConfig } from "../../defineConfig";
-import { getRepoRoot, isShallowRepository, listAncestorCommits, listChangedFiles } from "../../git";
+import { evalOvrConfig, resolveViewports } from "../../config";
+import type { OnlyAffectedConfig, OvrConfig } from "../../defineConfig";
+import {
+  getRepoRoot,
+  isShallowRepository,
+  listAncestorCommits,
+  listChangedFiles,
+  readFileAtCommit,
+} from "../../git";
 
 const MAX_ANCESTORS = 1000;
 const MAX_LISTED_STORY_FILES = 20;
+// The server's limit on the reason recorded on the build.
+const MAX_RECORDED_REASON_LENGTH = 2000;
 
 type FindUnaffectedTargetsInput = {
   client: Pick<OvrClient, "builds">;
@@ -16,7 +25,22 @@ type FindUnaffectedTargetsInput = {
   cwd: string;
   targets: StoryTarget[];
   config?: OnlyAffectedConfig;
+  /** The ovr.config this upload was configured with, to compare against the base commit's. */
+  ovrConfig?: { file: string; config: OvrConfig | undefined };
   log?: (message: string) => void;
+};
+
+/** What `--only-affected` decided, recorded on the build so the UI can show it. */
+export type OnlyAffectedSummary = {
+  baseBuildId: string | null;
+  baseCommitSha: string | null;
+  /** Why every story was captured, or null if only the affected ones were. */
+  captureAllReason: string | null;
+};
+
+export type UnaffectedTargets = {
+  unaffectedTargetIds: string[];
+  summary: OnlyAffectedSummary;
 };
 
 const describeError = (error: unknown): string =>
@@ -27,17 +51,61 @@ const toRepoGlobs = (globs: string[] | undefined, repoRoot: string, cwd: string)
   return (globs ?? []).map((glob) => (prefix ? path.posix.join(prefix, glob) : glob));
 };
 
+// Config keys that cannot change how a story renders. Viewports are left to the server, which
+// only keeps a baseline for an unaffected story at a browser and size it was captured at.
+const NON_RENDERING_CONFIG_KEYS = new Set(["serverUrl", "onlyAffected", "diffThreshold"]);
+
+const describeConfigChange = (
+  file: string,
+  base: OvrConfig,
+  head: OvrConfig,
+): { captureAllReason?: string; notes: string[] } => {
+  const changed = (key: string) =>
+    JSON.stringify(base[key as keyof OvrConfig]) !== JSON.stringify(head[key as keyof OvrConfig]);
+  const keys = [...new Set([...Object.keys(base), ...Object.keys(head)])].filter(changed);
+
+  const notes = keys.includes("diffThreshold")
+    ? [`${file} changed "diffThreshold"; it applies to the stories captured in this build`]
+    : [];
+  if (JSON.stringify(resolveViewports(base)) !== JSON.stringify(resolveViewports(head))) {
+    notes.push(
+      `${file} changed the viewports; stories are captured at any viewport they have no baseline for`,
+    );
+  }
+
+  const rendering = keys.filter(
+    (key) =>
+      !NON_RENDERING_CONFIG_KEYS.has(key) && key !== "viewports" && key !== "defaultViewports",
+  );
+  return rendering.length > 0
+    ? {
+        captureAllReason: `${file} changed ${rendering.map((key) => `"${key}"`).join(", ")}, which can change how every story renders`,
+        notes,
+      }
+    : { notes };
+};
+
 export const findUnaffectedTargets = async ({
   client,
   storybookDir,
   cwd,
   targets,
   config,
+  ovrConfig,
   log = console.log,
-}: FindUnaffectedTargetsInput): Promise<string[]> => {
-  const captureAll = (reason: string): string[] => {
+}: FindUnaffectedTargetsInput): Promise<UnaffectedTargets> => {
+  let base: { id: string; commitSha: string } | null = null;
+
+  const captureAll = (reason: string): UnaffectedTargets => {
     log(`Capturing every story: ${reason}.`);
-    return [];
+    return {
+      unaffectedTargetIds: [],
+      summary: {
+        baseBuildId: base?.id ?? null,
+        baseCommitSha: base?.commitSha ?? null,
+        captureAllReason: reason.slice(0, MAX_RECORDED_REASON_LENGTH),
+      },
+    };
   };
 
   let repoRoot: string;
@@ -54,7 +122,6 @@ export const findUnaffectedTargets = async ({
     return captureAll(`could not read the git history (${describeError(error)})`);
   }
 
-  let base: { id: string; commitSha: string } | null;
   try {
     ({ build: base } = await client.builds.findAncestorBuild({ commitShas: commits }));
   } catch (error) {
@@ -68,8 +135,12 @@ export const findUnaffectedTargets = async ({
   }
 
   if (!commits.includes(base.commitSha)) {
+    base = null;
     return captureAll("the server returned a build that is not in this commit's history");
   }
+
+  const { id: baseBuildId, commitSha: baseCommitSha } = base;
+  log(`Comparing against main-branch build ${baseBuildId} at ${baseCommitSha}.`);
 
   let changedFiles: string[];
   try {
@@ -80,13 +151,43 @@ export const findUnaffectedTargets = async ({
     );
   }
 
+  const readBaseFile = (file: string) => readFileAtCommit(repoRoot, baseCommitSha, file);
+  const untraced = toRepoGlobs(config?.untraced, repoRoot, cwd);
+
+  if (ovrConfig) {
+    const configFile = path.relative(repoRoot, ovrConfig.file).split(path.sep).join("/");
+    if (changedFiles.includes(configFile)) {
+      let change: ReturnType<typeof describeConfigChange>;
+      try {
+        const source = await readBaseFile(configFile);
+        const baseConfig =
+          source === undefined ? undefined : await evalOvrConfig(source, ovrConfig.file);
+        change = describeConfigChange(configFile, baseConfig ?? {}, ovrConfig.config ?? {});
+      } catch (error) {
+        return captureAll(
+          `could not load ${configFile} as of ${baseCommitSha.slice(0, 7)} to compare it (${describeError(error)})`,
+        );
+      }
+
+      for (const note of change.notes) {
+        log(`${note}.`);
+      }
+      if (change.captureAllReason) {
+        return captureAll(change.captureAllReason);
+      }
+      // Checked above, so it is not traced as build configuration, even under a custom name.
+      untraced.push(configFile);
+    }
+  }
+
   const result = await findAffectedStories({
     storybookDir,
     repoRoot,
     projectDir: cwd,
     changedFiles,
     externals: toRepoGlobs(config?.externals, repoRoot, cwd),
-    untraced: toRepoGlobs(config?.untraced, repoRoot, cwd),
+    untraced,
+    readBaseFile,
   });
 
   if (result.mode === "all") {
@@ -108,5 +209,8 @@ export const findUnaffectedTargets = async ({
     log(`  …and ${result.storyFiles.length - MAX_LISTED_STORY_FILES} more story files`);
   }
 
-  return unaffected;
+  return {
+    unaffectedTargetIds: unaffected,
+    summary: { baseBuildId, baseCommitSha, captureAllReason: null },
+  };
 };

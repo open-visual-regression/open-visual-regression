@@ -81,6 +81,16 @@ export const createBuildOutputSchema = z.object({
 
 export const createBuildContract = oc.input(createBuildInputSchema).output(createBuildOutputSchema);
 
+/** What `upload storybook --only-affected` decided for a build. */
+export const onlyAffectedSchema = z.object({
+  baseBuildId: z.string().max(64).nullable(),
+  baseCommitSha: z.string().max(64).nullable(),
+  /** Why every story was captured, or null if only the affected ones were. */
+  captureAllReason: z.string().max(2000).nullable(),
+});
+
+export type OnlyAffectedSchema = z.infer<typeof onlyAffectedSchema>;
+
 export const confirmUploadInputSchema = z.object({
   buildId: z.string(),
   targets: z.array(targetSchema),
@@ -94,6 +104,7 @@ export const confirmUploadInputSchema = z.object({
   diffThreshold: z.number().min(0.01).max(1).optional(),
   waitForTimeout: z.number().int().min(0).max(30_000).optional(),
   unaffectedTargetIds: z.array(z.string().min(1)).optional(),
+  onlyAffected: onlyAffectedSchema.optional(),
 });
 
 export type ConfirmUploadInputSchema = z.infer<typeof confirmUploadInputSchema>;
@@ -160,6 +171,7 @@ export const buildDetailSchema = buildSchema.extend({
   isReviewable: z.boolean(),
   commitUrl: z.string().nullable(),
   branchUrl: z.string().nullable(),
+  onlyAffected: onlyAffectedSchema.nullable(),
 });
 
 export type BuildDetailSchema = z.infer<typeof buildDetailSchema>;

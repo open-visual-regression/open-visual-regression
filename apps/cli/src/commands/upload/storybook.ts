@@ -6,6 +6,7 @@ import { STATS_FILENAME } from "@ovr/storybook-compat/moduleGraph";
 
 import { createClient } from "../../client";
 import {
+  findConfigPath,
   getApiKey,
   getServerUrl,
   loadOvrConfig,
@@ -66,15 +67,18 @@ export const createStorybookCommand = (): Command =>
 
         const client = createClient(serverUrl, apiKey);
 
-        const unaffectedTargetIds = options.onlyAffected
+        const configFile = findConfigPath(process.cwd(), options.config);
+        const onlyAffected = options.onlyAffected
           ? await findUnaffectedTargets({
               client,
               storybookDir: options.dir,
               cwd: process.cwd(),
               targets,
               config: config?.onlyAffected,
+              ovrConfig: configFile ? { file: configFile, config } : undefined,
             })
-          : [];
+          : undefined;
+        const unaffectedTargetIds = onlyAffected?.unaffectedTargetIds ?? [];
 
         console.log(`Creating build for ${branch}@${commitSha} (${targets.length} stories)...`);
         const { buildId, uploadUrl, buildUrl } = await runStep("creating the build", () =>
@@ -100,6 +104,7 @@ export const createStorybookCommand = (): Command =>
             diffThreshold,
             ...(waitForTimeout > 0 && { waitForTimeout }),
             ...(unaffectedTargetIds.length > 0 && { unaffectedTargetIds }),
+            ...(onlyAffected && { onlyAffected: onlyAffected.summary }),
           }),
         );
 

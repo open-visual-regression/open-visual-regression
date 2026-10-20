@@ -175,6 +175,39 @@ describe("BuildHeader", () => {
     expect(screen.queryByRole("button", { name: /reject all/i })).not.toBeInTheDocument();
   });
 
+  it("should explain why every story was captured when --only-affected fell back", () => {
+    renderComponent({
+      build: mocks.build.generateBuild({
+        status: "needs_review",
+        onlyAffected: {
+          baseBuildId: "0190a000-0000-7000-8000-000000000000",
+          baseCommitSha: "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0",
+          captureAllReason: "dependencies changed (yarn.lock): clsx (bundled by the Storybook)",
+        },
+      }),
+    });
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Captured every storydependencies changed (yarn.lock): clsx (bundled by the Storybook) (compared against the main-branch build at a1b2c3d)",
+    );
+  });
+
+  it("should note that only affected stories were captured", () => {
+    renderComponent({
+      build: mocks.build.generateBuild({
+        status: "needs_review",
+        onlyAffected: {
+          baseBuildId: "0190a000-0000-7000-8000-000000000000",
+          baseCommitSha: "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0",
+          captureAllReason: null,
+        },
+      }),
+    });
+
+    expect(screen.getByText("only stories affected since a1b2c3d")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it("should not show the error alert when the build has no error message", () => {
     renderComponent({
       build: mocks.build.generateBuild({ status: "needs_review", errorMessage: null }),

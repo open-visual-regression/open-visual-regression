@@ -6,6 +6,7 @@ import {
   CircleSlash2Icon,
   GitBranchIcon,
   GitCommitHorizontalIcon,
+  ListFilterIcon,
   UserIcon,
 } from "@ovr/ui/components/icon";
 import {
@@ -47,6 +48,8 @@ export const BuildHeader = ({
   const showRebuild = canReview && !isCancelable && build.isRebuildable;
   const showReviewActions = canReview && build.isReviewable && hasReviewable;
   const showActions = showCancel || showRebuild || showReviewActions;
+  const onlyAffected = build.onlyAffected;
+  const baseCommit = onlyAffected?.baseCommitSha?.slice(0, 7);
 
   return (
     <div className="flex flex-col gap-6">
@@ -88,6 +91,12 @@ export const BuildHeader = ({
           <Typography variant="caption">
             {formatRelativeDateTime(new Date(build.createdAt))}
           </Typography>
+          {onlyAffected && !onlyAffected.captureAllReason ? (
+            <Typography variant="caption" className="flex items-center gap-1">
+              <Icon icon={ListFilterIcon} size={10} />
+              only stories affected since {baseCommit}
+            </Typography>
+          ) : null}
           {isCanceled ? (
             <Typography variant="caption" className="flex items-center gap-1">
               <Icon icon={CircleSlash2Icon} size={10} />
@@ -114,6 +123,15 @@ export const BuildHeader = ({
         <Alert color="red">
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>{build.errorMessage}</AlertDescription>
+        </Alert>
+      ) : null}
+      {onlyAffected?.captureAllReason ? (
+        <Alert color="blue">
+          <AlertTitle>Captured every story</AlertTitle>
+          <AlertDescription>
+            {onlyAffected.captureAllReason}
+            {baseCommit ? ` (compared against the main-branch build at ${baseCommit})` : null}
+          </AlertDescription>
         </Alert>
       ) : null}
       {total > 0 ? (

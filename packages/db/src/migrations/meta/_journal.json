@@ -393,6 +393,13 @@
       "when": 1792322850082,
       "tag": "0055_add_snapshot_identity_index",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1792537143460,
+      "tag": "0056_add_build_only_affected",
+      "breakpoints": true
     }
   ]
 }

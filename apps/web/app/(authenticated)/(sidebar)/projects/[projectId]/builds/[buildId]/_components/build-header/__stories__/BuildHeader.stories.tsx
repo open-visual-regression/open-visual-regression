@@ -163,3 +163,33 @@ export const WithGitIntegration: Story = {
     snapshotCounts,
   },
 };
+
+export const CapturedEveryStory: Story = {
+  args: {
+    build: mocks.build.generateBuild({
+      ...buildOverrides,
+      status: "needs_review",
+      onlyAffected: {
+        baseBuildId: "0190a000-0000-7000-8000-000000000000",
+        baseCommitSha: "f0e1d2c3b4a5968778695a4b3c2d1e0f9a8b7c6d",
+        captureAllReason: "dependencies changed (yarn.lock): clsx (bundled by the Storybook)",
+      },
+    }),
+    snapshotCounts,
+  },
+};
+
+export const OnlyAffected: Story = {
+  args: {
+    build: mocks.build.generateBuild({
+      ...buildOverrides,
+      status: "needs_review",
+      onlyAffected: {
+        baseBuildId: "0190a000-0000-7000-8000-000000000000",
+        baseCommitSha: "f0e1d2c3b4a5968778695a4b3c2d1e0f9a8b7c6d",
+        captureAllReason: null,
+      },
+    }),
+    snapshotCounts,
+  },
+};

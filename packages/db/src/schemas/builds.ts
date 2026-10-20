@@ -84,6 +84,13 @@ export const buildTypeEnum = pgEnum("build_type", ["storybook"]);
 
 export type BuildType = (typeof buildTypeEnum.enumValues)[number];
 
+export type BuildOnlyAffected = {
+  baseBuildId: string | null;
+  baseCommitSha: string | null;
+  /** Why every story was captured, or null if only the affected ones were. */
+  captureAllReason: string | null;
+};
+
 export const builds = pgTable(
   "builds",
   {
@@ -112,6 +119,8 @@ export const builds = pgTable(
       .references(() => user.id, { onDelete: "cascade" })
       .notNull(),
     canceledBy: text("canceled_by").references(() => user.id, { onDelete: "set null" }),
+    /** What `upload storybook --only-affected` decided; null when the flag was not used. */
+    onlyAffected: jsonb("only_affected").$type<BuildOnlyAffected>(),
   },
   (table) => [
     index("builds_projectId_createdAt_id_idx").on(table.projectId, table.createdAt, table.id),

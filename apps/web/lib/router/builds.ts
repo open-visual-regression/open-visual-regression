@@ -91,6 +91,7 @@ export const confirmUpload = os.builds.confirmUpload
       diffThreshold: input.diffThreshold ?? DEFAULT_DIFF_THRESHOLD,
       waitForTimeout: input.waitForTimeout,
       unaffectedTargetIds: input.unaffectedTargetIds,
+      onlyAffected: input.onlyAffected,
     });
 
     if (result.status === "error") {
@@ -376,6 +377,7 @@ export const getOne = os.builds.getOne
         branchUrl: gitIntegration
           ? buildBranchUrl(gitIntegration.provider, gitIntegration.repoIdentifier, build.branch)
           : null,
+        onlyAffected: build.onlyAffected,
       },
     };
   })

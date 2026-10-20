@@ -2,6 +2,12 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
+import {
+  diffPackageJson,
+  findChangedLockedPackages,
+  isBuildTooling,
+  packageNameOf,
+} from "./dependencies";
 import { readModuleGraph, STATS_FILENAME } from "./moduleGraph";
 
 type IndexEntry = { id: string; importPath: string; type?: string };
@@ -14,6 +20,11 @@ export type AffectedStoriesInput = {
   changedFiles: string[];
   externals?: string[];
   untraced?: string[];
+  /**
+   * Reads a file as it was at the base commit, or undefined if it did not exist. Without it,
+   * any lockfile or manifest change captures every story.
+   */
+  readBaseFile?: (file: string) => Promise<string | undefined>;
 };
 
 export type AffectedStoryFile = {
@@ -35,7 +46,15 @@ const CODE_FILE = /\.[cm]?[jt]sx?$/;
 const LOCKFILE =
   /(^|\/)(package-lock\.json|npm-shrinkwrap\.json|pnpm-lock\.yaml|yarn\.lock|bun\.lockb?)$/;
 const CONFIG_FILE = /(^|\/)([^/]+\.config\.[cm]?[jt]s|tsconfig[^/]*\.json)$/;
-const NON_RENDERING = /\.md$|(^|\/)\.(github|changeset)\//;
+const PACKAGE_JSON = /(^|\/)package\.json$/;
+// Every ovr.config is read by the CLI, never bundled. The CLI checks its own for capture changes.
+const NON_RENDERING = /\.md$|(^|\/)\.(github|changeset)\/|(^|\/)ovr\.config\.[cm]?[jt]s$/;
+const MAX_LISTED_PACKAGES = 5;
+
+const listPackages = (names: string[]): string =>
+  names.length > MAX_LISTED_PACKAGES
+    ? `${names.slice(0, MAX_LISTED_PACKAGES).join(", ")} and ${names.length - MAX_LISTED_PACKAGES} more`
+    : names.join(", ");
 
 const readJson = async <T>(file: string): Promise<T | undefined> => {
   try {
@@ -52,6 +71,7 @@ export const findAffectedStories = async ({
   changedFiles,
   externals = [],
   untraced = [],
+  readBaseFile,
 }: AffectedStoriesInput): Promise<AffectedStories> => {
   const all = (reason: string): AffectedStories => ({ mode: "all", reason });
 
@@ -106,6 +126,58 @@ export const findAffectedStories = async ({
       .filter((file) => !file.startsWith("/") && !file.includes("node_modules/"))
       .map(packageDirOf),
   );
+  // npm packages with modules in the bundle, by the name they are installed under.
+  const bundledDependencies = new Set(
+    [...graph.importers].flatMap(([name, parents]) =>
+      [name, ...parents].flatMap((file) => packageNameOf(file) ?? []),
+    ),
+  );
+  const describeRendering = (names: string[]): string | undefined => {
+    const bundled = names.filter((name) => bundledDependencies.has(name));
+    const tooling = names.filter((name) => !bundledDependencies.has(name) && isBuildTooling(name));
+    const parts = [
+      bundled.length > 0 && `${listPackages(bundled)} (bundled by the Storybook)`,
+      tooling.length > 0 && `${listPackages(tooling)} (builds the Storybook)`,
+    ].filter(Boolean);
+    return parts.length > 0 ? parts.join("; ") : undefined;
+  };
+
+  const readHeadFile = async (file: string): Promise<string | undefined> => {
+    try {
+      return await readFile(path.join(repoRoot, file), "utf-8");
+    } catch {
+      return undefined;
+    }
+  };
+  const readVersions = async (file: string) => {
+    const [base, head] = await Promise.all([readBaseFile?.(file), readHeadFile(file)]);
+    return base === undefined || head === undefined ? undefined : { base, head };
+  };
+
+  // Why a lockfile change can change what renders, or undefined if it cannot.
+  const checkLockfile = async (file: string): Promise<string | undefined> => {
+    const versions = await readVersions(file);
+    const changed = versions && findChangedLockedPackages(file, versions.base, versions.head);
+    if (!changed) {
+      return `dependencies changed (${file})`;
+    }
+    const rendering = describeRendering(changed);
+    return rendering && `dependencies changed (${file}): ${rendering}`;
+  };
+
+  const checkPackageJson = async (file: string): Promise<string | undefined> => {
+    const versions = await readVersions(file);
+    const change = versions && diffPackageJson(versions.base, versions.head);
+    if (!change) {
+      return `${file} is not traceable but is in a package the Storybook bundles`;
+    }
+    if (change.kind === "fields") {
+      return `${file} changed ${change.fields.map((field) => `"${field}"`).join(", ")}, which can change how the Storybook is built`;
+    }
+    const rendering = describeRendering(change.names);
+    return rendering && `${file} changed the version range of ${rendering}`;
+  };
+
   const storybookConfigDir = path.relative(repoRoot, path.join(projectDir, ".storybook"));
   const matches = (file: string, globs: string[]) =>
     globs.some((glob) => path.matchesGlob(file, glob));
@@ -128,7 +200,17 @@ export const findAffectedStories = async ({
     } else if (NON_RENDERING.test(file)) {
       ignoredFiles.push(file);
     } else if (LOCKFILE.test(file) && (isRootFile || inBundledPackage)) {
-      return all(`dependencies changed (${file})`);
+      const reason = await checkLockfile(file);
+      if (reason) {
+        return all(reason);
+      }
+      ignoredFiles.push(file);
+    } else if (PACKAGE_JSON.test(file) && (isRootFile || inBundledPackage)) {
+      const reason = await checkPackageJson(file);
+      if (reason) {
+        return all(reason);
+      }
+      ignoredFiles.push(file);
     } else if (CONFIG_FILE.test(file) && (isRootFile || inBundledPackage)) {
       return all(`build configuration changed (${file})`);
     } else if (CODE_FILE.test(file)) {
