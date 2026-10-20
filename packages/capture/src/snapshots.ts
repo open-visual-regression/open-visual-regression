@@ -41,8 +41,6 @@ const logger = createLogger("capture");
 
 const MAX_PENDING_UPLOADS = 2;
 
-// Builds the reaper errored or a user canceled will never finalize from new work, so
-// capturing or diffing their snapshots only burns worker capacity.
 const TERMINAL_BUILD_STATUSES = new Set<BuildProcessingStatus>(["error", "canceled"]);
 
 const isTerminalBuild = (build: Pick<NonNullable<BuildDbSchema>, "processingStatus">): boolean =>
@@ -200,9 +198,6 @@ const captureSnapshotOnPage = async (
     throw new Error(`Snapshot not found: ${snapshotId}`);
   }
 
-  // An errored snapshot is already resolved, by the reaper or an earlier attempt of this
-  // group whose diff was recorded as an error. Retrying one goes through requeue, which
-  // resets it to queued, so skipping errored snapshots here never drops a retry.
   if (
     snapshot.status === "success" ||
     snapshot.status === "canceled" ||
@@ -546,7 +541,6 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
   }
 
   if (isTerminalBuild(build)) {
-    // Leave nothing pending on a build that will not finalize again.
     const diff = await dbClient.diffs.findById(diffId);
     if (diff?.processingStatus === "pending") {
       await dbClient.diffs.updateProcessingStatus(diffId, "error");
