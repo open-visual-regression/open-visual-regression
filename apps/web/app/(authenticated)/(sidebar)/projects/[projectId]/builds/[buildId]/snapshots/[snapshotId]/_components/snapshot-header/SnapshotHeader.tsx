@@ -55,7 +55,7 @@ export const SnapshotHeader = ({
     {snapshot.status === "error" ? (
       <Alert color="red">
         <AlertTitle>Error</AlertTitle>
-        <AlertDescription>
+        <AlertDescription className="line-clamp-4 break-words">
           {snapshot.errorMessage ?? "This snapshot failed to capture."}
         </AlertDescription>
       </Alert>

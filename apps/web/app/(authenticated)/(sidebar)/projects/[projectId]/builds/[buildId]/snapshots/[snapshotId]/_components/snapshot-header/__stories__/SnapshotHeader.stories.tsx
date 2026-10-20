@@ -110,6 +110,17 @@ export const Errored: Story = {
   },
 };
 
+export const ErroredWithLongMessage: Story = {
+  args: {
+    snapshot: {
+      ...snapshot,
+      status: "error",
+      errorMessage: `TypeError: Cannot read properties of undefined (reading 'items') at ProjectsTable (webpack-internal:///./src/components/projects-table/ProjectsTable.tsx:42:31) at renderWithHooks (webpack-internal:///./node_modules/react-dom/cjs/react-dom.development.js:16305:18) at mountIndeterminateComponent (webpack-internal:///./node_modules/react-dom/cjs/react-dom.development.js:20074:13) at beginWork (webpack-internal:///./node_modules/react-dom/cjs/react-dom.development.js:21587:16) at HTMLUnknownElement.callCallback (webpack-internal:///./node_modules/react-dom/cjs/react-dom.development.js:4164:14) at Object.invokeGuardedCallbackDev (webpack-internal:///./node_modules/react-dom/cjs/react-dom.development.js:4213:16) at invokeGuardedCallback (webpack-internal:///./node_modules/react-dom/cjs/react-dom.development.js:4277:31) at beginWork$1 (webpack-internal:///./node_modules/react-dom/cjs/react-dom.development.js:27451:7) at performUnitOfWork (webpack-internal:///./node_modules/react-dom/cjs/react-dom.development.js:26557:12) at workLoopSync (webpack-internal:///./node_modules/react-dom/cjs/react-dom.development.js:26466:5)`,
+    },
+    build: mocks.build.generateBuild(buildOverrides),
+  },
+};
+
 export const UncaughtPageError: Story = {
   args: {
     snapshot: { ...snapshot, status: "unchanged", hasUncaughtPageError: true },
