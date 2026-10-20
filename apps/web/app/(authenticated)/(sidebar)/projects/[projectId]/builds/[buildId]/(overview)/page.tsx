@@ -12,11 +12,11 @@ import { serverError } from "@/lib/utils/errors";
 import { parseSnapshotFilters } from "@/lib/utils/snapshotFilters";
 import { getStorybookPath, hasHostedStorybook } from "@/lib/utils/storage";
 
-import { BuildHeader } from "./_components/build-header/BuildHeader";
-import { BuildPageShell } from "./_components/BuildPageShell";
-import { SnapshotFilters } from "./_components/snapshot-grid/SnapshotFilters";
-import { SnapshotsSearchField } from "./_components/snapshot-grid/SnapshotsSearchField";
-import { SnapshotsSection } from "./_components/snapshot-grid/SnapshotsSection";
+import { BuildHeader } from "../_components/build-header/BuildHeader";
+import { BuildPageShell } from "../_components/BuildPageShell";
+import { SnapshotFilters } from "../_components/snapshot-grid/SnapshotFilters";
+import { SnapshotsSearchField } from "../_components/snapshot-grid/SnapshotsSearchField";
+import { SnapshotsSection } from "../_components/snapshot-grid/SnapshotsSection";
 
 type BuildPageProps = PageProps<"/projects/[projectId]/builds/[buildId]">;
 
