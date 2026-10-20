@@ -11,7 +11,7 @@ When flaky detection is enabled, OVR watches each story's screenshots across rec
 - renders differently for the same commit, or
 - changes on most builds.
 
-Flaky stories show a badge on their snapshot card on the build page and next to the status on the snapshot page. The badge reflects the story's current history, so it also appears on older builds.
+Flaky stories show a badge on their snapshot card on the build page and next to the status on the snapshot page. Whether a story is flaky depends only on its main-branch history, not on the build you're looking at, so every build, including pull request builds and older builds, shows the same stories as flaky.
 
 To review only flaky snapshots, pick **flaky** in the **flags** filter on the build page. The same filter also offers **warning** for snapshots whose story threw an uncaught error while rendering.
 

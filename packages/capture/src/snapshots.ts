@@ -603,16 +603,11 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
     return;
   }
 
-  const matchedVariantId = (await isFlakyDetectionEnabled())
-    ? await findEarlierMainVariant(snapshot, build.projectId, baselineSnapshot?.variantId ?? null)
-    : null;
-
   await dbClient.diffs.updateResult(diffId, {
     processingStatus: "success",
     reviewStatus: "needs_review",
     baselineSnapshotId: diff.baselineSnapshotId,
     ...(diffImagePath && { diffImagePath }),
-    ...(matchedVariantId && { matchedVariantId }),
     pixelDiffCount,
     diffPercent,
   });
@@ -676,27 +671,6 @@ const findMatchingVariant = async (
   }
 
   return findMatchingCandidate(snapshot, candidates);
-};
-
-const findEarlierMainVariant = async (
-  snapshot: SnapshotDbSchema,
-  projectId: string,
-  baselineVariantId: string | null,
-): Promise<string | null> => {
-  try {
-    const candidates = await dbClient.snapshotVariants.findRecentForKey(
-      toVariantKey(snapshot, projectId),
-      MAX_VARIANT_CANDIDATES,
-    );
-
-    return await findMatchingCandidate(
-      snapshot,
-      candidates.filter(({ id }) => id !== baselineVariantId),
-    );
-  } catch (error) {
-    logger.warn({ err: error, snapshotId: snapshot.id }, "failed to match an earlier main variant");
-    return null;
-  }
 };
 
 const assignSnapshotVariant = async (

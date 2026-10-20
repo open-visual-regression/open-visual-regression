@@ -8,7 +8,6 @@ export type SnapshotFlagFields = {
 
 export type SnapshotFlagDetailFields = {
   flakySnapshot: FlakySnapshotDbSchema | undefined;
-  matchesEarlierVariant: boolean;
   hasUncaughtPageError: boolean;
 };
 
@@ -31,23 +30,20 @@ export const getSnapshotFlags = ({
 
 export const getSnapshotFlagDetails = ({
   flakySnapshot,
-  matchesEarlierVariant,
   hasUncaughtPageError,
 }: SnapshotFlagDetailFields): SnapshotFlagDetail[] => {
   const flags: SnapshotFlagDetail[] = [];
 
-  if (flakySnapshot || matchesEarlierVariant) {
+  if (flakySnapshot) {
     flags.push({
       flag: "flaky",
-      detection: flakySnapshot
-        ? {
-            sampleCount: flakySnapshot.sampleCount,
-            changeCount: flakySnapshot.changeCount,
-            revertCount: flakySnapshot.revertCount,
-            sameCommitMismatchCount: flakySnapshot.sameCommitMismatchCount,
-          }
-        : null,
-      matchesEarlierVariant,
+      detection: {
+        sampleCount: flakySnapshot.sampleCount,
+        changeCount: flakySnapshot.changeCount,
+        revertCount: flakySnapshot.revertCount,
+        sameCommitMismatchCount: flakySnapshot.sameCommitMismatchCount,
+      },
+      matchesEarlierVariant: false,
     });
   }
 

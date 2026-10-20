@@ -7,7 +7,6 @@ import {
   exists,
   ilike,
   inArray,
-  isNotNull,
   ne,
   notInArray,
   or,
@@ -212,24 +211,21 @@ const statusDisplayOrder: SnapshotDisplayStatus[] = [
   "processing",
 ];
 
-const isFlaky = or(
-  isNotNull(diffs.matchedVariantId),
-  exists(
-    db
-      .select({ id: flakySnapshots.id })
-      .from(flakySnapshots)
-      .innerJoin(builds, eq(builds.projectId, flakySnapshots.projectId))
-      .where(
-        and(
-          eq(builds.id, snapshots.buildId),
-          eq(flakySnapshots.browser, snapshots.browser),
-          eq(flakySnapshots.viewportWidth, snapshots.viewportWidth),
-          eq(flakySnapshots.viewportHeight, snapshots.viewportHeight),
-          eq(flakySnapshots.targetId, snapshots.targetId),
-        ),
+const isFlaky = exists(
+  db
+    .select({ id: flakySnapshots.id })
+    .from(flakySnapshots)
+    .innerJoin(builds, eq(builds.projectId, flakySnapshots.projectId))
+    .where(
+      and(
+        eq(builds.id, snapshots.buildId),
+        eq(flakySnapshots.browser, snapshots.browser),
+        eq(flakySnapshots.viewportWidth, snapshots.viewportWidth),
+        eq(flakySnapshots.viewportHeight, snapshots.viewportHeight),
+        eq(flakySnapshots.targetId, snapshots.targetId),
       ),
-  ),
-)!.mapWith(Boolean);
+    ),
+).mapWith(Boolean);
 
 export type SnapshotFlag = "flaky" | "warning";
 
@@ -306,7 +302,6 @@ export const findFlags = async (buildId: string): Promise<SnapshotFlag[]> => {
       warning: snapshots.hasUncaughtPageError,
     })
     .from(snapshots)
-    .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
     .where(eq(snapshots.buildId, buildId));
 
   return flagDisplayOrder.filter((flag) => rows.some((row) => row[flag]));

@@ -308,6 +308,7 @@ export const diffs = pgTable(
     diffImagePath: text("diff_image_path"),
     pixelDiffCount: integer("pixel_diff_count"),
     diffPercent: real("diff_percent"),
+    // No longer written; drop in a later release.
     matchedVariantId: uuid("matched_variant_id").references(() => snapshotVariants.id, {
       onDelete: "set null",
     }),
