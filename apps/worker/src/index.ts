@@ -26,6 +26,8 @@ import * as purge from "./handlers/purge";
 import * as purgeDispatch from "./handlers/purgeDispatch";
 import * as reaper from "./handlers/reaper";
 import { startMemoryReports } from "./lib/memoryReport";
+import { startMetricsServer } from "./lib/metrics";
+import { startQueueReports } from "./lib/queueReport";
 
 const logger = createLogger("worker");
 
@@ -65,6 +67,23 @@ const MEMORY_LOG_INTERVAL_MS = z.coerce
   .nonnegative()
   .catch(60_000)
   .parse(process.env.OVR_MEMORY_LOG_INTERVAL_MS);
+
+// 0 turns the periodic "queue depth" log line off.
+const QUEUE_REPORT_INTERVAL_MS = z.coerce
+  .number()
+  .int()
+  .nonnegative()
+  .catch(60_000)
+  .parse(process.env.OVR_QUEUE_REPORT_INTERVAL_MS);
+
+// Unset serves no Prometheus /metrics endpoint.
+const METRICS_PORT = z.coerce
+  .number()
+  .int()
+  .positive()
+  .optional()
+  .catch(undefined)
+  .parse(process.env.OVR_METRICS_PORT || undefined);
 
 // Purge jobs running at once across all workers, not per worker.
 const PURGE_CONCURRENCY = z.coerce
@@ -176,6 +195,13 @@ if (MEMORY_LOG_INTERVAL_MS > 0) {
   startMemoryReports(logger, MEMORY_LOG_INTERVAL_MS);
 }
 
+if (QUEUE_REPORT_INTERVAL_MS > 0) {
+  startQueueReports(logger, connection, QUEUE_REPORT_INTERVAL_MS);
+}
+
+const metricsServer =
+  METRICS_PORT === undefined ? undefined : startMetricsServer(logger, connection, METRICS_PORT);
+
 try {
   await schedulePurge(connection);
 } catch (error) {
@@ -206,6 +232,7 @@ const onShutdown = async (): Promise<void> => {
   }
 
   shutdown.abort();
+  metricsServer?.close();
   await Promise.all(workers.map((worker) => worker.close()));
   process.exit(0);
 };

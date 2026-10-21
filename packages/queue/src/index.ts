@@ -428,6 +428,48 @@ export const cancelBuildJobs = async (
   }
 };
 
+export const QUEUE_DEPTH_STATES = [
+  "waiting",
+  "active",
+  "delayed",
+  "prioritized",
+  "waiting-children",
+  "failed",
+] as const satisfies JobType[];
+
+export type QueueDepth = Record<(typeof QUEUE_DEPTH_STATES)[number], number>;
+
+export const getQueueDepths = async (
+  connection: RedisConnection,
+): Promise<Record<QueueName, QueueDepth>> => {
+  const depths = await Promise.all(
+    Object.values(QueueName).map(async (queueName) => {
+      const queue = new Queue(queueName, queueOptions(connection));
+      try {
+        const counts = await queue.getJobCounts(...QUEUE_DEPTH_STATES);
+        const depth = Object.fromEntries(
+          QUEUE_DEPTH_STATES.map((state) => [state, counts[state] ?? 0]),
+        ) as QueueDepth;
+        return [queueName, depth] as const;
+      } finally {
+        await queue.close();
+      }
+    }),
+  );
+  return Object.fromEntries(depths) as Record<QueueName, QueueDepth>;
+};
+
+// Lets one worker out of many claim a periodic task. The key shares the queues' prefix, so it
+// lives on the same cluster slot as them.
+export const tryAcquireLock = async (
+  connection: RedisConnection,
+  name: string,
+  ttlMs: number,
+): Promise<boolean> => {
+  const key = `${queueOptions(connection).prefix}:lock:${name}`;
+  return (await connection.set(key, "1", "PX", ttlMs, "NX")) === "OK";
+};
+
 const PURGE_DISPATCH_JOB_ID = "build-purge-dispatch";
 
 export const schedulePurge = async (connection: RedisConnection): Promise<void> => {

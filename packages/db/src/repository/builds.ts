@@ -412,6 +412,22 @@ export const removeMany = async (tx: DbClient, ids: string[]): Promise<void> => 
   await tx.delete(builds).where(inArray(builds.id, ids));
 };
 
+export type InFlightBuildCounts = { queued: number; processing: number };
+
+export const countInFlight = async (): Promise<InFlightBuildCounts> => {
+  const rows = await db
+    .select({ status: builds.processingStatus, count: count() })
+    .from(builds)
+    .where(inArray(builds.processingStatus, ["queued", "processing"]))
+    .groupBy(builds.processingStatus);
+
+  const counts: InFlightBuildCounts = { queued: 0, processing: 0 };
+  for (const row of rows) {
+    counts[row.status as keyof InFlightBuildCounts] = row.count;
+  }
+  return counts;
+};
+
 // The same rows the FK cascades would remove, one statement per table instead of one trigger
 // query per deleted row. A snapshot that became a baseline in the meantime still fails the
 // baselines FK and rolls back the caller's transaction.

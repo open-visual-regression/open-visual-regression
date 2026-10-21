@@ -124,6 +124,26 @@ If Redis needs a password or TLS, point `worker.keda.authenticationRef` at a KED
 `cooldownPeriod` must outlast the longest capture group, and `worker.terminationGracePeriodSeconds` must cover the in-flight snapshot on top of that. Otherwise a scale-down stops a worker mid-capture.
 </Warning>
 
+## Queue metrics
+
+Once a minute, one worker logs a `queue depth` line with the waiting, active, delayed, prioritized, waiting-children and failed jobs in every queue, plus how many builds are queued and processing. Only one worker logs it per interval, so the counts aren't multiplied by the replica count. Set `worker.queueReportIntervalMs` to change the interval, or `0` to turn it off.
+
+For a scraper, set `worker.metrics.enabled: true`. Each worker then serves the same counts as Prometheus gauges, `ovr_queue_jobs{queue,state}` and `ovr_builds_in_flight{status}`, on `/metrics` at `worker.metrics.port` (default `9464`). The values are cluster-wide, so aggregate them with `max`, not `sum`. Point your scraper at the port with `worker.podAnnotations`:
+
+```yaml
+worker:
+  metrics:
+    enabled: true
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9464"
+    # Datadog:
+    # ad.datadoghq.com/worker.checks: |
+    #   {"openmetrics": {"instances": [{"openmetrics_endpoint": "http://%%host%%:9464/metrics", "namespace": "ovr", "metrics": [".*"]}]}}
+```
+
+With `networkPolicy.enabled`, the worker accepts traffic on the metrics port from `networkPolicy.worker.metricsFrom`, or from anywhere when that is empty.
+
 ## Network policies
 
 `networkPolicy.enabled` adds a policy per component. The worker gets deny-all ingress. The web pod admits traffic on its port from anywhere in the cluster, narrow that with `networkPolicy.web.from`.

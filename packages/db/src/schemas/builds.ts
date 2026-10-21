@@ -121,6 +121,10 @@ export const builds = pgTable(
       table.createdAt,
       table.id,
     ),
+    // Builds still waiting on work: the queue depth report and the reaper.
+    index("builds_inFlight_idx")
+      .on(table.processingStatus)
+      .where(sql`${table.processingStatus} in ('queued', 'processing')`),
     index("builds_createdBy_idx").on(table.createdBy),
     index("builds_canceledBy_idx").on(table.canceledBy),
   ],

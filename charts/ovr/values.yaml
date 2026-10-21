@@ -143,6 +143,20 @@ worker:
   storybookCacheBytes: ""
   # Local disk for caching screenshots. Empty uses the app default (512 MB).
   imageCacheBytes: ""
+  # How often one worker logs a "queue depth" line with each queue's job counts
+  # and the queued and processing builds. 0 turns it off. Empty uses the app
+  # default (60000).
+  queueReportIntervalMs: ""
+  # Serve the same counts as Prometheus gauges on /metrics. Every worker serves
+  # the cluster-wide values, so aggregate with max rather than sum. Point a
+  # scraper at it with podAnnotations, for example
+  #   prometheus.io/scrape: "true"
+  #   prometheus.io/port: "9464"
+  # or Datadog's ad.datadoghq.com/worker.checks openmetrics annotation.
+  metrics:
+    enabled: false
+    port: 9464
+  podAnnotations: {}
   # The daily 03:00 UTC purge of builds past their project's retention. Each
   # empty value uses the app default.
   purge:
@@ -216,4 +230,7 @@ networkPolicy:
   enabled: false
   web:
     from: []
+  worker:
+    # Who may scrape worker.metrics. Empty allows any source.
+    metricsFrom: []
   egress: []
