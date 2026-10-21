@@ -66,7 +66,7 @@ const MEMORY_LOG_INTERVAL_MS = z.coerce
   .catch(60_000)
   .parse(process.env.OVR_MEMORY_LOG_INTERVAL_MS);
 
-// Purge jobs running at once across all workers, not per worker.
+// Across all workers, not per worker.
 const PURGE_CONCURRENCY = z.coerce
   .number()
   .int()

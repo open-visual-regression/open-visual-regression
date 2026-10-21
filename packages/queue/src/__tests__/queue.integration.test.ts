@@ -188,34 +188,35 @@ describe("queue", () => {
   });
 
   describe("setPurgeConcurrency", () => {
-    test("should run one purge job at a time across every worker", async ({ connection }) => {
+    test("should run one purge job at a time across every worker", async ({
+      connection,
+      openQueue,
+    }) => {
       await setPurgeConcurrency(connection, 1);
       let running = 0;
       let mostRunning = 0;
-      let finished = 0;
-      const workers: Worker[] = [];
-      const allFinished = new Promise<void>((resolve) => {
-        const processor = async () => {
-          running++;
-          mostRunning = Math.max(mostRunning, running);
-          await new Promise((wait) => setTimeout(wait, 100));
-          running--;
-          if (++finished === 4) {
-            resolve();
-          }
-        };
-        workers.push(
-          new Worker(QueueName.BUILD_PURGE, processor, { connection, concurrency: 2 }),
-          new Worker(QueueName.BUILD_PURGE, processor, { connection, concurrency: 2 }),
-        );
-      });
+      const processor = async () => {
+        mostRunning = Math.max(mostRunning, ++running);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        running--;
+      };
+      const workers = [
+        new Worker(QueueName.BUILD_PURGE, processor, { connection, concurrency: 2 }),
+        new Worker(QueueName.BUILD_PURGE, processor, { connection, concurrency: 2 }),
+      ];
 
       try {
         await enqueuePurgeMany(
           ["a", "b", "c", "d"].map((projectId) => ({ projectId })),
           connection,
         );
-        await allFinished;
+        await vi.waitFor(
+          async () =>
+            expect(await openQueue(QueueName.BUILD_PURGE).getJobCounts("completed")).toEqual({
+              completed: 4,
+            }),
+          { timeout: 5000 },
+        );
       } finally {
         await Promise.all(workers.map((worker) => worker.close()));
       }

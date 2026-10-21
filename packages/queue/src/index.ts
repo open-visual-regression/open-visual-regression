@@ -450,8 +450,6 @@ export const schedulePurge = async (connection: RedisConnection): Promise<void> 
   }
 };
 
-// Caps purge jobs across every worker, so a fleet of workers can't run one each against a
-// small database at the same time.
 export const setPurgeConcurrency = async (
   connection: RedisConnection,
   concurrency: number,
