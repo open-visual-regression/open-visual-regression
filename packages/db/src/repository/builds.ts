@@ -428,9 +428,7 @@ export const countInFlight = async (): Promise<InFlightBuildCounts> => {
   return counts;
 };
 
-// The same rows the FK cascades would remove, one statement per table instead of one trigger
-// query per deleted row. A snapshot that became a baseline in the meantime still fails the
-// baselines FK and rolls back the caller's transaction.
+// Deletes what the FK cascades would, one statement per table instead of one query per row.
 export const purgeMany = async (tx: DbClient, ids: string[]): Promise<void> => {
   if (ids.length === 0) {
     return;
@@ -447,7 +445,7 @@ export const purgeMany = async (tx: DbClient, ids: string[]): Promise<void> => {
 
   await tx.delete(diffReviews).where(inArray(diffReviews.diffId, diffIds));
   await tx.delete(diffs).where(inArray(diffs.snapshotId, snapshotIds));
-  // What ON DELETE SET NULL does, without bumping updatedAt on another build's diffs.
+  // Like the FK's SET NULL, leave updatedAt alone.
   await tx
     .update(diffs)
     .set({ baselineSnapshotId: null, updatedAt: sql`${diffs.updatedAt}` })

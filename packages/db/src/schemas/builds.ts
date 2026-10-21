@@ -325,7 +325,6 @@ export const diffs = pgTable(
   },
   (table) => [
     uniqueIndex("diffs_snapshotId_uidx").on(table.snapshotId),
-    // Without it, deleting a snapshot scans every diff to apply the SET NULL.
     index("diffs_baselineSnapshotId_idx").on(table.baselineSnapshotId),
     index("diffs_matchedVariantId_idx").on(table.matchedVariantId),
   ],
