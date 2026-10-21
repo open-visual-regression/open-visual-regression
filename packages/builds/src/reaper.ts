@@ -17,8 +17,12 @@ export const resolveStaleBuilds = async (staleMinutes: number): Promise<void> =>
 
   for (const buildId of staleBuildIds) {
     const diffIds = await dbClient.transaction(async (tx) => {
-      await dbClient.snapshots.markUnfinishedAs(buildId, "error", tx);
+      const erroredSnapshotIds = await dbClient.snapshots.markUnfinishedAs(buildId, "error", tx);
       const erroredDiffIds = await dbClient.diffs.markPendingAs(buildId, "error", tx);
+      await dbClient.diffs.createMany({
+        values: erroredSnapshotIds.map((snapshotId) => ({ snapshotId, processingStatus: "error" })),
+        tx,
+      });
       await dbClient.builds.updateProcessingStatus(
         buildId,
         "error",

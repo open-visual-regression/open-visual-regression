@@ -84,6 +84,10 @@ describe("reaper", () => {
       expect(await dbClient.diffs.findById(pendingDiff!.id)).toMatchObject({
         processingStatus: "error",
       });
+      expect(await dbClient.diffs.findBySnapshot(queuedSnapshot!.id)).toMatchObject({
+        processingStatus: "error",
+      });
+      expect(await dbClient.diffs.hasAllDoneForBuild(build!.id)).toBe(true);
     });
 
     test("should remove the waiting capture and diff jobs of a build it errors", async ({
