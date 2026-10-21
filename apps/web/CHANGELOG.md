@@ -1,5 +1,23 @@
 # @ovr/web
 
+## 0.14.2
+
+### Patch Changes
+
+- [#414](https://github.com/open-visual-regression/open-visual-regression/pull/414) [`7fe7872`](https://github.com/open-visual-regression/open-visual-regression/commit/7fe7872e285762435c62ffcc89856e0ff7c3af73) Thanks [@tgfischer](https://github.com/tgfischer)! - Long error messages on the snapshot page are now truncated to 4 lines, so they no longer push the snapshot far down the screen.
+
+- [#415](https://github.com/open-visual-regression/open-visual-regression/pull/415) [`1784c87`](https://github.com/open-visual-regression/open-visual-regression/commit/1784c87b7a55ef8b685122595695f2584b4cf448) Thanks [@tgfischer](https://github.com/tgfischer)! - Pull request builds now show the same flaky snapshots as main-branch builds. `flags[].matchesEarlierVariant` is deprecated and always false.
+
+- [#411](https://github.com/open-visual-regression/open-visual-regression/pull/411) [`8dfe727`](https://github.com/open-visual-regression/open-visual-regression/commit/8dfe727b5d3745703eaf38e5444ba084b40a68f1) Thanks [@tgfischer](https://github.com/tgfischer)! - Opening a snapshot from the snapshot history now shows the snapshot page skeleton instead of the build page skeleton.
+
+- Updated dependencies [[`1784c87`](https://github.com/open-visual-regression/open-visual-regression/commit/1784c87b7a55ef8b685122595695f2584b4cf448), [`a269a15`](https://github.com/open-visual-regression/open-visual-regression/commit/a269a15f46915c5d027387a7f97583d8f0bc45ee)]:
+  - @ovr/api@0.5.1
+  - @ovr/db@0.4.3
+  - @ovr/builds@0.2.5
+  - @ovr/reviews@0.1.20
+  - @ovr/git-status@0.1.15
+  - @ovr/queue@0.2.4
+
 ## 0.14.1
 
 ### Patch Changes
