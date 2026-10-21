@@ -26,8 +26,17 @@ export const readQueueReport = async (connection: RedisConnection): Promise<Queu
 
 const REPORT_LOCK = "queue-depth-report";
 
-// Counts are cluster-wide, so only the worker that claims the interval logs them. The lock
-// expires a little before the next tick so the claim moves freely between workers.
+// Counts are cluster-wide, so only the worker holding the lock logs them.
+export const reportQueueDepth = async (
+  logger: Logger,
+  connection: RedisConnection,
+  lockTtlMs: number,
+): Promise<void> => {
+  if (await tryAcquireLock(connection, REPORT_LOCK, lockTtlMs)) {
+    logger.info(await readQueueReport(connection), "queue depth");
+  }
+};
+
 export const startQueueReports = (
   logger: Logger,
   connection: RedisConnection,
@@ -36,13 +45,9 @@ export const startQueueReports = (
   const lockTtlMs = Math.max(1, Math.floor(intervalMs * 0.9));
 
   const timer = setInterval(() => {
-    tryAcquireLock(connection, REPORT_LOCK, lockTtlMs)
-      .then(async (claimed) => {
-        if (claimed) {
-          logger.info(await readQueueReport(connection), "queue depth");
-        }
-      })
-      .catch((err: unknown) => logger.warn({ err }, "failed to read queue depth"));
+    reportQueueDepth(logger, connection, lockTtlMs).catch((err: unknown) =>
+      logger.warn({ err }, "failed to read queue depth"),
+    );
   }, intervalMs);
   timer.unref();
 
