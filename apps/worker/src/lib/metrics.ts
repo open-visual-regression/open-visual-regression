@@ -25,7 +25,6 @@ export const formatMetrics = ({ queues, builds }: QueueReport): string => {
   return `${lines.join("\n")}\n`;
 };
 
-// Every worker serves the same cluster-wide gauges, so aggregate them with max, not sum.
 export const startMetricsServer = (
   logger: Logger,
   connection: RedisConnection,

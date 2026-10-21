@@ -461,8 +461,7 @@ export const getQueueDepths = async (
   return Object.fromEntries(depths) as Record<QueueName, QueueDepth>;
 };
 
-// Lets one worker out of many claim a periodic task. The key shares the queues' prefix, so it
-// lives on the same cluster slot as them.
+// Uses the queues' prefix so the key lands on their cluster slot.
 export const tryAcquireLock = async (
   connection: RedisConnection,
   name: string,
@@ -557,8 +556,6 @@ export const schedulePurge = async (connection: RedisConnection): Promise<void> 
   }
 };
 
-// Caps purge jobs across every worker, so a fleet of workers can't run one each against a
-// small database at the same time.
 export const setPurgeConcurrency = async (
   connection: RedisConnection,
   concurrency: number,

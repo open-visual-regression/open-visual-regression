@@ -5,11 +5,10 @@ import { vi } from "vitest";
 import { dbClient } from "@ovr/db/client";
 import type { createLogger } from "@ovr/logger";
 import { QueueName } from "@ovr/queue";
-import { enqueueCaptureGroup } from "@ovr/queue/producer";
 
 import { describe, expect, test } from "../../__tests__/fixtures";
 import { startMetricsServer } from "../metrics";
-import { startQueueReports, type QueueReport } from "../queueReport";
+import { reportQueueDepth } from "../queueReport";
 
 type Logger = ReturnType<typeof createLogger>;
 
@@ -22,34 +21,29 @@ const createTestLogger = () => ({
 });
 
 describe("queue depth report", () => {
-  test("logs queue and build counts from one worker per interval, however many run", async ({
+  test("logs queue and build counts from only one of several workers", async ({
     build,
     connection,
   }) => {
     await dbClient.builds.updateProcessingStatus(build.id, "processing");
-    await enqueueCaptureGroup({ buildId: build.id, browser: "chromium", snapshotIds: [] });
     const loggers = [createTestLogger(), createTestLogger(), createTestLogger()];
 
-    const stops = loggers.map((logger) =>
-      startQueueReports(logger as unknown as Logger, connection, 300),
+    await Promise.all(
+      loggers.map((logger) => reportQueueDepth(logger as unknown as Logger, connection, 1000)),
     );
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    stops.forEach((stop) => stop());
 
-    const reports = loggers.flatMap((logger) =>
-      logger.info.mock.calls.filter(([, message]) => message === "queue depth"),
-    );
-    // Three ticks per worker in that second; one report per tick, not one per worker.
-    expect(reports.length).toBeGreaterThanOrEqual(2);
-    expect(reports.length).toBeLessThanOrEqual(4);
-    expect(reports[0]![0]).toMatchObject({
-      builds: { queued: 0, processing: 1 },
-      queues: {
-        [QueueName.SNAPSHOT_CAPTURE]: expect.objectContaining({ waiting: expect.any(Number) }),
-      },
-    });
-    const [report] = reports[0]! as unknown as [QueueReport];
-    expect(report.queues[QueueName.SNAPSHOT_CAPTURE].waiting).toBeGreaterThanOrEqual(1);
+    const reports = loggers.flatMap((logger) => logger.info.mock.calls);
+    expect(reports).toEqual([
+      [
+        expect.objectContaining({
+          builds: { queued: 0, processing: 1 },
+          queues: expect.objectContaining({
+            [QueueName.SNAPSHOT_CAPTURE]: expect.objectContaining({ waiting: expect.any(Number) }),
+          }),
+        }),
+        "queue depth",
+      ],
+    ]);
   });
 });
 

@@ -76,7 +76,6 @@ const QUEUE_REPORT_INTERVAL_MS = z.coerce
   .catch(60_000)
   .parse(process.env.OVR_QUEUE_REPORT_INTERVAL_MS);
 
-// Unset serves no Prometheus /metrics endpoint.
 const METRICS_PORT = z.coerce
   .number()
   .int()
@@ -85,7 +84,7 @@ const METRICS_PORT = z.coerce
   .catch(undefined)
   .parse(process.env.OVR_METRICS_PORT || undefined);
 
-// Purge jobs running at once across all workers, not per worker.
+// Across all workers, not per worker.
 const PURGE_CONCURRENCY = z.coerce
   .number()
   .int()
