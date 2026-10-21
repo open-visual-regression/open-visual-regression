@@ -130,8 +130,8 @@ export const markUnfinishedAs = async (
   buildId: string,
   status: SnapshotStatus,
   tx: DbClient = db,
-): Promise<void> => {
-  await tx
+): Promise<string[]> => {
+  const rows = await tx
     .update(snapshots)
     .set({ status, completedAt: sql`now()` })
     .where(
@@ -139,7 +139,9 @@ export const markUnfinishedAs = async (
         eq(snapshots.buildId, buildId),
         notInArray(snapshots.status, ["success", "error", "canceled", "skipped"]),
       ),
-    );
+    )
+    .returning({ id: snapshots.id });
+  return rows.map((row) => row.id);
 };
 
 export const countByBuild = async (buildId: string) => {

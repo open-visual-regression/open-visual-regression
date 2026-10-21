@@ -531,6 +531,11 @@ export const rebuildSnapshots = async (
       await dbClient.snapshots.markUnfinishedAs(buildId, "error", tx);
       await dbClient.builds.updateProcessingStatus(buildId, "error", message, tx);
     });
+    try {
+      await cancelBuildJobs([{ buildId, diffIds: [] }]);
+    } catch (cancelError) {
+      logger.error({ err: cancelError, buildId }, "failed to remove queued jobs for errored build");
+    }
     await publishStatus(buildId);
     throw error;
   }

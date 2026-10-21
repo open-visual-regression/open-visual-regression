@@ -488,9 +488,118 @@ describe("snapshots", () => {
 
       expect(uploadSpy).not.toHaveBeenCalled();
     });
+
+    test("does no capture work for a queued group whose build has already errored", async ({
+      mainBuild,
+      captureConfiguration,
+    }) => {
+      await uploadArtifactWithIframe(mainBuild.artifactPath, IFRAME_HTML);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" }],
+      });
+      await dbClient.builds.updateProcessingStatus(mainBuild.id, "error", "Build timed out");
+
+      const downloadSpy = vi.spyOn(storage, "getFileStream");
+      const launchSpy = vi.spyOn(chromium, "launch");
+      const uploadSpy = vi.spyOn(storage, "uploadFile");
+
+      await captureBuildGroup(mainBuild.id, captureConfiguration.browser, [snapshot!.id]);
+
+      expect(downloadSpy).not.toHaveBeenCalled();
+      expect(launchSpy).not.toHaveBeenCalled();
+      expect(uploadSpy).not.toHaveBeenCalled();
+      expect(await dbClient.snapshots.findById(snapshot!.id)).toMatchObject({ status: "queued" });
+      expect(await dbClient.diffs.findBySnapshot(snapshot!.id)).toBeUndefined();
+    });
+
+    test("skips snapshots the reaper errored once the build fails mid-group", async ({
+      mainBuild,
+      captureConfiguration,
+    }) => {
+      await uploadArtifactWithIframe(mainBuild.artifactPath, IFRAME_HTML);
+      const [first, second] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" },
+          { buildId: mainBuild.id, ...captureConfiguration, targetId: "story-b" },
+        ],
+      });
+
+      const updateStatus = dbClient.snapshots.updateStatus;
+      const updateStatusSpy = vi
+        .spyOn(dbClient.snapshots, "updateStatus")
+        .mockImplementationOnce(async (id, status) => {
+          const updated = await updateStatus(id, status);
+          await dbClient.transaction(async (tx) => {
+            await dbClient.snapshots.markUnfinishedAs(mainBuild.id, "error", tx);
+            await dbClient.builds.updateProcessingStatus(mainBuild.id, "error", "timed out", tx);
+          });
+          return updated;
+        });
+
+      await captureBuildGroup(mainBuild.id, captureConfiguration.browser, [first!.id, second!.id]);
+
+      expect(updateStatusSpy).toHaveBeenCalledTimes(1);
+      expect(await dbClient.snapshots.findById(second!.id)).toMatchObject({ status: "error" });
+      expect(await dbClient.diffs.findBySnapshot(second!.id)).toBeUndefined();
+    });
+
+    test("captures a snapshot requeued for a retry after the reaper errored it", async ({
+      mainBuild,
+      captureConfiguration,
+    }) => {
+      await uploadArtifactWithIframe(mainBuild.artifactPath, IFRAME_HTML);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" }],
+      });
+      await dbClient.transaction(async (tx) => {
+        await dbClient.snapshots.markUnfinishedAs(mainBuild.id, "error", tx);
+        await dbClient.builds.updateProcessingStatus(mainBuild.id, "error", "timed out", tx);
+      });
+
+      await dbClient.transaction(async (tx) => {
+        await dbClient.snapshots.requeue(snapshot!.id, tx);
+        await dbClient.builds.updateProcessingStatus(mainBuild.id, "processing", null, tx);
+      });
+
+      await captureBuildGroup(mainBuild.id, captureConfiguration.browser, [snapshot!.id]);
+
+      expect(await dbClient.snapshots.findById(snapshot!.id)).toMatchObject({
+        status: "success",
+        captureAttempt: snapshot!.captureAttempt + 1,
+      });
+    });
   });
 
   describe("diffSnapshot", () => {
+    test("errors a pending diff without comparing pixels when its build has already errored", async ({
+      featureBuild,
+      captureConfiguration,
+    }) => {
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: featureBuild.id,
+            ...captureConfiguration,
+            targetId: "story-a",
+            status: "success",
+            imagePath: `builds/${featureBuild.id}/snapshots/never-uploaded.png`,
+          },
+        ],
+      });
+      const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
+      await dbClient.builds.updateProcessingStatus(featureBuild.id, "error", "Build timed out");
+
+      const downloadSpy = vi.spyOn(storage, "getFileStream");
+
+      await diffSnapshot(snapshot!.id, diff!.id);
+
+      expect(downloadSpy).not.toHaveBeenCalled();
+      expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({ processingStatus: "error" });
+      expect(await dbClient.builds.findById(featureBuild.id)).toMatchObject({
+        processingStatus: "error",
+      });
+    });
+
     test("should ask a reviewer to approve the story when it has never been approved before, and move the build toward done once every story has a verdict", async ({
       featureBuild,
       captureConfiguration,
