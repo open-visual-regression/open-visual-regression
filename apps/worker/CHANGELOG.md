@@ -1,5 +1,22 @@
 # @ovr/worker
 
+## 0.14.2
+
+### Patch Changes
+
+- [#416](https://github.com/open-visual-regression/open-visual-regression/pull/416) [`9c09d39`](https://github.com/open-visual-regression/open-visual-regression/commit/9c09d39308a96091a39c9e153b9ab826460d1e2e) Thanks [@tgfischer](https://github.com/tgfischer)! - Fix a memory leak in snapshot diffs that grew worker memory until it ran out, and log the worker's memory use every minute.
+
+- [#415](https://github.com/open-visual-regression/open-visual-regression/pull/415) [`1784c87`](https://github.com/open-visual-regression/open-visual-regression/commit/1784c87b7a55ef8b685122595695f2584b4cf448) Thanks [@tgfischer](https://github.com/tgfischer)! - Pull request builds now show the same flaky snapshots as main-branch builds. `flags[].matchesEarlierVariant` is deprecated and always false.
+
+- [#413](https://github.com/open-visual-regression/open-visual-regression/pull/413) [`a269a15`](https://github.com/open-visual-regression/open-visual-regression/commit/a269a15f46915c5d027387a7f97583d8f0bc45ee) Thanks [@tgfischer](https://github.com/tgfischer)! - Capture and diff workers no longer spend time on builds that have already errored or been canceled. A queued capture group for such a build finishes without downloading the Storybook bundle or launching a browser, snapshots the build reaper already errored are no longer captured, and reaping a build now removes its waiting capture and diff jobs from the queue. Snapshots the reaper errors now get an errored diff, so retrying some of them lets the build settle instead of waiting to be reaped again.
+
+- Updated dependencies [[`9c09d39`](https://github.com/open-visual-regression/open-visual-regression/commit/9c09d39308a96091a39c9e153b9ab826460d1e2e), [`1784c87`](https://github.com/open-visual-regression/open-visual-regression/commit/1784c87b7a55ef8b685122595695f2584b4cf448), [`a269a15`](https://github.com/open-visual-regression/open-visual-regression/commit/a269a15f46915c5d027387a7f97583d8f0bc45ee)]:
+  - @ovr/capture@0.3.10
+  - @ovr/db@0.4.3
+  - @ovr/builds@0.2.5
+  - @ovr/git-status@0.1.15
+  - @ovr/queue@0.2.4
+
 ## 0.14.1
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @ovr/api
 
+## 0.5.1
+
+### Patch Changes
+
+- [#415](https://github.com/open-visual-regression/open-visual-regression/pull/415) [`1784c87`](https://github.com/open-visual-regression/open-visual-regression/commit/1784c87b7a55ef8b685122595695f2584b4cf448) Thanks [@tgfischer](https://github.com/tgfischer)! - Pull request builds now show the same flaky snapshots as main-branch builds. `flags[].matchesEarlierVariant` is deprecated and always false.
+
 ## 0.5.0
 
 ### Minor Changes
