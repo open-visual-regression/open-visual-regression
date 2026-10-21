@@ -10,7 +10,8 @@
     "tsc": "tsc --noEmit",
     "lint": "oxlint src",
     "format": "oxfmt src",
-    "test": "vitest run"
+    "test": "vitest run",
+    "soak": "tsx scripts/soak.ts"
   },
   "dependencies": {
     "@ovr/builds": "workspace:*",

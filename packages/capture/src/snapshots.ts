@@ -121,25 +121,27 @@ const launchCapturePage = async (
     logger.error({ buildId, browser: browserName }, "capture browser disconnected unexpectedly");
   });
 
-  const context = await browser.newContext({ deviceScaleFactor: 1 });
-  const page = await newPage(context);
-  page.on("crash", () => {
-    logger.error({ buildId, browser: browserName }, "capture page crashed");
-  });
-
-  await blockExternalRequests(page, proxy.origin);
-
   const pageLogState: PageLogState = { logs: [], hasPageError: false };
-  page.on("console", (message) => {
-    pageLogState.logs.push({ level: message.type(), message: message.text() });
-  });
-  page.on("pageerror", (error) => {
-    pageLogState.hasPageError = true;
-    pageLogState.logs.push({ level: "error", message: error.message });
-  });
-
   const bootStart = performance.now();
+  let page: Page;
+
   try {
+    const context = await browser.newContext({ deviceScaleFactor: 1 });
+    page = await newPage(context);
+    page.on("crash", () => {
+      logger.error({ buildId, browser: browserName }, "capture page crashed");
+    });
+
+    await blockExternalRequests(page, proxy.origin);
+
+    page.on("console", (message) => {
+      pageLogState.logs.push({ level: message.type(), message: message.text() });
+    });
+    page.on("pageerror", (error) => {
+      pageLogState.hasPageError = true;
+      pageLogState.logs.push({ level: "error", message: error.message });
+    });
+
     await bootTargetPage(page, proxy.origin, strategy);
   } catch (error) {
     closeRequested = true;
@@ -399,7 +401,6 @@ export const captureBuildGroup = async (
   await withTimeout(
     (signal) =>
       withBundleDir(build.id, build.artifactPath, async (bundleDir) => {
-        const proxy = await startStaticProxy(bundleDir);
         const strategy = await detectCaptureStrategy(bundleDir);
 
         logger.info(
@@ -407,7 +408,14 @@ export const captureBuildGroup = async (
           "capture group started",
         );
 
-        let capturePage = await launchCapturePage(buildId, browser, proxy, strategy);
+        const proxy = await startStaticProxy(bundleDir);
+        let capturePage: CapturePage;
+        try {
+          capturePage = await launchCapturePage(buildId, browser, proxy, strategy);
+        } catch (error) {
+          proxy.close();
+          throw error;
+        }
         const uploads = createUploadQueue(MAX_PENDING_UPLOADS);
         let uploadInterrupted = false;
 

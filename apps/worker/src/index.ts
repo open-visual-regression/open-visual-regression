@@ -24,6 +24,7 @@ import * as publishStatus from "./handlers/publishStatus";
 import * as purge from "./handlers/purge";
 import * as purgeDispatch from "./handlers/purgeDispatch";
 import * as reaper from "./handlers/reaper";
+import { startMemoryReports } from "./lib/memoryReport";
 
 const logger = createLogger("worker");
 
@@ -55,6 +56,14 @@ const CAPTURE_LOCK_DURATION_MS = z.coerce
   .positive()
   .catch(120_000)
   .parse(process.env.OVR_CAPTURE_LOCK_DURATION_MS);
+
+// 0 turns the periodic "worker memory" log line off.
+const MEMORY_LOG_INTERVAL_MS = z.coerce
+  .number()
+  .int()
+  .nonnegative()
+  .catch(60_000)
+  .parse(process.env.OVR_MEMORY_LOG_INTERVAL_MS);
 
 const shutdown = new AbortController();
 
@@ -152,6 +161,10 @@ for (const worker of workers) {
   worker.on("stalled", (jobId, prev) => {
     logger.warn({ jobId, queue: worker.name, prev }, "job stalled and will run again");
   });
+}
+
+if (MEMORY_LOG_INTERVAL_MS > 0) {
+  startMemoryReports(logger, MEMORY_LOG_INTERVAL_MS);
 }
 
 try {
