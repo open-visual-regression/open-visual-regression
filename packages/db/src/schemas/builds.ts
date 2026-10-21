@@ -121,7 +121,6 @@ export const builds = pgTable(
       table.createdAt,
       table.id,
     ),
-    // Builds still waiting on work: the queue depth report and the reaper.
     index("builds_inFlight_idx")
       .on(table.processingStatus)
       .where(sql`${table.processingStatus} in ('queued', 'processing')`),
@@ -327,7 +326,6 @@ export const diffs = pgTable(
   },
   (table) => [
     uniqueIndex("diffs_snapshotId_uidx").on(table.snapshotId),
-    // Without it, deleting a snapshot scans every diff to apply the SET NULL.
     index("diffs_baselineSnapshotId_idx").on(table.baselineSnapshotId),
     index("diffs_matchedVariantId_idx").on(table.matchedVariantId),
   ],

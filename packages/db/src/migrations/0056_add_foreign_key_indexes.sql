@@ -1,7 +1,5 @@
 -- ovr:no-transaction
--- Built concurrently because diffs is large, and IF NOT EXISTS keeps an index an operator already
--- created by hand under the same name. A failed CREATE INDEX CONCURRENTLY leaves an invalid index
--- behind that IF NOT EXISTS would skip, so drop those first. Dropping an invalid index is quick.
+-- IF NOT EXISTS would skip an invalid index left by a failed concurrent build, so drop those first.
 DO $$
 DECLARE
   leftover record;

@@ -83,7 +83,7 @@ spec:
             - name: OVR_IMAGE_CACHE_BYTES
               value: {{ . | quote }}
             {{- end }}
-            {{- /* 0 is a real value here: it turns the report off. */}}
+            {{- /* not `with`: 0 turns the report off */}}
             {{- if ne (toString .Values.worker.queueReportIntervalMs) "" }}
             - name: OVR_QUEUE_REPORT_INTERVAL_MS
               value: {{ .Values.worker.queueReportIntervalMs | quote }}
