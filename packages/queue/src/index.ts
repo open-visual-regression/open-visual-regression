@@ -471,7 +471,6 @@ export const tryAcquireLock = async (
   return (await connection.set(key, "1", "PX", ttlMs, "NX")) === "OK";
 };
 
-// Work that will still run: queued, retrying after a backoff, or held by a worker.
 const LIVE_JOB_STATES = [
   "waiting",
   "delayed",
@@ -484,7 +483,6 @@ const LIVE_JOB_STATES = [
 const isLiveState = (state: string): boolean =>
   (LIVE_JOB_STATES as readonly string[]).includes(state);
 
-// The given builds that still have an extract, capture, diff or finalize job that will run.
 export const findBuildsWithLiveJobs = async (
   buildJobs: BuildJobIds[],
   connection: RedisConnection,
