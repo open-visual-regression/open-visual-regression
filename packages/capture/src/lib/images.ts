@@ -16,6 +16,9 @@ const getComparisons = (): Piscina<CompareImagesTask, CompareImagesResult> => {
     filename: COMPARE_WORKER_URL.href,
     minThreads: 1,
     maxThreads: 1,
+    // "sync" atomics park the thread in Atomics.wait, so its event loop never runs, and zlib
+    // releases a closed handle (with the buffer it compressed) only from that loop.
+    atomics: "disabled",
   });
   return comparisons;
 };

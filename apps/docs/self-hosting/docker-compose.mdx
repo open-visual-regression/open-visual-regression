@@ -221,6 +221,7 @@ Any S3-compatible service works: AWS S3, Cloudflare R2, Backblaze B2, RustFS, Mi
 | `OVR_REAPER_STALE_MINUTES` | `30` | Minutes before a stalled capture job is requeued. |
 | `OVR_STORYBOOK_CACHE_BYTES` | `2147483648` (2 GB) | Local disk for extracted Storybook builds. |
 | `OVR_IMAGE_CACHE_BYTES` | `536870912` (512 MB) | Local disk for caching screenshots. |
+| `OVR_MEMORY_LOG_INTERVAL_MS` | `60000` | How often the worker logs a `worker memory` line with its RSS, heap, external memory, and live browser processes. `0` turns it off. |
 
 ### Ports
 
