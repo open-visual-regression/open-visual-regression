@@ -192,10 +192,10 @@ describe("queue", () => {
   });
 
   describe("enqueueCaptureGroups", () => {
-    const groups = (count: number) =>
+    const groups = (buildId: string, count: number) =>
       Array.from({ length: count }, (_, index) => ({
         browser: "chromium",
-        snapshotIds: [`snapshot-${index + 1}`],
+        snapshotIds: [`${buildId}-${index + 1}`],
       }));
 
     const captureOrder = async (connection: Redis, total: number): Promise<string[]> => {
@@ -203,58 +203,59 @@ describe("queue", () => {
       const worker = new Worker<CaptureGroupJobPayload>(
         QueueName.SNAPSHOT_CAPTURE,
         async (job) => {
-          order.push(`${job.data.buildId}:${job.data.snapshotIds[0]}`);
+          order.push(job.data.snapshotIds[0]!);
         },
         { connection, concurrency: 1 },
       );
       try {
-        await new Promise<void>((resolve) => {
-          worker.on("completed", () => order.length === total && resolve());
-        });
+        await vi.waitFor(() => expect(order).toHaveLength(total));
       } finally {
         await worker.close();
       }
-      return order.map((entry) => entry.replace("snapshot-", ""));
+      return order;
     };
 
     test("should interleave a small build queued behind a large one under round-robin", async ({
       connection,
     }) => {
-      await enqueueCaptureGroups("main", groups(4), connection, "round-robin");
-      await enqueueCaptureGroups("pr", groups(2), connection, "round-robin");
+      await enqueueCaptureGroups("main", groups("main", 4), connection, "round-robin");
+      await enqueueCaptureGroups("pr", groups("pr", 2), connection, "round-robin");
 
       expect(await captureOrder(connection, 6)).toEqual([
-        "main:1",
-        "pr:1",
-        "main:2",
-        "pr:2",
-        "main:3",
-        "main:4",
+        "main-1",
+        "pr-1",
+        "main-2",
+        "pr-2",
+        "main-3",
+        "main-4",
       ]);
     });
 
     test("should run groups in the order they were added under fifo", async ({ connection }) => {
-      await enqueueCaptureGroups("main", groups(3), connection, "fifo");
-      await enqueueCaptureGroups("pr", groups(1), connection, "fifo");
+      await enqueueCaptureGroups("main", groups("main", 3), connection, "fifo");
+      await enqueueCaptureGroups("pr", groups("pr", 1), connection, "fifo");
 
-      expect(await captureOrder(connection, 4)).toEqual(["main:1", "main:2", "main:3", "pr:1"]);
+      expect(await captureOrder(connection, 4)).toEqual(["main-1", "main-2", "main-3", "pr-1"]);
     });
 
     test("should leave no prioritized groups behind when the build is canceled", async ({
       connection,
       openQueue,
+      trackJob,
     }) => {
-      await enqueueCaptureGroups("superseded", groups(3), connection, "round-robin");
-      await enqueueCaptureGroups("kept", groups(1), connection, "round-robin");
+      await enqueueCaptureGroups("superseded", groups("superseded", 3), connection, "round-robin");
+      const [kept] = await enqueueCaptureGroups(
+        "kept",
+        groups("kept", 1),
+        connection,
+        "round-robin",
+      );
+      trackJob(kept!);
 
       await cancelBuildJobs([{ buildId: "superseded", diffIds: [] }], connection);
 
-      const queue = openQueue(QueueName.SNAPSHOT_CAPTURE);
-      const remaining = await queue.getJobs(["waiting", "prioritized"]);
-      expect(remaining.map((job) => (job.data as CaptureGroupJobPayload).buildId)).toEqual([
-        "kept",
-      ]);
-      await queue.obliterate({ force: true });
+      const remaining = await openQueue(QueueName.SNAPSHOT_CAPTURE).getJobs(["prioritized"]);
+      expect(remaining.map((job) => job.id)).toEqual([kept!.id]);
     });
   });
 
@@ -305,34 +306,35 @@ describe("queue", () => {
   });
 
   describe("setPurgeConcurrency", () => {
-    test("should run one purge job at a time across every worker", async ({ connection }) => {
+    test("should run one purge job at a time across every worker", async ({
+      connection,
+      openQueue,
+    }) => {
       await setPurgeConcurrency(connection, 1);
       let running = 0;
       let mostRunning = 0;
-      let finished = 0;
-      const workers: Worker[] = [];
-      const allFinished = new Promise<void>((resolve) => {
-        const processor = async () => {
-          running++;
-          mostRunning = Math.max(mostRunning, running);
-          await new Promise((wait) => setTimeout(wait, 100));
-          running--;
-          if (++finished === 4) {
-            resolve();
-          }
-        };
-        workers.push(
-          new Worker(QueueName.BUILD_PURGE, processor, { connection, concurrency: 2 }),
-          new Worker(QueueName.BUILD_PURGE, processor, { connection, concurrency: 2 }),
-        );
-      });
+      const processor = async () => {
+        mostRunning = Math.max(mostRunning, ++running);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        running--;
+      };
+      const workers = [
+        new Worker(QueueName.BUILD_PURGE, processor, { connection, concurrency: 2 }),
+        new Worker(QueueName.BUILD_PURGE, processor, { connection, concurrency: 2 }),
+      ];
 
       try {
         await enqueuePurgeMany(
           ["a", "b", "c", "d"].map((projectId) => ({ projectId })),
           connection,
         );
-        await allFinished;
+        await vi.waitFor(
+          async () =>
+            expect(await openQueue(QueueName.BUILD_PURGE).getJobCounts("completed")).toEqual({
+              completed: 4,
+            }),
+          { timeout: 5000 },
+        );
       } finally {
         await Promise.all(workers.map((worker) => worker.close()));
       }

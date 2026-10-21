@@ -273,15 +273,12 @@ export const enqueueCaptureGroup = (
   connection: RedisConnection,
 ): Promise<Job<CaptureGroupJobPayload>> => enqueue(QueueName.SNAPSHOT_CAPTURE, payload, connection);
 
-// round-robin: a build's nth capture group gets priority n, and BullMQ runs equal priorities in
-// the order they were added. Workers take every build's first group, then every build's second,
-// and so on, so a small build queued behind a large one starts within one round instead of
-// waiting for all of the large build's groups. fifo: groups run in the order they were added.
+// round-robin gives a build's nth group priority n, so workers take every build's first group,
+// then every build's second, and so on.
 export const captureQueuePolicySchema = z.enum(["round-robin", "fifo"]).catch("round-robin");
 
 export type CaptureQueuePolicy = z.infer<typeof captureQueuePolicySchema>;
 
-// BullMQ's lowest priority. Equal priorities still run in the order they were added.
 const LOWEST_PRIORITY = 2_097_151;
 
 export const enqueueCaptureGroups = async (
@@ -506,8 +503,7 @@ export const getQueueDepths = async (
   return Object.fromEntries(depths) as Record<QueueName, QueueDepth>;
 };
 
-// Lets one worker out of many claim a periodic task. The key shares the queues' prefix, so it
-// lives on the same cluster slot as them.
+// Uses the queues' prefix so the key lands on their cluster slot.
 export const tryAcquireLock = async (
   connection: RedisConnection,
   name: string,
@@ -517,7 +513,6 @@ export const tryAcquireLock = async (
   return (await connection.set(key, "1", "PX", ttlMs, "NX")) === "OK";
 };
 
-// Work that will still run: queued, retrying after a backoff, or held by a worker.
 const LIVE_JOB_STATES = [
   "waiting",
   "delayed",
@@ -530,7 +525,6 @@ const LIVE_JOB_STATES = [
 const isLiveState = (state: string): boolean =>
   (LIVE_JOB_STATES as readonly string[]).includes(state);
 
-// The given builds that still have an extract, capture, diff or finalize job that will run.
 export const findBuildsWithLiveJobs = async (
   buildJobs: BuildJobIds[],
   connection: RedisConnection,
@@ -602,8 +596,6 @@ export const schedulePurge = async (connection: RedisConnection): Promise<void> 
   }
 };
 
-// Caps purge jobs across every worker, so a fleet of workers can't run one each against a
-// small database at the same time.
 export const setPurgeConcurrency = async (
   connection: RedisConnection,
   concurrency: number,

@@ -143,45 +143,31 @@ worker:
   storybookCacheBytes: ""
   # Local disk for caching screenshots. Empty uses the app default (512 MB).
   imageCacheBytes: ""
-  # Order capture groups run in, across builds. "round-robin" runs every queued
-  # build's first group, then every build's second, and so on, so a small PR
-  # build doesn't wait for every group of a large build queued before it.
-  # "fifo" runs them in the order they were queued. Empty uses the app default
-  # (round-robin), or fifo when worker.keda uses its generated trigger, which
-  # can only see fifo's queue. Read by the web app too, which queues groups
-  # when snapshots are rebuilt.
+  # Order capture groups run in across builds: "round-robin" or "fifo". Empty
+  # uses round-robin, or fifo with worker.keda's generated trigger, which can't
+  # see prioritized jobs. Also read by the web app.
   captureQueuePolicy: ""
-  # Minutes an unfinished build can go without snapshot or diff updates before
-  # the reaper, which runs every 30 minutes, marks it errored. A build with jobs
-  # still queued, retrying or running is never reaped, however long it waits.
-  # Empty uses the app default (30).
+  # Minutes without snapshot or diff updates, and with no jobs left to run,
+  # before an unfinished build is errored. Empty uses the app default (30).
   reaperStaleMinutes: ""
-  # How often one worker logs a "queue depth" line with each queue's job counts
-  # and the queued and processing builds. 0 turns it off. Empty uses the app
-  # default (60000).
+  # How often one worker logs a "queue depth" line. 0 turns it off. Empty uses
+  # the app default (60000).
   queueReportIntervalMs: ""
-  # Serve the same counts as Prometheus gauges on /metrics. Every worker serves
-  # the cluster-wide values, so aggregate with max rather than sum. Point a
-  # scraper at it with podAnnotations, for example
-  #   prometheus.io/scrape: "true"
-  #   prometheus.io/port: "9464"
-  # or Datadog's ad.datadoghq.com/worker.checks openmetrics annotation.
+  # Prometheus gauges on /metrics. Every worker serves the same cluster-wide
+  # values, so aggregate with max. Point a scraper at it with podAnnotations.
   metrics:
     enabled: false
     port: 9464
   podAnnotations: {}
-  # The daily 03:00 UTC purge of builds past their project's retention. Each
-  # empty value uses the app default.
+  # Daily retention purge. Empty values use the app defaults.
   purge:
-    # Purge jobs running at once across all workers (1). Each one deletes
-    # builds from one project.
+    # Jobs at once across all workers (1).
     concurrency: ""
-    # Builds deleted per transaction (10).
+    # Builds per transaction (10).
     batchSize: ""
-    # Pause between batches so other queries get the database (500).
+    # Milliseconds between batches (500).
     batchPauseMs: ""
-    # A project's purge stops starting new batches after this long and leaves
-    # the rest for the next day (600000, 10 minutes).
+    # Milliseconds per project per run (600000).
     timeBudgetMs: ""
   resources: {}
   containerSecurityContext:

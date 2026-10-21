@@ -1,3 +1,4 @@
+import type { Job } from "bullmq";
 import { v7 as uuidv7 } from "uuid";
 import { test as vitest } from "vitest";
 
@@ -22,6 +23,7 @@ type Fixtures = {
   captureConfiguration: Viewport;
   build: NonNullable<Awaited<ReturnType<typeof dbClient.builds.create>>>;
   connection: RedisConnection;
+  trackJob: <T extends Job>(job: T) => T;
 };
 
 export const test = vitest.extend<Fixtures>({
@@ -86,5 +88,17 @@ export const test = vitest.extend<Fixtures>({
     await use(connection);
 
     await connection.quit();
+  },
+
+  // eslint-disable-next-line no-empty-pattern
+  trackJob: async ({}, use) => {
+    const jobs: Job[] = [];
+
+    await use((job) => {
+      jobs.push(job);
+      return job;
+    });
+
+    await Promise.all(jobs.map((job) => job.remove()));
   },
 });

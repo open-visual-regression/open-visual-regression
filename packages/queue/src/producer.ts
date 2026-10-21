@@ -60,7 +60,6 @@ export const enqueueCaptureGroup = (
 ): Promise<Job<CaptureGroupJobPayload>> =>
   whenConnected(() => enqueueCaptureGroupJob(payload, connection));
 
-// Read per call: the web app and the worker both queue capture groups.
 export const enqueueCaptureGroups = (
   buildId: string,
   groups: Omit<CaptureGroupJobPayload, "buildId">[],

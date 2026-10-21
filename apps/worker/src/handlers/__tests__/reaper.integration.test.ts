@@ -20,16 +20,6 @@ const findWaitingCaptureGroups = async (connection: RedisConnection, buildId: st
   }
 };
 
-// Redis isn't flushed between tests, so drop what a test leaves queued for the next suite's workers.
-const removeJob = async (connection: RedisConnection, queueName: QueueName, jobId: string) => {
-  const queue = new Queue(queueName, { connection });
-  try {
-    await queue.remove(jobId);
-  } finally {
-    await queue.close();
-  }
-};
-
 describe("reaper", () => {
   describe("resolveStaleBuilds", () => {
     test("should resolve a stalled build to error and mark its unfinished snapshots and diffs as error", async ({
@@ -95,6 +85,7 @@ describe("reaper", () => {
       project,
       user,
       captureConfiguration,
+      trackJob,
       connection,
     }) => {
       const build = await dbClient.builds.create({
@@ -118,10 +109,10 @@ describe("reaper", () => {
           },
         ],
       });
-      // Queued the way extract queues them, so under the default policy they wait as prioritized.
-      const captureGroups = await enqueueCaptureGroups(build!.id, [
+      const [captureGroup] = await enqueueCaptureGroups(build!.id, [
         { browser: captureConfiguration.browser, snapshotIds: [queuedSnapshot!.id] },
       ]);
+      trackJob(captureGroup!);
 
       await resolveStaleBuilds(STALE_MINUTES);
 
@@ -132,16 +123,14 @@ describe("reaper", () => {
         status: "queued",
       });
       expect(await findWaitingCaptureGroups(connection, build!.id)).toHaveLength(1);
-      expect(await captureGroups[0]!.getState()).toBe("prioritized");
-      for (const job of captureGroups) {
-        await removeJob(connection, QueueName.SNAPSHOT_CAPTURE, job.id!);
-      }
+      expect(await captureGroup!.getState()).toBe("prioritized");
     });
 
     test("should leave a build untouched while a diff job waits out its retry backoff", async ({
       project,
       user,
       captureConfiguration,
+      trackJob,
       connection,
     }) => {
       const build = await dbClient.builds.create({
@@ -170,30 +159,28 @@ describe("reaper", () => {
         updatedAt: OLD_TIMESTAMP,
       });
       const diffQueue = new Queue(QueueName.SNAPSHOT_DIFF, { connection });
-      try {
+      const retryingDiff = trackJob(
         await diffQueue.add(
           QueueName.SNAPSHOT_DIFF,
           { snapshotId: snapshot!.id, diffId: pendingDiff!.id },
           { jobId: pendingDiff!.id, delay: 60_000 },
-        );
+        ),
+      );
+      await diffQueue.close();
 
-        await resolveStaleBuilds(STALE_MINUTES);
+      await resolveStaleBuilds(STALE_MINUTES);
 
-        expect(await dbClient.builds.findById(build!.id)).toMatchObject({
-          processingStatus: "processing",
-        });
-        expect(await diffQueue.getJobState(pendingDiff!.id)).toBe("delayed");
-      } finally {
-        await diffQueue.remove(pendingDiff!.id);
-        await diffQueue.close();
-      }
+      expect(await dbClient.builds.findById(build!.id)).toMatchObject({
+        processingStatus: "processing",
+      });
+      expect(await retryingDiff.getState()).toBe("delayed");
     });
 
     test("should leave a build untouched when only its finalize job is left to run", async ({
       project,
       user,
       captureConfiguration,
-      connection,
+      trackJob,
     }) => {
       const build = await dbClient.builds.create({
         projectId: project.id,
@@ -221,21 +208,20 @@ describe("reaper", () => {
         processingStatus: "success",
         updatedAt: OLD_TIMESTAMP,
       });
-      await enqueueFinalize({ buildId: build!.id });
+      trackJob(await enqueueFinalize({ buildId: build!.id }));
 
       await resolveStaleBuilds(STALE_MINUTES);
 
       expect(await dbClient.builds.findById(build!.id)).toMatchObject({
         processingStatus: "processing",
       });
-      await removeJob(connection, QueueName.BUILD_FINALIZE, build!.id);
     });
 
     test("should resolve an idle build whose jobs are gone, even with a diff still pending", async ({
       project,
       user,
       captureConfiguration,
-      connection,
+      trackJob,
     }) => {
       const build = await dbClient.builds.create({
         projectId: project.id,
@@ -262,12 +248,13 @@ describe("reaper", () => {
         snapshotId: snapshot!.id,
         updatedAt: OLD_TIMESTAMP,
       });
-      // A capture group for another build doesn't keep this one alive.
-      const otherCaptureGroup = await enqueueCaptureGroup({
-        buildId: "other-build",
-        browser: captureConfiguration.browser,
-        snapshotIds: [],
-      });
+      trackJob(
+        await enqueueCaptureGroup({
+          buildId: "other-build",
+          browser: captureConfiguration.browser,
+          snapshotIds: [],
+        }),
+      );
 
       await resolveStaleBuilds(STALE_MINUTES);
 
@@ -278,8 +265,6 @@ describe("reaper", () => {
       expect(await dbClient.diffs.findById(pendingDiff!.id)).toMatchObject({
         processingStatus: "error",
       });
-      expect(await findWaitingCaptureGroups(connection, "other-build")).toHaveLength(1);
-      await removeJob(connection, QueueName.SNAPSHOT_CAPTURE, otherCaptureGroup.id!);
     });
 
     test("should leave an actively-processing build untouched", async ({

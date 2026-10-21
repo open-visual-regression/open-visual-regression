@@ -70,11 +70,8 @@ const drainStorageOutbox = async (projectId: string): Promise<void> => {
 };
 
 export type PurgeOptions = {
-  /** Builds deleted per transaction. */
   batchSize?: number;
-  /** Pause between batches, so other queries get the database in between. */
   batchPauseMs?: number;
-  /** Stop starting new batches after this long. The rest purge on the next run. */
   timeBudgetMs?: number;
 };
 

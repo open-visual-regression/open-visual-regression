@@ -336,7 +336,6 @@ CREATE TABLE "broken" ("id" not_a_type);`,
     const migrations = readRealMigrations();
     const before = migrations.filter(({ tag }) => tag < "0056");
     await runMigrations(databaseUrl, createMigrationsFolder(before));
-    // An operator's own index under the same name, and one a failed concurrent build left invalid.
     await query(
       databaseUrl,
       `CREATE INDEX "diffs_baselineSnapshotId_idx" ON "diffs" ("baseline_snapshot_id") WITH (fillfactor = 80)`,

@@ -12,9 +12,6 @@ const REAPER_BATCH_LIMIT = 100;
 const minutesSince = (timestamp: string): number =>
   Math.round((Date.now() - new Date(timestamp).getTime()) / 60_000);
 
-// A build with no recent snapshot or diff updates is only stalled once none of its jobs is left
-// to run. One waiting behind a long queue, retrying after a backoff, or waiting on its finalize
-// is still on its way.
 export const resolveStaleBuilds = async (staleMinutes: number): Promise<void> => {
   const cutoff = new Date(Date.now() - staleMinutes * 60 * 1000).toISOString();
   const idleBuildIds = await dbClient.builds.findStale(cutoff, REAPER_BATCH_LIMIT);
@@ -23,7 +20,7 @@ export const resolveStaleBuilds = async (staleMinutes: number): Promise<void> =>
     return;
   }
 
-  // Throws when Redis can't be reached, so an outage never reads as "no jobs left".
+  // Throws if Redis is down, so an outage never reads as "no jobs left".
   const waitingBuildIds = await findBuildsWithLiveJobs(
     await Promise.all(
       idleBuildIds.map(async (buildId) => ({
@@ -76,7 +73,6 @@ export const resolveStaleBuilds = async (staleMinutes: number): Promise<void> =>
   }
 
   try {
-    // Nothing should be left, but a job enqueued since the check would otherwise run for nothing.
     await cancelBuildJobs(reaped);
   } catch (error) {
     logger.error({ err: error }, "failed to remove queued jobs for reaped builds");

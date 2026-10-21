@@ -69,10 +69,7 @@ checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha25
 {{- end -}}
 {{- end -}}
 
-{{/*
-KEDA's generated trigger counts the capture queue's wait list. Under round-robin, queued capture
-groups wait in BullMQ's prioritized set instead, so that trigger would see no backlog.
-*/}}
+{{/* KEDA's generated trigger only counts the wait list, which round-robin groups never enter. */}}
 {{- define "ovr.captureQueuePolicy" -}}
 {{- $policy := .Values.worker.captureQueuePolicy -}}
 {{- $generatedTrigger := and .Values.worker.enabled .Values.worker.keda.enabled (not .Values.worker.keda.triggers) -}}
