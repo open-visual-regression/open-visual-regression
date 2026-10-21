@@ -218,7 +218,7 @@ Any S3-compatible service works: AWS S3, Cloudflare R2, Backblaze B2, RustFS, Mi
 | `OVR_CAPTURE_GROUP_CONCURRENCY` | `2` | Capture groups run in parallel per worker. Each drives its own browser instance. |
 | `OVR_CAPTURE_GROUP_SIZE` | `10` | Snapshots per capture group. |
 | `OVR_DIFF_CONCURRENCY` | `4` | Snapshots compared against their baseline in parallel per worker. |
-| `OVR_REAPER_STALE_MINUTES` | `30` | Minutes before a stalled capture job is requeued. |
+| `OVR_REAPER_STALE_MINUTES` | `30` | Minutes an unfinished build can go without snapshot or diff updates before it is marked errored. A build with capture, diff or finalize jobs still queued, retrying or running is never reaped, however long it waits. |
 | `OVR_PURGE_CONCURRENCY` | `1` | Retention purge jobs running at once across all workers. Each deletes one project's expired builds. |
 | `OVR_PURGE_BATCH_SIZE` | `10` | Builds the retention purge deletes per transaction. Lower it on a small database. |
 | `OVR_PURGE_BATCH_PAUSE_MS` | `500` | Pause between purge batches, so other queries get the database in between. |

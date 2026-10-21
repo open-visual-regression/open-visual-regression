@@ -143,6 +143,11 @@ worker:
   storybookCacheBytes: ""
   # Local disk for caching screenshots. Empty uses the app default (512 MB).
   imageCacheBytes: ""
+  # Minutes an unfinished build can go without snapshot or diff updates before
+  # the reaper, which runs every 30 minutes, marks it errored. A build with jobs
+  # still queued, retrying or running is never reaped, however long it waits.
+  # Empty uses the app default (30).
+  reaperStaleMinutes: ""
   # How often one worker logs a "queue depth" line with each queue's job counts
   # and the queued and processing builds. 0 turns it off. Empty uses the app
   # default (60000).

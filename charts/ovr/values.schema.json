@@ -273,6 +273,10 @@
           "type": ["string", "integer"],
           "description": "Local disk for caching screenshots. Empty string uses the app default."
         },
+        "reaperStaleMinutes": {
+          "type": ["string", "integer"],
+          "description": "Minutes without snapshot or diff activity, and with no jobs left to run, before an unfinished build is errored. Empty string uses the app default."
+        },
         "queueReportIntervalMs": {
           "type": ["string", "integer"],
           "description": "How often one worker logs queue and build counts, in milliseconds. 0 turns it off. Empty string uses the app default."

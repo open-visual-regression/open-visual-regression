@@ -79,6 +79,7 @@ CPU and memory scale with concurrent captures, not total build volume. Each capt
 | `worker.diffConcurrency` | app default `4` | Snapshots compared against their baseline at once. |
 | `worker.storybookCacheBytes` | app default 2 GB | Pod-local disk for extracted Storybook builds. Counts against the pod's ephemeral storage. |
 | `worker.imageCacheBytes` | app default 512 MB | Pod-local disk for caching screenshots. Counts against the pod's ephemeral storage. |
+| `worker.reaperStaleMinutes` | app default `30` | Minutes an unfinished build can go without snapshot or diff updates before it is marked errored. A build with jobs still queued, retrying or running is never reaped, however long the queue. |
 | `worker.purge.concurrency` | app default `1` | Retention purge jobs running at once across all workers. Each deletes one project's expired builds. |
 | `worker.purge.batchSize` | app default `10` | Builds the retention purge deletes per transaction. Lower it on a small database. |
 | `worker.purge.batchPauseMs` | app default `500` | Pause between purge batches, so other queries get the database in between. |

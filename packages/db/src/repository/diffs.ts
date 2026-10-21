@@ -105,18 +105,22 @@ export const removeBySnapshot = async (snapshotId: string, tx: DbClient = db): P
   await tx.delete(diffs).where(eq(diffs.snapshotId, snapshotId));
 };
 
-export const markPendingAs = async (
-  buildId: string,
-  status: DiffProcessingStatus,
-  tx: DbClient = db,
-): Promise<string[]> => {
+export const findPendingIds = async (buildId: string, tx: DbClient = db): Promise<string[]> => {
   const rows = await tx
     .select({ id: diffs.id })
     .from(diffs)
     .innerJoin(snapshots, eq(diffs.snapshotId, snapshots.id))
     .where(and(eq(snapshots.buildId, buildId), eq(diffs.processingStatus, "pending")));
 
-  const ids = rows.map((row) => row.id);
+  return rows.map((row) => row.id);
+};
+
+export const markPendingAs = async (
+  buildId: string,
+  status: DiffProcessingStatus,
+  tx: DbClient = db,
+): Promise<string[]> => {
+  const ids = await findPendingIds(buildId, tx);
   if (ids.length === 0) {
     return ids;
   }
