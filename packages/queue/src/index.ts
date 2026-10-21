@@ -273,6 +273,51 @@ export const enqueueCaptureGroup = (
   connection: RedisConnection,
 ): Promise<Job<CaptureGroupJobPayload>> => enqueue(QueueName.SNAPSHOT_CAPTURE, payload, connection);
 
+// round-robin: a build's nth capture group gets priority n, and BullMQ runs equal priorities in
+// the order they were added. Workers take every build's first group, then every build's second,
+// and so on, so a small build queued behind a large one starts within one round instead of
+// waiting for all of the large build's groups. fifo: groups run in the order they were added.
+export const captureQueuePolicySchema = z.enum(["round-robin", "fifo"]).catch("round-robin");
+
+export type CaptureQueuePolicy = z.infer<typeof captureQueuePolicySchema>;
+
+// BullMQ's lowest priority. Equal priorities still run in the order they were added.
+const LOWEST_PRIORITY = 2_097_151;
+
+export const enqueueCaptureGroups = async (
+  buildId: string,
+  groups: Omit<CaptureGroupJobPayload, "buildId">[],
+  connection: RedisConnection,
+  policy: CaptureQueuePolicy,
+): Promise<Job<CaptureGroupJobPayload>[]> => {
+  if (groups.length === 0) {
+    return [];
+  }
+
+  const queue = new Queue<
+    CaptureGroupJobPayload,
+    void,
+    string,
+    CaptureGroupJobPayload,
+    void,
+    string
+  >(QueueName.SNAPSHOT_CAPTURE, queueOptions(connection));
+  try {
+    return await queue.addBulk(
+      groups.map((group, index) => ({
+        name: QueueName.SNAPSHOT_CAPTURE,
+        data: { buildId, ...group },
+        opts: {
+          ...JOB_OPTIONS[QueueName.SNAPSHOT_CAPTURE],
+          ...(policy === "round-robin" && { priority: Math.min(index + 1, LOWEST_PRIORITY) }),
+        },
+      })),
+    );
+  } finally {
+    await queue.close();
+  }
+};
+
 export const enqueueDiff = (
   payload: DiffJobPayload,
   connection: RedisConnection,

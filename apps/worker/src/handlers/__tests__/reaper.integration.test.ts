@@ -3,7 +3,7 @@ import { Queue } from "bullmq";
 import { resolveStaleBuilds } from "@ovr/builds/reaper";
 import { dbClient } from "@ovr/db/client";
 import { QueueName, type CaptureGroupJobPayload, type RedisConnection } from "@ovr/queue";
-import { enqueueCaptureGroup, enqueueFinalize } from "@ovr/queue/producer";
+import { enqueueCaptureGroup, enqueueCaptureGroups, enqueueFinalize } from "@ovr/queue/producer";
 
 import { describe, expect, test } from "../../__tests__/fixtures";
 
@@ -118,11 +118,10 @@ describe("reaper", () => {
           },
         ],
       });
-      const captureGroup = await enqueueCaptureGroup({
-        buildId: build!.id,
-        browser: captureConfiguration.browser,
-        snapshotIds: [queuedSnapshot!.id],
-      });
+      // Queued the way extract queues them, so under the default policy they wait as prioritized.
+      const captureGroups = await enqueueCaptureGroups(build!.id, [
+        { browser: captureConfiguration.browser, snapshotIds: [queuedSnapshot!.id] },
+      ]);
 
       await resolveStaleBuilds(STALE_MINUTES);
 
@@ -133,7 +132,10 @@ describe("reaper", () => {
         status: "queued",
       });
       expect(await findWaitingCaptureGroups(connection, build!.id)).toHaveLength(1);
-      await removeJob(connection, QueueName.SNAPSHOT_CAPTURE, captureGroup.id!);
+      expect(await captureGroups[0]!.getState()).toBe("prioritized");
+      for (const job of captureGroups) {
+        await removeJob(connection, QueueName.SNAPSHOT_CAPTURE, job.id!);
+      }
     });
 
     test("should leave a build untouched while a diff job waits out its retry backoff", async ({

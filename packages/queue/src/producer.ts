@@ -9,6 +9,7 @@ import {
 import {
   cancelBuildJobs as cancelBuildJobsJob,
   enqueueCaptureGroup as enqueueCaptureGroupJob,
+  enqueueCaptureGroups as enqueueCaptureGroupsJob,
   enqueueDiff as enqueueDiffJob,
   enqueueExtract as enqueueExtractJob,
   enqueueFinalize as enqueueFinalizeJob,
@@ -34,6 +35,7 @@ import {
   type ProjectPurgeJobPayload,
   type PurgeJobPayload,
   buildRedisConnection,
+  captureQueuePolicySchema,
   waitForConnection,
 } from "./index";
 
@@ -57,6 +59,20 @@ export const enqueueCaptureGroup = (
   payload: CaptureGroupJobPayload,
 ): Promise<Job<CaptureGroupJobPayload>> =>
   whenConnected(() => enqueueCaptureGroupJob(payload, connection));
+
+// Read per call: the web app and the worker both queue capture groups.
+export const enqueueCaptureGroups = (
+  buildId: string,
+  groups: Omit<CaptureGroupJobPayload, "buildId">[],
+): Promise<Job<CaptureGroupJobPayload>[]> =>
+  whenConnected(() =>
+    enqueueCaptureGroupsJob(
+      buildId,
+      groups,
+      connection,
+      captureQueuePolicySchema.parse(process.env.OVR_CAPTURE_QUEUE_POLICY),
+    ),
+  );
 
 export const enqueueDiff = (payload: DiffJobPayload): Promise<Job<DiffJobPayload>> =>
   whenConnected(() => enqueueDiffJob(payload, connection));

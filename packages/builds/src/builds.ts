@@ -11,7 +11,7 @@ import { createLogger } from "@ovr/logger";
 import { QueueUnavailableError, type CanceledBuildJobs } from "@ovr/queue";
 import {
   cancelBuildJobs,
-  enqueueCaptureGroup,
+  enqueueCaptureGroups,
   enqueueExtract,
   enqueuePublishStatus,
   publishBuildStatusEvent,
@@ -521,9 +521,7 @@ export const rebuildSnapshots = async (
   });
 
   try {
-    await Promise.all(
-      toCaptureGroups(snapshots).map((group) => enqueueCaptureGroup({ buildId, ...group })),
-    );
+    await enqueueCaptureGroups(buildId, toCaptureGroups(snapshots));
   } catch (error) {
     logger.error({ err: error, buildId, snapshotIds }, "failed to queue rebuilt snapshots");
     const message = error instanceof Error ? error.message : String(error);

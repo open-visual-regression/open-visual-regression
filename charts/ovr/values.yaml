@@ -143,6 +143,14 @@ worker:
   storybookCacheBytes: ""
   # Local disk for caching screenshots. Empty uses the app default (512 MB).
   imageCacheBytes: ""
+  # Order capture groups run in, across builds. "round-robin" runs every queued
+  # build's first group, then every build's second, and so on, so a small PR
+  # build doesn't wait for every group of a large build queued before it.
+  # "fifo" runs them in the order they were queued. Empty uses the app default
+  # (round-robin), or fifo when worker.keda uses its generated trigger, which
+  # can only see fifo's queue. Read by the web app too, which queues groups
+  # when snapshots are rebuilt.
+  captureQueuePolicy: ""
   # Minutes an unfinished build can go without snapshot or diff updates before
   # the reaper, which runs every 30 minutes, marks it errored. A build with jobs
   # still queued, retrying or running is never reaped, however long it waits.
