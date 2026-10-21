@@ -765,6 +765,39 @@ describe("snapshots", () => {
       expect(download.mock.calls.filter(([path]) => path === baselinePath)).toHaveLength(1);
     });
 
+    test("should not hold on to memory as stories that changed keep getting diffed", async ({
+      featureBuild,
+      captureConfiguration,
+      approveBaseline,
+    }) => {
+      const baselinePath = `builds/${featureBuild.id}/snapshots/baseline-large.png`;
+      const capturePath = `builds/${featureBuild.id}/snapshots/capture-large.png`;
+      await uploadPng(baselinePath, 0, 1280, 1600);
+      await uploadPng(capturePath, 255, 1280, 1600);
+      await approveBaseline({
+        build: featureBuild,
+        targetId: "story-large",
+        imagePath: baselinePath,
+      });
+      const snapshots = await dbClient.snapshots.createMany({
+        values: Array.from({ length: 100 }, () => ({
+          buildId: featureBuild.id,
+          ...captureConfiguration,
+          targetId: "story-large",
+          status: "success" as const,
+          imagePath: capturePath,
+        })),
+      });
+      const diffs = await Promise.all(
+        snapshots.map((snapshot) => dbClient.diffs.create({ snapshotId: snapshot!.id })),
+      );
+      const rssBefore = process.memoryUsage().rss;
+
+      await Promise.all(diffs.map((diff) => diffSnapshot(diff!.snapshotId, diff!.id)));
+
+      expect(process.memoryUsage().rss - rssBefore).toBeLessThan(200 * 1024 ** 2);
+    }, 120_000);
+
     test("diffs a story this worker just captured without downloading its screenshot", async ({
       featureBuild,
       captureConfiguration,
