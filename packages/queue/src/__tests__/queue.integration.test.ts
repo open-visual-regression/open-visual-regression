@@ -12,9 +12,11 @@ import {
   getJobNextRunAt,
   isJobRunning,
   enqueuePublishStatus,
+  enqueuePurgeMany,
   QueueName,
   scheduleJob,
   scheduleReaper,
+  setPurgeConcurrency,
   type CaptureGroupJobPayload,
   type DiffJobPayload,
   type ExtractJobPayload,
@@ -182,6 +184,43 @@ describe("queue", () => {
       const [scheduler] = await openQueue(QueueName.BUILD_REAPER).getJobSchedulers();
 
       expect(scheduler?.template?.opts?.removeOnComplete).toEqual({ age: 60 * 60, count: 1000 });
+    });
+  });
+
+  describe("setPurgeConcurrency", () => {
+    test("should run one purge job at a time across every worker", async ({ connection }) => {
+      await setPurgeConcurrency(connection, 1);
+      let running = 0;
+      let mostRunning = 0;
+      let finished = 0;
+      const workers: Worker[] = [];
+      const allFinished = new Promise<void>((resolve) => {
+        const processor = async () => {
+          running++;
+          mostRunning = Math.max(mostRunning, running);
+          await new Promise((wait) => setTimeout(wait, 100));
+          running--;
+          if (++finished === 4) {
+            resolve();
+          }
+        };
+        workers.push(
+          new Worker(QueueName.BUILD_PURGE, processor, { connection, concurrency: 2 }),
+          new Worker(QueueName.BUILD_PURGE, processor, { connection, concurrency: 2 }),
+        );
+      });
+
+      try {
+        await enqueuePurgeMany(
+          ["a", "b", "c", "d"].map((projectId) => ({ projectId })),
+          connection,
+        );
+        await allFinished;
+      } finally {
+        await Promise.all(workers.map((worker) => worker.close()));
+      }
+
+      expect(mostRunning).toBe(1);
     });
   });
 

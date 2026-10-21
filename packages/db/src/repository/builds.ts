@@ -20,9 +20,14 @@ import { alias } from "drizzle-orm/pg-core";
 import { db, type DbClient } from "../db";
 import {
   baselines,
+  buildExtractDefaults,
   builds,
+  diffReviews,
   diffs,
+  gitStatusPublications,
   projects,
+  snapshotLogs,
+  snapshotVariants,
   snapshots,
   type BuildProcessingStatus,
   type BuildReviewStatus,
@@ -404,6 +409,38 @@ export const removeMany = async (tx: DbClient, ids: string[]): Promise<void> => 
     return;
   }
 
+  await tx.delete(builds).where(inArray(builds.id, ids));
+};
+
+// The same rows the FK cascades would remove, one statement per table instead of one trigger
+// query per deleted row. A snapshot that became a baseline in the meantime still fails the
+// baselines FK and rolls back the caller's transaction.
+export const purgeMany = async (tx: DbClient, ids: string[]): Promise<void> => {
+  if (ids.length === 0) {
+    return;
+  }
+
+  const snapshotIds = tx
+    .select({ id: snapshots.id })
+    .from(snapshots)
+    .where(inArray(snapshots.buildId, ids));
+  const diffIds = tx
+    .select({ id: diffs.id })
+    .from(diffs)
+    .where(inArray(diffs.snapshotId, snapshotIds));
+
+  await tx.delete(diffReviews).where(inArray(diffReviews.diffId, diffIds));
+  await tx.delete(diffs).where(inArray(diffs.snapshotId, snapshotIds));
+  // What ON DELETE SET NULL does, without bumping updatedAt on another build's diffs.
+  await tx
+    .update(diffs)
+    .set({ baselineSnapshotId: null, updatedAt: sql`${diffs.updatedAt}` })
+    .where(inArray(diffs.baselineSnapshotId, snapshotIds));
+  await tx.delete(snapshotLogs).where(inArray(snapshotLogs.snapshotId, snapshotIds));
+  await tx.delete(snapshotVariants).where(inArray(snapshotVariants.snapshotId, snapshotIds));
+  await tx.delete(snapshots).where(inArray(snapshots.buildId, ids));
+  await tx.delete(gitStatusPublications).where(inArray(gitStatusPublications.buildId, ids));
+  await tx.delete(buildExtractDefaults).where(inArray(buildExtractDefaults.buildId, ids));
   await tx.delete(builds).where(inArray(builds.id, ids));
 };
 

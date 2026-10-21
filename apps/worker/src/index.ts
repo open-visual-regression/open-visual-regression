@@ -11,6 +11,7 @@ import {
   queueOptions,
   scheduleReaper,
   schedulePurge,
+  setPurgeConcurrency,
 } from "@ovr/queue";
 
 import * as capture from "./handlers/capture";
@@ -64,6 +65,14 @@ const MEMORY_LOG_INTERVAL_MS = z.coerce
   .nonnegative()
   .catch(60_000)
   .parse(process.env.OVR_MEMORY_LOG_INTERVAL_MS);
+
+// Purge jobs running at once across all workers, not per worker.
+const PURGE_CONCURRENCY = z.coerce
+  .number()
+  .int()
+  .positive()
+  .catch(1)
+  .parse(process.env.OVR_PURGE_CONCURRENCY);
 
 const shutdown = new AbortController();
 
@@ -171,6 +180,12 @@ try {
   await schedulePurge(connection);
 } catch (error) {
   logger.error({ err: error }, "failed to schedule the daily purge dispatch job");
+}
+
+try {
+  await setPurgeConcurrency(connection, PURGE_CONCURRENCY);
+} catch (error) {
+  logger.error({ err: error }, "failed to set the purge concurrency");
 }
 
 try {
