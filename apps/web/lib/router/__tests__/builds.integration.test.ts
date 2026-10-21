@@ -323,6 +323,31 @@ describe("builds", () => {
       });
     });
 
+    test("records why --only-affected captured every story", async ({ admin: _ }) => {
+      const { apiKey } = await createProjectWithApiKey();
+      setApiKeyHeader(apiKey);
+
+      const [, createResult] = await serverClient.builds.createBuild({
+        branch: "feature/checkout",
+        commitSha: "a".repeat(40),
+      });
+      const buildId = createResult!.buildId;
+      const build = await dbClient.builds.findById(buildId);
+      await storage.uploadFile(build!.artifactPath, Buffer.from(""), "application/gzip");
+
+      const [error] = await serverClient.builds.confirmUpload({
+        buildId,
+        targets: [{ id: "story-a", title: "Story", name: "A" }],
+        viewports: VIEWPORTS,
+        captureAllReason: "viewports changed",
+      });
+
+      expect(error).toBeNull();
+      expect(await dbClient.buildExtractDefaults.findByBuild(buildId)).toMatchObject({
+        captureAllReason: "viewports changed",
+      });
+    });
+
     test("records the uploader's wait before capture, defaulting to none", async ({ admin: _ }) => {
       const { apiKey } = await createProjectWithApiKey();
       setApiKeyHeader(apiKey);
@@ -1456,7 +1481,32 @@ describe("builds", () => {
         status: "queued",
         isRebuildable: false,
         isReviewable: false,
+        captureAllReason: null,
       });
+    });
+
+    test("says why --only-affected captured every story in the build", async ({ admin }) => {
+      const [, project] = await serverClient.projects.add(TEST_PROJECT);
+      const build = await dbClient.builds.create({
+        projectId: project!.projectId,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: admin.id,
+      });
+      await dbClient.buildExtractDefaults.create({
+        buildId: build!.id,
+        targets: [],
+        viewports: [{ name: "default", browser: "chromium", viewportWidth: 1280 }],
+        diffThreshold: 0.05,
+        captureAllReason: "dependencies changed (pnpm-lock.yaml: vite builds the Storybook)",
+      });
+
+      const [, result] = await serverClient.builds.getOne({ buildId: build!.id });
+
+      expect(result?.build.captureAllReason).toBe(
+        "dependencies changed (pnpm-lock.yaml: vite builds the Storybook)",
+      );
     });
 
     test("reports a settled build with stored extract defaults as rebuildable", async ({

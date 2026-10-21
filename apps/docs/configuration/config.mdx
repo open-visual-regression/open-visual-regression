@@ -58,3 +58,4 @@ Options for [`ovr upload storybook --only-affected`](/cli/upload-storybook#only-
 |-------|------|---------|-------------|
 | `externals` | `string[]` | `[]` | Files that affect every story when they change, such as a static folder |
 | `untraced` | `string[]` | `[]` | Files that never affect a story |
+| `buildDependencies` | `string[]` | `[]` | Package names, or globs like `@acme/*`, that change how stories build without being bundled into them, such as a bundler plugin. A lockfile change that moves one to another version captures every story. Storybook, the common bundlers and CSS tools are always included |

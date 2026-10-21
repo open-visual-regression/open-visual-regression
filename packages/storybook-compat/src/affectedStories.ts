@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
+import { findChangedPackages, readLockfileVersions } from "./lockfiles";
 import { readModuleGraph, STATS_FILENAME } from "./moduleGraph";
 
 type IndexEntry = { id: string; importPath: string; type?: string };
@@ -14,6 +15,18 @@ export type AffectedStoriesInput = {
   changedFiles: string[];
   externals?: string[];
   untraced?: string[];
+  /**
+   * A repo-relative file as it was at the base commit, or undefined when it didn't exist there.
+   * Without it, any manifest or lockfile change in a bundled package captures everything.
+   */
+  readBaseFile?: (file: string) => Promise<string | undefined>;
+  /**
+   * The project's own ovr.config, repo-relative. A change to it only captures everything when
+   * `changedCaptureSettings` names a setting that changes the screenshots.
+   */
+  ovrConfig?: { file: string; changedCaptureSettings: () => Promise<string | null> };
+  /** Package name globs that change how stories build, on top of the known build tools. */
+  buildDependencies?: string[];
 };
 
 export type AffectedStoryFile = {
@@ -37,6 +50,77 @@ const LOCKFILE =
 const CONFIG_FILE = /(^|\/)([^/]+\.config\.[cm]?[jt]s|tsconfig[^/]*\.json)$/;
 const NON_RENDERING = /\.md$|(^|\/)\.(github|changeset)\//;
 
+// Manifest fields that change what a bundler resolves. devDependencies and scripts don't.
+const BUNDLED_MANIFEST_FIELDS = [
+  "dependencies",
+  "peerDependencies",
+  "optionalDependencies",
+  "exports",
+  "main",
+  "module",
+  "browser",
+  "imports",
+  "sideEffects",
+] as const;
+
+// Storybook frameworks, bundlers, compilers and CSS toolchains: they shape every story's output
+// without appearing in the module graph.
+const BUILD_TOOLS = [
+  "storybook",
+  "storybook-*",
+  "@storybook/*",
+  "vite",
+  "@vitejs/*",
+  "vite-plugin-*",
+  "webpack",
+  "webpack-*",
+  "*-webpack-plugin",
+  "rollup-plugin-*",
+  "@rspack/*",
+  "esbuild",
+  "rollup",
+  "@rollup/*",
+  "@swc/*",
+  "@babel/*",
+  "babel-*",
+  "typescript",
+  "postcss",
+  "postcss-*",
+  "autoprefixer",
+  "tailwindcss",
+  "@tailwindcss/*",
+  "sass",
+  "sass-embedded",
+  "less",
+  "lightningcss",
+  "@vanilla-extract/*",
+  "@pandacss/*",
+  "*-loader",
+];
+
+const stableStringify = (value: unknown): string =>
+  JSON.stringify(value, (_key, nested: unknown) =>
+    nested && typeof nested === "object" && !Array.isArray(nested)
+      ? Object.fromEntries(Object.entries(nested).sort(([a], [b]) => a.localeCompare(b)))
+      : nested,
+  ) ?? "undefined";
+
+const readText = async (file: string): Promise<string | undefined> => {
+  try {
+    return await readFile(file, "utf-8");
+  } catch {
+    return undefined;
+  }
+};
+
+const parseManifest = (contents: string | undefined): Record<string, unknown> | undefined => {
+  try {
+    return contents === undefined ? undefined : (JSON.parse(contents) as Record<string, unknown>);
+  } catch {
+    return undefined;
+  }
+};
+
 const readJson = async <T>(file: string): Promise<T | undefined> => {
   try {
     return JSON.parse(await readFile(file, "utf-8")) as T;
@@ -52,6 +136,9 @@ export const findAffectedStories = async ({
   changedFiles,
   externals = [],
   untraced = [],
+  readBaseFile,
+  ovrConfig,
+  buildDependencies = [],
 }: AffectedStoriesInput): Promise<AffectedStories> => {
   const all = (reason: string): AffectedStories => ({ mode: "all", reason });
 
@@ -110,6 +197,43 @@ export const findAffectedStories = async ({
   const matches = (file: string, globs: string[]) =>
     globs.some((glob) => path.matchesGlob(file, glob));
 
+  const bundledDependencies = new Set(
+    [...importers.keys()].flatMap((file) =>
+      [...file.matchAll(/node_modules\/((?:@[^/]+\/)?[^/]+)\//g)].map((match) => match[1]!),
+    ),
+  );
+
+  // Why a manifest change could change the bundle, or null when only other fields changed.
+  const manifestChange = async (file: string): Promise<string | null> => {
+    const base = parseManifest(await readBaseFile!(file));
+    const current = parseManifest(await readText(path.join(repoRoot, file)));
+    if (!base || !current) {
+      return `${file} is not traceable but is in a package the Storybook bundles`;
+    }
+    const field = BUNDLED_MANIFEST_FIELDS.find(
+      (name) => stableStringify(base[name]) !== stableStringify(current[name]),
+    );
+    return field ? `${file} changed "${field}"` : null;
+  };
+
+  // Why a lockfile change could change the bundle, or null when no bundled package moved.
+  const lockfileChange = async (file: string): Promise<string | null> => {
+    const base = readLockfileVersions(file, (await readBaseFile!(file)) ?? "");
+    const current = readLockfileVersions(file, (await readText(path.join(repoRoot, file))) ?? "");
+    if (!base || !current) {
+      return `dependencies changed (${file})`;
+    }
+    for (const name of findChangedPackages(base, current)) {
+      if (bundledDependencies.has(name)) {
+        return `dependencies changed (${file}: ${name} is bundled into the Storybook)`;
+      }
+      if (matches(name, [...BUILD_TOOLS, ...buildDependencies])) {
+        return `dependencies changed (${file}: ${name} builds the Storybook)`;
+      }
+    }
+    return null;
+  };
+
   const seeds: string[] = [];
   const ignoredFiles: string[] = [];
 
@@ -117,19 +241,37 @@ export const findAffectedStories = async ({
     const isRootFile = !file.includes("/");
     const inBundledPackage = bundledPackages.has(packageDirOf(file));
 
+    const isBundledScope = isRootFile || inBundledPackage;
+
     if (matches(file, untraced)) {
       ignoredFiles.push(file);
     } else if (matches(file, externals)) {
       return all(`${file} matches "externals"`);
+    } else if (ovrConfig && file === ovrConfig.file) {
+      const reason = await ovrConfig.changedCaptureSettings();
+      if (reason) {
+        return all(reason);
+      }
+      ignoredFiles.push(file);
     } else if (importers.has(file)) {
       seeds.push(file);
     } else if (file.startsWith(`${storybookConfigDir}/`)) {
       return all(`${file} is Storybook configuration`);
     } else if (NON_RENDERING.test(file)) {
       ignoredFiles.push(file);
-    } else if (LOCKFILE.test(file) && (isRootFile || inBundledPackage)) {
-      return all(`dependencies changed (${file})`);
-    } else if (CONFIG_FILE.test(file) && (isRootFile || inBundledPackage)) {
+    } else if (LOCKFILE.test(file) && isBundledScope) {
+      const reason = readBaseFile ? await lockfileChange(file) : `dependencies changed (${file})`;
+      if (reason) {
+        return all(reason);
+      }
+      ignoredFiles.push(file);
+    } else if (path.posix.basename(file) === "package.json" && isBundledScope && readBaseFile) {
+      const reason = await manifestChange(file);
+      if (reason) {
+        return all(reason);
+      }
+      ignoredFiles.push(file);
+    } else if (CONFIG_FILE.test(file) && isBundledScope) {
       return all(`build configuration changed (${file})`);
     } else if (CODE_FILE.test(file)) {
       ignoredFiles.push(file);

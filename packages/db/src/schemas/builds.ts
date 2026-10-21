@@ -149,6 +149,8 @@ export const buildExtractDefaults = pgTable("build_extract_defaults", {
   diffThreshold: numeric("diff_threshold", { mode: "number", precision: 3, scale: 2 }).notNull(),
   waitForTimeout: integer("wait_for_timeout").notNull().default(0),
   unaffectedTargetIds: jsonb("unaffected_target_ids").$type<string[]>().notNull().default([]),
+  // Why `--only-affected` captured every story instead.
+  captureAllReason: text("capture_all_reason"),
   createdAt: utcTimestamp("created_at")
     .default(sql`now()`)
     .notNull(),

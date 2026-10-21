@@ -407,6 +407,13 @@
       "when": 1792593499715,
       "tag": "0057_add_builds_in_flight_index",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1792595945991,
+      "tag": "0058_add_capture_all_reason",
+      "breakpoints": true
     }
   ]
 }

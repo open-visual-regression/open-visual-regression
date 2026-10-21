@@ -1,0 +1,1 @@
+ALTER TABLE "build_extract_defaults" ADD COLUMN "capture_all_reason" text;

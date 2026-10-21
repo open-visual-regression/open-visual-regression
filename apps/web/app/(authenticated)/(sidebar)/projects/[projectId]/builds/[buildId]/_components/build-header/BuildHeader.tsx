@@ -116,6 +116,14 @@ export const BuildHeader = ({
           <AlertDescription>{build.errorMessage}</AlertDescription>
         </Alert>
       ) : null}
+      {build.captureAllReason ? (
+        <Alert color="blue">
+          <AlertTitle>Captured every story</AlertTitle>
+          <AlertDescription>
+            --only-affected could not narrow this build down: {build.captureAllReason}.
+          </AlertDescription>
+        </Alert>
+      ) : null}
       {total > 0 ? (
         <SegmentedProgress
           title={`${total} snapshots`}

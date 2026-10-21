@@ -47,6 +47,7 @@ type ConfirmBuildUploadInput = {
   diffThreshold: number;
   waitForTimeout?: number;
   unaffectedTargetIds?: string[];
+  captureAllReason?: string;
 };
 
 export const DEFAULT_DIFF_THRESHOLD = 0.05;
@@ -249,6 +250,7 @@ export const confirmBuildUpload = async (
       diffThreshold: input.diffThreshold,
       waitForTimeout: input.waitForTimeout,
       unaffectedTargetIds,
+      captureAllReason: input.captureAllReason,
     });
     await enqueueExtract({
       buildId,

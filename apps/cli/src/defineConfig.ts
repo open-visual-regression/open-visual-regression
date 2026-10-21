@@ -39,6 +39,12 @@ export type OnlyAffectedConfig = {
   externals?: string[];
   /** Globs of files that never affect a story. */
   untraced?: string[];
+  /**
+   * Package names, or globs like `@acme/*`, that change how stories build without being
+   * bundled into them, such as a bundler plugin. When a lockfile moves one to another version,
+   * every story is captured. Storybook, the common bundlers and CSS tools are always included.
+   */
+  buildDependencies?: string[];
 };
 
 /** Per-story override, set via Storybook `parameters.ovr` on a story or its `meta`. */
