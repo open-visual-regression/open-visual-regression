@@ -1110,7 +1110,7 @@ describe("snapshots", () => {
       expect(result.snapshots.map((row) => [row.targetId, row.isFlaky])).toEqual([
         ["plain", false],
         ["flagged", true],
-        ["matched", true],
+        ["matched", false],
         ["warning", false],
         ["both", true],
       ]);
@@ -1124,8 +1124,8 @@ describe("snapshots", () => {
         limit: 10,
       });
 
-      expect(result.snapshots.map((row) => row.targetId)).toEqual(["flagged", "matched", "both"]);
-      expect(await dbClient.snapshots.countForBuild(build.id, { flags: ["flaky"] })).toBe(3);
+      expect(result.snapshots.map((row) => row.targetId)).toEqual(["flagged", "both"]);
+      expect(await dbClient.snapshots.countForBuild(build.id, { flags: ["flaky"] })).toBe(2);
     });
 
     test("filters to snapshots with warnings", async ({ build, project, captureConfiguration }) => {
@@ -1148,15 +1148,10 @@ describe("snapshots", () => {
         limit: 10,
       });
 
-      expect(result.snapshots.map((row) => row.targetId)).toEqual([
-        "flagged",
-        "matched",
-        "warning",
-        "both",
-      ]);
+      expect(result.snapshots.map((row) => row.targetId)).toEqual(["flagged", "warning", "both"]);
       expect(
         await dbClient.snapshots.countForBuild(build.id, { flags: ["flaky", "warning"] }),
-      ).toBe(4);
+      ).toBe(3);
     });
 
     test("combines a flag filter with other filters", async ({
@@ -1317,12 +1312,12 @@ describe("snapshots", () => {
       project,
       captureConfiguration,
     }) => {
-      const { flagged, matched, both } = await seedFlags(build, project, captureConfiguration);
+      const { flagged, both } = await seedFlags(build, project, captureConfiguration);
 
-      const result = await dbClient.snapshots.findAdjacentIds(build.id, matched.id, {
+      const result = await dbClient.snapshots.findAdjacentIds(build.id, both.id, {
         flags: ["flaky"],
       });
-      expect(result).toEqual({ prevId: flagged.id, nextId: both.id, position: 2, total: 3 });
+      expect(result).toEqual({ prevId: flagged.id, nextId: null, position: 2, total: 2 });
     });
 
     test("narrows navigation to the snapshots matching a search", async ({

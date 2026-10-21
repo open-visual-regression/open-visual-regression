@@ -41,7 +41,9 @@ export const flakyFlagDetailSchema = z.object({
   flag: z.literal("flaky"),
   detection: flakyDetectionSchema.nullable(),
   matchesEarlierVariant: z.boolean().meta({
-    description: "Whether the screenshot matches an earlier image of this snapshot",
+    description:
+      "Always false. Snapshots are flaky only when their story is flagged by flaky detection",
+    deprecated: true,
   }),
 });
 

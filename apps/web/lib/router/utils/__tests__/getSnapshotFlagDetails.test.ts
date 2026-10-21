@@ -16,7 +16,6 @@ describe("getSnapshotFlagDetails", () => {
     expect(
       getSnapshotFlagDetails({
         flakySnapshot: undefined,
-        matchesEarlierVariant: false,
         hasUncaughtPageError: false,
       }),
     ).toEqual([]);
@@ -26,7 +25,6 @@ describe("getSnapshotFlagDetails", () => {
     expect(
       getSnapshotFlagDetails({
         flakySnapshot,
-        matchesEarlierVariant: false,
         hasUncaughtPageError: false,
       }),
     ).toEqual([
@@ -38,15 +36,18 @@ describe("getSnapshotFlagDetails", () => {
     ]);
   });
 
-  it("should flag a change that matches an earlier variant even without flaky detection stats", () => {
+  it("should list the flaky flag before the warning flag", () => {
     expect(
       getSnapshotFlagDetails({
-        flakySnapshot: undefined,
-        matchesEarlierVariant: true,
+        flakySnapshot,
         hasUncaughtPageError: true,
       }),
     ).toEqual([
-      { flag: "flaky", detection: null, matchesEarlierVariant: true },
+      {
+        flag: "flaky",
+        detection: { sampleCount: 30, changeCount: 9, revertCount: 6, sameCommitMismatchCount: 1 },
+        matchesEarlierVariant: false,
+      },
       { flag: "warning" },
     ]);
   });

@@ -81,7 +81,6 @@ type UpdateResultInput = {
   pixelDiffCount?: number;
   diffPercent?: number;
   baselineSnapshotId?: string;
-  matchedVariantId?: string;
 };
 
 export const updateResult = async (id: string, result: UpdateResultInput) => {

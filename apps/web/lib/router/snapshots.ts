@@ -45,7 +45,6 @@ export const getOne = os.snapshots.getOne
       checkSnapshotsRebuildable(build, [snapshot], { isLatestBuild }),
       checkSnapshotReviewable(build, snapshot, diff, { isLatestBuild }),
     ]);
-    const matchesEarlierVariant = diff?.matchedVariantId != null;
 
     return {
       snapshot: {
@@ -60,10 +59,9 @@ export const getOne = os.snapshots.getOne
         viewportName: snapshot.viewportName,
         status: getSnapshotDisplayStatus(snapshot, diff),
         hasUncaughtPageError: snapshot.hasUncaughtPageError,
-        isFlaky: flakySnapshot !== undefined || matchesEarlierVariant,
+        isFlaky: flakySnapshot !== undefined,
         flags: getSnapshotFlagDetails({
           flakySnapshot,
-          matchesEarlierVariant,
           hasUncaughtPageError: snapshot.hasUncaughtPageError,
         }),
         errorMessage: snapshot.errorMessage,

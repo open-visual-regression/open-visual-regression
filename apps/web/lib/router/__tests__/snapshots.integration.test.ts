@@ -379,7 +379,7 @@ describe("snapshots", () => {
       ]);
     });
 
-    test("reports a snapshot as flaky when its change matches an earlier look of the story on main", async ({
+    test("does not report a snapshot as flaky when its change only matches an earlier look of the story on main", async ({
       admin,
     }) => {
       const { projectId, build } = await createProjectAndBuild(admin);
@@ -416,13 +416,11 @@ describe("snapshots", () => {
       ]);
 
       expect(getOneError).toBeNull();
-      expect(getOneResult?.snapshot.isFlaky).toBe(true);
-      expect(getOneResult?.snapshot.flags).toEqual([
-        { flag: "flaky", detection: null, matchesEarlierVariant: true },
-      ]);
+      expect(getOneResult?.snapshot.isFlaky).toBe(false);
+      expect(getOneResult?.snapshot.flags).toEqual([]);
       expect(listError).toBeNull();
-      expect(listResult?.snapshots[0]?.isFlaky).toBe(true);
-      expect(listResult?.snapshots[0]?.flags).toEqual(["flaky"]);
+      expect(listResult?.snapshots[0]?.isFlaky).toBe(false);
+      expect(listResult?.snapshots[0]?.flags).toEqual([]);
     });
 
     test("reports a snapshot as not flaky when its story has not been flagged", async ({
