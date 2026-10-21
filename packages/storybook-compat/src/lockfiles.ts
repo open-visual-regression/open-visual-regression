@@ -1,6 +1,5 @@
 import path from "node:path";
 
-/** Every version of each package a lockfile resolves, by package name. */
 export type LockfileVersions = Map<string, Set<string>>;
 
 const addVersion = (versions: LockfileVersions, name: string, version: string): void => {
@@ -14,7 +13,6 @@ const addVersion = (versions: LockfileVersions, name: string, version: string): 
 
 const unquote = (value: string): string => value.trim().replace(/^["']|["']$/g, "");
 
-// `name@version`, where a scoped name starts with its own "@".
 const splitNameAtVersion = (spec: string): [string, string] | undefined => {
   const at = spec.indexOf("@", 1);
   return at > 0 ? [spec.slice(0, at), spec.slice(at + 1)] : undefined;
@@ -82,8 +80,7 @@ const parseNpmLock = (contents: string): LockfileVersions => {
   return versions;
 };
 
-// v1 `"name@^1.0.0", name@^1.1.0:` then `  version "1.1.2"`; berry `"name@npm:^1.0.0":` then
-// `  version: 1.1.2`.
+// v1 `name@^1.0.0:` + `  version "1.1.2"`; berry `"name@npm:^1.0.0":` + `  version: 1.1.2`.
 const parseYarnLock = (contents: string): LockfileVersions => {
   const versions: LockfileVersions = new Map();
   let name: string | undefined;
@@ -103,7 +100,7 @@ const parseYarnLock = (contents: string): LockfileVersions => {
   return versions;
 };
 
-// Text bun.lock: `"key": ["name@version", ...]` under "packages".
+// `"key": ["name@version", ...]` under "packages".
 const parseBunLock = (contents: string): LockfileVersions => {
   const versions: LockfileVersions = new Map();
   const packages = contents.slice(contents.indexOf('"packages"'));
@@ -126,7 +123,7 @@ const PARSERS: Record<string, (contents: string) => LockfileVersions> = {
   "bun.lock": parseBunLock,
 };
 
-/** Undefined for a lockfile it can't read, like the binary bun.lockb. */
+// Undefined when unreadable, like the binary bun.lockb.
 export const readLockfileVersions = (
   file: string,
   contents: string,
@@ -143,7 +140,6 @@ export const readLockfileVersions = (
   }
 };
 
-/** Packages added, removed, or resolved to a different version. */
 export const findChangedPackages = (
   base: LockfileVersions,
   current: LockfileVersions,

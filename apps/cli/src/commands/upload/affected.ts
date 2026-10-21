@@ -23,21 +23,18 @@ type FindUnaffectedTargetsInput = {
   cwd: string;
   targets: StoryTarget[];
   config?: OnlyAffectedConfig;
-  /** The ovr.config this run loaded, so a change to it can be compared with the base commit's. */
   ovrConfig?: { file: string; config: OvrConfig | undefined };
   log?: (message: string) => void;
 };
 
 export type UnaffectedTargets = {
   unaffectedTargetIds: string[];
-  /** Why every story is captured instead, recorded on the build. */
   captureAllReason?: string;
 };
 
 const describeError = (error: unknown): string =>
   error instanceof Error ? error.message.split("\n")[0]! : String(error);
 
-// Settings that change the screenshots themselves. Anything else in ovr.config can't.
 const describeCaptureSettingsChange = (
   base: OvrConfig | undefined,
   current: OvrConfig | undefined,

@@ -94,7 +94,6 @@ export const confirmUploadInputSchema = z.object({
   diffThreshold: z.number().min(0.01).max(1).optional(),
   waitForTimeout: z.number().int().min(0).max(30_000).optional(),
   unaffectedTargetIds: z.array(z.string().min(1)).optional(),
-  /** Why `--only-affected` captured every story, shown on the build. */
   captureAllReason: z.string().trim().min(1).max(500).optional(),
 });
 

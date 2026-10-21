@@ -15,17 +15,9 @@ export type AffectedStoriesInput = {
   changedFiles: string[];
   externals?: string[];
   untraced?: string[];
-  /**
-   * A repo-relative file as it was at the base commit, or undefined when it didn't exist there.
-   * Without it, any manifest or lockfile change in a bundled package captures everything.
-   */
+  /** Undefined when the file didn't exist at the base commit. */
   readBaseFile?: (file: string) => Promise<string | undefined>;
-  /**
-   * The project's own ovr.config, repo-relative. A change to it only captures everything when
-   * `changedCaptureSettings` names a setting that changes the screenshots.
-   */
   ovrConfig?: { file: string; changedCaptureSettings: () => Promise<string | null> };
-  /** Package name globs that change how stories build, on top of the known build tools. */
   buildDependencies?: string[];
 };
 
@@ -50,7 +42,6 @@ const LOCKFILE =
 const CONFIG_FILE = /(^|\/)([^/]+\.config\.[cm]?[jt]s|tsconfig[^/]*\.json)$/;
 const NON_RENDERING = /\.md$|(^|\/)\.(github|changeset)\//;
 
-// Manifest fields that change what a bundler resolves. devDependencies and scripts don't.
 const BUNDLED_MANIFEST_FIELDS = [
   "dependencies",
   "peerDependencies",
@@ -63,8 +54,7 @@ const BUNDLED_MANIFEST_FIELDS = [
   "sideEffects",
 ] as const;
 
-// Storybook frameworks, bundlers, compilers and CSS toolchains: they shape every story's output
-// without appearing in the module graph.
+// Shape every story's output without appearing in the module graph.
 const BUILD_TOOLS = [
   "storybook",
   "storybook-*",
@@ -203,7 +193,6 @@ export const findAffectedStories = async ({
     ),
   );
 
-  // Why a manifest change could change the bundle, or null when only other fields changed.
   const manifestChange = async (file: string): Promise<string | null> => {
     const base = parseManifest(await readBaseFile!(file));
     const current = parseManifest(await readText(path.join(repoRoot, file)));
@@ -216,7 +205,6 @@ export const findAffectedStories = async ({
     return field ? `${file} changed "${field}"` : null;
   };
 
-  // Why a lockfile change could change the bundle, or null when no bundled package moved.
   const lockfileChange = async (file: string): Promise<string | null> => {
     const base = readLockfileVersions(file, (await readBaseFile!(file)) ?? "");
     const current = readLockfileVersions(file, (await readText(path.join(repoRoot, file))) ?? "");

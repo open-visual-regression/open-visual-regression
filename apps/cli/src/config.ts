@@ -64,10 +64,7 @@ export const loadOvrConfig = async (
   return loaded.default;
 };
 
-/**
- * Loads another version of the config file, such as the one at the base commit. It is written
- * next to the config file so its relative imports resolve, though to today's files.
- */
+// Written next to the config file so its relative imports resolve.
 export const loadOvrConfigSource = async (
   configFile: string,
   source: string,
