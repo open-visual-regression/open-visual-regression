@@ -112,7 +112,7 @@ export const purgeExpiredBuilds = async (
     }
 
     // The outbox row and the build row are written in the same transaction so a build
-    // promoted to a baseline mid-batch still fails the baselines FK and rolls back both,
+    // promoted to a baseline mid-batch still fails the cascade's FK and rolls back both,
     // instead of leaving an outbox entry for storage that was never actually orphaned.
     await dbClient.transaction(async (tx) => {
       await dbClient.storageOutbox.insertMany(
@@ -123,7 +123,7 @@ export const purgeExpiredBuilds = async (
           prefix: getBuildPrefix(projectId, buildId),
         })),
       );
-      await dbClient.builds.purgeMany(tx, buildIds);
+      await dbClient.builds.removeMany(tx, buildIds);
     });
 
     buildsPurged += buildIds.length;
