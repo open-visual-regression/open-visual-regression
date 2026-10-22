@@ -1,5 +1,5 @@
 {
-  "id": "e87389c9-1284-4337-9721-556c25d4d74f",
+  "id": "b561445c-f207-4f5f-bbfb-39234b889e4b",
   "prevId": "7f35261f-f82a-4ef7-b97c-db29566ded73",
   "version": "7",
   "dialect": "postgresql",
@@ -443,7 +443,7 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "concurrently": true,
           "method": "btree",
           "with": {}
         }
@@ -1154,7 +1154,7 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "concurrently": true,
           "method": "btree",
           "with": {}
         }
@@ -1445,7 +1445,7 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "concurrently": true,
           "method": "btree",
           "with": {}
         },
@@ -1460,7 +1460,7 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "concurrently": true,
           "method": "btree",
           "with": {}
         }
@@ -1570,7 +1570,7 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "concurrently": true,
           "method": "btree",
           "with": {}
         }
@@ -1698,7 +1698,7 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "concurrently": true,
           "method": "btree",
           "with": {}
         },
@@ -2763,7 +2763,7 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "concurrently": true,
           "method": "btree",
           "with": {}
         },
@@ -2778,7 +2778,7 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "concurrently": true,
           "method": "btree",
           "with": {}
         }
