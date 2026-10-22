@@ -1,24 +1,12 @@
-import { Queue } from "bullmq";
-
 import { resolveStaleBuilds } from "@ovr/builds/reaper";
 import { dbClient } from "@ovr/db/client";
-import { QueueName, type CaptureGroupJobPayload, type RedisConnection } from "@ovr/queue";
+import { QueueName } from "@ovr/queue";
 import { enqueueCaptureGroup, enqueueCaptureGroups, enqueueFinalize } from "@ovr/queue/producer";
 
 import { describe, expect, test } from "../../__tests__/fixtures";
 
 const STALE_MINUTES = 30;
 const OLD_TIMESTAMP = "2020-01-01T00:00:00.000Z";
-
-const findWaitingCaptureGroups = async (connection: RedisConnection, buildId: string) => {
-  const queue = new Queue<CaptureGroupJobPayload>(QueueName.SNAPSHOT_CAPTURE, { connection });
-  try {
-    const jobs = await queue.getJobs(["waiting", "delayed", "prioritized", "paused"]);
-    return jobs.filter((job) => job.data.buildId === buildId);
-  } finally {
-    await queue.close();
-  }
-};
 
 describe("reaper", () => {
   describe("resolveStaleBuilds", () => {
