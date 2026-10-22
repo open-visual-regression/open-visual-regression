@@ -1,3 +1,5 @@
+import { setTimeout as sleep } from "node:timers/promises";
+
 import { Queue, Worker } from "bullmq";
 import type { Redis } from "ioredis";
 import { vi } from "vitest";
@@ -239,37 +241,29 @@ describe("queue", () => {
     test("should run one purge job at a time across every worker", async ({
       connection,
       openQueue,
+      openWorker,
     }) => {
       await setPurgeConcurrency(connection, 1);
-      let running = 0;
-      let mostRunning = 0;
-      const processor = async () => {
-        mostRunning = Math.max(mostRunning, ++running);
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        running--;
-      };
-      const workers = [
-        new Worker(QueueName.BUILD_PURGE, processor, { connection, concurrency: 2 }),
-        new Worker(QueueName.BUILD_PURGE, processor, { connection, concurrency: 2 }),
-      ];
+      openWorker(QueueName.BUILD_PURGE, () => sleep(100), { concurrency: 2 });
+      openWorker(QueueName.BUILD_PURGE, () => sleep(100), { concurrency: 2 });
+      const queue = openQueue(QueueName.BUILD_PURGE);
 
-      try {
-        await enqueuePurgeMany(
-          ["a", "b", "c", "d"].map((projectId) => ({ projectId })),
-          connection,
-        );
-        await vi.waitFor(
-          async () =>
-            expect(await openQueue(QueueName.BUILD_PURGE).getJobCounts("completed")).toEqual({
-              completed: 4,
-            }),
-          { timeout: 5000 },
-        );
-      } finally {
-        await Promise.all(workers.map((worker) => worker.close()));
-      }
+      await enqueuePurgeMany(
+        ["a", "b", "c", "d"].map((projectId) => ({ projectId })),
+        connection,
+      );
+      await vi.waitFor(
+        async () => expect(await queue.getJobCounts("completed")).toEqual({ completed: 4 }),
+        { timeout: 5000 },
+      );
 
-      expect(mostRunning).toBe(1);
+      const runs = (await queue.getJobs(["completed"]))
+        .map((job) => ({ start: job.processedOn!, end: job.finishedOn! }))
+        .sort((a, b) => a.start - b.start);
+      const overlapping = runs.filter(
+        (run, index) => index > 0 && run.start < runs[index - 1]!.end,
+      );
+      expect(overlapping).toEqual([]);
     });
   });
 
