@@ -1,5 +1,11 @@
 # @ovr/db
 
+## 0.4.4
+
+### Patch Changes
+
+- [#417](https://github.com/open-visual-regression/open-visual-regression/pull/417) [`26e384d`](https://github.com/open-visual-regression/open-visual-regression/commit/26e384dce69f59d73896bf27bb95860329bab761) Thanks [@tgfischer](https://github.com/tgfischer)! - The daily retention purge is gentler on small databases. It deletes expired builds in small batches with a pause between them, stops after a per-project time budget, runs one project at a time across all workers, and logs a summary for each project. Tune it with `OVR_PURGE_CONCURRENCY`, `OVR_PURGE_BATCH_SIZE`, `OVR_PURGE_BATCH_PAUSE_MS` and `OVR_PURGE_TIME_BUDGET_MS`, or `worker.purge.*` in the Helm chart.
+
 ## 0.4.3
 
 ### Patch Changes
