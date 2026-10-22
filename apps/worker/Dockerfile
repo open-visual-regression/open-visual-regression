@@ -3,7 +3,7 @@
 # Build from the repository root:
 #   docker build -f apps/worker/Dockerfile -t open-visual-regression/worker .
 
-ARG NODE_VERSION=24.16.0
+ARG NODE_VERSION=24.22.1
 # Keep in sync with the pinned "playwright" version in apps/worker, packages/capture and packages/capture-browser.
 ARG PLAYWRIGHT_VERSION=1.61.0
 # Keep in sync with the "turbo" devDependency in the root package.json.
