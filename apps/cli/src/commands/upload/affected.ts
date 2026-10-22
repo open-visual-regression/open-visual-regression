@@ -1,11 +1,19 @@
 import path from "node:path";
+import { isDeepStrictEqual } from "node:util";
 
 import { findAffectedStories } from "@ovr/storybook-compat/affectedStories";
 import type { StoryTarget } from "@ovr/storybook-compat/manifest";
 
 import type { OvrClient } from "../../client";
-import type { OnlyAffectedConfig } from "../../defineConfig";
-import { getRepoRoot, isShallowRepository, listAncestorCommits, listChangedFiles } from "../../git";
+import { loadOvrConfigSource, resolveViewports, resolveWaitForTimeout } from "../../config";
+import type { OnlyAffectedConfig, OvrConfig } from "../../defineConfig";
+import {
+  getRepoRoot,
+  isShallowRepository,
+  listAncestorCommits,
+  listChangedFiles,
+  readFileAtCommit,
+} from "../../git";
 
 const MAX_ANCESTORS = 1000;
 const MAX_LISTED_STORY_FILES = 20;
@@ -16,11 +24,30 @@ type FindUnaffectedTargetsInput = {
   cwd: string;
   targets: StoryTarget[];
   config?: OnlyAffectedConfig;
+  ovrConfig?: { file: string; config: OvrConfig | undefined };
   log?: (message: string) => void;
+};
+
+export type UnaffectedTargets = {
+  unaffectedTargetIds: string[];
+  captureAllReason?: string;
 };
 
 const describeError = (error: unknown): string =>
   error instanceof Error ? error.message.split("\n")[0]! : String(error);
+
+const describeCaptureSettingsChange = (
+  base: OvrConfig | undefined,
+  current: OvrConfig | undefined,
+): string | null => {
+  if (!isDeepStrictEqual(resolveViewports(base), resolveViewports(current))) {
+    return "viewports changed";
+  }
+  if (resolveWaitForTimeout(base) !== resolveWaitForTimeout(current)) {
+    return "waitForTimeout changed";
+  }
+  return null;
+};
 
 const toRepoGlobs = (globs: string[] | undefined, repoRoot: string, cwd: string): string[] => {
   const prefix = path.relative(repoRoot, cwd).split(path.sep).join("/");
@@ -33,11 +60,12 @@ export const findUnaffectedTargets = async ({
   cwd,
   targets,
   config,
+  ovrConfig,
   log = console.log,
-}: FindUnaffectedTargetsInput): Promise<string[]> => {
-  const captureAll = (reason: string): string[] => {
+}: FindUnaffectedTargetsInput): Promise<UnaffectedTargets> => {
+  const captureAll = (reason: string): UnaffectedTargets => {
     log(`Capturing every story: ${reason}.`);
-    return [];
+    return { unaffectedTargetIds: [], captureAllReason: reason };
   };
 
   let repoRoot: string;
@@ -80,14 +108,41 @@ export const findUnaffectedTargets = async ({
     );
   }
 
-  const result = await findAffectedStories({
-    storybookDir,
-    repoRoot,
-    projectDir: cwd,
-    changedFiles,
-    externals: toRepoGlobs(config?.externals, repoRoot, cwd),
-    untraced: toRepoGlobs(config?.untraced, repoRoot, cwd),
-  });
+  const readBaseFile = (file: string) => readFileAtCommit(cwd, base.commitSha, file);
+  const toRepoPath = (file: string) => path.relative(repoRoot, file).split(path.sep).join("/");
+
+  let result: Awaited<ReturnType<typeof findAffectedStories>>;
+  try {
+    result = await findAffectedStories({
+      storybookDir,
+      repoRoot,
+      projectDir: cwd,
+      changedFiles,
+      externals: toRepoGlobs(config?.externals, repoRoot, cwd),
+      untraced: toRepoGlobs(config?.untraced, repoRoot, cwd),
+      buildDependencies: config?.buildDependencies,
+      readBaseFile,
+      ...(ovrConfig && {
+        ovrConfig: {
+          file: toRepoPath(ovrConfig.file),
+          changedCaptureSettings: async () => {
+            const source = await readBaseFile(toRepoPath(ovrConfig.file));
+            try {
+              const baseConfig =
+                source === undefined
+                  ? undefined
+                  : await loadOvrConfigSource(ovrConfig.file, source);
+              return describeCaptureSettingsChange(baseConfig, ovrConfig.config);
+            } catch (error) {
+              return `could not load ovr.config from ${base.commitSha.slice(0, 7)} (${describeError(error)})`;
+            }
+          },
+        },
+      }),
+    });
+  } catch (error) {
+    return captureAll(`could not compare with ${base.commitSha} (${describeError(error)})`);
+  }
 
   if (result.mode === "all") {
     return captureAll(result.reason);
@@ -108,5 +163,5 @@ export const findUnaffectedTargets = async ({
     log(`  …and ${result.storyFiles.length - MAX_LISTED_STORY_FILES} more story files`);
   }
 
-  return unaffected;
+  return { unaffectedTargetIds: unaffected };
 };

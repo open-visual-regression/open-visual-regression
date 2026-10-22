@@ -34,3 +34,18 @@ export const listChangedFiles = async (cwd: string, base: string): Promise<strin
 
   return [...new Set([...splitNul(changed), ...splitNul(untracked)])];
 };
+
+export const readFileAtCommit = async (
+  cwd: string,
+  commit: string,
+  file: string,
+): Promise<string | undefined> => {
+  const root = await getRepoRoot(cwd);
+  const spec = `${commit}:${file}`;
+  try {
+    await git(root, ["cat-file", "-e", "--end-of-options", spec]);
+  } catch {
+    return undefined;
+  }
+  return git(root, ["show", "--end-of-options", spec]);
+};

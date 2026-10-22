@@ -94,6 +94,7 @@ export const confirmUploadInputSchema = z.object({
   diffThreshold: z.number().min(0.01).max(1).optional(),
   waitForTimeout: z.number().int().min(0).max(30_000).optional(),
   unaffectedTargetIds: z.array(z.string().min(1)).optional(),
+  captureAllReason: z.string().trim().min(1).max(500).optional(),
 });
 
 export type ConfirmUploadInputSchema = z.infer<typeof confirmUploadInputSchema>;
@@ -160,6 +161,7 @@ export const buildDetailSchema = buildSchema.extend({
   isReviewable: z.boolean(),
   commitUrl: z.string().nullable(),
   branchUrl: z.string().nullable(),
+  captureAllReason: z.string().nullable(),
 });
 
 export type BuildDetailSchema = z.infer<typeof buildDetailSchema>;

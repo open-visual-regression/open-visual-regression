@@ -47,6 +47,23 @@ const renderComponent = ({
 };
 
 describe("BuildHeader", () => {
+  it("should say why --only-affected captured every story", () => {
+    renderComponent({
+      build: mocks.build.generateBuild({ captureAllReason: "viewports changed" }),
+    });
+
+    expect(screen.getByText("Captured every story")).toBeVisible();
+    expect(
+      screen.getByText("--only-affected could not narrow this build down: viewports changed."),
+    ).toBeVisible();
+  });
+
+  it("should not mention --only-affected when the build captured only what it needed", () => {
+    renderComponent({ build: mocks.build.generateBuild({ captureAllReason: null }) });
+
+    expect(screen.queryByText("Captured every story")).not.toBeInTheDocument();
+  });
+
   it("should render the SegmentedProgress segments with the correct counts", () => {
     renderComponent({ build: mocks.build.generateBuild({ status: "needs_review" }) });
 

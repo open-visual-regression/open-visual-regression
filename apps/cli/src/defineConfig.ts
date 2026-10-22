@@ -39,6 +39,8 @@ export type OnlyAffectedConfig = {
   externals?: string[];
   /** Globs of files that never affect a story. */
   untraced?: string[];
+  /** Package name globs, like a bundler plugin, whose version bump affects every story. */
+  buildDependencies?: string[];
 };
 
 /** Per-story override, set via Storybook `parameters.ovr` on a story or its `meta`. */

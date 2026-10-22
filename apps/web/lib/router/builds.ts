@@ -91,6 +91,7 @@ export const confirmUpload = os.builds.confirmUpload
       diffThreshold: input.diffThreshold ?? DEFAULT_DIFF_THRESHOLD,
       waitForTimeout: input.waitForTimeout,
       unaffectedTargetIds: input.unaffectedTargetIds,
+      captureAllReason: input.captureAllReason,
     });
 
     if (result.status === "error") {
@@ -348,11 +349,12 @@ export const getOne = os.builds.getOne
     const { build, project } = context;
 
     const isLatestBuild = await checkIsLatestBuild(build);
-    const [canceler, rebuildable, reviewable, gitIntegration] = await Promise.all([
+    const [canceler, rebuildable, reviewable, gitIntegration, extractDefaults] = await Promise.all([
       build.canceledBy ? dbClient.users.findById(build.canceledBy) : null,
       checkRebuildable(build, { isLatestBuild }),
       checkBuildReviewable(build, { isLatestBuild }),
       dbClient.gitIntegrations.findByProject(project.id),
+      dbClient.buildExtractDefaults.findByBuild(build.id),
     ]);
 
     return {
@@ -376,6 +378,7 @@ export const getOne = os.builds.getOne
         branchUrl: gitIntegration
           ? buildBranchUrl(gitIntegration.provider, gitIntegration.repoIdentifier, build.branch)
           : null,
+        captureAllReason: extractDefaults?.captureAllReason ?? null,
       },
     };
   })

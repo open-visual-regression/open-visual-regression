@@ -59,7 +59,13 @@ It needs:
 - The full git history. In GitHub Actions, check out with `fetch-depth: 0`.
 - A successful build on the project's main branch in the commit's history to compare against.
 
-When any of these is missing, or a change could affect every story (Storybook or build configuration, dependencies, global styles), every story is captured and the CLI prints why. Use [`onlyAffected`](/configuration/config#only-affected) in `ovr.config` for files that affect stories without being imported.
+When any of these is missing, or a change could affect every story (Storybook or build configuration, dependencies, global styles), every story is captured. The CLI prints why, and the build page shows it too. Use [`onlyAffected`](/configuration/config#only-affected) in `ovr.config` for files that affect stories without being imported.
+
+Some changes look global but are compared with the main-branch build's commit first, so routine upgrades don't capture everything:
+
+- **`ovr.config`**: every story is captured only when its viewports or `waitForTimeout` changed. Editing `onlyAffected` globs or `serverUrl` doesn't.
+- **`package.json`** in a package the Storybook bundles: only a change to `dependencies`, `peerDependencies`, `optionalDependencies`, `exports`, `main`, `module`, `browser`, `imports` or `sideEffects` counts. Bumping `devDependencies` or `scripts` doesn't.
+- **Lockfiles** (`pnpm-lock.yaml`, `package-lock.json`, `yarn.lock`, `bun.lock`): only packages that resolve to a different version count, and only when the Storybook bundles them or they build it (Storybook, Vite, Webpack, Babel, SWC, PostCSS, Tailwind, Sass and similar, plus [`onlyAffected.buildDependencies`](/configuration/config#only-affected)). Upgrading the OVR CLI or a test runner doesn't. The binary `bun.lockb` always captures everything.
 
 <Note>
   We recommend it for pull requests only, and capturing every story on the main branch.

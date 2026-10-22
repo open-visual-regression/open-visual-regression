@@ -1,4 +1,6 @@
+import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
+import { rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -33,7 +35,7 @@ const DEFAULT_VIEWPORTS: ResolvedViewport[] = [
 
 const CONFIG_FILENAMES = ["ovr.config.ts", "ovr.config.js", "ovr.config.mjs"];
 
-const findConfigPath = (cwd: string, configPath?: string): string | undefined => {
+export const findConfigPath = (cwd: string, configPath?: string): string | undefined => {
   if (configPath) {
     const resolved = path.resolve(cwd, configPath);
     if (!existsSync(resolved)) {
@@ -60,6 +62,25 @@ export const loadOvrConfig = async (
   const jiti = createJiti(pathToFileURL(path.join(cwd, "/")).href);
   const loaded = await jiti.import<{ default: OvrConfig }>(resolvedConfigPath);
   return loaded.default;
+};
+
+// Written next to the config file so its relative imports resolve.
+export const loadOvrConfigSource = async (
+  configFile: string,
+  source: string,
+): Promise<OvrConfig | undefined> => {
+  const copy = path.join(
+    path.dirname(configFile),
+    `.ovr-config-${randomUUID()}${path.extname(configFile)}`,
+  );
+  await writeFile(copy, source);
+  try {
+    const jiti = createJiti(pathToFileURL(copy).href, { moduleCache: false });
+    const loaded = await jiti.import<{ default: OvrConfig }>(copy);
+    return loaded.default;
+  } finally {
+    await rm(copy, { force: true });
+  }
 };
 
 export const resolveServerUrl = (config: OvrConfig | undefined, override?: string): string => {

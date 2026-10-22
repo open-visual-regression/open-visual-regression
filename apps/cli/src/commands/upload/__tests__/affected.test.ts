@@ -5,6 +5,7 @@ import path from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { loadOvrConfig } from "../../../config";
 import { findUnaffectedTargets } from "../affected";
 
 let repo: string;
@@ -60,6 +61,10 @@ const writeStorybookBuild = async (): Promise<string> => {
         { name: "./src/Form.stories.tsx", reasons: [{ moduleName: STORIES }] },
         { name: "./src/Form.tsx", reasons: [{ moduleName: "./src/Form.stories.tsx" }] },
         {
+          name: "./../../node_modules/.pnpm/clsx@2.1.1/node_modules/clsx/dist/clsx.mjs",
+          reasons: [{ moduleName: "./src/Form.tsx" }],
+        },
+        {
           name: STORIES,
           reasons: [{ moduleName: "/virtual:/@storybook/builder-vite/vite-app.js" }],
         },
@@ -89,16 +94,32 @@ const run = async (
   config?: Parameters<typeof findUnaffectedTargets>[0]["config"],
 ) => {
   const log = vi.fn<(message: string) => void>();
-  const unaffected = await findUnaffectedTargets({
+  const configFile = path.join(projectDir, "ovr.config.ts");
+  const { unaffectedTargetIds, captureAllReason } = await findUnaffectedTargets({
     client: client as never,
     storybookDir: await writeStorybookBuild(),
     cwd: projectDir,
     targets,
     config,
+    ovrConfig: { file: configFile, config: await loadOvrConfig(projectDir) },
     log,
   });
-  return { unaffected, output: log.mock.calls.map(([line]) => line).join("\n") };
+  return {
+    unaffected: unaffectedTargetIds,
+    captureAllReason,
+    output: log.mock.calls.map(([line]) => line).join("\n"),
+  };
 };
+
+const pnpmLock = (packages: Record<string, string>): string =>
+  `lockfileVersion: '9.0'\n\npackages:\n${Object.entries(packages)
+    .map(([name, version]) => `  '${name}@${version}':\n    resolution: {integrity: sha512-x}\n`)
+    .join("")}`;
+
+const ovrConfigSource = (config: Record<string, unknown>): string =>
+  `export default ${JSON.stringify(config)};\n`;
+
+const desktop = { name: "desktop", browser: "chromium", width: 1280 };
 
 beforeEach(async () => {
   repo = await realpath(await mkdtemp(path.join(tmpdir(), "ovr-cli-affected-")));
@@ -204,6 +225,105 @@ describe("findUnaffectedTargets", () => {
     });
 
     expect(unaffected).toEqual(["button--default", "form--default"]);
+  });
+
+  it("ignores a routine CLI upgrade in the manifest and lockfile", async () => {
+    await write(
+      "apps/web/package.json",
+      JSON.stringify({ devDependencies: { "@open-visual-regression/cli": "0.13.0" } }),
+    );
+    await write(
+      "pnpm-lock.yaml",
+      pnpmLock({ "@open-visual-regression/cli": "0.13.0", clsx: "2.1.1" }),
+    );
+    const base = commitAll();
+    await write(
+      "apps/web/package.json",
+      JSON.stringify({ devDependencies: { "@open-visual-regression/cli": "0.14.2" } }),
+    );
+    await write(
+      "pnpm-lock.yaml",
+      pnpmLock({ "@open-visual-regression/cli": "0.14.2", clsx: "2.1.1" }),
+    );
+    commitAll();
+
+    const { unaffected, captureAllReason } = await run(
+      clientFor({ id: "build-1", commitSha: base }),
+    );
+
+    expect(unaffected).toEqual(["button--default", "form--default"]);
+    expect(captureAllReason).toBeUndefined();
+  });
+
+  it("ignores an ovr.config change that only adds an untraced glob", async () => {
+    await write("apps/web/ovr.config.ts", ovrConfigSource({ viewports: [desktop] }));
+    const base = commitAll();
+    await write(
+      "apps/web/ovr.config.ts",
+      ovrConfigSource({ viewports: [desktop], onlyAffected: { untraced: ["fixtures/**"] } }),
+    );
+    commitAll();
+
+    const { unaffected } = await run(clientFor({ id: "build-1", commitSha: base }));
+
+    expect(unaffected).toEqual(["button--default", "form--default"]);
+  });
+
+  it("captures everything when ovr.config changes the viewports", async () => {
+    await write("apps/web/ovr.config.ts", ovrConfigSource({ viewports: [desktop] }));
+    const base = commitAll();
+    await write(
+      "apps/web/ovr.config.ts",
+      ovrConfigSource({
+        viewports: [desktop, { name: "mobile", browser: "chromium", width: 375 }],
+      }),
+    );
+    commitAll();
+
+    const { unaffected, captureAllReason } = await run(
+      clientFor({ id: "build-1", commitSha: base }),
+    );
+
+    expect(unaffected).toEqual([]);
+    expect(captureAllReason).toBe("viewports changed");
+  });
+
+  it("captures everything when ovr.config is added with other viewports than the defaults", async () => {
+    const base = commitAll();
+    await write("apps/web/ovr.config.ts", ovrConfigSource({ viewports: [desktop] }));
+
+    const { captureAllReason } = await run(clientFor({ id: "build-1", commitSha: base }));
+
+    expect(captureAllReason).toBe("viewports changed");
+  });
+
+  it("captures everything when a bundled dependency is bumped", async () => {
+    await write("pnpm-lock.yaml", pnpmLock({ clsx: "2.1.1" }));
+    const base = commitAll();
+    await write("pnpm-lock.yaml", pnpmLock({ clsx: "2.1.2" }));
+    commitAll();
+
+    const { unaffected, captureAllReason } = await run(
+      clientFor({ id: "build-1", commitSha: base }),
+    );
+
+    expect(unaffected).toEqual([]);
+    expect(captureAllReason).toBe(
+      "dependencies changed (pnpm-lock.yaml: clsx is bundled into the Storybook)",
+    );
+  });
+
+  it("captures everything when a build tool is bumped", async () => {
+    await write("pnpm-lock.yaml", pnpmLock({ "@storybook/react-vite": "8.5.0" }));
+    const base = commitAll();
+    await write("pnpm-lock.yaml", pnpmLock({ "@storybook/react-vite": "8.6.0" }));
+    commitAll();
+
+    const { captureAllReason } = await run(clientFor({ id: "build-1", commitSha: base }));
+
+    expect(captureAllReason).toBe(
+      "dependencies changed (pnpm-lock.yaml: @storybook/react-vite builds the Storybook)",
+    );
   });
 
   it("captures everything outside a git repository", async () => {

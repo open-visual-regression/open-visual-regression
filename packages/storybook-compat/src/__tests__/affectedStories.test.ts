@@ -107,6 +107,41 @@ const trace = async (
   });
 };
 
+type FileChange = { base?: string; current: string };
+
+const traceAgainstBase = async (
+  changes: Record<string, FileChange>,
+  options: Partial<AffectedStoriesInput> = {},
+): Promise<Awaited<ReturnType<typeof findAffectedStories>>> => {
+  await createRepo(viteRepoFiles);
+  const storybookDir = await writeBuild(viteGraph, viteEntries);
+  for (const [file, { current }] of Object.entries(changes)) {
+    await mkdir(path.join(repoRoot, path.dirname(file)), { recursive: true });
+    await writeFile(path.join(repoRoot, file), current);
+  }
+  return findAffectedStories({
+    storybookDir,
+    projectDir: webDir(),
+    repoRoot,
+    changedFiles: Object.keys(changes),
+    readBaseFile: async (file) => changes[file]?.base,
+    ...options,
+  });
+};
+
+const manifest = (fields: Record<string, unknown>): string =>
+  JSON.stringify({ name: "web", version: "1.0.0", ...fields }, null, 2);
+
+const pnpmLock = (packages: Record<string, string>): string =>
+  `lockfileVersion: '9.0'\n\npackages:\n${Object.entries(packages)
+    .map(([name, version]) => `  '${name}@${version}':\n    resolution: {integrity: sha512-x}\n`)
+    .join("")}`;
+
+const ovrConfig = (reason: string | null) => ({
+  file: "apps/web/ovr.config.ts",
+  changedCaptureSettings: async () => reason,
+});
+
 afterEach(async () => {
   await rm(repoRoot, { recursive: true, force: true });
 });
@@ -253,6 +288,159 @@ describe("findAffectedStories", () => {
     const result = await trace(["apps/worker/vitest.config.ts"]);
 
     expect(result).toMatchObject({ mode: "some", storyIds: [] });
+  });
+
+  it("ignores a change to the project's ovr.config that leaves capture settings alone", async () => {
+    const result = await traceAgainstBase(
+      {
+        "apps/web/ovr.config.ts": {
+          base: "export default { onlyAffected: { untraced: [] } };",
+          current: 'export default { onlyAffected: { untraced: ["fixtures/**"] } };',
+        },
+      },
+      { ovrConfig: ovrConfig(null) },
+    );
+
+    expect(result).toMatchObject({
+      mode: "some",
+      storyIds: [],
+      ignoredFiles: ["apps/web/ovr.config.ts"],
+    });
+  });
+
+  it("captures everything when the project's ovr.config changes its viewports", async () => {
+    const result = await traceAgainstBase(
+      { "apps/web/ovr.config.ts": { base: "a", current: "b" } },
+      { ovrConfig: ovrConfig("viewports changed") },
+    );
+
+    expect(result).toEqual({ mode: "all", reason: "viewports changed" });
+  });
+
+  it("still treats another package's config file as build configuration", async () => {
+    const result = await traceAgainstBase(
+      { "packages/ui/tailwind.config.js": { base: "a", current: "b" } },
+      { ovrConfig: ovrConfig(null) },
+    );
+
+    expect(result).toMatchObject({ mode: "all" });
+  });
+
+  it("ignores a bundled package's manifest when only its devDependencies changed", async () => {
+    const result = await traceAgainstBase({
+      "apps/web/package.json": {
+        base: manifest({ devDependencies: { "@open-visual-regression/cli": "0.13.0" } }),
+        current: manifest({ devDependencies: { "@open-visual-regression/cli": "0.14.2" } }),
+      },
+    });
+
+    expect(result).toMatchObject({ mode: "some", ignoredFiles: ["apps/web/package.json"] });
+  });
+
+  it.each([
+    { field: "dependencies", base: { react: "^18.2.0" }, current: { react: "^19.0.0" } },
+    { field: "exports", base: { ".": "./src/index.ts" }, current: { ".": "./dist/index.js" } },
+    { field: "sideEffects", base: undefined, current: ["*.css"] },
+  ])(
+    "captures everything when a bundled package's manifest changes $field",
+    async ({ field, base, current }) => {
+      const result = await traceAgainstBase({
+        "packages/ui/package.json": {
+          base: manifest({ [field]: base }),
+          current: manifest({ [field]: current }),
+        },
+      });
+
+      expect(result).toEqual({
+        mode: "all",
+        reason: `packages/ui/package.json changed "${field}"`,
+      });
+    },
+  );
+
+  it("captures everything for a new manifest in a bundled package", async () => {
+    const result = await traceAgainstBase({ "apps/web/package.json": { current: manifest({}) } });
+
+    expect(result).toMatchObject({ mode: "all" });
+  });
+
+  it("ignores a lockfile change that only bumps the CLI", async () => {
+    const result = await traceAgainstBase({
+      "pnpm-lock.yaml": {
+        base: pnpmLock({ "@open-visual-regression/cli": "0.13.0", clsx: "2.1.1" }),
+        current: pnpmLock({ "@open-visual-regression/cli": "0.14.2", clsx: "2.1.1" }),
+      },
+    });
+
+    expect(result).toMatchObject({
+      mode: "some",
+      storyIds: [],
+      ignoredFiles: ["pnpm-lock.yaml"],
+    });
+  });
+
+  it("ignores a lockfile change to packages the Storybook neither bundles nor builds with", async () => {
+    const result = await traceAgainstBase({
+      "pnpm-lock.yaml": {
+        base: pnpmLock({ bullmq: "5.80.0", eslint: "9.0.0" }),
+        current: pnpmLock({ bullmq: "5.81.3", eslint: "9.1.0" }),
+      },
+    });
+
+    expect(result).toMatchObject({ mode: "some", storyIds: [] });
+  });
+
+  it("captures everything when a lockfile bumps a dependency the Storybook bundles", async () => {
+    const result = await traceAgainstBase({
+      "pnpm-lock.yaml": {
+        base: pnpmLock({ clsx: "2.1.1" }),
+        current: pnpmLock({ clsx: "2.1.2" }),
+      },
+    });
+
+    expect(result).toEqual({
+      mode: "all",
+      reason: "dependencies changed (pnpm-lock.yaml: clsx is bundled into the Storybook)",
+    });
+  });
+
+  it.each(["vite", "@storybook/react-vite", "tailwindcss", "sass"])(
+    "captures everything when a lockfile bumps the build tool %s",
+    async (name) => {
+      const result = await traceAgainstBase({
+        "pnpm-lock.yaml": {
+          base: pnpmLock({ [name]: "1.0.0" }),
+          current: pnpmLock({ [name]: "1.0.1" }),
+        },
+      });
+
+      expect(result).toEqual({
+        mode: "all",
+        reason: `dependencies changed (pnpm-lock.yaml: ${name} builds the Storybook)`,
+      });
+    },
+  );
+
+  it("captures everything when a lockfile bumps a configured build dependency", async () => {
+    const result = await traceAgainstBase(
+      {
+        "pnpm-lock.yaml": {
+          base: pnpmLock({ "@acme/design-tokens": "1.0.0" }),
+          current: pnpmLock({ "@acme/design-tokens": "1.1.0" }),
+        },
+      },
+      { buildDependencies: ["@acme/*"] },
+    );
+
+    expect(result).toMatchObject({ mode: "all" });
+  });
+
+  it("captures everything when the lockfile can't be read", async () => {
+    const result = await traceAgainstBase({
+      "apps/web/bun.lockb": { base: "\u0000a", current: "\u0000b" },
+    });
+
+    expect(result).toEqual({ mode: "all", reason: "dependencies changed (apps/web/bun.lockb)" });
   });
 
   it("captures everything when a file matches externals", async () => {

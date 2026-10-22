@@ -104,6 +104,17 @@ export const Rejected: Story = {
   },
 };
 
+export const CapturedEveryStory: Story = {
+  args: {
+    build: mocks.build.generateBuild({
+      ...buildOverrides,
+      status: "needs_review",
+      captureAllReason: "dependencies changed (pnpm-lock.yaml: vite builds the Storybook)",
+    }),
+    snapshotCounts,
+  },
+};
+
 export const Errored: Story = {
   args: {
     build: mocks.build.generateBuild({

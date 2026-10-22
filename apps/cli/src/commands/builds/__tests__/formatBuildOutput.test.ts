@@ -20,6 +20,7 @@ const BUILD: BuildDetailSchema = {
   isReviewable: true,
   commitUrl: null,
   branchUrl: null,
+  captureAllReason: null,
 };
 
 describe("formatBuildOutput", () => {
