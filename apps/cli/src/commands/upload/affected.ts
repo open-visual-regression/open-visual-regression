@@ -1,4 +1,5 @@
 import path from "node:path";
+import { isDeepStrictEqual } from "node:util";
 
 import { findAffectedStories } from "@ovr/storybook-compat/affectedStories";
 import type { StoryTarget } from "@ovr/storybook-compat/manifest";
@@ -39,7 +40,7 @@ const describeCaptureSettingsChange = (
   base: OvrConfig | undefined,
   current: OvrConfig | undefined,
 ): string | null => {
-  if (JSON.stringify(resolveViewports(base)) !== JSON.stringify(resolveViewports(current))) {
+  if (!isDeepStrictEqual(resolveViewports(base), resolveViewports(current))) {
     return "viewports changed";
   }
   if (resolveWaitForTimeout(base) !== resolveWaitForTimeout(current)) {

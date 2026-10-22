@@ -1,49 +1,34 @@
 import path from "node:path";
+import { isDeepStrictEqual } from "node:util";
+
+import { parse as parseDependencyPath } from "@pnpm/dependency-path";
+import { parseResolution, parseSyml } from "@yarnpkg/parsers";
+import { parse as parseJsonc } from "jsonc-parser";
+import { parse as parseYaml } from "yaml";
 
 export type LockfileVersions = Map<string, Set<string>>;
 
-const addVersion = (versions: LockfileVersions, name: string, version: string): void => {
-  if (!name || !version) {
-    return;
-  }
-  const known = versions.get(name) ?? new Set<string>();
-  known.add(version);
-  versions.set(name, known);
-};
+type Entry = { name?: string; version?: string };
 
-const unquote = (value: string): string => value.trim().replace(/^["']|["']$/g, "");
-
-const splitNameAtVersion = (spec: string): [string, string] | undefined => {
-  const at = spec.indexOf("@", 1);
-  return at > 0 ? [spec.slice(0, at), spec.slice(at + 1)] : undefined;
-};
-
-// v9 `name@1.0.0(peer@2.0.0)`, v6 `/name@1.0.0(peer@2.0.0)`, v5 `/name/1.0.0_peer@2.0.0`.
-const PNPM_V5_KEY = /^((?:@[^/]+\/)?[^/@]+)\/(\d[^/_]*)(?:_.*)?$/;
-
-const parsePnpmKey = (key: string): [string, string] | undefined => {
-  const spec = unquote(key).replace(/^\//, "").replace(/\(.*$/, "");
-  const v5 = PNPM_V5_KEY.exec(spec);
-  return v5 ? [v5[1]!, v5[2]!] : splitNameAtVersion(spec);
-};
-
-const parsePnpmLock = (contents: string): LockfileVersions => {
+const toVersions = (entries: Entry[]): LockfileVersions => {
   const versions: LockfileVersions = new Map();
-  let inPackages = false;
-
-  for (const line of contents.split("\n")) {
-    if (/^\S/.test(line)) {
-      inPackages = /^(packages|snapshots):\s*$/.test(line);
-      continue;
-    }
-    const entry = inPackages ? /^ {2}(\S.*):\s*$/.exec(line) : null;
-    const nameAndVersion = entry && parsePnpmKey(entry[1]!);
-    if (nameAndVersion) {
-      addVersion(versions, ...nameAndVersion);
+  for (const { name, version } of entries) {
+    if (name && version) {
+      versions.set(name, (versions.get(name) ?? new Set()).add(version));
     }
   }
-
   return versions;
+};
+
+const nameOf = (descriptor: string): string | undefined =>
+  parseResolution(descriptor).descriptor.fullName;
+
+const parsePnpmLock = (contents: string): Entry[] => {
+  const lock = parseYaml(contents) as Record<string, Record<string, unknown> | undefined>;
+  return [...Object.keys(lock.packages ?? {}), ...Object.keys(lock.snapshots ?? {})].map((key) =>
+    // v6 keys start with "/".
+    parseDependencyPath(key.replace(/^\//, "")),
+  );
 };
 
 type NpmLockV1Dependencies = Record<
@@ -51,71 +36,38 @@ type NpmLockV1Dependencies = Record<
   { version?: string; dependencies?: NpmLockV1Dependencies }
 >;
 
-const parseNpmLock = (contents: string): LockfileVersions => {
-  const versions: LockfileVersions = new Map();
+const parseNpmLock = (contents: string): Entry[] => {
   const lock = JSON.parse(contents) as {
     packages?: Record<string, { version?: string }>;
     dependencies?: NpmLockV1Dependencies;
   };
-
   if (lock.packages) {
-    for (const [key, { version }] of Object.entries(lock.packages)) {
-      const at = key.lastIndexOf("node_modules/");
-      if (at !== -1 && version) {
-        addVersion(versions, key.slice(at + "node_modules/".length), version);
-      }
-    }
-    return versions;
+    return Object.entries(lock.packages)
+      .filter(([key]) => key.includes("node_modules/"))
+      .map(([key, { version }]) => ({ name: key.split("node_modules/").at(-1), version }));
   }
-
-  const walk = (dependencies: NpmLockV1Dependencies = {}): void => {
-    for (const [name, dependency] of Object.entries(dependencies)) {
-      if (dependency.version) {
-        addVersion(versions, name, dependency.version);
-      }
-      walk(dependency.dependencies);
-    }
-  };
-  walk(lock.dependencies);
-  return versions;
+  const flatten = (dependencies: NpmLockV1Dependencies = {}): Entry[] =>
+    Object.entries(dependencies).flatMap(([name, dependency]) => [
+      { name, version: dependency.version },
+      ...flatten(dependency.dependencies),
+    ]);
+  return flatten(lock.dependencies);
 };
 
-// v1 `name@^1.0.0:` + `  version "1.1.2"`; berry `"name@npm:^1.0.0":` + `  version: 1.1.2`.
-const parseYarnLock = (contents: string): LockfileVersions => {
-  const versions: LockfileVersions = new Map();
-  let name: string | undefined;
+const parseYarnLock = (contents: string): Entry[] =>
+  Object.entries(parseSyml(contents) as Record<string, { version?: string }>)
+    .filter(([key]) => key !== "__metadata")
+    .map(([key, { version }]) => ({ name: nameOf(key.split(",")[0]!.trim()), version }));
 
-  for (const line of contents.split("\n")) {
-    if (/^[^\s#].*:\s*$/.test(line)) {
-      const descriptor = unquote(line.replace(/:\s*$/, "").split(",")[0]!);
-      name = splitNameAtVersion(descriptor)?.[0];
-      continue;
-    }
-    const version = name ? /^ {2}version:? "?([^"\s]+)"?\s*$/.exec(line) : null;
-    if (name && version) {
-      addVersion(versions, name, version[1]!);
-    }
-  }
-
-  return versions;
+const parseBunLock = (contents: string): Entry[] => {
+  const lock = parseJsonc(contents) as { packages?: Record<string, [string, ...unknown[]]> };
+  return Object.values(lock.packages ?? {}).map(([spec]) => {
+    const { descriptor } = parseResolution(spec);
+    return { name: descriptor.fullName, version: descriptor.description };
+  });
 };
 
-// `"key": ["name@version", ...]` under "packages".
-const parseBunLock = (contents: string): LockfileVersions => {
-  const versions: LockfileVersions = new Map();
-  const packages = contents.slice(contents.indexOf('"packages"'));
-
-  for (const match of packages.matchAll(/^\s*"[^"]+":\s*\[\s*"([^"]+)"/gm)) {
-    const nameAndVersion = splitNameAtVersion(match[1]!);
-    if (nameAndVersion) {
-      addVersion(versions, ...nameAndVersion);
-    }
-  }
-
-  return versions;
-};
-
-const PARSERS: Record<string, (contents: string) => LockfileVersions> = {
+const PARSERS: Record<string, (contents: string) => Entry[]> = {
   "pnpm-lock.yaml": parsePnpmLock,
   "package-lock.json": parseNpmLock,
   "npm-shrinkwrap.json": parseNpmLock,
@@ -133,21 +85,14 @@ export const readLockfileVersions = (
     return undefined;
   }
   try {
-    const versions = parse(contents);
+    const versions = toVersions(parse(contents));
     return versions.size > 0 || contents.trim() === "" ? versions : undefined;
   } catch {
     return undefined;
   }
 };
 
-export const findChangedPackages = (
-  base: LockfileVersions,
-  current: LockfileVersions,
-): string[] => {
-  const sameVersions = (a: Set<string> | undefined, b: Set<string> | undefined): boolean =>
-    a !== undefined && b !== undefined && a.size === b.size && [...a].every((v) => b.has(v));
-
-  return [...new Set([...base.keys(), ...current.keys()])]
-    .filter((name) => !sameVersions(base.get(name), current.get(name)))
+export const findChangedPackages = (base: LockfileVersions, current: LockfileVersions): string[] =>
+  [...new Set([...base.keys(), ...current.keys()])]
+    .filter((name) => !isDeepStrictEqual(base.get(name), current.get(name)))
     .sort();
-};

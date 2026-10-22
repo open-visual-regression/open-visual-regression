@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { isDeepStrictEqual } from "node:util";
 
 import { findChangedPackages, readLockfileVersions } from "./lockfiles";
 import { readModuleGraph, STATS_FILENAME } from "./moduleGraph";
@@ -87,13 +88,6 @@ const BUILD_TOOLS = [
   "@pandacss/*",
   "*-loader",
 ];
-
-const stableStringify = (value: unknown): string =>
-  JSON.stringify(value, (_key, nested: unknown) =>
-    nested && typeof nested === "object" && !Array.isArray(nested)
-      ? Object.fromEntries(Object.entries(nested).sort(([a], [b]) => a.localeCompare(b)))
-      : nested,
-  ) ?? "undefined";
 
 const readText = async (file: string): Promise<string | undefined> => {
   try {
@@ -200,7 +194,7 @@ export const findAffectedStories = async ({
       return `${file} is not traceable but is in a package the Storybook bundles`;
     }
     const field = BUNDLED_MANIFEST_FIELDS.find(
-      (name) => stableStringify(base[name]) !== stableStringify(current[name]),
+      (name) => !isDeepStrictEqual(base[name], current[name]),
     );
     return field ? `${file} changed "${field}"` : null;
   };

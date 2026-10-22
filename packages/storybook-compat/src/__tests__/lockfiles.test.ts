@@ -39,22 +39,19 @@ snapshots:
     });
   });
 
-  it("reads pnpm v6 and v5 package keys", () => {
+  it("reads pnpm v6 package keys", () => {
     const lock = `lockfileVersion: '6.0'
 
 packages:
   /@babel/core@7.24.0:
     resolution: {integrity: sha512-a}
-  /clsx/2.1.1:
+  /@storybook/react@8.5.0(react@18.2.0):
     resolution: {integrity: sha512-b}
-  /@scope/pkg/1.0.0_react@18.2.0:
-    resolution: {integrity: sha512-c}
 `;
 
     expect(versionsOf("pnpm-lock.yaml", lock)).toEqual({
       "@babel/core": ["7.24.0"],
-      clsx: ["2.1.1"],
-      "@scope/pkg": ["1.0.0"],
+      "@storybook/react": ["8.5.0"],
     });
   });
 
@@ -124,6 +121,12 @@ react@^18.0.0:
   it("can't read the binary bun.lockb or a lockfile it doesn't recognize", () => {
     expect(readLockfileVersions("bun.lockb", "\u0000binary")).toBeUndefined();
     expect(readLockfileVersions("pnpm-lock.yaml", "not a lockfile")).toBeUndefined();
+    expect(
+      readLockfileVersions(
+        "pnpm-lock.yaml",
+        "lockfileVersion: 5.4\npackages:\n  /clsx/2.1.1: {}\n",
+      ),
+    ).toBeUndefined();
   });
 });
 
