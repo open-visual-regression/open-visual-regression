@@ -1,5 +1,18 @@
 # @ovr/web
 
+## 0.14.3
+
+### Patch Changes
+
+- [#423](https://github.com/open-visual-regression/open-visual-regression/pull/423) [`226ca93`](https://github.com/open-visual-regression/open-visual-regression/commit/226ca93ce845500ea939a199307dd28c2ceb5a99) Thanks [@tgfischer](https://github.com/tgfischer)! - Index the foreign keys that had no index on their referencing column, including `diffs.baseline_snapshot_id`. Without it, deleting a snapshot scanned every diff, which made the retention purge pin the database for hours. The upgrade builds the indexes without blocking the running app.
+
+- Updated dependencies [[`26e384d`](https://github.com/open-visual-regression/open-visual-regression/commit/26e384dce69f59d73896bf27bb95860329bab761)]:
+  - @ovr/builds@0.2.6
+  - @ovr/db@0.4.4
+  - @ovr/queue@0.2.5
+  - @ovr/reviews@0.1.21
+  - @ovr/git-status@0.1.16
+
 ## 0.14.2
 
 ### Patch Changes
