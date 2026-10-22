@@ -20,14 +20,9 @@ import { alias } from "drizzle-orm/pg-core";
 import { db, type DbClient } from "../db";
 import {
   baselines,
-  buildExtractDefaults,
   builds,
-  diffReviews,
   diffs,
-  gitStatusPublications,
   projects,
-  snapshotLogs,
-  snapshotVariants,
   snapshots,
   type BuildProcessingStatus,
   type BuildReviewStatus,
@@ -426,36 +421,6 @@ export const countInFlight = async (): Promise<InFlightBuildCounts> => {
     counts[row.status as keyof InFlightBuildCounts] = row.count;
   }
   return counts;
-};
-
-// Deletes what the FK cascades would, one statement per table instead of one query per row.
-export const purgeMany = async (tx: DbClient, ids: string[]): Promise<void> => {
-  if (ids.length === 0) {
-    return;
-  }
-
-  const snapshotIds = tx
-    .select({ id: snapshots.id })
-    .from(snapshots)
-    .where(inArray(snapshots.buildId, ids));
-  const diffIds = tx
-    .select({ id: diffs.id })
-    .from(diffs)
-    .where(inArray(diffs.snapshotId, snapshotIds));
-
-  await tx.delete(diffReviews).where(inArray(diffReviews.diffId, diffIds));
-  await tx.delete(diffs).where(inArray(diffs.snapshotId, snapshotIds));
-  // Like the FK's SET NULL, leave updatedAt alone.
-  await tx
-    .update(diffs)
-    .set({ baselineSnapshotId: null, updatedAt: sql`${diffs.updatedAt}` })
-    .where(inArray(diffs.baselineSnapshotId, snapshotIds));
-  await tx.delete(snapshotLogs).where(inArray(snapshotLogs.snapshotId, snapshotIds));
-  await tx.delete(snapshotVariants).where(inArray(snapshotVariants.snapshotId, snapshotIds));
-  await tx.delete(snapshots).where(inArray(snapshots.buildId, ids));
-  await tx.delete(gitStatusPublications).where(inArray(gitStatusPublications.buildId, ids));
-  await tx.delete(buildExtractDefaults).where(inArray(buildExtractDefaults.buildId, ids));
-  await tx.delete(builds).where(inArray(builds.id, ids));
 };
 
 export const findStale = async (cutoff: string, limit: number): Promise<string[]> => {
