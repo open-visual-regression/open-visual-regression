@@ -21,7 +21,7 @@ import {
   type ExtractJobPayload,
 } from "@ovr/queue";
 import { createBuildStatusSubscriber, type BuildStatusEvent } from "@ovr/queue/events";
-import { enqueueCaptureGroup, enqueueExtract } from "@ovr/queue/producer";
+import { enqueueCaptureGroups, enqueueExtract } from "@ovr/queue/producer";
 import { storage } from "@ovr/storage";
 
 import {
@@ -43,7 +43,7 @@ vi.mock("@ovr/queue/producer", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@ovr/queue/producer")>();
   return {
     ...actual,
-    enqueueCaptureGroup: vi.fn<typeof actual.enqueueCaptureGroup>(actual.enqueueCaptureGroup),
+    enqueueCaptureGroups: vi.fn<typeof actual.enqueueCaptureGroups>(actual.enqueueCaptureGroups),
     enqueueExtract: vi.fn<typeof actual.enqueueExtract>(actual.enqueueExtract),
   };
 });
@@ -1402,7 +1402,7 @@ describe("builds", () => {
         userId: user.id,
         viewport: captureConfiguration,
       });
-      vi.mocked(enqueueCaptureGroup).mockRejectedValueOnce(new Error("queue unavailable"));
+      vi.mocked(enqueueCaptureGroups).mockRejectedValueOnce(new Error("queue unavailable"));
 
       await expect(rebuildSnapshots(buildId, [snapshots[0]!.id], user.id)).rejects.toThrow(
         "queue unavailable",

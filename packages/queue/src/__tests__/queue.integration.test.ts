@@ -1,11 +1,13 @@
 import { setTimeout as sleep } from "node:timers/promises";
 
-import { Queue, Worker } from "bullmq";
+import { Queue, Worker, type Job } from "bullmq";
 import type { Redis } from "ioredis";
 import { vi } from "vitest";
 
 import {
+  cancelBuildJobs,
   enqueueCaptureGroup,
+  enqueueCaptureGroups,
   enqueueDiff,
   enqueueExtract,
   enqueueFinalize,
@@ -186,6 +188,88 @@ describe("queue", () => {
       const [scheduler] = await openQueue(QueueName.BUILD_REAPER).getJobSchedulers();
 
       expect(scheduler?.template?.opts?.removeOnComplete).toEqual({ age: 60 * 60, count: 1000 });
+    });
+  });
+
+  describe("enqueueCaptureGroups", () => {
+    const groups = (buildId: string, count: number) =>
+      Array.from({ length: count }, (_, index) => ({
+        browser: "chromium",
+        snapshotIds: [`${buildId}-${index + 1}`],
+      }));
+
+    const processingOrder = async (queue: Queue, jobs: Job<CaptureGroupJobPayload>[]) => {
+      await vi.waitFor(async () =>
+        expect(await Promise.all(jobs.map((job) => job.isCompleted()))).not.toContain(false),
+      );
+      const processed = await Promise.all(jobs.map((job) => queue.getJob(job.id!)));
+      return processed
+        .sort((a, b) => a!.processedOn! - b!.processedOn!)
+        .map((job) => (job!.data as CaptureGroupJobPayload).snapshotIds[0]);
+    };
+
+    test("should interleave a small build queued behind a large one under round-robin", async ({
+      connection,
+      openQueue,
+      openWorker,
+      trackJob,
+    }) => {
+      const jobs = [
+        ...(await enqueueCaptureGroups("main", groups("main", 4), connection, "round-robin")),
+        ...(await enqueueCaptureGroups("pr", groups("pr", 2), connection, "round-robin")),
+      ].map(trackJob);
+
+      openWorker(QueueName.SNAPSHOT_CAPTURE, () => sleep(10), { concurrency: 1 });
+
+      expect(await processingOrder(openQueue(QueueName.SNAPSHOT_CAPTURE), jobs)).toEqual([
+        "main-1",
+        "pr-1",
+        "main-2",
+        "pr-2",
+        "main-3",
+        "main-4",
+      ]);
+    });
+
+    test("should run groups in the order they were added under fifo", async ({
+      connection,
+      openQueue,
+      openWorker,
+      trackJob,
+    }) => {
+      const jobs = [
+        ...(await enqueueCaptureGroups("main", groups("main", 3), connection, "fifo")),
+        ...(await enqueueCaptureGroups("pr", groups("pr", 1), connection, "fifo")),
+      ].map(trackJob);
+
+      openWorker(QueueName.SNAPSHOT_CAPTURE, () => sleep(10), { concurrency: 1 });
+
+      expect(await processingOrder(openQueue(QueueName.SNAPSHOT_CAPTURE), jobs)).toEqual([
+        "main-1",
+        "main-2",
+        "main-3",
+        "pr-1",
+      ]);
+    });
+
+    test("should leave no prioritized groups behind when the build is canceled", async ({
+      connection,
+      openQueue,
+      trackJob,
+    }) => {
+      await enqueueCaptureGroups("superseded", groups("superseded", 3), connection, "round-robin");
+      const [kept] = await enqueueCaptureGroups(
+        "kept",
+        groups("kept", 1),
+        connection,
+        "round-robin",
+      );
+      trackJob(kept!);
+
+      await cancelBuildJobs([{ buildId: "superseded", diffIds: [] }], connection);
+
+      const remaining = await openQueue(QueueName.SNAPSHOT_CAPTURE).getJobs(["prioritized"]);
+      expect(remaining.map((job) => job.id)).toEqual([kept!.id]);
     });
   });
 

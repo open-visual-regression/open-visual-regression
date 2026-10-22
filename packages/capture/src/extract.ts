@@ -9,7 +9,7 @@ import {
 } from "@ovr/capture-browser/storyViewports";
 import type { NamedViewport } from "@ovr/capture-browser/storyViewports";
 import { dbClient } from "@ovr/db/client";
-import { enqueueCaptureGroup, enqueueFinalize } from "@ovr/queue/producer";
+import { enqueueCaptureGroups, enqueueFinalize } from "@ovr/queue/producer";
 import { assertSupportedStorybookBuild } from "@ovr/storybook-compat/version";
 
 import { markSnapshotErrored } from "./snapshots";
@@ -170,7 +170,8 @@ export const extractBuild = async (
     return;
   }
 
-  const groups = toCaptureGroups(snapshots.filter((snapshot) => snapshot.status === "queued"));
-
-  await Promise.all(groups.map((group) => enqueueCaptureGroup({ buildId, ...group })));
+  await enqueueCaptureGroups(
+    buildId,
+    toCaptureGroups(snapshots.filter((snapshot) => snapshot.status === "queued")),
+  );
 };
