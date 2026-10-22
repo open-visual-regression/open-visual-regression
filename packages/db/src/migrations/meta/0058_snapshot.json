@@ -1,6 +1,6 @@
 {
-  "id": "f7ec3dd7-dbda-4813-858a-64119b78a3a2",
-  "prevId": "8b28871e-0c03-4823-96c4-8161ec446ff3",
+  "id": "e6f1a324-ca82-46b0-80b2-de1121b270ea",
+  "prevId": "70020490-a51f-4670-bc0d-e848fd58777c",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -443,7 +443,7 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "concurrently": true,
           "method": "btree",
           "with": {}
         }
@@ -1154,7 +1154,7 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "concurrently": true,
           "method": "btree",
           "with": {}
         }
@@ -1452,7 +1452,7 @@
           ],
           "isUnique": false,
           "where": "\"builds\".\"processing_status\" in ('queued', 'processing')",
-          "concurrently": false,
+          "concurrently": true,
           "method": "btree",
           "with": {}
         },
@@ -1467,7 +1467,7 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "concurrently": true,
           "method": "btree",
           "with": {}
         },
@@ -1482,7 +1482,7 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "concurrently": true,
           "method": "btree",
           "with": {}
         }
@@ -1592,7 +1592,7 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "concurrently": true,
           "method": "btree",
           "with": {}
         }
@@ -1720,7 +1720,7 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "concurrently": true,
           "method": "btree",
           "with": {}
         },
@@ -2785,7 +2785,7 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "concurrently": true,
           "method": "btree",
           "with": {}
         },
@@ -2800,7 +2800,7 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "concurrently": true,
           "method": "btree",
           "with": {}
         }
