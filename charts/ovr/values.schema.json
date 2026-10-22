@@ -273,6 +273,20 @@
           "type": ["string", "integer"],
           "description": "Local disk for caching screenshots. Empty string uses the app default."
         },
+        "queueReportIntervalMs": {
+          "type": ["string", "integer"],
+          "description": "How often one worker logs queue and build counts, in milliseconds. 0 turns it off. Empty string uses the app default."
+        },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Prometheus /metrics endpoint with queue and build gauges.",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "port": { "type": "integer", "minimum": 1, "maximum": 65535 }
+          }
+        },
+        "podAnnotations": { "$ref": "#/definitions/stringMap" },
         "purge": {
           "type": "object",
           "additionalProperties": false,
@@ -341,6 +355,11 @@
           "type": "object",
           "additionalProperties": false,
           "properties": { "from": { "$ref": "#/definitions/objectList" } }
+        },
+        "worker": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "metricsFrom": { "$ref": "#/definitions/objectList" } }
         },
         "egress": { "$ref": "#/definitions/objectList" }
       }

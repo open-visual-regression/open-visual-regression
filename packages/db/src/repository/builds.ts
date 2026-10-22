@@ -407,6 +407,22 @@ export const removeMany = async (tx: DbClient, ids: string[]): Promise<void> => 
   await tx.delete(builds).where(inArray(builds.id, ids));
 };
 
+export type InFlightBuildCounts = { queued: number; processing: number };
+
+export const countInFlight = async (): Promise<InFlightBuildCounts> => {
+  const rows = await db
+    .select({ status: builds.processingStatus, count: count() })
+    .from(builds)
+    .where(inArray(builds.processingStatus, ["queued", "processing"]))
+    .groupBy(builds.processingStatus);
+
+  const counts: InFlightBuildCounts = { queued: 0, processing: 0 };
+  for (const row of rows) {
+    counts[row.status as keyof InFlightBuildCounts] = row.count;
+  }
+  return counts;
+};
+
 export const findStale = async (cutoff: string, limit: number): Promise<string[]> => {
   const diffSnapshots = alias(snapshots, "diff_snapshots");
 

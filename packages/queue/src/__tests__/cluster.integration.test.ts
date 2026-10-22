@@ -1,4 +1,4 @@
-import { Worker } from "bullmq";
+import { Queue, Worker } from "bullmq";
 import { vi } from "vitest";
 
 import {
@@ -9,8 +9,10 @@ import {
 import {
   buildRedisConnection,
   enqueueDiff,
+  getQueueDepths,
   queueOptions,
   QueueName,
+  tryAcquireLock,
   type DiffJobPayload,
 } from "../index";
 import { describe, expect, test } from "./fixtures";
@@ -32,6 +34,24 @@ describe("redis cluster", () => {
     vi.stubEnv("REDIS_MODE", "sentinel");
 
     expect(() => buildRedisConnection("redis://localhost:6379")).toThrow(/REDIS_MODE/);
+  });
+
+  test("should count queued jobs and hold a lock in cluster mode", async ({
+    clusterConnection,
+  }) => {
+    const queue = new Queue(QueueName.SNAPSHOT_DIFF, queueOptions(clusterConnection));
+    try {
+      const job = await queue.add("delayed", {}, { delay: 60_000 });
+      const depths = await getQueueDepths(clusterConnection);
+      await queue.remove(job.id!);
+
+      expect(depths[QueueName.SNAPSHOT_DIFF]).toMatchObject({ delayed: 1 });
+    } finally {
+      await queue.close();
+    }
+    expect(await tryAcquireLock(clusterConnection, "cluster-test", 1000)).toBe(true);
+    expect(await tryAcquireLock(clusterConnection, "cluster-test", 1000)).toBe(false);
+    expect(await clusterConnection.exists("{bull}:lock:cluster-test")).toBe(1);
   });
 
   test("should deliver an enqueued job to a worker", async ({ clusterConnection }) => {

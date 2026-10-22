@@ -143,6 +143,15 @@ worker:
   storybookCacheBytes: ""
   # Local disk for caching screenshots. Empty uses the app default (512 MB).
   imageCacheBytes: ""
+  # How often one worker logs a "queue depth" line. 0 turns it off. Empty uses
+  # the app default (60000).
+  queueReportIntervalMs: ""
+  # Prometheus gauges on /metrics. Every worker serves the same cluster-wide
+  # values, so aggregate with max. Point a scraper at it with podAnnotations.
+  metrics:
+    enabled: false
+    port: 9464
+  podAnnotations: {}
   # Daily retention purge. Empty values use the app defaults.
   purge:
     # Jobs at once across all workers (1).
@@ -213,4 +222,7 @@ networkPolicy:
   enabled: false
   web:
     from: []
+  worker:
+    # Who may scrape worker.metrics. Empty allows any source.
+    metricsFrom: []
   egress: []

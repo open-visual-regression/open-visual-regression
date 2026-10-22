@@ -121,6 +121,10 @@ export const builds = pgTable(
       table.createdAt,
       table.id,
     ),
+    index("builds_inFlight_idx")
+      .on(table.processingStatus)
+      .where(sql`${table.processingStatus} in ('queued', 'processing')`)
+      .concurrently(),
     index("builds_createdBy_idx").on(table.createdBy).concurrently(),
     index("builds_canceledBy_idx").on(table.canceledBy).concurrently(),
   ],

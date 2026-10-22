@@ -12,6 +12,7 @@ import {
   enqueueFlakySnapshotDispatch,
   enqueueFlakySnapshotScanMany,
   getJobNextRunAt,
+  getQueueDepths,
   isJobRunning,
   enqueuePublishStatus,
   enqueuePurgeMany,
@@ -19,6 +20,7 @@ import {
   scheduleJob,
   scheduleReaper,
   setPurgeConcurrency,
+  tryAcquireLock,
   type CaptureGroupJobPayload,
   type DiffJobPayload,
   type ExtractJobPayload,
@@ -186,6 +188,52 @@ describe("queue", () => {
       const [scheduler] = await openQueue(QueueName.BUILD_REAPER).getJobSchedulers();
 
       expect(scheduler?.template?.opts?.removeOnComplete).toEqual({ age: 60 * 60, count: 1000 });
+    });
+  });
+
+  describe("getQueueDepths", () => {
+    test("should count each queue's jobs by state", async ({ connection, openQueue, trackJob }) => {
+      trackJob(
+        await enqueueCaptureGroup(
+          { buildId: "b", browser: "chromium", snapshotIds: [] },
+          connection,
+        ),
+      );
+      trackJob(
+        await enqueueCaptureGroup(
+          { buildId: "b", browser: "chromium", snapshotIds: [] },
+          connection,
+        ),
+      );
+      trackJob(await openQueue(QueueName.SNAPSHOT_DIFF).add("delayed", {}, { delay: 60_000 }));
+
+      const depths = await getQueueDepths(connection);
+
+      expect(depths[QueueName.SNAPSHOT_CAPTURE]).toEqual({
+        waiting: 2,
+        active: 0,
+        delayed: 0,
+        prioritized: 0,
+        "waiting-children": 0,
+        failed: 0,
+      });
+      expect(depths[QueueName.SNAPSHOT_DIFF]).toMatchObject({ waiting: 0, delayed: 1 });
+      expect(Object.keys(depths)).toEqual(Object.values(QueueName));
+    });
+  });
+
+  describe("tryAcquireLock", () => {
+    test("should let one caller hold the lock until it expires", async ({ connection }) => {
+      const [first, second] = await Promise.all([
+        tryAcquireLock(connection, "depth-test", 200),
+        tryAcquireLock(connection, "depth-test", 200),
+      ]);
+
+      expect([first, second].sort()).toEqual([false, true]);
+
+      await sleep(250);
+
+      expect(await tryAcquireLock(connection, "depth-test", 200)).toBe(true);
     });
   });
 

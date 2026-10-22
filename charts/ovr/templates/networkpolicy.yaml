@@ -26,7 +26,15 @@ spec:
       from:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-  {{- else }}
+  {{- else if $.Values.worker.metrics.enabled }}
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: {{ $.Values.worker.metrics.port }}
+      {{- with $.Values.networkPolicy.worker.metricsFrom }}
+      from:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
   {{- end }}
   egress:
     - to:
