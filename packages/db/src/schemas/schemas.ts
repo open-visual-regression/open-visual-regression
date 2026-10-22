@@ -36,8 +36,8 @@ export const projects = pgTable(
       .notNull(),
   },
   (table) => [
-    index("projects_organizationId_idx").on(table.organizationId),
-    index("projects_creatorId_idx").on(table.creatorId),
+    index("projects_organizationId_idx").on(table.organizationId).concurrently(),
+    index("projects_creatorId_idx").on(table.creatorId).concurrently(),
   ],
 );
 
