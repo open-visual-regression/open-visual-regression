@@ -393,6 +393,13 @@
       "when": 1792322850082,
       "tag": "0055_add_snapshot_identity_index",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1792592289146,
+      "tag": "0056_add_foreign_key_indexes",
+      "breakpoints": true
     }
   ]
 }

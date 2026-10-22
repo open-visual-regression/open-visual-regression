@@ -121,6 +121,8 @@ export const builds = pgTable(
       table.createdAt,
       table.id,
     ),
+    index("builds_createdBy_idx").on(table.createdBy),
+    index("builds_canceledBy_idx").on(table.canceledBy),
   ],
 );
 
@@ -319,6 +321,7 @@ export const diffs = pgTable(
   },
   (table) => [
     uniqueIndex("diffs_snapshotId_uidx").on(table.snapshotId),
+    index("diffs_baselineSnapshotId_idx").on(table.baselineSnapshotId),
     index("diffs_matchedVariantId_idx").on(table.matchedVariantId),
   ],
 );
@@ -340,6 +343,7 @@ export const diffReviews = pgTable(
   },
   (table) => [
     uniqueIndex("diff_reviews_diffId_reviewerId_uidx").on(table.diffId, table.reviewerId),
+    index("diff_reviews_reviewerId_idx").on(table.reviewerId),
   ],
 );
 
@@ -380,5 +384,6 @@ export const baselines = pgTable(
       table.targetId,
     ),
     index("baselines_snapshotId_idx").on(table.snapshotId),
+    index("baselines_approvedBy_idx").on(table.approvedBy),
   ],
 );
