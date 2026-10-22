@@ -231,7 +231,7 @@ describe("queue", () => {
 
       expect([first, second].sort()).toEqual([false, true]);
 
-      await new Promise((resolve) => setTimeout(resolve, 250));
+      await sleep(250);
 
       expect(await tryAcquireLock(connection, "depth-test", 200)).toBe(true);
     });
