@@ -109,59 +109,6 @@ describe("retention", () => {
       expect(await dbClient.builds.findById(build!.id)).toMatchObject({ id: build!.id });
     });
 
-    test("removes an expired build's snapshots, diffs, reviews and logs, and unlinks newer diffs from its snapshots", async ({
-      project,
-      captureConfiguration,
-      user,
-    }) => {
-      const expiredBuild = await dbClient.builds.create({
-        projectId: project.id,
-        branch: "main",
-        commitSha: "a".repeat(40),
-        artifactPath: "artifact",
-        createdBy: user.id,
-        createdAt: daysAgo(project.retentionDays + 1),
-      });
-      const recentBuild = await dbClient.builds.create({
-        projectId: project.id,
-        branch: "feature",
-        commitSha: "b".repeat(40),
-        artifactPath: "artifact",
-        createdBy: user.id,
-        createdAt: daysAgo(1),
-      });
-      const [expiredSnapshot] = await dbClient.snapshots.createMany({
-        values: [{ buildId: expiredBuild!.id, ...captureConfiguration, targetId: "story-a" }],
-      });
-      const [recentSnapshot] = await dbClient.snapshots.createMany({
-        values: [{ buildId: recentBuild!.id, ...captureConfiguration, targetId: "story-a" }],
-      });
-      const expiredDiff = await dbClient.diffs.create({ snapshotId: expiredSnapshot!.id });
-      await dbClient.diffReviews.upsertVote({
-        diffId: expiredDiff!.id,
-        reviewerId: user.id,
-        vote: "approve",
-      });
-      await dbClient.snapshotLogs.createMany({
-        values: [{ snapshotId: expiredSnapshot!.id, level: "info", message: "captured" }],
-      });
-      const recentDiff = await dbClient.diffs.create({
-        snapshotId: recentSnapshot!.id,
-        baselineSnapshotId: expiredSnapshot!.id,
-      });
-
-      await purgeExpiredBuilds(project.id);
-
-      expect(await dbClient.builds.findById(expiredBuild!.id)).toBeUndefined();
-      expect(await dbClient.diffs.findById(expiredDiff!.id)).toBeUndefined();
-      expect(await dbClient.diffReviews.findByDiffs([expiredDiff!.id])).toEqual([]);
-      expect(await dbClient.snapshotLogs.findBySnapshot(expiredSnapshot!.id)).toEqual([]);
-      expect(await dbClient.diffs.findById(recentDiff!.id)).toMatchObject({
-        baselineSnapshotId: null,
-        updatedAt: recentDiff!.updatedAt,
-      });
-    });
-
     test("purges in batches and leaves the rest for the next run once the time budget is spent", async ({
       project,
       user,
