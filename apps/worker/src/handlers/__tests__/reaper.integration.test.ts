@@ -132,8 +132,8 @@ describe("reaper", () => {
       project,
       user,
       captureConfiguration,
+      openQueue,
       trackJob,
-      connection,
     }) => {
       const build = await dbClient.builds.create({
         projectId: project.id,
@@ -160,15 +160,13 @@ describe("reaper", () => {
         snapshotId: snapshot!.id,
         updatedAt: OLD_TIMESTAMP,
       });
-      const diffQueue = new Queue(QueueName.SNAPSHOT_DIFF, { connection });
       const retryingDiff = trackJob(
-        await diffQueue.add(
+        await openQueue(QueueName.SNAPSHOT_DIFF).add(
           QueueName.SNAPSHOT_DIFF,
           { snapshotId: snapshot!.id, diffId: pendingDiff!.id },
           { jobId: pendingDiff!.id, delay: 60_000 },
         ),
       );
-      await diffQueue.close();
 
       await resolveStaleBuilds(STALE_MINUTES);
 
