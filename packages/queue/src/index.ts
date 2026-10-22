@@ -450,6 +450,18 @@ export const schedulePurge = async (connection: RedisConnection): Promise<void> 
   }
 };
 
+export const setPurgeConcurrency = async (
+  connection: RedisConnection,
+  concurrency: number,
+): Promise<void> => {
+  const queue = new Queue<PurgeJobPayload>(QueueName.BUILD_PURGE, queueOptions(connection));
+  try {
+    await queue.setGlobalConcurrency(concurrency);
+  } finally {
+    await queue.close();
+  }
+};
+
 const REAPER_JOB_ID = "build-reaper";
 
 export const scheduleReaper = async (connection: RedisConnection): Promise<void> => {

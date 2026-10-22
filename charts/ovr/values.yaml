@@ -143,6 +143,16 @@ worker:
   storybookCacheBytes: ""
   # Local disk for caching screenshots. Empty uses the app default (512 MB).
   imageCacheBytes: ""
+  # Daily retention purge. Empty values use the app defaults.
+  purge:
+    # Jobs at once across all workers (1).
+    concurrency: ""
+    # Builds per transaction (10).
+    batchSize: ""
+    # Milliseconds between batches (500).
+    batchPauseMs: ""
+    # Milliseconds per project per run (600000).
+    timeBudgetMs: ""
   resources: {}
   containerSecurityContext:
     allowPrivilegeEscalation: false

@@ -1,3 +1,5 @@
+import { setTimeout as sleep } from "node:timers/promises";
+
 import { dbClient } from "@ovr/db/client";
 import { createLogger } from "@ovr/logger";
 import { enqueuePurgeMany } from "@ovr/queue/producer";
@@ -7,9 +9,7 @@ import { mapWithConcurrency } from "./lib/concurrency";
 
 const logger = createLogger("builds");
 
-const RETENTION_PAGE_SIZE = 500;
 const STORAGE_DELETE_CONCURRENCY = 10;
-const MAX_PAGES_PER_RUN = 200;
 
 const getBuildPrefix = (projectId: string, buildId: string): string =>
   `${projectId}/builds/${buildId}/`;
@@ -71,27 +71,48 @@ const drainStorageOutbox = async (projectId: string): Promise<void> => {
   }
 };
 
-export const purgeExpiredBuilds = async (projectId: string): Promise<void> => {
+export type PurgeOptions = {
+  batchSize?: number;
+  batchPauseMs?: number;
+  timeBudgetMs?: number;
+};
+
+export const DEFAULT_PURGE_OPTIONS = {
+  batchSize: 10,
+  batchPauseMs: 500,
+  timeBudgetMs: 10 * 60 * 1000,
+} as const satisfies Required<PurgeOptions>;
+
+export const purgeExpiredBuilds = async (
+  projectId: string,
+  options: PurgeOptions = {},
+): Promise<void> => {
+  const { batchSize, batchPauseMs, timeBudgetMs } = { ...DEFAULT_PURGE_OPTIONS, ...options };
   const project = await dbClient.projects.findById(projectId);
 
   if (!project) {
     return;
   }
 
+  const startedAt = Date.now();
+  let buildsPurged = 0;
+  let batches = 0;
+  let hitTimeBudget = false;
+
   // Retry storage deletes left over from a previous run before paging through new ones.
   await drainStorageOutbox(projectId);
 
   const cutoff = new Date(Date.now() - project.retentionDays * 24 * 60 * 60 * 1000).toISOString();
 
-  for (let page = 0; page < MAX_PAGES_PER_RUN; page++) {
-    const buildIds = await dbClient.builds.findExpiredPage(projectId, cutoff, RETENTION_PAGE_SIZE);
+  for (;;) {
+    const buildIds = await dbClient.builds.findExpiredPage(projectId, cutoff, batchSize);
 
     if (buildIds.length === 0) {
-      return;
+      break;
     }
 
     // The outbox row and the build row are written in the same transaction so a build
-    // promoted to a baseline mid-page still fails the cascade's FK and rolls back both,
+    // promoted to a baseline mid-batch still fails the cascade's FK and rolls back both,
     // instead of leaving an outbox entry for storage that was never actually orphaned.
     await dbClient.transaction(async (tx) => {
       await dbClient.storageOutbox.insertMany(
@@ -105,15 +126,37 @@ export const purgeExpiredBuilds = async (projectId: string): Promise<void> => {
       await dbClient.builds.removeMany(tx, buildIds);
     });
 
+    buildsPurged += buildIds.length;
+    batches++;
+
     await drainStorageOutbox(projectId);
 
-    if (buildIds.length < RETENTION_PAGE_SIZE) {
-      return;
+    if (buildIds.length < batchSize) {
+      break;
     }
+
+    if (Date.now() - startedAt >= timeBudgetMs) {
+      hitTimeBudget = true;
+      break;
+    }
+
+    await sleep(batchPauseMs);
   }
 
-  logger.warn(
-    { projectId, maxPages: MAX_PAGES_PER_RUN },
-    "hit the page safety cap before exhausting expired builds; the rest purge on the next run",
-  );
+  const summary = {
+    projectId,
+    buildsPurged,
+    batches,
+    durationMs: Date.now() - startedAt,
+    hitTimeBudget,
+  };
+
+  if (hitTimeBudget) {
+    logger.warn(
+      { ...summary, timeBudgetMs },
+      "purge hit its time budget before exhausting expired builds; the rest purge on the next run",
+    );
+  } else {
+    logger.info(summary, "purged expired builds");
+  }
 };

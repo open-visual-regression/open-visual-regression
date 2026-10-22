@@ -109,6 +109,36 @@ describe("retention", () => {
       expect(await dbClient.builds.findById(build!.id)).toMatchObject({ id: build!.id });
     });
 
+    test("purges in batches and leaves the rest for the next run once the time budget is spent", async ({
+      project,
+      user,
+    }) => {
+      const expiredBuilds = await Promise.all(
+        [3, 2, 1].map((extraDays) =>
+          dbClient.builds.create({
+            projectId: project.id,
+            branch: "main",
+            commitSha: "a".repeat(40),
+            artifactPath: "artifact",
+            createdBy: user.id,
+            createdAt: daysAgo(project.retentionDays + extraDays),
+          }),
+        ),
+      );
+      const remaining = async () =>
+        (await Promise.all(expiredBuilds.map((build) => dbClient.builds.findById(build!.id))))
+          .filter((build) => build !== undefined)
+          .map((build) => build.id);
+
+      await purgeExpiredBuilds(project.id, { batchSize: 1, batchPauseMs: 0, timeBudgetMs: 1 });
+
+      expect(await remaining()).toEqual([expiredBuilds[1]!.id, expiredBuilds[2]!.id]);
+
+      await purgeExpiredBuilds(project.id, { batchSize: 1, batchPauseMs: 0 });
+
+      expect(await remaining()).toEqual([]);
+    });
+
     test("does nothing for a project that no longer exists", async () => {
       await expect(purgeExpiredBuilds(uuidv7())).resolves.toBeUndefined();
     });

@@ -219,6 +219,10 @@ Any S3-compatible service works: AWS S3, Cloudflare R2, Backblaze B2, RustFS, Mi
 | `OVR_CAPTURE_GROUP_SIZE` | `10` | Snapshots per capture group. |
 | `OVR_DIFF_CONCURRENCY` | `4` | Snapshots compared against their baseline in parallel per worker. |
 | `OVR_REAPER_STALE_MINUTES` | `30` | Minutes before a stalled capture job is requeued. |
+| `OVR_PURGE_CONCURRENCY` | `1` | Retention purge jobs running at once across all workers. Each deletes one project's expired builds. |
+| `OVR_PURGE_BATCH_SIZE` | `10` | Builds the retention purge deletes per transaction. Lower it on a small database. |
+| `OVR_PURGE_BATCH_PAUSE_MS` | `500` | Pause between purge batches, so other queries get the database in between. |
+| `OVR_PURGE_TIME_BUDGET_MS` | `600000` (10 minutes) | How long one project's purge runs before it leaves the rest for the next day. |
 | `OVR_STORYBOOK_CACHE_BYTES` | `2147483648` (2 GB) | Local disk for extracted Storybook builds. |
 | `OVR_IMAGE_CACHE_BYTES` | `536870912` (512 MB) | Local disk for caching screenshots. |
 | `OVR_MEMORY_LOG_INTERVAL_MS` | `60000` | How often the worker logs a `worker memory` line with its RSS, heap, external memory, and live browser processes. `0` turns it off. |

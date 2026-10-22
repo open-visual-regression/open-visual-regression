@@ -273,6 +273,29 @@
           "type": ["string", "integer"],
           "description": "Local disk for caching screenshots. Empty string uses the app default."
         },
+        "purge": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "The daily purge of builds past their project's retention. Empty strings use the app defaults.",
+          "properties": {
+            "concurrency": {
+              "type": ["string", "integer"],
+              "description": "Purge jobs running at once across all workers."
+            },
+            "batchSize": {
+              "type": ["string", "integer"],
+              "description": "Builds deleted per transaction."
+            },
+            "batchPauseMs": {
+              "type": ["string", "integer"],
+              "description": "Pause between batches, in milliseconds."
+            },
+            "timeBudgetMs": {
+              "type": ["string", "integer"],
+              "description": "How long one project's purge runs before leaving the rest for the next day, in milliseconds."
+            }
+          }
+        },
         "resources": { "$ref": "#/definitions/resources" },
         "updateStrategy": { "$ref": "#/definitions/updateStrategy" },
         "terminationGracePeriodSeconds": { "type": "integer", "minimum": 0 },

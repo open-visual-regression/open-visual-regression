@@ -1,3 +1,5 @@
+import { setTimeout as sleep } from "node:timers/promises";
+
 import { Queue, Worker } from "bullmq";
 import type { Redis } from "ioredis";
 import { vi } from "vitest";
@@ -12,9 +14,11 @@ import {
   getJobNextRunAt,
   isJobRunning,
   enqueuePublishStatus,
+  enqueuePurgeMany,
   QueueName,
   scheduleJob,
   scheduleReaper,
+  setPurgeConcurrency,
   type CaptureGroupJobPayload,
   type DiffJobPayload,
   type ExtractJobPayload,
@@ -182,6 +186,36 @@ describe("queue", () => {
       const [scheduler] = await openQueue(QueueName.BUILD_REAPER).getJobSchedulers();
 
       expect(scheduler?.template?.opts?.removeOnComplete).toEqual({ age: 60 * 60, count: 1000 });
+    });
+  });
+
+  describe("setPurgeConcurrency", () => {
+    test("should run one purge job at a time across every worker", async ({
+      connection,
+      openQueue,
+      openWorker,
+    }) => {
+      await setPurgeConcurrency(connection, 1);
+      openWorker(QueueName.BUILD_PURGE, () => sleep(100), { concurrency: 2 });
+      openWorker(QueueName.BUILD_PURGE, () => sleep(100), { concurrency: 2 });
+      const queue = openQueue(QueueName.BUILD_PURGE);
+
+      await enqueuePurgeMany(
+        ["a", "b", "c", "d"].map((projectId) => ({ projectId })),
+        connection,
+      );
+      await vi.waitFor(
+        async () => expect(await queue.getJobCounts("completed")).toEqual({ completed: 4 }),
+        { timeout: 5000 },
+      );
+
+      const runs = (await queue.getJobs(["completed"]))
+        .map((job) => ({ start: job.processedOn!, end: job.finishedOn! }))
+        .sort((a, b) => a.start - b.start);
+      const overlapping = runs.filter(
+        (run, index) => index > 0 && run.start < runs[index - 1]!.end,
+      );
+      expect(overlapping).toEqual([]);
     });
   });
 
