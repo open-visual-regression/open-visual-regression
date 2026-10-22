@@ -1,3 +1,5 @@
+import { setTimeout as sleep } from "node:timers/promises";
+
 import { dbClient } from "@ovr/db/client";
 import { createLogger } from "@ovr/logger";
 import { enqueuePurgeMany } from "@ovr/queue/producer";
@@ -80,8 +82,6 @@ export const DEFAULT_PURGE_OPTIONS = {
   batchPauseMs: 500,
   timeBudgetMs: 10 * 60 * 1000,
 } as const satisfies Required<PurgeOptions>;
-
-const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const purgeExpiredBuilds = async (
   projectId: string,
