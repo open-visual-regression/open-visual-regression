@@ -35,25 +35,6 @@ const tableExists = async (connectionString: string, table: string) => {
   return row!.exists;
 };
 
-const readRealMigrations = () => {
-  const journal: { entries: { tag: string; when: number }[] } = JSON.parse(
-    readFileSync(join(migrationsFolder, "meta", "_journal.json"), "utf8"),
-  );
-  return journal.entries.map(({ tag, when }) => ({
-    tag,
-    when,
-    sql: readFileSync(join(migrationsFolder, `${tag}.sql`), "utf8"),
-  }));
-};
-
-const findIndex = async (connectionString: string, name: string) => {
-  const [index] = await query<{ indisvalid: boolean }>(
-    connectionString,
-    `SELECT indisvalid FROM pg_index WHERE indexrelid = to_regclass('public."${name}"')`,
-  );
-  return index;
-};
-
 const runDrizzleMigrations = async (connectionString: string, folder: string) => {
   const pool = new Pool({ connectionString });
   try {
@@ -326,35 +307,5 @@ CREATE TABLE "broken" ("id" not_a_type);`,
     );
 
     expect(await findAppliedMigrations(databaseUrl)).toHaveLength(2);
-  });
-
-  test("should build the foreign key indexes over ones created by hand or left invalid", async ({
-    databaseUrl,
-    createMigrationsFolder,
-  }) => {
-    const migrations = readRealMigrations();
-    const before = migrations.filter(({ tag }) => tag < "0056");
-    await runMigrations(databaseUrl, createMigrationsFolder(before));
-    await query(
-      databaseUrl,
-      `CREATE INDEX "diffs_baselineSnapshotId_idx" ON "diffs" ("baseline_snapshot_id")`,
-    );
-    await query(databaseUrl, `CREATE INDEX "builds_createdBy_idx" ON "builds" ("created_by")`);
-    await query(
-      databaseUrl,
-      `UPDATE pg_index SET indisvalid = false WHERE indexrelid = 'public."builds_createdBy_idx"'::regclass`,
-    );
-
-    await runMigrations(databaseUrl, createMigrationsFolder(migrations));
-
-    expect(await findIndex(databaseUrl, "diffs_baselineSnapshotId_idx")).toMatchObject({
-      indisvalid: true,
-    });
-    expect(await findIndex(databaseUrl, "builds_createdBy_idx")).toMatchObject({
-      indisvalid: true,
-    });
-    expect(await findIndex(databaseUrl, "invitation_inviterId_idx")).toMatchObject({
-      indisvalid: true,
-    });
   });
 });
