@@ -1,5 +1,5 @@
-import { Queue } from "bullmq";
-import type { Job } from "bullmq";
+import { Queue, Worker } from "bullmq";
+import type { Job, Processor, WorkerOptions } from "bullmq";
 import { Redis, type RedisOptions } from "ioredis";
 import { test as vitest, vi } from "vitest";
 
@@ -13,6 +13,11 @@ type Fixtures = {
   clusterUrl: string;
   clusterConnection: RedisConnection;
   openQueue: (name: QueueName) => Queue;
+  openWorker: (
+    name: QueueName,
+    processor: Processor,
+    options?: Omit<WorkerOptions, "connection">,
+  ) => Worker;
   trackJob: <T extends Job>(job: T) => T;
 };
 
@@ -65,6 +70,18 @@ export const test = vitest.extend<Fixtures>({
       await Promise.all(schedulers.map((scheduler) => queue.removeJobScheduler(scheduler.key)));
       await queue.close();
     }
+  },
+
+  openWorker: async ({ connection }, use) => {
+    const workers: Worker[] = [];
+
+    await use((name, processor, options) => {
+      const worker = new Worker(name, processor, { connection, ...options });
+      workers.push(worker);
+      return worker;
+    });
+
+    await Promise.all(workers.map((worker) => worker.close()));
   },
 
   // eslint-disable-next-line no-empty-pattern
