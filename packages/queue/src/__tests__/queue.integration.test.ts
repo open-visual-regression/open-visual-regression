@@ -1,6 +1,6 @@
 import { setTimeout as sleep } from "node:timers/promises";
 
-import { Queue, Worker } from "bullmq";
+import { Queue, Worker, type Job } from "bullmq";
 import type { Redis } from "ioredis";
 import { vi } from "vitest";
 
@@ -200,30 +200,30 @@ describe("queue", () => {
         snapshotIds: [`${buildId}-${index + 1}`],
       }));
 
-    const captureOrder = async (connection: Redis, total: number): Promise<string[]> => {
-      const order: string[] = [];
-      const worker = new Worker<CaptureGroupJobPayload>(
-        QueueName.SNAPSHOT_CAPTURE,
-        async (job) => {
-          order.push(job.data.snapshotIds[0]!);
-        },
-        { connection, concurrency: 1 },
+    const processingOrder = async (queue: Queue, jobs: Job<CaptureGroupJobPayload>[]) => {
+      await vi.waitFor(async () =>
+        expect(await Promise.all(jobs.map((job) => job.isCompleted()))).not.toContain(false),
       );
-      try {
-        await vi.waitFor(() => expect(order).toHaveLength(total));
-      } finally {
-        await worker.close();
-      }
-      return order;
+      const processed = await Promise.all(jobs.map((job) => queue.getJob(job.id!)));
+      return processed
+        .sort((a, b) => a!.processedOn! - b!.processedOn!)
+        .map((job) => (job!.data as CaptureGroupJobPayload).snapshotIds[0]);
     };
 
     test("should interleave a small build queued behind a large one under round-robin", async ({
       connection,
+      openQueue,
+      openWorker,
+      trackJob,
     }) => {
-      await enqueueCaptureGroups("main", groups("main", 4), connection, "round-robin");
-      await enqueueCaptureGroups("pr", groups("pr", 2), connection, "round-robin");
+      const jobs = [
+        ...(await enqueueCaptureGroups("main", groups("main", 4), connection, "round-robin")),
+        ...(await enqueueCaptureGroups("pr", groups("pr", 2), connection, "round-robin")),
+      ].map(trackJob);
 
-      expect(await captureOrder(connection, 6)).toEqual([
+      openWorker(QueueName.SNAPSHOT_CAPTURE, () => sleep(10), { concurrency: 1 });
+
+      expect(await processingOrder(openQueue(QueueName.SNAPSHOT_CAPTURE), jobs)).toEqual([
         "main-1",
         "pr-1",
         "main-2",
@@ -233,11 +233,25 @@ describe("queue", () => {
       ]);
     });
 
-    test("should run groups in the order they were added under fifo", async ({ connection }) => {
-      await enqueueCaptureGroups("main", groups("main", 3), connection, "fifo");
-      await enqueueCaptureGroups("pr", groups("pr", 1), connection, "fifo");
+    test("should run groups in the order they were added under fifo", async ({
+      connection,
+      openQueue,
+      openWorker,
+      trackJob,
+    }) => {
+      const jobs = [
+        ...(await enqueueCaptureGroups("main", groups("main", 3), connection, "fifo")),
+        ...(await enqueueCaptureGroups("pr", groups("pr", 1), connection, "fifo")),
+      ].map(trackJob);
 
-      expect(await captureOrder(connection, 4)).toEqual(["main-1", "main-2", "main-3", "pr-1"]);
+      openWorker(QueueName.SNAPSHOT_CAPTURE, () => sleep(10), { concurrency: 1 });
+
+      expect(await processingOrder(openQueue(QueueName.SNAPSHOT_CAPTURE), jobs)).toEqual([
+        "main-1",
+        "main-2",
+        "main-3",
+        "pr-1",
+      ]);
     });
 
     test("should leave no prioritized groups behind when the build is canceled", async ({
