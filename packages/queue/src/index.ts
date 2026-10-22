@@ -273,6 +273,48 @@ export const enqueueCaptureGroup = (
   connection: RedisConnection,
 ): Promise<Job<CaptureGroupJobPayload>> => enqueue(QueueName.SNAPSHOT_CAPTURE, payload, connection);
 
+// round-robin gives a build's nth group priority n, so workers take every build's first group,
+// then every build's second, and so on.
+export const captureQueuePolicySchema = z.enum(["round-robin", "fifo"]).catch("round-robin");
+
+export type CaptureQueuePolicy = z.infer<typeof captureQueuePolicySchema>;
+
+const LOWEST_PRIORITY = 2_097_151;
+
+export const enqueueCaptureGroups = async (
+  buildId: string,
+  groups: Omit<CaptureGroupJobPayload, "buildId">[],
+  connection: RedisConnection,
+  policy: CaptureQueuePolicy,
+): Promise<Job<CaptureGroupJobPayload>[]> => {
+  if (groups.length === 0) {
+    return [];
+  }
+
+  const queue = new Queue<
+    CaptureGroupJobPayload,
+    void,
+    string,
+    CaptureGroupJobPayload,
+    void,
+    string
+  >(QueueName.SNAPSHOT_CAPTURE, queueOptions(connection));
+  try {
+    return await queue.addBulk(
+      groups.map((group, index) => ({
+        name: QueueName.SNAPSHOT_CAPTURE,
+        data: { buildId, ...group },
+        opts: {
+          ...JOB_OPTIONS[QueueName.SNAPSHOT_CAPTURE],
+          ...(policy === "round-robin" && { priority: Math.min(index + 1, LOWEST_PRIORITY) }),
+        },
+      })),
+    );
+  } finally {
+    await queue.close();
+  }
+};
+
 export const enqueueDiff = (
   payload: DiffJobPayload,
   connection: RedisConnection,

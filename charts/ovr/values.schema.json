@@ -273,6 +273,11 @@
           "type": ["string", "integer"],
           "description": "Local disk for caching screenshots. Empty string uses the app default."
         },
+        "captureQueuePolicy": {
+          "type": "string",
+          "enum": ["", "round-robin", "fifo"],
+          "description": "Order capture groups run in across builds. Empty uses the app default, or fifo with KEDA's generated trigger."
+        },
         "purge": {
           "type": "object",
           "additionalProperties": false,
