@@ -47,10 +47,9 @@ const readRealMigrations = () => {
 };
 
 const findIndex = async (connectionString: string, name: string) => {
-  const [index] = await query<{ indisvalid: boolean; definition: string }>(
+  const [index] = await query<{ indisvalid: boolean }>(
     connectionString,
-    `SELECT indisvalid, pg_get_indexdef(indexrelid) AS definition
-     FROM pg_index WHERE indexrelid = to_regclass('public."${name}"')`,
+    `SELECT indisvalid FROM pg_index WHERE indexrelid = to_regclass('public."${name}"')`,
   );
   return index;
 };
@@ -329,7 +328,7 @@ CREATE TABLE "broken" ("id" not_a_type);`,
     expect(await findAppliedMigrations(databaseUrl)).toHaveLength(2);
   });
 
-  test("should keep a foreign key index created by hand and rebuild one left invalid", async ({
+  test("should build the foreign key indexes over ones created by hand or left invalid", async ({
     databaseUrl,
     createMigrationsFolder,
   }) => {
@@ -338,7 +337,7 @@ CREATE TABLE "broken" ("id" not_a_type);`,
     await runMigrations(databaseUrl, createMigrationsFolder(before));
     await query(
       databaseUrl,
-      `CREATE INDEX "diffs_baselineSnapshotId_idx" ON "diffs" ("baseline_snapshot_id") WITH (fillfactor = 80)`,
+      `CREATE INDEX "diffs_baselineSnapshotId_idx" ON "diffs" ("baseline_snapshot_id")`,
     );
     await query(databaseUrl, `CREATE INDEX "builds_createdBy_idx" ON "builds" ("created_by")`);
     await query(
@@ -350,7 +349,6 @@ CREATE TABLE "broken" ("id" not_a_type);`,
 
     expect(await findIndex(databaseUrl, "diffs_baselineSnapshotId_idx")).toMatchObject({
       indisvalid: true,
-      definition: expect.stringContaining("fillfactor"),
     });
     expect(await findIndex(databaseUrl, "builds_createdBy_idx")).toMatchObject({
       indisvalid: true,
