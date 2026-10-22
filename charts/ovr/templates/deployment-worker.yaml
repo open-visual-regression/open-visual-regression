@@ -80,6 +80,10 @@ spec:
             - name: OVR_IMAGE_CACHE_BYTES
               value: {{ . | quote }}
             {{- end }}
+            {{- with .Values.worker.reaperStaleMinutes }}
+            - name: OVR_REAPER_STALE_MINUTES
+              value: {{ . | quote }}
+            {{- end }}
             {{- with .Values.worker.purge.concurrency }}
             - name: OVR_PURGE_CONCURRENCY
               value: {{ . | quote }}

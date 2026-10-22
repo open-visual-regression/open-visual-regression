@@ -423,10 +423,12 @@ const removeJobById = async (queue: Queue, jobId: string): Promise<void> => {
   }
 };
 
-export type CanceledBuildJobs = {
+export type BuildJobIds = {
   buildId: string;
   diffIds: string[];
 };
+
+export type CanceledBuildJobs = BuildJobIds;
 
 export const cancelBuildJobs = async (
   canceled: CanceledBuildJobs[],
@@ -468,6 +470,67 @@ export const cancelBuildJobs = async (
       finalizeQueue.close(),
     ]);
   }
+};
+
+const LIVE_JOB_STATES = [
+  "waiting",
+  "delayed",
+  "prioritized",
+  "active",
+  "paused",
+  "waiting-children",
+] as const satisfies JobType[];
+
+const isLiveState = (state: string): boolean =>
+  (LIVE_JOB_STATES as readonly string[]).includes(state);
+
+export const findBuildsWithLiveJobs = async (
+  buildJobs: BuildJobIds[],
+  connection: RedisConnection,
+): Promise<Set<string>> => {
+  const live = new Set<string>();
+  if (buildJobs.length === 0) {
+    return live;
+  }
+
+  const buildIds = new Set(buildJobs.map(({ buildId }) => buildId));
+  const extractQueue = new Queue(QueueName.BUILD_EXTRACT, queueOptions(connection));
+  const captureQueue = new Queue(QueueName.SNAPSHOT_CAPTURE, queueOptions(connection));
+  const diffQueue = new Queue(QueueName.SNAPSHOT_DIFF, queueOptions(connection));
+  const finalizeQueue = new Queue(QueueName.BUILD_FINALIZE, queueOptions(connection));
+
+  try {
+    // Capture group job ids are random, so find them by payload.
+    for (const job of await captureQueue.getJobs([...LIVE_JOB_STATES])) {
+      const { buildId } = job.data as CaptureGroupJobPayload;
+      if (buildIds.has(buildId)) {
+        live.add(buildId);
+      }
+    }
+
+    for (const { buildId, diffIds } of buildJobs) {
+      if (live.has(buildId)) {
+        continue;
+      }
+      const states = await Promise.all([
+        extractQueue.getJobState(buildId),
+        finalizeQueue.getJobState(buildId),
+        ...diffIds.map((diffId) => diffQueue.getJobState(diffId)),
+      ]);
+      if (states.some(isLiveState)) {
+        live.add(buildId);
+      }
+    }
+  } finally {
+    await Promise.all([
+      extractQueue.close(),
+      captureQueue.close(),
+      diffQueue.close(),
+      finalizeQueue.close(),
+    ]);
+  }
+
+  return live;
 };
 
 const PURGE_DISPATCH_JOB_ID = "build-purge-dispatch";

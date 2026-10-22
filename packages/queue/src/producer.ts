@@ -19,9 +19,11 @@ import {
   enqueueProjectPurge as enqueueProjectPurgeJob,
   enqueuePurge as enqueuePurgeJob,
   enqueuePurgeMany as enqueuePurgeManyJob,
+  findBuildsWithLiveJobs as findBuildsWithLiveJobsCmd,
   getJobNextRunAt as getJobNextRunAtCmd,
   isJobRunning as isJobRunningCmd,
   scheduleJob as scheduleJobCmd,
+  type BuildJobIds,
   type CanceledBuildJobs,
   type CaptureGroupJobPayload,
   type DiffJobPayload,
@@ -105,6 +107,9 @@ export const enqueueFlakySnapshotScanMany = (
 
 export const cancelBuildJobs = (canceled: CanceledBuildJobs[]): Promise<void> =>
   whenConnected(() => cancelBuildJobsJob(canceled, connection));
+
+export const findBuildsWithLiveJobs = (buildJobs: BuildJobIds[]): Promise<Set<string>> =>
+  whenConnected(() => findBuildsWithLiveJobsCmd(buildJobs, connection));
 
 export const scheduleJob = (job: JobName, pattern: string | null): Promise<void> =>
   whenConnected(() => scheduleJobCmd(connection, job, pattern));

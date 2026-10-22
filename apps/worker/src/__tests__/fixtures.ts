@@ -1,10 +1,11 @@
+import { Queue, type Job } from "bullmq";
 import { v7 as uuidv7 } from "uuid";
 import { test as vitest } from "vitest";
 
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
 import { organization, projects, user as userTable } from "@ovr/db/schema";
-import { buildRedisConnection, type RedisConnection } from "@ovr/queue";
+import { buildRedisConnection, type QueueName, type RedisConnection } from "@ovr/queue";
 
 export { describe, expect } from "vitest";
 
@@ -22,6 +23,8 @@ type Fixtures = {
   captureConfiguration: Viewport;
   build: NonNullable<Awaited<ReturnType<typeof dbClient.builds.create>>>;
   connection: RedisConnection;
+  openQueue: (name: QueueName) => Queue;
+  trackJob: <T extends Job>(job: T) => T;
 };
 
 export const test = vitest.extend<Fixtures>({
@@ -86,5 +89,29 @@ export const test = vitest.extend<Fixtures>({
     await use(connection);
 
     await connection.quit();
+  },
+
+  openQueue: async ({ connection }, use) => {
+    const queues: Queue[] = [];
+
+    await use((name) => {
+      const queue = new Queue(name, { connection });
+      queues.push(queue);
+      return queue;
+    });
+
+    await Promise.all(queues.map((queue) => queue.close()));
+  },
+
+  // eslint-disable-next-line no-empty-pattern
+  trackJob: async ({}, use) => {
+    const jobs: Job[] = [];
+
+    await use((job) => {
+      jobs.push(job);
+      return job;
+    });
+
+    await Promise.all(jobs.map((job) => job.remove()));
   },
 });
