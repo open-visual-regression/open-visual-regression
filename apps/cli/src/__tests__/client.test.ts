@@ -7,8 +7,6 @@ describe("createClient", () => {
     unresponsiveServer,
   }) => {
     const onError = vi.spyOn(console, "error").mockImplementation(() => undefined);
-    // The first request in a process pays for fetch's one-time setup, which can take well over
-    // 100ms on a busy CI runner, so a tighter timeout can abort it before it reaches the server.
     const client = createClient(unresponsiveServer.url, "key", 1000);
 
     await expect(
