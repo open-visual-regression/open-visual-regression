@@ -5,7 +5,7 @@
 
 ARG NODE_VERSION=24.22.1
 # Keep in sync with the pinned "playwright" version in apps/worker, packages/capture and packages/capture-browser.
-ARG PLAYWRIGHT_VERSION=1.61.0
+ARG PLAYWRIGHT_VERSION=1.64.1
 # Keep in sync with the "turbo" devDependency in the root package.json.
 ARG TURBO_VERSION=2.10.8
 ARG PNPM_VERSION=11.9.0

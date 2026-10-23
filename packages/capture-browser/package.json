@@ -16,7 +16,7 @@
   "dependencies": {
     "@ovr/storage": "workspace:*",
     "@ovr/storybook-compat": "workspace:*",
-    "playwright": "1.61.0"
+    "playwright": "1.64.1"
   },
   "devDependencies": {
     "@ovr/typescript-config": "workspace:*",
