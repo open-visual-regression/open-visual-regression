@@ -18,6 +18,7 @@ import {
   enqueuePublishStatus,
   enqueuePurgeMany,
   QueueName,
+  runCaptureGroupRetryFirst,
   scheduleJob,
   scheduleReaper,
   setPurgeConcurrency,
@@ -198,9 +199,15 @@ describe("queue", () => {
         snapshotIds: [`${buildId}-${index + 1}`],
       }));
 
-    const processingOrder = async (queue: Queue, jobs: Job<CaptureGroupJobPayload>[]) => {
-      await vi.waitFor(async () =>
-        expect(await Promise.all(jobs.map((job) => job.isCompleted()))).not.toContain(false),
+    const processingOrder = async (
+      queue: Queue,
+      jobs: Job<CaptureGroupJobPayload>[],
+      timeout?: number,
+    ) => {
+      await vi.waitFor(
+        async () =>
+          expect(await Promise.all(jobs.map((job) => job.isCompleted()))).not.toContain(false),
+        { timeout },
       );
       const processed = await Promise.all(jobs.map((job) => queue.getJob(job.id!)));
       return processed
@@ -230,6 +237,84 @@ describe("queue", () => {
         "main-4",
       ]);
     });
+
+    test("should give each browser its own rounds under round-robin", async ({
+      connection,
+      openQueue,
+      openWorker,
+      trackJob,
+    }) => {
+      const browserGroups = (buildId: string, browser: string, count: number) =>
+        Array.from({ length: count }, (_, index) => ({
+          browser,
+          snapshotIds: [`${buildId}-${browser}-${index + 1}`],
+        }));
+      const jobs = [
+        ...(await enqueueCaptureGroups(
+          "main",
+          [...browserGroups("main", "chromium", 2), ...browserGroups("main", "webkit", 2)],
+          connection,
+          "round-robin",
+        )),
+        ...(await enqueueCaptureGroups(
+          "pr",
+          [...browserGroups("pr", "chromium", 1), ...browserGroups("pr", "webkit", 1)],
+          connection,
+          "round-robin",
+        )),
+      ].map(trackJob);
+
+      openWorker(QueueName.SNAPSHOT_CAPTURE, () => sleep(10), { concurrency: 1 });
+
+      expect(await processingOrder(openQueue(QueueName.SNAPSHOT_CAPTURE), jobs)).toEqual([
+        "main-chromium-1",
+        "main-webkit-1",
+        "pr-chromium-1",
+        "pr-webkit-1",
+        "main-chromium-2",
+        "main-webkit-2",
+      ]);
+    });
+
+    test("should run a retried group before the groups waiting their turn under round-robin", async ({
+      connection,
+      openQueue,
+      openWorker,
+      trackJob,
+    }) => {
+      const [retried] = await enqueueCaptureGroups(
+        "retried",
+        groups("retried", 1),
+        connection,
+        "round-robin",
+      );
+      const others = await Promise.all(
+        ["a", "b", "c"].map((buildId) =>
+          enqueueCaptureGroups(buildId, groups(buildId, 1), connection, "round-robin"),
+        ),
+      );
+      const jobs = [retried!, ...others.flat()].map(trackJob);
+
+      // Each other group outlasts half the retry's backoff, so the retry is due while b runs.
+      const worker = openWorker(
+        QueueName.SNAPSHOT_CAPTURE,
+        async (job: Job<CaptureGroupJobPayload>) => {
+          if (job.data.buildId === "retried" && job.attemptsMade === 0) {
+            throw new Error("interrupted");
+          }
+          await sleep(job.data.buildId === "retried" ? 10 : 1500);
+        },
+        { concurrency: 1 },
+      );
+      worker.on("failed", (job) => void runCaptureGroupRetryFirst(job!));
+
+      expect(await processingOrder(openQueue(QueueName.SNAPSHOT_CAPTURE), jobs, 10_000)).toEqual([
+        "a-1",
+        "b-1",
+        "retried-1",
+        "c-1",
+      ]);
+    }, 15_000);
 
     test("should run groups in the order they were added under fifo", async ({
       connection,

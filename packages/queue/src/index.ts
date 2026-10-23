@@ -273,8 +273,8 @@ export const enqueueCaptureGroup = (
   connection: RedisConnection,
 ): Promise<Job<CaptureGroupJobPayload>> => enqueue(QueueName.SNAPSHOT_CAPTURE, payload, connection);
 
-// round-robin gives a build's nth group priority n, so workers take every build's first group,
-// then every build's second, and so on.
+// round-robin gives a build's nth group of each browser priority n, so workers take every build's
+// first group of every browser, then every build's second, and so on.
 export const captureQueuePolicySchema = z.enum(["round-robin", "fifo"]).catch("round-robin");
 
 export type CaptureQueuePolicy = z.infer<typeof captureQueuePolicySchema>;
@@ -299,20 +299,41 @@ export const enqueueCaptureGroups = async (
     void,
     string
   >(QueueName.SNAPSHOT_CAPTURE, queueOptions(connection));
+  const rounds = new Map<string, number>();
+  const nextRound = (browser: string): number => {
+    const round = (rounds.get(browser) ?? 0) + 1;
+    rounds.set(browser, round);
+    return round;
+  };
+
   try {
     return await queue.addBulk(
-      groups.map((group, index) => ({
+      groups.map((group) => ({
         name: QueueName.SNAPSHOT_CAPTURE,
         data: { buildId, ...group },
         opts: {
           ...JOB_OPTIONS[QueueName.SNAPSHOT_CAPTURE],
-          ...(policy === "round-robin" && { priority: Math.min(index + 1, LOWEST_PRIORITY) }),
+          ...(policy === "round-robin" && {
+            priority: Math.min(nextRound(group.browser), LOWEST_PRIORITY),
+          }),
         },
       })),
     );
   } finally {
     await queue.close();
   }
+};
+
+// A retried group has already started, so it may have left a snapshot processing. Priority 0
+// returns it to the wait list, which workers take before any prioritized group, as BullMQ already
+// does for stalled jobs. Call it once the failed attempt has moved the job to its backoff.
+export const runCaptureGroupRetryFirst = async (
+  job: Job<CaptureGroupJobPayload>,
+): Promise<void> => {
+  if (!job.opts.priority) {
+    return;
+  }
+  await job.changePriority({ priority: 0 });
 };
 
 export const enqueueDiff = (
