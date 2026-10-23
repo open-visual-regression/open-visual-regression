@@ -9,6 +9,7 @@ import {
   QueueName,
   buildRedisConnection,
   queueOptions,
+  runCaptureGroupRetryFirst,
   scheduleReaper,
   schedulePurge,
   setPurgeConcurrency,
@@ -125,6 +126,17 @@ const guard =
 
 extractWorker.on("failed", guard(extract.failed));
 captureWorker.on("failed", guard(capture.failed));
+captureWorker.on("failed", (job) => {
+  if (!job || isFinalAttempt(job)) {
+    return;
+  }
+  runCaptureGroupRetryFirst(job).catch((error: unknown) => {
+    logger.error(
+      { err: error, jobId: job.id },
+      "failed to move a capture group retry to the front",
+    );
+  });
+});
 diffWorker.on("failed", guard(diff.failed));
 finalizeWorker.on("failed", guard(finalize.failed));
 purgeDispatchWorker.on("failed", guard(purgeDispatch.failed));
