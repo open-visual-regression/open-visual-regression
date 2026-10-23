@@ -921,7 +921,7 @@ describe("builds", () => {
         updatedAt: OLD_TIMESTAMP,
       });
 
-      const staleIds = await dbClient.builds.findStale(CUTOFF, 100);
+      const staleIds = (await dbClient.builds.findStale(CUTOFF, 100)).map(({ id }) => id);
       expect(staleIds).toContain(build!.id);
     });
 
@@ -934,7 +934,7 @@ describe("builds", () => {
         createdBy: user.id,
       });
 
-      const staleIds = await dbClient.builds.findStale(CUTOFF, 100);
+      const staleIds = (await dbClient.builds.findStale(CUTOFF, 100)).map(({ id }) => id);
       expect(staleIds).not.toContain(build!.id);
     });
 
@@ -964,7 +964,7 @@ describe("builds", () => {
         ],
       });
 
-      const staleIds = await dbClient.builds.findStale(CUTOFF, 100);
+      const staleIds = (await dbClient.builds.findStale(CUTOFF, 100)).map(({ id }) => id);
       expect(staleIds).not.toContain(build!.id);
     });
 
@@ -1000,7 +1000,7 @@ describe("builds", () => {
         updatedAt: new Date().toISOString(),
       });
 
-      const staleIds = await dbClient.builds.findStale(CUTOFF, 100);
+      const staleIds = (await dbClient.builds.findStale(CUTOFF, 100)).map(({ id }) => id);
       expect(staleIds).not.toContain(build!.id);
     });
 
@@ -1019,8 +1019,37 @@ describe("builds", () => {
       });
       await dbClient.builds.updateProcessingStatus(build!.id, "success");
 
-      const staleIds = await dbClient.builds.findStale(CUTOFF, 100);
+      const staleIds = (await dbClient.builds.findStale(CUTOFF, 100)).map(({ id }) => id);
       expect(staleIds).not.toContain(build!.id);
+    });
+
+    test("should return only the builds after the cursor", async ({ project, user }) => {
+      const [olderBuild, newerBuild] = await Promise.all(
+        [OLD_TIMESTAMP, "2020-01-02T00:00:00.000Z"].map((createdAt) =>
+          dbClient.builds.create({
+            projectId: project.id,
+            branch: "main",
+            commitSha: "a".repeat(40),
+            artifactPath: `builds/stale-${createdAt}/artifact`,
+            createdBy: user.id,
+            createdAt,
+            updatedAt: createdAt,
+          }),
+        ),
+      );
+
+      const staleBuilds = await dbClient.builds.findStale(CUTOFF, 100, {
+        id: olderBuild!.id,
+        createdAt: olderBuild!.createdAt,
+      });
+      const staleIds = staleBuilds.map(({ id }) => id);
+
+      expect(staleIds).not.toContain(olderBuild!.id);
+      expect(staleBuilds).toContainEqual({
+        id: newerBuild!.id,
+        projectId: project.id,
+        createdAt: newerBuild!.createdAt,
+      });
     });
   });
 });

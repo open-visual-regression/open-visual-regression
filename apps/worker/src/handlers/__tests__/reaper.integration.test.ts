@@ -252,6 +252,57 @@ describe("reaper", () => {
       });
     });
 
+    test("should resolve an idle build queued behind a full batch of builds still waiting on their jobs", async ({
+      project,
+      user,
+      captureConfiguration,
+      trackJob,
+    }) => {
+      const waitingBuilds = await Promise.all(
+        Array.from({ length: 100 }, async (_, index) => {
+          const build = await dbClient.builds.create({
+            projectId: project.id,
+            branch: "feature",
+            commitSha: "a".repeat(40),
+            artifactPath: `builds/waiting-${index}/artifact`,
+            createdBy: user.id,
+            createdAt: OLD_TIMESTAMP,
+            updatedAt: OLD_TIMESTAMP,
+          });
+          await dbClient.builds.updateProcessingStatus(build!.id, "processing");
+          trackJob(
+            await enqueueCaptureGroup({
+              buildId: build!.id,
+              browser: captureConfiguration.browser,
+              snapshotIds: [],
+            }),
+          );
+          return build!;
+        }),
+      );
+      const orphanedBuild = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/orphaned-behind-backlog/artifact",
+        createdBy: user.id,
+        createdAt: "2020-01-01T00:00:01.000Z",
+        updatedAt: OLD_TIMESTAMP,
+      });
+      await dbClient.builds.updateProcessingStatus(orphanedBuild!.id, "processing");
+
+      await resolveStaleBuilds(STALE_MINUTES);
+
+      expect(await dbClient.builds.findById(orphanedBuild!.id)).toMatchObject({
+        processingStatus: "error",
+      });
+      for (const build of waitingBuilds) {
+        expect(await dbClient.builds.findById(build.id)).toMatchObject({
+          processingStatus: "processing",
+        });
+      }
+    });
+
     test("should leave an actively-processing build untouched", async ({
       project,
       user,
