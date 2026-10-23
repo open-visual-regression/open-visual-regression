@@ -1,5 +1,12 @@
 # @ovr/web
 
+## 0.14.5
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @ovr/ui@0.1.4
+
 ## 0.14.4
 
 ### Patch Changes

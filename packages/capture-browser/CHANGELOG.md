@@ -1,5 +1,11 @@
 # @ovr/capture-browser
 
+## 0.0.2
+
+### Patch Changes
+
+- [`e688833`](https://github.com/open-visual-regression/open-visual-regression/commit/e688833724d681410ff28162830281f262af43c1) Thanks [@tgfischer](https://github.com/tgfischer)! - Upgrade Playwright to 1.64.1, so the worker runs on Node.js 24.22.1 and captures use Chromium 156.
+
 ## 0.0.1
 
 ### Patch Changes
