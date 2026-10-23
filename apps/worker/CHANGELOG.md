@@ -1,5 +1,27 @@
 # @ovr/worker
 
+## 0.14.5
+
+### Patch Changes
+
+- [`e688833`](https://github.com/open-visual-regression/open-visual-regression/commit/e688833724d681410ff28162830281f262af43c1) Thanks [@tgfischer](https://github.com/tgfischer)! - Upgrade Playwright to 1.64.1, so the worker runs on Node.js 24.22.1 and captures use Chromium 156.
+
+- Updated dependencies [[`e688833`](https://github.com/open-visual-regression/open-visual-regression/commit/e688833724d681410ff28162830281f262af43c1)]:
+  - @ovr/capture@0.3.13
+
+## 0.14.4
+
+### Patch Changes
+
+- [#429](https://github.com/open-visual-regression/open-visual-regression/pull/429) [`5c06f39`](https://github.com/open-visual-regression/open-visual-regression/commit/5c06f390a44b69f3aa0b8a7be22391528a45dfba) Thanks [@tgfischer](https://github.com/tgfischer)! - Docker images now run on Node.js 24.22.1, which includes the October 2026 Node.js security fixes.
+
+- [#426](https://github.com/open-visual-regression/open-visual-regression/pull/426) [`c6930b4`](https://github.com/open-visual-regression/open-visual-regression/commit/c6930b404c01abf9b6a25cda64ce6a31c405edbd) Thanks [@tgfischer](https://github.com/tgfischer)! - Small builds no longer wait for every snapshot of a large build queued before them. Set `OVR_CAPTURE_QUEUE_POLICY=fifo` to keep the previous order.
+
+- Updated dependencies [[`c6930b4`](https://github.com/open-visual-regression/open-visual-regression/commit/c6930b404c01abf9b6a25cda64ce6a31c405edbd)]:
+  - @ovr/builds@0.2.7
+  - @ovr/capture@0.3.12
+  - @ovr/queue@0.2.6
+
 ## 0.14.3
 
 ### Patch Changes

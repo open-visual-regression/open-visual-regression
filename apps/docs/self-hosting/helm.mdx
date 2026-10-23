@@ -79,7 +79,7 @@ CPU and memory scale with concurrent captures, not total build volume. Each capt
 | `worker.diffConcurrency` | app default `4` | Snapshots compared against their baseline at once. |
 | `worker.storybookCacheBytes` | app default 2 GB | Pod-local disk for extracted Storybook builds. Counts against the pod's ephemeral storage. |
 | `worker.imageCacheBytes` | app default 512 MB | Pod-local disk for caching screenshots. Counts against the pod's ephemeral storage. |
-| `worker.captureQueuePolicy` | app default `round-robin` | Order capture groups run in across builds. `round-robin` runs every queued build's first group, then every build's second, and so on, so small PR builds don't wait behind a large main build. `fifo` runs them in the order they were queued. Defaults to `fifo` when `worker.keda` uses its generated trigger (see below). |
+| `worker.captureQueuePolicy` | app default `round-robin` | Order capture groups run in across builds. `round-robin` runs every queued build's first group of each browser, then every build's second, and so on, with retried groups going first, so small PR builds don't wait behind a large main build. `fifo` runs them in the order they were queued. Defaults to `fifo` when `worker.keda` uses its generated trigger (see below). |
 | `worker.reaperStaleMinutes` | app default `30` | Minutes an unfinished build can go without snapshot or diff updates before it is marked errored. A build with jobs still queued, retrying or running is never reaped, however long the queue. |
 | `worker.purge.concurrency` | app default `1` | Retention purge jobs running at once across all workers. Each deletes one project's expired builds. |
 | `worker.purge.batchSize` | app default `10` | Builds the retention purge deletes per transaction. Lower it on a small database. |
@@ -120,7 +120,7 @@ worker:
     listLength: 4
 ```
 
-The generated trigger counts the capture queue's wait list, which only holds groups under `worker.captureQueuePolicy: fifo`. Round-robin groups wait in a sorted set the trigger can't read, so with the generated trigger the chart defaults to `fifo` and refuses `round-robin`. To use round-robin with KEDA, replace the trigger through `worker.keda.triggers` with one that counts prioritized jobs too.
+The generated trigger counts the capture queue's wait list, which only holds groups under `worker.captureQueuePolicy: fifo`, plus round-robin groups due to be retried. Other round-robin groups wait in a sorted set the trigger can't read, so with the generated trigger the chart defaults to `fifo` and refuses `round-robin`. To use round-robin with KEDA, replace the trigger through `worker.keda.triggers` with one that counts prioritized jobs too.
 
 If Redis needs a password or TLS, point `worker.keda.authenticationRef` at a KEDA [`TriggerAuthentication`](https://keda.sh/docs/latest/scalers/redis-lists/#authentication-parameters). `worker.keda.triggers` replaces the generated trigger entirely.
 
