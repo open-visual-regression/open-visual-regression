@@ -49,6 +49,7 @@ describe("captureBuildGroup", () => {
   test("captures a story on a fresh browser after it hangs the first one", async ({
     mainBuild,
     captureConfiguration,
+    metrics,
   }) => {
     await uploadArtifactWithIframe(mainBuild.artifactPath, iframeWithHangingStory(true));
     const [before, hanging, after] = await dbClient.snapshots.createMany({
@@ -74,6 +75,9 @@ describe("captureBuildGroup", () => {
         hasRenderError: false,
       });
     }
+    expect(await metrics.scrape()).toContain(
+      'ovr_capture_browser_relaunches_total{browser="chromium",reason="timeout"} 1',
+    );
   }, 60_000);
 
   test("errors a story that hangs every browser it runs in and captures the rest of the group", async ({
