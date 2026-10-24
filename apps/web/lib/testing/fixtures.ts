@@ -7,6 +7,7 @@ import { setupServer } from "msw/node";
 import { headers } from "next/headers";
 import { test as vitest, vi } from "vitest";
 
+import { metricsFixture, type TestMetrics } from "@ovr/metrics/testing";
 import { mocks } from "@ovr/mocks";
 
 import { auth } from "@/lib/auth/auth";
@@ -17,6 +18,8 @@ type Organization = NonNullable<Awaited<ReturnType<typeof auth.api.createOrganiz
 export { expect, describe } from "vitest";
 
 const TEST_PASSWORD = "securepass123";
+
+type QueuedJob = { remove: () => Promise<void> };
 
 const IDENTITY_PROVIDER_ALGORITHM = "ES256";
 
@@ -36,6 +39,8 @@ export const test = vitest.extend<{
   viewer: User;
   organization: Organization;
   identityProvider: IdentityProvider;
+  metrics: TestMetrics;
+  trackJob: <T extends QueuedJob>(job: T) => T;
 }>({
   // eslint-disable-next-line no-empty-pattern
   admin: async ({}, use) => {
@@ -141,5 +146,19 @@ export const test = vitest.extend<{
           .sign(privateKey),
     });
     server.close();
+  },
+
+  metrics: metricsFixture,
+
+  // eslint-disable-next-line no-empty-pattern
+  trackJob: async ({}, use) => {
+    const jobs: QueuedJob[] = [];
+
+    await use((job) => {
+      jobs.push(job);
+      return job;
+    });
+
+    await Promise.all(jobs.map((job) => job.remove()));
   },
 });

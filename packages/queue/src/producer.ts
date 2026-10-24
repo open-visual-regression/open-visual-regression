@@ -8,6 +8,7 @@ import {
 } from "./events";
 import {
   cancelBuildJobs as cancelBuildJobsJob,
+  countQueueJobs as countQueueJobsCmd,
   enqueueCaptureGroup as enqueueCaptureGroupJob,
   enqueueCaptureGroups as enqueueCaptureGroupsJob,
   enqueueDiff as enqueueDiffJob,
@@ -34,6 +35,7 @@ import {
   type GitStatusPublishJobPayload,
   type ProjectPurgeJobPayload,
   type PurgeJobPayload,
+  type QueueJobCount,
   buildRedisConnection,
   captureQueuePolicySchema,
   waitForConnection,
@@ -116,6 +118,9 @@ export const scheduleJob = (job: JobName, pattern: string | null): Promise<void>
 
 export const isJobRunning = (job: JobName): Promise<boolean> =>
   whenConnected(() => isJobRunningCmd(connection, job));
+
+export const countQueueJobs = (): Promise<QueueJobCount[]> =>
+  whenConnected(() => countQueueJobsCmd(connection));
 
 export const getJobNextRunAt = (job: JobName): Promise<Date | null> =>
   whenConnected(() => getJobNextRunAtCmd(connection, job));
