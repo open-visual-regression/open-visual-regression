@@ -1,0 +1,33 @@
+{
+  "name": "@ovr/metrics",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/server.ts",
+    "./testing": "./src/testing.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "tsc": "tsc --noEmit",
+    "lint": "oxlint src",
+    "format": "oxfmt src",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "~1.9.1",
+    "@opentelemetry/exporter-prometheus": "^0.223.0",
+    "@opentelemetry/resources": "^2.12.0",
+    "@opentelemetry/sdk-metrics": "^2.12.0",
+    "@opentelemetry/semantic-conventions": "^1.43.0",
+    "@ovr/logger": "workspace:*",
+    "zod": "^4.5.1"
+  },
+  "devDependencies": {
+    "@ovr/typescript-config": "workspace:*",
+    "@types/node": "^22.20.1",
+    "typescript": "6.0.3",
+    "vitest": "^4.1.11"
+  }
+}
