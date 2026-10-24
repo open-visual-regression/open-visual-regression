@@ -13,6 +13,7 @@ import { startStaticProxy } from "@ovr/capture-browser/staticProxy";
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
 import { organization, projects, user as userTable } from "@ovr/db/schema";
+import { metricsFixture, type TestMetrics } from "@ovr/metrics/testing";
 import { buildRedisConnection, type RedisConnection } from "@ovr/queue";
 import { storage } from "@ovr/storage";
 
@@ -81,6 +82,7 @@ type Fixtures = {
     targetId: string;
     imagePath: string;
   }) => Promise<void>;
+  metrics: TestMetrics;
 };
 
 export const test = vitest.extend<Fixtures>({
@@ -174,6 +176,8 @@ export const test = vitest.extend<Fixtures>({
       });
     });
   },
+
+  metrics: metricsFixture,
 });
 
 export const enableFlakyDetection = (userId: string, settings: Record<string, unknown> = {}) =>

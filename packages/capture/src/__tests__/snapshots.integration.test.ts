@@ -444,6 +444,7 @@ describe("snapshots", () => {
     test("marks only the failing snapshot as errored while the rest of the group still succeeds", async ({
       mainBuild,
       captureConfiguration,
+      metrics,
     }) => {
       await uploadArtifactWithIframe(mainBuild.artifactPath, IFRAME_HTML);
       const [badSnapshot, goodSnapshot] = await dbClient.snapshots.createMany({
@@ -466,6 +467,13 @@ describe("snapshots", () => {
       expect(await dbClient.snapshots.findById(goodSnapshot!.id)).toMatchObject({
         status: "success",
       });
+
+      const body = await metrics.scrape();
+      expect(body).toContain(
+        'ovr_snapshots_captured_total{browser="chromium",outcome="success"} 1',
+      );
+      expect(body).toContain('ovr_snapshots_captured_total{browser="chromium",outcome="error"} 1');
+      expect(body).toContain('ovr_snapshot_capture_duration_seconds_count{browser="chromium"} 1');
     });
 
     test("skips a snapshot in the group that a previous attempt already captured successfully", async ({
@@ -604,6 +612,7 @@ describe("snapshots", () => {
       featureBuild,
       captureConfiguration,
       connection,
+      metrics,
     }) => {
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
@@ -635,12 +644,15 @@ describe("snapshots", () => {
       } finally {
         await worker.close();
       }
+
+      expect(await metrics.scrape()).toContain('ovr_diffs_compared_total{result="new"} 1');
     });
 
     test("should approve a story automatically, with nothing for a reviewer to do, when it renders the same as the approved baseline", async ({
       featureBuild,
       project,
       captureConfiguration,
+      metrics,
     }) => {
       const baselinePath = `builds/${featureBuild.id}/snapshots/baseline.png`;
       const capturePath = `builds/${featureBuild.id}/snapshots/capture.png`;
@@ -682,6 +694,8 @@ describe("snapshots", () => {
         pixelDiffCount: 0,
         diffPercent: 0,
       });
+
+      expect(await metrics.scrape()).toContain('ovr_diffs_compared_total{result="unchanged"} 1');
     });
 
     test("should approve a story without reading either screenshot when its image hash matches the approved baseline", async ({
@@ -786,6 +800,7 @@ describe("snapshots", () => {
       featureBuild,
       project,
       captureConfiguration,
+      metrics,
     }) => {
       const baselinePath = `builds/${featureBuild.id}/snapshots/baseline-2.png`;
       const capturePath = `builds/${featureBuild.id}/snapshots/capture-2.png`;
@@ -830,6 +845,8 @@ describe("snapshots", () => {
 
       const diffImage = await storage.getFileStream(result!.diffImagePath!);
       expect(diffImage).toBeDefined();
+
+      expect(await metrics.scrape()).toContain('ovr_diffs_compared_total{result="changed"} 1');
     });
 
     test("compares later captures against an approved baseline without downloading it again", async ({
@@ -1021,6 +1038,7 @@ describe("snapshots", () => {
       mainBuild,
       project,
       captureConfiguration,
+      metrics,
     }) => {
       const capturePath = `builds/${mainBuild.id}/snapshots/main-no-baseline.png`;
       await uploadPng(capturePath, 255);
@@ -1051,12 +1069,15 @@ describe("snapshots", () => {
         targetId: "story-c",
       });
       expect(baseline?.snapshotId).toBe(captureSnapshotRow!.id);
+
+      expect(await metrics.scrape()).toContain('ovr_diffs_compared_total{result="new"} 1');
     });
 
     test("promotes the baseline and skips review for a main-branch build even when the diff is large", async ({
       mainBuild,
       project,
       captureConfiguration,
+      metrics,
     }) => {
       const baselinePath = `builds/${mainBuild.id}/snapshots/main-baseline.png`;
       const capturePath = `builds/${mainBuild.id}/snapshots/main-capture.png`;
@@ -1108,6 +1129,8 @@ describe("snapshots", () => {
         targetId: "story-d",
       });
       expect(baseline?.snapshotId).toBe(captureSnapshotRow!.id);
+
+      expect(await metrics.scrape()).toContain('ovr_diffs_compared_total{result="changed"} 1');
     });
 
     test("promotes the baseline and saves a diff image for a main-branch build whose diff is below the review threshold", async ({
@@ -1167,6 +1190,7 @@ describe("snapshots", () => {
     test("marks the diff as errored without comparing pixels when the snapshot failed to render", async ({
       featureBuild,
       captureConfiguration,
+      metrics,
     }) => {
       const capturePath = `builds/${featureBuild.id}/snapshots/render-error.png`;
       await uploadPng(capturePath, 255);
@@ -1192,6 +1216,8 @@ describe("snapshots", () => {
         reviewStatus: "not_required",
         pixelDiffCount: null,
       });
+
+      expect(await metrics.scrape()).toContain('ovr_diffs_compared_total{result="error"} 1');
     });
   });
 

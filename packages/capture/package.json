@@ -18,6 +18,7 @@
     "@ovr/capture-browser": "workspace:*",
     "@ovr/db": "workspace:*",
     "@ovr/logger": "workspace:*",
+    "@ovr/metrics": "workspace:*",
     "@ovr/queue": "workspace:*",
     "@ovr/reviews": "workspace:*",
     "@ovr/storage": "workspace:*",
