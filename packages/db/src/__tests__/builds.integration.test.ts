@@ -1052,4 +1052,47 @@ describe("builds", () => {
       });
     });
   });
+
+  describe("summarizeInProgress", () => {
+    const OLD_TIMESTAMP = "2020-01-01T00:00:00.000Z";
+
+    test("should count queued and processing builds with when the oldest of each was created", async ({
+      project,
+      user,
+    }) => {
+      const create = (createdAt?: string) =>
+        dbClient.builds.create({
+          projectId: project.id,
+          branch: "main",
+          commitSha: "a".repeat(40),
+          artifactPath: "builds/in-progress/artifact",
+          createdBy: user.id,
+          createdAt,
+        });
+      await create(OLD_TIMESTAMP);
+      await create();
+      const processing = await create();
+      await dbClient.builds.updateProcessingStatus(processing!.id, "processing");
+      const finished = await create(OLD_TIMESTAMP);
+      await dbClient.builds.updateProcessingStatus(finished!.id, "success");
+
+      const summary = await dbClient.builds.summarizeInProgress();
+
+      expect(summary).toHaveLength(2);
+      expect(summary).toContainEqual({
+        processingStatus: "queued",
+        count: 2,
+        oldestCreatedAt: expect.stringContaining("2020-01-01"),
+      });
+      expect(summary).toContainEqual({
+        processingStatus: "processing",
+        count: 1,
+        oldestCreatedAt: processing!.createdAt,
+      });
+    });
+
+    test("should return nothing when no build is in progress", async () => {
+      expect(await dbClient.builds.summarizeInProgress()).toEqual([]);
+    });
+  });
 });
