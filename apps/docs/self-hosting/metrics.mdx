@@ -1,0 +1,179 @@
+---
+title: Metrics
+description: Monitor builds, queues, and workers with Prometheus, Grafana, Datadog, or any OpenMetrics-compatible tool.
+---
+
+OVR reports metrics on builds, queues, snapshot captures, and worker health. The web app and the worker serve them in the OpenMetrics text format, which Prometheus, Grafana Alloy, the Datadog Agent, the OpenTelemetry Collector, and most other monitoring tools can collect.
+
+## Turn on metrics
+
+Metrics are off by default. Set `OVR_METRICS_PORT` on both the web app and the worker, and each serves its metrics at `/metrics` on that port.
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `OVR_METRICS_PORT` | unset | Port to serve metrics on. Metrics are off while it's unset. |
+| `OVR_METRICS_HOST` | `0.0.0.0` | Address to listen on. |
+
+The metrics port is separate from the dashboard's, so it isn't exposed through your ingress or load balancer. If the port can't be used, OVR logs an error and keeps running without metrics.
+
+With Helm, set `metrics.enabled`:
+
+```yaml
+metrics:
+  enabled: true
+  port: 9464
+```
+
+If you use `networkPolicy.enabled`, the chart allows traffic to the metrics port. Set `networkPolicy.metrics.from` to only allow your monitoring tool.
+
+## Collect metrics
+
+### Prometheus
+
+With the [Prometheus Operator](https://prometheus-operator.dev) or kube-prometheus-stack, the chart can create the scrape config, alerting rules, and a Grafana dashboard:
+
+```yaml
+metrics:
+  enabled: true
+  podMonitor:
+    enabled: true
+    labels:
+      release: kube-prometheus-stack
+  prometheusRule:
+    enabled: true
+    labels:
+      release: kube-prometheus-stack
+  grafanaDashboard:
+    enabled: true
+```
+
+| Value | Description |
+| --- | --- |
+| `metrics.podMonitor` | Scrapes the web and worker pods. `interval` defaults to `30s`. |
+| `metrics.prometheusRule` | Alerts when builds are failing, a build is stuck for over an hour, jobs keep failing, or a worker is leaking browser processes. |
+| `metrics.grafanaDashboard` | Adds the OVR dashboard for the Grafana sidecar to load. |
+| `labels` | Set these to match the `podMonitorSelector` and `ruleSelector` of your Prometheus. |
+
+Without the Operator, add a scrape job for port `9464` on the web and worker. The chart also adds `prometheus.io/scrape` annotations to both pods, for setups that discover targets that way. The [alerting rules](https://github.com/open-visual-regression/open-visual-regression/blob/main/charts/ovr/files/prometheus-rules.yaml) can be added to your `rule_files`.
+
+### Grafana
+
+Import [the OVR dashboard](https://github.com/open-visual-regression/open-visual-regression/blob/main/charts/ovr/files/grafana-dashboard.json) and pick your Prometheus data source. It covers build throughput and success rate, queue backlogs, capture times, and worker memory.
+
+### Datadog
+
+The Datadog Agent collects the metrics with its [OpenMetrics check](https://docs.datadoghq.com/integrations/openmetrics/). On Kubernetes, add an autodiscovery annotation to each pod:
+
+```yaml
+web:
+  podAnnotations:
+    ad.datadoghq.com/web.checks: |
+      {"openmetrics": {"instances": [{
+        "openmetrics_endpoint": "http://%%host%%:9464/metrics",
+        "namespace": "ovr",
+        "raw_metric_prefix": "ovr_",
+        "metrics": [".+"],
+        "histogram_buckets_as_distributions": true
+      }]}}
+worker:
+  podAnnotations:
+    ad.datadoghq.com/worker.checks: |
+      {"openmetrics": {"instances": [{
+        "openmetrics_endpoint": "http://%%host%%:9464/metrics",
+        "namespace": "ovr",
+        "raw_metric_prefix": "ovr_",
+        "metrics": [".+"],
+        "histogram_buckets_as_distributions": true
+      }]}}
+metrics:
+  enabled: true
+```
+
+Metrics arrive under the `ovr.` namespace, for example `ovr.builds_finished.count`. Outside Kubernetes, add the same instance to the Agent's `openmetrics.d/conf.yaml`.
+
+### Other tools
+
+Point any tool that reads Prometheus or OpenMetrics endpoints at port `9464` on the web app and the worker, for example Grafana Alloy's `prometheus.scrape` or the OpenTelemetry Collector's `prometheus` receiver.
+
+## Available metrics
+
+Scrape both the web app and the worker. Counters and histograms add up across instances, so `sum` them. Gauges marked *deployment-wide* report the same value from every web replica, so use `max` to avoid counting them more than once.
+
+```promql
+# Builds finished per hour, by status
+sum by (processing_status) (increase(ovr_builds_finished_total[1h]))
+
+# Snapshot captures waiting to start
+sum(max by (state) (ovr_queue_jobs{queue="snapshot-capture", state=~"waiting|prioritized"}))
+```
+
+### Builds
+
+| Metric | Type | Labels | Description |
+| --- | --- | --- | --- |
+| `ovr_builds_created_total` | Counter | `build_type`, `trigger` | Builds created. `trigger` is `upload` or `rebuild`. |
+| `ovr_builds_finished_total` | Counter | `processing_status`, `reason` | Builds that finished, by status (`success`, `error`, `canceled`) and reason. See [finish reasons](#finish-reasons). |
+| `ovr_build_duration_seconds` | Histogram | `processing_status` | Time from when the build was created until it finished processing. |
+| `ovr_builds_in_progress` | Gauge, deployment-wide | `processing_status` | Builds that are `queued` or `processing`. |
+| `ovr_builds_in_progress_oldest_age_seconds` | Gauge, deployment-wide | `processing_status` | Age of the oldest queued or processing build. A value that keeps growing means a build is stuck. |
+
+#### Finish reasons
+
+| Reason | Meaning |
+| --- | --- |
+| `finalized` | Every snapshot was captured and compared. The build succeeded, or errored because some snapshots did. |
+| `canceled` | Someone canceled the build. |
+| `superseded` | A newer build on the same branch replaced it. |
+| `timed_out` | The build made no progress for `OVR_REAPER_STALE_MINUTES`. |
+| `extract_failed` | The uploaded Storybook couldn't be read. |
+| `finalize_failed` | The build's results couldn't be saved. |
+| `enqueue_failed` | The work couldn't be queued, usually because Redis was unreachable. |
+
+### Queues
+
+| Metric | Type | Labels | Description |
+| --- | --- | --- | --- |
+| `ovr_queue_jobs` | Gauge, deployment-wide | `queue`, `state` | Jobs in each queue. `waiting` and `prioritized` are waiting to start, `active` are running, `delayed` are waiting to retry or for a scheduled time, and `failed` ran out of retries. |
+| `ovr_job_attempts_total` | Counter | `queue`, `outcome` | Job attempts by outcome: `completed`, `retried` (failed, will run again), or `failed` (out of retries). |
+| `ovr_job_duration_seconds` | Histogram | `queue`, `outcome` | How long a job attempt ran. |
+| `ovr_job_wait_seconds` | Histogram | `queue` | How long a job waited before a worker started it. |
+| `ovr_jobs_stalled_total` | Counter | `queue` | Jobs interrupted mid-run, for example by a worker restart, that will run again. |
+| `ovr_worker_errors_total` | Counter | `queue` | Worker errors outside of any job, such as a lost Redis connection. |
+
+### Snapshots
+
+| Metric | Type | Labels | Description |
+| --- | --- | --- | --- |
+| `ovr_snapshots_captured_total` | Counter | `browser`, `outcome` | Snapshots captured, by `success` or `error`. |
+| `ovr_snapshot_capture_duration_seconds` | Histogram | `browser` | Time to capture and store one snapshot. |
+| `ovr_capture_browser_relaunches_total` | Counter | `browser`, `reason` | Times a browser was restarted mid-build because a story hung (`timeout`) or the browser crashed (`closed`). |
+| `ovr_diffs_compared_total` | Counter | `result` | Snapshots compared with their baseline: `unchanged`, `changed`, `new` (no baseline yet), or `error`. |
+
+### Workers and web app
+
+| Metric | Type | Labels | Description |
+| --- | --- | --- | --- |
+| `ovr_worker_browser_processes` | Gauge | `state` | Browser processes a worker is running. A growing `zombie` count means exited processes aren't being cleaned up. Linux only. |
+| `ovr_worker_browser_memory_bytes` | Gauge | | Memory used by a worker's browsers. Linux only. |
+| `ovr_git_status_publications_total` | Counter | `provider`, `state`, `outcome` | Commit statuses sent to your git provider, by `ok` or `error`. |
+| `ovr_http_request_errors_total` | Counter | `route_type` | Web app requests that failed with an unexpected error. |
+| `process_memory_usage_bytes` | Gauge | | Memory used by the process. |
+| `process_cpu_time_seconds_total` | Counter | `cpu_mode` | CPU time used by the process. |
+| `v8js_memory_heap_used_bytes` | Gauge | `v8js_heap_space_name` | JavaScript heap in use. |
+| `nodejs_eventloop_delay_p99_seconds` | Gauge | | How long the process was too busy to respond, at the 99th percentile. |
+
+## Autoscale workers
+
+With Prometheus and [KEDA](https://keda.sh), you can scale workers on the number of snapshot captures waiting to start. This replaces the chart's [default Redis trigger](/self-hosting/helm#scaling), and works with the default `round-robin` capture queue policy:
+
+```yaml
+worker:
+  keda:
+    enabled: true
+    triggers:
+      - type: prometheus
+        metadata:
+          serverAddress: http://prometheus-operated.monitoring:9090
+          query: sum(max by (state) (ovr_queue_jobs{queue="snapshot-capture", state=~"waiting|prioritized"}))
+          threshold: "4"
+```

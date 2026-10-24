@@ -1,0 +1,51 @@
+# Loaded by metrics.prometheusRule, or add this file to your Prometheus rule_files.
+groups:
+  - name: ovr
+    rules:
+      - alert: OvrBuildsFailing
+        expr: |
+          sum(increase(ovr_builds_finished_total{processing_status="error"}[1h]))
+            / sum(increase(ovr_builds_finished_total{processing_status=~"success|error"}[1h]))
+            > 0.25
+          and sum(increase(ovr_builds_finished_total{processing_status=~"success|error"}[1h])) >= 4
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: More than a quarter of OVR builds are failing
+          description: >-
+            {{ $value | humanizePercentage }} of the builds that finished in the last hour
+            errored. ovr_builds_finished_total's reason label says where they failed.
+
+      - alert: OvrBuildStuck
+        expr: max by (processing_status) (ovr_builds_in_progress_oldest_age_seconds) > 3600
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: An OVR build has been {{ $labels.processing_status }} for over an hour
+          description: >-
+            The oldest {{ $labels.processing_status }} build was created
+            {{ $value | humanizeDuration }} ago. Check ovr_queue_jobs for a backlog and
+            the worker logs for errors.
+
+      - alert: OvrJobsFailing
+        expr: sum by (queue) (increase(ovr_job_attempts_total{outcome="failed"}[30m])) > 5
+        labels:
+          severity: warning
+        annotations:
+          summary: OVR jobs in the {{ $labels.queue }} queue are failing
+          description: >-
+            {{ $value | humanize }} {{ $labels.queue }} jobs used up their retries in the
+            last 30 minutes.
+
+      - alert: OvrBrowserZombies
+        expr: ovr_worker_browser_processes{state="zombie"} > 20
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: An OVR worker is leaving browser processes unreaped
+          description: >-
+            {{ $value }} exited browser processes have not been reaped. They count against
+            the pod's pids limit, so the worker will eventually fail to launch browsers.
