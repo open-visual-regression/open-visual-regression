@@ -1,5 +1,11 @@
 # @ovr/db
 
+## 0.4.5
+
+### Patch Changes
+
+- [#428](https://github.com/open-visual-regression/open-visual-regression/pull/428) [`79276f2`](https://github.com/open-visual-regression/open-visual-regression/commit/79276f236ad32d79fab0b5ad9494697490b2d562) Thanks [@tgfischer](https://github.com/tgfischer)! - Stop failing builds with "Build timed out" while they are still waiting in the queue.
+
 ## 0.4.4
 
 ### Patch Changes
