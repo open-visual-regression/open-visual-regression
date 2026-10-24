@@ -5,6 +5,7 @@ import { z } from "zod";
 import { scheduleFlakyDetection } from "@ovr/builds/flakiness";
 import { assertEncryptionKey } from "@ovr/git-status/crypto";
 import { createLogger } from "@ovr/logger";
+import { startMetrics } from "@ovr/metrics/server";
 import {
   QueueName,
   buildRedisConnection,
@@ -26,11 +27,16 @@ import * as publishStatus from "./handlers/publishStatus";
 import * as purge from "./handlers/purge";
 import * as purgeDispatch from "./handlers/purgeDispatch";
 import * as reaper from "./handlers/reaper";
-import { startMemoryReports } from "./lib/memoryReport";
+import { isFinalAttempt } from "./lib/attempts";
+import { observeJobs } from "./lib/jobMetrics";
+import { observeBrowserProcesses, startMemoryReports } from "./lib/memoryReport";
+import { APP_VERSION } from "./lib/version";
 
 const logger = createLogger("worker");
 
 assertEncryptionKey();
+
+const metrics = await startMetrics({ serviceName: "ovr-worker", serviceVersion: APP_VERSION });
 
 const connection = buildRedisConnection(process.env.REDIS_URL ?? "redis://localhost:6379", {
   maxRetriesPerRequest: null,
@@ -104,8 +110,6 @@ const flakySnapshotScanWorker = new Worker(
   options,
 );
 
-const isFinalAttempt = (job: Job<unknown>): boolean => job.attemptsMade >= (job.opts.attempts ?? 1);
-
 const guard =
   <T>(fn: (job: { data: T }, error: Error) => Promise<void>) =>
   (job: Job<T> | undefined, error: Error) => {
@@ -176,12 +180,17 @@ for (const worker of [extractWorker, captureWorker, diffWorker, finalizeWorker])
 }
 
 for (const worker of workers) {
+  observeJobs(worker);
   worker.on("error", (err) => {
     logger.error({ err, queue: worker.name }, "worker error");
   });
   worker.on("stalled", (jobId, prev) => {
     logger.warn({ jobId, queue: worker.name, prev }, "job stalled and will run again");
   });
+}
+
+if (metrics) {
+  observeBrowserProcesses();
 }
 
 if (MEMORY_LOG_INTERVAL_MS > 0) {
@@ -219,6 +228,7 @@ const onShutdown = async (): Promise<void> => {
 
   shutdown.abort();
   await Promise.all(workers.map((worker) => worker.close()));
+  await metrics?.shutdown();
   process.exit(0);
 };
 

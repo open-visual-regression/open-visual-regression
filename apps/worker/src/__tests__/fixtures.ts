@@ -1,10 +1,13 @@
-import { Queue, type Job } from "bullmq";
+import { spawn, type ChildProcess } from "node:child_process";
+
+import { Queue, Worker, type Job, type Processor, type WorkerOptions } from "bullmq";
 import { v7 as uuidv7 } from "uuid";
 import { test as vitest } from "vitest";
 
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
 import { organization, projects, user as userTable } from "@ovr/db/schema";
+import { metricsFixture, type TestMetrics } from "@ovr/metrics/testing";
 import { buildRedisConnection, type QueueName, type RedisConnection } from "@ovr/queue";
 
 export { describe, expect } from "vitest";
@@ -24,7 +27,15 @@ type Fixtures = {
   build: NonNullable<Awaited<ReturnType<typeof dbClient.builds.create>>>;
   connection: RedisConnection;
   openQueue: (name: QueueName) => Queue;
+  openWorker: (
+    name: QueueName,
+    processor: Processor,
+    options?: Omit<WorkerOptions, "connection">,
+  ) => Worker;
   trackJob: <T extends Job>(job: T) => T;
+  metrics: TestMetrics;
+  /** Stands in for a launched browser. */
+  childProcess: ChildProcess;
 };
 
 export const test = vitest.extend<Fixtures>({
@@ -103,6 +114,18 @@ export const test = vitest.extend<Fixtures>({
     await Promise.all(queues.map((queue) => queue.close()));
   },
 
+  openWorker: async ({ connection }, use) => {
+    const workers: Worker[] = [];
+
+    await use((name, processor, options) => {
+      const worker = new Worker(name, processor, { connection, ...options });
+      workers.push(worker);
+      return worker;
+    });
+
+    await Promise.all(workers.map((worker) => worker.close()));
+  },
+
   // eslint-disable-next-line no-empty-pattern
   trackJob: async ({}, use) => {
     const jobs: Job[] = [];
@@ -113,5 +136,14 @@ export const test = vitest.extend<Fixtures>({
     });
 
     await Promise.all(jobs.map((job) => job.remove()));
+  },
+
+  metrics: metricsFixture,
+
+  // eslint-disable-next-line no-empty-pattern
+  childProcess: async ({}, use) => {
+    const child = spawn("sleep", ["30"]);
+    await use(child);
+    child.kill();
   },
 });
