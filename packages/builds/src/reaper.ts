@@ -5,6 +5,7 @@ import type { CanceledBuildJobs } from "@ovr/queue";
 import { cancelBuildJobs, findBuildsWithLiveJobs } from "@ovr/queue/producer";
 
 import { publishStatus } from "./builds";
+import { buildsFinished } from "./lib/metrics";
 
 const logger = createLogger("builds");
 
@@ -52,6 +53,7 @@ const reapIdleBuilds = async (
       );
       return erroredDiffIds;
     });
+    buildsFinished.add(1, { processing_status: "error", reason: "timed_out" });
 
     logger.warn(
       {

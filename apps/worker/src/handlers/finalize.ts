@@ -1,5 +1,4 @@
-import { finalizeBuild, publishStatus } from "@ovr/builds/builds";
-import { dbClient } from "@ovr/db/client";
+import { failBuild, finalizeBuild } from "@ovr/builds/builds";
 import type { FinalizeJobPayload } from "@ovr/queue";
 
 type FinalizeJob = { data: FinalizeJobPayload };
@@ -9,6 +8,5 @@ export const run = async (job: FinalizeJob): Promise<void> => {
 };
 
 export const failed = async (job: FinalizeJob, error?: Error): Promise<void> => {
-  await dbClient.builds.updateProcessingStatus(job.data.buildId, "error", error?.message);
-  await publishStatus(job.data.buildId);
+  await failBuild(job.data.buildId, error?.message, "finalize_failed");
 };
