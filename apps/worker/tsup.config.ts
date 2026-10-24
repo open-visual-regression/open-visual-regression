@@ -21,6 +21,7 @@ export default defineConfig((options) => ({
   ],
   noExternal: [/^@ovr\/(?!logger)/],
   external: [
+    /^@opentelemetry\//,
     "playwright",
     "playwright-core",
     "bullmq",

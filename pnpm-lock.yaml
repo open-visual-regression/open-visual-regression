@@ -421,6 +421,21 @@ importers:
 
   apps/worker:
     dependencies:
+      '@opentelemetry/api':
+        specifier: ~1.9.1
+        version: 1.9.1
+      '@opentelemetry/exporter-prometheus':
+        specifier: ^0.223.0
+        version: 0.223.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/resources':
+        specifier: ^2.12.0
+        version: 2.12.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/sdk-metrics':
+        specifier: ^2.12.0
+        version: 2.12.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/semantic-conventions':
+        specifier: ^1.43.0
+        version: 1.43.0
       '@ovr/builds':
         specifier: workspace:*
         version: link:../../packages/builds
@@ -436,6 +451,9 @@ importers:
       '@ovr/logger':
         specifier: workspace:*
         version: link:../../packages/logger
+      '@ovr/metrics':
+        specifier: workspace:*
+        version: link:../../packages/metrics
       '@ovr/queue':
         specifier: workspace:*
         version: link:../../packages/queue
