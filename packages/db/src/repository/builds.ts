@@ -407,16 +407,29 @@ export const removeMany = async (tx: DbClient, ids: string[]): Promise<void> => 
   await tx.delete(builds).where(inArray(builds.id, ids));
 };
 
-export const findStale = async (cutoff: string, limit: number): Promise<string[]> => {
+export type StaleBuild = {
+  id: string;
+  projectId: string;
+  createdAt: string;
+};
+
+export const findStale = async (
+  cutoff: string,
+  limit: number,
+  after?: BuildsCursor,
+): Promise<StaleBuild[]> => {
   const diffSnapshots = alias(snapshots, "diff_snapshots");
 
-  const rows = await db
-    .select({ id: builds.id })
+  return db
+    .select({ id: builds.id, projectId: builds.projectId, createdAt: builds.createdAt })
     .from(builds)
     .where(
       and(
         inArray(builds.processingStatus, ["queued", "processing"]),
         lt(builds.createdAt, cutoff),
+        after
+          ? sql`(${builds.createdAt}, ${builds.id}) > (${after.createdAt}::timestamp, ${after.id}::uuid)`
+          : undefined,
         notExists(
           db
             .select({ one: sql`1` })
@@ -432,8 +445,6 @@ export const findStale = async (cutoff: string, limit: number): Promise<string[]
         ),
       ),
     )
-    .orderBy(asc(builds.createdAt))
+    .orderBy(asc(builds.createdAt), asc(builds.id))
     .limit(limit);
-
-  return rows.map((row) => row.id);
 };

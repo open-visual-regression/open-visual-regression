@@ -147,6 +147,9 @@ worker:
   # uses round-robin, or fifo with worker.keda's generated trigger, which can't
   # see prioritized jobs. Also read by the web app.
   captureQueuePolicy: ""
+  # Minutes without snapshot or diff updates, and with no jobs left to run,
+  # before an unfinished build is errored. Empty uses the app default (30).
+  reaperStaleMinutes: ""
   # Daily retention purge. Empty values use the app defaults.
   purge:
     # Jobs at once across all workers (1).

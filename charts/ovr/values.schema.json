@@ -278,6 +278,10 @@
           "enum": ["", "round-robin", "fifo"],
           "description": "Order capture groups run in across builds. Empty uses the app default, or fifo with KEDA's generated trigger."
         },
+        "reaperStaleMinutes": {
+          "type": ["string", "integer"],
+          "description": "Minutes without snapshot or diff activity, and with no jobs left to run, before an unfinished build is errored. Empty string uses the app default."
+        },
         "purge": {
           "type": "object",
           "additionalProperties": false,
