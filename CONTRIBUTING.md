@@ -106,6 +106,7 @@ packages/
   queue/              # BullMQ queue definitions (@ovr/queue)
   git-status/         # GitHub commit status publishing (@ovr/git-status)
   logger/             # Shared logger (@ovr/logger)
+  metrics/            # Shared metrics, served in the OpenMetrics format for any monitoring agent (@ovr/metrics)
   ui/                 # Shared React component library (@ovr/ui)
   mocks/              # Shared MSW mocks for tests (@ovr/mocks)
   testing/            # Shared test utilities / containers (@ovr/testing)
