@@ -237,6 +237,9 @@ importers:
       '@ovr/logger':
         specifier: workspace:*
         version: link:../../packages/logger
+      '@ovr/metrics':
+        specifier: workspace:*
+        version: link:../../packages/metrics
       '@ovr/queue':
         specifier: workspace:*
         version: link:../../packages/queue

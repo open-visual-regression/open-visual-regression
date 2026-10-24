@@ -6,6 +6,7 @@ import { vi } from "vitest";
 
 import {
   cancelBuildJobs,
+  countQueueJobs,
   enqueueCaptureGroup,
   enqueueCaptureGroups,
   enqueueDiff,
@@ -561,6 +562,48 @@ describe("queue", () => {
       } finally {
         await openQueue(QueueName.FLAKY_SNAPSHOT_SCAN).obliterate({ force: true });
       }
+    });
+  });
+
+  describe("countQueueJobs", () => {
+    const countOf = async (
+      connection: Parameters<typeof countQueueJobs>[0],
+      queue: QueueName,
+      state: string,
+    ) =>
+      (await countQueueJobs(connection)).find((row) => row.queue === queue && row.state === state)
+        ?.count;
+
+    test("should report every queue in every state, even when empty", async ({ connection }) => {
+      const counts = await countQueueJobs(connection);
+
+      expect(counts).toHaveLength(Object.values(QueueName).length * 7);
+      expect(counts).toContainEqual({ queue: QueueName.BUILD_EXTRACT, state: "waiting", count: 0 });
+    });
+
+    test("should count round-robin capture groups as prioritized rather than waiting", async ({
+      connection,
+      trackJob,
+    }) => {
+      const jobs = await enqueueCaptureGroups(
+        "build-a",
+        [
+          { browser: "chromium", snapshotIds: ["a-1"] },
+          { browser: "chromium", snapshotIds: ["a-2"] },
+        ],
+        connection,
+        "round-robin",
+      );
+      jobs.map(trackJob);
+
+      expect(await countOf(connection, QueueName.SNAPSHOT_CAPTURE, "prioritized")).toBe(2);
+      expect(await countOf(connection, QueueName.SNAPSHOT_CAPTURE, "waiting")).toBe(0);
+    });
+
+    test("should count a job waiting in a fifo queue", async ({ connection, trackJob }) => {
+      trackJob(await enqueueDiff({ snapshotId: "snapshot-a", diffId: "diff-a" }, connection));
+
+      expect(await countOf(connection, QueueName.SNAPSHOT_DIFF, "waiting")).toBe(1);
     });
   });
 });
