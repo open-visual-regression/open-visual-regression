@@ -82,3 +82,20 @@ fifo
 {{- $policy -}}
 {{- end -}}
 {{- end -}}
+
+{{- define "ovr.metricsEnv" -}}
+- name: OVR_METRICS_PORT
+  value: {{ .Values.metrics.port | quote }}
+{{- end -}}
+
+{{- define "ovr.metricsPort" -}}
+- name: metrics
+  containerPort: {{ .Values.metrics.port }}
+{{- end -}}
+
+{{/* Read by scrapers that discover pods by annotation. */}}
+{{- define "ovr.metricsAnnotations" -}}
+prometheus.io/scrape: "true"
+prometheus.io/port: {{ .Values.metrics.port | quote }}
+prometheus.io/path: /metrics
+{{- end -}}

@@ -19,6 +19,12 @@ spec:
     metadata:
       annotations:
         {{- include "ovr.configChecksums" . | nindent 8 }}
+        {{- if .Values.metrics.enabled }}
+        {{- include "ovr.metricsAnnotations" . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.worker.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       labels:
         {{- include "ovr.selectorLabels" (dict "Release" .Release "Chart" .Chart "Values" .Values "component" "worker") | nindent 8 }}
     spec:
@@ -100,6 +106,13 @@ spec:
             - name: OVR_PURGE_TIME_BUDGET_MS
               value: {{ . | quote }}
             {{- end }}
+            {{- if .Values.metrics.enabled }}
+            {{- include "ovr.metricsEnv" . | nindent 12 }}
+            {{- end }}
+          {{- if .Values.metrics.enabled }}
+          ports:
+            {{- include "ovr.metricsPort" . | nindent 12 }}
+          {{- end }}
           volumeMounts:
             - name: dshm
               mountPath: /dev/shm

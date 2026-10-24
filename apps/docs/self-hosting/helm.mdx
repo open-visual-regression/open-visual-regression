@@ -134,6 +134,10 @@ If Redis needs a password or TLS, point `worker.keda.authenticationRef` at a KED
 
 Egress always allows DNS, and is otherwise unrestricted. Setting `networkPolicy.egress` replaces that default entirely, so it must list everything the pods reach: Postgres, Redis, object storage, and your git provider.
 
+## Metrics
+
+Set `metrics.enabled` to serve metrics from the web and worker pods for Prometheus, Datadog, or another monitoring tool. With the Prometheus Operator, the chart can also create the scrape config, alerting rules, and a Grafana dashboard. See [Metrics](/self-hosting/metrics).
+
 ## Security
 
 Containers run as UID/GID `1001`, drop all capabilities, and disable privilege escalation.

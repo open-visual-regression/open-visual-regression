@@ -1,0 +1,25 @@
+existingSecret: ovr-secrets
+
+web:
+  podAnnotations:
+    ad.datadoghq.com/web.checks: |
+      {"openmetrics": {"instances": [{"openmetrics_endpoint": "http://%%host%%:9464/metrics", "namespace": "ovr", "metrics": [".+"]}]}}
+
+metrics:
+  enabled: true
+  podMonitor:
+    enabled: true
+    labels:
+      release: kube-prometheus-stack
+  prometheusRule:
+    enabled: true
+  grafanaDashboard:
+    enabled: true
+
+networkPolicy:
+  enabled: true
+  metrics:
+    from:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: monitoring

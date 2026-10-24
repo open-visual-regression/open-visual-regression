@@ -14,3 +14,6 @@ ci/
 
 values-prod.yaml
 values-*.local.yaml
+
+# Tests for files/prometheus-rules.yaml, run in CI.
+files/*.test.yaml
