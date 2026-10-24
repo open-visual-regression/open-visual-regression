@@ -555,6 +555,9 @@ importers:
       '@ovr/logger':
         specifier: workspace:*
         version: link:../logger
+      '@ovr/metrics':
+        specifier: workspace:*
+        version: link:../metrics
       '@ovr/queue':
         specifier: workspace:*
         version: link:../queue
@@ -800,6 +803,9 @@ importers:
       '@ovr/logger':
         specifier: workspace:*
         version: link:../logger
+      '@ovr/metrics':
+        specifier: workspace:*
+        version: link:../metrics
       zod:
         specifier: ^4.5.1
         version: 4.5.1
