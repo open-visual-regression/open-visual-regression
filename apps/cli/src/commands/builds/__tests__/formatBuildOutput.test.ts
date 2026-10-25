@@ -21,6 +21,7 @@ const BUILD: BuildDetailSchema = {
   canceledBy: null,
   isRebuildable: false,
   isReviewable: true,
+  latestBuildId: null,
   commitUrl: null,
   branchUrl: null,
 };

@@ -175,6 +175,28 @@ describe("BuildHeader", () => {
     expect(screen.queryByRole("button", { name: /reject all/i })).not.toBeInTheDocument();
   });
 
+  it("should link to the latest build on the branch when this build is not the latest", () => {
+    const build = mocks.build.generateBuild({
+      status: "needs_review",
+      isRebuildable: false,
+      isReviewable: false,
+      latestBuildId: "019edfc7-e040-7492-86b2-ccfdc00cf6e2",
+    });
+
+    renderComponent({ build, canReview: false });
+
+    expect(screen.getByRole("link", { name: /view latest build/i })).toHaveAttribute(
+      "href",
+      `/projects/${build.project.id}/builds/019edfc7-e040-7492-86b2-ccfdc00cf6e2`,
+    );
+  });
+
+  it("should not link to a latest build when this build is the latest", () => {
+    renderComponent({ build: mocks.build.generateBuild({ latestBuildId: null }) });
+
+    expect(screen.queryByRole("link", { name: /view latest build/i })).not.toBeInTheDocument();
+  });
+
   it("should not show the error alert when the build has no error message", () => {
     renderComponent({
       build: mocks.build.generateBuild({ status: "needs_review", errorMessage: null }),

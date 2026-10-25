@@ -162,6 +162,7 @@ export const buildDetailSchema = buildSchema.extend({
   canceledBy: z.string().min(1).nullable(),
   isRebuildable: z.boolean(),
   isReviewable: z.boolean(),
+  latestBuildId: z.uuidv7().nullable(),
   commitUrl: z.string().nullable(),
   branchUrl: z.string().nullable(),
 });

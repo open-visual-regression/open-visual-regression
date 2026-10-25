@@ -1510,5 +1510,28 @@ describe("builds", () => {
       const [, after] = await serverClient.builds.getOne({ buildId: build!.id });
       expect(after?.build).toMatchObject({ isReviewable: false });
     });
+
+    test("returns the newest build on the branch as the latest build", async ({ admin }) => {
+      const [, project] = await serverClient.projects.add(TEST_PROJECT);
+      const create = (commitSha: string, branch = "main") =>
+        dbClient.builds.create({
+          projectId: project!.projectId,
+          branch,
+          commitSha,
+          artifactPath: `builds/${commitSha}/artifact`,
+          createdBy: admin.id,
+        });
+
+      const build = await create("a".repeat(40));
+      const [, before] = await serverClient.builds.getOne({ buildId: build!.id });
+      expect(before?.build).toMatchObject({ latestBuildId: null });
+
+      await create("b".repeat(40));
+      const latest = await create("c".repeat(40));
+      await create("d".repeat(40), "feature");
+
+      const [, after] = await serverClient.builds.getOne({ buildId: build!.id });
+      expect(after?.build).toMatchObject({ latestBuildId: latest!.id });
+    });
   });
 });
