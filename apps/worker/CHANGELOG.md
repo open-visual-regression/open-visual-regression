@@ -1,5 +1,26 @@
 # @ovr/worker
 
+## 0.15.0
+
+### Minor Changes
+
+- [#441](https://github.com/open-visual-regression/open-visual-regression/pull/441) [`47af771`](https://github.com/open-visual-regression/open-visual-regression/commit/47af771b1e11fc4639f7947a3f1bb3b9d1b351f2) Thanks [@tgfischer](https://github.com/tgfischer)! - The web app and worker can serve metrics on builds, queues, snapshot captures, and worker health, so Prometheus, Grafana, Datadog, and other monitoring tools can track OVR without parsing its logs. Set `OVR_METRICS_PORT` (Helm: `metrics.enabled`) to turn them on. With the Prometheus Operator, the Helm chart can also create the scrape config, alerting rules, and a Grafana dashboard. See the Metrics page in the self-hosting docs.
+
+### Patch Changes
+
+- [#432](https://github.com/open-visual-regression/open-visual-regression/pull/432) [`8bb7448`](https://github.com/open-visual-regression/open-visual-regression/commit/8bb74484257bc01831da1207be516dd01c3ad21c) Thanks [@tgfischer](https://github.com/tgfischer)! - WebKit and Firefox snapshots no longer wait behind other builds' Chromium snapshots, and retried captures no longer stay stuck processing.
+
+- [#428](https://github.com/open-visual-regression/open-visual-regression/pull/428) [`79276f2`](https://github.com/open-visual-regression/open-visual-regression/commit/79276f236ad32d79fab0b5ad9494697490b2d562) Thanks [@tgfischer](https://github.com/tgfischer)! - Stop failing builds with "Build timed out" while they are still waiting in the queue.
+
+- [#433](https://github.com/open-visual-regression/open-visual-regression/pull/433) [`8ef5283`](https://github.com/open-visual-regression/open-visual-regression/commit/8ef52832e911f0e2dd1774619fe3ea98d75f1442) Thanks [@tgfischer](https://github.com/tgfischer)! - A story that freezes the page no longer holds up the rest of its capture group. It now times out and is marked errored.
+
+- Updated dependencies [[`8bb7448`](https://github.com/open-visual-regression/open-visual-regression/commit/8bb74484257bc01831da1207be516dd01c3ad21c), [`79276f2`](https://github.com/open-visual-regression/open-visual-regression/commit/79276f236ad32d79fab0b5ad9494697490b2d562), [`8ef5283`](https://github.com/open-visual-regression/open-visual-regression/commit/8ef52832e911f0e2dd1774619fe3ea98d75f1442)]:
+  - @ovr/queue@0.2.7
+  - @ovr/builds@0.2.8
+  - @ovr/db@0.4.5
+  - @ovr/capture@0.3.14
+  - @ovr/git-status@0.1.17
+
 ## 0.14.5
 
 ### Patch Changes

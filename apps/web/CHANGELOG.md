@@ -1,5 +1,20 @@
 # @ovr/web
 
+## 0.15.0
+
+### Minor Changes
+
+- [#441](https://github.com/open-visual-regression/open-visual-regression/pull/441) [`47af771`](https://github.com/open-visual-regression/open-visual-regression/commit/47af771b1e11fc4639f7947a3f1bb3b9d1b351f2) Thanks [@tgfischer](https://github.com/tgfischer)! - The web app and worker can serve metrics on builds, queues, snapshot captures, and worker health, so Prometheus, Grafana, Datadog, and other monitoring tools can track OVR without parsing its logs. Set `OVR_METRICS_PORT` (Helm: `metrics.enabled`) to turn them on. With the Prometheus Operator, the Helm chart can also create the scrape config, alerting rules, and a Grafana dashboard. See the Metrics page in the self-hosting docs.
+
+### Patch Changes
+
+- Updated dependencies [[`8bb7448`](https://github.com/open-visual-regression/open-visual-regression/commit/8bb74484257bc01831da1207be516dd01c3ad21c), [`79276f2`](https://github.com/open-visual-regression/open-visual-regression/commit/79276f236ad32d79fab0b5ad9494697490b2d562)]:
+  - @ovr/queue@0.2.7
+  - @ovr/builds@0.2.8
+  - @ovr/db@0.4.5
+  - @ovr/reviews@0.1.23
+  - @ovr/git-status@0.1.17
+
 ## 0.14.5
 
 ### Patch Changes
