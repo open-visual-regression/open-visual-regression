@@ -65,6 +65,9 @@ export const generateBuild = (overrides?: Partial<BuildDetailSchema>): BuildDeta
   branchUrl: null,
   buildType: "storybook",
   createdAt: faker.date.recent().toISOString(),
+  queuedMs: 12_000,
+  processingMs: 122_000,
+  durationMs: 134_000,
   ...overrides,
 });
 

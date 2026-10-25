@@ -337,6 +337,32 @@ describe("BuildHeader", () => {
     expect(mockPush).not.toHaveBeenCalled();
   });
 
+  it("should show how long the build took, split into queue and processing time", () => {
+    renderComponent({
+      build: mocks.build.generateBuild({
+        queuedMs: 12_000,
+        processingMs: 122_000,
+        durationMs: 134_000,
+      }),
+    });
+
+    expect(screen.getByText("took 2m 14s (12s queued, 2m 2s processing)")).toBeVisible();
+  });
+
+  it("should not show a duration while the build has no timings", () => {
+    renderComponent({
+      build: mocks.build.generateBuild({
+        status: "processing",
+        queuedMs: null,
+        processingMs: null,
+        durationMs: null,
+      }),
+    });
+
+    expect(screen.queryByRole("img", { name: /build duration/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/^took /)).not.toBeInTheDocument();
+  });
+
   it("should show who canceled the build", () => {
     renderComponent({
       build: mocks.build.generateBuild({ status: "canceled", canceledBy: "Jordan Lee" }),

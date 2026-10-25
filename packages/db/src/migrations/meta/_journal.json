@@ -407,6 +407,13 @@
       "when": 1792802529968,
       "tag": "0057_add_builds_in_progress_index",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1792891807671,
+      "tag": "0058_add_build_timings",
+      "breakpoints": true
     }
   ]
 }

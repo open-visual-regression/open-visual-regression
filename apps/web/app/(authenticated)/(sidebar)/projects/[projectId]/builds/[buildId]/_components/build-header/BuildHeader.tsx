@@ -6,6 +6,7 @@ import {
   CircleSlash2Icon,
   GitBranchIcon,
   GitCommitHorizontalIcon,
+  TimerIcon,
   UserIcon,
 } from "@ovr/ui/components/icon";
 import {
@@ -17,7 +18,8 @@ import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 
 import { ExternalLink } from "@/lib/components/external-link/ExternalLink";
 import { TruncatedText } from "@/lib/components/truncated-text/TruncatedText";
-import { formatRelativeDateTime } from "@/lib/utils/date";
+import { formatBuildTimingBreakdown } from "@/lib/utils/buildTimings";
+import { formatDuration, formatRelativeDateTime } from "@/lib/utils/date";
 
 import { BuildApproveButton } from "./BuildApproveButton";
 import { BuildCancelButton } from "./BuildCancelButton";
@@ -88,6 +90,12 @@ export const BuildHeader = ({
           <Typography variant="caption">
             {formatRelativeDateTime(new Date(build.createdAt))}
           </Typography>
+          {build.durationMs ? (
+            <Typography variant="caption" className="flex items-center gap-1">
+              <Icon icon={TimerIcon} size={10} role="img" aria-label="build duration" />
+              took {formatDuration(build.durationMs)} ({formatBuildTimingBreakdown(build)})
+            </Typography>
+          ) : null}
           {isCanceled ? (
             <Typography variant="caption" className="flex items-center gap-1">
               <Icon icon={CircleSlash2Icon} size={10} />

@@ -51,6 +51,30 @@ describe("BuildsList", () => {
     expect(screen.getByText("Jordan Lee")).toBeVisible();
   });
 
+  it("should show how long a finished build took, with the queue and processing split on hover", () => {
+    renderList([
+      mocks.build.generateBuild({ queuedMs: 12_000, processingMs: 122_000, durationMs: 134_000 }),
+    ]);
+
+    expect(screen.getByText("took 2m 14s")).toHaveAttribute(
+      "title",
+      "12s queued, 2m 2s processing",
+    );
+  });
+
+  it("should not show a duration for a build without timings", () => {
+    renderList([
+      mocks.build.generateBuild({
+        status: "queued",
+        queuedMs: null,
+        processingMs: null,
+        durationMs: null,
+      }),
+    ]);
+
+    expect(screen.queryByText(/^took /)).not.toBeInTheDocument();
+  });
+
   it("should link each row to its build detail page", () => {
     const build = mocks.build.generateBuild({ commitSha: "4f2a91e1234567890" });
     renderList([build]);
