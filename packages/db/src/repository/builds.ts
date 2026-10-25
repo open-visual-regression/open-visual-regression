@@ -10,6 +10,7 @@ import {
   isNotNull,
   lt,
   max,
+  min,
   ne,
   notExists,
   or,
@@ -448,3 +449,20 @@ export const findStale = async (
     .orderBy(asc(builds.createdAt), asc(builds.id))
     .limit(limit);
 };
+
+export type InProgressBuilds = {
+  processingStatus: BuildProcessingStatus;
+  count: number;
+  oldestCreatedAt: string | null;
+};
+
+export const summarizeInProgress = async (): Promise<InProgressBuilds[]> =>
+  db
+    .select({
+      processingStatus: builds.processingStatus,
+      count: count(),
+      oldestCreatedAt: min(builds.createdAt),
+    })
+    .from(builds)
+    .where(inArray(builds.processingStatus, ["queued", "processing"]))
+    .groupBy(builds.processingStatus);
