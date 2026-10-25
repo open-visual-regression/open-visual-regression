@@ -1,5 +1,21 @@
 # @ovr/bull-board
 
+## 0.1.20
+
+### Patch Changes
+
+- Updated dependencies [[`8bb7448`](https://github.com/open-visual-regression/open-visual-regression/commit/8bb74484257bc01831da1207be516dd01c3ad21c), [`79276f2`](https://github.com/open-visual-regression/open-visual-regression/commit/79276f236ad32d79fab0b5ad9494697490b2d562)]:
+  - @ovr/queue@0.2.7
+
+## 0.1.19
+
+### Patch Changes
+
+- [#429](https://github.com/open-visual-regression/open-visual-regression/pull/429) [`5c06f39`](https://github.com/open-visual-regression/open-visual-regression/commit/5c06f390a44b69f3aa0b8a7be22391528a45dfba) Thanks [@tgfischer](https://github.com/tgfischer)! - Docker images now run on Node.js 24.22.1, which includes the October 2026 Node.js security fixes.
+
+- Updated dependencies [[`c6930b4`](https://github.com/open-visual-regression/open-visual-regression/commit/c6930b404c01abf9b6a25cda64ce6a31c405edbd)]:
+  - @ovr/queue@0.2.6
+
 ## 0.1.18
 
 ### Patch Changes

@@ -10,7 +10,7 @@ import {
   DEFAULT_DIFF_THRESHOLD,
   findAncestorBuild as findAncestorBuildService,
   getArtifactPath,
-  checkIsLatestBuild,
+  findLatestBuildId,
   rebuildBuild as rebuildBuildService,
   type RebuildBlockedReason,
 } from "@ovr/builds/builds";
@@ -37,6 +37,7 @@ import {
   getBuildUrl,
   isTerminalBuildStatus,
 } from "./utils/buildStatus";
+import { getBuildTimings } from "./utils/buildTimings";
 
 const UPLOAD_URL_TTL_SECONDS = 3600;
 
@@ -270,6 +271,7 @@ export const list = os.builds.list
         status: getBuildDisplayStatus(build),
         buildType: build.buildType,
         createdAt: build.createdAt,
+        ...getBuildTimings(build),
       })),
       total,
       nextCursor,
@@ -348,7 +350,8 @@ export const getOne = os.builds.getOne
   .handler(async ({ context }) => {
     const { build, project } = context;
 
-    const isLatestBuild = await checkIsLatestBuild(build);
+    const latestBuildId = await findLatestBuildId(build);
+    const isLatestBuild = latestBuildId === null;
     const [canceler, rebuildable, reviewable, gitIntegration, extractDefaults] = await Promise.all([
       build.canceledBy ? dbClient.users.findById(build.canceledBy) : null,
       checkRebuildable(build, { isLatestBuild }),
@@ -370,8 +373,10 @@ export const getOne = os.builds.getOne
         canceledBy: canceler?.name ?? null,
         isRebuildable: rebuildable.status === "ok",
         isReviewable: reviewable.status === "ok",
+        latestBuildId,
         buildType: build.buildType,
         createdAt: build.createdAt,
+        ...getBuildTimings(build),
         commitUrl: gitIntegration
           ? buildCommitUrl(gitIntegration.provider, gitIntegration.repoIdentifier, build.commitSha)
           : null,

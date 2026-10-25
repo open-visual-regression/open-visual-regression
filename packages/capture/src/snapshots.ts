@@ -32,9 +32,20 @@ import { enqueueDiff, enqueueFinalize } from "@ovr/queue/producer";
 import { promoteBaseline } from "@ovr/reviews/baselines";
 import { storage } from "@ovr/storage";
 
-import { CAPTURE_JOB_TIMEOUT_MS, withTimeout } from "./lib/captureTimeouts";
+import {
+  CAPTURE_JOB_TIMEOUT_MS,
+  SNAPSHOT_CAPTURE_TIMEOUT_MS,
+  withTimeout,
+} from "./lib/captureTimeouts";
 import { cacheImage } from "./lib/imageCache";
 import { compareImages } from "./lib/images";
+import {
+  browserRelaunches,
+  diffsCompared,
+  snapshotCaptureDuration,
+  snapshotsCaptured,
+  type DiffResult,
+} from "./lib/metrics";
 import { createUploadQueue } from "./lib/uploadQueue";
 
 const logger = createLogger("capture");
@@ -78,6 +89,18 @@ class CapturePhaseError extends Error {
   }
 }
 
+type PagePhase = "viewport" | Exclude<CapturePhase, "upload">;
+
+class SnapshotTimeoutError extends Error {
+  constructor(
+    readonly phase: PagePhase,
+    timeoutMs: number,
+  ) {
+    super(`Snapshot capture timed out after ${timeoutMs}ms during ${phase}`);
+    this.name = "SnapshotTimeoutError";
+  }
+}
+
 const runPhase = async <T>(phase: CapturePhase, run: () => Promise<T>): Promise<[T, number]> => {
   const start = performance.now();
   try {
@@ -85,6 +108,26 @@ const runPhase = async <T>(phase: CapturePhase, run: () => Promise<T>): Promise<
     return [result, Math.round(performance.now() - start)];
   } catch (cause) {
     throw new CapturePhaseError(phase, Math.round(performance.now() - start), cause);
+  }
+};
+
+// Settles once the work does or the deadline passes. Work still running on a stuck page only
+// settles when its browser closes, so its result is dropped.
+const withDeadline = async <T>(
+  work: Promise<T>,
+  timeoutMs: number,
+  onTimeout: () => Error,
+): Promise<T> => {
+  let deadlineHandle: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<never>((_, reject) => {
+    deadlineHandle = setTimeout(() => reject(onTimeout()), timeoutMs);
+  });
+  work.catch(() => undefined);
+
+  try {
+    return await Promise.race([work, deadline]);
+  } finally {
+    clearTimeout(deadlineHandle);
   }
 };
 
@@ -175,6 +218,7 @@ const launchCapturePage = async (
 
 type CapturedSnapshot = {
   snapshotId: string;
+  browser: string;
   imagePath: string;
   screenshot: Buffer;
   logs: CaptureLog[];
@@ -220,8 +264,6 @@ const captureSnapshotOnPage = async (
     snapshot.viewportHeight,
   );
 
-  await page.setViewportSize({ width, height });
-
   const startedAt = performance.now();
   const context: SnapshotLogContext = {
     buildId: build.id,
@@ -233,8 +275,16 @@ const captureSnapshotOnPage = async (
     fullPage,
   };
 
-  try {
-    const [renderResult, renderMs] = await runPhase("render", () =>
+  let currentPhase: PagePhase = "viewport";
+  const runPagePhase = <T>(phase: Exclude<PagePhase, "viewport">, run: () => Promise<T>) => {
+    currentPhase = phase;
+    return runPhase(phase, run);
+  };
+
+  const capture = async (): Promise<CapturedSnapshot> => {
+    await page.setViewportSize({ width, height });
+
+    const [renderResult, renderMs] = await runPagePhase("render", () =>
       page.evaluate(strategy.waitForTargetPlayed, {
         targetId: snapshot.targetId,
         timeoutMs: RENDER_TIMEOUT_MS,
@@ -248,7 +298,7 @@ const captureSnapshotOnPage = async (
     }
 
     const [settled, settleMs] = renderResult.ok
-      ? await runPhase("settle", () => settlePage(page, networkActivity, SETTLE_TIMEOUT_MS))
+      ? await runPagePhase("settle", () => settlePage(page, networkActivity, SETTLE_TIMEOUT_MS))
       : ([false, 0] as const);
 
     if (renderResult.ok && !settled) {
@@ -257,17 +307,18 @@ const captureSnapshotOnPage = async (
 
     const [, waitMs] =
       renderResult.ok && snapshot.waitForTimeout > 0
-        ? await runPhase("wait", () => page.waitForTimeout(snapshot.waitForTimeout))
+        ? await runPagePhase("wait", () => page.waitForTimeout(snapshot.waitForTimeout))
         : ([undefined, 0] as const);
 
     const imagePath = `${build.projectId}/builds/${build.id}/snapshots/${snapshotId}-${snapshot.captureAttempt}.png`;
 
-    const [screenshot, screenshotMs] = await runPhase("screenshot", () =>
+    const [screenshot, screenshotMs] = await runPagePhase("screenshot", () =>
       takeScreenshot(page, fullPage),
     );
 
     return {
       snapshotId,
+      browser: snapshot.browser,
       imagePath,
       screenshot,
       logs: [...pageLogState.logs],
@@ -281,8 +332,21 @@ const captureSnapshotOnPage = async (
       startedAt,
       context,
     };
+  };
+
+  const timeoutMs = SNAPSHOT_CAPTURE_TIMEOUT_MS + snapshot.waitForTimeout;
+
+  try {
+    return await withDeadline(
+      capture(),
+      timeoutMs,
+      () => new SnapshotTimeoutError(currentPhase, timeoutMs),
+    );
   } catch (error) {
-    const failedPhase = error instanceof CapturePhaseError ? error.phase : undefined;
+    const failedPhase =
+      error instanceof CapturePhaseError || error instanceof SnapshotTimeoutError
+        ? error.phase
+        : undefined;
     const failedPhaseMs = error instanceof CapturePhaseError ? error.durationMs : undefined;
     const cause = error instanceof CapturePhaseError ? error.cause : error;
     logger.error(
@@ -351,10 +415,13 @@ const persistCapturedSnapshot = async (
       screenshot: captured.screenshotMs,
       upload: uploadMs,
     };
+    const totalMs = performance.now() - startedAt;
     logger.info(
-      { ...context, timings, totalMs: Math.round(performance.now() - startedAt), hasRenderError },
+      { ...context, timings, totalMs: Math.round(totalMs), hasRenderError },
       "snapshot captured",
     );
+    snapshotsCaptured.add(1, { browser: captured.browser, outcome: "success" });
+    snapshotCaptureDuration.record(totalMs / 1000, { browser: captured.browser });
 
     if (stored) {
       await enqueueSnapshotDiff(snapshotId);
@@ -395,6 +462,9 @@ export const markSnapshotErrored = async (snapshotId: string, error: unknown): P
   const message = error instanceof Error ? error.message : String(error);
   await dbClient.snapshotLogs.createMany({ values: [{ snapshotId, level: "error", message }] });
   await dbClient.snapshots.markErrored(snapshotId, message);
+  if (snapshot) {
+    snapshotsCaptured.add(1, { browser: snapshot.browser, outcome: "error" });
+  }
   await enqueueSnapshotDiff(snapshotId);
 };
 
@@ -443,7 +513,11 @@ export const captureBuildGroup = async (
         let uploadInterrupted = false;
 
         try {
-          for (const [index, snapshotId] of snapshotIds.entries()) {
+          let retriedAfterTimeout: string | undefined;
+
+          for (let index = 0; index < snapshotIds.length; index++) {
+            const snapshotId = snapshotIds[index]!;
+
             if (shutdownSignal?.aborted) {
               throw new ShutdownInterruptError(
                 `Capture group interrupted by worker shutdown: ${buildId}`,
@@ -477,16 +551,25 @@ export const captureBuildGroup = async (
                 throw error;
               }
 
-              await markSnapshotErrored(snapshotId, error);
+              const timedOut = error instanceof SnapshotTimeoutError;
+              const retry = timedOut && retriedAfterTimeout !== snapshotId;
 
-              if (!capturePage.page.isClosed()) {
+              if (!retry) {
+                await markSnapshotErrored(snapshotId, error);
+              }
+
+              // A page that timed out may still be stuck, so it is never reused.
+              if (!timedOut && !capturePage.page.isClosed()) {
                 continue;
               }
 
               logger.error(
                 { buildId, browser, snapshotId },
-                "capture browser closed mid-group, relaunching for remaining snapshots",
+                timedOut
+                  ? "snapshot capture timed out, relaunching the capture browser"
+                  : "capture browser closed mid-group, relaunching for remaining snapshots",
               );
+              browserRelaunches.add(1, { browser, reason: timedOut ? "timeout" : "closed" });
               await capturePage.close().catch(() => undefined);
 
               try {
@@ -496,10 +579,15 @@ export const captureBuildGroup = async (
                   { buildId, browser, err: relaunchError },
                   "failed to relaunch capture browser, aborting remaining snapshots",
                 );
-                for (const remainingId of snapshotIds.slice(index + 1)) {
+                for (const remainingId of snapshotIds.slice(retry ? index : index + 1)) {
                   await markSnapshotErrored(remainingId, relaunchError);
                 }
                 break;
+              }
+
+              if (retry) {
+                retriedAfterTimeout = snapshotId;
+                index--;
               }
             } finally {
               capturePage.pageLogState.logs = [];
@@ -533,6 +621,16 @@ export const enqueueSnapshotDiff = async (snapshotId: string): Promise<void> => 
   }
 };
 
+const diffResult = (
+  diff: Awaited<ReturnType<typeof diffAgainstBaselineSnapshot>>,
+  changed: boolean,
+): DiffResult => {
+  if (!diff) {
+    return "new";
+  }
+  return changed ? "changed" : "unchanged";
+};
+
 export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<void> => {
   const snapshot = await dbClient.snapshots.findById(snapshotId);
   if (!snapshot) {
@@ -563,6 +661,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
 
   if (snapshot.status === "error" || snapshot.hasRenderError) {
     await dbClient.diffs.updateProcessingStatus(diffId, "error");
+    diffsCompared.add(1, { result: "error" });
     await checkAllDoneAndFinalize(build.id);
     return;
   }
@@ -605,6 +704,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
       ...(diff && { pixelDiffCount: diff.pixelDiffCount, diffPercent: diff.diffPercent }),
       ...(diffImagePath && { diffImagePath }),
     });
+    diffsCompared.add(1, { result: diffResult(diff, changed) });
     await promoteBaseline(diffId, build.createdBy);
     if (await isFlakyDetectionEnabled()) {
       await assignSnapshotVariant(
@@ -623,6 +723,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
       reviewStatus: "needs_review",
       ...(baselineSnapshot && { baselineSnapshotId: baselineSnapshot.id }),
     });
+    diffsCompared.add(1, { result: "new" });
     await checkAllDoneAndFinalize(build.id);
     return;
   }
@@ -638,6 +739,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
       diffPercent,
       ...(diffImagePath && { diffImagePath }),
     });
+    diffsCompared.add(1, { result: "unchanged" });
     await checkAllDoneAndFinalize(build.id);
     return;
   }
@@ -650,6 +752,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
     pixelDiffCount,
     diffPercent,
   });
+  diffsCompared.add(1, { result: "changed" });
 
   await checkAllDoneAndFinalize(build.id);
 };

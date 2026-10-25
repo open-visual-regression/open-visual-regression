@@ -104,6 +104,9 @@ export const builds = pgTable(
     createdAt: utcTimestamp("created_at")
       .default(sql`now()`)
       .notNull(),
+    // Set once on the first run; rebuilding snapshots keeps the original timings.
+    startedAt: utcTimestamp("started_at"),
+    completedAt: utcTimestamp("completed_at"),
     updatedAt: utcTimestamp("updated_at")
       .default(sql`now()`)
       .$onUpdate(() => sql`now()`)
@@ -121,12 +124,13 @@ export const builds = pgTable(
       table.createdAt,
       table.id,
     ),
-    index("builds_inFlight_idx")
-      .on(table.processingStatus)
-      .where(sql`${table.processingStatus} in ('queued', 'processing')`)
-      .concurrently(),
     index("builds_createdBy_idx").on(table.createdBy).concurrently(),
     index("builds_canceledBy_idx").on(table.canceledBy).concurrently(),
+    // Stays small as finished builds accumulate.
+    index("builds_inProgress_createdAt_idx")
+      .on(table.createdAt)
+      .where(sql`${table.processingStatus} in ('queued', 'processing')`)
+      .concurrently(),
   ],
 );
 

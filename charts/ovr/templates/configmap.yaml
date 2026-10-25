@@ -17,6 +17,9 @@ data:
   STORAGE_REGION: {{ .Values.storage.region | quote }}
   STORAGE_BUCKET: {{ .Values.storage.bucket | quote }}
   STORAGE_FORCE_PATH_STYLE: {{ .Values.storage.forcePathStyle | quote }}
+  {{- with (include "ovr.captureQueuePolicy" .) }}
+  OVR_CAPTURE_QUEUE_POLICY: {{ . | quote }}
+  {{- end }}
   OVR_AUTH_MODE: {{ .Values.auth.mode | quote }}
   {{- if ne .Values.auth.mode "local" }}
   {{- with .Values.auth.trustedProxy }}

@@ -1,4 +1,5 @@
 import type { createLogger } from "@ovr/logger";
+import { observeGauges } from "@ovr/metrics";
 
 import { readProcessTree } from "./processTree";
 
@@ -43,3 +44,26 @@ export const startMemoryReports = (logger: Logger, intervalMs: number): (() => v
 
   return () => clearInterval(timer);
 };
+
+export const observeBrowserProcesses = (): (() => void) =>
+  observeGauges(
+    {
+      processes: {
+        name: "ovr.worker.browser.processes",
+        description: "Browser processes the worker launched. Zombies exited but were never reaped.",
+      },
+      memory: {
+        name: "ovr.worker.browser.memory.bytes",
+        description: "Resident memory of the browser processes the worker launched.",
+        unit: "By",
+      },
+    },
+    async (observe) => {
+      const usage = await readProcessTree(process.pid);
+      if (usage) {
+        observe("processes", usage.processes, { state: "running" });
+        observe("processes", usage.zombies, { state: "zombie" });
+        observe("memory", usage.rssBytes);
+      }
+    },
+  );

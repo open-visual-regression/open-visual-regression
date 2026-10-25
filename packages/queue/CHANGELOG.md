@@ -1,5 +1,22 @@
 # @ovr/queue
 
+## 0.2.7
+
+### Patch Changes
+
+- [#432](https://github.com/open-visual-regression/open-visual-regression/pull/432) [`8bb7448`](https://github.com/open-visual-regression/open-visual-regression/commit/8bb74484257bc01831da1207be516dd01c3ad21c) Thanks [@tgfischer](https://github.com/tgfischer)! - WebKit and Firefox snapshots no longer wait behind other builds' Chromium snapshots, and retried captures no longer stay stuck processing.
+
+- [#428](https://github.com/open-visual-regression/open-visual-regression/pull/428) [`79276f2`](https://github.com/open-visual-regression/open-visual-regression/commit/79276f236ad32d79fab0b5ad9494697490b2d562) Thanks [@tgfischer](https://github.com/tgfischer)! - Stop failing builds with "Build timed out" while they are still waiting in the queue.
+
+- Updated dependencies [[`79276f2`](https://github.com/open-visual-regression/open-visual-regression/commit/79276f236ad32d79fab0b5ad9494697490b2d562)]:
+  - @ovr/db@0.4.5
+
+## 0.2.6
+
+### Patch Changes
+
+- [#426](https://github.com/open-visual-regression/open-visual-regression/pull/426) [`c6930b4`](https://github.com/open-visual-regression/open-visual-regression/commit/c6930b404c01abf9b6a25cda64ce6a31c405edbd) Thanks [@tgfischer](https://github.com/tgfischer)! - Small builds no longer wait for every snapshot of a large build queued before them. Set `OVR_CAPTURE_QUEUE_POLICY=fifo` to keep the previous order.
+
 ## 0.2.5
 
 ### Patch Changes

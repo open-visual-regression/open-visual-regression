@@ -4,6 +4,10 @@ const logger = createLogger("capture");
 
 export const CAPTURE_JOB_TIMEOUT_MS = 2 * 60 * 1000;
 
+// Per capture attempt, on top of the snapshot's own waitForTimeout. Enforced from the worker, so it
+// still fires when the story blocks the page's main thread and the in-page timeouts never run.
+export const SNAPSHOT_CAPTURE_TIMEOUT_MS = 60_000;
+
 export const CLEANUP_GRACE_MS = 30_000;
 
 export class TimeoutError extends Error {

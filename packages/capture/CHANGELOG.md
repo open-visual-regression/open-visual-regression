@@ -1,5 +1,37 @@
 # @ovr/capture
 
+## 0.3.14
+
+### Patch Changes
+
+- [#433](https://github.com/open-visual-regression/open-visual-regression/pull/433) [`8ef5283`](https://github.com/open-visual-regression/open-visual-regression/commit/8ef52832e911f0e2dd1774619fe3ea98d75f1442) Thanks [@tgfischer](https://github.com/tgfischer)! - A story that freezes the page no longer holds up the rest of its capture group. It now times out and is marked errored.
+
+- Updated dependencies [[`8bb7448`](https://github.com/open-visual-regression/open-visual-regression/commit/8bb74484257bc01831da1207be516dd01c3ad21c), [`79276f2`](https://github.com/open-visual-regression/open-visual-regression/commit/79276f236ad32d79fab0b5ad9494697490b2d562)]:
+  - @ovr/queue@0.2.7
+  - @ovr/builds@0.2.8
+  - @ovr/db@0.4.5
+  - @ovr/reviews@0.1.23
+
+## 0.3.13
+
+### Patch Changes
+
+- [`e688833`](https://github.com/open-visual-regression/open-visual-regression/commit/e688833724d681410ff28162830281f262af43c1) Thanks [@tgfischer](https://github.com/tgfischer)! - Upgrade Playwright to 1.64.1, so the worker runs on Node.js 24.22.1 and captures use Chromium 156.
+
+- Updated dependencies [[`e688833`](https://github.com/open-visual-regression/open-visual-regression/commit/e688833724d681410ff28162830281f262af43c1)]:
+  - @ovr/capture-browser@0.0.2
+
+## 0.3.12
+
+### Patch Changes
+
+- [#426](https://github.com/open-visual-regression/open-visual-regression/pull/426) [`c6930b4`](https://github.com/open-visual-regression/open-visual-regression/commit/c6930b404c01abf9b6a25cda64ce6a31c405edbd) Thanks [@tgfischer](https://github.com/tgfischer)! - Small builds no longer wait for every snapshot of a large build queued before them. Set `OVR_CAPTURE_QUEUE_POLICY=fifo` to keep the previous order.
+
+- Updated dependencies [[`c6930b4`](https://github.com/open-visual-regression/open-visual-regression/commit/c6930b404c01abf9b6a25cda64ce6a31c405edbd)]:
+  - @ovr/builds@0.2.7
+  - @ovr/queue@0.2.6
+  - @ovr/reviews@0.1.22
+
 ## 0.3.11
 
 ### Patch Changes

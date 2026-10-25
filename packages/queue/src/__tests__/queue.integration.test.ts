@@ -1,26 +1,28 @@
 import { setTimeout as sleep } from "node:timers/promises";
 
-import { Queue, Worker } from "bullmq";
+import { Queue, Worker, type Job } from "bullmq";
 import type { Redis } from "ioredis";
 import { vi } from "vitest";
 
 import {
+  cancelBuildJobs,
+  countQueueJobs,
   enqueueCaptureGroup,
+  enqueueCaptureGroups,
   enqueueDiff,
   enqueueExtract,
   enqueueFinalize,
   enqueueFlakySnapshotDispatch,
   enqueueFlakySnapshotScanMany,
   getJobNextRunAt,
-  getQueueDepths,
   isJobRunning,
   enqueuePublishStatus,
   enqueuePurgeMany,
   QueueName,
+  runCaptureGroupRetryFirst,
   scheduleJob,
   scheduleReaper,
   setPurgeConcurrency,
-  tryAcquireLock,
   type CaptureGroupJobPayload,
   type DiffJobPayload,
   type ExtractJobPayload,
@@ -191,49 +193,169 @@ describe("queue", () => {
     });
   });
 
-  describe("getQueueDepths", () => {
-    test("should count each queue's jobs by state", async ({ connection, openQueue, trackJob }) => {
-      trackJob(
-        await enqueueCaptureGroup(
-          { buildId: "b", browser: "chromium", snapshotIds: [] },
-          connection,
-        ),
+  describe("enqueueCaptureGroups", () => {
+    const groups = (buildId: string, count: number) =>
+      Array.from({ length: count }, (_, index) => ({
+        browser: "chromium",
+        snapshotIds: [`${buildId}-${index + 1}`],
+      }));
+
+    const processingOrder = async (
+      queue: Queue,
+      jobs: Job<CaptureGroupJobPayload>[],
+      timeout?: number,
+    ) => {
+      await vi.waitFor(
+        async () =>
+          expect(await Promise.all(jobs.map((job) => job.isCompleted()))).not.toContain(false),
+        { timeout },
       );
-      trackJob(
-        await enqueueCaptureGroup(
-          { buildId: "b", browser: "chromium", snapshotIds: [] },
-          connection,
-        ),
-      );
-      trackJob(await openQueue(QueueName.SNAPSHOT_DIFF).add("delayed", {}, { delay: 60_000 }));
+      const processed = await Promise.all(jobs.map((job) => queue.getJob(job.id!)));
+      return processed
+        .sort((a, b) => a!.processedOn! - b!.processedOn!)
+        .map((job) => (job!.data as CaptureGroupJobPayload).snapshotIds[0]);
+    };
 
-      const depths = await getQueueDepths(connection);
+    test("should interleave a small build queued behind a large one under round-robin", async ({
+      connection,
+      openQueue,
+      openWorker,
+      trackJob,
+    }) => {
+      const jobs = [
+        ...(await enqueueCaptureGroups("main", groups("main", 4), connection, "round-robin")),
+        ...(await enqueueCaptureGroups("pr", groups("pr", 2), connection, "round-robin")),
+      ].map(trackJob);
 
-      expect(depths[QueueName.SNAPSHOT_CAPTURE]).toEqual({
-        waiting: 2,
-        active: 0,
-        delayed: 0,
-        prioritized: 0,
-        "waiting-children": 0,
-        failed: 0,
-      });
-      expect(depths[QueueName.SNAPSHOT_DIFF]).toMatchObject({ waiting: 0, delayed: 1 });
-      expect(Object.keys(depths)).toEqual(Object.values(QueueName));
-    });
-  });
+      openWorker(QueueName.SNAPSHOT_CAPTURE, () => sleep(10), { concurrency: 1 });
 
-  describe("tryAcquireLock", () => {
-    test("should let one caller hold the lock until it expires", async ({ connection }) => {
-      const [first, second] = await Promise.all([
-        tryAcquireLock(connection, "depth-test", 200),
-        tryAcquireLock(connection, "depth-test", 200),
+      expect(await processingOrder(openQueue(QueueName.SNAPSHOT_CAPTURE), jobs)).toEqual([
+        "main-1",
+        "pr-1",
+        "main-2",
+        "pr-2",
+        "main-3",
+        "main-4",
       ]);
+    });
 
-      expect([first, second].sort()).toEqual([false, true]);
+    test("should give each browser its own rounds under round-robin", async ({
+      connection,
+      openQueue,
+      openWorker,
+      trackJob,
+    }) => {
+      const browserGroups = (buildId: string, browser: string, count: number) =>
+        Array.from({ length: count }, (_, index) => ({
+          browser,
+          snapshotIds: [`${buildId}-${browser}-${index + 1}`],
+        }));
+      const jobs = [
+        ...(await enqueueCaptureGroups(
+          "main",
+          [...browserGroups("main", "chromium", 2), ...browserGroups("main", "webkit", 2)],
+          connection,
+          "round-robin",
+        )),
+        ...(await enqueueCaptureGroups(
+          "pr",
+          [...browserGroups("pr", "chromium", 1), ...browserGroups("pr", "webkit", 1)],
+          connection,
+          "round-robin",
+        )),
+      ].map(trackJob);
 
-      await sleep(250);
+      openWorker(QueueName.SNAPSHOT_CAPTURE, () => sleep(10), { concurrency: 1 });
 
-      expect(await tryAcquireLock(connection, "depth-test", 200)).toBe(true);
+      expect(await processingOrder(openQueue(QueueName.SNAPSHOT_CAPTURE), jobs)).toEqual([
+        "main-chromium-1",
+        "main-webkit-1",
+        "pr-chromium-1",
+        "pr-webkit-1",
+        "main-chromium-2",
+        "main-webkit-2",
+      ]);
+    });
+
+    test("should run a retried group before the groups waiting their turn under round-robin", async ({
+      connection,
+      openQueue,
+      openWorker,
+      trackJob,
+    }) => {
+      const [retried] = await enqueueCaptureGroups(
+        "retried",
+        groups("retried", 1),
+        connection,
+        "round-robin",
+      );
+      const others = await Promise.all(
+        ["a", "b", "c"].map((buildId) =>
+          enqueueCaptureGroups(buildId, groups(buildId, 1), connection, "round-robin"),
+        ),
+      );
+      const jobs = [retried!, ...others.flat()].map(trackJob);
+
+      // Each other group outlasts half the retry's backoff, so the retry is due while b runs.
+      const worker = openWorker(
+        QueueName.SNAPSHOT_CAPTURE,
+        async (job: Job<CaptureGroupJobPayload>) => {
+          if (job.data.buildId === "retried" && job.attemptsMade === 0) {
+            throw new Error("interrupted");
+          }
+          await sleep(job.data.buildId === "retried" ? 10 : 1500);
+        },
+        { concurrency: 1 },
+      );
+      worker.on("failed", (job) => void runCaptureGroupRetryFirst(job!));
+
+      expect(await processingOrder(openQueue(QueueName.SNAPSHOT_CAPTURE), jobs, 10_000)).toEqual([
+        "a-1",
+        "b-1",
+        "retried-1",
+        "c-1",
+      ]);
+    }, 15_000);
+
+    test("should run groups in the order they were added under fifo", async ({
+      connection,
+      openQueue,
+      openWorker,
+      trackJob,
+    }) => {
+      const jobs = [
+        ...(await enqueueCaptureGroups("main", groups("main", 3), connection, "fifo")),
+        ...(await enqueueCaptureGroups("pr", groups("pr", 1), connection, "fifo")),
+      ].map(trackJob);
+
+      openWorker(QueueName.SNAPSHOT_CAPTURE, () => sleep(10), { concurrency: 1 });
+
+      expect(await processingOrder(openQueue(QueueName.SNAPSHOT_CAPTURE), jobs)).toEqual([
+        "main-1",
+        "main-2",
+        "main-3",
+        "pr-1",
+      ]);
+    });
+
+    test("should leave no prioritized groups behind when the build is canceled", async ({
+      connection,
+      openQueue,
+      trackJob,
+    }) => {
+      await enqueueCaptureGroups("superseded", groups("superseded", 3), connection, "round-robin");
+      const [kept] = await enqueueCaptureGroups(
+        "kept",
+        groups("kept", 1),
+        connection,
+        "round-robin",
+      );
+      trackJob(kept!);
+
+      await cancelBuildJobs([{ buildId: "superseded", diffIds: [] }], connection);
+
+      const remaining = await openQueue(QueueName.SNAPSHOT_CAPTURE).getJobs(["prioritized"]);
+      expect(remaining.map((job) => job.id)).toEqual([kept!.id]);
     });
   });
 
@@ -440,6 +562,48 @@ describe("queue", () => {
       } finally {
         await openQueue(QueueName.FLAKY_SNAPSHOT_SCAN).obliterate({ force: true });
       }
+    });
+  });
+
+  describe("countQueueJobs", () => {
+    const countOf = async (
+      connection: Parameters<typeof countQueueJobs>[0],
+      queue: QueueName,
+      state: string,
+    ) =>
+      (await countQueueJobs(connection)).find((row) => row.queue === queue && row.state === state)
+        ?.count;
+
+    test("should report every queue in every state, even when empty", async ({ connection }) => {
+      const counts = await countQueueJobs(connection);
+
+      expect(counts).toHaveLength(Object.values(QueueName).length * 7);
+      expect(counts).toContainEqual({ queue: QueueName.BUILD_EXTRACT, state: "waiting", count: 0 });
+    });
+
+    test("should count round-robin capture groups as prioritized rather than waiting", async ({
+      connection,
+      trackJob,
+    }) => {
+      const jobs = await enqueueCaptureGroups(
+        "build-a",
+        [
+          { browser: "chromium", snapshotIds: ["a-1"] },
+          { browser: "chromium", snapshotIds: ["a-2"] },
+        ],
+        connection,
+        "round-robin",
+      );
+      jobs.map(trackJob);
+
+      expect(await countOf(connection, QueueName.SNAPSHOT_CAPTURE, "prioritized")).toBe(2);
+      expect(await countOf(connection, QueueName.SNAPSHOT_CAPTURE, "waiting")).toBe(0);
+    });
+
+    test("should count a job waiting in a fifo queue", async ({ connection, trackJob }) => {
+      trackJob(await enqueueDiff({ snapshotId: "snapshot-a", diffId: "diff-a" }, connection));
+
+      expect(await countOf(connection, QueueName.SNAPSHOT_DIFF, "waiting")).toBe(1);
     });
   });
 });

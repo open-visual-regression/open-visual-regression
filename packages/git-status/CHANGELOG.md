@@ -1,5 +1,12 @@
 # @ovr/git-status
 
+## 0.1.17
+
+### Patch Changes
+
+- Updated dependencies [[`79276f2`](https://github.com/open-visual-regression/open-visual-regression/commit/79276f236ad32d79fab0b5ad9494697490b2d562)]:
+  - @ovr/db@0.4.5
+
 ## 0.1.16
 
 ### Patch Changes

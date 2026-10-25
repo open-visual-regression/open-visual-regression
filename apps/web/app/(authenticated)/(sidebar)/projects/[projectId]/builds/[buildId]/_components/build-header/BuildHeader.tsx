@@ -3,9 +3,11 @@ import { Alert, AlertDescription, AlertTitle } from "@ovr/ui/components/alert";
 import { BadgeSkeleton } from "@ovr/ui/components/badge";
 import {
   Icon,
+  ArrowRightIcon,
   CircleSlash2Icon,
   GitBranchIcon,
   GitCommitHorizontalIcon,
+  TimerIcon,
   UserIcon,
 } from "@ovr/ui/components/icon";
 import {
@@ -15,9 +17,11 @@ import {
 import { Skeleton } from "@ovr/ui/components/skeleton";
 import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 
+import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
 import { ExternalLink } from "@/lib/components/external-link/ExternalLink";
 import { TruncatedText } from "@/lib/components/truncated-text/TruncatedText";
-import { formatRelativeDateTime } from "@/lib/utils/date";
+import { formatBuildTimingBreakdown } from "@/lib/utils/buildTimings";
+import { formatDuration, formatRelativeDateTime } from "@/lib/utils/date";
 
 import { BuildApproveButton } from "./BuildApproveButton";
 import { BuildCancelButton } from "./BuildCancelButton";
@@ -46,7 +50,8 @@ export const BuildHeader = ({
   const showCancel = canReview && isCancelable;
   const showRebuild = canReview && !isCancelable && build.isRebuildable;
   const showReviewActions = canReview && build.isReviewable && hasReviewable;
-  const showActions = showCancel || showRebuild || showReviewActions;
+  const showLatestBuild = build.latestBuildId !== null;
+  const showActions = showCancel || showRebuild || showReviewActions || showLatestBuild;
 
   return (
     <div className="flex flex-col gap-6">
@@ -88,6 +93,12 @@ export const BuildHeader = ({
           <Typography variant="caption">
             {formatRelativeDateTime(new Date(build.createdAt))}
           </Typography>
+          {build.durationMs ? (
+            <Typography variant="caption" className="flex items-center gap-1">
+              <Icon icon={TimerIcon} size={10} role="img" aria-label="build duration" />
+              took {formatDuration(build.durationMs)} ({formatBuildTimingBreakdown(build)})
+            </Typography>
+          ) : null}
           {isCanceled ? (
             <Typography variant="caption" className="flex items-center gap-1">
               <Icon icon={CircleSlash2Icon} size={10} />
@@ -97,6 +108,17 @@ export const BuildHeader = ({
         </div>
         {showActions ? (
           <div className="flex w-full flex-row gap-2 md:order-2 md:w-auto">
+            {showLatestBuild ? (
+              <ButtonLink
+                href={`/projects/${build.project.id}/builds/${build.latestBuildId}`}
+                variant="outline"
+                color="neutral"
+                className="flex-1 md:flex-none"
+              >
+                view latest build
+                <Icon icon={ArrowRightIcon} size={10} />
+              </ButtonLink>
+            ) : null}
             {showCancel ? <BuildCancelButton buildId={build.id} /> : null}
             {showRebuild ? (
               <BuildRebuildButton buildId={build.id} projectId={build.project.id} />

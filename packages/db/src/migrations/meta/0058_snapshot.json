@@ -1,6 +1,6 @@
 {
-  "id": "e6f1a324-ca82-46b0-80b2-de1121b270ea",
-  "prevId": "70020490-a51f-4670-bc0d-e848fd58777c",
+  "id": "5722dd36-a433-4b7f-89e1-9b5269177f57",
+  "prevId": "a19d0888-eb0f-45c2-a16b-f237b78ad045",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1236,12 +1236,6 @@
           "notNull": true,
           "default": "'[]'::jsonb"
         },
-        "capture_all_reason": {
-          "name": "capture_all_reason",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
@@ -1359,6 +1353,18 @@
           "notNull": true,
           "default": "now()"
         },
+        "started_at": {
+          "name": "started_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
         "updated_at": {
           "name": "updated_at",
           "type": "timestamp",
@@ -1440,22 +1446,6 @@
           "method": "btree",
           "with": {}
         },
-        "builds_inFlight_idx": {
-          "name": "builds_inFlight_idx",
-          "columns": [
-            {
-              "expression": "processing_status",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "where": "\"builds\".\"processing_status\" in ('queued', 'processing')",
-          "concurrently": true,
-          "method": "btree",
-          "with": {}
-        },
         "builds_createdBy_idx": {
           "name": "builds_createdBy_idx",
           "columns": [
@@ -1482,6 +1472,22 @@
             }
           ],
           "isUnique": false,
+          "concurrently": true,
+          "method": "btree",
+          "with": {}
+        },
+        "builds_inProgress_createdAt_idx": {
+          "name": "builds_inProgress_createdAt_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"builds\".\"processing_status\" in ('queued', 'processing')",
           "concurrently": true,
           "method": "btree",
           "with": {}

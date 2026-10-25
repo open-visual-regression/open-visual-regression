@@ -17,8 +17,9 @@ spec:
   policyTypes:
     - Ingress
     - Egress
-  {{- if eq $component "web" }}
+  {{- if or (eq $component "web") $.Values.metrics.enabled }}
   ingress:
+    {{- if eq $component "web" }}
     - ports:
         - protocol: TCP
           port: {{ $.Values.web.port }}
@@ -26,15 +27,16 @@ spec:
       from:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-  {{- else if $.Values.worker.metrics.enabled }}
-  ingress:
+    {{- end }}
+    {{- if $.Values.metrics.enabled }}
     - ports:
         - protocol: TCP
-          port: {{ $.Values.worker.metrics.port }}
-      {{- with $.Values.networkPolicy.worker.metricsFrom }}
+          port: {{ $.Values.metrics.port }}
+      {{- with $.Values.networkPolicy.metrics.from }}
       from:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+    {{- end }}
   {{- end }}
   egress:
     - to:

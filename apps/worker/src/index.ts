@@ -5,10 +5,12 @@ import { z } from "zod";
 import { scheduleFlakyDetection } from "@ovr/builds/flakiness";
 import { assertEncryptionKey } from "@ovr/git-status/crypto";
 import { createLogger } from "@ovr/logger";
+import { startMetrics } from "@ovr/metrics/server";
 import {
   QueueName,
   buildRedisConnection,
   queueOptions,
+  runCaptureGroupRetryFirst,
   scheduleReaper,
   schedulePurge,
   setPurgeConcurrency,
@@ -25,13 +27,16 @@ import * as publishStatus from "./handlers/publishStatus";
 import * as purge from "./handlers/purge";
 import * as purgeDispatch from "./handlers/purgeDispatch";
 import * as reaper from "./handlers/reaper";
-import { startMemoryReports } from "./lib/memoryReport";
-import { startMetricsServer } from "./lib/metrics";
-import { startQueueReports } from "./lib/queueReport";
+import { isFinalAttempt } from "./lib/attempts";
+import { observeJobs } from "./lib/jobMetrics";
+import { observeBrowserProcesses, startMemoryReports } from "./lib/memoryReport";
+import { APP_VERSION } from "./lib/version";
 
 const logger = createLogger("worker");
 
 assertEncryptionKey();
+
+const metrics = await startMetrics({ serviceName: "ovr-worker", serviceVersion: APP_VERSION });
 
 const connection = buildRedisConnection(process.env.REDIS_URL ?? "redis://localhost:6379", {
   maxRetriesPerRequest: null,
@@ -67,22 +72,6 @@ const MEMORY_LOG_INTERVAL_MS = z.coerce
   .nonnegative()
   .catch(60_000)
   .parse(process.env.OVR_MEMORY_LOG_INTERVAL_MS);
-
-// 0 turns the periodic "queue depth" log line off.
-const QUEUE_REPORT_INTERVAL_MS = z.coerce
-  .number()
-  .int()
-  .nonnegative()
-  .catch(60_000)
-  .parse(process.env.OVR_QUEUE_REPORT_INTERVAL_MS);
-
-const METRICS_PORT = z.coerce
-  .number()
-  .int()
-  .positive()
-  .optional()
-  .catch(undefined)
-  .parse(process.env.OVR_METRICS_PORT || undefined);
 
 // Across all workers, not per worker.
 const PURGE_CONCURRENCY = z.coerce
@@ -121,8 +110,6 @@ const flakySnapshotScanWorker = new Worker(
   options,
 );
 
-const isFinalAttempt = (job: Job<unknown>): boolean => job.attemptsMade >= (job.opts.attempts ?? 1);
-
 const guard =
   <T>(fn: (job: { data: T }, error: Error) => Promise<void>) =>
   (job: Job<T> | undefined, error: Error) => {
@@ -143,6 +130,17 @@ const guard =
 
 extractWorker.on("failed", guard(extract.failed));
 captureWorker.on("failed", guard(capture.failed));
+captureWorker.on("failed", (job) => {
+  if (!job || isFinalAttempt(job)) {
+    return;
+  }
+  runCaptureGroupRetryFirst(job).catch((error: unknown) => {
+    logger.error(
+      { err: error, jobId: job.id },
+      "failed to move a capture group retry to the front",
+    );
+  });
+});
 diffWorker.on("failed", guard(diff.failed));
 finalizeWorker.on("failed", guard(finalize.failed));
 purgeDispatchWorker.on("failed", guard(purgeDispatch.failed));
@@ -182,6 +180,7 @@ for (const worker of [extractWorker, captureWorker, diffWorker, finalizeWorker])
 }
 
 for (const worker of workers) {
+  observeJobs(worker);
   worker.on("error", (err) => {
     logger.error({ err, queue: worker.name }, "worker error");
   });
@@ -190,16 +189,13 @@ for (const worker of workers) {
   });
 }
 
+if (metrics) {
+  observeBrowserProcesses();
+}
+
 if (MEMORY_LOG_INTERVAL_MS > 0) {
   startMemoryReports(logger, MEMORY_LOG_INTERVAL_MS);
 }
-
-if (QUEUE_REPORT_INTERVAL_MS > 0) {
-  startQueueReports(logger, connection, QUEUE_REPORT_INTERVAL_MS);
-}
-
-const metricsServer =
-  METRICS_PORT === undefined ? undefined : startMetricsServer(logger, connection, METRICS_PORT);
 
 try {
   await schedulePurge(connection);
@@ -231,8 +227,8 @@ const onShutdown = async (): Promise<void> => {
   }
 
   shutdown.abort();
-  metricsServer?.close();
   await Promise.all(workers.map((worker) => worker.close()));
+  await metrics?.shutdown();
   process.exit(0);
 };
 

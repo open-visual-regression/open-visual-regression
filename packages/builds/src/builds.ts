@@ -11,7 +11,7 @@ import { createLogger } from "@ovr/logger";
 import { QueueUnavailableError, type CanceledBuildJobs } from "@ovr/queue";
 import {
   cancelBuildJobs,
-  enqueueCaptureGroup,
+  enqueueCaptureGroups,
   enqueueExtract,
   enqueuePublishStatus,
   publishBuildStatusEvent,
@@ -19,6 +19,12 @@ import {
 import { storage } from "@ovr/storage";
 
 import { toCaptureGroups } from "./lib/captureGroups";
+import {
+  buildDuration,
+  buildsCreated,
+  buildsFinished,
+  type BuildFinishReason,
+} from "./lib/metrics";
 import type { Result } from "./types";
 
 const logger = createLogger("builds");
@@ -79,11 +85,22 @@ export const publishStatus = async (buildId: string): Promise<void> => {
   }
 };
 
+export const failBuild = async (
+  buildId: string,
+  message: string | undefined,
+  reason: BuildFinishReason,
+): Promise<void> => {
+  await dbClient.builds.updateProcessingStatus(buildId, "error", message);
+  buildsFinished.add(1, { processing_status: "error", reason });
+  await publishStatus(buildId);
+};
+
 const cancelInProgressBuild = async (
   buildId: string,
   canceledBy: string | null,
-): Promise<string[] | null> =>
-  dbClient.transaction(async (tx) => {
+  reason: "canceled" | "superseded",
+): Promise<string[] | null> => {
+  const diffIds = await dbClient.transaction(async (tx) => {
     const canceledBuild = await dbClient.builds.cancelIfInProgress(buildId, canceledBy, tx);
     if (!canceledBuild) {
       return null;
@@ -92,6 +109,13 @@ const cancelInProgressBuild = async (
     await dbClient.snapshots.markUnfinishedAs(buildId, "canceled", tx);
     return dbClient.diffs.markPendingAs(buildId, "canceled", tx);
   });
+
+  if (diffIds) {
+    buildsFinished.add(1, { processing_status: "canceled", reason });
+  }
+
+  return diffIds;
+};
 
 type SupersedingBuild = {
   id: string;
@@ -115,7 +139,7 @@ export const supersedeInFlightBuilds = async (build: SupersedingBuild): Promise<
   const canceled: CanceledBuildJobs[] = [];
 
   for (const staleBuild of stale) {
-    const diffIds = await cancelInProgressBuild(staleBuild.id, null);
+    const diffIds = await cancelInProgressBuild(staleBuild.id, null, "superseded");
     if (diffIds) {
       canceled.push({ buildId: staleBuild.id, diffIds });
     }
@@ -206,6 +230,8 @@ export const createBuild = async (
       : { status: "error", error: "BUILD_ID_CONFLICT" };
   }
 
+  buildsCreated.add(1, { build_type: build.buildType, trigger: "upload" });
+
   await supersedeInFlightBuilds(build);
   await publishStatus(buildId);
 
@@ -263,8 +289,7 @@ export const confirmBuildUpload = async (
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    await dbClient.builds.updateProcessingStatus(buildId, "error", message);
-    await publishStatus(buildId);
+    await failBuild(buildId, message, "enqueue_failed");
 
     if (error instanceof QueueUnavailableError) {
       return { status: "error", error: "QUEUE_UNAVAILABLE" };
@@ -330,20 +355,23 @@ type ExtractDefaults = NonNullable<
   Awaited<ReturnType<typeof dbClient.buildExtractDefaults.findByBuild>>
 >;
 
-export const checkIsLatestBuild = async (
-  build: Pick<BuildCandidate, "id" | "projectId" | "branch" | "createdAt">,
-): Promise<boolean> => {
-  const newer = await dbClient.builds.findMany(
+type BranchBuild = Pick<BuildCandidate, "id" | "projectId" | "branch" | "createdAt">;
+
+export const findLatestBuildId = async (build: BranchBuild): Promise<string | null> => {
+  const [newest] = await dbClient.builds.findMany(
     {
       projectIds: [build.projectId],
       branches: [build.branch],
       createdAfter: { createdAt: build.createdAt, id: build.id },
     },
-    { limit: 1 },
+    { limit: 1, sortDirection: "desc" },
   );
 
-  return newer.length === 0;
+  return newest?.id ?? null;
 };
+
+export const checkIsLatestBuild = async (build: BranchBuild): Promise<boolean> =>
+  (await findLatestBuildId(build)) === null;
 
 type RebuildableOptions = { isLatestBuild?: boolean };
 
@@ -423,6 +451,8 @@ export const rebuildBuild = async (
     await dbClient.projects.incrementTotalBuildsCount(source.projectId, tx);
   });
 
+  buildsCreated.add(1, { build_type: source.buildType, trigger: "rebuild" });
+
   try {
     await storage.copyObject(source.artifactPath, artifactPath);
     await enqueueExtract({
@@ -436,8 +466,7 @@ export const rebuildBuild = async (
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    await dbClient.builds.updateProcessingStatus(rebuildId, "error", message);
-    await publishStatus(rebuildId);
+    await failBuild(rebuildId, message, "enqueue_failed");
     throw error;
   }
 
@@ -523,9 +552,7 @@ export const rebuildSnapshots = async (
   });
 
   try {
-    await Promise.all(
-      toCaptureGroups(snapshots).map((group) => enqueueCaptureGroup({ buildId, ...group })),
-    );
+    await enqueueCaptureGroups(buildId, toCaptureGroups(snapshots));
   } catch (error) {
     logger.error({ err: error, buildId, snapshotIds }, "failed to queue rebuilt snapshots");
     const message = error instanceof Error ? error.message : String(error);
@@ -533,6 +560,7 @@ export const rebuildSnapshots = async (
       await dbClient.snapshots.markUnfinishedAs(buildId, "error", tx);
       await dbClient.builds.updateProcessingStatus(buildId, "error", message, tx);
     });
+    buildsFinished.add(1, { processing_status: "error", reason: "enqueue_failed" });
     try {
       await cancelBuildJobs([{ buildId, diffIds: [] }]);
     } catch (cancelError) {
@@ -553,7 +581,7 @@ export const cancelBuild = async (
   buildId: string,
   canceledBy: string,
 ): Promise<Result<void, "BUILD_NOT_FOUND" | "NOT_CANCELABLE">> => {
-  const diffIds = await cancelInProgressBuild(buildId, canceledBy);
+  const diffIds = await cancelInProgressBuild(buildId, canceledBy, "canceled");
 
   if (!diffIds) {
     const build = await dbClient.builds.findById(buildId);
@@ -614,6 +642,14 @@ export const finalizeBuild = async (buildId: string): Promise<void> => {
     reviewStatus,
     errorMessage: hasProcessingError ? SNAPSHOT_ERROR_MESSAGE : null,
   });
+
+  // Skip retried finalize jobs.
+  if (build?.processingStatus === "queued" || build?.processingStatus === "processing") {
+    buildsFinished.add(1, { processing_status: processingStatus, reason: "finalized" });
+    buildDuration.record((Date.now() - Date.parse(build.createdAt)) / 1000, {
+      processing_status: processingStatus,
+    });
+  }
 
   logger.info(
     {

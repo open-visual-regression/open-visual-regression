@@ -7,7 +7,8 @@ import { cn } from "@ovr/ui/lib/utils";
 import { BUILD_STATUS_BORDER_CLASS, BuildStatusBadge } from "@/lib/components/BuildStatus";
 import { MetadataDot } from "@/lib/components/metadata-dot/MetadataDot";
 import { TruncatedText } from "@/lib/components/truncated-text/TruncatedText";
-import { formatRelativeDateTime } from "@/lib/utils/date";
+import { formatBuildTimingBreakdown } from "@/lib/utils/buildTimings";
+import { formatDuration, formatRelativeDateTime } from "@/lib/utils/date";
 
 type BuildRowProps = {
   build: BuildSchema;
@@ -54,6 +55,18 @@ export const BuildRow = ({ build }: BuildRowProps) => {
           <TruncatedText as={Typography} variant="body-muted">
             {formatRelativeDateTime(new Date(build.createdAt))}
           </TruncatedText>
+          {build.durationMs ? (
+            <>
+              <MetadataDot />
+              <TruncatedText
+                as={Typography}
+                variant="body-muted"
+                title={formatBuildTimingBreakdown(build)}
+              >
+                took {formatDuration(build.durationMs)}
+              </TruncatedText>
+            </>
+          ) : null}
         </div>
       </Link>
     </li>

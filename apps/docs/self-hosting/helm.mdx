@@ -79,6 +79,8 @@ CPU and memory scale with concurrent captures, not total build volume. Each capt
 | `worker.diffConcurrency` | app default `4` | Snapshots compared against their baseline at once. |
 | `worker.storybookCacheBytes` | app default 2 GB | Pod-local disk for extracted Storybook builds. Counts against the pod's ephemeral storage. |
 | `worker.imageCacheBytes` | app default 512 MB | Pod-local disk for caching screenshots. Counts against the pod's ephemeral storage. |
+| `worker.captureQueuePolicy` | app default `round-robin` | Order capture groups run in across builds. `round-robin` runs every queued build's first group of each browser, then every build's second, and so on, with retried groups going first, so small PR builds don't wait behind a large main build. `fifo` runs them in the order they were queued. Defaults to `fifo` when `worker.keda` uses its generated trigger (see below). |
+| `worker.reaperStaleMinutes` | app default `30` | Minutes an unfinished build can go without snapshot or diff updates before it is marked errored. A build with jobs still queued, retrying or running is never reaped, however long the queue. |
 | `worker.purge.concurrency` | app default `1` | Retention purge jobs running at once across all workers. Each deletes one project's expired builds. |
 | `worker.purge.batchSize` | app default `10` | Builds the retention purge deletes per transaction. Lower it on a small database. |
 | `worker.purge.batchPauseMs` | app default `500` | Pause between purge batches, so other queries get the database in between. |
@@ -118,37 +120,23 @@ worker:
     listLength: 4
 ```
 
+The generated trigger counts the capture queue's wait list, which only holds groups under `worker.captureQueuePolicy: fifo`, plus round-robin groups due to be retried. Other round-robin groups wait in a sorted set the trigger can't read, so with the generated trigger the chart defaults to `fifo` and refuses `round-robin`. To use round-robin with KEDA, replace the trigger through `worker.keda.triggers` with one that counts prioritized jobs too.
+
 If Redis needs a password or TLS, point `worker.keda.authenticationRef` at a KEDA [`TriggerAuthentication`](https://keda.sh/docs/latest/scalers/redis-lists/#authentication-parameters). `worker.keda.triggers` replaces the generated trigger entirely.
 
 <Warning>
 `cooldownPeriod` must outlast the longest capture group, and `worker.terminationGracePeriodSeconds` must cover the in-flight snapshot on top of that. Otherwise a scale-down stops a worker mid-capture.
 </Warning>
 
-## Queue metrics
-
-Once a minute, one worker logs a `queue depth` line with the waiting, active, delayed, prioritized, waiting-children and failed jobs in every queue, plus how many builds are queued and processing. Only one worker logs it per interval, so the counts aren't multiplied by the replica count. Set `worker.queueReportIntervalMs` to change the interval, or `0` to turn it off.
-
-For a scraper, set `worker.metrics.enabled: true`. Each worker then serves the same counts as Prometheus gauges, `ovr_queue_jobs{queue,state}` and `ovr_builds_in_flight{status}`, on `/metrics` at `worker.metrics.port` (default `9464`). The values are cluster-wide, so aggregate them with `max`, not `sum`. Point your scraper at the port with `worker.podAnnotations`:
-
-```yaml
-worker:
-  metrics:
-    enabled: true
-  podAnnotations:
-    prometheus.io/scrape: "true"
-    prometheus.io/port: "9464"
-    # Datadog:
-    # ad.datadoghq.com/worker.checks: |
-    #   {"openmetrics": {"instances": [{"openmetrics_endpoint": "http://%%host%%:9464/metrics", "namespace": "ovr", "metrics": [".*"]}]}}
-```
-
-With `networkPolicy.enabled`, the worker accepts traffic on the metrics port from `networkPolicy.worker.metricsFrom`, or from anywhere when that is empty.
-
 ## Network policies
 
 `networkPolicy.enabled` adds a policy per component. The worker gets deny-all ingress. The web pod admits traffic on its port from anywhere in the cluster, narrow that with `networkPolicy.web.from`.
 
 Egress always allows DNS, and is otherwise unrestricted. Setting `networkPolicy.egress` replaces that default entirely, so it must list everything the pods reach: Postgres, Redis, object storage, and your git provider.
+
+## Metrics
+
+Set `metrics.enabled` to serve metrics from the web and worker pods for Prometheus, Datadog, or another monitoring tool. With the Prometheus Operator, the chart can also create the scrape config, alerting rules, and a Grafana dashboard. See [Metrics](/self-hosting/metrics).
 
 ## Security
 

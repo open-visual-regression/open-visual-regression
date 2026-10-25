@@ -273,6 +273,69 @@ export const enqueueCaptureGroup = (
   connection: RedisConnection,
 ): Promise<Job<CaptureGroupJobPayload>> => enqueue(QueueName.SNAPSHOT_CAPTURE, payload, connection);
 
+// round-robin gives a build's nth group of each browser priority n, so workers take every build's
+// first group of every browser, then every build's second, and so on.
+export const captureQueuePolicySchema = z.enum(["round-robin", "fifo"]).catch("round-robin");
+
+export type CaptureQueuePolicy = z.infer<typeof captureQueuePolicySchema>;
+
+const LOWEST_PRIORITY = 2_097_151;
+
+export const enqueueCaptureGroups = async (
+  buildId: string,
+  groups: Omit<CaptureGroupJobPayload, "buildId">[],
+  connection: RedisConnection,
+  policy: CaptureQueuePolicy,
+): Promise<Job<CaptureGroupJobPayload>[]> => {
+  if (groups.length === 0) {
+    return [];
+  }
+
+  const queue = new Queue<
+    CaptureGroupJobPayload,
+    void,
+    string,
+    CaptureGroupJobPayload,
+    void,
+    string
+  >(QueueName.SNAPSHOT_CAPTURE, queueOptions(connection));
+  const rounds = new Map<string, number>();
+  const nextRound = (browser: string): number => {
+    const round = (rounds.get(browser) ?? 0) + 1;
+    rounds.set(browser, round);
+    return round;
+  };
+
+  try {
+    return await queue.addBulk(
+      groups.map((group) => ({
+        name: QueueName.SNAPSHOT_CAPTURE,
+        data: { buildId, ...group },
+        opts: {
+          ...JOB_OPTIONS[QueueName.SNAPSHOT_CAPTURE],
+          ...(policy === "round-robin" && {
+            priority: Math.min(nextRound(group.browser), LOWEST_PRIORITY),
+          }),
+        },
+      })),
+    );
+  } finally {
+    await queue.close();
+  }
+};
+
+// A retried group has already started, so it may have left a snapshot processing. Priority 0
+// returns it to the wait list, which workers take before any prioritized group, as BullMQ already
+// does for stalled jobs. Call it once the failed attempt has moved the job to its backoff.
+export const runCaptureGroupRetryFirst = async (
+  job: Job<CaptureGroupJobPayload>,
+): Promise<void> => {
+  if (!job.opts.priority) {
+    return;
+  }
+  await job.changePriority({ priority: 0 });
+};
+
 export const enqueueDiff = (
   payload: DiffJobPayload,
   connection: RedisConnection,
@@ -381,10 +444,12 @@ const removeJobById = async (queue: Queue, jobId: string): Promise<void> => {
   }
 };
 
-export type CanceledBuildJobs = {
+export type BuildJobIds = {
   buildId: string;
   diffIds: string[];
 };
+
+export type CanceledBuildJobs = BuildJobIds;
 
 export const cancelBuildJobs = async (
   canceled: CanceledBuildJobs[],
@@ -428,45 +493,65 @@ export const cancelBuildJobs = async (
   }
 };
 
-export const QUEUE_DEPTH_STATES = [
+const LIVE_JOB_STATES = [
   "waiting",
-  "active",
   "delayed",
   "prioritized",
+  "active",
+  "paused",
   "waiting-children",
-  "failed",
 ] as const satisfies JobType[];
 
-export type QueueDepth = Record<(typeof QUEUE_DEPTH_STATES)[number], number>;
+const isLiveState = (state: string): boolean =>
+  (LIVE_JOB_STATES as readonly string[]).includes(state);
 
-export const getQueueDepths = async (
+export const findBuildsWithLiveJobs = async (
+  buildJobs: BuildJobIds[],
   connection: RedisConnection,
-): Promise<Record<QueueName, QueueDepth>> => {
-  const depths = await Promise.all(
-    Object.values(QueueName).map(async (queueName) => {
-      const queue = new Queue(queueName, queueOptions(connection));
-      try {
-        const counts = await queue.getJobCounts(...QUEUE_DEPTH_STATES);
-        const depth = Object.fromEntries(
-          QUEUE_DEPTH_STATES.map((state) => [state, counts[state] ?? 0]),
-        ) as QueueDepth;
-        return [queueName, depth] as const;
-      } finally {
-        await queue.close();
+): Promise<Set<string>> => {
+  const live = new Set<string>();
+  if (buildJobs.length === 0) {
+    return live;
+  }
+
+  const buildIds = new Set(buildJobs.map(({ buildId }) => buildId));
+  const extractQueue = new Queue(QueueName.BUILD_EXTRACT, queueOptions(connection));
+  const captureQueue = new Queue(QueueName.SNAPSHOT_CAPTURE, queueOptions(connection));
+  const diffQueue = new Queue(QueueName.SNAPSHOT_DIFF, queueOptions(connection));
+  const finalizeQueue = new Queue(QueueName.BUILD_FINALIZE, queueOptions(connection));
+
+  try {
+    // Capture group job ids are random, so find them by payload.
+    for (const job of await captureQueue.getJobs([...LIVE_JOB_STATES])) {
+      const { buildId } = job.data as CaptureGroupJobPayload;
+      if (buildIds.has(buildId)) {
+        live.add(buildId);
       }
-    }),
-  );
-  return Object.fromEntries(depths) as Record<QueueName, QueueDepth>;
-};
+    }
 
-// Uses the queues' prefix so the key lands on their cluster slot.
-export const tryAcquireLock = async (
-  connection: RedisConnection,
-  name: string,
-  ttlMs: number,
-): Promise<boolean> => {
-  const key = `${queueOptions(connection).prefix}:lock:${name}`;
-  return (await connection.set(key, "1", "PX", ttlMs, "NX")) === "OK";
+    for (const { buildId, diffIds } of buildJobs) {
+      if (live.has(buildId)) {
+        continue;
+      }
+      const states = await Promise.all([
+        extractQueue.getJobState(buildId),
+        finalizeQueue.getJobState(buildId),
+        ...diffIds.map((diffId) => diffQueue.getJobState(diffId)),
+      ]);
+      if (states.some(isLiveState)) {
+        live.add(buildId);
+      }
+    }
+  } finally {
+    await Promise.all([
+      extractQueue.close(),
+      captureQueue.close(),
+      diffQueue.close(),
+      finalizeQueue.close(),
+    ]);
+  }
+
+  return live;
 };
 
 const PURGE_DISPATCH_JOB_ID = "build-purge-dispatch";
@@ -541,6 +626,38 @@ const countJobs = async (
     return Object.values(counts).reduce((sum, count) => sum + count, 0);
   } finally {
     await queue.close();
+  }
+};
+
+export const QUEUE_JOB_STATES = [
+  "waiting",
+  "prioritized",
+  "delayed",
+  "active",
+  "waiting-children",
+  "paused",
+  "failed",
+] as const satisfies JobType[];
+
+export type QueueJobCount = {
+  queue: QueueName;
+  state: (typeof QUEUE_JOB_STATES)[number];
+  count: number;
+};
+
+export const countQueueJobs = async (connection: RedisConnection): Promise<QueueJobCount[]> => {
+  const queues = Object.values(QueueName).map(
+    (name) => [name, new Queue(name, queueOptions(connection))] as const,
+  );
+  try {
+    const counts = await Promise.all(
+      queues.map(([, queue]) => queue.getJobCounts(...QUEUE_JOB_STATES)),
+    );
+    return queues.flatMap(([queue], index) =>
+      QUEUE_JOB_STATES.map((state) => ({ queue, state, count: counts[index]![state] ?? 0 })),
+    );
+  } finally {
+    await Promise.all(queues.map(([, queue]) => queue.close()));
   }
 };
 

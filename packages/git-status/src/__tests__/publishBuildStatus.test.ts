@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { it, vi } from "vitest";
 
 import { resolveAdapter } from "../adapters";
 import {
@@ -6,6 +6,7 @@ import {
   publishBuildStatus,
   type PublishBuildStatusDeps,
 } from "../publishBuildStatus";
+import { describe, expect, test } from "./fixtures";
 
 const build = {
   id: "build-1",
@@ -114,5 +115,41 @@ describe("publishBuildStatus", () => {
         headers: expect.objectContaining({ authorization: "Bearer plain-token" }),
       }),
     );
+  });
+
+  describe("metrics", () => {
+    test("counts a sent status by provider, state, and outcome", async ({ metrics }) => {
+      await publishBuildStatus("build-1", makeDeps());
+
+      expect(await metrics.scrape()).toContain(
+        'ovr_git_status_publications_total{provider="github",state="failure",outcome="ok"} 1',
+      );
+    });
+
+    test("counts a status the provider rejected as an error", async ({ metrics }) => {
+      const deps = makeDeps({
+        send: vi
+          .fn<PublishBuildStatusDeps["send"]>()
+          .mockResolvedValue({ outcome: "error", httpStatus: 401, retryable: false }),
+      });
+      await publishBuildStatus("build-1", deps);
+
+      expect(await metrics.scrape()).toContain(
+        'ovr_git_status_publications_total{provider="github",state="failure",outcome="error"} 1',
+      );
+    });
+
+    test("counts a status it could not send because the token would not decrypt", async ({
+      metrics,
+    }) => {
+      const deps = makeDeps({
+        tryDecryptToken: vi.fn<PublishBuildStatusDeps["tryDecryptToken"]>().mockReturnValue(null),
+      });
+      await publishBuildStatus("build-1", deps);
+
+      expect(await metrics.scrape()).toContain(
+        'ovr_git_status_publications_total{provider="github",state="failure",outcome="error"} 1',
+      );
+    });
   });
 });

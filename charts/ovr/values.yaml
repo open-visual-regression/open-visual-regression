@@ -115,6 +115,8 @@ web:
     redirectHttps: true
   priorityClassName: ""
   topologySpreadConstraints: []
+  # Added to the web pods, e.g. Datadog autodiscovery annotations.
+  podAnnotations: {}
   podDisruptionBudget:
     enabled: false
     maxUnavailable: ""
@@ -143,15 +145,13 @@ worker:
   storybookCacheBytes: ""
   # Local disk for caching screenshots. Empty uses the app default (512 MB).
   imageCacheBytes: ""
-  # How often one worker logs a "queue depth" line. 0 turns it off. Empty uses
-  # the app default (60000).
-  queueReportIntervalMs: ""
-  # Prometheus gauges on /metrics. Every worker serves the same cluster-wide
-  # values, so aggregate with max. Point a scraper at it with podAnnotations.
-  metrics:
-    enabled: false
-    port: 9464
-  podAnnotations: {}
+  # Order capture groups run in across builds: "round-robin" or "fifo". Empty
+  # uses round-robin, or fifo with worker.keda's generated trigger, which can't
+  # see prioritized jobs. Also read by the web app.
+  captureQueuePolicy: ""
+  # Minutes without snapshot or diff updates, and with no jobs left to run,
+  # before an unfinished build is errored. Empty uses the app default (30).
+  reaperStaleMinutes: ""
   # Daily retention purge. Empty values use the app defaults.
   purge:
     # Jobs at once across all workers (1).
@@ -186,6 +186,8 @@ worker:
   shmSize: 1Gi
   priorityClassName: ""
   topologySpreadConstraints: []
+  # Added to the worker pods, e.g. Datadog autodiscovery annotations.
+  podAnnotations: {}
   podDisruptionBudget:
     enabled: false
     maxUnavailable: ""
@@ -222,7 +224,26 @@ networkPolicy:
   enabled: false
   web:
     from: []
-  worker:
-    # Who may scrape worker.metrics. Empty allows any source.
-    metricsFrom: []
+  # Who may scrape metrics. Empty allows the whole cluster.
+  metrics:
+    from: []
   egress: []
+
+# Metrics for Prometheus, Datadog, or any OpenMetrics tool, on a port apart from app traffic.
+metrics:
+  enabled: false
+  port: 9464
+  # Prometheus Operator: scrape the web and worker pods.
+  podMonitor:
+    enabled: false
+    interval: 30s
+    labels: {}  # to match your Prometheus's podMonitorSelector
+  # Prometheus Operator: alerts on failing and stuck builds.
+  prometheusRule:
+    enabled: false
+    labels: {}  # to match your Prometheus's ruleSelector
+  # Grafana dashboard ConfigMap, for the Grafana chart's sidecar.
+  grafanaDashboard:
+    enabled: false
+    labels:
+      grafana_dashboard: "1"

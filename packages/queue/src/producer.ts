@@ -8,7 +8,9 @@ import {
 } from "./events";
 import {
   cancelBuildJobs as cancelBuildJobsJob,
+  countQueueJobs as countQueueJobsCmd,
   enqueueCaptureGroup as enqueueCaptureGroupJob,
+  enqueueCaptureGroups as enqueueCaptureGroupsJob,
   enqueueDiff as enqueueDiffJob,
   enqueueExtract as enqueueExtractJob,
   enqueueFinalize as enqueueFinalizeJob,
@@ -18,9 +20,11 @@ import {
   enqueueProjectPurge as enqueueProjectPurgeJob,
   enqueuePurge as enqueuePurgeJob,
   enqueuePurgeMany as enqueuePurgeManyJob,
+  findBuildsWithLiveJobs as findBuildsWithLiveJobsCmd,
   getJobNextRunAt as getJobNextRunAtCmd,
   isJobRunning as isJobRunningCmd,
   scheduleJob as scheduleJobCmd,
+  type BuildJobIds,
   type CanceledBuildJobs,
   type CaptureGroupJobPayload,
   type DiffJobPayload,
@@ -31,7 +35,9 @@ import {
   type GitStatusPublishJobPayload,
   type ProjectPurgeJobPayload,
   type PurgeJobPayload,
+  type QueueJobCount,
   buildRedisConnection,
+  captureQueuePolicySchema,
   waitForConnection,
 } from "./index";
 
@@ -55,6 +61,19 @@ export const enqueueCaptureGroup = (
   payload: CaptureGroupJobPayload,
 ): Promise<Job<CaptureGroupJobPayload>> =>
   whenConnected(() => enqueueCaptureGroupJob(payload, connection));
+
+export const enqueueCaptureGroups = (
+  buildId: string,
+  groups: Omit<CaptureGroupJobPayload, "buildId">[],
+): Promise<Job<CaptureGroupJobPayload>[]> =>
+  whenConnected(() =>
+    enqueueCaptureGroupsJob(
+      buildId,
+      groups,
+      connection,
+      captureQueuePolicySchema.parse(process.env.OVR_CAPTURE_QUEUE_POLICY),
+    ),
+  );
 
 export const enqueueDiff = (payload: DiffJobPayload): Promise<Job<DiffJobPayload>> =>
   whenConnected(() => enqueueDiffJob(payload, connection));
@@ -91,11 +110,17 @@ export const enqueueFlakySnapshotScanMany = (
 export const cancelBuildJobs = (canceled: CanceledBuildJobs[]): Promise<void> =>
   whenConnected(() => cancelBuildJobsJob(canceled, connection));
 
+export const findBuildsWithLiveJobs = (buildJobs: BuildJobIds[]): Promise<Set<string>> =>
+  whenConnected(() => findBuildsWithLiveJobsCmd(buildJobs, connection));
+
 export const scheduleJob = (job: JobName, pattern: string | null): Promise<void> =>
   whenConnected(() => scheduleJobCmd(connection, job, pattern));
 
 export const isJobRunning = (job: JobName): Promise<boolean> =>
   whenConnected(() => isJobRunningCmd(connection, job));
+
+export const countQueueJobs = (): Promise<QueueJobCount[]> =>
+  whenConnected(() => countQueueJobsCmd(connection));
 
 export const getJobNextRunAt = (job: JobName): Promise<Date | null> =>
   whenConnected(() => getJobNextRunAtCmd(connection, job));

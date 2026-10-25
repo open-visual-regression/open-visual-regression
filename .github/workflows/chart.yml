@@ -66,6 +66,11 @@ jobs:
       - name: Lint
         run: ct lint --all
 
+      - name: Test alert rules
+        run: |
+          docker run --rm --entrypoint promtool -v "$PWD/charts/ovr/files:/rules" -w /rules \
+            prom/prometheus:v3.1.0 test rules prometheus-rules.test.yaml
+
       - name: Install kubeconform
         run: |
           set -euo pipefail

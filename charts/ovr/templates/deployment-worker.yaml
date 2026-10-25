@@ -19,6 +19,9 @@ spec:
     metadata:
       annotations:
         {{- include "ovr.configChecksums" . | nindent 8 }}
+        {{- if .Values.metrics.enabled }}
+        {{- include "ovr.metricsAnnotations" . | nindent 8 }}
+        {{- end }}
         {{- with .Values.worker.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -83,14 +86,9 @@ spec:
             - name: OVR_IMAGE_CACHE_BYTES
               value: {{ . | quote }}
             {{- end }}
-            {{- /* not `with`: 0 turns the report off */}}
-            {{- if ne (toString .Values.worker.queueReportIntervalMs) "" }}
-            - name: OVR_QUEUE_REPORT_INTERVAL_MS
-              value: {{ .Values.worker.queueReportIntervalMs | quote }}
-            {{- end }}
-            {{- if .Values.worker.metrics.enabled }}
-            - name: OVR_METRICS_PORT
-              value: {{ .Values.worker.metrics.port | quote }}
+            {{- with .Values.worker.reaperStaleMinutes }}
+            - name: OVR_REAPER_STALE_MINUTES
+              value: {{ . | quote }}
             {{- end }}
             {{- with .Values.worker.purge.concurrency }}
             - name: OVR_PURGE_CONCURRENCY
@@ -108,11 +106,12 @@ spec:
             - name: OVR_PURGE_TIME_BUDGET_MS
               value: {{ . | quote }}
             {{- end }}
-          {{- if .Values.worker.metrics.enabled }}
+            {{- if .Values.metrics.enabled }}
+            {{- include "ovr.metricsEnv" . | nindent 12 }}
+            {{- end }}
+          {{- if .Values.metrics.enabled }}
           ports:
-            - name: metrics
-              containerPort: {{ .Values.worker.metrics.port }}
-              protocol: TCP
+            {{- include "ovr.metricsPort" . | nindent 12 }}
           {{- end }}
           volumeMounts:
             - name: dshm

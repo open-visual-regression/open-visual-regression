@@ -3,7 +3,7 @@
 # Build from the repository root:
 #   docker build -f apps/bull-board/Dockerfile -t open-visual-regression/bull-board .
 
-ARG NODE_VERSION=24.16.0
+ARG NODE_VERSION=24.22.1
 # Keep in sync with the "turbo" devDependency in the root package.json.
 ARG TURBO_VERSION=2.10.8
 ARG PNPM_VERSION=11.9.0

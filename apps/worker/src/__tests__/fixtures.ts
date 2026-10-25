@@ -1,15 +1,14 @@
-import type { AddressInfo } from "node:net";
+import { spawn, type ChildProcess } from "node:child_process";
 
+import { Queue, Worker, type Job, type Processor, type WorkerOptions } from "bullmq";
 import { v7 as uuidv7 } from "uuid";
-import { test as vitest, vi, type Mock } from "vitest";
+import { test as vitest } from "vitest";
 
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
 import { organization, projects, user as userTable } from "@ovr/db/schema";
-import type { createLogger } from "@ovr/logger";
-import { buildRedisConnection, type RedisConnection } from "@ovr/queue";
-
-import { startMetricsServer } from "../lib/metrics";
+import { metricsFixture, type TestMetrics } from "@ovr/metrics/testing";
+import { buildRedisConnection, type QueueName, type RedisConnection } from "@ovr/queue";
 
 export { describe, expect } from "vitest";
 
@@ -20,14 +19,6 @@ type Viewport = {
   viewportName: string;
 };
 
-type LogCall = (fields: Record<string, unknown>, message?: string) => void;
-
-export type MockLogger = ReturnType<typeof createLogger> & {
-  info: Mock<LogCall>;
-  warn: Mock<LogCall>;
-  error: Mock<LogCall>;
-};
-
 type Fixtures = {
   user: typeof userTable.$inferSelect;
   organization: typeof organization.$inferSelect;
@@ -35,8 +26,16 @@ type Fixtures = {
   captureConfiguration: Viewport;
   build: NonNullable<Awaited<ReturnType<typeof dbClient.builds.create>>>;
   connection: RedisConnection;
-  createMockLogger: () => MockLogger;
-  metricsUrl: string;
+  openQueue: (name: QueueName) => Queue;
+  openWorker: (
+    name: QueueName,
+    processor: Processor,
+    options?: Omit<WorkerOptions, "connection">,
+  ) => Worker;
+  trackJob: <T extends Job>(job: T) => T;
+  metrics: TestMetrics;
+  /** Stands in for a launched browser. */
+  childProcess: ChildProcess;
 };
 
 export const test = vitest.extend<Fixtures>({
@@ -103,25 +102,48 @@ export const test = vitest.extend<Fixtures>({
     await connection.quit();
   },
 
-  // eslint-disable-next-line no-empty-pattern
-  createMockLogger: async ({}, use) => {
-    await use(
-      () =>
-        ({
-          info: vi.fn<LogCall>(),
-          warn: vi.fn<LogCall>(),
-          error: vi.fn<LogCall>(),
-        }) as unknown as MockLogger,
-    );
+  openQueue: async ({ connection }, use) => {
+    const queues: Queue[] = [];
+
+    await use((name) => {
+      const queue = new Queue(name, { connection });
+      queues.push(queue);
+      return queue;
+    });
+
+    await Promise.all(queues.map((queue) => queue.close()));
   },
 
-  metricsUrl: async ({ connection, createMockLogger }, use) => {
-    const server = startMetricsServer(createMockLogger(), connection, 0);
-    await new Promise((resolve) => server.once("listening", resolve));
-    const { port } = server.address() as AddressInfo;
+  openWorker: async ({ connection }, use) => {
+    const workers: Worker[] = [];
 
-    await use(`http://127.0.0.1:${port}`);
+    await use((name, processor, options) => {
+      const worker = new Worker(name, processor, { connection, ...options });
+      workers.push(worker);
+      return worker;
+    });
 
-    await new Promise((resolve) => server.close(resolve));
+    await Promise.all(workers.map((worker) => worker.close()));
+  },
+
+  // eslint-disable-next-line no-empty-pattern
+  trackJob: async ({}, use) => {
+    const jobs: Job[] = [];
+
+    await use((job) => {
+      jobs.push(job);
+      return job;
+    });
+
+    await Promise.all(jobs.map((job) => job.remove()));
+  },
+
+  metrics: metricsFixture,
+
+  // eslint-disable-next-line no-empty-pattern
+  childProcess: async ({}, use) => {
+    const child = spawn("sleep", ["30"]);
+    await use(child);
+    child.kill();
   },
 });

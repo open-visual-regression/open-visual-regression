@@ -1,6 +1,7 @@
 import { dbClient } from "@ovr/db/client";
 import type { BuildProcessingStatus, BuildReviewStatus, GitProvider } from "@ovr/db/schema";
 import { createLogger } from "@ovr/logger";
+import { createCounter } from "@ovr/metrics";
 
 import { resolveAdapter } from "./adapters";
 import { tryDecryptToken } from "./crypto";
@@ -13,6 +14,14 @@ import {
 } from "./publisher";
 
 const logger = createLogger("git-status");
+
+const publications = createCounter<{
+  provider: GitProvider;
+  state: PublishRequest["state"];
+  outcome: PublishOutcome["outcome"];
+}>("ovr.git.status.publications", {
+  description: "Commit statuses sent to the git provider, by the state sent and the outcome.",
+});
 
 type BuildForPublish = {
   id: string;
@@ -96,6 +105,7 @@ export const publishBuildStatus = async (
       httpStatus: null,
       error: "token could not be decrypted",
     });
+    publications.add(1, { provider: integration.provider, state, outcome: "error" });
     logger.error(
       { buildId: build.id, provider: integration.provider },
       "token could not be decrypted",
@@ -123,6 +133,7 @@ export const publishBuildStatus = async (
     httpStatus: result.httpStatus ?? null,
     error: result.error ?? null,
   });
+  publications.add(1, { provider: integration.provider, state, outcome: result.outcome });
 
   if (result.outcome === "error") {
     logger.error(

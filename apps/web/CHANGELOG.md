@@ -1,5 +1,40 @@
 # @ovr/web
 
+## 0.15.0
+
+### Minor Changes
+
+- [#441](https://github.com/open-visual-regression/open-visual-regression/pull/441) [`47af771`](https://github.com/open-visual-regression/open-visual-regression/commit/47af771b1e11fc4639f7947a3f1bb3b9d1b351f2) Thanks [@tgfischer](https://github.com/tgfischer)! - The web app and worker can serve metrics on builds, queues, snapshot captures, and worker health, so Prometheus, Grafana, Datadog, and other monitoring tools can track OVR without parsing its logs. Set `OVR_METRICS_PORT` (Helm: `metrics.enabled`) to turn them on. With the Prometheus Operator, the Helm chart can also create the scrape config, alerting rules, and a Grafana dashboard. See the Metrics page in the self-hosting docs.
+
+### Patch Changes
+
+- Updated dependencies [[`8bb7448`](https://github.com/open-visual-regression/open-visual-regression/commit/8bb74484257bc01831da1207be516dd01c3ad21c), [`79276f2`](https://github.com/open-visual-regression/open-visual-regression/commit/79276f236ad32d79fab0b5ad9494697490b2d562)]:
+  - @ovr/queue@0.2.7
+  - @ovr/builds@0.2.8
+  - @ovr/db@0.4.5
+  - @ovr/reviews@0.1.23
+  - @ovr/git-status@0.1.17
+
+## 0.14.5
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @ovr/ui@0.1.4
+
+## 0.14.4
+
+### Patch Changes
+
+- [#429](https://github.com/open-visual-regression/open-visual-regression/pull/429) [`5c06f39`](https://github.com/open-visual-regression/open-visual-regression/commit/5c06f390a44b69f3aa0b8a7be22391528a45dfba) Thanks [@tgfischer](https://github.com/tgfischer)! - Docker images now run on Node.js 24.22.1, which includes the October 2026 Node.js security fixes.
+
+- [#426](https://github.com/open-visual-regression/open-visual-regression/pull/426) [`c6930b4`](https://github.com/open-visual-regression/open-visual-regression/commit/c6930b404c01abf9b6a25cda64ce6a31c405edbd) Thanks [@tgfischer](https://github.com/tgfischer)! - Small builds no longer wait for every snapshot of a large build queued before them. Set `OVR_CAPTURE_QUEUE_POLICY=fifo` to keep the previous order.
+
+- Updated dependencies [[`c6930b4`](https://github.com/open-visual-regression/open-visual-regression/commit/c6930b404c01abf9b6a25cda64ce6a31c405edbd)]:
+  - @ovr/builds@0.2.7
+  - @ovr/queue@0.2.6
+  - @ovr/reviews@0.1.22
+
 ## 0.14.3
 
 ### Patch Changes

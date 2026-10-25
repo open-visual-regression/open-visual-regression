@@ -10,6 +10,7 @@ import {
   isNotNull,
   lt,
   max,
+  min,
   ne,
   notExists,
   or,
@@ -43,6 +44,16 @@ export const createIfAbsent = async ({ tx = db, ...values }: CreateInput) => {
 export const findById = (id: string) =>
   db.query.builds.findFirst({ where: (builds, { eq }) => eq(builds.id, id) });
 
+const FINISHED_PROCESSING_STATUSES: BuildProcessingStatus[] = ["success", "error", "canceled"];
+
+// Timings are set once, so a snapshot rebuild or a later review keeps the first run's timings.
+const markStarted = () => ({ startedAt: sql<string>`coalesce(${builds.startedAt}, now())` });
+
+const markCompletedIfFinished = (processingStatus: BuildProcessingStatus) =>
+  FINISHED_PROCESSING_STATUSES.includes(processingStatus)
+    ? { completedAt: sql<string>`coalesce(${builds.completedAt}, now())` }
+    : {};
+
 export const updateProcessingStatus = async (
   id: string,
   processingStatus: BuildProcessingStatus,
@@ -51,7 +62,7 @@ export const updateProcessingStatus = async (
 ) => {
   const [build] = await tx
     .update(builds)
-    .set({ processingStatus, errorMessage })
+    .set({ processingStatus, errorMessage, ...markCompletedIfFinished(processingStatus) })
     .where(and(eq(builds.id, id), ne(builds.processingStatus, "canceled")))
     .returning();
   return build;
@@ -60,7 +71,7 @@ export const updateProcessingStatus = async (
 export const startProcessing = async (id: string) => {
   const [build] = await db
     .update(builds)
-    .set({ processingStatus: "processing" })
+    .set({ processingStatus: "processing", ...markStarted() })
     .where(and(eq(builds.id, id), inArray(builds.processingStatus, ["queued", "processing"])))
     .returning();
   return build;
@@ -73,7 +84,12 @@ export const cancelIfInProgress = async (
 ) => {
   const [build] = await tx
     .update(builds)
-    .set({ processingStatus: "canceled", errorMessage: null, canceledBy })
+    .set({
+      processingStatus: "canceled",
+      errorMessage: null,
+      canceledBy,
+      ...markCompletedIfFinished("canceled"),
+    })
     .where(and(eq(builds.id, id), inArray(builds.processingStatus, ["queued", "processing"])))
     .returning();
   return build;
@@ -88,7 +104,7 @@ type UpdateResultInput = {
 export const updateResult = async (id: string, result: UpdateResultInput) => {
   const [build] = await db
     .update(builds)
-    .set(result)
+    .set({ ...result, ...markCompletedIfFinished(result.processingStatus) })
     .where(and(eq(builds.id, id), ne(builds.processingStatus, "canceled")))
     .returning();
   return build;
@@ -193,6 +209,8 @@ export const findMany = async (
       reviewStatus: builds.reviewStatus,
       buildType: builds.buildType,
       createdAt: builds.createdAt,
+      startedAt: builds.startedAt,
+      completedAt: builds.completedAt,
     })
     .from(builds)
     .innerJoin(projects, eq(builds.projectId, projects.id))
@@ -407,32 +425,29 @@ export const removeMany = async (tx: DbClient, ids: string[]): Promise<void> => 
   await tx.delete(builds).where(inArray(builds.id, ids));
 };
 
-export type InFlightBuildCounts = { queued: number; processing: number };
-
-export const countInFlight = async (): Promise<InFlightBuildCounts> => {
-  const rows = await db
-    .select({ status: builds.processingStatus, count: count() })
-    .from(builds)
-    .where(inArray(builds.processingStatus, ["queued", "processing"]))
-    .groupBy(builds.processingStatus);
-
-  const counts: InFlightBuildCounts = { queued: 0, processing: 0 };
-  for (const row of rows) {
-    counts[row.status as keyof InFlightBuildCounts] = row.count;
-  }
-  return counts;
+export type StaleBuild = {
+  id: string;
+  projectId: string;
+  createdAt: string;
 };
 
-export const findStale = async (cutoff: string, limit: number): Promise<string[]> => {
+export const findStale = async (
+  cutoff: string,
+  limit: number,
+  after?: BuildsCursor,
+): Promise<StaleBuild[]> => {
   const diffSnapshots = alias(snapshots, "diff_snapshots");
 
-  const rows = await db
-    .select({ id: builds.id })
+  return db
+    .select({ id: builds.id, projectId: builds.projectId, createdAt: builds.createdAt })
     .from(builds)
     .where(
       and(
         inArray(builds.processingStatus, ["queued", "processing"]),
         lt(builds.createdAt, cutoff),
+        after
+          ? sql`(${builds.createdAt}, ${builds.id}) > (${after.createdAt}::timestamp, ${after.id}::uuid)`
+          : undefined,
         notExists(
           db
             .select({ one: sql`1` })
@@ -448,8 +463,23 @@ export const findStale = async (cutoff: string, limit: number): Promise<string[]
         ),
       ),
     )
-    .orderBy(asc(builds.createdAt))
+    .orderBy(asc(builds.createdAt), asc(builds.id))
     .limit(limit);
-
-  return rows.map((row) => row.id);
 };
+
+export type InProgressBuilds = {
+  processingStatus: BuildProcessingStatus;
+  count: number;
+  oldestCreatedAt: string | null;
+};
+
+export const summarizeInProgress = async (): Promise<InProgressBuilds[]> =>
+  db
+    .select({
+      processingStatus: builds.processingStatus,
+      count: count(),
+      oldestCreatedAt: min(builds.createdAt),
+    })
+    .from(builds)
+    .where(inArray(builds.processingStatus, ["queued", "processing"]))
+    .groupBy(builds.processingStatus);

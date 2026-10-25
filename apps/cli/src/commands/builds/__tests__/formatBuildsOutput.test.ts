@@ -15,6 +15,9 @@ const BUILD: BuildSchema = {
   status: "needs_review",
   buildType: "storybook",
   createdAt: "2026-09-12T10:43:15Z",
+  queuedMs: 12_000,
+  processingMs: 122_000,
+  durationMs: 134_000,
 };
 
 describe("formatBuildsOutput", () => {

@@ -43,6 +43,38 @@ describe("builds", () => {
       const updated = await dbClient.builds.updateProcessingStatus(build.id, "success");
       expect(updated?.processingStatus).toBe("success");
     });
+
+    test.for(["success", "error", "canceled"] as const)(
+      "records when the build completes as %s",
+      async (processingStatus, { build }) => {
+        const updated = await dbClient.builds.updateProcessingStatus(build.id, processingStatus);
+
+        expect(updated?.completedAt).toEqual(expect.any(String));
+      },
+    );
+
+    test("leaves completedAt unset while the build is still processing", async ({ build }) => {
+      const updated = await dbClient.builds.updateProcessingStatus(build.id, "processing");
+
+      expect(updated?.completedAt).toBeNull();
+    });
+
+    test("keeps the original timings when a finished build processes again", async ({ build }) => {
+      await dbClient.builds.startProcessing(build.id);
+      const finished = await dbClient.builds.updateProcessingStatus(build.id, "success");
+
+      const reprocessing = await dbClient.builds.updateProcessingStatus(build.id, "processing");
+      const refinished = await dbClient.builds.updateProcessingStatus(build.id, "error");
+
+      expect(reprocessing).toMatchObject({
+        startedAt: finished?.startedAt,
+        completedAt: finished?.completedAt,
+      });
+      expect(refinished).toMatchObject({
+        startedAt: finished?.startedAt,
+        completedAt: finished?.completedAt,
+      });
+    });
   });
 
   describe("findMany", () => {
@@ -110,6 +142,15 @@ describe("builds", () => {
       const updated = await dbClient.builds.startProcessing(build.id);
 
       expect(updated?.processingStatus).toBe("processing");
+      expect(updated?.startedAt).toEqual(expect.any(String));
+      expect(updated?.completedAt).toBeNull();
+    });
+
+    test("keeps the first start time when the extract job retries", async ({ build }) => {
+      const first = await dbClient.builds.startProcessing(build.id);
+      const retried = await dbClient.builds.startProcessing(build.id);
+
+      expect(retried?.startedAt).toBe(first?.startedAt);
     });
 
     test.for(["success", "error", "canceled"] as const)(
@@ -128,6 +169,7 @@ describe("builds", () => {
       const updated = await dbClient.builds.cancelIfInProgress(build.id, user.id);
 
       expect(updated).toMatchObject({ processingStatus: "canceled", canceledBy: user.id });
+      expect(updated?.completedAt).toEqual(expect.any(String));
     });
 
     test("records no user when the system cancels the build", async ({ build }) => {
@@ -164,6 +206,32 @@ describe("builds", () => {
         reviewStatus: "approved",
       });
       expect(updated).toMatchObject({ processingStatus: "success", reviewStatus: "approved" });
+      expect(updated?.completedAt).toEqual(expect.any(String));
+    });
+
+    test("keeps completedAt when a later review changes the result", async ({ build }) => {
+      const finalized = await dbClient.builds.updateResult(build.id, {
+        processingStatus: "success",
+        reviewStatus: "needs_review",
+      });
+
+      const reviewed = await dbClient.builds.updateResult(build.id, {
+        processingStatus: "success",
+        reviewStatus: "approved",
+      });
+
+      expect(reviewed?.completedAt).toBe(finalized?.completedAt);
+    });
+
+    test("leaves completedAt unset when a review lands while the build is processing", async ({
+      build,
+    }) => {
+      const updated = await dbClient.builds.updateResult(build.id, {
+        processingStatus: "processing",
+        reviewStatus: "needs_review",
+      });
+
+      expect(updated?.completedAt).toBeNull();
     });
   });
 
@@ -921,7 +989,7 @@ describe("builds", () => {
         updatedAt: OLD_TIMESTAMP,
       });
 
-      const staleIds = await dbClient.builds.findStale(CUTOFF, 100);
+      const staleIds = (await dbClient.builds.findStale(CUTOFF, 100)).map(({ id }) => id);
       expect(staleIds).toContain(build!.id);
     });
 
@@ -934,7 +1002,7 @@ describe("builds", () => {
         createdBy: user.id,
       });
 
-      const staleIds = await dbClient.builds.findStale(CUTOFF, 100);
+      const staleIds = (await dbClient.builds.findStale(CUTOFF, 100)).map(({ id }) => id);
       expect(staleIds).not.toContain(build!.id);
     });
 
@@ -964,7 +1032,7 @@ describe("builds", () => {
         ],
       });
 
-      const staleIds = await dbClient.builds.findStale(CUTOFF, 100);
+      const staleIds = (await dbClient.builds.findStale(CUTOFF, 100)).map(({ id }) => id);
       expect(staleIds).not.toContain(build!.id);
     });
 
@@ -1000,7 +1068,7 @@ describe("builds", () => {
         updatedAt: new Date().toISOString(),
       });
 
-      const staleIds = await dbClient.builds.findStale(CUTOFF, 100);
+      const staleIds = (await dbClient.builds.findStale(CUTOFF, 100)).map(({ id }) => id);
       expect(staleIds).not.toContain(build!.id);
     });
 
@@ -1019,8 +1087,80 @@ describe("builds", () => {
       });
       await dbClient.builds.updateProcessingStatus(build!.id, "success");
 
-      const staleIds = await dbClient.builds.findStale(CUTOFF, 100);
+      const staleIds = (await dbClient.builds.findStale(CUTOFF, 100)).map(({ id }) => id);
       expect(staleIds).not.toContain(build!.id);
+    });
+
+    test("should return only the builds after the cursor", async ({ project, user }) => {
+      const [olderBuild, newerBuild] = await Promise.all(
+        [OLD_TIMESTAMP, "2020-01-02T00:00:00.000Z"].map((createdAt) =>
+          dbClient.builds.create({
+            projectId: project.id,
+            branch: "main",
+            commitSha: "a".repeat(40),
+            artifactPath: `builds/stale-${createdAt}/artifact`,
+            createdBy: user.id,
+            createdAt,
+            updatedAt: createdAt,
+          }),
+        ),
+      );
+
+      const staleBuilds = await dbClient.builds.findStale(CUTOFF, 100, {
+        id: olderBuild!.id,
+        createdAt: olderBuild!.createdAt,
+      });
+      const staleIds = staleBuilds.map(({ id }) => id);
+
+      expect(staleIds).not.toContain(olderBuild!.id);
+      expect(staleBuilds).toContainEqual({
+        id: newerBuild!.id,
+        projectId: project.id,
+        createdAt: newerBuild!.createdAt,
+      });
+    });
+  });
+
+  describe("summarizeInProgress", () => {
+    const OLD_TIMESTAMP = "2020-01-01T00:00:00.000Z";
+
+    test("should count queued and processing builds with when the oldest of each was created", async ({
+      project,
+      user,
+    }) => {
+      const create = (createdAt?: string) =>
+        dbClient.builds.create({
+          projectId: project.id,
+          branch: "main",
+          commitSha: "a".repeat(40),
+          artifactPath: "builds/in-progress/artifact",
+          createdBy: user.id,
+          createdAt,
+        });
+      await create(OLD_TIMESTAMP);
+      await create();
+      const processing = await create();
+      await dbClient.builds.updateProcessingStatus(processing!.id, "processing");
+      const finished = await create(OLD_TIMESTAMP);
+      await dbClient.builds.updateProcessingStatus(finished!.id, "success");
+
+      const summary = await dbClient.builds.summarizeInProgress();
+
+      expect(summary).toHaveLength(2);
+      expect(summary).toContainEqual({
+        processingStatus: "queued",
+        count: 2,
+        oldestCreatedAt: expect.stringContaining("2020-01-01"),
+      });
+      expect(summary).toContainEqual({
+        processingStatus: "processing",
+        count: 1,
+        oldestCreatedAt: processing!.createdAt,
+      });
+    });
+
+    test("should return nothing when no build is in progress", async () => {
+      expect(await dbClient.builds.summarizeInProgress()).toEqual([]);
     });
   });
 });

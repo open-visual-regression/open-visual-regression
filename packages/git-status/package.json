@@ -1,6 +1,6 @@
 {
   "name": "@ovr/git-status",
-  "version": "0.1.16",
+  "version": "0.1.17",
   "private": true,
   "type": "module",
   "exports": {
@@ -16,6 +16,7 @@
   "dependencies": {
     "@ovr/db": "workspace:*",
     "@ovr/logger": "workspace:*",
+    "@ovr/metrics": "workspace:*",
     "zod": "^4.5.1"
   },
   "devDependencies": {

@@ -1,5 +1,5 @@
 {
-  "id": "70020490-a51f-4670-bc0d-e848fd58777c",
+  "id": "a19d0888-eb0f-45c2-a16b-f237b78ad045",
   "prevId": "b561445c-f207-4f5f-bbfb-39234b889e4b",
   "version": "7",
   "dialect": "postgresql",
@@ -1434,22 +1434,6 @@
           "method": "btree",
           "with": {}
         },
-        "builds_inFlight_idx": {
-          "name": "builds_inFlight_idx",
-          "columns": [
-            {
-              "expression": "processing_status",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "where": "\"builds\".\"processing_status\" in ('queued', 'processing')",
-          "concurrently": true,
-          "method": "btree",
-          "with": {}
-        },
         "builds_createdBy_idx": {
           "name": "builds_createdBy_idx",
           "columns": [
@@ -1476,6 +1460,22 @@
             }
           ],
           "isUnique": false,
+          "concurrently": true,
+          "method": "btree",
+          "with": {}
+        },
+        "builds_inProgress_createdAt_idx": {
+          "name": "builds_inProgress_createdAt_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"builds\".\"processing_status\" in ('queued', 'processing')",
           "concurrently": true,
           "method": "btree",
           "with": {}

@@ -1,6 +1,6 @@
 {
   "name": "@ovr/builds",
-  "version": "0.2.6",
+  "version": "0.2.8",
   "private": true,
   "type": "module",
   "exports": {
@@ -17,6 +17,7 @@
     "@ovr/api": "workspace:*",
     "@ovr/db": "workspace:*",
     "@ovr/logger": "workspace:*",
+    "@ovr/metrics": "workspace:*",
     "@ovr/queue": "workspace:*",
     "@ovr/storage": "workspace:*",
     "tar": "^7.5.22",
