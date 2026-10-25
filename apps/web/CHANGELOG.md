@@ -1,5 +1,13 @@
 # @ovr/web
 
+## 0.16.0
+
+### Minor Changes
+
+- [#443](https://github.com/open-visual-regression/open-visual-regression/pull/443) [`9a652af`](https://github.com/open-visual-regression/open-visual-regression/commit/9a652af2fddab68a92a65dfb88359a9f1edfdc0b) Thanks [@tgfischer](https://github.com/tgfischer)! - Builds show how long they took to run, including time spent in the queue.
+
+- [#445](https://github.com/open-visual-regression/open-visual-regression/pull/445) [`6b5a4d8`](https://github.com/open-visual-regression/open-visual-regression/commit/6b5a4d8f1e76ad4b351a99cfb0baaf604f00781a) Thanks [@tgfischer](https://github.com/tgfischer)! - Builds that have been superseded on their branch link to the latest build.
+
 ## 0.15.0
 
 ### Minor Changes
