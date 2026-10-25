@@ -39,6 +39,13 @@ import {
 } from "./lib/captureTimeouts";
 import { cacheImage } from "./lib/imageCache";
 import { compareImages } from "./lib/images";
+import {
+  browserRelaunches,
+  diffsCompared,
+  snapshotCaptureDuration,
+  snapshotsCaptured,
+  type DiffResult,
+} from "./lib/metrics";
 import { createUploadQueue } from "./lib/uploadQueue";
 
 const logger = createLogger("capture");
@@ -211,6 +218,7 @@ const launchCapturePage = async (
 
 type CapturedSnapshot = {
   snapshotId: string;
+  browser: string;
   imagePath: string;
   screenshot: Buffer;
   logs: CaptureLog[];
@@ -310,6 +318,7 @@ const captureSnapshotOnPage = async (
 
     return {
       snapshotId,
+      browser: snapshot.browser,
       imagePath,
       screenshot,
       logs: [...pageLogState.logs],
@@ -406,10 +415,13 @@ const persistCapturedSnapshot = async (
       screenshot: captured.screenshotMs,
       upload: uploadMs,
     };
+    const totalMs = performance.now() - startedAt;
     logger.info(
-      { ...context, timings, totalMs: Math.round(performance.now() - startedAt), hasRenderError },
+      { ...context, timings, totalMs: Math.round(totalMs), hasRenderError },
       "snapshot captured",
     );
+    snapshotsCaptured.add(1, { browser: captured.browser, outcome: "success" });
+    snapshotCaptureDuration.record(totalMs / 1000, { browser: captured.browser });
 
     if (stored) {
       await enqueueSnapshotDiff(snapshotId);
@@ -450,6 +462,9 @@ export const markSnapshotErrored = async (snapshotId: string, error: unknown): P
   const message = error instanceof Error ? error.message : String(error);
   await dbClient.snapshotLogs.createMany({ values: [{ snapshotId, level: "error", message }] });
   await dbClient.snapshots.markErrored(snapshotId, message);
+  if (snapshot) {
+    snapshotsCaptured.add(1, { browser: snapshot.browser, outcome: "error" });
+  }
   await enqueueSnapshotDiff(snapshotId);
 };
 
@@ -554,6 +569,7 @@ export const captureBuildGroup = async (
                   ? "snapshot capture timed out, relaunching the capture browser"
                   : "capture browser closed mid-group, relaunching for remaining snapshots",
               );
+              browserRelaunches.add(1, { browser, reason: timedOut ? "timeout" : "closed" });
               await capturePage.close().catch(() => undefined);
 
               try {
@@ -605,6 +621,16 @@ export const enqueueSnapshotDiff = async (snapshotId: string): Promise<void> => 
   }
 };
 
+const diffResult = (
+  diff: Awaited<ReturnType<typeof diffAgainstBaselineSnapshot>>,
+  changed: boolean,
+): DiffResult => {
+  if (!diff) {
+    return "new";
+  }
+  return changed ? "changed" : "unchanged";
+};
+
 export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<void> => {
   const snapshot = await dbClient.snapshots.findById(snapshotId);
   if (!snapshot) {
@@ -635,6 +661,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
 
   if (snapshot.status === "error" || snapshot.hasRenderError) {
     await dbClient.diffs.updateProcessingStatus(diffId, "error");
+    diffsCompared.add(1, { result: "error" });
     await checkAllDoneAndFinalize(build.id);
     return;
   }
@@ -677,6 +704,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
       ...(diff && { pixelDiffCount: diff.pixelDiffCount, diffPercent: diff.diffPercent }),
       ...(diffImagePath && { diffImagePath }),
     });
+    diffsCompared.add(1, { result: diffResult(diff, changed) });
     await promoteBaseline(diffId, build.createdBy);
     if (await isFlakyDetectionEnabled()) {
       await assignSnapshotVariant(
@@ -695,6 +723,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
       reviewStatus: "needs_review",
       ...(baselineSnapshot && { baselineSnapshotId: baselineSnapshot.id }),
     });
+    diffsCompared.add(1, { result: "new" });
     await checkAllDoneAndFinalize(build.id);
     return;
   }
@@ -710,6 +739,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
       diffPercent,
       ...(diffImagePath && { diffImagePath }),
     });
+    diffsCompared.add(1, { result: "unchanged" });
     await checkAllDoneAndFinalize(build.id);
     return;
   }
@@ -722,6 +752,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
     pixelDiffCount,
     diffPercent,
   });
+  diffsCompared.add(1, { result: "changed" });
 
   await checkAllDoneAndFinalize(build.id);
 };
