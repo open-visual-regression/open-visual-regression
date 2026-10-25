@@ -8,6 +8,14 @@ export const register = async () => {
 
   const { assertAuthConfig } = await import("@/lib/auth/config");
   assertAuthConfig();
+
+  const { startMetrics } = await import("@ovr/metrics/server");
+  const { APP_VERSION } = await import("@/lib/utils/version");
+  if (await startMetrics({ serviceName: "ovr-web", serviceVersion: APP_VERSION })) {
+    const { observeBuildsInProgress, observeQueues } = await import("@/lib/metrics");
+    observeQueues();
+    observeBuildsInProgress();
+  }
 };
 
 export const onRequestError = async (
@@ -32,4 +40,7 @@ export const onRequestError = async (
     },
     "unhandled request error",
   );
+
+  const { requestErrors } = await import("@/lib/metrics");
+  requestErrors.add(1, { route_type: context.routeType });
 };

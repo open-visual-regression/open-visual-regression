@@ -629,6 +629,38 @@ const countJobs = async (
   }
 };
 
+export const QUEUE_JOB_STATES = [
+  "waiting",
+  "prioritized",
+  "delayed",
+  "active",
+  "waiting-children",
+  "paused",
+  "failed",
+] as const satisfies JobType[];
+
+export type QueueJobCount = {
+  queue: QueueName;
+  state: (typeof QUEUE_JOB_STATES)[number];
+  count: number;
+};
+
+export const countQueueJobs = async (connection: RedisConnection): Promise<QueueJobCount[]> => {
+  const queues = Object.values(QueueName).map(
+    (name) => [name, new Queue(name, queueOptions(connection))] as const,
+  );
+  try {
+    const counts = await Promise.all(
+      queues.map(([, queue]) => queue.getJobCounts(...QUEUE_JOB_STATES)),
+    );
+    return queues.flatMap(([queue], index) =>
+      QUEUE_JOB_STATES.map((state) => ({ queue, state, count: counts[index]![state] ?? 0 })),
+    );
+  } finally {
+    await Promise.all(queues.map(([, queue]) => queue.close()));
+  }
+};
+
 export const isJobRunning = async (connection: RedisConnection, job: JobName): Promise<boolean> => {
   const counts = await Promise.all([
     // The scheduler parks its next run as a delayed job, so only waiting or active dispatches count.
