@@ -1,5 +1,17 @@
 # @ovr/capture
 
+## 0.3.14
+
+### Patch Changes
+
+- [#433](https://github.com/open-visual-regression/open-visual-regression/pull/433) [`8ef5283`](https://github.com/open-visual-regression/open-visual-regression/commit/8ef52832e911f0e2dd1774619fe3ea98d75f1442) Thanks [@tgfischer](https://github.com/tgfischer)! - A story that freezes the page no longer holds up the rest of its capture group. It now times out and is marked errored.
+
+- Updated dependencies [[`8bb7448`](https://github.com/open-visual-regression/open-visual-regression/commit/8bb74484257bc01831da1207be516dd01c3ad21c), [`79276f2`](https://github.com/open-visual-regression/open-visual-regression/commit/79276f236ad32d79fab0b5ad9494697490b2d562)]:
+  - @ovr/queue@0.2.7
+  - @ovr/builds@0.2.8
+  - @ovr/db@0.4.5
+  - @ovr/reviews@0.1.23
+
 ## 0.3.13
 
 ### Patch Changes
