@@ -12,6 +12,7 @@ import {
 import {
   blockExternalRequests,
   bootTargetPage,
+  disableLazyLoading,
   getCaptureViewport,
   takeScreenshot,
 } from "@ovr/capture-browser/page";
@@ -182,6 +183,7 @@ const launchCapturePage = async (
     });
 
     await blockExternalRequests(page, proxy.origin);
+    await disableLazyLoading(page);
 
     page.on("console", (message) => {
       pageLogState.logs.push({ level: message.type(), message: message.text() });
