@@ -355,7 +355,6 @@ type ExtractDefaults = NonNullable<
 
 type BranchBuild = Pick<BuildCandidate, "id" | "projectId" | "branch" | "createdAt">;
 
-// Returns the newest build on the same branch, or null when `build` is already the latest.
 export const findLatestBuildId = async (build: BranchBuild): Promise<string | null> => {
   const [newest] = await dbClient.builds.findMany(
     {

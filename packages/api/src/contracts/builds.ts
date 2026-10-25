@@ -162,7 +162,6 @@ export const buildDetailSchema = buildSchema.extend({
   canceledBy: z.string().min(1).nullable(),
   isRebuildable: z.boolean(),
   isReviewable: z.boolean(),
-  // The newest build on the same branch, or null when this build is the latest.
   latestBuildId: z.uuidv7().nullable(),
   commitUrl: z.string().nullable(),
   branchUrl: z.string().nullable(),
