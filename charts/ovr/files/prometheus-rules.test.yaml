@@ -1,0 +1,60 @@
+# promtool test rules charts/ovr/files/prometheus-rules.test.yaml
+rule_files:
+  - prometheus-rules.yaml
+
+evaluation_interval: 1m
+
+tests:
+  - interval: 1m
+    input_series:
+      # Two web replicas report the same gauge.
+      - series: 'ovr_builds_in_progress_oldest_age_seconds{processing_status="processing",pod="web-a"}'
+        values: "3000+60x40"
+      - series: 'ovr_builds_in_progress_oldest_age_seconds{processing_status="processing",pod="web-b"}'
+        values: "3000+60x40"
+      - series: 'ovr_builds_in_progress_oldest_age_seconds{processing_status="queued",pod="web-a"}'
+        values: "0x40"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: OvrBuildStuck
+        exp_alerts: []
+      - eval_time: 25m
+        alertname: OvrBuildStuck
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              processing_status: processing
+            exp_annotations:
+              summary: An OVR build has been processing for over an hour
+              description: >-
+                The oldest processing build was created 1h 15m 0s ago. Check
+                ovr_queue_jobs for a backlog and the worker logs for errors.
+
+  - interval: 1m
+    input_series:
+      - series: 'ovr_builds_finished_total{processing_status="success",reason="finalized"}'
+        values: "0+1x90"
+      - series: 'ovr_builds_finished_total{processing_status="error",reason="extract_failed"}'
+        values: "0+1x90"
+    alert_rule_test:
+      - eval_time: 80m
+        alertname: OvrBuildsFailing
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+            exp_annotations:
+              summary: More than a quarter of OVR builds are failing
+              description: >-
+                50% of the builds that finished in the last hour errored.
+                ovr_builds_finished_total's reason label says where they failed.
+
+  - interval: 1m
+    input_series:
+      - series: 'ovr_builds_finished_total{processing_status="success",reason="finalized"}'
+        values: "0+1x90"
+      - series: 'ovr_builds_finished_total{processing_status="error",reason="extract_failed"}'
+        values: "0x90"
+    alert_rule_test:
+      - eval_time: 80m
+        alertname: OvrBuildsFailing
+        exp_alerts: []

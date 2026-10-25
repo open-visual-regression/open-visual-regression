@@ -19,6 +19,12 @@ spec:
     metadata:
       annotations:
         {{- include "ovr.configChecksums" . | nindent 8 }}
+        {{- if .Values.metrics.enabled }}
+        {{- include "ovr.metricsAnnotations" . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.web.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       labels:
         {{- include "ovr.selectorLabels" (dict "Release" .Release "Chart" .Chart "Values" .Values "component" "web") | nindent 8 }}
     spec:
@@ -63,9 +69,15 @@ spec:
           env:
             - name: PORT
               value: {{ .Values.web.port | quote }}
+            {{- if .Values.metrics.enabled }}
+            {{- include "ovr.metricsEnv" . | nindent 12 }}
+            {{- end }}
           ports:
             - name: http
               containerPort: {{ .Values.web.port }}
+            {{- if .Values.metrics.enabled }}
+            {{- include "ovr.metricsPort" . | nindent 12 }}
+            {{- end }}
           readinessProbe:
             httpGet:
               path: /api/rpc/health/ready
