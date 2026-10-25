@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 export {
   ArrowLeftFromLineIcon,
+  ArrowRightIcon,
   ArrowRightToLineIcon,
   CheckIcon,
   ChevronDownIcon,
