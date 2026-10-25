@@ -4,6 +4,7 @@ import { test as vitest, vi } from "vitest";
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
 import { organization, projects, user as userTable } from "@ovr/db/schema";
+import { metricsFixture, type TestMetrics } from "@ovr/metrics/testing";
 import { buildRedisConnection, type RedisConnection } from "@ovr/queue";
 
 export { describe, expect } from "vitest";
@@ -24,6 +25,7 @@ type Fixtures = {
   featureBuild: NonNullable<Awaited<ReturnType<typeof dbClient.builds.create>>>;
   connection: RedisConnection;
   advanceClock: (ms: number) => void;
+  metrics: TestMetrics;
 };
 
 export const test = vitest.extend<Fixtures>({
@@ -109,6 +111,8 @@ export const test = vitest.extend<Fixtures>({
 
     await connection.quit();
   },
+
+  metrics: metricsFixture,
 });
 
 export const enableFlakyDetection = (userId: string, settings: Record<string, unknown> = {}) =>

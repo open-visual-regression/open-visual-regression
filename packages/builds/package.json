@@ -17,6 +17,7 @@
     "@ovr/api": "workspace:*",
     "@ovr/db": "workspace:*",
     "@ovr/logger": "workspace:*",
+    "@ovr/metrics": "workspace:*",
     "@ovr/queue": "workspace:*",
     "@ovr/storage": "workspace:*",
     "tar": "^7.5.22",
