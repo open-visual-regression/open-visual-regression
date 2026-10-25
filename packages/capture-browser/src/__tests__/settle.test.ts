@@ -27,6 +27,55 @@ const PAGE_HTML = `<!doctype html>
   </body>
 </html>`;
 
+// Renders in waves: a first response re-renders a few times without touching the network, then
+// that render makes a second, slower request.
+const WATERFALL_HTML = `<!doctype html>
+<html>
+  <body>
+    <div id="status">loading</div>
+    <script>
+      const status = document.getElementById("status");
+      const step = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+      (async () => {
+        await fetch("/data.json");
+        for (let index = 0; index < 6; index++) {
+          status.textContent = "rendering " + index;
+          await step(40);
+        }
+        await fetch("/slow-data.json");
+        status.textContent = "done";
+      })();
+    </script>
+  </body>
+</html>`;
+
+const TICKING_HTML = `<!doctype html>
+<html>
+  <body>
+    <div id="clock">0</div>
+    <script>
+      let ticks = 0;
+      setInterval(() => {
+        document.getElementById("clock").textContent = String(++ticks);
+      }, 50);
+    </script>
+  </body>
+</html>`;
+
+const OFFSCREEN_LAZY_IMAGE_HTML = `<!doctype html>
+<html>
+  <body>
+    <div style="height: 5000px"></div>
+    <img loading="lazy" src="/slow.png" />
+  </body>
+</html>`;
+
+const HTML_PAGES: Record<string, string> = {
+  "/waterfall": WATERFALL_HTML,
+  "/ticking": TICKING_HTML,
+  "/offscreen-lazy-image": OFFSCREEN_LAZY_IMAGE_HTML,
+};
+
 const onePixelPng = (): Buffer => {
   const png = new PNG({ width: 1, height: 1 });
   png.data.set([0, 128, 0, 255]);
@@ -60,8 +109,19 @@ beforeAll(async () => {
       return;
     }
 
+    if (url.pathname === "/data.json" || url.pathname === "/slow-data.json") {
+      setTimeout(
+        () => {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end("{}");
+        },
+        url.pathname === "/slow-data.json" ? SLOW_RESPONSE_MS : 0,
+      );
+      return;
+    }
+
     res.writeHead(200, { "Content-Type": "text/html" });
-    res.end(PAGE_HTML);
+    res.end(HTML_PAGES[url.pathname] ?? PAGE_HTML);
   });
 
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -106,5 +166,35 @@ describe("settlePage", () => {
 
     await expect(settlePage(page, activity, GIVE_UP_TIMEOUT_MS)).resolves.toBe(false);
     await expect(settlePage(page, activity, GIVE_UP_TIMEOUT_MS)).resolves.toBe(true);
+  }, 30_000);
+
+  test("waits for a second request that starts after a few renders with no network activity", async () => {
+    const page = await newPage(await browser.newContext());
+    const activity = trackNetworkActivity(page);
+
+    await page.goto(`${origin}/waterfall`, { waitUntil: "domcontentloaded" });
+
+    await expect(settlePage(page, activity, 10_000)).resolves.toBe(true);
+    expect(await page.textContent("#status")).toBe("done");
+  }, 30_000);
+
+  test("gives up on a DOM that never stops changing well before its budget runs out", async () => {
+    const page = await newPage(await browser.newContext());
+    const activity = trackNetworkActivity(page);
+
+    await page.goto(`${origin}/ticking`, { waitUntil: "domcontentloaded" });
+
+    const startedAt = Date.now();
+    await expect(settlePage(page, activity, 10_000)).resolves.toBe(false);
+    expect(Date.now() - startedAt).toBeLessThan(5_000);
+  }, 30_000);
+
+  test("does not wait for a lazy image outside the viewport", async () => {
+    const page = await newPage(await browser.newContext());
+    const activity = trackNetworkActivity(page);
+
+    await page.goto(`${origin}/offscreen-lazy-image`, { waitUntil: "domcontentloaded" });
+
+    await expect(settlePage(page, activity, 10_000)).resolves.toBe(true);
   }, 30_000);
 });
