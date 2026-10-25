@@ -353,20 +353,24 @@ type ExtractDefaults = NonNullable<
   Awaited<ReturnType<typeof dbClient.buildExtractDefaults.findByBuild>>
 >;
 
-export const checkIsLatestBuild = async (
-  build: Pick<BuildCandidate, "id" | "projectId" | "branch" | "createdAt">,
-): Promise<boolean> => {
-  const newer = await dbClient.builds.findMany(
+type BranchBuild = Pick<BuildCandidate, "id" | "projectId" | "branch" | "createdAt">;
+
+// Returns the newest build on the same branch, or null when `build` is already the latest.
+export const findLatestBuildId = async (build: BranchBuild): Promise<string | null> => {
+  const [newest] = await dbClient.builds.findMany(
     {
       projectIds: [build.projectId],
       branches: [build.branch],
       createdAfter: { createdAt: build.createdAt, id: build.id },
     },
-    { limit: 1 },
+    { limit: 1, sortDirection: "desc" },
   );
 
-  return newer.length === 0;
+  return newest?.id ?? null;
 };
+
+export const checkIsLatestBuild = async (build: BranchBuild): Promise<boolean> =>
+  (await findLatestBuildId(build)) === null;
 
 type RebuildableOptions = { isLatestBuild?: boolean };
 

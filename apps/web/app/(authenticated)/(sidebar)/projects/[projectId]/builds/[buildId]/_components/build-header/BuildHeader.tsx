@@ -3,6 +3,7 @@ import { Alert, AlertDescription, AlertTitle } from "@ovr/ui/components/alert";
 import { BadgeSkeleton } from "@ovr/ui/components/badge";
 import {
   Icon,
+  ArrowRightToLineIcon,
   CircleSlash2Icon,
   GitBranchIcon,
   GitCommitHorizontalIcon,
@@ -16,6 +17,7 @@ import {
 import { Skeleton } from "@ovr/ui/components/skeleton";
 import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 
+import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
 import { ExternalLink } from "@/lib/components/external-link/ExternalLink";
 import { TruncatedText } from "@/lib/components/truncated-text/TruncatedText";
 import { formatBuildTimingBreakdown } from "@/lib/utils/buildTimings";
@@ -48,7 +50,8 @@ export const BuildHeader = ({
   const showCancel = canReview && isCancelable;
   const showRebuild = canReview && !isCancelable && build.isRebuildable;
   const showReviewActions = canReview && build.isReviewable && hasReviewable;
-  const showActions = showCancel || showRebuild || showReviewActions;
+  const showLatestBuild = build.latestBuildId !== null;
+  const showActions = showCancel || showRebuild || showReviewActions || showLatestBuild;
 
   return (
     <div className="flex flex-col gap-6">
@@ -105,6 +108,17 @@ export const BuildHeader = ({
         </div>
         {showActions ? (
           <div className="flex w-full flex-row gap-2 md:order-2 md:w-auto">
+            {showLatestBuild ? (
+              <ButtonLink
+                href={`/projects/${build.project.id}/builds/${build.latestBuildId}`}
+                variant="outline"
+                color="neutral"
+                className="flex-1 md:flex-none"
+              >
+                <Icon icon={ArrowRightToLineIcon} size={10} />
+                view latest build
+              </ButtonLink>
+            ) : null}
             {showCancel ? <BuildCancelButton buildId={build.id} /> : null}
             {showRebuild ? (
               <BuildRebuildButton buildId={build.id} projectId={build.project.id} />

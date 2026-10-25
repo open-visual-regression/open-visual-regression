@@ -63,6 +63,19 @@ export const Rebuildable: Story = {
   },
 };
 
+export const Superseded: Story = {
+  args: {
+    build: mocks.build.generateBuild({
+      ...buildOverrides,
+      status: "needs_review",
+      isRebuildable: false,
+      isReviewable: false,
+      latestBuildId: "019edfc7-e040-7492-86b2-ccfdc00cf6e2",
+    }),
+    snapshotCounts,
+  },
+};
+
 export const Viewer: Story = {
   args: {
     build: mocks.build.generateBuild({
