@@ -150,6 +150,10 @@ export const buildSchema = z.object({
   status: buildStatusSchema,
   buildType: buildTypeSchema,
   createdAt: z.string().nonempty(),
+  // Null until the build finishes, and for builds created before timings were recorded.
+  queuedMs: z.number().int().nullable(),
+  processingMs: z.number().int().nullable(),
+  durationMs: z.number().int().nullable(),
 });
 
 export type BuildSchema = z.infer<typeof buildSchema>;

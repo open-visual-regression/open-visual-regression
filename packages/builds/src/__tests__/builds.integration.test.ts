@@ -1188,6 +1188,106 @@ describe("builds", () => {
       },
     );
 
+    describe("timings", () => {
+      const seedTimedBuild = async (options: SeedRebuildOptions) => {
+        const seeded = await seedFinalizedBuild({ ...options, processingStatus: "processing" });
+        await dbClient.builds.startProcessing(seeded.buildId);
+        const finished = await dbClient.builds.updateProcessingStatus(seeded.buildId, "success");
+        assert(finished?.startedAt && finished.completedAt);
+        return { ...seeded, timings: pickTimings(finished) };
+      };
+
+      const pickTimings = (build: { startedAt: string | null; completedAt: string | null }) => ({
+        startedAt: build.startedAt,
+        completedAt: build.completedAt,
+      });
+
+      const findTimings = async (buildId: string) => {
+        const build = await dbClient.builds.findById(buildId);
+        assert(build);
+        return pickTimings(build);
+      };
+
+      test("keeps the original timings while rebuilt snapshots process and after they finalize", async ({
+        project,
+        user,
+        captureConfiguration,
+      }) => {
+        const { buildId, snapshots, timings } = await seedTimedBuild({
+          projectId: project.id,
+          userId: user.id,
+          viewport: captureConfiguration,
+        });
+
+        expect(await rebuildSnapshots(buildId, [snapshots[0]!.id], user.id)).toEqual({
+          status: "ok",
+          data: undefined,
+        });
+        expect((await dbClient.builds.findById(buildId))?.processingStatus).toBe("processing");
+        expect(await findTimings(buildId)).toEqual(timings);
+
+        await finalizeBuild(buildId);
+
+        expect((await dbClient.builds.findById(buildId))?.processingStatus).toBe("success");
+        expect(await findTimings(buildId)).toEqual(timings);
+      });
+
+      test("rejects rebuilding another snapshot while a rebuild is still processing, leaving the timings alone", async ({
+        project,
+        user,
+        captureConfiguration,
+      }) => {
+        const { buildId, snapshots, timings } = await seedTimedBuild({
+          projectId: project.id,
+          userId: user.id,
+          viewport: captureConfiguration,
+          browsers: ["chromium", "firefox"],
+        });
+        await rebuildSnapshots(buildId, [snapshots[0]!.id], user.id);
+
+        const result = await rebuildSnapshots(buildId, [snapshots[1]!.id], user.id);
+
+        expect(result).toEqual({ status: "error", error: "NOT_SETTLED" });
+        expect(await findTimings(buildId)).toEqual(timings);
+      });
+
+      test("keeps the original timings when a rebuild fails to enqueue", async ({
+        project,
+        user,
+        captureConfiguration,
+      }) => {
+        const { buildId, snapshots, timings } = await seedTimedBuild({
+          projectId: project.id,
+          userId: user.id,
+          viewport: captureConfiguration,
+        });
+        vi.mocked(enqueueCaptureGroups).mockRejectedValueOnce(new QueueUnavailableError());
+
+        await expect(rebuildSnapshots(buildId, [snapshots[0]!.id], user.id)).rejects.toThrow();
+
+        expect((await dbClient.builds.findById(buildId))?.processingStatus).toBe("error");
+        expect(await findTimings(buildId)).toEqual(timings);
+      });
+
+      test("keeps the original timings when a rebuild is canceled", async ({
+        project,
+        user,
+        captureConfiguration,
+      }) => {
+        const { buildId, snapshots, timings } = await seedTimedBuild({
+          projectId: project.id,
+          userId: user.id,
+          viewport: captureConfiguration,
+        });
+        await rebuildSnapshots(buildId, [snapshots[0]!.id], user.id);
+
+        await cancelBuild(buildId, user.id);
+
+        expect((await dbClient.builds.findById(buildId))?.processingStatus).toBe("canceled");
+        expect(await findTimings(buildId)).toEqual(timings);
+      });
+    });
+
     test("returns BUILD_CANCELED for a canceled build, whose writes the pipeline discards", async ({
       project,
       user,

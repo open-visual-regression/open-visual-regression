@@ -37,6 +37,7 @@ import {
   getBuildUrl,
   isTerminalBuildStatus,
 } from "./utils/buildStatus";
+import { getBuildTimings } from "./utils/buildTimings";
 
 const UPLOAD_URL_TTL_SECONDS = 3600;
 
@@ -269,6 +270,7 @@ export const list = os.builds.list
         status: getBuildDisplayStatus(build),
         buildType: build.buildType,
         createdAt: build.createdAt,
+        ...getBuildTimings(build),
       })),
       total,
       nextCursor,
@@ -370,6 +372,7 @@ export const getOne = os.builds.getOne
         isReviewable: reviewable.status === "ok",
         buildType: build.buildType,
         createdAt: build.createdAt,
+        ...getBuildTimings(build),
         commitUrl: gitIntegration
           ? buildCommitUrl(gitIntegration.provider, gitIntegration.repoIdentifier, build.commitSha)
           : null,

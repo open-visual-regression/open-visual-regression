@@ -104,6 +104,9 @@ export const builds = pgTable(
     createdAt: utcTimestamp("created_at")
       .default(sql`now()`)
       .notNull(),
+    // Set once on the first run; rebuilding snapshots keeps the original timings.
+    startedAt: utcTimestamp("started_at"),
+    completedAt: utcTimestamp("completed_at"),
     updatedAt: utcTimestamp("updated_at")
       .default(sql`now()`)
       .$onUpdate(() => sql`now()`)
