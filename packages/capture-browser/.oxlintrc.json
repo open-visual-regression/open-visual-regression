@@ -1,0 +1,11 @@
+{
+  "plugins": ["typescript", "import", "unicorn", "vitest"],
+  "env": { "node": true },
+  "rules": {
+    "curly": "warn",
+    "func-style": ["warn", "expression"],
+    "no-nested-ternary": "warn",
+    "typescript/prefer-reduce-type-parameter": "warn",
+    "typescript/consistent-type-definitions": ["warn", "type"]
+  }
+}

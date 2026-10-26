@@ -26,9 +26,10 @@ export const getCaptureViewport = (
 
 const UNREACHABLE_PROXY = "http://127.0.0.1:9";
 
-// Not page.route: while a route is registered, Playwright only reports a request a service worker
-// answers once it has responded, so settling never waits out an msw delay. Firefox can't bypass a
-// single port, so other localhost ports stay reachable there.
+// Blocks other hosts with a proxy that refuses every connection. Blocking them with page.route
+// would make Playwright report a request a service worker answers, like an msw mock, only once
+// it has a response, so settling would not wait for it. Firefox can't exclude a single port from
+// the proxy, so other localhost ports stay reachable there.
 export const blockExternalRequests = (
   browser: Browser,
   origin: string,
