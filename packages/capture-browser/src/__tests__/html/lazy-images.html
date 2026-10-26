@@ -1,0 +1,16 @@
+<!doctype html>
+<html>
+  <body>
+    <div style="height: 5000px"></div>
+    <img id="initial" loading="lazy" src="/pixel.png" />
+    <script>
+      setTimeout(() => {
+        const image = document.createElement("img");
+        image.id = "added";
+        image.loading = "lazy";
+        image.src = "/pixel.png?added";
+        document.body.append(image);
+      }, 50);
+    </script>
+  </body>
+</html>
