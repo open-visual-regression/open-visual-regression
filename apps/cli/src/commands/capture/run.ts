@@ -177,7 +177,10 @@ const captureWithBrowser = async (
   });
 
   try {
-    const context = await browser.newContext({ deviceScaleFactor: 1 });
+    const context = await browser.newContext({
+      deviceScaleFactor: 1,
+      ...blockExternalRequests(browser, origin),
+    });
     const page = await newPage(context);
 
     if (options.cpuThrottle) {
@@ -188,7 +191,6 @@ const captureWithBrowser = async (
       await session.send("Emulation.setCPUThrottlingRate", { rate: options.cpuThrottle });
     }
 
-    await blockExternalRequests(page, origin);
     await disableLazyLoading(page);
     const networkActivity = trackNetworkActivity(page);
 

@@ -72,10 +72,8 @@ export const readStoryParameterOverrides = async (
   });
 
   try {
-    const context = await browser.newContext();
+    const context = await browser.newContext(blockExternalRequests(browser, proxy.origin));
     const page = await newPage(context);
-
-    await blockExternalRequests(page, proxy.origin);
 
     await page.goto(`${proxy.origin}/iframe.html`, { waitUntil: "load" });
     await page.waitForFunction(

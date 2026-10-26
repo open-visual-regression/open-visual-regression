@@ -176,13 +176,15 @@ const launchCapturePage = async (
   let page: Page;
 
   try {
-    const context = await browser.newContext({ deviceScaleFactor: 1 });
+    const context = await browser.newContext({
+      deviceScaleFactor: 1,
+      ...blockExternalRequests(browser, proxy.origin),
+    });
     page = await newPage(context);
     page.on("crash", () => {
       logger.error({ buildId, browser: browserName }, "capture page crashed");
     });
 
-    await blockExternalRequests(page, proxy.origin);
     await disableLazyLoading(page);
 
     page.on("console", (message) => {

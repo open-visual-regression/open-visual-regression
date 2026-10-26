@@ -13,6 +13,7 @@ const HTML_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), "html")
 type Fixtures = {
   browser: Browser;
   site: StaticProxy;
+  otherSite: StaticProxy;
 };
 
 export const test = vitest.extend<Fixtures>({
@@ -25,6 +26,13 @@ export const test = vitest.extend<Fixtures>({
 
   // eslint-disable-next-line no-empty-pattern
   site: async ({}, use) => {
+    const proxy = await startStaticProxy(HTML_DIR);
+    await use(proxy);
+    proxy.close();
+  },
+
+  // eslint-disable-next-line no-empty-pattern
+  otherSite: async ({}, use) => {
     const proxy = await startStaticProxy(HTML_DIR);
     await use(proxy);
     proxy.close();
