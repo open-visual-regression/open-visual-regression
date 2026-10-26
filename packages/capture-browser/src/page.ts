@@ -1,4 +1,4 @@
-import type { Page } from "playwright";
+import type { Browser, BrowserContextOptions, Page } from "playwright";
 
 import type { CaptureStrategy } from "./captureStrategies";
 import { BOOT_TIMEOUT_MS } from "./timeouts";
@@ -24,14 +24,22 @@ export const getCaptureViewport = (
   };
 };
 
-export const blockExternalRequests = async (page: Page, origin: string): Promise<void> => {
-  await page.route("**/*", (route) => {
-    const url = new URL(route.request().url());
-    if (url.origin === origin || url.protocol === "data:" || url.protocol === "blob:") {
-      return route.continue();
-    }
-    return route.abort();
-  });
+// Nothing listens here, so a request sent to it fails straight away.
+const UNREACHABLE_PROXY = "http://127.0.0.1:9";
+
+// Sends every request that isn't for the target to a proxy that refuses it. Routing could block
+// them too, but while any route is registered Playwright reports a request a service worker answers
+// (an msw mock, say) only once its response is ready, which hides it from the settle wait for as
+// long as the mocked delay lasts. Firefox can't bypass a single port, so it can still reach other
+// localhost ports, but every other host is blocked there too.
+export const blockExternalRequests = (
+  browser: Browser,
+  origin: string,
+): Pick<BrowserContextOptions, "proxy"> => {
+  const { host, hostname } = new URL(origin);
+  const bypass = browser.browserType().name() === "firefox" ? hostname : `<-loopback>,${host}`;
+
+  return { proxy: { server: UNREACHABLE_PROXY, bypass } };
 };
 
 export const bootTargetPage = async (
