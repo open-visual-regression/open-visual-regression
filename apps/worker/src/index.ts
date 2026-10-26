@@ -3,6 +3,8 @@ import { Worker, type Job } from "bullmq";
 import { z } from "zod";
 
 import { scheduleFlakyDetection } from "@ovr/builds/flakiness";
+import { describeAllowedHostLimits, formatAllowedHost } from "@ovr/capture-browser/allowedHosts";
+import { getCaptureAllowedHosts } from "@ovr/capture/lib/allowedHosts";
 import { assertEncryptionKey } from "@ovr/git-status/crypto";
 import { createLogger } from "@ovr/logger";
 import { startMetrics } from "@ovr/metrics/server";
@@ -36,6 +38,18 @@ import { APP_VERSION } from "./lib/version";
 const logger = createLogger("worker");
 
 assertEncryptionKey();
+
+// Read up front so an invalid entry stops the worker instead of failing every capture.
+const CAPTURE_ALLOWED_HOSTS = getCaptureAllowedHosts();
+if (CAPTURE_ALLOWED_HOSTS.length > 0) {
+  logger.info(
+    { allowedHosts: CAPTURE_ALLOWED_HOSTS.map(formatAllowedHost) },
+    "captures may load these external hosts",
+  );
+}
+for (const warning of describeAllowedHostLimits("firefox", CAPTURE_ALLOWED_HOSTS)) {
+  logger.warn(warning);
+}
 
 const metrics = await startMetrics({ serviceName: "ovr-worker", serviceVersion: APP_VERSION });
 

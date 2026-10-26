@@ -4,6 +4,7 @@ import { pathToFileURL } from "node:url";
 
 import { createJiti } from "jiti";
 
+import { parseAllowedHosts, type AllowedHost } from "@ovr/capture-browser/allowedHosts";
 import { MAX_WAIT_FOR_TIMEOUT_MS } from "@ovr/storybook-compat/parameters";
 
 import type { OvrConfig, Viewport as ConfigViewport } from "./defineConfig";
@@ -130,6 +131,37 @@ export const resolveWaitForTimeout = (config: OvrConfig | undefined): number => 
   }
 
   return waitForTimeout;
+};
+
+// The --allowed-hosts flag replaces the config's list rather than adding to it.
+export const resolveAllowedHosts = (
+  config: OvrConfig | undefined,
+  override?: string,
+): AllowedHost[] => {
+  if (override !== undefined) {
+    try {
+      return parseAllowedHosts(override);
+    } catch (error) {
+      throw new Error(`--allowed-hosts: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  const allowedHosts = config?.capture?.allowedHosts;
+  if (allowedHosts === undefined) {
+    return [];
+  }
+
+  if (!Array.isArray(allowedHosts) || allowedHosts.some((host) => typeof host !== "string")) {
+    throw new Error(`ovr.config: "capture.allowedHosts" must be a list of hosts`);
+  }
+
+  try {
+    return parseAllowedHosts(allowedHosts);
+  } catch (error) {
+    throw new Error(
+      `ovr.config: "capture.allowedHosts": ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
 };
 
 export const resolveViewports = (config: OvrConfig | undefined): ResolvedViewport[] => {

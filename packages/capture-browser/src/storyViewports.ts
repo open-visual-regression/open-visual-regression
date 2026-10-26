@@ -6,6 +6,7 @@ import {
   type OvrStoryParameters,
 } from "@ovr/storybook-compat/parameters";
 
+import type { AllowedHost } from "./allowedHosts";
 import { launchBrowser, newPage, type ManagedBrowser } from "./browser";
 import { blockExternalRequests } from "./page";
 import { startStaticProxy } from "./staticProxy";
@@ -63,6 +64,7 @@ export const readStoryParameterOverrides = async (
   bundleDir: string,
   targetIds: string[],
   launchOptions: LaunchOptions = {},
+  allowedHosts: readonly AllowedHost[] = [],
 ): Promise<StoryParameterOverrides> => {
   const proxy = await startStaticProxy(bundleDir);
   let managed: ManagedBrowser;
@@ -78,7 +80,9 @@ export const readStoryParameterOverrides = async (
   const { browser } = managed;
 
   try {
-    const context = await browser.newContext(blockExternalRequests(browser, proxy.origin));
+    const context = await browser.newContext(
+      blockExternalRequests(browser, proxy.origin, allowedHosts),
+    );
     const page = await newPage(context);
 
     await page.goto(`${proxy.origin}/iframe.html`, { waitUntil: "load" });

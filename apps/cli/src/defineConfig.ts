@@ -32,6 +32,8 @@ export type OvrConfig = {
   waitForTimeout?: number;
   /** Options for `upload storybook --only-affected`. */
   onlyAffected?: OnlyAffectedConfig;
+  /** Options for `capture storybook`, which captures on this machine. */
+  capture?: CaptureConfig;
 };
 
 export type OnlyAffectedConfig = {
@@ -39,6 +41,17 @@ export type OnlyAffectedConfig = {
   externals?: string[];
   /** Globs of files that never affect a story. */
   untraced?: string[];
+};
+
+export type CaptureConfig = {
+  /**
+   * External hosts local captures may load, like an image or font CDN. Every
+   * other host is blocked. Entries are `example.com`, `example.com:8443`, or
+   * `*.example.com` for its subdomains. Overridden by `--allowed-hosts`. Match
+   * the server's captures by listing the hosts in the worker's
+   * `OVR_CAPTURE_ALLOWED_HOSTS`.
+   */
+  allowedHosts?: readonly string[];
 };
 
 /** Per-story override, set via Storybook `parameters.ovr` on a story or its `meta`. */
@@ -87,4 +100,6 @@ export const defineConfig = <const V extends readonly Viewport[] = []>(config: {
   waitForTimeout?: number;
   /** Options for `upload storybook --only-affected`. */
   onlyAffected?: OnlyAffectedConfig;
+  /** Options for `capture storybook`, which captures on this machine. */
+  capture?: CaptureConfig;
 }): OvrConfig => config;

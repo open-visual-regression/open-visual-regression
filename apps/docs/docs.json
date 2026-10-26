@@ -39,6 +39,7 @@
         "pages": [
           "self-hosting/docker-compose",
           "self-hosting/helm",
+          "self-hosting/external-hosts",
           "self-hosting/sso",
           "self-hosting/metrics"
         ]

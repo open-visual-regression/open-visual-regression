@@ -191,7 +191,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm turbo run db:migrate --filter=@ovr/db
-      - run: pnpm --filter @ovr/capture exec playwright install --with-deps chromium
+      - run: pnpm --filter @ovr/capture exec playwright install --with-deps chromium webkit firefox
       - name: Restore Storybook fixture builds
         uses: actions/cache@v4
         with:

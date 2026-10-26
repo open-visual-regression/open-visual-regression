@@ -11,6 +11,7 @@ import {
   type Page,
 } from "playwright";
 
+import type { AllowedHost } from "@ovr/capture-browser/allowedHosts";
 import { SIGNAL_HANDLING_OPTIONS, newPage } from "@ovr/capture-browser/browser";
 import type { CaptureStrategy } from "@ovr/capture-browser/captureStrategies";
 import {
@@ -19,6 +20,8 @@ import {
   disableLazyLoading,
   getCaptureViewport,
   takeScreenshot,
+  trackBlockedHosts,
+  type BlockedHosts,
 } from "@ovr/capture-browser/page";
 import {
   settlePage,
@@ -57,6 +60,7 @@ export type CaptureResult = {
   diffThreshold: number;
   images: CapturedImage[];
   errors: string[];
+  blockedHosts: string[];
 };
 
 export type CaptureRunOptions = {
@@ -67,6 +71,7 @@ export type CaptureRunOptions = {
   outDir?: string;
   cpuThrottle?: number;
   launchOptions: LaunchOptions;
+  allowedHosts: readonly AllowedHost[];
 };
 
 type CaptureAttempt = {
@@ -123,17 +128,22 @@ const captureTarget = async (
   page: Page,
   origin: string,
   networkActivity: NetworkActivity,
+  blockedHosts: BlockedHosts,
   target: CaptureTarget,
   { strategy, repeat, outDir }: CaptureRunOptions,
 ): Promise<CaptureResult> => {
   const images = new Map<string, CapturedImage>();
   const errors = new Set<string>();
+  const blocked = new Set<string>();
   let reference: Buffer | null = null;
 
   for (let run = 0; run < repeat; run++) {
     // A fresh page per run, so no state carries over from the previous one.
     await bootTargetPage(page, origin, strategy);
     const { screenshot, error } = await captureOnce(page, strategy, networkActivity, target);
+    for (const host of blockedHosts.take()) {
+      blocked.add(host);
+    }
     const hash = createHash("sha1").update(screenshot).digest("hex").slice(0, HASH_LENGTH);
     const image = images.get(hash);
 
@@ -162,6 +172,7 @@ const captureTarget = async (
     diffThreshold: target.diffThreshold,
     images: [...images.values()],
     errors: [...errors],
+    blockedHosts: [...blocked].sort(),
   };
 };
 
@@ -179,7 +190,7 @@ const captureWithBrowser = async (
   try {
     const context = await browser.newContext({
       deviceScaleFactor: 1,
-      ...blockExternalRequests(browser, origin),
+      ...blockExternalRequests(browser, origin, options.allowedHosts),
     });
     const page = await newPage(context);
 
@@ -193,15 +204,20 @@ const captureWithBrowser = async (
 
     await disableLazyLoading(page);
     const networkActivity = trackNetworkActivity(page);
+    const blockedHosts = trackBlockedHosts(page, origin, options.allowedHosts);
 
     try {
       const results: CaptureResult[] = [];
       for (const target of targets) {
-        results.push(await captureTarget(page, origin, networkActivity, target, options));
+        blockedHosts.take();
+        results.push(
+          await captureTarget(page, origin, networkActivity, blockedHosts, target, options),
+        );
       }
       return results;
     } finally {
       networkActivity.dispose();
+      blockedHosts.dispose();
     }
   } finally {
     await browser.close();

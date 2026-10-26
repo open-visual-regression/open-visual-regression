@@ -243,6 +243,82 @@ describe("snapshots", () => {
       expect(logs.some((log) => log.level === "error")).toBe(true);
     });
 
+    describe("external hosts", () => {
+      const iframeLoading = (...urls: string[]) =>
+        IFRAME_HTML.replace(
+          "</body>",
+          `${urls.map((url) => `<img src="${url}" />`).join("")}</body>`,
+        );
+
+      const captureLogs = async (
+        build: { id: string; artifactPath: string },
+        captureConfiguration: Viewport,
+        iframeHtml: string,
+      ) => {
+        await uploadArtifactWithIframe(build.artifactPath, iframeHtml);
+        const [snapshot] = await dbClient.snapshots.createMany({
+          values: [{ buildId: build.id, ...captureConfiguration, targetId: "story-a" }],
+        });
+
+        await captureBuildGroup(build.id, captureConfiguration.browser, [snapshot!.id]);
+
+        expect(await dbClient.snapshots.findById(snapshot!.id)).toMatchObject({
+          status: "success",
+        });
+        return dbClient.snapshotLogs.findBySnapshot(snapshot!.id);
+      };
+
+      test("should tell the reviewer which external hosts a capture blocked, once each", async ({
+        mainBuild,
+        captureConfiguration,
+      }) => {
+        const logs = await captureLogs(
+          mainBuild,
+          captureConfiguration,
+          iframeLoading(
+            "http://images.invalid/a.png",
+            "http://images.invalid/b.png",
+            "http://fonts.invalid:8080/c.png",
+          ),
+        );
+
+        const warnings = logs.filter((log) => log.message.startsWith("Blocked requests"));
+        expect(warnings).toHaveLength(1);
+        expect(warnings[0]).toMatchObject({
+          level: "warning",
+          message: expect.stringContaining("fonts.invalid:8080, images.invalid."),
+        });
+        expect(warnings[0]!.message).toContain("OVR_CAPTURE_ALLOWED_HOSTS");
+      });
+
+      test("should leave hosts in OVR_CAPTURE_ALLOWED_HOSTS out of the blocked hosts", async ({
+        mainBuild,
+        captureConfiguration,
+      }) => {
+        vi.stubEnv("OVR_CAPTURE_ALLOWED_HOSTS", "images.invalid");
+
+        const logs = await captureLogs(
+          mainBuild,
+          captureConfiguration,
+          iframeLoading("http://images.invalid/a.png", "http://fonts.invalid/c.png"),
+        );
+
+        const warnings = logs.filter((log) => log.message.startsWith("Blocked requests"));
+        expect(warnings.map((log) => log.message)).toEqual([
+          expect.stringMatching(/^Blocked requests to fonts\.invalid\. /),
+        ]);
+      });
+
+      test("should not warn when a capture requests no external hosts", async ({
+        mainBuild,
+        captureConfiguration,
+      }) => {
+        const logs = await captureLogs(mainBuild, captureConfiguration, IFRAME_HTML);
+
+        expect(logs.filter((log) => log.message.startsWith("Blocked requests"))).toEqual([]);
+      });
+    });
+
     describe("waitForTimeout", () => {
       const LATE_LOG = "late data loaded";
       const iframeWithLateLog = IFRAME_HTML.replace(

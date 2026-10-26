@@ -12,6 +12,7 @@ import { dbClient } from "@ovr/db/client";
 import { enqueueCaptureGroups, enqueueFinalize } from "@ovr/queue/producer";
 import { assertSupportedStorybookBuild } from "@ovr/storybook-compat/version";
 
+import { getCaptureAllowedHosts } from "./lib/allowedHosts";
 import { markSnapshotErrored } from "./snapshots";
 
 type Target = { id: string; title: string; name: string };
@@ -108,6 +109,8 @@ export const extractBuild = async (
       return readStoryParameterOverrides(
         bundleDir,
         targets.map((target) => target.id),
+        {},
+        getCaptureAllowedHosts(),
       );
     },
   );

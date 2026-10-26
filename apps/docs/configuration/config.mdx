@@ -30,6 +30,7 @@ export default defineConfig({
 | `diffThreshold` | `number`, `(0, 1]` | `0.05` | Fraction of pixels that may differ before a snapshot needs review |
 | `waitForTimeout` | `number`, `[0, 30000]` | `0` | Milliseconds to wait before each screenshot, e.g. for slow-loading data or images |
 | `onlyAffected` | `object` | | Options for [`--only-affected`](/cli/upload-storybook#only-affected-stories). See [below](#only-affected) |
+| `capture` | `object` | | Options for [`ovr capture storybook`](/cli/capture-storybook). See [below](#capture) |
 
 <Note>
 If `viewports` is omitted, OVR falls back to a single default: 1280px wide, full page, in Chromium.
@@ -58,3 +59,21 @@ Options for [`ovr upload storybook --only-affected`](/cli/upload-storybook#only-
 |-------|------|---------|-------------|
 | `externals` | `string[]` | `[]` | Files that affect every story when they change, such as a static folder |
 | `untraced` | `string[]` | `[]` | Files that never affect a story |
+
+## Capture
+
+Options for [`ovr capture storybook`](/cli/capture-storybook), which captures stories on your machine.
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `allowedHosts` | `string[]` | `[]` | External hosts local captures may load, like image and font CDNs. Every other host is blocked. Overridden by `--allowed-hosts` |
+
+```ts
+export default defineConfig({
+  capture: {
+    allowedHosts: ["images.example.com", "fonts.googleapis.com", "fonts.gstatic.com", "*.cdn.example.com"],
+  },
+});
+```
+
+Entries are a host, `host:port`, or `*.example.com` for its subdomains. Captures on the server don't read this file: they use the worker's [`OVR_CAPTURE_ALLOWED_HOSTS`](/self-hosting/external-hosts), so keep the two lists the same.

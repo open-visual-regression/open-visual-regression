@@ -11,6 +11,7 @@ const RESULT: CaptureResult = {
   diffThreshold: 0.05,
   images: [{ hash: "aaaaaaaaaaaa", count: 3, diffPercent: 0, file: null }],
   errors: [],
+  blockedHosts: [],
 };
 
 const UNSTABLE: CaptureResult = {

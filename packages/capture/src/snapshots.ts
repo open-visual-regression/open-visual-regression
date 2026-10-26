@@ -16,6 +16,8 @@ import {
   disableLazyLoading,
   getCaptureViewport,
   takeScreenshot,
+  trackBlockedHosts,
+  type BlockedHosts,
 } from "@ovr/capture-browser/page";
 import {
   settlePage,
@@ -34,6 +36,7 @@ import { enqueueDiff, enqueueFinalize } from "@ovr/queue/producer";
 import { promoteBaseline } from "@ovr/reviews/baselines";
 import { storage } from "@ovr/storage";
 
+import { ALLOWED_HOSTS_ENV, getCaptureAllowedHosts } from "./lib/allowedHosts";
 import {
   CAPTURE_JOB_TIMEOUT_MS,
   SNAPSHOT_CAPTURE_TIMEOUT_MS,
@@ -150,8 +153,14 @@ type CapturePage = {
   page: Page;
   pageLogState: PageLogState;
   networkActivity: NetworkActivity;
+  blockedHosts: BlockedHosts;
   close: () => Promise<void>;
 };
+
+const blockedHostsLog = (hosts: string[]): CaptureLog => ({
+  level: "warning",
+  message: `Blocked requests to ${hosts.join(", ")}. Captures only load the Storybook build and the hosts in ${ALLOWED_HOSTS_ENV}.`,
+});
 
 const launchCapturePage = async (
   buildId: string,
@@ -189,15 +198,18 @@ const launchCapturePage = async (
   });
 
   const pageLogState: PageLogState = { logs: [], hasPageError: false };
+  const allowedHosts = getCaptureAllowedHosts();
   const bootStart = performance.now();
   let page: Page;
+  let blockedHosts: BlockedHosts;
 
   try {
     const context = await browser.newContext({
       deviceScaleFactor: 1,
-      ...blockExternalRequests(browser, proxy.origin),
+      ...blockExternalRequests(browser, proxy.origin, allowedHosts),
     });
     page = await newPage(context);
+    blockedHosts = trackBlockedHosts(page, proxy.origin, allowedHosts);
     page.on("crash", () => {
       logger.error({ buildId, browser: browserName }, "capture page crashed");
     });
@@ -228,8 +240,10 @@ const launchCapturePage = async (
     page,
     pageLogState,
     networkActivity,
+    blockedHosts,
     close: async () => {
       networkActivity.dispose();
+      blockedHosts.dispose();
       await closeBrowser();
     },
   };
@@ -253,7 +267,7 @@ type CapturedSnapshot = {
 };
 
 const captureSnapshotOnPage = async (
-  { page, pageLogState, networkActivity }: CapturePage,
+  { page, pageLogState, networkActivity, blockedHosts }: CapturePage,
   strategy: CaptureStrategy,
   build: NonNullable<BuildDbSchema>,
   snapshotId: string,
@@ -339,6 +353,11 @@ const captureSnapshotOnPage = async (
     const [screenshot, screenshotMs] = await runPagePhase("screenshot", () =>
       takeScreenshot(page, fullPage),
     );
+
+    const blocked = blockedHosts.take();
+    if (blocked.length > 0) {
+      pageLogState.logs.push(blockedHostsLog(blocked));
+    }
 
     return {
       snapshotId,
@@ -624,6 +643,7 @@ export const captureBuildGroup = async (
             } finally {
               capturePage.pageLogState.logs = [];
               capturePage.pageLogState.hasPageError = false;
+              capturePage.blockedHosts.take();
             }
           }
 

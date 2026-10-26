@@ -1,9 +1,11 @@
 import { Command } from "commander";
 
+import { describeAllowedHostLimits } from "@ovr/capture-browser/allowedHosts";
 import { readStoryTargets } from "@ovr/storybook-compat/manifest";
 
 import {
   loadOvrConfig,
+  resolveAllowedHosts,
   resolveDiffThreshold,
   resolveViewports,
   resolveWaitForTimeout,
@@ -30,6 +32,7 @@ type StorybookCaptureCommandOptions = {
   cpuThrottle?: string;
   executablePath?: string;
   config?: string;
+  allowedHosts?: string;
   json?: boolean;
 };
 
@@ -66,6 +69,7 @@ const captureStorybook = async (
   const viewports = resolveViewports(config);
   const waitForTimeout = resolveWaitForTimeout(config);
   const diffThreshold = resolveDiffThreshold(config);
+  const allowedHosts = resolveAllowedHosts(config, options.allowedHosts);
   const launchOptions = options.executablePath ? { executablePath: options.executablePath } : {};
 
   const stories = await readStoryTargets(options.dir);
@@ -91,6 +95,7 @@ const captureStorybook = async (
     options.dir,
     storyIds,
     launchOptions,
+    allowedHosts,
   );
 
   const issues: CaptureIssue[] = [];
@@ -124,6 +129,12 @@ const captureStorybook = async (
     throw new Error("Nothing to capture: no story has a matching viewport.");
   }
 
+  if (targets.some((target) => target.browser === "firefox")) {
+    for (const warning of describeAllowedHostLimits("firefox", allowedHosts)) {
+      console.error(`Warning: ${warning}`);
+    }
+  }
+
   const results = await runCaptures({
     dir: options.dir,
     strategy,
@@ -132,6 +143,7 @@ const captureStorybook = async (
     outDir: options.out,
     cpuThrottle,
     launchOptions,
+    allowedHosts,
   });
 
   return { results, issues };
@@ -147,6 +159,10 @@ export const createStorybookCaptureCommand = (): Command =>
     .option("--out <dir>", "save each distinct image to this directory")
     .option("--cpu-throttle <rate>", "slow the CPU down by this factor (Chromium only)")
     .option("--executable-path <path>", "browser executable to launch")
+    .option(
+      "--allowed-hosts <hosts>",
+      "comma-separated external hosts captures may load, replacing capture.allowedHosts in ovr.config",
+    )
     .option("-c, --config <path>", "path to ovr.config file")
     .option("--json", "print results as JSON instead of a table")
     .action(async (options: StorybookCaptureCommandOptions) => {

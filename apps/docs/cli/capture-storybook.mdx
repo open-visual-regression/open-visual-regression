@@ -30,6 +30,7 @@ ovr capture storybook --dir storybook-static --story components-dialog--open --r
 | `--out <dir>` | no | | Save each distinct image to this directory |
 | `--cpu-throttle <rate>` | no | | Slow the CPU down by this factor (Chromium only) |
 | `--executable-path <path>` | no | | Browser executable to launch instead of Playwright's |
+| `--allowed-hosts <hosts>` | no | `capture.allowedHosts` | Comma-separated external hosts captures may load. Replaces the list in `ovr.config` |
 | `-c, --config <path>` | no | `ovr.config` | Path to `ovr.config` file |
 | `--json` | no | | Print results as JSON instead of a table |
 
@@ -53,6 +54,27 @@ difference from the first run. A capture is `stable` when every run is within th
 render. With `--out`, each distinct image is saved to that directory.
 
 The command exits with status 1 if any capture is unstable or errored, so it can run in CI.
+
+## External hosts
+
+Captures only load the Storybook build. Requests to other hosts fail, including ones a
+service worker like msw passes through to the network, the same as on the server. A
+capture that requested a blocked host lists it under the table:
+
+```
+components-card--hero (desktop): blocked requests to fonts.gstatic.com, images.example.com
+```
+
+To load images and fonts from a CDN, allow their hosts with `capture.allowedHosts` in
+[`ovr.config`](/configuration/config#capture), or for one run:
+
+```sh
+ovr capture storybook --dir storybook-static --allowed-hosts images.example.com,fonts.googleapis.com,fonts.gstatic.com
+```
+
+Use the same list as the server's [`OVR_CAPTURE_ALLOWED_HOSTS`](/self-hosting/external-hosts)
+so local captures match the build's. Entries are a host, `host:port`, or `*.example.com` for
+its subdomains.
 
 <Note>
   Screenshots can differ slightly from a build's because of fonts and the operating
