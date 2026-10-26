@@ -1,5 +1,15 @@
 # @ovr/capture
 
+## 0.3.16
+
+### Patch Changes
+
+- [#450](https://github.com/open-visual-regression/open-visual-regression/pull/450) [`1560be5`](https://github.com/open-visual-regression/open-visual-regression/commit/1560be58843ecd23b3c54c148451e8775cd6b26e) Thanks [@tgfischer](https://github.com/tgfischer)! - Keep a build queued until its first snapshot starts capturing, instead of showing it as processing while every snapshot is still queued.
+
+- Updated dependencies [[`1560be5`](https://github.com/open-visual-regression/open-visual-regression/commit/1560be58843ecd23b3c54c148451e8775cd6b26e)]:
+  - @ovr/builds@0.2.9
+  - @ovr/reviews@0.1.24
+
 ## 0.3.15
 
 ### Patch Changes
