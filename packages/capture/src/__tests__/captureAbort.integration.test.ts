@@ -2,14 +2,20 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { chromium } from "playwright";
 import { vi } from "vitest";
 
 import { dbClient } from "@ovr/db/client";
 
 import { TimeoutError } from "../lib/captureTimeouts";
 import { captureBuildGroup } from "../snapshots";
-import { describe, expect, test, uploadArtifactWithIframe } from "./fixtures";
+import {
+  browserProcesses,
+  describe,
+  expect,
+  spyOnBrowserServers,
+  test,
+  uploadArtifactWithIframe,
+} from "./fixtures";
 
 const { CAPTURE_JOB_TIMEOUT_MS } = vi.hoisted(() => ({ CAPTURE_JOB_TIMEOUT_MS: 4_000 }));
 
@@ -44,7 +50,7 @@ describe("captureBuildGroup", () => {
       return updateStatus(id, status);
     });
 
-    const launch = vi.spyOn(chromium, "launch");
+    const { servers } = spyOnBrowserServers();
 
     await expect(
       captureBuildGroup(mainBuild.id, captureConfiguration.browser, [
@@ -54,10 +60,11 @@ describe("captureBuildGroup", () => {
       ]),
     ).rejects.toThrow(TimeoutError);
 
-    const browser = await launch.mock.results[0]!.value;
-    expect(browser.isConnected()).toBe(false);
+    expect(servers).toHaveLength(1);
+    expect(await browserProcesses(servers[0]!)).toEqual([]);
 
-    expect(await dbClient.snapshots.findById(first!.id)).toMatchObject({ status: "success" });
+    // The browser was killed under the snapshot in flight, so it is left for the retry too.
+    expect(await dbClient.snapshots.findById(first!.id)).toMatchObject({ status: "processing" });
     expect(await dbClient.snapshots.findById(second!.id)).toMatchObject({ status: "queued" });
     expect(await dbClient.snapshots.findById(third!.id)).toMatchObject({ status: "queued" });
   }, 60_000);

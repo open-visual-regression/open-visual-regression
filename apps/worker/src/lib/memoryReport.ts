@@ -1,7 +1,6 @@
+import { readProcessTree } from "@ovr/capture-browser/processTree";
 import type { createLogger } from "@ovr/logger";
 import { observeGauges } from "@ovr/metrics";
-
-import { readProcessTree } from "./processTree";
 
 type Logger = ReturnType<typeof createLogger>;
 

@@ -6,7 +6,7 @@ import {
   type OvrStoryParameters,
 } from "@ovr/storybook-compat/parameters";
 
-import { SIGNAL_HANDLING_OPTIONS, newPage } from "./browser";
+import { launchBrowser, newPage, type ManagedBrowser } from "./browser";
 import { blockExternalRequests } from "./page";
 import { startStaticProxy } from "./staticProxy";
 import { BOOT_TIMEOUT_MS } from "./timeouts";
@@ -65,11 +65,17 @@ export const readStoryParameterOverrides = async (
   launchOptions: LaunchOptions = {},
 ): Promise<StoryParameterOverrides> => {
   const proxy = await startStaticProxy(bundleDir);
-  const browser = await chromium.launch({
-    ...SIGNAL_HANDLING_OPTIONS,
-    args: ["--disable-dev-shm-usage"],
-    ...launchOptions,
-  });
+  let managed: ManagedBrowser;
+  try {
+    managed = await launchBrowser(chromium, {
+      args: ["--disable-dev-shm-usage"],
+      ...launchOptions,
+    });
+  } catch (error) {
+    proxy.close();
+    throw error;
+  }
+  const { browser } = managed;
 
   try {
     const context = await browser.newContext(blockExternalRequests(browser, proxy.origin));
@@ -85,7 +91,7 @@ export const readStoryParameterOverrides = async (
     const { entries, failures } = await page.evaluate(readOvrOverrides, targetIds);
     return { overrides: new Map(entries), failures: new Map(failures) };
   } finally {
-    await browser.close();
+    await managed.close();
     proxy.close();
   }
 };

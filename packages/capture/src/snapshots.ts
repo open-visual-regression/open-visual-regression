@@ -5,7 +5,7 @@ import { chromium, firefox, webkit, type Page } from "playwright";
 import { publishStatus } from "@ovr/builds/builds";
 import { isFlakyDetectionEnabled } from "@ovr/builds/flakiness";
 import { withBundleDir } from "@ovr/builds/storybookBundleCache";
-import { SIGNAL_HANDLING_OPTIONS, newPage } from "@ovr/capture-browser/browser";
+import { launchBrowser, newPage } from "@ovr/capture-browser/browser";
 import {
   detectCaptureStrategy,
   type CaptureStrategy,
@@ -150,6 +150,7 @@ type CapturePage = {
   page: Page;
   pageLogState: PageLogState;
   networkActivity: NetworkActivity;
+  // Settles within the browser close timeouts and never rejects, killing the browser if needed.
   close: () => Promise<void>;
 };
 
@@ -159,12 +160,28 @@ const launchCapturePage = async (
   proxy: StaticProxy,
   strategy: CaptureStrategy,
 ): Promise<CapturePage> => {
-  const browser = await getBrowserLauncher(browserName).launch({
-    ...SIGNAL_HANDLING_OPTIONS,
-    ...(browserName === "chromium" ? { args: ["--disable-dev-shm-usage"] } : {}),
-  });
+  const managedBrowser = await launchBrowser(
+    getBrowserLauncher(browserName),
+    browserName === "chromium" ? { args: ["--disable-dev-shm-usage"] } : {},
+  );
+  const { browser } = managedBrowser;
 
   let closeRequested = false;
+  let closing: Promise<void> | undefined;
+  const closeBrowser = () =>
+    (closing ??= (async () => {
+      closeRequested = true;
+      const timedOutSteps = await managedBrowser.close();
+      if (timedOutSteps.length > 0) {
+        logger.error(
+          { buildId, browser: browserName, timedOutSteps },
+          timedOutSteps.includes("kill")
+            ? "capture browser did not close in time and its processes survived a kill"
+            : "capture browser did not close in time and was killed",
+        );
+      }
+    })());
+
   browser.on("disconnected", () => {
     if (closeRequested) {
       return;
@@ -198,8 +215,7 @@ const launchCapturePage = async (
 
     await bootTargetPage(page, proxy.origin, strategy);
   } catch (error) {
-    closeRequested = true;
-    await browser.close().catch(() => undefined);
+    await closeBrowser();
     throw error;
   }
   logger.info(
@@ -214,9 +230,8 @@ const launchCapturePage = async (
     pageLogState,
     networkActivity,
     close: async () => {
-      closeRequested = true;
       networkActivity.dispose();
-      await browser.close();
+      await closeBrowser();
     },
   };
 };
@@ -522,6 +537,10 @@ export const captureBuildGroup = async (
         const uploads = createUploadQueue(MAX_PENDING_UPLOADS);
         let uploadInterrupted = false;
 
+        // The group timeout only stops waiting on this work, so kill the browser to end it.
+        const closeOnTimeout = () => void capturePage.close();
+        signal.addEventListener("abort", closeOnTimeout, { once: true });
+
         try {
           let retriedAfterTimeout: string | undefined;
 
@@ -561,6 +580,12 @@ export const captureBuildGroup = async (
                 throw error;
               }
 
+              // The group timed out and its browser was killed under this snapshot, which is
+              // left for the job's retry.
+              if (signal.aborted) {
+                break;
+              }
+
               const timedOut = error instanceof SnapshotTimeoutError;
               const retry = timedOut && retriedAfterTimeout !== snapshotId;
 
@@ -580,7 +605,7 @@ export const captureBuildGroup = async (
                   : "capture browser closed mid-group, relaunching for remaining snapshots",
               );
               browserRelaunches.add(1, { browser, reason: timedOut ? "timeout" : "closed" });
-              await capturePage.close().catch(() => undefined);
+              await capturePage.close();
 
               try {
                 capturePage = await launchCapturePage(buildId, browser, proxy, strategy);
@@ -613,6 +638,7 @@ export const captureBuildGroup = async (
             );
           }
         } finally {
+          signal.removeEventListener("abort", closeOnTimeout);
           await capturePage.close();
           proxy.close();
           await uploads.drain().catch(() => undefined);

@@ -20,6 +20,7 @@
     "@opentelemetry/semantic-conventions": "^1.43.0",
     "@ovr/builds": "workspace:*",
     "@ovr/capture": "workspace:*",
+    "@ovr/capture-browser": "workspace:*",
     "@ovr/db": "workspace:*",
     "@ovr/git-status": "workspace:*",
     "@ovr/logger": "workspace:*",

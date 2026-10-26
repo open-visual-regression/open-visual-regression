@@ -4,3 +4,10 @@ export const SETTLE_TIMEOUT_MS = 5_000;
 export const NETWORK_QUIET_WINDOW_MS = 100;
 export const DOM_QUIET_WINDOW_MS = 150;
 export const DOM_SETTLE_TIMEOUT_MS = 2_000;
+
+export const BROWSER_CONNECT_TIMEOUT_MS = 30_000;
+
+// Closing a capture browser runs these steps in turn, so it settles within their sum.
+export const CONTEXT_CLOSE_TIMEOUT_MS = 5_000;
+export const BROWSER_CLOSE_TIMEOUT_MS = 10_000;
+export const BROWSER_KILL_TIMEOUT_MS = 5_000;
