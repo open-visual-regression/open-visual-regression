@@ -264,7 +264,6 @@ const captureSnapshotOnPage = async (
 
   await dbClient.snapshots.updateStatus(snapshotId, "processing");
 
-  // A build is queued until its first snapshot starts capturing.
   if (currentBuild.processingStatus === "queued") {
     await dbClient.builds.startProcessing(build.id);
     await publishStatus(build.id);
