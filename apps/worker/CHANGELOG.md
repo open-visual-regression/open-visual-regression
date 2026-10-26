@@ -1,5 +1,18 @@
 # @ovr/worker
 
+## 0.16.1
+
+### Patch Changes
+
+- [#448](https://github.com/open-visual-regression/open-visual-regression/pull/448) [`be8ac27`](https://github.com/open-visual-regression/open-visual-regression/commit/be8ac27a964d19ff424025a39be3dfeca562c24e) Thanks [@tgfischer](https://github.com/tgfischer)! - Captures wait for requests a service worker answers, like delayed msw mocks, instead of screenshotting the loading state.
+
+- [#447](https://github.com/open-visual-regression/open-visual-regression/pull/447) [`77ca17f`](https://github.com/open-visual-regression/open-visual-regression/commit/77ca17f0a6e0436fe323d313e495d0288da5f55d) Thanks [@tgfischer](https://github.com/tgfischer)! - Captures load lazy images and iframes up front, so images below the viewport are no longer missing or half-loaded in full-page screenshots.
+
+- [#446](https://github.com/open-visual-regression/open-visual-regression/pull/446) [`644afd4`](https://github.com/open-visual-regression/open-visual-regression/commit/644afd402a84a41334eae028e4abbcba255a3683) Thanks [@tgfischer](https://github.com/tgfischer)! - Captures wait for the DOM to stop changing and for loaded images to decode, not just for the network to go quiet, so a story that renders in waves is no longer captured halfway.
+
+- Updated dependencies [[`be8ac27`](https://github.com/open-visual-regression/open-visual-regression/commit/be8ac27a964d19ff424025a39be3dfeca562c24e), [`77ca17f`](https://github.com/open-visual-regression/open-visual-regression/commit/77ca17f0a6e0436fe323d313e495d0288da5f55d), [`644afd4`](https://github.com/open-visual-regression/open-visual-regression/commit/644afd402a84a41334eae028e4abbcba255a3683)]:
+  - @ovr/capture@0.3.15
+
 ## 0.16.0
 
 ## 0.15.0
