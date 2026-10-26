@@ -146,7 +146,7 @@ describe("builds", () => {
       expect(updated?.completedAt).toBeNull();
     });
 
-    test("keeps the first start time when the extract job retries", async ({ build }) => {
+    test("keeps the first start time when called again", async ({ build }) => {
       const first = await dbClient.builds.startProcessing(build.id);
       const retried = await dbClient.builds.startProcessing(build.id);
 

@@ -1395,7 +1395,7 @@ describe("snapshots", () => {
       expect(error?.code).toBe("NOT_FOUND");
     });
 
-    test("requeues the snapshot and puts its build back to processing", async ({ admin }) => {
+    test("requeues the snapshot and puts its build back to queued", async ({ admin }) => {
       const { build, snapshot } = await seedRebuildableSnapshot(admin);
 
       const [error, result] = await serverClient.snapshots.rebuild({
@@ -1410,7 +1410,7 @@ describe("snapshots", () => {
         captureAttempt: 2,
       });
       expect(await dbClient.builds.findById(build.id)).toMatchObject({
-        processingStatus: "processing",
+        processingStatus: "queued",
       });
     });
 

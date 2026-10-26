@@ -546,7 +546,7 @@ export const rebuildSnapshots = async (
       await dbClient.snapshots.requeue(snapshot.id, tx);
     }
 
-    await dbClient.builds.updateProcessingStatus(buildId, "processing", null, tx);
+    await dbClient.builds.updateProcessingStatus(buildId, "queued", null, tx);
   });
 
   try {
