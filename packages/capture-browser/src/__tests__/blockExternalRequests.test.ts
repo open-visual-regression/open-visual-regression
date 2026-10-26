@@ -20,7 +20,7 @@ const PAGE_HTML = `<!doctype html>
   </body>
 </html>`;
 
-// Answers /api/data itself after a delay, the way msw answers a mocked request.
+// Answers /api/data after a delay, like an msw handler.
 const SERVICE_WORKER_JS = `
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
