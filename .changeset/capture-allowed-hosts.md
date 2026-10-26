@@ -1,8 +1,14 @@
 ---
-"@ovr/capture-browser": patch
+"@open-visual-regression/cli": minor
+"@ovr/worker": minor
+"@ovr/web": minor
+"@ovr/api": patch
+"@ovr/builds": patch
 "@ovr/capture": patch
-"@ovr/worker": patch
-"@open-visual-regression/cli": patch
+"@ovr/capture-browser": patch
+"@ovr/db": patch
+"@ovr/queue": patch
+"@ovr/storybook-compat": patch
 ---
 
-Since 0.16.1, captures block every external host, including requests a service worker like msw passes through to the network, which earlier versions let through. Stories that load images or web fonts from a remote host have captured spinners, broken images, or fallback fonts since then. Captures can now load specific hosts: list them in `OVR_CAPTURE_ALLOWED_HOSTS` on the worker (Helm: `worker.capture.allowedHosts`), like `images.example.com,fonts.gstatic.com,*.cdn.example.com`, and in `capture.allowedHosts` in `ovr.config` or `--allowed-hosts` for `ovr capture storybook`. Every other host stays blocked. A snapshot that requests a blocked host now gets one warning in its logs that names the host. See the External hosts page in the self-hosting docs.
+Captures load external hosts again by default, and blocking them is now opt-in. Since 0.16.1, captures have blocked every external host, including requests a service worker like msw passes through to the network, so stories that load images or web fonts from a remote host captured spinners, broken images, or fallback fonts. To block external requests, set `blockExternalRequests` in `ovr.config.ts`: `true` blocks every host outside the Storybook build, and `{ allow: ["images.example.com", "*.cdn.example.com"] }` blocks every host but those. Override it for one story with `parameters.ovr.blockExternalRequests`. When a capture blocks a request, the snapshot's logs get one warning naming each blocked host.

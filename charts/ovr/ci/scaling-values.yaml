@@ -25,11 +25,6 @@ web:
           app.kubernetes.io/component: web
 
 worker:
-  capture:
-    allowedHosts:
-      - images.example.com
-      - "*.cdn.example.com"
-      - fonts.example.com:8443
   podDisruptionBudget:
     enabled: true
     minAvailable: 1

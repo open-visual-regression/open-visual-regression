@@ -52,10 +52,21 @@ type ConfirmBuildUploadInput = {
   viewports: Viewport[];
   diffThreshold: number;
   waitForTimeout?: number;
+  blockExternalRequests?: boolean | { allow: string[] };
   unaffectedTargetIds?: string[];
 };
 
 export const DEFAULT_DIFF_THRESHOLD = 0.05;
+
+// The worker validates the hosts when it reads the build's stories.
+const toExternalRequestAllowlist = (
+  blockExternalRequests: ConfirmBuildUploadInput["blockExternalRequests"],
+): string[] | null => {
+  if (blockExternalRequests === undefined || blockExternalRequests === false) {
+    return null;
+  }
+  return blockExternalRequests === true ? [] : blockExternalRequests.allow;
+};
 
 export const getArtifactPath = (projectId: string, buildId: string): string =>
   `${projectId}/builds/${buildId}/artifact.tar.gz`;
@@ -266,6 +277,7 @@ export const confirmBuildUpload = async (
 
   const targetIds = new Set(input.targets.map((target) => target.id));
   const unaffectedTargetIds = (input.unaffectedTargetIds ?? []).filter((id) => targetIds.has(id));
+  const externalRequestAllowlist = toExternalRequestAllowlist(input.blockExternalRequests);
 
   try {
     await dbClient.buildExtractDefaults.create({
@@ -274,6 +286,7 @@ export const confirmBuildUpload = async (
       viewports: input.viewports,
       diffThreshold: input.diffThreshold,
       waitForTimeout: input.waitForTimeout,
+      externalRequestAllowlist,
       unaffectedTargetIds,
     });
     await enqueueExtract({
@@ -283,6 +296,7 @@ export const confirmBuildUpload = async (
       viewports: input.viewports,
       diffThreshold: input.diffThreshold,
       waitForTimeout: input.waitForTimeout,
+      externalRequestAllowlist,
       unaffectedTargetIds,
     });
   } catch (error) {
@@ -444,6 +458,7 @@ export const rebuildBuild = async (
       viewports: extractDefaults.viewports,
       diffThreshold: extractDefaults.diffThreshold,
       waitForTimeout: extractDefaults.waitForTimeout,
+      externalRequestAllowlist: extractDefaults.externalRequestAllowlist,
       unaffectedTargetIds: extractDefaults.unaffectedTargetIds,
     });
     await dbClient.projects.incrementTotalBuildsCount(source.projectId, tx);
@@ -460,6 +475,7 @@ export const rebuildBuild = async (
       viewports: extractDefaults.viewports,
       diffThreshold: extractDefaults.diffThreshold,
       waitForTimeout: extractDefaults.waitForTimeout,
+      externalRequestAllowlist: extractDefaults.externalRequestAllowlist,
       unaffectedTargetIds: extractDefaults.unaffectedTargetIds,
     });
   } catch (error) {

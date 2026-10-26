@@ -6,7 +6,7 @@ import {
   type OvrStoryParameters,
 } from "@ovr/storybook-compat/parameters";
 
-import type { AllowedHost } from "./allowedHosts";
+import { parseBlockExternalRequests, type ExternalRequestAllowlist } from "./allowedHosts";
 import { launchBrowser, newPage, type ManagedBrowser } from "./browser";
 import { blockExternalRequests } from "./page";
 import { startStaticProxy } from "./staticProxy";
@@ -64,7 +64,7 @@ export const readStoryParameterOverrides = async (
   bundleDir: string,
   targetIds: string[],
   launchOptions: LaunchOptions = {},
-  allowedHosts: readonly AllowedHost[] = [],
+  allowedHosts: ExternalRequestAllowlist = null,
 ): Promise<StoryParameterOverrides> => {
   const proxy = await startStaticProxy(bundleDir);
   let managed: ManagedBrowser;
@@ -129,6 +129,25 @@ export const resolveTargetDiffThreshold = (
   buildDefault: number,
   override: OvrStoryParameters | undefined,
 ): number => override?.diffThreshold ?? buildDefault;
+
+// Unlike the other story parameters, an invalid value throws rather than falling back, since
+// falling back could block hosts the story needs, or load ones it meant to block.
+export const resolveTargetExternalRequestAllowlist = (
+  buildDefault: ExternalRequestAllowlist,
+  override: OvrStoryParameters | undefined,
+): ExternalRequestAllowlist => {
+  if (override?.blockExternalRequests === undefined) {
+    return buildDefault;
+  }
+  try {
+    return parseBlockExternalRequests(override.blockExternalRequests);
+  } catch (error) {
+    throw new Error(
+      `parameters.ovr.blockExternalRequests: ${error instanceof Error ? error.message : String(error)}`,
+      { cause: error },
+    );
+  }
+};
 
 // Story parameters aren't validated at upload, so a bad value falls back to the build
 // default and an out-of-range one is clamped rather than failing the whole build.

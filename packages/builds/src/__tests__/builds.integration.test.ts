@@ -483,6 +483,7 @@ describe("builds", () => {
         targets,
         viewports: [captureConfiguration],
         diffThreshold: 0.05,
+        externalRequestAllowlist: null,
         unaffectedTargetIds: [],
       });
     });
@@ -558,6 +559,49 @@ describe("builds", () => {
         waitForTimeout: 1500,
       });
     });
+
+    test.for([
+      [undefined, null],
+      [false, null],
+      [true, []],
+      [
+        { allow: ["images.example.com", "*.cdn.example.com"] },
+        ["images.example.com", "*.cdn.example.com"],
+      ],
+    ] as const)(
+      "stores blockExternalRequests %j as the allowlist %j and passes it to extract",
+      async (
+        [blockExternalRequests, allowlist],
+        { project, captureConfiguration, user, connection },
+      ) => {
+        const created = await createBuild(
+          { projectId: project.id, branch: "main", commitSha: "a".repeat(40) },
+          user.id,
+        );
+        assert(created.status === "ok");
+        const buildId = created.data;
+        await storage.uploadFile(
+          getArtifactPath(project.id, buildId),
+          Buffer.from(""),
+          "application/gzip",
+        );
+
+        await confirmBuildUpload(buildId, {
+          targets: [{ id: "story-a", title: "Story", name: "A" }],
+          viewports: [captureConfiguration],
+          diffThreshold: 0.05,
+          blockExternalRequests:
+            typeof blockExternalRequests === "object"
+              ? { allow: [...blockExternalRequests.allow] }
+              : blockExternalRequests,
+        });
+
+        expect(
+          (await dbClient.buildExtractDefaults.findByBuild(buildId))?.externalRequestAllowlist,
+        ).toEqual(allowlist);
+        expect((await collectExtractJob(connection)).externalRequestAllowlist).toEqual(allowlist);
+      },
+    );
 
     test("stays successful when the client retries the same confirmation", async ({
       project,
@@ -853,6 +897,7 @@ describe("builds", () => {
           viewports: VIEWPORTS,
           diffThreshold: 0.05,
           waitForTimeout: 1500,
+          externalRequestAllowlist: ["images.example.com"],
           unaffectedTargetIds,
         });
       }
@@ -933,6 +978,7 @@ describe("builds", () => {
         viewports: VIEWPORTS,
         diffThreshold: 0.05,
         waitForTimeout: 1500,
+        externalRequestAllowlist: ["images.example.com"],
       });
     });
 
@@ -950,6 +996,7 @@ describe("builds", () => {
         viewports: VIEWPORTS,
         diffThreshold: 0.05,
         waitForTimeout: 1500,
+        externalRequestAllowlist: ["images.example.com"],
         unaffectedTargetIds: [],
       });
     });

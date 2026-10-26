@@ -80,7 +80,6 @@ CPU and memory scale with concurrent captures, not total build volume. Each capt
 | `worker.storybookCacheBytes` | app default 2 GB | Pod-local disk for extracted Storybook builds. Counts against the pod's ephemeral storage. |
 | `worker.imageCacheBytes` | app default 512 MB | Pod-local disk for caching screenshots. Counts against the pod's ephemeral storage. |
 | `worker.captureQueuePolicy` | app default `round-robin` | Order capture groups run in across builds. `round-robin` runs every queued build's first group of each browser, then every build's second, and so on, with retried groups going first, so small PR builds don't wait behind a large main build. `fifo` runs them in the order they were queued. Defaults to `fifo` when `worker.keda` uses its generated trigger (see below). |
-| `worker.capture.allowedHosts` | `[]` | External hosts captures may load, like image and font CDNs. Captures block every other host, including requests a service worker passes through. See [External hosts](/self-hosting/external-hosts). |
 | `worker.reaperStaleMinutes` | app default `30` | Minutes an unfinished build can go without snapshot or diff updates before it is marked errored. A build with jobs still queued, retrying or running is never reaped, however long the queue. |
 | `worker.purge.concurrency` | app default `1` | Retention purge jobs running at once across all workers. Each deletes one project's expired builds. |
 | `worker.purge.batchSize` | app default `10` | Builds the retention purge deletes per transaction. Lower it on a small database. |
@@ -133,7 +132,7 @@ If Redis needs a password or TLS, point `worker.keda.authenticationRef` at a KED
 
 `networkPolicy.enabled` adds a policy per component. The worker gets deny-all ingress. The web pod admits traffic on its port from anywhere in the cluster, narrow that with `networkPolicy.web.from`.
 
-Egress always allows DNS, and is otherwise unrestricted. Setting `networkPolicy.egress` replaces that default entirely, so it must list everything the pods reach: Postgres, Redis, object storage, your git provider, and any hosts in `worker.capture.allowedHosts`.
+Egress always allows DNS, and is otherwise unrestricted. Setting `networkPolicy.egress` replaces that default entirely, so it must list everything the pods reach: Postgres, Redis, object storage, and your git provider.
 
 ## Metrics
 

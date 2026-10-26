@@ -88,13 +88,13 @@ describe("formatCaptureReport", () => {
     expect(output).toContain(
       "components-button--primary (desktop): blocked requests to cdn.example.com, fonts.gstatic.com",
     );
-    expect(output).toContain("--allowed-hosts");
+    expect(output).toContain("blockExternalRequests");
     expect(output).toMatch(/components-button--primary .* stable$/m);
   });
 
   it("should leave the allow hint out when nothing was blocked", () => {
     expect(formatCaptureReport({ results: [RESULT], issues: [] }, false)).not.toContain(
-      "--allowed-hosts",
+      "blockExternalRequests",
     );
   });
 });

@@ -1,7 +1,11 @@
 import { describe, expect, test } from "vitest";
 
 import {
+  allowlistKey,
   describeAllowedHostLimits,
+  deserializeAllowlist,
+  parseBlockExternalRequests,
+  serializeAllowlist,
   formatAllowedHost,
   isAllowedHost,
   parseAllowedHost,
@@ -142,5 +146,49 @@ describe("describeAllowedHostLimits", () => {
   test("has nothing to warn about for Chromium and WebKit", () => {
     expect(describeAllowedHostLimits("chromium", allowed)).toEqual([]);
     expect(describeAllowedHostLimits("webkit", allowed)).toEqual([]);
+  });
+});
+
+describe("parseBlockExternalRequests", () => {
+  test("blocks nothing when unset or false", () => {
+    expect(parseBlockExternalRequests(undefined)).toBeNull();
+    expect(parseBlockExternalRequests(false)).toBeNull();
+  });
+
+  test("blocks every external host when true", () => {
+    expect(parseBlockExternalRequests(true)).toEqual([]);
+  });
+
+  test("blocks every external host but the allowed ones", () => {
+    expect(parseBlockExternalRequests({ allow: ["images.example.com", "*.fonts.net"] })).toEqual([
+      { hostname: "images.example.com", port: null, subdomains: false },
+      { hostname: "fonts.net", port: null, subdomains: true },
+    ]);
+  });
+
+  test.each([["yes"], [1], [null], [{}], [{ allow: "images.example.com" }], [{ allow: [1] }]])(
+    "rejects %j",
+    (value) => {
+      expect(() => parseBlockExternalRequests(value)).toThrow(/true, false, or \{ allow/);
+    },
+  );
+
+  test("rejects an invalid allowed host", () => {
+    expect(() => parseBlockExternalRequests({ allow: ["https://x.com/"] })).toThrow(/https:/);
+  });
+});
+
+describe("stored allowlists", () => {
+  test("round-trips, keeping null apart from an empty list", () => {
+    for (const allowlist of [null, [], parseAllowedHosts("*.fonts.net,images.example.com:8443")]) {
+      expect(deserializeAllowlist(serializeAllowlist(allowlist))).toEqual(allowlist);
+    }
+    expect(deserializeAllowlist(undefined)).toBeNull();
+  });
+
+  test("keys allowlists by what they block, not their order", () => {
+    expect(allowlistKey(["b.com", "a.com"])).toBe(allowlistKey(["a.com", "b.com"]));
+    expect(allowlistKey(null)).not.toBe(allowlistKey([]));
+    expect(allowlistKey(undefined)).toBe(allowlistKey(null));
   });
 });

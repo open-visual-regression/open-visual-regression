@@ -8,7 +8,11 @@ const CAPTURE_GROUP_SIZE = z.coerce
   .catch(10)
   .parse(process.env.OVR_CAPTURE_GROUP_SIZE);
 
-type GroupableSnapshot = { id: string; browser: string };
+type GroupableSnapshot = {
+  id: string;
+  browser: string;
+  externalRequestAllowlist?: string[] | null;
+};
 
 export type CaptureGroup = { browser: string; snapshotIds: string[] };
 
@@ -17,13 +21,21 @@ const chunk = <T>(items: T[], size: number): T[][] =>
     items.slice(index * size, index * size + size),
   );
 
+// Snapshots that block different external hosts need different pages, so they're grouped apart.
 export const toCaptureGroups = (snapshots: GroupableSnapshot[]): CaptureGroup[] => {
-  const byBrowser = snapshots.reduce((groups, snapshot) => {
-    groups.set(snapshot.browser, [...(groups.get(snapshot.browser) ?? []), snapshot.id]);
+  const byPage = snapshots.reduce((groups, snapshot) => {
+    const allowlist = snapshot.externalRequestAllowlist;
+    const key = JSON.stringify([
+      snapshot.browser,
+      allowlist == null ? null : [...allowlist].sort(),
+    ]);
+    const group = groups.get(key) ?? { browser: snapshot.browser, snapshotIds: [] };
+    group.snapshotIds.push(snapshot.id);
+    groups.set(key, group);
     return groups;
-  }, new Map<string, string[]>());
+  }, new Map<string, CaptureGroup>());
 
-  return Array.from(byBrowser.entries()).flatMap(([browser, snapshotIds]) =>
+  return Array.from(byPage.values()).flatMap(({ browser, snapshotIds }) =>
     chunk(snapshotIds, CAPTURE_GROUP_SIZE).map((group) => ({ browser, snapshotIds: group })),
   );
 };

@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { v7 as uuidv7 } from "uuid";
 
+import { formatAllowedHost } from "@ovr/capture-browser/allowedHosts";
 import { readStoryTargets } from "@ovr/storybook-compat/manifest";
 import { STATS_FILENAME } from "@ovr/storybook-compat/moduleGraph";
 
@@ -9,6 +10,7 @@ import {
   getApiKey,
   getServerUrl,
   loadOvrConfig,
+  resolveBlockExternalRequests,
   resolveDiffThreshold,
   resolveViewports,
   resolveWaitForTimeout,
@@ -62,6 +64,7 @@ export const createStorybookCommand = (): Command =>
         const viewports = resolveViewports(config);
         const diffThreshold = resolveDiffThreshold(config);
         const waitForTimeout = resolveWaitForTimeout(config);
+        const allowlist = resolveBlockExternalRequests(config);
         const { branch, commit: commitSha, name, author } = options;
 
         const client = createClient(serverUrl, apiKey);
@@ -99,6 +102,10 @@ export const createStorybookCommand = (): Command =>
             viewports,
             diffThreshold,
             ...(waitForTimeout > 0 && { waitForTimeout }),
+            ...(allowlist !== null && {
+              blockExternalRequests:
+                allowlist.length === 0 ? true : { allow: allowlist.map(formatAllowedHost) },
+            }),
             ...(unaffectedTargetIds.length > 0 && { unaffectedTargetIds }),
           }),
         );

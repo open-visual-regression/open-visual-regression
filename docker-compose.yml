@@ -161,7 +161,6 @@ services:
     environment:
       <<: *app-env
       OVR_CAPTURE_GROUP_CONCURRENCY: ${OVR_CAPTURE_GROUP_CONCURRENCY:-2}
-      OVR_CAPTURE_ALLOWED_HOSTS: ${OVR_CAPTURE_ALLOWED_HOSTS:-}
     volumes:
       - workertmp:/tmp
 

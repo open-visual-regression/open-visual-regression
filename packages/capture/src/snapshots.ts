@@ -5,6 +5,11 @@ import { chromium, firefox, webkit, type Page } from "playwright";
 import { publishStatus } from "@ovr/builds/builds";
 import { isFlakyDetectionEnabled } from "@ovr/builds/flakiness";
 import { withBundleDir } from "@ovr/builds/storybookBundleCache";
+import {
+  allowlistKey,
+  describeAllowedHostLimits,
+  deserializeAllowlist,
+} from "@ovr/capture-browser/allowedHosts";
 import { launchBrowser, newPage } from "@ovr/capture-browser/browser";
 import {
   detectCaptureStrategy,
@@ -36,7 +41,6 @@ import { enqueueDiff, enqueueFinalize } from "@ovr/queue/producer";
 import { promoteBaseline } from "@ovr/reviews/baselines";
 import { storage } from "@ovr/storage";
 
-import { ALLOWED_HOSTS_ENV, getCaptureAllowedHosts } from "./lib/allowedHosts";
 import {
   CAPTURE_JOB_TIMEOUT_MS,
   SNAPSHOT_CAPTURE_TIMEOUT_MS,
@@ -154,12 +158,14 @@ type CapturePage = {
   pageLogState: PageLogState;
   networkActivity: NetworkActivity;
   blockedHosts: BlockedHosts;
+  // The snapshots' stored allowlist this page was launched with.
+  allowlist: string[] | null;
   close: () => Promise<void>;
 };
 
 const blockedHostsLog = (hosts: string[]): CaptureLog => ({
   level: "warning",
-  message: `Blocked requests to ${hosts.join(", ")}. Captures only load the Storybook build and the hosts in ${ALLOWED_HOSTS_ENV}.`,
+  message: `Blocked requests to ${hosts.join(", ")}. With blockExternalRequests set, captures only load the Storybook build and the hosts it allows.`,
 });
 
 const launchCapturePage = async (
@@ -167,7 +173,13 @@ const launchCapturePage = async (
   browserName: string,
   proxy: StaticProxy,
   strategy: CaptureStrategy,
+  allowlist: string[] | null,
 ): Promise<CapturePage> => {
+  const allowedHosts = deserializeAllowlist(allowlist);
+  for (const warning of describeAllowedHostLimits(browserName, allowedHosts ?? [])) {
+    logger.warn({ buildId, browser: browserName }, warning);
+  }
+
   const managedBrowser = await launchBrowser(
     getBrowserLauncher(browserName),
     browserName === "chromium" ? { args: ["--disable-dev-shm-usage"] } : {},
@@ -198,7 +210,6 @@ const launchCapturePage = async (
   });
 
   const pageLogState: PageLogState = { logs: [], hasPageError: false };
-  const allowedHosts = getCaptureAllowedHosts();
   const bootStart = performance.now();
   let page: Page;
   let blockedHosts: BlockedHosts;
@@ -241,6 +252,7 @@ const launchCapturePage = async (
     pageLogState,
     networkActivity,
     blockedHosts,
+    allowlist,
     close: async () => {
       networkActivity.dispose();
       blockedHosts.dispose();
@@ -544,10 +556,26 @@ export const captureBuildGroup = async (
           "capture group started",
         );
 
+        // Snapshots that block different hosts need their own page, so the browser is relaunched
+        // when the next snapshot's allowlist differs. Capture groups keep them apart, so this only
+        // happens when a group mixes them.
+        const allowlists = new Map(
+          (await Promise.all(snapshotIds.map((id) => dbClient.snapshots.findById(id)))).map(
+            (snapshot, index) => [snapshotIds[index]!, snapshot?.externalRequestAllowlist ?? null],
+          ),
+        );
+        const allowlistFor = (snapshotId: string) => allowlists.get(snapshotId) ?? null;
+
         const proxy = await startStaticProxy(bundleDir);
         let capturePage: CapturePage;
         try {
-          capturePage = await launchCapturePage(buildId, browser, proxy, strategy);
+          capturePage = await launchCapturePage(
+            buildId,
+            browser,
+            proxy,
+            strategy,
+            allowlistFor(snapshotIds[0]!),
+          );
         } catch (error) {
           proxy.close();
           throw error;
@@ -575,6 +603,12 @@ export const captureBuildGroup = async (
             }
 
             try {
+              const allowlist = allowlistFor(snapshotId);
+              if (allowlistKey(allowlist) !== allowlistKey(capturePage.allowlist)) {
+                await capturePage.close();
+                capturePage = await launchCapturePage(buildId, browser, proxy, strategy, allowlist);
+              }
+
               const captured = await captureSnapshotOnPage(
                 capturePage,
                 strategy,
@@ -624,7 +658,13 @@ export const captureBuildGroup = async (
               await capturePage.close();
 
               try {
-                capturePage = await launchCapturePage(buildId, browser, proxy, strategy);
+                capturePage = await launchCapturePage(
+                  buildId,
+                  browser,
+                  proxy,
+                  strategy,
+                  capturePage.allowlist,
+                );
               } catch (relaunchError) {
                 logger.error(
                   { buildId, browser, err: relaunchError },

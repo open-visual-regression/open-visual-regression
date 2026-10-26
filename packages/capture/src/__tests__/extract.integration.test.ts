@@ -60,6 +60,7 @@ const buildArtifactTarball = async (
       viewports?: string[];
       diffThreshold?: number;
       waitForTimeout?: number;
+      blockExternalRequests?: unknown;
       skip?: boolean;
       __throw?: boolean;
     }
@@ -323,6 +324,114 @@ describe("extractBuild", () => {
 
     const [snapshot] = await dbClient.snapshots.findByBuild(mainBuild.id);
     expect(snapshot!.waitForTimeout).toBe(2000);
+  });
+
+  test("blocks no external hosts for a story when neither the build nor the story asks to", async ({
+    mainBuild,
+    captureConfiguration,
+  }) => {
+    await storage.uploadFile(
+      mainBuild.artifactPath,
+      await buildArtifactTarball(),
+      "application/gzip",
+    );
+
+    await extractBuild(
+      mainBuild.id,
+      [{ id: "story-a", title: "Story", name: "A" }],
+      [captureConfiguration],
+      0.1,
+    );
+
+    const [snapshot] = await dbClient.snapshots.findByBuild(mainBuild.id);
+    expect(snapshot!.externalRequestAllowlist).toBeNull();
+  });
+
+  test("uses the build's allowed hosts when a story has no override", async ({
+    mainBuild,
+    captureConfiguration,
+  }) => {
+    await storage.uploadFile(
+      mainBuild.artifactPath,
+      await buildArtifactTarball(),
+      "application/gzip",
+    );
+
+    await extractBuild(
+      mainBuild.id,
+      [{ id: "story-a", title: "Story", name: "A" }],
+      [captureConfiguration],
+      0.1,
+      [],
+      0,
+      ["images.example.com"],
+    );
+
+    const [snapshot] = await dbClient.snapshots.findByBuild(mainBuild.id);
+    expect(snapshot!.externalRequestAllowlist).toEqual(["images.example.com"]);
+  });
+
+  test("resolves a story's parameters.ovr.blockExternalRequests override onto its snapshots", async ({
+    mainBuild,
+    captureConfiguration,
+    connection,
+  }) => {
+    const tarball = await buildArtifactTarball({
+      "story-open": { blockExternalRequests: false },
+      "story-closed": { blockExternalRequests: true },
+      "story-cdn": { blockExternalRequests: { allow: ["*.cdn.example.com"] } },
+    });
+    await storage.uploadFile(mainBuild.artifactPath, tarball, "application/gzip");
+
+    await extractBuild(
+      mainBuild.id,
+      [
+        { id: "story-open", title: "Story", name: "Open" },
+        { id: "story-closed", title: "Story", name: "Closed" },
+        { id: "story-cdn", title: "Story", name: "Cdn" },
+        { id: "story-default", title: "Story", name: "Default" },
+      ],
+      [captureConfiguration],
+      0.1,
+      [],
+      0,
+      ["images.example.com"],
+    );
+
+    const snapshots = await dbClient.snapshots.findByBuild(mainBuild.id);
+    expect(
+      Object.fromEntries(snapshots.map((s) => [s.targetId, s.externalRequestAllowlist])),
+    ).toEqual({
+      "story-open": null,
+      "story-closed": [],
+      "story-cdn": ["*.cdn.example.com"],
+      "story-default": ["images.example.com"],
+    });
+
+    // Snapshots that block different hosts are captured on different pages.
+    const jobs = await collectCaptureGroupJobs(connection, 4);
+    expect(jobs.map((job) => job.snapshotIds.length)).toEqual([1, 1, 1, 1]);
+  });
+
+  test("errors a story whose parameters.ovr.blockExternalRequests is invalid", async ({
+    mainBuild,
+    captureConfiguration,
+  }) => {
+    const tarball = await buildArtifactTarball({
+      "story-a": { blockExternalRequests: { allow: ["https://images.example.com/"] } },
+    });
+    await storage.uploadFile(mainBuild.artifactPath, tarball, "application/gzip");
+
+    await extractBuild(
+      mainBuild.id,
+      [{ id: "story-a", title: "Story", name: "A" }],
+      [captureConfiguration],
+      0.1,
+    );
+
+    const [snapshot] = await dbClient.snapshots.findByBuild(mainBuild.id);
+    expect(snapshot).toMatchObject({ status: "error" });
+    expect(snapshot!.errorMessage).toMatch(/parameters\.ovr\.blockExternalRequests/);
   });
 
   test("marks a story with parameters.ovr.skip as skipped instead of capturing it", async ({

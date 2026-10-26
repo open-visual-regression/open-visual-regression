@@ -137,7 +137,7 @@ export const toProxyBypass = (
 
 // Entries an engine allows more broadly than written, so the operator isn't surprised.
 export const describeAllowedHostLimits = (
-  engine: BrowserEngine,
+  engine: string,
   allowedHosts: readonly AllowedHost[],
 ): string[] => {
   if (engine !== "firefox") {
@@ -151,3 +151,36 @@ export const describeAllowedHostLimits = (
         `Firefox can't limit an allowed host to one port, so captures in Firefox can load ${formatAllowedHost({ ...host, port: null })} on any port (from "${formatAllowedHost(host)}").`,
     );
 };
+
+// What a capture lets through: null loads every host, and a list blocks every external host but
+// the ones on it.
+export type ExternalRequestAllowlist = AllowedHost[] | null;
+
+const isHostList = (value: unknown): value is string[] =>
+  Array.isArray(value) && value.every((entry) => typeof entry === "string");
+
+// Reads `blockExternalRequests` from ovr.config or a story's parameters.
+export const parseBlockExternalRequests = (value: unknown): ExternalRequestAllowlist => {
+  if (value === undefined || value === false) {
+    return null;
+  }
+  if (value === true) {
+    return [];
+  }
+  if (typeof value === "object" && value !== null && "allow" in value && isHostList(value.allow)) {
+    return parseAllowedHosts(value.allow);
+  }
+  throw new Error("must be true, false, or { allow: [...hosts] }");
+};
+
+// The form stored with a build and its snapshots.
+export const serializeAllowlist = (allowlist: ExternalRequestAllowlist): string[] | null =>
+  allowlist === null ? null : allowlist.map(formatAllowedHost);
+
+export const deserializeAllowlist = (
+  stored: readonly string[] | null | undefined,
+): ExternalRequestAllowlist => (stored == null ? null : parseAllowedHosts(stored));
+
+// Equal for allowlists that block the same requests, so captures sharing one can share a page.
+export const allowlistKey = (stored: readonly string[] | null | undefined): string =>
+  stored == null ? "" : JSON.stringify([...stored].sort());

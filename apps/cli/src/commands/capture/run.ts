@@ -11,7 +11,11 @@ import {
   type Page,
 } from "playwright";
 
-import type { AllowedHost } from "@ovr/capture-browser/allowedHosts";
+import {
+  allowlistKey,
+  serializeAllowlist,
+  type ExternalRequestAllowlist,
+} from "@ovr/capture-browser/allowedHosts";
 import { SIGNAL_HANDLING_OPTIONS, newPage } from "@ovr/capture-browser/browser";
 import type { CaptureStrategy } from "@ovr/capture-browser/captureStrategies";
 import {
@@ -43,6 +47,7 @@ export type CaptureTarget = {
   viewportHeight: number;
   waitForTimeout: number;
   diffThreshold: number;
+  allowlist: ExternalRequestAllowlist;
 };
 
 export type CapturedImage = {
@@ -71,7 +76,6 @@ export type CaptureRunOptions = {
   outDir?: string;
   cpuThrottle?: number;
   launchOptions: LaunchOptions;
-  allowedHosts: readonly AllowedHost[];
 };
 
 type CaptureAttempt = {
@@ -176,8 +180,10 @@ const captureTarget = async (
   };
 };
 
+// Every target shares the browser and allowlist.
 const captureWithBrowser = async (
   browserName: string,
+  allowlist: ExternalRequestAllowlist,
   targets: CaptureTarget[],
   origin: string,
   options: CaptureRunOptions,
@@ -190,7 +196,7 @@ const captureWithBrowser = async (
   try {
     const context = await browser.newContext({
       deviceScaleFactor: 1,
-      ...blockExternalRequests(browser, origin, options.allowedHosts),
+      ...blockExternalRequests(browser, origin, allowlist),
     });
     const page = await newPage(context);
 
@@ -204,7 +210,7 @@ const captureWithBrowser = async (
 
     await disableLazyLoading(page);
     const networkActivity = trackNetworkActivity(page);
-    const blockedHosts = trackBlockedHosts(page, origin, options.allowedHosts);
+    const blockedHosts = trackBlockedHosts(page, origin, allowlist);
 
     try {
       const results: CaptureResult[] = [];
@@ -229,17 +235,25 @@ export const runCaptures = async (options: CaptureRunOptions): Promise<CaptureRe
     await mkdir(options.outDir, { recursive: true });
   }
 
-  const targetsByBrowser = new Map<string, CaptureTarget[]>();
+  // Targets that block different hosts need their own browser context.
+  const targetsByPage = new Map<string, CaptureTarget[]>();
   for (const target of options.targets) {
-    targetsByBrowser.set(target.browser, [...(targetsByBrowser.get(target.browser) ?? []), target]);
+    const key = JSON.stringify([
+      target.browser,
+      allowlistKey(serializeAllowlist(target.allowlist)),
+    ]);
+    targetsByPage.set(key, [...(targetsByPage.get(key) ?? []), target]);
   }
 
   const proxy = await startStaticProxy(options.dir);
 
   try {
     const results: CaptureResult[] = [];
-    for (const [browserName, targets] of targetsByBrowser) {
-      results.push(...(await captureWithBrowser(browserName, targets, proxy.origin, options)));
+    for (const targets of targetsByPage.values()) {
+      const [{ browser, allowlist }] = targets as [CaptureTarget];
+      results.push(
+        ...(await captureWithBrowser(browser, allowlist, targets, proxy.origin, options)),
+      );
     }
     return results;
   } finally {

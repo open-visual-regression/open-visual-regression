@@ -142,6 +142,8 @@ export type ExtractJobPayload = {
   diffThreshold: number;
   /** Absent on jobs queued before stories could wait before capture. */
   waitForTimeout?: number;
+  /** Null or absent loads every external host. A list blocks every external host but these. */
+  externalRequestAllowlist?: string[] | null;
   /** Absent on jobs queued before targets could be marked unaffected. */
   unaffectedTargetIds?: string[];
 };

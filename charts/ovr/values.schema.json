@@ -283,21 +283,6 @@
           "type": ["string", "integer"],
           "description": "Minutes without snapshot or diff activity, and with no jobs left to run, before an unfinished build is errored. Empty string uses the app default."
         },
-        "capture": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "allowedHosts": {
-              "type": "array",
-              "uniqueItems": true,
-              "description": "External hosts captures may load, like image and font CDNs: a host, host:port, or *.example.com for its subdomains. Every other host is blocked.",
-              "items": {
-                "type": "string",
-                "pattern": "^(?:(?:\\*\\.)?(?:[A-Za-z0-9_](?:[A-Za-z0-9_-]*[A-Za-z0-9_])?\\.)*[A-Za-z0-9_](?:[A-Za-z0-9_-]*[A-Za-z0-9_])?|\\[[0-9A-Fa-f:.]+\\])(?::[0-9]{1,5})?$"
-              }
-            }
-          }
-        },
         "purge": {
           "type": "object",
           "additionalProperties": false,

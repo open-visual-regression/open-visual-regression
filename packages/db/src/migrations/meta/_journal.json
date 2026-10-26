@@ -414,6 +414,13 @@
       "when": 1792891807671,
       "tag": "0058_add_build_timings",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1793054308157,
+      "tag": "0059_add_external_request_allowlist",
+      "breakpoints": true
     }
   ]
 }

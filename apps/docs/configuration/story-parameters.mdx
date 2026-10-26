@@ -1,6 +1,6 @@
 ---
 title: Per-story parameters
-description: Override viewports, diff threshold, and wait before capture, or skip a story entirely.
+description: Override viewports, diff threshold, wait before capture, and external request blocking, or skip a story entirely.
 ---
 
 `ovr.config.ts` sets the viewports every story is captured at and the diff threshold that decides when a change needs review. A story that doesn't fit those defaults overrides them with Storybook's `parameters.ovr`, which OVR reads out of the build you upload.
@@ -22,6 +22,7 @@ export const Primary: Story = {
 | `viewports` | `(string \| { browser?, width, height? })[]` | Replaces (not merges with) the config's default viewport list for this story. String entries reference a `name` from `ovr.config.ts`; object entries define a one-off viewport inline |
 | `diffThreshold` | `number` | Replaces the config's `diffThreshold` for this story, as a fraction of pixels that may differ |
 | `waitForTimeout` | `number` | Replaces the config's `waitForTimeout` for this story, in milliseconds. Set `0` to opt a story out of a config-wide wait |
+| `blockExternalRequests` | `boolean \| { allow: string[] }` | Replaces the config's `blockExternalRequests` for this story. See [Blocking external requests](/configuration/config#blocking-external-requests) |
 | `skip` | `boolean` | Skips this story; it is listed on the build as skipped, never captured or diffed |
 
 Storybook merges parameters global → component → story, so the same block on a `meta` default export covers every story in the file, and in `.storybook/preview.ts` every story in the project. The most specific level wins.
@@ -37,6 +38,24 @@ export const Dashboard: Story = {
 ```
 
 The wait is capped at 30 seconds (a larger value is clamped to 30000) and adds to every capture of the story, so keep it as short as the story needs. Set it in `ovr.config.ts` instead to apply it to every story.
+
+## Blocking external requests
+
+`blockExternalRequests` replaces the config's setting for one story, rather than adding to its list of allowed hosts. Turn blocking on for a story that should never reach the network, or off for one that needs a host the rest of the project blocks:
+
+```tsx
+export const Hero: Story = {
+  parameters: {
+    ovr: { blockExternalRequests: { allow: ["images.example.com", "fonts.gstatic.com"] } },
+  },
+};
+
+export const LiveMap: Story = {
+  parameters: { ovr: { blockExternalRequests: false } },
+};
+```
+
+An invalid value fails the story with an error rather than falling back to the config's setting.
 
 ## Skipping stories
 

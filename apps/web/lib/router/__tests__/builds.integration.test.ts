@@ -351,6 +351,37 @@ describe("builds", () => {
       expect(await confirm()).toMatchObject({ waitForTimeout: 0 });
     });
 
+    test("records which external hosts the uploader blocks, blocking none by default", async ({
+      admin: _,
+    }) => {
+      const { apiKey } = await createProjectWithApiKey();
+      setApiKeyHeader(apiKey);
+
+      const confirm = async (blockExternalRequests?: boolean | { allow: string[] }) => {
+        const [, createResult] = await serverClient.builds.createBuild({
+          branch: "main",
+          commitSha: "a".repeat(40),
+        });
+        const buildId = createResult!.buildId;
+        const build = await dbClient.builds.findById(buildId);
+        await storage.uploadFile(build!.artifactPath, Buffer.from(""), "application/gzip");
+
+        const [error] = await serverClient.builds.confirmUpload({
+          buildId,
+          targets: [{ id: "story-a", title: "Story", name: "A" }],
+          viewports: VIEWPORTS,
+          blockExternalRequests,
+        });
+        expect(error).toBeNull();
+
+        return (await dbClient.buildExtractDefaults.findByBuild(buildId))?.externalRequestAllowlist;
+      };
+
+      expect(await confirm()).toBeNull();
+      expect(await confirm(true)).toEqual([]);
+      expect(await confirm({ allow: ["images.example.com"] })).toEqual(["images.example.com"]);
+    });
+
     test("should reject a wait before capture longer than 30 seconds", async ({ admin: _ }) => {
       const { apiKey } = await createProjectWithApiKey();
       setApiKeyHeader(apiKey);

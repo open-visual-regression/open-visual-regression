@@ -1,6 +1,11 @@
 import type { Browser, BrowserContextOptions, Page, Request } from "playwright";
 
-import { isAllowedHost, toProxyBypass, type AllowedHost, type BrowserEngine } from "./allowedHosts";
+import {
+  isAllowedHost,
+  toProxyBypass,
+  type BrowserEngine,
+  type ExternalRequestAllowlist,
+} from "./allowedHosts";
 import type { CaptureStrategy } from "./captureStrategies";
 import { BOOT_TIMEOUT_MS } from "./timeouts";
 
@@ -27,17 +32,22 @@ export const getCaptureViewport = (
 
 const UNREACHABLE_PROXY = "http://127.0.0.1:9";
 
-// Blocks other hosts with a proxy that refuses every connection. Blocking them with page.route
-// would make Playwright report a request a service worker answers, like an msw mock, only once
-// it has a response, so settling would not wait for it. The proxy also catches what a service
-// worker fetches itself, which page.route never saw. Allowed hosts bypass the proxy, so they load
-// like the capture origin, for the page and its service workers alike. Firefox can't exclude a
-// single port from the proxy, so other localhost ports stay reachable there.
+// With an allowlist, blocks other hosts with a proxy that refuses every connection. Blocking them
+// with page.route would make Playwright report a request a service worker answers, like an msw
+// mock, only once it has a response, so settling would not wait for it. The proxy also catches
+// what a service worker fetches itself, which page.route never saw. Allowed hosts bypass the
+// proxy, so they load like the capture origin, for the page and its service workers alike.
+// Firefox can't exclude a single port from the proxy, so other localhost ports stay reachable
+// there. Without an allowlist, nothing is blocked.
 export const blockExternalRequests = (
   browser: Browser,
   origin: string,
-  allowedHosts: readonly AllowedHost[] = [],
+  allowedHosts: ExternalRequestAllowlist,
 ): Pick<BrowserContextOptions, "proxy"> => {
+  if (allowedHosts === null) {
+    return {};
+  }
+
   const { host, hostname } = new URL(origin);
   const engine = browser.browserType().name() as BrowserEngine;
   const target = engine === "firefox" ? [hostname] : ["<-loopback>", host];
@@ -60,8 +70,12 @@ export type BlockedHosts = {
 export const trackBlockedHosts = (
   page: Page,
   origin: string,
-  allowedHosts: readonly AllowedHost[] = [],
+  allowedHosts: ExternalRequestAllowlist,
 ): BlockedHosts => {
+  if (allowedHosts === null) {
+    return { take: () => [], dispose: () => undefined };
+  }
+
   const { host: originHost } = new URL(origin);
   const context = page.context();
   let blocked = new Set<string>();

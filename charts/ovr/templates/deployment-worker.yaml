@@ -90,10 +90,6 @@ spec:
             - name: OVR_REAPER_STALE_MINUTES
               value: {{ . | quote }}
             {{- end }}
-            {{- with .Values.worker.capture.allowedHosts }}
-            - name: OVR_CAPTURE_ALLOWED_HOSTS
-              value: {{ join "," . | quote }}
-            {{- end }}
             {{- with .Values.worker.purge.concurrency }}
             - name: OVR_PURGE_CONCURRENCY
               value: {{ . | quote }}

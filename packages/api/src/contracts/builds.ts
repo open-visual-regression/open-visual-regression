@@ -93,6 +93,9 @@ export const confirmUploadInputSchema = z.object({
     ),
   diffThreshold: z.number().min(0.01).max(1).optional(),
   waitForTimeout: z.number().int().min(0).max(30_000).optional(),
+  blockExternalRequests: z
+    .union([z.boolean(), z.object({ allow: z.array(z.string().trim().min(1).max(255)).max(200) })])
+    .optional(),
   unaffectedTargetIds: z.array(z.string().min(1)).optional(),
 });
 

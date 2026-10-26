@@ -30,28 +30,28 @@ export type OvrConfig = {
    * @default 0
    */
   waitForTimeout?: number;
+  /**
+   * Blocks requests to hosts outside the Storybook build, including ones a
+   * service worker like msw passes through to the network. `true` blocks
+   * every external host, `{ allow: [...] }` every one but these, like an
+   * image or font CDN. Entries are `example.com`, `example.com:8443`, or
+   * `*.example.com` for its subdomains. Override per story via
+   * `parameters.ovr.blockExternalRequests`.
+   * @default false
+   */
+  blockExternalRequests?: BlockExternalRequests;
   /** Options for `upload storybook --only-affected`. */
   onlyAffected?: OnlyAffectedConfig;
-  /** Options for `capture storybook`, which captures on this machine. */
-  capture?: CaptureConfig;
 };
+
+/** `true` blocks every external host, `{ allow }` every one but these, `false` none. */
+export type BlockExternalRequests = boolean | { allow: string[] };
 
 export type OnlyAffectedConfig = {
   /** Globs of files that affect every story when they change, e.g. a static folder. */
   externals?: string[];
   /** Globs of files that never affect a story. */
   untraced?: string[];
-};
-
-export type CaptureConfig = {
-  /**
-   * External hosts local captures may load, like an image or font CDN. Every
-   * other host is blocked. Entries are `example.com`, `example.com:8443`, or
-   * `*.example.com` for its subdomains. Overridden by `--allowed-hosts`. Match
-   * the server's captures by listing the hosts in the worker's
-   * `OVR_CAPTURE_ALLOWED_HOSTS`.
-   */
-  allowedHosts?: readonly string[];
 };
 
 /** Per-story override, set via Storybook `parameters.ovr` on a story or its `meta`. */
@@ -67,6 +67,8 @@ export type OvrStoryParameters = {
   diffThreshold?: number;
   /** Replaces the config's `waitForTimeout` for this story only. */
   waitForTimeout?: number;
+  /** Replaces the config's `blockExternalRequests` for this story only. */
+  blockExternalRequests?: BlockExternalRequests;
   /** Skips this story — listed on the build as skipped, never captured, baselines kept. */
   skip?: boolean;
 };
@@ -98,8 +100,16 @@ export const defineConfig = <const V extends readonly Viewport[] = []>(config: {
    * @default 0
    */
   waitForTimeout?: number;
+  /**
+   * Blocks requests to hosts outside the Storybook build, including ones a
+   * service worker like msw passes through to the network. `true` blocks
+   * every external host, `{ allow: [...] }` every one but these, like an
+   * image or font CDN. Entries are `example.com`, `example.com:8443`, or
+   * `*.example.com` for its subdomains. Override per story via
+   * `parameters.ovr.blockExternalRequests`.
+   * @default false
+   */
+  blockExternalRequests?: BlockExternalRequests;
   /** Options for `upload storybook --only-affected`. */
   onlyAffected?: OnlyAffectedConfig;
-  /** Options for `capture storybook`, which captures on this machine. */
-  capture?: CaptureConfig;
 }): OvrConfig => config;

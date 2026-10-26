@@ -29,8 +29,8 @@ export default defineConfig({
 | `defaultViewports` | `string[]` | every named viewport | Names from `viewports` captured automatically for every story |
 | `diffThreshold` | `number`, `(0, 1]` | `0.05` | Fraction of pixels that may differ before a snapshot needs review |
 | `waitForTimeout` | `number`, `[0, 30000]` | `0` | Milliseconds to wait before each screenshot, e.g. for slow-loading data or images |
+| `blockExternalRequests` | `boolean \| { allow: string[] }` | `false` | Blocks requests to hosts outside the Storybook build. See [below](#blocking-external-requests) |
 | `onlyAffected` | `object` | | Options for [`--only-affected`](/cli/upload-storybook#only-affected-stories). See [below](#only-affected) |
-| `capture` | `object` | | Options for [`ovr capture storybook`](/cli/capture-storybook). See [below](#capture) |
 
 <Note>
 If `viewports` is omitted, OVR falls back to a single default: 1280px wide, full page, in Chromium.
@@ -51,6 +51,36 @@ Unnamed viewports (no `name`) are always opt-in: they can't be referenced by `de
 
 Individual stories can override some of these options, or skip capture entirely — see [Per-story parameters](/configuration/story-parameters).
 
+## Blocking external requests
+
+By default, captures load whatever a story requests, from the Storybook build or anywhere else. Set `blockExternalRequests` to keep stories from reaching the network, so a slow or changing third party can't make their screenshots flaky:
+
+| Value | Captures load |
+|-------|---------------|
+| `false` (default) | Every host |
+| `true` | Only the Storybook build |
+| `{ allow: [...] }` | The Storybook build and the listed hosts |
+
+Blocking covers requests a service worker makes too, such as ones [msw](https://mswjs.io) passes through to the network because no handler mocks them. To keep loading images and fonts from a CDN while blocking everything else, allow their hosts:
+
+```ts
+export default defineConfig({
+  blockExternalRequests: {
+    allow: ["images.example.com", "fonts.googleapis.com", "fonts.gstatic.com", "*.cdn.example.com"],
+  },
+});
+```
+
+Each entry is a host (`images.example.com`), a host and port (`images.example.com:8443`), or `*.example.com` for every subdomain of `example.com` (list `example.com` too to allow it). Captures wait for allowed hosts the same way they wait for the Storybook build, including requests a service worker answers.
+
+When a capture blocks a request, the snapshot's logs get one warning naming each blocked host, since the request itself only fails with a generic error like `net::ERR_FAILED`. Check it when a snapshot shows a spinner, a broken image, or a fallback font.
+
+Override the setting for one story with [`parameters.ovr.blockExternalRequests`](/configuration/story-parameters#blocking-external-requests).
+
+<Note>
+Browsers apply the list slightly differently. WebKit also lets `images.example.com` load its subdomains and `*.example.com` load `example.com` itself. Firefox matches by hostname suffix and can't limit an entry to one port, so `images.example.com:8443` allows every port there.
+</Note>
+
 ## Only affected
 
 Options for [`ovr upload storybook --only-affected`](/cli/upload-storybook#only-affected-stories). Globs are relative to the directory you run the CLI from.
@@ -59,21 +89,3 @@ Options for [`ovr upload storybook --only-affected`](/cli/upload-storybook#only-
 |-------|------|---------|-------------|
 | `externals` | `string[]` | `[]` | Files that affect every story when they change, such as a static folder |
 | `untraced` | `string[]` | `[]` | Files that never affect a story |
-
-## Capture
-
-Options for [`ovr capture storybook`](/cli/capture-storybook), which captures stories on your machine.
-
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `allowedHosts` | `string[]` | `[]` | External hosts local captures may load, like image and font CDNs. Every other host is blocked. Overridden by `--allowed-hosts` |
-
-```ts
-export default defineConfig({
-  capture: {
-    allowedHosts: ["images.example.com", "fonts.googleapis.com", "fonts.gstatic.com", "*.cdn.example.com"],
-  },
-});
-```
-
-Entries are a host, `host:port`, or `*.example.com` for its subdomains. Captures on the server don't read this file: they use the worker's [`OVR_CAPTURE_ALLOWED_HOSTS`](/self-hosting/external-hosts), so keep the two lists the same.

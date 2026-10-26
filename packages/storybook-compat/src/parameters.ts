@@ -2,10 +2,14 @@ export type OvrStoryParameterViewport =
   | string
   | { browser?: string; width: number; height?: number };
 
+/** `true` blocks every external host, `{ allow }` every one but these, `false` none. */
+export type BlockExternalRequests = boolean | { allow: string[] };
+
 export type OvrStoryParameters = {
   viewports?: OvrStoryParameterViewport[];
   diffThreshold?: number;
   waitForTimeout?: number;
+  blockExternalRequests?: BlockExternalRequests;
   skip?: boolean;
 };
 

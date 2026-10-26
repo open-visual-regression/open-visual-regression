@@ -250,72 +250,116 @@ describe("snapshots", () => {
           `${urls.map((url) => `<img src="${url}" />`).join("")}</body>`,
         );
 
-      const captureLogs = async (
+      const blockedHostWarnings = async (snapshotId: string) =>
+        (await dbClient.snapshotLogs.findBySnapshot(snapshotId))
+          .filter((log) => log.message.startsWith("Blocked requests"))
+          .map((log) => ({ level: log.level, message: log.message }));
+
+      const captureWith = async (
         build: { id: string; artifactPath: string },
         captureConfiguration: Viewport,
         iframeHtml: string,
+        allowlists: (string[] | null)[],
       ) => {
         await uploadArtifactWithIframe(build.artifactPath, iframeHtml);
-        const [snapshot] = await dbClient.snapshots.createMany({
-          values: [{ buildId: build.id, ...captureConfiguration, targetId: "story-a" }],
+        const snapshots = await dbClient.snapshots.createMany({
+          values: allowlists.map((externalRequestAllowlist, index) => ({
+            buildId: build.id,
+            ...captureConfiguration,
+            targetId: `story-${index}`,
+            externalRequestAllowlist,
+          })),
         });
+        const snapshotIds = snapshots.map((snapshot) => snapshot.id);
 
-        await captureBuildGroup(build.id, captureConfiguration.browser, [snapshot!.id]);
+        await captureBuildGroup(build.id, captureConfiguration.browser, snapshotIds);
 
-        expect(await dbClient.snapshots.findById(snapshot!.id)).toMatchObject({
-          status: "success",
-        });
-        return dbClient.snapshotLogs.findBySnapshot(snapshot!.id);
+        for (const snapshotId of snapshotIds) {
+          expect(await dbClient.snapshots.findById(snapshotId)).toMatchObject({
+            status: "success",
+          });
+        }
+        return snapshotIds;
       };
+
+      const IFRAME_WITH_REMOTE_IMAGES = iframeLoading(
+        "http://images.invalid/a.png",
+        "http://images.invalid/b.png",
+        "http://fonts.invalid:8080/c.png",
+      );
+
+      test("should block nothing and warn about nothing when a snapshot doesn't block external requests", async ({
+        mainBuild,
+        captureConfiguration,
+      }) => {
+        const [snapshotId] = await captureWith(
+          mainBuild,
+          captureConfiguration,
+          IFRAME_WITH_REMOTE_IMAGES,
+          [null],
+        );
+
+        expect(await blockedHostWarnings(snapshotId!)).toEqual([]);
+      });
 
       test("should tell the reviewer which external hosts a capture blocked, once each", async ({
         mainBuild,
         captureConfiguration,
       }) => {
-        const logs = await captureLogs(
+        const [snapshotId] = await captureWith(
           mainBuild,
           captureConfiguration,
-          iframeLoading(
-            "http://images.invalid/a.png",
-            "http://images.invalid/b.png",
-            "http://fonts.invalid:8080/c.png",
-          ),
+          IFRAME_WITH_REMOTE_IMAGES,
+          [[]],
         );
 
-        const warnings = logs.filter((log) => log.message.startsWith("Blocked requests"));
-        expect(warnings).toHaveLength(1);
-        expect(warnings[0]).toMatchObject({
-          level: "warning",
-          message: expect.stringContaining("fonts.invalid:8080, images.invalid."),
-        });
-        expect(warnings[0]!.message).toContain("OVR_CAPTURE_ALLOWED_HOSTS");
-      });
-
-      test("should leave hosts in OVR_CAPTURE_ALLOWED_HOSTS out of the blocked hosts", async ({
-        mainBuild,
-        captureConfiguration,
-      }) => {
-        vi.stubEnv("OVR_CAPTURE_ALLOWED_HOSTS", "images.invalid");
-
-        const logs = await captureLogs(
-          mainBuild,
-          captureConfiguration,
-          iframeLoading("http://images.invalid/a.png", "http://fonts.invalid/c.png"),
-        );
-
-        const warnings = logs.filter((log) => log.message.startsWith("Blocked requests"));
-        expect(warnings.map((log) => log.message)).toEqual([
-          expect.stringMatching(/^Blocked requests to fonts\.invalid\. /),
+        expect(await blockedHostWarnings(snapshotId!)).toEqual([
+          {
+            level: "warning",
+            message: expect.stringMatching(
+              /^Blocked requests to fonts\.invalid:8080, images\.invalid\. .*blockExternalRequests/,
+            ),
+          },
         ]);
       });
 
-      test("should not warn when a capture requests no external hosts", async ({
+      test("should leave a snapshot's allowed hosts out of the blocked hosts", async ({
         mainBuild,
         captureConfiguration,
       }) => {
-        const logs = await captureLogs(mainBuild, captureConfiguration, IFRAME_HTML);
+        const [snapshotId] = await captureWith(
+          mainBuild,
+          captureConfiguration,
+          IFRAME_WITH_REMOTE_IMAGES,
+          [["images.invalid"]],
+        );
 
-        expect(logs.filter((log) => log.message.startsWith("Blocked requests"))).toEqual([]);
+        expect(await blockedHostWarnings(snapshotId!)).toEqual([
+          {
+            level: "warning",
+            message: expect.stringMatching(/^Blocked requests to fonts\.invalid:8080\. /),
+          },
+        ]);
+      });
+
+      test("should give each snapshot in a group its own allowlist", async ({
+        mainBuild,
+        captureConfiguration,
+      }) => {
+        const snapshotIds = await captureWith(
+          mainBuild,
+          captureConfiguration,
+          IFRAME_WITH_REMOTE_IMAGES,
+          [[], null, ["fonts.invalid"], []],
+        );
+
+        const warnings = await Promise.all(snapshotIds.map(blockedHostWarnings));
+        expect(warnings.map((logs) => logs.map((log) => log.message.split(". ")[0]))).toEqual([
+          ["Blocked requests to fonts.invalid:8080, images.invalid"],
+          [],
+          ["Blocked requests to images.invalid"],
+          ["Blocked requests to fonts.invalid:8080, images.invalid"],
+        ]);
       });
     });
 

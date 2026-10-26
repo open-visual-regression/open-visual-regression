@@ -45,12 +45,12 @@ type CapturePage = "blank.html" | "passthrough.html";
 const openPage = async (
   browser: Browser,
   origin: string,
-  allowedHosts: string[],
+  allowedHosts: string[] | null,
   entry: CapturePage,
 ): Promise<Page> => {
   const page = await newPage(
     await browser.newContext(
-      blockExternalRequests(browser, origin, parseAllowedHosts(allowedHosts)),
+      blockExternalRequests(browser, origin, allowedHosts && parseAllowedHosts(allowedHosts)),
     ),
   );
   await page.goto(`${origin}/${entry}`);
@@ -65,7 +65,7 @@ const openPage = async (
 const loadBothWays = async (
   browser: Browser,
   origin: string,
-  allowedHosts: string[],
+  allowedHosts: string[] | null,
   url: string,
 ) => {
   const direct = await openPage(browser, origin, allowedHosts, "blank.html");
@@ -77,13 +77,40 @@ const loadBothWays = async (
 };
 
 describe("blockExternalRequests", () => {
+  test("blocks nothing without an allowlist, including through a service worker", async ({
+    site,
+    otherSite,
+    externalSite,
+  }) => {
+    await withEngine("chromium", async (browser) => {
+      expect(blockExternalRequests(browser, site.origin, null)).toEqual({});
+      expect(await loadBothWays(browser, site.origin, null, `${externalSite.origin}/data`)).toEqual(
+        {
+          direct: "external",
+          serviceWorker: "service worker: external",
+        },
+      );
+      const page = await openPage(browser, site.origin, null, "blank.html");
+      expect(await isReachable(page, `${otherSite.origin}/pixel.png`)).toBe(true);
+    });
+  });
+
+  test("reports nothing blocked without an allowlist", async ({ site, browser }) => {
+    const page = await newPage(await browser.newContext());
+    const blocked = trackBlockedHosts(page, site.origin, null);
+    await page.goto(`${site.origin}/blank.html`);
+    await fetchText(page, "http://blocked.invalid/a.png");
+
+    expect(blocked.take()).toEqual([]);
+  });
+
   test("blocks requests to anything but the target, including other local ports", async ({
     browser,
     site,
     otherSite,
   }) => {
     const page = await newPage(
-      await browser.newContext(blockExternalRequests(browser, site.origin)),
+      await browser.newContext(blockExternalRequests(browser, site.origin, [])),
     );
     await page.goto(`${site.origin}/service-worker.html`);
 
@@ -102,7 +129,7 @@ describe("blockExternalRequests", () => {
     site,
   }) => {
     const page = await newPage(
-      await browser.newContext(blockExternalRequests(browser, site.origin)),
+      await browser.newContext(blockExternalRequests(browser, site.origin, [])),
     );
     const activity = trackNetworkActivity(page);
 

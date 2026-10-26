@@ -152,19 +152,6 @@ worker:
   # Minutes without snapshot or diff updates, and with no jobs left to run,
   # before an unfinished build is errored. Empty uses the app default (30).
   reaperStaleMinutes: ""
-  capture:
-    # External hosts captures may load, such as image and font CDNs. Captures
-    # block every other host, including requests a service worker (like msw)
-    # passes through to the network. Entries are a host, host:port, or
-    # *.example.com for its subdomains (not example.com itself). Sets
-    # OVR_CAPTURE_ALLOWED_HOSTS. A snapshot that requests a blocked host gets a
-    # warning in its logs that names the host.
-    # allowedHosts:
-    #   - images.example.com
-    #   - fonts.googleapis.com
-    #   - fonts.gstatic.com
-    #   - "*.cdn.example.com"
-    allowedHosts: []
   # Daily retention purge. Empty values use the app defaults.
   purge:
     # Jobs at once across all workers (1).
