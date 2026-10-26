@@ -150,7 +150,6 @@ type CapturePage = {
   page: Page;
   pageLogState: PageLogState;
   networkActivity: NetworkActivity;
-  // Settles within the browser close timeouts and never rejects, killing the browser if needed.
   close: () => Promise<void>;
 };
 
@@ -537,7 +536,6 @@ export const captureBuildGroup = async (
         const uploads = createUploadQueue(MAX_PENDING_UPLOADS);
         let uploadInterrupted = false;
 
-        // The group timeout only stops waiting on this work, so kill the browser to end it.
         const closeOnTimeout = () => void capturePage.close();
         signal.addEventListener("abort", closeOnTimeout, { once: true });
 
@@ -580,8 +578,7 @@ export const captureBuildGroup = async (
                 throw error;
               }
 
-              // The group timed out and its browser was killed under this snapshot, which is
-              // left for the job's retry.
+              // Left for the job's retry.
               if (signal.aborted) {
                 break;
               }

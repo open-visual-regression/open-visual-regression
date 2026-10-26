@@ -35,7 +35,6 @@ const readRssBytes = async (pid: number): Promise<number> => {
   return match ? Number(match[1]) * 1024 : 0;
 };
 
-// Returns null where /proc is unavailable (macOS, Windows).
 const readAllStats = async (): Promise<ProcStat[] | null> => {
   const entries = await readdir("/proc").catch(() => null);
   if (!entries) {
@@ -87,12 +86,7 @@ export const readProcessTree = async (rootPid: number): Promise<ProcessTreeUsage
   };
 };
 
-/**
- * Pids of the live processes that descend from `rootPid` or belong to process group `pgid`. A child
- * stays in the group after its parent exits, and one that left the group stays a descendant, so
- * both are needed to find every process of a browser.
- * Returns null where /proc is unavailable (macOS, Windows).
- */
+// A browser's processes stay in its process group after their parent exits.
 export const listProcessFamily = async (
   rootPid: number,
   pgid = rootPid,

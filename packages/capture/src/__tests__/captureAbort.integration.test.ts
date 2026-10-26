@@ -12,6 +12,8 @@ import {
   browserProcesses,
   describe,
   expect,
+  hangForever,
+  iframeWithHangingStory,
   spyOnBrowserServers,
   test,
   uploadArtifactWithIframe,
@@ -23,6 +25,12 @@ vi.mock("../lib/captureTimeouts", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/captureTimeouts")>();
   return { ...actual, CAPTURE_JOB_TIMEOUT_MS };
 });
+
+vi.mock("@ovr/capture-browser/timeouts", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@ovr/capture-browser/timeouts")>()),
+  CONTEXT_CLOSE_TIMEOUT_MS: 500,
+  BROWSER_CLOSE_TIMEOUT_MS: 1_000,
+}));
 
 const SNAPSHOT_COUNT = 3;
 const STALLED_CAPTURE_MS = CAPTURE_JOB_TIMEOUT_MS * (SNAPSHOT_COUNT + 1);
@@ -63,9 +71,32 @@ describe("captureBuildGroup", () => {
     expect(servers).toHaveLength(1);
     expect(await browserProcesses(servers[0]!)).toEqual([]);
 
-    // The browser was killed under the snapshot in flight, so it is left for the retry too.
+    // Its browser was killed mid-capture, so it waits for the retry too.
     expect(await dbClient.snapshots.findById(first!.id)).toMatchObject({ status: "processing" });
     expect(await dbClient.snapshots.findById(second!.id)).toMatchObject({ status: "queued" });
     expect(await dbClient.snapshots.findById(third!.id)).toMatchObject({ status: "queued" });
+  }, 60_000);
+
+  test("kills the browser when it runs out of time during a story that never returns", async ({
+    mainBuild,
+    captureConfiguration,
+  }) => {
+    await uploadArtifactWithIframe(mainBuild.artifactPath, iframeWithHangingStory(false));
+    const [hanging] = await dbClient.snapshots.createMany({
+      values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "story-hang" }],
+    });
+    const { servers } = spyOnBrowserServers((server) => {
+      server.close = hangForever;
+    });
+
+    await expect(
+      captureBuildGroup(mainBuild.id, captureConfiguration.browser, [hanging!.id]),
+    ).rejects.toThrow(TimeoutError);
+
+    expect(servers).toHaveLength(1);
+    expect(await browserProcesses(servers[0]!)).toEqual([]);
+    expect(await dbClient.snapshots.findById(hanging!.id)).toMatchObject({
+      status: "processing",
+    });
   }, 60_000);
 });

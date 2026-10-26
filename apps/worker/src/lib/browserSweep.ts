@@ -5,22 +5,18 @@ import { createCounter } from "@ovr/metrics";
 type Logger = ReturnType<typeof createLogger>;
 
 const browserProcessesKilled = createCounter("ovr.worker.browser.processes.killed", {
-  description:
-    "Browser processes still running with no browser work in flight, which the worker killed.",
+  description: "Leftover browser processes the worker killed.",
 });
 
 export type BrowserSweep = {
-  /** Wraps a job processor that launches browsers, so the sweep leaves them alone while it runs. */
   track: <A extends unknown[], R>(
     processor: (...args: A) => Promise<R>,
   ) => (...args: A) => Promise<R>;
-  /** Kills every process under the worker if no tracked processor is running. Returns how many. */
   sweep: () => Promise<number>;
   stop: () => void;
 };
 
-// Only browsers run as child processes of the worker, and every job closes the browsers it
-// launched before it finishes, so anything left while no such job runs is a leaked browser.
+// Every job closes its browsers before it finishes, so any left while none runs have leaked.
 export const startBrowserSweep = (logger: Logger, intervalMs: number): BrowserSweep => {
   let running = 0;
   let started = 0;
@@ -44,7 +40,6 @@ export const startBrowserSweep = (logger: Logger, intervalMs: number): BrowserSw
 
     const startedBefore = started;
     const tree = await readProcessTree(process.pid);
-    // A job that started while the tree was read may have launched some of these processes.
     if (!tree || tree.pids.length === 0 || running > 0 || started !== startedBefore) {
       return 0;
     }
@@ -58,7 +53,7 @@ export const startBrowserSweep = (logger: Logger, intervalMs: number): BrowserSw
     }
     logger.warn(
       { processes: tree.pids.length, rssBytes: tree.rssBytes },
-      "killed browser processes left running with no browser work in flight",
+      "killed leftover browser processes",
     );
     browserProcessesKilled.add(tree.pids.length, {});
     return tree.pids.length;

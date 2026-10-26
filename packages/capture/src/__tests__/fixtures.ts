@@ -64,10 +64,7 @@ export const withCapturePage = async (
   }
 };
 
-/**
- * Records the browser servers capture launches, so tests can reach their processes. `onLaunch`
- * can stub a server, for example to make its close hang.
- */
+// Records the browsers capture launches, so tests can check their processes.
 export const spyOnBrowserServers = (
   onLaunch?: (server: BrowserServer, index: number) => void,
   browserType: BrowserType = chromium,
@@ -83,7 +80,6 @@ export const spyOnBrowserServers = (
   return { spy, servers };
 };
 
-/** Live OS processes of a launched browser, read from /proc. */
 export const browserProcesses = async (server: BrowserServer): Promise<number[]> =>
   (await listProcessFamily(server.process().pid!)) ?? [];
 

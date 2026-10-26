@@ -74,7 +74,6 @@ const MEMORY_LOG_INTERVAL_MS = z.coerce
   .catch(60_000)
   .parse(process.env.OVR_MEMORY_LOG_INTERVAL_MS);
 
-// How often to look for browsers left running while no capture or extract job runs.
 const BROWSER_SWEEP_INTERVAL_MS = 60_000;
 
 // Across all workers, not per worker.

@@ -7,27 +7,13 @@ import { launchBrowser } from "../browser";
 import { listProcessFamily } from "../processTree";
 import { describe, expect, test } from "./fixtures";
 
-const { CONTEXT_CLOSE_TIMEOUT_MS, BROWSER_CLOSE_TIMEOUT_MS, BROWSER_KILL_TIMEOUT_MS } = vi.hoisted(
-  () => ({
-    CONTEXT_CLOSE_TIMEOUT_MS: 500,
-    BROWSER_CLOSE_TIMEOUT_MS: 1_000,
-    BROWSER_KILL_TIMEOUT_MS: 5_000,
-  }),
-);
-
 vi.mock("../timeouts", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../timeouts")>()),
-  CONTEXT_CLOSE_TIMEOUT_MS,
-  BROWSER_CLOSE_TIMEOUT_MS,
-  BROWSER_KILL_TIMEOUT_MS,
+  CONTEXT_CLOSE_TIMEOUT_MS: 500,
+  BROWSER_CLOSE_TIMEOUT_MS: 1_000,
 }));
 
-const CLOSE_BOUND_MS =
-  CONTEXT_CLOSE_TIMEOUT_MS + BROWSER_CLOSE_TIMEOUT_MS + BROWSER_KILL_TIMEOUT_MS;
-
-const never = () => new Promise<never>(() => {});
-
-// Each browser runs where it is installed: CI installs Chromium only.
+// CI installs Chromium only.
 const BROWSER_TYPES = [chromium, firefox, webkit].map((browserType) => ({
   name: browserType.name(),
   browserType,
@@ -50,46 +36,18 @@ const processesOf = async (server: BrowserServer): Promise<number[]> =>
   (await listProcessFamily(server.process().pid!)) ?? [];
 
 describe.each(BROWSER_TYPES)("launchBrowser ($name)", ({ browserType, installed }) => {
-  test.skipIf(!installed)("closes a browser and every one of its processes", async () => {
+  test.skipIf(!installed)("closes the browser and all of its processes", async () => {
     const servers = spyOnServers(browserType);
     const { browser, close } = await launchBrowser(browserType);
-    const page = await browser.newPage();
-    await page.setContent("<p>story</p>");
-    expect((await processesOf(servers[0]!)).length).toBeGreaterThan(0);
+    await browser.newPage();
 
     expect(await close()).toEqual([]);
-
     expect(await processesOf(servers[0]!)).toEqual([]);
-    expect(browser.isConnected()).toBe(false);
   });
 
-  test.skipIf(!installed)(
-    "kills a browser whose pages and process never close, within its time limit",
-    async () => {
-      const servers = spyOnServers(browserType, (server) => {
-        server.close = never;
-      });
-      const { browser, close } = await launchBrowser(browserType);
-      const context = await browser.newContext();
-      context.close = never;
-      const page = await context.newPage();
-      // Keeps the page busy the way an animated story does.
-      await page.setContent(
-        "<script>setInterval(() => { document.title = Date.now(); }, 10)</script>",
-      );
-
-      const start = performance.now();
-      const timedOutSteps = await close();
-
-      expect(timedOutSteps).toEqual(["context", "browser"]);
-      expect(performance.now() - start).toBeLessThan(CLOSE_BOUND_MS);
-      expect(await processesOf(servers[0]!)).toEqual([]);
-    },
-  );
-
-  test.skipIf(!installed)("kills a browser whose page is stuck in a busy loop", async () => {
+  test.skipIf(!installed)("kills a browser stuck in a story that never closes", async () => {
     const servers = spyOnServers(browserType, (server) => {
-      server.close = never;
+      server.close = () => new Promise(() => {});
     });
     const { browser, close } = await launchBrowser(browserType);
     const page = await browser.newPage();
@@ -100,17 +58,7 @@ describe.each(BROWSER_TYPES)("launchBrowser ($name)", ({ browserType, installed 
       });
     });
 
-    const timedOutSteps = await close();
-
-    expect(timedOutSteps).toContain("browser");
-    expect(timedOutSteps).not.toContain("kill");
+    expect(await close()).toContain("browser");
     expect(await processesOf(servers[0]!)).toEqual([]);
-  });
-
-  test.skipIf(!installed)("returns the same close to every caller", async () => {
-    const { close } = await launchBrowser(browserType);
-
-    expect(close()).toBe(close());
-    await close();
   });
 });

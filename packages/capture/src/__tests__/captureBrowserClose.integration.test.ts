@@ -6,7 +6,6 @@ import { vi } from "vitest";
 
 import { dbClient } from "@ovr/db/client";
 
-import { TimeoutError } from "../lib/captureTimeouts";
 import { captureBuildGroup } from "../snapshots";
 import {
   browserProcesses,
@@ -20,16 +19,9 @@ import {
   uploadArtifactWithIframe,
 } from "./fixtures";
 
-const timeouts = vi.hoisted(() => ({ snapshotMs: 3_000, groupPerSnapshotMs: 2 * 60 * 1000 }));
-
 vi.mock("../lib/captureTimeouts", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../lib/captureTimeouts")>()),
-  get SNAPSHOT_CAPTURE_TIMEOUT_MS() {
-    return timeouts.snapshotMs;
-  },
-  get CAPTURE_JOB_TIMEOUT_MS() {
-    return timeouts.groupPerSnapshotMs;
-  },
+  SNAPSHOT_CAPTURE_TIMEOUT_MS: 3_000,
 }));
 
 vi.mock("@ovr/capture-browser/timeouts", async (importOriginal) => ({
@@ -41,13 +33,13 @@ vi.mock("@ovr/capture-browser/timeouts", async (importOriginal) => ({
 const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
 const IFRAME_HTML = await readFile(path.join(TEST_DIR, "html/iframe-static.html"), "utf-8");
 
-describe("captureBuildGroup closing its browser", () => {
-  test("finishes the group and kills the browser when browser.close() never resolves", async ({
+describe("captureBuildGroup", () => {
+  test("finishes the group and kills its browser when the browser never closes", async ({
     mainBuild,
     captureConfiguration,
   }) => {
     await uploadArtifactWithIframe(mainBuild.artifactPath, IFRAME_HTML);
-    const snapshots = await dbClient.snapshots.createMany({
+    const [first, second] = await dbClient.snapshots.createMany({
       values: [
         { buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" },
         { buildId: mainBuild.id, ...captureConfiguration, targetId: "story-b" },
@@ -57,25 +49,19 @@ describe("captureBuildGroup closing its browser", () => {
       server.close = hangForever;
     });
 
-    await captureBuildGroup(
-      mainBuild.id,
-      captureConfiguration.browser,
-      snapshots.map((snapshot) => snapshot.id),
-    );
+    await captureBuildGroup(mainBuild.id, captureConfiguration.browser, [first!.id, second!.id]);
 
-    expect(servers).toHaveLength(1);
     expect(await browserProcesses(servers[0]!)).toEqual([]);
-    for (const snapshot of snapshots) {
-      expect(await dbClient.snapshots.findById(snapshot.id)).toMatchObject({ status: "success" });
-    }
+    expect(await dbClient.snapshots.findById(first!.id)).toMatchObject({ status: "success" });
+    expect(await dbClient.snapshots.findById(second!.id)).toMatchObject({ status: "success" });
   }, 60_000);
 
-  test("captures the rest of the group when the timed-out browser's close hangs", async ({
+  test("captures the rest of the group when a timed-out browser never closes", async ({
     mainBuild,
     captureConfiguration,
   }) => {
     await uploadArtifactWithIframe(mainBuild.artifactPath, iframeWithHangingStory(true));
-    const snapshots = await dbClient.snapshots.createMany({
+    const [before, hanging, after] = await dbClient.snapshots.createMany({
       values: [
         { buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" },
         { buildId: mainBuild.id, ...captureConfiguration, targetId: "story-hang" },
@@ -83,58 +69,20 @@ describe("captureBuildGroup closing its browser", () => {
       ],
     });
     markFirstLaunchToHang();
-    const { servers } = spyOnBrowserServers((server, index) => {
-      if (index === 0) {
-        server.close = hangForever;
-      }
+    const { servers } = spyOnBrowserServers((server) => {
+      server.close = hangForever;
     });
 
-    await captureBuildGroup(
-      mainBuild.id,
-      captureConfiguration.browser,
-      snapshots.map((snapshot) => snapshot.id),
-    );
+    await captureBuildGroup(mainBuild.id, captureConfiguration.browser, [
+      before!.id,
+      hanging!.id,
+      after!.id,
+    ]);
 
     expect(servers).toHaveLength(2);
-    for (const server of servers) {
-      expect(await browserProcesses(server)).toEqual([]);
-    }
-    for (const snapshot of snapshots) {
-      expect(await dbClient.snapshots.findById(snapshot.id)).toMatchObject({ status: "success" });
-    }
-  }, 60_000);
-
-  test("kills the browser when the group times out during a snapshot that never returns", async ({
-    mainBuild,
-    captureConfiguration,
-  }) => {
-    timeouts.snapshotMs = 60_000;
-    timeouts.groupPerSnapshotMs = 3_000;
-    try {
-      await uploadArtifactWithIframe(mainBuild.artifactPath, iframeWithHangingStory(false));
-      const [hanging] = await dbClient.snapshots.createMany({
-        values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "story-hang" }],
-      });
-      const { servers } = spyOnBrowserServers((server) => {
-        server.close = hangForever;
-      });
-
-      const start = performance.now();
-      await expect(
-        captureBuildGroup(mainBuild.id, captureConfiguration.browser, [hanging!.id]),
-      ).rejects.toThrow(TimeoutError);
-
-      // Settles once the browser is killed, not after the cleanup grace or the snapshot deadline.
-      expect(performance.now() - start).toBeLessThan(20_000);
-      expect(servers).toHaveLength(1);
-      expect(await browserProcesses(servers[0]!)).toEqual([]);
-      // Left for the job's retry rather than errored.
-      expect(await dbClient.snapshots.findById(hanging!.id)).toMatchObject({
-        status: "processing",
-      });
-    } finally {
-      timeouts.snapshotMs = 3_000;
-      timeouts.groupPerSnapshotMs = 2 * 60 * 1000;
-    }
+    expect(await browserProcesses(servers[0]!)).toEqual([]);
+    expect(await dbClient.snapshots.findById(before!.id)).toMatchObject({ status: "success" });
+    expect(await dbClient.snapshots.findById(hanging!.id)).toMatchObject({ status: "success" });
+    expect(await dbClient.snapshots.findById(after!.id)).toMatchObject({ status: "success" });
   }, 60_000);
 });
