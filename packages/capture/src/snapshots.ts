@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 
 import { chromium, firefox, webkit, type Page } from "playwright";
 
+import { publishStatus } from "@ovr/builds/builds";
 import { isFlakyDetectionEnabled } from "@ovr/builds/flakiness";
 import { withBundleDir } from "@ovr/builds/storybookBundleCache";
 import { SIGNAL_HANDLING_OPTIONS, newPage } from "@ovr/capture-browser/browser";
@@ -262,6 +263,12 @@ const captureSnapshotOnPage = async (
   }
 
   await dbClient.snapshots.updateStatus(snapshotId, "processing");
+
+  // A build is queued until its first snapshot starts capturing.
+  if (currentBuild.processingStatus === "queued") {
+    await dbClient.builds.startProcessing(build.id);
+    await publishStatus(build.id);
+  }
 
   const { fullPage, width, height } = getCaptureViewport(
     snapshot.viewportWidth,

@@ -1223,7 +1223,7 @@ describe("builds", () => {
           status: "ok",
           data: undefined,
         });
-        expect((await dbClient.builds.findById(buildId))?.processingStatus).toBe("processing");
+        expect((await dbClient.builds.findById(buildId))?.processingStatus).toBe("queued");
         expect(await findTimings(buildId)).toEqual(timings);
 
         await finalizeBuild(buildId);
@@ -1419,7 +1419,7 @@ describe("builds", () => {
       expect(await dbClient.snapshotLogs.findBySnapshot(snapshot.id)).toEqual([]);
     });
 
-    test("puts the build back to processing and clears the error it reported", async ({
+    test("puts the build back to queued and clears the error it reported", async ({
       project,
       user,
       captureConfiguration,
@@ -1436,7 +1436,7 @@ describe("builds", () => {
 
       assert(result.status === "ok");
       expect(await dbClient.builds.findById(buildId)).toMatchObject({
-        processingStatus: "processing",
+        processingStatus: "queued",
         errorMessage: null,
       });
     });

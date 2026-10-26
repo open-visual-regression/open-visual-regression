@@ -497,6 +497,27 @@ describe("snapshots", () => {
       expect(uploadSpy).not.toHaveBeenCalled();
     });
 
+    test("keeps the build queued until its first snapshot starts capturing", async ({
+      mainBuild,
+      captureConfiguration,
+    }) => {
+      await uploadArtifactWithIframe(mainBuild.artifactPath, IFRAME_HTML);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" }],
+      });
+      expect(await dbClient.builds.findById(mainBuild.id)).toMatchObject({
+        processingStatus: "queued",
+        startedAt: null,
+      });
+
+      await captureBuildGroup(mainBuild.id, captureConfiguration.browser, [snapshot!.id]);
+
+      expect(await dbClient.builds.findById(mainBuild.id)).toMatchObject({
+        processingStatus: "processing",
+        startedAt: expect.any(String),
+      });
+    });
+
     test("does no capture work for a queued group whose build has already errored", async ({
       mainBuild,
       captureConfiguration,

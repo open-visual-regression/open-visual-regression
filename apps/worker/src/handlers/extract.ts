@@ -6,9 +6,10 @@ import type { ExtractJobPayload } from "@ovr/queue";
 type ExtractJob = { data: ExtractJobPayload };
 
 export const run = async (job: ExtractJob): Promise<void> => {
-  const build = await dbClient.builds.startProcessing(job.data.buildId);
+  // The build stays queued until its first snapshot starts capturing.
+  const build = await dbClient.builds.findById(job.data.buildId);
 
-  if (!build) {
+  if (build?.processingStatus !== "queued" && build?.processingStatus !== "processing") {
     return;
   }
 
