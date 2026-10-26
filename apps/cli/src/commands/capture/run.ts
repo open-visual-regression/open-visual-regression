@@ -16,6 +16,7 @@ import type { CaptureStrategy } from "@ovr/capture-browser/captureStrategies";
 import {
   blockExternalRequests,
   bootTargetPage,
+  disableLazyLoading,
   getCaptureViewport,
   takeScreenshot,
 } from "@ovr/capture-browser/page";
@@ -190,6 +191,7 @@ const captureWithBrowser = async (
       await session.send("Emulation.setCPUThrottlingRate", { rate: options.cpuThrottle });
     }
 
+    await disableLazyLoading(page);
     const networkActivity = trackNetworkActivity(page);
 
     try {

@@ -12,6 +12,7 @@ import {
 import {
   blockExternalRequests,
   bootTargetPage,
+  disableLazyLoading,
   getCaptureViewport,
   takeScreenshot,
 } from "@ovr/capture-browser/page";
@@ -183,6 +184,8 @@ const launchCapturePage = async (
     page.on("crash", () => {
       logger.error({ buildId, browser: browserName }, "capture page crashed");
     });
+
+    await disableLazyLoading(page);
 
     page.on("console", (message) => {
       pageLogState.logs.push({ level: message.type(), message: message.text() });

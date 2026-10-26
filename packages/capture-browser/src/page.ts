@@ -40,6 +40,41 @@ export const blockExternalRequests = (
   return { proxy: { server: UNREACHABLE_PROXY, bypass } };
 };
 
+// A lazy image below the viewport would otherwise load partway through a full-page screenshot.
+const loadLazyResourcesEagerly = (): void => {
+  const lazySelector = 'img[loading="lazy"], iframe[loading="lazy"]';
+
+  const makeEager = (node: Node) => {
+    if (!(node instanceof Element)) {
+      return;
+    }
+    if (node.matches(lazySelector)) {
+      node.setAttribute("loading", "eager");
+    }
+    for (const element of node.querySelectorAll(lazySelector)) {
+      element.setAttribute("loading", "eager");
+    }
+  };
+
+  new MutationObserver((records) => {
+    for (const record of records) {
+      makeEager(record.target);
+      for (const added of record.addedNodes) {
+        makeEager(added);
+      }
+    }
+  }).observe(document, {
+    subtree: true,
+    childList: true,
+    attributes: true,
+    attributeFilter: ["loading"],
+  });
+};
+
+export const disableLazyLoading = async (page: Page): Promise<void> => {
+  await page.addInitScript(loadLazyResourcesEagerly);
+};
+
 export const bootTargetPage = async (
   page: Page,
   origin: string,
