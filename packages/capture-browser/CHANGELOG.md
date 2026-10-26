@@ -1,5 +1,11 @@
 # @ovr/capture-browser
 
+## 0.0.4
+
+### Patch Changes
+
+- [#452](https://github.com/open-visual-regression/open-visual-regression/pull/452) [`6084a1e`](https://github.com/open-visual-regression/open-visual-regression/commit/6084a1e6b626ee8e834ce539acac16693ef708fa) Thanks [@tgfischer](https://github.com/tgfischer)! - Capture browsers that fail to close are now force-killed, so they no longer leak memory in the worker.
+
 ## 0.0.3
 
 ### Patch Changes
