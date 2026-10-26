@@ -9,8 +9,6 @@ import { newPage } from "../browser";
 import { disableLazyLoading } from "../page";
 import { settlePage, trackNetworkActivity } from "../settle";
 
-// Both images sit far below the viewport: one is in the markup, the other is added the way a
-// component would add it after its data loads.
 const PAGE_HTML = `<!doctype html>
 <html>
   <body>

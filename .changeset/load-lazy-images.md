@@ -5,4 +5,4 @@
 "@open-visual-regression/cli": patch
 ---
 
-Captures load `loading="lazy"` images and iframes right away, including ones a story adds after it first renders. Images below the viewport now load while the page settles, instead of partway through a full-page screenshot or not at all.
+Captures load lazy images and iframes up front, so images below the viewport are no longer missing or half-loaded in full-page screenshots.
