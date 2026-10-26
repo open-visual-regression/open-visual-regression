@@ -155,6 +155,7 @@ sum(max by (state) (ovr_queue_jobs{queue="snapshot-capture", state=~"waiting|pri
 | --- | --- | --- | --- |
 | `ovr_worker_browser_processes` | Gauge | `state` | Browser processes a worker is running. A growing `zombie` count means exited processes aren't being cleaned up. Linux only. |
 | `ovr_worker_browser_memory_bytes` | Gauge | | Memory used by a worker's browsers. Linux only. |
+| `ovr_worker_browser_processes_killed_total` | Counter | | Leftover browser processes a worker killed after their builds finished. Linux only. |
 | `ovr_git_status_publications_total` | Counter | `provider`, `state`, `outcome` | Commit statuses sent to your git provider, by `ok` or `error`. |
 | `ovr_http_request_errors_total` | Counter | `route_type` | Web app requests that failed with an unexpected error. |
 | `process_memory_usage_bytes` | Gauge | | Memory used by the process. |

@@ -2,14 +2,22 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { chromium } from "playwright";
 import { vi } from "vitest";
 
 import { dbClient } from "@ovr/db/client";
 
 import { TimeoutError } from "../lib/captureTimeouts";
 import { captureBuildGroup } from "../snapshots";
-import { describe, expect, test, uploadArtifactWithIframe } from "./fixtures";
+import {
+  browserProcesses,
+  describe,
+  expect,
+  hangForever,
+  iframeWithHangingStory,
+  spyOnBrowserServers,
+  test,
+  uploadArtifactWithIframe,
+} from "./fixtures";
 
 const { CAPTURE_JOB_TIMEOUT_MS } = vi.hoisted(() => ({ CAPTURE_JOB_TIMEOUT_MS: 4_000 }));
 
@@ -17,6 +25,12 @@ vi.mock("../lib/captureTimeouts", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/captureTimeouts")>();
   return { ...actual, CAPTURE_JOB_TIMEOUT_MS };
 });
+
+vi.mock("@ovr/capture-browser/timeouts", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@ovr/capture-browser/timeouts")>()),
+  CONTEXT_CLOSE_TIMEOUT_MS: 500,
+  BROWSER_CLOSE_TIMEOUT_MS: 1_000,
+}));
 
 const SNAPSHOT_COUNT = 3;
 const STALLED_CAPTURE_MS = CAPTURE_JOB_TIMEOUT_MS * (SNAPSHOT_COUNT + 1);
@@ -44,7 +58,7 @@ describe("captureBuildGroup", () => {
       return updateStatus(id, status);
     });
 
-    const launch = vi.spyOn(chromium, "launch");
+    const { servers } = spyOnBrowserServers();
 
     await expect(
       captureBuildGroup(mainBuild.id, captureConfiguration.browser, [
@@ -54,11 +68,35 @@ describe("captureBuildGroup", () => {
       ]),
     ).rejects.toThrow(TimeoutError);
 
-    const browser = await launch.mock.results[0]!.value;
-    expect(browser.isConnected()).toBe(false);
+    expect(servers).toHaveLength(1);
+    expect(await browserProcesses(servers[0]!)).toEqual([]);
 
-    expect(await dbClient.snapshots.findById(first!.id)).toMatchObject({ status: "success" });
+    // Its browser was killed mid-capture, so it waits for the retry too.
+    expect(await dbClient.snapshots.findById(first!.id)).toMatchObject({ status: "processing" });
     expect(await dbClient.snapshots.findById(second!.id)).toMatchObject({ status: "queued" });
     expect(await dbClient.snapshots.findById(third!.id)).toMatchObject({ status: "queued" });
+  }, 60_000);
+
+  test("kills the browser when it runs out of time during a story that never returns", async ({
+    mainBuild,
+    captureConfiguration,
+  }) => {
+    await uploadArtifactWithIframe(mainBuild.artifactPath, iframeWithHangingStory(false));
+    const [hanging] = await dbClient.snapshots.createMany({
+      values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "story-hang" }],
+    });
+    const { servers } = spyOnBrowserServers((server) => {
+      server.close = hangForever;
+    });
+
+    await expect(
+      captureBuildGroup(mainBuild.id, captureConfiguration.browser, [hanging!.id]),
+    ).rejects.toThrow(TimeoutError);
+
+    expect(servers).toHaveLength(1);
+    expect(await browserProcesses(servers[0]!)).toEqual([]);
+    expect(await dbClient.snapshots.findById(hanging!.id)).toMatchObject({
+      status: "processing",
+    });
   }, 60_000);
 });

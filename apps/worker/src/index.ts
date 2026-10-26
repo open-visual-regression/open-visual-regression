@@ -28,6 +28,7 @@ import * as purge from "./handlers/purge";
 import * as purgeDispatch from "./handlers/purgeDispatch";
 import * as reaper from "./handlers/reaper";
 import { isFinalAttempt } from "./lib/attempts";
+import { startBrowserSweep } from "./lib/browserSweep";
 import { observeJobs } from "./lib/jobMetrics";
 import { observeBrowserProcesses, startMemoryReports } from "./lib/memoryReport";
 import { APP_VERSION } from "./lib/version";
@@ -73,6 +74,8 @@ const MEMORY_LOG_INTERVAL_MS = z.coerce
   .catch(60_000)
   .parse(process.env.OVR_MEMORY_LOG_INTERVAL_MS);
 
+const BROWSER_SWEEP_INTERVAL_MS = 60_000;
+
 // Across all workers, not per worker.
 const PURGE_CONCURRENCY = z.coerce
   .number()
@@ -82,13 +85,18 @@ const PURGE_CONCURRENCY = z.coerce
   .parse(process.env.OVR_PURGE_CONCURRENCY);
 
 const shutdown = new AbortController();
+const browserSweep = startBrowserSweep(logger, BROWSER_SWEEP_INTERVAL_MS);
 
-const extractWorker = new Worker(QueueName.BUILD_EXTRACT, extract.run, options);
-const captureWorker = new Worker(QueueName.SNAPSHOT_CAPTURE, capture.createRun(shutdown.signal), {
-  ...options,
-  concurrency: CAPTURE_GROUP_CONCURRENCY,
-  lockDuration: CAPTURE_LOCK_DURATION_MS,
-});
+const extractWorker = new Worker(QueueName.BUILD_EXTRACT, browserSweep.track(extract.run), options);
+const captureWorker = new Worker(
+  QueueName.SNAPSHOT_CAPTURE,
+  browserSweep.track(capture.createRun(shutdown.signal)),
+  {
+    ...options,
+    concurrency: CAPTURE_GROUP_CONCURRENCY,
+    lockDuration: CAPTURE_LOCK_DURATION_MS,
+  },
+);
 const diffWorker = new Worker(QueueName.SNAPSHOT_DIFF, diff.run, {
   ...options,
   concurrency: DIFF_CONCURRENCY,

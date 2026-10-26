@@ -1,14 +1,16 @@
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-import type { Page } from "playwright";
+import type { Browser, BrowserServer, BrowserType, Page } from "playwright";
 import { chromium } from "playwright";
 import * as tar from "tar";
 import { v7 as uuidv7 } from "uuid";
-import { test as vitest } from "vitest";
+import { test as vitest, vi } from "vitest";
 
 import { newPage } from "@ovr/capture-browser/browser";
+import { listProcessFamily } from "@ovr/capture-browser/processTree";
 import { startStaticProxy } from "@ovr/capture-browser/staticProxy";
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
@@ -60,6 +62,57 @@ export const withCapturePage = async (
     await browser.close();
     proxy.close();
   }
+};
+
+// Records the browsers capture launches, so tests can check their processes.
+export const spyOnBrowserServers = (
+  onLaunch?: (server: BrowserServer, index: number) => void,
+  browserType: BrowserType = chromium,
+) => {
+  const launchServer = browserType.launchServer.bind(browserType);
+  const servers: BrowserServer[] = [];
+  const spy = vi.spyOn(browserType, "launchServer").mockImplementation(async (options) => {
+    const server = await launchServer(options);
+    onLaunch?.(server, servers.length);
+    servers.push(server);
+    return server;
+  });
+  return { spy, servers };
+};
+
+export const browserProcesses = async (server: BrowserServer): Promise<number[]> =>
+  (await listProcessFamily(server.process().pid!)) ?? [];
+
+export const hangForever = () => new Promise<never>(() => {});
+
+const IFRAME_HTML = await readFile(
+  path.join(path.dirname(fileURLToPath(import.meta.url)), "html/iframe-static.html"),
+  "utf-8",
+);
+
+// Rendering "story-hang" blocks the page's main thread, so the in-page render timeout never fires.
+// With hangOnce, it only hangs in browsers marked by markFirstLaunchToHang.
+export const iframeWithHangingStory = (hangOnce: boolean) =>
+  IFRAME_HTML.replace(
+    "_render(payload) {",
+    `_render(payload) {
+          if (payload.storyId === "story-hang" && (${!hangOnce} || window.__OVR_HANG__)) {
+            while (true) {}
+          }`,
+  );
+
+export const markFirstLaunchToHang = () => {
+  const connect = chromium.connect.bind(chromium);
+  return vi.spyOn(chromium, "connect").mockImplementationOnce(async (...args) => {
+    const browser: Browser = await connect(...args);
+    const newContext = browser.newContext.bind(browser);
+    browser.newContext = async (contextOptions) => {
+      const context = await newContext(contextOptions);
+      await context.addInitScript({ content: "window.__OVR_HANG__ = true;" });
+      return context;
+    };
+    return browser;
+  });
 };
 
 export type Viewport = {

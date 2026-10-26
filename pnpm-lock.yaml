@@ -445,6 +445,9 @@ importers:
       '@ovr/capture':
         specifier: workspace:*
         version: link:../../packages/capture
+      '@ovr/capture-browser':
+        specifier: workspace:*
+        version: link:../../packages/capture-browser
       '@ovr/db':
         specifier: workspace:*
         version: link:../../packages/db

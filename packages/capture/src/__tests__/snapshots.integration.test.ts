@@ -4,7 +4,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { Worker } from "bullmq";
-import { chromium } from "playwright";
 import { PNG } from "pngjs";
 import { vi } from "vitest";
 
@@ -18,6 +17,7 @@ import {
   describe,
   enableFlakyDetection,
   expect,
+  spyOnBrowserServers,
   test,
   uploadArtifactWithIframe,
   type Viewport,
@@ -353,7 +353,7 @@ describe("snapshots", () => {
         ],
       });
 
-      const launchSpy = vi.spyOn(chromium, "launch");
+      const { spy: launchSpy } = spyOnBrowserServers();
 
       await captureBuildGroup(
         mainBuild.id,
@@ -529,7 +529,7 @@ describe("snapshots", () => {
       await dbClient.builds.updateProcessingStatus(mainBuild.id, "error", "Build timed out");
 
       const downloadSpy = vi.spyOn(storage, "getFileStream");
-      const launchSpy = vi.spyOn(chromium, "launch");
+      const { spy: launchSpy } = spyOnBrowserServers();
       const uploadSpy = vi.spyOn(storage, "uploadFile");
 
       await captureBuildGroup(mainBuild.id, captureConfiguration.browser, [snapshot!.id]);
