@@ -1,4 +1,4 @@
-import type { Page } from "playwright";
+import type { Browser, BrowserContextOptions, Page } from "playwright";
 
 import type { CaptureStrategy } from "./captureStrategies";
 import { BOOT_TIMEOUT_MS } from "./timeouts";
@@ -24,14 +24,20 @@ export const getCaptureViewport = (
   };
 };
 
-export const blockExternalRequests = async (page: Page, origin: string): Promise<void> => {
-  await page.route("**/*", (route) => {
-    const url = new URL(route.request().url());
-    if (url.origin === origin || url.protocol === "data:" || url.protocol === "blob:") {
-      return route.continue();
-    }
-    return route.abort();
-  });
+const UNREACHABLE_PROXY = "http://127.0.0.1:9";
+
+// Blocks other hosts with a proxy that refuses every connection. Blocking them with page.route
+// would make Playwright report a request a service worker answers, like an msw mock, only once
+// it has a response, so settling would not wait for it. Firefox can't exclude a single port from
+// the proxy, so other localhost ports stay reachable there.
+export const blockExternalRequests = (
+  browser: Browser,
+  origin: string,
+): Pick<BrowserContextOptions, "proxy"> => {
+  const { host, hostname } = new URL(origin);
+  const bypass = browser.browserType().name() === "firefox" ? hostname : `<-loopback>,${host}`;
+
+  return { proxy: { server: UNREACHABLE_PROXY, bypass } };
 };
 
 export const bootTargetPage = async (
