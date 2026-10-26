@@ -27,8 +27,6 @@ const PAGE_HTML = `<!doctype html>
   </body>
 </html>`;
 
-// Renders in waves: a first response re-renders a few times without touching the network, then
-// that render makes a second, slower request.
 const WATERFALL_HTML = `<!doctype html>
 <html>
   <body>
@@ -168,7 +166,7 @@ describe("settlePage", () => {
     await expect(settlePage(page, activity, GIVE_UP_TIMEOUT_MS)).resolves.toBe(true);
   }, 30_000);
 
-  test("waits for a second request that starts after a few renders with no network activity", async () => {
+  test("waits for a request that starts after a few renders", async () => {
     const page = await newPage(await browser.newContext());
     const activity = trackNetworkActivity(page);
 
@@ -178,7 +176,7 @@ describe("settlePage", () => {
     expect(await page.textContent("#status")).toBe("done");
   }, 30_000);
 
-  test("gives up on a DOM that never stops changing well before its budget runs out", async () => {
+  test("gives up early on a DOM that never stops changing", async () => {
     const page = await newPage(await browser.newContext());
     const activity = trackNetworkActivity(page);
 

@@ -11,8 +11,7 @@ const MIN_PAINT_BUDGET_MS = 250;
 
 export type NetworkActivity = {
   whenQuiet: (quietWindowMs: number, timeoutMs: number) => Promise<boolean>;
-  /** Counts every request the page has started, so a caller can tell whether any began since it last looked. */
-  generation: () => number;
+  requestCount: () => number;
   dispose: () => void;
 };
 
@@ -28,7 +27,7 @@ export const trackNetworkActivity = (
 ): NetworkActivity => {
   const pending = new Map<Request, ReturnType<typeof setTimeout>>();
   const listeners = new Set<() => void>();
-  let generation = 0;
+  let requestCount = 0;
 
   const notify = () => {
     for (const listener of listeners) {
@@ -49,7 +48,7 @@ export const trackNetworkActivity = (
   // A request that outlives a whole settle budget is treated as abandoned, so one
   // response that never arrives cannot stall every later snapshot on this page.
   const add = (request: Request) => {
-    generation += 1;
+    requestCount += 1;
     pending.set(
       request,
       setTimeout(() => remove(request), abandonAfterMs),
@@ -85,7 +84,7 @@ export const trackNetworkActivity = (
         listeners.add(onChange);
         onChange();
       }),
-    generation: () => generation,
+    requestCount: () => requestCount,
     dispose: () => {
       page.off("request", add);
       page.off("requestfinished", remove);
@@ -146,7 +145,7 @@ const unwatchDocument = (): void => {
   globalThis.__OVR_DOCUMENT_WATCH__ = undefined;
 };
 
-const waitForStillDocument = async ({
+const waitForQuietDom = async ({
   quietWindowMs,
   timeoutMs,
 }: {
@@ -157,12 +156,11 @@ const waitForStillDocument = async ({
   const remaining = () => deadline - performance.now();
   const elapsed = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
-  // A missing watch means the page navigated mid-settle, so treat it as changing right now.
+  // The watch is gone if the page navigated, which counts as a change.
   const lastMutationAt = () =>
     globalThis.__OVR_DOCUMENT_WATCH__?.lastMutationAt ?? performance.now();
 
-  // Only loaded images are decoded here. One still loading is held back by its pending request,
-  // and leaving it to the network tracker keeps a response that never arrives from stalling this.
+  // Images still loading are left to the network tracker, which gives up on a stuck request.
   const imagesDecoded = () =>
     Promise.all(
       Array.from(document.images)
@@ -190,7 +188,7 @@ const waitForStillDocument = async ({
       quietFor = performance.now() - lastMutationAt();
     }
 
-    // Anything that changed while the images decoded may have added more of them.
+    // The DOM changed while decoding, so there may be new images.
     if (lastMutationAt() === scannedAt) {
       return true;
     }
@@ -199,9 +197,8 @@ const waitForStillDocument = async ({
   return false;
 };
 
-// Rendering can come in waves, like a response that renders a component which then makes its own
-// request, so this only finishes once the network and the DOM are both quiet in the same pass.
-const waitForStillPage = async (
+// Rendering can come in waves, so the network and the DOM have to be quiet in the same pass.
+const waitForQuietPage = async (
   page: Page,
   activity: NetworkActivity,
   deadline: number,
@@ -212,16 +209,16 @@ const waitForStillPage = async (
       return false;
     }
 
-    const generation = activity.generation();
-    const still = await page.evaluate(waitForStillDocument, {
+    const requestCount = activity.requestCount();
+    const domQuiet = await page.evaluate(waitForQuietDom, {
       quietWindowMs: DOM_QUIET_WINDOW_MS,
       timeoutMs: Math.min(deadline - Date.now(), DOM_SETTLE_TIMEOUT_MS),
     });
-    if (!still) {
+    if (!domQuiet) {
       return false;
     }
 
-    if (activity.generation() === generation) {
+    if (activity.requestCount() === requestCount) {
       return true;
     }
   }
@@ -237,13 +234,13 @@ export const settlePage = async (
   await page.evaluate(watchDocument);
 
   try {
-    const still = await waitForStillPage(page, activity, deadline);
+    const quiet = await waitForQuietPage(page, activity, deadline);
 
     const painted = await page.evaluate(waitForPaint, {
       timeoutMs: Math.max(deadline - Date.now(), MIN_PAINT_BUDGET_MS),
     });
 
-    return still && painted;
+    return quiet && painted;
   } finally {
     await page.evaluate(unwatchDocument).catch(() => undefined);
   }
