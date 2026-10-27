@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@orpc/contract": "^1.14.14",
+    "@ovr/storybook-compat": "workspace:*",
     "cron-parser": "4.9.0",
     "zod": "^4.5.1"
   },

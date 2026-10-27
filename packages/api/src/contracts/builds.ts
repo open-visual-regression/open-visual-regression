@@ -1,6 +1,8 @@
 import { eventIterator, oc } from "@orpc/contract";
 import { z } from "zod";
 
+import { blockExternalRequestsSchema } from "@ovr/storybook-compat/parameters";
+
 export const buildProcessingStatusSchema = z.enum([
   "queued",
   "processing",
@@ -93,6 +95,7 @@ export const confirmUploadInputSchema = z.object({
     ),
   diffThreshold: z.number().min(0.01).max(1).optional(),
   waitForTimeout: z.number().int().min(0).max(30_000).optional(),
+  blockExternalRequests: blockExternalRequestsSchema.optional(),
   unaffectedTargetIds: z.array(z.string().min(1)).optional(),
 });
 

@@ -5,6 +5,8 @@ const HEADERS = ["TARGET", "BROWSER", "VIEWPORT", "RUNS", "IMAGES", "MAX DIFF%",
 
 const DIFF_PERCENT_PRECISION = 2;
 
+const BLOCKED_HOSTS_HINT = "Add blocked hosts to blockExternalRequests.allow to load them.";
+
 export type CaptureIssue = {
   targetId: string;
   message: string;
@@ -64,6 +66,11 @@ export const formatCaptureReport = (report: CaptureReport, json: boolean | undef
 
   const details = report.results.flatMap((result) => [
     ...result.errors.map((error) => `${result.targetId} (${result.viewportName}): ${error}`),
+    ...(result.blockedHosts.length > 0
+      ? [
+          `${result.targetId} (${result.viewportName}): blocked requests to ${result.blockedHosts.join(", ")}`,
+        ]
+      : []),
     ...(getCaptureResultStatus(result) === "unstable"
       ? result.images
           .filter((image) => image.file)
@@ -76,6 +83,10 @@ export const formatCaptureReport = (report: CaptureReport, json: boolean | undef
 
   if (details.length > 0) {
     sections.push(details.join("\n"));
+  }
+
+  if (report.results.some((result) => result.blockedHosts.length > 0)) {
+    sections.push(BLOCKED_HOSTS_HINT);
   }
 
   if (report.issues.length > 0) {

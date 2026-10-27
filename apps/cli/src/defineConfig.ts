@@ -30,9 +30,18 @@ export type OvrConfig = {
    * @default 0
    */
   waitForTimeout?: number;
+  /**
+   * Blocks requests outside the Storybook build. `{ allow: [...] }` lets the
+   * listed hosts through, e.g. `images.example.com` or `*.example.com`.
+   * Override per story via `parameters.ovr.blockExternalRequests`.
+   * @default false
+   */
+  blockExternalRequests?: BlockExternalRequests;
   /** Options for `upload storybook --only-affected`. */
   onlyAffected?: OnlyAffectedConfig;
 };
+
+export type BlockExternalRequests = boolean | { allow: string[] };
 
 export type OnlyAffectedConfig = {
   /** Globs of files that affect every story when they change, e.g. a static folder. */
@@ -54,6 +63,8 @@ export type OvrStoryParameters = {
   diffThreshold?: number;
   /** Replaces the config's `waitForTimeout` for this story only. */
   waitForTimeout?: number;
+  /** Replaces the config's `blockExternalRequests` for this story only. */
+  blockExternalRequests?: BlockExternalRequests;
   /** Skips this story — listed on the build as skipped, never captured, baselines kept. */
   skip?: boolean;
 };
@@ -85,6 +96,13 @@ export const defineConfig = <const V extends readonly Viewport[] = []>(config: {
    * @default 0
    */
   waitForTimeout?: number;
+  /**
+   * Blocks requests outside the Storybook build. `{ allow: [...] }` lets the
+   * listed hosts through, e.g. `images.example.com` or `*.example.com`.
+   * Override per story via `parameters.ovr.blockExternalRequests`.
+   * @default false
+   */
+  blockExternalRequests?: BlockExternalRequests;
   /** Options for `upload storybook --only-affected`. */
   onlyAffected?: OnlyAffectedConfig;
 }): OvrConfig => config;

@@ -23,6 +23,7 @@ import {
 import { createBuildStatusSubscriber, type BuildStatusEvent } from "@ovr/queue/events";
 import { enqueueCaptureGroups, enqueueExtract } from "@ovr/queue/producer";
 import { storage } from "@ovr/storage";
+import type { BlockExternalRequests } from "@ovr/storybook-compat/parameters";
 
 import {
   cancelBuild,
@@ -483,6 +484,7 @@ describe("builds", () => {
         targets,
         viewports: [captureConfiguration],
         diffThreshold: 0.05,
+        externalRequestAllowlist: null,
         unaffectedTargetIds: [],
       });
     });
@@ -558,6 +560,48 @@ describe("builds", () => {
         waitForTimeout: 1500,
       });
     });
+
+    test.for<[BlockExternalRequests | undefined, string[] | null]>([
+      [undefined, null],
+      [false, null],
+      [true, []],
+      [
+        { allow: ["images.example.com", "*.cdn.example.com"] },
+        ["*.cdn.example.com", "images.example.com"],
+      ],
+    ])(
+      "stores blockExternalRequests %j as the allowlist %j and passes it to extract",
+      async (
+        [blockExternalRequests, allowlist],
+        { project, captureConfiguration, user, connection },
+      ) => {
+        const created = await createBuild(
+          { projectId: project.id, branch: "main", commitSha: "a".repeat(40) },
+          user.id,
+        );
+        assert(created.status === "ok");
+        const buildId = created.data;
+        await storage.uploadFile(
+          getArtifactPath(project.id, buildId),
+          Buffer.from(""),
+          "application/gzip",
+        );
+
+        await confirmBuildUpload(buildId, {
+          targets: [{ id: "story-a", title: "Story", name: "A" }],
+          viewports: [captureConfiguration],
+          diffThreshold: 0.05,
+          blockExternalRequests,
+        });
+
+        expect(await dbClient.buildExtractDefaults.findByBuild(buildId)).toMatchObject({
+          externalRequestAllowlist: allowlist,
+        });
+        expect(await collectExtractJob(connection)).toMatchObject({
+          externalRequestAllowlist: allowlist,
+        });
+      },
+    );
 
     test("stays successful when the client retries the same confirmation", async ({
       project,
@@ -853,6 +897,7 @@ describe("builds", () => {
           viewports: VIEWPORTS,
           diffThreshold: 0.05,
           waitForTimeout: 1500,
+          externalRequestAllowlist: ["images.example.com"],
           unaffectedTargetIds,
         });
       }
@@ -933,6 +978,7 @@ describe("builds", () => {
         viewports: VIEWPORTS,
         diffThreshold: 0.05,
         waitForTimeout: 1500,
+        externalRequestAllowlist: ["images.example.com"],
       });
     });
 
@@ -950,6 +996,7 @@ describe("builds", () => {
         viewports: VIEWPORTS,
         diffThreshold: 0.05,
         waitForTimeout: 1500,
+        externalRequestAllowlist: ["images.example.com"],
         unaffectedTargetIds: [],
       });
     });
@@ -1462,8 +1509,18 @@ describe("builds", () => {
       expect(groups).toHaveLength(2);
       expect(groups).toEqual(
         expect.arrayContaining([
-          { buildId, browser: "chromium", snapshotIds: [chromium!.id] },
-          { buildId, browser: "firefox", snapshotIds: [firefox!.id] },
+          {
+            buildId,
+            browser: "chromium",
+            externalRequestAllowlist: null,
+            snapshotIds: [chromium!.id],
+          },
+          {
+            buildId,
+            browser: "firefox",
+            externalRequestAllowlist: null,
+            snapshotIds: [firefox!.id],
+          },
         ]),
       );
     });

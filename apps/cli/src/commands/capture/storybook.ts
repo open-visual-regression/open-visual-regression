@@ -1,9 +1,11 @@
 import { Command } from "commander";
 
 import { readStoryTargets } from "@ovr/storybook-compat/manifest";
+import { toExternalRequestAllowlist } from "@ovr/storybook-compat/parameters";
 
 import {
   loadOvrConfig,
+  resolveBlockExternalRequests,
   resolveDiffThreshold,
   resolveViewports,
   resolveWaitForTimeout,
@@ -66,6 +68,7 @@ const captureStorybook = async (
   const viewports = resolveViewports(config);
   const waitForTimeout = resolveWaitForTimeout(config);
   const diffThreshold = resolveDiffThreshold(config);
+  const externalRequestAllowlist = toExternalRequestAllowlist(resolveBlockExternalRequests(config));
   const launchOptions = options.executablePath ? { executablePath: options.executablePath } : {};
 
   const stories = await readStoryTargets(options.dir);
@@ -91,6 +94,7 @@ const captureStorybook = async (
     options.dir,
     storyIds,
     launchOptions,
+    externalRequestAllowlist,
   );
 
   const issues: CaptureIssue[] = [];
@@ -116,6 +120,10 @@ const captureStorybook = async (
         viewportHeight: viewport.viewportHeight ?? 0,
         waitForTimeout: storyViewports.resolveTargetWaitForTimeout(waitForTimeout, override),
         diffThreshold: storyViewports.resolveTargetDiffThreshold(diffThreshold, override),
+        externalRequestAllowlist: storyViewports.resolveTargetExternalRequestAllowlist(
+          externalRequestAllowlist,
+          override,
+        ),
       }))
       .filter((target) => !options.viewport || options.viewport.includes(target.viewportName));
   });

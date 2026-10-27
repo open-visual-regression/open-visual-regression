@@ -17,6 +17,10 @@ import {
   publishBuildStatusEvent,
 } from "@ovr/queue/producer";
 import { storage } from "@ovr/storage";
+import {
+  toExternalRequestAllowlist,
+  type BlockExternalRequests,
+} from "@ovr/storybook-compat/parameters";
 
 import { toCaptureGroups } from "./lib/captureGroups";
 import {
@@ -52,6 +56,7 @@ type ConfirmBuildUploadInput = {
   viewports: Viewport[];
   diffThreshold: number;
   waitForTimeout?: number;
+  blockExternalRequests?: BlockExternalRequests;
   unaffectedTargetIds?: string[];
 };
 
@@ -266,6 +271,7 @@ export const confirmBuildUpload = async (
 
   const targetIds = new Set(input.targets.map((target) => target.id));
   const unaffectedTargetIds = (input.unaffectedTargetIds ?? []).filter((id) => targetIds.has(id));
+  const externalRequestAllowlist = toExternalRequestAllowlist(input.blockExternalRequests);
 
   try {
     await dbClient.buildExtractDefaults.create({
@@ -274,6 +280,7 @@ export const confirmBuildUpload = async (
       viewports: input.viewports,
       diffThreshold: input.diffThreshold,
       waitForTimeout: input.waitForTimeout,
+      externalRequestAllowlist,
       unaffectedTargetIds,
     });
     await enqueueExtract({
@@ -283,6 +290,7 @@ export const confirmBuildUpload = async (
       viewports: input.viewports,
       diffThreshold: input.diffThreshold,
       waitForTimeout: input.waitForTimeout,
+      externalRequestAllowlist,
       unaffectedTargetIds,
     });
   } catch (error) {
@@ -444,6 +452,7 @@ export const rebuildBuild = async (
       viewports: extractDefaults.viewports,
       diffThreshold: extractDefaults.diffThreshold,
       waitForTimeout: extractDefaults.waitForTimeout,
+      externalRequestAllowlist: extractDefaults.externalRequestAllowlist,
       unaffectedTargetIds: extractDefaults.unaffectedTargetIds,
     });
     await dbClient.projects.incrementTotalBuildsCount(source.projectId, tx);
@@ -460,6 +469,7 @@ export const rebuildBuild = async (
       viewports: extractDefaults.viewports,
       diffThreshold: extractDefaults.diffThreshold,
       waitForTimeout: extractDefaults.waitForTimeout,
+      externalRequestAllowlist: extractDefaults.externalRequestAllowlist,
       unaffectedTargetIds: extractDefaults.unaffectedTargetIds,
     });
   } catch (error) {

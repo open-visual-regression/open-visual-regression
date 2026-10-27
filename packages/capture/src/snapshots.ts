@@ -16,6 +16,8 @@ import {
   disableLazyLoading,
   getCaptureViewport,
   takeScreenshot,
+  trackBlockedHosts,
+  type BlockedHosts,
 } from "@ovr/capture-browser/page";
 import {
   settlePage,
@@ -150,6 +152,7 @@ type CapturePage = {
   page: Page;
   pageLogState: PageLogState;
   networkActivity: NetworkActivity;
+  blockedHosts: BlockedHosts;
   close: () => Promise<void>;
 };
 
@@ -158,6 +161,7 @@ const launchCapturePage = async (
   browserName: string,
   proxy: StaticProxy,
   strategy: CaptureStrategy,
+  externalRequestAllowlist: string[] | null,
 ): Promise<CapturePage> => {
   const managedBrowser = await launchBrowser(
     getBrowserLauncher(browserName),
@@ -191,13 +195,15 @@ const launchCapturePage = async (
   const pageLogState: PageLogState = { logs: [], hasPageError: false };
   const bootStart = performance.now();
   let page: Page;
+  let blockedHosts: BlockedHosts;
 
   try {
     const context = await browser.newContext({
       deviceScaleFactor: 1,
-      ...blockExternalRequests(browser, proxy.origin),
+      ...blockExternalRequests(browser, proxy.origin, externalRequestAllowlist),
     });
     page = await newPage(context);
+    blockedHosts = trackBlockedHosts(page, proxy.origin, externalRequestAllowlist);
     page.on("crash", () => {
       logger.error({ buildId, browser: browserName }, "capture page crashed");
     });
@@ -228,8 +234,10 @@ const launchCapturePage = async (
     page,
     pageLogState,
     networkActivity,
+    blockedHosts,
     close: async () => {
       networkActivity.dispose();
+      blockedHosts.dispose();
       await closeBrowser();
     },
   };
@@ -253,7 +261,7 @@ type CapturedSnapshot = {
 };
 
 const captureSnapshotOnPage = async (
-  { page, pageLogState, networkActivity }: CapturePage,
+  { page, pageLogState, networkActivity, blockedHosts }: CapturePage,
   strategy: CaptureStrategy,
   build: NonNullable<BuildDbSchema>,
   snapshotId: string,
@@ -339,6 +347,14 @@ const captureSnapshotOnPage = async (
     const [screenshot, screenshotMs] = await runPagePhase("screenshot", () =>
       takeScreenshot(page, fullPage),
     );
+
+    const blocked = blockedHosts.take();
+    if (blocked.length > 0) {
+      pageLogState.logs.push({
+        level: "warning",
+        message: `Blocked requests to ${blocked.join(", ")}. Add them to blockExternalRequests.allow to load them.`,
+      });
+    }
 
     return {
       snapshotId,
@@ -494,13 +510,14 @@ export const markSnapshotErrored = async (snapshotId: string, error: unknown): P
 
 type CaptureBuildGroupOptions = {
   shutdownSignal?: AbortSignal;
+  externalRequestAllowlist?: string[] | null;
 };
 
 export const captureBuildGroup = async (
   buildId: string,
   browser: string,
   snapshotIds: string[],
-  { shutdownSignal }: CaptureBuildGroupOptions = {},
+  { shutdownSignal, externalRequestAllowlist = null }: CaptureBuildGroupOptions = {},
 ): Promise<void> => {
   const build = await dbClient.builds.findById(buildId);
   if (!build) {
@@ -528,7 +545,13 @@ export const captureBuildGroup = async (
         const proxy = await startStaticProxy(bundleDir);
         let capturePage: CapturePage;
         try {
-          capturePage = await launchCapturePage(buildId, browser, proxy, strategy);
+          capturePage = await launchCapturePage(
+            buildId,
+            browser,
+            proxy,
+            strategy,
+            externalRequestAllowlist,
+          );
         } catch (error) {
           proxy.close();
           throw error;
@@ -605,7 +628,13 @@ export const captureBuildGroup = async (
               await capturePage.close();
 
               try {
-                capturePage = await launchCapturePage(buildId, browser, proxy, strategy);
+                capturePage = await launchCapturePage(
+                  buildId,
+                  browser,
+                  proxy,
+                  strategy,
+                  externalRequestAllowlist,
+                );
               } catch (relaunchError) {
                 logger.error(
                   { buildId, browser, err: relaunchError },
@@ -624,6 +653,7 @@ export const captureBuildGroup = async (
             } finally {
               capturePage.pageLogState.logs = [];
               capturePage.pageLogState.hasPageError = false;
+              capturePage.blockedHosts.take();
             }
           }
 

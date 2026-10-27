@@ -142,6 +142,8 @@ export type ExtractJobPayload = {
   diffThreshold: number;
   /** Absent on jobs queued before stories could wait before capture. */
   waitForTimeout?: number;
+  /** Absent on jobs queued before external requests could be blocked. */
+  externalRequestAllowlist?: string[] | null;
   /** Absent on jobs queued before targets could be marked unaffected. */
   unaffectedTargetIds?: string[];
 };
@@ -149,6 +151,8 @@ export type ExtractJobPayload = {
 export type CaptureGroupJobPayload = {
   buildId: string;
   browser: string;
+  /** Absent on jobs queued before external requests could be blocked. */
+  externalRequestAllowlist?: string[] | null;
   snapshotIds: string[];
 };
 

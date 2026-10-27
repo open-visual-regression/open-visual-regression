@@ -60,6 +60,7 @@ const buildArtifactTarball = async (
       viewports?: string[];
       diffThreshold?: number;
       waitForTimeout?: number;
+      blockExternalRequests?: unknown;
       skip?: boolean;
       __throw?: boolean;
     }
@@ -114,6 +115,7 @@ describe("extractBuild", () => {
     expect(job).toEqual({
       buildId: mainBuild.id,
       browser: captureConfiguration.browser,
+      externalRequestAllowlist: null,
       snapshotIds: expect.arrayContaining(snapshots.map((snapshot) => snapshot.id)),
     });
     expect(job!.snapshotIds).toHaveLength(2);
@@ -323,6 +325,77 @@ describe("extractBuild", () => {
 
     const [snapshot] = await dbClient.snapshots.findByBuild(mainBuild.id);
     expect(snapshot!.waitForTimeout).toBe(2000);
+  });
+
+  test("uses the build's external request allowlist when a story has no override", async ({
+    mainBuild,
+    captureConfiguration,
+  }) => {
+    const tarball = await buildArtifactTarball();
+    await storage.uploadFile(mainBuild.artifactPath, tarball, "application/gzip");
+
+    await extractBuild(
+      mainBuild.id,
+      [{ id: "story-a", title: "Story", name: "A" }],
+      [captureConfiguration],
+      0.1,
+      [],
+      0,
+      ["images.example.com"],
+    );
+
+    const [snapshot] = await dbClient.snapshots.findByBuild(mainBuild.id);
+    expect(snapshot!.externalRequestAllowlist).toEqual(["images.example.com"]);
+  });
+
+  test("resolves a story's parameters.ovr.blockExternalRequests override, capturing each allowlist in its own group", async ({
+    mainBuild,
+    captureConfiguration,
+    connection,
+  }) => {
+    const tarball = await buildArtifactTarball({
+      "story-open": { blockExternalRequests: false },
+      "story-cdn": { blockExternalRequests: { allow: ["cdn.example.com"] } },
+    });
+    await storage.uploadFile(mainBuild.artifactPath, tarball, "application/gzip");
+
+    await extractBuild(
+      mainBuild.id,
+      [
+        { id: "story-open", title: "Story", name: "Open" },
+        { id: "story-cdn", title: "Story", name: "Cdn" },
+        { id: "story-default", title: "Story", name: "Default" },
+      ],
+      [captureConfiguration],
+      0.1,
+      [],
+      0,
+      ["images.example.com"],
+    );
+
+    const snapshots = await dbClient.snapshots.findByBuild(mainBuild.id);
+    const allowlistByTarget = Object.fromEntries(
+      snapshots.map((snapshot) => [snapshot.targetId, snapshot.externalRequestAllowlist]),
+    );
+    expect(allowlistByTarget).toEqual({
+      "story-open": null,
+      "story-cdn": ["cdn.example.com"],
+      "story-default": ["images.example.com"],
+    });
+
+    const jobs = await collectCaptureGroupJobs(connection, 3);
+    expect(
+      Object.fromEntries(
+        jobs.map((job) => [JSON.stringify(job.externalRequestAllowlist), job.snapshotIds]),
+      ),
+    ).toEqual(
+      Object.fromEntries(
+        snapshots.map((snapshot) => [
+          JSON.stringify(snapshot.externalRequestAllowlist),
+          [snapshot.id],
+        ]),
+      ),
+    );
   });
 
   test("marks a story with parameters.ovr.skip as skipped instead of capturing it", async ({

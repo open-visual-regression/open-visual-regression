@@ -10,6 +10,7 @@ const publishedParameters: Declared<PublishedStoryParameters> = {
   viewports: true,
   diffThreshold: true,
   waitForTimeout: true,
+  blockExternalRequests: true,
   skip: true,
 };
 
@@ -17,6 +18,7 @@ const resolvedParameters: Declared<ResolvedStoryParameters> = {
   viewports: true,
   diffThreshold: true,
   waitForTimeout: true,
+  blockExternalRequests: true,
   skip: true,
 };
 
@@ -30,6 +32,7 @@ describe("parameters.ovr", () => {
       viewports: ["mobile", { browser: "webkit", width: 1440 }],
       diffThreshold: 0.02,
       waitForTimeout: 2000,
+      blockExternalRequests: { allow: ["images.example.com"] },
       skip: false,
     } satisfies PublishedStoryParameters satisfies ResolvedStoryParameters;
 

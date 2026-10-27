@@ -19,6 +19,7 @@ export const run = async (job: ExtractJob): Promise<void> => {
     job.data.diffThreshold,
     job.data.unaffectedTargetIds,
     job.data.waitForTimeout,
+    job.data.externalRequestAllowlist ?? null,
   );
 };
 

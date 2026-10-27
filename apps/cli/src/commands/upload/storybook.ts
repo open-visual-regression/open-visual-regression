@@ -9,6 +9,7 @@ import {
   getApiKey,
   getServerUrl,
   loadOvrConfig,
+  resolveBlockExternalRequests,
   resolveDiffThreshold,
   resolveViewports,
   resolveWaitForTimeout,
@@ -62,6 +63,7 @@ export const createStorybookCommand = (): Command =>
         const viewports = resolveViewports(config);
         const diffThreshold = resolveDiffThreshold(config);
         const waitForTimeout = resolveWaitForTimeout(config);
+        const blockExternalRequests = resolveBlockExternalRequests(config);
         const { branch, commit: commitSha, name, author } = options;
 
         const client = createClient(serverUrl, apiKey);
@@ -99,6 +101,7 @@ export const createStorybookCommand = (): Command =>
             viewports,
             diffThreshold,
             ...(waitForTimeout > 0 && { waitForTimeout }),
+            blockExternalRequests,
             ...(unaffectedTargetIds.length > 0 && { unaffectedTargetIds }),
           }),
         );

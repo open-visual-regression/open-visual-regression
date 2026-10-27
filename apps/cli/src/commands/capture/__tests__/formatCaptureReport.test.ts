@@ -11,6 +11,7 @@ const RESULT: CaptureResult = {
   diffThreshold: 0.05,
   images: [{ hash: "aaaaaaaaaaaa", count: 3, diffPercent: 0, file: null }],
   errors: [],
+  blockedHosts: [],
 };
 
 const UNSTABLE: CaptureResult = {
@@ -73,5 +74,27 @@ describe("formatCaptureReport", () => {
 
     expect(output).toContain("components-button--primary (desktop): play function failed");
     expect(output).toContain("components-card--broken: failed to load: boom");
+  });
+
+  it("should list the hosts a capture blocked and how to allow them, without failing it", () => {
+    const output = formatCaptureReport(
+      {
+        results: [{ ...RESULT, blockedHosts: ["cdn.example.com", "fonts.gstatic.com"] }],
+        issues: [],
+      },
+      false,
+    );
+
+    expect(output).toContain(
+      "components-button--primary (desktop): blocked requests to cdn.example.com, fonts.gstatic.com",
+    );
+    expect(output).toContain("blockExternalRequests");
+    expect(output).toMatch(/components-button--primary .* stable$/m);
+  });
+
+  it("should leave the allow hint out when nothing was blocked", () => {
+    expect(formatCaptureReport({ results: [RESULT], issues: [] }, false)).not.toContain(
+      "blockExternalRequests",
+    );
   });
 });

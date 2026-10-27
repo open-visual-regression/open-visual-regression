@@ -3,6 +3,7 @@ import { withBundleDir } from "@ovr/builds/storybookBundleCache";
 import {
   readStoryParameterOverrides,
   resolveTargetDiffThreshold,
+  resolveTargetExternalRequestAllowlist,
   resolveTargetViewports,
   resolveTargetWaitForTimeout,
   toViewportName,
@@ -92,6 +93,7 @@ export const extractBuild = async (
   diffThreshold: number,
   unaffectedTargetIds: string[] = [],
   waitForTimeout = 0,
+  externalRequestAllowlist: string[] | null = null,
 ): Promise<void> => {
   const build = await dbClient.builds.findById(buildId);
 
@@ -108,6 +110,8 @@ export const extractBuild = async (
       return readStoryParameterOverrides(
         bundleDir,
         targets.map((target) => target.id),
+        {},
+        externalRequestAllowlist,
       );
     },
   );
@@ -147,6 +151,10 @@ export const extractBuild = async (
           targetName: target.name,
           diffThreshold: resolveTargetDiffThreshold(diffThreshold, override),
           waitForTimeout: resolveTargetWaitForTimeout(waitForTimeout, override),
+          externalRequestAllowlist: resolveTargetExternalRequestAllowlist(
+            externalRequestAllowlist,
+            override,
+          ),
         };
         const keepsBaseline = unaffected.has(target.id) && baselineKeys.has(baselineKey(snapshot));
 

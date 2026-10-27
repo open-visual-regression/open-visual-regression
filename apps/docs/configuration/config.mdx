@@ -29,6 +29,7 @@ export default defineConfig({
 | `defaultViewports` | `string[]` | every named viewport | Names from `viewports` captured automatically for every story |
 | `diffThreshold` | `number`, `(0, 1]` | `0.05` | Fraction of pixels that may differ before a snapshot needs review |
 | `waitForTimeout` | `number`, `[0, 30000]` | `0` | Milliseconds to wait before each screenshot, e.g. for slow-loading data or images |
+| `blockExternalRequests` | `boolean \| { allow: string[] }` | `false` | Blocks requests outside the Storybook build. See [below](#blocking-external-requests) |
 | `onlyAffected` | `object` | | Options for [`--only-affected`](/cli/upload-storybook#only-affected-stories). See [below](#only-affected) |
 
 <Note>
@@ -49,6 +50,32 @@ Each entry in `viewports` describes one capture target:
 Unnamed viewports (no `name`) are always opt-in: they can't be referenced by `defaultViewports`, only added inline via a story override.
 
 Individual stories can override some of these options, or skip capture entirely — see [Per-story parameters](/configuration/story-parameters).
+
+## Blocking external requests
+
+By default, stories load whatever they request. Set `blockExternalRequests` to keep screenshots from depending on the network:
+
+| Value | Loads |
+|-------|-------|
+| `false` (default) | Every host |
+| `true` | Only the Storybook build |
+| `{ allow: [...] }` | The Storybook build and the listed hosts |
+
+This includes requests a service worker like [msw](https://mswjs.io) passes through to the network. To keep loading images and fonts from a CDN:
+
+```ts
+export default defineConfig({
+  blockExternalRequests: {
+    allow: ["images.example.com", "fonts.googleapis.com", "fonts.gstatic.com"],
+  },
+});
+```
+
+Each entry is a host (`example.com`), a host and port (`example.com:8443`), or `*.example.com` for its subdomains. A snapshot that requested a blocked host gets a warning in its logs naming the host.
+
+<Note>
+Firefox ignores ports, so `example.com:8443` allows every port there.
+</Note>
 
 ## Only affected
 

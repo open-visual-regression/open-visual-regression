@@ -243,6 +243,80 @@ describe("snapshots", () => {
       expect(logs.some((log) => log.level === "error")).toBe(true);
     });
 
+    describe("external requests", () => {
+      const iframeWithRemoteImages = IFRAME_HTML.replace(
+        "</body>",
+        `<img src="http://images.invalid/a.png" />
+        <img src="http://images.invalid/b.png" />
+        <img src="http://fonts.invalid:8080/c.png" />
+        </body>`,
+      );
+
+      const captureBlockedHostLogs = async (
+        build: { id: string; artifactPath: string },
+        captureConfiguration: Viewport,
+        externalRequestAllowlist: string[] | null,
+      ) => {
+        await uploadArtifactWithIframe(build.artifactPath, iframeWithRemoteImages);
+        const [snapshot] = await dbClient.snapshots.createMany({
+          values: [
+            {
+              buildId: build.id,
+              ...captureConfiguration,
+              targetId: "story-a",
+              externalRequestAllowlist,
+            },
+          ],
+        });
+
+        await captureBuildGroup(build.id, captureConfiguration.browser, [snapshot!.id], {
+          externalRequestAllowlist,
+        });
+
+        const captured = await dbClient.snapshots.findById(snapshot!.id);
+        expect(captured).toMatchObject({ status: "success" });
+
+        const logs = await dbClient.snapshotLogs.findBySnapshot(snapshot!.id);
+        return logs.filter((log) => log.message.startsWith("Blocked requests"));
+      };
+
+      test("should not report blocked hosts when the snapshot doesn't block external requests", async ({
+        mainBuild,
+        captureConfiguration,
+      }) => {
+        expect(await captureBlockedHostLogs(mainBuild, captureConfiguration, null)).toEqual([]);
+      });
+
+      test("should log one warning naming each blocked host", async ({
+        mainBuild,
+        captureConfiguration,
+      }) => {
+        const logs = await captureBlockedHostLogs(mainBuild, captureConfiguration, []);
+
+        expect(logs).toEqual([
+          expect.objectContaining({
+            level: "warning",
+            message: expect.stringContaining("fonts.invalid:8080, images.invalid."),
+          }),
+        ]);
+      });
+
+      test("should leave allowed hosts out of the warning", async ({
+        mainBuild,
+        captureConfiguration,
+      }) => {
+        const logs = await captureBlockedHostLogs(mainBuild, captureConfiguration, [
+          "images.invalid",
+        ]);
+
+        expect(logs).toEqual([
+          expect.objectContaining({
+            message: expect.stringContaining("Blocked requests to fonts.invalid:8080."),
+          }),
+        ]);
+      });
+    });
+
     describe("waitForTimeout", () => {
       const LATE_LOG = "late data loaded";
       const iframeWithLateLog = IFRAME_HTML.replace(

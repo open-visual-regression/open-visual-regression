@@ -4,7 +4,11 @@ import { pathToFileURL } from "node:url";
 
 import { createJiti } from "jiti";
 
-import { MAX_WAIT_FOR_TIMEOUT_MS } from "@ovr/storybook-compat/parameters";
+import {
+  MAX_WAIT_FOR_TIMEOUT_MS,
+  blockExternalRequestsSchema,
+  type BlockExternalRequests,
+} from "@ovr/storybook-compat/parameters";
 
 import type { OvrConfig, Viewport as ConfigViewport } from "./defineConfig";
 
@@ -130,6 +134,18 @@ export const resolveWaitForTimeout = (config: OvrConfig | undefined): number => 
   }
 
   return waitForTimeout;
+};
+
+export const resolveBlockExternalRequests = (
+  config: OvrConfig | undefined,
+): BlockExternalRequests | undefined => {
+  const result = blockExternalRequestsSchema.optional().safeParse(config?.blockExternalRequests);
+
+  if (!result.success) {
+    throw new Error(`ovr.config: "blockExternalRequests" ${result.error.issues[0]?.message}`);
+  }
+
+  return result.data;
 };
 
 export const resolveViewports = (config: OvrConfig | undefined): ResolvedViewport[] => {

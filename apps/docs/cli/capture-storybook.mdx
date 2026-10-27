@@ -54,6 +54,10 @@ render. With `--out`, each distinct image is saved to that directory.
 
 The command exits with status 1 if any capture is unstable or errored, so it can run in CI.
 
+## Blocked requests
+
+With [`blockExternalRequests`](/configuration/config#blocking-external-requests) set, each story lists the hosts it requested that were blocked.
+
 <Note>
   Screenshots can differ slightly from a build's because of fonts and the operating
   system. Compare runs with each other, not with images from a build.

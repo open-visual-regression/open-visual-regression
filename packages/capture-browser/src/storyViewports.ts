@@ -2,6 +2,8 @@ import { chromium, type LaunchOptions } from "playwright";
 
 import {
   MAX_WAIT_FOR_TIMEOUT_MS,
+  blockExternalRequestsSchema,
+  toExternalRequestAllowlist,
   type OvrStoryParameterViewport,
   type OvrStoryParameters,
 } from "@ovr/storybook-compat/parameters";
@@ -63,6 +65,7 @@ export const readStoryParameterOverrides = async (
   bundleDir: string,
   targetIds: string[],
   launchOptions: LaunchOptions = {},
+  allowlist: string[] | null = null,
 ): Promise<StoryParameterOverrides> => {
   const proxy = await startStaticProxy(bundleDir);
   let managed: ManagedBrowser;
@@ -78,7 +81,9 @@ export const readStoryParameterOverrides = async (
   const { browser } = managed;
 
   try {
-    const context = await browser.newContext(blockExternalRequests(browser, proxy.origin));
+    const context = await browser.newContext(
+      blockExternalRequests(browser, proxy.origin, allowlist),
+    );
     const page = await newPage(context);
 
     await page.goto(`${proxy.origin}/iframe.html`, { waitUntil: "load" });
@@ -137,4 +142,16 @@ export const resolveTargetWaitForTimeout = (
     return buildDefault;
   }
   return Math.min(Math.max(Math.round(waitForTimeout), 0), MAX_WAIT_FOR_TIMEOUT_MS);
+};
+
+export const resolveTargetExternalRequestAllowlist = (
+  buildDefault: string[] | null,
+  override: OvrStoryParameters | undefined,
+): string[] | null => {
+  const blockExternalRequests = blockExternalRequestsSchema.safeParse(
+    override?.blockExternalRequests,
+  );
+  return blockExternalRequests.success
+    ? toExternalRequestAllowlist(blockExternalRequests.data)
+    : buildDefault;
 };
