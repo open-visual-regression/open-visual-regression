@@ -2,44 +2,35 @@ import { describe, expect, it } from "vitest";
 
 import type { OvrStoryParameters } from "@ovr/storybook-compat/parameters";
 
-import { parseAllowedHosts } from "../allowedHosts";
 import { resolveTargetExternalRequestAllowlist } from "../storyViewports";
-
-const ALLOW_CDN = parseAllowedHosts("cdn.example.com");
 
 describe("resolveTargetExternalRequestAllowlist", () => {
   it("should use the build default when the story has no override", () => {
     expect(resolveTargetExternalRequestAllowlist(null, undefined)).toBeNull();
-    expect(resolveTargetExternalRequestAllowlist(ALLOW_CDN, { diffThreshold: 0.1 })).toBe(
-      ALLOW_CDN,
-    );
+    expect(
+      resolveTargetExternalRequestAllowlist(["cdn.example.com"], { diffThreshold: 0.1 }),
+    ).toEqual(["cdn.example.com"]);
   });
 
-  it("should let a story turn blocking on when the build doesn't block", () => {
+  it("should use the story's override, replacing the build's allowed hosts", () => {
     expect(resolveTargetExternalRequestAllowlist(null, { blockExternalRequests: true })).toEqual(
       [],
     );
-  });
-
-  it("should let a story turn blocking off when the build blocks", () => {
     expect(
-      resolveTargetExternalRequestAllowlist(ALLOW_CDN, { blockExternalRequests: false }),
+      resolveTargetExternalRequestAllowlist(["cdn.example.com"], { blockExternalRequests: false }),
     ).toBeNull();
-  });
-
-  it("should replace the build's allowed hosts rather than add to them", () => {
     expect(
-      resolveTargetExternalRequestAllowlist(ALLOW_CDN, {
+      resolveTargetExternalRequestAllowlist(["cdn.example.com"], {
         blockExternalRequests: { allow: ["fonts.example.com"] },
       }),
-    ).toEqual(parseAllowedHosts("fonts.example.com"));
+    ).toEqual(["fonts.example.com"]);
   });
 
-  it("should throw, naming the parameter, rather than fall back on an invalid value", () => {
-    expect(() =>
-      resolveTargetExternalRequestAllowlist(null, {
-        blockExternalRequests: "yes",
-      } as unknown as OvrStoryParameters),
-    ).toThrow(/parameters\.ovr\.blockExternalRequests/);
+  it("should fall back to the build default when the override is invalid", () => {
+    expect(
+      resolveTargetExternalRequestAllowlist(["cdn.example.com"], {
+        blockExternalRequests: { allow: ["https://fonts.example.com/"] },
+      } as OvrStoryParameters),
+    ).toEqual(["cdn.example.com"]);
   });
 });

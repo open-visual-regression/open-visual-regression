@@ -23,6 +23,7 @@ import {
 import { createBuildStatusSubscriber, type BuildStatusEvent } from "@ovr/queue/events";
 import { enqueueCaptureGroups, enqueueExtract } from "@ovr/queue/producer";
 import { storage } from "@ovr/storage";
+import type { BlockExternalRequests } from "@ovr/storybook-compat/parameters";
 
 import {
   cancelBuild,
@@ -560,15 +561,15 @@ describe("builds", () => {
       });
     });
 
-    test.for([
+    test.for<[BlockExternalRequests | undefined, string[] | null]>([
       [undefined, null],
       [false, null],
       [true, []],
       [
         { allow: ["images.example.com", "*.cdn.example.com"] },
-        ["images.example.com", "*.cdn.example.com"],
+        ["*.cdn.example.com", "images.example.com"],
       ],
-    ] as const)(
+    ])(
       "stores blockExternalRequests %j as the allowlist %j and passes it to extract",
       async (
         [blockExternalRequests, allowlist],
@@ -590,16 +591,15 @@ describe("builds", () => {
           targets: [{ id: "story-a", title: "Story", name: "A" }],
           viewports: [captureConfiguration],
           diffThreshold: 0.05,
-          blockExternalRequests:
-            typeof blockExternalRequests === "object"
-              ? { allow: [...blockExternalRequests.allow] }
-              : blockExternalRequests,
+          blockExternalRequests,
         });
 
-        expect(
-          (await dbClient.buildExtractDefaults.findByBuild(buildId))?.externalRequestAllowlist,
-        ).toEqual(allowlist);
-        expect((await collectExtractJob(connection)).externalRequestAllowlist).toEqual(allowlist);
+        expect(await dbClient.buildExtractDefaults.findByBuild(buildId)).toMatchObject({
+          externalRequestAllowlist: allowlist,
+        });
+        expect(await collectExtractJob(connection)).toMatchObject({
+          externalRequestAllowlist: allowlist,
+        });
       },
     );
 
@@ -1509,8 +1509,18 @@ describe("builds", () => {
       expect(groups).toHaveLength(2);
       expect(groups).toEqual(
         expect.arrayContaining([
-          { buildId, browser: "chromium", snapshotIds: [chromium!.id] },
-          { buildId, browser: "firefox", snapshotIds: [firefox!.id] },
+          {
+            buildId,
+            browser: "chromium",
+            externalRequestAllowlist: null,
+            snapshotIds: [chromium!.id],
+          },
+          {
+            buildId,
+            browser: "firefox",
+            externalRequestAllowlist: null,
+            snapshotIds: [firefox!.id],
+          },
         ]),
       );
     });

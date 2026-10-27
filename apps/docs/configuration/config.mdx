@@ -29,7 +29,7 @@ export default defineConfig({
 | `defaultViewports` | `string[]` | every named viewport | Names from `viewports` captured automatically for every story |
 | `diffThreshold` | `number`, `(0, 1]` | `0.05` | Fraction of pixels that may differ before a snapshot needs review |
 | `waitForTimeout` | `number`, `[0, 30000]` | `0` | Milliseconds to wait before each screenshot, e.g. for slow-loading data or images |
-| `blockExternalRequests` | `boolean \| { allow: string[] }` | `false` | Blocks requests to hosts outside the Storybook build. See [below](#blocking-external-requests) |
+| `blockExternalRequests` | `boolean \| { allow: string[] }` | `false` | Blocks requests outside the Storybook build. See [below](#blocking-external-requests) |
 | `onlyAffected` | `object` | | Options for [`--only-affected`](/cli/upload-storybook#only-affected-stories). See [below](#only-affected) |
 
 <Note>
@@ -53,32 +53,28 @@ Individual stories can override some of these options, or skip capture entirely 
 
 ## Blocking external requests
 
-By default, captures load whatever a story requests, from the Storybook build or anywhere else. Set `blockExternalRequests` to keep stories from reaching the network, so a slow or changing third party can't make their screenshots flaky:
+By default, stories load whatever they request. Set `blockExternalRequests` to keep screenshots from depending on the network:
 
-| Value | Captures load |
-|-------|---------------|
+| Value | Loads |
+|-------|-------|
 | `false` (default) | Every host |
 | `true` | Only the Storybook build |
 | `{ allow: [...] }` | The Storybook build and the listed hosts |
 
-Blocking covers requests a service worker makes too, such as ones [msw](https://mswjs.io) passes through to the network because no handler mocks them. To keep loading images and fonts from a CDN while blocking everything else, allow their hosts:
+This includes requests a service worker like [msw](https://mswjs.io) passes through to the network. To keep loading images and fonts from a CDN:
 
 ```ts
 export default defineConfig({
   blockExternalRequests: {
-    allow: ["images.example.com", "fonts.googleapis.com", "fonts.gstatic.com", "*.cdn.example.com"],
+    allow: ["images.example.com", "fonts.googleapis.com", "fonts.gstatic.com"],
   },
 });
 ```
 
-Each entry is a host (`images.example.com`), a host and port (`images.example.com:8443`), or `*.example.com` for every subdomain of `example.com` (list `example.com` too to allow it). Captures wait for allowed hosts the same way they wait for the Storybook build, including requests a service worker answers.
-
-When a capture blocks a request, the snapshot's logs get one warning naming each blocked host, since the request itself only fails with a generic error like `net::ERR_FAILED`. Check it when a snapshot shows a spinner, a broken image, or a fallback font.
-
-Override the setting for one story with [`parameters.ovr.blockExternalRequests`](/configuration/story-parameters#blocking-external-requests).
+Each entry is a host (`example.com`), a host and port (`example.com:8443`), or `*.example.com` for its subdomains. A snapshot that requested a blocked host gets a warning in its logs naming the host.
 
 <Note>
-Browsers apply the list slightly differently. WebKit also lets `images.example.com` load its subdomains and `*.example.com` load `example.com` itself. Firefox matches by hostname suffix and can't limit an entry to one port, so `images.example.com:8443` allows every port there.
+Firefox ignores ports, so `example.com:8443` allows every port there.
 </Note>
 
 ## Only affected

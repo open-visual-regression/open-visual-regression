@@ -31,12 +31,9 @@ export type OvrConfig = {
    */
   waitForTimeout?: number;
   /**
-   * Blocks requests to hosts outside the Storybook build, including ones a
-   * service worker like msw passes through to the network. `true` blocks
-   * every external host, `{ allow: [...] }` every one but these, like an
-   * image or font CDN. Entries are `example.com`, `example.com:8443`, or
-   * `*.example.com` for its subdomains. Override per story via
-   * `parameters.ovr.blockExternalRequests`.
+   * Blocks requests outside the Storybook build. `{ allow: [...] }` lets the
+   * listed hosts through, e.g. `images.example.com` or `*.example.com`.
+   * Override per story via `parameters.ovr.blockExternalRequests`.
    * @default false
    */
   blockExternalRequests?: BlockExternalRequests;
@@ -44,7 +41,6 @@ export type OvrConfig = {
   onlyAffected?: OnlyAffectedConfig;
 };
 
-/** `true` blocks every external host, `{ allow }` every one but these, `false` none. */
 export type BlockExternalRequests = boolean | { allow: string[] };
 
 export type OnlyAffectedConfig = {
@@ -101,12 +97,9 @@ export const defineConfig = <const V extends readonly Viewport[] = []>(config: {
    */
   waitForTimeout?: number;
   /**
-   * Blocks requests to hosts outside the Storybook build, including ones a
-   * service worker like msw passes through to the network. `true` blocks
-   * every external host, `{ allow: [...] }` every one but these, like an
-   * image or font CDN. Entries are `example.com`, `example.com:8443`, or
-   * `*.example.com` for its subdomains. Override per story via
-   * `parameters.ovr.blockExternalRequests`.
+   * Blocks requests outside the Storybook build. `{ allow: [...] }` lets the
+   * listed hosts through, e.g. `images.example.com` or `*.example.com`.
+   * Override per story via `parameters.ovr.blockExternalRequests`.
    * @default false
    */
   blockExternalRequests?: BlockExternalRequests;

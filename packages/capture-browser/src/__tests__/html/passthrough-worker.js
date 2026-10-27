@@ -1,5 +1,4 @@
-// Fetches requests to other origins itself, like msw does for requests it doesn't mock, and
-// marks what it answered so a test can tell.
+// Fetches requests to other origins itself, like msw does for requests it doesn't mock.
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
 self.addEventListener("fetch", (event) => {

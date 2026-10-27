@@ -1,11 +1,6 @@
 import type { Browser, BrowserContextOptions, Page, Request } from "playwright";
 
-import {
-  isAllowedHost,
-  toProxyBypass,
-  type BrowserEngine,
-  type ExternalRequestAllowlist,
-} from "./allowedHosts";
+import { isAllowedUrl, toProxyBypass } from "./allowedHosts";
 import type { CaptureStrategy } from "./captureStrategies";
 import { BOOT_TIMEOUT_MS } from "./timeouts";
 
@@ -32,48 +27,42 @@ export const getCaptureViewport = (
 
 const UNREACHABLE_PROXY = "http://127.0.0.1:9";
 
-// With an allowlist, blocks other hosts with a proxy that refuses every connection. Blocking them
-// with page.route would make Playwright report a request a service worker answers, like an msw
-// mock, only once it has a response, so settling would not wait for it. The proxy also catches
-// what a service worker fetches itself, which page.route never saw. Allowed hosts bypass the
-// proxy, so they load like the capture origin, for the page and its service workers alike.
-// Firefox can't exclude a single port from the proxy, so other localhost ports stay reachable
-// there. Without an allowlist, nothing is blocked.
+// Blocks other hosts with a proxy that refuses every connection. Blocking them with page.route
+// would make Playwright report a request a service worker answers, like an msw mock, only once
+// it has a response, so settling would not wait for it. Firefox can't exclude a single port from
+// the proxy, so other localhost ports stay reachable there.
 export const blockExternalRequests = (
   browser: Browser,
   origin: string,
-  allowedHosts: ExternalRequestAllowlist,
+  allowlist: readonly string[] | null,
 ): Pick<BrowserContextOptions, "proxy"> => {
-  if (allowedHosts === null) {
+  if (allowlist === null) {
     return {};
   }
 
   const { host, hostname } = new URL(origin);
-  const engine = browser.browserType().name() as BrowserEngine;
-  const target = engine === "firefox" ? [hostname] : ["<-loopback>", host];
-  const bypass = [...target, ...toProxyBypass(engine, allowedHosts)].join(",");
+  const browserName = browser.browserType().name();
+  const target = browserName === "firefox" ? [hostname] : ["<-loopback>", host];
+  const bypass = [...target, ...toProxyBypass(browserName, allowlist)].join(",");
 
   return { proxy: { server: UNREACHABLE_PROXY, bypass } };
 };
 
-const BLOCKABLE_PROTOCOLS = new Set(["http:", "https:", "ws:", "wss:"]);
-
 export type BlockedHosts = {
-  // The hosts blocked since the last call, so each snapshot reports its own.
+  // Hosts blocked since the last call.
   take: () => string[];
   dispose: () => void;
 };
 
-// The refusing proxy only surfaces as a generic network error, so a failed request to a host
-// that isn't allowed is reported as blocked. Listens on the context so requests a service worker
-// makes are seen where the browser reports them.
+// A blocked request only fails with a generic network error, so report the host of any failed
+// request that isn't allowed.
 export const trackBlockedHosts = (
   page: Page,
   origin: string,
-  allowedHosts: ExternalRequestAllowlist,
+  allowlist: readonly string[] | null,
 ): BlockedHosts => {
-  if (allowedHosts === null) {
-    return { take: () => [], dispose: () => undefined };
+  if (allowlist === null) {
+    return { take: () => [], dispose: () => {} };
   }
 
   const { host: originHost } = new URL(origin);
@@ -81,21 +70,17 @@ export const trackBlockedHosts = (
   let blocked = new Set<string>();
 
   const onRequestFailed = (request: Request) => {
-    let url: URL;
-    try {
-      url = new URL(request.url());
-    } catch {
-      return;
-    }
+    const url = new URL(request.url());
     if (
-      BLOCKABLE_PROTOCOLS.has(url.protocol) &&
+      url.protocol.startsWith("http") &&
       url.host !== originHost &&
-      !isAllowedHost(url, allowedHosts)
+      !isAllowedUrl(url, allowlist)
     ) {
       blocked.add(url.host);
     }
   };
 
+  // The context also sees requests a service worker makes.
   context.on("requestfailed", onRequestFailed);
 
   return {
@@ -104,9 +89,7 @@ export const trackBlockedHosts = (
       blocked = new Set();
       return hosts;
     },
-    dispose: () => {
-      context.off("requestfailed", onRequestFailed);
-    },
+    dispose: () => context.off("requestfailed", onRequestFailed),
   };
 };
 

@@ -16,7 +16,8 @@
     "fixtures:clean": "node scripts/build-fixtures.mjs --clean"
   },
   "dependencies": {
-    "@streamparser/json-node": "^0.0.26"
+    "@streamparser/json-node": "^0.0.26",
+    "zod": "^4.5.1"
   },
   "devDependencies": {
     "@ovr/typescript-config": "workspace:*",

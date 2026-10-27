@@ -1,10 +1,7 @@
 import { Command } from "commander";
 
-import {
-  describeAllowedHostLimits,
-  type ExternalRequestAllowlist,
-} from "@ovr/capture-browser/allowedHosts";
 import { readStoryTargets } from "@ovr/storybook-compat/manifest";
+import { toExternalRequestAllowlist } from "@ovr/storybook-compat/parameters";
 
 import {
   loadOvrConfig,
@@ -71,7 +68,7 @@ const captureStorybook = async (
   const viewports = resolveViewports(config);
   const waitForTimeout = resolveWaitForTimeout(config);
   const diffThreshold = resolveDiffThreshold(config);
-  const allowlist = resolveBlockExternalRequests(config);
+  const externalRequestAllowlist = toExternalRequestAllowlist(resolveBlockExternalRequests(config));
   const launchOptions = options.executablePath ? { executablePath: options.executablePath } : {};
 
   const stories = await readStoryTargets(options.dir);
@@ -97,7 +94,7 @@ const captureStorybook = async (
     options.dir,
     storyIds,
     launchOptions,
-    allowlist,
+    externalRequestAllowlist,
   );
 
   const issues: CaptureIssue[] = [];
@@ -113,14 +110,6 @@ const captureStorybook = async (
       return [];
     }
 
-    let targetAllowlist: ExternalRequestAllowlist;
-    try {
-      targetAllowlist = storyViewports.resolveTargetExternalRequestAllowlist(allowlist, override);
-    } catch (error) {
-      issues.push({ targetId: storyId, message: describeError(error) });
-      return [];
-    }
-
     return storyViewports
       .resolveTargetViewports(viewports, override?.viewports)
       .map((viewport) => ({
@@ -131,20 +120,16 @@ const captureStorybook = async (
         viewportHeight: viewport.viewportHeight ?? 0,
         waitForTimeout: storyViewports.resolveTargetWaitForTimeout(waitForTimeout, override),
         diffThreshold: storyViewports.resolveTargetDiffThreshold(diffThreshold, override),
-        allowlist: targetAllowlist,
+        externalRequestAllowlist: storyViewports.resolveTargetExternalRequestAllowlist(
+          externalRequestAllowlist,
+          override,
+        ),
       }))
       .filter((target) => !options.viewport || options.viewport.includes(target.viewportName));
   });
 
   if (targets.length === 0 && issues.length === 0) {
     throw new Error("Nothing to capture: no story has a matching viewport.");
-  }
-
-  const warnings = new Set(
-    targets.flatMap((target) => describeAllowedHostLimits(target.browser, target.allowlist ?? [])),
-  );
-  for (const warning of warnings) {
-    console.error(`Warning: ${warning}`);
   }
 
   const results = await runCaptures({

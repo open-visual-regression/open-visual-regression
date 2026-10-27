@@ -5,8 +5,7 @@ const HEADERS = ["TARGET", "BROWSER", "VIEWPORT", "RUNS", "IMAGES", "MAX DIFF%",
 
 const DIFF_PERCENT_PRECISION = 2;
 
-const BLOCKED_HOSTS_HINT =
-  "With blockExternalRequests set, captures only load the Storybook build and the hosts it allows. Add hosts with { allow: [...] } in ovr.config or the story's parameters.ovr.";
+const BLOCKED_HOSTS_HINT = "Add blocked hosts to blockExternalRequests.allow to load them.";
 
 export type CaptureIssue = {
   targetId: string;

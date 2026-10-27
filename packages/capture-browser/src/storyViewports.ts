@@ -2,11 +2,12 @@ import { chromium, type LaunchOptions } from "playwright";
 
 import {
   MAX_WAIT_FOR_TIMEOUT_MS,
+  blockExternalRequestsSchema,
+  toExternalRequestAllowlist,
   type OvrStoryParameterViewport,
   type OvrStoryParameters,
 } from "@ovr/storybook-compat/parameters";
 
-import { parseBlockExternalRequests, type ExternalRequestAllowlist } from "./allowedHosts";
 import { launchBrowser, newPage, type ManagedBrowser } from "./browser";
 import { blockExternalRequests } from "./page";
 import { startStaticProxy } from "./staticProxy";
@@ -64,7 +65,7 @@ export const readStoryParameterOverrides = async (
   bundleDir: string,
   targetIds: string[],
   launchOptions: LaunchOptions = {},
-  allowedHosts: ExternalRequestAllowlist = null,
+  allowlist: string[] | null = null,
 ): Promise<StoryParameterOverrides> => {
   const proxy = await startStaticProxy(bundleDir);
   let managed: ManagedBrowser;
@@ -81,7 +82,7 @@ export const readStoryParameterOverrides = async (
 
   try {
     const context = await browser.newContext(
-      blockExternalRequests(browser, proxy.origin, allowedHosts),
+      blockExternalRequests(browser, proxy.origin, allowlist),
     );
     const page = await newPage(context);
 
@@ -130,25 +131,6 @@ export const resolveTargetDiffThreshold = (
   override: OvrStoryParameters | undefined,
 ): number => override?.diffThreshold ?? buildDefault;
 
-// Unlike the other story parameters, an invalid value throws rather than falling back, since
-// falling back could block hosts the story needs, or load ones it meant to block.
-export const resolveTargetExternalRequestAllowlist = (
-  buildDefault: ExternalRequestAllowlist,
-  override: OvrStoryParameters | undefined,
-): ExternalRequestAllowlist => {
-  if (override?.blockExternalRequests === undefined) {
-    return buildDefault;
-  }
-  try {
-    return parseBlockExternalRequests(override.blockExternalRequests);
-  } catch (error) {
-    throw new Error(
-      `parameters.ovr.blockExternalRequests: ${error instanceof Error ? error.message : String(error)}`,
-      { cause: error },
-    );
-  }
-};
-
 // Story parameters aren't validated at upload, so a bad value falls back to the build
 // default and an out-of-range one is clamped rather than failing the whole build.
 export const resolveTargetWaitForTimeout = (
@@ -160,4 +142,16 @@ export const resolveTargetWaitForTimeout = (
     return buildDefault;
   }
   return Math.min(Math.max(Math.round(waitForTimeout), 0), MAX_WAIT_FOR_TIMEOUT_MS);
+};
+
+export const resolveTargetExternalRequestAllowlist = (
+  buildDefault: string[] | null,
+  override: OvrStoryParameters | undefined,
+): string[] | null => {
+  const blockExternalRequests = blockExternalRequestsSchema.safeParse(
+    override?.blockExternalRequests,
+  );
+  return blockExternalRequests.success
+    ? toExternalRequestAllowlist(blockExternalRequests.data)
+    : buildDefault;
 };

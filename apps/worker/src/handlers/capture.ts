@@ -9,6 +9,7 @@ export const createRun =
   async (job: CaptureGroupJob): Promise<void> => {
     await captureBuildGroup(job.data.buildId, job.data.browser, job.data.snapshotIds, {
       shutdownSignal,
+      externalRequestAllowlist: job.data.externalRequestAllowlist,
     });
   };
 

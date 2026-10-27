@@ -56,13 +56,7 @@ The command exits with status 1 if any capture is unstable or errored, so it can
 
 ## Blocked requests
 
-With [`blockExternalRequests`](/configuration/config#blocking-external-requests) set in `ovr.config` or a story's parameters, captures block external hosts the same way a build does. A capture that requested a blocked host lists it under the table:
-
-```
-components-card--hero (desktop): blocked requests to fonts.gstatic.com, images.example.com
-```
-
-Add the hosts a story needs to its `allow` list.
+With [`blockExternalRequests`](/configuration/config#blocking-external-requests) set, each story lists the hosts it requested that were blocked.
 
 <Note>
   Screenshots can differ slightly from a build's because of fonts and the operating

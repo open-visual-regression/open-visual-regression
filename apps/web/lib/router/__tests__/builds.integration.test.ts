@@ -382,6 +382,20 @@ describe("builds", () => {
       expect(await confirm({ allow: ["images.example.com"] })).toEqual(["images.example.com"]);
     });
 
+    test("should reject an allowed host that isn't a host", async ({ admin: _ }) => {
+      const { apiKey } = await createProjectWithApiKey();
+      setApiKeyHeader(apiKey);
+
+      const [error] = await serverClient.builds.confirmUpload({
+        buildId: crypto.randomUUID(),
+        targets: [{ id: "story-a", title: "Story", name: "A" }],
+        viewports: VIEWPORTS,
+        blockExternalRequests: { allow: ["https://images.example.com/"] },
+      });
+
+      expect(error?.code).toBe("BAD_REQUEST");
+    });
+
     test("should reject a wait before capture longer than 30 seconds", async ({ admin: _ }) => {
       const { apiKey } = await createProjectWithApiKey();
       setApiKeyHeader(apiKey);

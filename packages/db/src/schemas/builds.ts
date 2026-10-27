@@ -152,7 +152,6 @@ export const buildExtractDefaults = pgTable("build_extract_defaults", {
   viewports: jsonb().$type<BuildExtractDefaultViewport[]>().notNull(),
   diffThreshold: numeric("diff_threshold", { mode: "number", precision: 3, scale: 2 }).notNull(),
   waitForTimeout: integer("wait_for_timeout").notNull().default(0),
-  // Null loads every external host. A list blocks every external host but the ones on it.
   externalRequestAllowlist: jsonb("external_request_allowlist").$type<string[]>(),
   unaffectedTargetIds: jsonb("unaffected_target_ids").$type<string[]>().notNull().default([]),
   createdAt: utcTimestamp("created_at")
@@ -203,7 +202,7 @@ export const snapshots = pgTable(
       .notNull()
       .default(0.05),
     waitForTimeout: integer("wait_for_timeout").notNull().default(0),
-    // Null loads every external host. A list blocks every external host but the ones on it.
+    // null means external requests aren't blocked.
     externalRequestAllowlist: jsonb("external_request_allowlist").$type<string[]>(),
     queuedAt: utcTimestamp("queued_at").default(sql`now()`),
     startedAt: utcTimestamp("started_at"),

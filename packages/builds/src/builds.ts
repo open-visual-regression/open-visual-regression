@@ -17,6 +17,10 @@ import {
   publishBuildStatusEvent,
 } from "@ovr/queue/producer";
 import { storage } from "@ovr/storage";
+import {
+  toExternalRequestAllowlist,
+  type BlockExternalRequests,
+} from "@ovr/storybook-compat/parameters";
 
 import { toCaptureGroups } from "./lib/captureGroups";
 import {
@@ -52,21 +56,11 @@ type ConfirmBuildUploadInput = {
   viewports: Viewport[];
   diffThreshold: number;
   waitForTimeout?: number;
-  blockExternalRequests?: boolean | { allow: string[] };
+  blockExternalRequests?: BlockExternalRequests;
   unaffectedTargetIds?: string[];
 };
 
 export const DEFAULT_DIFF_THRESHOLD = 0.05;
-
-// The worker validates the hosts when it reads the build's stories.
-const toExternalRequestAllowlist = (
-  blockExternalRequests: ConfirmBuildUploadInput["blockExternalRequests"],
-): string[] | null => {
-  if (blockExternalRequests === undefined || blockExternalRequests === false) {
-    return null;
-  }
-  return blockExternalRequests === true ? [] : blockExternalRequests.allow;
-};
 
 export const getArtifactPath = (projectId: string, buildId: string): string =>
   `${projectId}/builds/${buildId}/artifact.tar.gz`;

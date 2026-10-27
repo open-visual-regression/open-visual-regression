@@ -5,10 +5,10 @@ import { pathToFileURL } from "node:url";
 import { createJiti } from "jiti";
 
 import {
-  parseBlockExternalRequests,
-  type ExternalRequestAllowlist,
-} from "@ovr/capture-browser/allowedHosts";
-import { MAX_WAIT_FOR_TIMEOUT_MS } from "@ovr/storybook-compat/parameters";
+  MAX_WAIT_FOR_TIMEOUT_MS,
+  blockExternalRequestsSchema,
+  type BlockExternalRequests,
+} from "@ovr/storybook-compat/parameters";
 
 import type { OvrConfig, Viewport as ConfigViewport } from "./defineConfig";
 
@@ -138,14 +138,14 @@ export const resolveWaitForTimeout = (config: OvrConfig | undefined): number => 
 
 export const resolveBlockExternalRequests = (
   config: OvrConfig | undefined,
-): ExternalRequestAllowlist => {
-  try {
-    return parseBlockExternalRequests(config?.blockExternalRequests);
-  } catch (error) {
-    throw new Error(
-      `ovr.config: "blockExternalRequests": ${error instanceof Error ? error.message : String(error)}`,
-    );
+): BlockExternalRequests | undefined => {
+  const result = blockExternalRequestsSchema.optional().safeParse(config?.blockExternalRequests);
+
+  if (!result.success) {
+    throw new Error(`ovr.config: "blockExternalRequests" ${result.error.issues[0]?.message}`);
   }
+
+  return result.data;
 };
 
 export const resolveViewports = (config: OvrConfig | undefined): ResolvedViewport[] => {

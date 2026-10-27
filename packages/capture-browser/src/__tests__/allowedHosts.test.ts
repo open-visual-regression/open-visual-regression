@@ -1,194 +1,46 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, it } from "vitest";
 
-import {
-  allowlistKey,
-  describeAllowedHostLimits,
-  deserializeAllowlist,
-  parseBlockExternalRequests,
-  serializeAllowlist,
-  formatAllowedHost,
-  isAllowedHost,
-  parseAllowedHost,
-  parseAllowedHosts,
-  toProxyBypass,
-} from "../allowedHosts";
+import { isAllowedUrl, toProxyBypass } from "../allowedHosts";
 
-describe("parseAllowedHosts", () => {
-  test("allows nothing for an empty value", () => {
-    expect(parseAllowedHosts("")).toEqual([]);
-    expect(parseAllowedHosts(" , ,")).toEqual([]);
-    expect(parseAllowedHosts([])).toEqual([]);
-  });
+describe("allowedHosts", () => {
+  describe("isAllowedUrl", () => {
+    const allowlist = ["images.example.com", "*.fonts.net", "cdn.example.com:8443"];
+    const isAllowed = (url: string) => isAllowedUrl(new URL(url), allowlist);
 
-  test("reads a single host", () => {
-    expect(parseAllowedHosts("images.example.com")).toEqual([
-      { hostname: "images.example.com", port: null, subdomains: false },
-    ]);
-  });
-
-  test("reads several hosts, trimming whitespace and dropping duplicates", () => {
-    expect(
-      parseAllowedHosts(
-        " Images.Example.com ,*.fonts.net:443,\timages.example.com, 10.0.0.5:8080 ",
-      ),
-    ).toEqual([
-      { hostname: "images.example.com", port: null, subdomains: false },
-      { hostname: "fonts.net", port: 443, subdomains: true },
-      { hostname: "10.0.0.5", port: 8080, subdomains: false },
-    ]);
-  });
-
-  test("reads a list the same way as a comma-separated string", () => {
-    expect(parseAllowedHosts(["a.example.com", " b.example.com "])).toEqual(
-      parseAllowedHosts("a.example.com,b.example.com"),
-    );
-  });
-
-  test("reads a bracketed IPv6 address with or without a port", () => {
-    expect(parseAllowedHost("[2001:db8::1]")).toEqual({
-      hostname: "[2001:db8::1]",
-      port: null,
-      subdomains: false,
+    it("should match an exact host on any port, but not its subdomains", () => {
+      expect(isAllowed("https://images.example.com/a.png")).toBe(true);
+      expect(isAllowed("http://images.example.com:8080/a.png")).toBe(true);
+      expect(isAllowed("https://sub.images.example.com/a.png")).toBe(false);
     });
-    expect(parseAllowedHost("[2001:db8::1]:8443").port).toBe(8443);
+
+    it("should match a wildcard's subdomains, but not the domain itself", () => {
+      expect(isAllowed("https://static.fonts.net/a.woff2")).toBe(true);
+      expect(isAllowed("https://fonts.net/a.woff2")).toBe(false);
+      expect(isAllowed("https://evilfonts.net/a.woff2")).toBe(false);
+    });
+
+    it("should match a port, counting the scheme's default port", () => {
+      expect(isAllowed("https://cdn.example.com:8443/a.png")).toBe(true);
+      expect(isAllowed("https://cdn.example.com/a.png")).toBe(false);
+      expect(isAllowedUrl(new URL("https://cdn.example.com/a.png"), ["cdn.example.com:443"])).toBe(
+        true,
+      );
+    });
   });
 
-  test.each([
-    ["*", /every host/],
-    ["https://images.example.com", /without a scheme or path/],
-    ["images.example.com/assets", /without a scheme or path/],
-    [".example.com", /\*\.example\.com/],
-    ["images.*.example.com", /wildcard/],
-    ["*example.com", /wildcard/],
-    ["*.10.0.0.5", /IP address/],
-    ["exa mple.com", /not a valid hostname/],
-    ["-bad.example.com", /not a valid hostname/],
-    ["300.1.1.1", /not a valid hostname/],
-    ["2001:db8::1", /not a valid hostname/],
-    ["example.com:0", /port/],
-    ["example.com:65536", /port/],
-    ["example.com:https", /port/],
-    ["example.com:", /port/],
-  ])("rejects %j", (entry, message) => {
-    expect(() => parseAllowedHost(entry)).toThrow(message);
-  });
+  describe("toProxyBypass", () => {
+    const allowlist = ["*.fonts.net", "cdn.example.com:8443", "images.example.com"];
 
-  test("reports every invalid entry at once", () => {
-    expect(() => parseAllowedHosts("ok.example.com,*,https://bad.example.com")).toThrow(
-      /"\*".*; "https:\/\/bad\.example\.com"/,
-    );
-  });
+    it.each(["chromium", "webkit"])("should pass the entries through for %s", (browserName) => {
+      expect(toProxyBypass(browserName, allowlist)).toEqual(allowlist);
+    });
 
-  test("formats a host the way it was written", () => {
-    for (const entry of ["example.com", "*.example.com:8443", "[::1]:80", "10.0.0.5"]) {
-      expect(formatAllowedHost(parseAllowedHost(entry))).toBe(entry);
-    }
-  });
-});
-
-describe("isAllowedHost", () => {
-  const allowed = parseAllowedHosts("images.example.com,*.fonts.net,cdn.example.com:8443");
-  const check = (url: string) => isAllowedHost(new URL(url), allowed);
-
-  test("matches an exact host on any port", () => {
-    expect(check("https://images.example.com/a.png")).toBe(true);
-    expect(check("http://images.example.com:8080/a.png")).toBe(true);
-    expect(check("https://sub.images.example.com/a.png")).toBe(false);
-  });
-
-  test("matches a wildcard's subdomains but not the domain itself", () => {
-    expect(check("https://static.fonts.net/a.woff2")).toBe(true);
-    expect(check("https://a.b.fonts.net/a.woff2")).toBe(true);
-    expect(check("https://fonts.net/a.woff2")).toBe(false);
-    expect(check("https://evilfonts.net/a.woff2")).toBe(false);
-  });
-
-  test("matches a port, counting the scheme's default port", () => {
-    expect(check("https://cdn.example.com:8443/a.png")).toBe(true);
-    expect(check("https://cdn.example.com/a.png")).toBe(false);
-    expect(
-      isAllowedHost(
-        new URL("https://cdn.example.com/a.png"),
-        parseAllowedHosts("cdn.example.com:443"),
-      ),
-    ).toBe(true);
-  });
-});
-
-describe("toProxyBypass", () => {
-  const allowed = parseAllowedHosts("images.example.com,*.fonts.net,cdn.example.com:8443,[::1]:80");
-
-  test("passes every entry through as written for Chromium and WebKit", () => {
-    const expected = ["images.example.com", "*.fonts.net", "cdn.example.com:8443", "[::1]:80"];
-    expect(toProxyBypass("chromium", allowed)).toEqual(expected);
-    expect(toProxyBypass("webkit", allowed)).toEqual(expected);
-  });
-
-  test("writes hostname suffixes without ports for Firefox", () => {
-    expect(toProxyBypass("firefox", allowed)).toEqual([
-      "images.example.com",
-      ".fonts.net",
-      "cdn.example.com",
-      "::1",
-    ]);
-  });
-});
-
-describe("describeAllowedHostLimits", () => {
-  const allowed = parseAllowedHosts("images.example.com,cdn.example.com:8443");
-
-  test("warns that Firefox allows a host with a port on every port", () => {
-    const warnings = describeAllowedHostLimits("firefox", allowed);
-    expect(warnings).toHaveLength(1);
-    expect(warnings[0]).toMatch(/cdn\.example\.com on any port.*cdn\.example\.com:8443/);
-  });
-
-  test("has nothing to warn about for Chromium and WebKit", () => {
-    expect(describeAllowedHostLimits("chromium", allowed)).toEqual([]);
-    expect(describeAllowedHostLimits("webkit", allowed)).toEqual([]);
-  });
-});
-
-describe("parseBlockExternalRequests", () => {
-  test("blocks nothing when unset or false", () => {
-    expect(parseBlockExternalRequests(undefined)).toBeNull();
-    expect(parseBlockExternalRequests(false)).toBeNull();
-  });
-
-  test("blocks every external host when true", () => {
-    expect(parseBlockExternalRequests(true)).toEqual([]);
-  });
-
-  test("blocks every external host but the allowed ones", () => {
-    expect(parseBlockExternalRequests({ allow: ["images.example.com", "*.fonts.net"] })).toEqual([
-      { hostname: "images.example.com", port: null, subdomains: false },
-      { hostname: "fonts.net", port: null, subdomains: true },
-    ]);
-  });
-
-  test.each([["yes"], [1], [null], [{}], [{ allow: "images.example.com" }], [{ allow: [1] }]])(
-    "rejects %j",
-    (value) => {
-      expect(() => parseBlockExternalRequests(value)).toThrow(/true, false, or \{ allow/);
-    },
-  );
-
-  test("rejects an invalid allowed host", () => {
-    expect(() => parseBlockExternalRequests({ allow: ["https://x.com/"] })).toThrow(/https:/);
-  });
-});
-
-describe("stored allowlists", () => {
-  test("round-trips, keeping null apart from an empty list", () => {
-    for (const allowlist of [null, [], parseAllowedHosts("*.fonts.net,images.example.com:8443")]) {
-      expect(deserializeAllowlist(serializeAllowlist(allowlist))).toEqual(allowlist);
-    }
-    expect(deserializeAllowlist(undefined)).toBeNull();
-  });
-
-  test("keys allowlists by what they block, not their order", () => {
-    expect(allowlistKey(["b.com", "a.com"])).toBe(allowlistKey(["a.com", "b.com"]));
-    expect(allowlistKey(null)).not.toBe(allowlistKey([]));
-    expect(allowlistKey(undefined)).toBe(allowlistKey(null));
+    it("should write hostname suffixes without ports for Firefox", () => {
+      expect(toProxyBypass("firefox", allowlist)).toEqual([
+        ".fonts.net",
+        "cdn.example.com",
+        "images.example.com",
+      ]);
+    });
   });
 });

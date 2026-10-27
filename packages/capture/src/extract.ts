@@ -1,11 +1,6 @@
 import { toCaptureGroups } from "@ovr/builds/lib/captureGroups";
 import { withBundleDir } from "@ovr/builds/storybookBundleCache";
 import {
-  deserializeAllowlist,
-  serializeAllowlist,
-  type ExternalRequestAllowlist,
-} from "@ovr/capture-browser/allowedHosts";
-import {
   readStoryParameterOverrides,
   resolveTargetDiffThreshold,
   resolveTargetExternalRequestAllowlist,
@@ -106,16 +101,6 @@ export const extractBuild = async (
     throw new Error(`Build not found: ${buildId}`);
   }
 
-  let allowlist: ExternalRequestAllowlist;
-  try {
-    allowlist = deserializeAllowlist(externalRequestAllowlist);
-  } catch (error) {
-    throw new Error(
-      `ovr.config blockExternalRequests: ${error instanceof Error ? error.message : String(error)}`,
-      { cause: error },
-    );
-  }
-
   const { overrides, failures } = await withBundleDir(
     buildId,
     build.artifactPath,
@@ -126,26 +111,10 @@ export const extractBuild = async (
         bundleDir,
         targets.map((target) => target.id),
         {},
-        allowlist,
+        externalRequestAllowlist,
       );
     },
   );
-
-  // A story whose override can't be read fails like one that can't load, rather than falling
-  // back to the build's setting.
-  const targetAllowlists = new Map<string, string[] | null>();
-  for (const target of targets) {
-    try {
-      targetAllowlists.set(
-        target.id,
-        serializeAllowlist(
-          resolveTargetExternalRequestAllowlist(allowlist, overrides.get(target.id)),
-        ),
-      );
-    } catch (error) {
-      failures.set(target.id, error instanceof Error ? error.message : String(error));
-    }
-  }
 
   const unaffected = new Set(unaffectedTargetIds);
   const baselineKeys = await findBaselineKeys(build.projectId, unaffected);
@@ -182,7 +151,10 @@ export const extractBuild = async (
           targetName: target.name,
           diffThreshold: resolveTargetDiffThreshold(diffThreshold, override),
           waitForTimeout: resolveTargetWaitForTimeout(waitForTimeout, override),
-          externalRequestAllowlist: targetAllowlists.get(target.id) ?? null,
+          externalRequestAllowlist: resolveTargetExternalRequestAllowlist(
+            externalRequestAllowlist,
+            override,
+          ),
         };
         const keepsBaseline = unaffected.has(target.id) && baselineKeys.has(baselineKey(snapshot));
 
