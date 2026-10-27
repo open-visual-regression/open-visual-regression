@@ -197,7 +197,7 @@ describe("blockExternalRequests", () => {
             .then((text) => {
               document.getElementById("status")!.textContent = text;
             });
-        }, `${externalSite.origin}/data?delay=400`);
+        }, `${externalSite.origin}/slow`);
 
         await expect(settlePage(page, activity, 10_000)).resolves.toBe(true);
         expect(await page.textContent("#status")).toBe("service worker: external");

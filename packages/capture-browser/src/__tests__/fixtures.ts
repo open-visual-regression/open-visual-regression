@@ -21,7 +21,9 @@ export const EXTERNAL_ADDRESS = Object.values(networkInterfaces())
 
 export type ExternalSite = { origin: string; host: string; close: () => void };
 
-// Answers with CORS headers, after ?delay= milliseconds.
+const SLOW_RESPONSE_MS = 400;
+
+// Answers with CORS headers, after a delay for /slow.
 const startExternalSite = async (): Promise<ExternalSite> => {
   const pixel = await readFile(path.join(HTML_DIR, "pixel.png"));
   const server = http.createServer((req, res) => {
@@ -35,7 +37,7 @@ const startExternalSite = async (): Promise<ExternalSite> => {
         });
         res.end(isImage ? pixel : "external");
       },
-      Number(url.searchParams.get("delay") ?? 0),
+      url.pathname === "/slow" ? SLOW_RESPONSE_MS : 0,
     );
   });
 
