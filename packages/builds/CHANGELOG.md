@@ -1,5 +1,17 @@
 # @ovr/builds
 
+## 0.2.10
+
+### Patch Changes
+
+- [#454](https://github.com/open-visual-regression/open-visual-regression/pull/454) [`7a73f92`](https://github.com/open-visual-regression/open-visual-regression/commit/7a73f92fcdbd28af33cb9b8b0b96b3bc66f9be70) Thanks [@tgfischer](https://github.com/tgfischer)! - External hosts aren't blocked by default. Set `blockExternalRequests` in `ovr.config.ts` to block them, either all (`true`) or all but some (`{ allow: ["images.example.com"] }`), and override it for one story with `parameters.ovr.blockExternalRequests`. Stories that load images or fonts from another host may change once, since those now load.
+
+- Updated dependencies [[`7a73f92`](https://github.com/open-visual-regression/open-visual-regression/commit/7a73f92fcdbd28af33cb9b8b0b96b3bc66f9be70), [`3ecc66d`](https://github.com/open-visual-regression/open-visual-regression/commit/3ecc66d08cd328b884dfe15560d7ed8ef9f0c2da)]:
+  - @ovr/api@0.5.2
+  - @ovr/db@0.4.6
+  - @ovr/queue@0.2.8
+  - @ovr/storybook-compat@0.4.1
+
 ## 0.2.9
 
 ### Patch Changes
