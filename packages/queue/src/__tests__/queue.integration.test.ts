@@ -239,6 +239,42 @@ describe("queue", () => {
       ]);
     });
 
+    test("should start a build queued mid-run at the current round under round-robin", async ({
+      connection,
+      openQueue,
+      openWorker,
+      trackJob,
+    }) => {
+      const jobs = (
+        await enqueueCaptureGroups("main", groups("main", 4), connection, "round-robin")
+      ).map(trackJob);
+
+      openWorker(
+        QueueName.SNAPSHOT_CAPTURE,
+        async (job: Job<CaptureGroupJobPayload>) => {
+          if (job.data.snapshotIds[0] === "main-2") {
+            jobs.push(
+              ...(await enqueueCaptureGroups("pr", groups("pr", 2), connection, "round-robin")).map(
+                trackJob,
+              ),
+            );
+          }
+          await sleep(10);
+        },
+        { concurrency: 1 },
+      );
+
+      await vi.waitFor(() => expect(jobs).toHaveLength(6));
+      expect(await processingOrder(openQueue(QueueName.SNAPSHOT_CAPTURE), jobs)).toEqual([
+        "main-1",
+        "main-2",
+        "main-3",
+        "pr-1",
+        "main-4",
+        "pr-2",
+      ]);
+    });
+
     test("should give each browser its own rounds under round-robin", async ({
       connection,
       openQueue,
