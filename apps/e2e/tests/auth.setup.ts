@@ -10,13 +10,12 @@ import { seedClientForContext } from "./seed/client";
 
 setup("provision the test fixtures", async ({ page, context }) => {
   const setupPage = new SetupPage(page);
+  const loginPage = new LoginPage(page);
   await setupPage.goto();
 
   // Skip first-run setup when the stack is reused across runs or retries.
-  const needsSetup = await setupPage
-    .organizationNameField()
-    .isVisible()
-    .catch(() => false);
+  await expect(setupPage.organizationNameField().or(loginPage.emailField())).toBeVisible();
+  const needsSetup = await setupPage.organizationNameField().isVisible();
 
   if (needsSetup) {
     await setupPage.organizationNameField().fill(TEST_ADMIN.organizationName);
@@ -31,7 +30,6 @@ setup("provision the test fixtures", async ({ page, context }) => {
     await expect(page).toHaveURL(/\/login/);
   }
 
-  const loginPage = new LoginPage(page);
   await loginPage.goto();
   await loginPage.emailField().fill(TEST_ADMIN.email);
   await loginPage.passwordField().fill(TEST_ADMIN.password);
