@@ -277,13 +277,19 @@ export const enqueueCaptureGroup = (
   connection: RedisConnection,
 ): Promise<Job<CaptureGroupJobPayload>> => enqueue(QueueName.SNAPSHOT_CAPTURE, payload, connection);
 
-// round-robin gives a build's nth group of each browser priority n, so workers take every build's
-// first group of every browser, then every build's second, and so on.
+// round-robin gives a build's nth group of each browser priority n, counted from the round workers
+// are on, so a new build joins that round instead of jumping ahead of every queued build.
 export const captureQueuePolicySchema = z.enum(["round-robin", "fifo"]).catch("round-robin");
 
 export type CaptureQueuePolicy = z.infer<typeof captureQueuePolicySchema>;
 
 const LOWEST_PRIORITY = 2_097_151;
+
+// The next prioritized group's priority, or 1 once the queue drains.
+const currentRound = async (queue: Queue<CaptureGroupJobPayload>): Promise<number> => {
+  const [next] = await queue.getJobs(["prioritized"], 0, 0, true);
+  return Math.max(next?.opts.priority ?? 1, 1);
+};
 
 export const enqueueCaptureGroups = async (
   buildId: string,
@@ -303,14 +309,16 @@ export const enqueueCaptureGroups = async (
     void,
     string
   >(QueueName.SNAPSHOT_CAPTURE, queueOptions(connection));
-  const rounds = new Map<string, number>();
-  const nextRound = (browser: string): number => {
-    const round = (rounds.get(browser) ?? 0) + 1;
-    rounds.set(browser, round);
-    return round;
-  };
 
   try {
+    const rounds = new Map<string, number>();
+    const firstRound = policy === "round-robin" ? await currentRound(queue) : 0;
+    const nextRound = (browser: string): number => {
+      const round = rounds.get(browser) ?? firstRound;
+      rounds.set(browser, round + 1);
+      return round;
+    };
+
     return await queue.addBulk(
       groups.map((group) => ({
         name: QueueName.SNAPSHOT_CAPTURE,
