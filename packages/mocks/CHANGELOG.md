@@ -1,5 +1,13 @@
 # @ovr/mocks
 
+## 0.2.18
+
+### Patch Changes
+
+- Updated dependencies [[`7a73f92`](https://github.com/open-visual-regression/open-visual-regression/commit/7a73f92fcdbd28af33cb9b8b0b96b3bc66f9be70)]:
+  - @ovr/api@0.5.2
+  - @ovr/db@0.4.6
+
 ## 0.2.17
 
 ### Patch Changes
