@@ -2,6 +2,7 @@ import * as accessToken from "./accessToken";
 import * as apiKey from "./apiKey";
 import * as build from "./build";
 import * as gitIntegration from "./gitIntegration";
+import * as gitProvider from "./gitProvider";
 import * as organization from "./organization";
 import * as project from "./project";
 import * as session from "./session";
@@ -12,6 +13,7 @@ export const mocks = {
   apiKey,
   build,
   gitIntegration,
+  gitProvider,
   organization,
   project,
   session,

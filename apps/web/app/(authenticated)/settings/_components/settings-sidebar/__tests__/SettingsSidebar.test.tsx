@@ -18,6 +18,7 @@ describe("SettingsSidebar", () => {
     expect(screen.getByRole("link", { name: "organization" })).toBeVisible();
     expect(screen.getByRole("link", { name: "users" })).toBeVisible();
     expect(screen.getByRole("link", { name: "jobs" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "integrations" })).toBeVisible();
   });
 
   it("should hide the admin section for a non-admin user", () => {
@@ -30,5 +31,6 @@ describe("SettingsSidebar", () => {
     expect(screen.queryByRole("link", { name: "organization" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "users" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "jobs" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "integrations" })).not.toBeInTheDocument();
   });
 });
