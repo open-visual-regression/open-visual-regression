@@ -12,6 +12,7 @@ x-app-env: &app-env
   OVR_GIT_TOKEN_ENCRYPTION_KEY: ${OVR_GIT_TOKEN_ENCRYPTION_KEY:?set OVR_GIT_TOKEN_ENCRYPTION_KEY in your .env}
   OVR_GITHUB_APP_CLIENT_ID: ${OVR_GITHUB_APP_CLIENT_ID:-}
   OVR_GITHUB_APP_PRIVATE_KEY: ${OVR_GITHUB_APP_PRIVATE_KEY:-}
+  OVR_GITHUB_API_URL: ${OVR_GITHUB_API_URL:-}
 
 services:
   db:
@@ -225,6 +226,21 @@ services:
       - --skip-auth-route=^/api/rpc/
     ports:
       - 4180:4180
+
+  # Fake git provider APIs for the E2E suite: the msw handlers in @ovr/mocks, served by
+  # apps/e2e/mock-git-providers. Runs from the checkout, so run `pnpm install` first.
+  mock-git-providers:
+    image: node:24-slim
+    profiles: ["e2e"]
+    restart: unless-stopped
+    working_dir: /repo/apps/e2e
+    command: ["node_modules/.bin/tsx", "mock-git-providers/server.ts"]
+    environment:
+      FAKE_GITHUB_PUBLIC_KEY: ${FAKE_GITHUB_PUBLIC_KEY:-}
+    volumes:
+      - ./:/repo:ro
+    ports:
+      - 8090:8090
 
   adminer:
     image: adminer:5

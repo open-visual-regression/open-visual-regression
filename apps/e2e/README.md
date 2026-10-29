@@ -19,9 +19,17 @@ code instead).
 # 0. one-time: secrets compose needs
 cp .env.example .env
 # set BETTER_AUTH_SECRET and OVR_GIT_TOKEN_ENCRYPTION_KEY (each: openssl rand -base64 32)
+# and a throwaway GitHub App key pair for the mock git providers:
+key="$(mktemp)" && openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$key"
+echo "OVR_GITHUB_APP_PRIVATE_KEY=$(base64 -w0 "$key")" >> .env
+echo "FAKE_GITHUB_PUBLIC_KEY=$(openssl pkey -in "$key" -pubout | base64 -w0)" >> .env
+rm "$key"
 
-# 1. build + start the full stack from source (web + worker + db + valkey + storage)
-docker compose up -d --build
+# 1. build + start the full stack from source (web + worker + db + valkey + storage,
+#    plus the mock git providers). Install dependencies first: the mock runs from the checkout.
+pnpm install
+docker compose --env-file .env --env-file apps/e2e/mock-git-providers/mock-git-providers.env \
+  --profile e2e up -d --build
 
 # 2. build the artifacts the CLI ingests
 pnpm --filter @ovr/ui build-storybook
@@ -56,6 +64,20 @@ pnpm --filter @ovr/e2e test:e2e
 
 Point the suite at any running deployment with `PLAYWRIGHT_BASE_URL`. Override the
 ingested artifacts with `OVR_CLI_ENTRY` / `OVR_STORYBOOK_DIR` / `OVR_STORYBOOK_PKG_DIR`.
+
+## Git providers
+
+The stack's git providers talk to `mock-git-providers` (the `e2e` compose profile) instead
+of the real services. It serves the same msw handlers the unit tests use, from
+`@ovr/mocks/handlers`, through
+[`@mswjs/http-middleware`](https://github.com/mswjs/http-middleware). The GitHub fake checks
+the app's JWTs against the test public key and only honours installation tokens it minted,
+scoped the way they were requested.
+
+Specs reach it through the `gitProviderMock` fixture, which resets it before each test and
+can read what it received or make its next matching request fail. It listens on
+`http://localhost:8090` (override with `OVR_E2E_GIT_PROVIDERS_URL`). To run it outside
+compose, use `pnpm --filter @ovr/e2e mock:git-providers`.
 
 ## SSO suite
 

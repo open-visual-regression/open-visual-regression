@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "test:e2e": "playwright test",
+    "mock:git-providers": "tsx mock-git-providers/server.ts",
     "test:e2e:sso": "playwright test --config playwright.sso.config.ts",
     "tsc": "tsc --noEmit",
-    "lint": "oxlint tests",
-    "format": "oxfmt tests"
+    "lint": "oxlint tests mock-git-providers",
+    "format": "oxfmt tests mock-git-providers"
   },
   "dependencies": {
     "@open-visual-regression/cli": "workspace:*",
@@ -17,9 +18,13 @@
     "@ovr/api": "workspace:*"
   },
   "devDependencies": {
+    "@mswjs/http-middleware": "0.10.3",
+    "@ovr/mocks": "workspace:*",
     "@ovr/typescript-config": "workspace:*",
     "@playwright/test": "^1.62.1",
     "@types/node": "^22.20.1",
+    "msw": "^2.15.0",
+    "tsx": "^4.23.5",
     "typescript": "6.0.3"
   }
 }

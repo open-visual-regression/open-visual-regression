@@ -41,10 +41,11 @@ jobs:
         include:
           - name: E2E
             base_url: http://localhost:3000
-            compose_args: ""
+            compose_args: --env-file apps/e2e/mock-git-providers/mock-git-providers.env --profile e2e
             test_script: test:e2e
             build_artifacts: true
             artifact_suffix: ""
+            mock_git_providers: true
           - name: E2E SSO
             base_url: http://localhost:4180
             compose_args: --env-file apps/e2e/sso/sso.env --profile sso
@@ -68,6 +69,16 @@ jobs:
             echo "BETTER_AUTH_SECRET=$(openssl rand -base64 32)"
             echo "OVR_GIT_TOKEN_ENCRYPTION_KEY=$(openssl rand -base64 32)"
           } >> .env
+      - name: Write a throwaway GitHub App key pair for the mock git providers
+        if: matrix.mock_git_providers
+        run: |
+          key="$(mktemp)"
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$key"
+          {
+            echo "OVR_GITHUB_APP_PRIVATE_KEY=$(base64 -w0 "$key")"
+            echo "FAKE_GITHUB_PUBLIC_KEY=$(openssl pkey -in "$key" -pubout | base64 -w0)"
+          } >> .env
+          rm "$key"
       - name: Log in to GHCR
         if: inputs.mode == 'pull'
         uses: docker/login-action@v4

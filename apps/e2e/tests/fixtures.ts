@@ -7,7 +7,9 @@ import { test as base } from "@playwright/test";
 import { SEED_ARTIFACT, type SeedData } from "./constants";
 import { BuildPage } from "./pages/BuildPage";
 import { ForbiddenPage } from "./pages/ForbiddenPage";
+import { GitIntegrationSettingsPage } from "./pages/GitIntegrationSettingsPage";
 import { IdentityProviderLoginPage } from "./pages/IdentityProviderLoginPage";
+import { IntegrationsSettingsPage } from "./pages/IntegrationsSettingsPage";
 import { JobsSettingsPage } from "./pages/JobsSettingsPage";
 import { OrganizationSettingsPage } from "./pages/OrganizationSettingsPage";
 import { ProjectBuildsPage } from "./pages/ProjectBuildsPage";
@@ -15,7 +17,14 @@ import { Sidebar } from "./pages/Sidebar";
 import { SnapshotReviewPage } from "./pages/SnapshotReviewPage";
 import { UsersSettingsPage } from "./pages/UsersSettingsPage";
 import { seedClientForContext, type SeedClient } from "./seed/client";
+import { gitProviderMock, type GitProviderMock } from "./support/gitProviderMock";
 import { spawnIngest, type IngestOptions } from "./support/ingest";
+
+type ConnectedProject = {
+  projectId: string;
+  projectName: string;
+  apiKey: string;
+};
 
 type TestFixtures = {
   seed: SeedData;
@@ -29,6 +38,10 @@ type TestFixtures = {
   identityProviderLoginPage: IdentityProviderLoginPage;
   forbiddenPage: ForbiddenPage;
   usersSettingsPage: UsersSettingsPage;
+  integrationsSettingsPage: IntegrationsSettingsPage;
+  gitIntegrationSettingsPage: GitIntegrationSettingsPage;
+  gitProviderMock: GitProviderMock;
+  connectedProject: ConnectedProject;
   ingestBuild: (options: IngestOptions & { commitSha: string }) => ChildProcess;
 };
 
@@ -67,6 +80,29 @@ export const test = base.extend<TestFixtures>({
   },
   usersSettingsPage: async ({ page }, use) => {
     await use(new UsersSettingsPage(page));
+  },
+  integrationsSettingsPage: async ({ page }, use) => {
+    await use(new IntegrationsSettingsPage(page));
+  },
+  gitIntegrationSettingsPage: async ({ page }, use) => {
+    await use(new GitIntegrationSettingsPage(page));
+  },
+  // Starts each test with a mock that has forgotten earlier requests, tokens and failures.
+  // eslint-disable-next-line no-empty-pattern -- fixture takes no dependencies
+  gitProviderMock: async ({}, use) => {
+    await gitProviderMock.reset();
+    await use(gitProviderMock);
+  },
+  // A fresh project with an API key, so a test's git integration doesn't touch the shared seed.
+  connectedProject: async ({ seedClient }, use, testInfo) => {
+    const projectName = `E2E ${testInfo.title.slice(0, 40)} ${Date.now()}`;
+    const { projectId } = await seedClient.projects.add({
+      projectName,
+      projectDescription: "Project created for a git provider E2E test",
+      gitMainBranch: "main",
+    });
+    const { key } = await seedClient.apiKeys.create({ projectId, name: "e2e" });
+    await use({ projectId, projectName, apiKey: key });
   },
   // eslint-disable-next-line no-empty-pattern -- fixture takes no dependencies
   ingestBuild: async ({}, use) => {
