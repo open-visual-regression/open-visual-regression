@@ -75,3 +75,28 @@ The browser resolves `keycloak` to `127.0.0.1`, so the token issuer is the same
 for the browser and the containers. The specs call Keycloak's admin API from
 Node at `http://localhost:8081` (override with `OVR_E2E_IDP_URL`). Run it on a fresh stack: the first admin to
 sign in sets up the organization.
+
+## GitHub App suite
+
+`tests/github-app` runs against a stack whose GitHub App points at a fake GitHub
+API (`github/fake-github.mjs`, the `github` compose service under the
+`github-app` profile). The fake verifies the app's JWTs against a test public
+key and only honours installation tokens it minted, scoped the way they were
+requested. The specs cover the integrations settings page, linking a project to
+a repository, the commit statuses a build posts, the token scope, recovering
+from a revoked token, and test connection's errors.
+
+```bash
+# one-time: a throwaway key pair for the app and the fake
+key="$(mktemp)"
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$key"
+echo "OVR_GITHUB_APP_PRIVATE_KEY=$(base64 -w0 "$key")" >> .env
+echo "FAKE_GITHUB_PUBLIC_KEY=$(openssl pkey -in "$key" -pubout | base64 -w0)" >> .env
+rm "$key"
+
+docker compose --env-file .env --env-file apps/e2e/github/github-app.env --profile github-app up -d --build
+pnpm --filter @ovr/e2e test:e2e:github-app
+```
+
+The specs inspect and steer the fake from Node at `http://localhost:8090`
+(override with `OVR_E2E_GITHUB_URL`).

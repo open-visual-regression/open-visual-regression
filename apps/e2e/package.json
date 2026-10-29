@@ -6,6 +6,7 @@
   "scripts": {
     "test:e2e": "playwright test",
     "test:e2e:sso": "playwright test --config playwright.sso.config.ts",
+    "test:e2e:github-app": "playwright test --config playwright.github-app.config.ts",
     "tsc": "tsc --noEmit",
     "lint": "oxlint tests",
     "format": "oxfmt tests"
