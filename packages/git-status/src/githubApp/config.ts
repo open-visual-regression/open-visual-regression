@@ -7,6 +7,8 @@ const ENV_VARS = {
 
 const PEM_HEADER = "-----BEGIN";
 
+export const REJECTED_CREDENTIALS_MESSAGE = `github rejected the app's credentials, check ${ENV_VARS.clientId} and ${ENV_VARS.privateKey}`;
+
 export type GithubAppConfig = {
   clientId: string;
   privateKey: KeyObject;

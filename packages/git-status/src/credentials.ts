@@ -2,7 +2,12 @@ import type { GitAuthType, GitProvider } from "@ovr/db/schema";
 
 import { tryDecryptToken } from "./crypto";
 import { GithubAppRequestError } from "./githubApp/client";
-import { getGithubAppConfig, GithubAppConfigError, type GithubAppConfig } from "./githubApp/config";
+import {
+  getGithubAppConfig,
+  GithubAppConfigError,
+  REJECTED_CREDENTIALS_MESSAGE,
+  type GithubAppConfig,
+} from "./githubApp/config";
 import {
   getInstallationToken,
   invalidateInstallationToken,
@@ -54,9 +59,7 @@ const describeAppTokenError = (
     case null:
       return failure(error.message, true);
     case 401:
-      return failure(
-        "github rejected the app's credentials, check OVR_GITHUB_APP_CLIENT_ID and OVR_GITHUB_APP_PRIVATE_KEY",
-      );
+      return failure(REJECTED_CREDENTIALS_MESSAGE);
     case 404:
       return failure("the github app is no longer installed on this repository's account");
     case 403:

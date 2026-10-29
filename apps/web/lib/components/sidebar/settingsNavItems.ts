@@ -1,4 +1,5 @@
 import {
+  GitBranchIcon,
   KeyRoundIcon,
   SettingsIcon,
   TimerIcon,
@@ -35,6 +36,7 @@ const SETTINGS_NAV_SECTIONS: SettingsNavSection[] = [
       { href: "/settings/organization", icon: SettingsIcon, label: "organization" },
       { href: "/settings/users", icon: UsersIcon, label: "users" },
       { href: "/settings/jobs", icon: TimerIcon, label: "jobs" },
+      { href: "/settings/integrations", icon: GitBranchIcon, label: "integrations" },
     ],
   },
 ];

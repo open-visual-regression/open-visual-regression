@@ -145,6 +145,9 @@ export const serverClient: typeof RealServerClient = {
       .handler(() => ({ ok: true, httpStatus: 200, error: null }))
       .actionable(),
   },
+  githubApp: {
+    status: os.githubApp.status.handler(() => ({ status: "not_configured" as const })).actionable(),
+  },
   diffs: {
     castVote: os.diffs.castVote.handler(() => undefined).actionable(),
     removeVote: os.diffs.removeVote.handler(() => undefined).actionable(),

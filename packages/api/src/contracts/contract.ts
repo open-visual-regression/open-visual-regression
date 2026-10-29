@@ -4,6 +4,7 @@ import { contract as apiKeysContract } from "./apiKeys";
 import { contract as baselineContract } from "./baseline";
 import { contract as buildsContract } from "./builds";
 import { contract as diffsContract } from "./diffs";
+import { contract as githubAppContract } from "./githubApp";
 import { contract as gitIntegrationsContract } from "./gitIntegrations";
 import { contract as healthContract } from "./health";
 import { contract as invitationsContract } from "./invitations";
@@ -32,6 +33,7 @@ export const contract = {
   diffs: { ...diffsContract },
   snapshots: { ...snapshotsContract },
   gitIntegrations: { ...gitIntegrationsContract },
+  githubApp: { ...githubAppContract },
   accessTokens: { ...accessTokensContract },
   jobs: { ...jobsContract },
 } as const;
