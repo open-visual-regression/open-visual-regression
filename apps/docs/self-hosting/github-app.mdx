@@ -1,0 +1,92 @@
+---
+title: GitHub App
+description: Post commit statuses through your own GitHub App instead of personal access tokens.
+---
+
+OVR posts a commit status on every build, so a pull request shows whether its visual changes still need review. A project can authenticate those statuses with a personal access token, or with a GitHub App you register for your OVR instance.
+
+A GitHub App is the better choice for most teams:
+
+- It isn't tied to a person, so statuses keep working when someone leaves or their token expires.
+- Your GitHub organization owner chooses exactly which repositories OVR can reach, from GitHub.
+- Every status is sent with a token that lasts an hour and only reaches the one repository it's for.
+
+Access tokens keep working, and each project picks one or the other.
+
+## Register the app
+
+Register the app under the GitHub organization that owns your repositories.
+
+1. In your organization's settings, open **Developer settings → GitHub Apps** and click **New GitHub App**.
+2. Give it a name, such as `acme-ovr`, and set **Homepage URL** to your OVR `BASE_URL`.
+3. Under **Webhook**, uncheck **Active**. OVR doesn't need webhooks, and you can leave the callback and setup URLs empty.
+4. Under **Permissions → Repository permissions**, set **Commit statuses** to **Read and write**. **Metadata** is read-only and always granted.
+5. Under **Where can this GitHub App be installed?**, choose **Only on this account**.
+6. Click **Create GitHub App**. Note the **Client ID** at the top of the app's page (not the App ID).
+7. Under **Private keys**, click **Generate a private key**. Your browser downloads a `.pem` file.
+
+<Warning>
+Keep the app private. A private app can only be installed on the organization that owns it, so the only repositories OVR can reach are the ones your organization grants. A public app can be installed by anyone, and its repositories would show up in your OVR instance.
+</Warning>
+
+## Configure OVR
+
+Give the web app and the worker the client ID and private key. Set both or neither: OVR refuses to start with only one of them, or with a key it can't read.
+
+| Variable | Helm value | Description |
+| --- | --- | --- |
+| `OVR_GITHUB_APP_CLIENT_ID` | `githubApp.clientId` | The app's client ID. |
+| `OVR_GITHUB_APP_PRIVATE_KEY` | `githubApp.privateKey` | The app's private key: the PEM as it is, the PEM with `\n` for line breaks, or the whole file base64 encoded. |
+
+With Docker Compose, add them to your `.env`. Base64 keeps the key on one line:
+
+```sh
+echo "OVR_GITHUB_APP_CLIENT_ID=Iv23liExample" >> .env
+echo "OVR_GITHUB_APP_PRIVATE_KEY=$(base64 -w0 acme-ovr.private-key.pem)" >> .env
+```
+
+With Helm, pass the key file directly:
+
+```sh
+helm upgrade ovr oci://ghcr.io/open-visual-regression/charts/ovr --reuse-values \
+  --set githubApp.clientId=Iv23liExample \
+  --set-file githubApp.privateKey=acme-ovr.private-key.pem
+```
+
+With `existingSecret`, add `OVR_GITHUB_APP_CLIENT_ID` and `OVR_GITHUB_APP_PRIVATE_KEY` to your Secret instead.
+
+The private key lets anyone holding it act as the app on every repository it's installed on. Store it like any other production secret, and delete keys you no longer use from the app's settings.
+
+## Install the app
+
+Open **Settings → Integrations** in OVR as an admin. The GitHub App card shows the app, who owns it, and whether it can write commit statuses.
+
+Click **Install on GitHub**, pick your organization, and choose the repositories OVR should post statuses to. Back in OVR, the card lists the installation and how many repositories it covers. Use **configure** next to an installation to add or remove repositories later. That happens on GitHub, and OVR picks up the change on the next page load.
+
+## Link a project
+
+In the project's **Settings → Git integration**:
+
+1. Set **Authentication** to **github app**.
+2. Pick the repository. Only repositories the app is installed on are listed.
+3. Click **Save**, then **Test connection**.
+
+Switching an existing project from an access token to the app deletes its stored token.
+
+## Who can link what
+
+Any OVR admin can link a project to any repository the app's installation covers. The installation's repository list is the boundary: your GitHub organization owner decides which repositories OVR can post statuses to, and OVR admins decide which project posts to which of them. If some repositories shouldn't receive statuses from OVR, leave them out of the installation.
+
+## Check it works
+
+After linking a project, push a commit to a pull request and upload a build for it. The pull request shows a status named after your project, such as `Open Visual Regression / Web`, linking to the build in OVR. It reads pending while the build processes, then passes or asks for review.
+
+**Test connection** explains what's wrong when a status can't be sent:
+
+| Message | Fix |
+| --- | --- |
+| `github app is not configured on this instance` | Set `OVR_GITHUB_APP_CLIENT_ID` and `OVR_GITHUB_APP_PRIVATE_KEY` on the web app and worker. |
+| `github rejected the app's credentials` | The client ID or private key is wrong, or the key was deleted from the app. Generate a new key and update `OVR_GITHUB_APP_PRIVATE_KEY`. |
+| `the github app is no longer installed on this repository's account` | Reinstall the app from **Settings → Integrations**, then link the project again. |
+| `the github app can't write commit statuses to <repository>` | Add the repository to the installation, or grant **Commit statuses: Read and write** in the app's permissions and accept the change on the installation. |
+| `the repository name now points at a different repository` | The linked repository was deleted and another took its name. Link the project again. |

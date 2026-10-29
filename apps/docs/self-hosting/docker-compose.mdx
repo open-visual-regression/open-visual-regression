@@ -29,6 +29,8 @@ x-app-env: &app-env
   LOG_LEVEL: ${LOG_LEVEL:-info}
   BASE_URL: ${BASE_URL:-http://localhost:3000}
   OVR_GIT_TOKEN_ENCRYPTION_KEY: ${OVR_GIT_TOKEN_ENCRYPTION_KEY:?set OVR_GIT_TOKEN_ENCRYPTION_KEY in your .env}
+  OVR_GITHUB_APP_CLIENT_ID: ${OVR_GITHUB_APP_CLIENT_ID:-}
+  OVR_GITHUB_APP_PRIVATE_KEY: ${OVR_GITHUB_APP_PRIVATE_KEY:-}
 
 services:
   db:
@@ -208,6 +210,15 @@ Any S3-compatible service works: AWS S3, Cloudflare R2, Backblaze B2, RustFS, Mi
 | `STORAGE_ENDPOINT` | Internal address the app uses to reach storage. Unset for AWS S3. |
 | `STORAGE_PUBLIC_ENDPOINT` | Address used in presigned URLs handed to CI and browsers. Unset for AWS S3. |
 | `STORAGE_FORCE_PATH_STYLE` | `true` for RustFS, MinIO, R2, and most self-hosted services. `false` for AWS S3. |
+
+### GitHub App
+
+Optional. Post commit statuses through your own GitHub App instead of access tokens. See [GitHub App](/self-hosting/github-app).
+
+| Variable | Description |
+| --- | --- |
+| `OVR_GITHUB_APP_CLIENT_ID` | The app's client ID. Set it together with the private key. |
+| `OVR_GITHUB_APP_PRIVATE_KEY` | The app's PEM private key, verbatim, with `\n` for line breaks, or base64 encoded. |
 
 ### Optional tuning
 
