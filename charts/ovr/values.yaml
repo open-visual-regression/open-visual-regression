@@ -13,7 +13,8 @@ imagePullSecrets: []
 
 # Name of a Secret you create yourself with keys: DATABASE_URL, REDIS_URL,
 # BETTER_AUTH_SECRET, OVR_GIT_TOKEN_ENCRYPTION_KEY, STORAGE_ACCESS_KEY,
-# STORAGE_SECRET_KEY. Set this to use your own secret instead of the values
+# STORAGE_SECRET_KEY, and optionally OVR_GITHUB_APP_CLIENT_ID and
+# OVR_GITHUB_APP_PRIVATE_KEY. Set this to use your own secret instead of the values
 # below (recommended if using GitOps / Sealed Secrets / External Secrets).
 existingSecret: ""
 
@@ -68,6 +69,14 @@ auth:
     roleGroups: {}
     logoutUrl: ""
     organizationName: ""
+
+# Optional. Post commit statuses through your own GitHub App instead of access
+# tokens. Set both or neither.
+githubApp:
+  # The app's client ID (not its app ID), from the app's settings page.
+  clientId: ""
+  # The app's PEM private key, verbatim or base64 encoded.
+  privateKey: ""
 
 database:
   url: ""  # postgresql://user:pass@host:5432/open_visual_regression

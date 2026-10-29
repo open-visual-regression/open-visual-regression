@@ -165,6 +165,18 @@
         }
       }
     },
+    "githubApp": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "clientId": {
+          "type": "string"
+        },
+        "privateKey": {
+          "type": "string"
+        }
+      }
+    },
     "database": {
       "type": "object",
       "additionalProperties": false,

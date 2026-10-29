@@ -12,3 +12,10 @@ const PROVIDERS: Record<GitProvider, GitProviderModule> = {
 export const getProvider = (id: GitProvider): GitProviderModule => PROVIDERS[id];
 
 export const listProviders = (): GitProviderModule[] => Object.values(PROVIDERS);
+
+/** Checks every provider's instance settings. Called at startup by the web app and worker. */
+export const assertProvidersConfig = (): void => {
+  for (const provider of listProviders()) {
+    provider.assertConfig?.();
+  }
+};

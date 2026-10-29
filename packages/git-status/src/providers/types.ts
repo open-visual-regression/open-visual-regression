@@ -10,6 +10,8 @@ import type { HttpRequest, PublishRequest, VerifyRequest } from "../publisher";
 export type GitProviderModule = {
   id: GitProvider;
   name: string;
+  /** Throws when the provider's instance settings are invalid, so OVR fails at startup. */
+  assertConfig?: () => void;
   repository: {
     /** How the provider names a repository, shown as a hint where one is typed in. */
     placeholder: string;

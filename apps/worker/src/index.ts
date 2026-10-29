@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { scheduleFlakyDetection } from "@ovr/builds/flakiness";
 import { assertEncryptionKey } from "@ovr/git-status/crypto";
+import { assertProvidersConfig } from "@ovr/git-status/registry";
 import { createLogger } from "@ovr/logger";
 import { startMetrics } from "@ovr/metrics/server";
 import {
@@ -36,6 +37,7 @@ import { APP_VERSION } from "./lib/version";
 const logger = createLogger("worker");
 
 assertEncryptionKey();
+assertProvidersConfig();
 
 const metrics = await startMetrics({ serviceName: "ovr-worker", serviceVersion: APP_VERSION });
 
