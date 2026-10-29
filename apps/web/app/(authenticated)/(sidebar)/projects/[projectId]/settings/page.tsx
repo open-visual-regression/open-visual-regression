@@ -30,10 +30,12 @@ export default async function ProjectSettingsPage(props: ProjectSettingsPageProp
     [projectError, projectResult],
     [apiKeysError, apiKeysResult],
     [gitIntegrationError, gitIntegrationResult],
+    [githubAppError, githubAppResult],
   ] = await Promise.all([
     serverClient.projects.getOne({ projectId }),
     serverClient.apiKeys.list({ projectId }),
     serverClient.gitIntegrations.get({ projectId }),
+    serverClient.githubApp.repositories(),
   ]);
 
   if (projectError?.code === "NOT_FOUND") {
@@ -54,6 +56,9 @@ export default async function ProjectSettingsPage(props: ProjectSettingsPageProp
         <GitIntegrationSection
           projectId={projectId}
           integration={gitIntegrationResult.integration}
+          githubApp={
+            githubAppError ? { status: "error", error: githubAppError.message } : githubAppResult
+          }
         />
         <ApiKeysSection projectId={projectId} apiKeys={apiKeysResult.apiKeys} />
         <DeleteProjectSection project={projectResult.project} />

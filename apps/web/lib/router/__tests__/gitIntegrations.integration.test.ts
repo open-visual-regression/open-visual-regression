@@ -1,6 +1,11 @@
-import { vi } from "vitest";
+import { generateKeyPairSync } from "node:crypto";
+
+import { http, HttpResponse } from "msw";
+import { setupServer } from "msw/node";
+import { afterAll, afterEach, beforeAll, vi } from "vitest";
 
 import type { AddProjectInputSchema } from "@ovr/api/contracts/projects";
+import { clearInstallationTokens } from "@ovr/git-status/githubApp/tokens";
 
 import { serverClient } from "@/lib/router";
 import { test, describe, expect } from "@/lib/testing/fixtures";
@@ -13,6 +18,36 @@ const TEST_PROJECT: AddProjectInputSchema = {
   projectName: "Test Project",
   projectDescription: "A test project",
   gitMainBranch: "main",
+};
+
+const GITHUB_API = "https://api.github.com";
+
+const github = setupServer(
+  http.post(`${GITHUB_API}/app/installations/42/access_tokens`, () =>
+    HttpResponse.json(
+      { token: "ghs_42", expires_at: new Date(Date.now() + 3_600_000).toISOString() },
+      { status: 201 },
+    ),
+  ),
+  http.get(`${GITHUB_API}/installation/repositories`, () =>
+    HttpResponse.json({ repositories: [{ id: 7, full_name: "acme/web", private: true }] }),
+  ),
+);
+
+beforeAll(() => github.listen({ onUnhandledRequest: "bypass" }));
+afterEach(() => {
+  github.resetHandlers();
+  clearInstallationTokens();
+});
+afterAll(() => github.close());
+
+const configureGithubApp = () => {
+  const { privateKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
+  vi.stubEnv("OVR_GITHUB_APP_CLIENT_ID", "Iv23liExample");
+  vi.stubEnv(
+    "OVR_GITHUB_APP_PRIVATE_KEY",
+    privateKey.export({ type: "pkcs1", format: "pem" }).toString(),
+  );
 };
 
 describe("gitIntegrations", () => {
@@ -49,6 +84,7 @@ describe("gitIntegrations", () => {
       const [error] = await serverClient.gitIntegrations.upsert({
         projectId: FAKE_PROJECT_ID,
         provider: "github",
+        authType: "access_token",
         repoIdentifier: "acme/web",
         token: "a-token",
       });
@@ -61,6 +97,7 @@ describe("gitIntegrations", () => {
       const [error] = await serverClient.gitIntegrations.upsert({
         projectId: FAKE_PROJECT_ID,
         provider: "github",
+        authType: "access_token",
         repoIdentifier: "acme/web",
         token: "a-token",
       });
@@ -74,6 +111,7 @@ describe("gitIntegrations", () => {
       const [error, result] = await serverClient.gitIntegrations.upsert({
         projectId,
         provider: "github",
+        authType: "access_token",
         repoIdentifier: "acme/web",
         token: "a-secret-token",
       });
@@ -83,7 +121,10 @@ describe("gitIntegrations", () => {
       expect(result).not.toHaveProperty("encryptedToken");
 
       const [, getResult] = await serverClient.gitIntegrations.get({ projectId });
-      expect(getResult?.integration).toMatchObject({ hasToken: true, repoIdentifier: "acme/web" });
+      expect(getResult?.integration).toMatchObject({
+        authType: "access_token",
+        repoIdentifier: "acme/web",
+      });
     });
 
     test("should derive the check context from the project name", async ({ admin: _ }) => {
@@ -93,6 +134,7 @@ describe("gitIntegrations", () => {
       const [, result] = await serverClient.gitIntegrations.upsert({
         projectId,
         provider: "github",
+        authType: "access_token",
         repoIdentifier: "acme/web",
         token: "a-secret-token",
       });
@@ -109,12 +151,14 @@ describe("gitIntegrations", () => {
       const [, firstResult] = await serverClient.gitIntegrations.upsert({
         projectId: firstProject!.projectId,
         provider: "github",
+        authType: "access_token",
         repoIdentifier: "acme/web",
         token: "a-secret-token",
       });
       const [, secondResult] = await serverClient.gitIntegrations.upsert({
         projectId: secondProject!.projectId,
         provider: "github",
+        authType: "access_token",
         repoIdentifier: "acme/web",
         token: "a-secret-token",
       });
@@ -129,6 +173,7 @@ describe("gitIntegrations", () => {
       await serverClient.gitIntegrations.upsert({
         projectId,
         provider: "github",
+        authType: "access_token",
         repoIdentifier: "acme/web",
         token: "a-secret-token",
       });
@@ -136,10 +181,11 @@ describe("gitIntegrations", () => {
       const [error, result] = await serverClient.gitIntegrations.upsert({
         projectId,
         provider: "github",
+        authType: "access_token",
         repoIdentifier: "acme/renamed",
       });
       expect(error).toBeNull();
-      expect(result).toMatchObject({ repoIdentifier: "acme/renamed", hasToken: true });
+      expect(result).toMatchObject({ repoIdentifier: "acme/renamed", authType: "access_token" });
     });
 
     test("should reject a first-time save without a token", async ({ admin: _ }) => {
@@ -149,6 +195,7 @@ describe("gitIntegrations", () => {
       const [error] = await serverClient.gitIntegrations.upsert({
         projectId,
         provider: "github",
+        authType: "access_token",
         repoIdentifier: "acme/web",
       });
       expect(error?.code).toBe("BAD_REQUEST");
@@ -161,12 +208,14 @@ describe("gitIntegrations", () => {
       await serverClient.gitIntegrations.upsert({
         projectId,
         provider: "github",
+        authType: "access_token",
         repoIdentifier: "acme/web",
         token: "first-token",
       });
       await serverClient.gitIntegrations.upsert({
         projectId,
         provider: "github",
+        authType: "access_token",
         repoIdentifier: "acme/other",
         token: "second-token",
       });
@@ -174,8 +223,114 @@ describe("gitIntegrations", () => {
       const [, result] = await serverClient.gitIntegrations.get({ projectId });
       expect(result?.integration).toMatchObject({
         provider: "github",
+        authType: "access_token",
         repoIdentifier: "acme/other",
       });
+    });
+  });
+
+  describe("upsert with a github app", () => {
+    test("should link a repository the installation can access", async ({ admin: _ }) => {
+      configureGithubApp();
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+
+      const [error, result] = await serverClient.gitIntegrations.upsert({
+        projectId,
+        provider: "github",
+        authType: "github_app",
+        installationId: 42,
+        repositoryId: 7,
+      });
+
+      expect(error).toBeNull();
+      expect(result).toMatchObject({
+        authType: "github_app",
+        repoIdentifier: "acme/web",
+        githubInstallationId: 42,
+        externalRepoId: 7,
+      });
+    });
+
+    test("should switch an access token integration to the github app", async ({ admin: _ }) => {
+      configureGithubApp();
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+      await serverClient.gitIntegrations.upsert({
+        projectId,
+        provider: "github",
+        authType: "access_token",
+        repoIdentifier: "acme/web",
+        token: "a-token",
+      });
+
+      await serverClient.gitIntegrations.upsert({
+        projectId,
+        provider: "github",
+        authType: "github_app",
+        installationId: 42,
+        repositoryId: 7,
+      });
+
+      const [, result] = await serverClient.gitIntegrations.get({ projectId });
+      expect(result?.integration).toMatchObject({ authType: "github_app", externalRepoId: 7 });
+    });
+
+    test("should reject a repository the installation can't access", async ({ admin: _ }) => {
+      configureGithubApp();
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+
+      const [error] = await serverClient.gitIntegrations.upsert({
+        projectId: addResult!.projectId,
+        provider: "github",
+        authType: "github_app",
+        installationId: 42,
+        repositoryId: 8,
+      });
+
+      expect(error?.code).toBe("BAD_REQUEST");
+      expect(error?.message).toBe("the github app installation can't access that repository");
+    });
+
+    test("should reject the github app when none is configured", async ({ admin: _ }) => {
+      vi.stubEnv("OVR_GITHUB_APP_CLIENT_ID", "");
+      vi.stubEnv("OVR_GITHUB_APP_PRIVATE_KEY", "");
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+
+      const [error] = await serverClient.gitIntegrations.upsert({
+        projectId: addResult!.projectId,
+        provider: "github",
+        authType: "github_app",
+        installationId: 42,
+        repositoryId: 7,
+      });
+
+      expect(error?.code).toBe("BAD_REQUEST");
+      expect(error?.message).toBe("github app is not configured on this instance");
+    });
+
+    test("should require a token to switch a github app integration to an access token", async ({
+      admin: _,
+    }) => {
+      configureGithubApp();
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+      await serverClient.gitIntegrations.upsert({
+        projectId,
+        provider: "github",
+        authType: "github_app",
+        installationId: 42,
+        repositoryId: 7,
+      });
+
+      const [error] = await serverClient.gitIntegrations.upsert({
+        projectId,
+        provider: "github",
+        authType: "access_token",
+        repoIdentifier: "acme/web",
+      });
+
+      expect(error?.code).toBe("BAD_REQUEST");
     });
   });
 
@@ -215,6 +370,7 @@ describe("gitIntegrations", () => {
       await serverClient.gitIntegrations.upsert({
         projectId,
         provider: "github",
+        authType: "access_token",
         repoIdentifier: "acme/web",
         token: "a-token",
       });
@@ -254,6 +410,7 @@ describe("gitIntegrations", () => {
       await serverClient.gitIntegrations.upsert({
         projectId,
         provider: "github",
+        authType: "access_token",
         repoIdentifier: "acme/web",
         token: "a-token",
       });

@@ -128,7 +128,9 @@ export const serverClient: typeof RealServerClient = {
         repoIdentifier: "",
         checkContext: "Open Visual Regression / Storybook",
         statusChecksEnabled: true,
-        hasToken: true as const,
+        authType: "access_token" as const,
+        githubInstallationId: null,
+        externalRepoId: null,
       }))
       .actionable(),
     setStatusChecks: os.gitIntegrations.setStatusChecks
@@ -137,7 +139,9 @@ export const serverClient: typeof RealServerClient = {
         repoIdentifier: "",
         checkContext: "Open Visual Regression / Storybook",
         statusChecksEnabled: input.enabled,
-        hasToken: true as const,
+        authType: "access_token" as const,
+        githubInstallationId: null,
+        externalRepoId: null,
       }))
       .actionable(),
     remove: os.gitIntegrations.remove.handler(() => undefined).actionable(),
@@ -147,6 +151,9 @@ export const serverClient: typeof RealServerClient = {
   },
   githubApp: {
     status: os.githubApp.status.handler(() => ({ status: "not_configured" as const })).actionable(),
+    repositories: os.githubApp.repositories
+      .handler(() => ({ status: "not_configured" as const }))
+      .actionable(),
   },
   diffs: {
     castVote: os.diffs.castVote.handler(() => undefined).actionable(),

@@ -1,6 +1,9 @@
 import { useRouter } from "next/navigation";
 import { vi } from "vitest";
 
+import type { GithubAppRepositoriesSchema } from "@ovr/api/contracts/githubApp";
+import type { GitIntegrationSchema } from "@ovr/api/contracts/gitIntegrations";
+import { mocks } from "@ovr/mocks";
 import { Toaster } from "@ovr/ui/components/sonner";
 
 import { serverClient } from "@/lib/router";
@@ -19,18 +22,35 @@ const mockRefresh = vi.mocked(useRouter)().refresh;
 
 const PROJECT_ID = "project-id";
 
-const INTEGRATION = {
-  provider: "github" as const,
+const INTEGRATION = mocks.gitIntegration.generateGitIntegration({
   repoIdentifier: "acme/web",
   checkContext: "Open Visual Regression / Web",
-  statusChecksEnabled: true,
-  hasToken: true as const,
+});
+
+const APP_INTEGRATION = mocks.gitIntegration.generateGitIntegration({
+  repoIdentifier: "acme/api",
+  authType: "github_app",
+  githubInstallationId: 42,
+  externalRepoId: 8,
+});
+
+const NO_GITHUB_APP: GithubAppRepositoriesSchema = { status: "not_configured" };
+
+const GITHUB_APP: GithubAppRepositoriesSchema = {
+  status: "ok",
+  repositories: [
+    mocks.githubApp.generateGithubAppRepository({ id: 8, fullName: "acme/api" }),
+    mocks.githubApp.generateGithubAppRepository({ id: 7, fullName: "acme/web" }),
+  ],
 };
 
-const renderComponent = (integration: typeof INTEGRATION | null = null) =>
+const renderComponent = (
+  integration: GitIntegrationSchema | null = null,
+  githubApp: GithubAppRepositoriesSchema = NO_GITHUB_APP,
+) =>
   render(
     <>
-      <GitIntegrationForm projectId={PROJECT_ID} integration={integration} />
+      <GitIntegrationForm projectId={PROJECT_ID} integration={integration} githubApp={githubApp} />
       <Toaster />
     </>,
   );
@@ -74,6 +94,7 @@ describe("GitIntegrationForm", () => {
       expect(mockUpsert).toHaveBeenCalledWith(
         expect.objectContaining({
           projectId: PROJECT_ID,
+          authType: "access_token",
           repoIdentifier: "acme/other",
           token: "a-token",
         }),
@@ -166,5 +187,82 @@ describe("GitIntegrationForm", () => {
 
     await waitFor(() => expect(mockTestConnection).toHaveBeenCalledWith({ projectId: PROJECT_ID }));
     expect(await screen.findByText("invalid credentials")).toBeVisible();
+  });
+
+  it("should not offer the github app when none is configured", () => {
+    renderComponent(null, NO_GITHUB_APP);
+
+    expect(screen.queryByLabelText(/authentication/i)).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/access token/i)).toBeVisible();
+  });
+
+  describe("with a github app", () => {
+    it("should default to the github app and link the chosen repository", async ({ user }) => {
+      mockUpsert.mockResolvedValue([null, APP_INTEGRATION]);
+      renderComponent(null, GITHUB_APP);
+
+      expect(screen.queryByLabelText(/access token/i)).not.toBeInTheDocument();
+      await user.click(screen.getByRole("combobox", { name: /repository/i }));
+      await user.click(await screen.findByRole("option", { name: "acme/web" }));
+      await user.click(screen.getByRole("button", { name: /^save$/i }));
+
+      await waitFor(() =>
+        expect(mockUpsert).toHaveBeenCalledWith({
+          projectId: PROJECT_ID,
+          provider: "github",
+          authType: "github_app",
+          installationId: 42,
+          repositoryId: 7,
+        }),
+      );
+      expect(await screen.findByText("git integration saved")).toBeVisible();
+    });
+
+    it("should require a repository", async ({ user }) => {
+      renderComponent(null, GITHUB_APP);
+
+      await user.click(screen.getByRole("button", { name: /^save$/i }));
+
+      expect(await screen.findByText("you must choose a repository")).toBeVisible();
+      expect(mockUpsert).not.toHaveBeenCalled();
+    });
+
+    it("should show the linked repository", () => {
+      renderComponent(APP_INTEGRATION, GITHUB_APP);
+
+      expect(screen.getByRole("combobox", { name: /repository/i })).toHaveTextContent("acme/api");
+    });
+
+    it("should switch to an access token", async ({ user }) => {
+      renderComponent(null, GITHUB_APP);
+
+      await user.click(screen.getByRole("combobox", { name: /authentication/i }));
+      await user.click(await screen.findByRole("option", { name: "access token" }));
+
+      expect(screen.getByLabelText(/access token/i)).toBeVisible();
+      expect(screen.getByPlaceholderText("owner/repo")).toBeVisible();
+    });
+
+    it("should ask for a token when switching a github app integration to an access token", async ({
+      user,
+    }) => {
+      renderComponent(APP_INTEGRATION, GITHUB_APP);
+
+      await user.click(screen.getByRole("combobox", { name: /authentication/i }));
+      await user.click(await screen.findByRole("option", { name: "access token" }));
+      await user.type(screen.getByPlaceholderText("owner/repo"), "acme/web");
+      await user.click(screen.getByRole("button", { name: /^save$/i }));
+
+      expect(await screen.findByText("you must enter an access token")).toBeVisible();
+      expect(mockUpsert).not.toHaveBeenCalled();
+    });
+
+    it("should explain when the app's repositories can't be loaded", () => {
+      renderComponent(null, { status: "error", error: "github responded with 500" });
+
+      expect(
+        screen.getByText(/couldn't load the github app's repositories: github responded with 500/),
+      ).toBeVisible();
+    });
   });
 });

@@ -54,6 +54,48 @@ describe("gitIntegrations", () => {
     });
   });
 
+  describe("upsertGithubApp", () => {
+    test("should replace an access token with the github app installation", async ({ project }) => {
+      await dbClient.gitIntegrations.upsertAccessToken(accessTokenValues(project.id));
+
+      const integration = await dbClient.gitIntegrations.upsertGithubApp({
+        projectId: project.id,
+        repoIdentifier: "acme/web",
+        githubInstallationId: 42,
+        externalRepoId: 7,
+        checkContext: "ovr/visual-review",
+      });
+
+      expect(integration).toMatchObject({
+        authType: "github_app",
+        encryptedToken: null,
+        githubInstallationId: 42,
+        externalRepoId: 7,
+      });
+    });
+  });
+
+  describe("updateFields", () => {
+    test("should not touch a github app integration", async ({ project }) => {
+      await dbClient.gitIntegrations.upsertGithubApp({
+        projectId: project.id,
+        repoIdentifier: "acme/web",
+        githubInstallationId: 42,
+        externalRepoId: 7,
+        checkContext: "ovr/visual-review",
+      });
+
+      const updated = await dbClient.gitIntegrations.updateFields({
+        projectId: project.id,
+        provider: "github",
+        repoIdentifier: "acme/other",
+        checkContext: "ovr/visual-review",
+      });
+
+      expect(updated).toBeUndefined();
+    });
+  });
+
   describe("credentials check", () => {
     test("should reject an access token integration without a token", async ({ project }) => {
       await expect(

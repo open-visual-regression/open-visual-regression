@@ -7,6 +7,8 @@ export const generateGitIntegration = (
   repoIdentifier: "acme/web",
   checkContext: "Open Visual Regression / Web",
   statusChecksEnabled: true,
-  hasToken: true,
+  authType: "access_token",
+  githubInstallationId: null,
+  externalRepoId: null,
   ...overrides,
 });

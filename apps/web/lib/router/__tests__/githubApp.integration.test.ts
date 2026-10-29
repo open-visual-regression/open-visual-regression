@@ -28,4 +28,22 @@ describe("githubApp", () => {
       expect(result).toEqual({ status: "not_configured" });
     });
   });
+
+  describe("repositories", () => {
+    test("should return FORBIDDEN when the session user is not an admin", async ({
+      reviewer: _,
+    }) => {
+      const [error] = await serverClient.githubApp.repositories();
+      expect(error?.code).toBe("FORBIDDEN");
+    });
+
+    test("should report that no app is configured", async ({ admin: _ }) => {
+      vi.stubEnv("OVR_GITHUB_APP_CLIENT_ID", "");
+      vi.stubEnv("OVR_GITHUB_APP_PRIVATE_KEY", "");
+
+      const [error, result] = await serverClient.githubApp.repositories();
+      expect(error).toBeNull();
+      expect(result).toEqual({ status: "not_configured" });
+    });
+  });
 });

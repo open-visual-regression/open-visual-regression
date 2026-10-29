@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import { db } from "../db";
 import { gitIntegrations } from "../schema";
@@ -40,6 +40,33 @@ export const upsertAccessToken = async (values: UpsertAccessTokenInput) => {
   return integration;
 };
 
+type UpsertGithubAppInput = {
+  projectId: string;
+  repoIdentifier: string;
+  githubInstallationId: number;
+  externalRepoId: number;
+  checkContext: string;
+};
+
+export const upsertGithubApp = async (values: UpsertGithubAppInput) => {
+  const fields = {
+    provider: "github" as const,
+    repoIdentifier: values.repoIdentifier,
+    checkContext: values.checkContext,
+    authType: "github_app" as const,
+    encryptedToken: null,
+    githubInstallationId: values.githubInstallationId,
+    externalRepoId: values.externalRepoId,
+  };
+
+  const [integration] = await db
+    .insert(gitIntegrations)
+    .values({ projectId: values.projectId, ...fields })
+    .onConflictDoUpdate({ target: gitIntegrations.projectId, set: fields })
+    .returning();
+  return integration;
+};
+
 type UpdateFieldsInput = {
   projectId: string;
   provider: typeof gitIntegrations.$inferInsert.provider;
@@ -55,7 +82,12 @@ export const updateFields = async (values: UpdateFieldsInput) => {
       repoIdentifier: values.repoIdentifier,
       checkContext: values.checkContext,
     })
-    .where(eq(gitIntegrations.projectId, values.projectId))
+    .where(
+      and(
+        eq(gitIntegrations.projectId, values.projectId),
+        eq(gitIntegrations.authType, "access_token"),
+      ),
+    )
     .returning();
   return integration;
 };

@@ -19,6 +19,7 @@ const mockGetSession = vi.mocked(auth.api.getSession);
 const mockGetProject = vi.mocked(serverClient.projects.getOne);
 const mockListApiKeys = vi.mocked(serverClient.apiKeys.list);
 const mockGetGitIntegration = vi.mocked(serverClient.gitIntegrations.get);
+const mockGithubAppRepositories = vi.mocked(serverClient.githubApp.repositories);
 const mockNotFound = vi.mocked(notFound);
 
 const PROJECT_ID = "01900000-0000-7000-8000-000000000099";
@@ -30,6 +31,28 @@ const pageProps: ProjectSettingsPageProps = {
 describe("ProjectSettingsPage", () => {
   beforeEach(() => {
     mockGetGitIntegration.mockResolvedValue([null, { integration: null }]);
+    mockGithubAppRepositories.mockResolvedValue([null, { status: "not_configured" }]);
+  });
+
+  it("should still show the git integration when the github app repositories can't be loaded", async () => {
+    mockGetSession.mockResolvedValue({
+      user: mocks.user.generateAuthUser({ role: "admin" }),
+      session: mocks.session.generateSession(),
+    });
+    mockGetProject.mockResolvedValue([
+      null,
+      { project: mocks.project.generateProject({ id: PROJECT_ID }) },
+    ]);
+    mockListApiKeys.mockResolvedValue([null, { apiKeys: [], total: 0 }]);
+    mockGithubAppRepositories.mockResolvedValue([
+      createORPCError("INTERNAL_SERVER_ERROR"),
+      undefined,
+    ]);
+
+    render(await ProjectSettingsPage(pageProps));
+
+    expect(screen.getByText("git integration")).toBeVisible();
+    expect(screen.getByLabelText(/authentication/i)).toBeVisible();
   });
 
   it("should show the settings page for admins with no api keys", async () => {

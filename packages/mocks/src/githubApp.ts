@@ -1,4 +1,8 @@
-import type { GithubAppInstallationSchema, GithubAppSchema } from "@ovr/api/contracts/githubApp";
+import type {
+  GithubAppInstallationSchema,
+  GithubAppRepositorySchema,
+  GithubAppSchema,
+} from "@ovr/api/contracts/githubApp";
 
 export const generateGithubApp = (overrides?: Partial<GithubAppSchema>): GithubAppSchema => ({
   name: "acme-ovr",
@@ -19,5 +23,16 @@ export const generateGithubAppInstallation = (
   repositorySelection: "selected",
   repositoryCount: 12,
   suspended: false,
+  ...overrides,
+});
+
+export const generateGithubAppRepository = (
+  overrides?: Partial<GithubAppRepositorySchema>,
+): GithubAppRepositorySchema => ({
+  installationId: 42,
+  accountLogin: "acme",
+  id: 7,
+  fullName: "acme/web",
+  private: true,
   ...overrides,
 });

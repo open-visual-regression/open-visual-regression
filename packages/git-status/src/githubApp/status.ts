@@ -1,10 +1,6 @@
 import { getApp, GithubAppRequestError, listInstallations } from "./client";
-import {
-  getGithubAppConfig,
-  GithubAppConfigError,
-  REJECTED_CREDENTIALS_MESSAGE,
-  type GithubAppConfig,
-} from "./config";
+import { getGithubAppConfig, GithubAppConfigError, type GithubAppConfig } from "./config";
+import { describeGithubAppError } from "./repositories";
 import { listRepositoriesForInstallation } from "./tokens";
 
 export type GithubAppStatus =
@@ -85,7 +81,7 @@ export const getGithubAppStatus = async (): Promise<GithubAppStatus> => {
 
     return {
       status: "error",
-      error: error.status === 401 ? REJECTED_CREDENTIALS_MESSAGE : error.message,
+      error: describeGithubAppError(error),
     };
   }
 };
