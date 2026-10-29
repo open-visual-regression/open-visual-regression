@@ -15,7 +15,8 @@
   "dependencies": {
     "@faker-js/faker": "^10.5.0",
     "@ovr/api": "workspace:*",
-    "@ovr/db": "workspace:*"
+    "@ovr/db": "workspace:*",
+    "msw": "^2.15.0"
   },
   "devDependencies": {
     "@ovr/typescript-config": "workspace:*",

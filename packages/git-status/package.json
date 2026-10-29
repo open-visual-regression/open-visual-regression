@@ -20,6 +20,7 @@
     "zod": "^4.5.1"
   },
   "devDependencies": {
+    "@ovr/mocks": "workspace:*",
     "@ovr/typescript-config": "workspace:*",
     "@types/node": "^22.20.1",
     "msw": "^2.15.0",

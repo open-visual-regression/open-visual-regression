@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { PublishRequest } from "../../publisher";
 import { getProvider } from "../../registry";
@@ -24,6 +24,13 @@ describe("github provider", () => {
       description: "visual changes need review",
       target_url: request.targetUrl,
     });
+  });
+
+  it("posts to OVR_GITHUB_API_URL when it is set", () => {
+    vi.stubEnv("OVR_GITHUB_API_URL", "https://github.example.com/api/v3/");
+    expect(github.statuses.buildRequest("acme/web", "t", request).url).toBe(
+      "https://github.example.com/api/v3/repos/acme/web/statuses/abc123",
+    );
   });
 
   it("verifies against the repository", () => {
