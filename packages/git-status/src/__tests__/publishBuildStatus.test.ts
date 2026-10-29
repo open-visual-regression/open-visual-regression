@@ -1,5 +1,6 @@
 import { it, vi } from "vitest";
 
+import type { Credential } from "../credentials";
 import {
   GitStatusPublishError,
   publishBuildStatus,
@@ -118,6 +119,47 @@ describe("publishBuildStatus", () => {
         headers: expect.objectContaining({ authorization: "Bearer plain-token" }),
       }),
     );
+  });
+
+  it("retries once with a renewed token after a 401", async () => {
+    const renew = vi
+      .fn<() => Promise<Credential>>()
+      .mockResolvedValue({ ok: true, token: "fresh-token", renew: null });
+    const send = vi
+      .fn<PublishBuildStatusDeps["send"]>()
+      .mockResolvedValueOnce({ outcome: "error", httpStatus: 401, retryable: false })
+      .mockResolvedValueOnce({ outcome: "ok", httpStatus: 201, retryable: false });
+    const deps = makeDeps({
+      resolveCredential: vi
+        .fn<PublishBuildStatusDeps["resolveCredential"]>()
+        .mockResolvedValue({ ok: true, token: "stale-token", renew }),
+      send,
+    });
+
+    await publishBuildStatus("build-1", deps);
+
+    expect(renew).toHaveBeenCalledOnce();
+    expect(send).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        headers: expect.objectContaining({ authorization: "Bearer fresh-token" }),
+      }),
+    );
+    expect(deps.recordPublication).toHaveBeenCalledOnce();
+    expect(deps.recordPublication).toHaveBeenCalledWith(
+      expect.objectContaining({ outcome: "ok", httpStatus: 201 }),
+    );
+  });
+
+  it("does not retry a 401 when the token can't be renewed", async () => {
+    const deps = makeDeps({
+      send: vi
+        .fn<PublishBuildStatusDeps["send"]>()
+        .mockResolvedValue({ outcome: "error", httpStatus: 401, retryable: false }),
+    });
+
+    await publishBuildStatus("build-1", deps);
+
+    expect(deps.send).toHaveBeenCalledOnce();
   });
 
   describe("metrics", () => {

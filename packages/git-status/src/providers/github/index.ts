@@ -1,5 +1,6 @@
 import type { GitProviderModule } from "../types";
 import { assertGithubAppConfig } from "./app/config";
+import { githubAppConnections } from "./app/connections";
 import { githubStatuses } from "./statuses";
 
 export const githubProvider: GitProviderModule = {
@@ -12,4 +13,5 @@ export const githubProvider: GitProviderModule = {
     branchUrl: (repoIdentifier, branch) => `https://github.com/${repoIdentifier}/tree/${branch}`,
   },
   statuses: githubStatuses,
+  connections: githubAppConnections,
 };

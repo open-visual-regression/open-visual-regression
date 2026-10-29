@@ -1,6 +1,7 @@
 import type { GitCredentialType, GitProvider } from "@ovr/db/schema";
 
 import { tryDecryptToken } from "./crypto";
+import { getProvider } from "./registry";
 
 export type IntegrationCredentials = {
   provider: GitProvider;
@@ -39,6 +40,23 @@ const resolveAccessToken = ({ encryptedToken }: IntegrationCredentials): Credent
   return { ok: true, token, renew: null };
 };
 
+const resolveConnection = (
+  integration: IntegrationCredentials,
+): Promise<Credential> | Credential => {
+  const connections = getProvider(integration.provider).connections;
+  if (!connections) {
+    return failure(`${integration.provider} does not support connections`);
+  }
+  if (integration.connectionId === null || integration.externalRepoId === null) {
+    return failure("the integration is missing its connection, link it again");
+  }
+  return connections.credential(
+    integration.connectionId,
+    integration.externalRepoId,
+    integration.repoIdentifier,
+  );
+};
+
 /** The token to call the provider with, however the integration authenticates. */
 export const resolveCredential = async (
   integration: IntegrationCredentials,
@@ -47,6 +65,6 @@ export const resolveCredential = async (
     case "access_token":
       return resolveAccessToken(integration);
     case "connection":
-      return failure(`${integration.provider} does not support connections`);
+      return resolveConnection(integration);
   }
 };

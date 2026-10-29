@@ -108,15 +108,24 @@ export const publishBuildStatus = async (
     return;
   }
 
-  const result = await deps.send(
-    provider.statuses.buildRequest(integration.repoIdentifier, credential.token, {
+  const buildRequest = (token: string) =>
+    provider.statuses.buildRequest(integration.repoIdentifier, token, {
       sha: build.commitSha,
       state,
       context: integration.checkContext,
       description,
       targetUrl,
-    }),
-  );
+    });
+
+  let result = await deps.send(buildRequest(credential.token));
+
+  // A cached connection token can be revoked before it expires. Retry once with a fresh one.
+  if (result.httpStatus === 401 && credential.renew) {
+    const renewed = await credential.renew();
+    if (renewed.ok) {
+      result = await deps.send(buildRequest(renewed.token));
+    }
+  }
 
   await deps.recordPublication({
     buildId: build.id,
