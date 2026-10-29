@@ -40,6 +40,7 @@
           "self-hosting/docker-compose",
           "self-hosting/helm",
           "self-hosting/sso",
+          "self-hosting/github-app",
           "self-hosting/metrics"
         ]
       }
