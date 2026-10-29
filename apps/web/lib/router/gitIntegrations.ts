@@ -41,7 +41,7 @@ export const upsert = os.gitIntegrations.upsert
     const checkContext = formatCheckContext(context.project.name);
 
     const integration = input.token
-      ? await dbClient.gitIntegrations.upsert({
+      ? await dbClient.gitIntegrations.upsertAccessToken({
           projectId: input.projectId,
           provider: input.provider,
           repoIdentifier: input.repoIdentifier,
@@ -111,6 +111,10 @@ export const testConnection = os.gitIntegrations.testConnection
 
     if (!integration) {
       throw new ORPCError("BAD_REQUEST", { message: "No git integration configured" });
+    }
+
+    if (integration.encryptedToken === null) {
+      return { ok: false, httpStatus: null, error: "no access token is stored, enter one" };
     }
 
     const token = tryDecryptToken(integration.encryptedToken);

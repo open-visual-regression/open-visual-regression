@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import { db } from "../db";
 import { gitIntegrations } from "../schema";
@@ -8,7 +8,7 @@ export const findByProject = (projectId: string) =>
     where: (gitIntegrations, { eq }) => eq(gitIntegrations.projectId, projectId),
   });
 
-type UpsertInput = {
+type UpsertAccessTokenInput = {
   projectId: string;
   provider: typeof gitIntegrations.$inferInsert.provider;
   repoIdentifier: string;
@@ -16,19 +16,54 @@ type UpsertInput = {
   checkContext: string;
 };
 
-export const upsert = async (values: UpsertInput) => {
+export const upsertAccessToken = async (values: UpsertAccessTokenInput) => {
+  const credentials = {
+    credentialType: "access_token" as const,
+    encryptedToken: values.encryptedToken,
+    connectionId: null,
+    externalRepoId: null,
+  };
+
   const [integration] = await db
     .insert(gitIntegrations)
-    .values(values)
+    .values({ ...values, ...credentials })
     .onConflictDoUpdate({
       target: gitIntegrations.projectId,
       set: {
         provider: values.provider,
         repoIdentifier: values.repoIdentifier,
-        encryptedToken: values.encryptedToken,
         checkContext: values.checkContext,
+        ...credentials,
       },
     })
+    .returning();
+  return integration;
+};
+
+type UpsertConnectionInput = {
+  projectId: string;
+  provider: typeof gitIntegrations.$inferInsert.provider;
+  repoIdentifier: string;
+  connectionId: string;
+  externalRepoId: string;
+  checkContext: string;
+};
+
+export const upsertConnection = async (values: UpsertConnectionInput) => {
+  const fields = {
+    provider: values.provider,
+    repoIdentifier: values.repoIdentifier,
+    checkContext: values.checkContext,
+    credentialType: "connection" as const,
+    encryptedToken: null,
+    connectionId: values.connectionId,
+    externalRepoId: values.externalRepoId,
+  };
+
+  const [integration] = await db
+    .insert(gitIntegrations)
+    .values({ projectId: values.projectId, ...fields })
+    .onConflictDoUpdate({ target: gitIntegrations.projectId, set: fields })
     .returning();
   return integration;
 };
@@ -48,7 +83,12 @@ export const updateFields = async (values: UpdateFieldsInput) => {
       repoIdentifier: values.repoIdentifier,
       checkContext: values.checkContext,
     })
-    .where(eq(gitIntegrations.projectId, values.projectId))
+    .where(
+      and(
+        eq(gitIntegrations.projectId, values.projectId),
+        eq(gitIntegrations.credentialType, "access_token"),
+      ),
+    )
     .returning();
   return integration;
 };

@@ -139,6 +139,24 @@ describe("publishBuildStatus", () => {
       );
     });
 
+    test("records an error without sending when no access token is stored", async ({ metrics }) => {
+      const deps = makeDeps({
+        findIntegration: vi
+          .fn<PublishBuildStatusDeps["findIntegration"]>()
+          .mockResolvedValue({ ...integration, encryptedToken: null }),
+      });
+      await publishBuildStatus("build-1", deps);
+
+      expect(deps.tryDecryptToken).not.toHaveBeenCalled();
+      expect(deps.send).not.toHaveBeenCalled();
+      expect(deps.recordPublication).toHaveBeenCalledWith(
+        expect.objectContaining({ outcome: "error", error: "no access token is stored" }),
+      );
+      expect(await metrics.scrape()).toContain(
+        'ovr_git_status_publications_total{provider="github",state="failure",outcome="error"} 1',
+      );
+    });
+
     test("counts a status it could not send because the token would not decrypt", async ({
       metrics,
     }) => {
