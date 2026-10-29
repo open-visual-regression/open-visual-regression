@@ -1,5 +1,7 @@
 import {
+  bigint,
   boolean,
+  check,
   index,
   integer,
   pgEnum,
@@ -18,6 +20,10 @@ import { projects, utcTimestamp } from "./schemas";
 export const gitProviderEnum = pgEnum("git_provider", ["github"]);
 
 export type GitProvider = (typeof gitProviderEnum.enumValues)[number];
+
+export const gitAuthTypeEnum = pgEnum("git_auth_type", ["access_token", "github_app"]);
+
+export type GitAuthType = (typeof gitAuthTypeEnum.enumValues)[number];
 
 export const gitStatusStateEnum = pgEnum("git_status_state", [
   "pending",
@@ -41,7 +47,10 @@ export const gitIntegrations = pgTable(
       .notNull(),
     provider: gitProviderEnum().notNull(),
     repoIdentifier: varchar("repo_identifier", { length: 512 }).notNull(),
-    encryptedToken: text("encrypted_token").notNull(),
+    authType: gitAuthTypeEnum("auth_type").notNull().default("access_token"),
+    encryptedToken: text("encrypted_token"),
+    githubInstallationId: bigint("github_installation_id", { mode: "number" }),
+    externalRepoId: bigint("external_repo_id", { mode: "number" }),
     statusChecksEnabled: boolean("status_checks_enabled").notNull().default(true),
     checkContext: varchar("check_context", { length: 255 }).notNull().default("ovr/visual-review"),
     createdAt: utcTimestamp("created_at")
@@ -52,7 +61,23 @@ export const gitIntegrations = pgTable(
       .$onUpdate(() => sql`now()`)
       .notNull(),
   },
-  (table) => [uniqueIndex("git_integrations_projectId_uidx").on(table.projectId)],
+  (table) => [
+    uniqueIndex("git_integrations_projectId_uidx").on(table.projectId),
+    check(
+      "git_integrations_credentials_check",
+      sql`(
+        ${table.authType} = 'access_token'
+        AND ${table.encryptedToken} IS NOT NULL
+        AND ${table.githubInstallationId} IS NULL
+      ) OR (
+        ${table.authType} = 'github_app'
+        AND ${table.provider} = 'github'
+        AND ${table.encryptedToken} IS NULL
+        AND ${table.githubInstallationId} IS NOT NULL
+        AND ${table.externalRepoId} IS NOT NULL
+      )`,
+    ),
+  ],
 );
 
 export const gitStatusPublications = pgTable(

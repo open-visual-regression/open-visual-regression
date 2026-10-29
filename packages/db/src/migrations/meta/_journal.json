@@ -421,6 +421,20 @@
       "when": 1793054308157,
       "tag": "0059_add_external_request_allowlist",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1793238577529,
+      "tag": "0060_add_git_integration_auth_type",
+      "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1793238604002,
+      "tag": "0061_validate_git_integration_credentials_check",
+      "breakpoints": true
     }
   ]
 }

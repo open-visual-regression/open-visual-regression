@@ -8,7 +8,7 @@ export const findByProject = (projectId: string) =>
     where: (gitIntegrations, { eq }) => eq(gitIntegrations.projectId, projectId),
   });
 
-type UpsertInput = {
+type UpsertAccessTokenInput = {
   projectId: string;
   provider: typeof gitIntegrations.$inferInsert.provider;
   repoIdentifier: string;
@@ -16,17 +16,24 @@ type UpsertInput = {
   checkContext: string;
 };
 
-export const upsert = async (values: UpsertInput) => {
+export const upsertAccessToken = async (values: UpsertAccessTokenInput) => {
+  const credentials = {
+    authType: "access_token" as const,
+    encryptedToken: values.encryptedToken,
+    githubInstallationId: null,
+    externalRepoId: null,
+  };
+
   const [integration] = await db
     .insert(gitIntegrations)
-    .values(values)
+    .values({ ...values, ...credentials })
     .onConflictDoUpdate({
       target: gitIntegrations.projectId,
       set: {
         provider: values.provider,
         repoIdentifier: values.repoIdentifier,
-        encryptedToken: values.encryptedToken,
         checkContext: values.checkContext,
+        ...credentials,
       },
     })
     .returning();

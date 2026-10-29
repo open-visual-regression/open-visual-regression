@@ -34,7 +34,7 @@ type BuildForPublish = {
 type IntegrationForPublish = {
   provider: GitProvider;
   repoIdentifier: string;
-  encryptedToken: string;
+  encryptedToken: string | null;
   checkContext: string;
   statusChecksEnabled: boolean;
 };
@@ -94,8 +94,7 @@ export const publishBuildStatus = async (
   const adapter = deps.resolveAdapter(integration.provider);
   const targetUrl = `${deps.baseUrl}/projects/${build.projectId}/builds/${build.id}`;
 
-  const token = deps.tryDecryptToken(integration.encryptedToken);
-  if (token === null) {
+  const recordUnsent = async (error: string) => {
     await deps.recordPublication({
       buildId: build.id,
       commitSha: build.commitSha,
@@ -103,13 +102,20 @@ export const publishBuildStatus = async (
       state,
       outcome: "error",
       httpStatus: null,
-      error: "token could not be decrypted",
+      error,
     });
     publications.add(1, { provider: integration.provider, state, outcome: "error" });
-    logger.error(
-      { buildId: build.id, provider: integration.provider },
-      "token could not be decrypted",
-    );
+    logger.error({ buildId: build.id, provider: integration.provider }, error);
+  };
+
+  if (integration.encryptedToken === null) {
+    await recordUnsent("no access token is stored");
+    return;
+  }
+
+  const token = deps.tryDecryptToken(integration.encryptedToken);
+  if (token === null) {
+    await recordUnsent("token could not be decrypted");
     return;
   }
 
