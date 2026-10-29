@@ -16,7 +16,8 @@ Copy `values.yaml`, or pass `--set`, filling in:
 
 Or set `existingSecret` to the name of a Secret you manage yourself with keys:
 `DATABASE_URL`, `REDIS_URL`, `BETTER_AUTH_SECRET`, `OVR_GIT_TOKEN_ENCRYPTION_KEY`,
-`STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`.
+`STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`. To post commit statuses through a GitHub App,
+also add `OVR_GITHUB_APP_CLIENT_ID` and `OVR_GITHUB_APP_PRIVATE_KEY`, or set `githubApp.*`.
 
 ## 2. Install
 
