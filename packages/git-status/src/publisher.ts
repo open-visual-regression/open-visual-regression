@@ -1,11 +1,6 @@
 import { z } from "zod";
 
-import type {
-  BuildProcessingStatus,
-  BuildReviewStatus,
-  GitProvider,
-  GitStatusState,
-} from "@ovr/db/schema";
+import type { BuildProcessingStatus, BuildReviewStatus, GitStatusState } from "@ovr/db/schema";
 
 export type { GitStatusState };
 
@@ -50,12 +45,6 @@ export const mapBuildStatus = ({
   }
 };
 
-export type AdapterConfig = {
-  provider: GitProvider;
-  repoIdentifier: string;
-  token: string;
-};
-
 export type PublishRequest = {
   sha: string;
   state: GitStatusState;
@@ -73,11 +62,6 @@ export type HttpRequest = {
 export type VerifyRequest = {
   url: string;
   headers: Record<string, string>;
-};
-
-export type Adapter = {
-  buildRequest: (config: AdapterConfig, request: PublishRequest) => HttpRequest;
-  buildVerifyRequest: (config: AdapterConfig) => VerifyRequest;
 };
 
 export type PublishOutcome = {

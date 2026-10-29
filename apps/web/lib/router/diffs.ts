@@ -3,7 +3,7 @@
 import { ORPCError } from "@orpc/client";
 
 import { dbClient } from "@ovr/db/client";
-import { buildCommitUrl } from "@ovr/git-status/webCommitUrl";
+import { getProvider } from "@ovr/git-status/registry";
 import {
   bulkCastVote as bulkCastVoteService,
   castVote as castVoteService,
@@ -72,8 +72,7 @@ const buildBaselineSnapshot = async (
     imagePath: baselineSnapshot.imagePath,
     commitSha: baselineBuild.commitSha,
     commitUrl: gitIntegration
-      ? buildCommitUrl(
-          gitIntegration.provider,
+      ? getProvider(gitIntegration.provider).repository.commitUrl(
           gitIntegration.repoIdentifier,
           baselineBuild.commitSha,
         )

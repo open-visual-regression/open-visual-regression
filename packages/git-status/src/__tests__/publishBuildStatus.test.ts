@@ -1,11 +1,11 @@
 import { it, vi } from "vitest";
 
-import { resolveAdapter } from "../adapters";
 import {
   GitStatusPublishError,
   publishBuildStatus,
   type PublishBuildStatusDeps,
 } from "../publishBuildStatus";
+import { getProvider } from "../registry";
 import { describe, expect, test } from "./fixtures";
 
 const build = {
@@ -19,7 +19,10 @@ const build = {
 const integration = {
   provider: "github" as const,
   repoIdentifier: "acme/web",
+  credentialType: "access_token" as const,
   encryptedToken: "encrypted",
+  connectionId: null,
+  externalRepoId: null,
   checkContext: "ovr/visual-review",
   statusChecksEnabled: true,
 };
@@ -32,10 +35,10 @@ const makeDeps = (overrides: Partial<PublishBuildStatusDeps> = {}): PublishBuild
   recordPublication: vi
     .fn<PublishBuildStatusDeps["recordPublication"]>()
     .mockResolvedValue(undefined),
-  resolveAdapter,
-  tryDecryptToken: vi
-    .fn<PublishBuildStatusDeps["tryDecryptToken"]>()
-    .mockReturnValue("plain-token"),
+  getProvider,
+  resolveCredential: vi
+    .fn<PublishBuildStatusDeps["resolveCredential"]>()
+    .mockResolvedValue({ ok: true, token: "plain-token", renew: null }),
   send: vi
     .fn<PublishBuildStatusDeps["send"]>()
     .mockResolvedValue({ outcome: "ok", httpStatus: 201, retryable: false }),
@@ -139,35 +142,42 @@ describe("publishBuildStatus", () => {
       );
     });
 
-    test("records an error without sending when no access token is stored", async ({ metrics }) => {
+    test("records an error without sending when no credential is available", async ({
+      metrics,
+    }) => {
       const deps = makeDeps({
-        findIntegration: vi
-          .fn<PublishBuildStatusDeps["findIntegration"]>()
-          .mockResolvedValue({ ...integration, encryptedToken: null }),
+        resolveCredential: vi.fn<PublishBuildStatusDeps["resolveCredential"]>().mockResolvedValue({
+          ok: false,
+          error: "no access token is stored, enter one",
+          retryable: false,
+        }),
       });
-      await publishBuildStatus("build-1", deps);
+      await expect(publishBuildStatus("build-1", deps)).resolves.toBeUndefined();
 
-      expect(deps.tryDecryptToken).not.toHaveBeenCalled();
       expect(deps.send).not.toHaveBeenCalled();
       expect(deps.recordPublication).toHaveBeenCalledWith(
-        expect.objectContaining({ outcome: "error", error: "no access token is stored" }),
+        expect.objectContaining({
+          outcome: "error",
+          httpStatus: null,
+          error: "no access token is stored, enter one",
+        }),
       );
       expect(await metrics.scrape()).toContain(
         'ovr_git_status_publications_total{provider="github",state="failure",outcome="error"} 1',
       );
     });
 
-    test("counts a status it could not send because the token would not decrypt", async ({
-      metrics,
-    }) => {
+    test("throws so the job retries when the credential failed transiently", async () => {
       const deps = makeDeps({
-        tryDecryptToken: vi.fn<PublishBuildStatusDeps["tryDecryptToken"]>().mockReturnValue(null),
+        resolveCredential: vi
+          .fn<PublishBuildStatusDeps["resolveCredential"]>()
+          .mockResolvedValue({ ok: false, error: "could not reach the provider", retryable: true }),
       });
-      await publishBuildStatus("build-1", deps);
 
-      expect(await metrics.scrape()).toContain(
-        'ovr_git_status_publications_total{provider="github",state="failure",outcome="error"} 1',
+      await expect(publishBuildStatus("build-1", deps)).rejects.toBeInstanceOf(
+        GitStatusPublishError,
       );
+      expect(deps.send).not.toHaveBeenCalled();
     });
   });
 });

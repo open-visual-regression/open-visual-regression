@@ -3,15 +3,9 @@ import type { BuildProcessingStatus, BuildReviewStatus, GitProvider } from "@ovr
 import { createLogger } from "@ovr/logger";
 import { createCounter } from "@ovr/metrics";
 
-import { resolveAdapter } from "./adapters";
-import { tryDecryptToken } from "./crypto";
-import {
-  mapBuildStatus,
-  send,
-  type Adapter,
-  type PublishOutcome,
-  type PublishRequest,
-} from "./publisher";
+import { resolveCredential, type Credential, type IntegrationCredentials } from "./credentials";
+import { mapBuildStatus, send, type PublishOutcome, type PublishRequest } from "./publisher";
+import { getProvider, type GitProviderModule } from "./registry";
 
 const logger = createLogger("git-status");
 
@@ -31,10 +25,7 @@ type BuildForPublish = {
   reviewStatus: BuildReviewStatus;
 };
 
-type IntegrationForPublish = {
-  provider: GitProvider;
-  repoIdentifier: string;
-  encryptedToken: string | null;
+type IntegrationForPublish = IntegrationCredentials & {
   checkContext: string;
   statusChecksEnabled: boolean;
 };
@@ -53,8 +44,8 @@ export type PublishBuildStatusDeps = {
   findBuild: (buildId: string) => Promise<BuildForPublish | undefined>;
   findIntegration: (projectId: string) => Promise<IntegrationForPublish | undefined>;
   recordPublication: (values: PublicationRecord) => Promise<unknown>;
-  resolveAdapter: (provider: GitProvider) => Adapter;
-  tryDecryptToken: (payload: string) => string | null;
+  getProvider: (provider: GitProvider) => GitProviderModule;
+  resolveCredential: (integration: IntegrationCredentials) => Promise<Credential>;
   send: (request: Parameters<typeof send>[0]) => Promise<PublishOutcome>;
   baseUrl: string;
 };
@@ -63,8 +54,8 @@ const defaultDeps = (): PublishBuildStatusDeps => ({
   findBuild: dbClient.builds.findById,
   findIntegration: dbClient.gitIntegrations.findByProject,
   recordPublication: dbClient.gitStatusPublications.record,
-  resolveAdapter,
-  tryDecryptToken,
+  getProvider,
+  resolveCredential,
   send,
   baseUrl: process.env.BASE_URL ?? "http://localhost:3000",
 });
@@ -91,7 +82,7 @@ export const publishBuildStatus = async (
   }
 
   const { state, description } = mapBuildStatus(build);
-  const adapter = deps.resolveAdapter(integration.provider);
+  const provider = deps.getProvider(integration.provider);
   const targetUrl = `${deps.baseUrl}/projects/${build.projectId}/builds/${build.id}`;
 
   const recordUnsent = async (error: string) => {
@@ -108,27 +99,24 @@ export const publishBuildStatus = async (
     logger.error({ buildId: build.id, provider: integration.provider }, error);
   };
 
-  if (integration.encryptedToken === null) {
-    await recordUnsent("no access token is stored");
+  const credential = await deps.resolveCredential(integration);
+  if (!credential.ok) {
+    await recordUnsent(credential.error);
+    if (credential.retryable) {
+      throw new GitStatusPublishError(credential.error);
+    }
     return;
   }
 
-  const token = deps.tryDecryptToken(integration.encryptedToken);
-  if (token === null) {
-    await recordUnsent("token could not be decrypted");
-    return;
-  }
-
-  const request = adapter.buildRequest(
-    {
-      provider: integration.provider,
-      repoIdentifier: integration.repoIdentifier,
-      token,
-    },
-    { sha: build.commitSha, state, context: integration.checkContext, description, targetUrl },
+  const result = await deps.send(
+    provider.statuses.buildRequest(integration.repoIdentifier, credential.token, {
+      sha: build.commitSha,
+      state,
+      context: integration.checkContext,
+      description,
+      targetUrl,
+    }),
   );
-
-  const result = await deps.send(request);
 
   await deps.recordPublication({
     buildId: build.id,
