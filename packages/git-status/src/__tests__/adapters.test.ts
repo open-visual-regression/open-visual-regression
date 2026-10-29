@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { resolveAdapter } from "../adapters";
 import type { AdapterConfig, PublishRequest } from "../publisher";
@@ -23,5 +23,12 @@ describe("github-family adapter", () => {
     expect(built.headers.authorization).toBe("Bearer t");
     expect(built.body.state).toBe("failure");
     expect(built.body.target_url).toBe(request.targetUrl);
+  });
+
+  it("targets OVR_GITHUB_API_URL when it is set", () => {
+    vi.stubEnv("OVR_GITHUB_API_URL", "https://github.example.com/api/v3/");
+    const config: AdapterConfig = { provider: "github", repoIdentifier: "acme/web", token: "t" };
+    const built = resolveAdapter("github").buildRequest(config, request);
+    expect(built.url).toBe("https://github.example.com/api/v3/repos/acme/web/statuses/abc123");
   });
 });
