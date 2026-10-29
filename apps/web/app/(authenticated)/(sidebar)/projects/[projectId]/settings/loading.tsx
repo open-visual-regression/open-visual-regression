@@ -2,7 +2,7 @@ import { TypographySkeleton } from "@ovr/ui/components/typography";
 
 import { ApiKeysSectionSkeleton } from "./_components/api-keys-section/ApiKeysSection";
 import { DeleteProjectSectionSkeleton } from "./_components/delete-project/DeleteProjectSection";
-import { GitIntegrationSectionSkeleton } from "./_components/git-integration/GitIntegrationSection";
+import { GitIntegrationSectionSkeleton } from "./_components/git-integration/GitIntegrationSectionSkeleton";
 import { UpdateProjectFormSkeleton } from "./_components/update-project-form/UpdateProjectForm";
 
 export default function Loading() {

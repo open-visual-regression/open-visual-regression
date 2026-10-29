@@ -1,173 +1,190 @@
+import { http, HttpResponse } from "msw";
 import { useRouter } from "next/navigation";
 import { vi } from "vitest";
 
-import { Toaster } from "@ovr/ui/components/sonner";
+import type { GitIntegrationSchema } from "@ovr/api/contracts/gitIntegrations";
+import type { GitProviderSummarySchema } from "@ovr/api/contracts/gitProviders";
+import { mocks } from "@ovr/mocks";
 
 import { serverClient } from "@/lib/router";
-import { describe, expect, it, render, screen, waitFor, within } from "@/test-utils";
+import { server } from "@/lib/testing/server";
+import { describe, expect, it, screen, waitFor } from "@/test-utils";
 
 import { GitIntegrationForm } from "../GitIntegrationForm";
+import { renderWithQueryClient } from "./renderWithQueryClient";
 
 vi.mock("@/lib/router");
 vi.mock("next/navigation");
 
 const mockUpsert = vi.mocked(serverClient.gitIntegrations.upsert);
-const mockRemove = vi.mocked(serverClient.gitIntegrations.remove);
-const mockSetStatusChecks = vi.mocked(serverClient.gitIntegrations.setStatusChecks);
-const mockTestConnection = vi.mocked(serverClient.gitIntegrations.testConnection);
 const mockRefresh = vi.mocked(useRouter)().refresh;
 
 const PROJECT_ID = "project-id";
 
-const INTEGRATION = {
-  provider: "github" as const,
-  repoIdentifier: "acme/web",
-  checkContext: "Open Visual Regression / Web",
-  statusChecksEnabled: true,
-  credentialType: "access_token" as const,
-  connectionId: null,
-  externalRepoId: null,
-};
+const ACCESS_TOKEN_ONLY = mocks.gitProvider.generateProviderSummary({
+  credentialTypes: ["access_token"],
+});
+const WITH_CONNECTIONS = mocks.gitProvider.generateProviderSummary();
 
-const renderComponent = (integration: typeof INTEGRATION | null = null) =>
-  render(
-    <>
-      <GitIntegrationForm projectId={PROJECT_ID} integration={integration} />
-      <Toaster />
-    </>,
+const TOKEN_INTEGRATION = mocks.gitIntegration.generateGitIntegration({
+  repoIdentifier: "acme/web",
+});
+const CONNECTION_INTEGRATION = mocks.gitIntegration.generateGitIntegration({
+  repoIdentifier: "acme/api",
+  credentialType: "connection",
+  connectionId: "42",
+  externalRepoId: "8",
+});
+
+const renderForm = (
+  integration: GitIntegrationSchema | null,
+  provider: GitProviderSummarySchema = ACCESS_TOKEN_ONLY,
+) =>
+  renderWithQueryClient(
+    <GitIntegrationForm projectId={PROJECT_ID} integration={integration} providers={[provider]} />,
+  );
+
+const serveRepositories = () =>
+  server.use(
+    http.post("*/api/rpc/gitProviders/searchRepositories", () =>
+      HttpResponse.json({
+        json: {
+          status: "ok",
+          repositories: [
+            mocks.gitProvider.generateRepository({ id: "8", fullName: "acme/api" }),
+            mocks.gitProvider.generateRepository({ id: "7", fullName: "acme/web" }),
+          ],
+          nextCursor: null,
+        },
+      }),
+    ),
   );
 
 describe("GitIntegrationForm", () => {
-  it("should not show disconnect or test connection when no integration is configured", () => {
-    renderComponent(null);
+  describe("with an access token", () => {
+    it("should only offer access tokens when the provider has no connections", () => {
+      renderForm(null);
 
-    expect(screen.queryByRole("button", { name: /disconnect/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /test connection/i })).not.toBeInTheDocument();
-  });
+      expect(screen.queryByLabelText(/authentication/i)).not.toBeInTheDocument();
+      expect(screen.getByPlaceholderText("owner/repo")).toBeVisible();
+      expect(screen.getByLabelText(/access token/i)).toBeVisible();
+    });
 
-  it("should render the integration's current values", () => {
-    renderComponent(INTEGRATION);
+    it("should render the integration's current values", () => {
+      renderForm(TOKEN_INTEGRATION);
 
-    expect(screen.getByLabelText(/repository/i)).toHaveValue(INTEGRATION.repoIdentifier);
-    expect(screen.getByLabelText(/access token/i)).toHaveValue("");
-    expect(screen.getByRole("button", { name: /disconnect/i })).toBeVisible();
-    expect(screen.getByRole("button", { name: /test connection/i })).toBeVisible();
-  });
+      expect(screen.getByPlaceholderText("owner/repo")).toHaveValue("acme/web");
+      expect(screen.getByLabelText(/access token/i)).toHaveValue("");
+    });
 
-  it("should show a validation error when repository is blank", async ({ user }) => {
-    renderComponent(null);
+    it("should show a validation error when repository is blank", async ({ user }) => {
+      renderForm(null);
 
-    await user.type(screen.getByLabelText(/access token/i), "a-token");
-    await user.click(screen.getByRole("button", { name: /^save$/i }));
+      await user.type(screen.getByLabelText(/access token/i), "a-token");
+      await user.click(screen.getByRole("button", { name: /^save$/i }));
 
-    expect(await screen.findByText("you must enter a repository")).toBeVisible();
-    expect(mockUpsert).not.toHaveBeenCalled();
-  });
+      expect(await screen.findByText("you must enter a repository")).toBeVisible();
+      expect(mockUpsert).not.toHaveBeenCalled();
+    });
 
-  it("should submit the integration", async ({ user }) => {
-    mockUpsert.mockResolvedValue([null, { ...INTEGRATION, repoIdentifier: "acme/other" }]);
-    renderComponent(null);
+    it("should submit the integration", async ({ user }) => {
+      mockUpsert.mockResolvedValue([null, TOKEN_INTEGRATION]);
+      renderForm(null);
 
-    await user.type(screen.getByLabelText(/repository/i), "acme/other");
-    await user.type(screen.getByLabelText(/access token/i), "a-token");
-    await user.click(screen.getByRole("button", { name: /^save$/i }));
+      await user.type(screen.getByPlaceholderText("owner/repo"), "acme/other");
+      await user.type(screen.getByLabelText(/access token/i), "a-token");
+      await user.click(screen.getByRole("button", { name: /^save$/i }));
 
-    await waitFor(() =>
-      expect(mockUpsert).toHaveBeenCalledWith(
-        expect.objectContaining({
+      await waitFor(() =>
+        expect(mockUpsert).toHaveBeenCalledWith({
           projectId: PROJECT_ID,
+          provider: "github",
           credential: { type: "access_token", repoIdentifier: "acme/other", token: "a-token" },
         }),
-      ),
-    );
-    expect(await screen.findByText("git integration saved")).toBeVisible();
-    expect(mockRefresh).toHaveBeenCalled();
+      );
+      expect(await screen.findByText("git integration saved")).toBeVisible();
+      expect(mockRefresh).toHaveBeenCalled();
+    });
+
+    it("should update an existing integration without re-entering the token", async ({ user }) => {
+      mockUpsert.mockResolvedValue([null, TOKEN_INTEGRATION]);
+      renderForm(TOKEN_INTEGRATION);
+
+      await user.clear(screen.getByPlaceholderText("owner/repo"));
+      await user.type(screen.getByPlaceholderText("owner/repo"), "acme/renamed");
+      await user.click(screen.getByRole("button", { name: /^save$/i }));
+
+      await waitFor(() =>
+        expect(mockUpsert).toHaveBeenCalledWith(
+          expect.objectContaining({
+            credential: { type: "access_token", repoIdentifier: "acme/renamed", token: undefined },
+          }),
+        ),
+      );
+    });
   });
 
-  it("should update an existing integration without re-entering the token", async ({ user }) => {
-    mockUpsert.mockResolvedValue([null, { ...INTEGRATION, repoIdentifier: "acme/renamed" }]);
-    renderComponent(INTEGRATION);
+  describe("with a connection", () => {
+    it("should default to the provider's connection and link the chosen repository", async ({
+      user,
+    }) => {
+      serveRepositories();
+      mockUpsert.mockResolvedValue([null, CONNECTION_INTEGRATION]);
+      renderForm(null, WITH_CONNECTIONS);
 
-    await user.clear(screen.getByLabelText(/repository/i));
-    await user.type(screen.getByLabelText(/repository/i), "acme/renamed");
-    await user.click(screen.getByRole("button", { name: /^save$/i }));
+      expect(screen.getByRole("combobox", { name: /authentication/i })).toHaveTextContent(
+        "github app",
+      );
+      expect(screen.queryByLabelText(/access token/i)).not.toBeInTheDocument();
 
-    await waitFor(() =>
-      expect(mockUpsert).toHaveBeenCalledWith(
-        expect.objectContaining({
-          credential: { type: "access_token", repoIdentifier: "acme/renamed", token: undefined },
+      await user.click(screen.getByRole("combobox", { name: /repository/i }));
+      await user.click(await screen.findByRole("option", { name: "acme/web" }));
+      await user.click(screen.getByRole("button", { name: /^save$/i }));
+
+      await waitFor(() =>
+        expect(mockUpsert).toHaveBeenCalledWith({
+          projectId: PROJECT_ID,
+          provider: "github",
+          credential: { type: "connection", connectionId: "42", repositoryId: "7" },
         }),
-      ),
-    );
-  });
+      );
+    });
 
-  it("should disconnect the integration", async ({ user }) => {
-    mockRemove.mockResolvedValue([null, undefined]);
-    renderComponent(INTEGRATION);
+    it("should require a repository", async ({ user }) => {
+      renderForm(null, WITH_CONNECTIONS);
 
-    await user.click(screen.getByRole("button", { name: /disconnect/i }));
+      await user.click(screen.getByRole("button", { name: /^save$/i }));
 
-    await waitFor(() => expect(mockRemove).toHaveBeenCalledWith({ projectId: PROJECT_ID }));
-    expect(await screen.findByText("git integration removed")).toBeVisible();
-    expect(mockRefresh).toHaveBeenCalled();
-  });
+      expect(await screen.findByText("you must choose a repository")).toBeVisible();
+      expect(mockUpsert).not.toHaveBeenCalled();
+    });
 
-  it("should disable ci checks after confirming", async ({ user }) => {
-    mockSetStatusChecks.mockResolvedValue([null, { ...INTEGRATION, statusChecksEnabled: false }]);
-    renderComponent(INTEGRATION);
+    it("should show the linked repository", () => {
+      renderForm(CONNECTION_INTEGRATION, WITH_CONNECTIONS);
 
-    await user.click(screen.getByRole("button", { name: /^disable$/i }));
-    expect(mockSetStatusChecks).not.toHaveBeenCalled();
+      expect(screen.getByRole("combobox", { name: /repository/i })).toHaveValue("acme/api");
+    });
 
-    const dialog = await screen.findByRole("alertdialog");
-    expect(within(dialog).getByText("disable git integration?")).toBeVisible();
-    await user.click(within(dialog).getByRole("button", { name: /^disable$/i }));
+    it("should keep showing a connection the instance no longer offers", () => {
+      renderForm(CONNECTION_INTEGRATION, ACCESS_TOKEN_ONLY);
 
-    await waitFor(() =>
-      expect(mockSetStatusChecks).toHaveBeenCalledWith({ projectId: PROJECT_ID, enabled: false }),
-    );
-    expect(await screen.findByText("ci checks disabled")).toBeVisible();
-    expect(mockRefresh).toHaveBeenCalled();
-  });
+      expect(screen.getByRole("combobox", { name: /authentication/i })).toHaveTextContent(
+        "github app",
+      );
+    });
 
-  it("should not disable ci checks when the dialog is cancelled", async ({ user }) => {
-    renderComponent(INTEGRATION);
+    it("should ask for a token when switching a connection integration to an access token", async ({
+      user,
+    }) => {
+      renderForm(CONNECTION_INTEGRATION, WITH_CONNECTIONS);
 
-    await user.click(screen.getByRole("button", { name: /^disable$/i }));
-    await user.click(await screen.findByRole("button", { name: /cancel/i }));
+      await user.click(screen.getByRole("combobox", { name: /authentication/i }));
+      await user.click(await screen.findByRole("option", { name: "access token" }));
+      await user.type(screen.getByPlaceholderText("owner/repo"), "acme/web");
+      await user.click(screen.getByRole("button", { name: /^save$/i }));
 
-    expect(mockSetStatusChecks).not.toHaveBeenCalled();
-  });
-
-  it("should offer to enable ci checks when they are disabled", async ({ user }) => {
-    mockSetStatusChecks.mockResolvedValue([null, INTEGRATION]);
-    renderComponent({ ...INTEGRATION, statusChecksEnabled: false });
-
-    expect(screen.queryByRole("button", { name: /^disable$/i })).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /^enable$/i }));
-
-    await waitFor(() =>
-      expect(mockSetStatusChecks).toHaveBeenCalledWith({ projectId: PROJECT_ID, enabled: true }),
-    );
-    expect(await screen.findByText("ci checks enabled")).toBeVisible();
-  });
-
-  it("should not show disable when no integration is configured", () => {
-    renderComponent(null);
-
-    expect(screen.queryByRole("button", { name: /^disable$/i })).not.toBeInTheDocument();
-  });
-
-  it("should show the result of testing the connection", async ({ user }) => {
-    mockTestConnection.mockResolvedValue([
-      null,
-      { ok: false, httpStatus: 401, error: "invalid credentials" },
-    ]);
-    renderComponent(INTEGRATION);
-
-    await user.click(screen.getByRole("button", { name: /test connection/i }));
-
-    await waitFor(() => expect(mockTestConnection).toHaveBeenCalledWith({ projectId: PROJECT_ID }));
-    expect(await screen.findByText("invalid credentials")).toBeVisible();
+      expect(await screen.findByText("you must enter an access token")).toBeVisible();
+      expect(mockUpsert).not.toHaveBeenCalled();
+    });
   });
 });
