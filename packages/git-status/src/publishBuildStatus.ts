@@ -4,7 +4,7 @@ import { createLogger } from "@ovr/logger";
 import { createCounter } from "@ovr/metrics";
 
 import { resolveAdapter } from "./adapters";
-import { tryDecryptToken } from "./crypto";
+import { resolveCredential, type Credential, type IntegrationCredentials } from "./credentials";
 import {
   mapBuildStatus,
   send,
@@ -31,10 +31,7 @@ type BuildForPublish = {
   reviewStatus: BuildReviewStatus;
 };
 
-type IntegrationForPublish = {
-  provider: GitProvider;
-  repoIdentifier: string;
-  encryptedToken: string | null;
+type IntegrationForPublish = IntegrationCredentials & {
   checkContext: string;
   statusChecksEnabled: boolean;
 };
@@ -54,7 +51,7 @@ export type PublishBuildStatusDeps = {
   findIntegration: (projectId: string) => Promise<IntegrationForPublish | undefined>;
   recordPublication: (values: PublicationRecord) => Promise<unknown>;
   resolveAdapter: (provider: GitProvider) => Adapter;
-  tryDecryptToken: (payload: string) => string | null;
+  resolveCredential: (integration: IntegrationCredentials) => Promise<Credential>;
   send: (request: Parameters<typeof send>[0]) => Promise<PublishOutcome>;
   baseUrl: string;
 };
@@ -64,7 +61,7 @@ const defaultDeps = (): PublishBuildStatusDeps => ({
   findIntegration: dbClient.gitIntegrations.findByProject,
   recordPublication: dbClient.gitStatusPublications.record,
   resolveAdapter,
-  tryDecryptToken,
+  resolveCredential,
   send,
   baseUrl: process.env.BASE_URL ?? "http://localhost:3000",
 });
@@ -108,27 +105,30 @@ export const publishBuildStatus = async (
     logger.error({ buildId: build.id, provider: integration.provider }, error);
   };
 
-  if (integration.encryptedToken === null) {
-    await recordUnsent("no access token is stored");
+  const credential = await deps.resolveCredential(integration);
+  if (!credential.ok) {
+    await recordUnsent(credential.error);
+    if (credential.retryable) {
+      throw new GitStatusPublishError(credential.error);
+    }
     return;
   }
 
-  const token = deps.tryDecryptToken(integration.encryptedToken);
-  if (token === null) {
-    await recordUnsent("token could not be decrypted");
-    return;
+  const buildRequest = (token: string) =>
+    adapter.buildRequest(
+      { provider: integration.provider, repoIdentifier: integration.repoIdentifier, token },
+      { sha: build.commitSha, state, context: integration.checkContext, description, targetUrl },
+    );
+
+  let result = await deps.send(buildRequest(credential.token));
+
+  // A cached GitHub App token can be revoked before it expires. Retry once with a fresh one.
+  if (result.httpStatus === 401 && credential.renew) {
+    const renewed = await credential.renew();
+    if (renewed.ok) {
+      result = await deps.send(buildRequest(renewed.token));
+    }
   }
-
-  const request = adapter.buildRequest(
-    {
-      provider: integration.provider,
-      repoIdentifier: integration.repoIdentifier,
-      token,
-    },
-    { sha: build.commitSha, state, context: integration.checkContext, description, targetUrl },
-  );
-
-  const result = await deps.send(request);
 
   await deps.recordPublication({
     buildId: build.id,

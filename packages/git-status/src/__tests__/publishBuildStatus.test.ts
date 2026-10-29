@@ -1,6 +1,7 @@
 import { it, vi } from "vitest";
 
 import { resolveAdapter } from "../adapters";
+import type { Credential } from "../credentials";
 import {
   GitStatusPublishError,
   publishBuildStatus,
@@ -19,7 +20,10 @@ const build = {
 const integration = {
   provider: "github" as const,
   repoIdentifier: "acme/web",
+  authType: "access_token" as const,
   encryptedToken: "encrypted",
+  githubInstallationId: null,
+  externalRepoId: null,
   checkContext: "ovr/visual-review",
   statusChecksEnabled: true,
 };
@@ -33,9 +37,9 @@ const makeDeps = (overrides: Partial<PublishBuildStatusDeps> = {}): PublishBuild
     .fn<PublishBuildStatusDeps["recordPublication"]>()
     .mockResolvedValue(undefined),
   resolveAdapter,
-  tryDecryptToken: vi
-    .fn<PublishBuildStatusDeps["tryDecryptToken"]>()
-    .mockReturnValue("plain-token"),
+  resolveCredential: vi
+    .fn<PublishBuildStatusDeps["resolveCredential"]>()
+    .mockResolvedValue({ ok: true, token: "plain-token", renew: null }),
   send: vi
     .fn<PublishBuildStatusDeps["send"]>()
     .mockResolvedValue({ outcome: "ok", httpStatus: 201, retryable: false }),
@@ -117,6 +121,61 @@ describe("publishBuildStatus", () => {
     );
   });
 
+  it("throws so the job retries when the credential failed transiently", async () => {
+    const deps = makeDeps({
+      resolveCredential: vi
+        .fn<PublishBuildStatusDeps["resolveCredential"]>()
+        .mockResolvedValue({ ok: false, error: "could not reach github", retryable: true }),
+    });
+
+    await expect(publishBuildStatus("build-1", deps)).rejects.toBeInstanceOf(GitStatusPublishError);
+    expect(deps.send).not.toHaveBeenCalled();
+    expect(deps.recordPublication).toHaveBeenCalledWith(
+      expect.objectContaining({ outcome: "error", error: "could not reach github" }),
+    );
+  });
+
+  it("retries once with a renewed token after a 401", async () => {
+    const renew = vi
+      .fn<() => Promise<Credential>>()
+      .mockResolvedValue({ ok: true, token: "fresh-token", renew: null });
+    const send = vi
+      .fn<PublishBuildStatusDeps["send"]>()
+      .mockResolvedValueOnce({ outcome: "error", httpStatus: 401, retryable: false })
+      .mockResolvedValueOnce({ outcome: "ok", httpStatus: 201, retryable: false });
+    const deps = makeDeps({
+      resolveCredential: vi
+        .fn<PublishBuildStatusDeps["resolveCredential"]>()
+        .mockResolvedValue({ ok: true, token: "stale-token", renew }),
+      send,
+    });
+
+    await publishBuildStatus("build-1", deps);
+
+    expect(renew).toHaveBeenCalledOnce();
+    expect(send).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        headers: expect.objectContaining({ authorization: "Bearer fresh-token" }),
+      }),
+    );
+    expect(deps.recordPublication).toHaveBeenCalledOnce();
+    expect(deps.recordPublication).toHaveBeenCalledWith(
+      expect.objectContaining({ outcome: "ok", httpStatus: 201 }),
+    );
+  });
+
+  it("does not retry a 401 when the token can't be renewed", async () => {
+    const deps = makeDeps({
+      send: vi
+        .fn<PublishBuildStatusDeps["send"]>()
+        .mockResolvedValue({ outcome: "error", httpStatus: 401, retryable: false }),
+    });
+
+    await publishBuildStatus("build-1", deps);
+
+    expect(deps.send).toHaveBeenCalledOnce();
+  });
+
   describe("metrics", () => {
     test("counts a sent status by provider, state, and outcome", async ({ metrics }) => {
       await publishBuildStatus("build-1", makeDeps());
@@ -139,32 +198,26 @@ describe("publishBuildStatus", () => {
       );
     });
 
-    test("records an error without sending when no access token is stored", async ({ metrics }) => {
-      const deps = makeDeps({
-        findIntegration: vi
-          .fn<PublishBuildStatusDeps["findIntegration"]>()
-          .mockResolvedValue({ ...integration, encryptedToken: null }),
-      });
-      await publishBuildStatus("build-1", deps);
-
-      expect(deps.tryDecryptToken).not.toHaveBeenCalled();
-      expect(deps.send).not.toHaveBeenCalled();
-      expect(deps.recordPublication).toHaveBeenCalledWith(
-        expect.objectContaining({ outcome: "error", error: "no access token is stored" }),
-      );
-      expect(await metrics.scrape()).toContain(
-        'ovr_git_status_publications_total{provider="github",state="failure",outcome="error"} 1',
-      );
-    });
-
-    test("counts a status it could not send because the token would not decrypt", async ({
+    test("records an error without sending when no credential is available", async ({
       metrics,
     }) => {
       const deps = makeDeps({
-        tryDecryptToken: vi.fn<PublishBuildStatusDeps["tryDecryptToken"]>().mockReturnValue(null),
+        resolveCredential: vi.fn<PublishBuildStatusDeps["resolveCredential"]>().mockResolvedValue({
+          ok: false,
+          error: "no access token is stored, enter one",
+          retryable: false,
+        }),
       });
-      await publishBuildStatus("build-1", deps);
+      await expect(publishBuildStatus("build-1", deps)).resolves.toBeUndefined();
 
+      expect(deps.send).not.toHaveBeenCalled();
+      expect(deps.recordPublication).toHaveBeenCalledWith(
+        expect.objectContaining({
+          outcome: "error",
+          httpStatus: null,
+          error: "no access token is stored, enter one",
+        }),
+      );
       expect(await metrics.scrape()).toContain(
         'ovr_git_status_publications_total{provider="github",state="failure",outcome="error"} 1',
       );

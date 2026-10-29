@@ -57,8 +57,8 @@ describe("getInstallationToken", () => {
     expect(await getInstallationToken(config, 42, statusesScope(7), () => NOW)).toBe("ghs_1");
     expect(await getInstallationToken(config, 42, statusesScope(8), () => NOW)).toBe("ghs_2");
     expect(requests).toEqual([
-      { repository_ids: [7], permissions: { statuses: "write" } },
-      { repository_ids: [8], permissions: { statuses: "write" } },
+      { repository_ids: [7], permissions: { statuses: "write", metadata: "read" } },
+      { repository_ids: [8], permissions: { statuses: "write", metadata: "read" } },
     ]);
   });
 

@@ -4,7 +4,7 @@ import { ORPCError } from "@orpc/client";
 
 import { dbClient } from "@ovr/db/client";
 import { formatCheckContext } from "@ovr/git-status/checkContext";
-import { encryptToken, tryDecryptToken } from "@ovr/git-status/crypto";
+import { encryptToken } from "@ovr/git-status/crypto";
 import { verifyIntegration } from "@ovr/git-status/verifyIntegration";
 
 import { adminMiddleware, authenticatedMiddleware, projectMiddleware } from "./middleware";
@@ -113,23 +113,6 @@ export const testConnection = os.gitIntegrations.testConnection
       throw new ORPCError("BAD_REQUEST", { message: "No git integration configured" });
     }
 
-    if (integration.encryptedToken === null) {
-      return { ok: false, httpStatus: null, error: "no access token is stored, enter one" };
-    }
-
-    const token = tryDecryptToken(integration.encryptedToken);
-    if (token === null) {
-      return {
-        ok: false,
-        httpStatus: null,
-        error: "stored token could not be decrypted, re-enter it",
-      };
-    }
-
-    return verifyIntegration({
-      provider: integration.provider,
-      repoIdentifier: integration.repoIdentifier,
-      token,
-    });
+    return verifyIntegration(integration);
   })
   .actionable();

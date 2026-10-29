@@ -54,10 +54,13 @@ export const clearInstallationTokens = (): void => {
   tokens.clear();
 };
 
-/** The token scope used to post commit statuses to one repository. */
+/**
+ * The token scope used to post commit statuses to one repository. Metadata read is granted to
+ * every installation, and lets the same token look the repository up when testing the connection.
+ */
 export const statusesScope = (repositoryId: number): InstallationTokenScope => ({
   repositoryIds: [repositoryId],
-  permissions: { statuses: "write" },
+  permissions: { statuses: "write", metadata: "read" },
 });
 
 const METADATA_SCOPE: InstallationTokenScope = { permissions: { metadata: "read" } };

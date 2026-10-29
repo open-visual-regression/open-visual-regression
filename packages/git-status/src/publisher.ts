@@ -131,6 +131,45 @@ export const verify = async (request: VerifyRequest): Promise<VerifyOutcome> => 
   }
 };
 
+const repositoryIdSchema = z.object({ id: z.number() });
+
+/**
+ * Confirms a GitHub App token reaches the repository the integration was linked to. Minting the
+ * token already proved the installation grants commit statuses on it.
+ */
+export const verifyRepository = async (
+  request: VerifyRequest,
+  expectedRepositoryId: number,
+): Promise<VerifyOutcome> => {
+  try {
+    const response = await fetch(request.url, { method: "GET", headers: request.headers });
+    if (!response.ok) {
+      return {
+        ok: false,
+        httpStatus: response.status,
+        error: `provider responded with ${response.status}`,
+      };
+    }
+
+    const parsed = repositoryIdSchema.safeParse(await response.json().catch(() => null));
+    if (!parsed.success || parsed.data.id !== expectedRepositoryId) {
+      return {
+        ok: false,
+        httpStatus: response.status,
+        error: "the repository name now points at a different repository, link it again",
+      };
+    }
+
+    return { ok: true, httpStatus: response.status, error: null };
+  } catch (error) {
+    return {
+      ok: false,
+      httpStatus: null,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+};
+
 export const send = async (request: HttpRequest): Promise<PublishOutcome> => {
   try {
     const response = await fetch(request.url, {
