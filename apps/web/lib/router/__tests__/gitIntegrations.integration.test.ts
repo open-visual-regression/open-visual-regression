@@ -3,6 +3,7 @@ import { vi } from "vitest";
 import type { AddProjectInputSchema } from "@ovr/api/contracts/projects";
 
 import { serverClient } from "@/lib/router";
+import { useFakeGithub } from "@/lib/testing/fakeGithub";
 import { test, describe, expect } from "@/lib/testing/fixtures";
 
 vi.mock("next/headers");
@@ -14,6 +15,8 @@ const TEST_PROJECT: AddProjectInputSchema = {
   projectDescription: "A test project",
   gitMainBranch: "main",
 };
+
+const github = useFakeGithub();
 
 describe("gitIntegrations", () => {
   describe("get", () => {
@@ -49,8 +52,7 @@ describe("gitIntegrations", () => {
       const [error] = await serverClient.gitIntegrations.upsert({
         projectId: FAKE_PROJECT_ID,
         provider: "github",
-        repoIdentifier: "acme/web",
-        token: "a-token",
+        credential: { type: "access_token", repoIdentifier: "acme/web", token: "a-token" },
       });
       expect(error?.code).toBe("UNAUTHORIZED");
     });
@@ -61,8 +63,7 @@ describe("gitIntegrations", () => {
       const [error] = await serverClient.gitIntegrations.upsert({
         projectId: FAKE_PROJECT_ID,
         provider: "github",
-        repoIdentifier: "acme/web",
-        token: "a-token",
+        credential: { type: "access_token", repoIdentifier: "acme/web", token: "a-token" },
       });
       expect(error?.code).toBe("FORBIDDEN");
     });
@@ -74,8 +75,7 @@ describe("gitIntegrations", () => {
       const [error, result] = await serverClient.gitIntegrations.upsert({
         projectId,
         provider: "github",
-        repoIdentifier: "acme/web",
-        token: "a-secret-token",
+        credential: { type: "access_token", repoIdentifier: "acme/web", token: "a-secret-token" },
       });
       expect(error).toBeNull();
       expect(result).toMatchObject({ provider: "github", repoIdentifier: "acme/web" });
@@ -83,7 +83,10 @@ describe("gitIntegrations", () => {
       expect(result).not.toHaveProperty("encryptedToken");
 
       const [, getResult] = await serverClient.gitIntegrations.get({ projectId });
-      expect(getResult?.integration).toMatchObject({ hasToken: true, repoIdentifier: "acme/web" });
+      expect(getResult?.integration).toMatchObject({
+        credentialType: "access_token",
+        repoIdentifier: "acme/web",
+      });
     });
 
     test("should derive the check context from the project name", async ({ admin: _ }) => {
@@ -93,8 +96,7 @@ describe("gitIntegrations", () => {
       const [, result] = await serverClient.gitIntegrations.upsert({
         projectId,
         provider: "github",
-        repoIdentifier: "acme/web",
-        token: "a-secret-token",
+        credential: { type: "access_token", repoIdentifier: "acme/web", token: "a-secret-token" },
       });
       expect(result).toMatchObject({ checkContext: "Open Visual Regression / Test Project" });
     });
@@ -109,14 +111,12 @@ describe("gitIntegrations", () => {
       const [, firstResult] = await serverClient.gitIntegrations.upsert({
         projectId: firstProject!.projectId,
         provider: "github",
-        repoIdentifier: "acme/web",
-        token: "a-secret-token",
+        credential: { type: "access_token", repoIdentifier: "acme/web", token: "a-secret-token" },
       });
       const [, secondResult] = await serverClient.gitIntegrations.upsert({
         projectId: secondProject!.projectId,
         provider: "github",
-        repoIdentifier: "acme/web",
-        token: "a-secret-token",
+        credential: { type: "access_token", repoIdentifier: "acme/web", token: "a-secret-token" },
       });
 
       expect(firstResult?.checkContext).not.toBe(secondResult?.checkContext);
@@ -129,17 +129,19 @@ describe("gitIntegrations", () => {
       await serverClient.gitIntegrations.upsert({
         projectId,
         provider: "github",
-        repoIdentifier: "acme/web",
-        token: "a-secret-token",
+        credential: { type: "access_token", repoIdentifier: "acme/web", token: "a-secret-token" },
       });
 
       const [error, result] = await serverClient.gitIntegrations.upsert({
         projectId,
         provider: "github",
-        repoIdentifier: "acme/renamed",
+        credential: { type: "access_token", repoIdentifier: "acme/renamed" },
       });
       expect(error).toBeNull();
-      expect(result).toMatchObject({ repoIdentifier: "acme/renamed", hasToken: true });
+      expect(result).toMatchObject({
+        repoIdentifier: "acme/renamed",
+        credentialType: "access_token",
+      });
     });
 
     test("should reject a first-time save without a token", async ({ admin: _ }) => {
@@ -149,7 +151,7 @@ describe("gitIntegrations", () => {
       const [error] = await serverClient.gitIntegrations.upsert({
         projectId,
         provider: "github",
-        repoIdentifier: "acme/web",
+        credential: { type: "access_token", repoIdentifier: "acme/web" },
       });
       expect(error?.code).toBe("BAD_REQUEST");
     });
@@ -161,14 +163,12 @@ describe("gitIntegrations", () => {
       await serverClient.gitIntegrations.upsert({
         projectId,
         provider: "github",
-        repoIdentifier: "acme/web",
-        token: "first-token",
+        credential: { type: "access_token", repoIdentifier: "acme/web", token: "first-token" },
       });
       await serverClient.gitIntegrations.upsert({
         projectId,
         provider: "github",
-        repoIdentifier: "acme/other",
-        token: "second-token",
+        credential: { type: "access_token", repoIdentifier: "acme/other", token: "second-token" },
       });
 
       const [, result] = await serverClient.gitIntegrations.get({ projectId });
@@ -176,6 +176,118 @@ describe("gitIntegrations", () => {
         provider: "github",
         repoIdentifier: "acme/other",
       });
+    });
+  });
+
+  describe("upsert with a connection", () => {
+    test("should link a repository the connection can access", async ({ admin: _ }) => {
+      github.configure();
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+
+      const [error, result] = await serverClient.gitIntegrations.upsert({
+        projectId,
+        provider: "github",
+        credential: { type: "connection", connectionId: "42", repositoryId: "7" },
+      });
+
+      expect(error).toBeNull();
+      expect(result).toMatchObject({
+        credentialType: "connection",
+        repoIdentifier: "acme/web",
+        connectionId: "42",
+        externalRepoId: "7",
+      });
+    });
+
+    test("should switch an access token integration to a connection", async ({ admin: _ }) => {
+      github.configure();
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+      await serverClient.gitIntegrations.upsert({
+        projectId,
+        provider: "github",
+        credential: { type: "access_token", repoIdentifier: "acme/web", token: "a-token" },
+      });
+
+      await serverClient.gitIntegrations.upsert({
+        projectId,
+        provider: "github",
+        credential: { type: "connection", connectionId: "42", repositoryId: "7" },
+      });
+
+      const [, result] = await serverClient.gitIntegrations.get({ projectId });
+      expect(result?.integration).toMatchObject({
+        credentialType: "connection",
+        externalRepoId: "7",
+      });
+    });
+
+    test("should reject a repository the connection can't access", async ({ admin: _ }) => {
+      github.configure();
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+
+      const [error] = await serverClient.gitIntegrations.upsert({
+        projectId: addResult!.projectId,
+        provider: "github",
+        credential: { type: "connection", connectionId: "42", repositoryId: "999" },
+      });
+
+      expect(error?.code).toBe("BAD_REQUEST");
+      expect(error?.message).toBe("the github app installation can't access that repository");
+    });
+
+    test("should reject a connection when the provider has none configured", async ({
+      admin: _,
+    }) => {
+      github.unconfigure();
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+
+      const [error] = await serverClient.gitIntegrations.upsert({
+        projectId: addResult!.projectId,
+        provider: "github",
+        credential: { type: "connection", connectionId: "42", repositoryId: "7" },
+      });
+
+      expect(error?.code).toBe("BAD_REQUEST");
+      expect(error?.message).toBe("github app is not configured on this instance");
+    });
+
+    test("should require a token to switch a connection integration to an access token", async ({
+      admin: _,
+    }) => {
+      github.configure();
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+      await serverClient.gitIntegrations.upsert({
+        projectId,
+        provider: "github",
+        credential: { type: "connection", connectionId: "42", repositoryId: "7" },
+      });
+
+      const [error] = await serverClient.gitIntegrations.upsert({
+        projectId,
+        provider: "github",
+        credential: { type: "access_token", repoIdentifier: "acme/web" },
+      });
+
+      expect(error?.code).toBe("BAD_REQUEST");
+    });
+
+    test("should test the connection through the provider", async ({ admin: _ }) => {
+      github.configure();
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+      await serverClient.gitIntegrations.upsert({
+        projectId,
+        provider: "github",
+        credential: { type: "connection", connectionId: "42", repositoryId: "7" },
+      });
+
+      const [error, result] = await serverClient.gitIntegrations.testConnection({ projectId });
+
+      expect(error).toBeNull();
+      expect(result).toEqual({ ok: true, httpStatus: 200, error: null });
     });
   });
 
@@ -215,8 +327,7 @@ describe("gitIntegrations", () => {
       await serverClient.gitIntegrations.upsert({
         projectId,
         provider: "github",
-        repoIdentifier: "acme/web",
-        token: "a-token",
+        credential: { type: "access_token", repoIdentifier: "acme/web", token: "a-token" },
       });
 
       const [error, disabled] = await serverClient.gitIntegrations.setStatusChecks({
@@ -254,8 +365,7 @@ describe("gitIntegrations", () => {
       await serverClient.gitIntegrations.upsert({
         projectId,
         provider: "github",
-        repoIdentifier: "acme/web",
-        token: "a-token",
+        credential: { type: "access_token", repoIdentifier: "acme/web", token: "a-token" },
       });
 
       const [error] = await serverClient.gitIntegrations.remove({ projectId });

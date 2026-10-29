@@ -128,7 +128,9 @@ export const serverClient: typeof RealServerClient = {
         repoIdentifier: "",
         checkContext: "Open Visual Regression / Storybook",
         statusChecksEnabled: true,
-        hasToken: true as const,
+        credentialType: "access_token" as const,
+        connectionId: null,
+        externalRepoId: null,
       }))
       .actionable(),
     setStatusChecks: os.gitIntegrations.setStatusChecks
@@ -137,12 +139,37 @@ export const serverClient: typeof RealServerClient = {
         repoIdentifier: "",
         checkContext: "Open Visual Regression / Storybook",
         statusChecksEnabled: input.enabled,
-        hasToken: true as const,
+        credentialType: "access_token" as const,
+        connectionId: null,
+        externalRepoId: null,
       }))
       .actionable(),
     remove: os.gitIntegrations.remove.handler(() => undefined).actionable(),
     testConnection: os.gitIntegrations.testConnection
       .handler(() => ({ ok: true, httpStatus: 200, error: null }))
+      .actionable(),
+  },
+  gitProviders: {
+    list: os.gitProviders.list
+      .handler(() => ({
+        providers: [
+          {
+            id: "github" as const,
+            name: "github",
+            repository: { placeholder: "owner/repo" },
+            credentialTypes: ["access_token" as const],
+            connections: {
+              label: "github app",
+              setupGuideUrl: "https://docs.openvisualregression.com/self-hosting/github-app",
+              configured: false,
+            },
+          },
+        ],
+      }))
+      .actionable(),
+    connections: os.gitProviders.connections.handler(() => ({ providers: [] })).actionable(),
+    searchRepositories: os.gitProviders.searchRepositories
+      .handler(() => ({ status: "ok" as const, repositories: [], nextCursor: null }))
       .actionable(),
   },
   diffs: {

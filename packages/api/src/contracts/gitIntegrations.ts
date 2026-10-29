@@ -5,12 +5,18 @@ export const gitProviderSchema = z.enum(["github"]);
 
 export type GitProviderSchema = z.infer<typeof gitProviderSchema>;
 
+export const gitCredentialTypeSchema = z.enum(["access_token", "connection"]);
+
+export type GitCredentialTypeSchema = z.infer<typeof gitCredentialTypeSchema>;
+
 export const gitIntegrationSchema = z.object({
   provider: gitProviderSchema,
   repoIdentifier: z.string(),
   checkContext: z.string(),
   statusChecksEnabled: z.boolean(),
-  hasToken: z.literal(true),
+  credentialType: gitCredentialTypeSchema,
+  connectionId: z.string().nullable(),
+  externalRepoId: z.string().nullable(),
 });
 
 export type GitIntegrationSchema = z.infer<typeof gitIntegrationSchema>;
@@ -23,11 +29,26 @@ export const getGitIntegrationOutputSchema = z.object({
   integration: gitIntegrationSchema.nullable(),
 });
 
+export const gitCredentialInputSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("access_token"),
+    repoIdentifier: z.string().min(1).max(512),
+    /** Omit to keep the stored token. */
+    token: z.string().min(1).optional(),
+  }),
+  z.object({
+    type: z.literal("connection"),
+    connectionId: z.string().min(1).max(255),
+    repositoryId: z.string().min(1).max(255),
+  }),
+]);
+
+export type GitCredentialInputSchema = z.infer<typeof gitCredentialInputSchema>;
+
 export const upsertGitIntegrationInputSchema = z.object({
   projectId: z.uuidv7(),
   provider: gitProviderSchema,
-  repoIdentifier: z.string().min(1).max(512),
-  token: z.string().min(1).optional(),
+  credential: gitCredentialInputSchema,
 });
 
 export type UpsertGitIntegrationInputSchema = z.infer<typeof upsertGitIntegrationInputSchema>;

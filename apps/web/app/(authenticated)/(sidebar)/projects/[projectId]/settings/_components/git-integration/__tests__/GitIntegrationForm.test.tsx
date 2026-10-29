@@ -24,7 +24,9 @@ const INTEGRATION = {
   repoIdentifier: "acme/web",
   checkContext: "Open Visual Regression / Web",
   statusChecksEnabled: true,
-  hasToken: true as const,
+  credentialType: "access_token" as const,
+  connectionId: null,
+  externalRepoId: null,
 };
 
 const renderComponent = (integration: typeof INTEGRATION | null = null) =>
@@ -74,8 +76,7 @@ describe("GitIntegrationForm", () => {
       expect(mockUpsert).toHaveBeenCalledWith(
         expect.objectContaining({
           projectId: PROJECT_ID,
-          repoIdentifier: "acme/other",
-          token: "a-token",
+          credential: { type: "access_token", repoIdentifier: "acme/other", token: "a-token" },
         }),
       ),
     );
@@ -93,7 +94,9 @@ describe("GitIntegrationForm", () => {
 
     await waitFor(() =>
       expect(mockUpsert).toHaveBeenCalledWith(
-        expect.objectContaining({ repoIdentifier: "acme/renamed", token: undefined }),
+        expect.objectContaining({
+          credential: { type: "access_token", repoIdentifier: "acme/renamed", token: undefined },
+        }),
       ),
     );
   });

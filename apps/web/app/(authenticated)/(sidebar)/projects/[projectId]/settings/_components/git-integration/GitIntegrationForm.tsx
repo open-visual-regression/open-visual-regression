@@ -103,8 +103,11 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
     save.execute({
       projectId,
       provider: values.provider,
-      repoIdentifier: values.repoIdentifier,
-      token: values.token.trim() === "" ? undefined : values.token,
+      credential: {
+        type: "access_token",
+        repoIdentifier: values.repoIdentifier,
+        token: values.token.trim() === "" ? undefined : values.token,
+      },
     });
   };
 
