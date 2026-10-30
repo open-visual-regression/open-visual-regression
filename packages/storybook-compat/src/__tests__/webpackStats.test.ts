@@ -123,6 +123,53 @@ describe("readWebpackImporters", () => {
     });
   });
 
+  describe.each([
+    ["Webpack", STORIES_CONTEXT],
+    [
+      "Rspack",
+      "./src|lazy|/^\\.\\/.*$/|include: /\\.stories\\.jsx$/|chunkName: [request]|namespace object",
+    ],
+  ])("with the stories context %s writes", (_, context) => {
+    it("links a module concatenated into a story file to that story file", () => {
+      expect(
+        read(
+          [
+            { name: context, reasons: [{ moduleName: "./storybook-stories.js" }] },
+            {
+              name: "./src/Button.stories.jsx + 1 modules",
+              reasons: [{ moduleName: context }],
+              modules: [
+                { name: "./src/Button.stories.jsx", reasons: [{ moduleName: context }] },
+                { name: "./src/Button.jsx", reasons: [{ moduleName: context }] },
+              ],
+            },
+            { name: "./src/Button.jsx", reasons: [{ moduleName: context }] },
+          ],
+          ["./src/Button.stories.jsx"],
+        ),
+      ).toEqual({
+        "./src/Button.stories.jsx": ["./storybook-stories.js"],
+        "./src/Button.jsx": ["./src/Button.stories.jsx"],
+      });
+    });
+
+    it("leaves a module only the stories context loads without importers", () => {
+      expect(
+        read(
+          [
+            { name: context, reasons: [{ moduleName: "./storybook-stories.js" }] },
+            { name: "./src/Button.stories.jsx", reasons: [{ moduleName: context }] },
+            { name: "./src/Button.jsx", reasons: [{ moduleName: context }] },
+          ],
+          ["./src/Button.stories.jsx"],
+        ),
+      ).toEqual({
+        "./src/Button.stories.jsx": ["./storybook-stories.js"],
+        "./src/Button.jsx": [],
+      });
+    });
+  });
+
   it("leaves out modules that are not files", () => {
     expect(
       read([

@@ -32,7 +32,7 @@ const createRepo = async (files: string[]): Promise<string> => {
 const writeBuild = async (
   graph: Graph,
   entries: { id: string; importPath: string; type?: string }[],
-  options: { stats?: boolean; version?: string } = {},
+  options: { stats?: boolean; version?: string; nested?: Record<string, string[]> } = {},
 ): Promise<string> => {
   const storybookDir = path.join(repoRoot, "apps/web/storybook-static");
   await mkdir(storybookDir, { recursive: true });
@@ -51,6 +51,10 @@ const writeBuild = async (
       id: name,
       name,
       reasons: reasons.map((moduleName) => ({ moduleName })),
+      modules: options.nested?.[name]?.map((inner) => ({
+        name: inner,
+        reasons: graph[inner]?.map((moduleName) => ({ moduleName })),
+      })),
     }));
     await writeFile(
       path.join(storybookDir, "preview-stats.json"),
@@ -321,6 +325,69 @@ describe("findAffectedStories", () => {
     });
 
     expect(result).toMatchObject({ mode: "some", storyIds: ["form--default"] });
+  });
+
+  describe.each([
+    [
+      "Webpack",
+      "./src/ lazy ^\\.\\/.*$ include: (?:\\/src(?:\\/(?!\\.)(?:(?:(?!(?:^|\\/)\\.).)*?)\\/|\\/|$)(?!\\.)(?=.)[^/]*?\\.stories\\.tsx)$ chunkName: [request] namespace object",
+      "5.101.0",
+    ],
+    [
+      "Rspack",
+      "./src|lazy|/^\\.\\/.*$/|include: /\\.stories\\.tsx$/|chunkName: [request]|namespace object",
+      "1.5.0",
+    ],
+  ])("with %s scope hoisting", (_, context, version) => {
+    const STORIES_ENTRY = "./storybook-stories.js";
+    const graph: Graph = {
+      [STORIES_ENTRY]: [null],
+      [context]: [STORIES_ENTRY],
+      "./src/Button.stories.tsx + 1 modules": [context],
+      "./src/Button.stories.tsx": [context],
+      "./src/Button.tsx": [context],
+      "./src/Form.stories.tsx": [context],
+      "./src/Form.tsx": ["./src/Form.stories.tsx"],
+    };
+
+    it("follows a module concatenated into a story file to that story file", async () => {
+      await createRepo(viteRepoFiles);
+      const storybookDir = await writeBuild(graph, viteEntries, {
+        version,
+        nested: {
+          "./src/Button.stories.tsx + 1 modules": ["./src/Button.stories.tsx", "./src/Button.tsx"],
+        },
+      });
+
+      const result = await findAffectedStories({
+        storybookDir,
+        projectDir: webDir(),
+        repoRoot,
+        changedFiles: ["apps/web/src/Button.tsx"],
+      });
+
+      expect(result).toMatchObject({
+        mode: "some",
+        storyIds: ["button--primary", "button--secondary"],
+      });
+    });
+
+    it("captures everything for a module only the stories context loads", async () => {
+      await createRepo(viteRepoFiles);
+      const storybookDir = await writeBuild(graph, viteEntries, { version });
+
+      const result = await findAffectedStories({
+        storybookDir,
+        projectDir: webDir(),
+        repoRoot,
+        changedFiles: ["apps/web/src/Button.tsx"],
+      });
+
+      expect(result).toMatchObject({ mode: "all" });
+      expect(result.mode === "all" && result.reason).toContain(
+        "is an entry of the Storybook preview",
+      );
+    });
   });
 
   it("captures everything when run from somewhere other than where Storybook was built", async () => {

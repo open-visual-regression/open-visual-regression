@@ -44,12 +44,32 @@ export const readWebpackImporters = (
   const importers = new Map<string, Set<string>>();
   const contexts = new Map<string, Set<string>>();
 
+  // The file each module was concatenated into. Rspack and Webpack can give a module
+  // concatenated into a story file only the stories context as a reason, not the story file.
+  const roots = new Map<string, Set<string>>();
+  for (const outer of stats.modules) {
+    const root = outer.name && outer.modules?.length ? toFileName(outer.name) : undefined;
+    if (!root) {
+      continue;
+    }
+    for (const inner of flatten(outer.modules ?? [])) {
+      const name = inner.name && toFileName(inner.name);
+      if (name && name !== root) {
+        addAll(roots, name, [root]);
+      }
+    }
+  }
+
   for (const module of flatten(stats.modules)) {
+    const name = module.name ? toFileName(module.name) : undefined;
     const parents = (module.reasons ?? []).flatMap(({ moduleName }) => {
       if (!moduleName) {
         return [];
       }
-      const parent = CONTEXT.test(moduleName) ? moduleName : toFileName(moduleName);
+      if (CONTEXT.test(moduleName)) {
+        return [moduleName, ...(name ? (roots.get(name) ?? []) : [])];
+      }
+      const parent = toFileName(moduleName);
       return parent ? [parent] : [];
     });
 
@@ -57,7 +77,6 @@ export const readWebpackImporters = (
       continue;
     }
 
-    const name = toFileName(module.name);
     if (CONTEXT.test(module.name)) {
       addAll(contexts, module.name, parents);
     } else if (name) {
