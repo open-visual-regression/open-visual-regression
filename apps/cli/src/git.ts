@@ -34,3 +34,24 @@ export const listChangedFiles = async (cwd: string, base: string): Promise<strin
 
   return [...new Set([...splitNul(changed), ...splitNul(untracked)])];
 };
+
+/** A file's contents at a commit, or `undefined` if it did not exist there. */
+export const readFileAtCommit = async (
+  cwd: string,
+  commit: string,
+  file: string,
+): Promise<string | undefined> => {
+  const root = await getRepoRoot(cwd);
+  const listed = await git(root, [
+    "ls-tree",
+    "--name-only",
+    "--end-of-options",
+    commit,
+    "--",
+    file,
+  ]);
+  if (!listed.trim()) {
+    return undefined;
+  }
+  return git(root, ["show", "--end-of-options", `${commit}:${file}`]);
+};

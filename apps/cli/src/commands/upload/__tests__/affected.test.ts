@@ -60,6 +60,10 @@ const writeStorybookBuild = async (): Promise<string> => {
         { name: "./src/Form.stories.tsx", reasons: [{ moduleName: STORIES }] },
         { name: "./src/Form.tsx", reasons: [{ moduleName: "./src/Form.stories.tsx" }] },
         {
+          name: "./../../node_modules/react/index.js",
+          reasons: [{ moduleName: "./src/Form.tsx" }],
+        },
+        {
           name: STORIES,
           reasons: [{ moduleName: "/virtual:/@storybook/builder-vite/vite-app.js" }],
         },
@@ -175,12 +179,56 @@ describe("findUnaffectedTargets", () => {
 
   it("captures everything when the tracer cannot explain a change", async () => {
     const base = commitAll();
-    await write("pnpm-lock.yaml", "changed");
+    await write("bun.lock", "changed");
 
     const { unaffected, output } = await run(clientFor({ id: "build-1", commitSha: base }));
 
     expect(unaffected).toEqual([]);
-    expect(output).toContain("Capturing every story: dependencies changed (pnpm-lock.yaml)");
+    expect(output).toContain("Capturing every story: dependencies changed (bun.lock)");
+  });
+
+  describe("when the lockfile changes", () => {
+    const yarnLock = (packages: Record<string, string>): string =>
+      [
+        "# yarn lockfile v1",
+        ...Object.entries(packages).map(
+          ([name, version]) => `\n${name}@^${version}:\n  version "${version}"`,
+        ),
+      ].join("\n");
+
+    it("skips stories when no package the Storybook bundles changed", async () => {
+      await write("yarn.lock", yarnLock({ react: "18.3.1", electron: "30.0.1" }));
+      const base = commitAll();
+      await write("yarn.lock", yarnLock({ react: "18.3.1", electron: "30.0.2" }));
+      commitAll();
+
+      const { unaffected, output } = await run(clientFor({ id: "build-1", commitSha: base }));
+
+      expect(unaffected).toEqual(["button--default", "form--default"]);
+      expect(output).toContain(
+        "yarn.lock changed only packages the Storybook does not bundle: electron.",
+      );
+    });
+
+    it("captures everything when a bundled package changed", async () => {
+      await write("yarn.lock", yarnLock({ react: "18.3.1" }));
+      const base = commitAll();
+      await write("yarn.lock", yarnLock({ react: "18.3.2" }));
+
+      const { unaffected, output } = await run(clientFor({ id: "build-1", commitSha: base }));
+
+      expect(unaffected).toEqual([]);
+      expect(output).toContain("Capturing every story: dependencies changed (yarn.lock: react)");
+    });
+
+    it("compares against an empty lockfile when the base commit has none", async () => {
+      const base = commitAll();
+      await write("yarn.lock", yarnLock({ react: "18.3.1" }));
+
+      const { unaffected } = await run(clientFor({ id: "build-1", commitSha: base }));
+
+      expect(unaffected).toEqual([]);
+    });
   });
 
   it("resolves config globs from the directory ovr runs in", async () => {

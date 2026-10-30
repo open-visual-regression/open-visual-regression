@@ -5,10 +5,17 @@ import type { StoryTarget } from "@ovr/storybook-compat/manifest";
 
 import type { OvrClient } from "../../client";
 import type { OnlyAffectedConfig } from "../../defineConfig";
-import { getRepoRoot, isShallowRepository, listAncestorCommits, listChangedFiles } from "../../git";
+import {
+  getRepoRoot,
+  isShallowRepository,
+  listAncestorCommits,
+  listChangedFiles,
+  readFileAtCommit,
+} from "../../git";
 
 const MAX_ANCESTORS = 1000;
 const MAX_LISTED_STORY_FILES = 20;
+const MAX_LISTED_PACKAGES = 10;
 
 type FindUnaffectedTargetsInput = {
   client: Pick<OvrClient, "builds">;
@@ -87,6 +94,7 @@ export const findUnaffectedTargets = async ({
     changedFiles,
     externals: toRepoGlobs(config?.externals, repoRoot, cwd),
     untraced: toRepoGlobs(config?.untraced, repoRoot, cwd),
+    readBaseFile: (file) => readFileAtCommit(cwd, base.commitSha, file),
   });
 
   if (result.mode === "all") {
@@ -101,6 +109,15 @@ export const findUnaffectedTargets = async ({
   log(
     `${targets.length - unaffected.length} of ${targets.length} stories are affected by ${changedFiles.length} changed file(s) since ${base.commitSha.slice(0, 7)}.`,
   );
+  for (const { lockfile, packages } of result.unbundledDependencies) {
+    const listed = packages.slice(0, MAX_LISTED_PACKAGES).join(", ");
+    const more = packages.length - MAX_LISTED_PACKAGES;
+    log(
+      packages.length === 0
+        ? `  ${lockfile} changed, but no package entries in it did.`
+        : `  ${lockfile} changed only packages the Storybook does not bundle: ${listed}${more > 0 ? ` and ${more} more` : ""}.`,
+    );
+  }
   for (const storyFile of result.storyFiles.slice(0, MAX_LISTED_STORY_FILES)) {
     log(`  ${storyFile.file} (via ${storyFile.via[0]})`);
   }

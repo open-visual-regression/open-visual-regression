@@ -74,6 +74,7 @@ const viteGraph: Graph = {
   "./../../node_modules/.pnpm/clsx@2.1.1/node_modules/clsx/dist/clsx.mjs": [
     "./../../packages/ui/src/utils.ts",
   ],
+  "./../../node_modules/react/index.js": ["./src/Button.tsx"],
 };
 
 const viteEntries = [
@@ -140,6 +141,7 @@ describe("findAffectedStories", () => {
         },
       ],
       ignoredFiles: [],
+      unbundledDependencies: [],
     });
   });
 
@@ -198,6 +200,7 @@ describe("findAffectedStories", () => {
       storyIds: [],
       storyFiles: [],
       ignoredFiles: ["apps/web/src/server.ts", "packages/ui/src/__tests__/utils.test.ts"],
+      unbundledDependencies: [],
     });
   });
 
@@ -230,11 +233,111 @@ describe("findAffectedStories", () => {
   });
 
   it.each(["pnpm-lock.yaml", "package-lock.json", "yarn.lock", "bun.lock", "apps/web/bun.lockb"])(
-    "captures everything when the lockfile %s changes",
+    "captures everything when the lockfile %s changes and its old version cannot be read",
     async (lockfile) => {
       expect(await trace([lockfile])).toMatchObject({ mode: "all" });
     },
   );
+
+  describe("with the lockfile at the base commit", () => {
+    const yarnLock = (packages: Record<string, string>): string =>
+      [
+        "# yarn lockfile v1",
+        ...Object.entries(packages).map(
+          ([name, version]) =>
+            `\n"${name}@^${version}":\n  version "${version}"\n  integrity sha512-${version}`,
+        ),
+      ].join("\n");
+
+    const traceLockfile = async (
+      file: string,
+      before: string | undefined,
+      after: string,
+      graph: Graph = viteGraph,
+    ) => {
+      await createRepo(viteRepoFiles);
+      await writeFile(path.join(repoRoot, file), after);
+      const storybookDir = await writeBuild(graph, viteEntries);
+      return findAffectedStories({
+        storybookDir,
+        projectDir: webDir(),
+        repoRoot,
+        changedFiles: [file],
+        readBaseFile: async (requested) => (requested === file ? before : undefined),
+      });
+    };
+
+    const base = { react: "18.3.1", electron: "30.0.1", "@types/node": "20.0.0" };
+
+    it("ignores a change to packages the Storybook does not bundle", async () => {
+      const result = await traceLockfile(
+        "yarn.lock",
+        yarnLock(base),
+        yarnLock({ ...base, electron: "30.0.2", "@types/node": "20.1.0" }),
+      );
+
+      expect(result).toEqual({
+        mode: "some",
+        storyIds: [],
+        storyFiles: [],
+        ignoredFiles: ["yarn.lock"],
+        unbundledDependencies: [{ lockfile: "yarn.lock", packages: ["@types/node", "electron"] }],
+      });
+    });
+
+    it("captures everything when a bundled package changes", async () => {
+      const result = await traceLockfile(
+        "yarn.lock",
+        yarnLock(base),
+        yarnLock({ ...base, react: "18.3.2", electron: "30.0.2" }),
+      );
+
+      expect(result).toEqual({ mode: "all", reason: "dependencies changed (yarn.lock: react)" });
+    });
+
+    it("captures everything when a package that builds the Storybook changes", async () => {
+      const result = await traceLockfile(
+        "yarn.lock",
+        yarnLock({ ...base, vite: "6.0.0" }),
+        yarnLock({ ...base, vite: "6.0.1" }),
+      );
+
+      expect(result).toEqual({ mode: "all", reason: "dependencies changed (yarn.lock: vite)" });
+    });
+
+    it("captures everything when the lockfile cannot be parsed", async () => {
+      const result = await traceLockfile("yarn.lock", yarnLock(base), "<<<<<<< HEAD\n");
+
+      expect(result).toMatchObject({ mode: "all" });
+      expect(result.mode === "all" && result.reason).toContain(
+        "dependencies changed (yarn.lock) and could not be compared",
+      );
+    });
+
+    it("captures everything when the lockfile format is not supported", async () => {
+      const result = await traceLockfile("bun.lock", "{}", "{ }");
+
+      expect(result).toEqual({ mode: "all", reason: "dependencies changed (bun.lock)" });
+    });
+
+    it("captures everything when the stats do not show which packages are bundled", async () => {
+      const graph = Object.fromEntries(
+        Object.entries(viteGraph).filter(([name]) => !name.includes("node_modules/")),
+      );
+      const result = await traceLockfile(
+        "yarn.lock",
+        yarnLock(base),
+        yarnLock({ ...base, electron: "30.0.2" }),
+        graph,
+      );
+
+      expect(result).toEqual({
+        mode: "all",
+        reason:
+          "dependencies changed (yarn.lock) and preview-stats.json does not show which packages are bundled",
+      });
+    });
+  });
 
   it("ignores a lockfile of a project the bundle does not use", async () => {
     const result = await trace(["examples/other/pnpm-lock.yaml"]);

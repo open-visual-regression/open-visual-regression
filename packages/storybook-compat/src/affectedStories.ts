@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
+import { diffLockfile, isSupportedLockfile } from "./lockfile";
 import { readModuleGraph, STATS_FILENAME } from "./moduleGraph";
 
 type IndexEntry = { id: string; importPath: string; type?: string };
@@ -14,6 +15,18 @@ export type AffectedStoriesInput = {
   changedFiles: string[];
   externals?: string[];
   untraced?: string[];
+  /**
+   * Reads a repository file as it was at the commit the changes are listed against,
+   * resolving `undefined` if it did not exist there. Without it, any lockfile change
+   * captures every story.
+   */
+  readBaseFile?: (file: string) => Promise<string | undefined>;
+};
+
+export type UnbundledDependencies = {
+  lockfile: string;
+  /** Packages whose locked entries changed, none of which the Storybook bundles. */
+  packages: string[];
 };
 
 export type AffectedStoryFile = {
@@ -29,6 +42,7 @@ export type AffectedStories =
       storyIds: string[];
       storyFiles: AffectedStoryFile[];
       ignoredFiles: string[];
+      unbundledDependencies: UnbundledDependencies[];
     };
 
 const CODE_FILE = /\.[cm]?[jt]sx?$/;
@@ -36,6 +50,11 @@ const LOCKFILE =
   /(^|\/)(package-lock\.json|npm-shrinkwrap\.json|pnpm-lock\.yaml|yarn\.lock|bun\.lockb?)$/;
 const CONFIG_FILE = /(^|\/)([^/]+\.config\.[cm]?[jt]s|tsconfig[^/]*\.json)$/;
 const NON_RENDERING = /\.md$|(^|\/)\.(github|changeset)\//;
+// Packages that build the Storybook rather than run in it, so they change its output
+// without appearing in the stats.
+const BUILD_TOOL =
+  /^(.*storybook.*|vite|@vitejs\/.+|vite-plugin-.+|rollup|@rollup\/.+|rolldown|@rolldown\/.+|webpack(-.+)?|.+-loader|@rspack\/.+|@rsbuild\/.+|@swc\/.+|esbuild|@esbuild\/.+|@babel\/.+|babel-.+|postcss(-.+)?|autoprefixer|tailwindcss|@tailwindcss\/.+|sass(-embedded)?|less|lightningcss(-.+)?)$/;
+const MAX_LISTED_PACKAGES = 5;
 
 const readJson = async <T>(file: string): Promise<T | undefined> => {
   try {
@@ -52,6 +71,7 @@ export const findAffectedStories = async ({
   changedFiles,
   externals = [],
   untraced = [],
+  readBaseFile,
 }: AffectedStoriesInput): Promise<AffectedStories> => {
   const all = (reason: string): AffectedStories => ({ mode: "all", reason });
 
@@ -112,6 +132,7 @@ export const findAffectedStories = async ({
 
   const seeds: string[] = [];
   const ignoredFiles: string[] = [];
+  const lockfiles: string[] = [];
 
   for (const file of changedFiles) {
     const isRootFile = !file.includes("/");
@@ -128,7 +149,7 @@ export const findAffectedStories = async ({
     } else if (NON_RENDERING.test(file)) {
       ignoredFiles.push(file);
     } else if (LOCKFILE.test(file) && (isRootFile || inBundledPackage)) {
-      return all(`dependencies changed (${file})`);
+      lockfiles.push(file);
     } else if (CONFIG_FILE.test(file) && (isRootFile || inBundledPackage)) {
       return all(`build configuration changed (${file})`);
     } else if (CODE_FILE.test(file)) {
@@ -138,6 +159,42 @@ export const findAffectedStories = async ({
     } else {
       ignoredFiles.push(file);
     }
+  }
+
+  const unbundledDependencies: UnbundledDependencies[] = [];
+  for (const lockfile of lockfiles) {
+    const changed = `dependencies changed (${lockfile})`;
+    if (!readBaseFile || !isSupportedLockfile(lockfile)) {
+      return all(changed);
+    }
+    if (!graph.packages) {
+      return all(`${changed} and ${STATS_FILENAME} does not show which packages are bundled`);
+    }
+
+    let packages: string[];
+    try {
+      const current = path.join(repoRoot, lockfile);
+      packages = diffLockfile(
+        lockfile,
+        await readBaseFile(lockfile),
+        existsSync(current) ? await readFile(current, "utf-8") : undefined,
+      );
+    } catch (error) {
+      return all(
+        `${changed} and could not be compared (${error instanceof Error ? error.message : String(error)})`,
+      );
+    }
+
+    const rendering = packages.filter((name) => graph.packages!.has(name) || BUILD_TOOL.test(name));
+    if (rendering.length > 0) {
+      const more = rendering.length - MAX_LISTED_PACKAGES;
+      const listed = rendering.slice(0, MAX_LISTED_PACKAGES).join(", ");
+      return all(
+        `dependencies changed (${lockfile}: ${listed}${more > 0 ? ` and ${more} more` : ""})`,
+      );
+    }
+    ignoredFiles.push(lockfile);
+    unbundledDependencies.push({ lockfile, packages });
   }
 
   const reachedFrom = new Map<string, string | null>(seeds.map((seed) => [seed, null]));
@@ -189,5 +246,6 @@ export const findAffectedStories = async ({
     storyIds: affectedStoryFiles.flatMap((storyFile) => storyFile.storyIds),
     storyFiles: affectedStoryFiles,
     ignoredFiles,
+    unbundledDependencies,
   };
 };
