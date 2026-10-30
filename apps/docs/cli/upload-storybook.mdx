@@ -59,7 +59,7 @@ It needs:
 - The full git history. In GitHub Actions, check out with `fetch-depth: 0`.
 - A successful build on the project's main branch in the commit's history to compare against.
 
-When any of these is missing, or a change could affect every story (Storybook or build configuration, dependencies, global styles), every story is captured and the CLI prints why. Use [`onlyAffected`](/configuration/config#only-affected) in `ovr.config` for files that affect stories without being imported.
+When any of these is missing, or a change could affect every story (Storybook or build configuration, dependencies, global styles), every story is captured and the CLI prints why. Code and stylesheets that no story imports are ignored, since they cannot render. Use [`onlyAffected`](/configuration/config#only-affected) in `ovr.config` for files that affect stories without being imported.
 
 <Note>
   We recommend it for pull requests only, and capturing every story on the main branch.

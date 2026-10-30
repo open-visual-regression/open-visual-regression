@@ -32,6 +32,8 @@ export type AffectedStories =
     };
 
 const CODE_FILE = /\.[cm]?[jt]sx?$/;
+// Stylesheets are loaded through imports like code, so one outside the graph cannot render.
+const STYLE_FILE = /\.(css|scss|sass|less|styl|pcss)$/;
 const LOCKFILE =
   /(^|\/)(package-lock\.json|npm-shrinkwrap\.json|pnpm-lock\.yaml|yarn\.lock|bun\.lockb?)$/;
 const CONFIG_FILE = /(^|\/)([^/]+\.config\.[cm]?[jt]s|tsconfig[^/]*\.json)$/;
@@ -132,6 +134,8 @@ export const findAffectedStories = async ({
     } else if (CONFIG_FILE.test(file) && (isRootFile || inBundledPackage)) {
       return all(`build configuration changed (${file})`);
     } else if (CODE_FILE.test(file)) {
+      ignoredFiles.push(file);
+    } else if (STYLE_FILE.test(file)) {
       ignoredFiles.push(file);
     } else if (inBundledPackage) {
       return all(`${file} is not traceable but is in a package the Storybook bundles`);

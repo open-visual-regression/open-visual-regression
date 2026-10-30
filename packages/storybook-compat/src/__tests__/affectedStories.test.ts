@@ -202,10 +202,55 @@ describe("findAffectedStories", () => {
   });
 
   it("captures everything when a non-code file changes in a package the bundle uses", async () => {
-    const result = await trace(["packages/ui/src/tokens.css"]);
+    const result = await trace(["packages/ui/src/tokens.json"]);
 
     expect(result).toMatchObject({ mode: "all" });
-    expect(result.mode === "all" && result.reason).toContain("packages/ui/src/tokens.css");
+    expect(result.mode === "all" && result.reason).toContain("packages/ui/src/tokens.json");
+  });
+
+  it.each([
+    "packages/ui/src/tokens.css",
+    "packages/ui/src/Modal.module.css",
+    "packages/ui/src/theme.scss",
+    "packages/ui/src/form.sass",
+    "packages/ui/src/form.less",
+    "packages/ui/src/form.styl",
+    "packages/ui/src/form.pcss",
+  ])("ignores the stylesheet %s that no story imports, since it cannot render", async (file) => {
+    const result = await trace([file]);
+
+    expect(result).toEqual({ mode: "some", storyIds: [], storyFiles: [], ignoredFiles: [file] });
+  });
+
+  it("follows a changed stylesheet up to the stories that import it", async () => {
+    await createRepo([...viteRepoFiles, "packages/ui/src/button.css"]);
+    const storybookDir = await writeBuild(
+      { ...viteGraph, "./../../packages/ui/src/button.css": ["./src/Form.tsx"] },
+      viteEntries,
+    );
+
+    const result = await findAffectedStories({
+      storybookDir,
+      projectDir: webDir(),
+      repoRoot,
+      changedFiles: ["packages/ui/src/button.css"],
+    });
+
+    expect(result).toMatchObject({
+      mode: "some",
+      storyIds: ["form--default"],
+      storyFiles: [
+        {
+          file: "apps/web/src/Form.stories.tsx",
+          via: [
+            "packages/ui/src/button.css",
+            "apps/web/src/Form.tsx",
+            "apps/web/src/Form.stories.tsx",
+          ],
+        },
+      ],
+      ignoredFiles: [],
+    });
   });
 
   it("captures everything when a bundled package's manifest changes", async () => {
