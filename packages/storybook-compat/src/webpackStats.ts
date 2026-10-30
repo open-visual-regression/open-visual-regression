@@ -44,8 +44,10 @@ export const readWebpackImporters = (
   const importers = new Map<string, Set<string>>();
   const contexts = new Map<string, Set<string>>();
 
-  // The file each module was concatenated into. Rspack and Webpack can give a module
-  // concatenated into a story file only the stories context as a reason, not the story file.
+  // Maps each module to the files it was bundled into. Webpack and Rspack can merge a file
+  // into the story file that imports it ("./src/Button.stories.jsx + 1 modules"). The stats
+  // then often say the file was loaded by the stories glob instead of by that story file.
+  // Recording the story file lets us use it as the real importer.
   const roots = new Map<string, Set<string>>();
   for (const outer of stats.modules) {
     const root = outer.name && outer.modules?.length ? toFileName(outer.name) : undefined;
