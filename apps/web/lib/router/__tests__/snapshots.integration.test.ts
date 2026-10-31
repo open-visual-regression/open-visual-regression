@@ -1550,9 +1550,41 @@ describe("snapshots", () => {
       });
     });
 
-    test("should return CONFLICT while the build is still running", async ({ admin }) => {
+    test("marks a finished snapshot rebuildable and rebuilds it while the rest of the build runs", async ({
+      admin,
+    }) => {
       const { build, snapshot } = await seedRebuildableSnapshot(admin);
+      await dbClient.snapshots.createMany({
+        values: [{ buildId: build.id, ...VIEWPORT, targetId: "story-b", status: "processing" }],
+      });
       await dbClient.builds.updateProcessingStatus(build.id, "processing");
+
+      const [, getResult] = await serverClient.snapshots.getOne({ snapshotId: snapshot.id });
+      expect(getResult?.snapshot.isRebuildable).toBe(true);
+
+      const [error, result] = await serverClient.snapshots.rebuild({
+        buildId: build.id,
+        snapshotIds: [snapshot.id],
+      });
+
+      expect(error).toBeNull();
+      expect(result).toEqual({ ok: true });
+      expect(await dbClient.snapshots.findById(snapshot.id)).toMatchObject({ status: "queued" });
+      expect(await dbClient.builds.findById(build.id)).toMatchObject({
+        processingStatus: "processing",
+      });
+    });
+
+    test("should return CONFLICT for a snapshot that is still being captured", async ({
+      admin,
+    }) => {
+      const { build, snapshot } = await seedRebuildableSnapshot(admin);
+      await dbClient.diffs.removeBySnapshot(snapshot.id);
+      await dbClient.snapshots.updateStatus(snapshot.id, "processing");
+      await dbClient.builds.updateProcessingStatus(build.id, "processing");
+
+      const [, getResult] = await serverClient.snapshots.getOne({ snapshotId: snapshot.id });
+      expect(getResult?.snapshot.isRebuildable).toBe(false);
 
       const [error] = await serverClient.snapshots.rebuild({
         buildId: build.id,
@@ -1560,7 +1592,7 @@ describe("snapshots", () => {
       });
 
       expect(error?.code).toBe("CONFLICT");
-      expect(error?.message).toContain("still running");
+      expect(error?.message).toContain("still being captured");
     });
 
     test("should return NOT_FOUND for a snapshot belonging to another build", async ({ admin }) => {
