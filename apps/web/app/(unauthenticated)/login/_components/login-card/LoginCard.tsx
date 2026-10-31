@@ -1,5 +1,7 @@
 import { Card, CardContent, CardHeader } from "@ovr/ui/components/card";
-import { Typography } from "@ovr/ui/components/typography";
+import { FieldGroup, FieldSkeleton } from "@ovr/ui/components/field";
+import { Skeleton } from "@ovr/ui/components/skeleton";
+import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 
 import { LoginForm } from "./LoginForm";
 
@@ -16,6 +18,21 @@ export const LoginCard = ({ redirectPath }: LoginCardProps) => (
     </CardHeader>
     <CardContent>
       <LoginForm redirectPath={redirectPath} />
+    </CardContent>
+  </Card>
+);
+
+export const LoginCardSkeleton = () => (
+  <Card aria-hidden className="w-full">
+    <CardHeader>
+      <TypographySkeleton variant="h2" className="w-20" />
+    </CardHeader>
+    <CardContent>
+      <FieldGroup>
+        <FieldSkeleton />
+        <FieldSkeleton />
+        <Skeleton className="h-10 w-full rounded-lg" />
+      </FieldGroup>
     </CardContent>
   </Card>
 );
