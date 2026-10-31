@@ -18,7 +18,7 @@ import {
   bootTargetPage,
   disableLazyLoading,
   getCaptureViewport,
-  takeScreenshot,
+  takeStableScreenshot,
   trackBlockedHosts,
   type BlockedHosts,
 } from "@ovr/capture-browser/page";
@@ -118,7 +118,8 @@ const captureOnce = async (
   }
 
   return {
-    screenshot: await takeScreenshot(page, fullPage),
+    // Matches the worker's default OVR_SCREENSHOT_STABILITY, so local captures match real builds.
+    screenshot: (await takeStableScreenshot(page, fullPage, { mode: "auto" })).image,
     error: renderResult.ok ? null : (renderResult.error ?? "target failed to render"),
   };
 };

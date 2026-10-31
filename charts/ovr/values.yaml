@@ -145,6 +145,10 @@ worker:
   storybookCacheBytes: ""
   # Local disk for caching screenshots. Empty uses the app default (512 MB).
   imageCacheBytes: ""
+  # Retake a snapshot's screenshot until two in a row match: "auto" (pages
+  # with a canvas, video, iframe, SVG animation, animated image or shadow
+  # DOM), "always", or "off". Empty uses the app default (auto).
+  screenshotStability: ""
   # Order capture groups run in across builds: "round-robin" or "fifo". Empty
   # uses round-robin, or fifo with worker.keda's generated trigger, which can't
   # see prioritized jobs. Also read by the web app.

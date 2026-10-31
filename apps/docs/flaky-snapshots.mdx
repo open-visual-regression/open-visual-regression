@@ -15,6 +15,12 @@ Flaky stories show a badge on their snapshot card on the build page and next to 
 
 To review only flaky snapshots, pick **flaky** in the **flags** filter on the build page. The same filter also offers **warning** for snapshots whose story threw an uncaught error while rendering.
 
+## Animations caught mid-frame
+
+OVR waits for a story's network requests, images, fonts, and DOM to go quiet before taking its screenshot, and stops CSS animations and transitions while it does. A canvas or video can keep repainting without changing the DOM, though, like a chart that animates in. For a story with a canvas, video, iframe, SVG animation, animated image, or shadow DOM, OVR retakes the screenshot until two in a row match, so it keeps the finished frame.
+
+If the screenshot is still changing after 2 seconds, OVR keeps the last one and adds a warning to the snapshot's logs. Stop the animation in that story, for example by turning off the chart library's animation in Storybook, or [skip it](/configuration/story-parameters#skipping-stories).
+
 ## Enabling detection
 
 Flaky detection is off by default. An admin turns it on under **Settings → Jobs**, where they can also set how often stories are re-evaluated, as a cron pattern (7am and 7pm by default), and how many recent main-branch builds are considered (30 by default).

@@ -86,6 +86,10 @@ spec:
             - name: OVR_IMAGE_CACHE_BYTES
               value: {{ . | quote }}
             {{- end }}
+            {{- with .Values.worker.screenshotStability }}
+            - name: OVR_SCREENSHOT_STABILITY
+              value: {{ . | quote }}
+            {{- end }}
             {{- with .Values.worker.reaperStaleMinutes }}
             - name: OVR_REAPER_STALE_MINUTES
               value: {{ . | quote }}

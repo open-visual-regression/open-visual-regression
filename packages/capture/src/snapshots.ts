@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 
 import { chromium, firefox, webkit, type Page } from "playwright";
+import { z } from "zod";
 
 import { publishStatus } from "@ovr/builds/builds";
 import { isFlakyDetectionEnabled } from "@ovr/builds/flakiness";
@@ -15,7 +16,8 @@ import {
   bootTargetPage,
   disableLazyLoading,
   getCaptureViewport,
-  takeScreenshot,
+  STABILITY_TIMEOUT_MS,
+  takeStableScreenshot,
   trackBlockedHosts,
   type BlockedHosts,
 } from "@ovr/capture-browser/page";
@@ -55,6 +57,13 @@ import { createUploadQueue } from "./lib/uploadQueue";
 const logger = createLogger("capture");
 
 const MAX_PENDING_UPLOADS = 2;
+
+// Whether a snapshot's screenshot is retaken until two in a row match. "auto" only does it for
+// pages with content that can repaint without a DOM change, such as a canvas or a video.
+const SCREENSHOT_STABILITY = z
+  .enum(["off", "auto", "always"])
+  .catch("auto")
+  .parse(process.env.OVR_SCREENSHOT_STABILITY);
 
 const TERMINAL_BUILD_STATUSES = new Set<BuildProcessingStatus>(["error", "canceled"]);
 
@@ -344,9 +353,17 @@ const captureSnapshotOnPage = async (
 
     const imagePath = `${build.projectId}/builds/${build.id}/snapshots/${snapshotId}-${snapshot.captureAttempt}.png`;
 
-    const [screenshot, screenshotMs] = await runPagePhase("screenshot", () =>
-      takeScreenshot(page, fullPage),
+    const [{ image: screenshot, screenshots, stable }, screenshotMs] = await runPagePhase(
+      "screenshot",
+      () => takeStableScreenshot(page, fullPage, { mode: SCREENSHOT_STABILITY }),
     );
+
+    if (!stable) {
+      pageLogState.logs.push({
+        level: "warning",
+        message: `The screenshot kept changing for ${STABILITY_TIMEOUT_MS / 1000}s (${screenshots} screenshots), so it may differ between builds. Stop the animation or video in this story, or skip it.`,
+      });
+    }
 
     const blocked = blockedHosts.take();
     if (blocked.length > 0) {

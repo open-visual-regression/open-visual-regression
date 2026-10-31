@@ -139,3 +139,84 @@ export const bootTargetPage = async (
 
 export const takeScreenshot = (page: Page, fullPage: boolean): Promise<Buffer> =>
   page.screenshot({ fullPage, animations: "disabled" });
+
+// "auto" only checks pages that can change pixels without changing the DOM, which settlePage
+// can't see; "always" checks every page.
+export type StabilityMode = "off" | "auto" | "always";
+
+export type StableScreenshot = {
+  image: Buffer;
+  // How many screenshots were taken.
+  screenshots: number;
+  // Whether two screenshots in a row matched. Only false when the page was checked and never
+  // stopped changing within the budget.
+  stable: boolean;
+};
+
+// Waits between screenshots. Shorter than Playwright's 100, 250, 500, then 1000ms, because a
+// typical chart animation ends within a second and a long final wait only adds latency.
+const STABILITY_INTERVALS_MS = [100, 250, 250, 250, 500];
+const STABILITY_REPEAT_INTERVAL_MS = 1_000;
+export const STABILITY_TIMEOUT_MS = 2_000;
+// Bounds the screenshots a page that never stops changing costs on every build.
+export const MAX_STABILITY_SCREENSHOTS = 6;
+
+// Content that can repaint without a DOM mutation: canvas and video draw on their own, an
+// iframe's document and a shadow root aren't seen by settlePage's MutationObserver, SVG
+// animations aren't stopped by `animations: "disabled"`, and animated images keep playing.
+const mayRepaintWithoutMutation = (): boolean => {
+  const repaintsOnItsOwn =
+    "canvas, video, iframe, embed, object, animate, animateMotion, animateTransform, set";
+  if (document.querySelector(repaintsOnItsOwn)) {
+    return true;
+  }
+
+  const animatedImage = /\.(gif|webp|apng)([?#]|$)/i;
+  for (const image of document.images) {
+    if (animatedImage.test(image.currentSrc)) {
+      return true;
+    }
+  }
+
+  const walker = document.createTreeWalker(document.documentElement, NodeFilter.SHOW_ELEMENT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    if ((node as Element).shadowRoot) {
+      return true;
+    }
+  }
+  return false;
+};
+
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+// Takes screenshots until two in a row match, so a frame caught mid-animation isn't kept. The
+// first screenshot is the one that would have been taken anyway, so a stable page costs one wait
+// and one extra screenshot. A page that never stops changing within `timeoutMs` keeps its last
+// screenshot and reports `stable: false`.
+export const takeStableScreenshot = async (
+  page: Page,
+  fullPage: boolean,
+  { mode, timeoutMs = STABILITY_TIMEOUT_MS }: { mode: StabilityMode; timeoutMs?: number },
+): Promise<StableScreenshot> => {
+  const first = await takeScreenshot(page, fullPage);
+  if (mode === "off" || (mode === "auto" && !(await page.evaluate(mayRepaintWithoutMutation)))) {
+    return { image: first, screenshots: 1, stable: true };
+  }
+
+  const deadline = Date.now() + timeoutMs;
+  let previous = first;
+  for (let attempt = 0; ; attempt++) {
+    const interval = STABILITY_INTERVALS_MS[attempt] ?? STABILITY_REPEAT_INTERVAL_MS;
+    const remaining = deadline - Date.now();
+    if (remaining <= 0 || attempt + 1 >= MAX_STABILITY_SCREENSHOTS) {
+      return { image: previous, screenshots: attempt + 1, stable: false };
+    }
+    await sleep(Math.min(interval, remaining));
+
+    const next = await takeScreenshot(page, fullPage);
+    if (next.equals(previous)) {
+      return { image: next, screenshots: attempt + 2, stable: true };
+    }
+    previous = next;
+  }
+};
