@@ -35,7 +35,6 @@ export const listChangedFiles = async (cwd: string, base: string): Promise<strin
   return [...new Set([...splitNul(changed), ...splitNul(untracked)])];
 };
 
-/** A file's contents at a commit, or `undefined` if it did not exist there. */
 export const readFileAtCommit = async (
   cwd: string,
   commit: string,

@@ -179,15 +179,17 @@ packages:
     const conflicted = `${yarnV1("18.2.0")}<<<<<<< HEAD\n`;
 
     expect(() => diffLockfile("yarn.lock", yarnV1("18.2.0"), conflicted)).toThrow(
-      'unexpected line "<<<<<<< HEAD"',
-    );
-    expect(() => diffLockfile("pnpm-lock.yaml", "lockfileVersion: 5.4\n", "")).toThrow(
-      "only lockfile version 6 and later are supported",
-    );
-    expect(() => diffLockfile("package-lock.json", "{}", "{")).toThrow(
-      "only lockfile version 2 and later are supported",
+      'cannot read the package name in "<<<<<<< HEAD"',
     );
     expect(() => diffLockfile("package-lock.json", undefined, "{")).toThrow(SyntaxError);
+  });
+
+  it.each([
+    ["yarn.lock", "__metadata:\n  version: 9\n"],
+    ["pnpm-lock.yaml", "lockfileVersion: 5.4\n"],
+    ["package-lock.json", "{}"],
+  ])("throws on a %s version it does not know", (file, text) => {
+    expect(() => diffLockfile(file, undefined, text)).toThrow("is not supported");
   });
 
   it.each([

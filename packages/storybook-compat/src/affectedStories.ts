@@ -15,17 +15,11 @@ export type AffectedStoriesInput = {
   changedFiles: string[];
   externals?: string[];
   untraced?: string[];
-  /**
-   * Reads a repository file as it was at the commit the changes are listed against,
-   * resolving `undefined` if it did not exist there. Without it, any lockfile change
-   * captures every story.
-   */
   readBaseFile?: (file: string) => Promise<string | undefined>;
 };
 
 export type UnbundledDependencies = {
   lockfile: string;
-  /** Packages whose locked entries changed, none of which the Storybook bundles. */
   packages: string[];
 };
 
@@ -50,8 +44,7 @@ const LOCKFILE =
   /(^|\/)(package-lock\.json|npm-shrinkwrap\.json|pnpm-lock\.yaml|yarn\.lock|bun\.lockb?)$/;
 const CONFIG_FILE = /(^|\/)([^/]+\.config\.[cm]?[jt]s|tsconfig[^/]*\.json)$/;
 const NON_RENDERING = /\.md$|(^|\/)\.(github|changeset)\//;
-// Packages that build the Storybook rather than run in it, so they change its output
-// without appearing in the stats.
+// Packages that change the build's output without being in it.
 const BUILD_TOOL =
   /^(.*storybook.*|vite|@vitejs\/.+|vite-plugin-.+|rollup|@rollup\/.+|rolldown|@rolldown\/.+|webpack(-.+)?|.+-loader|@rspack\/.+|@rsbuild\/.+|@swc\/.+|esbuild|@esbuild\/.+|@babel\/.+|babel-.+|postcss(-.+)?|autoprefixer|tailwindcss|@tailwindcss\/.+|sass(-embedded)?|less|lightningcss(-.+)?)$/;
 const MAX_LISTED_PACKAGES = 5;

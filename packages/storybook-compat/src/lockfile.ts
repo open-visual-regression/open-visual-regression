@@ -1,19 +1,19 @@
-/** What a lockfile pins for each package name, as a set of comparable entries. */
-export type LockedPackages = Map<string, Set<string>>;
+import { parse as parseYaml } from "yaml";
 
-const add = (packages: LockedPackages, name: string, entry: string): void => {
-  packages.set(name, (packages.get(name) ?? new Set()).add(entry));
-};
+type LockedPackages = Map<string, Set<string>>;
 
-// Dependencies resolved from the repository itself, whose source files the module graph traces.
+// Packages in the repository, whose files the module graph already traces.
 const LOCAL_PROTOCOL = /^(workspace|link|portal):/;
 
-const indentOf = (line: string): number => line.length - line.trimStart().length;
+const lockedPackages = (entries: [name: string, entry: unknown][]): LockedPackages => {
+  const packages: LockedPackages = new Map();
+  for (const [name, entry] of entries) {
+    packages.set(name, (packages.get(name) ?? new Set()).add(JSON.stringify(entry)));
+  }
+  return packages;
+};
 
-const unquote = (value: string): string => value.replace(/^(["'])(.*)\1$/, "$2");
-
-/** "react@^18.0.0" or "@types/react@npm:^18.0.0" -> ["react", "^18.0.0"]. */
-const splitDescriptor = (descriptor: string): [string, string] => {
+const splitDescriptor = (descriptor: string): [name: string, range: string] => {
   const at = descriptor.indexOf("@", 1);
   if (at <= 0) {
     throw new Error(`cannot read the package name in "${descriptor}"`);
@@ -21,139 +21,93 @@ const splitDescriptor = (descriptor: string): [string, string] => {
   return [descriptor.slice(0, at), descriptor.slice(at + 1)];
 };
 
-/** Top-level blocks of a YAML-like file: each unindented line with the lines nested under it. */
-const topLevelBlocks = (text: string): { key: string; body: string[] }[] => {
-  const blocks: { key: string; body: string[] }[] = [];
+const checkVersion = (version: unknown, supported: number[]): void => {
+  if (!supported.includes(Number.parseInt(String(version), 10))) {
+    throw new Error(`lockfile version ${String(version)} is not supported`);
+  }
+};
+
+const parseYarnClassicLock = (text: string): LockedPackages => {
+  const entries: [string, Record<string, string>][] = [];
   for (const line of text.split(/\r?\n/)) {
     if (line.trim() === "" || line.startsWith("#")) {
       continue;
     }
-    if (indentOf(line) > 0) {
-      if (blocks.length === 0) {
-        throw new Error("found an indented line before any entry");
-      }
-      blocks.at(-1)!.body.push(line);
-    } else {
-      blocks.push({ key: line, body: [] });
+    if (!line.startsWith(" ")) {
+      const [descriptor = ""] = line.replace(/:$/, "").replaceAll('"', "").split(", ");
+      entries.push([splitDescriptor(descriptor)[0], {}]);
+      continue;
+    }
+    const field = /^ {2}(version|resolved|integrity) "?([^"]*)"?$/.exec(line);
+    if (field && entries.length > 0) {
+      entries.at(-1)![1][field[1]!] = field[2]!;
     }
   }
-  return blocks;
+  return lockedPackages(entries);
 };
 
-// yarn.lock, both v1 ("# yarn lockfile v1") and Berry ("__metadata:").
+type YarnBerryLock = Record<
+  string,
+  { version?: string | number; resolution?: string; checksum?: string }
+>;
+
 const parseYarnLock = (text: string): LockedPackages => {
-  const packages: LockedPackages = new Map();
-
-  for (const { key, body } of topLevelBlocks(text)) {
-    if (!key.endsWith(":")) {
-      throw new Error(`unexpected line "${key}"`);
-    }
-    if (key === "__metadata:") {
-      continue;
-    }
-    // The key lists every range that resolved to this entry; ranges that resolve the
-    // same way leave what is installed unchanged, so only the body is compared.
-    const entry = body.map((line) => line.trim()).join("\n");
-    // v1 quotes each range ("a@^1", "a@^2":), Berry the whole list ("a@npm:^1, a@npm:^2":).
-    for (const descriptor of key.slice(0, -1).replaceAll('"', "").split(/,\s*/)) {
-      const [name, range] = splitDescriptor(descriptor.trim());
-      if (!LOCAL_PROTOCOL.test(range)) {
-        add(packages, name, entry);
-      }
-    }
+  if (text.includes("# yarn lockfile v1")) {
+    return parseYarnClassicLock(text);
   }
 
-  return packages;
+  const { __metadata, ...lock } = parseYaml(text) as YarnBerryLock;
+  checkVersion(__metadata?.version, [4, 5, 6, 7, 8]);
+
+  return lockedPackages(
+    Object.values(lock).flatMap(({ version, resolution = "", checksum }) => {
+      const [name, reference] = splitDescriptor(resolution);
+      return LOCAL_PROTOCOL.test(reference) ? [] : [[name, { version, resolution, checksum }]];
+    }),
+  );
 };
 
-// Fields of a pnpm package entry that list other packages, which have entries of their own.
-const PNPM_LINK_FIELDS = new Set([
-  "dependencies",
-  "optionalDependencies",
-  "peerDependencies",
-  "peerDependenciesMeta",
-  "transitivePeerDependencies",
-]);
+type PnpmLock = {
+  lockfileVersion?: string | number;
+  packages?: Record<string, { name?: string; resolution?: unknown }>;
+};
 
-// pnpm-lock.yaml, lockfile versions 6 and later.
 const parsePnpmLock = (text: string): LockedPackages => {
-  const blocks = topLevelBlocks(text);
-  const version = blocks.find(({ key }) => key.startsWith("lockfileVersion:"));
-  const major = Number.parseInt(unquote(version?.key.split(":")[1]?.trim() ?? ""), 10);
-  if (!(major >= 6)) {
-    throw new Error("only lockfile version 6 and later are supported");
-  }
+  const lock = parseYaml(text) as PnpmLock;
+  checkVersion(lock.lockfileVersion, [6, 9]);
 
-  const packages: LockedPackages = new Map();
-  // "packages" pins the version and integrity of each package. "snapshots" (v9) and
-  // "importers" only say how they link together.
-  const lines = blocks.find(({ key }) => key === "packages:")?.body ?? [];
-  let current: { name: string; entry: string[] } | undefined;
-  let skipField = false;
-
-  const flush = () => {
-    if (current) {
-      add(packages, current.name, current.entry.join("\n"));
-    }
-  };
-
-  for (const line of lines) {
-    const indent = indentOf(line);
-    const trimmed = line.trim();
-    if (indent === 2) {
-      flush();
-      const match = /^(.+?):(\s*\{\})?$/.exec(trimmed);
-      if (!match) {
-        throw new Error(`unexpected line "${trimmed}"`);
-      }
-      // "/@scope/name@1.0.0(react@18.0.0)" (v6) or "'@scope/name@1.0.0'" (v9).
-      const id = unquote(match[1]!).replace(/^\//, "").replace(/\(.*$/, "");
-      const [name, reference] = splitDescriptor(id);
-      current = LOCAL_PROTOCOL.test(reference) ? undefined : { name, entry: [id] };
-      skipField = false;
-    } else if (indent === 4) {
-      skipField = PNPM_LINK_FIELDS.has(trimmed.replace(/:.*$/, ""));
-      if (!skipField) {
-        current?.entry.push(trimmed);
-      }
-    } else if (!skipField) {
-      current?.entry.push(trimmed);
-    }
-  }
-  flush();
-
-  return packages;
+  return lockedPackages(
+    Object.entries(lock.packages ?? {}).flatMap(([key, { name, resolution }]) => {
+      // "/name@1.0.0(peer@1.0.0)" in v6, "name@1.0.0" in v9.
+      const id = key.replace(/^\//, "").replace(/\(.*$/, "");
+      const [keyName, reference] = splitDescriptor(id);
+      return LOCAL_PROTOCOL.test(reference) ? [] : [[name ?? keyName, { id, resolution }]];
+    }),
+  );
 };
 
-type NpmPackage = {
-  version?: string;
-  resolved?: string;
-  integrity?: string;
-  link?: boolean;
+type NpmLock = {
+  lockfileVersion?: number;
+  packages?: Record<
+    string,
+    { version?: string; resolved?: string; integrity?: string; link?: boolean }
+  >;
 };
 
-// package-lock.json and npm-shrinkwrap.json, lockfile versions 2 and 3.
 const parseNpmLock = (text: string): LockedPackages => {
-  const lock = JSON.parse(text) as { packages?: Record<string, NpmPackage> };
-  if (!lock.packages) {
-    throw new Error("only lockfile version 2 and later are supported");
-  }
+  const lock = JSON.parse(text) as NpmLock;
+  checkVersion(lock.lockfileVersion, [2, 3]);
 
-  const packages: LockedPackages = new Map();
-  for (const [location, { version, resolved, integrity, link }] of Object.entries(lock.packages)) {
-    const at = location.lastIndexOf("node_modules/");
-    // Entries without node_modules in their location are workspace packages.
-    if (at < 0 || link) {
-      continue;
-    }
-    add(
-      packages,
-      location.slice(at + "node_modules/".length),
-      [version, resolved, integrity].join(" "),
-    );
-  }
-
-  return packages;
+  return lockedPackages(
+    Object.entries(lock.packages ?? {}).flatMap(
+      ([location, { version, resolved, integrity, link }]) => {
+        const at = location.lastIndexOf("node_modules/");
+        return at < 0 || link
+          ? []
+          : [[location.slice(at + "node_modules/".length), { version, resolved, integrity }]];
+      },
+    ),
+  );
 };
 
 const PARSERS: Record<string, (text: string) => LockedPackages> = {
@@ -163,30 +117,26 @@ const PARSERS: Record<string, (text: string) => LockedPackages> = {
   "npm-shrinkwrap.json": parseNpmLock,
 };
 
-export const isSupportedLockfile = (file: string): boolean =>
-  Object.hasOwn(PARSERS, file.slice(file.lastIndexOf("/") + 1));
+const parserFor = (file: string) => PARSERS[file.slice(file.lastIndexOf("/") + 1)];
 
-/**
- * Package names whose locked entries differ between two versions of a lockfile.
- * `undefined` contents mean the file does not exist on that side. Throws when either
- * side cannot be parsed.
- */
+export const isSupportedLockfile = (file: string): boolean => parserFor(file) !== undefined;
+
 export const diffLockfile = (
   file: string,
   before: string | undefined,
   after: string | undefined,
 ): string[] => {
-  const parse = PARSERS[file.slice(file.lastIndexOf("/") + 1)];
+  const parse = parserFor(file);
   if (!parse) {
     throw new Error(`${file} is not a supported lockfile`);
   }
 
   const [old, next] = [before, after].map((text) =>
-    text === undefined ? new Map<string, Set<string>>() : parse(text),
+    text === undefined ? new Map() : parse(text),
   ) as [LockedPackages, LockedPackages];
 
-  const sameEntries = (a: Set<string> | undefined, b: Set<string> | undefined): boolean =>
-    a?.size === b?.size && [...(a ?? [])].every((entry) => b?.has(entry));
+  const sameEntries = (a = new Set<string>(), b = new Set<string>()): boolean =>
+    a.size === b.size && [...a].every((entry) => b.has(entry));
 
   return [...new Set([...old.keys(), ...next.keys()])]
     .filter((name) => !sameEntries(old.get(name), next.get(name)))

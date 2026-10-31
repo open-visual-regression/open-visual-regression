@@ -12,7 +12,6 @@ export const STATS_FILENAME = "preview-stats.json";
 export type ModuleGraph =
   | {
       importers: Map<string, string[]>;
-      /** npm packages the bundle includes, or `undefined` when the stats do not say. */
       packages: Set<string> | undefined;
     }
   | { reason: string };
@@ -46,32 +45,27 @@ const readStats = async (file: string): Promise<Stats> => {
   return stats;
 };
 
-// The package after the last node_modules, for nested installs and pnpm's
-// "node_modules/.pnpm/react@18.3.1/node_modules/react/index.js".
+// "node_modules/.pnpm/react@18.3.1/node_modules/react/index.js" is react.
 const PACKAGE_PATH = /^.*node_modules\/((?:@[^/]+\/)?[^/]+)/;
 
 const flatten = (modules: StatsModule[]): StatsModule[] =>
   modules.flatMap((module) => [module, ...flatten(module.modules ?? [])]);
 
-/** Names of the npm packages whose files appear in the stats, loaders included. */
 export const readPackageNames = (names: string[]): Set<string> | undefined => {
   const packages = new Set<string>();
   for (const name of names) {
-    // "css-loader/dist/cjs.js!./src/Button.css" names a package for each loader.
     for (const part of name.replaceAll("\\", "/").split("!")) {
       const packageName = PACKAGE_PATH.exec(part)?.[1];
-      // Builders write the modules they generate, like Storybook's entries, to node_modules/.cache.
+      // Builders write generated modules, like Storybook's entries, to node_modules/.cache.
       if (packageName === undefined || packageName === ".cache") {
         continue;
       }
-      // Other caches, like node_modules/.vite/deps/react.js, hide which package they came from.
       if (packageName.startsWith(".")) {
         return undefined;
       }
       packages.add(packageName);
     }
   }
-  // Every Storybook bundles npm packages, so finding none means the stats leave them out.
   return packages.size > 0 ? packages : undefined;
 };
 
