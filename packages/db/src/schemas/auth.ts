@@ -51,7 +51,8 @@ export const account = pgTable(
   "account",
   {
     id: text("id").primaryKey(),
-    issuer: text("issuer").notNull(),
+    /** @deprecated Better Auth 1.7.3+ no longer writes this; kept until older deploys are gone. */
+    issuer: text("issuer"),
     accountId: text("account_id").notNull(),
     providerId: text("provider_id").notNull(),
     userId: text("user_id")
@@ -71,7 +72,7 @@ export const account = pgTable(
   },
   (table) => [
     index("account_userId_idx").on(table.userId),
-    uniqueIndex("account_issuer_accountId_uidx").on(table.issuer, table.accountId),
+    uniqueIndex("account_providerId_accountId_uidx").on(table.providerId, table.accountId),
   ],
 );
 

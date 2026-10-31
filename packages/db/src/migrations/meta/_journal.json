@@ -421,6 +421,13 @@
       "when": 1793054308157,
       "tag": "0059_add_external_request_allowlist",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1793442812342,
+      "tag": "0060_rekey_accounts_by_provider",
+      "breakpoints": true
     }
   ]
 }

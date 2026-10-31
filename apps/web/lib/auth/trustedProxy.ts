@@ -19,6 +19,15 @@ export const TRUSTED_PROXY_PROVIDER_ID = "trusted-proxy";
 
 export const TRUSTED_PROXY_SIGN_IN_PATH = "/api/auth/sign-in/trusted-proxy";
 
+/**
+ * Better Auth keys accounts by provider and account ID alone, so the issuer is
+ * folded into the account ID: the same subject from another identity provider
+ * must never resolve to an existing user. OIDC issuers cannot contain a
+ * fragment, so `#` separates the two unambiguously.
+ */
+export const toTrustedProxyAccountId = ({ issuer, subject }: { issuer: string; subject: string }) =>
+  `${issuer}#${subject}`;
+
 export const trustedProxy = () =>
   ({
     id: "trusted-proxy",
@@ -94,8 +103,7 @@ export const trustedProxy = () =>
             },
             account: {
               providerId: TRUSTED_PROXY_PROVIDER_ID,
-              issuer: identity.issuer,
-              accountId: identity.subject,
+              accountId: toTrustedProxyAccountId(identity),
             },
             source: { method: "oauth", oauth: { providerId: TRUSTED_PROXY_PROVIDER_ID } },
           });
