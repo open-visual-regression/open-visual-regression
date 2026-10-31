@@ -17,7 +17,7 @@ const meta: Meta<typeof SnapshotComparisonSection> = {
   render: (args) => (
     <ComparisonModeProvider>
       <div className="flex flex-col lg:h-[720px]">
-        {args.diff?.baselineSnapshot ? <ComparisonControls /> : null}
+        {args.baseline ? <ComparisonControls /> : null}
         <SnapshotComparisonSection {...args} />
       </div>
     </ComparisonModeProvider>
@@ -57,10 +57,27 @@ const mobileSnapshot = {
   imagePath: "new-mobile.png",
 };
 
+const desktopBaseline = {
+  imagePath: "baseline-desktop.png",
+  commitSha: "abc1234567890",
+  commitUrl: "https://github.com/acme/web/commit/abc1234567890",
+};
+
+const mobileBaseline = { ...desktopBaseline, imagePath: "baseline-mobile.png" };
+
 export const NewOnly: Story = {
   args: {
     snapshot: newSnapshot,
     diff: null,
+    baseline: null,
+  },
+};
+
+export const SkippedWithBaseline: Story = {
+  args: {
+    snapshot: { ...newSnapshot, status: "skipped", imagePath: null },
+    diff: null,
+    baseline: desktopBaseline,
   },
 };
 
@@ -74,12 +91,9 @@ export const NewWithBaseline: Story = {
       diffImagePath: null,
       pixelDiffCount: 0,
       diffPercent: 0,
-      baselineSnapshot: {
-        imagePath: "baseline-desktop.png",
-        commitSha: "abc1234567890",
-        commitUrl: "https://github.com/acme/web/commit/abc1234567890",
-      },
+      baselineSnapshot: desktopBaseline,
     },
+    baseline: desktopBaseline,
   },
 };
 
@@ -93,12 +107,9 @@ export const NewWithBaselineAndDiff: Story = {
       diffImagePath: "diff-desktop.png",
       pixelDiffCount: 120,
       diffPercent: 0.4,
-      baselineSnapshot: {
-        imagePath: "baseline-desktop.png",
-        commitSha: "abc1234567890",
-        commitUrl: "https://github.com/acme/web/commit/abc1234567890",
-      },
+      baselineSnapshot: desktopBaseline,
     },
+    baseline: desktopBaseline,
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -124,12 +135,9 @@ export const SliderView: Story = {
       diffImagePath: "diff-desktop.png",
       pixelDiffCount: 120,
       diffPercent: 0.4,
-      baselineSnapshot: {
-        imagePath: "baseline-desktop.png",
-        commitSha: "abc1234567890",
-        commitUrl: "https://github.com/acme/web/commit/abc1234567890",
-      },
+      baselineSnapshot: desktopBaseline,
     },
+    baseline: desktopBaseline,
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -163,12 +171,9 @@ export const MobileWithBaselineAndDiff: Story = {
       diffImagePath: "diff-mobile.png",
       pixelDiffCount: 60_272,
       diffPercent: 11.5,
-      baselineSnapshot: {
-        imagePath: "baseline-mobile.png",
-        commitSha: "abc1234567890",
-        commitUrl: "https://github.com/acme/web/commit/abc1234567890",
-      },
+      baselineSnapshot: mobileBaseline,
     },
+    baseline: mobileBaseline,
   },
 };
 
@@ -183,12 +188,9 @@ export const DifferentSizes: Story = {
       diffImagePath: null,
       pixelDiffCount: 0,
       diffPercent: 0,
-      baselineSnapshot: {
-        imagePath: "baseline-mobile.png",
-        commitSha: "abc1234567890",
-        commitUrl: "https://github.com/acme/web/commit/abc1234567890",
-      },
+      baselineSnapshot: mobileBaseline,
     },
+    baseline: mobileBaseline,
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);

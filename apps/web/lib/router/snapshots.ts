@@ -19,6 +19,7 @@ import {
   reviewerMiddleware,
 } from "./middleware";
 import { os } from "./os";
+import { getBaselineSnapshot } from "./utils/baselineSnapshot";
 import { getSnapshotFlagDetails, getSnapshotFlags } from "./utils/snapshotFlags";
 import { getSnapshotDisplayStatus } from "./utils/snapshotStatus";
 import { getSnapshotTimings } from "./utils/snapshotTimings";
@@ -77,6 +78,14 @@ export const getOne = os.snapshots.getOne
       },
     };
   })
+  .actionable();
+
+export const getBaseline = os.snapshots.getBaseline
+  .use(callerMiddleware("builds", "read"))
+  .use(organizationSnapshotMiddleware)
+  .handler(async ({ context }) => ({
+    baseline: await getBaselineSnapshot(context.snapshot, context.build),
+  }))
   .actionable();
 
 export const list = os.snapshots.list
