@@ -5,7 +5,7 @@ import { db, sql } from "@ovr/db/db";
 
 import { auth } from "@/lib/auth/auth";
 import { getAuthConfig, type AuthConfig } from "@/lib/auth/config";
-import { TRUSTED_PROXY_PROVIDER_ID, toTrustedProxyAccountId } from "@/lib/auth/trustedProxy";
+import { TRUSTED_PROXY_PROVIDER_ID } from "@/lib/auth/trustedProxy";
 import { serverClient } from "@/lib/router";
 import { test, describe, expect } from "@/lib/testing/fixtures";
 
@@ -41,7 +41,7 @@ const linkIdentity = async (userId: string) => {
   const { internalAdapter } = await auth.$context;
   await internalAdapter.linkAccount({
     providerId: TRUSTED_PROXY_PROVIDER_ID,
-    accountId: toTrustedProxyAccountId({ issuer: ISSUER, subject: "00u1" }),
+    accountId: "00u1",
     userId,
   });
 };

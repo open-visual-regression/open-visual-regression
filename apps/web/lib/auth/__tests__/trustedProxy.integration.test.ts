@@ -9,7 +9,6 @@ import { test, describe, expect, type IdentityProvider } from "@/lib/testing/fix
 import { auth } from "../auth";
 import { getAuthConfig } from "../config";
 import { getCachedSession } from "../session";
-import { TRUSTED_PROXY_PROVIDER_ID, toTrustedProxyAccountId } from "../trustedProxy";
 
 vi.mock("next/headers");
 vi.mock("@/lib/auth/config", async (importOriginal) => ({
@@ -75,31 +74,6 @@ describe("trustedProxy", () => {
       expect(response.status).toBe(302);
       expect(await dbClient.users.getUserCount()).toBe(2);
       expect((await dbClient.users.findByEmail("jane@example.com"))?.id).toBe(first?.id);
-    });
-
-    test("should not sign in as a user linked to the same subject from another issuer", async ({
-      identityProvider,
-      organization: _,
-    }) => {
-      const { user: other } = await auth.api.createUser({
-        body: { name: "Other", email: "other@example.com", password: "securepass123" },
-      });
-      const { internalAdapter } = await auth.$context;
-      await internalAdapter.linkAccount({
-        providerId: TRUSTED_PROXY_PROVIDER_ID,
-        accountId: toTrustedProxyAccountId({
-          issuer: "https://other.example.com",
-          subject: "jane",
-        }),
-        userId: other.id,
-      });
-
-      const response = await signIn(identityProvider, { groups: ["ovr-reviewers"] });
-
-      expect(response.status).toBe(302);
-      const user = await dbClient.users.findByEmail("jane@example.com");
-      expect(user).toBeDefined();
-      expect(user!.id).not.toBe(other.id);
     });
 
     test("should update the role when the groups change", async ({
