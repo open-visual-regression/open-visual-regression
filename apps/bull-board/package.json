@@ -12,13 +12,13 @@
     "format": "oxfmt src"
   },
   "dependencies": {
-    "@bull-board/api": "^8.5.0",
-    "@bull-board/express": "^8.5.0",
+    "@bull-board/api": "^8.6.1",
+    "@bull-board/express": "^8.6.1",
     "@ovr/logger": "workspace:*",
     "@ovr/queue": "workspace:*",
     "bullmq": "^5.81.3",
     "dotenv": "^17.4.2",
-    "express": "^5.2.1",
+    "express": "^5.3.0",
     "ioredis": "5.11.1"
   },
   "devDependencies": {
