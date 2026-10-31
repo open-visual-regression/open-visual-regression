@@ -1,5 +1,16 @@
 # @ovr/worker
 
+## 0.17.1
+
+### Patch Changes
+
+- [#470](https://github.com/open-visual-regression/open-visual-regression/pull/470) [`ca77894`](https://github.com/open-visual-regression/open-visual-regression/commit/ca77894dff106369a271838066774cd554d75437) Thanks [@tgfischer](https://github.com/tgfischer)! - Images no longer go missing from snapshots captured under load or alongside animations.
+
+- Updated dependencies [[`ca77894`](https://github.com/open-visual-regression/open-visual-regression/commit/ca77894dff106369a271838066774cd554d75437)]:
+  - @ovr/capture-browser@0.0.6
+  - @ovr/capture@0.3.19
+  - @ovr/builds@0.2.11
+
 ## 0.17.0
 
 ### Minor Changes

@@ -1,5 +1,13 @@
 # @ovr/storybook-compat
 
+## 0.4.2
+
+### Patch Changes
+
+- [#466](https://github.com/open-visual-regression/open-visual-regression/pull/466) [`8db0612`](https://github.com/open-visual-regression/open-visual-regression/commit/8db0612ae6e6a2cd289a93ea8ec3c2f193f7cb5d) Thanks [@tgfischer](https://github.com/tgfischer)! - `--only-affected` no longer captures every story in some Rspack and Webpack Storybooks for changes that only affect a few stories.
+
+- [#474](https://github.com/open-visual-regression/open-visual-regression/pull/474) [`8d8e5be`](https://github.com/open-visual-regression/open-visual-regression/commit/8d8e5beed481201fcaa798d2c476067c2ec72efb) Thanks [@tgfischer](https://github.com/tgfischer)! - `--only-affected` no longer captures every story when a stylesheet that no story imports changes.
+
 ## 0.4.1
 
 ### Patch Changes
