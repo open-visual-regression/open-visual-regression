@@ -9,7 +9,12 @@ import { readWebpackImporters, type WebpackStats } from "./webpackStats";
 
 export const STATS_FILENAME = "preview-stats.json";
 
-export type ModuleGraph = { importers: Map<string, string[]> } | { reason: string };
+export type ModuleGraph =
+  | {
+      importers: Map<string, string[]>;
+      packages: Set<string> | undefined;
+    }
+  | { reason: string };
 
 type StatsModule = {
   name?: string | null;
@@ -40,6 +45,30 @@ const readStats = async (file: string): Promise<Stats> => {
   return stats;
 };
 
+// "node_modules/.pnpm/react@18.3.1/node_modules/react/index.js" is react.
+const PACKAGE_PATH = /^.*node_modules\/((?:@[^/]+\/)?[^/]+)/;
+
+const flatten = (modules: StatsModule[]): StatsModule[] =>
+  modules.flatMap((module) => [module, ...flatten(module.modules ?? [])]);
+
+export const readPackageNames = (names: string[]): Set<string> | undefined => {
+  const packages = new Set<string>();
+  for (const name of names) {
+    for (const part of name.replaceAll("\\", "/").split("!")) {
+      const packageName = PACKAGE_PATH.exec(part)?.[1];
+      // Builders write generated modules, like Storybook's entries, to node_modules/.cache.
+      if (packageName === undefined || packageName === ".cache") {
+        continue;
+      }
+      if (packageName.startsWith(".")) {
+        return undefined;
+      }
+      packages.add(packageName);
+    }
+  }
+  return packages.size > 0 ? packages : undefined;
+};
+
 export const readModuleGraph = async (
   storybookDir: string,
   storyFiles: Set<string>,
@@ -61,9 +90,12 @@ export const readModuleGraph = async (
   if (stats.modules.length === 0) {
     return undefined;
   }
+  const packages = readPackageNames(
+    flatten(stats.modules).flatMap(({ name }) => (name ? [name] : [])),
+  );
   if (stats.version) {
-    return { importers: readWebpackImporters(stats as WebpackStats, storyFiles) };
+    return { importers: readWebpackImporters(stats as WebpackStats, storyFiles), packages };
   }
 
-  return { importers: readViteImporters(stats as ViteStats) };
+  return { importers: readViteImporters(stats as ViteStats), packages };
 };
