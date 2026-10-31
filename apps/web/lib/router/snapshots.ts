@@ -43,7 +43,7 @@ export const getOne = os.snapshots.getOne
       }),
     ]);
     const [rebuildable, reviewable] = await Promise.all([
-      checkSnapshotsRebuildable(build, [snapshot], { isLatestBuild }),
+      checkSnapshotsRebuildable(build, [{ status: snapshot.status, diff }], { isLatestBuild }),
       checkSnapshotReviewable(build, snapshot, diff, { isLatestBuild }),
     ]);
 
@@ -230,7 +230,7 @@ export const listFlags = os.snapshots.listFlags
   .actionable();
 
 const REBUILD_ERROR_MESSAGES: Record<SnapshotRebuildBlockedReason | "ARTIFACT_MISSING", string> = {
-  NOT_SETTLED: "this build is still running",
+  NOT_SETTLED: "this snapshot is still being captured",
   BUILD_CANCELED: "this build was canceled",
   NOT_LATEST_ON_BRANCH: "a newer build has landed on this branch",
   SNAPSHOT_SKIPPED: "this story is skipped",

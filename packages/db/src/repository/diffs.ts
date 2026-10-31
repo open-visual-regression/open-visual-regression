@@ -129,9 +129,23 @@ export const markPendingAs = async (
   return ids;
 };
 
-export const hasAllDoneForBuild = async (buildId: string) => {
-  const capturedSnapshots = and(eq(snapshots.buildId, buildId), ne(snapshots.status, "skipped"));
+const capturedSnapshotsOf = (buildId: string) =>
+  and(eq(snapshots.buildId, buildId), ne(snapshots.status, "skipped"));
 
+// Captured snapshots still waiting on a capture or a diff.
+const pendingSnapshotsOf = (buildId: string) =>
+  db
+    .select({ one: sql`1` })
+    .from(snapshots)
+    .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
+    .where(
+      and(
+        capturedSnapshotsOf(buildId),
+        or(isNull(diffs.processingStatus), eq(diffs.processingStatus, "pending")),
+      ),
+    );
+
+export const hasAllDoneForBuild = async (buildId: string) => {
   const [row] = await db
     .select({ id: builds.id })
     .from(builds)
@@ -142,23 +156,17 @@ export const hasAllDoneForBuild = async (buildId: string) => {
           db
             .select({ one: sql`1` })
             .from(snapshots)
-            .where(capturedSnapshots),
+            .where(capturedSnapshotsOf(buildId)),
         ),
-        notExists(
-          db
-            .select({ one: sql`1` })
-            .from(snapshots)
-            .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
-            .where(
-              and(
-                capturedSnapshots,
-                or(isNull(diffs.processingStatus), eq(diffs.processingStatus, "pending")),
-              ),
-            ),
-        ),
+        notExists(pendingSnapshotsOf(buildId)),
       ),
     );
 
+  return row !== undefined;
+};
+
+export const hasPendingForBuild = async (buildId: string): Promise<boolean> => {
+  const [row] = await pendingSnapshotsOf(buildId).limit(1);
   return row !== undefined;
 };
 

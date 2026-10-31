@@ -5,6 +5,7 @@ import type {
   BuildProcessingStatus,
   BuildReviewStatus,
   BuildType,
+  DiffProcessingStatus,
   SnapshotStatus,
 } from "@ovr/db/schema";
 import { createLogger } from "@ovr/logger";
@@ -381,11 +382,14 @@ export const checkIsLatestBuild = async (build: BranchBuild): Promise<boolean> =
 
 type RebuildableOptions = { isLatestBuild?: boolean };
 
+const isBuildInProgress = (build: Pick<BuildCandidate, "processingStatus">): boolean =>
+  build.processingStatus === "queued" || build.processingStatus === "processing";
+
 export const checkRebuildable = async (
   build: BuildCandidate,
   options: RebuildableOptions = {},
 ): Promise<Result<ExtractDefaults, RebuildBlockedReason>> => {
-  if (build.processingStatus === "queued" || build.processingStatus === "processing") {
+  if (isBuildInProgress(build)) {
     return { status: "error", error: "NOT_SETTLED" };
   }
 
@@ -491,21 +495,32 @@ export type SnapshotRebuildBlockedReason =
   | "NOT_LATEST_ON_BRANCH"
   | "SNAPSHOT_SKIPPED";
 
+type SnapshotRebuildCandidate = {
+  status: SnapshotStatus;
+  diff: { processingStatus: DiffProcessingStatus } | null | undefined;
+};
+
+// A snapshot has settled once it is captured and diffed, even while the rest of its build runs.
+const isSnapshotSettled = (snapshot: SnapshotRebuildCandidate): boolean =>
+  (snapshot.status === "success" || snapshot.status === "error") &&
+  snapshot.diff != null &&
+  snapshot.diff.processingStatus !== "pending";
+
 export const checkSnapshotsRebuildable = async (
   build: BuildCandidate,
-  snapshots: { status: SnapshotStatus }[],
+  snapshots: SnapshotRebuildCandidate[],
   options: RebuildableOptions = {},
 ): Promise<Result<void, SnapshotRebuildBlockedReason>> => {
-  if (build.processingStatus === "queued" || build.processingStatus === "processing") {
-    return { status: "error", error: "NOT_SETTLED" };
-  }
-
   if (build.processingStatus === "canceled") {
     return { status: "error", error: "BUILD_CANCELED" };
   }
 
   if (snapshots.some((snapshot) => snapshot.status === "skipped")) {
     return { status: "error", error: "SNAPSHOT_SKIPPED" };
+  }
+
+  if (isBuildInProgress(build) && !snapshots.every(isSnapshotSettled)) {
+    return { status: "error", error: "NOT_SETTLED" };
   }
 
   if (!(await (options.isLatestBuild ?? checkIsLatestBuild(build)))) {
@@ -532,14 +547,24 @@ export const rebuildSnapshots = async (
   }
 
   const requested = new Set(snapshotIds);
-  const buildSnapshots = await dbClient.snapshots.findByBuild(buildId);
+  const [buildSnapshots, buildDiffs] = await Promise.all([
+    dbClient.snapshots.findByBuild(buildId),
+    dbClient.diffs.findByBuild(buildId),
+  ]);
   const snapshots = buildSnapshots.filter((snapshot) => requested.has(snapshot.id));
 
   if (snapshots.length !== requested.size) {
     return { status: "error", error: "SNAPSHOT_NOT_FOUND" };
   }
 
-  const rebuildable = await checkSnapshotsRebuildable(build, snapshots);
+  const diffsBySnapshot = new Map(buildDiffs.map((diff) => [diff.snapshotId, diff]));
+  const rebuildable = await checkSnapshotsRebuildable(
+    build,
+    snapshots.map((snapshot) => ({
+      status: snapshot.status,
+      diff: diffsBySnapshot.get(snapshot.id),
+    })),
+  );
 
   if (rebuildable.status === "error") {
     return rebuildable;
@@ -556,7 +581,10 @@ export const rebuildSnapshots = async (
       await dbClient.snapshots.requeue(snapshot.id, tx);
     }
 
-    await dbClient.builds.updateProcessingStatus(buildId, "queued", null, tx);
+    // A build that is still running picks the requeued snapshots up as it goes.
+    if (!isBuildInProgress(build)) {
+      await dbClient.builds.updateProcessingStatus(buildId, "queued", null, tx);
+    }
   });
 
   try {

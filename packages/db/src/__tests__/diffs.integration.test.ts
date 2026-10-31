@@ -207,6 +207,41 @@ describe("diffs", () => {
     });
   });
 
+  describe("hasPendingForBuild", () => {
+    test("should return false for a build with only skipped snapshots", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      await dbClient.snapshots.createMany({
+        values: [{ buildId: build.id, ...captureConfiguration, targetId: "a", status: "skipped" }],
+      });
+
+      expect(await dbClient.diffs.hasPendingForBuild(build.id)).toBe(false);
+    });
+
+    test("should return true while a snapshot has no diff or a pending one", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const [first, second] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, ...captureConfiguration, targetId: "a" },
+          { buildId: build.id, ...captureConfiguration, targetId: "b" },
+        ],
+      });
+      const firstDiff = await dbClient.diffs.create({ snapshotId: first!.id });
+      await dbClient.diffs.updateProcessingStatus(firstDiff!.id, "success");
+
+      expect(await dbClient.diffs.hasPendingForBuild(build.id)).toBe(true);
+
+      const secondDiff = await dbClient.diffs.create({ snapshotId: second!.id });
+      expect(await dbClient.diffs.hasPendingForBuild(build.id)).toBe(true);
+
+      await dbClient.diffs.updateProcessingStatus(secondDiff!.id, "error");
+      expect(await dbClient.diffs.hasPendingForBuild(build.id)).toBe(false);
+    });
+  });
+
   describe("hasAllDoneForBuild", () => {
     test("should return false while any diff is still pending", async ({
       build,

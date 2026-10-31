@@ -1220,20 +1220,63 @@ describe("builds", () => {
     };
 
     test.for(["queued", "processing"] as const)(
-      "returns NOT_SETTLED while the build is still %s",
+      "rebuilds a finished snapshot while the rest of the build is still %s, leaving the build status alone",
       async (processingStatus, { project, user, captureConfiguration }) => {
         const { buildId, snapshots } = await seedFinalizedBuild({
           projectId: project.id,
           userId: user.id,
           viewport: captureConfiguration,
           processingStatus,
+          browsers: ["chromium", "firefox"],
         });
+        await dbClient.snapshots.requeue(snapshots[1]!.id);
+        await dbClient.diffs.removeBySnapshot(snapshots[1]!.id);
+
+        const result = await rebuildSnapshots(buildId, [snapshots[0]!.id], user.id);
+
+        expect(result).toEqual({ status: "ok", data: undefined });
+        expect((await dbClient.snapshots.findById(snapshots[0]!.id))?.status).toBe("queued");
+        expect(await dbClient.diffs.findBySnapshot(snapshots[0]!.id)).toBeUndefined();
+        expect((await dbClient.builds.findById(buildId))?.processingStatus).toBe(processingStatus);
+      },
+    );
+
+    test.for(["queued", "processing"] as const)(
+      "returns NOT_SETTLED for a snapshot that is still %s",
+      async (snapshotStatus, { project, user, captureConfiguration }) => {
+        const { buildId, snapshots } = await seedFinalizedBuild({
+          projectId: project.id,
+          userId: user.id,
+          viewport: captureConfiguration,
+          processingStatus: "processing",
+        });
+        await dbClient.diffs.removeBySnapshot(snapshots[0]!.id);
+        await dbClient.snapshots.updateStatus(snapshots[0]!.id, snapshotStatus);
 
         const result = await rebuildSnapshots(buildId, [snapshots[0]!.id], user.id);
 
         expect(result).toEqual({ status: "error", error: "NOT_SETTLED" });
       },
     );
+
+    test("returns NOT_SETTLED for a captured snapshot whose diff is still pending", async ({
+      project,
+      user,
+      captureConfiguration,
+    }) => {
+      const { buildId, snapshots } = await seedFinalizedBuild({
+        projectId: project.id,
+        userId: user.id,
+        viewport: captureConfiguration,
+        processingStatus: "processing",
+      });
+      const diff = await dbClient.diffs.findBySnapshot(snapshots[0]!.id);
+      await dbClient.diffs.updateProcessingStatus(diff!.id, "pending");
+
+      const result = await rebuildSnapshots(buildId, [snapshots[0]!.id], user.id);
+
+      expect(result).toEqual({ status: "error", error: "NOT_SETTLED" });
+    });
 
     describe("timings", () => {
       const seedTimedBuild = async (options: SeedRebuildOptions) => {
@@ -1279,7 +1322,7 @@ describe("builds", () => {
         expect(await findTimings(buildId)).toEqual(timings);
       });
 
-      test("rejects rebuilding another snapshot while a rebuild is still processing, leaving the timings alone", async ({
+      test("rebuilds another snapshot while a rebuild is still processing, leaving the timings alone", async ({
         project,
         user,
         captureConfiguration,
@@ -1292,9 +1335,14 @@ describe("builds", () => {
         });
         await rebuildSnapshots(buildId, [snapshots[0]!.id], user.id);
 
-        const result = await rebuildSnapshots(buildId, [snapshots[1]!.id], user.id);
-
-        expect(result).toEqual({ status: "error", error: "NOT_SETTLED" });
+        expect(await rebuildSnapshots(buildId, [snapshots[1]!.id], user.id)).toEqual({
+          status: "ok",
+          data: undefined,
+        });
+        expect(await rebuildSnapshots(buildId, [snapshots[0]!.id], user.id)).toEqual({
+          status: "error",
+          error: "NOT_SETTLED",
+        });
         expect(await findTimings(buildId)).toEqual(timings);
       });
 
