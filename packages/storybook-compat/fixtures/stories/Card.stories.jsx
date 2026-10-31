@@ -1,4 +1,7 @@
+// Rspack merges both imports into this story and can list greeting.js as loaded by the stories glob.
+import { GREETING } from "../../shared/greeting";
 import { Card } from "./Card";
+import { LABELS } from "./labels";
 
 export default {
   title: "Components/Card",
@@ -6,5 +9,5 @@ export default {
 };
 
 export const Default = {
-  args: { children: "Card" },
+  args: { children: `${LABELS.primary}: ${GREETING}` },
 };
