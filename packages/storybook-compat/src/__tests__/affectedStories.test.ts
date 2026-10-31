@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -209,10 +209,177 @@ describe("findAffectedStories", () => {
   });
 
   it("captures everything when a non-code file changes in a package the bundle uses", async () => {
-    const result = await trace(["packages/ui/src/tokens.css"]);
+    const result = await trace(["packages/ui/src/tokens.json"]);
 
     expect(result).toMatchObject({ mode: "all" });
-    expect(result.mode === "all" && result.reason).toContain("packages/ui/src/tokens.css");
+    expect(result.mode === "all" && result.reason).toContain("packages/ui/src/tokens.json");
+  });
+
+  it.each([
+    "packages/ui/src/tokens.css",
+    "packages/ui/src/Modal.module.css",
+    "packages/ui/src/theme.scss",
+    "packages/ui/src/form.sass",
+    "packages/ui/src/form.less",
+    "packages/ui/src/form.styl",
+    "packages/ui/src/form.pcss",
+  ])("ignores the stylesheet %s that no story imports, since it cannot render", async (file) => {
+    const result = await trace([file]);
+
+    expect(result).toMatchObject({
+      mode: "some",
+      storyIds: [],
+      storyFiles: [],
+      ignoredFiles: [file],
+    });
+  });
+
+  it("follows a changed stylesheet up to the stories that import it", async () => {
+    await createRepo([...viteRepoFiles, "packages/ui/src/button.css"]);
+    const storybookDir = await writeBuild(
+      { ...viteGraph, "./../../packages/ui/src/button.css": ["./src/Form.tsx"] },
+      viteEntries,
+    );
+
+    const result = await findAffectedStories({
+      storybookDir,
+      projectDir: webDir(),
+      repoRoot,
+      changedFiles: ["packages/ui/src/button.css"],
+    });
+
+    expect(result).toMatchObject({
+      mode: "some",
+      storyIds: ["form--default"],
+      storyFiles: [
+        {
+          file: "apps/web/src/Form.stories.tsx",
+          via: [
+            "packages/ui/src/button.css",
+            "apps/web/src/Form.tsx",
+            "apps/web/src/Form.stories.tsx",
+          ],
+        },
+      ],
+      ignoredFiles: [],
+    });
+  });
+
+  const traceStyles = async (
+    styles: Record<string, string>,
+    changedFiles: string[],
+    setup?: () => Promise<void>,
+  ): Promise<Awaited<ReturnType<typeof findAffectedStories>>> => {
+    await createRepo(viteRepoFiles);
+    for (const [file, source] of Object.entries(styles)) {
+      await mkdir(path.join(repoRoot, path.dirname(file)), { recursive: true });
+      await writeFile(path.join(repoRoot, file), source);
+    }
+    await setup?.();
+    const storybookDir = await writeBuild(
+      { ...viteGraph, "./../../packages/ui/src/button.scss": ["./src/Form.tsx"] },
+      viteEntries,
+    );
+    return findAffectedStories({ storybookDir, projectDir: webDir(), repoRoot, changedFiles });
+  };
+
+  it.each([
+    ['@use "./tokens";', "packages/ui/src/_tokens.scss"],
+    ['@use "./theme" as t;', "packages/ui/src/theme/_index.scss"],
+    ['@import "./reset.css", "./fonts.css";', "packages/ui/src/fonts.css"],
+    ["@import url(./reset.css) layer(base);", "packages/ui/src/reset.css"],
+    [".title { composes: heading from './type.module.css'; }", "packages/ui/src/type.module.css"],
+  ])("follows `%s` to the stories that load the importing stylesheet", async (source, file) => {
+    const result = await traceStyles(
+      {
+        "packages/ui/src/button.scss": source,
+        "packages/ui/src/_tokens.scss": "",
+        "packages/ui/src/theme/_index.scss": "",
+        "packages/ui/src/reset.css": "",
+        "packages/ui/src/fonts.css": "",
+        "packages/ui/src/type.module.css": "",
+      },
+      [file],
+    );
+
+    expect(result).toMatchObject({
+      mode: "some",
+      storyIds: ["form--default"],
+      storyFiles: [
+        {
+          via: [
+            file,
+            "packages/ui/src/button.scss",
+            "apps/web/src/Form.tsx",
+            "apps/web/src/Form.stories.tsx",
+          ],
+        },
+      ],
+    });
+  });
+
+  it("follows imports of imports and ignores commented-out ones", async () => {
+    const result = await traceStyles(
+      {
+        "packages/ui/src/button.scss": '// @use "./form";\n/* @use "./modal"; */\n@use "./tokens";',
+        "packages/ui/src/_tokens.scss": '@forward "./colors";',
+        "packages/ui/src/_colors.scss": "",
+        "packages/ui/src/_form.scss": "",
+        "packages/ui/src/_modal.scss": "",
+      },
+      ["packages/ui/src/_colors.scss", "packages/ui/src/_form.scss", "packages/ui/src/_modal.scss"],
+    );
+
+    expect(result).toMatchObject({
+      mode: "some",
+      storyIds: ["form--default"],
+      ignoredFiles: ["packages/ui/src/_form.scss", "packages/ui/src/_modal.scss"],
+    });
+  });
+
+  it("ignores imports of Sass modules and remote stylesheets", async () => {
+    const result = await traceStyles(
+      {
+        "packages/ui/src/button.scss":
+          '@use "sass:math";\n@import url("https://fonts.example.com/inter.css");',
+      },
+      ["packages/ui/src/form.css"],
+    );
+
+    expect(result).toMatchObject({ mode: "some", ignoredFiles: ["packages/ui/src/form.css"] });
+  });
+
+  it("captures everything when an untraced stylesheet could be loaded through an unresolved import", async () => {
+    const result = await traceStyles(
+      { "packages/ui/src/button.scss": '@use "design-tokens/colors";' },
+      ["packages/ui/src/form.css"],
+    );
+
+    expect(result).toEqual({
+      mode: "all",
+      reason:
+        'packages/ui/src/form.css is not traceable, and packages/ui/src/button.scss imports "design-tokens/colors", which could not be resolved',
+    });
+  });
+
+  it("follows imports into a workspace package through node_modules", async () => {
+    const result = await traceStyles(
+      {
+        "packages/ui/src/button.scss": '@use "tokens/colors";',
+        "packages/tokens/package.json": "",
+        "packages/tokens/_colors.scss": "",
+      },
+      ["packages/tokens/_colors.scss"],
+      async () => {
+        await mkdir(path.join(repoRoot, "packages/ui/node_modules"), { recursive: true });
+        await symlink(
+          path.join(repoRoot, "packages/tokens"),
+          path.join(repoRoot, "packages/ui/node_modules/tokens"),
+        );
+      },
+    );
+
+    expect(result).toMatchObject({ mode: "some", storyIds: ["form--default"] });
   });
 
   it("captures everything when a bundled package's manifest changes", async () => {
