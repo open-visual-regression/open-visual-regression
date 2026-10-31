@@ -77,7 +77,6 @@ CPU and memory scale with concurrent captures, not total build volume. Each capt
 | `worker.concurrency` | `2` | Capture groups a worker runs at once, each with its own browser instance. |
 | `worker.groupSize` | app default `10` | Snapshots per capture group. |
 | `worker.diffConcurrency` | app default `4` | Snapshots compared against their baseline at once. |
-| `worker.screenshotStability` | app default `auto` | When a snapshot's screenshot is retaken until two in a row match. See `OVR_SCREENSHOT_STABILITY` in [Docker Compose](/self-hosting/docker-compose#environment-variables). |
 | `worker.storybookCacheBytes` | app default 2 GB | Pod-local disk for extracted Storybook builds. Counts against the pod's ephemeral storage. |
 | `worker.imageCacheBytes` | app default 512 MB | Pod-local disk for caching screenshots. Counts against the pod's ephemeral storage. |
 | `worker.captureQueuePolicy` | app default `round-robin` | Order capture groups run in across builds. `round-robin` takes one group of each browser from every queued build in turn, with retried groups going first, so small PR builds don't wait behind a large main build. A newly queued build joins the current round, so a stream of small builds can't starve a large one. `fifo` runs them in the order they were queued. Defaults to `fifo` when `worker.keda` uses its generated trigger (see below). |
