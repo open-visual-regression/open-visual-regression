@@ -1,5 +1,19 @@
 # @ovr/web
 
+## 0.17.1
+
+### Patch Changes
+
+- [#472](https://github.com/open-visual-regression/open-visual-regression/pull/472) [`7afb831`](https://github.com/open-visual-regression/open-visual-regression/commit/7afb831f475a3451d9c7744583d5aefc2392068f) Thanks [@tgfischer](https://github.com/tgfischer)! - The snapshot page now shows the baseline for skipped, errored, and canceled snapshots, not only for snapshots that were compared.
+
+- [#469](https://github.com/open-visual-regression/open-visual-regression/pull/469) [`55a74a5`](https://github.com/open-visual-regression/open-visual-regression/commit/55a74a54a9bba9a5d6d8e13303f52f04a73882a4) Thanks [@tgfischer](https://github.com/tgfischer)! - The diff switch in the snapshot zoom modal now sits next to the baseline/new toggle.
+
+- Updated dependencies [[`7afb831`](https://github.com/open-visual-regression/open-visual-regression/commit/7afb831f475a3451d9c7744583d5aefc2392068f)]:
+  - @ovr/api@0.5.3
+  - @ovr/ui@0.1.4
+  - @ovr/builds@0.2.11
+  - @ovr/reviews@0.1.26
+
 ## 0.17.0
 
 ### Minor Changes

@@ -1,5 +1,14 @@
 # @ovr/api
 
+## 0.5.3
+
+### Patch Changes
+
+- [#472](https://github.com/open-visual-regression/open-visual-regression/pull/472) [`7afb831`](https://github.com/open-visual-regression/open-visual-regression/commit/7afb831f475a3451d9c7744583d5aefc2392068f) Thanks [@tgfischer](https://github.com/tgfischer)! - The snapshot page now shows the baseline for skipped, errored, and canceled snapshots, not only for snapshots that were compared.
+
+- Updated dependencies [[`8db0612`](https://github.com/open-visual-regression/open-visual-regression/commit/8db0612ae6e6a2cd289a93ea8ec3c2f193f7cb5d), [`8d8e5be`](https://github.com/open-visual-regression/open-visual-regression/commit/8d8e5beed481201fcaa798d2c476067c2ec72efb)]:
+  - @ovr/storybook-compat@0.4.2
+
 ## 0.5.2
 
 ### Patch Changes
