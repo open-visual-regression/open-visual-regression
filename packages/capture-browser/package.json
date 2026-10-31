@@ -11,8 +11,7 @@
     "tsc": "tsc --noEmit",
     "lint": "oxlint src",
     "format": "oxfmt src",
-    "test": "vitest run",
-    "stress": "vitest run --config stress/vitest.config.ts"
+    "test": "vitest run"
   },
   "dependencies": {
     "@ovr/storage": "workspace:*",

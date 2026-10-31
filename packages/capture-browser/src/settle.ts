@@ -162,13 +162,12 @@ const unwatchDocument = (): void => {
 // Waits for every image to load and decode, and for fonts to load. An image can still be loading
 // after the network goes quiet, because the browser hasn't sent its request yet or hasn't handled
 // the response yet, so it's waited for here rather than left to the network tracker.
+type WaitForImagesAndFontsArgs = { timeoutMs: number; abandonAfterMs: number };
+
 const waitForImagesAndFonts = ({
   timeoutMs,
   abandonAfterMs,
-}: {
-  timeoutMs: number;
-  abandonAfterMs: number;
-}): Promise<boolean> => {
+}: WaitForImagesAndFontsArgs): Promise<boolean> => {
   const elapsed = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
   const now = performance.now();
 
@@ -190,7 +189,8 @@ const waitForImagesAndFonts = ({
       image.addEventListener("error", () => resolve(), { once: true });
     });
 
-  // An image still marked lazy is outside the viewport, so it won't load for the screenshot.
+  // Capture makes lazy images eager with disableLazyLoading, so this only skips them on a page
+  // without it, where one outside the viewport would never load.
   const images = Array.from(document.images)
     .filter((image) => image.complete || (image.loading !== "lazy" && !isAbandoned(image)))
     .map((image) =>
@@ -209,13 +209,12 @@ const waitForImagesAndFonts = ({
   ]);
 };
 
+type WaitForQuietDomArgs = { quietWindowMs: number; timeoutMs: number };
+
 const waitForQuietDom = async ({
   quietWindowMs,
   timeoutMs,
-}: {
-  quietWindowMs: number;
-  timeoutMs: number;
-}): Promise<boolean> => {
+}: WaitForQuietDomArgs): Promise<boolean> => {
   const deadline = performance.now() + timeoutMs;
   const remaining = () => deadline - performance.now();
   const elapsed = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
