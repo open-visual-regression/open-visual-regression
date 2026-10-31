@@ -10,6 +10,8 @@ import {
 const MIN_PAINT_BUDGET_MS = 250;
 
 export type NetworkActivity = {
+  // How long a request or image can stay pending before it's given up on.
+  abandonAfterMs: number;
   whenQuiet: (quietWindowMs: number, timeoutMs: number) => Promise<boolean>;
   requestCount: () => number;
   dispose: () => void;
@@ -17,8 +19,11 @@ export type NetworkActivity = {
 
 type DocumentWatch = { observer: MutationObserver; lastMutationAt: number };
 
+type LoadingImage = { src: string; since: number };
+
 declare global {
   var __OVR_DOCUMENT_WATCH__: DocumentWatch | undefined;
+  var __OVR_LOADING_IMAGES__: WeakMap<HTMLImageElement, LoadingImage> | undefined;
 }
 
 export const trackNetworkActivity = (
@@ -61,6 +66,7 @@ export const trackNetworkActivity = (
   page.on("requestfailed", remove);
 
   return {
+    abandonAfterMs,
     whenQuiet: (quietWindowMs, timeoutMs) =>
       new Promise((resolve) => {
         let quietTimer: ReturnType<typeof setTimeout> | undefined;
@@ -138,11 +144,69 @@ const watchDocument = (): void => {
     characterData: true,
   });
   globalThis.__OVR_DOCUMENT_WATCH__ = watch;
+
+  // Starts the clock on images already loading, so one that never finishes is given up on in time.
+  const loadingSince = (globalThis.__OVR_LOADING_IMAGES__ ??= new WeakMap());
+  for (const image of document.images) {
+    if (!image.complete && loadingSince.get(image)?.src !== image.currentSrc) {
+      loadingSince.set(image, { src: image.currentSrc, since: watch.lastMutationAt });
+    }
+  }
 };
 
 const unwatchDocument = (): void => {
   globalThis.__OVR_DOCUMENT_WATCH__?.observer.disconnect();
   globalThis.__OVR_DOCUMENT_WATCH__ = undefined;
+};
+
+// Waits for every image to load and decode, and for fonts to load. An image can still be loading
+// after the network goes quiet, because the browser hasn't sent its request yet or hasn't handled
+// the response yet, so it's waited for here rather than left to the network tracker.
+const waitForImagesAndFonts = ({
+  timeoutMs,
+  abandonAfterMs,
+}: {
+  timeoutMs: number;
+  abandonAfterMs: number;
+}): Promise<boolean> => {
+  const elapsed = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+  const now = performance.now();
+
+  // Like a stuck request, an image that outlives a whole settle budget is given up on, so it
+  // cannot stall every later snapshot on this page.
+  const loadingSince = (globalThis.__OVR_LOADING_IMAGES__ ??= new WeakMap());
+  const isAbandoned = (image: HTMLImageElement) => {
+    const loading = loadingSince.get(image);
+    if (loading?.src !== image.currentSrc) {
+      loadingSince.set(image, { src: image.currentSrc, since: now });
+      return false;
+    }
+    return now - loading.since >= abandonAfterMs;
+  };
+
+  const loaded = (image: HTMLImageElement) =>
+    new Promise<void>((resolve) => {
+      image.addEventListener("load", () => resolve(), { once: true });
+      image.addEventListener("error", () => resolve(), { once: true });
+    });
+
+  // An image still marked lazy is outside the viewport, so it won't load for the screenshot.
+  const images = Array.from(document.images)
+    .filter((image) => image.complete || (image.loading !== "lazy" && !isAbandoned(image)))
+    .map((image) =>
+      (image.complete ? Promise.resolve() : loaded(image))
+        .then(() => image.decode())
+        .catch(() => undefined),
+    );
+
+  const fonts = Promise.resolve(
+    document.fonts?.status === "loading" ? document.fonts.ready : undefined,
+  ).catch(() => undefined);
+
+  return Promise.race([
+    Promise.all([...images, fonts]).then(() => true),
+    elapsed(timeoutMs).then(() => false),
+  ]);
 };
 
 const waitForQuietDom = async ({
@@ -160,49 +224,30 @@ const waitForQuietDom = async ({
   const lastMutationAt = () =>
     globalThis.__OVR_DOCUMENT_WATCH__?.lastMutationAt ?? performance.now();
 
-  // Images still loading are left to the network tracker, which gives up on a stuck request.
-  const imagesDecoded = () =>
-    Promise.all(
-      Array.from(document.images)
-        .filter((image) => image.complete)
-        .map((image) => image.decode().catch(() => undefined)),
-    );
-
-  while (remaining() > 0) {
-    const scannedAt = lastMutationAt();
-
-    const decoded = await Promise.race([
-      imagesDecoded().then(() => true),
-      elapsed(remaining()).then(() => false),
-    ]);
-    if (!decoded) {
+  let quietFor = performance.now() - lastMutationAt();
+  while (quietFor < quietWindowMs) {
+    if (remaining() <= 0) {
       return false;
     }
-
-    let quietFor = performance.now() - lastMutationAt();
-    while (quietFor < quietWindowMs) {
-      if (remaining() <= 0) {
-        return false;
-      }
-      await elapsed(Math.min(quietWindowMs - quietFor, remaining()));
-      quietFor = performance.now() - lastMutationAt();
-    }
-
-    // The DOM changed while decoding, so there may be new images.
-    if (lastMutationAt() === scannedAt) {
-      return true;
-    }
+    await elapsed(Math.min(quietWindowMs - quietFor, remaining()));
+    quietFor = performance.now() - lastMutationAt();
   }
-
-  return false;
+  return true;
 };
 
-// Rendering can come in waves, so the network and the DOM have to be quiet in the same pass.
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+// Rendering can come in waves, so the network, images, and DOM have to be quiet in the same pass.
+// A DOM that never stops changing, like an endless animation, is only watched for a while, but its
+// requests and images are still waited for. Resolves with whether everything, the DOM included,
+// went quiet.
 const waitForQuietPage = async (
   page: Page,
   activity: NetworkActivity,
   deadline: number,
 ): Promise<boolean> => {
+  let watchDom = true;
+
   for (;;) {
     const quiet = await activity.whenQuiet(NETWORK_QUIET_WINDOW_MS, deadline - Date.now());
     if (!quiet) {
@@ -210,16 +255,42 @@ const waitForQuietPage = async (
     }
 
     const requestCount = activity.requestCount();
-    const domQuiet = await page.evaluate(waitForQuietDom, {
-      quietWindowMs: DOM_QUIET_WINDOW_MS,
-      timeoutMs: Math.min(deadline - Date.now(), DOM_SETTLE_TIMEOUT_MS),
+    const mutationsBefore = await page.evaluate(
+      () => globalThis.__OVR_DOCUMENT_WATCH__?.lastMutationAt,
+    );
+
+    const loaded = await page.evaluate(waitForImagesAndFonts, {
+      timeoutMs: deadline - Date.now(),
+      abandonAfterMs: activity.abandonAfterMs,
     });
-    if (!domQuiet) {
+    if (!loaded) {
       return false;
     }
 
-    if (activity.requestCount() === requestCount) {
-      return true;
+    let domChanged = false;
+    if (watchDom) {
+      const domQuiet = await page.evaluate(waitForQuietDom, {
+        quietWindowMs: DOM_QUIET_WINDOW_MS,
+        timeoutMs: Math.max(Math.min(deadline - Date.now(), DOM_SETTLE_TIMEOUT_MS), 0),
+      });
+      if (!domQuiet) {
+        if (Date.now() >= deadline) {
+          return false;
+        }
+        watchDom = false;
+        continue;
+      }
+      // The DOM changed while images loaded, so there may be new ones.
+      domChanged =
+        (await page.evaluate(() => globalThis.__OVR_DOCUMENT_WATCH__?.lastMutationAt)) !==
+        mutationsBefore;
+    } else {
+      // Gives the render a moment to start any requests it has left.
+      await sleep(Math.min(DOM_QUIET_WINDOW_MS, Math.max(deadline - Date.now(), 0)));
+    }
+
+    if (activity.requestCount() === requestCount && !domChanged) {
+      return watchDom;
     }
   }
 };
