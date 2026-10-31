@@ -1,5 +1,21 @@
 # @ovr/capture
 
+## 0.3.19
+
+### Patch Changes
+
+- [#470](https://github.com/open-visual-regression/open-visual-regression/pull/470) [`ca77894`](https://github.com/open-visual-regression/open-visual-regression/commit/ca77894dff106369a271838066774cd554d75437) Thanks [@tgfischer](https://github.com/tgfischer)! - Images no longer go missing from snapshots captured under load or alongside animations.
+
+- [#476](https://github.com/open-visual-regression/open-visual-regression/pull/476) [`9caa71f`](https://github.com/open-visual-regression/open-visual-regression/commit/9caa71f69f9f64d008ae71f12ee80650c01cc7ce) Thanks [@tgfischer](https://github.com/tgfischer)! - Stories with a canvas, video, iframe, or shadow DOM are retaken until two screenshots match, so animating charts no longer flake. Set `screenshotStability` in `ovr.config.ts` or `parameters.ovr` to change it.
+
+- Updated dependencies [[`8db0612`](https://github.com/open-visual-regression/open-visual-regression/commit/8db0612ae6e6a2cd289a93ea8ec3c2f193f7cb5d), [`4e4e7a3`](https://github.com/open-visual-regression/open-visual-regression/commit/4e4e7a3928396d4d56b6e339dcacd1901f673a7b), [`f297ce1`](https://github.com/open-visual-regression/open-visual-regression/commit/f297ce19aad59bf2b9e90d89bdf844c0bc4be039), [`ca77894`](https://github.com/open-visual-regression/open-visual-regression/commit/ca77894dff106369a271838066774cd554d75437), [`9caa71f`](https://github.com/open-visual-regression/open-visual-regression/commit/9caa71f69f9f64d008ae71f12ee80650c01cc7ce), [`8d8e5be`](https://github.com/open-visual-regression/open-visual-regression/commit/8d8e5beed481201fcaa798d2c476067c2ec72efb)]:
+  - @ovr/storybook-compat@0.4.2
+  - @ovr/db@0.4.7
+  - @ovr/builds@0.2.11
+  - @ovr/capture-browser@0.0.6
+  - @ovr/queue@0.2.9
+  - @ovr/reviews@0.1.26
+
 ## 0.3.18
 
 ### Patch Changes
