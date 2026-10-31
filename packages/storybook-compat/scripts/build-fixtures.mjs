@@ -27,7 +27,7 @@ const force = process.argv.includes("--force");
 const clean = process.argv.includes("--clean");
 
 const fixtures = (await readdir(FIXTURES_DIR, { withFileTypes: true }))
-  .filter((entry) => entry.isDirectory() && entry.name !== "stories")
+  .filter((entry) => entry.isDirectory() && !["stories", "shared"].includes(entry.name))
   .map((entry) => path.join(FIXTURES_DIR, entry.name))
   .sort();
 

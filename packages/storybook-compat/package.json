@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@streamparser/json-node": "^0.0.26",
+    "yaml": "^2.9.0",
     "zod": "^4.5.1"
   },
   "devDependencies": {

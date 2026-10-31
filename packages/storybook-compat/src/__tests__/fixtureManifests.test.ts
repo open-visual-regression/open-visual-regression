@@ -30,6 +30,7 @@ const PROJECT_IMPORTERS = [
   "./src/Card.jsx <- ./src/Card.stories.jsx",
   "./src/Card.jsx <- ./src/Lazy.stories.jsx",
   "./src/global.css <- ./.storybook/preview.js",
+  "./src/labels.js <- ./src/Card.stories.jsx",
   "./src/tones.js <- ./src/Button.stories.jsx",
   "./src/tones.js <- ./src/Card.stories.jsx",
   "./src/tones.js <- ./src/Lazy.stories.jsx",
@@ -126,6 +127,22 @@ describe.skipIf(fixtures.length === 0)("built Storybook fixtures", () => {
       "components-lazy--default",
     ]);
   });
+
+  it.each(fixtures)(
+    "Storybook $name traces a module from outside the project to the story that imports it",
+    async (fixture) => {
+      const greeting = path.relative(repoRoot, path.join(fixture.dir, "../shared/greeting.js"));
+
+      const result = await findAffectedStories({
+        storybookDir: fixture.buildDir,
+        projectDir: fixture.dir,
+        repoRoot,
+        changedFiles: [greeting],
+      });
+
+      expect(result).toMatchObject({ mode: "some", storyIds: ["components-card--default"] });
+    },
+  );
 
   it.each(fixtures)("Storybook $name captures everything when preview changes", async (fixture) => {
     const preview = path.relative(repoRoot, path.join(fixture.dir, ".storybook/preview.js"));

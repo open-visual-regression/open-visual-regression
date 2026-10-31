@@ -43,7 +43,7 @@ export const SnapshotZoomToolbar = ({
 
   return (
     <div className="flex shrink-0 flex-wrap items-center justify-end gap-x-1 gap-y-2 border-b border-ovr-border-subtle px-2 py-2 sm:gap-x-4 sm:px-4">
-      <div className="mr-auto flex items-center gap-2">
+      <div className="mr-auto flex items-center gap-2 sm:gap-4">
         <DialogTitle className={cn(baseline && "sr-only")}>
           <Typography variant="label">{view}</Typography>
         </DialogTitle>
@@ -58,17 +58,17 @@ export const SnapshotZoomToolbar = ({
             </SegmentedTabsList>
           </SegmentedTabs>
         ) : null}
+        {hasDiff ? (
+          <label className="flex items-center gap-2">
+            <Typography variant="caption">diff</Typography>
+            <Switch
+              checked={showDiff}
+              disabled={view === "baseline"}
+              onCheckedChange={onShowDiffChange}
+            />
+          </label>
+        ) : null}
       </div>
-      {hasDiff ? (
-        <label className="flex items-center gap-2">
-          <Typography variant="caption">diff</Typography>
-          <Switch
-            checked={showDiff}
-            disabled={view === "baseline"}
-            onCheckedChange={onShowDiffChange}
-          />
-        </label>
-      ) : null}
       <div className="flex items-center gap-1">
         <Button
           variant="ghost"
