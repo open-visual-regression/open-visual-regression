@@ -18,7 +18,7 @@ import {
   bootTargetPage,
   disableLazyLoading,
   getCaptureViewport,
-  takeScreenshot,
+  takeStableScreenshot,
   trackBlockedHosts,
   type BlockedHosts,
 } from "@ovr/capture-browser/page";
@@ -29,6 +29,7 @@ import {
 } from "@ovr/capture-browser/settle";
 import { startStaticProxy } from "@ovr/capture-browser/staticProxy";
 import { RENDER_TIMEOUT_MS, SETTLE_TIMEOUT_MS } from "@ovr/capture-browser/timeouts";
+import type { ScreenshotStability } from "@ovr/storybook-compat/parameters";
 
 import { getDiffPercent } from "./compare";
 
@@ -43,6 +44,7 @@ export type CaptureTarget = {
   waitForTimeout: number;
   diffThreshold: number;
   externalRequestAllowlist: string[] | null;
+  screenshotStability: ScreenshotStability;
 };
 
 export type CapturedImage = {
@@ -118,7 +120,7 @@ const captureOnce = async (
   }
 
   return {
-    screenshot: await takeScreenshot(page, fullPage),
+    screenshot: (await takeStableScreenshot(page, fullPage, target.screenshotStability)).image,
     error: renderResult.ok ? null : (renderResult.error ?? "target failed to render"),
   };
 };

@@ -21,6 +21,7 @@ import { storage } from "@ovr/storage";
 import {
   toExternalRequestAllowlist,
   type BlockExternalRequests,
+  type ScreenshotStability,
 } from "@ovr/storybook-compat/parameters";
 
 import { toCaptureGroups } from "./lib/captureGroups";
@@ -58,6 +59,7 @@ type ConfirmBuildUploadInput = {
   diffThreshold: number;
   waitForTimeout?: number;
   blockExternalRequests?: BlockExternalRequests;
+  screenshotStability?: ScreenshotStability;
   unaffectedTargetIds?: string[];
 };
 
@@ -281,6 +283,7 @@ export const confirmBuildUpload = async (
       viewports: input.viewports,
       diffThreshold: input.diffThreshold,
       waitForTimeout: input.waitForTimeout,
+      screenshotStability: input.screenshotStability,
       externalRequestAllowlist,
       unaffectedTargetIds,
     });
@@ -291,6 +294,7 @@ export const confirmBuildUpload = async (
       viewports: input.viewports,
       diffThreshold: input.diffThreshold,
       waitForTimeout: input.waitForTimeout,
+      screenshotStability: input.screenshotStability,
       externalRequestAllowlist,
       unaffectedTargetIds,
     });
@@ -456,6 +460,7 @@ export const rebuildBuild = async (
       viewports: extractDefaults.viewports,
       diffThreshold: extractDefaults.diffThreshold,
       waitForTimeout: extractDefaults.waitForTimeout,
+      screenshotStability: extractDefaults.screenshotStability,
       externalRequestAllowlist: extractDefaults.externalRequestAllowlist,
       unaffectedTargetIds: extractDefaults.unaffectedTargetIds,
     });
@@ -473,6 +478,7 @@ export const rebuildBuild = async (
       viewports: extractDefaults.viewports,
       diffThreshold: extractDefaults.diffThreshold,
       waitForTimeout: extractDefaults.waitForTimeout,
+      screenshotStability: extractDefaults.screenshotStability,
       externalRequestAllowlist: extractDefaults.externalRequestAllowlist,
       unaffectedTargetIds: extractDefaults.unaffectedTargetIds,
     });

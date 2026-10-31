@@ -4,6 +4,7 @@ import {
   readStoryParameterOverrides,
   resolveTargetDiffThreshold,
   resolveTargetExternalRequestAllowlist,
+  resolveTargetScreenshotStability,
   resolveTargetViewports,
   resolveTargetWaitForTimeout,
   toViewportName,
@@ -11,6 +12,10 @@ import {
 import type { NamedViewport } from "@ovr/capture-browser/storyViewports";
 import { dbClient } from "@ovr/db/client";
 import { enqueueCaptureGroups, enqueueFinalize } from "@ovr/queue/producer";
+import {
+  DEFAULT_SCREENSHOT_STABILITY,
+  type ScreenshotStability,
+} from "@ovr/storybook-compat/parameters";
 import { assertSupportedStorybookBuild } from "@ovr/storybook-compat/version";
 
 import { markSnapshotErrored } from "./snapshots";
@@ -94,6 +99,7 @@ export const extractBuild = async (
   unaffectedTargetIds: string[] = [],
   waitForTimeout = 0,
   externalRequestAllowlist: string[] | null = null,
+  screenshotStability: ScreenshotStability = DEFAULT_SCREENSHOT_STABILITY,
 ): Promise<void> => {
   const build = await dbClient.builds.findById(buildId);
 
@@ -151,6 +157,7 @@ export const extractBuild = async (
           targetName: target.name,
           diffThreshold: resolveTargetDiffThreshold(diffThreshold, override),
           waitForTimeout: resolveTargetWaitForTimeout(waitForTimeout, override),
+          screenshotStability: resolveTargetScreenshotStability(screenshotStability, override),
           externalRequestAllowlist: resolveTargetExternalRequestAllowlist(
             externalRequestAllowlist,
             override,

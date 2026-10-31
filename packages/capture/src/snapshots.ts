@@ -15,7 +15,7 @@ import {
   bootTargetPage,
   disableLazyLoading,
   getCaptureViewport,
-  takeScreenshot,
+  takeStableScreenshot,
   trackBlockedHosts,
   type BlockedHosts,
 } from "@ovr/capture-browser/page";
@@ -344,9 +344,17 @@ const captureSnapshotOnPage = async (
 
     const imagePath = `${build.projectId}/builds/${build.id}/snapshots/${snapshotId}-${snapshot.captureAttempt}.png`;
 
-    const [screenshot, screenshotMs] = await runPagePhase("screenshot", () =>
-      takeScreenshot(page, fullPage),
+    const [{ image: screenshot, stable }, screenshotMs] = await runPagePhase("screenshot", () =>
+      takeStableScreenshot(page, fullPage, snapshot.screenshotStability),
     );
+
+    if (!stable) {
+      pageLogState.logs.push({
+        level: "warning",
+        message:
+          "The screenshot kept changing, so it may differ between builds. Stop the animation in this story or set screenshotStability to off.",
+      });
+    }
 
     const blocked = blockedHosts.take();
     if (blocked.length > 0) {

@@ -5,9 +5,12 @@ import { pathToFileURL } from "node:url";
 import { createJiti } from "jiti";
 
 import {
+  DEFAULT_SCREENSHOT_STABILITY,
   MAX_WAIT_FOR_TIMEOUT_MS,
   blockExternalRequestsSchema,
+  screenshotStabilitySchema,
   type BlockExternalRequests,
+  type ScreenshotStability,
 } from "@ovr/storybook-compat/parameters";
 
 import type { OvrConfig, Viewport as ConfigViewport } from "./defineConfig";
@@ -143,6 +146,18 @@ export const resolveBlockExternalRequests = (
 
   if (!result.success) {
     throw new Error(`ovr.config: "blockExternalRequests" ${result.error.issues[0]?.message}`);
+  }
+
+  return result.data;
+};
+
+export const resolveScreenshotStability = (config: OvrConfig | undefined): ScreenshotStability => {
+  const result = screenshotStabilitySchema
+    .default(DEFAULT_SCREENSHOT_STABILITY)
+    .safeParse(config?.screenshotStability);
+
+  if (!result.success) {
+    throw new Error(`ovr.config: "screenshotStability" must be "auto", "always" or "off"`);
   }
 
   return result.data;

@@ -1,5 +1,7 @@
 import type { Browser, BrowserContextOptions, Page, Request } from "playwright";
 
+import type { ScreenshotStability } from "@ovr/storybook-compat/parameters";
+
 import { isAllowedUrl, toProxyBypass } from "./allowedHosts";
 import type { CaptureStrategy } from "./captureStrategies";
 import { BOOT_TIMEOUT_MS } from "./timeouts";
@@ -139,3 +141,36 @@ export const bootTargetPage = async (
 
 export const takeScreenshot = (page: Page, fullPage: boolean): Promise<Buffer> =>
   page.screenshot({ fullPage, animations: "disabled" });
+
+const STABILITY_INTERVAL_MS = 250;
+export const MAX_STABILITY_SCREENSHOTS = 6;
+
+// settlePage watches the DOM, so it misses anything that repaints without changing it.
+const mayRepaintOnItsOwn = (): boolean => {
+  if (document.querySelector("canvas, video, iframe, embed, object, animate, animateTransform")) {
+    return true;
+  }
+  return Array.from(document.querySelectorAll("*")).some((element) => element.shadowRoot);
+};
+
+// Retakes the screenshot until two in a row match, like Playwright's toHaveScreenshot.
+export const takeStableScreenshot = async (
+  page: Page,
+  fullPage: boolean,
+  stability: ScreenshotStability,
+): Promise<{ image: Buffer; stable: boolean }> => {
+  let image = await takeScreenshot(page, fullPage);
+  if (stability === "off" || (stability === "auto" && !(await page.evaluate(mayRepaintOnItsOwn)))) {
+    return { image, stable: true };
+  }
+
+  for (let taken = 1; taken < MAX_STABILITY_SCREENSHOTS; taken++) {
+    await page.waitForTimeout(STABILITY_INTERVAL_MS);
+    const next = await takeScreenshot(page, fullPage);
+    if (next.equals(image)) {
+      return { image, stable: true };
+    }
+    image = next;
+  }
+  return { image, stable: false };
+};

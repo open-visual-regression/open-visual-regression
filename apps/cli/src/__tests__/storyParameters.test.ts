@@ -11,6 +11,7 @@ const publishedParameters: Declared<PublishedStoryParameters> = {
   diffThreshold: true,
   waitForTimeout: true,
   blockExternalRequests: true,
+  screenshotStability: true,
   skip: true,
 };
 
@@ -19,6 +20,7 @@ const resolvedParameters: Declared<ResolvedStoryParameters> = {
   diffThreshold: true,
   waitForTimeout: true,
   blockExternalRequests: true,
+  screenshotStability: true,
   skip: true,
 };
 
@@ -33,6 +35,7 @@ describe("parameters.ovr", () => {
       diffThreshold: 0.02,
       waitForTimeout: 2000,
       blockExternalRequests: { allow: ["images.example.com"] },
+      screenshotStability: "off",
       skip: false,
     } satisfies PublishedStoryParameters satisfies ResolvedStoryParameters;
 

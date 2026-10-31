@@ -6,6 +6,7 @@ import { toExternalRequestAllowlist } from "@ovr/storybook-compat/parameters";
 import {
   loadOvrConfig,
   resolveBlockExternalRequests,
+  resolveScreenshotStability,
   resolveDiffThreshold,
   resolveViewports,
   resolveWaitForTimeout,
@@ -69,6 +70,7 @@ const captureStorybook = async (
   const waitForTimeout = resolveWaitForTimeout(config);
   const diffThreshold = resolveDiffThreshold(config);
   const externalRequestAllowlist = toExternalRequestAllowlist(resolveBlockExternalRequests(config));
+  const screenshotStability = resolveScreenshotStability(config);
   const launchOptions = options.executablePath ? { executablePath: options.executablePath } : {};
 
   const stories = await readStoryTargets(options.dir);
@@ -122,6 +124,10 @@ const captureStorybook = async (
         diffThreshold: storyViewports.resolveTargetDiffThreshold(diffThreshold, override),
         externalRequestAllowlist: storyViewports.resolveTargetExternalRequestAllowlist(
           externalRequestAllowlist,
+          override,
+        ),
+        screenshotStability: storyViewports.resolveTargetScreenshotStability(
+          screenshotStability,
           override,
         ),
       }))

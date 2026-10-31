@@ -3,9 +3,11 @@ import { chromium, type LaunchOptions } from "playwright";
 import {
   MAX_WAIT_FOR_TIMEOUT_MS,
   blockExternalRequestsSchema,
+  screenshotStabilitySchema,
   toExternalRequestAllowlist,
   type OvrStoryParameterViewport,
   type OvrStoryParameters,
+  type ScreenshotStability,
 } from "@ovr/storybook-compat/parameters";
 
 import { launchBrowser, newPage, type ManagedBrowser } from "./browser";
@@ -154,4 +156,12 @@ export const resolveTargetExternalRequestAllowlist = (
   return blockExternalRequests.success
     ? toExternalRequestAllowlist(blockExternalRequests.data)
     : buildDefault;
+};
+
+export const resolveTargetScreenshotStability = (
+  buildDefault: ScreenshotStability,
+  override: OvrStoryParameters | undefined,
+): ScreenshotStability => {
+  const screenshotStability = screenshotStabilitySchema.safeParse(override?.screenshotStability);
+  return screenshotStability.success ? screenshotStability.data : buildDefault;
 };

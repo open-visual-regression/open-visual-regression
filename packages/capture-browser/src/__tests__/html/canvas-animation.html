@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+  <body>
+    <canvas id="chart" width="200" height="100"></canvas>
+    <script>
+      // ?duration=600 grows a bar over 600ms, ?duration=endless pulses it forever.
+      const duration = new URLSearchParams(location.search).get("duration");
+      const ctx = document.getElementById("chart").getContext("2d");
+      const start = performance.now();
+      const draw = (now) => {
+        const elapsed = now - start;
+        const height =
+          duration === "endless"
+            ? 45 + Math.sin(elapsed / 50) * 45
+            : 90 * Math.min(elapsed / Number(duration), 1);
+        ctx.clearRect(0, 0, 200, 100);
+        ctx.fillRect(10, 100 - height, 50, height);
+        if (duration === "endless" || elapsed < Number(duration)) {
+          requestAnimationFrame(draw);
+        }
+      };
+      requestAnimationFrame(draw);
+    </script>
+  </body>
+</html>

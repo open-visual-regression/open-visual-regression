@@ -37,11 +37,21 @@ export type OvrConfig = {
    * @default false
    */
   blockExternalRequests?: BlockExternalRequests;
+  /**
+   * When to retake a screenshot until two in a row match, so an animation
+   * isn't caught mid-frame. `"auto"` does it for stories with a canvas, video,
+   * iframe, SVG animation or shadow DOM. Override per story via
+   * `parameters.ovr.screenshotStability`.
+   * @default "auto"
+   */
+  screenshotStability?: ScreenshotStability;
   /** Options for `upload storybook --only-affected`. */
   onlyAffected?: OnlyAffectedConfig;
 };
 
 export type BlockExternalRequests = boolean | { allow: string[] };
+
+export type ScreenshotStability = "auto" | "always" | "off";
 
 export type OnlyAffectedConfig = {
   /** Globs of files that affect every story when they change, e.g. a static folder. */
@@ -65,6 +75,8 @@ export type OvrStoryParameters = {
   waitForTimeout?: number;
   /** Replaces the config's `blockExternalRequests` for this story only. */
   blockExternalRequests?: BlockExternalRequests;
+  /** Replaces the config's `screenshotStability` for this story only. */
+  screenshotStability?: ScreenshotStability;
   /** Skips this story — listed on the build as skipped, never captured, baselines kept. */
   skip?: boolean;
 };
@@ -103,6 +115,14 @@ export const defineConfig = <const V extends readonly Viewport[] = []>(config: {
    * @default false
    */
   blockExternalRequests?: BlockExternalRequests;
+  /**
+   * When to retake a screenshot until two in a row match, so an animation
+   * isn't caught mid-frame. `"auto"` does it for stories with a canvas, video,
+   * iframe, SVG animation or shadow DOM. Override per story via
+   * `parameters.ovr.screenshotStability`.
+   * @default "auto"
+   */
+  screenshotStability?: ScreenshotStability;
   /** Options for `upload storybook --only-affected`. */
   onlyAffected?: OnlyAffectedConfig;
 }): OvrConfig => config;

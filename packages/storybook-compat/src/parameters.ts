@@ -43,11 +43,18 @@ export const toExternalRequestAllowlist = (
   return blockExternalRequests === true ? [] : [...new Set(blockExternalRequests.allow)].sort();
 };
 
+export const screenshotStabilitySchema = z.enum(["auto", "always", "off"]);
+
+export type ScreenshotStability = z.output<typeof screenshotStabilitySchema>;
+
+export const DEFAULT_SCREENSHOT_STABILITY: ScreenshotStability = "auto";
+
 export type OvrStoryParameters = {
   viewports?: OvrStoryParameterViewport[];
   diffThreshold?: number;
   waitForTimeout?: number;
   blockExternalRequests?: BlockExternalRequests;
+  screenshotStability?: ScreenshotStability;
   skip?: boolean;
 };
 

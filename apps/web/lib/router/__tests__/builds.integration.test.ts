@@ -351,6 +351,36 @@ describe("builds", () => {
       expect(await confirm()).toMatchObject({ waitForTimeout: 0 });
     });
 
+    test("records the uploader's screenshot stability, defaulting to auto", async ({
+      admin: _,
+    }) => {
+      const { apiKey } = await createProjectWithApiKey();
+      setApiKeyHeader(apiKey);
+
+      const confirm = async (screenshotStability?: "auto" | "always" | "off") => {
+        const [, createResult] = await serverClient.builds.createBuild({
+          branch: "main",
+          commitSha: "a".repeat(40),
+        });
+        const buildId = createResult!.buildId;
+        const build = await dbClient.builds.findById(buildId);
+        await storage.uploadFile(build!.artifactPath, Buffer.from(""), "application/gzip");
+
+        const [error] = await serverClient.builds.confirmUpload({
+          buildId,
+          targets: [{ id: "story-a", title: "Story", name: "A" }],
+          viewports: VIEWPORTS,
+          screenshotStability,
+        });
+        expect(error).toBeNull();
+
+        return dbClient.buildExtractDefaults.findByBuild(buildId);
+      };
+
+      expect(await confirm("off")).toMatchObject({ screenshotStability: "off" });
+      expect(await confirm()).toMatchObject({ screenshotStability: "auto" });
+    });
+
     test("records which external hosts the uploader blocks, blocking none by default", async ({
       admin: _,
     }) => {
@@ -405,6 +435,20 @@ describe("builds", () => {
         targets: [{ id: "story-a", title: "Story", name: "A" }],
         viewports: VIEWPORTS,
         waitForTimeout: 30_001,
+      });
+
+      expect(error?.code).toBe("BAD_REQUEST");
+    });
+
+    test("should reject an unknown screenshot stability", async ({ admin: _ }) => {
+      const { apiKey } = await createProjectWithApiKey();
+      setApiKeyHeader(apiKey);
+
+      const [error] = await serverClient.builds.confirmUpload({
+        buildId: crypto.randomUUID(),
+        targets: [{ id: "story-a", title: "Story", name: "A" }],
+        viewports: VIEWPORTS,
+        screenshotStability: "sometimes" as "auto",
       });
 
       expect(error?.code).toBe("BAD_REQUEST");
