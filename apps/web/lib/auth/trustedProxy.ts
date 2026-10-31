@@ -94,7 +94,6 @@ export const trustedProxy = () =>
             },
             account: {
               providerId: TRUSTED_PROXY_PROVIDER_ID,
-              issuer: identity.issuer,
               accountId: identity.subject,
             },
             source: { method: "oauth", oauth: { providerId: TRUSTED_PROXY_PROVIDER_ID } },
