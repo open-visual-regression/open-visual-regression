@@ -4,6 +4,7 @@ import path from "node:path";
 
 import { diffLockfile, isSupportedLockfile } from "./lockfile";
 import { readModuleGraph, STATS_FILENAME } from "./moduleGraph";
+import { addStyleImports, STYLE_FILE } from "./styleImports";
 
 type IndexEntry = { id: string; importPath: string; type?: string };
 
@@ -40,8 +41,6 @@ export type AffectedStories =
     };
 
 const CODE_FILE = /\.[cm]?[jt]sx?$/;
-// Stylesheets are loaded through imports like code, so one outside the graph cannot render.
-const STYLE_FILE = /\.(css|scss|sass|less|styl|pcss)$/;
 const LOCKFILE =
   /(^|\/)(package-lock\.json|npm-shrinkwrap\.json|pnpm-lock\.yaml|yarn\.lock|bun\.lockb?)$/;
 const CONFIG_FILE = /(^|\/)([^/]+\.config\.[cm]?[jt]s|tsconfig[^/]*\.json)$/;
@@ -116,6 +115,8 @@ export const findAffectedStories = async ({
     return dir;
   };
 
+  const unresolvedStyleImport = await addStyleImports(importers, repoRoot);
+
   const bundledPackages = new Set(
     [...importers.keys()]
       .filter((file) => !file.startsWith("/") && !file.includes("node_modules/"))
@@ -149,7 +150,13 @@ export const findAffectedStories = async ({
       return all(`build configuration changed (${file})`);
     } else if (CODE_FILE.test(file)) {
       ignoredFiles.push(file);
+    } else if (STYLE_FILE.test(file) && unresolvedStyleImport && inBundledPackage) {
+      const { file: importer, specifier } = unresolvedStyleImport;
+      return all(
+        `${file} is not traceable, and ${importer} imports "${specifier}", which could not be resolved`,
+      );
     } else if (STYLE_FILE.test(file)) {
+      // Stylesheets load through imports like code, so one outside the graph cannot render.
       ignoredFiles.push(file);
     } else if (inBundledPackage) {
       return all(`${file} is not traceable but is in a package the Storybook bundles`);
