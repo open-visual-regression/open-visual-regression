@@ -9,6 +9,7 @@ import { newPage } from "../browser";
 import { settlePage, trackNetworkActivity } from "../settle";
 
 const SLOW_RESPONSE_MS = 400;
+const VERY_SLOW_RESPONSE_MS = 2_500;
 const GIVE_UP_TIMEOUT_MS = 500;
 
 const PAGE_HTML = `<!doctype html>
@@ -60,6 +61,41 @@ const TICKING_HTML = `<!doctype html>
   </body>
 </html>`;
 
+const SLOW_TICKING_HTML = `<!doctype html>
+<html>
+  <body>
+    <div id="clock">0</div>
+    <script>
+      let ticks = 0;
+      setInterval(() => {
+        document.getElementById("clock").textContent = String(++ticks);
+      }, 170);
+    </script>
+  </body>
+</html>`;
+
+// An endless animation, and an image that only starts loading once the DOM has been watched for a
+// while and outlasts how long the DOM is watched for.
+const ANIMATED_WITH_LATE_IMAGE_HTML = `<!doctype html>
+<html>
+  <body>
+    <div id="spinner"></div>
+    <img id="late" />
+    <script>
+      const spinner = document.getElementById("spinner");
+      let angle = 0;
+      const spin = () => {
+        spinner.style.transform = "rotate(" + (angle += 7) + "deg)";
+        requestAnimationFrame(spin);
+      };
+      spin();
+      setTimeout(() => {
+        document.getElementById("late").src = "/very-slow.png";
+      }, 300);
+    </script>
+  </body>
+</html>`;
+
 const OFFSCREEN_LAZY_IMAGE_HTML = `<!doctype html>
 <html>
   <body>
@@ -71,7 +107,9 @@ const OFFSCREEN_LAZY_IMAGE_HTML = `<!doctype html>
 const HTML_PAGES: Record<string, string> = {
   "/waterfall": WATERFALL_HTML,
   "/ticking": TICKING_HTML,
+  "/slow-ticking": SLOW_TICKING_HTML,
   "/offscreen-lazy-image": OFFSCREEN_LAZY_IMAGE_HTML,
+  "/animated-with-late-image": ANIMATED_WITH_LATE_IMAGE_HTML,
 };
 
 const onePixelPng = (): Buffer => {
@@ -93,11 +131,14 @@ beforeAll(async () => {
   server = http.createServer((req, res) => {
     const url = new URL(req.url ?? "/", "http://127.0.0.1");
 
-    if (url.pathname === "/slow.png") {
-      setTimeout(() => {
-        res.writeHead(200, { "Content-Type": "image/png" });
-        res.end(image);
-      }, SLOW_RESPONSE_MS);
+    if (url.pathname === "/slow.png" || url.pathname === "/very-slow.png") {
+      setTimeout(
+        () => {
+          res.writeHead(200, { "Content-Type": "image/png" });
+          res.end(image);
+        },
+        url.pathname === "/slow.png" ? SLOW_RESPONSE_MS : VERY_SLOW_RESPONSE_MS,
+      );
       return;
     }
 
@@ -185,6 +226,32 @@ describe("settlePage", () => {
     const startedAt = Date.now();
     await expect(settlePage(page, activity, 10_000)).resolves.toBe(false);
     expect(Date.now() - startedAt).toBeLessThan(5_000);
+  }, 30_000);
+
+  test("gives up early on a DOM that keeps changing between quiet windows", async () => {
+    const page = await newPage(await browser.newContext());
+    const activity = trackNetworkActivity(page);
+
+    await page.goto(`${origin}/slow-ticking`, { waitUntil: "domcontentloaded" });
+
+    const startedAt = Date.now();
+    await settlePage(page, activity, 10_000);
+    expect(Date.now() - startedAt).toBeLessThan(5_000);
+  }, 30_000);
+
+  test("still waits for images on a DOM that never stops changing", async () => {
+    const page = await newPage(await browser.newContext());
+    const activity = trackNetworkActivity(page);
+
+    await page.goto(`${origin}/animated-with-late-image`, { waitUntil: "domcontentloaded" });
+
+    await expect(settlePage(page, activity, 10_000)).resolves.toBe(false);
+    expect(
+      await page.evaluate(() => {
+        const image = document.getElementById("late") as HTMLImageElement;
+        return image.complete && image.naturalWidth > 0;
+      }),
+    ).toBe(true);
   }, 30_000);
 
   test("does not wait for a lazy image outside the viewport", async () => {
