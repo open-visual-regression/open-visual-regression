@@ -92,6 +92,7 @@ export const confirmUpload = os.builds.confirmUpload
       diffThreshold: input.diffThreshold ?? DEFAULT_DIFF_THRESHOLD,
       waitForTimeout: input.waitForTimeout,
       blockExternalRequests: input.blockExternalRequests,
+      screenshotStability: input.screenshotStability,
       unaffectedTargetIds: input.unaffectedTargetIds,
     });
 

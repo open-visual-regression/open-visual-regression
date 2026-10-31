@@ -61,6 +61,7 @@ const buildArtifactTarball = async (
       diffThreshold?: number;
       waitForTimeout?: number;
       blockExternalRequests?: unknown;
+      screenshotStability?: string;
       skip?: boolean;
       __throw?: boolean;
     }
@@ -325,6 +326,50 @@ describe("extractBuild", () => {
 
     const [snapshot] = await dbClient.snapshots.findByBuild(mainBuild.id);
     expect(snapshot!.waitForTimeout).toBe(2000);
+  });
+
+  test("uses the build's screenshot stability when a story has no override", async ({
+    mainBuild,
+    captureConfiguration,
+  }) => {
+    const tarball = await buildArtifactTarball();
+    await storage.uploadFile(mainBuild.artifactPath, tarball, "application/gzip");
+
+    await extractBuild(
+      mainBuild.id,
+      [{ id: "story-a", title: "Story", name: "A" }],
+      [captureConfiguration],
+      0.1,
+      [],
+      0,
+      null,
+      "always",
+    );
+
+    const [snapshot] = await dbClient.snapshots.findByBuild(mainBuild.id);
+    expect(snapshot!.screenshotStability).toBe("always");
+  });
+
+  test("resolves a story's parameters.ovr.screenshotStability override onto its snapshots", async ({
+    mainBuild,
+    captureConfiguration,
+  }) => {
+    const tarball = await buildArtifactTarball({ "story-a": { screenshotStability: "off" } });
+    await storage.uploadFile(mainBuild.artifactPath, tarball, "application/gzip");
+
+    await extractBuild(
+      mainBuild.id,
+      [{ id: "story-a", title: "Story", name: "A" }],
+      [captureConfiguration],
+      0.1,
+      [],
+      0,
+      null,
+      "always",
+    );
+
+    const [snapshot] = await dbClient.snapshots.findByBuild(mainBuild.id);
+    expect(snapshot!.screenshotStability).toBe("off");
   });
 
   test("uses the build's external request allowlist when a story has no override", async ({

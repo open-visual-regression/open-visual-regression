@@ -550,6 +550,7 @@ describe("builds", () => {
         viewports: [captureConfiguration],
         diffThreshold: 0.05,
         waitForTimeout: 1500,
+        screenshotStability: "always",
       });
 
       expect(await dbClient.buildExtractDefaults.findByBuild(buildId)).toMatchObject({
@@ -558,6 +559,7 @@ describe("builds", () => {
         viewports: [captureConfiguration],
         diffThreshold: 0.05,
         waitForTimeout: 1500,
+        screenshotStability: "always",
       });
     });
 
@@ -897,6 +899,7 @@ describe("builds", () => {
           viewports: VIEWPORTS,
           diffThreshold: 0.05,
           waitForTimeout: 1500,
+          screenshotStability: "always",
           externalRequestAllowlist: ["images.example.com"],
           unaffectedTargetIds,
         });
@@ -978,6 +981,7 @@ describe("builds", () => {
         viewports: VIEWPORTS,
         diffThreshold: 0.05,
         waitForTimeout: 1500,
+        screenshotStability: "always",
         externalRequestAllowlist: ["images.example.com"],
       });
     });
@@ -996,6 +1000,7 @@ describe("builds", () => {
         viewports: VIEWPORTS,
         diffThreshold: 0.05,
         waitForTimeout: 1500,
+        screenshotStability: "always",
         externalRequestAllowlist: ["images.example.com"],
         unaffectedTargetIds: [],
       });

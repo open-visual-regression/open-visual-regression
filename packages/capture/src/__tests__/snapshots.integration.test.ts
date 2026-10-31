@@ -374,6 +374,72 @@ describe("snapshots", () => {
       });
     });
 
+    describe("screenshotStability", () => {
+      const iframeWithEndlessCanvas = IFRAME_HTML.replace(
+        "</body>",
+        `<canvas id="pulse" width="100" height="100"></canvas>
+        <script>
+          const ctx = document.getElementById("pulse").getContext("2d");
+          const draw = (now) => {
+            ctx.clearRect(0, 0, 100, 100);
+            ctx.fillRect(0, 0, 50 + Math.sin(now / 50) * 50, 100);
+            requestAnimationFrame(draw);
+          };
+          requestAnimationFrame(draw);
+        </script></body>`,
+      );
+
+      const captureLogs = async (
+        mainBuild: NonNullable<BuildDbSchema>,
+        captureConfiguration: Viewport,
+        screenshotStability: "auto" | "off",
+      ) => {
+        await uploadArtifactWithIframe(mainBuild.artifactPath, iframeWithEndlessCanvas);
+        const [snapshot] = await dbClient.snapshots.createMany({
+          values: [
+            {
+              buildId: mainBuild.id,
+              ...captureConfiguration,
+              targetId: "story-a",
+              screenshotStability,
+            },
+          ],
+        });
+
+        await captureBuildGroup(mainBuild.id, captureConfiguration.browser, [snapshot!.id]);
+
+        expect(await dbClient.snapshots.findById(snapshot!.id)).toMatchObject({
+          status: "success",
+        });
+        return dbClient.snapshotLogs.findBySnapshot(snapshot!.id);
+      };
+
+      test("should warn when a story's screenshot never stops changing", async ({
+        mainBuild,
+        captureConfiguration,
+      }) => {
+        const logs = await captureLogs(mainBuild, captureConfiguration, "auto");
+
+        expect(logs).toContainEqual(
+          expect.objectContaining({
+            level: "warning",
+            message: expect.stringContaining("The screenshot kept changing"),
+          }),
+        );
+      });
+
+      test("should take a single screenshot without a warning when it's off", async ({
+        mainBuild,
+        captureConfiguration,
+      }) => {
+        const logs = await captureLogs(mainBuild, captureConfiguration, "off");
+
+        expect(logs.map((log) => log.message)).not.toContainEqual(
+          expect.stringContaining("The screenshot kept changing"),
+        );
+      });
+    });
+
     test("should flag an uncaught page error separately from a render error when Storybook still reports success", async ({
       mainBuild,
       captureConfiguration,

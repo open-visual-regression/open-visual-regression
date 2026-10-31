@@ -30,6 +30,7 @@ export default defineConfig({
 | `diffThreshold` | `number`, `(0, 1]` | `0.05` | Fraction of pixels that may differ before a snapshot needs review |
 | `waitForTimeout` | `number`, `[0, 30000]` | `0` | Milliseconds to wait before each screenshot, e.g. for slow-loading data or images |
 | `blockExternalRequests` | `boolean \| { allow: string[] }` | `false` | Blocks requests outside the Storybook build. See [below](#blocking-external-requests) |
+| `screenshotStability` | `"auto" \| "always" \| "off"` | `"auto"` | When to retake a screenshot until two in a row match. See [Flaky snapshots](/flaky-snapshots#animations-caught-mid-frame) |
 | `onlyAffected` | `object` | | Options for [`--only-affected`](/cli/upload-storybook#only-affected-stories). See [below](#only-affected) |
 
 <Note>

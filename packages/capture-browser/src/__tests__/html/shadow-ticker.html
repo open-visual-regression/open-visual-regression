@@ -1,0 +1,16 @@
+<!doctype html>
+<html>
+  <body>
+    <div id="host"></div>
+    <script>
+      // ?mode=open or ?mode=closed. The count changes inside the shadow root, out of sight of a
+      // MutationObserver on the document.
+      const mode = new URLSearchParams(location.search).get("mode");
+      const root = document.getElementById("host").attachShadow({ mode });
+      let ticks = 0;
+      setInterval(() => {
+        root.textContent = String(++ticks);
+      }, 30);
+    </script>
+  </body>
+</html>

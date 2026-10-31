@@ -20,6 +20,7 @@ export const run = async (job: ExtractJob): Promise<void> => {
     job.data.unaffectedTargetIds,
     job.data.waitForTimeout,
     job.data.externalRequestAllowlist ?? null,
+    job.data.screenshotStability,
   );
 };
 

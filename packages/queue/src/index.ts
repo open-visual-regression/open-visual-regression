@@ -4,7 +4,7 @@ import { Cluster, Redis } from "ioredis";
 import type { RedisOptions } from "ioredis";
 import { z } from "zod";
 
-import type { JobName } from "@ovr/db/schema";
+import type { JobName, ScreenshotStability } from "@ovr/db/schema";
 import { createLogger } from "@ovr/logger";
 
 const logger = createLogger("queue");
@@ -142,6 +142,8 @@ export type ExtractJobPayload = {
   diffThreshold: number;
   /** Absent on jobs queued before stories could wait before capture. */
   waitForTimeout?: number;
+  /** Absent on jobs queued before screenshots could be retaken until stable. */
+  screenshotStability?: ScreenshotStability;
   /** Absent on jobs queued before external requests could be blocked. */
   externalRequestAllowlist?: string[] | null;
   /** Absent on jobs queued before targets could be marked unaffected. */

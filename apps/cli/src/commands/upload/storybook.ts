@@ -10,6 +10,7 @@ import {
   getServerUrl,
   loadOvrConfig,
   resolveBlockExternalRequests,
+  resolveScreenshotStability,
   resolveDiffThreshold,
   resolveViewports,
   resolveWaitForTimeout,
@@ -64,6 +65,7 @@ export const createStorybookCommand = (): Command =>
         const diffThreshold = resolveDiffThreshold(config);
         const waitForTimeout = resolveWaitForTimeout(config);
         const blockExternalRequests = resolveBlockExternalRequests(config);
+        const screenshotStability = resolveScreenshotStability(config);
         const { branch, commit: commitSha, name, author } = options;
 
         const client = createClient(serverUrl, apiKey);
@@ -102,6 +104,7 @@ export const createStorybookCommand = (): Command =>
             diffThreshold,
             ...(waitForTimeout > 0 && { waitForTimeout }),
             blockExternalRequests,
+            screenshotStability,
             ...(unaffectedTargetIds.length > 0 && { unaffectedTargetIds }),
           }),
         );
