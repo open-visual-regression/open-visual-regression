@@ -41,9 +41,9 @@ The summary is for people who run OVR, not for reviewers. They don't know the co
 - **Add the why, if it isn't obvious,** in a short "so …" clause or a second sentence: "…so images below the viewport are no longer missing in full-page screenshots."
 - **Tell them what to do,** if anything. Name the exact config key, flag, env var, or Helm value to set, and give the old behavior back as an option when a default changes: "Set `OVR_CAPTURE_QUEUE_POLICY=fifo` to keep the previous order."
 - **Call out side effects of upgrading,** like snapshots that will change once, a migration that runs, or something that now takes longer: "Stories that load images or fonts from another host may change once, since those now load."
-- **Breaking changes** start with `**Breaking:**`, then say what broke and give the migration steps. Use a short list or a code block if there's more than one step.
+- **Breaking changes** start with `**Breaking:**` and say what broke in the summary. Put the migration steps after it as a short list or a code block.
 - **Tense and voice:** Describe the new behavior in the present tense, as in "Captures wait for…" or "Builds show how long…". "No longer" is good for fixes. Don't write "This PR…", "We…", or a commit-style "Fixed…".
-- **Length:** One or two sentences is usual. Keep it to a short paragraph, unless a breaking change needs migration steps.
+- **Length:** Keep the summary under 30 words, which is usually one or two sentences. If it won't fit, cut implementation detail and background before cutting what the user has to do. Longer setup instructions belong in the docs, so link to the page instead of repeating it. The only exception is a breaking change, where the migration steps can follow the summary as a short list.
 - **Formatting:** Use backticks for code, flags, config keys, env vars, and commands. Don't write a heading, since the changelog adds its own. Don't add PR links, issue numbers, or author credits, because the changelog generator adds them.
 - **Altitude:** No file names, function names, or class names unless the user types them. Implementation details belong in the PR description.
 - **Sound like a person:** Write in plain, full sentences. Avoid "seamlessly", "robust", "enhanced", "various improvements", and "minor fixes". If you can't say concretely what changed for the user, the change may not need a changeset.
@@ -72,7 +72,7 @@ Package names in the frontmatter must be quoted and must match each `package.jso
 
 ## Good examples
 
-These are from this repo's changelogs.
+These are from this repo's changelogs, and the last one is trimmed to fit the 30-word limit.
 
 ```md
 Captures load lazy images and iframes up front, so images below the viewport are no longer missing or half-loaded in full-page screenshots.
@@ -83,7 +83,7 @@ Small builds no longer wait for every snapshot of a large build queued before th
 ```
 
 ```md
-External hosts aren't blocked by default. Set `blockExternalRequests` in `ovr.config.ts` to block them, either all (`true`) or all but some (`{ allow: ["images.example.com"] }`), and override it for one story with `parameters.ovr.blockExternalRequests`. Stories that load images or fonts from another host may change once, since those now load.
+External hosts aren't blocked by default. Set `blockExternalRequests` in `ovr.config.ts` to block them. Stories that load images or fonts from another host may change once.
 ```
 
 ## Bad examples
