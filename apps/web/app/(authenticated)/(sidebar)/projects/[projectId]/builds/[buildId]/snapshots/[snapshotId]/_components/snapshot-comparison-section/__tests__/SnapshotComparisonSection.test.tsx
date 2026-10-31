@@ -40,11 +40,15 @@ const diff: DiffSchema = {
   baselineSnapshot: { imagePath: "baseline.png", commitSha: null, commitUrl: null },
 };
 
-const renderSection = (diffInput: DiffSchema | null) =>
+const renderSection = (
+  diffInput: DiffSchema | null,
+  baseline = diffInput?.baselineSnapshot ?? null,
+  snapshotInput = snapshot,
+) =>
   render(
     <QueryClientProvider client={new QueryClient()}>
       <ComparisonModeProvider>
-        <SnapshotComparisonSection snapshot={snapshot} diff={diffInput} />
+        <SnapshotComparisonSection snapshot={snapshotInput} diff={diffInput} baseline={baseline} />
       </ComparisonModeProvider>
     </QueryClientProvider>,
   );
@@ -58,6 +62,19 @@ describe("SnapshotComparisonSection", () => {
 
     expect(screen.getByRole("img", { name: "snapshot of UI/Button Kitchen Sink" })).toBeVisible();
     expect(screen.queryByText("baseline")).not.toBeInTheDocument();
+  });
+
+  it("should show the baseline when a skipped snapshot has no diff", () => {
+    renderSection(null, diff.baselineSnapshot, {
+      ...snapshot,
+      status: "skipped",
+      imagePath: null,
+    });
+
+    expect(
+      screen.getByRole("img", { name: "baseline snapshot of UI/Button Kitchen Sink" }),
+    ).toBeVisible();
+    expect(screen.getByText("no preview")).toBeVisible();
   });
 
   it("should show the baseline, the new snapshot, and the diff overlay when there is a visible diff", () => {

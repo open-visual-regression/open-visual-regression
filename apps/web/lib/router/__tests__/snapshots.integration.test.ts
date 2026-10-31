@@ -450,6 +450,142 @@ describe("snapshots", () => {
     });
   });
 
+  describe("getBaseline", () => {
+    const createBaseline = async (
+      admin: User,
+      projectId: string,
+      buildId: string,
+      targetId: string,
+    ) => {
+      const [baselineSnapshot] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId,
+            ...VIEWPORT,
+            targetId,
+            status: "success",
+            imagePath: "projects/p/builds/b/snapshots/baseline.png",
+          },
+        ],
+      });
+
+      await dbClient.baselines.upsert({
+        projectId,
+        snapshotId: baselineSnapshot!.id,
+        browser: VIEWPORT.browser,
+        viewportWidth: VIEWPORT.viewportWidth,
+        viewportHeight: VIEWPORT.viewportHeight,
+        targetId,
+        approvedBy: admin.id,
+      });
+
+      return baselineSnapshot!;
+    };
+
+    const createLaterBuild = (projectId: string, admin: User) =>
+      dbClient.builds.create({
+        projectId,
+        branch: "feature/test",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/seed/later",
+        createdBy: admin.id,
+        createdAt: new Date(Date.now() + 60_000).toISOString(),
+      });
+
+    test("returns NOT_FOUND for a missing snapshot id", async ({ admin: _ }) => {
+      const [error] = await serverClient.snapshots.getBaseline({ snapshotId: uuidv7() });
+      expect(error?.code).toBe("NOT_FOUND");
+    });
+
+    test("returns the baseline the snapshot's diff was compared against", async ({ admin }) => {
+      const { projectId, build } = await createProjectAndBuild(admin);
+      const baselineSnapshot = await createBaseline(admin, projectId, build.id, "story-a");
+      const laterBuild = await createLaterBuild(projectId, admin);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: laterBuild!.id, ...VIEWPORT, targetId: "story-a", status: "success" }],
+      });
+      await dbClient.diffs.create({
+        snapshotId: snapshot!.id,
+        baselineSnapshotId: baselineSnapshot.id,
+        processingStatus: "success",
+        reviewStatus: "unchanged",
+      });
+
+      const [error, result] = await serverClient.snapshots.getBaseline({
+        snapshotId: snapshot!.id,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.baseline).toEqual({
+        imagePath: "projects/p/builds/b/snapshots/baseline.png",
+        commitSha: "a".repeat(40),
+        commitUrl: null,
+      });
+    });
+
+    test("returns the project baseline for a skipped snapshot with no diff", async ({ admin }) => {
+      const { projectId, build } = await createProjectAndBuild(admin);
+      await createBaseline(admin, projectId, build.id, "story-a");
+      const laterBuild = await createLaterBuild(projectId, admin);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: laterBuild!.id, ...VIEWPORT, targetId: "story-a", status: "skipped" }],
+      });
+
+      const [error, result] = await serverClient.snapshots.getBaseline({
+        snapshotId: snapshot!.id,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.baseline).toEqual({
+        imagePath: "projects/p/builds/b/snapshots/baseline.png",
+        commitSha: "a".repeat(40),
+        commitUrl: null,
+      });
+    });
+
+    test("returns null when the snapshot is itself the baseline", async ({ admin }) => {
+      const { projectId, build } = await createProjectAndBuild(admin);
+      const baselineSnapshot = await createBaseline(admin, projectId, build.id, "story-a");
+
+      const [error, result] = await serverClient.snapshots.getBaseline({
+        snapshotId: baselineSnapshot.id,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.baseline).toBeNull();
+    });
+
+    test("returns null when the project baseline was set by a newer build", async ({ admin }) => {
+      const { projectId, build } = await createProjectAndBuild(admin);
+      const laterBuild = await createLaterBuild(projectId, admin);
+      await createBaseline(admin, projectId, laterBuild!.id, "story-a");
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: build.id, ...VIEWPORT, targetId: "story-a", status: "skipped" }],
+      });
+
+      const [error, result] = await serverClient.snapshots.getBaseline({
+        snapshotId: snapshot!.id,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.baseline).toBeNull();
+    });
+
+    test("returns null when there is no baseline for the story", async ({ admin }) => {
+      const { build } = await createProjectAndBuild(admin);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: build.id, ...VIEWPORT, targetId: "story-a", status: "skipped" }],
+      });
+
+      const [error, result] = await serverClient.snapshots.getBaseline({
+        snapshotId: snapshot!.id,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.baseline).toBeNull();
+    });
+  });
+
   describe("list", () => {
     test("should let a personal access token list a build's snapshots", async ({ admin }) => {
       const { build } = await createProjectAndBuild(admin);

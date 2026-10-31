@@ -40,6 +40,14 @@ const REVIEWABLE_DIFF_REVIEW_STATUSES: readonly DiffReviewStatusSchema[] = [
 export const isDiffReviewable = (reviewStatus: DiffReviewStatusSchema): boolean =>
   REVIEWABLE_DIFF_REVIEW_STATUSES.includes(reviewStatus);
 
+export const baselineSnapshotSchema = z.object({
+  imagePath: z.string().nullable(),
+  commitSha: z.string().nullable(),
+  commitUrl: z.string().nullable(),
+});
+
+export type BaselineSnapshotSchema = z.infer<typeof baselineSnapshotSchema>;
+
 export const diffSchema = z.object({
   id: z.uuidv7(),
   processingStatus: diffProcessingStatusSchema,
@@ -47,13 +55,7 @@ export const diffSchema = z.object({
   diffImagePath: z.string().nullable(),
   pixelDiffCount: z.number().int().nullable(),
   diffPercent: z.number().nullable(),
-  baselineSnapshot: z
-    .object({
-      imagePath: z.string().nullable(),
-      commitSha: z.string().nullable(),
-      commitUrl: z.string().nullable(),
-    })
-    .nullable(),
+  baselineSnapshot: baselineSnapshotSchema.nullable(),
 });
 
 export type DiffSchema = z.infer<typeof diffSchema>;

@@ -2,6 +2,7 @@ import { oc } from "@orpc/contract";
 import { z } from "zod";
 
 import { snapshotDisplayStatusSchema } from "./builds";
+import { baselineSnapshotSchema } from "./diffs";
 
 export const MAX_REBUILD_SNAPSHOTS = 100;
 
@@ -87,6 +88,17 @@ export const getOneInputSchema = z.object({ snapshotId: z.uuidv7() });
 export const getOneOutputSchema = z.object({ snapshot: snapshotSchema });
 
 export const getOneContract = oc.input(getOneInputSchema).output(getOneOutputSchema);
+
+export const getBaselineInputSchema = z.object({ snapshotId: z.uuidv7() });
+
+export const getBaselineOutputSchema = z.object({
+  baseline: baselineSnapshotSchema.nullable().meta({
+    description:
+      "The baseline this snapshot was compared against, or the project's baseline for the same story, browser, and viewport when it was not compared",
+  }),
+});
+
+export const getBaselineContract = oc.input(getBaselineInputSchema).output(getBaselineOutputSchema);
 
 export const buildSnapshotSchema = z.object({
   id: z.uuidv7(),
@@ -287,6 +299,7 @@ export const rebuildContract = oc.input(rebuildInputSchema).output(rebuildOutput
 
 export const contract = {
   getOne: getOneContract,
+  getBaseline: getBaselineContract,
   list: listContract,
   getCounts: getCountsContract,
   getAdjacent: getAdjacentContract,

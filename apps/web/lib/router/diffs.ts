@@ -3,7 +3,6 @@
 import { ORPCError } from "@orpc/client";
 
 import { dbClient } from "@ovr/db/client";
-import { buildCommitUrl } from "@ovr/git-status/webCommitUrl";
 import {
   bulkCastVote as bulkCastVoteService,
   castVote as castVoteService,
@@ -22,6 +21,7 @@ import {
   reviewerMiddleware,
 } from "./middleware";
 import { os } from "./os";
+import { toBaselineSnapshot } from "./utils/baselineSnapshot";
 
 const REVIEW_BLOCKED_MESSAGES: Record<
   Exclude<BuildReviewBlockedReason | SnapshotReviewBlockedReason, "REVIEW_NOT_REQUIRED">,
@@ -53,32 +53,6 @@ const throwOnError = (
     default:
       throw new ORPCError("CONFLICT", { message: REVIEW_BLOCKED_MESSAGES[error] });
   }
-};
-
-const buildBaselineSnapshot = async (
-  baselineSnapshot: { imagePath: string | null; buildId: string },
-  projectId: string,
-) => {
-  const [baselineBuild, gitIntegration] = await Promise.all([
-    dbClient.builds.findById(baselineSnapshot.buildId),
-    dbClient.gitIntegrations.findByProject(projectId),
-  ]);
-
-  if (!baselineBuild) {
-    return { imagePath: baselineSnapshot.imagePath, commitSha: null, commitUrl: null };
-  }
-
-  return {
-    imagePath: baselineSnapshot.imagePath,
-    commitSha: baselineBuild.commitSha,
-    commitUrl: gitIntegration
-      ? buildCommitUrl(
-          gitIntegration.provider,
-          gitIntegration.repoIdentifier,
-          baselineBuild.commitSha,
-        )
-      : null,
-  };
 };
 
 export const castVote = os.diffs.castVote
@@ -134,7 +108,7 @@ export const getOne = os.diffs.getOne
     }
 
     const baselineSnapshot = row.baselineSnapshot
-      ? await buildBaselineSnapshot(row.baselineSnapshot, context.project.id)
+      ? await toBaselineSnapshot(row.baselineSnapshot, context.project.id)
       : null;
 
     return {

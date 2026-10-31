@@ -1,4 +1,4 @@
-import type { DiffSchema } from "@ovr/api/contracts/diffs";
+import type { BaselineSnapshotSchema, DiffSchema } from "@ovr/api/contracts/diffs";
 import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 
 import { getStoragePath } from "@/lib/utils/storage";
@@ -10,13 +10,18 @@ import { NewSnapshotPane } from "./comparison-view/NewSnapshotPane";
 export type SnapshotComparisonSectionProps = {
   snapshot: SnapshotSchema;
   diff: DiffSchema | null;
+  baseline: BaselineSnapshotSchema | null;
 };
 
-export const SnapshotComparisonSection = ({ snapshot, diff }: SnapshotComparisonSectionProps) => {
+export const SnapshotComparisonSection = ({
+  snapshot,
+  diff,
+  baseline,
+}: SnapshotComparisonSectionProps) => {
   const alt = `snapshot of ${snapshot.targetTitle} ${snapshot.targetName}`;
   const newSnapshot = { imagePath: getStoragePath(snapshot.imagePath), alt };
 
-  if (!diff?.baselineSnapshot) {
+  if (!baseline) {
     return (
       <SnapshotZoomDialog baseline={null} newSnapshot={newSnapshot} diffImagePath={null}>
         <NewSnapshotPane {...newSnapshot} />
@@ -27,13 +32,13 @@ export const SnapshotComparisonSection = ({ snapshot, diff }: SnapshotComparison
   return (
     <ComparisonView
       baseline={{
-        imagePath: getStoragePath(diff.baselineSnapshot.imagePath),
+        imagePath: getStoragePath(baseline.imagePath),
         alt: `baseline ${alt}`,
-        commitSha: diff.baselineSnapshot.commitSha,
-        commitUrl: diff.baselineSnapshot.commitUrl,
+        commitSha: baseline.commitSha,
+        commitUrl: baseline.commitUrl,
       }}
       newSnapshot={newSnapshot}
-      diffImagePath={getStoragePath(diff.diffImagePath)}
+      diffImagePath={getStoragePath(diff?.diffImagePath ?? null)}
     />
   );
 };

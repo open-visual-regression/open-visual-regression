@@ -25,6 +25,7 @@ export default async function SnapshotPage(props: SnapshotPageProps) {
     [buildError, buildResult],
     [snapshotError, snapshotResult],
     [diffError, diffResult],
+    [baselineError, baselineResult],
     [adjacentError, adjacentResult],
     [reviewsError, reviewsResult],
   ] = await Promise.all([
@@ -32,6 +33,7 @@ export default async function SnapshotPage(props: SnapshotPageProps) {
     serverClient.builds.getOne({ buildId }),
     serverClient.snapshots.getOne({ snapshotId }),
     serverClient.diffs.getOne({ snapshotId }),
+    serverClient.snapshots.getBaseline({ snapshotId }),
     serverClient.snapshots.getAdjacent({
       snapshotId,
       statuses,
@@ -47,19 +49,23 @@ export default async function SnapshotPage(props: SnapshotPageProps) {
     buildError?.code === "NOT_FOUND" ||
     snapshotError?.code === "NOT_FOUND" ||
     diffError?.code === "NOT_FOUND" ||
+    baselineError?.code === "NOT_FOUND" ||
     adjacentError?.code === "NOT_FOUND" ||
     reviewsError?.code === "NOT_FOUND"
   ) {
     notFound();
   }
 
-  if (buildError || snapshotError || diffError || adjacentError || reviewsError) {
-    serverError(buildError || snapshotError || diffError || adjacentError || reviewsError);
+  if (buildError || snapshotError || diffError || baselineError || adjacentError || reviewsError) {
+    serverError(
+      buildError || snapshotError || diffError || baselineError || adjacentError || reviewsError,
+    );
   }
 
   const { build } = buildResult;
   const { snapshot } = snapshotResult;
   const { diff } = diffResult;
+  const { baseline } = baselineResult;
   const { prevSnapshotId, nextSnapshotId, position, total } = adjacentResult;
 
   const storybookHref = hasHostedStorybook(build)
@@ -91,9 +97,9 @@ export default async function SnapshotPage(props: SnapshotPageProps) {
         snapshot={snapshot}
         build={build}
         storybookHref={storybookHref}
-        controls={diff?.baselineSnapshot ? <ComparisonControls /> : null}
+        controls={baseline ? <ComparisonControls /> : null}
       />
-      <SnapshotComparisonSection snapshot={snapshot} diff={diff} />
+      <SnapshotComparisonSection snapshot={snapshot} diff={diff} baseline={baseline} />
     </SnapshotLayout>
   );
 }
