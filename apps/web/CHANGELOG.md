@@ -1,5 +1,30 @@
 # @ovr/web
 
+## 0.18.0
+
+### Minor Changes
+
+- [#476](https://github.com/open-visual-regression/open-visual-regression/pull/476) [`9caa71f`](https://github.com/open-visual-regression/open-visual-regression/commit/9caa71f69f9f64d008ae71f12ee80650c01cc7ce) Thanks [@tgfischer](https://github.com/tgfischer)! - Stories with a canvas, video, iframe, or shadow DOM are retaken until two screenshots match, so animating charts no longer flake. Set `screenshotStability` in `ovr.config.ts` or `parameters.ovr` to change it.
+
+### Patch Changes
+
+- [#473](https://github.com/open-visual-regression/open-visual-regression/pull/473) [`4e4e7a3`](https://github.com/open-visual-regression/open-visual-regression/commit/4e4e7a3928396d4d56b6e339dcacd1901f673a7b) Thanks [@tgfischer](https://github.com/tgfischer)! - Updates Next.js, Better Auth, and other dependencies to fix security advisories. A migration makes the `account.issuer` column, which Better Auth no longer uses, nullable.
+
+- [#475](https://github.com/open-visual-regression/open-visual-regression/pull/475) [`f297ce1`](https://github.com/open-visual-regression/open-visual-regression/commit/f297ce19aad59bf2b9e90d89bdf844c0bc4be039) Thanks [@tgfischer](https://github.com/tgfischer)! - You can now rebuild a snapshot as soon as it has been captured and compared, even while the rest of its build is still running. Before, the rebuild button stayed hidden until the whole build finished.
+
+- [#472](https://github.com/open-visual-regression/open-visual-regression/pull/472) [`7afb831`](https://github.com/open-visual-regression/open-visual-regression/commit/7afb831f475a3451d9c7744583d5aefc2392068f) Thanks [@tgfischer](https://github.com/tgfischer)! - The snapshot page now shows the baseline for skipped, errored, and canceled snapshots, not only for snapshots that were compared.
+
+- [#469](https://github.com/open-visual-regression/open-visual-regression/pull/469) [`55a74a5`](https://github.com/open-visual-regression/open-visual-regression/commit/55a74a54a9bba9a5d6d8e13303f52f04a73882a4) Thanks [@tgfischer](https://github.com/tgfischer)! - The diff switch in the snapshot zoom modal now sits next to the baseline/new toggle.
+
+- Updated dependencies [[`4e4e7a3`](https://github.com/open-visual-regression/open-visual-regression/commit/4e4e7a3928396d4d56b6e339dcacd1901f673a7b), [`f297ce1`](https://github.com/open-visual-regression/open-visual-regression/commit/f297ce19aad59bf2b9e90d89bdf844c0bc4be039), [`7afb831`](https://github.com/open-visual-regression/open-visual-regression/commit/7afb831f475a3451d9c7744583d5aefc2392068f), [`9caa71f`](https://github.com/open-visual-regression/open-visual-regression/commit/9caa71f69f9f64d008ae71f12ee80650c01cc7ce)]:
+  - @ovr/db@0.4.7
+  - @ovr/builds@0.2.11
+  - @ovr/api@0.5.3
+  - @ovr/queue@0.2.9
+  - @ovr/ui@0.1.4
+  - @ovr/git-status@0.1.19
+  - @ovr/reviews@0.1.26
+
 ## 0.17.0
 
 ### Minor Changes
