@@ -36,7 +36,7 @@ setup("provision the test fixtures", async ({ page, context }) => {
   await loginPage.emailField().fill(TEST_ADMIN.email);
   await loginPage.passwordField().fill(TEST_ADMIN.password);
   await loginPage.signInButton().click();
-  await page.waitForURL("**/projects");
+  await page.waitForURL((url) => url.pathname === "/");
 
   await context.storageState({ path: STORAGE_STATE });
 

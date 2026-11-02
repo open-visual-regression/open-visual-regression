@@ -1,4 +1,4 @@
-const DEFAULT_REDIRECT_PATH = "/projects";
+const DEFAULT_REDIRECT_PATH = "/";
 
 export const CALLBACK_URL_PARAM = "callback_url";
 

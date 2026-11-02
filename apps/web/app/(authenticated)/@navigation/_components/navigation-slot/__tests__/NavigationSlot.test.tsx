@@ -6,7 +6,7 @@ import { auth } from "@/lib/auth/auth";
 import { serverClient } from "@/lib/router";
 import { describe, expect, it, render, screen } from "@/test-utils";
 
-import NavigationSlot from "../page";
+import { NavigationSlot } from "../NavigationSlot";
 
 vi.mock("next/headers");
 vi.mock("next/navigation");
@@ -24,20 +24,15 @@ mockCount.mockResolvedValue([null, { total: 0 }]);
 mockBuildsList.mockResolvedValue([null, { builds: [], total: 0, nextCursor: null }]);
 
 describe("NavigationSlot", () => {
-  it("should render breadcrumbs for the projects root", async () => {
+  it("should render breadcrumbs for the overview page", async () => {
     mockGetSession.mockResolvedValue({
       user: mocks.user.generateAuthUser({ name: "Jane Doe" }),
       session: mocks.session.generateSession(),
     });
 
-    render(
-      await NavigationSlot({
-        params: Promise.resolve({ pathname: undefined }),
-        searchParams: Promise.resolve({}),
-      }),
-    );
+    render(await NavigationSlot({ pathname: [] }));
 
-    expect(screen.getByText("projects")).toBeVisible();
+    expect(screen.getByText("overview")).toBeVisible();
     expect(screen.getByLabelText("User menu for Jane Doe")).toBeVisible();
   });
 
@@ -49,12 +44,7 @@ describe("NavigationSlot", () => {
     });
     mockGetOne.mockResolvedValue([null, { project }]);
 
-    render(
-      await NavigationSlot({
-        params: Promise.resolve({ pathname: ["projects", project.id, "settings"] }),
-        searchParams: Promise.resolve({}),
-      }),
-    );
+    render(await NavigationSlot({ pathname: ["projects", project.id, "settings"] }));
 
     expect(screen.getByText("D's Construction")).toBeVisible();
     expect(screen.getByText("settings")).toBeVisible();

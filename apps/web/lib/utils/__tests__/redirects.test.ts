@@ -26,8 +26,8 @@ describe("redirects", () => {
       "https://example.com",
       "//example.com",
       "/\\example.com",
-    ])("should fall back to the projects page for %j", (next) => {
-      expect(getSafeRedirectPath(next)).toBe("/projects");
+    ])("should fall back to the overview page for %j", (next) => {
+      expect(getSafeRedirectPath(next)).toBe("/");
     });
   });
 });

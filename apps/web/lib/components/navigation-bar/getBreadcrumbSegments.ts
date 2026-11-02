@@ -32,7 +32,7 @@ const humanize = (segment: string) => segment.replace(/-/g, " ");
 
 const getBreadcrumbSegments = async (segments: string[]): Promise<BreadcrumbSegment[]> => {
   if (segments.length === 0) {
-    return [{ label: "projects" }];
+    return [{ label: "overview" }];
   }
 
   const entries = await Promise.all(

@@ -15,6 +15,8 @@ Flaky stories show a badge on their snapshot card on the build page and next to 
 
 To review only flaky snapshots, pick **flaky** in the **flags** filter on the build page. The same filter also offers **warning** for snapshots whose story threw an uncaught error while rendering.
 
+To see every flaky story at once, open **snapshots** from the overview page. It shows the current baseline of every story in every project, and has the same **flags** filter, plus a **project** filter to narrow it to one project.
+
 ## Animations caught mid-frame
 
 OVR waits for a story's network requests, images, fonts, and DOM to go quiet before its screenshot, and stops CSS animations while it takes it. A canvas or video can keep repainting without changing the DOM, though, like a chart that animates in. So for a story with a canvas, video, iframe, SVG animation, or shadow DOM, OVR retakes the screenshot until two in a row match.
