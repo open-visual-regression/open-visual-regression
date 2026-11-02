@@ -69,12 +69,12 @@ checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha25
 {{- end -}}
 {{- end -}}
 
-{{/* KEDA's generated trigger only counts the wait list, which round-robin groups never enter. */}}
+{{/* KEDA's generated trigger only counts the wait list, which deadline and round-robin groups never enter. */}}
 {{- define "ovr.captureQueuePolicy" -}}
 {{- $policy := .Values.worker.captureQueuePolicy -}}
 {{- $generatedTrigger := and .Values.worker.enabled .Values.worker.keda.enabled (not .Values.worker.keda.triggers) -}}
-{{- if and $generatedTrigger (eq $policy "round-robin") -}}
-{{- fail "worker.captureQueuePolicy round-robin keeps queued capture groups out of the list worker.keda's generated trigger watches. Use fifo, or set worker.keda.triggers." -}}
+{{- if and $generatedTrigger (has $policy (list "deadline" "round-robin")) -}}
+{{- fail (printf "worker.captureQueuePolicy %s keeps queued capture groups out of the list worker.keda's generated trigger watches. Use fifo, or set worker.keda.triggers." $policy) -}}
 {{- end -}}
 {{- if and $generatedTrigger (not $policy) -}}
 fifo

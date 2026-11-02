@@ -165,7 +165,7 @@ sum(max by (state) (ovr_queue_jobs{queue="snapshot-capture", state=~"waiting|pri
 
 ## Autoscale workers
 
-With Prometheus and [KEDA](https://keda.sh), you can scale workers on the number of snapshot captures waiting to start. This replaces the chart's [default Redis trigger](/self-hosting/helm#scaling), and works with the default `round-robin` capture queue policy:
+With Prometheus and [KEDA](https://keda.sh), you can scale workers on the number of snapshot captures waiting to start. This replaces the chart's [default Redis trigger](/self-hosting/helm#scaling), and works with the default `deadline` capture queue policy:
 
 ```yaml
 worker:

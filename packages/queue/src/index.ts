@@ -156,6 +156,8 @@ export type CaptureGroupJobPayload = {
   /** Absent on jobs queued before external requests could be blocked. */
   externalRequestAllowlist?: string[] | null;
   snapshotIds: string[];
+  /** Unix seconds the build's groups are due under the deadline policy; absent under the others. */
+  deadline?: number;
 };
 
 export type DiffJobPayload = {
@@ -279,18 +281,61 @@ export const enqueueCaptureGroup = (
   connection: RedisConnection,
 ): Promise<Job<CaptureGroupJobPayload>> => enqueue(QueueName.SNAPSHOT_CAPTURE, payload, connection);
 
+// deadline gives every group of a build one deadline, the time it was queued plus
+// DEADLINE_SECONDS_PER_SNAPSHOT for each of its snapshots, and workers take the earliest. A small
+// build is due soon, so it runs ahead of a large build queued before it, but only until the large
+// build's deadline: a build queued after that is due later, so it can't pass. The longer a build
+// waits, the fewer new builds can go ahead of it, and a large build never waits past its deadline
+// for builds queued after it.
 // round-robin gives a build's nth group of each browser priority n, counted from the round workers
 // are on, so a new build joins that round instead of jumping ahead of every queued build.
-export const captureQueuePolicySchema = z.enum(["round-robin", "fifo"]).catch("round-robin");
+export const captureQueuePolicySchema = z
+  .enum(["deadline", "round-robin", "fifo"])
+  .catch("deadline");
 
 export type CaptureQueuePolicy = z.infer<typeof captureQueuePolicySchema>;
 
 const LOWEST_PRIORITY = 2_097_151;
 
-// The next prioritized group's priority, or 1 once the queue drains.
-const currentRound = async (queue: Queue<CaptureGroupJobPayload>): Promise<number> => {
+// Below a few seconds per snapshot, deadlines pass faster than builds run and small builds queue
+// behind large ones as under fifo.
+const DEADLINE_SECONDS_PER_SNAPSHOT = 5;
+
+const nextPrioritized = async (
+  queue: Queue<CaptureGroupJobPayload>,
+): Promise<Job<CaptureGroupJobPayload> | undefined> => {
   const [next] = await queue.getJobs(["prioritized"], 0, 0, true);
-  return Math.max(next?.opts.priority ?? 1, 1);
+  return next;
+};
+
+// The next prioritized group's priority, or 1 once the queue drains.
+const currentRound = async (queue: Queue<CaptureGroupJobPayload>): Promise<number> =>
+  Math.max((await nextPrioritized(queue))?.opts.priority ?? 1, 1);
+
+// Deadline priorities count seconds from an epoch the earliest queued group carries, so they stay
+// small while the queue is busy and start over once it drains.
+const deadlineEpoch = async (
+  queue: Queue<CaptureGroupJobPayload>,
+  now: number,
+): Promise<number> => {
+  const next = await nextPrioritized(queue);
+  if (next?.data.deadline === undefined || !next.opts.priority) {
+    return now - 1;
+  }
+  return Math.min(next.data.deadline - next.opts.priority, now - 1);
+};
+
+// Alternates browsers so a build's groups of each browser share its deadline's turn.
+const interleaveBrowsers = <T extends { browser: string }>(groups: T[]): T[] => {
+  const indexes = new Map<string, number>();
+  return groups
+    .map((group) => {
+      const index = indexes.get(group.browser) ?? 0;
+      indexes.set(group.browser, index + 1);
+      return { group, index };
+    })
+    .sort((a, b) => a.index - b.index)
+    .map(({ group }) => group);
 };
 
 export const enqueueCaptureGroups = async (
@@ -313,6 +358,24 @@ export const enqueueCaptureGroups = async (
   >(QueueName.SNAPSHOT_CAPTURE, queueOptions(connection));
 
   try {
+    if (policy === "deadline") {
+      const now = Math.floor(Date.now() / 1000);
+      const snapshots = groups.reduce((count, group) => count + group.snapshotIds.length, 0);
+      const deadline = now + DEADLINE_SECONDS_PER_SNAPSHOT * snapshots;
+      const priority = Math.min(
+        Math.max(deadline - (await deadlineEpoch(queue, now)), 1),
+        LOWEST_PRIORITY,
+      );
+
+      return await queue.addBulk(
+        interleaveBrowsers(groups).map((group) => ({
+          name: QueueName.SNAPSHOT_CAPTURE,
+          data: { buildId, ...group, deadline },
+          opts: { ...JOB_OPTIONS[QueueName.SNAPSHOT_CAPTURE], priority },
+        })),
+      );
+    }
+
     const rounds = new Map<string, number>();
     const firstRound = policy === "round-robin" ? await currentRound(queue) : 0;
     const nextRound = (browser: string): number => {
