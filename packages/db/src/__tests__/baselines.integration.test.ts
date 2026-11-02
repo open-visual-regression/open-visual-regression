@@ -3,6 +3,7 @@ import { v7 as uuidv7 } from "uuid";
 import { dbClient } from "../client";
 import { db } from "../db";
 import type { BaselinesCursor } from "../repository/baselines";
+import type { SnapshotFlag } from "../repository/snapshots";
 import { flakySnapshots, organization as organizationTable, projects } from "../schema";
 import { describe, expect, test, type Viewport } from "./fixtures";
 
@@ -345,6 +346,93 @@ describe("baselines", () => {
       } while (cursor);
 
       expect(seen).toEqual([...titles].sort());
+    });
+
+    const seedFlaggedStories = async ({
+      project,
+      build,
+      user,
+      captureConfiguration,
+    }: {
+      project: { id: string };
+      build: { id: string };
+      user: { id: string };
+      captureConfiguration: Viewport;
+    }) => {
+      await promoteStories(
+        { projectId: project.id, buildId: build.id, userId: user.id },
+        captureConfiguration,
+        [
+          { targetId: "plain--default", targetTitle: "Plain" },
+          { targetId: "flaky--default", targetTitle: "Flaky" },
+          { targetId: "warned--default", targetTitle: "Warned", hasUncaughtPageError: true },
+        ],
+      );
+      await db.insert(flakySnapshots).values({
+        projectId: project.id,
+        browser: captureConfiguration.browser,
+        viewportWidth: captureConfiguration.viewportWidth,
+        viewportHeight: captureConfiguration.viewportHeight,
+        targetId: "flaky--default",
+        sampleCount: 10,
+        changeCount: 9,
+        revertCount: 4,
+        sameCommitMismatchCount: 0,
+      });
+    };
+
+    test("should only list baselines with any of the given flags", async ({
+      organization,
+      project,
+      captureConfiguration,
+      build,
+      user,
+    }) => {
+      await seedFlaggedStories({ project, build, user, captureConfiguration });
+
+      const list = async (flags: SnapshotFlag[]) =>
+        (
+          await dbClient.baselines.listForOrganization(organization.id, { flags, limit: 10 })
+        ).baselines.map(({ targetTitle }) => targetTitle);
+
+      expect(await list(["flaky"])).toEqual(["Flaky"]);
+      expect(await list(["warning"])).toEqual(["Warned"]);
+      expect(await list(["flaky", "warning"])).toEqual(["Flaky", "Warned"]);
+      expect(
+        await dbClient.baselines.countForOrganization(organization.id, { flags: ["flaky"] }),
+      ).toBe(1);
+    });
+  });
+
+  describe("findFlagsForOrganization", () => {
+    test("should list only the flags some baseline has", async ({
+      organization,
+      project,
+      captureConfiguration,
+      build,
+      user,
+    }) => {
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            targetId: "warned--default",
+            hasUncaughtPageError: true,
+          },
+        ],
+      });
+      await dbClient.baselines.upsert({
+        projectId: project.id,
+        ...captureConfiguration,
+        targetId: "warned--default",
+        snapshotId: snapshot!.id,
+        approvedBy: user.id,
+      });
+
+      expect(await dbClient.baselines.findFlagsForOrganization(organization.id)).toEqual([
+        "warning",
+      ]);
     });
   });
 });

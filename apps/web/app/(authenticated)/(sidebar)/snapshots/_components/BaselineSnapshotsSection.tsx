@@ -2,15 +2,21 @@
 
 import { useInfiniteQuery } from "@tanstack/react-query";
 
+import { type SnapshotFlag } from "@ovr/api/contracts/snapshots";
+
 import { SnapshotGrid, SnapshotGridSkeleton } from "@/lib/components/snapshot-grid/SnapshotGrid";
 import { orpc } from "@/lib/orpc/client";
 import { baselineSnapshotsListInfiniteOptions } from "@/lib/orpc/snapshots-query";
 
 import { BaselineSnapshotCard } from "./BaselineSnapshotCard";
 
-export const BaselineSnapshotsSection = () => {
+type BaselineSnapshotsSectionProps = {
+  flags?: SnapshotFlag[];
+};
+
+export const BaselineSnapshotsSection = ({ flags }: BaselineSnapshotsSectionProps) => {
   const { data, isPending, hasNextPage, isFetchingNextPage, fetchNextPage } = useInfiniteQuery(
-    orpc.snapshots.listBaselines.infiniteOptions(baselineSnapshotsListInfiniteOptions()),
+    orpc.snapshots.listBaselines.infiniteOptions(baselineSnapshotsListInfiniteOptions({ flags })),
   );
 
   if (isPending) {

@@ -8,28 +8,38 @@ import { describe, expect, it, render, screen } from "@/test-utils";
 
 vi.mock("next/navigation");
 
-const { listBaselines } = vi.hoisted(() => ({ listBaselines: vi.fn() }));
+const { listBaselines, listBaselineFlags } = vi.hoisted(() => ({
+  listBaselines: vi.fn(),
+  listBaselineFlags: vi.fn(),
+}));
 
 vi.mock("@/lib/orpc/server", async () => {
   const { createTanstackQueryUtils } = await import("@orpc/tanstack-query");
   return {
-    orpcServer: createTanstackQueryUtils({ snapshots: { listBaselines } }),
+    orpcServer: createTanstackQueryUtils({ snapshots: { listBaselines, listBaselineFlags } }),
   };
 });
 
 const { default: SnapshotsPage } = await import("../page");
 
-const renderPage = async () =>
-  render(await SnapshotsPage(), {
-    wrapper: ({ children }) => (
-      <QueryClientProvider client={new QueryClient()}>{children}</QueryClientProvider>
-    ),
-  });
+const renderPage = async (searchParams: Record<string, string | string[]> = {}) =>
+  render(
+    await SnapshotsPage({
+      params: Promise.resolve({}),
+      searchParams: Promise.resolve(searchParams),
+    }),
+    {
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={new QueryClient()}>{children}</QueryClientProvider>
+      ),
+    },
+  );
 
 describe("SnapshotsPage", () => {
   // Each server request gets its own query client; under jsdom the page shares one.
   beforeEach(() => {
     getQueryClient().clear();
+    listBaselineFlags.mockResolvedValue({ flags: ["flaky", "warning"] });
   });
 
   it("should list every project's baseline snapshots, each linking to its snapshot page", async () => {
@@ -99,5 +109,34 @@ describe("SnapshotsPage", () => {
     await renderPage();
 
     expect(screen.getByText("no snapshots found")).toBeVisible();
+  });
+
+  it("should offer a flags facet with the flags the baselines have", async () => {
+    listBaselines.mockResolvedValue({ snapshots: [], total: 0, nextCursor: null });
+
+    await renderPage();
+
+    expect(screen.getByRole("button", { name: /^flags\s+any$/i })).toBeVisible();
+  });
+
+  it("should hide the flags facet when no baseline has a flag", async () => {
+    listBaselineFlags.mockResolvedValue({ flags: [] });
+    listBaselines.mockResolvedValue({ snapshots: [], total: 0, nextCursor: null });
+
+    await renderPage();
+
+    expect(screen.queryByRole("button", { name: /^flags/i })).not.toBeInTheDocument();
+  });
+
+  it("should apply the flags from the url to the snapshots query and the facet trigger", async () => {
+    listBaselines.mockResolvedValue({ snapshots: [], total: 0, nextCursor: null });
+
+    await renderPage({ flag: "flaky" });
+
+    expect(screen.getByRole("button", { name: /^flags\s+flaky$/i })).toBeVisible();
+    expect(listBaselines).toHaveBeenCalledWith(
+      expect.objectContaining({ flags: ["flaky"] }),
+      expect.anything(),
+    );
   });
 });
