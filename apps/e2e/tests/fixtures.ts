@@ -10,9 +10,11 @@ import { ForbiddenPage } from "./pages/ForbiddenPage";
 import { IdentityProviderLoginPage } from "./pages/IdentityProviderLoginPage";
 import { JobsSettingsPage } from "./pages/JobsSettingsPage";
 import { OrganizationSettingsPage } from "./pages/OrganizationSettingsPage";
+import { OverviewPage } from "./pages/OverviewPage";
 import { ProjectBuildsPage } from "./pages/ProjectBuildsPage";
 import { Sidebar } from "./pages/Sidebar";
 import { SnapshotReviewPage } from "./pages/SnapshotReviewPage";
+import { SnapshotsPage } from "./pages/SnapshotsPage";
 import { UsersSettingsPage } from "./pages/UsersSettingsPage";
 import { seedClientForContext, type SeedClient } from "./seed/client";
 import { spawnIngest, type IngestOptions } from "./support/ingest";
@@ -25,6 +27,8 @@ type TestFixtures = {
   buildPage: BuildPage;
   jobsSettingsPage: JobsSettingsPage;
   organizationSettingsPage: OrganizationSettingsPage;
+  overviewPage: OverviewPage;
+  snapshotsPage: SnapshotsPage;
   sidebar: Sidebar;
   identityProviderLoginPage: IdentityProviderLoginPage;
   forbiddenPage: ForbiddenPage;
@@ -55,6 +59,12 @@ export const test = base.extend<TestFixtures>({
   },
   organizationSettingsPage: async ({ page }, use) => {
     await use(new OrganizationSettingsPage(page));
+  },
+  overviewPage: async ({ page }, use) => {
+    await use(new OverviewPage(page));
+  },
+  snapshotsPage: async ({ page }, use) => {
+    await use(new SnapshotsPage(page));
   },
   sidebar: async ({ page }, use) => {
     await use(new Sidebar(page));

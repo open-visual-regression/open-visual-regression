@@ -29,7 +29,7 @@ const BUILDS: NavigationBarMobileMenuProps["builds"] = [
 
 describe("NavigationBarMobileMenu", () => {
   it("should not render a mobile menu trigger outside settings and projects routes", () => {
-    vi.mocked(usePathname).mockReturnValue("/");
+    vi.mocked(usePathname).mockReturnValue("/forbidden");
 
     render(
       <NavigationBarMobileMenu role="reviewer" projects={PROJECTS} projectsTotal={2} builds={[]} />,
@@ -65,17 +65,25 @@ describe("NavigationBarMobileMenu", () => {
     expect(screen.getByRole("link", { name: "Beta" })).toBeVisible();
   });
 
-  it("should open the projects nav links from the all-builds page", async ({ user }) => {
-    vi.mocked(usePathname).mockReturnValue("/builds");
+  it.for(["/", "/builds", "/snapshots"])(
+    "should open the projects nav links from %s",
+    async (pathname, { user }) => {
+      vi.mocked(usePathname).mockReturnValue(pathname);
 
-    render(
-      <NavigationBarMobileMenu role="reviewer" projects={PROJECTS} projectsTotal={2} builds={[]} />,
-    );
+      render(
+        <NavigationBarMobileMenu
+          role="reviewer"
+          projects={PROJECTS}
+          projectsTotal={2}
+          builds={[]}
+        />,
+      );
 
-    await user.click(screen.getByRole("button", { name: /open projects navigation/i }));
+      await user.click(screen.getByRole("button", { name: /open projects navigation/i }));
 
-    expect(screen.getByRole("link", { name: "Alpha" })).toBeVisible();
-  });
+      expect(screen.getByRole("link", { name: "Alpha" })).toBeVisible();
+    },
+  );
 
   it("should show recent builds in the projects nav links from the mobile menu", async ({
     user,
