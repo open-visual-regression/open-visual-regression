@@ -21,8 +21,10 @@ const splitDescriptor = (descriptor: string): [name: string, range: string] => {
   return [descriptor.slice(0, at), descriptor.slice(at + 1)];
 };
 
-const checkVersion = (version: unknown, supported: number[]): void => {
-  if (!supported.includes(Number.parseInt(String(version), 10))) {
+// `supported` lists the known versions; `from` accepts that version and any later one.
+const checkVersion = (version: unknown, supported: number[] | { from: number }): void => {
+  const major = Number.parseInt(String(version), 10);
+  if (Array.isArray(supported) ? !supported.includes(major) : !(major >= supported.from)) {
     throw new Error(`lockfile version ${String(version)} is not supported`);
   }
 };
@@ -57,7 +59,10 @@ const parseYarnLock = (text: string): LockedPackages => {
   }
 
   const { __metadata, ...lock } = parseYaml(text) as YarnBerryLock;
-  checkVersion(__metadata?.version, [4, 5, 6, 7, 8]);
+  // Yarn bumps this number without changing the fields read here (Yarn 4.14 wrote 9, 4.15
+  // wrote 10), so later versions are accepted. If a future one moves `resolution`, reading
+  // the empty descriptor throws and the caller still captures every story.
+  checkVersion(__metadata?.version, { from: 4 });
 
   return lockedPackages(
     Object.values(lock).flatMap(({ version, resolution = "", checksum }) => {
