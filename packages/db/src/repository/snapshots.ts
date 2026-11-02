@@ -8,6 +8,7 @@ import {
   ilike,
   inArray,
   ne,
+  notExists,
   notInArray,
   or,
   type SQL,
@@ -15,7 +16,14 @@ import {
 } from "drizzle-orm";
 
 import { db, type DbClient } from "../db";
-import { builds, diffs, flakySnapshots, snapshots, type SnapshotStatus } from "../schema";
+import {
+  baselines,
+  builds,
+  diffs,
+  flakySnapshots,
+  snapshots,
+  type SnapshotStatus,
+} from "../schema";
 
 export type SnapshotDisplayStatusCounts = {
   unchanged: number;
@@ -659,3 +667,33 @@ export const findHistoryAround = async ({
 };
 
 export type SnapshotDbSchema = Awaited<ReturnType<typeof findByBuild>>[number];
+
+// Deletes a build's snapshots that are not a current baseline. A baseline set on one of them
+// meanwhile fails the baselines foreign key and rolls the caller's transaction back.
+export const removeNonBaselineByBuild = async (tx: DbClient, buildId: string): Promise<number> => {
+  const removed = await tx
+    .delete(snapshots)
+    .where(
+      and(
+        eq(snapshots.buildId, buildId),
+        notExists(
+          tx
+            .select({ one: sql`1` })
+            .from(baselines)
+            .where(eq(baselines.snapshotId, snapshots.id)),
+        ),
+      ),
+    )
+    .returning({ id: snapshots.id });
+
+  return removed.length;
+};
+
+export const findImagePathsByBuild = async (buildId: string): Promise<string[]> => {
+  const rows = await db
+    .select({ imagePath: snapshots.imagePath })
+    .from(snapshots)
+    .where(eq(snapshots.buildId, buildId));
+
+  return rows.flatMap((row) => (row.imagePath ? [row.imagePath] : []));
+};

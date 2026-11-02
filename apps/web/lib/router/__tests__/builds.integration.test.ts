@@ -1572,6 +1572,34 @@ describe("builds", () => {
       expect(result?.build).toMatchObject({ isRebuildable: true });
     });
 
+    test("reports a build retention stripped as archived and not rebuildable", async ({
+      admin,
+    }) => {
+      const [, project] = await serverClient.projects.add(TEST_PROJECT);
+      const build = await dbClient.builds.create({
+        projectId: project!.projectId,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: admin.id,
+        processingStatus: "success",
+      });
+      await dbClient.buildExtractDefaults.create({
+        buildId: build!.id,
+        targets: [{ id: "story-a", title: "Story", name: "A" }],
+        viewports: VIEWPORTS,
+        diffThreshold: 0.05,
+      });
+      await dbClient.builds.markStripped(build!.id);
+
+      const [, result] = await serverClient.builds.getOne({ buildId: build!.id });
+
+      expect(result?.build).toMatchObject({
+        strippedAt: expect.any(String),
+        isRebuildable: false,
+      });
+    });
+
     test("reports a settled build as reviewable until a newer build lands on its branch", async ({
       admin,
     }) => {

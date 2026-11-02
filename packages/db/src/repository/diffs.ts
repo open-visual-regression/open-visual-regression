@@ -171,3 +171,15 @@ export const hasPendingForBuild = async (buildId: string): Promise<boolean> => {
 };
 
 export type DiffDbSchema = Awaited<ReturnType<typeof findById>>;
+
+export const clearImagesByBuild = async (tx: DbClient, buildId: string): Promise<void> => {
+  await tx
+    .update(diffs)
+    .set({ diffImagePath: null })
+    .where(
+      inArray(
+        diffs.snapshotId,
+        tx.select({ id: snapshots.id }).from(snapshots).where(eq(snapshots.buildId, buildId)),
+      ),
+    );
+};

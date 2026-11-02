@@ -59,6 +59,7 @@ export const generateBuild = (overrides?: Partial<BuildDetailSchema>): BuildDeta
   errorMessage: null,
   status: "unchanged",
   canceledBy: null,
+  strippedAt: null,
   isRebuildable: false,
   isReviewable: true,
   latestBuildId: null,

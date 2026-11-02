@@ -1,3 +1,4 @@
+import { Pool } from "pg";
 import { v7 as uuidv7 } from "uuid";
 import { test as vitest, vi } from "vitest";
 
@@ -121,3 +122,16 @@ export const enableFlakyDetection = (userId: string, settings: Record<string, un
     settings: { enabled: true, ...settings },
     updatedBy: userId,
   });
+
+// Backdates when a main-branch build last had a baseline's story.
+export const setBaselineLastSeenAt = async (baselineId: string, lastSeenAt: string) => {
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  try {
+    await pool.query("update baselines set last_seen_at = $1 where id = $2", [
+      lastSeenAt,
+      baselineId,
+    ]);
+  } finally {
+    await pool.end();
+  }
+};

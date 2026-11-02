@@ -28,5 +28,15 @@ describe("storage", () => {
         expect(hasHostedStorybook({ buildType: "storybook", status })).toBe(false);
       },
     );
+
+    it("should be false once retention has stripped the build", () => {
+      expect(
+        hasHostedStorybook({
+          buildType: "storybook",
+          status: "unchanged",
+          strippedAt: "2026-01-01T00:00:00.000Z",
+        }),
+      ).toBe(false);
+    });
   });
 });

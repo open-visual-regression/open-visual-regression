@@ -132,6 +132,15 @@ export const BuildHeader = ({
           </div>
         ) : null}
       </div>
+      {build.strippedAt ? (
+        <Alert color="blue">
+          <AlertTitle>Archived</AlertTitle>
+          <AlertDescription>
+            This build is older than the project&apos;s retention period. Only the snapshots that
+            are still baselines were kept, so its Storybook, diffs, and other snapshots are gone.
+          </AlertDescription>
+        </Alert>
+      ) : null}
       {build.errorMessage ? (
         <Alert color="red">
           <AlertTitle>Error</AlertTitle>

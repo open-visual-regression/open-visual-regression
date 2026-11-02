@@ -7,8 +7,13 @@ export const getStorybookPath = (buildId: string) => `/api/storybook/${buildId}/
 export const getStorybookStoryPath = (buildId: string, storyId: string) =>
   `${getStorybookPath(buildId)}?path=/story/${encodeURIComponent(storyId)}`;
 
-export const hasHostedStorybook = (build: { buildType: BuildType; status: BuildStatus }) =>
+export const hasHostedStorybook = (build: {
+  buildType: BuildType;
+  status: BuildStatus;
+  strippedAt?: string | null;
+}) =>
   build.buildType === "storybook" &&
+  !build.strippedAt &&
   build.status !== "queued" &&
   build.status !== "processing" &&
   build.status !== "error";

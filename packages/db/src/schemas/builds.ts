@@ -119,6 +119,9 @@ export const builds = pgTable(
       .references(() => user.id, { onDelete: "cascade" })
       .notNull(),
     canceledBy: text("canceled_by").references(() => user.id, { onDelete: "set null" }),
+    // Set when retention removed everything but the build's baseline snapshots (and their
+    // images), because the build expired while still holding a current baseline.
+    strippedAt: utcTimestamp("stripped_at"),
   },
   (table) => [
     index("builds_projectId_createdAt_id_idx").on(table.projectId, table.createdAt, table.id),
@@ -391,6 +394,11 @@ export const baselines = pgTable(
     approvedBy: text("approved_by")
       .references(() => user.id, { onDelete: "cascade" })
       .notNull(),
+    // Last time a main-branch build had a snapshot for this key. Retention drops a baseline
+    // that goes unseen for a full retention window, e.g. after its story is deleted.
+    lastSeenAt: utcTimestamp("last_seen_at")
+      .default(sql`now()`)
+      .notNull(),
   },
   (table) => [
     uniqueIndex("baselines_project_browser_viewport_target_uidx").on(
@@ -402,5 +410,8 @@ export const baselines = pgTable(
     ),
     index("baselines_snapshotId_idx").on(table.snapshotId),
     index("baselines_approvedBy_idx").on(table.approvedBy).concurrently(),
+    index("baselines_projectId_lastSeenAt_idx")
+      .on(table.projectId, table.lastSeenAt)
+      .concurrently(),
   ],
 );

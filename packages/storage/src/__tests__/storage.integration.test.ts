@@ -42,6 +42,16 @@ describe("storage", () => {
     });
   });
 
+  test("deletePrefix leaves the keys it is told to keep", async ({ prefix }) => {
+    await storage.uploadFile(`${prefix}a.png`, Buffer.from("a"), "image/png");
+    await storage.uploadFile(`${prefix}b.png`, Buffer.from("b"), "image/png");
+
+    await storage.deletePrefix(prefix, new Set([`${prefix}a.png`]));
+
+    expect(await storage.objectExists(`${prefix}a.png`)).toBe(true);
+    expect(await storage.objectExists(`${prefix}b.png`)).toBe(false);
+  });
+
   test("copyObject copies an object to a new key, leaving the source intact", async ({
     prefix,
   }) => {

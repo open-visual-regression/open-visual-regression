@@ -371,7 +371,9 @@ export const getOne = os.builds.getOne
         author: build.author,
         status: getBuildDisplayStatus(build),
         canceledBy: canceler?.name ?? null,
-        isRebuildable: rebuildable.status === "ok",
+        strippedAt: build.strippedAt,
+        // A stripped build's Storybook artifact is gone.
+        isRebuildable: rebuildable.status === "ok" && build.strippedAt === null,
         isReviewable: reviewable.status === "ok",
         latestBuildId,
         buildType: build.buildType,

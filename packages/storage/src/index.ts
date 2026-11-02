@@ -89,7 +89,7 @@ export const storage = {
     );
   },
 
-  deletePrefix: async (prefix: string): Promise<void> => {
+  deletePrefix: async (prefix: string, keep: ReadonlySet<string> = new Set()): Promise<void> => {
     let continuationToken: string | undefined;
 
     do {
@@ -103,6 +103,7 @@ export const storage = {
 
       const objects = (Contents ?? [])
         .filter((object): object is { Key: string } => object.Key !== undefined)
+        .filter(({ Key }) => !keep.has(Key))
         .map(({ Key }) => ({ Key }));
 
       if (objects.length > 0) {

@@ -38,7 +38,7 @@ import {
   rebuildSnapshots,
   updateBuildReviewStatus,
 } from "../builds";
-import { describe, expect, test } from "./fixtures";
+import { describe, expect, setBaselineLastSeenAt, test } from "./fixtures";
 
 vi.mock("@ovr/queue/producer", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@ovr/queue/producer")>();
@@ -1753,6 +1753,34 @@ describe("builds", () => {
       expect(await dbClient.builds.findById(featureBuild.id)).toMatchObject({
         processingStatus: "canceled",
       });
+    });
+
+    test("marks the baselines of a main-branch build's stories as seen", async ({
+      project,
+      mainBuild,
+      captureConfiguration,
+      user,
+    }) => {
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" }],
+      });
+      const baseline = await dbClient.baselines.upsert({
+        projectId: project.id,
+        ...captureConfiguration,
+        targetId: "story-a",
+        snapshotId: snapshot!.id,
+        approvedBy: user.id,
+      });
+      await setBaselineLastSeenAt(baseline!.id, "2020-01-01T00:00:00.000Z");
+
+      await finalizeBuild(mainBuild.id);
+
+      const seen = await dbClient.baselines.find({
+        projectId: project.id,
+        ...captureConfiguration,
+        targetId: "story-a",
+      });
+      expect(Date.parse(seen!.lastSeenAt)).toBeGreaterThan(Date.parse("2020-01-02T00:00:00.000Z"));
     });
 
     test("marks the build as error when any diff errored", async ({

@@ -11,9 +11,9 @@ Open it from a project's page with **view baseline**.
 
 These links always point at the current baseline, so you can put them in docs, READMEs, or a design system site. Replace `https://ovr.example.com` with your OVR URL and `<project-id>` with the ID from the project's URL.
 
-| Link | Opens |
-|------|-------|
-| `https://ovr.example.com/api/baseline/<project-id>` | The baseline build |
+| Link                                                          | Opens                          |
+| ------------------------------------------------------------- | ------------------------------ |
+| `https://ovr.example.com/api/baseline/<project-id>`           | The baseline build             |
 | `https://ovr.example.com/api/baseline/<project-id>/storybook` | The baseline build's Storybook |
 
 To link to a single story, add Storybook's `path` parameter:
@@ -23,3 +23,12 @@ https://ovr.example.com/api/baseline/<project-id>/storybook?path=/story/ui-butto
 ```
 
 Opening a link requires signing in to OVR. After signing in, you're taken to the link you opened. A project with no baseline build yet returns a 404.
+
+## Retention
+
+Each project deletes builds older than its **retention days** setting (90 by default) once a day. Two kinds of baseline are handled differently:
+
+- **Baselines still in use.** A build that holds a story's current baseline is never deleted. Once it is older than the retention period, it's archived: everything except its baseline snapshots is deleted, including its Storybook, its diffs and its other snapshots. The build page shows it as archived. The project's baseline build is never archived, so the stable links above keep working.
+- **Baselines nothing uses.** A baseline is deleted once no main-branch build has included its story, viewport and browser for a full retention period. This happens when you delete a story or drop a viewport or browser from your config. A story that is skipped with `--only-affected`, or that fails to load, still counts as included. If your main branch stops building, its baselines are kept: the retention period is counted back from the project's most recent main-branch build, not from today.
+
+If a story whose baseline was deleted comes back, its first build treats it as new.

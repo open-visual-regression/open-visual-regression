@@ -19,6 +19,7 @@ const BUILD: BuildDetailSchema = {
   processingMs: 122_000,
   durationMs: 134_000,
   canceledBy: null,
+  strippedAt: null,
   isRebuildable: false,
   isReviewable: true,
   latestBuildId: null,

@@ -154,6 +154,18 @@ export const Canceled: Story = {
   },
 };
 
+export const Archived: Story = {
+  args: {
+    build: mocks.build.generateBuild({
+      ...buildOverrides,
+      status: "auto_approved",
+      strippedAt: "2026-01-01T00:00:00.000Z",
+    }),
+    snapshotCounts: mocks.build.generateSnapshotCounts({ auto_approved: 3 }),
+    storybookHref: null,
+  },
+};
+
 export const Processing: Story = {
   args: {
     build: mocks.build.generateBuild({

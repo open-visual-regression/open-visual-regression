@@ -8,6 +8,7 @@ import {
   ilike,
   inArray,
   isNotNull,
+  isNull,
   lt,
   max,
   min,
@@ -415,6 +416,38 @@ export const findExpiredPage = async (
     .limit(limit);
 
   return rows.map((row) => row.id);
+};
+
+// Expired builds retention has not stripped yet. Run after the expired, unpinned builds are
+// deleted, these are the ones a current baseline still holds onto.
+export const findUnstrippedExpiredPage = async (
+  projectId: string,
+  cutoff: string,
+  limit: number,
+  excludeId: string | null,
+): Promise<string[]> => {
+  const rows = await db
+    .select({ id: builds.id })
+    .from(builds)
+    .where(
+      and(
+        eq(builds.projectId, projectId),
+        lt(builds.createdAt, cutoff),
+        isNull(builds.strippedAt),
+        excludeId ? ne(builds.id, excludeId) : undefined,
+      ),
+    )
+    .orderBy(asc(builds.createdAt), asc(builds.id))
+    .limit(limit);
+
+  return rows.map((row) => row.id);
+};
+
+export const markStripped = async (id: string): Promise<void> => {
+  await db
+    .update(builds)
+    .set({ strippedAt: sql`now()` })
+    .where(eq(builds.id, id));
 };
 
 export const removeMany = async (tx: DbClient, ids: string[]): Promise<void> => {

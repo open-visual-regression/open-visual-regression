@@ -393,6 +393,21 @@ describe("BuildHeader", () => {
     expect(screen.getByText(/canceled by Jordan Lee/i)).toBeVisible();
   });
 
+  it("should explain that retention archived the build", () => {
+    renderComponent({
+      build: mocks.build.generateBuild({ strippedAt: "2026-01-01T00:00:00.000Z" }),
+    });
+
+    expect(screen.getByText(/archived/i)).toBeVisible();
+    expect(screen.getByText(/older than the project's retention period/i)).toBeVisible();
+  });
+
+  it("should not show the archived notice for a build retention has not stripped", () => {
+    renderComponent({ build: mocks.build.generateBuild() });
+
+    expect(screen.queryByText(/archived/i)).not.toBeInTheDocument();
+  });
+
   it("should attribute the cancellation to the system when no user canceled it", () => {
     renderComponent({
       build: mocks.build.generateBuild({ status: "canceled", canceledBy: null }),

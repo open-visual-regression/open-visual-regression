@@ -167,6 +167,8 @@ export type BuildSchema = z.infer<typeof buildSchema>;
 
 export const buildDetailSchema = buildSchema.extend({
   canceledBy: z.string().min(1).nullable(),
+  // Set once retention has removed everything but the build's baseline snapshots.
+  strippedAt: z.string().nonempty().nullable(),
   isRebuildable: z.boolean(),
   isReviewable: z.boolean(),
   latestBuildId: z.uuidv7().nullable(),

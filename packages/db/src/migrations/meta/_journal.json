@@ -435,6 +435,13 @@
       "when": 1793474195832,
       "tag": "0061_add_screenshot_stability",
       "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1793644715376,
+      "tag": "0062_add_baseline_last_seen_and_build_stripped",
+      "breakpoints": true
     }
   ]
 }

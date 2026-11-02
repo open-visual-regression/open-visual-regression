@@ -685,6 +685,9 @@ export const finalizeBuild = async (buildId: string): Promise<void> => {
     errorMessage: hasProcessingError ? SNAPSHOT_ERROR_MESSAGE : null,
   });
 
+  // No-op off the main branch. Keeps the baselines of the stories this build still has.
+  await dbClient.baselines.markSeenInMainBuild(buildId);
+
   // Skip retried finalize jobs.
   if (build?.processingStatus === "queued" || build?.processingStatus === "processing") {
     buildsFinished.add(1, { processing_status: processingStatus, reason: "finalized" });
