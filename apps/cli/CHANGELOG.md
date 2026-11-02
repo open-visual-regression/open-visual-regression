@@ -1,5 +1,11 @@
 # @open-visual-regression/cli
 
+## 0.11.1
+
+### Patch Changes
+
+- [#482](https://github.com/open-visual-regression/open-visual-regression/pull/482) [`e9fd02b`](https://github.com/open-visual-regression/open-visual-regression/commit/e9fd02becdd0be9352c2f69ec6a64fb75cec9c76) Thanks [@tgfischer](https://github.com/tgfischer)! - `--only-affected` now reads `yarn.lock` files written by Yarn 4.14 and later, instead of capturing every story when they change.
+
 ## 0.11.0
 
 ### Minor Changes
