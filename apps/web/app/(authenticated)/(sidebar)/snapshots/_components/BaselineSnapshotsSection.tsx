@@ -11,12 +11,15 @@ import { baselineSnapshotsListInfiniteOptions } from "@/lib/orpc/snapshots-query
 import { BaselineSnapshotCard } from "./BaselineSnapshotCard";
 
 type BaselineSnapshotsSectionProps = {
+  projectIds?: string[];
   flags?: SnapshotFlag[];
 };
 
-export const BaselineSnapshotsSection = ({ flags }: BaselineSnapshotsSectionProps) => {
+export const BaselineSnapshotsSection = ({ projectIds, flags }: BaselineSnapshotsSectionProps) => {
   const { data, isPending, hasNextPage, isFetchingNextPage, fetchNextPage } = useInfiniteQuery(
-    orpc.snapshots.listBaselines.infiniteOptions(baselineSnapshotsListInfiniteOptions({ flags })),
+    orpc.snapshots.listBaselines.infiniteOptions(
+      baselineSnapshotsListInfiniteOptions({ projectIds, flags }),
+    ),
   );
 
   if (isPending) {

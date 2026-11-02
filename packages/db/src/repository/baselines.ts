@@ -1,4 +1,16 @@
-import { type AnyColumn, and, asc, count, eq, exists, gte, or, type SQL, sql } from "drizzle-orm";
+import {
+  type AnyColumn,
+  and,
+  asc,
+  count,
+  eq,
+  exists,
+  gte,
+  inArray,
+  or,
+  type SQL,
+  sql,
+} from "drizzle-orm";
 
 import { db } from "../db";
 import { baselines, builds, flakySnapshots, projects, snapshots } from "../schema";
@@ -95,15 +107,17 @@ const flagConditions: Record<SnapshotFlag, SQL> = {
 const flagDisplayOrder: SnapshotFlag[] = ["flaky", "warning"];
 
 export type ListForOrganizationFilters = {
+  projectIds?: string[];
   flags?: SnapshotFlag[];
 };
 
 const listForOrganizationWhere = (
   organizationId: string,
-  { flags }: ListForOrganizationFilters = {},
+  { projectIds, flags }: ListForOrganizationFilters = {},
 ) =>
   and(
     eq(projects.organizationId, organizationId),
+    projectIds?.length ? inArray(baselines.projectId, projectIds) : undefined,
     flags?.length ? or(...flags.map((flag) => flagConditions[flag])) : undefined,
   );
 
@@ -119,7 +133,7 @@ export type ListForOrganizationOptions = ListForOrganizationFilters & {
 // Every project's current baseline snapshot, one per story, browser, and viewport.
 export const listForOrganization = async (
   organizationId: string,
-  { flags, limit, cursor }: ListForOrganizationOptions,
+  { projectIds, flags, limit, cursor }: ListForOrganizationOptions,
 ) => {
   const rows = await db
     .select({
@@ -143,7 +157,7 @@ export const listForOrganization = async (
     .innerJoin(projects, eq(projects.id, baselines.projectId))
     .where(
       and(
-        listForOrganizationWhere(organizationId, { flags }),
+        listForOrganizationWhere(organizationId, { projectIds, flags }),
         cursor ? getCursorFilter(cursor) : undefined,
       ),
     )

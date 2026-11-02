@@ -11,22 +11,32 @@ import { parseBaselineSnapshotsSearchParams } from "./_components/baselineSnapsh
 import { BaselineSnapshotsSection } from "./_components/BaselineSnapshotsSection";
 import { SnapshotsPageShell } from "./_components/SnapshotsPageShell";
 
+// The most projects the contract returns in one page.
+const PROJECT_OPTIONS_LIMIT = 100;
+
 type SnapshotsPageProps = PageProps<"/snapshots">;
 
 export default async function SnapshotsPage(props: SnapshotsPageProps) {
-  const { flags } = parseBaselineSnapshotsSearchParams(await props.searchParams);
+  const { projectIds, flags } = parseBaselineSnapshotsSearchParams(await props.searchParams);
 
   const queryClient = getQueryClient();
 
-  const [flagsResult] = await Promise.all([
+  const [projectsResult, flagsResult] = await Promise.all([
+    queryClient.fetchQuery(
+      orpcServer.projects.list.queryOptions({ input: { limit: PROJECT_OPTIONS_LIMIT } }),
+    ),
     queryClient.fetchQuery(orpcServer.snapshots.listBaselineFlags.queryOptions()),
     queryClient.prefetchInfiniteQuery(
       orpcServer.snapshots.listBaselines.infiniteOptions(
-        baselineSnapshotsListInfiniteOptions({ flags }),
+        baselineSnapshotsListInfiniteOptions({ projectIds, flags }),
       ),
     ),
   ]);
 
+  const projectOptions = projectsResult.projects.map((project) => ({
+    value: project.id,
+    label: project.name,
+  }));
   const flagOptions = flagsResult.flags.map((flag) => ({ value: flag, label: flag }));
 
   return (
@@ -36,10 +46,17 @@ export default async function SnapshotsPage(props: SnapshotsPageProps) {
           snapshots
         </Typography>
       }
-      filters={<BaselineSnapshotsFilters flags={flags} flagOptions={flagOptions} />}
+      filters={
+        <BaselineSnapshotsFilters
+          projectIds={projectIds}
+          flags={flags}
+          projectOptions={projectOptions}
+          flagOptions={flagOptions}
+        />
+      }
       content={
         <HydrationBoundary state={dehydrate(queryClient)}>
-          <BaselineSnapshotsSection flags={flags} />
+          <BaselineSnapshotsSection projectIds={projectIds} flags={flags} />
         </HydrationBoundary>
       }
     />

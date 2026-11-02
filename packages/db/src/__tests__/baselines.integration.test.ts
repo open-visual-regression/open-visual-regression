@@ -402,6 +402,66 @@ describe("baselines", () => {
         await dbClient.baselines.countForOrganization(organization.id, { flags: ["flaky"] }),
       ).toBe(1);
     });
+
+    test("should only list baselines from the given projects", async ({
+      organization,
+      project,
+      captureConfiguration,
+      build,
+      user,
+    }) => {
+      const [otherProject] = await db
+        .insert(projects)
+        .values({
+          name: "Other Project",
+          gitMainBranch: "main",
+          organizationId: organization.id,
+          creatorId: user.id,
+        })
+        .returning();
+      const otherBuild = await dbClient.builds.create({
+        projectId: otherProject!.id,
+        branch: "main",
+        commitSha: "d".repeat(40),
+        artifactPath: "builds/seed/artifact",
+        createdBy: user.id,
+      });
+      const [button, card] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, ...captureConfiguration, targetId: "button", targetTitle: "Button" },
+          {
+            buildId: otherBuild!.id,
+            ...captureConfiguration,
+            targetId: "card",
+            targetTitle: "Card",
+          },
+        ],
+      });
+      for (const [projectId, snapshot] of [
+        [project.id, button!],
+        [otherProject!.id, card!],
+      ] as const) {
+        await dbClient.baselines.upsert({
+          projectId,
+          ...captureConfiguration,
+          targetId: snapshot.targetId,
+          snapshotId: snapshot.id,
+          approvedBy: user.id,
+        });
+      }
+
+      const { baselines } = await dbClient.baselines.listForOrganization(organization.id, {
+        projectIds: [otherProject!.id],
+        limit: 10,
+      });
+
+      expect(baselines.map(({ targetTitle }) => targetTitle)).toEqual(["Card"]);
+      expect(
+        await dbClient.baselines.countForOrganization(organization.id, {
+          projectIds: [otherProject!.id],
+        }),
+      ).toBe(1);
+    });
   });
 
   describe("findFlagsForOrganization", () => {

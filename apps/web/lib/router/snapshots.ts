@@ -136,11 +136,16 @@ export const list = os.snapshots.list
 export const listBaselines = os.snapshots.listBaselines
   .use(callerMiddleware("builds", "read"))
   .handler(async ({ input, context }) => {
-    const { flags, limit = 24, cursor } = input ?? {};
+    const { projectIds, flags, limit = 24, cursor } = input ?? {};
 
     const [{ baselines, nextCursor }, total] = await Promise.all([
-      dbClient.baselines.listForOrganization(context.organizationId, { flags, limit, cursor }),
-      dbClient.baselines.countForOrganization(context.organizationId, { flags }),
+      dbClient.baselines.listForOrganization(context.organizationId, {
+        projectIds,
+        flags,
+        limit,
+        cursor,
+      }),
+      dbClient.baselines.countForOrganization(context.organizationId, { projectIds, flags }),
     ]);
 
     return {

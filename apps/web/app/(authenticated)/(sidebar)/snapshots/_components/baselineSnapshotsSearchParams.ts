@@ -6,13 +6,15 @@ const toArray = (value: string | string[] | undefined) =>
   value === undefined ? undefined : Array.isArray(value) ? value : [value];
 
 const baselineSnapshotsSearchParamsSchema = z.object({
+  project: z.preprocess(toArray, z.array(z.uuidv7())).optional().catch(undefined),
   flag: z.preprocess(toArray, z.array(snapshotFlagSchema)).optional().catch(undefined),
 });
 
 export const parseBaselineSnapshotsSearchParams = (
   searchParams: Record<string, string | string[] | undefined>,
 ) => {
-  const { flag: flags = [] } = baselineSnapshotsSearchParamsSchema.parse(searchParams);
+  const { project: projectIds = [], flag: flags = [] } =
+    baselineSnapshotsSearchParamsSchema.parse(searchParams);
 
-  return { flags };
+  return { projectIds, flags };
 };
