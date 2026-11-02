@@ -281,12 +281,9 @@ export const enqueueCaptureGroup = (
   connection: RedisConnection,
 ): Promise<Job<CaptureGroupJobPayload>> => enqueue(QueueName.SNAPSHOT_CAPTURE, payload, connection);
 
-// deadline gives every group of a build one deadline, the time it was queued plus
-// DEADLINE_SECONDS_PER_SNAPSHOT for each of its snapshots, and workers take the earliest. A small
-// build is due soon, so it runs ahead of a large build queued before it, but only until the large
-// build's deadline: a build queued after that is due later, so it can't pass. The longer a build
-// waits, the fewer new builds can go ahead of it, and a large build never waits past its deadline
-// for builds queued after it.
+// deadline makes a build due DEADLINE_SECONDS_PER_SNAPSHOT per snapshot after it's queued, and
+// workers take the earliest: small builds go first, but none queued after a build's deadline can
+// pass it.
 // round-robin gives a build's nth group of each browser priority n, counted from the round workers
 // are on, so a new build joins that round instead of jumping ahead of every queued build.
 export const captureQueuePolicySchema = z
@@ -297,8 +294,7 @@ export type CaptureQueuePolicy = z.infer<typeof captureQueuePolicySchema>;
 
 const LOWEST_PRIORITY = 2_097_151;
 
-// Below a few seconds per snapshot, deadlines pass faster than builds run and small builds queue
-// behind large ones as under fifo.
+// Too low and deadlines pass before builds can run, so the order falls back to fifo.
 const DEADLINE_SECONDS_PER_SNAPSHOT = 5;
 
 const nextPrioritized = async (
@@ -312,8 +308,8 @@ const nextPrioritized = async (
 const currentRound = async (queue: Queue<CaptureGroupJobPayload>): Promise<number> =>
   Math.max((await nextPrioritized(queue))?.opts.priority ?? 1, 1);
 
-// Deadline priorities count seconds from an epoch the earliest queued group carries, so they stay
-// small while the queue is busy and start over once it drains.
+// Deadline priorities are seconds since an epoch the earliest queued group carries, which resets
+// once the queue drains.
 const deadlineEpoch = async (
   queue: Queue<CaptureGroupJobPayload>,
   now: number,
@@ -325,7 +321,7 @@ const deadlineEpoch = async (
   return Math.min(next.data.deadline - next.opts.priority, now - 1);
 };
 
-// Alternates browsers so a build's groups of each browser share its deadline's turn.
+// A build's groups share one priority, so their queue order alternates browsers.
 const interleaveBrowsers = <T extends { browser: string }>(groups: T[]): T[] => {
   const indexes = new Map<string, number>();
   return groups
