@@ -15,8 +15,8 @@ const mockBuildsGetOne = vi.mocked(serverClient.builds.getOne);
 const mockSnapshotsGetOne = vi.mocked(serverClient.snapshots.getOne);
 
 describe("getBreadcrumbSegments", () => {
-  it("should return the projects root segment for the projects list page", async () => {
-    expect(await getBreadcrumbSegments([])).toEqual([{ label: "projects" }]);
+  it("should return the overview segment for the overview page", async () => {
+    expect(await getBreadcrumbSegments([])).toEqual([{ label: "overview" }]);
   });
 
   it("should humanize the new project segment", async () => {

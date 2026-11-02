@@ -3,6 +3,8 @@ export {
   ArrowLeftFromLineIcon,
   ArrowRightIcon,
   ArrowRightToLineIcon,
+  BoxIcon,
+  CameraIcon,
   CheckIcon,
   ChevronDownIcon,
   ChevronLeftIcon,

@@ -4,19 +4,19 @@ import { getCachedSession } from "@/lib/auth/session";
 import { getBreadcrumbSegments } from "@/lib/components/navigation-bar/getBreadcrumbSegments";
 import { serverClient } from "@/lib/router";
 
-import { NavigationBarContent } from "./_components/navigation-bar-content/NavigationBarContent";
+import { NavigationBarContent } from "../navigation-bar-content/NavigationBarContent";
 
-type NavigationSlotProps = PageProps<"/[[...pathname]]">;
+type NavigationSlotProps = {
+  pathname: string[];
+};
 
 const NAVIGATION_PROJECTS_LIMIT = 10;
 const NAVIGATION_RECENT_BUILDS_LIMIT = 15;
 
-export default async function NavigationSlot({ params }: NavigationSlotProps) {
-  const { pathname } = await params;
-
+export const NavigationSlot = async ({ pathname }: NavigationSlotProps) => {
   const [session, segments] = await Promise.all([
     getCachedSession().catch(() => null),
-    getBreadcrumbSegments(pathname ?? []),
+    getBreadcrumbSegments(pathname),
   ]);
 
   const userName = session?.user?.name ?? session?.user?.email ?? "";
@@ -42,4 +42,4 @@ export default async function NavigationSlot({ params }: NavigationSlotProps) {
       signOutUrl={getSignOutUrl()}
     />
   );
-}
+};
