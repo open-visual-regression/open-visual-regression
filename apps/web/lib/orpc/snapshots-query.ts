@@ -1,5 +1,6 @@
 import { type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
 import {
+  type BaselinesCursor,
   type SnapshotFlag,
   type SnapshotHistoryCursor,
   type SnapshotsCursor,
@@ -44,6 +45,25 @@ export const snapshotsListInfiniteOptions = (
     limit: SNAPSHOTS_PAGE_SIZE,
     cursor,
   }),
+  initialPageParam: undefined,
+  getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+});
+
+type BaselineSnapshotsListInput = {
+  limit: number;
+  cursor: BaselinesCursor | undefined;
+};
+
+type BaselineSnapshotsListInfiniteOptions = {
+  input: (cursor: BaselinesCursor | undefined) => BaselineSnapshotsListInput;
+  initialPageParam: BaselinesCursor | undefined;
+  getNextPageParam: (lastPage: {
+    nextCursor: BaselinesCursor | null;
+  }) => BaselinesCursor | undefined;
+};
+
+export const baselineSnapshotsListInfiniteOptions = (): BaselineSnapshotsListInfiniteOptions => ({
+  input: (cursor) => ({ limit: SNAPSHOTS_PAGE_SIZE, cursor }),
   initialPageParam: undefined,
   getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
 });

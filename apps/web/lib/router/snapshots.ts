@@ -133,6 +133,37 @@ export const list = os.snapshots.list
   })
   .actionable();
 
+export const listBaselines = os.snapshots.listBaselines
+  .use(callerMiddleware("builds", "read"))
+  .handler(async ({ input, context }) => {
+    const { limit = 24, cursor } = input ?? {};
+
+    const [{ baselines, nextCursor }, total] = await Promise.all([
+      dbClient.baselines.listForOrganization(context.organizationId, { limit, cursor }),
+      dbClient.baselines.countForOrganization(context.organizationId),
+    ]);
+
+    return {
+      snapshots: baselines.map((row) => ({
+        id: row.id,
+        buildId: row.buildId,
+        project: { id: row.projectId, name: row.projectName },
+        targetId: row.targetId,
+        targetTitle: row.targetTitle,
+        targetName: row.targetName,
+        imagePath: row.imagePath,
+        browser: row.browser,
+        viewportWidth: row.viewportWidth,
+        viewportHeight: row.viewportHeight === 0 ? null : row.viewportHeight,
+        viewportName: row.viewportName,
+        flags: getSnapshotFlags(row),
+      })),
+      total,
+      nextCursor,
+    };
+  })
+  .actionable();
+
 export const getHistory = os.snapshots.getHistory
   .use(callerMiddleware("builds", "read"))
   .use(organizationSnapshotMiddleware)

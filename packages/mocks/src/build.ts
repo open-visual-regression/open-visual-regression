@@ -3,6 +3,7 @@ import { faker } from "@faker-js/faker";
 import type { BuildDetailSchema } from "@ovr/api/contracts/builds";
 import type {
   BuildSnapshotSchema,
+  ProjectBaselineSnapshotSchema,
   SnapshotCountsSchema,
   SnapshotHistoryEntrySchema,
 } from "@ovr/api/contracts/snapshots";
@@ -27,6 +28,24 @@ export const generateBuildSnapshot = (
   isFlaky: false,
   flags: [],
   processingMs: null,
+  ...overrides,
+});
+
+export const generateProjectBaselineSnapshot = (
+  overrides?: Partial<ProjectBaselineSnapshotSchema>,
+): ProjectBaselineSnapshotSchema => ({
+  id: faker.string.uuid(),
+  buildId: faker.string.uuid(),
+  project: { id: faker.string.uuid(), name: faker.company.name() },
+  targetId: faker.word.noun(),
+  targetTitle: faker.word.noun(),
+  targetName: faker.word.noun(),
+  imagePath: faker.system.filePath(),
+  browser: "chromium",
+  viewportWidth: 1280,
+  viewportHeight: 800,
+  viewportName: "desktop",
+  flags: [],
   ...overrides,
 });
 
