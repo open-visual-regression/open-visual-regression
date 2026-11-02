@@ -1,41 +1,24 @@
 import { type BuildSnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { GlobeIcon, Icon, TimerIcon } from "@ovr/ui/components/icon";
 import { ResolutionIcon } from "@ovr/ui/components/resolution-icon";
-import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
-import { cn } from "@ovr/ui/lib/utils";
+import { Typography } from "@ovr/ui/components/typography";
 
 import { CardLink } from "@/lib/components/card-link/CardLink";
-import { CardSurface } from "@/lib/components/card-link/CardSurface";
 import { FlakyBadge } from "@/lib/components/FlakyBadge";
-import { Image } from "@/lib/components/image/Image";
 import { MetadataItem } from "@/lib/components/metadata-item/MetadataItem";
 import { MetadataList } from "@/lib/components/metadata-list/MetadataList";
+import {
+  SnapshotCardBody,
+  SnapshotCardImage,
+  SnapshotCardPreview,
+  SnapshotCardPreviewBadges,
+} from "@/lib/components/snapshot-grid/SnapshotCardLayout";
 import { SnapshotBadges } from "@/lib/components/SnapshotBadges";
 import { getSnapshotStatusLabel, SnapshotStatusBadge } from "@/lib/components/SnapshotStatusBadge";
 import { WarningBadge } from "@/lib/components/WarningBadge";
 import { formatDuration } from "@/lib/utils/date";
 import { type SnapshotFilters, withSnapshotFilters } from "@/lib/utils/snapshotFilters";
 import { getStoragePath } from "@/lib/utils/storage";
-
-type SnapshotCardSlotProps = {
-  className?: string;
-  children?: React.ReactNode;
-};
-
-const SnapshotCardPreview = ({ className, children }: SnapshotCardSlotProps) => (
-  <div
-    className={cn(
-      "relative h-40 overflow-hidden border-b border-ovr-border-subtle bg-ovr-inset bg-pixel-grid",
-      className,
-    )}
-  >
-    {children}
-  </div>
-);
-
-const SnapshotCardBody = ({ className, children }: SnapshotCardSlotProps) => (
-  <div className={cn("flex min-w-0 flex-col gap-1 px-3 py-2.5", className)}>{children}</div>
-);
 
 type SnapshotCardProps = {
   snapshot: BuildSnapshotSchema;
@@ -58,29 +41,17 @@ export const SnapshotCard = ({ snapshot, projectId, buildId, filters }: Snapshot
       aria-label={label}
     >
       <SnapshotCardPreview>
-        {imagePath ? (
-          <Image
-            src={imagePath}
-            alt={`snapshot of ${snapshot.targetTitle} ${snapshot.targetName}`}
-            className="absolute inset-0 h-full w-full object-cover"
-            errorFallback={
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Typography variant="caption">failed to load snapshot</Typography>
-              </div>
-            }
-          />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Typography variant="caption">no preview</Typography>
-          </div>
-        )}
-        <div className="absolute bottom-2 right-2">
+        <SnapshotCardImage
+          src={imagePath}
+          alt={`snapshot of ${snapshot.targetTitle} ${snapshot.targetName}`}
+        />
+        <SnapshotCardPreviewBadges>
           <SnapshotBadges>
             {snapshot.hasUncaughtPageError ? <WarningBadge /> : null}
             {snapshot.isFlaky ? <FlakyBadge filled /> : null}
             <SnapshotStatusBadge status={snapshot.status} filled />
           </SnapshotBadges>
-        </div>
+        </SnapshotCardPreviewBadges>
       </SnapshotCardPreview>
       <SnapshotCardBody>
         <Typography variant="code" className="truncate">
@@ -118,14 +89,3 @@ export const SnapshotCard = ({ snapshot, projectId, buildId, filters }: Snapshot
     </CardLink>
   );
 };
-
-export const SnapshotCardSkeleton = ({ className }: { className?: string }) => (
-  <CardSurface aria-hidden className={cn("gap-0 py-0", className)}>
-    <SnapshotCardPreview />
-    <SnapshotCardBody>
-      <TypographySkeleton variant="code" className="w-2/3" />
-      <TypographySkeleton variant="caption" className="w-1/2" />
-      <TypographySkeleton variant="caption" className="w-3/4" />
-    </SnapshotCardBody>
-  </CardSurface>
-);
