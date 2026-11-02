@@ -4,6 +4,7 @@ import { v7 as uuidv7 } from "uuid";
 import { vi } from "vitest";
 
 import type { AddProjectInputSchema } from "@ovr/api/contracts/projects";
+import type { BaselinesCursor } from "@ovr/api/contracts/snapshots";
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
 import { flakySnapshots, organization, projects, snapshots } from "@ovr/db/schema";
@@ -73,6 +74,42 @@ const seedFlags = async (projectId: string, buildId: string) => {
   await flagStory(projectId, "d");
 
   return { a: a!, b: b!, c: c!, d: d! };
+};
+
+const promoteBaselines = async (
+  admin: User,
+  projectId: string,
+  stories: { targetId: string; targetTitle: string; hasUncaughtPageError?: boolean }[],
+) => {
+  const build = await dbClient.builds.create({
+    projectId,
+    branch: "main",
+    commitSha: "b".repeat(40),
+    artifactPath: "builds/seed/artifact",
+    createdBy: admin.id,
+  });
+  const created = await dbClient.snapshots.createMany({
+    values: stories.map((story) => ({
+      buildId: build!.id,
+      ...VIEWPORT,
+      targetName: "Default",
+      ...story,
+    })),
+  });
+
+  for (const snapshot of created) {
+    await dbClient.baselines.upsert({
+      projectId,
+      browser: snapshot.browser,
+      viewportWidth: snapshot.viewportWidth,
+      viewportHeight: snapshot.viewportHeight,
+      targetId: snapshot.targetId,
+      snapshotId: snapshot.id,
+      approvedBy: admin.id,
+    });
+  }
+
+  return { build: build!, snapshots: created };
 };
 
 describe("snapshots", () => {
@@ -832,6 +869,147 @@ describe("snapshots", () => {
 
       expect(error).toBeNull();
       expect(result?.snapshots.map((snapshot) => snapshot.targetId)).toEqual(["b", "a"]);
+    });
+  });
+
+  describe("listBaselines", () => {
+    test("should return UNAUTHORIZED when no session cookie is provided", async () => {
+      const [error] = await serverClient.snapshots.listBaselines({});
+
+      expect(error?.code).toBe("UNAUTHORIZED");
+    });
+
+    test("should let a personal access token list the baselines", async ({ admin }) => {
+      const { projectId } = await createProjectAndBuild(admin);
+      await promoteBaselines(admin, projectId, [{ targetId: "button", targetTitle: "Button" }]);
+      const [, token] = await serverClient.accessTokens.create({ name: "cursor" });
+
+      asBearer(token!.token);
+
+      const [error, result] = await serverClient.snapshots.listBaselines({});
+
+      expect(error).toBeNull();
+      expect(result?.snapshots.map(({ targetTitle }) => targetTitle)).toEqual(["Button"]);
+    });
+
+    test("lists every project's baselines with the build they were captured in", async ({
+      admin,
+    }) => {
+      const { projectId } = await createProjectAndBuild(admin);
+      const { projectId: otherProjectId } = await createProjectAndBuild(admin);
+      const {
+        build,
+        snapshots: [button],
+      } = await promoteBaselines(admin, projectId, [{ targetId: "button", targetTitle: "Button" }]);
+      const {
+        build: otherBuild,
+        snapshots: [card],
+      } = await promoteBaselines(admin, otherProjectId, [
+        { targetId: "card", targetTitle: "Card" },
+      ]);
+
+      const [error, result] = await serverClient.snapshots.listBaselines({});
+
+      expect(error).toBeNull();
+      expect(result?.total).toBe(2);
+      expect(
+        result?.snapshots.map(({ id, buildId, project, viewportHeight }) => ({
+          id,
+          buildId,
+          projectId: project.id,
+          viewportHeight,
+        })),
+      ).toEqual([
+        { id: button!.id, buildId: build.id, projectId, viewportHeight: VIEWPORT.viewportHeight },
+        {
+          id: card!.id,
+          buildId: otherBuild.id,
+          projectId: otherProjectId,
+          viewportHeight: VIEWPORT.viewportHeight,
+        },
+      ]);
+    });
+
+    test("flags a baseline as flaky only when its story is flagged in its own project", async ({
+      admin,
+    }) => {
+      const { projectId } = await createProjectAndBuild(admin);
+      const { projectId: otherProjectId } = await createProjectAndBuild(admin);
+      await promoteBaselines(admin, projectId, [
+        { targetId: "button", targetTitle: "Button" },
+        { targetId: "card", targetTitle: "Card", hasUncaughtPageError: true },
+      ]);
+      await promoteBaselines(admin, otherProjectId, [
+        { targetId: "button", targetTitle: "Button" },
+      ]);
+      await flagStory(projectId, "button");
+
+      const [error, result] = await serverClient.snapshots.listBaselines({});
+
+      expect(error).toBeNull();
+      expect(
+        result?.snapshots.map(({ targetTitle, project, flags }) => ({
+          targetTitle,
+          projectId: project.id,
+          flags,
+        })),
+      ).toEqual(
+        expect.arrayContaining([
+          { targetTitle: "Button", projectId, flags: ["flaky"] },
+          { targetTitle: "Button", projectId: otherProjectId, flags: [] },
+          { targetTitle: "Card", projectId, flags: ["warning"] },
+        ]),
+      );
+    });
+
+    test("does not list another organization's baselines", async ({ admin }) => {
+      const [otherOrg] = await db
+        .insert(organization)
+        .values({
+          id: crypto.randomUUID(),
+          name: "Other Org",
+          slug: crypto.randomUUID(),
+          createdAt: new Date(),
+        })
+        .returning();
+      const [otherProject] = await db
+        .insert(projects)
+        .values({
+          name: "Other Org Project",
+          gitMainBranch: "main",
+          organizationId: otherOrg!.id,
+          creatorId: admin.id,
+        })
+        .returning();
+      await promoteBaselines(admin, otherProject!.id, [
+        { targetId: "secret", targetTitle: "Secret" },
+      ]);
+
+      const [error, result] = await serverClient.snapshots.listBaselines({});
+
+      expect(error).toBeNull();
+      expect(result).toEqual({ snapshots: [], total: 0, nextCursor: null });
+    });
+
+    test("pages through every baseline exactly once", async ({ admin }) => {
+      const { projectId } = await createProjectAndBuild(admin);
+      const titles = ["Tabs", "Alert", "Card", "Badge", "Switch"];
+      await promoteBaselines(
+        admin,
+        projectId,
+        titles.map((title) => ({ targetId: title.toLowerCase(), targetTitle: title })),
+      );
+
+      const seen: string[] = [];
+      let cursor: BaselinesCursor | undefined;
+      do {
+        const [error, result] = await serverClient.snapshots.listBaselines({ limit: 2, cursor });
+        expect(error).toBeNull();
+        seen.push(...result!.snapshots.map(({ targetTitle }) => targetTitle));
+        cursor = result!.nextCursor ?? undefined;
+      } while (cursor);
+
+      expect(seen).toEqual([...titles].sort());
     });
   });
 

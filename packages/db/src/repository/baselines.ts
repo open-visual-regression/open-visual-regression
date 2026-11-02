@@ -1,7 +1,7 @@
-import { type AnyColumn, eq, gte } from "drizzle-orm";
+import { type AnyColumn, and, asc, count, eq, exists, gte, sql } from "drizzle-orm";
 
 import { db } from "../db";
-import { baselines, builds, snapshots } from "../schema";
+import { baselines, builds, flakySnapshots, projects, snapshots } from "../schema";
 
 type FindInput = {
   projectId: string;
@@ -62,3 +62,104 @@ export const findByProject = (projectId: string) =>
   });
 
 export type BaselineDbSchema = Awaited<ReturnType<typeof findByProject>>[number];
+
+export type BaselinesCursor = {
+  targetTitle: string;
+  targetName: string;
+  browser: string;
+  viewportWidth: number;
+  id: string;
+};
+
+const isFlaky = exists(
+  db
+    .select({ id: flakySnapshots.id })
+    .from(flakySnapshots)
+    .where(
+      and(
+        eq(flakySnapshots.projectId, baselines.projectId),
+        eq(flakySnapshots.browser, baselines.browser),
+        eq(flakySnapshots.viewportWidth, baselines.viewportWidth),
+        eq(flakySnapshots.viewportHeight, baselines.viewportHeight),
+        eq(flakySnapshots.targetId, baselines.targetId),
+      ),
+    ),
+).mapWith(Boolean);
+
+const listForOrganizationWhere = (organizationId: string) =>
+  eq(projects.organizationId, organizationId);
+
+const getCursorFilter = (cursor: BaselinesCursor) =>
+  sql`(${snapshots.targetTitle}, ${snapshots.targetName}, ${snapshots.browser}, ${snapshots.viewportWidth}, ${snapshots.id})
+      > (${cursor.targetTitle}::text, ${cursor.targetName}::text, ${cursor.browser}::text, ${cursor.viewportWidth}::int, ${cursor.id}::uuid)`;
+
+export type ListForOrganizationOptions = {
+  limit: number;
+  cursor?: BaselinesCursor;
+};
+
+// Every project's current baseline snapshot, one per story, browser, and viewport.
+export const listForOrganization = async (
+  organizationId: string,
+  { limit, cursor }: ListForOrganizationOptions,
+) => {
+  const rows = await db
+    .select({
+      id: snapshots.id,
+      buildId: snapshots.buildId,
+      projectId: projects.id,
+      projectName: projects.name,
+      targetId: snapshots.targetId,
+      targetTitle: snapshots.targetTitle,
+      targetName: snapshots.targetName,
+      browser: snapshots.browser,
+      viewportWidth: snapshots.viewportWidth,
+      viewportHeight: snapshots.viewportHeight,
+      viewportName: snapshots.viewportName,
+      imagePath: snapshots.imagePath,
+      hasUncaughtPageError: snapshots.hasUncaughtPageError,
+      isFlaky,
+    })
+    .from(baselines)
+    .innerJoin(snapshots, eq(snapshots.id, baselines.snapshotId))
+    .innerJoin(projects, eq(projects.id, baselines.projectId))
+    .where(
+      and(listForOrganizationWhere(organizationId), cursor ? getCursorFilter(cursor) : undefined),
+    )
+    .orderBy(
+      asc(snapshots.targetTitle),
+      asc(snapshots.targetName),
+      asc(snapshots.browser),
+      asc(snapshots.viewportWidth),
+      asc(snapshots.id),
+    )
+    .limit(limit + 1);
+
+  const hasMore = rows.length > limit;
+  const pageRows = hasMore ? rows.slice(0, limit) : rows;
+  const lastRow = pageRows.at(-1);
+
+  return {
+    baselines: pageRows,
+    nextCursor:
+      hasMore && lastRow
+        ? {
+            targetTitle: lastRow.targetTitle,
+            targetName: lastRow.targetName,
+            browser: lastRow.browser,
+            viewportWidth: lastRow.viewportWidth,
+            id: lastRow.id,
+          }
+        : null,
+  };
+};
+
+export const countForOrganization = async (organizationId: string) => {
+  const [result] = await db
+    .select({ count: count() })
+    .from(baselines)
+    .innerJoin(projects, eq(projects.id, baselines.projectId))
+    .where(listForOrganizationWhere(organizationId));
+
+  return result?.count ?? 0;
+};

@@ -229,6 +229,55 @@ export const listFlagsContract = oc
   .input(listSnapshotFilterOptionsInputSchema)
   .output(listFlagsOutputSchema);
 
+export const projectBaselineSnapshotSchema = z.object({
+  id: z.uuidv7(),
+  buildId: z.uuidv7().meta({ description: "The main-branch build the baseline was captured in" }),
+  project: z.object({ id: z.uuidv7(), name: z.string().min(1) }),
+  targetId: z.string().min(1),
+  targetTitle: z.string(),
+  targetName: z.string(),
+  imagePath: z.string().nullable(),
+  browser: z.string().min(1),
+  viewportWidth: z.number().int(),
+  viewportHeight: z.number().int().nullable(),
+  viewportName: z.string().min(1),
+  flags: z.array(snapshotFlagSchema),
+});
+
+export type ProjectBaselineSnapshotSchema = z.infer<typeof projectBaselineSnapshotSchema>;
+
+export const baselinesCursorSchema = z.object({
+  targetTitle: z.string(),
+  targetName: z.string(),
+  browser: z.string(),
+  viewportWidth: z.number().int(),
+  id: z.uuidv7(),
+});
+
+export type BaselinesCursor = z.infer<typeof baselinesCursorSchema>;
+
+export const listBaselinesInputSchema = z.object({
+  limit: z.number().int().min(1).max(100).default(24),
+  cursor: baselinesCursorSchema.optional(),
+});
+
+export type ListBaselinesInputSchema = z.infer<typeof listBaselinesInputSchema>;
+
+export const listBaselinesOutputSchema = z.object({
+  snapshots: z.array(projectBaselineSnapshotSchema).meta({
+    description:
+      "Every project's current baseline snapshot, one per story, browser, and viewport, ordered by story",
+  }),
+  total: z.number().int().nonnegative(),
+  nextCursor: baselinesCursorSchema.nullable(),
+});
+
+export type ListBaselinesOutputSchema = z.infer<typeof listBaselinesOutputSchema>;
+
+export const listBaselinesContract = oc
+  .input(listBaselinesInputSchema.optional())
+  .output(listBaselinesOutputSchema);
+
 export const MAX_SNAPSHOT_HISTORY = 100;
 
 export const snapshotHistoryEntrySchema = z.object({
@@ -301,6 +350,7 @@ export const contract = {
   getOne: getOneContract,
   getBaseline: getBaselineContract,
   list: listContract,
+  listBaselines: listBaselinesContract,
   getCounts: getCountsContract,
   getAdjacent: getAdjacentContract,
   getHistory: getHistoryContract,
