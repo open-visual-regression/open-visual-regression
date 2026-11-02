@@ -257,6 +257,9 @@ export const baselinesCursorSchema = z.object({
 export type BaselinesCursor = z.infer<typeof baselinesCursorSchema>;
 
 export const listBaselinesInputSchema = z.object({
+  flags: z.array(snapshotFlagSchema).optional().meta({
+    description: "Only baselines with any of these flags",
+  }),
   limit: z.number().int().min(1).max(100).default(24),
   cursor: baselinesCursorSchema.optional(),
 });
@@ -277,6 +280,8 @@ export type ListBaselinesOutputSchema = z.infer<typeof listBaselinesOutputSchema
 export const listBaselinesContract = oc
   .input(listBaselinesInputSchema.optional())
   .output(listBaselinesOutputSchema);
+
+export const listBaselineFlagsContract = oc.output(listFlagsOutputSchema);
 
 export const MAX_SNAPSHOT_HISTORY = 100;
 
@@ -358,5 +363,6 @@ export const contract = {
   listBrowsers: listBrowsersContract,
   listViewports: listViewportsContract,
   listFlags: listFlagsContract,
+  listBaselineFlags: listBaselineFlagsContract,
   rebuild: rebuildContract,
 } as const;

@@ -50,6 +50,7 @@ export const snapshotsListInfiniteOptions = (
 });
 
 type BaselineSnapshotsListInput = {
+  flags: SnapshotFlag[] | undefined;
   limit: number;
   cursor: BaselinesCursor | undefined;
 };
@@ -62,8 +63,14 @@ type BaselineSnapshotsListInfiniteOptions = {
   }) => BaselinesCursor | undefined;
 };
 
-export const baselineSnapshotsListInfiniteOptions = (): BaselineSnapshotsListInfiniteOptions => ({
-  input: (cursor) => ({ limit: SNAPSHOTS_PAGE_SIZE, cursor }),
+export type BaselineSnapshotsListFilters = {
+  flags?: SnapshotFlag[];
+};
+
+export const baselineSnapshotsListInfiniteOptions = ({
+  flags,
+}: BaselineSnapshotsListFilters = {}): BaselineSnapshotsListInfiniteOptions => ({
+  input: (cursor) => ({ flags, limit: SNAPSHOTS_PAGE_SIZE, cursor }),
   initialPageParam: undefined,
   getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
 });

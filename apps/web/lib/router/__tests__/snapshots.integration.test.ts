@@ -991,6 +991,22 @@ describe("snapshots", () => {
       expect(result).toEqual({ snapshots: [], total: 0, nextCursor: null });
     });
 
+    test("filters by flag", async ({ admin }) => {
+      const { projectId } = await createProjectAndBuild(admin);
+      await promoteBaselines(admin, projectId, [
+        { targetId: "button", targetTitle: "Button" },
+        { targetId: "card", targetTitle: "Card", hasUncaughtPageError: true },
+        { targetId: "chart", targetTitle: "Chart" },
+      ]);
+      await flagStory(projectId, "chart");
+
+      const [error, result] = await serverClient.snapshots.listBaselines({ flags: ["flaky"] });
+
+      expect(error).toBeNull();
+      expect(result?.snapshots.map(({ targetTitle }) => targetTitle)).toEqual(["Chart"]);
+      expect(result?.total).toBe(1);
+    });
+
     test("pages through every baseline exactly once", async ({ admin }) => {
       const { projectId } = await createProjectAndBuild(admin);
       const titles = ["Tabs", "Alert", "Card", "Badge", "Switch"];
@@ -1010,6 +1026,28 @@ describe("snapshots", () => {
       } while (cursor);
 
       expect(seen).toEqual([...titles].sort());
+    });
+  });
+
+  describe("listBaselineFlags", () => {
+    test("should return UNAUTHORIZED when no session cookie is provided", async () => {
+      const [error] = await serverClient.snapshots.listBaselineFlags();
+
+      expect(error?.code).toBe("UNAUTHORIZED");
+    });
+
+    test("lists the flags the organization's baselines have", async ({ admin }) => {
+      const { projectId } = await createProjectAndBuild(admin);
+      await promoteBaselines(admin, projectId, [
+        { targetId: "button", targetTitle: "Button" },
+        { targetId: "chart", targetTitle: "Chart" },
+      ]);
+      await flagStory(projectId, "chart");
+
+      const [error, result] = await serverClient.snapshots.listBaselineFlags();
+
+      expect(error).toBeNull();
+      expect(result).toEqual({ flags: ["flaky"] });
     });
   });
 

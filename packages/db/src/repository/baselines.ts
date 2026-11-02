@@ -1,7 +1,8 @@
-import { type AnyColumn, and, asc, count, eq, exists, gte, sql } from "drizzle-orm";
+import { type AnyColumn, and, asc, count, eq, exists, gte, or, type SQL, sql } from "drizzle-orm";
 
 import { db } from "../db";
 import { baselines, builds, flakySnapshots, projects, snapshots } from "../schema";
+import type { SnapshotFlag } from "./snapshots";
 
 type FindInput = {
   projectId: string;
@@ -86,14 +87,31 @@ const isFlaky = exists(
     ),
 ).mapWith(Boolean);
 
-const listForOrganizationWhere = (organizationId: string) =>
-  eq(projects.organizationId, organizationId);
+const flagConditions: Record<SnapshotFlag, SQL> = {
+  flaky: isFlaky,
+  warning: eq(snapshots.hasUncaughtPageError, true),
+};
+
+const flagDisplayOrder: SnapshotFlag[] = ["flaky", "warning"];
+
+export type ListForOrganizationFilters = {
+  flags?: SnapshotFlag[];
+};
+
+const listForOrganizationWhere = (
+  organizationId: string,
+  { flags }: ListForOrganizationFilters = {},
+) =>
+  and(
+    eq(projects.organizationId, organizationId),
+    flags?.length ? or(...flags.map((flag) => flagConditions[flag])) : undefined,
+  );
 
 const getCursorFilter = (cursor: BaselinesCursor) =>
   sql`(${snapshots.targetTitle}, ${snapshots.targetName}, ${snapshots.browser}, ${snapshots.viewportWidth}, ${snapshots.id})
       > (${cursor.targetTitle}::text, ${cursor.targetName}::text, ${cursor.browser}::text, ${cursor.viewportWidth}::int, ${cursor.id}::uuid)`;
 
-export type ListForOrganizationOptions = {
+export type ListForOrganizationOptions = ListForOrganizationFilters & {
   limit: number;
   cursor?: BaselinesCursor;
 };
@@ -101,7 +119,7 @@ export type ListForOrganizationOptions = {
 // Every project's current baseline snapshot, one per story, browser, and viewport.
 export const listForOrganization = async (
   organizationId: string,
-  { limit, cursor }: ListForOrganizationOptions,
+  { flags, limit, cursor }: ListForOrganizationOptions,
 ) => {
   const rows = await db
     .select({
@@ -124,7 +142,10 @@ export const listForOrganization = async (
     .innerJoin(snapshots, eq(snapshots.id, baselines.snapshotId))
     .innerJoin(projects, eq(projects.id, baselines.projectId))
     .where(
-      and(listForOrganizationWhere(organizationId), cursor ? getCursorFilter(cursor) : undefined),
+      and(
+        listForOrganizationWhere(organizationId, { flags }),
+        cursor ? getCursorFilter(cursor) : undefined,
+      ),
     )
     .orderBy(
       asc(snapshots.targetTitle),
@@ -154,12 +175,27 @@ export const listForOrganization = async (
   };
 };
 
-export const countForOrganization = async (organizationId: string) => {
+export const countForOrganization = async (
+  organizationId: string,
+  filters: ListForOrganizationFilters = {},
+) => {
   const [result] = await db
     .select({ count: count() })
     .from(baselines)
+    .innerJoin(snapshots, eq(snapshots.id, baselines.snapshotId))
+    .innerJoin(projects, eq(projects.id, baselines.projectId))
+    .where(listForOrganizationWhere(organizationId, filters));
+
+  return result?.count ?? 0;
+};
+
+export const findFlagsForOrganization = async (organizationId: string): Promise<SnapshotFlag[]> => {
+  const rows = await db
+    .selectDistinct({ flaky: isFlaky, warning: snapshots.hasUncaughtPageError })
+    .from(baselines)
+    .innerJoin(snapshots, eq(snapshots.id, baselines.snapshotId))
     .innerJoin(projects, eq(projects.id, baselines.projectId))
     .where(listForOrganizationWhere(organizationId));
 
-  return result?.count ?? 0;
+  return flagDisplayOrder.filter((flag) => rows.some((row) => row[flag]));
 };
