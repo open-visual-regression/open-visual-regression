@@ -9,7 +9,7 @@ export default function Loading() {
   return (
     <SnapshotsPageShell
       heading={<TypographySkeleton variant="h1" className="w-32" />}
-      filters={<FacetBarSkeleton facets={1} />}
+      filters={<FacetBarSkeleton facets={2} />}
       content={<SnapshotGridSkeleton />}
     />
   );

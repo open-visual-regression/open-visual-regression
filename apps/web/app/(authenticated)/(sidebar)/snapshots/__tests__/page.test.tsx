@@ -8,19 +8,28 @@ import { describe, expect, it, render, screen } from "@/test-utils";
 
 vi.mock("next/navigation");
 
-const { listBaselines, listBaselineFlags } = vi.hoisted(() => ({
+const { listBaselines, listBaselineFlags, listProjects } = vi.hoisted(() => ({
   listBaselines: vi.fn(),
   listBaselineFlags: vi.fn(),
+  listProjects: vi.fn(),
 }));
 
 vi.mock("@/lib/orpc/server", async () => {
   const { createTanstackQueryUtils } = await import("@orpc/tanstack-query");
   return {
-    orpcServer: createTanstackQueryUtils({ snapshots: { listBaselines, listBaselineFlags } }),
+    orpcServer: createTanstackQueryUtils({
+      projects: { list: listProjects },
+      snapshots: { listBaselines, listBaselineFlags },
+    }),
   };
 });
 
 const { default: SnapshotsPage } = await import("../page");
+
+const PROJECTS = [
+  mocks.project.generateProject({ id: "018f0000-0000-7000-8000-000000000001", name: "Acme Web" }),
+  mocks.project.generateProject({ id: "018f0000-0000-7000-8000-000000000002", name: "Acme Admin" }),
+];
 
 const renderPage = async (searchParams: Record<string, string | string[]> = {}) =>
   render(
@@ -40,6 +49,7 @@ describe("SnapshotsPage", () => {
   beforeEach(() => {
     getQueryClient().clear();
     listBaselineFlags.mockResolvedValue({ flags: ["flaky", "warning"] });
+    listProjects.mockResolvedValue({ projects: PROJECTS, nextCursor: null });
   });
 
   it("should list every project's baseline snapshots, each linking to its snapshot page", async () => {
@@ -136,6 +146,37 @@ describe("SnapshotsPage", () => {
     expect(screen.getByRole("button", { name: /^flags\s+flaky$/i })).toBeVisible();
     expect(listBaselines).toHaveBeenCalledWith(
       expect.objectContaining({ flags: ["flaky"] }),
+      expect.anything(),
+    );
+  });
+
+  it("should offer a project facet listing every project", async ({ user }) => {
+    listBaselines.mockResolvedValue({ snapshots: [], total: 0, nextCursor: null });
+
+    await renderPage();
+    await user.click(screen.getByRole("button", { name: /^project\s+any$/i }));
+
+    expect(await screen.findByRole("checkbox", { name: "Acme Web" })).toBeVisible();
+    expect(screen.getByRole("checkbox", { name: "Acme Admin" })).toBeVisible();
+  });
+
+  it("should hide the project facet when there is only one project", async () => {
+    listProjects.mockResolvedValue({ projects: PROJECTS.slice(0, 1), nextCursor: null });
+    listBaselines.mockResolvedValue({ snapshots: [], total: 0, nextCursor: null });
+
+    await renderPage();
+
+    expect(screen.queryByRole("button", { name: /^project/i })).not.toBeInTheDocument();
+  });
+
+  it("should apply the projects from the url to the snapshots query and the facet trigger", async () => {
+    listBaselines.mockResolvedValue({ snapshots: [], total: 0, nextCursor: null });
+
+    await renderPage({ project: PROJECTS[1]!.id, flag: "flaky" });
+
+    expect(screen.getByRole("button", { name: /^project\s+Acme Admin$/i })).toBeVisible();
+    expect(listBaselines).toHaveBeenCalledWith(
+      expect.objectContaining({ projectIds: [PROJECTS[1]!.id], flags: ["flaky"] }),
       expect.anything(),
     );
   });

@@ -1007,6 +1007,63 @@ describe("snapshots", () => {
       expect(result?.total).toBe(1);
     });
 
+    test("filters by project, together with the flag filter", async ({ admin }) => {
+      const { projectId } = await createProjectAndBuild(admin);
+      const { projectId: otherProjectId } = await createProjectAndBuild(admin);
+      await promoteBaselines(admin, projectId, [
+        { targetId: "button", targetTitle: "Button" },
+        { targetId: "chart", targetTitle: "Chart" },
+      ]);
+      await promoteBaselines(admin, otherProjectId, [{ targetId: "chart", targetTitle: "Chart" }]);
+      await flagStory(projectId, "chart");
+      await flagStory(otherProjectId, "chart");
+
+      const [error, result] = await serverClient.snapshots.listBaselines({
+        projectIds: [projectId],
+        flags: ["flaky"],
+      });
+
+      expect(error).toBeNull();
+      expect(
+        result?.snapshots.map(({ targetTitle, project }) => ({
+          targetTitle,
+          projectId: project.id,
+        })),
+      ).toEqual([{ targetTitle: "Chart", projectId }]);
+      expect(result?.total).toBe(1);
+    });
+
+    test("lists nothing for a project in another organization", async ({ admin }) => {
+      const [otherOrg] = await db
+        .insert(organization)
+        .values({
+          id: crypto.randomUUID(),
+          name: "Other Org",
+          slug: crypto.randomUUID(),
+          createdAt: new Date(),
+        })
+        .returning();
+      const [otherProject] = await db
+        .insert(projects)
+        .values({
+          name: "Other Org Project",
+          gitMainBranch: "main",
+          organizationId: otherOrg!.id,
+          creatorId: admin.id,
+        })
+        .returning();
+      await promoteBaselines(admin, otherProject!.id, [
+        { targetId: "secret", targetTitle: "Secret" },
+      ]);
+
+      const [error, result] = await serverClient.snapshots.listBaselines({
+        projectIds: [otherProject!.id],
+      });
+
+      expect(error).toBeNull();
+      expect(result).toEqual({ snapshots: [], total: 0, nextCursor: null });
+    });
+
     test("pages through every baseline exactly once", async ({ admin }) => {
       const { projectId } = await createProjectAndBuild(admin);
       const titles = ["Tabs", "Alert", "Card", "Badge", "Switch"];

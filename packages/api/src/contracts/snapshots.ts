@@ -257,6 +257,9 @@ export const baselinesCursorSchema = z.object({
 export type BaselinesCursor = z.infer<typeof baselinesCursorSchema>;
 
 export const listBaselinesInputSchema = z.object({
+  projectIds: z.array(z.uuidv7()).optional().meta({
+    description: "Only baselines from these projects",
+  }),
   flags: z.array(snapshotFlagSchema).optional().meta({
     description: "Only baselines with any of these flags",
   }),
