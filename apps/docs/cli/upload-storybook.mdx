@@ -61,6 +61,18 @@ It needs:
 
 When any of these is missing, or a change could affect every story (Storybook or build configuration, dependencies the Storybook uses, global styles), every story is captured and the CLI prints why. Code and stylesheets that no story imports are ignored, since they cannot render. Use [`onlyAffected`](/configuration/config#only-affected) in `ovr.config` for files that affect stories without being imported.
 
+### Lockfiles
+
+When a lockfile changes, OVR compares it with the lockfile from the build it compares against. It captures every story only if a changed package is one the Storybook bundles or a build tool; otherwise the lockfile change is ignored. These lockfiles are supported:
+
+| Package manager | Lockfile | Versions |
+|-----------------|----------|----------|
+| Yarn | `yarn.lock` | Yarn 1, and Yarn 2 and later |
+| pnpm | `pnpm-lock.yaml` | pnpm 8 and later (lockfile `6.0` and `9.0`) |
+| npm | `package-lock.json`, `npm-shrinkwrap.json` | npm 7 and later (lockfile version 2 and 3) |
+
+A change to any other lockfile, such as Bun's `bun.lock`, captures every story.
+
 <Note>
   We recommend it for pull requests only, and capturing every story on the main branch.
 </Note>
