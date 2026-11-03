@@ -1567,12 +1567,14 @@ describe("builds", () => {
             browser: "chromium",
             externalRequestAllowlist: null,
             snapshotIds: [chromium!.id],
+            deadline: expect.any(Number),
           },
           {
             buildId,
             browser: "firefox",
             externalRequestAllowlist: null,
             snapshotIds: [firefox!.id],
+            deadline: expect.any(Number),
           },
         ]),
       );

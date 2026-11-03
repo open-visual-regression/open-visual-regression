@@ -118,6 +118,7 @@ describe("extractBuild", () => {
       browser: captureConfiguration.browser,
       externalRequestAllowlist: null,
       snapshotIds: expect.arrayContaining(snapshots.map((snapshot) => snapshot.id)),
+      deadline: expect.any(Number),
     });
     expect(job!.snapshotIds).toHaveLength(2);
   });
