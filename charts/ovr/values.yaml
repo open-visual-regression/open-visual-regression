@@ -145,9 +145,9 @@ worker:
   storybookCacheBytes: ""
   # Local disk for caching screenshots. Empty uses the app default (512 MB).
   imageCacheBytes: ""
-  # Order capture groups run in across builds: "round-robin" or "fifo". Empty
-  # uses round-robin, or fifo with worker.keda's generated trigger, which can't
-  # see prioritized jobs. Also read by the web app.
+  # Order capture groups run in across builds: "deadline", "round-robin" or
+  # "fifo". Empty uses deadline, or fifo with worker.keda's generated trigger,
+  # which can't see prioritized jobs. Also read by the web app.
   captureQueuePolicy: ""
   # Minutes without snapshot or diff updates, and with no jobs left to run,
   # before an unfinished build is errored. Empty uses the app default (30).

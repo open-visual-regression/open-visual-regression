@@ -275,6 +275,122 @@ describe("queue", () => {
       ]);
     });
 
+    test("should run a small build queued behind a large one first under deadline", async ({
+      connection,
+      openQueue,
+      openWorker,
+      trackJob,
+    }) => {
+      const jobs = [
+        ...(await enqueueCaptureGroups("main", groups("main", 4), connection, "deadline")),
+        ...(await enqueueCaptureGroups("pr", groups("pr", 2), connection, "deadline")),
+      ].map(trackJob);
+
+      openWorker(QueueName.SNAPSHOT_CAPTURE, () => sleep(10), { concurrency: 1 });
+
+      expect(await processingOrder(openQueue(QueueName.SNAPSHOT_CAPTURE), jobs)).toEqual([
+        "pr-1",
+        "pr-2",
+        "main-1",
+        "main-2",
+        "main-3",
+        "main-4",
+      ]);
+    });
+
+    test("should keep a build queued after a large build's deadline behind it under deadline", async ({
+      connection,
+      openQueue,
+      openWorker,
+      trackJob,
+    }) => {
+      const queuedAt = Date.now();
+      const jobs = (
+        await enqueueCaptureGroups("main", groups("main", 4), connection, "deadline")
+      ).map(trackJob);
+      // main's 4 snapshots are due 20s after it was queued; pr is queued 30s later.
+      const now = vi.spyOn(Date, "now").mockReturnValue(queuedAt + 30_000);
+      try {
+        jobs.push(
+          ...(await enqueueCaptureGroups("pr", groups("pr", 1), connection, "deadline")).map(
+            trackJob,
+          ),
+        );
+      } finally {
+        now.mockRestore();
+      }
+
+      openWorker(QueueName.SNAPSHOT_CAPTURE, () => sleep(10), { concurrency: 1 });
+
+      expect(await processingOrder(openQueue(QueueName.SNAPSHOT_CAPTURE), jobs)).toEqual([
+        "main-1",
+        "main-2",
+        "main-3",
+        "main-4",
+        "pr-1",
+      ]);
+    });
+
+    test("should alternate a build's browsers under deadline", async ({
+      connection,
+      openQueue,
+      openWorker,
+      trackJob,
+    }) => {
+      const jobs = (
+        await enqueueCaptureGroups(
+          "main",
+          [
+            { browser: "chromium", snapshotIds: ["main-chromium-1"] },
+            { browser: "chromium", snapshotIds: ["main-chromium-2"] },
+            { browser: "webkit", snapshotIds: ["main-webkit-1"] },
+            { browser: "webkit", snapshotIds: ["main-webkit-2"] },
+          ],
+          connection,
+          "deadline",
+        )
+      ).map(trackJob);
+
+      openWorker(QueueName.SNAPSHOT_CAPTURE, () => sleep(10), { concurrency: 1 });
+
+      expect(await processingOrder(openQueue(QueueName.SNAPSHOT_CAPTURE), jobs)).toEqual([
+        "main-chromium-1",
+        "main-webkit-1",
+        "main-chromium-2",
+        "main-webkit-2",
+      ]);
+    });
+
+    test("should run a retried group before the groups waiting their turn under deadline", async ({
+      connection,
+      openQueue,
+      openWorker,
+      trackJob,
+    }) => {
+      const [retried] = await enqueueCaptureGroups(
+        "retried",
+        groups("retried", 1),
+        connection,
+        "deadline",
+      );
+      const jobs = [
+        trackJob(retried!),
+        ...(await enqueueCaptureGroups("pr", groups("pr", 2), connection, "deadline")).map(
+          trackJob,
+        ),
+      ];
+      // pr is due sooner, but the retried group has already started.
+      await runCaptureGroupRetryFirst(retried!);
+
+      openWorker(QueueName.SNAPSHOT_CAPTURE, () => sleep(10), { concurrency: 1 });
+
+      expect(await processingOrder(openQueue(QueueName.SNAPSHOT_CAPTURE), jobs)).toEqual([
+        "retried-1",
+        "pr-1",
+        "pr-2",
+      ]);
+    });
+
     test("should give each browser its own rounds under round-robin", async ({
       connection,
       openQueue,
