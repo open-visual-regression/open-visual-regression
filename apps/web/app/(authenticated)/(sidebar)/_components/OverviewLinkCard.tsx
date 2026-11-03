@@ -1,8 +1,9 @@
 import { CardHeader } from "@ovr/ui/components/card";
 import { Icon, type LucideIcon } from "@ovr/ui/components/icon";
-import { Typography } from "@ovr/ui/components/typography";
+import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 
 import { CardLink } from "@/lib/components/card-link/CardLink";
+import { CardSurface } from "@/lib/components/card-link/CardSurface";
 
 type OverviewLinkCardProps = {
   href: string;
@@ -20,5 +21,15 @@ export const OverviewLinkCard = ({ href, icon, label }: OverviewLinkCardProps) =
         </Typography>
       </CardHeader>
     </CardLink>
+  </li>
+);
+
+export const OverviewLinkCardSkeleton = () => (
+  <li aria-hidden>
+    <CardSurface>
+      <CardHeader>
+        <TypographySkeleton variant="h3" className="w-32" />
+      </CardHeader>
+    </CardSurface>
   </li>
 );

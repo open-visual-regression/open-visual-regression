@@ -1,8 +1,8 @@
 import { BoxIcon, CameraIcon, FolderIcon } from "@ovr/ui/components/icon";
 import { Typography } from "@ovr/ui/components/typography";
 
-import { OverviewLinkCard } from "./_components/OverviewLinkCard";
-import { OverviewPageShell } from "./_components/OverviewPageShell";
+import { OverviewLinkCard } from "../_components/OverviewLinkCard";
+import { OverviewPageShell } from "../_components/OverviewPageShell";
 
 export default function OverviewPage() {
   return (

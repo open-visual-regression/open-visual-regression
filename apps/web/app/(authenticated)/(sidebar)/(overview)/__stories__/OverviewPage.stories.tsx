@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
-import OverviewPage from "../../page";
+import OverviewPage from "../page";
 
 const meta: Meta<typeof OverviewPage> = {
   title: "Web/OverviewPage",
