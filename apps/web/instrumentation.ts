@@ -12,9 +12,11 @@ export const register = async () => {
   const { startMetrics } = await import("@ovr/metrics/server");
   const { APP_VERSION } = await import("@/lib/utils/version");
   if (await startMetrics({ serviceName: "ovr-web", serviceVersion: APP_VERSION })) {
-    const { observeBuildsInProgress, observeQueues } = await import("@/lib/metrics");
+    const { observeBuildsInProgress, observeQueues, observeStorageOutbox } =
+      await import("@/lib/metrics");
     observeQueues();
     observeBuildsInProgress();
+    observeStorageOutbox();
   }
 };
 

@@ -17,11 +17,13 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1102.0",
     "@aws-sdk/s3-request-presigner": "^3.1102.0",
+    "@ovr/metrics": "workspace:*",
     "@smithy/node-http-handler": "^4.9.13"
   },
   "devDependencies": {
     "@ovr/testing": "workspace:*",
     "@ovr/typescript-config": "workspace:*",
+    "@smithy/types": "^4.17.2",
     "@types/node": "^22.20.1",
     "typescript": "6.0.3",
     "vitest": "^4.1.12"

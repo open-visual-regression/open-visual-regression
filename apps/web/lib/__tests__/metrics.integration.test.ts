@@ -4,11 +4,11 @@ import { vi } from "vitest";
 
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
-import { projects } from "@ovr/db/schema";
+import { projects, storageOutbox } from "@ovr/db/schema";
 import { QueueName } from "@ovr/queue";
 import { enqueueDiff } from "@ovr/queue/producer";
 
-import { observeBuildsInProgress, observeQueues } from "@/lib/metrics";
+import { observeBuildsInProgress, observeQueues, observeStorageOutbox } from "@/lib/metrics";
 import { describe, expect, test } from "@/lib/testing/fixtures";
 
 vi.mock("next/headers");
@@ -87,6 +87,34 @@ describe("metrics", () => {
         'ovr_builds_in_progress_oldest_age_seconds{processing_status="queued"}',
       );
       expect(age).toBeGreaterThan((Date.now() - Date.parse(OLD_TIMESTAMP)) / 1000 - 60);
+    });
+  });
+
+  describe("observeStorageOutbox", () => {
+    test("should report an empty backlog as zero", async ({ metrics }) => {
+      observeStorageOutbox();
+
+      const body = await metrics.scrape();
+
+      expect(body).toContain("ovr_storage_outbox_pending 0");
+      expect(body).toContain("ovr_storage_outbox_oldest_age_seconds 0");
+    });
+
+    test("should report pending prefixes and how long the oldest has waited", async ({
+      metrics,
+    }) => {
+      await db.insert(storageOutbox).values([
+        { projectId: randomUUID(), buildId: randomUUID(), prefix: "a/", createdAt: OLD_TIMESTAMP },
+        { projectId: randomUUID(), buildId: randomUUID(), prefix: "b/" },
+      ]);
+      observeStorageOutbox();
+
+      const body = await metrics.scrape();
+
+      expect(body).toContain("ovr_storage_outbox_pending 2");
+      expect(readValue(body, "ovr_storage_outbox_oldest_age_seconds")).toBeGreaterThan(
+        (Date.now() - Date.parse(OLD_TIMESTAMP)) / 1000 - 60,
+      );
     });
   });
 });

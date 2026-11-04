@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { count, eq, min } from "drizzle-orm";
 
 import { db, type DbClient } from "../db";
 import { storageOutbox } from "../schema";
@@ -30,4 +30,15 @@ export const remove = async (id: string): Promise<void> => {
 
 export const removeByProject = async (tx: DbClient, projectId: string): Promise<void> => {
   await tx.delete(storageOutbox).where(eq(storageOutbox.projectId, projectId));
+};
+
+export type StorageOutboxSummary = { pending: number; oldestCreatedAt: string | null };
+
+/** How many prefixes are still waiting to be deleted, and when the oldest was queued. */
+export const summarize = async (): Promise<StorageOutboxSummary> => {
+  const [row] = await db
+    .select({ pending: count(), oldestCreatedAt: min(storageOutbox.createdAt) })
+    .from(storageOutbox);
+
+  return { pending: row?.pending ?? 0, oldestCreatedAt: row?.oldestCreatedAt ?? null };
 };

@@ -3,7 +3,7 @@ title: Metrics
 description: Monitor builds, queues, and workers with Prometheus, Grafana, Datadog, or any OpenMetrics-compatible tool.
 ---
 
-OVR reports metrics on builds, queues, snapshot captures, and worker health. The web app and the worker serve them in the OpenMetrics text format, which Prometheus, Grafana Alloy, the Datadog Agent, the OpenTelemetry Collector, and most other monitoring tools can collect.
+OVR reports metrics on builds, queues, snapshot captures, object storage, and worker health. The web app and the worker serve them in the OpenMetrics text format, which Prometheus, Grafana Alloy, the Datadog Agent, the OpenTelemetry Collector, and most other monitoring tools can collect.
 
 ## Turn on metrics
 
@@ -50,7 +50,7 @@ metrics:
 | Value | Description |
 | --- | --- |
 | `metrics.podMonitor` | Scrapes the web and worker pods. `interval` defaults to `30s`. |
-| `metrics.prometheusRule` | Alerts when builds are failing, a build is stuck for over an hour, jobs keep failing, or a worker is leaking browser processes. |
+| `metrics.prometheusRule` | Alerts when builds are failing, a build is stuck for over an hour, jobs keep failing, a worker is leaking browser processes, object storage requests are failing, or files of purged builds or deleted projects are left in storage. |
 | `metrics.grafanaDashboard` | Adds the OVR dashboard for the Grafana sidecar to load. |
 | `labels` | Set these to match the `podMonitorSelector` and `ruleSelector` of your Prometheus. |
 
@@ -58,7 +58,7 @@ Without the Operator, add a scrape job for port `9464` on the web and worker. Th
 
 ### Grafana
 
-Import [the OVR dashboard](https://github.com/open-visual-regression/open-visual-regression/blob/main/charts/ovr/files/grafana-dashboard.json) and pick your Prometheus data source. It covers build throughput and success rate, queue backlogs, capture times, and worker memory.
+Import [the OVR dashboard](https://github.com/open-visual-regression/open-visual-regression/blob/main/charts/ovr/files/grafana-dashboard.json) and pick your Prometheus data source. It covers build throughput and success rate, queue backlogs, capture times, object storage requests and cleanup, and worker memory.
 
 ### Datadog
 
@@ -148,6 +148,19 @@ sum(max by (state) (ovr_queue_jobs{queue="snapshot-capture", state=~"waiting|pri
 | `ovr_snapshot_capture_duration_seconds` | Histogram | `browser` | Time to capture and store one snapshot. |
 | `ovr_capture_browser_relaunches_total` | Counter | `browser`, `reason` | Times a browser was restarted mid-build because a story hung (`timeout`) or the browser crashed (`closed`). |
 | `ovr_diffs_compared_total` | Counter | `result` | Snapshots compared with their baseline: `unchanged`, `changed`, `new` (no baseline yet), or `error`. |
+
+### Storage
+
+| Metric | Type | Labels | Description |
+| --- | --- | --- | --- |
+| `ovr_storage_requests_total` | Counter | `operation`, `outcome`, `error_code` | Requests to object storage, by S3 operation and outcome: `success`, `client_error`, `throttled`, `server_error`, or `network_error`. Each SDK retry counts separately. `client_error` includes expected misses, like checking for an object that doesn't exist. |
+| `ovr_storage_request_duration_seconds` | Histogram | `operation` | How long each request to object storage took, including failed attempts. |
+| `ovr_storage_objects_deleted_total` | Counter | `reason` | Objects deleted, by `build_purge` (builds past their retention) or `project_purge` (deleted projects). |
+| `ovr_storage_objects_delete_failed_total` | Counter | `reason`, `error_code` | Objects the store refused to delete, for example when throttled. Purged builds' files are retried the next night. |
+| `ovr_storage_outbox_pending` | Gauge, deployment-wide | | Purged builds whose files are still waiting to be deleted. |
+| `ovr_storage_outbox_oldest_age_seconds` | Gauge, deployment-wide | | How long the oldest of those has waited. Over a day means a nightly purge failed or fell behind, and storage is growing. |
+
+`error_code` is the code the store or network returned, such as `SlowDown`, `AccessDenied`, or `ECONNRESET`. Each process reports at most 20 distinct codes and reports the rest as `Other`, so the number of series stays bounded.
 
 ### Workers and web app
 

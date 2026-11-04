@@ -1,5 +1,7 @@
 import { test as vitest } from "vitest";
 
+import { metricsFixture, type TestMetrics } from "@ovr/metrics/testing";
+
 import { storage } from "../index";
 
 export { describe, expect } from "vitest";
@@ -7,9 +9,12 @@ export { describe, expect } from "vitest";
 type Fixtures = {
   key: string;
   prefix: string;
+  metrics: TestMetrics;
 };
 
 export const test = vitest.extend<Fixtures>({
+  metrics: metricsFixture,
+
   // eslint-disable-next-line no-empty-pattern
   key: async ({}, use) => {
     const key = `test/${crypto.randomUUID()}.png`;

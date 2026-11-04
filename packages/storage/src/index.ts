@@ -14,6 +14,15 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { NodeHttpHandler } from "@smithy/node-http-handler";
 
+import {
+  instrumentClient,
+  objectsDeleted,
+  recordDeleteFailure,
+  type StorageDeleteReason,
+} from "./metrics";
+
+export type { StorageDeleteReason } from "./metrics";
+
 const KEEP_ALIVE_MAX_SOCKETS = 50;
 
 const staticCredentials =
@@ -39,10 +48,13 @@ const createClient = (endpoint: string | undefined): S3Client =>
   });
 
 const client = createClient(process.env.STORAGE_ENDPOINT);
+instrumentClient(client);
 
-const presignClient = process.env.STORAGE_PUBLIC_ENDPOINT
-  ? createClient(process.env.STORAGE_PUBLIC_ENDPOINT)
-  : client;
+// Always its own client, and never instrumented: presigning runs the client's middleware stack
+// and answers with a fake 200 instead of sending anything, which would count as a real request.
+const presignClient = createClient(
+  process.env.STORAGE_PUBLIC_ENDPOINT || process.env.STORAGE_ENDPOINT,
+);
 
 const bucket = process.env.STORAGE_BUCKET ?? "ovr";
 
@@ -132,10 +144,12 @@ export const storage = {
    * DeleteObjects answers 200 even when some keys fail (throttling, access denied), so the
    * per-key errors are collected across every page and thrown together as a
    * {@link DeletePrefixError} once the listing is done.
+   *
+   * `reason` labels the deleted and failed object counts in the storage metrics.
    */
   deletePrefix: async (
     prefix: string,
-    { signal }: { signal?: AbortSignal } = {},
+    { signal, reason = "other" }: { signal?: AbortSignal; reason?: StorageDeleteReason } = {},
   ): Promise<DeletePrefixResult> => {
     if (prefix === "") {
       throw new Error("Refusing to delete an empty prefix, which would empty the whole bucket");
@@ -176,6 +190,10 @@ export const storage = {
 
         failures.push(...pageFailures);
         deletedCount += objects.length - pageFailures.length;
+        objectsDeleted.add(objects.length - pageFailures.length, { reason });
+        for (const { code } of pageFailures) {
+          recordDeleteFailure(reason, code ?? "Unknown");
+        }
       }
 
       continuationToken = NextContinuationToken;

@@ -46,4 +46,19 @@ describe("projectPurge", () => {
     expect(await storage.objectExists(`${projectId}/builds/b1/snapshots/s1.png`)).toBe(false);
     expect(await storage.objectExists(`${otherProjectId}/builds/b1/snapshots/s1.png`)).toBe(true);
   });
+
+  test("should count the objects it deletes as a project purge", async ({ metrics }) => {
+    const projectId = uuidv7();
+    await storage.uploadFile(
+      `${projectId}/builds/b1/snapshots/s1.png`,
+      Buffer.from("a"),
+      "image/png",
+    );
+
+    await run({ data: { projectId } });
+
+    expect(await metrics.scrape()).toContain(
+      'ovr_storage_objects_deleted_total{reason="project_purge"} 1',
+    );
+  });
 });
