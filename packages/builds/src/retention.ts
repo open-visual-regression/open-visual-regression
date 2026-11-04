@@ -40,7 +40,9 @@ export const dispatchPurgeJobs = async (): Promise<void> => {
   }
 };
 
-const drainStorageOutbox = async (projectId: string): Promise<void> => {
+// Stops starting new pages once `signal` aborts. A prefix left half-deleted keeps its outbox row,
+// so the next run finishes it instead of the leftover objects becoming orphans.
+const drainStorageOutbox = async (projectId: string, signal: AbortSignal): Promise<void> => {
   const pending = await dbClient.storageOutbox.findByProject(projectId);
 
   if (pending.length === 0) {
@@ -49,15 +51,20 @@ const drainStorageOutbox = async (projectId: string): Promise<void> => {
 
   const results = await mapWithConcurrency(pending, STORAGE_DELETE_CONCURRENCY, async (entry) => {
     try {
-      await storage.deletePrefix(entry.prefix);
-      await dbClient.storageOutbox.remove(entry.id);
-      return { entry, ok: true as const };
+      const { complete } = await storage.deletePrefix(entry.prefix, { signal });
+
+      if (complete) {
+        await dbClient.storageOutbox.remove(entry.id);
+      }
+
+      return { entry, ok: true as const, complete };
     } catch (error) {
       return { entry, ok: false as const, error };
     }
   });
 
   const failures = results.filter((result) => !result.ok);
+  const unfinished = results.filter((result) => result.ok && !result.complete);
 
   if (failures.length > 0) {
     logger.error(
@@ -67,6 +74,13 @@ const drainStorageOutbox = async (projectId: string): Promise<void> => {
         prefixes: failures.map((failure) => failure.entry.prefix),
       },
       "failed to delete storage for purged builds; will retry on the next run",
+    );
+  }
+
+  if (unfinished.length > 0) {
+    logger.info(
+      { projectId, prefixes: unfinished.map((result) => result.entry.prefix) },
+      "purge time budget ran out while deleting storage; the rest is deleted on the next run",
     );
   }
 };
@@ -95,12 +109,13 @@ export const purgeExpiredBuilds = async (
   }
 
   const startedAt = Date.now();
+  const deadline = AbortSignal.timeout(timeBudgetMs);
   let buildsPurged = 0;
   let batches = 0;
   let hitTimeBudget = false;
 
   // Retry storage deletes left over from a previous run before paging through new ones.
-  await drainStorageOutbox(projectId);
+  await drainStorageOutbox(projectId, deadline);
 
   const cutoff = new Date(Date.now() - project.retentionDays * 24 * 60 * 60 * 1000).toISOString();
 
@@ -129,7 +144,7 @@ export const purgeExpiredBuilds = async (
     buildsPurged += buildIds.length;
     batches++;
 
-    await drainStorageOutbox(projectId);
+    await drainStorageOutbox(projectId, deadline);
 
     if (buildIds.length < batchSize) {
       break;
