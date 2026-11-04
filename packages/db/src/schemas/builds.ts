@@ -97,6 +97,11 @@ export const builds = pgTable(
       .notNull(),
     branch: varchar({ length: 255 }).notNull(),
     commitSha: varchar("commit_sha", { length: 64 }).notNull(),
+    // The main-branch build at this build's merge base. Purging it doesn't wait on this
+    // build: it's set to null, and the build compares against the latest baselines instead.
+    baseBuildId: uuid("base_build_id").references((): AnyPgColumn => builds.id, {
+      onDelete: "set null",
+    }),
     name: varchar({ length: 255 }),
     author: varchar({ length: 255 }),
     processingStatus: buildProcessingStatusEnum("processing_status").notNull().default("queued"),
@@ -130,6 +135,7 @@ export const builds = pgTable(
     ),
     index("builds_createdBy_idx").on(table.createdBy).concurrently(),
     index("builds_canceledBy_idx").on(table.canceledBy).concurrently(),
+    index("builds_baseBuildId_idx").on(table.baseBuildId).concurrently(),
     // Stays small as finished builds accumulate.
     index("builds_inProgress_createdAt_idx")
       .on(table.createdAt)
@@ -405,5 +411,45 @@ export const baselines = pgTable(
     ),
     index("baselines_snapshotId_idx").on(table.snapshotId),
     index("baselines_approvedBy_idx").on(table.approvedBy).concurrently(),
+  ],
+);
+
+// One row each time a main-branch build changes a baseline, so a branch can be compared
+// against main as it was at its merge base. Unchanged stories write nothing, and each row
+// is purged with the build that made the change.
+export const baselineRevisions = pgTable(
+  "baseline_revisions",
+  {
+    id: uuid().primaryKey().$defaultFn(uuidv7),
+    projectId: uuid("project_id")
+      .references(() => projects.id, { onDelete: "cascade" })
+      .notNull(),
+    browser: varchar({ length: 50 }).notNull(),
+    viewportWidth: integer("viewport_width").notNull(),
+    viewportHeight: integer("viewport_height").notNull(),
+    targetId: varchar("target_id", { length: 255 }).notNull(),
+    buildId: uuid("build_id")
+      .references(() => builds.id, { onDelete: "cascade" })
+      .notNull(),
+    // The baseline this change replaced. Null when the story was new, or once that snapshot
+    // is purged; replacedExisting tells the two apart.
+    previousSnapshotId: uuid("previous_snapshot_id").references(() => snapshots.id, {
+      onDelete: "set null",
+    }),
+    replacedExisting: boolean("replaced_existing").notNull(),
+    // The changing build's createdAt, so revisions order the same way baselines are promoted.
+    createdAt: utcTimestamp("created_at").notNull(),
+  },
+  (table) => [
+    index("baseline_revisions_project_viewport_target_createdAt_idx").on(
+      table.projectId,
+      table.browser,
+      table.viewportWidth,
+      table.viewportHeight,
+      table.targetId,
+      table.createdAt,
+    ),
+    index("baseline_revisions_buildId_idx").on(table.buildId),
+    index("baseline_revisions_previousSnapshotId_idx").on(table.previousSnapshotId),
   ],
 );
