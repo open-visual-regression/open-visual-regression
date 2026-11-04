@@ -142,14 +142,14 @@ describe("projects", () => {
       expect(found.map((p) => p.id)).toEqual([project.id]);
     });
 
-    test("should return the most recently created project first", async ({
+    test("should sort projects with the same build count alphabetically", async ({
       organization,
       user,
     }) => {
-      const [older] = await db
+      const [alpha] = await db
         .insert(projects)
         .values({
-          name: "Older Project",
+          name: "Alpha Project",
           gitMainBranch: "main",
           organizationId: organization.id,
           creatorId: user.id,
@@ -157,10 +157,10 @@ describe("projects", () => {
         })
         .returning();
 
-      const [newer] = await db
+      const [zebra] = await db
         .insert(projects)
         .values({
-          name: "Newer Project",
+          name: "Zebra Project",
           gitMainBranch: "main",
           organizationId: organization.id,
           creatorId: user.id,
@@ -173,7 +173,40 @@ describe("projects", () => {
         limit: 10,
       });
 
-      expect(found.map((p) => p.id)).toEqual([newer!.id, older!.id]);
+      expect(found.map((p) => p.id)).toEqual([alpha!.id, zebra!.id]);
+    });
+
+    test("should return projects with the most builds first", async ({ organization, user }) => {
+      const [fewBuilds, manyBuilds, noBuilds] = await Promise.all(
+        [3, 10, 0].map(async (totalBuildsCount, i) => {
+          const [p] = await db
+            .insert(projects)
+            .values({
+              name: `Project ${i}`,
+              gitMainBranch: "main",
+              organizationId: organization.id,
+              creatorId: user.id,
+              totalBuildsCount,
+            })
+            .returning();
+          return p!;
+        }),
+      );
+
+      const firstPage = await dbClient.projects.findAll({
+        organizationId: organization.id,
+        limit: 2,
+      });
+
+      expect(firstPage.projects.map((p) => p.id)).toEqual([manyBuilds!.id, fewBuilds!.id]);
+
+      const secondPage = await dbClient.projects.findAll({
+        organizationId: organization.id,
+        limit: 2,
+        cursor: firstPage.nextCursor!,
+      });
+
+      expect(secondPage.projects.map((p) => p.id)).toEqual([noBuilds!.id]);
     });
 
     test("should paginate with the limit and cursor params", async ({ organization, user }) => {
@@ -198,7 +231,7 @@ describe("projects", () => {
         limit: 2,
       });
 
-      expect(firstPage.projects.map((p) => p.id)).toEqual([third!.id, second!.id]);
+      expect(firstPage.projects.map((p) => p.id)).toEqual([first!.id, second!.id]);
       expect(firstPage.nextCursor).not.toBeNull();
 
       const secondPage = await dbClient.projects.findAll({
@@ -207,7 +240,7 @@ describe("projects", () => {
         cursor: firstPage.nextCursor!,
       });
 
-      expect(secondPage.projects.map((p) => p.id)).toEqual([first!.id]);
+      expect(secondPage.projects.map((p) => p.id)).toEqual([third!.id]);
       expect(secondPage.nextCursor).toBeNull();
     });
   });
