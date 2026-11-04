@@ -1313,6 +1313,69 @@ describe("snapshots", () => {
       expect(await dbClient.snapshots.findFlags({ buildId: otherBuild!.id })).toEqual(["warning"]);
     });
 
+    test("should only list snapshots from the given projects", async ({
+      organization,
+      build,
+      user,
+      captureConfiguration,
+    }) => {
+      const [otherProject] = await db
+        .insert(projects)
+        .values({
+          name: "Other Project",
+          gitMainBranch: "main",
+          organizationId: organization.id,
+          creatorId: user.id,
+        })
+        .returning();
+      const otherBuild = await dbClient.builds.create({
+        projectId: otherProject!.id,
+        branch: "main",
+        commitSha: "e".repeat(40),
+        artifactPath: "builds/seed/artifact",
+        createdBy: user.id,
+      });
+      await seedStories(build.id, captureConfiguration, ["Badge"]);
+      await seedStories(otherBuild!.id, captureConfiguration, ["Card"]);
+      const filters = { organizationId: organization.id, projectIds: [otherProject!.id] };
+
+      const { snapshots } = await dbClient.snapshots.list({ ...filters, sort: "name", limit: 10 });
+
+      expect(snapshots.map(({ targetTitle }) => targetTitle)).toEqual(["Card"]);
+      expect(await dbClient.snapshots.count(filters)).toBe(1);
+    });
+
+    test("should only list snapshots that are their project's current baseline", async ({
+      organization,
+      project,
+      build,
+      user,
+      captureConfiguration,
+    }) => {
+      const featureBuild = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "feature/cards",
+        commitSha: "f".repeat(40),
+        artifactPath: "builds/seed/artifact",
+        createdBy: user.id,
+      });
+      const [baseline] = await seedStories(build.id, captureConfiguration, ["Card"]);
+      await seedStories(featureBuild!.id, captureConfiguration, ["Card"]);
+      await dbClient.baselines.upsert({
+        projectId: project.id,
+        ...captureConfiguration,
+        targetId: baseline!.targetId,
+        snapshotId: baseline!.id,
+        approvedBy: user.id,
+      });
+      const filters = { organizationId: organization.id, baseline: true };
+
+      const { snapshots } = await dbClient.snapshots.list({ ...filters, sort: "name", limit: 10 });
+
+      expect(snapshots.map(({ id }) => id)).toEqual([baseline!.id]);
+      expect(await dbClient.snapshots.count(filters)).toBe(1);
+    });
+
     test("should page through every snapshot exactly once when sorted by name", async ({
       organization,
       build,

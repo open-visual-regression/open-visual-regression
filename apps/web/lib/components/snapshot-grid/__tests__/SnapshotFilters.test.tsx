@@ -234,4 +234,62 @@ describe("SnapshotFilters", () => {
 
     expect(screen.queryByRole("button")).toBeNull();
   });
+
+  it("should navigate with the selected projects when the project facet is applied", async ({
+    user,
+  }) => {
+    render(
+      <SnapshotFilters
+        statuses={[]}
+        browsers={[]}
+        viewports={[]}
+        flags={[]}
+        statusOptions={STATUS_OPTIONS}
+        browserOptions={BROWSER_OPTIONS}
+        viewportOptions={VIEWPORT_OPTIONS}
+        flagOptions={FLAG_OPTIONS}
+        projectOptions={[
+          { value: "project-1", label: "Storefront" },
+          { value: "project-2", label: "Admin" },
+        ]}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /^project\s+any$/i }));
+    await user.click(await screen.findByRole("checkbox", { name: "Admin" }));
+    await user.click(screen.getByRole("button", { name: /^apply$/i }));
+
+    expect(mockPush).toHaveBeenCalledWith("/?project=project-2");
+  });
+
+  it("should navigate to current baselines only when the baseline facet is applied", async ({
+    user,
+  }) => {
+    render(
+      <SnapshotFilters
+        statuses={[]}
+        browsers={[]}
+        viewports={[]}
+        flags={[]}
+        statusOptions={STATUS_OPTIONS}
+        browserOptions={BROWSER_OPTIONS}
+        viewportOptions={VIEWPORT_OPTIONS}
+        flagOptions={FLAG_OPTIONS}
+        showBaselineFacet
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /^baseline\s+any$/i }));
+    await user.click(await screen.findByRole("checkbox", { name: "current" }));
+    await user.click(screen.getByRole("button", { name: /^apply$/i }));
+
+    expect(mockPush).toHaveBeenCalledWith("/?baseline=true");
+  });
+
+  it("should not offer the project or baseline facets unless given them", () => {
+    renderComponent();
+
+    expect(screen.queryByRole("button", { name: /^project/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^baseline/i })).toBeNull();
+  });
 });

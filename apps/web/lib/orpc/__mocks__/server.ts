@@ -13,6 +13,9 @@ export const orpcServerClient = {
     listAuthors: vi.fn(),
     listCommitShas: vi.fn(),
   },
+  projects: {
+    list: vi.fn(),
+  },
   snapshots: {
     list: vi.fn(),
     listStatuses: vi.fn(),

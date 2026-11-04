@@ -11,6 +11,8 @@ export type SnapshotFilters = {
   browsers: string[];
   viewports: string[];
   flags: SnapshotFlag[];
+  projectIds?: string[];
+  baseline?: boolean;
 };
 
 const toArray = (value: string | string[] | undefined) =>
@@ -26,6 +28,11 @@ const searchParamsSchema = z.object({
   browser: z.preprocess(toArray, z.array(z.string())).optional().catch(undefined),
   viewport: z.preprocess(toArray, z.array(z.string())).optional().catch(undefined),
   flag: z.preprocess(toArray, z.array(snapshotFlagSchema)).optional().catch(undefined),
+  project: z.preprocess(toArray, z.array(z.uuidv7())).optional().catch(undefined),
+  baseline: z
+    .preprocess(toArray, z.array(z.literal("true")))
+    .optional()
+    .catch(undefined),
 });
 
 export const parseSnapshotFilters = (
@@ -37,9 +44,19 @@ export const parseSnapshotFilters = (
     browser = [],
     viewport = [],
     flag = [],
+    project = [],
+    baseline = [],
   } = searchParamsSchema.parse(searchParams);
 
-  return { search, statuses: status, browsers: browser, viewports: viewport, flags: flag };
+  return {
+    search,
+    statuses: status,
+    browsers: browser,
+    viewports: viewport,
+    flags: flag,
+    projectIds: project,
+    baseline: baseline.length > 0,
+  };
 };
 
 export const withSnapshotFilters = (path: string, filters?: SnapshotFilters): string => {

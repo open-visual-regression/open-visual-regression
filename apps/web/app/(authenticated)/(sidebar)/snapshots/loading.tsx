@@ -11,7 +11,7 @@ export default function Loading() {
   return (
     <SnapshotsPageShell
       heading={<TypographySkeleton variant="h1" className="w-32" />}
-      filters={<FacetBarSkeleton facets={4} />}
+      filters={<FacetBarSkeleton facets={6} />}
       search={<SearchFieldSkeleton className="min-w-0 flex-1 lg:w-64 lg:flex-none" />}
       content={<SnapshotGridSkeleton skeleton={<SnapshotCardSkeleton showProject />} />}
     />

@@ -17,6 +17,12 @@ const mockListStatuses = vi.mocked(orpcServerClient.snapshots.listStatuses);
 const mockListBrowsers = vi.mocked(orpcServerClient.snapshots.listBrowsers);
 const mockListViewports = vi.mocked(orpcServerClient.snapshots.listViewports);
 const mockListFlags = vi.mocked(orpcServerClient.snapshots.listFlags);
+const mockListProjects = vi.mocked(orpcServerClient.projects.list);
+
+const PROJECTS = [
+  mocks.project.generateProject({ id: "018f0000-0000-7000-8000-000000000001", name: "Acme Web" }),
+  mocks.project.generateProject({ id: "018f0000-0000-7000-8000-000000000002", name: "Acme Admin" }),
+];
 
 const renderPage = async (searchParams: Record<string, string | string[]> = {}) =>
   render(
@@ -38,6 +44,7 @@ describe("SnapshotsPage", () => {
     mockListBrowsers.mockResolvedValue({ browsers: ["chromium", "firefox"] });
     mockListViewports.mockResolvedValue({ viewports: ["mobile", "desktop"] });
     mockListFlags.mockResolvedValue({ flags: ["flaky", "warning"] });
+    mockListProjects.mockResolvedValue({ projects: PROJECTS, nextCursor: null });
   });
 
   it("should list every project's snapshots alphabetically, each naming its project", async () => {
@@ -112,5 +119,29 @@ describe("SnapshotsPage", () => {
     await renderPage();
 
     expect(screen.getByRole("search")).toHaveAttribute("action", "/snapshots");
+  });
+
+  it("should offer a project facet and a current baseline facet", async ({ user }) => {
+    mockList.mockResolvedValue({ snapshots: [], total: 0, nextCursor: null });
+
+    await renderPage();
+    await user.click(screen.getByRole("button", { name: /^project\s+any$/i }));
+
+    expect(await screen.findByRole("checkbox", { name: "Acme Web" })).toBeVisible();
+    expect(screen.getByRole("checkbox", { name: "Acme Admin" })).toBeVisible();
+    expect(screen.getByRole("button", { name: /^baseline\s+any$/i })).toBeVisible();
+  });
+
+  it("should apply the project and baseline from the url to the snapshots query", async () => {
+    mockList.mockResolvedValue({ snapshots: [], total: 0, nextCursor: null });
+
+    await renderPage({ project: PROJECTS[1]!.id, baseline: "true" });
+
+    expect(screen.getByRole("button", { name: /^project\s+Acme Admin$/i })).toBeVisible();
+    expect(screen.getByRole("button", { name: /^baseline\s+current$/i })).toBeVisible();
+    expect(mockList).toHaveBeenCalledWith(
+      expect.objectContaining({ projectIds: [PROJECTS[1]!.id], baseline: true }),
+      expect.anything(),
+    );
   });
 });

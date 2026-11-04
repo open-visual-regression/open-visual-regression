@@ -156,6 +156,14 @@ export const listInputSchema = snapshotFiltersSchema.extend({
   buildId: z.uuidv7().optional().meta({
     description: "Only this build's snapshots. Without it, every build in the organization",
   }),
+  projectIds: z
+    .array(z.uuidv7())
+    .optional()
+    .meta({ description: "Only these projects' snapshots" }),
+  baseline: z.boolean().optional().meta({
+    description:
+      "Only snapshots that are their project's current baseline for their target, browser and viewport",
+  }),
   sort: snapshotSortSchema.default("status"),
   limit: z.number().int().min(1).max(100).default(24),
   cursor: snapshotsCursorSchema.optional(),
