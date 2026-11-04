@@ -142,14 +142,14 @@ describe("projects", () => {
       expect(found.map((p) => p.id)).toEqual([project.id]);
     });
 
-    test("should return the most recently created project first", async ({
+    test("should sort projects with the same build count alphabetically", async ({
       organization,
       user,
     }) => {
-      const [older] = await db
+      const [alpha] = await db
         .insert(projects)
         .values({
-          name: "Older Project",
+          name: "Alpha Project",
           gitMainBranch: "main",
           organizationId: organization.id,
           creatorId: user.id,
@@ -157,10 +157,10 @@ describe("projects", () => {
         })
         .returning();
 
-      const [newer] = await db
+      const [zebra] = await db
         .insert(projects)
         .values({
-          name: "Newer Project",
+          name: "Zebra Project",
           gitMainBranch: "main",
           organizationId: organization.id,
           creatorId: user.id,
@@ -173,7 +173,7 @@ describe("projects", () => {
         limit: 10,
       });
 
-      expect(found.map((p) => p.id)).toEqual([newer!.id, older!.id]);
+      expect(found.map((p) => p.id)).toEqual([alpha!.id, zebra!.id]);
     });
 
     test("should return projects with the most builds first", async ({ organization, user }) => {
@@ -231,7 +231,7 @@ describe("projects", () => {
         limit: 2,
       });
 
-      expect(firstPage.projects.map((p) => p.id)).toEqual([third!.id, second!.id]);
+      expect(firstPage.projects.map((p) => p.id)).toEqual([first!.id, second!.id]);
       expect(firstPage.nextCursor).not.toBeNull();
 
       const secondPage = await dbClient.projects.findAll({
@@ -240,7 +240,7 @@ describe("projects", () => {
         cursor: firstPage.nextCursor!,
       });
 
-      expect(secondPage.projects.map((p) => p.id)).toEqual([first!.id]);
+      expect(secondPage.projects.map((p) => p.id)).toEqual([third!.id]);
       expect(secondPage.nextCursor).toBeNull();
     });
   });

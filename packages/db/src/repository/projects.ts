@@ -1,4 +1,4 @@
-import { and, count, desc, eq, exists, gt, isNull, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, exists, gt, isNull, lt, or, sql } from "drizzle-orm";
 
 import { db, type DbClient } from "../db";
 import { builds, projects } from "../schema";
@@ -63,12 +63,22 @@ export type ListProjectsResult = Awaited<ReturnType<typeof listProjects>>;
 
 type ProjectsCursor = {
   totalBuildsCount: number;
-  createdAt: string;
+  name: string;
   id: string;
 };
 
+// Matches the findAll sort order: totalBuildsCount DESC, name ASC, id ASC.
 const getCursorFilter = (cursor: ProjectsCursor) =>
-  sql`(${projects.totalBuildsCount}, ${projects.createdAt}, ${projects.id}) < (${cursor.totalBuildsCount}::integer, ${cursor.createdAt}::timestamp, ${cursor.id}::uuid)`;
+  or(
+    lt(projects.totalBuildsCount, cursor.totalBuildsCount),
+    and(
+      eq(projects.totalBuildsCount, cursor.totalBuildsCount),
+      or(
+        gt(projects.name, cursor.name),
+        and(eq(projects.name, cursor.name), gt(projects.id, cursor.id)),
+      ),
+    ),
+  );
 
 type FindAllInput = ProjectsFilter & {
   limit: number;
@@ -92,7 +102,7 @@ export const findAll = async ({ organizationId, limit, cursor }: FindAllInput) =
     },
     with: { creator: { columns: { id: true, name: true, email: true } } },
     where: and(baseFilter, cursorFilter),
-    orderBy: [desc(projects.totalBuildsCount), desc(projects.createdAt), desc(projects.id)],
+    orderBy: [desc(projects.totalBuildsCount), asc(projects.name), asc(projects.id)],
     limit: limit + 1,
   });
 
@@ -101,7 +111,7 @@ export const findAll = async ({ organizationId, limit, cursor }: FindAllInput) =
   const lastRow = pageRows.at(-1);
   const nextCursor =
     hasMore && lastRow
-      ? { totalBuildsCount: lastRow.totalBuildsCount, createdAt: lastRow.createdAt, id: lastRow.id }
+      ? { totalBuildsCount: lastRow.totalBuildsCount, name: lastRow.name, id: lastRow.id }
       : null;
 
   return { projects: pageRows, nextCursor };
