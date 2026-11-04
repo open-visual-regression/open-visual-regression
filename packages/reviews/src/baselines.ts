@@ -1,6 +1,12 @@
 import { dbClient } from "@ovr/db/client";
+import type { DiffReviewStatus } from "@ovr/db/schema";
 
 type Viewport = { browser: string; viewportWidth: number; viewportHeight: number };
+
+const CHANGED_REVIEW_STATUSES: ReadonlySet<DiffReviewStatus> = new Set([
+  "auto_approved",
+  "approved",
+]);
 
 export const getBaseline = (projectId: string, viewport: Viewport, targetId: string) =>
   dbClient.baselines.find({ projectId, ...viewport, targetId });
@@ -30,13 +36,34 @@ export const promoteBaseline = async (diffId: string, approverId: string): Promi
     return;
   }
 
-  await dbClient.baselines.upsert({
+  const key = {
     projectId: project.id,
     browser: snapshot.browser,
     viewportWidth: snapshot.viewportWidth,
     viewportHeight: snapshot.viewportHeight,
     targetId: snapshot.targetId,
-    snapshotId: snapshot.id,
-    approvedBy: approverId,
+  };
+
+  await dbClient.transaction(async (tx) => {
+    const baseline = await dbClient.baselines.upsert(
+      { ...key, snapshotId: snapshot.id, approvedBy: approverId },
+      tx,
+    );
+
+    // Only record changes, so unchanged stories don't add a row on every main build.
+    if (!baseline || !CHANGED_REVIEW_STATUSES.has(diff.reviewStatus)) {
+      return;
+    }
+
+    await dbClient.baselineRevisions.create(
+      {
+        ...key,
+        buildId: build.id,
+        previousSnapshotId: diff.baselineSnapshotId,
+        replacedExisting: diff.baselineSnapshotId !== null,
+        createdAt: build.createdAt,
+      },
+      tx,
+    );
   });
 };
