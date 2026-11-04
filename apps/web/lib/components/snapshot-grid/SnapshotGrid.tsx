@@ -1,17 +1,15 @@
 "use client";
 
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 
-import { type BuildSnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { Typography } from "@ovr/ui/components/typography";
 import { cn } from "@ovr/ui/lib/utils";
 
 import { useScrollContainer } from "@/lib/providers/ScrollContainer";
 import { chunk } from "@/lib/utils/chunk";
-import { type SnapshotFilters } from "@/lib/utils/snapshotFilters";
 
-import { SnapshotCard, SnapshotCardSkeleton } from "./SnapshotCard";
+import { SnapshotCardSkeleton } from "./SnapshotCard";
 
 const CHUNK_SIZE = 12;
 const ESTIMATED_CHUNK_HEIGHT = 768;
@@ -31,33 +29,42 @@ const SnapshotGridLayout = ({ className, children }: SnapshotGridLayoutProps) =>
   </div>
 );
 
-const SnapshotCardSkeletons = ({ count }: { count: number }) =>
-  Array.from({ length: count }, (_, index) => <SnapshotCardSkeleton key={index} />);
+const DEFAULT_SKELETON = <SnapshotCardSkeleton />;
 
-type SnapshotGridProps = {
-  snapshots: BuildSnapshotSchema[];
-  projectId: string;
-  buildId: string;
-  filters?: SnapshotFilters;
+type SnapshotCardSkeletonsProps = {
+  count: number;
+  skeleton: React.ReactNode;
+};
+
+const SnapshotCardSkeletons = ({ count, skeleton }: SnapshotCardSkeletonsProps) =>
+  Array.from({ length: count }, (_, index) => <Fragment key={index}>{skeleton}</Fragment>);
+
+type SnapshotGridProps<T> = {
+  items: T[];
+  getKey: (item: T) => string;
+  renderItem: (item: T) => React.ReactNode;
+  skeleton?: React.ReactNode;
+  emptyMessage: string;
   hasNextPage?: boolean;
   isFetchingNextPage?: boolean;
   onLoadMore?: () => void;
 };
 
-export const SnapshotGrid = ({
-  snapshots,
-  projectId,
-  buildId,
-  filters,
+export const SnapshotGrid = <T,>({
+  items,
+  getKey,
+  renderItem,
+  skeleton = DEFAULT_SKELETON,
+  emptyMessage,
   hasNextPage = false,
   isFetchingNextPage = false,
   onLoadMore,
-}: SnapshotGridProps) => {
+}: SnapshotGridProps<T>) => {
   const listRef = useRef<HTMLDivElement>(null);
   const scrollElement = useScrollContainer();
   const [chunkHeight, setChunkHeight] = useState(ESTIMATED_CHUNK_HEIGHT);
 
-  const chunks = chunk(snapshots, CHUNK_SIZE);
+  const chunks = chunk(items, CHUNK_SIZE);
 
   const virtualizer = useVirtualizer({
     count: scrollElement ? chunks.length + (hasNextPage ? 1 : 0) : 0,
@@ -80,40 +87,35 @@ export const SnapshotGrid = ({
     }
   };
 
-  const items = virtualizer.getVirtualItems();
+  const virtualItems = virtualizer.getVirtualItems();
 
   useEffect(() => {
-    const lastItem = items.at(-1);
+    const lastItem = virtualItems.at(-1);
 
     if (lastItem && lastItem.index >= chunks.length - 1 && hasNextPage && !isFetchingNextPage) {
       onLoadMore?.();
     }
-  }, [items, chunks.length, hasNextPage, isFetchingNextPage, onLoadMore]);
+  }, [virtualItems, chunks.length, hasNextPage, isFetchingNextPage, onLoadMore]);
 
-  if (snapshots.length === 0) {
+  if (items.length === 0) {
     return (
       <Typography variant="caption" className="py-12 text-center">
-        {filters?.search ? `no snapshots found matching "${filters.search}"` : "no snapshots found"}
+        {emptyMessage}
       </Typography>
     );
   }
 
-  const renderChunk = (index: number) => {
-    const snapshotChunk = chunks[index];
+  const renderItems = (itemsToRender: T[]) =>
+    itemsToRender.map((item) => <Fragment key={getKey(item)}>{renderItem(item)}</Fragment>);
 
-    if (!snapshotChunk) {
-      return <SnapshotCardSkeletons count={CHUNK_SIZE} />;
+  const renderChunk = (index: number) => {
+    const itemChunk = chunks[index];
+
+    if (!itemChunk) {
+      return <SnapshotCardSkeletons count={CHUNK_SIZE} skeleton={skeleton} />;
     }
 
-    return snapshotChunk.map((snapshot) => (
-      <SnapshotCard
-        key={snapshot.id}
-        snapshot={snapshot}
-        projectId={projectId}
-        buildId={buildId}
-        filters={filters}
-      />
-    ));
+    return renderItems(itemChunk);
   };
 
   return (
@@ -124,37 +126,37 @@ export const SnapshotGrid = ({
             className="absolute inset-x-0 top-0"
             style={{
               transform: `translateY(${
-                (items[0]?.start ?? 0) - virtualizer.options.scrollMargin
+                (virtualItems[0]?.start ?? 0) - virtualizer.options.scrollMargin
               }px)`,
             }}
           >
-            {items.map((item) => (
-              <div key={item.key} data-index={item.index} ref={measureChunk}>
-                <SnapshotGridLayout className="pb-3">{renderChunk(item.index)}</SnapshotGridLayout>
+            {virtualItems.map((virtualItem) => (
+              <div key={virtualItem.key} data-index={virtualItem.index} ref={measureChunk}>
+                <SnapshotGridLayout className="pb-3">
+                  {renderChunk(virtualItem.index)}
+                </SnapshotGridLayout>
               </div>
             ))}
           </div>
         </div>
       ) : (
         <SnapshotGridLayout>
-          {snapshots.map((snapshot) => (
-            <SnapshotCard
-              key={snapshot.id}
-              snapshot={snapshot}
-              projectId={projectId}
-              buildId={buildId}
-              filters={filters}
-            />
-          ))}
-          {hasNextPage ? <SnapshotCardSkeletons count={CHUNK_SIZE} /> : null}
+          {renderItems(items)}
+          {hasNextPage ? <SnapshotCardSkeletons count={CHUNK_SIZE} skeleton={skeleton} /> : null}
         </SnapshotGridLayout>
       )}
     </div>
   );
 };
 
-export const SnapshotGridSkeleton = () => (
+type SnapshotGridSkeletonProps = {
+  skeleton?: React.ReactNode;
+};
+
+export const SnapshotGridSkeleton = ({
+  skeleton = DEFAULT_SKELETON,
+}: SnapshotGridSkeletonProps) => (
   <SnapshotGridLayout>
-    <SnapshotCardSkeletons count={PAGE_SKELETON_COUNT} />
+    <SnapshotCardSkeletons count={PAGE_SKELETON_COUNT} skeleton={skeleton} />
   </SnapshotGridLayout>
 );

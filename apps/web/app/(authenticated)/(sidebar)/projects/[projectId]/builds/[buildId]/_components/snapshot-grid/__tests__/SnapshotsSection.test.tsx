@@ -35,25 +35,34 @@ const toPage = (snapshots: BuildSnapshotSchema[], total = snapshots.length): Lis
 
 const NO_FILTERS: SnapshotFilters = { statuses: [], browsers: [], viewports: [], flags: [] };
 
-const listKey = () =>
-  orpc.snapshots.list.infiniteKey(snapshotsListInfiniteOptions(BUILD_ID, NO_FILTERS));
+const listKey = (filters = NO_FILTERS) =>
+  orpc.snapshots.list.infiniteKey(snapshotsListInfiniteOptions(BUILD_ID, filters));
 
 const createQueryClient = () =>
   new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
 
-const seedPages = (queryClient: QueryClient, pages: ListOutputSchema[], updatedAt?: number) =>
+const seedPages = (
+  queryClient: QueryClient,
+  pages: ListOutputSchema[],
+  updatedAt?: number,
+  filters = NO_FILTERS,
+) =>
   queryClient.setQueryData(
-    listKey(),
+    listKey(filters),
     { pages, pageParams: pages.map((_, index) => (index === 0 ? undefined : CURSOR)) },
     updatedAt === undefined ? undefined : { updatedAt },
   );
 
 type RenderOptions = {
   queryClient?: QueryClient;
+  filters?: SnapshotFilters;
 };
 
-const renderSection = ({ queryClient = createQueryClient() }: RenderOptions = {}) =>
-  render(<SnapshotsSection projectId={PROJECT_ID} buildId={BUILD_ID} filters={NO_FILTERS} />, {
+const renderSection = ({
+  queryClient = createQueryClient(),
+  filters = NO_FILTERS,
+}: RenderOptions = {}) =>
+  render(<SnapshotsSection projectId={PROJECT_ID} buildId={BUILD_ID} filters={filters} />, {
     wrapper: ({ children }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     ),
@@ -128,5 +137,15 @@ describe("SnapshotsSection", () => {
     renderSection({ queryClient });
 
     expect(screen.getByText("no snapshots found")).toBeVisible();
+  });
+
+  it("should show the search term when no snapshots match it", () => {
+    const filters = { ...NO_FILTERS, search: "home" };
+    const queryClient = createQueryClient();
+    seedPages(queryClient, [toPage([])], undefined, filters);
+
+    renderSection({ queryClient, filters });
+
+    expect(screen.getByText('no snapshots found matching "home"')).toBeVisible();
   });
 });
