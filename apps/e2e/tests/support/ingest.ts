@@ -11,7 +11,7 @@ const REPO_ROOT = path.resolve(process.cwd(), "../..");
 const CLI_ENTRY = process.env.OVR_CLI_ENTRY ?? path.join(REPO_ROOT, "apps/cli/dist/index.js");
 // Run the CLI from this dir so it picks up the package's ovr.config viewports.
 const STORYBOOK_PKG_DIR = process.env.OVR_STORYBOOK_PKG_DIR ?? path.join(REPO_ROOT, "packages/ui");
-const STORYBOOK_DIR =
+export const STORYBOOK_DIR =
   process.env.OVR_STORYBOOK_DIR ?? path.join(STORYBOOK_PKG_DIR, "storybook-static");
 
 export type IngestOptions = {
@@ -20,6 +20,9 @@ export type IngestOptions = {
   commitSha?: string;
   name?: string;
   wait?: boolean;
+  // Run the CLI from this git checkout, so it finds builds from that history.
+  cwd?: string;
+  storybookDir?: string;
 };
 
 export type IngestResult = {
@@ -35,7 +38,8 @@ const buildArgs = (commitSha: string, options: IngestOptions): string[] => [
   "upload",
   "storybook",
   "--dir",
-  STORYBOOK_DIR,
+  options.storybookDir ?? STORYBOOK_DIR,
+  ...(options.cwd ? ["--config", path.join(STORYBOOK_PKG_DIR, "ovr.config.ts")] : []),
   "--server-url",
   getBaseURL(),
   "--branch",
@@ -51,7 +55,7 @@ const buildArgs = (commitSha: string, options: IngestOptions): string[] => [
 // build while it is still processing.
 export const spawnIngest = (options: IngestOptions & { commitSha: string }): ChildProcess =>
   spawn("node", buildArgs(options.commitSha, options), {
-    cwd: STORYBOOK_PKG_DIR,
+    cwd: options.cwd ?? STORYBOOK_PKG_DIR,
     env: { ...process.env, OVR_API_KEY: options.apiKey },
   });
 
@@ -62,7 +66,7 @@ export const ingestStorybook = async (options: IngestOptions): Promise<IngestRes
   const shortSha = commitSha.slice(0, 7);
 
   const options_ = {
-    cwd: STORYBOOK_PKG_DIR,
+    cwd: options.cwd ?? STORYBOOK_PKG_DIR,
     env: { ...process.env, OVR_API_KEY: options.apiKey },
     maxBuffer: 10 * 1024 * 1024,
   };

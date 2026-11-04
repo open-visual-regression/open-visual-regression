@@ -18,6 +18,11 @@ export class BuildPage {
     return this.page.getByRole("status", { name: "build status" });
   }
 
+  // ButtonLink exposes a button role, so find the anchor by its text.
+  comparedToLink(): Locator {
+    return this.page.locator("a", { hasText: /^compared to/ });
+  }
+
   cancelButton(): Locator {
     return this.page.getByRole("button", { name: "cancel build", exact: true });
   }
