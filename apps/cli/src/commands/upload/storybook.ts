@@ -18,6 +18,7 @@ import {
 import { formatCliError, runStep } from "../../errors";
 import { findUnaffectedTargets } from "./affected";
 import { createArtifactTarball, uploadArtifact } from "./artifact";
+import { findBaseBuild } from "./baseBuild";
 import {
   BuildFailedError,
   BuildNeedsReviewError,
@@ -70,9 +71,11 @@ export const createStorybookCommand = (): Command =>
 
         const client = createClient(serverUrl, apiKey);
 
+        const base = await findBaseBuild({ client, cwd: process.cwd() });
+
         const unaffectedTargetIds = options.onlyAffected
           ? await findUnaffectedTargets({
-              client,
+              base,
               storybookDir: options.dir,
               cwd: process.cwd(),
               targets,
@@ -86,6 +89,7 @@ export const createStorybookCommand = (): Command =>
             buildId: uuidv7(),
             branch,
             commitSha,
+            ...(base.status === "found" && { baseBuildId: base.build.id }),
             name,
             author,
             buildType: "storybook",

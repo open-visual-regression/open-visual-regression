@@ -50,6 +50,7 @@ export const createBuild = os.builds.createBuild
         projectId: context.projectId,
         branch: input.branch,
         commitSha: input.commitSha,
+        baseBuildId: input.baseBuildId,
         name: input.name,
         author: input.author,
       },

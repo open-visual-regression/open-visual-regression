@@ -48,6 +48,7 @@ type CreateBuildInput = {
   projectId: string;
   branch: string;
   commitSha: string;
+  baseBuildId?: string;
   name?: string;
   author?: string;
   buildType?: BuildType;
@@ -198,6 +199,34 @@ const isRetryOfPendingUpload = async (
   return !(await dbClient.buildExtractDefaults.findByBuild(buildId));
 };
 
+// Only a successful main-branch build of the same project can be a branch build's base.
+// Anything else is ignored rather than failing the upload, so the build is compared
+// against the latest baselines as it was before merge bases were sent.
+const resolveBaseBuildId = async (
+  project: { id: string; gitMainBranch: string },
+  input: Pick<CreateBuildInput, "baseBuildId" | "branch">,
+): Promise<string | null> => {
+  if (!input.baseBuildId || input.branch === project.gitMainBranch) {
+    return null;
+  }
+
+  const base = await dbClient.builds.findById(input.baseBuildId);
+
+  if (
+    base?.projectId === project.id &&
+    base.branch === project.gitMainBranch &&
+    base.processingStatus === "success"
+  ) {
+    return base.id;
+  }
+
+  logger.warn(
+    { projectId: project.id, baseBuildId: input.baseBuildId },
+    "ignoring a base build that isn't a successful main-branch build of this project",
+  );
+  return null;
+};
+
 export const createBuild = async (
   input: CreateBuildInput,
   callerId: string,
@@ -209,6 +238,7 @@ export const createBuild = async (
   }
 
   const buildId = input.buildId ?? uuidv7();
+  const baseBuildId = await resolveBaseBuildId(project, input);
 
   const build = await dbClient.transaction(async (tx) => {
     const created = await dbClient.builds.createIfAbsent({
@@ -217,6 +247,7 @@ export const createBuild = async (
       projectId: input.projectId,
       branch: input.branch,
       commitSha: input.commitSha,
+      baseBuildId,
       name: input.name,
       author: input.author,
       processingStatus: "queued",
@@ -445,6 +476,7 @@ export const rebuildBuild = async (
       projectId: source.projectId,
       branch: source.branch,
       commitSha: source.commitSha,
+      baseBuildId: source.baseBuildId,
       name: source.name,
       author: source.author,
       processingStatus: "queued",

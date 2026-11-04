@@ -3,22 +3,15 @@ import path from "node:path";
 import { findAffectedStories } from "@ovr/storybook-compat/affectedStories";
 import type { StoryTarget } from "@ovr/storybook-compat/manifest";
 
-import type { OvrClient } from "../../client";
 import type { OnlyAffectedConfig } from "../../defineConfig";
-import {
-  getRepoRoot,
-  isShallowRepository,
-  listAncestorCommits,
-  listChangedFiles,
-  readFileAtCommit,
-} from "../../git";
+import { getRepoRoot, listChangedFiles, readFileAtCommit } from "../../git";
+import type { BaseBuildLookup } from "./baseBuild";
 
-const MAX_ANCESTORS = 1000;
 const MAX_LISTED_STORY_FILES = 20;
 const MAX_LISTED_PACKAGES = 10;
 
 type FindUnaffectedTargetsInput = {
-  client: Pick<OvrClient, "builds">;
+  base: BaseBuildLookup;
   storybookDir: string;
   cwd: string;
   targets: StoryTarget[];
@@ -35,7 +28,7 @@ const toRepoGlobs = (globs: string[] | undefined, repoRoot: string, cwd: string)
 };
 
 export const findUnaffectedTargets = async ({
-  client,
+  base,
   storybookDir,
   cwd,
   targets,
@@ -47,43 +40,25 @@ export const findUnaffectedTargets = async ({
     return [];
   };
 
+  if (base.status === "missing") {
+    return captureAll(base.reason);
+  }
+
+  const baseCommit = base.build.commitSha;
+
   let repoRoot: string;
-  let commits: string[];
   try {
     repoRoot = await getRepoRoot(cwd);
-    if (await isShallowRepository(cwd)) {
-      log(
-        "Warning: this is a shallow clone, so the last main-branch build may be out of reach. Fetch the full history (e.g. actions/checkout with fetch-depth: 0).",
-      );
-    }
-    commits = await listAncestorCommits(cwd, "HEAD", MAX_ANCESTORS);
   } catch (error) {
     return captureAll(`could not read the git history (${describeError(error)})`);
   }
 
-  let base: { id: string; commitSha: string } | null;
-  try {
-    ({ build: base } = await client.builds.findAncestorBuild({ commitShas: commits }));
-  } catch (error) {
-    return captureAll(
-      `the server could not find a build to compare against (${describeError(error)})`,
-    );
-  }
-
-  if (!base) {
-    return captureAll("no successful main-branch build was found in this commit's history");
-  }
-
-  if (!commits.includes(base.commitSha)) {
-    return captureAll("the server returned a build that is not in this commit's history");
-  }
-
   let changedFiles: string[];
   try {
-    changedFiles = await listChangedFiles(cwd, base.commitSha);
+    changedFiles = await listChangedFiles(cwd, baseCommit);
   } catch (error) {
     return captureAll(
-      `could not list the files changed since ${base.commitSha} (${describeError(error)})`,
+      `could not list the files changed since ${baseCommit} (${describeError(error)})`,
     );
   }
 
@@ -94,7 +69,7 @@ export const findUnaffectedTargets = async ({
     changedFiles,
     externals: toRepoGlobs(config?.externals, repoRoot, cwd),
     untraced: toRepoGlobs(config?.untraced, repoRoot, cwd),
-    readBaseFile: (file) => readFileAtCommit(cwd, base.commitSha, file),
+    readBaseFile: (file) => readFileAtCommit(cwd, baseCommit, file),
   });
 
   if (result.mode === "all") {
@@ -107,7 +82,7 @@ export const findUnaffectedTargets = async ({
     .map((target) => target.id);
 
   log(
-    `${targets.length - unaffected.length} of ${targets.length} stories are affected by ${changedFiles.length} changed file(s) since ${base.commitSha.slice(0, 7)}.`,
+    `${targets.length - unaffected.length} of ${targets.length} stories are affected by ${changedFiles.length} changed file(s) since ${baseCommit.slice(0, 7)}.`,
   );
   for (const { lockfile, packages } of result.unbundledDependencies) {
     const listed = packages.slice(0, MAX_LISTED_PACKAGES).join(", ");
