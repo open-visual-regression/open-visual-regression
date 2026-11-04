@@ -1,22 +1,20 @@
 import { SearchField, type SearchFieldProps } from "@/lib/components/SearchField/SearchField";
 
 type SnapshotsSearchFieldProps = {
-  projectId: string;
-  buildId: string;
+  action: string;
   search?: string;
   searchParams?: SearchFieldProps["searchParams"];
   className?: string;
 };
 
 export const SnapshotsSearchField = ({
-  projectId,
-  buildId,
+  action,
   search,
   searchParams,
   className,
 }: SnapshotsSearchFieldProps) => (
   <SearchField
-    action={`/projects/${projectId}/builds/${buildId}`}
+    action={action}
     label="search snapshots"
     placeholder="search snapshots..."
     search={search}

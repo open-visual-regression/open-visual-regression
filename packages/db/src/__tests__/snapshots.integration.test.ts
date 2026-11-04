@@ -1257,6 +1257,62 @@ describe("snapshots", () => {
       expect(await dbClient.snapshots.count({ organizationId: organization.id })).toBe(3);
     });
 
+    test("should find the filter options across every build in the organization", async ({
+      organization,
+      project,
+      build,
+      user,
+    }) => {
+      const otherBuild = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "feature/cards",
+        commitSha: "d".repeat(40),
+        artifactPath: "builds/seed/artifact",
+        createdBy: user.id,
+      });
+      const desktop = {
+        browser: "chromium",
+        viewportWidth: 1280,
+        viewportHeight: 800,
+        viewportName: "desktop",
+      };
+      const mobile = {
+        browser: "firefox",
+        viewportWidth: 375,
+        viewportHeight: 800,
+        viewportName: "mobile",
+      };
+      await seedStories(build.id, desktop, ["Chart"]);
+      await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: otherBuild!.id,
+            ...mobile,
+            targetId: "widget",
+            targetTitle: "Widget",
+            hasUncaughtPageError: true,
+          },
+        ],
+      });
+      await db.insert(flakySnapshots).values({
+        projectId: project.id,
+        browser: desktop.browser,
+        viewportWidth: desktop.viewportWidth,
+        viewportHeight: desktop.viewportHeight,
+        targetId: "chart",
+        sampleCount: 10,
+        changeCount: 9,
+        revertCount: 4,
+        sameCommitMismatchCount: 0,
+      });
+      const scope = { organizationId: organization.id };
+
+      expect(await dbClient.snapshots.findBrowsers(scope)).toEqual(["chromium", "firefox"]);
+      expect(await dbClient.snapshots.findViewports(scope)).toEqual(["mobile", "desktop"]);
+      expect(await dbClient.snapshots.findFlags(scope)).toEqual(["flaky", "warning"]);
+      expect(await dbClient.snapshots.findFlags({ buildId: otherBuild!.id })).toEqual(["warning"]);
+    });
+
     test("should page through every snapshot exactly once when sorted by name", async ({
       organization,
       build,
@@ -1290,7 +1346,10 @@ describe("snapshots", () => {
     }) => {
       await seedFlags(build, project, captureConfiguration);
 
-      expect(await dbClient.snapshots.findFlags(build.id)).toEqual(["flaky", "warning"]);
+      expect(await dbClient.snapshots.findFlags({ buildId: build.id })).toEqual([
+        "flaky",
+        "warning",
+      ]);
     });
 
     test("returns only the flags some snapshot carries", async ({
@@ -1304,11 +1363,11 @@ describe("snapshots", () => {
         ],
       });
 
-      expect(await dbClient.snapshots.findFlags(build.id)).toEqual(["warning"]);
+      expect(await dbClient.snapshots.findFlags({ buildId: build.id })).toEqual(["warning"]);
     });
 
     test("returns no flags for a build without snapshots", async ({ build }) => {
-      expect(await dbClient.snapshots.findFlags(build.id)).toEqual([]);
+      expect(await dbClient.snapshots.findFlags({ buildId: build.id })).toEqual([]);
     });
   });
 
@@ -1325,7 +1384,7 @@ describe("snapshots", () => {
         reviewStatus: "unchanged",
       });
 
-      const statuses = await dbClient.snapshots.findStatuses(build.id);
+      const statuses = await dbClient.snapshots.findStatuses({ buildId: build.id });
 
       expect(statuses.sort()).toEqual(["error", "needs_review", "rejected", "unchanged"]);
     });
@@ -1344,7 +1403,7 @@ describe("snapshots", () => {
         ],
       });
 
-      const browsers = await dbClient.snapshots.findBrowsers(build.id);
+      const browsers = await dbClient.snapshots.findBrowsers({ buildId: build.id });
 
       expect(browsers).toEqual(["chromium", "firefox"]);
     });
@@ -1384,7 +1443,7 @@ describe("snapshots", () => {
         ],
       });
 
-      const viewports = await dbClient.snapshots.findViewports(build.id);
+      const viewports = await dbClient.snapshots.findViewports({ buildId: build.id });
 
       expect(viewports).toEqual(["mobile", "desktop"]);
     });

@@ -15,6 +15,10 @@ export const orpcServerClient = {
   },
   snapshots: {
     list: vi.fn(),
+    listStatuses: vi.fn(),
+    listBrowsers: vi.fn(),
+    listViewports: vi.fn(),
+    listFlags: vi.fn(),
   },
 } satisfies PartialClient<typeof OrpcServerClient>;
 

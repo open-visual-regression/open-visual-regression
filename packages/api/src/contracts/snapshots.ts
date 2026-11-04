@@ -207,7 +207,11 @@ export type GetAdjacentOutputSchema = z.infer<typeof getAdjacentOutputSchema>;
 
 export const getAdjacentContract = oc.input(getAdjacentInputSchema).output(getAdjacentOutputSchema);
 
-export const listSnapshotFilterOptionsInputSchema = z.object({ buildId: z.uuidv7() });
+export const listSnapshotFilterOptionsInputSchema = z.object({
+  buildId: z.uuidv7().optional().meta({
+    description: "Only this build's snapshots. Without it, every build in the organization",
+  }),
+});
 
 export const listStatusesOutputSchema = z.object({
   statuses: z.array(snapshotDisplayStatusSchema),

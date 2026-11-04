@@ -4,13 +4,13 @@ import { SnapshotsSearchField } from "../SnapshotsSearchField";
 
 describe("SnapshotsSearchField", () => {
   it("should initialize the field from the search value", () => {
-    render(<SnapshotsSearchField projectId="project-1" buildId="build-1" search="home" />);
+    render(<SnapshotsSearchField action="/projects/project-1/builds/build-1" search="home" />);
 
     expect(screen.getByLabelText("search snapshots")).toHaveValue("home");
   });
 
-  it("should point the clear button back to the build page", () => {
-    render(<SnapshotsSearchField projectId="project-1" buildId="build-1" search="home" />);
+  it("should point the clear button back to the page it searches", () => {
+    render(<SnapshotsSearchField action="/projects/project-1/builds/build-1" search="home" />);
 
     expect(screen.getByRole("button", { name: "clear search" })).toHaveAttribute(
       "href",
@@ -21,8 +21,7 @@ describe("SnapshotsSearchField", () => {
   it("should preserve active facets on the clear button when clearing search", () => {
     render(
       <SnapshotsSearchField
-        projectId="project-1"
-        buildId="build-1"
+        action="/projects/project-1/builds/build-1"
         search="home"
         searchParams={{ search: "home", browser: "firefox", viewport: "mobile" }}
       />,

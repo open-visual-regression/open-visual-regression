@@ -13,17 +13,31 @@ vi.mock("next/navigation");
 vi.mock("@/lib/orpc/server");
 
 const mockList = vi.mocked(orpcServerClient.snapshots.list);
+const mockListStatuses = vi.mocked(orpcServerClient.snapshots.listStatuses);
+const mockListBrowsers = vi.mocked(orpcServerClient.snapshots.listBrowsers);
+const mockListViewports = vi.mocked(orpcServerClient.snapshots.listViewports);
+const mockListFlags = vi.mocked(orpcServerClient.snapshots.listFlags);
 
-const renderPage = async () =>
-  render(await SnapshotsPage(), {
-    wrapper: ({ children }) => (
-      <QueryClientProvider client={new QueryClient()}>{children}</QueryClientProvider>
-    ),
-  });
+const renderPage = async (searchParams: Record<string, string | string[]> = {}) =>
+  render(
+    await SnapshotsPage({
+      params: Promise.resolve({}),
+      searchParams: Promise.resolve(searchParams),
+    }),
+    {
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={new QueryClient()}>{children}</QueryClientProvider>
+      ),
+    },
+  );
 
 describe("SnapshotsPage", () => {
   beforeEach(() => {
     getQueryClient().clear();
+    mockListStatuses.mockResolvedValue({ statuses: ["processing", "needs_review"] });
+    mockListBrowsers.mockResolvedValue({ browsers: ["chromium", "firefox"] });
+    mockListViewports.mockResolvedValue({ viewports: ["mobile", "desktop"] });
+    mockListFlags.mockResolvedValue({ flags: ["flaky", "warning"] });
   });
 
   it("should list every project's snapshots alphabetically, each naming its project", async () => {
@@ -65,5 +79,38 @@ describe("SnapshotsPage", () => {
     await renderPage();
 
     expect(screen.getByText("no snapshots found")).toBeVisible();
+  });
+
+  it("should offer the status, browser, viewport and flags facets from every project", async () => {
+    mockList.mockResolvedValue({ snapshots: [], total: 0, nextCursor: null });
+
+    await renderPage();
+
+    expect(screen.getByRole("button", { name: /^status\s+any$/i })).toBeVisible();
+    expect(screen.getByRole("button", { name: /^browser\s+any$/i })).toBeVisible();
+    expect(screen.getByRole("button", { name: /^viewport\s+any$/i })).toBeVisible();
+    expect(screen.getByRole("button", { name: /^flags\s+any$/i })).toBeVisible();
+    expect(mockListStatuses).toHaveBeenCalledWith({}, expect.anything());
+  });
+
+  it("should apply the filters from the url to the snapshots query and the facet triggers", async () => {
+    mockList.mockResolvedValue({ snapshots: [], total: 0, nextCursor: null });
+
+    await renderPage({ status: "processing", flag: "flaky", search: "chart" });
+
+    expect(screen.getByRole("button", { name: /^status\s+processing$/i })).toBeVisible();
+    expect(screen.getByRole("button", { name: /^flags\s+flaky$/i })).toBeVisible();
+    expect(mockList).toHaveBeenCalledWith(
+      expect.objectContaining({ statuses: ["processing"], flags: ["flaky"], search: "chart" }),
+      expect.anything(),
+    );
+  });
+
+  it("should submit the search field back to the snapshots page", async () => {
+    mockList.mockResolvedValue({ snapshots: [], total: 0, nextCursor: null });
+
+    await renderPage();
+
+    expect(screen.getByRole("search")).toHaveAttribute("action", "/snapshots");
   });
 });

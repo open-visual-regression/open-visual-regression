@@ -195,33 +195,45 @@ export const getAdjacent = os.snapshots.getAdjacent
 
 export const listStatuses = os.snapshots.listStatuses
   .use(authenticatedMiddleware)
-  .use(organizationBuildMiddleware)
-  .handler(async ({ input }) => ({
-    statuses: await dbClient.snapshots.findStatuses(input.buildId),
+  .use(optionalOrganizationBuildMiddleware)
+  .handler(async ({ input, context }) => ({
+    statuses: await dbClient.snapshots.findStatuses({
+      organizationId: context.organizationId,
+      buildId: input.buildId,
+    }),
   }))
   .actionable();
 
 export const listBrowsers = os.snapshots.listBrowsers
   .use(authenticatedMiddleware)
-  .use(organizationBuildMiddleware)
-  .handler(async ({ input }) => ({
-    browsers: await dbClient.snapshots.findBrowsers(input.buildId),
+  .use(optionalOrganizationBuildMiddleware)
+  .handler(async ({ input, context }) => ({
+    browsers: await dbClient.snapshots.findBrowsers({
+      organizationId: context.organizationId,
+      buildId: input.buildId,
+    }),
   }))
   .actionable();
 
 export const listViewports = os.snapshots.listViewports
   .use(authenticatedMiddleware)
-  .use(organizationBuildMiddleware)
-  .handler(async ({ input }) => ({
-    viewports: await dbClient.snapshots.findViewports(input.buildId),
+  .use(optionalOrganizationBuildMiddleware)
+  .handler(async ({ input, context }) => ({
+    viewports: await dbClient.snapshots.findViewports({
+      organizationId: context.organizationId,
+      buildId: input.buildId,
+    }),
   }))
   .actionable();
 
 export const listFlags = os.snapshots.listFlags
   .use(authenticatedMiddleware)
-  .use(organizationBuildMiddleware)
-  .handler(async ({ input }) => ({
-    flags: await dbClient.snapshots.findFlags(input.buildId),
+  .use(optionalOrganizationBuildMiddleware)
+  .handler(async ({ input, context }) => ({
+    flags: await dbClient.snapshots.findFlags({
+      organizationId: context.organizationId,
+      buildId: input.buildId,
+    }),
   }))
   .actionable();
 
