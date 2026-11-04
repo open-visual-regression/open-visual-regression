@@ -24,6 +24,7 @@ export const projectSchema = z.object({
 export type ProjectDto = z.infer<typeof projectSchema>;
 
 export const projectsCursorSchema = z.object({
+  totalBuildsCount: z.number().int().nonnegative(),
   createdAt: z.string().nonempty(),
   id: z.uuidv7(),
 });

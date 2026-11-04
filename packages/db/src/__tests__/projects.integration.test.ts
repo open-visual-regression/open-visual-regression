@@ -176,6 +176,39 @@ describe("projects", () => {
       expect(found.map((p) => p.id)).toEqual([newer!.id, older!.id]);
     });
 
+    test("should return projects with the most builds first", async ({ organization, user }) => {
+      const [fewBuilds, manyBuilds, noBuilds] = await Promise.all(
+        [3, 10, 0].map(async (totalBuildsCount, i) => {
+          const [p] = await db
+            .insert(projects)
+            .values({
+              name: `Project ${i}`,
+              gitMainBranch: "main",
+              organizationId: organization.id,
+              creatorId: user.id,
+              totalBuildsCount,
+            })
+            .returning();
+          return p!;
+        }),
+      );
+
+      const firstPage = await dbClient.projects.findAll({
+        organizationId: organization.id,
+        limit: 2,
+      });
+
+      expect(firstPage.projects.map((p) => p.id)).toEqual([manyBuilds!.id, fewBuilds!.id]);
+
+      const secondPage = await dbClient.projects.findAll({
+        organizationId: organization.id,
+        limit: 2,
+        cursor: firstPage.nextCursor!,
+      });
+
+      expect(secondPage.projects.map((p) => p.id)).toEqual([noBuilds!.id]);
+    });
+
     test("should paginate with the limit and cursor params", async ({ organization, user }) => {
       const created = await Promise.all(
         [0, 1, 2].map((i) =>
