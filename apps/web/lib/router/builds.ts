@@ -354,11 +354,12 @@ export const getOne = os.builds.getOne
 
     const latestBuildId = await findLatestBuildId(build);
     const isLatestBuild = latestBuildId === null;
-    const [canceler, rebuildable, reviewable, gitIntegration] = await Promise.all([
+    const [canceler, rebuildable, reviewable, gitIntegration, baseBuild] = await Promise.all([
       build.canceledBy ? dbClient.users.findById(build.canceledBy) : null,
       checkRebuildable(build, { isLatestBuild }),
       checkBuildReviewable(build, { isLatestBuild }),
       dbClient.gitIntegrations.findByProject(project.id),
+      build.baseBuildId ? dbClient.builds.findById(build.baseBuildId) : null,
     ]);
 
     return {
@@ -384,6 +385,7 @@ export const getOne = os.builds.getOne
         branchUrl: gitIntegration
           ? buildBranchUrl(gitIntegration.provider, gitIntegration.repoIdentifier, build.branch)
           : null,
+        baseBuild: baseBuild ? { id: baseBuild.id, commitSha: baseBuild.commitSha } : null,
       },
     };
   })

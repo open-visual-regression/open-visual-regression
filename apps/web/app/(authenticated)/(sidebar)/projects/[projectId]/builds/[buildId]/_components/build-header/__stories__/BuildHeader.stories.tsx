@@ -176,3 +176,18 @@ export const WithGitIntegration: Story = {
     snapshotCounts,
   },
 };
+
+export const ComparedToMergeBase: Story = {
+  args: {
+    build: mocks.build.generateBuild({
+      ...buildOverrides,
+      branch: "feature/empty-state",
+      status: "needs_review",
+      baseBuild: {
+        id: "0196f1c2-7a3b-7c4d-8e5f-6a7b8c9d0e1f",
+        commitSha: "c0ffee1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b",
+      },
+    }),
+    snapshotCounts,
+  },
+};

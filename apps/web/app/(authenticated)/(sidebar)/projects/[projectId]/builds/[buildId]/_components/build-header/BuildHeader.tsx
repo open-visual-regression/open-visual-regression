@@ -7,6 +7,7 @@ import {
   CircleSlash2Icon,
   GitBranchIcon,
   GitCommitHorizontalIcon,
+  GitCompareArrowsIcon,
   TimerIcon,
   UserIcon,
 } from "@ovr/ui/components/icon";
@@ -84,6 +85,16 @@ export const BuildHeader = ({
               {build.commitSha.slice(0, 7)}
             </Typography>
           )}
+          {build.baseBuild ? (
+            <ButtonLink
+              href={`/projects/${build.project.id}/builds/${build.baseBuild.id}`}
+              variant="link"
+              color="neutral"
+            >
+              <Icon icon={GitCompareArrowsIcon} size={10} />
+              compared to {build.baseBuild.commitSha.slice(0, 7)}
+            </ButtonLink>
+          ) : null}
           {build.author ? (
             <Typography variant="caption" className="flex items-center gap-1">
               <Icon icon={UserIcon} size={10} />

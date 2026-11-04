@@ -1,5 +1,6 @@
 import { dbClient } from "@ovr/db/client";
 import { buildCommitUrl } from "@ovr/git-status/webCommitUrl";
+import { findComparisonBaseline } from "@ovr/reviews/baselines";
 
 type BaselineSource = { imagePath: string | null; buildId: string };
 
@@ -11,7 +12,7 @@ type Snapshot = {
   viewportHeight: number;
 };
 
-type Build = { projectId: string; createdAt: string };
+type Build = { projectId: string; createdAt: string; baseBuildId: string | null };
 
 export const toBaselineSnapshot = async (baselineSnapshot: BaselineSource, projectId: string) => {
   const [baselineBuild, gitIntegration] = await Promise.all([
@@ -37,21 +38,26 @@ export const toBaselineSnapshot = async (baselineSnapshot: BaselineSource, proje
 };
 
 // Snapshots that were never compared (skipped, errored, canceled) have no diff to carry their
-// baseline, so fall back to the project's baseline for the same story, browser, and viewport.
+// baseline, so fall back to what the build would have compared the story against: main at the
+// build's merge base, or the project's latest baseline.
 // A baseline set by a newer build than this one did not exist yet, so it is not shown.
 const findProjectBaselineSource = async (
   snapshot: Snapshot,
   build: Build,
 ): Promise<BaselineSource | null> => {
-  const baseline = await dbClient.baselines.find({
-    projectId: build.projectId,
-    targetId: snapshot.targetId,
-    browser: snapshot.browser,
-    viewportWidth: snapshot.viewportWidth,
-    viewportHeight: snapshot.viewportHeight,
-  });
+  const base = build.baseBuildId ? await dbClient.builds.findById(build.baseBuildId) : null;
+  const baseline = await findComparisonBaseline(
+    build.projectId,
+    {
+      browser: snapshot.browser,
+      viewportWidth: snapshot.viewportWidth,
+      viewportHeight: snapshot.viewportHeight,
+    },
+    snapshot.targetId,
+    base ?? null,
+  );
 
-  if (!baseline || baseline.snapshotId === snapshot.id) {
+  if (!baseline.snapshotId || baseline.snapshotId === snapshot.id) {
     return null;
   }
 

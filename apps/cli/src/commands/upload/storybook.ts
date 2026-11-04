@@ -72,6 +72,11 @@ export const createStorybookCommand = (): Command =>
         const client = createClient(serverUrl, apiKey);
 
         const base = await findBaseBuild({ client, cwd: process.cwd() });
+        if (base.status === "missing") {
+          console.log(
+            `Comparing against the latest baselines instead of the merge base: ${base.reason}.`,
+          );
+        }
 
         const unaffectedTargetIds = options.onlyAffected
           ? await findUnaffectedTargets({

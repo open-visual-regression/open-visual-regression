@@ -175,6 +175,9 @@ export const buildDetailSchema = buildSchema.extend({
   latestBuildId: z.uuidv7().nullable(),
   commitUrl: z.string().nullable(),
   branchUrl: z.string().nullable(),
+  // The main-branch build this branch build was compared against. Null for main-branch
+  // builds, and for branch builds compared against the latest baselines.
+  baseBuild: z.object({ id: z.uuidv7(), commitSha: z.string().min(1) }).nullable(),
 });
 
 export type BuildDetailSchema = z.infer<typeof buildDetailSchema>;

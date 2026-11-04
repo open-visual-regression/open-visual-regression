@@ -7,6 +7,18 @@ A project's baseline build is its latest successful build on its main branch. Bu
 
 Open it from a project's page with **view baseline**.
 
+## Branch builds
+
+A build on any other branch is compared against main as it was when the branch was cut, not main's latest. Changes that landed on main since then don't show up as changes on the branch, so a branch that's behind main only shows its own changes.
+
+The CLI finds the most recent successful main-branch build in the commit's history and sends it with the build. The build page links to it as **compared to**. A branch build is compared against main's latest baselines instead when:
+
+- The git history isn't available, such as in a shallow clone. In GitHub Actions, check out with `fetch-depth: 0`.
+- No successful main-branch build is in the commit's history.
+- The main-branch build has been removed by the project's retention period.
+
+A story main changed after the branch was cut is also compared against main's latest if the build holding its earlier screenshot has been removed. Capturing every story on main keeps those screenshots as recent as possible.
+
 ## Stable links
 
 These links always point at the current baseline, so you can put them in docs, READMEs, or a design system site. Replace `https://ovr.example.com` with your OVR URL and `<project-id>` with the ID from the project's URL.

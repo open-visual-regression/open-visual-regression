@@ -1195,6 +1195,183 @@ describe("snapshots", () => {
       );
     });
 
+    describe("on a branch cut before main changed a story", () => {
+      type Fixture = {
+        project: { id: string };
+        user: { id: string };
+        captureConfiguration: {
+          browser: string;
+          viewportWidth: number;
+          viewportHeight: number;
+          viewportName: string;
+        };
+      };
+
+      // Captures a story at `fill` in a new build and diffs it, the way the worker does.
+      const captureAndDiff = async (
+        { project, user, captureConfiguration }: Fixture,
+        build: { branch: string; createdAt: string; baseBuildId?: string },
+        fill: number,
+      ) => {
+        const created = await dbClient.builds.create({
+          projectId: project.id,
+          commitSha: "a".repeat(40),
+          artifactPath: "builds/artifact",
+          createdBy: user.id,
+          ...build,
+        });
+        const imagePath = `builds/${created!.id}/snapshots/story-a.png`;
+        await uploadPng(imagePath, fill);
+        const [snapshot] = await dbClient.snapshots.createMany({
+          values: [
+            {
+              buildId: created!.id,
+              ...captureConfiguration,
+              targetId: "story-a",
+              status: "success",
+              imagePath,
+            },
+          ],
+        });
+        const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
+        await diffSnapshot(snapshot!.id, diff!.id);
+        await dbClient.builds.updateProcessingStatus(created!.id, "success");
+        return { build: created!, snapshot: snapshot!, diff: diff! };
+      };
+
+      test("should not show main's later change as the branch's own", async ({
+        project,
+        user,
+        captureConfiguration,
+      }) => {
+        const fixture = { project, user, captureConfiguration };
+        const cut = await captureAndDiff(
+          fixture,
+          { branch: "main", createdAt: "2026-01-01T00:00:00.000Z" },
+          0,
+        );
+        await captureAndDiff(
+          fixture,
+          { branch: "main", createdAt: "2026-01-02T00:00:00.000Z" },
+          255,
+        );
+
+        const branch = await captureAndDiff(
+          fixture,
+          { branch: "feature/x", createdAt: "2026-01-03T00:00:00.000Z", baseBuildId: cut.build.id },
+          0,
+        );
+
+        expect(await dbClient.diffs.findById(branch.diff.id)).toMatchObject({
+          reviewStatus: "unchanged",
+          baselineSnapshotId: cut.snapshot.id,
+        });
+      });
+
+      test("should still show a change the branch made itself", async ({
+        project,
+        user,
+        captureConfiguration,
+      }) => {
+        const fixture = { project, user, captureConfiguration };
+        const cut = await captureAndDiff(
+          fixture,
+          { branch: "main", createdAt: "2026-01-01T00:00:00.000Z" },
+          0,
+        );
+        await captureAndDiff(
+          fixture,
+          { branch: "main", createdAt: "2026-01-02T00:00:00.000Z" },
+          255,
+        );
+
+        const branch = await captureAndDiff(
+          fixture,
+          { branch: "feature/x", createdAt: "2026-01-03T00:00:00.000Z", baseBuildId: cut.build.id },
+          128,
+        );
+
+        expect(await dbClient.diffs.findById(branch.diff.id)).toMatchObject({
+          reviewStatus: "needs_review",
+          baselineSnapshotId: cut.snapshot.id,
+        });
+      });
+
+      test("should compare against main's latest when the branch has no merge base", async ({
+        project,
+        user,
+        captureConfiguration,
+      }) => {
+        const fixture = { project, user, captureConfiguration };
+        await captureAndDiff(fixture, { branch: "main", createdAt: "2026-01-01T00:00:00.000Z" }, 0);
+        const latest = await captureAndDiff(
+          fixture,
+          { branch: "main", createdAt: "2026-01-02T00:00:00.000Z" },
+          255,
+        );
+
+        const branch = await captureAndDiff(
+          fixture,
+          { branch: "feature/x", createdAt: "2026-01-03T00:00:00.000Z" },
+          0,
+        );
+
+        expect(await dbClient.diffs.findById(branch.diff.id)).toMatchObject({
+          reviewStatus: "needs_review",
+          baselineSnapshotId: latest.snapshot.id,
+        });
+      });
+
+      test("should compare against main's latest once the merge-base build is purged", async ({
+        project,
+        user,
+        captureConfiguration,
+      }) => {
+        const fixture = { project, user, captureConfiguration };
+        const cut = await captureAndDiff(
+          fixture,
+          { branch: "main", createdAt: "2026-01-01T00:00:00.000Z" },
+          0,
+        );
+        const latest = await captureAndDiff(
+          fixture,
+          { branch: "main", createdAt: "2026-01-02T00:00:00.000Z" },
+          255,
+        );
+        const branchBuild = await dbClient.builds.create({
+          projectId: project.id,
+          branch: "feature/x",
+          commitSha: "b".repeat(40),
+          createdAt: "2026-01-03T00:00:00.000Z",
+          baseBuildId: cut.build.id,
+          artifactPath: "builds/artifact",
+          createdBy: user.id,
+        });
+        const imagePath = `builds/${branchBuild!.id}/snapshots/story-a.png`;
+        await uploadPng(imagePath, 0);
+        const [snapshot] = await dbClient.snapshots.createMany({
+          values: [
+            {
+              buildId: branchBuild!.id,
+              ...captureConfiguration,
+              targetId: "story-a",
+              status: "success",
+              imagePath,
+            },
+          ],
+        });
+        const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
+
+        await dbClient.transaction((tx) => dbClient.builds.removeMany(tx, [cut.build.id]));
+        await diffSnapshot(snapshot!.id, diff!.id);
+
+        expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
+          reviewStatus: "needs_review",
+          baselineSnapshotId: latest.snapshot.id,
+        });
+      });
+    });
+
     test("promotes the baseline and skips review entirely for a main-branch build with no prior baseline", async ({
       mainBuild,
       project,

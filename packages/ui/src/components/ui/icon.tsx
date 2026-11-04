@@ -14,6 +14,7 @@ export {
   FolderIcon,
   GitBranchIcon,
   GitCommitHorizontalIcon,
+  GitCompareArrowsIcon,
   ExternalLinkIcon,
   GlobeIcon,
   KeyRoundIcon,

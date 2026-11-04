@@ -572,6 +572,64 @@ describe("snapshots", () => {
       });
     });
 
+    test("returns main's baseline at the merge base for a skipped snapshot on a branch", async ({
+      admin,
+    }) => {
+      const { projectId, build: mergeBaseBuild } = await createProjectAndBuild(admin);
+      const [atMergeBase] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: mergeBaseBuild.id,
+            ...VIEWPORT,
+            targetId: "story-a",
+            status: "success",
+            imagePath: "projects/p/builds/b/snapshots/at-merge-base.png",
+          },
+        ],
+      });
+      const laterMainBuild = await dbClient.builds.create({
+        projectId,
+        branch: "main",
+        commitSha: "c".repeat(40),
+        artifactPath: "builds/seed/main",
+        createdBy: admin.id,
+        createdAt: new Date(Date.now() + 30_000).toISOString(),
+      });
+      await createBaseline(admin, projectId, laterMainBuild!.id, "story-a");
+      await dbClient.baselineRevisions.create({
+        projectId,
+        browser: VIEWPORT.browser,
+        viewportWidth: VIEWPORT.viewportWidth,
+        viewportHeight: VIEWPORT.viewportHeight,
+        targetId: "story-a",
+        buildId: laterMainBuild!.id,
+        previousSnapshotId: atMergeBase!.id,
+        replacedExisting: true,
+        createdAt: laterMainBuild!.createdAt,
+      });
+      const branchBuild = await dbClient.builds.create({
+        projectId,
+        branch: "feature/test",
+        commitSha: "b".repeat(40),
+        baseBuildId: mergeBaseBuild.id,
+        artifactPath: "builds/seed/later",
+        createdBy: admin.id,
+        createdAt: new Date(Date.now() + 60_000).toISOString(),
+      });
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: branchBuild!.id, ...VIEWPORT, targetId: "story-a", status: "skipped" }],
+      });
+
+      const [error, result] = await serverClient.snapshots.getBaseline({
+        snapshotId: snapshot!.id,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.baseline).toMatchObject({
+        imagePath: "projects/p/builds/b/snapshots/at-merge-base.png",
+      });
+    });
+
     test("returns null when the snapshot is itself the baseline", async ({ admin }) => {
       const { projectId, build } = await createProjectAndBuild(admin);
       const baselineSnapshot = await createBaseline(admin, projectId, build.id, "story-a");

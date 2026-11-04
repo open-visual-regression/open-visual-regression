@@ -11,6 +11,44 @@ const CHANGED_REVIEW_STATUSES: ReadonlySet<DiffReviewStatus> = new Set([
 export const getBaseline = (projectId: string, viewport: Viewport, targetId: string) =>
   dbClient.baselines.find({ projectId, ...viewport, targetId });
 
+export type ComparisonBaseline = {
+  snapshotId: string | null;
+  // merge_base: main as it was at the build's merge base.
+  // latest: main's latest, because there's no merge base or main hasn't changed the story since.
+  // expired: the merge-base baseline was purged, so main's latest stands in for it.
+  source: "merge_base" | "latest" | "expired";
+};
+
+// What a story is compared against: main as it was at `base`, the main-branch build at the
+// merge base. Only stories main changed after `base` differ from main's latest baseline, and
+// the first of those changes records what the baseline was before it.
+export const findComparisonBaseline = async (
+  projectId: string,
+  viewport: Viewport,
+  targetId: string,
+  base: { createdAt: string } | null,
+): Promise<ComparisonBaseline> => {
+  const key = { projectId, ...viewport, targetId };
+  const [latest, revision] = await Promise.all([
+    dbClient.baselines.find(key),
+    base ? dbClient.baselineRevisions.findFirstAfter(key, base.createdAt) : undefined,
+  ]);
+
+  if (!revision) {
+    return { snapshotId: latest?.snapshotId ?? null, source: "latest" };
+  }
+
+  if (!revision.replacedExisting) {
+    return { snapshotId: null, source: "merge_base" };
+  }
+
+  if (revision.previousSnapshotId) {
+    return { snapshotId: revision.previousSnapshotId, source: "merge_base" };
+  }
+
+  return { snapshotId: latest?.snapshotId ?? null, source: "expired" };
+};
+
 export const promoteBaseline = async (diffId: string, approverId: string): Promise<void> => {
   const diff = await dbClient.diffs.findById(diffId);
   if (!diff) {

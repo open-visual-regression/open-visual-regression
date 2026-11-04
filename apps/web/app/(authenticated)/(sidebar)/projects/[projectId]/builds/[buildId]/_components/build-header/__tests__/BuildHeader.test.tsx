@@ -57,6 +57,26 @@ describe("BuildHeader", () => {
     expect(screen.getByRole("listitem", { name: "4 queued" })).toBeVisible();
   });
 
+  it("should link to the main-branch build a branch build was compared against", () => {
+    const build = mocks.build.generateBuild({
+      branch: "feature/empty-state",
+      baseBuild: { id: "0196f1c2-7a3b-7c4d-8e5f-6a7b8c9d0e1f", commitSha: "c0ffee1d2e3f" },
+    });
+
+    renderComponent({ build });
+
+    expect(screen.getByRole("link", { name: "compared to c0ffee1" })).toHaveAttribute(
+      "href",
+      `/projects/${build.project.id}/builds/0196f1c2-7a3b-7c4d-8e5f-6a7b8c9d0e1f`,
+    );
+  });
+
+  it("should not say what a build was compared against when it has no merge base", () => {
+    renderComponent({ build: mocks.build.generateBuild({ baseBuild: null }) });
+
+    expect(screen.queryByRole("link", { name: /compared to/ })).not.toBeInTheDocument();
+  });
+
   it("should hide both bulk actions when there are no reviewable snapshots", () => {
     renderComponent({
       build: mocks.build.generateBuild({ status: "needs_review" }),
