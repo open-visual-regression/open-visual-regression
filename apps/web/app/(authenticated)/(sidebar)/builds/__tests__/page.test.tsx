@@ -3,34 +3,20 @@ import { beforeEach, vi } from "vitest";
 
 import { mocks } from "@ovr/mocks";
 
+import { orpcServerClient } from "@/lib/orpc/server";
 import { describe, expect, it, render, screen } from "@/test-utils";
+
+import BuildsPage from "../page";
 
 vi.mock("next/navigation");
 
-const { listBuilds, listStatuses, listBranches, listAuthors, listCommitShas } = vi.hoisted(() => ({
-  listBuilds: vi.fn(),
-  listStatuses: vi.fn(),
-  listBranches: vi.fn(),
-  listAuthors: vi.fn(),
-  listCommitShas: vi.fn(),
-}));
+vi.mock("@/lib/orpc/server");
 
-vi.mock("@/lib/orpc/server", async () => {
-  const { createTanstackQueryUtils } = await import("@orpc/tanstack-query");
-  return {
-    orpcServer: createTanstackQueryUtils({
-      builds: {
-        list: listBuilds,
-        listStatuses,
-        listBranches,
-        listAuthors,
-        listCommitShas,
-      },
-    }),
-  };
-});
-
-const { default: BuildsPage } = await import("../page");
+const listBuilds = vi.mocked(orpcServerClient.builds.list);
+const listStatuses = vi.mocked(orpcServerClient.builds.listStatuses);
+const listBranches = vi.mocked(orpcServerClient.builds.listBranches);
+const listAuthors = vi.mocked(orpcServerClient.builds.listAuthors);
+const listCommitShas = vi.mocked(orpcServerClient.builds.listCommitShas);
 
 const renderPage = async (searchParams: Record<string, string | string[]> = {}) =>
   render(

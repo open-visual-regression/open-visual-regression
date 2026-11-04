@@ -6,6 +6,8 @@ import { formatSnapshotsOutput } from "../table";
 
 const SNAPSHOT: BuildSnapshotSchema = {
   id: "01a092d6-b0aa-71bf-9312-dd8ef48a22fb",
+  buildId: "01a092d6-b0aa-71bf-9312-dd8ef48a22fa",
+  project: { id: "01a092d6-b0aa-71bf-9312-dd8ef48a22f9", name: "Storefront" },
   targetId: "components-button--primary",
   targetTitle: "Components/Button",
   targetName: "Primary",

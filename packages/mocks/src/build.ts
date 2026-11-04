@@ -11,6 +11,8 @@ export const generateBuildSnapshot = (
   overrides?: Partial<BuildSnapshotSchema>,
 ): BuildSnapshotSchema => ({
   id: faker.string.uuid(),
+  buildId: faker.string.uuid(),
+  project: { id: faker.string.uuid(), name: faker.company.name() },
   targetId: faker.word.noun(),
   targetTitle: faker.word.noun(),
   targetName: faker.word.noun(),

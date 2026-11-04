@@ -4,6 +4,6 @@ import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 
 import { serverClient } from "@/lib/router";
 
-const client = createRouterClient(serverClient);
+export const orpcServerClient = createRouterClient(serverClient);
 
-export const orpcServer = createTanstackQueryUtils(client);
+export const orpcServer = createTanstackQueryUtils(orpcServerClient);

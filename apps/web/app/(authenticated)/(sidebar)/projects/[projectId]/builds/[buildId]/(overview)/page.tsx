@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { canReview } from "@/lib/auth/roles";
 import { getCachedSession } from "@/lib/auth/session";
+import { SnapshotsSection } from "@/lib/components/snapshot-grid/SnapshotsSection";
 import { getSnapshotStatusLabel } from "@/lib/components/SnapshotStatusBadge";
 import { getQueryClient } from "@/lib/orpc/query-client";
 import { orpcServer } from "@/lib/orpc/server";
@@ -16,7 +17,6 @@ import { BuildHeader } from "../_components/build-header/BuildHeader";
 import { BuildPageShell } from "../_components/BuildPageShell";
 import { SnapshotFilters } from "../_components/snapshot-grid/SnapshotFilters";
 import { SnapshotsSearchField } from "../_components/snapshot-grid/SnapshotsSearchField";
-import { SnapshotsSection } from "../_components/snapshot-grid/SnapshotsSection";
 
 type BuildPageProps = PageProps<"/projects/[projectId]/builds/[buildId]">;
 
@@ -45,7 +45,7 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
     serverClient.snapshots.listViewports({ buildId }),
     serverClient.snapshots.listFlags({ buildId }),
     queryClient.prefetchInfiniteQuery(
-      orpcServer.snapshots.list.infiniteOptions(snapshotsListInfiniteOptions(buildId, filters)),
+      orpcServer.snapshots.list.infiniteOptions(snapshotsListInfiniteOptions({ buildId }, filters)),
     ),
   ]);
 
@@ -117,7 +117,7 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
       }
       grid={
         <HydrationBoundary state={dehydrate(queryClient)}>
-          <SnapshotsSection projectId={projectId} buildId={buildId} filters={filters} />
+          <SnapshotsSection buildId={buildId} filters={filters} />
         </HydrationBoundary>
       }
     />

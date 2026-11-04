@@ -1,6 +1,7 @@
 import { type BuildSnapshotSchema } from "@ovr/api/contracts/snapshots";
-import { GlobeIcon, Icon, TimerIcon } from "@ovr/ui/components/icon";
+import { FolderIcon, GlobeIcon, Icon, TimerIcon } from "@ovr/ui/components/icon";
 import { ResolutionIcon } from "@ovr/ui/components/resolution-icon";
+import { Skeleton } from "@ovr/ui/components/skeleton";
 import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 import { cn } from "@ovr/ui/lib/utils";
 
@@ -39,19 +40,18 @@ const SnapshotCardBody = ({ className, children }: SnapshotCardSlotProps) => (
 
 type SnapshotCardProps = {
   snapshot: BuildSnapshotSchema;
-  projectId: string;
-  buildId: string;
   filters?: SnapshotFilters;
+  showProject?: boolean;
 };
 
-export const SnapshotCard = ({ snapshot, projectId, buildId, filters }: SnapshotCardProps) => {
+export const SnapshotCard = ({ snapshot, filters, showProject = false }: SnapshotCardProps) => {
   const imagePath = getStoragePath(snapshot.imagePath);
-  const label = `snapshot of ${snapshot.targetTitle} ${snapshot.targetName}, ${snapshot.browser} ${snapshot.viewportName}, ${getSnapshotStatusLabel(snapshot.status)}${snapshot.hasUncaughtPageError ? ", has warnings" : ""}${snapshot.isFlaky ? ", flaky" : ""}`;
+  const label = `snapshot of ${snapshot.targetTitle} ${snapshot.targetName}, ${showProject ? `${snapshot.project.name}, ` : ""}${snapshot.browser} ${snapshot.viewportName}, ${getSnapshotStatusLabel(snapshot.status)}${snapshot.hasUncaughtPageError ? ", has warnings" : ""}${snapshot.isFlaky ? ", flaky" : ""}`;
 
   return (
     <CardLink
       href={withSnapshotFilters(
-        `/projects/${projectId}/builds/${buildId}/snapshots/${snapshot.id}`,
+        `/projects/${snapshot.project.id}/builds/${snapshot.buildId}/snapshots/${snapshot.id}`,
         filters,
       )}
       className="gap-0 py-0"
@@ -89,6 +89,12 @@ export const SnapshotCard = ({ snapshot, projectId, buildId, filters }: Snapshot
         <Typography variant="caption" className="truncate">
           {snapshot.targetTitle}
         </Typography>
+        {showProject ? (
+          <Typography variant="caption" className="flex min-w-0 items-center gap-1">
+            <Icon icon={FolderIcon} size={12} className="shrink-0" />
+            <span className="truncate">{snapshot.project.name}</span>
+          </Typography>
+        ) : null}
         <MetadataList className="gap-x-3 gap-y-1">
           <MetadataItem icon={<Icon icon={GlobeIcon} size={12} className="shrink-0" />}>
             {snapshot.browser}
@@ -119,13 +125,33 @@ export const SnapshotCard = ({ snapshot, projectId, buildId, filters }: Snapshot
   );
 };
 
-export const SnapshotCardSkeleton = ({ className }: { className?: string }) => (
+const MetadataItemSkeleton = ({ className }: { className: string }) => (
+  <span className="flex items-center gap-1">
+    <Skeleton className="size-3 shrink-0" />
+    <TypographySkeleton variant="caption" className={className} />
+  </span>
+);
+
+type SnapshotCardSkeletonProps = {
+  className?: string;
+  showProject?: boolean;
+};
+
+export const SnapshotCardSkeleton = ({
+  className,
+  showProject = false,
+}: SnapshotCardSkeletonProps) => (
   <CardSurface aria-hidden className={cn("gap-0 py-0", className)}>
     <SnapshotCardPreview />
     <SnapshotCardBody>
       <TypographySkeleton variant="code" className="w-2/3" />
       <TypographySkeleton variant="caption" className="w-1/2" />
-      <TypographySkeleton variant="caption" className="w-3/4" />
+      {showProject ? <MetadataItemSkeleton className="w-16" /> : null}
+      <MetadataList className="gap-x-3 gap-y-1">
+        <MetadataItemSkeleton className="w-13" />
+        <MetadataItemSkeleton className="w-11" />
+        <MetadataItemSkeleton className="w-8" />
+      </MetadataList>
     </SnapshotCardBody>
   </CardSurface>
 );

@@ -2,6 +2,7 @@ import { type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
 import {
   type SnapshotFlag,
   type SnapshotHistoryCursor,
+  type SnapshotSort,
   type SnapshotsCursor,
 } from "@ovr/api/contracts/snapshots";
 
@@ -12,7 +13,8 @@ export const SNAPSHOTS_PAGE_SIZE = 60;
 export const SNAPSHOT_HISTORY_PAGE_SIZE = 30;
 
 type SnapshotsListInput = {
-  buildId: string;
+  buildId: string | undefined;
+  sort: SnapshotSort | undefined;
   search: string | undefined;
   statuses: SnapshotDisplayStatus[] | undefined;
   browsers: string[] | undefined;
@@ -30,12 +32,18 @@ type SnapshotsListInfiniteOptions = {
   }) => SnapshotsCursor | undefined;
 };
 
+export type SnapshotsListScope = {
+  buildId?: string;
+  sort?: SnapshotSort;
+};
+
 export const snapshotsListInfiniteOptions = (
-  buildId: string,
-  { search, statuses, browsers, viewports, flags }: SnapshotFilters,
+  { buildId, sort }: SnapshotsListScope,
+  { search, statuses, browsers, viewports, flags }: Partial<SnapshotFilters> = {},
 ): SnapshotsListInfiniteOptions => ({
   input: (cursor) => ({
     buildId,
+    sort,
     search,
     statuses,
     browsers,

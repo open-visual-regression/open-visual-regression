@@ -6,8 +6,12 @@ import { SnapshotCard } from "../SnapshotCard";
 
 describe("SnapshotCard", () => {
   it("should link to the snapshot page", () => {
-    const snapshot = mocks.build.generateBuildSnapshot({ id: "snapshot-1" });
-    render(<SnapshotCard snapshot={snapshot} projectId="project-1" buildId="build-1" />);
+    const snapshot = mocks.build.generateBuildSnapshot({
+      id: "snapshot-1",
+      buildId: "build-1",
+      project: { id: "project-1", name: "Storefront" },
+    });
+    render(<SnapshotCard snapshot={snapshot} />);
 
     expect(screen.getByRole("link")).toHaveAttribute(
       "href",
@@ -16,12 +20,14 @@ describe("SnapshotCard", () => {
   });
 
   it("should carry the build's filters into the snapshot link", () => {
-    const snapshot = mocks.build.generateBuildSnapshot({ id: "snapshot-1" });
+    const snapshot = mocks.build.generateBuildSnapshot({
+      id: "snapshot-1",
+      buildId: "build-1",
+      project: { id: "project-1", name: "Storefront" },
+    });
     render(
       <SnapshotCard
         snapshot={snapshot}
-        projectId="project-1"
-        buildId="build-1"
         filters={{ statuses: ["needs_review"], browsers: ["chromium"], viewports: [], flags: [] }}
       />,
     );
@@ -34,35 +40,35 @@ describe("SnapshotCard", () => {
 
   it("should show the processing time when the snapshot has one", () => {
     const snapshot = mocks.build.generateBuildSnapshot({ processingMs: 2500 });
-    render(<SnapshotCard snapshot={snapshot} projectId="project-1" buildId="build-1" />);
+    render(<SnapshotCard snapshot={snapshot} />);
 
     expect(screen.getByRole("img", { name: "processing time" })).toBeInTheDocument();
   });
 
   it("should not show the processing time when the snapshot has none", () => {
     const snapshot = mocks.build.generateBuildSnapshot({ processingMs: null });
-    render(<SnapshotCard snapshot={snapshot} projectId="project-1" buildId="build-1" />);
+    render(<SnapshotCard snapshot={snapshot} />);
 
     expect(screen.queryByRole("img", { name: "processing time" })).not.toBeInTheDocument();
   });
 
   it("should show a warning badge when the snapshot has an uncaught page error", () => {
     const snapshot = mocks.build.generateBuildSnapshot({ hasUncaughtPageError: true });
-    render(<SnapshotCard snapshot={snapshot} projectId="project-1" buildId="build-1" />);
+    render(<SnapshotCard snapshot={snapshot} />);
 
     expect(screen.getByRole("img", { name: "warning" })).toBeInTheDocument();
   });
 
   it("should not show a warning badge when the snapshot has no warnings", () => {
     const snapshot = mocks.build.generateBuildSnapshot({ hasUncaughtPageError: false });
-    render(<SnapshotCard snapshot={snapshot} projectId="project-1" buildId="build-1" />);
+    render(<SnapshotCard snapshot={snapshot} />);
 
     expect(screen.queryByRole("img", { name: "warning" })).not.toBeInTheDocument();
   });
 
   it("should show a flaky badge when the story has been flagged as flaky", () => {
     const snapshot = mocks.build.generateBuildSnapshot({ isFlaky: true });
-    render(<SnapshotCard snapshot={snapshot} projectId="project-1" buildId="build-1" />);
+    render(<SnapshotCard snapshot={snapshot} />);
 
     expect(screen.getByRole("img", { name: "flaky" })).toBeInTheDocument();
     expect(screen.getByRole("link")).toHaveAccessibleName(expect.stringContaining(", flaky"));
@@ -70,8 +76,27 @@ describe("SnapshotCard", () => {
 
   it("should not show a flaky badge when the story has not been flagged", () => {
     const snapshot = mocks.build.generateBuildSnapshot({ isFlaky: false });
-    render(<SnapshotCard snapshot={snapshot} projectId="project-1" buildId="build-1" />);
+    render(<SnapshotCard snapshot={snapshot} />);
 
     expect(screen.queryByRole("img", { name: "flaky" })).not.toBeInTheDocument();
+  });
+
+  it("should name the snapshot's project when asked to", () => {
+    const snapshot = mocks.build.generateBuildSnapshot({
+      project: { id: "project-1", name: "Storefront" },
+    });
+    render(<SnapshotCard snapshot={snapshot} showProject />);
+
+    expect(screen.getByText("Storefront")).toBeVisible();
+    expect(screen.getByRole("link")).toHaveAccessibleName(expect.stringContaining(", Storefront,"));
+  });
+
+  it("should not name the project by default", () => {
+    const snapshot = mocks.build.generateBuildSnapshot({
+      project: { id: "project-1", name: "Storefront" },
+    });
+    render(<SnapshotCard snapshot={snapshot} />);
+
+    expect(screen.queryByText("Storefront")).not.toBeInTheDocument();
   });
 });

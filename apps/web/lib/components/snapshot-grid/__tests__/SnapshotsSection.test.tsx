@@ -16,7 +16,6 @@ import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
 import { SnapshotsSection } from "../SnapshotsSection";
 
 const BUILD_ID = "018f0000-0000-7000-8000-000000000000";
-const PROJECT_ID = "018f0000-0000-7000-8000-000000000001";
 
 const CURSOR = {
   statusPriority: 3,
@@ -36,7 +35,7 @@ const toPage = (snapshots: BuildSnapshotSchema[], total = snapshots.length): Lis
 const NO_FILTERS: SnapshotFilters = { statuses: [], browsers: [], viewports: [], flags: [] };
 
 const listKey = (filters = NO_FILTERS) =>
-  orpc.snapshots.list.infiniteKey(snapshotsListInfiniteOptions(BUILD_ID, filters));
+  orpc.snapshots.list.infiniteKey(snapshotsListInfiniteOptions({ buildId: BUILD_ID }, filters));
 
 const createQueryClient = () =>
   new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
@@ -62,7 +61,7 @@ const renderSection = ({
   queryClient = createQueryClient(),
   filters = NO_FILTERS,
 }: RenderOptions = {}) =>
-  render(<SnapshotsSection projectId={PROJECT_ID} buildId={BUILD_ID} filters={filters} />, {
+  render(<SnapshotsSection buildId={BUILD_ID} filters={filters} />, {
     wrapper: ({ children }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     ),
@@ -121,7 +120,7 @@ describe("SnapshotsSection", () => {
     render(
       <QueryClientProvider client={queryClient}>
         <HydrationBoundary state={dehydrate(serverQueryClient)}>
-          <SnapshotsSection projectId={PROJECT_ID} buildId={BUILD_ID} filters={NO_FILTERS} />
+          <SnapshotsSection buildId={BUILD_ID} filters={NO_FILTERS} />
         </HydrationBoundary>
       </QueryClientProvider>,
     );
@@ -147,5 +146,38 @@ describe("SnapshotsSection", () => {
     renderSection({ queryClient, filters });
 
     expect(screen.getByText('no snapshots found matching "home"')).toBeVisible();
+  });
+
+  it("should list every build's snapshots by name with their projects, without carrying filters into the links", () => {
+    const filters = { ...NO_FILTERS, flags: ["flaky" as const] };
+    const queryClient = createQueryClient();
+    queryClient.setQueryData(
+      orpc.snapshots.list.infiniteKey(snapshotsListInfiniteOptions({ sort: "name" }, filters)),
+      {
+        pages: [
+          toPage([
+            mocks.build.generateBuildSnapshot({
+              id: "snapshot-1",
+              buildId: "build-1",
+              project: { id: "project-1", name: "Storefront" },
+              targetName: "home-page",
+            }),
+          ]),
+        ],
+        pageParams: [undefined],
+      },
+    );
+
+    render(<SnapshotsSection sort="name" filters={filters} showProject />, {
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      ),
+    });
+
+    expect(screen.getByText("Storefront")).toBeVisible();
+    expect(screen.getByRole("link", { name: /home-page/ })).toHaveAttribute(
+      "href",
+      "/projects/project-1/builds/build-1/snapshots/snapshot-1",
+    );
   });
 });

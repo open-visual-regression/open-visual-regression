@@ -102,6 +102,8 @@ export const getBaselineContract = oc.input(getBaselineInputSchema).output(getBa
 
 export const buildSnapshotSchema = z.object({
   id: z.uuidv7(),
+  buildId: z.uuidv7(),
+  project: z.object({ id: z.uuidv7(), name: z.string().min(1) }),
   targetId: z.string().min(1),
   targetTitle: z.string().min(1),
   targetName: z.string().min(1),
@@ -123,7 +125,7 @@ export const buildSnapshotSchema = z.object({
 export type BuildSnapshotSchema = z.infer<typeof buildSnapshotSchema>;
 
 export const snapshotsCursorSchema = z.object({
-  statusPriority: z.number().int(),
+  statusPriority: z.number().int().optional().meta({ description: "Set when sorting by status" }),
   targetTitle: z.string(),
   targetName: z.string(),
   browser: z.string(),
@@ -143,8 +145,18 @@ export const snapshotFiltersSchema = z.object({
 
 export type SnapshotFiltersSchema = z.infer<typeof snapshotFiltersSchema>;
 
+export const snapshotSortSchema = z.enum(["status", "name"]).meta({
+  description:
+    "status puts errors and snapshots awaiting review first; name sorts alphabetically by target title, target name, browser and viewport",
+});
+
+export type SnapshotSort = z.infer<typeof snapshotSortSchema>;
+
 export const listInputSchema = snapshotFiltersSchema.extend({
-  buildId: z.uuidv7(),
+  buildId: z.uuidv7().optional().meta({
+    description: "Only this build's snapshots. Without it, every build in the organization",
+  }),
+  sort: snapshotSortSchema.default("status"),
   limit: z.number().int().min(1).max(100).default(24),
   cursor: snapshotsCursorSchema.optional(),
 });
