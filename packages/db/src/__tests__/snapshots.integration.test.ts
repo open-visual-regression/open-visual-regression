@@ -1,9 +1,10 @@
+import { eq } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
 
 import { dbClient } from "../client";
 import { db } from "../db";
 import { type ListFilters, type SnapshotsCursor } from "../repository/snapshots";
-import { flakySnapshots, organization as organizationTable, projects } from "../schema";
+import { builds, flakySnapshots, organization as organizationTable, projects } from "../schema";
 import { describe, expect, test, type Viewport } from "./fixtures";
 
 const seedReviewQueue = async (
@@ -1374,6 +1375,97 @@ describe("snapshots", () => {
 
       expect(snapshots.map(({ id }) => id)).toEqual([baseline!.id]);
       expect(await dbClient.snapshots.count(filters)).toBe(1);
+    });
+
+    test("should list only each project's latest main build in the catalog", async ({
+      organization,
+      project,
+      build,
+      user,
+      captureConfiguration,
+    }) => {
+      const createBuild = async (projectId: string, branch: string) =>
+        (await dbClient.builds.create({
+          projectId,
+          branch,
+          commitSha: "a".repeat(40),
+          artifactPath: "builds/seed/artifact",
+          createdBy: user.id,
+        }))!;
+      const [otherProject] = await db
+        .insert(projects)
+        .values({
+          name: "Other Project",
+          gitMainBranch: "trunk",
+          organizationId: organization.id,
+          creatorId: user.id,
+        })
+        .returning();
+      const latestMain = await createBuild(project.id, "main");
+      const featureBuild = await createBuild(project.id, "feature/cards");
+      const canceledMain = await createBuild(project.id, "main");
+      await db
+        .update(builds)
+        .set({ processingStatus: "canceled" })
+        .where(eq(builds.id, canceledMain.id));
+      const otherMain = await createBuild(otherProject!.id, "trunk");
+      await seedStories(build.id, captureConfiguration, ["Badge", "Card"]);
+      await seedStories(latestMain.id, captureConfiguration, ["Badge", "Card"]);
+      await seedStories(featureBuild.id, captureConfiguration, ["Badge", "Card"]);
+      await seedStories(canceledMain.id, captureConfiguration, ["Badge", "Card"]);
+      await seedStories(otherMain.id, captureConfiguration, ["Alert"]);
+      const filters = { organizationId: organization.id, catalog: true };
+
+      const { snapshots } = await dbClient.snapshots.list({ ...filters, sort: "name", limit: 10 });
+
+      expect(snapshots.map(({ targetTitle, buildId }) => ({ targetTitle, buildId }))).toEqual([
+        { targetTitle: "Alert", buildId: otherMain.id },
+        { targetTitle: "Badge", buildId: latestMain.id },
+        { targetTitle: "Card", buildId: latestMain.id },
+      ]);
+      expect(await dbClient.snapshots.count(filters)).toBe(3);
+    });
+
+    test("should widen the catalog to every build when filtering to in-flight statuses", async ({
+      organization,
+      project,
+      build,
+      user,
+      captureConfiguration,
+    }) => {
+      const featureBuild = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "feature/cards",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/seed/artifact",
+        createdBy: user.id,
+      });
+      const [mainCard] = await seedStories(build.id, captureConfiguration, ["Card"]);
+      await dbClient.snapshots.updateStatus(mainCard!.id, "processing");
+      const [featureCard] = await seedStories(featureBuild!.id, captureConfiguration, ["Card"]);
+      await dbClient.snapshots.updateStatus(featureCard!.id, "processing");
+      const [featureBadge] = await seedStories(featureBuild!.id, captureConfiguration, ["Badge"]);
+      await dbClient.snapshots.updateStatus(featureBadge!.id, "error");
+      const scope = { organizationId: organization.id, catalog: true };
+
+      const inFlight = await dbClient.snapshots.list({
+        ...scope,
+        statuses: ["queued", "processing"],
+        sort: "name",
+        limit: 10,
+      });
+      const mixed = await dbClient.snapshots.list({
+        ...scope,
+        statuses: ["processing", "error"],
+        sort: "name",
+        limit: 10,
+      });
+
+      expect(inFlight.snapshots.map(({ id }) => id).sort()).toEqual(
+        [mainCard!.id, featureCard!.id].sort(),
+      );
+      expect(mixed.snapshots.map(({ id }) => id)).toEqual([mainCard!.id]);
+      expect(await dbClient.snapshots.findStatuses(scope)).toEqual(["processing"]);
     });
 
     test("should page through every snapshot exactly once when sorted by name", async ({

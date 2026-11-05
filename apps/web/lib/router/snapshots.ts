@@ -94,7 +94,10 @@ export const list = os.snapshots.list
   .use(optionalOrganizationBuildMiddleware)
   .handler(async ({ input, context }) => {
     const { sort, limit, cursor, ...rest } = input;
-    const filters = { organizationId: context.organizationId, ...rest };
+    // Without a build, list the catalog rather than every build's copy of each
+    // story. Baselines are already one per story, browser and viewport.
+    const catalog = !rest.buildId && !rest.baseline;
+    const filters = { organizationId: context.organizationId, catalog, ...rest };
 
     const [{ snapshots: rows, nextCursor }, total] = await Promise.all([
       dbClient.snapshots.list({ ...filters, sort, limit, cursor }),
@@ -200,6 +203,7 @@ export const listStatuses = os.snapshots.listStatuses
     statuses: await dbClient.snapshots.findStatuses({
       organizationId: context.organizationId,
       buildId: input.buildId,
+      catalog: !input.buildId,
     }),
   }))
   .actionable();
@@ -211,6 +215,7 @@ export const listBrowsers = os.snapshots.listBrowsers
     browsers: await dbClient.snapshots.findBrowsers({
       organizationId: context.organizationId,
       buildId: input.buildId,
+      catalog: !input.buildId,
     }),
   }))
   .actionable();
@@ -222,6 +227,7 @@ export const listViewports = os.snapshots.listViewports
     viewports: await dbClient.snapshots.findViewports({
       organizationId: context.organizationId,
       buildId: input.buildId,
+      catalog: !input.buildId,
     }),
   }))
   .actionable();
@@ -233,6 +239,7 @@ export const listFlags = os.snapshots.listFlags
     flags: await dbClient.snapshots.findFlags({
       organizationId: context.organizationId,
       buildId: input.buildId,
+      catalog: !input.buildId,
     }),
   }))
   .actionable();
