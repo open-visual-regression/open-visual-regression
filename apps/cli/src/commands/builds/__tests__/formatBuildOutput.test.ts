@@ -24,6 +24,8 @@ const BUILD: BuildDetailSchema = {
   latestBuildId: null,
   commitUrl: null,
   branchUrl: null,
+  mainBranch: "main",
+  baseBuild: null,
 };
 
 describe("formatBuildOutput", () => {

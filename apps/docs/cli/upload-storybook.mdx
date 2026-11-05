@@ -80,6 +80,12 @@ A change to any other lockfile, such as Bun's `bun.lock`, captures every story.
 ## CI example
 
 ```yaml
+- uses: actions/checkout@v4
+  with:
+    # Build the pull request's own commit, with the history OVR needs to find its merge base.
+    ref: ${{ github.event.pull_request.head.sha || github.sha }}
+    fetch-depth: 0
+
 - name: Build Storybook
   run: pnpm build-storybook
 
@@ -95,5 +101,7 @@ A change to any other lockfile, such as Bun's `bun.lock`, captures every story.
       --name "$(git log -1 --pretty=%s)" \
       --author "$(git log -1 --pretty=%an)"
 ```
+
+On pull requests, GitHub checks out a merge of the pull request into its base branch by default. Checking out the pull request's head commit makes the screenshots match the commit OVR records, and the branch is compared against main as it was at its [merge base](/baselines#branch-builds).
 
 Every story is captured at the viewports from [`ovr.config`](/configuration/config), unless overridden with [per-story parameters](/configuration/story-parameters).

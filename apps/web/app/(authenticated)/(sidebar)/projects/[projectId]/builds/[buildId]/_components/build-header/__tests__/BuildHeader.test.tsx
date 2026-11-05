@@ -57,6 +57,46 @@ describe("BuildHeader", () => {
     expect(screen.getByRole("listitem", { name: "4 queued" })).toBeVisible();
   });
 
+  it("should show a branch build's branch alongside the main build it was compared to", () => {
+    const build = mocks.build.generateBuild({
+      branch: "feature/empty-state",
+      branchUrl: "https://github.com/acme/web/tree/feature/empty-state",
+      baseBuild: { id: "0196f1c2-7a3b-7c4d-8e5f-6a7b8c9d0e1f", commitSha: "c0ffee1d2e3f" },
+    });
+
+    renderComponent({ build });
+
+    expect(
+      screen.getByRole("group", { name: "feature/empty-state compared to main @ c0ffee1" }),
+    ).toBeVisible();
+    expect(screen.getByRole("link", { name: "main @ c0ffee1" })).toHaveAttribute(
+      "href",
+      `/projects/${build.project.id}/builds/0196f1c2-7a3b-7c4d-8e5f-6a7b8c9d0e1f`,
+    );
+    expect(screen.getByRole("link", { name: "feature/empty-state" })).toHaveAttribute(
+      "href",
+      "https://github.com/acme/web/tree/feature/empty-state",
+    );
+  });
+
+  it("should say a branch build was compared to main's latest when it has no merge base", () => {
+    renderComponent({
+      build: mocks.build.generateBuild({ branch: "feature/empty-state", baseBuild: null }),
+    });
+
+    expect(
+      screen.getByRole("group", { name: "feature/empty-state compared to main (latest)" }),
+    ).toBeVisible();
+    expect(screen.queryByRole("link", { name: /^main/ })).not.toBeInTheDocument();
+  });
+
+  it("should show only the branch for a build on the main branch", () => {
+    renderComponent({ build: mocks.build.generateBuild({ branch: "main", baseBuild: null }) });
+
+    expect(screen.queryByRole("group", { name: /compared to/ })).not.toBeInTheDocument();
+    expect(screen.getByText("main")).toBeVisible();
+  });
+
   it("should hide both bulk actions when there are no reviewable snapshots", () => {
     renderComponent({
       build: mocks.build.generateBuild({ status: "needs_review" }),

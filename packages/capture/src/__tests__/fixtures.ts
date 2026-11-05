@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 
 import type { Browser, BrowserServer, BrowserType, Page } from "playwright";
 import { chromium } from "playwright";
+import { PNG } from "pngjs";
 import * as tar from "tar";
 import { v7 as uuidv7 } from "uuid";
 import { test as vitest, vi } from "vitest";
@@ -18,6 +19,8 @@ import { organization, projects, user as userTable } from "@ovr/db/schema";
 import { metricsFixture, type TestMetrics } from "@ovr/metrics/testing";
 import { buildRedisConnection, type RedisConnection } from "@ovr/queue";
 import { storage } from "@ovr/storage";
+
+import { diffSnapshot } from "../snapshots";
 
 export { describe, expect } from "vitest";
 
@@ -135,6 +138,14 @@ type Fixtures = {
     targetId: string;
     imagePath: string;
   }) => Promise<void>;
+  captureAndDiff: (
+    build: { branch: string; createdAt: string; baseBuildId?: string },
+    fill: number,
+  ) => Promise<{
+    build: NonNullable<Awaited<ReturnType<typeof dbClient.builds.create>>>;
+    snapshot: NonNullable<Awaited<ReturnType<typeof dbClient.snapshots.createMany>>[number]>;
+    diff: NonNullable<Awaited<ReturnType<typeof dbClient.diffs.create>>>;
+  }>;
   metrics: TestMetrics;
 };
 
@@ -227,6 +238,39 @@ export const test = vitest.extend<Fixtures>({
         snapshotId: snapshot!.id,
         approvedBy: build.createdBy,
       });
+    });
+  },
+
+  // Captures target-a as a solid `fill` image in a new build and diffs it, the way the worker
+  // does, then marks the build successful so later builds can use it as their merge base.
+  captureAndDiff: async ({ project, user, captureConfiguration }, use) => {
+    await use(async (build, fill) => {
+      const created = await dbClient.builds.create({
+        projectId: project.id,
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/artifact",
+        createdBy: user.id,
+        ...build,
+      });
+      const imagePath = `builds/${created!.id}/snapshots/target-a.png`;
+      const png = new PNG({ width: 2, height: 2 });
+      png.data.fill(fill);
+      await storage.uploadFile(imagePath, PNG.sync.write(png), "image/png");
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: created!.id,
+            ...captureConfiguration,
+            targetId: "target-a",
+            status: "success",
+            imagePath,
+          },
+        ],
+      });
+      const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
+      await diffSnapshot(snapshot!.id, diff!.id);
+      await dbClient.builds.updateProcessingStatus(created!.id, "success");
+      return { build: created!, snapshot: snapshot!, diff: diff! };
     });
   },
 

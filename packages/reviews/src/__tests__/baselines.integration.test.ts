@@ -1,6 +1,6 @@
 import { dbClient } from "@ovr/db/client";
 
-import { getBaseline, promoteBaseline } from "../baselines";
+import { findComparisonBaseline, getBaseline, promoteBaseline } from "../baselines";
 import { describe, expect, test } from "./fixtures";
 
 describe("baselines", () => {
@@ -232,6 +232,116 @@ describe("baselines", () => {
           newerBuild!.createdAt,
         ),
       ).toBeUndefined();
+    });
+  });
+
+  describe("findComparisonBaseline", () => {
+    const BASE = { createdAt: "2026-01-02T00:00:00.000Z" };
+
+    test("should compare against main's latest when the build has no merge base", async ({
+      project,
+      captureConfiguration,
+      mainBuild,
+      reviewer,
+    }) => {
+      const [latest] = await dbClient.snapshots.createMany({
+        values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "target-a" }],
+      });
+      await dbClient.baselines.upsert({
+        projectId: project.id,
+        ...captureConfiguration,
+        targetId: "target-a",
+        snapshotId: latest!.id,
+        approvedBy: reviewer.id,
+      });
+
+      const result = await findComparisonBaseline(
+        project.id,
+        captureConfiguration,
+        "target-a",
+        null,
+      );
+
+      expect(result).toEqual({ snapshotId: latest!.id, source: "latest" });
+    });
+
+    test("should compare against what the target looked like at the merge base when main changed it since", async ({
+      project,
+      captureConfiguration,
+      mainBuild,
+      recordRevision,
+    }) => {
+      const [atMergeBase] = await dbClient.snapshots.createMany({
+        values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "target-a" }],
+      });
+      await recordRevision({
+        previousSnapshotId: atMergeBase!.id,
+        replacedExisting: true,
+        createdAt: "2026-01-03T00:00:00.000Z",
+      });
+
+      const result = await findComparisonBaseline(
+        project.id,
+        captureConfiguration,
+        "target-a",
+        BASE,
+      );
+
+      expect(result).toEqual({ snapshotId: atMergeBase!.id, source: "merge_base" });
+    });
+
+    test("should treat a target main added after the merge base as new", async ({
+      project,
+      captureConfiguration,
+      recordRevision,
+    }) => {
+      await recordRevision({
+        previousSnapshotId: null,
+        replacedExisting: false,
+        createdAt: "2026-01-03T00:00:00.000Z",
+      });
+
+      const result = await findComparisonBaseline(
+        project.id,
+        captureConfiguration,
+        "target-a",
+        BASE,
+      );
+
+      expect(result).toEqual({ snapshotId: null, source: "merge_base" });
+    });
+
+    test("should fall back to main's latest when the merge-base baseline was purged", async ({
+      project,
+      captureConfiguration,
+      reviewer,
+      mainBuild,
+      recordRevision,
+    }) => {
+      const [latest] = await dbClient.snapshots.createMany({
+        values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "target-a" }],
+      });
+      await dbClient.baselines.upsert({
+        projectId: project.id,
+        ...captureConfiguration,
+        targetId: "target-a",
+        snapshotId: latest!.id,
+        approvedBy: reviewer.id,
+      });
+      await recordRevision({
+        previousSnapshotId: null,
+        replacedExisting: true,
+        createdAt: "2026-01-03T00:00:00.000Z",
+      });
+
+      const result = await findComparisonBaseline(
+        project.id,
+        captureConfiguration,
+        "target-a",
+        BASE,
+      );
+
+      expect(result).toEqual({ snapshotId: latest!.id, source: "expired" });
     });
   });
 });

@@ -1545,6 +1545,33 @@ describe("builds", () => {
         status: "queued",
         isRebuildable: false,
         isReviewable: false,
+        baseBuild: null,
+      });
+    });
+
+    test("names the main-branch build a branch build was compared against", async ({ admin }) => {
+      const [, project] = await serverClient.projects.add(TEST_PROJECT);
+      const mergeBaseBuild = await dbClient.builds.create({
+        projectId: project!.projectId,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: admin.id,
+        processingStatus: "success",
+      });
+      const build = await dbClient.builds.create({
+        projectId: project!.projectId,
+        branch: "feature/x",
+        commitSha: "b".repeat(40),
+        baseBuildId: mergeBaseBuild!.id,
+        artifactPath: "builds/b/artifact",
+        createdBy: admin.id,
+      });
+
+      const [, result] = await serverClient.builds.getOne({ buildId: build!.id });
+
+      expect(result?.build).toMatchObject({
+        baseBuild: { id: mergeBaseBuild!.id, commitSha: "a".repeat(40) },
       });
     });
 

@@ -18,6 +18,11 @@ export class BuildPage {
     return this.page.getByRole("status", { name: "build status" });
   }
 
+  // The main-branch build a branch build was compared to, shown as `main @ <sha>`.
+  baseBuildLink(mainBranch: string, shortSha: string): Locator {
+    return this.page.getByRole("link", { name: `${mainBranch} @ ${shortSha}`, exact: true });
+  }
+
   cancelButton(): Locator {
     return this.page.getByRole("button", { name: "cancel build", exact: true });
   }

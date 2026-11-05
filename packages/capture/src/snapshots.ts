@@ -33,7 +33,7 @@ import type { SnapshotDbSchema } from "@ovr/db/repository/snapshots";
 import type { BuildProcessingStatus } from "@ovr/db/schema";
 import { createLogger } from "@ovr/logger";
 import { enqueueDiff, enqueueFinalize } from "@ovr/queue/producer";
-import { promoteBaseline } from "@ovr/reviews/baselines";
+import { findComparisonBaseline, promoteBaseline } from "@ovr/reviews/baselines";
 import { storage } from "@ovr/storage";
 
 import {
@@ -739,19 +739,35 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
 
   const isMainBranch = build.branch === project.gitMainBranch;
 
-  const baseline = await dbClient.baselines.find({
-    projectId: project.id,
-    browser: snapshot.browser,
-    viewportWidth: snapshot.viewportWidth,
-    viewportHeight: snapshot.viewportHeight,
-    targetId: snapshot.targetId,
-  });
+  // Branch builds compare against main as it was at their merge base, so changes main made
+  // since the branch was cut don't show up as the branch's own.
+  const base =
+    !isMainBranch && build.baseBuildId ? await dbClient.builds.findById(build.baseBuildId) : null;
+  const baseline = await findComparisonBaseline(
+    project.id,
+    {
+      browser: snapshot.browser,
+      viewportWidth: snapshot.viewportWidth,
+      viewportHeight: snapshot.viewportHeight,
+    },
+    snapshot.targetId,
+    base ?? null,
+  );
+
+  if (baseline.source === "expired") {
+    logger.warn(
+      { snapshotId, buildId: build.id, baseBuildId: build.baseBuildId },
+      "merge-base baseline was purged; comparing against the latest baseline instead",
+    );
+  }
 
   if (!snapshot.imagePath) {
     throw new Error(`Snapshot has no captured image: ${snapshotId}`);
   }
 
-  const baselineSnapshot = baseline ? await dbClient.snapshots.findById(baseline.snapshotId) : null;
+  const baselineSnapshot = baseline.snapshotId
+    ? await dbClient.snapshots.findById(baseline.snapshotId)
+    : null;
   const diff = await diffAgainstBaselineSnapshot(
     snapshotId,
     snapshot.imagePath,

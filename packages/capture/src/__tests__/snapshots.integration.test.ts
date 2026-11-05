@@ -1195,6 +1195,113 @@ describe("snapshots", () => {
       );
     });
 
+    describe("on a branch cut before main changed a target", () => {
+      test("should not show main's later change as the branch's own", async ({
+        captureAndDiff,
+      }) => {
+        const cut = await captureAndDiff(
+          { branch: "main", createdAt: "2026-01-01T00:00:00.000Z" },
+          0,
+        );
+        await captureAndDiff({ branch: "main", createdAt: "2026-01-02T00:00:00.000Z" }, 255);
+
+        const branch = await captureAndDiff(
+          { branch: "feature/x", createdAt: "2026-01-03T00:00:00.000Z", baseBuildId: cut.build.id },
+          0,
+        );
+
+        expect(await dbClient.diffs.findById(branch.diff.id)).toMatchObject({
+          reviewStatus: "unchanged",
+          baselineSnapshotId: cut.snapshot.id,
+        });
+      });
+
+      test("should still show a change the branch made itself", async ({ captureAndDiff }) => {
+        const cut = await captureAndDiff(
+          { branch: "main", createdAt: "2026-01-01T00:00:00.000Z" },
+          0,
+        );
+        await captureAndDiff({ branch: "main", createdAt: "2026-01-02T00:00:00.000Z" }, 255);
+
+        const branch = await captureAndDiff(
+          { branch: "feature/x", createdAt: "2026-01-03T00:00:00.000Z", baseBuildId: cut.build.id },
+          128,
+        );
+
+        expect(await dbClient.diffs.findById(branch.diff.id)).toMatchObject({
+          reviewStatus: "needs_review",
+          baselineSnapshotId: cut.snapshot.id,
+        });
+      });
+
+      test("should compare against main's latest when the branch has no merge base", async ({
+        captureAndDiff,
+      }) => {
+        await captureAndDiff({ branch: "main", createdAt: "2026-01-01T00:00:00.000Z" }, 0);
+        const latest = await captureAndDiff(
+          { branch: "main", createdAt: "2026-01-02T00:00:00.000Z" },
+          255,
+        );
+
+        const branch = await captureAndDiff(
+          { branch: "feature/x", createdAt: "2026-01-03T00:00:00.000Z" },
+          0,
+        );
+
+        expect(await dbClient.diffs.findById(branch.diff.id)).toMatchObject({
+          reviewStatus: "needs_review",
+          baselineSnapshotId: latest.snapshot.id,
+        });
+      });
+
+      test("should compare against main's latest once the merge-base build is purged", async ({
+        project,
+        user,
+        captureConfiguration,
+        captureAndDiff,
+      }) => {
+        const cut = await captureAndDiff(
+          { branch: "main", createdAt: "2026-01-01T00:00:00.000Z" },
+          0,
+        );
+        const latest = await captureAndDiff(
+          { branch: "main", createdAt: "2026-01-02T00:00:00.000Z" },
+          255,
+        );
+        const branchBuild = await dbClient.builds.create({
+          projectId: project.id,
+          branch: "feature/x",
+          commitSha: "b".repeat(40),
+          createdAt: "2026-01-03T00:00:00.000Z",
+          baseBuildId: cut.build.id,
+          artifactPath: "builds/artifact",
+          createdBy: user.id,
+        });
+        const imagePath = `builds/${branchBuild!.id}/snapshots/target-a.png`;
+        await uploadPng(imagePath, 0);
+        const [snapshot] = await dbClient.snapshots.createMany({
+          values: [
+            {
+              buildId: branchBuild!.id,
+              ...captureConfiguration,
+              targetId: "target-a",
+              status: "success",
+              imagePath,
+            },
+          ],
+        });
+        const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
+
+        await dbClient.transaction((tx) => dbClient.builds.removeMany(tx, [cut.build.id]));
+        await diffSnapshot(snapshot!.id, diff!.id);
+
+        expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
+          reviewStatus: "needs_review",
+          baselineSnapshotId: latest.snapshot.id,
+        });
+      });
+    });
+
     test("promotes the baseline and skips review entirely for a main-branch build with no prior baseline", async ({
       mainBuild,
       project,
