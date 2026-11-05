@@ -3,7 +3,8 @@ import { test as vitest } from "vitest";
 
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
-import { organization, projects, user as userTable } from "@ovr/db/schema";
+import type { BaselineRevisionDbSchema } from "@ovr/db/repository/baselineRevisions";
+import { baselineRevisions, organization, projects, user as userTable } from "@ovr/db/schema";
 import { buildRedisConnection, type RedisConnection } from "@ovr/queue";
 
 export { describe, expect } from "vitest";
@@ -22,6 +23,9 @@ type Fixtures = {
   captureConfiguration: Viewport;
   mainBuild: NonNullable<Awaited<ReturnType<typeof dbClient.builds.create>>>;
   featureBuild: NonNullable<Awaited<ReturnType<typeof dbClient.builds.create>>>;
+  recordRevision: (
+    values?: Partial<typeof baselineRevisions.$inferInsert>,
+  ) => Promise<BaselineRevisionDbSchema>;
   connection: RedisConnection;
 };
 
@@ -92,6 +96,24 @@ export const test = vitest.extend<Fixtures>({
       createdBy: reviewer.id,
     });
     await use(created!);
+  },
+
+  // Records that mainBuild changed target-a's baseline; pass values to describe another change.
+  recordRevision: async ({ project, captureConfiguration, mainBuild }, use) => {
+    const { viewportName: _, ...viewport } = captureConfiguration;
+    await use(async (values = {}) => {
+      const revision = await dbClient.baselineRevisions.create({
+        projectId: project.id,
+        ...viewport,
+        targetId: "target-a",
+        buildId: mainBuild.id,
+        previousSnapshotId: null,
+        replacedExisting: false,
+        createdAt: mainBuild.createdAt,
+        ...values,
+      });
+      return revision!;
+    });
   },
 
   // eslint-disable-next-line no-empty-pattern

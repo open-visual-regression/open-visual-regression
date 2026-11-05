@@ -269,15 +269,12 @@ describe("baselines", () => {
       project,
       captureConfiguration,
       mainBuild,
+      recordRevision,
     }) => {
       const [atMergeBase] = await dbClient.snapshots.createMany({
         values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "target-a" }],
       });
-      await dbClient.baselineRevisions.create({
-        projectId: project.id,
-        ...captureConfiguration,
-        targetId: "target-a",
-        buildId: mainBuild.id,
+      await recordRevision({
         previousSnapshotId: atMergeBase!.id,
         replacedExisting: true,
         createdAt: "2026-01-03T00:00:00.000Z",
@@ -296,13 +293,9 @@ describe("baselines", () => {
     test("should treat a target main added after the merge base as new", async ({
       project,
       captureConfiguration,
-      mainBuild,
+      recordRevision,
     }) => {
-      await dbClient.baselineRevisions.create({
-        projectId: project.id,
-        ...captureConfiguration,
-        targetId: "target-a",
-        buildId: mainBuild.id,
+      await recordRevision({
         previousSnapshotId: null,
         replacedExisting: false,
         createdAt: "2026-01-03T00:00:00.000Z",
@@ -321,8 +314,9 @@ describe("baselines", () => {
     test("should fall back to main's latest when the merge-base baseline was purged", async ({
       project,
       captureConfiguration,
-      mainBuild,
       reviewer,
+      mainBuild,
+      recordRevision,
     }) => {
       const [latest] = await dbClient.snapshots.createMany({
         values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "target-a" }],
@@ -334,11 +328,7 @@ describe("baselines", () => {
         snapshotId: latest!.id,
         approvedBy: reviewer.id,
       });
-      await dbClient.baselineRevisions.create({
-        projectId: project.id,
-        ...captureConfiguration,
-        targetId: "target-a",
-        buildId: mainBuild.id,
+      await recordRevision({
         previousSnapshotId: null,
         replacedExisting: true,
         createdAt: "2026-01-03T00:00:00.000Z",

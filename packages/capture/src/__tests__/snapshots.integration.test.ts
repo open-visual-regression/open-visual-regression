@@ -1196,68 +1196,16 @@ describe("snapshots", () => {
     });
 
     describe("on a branch cut before main changed a target", () => {
-      type Fixture = {
-        project: { id: string };
-        user: { id: string };
-        captureConfiguration: {
-          browser: string;
-          viewportWidth: number;
-          viewportHeight: number;
-          viewportName: string;
-        };
-      };
-
-      // Captures a target at `fill` in a new build and diffs it, the way the worker does.
-      const captureAndDiff = async (
-        { project, user, captureConfiguration }: Fixture,
-        build: { branch: string; createdAt: string; baseBuildId?: string },
-        fill: number,
-      ) => {
-        const created = await dbClient.builds.create({
-          projectId: project.id,
-          commitSha: "a".repeat(40),
-          artifactPath: "builds/artifact",
-          createdBy: user.id,
-          ...build,
-        });
-        const imagePath = `builds/${created!.id}/snapshots/target-a.png`;
-        await uploadPng(imagePath, fill);
-        const [snapshot] = await dbClient.snapshots.createMany({
-          values: [
-            {
-              buildId: created!.id,
-              ...captureConfiguration,
-              targetId: "target-a",
-              status: "success",
-              imagePath,
-            },
-          ],
-        });
-        const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
-        await diffSnapshot(snapshot!.id, diff!.id);
-        await dbClient.builds.updateProcessingStatus(created!.id, "success");
-        return { build: created!, snapshot: snapshot!, diff: diff! };
-      };
-
       test("should not show main's later change as the branch's own", async ({
-        project,
-        user,
-        captureConfiguration,
+        captureAndDiff,
       }) => {
-        const fixture = { project, user, captureConfiguration };
         const cut = await captureAndDiff(
-          fixture,
           { branch: "main", createdAt: "2026-01-01T00:00:00.000Z" },
           0,
         );
-        await captureAndDiff(
-          fixture,
-          { branch: "main", createdAt: "2026-01-02T00:00:00.000Z" },
-          255,
-        );
+        await captureAndDiff({ branch: "main", createdAt: "2026-01-02T00:00:00.000Z" }, 255);
 
         const branch = await captureAndDiff(
-          fixture,
           { branch: "feature/x", createdAt: "2026-01-03T00:00:00.000Z", baseBuildId: cut.build.id },
           0,
         );
@@ -1268,25 +1216,14 @@ describe("snapshots", () => {
         });
       });
 
-      test("should still show a change the branch made itself", async ({
-        project,
-        user,
-        captureConfiguration,
-      }) => {
-        const fixture = { project, user, captureConfiguration };
+      test("should still show a change the branch made itself", async ({ captureAndDiff }) => {
         const cut = await captureAndDiff(
-          fixture,
           { branch: "main", createdAt: "2026-01-01T00:00:00.000Z" },
           0,
         );
-        await captureAndDiff(
-          fixture,
-          { branch: "main", createdAt: "2026-01-02T00:00:00.000Z" },
-          255,
-        );
+        await captureAndDiff({ branch: "main", createdAt: "2026-01-02T00:00:00.000Z" }, 255);
 
         const branch = await captureAndDiff(
-          fixture,
           { branch: "feature/x", createdAt: "2026-01-03T00:00:00.000Z", baseBuildId: cut.build.id },
           128,
         );
@@ -1298,20 +1235,15 @@ describe("snapshots", () => {
       });
 
       test("should compare against main's latest when the branch has no merge base", async ({
-        project,
-        user,
-        captureConfiguration,
+        captureAndDiff,
       }) => {
-        const fixture = { project, user, captureConfiguration };
-        await captureAndDiff(fixture, { branch: "main", createdAt: "2026-01-01T00:00:00.000Z" }, 0);
+        await captureAndDiff({ branch: "main", createdAt: "2026-01-01T00:00:00.000Z" }, 0);
         const latest = await captureAndDiff(
-          fixture,
           { branch: "main", createdAt: "2026-01-02T00:00:00.000Z" },
           255,
         );
 
         const branch = await captureAndDiff(
-          fixture,
           { branch: "feature/x", createdAt: "2026-01-03T00:00:00.000Z" },
           0,
         );
@@ -1326,15 +1258,13 @@ describe("snapshots", () => {
         project,
         user,
         captureConfiguration,
+        captureAndDiff,
       }) => {
-        const fixture = { project, user, captureConfiguration };
         const cut = await captureAndDiff(
-          fixture,
           { branch: "main", createdAt: "2026-01-01T00:00:00.000Z" },
           0,
         );
         const latest = await captureAndDiff(
-          fixture,
           { branch: "main", createdAt: "2026-01-02T00:00:00.000Z" },
           255,
         );
