@@ -34,7 +34,6 @@ export const removeByProject = async (tx: DbClient, projectId: string): Promise<
 
 export type StorageOutboxSummary = { pending: number; oldestCreatedAt: string | null };
 
-/** How many prefixes are still waiting to be deleted, and when the oldest was queued. */
 export const summarize = async (): Promise<StorageOutboxSummary> => {
   const [row] = await db
     .select({ pending: count(), oldestCreatedAt: min(storageOutbox.createdAt) })

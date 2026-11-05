@@ -1,5 +1,4 @@
-import { DeleteObjectsCommand, S3Client, S3ServiceException } from "@aws-sdk/client-s3";
-import { afterEach, vi } from "vitest";
+import { S3ServiceException } from "@aws-sdk/client-s3";
 
 import { storage } from "../index";
 import { boundErrorCode, classifyStorageError } from "../metrics";
@@ -9,10 +8,6 @@ const s3Error = (name: string, httpStatusCode: number) =>
   new S3ServiceException({ name, $fault: "server", $metadata: { httpStatusCode } });
 
 describe("storage metrics", () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   test("counts and times a successful request by operation", async ({ key, metrics }) => {
     await storage.uploadFile(key, Buffer.from("png"), "image/png");
 
@@ -44,39 +39,6 @@ describe("storage metrics", () => {
 
     expect(await metrics.scrape()).toContain(
       'ovr_storage_objects_deleted_total{reason="build_purge"} 2',
-    );
-  });
-
-  test("counts objects the store refused to delete by error code", async ({ prefix, metrics }) => {
-    const failingKey = `${prefix}b.png`;
-    await storage.uploadFile(`${prefix}a.png`, Buffer.from("a"), "image/png");
-    await storage.uploadFile(failingKey, Buffer.from("b"), "image/png");
-
-    const send = S3Client.prototype.send as (this: S3Client, command: unknown) => Promise<unknown>;
-    vi.spyOn(S3Client.prototype, "send").mockImplementation(async function (
-      this: S3Client,
-      command: Parameters<S3Client["send"]>[0],
-    ) {
-      if (command instanceof DeleteObjectsCommand) {
-        const { Bucket, Delete } = command.input;
-        await send.call(
-          this,
-          new DeleteObjectsCommand({
-            Bucket,
-            Delete: { Objects: Delete?.Objects?.filter(({ Key }) => Key !== failingKey) },
-          }),
-        );
-        return { Errors: [{ Key: failingKey, Code: "AccessDenied", Message: "Access Denied" }] };
-      }
-      return send.call(this, command);
-    } as S3Client["send"]);
-
-    await expect(storage.deletePrefix(prefix, { reason: "project_purge" })).rejects.toThrow();
-
-    const body = await metrics.scrape();
-    expect(body).toContain('ovr_storage_objects_deleted_total{reason="project_purge"} 1');
-    expect(body).toContain(
-      'ovr_storage_objects_delete_failed_total{reason="project_purge",error_code="AccessDenied"} 1',
     );
   });
 });

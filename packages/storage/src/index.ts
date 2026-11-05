@@ -50,8 +50,7 @@ const createClient = (endpoint: string | undefined): S3Client =>
 const client = createClient(process.env.STORAGE_ENDPOINT);
 instrumentClient(client);
 
-// Always its own client, and never instrumented: presigning runs the client's middleware stack
-// and answers with a fake 200 instead of sending anything, which would count as a real request.
+// Presigning runs the middleware stack, so it must not share the instrumented client.
 const presignClient = createClient(
   process.env.STORAGE_PUBLIC_ENDPOINT || process.env.STORAGE_ENDPOINT,
 );

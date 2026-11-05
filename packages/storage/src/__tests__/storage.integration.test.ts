@@ -77,6 +77,7 @@ describe("storage", () => {
   test("deletePrefix deletes what it can, then throws for keys the store refused", async ({
     prefix,
     denyDeletes,
+    metrics,
   }) => {
     const refusedKey = `${prefix}b.png`;
     await storage.uploadFile(`${prefix}a.png`, Buffer.from("a"), "image/png");
@@ -93,6 +94,9 @@ describe("storage", () => {
     });
     expect(await storage.objectExists(`${prefix}a.png`)).toBe(false);
     expect(await storage.objectExists(refusedKey)).toBe(true);
+    expect(await metrics.scrape()).toContain(
+      'ovr_storage_objects_delete_failed_total{reason="other",error_code="AccessDenied"} 1',
+    );
   });
 
   test("copyObject copies an object to a new key, leaving the source intact", async ({

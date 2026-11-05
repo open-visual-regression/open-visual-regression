@@ -3,10 +3,6 @@ import type { FinalizeRequestMiddleware, MetadataBearer } from "@smithy/types";
 
 import { createCounter, createHistogram } from "@ovr/metrics";
 
-/**
- * How a request to the object store ended. `client_error` covers expected misses too (a 404 from
- * `objectExists`), so alert on `throttled`, `server_error` and `network_error` instead.
- */
 export type StorageRequestOutcome =
   | "success"
   | "client_error"
@@ -14,14 +10,11 @@ export type StorageRequestOutcome =
   | "server_error"
   | "network_error";
 
-/** Why objects are being deleted, so a dashboard can tell build purges from project deletes. */
 export type StorageDeleteReason = "build_purge" | "project_purge" | "other";
 
-// Each bucket is one more series per operation, so keep these coarse.
 const REQUEST_DURATION_BUCKETS_SECONDS = [0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30];
 
-// error_code comes from whatever the SDK or the network raises, so cap how many distinct values
-// one process reports. Past the cap, new codes are reported as "Other".
+// Capped, since error codes come from errors we don't control.
 const MAX_ERROR_CODES = 20;
 const seenErrorCodes = new Set<string>();
 
@@ -100,17 +93,12 @@ export const classifyStorageError = (
   if (status !== undefined && status >= 500) {
     return { outcome: "server_error", errorCode };
   }
-  // No HTTP response at all: refused connections, socket timeouts, DNS failures.
   return { outcome: "network_error", errorCode: code ?? errorCode };
 };
 
 const operationName = (commandName: string | undefined): string =>
   commandName?.replace(/Command$/, "") ?? "Unknown";
 
-/**
- * Records every attempt the client makes. It sits just inside the SDK's retry middleware, so a
- * request that succeeds on its third try shows up as two failures and one success.
- */
 export const instrumentClient = (client: S3Client): void => {
   const middleware: FinalizeRequestMiddleware<object, MetadataBearer> =
     (next, context) => async (args) => {
@@ -133,6 +121,7 @@ export const instrumentClient = (client: S3Client): void => {
   client.middlewareStack.addRelativeTo(middleware, {
     name: "ovrStorageMetrics",
     relation: "after",
+    // After the retry middleware, so each attempt is recorded.
     toMiddleware: "retryMiddleware",
     override: true,
   });

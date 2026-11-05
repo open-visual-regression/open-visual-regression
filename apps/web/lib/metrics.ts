@@ -48,8 +48,6 @@ export const observeBuildsInProgress = (): (() => void) =>
     },
   );
 
-// Prefixes of purged builds waiting to be deleted from object storage. A backlog that keeps
-// aging means the nightly purge keeps failing or falling behind, and storage is leaking.
 export const observeStorageOutbox = (): (() => void) =>
   observeGauges(
     {
