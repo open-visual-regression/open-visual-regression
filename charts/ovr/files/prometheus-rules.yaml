@@ -49,3 +49,43 @@ groups:
           description: >-
             {{ $value }} exited browser processes have not been reaped. They count against
             the pod's pids limit, so the worker will eventually fail to launch browsers.
+
+      - alert: OvrStorageCleanupBacklog
+        expr: max(ovr_storage_outbox_oldest_age_seconds) > 2 * 86400
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: Storage for purged OVR builds has been waiting over 2 days to be deleted
+          description: >-
+            The oldest purged build's files have been waiting {{ $value | humanizeDuration }}
+            to be deleted, so the nightly purge keeps failing or falling behind and object
+            storage is growing. Check ovr_storage_objects_delete_failed_total and the worker
+            logs for "failed to delete storage".
+
+      - alert: OvrStorageRequestsFailing
+        expr: |
+          sum by (operation) (rate(ovr_storage_requests_total{outcome=~"throttled|server_error|network_error"}[10m]))
+            / sum by (operation) (rate(ovr_storage_requests_total[10m]))
+            > 0.05
+          and sum by (operation) (increase(ovr_storage_requests_total[10m])) >= 20
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: OVR's {{ $labels.operation }} requests to object storage are failing
+          description: >-
+            {{ $value | humanizePercentage }} of {{ $labels.operation }} requests in the last
+            10 minutes were throttled, failed on the server, or never got a response.
+            ovr_storage_requests_total's error_code label says why.
+
+      - alert: OvrProjectPurgeFailed
+        expr: sum(increase(ovr_job_attempts_total{queue="project-purge",outcome="failed"}[1h])) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: Files of a deleted OVR project were left in object storage
+          description: >-
+            A project purge job used up its retries, and nothing retries it later, so the
+            deleted project's files stay in the bucket. The worker logs list the keys under
+            "project purge job failed".

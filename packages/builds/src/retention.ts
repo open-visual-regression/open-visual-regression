@@ -3,7 +3,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { dbClient } from "@ovr/db/client";
 import { createLogger } from "@ovr/logger";
 import { enqueuePurgeMany } from "@ovr/queue/producer";
-import { storage } from "@ovr/storage";
+import { DeletePrefixError, storage } from "@ovr/storage";
 
 import { mapWithConcurrency } from "./lib/concurrency";
 
@@ -40,24 +40,30 @@ export const dispatchPurgeJobs = async (): Promise<void> => {
   }
 };
 
-const drainStorageOutbox = async (projectId: string, signal: AbortSignal): Promise<void> => {
+type DrainResult = { objectsDeleted: number; prefixesPending: number };
+
+const drainStorageOutbox = async (projectId: string, signal: AbortSignal): Promise<DrainResult> => {
   const pending = await dbClient.storageOutbox.findByProject(projectId);
 
   if (pending.length === 0) {
-    return;
+    return { objectsDeleted: 0, prefixesPending: 0 };
   }
 
   const results = await mapWithConcurrency(pending, STORAGE_DELETE_CONCURRENCY, async (entry) => {
     try {
-      const { complete } = await storage.deletePrefix(entry.prefix, { signal });
+      const { complete, deletedCount } = await storage.deletePrefix(entry.prefix, {
+        signal,
+        reason: "build_purge",
+      });
 
       if (complete) {
         await dbClient.storageOutbox.remove(entry.id);
       }
 
-      return { entry, ok: true as const, complete };
+      return { entry, ok: true as const, complete, deletedCount };
     } catch (error) {
-      return { entry, ok: false as const, error };
+      const deletedCount = error instanceof DeletePrefixError ? error.deletedCount : 0;
+      return { entry, ok: false as const, error, deletedCount };
     }
   });
 
@@ -81,6 +87,11 @@ const drainStorageOutbox = async (projectId: string, signal: AbortSignal): Promi
       "purge time budget ran out while deleting storage; the rest is deleted on the next run",
     );
   }
+
+  return {
+    objectsDeleted: results.reduce((total, result) => total + result.deletedCount, 0),
+    prefixesPending: failures.length + unfinished.length,
+  };
 };
 
 export type PurgeOptions = {
@@ -109,11 +120,13 @@ export const purgeExpiredBuilds = async (
   const startedAt = Date.now();
   const deadline = AbortSignal.timeout(timeBudgetMs);
   let buildsPurged = 0;
+  let objectsDeleted = 0;
+  let prefixesPending = 0;
   let batches = 0;
   let hitTimeBudget = false;
 
   // Retry storage deletes left over from a previous run before paging through new ones.
-  await drainStorageOutbox(projectId, deadline);
+  ({ objectsDeleted, prefixesPending } = await drainStorageOutbox(projectId, deadline));
 
   const cutoff = new Date(Date.now() - project.retentionDays * 24 * 60 * 60 * 1000).toISOString();
 
@@ -142,7 +155,9 @@ export const purgeExpiredBuilds = async (
     buildsPurged += buildIds.length;
     batches++;
 
-    await drainStorageOutbox(projectId, deadline);
+    const drained = await drainStorageOutbox(projectId, deadline);
+    objectsDeleted += drained.objectsDeleted;
+    prefixesPending = drained.prefixesPending;
 
     if (buildIds.length < batchSize) {
       break;
@@ -160,6 +175,8 @@ export const purgeExpiredBuilds = async (
     projectId,
     buildsPurged,
     batches,
+    objectsDeleted,
+    prefixesPending,
     durationMs: Date.now() - startedAt,
     hitTimeBudget,
   };

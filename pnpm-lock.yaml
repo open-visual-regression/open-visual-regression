@@ -1015,6 +1015,9 @@ importers:
       '@aws-sdk/s3-request-presigner':
         specifier: ^3.1102.0
         version: 3.1121.0
+      '@ovr/metrics':
+        specifier: workspace:*
+        version: link:../metrics
       '@smithy/node-http-handler':
         specifier: ^4.9.13
         version: 4.11.3
@@ -1025,6 +1028,9 @@ importers:
       '@ovr/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
+      '@smithy/types':
+        specifier: ^4.17.2
+        version: 4.17.2
       '@types/node':
         specifier: ^22.20.1
         version: 22.20.1

@@ -140,6 +140,30 @@ describe("retention", () => {
       expect(await remaining()).toEqual([]);
     });
 
+    test("counts the storage objects it deletes as a build purge", async ({
+      project,
+      user,
+      metrics,
+    }) => {
+      const build = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "artifact",
+        createdBy: user.id,
+        createdAt: daysAgo(project.retentionDays + 1),
+      });
+      const prefix = `${project.id}/builds/${build!.id}/`;
+      await storage.uploadFile(`${prefix}artifact.tar.gz`, Buffer.from("a"), "application/gzip");
+      await storage.uploadFile(`${prefix}snapshots/a.png`, Buffer.from("b"), "image/png");
+
+      await purgeExpiredBuilds(project.id);
+
+      expect(await metrics.scrape()).toContain(
+        'ovr_storage_objects_deleted_total{reason="build_purge"} 2',
+      );
+    });
+
     test("keeps the storage outbox entry until the build's prefix is fully deleted", async ({
       project,
       user,

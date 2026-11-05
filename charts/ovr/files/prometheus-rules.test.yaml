@@ -58,3 +58,81 @@ tests:
       - eval_time: 80m
         alertname: OvrBuildsFailing
         exp_alerts: []
+
+  - interval: 1m
+    input_series:
+      # Two web replicas report the same gauge.
+      - series: 'ovr_storage_outbox_oldest_age_seconds{pod="web-a"}'
+        values: "180000+60x90"
+      - series: 'ovr_storage_outbox_oldest_age_seconds{pod="web-b"}'
+        values: "180000+60x90"
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: OvrStorageCleanupBacklog
+        exp_alerts: []
+      - eval_time: 70m
+        alertname: OvrStorageCleanupBacklog
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+            exp_annotations:
+              summary: Storage for purged OVR builds has been waiting over 2 days to be deleted
+              description: >-
+                The oldest purged build's files have been waiting 2d 3h 10m 0s
+                to be deleted, so the nightly purge keeps failing or falling behind and object
+                storage is growing. Check ovr_storage_objects_delete_failed_total and the worker
+                logs for "failed to delete storage".
+
+  - interval: 1m
+    input_series:
+      - series: 'ovr_storage_requests_total{operation="DeleteObjects",outcome="success"}'
+        values: "0+10x40"
+      - series: 'ovr_storage_requests_total{operation="DeleteObjects",outcome="throttled",error_code="SlowDown"}'
+        values: "0+2x40"
+      # Expected misses from objectExists never count as failures.
+      - series: 'ovr_storage_requests_total{operation="HeadObject",outcome="success"}'
+        values: "0+10x40"
+      - series: 'ovr_storage_requests_total{operation="HeadObject",outcome="client_error",error_code="NotFound"}'
+        values: "0+10x40"
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: OvrStorageRequestsFailing
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              operation: DeleteObjects
+            exp_annotations:
+              summary: OVR's DeleteObjects requests to object storage are failing
+              description: >-
+                16.67% of DeleteObjects requests in the last
+                10 minutes were throttled, failed on the server, or never got a response.
+                ovr_storage_requests_total's error_code label says why.
+
+  - interval: 1m
+    input_series:
+      # Too few requests to page anyone over, even though every one failed.
+      - series: 'ovr_storage_requests_total{operation="CopyObject",outcome="server_error",error_code="InternalError"}'
+        values: "0+1x40"
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: OvrStorageRequestsFailing
+        exp_alerts: []
+
+  - interval: 1m
+    input_series:
+      - series: 'ovr_job_attempts_total{queue="project-purge",outcome="failed"}'
+        values: "0 0 0 1 1 1 1 1 1 1"
+      - series: 'ovr_job_attempts_total{queue="build-purge",outcome="failed"}'
+        values: "0 0 0 1 1 1 1 1 1 1"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: OvrProjectPurgeFailed
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+            exp_annotations:
+              summary: Files of a deleted OVR project were left in object storage
+              description: >-
+                A project purge job used up its retries, and nothing retries it later, so the
+                deleted project's files stay in the bucket. The worker logs list the keys under
+                "project purge job failed".

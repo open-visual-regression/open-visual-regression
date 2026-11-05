@@ -47,3 +47,24 @@ export const observeBuildsInProgress = (): (() => void) =>
       }
     },
   );
+
+export const observeStorageOutbox = (): (() => void) =>
+  observeGauges(
+    {
+      pending: {
+        name: "ovr.storage.outbox.pending",
+        description: "Storage prefixes of purged builds still waiting to be deleted.",
+      },
+      oldestAge: {
+        name: "ovr.storage.outbox.oldest.age.seconds",
+        description: "How long the oldest storage prefix has been waiting to be deleted.",
+        unit: "s",
+      },
+    },
+    async (observe) => {
+      const { pending, oldestCreatedAt } = await dbClient.storageOutbox.summarize();
+      const oldestAge = oldestCreatedAt ? Date.now() - Date.parse(oldestCreatedAt) : 0;
+      observe("pending", pending);
+      observe("oldestAge", Math.max(oldestAge, 0) / 1000);
+    },
+  );
