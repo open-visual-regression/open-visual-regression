@@ -1,6 +1,6 @@
 import { type AnyColumn, eq, gte } from "drizzle-orm";
 
-import { db } from "../db";
+import { db, type DbClient } from "../db";
 import { baselines, builds, snapshots } from "../schema";
 
 type FindInput = {
@@ -33,8 +33,9 @@ const selectBuildCreatedAt = (snapshotId: string | AnyColumn) =>
 const getNotOlderBuildFilter = (snapshotId: string) =>
   gte(selectBuildCreatedAt(snapshotId), selectBuildCreatedAt(baselines.snapshotId));
 
-export const upsert = async (values: typeof baselines.$inferInsert) => {
-  const [baseline] = await db
+// Resolves to undefined when a newer build already set this baseline.
+export const upsert = async (values: typeof baselines.$inferInsert, tx: DbClient = db) => {
+  const [baseline] = await tx
     .insert(baselines)
     .values(values)
     .onConflictDoUpdate({
