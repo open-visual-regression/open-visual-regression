@@ -14,7 +14,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@ovr/ui/components/alert-dialog";
 import { Button } from "@ovr/ui/components/button";
 import { FieldError } from "@ovr/ui/components/field";
@@ -28,15 +27,25 @@ export type BuildRebuildButtonProps = {
   projectId: string;
 };
 
-export const BuildRebuildButton = ({ buildId, projectId }: BuildRebuildButtonProps) => {
+export type BuildRebuildDialogProps = BuildRebuildButtonProps & {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
+
+// Asks to confirm rebuilding. Controlled, so a menu item can open it too.
+export const BuildRebuildDialog = ({
+  buildId,
+  projectId,
+  open,
+  onOpenChange,
+}: BuildRebuildDialogProps) => {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
   const [error, setError] = useState<{ message: string } | null>(null);
 
   const { execute, status } = useServerAction(serverClient.builds.rebuild, {
     interceptors: [
       onSuccess((result) => {
-        setOpen(false);
+        onOpenChange(false);
         router.push(`/projects/${projectId}/builds/${result.buildId}`);
       }),
       onError((err) => setError({ message: err.message })),
@@ -47,19 +56,13 @@ export const BuildRebuildButton = ({ buildId, projectId }: BuildRebuildButtonPro
     if (nextOpen) {
       setError(null);
     }
-    setOpen(nextOpen);
+    onOpenChange(nextOpen);
   };
 
   const pending = status === "pending";
 
   return (
     <AlertDialog open={open} onOpenChange={handleOpenChange}>
-      <AlertDialogTrigger
-        render={<Button variant="outline" color="neutral" className="flex-1 md:flex-none" />}
-      >
-        <Icon icon={RefreshCwIcon} size={10} />
-        rebuild
-      </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>rebuild?</AlertDialogTitle>
@@ -80,5 +83,29 @@ export const BuildRebuildButton = ({ buildId, projectId }: BuildRebuildButtonPro
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+  );
+};
+
+export const BuildRebuildButton = ({ buildId, projectId }: BuildRebuildButtonProps) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <Button
+        variant="outline"
+        color="neutral"
+        className="flex-1 md:flex-none"
+        onClick={() => setOpen(true)}
+      >
+        <Icon icon={RefreshCwIcon} size={10} />
+        rebuild
+      </Button>
+      <BuildRebuildDialog
+        buildId={buildId}
+        projectId={projectId}
+        open={open}
+        onOpenChange={setOpen}
+      />
+    </>
   );
 };

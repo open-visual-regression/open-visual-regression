@@ -12,6 +12,7 @@ export {
   ChevronRightIcon,
   CopyIcon,
   CornerLeftUpIcon,
+  EllipsisIcon,
   FolderIcon,
   GitBranchIcon,
   GitCommitHorizontalIcon,

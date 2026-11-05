@@ -13,7 +13,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@ovr/ui/components/alert-dialog";
 import { Button } from "@ovr/ui/components/button";
 import { FieldError } from "@ovr/ui/components/field";
@@ -26,15 +25,20 @@ export type BuildCancelButtonProps = {
   buildId: string;
 };
 
-export const BuildCancelButton = ({ buildId }: BuildCancelButtonProps) => {
+export type BuildCancelDialogProps = BuildCancelButtonProps & {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
+
+// Asks to confirm canceling the build. Controlled, so a menu item can open it too.
+export const BuildCancelDialog = ({ buildId, open, onOpenChange }: BuildCancelDialogProps) => {
   const refreshReview = useReviewRefresh();
-  const [open, setOpen] = useState(false);
   const [error, setError] = useState<{ message: string } | null>(null);
 
   const { execute, status } = useServerAction(serverClient.builds.cancel, {
     interceptors: [
       onSuccess(() => {
-        setOpen(false);
+        onOpenChange(false);
         refreshReview();
       }),
       onError((err) => setError({ message: err.message })),
@@ -45,18 +49,13 @@ export const BuildCancelButton = ({ buildId }: BuildCancelButtonProps) => {
     if (nextOpen) {
       setError(null);
     }
-    setOpen(nextOpen);
+    onOpenChange(nextOpen);
   };
 
   const pending = status === "pending";
 
   return (
     <AlertDialog open={open} onOpenChange={handleOpenChange}>
-      <AlertDialogTrigger
-        render={<Button variant="outline" color="neutral" className="flex-1 md:flex-none" />}
-      >
-        cancel build
-      </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>cancel build?</AlertDialogTitle>
@@ -80,5 +79,23 @@ export const BuildCancelButton = ({ buildId }: BuildCancelButtonProps) => {
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+  );
+};
+
+export const BuildCancelButton = ({ buildId }: BuildCancelButtonProps) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <Button
+        variant="outline"
+        color="neutral"
+        className="flex-1 md:flex-none"
+        onClick={() => setOpen(true)}
+      >
+        cancel build
+      </Button>
+      <BuildCancelDialog buildId={buildId} open={open} onOpenChange={setOpen} />
+    </>
   );
 };
