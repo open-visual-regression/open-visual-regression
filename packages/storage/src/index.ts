@@ -46,6 +46,39 @@ const presignClient = process.env.STORAGE_PUBLIC_ENDPOINT
 
 const bucket = process.env.STORAGE_BUCKET ?? "ovr";
 
+export type DeletePrefixResult = {
+  complete: boolean;
+  deletedCount: number;
+};
+
+export type DeletePrefixFailure = {
+  key: string | undefined;
+  code: string | undefined;
+  message: string | undefined;
+};
+
+const MAX_REPORTED_FAILURES = 5;
+
+export class DeletePrefixError extends Error {
+  constructor(
+    readonly prefix: string,
+    readonly failures: DeletePrefixFailure[],
+    readonly deletedCount: number,
+  ) {
+    const sample = failures
+      .slice(0, MAX_REPORTED_FAILURES)
+      .map(({ key, code }) => `${key ?? "<unknown key>"} (${code ?? "unknown error"})`)
+      .join(", ");
+    const more =
+      failures.length > MAX_REPORTED_FAILURES
+        ? ` and ${failures.length - MAX_REPORTED_FAILURES} more`
+        : "";
+
+    super(`Failed to delete ${failures.length} object(s) under "${prefix}": ${sample}${more}`);
+    this.name = "DeletePrefixError";
+  }
+}
+
 export const storage = {
   uploadFile: async (key: string, body: Buffer | Readable, contentType: string): Promise<void> => {
     await client.send(
@@ -89,10 +122,25 @@ export const storage = {
     );
   },
 
-  deletePrefix: async (prefix: string): Promise<void> => {
+  deletePrefix: async (
+    prefix: string,
+    { signal }: { signal?: AbortSignal } = {},
+  ): Promise<DeletePrefixResult> => {
+    if (prefix === "") {
+      throw new Error("Refusing to delete an empty prefix, which would empty the whole bucket");
+    }
+
+    const failures: DeletePrefixFailure[] = [];
+    let deletedCount = 0;
+    let complete = true;
     let continuationToken: string | undefined;
 
     do {
+      if (signal?.aborted) {
+        complete = false;
+        break;
+      }
+
       const { Contents, NextContinuationToken } = await client.send(
         new ListObjectsV2Command({
           Bucket: bucket,
@@ -106,13 +154,28 @@ export const storage = {
         .map(({ Key }) => ({ Key }));
 
       if (objects.length > 0) {
-        await client.send(
-          new DeleteObjectsCommand({ Bucket: bucket, Delete: { Objects: objects } }),
+        // DeleteObjects answers 200 even when some keys fail.
+        const { Errors } = await client.send(
+          new DeleteObjectsCommand({ Bucket: bucket, Delete: { Objects: objects, Quiet: true } }),
         );
+        const pageFailures = (Errors ?? []).map(({ Key, Code, Message }) => ({
+          key: Key,
+          code: Code,
+          message: Message,
+        }));
+
+        failures.push(...pageFailures);
+        deletedCount += objects.length - pageFailures.length;
       }
 
       continuationToken = NextContinuationToken;
     } while (continuationToken);
+
+    if (failures.length > 0) {
+      throw new DeletePrefixError(prefix, failures, deletedCount);
+    }
+
+    return { complete, deletedCount };
   },
 
   getPresignedUrl: async (key: string, ttlSeconds: number): Promise<string> => {

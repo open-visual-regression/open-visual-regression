@@ -1,5 +1,6 @@
 import { Worker } from "bullmq";
 import { v7 as uuidv7 } from "uuid";
+import { vi } from "vitest";
 
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
@@ -137,6 +138,37 @@ describe("retention", () => {
       await purgeExpiredBuilds(project.id, { batchSize: 1, batchPauseMs: 0 });
 
       expect(await remaining()).toEqual([]);
+    });
+
+    test("keeps the storage outbox entry until the build's prefix is fully deleted", async ({
+      project,
+      user,
+    }) => {
+      const build = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "artifact",
+        createdBy: user.id,
+        createdAt: daysAgo(project.retentionDays + 1),
+      });
+      const artifactPath = `${project.id}/builds/${build!.id}/artifact.tar.gz`;
+      await storage.uploadFile(artifactPath, Buffer.from("artifact"), "application/gzip");
+
+      vi.spyOn(storage, "deletePrefix").mockResolvedValueOnce({ complete: false, deletedCount: 0 });
+
+      await purgeExpiredBuilds(project.id);
+
+      expect(await dbClient.builds.findById(build!.id)).toBeUndefined();
+      expect(await dbClient.storageOutbox.findByProject(project.id)).toMatchObject([
+        { buildId: build!.id, prefix: `${project.id}/builds/${build!.id}/` },
+      ]);
+      expect(await storage.objectExists(artifactPath)).toBe(true);
+
+      await purgeExpiredBuilds(project.id);
+
+      expect(await dbClient.storageOutbox.findByProject(project.id)).toEqual([]);
+      expect(await storage.objectExists(artifactPath)).toBe(false);
     });
 
     test("does nothing for a project that no longer exists", async () => {

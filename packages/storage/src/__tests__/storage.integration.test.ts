@@ -1,6 +1,6 @@
 import type { Readable } from "node:stream";
 
-import { storage } from "../index";
+import { DeletePrefixError, storage } from "../index";
 import { describe, expect, test } from "./fixtures";
 
 const streamToBuffer = async (stream: Readable): Promise<Buffer> => {
@@ -40,6 +40,59 @@ describe("storage", () => {
     await expect(storage.getFileStream(`${prefix}b.png`)).rejects.toMatchObject({
       name: "NoSuchKey",
     });
+  });
+
+  test("deletePrefix reports how many objects it deleted", async ({ prefix }) => {
+    await storage.uploadFile(`${prefix}a.png`, Buffer.from("a"), "image/png");
+    await storage.uploadFile(`${prefix}b.png`, Buffer.from("b"), "image/png");
+
+    await expect(storage.deletePrefix(prefix)).resolves.toEqual({
+      complete: true,
+      deletedCount: 2,
+    });
+  });
+
+  test("deletePrefix stops once its signal aborts and finishes on a later call", async ({
+    prefix,
+  }) => {
+    await storage.uploadFile(`${prefix}a.png`, Buffer.from("a"), "image/png");
+
+    await expect(storage.deletePrefix(prefix, { signal: AbortSignal.abort() })).resolves.toEqual({
+      complete: false,
+      deletedCount: 0,
+    });
+    expect(await storage.objectExists(`${prefix}a.png`)).toBe(true);
+
+    await expect(storage.deletePrefix(prefix)).resolves.toEqual({
+      complete: true,
+      deletedCount: 1,
+    });
+    expect(await storage.objectExists(`${prefix}a.png`)).toBe(false);
+  });
+
+  test("deletePrefix refuses an empty prefix", async () => {
+    await expect(storage.deletePrefix("")).rejects.toThrow(/empty prefix/);
+  });
+
+  test("deletePrefix deletes what it can, then throws for keys the store refused", async ({
+    prefix,
+    denyDeletes,
+  }) => {
+    const refusedKey = `${prefix}b.png`;
+    await storage.uploadFile(`${prefix}a.png`, Buffer.from("a"), "image/png");
+    await storage.uploadFile(refusedKey, Buffer.from("b"), "image/png");
+    await denyDeletes(refusedKey);
+
+    const error = await storage.deletePrefix(prefix).catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(DeletePrefixError);
+    expect(error).toMatchObject({
+      prefix,
+      deletedCount: 1,
+      failures: [{ key: refusedKey, code: "AccessDenied" }],
+    });
+    expect(await storage.objectExists(`${prefix}a.png`)).toBe(false);
+    expect(await storage.objectExists(refusedKey)).toBe(true);
   });
 
   test("copyObject copies an object to a new key, leaving the source intact", async ({
