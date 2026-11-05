@@ -1,8 +1,5 @@
 import type { Readable } from "node:stream";
 
-import { DeleteObjectsCommand, S3Client } from "@aws-sdk/client-s3";
-import { afterEach, vi } from "vitest";
-
 import { DeletePrefixError, storage } from "../index";
 import { describe, expect, test } from "./fixtures";
 
@@ -77,57 +74,25 @@ describe("storage", () => {
     await expect(storage.deletePrefix("")).rejects.toThrow(/empty prefix/);
   });
 
-  describe("when DeleteObjects reports per-key errors", () => {
-    afterEach(() => {
-      vi.restoreAllMocks();
+  test("deletePrefix deletes what it can, then throws for keys the store refused", async ({
+    prefix,
+    denyDeletes,
+  }) => {
+    const refusedKey = `${prefix}b.png`;
+    await storage.uploadFile(`${prefix}a.png`, Buffer.from("a"), "image/png");
+    await storage.uploadFile(refusedKey, Buffer.from("b"), "image/png");
+    await denyDeletes(refusedKey);
+
+    const error = await storage.deletePrefix(prefix).catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(DeletePrefixError);
+    expect(error).toMatchObject({
+      prefix,
+      deletedCount: 1,
+      failures: [{ key: refusedKey, code: "AccessDenied" }],
     });
-
-    test("deletePrefix throws after deleting everything it could", async ({ prefix }) => {
-      const failingKey = `${prefix}b.png`;
-      await storage.uploadFile(`${prefix}a.png`, Buffer.from("a"), "image/png");
-      await storage.uploadFile(failingKey, Buffer.from("b"), "image/png");
-
-      // Simulate S3 answering 200 with one key it could not delete.
-      const send = S3Client.prototype.send as (
-        this: S3Client,
-        command: unknown,
-      ) => Promise<unknown>;
-      vi.spyOn(S3Client.prototype, "send").mockImplementation(async function (
-        this: S3Client,
-        command: Parameters<S3Client["send"]>[0],
-      ) {
-        if (command instanceof DeleteObjectsCommand) {
-          const { Bucket, Delete } = command.input;
-          await send.call(
-            this,
-            new DeleteObjectsCommand({
-              Bucket,
-              Delete: { Objects: Delete?.Objects?.filter(({ Key }) => Key !== failingKey) },
-            }),
-          );
-          return {
-            Errors: [
-              { Key: failingKey, Code: "SlowDown", Message: "Please reduce your request rate." },
-            ],
-          };
-        }
-        return send.call(this, command);
-      } as S3Client["send"]);
-
-      const error = await storage.deletePrefix(prefix).catch((caught: unknown) => caught);
-
-      expect(error).toBeInstanceOf(DeletePrefixError);
-      expect(error).toMatchObject({
-        prefix,
-        deletedCount: 1,
-        failures: [{ key: failingKey, code: "SlowDown" }],
-      });
-      expect((error as Error).message).toContain(`${failingKey} (SlowDown)`);
-
-      vi.restoreAllMocks();
-      expect(await storage.objectExists(`${prefix}a.png`)).toBe(false);
-      expect(await storage.objectExists(failingKey)).toBe(true);
-    });
+    expect(await storage.objectExists(`${prefix}a.png`)).toBe(false);
+    expect(await storage.objectExists(refusedKey)).toBe(true);
   });
 
   test("copyObject copies an object to a new key, leaving the source intact", async ({

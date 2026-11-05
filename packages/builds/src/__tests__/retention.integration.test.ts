@@ -155,16 +155,9 @@ describe("retention", () => {
       const artifactPath = `${project.id}/builds/${build!.id}/artifact.tar.gz`;
       await storage.uploadFile(artifactPath, Buffer.from("artifact"), "application/gzip");
 
-      // The time budget runs out before the prefix is emptied.
-      const deletePrefix = vi
-        .spyOn(storage, "deletePrefix")
-        .mockResolvedValue({ complete: false, deletedCount: 0 });
+      vi.spyOn(storage, "deletePrefix").mockResolvedValueOnce({ complete: false, deletedCount: 0 });
 
-      try {
-        await purgeExpiredBuilds(project.id);
-      } finally {
-        deletePrefix.mockRestore();
-      }
+      await purgeExpiredBuilds(project.id);
 
       expect(await dbClient.builds.findById(build!.id)).toBeUndefined();
       expect(await dbClient.storageOutbox.findByProject(project.id)).toMatchObject([
