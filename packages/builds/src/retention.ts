@@ -40,8 +40,6 @@ export const dispatchPurgeJobs = async (): Promise<void> => {
   }
 };
 
-// Stops starting new pages once `signal` aborts. A prefix left half-deleted keeps its outbox row,
-// so the next run finishes it instead of the leftover objects becoming orphans.
 type DrainResult = { objectsDeleted: number; prefixesPending: number };
 
 const drainStorageOutbox = async (projectId: string, signal: AbortSignal): Promise<DrainResult> => {
