@@ -15,12 +15,14 @@ import {
 } from "@ovr/ui/components/segmented-progress";
 import { Skeleton } from "@ovr/ui/components/skeleton";
 import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
+import { cn } from "@ovr/ui/lib/utils";
 
 import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
 import { ExternalLink } from "@/lib/components/external-link/ExternalLink";
 import { formatBuildTimingBreakdown } from "@/lib/utils/buildTimings";
 import { formatDuration, formatRelativeDateTime } from "@/lib/utils/date";
 
+import { BuildActionsMenu } from "./BuildActionsMenu";
 import { BuildApproveButton } from "./BuildApproveButton";
 import { BuildBranches } from "./BuildBranches";
 import { BuildCancelButton } from "./BuildCancelButton";
@@ -50,7 +52,14 @@ export const BuildHeader = ({
   const showRebuild = canReview && !isCancelable && build.isRebuildable;
   const showReviewActions = canReview && build.isReviewable && hasReviewable;
   const showLatestBuild = build.latestBuildId !== null;
-  const showActions = showCancel || showRebuild || showReviewActions || showLatestBuild;
+  const latestBuildHref = showLatestBuild
+    ? `/projects/${build.project.id}/builds/${build.latestBuildId}`
+    : null;
+  // On small screens these fold into a menu, so approving and rejecting keep the room.
+  const hasSecondaryActions = showLatestBuild || showCancel || showRebuild;
+  const showActionsMenu = hasSecondaryActions || storybookHref !== null;
+  const showWideActions = hasSecondaryActions || showReviewActions;
+  const showActions = showWideActions || showActionsMenu;
 
   return (
     <div className="flex flex-col gap-6">
@@ -60,7 +69,11 @@ export const BuildHeader = ({
         </Typography>
         <div className="flex flex-row flex-wrap items-center gap-4 text-xs md:order-3 md:basis-full">
           <BuildStatusStream buildId={build.id} initialStatus={build.status} />
-          {storybookHref ? <ExternalLink href={storybookHref}>view storybook</ExternalLink> : null}
+          {storybookHref ? (
+            <ExternalLink href={storybookHref} className="hidden md:inline-flex">
+              view storybook
+            </ExternalLink>
+          ) : null}
           <BuildBranches build={build} />
           {build.commitUrl ? (
             <ExternalLink href={build.commitUrl}>
@@ -96,27 +109,42 @@ export const BuildHeader = ({
           ) : null}
         </div>
         {showActions ? (
-          <div className="flex w-full flex-row gap-2 md:order-2 md:w-auto">
-            {showLatestBuild ? (
-              <ButtonLink
-                href={`/projects/${build.project.id}/builds/${build.latestBuildId}`}
-                variant="outline"
-                color="neutral"
-                className="flex-1 md:flex-none"
-              >
-                view latest build
-                <Icon icon={ArrowRightIcon} size={10} />
-              </ButtonLink>
-            ) : null}
-            {showCancel ? <BuildCancelButton buildId={build.id} /> : null}
-            {showRebuild ? (
-              <BuildRebuildButton buildId={build.id} projectId={build.project.id} />
+          <div
+            className={cn(
+              "flex w-full flex-row justify-end gap-2 md:order-2 md:w-auto md:justify-start",
+              !showWideActions && "md:hidden",
+            )}
+          >
+            {hasSecondaryActions ? (
+              <div className="hidden md:contents">
+                {latestBuildHref ? (
+                  <ButtonLink href={latestBuildHref} variant="outline" color="neutral">
+                    view latest build
+                    <Icon icon={ArrowRightIcon} size={10} />
+                  </ButtonLink>
+                ) : null}
+                {showCancel ? <BuildCancelButton buildId={build.id} /> : null}
+                {showRebuild ? (
+                  <BuildRebuildButton buildId={build.id} projectId={build.project.id} />
+                ) : null}
+              </div>
             ) : null}
             {showReviewActions ? (
               <>
                 <BuildRejectButton buildId={build.id} rejected={build.status === "rejected"} />
                 <BuildApproveButton buildId={build.id} approved={build.status === "approved"} />
               </>
+            ) : null}
+            {showActionsMenu ? (
+              <BuildActionsMenu
+                buildId={build.id}
+                projectId={build.project.id}
+                storybookHref={storybookHref}
+                latestBuildHref={latestBuildHref}
+                canCancel={showCancel}
+                canRebuild={showRebuild}
+                className="md:hidden"
+              />
             ) : null}
           </div>
         ) : null}

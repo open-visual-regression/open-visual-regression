@@ -373,6 +373,51 @@ describe("BuildHeader", () => {
     );
   });
 
+  it("should offer the build's other actions from a menu on small screens", async ({ user }) => {
+    const build = mocks.build.generateBuild({
+      status: "needs_review",
+      isRebuildable: true,
+      latestBuildId: "019edfc7-e040-7492-86b2-ccfdc00cf6e2",
+    });
+    renderComponent({ build, storybookHref: "/api/storybook/mock-build/index.html" });
+
+    await user.click(screen.getByRole("button", { name: "more build actions" }));
+
+    expect(await screen.findByRole("menuitem", { name: "view storybook" })).toHaveAttribute(
+      "href",
+      "/api/storybook/mock-build/index.html",
+    );
+    expect(screen.getByRole("menuitem", { name: "view latest build" })).toHaveAttribute(
+      "href",
+      `/projects/${build.project.id}/builds/019edfc7-e040-7492-86b2-ccfdc00cf6e2`,
+    );
+    expect(screen.getByRole("menuitem", { name: "rebuild" })).toBeVisible();
+    expect(screen.queryByRole("menuitem", { name: "cancel build" })).not.toBeInTheDocument();
+  });
+
+  it("should rebuild from the menu once confirmed", async ({ user }) => {
+    mockRebuild.mockResolvedValue([null, { buildId: "019edfc7-e040-7492-86b2-ccfdc00cf6e2" }]);
+    const build = mocks.build.generateBuild({ status: "needs_review", isRebuildable: true });
+    renderComponent({ build });
+
+    await user.click(screen.getByRole("button", { name: "more build actions" }));
+    await user.click(await screen.findByRole("menuitem", { name: "rebuild" }));
+    expect(await screen.findByRole("alertdialog", { name: /rebuild\?/i })).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: /^rebuild$/i }));
+
+    expect(mockRebuild).toHaveBeenCalledWith({ buildId: build.id });
+  });
+
+  it("should offer to cancel a running build from the menu", async ({ user }) => {
+    renderComponent({ build: mocks.build.generateBuild({ status: "processing" }) });
+
+    await user.click(screen.getByRole("button", { name: "more build actions" }));
+    await user.click(await screen.findByRole("menuitem", { name: "cancel build" }));
+
+    expect(await screen.findByRole("alertdialog", { name: /cancel build\?/i })).toBeVisible();
+  });
+
   it("should not rebuild the build when the confirmation is dismissed", async ({ user }) => {
     renderComponent({
       build: mocks.build.generateBuild({ status: "needs_review", isRebuildable: true }),
