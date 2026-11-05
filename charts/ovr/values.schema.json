@@ -279,6 +279,10 @@
           "enum": ["", "deadline", "round-robin", "fifo"],
           "description": "Order capture groups run in across builds. Empty uses the app default, or fifo with KEDA's generated trigger."
         },
+        "captureQueueMaxDeadlineMinutes": {
+          "type": ["string", "number"],
+          "description": "Under the deadline policy, the most minutes after it's queued a build is due. Empty string uses the app default."
+        },
         "reaperStaleMinutes": {
           "type": ["string", "integer"],
           "description": "Minutes without snapshot or diff activity, and with no jobs left to run, before an unfinished build is errored. Empty string uses the app default."

@@ -331,6 +331,93 @@ describe("queue", () => {
       ]);
     });
 
+    const largeGroups = (buildId: string, count: number, snapshots: number) =>
+      Array.from({ length: count }, (_, index) => ({
+        browser: "chromium",
+        snapshotIds: Array.from(
+          { length: snapshots },
+          (_, snapshot) => `${buildId}-${index + 1}${snapshot === 0 ? "" : `.${snapshot}`}`,
+        ),
+      }));
+
+    const enqueueAt = async <T>(at: number, enqueue: () => Promise<T>): Promise<T> => {
+      const now = vi.spyOn(Date, "now").mockReturnValue(at);
+      try {
+        return await enqueue();
+      } finally {
+        now.mockRestore();
+      }
+    };
+
+    test("should keep a small build queued past a large build's 15 minute max deadline behind it under deadline", async ({
+      connection,
+      openQueue,
+      openWorker,
+      trackJob,
+    }) => {
+      const queuedAt = Date.now();
+      // main's 1500 snapshots would be due 7500s after it was queued; the max deadline makes it 900s.
+      const jobs = (
+        await enqueueCaptureGroups("main", largeGroups("main", 3, 500), connection, "deadline")
+      ).map(trackJob);
+      // pr's one snapshot is due 5s after it is queued 16 minutes later: 965s, past main's 900s.
+      jobs.push(
+        ...(
+          await enqueueAt(queuedAt + 16 * 60_000, () =>
+            enqueueCaptureGroups("pr", groups("pr", 1), connection, "deadline"),
+          )
+        ).map(trackJob),
+      );
+
+      openWorker(QueueName.SNAPSHOT_CAPTURE, () => sleep(10), { concurrency: 1 });
+
+      expect(await processingOrder(openQueue(QueueName.SNAPSHOT_CAPTURE), jobs)).toEqual([
+        "main-1",
+        "main-2",
+        "main-3",
+        "pr-1",
+      ]);
+    });
+
+    test("should let small builds pass a large build only within its configured max deadline under deadline", async ({
+      connection,
+      openQueue,
+      openWorker,
+      trackJob,
+    }) => {
+      const queuedAt = Date.now();
+      // With a 1 minute max deadline, main is due 60s after it was queued.
+      const jobs = (
+        await enqueueCaptureGroups("main", largeGroups("main", 3, 500), connection, "deadline", 1)
+      ).map(trackJob);
+      // early is queued 30s later and due at 35s, before main.
+      jobs.push(
+        ...(
+          await enqueueAt(queuedAt + 30_000, () =>
+            enqueueCaptureGroups("early", groups("early", 1), connection, "deadline", 1),
+          )
+        ).map(trackJob),
+      );
+      // late is queued 90s later and due at 95s, after main.
+      jobs.push(
+        ...(
+          await enqueueAt(queuedAt + 90_000, () =>
+            enqueueCaptureGroups("late", groups("late", 1), connection, "deadline", 1),
+          )
+        ).map(trackJob),
+      );
+
+      openWorker(QueueName.SNAPSHOT_CAPTURE, () => sleep(10), { concurrency: 1 });
+
+      expect(await processingOrder(openQueue(QueueName.SNAPSHOT_CAPTURE), jobs)).toEqual([
+        "early-1",
+        "main-1",
+        "main-2",
+        "main-3",
+        "late-1",
+      ]);
+    });
+
     test("should alternate a build's browsers under deadline", async ({
       connection,
       openQueue,
