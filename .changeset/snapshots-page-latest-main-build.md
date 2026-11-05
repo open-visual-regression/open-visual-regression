@@ -5,4 +5,4 @@
 "@ovr/api": patch
 ---
 
-The snapshots page no longer repeats the same story once per build. It shows each project's latest main-branch build, plus queued and processing snapshots from any branch when filtered to those statuses.
+The snapshots page no longer repeats snapshots once per build. It shows each project's latest main build, or in-flight snapshots on any build when filtered to queued or processing.

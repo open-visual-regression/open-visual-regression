@@ -250,7 +250,7 @@ const flagDisplayOrder: SnapshotFlag[] = ["flaky", "warning"];
 export type ListFilters = {
   organizationId?: string;
   buildId?: string;
-  catalog?: boolean;
+  latestMainBuild?: boolean;
   projectIds?: string[];
   baseline?: boolean;
   statuses?: SnapshotDisplayStatus[];
@@ -266,8 +266,6 @@ const isBaseline = exists(
 
 const latestMainBuilds = alias(builds, "latest_main_builds");
 
-// The newest build on its project's main branch that wasn't canceled. Expects
-// builds and projects to be joined in the outer query.
 const isOnLatestMainBuild = sql`${builds.id} = (${db
   .select({ id: latestMainBuilds.id })
   .from(latestMainBuilds)
@@ -288,16 +286,13 @@ const isInFlight = or(...inFlightStatuses.map((status) => sql`${displayStatusExp
 const isInFlightOnly = (statuses?: SnapshotDisplayStatus[]) =>
   !!statuses?.length && statuses.every((status) => inFlightStatuses.includes(status));
 
-// The catalog is each project's latest main build, so every story, browser and
-// viewport appears once. Filtering to only in-flight statuses widens it to
-// every build, so work running on branches shows up too.
-const catalogWhere = (statuses?: SnapshotDisplayStatus[]) =>
+const latestMainBuildWhere = (statuses?: SnapshotDisplayStatus[]) =>
   isInFlightOnly(statuses) ? undefined : isOnLatestMainBuild;
 
 const listWhere = ({
   organizationId,
   buildId,
-  catalog,
+  latestMainBuild,
   projectIds,
   baseline,
   statuses,
@@ -309,7 +304,7 @@ const listWhere = ({
   and(
     organizationId ? eq(projects.organizationId, organizationId) : undefined,
     buildId ? eq(snapshots.buildId, buildId) : undefined,
-    catalog ? catalogWhere(statuses) : undefined,
+    latestMainBuild ? latestMainBuildWhere(statuses) : undefined,
     projectIds?.length ? inArray(builds.projectId, projectIds) : undefined,
     baseline ? isBaseline : undefined,
     statuses?.length
@@ -323,19 +318,17 @@ const listWhere = ({
       : undefined,
   );
 
-export type SnapshotScope = Pick<ListFilters, "organizationId" | "buildId" | "catalog">;
+export type SnapshotScope = Pick<ListFilters, "organizationId" | "buildId" | "latestMainBuild">;
 
 export const findStatuses = async (scope: SnapshotScope): Promise<SnapshotDisplayStatus[]> => {
-  const { catalog, ...rest } = scope;
+  const { latestMainBuild, ...rest } = scope;
   const rows = await db
     .selectDistinct({ status: displayStatusExpr })
     .from(snapshots)
     .innerJoin(builds, eq(builds.id, snapshots.buildId))
     .innerJoin(projects, eq(projects.id, builds.projectId))
     .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
-    // In-flight snapshots on any build are reachable by filtering to their
-    // statuses, so offer those statuses even when the catalog has none.
-    .where(and(listWhere(rest), catalog ? or(isOnLatestMainBuild, isInFlight) : undefined));
+    .where(and(listWhere(rest), latestMainBuild ? or(isOnLatestMainBuild, isInFlight) : undefined));
 
   const present = new Set(rows.map((row) => row.status));
   return statusDisplayOrder.filter((status) => present.has(status));
@@ -492,7 +485,7 @@ export const findAdjacentIds = async (
   snapshotId: string,
   filters: Omit<
     ListFilters,
-    "organizationId" | "buildId" | "catalog" | "projectIds" | "baseline"
+    "organizationId" | "buildId" | "latestMainBuild" | "projectIds" | "baseline"
   > = {},
 ): Promise<AdjacentSnapshotIds> => {
   const { rows } = await db.execute<{

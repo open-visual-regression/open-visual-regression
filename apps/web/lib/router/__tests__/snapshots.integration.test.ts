@@ -714,7 +714,7 @@ describe("snapshots", () => {
       ]);
     });
 
-    test("lists one copy of each story when no build is given, and in-flight work on any build", async ({
+    test("lists each project's latest main build, and in-flight snapshots on any build", async ({
       admin,
     }) => {
       const { projectId, build: olderMain } = await createProjectAndBuild(admin, "main");
@@ -739,16 +739,16 @@ describe("snapshots", () => {
       const [featureCard] = await seed(featureBuild.id);
       await dbClient.snapshots.updateStatus(featureCard!.id, "processing");
 
-      const [catalogError, catalog] = await serverClient.snapshots.list({ sort: "name" });
+      const [listError, listed] = await serverClient.snapshots.list({ sort: "name" });
       const [inFlightError, inFlight] = await serverClient.snapshots.list({
         statuses: ["processing"],
         sort: "name",
       });
       const [, statuses] = await serverClient.snapshots.listStatuses({});
 
-      expect(catalogError).toBeNull();
-      expect(catalog?.snapshots.map(({ id }) => id)).toEqual([latestCard!.id]);
-      expect(catalog?.total).toBe(1);
+      expect(listError).toBeNull();
+      expect(listed?.snapshots.map(({ id }) => id)).toEqual([latestCard!.id]);
+      expect(listed?.total).toBe(1);
       expect(inFlightError).toBeNull();
       expect(inFlight?.snapshots.map(({ id }) => id)).toEqual([featureCard!.id]);
       expect(statuses?.statuses).toContain("processing");

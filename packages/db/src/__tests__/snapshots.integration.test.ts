@@ -1377,7 +1377,7 @@ describe("snapshots", () => {
       expect(await dbClient.snapshots.count(filters)).toBe(1);
     });
 
-    test("should list only each project's latest main build in the catalog", async ({
+    test("should list only each project's latest main build", async ({
       organization,
       project,
       build,
@@ -1414,7 +1414,7 @@ describe("snapshots", () => {
       await seedStories(featureBuild.id, captureConfiguration, ["Badge", "Card"]);
       await seedStories(canceledMain.id, captureConfiguration, ["Badge", "Card"]);
       await seedStories(otherMain.id, captureConfiguration, ["Alert"]);
-      const filters = { organizationId: organization.id, catalog: true };
+      const filters = { organizationId: organization.id, latestMainBuild: true };
 
       const { snapshots } = await dbClient.snapshots.list({ ...filters, sort: "name", limit: 10 });
 
@@ -1426,7 +1426,7 @@ describe("snapshots", () => {
       expect(await dbClient.snapshots.count(filters)).toBe(3);
     });
 
-    test("should widen the catalog to every build when filtering to in-flight statuses", async ({
+    test("should list every build when filtering to in-flight statuses", async ({
       organization,
       project,
       build,
@@ -1446,7 +1446,7 @@ describe("snapshots", () => {
       await dbClient.snapshots.updateStatus(featureCard!.id, "processing");
       const [featureBadge] = await seedStories(featureBuild!.id, captureConfiguration, ["Badge"]);
       await dbClient.snapshots.updateStatus(featureBadge!.id, "error");
-      const scope = { organizationId: organization.id, catalog: true };
+      const scope = { organizationId: organization.id, latestMainBuild: true };
 
       const inFlight = await dbClient.snapshots.list({
         ...scope,
