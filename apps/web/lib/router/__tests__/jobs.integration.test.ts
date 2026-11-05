@@ -1,7 +1,9 @@
 import { vi } from "vitest";
 
 import {
+  DEFAULT_CAPTURE_QUEUE_SETTINGS,
   DEFAULT_FLAKY_DETECTION_SETTINGS,
+  type CaptureQueueSettings,
   type FlakyDetectionSettings,
 } from "@ovr/api/contracts/jobs";
 import { QueueUnavailableError } from "@ovr/queue";
@@ -153,6 +155,69 @@ describe("jobs", () => {
       const [error] = await serverClient.jobs.runFlakyDetection();
 
       expect(error?.code).toBe("SERVICE_UNAVAILABLE");
+    });
+  });
+
+  describe("getCaptureQueue", () => {
+    test("should return UNAUTHORIZED when no session cookie is provided", async () => {
+      const [error] = await serverClient.jobs.getCaptureQueue();
+      expect(error?.code).toBe("UNAUTHORIZED");
+    });
+
+    test("should return FORBIDDEN when the session user is not an admin", async ({
+      reviewer: _,
+    }) => {
+      const [error] = await serverClient.jobs.getCaptureQueue();
+      expect(error?.code).toBe("FORBIDDEN");
+    });
+
+    test("should return the default settings when none have been saved", async ({ admin: _ }) => {
+      vi.stubEnv("OVR_CAPTURE_QUEUE_POLICY", "");
+
+      const [error, result] = await serverClient.jobs.getCaptureQueue();
+
+      expect(error).toBeNull();
+      expect(result).toEqual({ settings: DEFAULT_CAPTURE_QUEUE_SETTINGS, envPolicy: null });
+    });
+
+    test("should report the policy OVR_CAPTURE_QUEUE_POLICY sets", async ({ admin: _ }) => {
+      vi.stubEnv("OVR_CAPTURE_QUEUE_POLICY", "fifo");
+
+      const [, result] = await serverClient.jobs.getCaptureQueue();
+
+      expect(result?.envPolicy).toBe("fifo");
+    });
+  });
+
+  describe("updateCaptureQueue", () => {
+    const CAPTURE_QUEUE_SETTINGS: CaptureQueueSettings = { policy: "round-robin" };
+
+    test("should return UNAUTHORIZED when no session cookie is provided", async () => {
+      const [error] = await serverClient.jobs.updateCaptureQueue(CAPTURE_QUEUE_SETTINGS);
+      expect(error?.code).toBe("UNAUTHORIZED");
+    });
+
+    test("should return FORBIDDEN when the session user is not an admin", async ({
+      reviewer: _,
+    }) => {
+      const [error] = await serverClient.jobs.updateCaptureQueue(CAPTURE_QUEUE_SETTINGS);
+      expect(error?.code).toBe("FORBIDDEN");
+    });
+
+    test("should return BAD_REQUEST when the policy is unknown", async ({ admin: _ }) => {
+      const [error] = await serverClient.jobs.updateCaptureQueue({
+        policy: "lifo" as CaptureQueueSettings["policy"],
+      });
+      expect(error?.code).toBe("BAD_REQUEST");
+    });
+
+    test("should save the settings so they are returned afterwards", async ({ admin: _ }) => {
+      const [error] = await serverClient.jobs.updateCaptureQueue(CAPTURE_QUEUE_SETTINGS);
+
+      expect(error).toBeNull();
+
+      const [, result] = await serverClient.jobs.getCaptureQueue();
+      expect(result?.settings).toEqual(CAPTURE_QUEUE_SETTINGS);
     });
   });
 });

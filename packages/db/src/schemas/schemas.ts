@@ -50,8 +50,11 @@ export const projectsRelations = relations(projects, ({ one }) => ({
 
 export type JobName = "flaky_detection";
 
+// Settings for queue behavior live beside the scheduled jobs' but are never scheduled themselves.
+export type JobSettingsKey = JobName | "capture_queue";
+
 export const jobSettings = pgTable("job_settings", {
-  job: text().$type<JobName>().primaryKey(),
+  job: text().$type<JobSettingsKey>().primaryKey(),
   settings: jsonb().$type<Record<string, unknown>>().notNull(),
   updatedBy: text("updated_by").references(() => user.id, { onDelete: "set null" }),
   updatedAt: utcTimestamp("updated_at")

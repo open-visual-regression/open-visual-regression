@@ -6,6 +6,7 @@ import { serverClient } from "@/lib/router";
 import { verifyRole } from "@/lib/utils/authorization";
 import { serverError } from "@/lib/utils/errors";
 
+import { CaptureQueueSection } from "./_components/capture-queue-section/CaptureQueueSection";
 import { FlakyDetectionSection } from "./_components/flaky-detection-section/FlakyDetectionSection";
 
 export default async function SettingsJobsPage() {
@@ -19,10 +20,15 @@ export default async function SettingsJobsPage() {
     notFound();
   }
 
-  const [flakyDetectionError, flakyDetectionResult] = await serverClient.jobs.getFlakyDetection();
+  const [[flakyDetectionError, flakyDetectionResult], [captureQueueError, captureQueueResult]] =
+    await Promise.all([serverClient.jobs.getFlakyDetection(), serverClient.jobs.getCaptureQueue()]);
 
   if (flakyDetectionError) {
     serverError(flakyDetectionError);
+  }
+
+  if (captureQueueError) {
+    serverError(captureQueueError);
   }
 
   return (
@@ -31,6 +37,7 @@ export default async function SettingsJobsPage() {
         jobs
       </Typography>
       <FlakyDetectionSection {...flakyDetectionResult} />
+      <CaptureQueueSection {...captureQueueResult} />
     </div>
   );
 }

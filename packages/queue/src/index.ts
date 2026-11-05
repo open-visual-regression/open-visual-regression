@@ -286,11 +286,8 @@ export const enqueueCaptureGroup = (
 // pass it.
 // round-robin gives a build's nth group of each browser priority n, counted from the round workers
 // are on, so a new build joins that round instead of jumping ahead of every queued build.
-export const captureQueuePolicySchema = z
-  .enum(["deadline", "round-robin", "fifo"])
-  .catch("deadline");
-
-export type CaptureQueuePolicy = z.infer<typeof captureQueuePolicySchema>;
+// Callers resolve the policy: OVR_CAPTURE_QUEUE_POLICY, else what an admin saved.
+export type CaptureQueuePolicy = "deadline" | "round-robin" | "fifo";
 
 const LOWEST_PRIORITY = 2_097_151;
 

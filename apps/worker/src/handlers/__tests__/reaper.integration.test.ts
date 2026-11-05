@@ -97,9 +97,11 @@ describe("reaper", () => {
         ],
       });
       const [captureGroup] = (
-        await enqueueCaptureGroups(build!.id, [
-          { browser: captureConfiguration.browser, snapshotIds: [queuedSnapshot!.id] },
-        ])
+        await enqueueCaptureGroups(
+          build!.id,
+          [{ browser: captureConfiguration.browser, snapshotIds: [queuedSnapshot!.id] }],
+          "deadline",
+        )
       ).map(trackJob);
 
       await resolveStaleBuilds(STALE_MINUTES);

@@ -1,7 +1,10 @@
 import { notFound } from "next/navigation";
-import { vi } from "vitest";
+import { beforeEach, vi } from "vitest";
 
-import { DEFAULT_FLAKY_DETECTION_SETTINGS } from "@ovr/api/contracts/jobs";
+import {
+  DEFAULT_CAPTURE_QUEUE_SETTINGS,
+  DEFAULT_FLAKY_DETECTION_SETTINGS,
+} from "@ovr/api/contracts/jobs";
 import { mocks } from "@ovr/mocks";
 
 import { auth } from "@/lib/auth/auth";
@@ -18,9 +21,17 @@ vi.mock("@/lib/router");
 
 const mockGetSession = vi.mocked(auth.api.getSession);
 const mockGetFlakyDetection = vi.mocked(serverClient.jobs.getFlakyDetection);
+const mockGetCaptureQueue = vi.mocked(serverClient.jobs.getCaptureQueue);
 const mockNotFound = vi.mocked(notFound);
 
 describe("SettingsJobsPage", () => {
+  beforeEach(() => {
+    mockGetCaptureQueue.mockResolvedValue([
+      null,
+      { settings: DEFAULT_CAPTURE_QUEUE_SETTINGS, envPolicy: null },
+    ]);
+  });
+
   it("should show the flaky detection settings for admins", async () => {
     mockGetSession.mockResolvedValue({
       user: mocks.user.generateAuthUser({ role: "admin" }),
@@ -81,6 +92,50 @@ describe("SettingsJobsPage", () => {
     render(await SettingsJobsPage());
 
     expect(screen.getByText("last run: never")).toBeVisible();
+  });
+
+  it("should show the capture queue policy for admins", async () => {
+    mockGetSession.mockResolvedValue({
+      user: mocks.user.generateAuthUser({ role: "admin" }),
+      session: mocks.session.generateSession(),
+    });
+    mockGetFlakyDetection.mockResolvedValue([
+      null,
+      {
+        settings: DEFAULT_FLAKY_DETECTION_SETTINGS,
+        lastRunAt: null,
+        nextRunAt: null,
+        running: false,
+      },
+    ]);
+    mockGetCaptureQueue.mockResolvedValue([
+      null,
+      { settings: { policy: "round-robin" }, envPolicy: null },
+    ]);
+
+    render(await SettingsJobsPage());
+
+    expect(screen.getByRole("heading", { name: /capture queue/i })).toBeVisible();
+    expect(screen.getByRole("combobox", { name: /policy/i })).toHaveTextContent("round-robin");
+  });
+
+  it("should show an error page when the capture queue settings cannot be retrieved", async () => {
+    mockGetSession.mockResolvedValue({
+      user: mocks.user.generateAuthUser({ role: "admin" }),
+      session: mocks.session.generateSession(),
+    });
+    mockGetFlakyDetection.mockResolvedValue([
+      null,
+      {
+        settings: DEFAULT_FLAKY_DETECTION_SETTINGS,
+        lastRunAt: null,
+        nextRunAt: null,
+        running: false,
+      },
+    ]);
+    mockGetCaptureQueue.mockResolvedValue([createORPCError("INTERNAL_SERVER_ERROR"), undefined]);
+
+    await expect(SettingsJobsPage()).rejects.toThrow();
   });
 
   it("should show a not found page for non-admins", async () => {

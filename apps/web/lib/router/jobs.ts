@@ -3,6 +3,10 @@
 import { ORPCError } from "@orpc/client";
 
 import {
+  getCaptureQueue as getCaptureQueueState,
+  saveCaptureQueueSettings,
+} from "@ovr/builds/captureQueue";
+import {
   getFlakyDetection as getFlakyDetectionState,
   runFlakyDetectionNow,
   saveFlakyDetectionSettings,
@@ -47,5 +51,19 @@ export const runFlakyDetection = os.jobs.runFlakyDetection
       case "QUEUE_UNAVAILABLE":
         throw new ORPCError("SERVICE_UNAVAILABLE", { message: "the job queue is unavailable" });
     }
+  })
+  .actionable();
+
+export const getCaptureQueue = os.jobs.getCaptureQueue
+  .use(authenticatedMiddleware)
+  .use(adminMiddleware)
+  .handler(() => getCaptureQueueState())
+  .actionable();
+
+export const updateCaptureQueue = os.jobs.updateCaptureQueue
+  .use(authenticatedMiddleware)
+  .use(adminMiddleware)
+  .handler(async ({ input, context }) => {
+    await saveCaptureQueueSettings(input, context.user.id);
   })
   .actionable();

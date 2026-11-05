@@ -1,3 +1,4 @@
+import { getCaptureQueuePolicy } from "@ovr/builds/captureQueue";
 import { toCaptureGroups } from "@ovr/builds/lib/captureGroups";
 import { withBundleDir } from "@ovr/builds/storybookBundleCache";
 import {
@@ -188,5 +189,6 @@ export const extractBuild = async (
   await enqueueCaptureGroups(
     buildId,
     toCaptureGroups(snapshots.filter((snapshot) => snapshot.status === "queued")),
+    await getCaptureQueuePolicy(),
   );
 };

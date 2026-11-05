@@ -1,15 +1,15 @@
 import { eq, sql } from "drizzle-orm";
 
 import { db } from "../db";
-import { jobSettings, type JobName } from "../schema";
+import { jobSettings, type JobName, type JobSettingsKey } from "../schema";
 
-export const find = (job: JobName) =>
+export const find = (job: JobSettingsKey) =>
   db.query.jobSettings.findFirst({
     where: (jobSettings, { eq }) => eq(jobSettings.job, job),
   });
 
 type UpsertInput = {
-  job: JobName;
+  job: JobSettingsKey;
   settings: Record<string, unknown>;
   updatedBy: string;
 };
