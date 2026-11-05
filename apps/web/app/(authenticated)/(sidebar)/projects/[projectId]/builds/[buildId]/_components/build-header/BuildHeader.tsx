@@ -55,7 +55,6 @@ export const BuildHeader = ({
   const latestBuildHref = showLatestBuild
     ? `/projects/${build.project.id}/builds/${build.latestBuildId}`
     : null;
-  // On small screens these fold into a menu, so approving and rejecting keep the room.
   const hasSecondaryActions = showLatestBuild || showCancel || showRebuild;
   const showActionsMenu = hasSecondaryActions || storybookHref !== null;
   const showWideActions = hasSecondaryActions || showReviewActions;
@@ -63,7 +62,6 @@ export const BuildHeader = ({
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-start md:gap-x-4 md:gap-y-2">
-        {/* On small screens the menu sits beside the title, so it never takes a row of its own. */}
         <div className="flex flex-row items-start gap-2 md:contents">
           <Typography variant="h1" as="h1" className="min-w-0 flex-1 md:order-1 md:truncate">
             {build.name}
