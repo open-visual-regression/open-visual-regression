@@ -5,9 +5,7 @@ import {
   Icon,
   ArrowRightIcon,
   CircleSlash2Icon,
-  GitBranchIcon,
   GitCommitHorizontalIcon,
-  GitCompareArrowsIcon,
   TimerIcon,
   UserIcon,
 } from "@ovr/ui/components/icon";
@@ -20,11 +18,11 @@ import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 
 import { ButtonLink } from "@/lib/components/button-link/ButtonLink";
 import { ExternalLink } from "@/lib/components/external-link/ExternalLink";
-import { TruncatedText } from "@/lib/components/truncated-text/TruncatedText";
 import { formatBuildTimingBreakdown } from "@/lib/utils/buildTimings";
 import { formatDuration, formatRelativeDateTime } from "@/lib/utils/date";
 
 import { BuildApproveButton } from "./BuildApproveButton";
+import { BuildBranches } from "./BuildBranches";
 import { BuildCancelButton } from "./BuildCancelButton";
 import { BuildRebuildButton } from "./BuildRebuildButton";
 import { BuildRejectButton } from "./BuildRejectButton";
@@ -63,17 +61,7 @@ export const BuildHeader = ({
         <div className="flex flex-row flex-wrap items-center gap-4 text-xs md:order-3 md:basis-full">
           <BuildStatusStream buildId={build.id} initialStatus={build.status} />
           {storybookHref ? <ExternalLink href={storybookHref}>view storybook</ExternalLink> : null}
-          {build.branchUrl ? (
-            <ExternalLink href={build.branchUrl}>
-              <Icon icon={GitBranchIcon} size={10} />
-              <TruncatedText>{build.branch}</TruncatedText>
-            </ExternalLink>
-          ) : (
-            <Typography variant="caption" className="flex items-center gap-1">
-              <Icon icon={GitBranchIcon} size={10} />
-              <TruncatedText>{build.branch}</TruncatedText>
-            </Typography>
-          )}
+          <BuildBranches build={build} />
           {build.commitUrl ? (
             <ExternalLink href={build.commitUrl}>
               <Icon icon={GitCommitHorizontalIcon} size={10} />
@@ -85,16 +73,6 @@ export const BuildHeader = ({
               {build.commitSha.slice(0, 7)}
             </Typography>
           )}
-          {build.baseBuild ? (
-            <ButtonLink
-              href={`/projects/${build.project.id}/builds/${build.baseBuild.id}`}
-              variant="link"
-              color="neutral"
-            >
-              <Icon icon={GitCompareArrowsIcon} size={10} />
-              compared to {build.baseBuild.commitSha.slice(0, 7)}
-            </ButtonLink>
-          ) : null}
           {build.author ? (
             <Typography variant="caption" className="flex items-center gap-1">
               <Icon icon={UserIcon} size={10} />

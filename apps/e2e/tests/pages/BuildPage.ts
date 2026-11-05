@@ -18,9 +18,9 @@ export class BuildPage {
     return this.page.getByRole("status", { name: "build status" });
   }
 
-  // ButtonLink exposes a button role, so find the anchor by its text.
-  comparedToLink(): Locator {
-    return this.page.locator("a", { hasText: /^compared to/ });
+  // The main-branch build a branch build was compared to, shown as `main @ <sha>`.
+  baseBuildLink(mainBranch: string, shortSha: string): Locator {
+    return this.page.getByRole("link", { name: `${mainBranch} @ ${shortSha}`, exact: true });
   }
 
   cancelButton(): Locator {

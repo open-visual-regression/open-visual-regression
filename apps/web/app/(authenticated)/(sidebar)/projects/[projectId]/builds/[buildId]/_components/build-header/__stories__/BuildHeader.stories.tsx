@@ -177,12 +177,41 @@ export const WithGitIntegration: Story = {
   },
 };
 
-export const ComparedToMergeBase: Story = {
+export const BranchBuild: Story = {
   args: {
     build: mocks.build.generateBuild({
       ...buildOverrides,
       branch: "feature/empty-state",
       status: "needs_review",
+      baseBuild: {
+        id: "0196f1c2-7a3b-7c4d-8e5f-6a7b8c9d0e1f",
+        commitSha: "c0ffee1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b",
+      },
+    }),
+    snapshotCounts,
+  },
+};
+
+export const BranchBuildWithoutMergeBase: Story = {
+  args: {
+    build: mocks.build.generateBuild({
+      ...buildOverrides,
+      branch: "feature/empty-state",
+      status: "needs_review",
+      baseBuild: null,
+    }),
+    snapshotCounts,
+  },
+};
+
+export const BranchBuildWithLongBranchName: Story = {
+  args: {
+    build: mocks.build.generateBuild({
+      ...buildOverrides,
+      branch: "feature/a-very-long-branch-name-that-should-be-truncated-on-small-screens",
+      status: "needs_review",
+      branchUrl:
+        "https://github.com/acme/web/tree/feature/a-very-long-branch-name-that-should-be-truncated-on-small-screens",
       baseBuild: {
         id: "0196f1c2-7a3b-7c4d-8e5f-6a7b8c9d0e1f",
         commitSha: "c0ffee1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b",

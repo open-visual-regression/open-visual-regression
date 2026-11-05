@@ -385,6 +385,7 @@ export const getOne = os.builds.getOne
         branchUrl: gitIntegration
           ? buildBranchUrl(gitIntegration.provider, gitIntegration.repoIdentifier, build.branch)
           : null,
+        mainBranch: project.gitMainBranch,
         baseBuild: baseBuild ? { id: baseBuild.id, commitSha: baseBuild.commitSha } : null,
       },
     };

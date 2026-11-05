@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 export {
   ArrowLeftFromLineIcon,
+  ArrowLeftIcon,
   ArrowRightIcon,
   ArrowRightToLineIcon,
   BoxIcon,
@@ -14,7 +15,6 @@ export {
   FolderIcon,
   GitBranchIcon,
   GitCommitHorizontalIcon,
-  GitCompareArrowsIcon,
   ExternalLinkIcon,
   GlobeIcon,
   KeyRoundIcon,

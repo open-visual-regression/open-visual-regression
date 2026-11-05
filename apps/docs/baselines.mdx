@@ -11,7 +11,7 @@ Open it from a project's page with **view baseline**.
 
 A build on any other branch is compared against main as it was when the branch was cut, not main's latest. Changes that landed on main since then don't show up as changes on the branch, so a branch that's behind main only shows its own changes.
 
-The CLI finds the most recent successful main-branch build in the commit's history and sends it with the build. The build page links to it as **compared to**. A branch build is compared against main's latest baselines instead when:
+The CLI finds the most recent successful main-branch build in the commit's history and sends it with the build. The build page shows it next to the branch, the way a pull request shows its base branch: `main @ c0ffee1 ← feature/empty-state`, with the main side linking to that build. When there's no such build, it shows `main (latest)`. A branch build is compared against main's latest baselines when:
 
 - The git history isn't available, such as in a shallow clone. In GitHub Actions, check out with `fetch-depth: 0`.
 - No successful main-branch build is in the commit's history.
