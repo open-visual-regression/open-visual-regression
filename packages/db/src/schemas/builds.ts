@@ -415,7 +415,7 @@ export const baselines = pgTable(
 );
 
 // One row each time a main-branch build changes a baseline, so a branch can be compared
-// against main as it was at its merge base. Unchanged stories write nothing, and each row
+// against main as it was at its merge base. Unchanged targets write nothing, and each row
 // is purged with the build that made the change.
 export const baselineRevisions = pgTable(
   "baseline_revisions",
@@ -431,7 +431,7 @@ export const baselineRevisions = pgTable(
     buildId: uuid("build_id")
       .references(() => builds.id, { onDelete: "cascade" })
       .notNull(),
-    // The baseline this change replaced. Null when the story was new, or once that snapshot
+    // The baseline this change replaced. Null when the target was new, or once that snapshot
     // is purged; replacedExisting tells the two apart.
     previousSnapshotId: uuid("previous_snapshot_id").references(() => snapshots.id, {
       onDelete: "set null",

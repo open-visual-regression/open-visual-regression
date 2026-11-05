@@ -3,15 +3,15 @@ import { describe, expect, test } from "./fixtures";
 
 describe("baselineRevisions", () => {
   describe("findFirstAfter", () => {
-    test("should find the first change main made to a story after the given time", async ({
+    test("should find the first change main made to a target after the given time", async ({
       project,
       captureConfiguration,
       build,
     }) => {
       const [previous] = await dbClient.snapshots.createMany({
-        values: [{ buildId: build.id, ...captureConfiguration, targetId: "button--primary" }],
+        values: [{ buildId: build.id, ...captureConfiguration, targetId: "target-a" }],
       });
-      const key = { projectId: project.id, ...captureConfiguration, targetId: "button--primary" };
+      const key = { projectId: project.id, ...captureConfiguration, targetId: "target-a" };
       await dbClient.baselineRevisions.create({
         ...key,
         buildId: build.id,
@@ -42,12 +42,12 @@ describe("baselineRevisions", () => {
       expect(revision).toMatchObject({ id: first!.id, previousSnapshotId: previous!.id });
     });
 
-    test("should find nothing when main hasn't changed the story since the given time", async ({
+    test("should find nothing when main hasn't changed the target since the given time", async ({
       project,
       captureConfiguration,
       build,
     }) => {
-      const key = { projectId: project.id, ...captureConfiguration, targetId: "button--primary" };
+      const key = { projectId: project.id, ...captureConfiguration, targetId: "target-a" };
       await dbClient.baselineRevisions.create({
         ...key,
         buildId: build.id,
@@ -57,7 +57,7 @@ describe("baselineRevisions", () => {
       });
       await dbClient.baselineRevisions.create({
         ...key,
-        targetId: "button--secondary",
+        targetId: "target-b",
         buildId: build.id,
         previousSnapshotId: null,
         replacedExisting: false,
@@ -79,7 +79,7 @@ describe("baselineRevisions", () => {
       captureConfiguration,
       build,
     }) => {
-      const key = { projectId: project.id, ...captureConfiguration, targetId: "button--primary" };
+      const key = { projectId: project.id, ...captureConfiguration, targetId: "target-a" };
       await dbClient.baselineRevisions.create({
         ...key,
         buildId: build.id,
@@ -102,7 +102,7 @@ describe("baselineRevisions", () => {
       user,
     }) => {
       const [previous] = await dbClient.snapshots.createMany({
-        values: [{ buildId: build.id, ...captureConfiguration, targetId: "button--primary" }],
+        values: [{ buildId: build.id, ...captureConfiguration, targetId: "target-a" }],
       });
       const changingBuild = await dbClient.builds.create({
         projectId: project.id,
@@ -111,7 +111,7 @@ describe("baselineRevisions", () => {
         artifactPath: "builds/changing/artifact",
         createdBy: user.id,
       });
-      const key = { projectId: project.id, ...captureConfiguration, targetId: "button--primary" };
+      const key = { projectId: project.id, ...captureConfiguration, targetId: "target-a" };
       await dbClient.baselineRevisions.create({
         ...key,
         buildId: changingBuild!.id,

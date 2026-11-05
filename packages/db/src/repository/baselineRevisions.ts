@@ -16,8 +16,8 @@ export const create = async (values: typeof baselineRevisions.$inferInsert, tx: 
   return revision;
 };
 
-// The first change main made to a story after `after`. Its previous snapshot is the
-// baseline the story had at `after`.
+// The first change main made to a target after `after`. Its previous snapshot is the
+// baseline the target had at `after`.
 export const findFirstAfter = async (
   { projectId, browser, viewportWidth, viewportHeight, targetId }: RevisionKey,
   after: string,
