@@ -1,5 +1,13 @@
 # @ovr/ui
 
+## 0.1.5
+
+### Patch Changes
+
+- [#495](https://github.com/open-visual-regression/open-visual-regression/pull/495) [`88de1b2`](https://github.com/open-visual-regression/open-visual-regression/commit/88de1b27b19f6c33257aca1f54f47363beb91713) Thanks [@tgfischer](https://github.com/tgfischer)! - On small screens, the build page keeps approve and reject in view and moves viewing the Storybook, the latest build, rebuilding and canceling into a menu.
+
+- [#493](https://github.com/open-visual-regression/open-visual-regression/pull/493) [`dfd4571`](https://github.com/open-visual-regression/open-visual-regression/commit/dfd457143f8fddcfbdfc981d8c0e244fe7f3a358) Thanks [@tgfischer](https://github.com/tgfischer)! - Branch builds are compared against main at their merge base, so changes main made after the branch was cut no longer show up as the branch's own. This needs the full git history (`fetch-depth: 0`).
+
 ## 0.1.4
 
 ### Patch Changes
