@@ -4,15 +4,21 @@ import { type SnapshotFlag } from "@ovr/api/contracts/snapshots";
 import { FacetBar } from "@/lib/components/facet/FacetBar";
 import { type FacetOption } from "@/lib/components/facet/FacetOptionsList";
 
+const BASELINE_OPTIONS: FacetOption<string>[] = [{ value: "true", label: "current" }];
+
 type SnapshotFiltersProps = {
   statuses: SnapshotDisplayStatus[];
   browsers: string[];
   viewports: string[];
   flags: SnapshotFlag[];
+  projectIds?: string[];
+  baseline?: boolean;
   statusOptions: FacetOption<SnapshotDisplayStatus>[];
   browserOptions: FacetOption<string>[];
   viewportOptions: FacetOption<string>[];
   flagOptions: FacetOption<SnapshotFlag>[];
+  projectOptions?: FacetOption<string>[];
+  showBaselineFacet?: boolean;
   className?: string;
 };
 
@@ -21,19 +27,31 @@ export const SnapshotFilters = ({
   browsers,
   viewports,
   flags,
+  projectIds = [],
+  baseline = false,
   statusOptions,
   browserOptions,
   viewportOptions,
   flagOptions,
+  projectOptions = [],
+  showBaselineFacet = false,
   className,
 }: SnapshotFiltersProps) => (
   <FacetBar
     className={className}
     facets={[
+      { param: "project", label: "project", options: projectOptions, selected: projectIds },
       { param: "status", label: "status", options: statusOptions, selected: statuses },
       { param: "browser", label: "browser", options: browserOptions, selected: browsers },
       { param: "viewport", label: "viewport", options: viewportOptions, selected: viewports },
       { param: "flag", label: "flags", options: flagOptions, selected: flags, minOptions: 1 },
+      {
+        param: "baseline",
+        label: "baseline",
+        options: showBaselineFacet ? BASELINE_OPTIONS : [],
+        selected: baseline ? ["true"] : [],
+        minOptions: 1,
+      },
     ]}
   />
 );

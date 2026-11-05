@@ -12,6 +12,8 @@ describe("snapshotFilters", () => {
           browser: "chromium",
           viewport: ["desktop", "mobile"],
           flag: ["flaky", "warning"],
+          project: "018f0000-0000-7000-8000-000000000001",
+          baseline: "true",
         }),
       ).toEqual({
         search: "button",
@@ -19,6 +21,8 @@ describe("snapshotFilters", () => {
         browsers: ["chromium"],
         viewports: ["desktop", "mobile"],
         flags: ["flaky", "warning"],
+        projectIds: ["018f0000-0000-7000-8000-000000000001"],
+        baseline: true,
       });
     });
 
@@ -29,6 +33,8 @@ describe("snapshotFilters", () => {
         browsers: [],
         viewports: [],
         flags: [],
+        projectIds: [],
+        baseline: false,
       });
     });
 
@@ -38,6 +44,10 @@ describe("snapshotFilters", () => {
 
     it("should drop an unrecognised flag rather than failing the page", () => {
       expect(parseSnapshotFilters({ flag: "not-a-flag" }).flags).toEqual([]);
+    });
+
+    it("should drop a project that isn't an id rather than failing the page", () => {
+      expect(parseSnapshotFilters({ project: "storefront" }).projectIds).toEqual([]);
     });
 
     it("should treat an empty search as no search", () => {

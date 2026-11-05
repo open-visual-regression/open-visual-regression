@@ -15,7 +15,15 @@ import {
 } from "drizzle-orm";
 
 import { db, type DbClient } from "../db";
-import { builds, diffs, flakySnapshots, projects, snapshots, type SnapshotStatus } from "../schema";
+import {
+  baselines,
+  builds,
+  diffs,
+  flakySnapshots,
+  projects,
+  snapshots,
+  type SnapshotStatus,
+} from "../schema";
 
 export type SnapshotDisplayStatusCounts = {
   unchanged: number;
@@ -241,6 +249,8 @@ const flagDisplayOrder: SnapshotFlag[] = ["flaky", "warning"];
 export type ListFilters = {
   organizationId?: string;
   buildId?: string;
+  projectIds?: string[];
+  baseline?: boolean;
   statuses?: SnapshotDisplayStatus[];
   browsers?: string[];
   viewports?: string[];
@@ -248,9 +258,15 @@ export type ListFilters = {
   search?: string;
 };
 
+const isBaseline = exists(
+  db.select({ id: baselines.id }).from(baselines).where(eq(baselines.snapshotId, snapshots.id)),
+);
+
 const listWhere = ({
   organizationId,
   buildId,
+  projectIds,
+  baseline,
   statuses,
   browsers,
   viewports,
@@ -260,6 +276,8 @@ const listWhere = ({
   and(
     organizationId ? eq(projects.organizationId, organizationId) : undefined,
     buildId ? eq(snapshots.buildId, buildId) : undefined,
+    projectIds?.length ? inArray(builds.projectId, projectIds) : undefined,
+    baseline ? isBaseline : undefined,
     statuses?.length
       ? or(...statuses.map((status) => sql`${displayStatusExpr} = ${status}`))
       : undefined,
@@ -435,7 +453,7 @@ const sortKeyOrder = (alias: string, direction: "asc" | "desc") =>
 export const findAdjacentIds = async (
   buildId: string,
   snapshotId: string,
-  filters: Omit<ListFilters, "organizationId" | "buildId"> = {},
+  filters: Omit<ListFilters, "organizationId" | "buildId" | "projectIds" | "baseline"> = {},
 ): Promise<AdjacentSnapshotIds> => {
   const { rows } = await db.execute<{
     prev_id: string | null;

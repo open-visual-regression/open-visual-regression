@@ -651,6 +651,43 @@ describe("snapshots", () => {
       ]);
     });
 
+    test("filters by project and by current baseline, together with the other filters", async ({
+      admin,
+    }) => {
+      const { projectId, build } = await createProjectAndBuild(admin);
+      const { build: otherBuild } = await createProjectAndBuild(admin);
+      const [chart, card] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, targetId: "chart", targetTitle: "Chart" },
+          { buildId: build.id, targetId: "card", targetTitle: "Card" },
+          { buildId: otherBuild.id, targetId: "chart", targetTitle: "Chart" },
+        ].map((target) => ({ ...target, ...VIEWPORT, targetName: "Default" })),
+      });
+      for (const snapshot of [chart!, card!]) {
+        await dbClient.baselines.upsert({
+          projectId,
+          browser: snapshot.browser,
+          viewportWidth: snapshot.viewportWidth,
+          viewportHeight: snapshot.viewportHeight,
+          targetId: snapshot.targetId,
+          snapshotId: snapshot.id,
+          approvedBy: admin.id,
+        });
+      }
+      await flagStory(projectId, "chart");
+
+      const [error, result] = await serverClient.snapshots.list({
+        projectIds: [projectId],
+        baseline: true,
+        flags: ["flaky"],
+        sort: "name",
+      });
+
+      expect(error).toBeNull();
+      expect(result?.snapshots.map(({ id }) => id)).toEqual([chart!.id]);
+      expect(result?.total).toBe(1);
+    });
+
     test("does not list another organization's snapshots when no build is given", async ({
       admin,
     }) => {

@@ -13,27 +13,37 @@ import { parseSnapshotFilters } from "@/lib/utils/snapshotFilters";
 
 import { SnapshotsPageShell } from "./_components/SnapshotsPageShell";
 
+const PROJECT_OPTIONS_LIMIT = 100;
+
 type SnapshotsPageProps = PageProps<"/snapshots">;
 
 export default async function SnapshotsPage(props: SnapshotsPageProps) {
   const rawSearchParams = await props.searchParams;
   const filters = parseSnapshotFilters(rawSearchParams);
-  const { search, statuses, browsers, viewports, flags } = filters;
+  const { search, statuses, browsers, viewports, flags, projectIds, baseline } = filters;
 
   const queryClient = getQueryClient();
 
-  const [statusesResult, browsersResult, viewportsResult, flagsResult] = await Promise.all([
-    queryClient.fetchQuery(orpcServer.snapshots.listStatuses.queryOptions({ input: {} })),
-    queryClient.fetchQuery(orpcServer.snapshots.listBrowsers.queryOptions({ input: {} })),
-    queryClient.fetchQuery(orpcServer.snapshots.listViewports.queryOptions({ input: {} })),
-    queryClient.fetchQuery(orpcServer.snapshots.listFlags.queryOptions({ input: {} })),
-    queryClient.prefetchInfiniteQuery(
-      orpcServer.snapshots.list.infiniteOptions(
-        snapshotsListInfiniteOptions({ sort: "name" }, filters),
+  const [projectsResult, statusesResult, browsersResult, viewportsResult, flagsResult] =
+    await Promise.all([
+      queryClient.fetchQuery(
+        orpcServer.projects.list.queryOptions({ input: { limit: PROJECT_OPTIONS_LIMIT } }),
       ),
-    ),
-  ]);
+      queryClient.fetchQuery(orpcServer.snapshots.listStatuses.queryOptions({ input: {} })),
+      queryClient.fetchQuery(orpcServer.snapshots.listBrowsers.queryOptions({ input: {} })),
+      queryClient.fetchQuery(orpcServer.snapshots.listViewports.queryOptions({ input: {} })),
+      queryClient.fetchQuery(orpcServer.snapshots.listFlags.queryOptions({ input: {} })),
+      queryClient.prefetchInfiniteQuery(
+        orpcServer.snapshots.list.infiniteOptions(
+          snapshotsListInfiniteOptions({ sort: "name" }, filters),
+        ),
+      ),
+    ]);
 
+  const projectOptions = projectsResult.projects.map((project) => ({
+    value: project.id,
+    label: project.name,
+  }));
   const statusOptions = statusesResult.statuses.map((status) => ({
     value: status,
     label: getSnapshotStatusLabel(status),
@@ -61,10 +71,14 @@ export default async function SnapshotsPage(props: SnapshotsPageProps) {
           browsers={browsers}
           viewports={viewports}
           flags={flags}
+          projectIds={projectIds}
+          baseline={baseline}
           statusOptions={statusOptions}
           browserOptions={browserOptions}
           viewportOptions={viewportOptions}
           flagOptions={flagOptions}
+          projectOptions={projectOptions}
+          showBaselineFacet
         />
       }
       search={
