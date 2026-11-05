@@ -24,6 +24,7 @@ import {
   type ScreenshotStability,
 } from "@ovr/storybook-compat/parameters";
 
+import { getCaptureQueuePolicy } from "./captureQueue";
 import { toCaptureGroups } from "./lib/captureGroups";
 import {
   buildDuration,
@@ -626,7 +627,7 @@ export const rebuildSnapshots = async (
   });
 
   try {
-    await enqueueCaptureGroups(buildId, toCaptureGroups(snapshots));
+    await enqueueCaptureGroups(buildId, toCaptureGroups(snapshots), await getCaptureQueuePolicy());
   } catch (error) {
     logger.error({ err: error, buildId, snapshotIds }, "failed to queue rebuilt snapshots");
     const message = error instanceof Error ? error.message : String(error);

@@ -36,8 +36,8 @@ import {
   type ProjectPurgeJobPayload,
   type PurgeJobPayload,
   type QueueJobCount,
+  type CaptureQueuePolicy,
   buildRedisConnection,
-  captureQueuePolicySchema,
   waitForConnection,
 } from "./index";
 
@@ -65,15 +65,9 @@ export const enqueueCaptureGroup = (
 export const enqueueCaptureGroups = (
   buildId: string,
   groups: Omit<CaptureGroupJobPayload, "buildId">[],
+  policy: CaptureQueuePolicy,
 ): Promise<Job<CaptureGroupJobPayload>[]> =>
-  whenConnected(() =>
-    enqueueCaptureGroupsJob(
-      buildId,
-      groups,
-      connection,
-      captureQueuePolicySchema.parse(process.env.OVR_CAPTURE_QUEUE_POLICY),
-    ),
-  );
+  whenConnected(() => enqueueCaptureGroupsJob(buildId, groups, connection, policy));
 
 export const enqueueDiff = (payload: DiffJobPayload): Promise<Job<DiffJobPayload>> =>
   whenConnected(() => enqueueDiffJob(payload, connection));

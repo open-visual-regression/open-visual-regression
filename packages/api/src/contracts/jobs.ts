@@ -55,8 +55,44 @@ export const updateFlakyDetectionContract = oc.input(flakyDetectionSettingsSchem
 
 export const runFlakyDetectionContract = oc.output(z.void());
 
+export const CAPTURE_QUEUE_POLICIES = ["deadline", "round-robin", "fifo"] as const;
+
+export const captureQueuePolicySchema = z.enum(CAPTURE_QUEUE_POLICIES);
+
+export type CaptureQueuePolicy = z.infer<typeof captureQueuePolicySchema>;
+
+export const captureQueueSettingsSchema = z.object({
+  policy: captureQueuePolicySchema,
+});
+
+export type CaptureQueueSettings = z.infer<typeof captureQueueSettingsSchema>;
+
+export const DEFAULT_CAPTURE_QUEUE_SETTINGS: CaptureQueueSettings = {
+  policy: "deadline",
+};
+
+export const storedCaptureQueueSettingsSchema = z
+  .object({
+    policy: captureQueuePolicySchema.catch(DEFAULT_CAPTURE_QUEUE_SETTINGS.policy),
+  })
+  .catch(DEFAULT_CAPTURE_QUEUE_SETTINGS);
+
+export const getCaptureQueueOutputSchema = z.object({
+  settings: captureQueueSettingsSchema,
+  /** The policy OVR_CAPTURE_QUEUE_POLICY sets, which wins over the saved settings. */
+  envPolicy: captureQueuePolicySchema.nullable(),
+});
+
+export type CaptureQueue = z.infer<typeof getCaptureQueueOutputSchema>;
+
+export const getCaptureQueueContract = oc.output(getCaptureQueueOutputSchema);
+
+export const updateCaptureQueueContract = oc.input(captureQueueSettingsSchema).output(z.void());
+
 export const contract = {
   getFlakyDetection: getFlakyDetectionContract,
   updateFlakyDetection: updateFlakyDetectionContract,
   runFlakyDetection: runFlakyDetectionContract,
+  getCaptureQueue: getCaptureQueueContract,
+  updateCaptureQueue: updateCaptureQueueContract,
 } as const;
