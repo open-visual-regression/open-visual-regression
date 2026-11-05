@@ -1,6 +1,7 @@
 import { db } from "./db";
 import * as accessTokens from "./repository/accessTokens";
 import * as apiKeys from "./repository/apiKeys";
+import * as baselineRevisions from "./repository/baselineRevisions";
 import * as baselines from "./repository/baselines";
 import * as buildExtractDefaults from "./repository/buildExtractDefaults";
 import * as builds from "./repository/builds";
@@ -33,6 +34,7 @@ export const dbClient = {
   diffs,
   diffReviews,
   baselines,
+  baselineRevisions,
   storageOutbox,
   gitIntegrations,
   gitStatusPublications,

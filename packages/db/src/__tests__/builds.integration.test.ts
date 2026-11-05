@@ -31,6 +31,27 @@ describe("builds", () => {
     });
   });
 
+  describe("removeMany", () => {
+    test("should let a branch's merge-base build be purged, leaving the branch build without a base", async ({
+      project,
+      user,
+      build: mainBuild,
+    }) => {
+      const branchBuild = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "feature/x",
+        commitSha: "b".repeat(40),
+        baseBuildId: mainBuild.id,
+        artifactPath: "builds/feature/artifact",
+        createdBy: user.id,
+      });
+
+      await dbClient.transaction((tx) => dbClient.builds.removeMany(tx, [mainBuild.id]));
+
+      expect(await dbClient.builds.findById(branchBuild!.id)).toMatchObject({ baseBuildId: null });
+    });
+  });
+
   describe("findById", () => {
     test("should return the build matching the given id", async ({ build }) => {
       const found = await dbClient.builds.findById(build.id);

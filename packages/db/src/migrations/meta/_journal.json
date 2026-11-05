@@ -442,6 +442,20 @@
       "when": 1793751385508,
       "tag": "0062_add_snapshots_name_order_index",
       "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "7",
+      "when": 1793837849703,
+      "tag": "0063_add_baseline_revisions",
+      "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1793837851161,
+      "tag": "0064_add_base_build_index",
+      "breakpoints": true
     }
   ]
 }
