@@ -1,10 +1,11 @@
 import { type AccessTokenSchema } from "@ovr/api/contracts/accessTokens";
 import { Icon, PlusIcon } from "@ovr/ui/components/icon";
-import { Typography } from "@ovr/ui/components/typography";
+import { Skeleton } from "@ovr/ui/components/skeleton";
+import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 
 import { CreateAccessTokenModal } from "../create-access-token/CreateAccessTokenModal";
 import { CreateAccessTokenModalButton } from "../create-access-token/CreateAccessTokenModalButton";
-import { AccessTokensTable } from "./AccessTokensTable";
+import { AccessTokensTable, AccessTokensTableSkeleton } from "./AccessTokensTable";
 import { NoAccessTokensSection } from "./NoAccessTokensSection";
 
 type AccessTokensSectionProps = {
@@ -29,5 +30,15 @@ export const AccessTokensSection = ({ accessTokens }: AccessTokensSectionProps) 
     ) : (
       <AccessTokensTable data={accessTokens} />
     )}
+  </div>
+);
+
+export const AccessTokensSectionSkeleton = () => (
+  <div aria-hidden className="flex flex-col gap-4">
+    <div className="flex items-center justify-between">
+      <TypographySkeleton variant="h2" className="w-28" />
+      <Skeleton className="h-8 w-8 rounded-lg sm:w-36" />
+    </div>
+    <AccessTokensTableSkeleton />
   </div>
 );

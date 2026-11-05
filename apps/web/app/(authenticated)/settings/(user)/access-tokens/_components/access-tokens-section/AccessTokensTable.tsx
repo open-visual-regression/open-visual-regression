@@ -3,6 +3,7 @@
 import { useTable, tableFeatures, createColumnHelper } from "@tanstack/react-table";
 import { useTanStackTableDevtools } from "@tanstack/react-table-devtools";
 
+import { Skeleton } from "@ovr/ui/components/skeleton";
 import { StatusIcon } from "@ovr/ui/components/status-icon";
 import {
   Table,
@@ -106,3 +107,44 @@ export const AccessTokensTable = ({ data }: AccessTokensTableProps) => {
     </TableContainer>
   );
 };
+
+type AccessTokensTableSkeletonColumn = {
+  header: string | null;
+  className?: string;
+};
+
+const ACCESS_TOKENS_TABLE_SKELETON_COLUMNS: AccessTokensTableSkeletonColumn[] = [
+  { header: "Name" },
+  { header: "Created at" },
+  { header: "Last used" },
+  { header: null, className: "text-right" },
+];
+
+const ACCESS_TOKENS_SKELETON_ROW_COUNT = 3;
+
+export const AccessTokensTableSkeleton = () => (
+  <TableContainer aria-hidden>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          {ACCESS_TOKENS_TABLE_SKELETON_COLUMNS.map((column, index) => (
+            <TableHead key={index} className={column.className}>
+              {column.header}
+            </TableHead>
+          ))}
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {Array.from({ length: ACCESS_TOKENS_SKELETON_ROW_COUNT }, (_, rowIndex) => (
+          <TableRow key={rowIndex}>
+            {ACCESS_TOKENS_TABLE_SKELETON_COLUMNS.map((column, columnIndex) => (
+              <TableCell key={columnIndex} className={column.className}>
+                <Skeleton className="h-4 w-full" />
+              </TableCell>
+            ))}
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </TableContainer>
+);
