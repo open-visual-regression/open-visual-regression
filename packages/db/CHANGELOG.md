@@ -1,5 +1,11 @@
 # @ovr/db
 
+## 0.4.9
+
+### Patch Changes
+
+- [#498](https://github.com/open-visual-regression/open-visual-regression/pull/498) [`1ce7c07`](https://github.com/open-visual-regression/open-visual-regression/commit/1ce7c073cc1af4371be0cc4529f7a17a4ab29487) Thanks [@tgfischer](https://github.com/tgfischer)! - The snapshots page no longer repeats snapshots once per build. It shows each project's latest main build, or in-flight snapshots on any build when filtered to queued or processing.
+
 ## 0.4.8
 
 ### Patch Changes

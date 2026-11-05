@@ -1,5 +1,18 @@
 # @ovr/worker
 
+## 0.19.1
+
+### Patch Changes
+
+- [#498](https://github.com/open-visual-regression/open-visual-regression/pull/498) [`1ce7c07`](https://github.com/open-visual-regression/open-visual-regression/commit/1ce7c073cc1af4371be0cc4529f7a17a4ab29487) Thanks [@tgfischer](https://github.com/tgfischer)! - The snapshots page no longer repeats snapshots once per build. It shows each project's latest main build, or in-flight snapshots on any build when filtered to queued or processing.
+
+- Updated dependencies [[`1ce7c07`](https://github.com/open-visual-regression/open-visual-regression/commit/1ce7c073cc1af4371be0cc4529f7a17a4ab29487)]:
+  - @ovr/db@0.4.9
+  - @ovr/builds@0.2.13
+  - @ovr/capture@0.3.21
+  - @ovr/git-status@0.1.21
+  - @ovr/queue@0.3.1
+
 ## 0.19.0
 
 ### Minor Changes
