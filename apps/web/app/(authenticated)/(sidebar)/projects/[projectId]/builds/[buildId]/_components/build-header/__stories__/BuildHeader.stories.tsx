@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
-import type { BuildSchema } from "@ovr/api/contracts/builds";
+import type { BuildDetailSchema } from "@ovr/api/contracts/builds";
 import { mocks } from "@ovr/mocks";
 
 import { BuildHeader } from "../BuildHeader";
@@ -33,9 +33,13 @@ const snapshotCounts = mocks.build.generateSnapshotCounts({
   processing: 1,
 });
 
-const buildOverrides: Partial<BuildSchema> = {
+const buildOverrides: Partial<BuildDetailSchema> = {
   name: "Add empty state to projects table",
   branch: "feature/a-very-long-branch-name-that-should-be-truncated",
+  baseBuild: {
+    id: "0196f1c2-7a3b-7c4d-8e5f-6a7b8c9d0e1f",
+    commitSha: "c0ffee1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b",
+  },
   commitSha: "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0",
   author: "Jordan Lee",
   createdAt: "2026-06-20T12:00:00.000Z",
@@ -172,50 +176,6 @@ export const WithGitIntegration: Story = {
       branchUrl:
         "https://github.com/acme/web/tree/feature/a-very-long-branch-name-that-should-be-truncated",
       commitUrl: "https://github.com/acme/web/commit/a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0",
-    }),
-    snapshotCounts,
-  },
-};
-
-export const BranchBuild: Story = {
-  args: {
-    build: mocks.build.generateBuild({
-      ...buildOverrides,
-      branch: "feature/empty-state",
-      status: "needs_review",
-      baseBuild: {
-        id: "0196f1c2-7a3b-7c4d-8e5f-6a7b8c9d0e1f",
-        commitSha: "c0ffee1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b",
-      },
-    }),
-    snapshotCounts,
-  },
-};
-
-export const BranchBuildWithoutMergeBase: Story = {
-  args: {
-    build: mocks.build.generateBuild({
-      ...buildOverrides,
-      branch: "feature/empty-state",
-      status: "needs_review",
-      baseBuild: null,
-    }),
-    snapshotCounts,
-  },
-};
-
-export const BranchBuildWithLongBranchName: Story = {
-  args: {
-    build: mocks.build.generateBuild({
-      ...buildOverrides,
-      branch: "feature/a-very-long-branch-name-that-should-be-truncated-on-small-screens",
-      status: "needs_review",
-      branchUrl:
-        "https://github.com/acme/web/tree/feature/a-very-long-branch-name-that-should-be-truncated-on-small-screens",
-      baseBuild: {
-        id: "0196f1c2-7a3b-7c4d-8e5f-6a7b8c9d0e1f",
-        commitSha: "c0ffee1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b",
-      },
     }),
     snapshotCounts,
   },
