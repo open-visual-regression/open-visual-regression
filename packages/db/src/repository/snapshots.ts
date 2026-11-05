@@ -13,6 +13,7 @@ import {
   type SQL,
   sql,
 } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 
 import { db, type DbClient } from "../db";
 import {
@@ -249,6 +250,7 @@ const flagDisplayOrder: SnapshotFlag[] = ["flaky", "warning"];
 export type ListFilters = {
   organizationId?: string;
   buildId?: string;
+  latestMainBuild?: boolean;
   projectIds?: string[];
   baseline?: boolean;
   statuses?: SnapshotDisplayStatus[];
@@ -262,9 +264,35 @@ const isBaseline = exists(
   db.select({ id: baselines.id }).from(baselines).where(eq(baselines.snapshotId, snapshots.id)),
 );
 
+const latestMainBuilds = alias(builds, "latest_main_builds");
+
+const isOnLatestMainBuild = sql`${builds.id} = (${db
+  .select({ id: latestMainBuilds.id })
+  .from(latestMainBuilds)
+  .where(
+    and(
+      eq(latestMainBuilds.projectId, builds.projectId),
+      eq(latestMainBuilds.branch, projects.gitMainBranch),
+      ne(latestMainBuilds.processingStatus, "canceled"),
+    ),
+  )
+  .orderBy(desc(latestMainBuilds.createdAt), desc(latestMainBuilds.id))
+  .limit(1)})`;
+
+const inFlightStatuses: SnapshotDisplayStatus[] = ["queued", "processing"];
+
+const isInFlight = or(...inFlightStatuses.map((status) => sql`${displayStatusExpr} = ${status}`));
+
+const isInFlightOnly = (statuses?: SnapshotDisplayStatus[]) =>
+  !!statuses?.length && statuses.every((status) => inFlightStatuses.includes(status));
+
+const latestMainBuildWhere = (statuses?: SnapshotDisplayStatus[]) =>
+  isInFlightOnly(statuses) ? undefined : isOnLatestMainBuild;
+
 const listWhere = ({
   organizationId,
   buildId,
+  latestMainBuild,
   projectIds,
   baseline,
   statuses,
@@ -276,6 +304,7 @@ const listWhere = ({
   and(
     organizationId ? eq(projects.organizationId, organizationId) : undefined,
     buildId ? eq(snapshots.buildId, buildId) : undefined,
+    latestMainBuild ? latestMainBuildWhere(statuses) : undefined,
     projectIds?.length ? inArray(builds.projectId, projectIds) : undefined,
     baseline ? isBaseline : undefined,
     statuses?.length
@@ -289,16 +318,17 @@ const listWhere = ({
       : undefined,
   );
 
-export type SnapshotScope = Pick<ListFilters, "organizationId" | "buildId">;
+export type SnapshotScope = Pick<ListFilters, "organizationId" | "buildId" | "latestMainBuild">;
 
 export const findStatuses = async (scope: SnapshotScope): Promise<SnapshotDisplayStatus[]> => {
+  const { latestMainBuild, ...rest } = scope;
   const rows = await db
     .selectDistinct({ status: displayStatusExpr })
     .from(snapshots)
     .innerJoin(builds, eq(builds.id, snapshots.buildId))
     .innerJoin(projects, eq(projects.id, builds.projectId))
     .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
-    .where(listWhere(scope));
+    .where(and(listWhere(rest), latestMainBuild ? or(isOnLatestMainBuild, isInFlight) : undefined));
 
   const present = new Set(rows.map((row) => row.status));
   return statusDisplayOrder.filter((status) => present.has(status));
@@ -453,7 +483,10 @@ const sortKeyOrder = (alias: string, direction: "asc" | "desc") =>
 export const findAdjacentIds = async (
   buildId: string,
   snapshotId: string,
-  filters: Omit<ListFilters, "organizationId" | "buildId" | "projectIds" | "baseline"> = {},
+  filters: Omit<
+    ListFilters,
+    "organizationId" | "buildId" | "latestMainBuild" | "projectIds" | "baseline"
+  > = {},
 ): Promise<AdjacentSnapshotIds> => {
   const { rows } = await db.execute<{
     prev_id: string | null;

@@ -154,7 +154,7 @@ export type SnapshotSort = z.infer<typeof snapshotSortSchema>;
 
 export const listInputSchema = snapshotFiltersSchema.extend({
   buildId: z.uuidv7().optional().meta({
-    description: "Only this build's snapshots. Without it, every build in the organization",
+    description: "Only this build's snapshots. Without it, each project's latest main build",
   }),
   projectIds: z
     .array(z.uuidv7())
@@ -217,7 +217,7 @@ export const getAdjacentContract = oc.input(getAdjacentInputSchema).output(getAd
 
 export const listSnapshotFilterOptionsInputSchema = z.object({
   buildId: z.uuidv7().optional().meta({
-    description: "Only this build's snapshots. Without it, every build in the organization",
+    description: "Only this build's snapshots. Without it, each project's latest main build",
   }),
 });
 
