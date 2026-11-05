@@ -1195,7 +1195,7 @@ describe("snapshots", () => {
       );
     });
 
-    describe("on a branch cut before main changed a story", () => {
+    describe("on a branch cut before main changed a target", () => {
       type Fixture = {
         project: { id: string };
         user: { id: string };
@@ -1207,7 +1207,7 @@ describe("snapshots", () => {
         };
       };
 
-      // Captures a story at `fill` in a new build and diffs it, the way the worker does.
+      // Captures a target at `fill` in a new build and diffs it, the way the worker does.
       const captureAndDiff = async (
         { project, user, captureConfiguration }: Fixture,
         build: { branch: string; createdAt: string; baseBuildId?: string },
@@ -1220,14 +1220,14 @@ describe("snapshots", () => {
           createdBy: user.id,
           ...build,
         });
-        const imagePath = `builds/${created!.id}/snapshots/story-a.png`;
+        const imagePath = `builds/${created!.id}/snapshots/target-a.png`;
         await uploadPng(imagePath, fill);
         const [snapshot] = await dbClient.snapshots.createMany({
           values: [
             {
               buildId: created!.id,
               ...captureConfiguration,
-              targetId: "story-a",
+              targetId: "target-a",
               status: "success",
               imagePath,
             },
@@ -1347,14 +1347,14 @@ describe("snapshots", () => {
           artifactPath: "builds/artifact",
           createdBy: user.id,
         });
-        const imagePath = `builds/${branchBuild!.id}/snapshots/story-a.png`;
+        const imagePath = `builds/${branchBuild!.id}/snapshots/target-a.png`;
         await uploadPng(imagePath, 0);
         const [snapshot] = await dbClient.snapshots.createMany({
           values: [
             {
               buildId: branchBuild!.id,
               ...captureConfiguration,
-              targetId: "story-a",
+              targetId: "target-a",
               status: "success",
               imagePath,
             },

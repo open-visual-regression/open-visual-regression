@@ -17,7 +17,7 @@ The CLI finds the most recent successful main-branch build in the commit's histo
 - No successful main-branch build is in the commit's history.
 - The main-branch build has been removed by the project's retention period.
 
-A story main changed after the branch was cut is also compared against main's latest if the build holding its earlier screenshot has been removed. Capturing every story on main keeps those screenshots as recent as possible.
+If main changed a snapshot after the branch was cut and the build holding its earlier screenshot has been removed, that snapshot is also compared against main's latest. Capturing everything on every main build keeps those screenshots as recent as possible.
 
 ## Stable links
 

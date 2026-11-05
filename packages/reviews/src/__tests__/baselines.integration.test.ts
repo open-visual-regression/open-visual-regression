@@ -245,12 +245,12 @@ describe("baselines", () => {
       reviewer,
     }) => {
       const [latest] = await dbClient.snapshots.createMany({
-        values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" }],
+        values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "target-a" }],
       });
       await dbClient.baselines.upsert({
         projectId: project.id,
         ...captureConfiguration,
-        targetId: "story-a",
+        targetId: "target-a",
         snapshotId: latest!.id,
         approvedBy: reviewer.id,
       });
@@ -258,25 +258,25 @@ describe("baselines", () => {
       const result = await findComparisonBaseline(
         project.id,
         captureConfiguration,
-        "story-a",
+        "target-a",
         null,
       );
 
       expect(result).toEqual({ snapshotId: latest!.id, source: "latest" });
     });
 
-    test("should compare against what the story looked like at the merge base when main changed it since", async ({
+    test("should compare against what the target looked like at the merge base when main changed it since", async ({
       project,
       captureConfiguration,
       mainBuild,
     }) => {
       const [atMergeBase] = await dbClient.snapshots.createMany({
-        values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" }],
+        values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "target-a" }],
       });
       await dbClient.baselineRevisions.create({
         projectId: project.id,
         ...captureConfiguration,
-        targetId: "story-a",
+        targetId: "target-a",
         buildId: mainBuild.id,
         previousSnapshotId: atMergeBase!.id,
         replacedExisting: true,
@@ -286,14 +286,14 @@ describe("baselines", () => {
       const result = await findComparisonBaseline(
         project.id,
         captureConfiguration,
-        "story-a",
+        "target-a",
         BASE,
       );
 
       expect(result).toEqual({ snapshotId: atMergeBase!.id, source: "merge_base" });
     });
 
-    test("should treat a story main added after the merge base as new", async ({
+    test("should treat a target main added after the merge base as new", async ({
       project,
       captureConfiguration,
       mainBuild,
@@ -301,7 +301,7 @@ describe("baselines", () => {
       await dbClient.baselineRevisions.create({
         projectId: project.id,
         ...captureConfiguration,
-        targetId: "story-a",
+        targetId: "target-a",
         buildId: mainBuild.id,
         previousSnapshotId: null,
         replacedExisting: false,
@@ -311,7 +311,7 @@ describe("baselines", () => {
       const result = await findComparisonBaseline(
         project.id,
         captureConfiguration,
-        "story-a",
+        "target-a",
         BASE,
       );
 
@@ -325,19 +325,19 @@ describe("baselines", () => {
       reviewer,
     }) => {
       const [latest] = await dbClient.snapshots.createMany({
-        values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" }],
+        values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "target-a" }],
       });
       await dbClient.baselines.upsert({
         projectId: project.id,
         ...captureConfiguration,
-        targetId: "story-a",
+        targetId: "target-a",
         snapshotId: latest!.id,
         approvedBy: reviewer.id,
       });
       await dbClient.baselineRevisions.create({
         projectId: project.id,
         ...captureConfiguration,
-        targetId: "story-a",
+        targetId: "target-a",
         buildId: mainBuild.id,
         previousSnapshotId: null,
         replacedExisting: true,
@@ -347,7 +347,7 @@ describe("baselines", () => {
       const result = await findComparisonBaseline(
         project.id,
         captureConfiguration,
-        "story-a",
+        "target-a",
         BASE,
       );
 

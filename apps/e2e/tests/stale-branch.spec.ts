@@ -6,7 +6,7 @@ import path from "node:path";
 import { expect, test } from "./fixtures";
 import { ingestStorybook, STORYBOOK_DIR } from "./support/ingest";
 
-// Every story renders differently, standing in for a change main made after a branch was cut.
+// Every snapshot renders differently, standing in for a change main made after a branch was cut.
 const restyleStorybook = async (dir: string): Promise<string> => {
   const restyled = path.join(dir, "storybook-restyled");
   await cp(STORYBOOK_DIR, restyled, { recursive: true });
@@ -53,7 +53,7 @@ test("a branch that's behind main only shows its own changes", async ({
     const cut = await ingestStorybook({ apiKey, branch: "main", commitSha: mergeBase, cwd: repo });
     expect(cut.exitCode, cut.stderr).toBe(0);
 
-    const restyle = await commit("restyle every story on main");
+    const restyle = await commit("restyle every snapshot on main");
     const mainAfter = await ingestStorybook({
       apiKey,
       branch: "main",
@@ -89,7 +89,7 @@ test("a branch that's behind main only shows its own changes", async ({
     );
 
     git("checkout", "-q", "-b", "feature/own-change", mergeBase);
-    const ownChange = await commit("a branch that restyles every story itself");
+    const ownChange = await commit("a branch that restyles every snapshot itself");
     const changedBranch = await ingestStorybook({
       apiKey,
       branch: "feature/own-change",

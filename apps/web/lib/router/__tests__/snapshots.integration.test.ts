@@ -581,7 +581,7 @@ describe("snapshots", () => {
           {
             buildId: mergeBaseBuild.id,
             ...VIEWPORT,
-            targetId: "story-a",
+            targetId: "target-a",
             status: "success",
             imagePath: "projects/p/builds/b/snapshots/at-merge-base.png",
           },
@@ -595,13 +595,13 @@ describe("snapshots", () => {
         createdBy: admin.id,
         createdAt: new Date(Date.now() + 30_000).toISOString(),
       });
-      await createBaseline(admin, projectId, laterMainBuild!.id, "story-a");
+      await createBaseline(admin, projectId, laterMainBuild!.id, "target-a");
       await dbClient.baselineRevisions.create({
         projectId,
         browser: VIEWPORT.browser,
         viewportWidth: VIEWPORT.viewportWidth,
         viewportHeight: VIEWPORT.viewportHeight,
-        targetId: "story-a",
+        targetId: "target-a",
         buildId: laterMainBuild!.id,
         previousSnapshotId: atMergeBase!.id,
         replacedExisting: true,
@@ -617,7 +617,9 @@ describe("snapshots", () => {
         createdAt: new Date(Date.now() + 60_000).toISOString(),
       });
       const [snapshot] = await dbClient.snapshots.createMany({
-        values: [{ buildId: branchBuild!.id, ...VIEWPORT, targetId: "story-a", status: "skipped" }],
+        values: [
+          { buildId: branchBuild!.id, ...VIEWPORT, targetId: "target-a", status: "skipped" },
+        ],
       });
 
       const [error, result] = await serverClient.snapshots.getBaseline({

@@ -14,13 +14,13 @@ export const getBaseline = (projectId: string, viewport: Viewport, targetId: str
 export type ComparisonBaseline = {
   snapshotId: string | null;
   // merge_base: main as it was at the build's merge base.
-  // latest: main's latest, because there's no merge base or main hasn't changed the story since.
+  // latest: main's latest, because there's no merge base or main hasn't changed the target since.
   // expired: the merge-base baseline was purged, so main's latest stands in for it.
   source: "merge_base" | "latest" | "expired";
 };
 
-// What a story is compared against: main as it was at `base`, the main-branch build at the
-// merge base. Only stories main changed after `base` differ from main's latest baseline, and
+// What a target is compared against: main as it was at `base`, the main-branch build at the
+// merge base. Only targets main changed after `base` differ from main's latest baseline, and
 // the first of those changes records what the baseline was before it.
 export const findComparisonBaseline = async (
   projectId: string,
