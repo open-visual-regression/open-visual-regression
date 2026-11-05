@@ -59,14 +59,27 @@ export const BuildHeader = ({
   const hasSecondaryActions = showLatestBuild || showCancel || showRebuild;
   const showActionsMenu = hasSecondaryActions || storybookHref !== null;
   const showWideActions = hasSecondaryActions || showReviewActions;
-  const showActions = showWideActions || showActionsMenu;
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-start md:gap-x-4 md:gap-y-2">
-        <Typography variant="h1" as="h1" className="min-w-0 md:order-1 md:flex-1 md:truncate">
-          {build.name}
-        </Typography>
+        {/* On small screens the menu sits beside the title, so it never takes a row of its own. */}
+        <div className="flex flex-row items-start gap-2 md:contents">
+          <Typography variant="h1" as="h1" className="min-w-0 flex-1 md:order-1 md:truncate">
+            {build.name}
+          </Typography>
+          {showActionsMenu ? (
+            <BuildActionsMenu
+              buildId={build.id}
+              projectId={build.project.id}
+              storybookHref={storybookHref}
+              latestBuildHref={latestBuildHref}
+              canCancel={showCancel}
+              canRebuild={showRebuild}
+              className="md:hidden"
+            />
+          ) : null}
+        </div>
         <div className="flex flex-row flex-wrap items-center gap-4 text-xs md:order-3 md:basis-full">
           <BuildStatusStream buildId={build.id} initialStatus={build.status} />
           {storybookHref ? (
@@ -108,11 +121,11 @@ export const BuildHeader = ({
             </Typography>
           ) : null}
         </div>
-        {showActions ? (
+        {showWideActions ? (
           <div
             className={cn(
               "flex w-full flex-row justify-end gap-2 md:order-2 md:w-auto md:justify-start",
-              !showWideActions && "md:hidden",
+              !showReviewActions && "hidden md:flex",
             )}
           >
             {hasSecondaryActions ? (
@@ -134,17 +147,6 @@ export const BuildHeader = ({
                 <BuildRejectButton buildId={build.id} rejected={build.status === "rejected"} />
                 <BuildApproveButton buildId={build.id} approved={build.status === "approved"} />
               </>
-            ) : null}
-            {showActionsMenu ? (
-              <BuildActionsMenu
-                buildId={build.id}
-                projectId={build.project.id}
-                storybookHref={storybookHref}
-                latestBuildHref={latestBuildHref}
-                canCancel={showCancel}
-                canRebuild={showRebuild}
-                className="md:hidden"
-              />
             ) : null}
           </div>
         ) : null}
