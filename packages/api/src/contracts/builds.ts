@@ -71,6 +71,9 @@ export const createBuildInputSchema = z.object({
   buildId: z.uuidv7().optional(),
   branch: z.string().min(1),
   commitSha: z.string().min(1),
+  // The main-branch build at the merge base, from findAncestorBuild. Branch builds are
+  // compared against main as it was at this build instead of main's latest.
+  baseBuildId: z.uuidv7().optional(),
   name: z.string().min(1).optional(),
   author: z.string().min(1).optional(),
   buildType: buildTypeSchema.optional(),

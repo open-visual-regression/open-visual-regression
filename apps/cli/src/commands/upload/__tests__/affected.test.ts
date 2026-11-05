@@ -6,6 +6,7 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { findUnaffectedTargets } from "../affected";
+import { findBaseBuild } from "../baseBuild";
 
 let repo: string;
 let projectDir: string;
@@ -93,8 +94,9 @@ const run = async (
   config?: Parameters<typeof findUnaffectedTargets>[0]["config"],
 ) => {
   const log = vi.fn<(message: string) => void>();
+  const base = await findBaseBuild({ client: client as never, cwd: projectDir, log });
   const unaffected = await findUnaffectedTargets({
-    client: client as never,
+    base,
     storybookDir: await writeStorybookBuild(),
     cwd: projectDir,
     targets,

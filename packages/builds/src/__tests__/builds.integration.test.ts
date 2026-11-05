@@ -161,6 +161,114 @@ describe("builds", () => {
       expect(await findExtractJob(connection, buildId)).toBeUndefined();
     });
 
+    test("records the main-branch build at a branch build's merge base", async ({
+      project,
+      user,
+      mainBuild,
+    }) => {
+      await dbClient.builds.updateProcessingStatus(mainBuild.id, "success");
+
+      const result = await createBuild(
+        {
+          projectId: project.id,
+          branch: "feature/x",
+          commitSha: "b".repeat(40),
+          baseBuildId: mainBuild.id,
+        },
+        user.id,
+      );
+
+      assert(result.status === "ok");
+      expect(await dbClient.builds.findById(result.data)).toMatchObject({
+        baseBuildId: mainBuild.id,
+      });
+    });
+
+    test.for([
+      { case: "hasn't finished", branch: "main", processingStatus: "processing" },
+      { case: "failed", branch: "main", processingStatus: "error" },
+      { case: "isn't on the main branch", branch: "feature/y", processingStatus: "success" },
+    ] as const)(
+      "ignores a merge-base build that $case",
+      async ({ branch, processingStatus }, { project, user }) => {
+        const base = await dbClient.builds.create({
+          projectId: project.id,
+          branch,
+          commitSha: "a".repeat(40),
+          artifactPath: "builds/base/artifact",
+          createdBy: user.id,
+        });
+        await dbClient.builds.updateProcessingStatus(base!.id, processingStatus);
+
+        const result = await createBuild(
+          {
+            projectId: project.id,
+            branch: "feature/x",
+            commitSha: "b".repeat(40),
+            baseBuildId: base!.id,
+          },
+          user.id,
+        );
+
+        assert(result.status === "ok");
+        expect(await dbClient.builds.findById(result.data)).toMatchObject({ baseBuildId: null });
+      },
+    );
+
+    test("ignores a merge-base build from another project", async ({
+      project,
+      organization,
+      user,
+    }) => {
+      const [otherProject] = await db
+        .insert(projects)
+        .values({
+          name: "Other Project",
+          gitMainBranch: "main",
+          organizationId: organization.id,
+          creatorId: user.id,
+        })
+        .returning();
+      const otherBuild = await dbClient.builds.create({
+        projectId: otherProject!.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/other/artifact",
+        createdBy: user.id,
+      });
+      await dbClient.builds.updateProcessingStatus(otherBuild!.id, "success");
+
+      const result = await createBuild(
+        {
+          projectId: project.id,
+          branch: "feature/x",
+          commitSha: "b".repeat(40),
+          baseBuildId: otherBuild!.id,
+        },
+        user.id,
+      );
+
+      assert(result.status === "ok");
+      expect(await dbClient.builds.findById(result.data)).toMatchObject({ baseBuildId: null });
+    });
+
+    test("doesn't give a main-branch build a merge base", async ({ project, user, mainBuild }) => {
+      await dbClient.builds.updateProcessingStatus(mainBuild.id, "success");
+
+      const result = await createBuild(
+        {
+          projectId: project.id,
+          branch: "main",
+          commitSha: "b".repeat(40),
+          baseBuildId: mainBuild.id,
+        },
+        user.id,
+      );
+
+      assert(result.status === "ok");
+      expect(await dbClient.builds.findById(result.data)).toMatchObject({ baseBuildId: null });
+    });
+
     test("increments the project's total builds count", async ({ project, user }) => {
       await createBuild(
         { projectId: project.id, branch: "main", commitSha: "a".repeat(40) },
@@ -952,6 +1060,43 @@ describe("builds", () => {
         });
       },
     );
+
+    test("compares the rebuild against the same merge base as the source", async ({
+      project,
+      user,
+      mainBuild,
+    }) => {
+      await dbClient.builds.updateProcessingStatus(mainBuild.id, "success");
+      const created = await createBuild(
+        {
+          projectId: project.id,
+          branch: "feature/x",
+          commitSha: "b".repeat(40),
+          baseBuildId: mainBuild.id,
+        },
+        user.id,
+      );
+      assert(created.status === "ok");
+      await storage.uploadFile(
+        getArtifactPath(project.id, created.data),
+        Buffer.from("artifact-bytes"),
+        "application/gzip",
+      );
+      await dbClient.buildExtractDefaults.create({
+        buildId: created.data,
+        targets: TARGETS,
+        viewports: VIEWPORTS,
+        diffThreshold: 0.05,
+      });
+      await dbClient.builds.updateProcessingStatus(created.data, "success");
+
+      const result = await rebuildBuild(created.data, user.id);
+
+      assert(result.status === "ok");
+      expect(await dbClient.builds.findById(result.data)).toMatchObject({
+        baseBuildId: mainBuild.id,
+      });
+    });
 
     test("copies the artifact so the rebuild survives the source being purged", async ({
       project,
