@@ -2,11 +2,11 @@
 
 import { useInfiniteQuery } from "@tanstack/react-query";
 
+import { SnapshotCard } from "@/lib/components/snapshot-grid/SnapshotCard";
+import { SnapshotGrid, SnapshotGridSkeleton } from "@/lib/components/snapshot-grid/SnapshotGrid";
 import { orpc } from "@/lib/orpc/client";
 import { snapshotsListInfiniteOptions } from "@/lib/orpc/snapshots-query";
 import { type SnapshotFilters } from "@/lib/utils/snapshotFilters";
-
-import { SnapshotGrid, SnapshotGridSkeleton } from "./SnapshotGrid";
 
 type SnapshotsSectionProps = {
   projectId: string;
@@ -27,10 +27,19 @@ export const SnapshotsSection = ({ projectId, buildId, filters }: SnapshotsSecti
 
   return (
     <SnapshotGrid
-      snapshots={snapshots}
-      projectId={projectId}
-      buildId={buildId}
-      filters={filters}
+      items={snapshots}
+      getKey={(snapshot) => snapshot.id}
+      renderItem={(snapshot) => (
+        <SnapshotCard
+          snapshot={snapshot}
+          projectId={projectId}
+          buildId={buildId}
+          filters={filters}
+        />
+      )}
+      emptyMessage={
+        filters.search ? `no snapshots found matching "${filters.search}"` : "no snapshots found"
+      }
       hasNextPage={hasNextPage}
       isFetchingNextPage={isFetchingNextPage}
       onLoadMore={fetchNextPage}
