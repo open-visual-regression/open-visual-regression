@@ -48,7 +48,11 @@ describe("findBaseBuild", () => {
     const head = await commit("feature");
     const client = clientFor({ id: "build-1", commitSha: mergeBase });
 
-    const base = await findBaseBuild({ client: client as never, cwd: repo, log: vi.fn() });
+    const base = await findBaseBuild({
+      client: client as never,
+      cwd: repo,
+      log: vi.fn<(message: string) => void>(),
+    });
 
     expect(base).toEqual({ status: "found", build: { id: "build-1", commitSha: mergeBase } });
     expect(client.builds.findAncestorBuild).toHaveBeenCalledWith({
@@ -59,7 +63,11 @@ describe("findBaseBuild", () => {
   it("explains why there is no base outside a git repository", async () => {
     const client = clientFor(null);
 
-    const base = await findBaseBuild({ client: client as never, cwd: repo, log: vi.fn() });
+    const base = await findBaseBuild({
+      client: client as never,
+      cwd: repo,
+      log: vi.fn<(message: string) => void>(),
+    });
 
     expect(base).toMatchObject({
       status: "missing",
