@@ -1,7 +1,9 @@
+import { v7 as uuidv7 } from "uuid";
+
 import { dbClient } from "../client";
 import { db } from "../db";
-import { type ListForBuildFilters } from "../repository/snapshots";
-import { flakySnapshots, projects } from "../schema";
+import { type ListFilters, type SnapshotsCursor } from "../repository/snapshots";
+import { flakySnapshots, organization as organizationTable, projects } from "../schema";
 import { describe, expect, test, type Viewport } from "./fixtures";
 
 const seedReviewQueue = async (
@@ -625,7 +627,7 @@ describe("snapshots", () => {
     });
   });
 
-  describe("listForBuild / countForBuild", () => {
+  describe("list / count", () => {
     const seedHomeAndCheckout = async (
       build: { id: string },
       captureConfiguration: {
@@ -692,14 +694,15 @@ describe("snapshots", () => {
     test("filters by derived display status", async ({ build, captureConfiguration }) => {
       await seedHomeAndCheckout(build, captureConfiguration);
 
-      const needsReviewOnly = await dbClient.snapshots.listForBuild(build.id, {
+      const needsReviewOnly = await dbClient.snapshots.list({
+        buildId: build.id,
         statuses: ["needs_review"],
         limit: 10,
       });
       expect(needsReviewOnly.snapshots.map((row) => row.targetId)).toEqual(["checkout"]);
-      expect(await dbClient.snapshots.countForBuild(build.id, { statuses: ["needs_review"] })).toBe(
-        1,
-      );
+      expect(
+        await dbClient.snapshots.count({ buildId: build.id, statuses: ["needs_review"] }),
+      ).toBe(1);
     });
 
     test("lists a skipped snapshot as skipped and filters to it", async ({
@@ -720,21 +723,23 @@ describe("snapshots", () => {
         ],
       });
 
-      const skipped = await dbClient.snapshots.listForBuild(build.id, {
+      const skipped = await dbClient.snapshots.list({
+        buildId: build.id,
         statuses: ["skipped"],
         limit: 10,
       });
       expect(skipped.snapshots.map((row) => row.targetId)).toEqual(["pricing"]);
       expect(skipped.snapshots[0]?.status).toBe("skipped");
 
-      const all = await dbClient.snapshots.listForBuild(build.id, { limit: 10 });
+      const all = await dbClient.snapshots.list({ buildId: build.id, limit: 10 });
       expect(all.snapshots.map((row) => row.targetId)).toEqual(["checkout", "home", "pricing"]);
     });
 
     test("filters by more than one status", async ({ build, captureConfiguration }) => {
       await seedHomeAndCheckout(build, captureConfiguration);
 
-      const results = await dbClient.snapshots.listForBuild(build.id, {
+      const results = await dbClient.snapshots.list({
+        buildId: build.id,
         statuses: ["needs_review", "unchanged"],
         limit: 10,
       });
@@ -748,7 +753,8 @@ describe("snapshots", () => {
     }) => {
       await seedHomeAndCheckout(build, captureConfiguration);
 
-      const searched = await dbClient.snapshots.listForBuild(build.id, {
+      const searched = await dbClient.snapshots.list({
+        buildId: build.id,
         search: "home",
         limit: 10,
       });
@@ -777,13 +783,14 @@ describe("snapshots", () => {
         ],
       });
 
-      const results = await dbClient.snapshots.listForBuild(build.id, {
+      const results = await dbClient.snapshots.list({
+        buildId: build.id,
         browsers: ["firefox"],
         limit: 10,
       });
 
       expect(results.snapshots.map((row) => row.targetId)).toEqual(["checkout"]);
-      expect(await dbClient.snapshots.countForBuild(build.id, { browsers: ["firefox"] })).toBe(1);
+      expect(await dbClient.snapshots.count({ buildId: build.id, browsers: ["firefox"] })).toBe(1);
     });
 
     test("filters by viewport name", async ({ build, captureConfiguration }) => {
@@ -808,23 +815,25 @@ describe("snapshots", () => {
         ],
       });
 
-      const results = await dbClient.snapshots.listForBuild(build.id, {
+      const results = await dbClient.snapshots.list({
+        buildId: build.id,
         viewports: ["mobile"],
         limit: 10,
       });
 
       expect(results.snapshots.map((row) => row.targetId)).toEqual(["checkout"]);
-      expect(await dbClient.snapshots.countForBuild(build.id, { viewports: ["mobile"] })).toBe(1);
+      expect(await dbClient.snapshots.count({ buildId: build.id, viewports: ["mobile"] })).toBe(1);
     });
 
     test("pages through results with a cursor", async ({ build, captureConfiguration }) => {
       await seedHomeAndCheckout(build, captureConfiguration);
 
-      const firstPage = await dbClient.snapshots.listForBuild(build.id, { limit: 1 });
+      const firstPage = await dbClient.snapshots.list({ buildId: build.id, limit: 1 });
       expect(firstPage.snapshots).toHaveLength(1);
       expect(firstPage.nextCursor).not.toBeNull();
 
-      const secondPage = await dbClient.snapshots.listForBuild(build.id, {
+      const secondPage = await dbClient.snapshots.list({
+        buildId: build.id,
         limit: 1,
         cursor: firstPage.nextCursor ?? undefined,
       });
@@ -832,7 +841,7 @@ describe("snapshots", () => {
       expect(secondPage.snapshots[0]!.id).not.toBe(firstPage.snapshots[0]!.id);
 
       expect(secondPage.nextCursor).toBeNull();
-      expect(await dbClient.snapshots.countForBuild(build.id)).toBe(2);
+      expect(await dbClient.snapshots.count({ buildId: build.id })).toBe(2);
     });
 
     test("defaults to sorting by status priority: error, needs_review, rejected, approved, unchanged, then queued", async ({
@@ -921,7 +930,7 @@ describe("snapshots", () => {
 
       expect(errorSnapshot).toBeTruthy();
 
-      const results = await dbClient.snapshots.listForBuild(build.id, { limit: 10 });
+      const results = await dbClient.snapshots.list({ buildId: build.id, limit: 10 });
       expect(results.snapshots.map((row) => row.targetId)).toEqual([
         "error",
         "needs_review",
@@ -963,7 +972,7 @@ describe("snapshots", () => {
         ],
       });
 
-      const results = await dbClient.snapshots.listForBuild(build.id, { limit: 10 });
+      const results = await dbClient.snapshots.list({ buildId: build.id, limit: 10 });
       expect(results.snapshots.map((row) => row.targetId)).toEqual(["checkout", "home"]);
     });
 
@@ -973,12 +982,14 @@ describe("snapshots", () => {
     }) => {
       await seedStories(build, captureConfiguration, 5);
 
-      const first = await dbClient.snapshots.listForBuild(build.id, { limit: 2 });
-      const second = await dbClient.snapshots.listForBuild(build.id, {
+      const first = await dbClient.snapshots.list({ buildId: build.id, limit: 2 });
+      const second = await dbClient.snapshots.list({
+        buildId: build.id,
         limit: 2,
         cursor: first.nextCursor ?? undefined,
       });
-      const third = await dbClient.snapshots.listForBuild(build.id, {
+      const third = await dbClient.snapshots.list({
+        buildId: build.id,
         limit: 2,
         cursor: second.nextCursor ?? undefined,
       });
@@ -1003,8 +1014,9 @@ describe("snapshots", () => {
         })),
       });
 
-      const first = await dbClient.snapshots.listForBuild(build.id, { limit: 2 });
-      const second = await dbClient.snapshots.listForBuild(build.id, {
+      const first = await dbClient.snapshots.list({ buildId: build.id, limit: 2 });
+      const second = await dbClient.snapshots.list({
+        buildId: build.id,
         limit: 2,
         cursor: first.nextCursor ?? undefined,
       });
@@ -1027,12 +1039,13 @@ describe("snapshots", () => {
         });
       }
 
-      const first = await dbClient.snapshots.listForBuild(build.id, { limit: 2 });
+      const first = await dbClient.snapshots.list({ buildId: build.id, limit: 2 });
 
       const diff = await dbClient.diffs.findBySnapshot(first.snapshots[0]!.id);
       await dbClient.diffs.updateReviewStatus(diff!.id, "approved");
 
-      const second = await dbClient.snapshots.listForBuild(build.id, {
+      const second = await dbClient.snapshots.list({
+        buildId: build.id,
         limit: 2,
         cursor: first.nextCursor ?? undefined,
       });
@@ -1059,7 +1072,7 @@ describe("snapshots", () => {
         })),
       });
 
-      const first = await dbClient.snapshots.listForBuild(build.id, { limit: 2 });
+      const first = await dbClient.snapshots.list({ buildId: build.id, limit: 2 });
 
       const promoted = created.at(-1)!;
       await dbClient.snapshots.updateStatus(promoted.id, "success");
@@ -1069,7 +1082,8 @@ describe("snapshots", () => {
         reviewStatus: "needs_review",
       });
 
-      const second = await dbClient.snapshots.listForBuild(build.id, {
+      const second = await dbClient.snapshots.list({
+        buildId: build.id,
         limit: 2,
         cursor: first.nextCursor ?? undefined,
       });
@@ -1078,7 +1092,7 @@ describe("snapshots", () => {
         promoted.id,
       );
 
-      const restarted = await dbClient.snapshots.listForBuild(build.id, { limit: 2 });
+      const restarted = await dbClient.snapshots.list({ buildId: build.id, limit: 2 });
       expect(restarted.snapshots.map((row) => row.id)).toContain(promoted.id);
     });
 
@@ -1088,13 +1102,13 @@ describe("snapshots", () => {
     }) => {
       const { first } = await seedReviewQueue(build, captureConfiguration);
 
-      const before = await dbClient.snapshots.listForBuild(build.id, { limit: 10 });
+      const before = await dbClient.snapshots.list({ buildId: build.id, limit: 10 });
       expect(before.snapshots.map((row) => row.targetId)).toEqual(["d", "a", "b", "c"]);
 
       const diff = await dbClient.diffs.findBySnapshot(first.id);
       await dbClient.diffs.updateReviewStatus(diff!.id, "approved");
 
-      const after = await dbClient.snapshots.listForBuild(build.id, { limit: 10 });
+      const after = await dbClient.snapshots.list({ buildId: build.id, limit: 10 });
       expect(after.snapshots.map((row) => row.targetId)).toEqual(["d", "a", "b", "c"]);
     });
 
@@ -1105,7 +1119,7 @@ describe("snapshots", () => {
     }) => {
       await seedFlags(build, project, captureConfiguration);
 
-      const result = await dbClient.snapshots.listForBuild(build.id, { limit: 10 });
+      const result = await dbClient.snapshots.list({ buildId: build.id, limit: 10 });
 
       expect(result.snapshots.map((row) => [row.targetId, row.isFlaky])).toEqual([
         ["plain", false],
@@ -1119,38 +1133,41 @@ describe("snapshots", () => {
     test("filters to flaky snapshots", async ({ build, project, captureConfiguration }) => {
       await seedFlags(build, project, captureConfiguration);
 
-      const result = await dbClient.snapshots.listForBuild(build.id, {
+      const result = await dbClient.snapshots.list({
+        buildId: build.id,
         flags: ["flaky"],
         limit: 10,
       });
 
       expect(result.snapshots.map((row) => row.targetId)).toEqual(["flagged", "both"]);
-      expect(await dbClient.snapshots.countForBuild(build.id, { flags: ["flaky"] })).toBe(2);
+      expect(await dbClient.snapshots.count({ buildId: build.id, flags: ["flaky"] })).toBe(2);
     });
 
     test("filters to snapshots with warnings", async ({ build, project, captureConfiguration }) => {
       await seedFlags(build, project, captureConfiguration);
 
-      const result = await dbClient.snapshots.listForBuild(build.id, {
+      const result = await dbClient.snapshots.list({
+        buildId: build.id,
         flags: ["warning"],
         limit: 10,
       });
 
       expect(result.snapshots.map((row) => row.targetId)).toEqual(["warning", "both"]);
-      expect(await dbClient.snapshots.countForBuild(build.id, { flags: ["warning"] })).toBe(2);
+      expect(await dbClient.snapshots.count({ buildId: build.id, flags: ["warning"] })).toBe(2);
     });
 
     test("matches any of several flags", async ({ build, project, captureConfiguration }) => {
       await seedFlags(build, project, captureConfiguration);
 
-      const result = await dbClient.snapshots.listForBuild(build.id, {
+      const result = await dbClient.snapshots.list({
+        buildId: build.id,
         flags: ["flaky", "warning"],
         limit: 10,
       });
 
       expect(result.snapshots.map((row) => row.targetId)).toEqual(["flagged", "warning", "both"]);
       expect(
-        await dbClient.snapshots.countForBuild(build.id, { flags: ["flaky", "warning"] }),
+        await dbClient.snapshots.count({ buildId: build.id, flags: ["flaky", "warning"] }),
       ).toBe(3);
     });
 
@@ -1161,11 +1178,107 @@ describe("snapshots", () => {
     }) => {
       await seedFlags(build, project, captureConfiguration);
 
-      const filters: ListForBuildFilters = { flags: ["flaky"], search: "E" };
-      const result = await dbClient.snapshots.listForBuild(build.id, { ...filters, limit: 10 });
+      const filters: ListFilters = { flags: ["flaky"], search: "E" };
+      const result = await dbClient.snapshots.list({ buildId: build.id, ...filters, limit: 10 });
 
       expect(result.snapshots.map((row) => row.targetId)).toEqual(["both"]);
-      expect(await dbClient.snapshots.countForBuild(build.id, filters)).toBe(1);
+      expect(await dbClient.snapshots.count({ buildId: build.id, ...filters })).toBe(1);
+    });
+  });
+
+  describe("list across builds", () => {
+    const seedStories = (buildId: string, viewport: Viewport, titles: string[]) =>
+      dbClient.snapshots.createMany({
+        values: titles.map((title) => ({
+          buildId,
+          ...viewport,
+          targetId: title.toLowerCase(),
+          targetTitle: title,
+          targetName: "Default",
+          status: "success" as const,
+        })),
+      });
+
+    test("should list every build's snapshots in the organization, alphabetically by target", async ({
+      organization,
+      project,
+      build,
+      user,
+      captureConfiguration,
+    }) => {
+      const laterBuild = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "feature/cards",
+        commitSha: "b".repeat(40),
+        artifactPath: "builds/seed/artifact",
+        createdBy: user.id,
+      });
+      const [otherOrganization] = await db
+        .insert(organizationTable)
+        .values({ id: uuidv7(), name: "Other Org", slug: uuidv7(), createdAt: new Date() })
+        .returning();
+      const [otherProject] = await db
+        .insert(projects)
+        .values({
+          name: "Other Project",
+          gitMainBranch: "main",
+          organizationId: otherOrganization!.id,
+          creatorId: user.id,
+        })
+        .returning();
+      const otherBuild = await dbClient.builds.create({
+        projectId: otherProject!.id,
+        branch: "main",
+        commitSha: "c".repeat(40),
+        artifactPath: "builds/seed/artifact",
+        createdBy: user.id,
+      });
+      await seedStories(build.id, captureConfiguration, ["Tabs", "Badge"]);
+      await seedStories(laterBuild!.id, captureConfiguration, ["Card"]);
+      await seedStories(otherBuild!.id, captureConfiguration, ["Alert"]);
+
+      const { snapshots } = await dbClient.snapshots.list({
+        organizationId: organization.id,
+        sort: "name",
+        limit: 10,
+      });
+
+      expect(
+        snapshots.map(({ targetTitle, buildId, projectName }) => ({
+          targetTitle,
+          buildId,
+          projectName,
+        })),
+      ).toEqual([
+        { targetTitle: "Badge", buildId: build.id, projectName: project.name },
+        { targetTitle: "Card", buildId: laterBuild!.id, projectName: project.name },
+        { targetTitle: "Tabs", buildId: build.id, projectName: project.name },
+      ]);
+      expect(await dbClient.snapshots.count({ organizationId: organization.id })).toBe(3);
+    });
+
+    test("should page through every snapshot exactly once when sorted by name", async ({
+      organization,
+      build,
+      captureConfiguration,
+    }) => {
+      const titles = ["Tabs", "Alert", "Card", "Badge", "Switch"];
+      await seedStories(build.id, captureConfiguration, titles);
+
+      const seen: string[] = [];
+      let cursor: SnapshotsCursor | undefined;
+      do {
+        const page = await dbClient.snapshots.list({
+          organizationId: organization.id,
+          sort: "name",
+          limit: 2,
+          cursor,
+        });
+        seen.push(...page.snapshots.map(({ targetTitle }) => targetTitle));
+        cursor = page.nextCursor ?? undefined;
+      } while (cursor);
+
+      expect(seen).toEqual([...titles].sort());
     });
   });
 
@@ -1337,7 +1450,7 @@ describe("snapshots", () => {
       captureConfiguration,
     }) => {
       const { first, second } = await seedReviewQueue(build, captureConfiguration);
-      const filters: ListForBuildFilters = { statuses: ["needs_review", "rejected"] };
+      const filters: ListFilters = { statuses: ["needs_review", "rejected"] };
       const diff = await dbClient.diffs.findBySnapshot(first.id);
 
       const before = await dbClient.snapshots.findAdjacentIds(build.id, first.id, filters);

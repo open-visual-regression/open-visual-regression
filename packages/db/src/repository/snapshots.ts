@@ -1,7 +1,7 @@
 import {
   and,
   asc,
-  count,
+  count as countRows,
   desc,
   eq,
   exists,
@@ -15,7 +15,7 @@ import {
 } from "drizzle-orm";
 
 import { db, type DbClient } from "../db";
-import { builds, diffs, flakySnapshots, snapshots, type SnapshotStatus } from "../schema";
+import { builds, diffs, flakySnapshots, projects, snapshots, type SnapshotStatus } from "../schema";
 
 export type SnapshotDisplayStatusCounts = {
   unchanged: number;
@@ -146,7 +146,7 @@ export const markUnfinishedAs = async (
 
 export const countByBuild = async (buildId: string) => {
   const [result] = await db
-    .select({ count: count() })
+    .select({ count: countRows() })
     .from(snapshots)
     .where(eq(snapshots.buildId, buildId));
   return result?.count ?? 0;
@@ -172,7 +172,7 @@ export const getDisplayStatusCounts = async (
   buildId: string,
 ): Promise<SnapshotDisplayStatusCounts> => {
   const rows = await db
-    .select({ status: displayStatusExpr, count: count() })
+    .select({ status: displayStatusExpr, count: countRows() })
     .from(snapshots)
     .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
     .where(eq(snapshots.buildId, buildId))
@@ -238,7 +238,9 @@ const flagConditions: Record<SnapshotFlag, SQL> = {
 
 const flagDisplayOrder: SnapshotFlag[] = ["flaky", "warning"];
 
-export type ListForBuildFilters = {
+export type ListFilters = {
+  organizationId?: string;
+  buildId?: string;
   statuses?: SnapshotDisplayStatus[];
   browsers?: string[];
   viewports?: string[];
@@ -246,12 +248,18 @@ export type ListForBuildFilters = {
   search?: string;
 };
 
-const listForBuildWhere = (
-  buildId: string,
-  { statuses, browsers, viewports, flags, search }: ListForBuildFilters,
-) =>
+const listWhere = ({
+  organizationId,
+  buildId,
+  statuses,
+  browsers,
+  viewports,
+  flags,
+  search,
+}: ListFilters) =>
   and(
-    eq(snapshots.buildId, buildId),
+    organizationId ? eq(projects.organizationId, organizationId) : undefined,
+    buildId ? eq(snapshots.buildId, buildId) : undefined,
     statuses?.length
       ? or(...statuses.map((status) => sql`${displayStatusExpr} = ${status}`))
       : undefined,
@@ -334,8 +342,10 @@ const snapshotOrderBy = sql`
   ${snapshots.id} asc
 `;
 
+export type SnapshotSort = "status" | "name";
+
 export type SnapshotsCursor = {
-  statusPriority: number;
+  statusPriority?: number;
   targetTitle: string;
   targetName: string;
   browser: string;
@@ -343,9 +353,20 @@ export type SnapshotsCursor = {
   id: string;
 };
 
-const getCursorFilter = (cursor: SnapshotsCursor) =>
-  sql`(${statusPriorityExpr}, ${snapshots.targetTitle}, ${snapshots.targetName}, ${snapshots.browser}, ${snapshots.viewportWidth}, ${snapshots.id})
-      > (${cursor.statusPriority}::int, ${cursor.targetTitle}::text, ${cursor.targetName}::text, ${cursor.browser}::text, ${cursor.viewportWidth}::int, ${cursor.id}::uuid)`;
+const nameOrderBy = [
+  asc(snapshots.targetTitle),
+  asc(snapshots.targetName),
+  asc(snapshots.browser),
+  asc(snapshots.viewportWidth),
+  asc(snapshots.id),
+];
+
+const getCursorFilter = (cursor: SnapshotsCursor, sort: SnapshotSort) =>
+  sort === "status"
+    ? sql`(${statusPriorityExpr}, ${snapshots.targetTitle}, ${snapshots.targetName}, ${snapshots.browser}, ${snapshots.viewportWidth}, ${snapshots.id})
+      > (${cursor.statusPriority ?? 0}::int, ${cursor.targetTitle}::text, ${cursor.targetName}::text, ${cursor.browser}::text, ${cursor.viewportWidth}::int, ${cursor.id}::uuid)`
+    : sql`(${snapshots.targetTitle}, ${snapshots.targetName}, ${snapshots.browser}, ${snapshots.viewportWidth}, ${snapshots.id})
+      > (${cursor.targetTitle}::text, ${cursor.targetName}::text, ${cursor.browser}::text, ${cursor.viewportWidth}::int, ${cursor.id}::uuid)`;
 
 export type AdjacentSnapshotIds = {
   prevId: string | null;
@@ -382,7 +403,7 @@ const sortKeyOrder = (alias: string, direction: "asc" | "desc") =>
 export const findAdjacentIds = async (
   buildId: string,
   snapshotId: string,
-  filters: ListForBuildFilters = {},
+  filters: Omit<ListFilters, "organizationId" | "buildId"> = {},
 ): Promise<AdjacentSnapshotIds> => {
   const { rows } = await db.execute<{
     prev_id: string | null;
@@ -401,7 +422,7 @@ export const findAdjacentIds = async (
       select ${sortKeyProjection}
       from ${snapshots}
       left join ${diffs} on ${diffs.snapshotId} = ${snapshots.id}
-      where ${listForBuildWhere(buildId, filters)}
+      where ${listWhere({ ...filters, buildId })}
     )
     select
       (
@@ -438,18 +459,24 @@ export const findAdjacentIds = async (
   };
 };
 
-export type ListForBuildOptions = ListForBuildFilters & {
+export type ListOptions = {
+  sort?: SnapshotSort;
   limit: number;
   cursor?: SnapshotsCursor;
 };
 
-export const listForBuild = async (
-  buildId: string,
-  { statuses, browsers, viewports, flags, search, limit, cursor }: ListForBuildOptions,
-) => {
+export const list = async ({
+  sort = "status",
+  limit,
+  cursor,
+  ...filters
+}: ListFilters & ListOptions) => {
   const rows = await db
     .select({
       id: snapshots.id,
+      buildId: snapshots.buildId,
+      projectId: projects.id,
+      projectName: projects.name,
       targetId: snapshots.targetId,
       targetTitle: snapshots.targetTitle,
       targetName: snapshots.targetName,
@@ -470,14 +497,11 @@ export const listForBuild = async (
       isFlaky,
     })
     .from(snapshots)
+    .innerJoin(builds, eq(builds.id, snapshots.buildId))
+    .innerJoin(projects, eq(projects.id, builds.projectId))
     .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
-    .where(
-      and(
-        listForBuildWhere(buildId, { statuses, browsers, viewports, flags, search }),
-        cursor ? getCursorFilter(cursor) : undefined,
-      ),
-    )
-    .orderBy(snapshotOrderBy)
+    .where(and(listWhere(filters), cursor ? getCursorFilter(cursor, sort) : undefined))
+    .orderBy(...(sort === "status" ? [snapshotOrderBy] : nameOrderBy))
     .limit(limit + 1);
 
   const hasMore = rows.length > limit;
@@ -489,7 +513,7 @@ export const listForBuild = async (
     nextCursor:
       hasMore && lastRow
         ? {
-            statusPriority: lastRow.statusPriority,
+            ...(sort === "status" && { statusPriority: lastRow.statusPriority }),
             targetTitle: lastRow.targetTitle,
             targetName: lastRow.targetName,
             browser: lastRow.browser,
@@ -500,12 +524,14 @@ export const listForBuild = async (
   };
 };
 
-export const countForBuild = async (buildId: string, filters: ListForBuildFilters = {}) => {
+export const count = async (filters: ListFilters = {}) => {
   const [result] = await db
-    .select({ count: count() })
+    .select({ count: countRows() })
     .from(snapshots)
+    .innerJoin(builds, eq(builds.id, snapshots.buildId))
+    .innerJoin(projects, eq(projects.id, builds.projectId))
     .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
-    .where(listForBuildWhere(buildId, filters));
+    .where(listWhere(filters));
   return result?.count ?? 0;
 };
 

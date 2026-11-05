@@ -215,25 +215,39 @@ export const projectMiddleware = os
     return next({ context: { project } });
   });
 
+const findOrganizationBuild = async (buildId: string, organizationId: string) => {
+  const build = await dbClient.builds.findById(buildId);
+
+  if (!build) {
+    throw new ORPCError("NOT_FOUND");
+  }
+
+  const project = await dbClient.projects.getProject({
+    projectId: build.projectId,
+    organizationId,
+  });
+
+  if (!project) {
+    throw new ORPCError("NOT_FOUND");
+  }
+
+  return { build, project };
+};
+
 export const organizationBuildMiddleware = os
   .$context<OrganizationScopedContext>()
-  .middleware(async ({ context, next }, input: { buildId: string }) => {
-    const build = await dbClient.builds.findById(input.buildId);
+  .middleware(async ({ context, next }, input: { buildId: string }) =>
+    next({ context: await findOrganizationBuild(input.buildId, context.organizationId) }),
+  );
 
-    if (!build) {
-      throw new ORPCError("NOT_FOUND");
-    }
+export const optionalOrganizationBuildMiddleware = os
+  .$context<OrganizationScopedContext>()
+  .middleware(async ({ context, next }, input: { buildId?: string }) => {
+    const found = input.buildId
+      ? await findOrganizationBuild(input.buildId, context.organizationId)
+      : undefined;
 
-    const project = await dbClient.projects.getProject({
-      projectId: build.projectId,
-      organizationId: context.organizationId,
-    });
-
-    if (!project) {
-      throw new ORPCError("NOT_FOUND");
-    }
-
-    return next({ context: { build, project } });
+    return next({ context: { build: found?.build, project: found?.project } });
   });
 
 export const organizationDiffMiddleware = os

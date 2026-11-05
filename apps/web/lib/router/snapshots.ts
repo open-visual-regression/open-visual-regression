@@ -14,6 +14,7 @@ import { checkSnapshotReviewable } from "@ovr/reviews/reviewable";
 import {
   authenticatedMiddleware,
   callerMiddleware,
+  optionalOrganizationBuildMiddleware,
   organizationBuildMiddleware,
   organizationSnapshotMiddleware,
   reviewerMiddleware,
@@ -90,26 +91,21 @@ export const getBaseline = os.snapshots.getBaseline
 
 export const list = os.snapshots.list
   .use(callerMiddleware("builds", "read"))
-  .use(organizationBuildMiddleware)
-  .handler(async ({ input }) => {
-    const { buildId, statuses, browsers, viewports, flags, search, limit, cursor } = input;
+  .use(optionalOrganizationBuildMiddleware)
+  .handler(async ({ input, context }) => {
+    const { sort, limit, cursor, ...rest } = input;
+    const filters = { organizationId: context.organizationId, ...rest };
 
     const [{ snapshots: rows, nextCursor }, total] = await Promise.all([
-      dbClient.snapshots.listForBuild(buildId, {
-        statuses,
-        browsers,
-        viewports,
-        flags,
-        search,
-        limit,
-        cursor,
-      }),
-      dbClient.snapshots.countForBuild(buildId, { statuses, browsers, viewports, flags, search }),
+      dbClient.snapshots.list({ ...filters, sort, limit, cursor }),
+      dbClient.snapshots.count(filters),
     ]);
 
     return {
       snapshots: rows.map((row) => ({
         id: row.id,
+        buildId: row.buildId,
+        project: { id: row.projectId, name: row.projectName },
         targetId: row.targetId,
         targetTitle: row.targetTitle,
         targetName: row.targetName,

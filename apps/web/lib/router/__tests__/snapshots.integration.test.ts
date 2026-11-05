@@ -75,6 +75,35 @@ const seedFlags = async (projectId: string, buildId: string) => {
   return { a: a!, b: b!, c: c!, d: d! };
 };
 
+const createOtherOrganizationBuild = async (admin: User) => {
+  const [otherOrg] = await db
+    .insert(organization)
+    .values({
+      id: crypto.randomUUID(),
+      name: "Other Org",
+      slug: crypto.randomUUID(),
+      createdAt: new Date(),
+    })
+    .returning();
+  const [otherProject] = await db
+    .insert(projects)
+    .values({
+      name: "Other Org Project",
+      gitMainBranch: "main",
+      organizationId: otherOrg!.id,
+      creatorId: admin.id,
+    })
+    .returning();
+
+  return dbClient.builds.create({
+    projectId: otherProject!.id,
+    branch: "main",
+    commitSha: "a".repeat(40),
+    artifactPath: "builds/other/artifact",
+    createdBy: admin.id,
+  });
+};
+
 describe("snapshots", () => {
   describe("getOne", () => {
     test("should return UNAUTHORIZED when no session cookie is provided", async () => {
@@ -587,6 +616,65 @@ describe("snapshots", () => {
   });
 
   describe("list", () => {
+    test("lists every build's snapshots in the organization alphabetically when no build is given", async ({
+      admin,
+    }) => {
+      const { projectId, build } = await createProjectAndBuild(admin);
+      const { projectId: otherProjectId, build: otherBuild } = await createProjectAndBuild(admin);
+      await dbClient.snapshots.createMany({
+        values: [
+          { buildId: build.id, targetTitle: "Tabs" },
+          { buildId: otherBuild.id, targetTitle: "Card" },
+          { buildId: build.id, targetTitle: "Badge" },
+        ].map((target) => ({
+          ...target,
+          ...VIEWPORT,
+          targetId: target.targetTitle.toLowerCase(),
+          targetName: "Default",
+        })),
+      });
+
+      const [error, result] = await serverClient.snapshots.list({ sort: "name" });
+
+      expect(error).toBeNull();
+      expect(result?.total).toBe(3);
+      expect(
+        result?.snapshots.map(({ targetTitle, buildId, project }) => ({
+          targetTitle,
+          buildId,
+          projectId: project.id,
+        })),
+      ).toEqual([
+        { targetTitle: "Badge", buildId: build.id, projectId },
+        { targetTitle: "Card", buildId: otherBuild.id, projectId: otherProjectId },
+        { targetTitle: "Tabs", buildId: build.id, projectId },
+      ]);
+    });
+
+    test("does not list another organization's snapshots when no build is given", async ({
+      admin,
+    }) => {
+      const otherBuild = await createOtherOrganizationBuild(admin);
+      await dbClient.snapshots.createMany({
+        values: [{ buildId: otherBuild!.id, ...VIEWPORT, targetId: "secret" }],
+      });
+
+      const [error, result] = await serverClient.snapshots.list({});
+
+      expect(error).toBeNull();
+      expect(result).toEqual({ snapshots: [], total: 0, nextCursor: null });
+    });
+
+    test("returns NOT_FOUND for a build belonging to a different organization", async ({
+      admin,
+    }) => {
+      const otherBuild = await createOtherOrganizationBuild(admin);
+
+      const [error] = await serverClient.snapshots.list({ buildId: otherBuild!.id });
+
+      expect(error?.code).toBe("NOT_FOUND");
+    });
+
     test("should let a personal access token list a build's snapshots", async ({ admin }) => {
       const { build } = await createProjectAndBuild(admin);
       await dbClient.snapshots.createMany({

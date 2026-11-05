@@ -62,6 +62,10 @@ describe("getBreadcrumbSegments", () => {
     expect(await getBreadcrumbSegments(["builds"])).toEqual([{ label: "builds" }]);
   });
 
+  it("should return a single segment for the all-snapshots page", async () => {
+    expect(await getBreadcrumbSegments(["snapshots"])).toEqual([{ label: "snapshots" }]);
+  });
+
   it("should humanize static segments outside of projects", async () => {
     expect(await getBreadcrumbSegments(["settings", "profile"])).toEqual([
       { label: "settings", href: "/settings" },

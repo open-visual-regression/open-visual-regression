@@ -228,6 +228,9 @@ export const snapshots = pgTable(
       table.targetId,
       table.buildId,
     ),
+    index("snapshots_targetTitle_targetName_browser_viewportWidth_id_idx")
+      .on(table.targetTitle, table.targetName, table.browser, table.viewportWidth, table.id)
+      .concurrently(),
   ],
 );
 
