@@ -1563,6 +1563,34 @@ describe("snapshots", () => {
       expect(error).toBeNull();
       expect(result).toEqual({ flags: [] });
     });
+
+    test("lists the flags across every build in the organization when no build is given", async ({
+      admin,
+    }) => {
+      const { projectId, build } = await createProjectAndBuild(admin);
+      const otherOrgBuild = await createOtherOrganizationBuild(admin);
+      await seedFlags(projectId, build.id);
+      await dbClient.snapshots.createMany({
+        values: [
+          { buildId: otherOrgBuild!.id, ...VIEWPORT, targetId: "z", hasUncaughtPageError: true },
+        ],
+      });
+
+      const [error, result] = await serverClient.snapshots.listFlags({});
+
+      expect(error).toBeNull();
+      expect(result).toEqual({ flags: ["flaky", "warning"] });
+    });
+
+    test("returns NOT_FOUND for a build belonging to a different organization", async ({
+      admin,
+    }) => {
+      const otherOrgBuild = await createOtherOrganizationBuild(admin);
+
+      const [error] = await serverClient.snapshots.listFlags({ buildId: otherOrgBuild!.id });
+
+      expect(error?.code).toBe("NOT_FOUND");
+    });
   });
 
   describe("rebuild", () => {

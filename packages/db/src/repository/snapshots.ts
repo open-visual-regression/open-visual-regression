@@ -271,50 +271,82 @@ const listWhere = ({
       : undefined,
   );
 
-export const findStatuses = async (buildId: string): Promise<SnapshotDisplayStatus[]> => {
+export type SnapshotScope = Pick<ListFilters, "organizationId" | "buildId">;
+
+export const findStatuses = async (scope: SnapshotScope): Promise<SnapshotDisplayStatus[]> => {
   const rows = await db
     .selectDistinct({ status: displayStatusExpr })
     .from(snapshots)
+    .innerJoin(builds, eq(builds.id, snapshots.buildId))
+    .innerJoin(projects, eq(projects.id, builds.projectId))
     .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
-    .where(eq(snapshots.buildId, buildId));
+    .where(listWhere(scope));
 
   const present = new Set(rows.map((row) => row.status));
   return statusDisplayOrder.filter((status) => present.has(status));
 };
 
-export const findBrowsers = async (buildId: string): Promise<string[]> => {
+export const findBrowsers = async (scope: SnapshotScope): Promise<string[]> => {
   const rows = await db
     .selectDistinct({ browser: snapshots.browser })
     .from(snapshots)
-    .where(eq(snapshots.buildId, buildId))
+    .innerJoin(builds, eq(builds.id, snapshots.buildId))
+    .innerJoin(projects, eq(projects.id, builds.projectId))
+    .where(listWhere(scope))
     .orderBy(asc(snapshots.browser));
 
   return rows.map((row) => row.browser);
 };
 
-export const findViewports = async (buildId: string): Promise<string[]> => {
+export const findViewports = async (scope: SnapshotScope): Promise<string[]> => {
   const rows = await db
     .selectDistinct({
       viewportName: snapshots.viewportName,
       viewportWidth: snapshots.viewportWidth,
     })
     .from(snapshots)
-    .where(eq(snapshots.buildId, buildId))
+    .innerJoin(builds, eq(builds.id, snapshots.buildId))
+    .innerJoin(projects, eq(projects.id, builds.projectId))
+    .where(listWhere(scope))
     .orderBy(asc(snapshots.viewportWidth), asc(snapshots.viewportName));
 
-  return rows.map((row) => row.viewportName);
+  return [...new Set(rows.map((row) => row.viewportName))];
 };
 
-export const findFlags = async (buildId: string): Promise<SnapshotFlag[]> => {
-  const rows = await db
-    .selectDistinct({
-      flaky: isFlaky,
-      warning: snapshots.hasUncaughtPageError,
-    })
-    .from(snapshots)
-    .where(eq(snapshots.buildId, buildId));
+export const findFlags = async (scope: SnapshotScope): Promise<SnapshotFlag[]> => {
+  const flaky = db
+    .select({ id: snapshots.id })
+    .from(flakySnapshots)
+    .innerJoin(projects, eq(projects.id, flakySnapshots.projectId))
+    .innerJoin(builds, eq(builds.projectId, flakySnapshots.projectId))
+    .innerJoin(
+      snapshots,
+      and(
+        eq(snapshots.buildId, builds.id),
+        eq(snapshots.browser, flakySnapshots.browser),
+        eq(snapshots.viewportWidth, flakySnapshots.viewportWidth),
+        eq(snapshots.viewportHeight, flakySnapshots.viewportHeight),
+        eq(snapshots.targetId, flakySnapshots.targetId),
+      ),
+    )
+    .where(listWhere(scope))
+    .limit(1);
 
-  return flagDisplayOrder.filter((flag) => rows.some((row) => row[flag]));
+  const warning = db
+    .select({ id: snapshots.id })
+    .from(snapshots)
+    .innerJoin(builds, eq(builds.id, snapshots.buildId))
+    .innerJoin(projects, eq(projects.id, builds.projectId))
+    .where(and(listWhere(scope), eq(snapshots.hasUncaughtPageError, true)))
+    .limit(1);
+
+  const [flakyRows, warningRows] = await Promise.all([flaky, warning]);
+  const present: Record<SnapshotFlag, boolean> = {
+    flaky: flakyRows.length > 0,
+    warning: warningRows.length > 0,
+  };
+
+  return flagDisplayOrder.filter((flag) => present[flag]);
 };
 
 // needs_review/rejected/approved share a tier so that reviewing a snapshot

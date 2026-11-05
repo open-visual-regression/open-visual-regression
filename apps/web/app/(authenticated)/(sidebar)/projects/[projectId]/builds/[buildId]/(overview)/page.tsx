@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 
 import { canReview } from "@/lib/auth/roles";
 import { getCachedSession } from "@/lib/auth/session";
+import { SnapshotFilters } from "@/lib/components/snapshot-grid/SnapshotFilters";
+import { SnapshotsSearchField } from "@/lib/components/snapshot-grid/SnapshotsSearchField";
 import { SnapshotsSection } from "@/lib/components/snapshot-grid/SnapshotsSection";
 import { getSnapshotStatusLabel } from "@/lib/components/SnapshotStatusBadge";
 import { getQueryClient } from "@/lib/orpc/query-client";
@@ -15,8 +17,6 @@ import { getStorybookPath, hasHostedStorybook } from "@/lib/utils/storage";
 
 import { BuildHeader } from "../_components/build-header/BuildHeader";
 import { BuildPageShell } from "../_components/BuildPageShell";
-import { SnapshotFilters } from "../_components/snapshot-grid/SnapshotFilters";
-import { SnapshotsSearchField } from "../_components/snapshot-grid/SnapshotsSearchField";
 
 type BuildPageProps = PageProps<"/projects/[projectId]/builds/[buildId]">;
 
@@ -108,8 +108,7 @@ export default async function BuildPage({ params, searchParams }: BuildPageProps
       }
       search={
         <SnapshotsSearchField
-          projectId={projectId}
-          buildId={buildId}
+          action={`/projects/${projectId}/builds/${buildId}`}
           search={search}
           searchParams={rawSearchParams}
           className="min-w-0 flex-1 lg:w-64 lg:flex-none"
