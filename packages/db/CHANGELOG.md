@@ -1,5 +1,19 @@
 # @ovr/db
 
+## 0.4.8
+
+### Patch Changes
+
+- [#490](https://github.com/open-visual-regression/open-visual-regression/pull/490) [`f487ace`](https://github.com/open-visual-regression/open-visual-regression/commit/f487acea37219c51971d0e7e1c49105010f8fbbf) Thanks [@tgfischer](https://github.com/tgfischer)! - Adds a table for the baselines main changes and a merge-base column on builds, in preparation for comparing branches against main as it was when they were cut. The upgrade builds the new index without blocking the running app.
+
+- [#479](https://github.com/open-visual-regression/open-visual-regression/pull/479) [`74b77e8`](https://github.com/open-visual-regression/open-visual-regression/commit/74b77e87cef549db2931d5eb2253a54c74d9e003) Thanks [@tgfischer](https://github.com/tgfischer)! - `snapshots.listStatuses`, `listBrowsers`, `listViewports` and `listFlags` return the options across every build when no `buildId` is given.
+
+- [#478](https://github.com/open-visual-regression/open-visual-regression/pull/478) [`86af061`](https://github.com/open-visual-regression/open-visual-regression/commit/86af0617a3af2c134c8f3942800c139e12649455) Thanks [@tgfischer](https://github.com/tgfischer)! - `snapshots.list` lists every build's snapshots when no `buildId` is given, sorted by status or alphabetically, with each snapshot's build and project. Upgrading adds an index on snapshots without locking the table.
+
+- [#480](https://github.com/open-visual-regression/open-visual-regression/pull/480) [`ae2504c`](https://github.com/open-visual-regression/open-visual-regression/commit/ae2504ccd335bdb4e213982749565e89baf4d2a9) Thanks [@tgfischer](https://github.com/tgfischer)! - `snapshots.list` filters by `projectIds`, and `baseline: true` keeps only snapshots that are their project's current baseline.
+
+- [#489](https://github.com/open-visual-regression/open-visual-regression/pull/489) [`4972a24`](https://github.com/open-visual-regression/open-visual-regression/commit/4972a24b5ad6dfd46eb2d1cf9f9464f61c1bbf5c) Thanks [@tgfischer](https://github.com/tgfischer)! - Metrics, alerts, and dashboard panels cover object storage: request failures and latency, deleted files, and files of purged builds or projects left in storage.
+
 ## 0.4.7
 
 ### Patch Changes

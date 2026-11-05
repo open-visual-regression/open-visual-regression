@@ -1,5 +1,12 @@
 # @ovr/capture-browser
 
+## 0.0.7
+
+### Patch Changes
+
+- Updated dependencies [[`479d610`](https://github.com/open-visual-regression/open-visual-regression/commit/479d61032e7f4c6a5c7cf446ef412f4caafe4daa), [`4972a24`](https://github.com/open-visual-regression/open-visual-regression/commit/4972a24b5ad6dfd46eb2d1cf9f9464f61c1bbf5c)]:
+  - @ovr/storage@0.1.1
+
 ## 0.0.6
 
 ### Patch Changes

@@ -1,5 +1,17 @@
 # @ovr/api
 
+## 0.5.4
+
+### Patch Changes
+
+- [#493](https://github.com/open-visual-regression/open-visual-regression/pull/493) [`dfd4571`](https://github.com/open-visual-regression/open-visual-regression/commit/dfd457143f8fddcfbdfc981d8c0e244fe7f3a358) Thanks [@tgfischer](https://github.com/tgfischer)! - Branch builds are compared against main at their merge base, so changes main made after the branch was cut no longer show up as the branch's own. This needs the full git history (`fetch-depth: 0`).
+
+- [#479](https://github.com/open-visual-regression/open-visual-regression/pull/479) [`74b77e8`](https://github.com/open-visual-regression/open-visual-regression/commit/74b77e87cef549db2931d5eb2253a54c74d9e003) Thanks [@tgfischer](https://github.com/tgfischer)! - `snapshots.listStatuses`, `listBrowsers`, `listViewports` and `listFlags` return the options across every build when no `buildId` is given.
+
+- [#478](https://github.com/open-visual-regression/open-visual-regression/pull/478) [`86af061`](https://github.com/open-visual-regression/open-visual-regression/commit/86af0617a3af2c134c8f3942800c139e12649455) Thanks [@tgfischer](https://github.com/tgfischer)! - `snapshots.list` lists every build's snapshots when no `buildId` is given, sorted by status or alphabetically, with each snapshot's build and project. Upgrading adds an index on snapshots without locking the table.
+
+- [#480](https://github.com/open-visual-regression/open-visual-regression/pull/480) [`ae2504c`](https://github.com/open-visual-regression/open-visual-regression/commit/ae2504ccd335bdb4e213982749565e89baf4d2a9) Thanks [@tgfischer](https://github.com/tgfischer)! - `snapshots.list` filters by `projectIds`, and `baseline: true` keeps only snapshots that are their project's current baseline.
+
 ## 0.5.3
 
 ### Patch Changes
