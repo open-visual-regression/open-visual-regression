@@ -50,7 +50,7 @@ export const promoteBaseline = async (diffId: string, approverId: string): Promi
       tx,
     );
 
-    // Only record changes, so unchanged stories don't add a row on every main build.
+    // Only record changes, so unchanged targets don't add a row on every main build.
     if (!baseline || !CHANGED_REVIEW_STATUSES.has(diff.reviewStatus)) {
       return;
     }

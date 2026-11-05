@@ -102,7 +102,7 @@ describe("baselines", () => {
       ).toBeUndefined();
     });
 
-    test("should remember what a story looked like before main changed it", async ({
+    test("should remember what a target looked like before main changed it", async ({
       project,
       captureConfiguration,
       mainBuild,
@@ -110,8 +110,8 @@ describe("baselines", () => {
     }) => {
       const [previous, changed] = await dbClient.snapshots.createMany({
         values: [
-          { buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" },
-          { buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" },
+          { buildId: mainBuild.id, ...captureConfiguration, targetId: "target-a" },
+          { buildId: mainBuild.id, ...captureConfiguration, targetId: "target-a" },
         ],
       });
       const diff = await dbClient.diffs.create({
@@ -123,7 +123,7 @@ describe("baselines", () => {
       await promoteBaseline(diff!.id, reviewer.id);
 
       const revision = await dbClient.baselineRevisions.findFirstAfter(
-        { projectId: project.id, ...captureConfiguration, targetId: "story-a" },
+        { projectId: project.id, ...captureConfiguration, targetId: "target-a" },
         "2000-01-01T00:00:00.000Z",
       );
       expect(revision).toMatchObject({
@@ -134,14 +134,14 @@ describe("baselines", () => {
       });
     });
 
-    test("should remember that a story added on main had no baseline before", async ({
+    test("should remember that a target added on main had no baseline before", async ({
       project,
       captureConfiguration,
       mainBuild,
       reviewer,
     }) => {
       const [snapshot] = await dbClient.snapshots.createMany({
-        values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" }],
+        values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "target-a" }],
       });
       const diff = await dbClient.diffs.create({
         snapshotId: snapshot!.id,
@@ -151,13 +151,13 @@ describe("baselines", () => {
       await promoteBaseline(diff!.id, reviewer.id);
 
       const revision = await dbClient.baselineRevisions.findFirstAfter(
-        { projectId: project.id, ...captureConfiguration, targetId: "story-a" },
+        { projectId: project.id, ...captureConfiguration, targetId: "target-a" },
         "2000-01-01T00:00:00.000Z",
       );
       expect(revision).toMatchObject({ previousSnapshotId: null, replacedExisting: false });
     });
 
-    test("should not record a change for a story main left unchanged", async ({
+    test("should not record a change for a target main left unchanged", async ({
       project,
       captureConfiguration,
       mainBuild,
@@ -165,8 +165,8 @@ describe("baselines", () => {
     }) => {
       const [previous, unchanged] = await dbClient.snapshots.createMany({
         values: [
-          { buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" },
-          { buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" },
+          { buildId: mainBuild.id, ...captureConfiguration, targetId: "target-a" },
+          { buildId: mainBuild.id, ...captureConfiguration, targetId: "target-a" },
         ],
       });
       const diff = await dbClient.diffs.create({
@@ -179,7 +179,7 @@ describe("baselines", () => {
 
       expect(
         await dbClient.baselineRevisions.findFirstAfter(
-          { projectId: project.id, ...captureConfiguration, targetId: "story-a" },
+          { projectId: project.id, ...captureConfiguration, targetId: "target-a" },
           "2000-01-01T00:00:00.000Z",
         ),
       ).toBeUndefined();
@@ -202,10 +202,10 @@ describe("baselines", () => {
       const olderBuild = await createMainBuild("b".repeat(40), "2026-01-01T00:00:00.000Z");
       const newerBuild = await createMainBuild("c".repeat(40), "2026-01-02T00:00:00.000Z");
       const [newer] = await dbClient.snapshots.createMany({
-        values: [{ buildId: newerBuild!.id, ...captureConfiguration, targetId: "story-a" }],
+        values: [{ buildId: newerBuild!.id, ...captureConfiguration, targetId: "target-a" }],
       });
       const [older] = await dbClient.snapshots.createMany({
-        values: [{ buildId: olderBuild!.id, ...captureConfiguration, targetId: "story-a" }],
+        values: [{ buildId: olderBuild!.id, ...captureConfiguration, targetId: "target-a" }],
       });
       await promoteBaseline(
         (await dbClient.diffs.create({ snapshotId: newer!.id, reviewStatus: "auto_approved" }))!.id,
@@ -217,18 +217,18 @@ describe("baselines", () => {
         reviewer.id,
       );
 
-      expect(await getBaseline(project.id, captureConfiguration, "story-a")).toMatchObject({
+      expect(await getBaseline(project.id, captureConfiguration, "target-a")).toMatchObject({
         snapshotId: newer!.id,
       });
       expect(
         await dbClient.baselineRevisions.findFirstAfter(
-          { projectId: project.id, ...captureConfiguration, targetId: "story-a" },
+          { projectId: project.id, ...captureConfiguration, targetId: "target-a" },
           "2000-01-01T00:00:00.000Z",
         ),
       ).toMatchObject({ buildId: newerBuild!.id });
       expect(
         await dbClient.baselineRevisions.findFirstAfter(
-          { projectId: project.id, ...captureConfiguration, targetId: "story-a" },
+          { projectId: project.id, ...captureConfiguration, targetId: "target-a" },
           newerBuild!.createdAt,
         ),
       ).toBeUndefined();
