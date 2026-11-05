@@ -7,65 +7,37 @@ describe("baselineRevisions", () => {
       project,
       captureConfiguration,
       build,
+      recordRevision,
     }) => {
       const [previous] = await dbClient.snapshots.createMany({
         values: [{ buildId: build.id, ...captureConfiguration, targetId: "target-a" }],
       });
-      const key = { projectId: project.id, ...captureConfiguration, targetId: "target-a" };
-      await dbClient.baselineRevisions.create({
-        ...key,
-        buildId: build.id,
-        previousSnapshotId: null,
-        replacedExisting: false,
-        createdAt: "2026-01-01T00:00:00.000Z",
-      });
-      const first = await dbClient.baselineRevisions.create({
-        ...key,
-        buildId: build.id,
+      await recordRevision({ createdAt: "2026-01-01T00:00:00.000Z" });
+      const first = await recordRevision({
         previousSnapshotId: previous!.id,
         replacedExisting: true,
         createdAt: "2026-01-03T00:00:00.000Z",
       });
-      await dbClient.baselineRevisions.create({
-        ...key,
-        buildId: build.id,
-        previousSnapshotId: null,
-        replacedExisting: true,
-        createdAt: "2026-01-05T00:00:00.000Z",
-      });
+      await recordRevision({ replacedExisting: true, createdAt: "2026-01-05T00:00:00.000Z" });
 
       const revision = await dbClient.baselineRevisions.findFirstAfter(
-        key,
+        { projectId: project.id, ...captureConfiguration, targetId: "target-a" },
         "2026-01-02T00:00:00.000Z",
       );
 
-      expect(revision).toMatchObject({ id: first!.id, previousSnapshotId: previous!.id });
+      expect(revision).toMatchObject({ id: first.id, previousSnapshotId: previous!.id });
     });
 
     test("should find nothing when main hasn't changed the target since the given time", async ({
       project,
       captureConfiguration,
-      build,
+      recordRevision,
     }) => {
-      const key = { projectId: project.id, ...captureConfiguration, targetId: "target-a" };
-      await dbClient.baselineRevisions.create({
-        ...key,
-        buildId: build.id,
-        previousSnapshotId: null,
-        replacedExisting: false,
-        createdAt: "2026-01-01T00:00:00.000Z",
-      });
-      await dbClient.baselineRevisions.create({
-        ...key,
-        targetId: "target-b",
-        buildId: build.id,
-        previousSnapshotId: null,
-        replacedExisting: false,
-        createdAt: "2026-01-03T00:00:00.000Z",
-      });
+      await recordRevision({ createdAt: "2026-01-01T00:00:00.000Z" });
+      await recordRevision({ targetId: "target-b", createdAt: "2026-01-03T00:00:00.000Z" });
 
       const revision = await dbClient.baselineRevisions.findFirstAfter(
-        key,
+        { projectId: project.id, ...captureConfiguration, targetId: "target-a" },
         "2026-01-02T00:00:00.000Z",
       );
 
@@ -78,20 +50,17 @@ describe("baselineRevisions", () => {
       project,
       captureConfiguration,
       build,
+      recordRevision,
     }) => {
-      const key = { projectId: project.id, ...captureConfiguration, targetId: "target-a" };
-      await dbClient.baselineRevisions.create({
-        ...key,
-        buildId: build.id,
-        previousSnapshotId: null,
-        replacedExisting: false,
-        createdAt: build.createdAt,
-      });
+      await recordRevision();
 
       await dbClient.transaction((tx) => dbClient.builds.removeMany(tx, [build.id]));
 
       expect(
-        await dbClient.baselineRevisions.findFirstAfter(key, "2000-01-01T00:00:00.000Z"),
+        await dbClient.baselineRevisions.findFirstAfter(
+          { projectId: project.id, ...captureConfiguration, targetId: "target-a" },
+          "2000-01-01T00:00:00.000Z",
+        ),
       ).toBeUndefined();
     });
 
@@ -100,6 +69,7 @@ describe("baselineRevisions", () => {
       captureConfiguration,
       build,
       user,
+      recordRevision,
     }) => {
       const [previous] = await dbClient.snapshots.createMany({
         values: [{ buildId: build.id, ...captureConfiguration, targetId: "target-a" }],
@@ -111,9 +81,7 @@ describe("baselineRevisions", () => {
         artifactPath: "builds/changing/artifact",
         createdBy: user.id,
       });
-      const key = { projectId: project.id, ...captureConfiguration, targetId: "target-a" };
-      await dbClient.baselineRevisions.create({
-        ...key,
+      await recordRevision({
         buildId: changingBuild!.id,
         previousSnapshotId: previous!.id,
         replacedExisting: true,
@@ -123,7 +91,10 @@ describe("baselineRevisions", () => {
       await dbClient.transaction((tx) => dbClient.builds.removeMany(tx, [build.id]));
 
       expect(
-        await dbClient.baselineRevisions.findFirstAfter(key, "2000-01-01T00:00:00.000Z"),
+        await dbClient.baselineRevisions.findFirstAfter(
+          { projectId: project.id, ...captureConfiguration, targetId: "target-a" },
+          "2000-01-01T00:00:00.000Z",
+        ),
       ).toMatchObject({ previousSnapshotId: null, replacedExisting: true });
     });
   });

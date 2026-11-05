@@ -8,7 +8,8 @@ import { test as vitest } from "vitest";
 
 import { dbClient } from "../client";
 import { db } from "../db";
-import { organization, projects, user as userTable } from "../schema";
+import type { BaselineRevisionDbSchema } from "../repository/baselineRevisions";
+import { baselineRevisions, organization, projects, user as userTable } from "../schema";
 
 export { describe, expect } from "vitest";
 
@@ -31,6 +32,9 @@ type Fixtures = {
   project: typeof projects.$inferSelect;
   captureConfiguration: Viewport;
   build: NonNullable<Awaited<ReturnType<typeof dbClient.builds.create>>>;
+  recordRevision: (
+    values?: Partial<typeof baselineRevisions.$inferInsert>,
+  ) => Promise<BaselineRevisionDbSchema>;
   databaseUrl: string;
   createMigrationsFolder: (migrations: TestMigration[]) => string;
 };
@@ -96,6 +100,24 @@ export const test = vitest.extend<Fixtures>({
       createdBy: user.id,
     });
     await use(created!);
+  },
+
+  // Records that `build` changed target-a's baseline; pass values to describe another change.
+  recordRevision: async ({ project, captureConfiguration, build }, use) => {
+    const { viewportName: _, ...viewport } = captureConfiguration;
+    await use(async (values = {}) => {
+      const revision = await dbClient.baselineRevisions.create({
+        projectId: project.id,
+        ...viewport,
+        targetId: "target-a",
+        buildId: build.id,
+        previousSnapshotId: null,
+        replacedExisting: false,
+        createdAt: build.createdAt,
+        ...values,
+      });
+      return revision!;
+    });
   },
 
   // eslint-disable-next-line no-empty-pattern
