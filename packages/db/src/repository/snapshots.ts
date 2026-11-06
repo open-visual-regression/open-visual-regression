@@ -302,7 +302,7 @@ const isOnLatestMainBuild = (scope: BuildScope) =>
 
 const inFlightStatuses: SnapshotDisplayStatus[] = ["queued", "processing"];
 
-const isInFlight = or(...inFlightStatuses.map((status) => sql`${displayStatusExpr} = ${status}`));
+const isInFlight = inArray(displayStatusExpr, inFlightStatuses);
 
 const isInFlightOnly = (statuses?: SnapshotDisplayStatus[]) =>
   !!statuses?.length && statuses.every((status) => inFlightStatuses.includes(status));
@@ -359,9 +359,7 @@ const listWhere = ({
     latestMainBuild ? latestMainBuildWhere({ organizationId, projectIds, statuses }) : undefined,
     projectIds?.length ? inArray(builds.projectId, projectIds) : undefined,
     baseline ? isBaseline : undefined,
-    statuses?.length
-      ? or(...statuses.map((status) => sql`${displayStatusExpr} = ${status}`))
-      : undefined,
+    statuses?.length ? inArray(displayStatusExpr, statuses) : undefined,
     browsers?.length ? inArray(snapshots.browser, browsers) : undefined,
     viewports?.length ? inArray(snapshots.viewportName, viewports) : undefined,
     flags?.length ? or(...flags.map((flag) => flagConditions[flag])) : undefined,
