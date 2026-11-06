@@ -194,11 +194,26 @@ describe("queue", () => {
   });
 
   describe("enqueueCaptureGroups", () => {
-    const groups = (buildId: string, count: number) =>
+    const groups = (buildId: string, count: number, snapshots = 1) =>
       Array.from({ length: count }, (_, index) => ({
         browser: "chromium",
-        snapshotIds: [`${buildId}-${index + 1}`],
+        snapshotIds: [
+          `${buildId}-${index + 1}`,
+          ...Array.from(
+            { length: snapshots - 1 },
+            (_, snapshot) => `${buildId}-${index + 1}.${snapshot + 1}`,
+          ),
+        ],
       }));
+
+    const enqueueAt = async <T>(at: number, enqueue: () => Promise<T>): Promise<T> => {
+      const now = vi.spyOn(Date, "now").mockReturnValue(at);
+      try {
+        return await enqueue();
+      } finally {
+        now.mockRestore();
+      }
+    };
 
     const processingOrder = async (
       queue: Queue,
@@ -331,36 +346,18 @@ describe("queue", () => {
       ]);
     });
 
-    const largeGroups = (buildId: string, count: number, snapshots: number) =>
-      Array.from({ length: count }, (_, index) => ({
-        browser: "chromium",
-        snapshotIds: Array.from(
-          { length: snapshots },
-          (_, snapshot) => `${buildId}-${index + 1}${snapshot === 0 ? "" : `.${snapshot}`}`,
-        ),
-      }));
-
-    const enqueueAt = async <T>(at: number, enqueue: () => Promise<T>): Promise<T> => {
-      const now = vi.spyOn(Date, "now").mockReturnValue(at);
-      try {
-        return await enqueue();
-      } finally {
-        now.mockRestore();
-      }
-    };
-
-    test("should keep a small build queued past a large build's 15 minute max deadline behind it under deadline", async ({
+    test("should keep a build queued past a large build's max deadline behind it under deadline", async ({
       connection,
       openQueue,
       openWorker,
       trackJob,
     }) => {
       const queuedAt = Date.now();
-      // main's 1500 snapshots would be due 7500s after it was queued; the max deadline makes it 900s.
+      // main's 1500 snapshots are due after the 15 minute default max deadline, not 7500s.
       const jobs = (
-        await enqueueCaptureGroups("main", largeGroups("main", 3, 500), connection, "deadline")
+        await enqueueCaptureGroups("main", groups("main", 3, 500), connection, "deadline")
       ).map(trackJob);
-      // pr's one snapshot is due 5s after it is queued 16 minutes later: 965s, past main's 900s.
+      // pr is queued 16 minutes later and due 5s after that, past main's deadline.
       jobs.push(
         ...(
           await enqueueAt(queuedAt + 16 * 60_000, () =>
@@ -379,18 +376,17 @@ describe("queue", () => {
       ]);
     });
 
-    test("should let small builds pass a large build only within its configured max deadline under deadline", async ({
+    test("should let builds pass a large build only within a configured max deadline under deadline", async ({
       connection,
       openQueue,
       openWorker,
       trackJob,
     }) => {
       const queuedAt = Date.now();
-      // With a 1 minute max deadline, main is due 60s after it was queued.
+      // main is due 60s after it was queued; early is due at 35s and late at 95s.
       const jobs = (
-        await enqueueCaptureGroups("main", largeGroups("main", 3, 500), connection, "deadline", 1)
+        await enqueueCaptureGroups("main", groups("main", 3, 500), connection, "deadline", 1)
       ).map(trackJob);
-      // early is queued 30s later and due at 35s, before main.
       jobs.push(
         ...(
           await enqueueAt(queuedAt + 30_000, () =>
@@ -398,7 +394,6 @@ describe("queue", () => {
           )
         ).map(trackJob),
       );
-      // late is queued 90s later and due at 95s, after main.
       jobs.push(
         ...(
           await enqueueAt(queuedAt + 90_000, () =>

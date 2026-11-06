@@ -281,10 +281,9 @@ export const enqueueCaptureGroup = (
   connection: RedisConnection,
 ): Promise<Job<CaptureGroupJobPayload>> => enqueue(QueueName.SNAPSHOT_CAPTURE, payload, connection);
 
-// deadline makes a build due DEADLINE_SECONDS_PER_SNAPSHOT per snapshot after it's queued, but no
-// later than its max deadline, and workers take the earliest: small builds go first, but none
-// queued after a build's deadline can pass it, so a large build waits behind newer builds for at
-// most the max deadline.
+// deadline makes a build due DEADLINE_SECONDS_PER_SNAPSHOT per snapshot after it's queued, capped at
+// the max deadline, and workers take the earliest: small builds go first, but none queued after a
+// build's deadline can pass it.
 // round-robin gives a build's nth group of each browser priority n, counted from the round workers
 // are on, so a new build joins that round instead of jumping ahead of every queued build.
 export const captureQueuePolicySchema = z
@@ -293,6 +292,7 @@ export const captureQueuePolicySchema = z
 
 export type CaptureQueuePolicy = z.infer<typeof captureQueuePolicySchema>;
 
+// Lower runs large builds sooner, but small builds queued behind them wait longer.
 export const DEFAULT_CAPTURE_MAX_DEADLINE_MINUTES = 15;
 
 export const captureMaxDeadlineMinutesSchema = z.coerce
