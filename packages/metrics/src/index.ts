@@ -100,7 +100,6 @@ export const observeGauges = <K extends string>(
   return () => meter.removeBatchObservableCallback(callback, observables);
 };
 
-// 900 and 1200 split the 10 to 30 minutes a large build can wait in a busy queue.
 export const DURATION_BUCKETS_SECONDS = [
   0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30, 60, 120, 300, 600, 900, 1200, 1800,
 ];

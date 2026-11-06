@@ -14,7 +14,6 @@ export type BuildFinishReason =
   | "finalize_failed"
   | "enqueue_failed";
 
-// A few size ranges, never the count itself, so each range stays one series.
 export type BuildSize = "under_100" | "100_to_499" | "500_to_999" | "1000_or_more";
 
 export const toBuildSize = (snapshots: number): BuildSize => {
@@ -43,8 +42,7 @@ export const buildDuration = createHistogram<{
   processing_status: FinishedBuildStatus;
   size: BuildSize;
 }>("ovr.build.duration.seconds", {
-  description:
-    "Time from a build's creation until it finalized, by how many snapshots it captured.",
+  description: "Time from a build's creation until it finalized, by size.",
   unit: "s",
   buckets: DURATION_BUCKETS_SECONDS,
 });
@@ -52,8 +50,7 @@ export const buildDuration = createHistogram<{
 export const buildCaptureWait = createHistogram<{ size: BuildSize }>(
   "ovr.build.capture.wait.seconds",
   {
-    description:
-      "Time from a build's capture groups being queued until its first snapshot started capturing, by how many snapshots it captures.",
+    description: "Time from a build's snapshots being queued until the first started capturing.",
     unit: "s",
     buckets: DURATION_BUCKETS_SECONDS,
   },

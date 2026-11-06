@@ -186,10 +186,8 @@ const waitForImagesAndFonts = ({
   // Like a stuck request, an image that outlives a whole settle budget is given up on, so it
   // cannot stall every later snapshot on this page.
   const loadingSince = (globalThis.__OVR_LOADING_IMAGES__ ??= new WeakMap());
-  // A later story that renders the same stuck image gets a new element, but the browser reuses the
-  // stuck request, so the image is remembered by its URL rather than waited for again.
+  // Images given up on, so later stories that show the same one don't wait for it again.
   const abandonedSrcs = (globalThis.__OVR_ABANDONED_IMAGE_SRCS__ ??= new Set());
-  // currentSrc stays empty until an image receives data, so a stuck image is known by its src.
   const urlOf = (image: HTMLImageElement) => image.currentSrc || image.src;
   const isAbandoned = (image: HTMLImageElement) => {
     if (abandonedSrcs.has(urlOf(image))) {
@@ -207,8 +205,6 @@ const waitForImagesAndFonts = ({
     return true;
   };
 
-  // Stops waiting once the image has loaded for as long as a request may, so one image can't use up
-  // the whole settle budget.
   const loaded = (image: HTMLImageElement) =>
     new Promise<void>((resolve) => {
       image.addEventListener("load", () => resolve(), { once: true });
@@ -231,7 +227,6 @@ const waitForImagesAndFonts = ({
     .filter((image) => image.complete || (image.loading !== "lazy" && !isAbandoned(image)))
     .map((image) =>
       (image.complete ? Promise.resolve() : loaded(image))
-        // decode() waits for an image that is still loading, so skip one that was given up on.
         .then(() => (image.complete ? image.decode() : undefined))
         .catch(() => undefined),
     );

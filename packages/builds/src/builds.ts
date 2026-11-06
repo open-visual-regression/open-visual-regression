@@ -721,7 +721,7 @@ export const finalizeBuild = async (buildId: string): Promise<void> => {
   // Skip retried finalize jobs.
   if (build?.processingStatus === "queued" || build?.processingStatus === "processing") {
     buildsFinished.add(1, { processing_status: processingStatus, reason: "finalized" });
-    // Every captured snapshot has a diff, and skipped ones don't.
+    // Skipped snapshots have no diff, so they don't count toward size.
     buildDuration.record((Date.now() - Date.parse(build.createdAt)) / 1000, {
       processing_status: processingStatus,
       size: toBuildSize(diffs.length),
