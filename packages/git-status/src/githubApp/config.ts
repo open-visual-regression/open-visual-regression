@@ -66,12 +66,3 @@ export const readGitHubAppConfig = (
 export const assertGitHubAppConfig = (): void => {
   readGitHubAppConfig();
 };
-
-/** Whether the deployment has a usable GitHub App, for offering App auth in settings. */
-export const isGitHubAppConfigured = (): boolean => {
-  try {
-    return readGitHubAppConfig() !== null;
-  } catch {
-    return false;
-  }
-};

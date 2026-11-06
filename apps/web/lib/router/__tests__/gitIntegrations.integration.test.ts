@@ -56,16 +56,25 @@ describe("gitIntegrations", () => {
       expect(result?.integration).toBeNull();
     });
 
-    test("should report whether the deployment has a GitHub App", async ({ admin: _ }) => {
+    test("should offer only token auth when the deployment has no GitHub App", async ({
+      admin: _,
+    }) => {
       const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
-      const projectId = addResult!.projectId;
 
-      const [, withoutApp] = await serverClient.gitIntegrations.get({ projectId });
-      expect(withoutApp?.githubAppConfigured).toBe(false);
+      const [, result] = await serverClient.gitIntegrations.get({
+        projectId: addResult!.projectId,
+      });
+      expect(result?.availableAuthTypes).toEqual({ github: ["token"] });
+    });
 
+    test("should offer GitHub App auth once the deployment has an App", async ({ admin: _ }) => {
       configureGitHubApp();
-      const [, withApp] = await serverClient.gitIntegrations.get({ projectId });
-      expect(withApp?.githubAppConfigured).toBe(true);
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+
+      const [, result] = await serverClient.gitIntegrations.get({
+        projectId: addResult!.projectId,
+      });
+      expect(result?.availableAuthTypes).toEqual({ github: ["token", "github_app"] });
     });
   });
 
@@ -202,9 +211,7 @@ describe("gitIntegrations", () => {
         repoIdentifier: "acme/other",
       });
     });
-  });
 
-  describe("upsert with GitHub App auth", () => {
     test("should save without a token when the deployment has an App", async ({ admin: _ }) => {
       configureGitHubApp();
       const [, addResult] = await serverClient.projects.add(TEST_PROJECT);

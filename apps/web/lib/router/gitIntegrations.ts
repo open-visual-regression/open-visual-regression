@@ -5,11 +5,9 @@ import { ORPCError } from "@orpc/client";
 import type { GitIntegrationSchema } from "@ovr/api/contracts/gitIntegrations";
 import { dbClient } from "@ovr/db/client";
 import type { GitIntegrationDbSchema } from "@ovr/db/repository/gitIntegrations";
+import { availableAuthTypes, verifyIntegration } from "@ovr/git-status/auth";
 import { formatCheckContext } from "@ovr/git-status/checkContext";
 import { encryptToken } from "@ovr/git-status/crypto";
-import { isGitHubAppConfigured } from "@ovr/git-status/githubApp/config";
-import { resolveToken } from "@ovr/git-status/resolveToken";
-import { verifyGitHubAppIntegration, verifyIntegration } from "@ovr/git-status/verifyIntegration";
 
 import { adminMiddleware, authenticatedMiddleware, projectMiddleware } from "./middleware";
 import { os } from "./os";
@@ -32,7 +30,7 @@ export const get = os.gitIntegrations.get
 
     return {
       integration: integration ? toGitIntegration(integration) : null,
-      githubAppConfigured: isGitHubAppConfigured(),
+      availableAuthTypes: availableAuthTypes(),
     };
   })
   .actionable();
@@ -42,6 +40,12 @@ export const upsert = os.gitIntegrations.upsert
   .use(adminMiddleware)
   .use(projectMiddleware)
   .handler(async ({ input, context }) => {
+    if (!availableAuthTypes()[input.provider].includes(input.authType)) {
+      throw new ORPCError("BAD_REQUEST", {
+        message: `${input.authType} authentication is not available for ${input.provider} on this deployment`,
+      });
+    }
+
     const fields = {
       projectId: input.projectId,
       provider: input.provider,
@@ -49,16 +53,11 @@ export const upsert = os.gitIntegrations.upsert
       checkContext: formatCheckContext(context.project.name),
     };
 
-    if (input.authType === "github_app") {
-      if (!isGitHubAppConfigured()) {
-        throw new ORPCError("BAD_REQUEST", {
-          message: "No GitHub App is configured on this deployment",
-        });
-      }
-
+    // Only token auth stores a credential. Every other method drops any token left over.
+    if (input.authType !== "token") {
       const integration = await dbClient.gitIntegrations.upsert({
         ...fields,
-        authType: "github_app",
+        authType: input.authType,
         encryptedToken: null,
       });
       return toGitIntegration(integration!);
@@ -126,19 +125,6 @@ export const testConnection = os.gitIntegrations.testConnection
       throw new ORPCError("BAD_REQUEST", { message: "No git integration configured" });
     }
 
-    if (integration.authType === "github_app") {
-      return verifyGitHubAppIntegration(integration);
-    }
-
-    const resolved = await resolveToken(integration);
-    if (!resolved.ok) {
-      return { ok: false, httpStatus: null, error: resolved.error };
-    }
-
-    return verifyIntegration({
-      provider: integration.provider,
-      repoIdentifier: integration.repoIdentifier,
-      token: resolved.token,
-    });
+    return verifyIntegration(integration);
   })
   .actionable();

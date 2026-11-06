@@ -11,7 +11,7 @@ const meta: Meta<typeof GitIntegrationSection> = {
   tags: ["autodocs"],
   args: {
     projectId: "00000000-0000-7000-8000-000000000000",
-    githubAppConfigured: false,
+    availableAuthTypes: { github: ["token"] },
   },
   parameters: {
     nextjs: {
@@ -53,7 +53,7 @@ export const ChecksDisabled: Story = {
 export const GitHubAppAvailable: Story = {
   args: {
     integration: null,
-    githubAppConfigured: true,
+    availableAuthTypes: { github: ["token", "github_app"] },
   },
 };
 
@@ -64,7 +64,7 @@ export const ConnectedWithGitHubApp: Story = {
       authType: "github_app",
       hasToken: false,
     }),
-    githubAppConfigured: true,
+    availableAuthTypes: { github: ["token", "github_app"] },
   },
 };
 

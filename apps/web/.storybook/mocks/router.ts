@@ -122,7 +122,7 @@ export const serverClient: typeof RealServerClient = {
   },
   gitIntegrations: {
     get: os.gitIntegrations.get
-      .handler(() => ({ integration: null, githubAppConfigured: false }))
+      .handler(() => ({ integration: null, availableAuthTypes: { github: ["token" as const] } }))
       .actionable(),
     upsert: os.gitIntegrations.upsert
       .handler(() => ({

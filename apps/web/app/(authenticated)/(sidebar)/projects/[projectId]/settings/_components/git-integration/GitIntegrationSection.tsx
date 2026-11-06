@@ -1,25 +1,29 @@
 import type { GitIntegrationSchema } from "@ovr/api/contracts/gitIntegrations";
 import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 
-import { GitIntegrationForm, GitIntegrationFormSkeleton } from "./GitIntegrationForm";
+import {
+  GitIntegrationForm,
+  GitIntegrationFormSkeleton,
+  type GitIntegrationFormProps,
+} from "./GitIntegrationForm";
 
 type GitIntegrationSectionProps = {
   projectId: string;
   integration: GitIntegrationSchema | null;
-  githubAppConfigured: boolean;
+  availableAuthTypes: GitIntegrationFormProps["availableAuthTypes"];
 };
 
 export const GitIntegrationSection = ({
   projectId,
   integration,
-  githubAppConfigured,
+  availableAuthTypes,
 }: GitIntegrationSectionProps) => (
   <div className="flex flex-col gap-4">
     <Typography variant="h2">git integration</Typography>
     <GitIntegrationForm
       projectId={projectId}
       integration={integration}
-      githubAppConfigured={githubAppConfigured}
+      availableAuthTypes={availableAuthTypes}
     />
   </div>
 );

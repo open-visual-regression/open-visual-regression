@@ -31,7 +31,7 @@ describe("ProjectSettingsPage", () => {
   beforeEach(() => {
     mockGetGitIntegration.mockResolvedValue([
       null,
-      { integration: null, githubAppConfigured: false },
+      { integration: null, availableAuthTypes: { github: ["token"] } },
     ]);
   });
 
