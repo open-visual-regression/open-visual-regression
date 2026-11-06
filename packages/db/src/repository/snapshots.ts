@@ -13,7 +13,7 @@ import {
   type SQL,
   sql,
 } from "drizzle-orm";
-import { alias, unionAll } from "drizzle-orm/pg-core";
+import { alias, union, unionAll } from "drizzle-orm/pg-core";
 
 import { db, type DbClient } from "../db";
 import {
@@ -269,9 +269,7 @@ const latestMainBuilds = alias(builds, "latest_main_builds");
 
 type BuildScope = Pick<ListFilters, "organizationId" | "projectIds">;
 
-// One row per project, each walking builds_projectId_branch_createdAt_id_idx backwards to its
-// latest non-canceled main build. Resolving these few IDs first lets snapshots be found through
-// snapshots_buildId_idx, instead of checking every snapshot's build against a subquery.
+// Resolve the few latest main build IDs first, so snapshots are found by build_id.
 const latestMainBuildIds = ({ organizationId, projectIds }: BuildScope) => {
   const latestMainBuild = db
     .select({ id: latestMainBuilds.id })
@@ -290,7 +288,7 @@ const latestMainBuildIds = ({ organizationId, projectIds }: BuildScope) => {
   return db
     .select({ id: latestMainBuild.id })
     .from(scopedProjects)
-    .innerJoinLateral(latestMainBuild, sql`true`)
+    .crossJoinLateral(latestMainBuild)
     .where(
       and(
         organizationId ? eq(scopedProjects.organizationId, organizationId) : undefined,
@@ -314,11 +312,8 @@ const inProgressBuildSnapshots = alias(snapshots, "in_progress_build_snapshots")
 const unfinishedSnapshots = alias(snapshots, "unfinished_snapshots");
 const pendingDiffs = alias(diffs, "pending_diffs");
 
-// Narrows to snapshots that can be in flight through small partial indexes, so the display
-// status is computed for those alone instead of for every snapshot: those on a build that's still
-// running, those waiting on a capture, and those waiting on a diff. The status predicates are
-// inlined so the planner matches them to the partial indexes. A captured snapshot whose diff was
-// never created also reads as queued, but only counts here while its build is still running.
+// Snapshots that can display as queued or processing, each found through a partial index.
+// A snapshot with no diff counts only while its build is running.
 const isInFlightCandidate = inArray(
   snapshots.id,
   unionAll(
@@ -329,19 +324,21 @@ const isInFlightCandidate = inArray(
         inProgressBuildSnapshots,
         eq(inProgressBuildSnapshots.buildId, inProgressBuilds.id),
       )
-      .where(sql`${inProgressBuilds.processingStatus} in ('queued', 'processing')`),
+      .where(inArray(inProgressBuilds.processingStatus, ["queued", "processing"])),
     db
       .select({ id: unfinishedSnapshots.id })
       .from(unfinishedSnapshots)
-      .where(sql`${unfinishedSnapshots.status} in ('queued', 'processing')`),
+      .where(inArray(unfinishedSnapshots.status, ["queued", "processing"])),
     db
       .select({ id: pendingDiffs.snapshotId })
       .from(pendingDiffs)
-      .where(sql`${pendingDiffs.processingStatus} = 'pending'`),
+      .where(eq(pendingDiffs.processingStatus, "pending")),
   ),
 );
 
-const latestMainBuildWhere = ({ statuses, ...scope }: BuildScope & Pick<ListFilters, "statuses">) =>
+type LatestMainBuildFilters = Pick<ListFilters, "organizationId" | "projectIds" | "statuses">;
+
+const latestMainBuildWhere = ({ statuses, ...scope }: LatestMainBuildFilters) =>
   isInFlightOnly(statuses) ? isInFlightCandidate : isOnLatestMainBuild(scope);
 
 const listWhere = ({
@@ -386,19 +383,15 @@ export const findStatuses = async (scope: SnapshotScope): Promise<SnapshotDispla
       .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
       .where(where);
 
-  // Queued and processing are offered whenever anything is in flight on any build, since
-  // filtering to them widens the list to every build. Looking those up separately keeps an OR
-  // over the computed display status from turning both lookups into full scans.
-  const groups = await Promise.all(
-    latestMainBuild
-      ? [
-          findDistinct(listWhere({ ...rest, latestMainBuild })),
-          findDistinct(and(listWhere(rest), isInFlightCandidate, isInFlight)),
-        ]
-      : [findDistinct(listWhere(rest))],
-  );
+  // A union rather than an OR, since an OR over the computed status can't use an index.
+  const rows = await (latestMainBuild
+    ? union(
+        findDistinct(listWhere({ ...rest, latestMainBuild })),
+        findDistinct(and(listWhere(rest), isInFlightCandidate, isInFlight)),
+      )
+    : findDistinct(listWhere(rest)));
 
-  const present = new Set(groups.flat().map((row) => row.status));
+  const present = new Set(rows.map((row) => row.status));
   return statusDisplayOrder.filter((status) => present.has(status));
 };
 

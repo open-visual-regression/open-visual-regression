@@ -4,8 +4,21 @@ import { v7 as uuidv7 } from "uuid";
 import { dbClient } from "../client";
 import { db } from "../db";
 import { type ListFilters, type SnapshotsCursor } from "../repository/snapshots";
-import { builds, flakySnapshots, organization as organizationTable, projects } from "../schema";
+import {
+  type BuildProcessingStatus,
+  builds,
+  flakySnapshots,
+  organization as organizationTable,
+  projects,
+} from "../schema";
 import { describe, expect, test, type Viewport } from "./fixtures";
+
+type MainBranchProjectsSeed = {
+  organizationId: string;
+  projectId: string;
+  userId: string;
+  captureConfiguration: Viewport;
+};
 
 const seedReviewQueue = async (
   build: { id: string },
@@ -1200,7 +1213,7 @@ describe("snapshots", () => {
         })),
       });
 
-    // Captured and diffed, so the snapshots read as settled rather than queued.
+    // Diffed, so they display as unchanged rather than queued.
     const seedSettledStories = async (buildId: string, viewport: Viewport, titles: string[]) => {
       const seeded = await seedStories(buildId, viewport, titles);
       await dbClient.diffs.createMany({
@@ -1222,7 +1235,7 @@ describe("snapshots", () => {
         createdBy,
       }))!;
 
-    const finishBuild = (buildId: string, processingStatus: "success" | "error" | "canceled") =>
+    const finishBuild = (buildId: string, processingStatus: BuildProcessingStatus) =>
       db.update(builds).set({ processingStatus }).where(eq(builds.id, buildId));
 
     const createOtherOrganizationProject = async (creatorId: string) => {
@@ -1242,42 +1255,34 @@ describe("snapshots", () => {
       return otherProject!;
     };
 
-    // Two projects with different main branches. The trunk project's latest main build is
-    // older than the main project's, each project has a newer build on a branch named after the
-    // other's main branch, the trunk project's newest main build is canceled, and another
-    // organization has a newer main build. Only mainCard and trunkCard are on a latest main build.
+    // Only mainCard and trunkCard are on a latest main build; every other build is a decoy.
     const seedMainBranchProjects = async ({
-      organization,
-      project,
-      user,
+      organizationId,
+      projectId,
+      userId,
       captureConfiguration,
-    }: {
-      organization: { id: string };
-      project: { id: string };
-      user: { id: string };
-      captureConfiguration: Viewport;
-    }) => {
+    }: MainBranchProjectsSeed) => {
       const [trunkProject] = await db
         .insert(projects)
         .values({
           name: "Trunk Project",
           gitMainBranch: "trunk",
-          organizationId: organization.id,
-          creatorId: user.id,
+          organizationId,
+          creatorId: userId,
         })
         .returning();
-      const otherProject = await createOtherOrganizationProject(user.id);
+      const otherProject = await createOtherOrganizationProject(userId);
       const firefox = { ...captureConfiguration, browser: "firefox" };
       const webkit = { ...captureConfiguration, browser: "webkit" };
 
-      const olderMain = await createBuild(project.id, user.id, "main");
-      const latestTrunk = await createBuild(trunkProject!.id, user.id, "trunk");
-      const latestMain = await createBuild(project.id, user.id, "main");
-      const trunkOnMainProject = await createBuild(project.id, user.id, "trunk");
-      const mainOnTrunkProject = await createBuild(trunkProject!.id, user.id, "main");
-      const canceledTrunk = await createBuild(trunkProject!.id, user.id, "trunk");
+      const olderMain = await createBuild(projectId, userId, "main");
+      const latestTrunk = await createBuild(trunkProject!.id, userId, "trunk");
+      const latestMain = await createBuild(projectId, userId, "main");
+      const trunkOnMainProject = await createBuild(projectId, userId, "trunk");
+      const mainOnTrunkProject = await createBuild(trunkProject!.id, userId, "main");
+      const canceledTrunk = await createBuild(trunkProject!.id, userId, "trunk");
       await finishBuild(canceledTrunk.id, "canceled");
-      const otherMain = await createBuild(otherProject.id, user.id, "main");
+      const otherMain = await createBuild(otherProject.id, userId, "main");
 
       await seedSettledStories(olderMain.id, webkit, ["Card"]);
       const [mainCard] = await seedSettledStories(latestMain.id, captureConfiguration, ["Card"]);
@@ -1565,9 +1570,9 @@ describe("snapshots", () => {
       captureConfiguration,
     }) => {
       const { mainCard, trunkCard } = await seedMainBranchProjects({
-        organization,
-        project,
-        user,
+        organizationId: organization.id,
+        projectId: project.id,
+        userId: user.id,
         captureConfiguration,
       });
       const filters = { organizationId: organization.id, latestMainBuild: true };
@@ -1585,9 +1590,9 @@ describe("snapshots", () => {
       captureConfiguration,
     }) => {
       const { trunkProject, trunkCard } = await seedMainBranchProjects({
-        organization,
-        project,
-        user,
+        organizationId: organization.id,
+        projectId: project.id,
+        userId: user.id,
         captureConfiguration,
       });
       const filters = {
@@ -1608,7 +1613,12 @@ describe("snapshots", () => {
       user,
       captureConfiguration,
     }) => {
-      await seedMainBranchProjects({ organization, project, user, captureConfiguration });
+      await seedMainBranchProjects({
+        organizationId: organization.id,
+        projectId: project.id,
+        userId: user.id,
+        captureConfiguration,
+      });
       const scope = { organizationId: organization.id, latestMainBuild: true };
 
       expect(await dbClient.snapshots.findBrowsers(scope)).toEqual(["chromium", "firefox"]);
