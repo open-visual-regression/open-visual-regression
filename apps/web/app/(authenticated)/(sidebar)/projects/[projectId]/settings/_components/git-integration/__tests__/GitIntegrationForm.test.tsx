@@ -7,7 +7,7 @@ import { Toaster } from "@ovr/ui/components/sonner";
 import { serverClient } from "@/lib/router";
 import { describe, expect, it, render, screen, waitFor, within } from "@/test-utils";
 
-import { GitIntegrationForm } from "../GitIntegrationForm";
+import { GitIntegrationForm, type GitIntegrationFormProps } from "../GitIntegrationForm";
 
 vi.mock("@/lib/router");
 vi.mock("next/navigation");
@@ -35,16 +35,19 @@ const APP_INTEGRATION: GitIntegrationSchema = {
   hasToken: false,
 };
 
+const TOKEN_ONLY = { github: ["token" as const] };
+const WITH_GITHUB_APP = { github: ["token" as const, "github_app" as const] };
+
 const renderComponent = (
   integration: GitIntegrationSchema | null = null,
-  { githubAppConfigured = false } = {},
+  availableAuthTypes: GitIntegrationFormProps["availableAuthTypes"] = TOKEN_ONLY,
 ) =>
   render(
     <>
       <GitIntegrationForm
         projectId={PROJECT_ID}
         integration={integration}
-        githubAppConfigured={githubAppConfigured}
+        availableAuthTypes={availableAuthTypes}
       />
       <Toaster />
     </>,
@@ -183,54 +186,62 @@ describe("GitIntegrationForm", () => {
     expect(await screen.findByText("invalid credentials")).toBeVisible();
   });
 
-  describe("authentication", () => {
-    it("should not offer a GitHub App when the deployment has none", () => {
-      renderComponent(null);
+  it("should not offer a GitHub App when the deployment has none", () => {
+    renderComponent(null);
 
-      expect(screen.queryByLabelText(/authentication/i)).not.toBeInTheDocument();
-      expect(screen.getByLabelText(/access token/i)).toBeVisible();
-    });
+    expect(screen.queryByRole("combobox", { name: /authentication/i })).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/access token/i)).toBeVisible();
+  });
 
-    it("should save a GitHub App integration without a token", async ({ user }) => {
-      mockUpsert.mockResolvedValue([null, APP_INTEGRATION]);
-      renderComponent(null, { githubAppConfigured: true });
+  it("should save a GitHub App integration without a token", async ({ user }) => {
+    mockUpsert.mockResolvedValue([null, APP_INTEGRATION]);
+    renderComponent(null, WITH_GITHUB_APP);
 
-      await user.click(screen.getByLabelText(/authentication/i));
-      await user.click(await screen.findByRole("option", { name: "github app" }));
-      expect(screen.queryByLabelText(/access token/i)).not.toBeInTheDocument();
+    await user.click(screen.getByRole("combobox", { name: /authentication/i }));
+    await user.click(await screen.findByRole("option", { name: "github app" }));
+    expect(screen.queryByLabelText(/access token/i)).not.toBeInTheDocument();
 
-      await user.type(screen.getByLabelText(/repository/i), "acme/web");
-      await user.click(screen.getByRole("button", { name: /^save$/i }));
+    await user.type(screen.getByLabelText(/repository/i), "acme/web");
+    await user.click(screen.getByRole("button", { name: /^save$/i }));
 
-      await waitFor(() =>
-        expect(mockUpsert).toHaveBeenCalledWith(
-          expect.objectContaining({
-            repoIdentifier: "acme/web",
-            authType: "github_app",
-            token: undefined,
-          }),
-        ),
-      );
-    });
+    await waitFor(() =>
+      expect(mockUpsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          repoIdentifier: "acme/web",
+          authType: "github_app",
+          token: undefined,
+        }),
+      ),
+    );
+  });
 
-    it("should hide the token field for a GitHub App integration", () => {
-      renderComponent(APP_INTEGRATION, { githubAppConfigured: true });
+  it("should hide the token field for a GitHub App integration", () => {
+    renderComponent(APP_INTEGRATION, WITH_GITHUB_APP);
 
-      expect(screen.getByLabelText(/authentication/i)).toHaveTextContent("github app");
-      expect(screen.queryByLabelText(/access token/i)).not.toBeInTheDocument();
-    });
+    expect(screen.getByRole("combobox", { name: /authentication/i })).toHaveTextContent(
+      "github app",
+    );
+    expect(screen.queryByLabelText(/access token/i)).not.toBeInTheDocument();
+  });
 
-    it("should require a token when switching a GitHub App integration to a token", async ({
-      user,
-    }) => {
-      renderComponent(APP_INTEGRATION, { githubAppConfigured: true });
+  it("should require a token when switching a GitHub App integration to a token", async ({
+    user,
+  }) => {
+    renderComponent(APP_INTEGRATION, WITH_GITHUB_APP);
 
-      await user.click(screen.getByLabelText(/authentication/i));
-      await user.click(await screen.findByRole("option", { name: "access token" }));
-      await user.click(screen.getByRole("button", { name: /^save$/i }));
+    await user.click(screen.getByRole("combobox", { name: /authentication/i }));
+    await user.click(await screen.findByRole("option", { name: "access token" }));
+    await user.click(screen.getByRole("button", { name: /^save$/i }));
 
-      expect(await screen.findByText("you must enter an access token")).toBeVisible();
-      expect(mockUpsert).not.toHaveBeenCalled();
-    });
+    expect(await screen.findByText("you must enter an access token")).toBeVisible();
+    expect(mockUpsert).not.toHaveBeenCalled();
+  });
+
+  it("should still let a GitHub App integration switch to a token after the App is removed", () => {
+    renderComponent(APP_INTEGRATION, TOKEN_ONLY);
+
+    expect(screen.getByRole("combobox", { name: /authentication/i })).toHaveTextContent(
+      "github app",
+    );
   });
 });

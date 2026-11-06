@@ -35,10 +35,10 @@ const PROVIDERS: { value: GitProviderSchema; label: string }[] = [
   { value: "github", label: "github" },
 ];
 
-const AUTH_TYPES: { value: GitAuthTypeSchema; label: string }[] = [
-  { value: "token", label: "access token" },
-  { value: "github_app", label: "github app" },
-];
+const AUTH_TYPE_LABELS: Record<GitAuthTypeSchema, string> = {
+  token: "access token",
+  github_app: "github app",
+};
 
 // A token is only required when there's no stored one to keep.
 const makeGitIntegrationSchema = (hasStoredToken: boolean) =>
@@ -56,16 +56,16 @@ const makeGitIntegrationSchema = (hasStoredToken: boolean) =>
 
 type GitIntegrationFormValues = z.infer<ReturnType<typeof makeGitIntegrationSchema>>;
 
-type GitIntegrationFormProps = {
+export type GitIntegrationFormProps = {
   projectId: string;
   integration: GitIntegrationSchema | null;
-  githubAppConfigured: boolean;
+  availableAuthTypes: Record<GitProviderSchema, GitAuthTypeSchema[]>;
 };
 
 export const GitIntegrationForm = ({
   projectId,
   integration,
-  githubAppConfigured,
+  availableAuthTypes,
 }: GitIntegrationFormProps) => {
   const router = useRouter();
 
@@ -87,10 +87,17 @@ export const GitIntegrationForm = ({
     },
   });
 
+  const provider = useWatch({ control, name: "provider" });
   const authType = useWatch({ control, name: "authType" });
-  // Keep the choice visible for an App integration even if the deployment's App was removed,
-  // so it can be switched back to a token.
-  const showAuthType = githubAppConfigured || integration?.authType === "github_app";
+  // Keep the integration's current auth type selectable even if the deployment stopped offering
+  // it, so it can be switched to one that works.
+  const authTypeOptions = [
+    ...new Set([
+      ...availableAuthTypes[provider],
+      ...(integration?.provider === provider ? [integration.authType] : []),
+    ]),
+  ].map((value) => ({ value, label: AUTH_TYPE_LABELS[value] }));
+  const showAuthType = authTypeOptions.length > 1;
 
   const save = useServerAction(serverClient.gitIntegrations.upsert, {
     interceptors: [
@@ -187,12 +194,16 @@ export const GitIntegrationForm = ({
                   control={control}
                   name="authType"
                   render={({ field }) => (
-                    <Select items={AUTH_TYPES} value={field.value} onValueChange={field.onChange}>
+                    <Select
+                      items={authTypeOptions}
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
                       <SelectTrigger id="authType" className="w-full">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {AUTH_TYPES.map((option) => (
+                        {authTypeOptions.map((option) => (
                           <SelectItem key={option.value} value={option.value}>
                             {option.label}
                           </SelectItem>

@@ -9,6 +9,7 @@ import { createLogger } from "@ovr/logger";
 import { createCounter } from "@ovr/metrics";
 
 import { resolveAdapter } from "./adapters";
+import { resolveToken, type IntegrationAuth, type ResolvedToken } from "./auth";
 import {
   mapBuildStatus,
   send,
@@ -16,7 +17,6 @@ import {
   type PublishOutcome,
   type PublishRequest,
 } from "./publisher";
-import { resolveToken, type ResolvedToken, type TokenSource } from "./resolveToken";
 
 const logger = createLogger("git-status");
 
@@ -60,7 +60,7 @@ export type PublishBuildStatusDeps = {
   findIntegration: (projectId: string) => Promise<IntegrationForPublish | undefined>;
   recordPublication: (values: PublicationRecord) => Promise<unknown>;
   resolveAdapter: (provider: GitProvider) => Adapter;
-  resolveToken: (source: TokenSource) => Promise<ResolvedToken>;
+  resolveToken: (integration: IntegrationAuth) => Promise<ResolvedToken>;
   send: (request: Parameters<typeof send>[0]) => Promise<PublishOutcome>;
   baseUrl: string;
 };

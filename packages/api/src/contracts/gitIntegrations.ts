@@ -26,7 +26,8 @@ export const getGitIntegrationInputSchema = z.object({
 
 export const getGitIntegrationOutputSchema = z.object({
   integration: gitIntegrationSchema.nullable(),
-  githubAppConfigured: z.boolean(),
+  // The auth types this deployment can offer, by provider.
+  availableAuthTypes: z.record(gitProviderSchema, z.array(gitAuthTypeSchema)),
 });
 
 export const upsertGitIntegrationInputSchema = z.object({
