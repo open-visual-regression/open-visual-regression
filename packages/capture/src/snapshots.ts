@@ -535,7 +535,6 @@ export const markSnapshotErrored = async (snapshotId: string, error: unknown): P
 type CaptureBuildGroupOptions = {
   shutdownSignal?: AbortSignal;
   externalRequestAllowlist?: string[] | null;
-  /** When the group's job was queued, in epoch milliseconds. */
   queuedAt?: number;
 };
 
