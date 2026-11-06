@@ -178,8 +178,10 @@ const waitForImagesAndFonts = ({
   // A later story that renders the same stuck image gets a new element, but the browser reuses the
   // stuck request, so the image is remembered by its URL rather than waited for again.
   const abandonedSrcs = (globalThis.__OVR_ABANDONED_IMAGE_SRCS__ ??= new Set());
+  // currentSrc stays empty until an image receives data, so a stuck image is known by its src.
+  const urlOf = (image: HTMLImageElement) => image.currentSrc || image.src;
   const isAbandoned = (image: HTMLImageElement) => {
-    if (abandonedSrcs.has(image.currentSrc)) {
+    if (abandonedSrcs.has(urlOf(image))) {
       return true;
     }
     const loading = loadingSince.get(image);
@@ -190,7 +192,7 @@ const waitForImagesAndFonts = ({
     if (now - loading.since < abandonAfterMs) {
       return false;
     }
-    abandonedSrcs.add(image.currentSrc);
+    abandonedSrcs.add(urlOf(image));
     return true;
   };
 
@@ -204,7 +206,7 @@ const waitForImagesAndFonts = ({
       setTimeout(
         () => {
           if (!image.complete) {
-            abandonedSrcs.add(image.currentSrc);
+            abandonedSrcs.add(urlOf(image));
           }
           resolve();
         },
