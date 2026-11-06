@@ -48,9 +48,8 @@ export const snapshotsCreated = createCounter<{ status: "queued" | "skipped" }>(
   { description: "Snapshots builds created, by whether they will be captured or skipped." },
 );
 
-export const capturedRequestsAbandoned = createCounter("ovr.capture.requests.abandoned", {
-  description:
-    "Requests and images a snapshot was captured without because they never finished loading, counted once per snapshot.",
+export const requestsAbandoned = createCounter("ovr.capture.requests.abandoned", {
+  description: "Requests capture stopped waiting for because they never finished.",
 });
 
 export const browserRelaunches = createCounter<{ browser: string; reason: "timeout" | "closed" }>(
