@@ -37,6 +37,7 @@ import {
   type PurgeJobPayload,
   type QueueJobCount,
   buildRedisConnection,
+  captureMaxDeadlineMinutesSchema,
   captureQueuePolicySchema,
   waitForConnection,
 } from "./index";
@@ -72,6 +73,7 @@ export const enqueueCaptureGroups = (
       groups,
       connection,
       captureQueuePolicySchema.parse(process.env.OVR_CAPTURE_QUEUE_POLICY),
+      captureMaxDeadlineMinutesSchema.parse(process.env.OVR_CAPTURE_QUEUE_MAX_DEADLINE_MINUTES),
     ),
   );
 
