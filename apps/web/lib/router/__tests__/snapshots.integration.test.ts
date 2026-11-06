@@ -754,7 +754,7 @@ describe("snapshots", () => {
       expect(statuses?.statuses).toContain("processing");
     });
 
-    test("keeps each project to its own latest main build across the list and its filter options", async ({
+    test("lists each project's own latest main build when projects use different main branches", async ({
       admin,
     }) => {
       const { projectId, build: latestMain } = await createProjectAndBuild(admin, "main");
@@ -778,7 +778,7 @@ describe("snapshots", () => {
       const trunkOnMainProject = await createBuild(projectId, "trunk");
       const otherBuild = await createOtherOrganizationBuild(admin);
       const firefox = { ...VIEWPORT, browser: "firefox", viewportName: "firefox desktop" };
-      const [mainCard, trunkCard, , , otherCard] = await dbClient.snapshots.createMany({
+      const [mainCard, trunkCard] = await dbClient.snapshots.createMany({
         values: [
           { buildId: latestMain.id, ...VIEWPORT },
           { buildId: latestTrunk.id, ...firefox },
@@ -793,14 +793,6 @@ describe("snapshots", () => {
           status: "success" as const,
         })),
       });
-      for (const snapshot of [mainCard!, trunkCard!, otherCard!]) {
-        await dbClient.diffs.create({
-          snapshotId: snapshot.id,
-          processingStatus: "success",
-          reviewStatus: "unchanged",
-        });
-      }
-
       const [listError, listed] = await serverClient.snapshots.list({ sort: "name" });
       const [, trunkOnly] = await serverClient.snapshots.list({
         projectIds: [trunkProjectId],
@@ -810,14 +802,12 @@ describe("snapshots", () => {
       const [, viewports] = await serverClient.snapshots.listViewports({});
 
       expect(listError).toBeNull();
-      expect(listed?.snapshots.map(({ id }) => id).sort()).toEqual(
-        [mainCard!.id, trunkCard!.id].sort(),
-      );
+      expect(listed?.snapshots.map(({ id }) => id)).toEqual([mainCard!.id, trunkCard!.id]);
       expect(listed?.total).toBe(2);
       expect(trunkOnly?.snapshots.map(({ id }) => id)).toEqual([trunkCard!.id]);
       expect(trunkOnly?.total).toBe(1);
       expect(browsers?.browsers).toEqual(["chromium", "firefox"]);
-      expect(viewports?.viewports.sort()).toEqual(["desktop", "firefox desktop"]);
+      expect(viewports?.viewports).toEqual(["desktop", "firefox desktop"]);
     });
 
     test("filters by project and by current baseline, together with the other filters", async ({

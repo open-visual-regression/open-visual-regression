@@ -1200,6 +1200,96 @@ describe("snapshots", () => {
         })),
       });
 
+    // Captured and diffed, so the snapshots read as settled rather than queued.
+    const seedSettledStories = async (buildId: string, viewport: Viewport, titles: string[]) => {
+      const seeded = await seedStories(buildId, viewport, titles);
+      await dbClient.diffs.createMany({
+        values: seeded.map(({ id }) => ({
+          snapshotId: id,
+          processingStatus: "success" as const,
+          reviewStatus: "unchanged" as const,
+        })),
+      });
+      return seeded;
+    };
+
+    const createBuild = async (projectId: string, createdBy: string, branch: string) =>
+      (await dbClient.builds.create({
+        projectId,
+        branch,
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/seed/artifact",
+        createdBy,
+      }))!;
+
+    const finishBuild = (buildId: string, processingStatus: "success" | "error" | "canceled") =>
+      db.update(builds).set({ processingStatus }).where(eq(builds.id, buildId));
+
+    const createOtherOrganizationProject = async (creatorId: string) => {
+      const [otherOrganization] = await db
+        .insert(organizationTable)
+        .values({ id: uuidv7(), name: "Other Org", slug: uuidv7(), createdAt: new Date() })
+        .returning();
+      const [otherProject] = await db
+        .insert(projects)
+        .values({
+          name: "Other Project",
+          gitMainBranch: "main",
+          organizationId: otherOrganization!.id,
+          creatorId,
+        })
+        .returning();
+      return otherProject!;
+    };
+
+    // Two projects with different main branches. The trunk project's latest main build is
+    // older than the main project's, each project has a newer build on a branch named after the
+    // other's main branch, the trunk project's newest main build is canceled, and another
+    // organization has a newer main build. Only mainCard and trunkCard are on a latest main build.
+    const seedMainBranchProjects = async ({
+      organization,
+      project,
+      user,
+      captureConfiguration,
+    }: {
+      organization: { id: string };
+      project: { id: string };
+      user: { id: string };
+      captureConfiguration: Viewport;
+    }) => {
+      const [trunkProject] = await db
+        .insert(projects)
+        .values({
+          name: "Trunk Project",
+          gitMainBranch: "trunk",
+          organizationId: organization.id,
+          creatorId: user.id,
+        })
+        .returning();
+      const otherProject = await createOtherOrganizationProject(user.id);
+      const firefox = { ...captureConfiguration, browser: "firefox" };
+      const webkit = { ...captureConfiguration, browser: "webkit" };
+
+      const olderMain = await createBuild(project.id, user.id, "main");
+      const latestTrunk = await createBuild(trunkProject!.id, user.id, "trunk");
+      const latestMain = await createBuild(project.id, user.id, "main");
+      const trunkOnMainProject = await createBuild(project.id, user.id, "trunk");
+      const mainOnTrunkProject = await createBuild(trunkProject!.id, user.id, "main");
+      const canceledTrunk = await createBuild(trunkProject!.id, user.id, "trunk");
+      await finishBuild(canceledTrunk.id, "canceled");
+      const otherMain = await createBuild(otherProject.id, user.id, "main");
+
+      await seedSettledStories(olderMain.id, webkit, ["Card"]);
+      const [mainCard] = await seedSettledStories(latestMain.id, captureConfiguration, ["Card"]);
+      const [trunkCard] = await seedSettledStories(latestTrunk.id, firefox, ["Card"]);
+      await seedSettledStories(trunkOnMainProject.id, webkit, ["Card"]);
+      await seedSettledStories(mainOnTrunkProject.id, webkit, ["Card"]);
+      await seedSettledStories(canceledTrunk.id, webkit, ["Card"]);
+      await seedSettledStories(otherMain.id, webkit, ["Card"]);
+
+      return { trunkProject: trunkProject!, mainCard: mainCard!, trunkCard: trunkCard! };
+    };
+
     test("should list every build's snapshots in the organization, alphabetically by target", async ({
       organization,
       project,
@@ -1468,180 +1558,139 @@ describe("snapshots", () => {
       expect(await dbClient.snapshots.findStatuses(scope)).toEqual(["processing"]);
     });
 
-    test("should scope each project to its own latest main build", async ({
+    test("should list each project's own latest main build when projects use different main branches", async ({
       organization,
       project,
       user,
       captureConfiguration,
     }) => {
-      const createProject = async (name: string, gitMainBranch: string, organizationId: string) =>
-        (
-          await db
-            .insert(projects)
-            .values({ name, gitMainBranch, organizationId, creatorId: user.id })
-            .returning()
-        )[0]!;
-      const createBuild = async (projectId: string, branch: string) =>
-        (await dbClient.builds.create({
-          projectId,
-          branch,
-          commitSha: "a".repeat(40),
-          artifactPath: "builds/seed/artifact",
-          createdBy: user.id,
-        }))!;
-      const firefox = { ...captureConfiguration, browser: "firefox" };
-      const webkit = { ...captureConfiguration, browser: "webkit" };
-      const trunkProject = await createProject("Trunk Project", "trunk", organization.id);
-      const unbuiltProject = await createProject("Unbuilt Project", "main", organization.id);
-      const [otherOrganization] = await db
-        .insert(organizationTable)
-        .values({ id: uuidv7(), name: "Other Org", slug: uuidv7(), createdAt: new Date() })
-        .returning();
-      const otherProject = await createProject("Other Project", "main", otherOrganization!.id);
+      const { mainCard, trunkCard } = await seedMainBranchProjects({
+        organization,
+        project,
+        user,
+        captureConfiguration,
+      });
+      const filters = { organizationId: organization.id, latestMainBuild: true };
 
-      // The trunk project's latest main build is older than the main project's, and each
-      // project has a newer build on a branch named after the other project's main branch.
-      const olderMain = await createBuild(project.id, "main");
-      const latestTrunk = await createBuild(trunkProject.id, "trunk");
-      const latestMain = await createBuild(project.id, "main");
-      const trunkOnMainProject = await createBuild(project.id, "trunk");
-      const mainOnTrunkProject = await createBuild(trunkProject.id, "main");
-      const canceledTrunk = await createBuild(trunkProject.id, "trunk");
-      await db
-        .update(builds)
-        .set({ processingStatus: "canceled" })
-        .where(eq(builds.id, canceledTrunk.id));
-      const unbuiltFeature = await createBuild(unbuiltProject.id, "feature/cards");
-      const otherMain = await createBuild(otherProject.id, "main");
+      const { snapshots } = await dbClient.snapshots.list({ ...filters, sort: "name", limit: 10 });
 
-      const seeded = await Promise.all([
-        seedStories(olderMain.id, webkit, ["Old"]),
-        seedStories(latestMain.id, captureConfiguration, ["Card"]),
-        seedStories(latestTrunk.id, firefox, ["Card"]),
-        seedStories(trunkOnMainProject.id, webkit, ["Branch"]),
-        seedStories(mainOnTrunkProject.id, webkit, ["Branch"]),
-        seedStories(canceledTrunk.id, webkit, ["Canceled"]),
-        seedStories(unbuiltFeature.id, webkit, ["Feature"]),
-        seedStories(otherMain.id, webkit, ["Card"]),
-      ]);
-      for (const snapshot of seeded.flat()) {
-        await dbClient.diffs.create({
-          snapshotId: snapshot.id,
-          processingStatus: "success",
-          reviewStatus: "unchanged",
-        });
-      }
-      const [latestMainCard, latestTrunkCard, otherCard] = [
-        seeded[1]![0],
-        seeded[2]![0],
-        seeded[7]![0],
-      ];
-      await dbClient.snapshots.updateStatus(otherCard!.id, "error");
-      const scope = { organizationId: organization.id, latestMainBuild: true };
-      const trunkScope = { ...scope, projectIds: [trunkProject.id] };
-
-      const listed = await dbClient.snapshots.list({ ...scope, sort: "name", limit: 10 });
-      const trunkListed = await dbClient.snapshots.list({ ...trunkScope, sort: "name", limit: 10 });
-
-      expect(listed.snapshots.map(({ id }) => id).sort()).toEqual(
-        [latestMainCard!.id, latestTrunkCard!.id].sort(),
-      );
-      expect(await dbClient.snapshots.count(scope)).toBe(2);
-      expect(trunkListed.snapshots.map(({ id }) => id)).toEqual([latestTrunkCard!.id]);
-      expect(await dbClient.snapshots.count(trunkScope)).toBe(1);
-      expect(await dbClient.snapshots.findBrowsers(scope)).toEqual(["chromium", "firefox"]);
-      expect(await dbClient.snapshots.findStatuses(scope)).toEqual(["unchanged"]);
-      expect(
-        await dbClient.snapshots.findBrowsers({
-          organizationId: otherOrganization!.id,
-          latestMainBuild: true,
-        }),
-      ).toEqual(["webkit"]);
+      expect(snapshots.map(({ id }) => id).sort()).toEqual([mainCard.id, trunkCard.id].sort());
+      expect(await dbClient.snapshots.count(filters)).toBe(2);
     });
 
-    test("should offer and list in-flight snapshots on builds that already finished", async ({
+    test("should only list the given projects' latest main builds", async ({
+      organization,
+      project,
+      user,
+      captureConfiguration,
+    }) => {
+      const { trunkProject, trunkCard } = await seedMainBranchProjects({
+        organization,
+        project,
+        user,
+        captureConfiguration,
+      });
+      const filters = {
+        organizationId: organization.id,
+        latestMainBuild: true,
+        projectIds: [trunkProject.id],
+      };
+
+      const { snapshots } = await dbClient.snapshots.list({ ...filters, sort: "name", limit: 10 });
+
+      expect(snapshots.map(({ id }) => id)).toEqual([trunkCard.id]);
+      expect(await dbClient.snapshots.count(filters)).toBe(1);
+    });
+
+    test("should find the filter options from each project's own latest main build", async ({
+      organization,
+      project,
+      user,
+      captureConfiguration,
+    }) => {
+      await seedMainBranchProjects({ organization, project, user, captureConfiguration });
+      const scope = { organizationId: organization.id, latestMainBuild: true };
+
+      expect(await dbClient.snapshots.findBrowsers(scope)).toEqual(["chromium", "firefox"]);
+      expect(await dbClient.snapshots.findStatuses(scope)).toEqual(["unchanged"]);
+    });
+
+    test("should offer and list queued snapshots still waiting on a diff in a finished build", async ({
       organization,
       project,
       build,
       user,
       captureConfiguration,
     }) => {
-      const createFinishedBuild = async (
-        projectId: string,
-        processingStatus: "success" | "error",
-      ) => {
-        const created = (await dbClient.builds.create({
-          projectId,
-          branch: "feature/cards",
-          commitSha: "b".repeat(40),
-          artifactPath: "builds/seed/artifact",
-          createdBy: user.id,
-        }))!;
-        await db.update(builds).set({ processingStatus }).where(eq(builds.id, created.id));
-        return created;
-      };
-      const [otherOrganization] = await db
-        .insert(organizationTable)
-        .values({ id: uuidv7(), name: "Other Org", slug: uuidv7(), createdAt: new Date() })
-        .returning();
-      const [otherProject] = await db
-        .insert(projects)
-        .values({
-          name: "Other Project",
-          gitMainBranch: "main",
-          organizationId: otherOrganization!.id,
-          creatorId: user.id,
-        })
-        .returning();
-      await db.update(builds).set({ processingStatus: "success" }).where(eq(builds.id, build.id));
-      const [mainCard] = await seedStories(build.id, captureConfiguration, ["Card"]);
-      await dbClient.diffs.create({
-        snapshotId: mainCard!.id,
-        processingStatus: "success",
-        reviewStatus: "unchanged",
-      });
-      const diffing = await createFinishedBuild(project.id, "success");
-      const [diffingCard] = await seedStories(diffing.id, captureConfiguration, ["Card"]);
-      await dbClient.diffs.create({ snapshotId: diffingCard!.id });
-      const otherFailed = await createFinishedBuild(otherProject!.id, "error");
-      const [otherProcessing] = await seedStories(otherFailed.id, captureConfiguration, ["Card"]);
-      await dbClient.snapshots.updateStatus(otherProcessing!.id, "processing");
+      await finishBuild(build.id, "success");
+      await seedSettledStories(build.id, captureConfiguration, ["Card"]);
+      const featureBuild = await createBuild(project.id, user.id, "feature/cards");
+      await finishBuild(featureBuild.id, "success");
+      const [waiting] = await seedStories(featureBuild.id, captureConfiguration, ["Card"]);
+      await dbClient.diffs.create({ snapshotId: waiting!.id });
       const scope = { organizationId: organization.id, latestMainBuild: true };
 
-      expect(await dbClient.snapshots.findStatuses(scope)).toEqual(["unchanged", "queued"]);
-      const queued = await dbClient.snapshots.list({
+      const { snapshots } = await dbClient.snapshots.list({
         ...scope,
-        statuses: ["queued", "processing"],
+        statuses: ["queued"],
         sort: "name",
         limit: 10,
       });
-      expect(queued.snapshots.map(({ id }) => id)).toEqual([diffingCard!.id]);
-      expect(await dbClient.snapshots.count({ ...scope, statuses: ["queued", "processing"] })).toBe(
-        1,
-      );
 
-      const failed = await createFinishedBuild(project.id, "error");
-      const [stuck] = await seedStories(failed.id, captureConfiguration, ["Badge"]);
+      expect(await dbClient.snapshots.findStatuses(scope)).toEqual(["unchanged", "queued"]);
+      expect(snapshots.map(({ id }) => id)).toEqual([waiting!.id]);
+      expect(await dbClient.snapshots.count({ ...scope, statuses: ["queued"] })).toBe(1);
+    });
+
+    test("should offer and list snapshots still being captured in a failed build", async ({
+      organization,
+      project,
+      build,
+      user,
+      captureConfiguration,
+    }) => {
+      await finishBuild(build.id, "success");
+      await seedSettledStories(build.id, captureConfiguration, ["Card"]);
+      const failedBuild = await createBuild(project.id, user.id, "feature/cards");
+      await finishBuild(failedBuild.id, "error");
+      const [stuck] = await seedStories(failedBuild.id, captureConfiguration, ["Badge"]);
       await dbClient.snapshots.updateStatus(stuck!.id, "processing");
+      const scope = { organizationId: organization.id, latestMainBuild: true };
 
-      expect(await dbClient.snapshots.findStatuses(scope)).toEqual([
-        "unchanged",
-        "queued",
-        "processing",
-      ]);
-      const processing = await dbClient.snapshots.list({
+      const { snapshots } = await dbClient.snapshots.list({
         ...scope,
         statuses: ["processing"],
         sort: "name",
         limit: 10,
       });
-      expect(processing.snapshots.map(({ id }) => id)).toEqual([stuck!.id]);
-      expect(
-        await dbClient.snapshots.findStatuses({
-          organizationId: otherOrganization!.id,
-          latestMainBuild: true,
-        }),
-      ).toEqual(["processing"]);
+
+      expect(await dbClient.snapshots.findStatuses(scope)).toEqual(["unchanged", "processing"]);
+      expect(snapshots.map(({ id }) => id)).toEqual([stuck!.id]);
+    });
+
+    test("should not offer or list another organization's in-flight snapshots", async ({
+      organization,
+      build,
+      user,
+      captureConfiguration,
+    }) => {
+      await finishBuild(build.id, "success");
+      await seedSettledStories(build.id, captureConfiguration, ["Card"]);
+      const otherProject = await createOtherOrganizationProject(user.id);
+      const otherBuild = await createBuild(otherProject.id, user.id, "feature/cards");
+      const [otherCard] = await seedStories(otherBuild.id, captureConfiguration, ["Card"]);
+      await dbClient.snapshots.updateStatus(otherCard!.id, "processing");
+      const scope = { organizationId: organization.id, latestMainBuild: true };
+
+      const { snapshots } = await dbClient.snapshots.list({
+        ...scope,
+        statuses: ["processing"],
+        sort: "name",
+        limit: 10,
+      });
+
+      expect(await dbClient.snapshots.findStatuses(scope)).toEqual(["unchanged"]);
+      expect(snapshots).toEqual([]);
     });
 
     test("should page through every snapshot exactly once when sorted by name", async ({
