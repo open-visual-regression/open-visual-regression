@@ -53,6 +53,11 @@ export const snapshotsCreated = createCounter<{ status: "queued" | "skipped" }>(
   },
 );
 
+export const capturedRequestsAbandoned = createCounter("ovr.capture.requests.abandoned", {
+  description:
+    "Requests and images a snapshot was captured without because they never finished loading, counted once per snapshot.",
+});
+
 export const browserRelaunches = createCounter<{ browser: string; reason: "timeout" | "closed" }>(
   "ovr.capture.browser.relaunches",
   { description: "Capture browsers relaunched mid-group after a timeout or an unexpected close." },

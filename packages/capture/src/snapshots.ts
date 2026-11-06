@@ -22,6 +22,7 @@ import {
 } from "@ovr/capture-browser/page";
 import {
   settlePage,
+  takeAbandonedUrls,
   trackNetworkActivity,
   type NetworkActivity,
 } from "@ovr/capture-browser/settle";
@@ -46,6 +47,7 @@ import { cacheImage } from "./lib/imageCache";
 import { compareImages } from "./lib/images";
 import {
   browserRelaunches,
+  capturedRequestsAbandoned,
   capturePageBootDuration,
   diffsCompared,
   snapshotCaptureDuration,
@@ -377,6 +379,15 @@ const captureSnapshotOnPage = async (
       });
     }
 
+    const abandoned = await takeAbandonedUrls(page, networkActivity);
+    if (abandoned.length > 0) {
+      capturedRequestsAbandoned.add(abandoned.length, {});
+      pageLogState.logs.push({
+        level: "warning",
+        message: `Stopped waiting for requests that never finished loading, so the screenshot may be missing them: ${abandoned.join(", ")}. Fix them, or block their host with blockExternalRequests.`,
+      });
+    }
+
     return {
       snapshotId,
       browser: snapshot.browser,
@@ -681,6 +692,7 @@ export const captureBuildGroup = async (
               capturePage.pageLogState.logs = [];
               capturePage.pageLogState.hasPageError = false;
               capturePage.blockedHosts.take();
+              capturePage.networkActivity.takeAbandoned();
             }
           }
 

@@ -14,6 +14,8 @@ export type NetworkActivity = {
   abandonAfterMs: number;
   whenQuiet: (quietWindowMs: number, timeoutMs: number) => Promise<boolean>;
   requestCount: () => number;
+  // URLs of requests given up on since the last call.
+  takeAbandoned: () => string[];
   dispose: () => void;
 };
 
@@ -34,6 +36,7 @@ export const trackNetworkActivity = (
   const pending = new Map<Request, ReturnType<typeof setTimeout>>();
   const listeners = new Set<() => void>();
   let requestCount = 0;
+  let abandoned = new Set<string>();
 
   const notify = () => {
     for (const listener of listeners) {
@@ -57,7 +60,10 @@ export const trackNetworkActivity = (
     requestCount += 1;
     pending.set(
       request,
-      setTimeout(() => remove(request), abandonAfterMs),
+      setTimeout(() => {
+        abandoned.add(request.url());
+        remove(request);
+      }, abandonAfterMs),
     );
     notify();
   };
@@ -92,6 +98,11 @@ export const trackNetworkActivity = (
         onChange();
       }),
     requestCount: () => requestCount,
+    takeAbandoned: () => {
+      const urls = [...abandoned].sort();
+      abandoned = new Set();
+      return urls;
+    },
     dispose: () => {
       page.off("request", add);
       page.off("requestfinished", remove);
@@ -340,4 +351,24 @@ export const settlePage = async (
   } finally {
     await page.evaluate(unwatchDocument).catch(() => undefined);
   }
+};
+
+// Known by src as well, since currentSrc stays empty until an image receives data.
+const findAbandonedImages = (): string[] =>
+  Array.from(document.images)
+    .map((image) => ({ complete: image.complete, url: image.currentSrc || image.src }))
+    .filter(
+      ({ complete, url }) =>
+        !complete && globalThis.__OVR_ABANDONED_IMAGE_SRCS__?.has(url) === true,
+    )
+    .map(({ url }) => url);
+
+// Requests given up on since the last call, and images on the page that were given up on: the
+// screenshot may be missing them.
+export const takeAbandonedUrls = async (
+  page: Page,
+  activity: NetworkActivity,
+): Promise<string[]> => {
+  const images = await page.evaluate(findAbandonedImages);
+  return [...new Set([...activity.takeAbandoned(), ...images])].sort();
 };

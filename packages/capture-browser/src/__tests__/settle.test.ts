@@ -6,7 +6,7 @@ import { PNG } from "pngjs";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import { newPage } from "../browser";
-import { settlePage, trackNetworkActivity } from "../settle";
+import { settlePage, takeAbandonedUrls, trackNetworkActivity } from "../settle";
 
 const SLOW_RESPONSE_MS = 400;
 const VERY_SLOW_RESPONSE_MS = 2_500;
@@ -219,6 +219,26 @@ describe("settlePage", () => {
     });
 
     await expect(settlePage(page, activity, 10_000)).resolves.toBe(true);
+  }, 30_000);
+
+  test("reports a stuck image it gave up on", async () => {
+    const page = await newPage(await browser.newContext());
+    const activity = trackNetworkActivity(page, GIVE_UP_TIMEOUT_MS);
+
+    await page.goto(`${origin}/?image=/hang.png`, { waitUntil: "domcontentloaded" });
+    await settlePage(page, activity, 10_000);
+
+    expect(await takeAbandonedUrls(page, activity)).toEqual([`${origin}/hang.png`]);
+  }, 30_000);
+
+  test("reports nothing once every image has loaded", async () => {
+    const page = await newPage(await browser.newContext());
+    const activity = trackNetworkActivity(page, GIVE_UP_TIMEOUT_MS);
+
+    await page.goto(`${origin}/?image=/slow.png`, { waitUntil: "domcontentloaded" });
+    await settlePage(page, activity, 10_000);
+
+    expect(await takeAbandonedUrls(page, activity)).toEqual([]);
   }, 30_000);
 
   test("waits for a request that starts after a few renders", async () => {
