@@ -121,14 +121,17 @@ export const serverClient: typeof RealServerClient = {
     acceptInvitation: os.invitations.acceptInvitation.handler(() => undefined).actionable(),
   },
   gitIntegrations: {
-    get: os.gitIntegrations.get.handler(() => ({ integration: null })).actionable(),
+    get: os.gitIntegrations.get
+      .handler(() => ({ integration: null, githubAppConfigured: false }))
+      .actionable(),
     upsert: os.gitIntegrations.upsert
       .handler(() => ({
         provider: "github" as const,
         repoIdentifier: "",
         checkContext: "Open Visual Regression / Storybook",
         statusChecksEnabled: true,
-        hasToken: true as const,
+        authType: "token" as const,
+        hasToken: true,
       }))
       .actionable(),
     setStatusChecks: os.gitIntegrations.setStatusChecks
@@ -137,7 +140,8 @@ export const serverClient: typeof RealServerClient = {
         repoIdentifier: "",
         checkContext: "Open Visual Regression / Storybook",
         statusChecksEnabled: input.enabled,
-        hasToken: true as const,
+        authType: "token" as const,
+        hasToken: true,
       }))
       .actionable(),
     remove: os.gitIntegrations.remove.handler(() => undefined).actionable(),

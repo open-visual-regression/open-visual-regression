@@ -1,7 +1,7 @@
 import type { GitAuthType, GitProvider } from "@ovr/db/schema";
 
 import { tryDecryptToken } from "./crypto";
-import { GitHubAppConfigError } from "./githubApp/config";
+import { GITHUB_APP_NOT_CONFIGURED, GitHubAppConfigError } from "./githubApp/config";
 import { GitHubAppError, type InstallationTokenProvider } from "./githubApp/installationTokens";
 import { getGitHubAppTokenProvider } from "./githubApp/provider";
 
@@ -37,9 +37,6 @@ const defaultDeps: ResolveTokenDeps = {
   githubAppTokens: getGitHubAppTokenProvider,
 };
 
-const APP_NOT_CONFIGURED =
-  "GitHub App authentication is not configured on this deployment; set OVR_GITHUB_APP_ID and OVR_GITHUB_APP_PRIVATE_KEY";
-
 const resolveAppToken = async (
   source: TokenSource,
   deps: ResolveTokenDeps,
@@ -55,7 +52,7 @@ const resolveAppToken = async (
   }
 
   if (!tokens) {
-    return { ok: false, error: APP_NOT_CONFIGURED, retryable: false };
+    return { ok: false, error: GITHUB_APP_NOT_CONFIGURED, retryable: false };
   }
 
   try {

@@ -5,12 +5,17 @@ export const gitProviderSchema = z.enum(["github"]);
 
 export type GitProviderSchema = z.infer<typeof gitProviderSchema>;
 
+export const gitAuthTypeSchema = z.enum(["token", "github_app"]);
+
+export type GitAuthTypeSchema = z.infer<typeof gitAuthTypeSchema>;
+
 export const gitIntegrationSchema = z.object({
   provider: gitProviderSchema,
   repoIdentifier: z.string(),
   checkContext: z.string(),
   statusChecksEnabled: z.boolean(),
-  hasToken: z.literal(true),
+  authType: gitAuthTypeSchema,
+  hasToken: z.boolean(),
 });
 
 export type GitIntegrationSchema = z.infer<typeof gitIntegrationSchema>;
@@ -21,12 +26,14 @@ export const getGitIntegrationInputSchema = z.object({
 
 export const getGitIntegrationOutputSchema = z.object({
   integration: gitIntegrationSchema.nullable(),
+  githubAppConfigured: z.boolean(),
 });
 
 export const upsertGitIntegrationInputSchema = z.object({
   projectId: z.uuidv7(),
   provider: gitProviderSchema,
   repoIdentifier: z.string().min(1).max(512),
+  authType: gitAuthTypeSchema.default("token"),
   token: z.string().min(1).optional(),
 });
 

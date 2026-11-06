@@ -4,10 +4,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { onError, onSuccess } from "@orpc/client";
 import { useServerAction } from "@orpc/react/hooks";
 import { useRouter } from "next/navigation";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 
-import type { GitIntegrationSchema, GitProviderSchema } from "@ovr/api/contracts/gitIntegrations";
+import type {
+  GitAuthTypeSchema,
+  GitIntegrationSchema,
+  GitProviderSchema,
+} from "@ovr/api/contracts/gitIntegrations";
 import { Button } from "@ovr/ui/components/button";
 import { Card, CardContent, CardFooter } from "@ovr/ui/components/card";
 import { Field, FieldError, FieldGroup, FieldLabel, FieldSkeleton } from "@ovr/ui/components/field";
@@ -31,23 +35,38 @@ const PROVIDERS: { value: GitProviderSchema; label: string }[] = [
   { value: "github", label: "github" },
 ];
 
-const makeGitIntegrationSchema = (isEditing: boolean) =>
-  z.object({
-    provider: z.enum(["github"]),
-    repoIdentifier: z.string().min(1, "you must enter a repository").max(512),
-    token: isEditing
-      ? z.string().max(512)
-      : z.string().min(1, "you must enter an access token").max(512),
-  });
+const AUTH_TYPES: { value: GitAuthTypeSchema; label: string }[] = [
+  { value: "token", label: "access token" },
+  { value: "github_app", label: "github app" },
+];
+
+// A token is only required when there's no stored one to keep.
+const makeGitIntegrationSchema = (hasStoredToken: boolean) =>
+  z
+    .object({
+      provider: z.enum(["github"]),
+      authType: z.enum(["token", "github_app"]),
+      repoIdentifier: z.string().min(1, "you must enter a repository").max(512),
+      token: z.string().max(512),
+    })
+    .refine(
+      (values) => values.authType !== "token" || hasStoredToken || values.token.trim() !== "",
+      { path: ["token"], message: "you must enter an access token" },
+    );
 
 type GitIntegrationFormValues = z.infer<ReturnType<typeof makeGitIntegrationSchema>>;
 
 type GitIntegrationFormProps = {
   projectId: string;
   integration: GitIntegrationSchema | null;
+  githubAppConfigured: boolean;
 };
 
-export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFormProps) => {
+export const GitIntegrationForm = ({
+  projectId,
+  integration,
+  githubAppConfigured,
+}: GitIntegrationFormProps) => {
   const router = useRouter();
 
   const {
@@ -57,13 +76,21 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
     setError,
     formState: { errors },
   } = useForm<GitIntegrationFormValues>({
-    resolver: zodResolver(makeGitIntegrationSchema(!!integration)),
+    resolver: zodResolver(
+      makeGitIntegrationSchema(integration?.authType === "token" && integration.hasToken),
+    ),
     defaultValues: {
       provider: integration?.provider ?? "github",
+      authType: integration?.authType ?? "token",
       repoIdentifier: integration?.repoIdentifier ?? "",
       token: "",
     },
   });
+
+  const authType = useWatch({ control, name: "authType" });
+  // Keep the choice visible for an App integration even if the deployment's App was removed,
+  // so it can be switched back to a token.
+  const showAuthType = githubAppConfigured || integration?.authType === "github_app";
 
   const save = useServerAction(serverClient.gitIntegrations.upsert, {
     interceptors: [
@@ -104,7 +131,9 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
       projectId,
       provider: values.provider,
       repoIdentifier: values.repoIdentifier,
-      token: values.token.trim() === "" ? undefined : values.token,
+      authType: values.authType,
+      token:
+        values.authType === "github_app" || values.token.trim() === "" ? undefined : values.token,
     });
   };
 
@@ -150,20 +179,50 @@ export const GitIntegrationForm = ({ projectId, integration }: GitIntegrationFor
               <FieldError errors={[errors.repoIdentifier]} />
             </Field>
           </FieldGroup>
-          <FieldGroup>
-            <Field data-invalid={!!errors.token}>
-              <FieldLabel htmlFor="token">access token</FieldLabel>
-              <Input
-                id="token"
-                type="password"
-                autoComplete="off"
-                placeholder={integration ? "re-enter to update the stored token" : "paste a token"}
-                aria-invalid={!!errors.token}
-                {...register("token")}
-              />
-              <FieldError errors={[errors.token]} />
-            </Field>
-          </FieldGroup>
+          {showAuthType ? (
+            <FieldGroup>
+              <Field data-invalid={!!errors.authType}>
+                <FieldLabel htmlFor="authType">authentication</FieldLabel>
+                <Controller
+                  control={control}
+                  name="authType"
+                  render={({ field }) => (
+                    <Select items={AUTH_TYPES} value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger id="authType" className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {AUTH_TYPES.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                <FieldError errors={[errors.authType]} />
+              </Field>
+            </FieldGroup>
+          ) : null}
+          {authType === "token" ? (
+            <FieldGroup>
+              <Field data-invalid={!!errors.token}>
+                <FieldLabel htmlFor="token">access token</FieldLabel>
+                <Input
+                  id="token"
+                  type="password"
+                  autoComplete="off"
+                  placeholder={
+                    integration?.hasToken ? "re-enter to update the stored token" : "paste a token"
+                  }
+                  aria-invalid={!!errors.token}
+                  {...register("token")}
+                />
+                <FieldError errors={[errors.token]} />
+              </Field>
+            </FieldGroup>
+          ) : null}
           <FieldError errors={[errors.root]} />
         </CardContent>
         <CardFooter className="flex flex-col items-stretch gap-2 @md:flex-row @md:items-center @md:justify-between">

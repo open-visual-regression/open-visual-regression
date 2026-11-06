@@ -8,6 +8,8 @@ export type GitHubAppConfig = {
   privateKey: KeyObject;
 };
 
+export const GITHUB_APP_NOT_CONFIGURED = `GitHub App authentication is not configured on this deployment; set ${APP_ID_VAR} and ${PRIVATE_KEY_VAR}`;
+
 export class GitHubAppConfigError extends Error {
   constructor(detail: string) {
     super(`GitHub App is misconfigured: ${detail}`);
@@ -63,4 +65,13 @@ export const readGitHubAppConfig = (
 /** Fails startup on a half-configured App instead of failing every publish later. */
 export const assertGitHubAppConfig = (): void => {
   readGitHubAppConfig();
+};
+
+/** Whether the deployment has a usable GitHub App, for offering App auth in settings. */
+export const isGitHubAppConfigured = (): boolean => {
+  try {
+    return readGitHubAppConfig() !== null;
+  } catch {
+    return false;
+  }
 };

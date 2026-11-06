@@ -6,12 +6,21 @@ import { GitIntegrationForm, GitIntegrationFormSkeleton } from "./GitIntegration
 type GitIntegrationSectionProps = {
   projectId: string;
   integration: GitIntegrationSchema | null;
+  githubAppConfigured: boolean;
 };
 
-export const GitIntegrationSection = ({ projectId, integration }: GitIntegrationSectionProps) => (
+export const GitIntegrationSection = ({
+  projectId,
+  integration,
+  githubAppConfigured,
+}: GitIntegrationSectionProps) => (
   <div className="flex flex-col gap-4">
     <Typography variant="h2">git integration</Typography>
-    <GitIntegrationForm projectId={projectId} integration={integration} />
+    <GitIntegrationForm
+      projectId={projectId}
+      integration={integration}
+      githubAppConfigured={githubAppConfigured}
+    />
   </div>
 );
 

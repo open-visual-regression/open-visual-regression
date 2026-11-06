@@ -1,3 +1,5 @@
+import { generateKeyPairSync } from "node:crypto";
+
 import { vi } from "vitest";
 
 import type { AddProjectInputSchema } from "@ovr/api/contracts/projects";
@@ -8,6 +10,17 @@ import { test, describe, expect } from "@/lib/testing/fixtures";
 vi.mock("next/headers");
 
 const FAKE_PROJECT_ID = "01900000-0000-7000-8000-000000000000";
+
+const { privateKey: APP_PRIVATE_KEY } = generateKeyPairSync("rsa", {
+  modulusLength: 2048,
+  privateKeyEncoding: { type: "pkcs1", format: "pem" },
+  publicKeyEncoding: { type: "spki", format: "pem" },
+});
+
+const configureGitHubApp = () => {
+  vi.stubEnv("OVR_GITHUB_APP_ID", "1234");
+  vi.stubEnv("OVR_GITHUB_APP_PRIVATE_KEY", APP_PRIVATE_KEY);
+};
 
 const TEST_PROJECT: AddProjectInputSchema = {
   projectName: "Test Project",
@@ -41,6 +54,18 @@ describe("gitIntegrations", () => {
       const [error, result] = await serverClient.gitIntegrations.get({ projectId });
       expect(error).toBeNull();
       expect(result?.integration).toBeNull();
+    });
+
+    test("should report whether the deployment has a GitHub App", async ({ admin: _ }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+
+      const [, withoutApp] = await serverClient.gitIntegrations.get({ projectId });
+      expect(withoutApp?.githubAppConfigured).toBe(false);
+
+      configureGitHubApp();
+      const [, withApp] = await serverClient.gitIntegrations.get({ projectId });
+      expect(withApp?.githubAppConfigured).toBe(true);
     });
   });
 
@@ -179,6 +204,88 @@ describe("gitIntegrations", () => {
     });
   });
 
+  describe("upsert with GitHub App auth", () => {
+    test("should save without a token when the deployment has an App", async ({ admin: _ }) => {
+      configureGitHubApp();
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+
+      const [error, result] = await serverClient.gitIntegrations.upsert({
+        projectId,
+        provider: "github",
+        repoIdentifier: "acme/web",
+        authType: "github_app",
+      });
+      expect(error).toBeNull();
+      expect(result).toMatchObject({ authType: "github_app", hasToken: false });
+
+      const [, getResult] = await serverClient.gitIntegrations.get({ projectId });
+      expect(getResult?.integration).toMatchObject({ authType: "github_app", hasToken: false });
+    });
+
+    test("should reject App auth when the deployment has no App", async ({ admin: _ }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+
+      const [error] = await serverClient.gitIntegrations.upsert({
+        projectId: addResult!.projectId,
+        provider: "github",
+        repoIdentifier: "acme/web",
+        authType: "github_app",
+      });
+      expect(error?.code).toBe("BAD_REQUEST");
+    });
+
+    test("should drop the stored token when switching to App auth", async ({ admin: _ }) => {
+      configureGitHubApp();
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+
+      await serverClient.gitIntegrations.upsert({
+        projectId,
+        provider: "github",
+        repoIdentifier: "acme/web",
+        token: "a-secret-token",
+      });
+      const [, result] = await serverClient.gitIntegrations.upsert({
+        projectId,
+        provider: "github",
+        repoIdentifier: "acme/web",
+        authType: "github_app",
+      });
+      expect(result).toMatchObject({ authType: "github_app", hasToken: false });
+    });
+
+    test("should require a token when switching back to token auth", async ({ admin: _ }) => {
+      configureGitHubApp();
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+
+      await serverClient.gitIntegrations.upsert({
+        projectId,
+        provider: "github",
+        repoIdentifier: "acme/web",
+        authType: "github_app",
+      });
+
+      const [error] = await serverClient.gitIntegrations.upsert({
+        projectId,
+        provider: "github",
+        repoIdentifier: "acme/web",
+        authType: "token",
+      });
+      expect(error?.code).toBe("BAD_REQUEST");
+
+      const [, result] = await serverClient.gitIntegrations.upsert({
+        projectId,
+        provider: "github",
+        repoIdentifier: "acme/web",
+        authType: "token",
+        token: "a-secret-token",
+      });
+      expect(result).toMatchObject({ authType: "token", hasToken: true });
+    });
+  });
+
   describe("setStatusChecks", () => {
     test("should return UNAUTHORIZED when no session cookie is provided", async () => {
       const [error] = await serverClient.gitIntegrations.setStatusChecks({
@@ -289,6 +396,24 @@ describe("gitIntegrations", () => {
 
       const [error] = await serverClient.gitIntegrations.testConnection({ projectId });
       expect(error?.code).toBe("BAD_REQUEST");
+    });
+
+    test("should explain when an App integration's deployment has no App", async ({ admin: _ }) => {
+      configureGitHubApp();
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+      await serverClient.gitIntegrations.upsert({
+        projectId,
+        provider: "github",
+        repoIdentifier: "acme/web",
+        authType: "github_app",
+      });
+      vi.unstubAllEnvs();
+
+      const [error, result] = await serverClient.gitIntegrations.testConnection({ projectId });
+      expect(error).toBeNull();
+      expect(result).toMatchObject({ ok: false, httpStatus: null });
+      expect(result?.error).toMatch(/OVR_GITHUB_APP_ID/);
     });
   });
 });

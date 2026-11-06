@@ -1,6 +1,7 @@
 import { useRouter } from "next/navigation";
 import { vi } from "vitest";
 
+import type { GitIntegrationSchema } from "@ovr/api/contracts/gitIntegrations";
 import { Toaster } from "@ovr/ui/components/sonner";
 
 import { serverClient } from "@/lib/router";
@@ -19,18 +20,32 @@ const mockRefresh = vi.mocked(useRouter)().refresh;
 
 const PROJECT_ID = "project-id";
 
-const INTEGRATION = {
-  provider: "github" as const,
+const INTEGRATION: GitIntegrationSchema = {
+  provider: "github",
   repoIdentifier: "acme/web",
   checkContext: "Open Visual Regression / Web",
   statusChecksEnabled: true,
-  hasToken: true as const,
+  authType: "token",
+  hasToken: true,
 };
 
-const renderComponent = (integration: typeof INTEGRATION | null = null) =>
+const APP_INTEGRATION: GitIntegrationSchema = {
+  ...INTEGRATION,
+  authType: "github_app",
+  hasToken: false,
+};
+
+const renderComponent = (
+  integration: GitIntegrationSchema | null = null,
+  { githubAppConfigured = false } = {},
+) =>
   render(
     <>
-      <GitIntegrationForm projectId={PROJECT_ID} integration={integration} />
+      <GitIntegrationForm
+        projectId={PROJECT_ID}
+        integration={integration}
+        githubAppConfigured={githubAppConfigured}
+      />
       <Toaster />
     </>,
   );
@@ -166,5 +181,56 @@ describe("GitIntegrationForm", () => {
 
     await waitFor(() => expect(mockTestConnection).toHaveBeenCalledWith({ projectId: PROJECT_ID }));
     expect(await screen.findByText("invalid credentials")).toBeVisible();
+  });
+
+  describe("authentication", () => {
+    it("should not offer a GitHub App when the deployment has none", () => {
+      renderComponent(null);
+
+      expect(screen.queryByLabelText(/authentication/i)).not.toBeInTheDocument();
+      expect(screen.getByLabelText(/access token/i)).toBeVisible();
+    });
+
+    it("should save a GitHub App integration without a token", async ({ user }) => {
+      mockUpsert.mockResolvedValue([null, APP_INTEGRATION]);
+      renderComponent(null, { githubAppConfigured: true });
+
+      await user.click(screen.getByLabelText(/authentication/i));
+      await user.click(await screen.findByRole("option", { name: "github app" }));
+      expect(screen.queryByLabelText(/access token/i)).not.toBeInTheDocument();
+
+      await user.type(screen.getByLabelText(/repository/i), "acme/web");
+      await user.click(screen.getByRole("button", { name: /^save$/i }));
+
+      await waitFor(() =>
+        expect(mockUpsert).toHaveBeenCalledWith(
+          expect.objectContaining({
+            repoIdentifier: "acme/web",
+            authType: "github_app",
+            token: undefined,
+          }),
+        ),
+      );
+    });
+
+    it("should hide the token field for a GitHub App integration", () => {
+      renderComponent(APP_INTEGRATION, { githubAppConfigured: true });
+
+      expect(screen.getByLabelText(/authentication/i)).toHaveTextContent("github app");
+      expect(screen.queryByLabelText(/access token/i)).not.toBeInTheDocument();
+    });
+
+    it("should require a token when switching a GitHub App integration to a token", async ({
+      user,
+    }) => {
+      renderComponent(APP_INTEGRATION, { githubAppConfigured: true });
+
+      await user.click(screen.getByLabelText(/authentication/i));
+      await user.click(await screen.findByRole("option", { name: "access token" }));
+      await user.click(screen.getByRole("button", { name: /^save$/i }));
+
+      expect(await screen.findByText("you must enter an access token")).toBeVisible();
+      expect(mockUpsert).not.toHaveBeenCalled();
+    });
   });
 });
