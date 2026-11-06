@@ -3,10 +3,9 @@
 import { ORPCError } from "@orpc/client";
 
 import { dbClient } from "@ovr/db/client";
+import { verifyIntegration } from "@ovr/git-status/auth";
 import { formatCheckContext } from "@ovr/git-status/checkContext";
 import { encryptToken } from "@ovr/git-status/crypto";
-import { resolveToken } from "@ovr/git-status/resolveToken";
-import { verifyIntegration } from "@ovr/git-status/verifyIntegration";
 
 import { adminMiddleware, authenticatedMiddleware, projectMiddleware } from "./middleware";
 import { os } from "./os";
@@ -114,15 +113,6 @@ export const testConnection = os.gitIntegrations.testConnection
       throw new ORPCError("BAD_REQUEST", { message: "No git integration configured" });
     }
 
-    const resolved = await resolveToken(integration);
-    if (!resolved.ok) {
-      return { ok: false, httpStatus: null, error: resolved.error };
-    }
-
-    return verifyIntegration({
-      provider: integration.provider,
-      repoIdentifier: integration.repoIdentifier,
-      token: resolved.token,
-    });
+    return verifyIntegration(integration);
   })
   .actionable();

@@ -1,6 +1,9 @@
+import { randomBytes } from "node:crypto";
+
 import { it, vi } from "vitest";
 
 import { resolveAdapter } from "../adapters";
+import { resolveToken } from "../auth";
 import {
   GitStatusPublishError,
   publishBuildStatus,
@@ -108,29 +111,24 @@ describe("publishBuildStatus", () => {
     expect(deps.recordPublication).toHaveBeenCalled();
   });
 
-  it("records a terminal error without sending when no token can be resolved", async () => {
+  it("records a terminal error without sending when the stored token can't be decrypted", async () => {
+    vi.stubEnv("OVR_GIT_TOKEN_ENCRYPTION_KEY", randomBytes(32).toString("base64"));
     const deps = makeDeps({
-      resolveToken: vi
-        .fn<PublishBuildStatusDeps["resolveToken"]>()
-        .mockResolvedValue({ ok: false, error: "bad key", retryable: false }),
+      findIntegration: vi
+        .fn<PublishBuildStatusDeps["findIntegration"]>()
+        .mockResolvedValue({ ...integration, encryptedToken: "not-a-ciphertext" }),
+      resolveToken,
     });
-    await expect(publishBuildStatus("build-1", deps)).resolves.toBeUndefined();
-    expect(deps.send).not.toHaveBeenCalled();
-    expect(deps.recordPublication).toHaveBeenCalledWith(
-      expect.objectContaining({ outcome: "error", httpStatus: null, error: "bad key" }),
-    );
-  });
 
-  it("throws so the job retries when resolving the token failed transiently", async () => {
-    const deps = makeDeps({
-      resolveToken: vi
-        .fn<PublishBuildStatusDeps["resolveToken"]>()
-        .mockResolvedValue({ ok: false, error: "provider is down", retryable: true }),
-    });
-    await expect(publishBuildStatus("build-1", deps)).rejects.toBeInstanceOf(GitStatusPublishError);
+    await expect(publishBuildStatus("build-1", deps)).resolves.toBeUndefined();
+
     expect(deps.send).not.toHaveBeenCalled();
     expect(deps.recordPublication).toHaveBeenCalledWith(
-      expect.objectContaining({ outcome: "error", error: "provider is down" }),
+      expect.objectContaining({
+        outcome: "error",
+        httpStatus: null,
+        error: "stored token could not be decrypted, re-enter it",
+      }),
     );
   });
 
@@ -169,10 +167,12 @@ describe("publishBuildStatus", () => {
     test("counts a status it could not send because the token would not decrypt", async ({
       metrics,
     }) => {
+      vi.stubEnv("OVR_GIT_TOKEN_ENCRYPTION_KEY", randomBytes(32).toString("base64"));
       const deps = makeDeps({
-        resolveToken: vi
-          .fn<PublishBuildStatusDeps["resolveToken"]>()
-          .mockResolvedValue({ ok: false, error: "undecryptable", retryable: false }),
+        findIntegration: vi
+          .fn<PublishBuildStatusDeps["findIntegration"]>()
+          .mockResolvedValue({ ...integration, encryptedToken: "not-a-ciphertext" }),
+        resolveToken,
       });
       await publishBuildStatus("build-1", deps);
 
