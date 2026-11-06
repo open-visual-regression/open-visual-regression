@@ -19,6 +19,7 @@ const build = {
 const integration = {
   provider: "github" as const,
   repoIdentifier: "acme/web",
+  authType: "token" as const,
   encryptedToken: "encrypted",
   checkContext: "ovr/visual-review",
   statusChecksEnabled: true,
@@ -33,9 +34,9 @@ const makeDeps = (overrides: Partial<PublishBuildStatusDeps> = {}): PublishBuild
     .fn<PublishBuildStatusDeps["recordPublication"]>()
     .mockResolvedValue(undefined),
   resolveAdapter,
-  tryDecryptToken: vi
-    .fn<PublishBuildStatusDeps["tryDecryptToken"]>()
-    .mockReturnValue("plain-token"),
+  resolveToken: vi
+    .fn<PublishBuildStatusDeps["resolveToken"]>()
+    .mockResolvedValue({ ok: true, token: "plain-token" }),
   send: vi
     .fn<PublishBuildStatusDeps["send"]>()
     .mockResolvedValue({ outcome: "ok", httpStatus: 201, retryable: false }),
@@ -107,6 +108,32 @@ describe("publishBuildStatus", () => {
     expect(deps.recordPublication).toHaveBeenCalled();
   });
 
+  it("records a terminal error without sending when no token can be resolved", async () => {
+    const deps = makeDeps({
+      resolveToken: vi
+        .fn<PublishBuildStatusDeps["resolveToken"]>()
+        .mockResolvedValue({ ok: false, error: "bad key", retryable: false }),
+    });
+    await expect(publishBuildStatus("build-1", deps)).resolves.toBeUndefined();
+    expect(deps.send).not.toHaveBeenCalled();
+    expect(deps.recordPublication).toHaveBeenCalledWith(
+      expect.objectContaining({ outcome: "error", httpStatus: null, error: "bad key" }),
+    );
+  });
+
+  it("throws so the job retries when resolving the token failed transiently", async () => {
+    const deps = makeDeps({
+      resolveToken: vi
+        .fn<PublishBuildStatusDeps["resolveToken"]>()
+        .mockResolvedValue({ ok: false, error: "provider is down", retryable: true }),
+    });
+    await expect(publishBuildStatus("build-1", deps)).rejects.toBeInstanceOf(GitStatusPublishError);
+    expect(deps.send).not.toHaveBeenCalled();
+    expect(deps.recordPublication).toHaveBeenCalledWith(
+      expect.objectContaining({ outcome: "error", error: "provider is down" }),
+    );
+  });
+
   it("never passes the encrypted token to the adapter", async () => {
     const deps = makeDeps();
     await publishBuildStatus("build-1", deps);
@@ -143,7 +170,9 @@ describe("publishBuildStatus", () => {
       metrics,
     }) => {
       const deps = makeDeps({
-        tryDecryptToken: vi.fn<PublishBuildStatusDeps["tryDecryptToken"]>().mockReturnValue(null),
+        resolveToken: vi
+          .fn<PublishBuildStatusDeps["resolveToken"]>()
+          .mockResolvedValue({ ok: false, error: "undecryptable", retryable: false }),
       });
       await publishBuildStatus("build-1", deps);
 

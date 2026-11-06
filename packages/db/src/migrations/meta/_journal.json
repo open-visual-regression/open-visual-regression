@@ -456,6 +456,13 @@
       "when": 1793837851161,
       "tag": "0064_add_base_build_index",
       "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "7",
+      "when": 1793979781693,
+      "tag": "0065_git_integration_auth_type",
+      "breakpoints": true
     }
   ]
 }
