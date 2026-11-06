@@ -24,6 +24,7 @@ type LoadingImage = { src: string; since: number };
 declare global {
   var __OVR_DOCUMENT_WATCH__: DocumentWatch | undefined;
   var __OVR_LOADING_IMAGES__: WeakMap<HTMLImageElement, LoadingImage> | undefined;
+  var __OVR_ABANDONED_IMAGE_SRCS__: Set<string> | undefined;
 }
 
 export const trackNetworkActivity = (
@@ -174,19 +175,41 @@ const waitForImagesAndFonts = ({
   // Like a stuck request, an image that outlives a whole settle budget is given up on, so it
   // cannot stall every later snapshot on this page.
   const loadingSince = (globalThis.__OVR_LOADING_IMAGES__ ??= new WeakMap());
+  // A later story that renders the same stuck image gets a new element, but the browser reuses the
+  // stuck request, so the image is remembered by its URL rather than waited for again.
+  const abandonedSrcs = (globalThis.__OVR_ABANDONED_IMAGE_SRCS__ ??= new Set());
   const isAbandoned = (image: HTMLImageElement) => {
+    if (abandonedSrcs.has(image.currentSrc)) {
+      return true;
+    }
     const loading = loadingSince.get(image);
     if (loading?.src !== image.currentSrc) {
       loadingSince.set(image, { src: image.currentSrc, since: now });
       return false;
     }
-    return now - loading.since >= abandonAfterMs;
+    if (now - loading.since < abandonAfterMs) {
+      return false;
+    }
+    abandonedSrcs.add(image.currentSrc);
+    return true;
   };
 
+  // Stops waiting once the image has loaded for as long as a request may, so one image can't use up
+  // the whole settle budget.
   const loaded = (image: HTMLImageElement) =>
     new Promise<void>((resolve) => {
       image.addEventListener("load", () => resolve(), { once: true });
       image.addEventListener("error", () => resolve(), { once: true });
+      const since = loadingSince.get(image)?.since ?? now;
+      setTimeout(
+        () => {
+          if (!image.complete) {
+            abandonedSrcs.add(image.currentSrc);
+          }
+          resolve();
+        },
+        Math.max(since + abandonAfterMs - now, 0),
+      );
     });
 
   // Capture makes lazy images eager with disableLazyLoading, so this only skips them on a page
@@ -195,7 +218,8 @@ const waitForImagesAndFonts = ({
     .filter((image) => image.complete || (image.loading !== "lazy" && !isAbandoned(image)))
     .map((image) =>
       (image.complete ? Promise.resolve() : loaded(image))
-        .then(() => image.decode())
+        // decode() waits for an image that is still loading, so skip one that was given up on.
+        .then(() => (image.complete ? image.decode() : undefined))
         .catch(() => undefined),
     );
 
