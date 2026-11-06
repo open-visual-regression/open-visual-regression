@@ -9,13 +9,17 @@ import {
 
 const MIN_PAINT_BUDGET_MS = 250;
 
+export type AbandonedRequests = {
+  // Requests given up on since the last call.
+  take: () => string[];
+};
+
 export type NetworkActivity = {
   // How long a request or image can stay pending before it's given up on.
   abandonAfterMs: number;
   whenQuiet: (quietWindowMs: number, timeoutMs: number) => Promise<boolean>;
   requestCount: () => number;
-  // URLs of requests given up on since the last call.
-  takeAbandoned: () => string[];
+  abandoned: AbandonedRequests;
   dispose: () => void;
 };
 
@@ -98,10 +102,12 @@ export const trackNetworkActivity = (
         onChange();
       }),
     requestCount: () => requestCount,
-    takeAbandoned: () => {
-      const urls = [...abandoned].sort();
-      abandoned = new Set();
-      return urls;
+    abandoned: {
+      take: () => {
+        const urls = [...abandoned].sort();
+        abandoned = new Set();
+        return urls;
+      },
     },
     dispose: () => {
       page.off("request", add);
@@ -186,10 +192,8 @@ const waitForImagesAndFonts = ({
   // Like a stuck request, an image still loading after abandonAfterMs is given up on, so it cannot
   // stall every later snapshot on this page.
   const loadingSince = (globalThis.__OVR_LOADING_IMAGES__ ??= new WeakMap());
-  // A later story that renders the same stuck image gets a new element, but the browser reuses the
-  // stuck request, so the image is remembered by its URL rather than waited for again.
+  // Images given up on, so later stories that show the same one don't wait for it again.
   const abandonedSrcs = (globalThis.__OVR_ABANDONED_IMAGE_SRCS__ ??= new Set());
-  // currentSrc stays empty until an image receives data, so a stuck image is known by its src.
   const urlOf = (image: HTMLImageElement) => image.currentSrc || image.src;
   const isAbandoned = (image: HTMLImageElement) => {
     if (abandonedSrcs.has(urlOf(image))) {
@@ -207,8 +211,6 @@ const waitForImagesAndFonts = ({
     return true;
   };
 
-  // Stops waiting once the image has loaded for as long as a request may, so one image can't use up
-  // the whole settle budget.
   const loaded = (image: HTMLImageElement) =>
     new Promise<void>((resolve) => {
       image.addEventListener("load", () => resolve(), { once: true });
@@ -231,7 +233,6 @@ const waitForImagesAndFonts = ({
     .filter((image) => image.complete || (image.loading !== "lazy" && !isAbandoned(image)))
     .map((image) =>
       (image.complete ? Promise.resolve() : loaded(image))
-        // decode() waits for an image that is still loading, so skip one that was given up on.
         .then(() => (image.complete ? image.decode() : undefined))
         .catch(() => undefined),
     );
@@ -351,24 +352,4 @@ export const settlePage = async (
   } finally {
     await page.evaluate(unwatchDocument).catch(() => undefined);
   }
-};
-
-// Known by src as well, since currentSrc stays empty until an image receives data.
-const findAbandonedImages = (): string[] =>
-  Array.from(document.images)
-    .map((image) => ({ complete: image.complete, url: image.currentSrc || image.src }))
-    .filter(
-      ({ complete, url }) =>
-        !complete && globalThis.__OVR_ABANDONED_IMAGE_SRCS__?.has(url) === true,
-    )
-    .map(({ url }) => url);
-
-// Requests given up on since the last call, and images on the page that were given up on: the
-// screenshot may be missing them.
-export const takeAbandonedUrls = async (
-  page: Page,
-  activity: NetworkActivity,
-): Promise<string[]> => {
-  const images = await page.evaluate(findAbandonedImages);
-  return [...new Set([...activity.takeAbandoned(), ...images])].sort();
 };

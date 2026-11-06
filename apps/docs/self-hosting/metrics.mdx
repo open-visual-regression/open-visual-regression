@@ -110,7 +110,7 @@ sum(max by (state) (ovr_queue_jobs{queue="snapshot-capture", state=~"waiting|pri
 histogram_quantile(0.95, sum by (le) (rate(ovr_build_capture_wait_seconds_bucket{size="1000_or_more"}[1h])))
 ```
 
-`size` groups builds by how many snapshots they capture: `under_100`, `100_to_499`, `500_to_999`, or `1000_or_more`. Snapshots skipped because their story was unaffected don't count.
+`size` is how many snapshots a build captures: `under_100`, `100_to_499`, `500_to_999`, or `1000_or_more`.
 
 ### Builds
 
@@ -119,7 +119,7 @@ histogram_quantile(0.95, sum by (le) (rate(ovr_build_capture_wait_seconds_bucket
 | `ovr_builds_created_total` | Counter | `build_type`, `trigger` | Builds created. `trigger` is `upload` or `rebuild`. |
 | `ovr_builds_finished_total` | Counter | `processing_status`, `reason` | Builds that finished, by status (`success`, `error`, `canceled`) and reason. See [finish reasons](#finish-reasons). |
 | `ovr_build_duration_seconds` | Histogram | `processing_status`, `size` | Time from when the build was created until it finished processing. |
-| `ovr_build_capture_wait_seconds` | Histogram | `size` | Time from when a build's snapshots were queued until the first one started capturing. A high value for large builds means smaller builds are running ahead of them. |
+| `ovr_build_capture_wait_seconds` | Histogram | `size` | Time from when a build's snapshots were queued until the first one started capturing. |
 | `ovr_builds_in_progress` | Gauge, deployment-wide | `processing_status` | Builds that are `queued` or `processing`. |
 | `ovr_builds_in_progress_oldest_age_seconds` | Gauge, deployment-wide | `processing_status` | Age of the oldest queued or processing build. A value that keeps growing means a build is stuck. |
 
@@ -152,11 +152,11 @@ histogram_quantile(0.95, sum by (le) (rate(ovr_build_capture_wait_seconds_bucket
 | --- | --- | --- | --- |
 | `ovr_snapshots_captured_total` | Counter | `browser`, `outcome` | Snapshots captured, by `success` or `error`. |
 | `ovr_snapshot_capture_duration_seconds` | Histogram | `browser` | Time to capture and store one snapshot. |
-| `ovr_snapshot_capture_phase_duration_seconds` | Histogram | `browser`, `phase` | Time each part of a capture took: `render` the story, `settle` (wait for requests, images, fonts and the DOM to go quiet), `wait` (the story's `waitForTimeout`), `screenshot`, and `upload`. |
-| `ovr_snapshots_settled_total` | Counter | `outcome` | Snapshots whose page went `quiet`, or `timed_out` with requests or images still pending. A rising `timed_out` count usually means a story loads an image from a host that never answers. |
-| `ovr_capture_requests_abandoned_total` | Counter | | Requests and images a snapshot was captured without because they never finished loading, counted once per snapshot. Each one is also listed in that snapshot's logs. |
-| `ovr_capture_page_boot_duration_seconds` | Histogram | `browser` | Time to open a page and load Storybook in a capture browser, once per capture group. |
-| `ovr_snapshots_created_total` | Counter | `status` | Snapshots builds created: `queued` to capture, or `skipped` to keep their baseline because their story was unaffected. |
+| `ovr_snapshot_capture_phase_duration_seconds` | Histogram | `browser`, `phase` | Time each part of a capture took: `render`, `settle`, `wait` (the story's `waitForTimeout`), `screenshot`, or `upload`. |
+| `ovr_snapshots_settled_total` | Counter | `outcome` | Snapshots whose page went `quiet`, or `timed_out` with work still pending. |
+| `ovr_capture_requests_abandoned_total` | Counter | | Requests a snapshot was captured without because they never finished loading. |
+| `ovr_capture_page_boot_duration_seconds` | Histogram | `browser` | Time to load Storybook, once per capture group. |
+| `ovr_snapshots_created_total` | Counter | `status` | Snapshots created, by `queued` or `skipped` (unaffected story). |
 | `ovr_capture_browser_relaunches_total` | Counter | `browser`, `reason` | Times a browser was restarted mid-build because a story hung (`timeout`) or the browser crashed (`closed`). |
 | `ovr_diffs_compared_total` | Counter | `result` | Snapshots compared with their baseline: `unchanged`, `changed`, `new` (no baseline yet), or `error`. |
 
@@ -180,8 +180,8 @@ histogram_quantile(0.95, sum by (le) (rate(ovr_build_capture_wait_seconds_bucket
 | `ovr_worker_browser_processes` | Gauge | `state` | Browser processes a worker is running. A growing `zombie` count means exited processes aren't being cleaned up. Linux only. |
 | `ovr_worker_browser_memory_bytes` | Gauge | | Memory used by a worker's browsers. Linux only. |
 | `ovr_worker_browser_processes_killed_total` | Counter | | Leftover browser processes a worker killed after their builds finished. Linux only. |
-| `ovr_capture_slots` | Gauge | | Capture groups a worker can run at once, from `OVR_CAPTURE_GROUP_CONCURRENCY`. |
-| `ovr_capture_slots_busy` | Gauge | | Capture groups a worker is running. Busy slots that stay at the total while captures wait in the queue mean workers need more capacity. |
+| `ovr_capture_slots` | Gauge | | Capture groups a worker can run at once. |
+| `ovr_capture_slots_busy` | Gauge | | Capture groups a worker is running. |
 | `ovr_git_status_publications_total` | Counter | `provider`, `state`, `outcome` | Commit statuses sent to your git provider, by `ok` or `error`. |
 | `ovr_http_request_errors_total` | Counter | `route_type` | Web app requests that failed with an unexpected error. |
 | `process_memory_usage_bytes` | Gauge | | Memory used by the process. |

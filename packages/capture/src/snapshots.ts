@@ -22,7 +22,6 @@ import {
 } from "@ovr/capture-browser/page";
 import {
   settlePage,
-  takeAbandonedUrls,
   trackNetworkActivity,
   type NetworkActivity,
 } from "@ovr/capture-browser/settle";
@@ -48,9 +47,9 @@ import { cacheImage } from "./lib/imageCache";
 import { compareImages } from "./lib/images";
 import {
   browserRelaunches,
-  capturedRequestsAbandoned,
   capturePageBootDuration,
   diffsCompared,
+  requestsAbandoned,
   snapshotCaptureDuration,
   snapshotCapturePhaseDuration,
   snapshotsCaptured,
@@ -380,12 +379,12 @@ const captureSnapshotOnPage = async (
       });
     }
 
-    const abandoned = await takeAbandonedUrls(page, networkActivity);
+    const abandoned = networkActivity.abandoned.take();
     if (abandoned.length > 0) {
-      capturedRequestsAbandoned.add(abandoned.length, {});
+      requestsAbandoned.add(abandoned.length, {});
       pageLogState.logs.push({
         level: "warning",
-        message: `Stopped waiting for requests that never finished loading, so the screenshot may be missing them: ${abandoned.join(", ")}. Fix them, or block their host with blockExternalRequests.`,
+        message: `Requests to ${abandoned.join(", ")} never finished, so the screenshot may be missing them.`,
       });
     }
 
@@ -547,7 +546,6 @@ export const markSnapshotErrored = async (snapshotId: string, error: unknown): P
 type CaptureBuildGroupOptions = {
   shutdownSignal?: AbortSignal;
   externalRequestAllowlist?: string[] | null;
-  /** When the group's job was queued, in epoch milliseconds. */
   queuedAt?: number;
 };
 
@@ -693,7 +691,7 @@ export const captureBuildGroup = async (
               capturePage.pageLogState.logs = [];
               capturePage.pageLogState.hasPageError = false;
               capturePage.blockedHosts.take();
-              capturePage.networkActivity.takeAbandoned();
+              capturePage.networkActivity.abandoned.take();
             }
           }
 

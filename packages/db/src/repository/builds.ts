@@ -68,7 +68,7 @@ export const updateProcessingStatus = async (
   return build;
 };
 
-// Returns the build only to the call that moved it out of queued, so its start is handled once.
+// Only the call that starts a queued build gets it back.
 export const startProcessing = async (id: string) => {
   const [build] = await db
     .update(builds)

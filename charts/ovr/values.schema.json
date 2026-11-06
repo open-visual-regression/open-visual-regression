@@ -264,7 +264,7 @@
         },
         "requestTimeoutMs": {
           "type": ["string", "integer"],
-          "description": "Milliseconds a story's request or image may load before capture stops waiting for it. Empty string uses the app default."
+          "description": "Milliseconds to wait for a story's request before capturing without it. Empty string uses the app default."
         },
         "diffConcurrency": {
           "type": ["string", "integer"],

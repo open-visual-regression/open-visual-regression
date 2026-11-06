@@ -13,8 +13,6 @@ export const SNAPSHOT_CAPTURE_TIMEOUT_MS = 60_000;
 
 export const CLEANUP_GRACE_MS = 30_000;
 
-// Lower moves past a host that never answers sooner, but an image slower than this is captured
-// without it. Read on each launch, so tests can set it.
 export const requestTimeoutMs = (): number =>
   z.coerce
     .number()

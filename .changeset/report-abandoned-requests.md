@@ -5,4 +5,4 @@
 "@ovr/capture-browser": patch
 ---
 
-A snapshot's logs now list any request or image that never finished loading, so you can find and fix the broken URLs its screenshot may be missing.
+A snapshot's logs now list any request that never finished loading, so you can find the broken URLs its screenshot may be missing.
