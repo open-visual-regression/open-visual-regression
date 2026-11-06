@@ -89,13 +89,15 @@ export const SnapshotCard = ({ snapshot, filters, showProject = false }: Snapsho
         <Typography variant="caption" className="truncate">
           {snapshot.targetTitle}
         </Typography>
-        {showProject ? (
-          <Typography variant="caption" className="flex min-w-0 items-center gap-1">
-            <Icon icon={FolderIcon} size={12} className="shrink-0" />
-            <span className="truncate">{snapshot.project.name}</span>
-          </Typography>
-        ) : null}
         <MetadataList className="gap-x-3 gap-y-1">
+          {showProject ? (
+            <MetadataItem
+              icon={<Icon icon={FolderIcon} size={12} className="shrink-0" />}
+              className="min-w-0 max-w-full"
+            >
+              <span className="truncate">{snapshot.project.name}</span>
+            </MetadataItem>
+          ) : null}
           <MetadataItem icon={<Icon icon={GlobeIcon} size={12} className="shrink-0" />}>
             {snapshot.browser}
           </MetadataItem>
@@ -146,8 +148,8 @@ export const SnapshotCardSkeleton = ({
     <SnapshotCardBody>
       <TypographySkeleton variant="code" className="w-2/3" />
       <TypographySkeleton variant="caption" className="w-1/2" />
-      {showProject ? <MetadataItemSkeleton className="w-16" /> : null}
       <MetadataList className="gap-x-3 gap-y-1">
+        {showProject ? <MetadataItemSkeleton className="w-16" /> : null}
         <MetadataItemSkeleton className="w-13" />
         <MetadataItemSkeleton className="w-11" />
         <MetadataItemSkeleton className="w-8" />
