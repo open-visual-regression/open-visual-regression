@@ -40,6 +40,7 @@ import { storage } from "@ovr/storage";
 
 import {
   CAPTURE_JOB_TIMEOUT_MS,
+  requestTimeoutMs,
   SNAPSHOT_CAPTURE_TIMEOUT_MS,
   withTimeout,
 } from "./lib/captureTimeouts";
@@ -232,7 +233,7 @@ const launchCapturePage = async (
   logger.info({ buildId, browser: browserName, bootMs: Math.round(bootMs) }, "capture page booted");
   capturePageBootDuration.record(bootMs / 1000, { browser: browserName });
 
-  const networkActivity = trackNetworkActivity(page);
+  const networkActivity = trackNetworkActivity(page, requestTimeoutMs());
 
   return {
     page,

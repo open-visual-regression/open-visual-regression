@@ -11,12 +11,6 @@ import { dbClient } from "@ovr/db/client";
 import { captureBuildGroup } from "../snapshots";
 import { describe, expect, test, uploadArtifactWithIframe } from "./fixtures";
 
-// A short budget, so a request that never finishes is given up on quickly.
-vi.mock("@ovr/capture-browser/timeouts", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@ovr/capture-browser/timeouts")>()),
-  SETTLE_TIMEOUT_MS: 2_000,
-}));
-
 const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
 const IFRAME_HTML = await readFile(path.join(TEST_DIR, "html/iframe-static.html"), "utf-8");
 
@@ -53,6 +47,7 @@ describe("captureBuildGroup", () => {
     captureConfiguration,
     metrics,
   }) => {
+    vi.stubEnv("OVR_CAPTURE_REQUEST_TIMEOUT_MS", "1000");
     await uploadArtifactWithIframe(mainBuild.artifactPath, iframeWithStuckImage());
     const [snapshot] = await dbClient.snapshots.createMany({
       values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" }],
@@ -68,5 +63,44 @@ describe("captureBuildGroup", () => {
       }),
     );
     expect(await metrics.scrape()).toContain("ovr_capture_requests_abandoned_total 1");
+  }, 30_000);
+
+  test("stops waiting for a request that never finishes after OVR_CAPTURE_REQUEST_TIMEOUT_MS", async ({
+    mainBuild,
+    captureConfiguration,
+    metrics,
+  }) => {
+    vi.stubEnv("OVR_CAPTURE_REQUEST_TIMEOUT_MS", "1000");
+    await uploadArtifactWithIframe(mainBuild.artifactPath, iframeWithStuckImage());
+    const [snapshot] = await dbClient.snapshots.createMany({
+      values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" }],
+    });
+
+    await captureBuildGroup(mainBuild.id, captureConfiguration.browser, [snapshot!.id]);
+
+    expect(await metrics.scrape()).toContain(
+      'ovr_snapshot_capture_phase_duration_seconds_bucket{browser="chromium",phase="settle",le="2.5"} 1',
+    );
+  }, 30_000);
+
+  test("stops waiting for a request that never finishes after 5 seconds by default", async ({
+    mainBuild,
+    captureConfiguration,
+    metrics,
+  }) => {
+    await uploadArtifactWithIframe(mainBuild.artifactPath, iframeWithStuckImage());
+    const [snapshot] = await dbClient.snapshots.createMany({
+      values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" }],
+    });
+
+    await captureBuildGroup(mainBuild.id, captureConfiguration.browser, [snapshot!.id]);
+
+    const body = await metrics.scrape();
+    expect(body).toContain(
+      'ovr_snapshot_capture_phase_duration_seconds_bucket{browser="chromium",phase="settle",le="2.5"} 0',
+    );
+    expect(body).toContain(
+      'ovr_snapshot_capture_phase_duration_seconds_bucket{browser="chromium",phase="settle",le="10"} 1',
+    );
   }, 30_000);
 });

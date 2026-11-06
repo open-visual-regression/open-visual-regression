@@ -4,7 +4,7 @@ import {
   DOM_QUIET_WINDOW_MS,
   DOM_SETTLE_TIMEOUT_MS,
   NETWORK_QUIET_WINDOW_MS,
-  SETTLE_TIMEOUT_MS,
+  REQUEST_TIMEOUT_MS,
 } from "./timeouts";
 
 const MIN_PAINT_BUDGET_MS = 250;
@@ -31,7 +31,7 @@ declare global {
 
 export const trackNetworkActivity = (
   page: Page,
-  abandonAfterMs = SETTLE_TIMEOUT_MS,
+  abandonAfterMs = REQUEST_TIMEOUT_MS,
 ): NetworkActivity => {
   const pending = new Map<Request, ReturnType<typeof setTimeout>>();
   const listeners = new Set<() => void>();
@@ -54,8 +54,8 @@ export const trackNetworkActivity = (
     notify();
   };
 
-  // A request that outlives a whole settle budget is treated as abandoned, so one
-  // response that never arrives cannot stall every later snapshot on this page.
+  // A request still pending after abandonAfterMs is treated as abandoned, so one response that
+  // never arrives cannot stall every later snapshot on this page.
   const add = (request: Request) => {
     requestCount += 1;
     pending.set(
@@ -183,8 +183,8 @@ const waitForImagesAndFonts = ({
   const elapsed = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
   const now = performance.now();
 
-  // Like a stuck request, an image that outlives a whole settle budget is given up on, so it
-  // cannot stall every later snapshot on this page.
+  // Like a stuck request, an image still loading after abandonAfterMs is given up on, so it cannot
+  // stall every later snapshot on this page.
   const loadingSince = (globalThis.__OVR_LOADING_IMAGES__ ??= new WeakMap());
   // A later story that renders the same stuck image gets a new element, but the browser reuses the
   // stuck request, so the image is remembered by its URL rather than waited for again.
