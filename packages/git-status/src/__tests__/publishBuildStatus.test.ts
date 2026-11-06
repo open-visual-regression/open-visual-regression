@@ -1,18 +1,19 @@
-import { generateKeyPairSync } from "node:crypto";
+import { randomBytes } from "node:crypto";
 
 import { http, HttpResponse } from "msw";
 import { it, vi } from "vitest";
 
 import { resolveAdapter } from "../adapters";
-import { readGitHubAppConfig } from "../githubApp/config";
-import { createInstallationTokenProvider } from "../githubApp/installationTokens";
+import { resolveToken } from "../auth";
+import { createGitHubAppAuth } from "../authMethods/githubApp";
+import { encryptToken } from "../crypto";
 import {
   GitStatusPublishError,
   publishBuildStatus,
   type PublishBuildStatusDeps,
 } from "../publishBuildStatus";
 import { send } from "../publisher";
-import { resolveToken } from "../resolveToken";
+import { generateAppConfig, useFakeGitHub } from "./fakeGitHub";
 import { describe, expect, test } from "./fixtures";
 import { server } from "./setup";
 
@@ -32,6 +33,8 @@ const integration = {
   checkContext: "ovr/visual-review",
   statusChecksEnabled: true,
 };
+
+const appIntegration = { ...integration, authType: "github_app" as const, encryptedToken: null };
 
 const makeDeps = (overrides: Partial<PublishBuildStatusDeps> = {}): PublishBuildStatusDeps => ({
   findBuild: vi.fn<PublishBuildStatusDeps["findBuild"]>().mockResolvedValue(build),
@@ -116,29 +119,24 @@ describe("publishBuildStatus", () => {
     expect(deps.recordPublication).toHaveBeenCalled();
   });
 
-  it("records a terminal error without sending when no token can be resolved", async () => {
+  it("records a terminal error without sending when the stored token can't be decrypted", async () => {
+    vi.stubEnv("OVR_GIT_TOKEN_ENCRYPTION_KEY", randomBytes(32).toString("base64"));
     const deps = makeDeps({
-      resolveToken: vi
-        .fn<PublishBuildStatusDeps["resolveToken"]>()
-        .mockResolvedValue({ ok: false, error: "bad key", retryable: false }),
+      findIntegration: vi
+        .fn<PublishBuildStatusDeps["findIntegration"]>()
+        .mockResolvedValue({ ...integration, encryptedToken: "not-a-ciphertext" }),
+      resolveToken,
     });
-    await expect(publishBuildStatus("build-1", deps)).resolves.toBeUndefined();
-    expect(deps.send).not.toHaveBeenCalled();
-    expect(deps.recordPublication).toHaveBeenCalledWith(
-      expect.objectContaining({ outcome: "error", httpStatus: null, error: "bad key" }),
-    );
-  });
 
-  it("throws so the job retries when resolving the token failed transiently", async () => {
-    const deps = makeDeps({
-      resolveToken: vi
-        .fn<PublishBuildStatusDeps["resolveToken"]>()
-        .mockResolvedValue({ ok: false, error: "provider is down", retryable: true }),
-    });
-    await expect(publishBuildStatus("build-1", deps)).rejects.toBeInstanceOf(GitStatusPublishError);
+    await expect(publishBuildStatus("build-1", deps)).resolves.toBeUndefined();
+
     expect(deps.send).not.toHaveBeenCalled();
     expect(deps.recordPublication).toHaveBeenCalledWith(
-      expect.objectContaining({ outcome: "error", error: "provider is down" }),
+      expect.objectContaining({
+        outcome: "error",
+        httpStatus: null,
+        error: "stored token could not be decrypted, re-enter it",
+      }),
     );
   });
 
@@ -152,103 +150,139 @@ describe("publishBuildStatus", () => {
     );
   });
 
-  describe("when GitHub rejects the token", () => {
-    const unauthorized = { outcome: "error" as const, httpStatus: 401, retryable: false };
-    const created = { outcome: "ok" as const, httpStatus: 201, retryable: false };
-
-    it("drops a cached App token and retries once with a fresh one", async () => {
-      const invalidate = vi.fn<() => void>();
-      const deps = makeDeps({
-        resolveToken: vi
-          .fn<PublishBuildStatusDeps["resolveToken"]>()
-          .mockResolvedValueOnce({ ok: true, token: "stale", invalidate })
-          .mockResolvedValueOnce({ ok: true, token: "fresh", invalidate }),
-        send: vi
-          .fn<PublishBuildStatusDeps["send"]>()
-          .mockResolvedValueOnce(unauthorized)
-          .mockResolvedValueOnce(created),
-      });
-      await publishBuildStatus("build-1", deps);
-
-      expect(invalidate).toHaveBeenCalledOnce();
-      expect(deps.send).toHaveBeenCalledTimes(2);
-      expect(deps.send).toHaveBeenLastCalledWith(
-        expect.objectContaining({
-          headers: expect.objectContaining({ authorization: "Bearer fresh" }),
-        }),
-      );
-      expect(deps.recordPublication).toHaveBeenCalledOnce();
-      expect(deps.recordPublication).toHaveBeenCalledWith(
-        expect.objectContaining({ outcome: "ok", httpStatus: 201 }),
-      );
-    });
-
-    it("records the error when the retry is rejected too", async () => {
-      const deps = makeDeps({
-        resolveToken: vi
-          .fn<PublishBuildStatusDeps["resolveToken"]>()
-          .mockResolvedValue({ ok: true, token: "t", invalidate: vi.fn<() => void>() }),
-        send: vi.fn<PublishBuildStatusDeps["send"]>().mockResolvedValue(unauthorized),
-      });
-      await expect(publishBuildStatus("build-1", deps)).resolves.toBeUndefined();
-
-      expect(deps.send).toHaveBeenCalledTimes(2);
-      expect(deps.recordPublication).toHaveBeenCalledWith(
-        expect.objectContaining({ outcome: "error", httpStatus: 401 }),
-      );
-    });
-
-    it("does not retry with a static token", async () => {
-      const deps = makeDeps({
-        send: vi.fn<PublishBuildStatusDeps["send"]>().mockResolvedValue(unauthorized),
-      });
-      await publishBuildStatus("build-1", deps);
-
-      expect(deps.send).toHaveBeenCalledOnce();
-    });
-  });
-
-  it("publishes for a GitHub App integration end to end", async () => {
-    const { privateKey } = generateKeyPairSync("rsa", {
-      modulusLength: 2048,
-      privateKeyEncoding: { type: "pkcs1", format: "pem" },
-      publicKeyEncoding: { type: "spki", format: "pem" },
-    });
-    const config = readGitHubAppConfig({
-      OVR_GITHUB_APP_ID: "1234",
-      OVR_GITHUB_APP_PRIVATE_KEY: privateKey,
-    })!;
-    const tokens = createInstallationTokenProvider({ config, apiBase: "https://api.github.com" });
-    const statusAuth = vi.fn<(authorization: string | null) => void>();
-    server.use(
-      http.get("https://api.github.com/repos/acme/web/installation", () =>
-        HttpResponse.json({ id: 42, permissions: { statuses: "write" } }),
-      ),
-      http.post("https://api.github.com/app/installations/42/access_tokens", () =>
-        HttpResponse.json(
-          { token: "ghs_installation", expires_at: new Date(Date.now() + 3_600_000).toISOString() },
-          { status: 201 },
-        ),
-      ),
-      http.post("https://api.github.com/repos/acme/web/statuses/abc123", ({ request }) => {
-        statusAuth(request.headers.get("authorization"));
-        return new HttpResponse(null, { status: 201 });
-      }),
-    );
-
+  it("publishes as a GitHub App installation", async () => {
+    const app = generateAppConfig();
+    const github = useFakeGitHub({ app });
     const deps = makeDeps({
       findIntegration: vi
         .fn<PublishBuildStatusDeps["findIntegration"]>()
-        .mockResolvedValue({ ...integration, authType: "github_app", encryptedToken: null }),
-      resolveToken: (source) =>
-        resolveToken(source, { tryDecryptToken: () => null, githubAppTokens: () => tokens }),
+        .mockResolvedValue(appIntegration),
+      resolveToken: createGitHubAppAuth({ config: app }).resolveToken,
       send,
     });
+
     await publishBuildStatus("build-1", deps);
 
-    expect(statusAuth).toHaveBeenCalledWith("Bearer ghs_installation");
+    expect(github.statusTokens).toEqual(["ghs_1"]);
     expect(deps.recordPublication).toHaveBeenCalledWith(
       expect.objectContaining({ outcome: "ok", httpStatus: 201 }),
+    );
+  });
+
+  it("retries once with a fresh App token when GitHub rejects the cached one", async () => {
+    const app = generateAppConfig();
+    const github = useFakeGitHub({ app, rejectedTokens: (token) => token === "ghs_1" });
+    const deps = makeDeps({
+      findIntegration: vi
+        .fn<PublishBuildStatusDeps["findIntegration"]>()
+        .mockResolvedValue(appIntegration),
+      resolveToken: createGitHubAppAuth({ config: app }).resolveToken,
+      send,
+    });
+
+    await publishBuildStatus("build-1", deps);
+
+    expect(github.statusTokens).toEqual(["ghs_1", "ghs_2"]);
+    expect(deps.recordPublication).toHaveBeenCalledOnce();
+    expect(deps.recordPublication).toHaveBeenCalledWith(
+      expect.objectContaining({ outcome: "ok", httpStatus: 201 }),
+    );
+  });
+
+  it("records the error when GitHub rejects the fresh App token too", async () => {
+    const app = generateAppConfig();
+    const github = useFakeGitHub({ app, rejectedTokens: () => true });
+    const deps = makeDeps({
+      findIntegration: vi
+        .fn<PublishBuildStatusDeps["findIntegration"]>()
+        .mockResolvedValue(appIntegration),
+      resolveToken: createGitHubAppAuth({ config: app }).resolveToken,
+      send,
+    });
+
+    await expect(publishBuildStatus("build-1", deps)).resolves.toBeUndefined();
+
+    expect(github.statusTokens).toEqual(["ghs_1", "ghs_2"]);
+    expect(deps.recordPublication).toHaveBeenCalledWith(
+      expect.objectContaining({ outcome: "error", httpStatus: 401 }),
+    );
+  });
+
+  it("does not retry when GitHub rejects a stored token", async () => {
+    vi.stubEnv("OVR_GIT_TOKEN_ENCRYPTION_KEY", randomBytes(32).toString("base64"));
+    const github = useFakeGitHub({ app: generateAppConfig(), rejectedTokens: () => true });
+    const deps = makeDeps({
+      findIntegration: vi
+        .fn<PublishBuildStatusDeps["findIntegration"]>()
+        .mockResolvedValue({ ...integration, encryptedToken: encryptToken("ghp_revoked") }),
+      resolveToken,
+      send,
+    });
+
+    await publishBuildStatus("build-1", deps);
+
+    expect(github.statusTokens).toEqual(["ghp_revoked"]);
+  });
+
+  it("throws so the job retries when GitHub is down while minting an App token", async () => {
+    server.use(
+      http.get(
+        "https://api.github.com/repos/acme/web/installation",
+        () => new HttpResponse(null, { status: 503 }),
+      ),
+    );
+    const deps = makeDeps({
+      findIntegration: vi
+        .fn<PublishBuildStatusDeps["findIntegration"]>()
+        .mockResolvedValue(appIntegration),
+      resolveToken: createGitHubAppAuth({ config: generateAppConfig() }).resolveToken,
+      send,
+    });
+
+    await expect(publishBuildStatus("build-1", deps)).rejects.toBeInstanceOf(GitStatusPublishError);
+    expect(deps.recordPublication).toHaveBeenCalledWith(
+      expect.objectContaining({ outcome: "error", httpStatus: null }),
+    );
+  });
+
+  it("records a terminal error when the App is not installed on the repo", async () => {
+    const app = generateAppConfig();
+    const github = useFakeGitHub({ app, owner: "someone-else" });
+    const deps = makeDeps({
+      findIntegration: vi
+        .fn<PublishBuildStatusDeps["findIntegration"]>()
+        .mockResolvedValue(appIntegration),
+      resolveToken: createGitHubAppAuth({ config: app }).resolveToken,
+      send,
+    });
+
+    await expect(publishBuildStatus("build-1", deps)).resolves.toBeUndefined();
+
+    expect(github.statusTokens).toEqual([]);
+    expect(deps.recordPublication).toHaveBeenCalledWith(
+      expect.objectContaining({
+        outcome: "error",
+        error: "the GitHub App is not installed on acme/web",
+      }),
+    );
+  });
+
+  it("records a terminal error when the deployment has no GitHub App", async () => {
+    const deps = makeDeps({
+      findIntegration: vi
+        .fn<PublishBuildStatusDeps["findIntegration"]>()
+        .mockResolvedValue(appIntegration),
+      resolveToken,
+      send,
+    });
+
+    await expect(publishBuildStatus("build-1", deps)).resolves.toBeUndefined();
+
+    expect(deps.recordPublication).toHaveBeenCalledWith(
+      expect.objectContaining({
+        outcome: "error",
+        error: expect.stringMatching(/set OVR_GITHUB_APP_ID and OVR_GITHUB_APP_PRIVATE_KEY/),
+      }),
     );
   });
 
@@ -277,10 +311,12 @@ describe("publishBuildStatus", () => {
     test("counts a status it could not send because the token would not decrypt", async ({
       metrics,
     }) => {
+      vi.stubEnv("OVR_GIT_TOKEN_ENCRYPTION_KEY", randomBytes(32).toString("base64"));
       const deps = makeDeps({
-        resolveToken: vi
-          .fn<PublishBuildStatusDeps["resolveToken"]>()
-          .mockResolvedValue({ ok: false, error: "undecryptable", retryable: false }),
+        findIntegration: vi
+          .fn<PublishBuildStatusDeps["findIntegration"]>()
+          .mockResolvedValue({ ...integration, encryptedToken: "not-a-ciphertext" }),
+        resolveToken,
       });
       await publishBuildStatus("build-1", deps);
 
