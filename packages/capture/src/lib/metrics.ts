@@ -23,23 +23,21 @@ export const snapshotCapturePhaseDuration = createHistogram<{
   browser: string;
   phase: CapturePhase;
 }>("ovr.snapshot.capture.phase.duration.seconds", {
-  description:
-    "Time each phase of a successful snapshot capture took. wait is the story's waitForTimeout.",
+  description: "Time each phase of a successful snapshot capture took.",
   unit: "s",
   buckets: DURATION_BUCKETS_SECONDS,
 });
 
-// timed_out: the settle budget ran out with requests, images or DOM changes still pending.
+// `timed_out`: work was still pending when the settle budget ran out.
 export const snapshotsSettled = createCounter<{ outcome: "quiet" | "timed_out" }>(
   "ovr.snapshots.settled",
-  { description: "Snapshots that finished settling, by whether the page went quiet in time." },
+  { description: "Snapshots that finished settling, by whether the page went quiet." },
 );
 
 export const capturePageBootDuration = createHistogram<{ browser: string }>(
   "ovr.capture.page.boot.duration.seconds",
   {
-    description:
-      "Time to open a page and load Storybook in a new capture browser, once per capture group.",
+    description: "Time to load Storybook in a capture browser.",
     unit: "s",
     buckets: DURATION_BUCKETS_SECONDS,
   },
@@ -47,10 +45,7 @@ export const capturePageBootDuration = createHistogram<{ browser: string }>(
 
 export const snapshotsCreated = createCounter<{ status: "queued" | "skipped" }>(
   "ovr.snapshots.created",
-  {
-    description:
-      "Snapshots a build created, by whether they will be captured or keep their baseline because their story was unaffected.",
-  },
+  { description: "Snapshots builds created, by whether they will be captured or skipped." },
 );
 
 export const browserRelaunches = createCounter<{ browser: string; reason: "timeout" | "closed" }>(

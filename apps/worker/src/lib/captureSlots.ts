@@ -7,7 +7,6 @@ export type CaptureSlots = {
   observe: () => () => void;
 };
 
-// Busy against total slots shows whether captures are waiting for capacity this worker doesn't have.
 export const createCaptureSlots = (slots: number): CaptureSlots => {
   let busy = 0;
 
