@@ -68,11 +68,12 @@ export const updateProcessingStatus = async (
   return build;
 };
 
+// Returns the build only to the call that moved it out of queued, so its start is handled once.
 export const startProcessing = async (id: string) => {
   const [build] = await db
     .update(builds)
     .set({ processingStatus: "processing", ...markStarted() })
-    .where(and(eq(builds.id, id), inArray(builds.processingStatus, ["queued", "processing"])))
+    .where(and(eq(builds.id, id), eq(builds.processingStatus, "queued")))
     .returning();
   return build;
 };

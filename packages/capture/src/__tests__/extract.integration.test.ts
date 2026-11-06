@@ -592,6 +592,26 @@ describe("extractBuild", () => {
       );
     });
 
+    test("counts the snapshots it will capture and the ones that keep their baseline", async ({
+      mainBuild,
+      featureBuild,
+      metrics,
+    }) => {
+      await seedBaseline(mainBuild, "story-a", desktop);
+      await seedBaseline(mainBuild, "story-a", mobile);
+      await storage.uploadFile(
+        featureBuild.artifactPath,
+        await buildArtifactTarball(),
+        "application/gzip",
+      );
+
+      await extractBuild(featureBuild.id, targets, viewports, 0.05, ["story-a"]);
+
+      const body = await metrics.scrape();
+      expect(body).toContain('ovr_snapshots_created_total{status="queued"} 2');
+      expect(body).toContain('ovr_snapshots_created_total{status="skipped"} 2');
+    });
+
     test("captures an unaffected target on any viewport that has no baseline yet", async ({
       mainBuild,
       featureBuild,

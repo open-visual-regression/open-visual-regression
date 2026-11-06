@@ -2,7 +2,7 @@ import { captureBuildGroup, enqueueSnapshotDiff } from "@ovr/capture/snapshots";
 import { dbClient } from "@ovr/db/client";
 import type { CaptureGroupJobPayload } from "@ovr/queue";
 
-type CaptureGroupJob = { data: CaptureGroupJobPayload };
+type CaptureGroupJob = { data: CaptureGroupJobPayload; timestamp?: number };
 
 export const createRun =
   (shutdownSignal: AbortSignal) =>
@@ -10,6 +10,7 @@ export const createRun =
     await captureBuildGroup(job.data.buildId, job.data.browser, job.data.snapshotIds, {
       shutdownSignal,
       externalRequestAllowlist: job.data.externalRequestAllowlist,
+      queuedAt: job.timestamp,
     });
   };
 

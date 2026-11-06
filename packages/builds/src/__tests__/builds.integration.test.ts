@@ -1430,7 +1430,7 @@ describe("builds", () => {
 
     describe("timings", () => {
       const seedTimedBuild = async (options: SeedRebuildOptions) => {
-        const seeded = await seedFinalizedBuild({ ...options, processingStatus: "processing" });
+        const seeded = await seedFinalizedBuild({ ...options, processingStatus: "queued" });
         await dbClient.builds.startProcessing(seeded.buildId);
         const finished = await dbClient.builds.updateProcessingStatus(seeded.buildId, "success");
         assert(finished?.startedAt && finished.completedAt);
