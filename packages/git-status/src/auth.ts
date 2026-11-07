@@ -1,5 +1,6 @@
 import type { GitAuthType, GitProvider } from "@ovr/db/schema";
 
+import { githubAppAuth } from "./authMethods/githubApp";
 import { staticTokenAuth } from "./authMethods/staticToken";
 import type { AuthMethod, IntegrationAuth, ResolvedToken } from "./authMethods/types";
 import type { VerifyOutcome } from "./publisher";
@@ -8,7 +9,7 @@ export type { IntegrationAuth, ResolvedToken };
 
 // Adapters only ever see the token, so new providers and auth methods are registered here.
 const authMethods: Record<GitProvider, Partial<Record<GitAuthType, AuthMethod>>> = {
-  github: { token: staticTokenAuth },
+  github: { token: staticTokenAuth, github_app: githubAppAuth },
 };
 
 const methodFor = ({ provider, authType }: IntegrationAuth): AuthMethod | undefined =>

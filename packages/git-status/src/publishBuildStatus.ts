@@ -130,16 +130,24 @@ export const publishBuildStatus = async (
     return;
   }
 
-  const request = adapter.buildRequest(
-    {
-      provider: integration.provider,
-      repoIdentifier: integration.repoIdentifier,
-      token: resolved.token,
-    },
-    { sha: build.commitSha, state, context: integration.checkContext, description, targetUrl },
-  );
+  const sendWithToken = (token: string) =>
+    deps.send(
+      adapter.buildRequest(
+        { provider: integration.provider, repoIdentifier: integration.repoIdentifier, token },
+        { sha: build.commitSha, state, context: integration.checkContext, description, targetUrl },
+      ),
+    );
 
-  const result = await deps.send(request);
+  let result: PublishOutcome = await sendWithToken(resolved.token);
+
+  // A cached token can be revoked before it expires.
+  if (result.outcome === "error" && result.httpStatus === 401 && resolved.invalidate) {
+    resolved.invalidate();
+    const refreshed = await deps.resolveToken(integration);
+    result = refreshed.ok
+      ? await sendWithToken(refreshed.token)
+      : { outcome: "error", error: refreshed.error, retryable: refreshed.retryable };
+  }
 
   await deps.recordPublication({
     buildId: build.id,
