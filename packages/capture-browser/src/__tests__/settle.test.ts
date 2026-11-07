@@ -221,6 +221,26 @@ describe("settlePage", () => {
     await expect(settlePage(page, activity, 10_000)).resolves.toBe(true);
   }, 30_000);
 
+  test("reports a request it gave up on", async () => {
+    const page = await newPage(await browser.newContext());
+    const activity = trackNetworkActivity(page, GIVE_UP_TIMEOUT_MS);
+
+    await page.goto(`${origin}/?image=/hang.png`, { waitUntil: "domcontentloaded" });
+    await settlePage(page, activity, 10_000);
+
+    expect(activity.abandoned.take()).toEqual([`${origin}/hang.png`]);
+  }, 30_000);
+
+  test("reports nothing once every request has finished", async () => {
+    const page = await newPage(await browser.newContext());
+    const activity = trackNetworkActivity(page, GIVE_UP_TIMEOUT_MS);
+
+    await page.goto(`${origin}/?image=/slow.png`, { waitUntil: "domcontentloaded" });
+    await settlePage(page, activity, 10_000);
+
+    expect(activity.abandoned.take()).toEqual([]);
+  }, 30_000);
+
   test("waits for a request that starts after a few renders", async () => {
     const page = await newPage(await browser.newContext());
     const activity = trackNetworkActivity(page);

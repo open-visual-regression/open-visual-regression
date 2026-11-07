@@ -9,11 +9,17 @@ import {
 
 const MIN_PAINT_BUDGET_MS = 250;
 
+export type AbandonedRequests = {
+  // Requests given up on since the last call.
+  take: () => string[];
+};
+
 export type NetworkActivity = {
   // How long a request or image can stay pending before it's given up on.
   abandonAfterMs: number;
   whenQuiet: (quietWindowMs: number, timeoutMs: number) => Promise<boolean>;
   requestCount: () => number;
+  abandoned: AbandonedRequests;
   dispose: () => void;
 };
 
@@ -34,6 +40,7 @@ export const trackNetworkActivity = (
   const pending = new Map<Request, ReturnType<typeof setTimeout>>();
   const listeners = new Set<() => void>();
   let requestCount = 0;
+  let abandoned = new Set<string>();
 
   const notify = () => {
     for (const listener of listeners) {
@@ -57,7 +64,10 @@ export const trackNetworkActivity = (
     requestCount += 1;
     pending.set(
       request,
-      setTimeout(() => remove(request), abandonAfterMs),
+      setTimeout(() => {
+        abandoned.add(request.url());
+        remove(request);
+      }, abandonAfterMs),
     );
     notify();
   };
@@ -92,6 +102,13 @@ export const trackNetworkActivity = (
         onChange();
       }),
     requestCount: () => requestCount,
+    abandoned: {
+      take: () => {
+        const urls = [...abandoned].sort();
+        abandoned = new Set();
+        return urls;
+      },
+    },
     dispose: () => {
       page.off("request", add);
       page.off("requestfinished", remove);

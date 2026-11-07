@@ -48,6 +48,7 @@ import {
   browserRelaunches,
   capturePageBootDuration,
   diffsCompared,
+  requestsAbandoned,
   snapshotCaptureDuration,
   snapshotCapturePhaseDuration,
   snapshotsCaptured,
@@ -377,6 +378,15 @@ const captureSnapshotOnPage = async (
       });
     }
 
+    const abandoned = networkActivity.abandoned.take();
+    if (abandoned.length > 0) {
+      requestsAbandoned.add(abandoned.length, {});
+      pageLogState.logs.push({
+        level: "warning",
+        message: `Requests to ${abandoned.join(", ")} never finished, so the screenshot may be missing them.`,
+      });
+    }
+
     return {
       snapshotId,
       browser: snapshot.browser,
@@ -680,6 +690,7 @@ export const captureBuildGroup = async (
               capturePage.pageLogState.logs = [];
               capturePage.pageLogState.hasPageError = false;
               capturePage.blockedHosts.take();
+              capturePage.networkActivity.abandoned.take();
             }
           }
 

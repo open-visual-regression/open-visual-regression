@@ -154,6 +154,7 @@ histogram_quantile(0.95, sum by (le) (rate(ovr_build_capture_wait_seconds_bucket
 | `ovr_snapshot_capture_duration_seconds` | Histogram | `browser` | Time to capture and store one snapshot. |
 | `ovr_snapshot_capture_phase_duration_seconds` | Histogram | `browser`, `phase` | Time each part of a capture took: `render`, `settle`, `wait` (the story's `waitForTimeout`), `screenshot`, or `upload`. |
 | `ovr_snapshots_settled_total` | Counter | `outcome` | Snapshots whose page went `quiet`, or `timed_out` with work still pending. |
+| `ovr_capture_requests_abandoned_total` | Counter | | Requests a snapshot was captured without because they never finished loading. |
 | `ovr_capture_page_boot_duration_seconds` | Histogram | `browser` | Time to load Storybook, once per capture group. |
 | `ovr_snapshots_created_total` | Counter | `status` | Snapshots created, by `queued` or `skipped` (unaffected story). |
 | `ovr_capture_browser_relaunches_total` | Counter | `browser`, `reason` | Times a browser was restarted mid-build because a story hung (`timeout`) or the browser crashed (`closed`). |

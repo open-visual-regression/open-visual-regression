@@ -317,6 +317,40 @@ describe("snapshots", () => {
       });
     });
 
+    describe("requests that never finish", () => {
+      const iframeWithStoryImage = (src: string) =>
+        IFRAME_HTML.replace(
+          'for (const listener of this._l["storyRendered"] || []) {',
+          `document.getElementById("storybook-root").innerHTML = '<img src="${src}" />';
+          for (const listener of this._l["storyRendered"] || []) {`,
+        );
+
+      test("should log a warning naming the request and count it", async ({
+        mainBuild,
+        captureConfiguration,
+        stuckImageUrl,
+        metrics,
+      }) => {
+        await uploadArtifactWithIframe(mainBuild.artifactPath, iframeWithStoryImage(stuckImageUrl));
+        const [snapshot] = await dbClient.snapshots.createMany({
+          values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" }],
+        });
+
+        await captureBuildGroup(mainBuild.id, captureConfiguration.browser, [snapshot!.id]);
+
+        expect(await dbClient.snapshots.findById(snapshot!.id)).toMatchObject({
+          status: "success",
+        });
+        expect(await dbClient.snapshotLogs.findBySnapshot(snapshot!.id)).toContainEqual(
+          expect.objectContaining({
+            level: "warning",
+            message: `Requests to ${stuckImageUrl} never finished, so the screenshot may be missing them.`,
+          }),
+        );
+        expect(await metrics.scrape()).toContain("ovr_capture_requests_abandoned_total 1");
+      }, 60_000);
+    });
+
     describe("waitForTimeout", () => {
       const LATE_LOG = "late data loaded";
       const iframeWithLateLog = IFRAME_HTML.replace(
