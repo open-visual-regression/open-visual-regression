@@ -89,8 +89,7 @@ export const GitIntegrationForm = ({
 
   const provider = useWatch({ control, name: "provider" });
   const authType = useWatch({ control, name: "authType" });
-  // Keep the integration's current auth type selectable even if the deployment stopped offering
-  // it, so it can be switched to one that works.
+  // Kept even if no longer offered, so the integration can be switched off it.
   const authTypeOptions = [
     ...new Set([
       ...availableAuthTypes[provider],
