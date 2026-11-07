@@ -1,20 +1,27 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { headers } from "next/headers";
+import { usePathname } from "next/navigation";
 import { vi } from "vitest";
 
 import { mocks } from "@ovr/mocks";
 
 import { auth } from "@/lib/auth/auth";
+import { orpcServerClient } from "@/lib/orpc/server";
 import { serverClient } from "@/lib/router";
+import { REQUEST_PATH_HEADER } from "@/lib/utils/redirects";
 import { describe, expect, it, render, screen } from "@/test-utils";
 
-import { NavigationSlot } from "../NavigationSlot";
+import { NavigationBarContainer } from "../NavigationBarContainer";
 
 vi.mock("next/headers");
 vi.mock("next/navigation");
 vi.mock("@/lib/auth/auth");
 vi.mock("@/lib/router");
+vi.mock("@/lib/orpc/server");
 
+const mockHeaders = vi.mocked(headers);
 const mockGetSession = vi.mocked(auth.api.getSession);
-const mockGetOne = vi.mocked(serverClient.projects.getOne);
+const mockGetProject = vi.mocked(orpcServerClient.projects.getOne);
 const mockList = vi.mocked(serverClient.projects.list);
 const mockCount = vi.mocked(serverClient.projects.count);
 const mockBuildsList = vi.mocked(serverClient.builds.list);
@@ -23,30 +30,41 @@ mockList.mockResolvedValue([null, { projects: [], nextCursor: null }]);
 mockCount.mockResolvedValue([null, { total: 0 }]);
 mockBuildsList.mockResolvedValue([null, { builds: [], total: 0, nextCursor: null }]);
 
-describe("NavigationSlot", () => {
+const renderAtPath = async (pathname: string) => {
+  mockHeaders.mockResolvedValue(new Headers({ [REQUEST_PATH_HEADER]: pathname }));
+  vi.mocked(usePathname).mockReturnValue(pathname);
+
+  return render(await NavigationBarContainer(), {
+    wrapper: ({ children }) => (
+      <QueryClientProvider client={new QueryClient()}>{children}</QueryClientProvider>
+    ),
+  });
+};
+
+describe("NavigationBarContainer", () => {
   it("should render breadcrumbs for the overview page", async () => {
     mockGetSession.mockResolvedValue({
       user: mocks.user.generateAuthUser({ name: "Jane Doe" }),
       session: mocks.session.generateSession(),
     });
 
-    render(await NavigationSlot({ pathname: [] }));
+    await renderAtPath("/");
 
     expect(screen.getByText("overview")).toBeVisible();
     expect(screen.getByLabelText("User menu for Jane Doe")).toBeVisible();
   });
 
-  it("should resolve the project name in the breadcrumb trail", async () => {
+  it("should resolve the project name for the requested path on the server", async () => {
     const project = mocks.project.generateProject({ name: "D's Construction" });
     mockGetSession.mockResolvedValue({
       user: mocks.user.generateAuthUser(),
       session: mocks.session.generateSession(),
     });
-    mockGetOne.mockResolvedValue([null, { project }]);
+    mockGetProject.mockResolvedValue({ project });
 
-    render(await NavigationSlot({ pathname: ["projects", project.id, "settings"] }));
+    await renderAtPath(`/projects/${project.id}/settings`);
 
-    expect(screen.getByText("D's Construction")).toBeVisible();
+    expect(screen.getByRole("link", { name: "D's Construction" })).toBeVisible();
     expect(screen.getByText("settings")).toBeVisible();
   });
 });
