@@ -349,6 +349,47 @@ describe("snapshots", () => {
         );
         expect(await metrics.scrape()).toContain("ovr_capture_requests_abandoned_total 1");
       }, 60_000);
+
+      test("should stop waiting for a request after OVR_CAPTURE_REQUEST_TIMEOUT_MS", async ({
+        mainBuild,
+        captureConfiguration,
+        stuckImageUrl,
+        metrics,
+      }) => {
+        vi.stubEnv("OVR_CAPTURE_REQUEST_TIMEOUT_MS", "1000");
+        await uploadArtifactWithIframe(mainBuild.artifactPath, iframeWithStoryImage(stuckImageUrl));
+        const [snapshot] = await dbClient.snapshots.createMany({
+          values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" }],
+        });
+
+        await captureBuildGroup(mainBuild.id, captureConfiguration.browser, [snapshot!.id]);
+
+        expect(await metrics.scrape()).toContain(
+          'ovr_snapshot_capture_phase_duration_seconds_bucket{browser="chromium",phase="settle",le="2.5"} 1',
+        );
+      }, 60_000);
+
+      test("should stop waiting for a request after 5 seconds by default", async ({
+        mainBuild,
+        captureConfiguration,
+        stuckImageUrl,
+        metrics,
+      }) => {
+        await uploadArtifactWithIframe(mainBuild.artifactPath, iframeWithStoryImage(stuckImageUrl));
+        const [snapshot] = await dbClient.snapshots.createMany({
+          values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" }],
+        });
+
+        await captureBuildGroup(mainBuild.id, captureConfiguration.browser, [snapshot!.id]);
+
+        const body = await metrics.scrape();
+        expect(body).toContain(
+          'ovr_snapshot_capture_phase_duration_seconds_bucket{browser="chromium",phase="settle",le="2.5"} 0',
+        );
+        expect(body).toContain(
+          'ovr_snapshot_capture_phase_duration_seconds_bucket{browser="chromium",phase="settle",le="10"} 1',
+        );
+      }, 60_000);
     });
 
     describe("waitForTimeout", () => {
