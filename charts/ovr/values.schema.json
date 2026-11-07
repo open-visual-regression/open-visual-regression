@@ -262,6 +262,10 @@
           "type": ["string", "integer"],
           "description": "Snapshots per capture group. Empty string uses the app default."
         },
+        "requestTimeoutMs": {
+          "type": ["string", "integer"],
+          "description": "Milliseconds to wait for a story's request before capturing without it. Empty string uses the app default."
+        },
         "diffConcurrency": {
           "type": ["string", "integer"],
           "description": "Snapshots compared against their baseline at once. Empty string uses the app default."

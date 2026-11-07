@@ -167,14 +167,16 @@ describe("builds", () => {
       expect(updated?.completedAt).toBeNull();
     });
 
-    test("keeps the first start time when called again", async ({ build }) => {
+    test("returns nothing to a later call, so only one call starts the build", async ({
+      build,
+    }) => {
       const first = await dbClient.builds.startProcessing(build.id);
-      const retried = await dbClient.builds.startProcessing(build.id);
 
-      expect(retried?.startedAt).toBe(first?.startedAt);
+      expect(await dbClient.builds.startProcessing(build.id)).toBeUndefined();
+      expect((await dbClient.builds.findById(build.id))?.startedAt).toBe(first?.startedAt);
     });
 
-    test.for(["success", "error", "canceled"] as const)(
+    test.for(["processing", "success", "error", "canceled"] as const)(
       "leaves a %s build as it is",
       async (processingStatus, { build }) => {
         await dbClient.builds.updateProcessingStatus(build.id, processingStatus);

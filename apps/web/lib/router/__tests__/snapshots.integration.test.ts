@@ -754,6 +754,62 @@ describe("snapshots", () => {
       expect(statuses?.statuses).toContain("processing");
     });
 
+    test("lists each project's own latest main build when projects use different main branches", async ({
+      admin,
+    }) => {
+      const { projectId, build: latestMain } = await createProjectAndBuild(admin, "main");
+      const { projectId: trunkProjectId, build: mainOnTrunkProject } = await createProjectAndBuild(
+        admin,
+        "main",
+      );
+      await db
+        .update(projects)
+        .set({ gitMainBranch: "trunk" })
+        .where(eq(projects.id, trunkProjectId));
+      const createBuild = async (buildProjectId: string, branch: string) =>
+        (await dbClient.builds.create({
+          projectId: buildProjectId,
+          branch,
+          commitSha: "b".repeat(40),
+          artifactPath: "builds/seed/artifact",
+          createdBy: admin.id,
+        }))!;
+      const latestTrunk = await createBuild(trunkProjectId, "trunk");
+      const trunkOnMainProject = await createBuild(projectId, "trunk");
+      const otherBuild = await createOtherOrganizationBuild(admin);
+      const firefox = { ...VIEWPORT, browser: "firefox", viewportName: "firefox desktop" };
+      const [mainCard, trunkCard] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: latestMain.id, ...VIEWPORT },
+          { buildId: latestTrunk.id, ...firefox },
+          { buildId: mainOnTrunkProject.id, ...VIEWPORT, viewportName: "branch" },
+          { buildId: trunkOnMainProject.id, ...VIEWPORT, viewportName: "branch" },
+          { buildId: otherBuild!.id, ...VIEWPORT, viewportName: "other" },
+        ].map((target) => ({
+          ...target,
+          targetId: "card",
+          targetTitle: "Card",
+          targetName: "Default",
+          status: "success" as const,
+        })),
+      });
+      const [listError, listed] = await serverClient.snapshots.list({ sort: "name" });
+      const [, trunkOnly] = await serverClient.snapshots.list({
+        projectIds: [trunkProjectId],
+        sort: "name",
+      });
+      const [, browsers] = await serverClient.snapshots.listBrowsers({});
+      const [, viewports] = await serverClient.snapshots.listViewports({});
+
+      expect(listError).toBeNull();
+      expect(listed?.snapshots.map(({ id }) => id)).toEqual([mainCard!.id, trunkCard!.id]);
+      expect(listed?.total).toBe(2);
+      expect(trunkOnly?.snapshots.map(({ id }) => id)).toEqual([trunkCard!.id]);
+      expect(trunkOnly?.total).toBe(1);
+      expect(browsers?.browsers).toEqual(["chromium", "firefox"]);
+      expect(viewports?.viewports).toEqual(["desktop", "firefox desktop"]);
+    });
+
     test("filters by project and by current baseline, together with the other filters", async ({
       admin,
     }) => {
