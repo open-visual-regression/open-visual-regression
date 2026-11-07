@@ -18,10 +18,13 @@ code instead).
 ```bash
 # 0. one-time: secrets compose needs
 cp .env.example .env
-# set BETTER_AUTH_SECRET and OVR_GIT_TOKEN_ENCRYPTION_KEY (each: openssl rand -base64 32)
+# set BETTER_AUTH_SECRET and OVR_GIT_TOKEN_ENCRYPTION_KEY (each: openssl rand -base64 32),
+# and a GitHub App key for the fake GitHub:
+echo "OVR_GITHUB_APP_PRIVATE_KEY='$(openssl genrsa 2048 2>/dev/null | awk '{printf "%s\\n", $0}')'" >> .env
 
-# 1. build + start the full stack from source (web + worker + db + valkey + storage)
-docker compose up -d --build
+# 1. build + start the full stack from source (web + worker + db + valkey + storage,
+#    and a fake GitHub the stack publishes commit statuses to)
+docker compose --env-file .env --env-file apps/e2e/github-app/github-app.env --profile github-app up -d --build
 
 # 2. build the artifacts the CLI ingests
 pnpm --filter @ovr/ui build-storybook
@@ -56,6 +59,15 @@ pnpm --filter @ovr/e2e test:e2e
 
 Point the suite at any running deployment with `PLAYWRIGHT_BASE_URL`. Override the
 ingested artifacts with `OVR_CLI_ENTRY` / `OVR_STORYBOOK_DIR` / `OVR_STORYBOOK_PKG_DIR`.
+
+## GitHub App
+
+`tests/github-app.spec.ts` covers publishing commit statuses as a GitHub App. The
+`github-app` compose profile runs `github-app/fakeGitHub.ts`, a fake of the GitHub
+endpoints OVR calls, and `github-app.env` points the stack at it with
+`OVR_GITHUB_API_URL`. The specs read what it received, and change how it answers,
+through its `/_fake` endpoints at `http://localhost:4010` (override with
+`OVR_E2E_GITHUB_URL`).
 
 ## SSO suite
 

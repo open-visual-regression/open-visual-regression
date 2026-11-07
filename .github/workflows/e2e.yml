@@ -41,7 +41,7 @@ jobs:
         include:
           - name: E2E
             base_url: http://localhost:3000
-            compose_args: ""
+            compose_args: --env-file apps/e2e/github-app/github-app.env --profile github-app
             test_script: test:e2e
             build_artifacts: true
             artifact_suffix: ""
@@ -67,6 +67,7 @@ jobs:
           {
             echo "BETTER_AUTH_SECRET=$(openssl rand -base64 32)"
             echo "OVR_GIT_TOKEN_ENCRYPTION_KEY=$(openssl rand -base64 32)"
+            echo "OVR_GITHUB_APP_PRIVATE_KEY='$(openssl genrsa 2048 2>/dev/null | awk '{printf "%s\\n", $0}')'"
           } >> .env
       - name: Log in to GHCR
         if: inputs.mode == 'pull'

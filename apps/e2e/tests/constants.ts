@@ -22,6 +22,9 @@ export const TEST_ADMIN = {
   password: "e2e-password-123",
 } as const;
 
+export const getFakeGitHubURL = (): string =>
+  process.env.OVR_E2E_GITHUB_URL ?? "http://localhost:4010";
+
 export const getBaseURL = (): string => process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000";
 
 export type SeedData = {

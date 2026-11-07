@@ -7,6 +7,7 @@ import { test as base } from "@playwright/test";
 import { SEED_ARTIFACT, type SeedData } from "./constants";
 import { BuildPage } from "./pages/BuildPage";
 import { ForbiddenPage } from "./pages/ForbiddenPage";
+import { GitIntegrationSettingsPage } from "./pages/GitIntegrationSettingsPage";
 import { IdentityProviderLoginPage } from "./pages/IdentityProviderLoginPage";
 import { JobsSettingsPage } from "./pages/JobsSettingsPage";
 import { OrganizationSettingsPage } from "./pages/OrganizationSettingsPage";
@@ -17,6 +18,7 @@ import { SnapshotReviewPage } from "./pages/SnapshotReviewPage";
 import { SnapshotsPage } from "./pages/SnapshotsPage";
 import { UsersSettingsPage } from "./pages/UsersSettingsPage";
 import { seedClientForContext, type SeedClient } from "./seed/client";
+import { fakeGitHub, type FakeGitHub } from "./support/fakeGitHub";
 import { spawnIngest, type IngestOptions } from "./support/ingest";
 
 type TestFixtures = {
@@ -33,6 +35,8 @@ type TestFixtures = {
   identityProviderLoginPage: IdentityProviderLoginPage;
   forbiddenPage: ForbiddenPage;
   usersSettingsPage: UsersSettingsPage;
+  gitIntegrationSettingsPage: GitIntegrationSettingsPage;
+  fakeGitHub: FakeGitHub;
   ingestBuild: (options: IngestOptions & { commitSha: string }) => ChildProcess;
 };
 
@@ -77,6 +81,14 @@ export const test = base.extend<TestFixtures>({
   },
   usersSettingsPage: async ({ page }, use) => {
     await use(new UsersSettingsPage(page));
+  },
+  gitIntegrationSettingsPage: async ({ page }, use) => {
+    await use(new GitIntegrationSettingsPage(page));
+  },
+  // eslint-disable-next-line no-empty-pattern -- fixture takes no dependencies
+  fakeGitHub: async ({}, use) => {
+    await fakeGitHub.reset();
+    await use(fakeGitHub);
   },
   // eslint-disable-next-line no-empty-pattern -- fixture takes no dependencies
   ingestBuild: async ({}, use) => {

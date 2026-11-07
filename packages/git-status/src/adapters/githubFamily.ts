@@ -19,7 +19,7 @@ const headers = (token: string): Record<string, string> => ({
 export const githubApiBase = (provider: GitProvider): string => {
   switch (provider) {
     case "github":
-      return "https://api.github.com";
+      return (process.env.OVR_GITHUB_API_URL || "https://api.github.com").replace(/\/+$/, "");
   }
 };
 
