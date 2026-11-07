@@ -12,6 +12,7 @@ x-app-env: &app-env
   OVR_GIT_TOKEN_ENCRYPTION_KEY: ${OVR_GIT_TOKEN_ENCRYPTION_KEY:?set OVR_GIT_TOKEN_ENCRYPTION_KEY in your .env}
   OVR_GITHUB_APP_ID: ${OVR_GITHUB_APP_ID:-}
   OVR_GITHUB_APP_PRIVATE_KEY: ${OVR_GITHUB_APP_PRIVATE_KEY:-}
+  OVR_GITHUB_API_URL: ${OVR_GITHUB_API_URL:-}
 
 services:
   db:
@@ -225,6 +226,19 @@ services:
       - --skip-auth-route=^/api/rpc/
     ports:
       - 4180:4180
+
+  fake-github:
+    image: node:24-alpine
+    profiles: ["github-app"]
+    restart: unless-stopped
+    command: ["node", "/app/fakeGitHub.ts"]
+    environment:
+      OVR_GITHUB_APP_PRIVATE_KEY: ${OVR_GITHUB_APP_PRIVATE_KEY:-}
+      PORT: 4010
+    volumes:
+      - ./apps/e2e/github-app/fakeGitHub.ts:/app/fakeGitHub.ts:ro
+    ports:
+      - 4010:4010
 
   adminer:
     image: adminer:5

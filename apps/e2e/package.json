@@ -7,8 +7,8 @@
     "test:e2e": "playwright test",
     "test:e2e:sso": "playwright test --config playwright.sso.config.ts",
     "tsc": "tsc --noEmit",
-    "lint": "oxlint tests",
-    "format": "oxfmt tests"
+    "lint": "oxlint tests github-app",
+    "format": "oxfmt tests github-app"
   },
   "dependencies": {
     "@open-visual-regression/cli": "workspace:*",
