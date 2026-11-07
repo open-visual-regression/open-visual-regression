@@ -7,6 +7,7 @@ type PartialClient<T> = { [K in keyof T]?: Partial<T[K]> };
 
 export const orpcServerClient = {
   builds: {
+    getOne: vi.fn(),
     list: vi.fn(),
     listStatuses: vi.fn(),
     listBranches: vi.fn(),
@@ -14,9 +15,11 @@ export const orpcServerClient = {
     listCommitShas: vi.fn(),
   },
   projects: {
+    getOne: vi.fn(),
     list: vi.fn(),
   },
   snapshots: {
+    getOne: vi.fn(),
     list: vi.fn(),
     listStatuses: vi.fn(),
     listBrowsers: vi.fn(),

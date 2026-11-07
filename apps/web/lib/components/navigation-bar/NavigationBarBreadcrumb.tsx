@@ -9,11 +9,30 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@ovr/ui/components/breadcrumb";
+import { Skeleton } from "@ovr/ui/components/skeleton";
 
-import type { BreadcrumbSegment } from "./getBreadcrumbSegments";
+type BreadcrumbSegment = {
+  label: string;
+  href?: string;
+  isPending?: boolean;
+};
 
 type NavigationBarBreadcrumbProps = {
   segments: BreadcrumbSegment[];
+};
+
+const NavigationBarBreadcrumbLabel = ({ label, href, isPending }: BreadcrumbSegment) => {
+  if (isPending) {
+    return <Skeleton className="h-3 w-24" />;
+  }
+
+  return href ? (
+    <BreadcrumbLink render={<Link href={href} />} className="block max-w-75 truncate">
+      {label}
+    </BreadcrumbLink>
+  ) : (
+    <BreadcrumbPage className="block max-w-75 truncate">{label}</BreadcrumbPage>
+  );
 };
 
 const NavigationBarBreadcrumb = ({ segments }: NavigationBarBreadcrumbProps) => (
@@ -23,16 +42,7 @@ const NavigationBarBreadcrumb = ({ segments }: NavigationBarBreadcrumbProps) => 
         <Fragment key={`${segment.label}-${index}`}>
           {index > 0 ? <BreadcrumbSeparator className="shrink-0" /> : null}
           <BreadcrumbItem className="min-w-0">
-            {segment.href ? (
-              <BreadcrumbLink
-                render={<Link href={segment.href} />}
-                className="block max-w-75 truncate"
-              >
-                {segment.label}
-              </BreadcrumbLink>
-            ) : (
-              <BreadcrumbPage className="block max-w-75 truncate">{segment.label}</BreadcrumbPage>
-            )}
+            <NavigationBarBreadcrumbLabel {...segment} />
           </BreadcrumbItem>
         </Fragment>
       ))}
@@ -41,4 +51,4 @@ const NavigationBarBreadcrumb = ({ segments }: NavigationBarBreadcrumbProps) => 
 );
 
 export { NavigationBarBreadcrumb };
-export type { NavigationBarBreadcrumbProps };
+export type { BreadcrumbSegment, NavigationBarBreadcrumbProps };
