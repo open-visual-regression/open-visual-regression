@@ -1,5 +1,13 @@
 # @ovr/db
 
+## 0.4.10
+
+### Patch Changes
+
+- [#503](https://github.com/open-visual-regression/open-visual-regression/pull/503) [`262896c`](https://github.com/open-visual-regression/open-visual-regression/commit/262896c9d13281d663b35043d978cf28d3577d20) Thanks [@tgfischer](https://github.com/tgfischer)! - New metrics show how long builds of each size wait to start capturing, where capture time goes, and how busy capture workers are. See the metrics docs for the full list.
+
+- [#502](https://github.com/open-visual-regression/open-visual-regression/pull/502) [`35a89cd`](https://github.com/open-visual-regression/open-visual-regression/commit/35a89cdeba96008d143a4a745e614e25170fa017) Thanks [@tgfischer](https://github.com/tgfischer)! - The snapshots page loads quickly again on large databases, instead of scanning every snapshot. Upgrading adds two small indexes on in-flight snapshots and pending diffs.
+
 ## 0.4.9
 
 ### Patch Changes

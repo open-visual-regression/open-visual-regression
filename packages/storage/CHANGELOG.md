@@ -1,5 +1,12 @@
 # @ovr/storage
 
+## 0.1.2
+
+### Patch Changes
+
+- Updated dependencies [[`262896c`](https://github.com/open-visual-regression/open-visual-regression/commit/262896c9d13281d663b35043d978cf28d3577d20)]:
+  - @ovr/metrics@0.1.1
+
 ## 0.1.1
 
 ### Patch Changes
