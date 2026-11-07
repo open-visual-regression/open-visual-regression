@@ -1,5 +1,24 @@
 # @ovr/capture
 
+## 0.3.22
+
+### Patch Changes
+
+- [#503](https://github.com/open-visual-regression/open-visual-regression/pull/503) [`262896c`](https://github.com/open-visual-regression/open-visual-regression/commit/262896c9d13281d663b35043d978cf28d3577d20) Thanks [@tgfischer](https://github.com/tgfischer)! - New metrics show how long builds of each size wait to start capturing, where capture time goes, and how busy capture workers are. See the metrics docs for the full list.
+
+- [#506](https://github.com/open-visual-regression/open-visual-regression/pull/506) [`b878f4b`](https://github.com/open-visual-regression/open-visual-regression/commit/b878f4b37b5b0d6b0a0a6f00aca707d18293ffb2) Thanks [@tgfischer](https://github.com/tgfischer)! - Capture stops waiting for a request after 5 seconds instead of 15. Set `OVR_CAPTURE_REQUEST_TIMEOUT_MS=15000` on the worker to keep the previous limit.
+
+- [#505](https://github.com/open-visual-regression/open-visual-regression/pull/505) [`cdc9485`](https://github.com/open-visual-regression/open-visual-regression/commit/cdc9485f1edadb4a2005e0c1c90b3b30248defb9) Thanks [@tgfischer](https://github.com/tgfischer)! - A snapshot's logs now list any request that never finished loading, so you can find the broken URLs its screenshot may be missing.
+
+- Updated dependencies [[`262896c`](https://github.com/open-visual-regression/open-visual-regression/commit/262896c9d13281d663b35043d978cf28d3577d20), [`b878f4b`](https://github.com/open-visual-regression/open-visual-regression/commit/b878f4b37b5b0d6b0a0a6f00aca707d18293ffb2), [`cdc9485`](https://github.com/open-visual-regression/open-visual-regression/commit/cdc9485f1edadb4a2005e0c1c90b3b30248defb9), [`8bec07e`](https://github.com/open-visual-regression/open-visual-regression/commit/8bec07ed623a5324f219f867a469cdf4f8298668), [`35a89cd`](https://github.com/open-visual-regression/open-visual-regression/commit/35a89cdeba96008d143a4a745e614e25170fa017)]:
+  - @ovr/builds@0.2.14
+  - @ovr/metrics@0.1.1
+  - @ovr/db@0.4.10
+  - @ovr/capture-browser@0.0.8
+  - @ovr/reviews@0.1.29
+  - @ovr/storage@0.1.2
+  - @ovr/queue@0.3.2
+
 ## 0.3.21
 
 ### Patch Changes
