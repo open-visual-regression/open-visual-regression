@@ -1,6 +1,7 @@
 import { it, vi } from "vitest";
 
 import { resolveAdapter } from "../adapters";
+import { resolveToken } from "../auth";
 import {
   GitStatusPublishError,
   publishBuildStatus,
@@ -19,6 +20,7 @@ const build = {
 const integration = {
   provider: "github" as const,
   repoIdentifier: "acme/web",
+  authType: "token" as const,
   encryptedToken: "encrypted",
   checkContext: "ovr/visual-review",
   statusChecksEnabled: true,
@@ -33,9 +35,9 @@ const makeDeps = (overrides: Partial<PublishBuildStatusDeps> = {}): PublishBuild
     .fn<PublishBuildStatusDeps["recordPublication"]>()
     .mockResolvedValue(undefined),
   resolveAdapter,
-  tryDecryptToken: vi
-    .fn<PublishBuildStatusDeps["tryDecryptToken"]>()
-    .mockReturnValue("plain-token"),
+  resolveToken: vi
+    .fn<PublishBuildStatusDeps["resolveToken"]>()
+    .mockResolvedValue({ ok: true, token: "plain-token" }),
   send: vi
     .fn<PublishBuildStatusDeps["send"]>()
     .mockResolvedValue({ outcome: "ok", httpStatus: 201, retryable: false }),
@@ -107,6 +109,28 @@ describe("publishBuildStatus", () => {
     expect(deps.recordPublication).toHaveBeenCalled();
   });
 
+  test("records a terminal error without sending when the stored token can't be decrypted", async ({
+    encryptionKey: _,
+  }) => {
+    const deps = makeDeps({
+      findIntegration: vi
+        .fn<PublishBuildStatusDeps["findIntegration"]>()
+        .mockResolvedValue({ ...integration, encryptedToken: "not-a-ciphertext" }),
+      resolveToken,
+    });
+
+    await expect(publishBuildStatus("build-1", deps)).resolves.toBeUndefined();
+
+    expect(deps.send).not.toHaveBeenCalled();
+    expect(deps.recordPublication).toHaveBeenCalledWith(
+      expect.objectContaining({
+        outcome: "error",
+        httpStatus: null,
+        error: "stored token could not be decrypted, re-enter it",
+      }),
+    );
+  });
+
   it("never passes the encrypted token to the adapter", async () => {
     const deps = makeDeps();
     await publishBuildStatus("build-1", deps);
@@ -141,9 +165,13 @@ describe("publishBuildStatus", () => {
 
     test("counts a status it could not send because the token would not decrypt", async ({
       metrics,
+      encryptionKey: _,
     }) => {
       const deps = makeDeps({
-        tryDecryptToken: vi.fn<PublishBuildStatusDeps["tryDecryptToken"]>().mockReturnValue(null),
+        findIntegration: vi
+          .fn<PublishBuildStatusDeps["findIntegration"]>()
+          .mockResolvedValue({ ...integration, encryptedToken: "not-a-ciphertext" }),
+        resolveToken,
       });
       await publishBuildStatus("build-1", deps);
 
