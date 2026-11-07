@@ -11,6 +11,7 @@ const meta: Meta<typeof GitIntegrationSection> = {
   tags: ["autodocs"],
   args: {
     projectId: "00000000-0000-7000-8000-000000000000",
+    availableAuthTypes: { github: ["token"] },
   },
   parameters: {
     nextjs: {
@@ -46,6 +47,24 @@ export const ChecksDisabled: Story = {
       repoIdentifier: "acme/web",
       statusChecksEnabled: false,
     }),
+  },
+};
+
+export const GitHubAppAvailable: Story = {
+  args: {
+    integration: null,
+    availableAuthTypes: { github: ["token", "github_app"] },
+  },
+};
+
+export const ConnectedWithGitHubApp: Story = {
+  args: {
+    integration: mocks.gitIntegration.generateGitIntegration({
+      repoIdentifier: "acme/web",
+      authType: "github_app",
+      hasToken: false,
+    }),
+    availableAuthTypes: { github: ["token", "github_app"] },
   },
 };
 

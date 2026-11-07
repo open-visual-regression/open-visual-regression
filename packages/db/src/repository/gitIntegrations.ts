@@ -12,7 +12,8 @@ type UpsertInput = {
   projectId: string;
   provider: typeof gitIntegrations.$inferInsert.provider;
   repoIdentifier: string;
-  encryptedToken: string;
+  authType: typeof gitIntegrations.$inferInsert.authType & {};
+  encryptedToken: string | null;
   checkContext: string;
 };
 
@@ -25,6 +26,7 @@ export const upsert = async (values: UpsertInput) => {
       set: {
         provider: values.provider,
         repoIdentifier: values.repoIdentifier,
+        authType: values.authType,
         encryptedToken: values.encryptedToken,
         checkContext: values.checkContext,
       },

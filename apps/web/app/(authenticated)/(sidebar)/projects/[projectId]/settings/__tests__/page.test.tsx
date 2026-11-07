@@ -29,7 +29,10 @@ const pageProps: ProjectSettingsPageProps = {
 
 describe("ProjectSettingsPage", () => {
   beforeEach(() => {
-    mockGetGitIntegration.mockResolvedValue([null, { integration: null }]);
+    mockGetGitIntegration.mockResolvedValue([
+      null,
+      { integration: null, availableAuthTypes: { github: ["token"] } },
+    ]);
   });
 
   it("should show the settings page for admins with no api keys", async () => {

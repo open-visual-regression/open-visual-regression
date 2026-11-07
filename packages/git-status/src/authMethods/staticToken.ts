@@ -21,6 +21,7 @@ const resolveToken = async ({ encryptedToken }: IntegrationAuth): Promise<Resolv
 };
 
 export const staticTokenAuth: AuthMethod = {
+  isAvailable: () => true,
   resolveToken,
   verify: async (integration) => {
     const resolved = await resolveToken(integration);

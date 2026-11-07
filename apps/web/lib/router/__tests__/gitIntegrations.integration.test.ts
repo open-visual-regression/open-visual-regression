@@ -42,6 +42,29 @@ describe("gitIntegrations", () => {
       expect(error).toBeNull();
       expect(result?.integration).toBeNull();
     });
+
+    test("should offer only token auth when the deployment has no GitHub App", async ({
+      admin: _,
+    }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+
+      const [, result] = await serverClient.gitIntegrations.get({
+        projectId: addResult!.projectId,
+      });
+      expect(result?.availableAuthTypes).toEqual({ github: ["token"] });
+    });
+
+    test("should offer GitHub App auth once the deployment has an App", async ({
+      admin: _admin,
+      githubApp: _githubApp,
+    }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+
+      const [, result] = await serverClient.gitIntegrations.get({
+        projectId: addResult!.projectId,
+      });
+      expect(result?.availableAuthTypes).toEqual({ github: ["token", "github_app"] });
+    });
   });
 
   describe("upsert", () => {
@@ -177,6 +200,92 @@ describe("gitIntegrations", () => {
         repoIdentifier: "acme/other",
       });
     });
+
+    test("should save without a token when the deployment has an App", async ({
+      admin: _admin,
+      githubApp: _githubApp,
+    }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+
+      const [error, result] = await serverClient.gitIntegrations.upsert({
+        projectId,
+        provider: "github",
+        repoIdentifier: "acme/web",
+        authType: "github_app",
+      });
+      expect(error).toBeNull();
+      expect(result).toMatchObject({ authType: "github_app", hasToken: false });
+
+      const [, getResult] = await serverClient.gitIntegrations.get({ projectId });
+      expect(getResult?.integration).toMatchObject({ authType: "github_app", hasToken: false });
+    });
+
+    test("should reject App auth when the deployment has no App", async ({ admin: _ }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+
+      const [error] = await serverClient.gitIntegrations.upsert({
+        projectId: addResult!.projectId,
+        provider: "github",
+        repoIdentifier: "acme/web",
+        authType: "github_app",
+      });
+      expect(error?.code).toBe("BAD_REQUEST");
+    });
+
+    test("should drop the stored token when switching to App auth", async ({
+      admin: _admin,
+      githubApp: _githubApp,
+    }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+
+      await serverClient.gitIntegrations.upsert({
+        projectId,
+        provider: "github",
+        repoIdentifier: "acme/web",
+        token: "a-secret-token",
+      });
+      const [, result] = await serverClient.gitIntegrations.upsert({
+        projectId,
+        provider: "github",
+        repoIdentifier: "acme/web",
+        authType: "github_app",
+      });
+      expect(result).toMatchObject({ authType: "github_app", hasToken: false });
+    });
+
+    test("should require a token when switching back to token auth", async ({
+      admin: _admin,
+      githubApp: _githubApp,
+    }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+
+      await serverClient.gitIntegrations.upsert({
+        projectId,
+        provider: "github",
+        repoIdentifier: "acme/web",
+        authType: "github_app",
+      });
+
+      const [error] = await serverClient.gitIntegrations.upsert({
+        projectId,
+        provider: "github",
+        repoIdentifier: "acme/web",
+        authType: "token",
+      });
+      expect(error?.code).toBe("BAD_REQUEST");
+
+      const [, result] = await serverClient.gitIntegrations.upsert({
+        projectId,
+        provider: "github",
+        repoIdentifier: "acme/web",
+        authType: "token",
+        token: "a-secret-token",
+      });
+      expect(result).toMatchObject({ authType: "token", hasToken: true });
+    });
   });
 
   describe("setStatusChecks", () => {
@@ -289,6 +398,26 @@ describe("gitIntegrations", () => {
 
       const [error] = await serverClient.gitIntegrations.testConnection({ projectId });
       expect(error?.code).toBe("BAD_REQUEST");
+    });
+
+    test("should explain when an App integration's deployment has no App", async ({
+      admin: _admin,
+      githubApp: _githubApp,
+    }) => {
+      const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
+      const projectId = addResult!.projectId;
+      await serverClient.gitIntegrations.upsert({
+        projectId,
+        provider: "github",
+        repoIdentifier: "acme/web",
+        authType: "github_app",
+      });
+      vi.unstubAllEnvs();
+
+      const [error, result] = await serverClient.gitIntegrations.testConnection({ projectId });
+      expect(error).toBeNull();
+      expect(result).toMatchObject({ ok: false, httpStatus: null });
+      expect(result?.error).toMatch(/OVR_GITHUB_APP_ID/);
     });
   });
 });

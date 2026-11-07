@@ -25,6 +25,7 @@ const toFailure = (error: unknown): Failure =>
       };
 
 const unavailableAuth = (error: string): AuthMethod => ({
+  isAvailable: () => false,
   resolveToken: async () => ({ ok: false, error, retryable: false }),
   verify: async () => ({ ok: false, httpStatus: null, error }),
 });
@@ -42,6 +43,7 @@ export const createGitHubAppAuth = ({
   const tokens = createInstallationTokenProvider(client);
 
   return {
+    isAvailable: () => true,
     resolveToken: async ({ repoIdentifier }) => {
       try {
         const { token, invalidate } = await tokens.getToken(repoIdentifier);
@@ -95,6 +97,7 @@ const fromEnvironment = (): AuthMethod => {
 };
 
 export const githubAppAuth: AuthMethod = {
+  isAvailable: () => fromEnvironment().isAvailable(),
   resolveToken: (integration) => fromEnvironment().resolveToken(integration),
   verify: (integration) => fromEnvironment().verify(integration),
 };
