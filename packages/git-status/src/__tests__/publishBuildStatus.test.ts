@@ -1,5 +1,3 @@
-import { randomBytes } from "node:crypto";
-
 import { it, vi } from "vitest";
 
 import { resolveAdapter } from "../adapters";
@@ -111,8 +109,9 @@ describe("publishBuildStatus", () => {
     expect(deps.recordPublication).toHaveBeenCalled();
   });
 
-  it("records a terminal error without sending when the stored token can't be decrypted", async () => {
-    vi.stubEnv("OVR_GIT_TOKEN_ENCRYPTION_KEY", randomBytes(32).toString("base64"));
+  test("records a terminal error without sending when the stored token can't be decrypted", async ({
+    encryptionKey: _,
+  }) => {
     const deps = makeDeps({
       findIntegration: vi
         .fn<PublishBuildStatusDeps["findIntegration"]>()
@@ -166,8 +165,8 @@ describe("publishBuildStatus", () => {
 
     test("counts a status it could not send because the token would not decrypt", async ({
       metrics,
+      encryptionKey: _,
     }) => {
-      vi.stubEnv("OVR_GIT_TOKEN_ENCRYPTION_KEY", randomBytes(32).toString("base64"));
       const deps = makeDeps({
         findIntegration: vi
           .fn<PublishBuildStatusDeps["findIntegration"]>()
