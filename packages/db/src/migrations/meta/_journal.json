@@ -460,8 +460,15 @@
     {
       "idx": 65,
       "version": "7",
-      "when": 1793979781693,
-      "tag": "0065_git_integration_auth_type",
+      "when": 1793926226048,
+      "tag": "0065_add_in_flight_snapshot_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "7",
+      "when": 1794052118509,
+      "tag": "0066_git_integration_auth_type",
       "breakpoints": true
     }
   ]

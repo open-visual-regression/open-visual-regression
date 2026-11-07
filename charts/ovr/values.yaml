@@ -138,6 +138,9 @@ worker:
   # 2 minutes per snapshot, so this also sets how long a stuck group runs
   # before its timeout fires. Empty uses the app default (10).
   groupSize: ""
+  # Milliseconds to wait for a story's request before capturing without it.
+  # Empty uses the app default (5000).
+  requestTimeoutMs: ""
   # Snapshots compared against their baseline at once. Empty uses the app
   # default (4).
   diffConcurrency: ""

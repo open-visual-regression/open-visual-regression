@@ -101,5 +101,5 @@ export const observeGauges = <K extends string>(
 };
 
 export const DURATION_BUCKETS_SECONDS = [
-  0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30, 60, 120, 300, 600, 1800,
+  0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30, 60, 120, 300, 600, 900, 1200, 1800,
 ];

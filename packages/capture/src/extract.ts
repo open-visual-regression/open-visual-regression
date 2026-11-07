@@ -18,6 +18,7 @@ import {
 } from "@ovr/storybook-compat/parameters";
 import { assertSupportedStorybookBuild } from "@ovr/storybook-compat/version";
 
+import { snapshotsCreated } from "./lib/metrics";
 import { markSnapshotErrored } from "./snapshots";
 
 type Target = { id: string; title: string; name: string };
@@ -125,7 +126,7 @@ export const extractBuild = async (
   const unaffected = new Set(unaffectedTargetIds);
   const baselineKeys = await findBaselineKeys(build.projectId, unaffected);
 
-  await dbClient.snapshots.createMany({
+  const created = await dbClient.snapshots.createMany({
     values: targets.flatMap((target) => {
       if (failures.has(target.id)) {
         return [];
@@ -169,6 +170,9 @@ export const extractBuild = async (
       });
     }),
   });
+  const skipped = created.filter(({ status }) => status === "skipped").length;
+  snapshotsCreated.add(created.length - skipped, { status: "queued" });
+  snapshotsCreated.add(skipped, { status: "skipped" });
 
   await failUnreadableTargets(buildId, targets, viewports, diffThreshold, failures);
 
