@@ -53,7 +53,7 @@ export const upsert = os.gitIntegrations.upsert
       checkContext: formatCheckContext(context.project.name),
     };
 
-    // Only token auth stores a credential. Every other method drops any token left over.
+    // Only token auth stores a credential.
     if (input.authType !== "token") {
       const integration = await dbClient.gitIntegrations.upsert({
         ...fields,

@@ -7,8 +7,7 @@ import type { VerifyOutcome } from "./publisher";
 
 export type { IntegrationAuth, ResolvedToken };
 
-// The auth methods each provider supports. Adapters and callers only ever see the resulting
-// token, so a new provider or auth method is added here.
+// Adapters only ever see the token, so new providers and auth methods are registered here.
 const authMethods: Record<GitProvider, Partial<Record<GitAuthType, AuthMethod>>> = {
   github: { token: staticTokenAuth, github_app: githubAppAuth },
 };
@@ -19,7 +18,6 @@ const methodFor = ({ provider, authType }: IntegrationAuth): AuthMethod | undefi
 const unsupported = ({ provider, authType }: IntegrationAuth): string =>
   `${authType} authentication is not supported for ${provider}`;
 
-/** Gets a token to call the provider's API with on behalf of the integration. */
 export const resolveToken = async (integration: IntegrationAuth): Promise<ResolvedToken> => {
   const method = methodFor(integration);
   if (!method) {
@@ -29,7 +27,6 @@ export const resolveToken = async (integration: IntegrationAuth): Promise<Resolv
   return method.resolveToken(integration);
 };
 
-/** Checks the integration can publish commit statuses to its repository. */
 export const verifyIntegration = async (integration: IntegrationAuth): Promise<VerifyOutcome> => {
   const method = methodFor(integration);
   if (!method) {
@@ -39,7 +36,6 @@ export const verifyIntegration = async (integration: IntegrationAuth): Promise<V
   return method.verify(integration);
 };
 
-/** The auth methods this deployment can offer, by provider. */
 export const availableAuthTypes = (): Record<GitProvider, GitAuthType[]> => {
   const entries = Object.entries(authMethods).map(([provider, methods]) => [
     provider,

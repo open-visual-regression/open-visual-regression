@@ -37,10 +37,6 @@ const parsePrivateKey = (raw: string): KeyObject => {
   return key;
 };
 
-/**
- * Reads the deployment's GitHub App from the environment. Returns null when neither variable is
- * set, and throws when only one is set or the key can't be parsed.
- */
 export const readGitHubAppConfig = (
   env: Record<string, string | undefined> = process.env,
 ): GitHubAppConfig | null => {
@@ -62,7 +58,6 @@ export const readGitHubAppConfig = (
   return { appId, privateKey: parsePrivateKey(rawKey) };
 };
 
-/** Fails startup on a half-configured App instead of failing every publish later. */
 export const assertGitHubAppConfig = (): void => {
   readGitHubAppConfig();
 };

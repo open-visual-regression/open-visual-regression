@@ -1,5 +1,3 @@
-import { generateKeyPairSync } from "node:crypto";
-
 import { vi } from "vitest";
 
 import type { AddProjectInputSchema } from "@ovr/api/contracts/projects";
@@ -10,17 +8,6 @@ import { test, describe, expect } from "@/lib/testing/fixtures";
 vi.mock("next/headers");
 
 const FAKE_PROJECT_ID = "01900000-0000-7000-8000-000000000000";
-
-const { privateKey: APP_PRIVATE_KEY } = generateKeyPairSync("rsa", {
-  modulusLength: 2048,
-  privateKeyEncoding: { type: "pkcs1", format: "pem" },
-  publicKeyEncoding: { type: "spki", format: "pem" },
-});
-
-const configureGitHubApp = () => {
-  vi.stubEnv("OVR_GITHUB_APP_ID", "1234");
-  vi.stubEnv("OVR_GITHUB_APP_PRIVATE_KEY", APP_PRIVATE_KEY);
-};
 
 const TEST_PROJECT: AddProjectInputSchema = {
   projectName: "Test Project",
@@ -67,8 +54,10 @@ describe("gitIntegrations", () => {
       expect(result?.availableAuthTypes).toEqual({ github: ["token"] });
     });
 
-    test("should offer GitHub App auth once the deployment has an App", async ({ admin: _ }) => {
-      configureGitHubApp();
+    test("should offer GitHub App auth once the deployment has an App", async ({
+      admin: _admin,
+      githubApp: _githubApp,
+    }) => {
       const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
 
       const [, result] = await serverClient.gitIntegrations.get({
@@ -212,8 +201,10 @@ describe("gitIntegrations", () => {
       });
     });
 
-    test("should save without a token when the deployment has an App", async ({ admin: _ }) => {
-      configureGitHubApp();
+    test("should save without a token when the deployment has an App", async ({
+      admin: _admin,
+      githubApp: _githubApp,
+    }) => {
       const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
       const projectId = addResult!.projectId;
 
@@ -242,8 +233,10 @@ describe("gitIntegrations", () => {
       expect(error?.code).toBe("BAD_REQUEST");
     });
 
-    test("should drop the stored token when switching to App auth", async ({ admin: _ }) => {
-      configureGitHubApp();
+    test("should drop the stored token when switching to App auth", async ({
+      admin: _admin,
+      githubApp: _githubApp,
+    }) => {
       const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
       const projectId = addResult!.projectId;
 
@@ -262,8 +255,10 @@ describe("gitIntegrations", () => {
       expect(result).toMatchObject({ authType: "github_app", hasToken: false });
     });
 
-    test("should require a token when switching back to token auth", async ({ admin: _ }) => {
-      configureGitHubApp();
+    test("should require a token when switching back to token auth", async ({
+      admin: _admin,
+      githubApp: _githubApp,
+    }) => {
       const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
       const projectId = addResult!.projectId;
 
@@ -405,8 +400,10 @@ describe("gitIntegrations", () => {
       expect(error?.code).toBe("BAD_REQUEST");
     });
 
-    test("should explain when an App integration's deployment has no App", async ({ admin: _ }) => {
-      configureGitHubApp();
+    test("should explain when an App integration's deployment has no App", async ({
+      admin: _admin,
+      githubApp: _githubApp,
+    }) => {
       const [, addResult] = await serverClient.projects.add(TEST_PROJECT);
       const projectId = addResult!.projectId;
       await serverClient.gitIntegrations.upsert({

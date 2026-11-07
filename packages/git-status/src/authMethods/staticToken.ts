@@ -20,7 +20,6 @@ const resolveToken = async ({ encryptedToken }: IntegrationAuth): Promise<Resolv
   return { ok: true, token };
 };
 
-/** A token the user pasted in, stored encrypted on the integration. */
 export const staticTokenAuth: AuthMethod = {
   isAvailable: () => true,
   resolveToken,
