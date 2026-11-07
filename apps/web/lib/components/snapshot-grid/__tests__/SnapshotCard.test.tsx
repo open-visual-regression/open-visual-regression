@@ -38,6 +38,30 @@ describe("SnapshotCard", () => {
     );
   });
 
+  it("should show the baseline when a skipped snapshot has one", () => {
+    const snapshot = mocks.build.generateBuildSnapshot({
+      status: "skipped",
+      imagePath: null,
+      baselineImagePath: "projects/p/builds/b/snapshots/baseline.png",
+    });
+    render(<SnapshotCard snapshot={snapshot} />);
+
+    expect(screen.getByRole("img", { name: /^baseline of / })).toBeInTheDocument();
+    expect(screen.getByText("baseline")).toBeInTheDocument();
+  });
+
+  it("should show no preview when a skipped snapshot has no baseline", () => {
+    const snapshot = mocks.build.generateBuildSnapshot({
+      status: "skipped",
+      imagePath: null,
+      baselineImagePath: null,
+    });
+    render(<SnapshotCard snapshot={snapshot} />);
+
+    expect(screen.getByText("no preview")).toBeInTheDocument();
+    expect(screen.queryByText("baseline")).not.toBeInTheDocument();
+  });
+
   it("should show the processing time when the snapshot has one", () => {
     const snapshot = mocks.build.generateBuildSnapshot({ processingMs: 2500 });
     render(<SnapshotCard snapshot={snapshot} />);

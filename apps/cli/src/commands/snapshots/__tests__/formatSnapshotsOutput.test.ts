@@ -13,6 +13,7 @@ const SNAPSHOT: BuildSnapshotSchema = {
   targetName: "Primary",
   status: "needs_review",
   imagePath: "project/builds/build/snapshots/snap.png",
+  baselineImagePath: null,
   diffId: "01a092d6-b0aa-71bf-9312-dd8ef48a22fc",
   diffImagePath: "project/builds/build/diffs/diff.png",
   diffPercent: 1.2345,

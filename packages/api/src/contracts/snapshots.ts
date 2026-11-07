@@ -109,6 +109,10 @@ export const buildSnapshotSchema = z.object({
   targetName: z.string().min(1),
   status: snapshotDisplayStatusSchema,
   imagePath: z.string().nullable(),
+  baselineImagePath: z.string().nullable().meta({
+    description:
+      "Skipped snapshots only: the project's baseline image for the same story, browser, and viewport, if there is one",
+  }),
   diffId: z.uuidv7().nullable(),
   diffImagePath: z.string().nullable(),
   diffPercent: z.number().nullable(),

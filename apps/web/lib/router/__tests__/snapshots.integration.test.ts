@@ -479,48 +479,48 @@ describe("snapshots", () => {
     });
   });
 
+  const createBaseline = async (
+    admin: User,
+    projectId: string,
+    buildId: string,
+    targetId: string,
+  ) => {
+    const [baselineSnapshot] = await dbClient.snapshots.createMany({
+      values: [
+        {
+          buildId,
+          ...VIEWPORT,
+          targetId,
+          status: "success",
+          imagePath: "projects/p/builds/b/snapshots/baseline.png",
+        },
+      ],
+    });
+
+    await dbClient.baselines.upsert({
+      projectId,
+      snapshotId: baselineSnapshot!.id,
+      browser: VIEWPORT.browser,
+      viewportWidth: VIEWPORT.viewportWidth,
+      viewportHeight: VIEWPORT.viewportHeight,
+      targetId,
+      approvedBy: admin.id,
+    });
+
+    return baselineSnapshot!;
+  };
+
+  const createLaterBuild = (projectId: string, admin: User) =>
+    dbClient.builds.create({
+      projectId,
+      branch: "feature/test",
+      commitSha: "b".repeat(40),
+      artifactPath: "builds/seed/later",
+      createdBy: admin.id,
+      createdAt: new Date(Date.now() + 60_000).toISOString(),
+    });
+
   describe("getBaseline", () => {
-    const createBaseline = async (
-      admin: User,
-      projectId: string,
-      buildId: string,
-      targetId: string,
-    ) => {
-      const [baselineSnapshot] = await dbClient.snapshots.createMany({
-        values: [
-          {
-            buildId,
-            ...VIEWPORT,
-            targetId,
-            status: "success",
-            imagePath: "projects/p/builds/b/snapshots/baseline.png",
-          },
-        ],
-      });
-
-      await dbClient.baselines.upsert({
-        projectId,
-        snapshotId: baselineSnapshot!.id,
-        browser: VIEWPORT.browser,
-        viewportWidth: VIEWPORT.viewportWidth,
-        viewportHeight: VIEWPORT.viewportHeight,
-        targetId,
-        approvedBy: admin.id,
-      });
-
-      return baselineSnapshot!;
-    };
-
-    const createLaterBuild = (projectId: string, admin: User) =>
-      dbClient.builds.create({
-        projectId,
-        branch: "feature/test",
-        commitSha: "b".repeat(40),
-        artifactPath: "builds/seed/later",
-        createdBy: admin.id,
-        createdAt: new Date(Date.now() + 60_000).toISOString(),
-      });
-
     test("returns NOT_FOUND for a missing snapshot id", async ({ admin: _ }) => {
       const [error] = await serverClient.snapshots.getBaseline({ snapshotId: uuidv7() });
       expect(error?.code).toBe("NOT_FOUND");
@@ -676,6 +676,55 @@ describe("snapshots", () => {
   });
 
   describe("list", () => {
+    test("returns the project baseline's image for a skipped snapshot", async ({ admin }) => {
+      const { projectId, build } = await createProjectAndBuild(admin);
+      await createBaseline(admin, projectId, build.id, "story-a");
+      const laterBuild = await createLaterBuild(projectId, admin);
+      await dbClient.snapshots.createMany({
+        values: [
+          { targetId: "story-a", status: "skipped" as const },
+          { targetId: "story-b", status: "skipped" as const },
+          {
+            targetId: "story-c",
+            status: "success" as const,
+            imagePath: "projects/p/builds/b/snapshots/c.png",
+          },
+        ].map((snapshot) => ({
+          ...snapshot,
+          ...VIEWPORT,
+          buildId: laterBuild!.id,
+          targetTitle: snapshot.targetId,
+          targetName: "Default",
+        })),
+      });
+
+      const [error, result] = await serverClient.snapshots.list({
+        buildId: laterBuild!.id,
+        sort: "name",
+      });
+
+      expect(error).toBeNull();
+      expect(
+        result?.snapshots.map(({ targetId, imagePath, baselineImagePath }) => ({
+          targetId,
+          imagePath,
+          baselineImagePath,
+        })),
+      ).toEqual([
+        {
+          targetId: "story-a",
+          imagePath: null,
+          baselineImagePath: "projects/p/builds/b/snapshots/baseline.png",
+        },
+        { targetId: "story-b", imagePath: null, baselineImagePath: null },
+        {
+          targetId: "story-c",
+          imagePath: "projects/p/builds/b/snapshots/c.png",
+          baselineImagePath: null,
+        },
+      ]);
+    });
+
     test("lists each project's latest main build alphabetically when no build is given", async ({
       admin,
     }) => {

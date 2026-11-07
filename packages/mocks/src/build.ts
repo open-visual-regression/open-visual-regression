@@ -18,6 +18,7 @@ export const generateBuildSnapshot = (
   targetName: faker.word.noun(),
   status: "unchanged",
   imagePath: faker.system.filePath(),
+  baselineImagePath: null,
   diffId: null,
   diffImagePath: null,
   diffPercent: null,

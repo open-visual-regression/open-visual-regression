@@ -41,7 +41,7 @@ export const toBaselineSnapshot = async (baselineSnapshot: BaselineSource, proje
 // baseline, so fall back to what the build would have compared the target against: main at the
 // build's merge base, or the project's latest baseline.
 // A baseline set by a newer build than this one did not exist yet, so it is not shown.
-const findProjectBaselineSource = async (
+export const findProjectBaselineSource = async (
   snapshot: Snapshot,
   build: Build,
 ): Promise<BaselineSource | null> => {

@@ -1,4 +1,5 @@
 import { type BuildSnapshotSchema } from "@ovr/api/contracts/snapshots";
+import { Badge } from "@ovr/ui/components/badge";
 import { FolderIcon, GlobeIcon, Icon, TimerIcon } from "@ovr/ui/components/icon";
 import { ResolutionIcon } from "@ovr/ui/components/resolution-icon";
 import { Skeleton } from "@ovr/ui/components/skeleton";
@@ -45,7 +46,8 @@ type SnapshotCardProps = {
 };
 
 export const SnapshotCard = ({ snapshot, filters, showProject = false }: SnapshotCardProps) => {
-  const imagePath = getStoragePath(snapshot.imagePath);
+  const showsBaseline = !snapshot.imagePath && !!snapshot.baselineImagePath;
+  const imagePath = getStoragePath(snapshot.imagePath ?? snapshot.baselineImagePath);
   const label = `snapshot of ${snapshot.targetTitle} ${snapshot.targetName}, ${showProject ? `${snapshot.project.name}, ` : ""}${snapshot.browser} ${snapshot.viewportName}, ${getSnapshotStatusLabel(snapshot.status)}${snapshot.hasUncaughtPageError ? ", has warnings" : ""}${snapshot.isFlaky ? ", flaky" : ""}`;
 
   return (
@@ -61,11 +63,13 @@ export const SnapshotCard = ({ snapshot, filters, showProject = false }: Snapsho
         {imagePath ? (
           <Image
             src={imagePath}
-            alt={`snapshot of ${snapshot.targetTitle} ${snapshot.targetName}`}
+            alt={`${showsBaseline ? "baseline" : "snapshot"} of ${snapshot.targetTitle} ${snapshot.targetName}`}
             className="absolute inset-0 h-full w-full object-cover"
             errorFallback={
               <div className="absolute inset-0 flex items-center justify-center">
-                <Typography variant="caption">failed to load snapshot</Typography>
+                <Typography variant="caption">
+                  failed to load {showsBaseline ? "baseline" : "snapshot"}
+                </Typography>
               </div>
             }
           />
@@ -74,6 +78,11 @@ export const SnapshotCard = ({ snapshot, filters, showProject = false }: Snapsho
             <Typography variant="caption">no preview</Typography>
           </div>
         )}
+        {showsBaseline ? (
+          <div className="absolute left-2 top-2">
+            <Badge variant="solid">baseline</Badge>
+          </div>
+        ) : null}
         <div className="absolute bottom-2 right-2">
           <SnapshotBadges>
             {snapshot.hasUncaughtPageError ? <WarningBadge /> : null}
