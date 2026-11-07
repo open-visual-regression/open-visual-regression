@@ -207,6 +207,40 @@ describe("settlePage", () => {
     await expect(settlePage(page, activity, GIVE_UP_TIMEOUT_MS)).resolves.toBe(true);
   }, 30_000);
 
+  test("does not wait again for a stuck image that a later story renders again", async () => {
+    const page = await newPage(await browser.newContext());
+    const activity = trackNetworkActivity(page, GIVE_UP_TIMEOUT_MS);
+
+    await page.goto(`${origin}/?image=/hang.png`, { waitUntil: "domcontentloaded" });
+    await settlePage(page, activity, 10_000);
+    await page.evaluate(() => {
+      const hero = document.getElementById("hero")!;
+      hero.replaceWith(hero.cloneNode());
+    });
+
+    await expect(settlePage(page, activity, 10_000)).resolves.toBe(true);
+  }, 30_000);
+
+  test("reports a request it gave up on", async () => {
+    const page = await newPage(await browser.newContext());
+    const activity = trackNetworkActivity(page, GIVE_UP_TIMEOUT_MS);
+
+    await page.goto(`${origin}/?image=/hang.png`, { waitUntil: "domcontentloaded" });
+    await settlePage(page, activity, 10_000);
+
+    expect(activity.abandoned.take()).toEqual([`${origin}/hang.png`]);
+  }, 30_000);
+
+  test("reports nothing once every request has finished", async () => {
+    const page = await newPage(await browser.newContext());
+    const activity = trackNetworkActivity(page, GIVE_UP_TIMEOUT_MS);
+
+    await page.goto(`${origin}/?image=/slow.png`, { waitUntil: "domcontentloaded" });
+    await settlePage(page, activity, 10_000);
+
+    expect(activity.abandoned.take()).toEqual([]);
+  }, 30_000);
+
   test("waits for a request that starts after a few renders", async () => {
     const page = await newPage(await browser.newContext());
     const activity = trackNetworkActivity(page);

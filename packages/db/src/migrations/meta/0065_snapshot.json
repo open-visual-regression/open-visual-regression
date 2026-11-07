@@ -1,5 +1,5 @@
 {
-  "id": "885d7820-3cd0-4caf-a232-e4a354fcfeff",
+  "id": "9ff1922e-78cd-46ae-9824-24ecb59c2f5a",
   "prevId": "6e0b6a3b-386c-4b75-aea9-02f9d4753685",
   "version": "7",
   "dialect": "postgresql",
@@ -1965,6 +1965,22 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "diffs_pending_snapshotId_idx": {
+          "name": "diffs_pending_snapshotId_idx",
+          "columns": [
+            {
+              "expression": "snapshot_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"diffs\".\"processing_status\" = 'pending'",
+          "concurrently": true,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -2636,6 +2652,22 @@
           "concurrently": true,
           "method": "btree",
           "with": {}
+        },
+        "snapshots_inFlight_buildId_idx": {
+          "name": "snapshots_inFlight_buildId_idx",
+          "columns": [
+            {
+              "expression": "build_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"snapshots\".\"status\" in ('queued', 'processing')",
+          "concurrently": true,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -2753,19 +2785,11 @@
           "primaryKey": false,
           "notNull": true
         },
-        "auth_type": {
-          "name": "auth_type",
-          "type": "git_auth_type",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'token'"
-        },
         "encrypted_token": {
           "name": "encrypted_token",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "status_checks_enabled": {
           "name": "status_checks_enabled",
@@ -3179,11 +3203,6 @@
       "name": "snapshot_status",
       "schema": "public",
       "values": ["queued", "processing", "success", "error", "canceled", "skipped"]
-    },
-    "public.git_auth_type": {
-      "name": "git_auth_type",
-      "schema": "public",
-      "values": ["token", "github_app"]
     },
     "public.git_provider": {
       "name": "git_provider",
