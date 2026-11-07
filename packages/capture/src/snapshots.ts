@@ -4,6 +4,7 @@ import { chromium, firefox, webkit, type Page } from "playwright";
 
 import { publishStatus } from "@ovr/builds/builds";
 import { isFlakyDetectionEnabled } from "@ovr/builds/flakiness";
+import { buildCaptureWait, toBuildSize } from "@ovr/builds/lib/metrics";
 import { withBundleDir } from "@ovr/builds/storybookBundleCache";
 import { launchBrowser, newPage } from "@ovr/capture-browser/browser";
 import {
@@ -45,9 +46,13 @@ import { cacheImage } from "./lib/imageCache";
 import { compareImages } from "./lib/images";
 import {
   browserRelaunches,
+  capturePageBootDuration,
   diffsCompared,
   snapshotCaptureDuration,
+  snapshotCapturePhaseDuration,
   snapshotsCaptured,
+  snapshotsSettled,
+  type CapturePhase,
   type DiffResult,
 } from "./lib/metrics";
 import { createUploadQueue } from "./lib/uploadQueue";
@@ -60,8 +65,6 @@ const TERMINAL_BUILD_STATUSES = new Set<BuildProcessingStatus>(["error", "cancel
 
 const isTerminalBuild = (build: Pick<NonNullable<BuildDbSchema>, "processingStatus">): boolean =>
   TERMINAL_BUILD_STATUSES.has(build.processingStatus);
-
-type CapturePhase = "render" | "settle" | "wait" | "screenshot" | "upload";
 
 type CaptureTimings = Record<CapturePhase, number>;
 
@@ -223,10 +226,9 @@ const launchCapturePage = async (
     await closeBrowser();
     throw error;
   }
-  logger.info(
-    { buildId, browser: browserName, bootMs: Math.round(performance.now() - bootStart) },
-    "capture page booted",
-  );
+  const bootMs = performance.now() - bootStart;
+  logger.info({ buildId, browser: browserName, bootMs: Math.round(bootMs) }, "capture page booted");
+  capturePageBootDuration.record(bootMs / 1000, { browser: browserName });
 
   const networkActivity = trackNetworkActivity(page);
 
@@ -265,6 +267,7 @@ const captureSnapshotOnPage = async (
   strategy: CaptureStrategy,
   build: NonNullable<BuildDbSchema>,
   snapshotId: string,
+  queuedAt: number | undefined,
 ): Promise<CapturedSnapshot | undefined> => {
   const snapshot = await dbClient.snapshots.findById(snapshotId);
   if (!snapshot) {
@@ -286,8 +289,14 @@ const captureSnapshotOnPage = async (
 
   await dbClient.snapshots.updateStatus(snapshotId, "processing");
 
-  if (currentBuild.processingStatus === "queued") {
-    await dbClient.builds.startProcessing(build.id);
+  if (
+    currentBuild.processingStatus === "queued" &&
+    (await dbClient.builds.startProcessing(build.id))
+  ) {
+    if (queuedAt !== undefined) {
+      const snapshots = await dbClient.snapshots.countToCapture(build.id);
+      buildCaptureWait.record((Date.now() - queuedAt) / 1000, { size: toBuildSize(snapshots) });
+    }
     await publishStatus(build.id);
   }
 
@@ -332,6 +341,10 @@ const captureSnapshotOnPage = async (
     const [settled, settleMs] = renderResult.ok
       ? await runPagePhase("settle", () => settlePage(page, networkActivity, SETTLE_TIMEOUT_MS))
       : ([false, 0] as const);
+
+    if (renderResult.ok) {
+      snapshotsSettled.add(1, { outcome: settled ? "quiet" : "timed_out" });
+    }
 
     if (renderResult.ok && !settled) {
       logger.warn(context, "snapshot still had pending work when its settle budget ran out");
@@ -470,6 +483,9 @@ const persistCapturedSnapshot = async (
     );
     snapshotsCaptured.add(1, { browser: captured.browser, outcome: "success" });
     snapshotCaptureDuration.record(totalMs / 1000, { browser: captured.browser });
+    for (const [phase, ms] of Object.entries(timings) as [CapturePhase, number][]) {
+      snapshotCapturePhaseDuration.record(ms / 1000, { browser: captured.browser, phase });
+    }
 
     if (stored) {
       await enqueueSnapshotDiff(snapshotId);
@@ -519,13 +535,14 @@ export const markSnapshotErrored = async (snapshotId: string, error: unknown): P
 type CaptureBuildGroupOptions = {
   shutdownSignal?: AbortSignal;
   externalRequestAllowlist?: string[] | null;
+  queuedAt?: number;
 };
 
 export const captureBuildGroup = async (
   buildId: string,
   browser: string,
   snapshotIds: string[],
-  { shutdownSignal, externalRequestAllowlist = null }: CaptureBuildGroupOptions = {},
+  { shutdownSignal, externalRequestAllowlist = null, queuedAt }: CaptureBuildGroupOptions = {},
 ): Promise<void> => {
   const build = await dbClient.builds.findById(buildId);
   if (!build) {
@@ -592,6 +609,7 @@ export const captureBuildGroup = async (
                 strategy,
                 build,
                 snapshotId,
+                queuedAt,
               );
 
               if (captured) {

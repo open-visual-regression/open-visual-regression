@@ -84,7 +84,34 @@ describe("build metrics", () => {
     expect(body).toContain(
       'ovr_builds_finished_total{processing_status="success",reason="finalized"} 1',
     );
-    expect(body).toContain('ovr_build_duration_seconds_count{processing_status="success"} 1');
+    expect(body).toContain(
+      'ovr_build_duration_seconds_count{processing_status="success",size="under_100"} 1',
+    );
+  });
+
+  test("should size a finalized build by the snapshots it captured", async ({
+    mainBuild,
+    captureConfiguration,
+    metrics,
+  }) => {
+    const snapshots = await dbClient.snapshots.createMany({
+      values: Array.from({ length: 100 }, (_, index) => ({
+        buildId: mainBuild.id,
+        ...captureConfiguration,
+        targetId: `story-${index}`,
+        status: "success" as const,
+      })),
+    });
+    await dbClient.diffs.createMany({
+      values: snapshots.map(({ id }) => ({ snapshotId: id, processingStatus: "success" as const })),
+    });
+    await dbClient.builds.updateProcessingStatus(mainBuild.id, "processing");
+
+    await finalizeBuild(mainBuild.id);
+
+    expect(await metrics.scrape()).toContain(
+      'ovr_build_duration_seconds_count{processing_status="success",size="100_to_499"} 1',
+    );
   });
 
   test("should count a canceled build", async ({ featureBuild, user, metrics }) => {

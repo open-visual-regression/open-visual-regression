@@ -161,6 +161,14 @@ export const countByBuild = async (buildId: string) => {
   return result?.count ?? 0;
 };
 
+export const countToCapture = async (buildId: string) => {
+  const [result] = await db
+    .select({ count: countRows() })
+    .from(snapshots)
+    .where(and(eq(snapshots.buildId, buildId), ne(snapshots.status, "skipped")));
+  return result?.count ?? 0;
+};
+
 const displayStatusExpr = sql<SnapshotDisplayStatus>`case
   when ${snapshots.status} = 'skipped' then 'skipped'
   when ${snapshots.status} = 'error' or ${snapshots.hasRenderError} then 'error'

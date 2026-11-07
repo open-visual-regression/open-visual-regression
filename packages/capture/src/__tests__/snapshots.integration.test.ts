@@ -616,6 +616,64 @@ describe("snapshots", () => {
       expect(body).toContain('ovr_snapshot_capture_duration_seconds_count{browser="chromium"} 1');
     });
 
+    test("records how long each phase took, whether the page settled and how long it booted", async ({
+      mainBuild,
+      captureConfiguration,
+      metrics,
+    }) => {
+      await uploadArtifactWithIframe(mainBuild.artifactPath, IFRAME_HTML);
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" }],
+      });
+
+      await captureBuildGroup(mainBuild.id, captureConfiguration.browser, [snapshot!.id]);
+
+      const body = await metrics.scrape();
+      expect(body).toContain(
+        'ovr_snapshot_capture_phase_duration_seconds_count{browser="chromium",phase="render"} 1',
+      );
+      expect(body).toContain(
+        'ovr_snapshot_capture_phase_duration_seconds_count{browser="chromium",phase="settle"} 1',
+      );
+      expect(body).toContain(
+        'ovr_snapshot_capture_phase_duration_seconds_count{browser="chromium",phase="wait"} 1',
+      );
+      expect(body).toContain(
+        'ovr_snapshot_capture_phase_duration_seconds_count{browser="chromium",phase="screenshot"} 1',
+      );
+      expect(body).toContain(
+        'ovr_snapshot_capture_phase_duration_seconds_count{browser="chromium",phase="upload"} 1',
+      );
+      expect(body).toContain('ovr_snapshots_settled_total{outcome="quiet"} 1');
+      expect(body).toContain('ovr_capture_page_boot_duration_seconds_count{browser="chromium"} 1');
+    });
+
+    test("records how long a build waited for its first capture once when its groups start together", async ({
+      mainBuild,
+      captureConfiguration,
+      metrics,
+    }) => {
+      await uploadArtifactWithIframe(mainBuild.artifactPath, IFRAME_HTML);
+      const [first, second] = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" },
+          { buildId: mainBuild.id, ...captureConfiguration, targetId: "story-b" },
+        ],
+      });
+      const queuedAt = Date.now() - 60_000;
+
+      await Promise.all([
+        captureBuildGroup(mainBuild.id, captureConfiguration.browser, [first!.id], { queuedAt }),
+        captureBuildGroup(mainBuild.id, captureConfiguration.browser, [second!.id], { queuedAt }),
+      ]);
+
+      const body = await metrics.scrape();
+      expect(body).toContain('ovr_build_capture_wait_seconds_count{size="under_100"} 1');
+      expect(body).toContain('ovr_build_capture_wait_seconds_bucket{size="under_100",le="30"} 0');
+      expect(body).toContain('ovr_build_capture_wait_seconds_bucket{size="under_100",le="60"} 0');
+      expect(body).toContain('ovr_build_capture_wait_seconds_bucket{size="under_100",le="120"} 1');
+    });
+
     test("skips a snapshot in the group that a previous attempt already captured successfully", async ({
       mainBuild,
       captureConfiguration,
