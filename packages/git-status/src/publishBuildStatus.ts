@@ -140,7 +140,7 @@ export const publishBuildStatus = async (
 
   let result: PublishOutcome = await sendWithToken(resolved.token);
 
-  // A cached token can be revoked before it expires. Drop it and try once with a fresh one.
+  // A cached token can be revoked before it expires.
   if (result.outcome === "error" && result.httpStatus === 401 && resolved.invalidate) {
     resolved.invalidate();
     const refreshed = await deps.resolveToken(integration);

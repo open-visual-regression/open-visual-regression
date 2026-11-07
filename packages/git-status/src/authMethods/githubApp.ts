@@ -34,10 +34,6 @@ type GitHubAppAuthOptions = {
   apiBase?: string;
 };
 
-/**
- * Authenticates as a GitHub App installation. Holds its own token cache, so create one per App
- * and keep it for the life of the process.
- */
 export const createGitHubAppAuth = ({
   config,
   apiBase = githubApiBase("github"),
@@ -56,9 +52,6 @@ export const createGitHubAppAuth = ({
       }
     },
 
-    // `GET /repos/{repo}` isn't used here: its `permissions` object describes a user's access and
-    // isn't documented for installation tokens, so the installation's own permissions are the
-    // reliable signal.
     verify: async ({ repoIdentifier }) => {
       try {
         const installation = await findRepoInstallation(client, repoIdentifier);
@@ -90,8 +83,7 @@ const fromConfig = (): AuthMethod => {
   }
 };
 
-// The deployment's App, read from the environment. Rebuilt only if the environment changes, so
-// the token cache lives as long as the process.
+// Keyed by the env, so the token cache lives as long as the config does.
 let current: { env: string; auth: AuthMethod } | undefined;
 
 const fromEnvironment = (): AuthMethod => {
@@ -102,7 +94,6 @@ const fromEnvironment = (): AuthMethod => {
   return current.auth;
 };
 
-/** The deployment's GitHub App, configured with `OVR_GITHUB_APP_ID` and `OVR_GITHUB_APP_PRIVATE_KEY`. */
 export const githubAppAuth: AuthMethod = {
   resolveToken: (integration) => fromEnvironment().resolveToken(integration),
   verify: (integration) => fromEnvironment().verify(integration),

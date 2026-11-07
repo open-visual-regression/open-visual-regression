@@ -1,5 +1,3 @@
-import { randomBytes } from "node:crypto";
-
 import { http, HttpResponse } from "msw";
 import { it, vi } from "vitest";
 
@@ -13,7 +11,6 @@ import {
   type PublishBuildStatusDeps,
 } from "../publishBuildStatus";
 import { send } from "../publisher";
-import { generateAppConfig, useFakeGitHub } from "./fakeGitHub";
 import { describe, expect, test } from "./fixtures";
 import { server } from "./setup";
 
@@ -119,8 +116,9 @@ describe("publishBuildStatus", () => {
     expect(deps.recordPublication).toHaveBeenCalled();
   });
 
-  it("records a terminal error without sending when the stored token can't be decrypted", async () => {
-    vi.stubEnv("OVR_GIT_TOKEN_ENCRYPTION_KEY", randomBytes(32).toString("base64"));
+  test("records a terminal error without sending when the stored token can't be decrypted", async ({
+    encryptionKey: _,
+  }) => {
     const deps = makeDeps({
       findIntegration: vi
         .fn<PublishBuildStatusDeps["findIntegration"]>()
@@ -150,14 +148,12 @@ describe("publishBuildStatus", () => {
     );
   });
 
-  it("publishes as a GitHub App installation", async () => {
-    const app = generateAppConfig();
-    const github = useFakeGitHub({ app });
+  test("publishes as a GitHub App installation", async ({ githubApp, github }) => {
     const deps = makeDeps({
       findIntegration: vi
         .fn<PublishBuildStatusDeps["findIntegration"]>()
         .mockResolvedValue(appIntegration),
-      resolveToken: createGitHubAppAuth({ config: app }).resolveToken,
+      resolveToken: createGitHubAppAuth({ config: githubApp }).resolveToken,
       send,
     });
 
@@ -169,14 +165,16 @@ describe("publishBuildStatus", () => {
     );
   });
 
-  it("retries once with a fresh App token when GitHub rejects the cached one", async () => {
-    const app = generateAppConfig();
-    const github = useFakeGitHub({ app, rejectedTokens: (token) => token === "ghs_1" });
+  test("retries once with a fresh App token when GitHub rejects the cached one", async ({
+    githubApp,
+    github,
+  }) => {
+    github.rejectedTokens.add("ghs_1");
     const deps = makeDeps({
       findIntegration: vi
         .fn<PublishBuildStatusDeps["findIntegration"]>()
         .mockResolvedValue(appIntegration),
-      resolveToken: createGitHubAppAuth({ config: app }).resolveToken,
+      resolveToken: createGitHubAppAuth({ config: githubApp }).resolveToken,
       send,
     });
 
@@ -189,14 +187,16 @@ describe("publishBuildStatus", () => {
     );
   });
 
-  it("records the error when GitHub rejects the fresh App token too", async () => {
-    const app = generateAppConfig();
-    const github = useFakeGitHub({ app, rejectedTokens: () => true });
+  test("records the error when GitHub rejects the fresh App token too", async ({
+    githubApp,
+    github,
+  }) => {
+    github.rejectedTokens.add("ghs_1").add("ghs_2");
     const deps = makeDeps({
       findIntegration: vi
         .fn<PublishBuildStatusDeps["findIntegration"]>()
         .mockResolvedValue(appIntegration),
-      resolveToken: createGitHubAppAuth({ config: app }).resolveToken,
+      resolveToken: createGitHubAppAuth({ config: githubApp }).resolveToken,
       send,
     });
 
@@ -208,9 +208,11 @@ describe("publishBuildStatus", () => {
     );
   });
 
-  it("does not retry when GitHub rejects a stored token", async () => {
-    vi.stubEnv("OVR_GIT_TOKEN_ENCRYPTION_KEY", randomBytes(32).toString("base64"));
-    const github = useFakeGitHub({ app: generateAppConfig(), rejectedTokens: () => true });
+  test("does not retry when GitHub rejects a stored token", async ({
+    encryptionKey: _,
+    github,
+  }) => {
+    github.rejectedTokens.add("ghp_revoked");
     const deps = makeDeps({
       findIntegration: vi
         .fn<PublishBuildStatusDeps["findIntegration"]>()
@@ -224,7 +226,9 @@ describe("publishBuildStatus", () => {
     expect(github.statusTokens).toEqual(["ghp_revoked"]);
   });
 
-  it("throws so the job retries when GitHub is down while minting an App token", async () => {
+  test("throws so the job retries when GitHub is down while minting an App token", async ({
+    githubApp,
+  }) => {
     server.use(
       http.get(
         "https://api.github.com/repos/acme/web/installation",
@@ -235,7 +239,7 @@ describe("publishBuildStatus", () => {
       findIntegration: vi
         .fn<PublishBuildStatusDeps["findIntegration"]>()
         .mockResolvedValue(appIntegration),
-      resolveToken: createGitHubAppAuth({ config: generateAppConfig() }).resolveToken,
+      resolveToken: createGitHubAppAuth({ config: githubApp }).resolveToken,
       send,
     });
 
@@ -245,14 +249,16 @@ describe("publishBuildStatus", () => {
     );
   });
 
-  it("records a terminal error when the App is not installed on the repo", async () => {
-    const app = generateAppConfig();
-    const github = useFakeGitHub({ app, owner: "someone-else" });
+  test("records a terminal error when the App is not installed on the repo", async ({
+    githubApp,
+    github,
+  }) => {
+    github.installedOn = "someone-else";
     const deps = makeDeps({
       findIntegration: vi
         .fn<PublishBuildStatusDeps["findIntegration"]>()
         .mockResolvedValue(appIntegration),
-      resolveToken: createGitHubAppAuth({ config: app }).resolveToken,
+      resolveToken: createGitHubAppAuth({ config: githubApp }).resolveToken,
       send,
     });
 
@@ -310,8 +316,8 @@ describe("publishBuildStatus", () => {
 
     test("counts a status it could not send because the token would not decrypt", async ({
       metrics,
+      encryptionKey: _,
     }) => {
-      vi.stubEnv("OVR_GIT_TOKEN_ENCRYPTION_KEY", randomBytes(32).toString("base64"));
       const deps = makeDeps({
         findIntegration: vi
           .fn<PublishBuildStatusDeps["findIntegration"]>()

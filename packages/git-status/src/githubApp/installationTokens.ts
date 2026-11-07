@@ -4,8 +4,7 @@ import type { GitHubAppConfig } from "./config";
 import { signAppJwt } from "./jwt";
 
 const GITHUB_API_VERSION = "2022-11-28";
-// Installation tokens live for an hour; swap them out well before that so a token never expires
-// between being handed out and being used.
+// Refreshed early so a token can't expire between being handed out and being used.
 const REFRESH_BEFORE_EXPIRY_MS = 5 * 60 * 1000;
 
 export class GitHubAppError extends Error {
@@ -22,8 +21,6 @@ export class GitHubAppError extends Error {
 export type GitHubAppClientOptions = {
   config: GitHubAppConfig;
   apiBase: string;
-  fetch?: typeof fetch;
-  now?: () => number;
 };
 
 const installationSchema = z.object({
@@ -49,15 +46,12 @@ const requestAsApp = async (
   path: string,
   action: string,
 ): Promise<Response> => {
-  const fetchImpl = options.fetch ?? fetch;
-  const now = options.now ?? Date.now;
-
   let response: Response;
   try {
-    response = await fetchImpl(`${options.apiBase}${path}`, {
+    response = await fetch(`${options.apiBase}${path}`, {
       method,
       headers: {
-        authorization: `Bearer ${signAppJwt(options.config, now())}`,
+        authorization: `Bearer ${signAppJwt(options.config)}`,
         accept: "application/vnd.github+json",
         "x-github-api-version": GITHUB_API_VERSION,
       },
@@ -90,7 +84,6 @@ const requestAsApp = async (
   return response;
 };
 
-/** Finds the App's installation that covers `repo` (`owner/name`). */
 export const findRepoInstallation = async (
   options: GitHubAppClientOptions,
   repo: string,
@@ -160,7 +153,6 @@ const createInstallationToken = async (
 
 export type AppToken = {
   token: string;
-  /** Forgets this token, e.g. after GitHub rejected it, so the next call mints a new one. */
   invalidate: () => void;
 };
 
@@ -170,15 +162,9 @@ export type InstallationTokenProvider = {
 
 type CacheEntry = { promise: Promise<InstallationToken>; settled?: InstallationToken };
 
-/**
- * Hands out installation tokens for repos the App is installed on. Tokens are cached in memory
- * per installation, refreshed shortly before they expire, and concurrent callers share a single
- * in-flight request.
- */
 export const createInstallationTokenProvider = (
   options: GitHubAppClientOptions,
 ): InstallationTokenProvider => {
-  const now = options.now ?? Date.now;
   const installationIds = new Map<string, Promise<number>>();
   const tokens = new Map<number, CacheEntry>();
 
@@ -200,7 +186,7 @@ export const createInstallationTokenProvider = (
   };
 
   const isFresh = (entry: CacheEntry): boolean =>
-    !entry.settled || entry.settled.expiresAt - REFRESH_BEFORE_EXPIRY_MS > now();
+    !entry.settled || entry.settled.expiresAt - REFRESH_BEFORE_EXPIRY_MS > Date.now();
 
   const tokenFor = (installationId: number): Promise<InstallationToken> => {
     const cached = tokens.get(installationId);
@@ -230,7 +216,7 @@ export const createInstallationTokenProvider = (
     try {
       token = await tokenFor(installationId);
     } catch (error) {
-      // The App may have been uninstalled and reinstalled under a new id; look it up again next time.
+      // A reinstalled App gets a new installation id.
       if (error instanceof GitHubAppError && error.httpStatus === 404) {
         installationIds.delete(repo.toLowerCase());
       }
