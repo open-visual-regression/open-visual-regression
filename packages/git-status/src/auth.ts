@@ -35,3 +35,13 @@ export const verifyIntegration = async (integration: IntegrationAuth): Promise<V
 
   return method.verify(integration);
 };
+
+export const availableAuthTypes = (): Record<GitProvider, GitAuthType[]> => {
+  const entries = Object.entries(authMethods).map(([provider, methods]) => [
+    provider,
+    Object.entries(methods)
+      .filter(([, method]) => method.isAvailable())
+      .map(([authType]) => authType as GitAuthType),
+  ]);
+  return Object.fromEntries(entries) as Record<GitProvider, GitAuthType[]>;
+};

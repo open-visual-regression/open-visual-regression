@@ -23,6 +23,7 @@ export type ResolvedToken =
     };
 
 export type AuthMethod = {
+  isAvailable: () => boolean;
   resolveToken: (integration: IntegrationAuth) => Promise<ResolvedToken>;
   verify: (integration: IntegrationAuth) => Promise<VerifyOutcome>;
 };

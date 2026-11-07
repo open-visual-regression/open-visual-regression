@@ -54,6 +54,7 @@ export default async function ProjectSettingsPage(props: ProjectSettingsPageProp
         <GitIntegrationSection
           projectId={projectId}
           integration={gitIntegrationResult.integration}
+          availableAuthTypes={gitIntegrationResult.availableAuthTypes}
         />
         <ApiKeysSection projectId={projectId} apiKeys={apiKeysResult.apiKeys} />
         <DeleteProjectSection project={projectResult.project} />

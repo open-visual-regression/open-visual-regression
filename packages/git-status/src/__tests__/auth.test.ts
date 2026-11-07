@@ -1,7 +1,7 @@
 import { http, HttpResponse } from "msw";
 import { vi } from "vitest";
 
-import { verifyIntegration } from "../auth";
+import { availableAuthTypes, verifyIntegration } from "../auth";
 import { encryptToken } from "../crypto";
 import { describe, expect, test } from "./fixtures";
 import { server } from "./setup";
@@ -93,5 +93,13 @@ describe("auth", () => {
     const result = await verifyIntegration(appIntegration);
 
     expect(result.error).toMatch(/OVR_GITHUB_APP_ID is set but OVR_GITHUB_APP_PRIVATE_KEY is not/);
+  });
+
+  test("offers only token auth when the deployment has no App", () => {
+    expect(availableAuthTypes()).toEqual({ github: ["token"] });
+  });
+
+  test("offers App auth for github once the deployment has an App", ({ githubApp: _ }) => {
+    expect(availableAuthTypes()).toEqual({ github: ["token", "github_app"] });
   });
 });
