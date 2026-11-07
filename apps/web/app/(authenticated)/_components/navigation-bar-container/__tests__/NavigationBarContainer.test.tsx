@@ -20,7 +20,6 @@ vi.mock("@/lib/router");
 vi.mock("@/lib/orpc/server");
 
 const mockHeaders = vi.mocked(headers);
-const mockUsePathname = vi.mocked(usePathname);
 const mockGetSession = vi.mocked(auth.api.getSession);
 const mockGetProject = vi.mocked(orpcServerClient.projects.getOne);
 const mockList = vi.mocked(serverClient.projects.list);
@@ -33,7 +32,7 @@ mockBuildsList.mockResolvedValue([null, { builds: [], total: 0, nextCursor: null
 
 const renderAtPath = async (pathname: string) => {
   mockHeaders.mockResolvedValue(new Headers({ [REQUEST_PATH_HEADER]: pathname }));
-  mockUsePathname.mockReturnValue(pathname);
+  vi.mocked(usePathname).mockReturnValue(pathname);
 
   return render(await NavigationBarContainer(), {
     wrapper: ({ children }) => (

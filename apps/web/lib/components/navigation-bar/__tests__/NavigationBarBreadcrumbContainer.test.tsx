@@ -13,10 +13,8 @@ import { NavigationBarBreadcrumbContainer } from "../NavigationBarBreadcrumbCont
 
 vi.mock("next/navigation");
 
-const mockUsePathname = vi.mocked(usePathname);
-
 const renderBreadcrumb = (pathname: string, queryClient = new QueryClient()) => {
-  mockUsePathname.mockReturnValue(pathname);
+  vi.mocked(usePathname).mockReturnValue(pathname);
 
   return render(
     <QueryClientProvider client={queryClient}>
