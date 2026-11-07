@@ -41,7 +41,7 @@
     "@tanstack/react-virtual": "^3.14.9",
     "better-auth": "^1.7.14",
     "jose": "^6.2.12",
-    "next": "16.4.3",
+    "next": "16.4.5",
     "react": "^19.2.8",
     "react-compare-slider": "^4.0.0",
     "react-dom": "^19.2.8",

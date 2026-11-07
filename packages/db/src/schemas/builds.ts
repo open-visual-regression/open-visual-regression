@@ -237,6 +237,10 @@ export const snapshots = pgTable(
     index("snapshots_targetTitle_targetName_browser_viewportWidth_id_idx")
       .on(table.targetTitle, table.targetName, table.browser, table.viewportWidth, table.id)
       .concurrently(),
+    index("snapshots_inFlight_buildId_idx")
+      .on(table.buildId)
+      .where(sql`${table.status} in ('queued', 'processing')`)
+      .concurrently(),
   ],
 );
 
@@ -349,6 +353,10 @@ export const diffs = pgTable(
     uniqueIndex("diffs_snapshotId_uidx").on(table.snapshotId),
     index("diffs_baselineSnapshotId_idx").on(table.baselineSnapshotId).concurrently(),
     index("diffs_matchedVariantId_idx").on(table.matchedVariantId),
+    index("diffs_pending_snapshotId_idx")
+      .on(table.snapshotId)
+      .where(sql`${table.processingStatus} = 'pending'`)
+      .concurrently(),
   ],
 );
 
