@@ -43,4 +43,6 @@ export const mockHandlers = {
     mockProcedure<Inputs["diffs"]["castVote"]>("diffs/castVote", options),
   mockGetHistory: (options?: MockProcedureOptions) =>
     mockProcedure<Inputs["snapshots"]["getHistory"]>("snapshots/getHistory", options),
+  mockGetProject: (options?: MockProcedureOptions) =>
+    mockProcedure<Inputs["projects"]["getOne"]>("projects/getOne", options),
 };

@@ -3,10 +3,8 @@ import type { ProjectDto } from "@ovr/api/contracts/projects";
 import { Separator } from "@ovr/ui/components/separator";
 
 import type { Role } from "@/lib/auth/roles";
-import type { BreadcrumbSegment } from "@/lib/components/navigation-bar/getBreadcrumbSegments";
 import { NavigationBar } from "@/lib/components/navigation-bar/NavigationBar";
 import { NavigationBarActions } from "@/lib/components/navigation-bar/NavigationBarActions";
-import { NavigationBarBreadcrumb } from "@/lib/components/navigation-bar/NavigationBarBreadcrumb";
 import { NavigationBarLogo } from "@/lib/components/navigation-bar/NavigationBarLogo";
 import { NavigationBarMobileMenu } from "@/lib/components/navigation-bar/NavigationBarMobileMenu";
 
@@ -15,7 +13,7 @@ type NavigationBarContentProps = {
   projects: Pick<ProjectDto, "id" | "name">[];
   projectsTotal: number;
   builds: BuildSchema[];
-  segments: BreadcrumbSegment[];
+  breadcrumb: React.ReactNode;
   userName: string;
   signOutUrl?: string;
 };
@@ -25,7 +23,7 @@ const NavigationBarContent = ({
   projects,
   projectsTotal,
   builds,
-  segments,
+  breadcrumb,
   userName,
   signOutUrl,
 }: NavigationBarContentProps) => (
@@ -39,7 +37,7 @@ const NavigationBarContent = ({
       />
       <NavigationBarLogo />
       <Separator orientation="vertical" className="h-5" />
-      <NavigationBarBreadcrumb segments={segments} />
+      {breadcrumb}
     </div>
     <NavigationBarActions userName={userName} signOutUrl={signOutUrl} />
   </NavigationBar>
