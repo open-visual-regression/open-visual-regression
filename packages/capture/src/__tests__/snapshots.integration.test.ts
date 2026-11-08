@@ -1033,10 +1033,12 @@ describe("snapshots", () => {
       expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
         processingStatus: "success",
         reviewStatus: "unchanged",
-        baselineSnapshotId: baselineSnapshot!.id,
         pixelDiffCount: 0,
         diffPercent: 0,
         diffImagePath: null,
+      });
+      expect(await dbClient.snapshots.findById(captureSnapshotRow!.id)).toMatchObject({
+        baselineSnapshotId: baselineSnapshot!.id,
       });
     });
 
@@ -1321,7 +1323,6 @@ describe("snapshots", () => {
 
       const result = await dbClient.diffs.findById(diff!.id);
       expect(result).toMatchObject({ processingStatus: "success", reviewStatus: "needs_review" });
-      expect(result!.baselineSnapshotId).toBe(baselineSnapshot!.id);
       expect(await dbClient.snapshots.findById(captureSnapshotRow!.id)).toMatchObject({
         baselineSnapshotId: baselineSnapshot!.id,
       });
@@ -1348,7 +1349,6 @@ describe("snapshots", () => {
 
         expect(await dbClient.diffs.findById(branch.diff.id)).toMatchObject({
           reviewStatus: "unchanged",
-          baselineSnapshotId: cut.snapshot.id,
         });
         expect(await dbClient.snapshots.findById(branch.snapshot.id)).toMatchObject({
           baselineSnapshotId: cut.snapshot.id,
@@ -1369,6 +1369,8 @@ describe("snapshots", () => {
 
         expect(await dbClient.diffs.findById(branch.diff.id)).toMatchObject({
           reviewStatus: "needs_review",
+        });
+        expect(await dbClient.snapshots.findById(branch.snapshot.id)).toMatchObject({
           baselineSnapshotId: cut.snapshot.id,
         });
       });
@@ -1389,6 +1391,8 @@ describe("snapshots", () => {
 
         expect(await dbClient.diffs.findById(branch.diff.id)).toMatchObject({
           reviewStatus: "needs_review",
+        });
+        expect(await dbClient.snapshots.findById(branch.snapshot.id)).toMatchObject({
           baselineSnapshotId: latest.snapshot.id,
         });
       });
@@ -1436,6 +1440,8 @@ describe("snapshots", () => {
 
         expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
           reviewStatus: "needs_review",
+        });
+        expect(await dbClient.snapshots.findById(snapshot!.id)).toMatchObject({
           baselineSnapshotId: latest.snapshot.id,
         });
       });

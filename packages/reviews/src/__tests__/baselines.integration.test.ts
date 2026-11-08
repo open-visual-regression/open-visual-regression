@@ -114,15 +114,21 @@ describe("baselines", () => {
       mainBuild,
       reviewer,
     }) => {
-      const [previous, changed] = await dbClient.snapshots.createMany({
+      const [previous] = await dbClient.snapshots.createMany({
+        values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "target-a" }],
+      });
+      const [changed] = await dbClient.snapshots.createMany({
         values: [
-          { buildId: mainBuild.id, ...captureConfiguration, targetId: "target-a" },
-          { buildId: mainBuild.id, ...captureConfiguration, targetId: "target-a" },
+          {
+            buildId: mainBuild.id,
+            ...captureConfiguration,
+            targetId: "target-a",
+            baselineSnapshotId: previous!.id,
+          },
         ],
       });
       const diff = await dbClient.diffs.create({
         snapshotId: changed!.id,
-        baselineSnapshotId: previous!.id,
         reviewStatus: "auto_approved",
       });
 
@@ -169,15 +175,21 @@ describe("baselines", () => {
       mainBuild,
       reviewer,
     }) => {
-      const [previous, unchanged] = await dbClient.snapshots.createMany({
+      const [previous] = await dbClient.snapshots.createMany({
+        values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "target-a" }],
+      });
+      const [unchanged] = await dbClient.snapshots.createMany({
         values: [
-          { buildId: mainBuild.id, ...captureConfiguration, targetId: "target-a" },
-          { buildId: mainBuild.id, ...captureConfiguration, targetId: "target-a" },
+          {
+            buildId: mainBuild.id,
+            ...captureConfiguration,
+            targetId: "target-a",
+            baselineSnapshotId: previous!.id,
+          },
         ],
       });
       const diff = await dbClient.diffs.create({
         snapshotId: unchanged!.id,
-        baselineSnapshotId: previous!.id,
         reviewStatus: "unchanged",
       });
 

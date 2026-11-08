@@ -818,7 +818,6 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
     await dbClient.diffs.updateResult(diffId, {
       processingStatus: "success",
       reviewStatus: changed ? "auto_approved" : "unchanged",
-      ...(baselineSnapshot && { baselineSnapshotId: baselineSnapshot.id }),
       ...(diff && { pixelDiffCount: diff.pixelDiffCount, diffPercent: diff.diffPercent }),
       ...(diffImagePath && { diffImagePath }),
     });
@@ -839,7 +838,6 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
     await dbClient.diffs.updateResult(diffId, {
       processingStatus: "success",
       reviewStatus: "needs_review",
-      ...(baselineSnapshot && { baselineSnapshotId: baselineSnapshot.id }),
     });
     diffsCompared.add(1, { result: "new" });
     await checkAllDoneAndFinalize(build.id);
@@ -852,7 +850,6 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
     await dbClient.diffs.updateResult(diffId, {
       processingStatus: "success",
       reviewStatus: "unchanged",
-      baselineSnapshotId: diff.baselineSnapshotId,
       pixelDiffCount,
       diffPercent,
       ...(diffImagePath && { diffImagePath }),
@@ -865,7 +862,6 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
   await dbClient.diffs.updateResult(diffId, {
     processingStatus: "success",
     reviewStatus: "needs_review",
-    baselineSnapshotId: diff.baselineSnapshotId,
     ...(diffImagePath && { diffImagePath }),
     pixelDiffCount,
     diffPercent,
@@ -986,12 +982,7 @@ const diffAgainstBaselineSnapshot = async (
   }
 
   if (captureHash !== null && captureHash === baselineSnapshot.imageHash) {
-    return {
-      pixelDiffCount: 0,
-      diffPercent: 0,
-      diffImage: null,
-      baselineSnapshotId: baselineSnapshot.id,
-    };
+    return { pixelDiffCount: 0, diffPercent: 0, diffImage: null };
   }
 
   const { pixelDiffCount, diffPercent, diffImage, cachedImages, timings } = await compareImages(
@@ -1003,7 +994,7 @@ const diffAgainstBaselineSnapshot = async (
     { snapshotId, baselineSnapshotId: baselineSnapshot.id, pixelDiffCount, cachedImages, timings },
     "snapshot compared against baseline",
   );
-  return { pixelDiffCount, diffPercent, diffImage, baselineSnapshotId: baselineSnapshot.id };
+  return { pixelDiffCount, diffPercent, diffImage };
 };
 
 export const checkAllDoneAndFinalize = async (buildId: string): Promise<void> => {

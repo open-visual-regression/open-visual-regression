@@ -137,8 +137,8 @@ export const promoteBaseline = async (diffId: string, approverId: string): Promi
       {
         ...key,
         buildId: build.id,
-        previousSnapshotId: diff.baselineSnapshotId,
-        replacedExisting: diff.baselineSnapshotId !== null,
+        previousSnapshotId: snapshot.baselineSnapshotId,
+        replacedExisting: snapshot.baselineSnapshotId !== null,
         createdAt: build.createdAt,
       },
       tx,

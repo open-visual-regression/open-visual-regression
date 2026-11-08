@@ -37,7 +37,16 @@ export const findBySnapshotWithBaseline = async (snapshotId: string) => {
   const [row] = await db
     .select({ diff: diffs, baselineSnapshot: baselineSnapshots })
     .from(diffs)
-    .leftJoin(baselineSnapshots, eq(diffs.baselineSnapshotId, baselineSnapshots.id))
+    .innerJoin(snapshots, eq(snapshots.id, diffs.snapshotId))
+    .leftJoin(
+      baselineSnapshots,
+      eq(
+        baselineSnapshots.id,
+        // Only snapshots compared before snapshots recorded their baseline have it on their
+        // diff instead. Drop the fallback with diffs.baseline_snapshot_id once those are purged.
+        sql`coalesce(${snapshots.baselineSnapshotId}, ${diffs.baselineSnapshotId})`,
+      ),
+    )
     .where(eq(diffs.snapshotId, snapshotId));
 
   return row;
@@ -80,7 +89,6 @@ type UpdateResultInput = {
   diffImagePath?: string;
   pixelDiffCount?: number;
   diffPercent?: number;
-  baselineSnapshotId?: string;
 };
 
 export const updateResult = async (id: string, result: UpdateResultInput) => {
