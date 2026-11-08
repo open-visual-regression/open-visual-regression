@@ -13,20 +13,12 @@ export type GitPillProps = {
   icon: IconProps["icon"];
   href: string | null;
   external?: boolean;
-  title?: string;
   className?: string;
   children: ReactNode;
 };
 
 // A git ref (a branch or a commit) shown as a pill, linking to it when there is somewhere to go.
-export const GitPill = ({
-  icon,
-  href,
-  external = false,
-  title,
-  className,
-  children,
-}: GitPillProps) => {
+export const GitPill = ({ icon, href, external = false, className, children }: GitPillProps) => {
   const content = (
     <>
       <Icon icon={icon} size={10} className="shrink-0" />
@@ -35,17 +27,12 @@ export const GitPill = ({
   );
 
   if (!href) {
-    return (
-      <span className={cn(pillClassName, className)} title={title}>
-        {content}
-      </span>
-    );
+    return <span className={cn(pillClassName, className)}>{content}</span>;
   }
 
   return (
     <Link
       href={href}
-      title={title}
       className={cn(pillClassName, linkClassName, className)}
       {...(external && { target: "_blank", rel: "noopener noreferrer" })}
     >

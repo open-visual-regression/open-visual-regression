@@ -47,13 +47,7 @@ export const BuildBranches = ({ build }: BuildBranchesProps) => {
           {base}
         </GitPill>
       ) : (
-        <GitPill
-          icon={GitBranchIcon}
-          href={build.mainBranchUrl}
-          external
-          title={`No ${build.mainBranch} build was found at this branch's merge base, so it's compared to ${build.mainBranch}'s latest baselines`}
-          className="shrink-0"
-        >
+        <GitPill icon={GitBranchIcon} href={build.mainBranchUrl} external className="shrink-0">
           {base}
         </GitPill>
       )}
