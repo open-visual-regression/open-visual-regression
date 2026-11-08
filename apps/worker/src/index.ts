@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { scheduleFlakyDetection } from "@ovr/builds/flakiness";
 import { assertEncryptionKey } from "@ovr/git-status/crypto";
+import { assertGitHubAppConfig } from "@ovr/git-status/githubApp/config";
 import { createLogger } from "@ovr/logger";
 import { startMetrics } from "@ovr/metrics/server";
 import {
@@ -29,6 +30,7 @@ import * as purgeDispatch from "./handlers/purgeDispatch";
 import * as reaper from "./handlers/reaper";
 import { isFinalAttempt } from "./lib/attempts";
 import { startBrowserSweep } from "./lib/browserSweep";
+import { createCaptureSlots } from "./lib/captureSlots";
 import { observeJobs } from "./lib/jobMetrics";
 import { observeBrowserProcesses, startMemoryReports } from "./lib/memoryReport";
 import { APP_VERSION } from "./lib/version";
@@ -36,6 +38,7 @@ import { APP_VERSION } from "./lib/version";
 const logger = createLogger("worker");
 
 assertEncryptionKey();
+assertGitHubAppConfig();
 
 const metrics = await startMetrics({ serviceName: "ovr-worker", serviceVersion: APP_VERSION });
 
@@ -86,11 +89,12 @@ const PURGE_CONCURRENCY = z.coerce
 
 const shutdown = new AbortController();
 const browserSweep = startBrowserSweep(logger, BROWSER_SWEEP_INTERVAL_MS);
+const captureSlots = createCaptureSlots(CAPTURE_GROUP_CONCURRENCY);
 
 const extractWorker = new Worker(QueueName.BUILD_EXTRACT, browserSweep.track(extract.run), options);
 const captureWorker = new Worker(
   QueueName.SNAPSHOT_CAPTURE,
-  browserSweep.track(capture.createRun(shutdown.signal)),
+  captureSlots.track(browserSweep.track(capture.createRun(shutdown.signal))),
   {
     ...options,
     concurrency: CAPTURE_GROUP_CONCURRENCY,
@@ -199,6 +203,7 @@ for (const worker of workers) {
 
 if (metrics) {
   observeBrowserProcesses();
+  captureSlots.observe();
 }
 
 if (MEMORY_LOG_INTERVAL_MS > 0) {

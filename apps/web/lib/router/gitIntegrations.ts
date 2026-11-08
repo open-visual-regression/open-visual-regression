@@ -2,13 +2,24 @@
 
 import { ORPCError } from "@orpc/client";
 
+import type { GitIntegrationSchema } from "@ovr/api/contracts/gitIntegrations";
 import { dbClient } from "@ovr/db/client";
+import type { GitIntegrationDbSchema } from "@ovr/db/repository/gitIntegrations";
+import { availableAuthTypes, verifyIntegration } from "@ovr/git-status/auth";
 import { formatCheckContext } from "@ovr/git-status/checkContext";
-import { encryptToken, tryDecryptToken } from "@ovr/git-status/crypto";
-import { verifyIntegration } from "@ovr/git-status/verifyIntegration";
+import { encryptToken } from "@ovr/git-status/crypto";
 
 import { adminMiddleware, authenticatedMiddleware, projectMiddleware } from "./middleware";
 import { os } from "./os";
+
+const toGitIntegration = (integration: GitIntegrationDbSchema): GitIntegrationSchema => ({
+  provider: integration.provider,
+  repoIdentifier: integration.repoIdentifier,
+  checkContext: integration.checkContext,
+  statusChecksEnabled: integration.statusChecksEnabled,
+  authType: integration.authType,
+  hasToken: integration.encryptedToken !== null,
+});
 
 export const get = os.gitIntegrations.get
   .use(authenticatedMiddleware)
@@ -17,18 +28,9 @@ export const get = os.gitIntegrations.get
   .handler(async ({ input }) => {
     const integration = await dbClient.gitIntegrations.findByProject(input.projectId);
 
-    if (!integration) {
-      return { integration: null };
-    }
-
     return {
-      integration: {
-        provider: integration.provider,
-        repoIdentifier: integration.repoIdentifier,
-        checkContext: integration.checkContext,
-        statusChecksEnabled: integration.statusChecksEnabled,
-        hasToken: true as const,
-      },
+      integration: integration ? toGitIntegration(integration) : null,
+      availableAuthTypes: availableAuthTypes(),
     };
   })
   .actionable();
@@ -38,34 +40,50 @@ export const upsert = os.gitIntegrations.upsert
   .use(adminMiddleware)
   .use(projectMiddleware)
   .handler(async ({ input, context }) => {
-    const checkContext = formatCheckContext(context.project.name);
+    if (!availableAuthTypes()[input.provider].includes(input.authType)) {
+      throw new ORPCError("BAD_REQUEST", {
+        message: `${input.authType} authentication is not available for ${input.provider} on this deployment`,
+      });
+    }
 
-    const integration = input.token
-      ? await dbClient.gitIntegrations.upsert({
-          projectId: input.projectId,
-          provider: input.provider,
-          repoIdentifier: input.repoIdentifier,
-          encryptedToken: encryptToken(input.token),
-          checkContext,
-        })
-      : await dbClient.gitIntegrations.updateFields({
-          projectId: input.projectId,
-          provider: input.provider,
-          repoIdentifier: input.repoIdentifier,
-          checkContext,
-        });
+    const fields = {
+      projectId: input.projectId,
+      provider: input.provider,
+      repoIdentifier: input.repoIdentifier,
+      checkContext: formatCheckContext(context.project.name),
+    };
 
+    // Only token auth stores a credential.
+    if (input.authType !== "token") {
+      const integration = await dbClient.gitIntegrations.upsert({
+        ...fields,
+        authType: input.authType,
+        encryptedToken: null,
+      });
+      return toGitIntegration(integration!);
+    }
+
+    if (input.token) {
+      const integration = await dbClient.gitIntegrations.upsert({
+        ...fields,
+        authType: "token",
+        encryptedToken: encryptToken(input.token),
+      });
+      return toGitIntegration(integration!);
+    }
+
+    // Saving without a token keeps the stored one, so there has to be one to keep.
+    const existing = await dbClient.gitIntegrations.findByProject(input.projectId);
+    if (existing?.authType !== "token" || existing.encryptedToken === null) {
+      throw new ORPCError("BAD_REQUEST", { message: "An access token is required" });
+    }
+
+    const integration = await dbClient.gitIntegrations.updateFields(fields);
     if (!integration) {
       throw new ORPCError("BAD_REQUEST", { message: "An access token is required" });
     }
 
-    return {
-      provider: integration.provider,
-      repoIdentifier: integration.repoIdentifier,
-      checkContext: integration.checkContext,
-      statusChecksEnabled: integration.statusChecksEnabled,
-      hasToken: true as const,
-    };
+    return toGitIntegration(integration);
   })
   .actionable();
 
@@ -83,13 +101,7 @@ export const setStatusChecks = os.gitIntegrations.setStatusChecks
       throw new ORPCError("BAD_REQUEST", { message: "No git integration configured" });
     }
 
-    return {
-      provider: integration.provider,
-      repoIdentifier: integration.repoIdentifier,
-      checkContext: integration.checkContext,
-      statusChecksEnabled: integration.statusChecksEnabled,
-      hasToken: true as const,
-    };
+    return toGitIntegration(integration);
   })
   .actionable();
 
@@ -113,19 +125,6 @@ export const testConnection = os.gitIntegrations.testConnection
       throw new ORPCError("BAD_REQUEST", { message: "No git integration configured" });
     }
 
-    const token = tryDecryptToken(integration.encryptedToken);
-    if (token === null) {
-      return {
-        ok: false,
-        httpStatus: null,
-        error: "stored token could not be decrypted, re-enter it",
-      };
-    }
-
-    return verifyIntegration({
-      provider: integration.provider,
-      repoIdentifier: integration.repoIdentifier,
-      token,
-    });
+    return verifyIntegration(integration);
   })
   .actionable();

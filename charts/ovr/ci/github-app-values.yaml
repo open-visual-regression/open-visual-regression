@@ -1,0 +1,13 @@
+database:
+  url: postgresql://u:p@h:5432/d
+redis:
+  url: redis://h:6379
+auth:
+  betterAuthSecret: ci-not-a-real-key
+  gitTokenEncryptionKey: ci-not-a-real-key
+githubApp:
+  appId: 123456
+  privateKey: |
+    -----BEGIN RSA PRIVATE KEY-----
+    ci-not-a-real-key
+    -----END RSA PRIVATE KEY-----

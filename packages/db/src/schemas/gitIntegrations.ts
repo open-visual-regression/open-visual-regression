@@ -19,6 +19,10 @@ export const gitProviderEnum = pgEnum("git_provider", ["github"]);
 
 export type GitProvider = (typeof gitProviderEnum.enumValues)[number];
 
+export const gitAuthTypeEnum = pgEnum("git_auth_type", ["token", "github_app"]);
+
+export type GitAuthType = (typeof gitAuthTypeEnum.enumValues)[number];
+
 export const gitStatusStateEnum = pgEnum("git_status_state", [
   "pending",
   "success",
@@ -41,7 +45,8 @@ export const gitIntegrations = pgTable(
       .notNull(),
     provider: gitProviderEnum().notNull(),
     repoIdentifier: varchar("repo_identifier", { length: 512 }).notNull(),
-    encryptedToken: text("encrypted_token").notNull(),
+    authType: gitAuthTypeEnum("auth_type").notNull().default("token"),
+    encryptedToken: text("encrypted_token"),
     statusChecksEnabled: boolean("status_checks_enabled").notNull().default(true),
     checkContext: varchar("check_context", { length: 255 }).notNull().default("ovr/visual-review"),
     createdAt: utcTimestamp("created_at")

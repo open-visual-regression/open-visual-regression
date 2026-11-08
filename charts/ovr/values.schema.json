@@ -99,6 +99,20 @@
       }
     },
     "existingSecret": { "type": "string" },
+    "githubApp": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "appId": {
+          "type": ["string", "integer"],
+          "description": "The GitHub App's ID. Set together with privateKey."
+        },
+        "privateKey": {
+          "type": "string",
+          "description": "The GitHub App's PEM private key. Set together with appId."
+        }
+      }
+    },
     "podSecurityContext": {
       "type": "object",
       "description": "Pod-level securityContext, passed through verbatim."
@@ -261,6 +275,10 @@
         "groupSize": {
           "type": ["string", "integer"],
           "description": "Snapshots per capture group. Empty string uses the app default."
+        },
+        "requestTimeoutMs": {
+          "type": ["string", "integer"],
+          "description": "Milliseconds to wait for a story's request before capturing without it. Empty string uses the app default."
         },
         "diffConcurrency": {
           "type": ["string", "integer"],

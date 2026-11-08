@@ -29,6 +29,8 @@ x-app-env: &app-env
   LOG_LEVEL: ${LOG_LEVEL:-info}
   BASE_URL: ${BASE_URL:-http://localhost:3000}
   OVR_GIT_TOKEN_ENCRYPTION_KEY: ${OVR_GIT_TOKEN_ENCRYPTION_KEY:?set OVR_GIT_TOKEN_ENCRYPTION_KEY in your .env}
+  OVR_GITHUB_APP_ID: ${OVR_GITHUB_APP_ID:-}
+  OVR_GITHUB_APP_PRIVATE_KEY: ${OVR_GITHUB_APP_PRIVATE_KEY:-}
 
 services:
   db:
@@ -209,6 +211,15 @@ Any S3-compatible service works: AWS S3, Cloudflare R2, Backblaze B2, RustFS, Mi
 | `STORAGE_PUBLIC_ENDPOINT` | Address used in presigned URLs handed to CI and browsers. Unset for AWS S3. |
 | `STORAGE_FORCE_PATH_STYLE` | `true` for RustFS, MinIO, R2, and most self-hosted services. `false` for AWS S3. |
 
+### GitHub App
+
+Optional. Lets projects publish commit statuses as a GitHub App instead of with an access token. See [GitHub App](/self-hosting/github-app).
+
+| Variable | Description |
+| --- | --- |
+| `OVR_GITHUB_APP_ID` | The App ID. Set together with the private key. |
+| `OVR_GITHUB_APP_PRIVATE_KEY` | The App's `.pem` private key. Line breaks can be escaped as `\n`. |
+
 ### Optional tuning
 
 | Variable | Default | Description |
@@ -217,6 +228,7 @@ Any S3-compatible service works: AWS S3, Cloudflare R2, Backblaze B2, RustFS, Mi
 | `LOG_FILE_PATH` | unset | Log to a file instead of stdout. |
 | `OVR_CAPTURE_GROUP_CONCURRENCY` | `2` | Capture groups run in parallel per worker. Each drives its own browser instance. |
 | `OVR_CAPTURE_GROUP_SIZE` | `10` | Snapshots per capture group. |
+| `OVR_CAPTURE_REQUEST_TIMEOUT_MS` | `5000` | Milliseconds to wait for a story's request before capturing without it. |
 | `OVR_CAPTURE_QUEUE_POLICY` | `deadline` | Order capture groups run in across builds. `deadline` runs the build due soonest, each due 5 seconds per snapshot after it's queued but no later than `OVR_CAPTURE_QUEUE_MAX_DEADLINE_MINUTES`, so small builds go first without starving large ones. `round-robin` takes one group per browser from each build in turn. Both run retried groups first. `fifo` runs groups in queue order. Set it on the web app too, which queues groups when snapshots are rebuilt. |
 | `OVR_CAPTURE_QUEUE_MAX_DEADLINE_MINUTES` | `15` | Under `deadline`, the most minutes after it's queued a build is due. Builds queued after that can't pass it, so a large build waits behind newer builds for at most this long. Lower it to run large builds sooner, at the cost of small builds queued behind them. Set it on the web app too. |
 | `OVR_DIFF_CONCURRENCY` | `4` | Snapshots compared against their baseline in parallel per worker. |

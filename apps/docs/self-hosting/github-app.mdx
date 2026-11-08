@@ -1,0 +1,95 @@
+---
+title: GitHub App
+description: Publish commit statuses as a GitHub App instead of with a personal access token.
+---
+
+OVR posts a commit status to GitHub for each build. By default each project stores an access token for this, which belongs to whoever created it and stops working when they leave or the token expires. A GitHub App avoids that: the statuses come from the App, and OVR mints short-lived tokens for it as needed.
+
+You create one App for your OVR deployment, install it on the repositories you want statuses on, and then switch each project to use it.
+
+## Create the App
+
+1. In GitHub, open **Settings → Developer settings → GitHub Apps → New GitHub App**. To own the App with an organization, start from the organization's settings instead.
+2. Give it a name, such as `OVR`, and set the **Homepage URL** to your OVR address.
+3. Under **Webhook**, clear **Active**. OVR doesn't receive webhooks.
+4. Under **Repository permissions**, set:
+   - **Commit statuses**: Read and write
+   - **Metadata**: Read-only (GitHub requires this for every App)
+
+   Leave every other permission at **No access**.
+5. Under **Where can this GitHub App be installed?**, choose **Only on this account** unless you need it elsewhere.
+6. Click **Create GitHub App**.
+
+On the App's settings page, note the **App ID**. Then, under **Private keys**, click **Generate a private key**. GitHub downloads a `.pem` file, which is the only copy of the key.
+
+## Install the App
+
+From the App's settings page, open **Install App** and install it on the account or organization that owns your repositories. Choose **All repositories**, or **Only select repositories** and pick the ones OVR builds.
+
+To add repositories later, open the installation's **Configure** page from the account's or organization's **Settings → GitHub Apps**.
+
+## Configure OVR
+
+Give the web app and the worker the App ID and the private key:
+
+| Variable | Helm value | Description |
+| --- | --- | --- |
+| `OVR_GITHUB_APP_ID` | `githubApp.appId` | The App ID. |
+| `OVR_GITHUB_APP_PRIVATE_KEY` | `githubApp.privateKey` | The contents of the `.pem` file. Line breaks can be escaped as `\n` to fit the key on one line. |
+
+Set both or neither. The web app and worker refuse to start if only one is set or the key can't be read, and the error names the variable at fault. The key is only read from the environment and is never stored in the database.
+
+### Docker Compose
+
+Add both to `.env`. To put the key on one line, escape its line breaks:
+
+```sh
+awk '{printf "%s\\n", $0}' my-app.private-key.pem
+```
+
+```sh
+OVR_GITHUB_APP_ID=123456
+OVR_GITHUB_APP_PRIVATE_KEY='-----BEGIN RSA PRIVATE KEY-----\nMIIE...\n-----END RSA PRIVATE KEY-----\n'
+```
+
+Then run `docker compose up -d` to restart the web app and worker with them.
+
+### Helm
+
+```yaml
+githubApp:
+  appId: 123456
+  privateKey: |
+    -----BEGIN RSA PRIVATE KEY-----
+    MIIE...
+    -----END RSA PRIVATE KEY-----
+```
+
+With `existingSecret`, add the keys `OVR_GITHUB_APP_ID` and `OVR_GITHUB_APP_PRIVATE_KEY` to your Secret instead.
+
+## Switch a project to the App
+
+1. Open the project's **settings** page.
+2. Under **git integration**, set **authentication** to **github app**. The choice only appears once the App is configured.
+3. Enter the repository as `owner/repo` and click **save**.
+4. Click **test connection**. It checks that the App is installed on the repository and has permission to write commit statuses.
+
+Switching a project to the App deletes its stored token. To switch back, choose **access token** and enter a new one.
+
+## How tokens are handled
+
+To publish a status, OVR signs a short JWT with the App's private key, looks up the App's installation for the repository, and exchanges the JWT for an installation token. Installation tokens expire after an hour.
+
+Each web and worker process caches its installation tokens in memory, one per installation, and replaces a token five minutes before it expires. Concurrent publishes share a single refresh. If GitHub rejects a cached token, OVR fetches a new one and retries the status once. Nothing about these tokens is written to the database, so a restarted process simply mints new ones.
+
+## Troubleshooting
+
+**the GitHub App is not installed on owner/repo**: install the App on that repository, or add the repository to its installation. Check the repository name in the project's settings.
+
+**the GitHub App cannot write commit statuses**: give the App the **Commit statuses: Read and write** permission. After changing an App's permissions, the account or organization that installed it has to approve the change on the installation before it takes effect.
+
+**GitHub rejected the App's credentials**: the App ID and private key don't match, or the key was revoked. Check both values, and generate a new key if needed.
+
+Publishing failures are also recorded in the `ovr_git_status_publications_total` metric with `outcome="error"`, and logged by the worker. See [Metrics](/self-hosting/metrics).
+
+GitHub Enterprise Server isn't supported yet.

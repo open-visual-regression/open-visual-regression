@@ -80,12 +80,12 @@ export const BuildHeader = ({
         </div>
         <div className="flex flex-row flex-wrap items-center gap-4 text-xs md:order-3 md:basis-full">
           <BuildStatusStream buildId={build.id} initialStatus={build.status} />
+          <BuildBranches build={build} />
           {storybookHref ? (
             <ExternalLink href={storybookHref} className="hidden md:inline-flex">
               view storybook
             </ExternalLink>
           ) : null}
-          <BuildBranches build={build} />
           {build.commitUrl ? (
             <ExternalLink href={build.commitUrl}>
               <Icon icon={GitCommitHorizontalIcon} size={10} />

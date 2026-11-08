@@ -1,4 +1,6 @@
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import http from "node:http";
+import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -133,6 +135,7 @@ type Fixtures = {
   mainBuild: NonNullable<Awaited<ReturnType<typeof dbClient.builds.create>>>;
   featureBuild: NonNullable<Awaited<ReturnType<typeof dbClient.builds.create>>>;
   connection: RedisConnection;
+  stuckImageUrl: string;
   approveBaseline: (input: {
     build: NonNullable<Awaited<ReturnType<typeof dbClient.builds.create>>>;
     targetId: string;
@@ -222,6 +225,21 @@ export const test = vitest.extend<Fixtures>({
     await use(connection);
 
     await connection.quit();
+  },
+
+  // eslint-disable-next-line no-empty-pattern
+  stuckImageUrl: async ({}, use) => {
+    // Sends the headers, then never sends the image.
+    const server = http.createServer((_req, res) => {
+      res.writeHead(200, { "Content-Type": "image/png" });
+      res.flushHeaders();
+    });
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+
+    await use(`http://127.0.0.1:${(server.address() as AddressInfo).port}/stuck.png`);
+
+    server.closeAllConnections();
+    await new Promise<void>((resolve) => server.close(() => resolve()));
   },
 
   approveBaseline: async ({ project, captureConfiguration }, use) => {

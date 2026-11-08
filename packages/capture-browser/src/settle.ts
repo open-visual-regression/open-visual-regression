@@ -4,16 +4,22 @@ import {
   DOM_QUIET_WINDOW_MS,
   DOM_SETTLE_TIMEOUT_MS,
   NETWORK_QUIET_WINDOW_MS,
-  SETTLE_TIMEOUT_MS,
+  REQUEST_TIMEOUT_MS,
 } from "./timeouts";
 
 const MIN_PAINT_BUDGET_MS = 250;
+
+export type AbandonedRequests = {
+  // Requests given up on since the last call.
+  take: () => string[];
+};
 
 export type NetworkActivity = {
   // How long a request or image can stay pending before it's given up on.
   abandonAfterMs: number;
   whenQuiet: (quietWindowMs: number, timeoutMs: number) => Promise<boolean>;
   requestCount: () => number;
+  abandoned: AbandonedRequests;
   dispose: () => void;
 };
 
@@ -24,15 +30,17 @@ type LoadingImage = { src: string; since: number };
 declare global {
   var __OVR_DOCUMENT_WATCH__: DocumentWatch | undefined;
   var __OVR_LOADING_IMAGES__: WeakMap<HTMLImageElement, LoadingImage> | undefined;
+  var __OVR_ABANDONED_IMAGE_SRCS__: Set<string> | undefined;
 }
 
 export const trackNetworkActivity = (
   page: Page,
-  abandonAfterMs = SETTLE_TIMEOUT_MS,
+  abandonAfterMs = REQUEST_TIMEOUT_MS,
 ): NetworkActivity => {
   const pending = new Map<Request, ReturnType<typeof setTimeout>>();
   const listeners = new Set<() => void>();
   let requestCount = 0;
+  let abandoned = new Set<string>();
 
   const notify = () => {
     for (const listener of listeners) {
@@ -50,13 +58,16 @@ export const trackNetworkActivity = (
     notify();
   };
 
-  // A request that outlives a whole settle budget is treated as abandoned, so one
-  // response that never arrives cannot stall every later snapshot on this page.
+  // A request still pending after abandonAfterMs is treated as abandoned, so one response that
+  // never arrives cannot stall every later snapshot on this page.
   const add = (request: Request) => {
     requestCount += 1;
     pending.set(
       request,
-      setTimeout(() => remove(request), abandonAfterMs),
+      setTimeout(() => {
+        abandoned.add(request.url());
+        remove(request);
+      }, abandonAfterMs),
     );
     notify();
   };
@@ -91,6 +102,13 @@ export const trackNetworkActivity = (
         onChange();
       }),
     requestCount: () => requestCount,
+    abandoned: {
+      take: () => {
+        const urls = [...abandoned].sort();
+        abandoned = new Set();
+        return urls;
+      },
+    },
     dispose: () => {
       page.off("request", add);
       page.off("requestfinished", remove);
@@ -171,22 +189,42 @@ const waitForImagesAndFonts = ({
   const elapsed = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
   const now = performance.now();
 
-  // Like a stuck request, an image that outlives a whole settle budget is given up on, so it
-  // cannot stall every later snapshot on this page.
+  // Like a stuck request, an image still loading after abandonAfterMs is given up on, so it cannot
+  // stall every later snapshot on this page.
   const loadingSince = (globalThis.__OVR_LOADING_IMAGES__ ??= new WeakMap());
+  // Images given up on, so later stories that show the same one don't wait for it again.
+  const abandonedSrcs = (globalThis.__OVR_ABANDONED_IMAGE_SRCS__ ??= new Set());
+  const urlOf = (image: HTMLImageElement) => image.currentSrc || image.src;
   const isAbandoned = (image: HTMLImageElement) => {
+    if (abandonedSrcs.has(urlOf(image))) {
+      return true;
+    }
     const loading = loadingSince.get(image);
     if (loading?.src !== image.currentSrc) {
       loadingSince.set(image, { src: image.currentSrc, since: now });
       return false;
     }
-    return now - loading.since >= abandonAfterMs;
+    if (now - loading.since < abandonAfterMs) {
+      return false;
+    }
+    abandonedSrcs.add(urlOf(image));
+    return true;
   };
 
   const loaded = (image: HTMLImageElement) =>
     new Promise<void>((resolve) => {
       image.addEventListener("load", () => resolve(), { once: true });
       image.addEventListener("error", () => resolve(), { once: true });
+      const since = loadingSince.get(image)?.since ?? now;
+      setTimeout(
+        () => {
+          if (!image.complete) {
+            abandonedSrcs.add(urlOf(image));
+          }
+          resolve();
+        },
+        Math.max(since + abandonAfterMs - now, 0),
+      );
     });
 
   // Capture makes lazy images eager with disableLazyLoading, so this only skips them on a page
@@ -195,7 +233,7 @@ const waitForImagesAndFonts = ({
     .filter((image) => image.complete || (image.loading !== "lazy" && !isAbandoned(image)))
     .map((image) =>
       (image.complete ? Promise.resolve() : loaded(image))
-        .then(() => image.decode())
+        .then(() => (image.complete ? image.decode() : undefined))
         .catch(() => undefined),
     );
 

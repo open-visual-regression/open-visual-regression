@@ -14,9 +14,13 @@ Copy `values.yaml`, or pass `--set`, filling in:
 - `auth.betterAuthSecret` / `auth.gitTokenEncryptionKey` — each `openssl rand -base64 32`
 - `env.baseUrl` — public URL the app will be served at
 
+Optionally, set `githubApp.appId` and `githubApp.privateKey` so projects can
+publish commit statuses as a GitHub App instead of with an access token.
+
 Or set `existingSecret` to the name of a Secret you manage yourself with keys:
 `DATABASE_URL`, `REDIS_URL`, `BETTER_AUTH_SECRET`, `OVR_GIT_TOKEN_ENCRYPTION_KEY`,
-`STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`.
+`STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, and optionally `OVR_GITHUB_APP_ID`
+and `OVR_GITHUB_APP_PRIVATE_KEY`.
 
 ## 2. Install
 

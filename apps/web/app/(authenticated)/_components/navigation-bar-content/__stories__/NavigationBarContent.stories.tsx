@@ -2,6 +2,8 @@ import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 import { mocks } from "@ovr/mocks";
 
+import { NavigationBarBreadcrumb } from "@/lib/components/navigation-bar/NavigationBarBreadcrumb";
+
 import { NavigationBarContent } from "../NavigationBarContent";
 
 const PROJECTS = [
@@ -55,10 +57,14 @@ const meta: Meta<typeof NavigationBarContent> = {
     projects: PROJECTS,
     projectsTotal: PROJECTS.length,
     builds: BUILDS,
-    segments: [
-      { label: "projects", href: "/projects" },
-      { label: "Marketing Website Redesign and Component Library Overhaul" },
-    ],
+    breadcrumb: (
+      <NavigationBarBreadcrumb
+        segments={[
+          { label: "projects", href: "/projects" },
+          { label: "Marketing Website Redesign and Component Library Overhaul" },
+        ]}
+      />
+    ),
     userName: "Jordan Lee",
   },
   parameters: {

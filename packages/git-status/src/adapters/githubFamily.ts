@@ -1,3 +1,5 @@
+import type { GitProvider } from "@ovr/db/schema";
+
 import type {
   Adapter,
   AdapterConfig,
@@ -14,7 +16,7 @@ const headers = (token: string): Record<string, string> => ({
   "x-github-api-version": GITHUB_API_VERSION,
 });
 
-const resolveApiBase = ({ provider }: AdapterConfig): string => {
+export const githubApiBase = (provider: GitProvider): string => {
   switch (provider) {
     case "github":
       return "https://api.github.com";
@@ -22,7 +24,7 @@ const resolveApiBase = ({ provider }: AdapterConfig): string => {
 };
 
 const buildRequest = (config: AdapterConfig, request: PublishRequest): HttpRequest => ({
-  url: `${resolveApiBase(config)}/repos/${config.repoIdentifier}/statuses/${request.sha}`,
+  url: `${githubApiBase(config.provider)}/repos/${config.repoIdentifier}/statuses/${request.sha}`,
   headers: headers(config.token),
   body: {
     state: request.state,
@@ -33,7 +35,7 @@ const buildRequest = (config: AdapterConfig, request: PublishRequest): HttpReque
 });
 
 const buildVerifyRequest = (config: AdapterConfig): VerifyRequest => ({
-  url: `${resolveApiBase(config)}/repos/${config.repoIdentifier}`,
+  url: `${githubApiBase(config.provider)}/repos/${config.repoIdentifier}`,
   headers: headers(config.token),
 });
 
