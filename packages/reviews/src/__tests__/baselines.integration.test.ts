@@ -140,6 +140,39 @@ describe("baselines", () => {
       });
     });
 
+    test("should remember the baseline the snapshot recorded before main changed it", async ({
+      project,
+      captureConfiguration,
+      mainBuild,
+      reviewer,
+    }) => {
+      const [previous] = await dbClient.snapshots.createMany({
+        values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "target-a" }],
+      });
+      const [changed] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: mainBuild.id,
+            ...captureConfiguration,
+            targetId: "target-a",
+            baselineSnapshotId: previous!.id,
+          },
+        ],
+      });
+      const diff = await dbClient.diffs.create({
+        snapshotId: changed!.id,
+        reviewStatus: "auto_approved",
+      });
+
+      await promoteBaseline(diff!.id, reviewer.id);
+
+      const revision = await dbClient.baselineRevisions.findFirstAfter(
+        { projectId: project.id, ...captureConfiguration, targetId: "target-a" },
+        "2000-01-01T00:00:00.000Z",
+      );
+      expect(revision).toMatchObject({ previousSnapshotId: previous!.id, replacedExisting: true });
+    });
+
     test("should remember that a target added on main had no baseline before", async ({
       project,
       captureConfiguration,

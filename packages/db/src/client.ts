@@ -1,6 +1,7 @@
 import { db } from "./db";
 import * as accessTokens from "./repository/accessTokens";
 import * as apiKeys from "./repository/apiKeys";
+import * as backfills from "./repository/backfills";
 import * as baselineRevisions from "./repository/baselineRevisions";
 import * as baselines from "./repository/baselines";
 import * as buildExtractDefaults from "./repository/buildExtractDefaults";
@@ -39,5 +40,6 @@ export const dbClient = {
   gitIntegrations,
   gitStatusPublications,
   jobSettings,
+  backfills,
   transaction: db.transaction.bind(db),
 } as const;

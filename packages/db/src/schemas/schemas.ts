@@ -59,3 +59,17 @@ export const jobSettings = pgTable("job_settings", {
     .notNull(),
   lastRunAt: utcTimestamp("last_run_at"),
 });
+
+export type BackfillName = "snapshot_baselines";
+
+// Progress of a data backfill that runs in the background because it is too slow for a
+// migration: how far it got, and when it finished.
+export const backfills = pgTable("backfills", {
+  name: text().$type<BackfillName>().primaryKey(),
+  cursor: text(),
+  completedAt: utcTimestamp("completed_at"),
+  updatedAt: utcTimestamp("updated_at")
+    .default(sql`now()`)
+    .$onUpdate(() => sql`now()`)
+    .notNull(),
+});

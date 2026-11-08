@@ -14,6 +14,7 @@ import {
   runCaptureGroupRetryFirst,
   scheduleReaper,
   schedulePurge,
+  scheduleSnapshotBaselineBackfill,
   setPurgeConcurrency,
 } from "@ovr/queue";
 
@@ -28,6 +29,7 @@ import * as publishStatus from "./handlers/publishStatus";
 import * as purge from "./handlers/purge";
 import * as purgeDispatch from "./handlers/purgeDispatch";
 import * as reaper from "./handlers/reaper";
+import * as snapshotBaselineBackfill from "./handlers/snapshotBaselineBackfill";
 import { isFinalAttempt } from "./lib/attempts";
 import { startBrowserSweep } from "./lib/browserSweep";
 import { createCaptureSlots } from "./lib/captureSlots";
@@ -121,6 +123,11 @@ const flakySnapshotScanWorker = new Worker(
   flakySnapshotScan.run,
   options,
 );
+const snapshotBaselineBackfillWorker = new Worker(
+  QueueName.SNAPSHOT_BASELINE_BACKFILL,
+  snapshotBaselineBackfill.run,
+  options,
+);
 
 const guard =
   <T>(fn: (job: { data: T }, error: Error) => Promise<void>) =>
@@ -162,6 +169,7 @@ reaperWorker.on("failed", guard(reaper.failed));
 publishStatusWorker.on("failed", guard(publishStatus.failed));
 flakySnapshotDispatchWorker.on("failed", guard(flakySnapshotDispatch.failed));
 flakySnapshotScanWorker.on("failed", guard(flakySnapshotScan.failed));
+snapshotBaselineBackfillWorker.on("failed", guard(snapshotBaselineBackfill.failed));
 
 const workers = [
   extractWorker,
@@ -175,6 +183,7 @@ const workers = [
   publishStatusWorker,
   flakySnapshotDispatchWorker,
   flakySnapshotScanWorker,
+  snapshotBaselineBackfillWorker,
 ];
 
 for (const worker of [extractWorker, captureWorker, diffWorker, finalizeWorker]) {
@@ -226,6 +235,12 @@ try {
   await scheduleReaper(connection);
 } catch (error) {
   logger.error({ err: error }, "failed to schedule the build reaper job");
+}
+
+try {
+  await scheduleSnapshotBaselineBackfill(connection);
+} catch (error) {
+  logger.error({ err: error }, "failed to schedule the snapshot baseline backfill job");
 }
 
 try {

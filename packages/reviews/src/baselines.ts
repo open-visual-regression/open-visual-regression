@@ -133,12 +133,16 @@ export const promoteBaseline = async (diffId: string, approverId: string): Promi
       return;
     }
 
+    // Diffs carry the baseline until the backfill has copied it to every snapshot.
+    // Drop the fallback together with diffs.baseline_snapshot_id.
+    const previousSnapshotId = snapshot.baselineSnapshotId ?? diff.baselineSnapshotId;
+
     await dbClient.baselineRevisions.create(
       {
         ...key,
         buildId: build.id,
-        previousSnapshotId: diff.baselineSnapshotId,
-        replacedExisting: diff.baselineSnapshotId !== null,
+        previousSnapshotId,
+        replacedExisting: previousSnapshotId !== null,
         createdAt: build.createdAt,
       },
       tx,

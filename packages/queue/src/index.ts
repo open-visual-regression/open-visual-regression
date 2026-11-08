@@ -126,6 +126,7 @@ export enum QueueName {
   GIT_STATUS_PUBLISH = "git-status-publish",
   FLAKY_SNAPSHOT_DISPATCH = "flaky-snapshot-dispatch",
   FLAKY_SNAPSHOT_SCAN = "flaky-snapshot-scan",
+  SNAPSHOT_BASELINE_BACKFILL = "snapshot-baseline-backfill",
 }
 
 export type ExtractJobPayload = {
@@ -180,6 +181,8 @@ export type ProjectPurgeJobPayload = {
 };
 
 export type ReaperJobPayload = Record<string, never>;
+
+export type SnapshotBaselineBackfillJobPayload = Record<string, never>;
 
 export type GitStatusPublishJobPayload = {
   buildId: string;
@@ -252,6 +255,11 @@ const JOB_OPTIONS: Record<QueueName, JobsOptions> = {
   [QueueName.FLAKY_SNAPSHOT_SCAN]: {
     attempts: 3,
     backoff: { type: "exponential", delay: 2000 },
+    ...RETENTION,
+  },
+  [QueueName.SNAPSHOT_BASELINE_BACKFILL]: {
+    attempts: 3,
+    backoff: { type: "exponential", delay: 5000 },
     ...RETENTION,
   },
 };
@@ -670,6 +678,31 @@ export const scheduleReaper = async (connection: RedisConnection): Promise<void>
       REAPER_JOB_ID,
       { pattern: "*/30 * * * *" },
       { name: QueueName.BUILD_REAPER, data: {}, opts: JOB_OPTIONS[QueueName.BUILD_REAPER] },
+    );
+  } finally {
+    await queue.close();
+  }
+};
+
+const SNAPSHOT_BASELINE_BACKFILL_JOB_ID = "snapshot-baseline-backfill";
+
+// Runs until the backfill finishes; after that each run returns straight away.
+export const scheduleSnapshotBaselineBackfill = async (
+  connection: RedisConnection,
+): Promise<void> => {
+  const queue = new Queue<SnapshotBaselineBackfillJobPayload>(
+    QueueName.SNAPSHOT_BASELINE_BACKFILL,
+    queueOptions(connection),
+  );
+  try {
+    await queue.upsertJobScheduler(
+      SNAPSHOT_BASELINE_BACKFILL_JOB_ID,
+      { pattern: "*/15 * * * *" },
+      {
+        name: QueueName.SNAPSHOT_BASELINE_BACKFILL,
+        data: {},
+        opts: JOB_OPTIONS[QueueName.SNAPSHOT_BASELINE_BACKFILL],
+      },
     );
   } finally {
     await queue.close();

@@ -110,6 +110,41 @@ export const setBaseline = async (id: string, baselineSnapshotId: string | null)
   await db.update(snapshots).set({ baselineSnapshotId }).where(eq(snapshots.id, id));
 };
 
+const FIRST_UUID = "00000000-0000-0000-0000-000000000000";
+
+// Copies the baselines of the next `limit` diffs after `afterDiffId`, in primary-key order,
+// onto snapshots that have none yet. Returns the last diff it looked at, or null when there
+// are no diffs left.
+export const copyBaselinesFromDiffs = async (
+  afterDiffId: string | null,
+  limit: number,
+  tx: DbClient = db,
+): Promise<{ lastDiffId: string | null; copied: number }> => {
+  const { rows } = await tx.execute<{ last_diff_id: string | null; copied: number }>(sql`
+    with batch as (
+      select ${diffs.id} as id, ${diffs.snapshotId} as snapshot_id,
+        ${diffs.baselineSnapshotId} as baseline_snapshot_id
+      from ${diffs}
+      where ${diffs.id} > ${afterDiffId ?? FIRST_UUID}::uuid
+      order by ${diffs.id}
+      limit ${limit}
+    ),
+    copied as (
+      update ${snapshots}
+      set baseline_snapshot_id = batch.baseline_snapshot_id
+      from batch
+      where ${snapshots.id} = batch.snapshot_id
+        and batch.baseline_snapshot_id is not null
+        and ${snapshots.baselineSnapshotId} is null
+      returning 1
+    )
+    select (select id from batch order by id desc limit 1) as last_diff_id,
+      (select count(*) from copied)::int as copied
+  `);
+
+  return { lastDiffId: rows[0]?.last_diff_id ?? null, copied: rows[0]?.copied ?? 0 };
+};
+
 export const markErrored = async (id: string, errorMessage: string) => {
   const [snapshot] = await db
     .update(snapshots)
