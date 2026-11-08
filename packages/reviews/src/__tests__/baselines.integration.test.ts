@@ -5,7 +5,7 @@ import {
   findComparisonBaselines,
   getBaseline,
   promoteBaseline,
-  toComparisonKey,
+  toBaselineKey,
 } from "../baselines";
 import { describe, expect, test } from "./fixtures";
 
@@ -412,7 +412,7 @@ describe("baselines", () => {
         createdAt: "2026-01-02T00:00:00.000Z",
       });
 
-      expect(keys.map((key) => result.get(toComparisonKey(key)))).toEqual([
+      expect(keys.map((key) => result.get(toBaselineKey(key)))).toEqual([
         { snapshotId: atMergeBase!.id, source: "merge_base" },
         { snapshotId: latestB!.id, source: "latest" },
         { snapshotId: null, source: "latest" },

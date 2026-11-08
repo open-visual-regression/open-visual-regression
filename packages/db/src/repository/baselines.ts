@@ -1,4 +1,4 @@
-import { and, type AnyColumn, asc, eq, gt, gte, inArray, or, sql } from "drizzle-orm";
+import { and, type AnyColumn, eq, gte, inArray, or } from "drizzle-orm";
 
 import { db, type DbClient } from "../db";
 import { baselineRevisions, baselines, builds, snapshots } from "../schema";
@@ -98,56 +98,12 @@ export const matchesBaselineKeys = (
   );
 };
 
-export const findByKeysWithRevisionAfter = async (
-  projectId: string,
-  keys: BaselineKey[],
-  after: string | null,
-) => {
-  if (keys.length === 0) {
-    return [];
-  }
-
-  if (!after) {
-    const rows = await db
-      .select()
-      .from(baselines)
-      .where(matchesBaselineKeys(baselines, projectId, keys));
-    return rows.map((baseline) => ({ baseline, revision: null }));
-  }
-
-  const firstRevision = db
-    .select({
-      id: baselineRevisions.id,
-      replacedExisting: baselineRevisions.replacedExisting,
-      previousSnapshotId: baselineRevisions.previousSnapshotId,
-    })
-    .from(baselineRevisions)
-    .where(
-      and(
-        eq(baselineRevisions.projectId, baselines.projectId),
-        eq(baselineRevisions.browser, baselines.browser),
-        eq(baselineRevisions.viewportWidth, baselines.viewportWidth),
-        eq(baselineRevisions.viewportHeight, baselines.viewportHeight),
-        eq(baselineRevisions.targetId, baselines.targetId),
-        gt(baselineRevisions.createdAt, after),
-      ),
-    )
-    .orderBy(asc(baselineRevisions.createdAt), asc(baselineRevisions.id))
-    .limit(1)
-    .as("first_revision");
-
-  return db
-    .select({
-      baseline: baselines,
-      revision: {
-        id: firstRevision.id,
-        replacedExisting: firstRevision.replacedExisting,
-        previousSnapshotId: firstRevision.previousSnapshotId,
-      },
-    })
-    .from(baselines)
-    .leftJoinLateral(firstRevision, sql`true`)
-    .where(matchesBaselineKeys(baselines, projectId, keys));
-};
+export const findMany = (projectId: string, keys: BaselineKey[]) =>
+  keys.length === 0
+    ? Promise.resolve([])
+    : db
+        .select()
+        .from(baselines)
+        .where(matchesBaselineKeys(baselines, projectId, keys));
 
 export type BaselineDbSchema = Awaited<ReturnType<typeof findByProject>>[number];

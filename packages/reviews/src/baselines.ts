@@ -1,4 +1,7 @@
 import { dbClient } from "@ovr/db/client";
+import type { BaselineKey } from "@ovr/db/repository/baselines";
+import type { BuildDbSchema } from "@ovr/db/repository/builds";
+import type { ProjectDbSchema } from "@ovr/db/repository/projects";
 import type { DiffReviewStatus } from "@ovr/db/schema";
 
 type Viewport = { browser: string; viewportWidth: number; viewportHeight: number };
@@ -19,9 +22,7 @@ export type ComparisonBaseline = {
   source: "merge_base" | "latest" | "expired";
 };
 
-export type ComparisonKey = Viewport & { targetId: string };
-
-export const toComparisonKey = (key: ComparisonKey): string =>
+export const toBaselineKey = (key: BaselineKey): string =>
   [key.targetId, key.browser, key.viewportWidth, key.viewportHeight].join(":");
 
 const resolveComparisonBaseline = (
@@ -48,52 +49,52 @@ const resolveComparisonBaseline = (
 // the first of those changes records what the baseline was before it.
 export const findComparisonBaselines = async (
   projectId: string,
-  keys: ComparisonKey[],
+  keys: BaselineKey[],
   base: { createdAt: string } | null,
 ): Promise<Map<string, ComparisonBaseline>> => {
-  const rows = await dbClient.baselines.findByKeysWithRevisionAfter(
-    projectId,
-    keys,
-    base?.createdAt ?? null,
-  );
-  const rowByKey = new Map(rows.map((row) => [toComparisonKey(row.baseline), row]));
-
-  // Main can have changed a target whose baseline is gone, e.g. deleted with its approver.
-  const withoutBaseline = keys.filter((key) => !rowByKey.has(toComparisonKey(key)));
-  const orphanedRevisions = base
-    ? await dbClient.baselineRevisions.findFirstAfterByKeys(
-        projectId,
-        withoutBaseline,
-        base.createdAt,
-      )
-    : [];
-  const orphanedRevisionByKey = new Map(
-    orphanedRevisions.map((revision) => [toComparisonKey(revision), revision]),
-  );
+  const [latest, revisions] = await Promise.all([
+    dbClient.baselines.findMany(projectId, keys),
+    base ? dbClient.baselineRevisions.findFirstAfterMany(projectId, keys, base.createdAt) : [],
+  ]);
+  const latestByKey = new Map(latest.map((baseline) => [toBaselineKey(baseline), baseline]));
+  const revisionByKey = new Map(revisions.map((revision) => [toBaselineKey(revision), revision]));
 
   return new Map(
-    keys.map((key) => {
-      const row = rowByKey.get(toComparisonKey(key));
-      return [
-        toComparisonKey(key),
-        resolveComparisonBaseline(
-          row?.baseline.snapshotId ?? null,
-          row?.revision ?? orphanedRevisionByKey.get(toComparisonKey(key)) ?? null,
-        ),
-      ];
-    }),
+    keys.map((key) => [
+      toBaselineKey(key),
+      resolveComparisonBaseline(
+        latestByKey.get(toBaselineKey(key))?.snapshotId ?? null,
+        revisionByKey.get(toBaselineKey(key)) ?? null,
+      ),
+    ]),
   );
 };
 
 // Branch builds compare against main as it was at their merge base, so changes main made
 // since the branch was cut don't show up as the branch's own.
 export const findComparisonBase = async (
-  build: { branch: string; baseBuildId: string | null },
-  project: { gitMainBranch: string },
+  build: Pick<NonNullable<BuildDbSchema>, "branch" | "baseBuildId">,
+  project: Pick<ProjectDbSchema, "gitMainBranch">,
 ) =>
   build.branch !== project.gitMainBranch && build.baseBuildId
     ? ((await dbClient.builds.findById(build.baseBuildId)) ?? null)
     : null;
+
+export const findBuildComparisonBaselines = async (
+  build: NonNullable<BuildDbSchema>,
+  keys: BaselineKey[],
+) => {
+  if (keys.length === 0) {
+    return new Map<string, ComparisonBaseline>();
+  }
+
+  const project = await dbClient.projects.findById(build.projectId);
+  if (!project) {
+    throw new Error(`Project not found for build: ${build.id}`);
+  }
+
+  return findComparisonBaselines(build.projectId, keys, await findComparisonBase(build, project));
+};
 
 export const findComparisonBaseline = async (
   projectId: string,
@@ -103,7 +104,7 @@ export const findComparisonBaseline = async (
 ): Promise<ComparisonBaseline> => {
   const key = { ...viewport, targetId };
   const baselines = await findComparisonBaselines(projectId, [key], base);
-  return baselines.get(toComparisonKey(key)) ?? { snapshotId: null, source: "latest" };
+  return baselines.get(toBaselineKey(key)) ?? { snapshotId: null, source: "latest" };
 };
 
 export const promoteBaseline = async (diffId: string, approverId: string): Promise<void> => {

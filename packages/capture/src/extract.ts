@@ -12,11 +12,7 @@ import {
 import type { NamedViewport } from "@ovr/capture-browser/storyViewports";
 import { dbClient } from "@ovr/db/client";
 import { enqueueCaptureGroups, enqueueFinalize } from "@ovr/queue/producer";
-import {
-  findComparisonBase,
-  findComparisonBaselines,
-  toComparisonKey,
-} from "@ovr/reviews/baselines";
+import { findBuildComparisonBaselines, toBaselineKey } from "@ovr/reviews/baselines";
 import {
   DEFAULT_SCREENSHOT_STABILITY,
   type ScreenshotStability,
@@ -82,50 +78,6 @@ const failUnreadableTargets = async (
 
     await markSnapshotErrored(snapshot!.id, new Error(`Story failed to load: ${message}`));
   }
-};
-
-type ExtractedSnapshot = {
-  status: "queued" | "skipped";
-  browser: string;
-  viewportWidth: number;
-  viewportHeight: number;
-  targetId: string;
-  skipsToKeepBaseline?: boolean;
-};
-
-const resolveSkippedSnapshots = async <T extends ExtractedSnapshot>(
-  build: { id: string; projectId: string; branch: string; baseBuildId: string | null },
-  snapshots: T[],
-) => {
-  const skipped = snapshots.filter((snapshot) => snapshot.status === "skipped");
-  const baselines =
-    skipped.length === 0
-      ? new Map<string, never>()
-      : await findComparisonBaselines(
-          build.projectId,
-          skipped,
-          await findComparisonBase(build, await findProject(build)),
-        );
-
-  return snapshots.map(({ skipsToKeepBaseline, ...snapshot }) => {
-    if (snapshot.status !== "skipped") {
-      return snapshot;
-    }
-
-    const baselineSnapshotId = baselines.get(toComparisonKey(snapshot))?.snapshotId ?? null;
-
-    return skipsToKeepBaseline && !baselineSnapshotId
-      ? { ...snapshot, status: "queued" as const }
-      : { ...snapshot, baselineSnapshotId };
-  });
-};
-
-const findProject = async (build: { id: string; projectId: string }) => {
-  const project = await dbClient.projects.findById(build.projectId);
-  if (!project) {
-    throw new Error(`Project not found for build: ${build.id}`);
-  }
-  return project;
 };
 
 export const extractBuild = async (
@@ -198,13 +150,27 @@ export const extractBuild = async (
           override,
         ),
       };
-      return unaffected.has(target.id)
-        ? { ...snapshot, status: "skipped" as const, skipsToKeepBaseline: true }
-        : { ...snapshot, status: "queued" as const };
+      return { ...snapshot, status: "queued" as const };
     });
   });
+
+  // An unaffected story keeps its baseline instead of being captured, if it has one.
+  const baselines = await findBuildComparisonBaselines(
+    build,
+    values.filter((value) => value.status === "skipped" || unaffected.has(value.targetId)),
+  );
   const created = await dbClient.snapshots.createMany({
-    values: await resolveSkippedSnapshots(build, values),
+    values: values.map((value) => {
+      const baselineSnapshotId = baselines.get(toBaselineKey(value))?.snapshotId ?? null;
+
+      if (value.status === "skipped") {
+        return { ...value, baselineSnapshotId };
+      }
+
+      return unaffected.has(value.targetId) && baselineSnapshotId
+        ? { ...value, status: "skipped" as const, baselineSnapshotId }
+        : value;
+    }),
   });
   const skipped = created.filter(({ status }) => status === "skipped").length;
   snapshotsCreated.add(created.length - skipped, { status: "queued" });

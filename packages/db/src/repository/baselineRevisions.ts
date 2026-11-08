@@ -41,7 +41,7 @@ export const findFirstAfter = async (
   return revision;
 };
 
-export const findFirstAfterByKeys = (projectId: string, keys: BaselineKey[], after: string) =>
+export const findFirstAfterMany = (projectId: string, keys: BaselineKey[], after: string) =>
   keys.length === 0
     ? Promise.resolve([])
     : db

@@ -471,6 +471,37 @@ describe("extractBuild", () => {
     ]);
   });
 
+  test("records the baseline a story with parameters.ovr.skip keeps", async ({
+    mainBuild,
+    captureConfiguration,
+  }) => {
+    const { viewportName: _, ...viewport } = captureConfiguration;
+    const [baseline] = await dbClient.snapshots.createMany({
+      values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" }],
+    });
+    await dbClient.baselines.upsert({
+      projectId: mainBuild.projectId,
+      ...viewport,
+      targetId: "story-a",
+      snapshotId: baseline!.id,
+      approvedBy: mainBuild.createdBy,
+    });
+    const tarball = await buildArtifactTarball({ "story-a": { skip: true } });
+    await storage.uploadFile(mainBuild.artifactPath, tarball, "application/gzip");
+
+    await extractBuild(
+      mainBuild.id,
+      [{ id: "story-a", title: "Story", name: "A" }],
+      [captureConfiguration],
+      0.05,
+    );
+
+    const skipped = (await dbClient.snapshots.findByBuild(mainBuild.id)).find(
+      (snapshot) => snapshot.status === "skipped",
+    );
+    expect(skipped).toMatchObject({ targetId: "story-a", baselineSnapshotId: baseline!.id });
+  });
+
   test("creates one skipped snapshot per story, not one per viewport", async ({ mainBuild }) => {
     const tarball = await buildArtifactTarball({ "story-a": { skip: true } });
     await storage.uploadFile(mainBuild.artifactPath, tarball, "application/gzip");
