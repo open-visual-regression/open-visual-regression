@@ -206,6 +206,9 @@ export const snapshots = pgTable(
     variantId: uuid("variant_id").references((): AnyPgColumn => snapshotVariants.id, {
       onDelete: "set null",
     }),
+    baselineSnapshotId: uuid("baseline_snapshot_id").references((): AnyPgColumn => snapshots.id, {
+      onDelete: "set null",
+    }),
     hasRenderError: boolean("has_render_error").notNull().default(false),
     hasUncaughtPageError: boolean("has_uncaught_page_error").notNull().default(false),
     errorMessage: text("error_message"),
@@ -227,6 +230,7 @@ export const snapshots = pgTable(
   (table) => [
     index("snapshots_buildId_idx").on(table.buildId),
     index("snapshots_variantId_idx").on(table.variantId),
+    index("snapshots_baselineSnapshotId_idx").on(table.baselineSnapshotId).concurrently(),
     index("snapshots_browser_viewport_target_buildId_idx").on(
       table.browser,
       table.viewportWidth,

@@ -74,6 +74,35 @@ describe("diffs", () => {
       expect(found?.baselineSnapshot?.imagePath).toBe("baseline.png");
     });
 
+    test("should prefer the baseline the snapshot recorded over the diff's", async ({
+      build,
+      captureConfiguration,
+    }) => {
+      const [recorded, onDiff] = await dbClient.snapshots.createMany({
+        values: ["recorded.png", "on-diff.png"].map((imagePath) => ({
+          buildId: build.id,
+          ...captureConfiguration,
+          targetId: "a",
+          imagePath,
+        })),
+      });
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            ...captureConfiguration,
+            targetId: "a",
+            baselineSnapshotId: recorded!.id,
+          },
+        ],
+      });
+      await dbClient.diffs.create({ snapshotId: snapshot!.id, baselineSnapshotId: onDiff!.id });
+
+      const found = await dbClient.diffs.findBySnapshotWithBaseline(snapshot!.id);
+
+      expect(found?.baselineSnapshot?.imagePath).toBe("recorded.png");
+    });
+
     test("should return a null baseline snapshot when the diff has no baseline", async ({
       build,
       captureConfiguration,

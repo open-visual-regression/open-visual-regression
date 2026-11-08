@@ -109,6 +109,10 @@ export const buildSnapshotSchema = z.object({
   targetName: z.string().min(1),
   status: snapshotDisplayStatusSchema,
   imagePath: z.string().nullable(),
+  baselineImagePath: z.string().nullable().meta({
+    description:
+      "The image of the baseline this snapshot was compared against or, when skipped, the baseline it keeps",
+  }),
   diffId: z.uuidv7().nullable(),
   diffImagePath: z.string().nullable(),
   diffPercent: z.number().nullable(),

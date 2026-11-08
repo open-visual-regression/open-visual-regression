@@ -471,6 +471,37 @@ describe("extractBuild", () => {
     ]);
   });
 
+  test("records the baseline a story with parameters.ovr.skip keeps", async ({
+    mainBuild,
+    captureConfiguration,
+  }) => {
+    const { viewportName: _, ...viewport } = captureConfiguration;
+    const [baseline] = await dbClient.snapshots.createMany({
+      values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" }],
+    });
+    await dbClient.baselines.upsert({
+      projectId: mainBuild.projectId,
+      ...viewport,
+      targetId: "story-a",
+      snapshotId: baseline!.id,
+      approvedBy: mainBuild.createdBy,
+    });
+    const tarball = await buildArtifactTarball({ "story-a": { skip: true } });
+    await storage.uploadFile(mainBuild.artifactPath, tarball, "application/gzip");
+
+    await extractBuild(
+      mainBuild.id,
+      [{ id: "story-a", title: "Story", name: "A" }],
+      [captureConfiguration],
+      0.05,
+    );
+
+    const skipped = (await dbClient.snapshots.findByBuild(mainBuild.id)).find(
+      (snapshot) => snapshot.status === "skipped",
+    );
+    expect(skipped).toMatchObject({ targetId: "story-a", baselineSnapshotId: baseline!.id });
+  });
+
   test("creates one skipped snapshot per story, not one per viewport", async ({ mainBuild }) => {
     const tarball = await buildArtifactTarball({ "story-a": { skip: true } });
     await storage.uploadFile(mainBuild.artifactPath, tarball, "application/gzip");
@@ -522,7 +553,7 @@ describe("extractBuild", () => {
       build: { id: string; projectId: string; createdBy: string },
       targetId: string,
       viewport: { browser: string; viewportWidth: number; viewportHeight: number },
-    ): Promise<void> => {
+    ): Promise<string> => {
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
           {
@@ -544,6 +575,7 @@ describe("extractBuild", () => {
         snapshotId: snapshot!.id,
         approvedBy: build.createdBy,
       });
+      return snapshot!.id;
     };
 
     const desktop = { browser: "chromium", viewportWidth: 1280, viewportHeight: 0 };
@@ -592,6 +624,35 @@ describe("extractBuild", () => {
       );
     });
 
+    test("records the baseline each skipped snapshot keeps", async ({
+      mainBuild,
+      featureBuild,
+    }) => {
+      const desktopBaselineId = await seedBaseline(mainBuild, "story-a", desktop);
+      const mobileBaselineId = await seedBaseline(mainBuild, "story-a", mobile);
+      await storage.uploadFile(
+        featureBuild.artifactPath,
+        await buildArtifactTarball(),
+        "application/gzip",
+      );
+
+      await extractBuild(featureBuild.id, targets, viewports, 0.05, ["story-a"]);
+
+      const snapshots = await dbClient.snapshots.findByBuild(featureBuild.id);
+      const baselineByViewport = Object.fromEntries(
+        snapshots.map((snapshot) => [
+          `${snapshot.targetId}@${snapshot.viewportName}`,
+          snapshot.baselineSnapshotId,
+        ]),
+      );
+      expect(baselineByViewport).toEqual({
+        "story-a@desktop": desktopBaselineId,
+        "story-a@mobile": mobileBaselineId,
+        "story-b@desktop": null,
+        "story-b@mobile": null,
+      });
+    });
+
     test("counts the snapshots it will capture and the ones that keep their baseline", async ({
       mainBuild,
       featureBuild,
@@ -630,6 +691,49 @@ describe("extractBuild", () => {
         snapshots.map((snapshot) => [snapshot.viewportName, snapshot.status]),
       );
       expect(statusByViewport).toEqual({ desktop: "skipped", mobile: "queued" });
+    });
+
+    test("captures an unaffected target that had no baseline at the branch's merge base", async ({
+      mainBuild,
+      user,
+    }) => {
+      const mergeBase = await dbClient.builds.create({
+        projectId: mainBuild.projectId,
+        branch: "main",
+        commitSha: "c".repeat(40),
+        artifactPath: "builds/seed/merge-base",
+        createdBy: user.id,
+        createdAt: "2026-01-01T00:00:00.000Z",
+      });
+      await seedBaseline(mainBuild, "story-a", desktop);
+      // Main added story-a's baseline after the branch was cut.
+      await dbClient.baselineRevisions.create({
+        projectId: mainBuild.projectId,
+        ...desktop,
+        targetId: "story-a",
+        buildId: mainBuild.id,
+        previousSnapshotId: null,
+        replacedExisting: false,
+        createdAt: mainBuild.createdAt,
+      });
+      const branchBuild = await dbClient.builds.create({
+        projectId: mainBuild.projectId,
+        branch: "feature/test",
+        commitSha: "b".repeat(40),
+        baseBuildId: mergeBase!.id,
+        artifactPath: "builds/seed/branch",
+        createdBy: user.id,
+      });
+      await storage.uploadFile(
+        branchBuild!.artifactPath,
+        await buildArtifactTarball(),
+        "application/gzip",
+      );
+
+      await extractBuild(branchBuild!.id, [targets[0]!], [viewports[0]!], 0.05, ["story-a"]);
+
+      const [snapshot] = await dbClient.snapshots.findByBuild(branchBuild!.id);
+      expect(snapshot).toMatchObject({ status: "queued", baselineSnapshotId: null });
     });
 
     test("does not use another project's baselines", async ({

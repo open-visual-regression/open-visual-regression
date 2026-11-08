@@ -1,6 +1,12 @@
 import { dbClient } from "@ovr/db/client";
 
-import { findComparisonBaseline, getBaseline, promoteBaseline } from "../baselines";
+import {
+  findComparisonBaseline,
+  findComparisonBaselines,
+  getBaseline,
+  promoteBaseline,
+  toBaselineKey,
+} from "../baselines";
 import { describe, expect, test } from "./fixtures";
 
 describe("baselines", () => {
@@ -108,15 +114,21 @@ describe("baselines", () => {
       mainBuild,
       reviewer,
     }) => {
-      const [previous, changed] = await dbClient.snapshots.createMany({
+      const [previous] = await dbClient.snapshots.createMany({
+        values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "target-a" }],
+      });
+      const [changed] = await dbClient.snapshots.createMany({
         values: [
-          { buildId: mainBuild.id, ...captureConfiguration, targetId: "target-a" },
-          { buildId: mainBuild.id, ...captureConfiguration, targetId: "target-a" },
+          {
+            buildId: mainBuild.id,
+            ...captureConfiguration,
+            targetId: "target-a",
+            baselineSnapshotId: previous!.id,
+          },
         ],
       });
       const diff = await dbClient.diffs.create({
         snapshotId: changed!.id,
-        baselineSnapshotId: previous!.id,
         reviewStatus: "auto_approved",
       });
 
@@ -163,15 +175,21 @@ describe("baselines", () => {
       mainBuild,
       reviewer,
     }) => {
-      const [previous, unchanged] = await dbClient.snapshots.createMany({
+      const [previous] = await dbClient.snapshots.createMany({
+        values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "target-a" }],
+      });
+      const [unchanged] = await dbClient.snapshots.createMany({
         values: [
-          { buildId: mainBuild.id, ...captureConfiguration, targetId: "target-a" },
-          { buildId: mainBuild.id, ...captureConfiguration, targetId: "target-a" },
+          {
+            buildId: mainBuild.id,
+            ...captureConfiguration,
+            targetId: "target-a",
+            baselineSnapshotId: previous!.id,
+          },
         ],
       });
       const diff = await dbClient.diffs.create({
         snapshotId: unchanged!.id,
-        baselineSnapshotId: previous!.id,
         reviewStatus: "unchanged",
       });
 
@@ -342,6 +360,63 @@ describe("baselines", () => {
       );
 
       expect(result).toEqual({ snapshotId: latest!.id, source: "expired" });
+    });
+  });
+
+  describe("findComparisonBaselines", () => {
+    test("should resolve each target the way findComparisonBaseline does, in one call", async ({
+      project,
+      captureConfiguration,
+      mainBuild,
+      reviewer,
+      recordRevision,
+    }) => {
+      const { viewportName: _, ...viewport } = captureConfiguration;
+      const [atMergeBase, latestA, latestB] = await dbClient.snapshots.createMany({
+        values: ["target-a", "target-a", "target-b"].map((targetId) => ({
+          buildId: mainBuild.id,
+          ...captureConfiguration,
+          targetId,
+        })),
+      });
+      for (const [targetId, snapshot] of [
+        ["target-a", latestA],
+        ["target-b", latestB],
+      ] as const) {
+        await dbClient.baselines.upsert({
+          projectId: project.id,
+          ...viewport,
+          targetId,
+          snapshotId: snapshot!.id,
+          approvedBy: reviewer.id,
+        });
+      }
+      // Before the merge base, so it doesn't count.
+      await recordRevision({
+        targetId: "target-b",
+        previousSnapshotId: null,
+        replacedExisting: false,
+        createdAt: "2026-01-01T00:00:00.000Z",
+      });
+      await recordRevision({
+        previousSnapshotId: atMergeBase!.id,
+        replacedExisting: true,
+        createdAt: "2026-01-03T00:00:00.000Z",
+      });
+      const keys = ["target-a", "target-b", "target-c"].map((targetId) => ({
+        ...viewport,
+        targetId,
+      }));
+
+      const result = await findComparisonBaselines(project.id, keys, {
+        createdAt: "2026-01-02T00:00:00.000Z",
+      });
+
+      expect(keys.map((key) => result.get(toBaselineKey(key)))).toEqual([
+        { snapshotId: atMergeBase!.id, source: "merge_base" },
+        { snapshotId: latestB!.id, source: "latest" },
+        { snapshotId: null, source: "latest" },
+      ]);
     });
   });
 });

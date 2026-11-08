@@ -12,6 +12,7 @@ import {
 import type { NamedViewport } from "@ovr/capture-browser/storyViewports";
 import { dbClient } from "@ovr/db/client";
 import { enqueueCaptureGroups, enqueueFinalize } from "@ovr/queue/producer";
+import { findBuildComparisonBaselines, toBaselineKey } from "@ovr/reviews/baselines";
 import {
   DEFAULT_SCREENSHOT_STABILITY,
   type ScreenshotStability,
@@ -79,19 +80,6 @@ const failUnreadableTargets = async (
   }
 };
 
-const baselineKey = (snapshot: {
-  targetId: string;
-  browser: string;
-  viewportWidth: number;
-  viewportHeight: number;
-}): string =>
-  [snapshot.targetId, snapshot.browser, snapshot.viewportWidth, snapshot.viewportHeight].join(":");
-
-const findBaselineKeys = async (projectId: string, unaffected: Set<string>) =>
-  unaffected.size === 0
-    ? new Set<string>()
-    : new Set((await dbClient.baselines.findByProject(projectId)).map(baselineKey));
-
 export const extractBuild = async (
   buildId: string,
   targets: Target[],
@@ -124,50 +112,64 @@ export const extractBuild = async (
   );
 
   const unaffected = new Set(unaffectedTargetIds);
-  const baselineKeys = await findBaselineKeys(build.projectId, unaffected);
 
-  const created = await dbClient.snapshots.createMany({
-    values: targets.flatMap((target) => {
-      if (failures.has(target.id)) {
-        return [];
-      }
+  const values = targets.flatMap((target) => {
+    if (failures.has(target.id)) {
+      return [];
+    }
 
-      const override = overrides.get(target.id);
+    const override = overrides.get(target.id);
 
-      if (override?.skip) {
-        return [
-          toUncapturedSnapshot(
-            buildId,
-            target,
-            resolveDefaultViewport(viewports),
-            diffThreshold,
-            "skipped",
-          ),
-        ];
-      }
-
-      return resolveTargetViewports(viewports, override?.viewports).map((viewport) => {
-        const snapshot = {
+    if (override?.skip) {
+      return [
+        toUncapturedSnapshot(
           buildId,
-          browser: viewport.browser,
-          viewportWidth: viewport.viewportWidth,
-          viewportHeight: viewport.viewportHeight ?? 0,
-          viewportName: toViewportName(viewport),
-          targetId: target.id,
-          targetTitle: target.title,
-          targetName: target.name,
-          diffThreshold: resolveTargetDiffThreshold(diffThreshold, override),
-          waitForTimeout: resolveTargetWaitForTimeout(waitForTimeout, override),
-          screenshotStability: resolveTargetScreenshotStability(screenshotStability, override),
-          externalRequestAllowlist: resolveTargetExternalRequestAllowlist(
-            externalRequestAllowlist,
-            override,
-          ),
-        };
-        const keepsBaseline = unaffected.has(target.id) && baselineKeys.has(baselineKey(snapshot));
+          target,
+          resolveDefaultViewport(viewports),
+          diffThreshold,
+          "skipped",
+        ),
+      ];
+    }
 
-        return { ...snapshot, status: keepsBaseline ? ("skipped" as const) : ("queued" as const) };
-      });
+    return resolveTargetViewports(viewports, override?.viewports).map((viewport) => {
+      const snapshot = {
+        buildId,
+        browser: viewport.browser,
+        viewportWidth: viewport.viewportWidth,
+        viewportHeight: viewport.viewportHeight ?? 0,
+        viewportName: toViewportName(viewport),
+        targetId: target.id,
+        targetTitle: target.title,
+        targetName: target.name,
+        diffThreshold: resolveTargetDiffThreshold(diffThreshold, override),
+        waitForTimeout: resolveTargetWaitForTimeout(waitForTimeout, override),
+        screenshotStability: resolveTargetScreenshotStability(screenshotStability, override),
+        externalRequestAllowlist: resolveTargetExternalRequestAllowlist(
+          externalRequestAllowlist,
+          override,
+        ),
+      };
+      return { ...snapshot, status: "queued" as const };
+    });
+  });
+
+  // An unaffected story keeps its baseline instead of being captured, if it has one.
+  const baselines = await findBuildComparisonBaselines(
+    build,
+    values.filter((value) => value.status === "skipped" || unaffected.has(value.targetId)),
+  );
+  const created = await dbClient.snapshots.createMany({
+    values: values.map((value) => {
+      const baselineSnapshotId = baselines.get(toBaselineKey(value))?.snapshotId ?? null;
+
+      if (value.status === "skipped") {
+        return { ...value, baselineSnapshotId };
+      }
+
+      return unaffected.has(value.targetId) && baselineSnapshotId
+        ? { ...value, status: "skipped" as const, baselineSnapshotId }
+        : value;
     }),
   });
   const skipped = created.filter(({ status }) => status === "skipped").length;

@@ -2,6 +2,7 @@ import { and, asc, eq, gt } from "drizzle-orm";
 
 import { db, type DbClient } from "../db";
 import { baselineRevisions } from "../schema";
+import { type BaselineKey, matchesBaselineKeys } from "./baselines";
 
 type RevisionKey = {
   projectId: string;
@@ -39,5 +40,31 @@ export const findFirstAfter = async (
     .limit(1);
   return revision;
 };
+
+export const findFirstAfterMany = (projectId: string, keys: BaselineKey[], after: string) =>
+  keys.length === 0
+    ? Promise.resolve([])
+    : db
+        .selectDistinctOn([
+          baselineRevisions.browser,
+          baselineRevisions.viewportWidth,
+          baselineRevisions.viewportHeight,
+          baselineRevisions.targetId,
+        ])
+        .from(baselineRevisions)
+        .where(
+          and(
+            matchesBaselineKeys(baselineRevisions, projectId, keys),
+            gt(baselineRevisions.createdAt, after),
+          ),
+        )
+        .orderBy(
+          asc(baselineRevisions.browser),
+          asc(baselineRevisions.viewportWidth),
+          asc(baselineRevisions.viewportHeight),
+          asc(baselineRevisions.targetId),
+          asc(baselineRevisions.createdAt),
+          asc(baselineRevisions.id),
+        );
 
 export type BaselineRevisionDbSchema = typeof baselineRevisions.$inferSelect;

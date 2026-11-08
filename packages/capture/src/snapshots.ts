@@ -34,7 +34,11 @@ import type { SnapshotDbSchema } from "@ovr/db/repository/snapshots";
 import type { BuildProcessingStatus } from "@ovr/db/schema";
 import { createLogger } from "@ovr/logger";
 import { enqueueDiff, enqueueFinalize } from "@ovr/queue/producer";
-import { findComparisonBaseline, promoteBaseline } from "@ovr/reviews/baselines";
+import {
+  findComparisonBase,
+  findComparisonBaseline,
+  promoteBaseline,
+} from "@ovr/reviews/baselines";
 import { storage } from "@ovr/storage";
 
 import {
@@ -769,10 +773,6 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
 
   const isMainBranch = build.branch === project.gitMainBranch;
 
-  // Branch builds compare against main as it was at their merge base, so changes main made
-  // since the branch was cut don't show up as the branch's own.
-  const base =
-    !isMainBranch && build.baseBuildId ? await dbClient.builds.findById(build.baseBuildId) : null;
   const baseline = await findComparisonBaseline(
     project.id,
     {
@@ -781,7 +781,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
       viewportHeight: snapshot.viewportHeight,
     },
     snapshot.targetId,
-    base ?? null,
+    await findComparisonBase(build, project),
   );
 
   if (baseline.source === "expired") {
@@ -798,6 +798,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
   const baselineSnapshot = baseline.snapshotId
     ? await dbClient.snapshots.findById(baseline.snapshotId)
     : null;
+  await dbClient.snapshots.setBaseline(snapshotId, baselineSnapshot?.id ?? null);
   const diff = await diffAgainstBaselineSnapshot(
     snapshotId,
     snapshot.imagePath,
@@ -817,7 +818,6 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
     await dbClient.diffs.updateResult(diffId, {
       processingStatus: "success",
       reviewStatus: changed ? "auto_approved" : "unchanged",
-      ...(baselineSnapshot && { baselineSnapshotId: baselineSnapshot.id }),
       ...(diff && { pixelDiffCount: diff.pixelDiffCount, diffPercent: diff.diffPercent }),
       ...(diffImagePath && { diffImagePath }),
     });
@@ -838,7 +838,6 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
     await dbClient.diffs.updateResult(diffId, {
       processingStatus: "success",
       reviewStatus: "needs_review",
-      ...(baselineSnapshot && { baselineSnapshotId: baselineSnapshot.id }),
     });
     diffsCompared.add(1, { result: "new" });
     await checkAllDoneAndFinalize(build.id);
@@ -851,7 +850,6 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
     await dbClient.diffs.updateResult(diffId, {
       processingStatus: "success",
       reviewStatus: "unchanged",
-      baselineSnapshotId: diff.baselineSnapshotId,
       pixelDiffCount,
       diffPercent,
       ...(diffImagePath && { diffImagePath }),
@@ -864,7 +862,6 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
   await dbClient.diffs.updateResult(diffId, {
     processingStatus: "success",
     reviewStatus: "needs_review",
-    baselineSnapshotId: diff.baselineSnapshotId,
     ...(diffImagePath && { diffImagePath }),
     pixelDiffCount,
     diffPercent,
@@ -985,12 +982,7 @@ const diffAgainstBaselineSnapshot = async (
   }
 
   if (captureHash !== null && captureHash === baselineSnapshot.imageHash) {
-    return {
-      pixelDiffCount: 0,
-      diffPercent: 0,
-      diffImage: null,
-      baselineSnapshotId: baselineSnapshot.id,
-    };
+    return { pixelDiffCount: 0, diffPercent: 0, diffImage: null };
   }
 
   const { pixelDiffCount, diffPercent, diffImage, cachedImages, timings } = await compareImages(
@@ -1002,7 +994,7 @@ const diffAgainstBaselineSnapshot = async (
     { snapshotId, baselineSnapshotId: baselineSnapshot.id, pixelDiffCount, cachedImages, timings },
     "snapshot compared against baseline",
   );
-  return { pixelDiffCount, diffPercent, diffImage, baselineSnapshotId: baselineSnapshot.id };
+  return { pixelDiffCount, diffPercent, diffImage };
 };
 
 export const checkAllDoneAndFinalize = async (buildId: string): Promise<void> => {

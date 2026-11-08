@@ -106,6 +106,10 @@ export const setVariant = async (id: string, variantId: string, tx: DbClient = d
   return snapshot;
 };
 
+export const setBaseline = async (id: string, baselineSnapshotId: string | null) => {
+  await db.update(snapshots).set({ baselineSnapshotId }).where(eq(snapshots.id, id));
+};
+
 export const markErrored = async (id: string, errorMessage: string) => {
   const [snapshot] = await db
     .update(snapshots)
@@ -123,6 +127,7 @@ export const requeue = async (id: string, tx: DbClient = db) => {
       captureAttempt: sql`${snapshots.captureAttempt} + 1`,
       imagePath: null,
       imageHash: null,
+      baselineSnapshotId: null,
       hasRenderError: false,
       hasUncaughtPageError: false,
       errorMessage: null,
@@ -245,6 +250,14 @@ const isFlaky = exists(
       ),
     ),
 ).mapWith(Boolean);
+
+const baselineSnapshots = alias(snapshots, "baseline_snapshots");
+
+// A subquery rather than a join, so it only runs for the rows on the page.
+const baselineImagePath = sql<string | null>`(${db
+  .select({ imagePath: baselineSnapshots.imagePath })
+  .from(baselineSnapshots)
+  .where(eq(baselineSnapshots.id, snapshots.baselineSnapshotId))})`;
 
 export type SnapshotFlag = "flaky" | "warning";
 
@@ -635,6 +648,7 @@ export const list = async ({
       viewportHeight: snapshots.viewportHeight,
       viewportName: snapshots.viewportName,
       imagePath: snapshots.imagePath,
+      baselineImagePath,
       hasUncaughtPageError: snapshots.hasUncaughtPageError,
       queuedAt: snapshots.queuedAt,
       startedAt: snapshots.startedAt,

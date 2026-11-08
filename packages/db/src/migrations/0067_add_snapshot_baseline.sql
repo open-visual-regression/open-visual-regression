@@ -1,0 +1,2 @@
+ALTER TABLE "snapshots" ADD COLUMN "baseline_snapshot_id" uuid;--> statement-breakpoint
+ALTER TABLE "snapshots" ADD CONSTRAINT "snapshots_baseline_snapshot_id_snapshots_id_fk" FOREIGN KEY ("baseline_snapshot_id") REFERENCES "public"."snapshots"("id") ON DELETE set null ON UPDATE no action NOT VALID;

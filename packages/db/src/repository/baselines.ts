@@ -1,7 +1,7 @@
-import { type AnyColumn, eq, gte } from "drizzle-orm";
+import { and, type AnyColumn, eq, gte, inArray, or } from "drizzle-orm";
 
 import { db, type DbClient } from "../db";
-import { baselines, builds, snapshots } from "../schema";
+import { baselineRevisions, baselines, builds, snapshots } from "../schema";
 
 type FindInput = {
   projectId: string;
@@ -61,5 +61,49 @@ export const findByProject = (projectId: string) =>
   db.query.baselines.findMany({
     where: (baselines, { eq }) => eq(baselines.projectId, projectId),
   });
+
+export type BaselineKey = {
+  browser: string;
+  viewportWidth: number;
+  viewportHeight: number;
+  targetId: string;
+};
+
+// Groups the keys by viewport, so each group matches the key indexes on its full prefix.
+export const matchesBaselineKeys = (
+  table: typeof baselines | typeof baselineRevisions,
+  projectId: string,
+  keys: BaselineKey[],
+) => {
+  const byViewport = new Map<string, { viewport: BaselineKey; targetIds: string[] }>();
+  for (const key of keys) {
+    const viewport = [key.browser, key.viewportWidth, key.viewportHeight].join(":");
+    const group = byViewport.get(viewport) ?? { viewport: key, targetIds: [] };
+    group.targetIds.push(key.targetId);
+    byViewport.set(viewport, group);
+  }
+
+  return and(
+    eq(table.projectId, projectId),
+    or(
+      ...[...byViewport.values()].map(({ viewport, targetIds }) =>
+        and(
+          eq(table.browser, viewport.browser),
+          eq(table.viewportWidth, viewport.viewportWidth),
+          eq(table.viewportHeight, viewport.viewportHeight),
+          inArray(table.targetId, targetIds),
+        ),
+      ),
+    ),
+  );
+};
+
+export const findMany = (projectId: string, keys: BaselineKey[]) =>
+  keys.length === 0
+    ? Promise.resolve([])
+    : db
+        .select()
+        .from(baselines)
+        .where(matchesBaselineKeys(baselines, projectId, keys));
 
 export type BaselineDbSchema = Awaited<ReturnType<typeof findByProject>>[number];
