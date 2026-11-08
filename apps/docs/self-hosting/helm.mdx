@@ -45,11 +45,11 @@ cosign verify ghcr.io/open-visual-regression/charts/ovr:X.Y.Z \
 | `redis.mode` | `standalone` (default) or `cluster`. |
 | `storage.bucket` / `storage.region` | Bucket name and region. The bucket must already exist. |
 
-Set `existingSecret` to supply all of these from a Secret you manage (Sealed Secrets, External Secrets, or by hand) instead. It needs the keys `DATABASE_URL`, `REDIS_URL`, `BETTER_AUTH_SECRET`, `OVR_GIT_TOKEN_ENCRYPTION_KEY`, `STORAGE_ACCESS_KEY`, and `STORAGE_SECRET_KEY`, plus `OVR_GITHUB_APP_ID` and `OVR_GITHUB_APP_PRIVATE_KEY` if you use a GitHub App.
+Set `existingSecret` to supply all of these from a Secret you manage (Sealed Secrets, External Secrets, or by hand) instead. It needs the keys `DATABASE_URL`, `REDIS_URL`, `BETTER_AUTH_SECRET`, `OVR_GIT_TOKEN_ENCRYPTION_KEY`, `STORAGE_ACCESS_KEY`, and `STORAGE_SECRET_KEY`. A GitHub App's private key goes in a Secret of its own, set with `githubApp.existingSecret`.
 
 To sign people in through an SSO proxy in front of OVR instead of OVR's own passwords, set `auth.mode` and `auth.trustedProxy`. See [SSO](/self-hosting/sso).
 
-To publish commit statuses as a GitHub App instead of with each project's access token, set `githubApp.appId` and `githubApp.privateKey`. See [GitHub App](/self-hosting/github-app).
+To publish commit statuses as a GitHub App instead of with each project's access token, set `githubApp.appId` and either `githubApp.privateKey` or `githubApp.existingSecret`. See [GitHub App](/self-hosting/github-app).
 
 ## Object storage
 

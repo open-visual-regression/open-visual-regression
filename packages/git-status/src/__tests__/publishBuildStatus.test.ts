@@ -287,7 +287,7 @@ describe("publishBuildStatus", () => {
     expect(deps.recordPublication).toHaveBeenCalledWith(
       expect.objectContaining({
         outcome: "error",
-        error: expect.stringMatching(/set OVR_GITHUB_APP_ID and OVR_GITHUB_APP_PRIVATE_KEY/),
+        error: expect.stringMatching(/set OVR_GITHUB_APP_ID and OVR_GITHUB_APP_PRIVATE_KEY_FILE/),
       }),
     );
   });

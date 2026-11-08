@@ -111,6 +111,24 @@ jobs:
           fails --set web.updateStrategy=Rolling
           fails --set auth.mode=sso
           fails --set githubApp.appID=1
+          fails --set githubApp.appId=1
+          fails --set githubApp.existingSecret=k
+          fails --set githubApp.appId=1 --set githubApp.existingSecret=k --set githubApp.privateKey=k
+
+      - name: GitHub App key is mounted, not in the environment
+        run: |
+          set -euo pipefail
+          for name in github-app github-app-existing-secret; do
+            if yq 'select(.kind == "Secret" and .metadata.name == "ovr-app-secret")' "rendered/$name.yaml" | grep -q "GITHUB_APP\|BEGIN RSA"; then
+              echo "::error::$name puts the GitHub App key in the shared Secret"; exit 1
+            fi
+            for component in web worker; do
+              deployment=$(yq "select(.kind == \"Deployment\" and .metadata.name == \"ovr-app-$component\")" "rendered/$name.yaml")
+              grep -q "OVR_GITHUB_APP_PRIVATE_KEY_FILE" <<<"$deployment" || { echo "::error::$name $component has no OVR_GITHUB_APP_PRIVATE_KEY_FILE"; exit 1; }
+              grep -q "mountPath: /etc/ovr/github-app" <<<"$deployment" || { echo "::error::$name $component doesn't mount the key"; exit 1; }
+            done
+            echo "$name mounts the key as a file"
+          done
 
       - name: Package
         run: helm package charts/ovr --destination dist && ls -l dist

@@ -1,4 +1,7 @@
 import { randomBytes } from "node:crypto";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 import { test as vitest, vi } from "vitest";
 
@@ -18,6 +21,7 @@ type Fixtures = {
   github: FakeGitHub;
   clock: Clock;
   githubAppPrivateKey: string;
+  writeTempFile: (contents: string) => string;
 };
 
 export const test = vitest.extend<Fixtures>({
@@ -39,9 +43,22 @@ export const test = vitest.extend<Fixtures>({
     { scope: "worker" },
   ],
 
-  githubApp: async ({ githubAppPrivateKey }, use) => {
+  // eslint-disable-next-line no-empty-pattern
+  writeTempFile: async ({}, use) => {
+    const dir = mkdtempSync(join(tmpdir(), "ovr-git-status-"));
+    let count = 0;
+    await use((contents) => {
+      count += 1;
+      const path = join(dir, `file-${count}`);
+      writeFileSync(path, contents);
+      return path;
+    });
+    rmSync(dir, { recursive: true, force: true });
+  },
+
+  githubApp: async ({ githubAppPrivateKey, writeTempFile }, use) => {
     vi.stubEnv("OVR_GITHUB_APP_ID", "1234");
-    vi.stubEnv("OVR_GITHUB_APP_PRIVATE_KEY", githubAppPrivateKey);
+    vi.stubEnv("OVR_GITHUB_APP_PRIVATE_KEY_FILE", writeTempFile(githubAppPrivateKey));
     await use(readGitHubAppConfig()!);
   },
 
