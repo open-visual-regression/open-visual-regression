@@ -1,7 +1,7 @@
-import { type AnyColumn, eq, gte, sql } from "drizzle-orm";
+import { and, type AnyColumn, asc, eq, gt, gte, inArray, or, sql } from "drizzle-orm";
 
 import { db, type DbClient } from "../db";
-import { baselines, builds, snapshots } from "../schema";
+import { baselineRevisions, baselines, builds, snapshots } from "../schema";
 
 type FindInput = {
   projectId: string;
@@ -69,92 +69,85 @@ export type BaselineKey = {
   targetId: string;
 };
 
-export type ComparisonCandidates = BaselineKey & {
-  latestSnapshotId: string | null;
-  // Main's first change to the target after `after`, if there was one.
-  revision: { replacedExisting: boolean; previousSnapshotId: string | null } | null;
+// Groups the keys by viewport, so each group matches the key indexes on its full prefix.
+export const matchesBaselineKeys = (
+  table: typeof baselines | typeof baselineRevisions,
+  projectId: string,
+  keys: BaselineKey[],
+) => {
+  const byViewport = new Map<string, { viewport: BaselineKey; targetIds: string[] }>();
+  for (const key of keys) {
+    const viewport = [key.browser, key.viewportWidth, key.viewportHeight].join(":");
+    const group = byViewport.get(viewport) ?? { viewport: key, targetIds: [] };
+    group.targetIds.push(key.targetId);
+    byViewport.set(viewport, group);
+  }
+
+  return and(
+    eq(table.projectId, projectId),
+    or(
+      ...[...byViewport.values()].map(({ viewport, targetIds }) =>
+        and(
+          eq(table.browser, viewport.browser),
+          eq(table.viewportWidth, viewport.viewportWidth),
+          eq(table.viewportHeight, viewport.viewportHeight),
+          inArray(table.targetId, targetIds),
+        ),
+      ),
+    ),
+  );
 };
 
-const toKeyRow = (key: BaselineKey) => ({
-  browser: key.browser,
-  viewport_width: key.viewportWidth,
-  viewport_height: key.viewportHeight,
-  target_id: key.targetId,
-});
-
-// Bounds the size of one query's key list.
-const COMPARISON_CANDIDATES_CHUNK = 1000;
-
-// For each key, main's latest baseline and main's first change after `after`: what
-// `findComparisonBaseline` decides between. One indexed lookup per key, in one query per chunk.
-export const findComparisonCandidates = async (
+export const findByKeysWithRevisionAfter = async (
   projectId: string,
   keys: BaselineKey[],
   after: string | null,
-): Promise<ComparisonCandidates[]> => {
-  const results: ComparisonCandidates[] = [];
-
-  for (let start = 0; start < keys.length; start += COMPARISON_CANDIDATES_CHUNK) {
-    const chunk = keys.slice(start, start + COMPARISON_CANDIDATES_CHUNK);
-    const { rows } = await db.execute<{
-      browser: string;
-      viewport_width: number;
-      viewport_height: number;
-      target_id: string;
-      latest_snapshot_id: string | null;
-      revision_id: string | null;
-      replaced_existing: boolean | null;
-      previous_snapshot_id: string | null;
-    }>(sql`
-      select k.browser, k.viewport_width, k.viewport_height, k.target_id,
-        b.snapshot_id as latest_snapshot_id,
-        r.id as revision_id, r.replaced_existing, r.previous_snapshot_id
-      from jsonb_to_recordset(${JSON.stringify(chunk.map(toKeyRow))}::jsonb)
-        as k(browser text, viewport_width int, viewport_height int, target_id text)
-      -- Lateral with a limit, so each key is an index probe. A join, or a lateral Postgres can
-      -- flatten into one, may hash every baseline instead.
-      left join lateral (
-        select b.snapshot_id
-        from baselines b
-        where b.project_id = ${projectId}
-          and b.browser = k.browser
-          and b.viewport_width = k.viewport_width
-          and b.viewport_height = k.viewport_height
-          and b.target_id = k.target_id
-        limit 1
-      ) b on true
-      left join lateral (
-        select r.id, r.replaced_existing, r.previous_snapshot_id
-        from baseline_revisions r
-        where r.project_id = ${projectId}
-          and r.browser = k.browser
-          and r.viewport_width = k.viewport_width
-          and r.viewport_height = k.viewport_height
-          and r.target_id = k.target_id
-          and r.created_at > ${after}::timestamp
-        order by r.created_at, r.id
-        limit 1
-      ) r on true
-    `);
-
-    for (const row of rows) {
-      results.push({
-        browser: row.browser,
-        viewportWidth: row.viewport_width,
-        viewportHeight: row.viewport_height,
-        targetId: row.target_id,
-        latestSnapshotId: row.latest_snapshot_id,
-        revision: row.revision_id
-          ? {
-              replacedExisting: row.replaced_existing ?? false,
-              previousSnapshotId: row.previous_snapshot_id,
-            }
-          : null,
-      });
-    }
+) => {
+  if (keys.length === 0) {
+    return [];
   }
 
-  return results;
+  if (!after) {
+    const rows = await db
+      .select()
+      .from(baselines)
+      .where(matchesBaselineKeys(baselines, projectId, keys));
+    return rows.map((baseline) => ({ baseline, revision: null }));
+  }
+
+  const firstRevision = db
+    .select({
+      id: baselineRevisions.id,
+      replacedExisting: baselineRevisions.replacedExisting,
+      previousSnapshotId: baselineRevisions.previousSnapshotId,
+    })
+    .from(baselineRevisions)
+    .where(
+      and(
+        eq(baselineRevisions.projectId, baselines.projectId),
+        eq(baselineRevisions.browser, baselines.browser),
+        eq(baselineRevisions.viewportWidth, baselines.viewportWidth),
+        eq(baselineRevisions.viewportHeight, baselines.viewportHeight),
+        eq(baselineRevisions.targetId, baselines.targetId),
+        gt(baselineRevisions.createdAt, after),
+      ),
+    )
+    .orderBy(asc(baselineRevisions.createdAt), asc(baselineRevisions.id))
+    .limit(1)
+    .as("first_revision");
+
+  return db
+    .select({
+      baseline: baselines,
+      revision: {
+        id: firstRevision.id,
+        replacedExisting: firstRevision.replacedExisting,
+        previousSnapshotId: firstRevision.previousSnapshotId,
+      },
+    })
+    .from(baselines)
+    .leftJoinLateral(firstRevision, sql`true`)
+    .where(matchesBaselineKeys(baselines, projectId, keys));
 };
 
 export type BaselineDbSchema = Awaited<ReturnType<typeof findByProject>>[number];

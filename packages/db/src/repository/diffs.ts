@@ -42,8 +42,7 @@ export const findBySnapshotWithBaseline = async (snapshotId: string) => {
       baselineSnapshots,
       eq(
         baselineSnapshots.id,
-        // Only snapshots compared before snapshots recorded their baseline have it on their
-        // diff instead. Drop the fallback with diffs.baseline_snapshot_id once those are purged.
+        // Snapshots compared before they recorded their baseline only have it on their diff.
         sql`coalesce(${snapshots.baselineSnapshotId}, ${diffs.baselineSnapshotId})`,
       ),
     )

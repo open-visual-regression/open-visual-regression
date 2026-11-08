@@ -90,13 +90,9 @@ type ExtractedSnapshot = {
   viewportWidth: number;
   viewportHeight: number;
   targetId: string;
-  // Skipped only if there is a baseline to keep, as for a target the change doesn't affect.
   skipsToKeepBaseline?: boolean;
 };
 
-// Resolves, in one lookup, the baseline each skipped snapshot keeps: the same baseline a
-// captured snapshot would be compared against. Skipped snapshots record it, and one that is
-// only skipped to keep a baseline is captured instead when there is none.
 const resolveSkippedSnapshots = async <T extends ExtractedSnapshot>(
   build: { id: string; projectId: string; branch: string; baseBuildId: string | null },
   snapshots: T[],

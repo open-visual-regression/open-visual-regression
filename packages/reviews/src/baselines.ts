@@ -1,5 +1,4 @@
 import { dbClient } from "@ovr/db/client";
-import type { ComparisonCandidates } from "@ovr/db/repository/baselines";
 import type { DiffReviewStatus } from "@ovr/db/schema";
 
 type Viewport = { browser: string; viewportWidth: number; viewportHeight: number };
@@ -25,10 +24,10 @@ export type ComparisonKey = Viewport & { targetId: string };
 export const toComparisonKey = (key: ComparisonKey): string =>
   [key.targetId, key.browser, key.viewportWidth, key.viewportHeight].join(":");
 
-const resolveComparisonBaseline = ({
-  latestSnapshotId,
-  revision,
-}: ComparisonCandidates): ComparisonBaseline => {
+const resolveComparisonBaseline = (
+  latestSnapshotId: string | null,
+  revision: { replacedExisting: boolean; previousSnapshotId: string | null } | null,
+): ComparisonBaseline => {
   if (!revision) {
     return { snapshotId: latestSnapshotId, source: "latest" };
   }
@@ -47,29 +46,47 @@ const resolveComparisonBaseline = ({
 // What each target is compared against: main as it was at `base`, the main-branch build at the
 // merge base. Only targets main changed after `base` differ from main's latest baseline, and
 // the first of those changes records what the baseline was before it.
-// Keyed by `toComparisonKey`.
 export const findComparisonBaselines = async (
   projectId: string,
   keys: ComparisonKey[],
   base: { createdAt: string } | null,
 ): Promise<Map<string, ComparisonBaseline>> => {
-  const candidates = await dbClient.baselines.findComparisonCandidates(
+  const rows = await dbClient.baselines.findByKeysWithRevisionAfter(
     projectId,
     keys,
     base?.createdAt ?? null,
   );
+  const rowByKey = new Map(rows.map((row) => [toComparisonKey(row.baseline), row]));
+
+  // Main can have changed a target whose baseline is gone, e.g. deleted with its approver.
+  const withoutBaseline = keys.filter((key) => !rowByKey.has(toComparisonKey(key)));
+  const orphanedRevisions = base
+    ? await dbClient.baselineRevisions.findFirstAfterByKeys(
+        projectId,
+        withoutBaseline,
+        base.createdAt,
+      )
+    : [];
+  const orphanedRevisionByKey = new Map(
+    orphanedRevisions.map((revision) => [toComparisonKey(revision), revision]),
+  );
 
   return new Map(
-    candidates.map((candidate) => [
-      toComparisonKey(candidate),
-      resolveComparisonBaseline(candidate),
-    ]),
+    keys.map((key) => {
+      const row = rowByKey.get(toComparisonKey(key));
+      return [
+        toComparisonKey(key),
+        resolveComparisonBaseline(
+          row?.baseline.snapshotId ?? null,
+          row?.revision ?? orphanedRevisionByKey.get(toComparisonKey(key)) ?? null,
+        ),
+      ];
+    }),
   );
 };
 
 // Branch builds compare against main as it was at their merge base, so changes main made
-// since the branch was cut don't show up as the branch's own. Main builds compare against
-// main's latest.
+// since the branch was cut don't show up as the branch's own.
 export const findComparisonBase = async (
   build: { branch: string; baseBuildId: string | null },
   project: { gitMainBranch: string },

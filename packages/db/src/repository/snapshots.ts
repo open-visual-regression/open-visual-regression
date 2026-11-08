@@ -253,7 +253,7 @@ const isFlaky = exists(
 
 const baselineSnapshots = alias(snapshots, "baseline_snapshots");
 
-// A lookup by primary key per listed row rather than a join, so it runs only for the page.
+// A subquery rather than a join, so it only runs for the rows on the page.
 const baselineImagePath = sql<string | null>`(${db
   .select({ imagePath: baselineSnapshots.imagePath })
   .from(baselineSnapshots)

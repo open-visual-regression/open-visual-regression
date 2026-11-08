@@ -40,8 +40,8 @@ export const toBaselineSnapshot = async (baselineSnapshot: BaselineSource, proje
   };
 };
 
-// Snapshots that never recorded a baseline (errored, canceled, or from before snapshots recorded
-// one) fall back to what the build would have compared the target against.
+// Snapshots that never recorded a baseline fall back to what the build would have compared
+// the target against.
 // A baseline set by a newer build than this one did not exist yet, so it is not shown.
 const findProjectBaselineSource = async (
   snapshot: Snapshot,
@@ -81,7 +81,7 @@ const findRecordedBaselineSource = async (snapshot: Snapshot) => {
     return (await dbClient.snapshots.findById(snapshot.baselineSnapshotId)) ?? null;
   }
 
-  // Snapshots compared before snapshots recorded their baseline only have it on their diff.
+  // Snapshots compared before they recorded their baseline only have it on their diff.
   const row = await dbClient.diffs.findBySnapshotWithBaseline(snapshot.id);
   return row?.baselineSnapshot ?? null;
 };

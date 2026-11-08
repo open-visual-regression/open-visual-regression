@@ -206,8 +206,6 @@ export const snapshots = pgTable(
     variantId: uuid("variant_id").references((): AnyPgColumn => snapshotVariants.id, {
       onDelete: "set null",
     }),
-    // What this snapshot is judged against: the baseline it was compared to, or, for a skipped
-    // snapshot, the baseline it keeps. Null when there was none, or it hasn't been resolved yet.
     baselineSnapshotId: uuid("baseline_snapshot_id").references((): AnyPgColumn => snapshots.id, {
       onDelete: "set null",
     }),
