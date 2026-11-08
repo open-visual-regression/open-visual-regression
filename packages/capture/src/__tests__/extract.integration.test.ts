@@ -662,6 +662,49 @@ describe("extractBuild", () => {
       expect(statusByViewport).toEqual({ desktop: "skipped", mobile: "queued" });
     });
 
+    test("captures an unaffected target that had no baseline at the branch's merge base", async ({
+      mainBuild,
+      user,
+    }) => {
+      const mergeBase = await dbClient.builds.create({
+        projectId: mainBuild.projectId,
+        branch: "main",
+        commitSha: "c".repeat(40),
+        artifactPath: "builds/seed/merge-base",
+        createdBy: user.id,
+        createdAt: "2026-01-01T00:00:00.000Z",
+      });
+      await seedBaseline(mainBuild, "story-a", desktop);
+      // Main added story-a's baseline after the branch was cut.
+      await dbClient.baselineRevisions.create({
+        projectId: mainBuild.projectId,
+        ...desktop,
+        targetId: "story-a",
+        buildId: mainBuild.id,
+        previousSnapshotId: null,
+        replacedExisting: false,
+        createdAt: mainBuild.createdAt,
+      });
+      const branchBuild = await dbClient.builds.create({
+        projectId: mainBuild.projectId,
+        branch: "feature/test",
+        commitSha: "b".repeat(40),
+        baseBuildId: mergeBase!.id,
+        artifactPath: "builds/seed/branch",
+        createdBy: user.id,
+      });
+      await storage.uploadFile(
+        branchBuild!.artifactPath,
+        await buildArtifactTarball(),
+        "application/gzip",
+      );
+
+      await extractBuild(branchBuild!.id, [targets[0]!], [viewports[0]!], 0.05, ["story-a"]);
+
+      const [snapshot] = await dbClient.snapshots.findByBuild(branchBuild!.id);
+      expect(snapshot).toMatchObject({ status: "queued", baselineSnapshotId: null });
+    });
+
     test("does not use another project's baselines", async ({
       featureBuild,
       user,
