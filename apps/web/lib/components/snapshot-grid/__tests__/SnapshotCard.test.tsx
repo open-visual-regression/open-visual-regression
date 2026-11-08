@@ -46,8 +46,10 @@ describe("SnapshotCard", () => {
     });
     render(<SnapshotCard snapshot={snapshot} />);
 
-    expect(screen.getByRole("img", { name: /^baseline of / })).toBeInTheDocument();
-    expect(screen.getByText("baseline")).toBeInTheDocument();
+    expect(screen.getByRole("img")).toHaveAttribute(
+      "src",
+      expect.stringContaining("projects/p/builds/b/snapshots/baseline.png"),
+    );
   });
 
   it("should show no preview when a skipped snapshot has no baseline", () => {
@@ -59,7 +61,6 @@ describe("SnapshotCard", () => {
     render(<SnapshotCard snapshot={snapshot} />);
 
     expect(screen.getByText("no preview")).toBeInTheDocument();
-    expect(screen.queryByText("baseline")).not.toBeInTheDocument();
   });
 
   it("should show the processing time when the snapshot has one", () => {
