@@ -123,7 +123,7 @@ jobs:
         run: |
           set -euo pipefail
           for f in rendered/*.yaml; do
-            if yq 'select(.kind == "Deployment" or .kind == "Job") | .spec.template.spec.containers[].envFrom[] | select(has("secretRef"))' "$f" | grep -q .; then
+            if yq 'select(.kind == "Deployment" or .kind == "Job") | .spec.template.spec.containers[] | (.envFrom // [])[] | select(has("secretRef"))' "$f" | grep -q .; then
               echo "::error::$f loads a Secret with envFrom, which would put the GitHub App key in the environment"; exit 1
             fi
           done
