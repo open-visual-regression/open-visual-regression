@@ -111,7 +111,7 @@ export const buildSnapshotSchema = z.object({
   imagePath: z.string().nullable(),
   baselineImagePath: z.string().nullable().meta({
     description:
-      "Skipped snapshots only: the project's baseline image for the same story, browser, and viewport, if there is one",
+      "The image of the baseline this snapshot was compared against or, when skipped, the baseline it keeps",
   }),
   diffId: z.uuidv7().nullable(),
   diffImagePath: z.string().nullable(),

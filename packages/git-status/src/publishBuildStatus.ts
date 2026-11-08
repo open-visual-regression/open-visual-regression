@@ -1,10 +1,15 @@
 import { dbClient } from "@ovr/db/client";
-import type { BuildProcessingStatus, BuildReviewStatus, GitProvider } from "@ovr/db/schema";
+import type {
+  BuildProcessingStatus,
+  BuildReviewStatus,
+  GitAuthType,
+  GitProvider,
+} from "@ovr/db/schema";
 import { createLogger } from "@ovr/logger";
 import { createCounter } from "@ovr/metrics";
 
 import { resolveAdapter } from "./adapters";
-import { tryDecryptToken } from "./crypto";
+import { resolveToken, type IntegrationAuth, type ResolvedToken } from "./auth";
 import {
   mapBuildStatus,
   send,
@@ -34,7 +39,8 @@ type BuildForPublish = {
 type IntegrationForPublish = {
   provider: GitProvider;
   repoIdentifier: string;
-  encryptedToken: string;
+  authType: GitAuthType;
+  encryptedToken: string | null;
   checkContext: string;
   statusChecksEnabled: boolean;
 };
@@ -54,7 +60,7 @@ export type PublishBuildStatusDeps = {
   findIntegration: (projectId: string) => Promise<IntegrationForPublish | undefined>;
   recordPublication: (values: PublicationRecord) => Promise<unknown>;
   resolveAdapter: (provider: GitProvider) => Adapter;
-  tryDecryptToken: (payload: string) => string | null;
+  resolveToken: (integration: IntegrationAuth) => Promise<ResolvedToken>;
   send: (request: Parameters<typeof send>[0]) => Promise<PublishOutcome>;
   baseUrl: string;
 };
@@ -64,7 +70,7 @@ const defaultDeps = (): PublishBuildStatusDeps => ({
   findIntegration: dbClient.gitIntegrations.findByProject,
   recordPublication: dbClient.gitStatusPublications.record,
   resolveAdapter,
-  tryDecryptToken,
+  resolveToken,
   send,
   baseUrl: process.env.BASE_URL ?? "http://localhost:3000",
 });
@@ -94,8 +100,8 @@ export const publishBuildStatus = async (
   const adapter = deps.resolveAdapter(integration.provider);
   const targetUrl = `${deps.baseUrl}/projects/${build.projectId}/builds/${build.id}`;
 
-  const token = deps.tryDecryptToken(integration.encryptedToken);
-  if (token === null) {
+  const resolved = await deps.resolveToken(integration);
+  if (!resolved.ok) {
     await deps.recordPublication({
       buildId: build.id,
       commitSha: build.commitSha,
@@ -103,26 +109,45 @@ export const publishBuildStatus = async (
       state,
       outcome: "error",
       httpStatus: null,
-      error: "token could not be decrypted",
+      error: resolved.error,
     });
     publications.add(1, { provider: integration.provider, state, outcome: "error" });
     logger.error(
-      { buildId: build.id, provider: integration.provider },
-      "token could not be decrypted",
+      {
+        buildId: build.id,
+        provider: integration.provider,
+        authType: integration.authType,
+        retryable: resolved.retryable,
+        error: resolved.error,
+      },
+      "could not get a token to publish the commit status",
     );
+
+    if (resolved.retryable) {
+      throw new GitStatusPublishError(resolved.error);
+    }
+
     return;
   }
 
-  const request = adapter.buildRequest(
-    {
-      provider: integration.provider,
-      repoIdentifier: integration.repoIdentifier,
-      token,
-    },
-    { sha: build.commitSha, state, context: integration.checkContext, description, targetUrl },
-  );
+  const sendWithToken = (token: string) =>
+    deps.send(
+      adapter.buildRequest(
+        { provider: integration.provider, repoIdentifier: integration.repoIdentifier, token },
+        { sha: build.commitSha, state, context: integration.checkContext, description, targetUrl },
+      ),
+    );
 
-  const result = await deps.send(request);
+  let result: PublishOutcome = await sendWithToken(resolved.token);
+
+  // A cached token can be revoked before it expires.
+  if (result.outcome === "error" && result.httpStatus === 401 && resolved.invalidate) {
+    resolved.invalidate();
+    const refreshed = await deps.resolveToken(integration);
+    result = refreshed.ok
+      ? await sendWithToken(refreshed.token)
+      : { outcome: "error", error: refreshed.error, retryable: refreshed.retryable };
+  }
 
   await deps.recordPublication({
     buildId: build.id,

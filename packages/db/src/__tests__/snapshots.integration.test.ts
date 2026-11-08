@@ -605,6 +605,9 @@ describe("snapshots", () => {
       build,
       captureConfiguration,
     }) => {
+      const [baseline] = await dbClient.snapshots.createMany({
+        values: [{ buildId: build.id, ...captureConfiguration, targetId: "a" }],
+      });
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
           {
@@ -612,6 +615,7 @@ describe("snapshots", () => {
             ...captureConfiguration,
             targetId: "a",
             status: "error",
+            baselineSnapshotId: baseline!.id,
             imagePath: "some/path-1.png",
             imageHash: "a".repeat(64),
             hasRenderError: true,
@@ -631,6 +635,7 @@ describe("snapshots", () => {
         captureAttempt: 2,
         imagePath: null,
         imageHash: null,
+        baselineSnapshotId: null,
         hasRenderError: false,
         hasUncaughtPageError: false,
         errorMessage: null,

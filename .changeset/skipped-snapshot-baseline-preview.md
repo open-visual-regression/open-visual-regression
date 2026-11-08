@@ -1,9 +1,11 @@
 ---
 "@ovr/web": minor
 "@ovr/worker": minor
-"@ovr/api": patch
-"@ovr/db": patch
 "@open-visual-regression/cli": patch
+"@ovr/api": patch
+"@ovr/capture": patch
+"@ovr/db": patch
+"@ovr/reviews": patch
 ---
 
-Skipped snapshots show their baseline image in snapshot grids instead of "no preview". The snapshots list API returns it as `baselineImagePath`.
+Skipped snapshots show the baseline they keep in snapshot grids instead of "no preview". Upgrading adds a column and index to snapshots; snapshots skipped earlier are unchanged.

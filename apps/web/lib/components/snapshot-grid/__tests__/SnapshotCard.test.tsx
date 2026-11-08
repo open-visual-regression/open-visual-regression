@@ -38,7 +38,7 @@ describe("SnapshotCard", () => {
     );
   });
 
-  it("should show the baseline when a skipped snapshot has one", () => {
+  it("should show the baseline when a skipped snapshot keeps one", () => {
     const snapshot = mocks.build.generateBuildSnapshot({
       status: "skipped",
       imagePath: null,
@@ -52,7 +52,7 @@ describe("SnapshotCard", () => {
     );
   });
 
-  it("should show no preview when a skipped snapshot has no baseline", () => {
+  it("should show no preview when a skipped snapshot keeps no baseline", () => {
     const snapshot = mocks.build.generateBuildSnapshot({
       status: "skipped",
       imagePath: null,

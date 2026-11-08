@@ -1322,6 +1322,9 @@ describe("snapshots", () => {
       const result = await dbClient.diffs.findById(diff!.id);
       expect(result).toMatchObject({ processingStatus: "success", reviewStatus: "needs_review" });
       expect(result!.baselineSnapshotId).toBe(baselineSnapshot!.id);
+      expect(await dbClient.snapshots.findById(captureSnapshotRow!.id)).toMatchObject({
+        baselineSnapshotId: baselineSnapshot!.id,
+      });
       expect(result!.pixelDiffCount).toBeGreaterThan(0);
       expect(result!.diffImagePath).toBe(
         `${featureBuild.projectId}/builds/${featureBuild.id}/diffs/${diff!.id}.png`,
@@ -1345,6 +1348,9 @@ describe("snapshots", () => {
 
         expect(await dbClient.diffs.findById(branch.diff.id)).toMatchObject({
           reviewStatus: "unchanged",
+          baselineSnapshotId: cut.snapshot.id,
+        });
+        expect(await dbClient.snapshots.findById(branch.snapshot.id)).toMatchObject({
           baselineSnapshotId: cut.snapshot.id,
         });
       });

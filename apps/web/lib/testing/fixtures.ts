@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { generateKeyPairSync, randomUUID } from "node:crypto";
 
 import { convertSetCookieToCookie } from "better-auth/test";
 import { exportJWK, exportSPKI, generateKeyPair, SignJWT, type JWTPayload } from "jose";
@@ -39,6 +39,7 @@ export const test = vitest.extend<{
   viewer: User;
   organization: Organization;
   identityProvider: IdentityProvider;
+  githubApp: void;
   metrics: TestMetrics;
   trackJob: <T extends QueuedJob>(job: T) => T;
 }>({
@@ -146,6 +147,18 @@ export const test = vitest.extend<{
           .sign(privateKey),
     });
     server.close();
+  },
+
+  // eslint-disable-next-line no-empty-pattern
+  githubApp: async ({}, use) => {
+    const { privateKey } = generateKeyPairSync("rsa", {
+      modulusLength: 2048,
+      privateKeyEncoding: { type: "pkcs1", format: "pem" },
+      publicKeyEncoding: { type: "spki", format: "pem" },
+    });
+    vi.stubEnv("OVR_GITHUB_APP_ID", "1234");
+    vi.stubEnv("OVR_GITHUB_APP_PRIVATE_KEY", privateKey);
+    await use();
   },
 
   metrics: metricsFixture,

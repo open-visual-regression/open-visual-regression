@@ -85,7 +85,7 @@ export const getBaseline = os.snapshots.getBaseline
   .use(callerMiddleware("builds", "read"))
   .use(organizationSnapshotMiddleware)
   .handler(async ({ context }) => ({
-    baseline: await getBaselineSnapshot(context.snapshot, context.build),
+    baseline: await getBaselineSnapshot(context.snapshot, context.build, context.project),
   }))
   .actionable();
 
