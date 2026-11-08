@@ -68,6 +68,7 @@ export const generateBuild = (overrides?: Partial<BuildDetailSchema>): BuildDeta
   commitUrl: null,
   branchUrl: null,
   mainBranch: "main",
+  mainBranchUrl: null,
   baseBuild: null,
   buildType: "storybook",
   createdAt: faker.date.recent().toISOString(),
