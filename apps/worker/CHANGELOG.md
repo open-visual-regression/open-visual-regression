@@ -1,5 +1,20 @@
 # @ovr/worker
 
+## 0.21.0
+
+### Minor Changes
+
+- [#518](https://github.com/open-visual-regression/open-visual-regression/pull/518) [`a5de392`](https://github.com/open-visual-regression/open-visual-regression/commit/a5de392712d79a710a8cb0620ee083e9fa4705f4) Thanks [@tgfischer](https://github.com/tgfischer)! - Skipped snapshots show the baseline they keep in snapshot grids instead of "no preview". Upgrading adds a column and index to snapshots; snapshots skipped earlier are unchanged.
+
+### Patch Changes
+
+- Updated dependencies [[`a5de392`](https://github.com/open-visual-regression/open-visual-regression/commit/a5de392712d79a710a8cb0620ee083e9fa4705f4)]:
+  - @ovr/capture@0.3.23
+  - @ovr/db@0.4.11
+  - @ovr/builds@0.2.15
+  - @ovr/git-status@0.1.23
+  - @ovr/queue@0.4.1
+
 ## 0.20.0
 
 ### Minor Changes
