@@ -82,14 +82,14 @@ export const BuildHeader = ({
         <div className="flex flex-row flex-wrap items-center gap-4 text-xs md:order-3 md:basis-full">
           <BuildStatusStream buildId={build.id} initialStatus={build.status} />
           <BuildBranches build={build} />
+          <GitPill icon={GitCommitHorizontalIcon} href={build.commitUrl} external>
+            {build.commitSha.slice(0, 7)}
+          </GitPill>
           {storybookHref ? (
             <ExternalLink href={storybookHref} className="hidden md:inline-flex">
               view storybook
             </ExternalLink>
           ) : null}
-          <GitPill icon={GitCommitHorizontalIcon} href={build.commitUrl} external>
-            {build.commitSha.slice(0, 7)}
-          </GitPill>
           {build.author ? (
             <Typography variant="caption" className="flex items-center gap-1">
               <Icon icon={UserIcon} size={10} />
