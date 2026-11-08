@@ -2,4 +2,4 @@
 "@ovr/web": patch
 ---
 
-Metadata rows on snapshot cards and the snapshot header no longer leave a large gap between lines when their items wrap.
+The snapshot header's metadata row no longer leaves a large gap between lines when its items wrap.
