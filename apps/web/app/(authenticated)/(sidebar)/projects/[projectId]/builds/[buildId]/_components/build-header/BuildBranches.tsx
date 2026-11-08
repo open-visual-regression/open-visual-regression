@@ -30,7 +30,7 @@ export const BuildBranches = ({ build }: BuildBranchesProps) => {
 
   const base = build.baseBuild
     ? `${build.mainBranch} @ ${build.baseBuild.commitSha.slice(0, 7)}`
-    : `${build.mainBranch} (latest)`;
+    : build.mainBranch;
 
   return (
     <div
