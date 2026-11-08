@@ -1,5 +1,19 @@
 # @ovr/git-status
 
+## 0.1.22
+
+### Patch Changes
+
+- [#510](https://github.com/open-visual-regression/open-visual-regression/pull/510) [`d1e0df9`](https://github.com/open-visual-regression/open-visual-regression/commit/d1e0df997134d11a400af9b19ef73e5dcfdb9946) Thanks [@tgfischer](https://github.com/tgfischer)! - Upgrading runs a migration that records how each project's git integration authenticates, ahead of GitHub App support. Existing token integrations keep working unchanged.
+
+- [#512](https://github.com/open-visual-regression/open-visual-regression/pull/512) [`00c28b4`](https://github.com/open-visual-regression/open-visual-regression/commit/00c28b42590817756c2fd1ccc742a57abd62f22e) Thanks [@tgfischer](https://github.com/tgfischer)! - Projects can publish commit statuses as a GitHub App instead of with a personal token. When the deployment has an App configured, choose "github app" under the project's git integration settings.
+
+- [#511](https://github.com/open-visual-regression/open-visual-regression/pull/511) [`0ef45ea`](https://github.com/open-visual-regression/open-visual-regression/commit/0ef45eac50a1f1b3fba2e280e835d5289d84ffb1) Thanks [@tgfischer](https://github.com/tgfischer)! - The web and worker read a GitHub App from `OVR_GITHUB_APP_ID` and `OVR_GITHUB_APP_PRIVATE_KEY`, and refuse to start if only one is set or the key isn't a valid RSA private key.
+
+- Updated dependencies [[`262896c`](https://github.com/open-visual-regression/open-visual-regression/commit/262896c9d13281d663b35043d978cf28d3577d20), [`d1e0df9`](https://github.com/open-visual-regression/open-visual-regression/commit/d1e0df997134d11a400af9b19ef73e5dcfdb9946), [`00c28b4`](https://github.com/open-visual-regression/open-visual-regression/commit/00c28b42590817756c2fd1ccc742a57abd62f22e), [`35a89cd`](https://github.com/open-visual-regression/open-visual-regression/commit/35a89cdeba96008d143a4a745e614e25170fa017)]:
+  - @ovr/metrics@0.1.1
+  - @ovr/db@0.4.10
+
 ## 0.1.21
 
 ### Patch Changes

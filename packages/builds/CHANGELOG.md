@@ -1,5 +1,18 @@
 # @ovr/builds
 
+## 0.2.14
+
+### Patch Changes
+
+- [#503](https://github.com/open-visual-regression/open-visual-regression/pull/503) [`262896c`](https://github.com/open-visual-regression/open-visual-regression/commit/262896c9d13281d663b35043d978cf28d3577d20) Thanks [@tgfischer](https://github.com/tgfischer)! - New metrics show how long builds of each size wait to start capturing, where capture time goes, and how busy capture workers are. See the metrics docs for the full list.
+
+- Updated dependencies [[`262896c`](https://github.com/open-visual-regression/open-visual-regression/commit/262896c9d13281d663b35043d978cf28d3577d20), [`760dd6b`](https://github.com/open-visual-regression/open-visual-regression/commit/760dd6b606563e58e2ffd6653a771d7794f064c4), [`d1e0df9`](https://github.com/open-visual-regression/open-visual-regression/commit/d1e0df997134d11a400af9b19ef73e5dcfdb9946), [`00c28b4`](https://github.com/open-visual-regression/open-visual-regression/commit/00c28b42590817756c2fd1ccc742a57abd62f22e), [`35a89cd`](https://github.com/open-visual-regression/open-visual-regression/commit/35a89cdeba96008d143a4a745e614e25170fa017)]:
+  - @ovr/metrics@0.1.1
+  - @ovr/db@0.4.10
+  - @ovr/queue@0.4.0
+  - @ovr/api@0.5.6
+  - @ovr/storage@0.1.2
+
 ## 0.2.13
 
 ### Patch Changes

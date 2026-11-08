@@ -1,5 +1,18 @@
 # @ovr/capture-browser
 
+## 0.0.8
+
+### Patch Changes
+
+- [#506](https://github.com/open-visual-regression/open-visual-regression/pull/506) [`b878f4b`](https://github.com/open-visual-regression/open-visual-regression/commit/b878f4b37b5b0d6b0a0a6f00aca707d18293ffb2) Thanks [@tgfischer](https://github.com/tgfischer)! - Capture stops waiting for a request after 5 seconds instead of 15. Set `OVR_CAPTURE_REQUEST_TIMEOUT_MS=15000` on the worker to keep the previous limit.
+
+- [#505](https://github.com/open-visual-regression/open-visual-regression/pull/505) [`cdc9485`](https://github.com/open-visual-regression/open-visual-regression/commit/cdc9485f1edadb4a2005e0c1c90b3b30248defb9) Thanks [@tgfischer](https://github.com/tgfischer)! - A snapshot's logs now list any request that never finished loading, so you can find the broken URLs its screenshot may be missing.
+
+- [#504](https://github.com/open-visual-regression/open-visual-regression/pull/504) [`8bec07e`](https://github.com/open-visual-regression/open-visual-regression/commit/8bec07ed623a5324f219f867a469cdf4f8298668) Thanks [@tgfischer](https://github.com/tgfischer)! - Stories that show the same image from a host that never finishes responding no longer each wait out the full settle time. Once capture gives up on the image, later stories skip it.
+
+- Updated dependencies []:
+  - @ovr/storage@0.1.2
+
 ## 0.0.7
 
 ### Patch Changes
