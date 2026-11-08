@@ -105,20 +105,11 @@
       "properties": {
         "appId": {
           "type": ["string", "integer"],
-          "description": "The GitHub App's ID. Set together with privateKey or existingSecret."
+          "description": "The GitHub App's ID. Set together with privateKey, unless existingSecret holds the key."
         },
         "privateKey": {
           "type": "string",
-          "description": "The GitHub App's PEM private key. Set this or existingSecret, together with appId."
-        },
-        "existingSecret": {
-          "type": "string",
-          "description": "A Secret you manage that holds the GitHub App's PEM private key. Set this or privateKey, together with appId."
-        },
-        "existingSecretKey": {
-          "type": "string",
-          "minLength": 1,
-          "description": "The key in existingSecret that holds the PEM private key."
+          "description": "The GitHub App's PEM private key. Set together with appId, unless existingSecret holds it."
         }
       }
     },

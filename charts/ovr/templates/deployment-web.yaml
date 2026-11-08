@@ -64,9 +64,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ include "ovr.fullname" . }}-config
-            - secretRef:
-                name: {{ include "ovr.secretName" . }}
           env:
+            {{- include "ovr.appSecretEnv" . | nindent 12 }}
             - name: PORT
               value: {{ .Values.web.port | quote }}
             {{- if .Values.metrics.enabled }}

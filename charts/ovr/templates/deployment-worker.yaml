@@ -65,9 +65,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ include "ovr.fullname" . }}-config
-            - secretRef:
-                name: {{ include "ovr.secretName" . }}
           env:
+            {{- include "ovr.appSecretEnv" . | nindent 12 }}
             - name: OVR_CAPTURE_GROUP_CONCURRENCY
               value: {{ .Values.worker.concurrency | quote }}
             {{- with .Values.worker.groupSize }}

@@ -59,38 +59,47 @@ checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sh
 {{- if not .Values.existingSecret }}
 checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
 {{- end }}
-{{- if .Values.githubApp.privateKey }}
-checksum/github-app-secret: {{ include (print $.Template.BasePath "/secret-github-app.yaml") . | sha256sum }}
+{{- end -}}
+
+{{/*
+Secret values are referenced key by key rather than envFrom'd, so the GitHub App
+key in the same Secret is only ever mounted as a file, never put in the environment.
+*/}}
+{{- define "ovr.secretEnvVar" -}}
+- name: {{ .key }}
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "ovr.secretName" .root }}
+      key: {{ .key }}
+      {{- if .optional }}
+      optional: true
+      {{- end }}
+{{- end -}}
+
+{{- define "ovr.appSecretEnv" -}}
+{{- range list "DATABASE_URL" "REDIS_URL" "BETTER_AUTH_SECRET" "OVR_GIT_TOKEN_ENCRYPTION_KEY" }}
+{{ include "ovr.secretEnvVar" (dict "root" $ "key" .) }}
+{{- end }}
+{{- range list "STORAGE_ACCESS_KEY" "STORAGE_SECRET_KEY" }}
+{{ include "ovr.secretEnvVar" (dict "root" $ "key" . "optional" true) }}
 {{- end }}
 {{- end -}}
 
 {{/* "true" when a GitHub App is configured. Fails on a half-configured one. */}}
 {{- define "ovr.githubAppEnabled" -}}
 {{- with .Values.githubApp -}}
-{{- if or .appId .privateKey .existingSecret -}}
-{{- if not .appId -}}
-{{- fail "githubApp.appId is required when githubApp.privateKey or githubApp.existingSecret is set" -}}
+{{- if and .privateKey (not .appId) -}}
+{{- fail "githubApp.appId is required when githubApp.privateKey is set" -}}
 {{- end -}}
-{{- if and .privateKey .existingSecret -}}
-{{- fail "set githubApp.privateKey or githubApp.existingSecret, not both" -}}
-{{- end -}}
-{{- if not (or .privateKey .existingSecret) -}}
-{{- fail "githubApp.privateKey or githubApp.existingSecret is required when githubApp.appId is set" -}}
+{{- if .appId -}}
+{{- if not (or .privateKey $.Values.existingSecret) -}}
+{{- fail "githubApp.privateKey is required when githubApp.appId is set (or set existingSecret, with the key under github-app-private-key.pem)" -}}
 {{- end -}}
 true
 {{- end -}}
 {{- end -}}
 {{- end -}}
 
-{{- define "ovr.githubAppSecretName" -}}
-{{- if .Values.githubApp.existingSecret -}}
-{{ .Values.githubApp.existingSecret }}
-{{- else -}}
-{{ include "ovr.fullname" . }}-github-app
-{{- end -}}
-{{- end -}}
-
-{{/* Mounted as a file rather than envFrom'd, so the key never sits in the environment. */}}
 {{- define "ovr.githubAppEnv" -}}
 - name: OVR_GITHUB_APP_PRIVATE_KEY_FILE
   value: /etc/ovr/github-app/private-key.pem
@@ -105,9 +114,9 @@ true
 {{- define "ovr.githubAppVolume" -}}
 - name: github-app
   secret:
-    secretName: {{ include "ovr.githubAppSecretName" . }}
+    secretName: {{ include "ovr.secretName" . }}
     items:
-      - key: {{ .Values.githubApp.existingSecretKey }}
+      - key: github-app-private-key.pem
         path: private-key.pem
 {{- end -}}
 

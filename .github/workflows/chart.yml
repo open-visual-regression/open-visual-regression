@@ -111,23 +111,26 @@ jobs:
           fails --set web.updateStrategy=Rolling
           fails --set auth.mode=sso
           fails --set githubApp.appID=1
-          fails --set githubApp.appId=1
-          fails --set githubApp.existingSecret=k
-          fails --set githubApp.appId=1 --set githubApp.existingSecret=k --set githubApp.privateKey=k
+          fails --set githubApp.privateKey=k
+          if ! helm template ovr-app charts/ovr --set existingSecret=s --set githubApp.appId=1 >/dev/null; then
+            echo "::error::githubApp.appId with existingSecret was rejected"; exit 1
+          fi
+          if helm template ovr-app charts/ovr --values charts/ovr/ci/inline-secret-values.yaml --set githubApp.appId=1 >/dev/null 2>&1; then
+            echo "::error::githubApp.appId without a key was accepted"; exit 1
+          fi
 
-      - name: GitHub App key is mounted, not in the environment
+      - name: Secret values stay out of the environment except by name
         run: |
           set -euo pipefail
-          for name in github-app github-app-existing-secret; do
-            if yq 'select(.kind == "Secret" and .metadata.name == "ovr-app-secret")' "rendered/$name.yaml" | grep -q "GITHUB_APP\|BEGIN RSA"; then
-              echo "::error::$name puts the GitHub App key in the shared Secret"; exit 1
+          for f in rendered/*.yaml; do
+            if yq 'select(.kind == "Deployment" or .kind == "Job") | .spec.template.spec.containers[].envFrom[] | select(has("secretRef"))' "$f" | grep -q .; then
+              echo "::error::$f loads a Secret with envFrom, which would put the GitHub App key in the environment"; exit 1
             fi
-            for component in web worker; do
-              deployment=$(yq "select(.kind == \"Deployment\" and .metadata.name == \"ovr-app-$component\")" "rendered/$name.yaml")
-              grep -q "OVR_GITHUB_APP_PRIVATE_KEY_FILE" <<<"$deployment" || { echo "::error::$name $component has no OVR_GITHUB_APP_PRIVATE_KEY_FILE"; exit 1; }
-              grep -q "mountPath: /etc/ovr/github-app" <<<"$deployment" || { echo "::error::$name $component doesn't mount the key"; exit 1; }
-            done
-            echo "$name mounts the key as a file"
+          done
+          for component in web worker; do
+            deployment=$(yq "select(.kind == \"Deployment\" and .metadata.name == \"ovr-app-$component\")" rendered/github-app.yaml)
+            grep -q "OVR_GITHUB_APP_PRIVATE_KEY_FILE" <<<"$deployment" || { echo "::error::$component has no OVR_GITHUB_APP_PRIVATE_KEY_FILE"; exit 1; }
+            grep -q "mountPath: /etc/ovr/github-app" <<<"$deployment" || { echo "::error::$component doesn't mount the GitHub App key"; exit 1; }
           done
 
       - name: Package

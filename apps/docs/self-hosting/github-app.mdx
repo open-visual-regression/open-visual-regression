@@ -72,7 +72,7 @@ Then run `docker compose up -d` to restart the web app and worker with it.
 
 ### Helm
 
-Set the App ID and the key, and the chart puts the key in its own Secret and mounts it into the web and worker pods:
+Set the App ID and the key, and the chart mounts the key into the web and worker pods:
 
 ```yaml
 githubApp:
@@ -83,23 +83,19 @@ githubApp:
     -----END RSA PRIVATE KEY-----
 ```
 
-To keep the key out of your values, create the Secret yourself and point the chart at it instead of setting `privateKey`:
+With `existingSecret`, set only `githubApp.appId` and add the key to your Secret under `github-app-private-key.pem`. For example, to create the Secret by hand:
 
 ```sh
-kubectl create secret generic ovr-github-app --from-file=private-key.pem=github-app.private-key.pem
+kubectl create secret generic ovr-secrets \
+  --from-literal=DATABASE_URL=... \
+  --from-file=github-app-private-key.pem=github-app.private-key.pem
 ```
 
-```yaml
-githubApp:
-  appId: 123456
-  existingSecret: ovr-github-app
-  # The key in the Secret that holds the .pem contents. Defaults to private-key.pem.
-  existingSecretKey: private-key.pem
-```
+The chart reads each of its environment variables from the Secret by name, so the key is only mounted as a file and never reaches the environment.
 
 ### Rotating the key
 
-Generate a new key on the App's settings page, replace the file or Secret, and restart the web app and worker. With `githubApp.privateKey`, `helm upgrade` restarts them for you. Then delete the old key from the App's settings page.
+Generate a new key on the App's settings page, replace the file or the key in your Secret, and restart the web app and worker. With `githubApp.privateKey`, `helm upgrade` restarts them for you. Then delete the old key from the App's settings page.
 
 ### Upgrading from `OVR_GITHUB_APP_PRIVATE_KEY`
 
@@ -107,7 +103,7 @@ Earlier versions read the key from `OVR_GITHUB_APP_PRIVATE_KEY`. That variable i
 
 - **Docker Compose**: move `OVR_GITHUB_APP_ID` from `.env` into `docker-compose.override.yml`, save the key as a `.pem` file (the one GitHub downloaded, or a newly generated one), and delete both variables from `.env`.
 - **Helm with `githubApp.privateKey`**: no change is needed, unless you put the key on one line with `\n` escapes. Write it as a multi-line string instead, as shown above.
-- **Helm with `existingSecret`**: move the key from that Secret into a Secret of its own, set `githubApp.appId` and `githubApp.existingSecret`, and remove `OVR_GITHUB_APP_ID` and `OVR_GITHUB_APP_PRIVATE_KEY` from the shared Secret.
+- **Helm with `existingSecret`**: in your Secret, rename `OVR_GITHUB_APP_PRIVATE_KEY` to `github-app-private-key.pem` and give it the key with real line breaks, remove `OVR_GITHUB_APP_ID`, and set `githubApp.appId` instead.
 
 Until you do, either the web app and worker refuse to start because `OVR_GITHUB_APP_ID` is set without `OVR_GITHUB_APP_PRIVATE_KEY_FILE`, or projects set to **github app** fail to publish statuses with "GitHub App authentication is not configured on this deployment".
 

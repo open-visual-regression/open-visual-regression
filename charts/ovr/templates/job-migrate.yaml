@@ -35,6 +35,6 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ include "ovr.fullname" . }}-config
-            - secretRef:
-                name: {{ include "ovr.secretName" . }}
+          env:
+            {{- include "ovr.secretEnvVar" (dict "root" . "key" "DATABASE_URL") | nindent 12 }}
 {{- end }}
