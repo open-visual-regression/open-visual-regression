@@ -1,5 +1,17 @@
 # @ovr/db
 
+## 0.4.10
+
+### Patch Changes
+
+- [#503](https://github.com/open-visual-regression/open-visual-regression/pull/503) [`262896c`](https://github.com/open-visual-regression/open-visual-regression/commit/262896c9d13281d663b35043d978cf28d3577d20) Thanks [@tgfischer](https://github.com/tgfischer)! - New metrics show how long builds of each size wait to start capturing, where capture time goes, and how busy capture workers are. See the metrics docs for the full list.
+
+- [#510](https://github.com/open-visual-regression/open-visual-regression/pull/510) [`d1e0df9`](https://github.com/open-visual-regression/open-visual-regression/commit/d1e0df997134d11a400af9b19ef73e5dcfdb9946) Thanks [@tgfischer](https://github.com/tgfischer)! - Upgrading runs a migration that records how each project's git integration authenticates, ahead of GitHub App support. Existing token integrations keep working unchanged.
+
+- [#512](https://github.com/open-visual-regression/open-visual-regression/pull/512) [`00c28b4`](https://github.com/open-visual-regression/open-visual-regression/commit/00c28b42590817756c2fd1ccc742a57abd62f22e) Thanks [@tgfischer](https://github.com/tgfischer)! - Projects can publish commit statuses as a GitHub App instead of with a personal token. When the deployment has an App configured, choose "github app" under the project's git integration settings.
+
+- [#502](https://github.com/open-visual-regression/open-visual-regression/pull/502) [`35a89cd`](https://github.com/open-visual-regression/open-visual-regression/commit/35a89cdeba96008d143a4a745e614e25170fa017) Thanks [@tgfischer](https://github.com/tgfischer)! - The snapshots page loads quickly again on large databases, instead of scanning every snapshot. Upgrading adds two small indexes on in-flight snapshots and pending diffs.
+
 ## 0.4.9
 
 ### Patch Changes

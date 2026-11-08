@@ -1,5 +1,11 @@
 # @ovr/api
 
+## 0.5.6
+
+### Patch Changes
+
+- [#512](https://github.com/open-visual-regression/open-visual-regression/pull/512) [`00c28b4`](https://github.com/open-visual-regression/open-visual-regression/commit/00c28b42590817756c2fd1ccc742a57abd62f22e) Thanks [@tgfischer](https://github.com/tgfischer)! - Projects can publish commit statuses as a GitHub App instead of with a personal token. When the deployment has an App configured, choose "github app" under the project's git integration settings.
+
 ## 0.5.5
 
 ### Patch Changes

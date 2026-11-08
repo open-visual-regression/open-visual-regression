@@ -1,5 +1,48 @@
 # @ovr/web
 
+## 0.20.0
+
+### Minor Changes
+
+- [#503](https://github.com/open-visual-regression/open-visual-regression/pull/503) [`262896c`](https://github.com/open-visual-regression/open-visual-regression/commit/262896c9d13281d663b35043d978cf28d3577d20) Thanks [@tgfischer](https://github.com/tgfischer)! - New metrics show how long builds of each size wait to start capturing, where capture time goes, and how busy capture workers are. See the metrics docs for the full list.
+
+- [#501](https://github.com/open-visual-regression/open-visual-regression/pull/501) [`760dd6b`](https://github.com/open-visual-regression/open-visual-regression/commit/760dd6b606563e58e2ffd6653a771d7794f064c4) Thanks [@tgfischer](https://github.com/tgfischer)! - Large builds no longer wait behind newer, smaller builds for up to two hours: after 15 minutes in the queue, builds queued later can't pass them. Set `OVR_CAPTURE_QUEUE_MAX_DEADLINE_MINUTES` to change the limit.
+
+- [#506](https://github.com/open-visual-regression/open-visual-regression/pull/506) [`b878f4b`](https://github.com/open-visual-regression/open-visual-regression/commit/b878f4b37b5b0d6b0a0a6f00aca707d18293ffb2) Thanks [@tgfischer](https://github.com/tgfischer)! - Capture stops waiting for a request after 5 seconds instead of 15. Set `OVR_CAPTURE_REQUEST_TIMEOUT_MS=15000` on the worker to keep the previous limit.
+
+- [#512](https://github.com/open-visual-regression/open-visual-regression/pull/512) [`00c28b4`](https://github.com/open-visual-regression/open-visual-regression/commit/00c28b42590817756c2fd1ccc742a57abd62f22e) Thanks [@tgfischer](https://github.com/tgfischer)! - Projects can publish commit statuses as a GitHub App instead of with a personal token. When the deployment has an App configured, choose "github app" under the project's git integration settings.
+
+- [#505](https://github.com/open-visual-regression/open-visual-regression/pull/505) [`cdc9485`](https://github.com/open-visual-regression/open-visual-regression/commit/cdc9485f1edadb4a2005e0c1c90b3b30248defb9) Thanks [@tgfischer](https://github.com/tgfischer)! - A snapshot's logs now list any request that never finished loading, so you can find the broken URLs its screenshot may be missing.
+
+### Patch Changes
+
+- [#515](https://github.com/open-visual-regression/open-visual-regression/pull/515) [`6c25c18`](https://github.com/open-visual-regression/open-visual-regression/commit/6c25c1803f4439590ebef714f125a4ad105d8ffa) Thanks [@tgfischer](https://github.com/tgfischer)! - The login, setup, forbidden and invitation pages no longer return a 404 when running the web app with `next dev`.
+
+- [#510](https://github.com/open-visual-regression/open-visual-regression/pull/510) [`d1e0df9`](https://github.com/open-visual-regression/open-visual-regression/commit/d1e0df997134d11a400af9b19ef73e5dcfdb9946) Thanks [@tgfischer](https://github.com/tgfischer)! - Upgrading runs a migration that records how each project's git integration authenticates, ahead of GitHub App support. Existing token integrations keep working unchanged.
+
+- [#513](https://github.com/open-visual-regression/open-visual-regression/pull/513) [`f56577c`](https://github.com/open-visual-regression/open-visual-regression/commit/f56577c872bffcc9188fbadd78b96d499de91636) Thanks [@tgfischer](https://github.com/tgfischer)! - The Helm chart accepts `githubApp.appId` and `githubApp.privateKey`, and the Compose files pass `OVR_GITHUB_APP_ID` and `OVR_GITHUB_APP_PRIVATE_KEY` through, for publishing commit statuses as a GitHub App.
+
+- [#511](https://github.com/open-visual-regression/open-visual-regression/pull/511) [`0ef45ea`](https://github.com/open-visual-regression/open-visual-regression/commit/0ef45eac50a1f1b3fba2e280e835d5289d84ffb1) Thanks [@tgfischer](https://github.com/tgfischer)! - The web and worker read a GitHub App from `OVR_GITHUB_APP_ID` and `OVR_GITHUB_APP_PRIVATE_KEY`, and refuse to start if only one is set or the key isn't a valid RSA private key.
+
+- [#514](https://github.com/open-visual-regression/open-visual-regression/pull/514) [`1f8c128`](https://github.com/open-visual-regression/open-visual-regression/commit/1f8c1280c44f15e695ecb82bb20eeb2a750eba83) Thanks [@tgfischer](https://github.com/tgfischer)! - The web app runs on Next.js 16.4.5, up from 16.4.3.
+
+- [#504](https://github.com/open-visual-regression/open-visual-regression/pull/504) [`8bec07e`](https://github.com/open-visual-regression/open-visual-regression/commit/8bec07ed623a5324f219f867a469cdf4f8298668) Thanks [@tgfischer](https://github.com/tgfischer)! - Stories that show the same image from a host that never finishes responding no longer each wait out the full settle time. Once capture gives up on the image, later stories skip it.
+
+- [#502](https://github.com/open-visual-regression/open-visual-regression/pull/502) [`35a89cd`](https://github.com/open-visual-regression/open-visual-regression/commit/35a89cdeba96008d143a4a745e614e25170fa017) Thanks [@tgfischer](https://github.com/tgfischer)! - The snapshots page loads quickly again on large databases, instead of scanning every snapshot. Upgrading adds two small indexes on in-flight snapshots and pending diffs.
+
+- [#507](https://github.com/open-visual-regression/open-visual-regression/pull/507) [`1465129`](https://github.com/open-visual-regression/open-visual-regression/commit/1465129a39c90d5e67b40062546d52e2e44eda5a) Thanks [@tgfischer](https://github.com/tgfischer)! - The build page's "view storybook" link now sits right before the commit link in the build details row.
+
+- Updated dependencies [[`262896c`](https://github.com/open-visual-regression/open-visual-regression/commit/262896c9d13281d663b35043d978cf28d3577d20), [`760dd6b`](https://github.com/open-visual-regression/open-visual-regression/commit/760dd6b606563e58e2ffd6653a771d7794f064c4), [`d1e0df9`](https://github.com/open-visual-regression/open-visual-regression/commit/d1e0df997134d11a400af9b19ef73e5dcfdb9946), [`00c28b4`](https://github.com/open-visual-regression/open-visual-regression/commit/00c28b42590817756c2fd1ccc742a57abd62f22e), [`0ef45ea`](https://github.com/open-visual-regression/open-visual-regression/commit/0ef45eac50a1f1b3fba2e280e835d5289d84ffb1), [`35a89cd`](https://github.com/open-visual-regression/open-visual-regression/commit/35a89cdeba96008d143a4a745e614e25170fa017)]:
+  - @ovr/builds@0.2.14
+  - @ovr/metrics@0.1.1
+  - @ovr/db@0.4.10
+  - @ovr/queue@0.4.0
+  - @ovr/git-status@0.1.22
+  - @ovr/api@0.5.6
+  - @ovr/reviews@0.1.29
+  - @ovr/storage@0.1.2
+  - @ovr/ui@0.1.5
+
 ## 0.19.1
 
 ### Patch Changes
