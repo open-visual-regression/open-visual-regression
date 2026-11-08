@@ -85,7 +85,7 @@ export const getBaseline = os.snapshots.getBaseline
   .use(callerMiddleware("builds", "read"))
   .use(organizationSnapshotMiddleware)
   .handler(async ({ context }) => ({
-    baseline: await getBaselineSnapshot(context.snapshot, context.build),
+    baseline: await getBaselineSnapshot(context.snapshot, context.build, context.project),
   }))
   .actionable();
 
@@ -112,6 +112,7 @@ export const list = os.snapshots.list
         targetName: row.targetName,
         status: row.status,
         imagePath: row.imagePath,
+        baselineImagePath: row.baselineImagePath,
         diffId: row.diffId,
         diffImagePath: row.diffImagePath,
         diffPercent: row.diffPercent,

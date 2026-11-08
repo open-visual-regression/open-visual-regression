@@ -470,6 +470,20 @@
       "when": 1794052118509,
       "tag": "0066_git_integration_auth_type",
       "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1794105164679,
+      "tag": "0067_add_snapshot_baseline",
+      "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "7",
+      "when": 1794105174647,
+      "tag": "0068_add_snapshot_baseline_index",
+      "breakpoints": true
     }
   ]
 }

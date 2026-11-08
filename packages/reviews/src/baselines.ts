@@ -1,4 +1,5 @@
 import { dbClient } from "@ovr/db/client";
+import type { ComparisonCandidates } from "@ovr/db/repository/baselines";
 import type { DiffReviewStatus } from "@ovr/db/schema";
 
 type Viewport = { browser: string; viewportWidth: number; viewportHeight: number };
@@ -19,23 +20,17 @@ export type ComparisonBaseline = {
   source: "merge_base" | "latest" | "expired";
 };
 
-// What a target is compared against: main as it was at `base`, the main-branch build at the
-// merge base. Only targets main changed after `base` differ from main's latest baseline, and
-// the first of those changes records what the baseline was before it.
-export const findComparisonBaseline = async (
-  projectId: string,
-  viewport: Viewport,
-  targetId: string,
-  base: { createdAt: string } | null,
-): Promise<ComparisonBaseline> => {
-  const key = { projectId, ...viewport, targetId };
-  const [latest, revision] = await Promise.all([
-    dbClient.baselines.find(key),
-    base ? dbClient.baselineRevisions.findFirstAfter(key, base.createdAt) : undefined,
-  ]);
+export type ComparisonKey = Viewport & { targetId: string };
 
+export const toComparisonKey = (key: ComparisonKey): string =>
+  [key.targetId, key.browser, key.viewportWidth, key.viewportHeight].join(":");
+
+const resolveComparisonBaseline = ({
+  latestSnapshotId,
+  revision,
+}: ComparisonCandidates): ComparisonBaseline => {
   if (!revision) {
-    return { snapshotId: latest?.snapshotId ?? null, source: "latest" };
+    return { snapshotId: latestSnapshotId, source: "latest" };
   }
 
   if (!revision.replacedExisting) {
@@ -46,7 +41,52 @@ export const findComparisonBaseline = async (
     return { snapshotId: revision.previousSnapshotId, source: "merge_base" };
   }
 
-  return { snapshotId: latest?.snapshotId ?? null, source: "expired" };
+  return { snapshotId: latestSnapshotId, source: "expired" };
+};
+
+// What each target is compared against: main as it was at `base`, the main-branch build at the
+// merge base. Only targets main changed after `base` differ from main's latest baseline, and
+// the first of those changes records what the baseline was before it.
+// Keyed by `toComparisonKey`.
+export const findComparisonBaselines = async (
+  projectId: string,
+  keys: ComparisonKey[],
+  base: { createdAt: string } | null,
+): Promise<Map<string, ComparisonBaseline>> => {
+  const candidates = await dbClient.baselines.findComparisonCandidates(
+    projectId,
+    keys,
+    base?.createdAt ?? null,
+  );
+
+  return new Map(
+    candidates.map((candidate) => [
+      toComparisonKey(candidate),
+      resolveComparisonBaseline(candidate),
+    ]),
+  );
+};
+
+// Branch builds compare against main as it was at their merge base, so changes main made
+// since the branch was cut don't show up as the branch's own. Main builds compare against
+// main's latest.
+export const findComparisonBase = async (
+  build: { branch: string; baseBuildId: string | null },
+  project: { gitMainBranch: string },
+) =>
+  build.branch !== project.gitMainBranch && build.baseBuildId
+    ? ((await dbClient.builds.findById(build.baseBuildId)) ?? null)
+    : null;
+
+export const findComparisonBaseline = async (
+  projectId: string,
+  viewport: Viewport,
+  targetId: string,
+  base: { createdAt: string } | null,
+): Promise<ComparisonBaseline> => {
+  const key = { ...viewport, targetId };
+  const baselines = await findComparisonBaselines(projectId, [key], base);
+  return baselines.get(toComparisonKey(key)) ?? { snapshotId: null, source: "latest" };
 };
 
 export const promoteBaseline = async (diffId: string, approverId: string): Promise<void> => {

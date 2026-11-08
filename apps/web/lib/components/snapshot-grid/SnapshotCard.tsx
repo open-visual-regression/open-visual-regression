@@ -45,7 +45,7 @@ type SnapshotCardProps = {
 };
 
 export const SnapshotCard = ({ snapshot, filters, showProject = false }: SnapshotCardProps) => {
-  const imagePath = getStoragePath(snapshot.imagePath);
+  const imagePath = getStoragePath(snapshot.imagePath ?? snapshot.baselineImagePath);
   const label = `snapshot of ${snapshot.targetTitle} ${snapshot.targetName}, ${showProject ? `${snapshot.project.name}, ` : ""}${snapshot.browser} ${snapshot.viewportName}, ${getSnapshotStatusLabel(snapshot.status)}${snapshot.hasUncaughtPageError ? ", has warnings" : ""}${snapshot.isFlaky ? ", flaky" : ""}`;
 
   return (

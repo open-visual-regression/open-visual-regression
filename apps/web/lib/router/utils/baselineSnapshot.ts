@@ -1,18 +1,21 @@
 import { dbClient } from "@ovr/db/client";
 import { buildCommitUrl } from "@ovr/git-status/webCommitUrl";
-import { findComparisonBaseline } from "@ovr/reviews/baselines";
+import { findComparisonBase, findComparisonBaseline } from "@ovr/reviews/baselines";
 
 type BaselineSource = { imagePath: string | null; buildId: string };
 
 type Snapshot = {
   id: string;
+  baselineSnapshotId: string | null;
   targetId: string;
   browser: string;
   viewportWidth: number;
   viewportHeight: number;
 };
 
-type Build = { projectId: string; createdAt: string; baseBuildId: string | null };
+type Build = { projectId: string; createdAt: string; branch: string; baseBuildId: string | null };
+
+type Project = { gitMainBranch: string };
 
 export const toBaselineSnapshot = async (baselineSnapshot: BaselineSource, projectId: string) => {
   const [baselineBuild, gitIntegration] = await Promise.all([
@@ -37,15 +40,14 @@ export const toBaselineSnapshot = async (baselineSnapshot: BaselineSource, proje
   };
 };
 
-// Snapshots that were never compared (skipped, errored, canceled) have no diff to carry their
-// baseline, so fall back to what the build would have compared the target against: main at the
-// build's merge base, or the project's latest baseline.
+// Snapshots that never recorded a baseline (errored, canceled, or from before snapshots recorded
+// one) fall back to what the build would have compared the target against.
 // A baseline set by a newer build than this one did not exist yet, so it is not shown.
 const findProjectBaselineSource = async (
   snapshot: Snapshot,
   build: Build,
+  project: Project,
 ): Promise<BaselineSource | null> => {
-  const base = build.baseBuildId ? await dbClient.builds.findById(build.baseBuildId) : null;
   const baseline = await findComparisonBaseline(
     build.projectId,
     {
@@ -54,7 +56,7 @@ const findProjectBaselineSource = async (
       viewportHeight: snapshot.viewportHeight,
     },
     snapshot.targetId,
-    base ?? null,
+    await findComparisonBase(build, project),
   );
 
   if (!baseline.snapshotId || baseline.snapshotId === snapshot.id) {
@@ -74,9 +76,20 @@ const findProjectBaselineSource = async (
   return baselineSnapshot;
 };
 
-export const getBaselineSnapshot = async (snapshot: Snapshot, build: Build) => {
+const findRecordedBaselineSource = async (snapshot: Snapshot) => {
+  if (snapshot.baselineSnapshotId) {
+    return (await dbClient.snapshots.findById(snapshot.baselineSnapshotId)) ?? null;
+  }
+
+  // Snapshots compared before snapshots recorded their baseline only have it on their diff.
   const row = await dbClient.diffs.findBySnapshotWithBaseline(snapshot.id);
-  const source = row?.baselineSnapshot ?? (await findProjectBaselineSource(snapshot, build));
+  return row?.baselineSnapshot ?? null;
+};
+
+export const getBaselineSnapshot = async (snapshot: Snapshot, build: Build, project: Project) => {
+  const source =
+    (await findRecordedBaselineSource(snapshot)) ??
+    (await findProjectBaselineSource(snapshot, build, project));
 
   return source ? toBaselineSnapshot(source, build.projectId) : null;
 };

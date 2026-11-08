@@ -13,6 +13,11 @@ import type { NamedViewport } from "@ovr/capture-browser/storyViewports";
 import { dbClient } from "@ovr/db/client";
 import { enqueueCaptureGroups, enqueueFinalize } from "@ovr/queue/producer";
 import {
+  findComparisonBase,
+  findComparisonBaselines,
+  toComparisonKey,
+} from "@ovr/reviews/baselines";
+import {
   DEFAULT_SCREENSHOT_STABILITY,
   type ScreenshotStability,
 } from "@ovr/storybook-compat/parameters";
@@ -92,6 +97,44 @@ const findBaselineKeys = async (projectId: string, unaffected: Set<string>) =>
     ? new Set<string>()
     : new Set((await dbClient.baselines.findByProject(projectId)).map(baselineKey));
 
+type ExtractedSnapshot = {
+  status: "queued" | "skipped";
+  browser: string;
+  viewportWidth: number;
+  viewportHeight: number;
+  targetId: string;
+};
+
+// A skipped snapshot keeps its baseline instead of being captured, so it records that baseline
+// the way a captured one records what it was compared against.
+const withKeptBaselines = async <T extends ExtractedSnapshot>(
+  build: { id: string; projectId: string; branch: string; baseBuildId: string | null },
+  snapshots: T[],
+): Promise<(T & { baselineSnapshotId?: string | null })[]> => {
+  const skipped = snapshots.filter((snapshot) => snapshot.status === "skipped");
+
+  if (skipped.length === 0) {
+    return snapshots;
+  }
+
+  const project = await dbClient.projects.findById(build.projectId);
+  if (!project) {
+    throw new Error(`Project not found for build: ${build.id}`);
+  }
+
+  const base = await findComparisonBase(build, project);
+  const baselines = await findComparisonBaselines(build.projectId, skipped, base);
+
+  return snapshots.map((snapshot) =>
+    snapshot.status === "skipped"
+      ? {
+          ...snapshot,
+          baselineSnapshotId: baselines.get(toComparisonKey(snapshot))?.snapshotId ?? null,
+        }
+      : snapshot,
+  );
+};
+
 export const extractBuild = async (
   buildId: string,
   targets: Target[],
@@ -126,49 +169,50 @@ export const extractBuild = async (
   const unaffected = new Set(unaffectedTargetIds);
   const baselineKeys = await findBaselineKeys(build.projectId, unaffected);
 
-  const created = await dbClient.snapshots.createMany({
-    values: targets.flatMap((target) => {
-      if (failures.has(target.id)) {
-        return [];
-      }
+  const values = targets.flatMap((target) => {
+    if (failures.has(target.id)) {
+      return [];
+    }
 
-      const override = overrides.get(target.id);
+    const override = overrides.get(target.id);
 
-      if (override?.skip) {
-        return [
-          toUncapturedSnapshot(
-            buildId,
-            target,
-            resolveDefaultViewport(viewports),
-            diffThreshold,
-            "skipped",
-          ),
-        ];
-      }
-
-      return resolveTargetViewports(viewports, override?.viewports).map((viewport) => {
-        const snapshot = {
+    if (override?.skip) {
+      return [
+        toUncapturedSnapshot(
           buildId,
-          browser: viewport.browser,
-          viewportWidth: viewport.viewportWidth,
-          viewportHeight: viewport.viewportHeight ?? 0,
-          viewportName: toViewportName(viewport),
-          targetId: target.id,
-          targetTitle: target.title,
-          targetName: target.name,
-          diffThreshold: resolveTargetDiffThreshold(diffThreshold, override),
-          waitForTimeout: resolveTargetWaitForTimeout(waitForTimeout, override),
-          screenshotStability: resolveTargetScreenshotStability(screenshotStability, override),
-          externalRequestAllowlist: resolveTargetExternalRequestAllowlist(
-            externalRequestAllowlist,
-            override,
-          ),
-        };
-        const keepsBaseline = unaffected.has(target.id) && baselineKeys.has(baselineKey(snapshot));
+          target,
+          resolveDefaultViewport(viewports),
+          diffThreshold,
+          "skipped",
+        ),
+      ];
+    }
 
-        return { ...snapshot, status: keepsBaseline ? ("skipped" as const) : ("queued" as const) };
-      });
-    }),
+    return resolveTargetViewports(viewports, override?.viewports).map((viewport) => {
+      const snapshot = {
+        buildId,
+        browser: viewport.browser,
+        viewportWidth: viewport.viewportWidth,
+        viewportHeight: viewport.viewportHeight ?? 0,
+        viewportName: toViewportName(viewport),
+        targetId: target.id,
+        targetTitle: target.title,
+        targetName: target.name,
+        diffThreshold: resolveTargetDiffThreshold(diffThreshold, override),
+        waitForTimeout: resolveTargetWaitForTimeout(waitForTimeout, override),
+        screenshotStability: resolveTargetScreenshotStability(screenshotStability, override),
+        externalRequestAllowlist: resolveTargetExternalRequestAllowlist(
+          externalRequestAllowlist,
+          override,
+        ),
+      };
+      const keepsBaseline = unaffected.has(target.id) && baselineKeys.has(baselineKey(snapshot));
+
+      return { ...snapshot, status: keepsBaseline ? ("skipped" as const) : ("queued" as const) };
+    });
+  });
+  const created = await dbClient.snapshots.createMany({
+    values: await withKeptBaselines(build, values),
   });
   const skipped = created.filter(({ status }) => status === "skipped").length;
   snapshotsCreated.add(created.length - skipped, { status: "queued" });

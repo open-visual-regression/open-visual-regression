@@ -522,7 +522,7 @@ describe("extractBuild", () => {
       build: { id: string; projectId: string; createdBy: string },
       targetId: string,
       viewport: { browser: string; viewportWidth: number; viewportHeight: number },
-    ): Promise<void> => {
+    ): Promise<string> => {
       const [snapshot] = await dbClient.snapshots.createMany({
         values: [
           {
@@ -544,6 +544,7 @@ describe("extractBuild", () => {
         snapshotId: snapshot!.id,
         approvedBy: build.createdBy,
       });
+      return snapshot!.id;
     };
 
     const desktop = { browser: "chromium", viewportWidth: 1280, viewportHeight: 0 };
@@ -590,6 +591,35 @@ describe("extractBuild", () => {
           .map((snapshot) => snapshot.id)
           .sort(),
       );
+    });
+
+    test("records the baseline each skipped snapshot keeps", async ({
+      mainBuild,
+      featureBuild,
+    }) => {
+      const desktopBaselineId = await seedBaseline(mainBuild, "story-a", desktop);
+      const mobileBaselineId = await seedBaseline(mainBuild, "story-a", mobile);
+      await storage.uploadFile(
+        featureBuild.artifactPath,
+        await buildArtifactTarball(),
+        "application/gzip",
+      );
+
+      await extractBuild(featureBuild.id, targets, viewports, 0.05, ["story-a"]);
+
+      const snapshots = await dbClient.snapshots.findByBuild(featureBuild.id);
+      const baselineByViewport = Object.fromEntries(
+        snapshots.map((snapshot) => [
+          `${snapshot.targetId}@${snapshot.viewportName}`,
+          snapshot.baselineSnapshotId,
+        ]),
+      );
+      expect(baselineByViewport).toEqual({
+        "story-a@desktop": desktopBaselineId,
+        "story-a@mobile": mobileBaselineId,
+        "story-b@desktop": null,
+        "story-b@mobile": null,
+      });
     });
 
     test("counts the snapshots it will capture and the ones that keep their baseline", async ({

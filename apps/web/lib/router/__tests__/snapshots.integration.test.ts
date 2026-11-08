@@ -552,6 +552,52 @@ describe("snapshots", () => {
       });
     });
 
+    test("returns the baseline a skipped snapshot recorded, even after main moves on", async ({
+      admin,
+    }) => {
+      const { projectId, build } = await createProjectAndBuild(admin);
+      const kept = await createBaseline(admin, projectId, build.id, "story-a");
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            ...VIEWPORT,
+            targetId: "story-a",
+            status: "skipped",
+            baselineSnapshotId: kept.id,
+          },
+        ],
+      });
+      const laterBuild = await createLaterBuild(projectId, admin);
+      const [newer] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: laterBuild!.id,
+            ...VIEWPORT,
+            targetId: "story-a",
+            status: "success",
+            imagePath: "projects/p/builds/b/snapshots/newer.png",
+          },
+        ],
+      });
+      await dbClient.baselines.upsert({
+        projectId,
+        snapshotId: newer!.id,
+        ...VIEWPORT,
+        targetId: "story-a",
+        approvedBy: admin.id,
+      });
+
+      const [error, result] = await serverClient.snapshots.getBaseline({
+        snapshotId: snapshot!.id,
+      });
+
+      expect(error).toBeNull();
+      expect(result?.baseline).toMatchObject({
+        imagePath: "projects/p/builds/b/snapshots/baseline.png",
+      });
+    });
+
     test("returns the project baseline for a skipped snapshot with no diff", async ({ admin }) => {
       const { projectId, build } = await createProjectAndBuild(admin);
       await createBaseline(admin, projectId, build.id, "story-a");
@@ -676,6 +722,48 @@ describe("snapshots", () => {
   });
 
   describe("list", () => {
+    test("returns the image of the baseline each snapshot recorded", async ({ admin }) => {
+      const { build } = await createProjectAndBuild(admin);
+      const [baseline] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: build.id,
+            ...VIEWPORT,
+            targetId: "baseline",
+            targetTitle: "Baseline",
+            targetName: "Default",
+            status: "success",
+            imagePath: "projects/p/builds/b/snapshots/baseline.png",
+          },
+        ],
+      });
+      await dbClient.snapshots.createMany({
+        values: [
+          { targetId: "kept", baselineSnapshotId: baseline!.id },
+          { targetId: "none", baselineSnapshotId: null },
+        ].map((snapshot) => ({
+          ...snapshot,
+          ...VIEWPORT,
+          buildId: build.id,
+          targetTitle: snapshot.targetId,
+          targetName: "Default",
+          status: "skipped" as const,
+        })),
+      });
+
+      const [error, result] = await serverClient.snapshots.list({
+        buildId: build.id,
+        sort: "name",
+      });
+
+      expect(error).toBeNull();
+      expect(
+        Object.fromEntries(
+          result!.snapshots.map((snapshot) => [snapshot.targetId, snapshot.baselineImagePath]),
+        ),
+      ).toEqual({ baseline: null, kept: "projects/p/builds/b/snapshots/baseline.png", none: null });
+    });
+
     test("lists each project's latest main build alphabetically when no build is given", async ({
       admin,
     }) => {
