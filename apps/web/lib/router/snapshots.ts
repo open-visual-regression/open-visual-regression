@@ -20,7 +20,7 @@ import {
   reviewerMiddleware,
 } from "./middleware";
 import { os } from "./os";
-import { findProjectBaselineSource, getBaselineSnapshot } from "./utils/baselineSnapshot";
+import { getBaselineSnapshot } from "./utils/baselineSnapshot";
 import { getSnapshotFlagDetails, getSnapshotFlags } from "./utils/snapshotFlags";
 import { getSnapshotDisplayStatus } from "./utils/snapshotStatus";
 import { getSnapshotTimings } from "./utils/snapshotTimings";
@@ -89,30 +89,6 @@ export const getBaseline = os.snapshots.getBaseline
   }))
   .actionable();
 
-type ListRow = Awaited<ReturnType<typeof dbClient.snapshots.list>>["snapshots"][number];
-
-// Skipped snapshots have no image of their own, so their cards show the baseline they would
-// have been compared against instead.
-const getSkippedBaselineImagePaths = async (rows: ListRow[]) => {
-  const skipped = rows.filter((row) => row.status === "skipped");
-  const buildIds = [...new Set(skipped.map((row) => row.buildId))];
-  const builds = new Map(
-    await Promise.all(
-      buildIds.map(async (id) => [id, await dbClient.builds.findById(id)] as const),
-    ),
-  );
-
-  const entries = await Promise.all(
-    skipped.map(async (row) => {
-      const build = builds.get(row.buildId);
-      const source = build ? await findProjectBaselineSource(row, build) : null;
-      return [row.id, source?.imagePath ?? null] as const;
-    }),
-  );
-
-  return new Map(entries);
-};
-
 export const list = os.snapshots.list
   .use(callerMiddleware("builds", "read"))
   .use(optionalOrganizationBuildMiddleware)
@@ -126,8 +102,6 @@ export const list = os.snapshots.list
       dbClient.snapshots.count(filters),
     ]);
 
-    const baselineImagePaths = await getSkippedBaselineImagePaths(rows);
-
     return {
       snapshots: rows.map((row) => ({
         id: row.id,
@@ -138,7 +112,7 @@ export const list = os.snapshots.list
         targetName: row.targetName,
         status: row.status,
         imagePath: row.imagePath,
-        baselineImagePath: baselineImagePaths.get(row.id) ?? null,
+        baselineImagePath: row.baselineImagePath,
         diffId: row.diffId,
         diffImagePath: row.diffImagePath,
         diffPercent: row.diffPercent,

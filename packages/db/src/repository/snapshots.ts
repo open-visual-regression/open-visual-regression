@@ -5,8 +5,10 @@ import {
   desc,
   eq,
   exists,
+  gt,
   ilike,
   inArray,
+  lte,
   ne,
   notInArray,
   or,
@@ -17,6 +19,7 @@ import { alias, union, unionAll } from "drizzle-orm/pg-core";
 
 import { db, type DbClient } from "../db";
 import {
+  baselineRevisions,
   baselines,
   builds,
   diffs,
@@ -245,6 +248,73 @@ const isFlaky = exists(
       ),
     ),
 ).mapWith(Boolean);
+
+// The baseline a skipped snapshot would have been compared against, resolved in the query so a
+// page of snapshots needs no extra round trips. Mirrors `findComparisonBaseline` in
+// @ovr/reviews: main as it was at the build's merge base, or main's latest baseline.
+const baseBuilds = alias(builds, "base_builds");
+const baselineSnapshots = alias(snapshots, "baseline_snapshots");
+const baselineBuilds = alias(builds, "baseline_builds");
+
+const isSameTarget = (table: typeof baselines | typeof baselineRevisions) =>
+  and(
+    eq(table.projectId, builds.projectId),
+    eq(table.browser, snapshots.browser),
+    eq(table.viewportWidth, snapshots.viewportWidth),
+    eq(table.viewportHeight, snapshots.viewportHeight),
+    eq(table.targetId, snapshots.targetId),
+  );
+
+const latestBaselineSnapshotId = db
+  .select({ snapshotId: baselines.snapshotId })
+  .from(baselines)
+  .where(isSameTarget(baselines));
+
+// Main's changes to the target after the merge base. None without a merge base.
+const revisionsAfterBase = (columns: Parameters<typeof db.select>[0]) =>
+  db
+    .select(columns)
+    .from(baselineRevisions)
+    .where(
+      and(
+        isSameTarget(baselineRevisions),
+        gt(
+          baselineRevisions.createdAt,
+          db
+            .select({ createdAt: baseBuilds.createdAt })
+            .from(baseBuilds)
+            .where(eq(baseBuilds.id, builds.baseBuildId)),
+        ),
+      ),
+    );
+
+// The first change after the merge base records what the baseline was then: nothing if it
+// created the baseline, or main's latest if that snapshot has since expired.
+const comparisonSnapshotId = sql`case
+  when not exists (${revisionsAfterBase({ id: baselineRevisions.id })})
+    then (${latestBaselineSnapshotId})
+  else (${revisionsAfterBase({
+    snapshotId: sql`case when ${baselineRevisions.replacedExisting}
+      then coalesce(${baselineRevisions.previousSnapshotId}, (${latestBaselineSnapshotId})) end`,
+  })
+    .orderBy(asc(baselineRevisions.createdAt), asc(baselineRevisions.id))
+    .limit(1)})
+end`;
+
+// A baseline set by a newer build than this one did not exist yet, so it is not shown.
+const skippedBaselineImagePath = sql<
+  string | null
+>`case when ${snapshots.status} = 'skipped' then (${db
+  .select({ imagePath: baselineSnapshots.imagePath })
+  .from(baselineSnapshots)
+  .innerJoin(baselineBuilds, eq(baselineBuilds.id, baselineSnapshots.buildId))
+  .where(
+    and(
+      eq(baselineSnapshots.id, comparisonSnapshotId),
+      ne(baselineSnapshots.id, snapshots.id),
+      lte(baselineBuilds.createdAt, builds.createdAt),
+    ),
+  )}) end`;
 
 export type SnapshotFlag = "flaky" | "warning";
 
@@ -635,6 +705,7 @@ export const list = async ({
       viewportHeight: snapshots.viewportHeight,
       viewportName: snapshots.viewportName,
       imagePath: snapshots.imagePath,
+      baselineImagePath: skippedBaselineImagePath,
       hasUncaughtPageError: snapshots.hasUncaughtPageError,
       queuedAt: snapshots.queuedAt,
       startedAt: snapshots.startedAt,

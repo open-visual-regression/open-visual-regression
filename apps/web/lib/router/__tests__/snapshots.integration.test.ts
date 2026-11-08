@@ -520,6 +520,12 @@ describe("snapshots", () => {
       createdAt: new Date(Date.now() + 60_000).toISOString(),
     });
 
+  // The snapshots list resolves a skipped snapshot's baseline in SQL; it must match getBaseline.
+  const findListedBaselineImagePath = async (buildId: string, snapshotId: string) => {
+    const { snapshots } = await dbClient.snapshots.list({ buildId, limit: 100 });
+    return snapshots.find((row) => row.id === snapshotId)?.baselineImagePath;
+  };
+
   describe("getBaseline", () => {
     test("returns NOT_FOUND for a missing snapshot id", async ({ admin: _ }) => {
       const [error] = await serverClient.snapshots.getBaseline({ snapshotId: uuidv7() });
@@ -570,6 +576,9 @@ describe("snapshots", () => {
         commitSha: "a".repeat(40),
         commitUrl: null,
       });
+      expect(await findListedBaselineImagePath(laterBuild!.id, snapshot!.id)).toBe(
+        "projects/p/builds/b/snapshots/baseline.png",
+      );
     });
 
     test("returns main's baseline at the merge base for a skipped snapshot on a branch", async ({
@@ -630,6 +639,9 @@ describe("snapshots", () => {
       expect(result?.baseline).toMatchObject({
         imagePath: "projects/p/builds/b/snapshots/at-merge-base.png",
       });
+      expect(await findListedBaselineImagePath(branchBuild!.id, snapshot!.id)).toBe(
+        "projects/p/builds/b/snapshots/at-merge-base.png",
+      );
     });
 
     test("returns null when the snapshot is itself the baseline", async ({ admin }) => {
@@ -658,6 +670,7 @@ describe("snapshots", () => {
 
       expect(error).toBeNull();
       expect(result?.baseline).toBeNull();
+      expect(await findListedBaselineImagePath(build.id, snapshot!.id)).toBeNull();
     });
 
     test("returns null when there is no baseline for the story", async ({ admin }) => {
@@ -672,6 +685,7 @@ describe("snapshots", () => {
 
       expect(error).toBeNull();
       expect(result?.baseline).toBeNull();
+      expect(await findListedBaselineImagePath(build.id, snapshot!.id)).toBeNull();
     });
   });
 
