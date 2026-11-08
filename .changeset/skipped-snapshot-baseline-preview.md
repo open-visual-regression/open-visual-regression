@@ -2,6 +2,7 @@
 "@ovr/web": minor
 "@ovr/worker": minor
 "@ovr/api": patch
+"@ovr/db": patch
 "@open-visual-regression/cli": patch
 ---
 
