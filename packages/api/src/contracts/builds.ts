@@ -177,6 +177,7 @@ export const buildDetailSchema = buildSchema.extend({
   branchUrl: z.string().nullable(),
   // The project's main branch, which branch builds are compared against.
   mainBranch: z.string().min(1),
+  mainBranchUrl: z.string().nullable(),
   // The main-branch build this branch build was compared against. Null for main-branch
   // builds, and for branch builds compared against the latest baselines.
   baseBuild: z.object({ id: z.uuidv7(), commitSha: z.string().min(1) }).nullable(),

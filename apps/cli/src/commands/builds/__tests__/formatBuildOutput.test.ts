@@ -25,6 +25,7 @@ const BUILD: BuildDetailSchema = {
   commitUrl: null,
   branchUrl: null,
   mainBranch: "main",
+  mainBranchUrl: null,
   baseBuild: null,
 };
 

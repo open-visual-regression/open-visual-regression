@@ -90,6 +90,21 @@ describe("BuildHeader", () => {
     expect(screen.queryByRole("link", { name: /^main/ })).not.toBeInTheDocument();
   });
 
+  it("should link main's latest to the provider's main branch page when it has no merge base", () => {
+    renderComponent({
+      build: mocks.build.generateBuild({
+        branch: "feature/empty-state",
+        baseBuild: null,
+        mainBranchUrl: "https://github.com/acme/web/tree/main",
+      }),
+    });
+
+    expect(screen.getByRole("link", { name: "main (latest)" })).toHaveAttribute(
+      "href",
+      "https://github.com/acme/web/tree/main",
+    );
+  });
+
   it("should show only the branch for a build on the main branch", () => {
     renderComponent({ build: mocks.build.generateBuild({ branch: "main", baseBuild: null }) });
 
@@ -544,7 +559,7 @@ describe("BuildHeader", () => {
       }),
     });
 
-    expect(screen.getByRole("link", { name: /abc1234/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "abc1234" })).toHaveAttribute(
       "href",
       "https://github.com/acme/web/commit/abc1234def",
     );

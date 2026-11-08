@@ -29,6 +29,7 @@ import { BuildCancelButton } from "./BuildCancelButton";
 import { BuildRebuildButton } from "./BuildRebuildButton";
 import { BuildRejectButton } from "./BuildRejectButton";
 import { BuildStatusStream } from "./BuildStatusStream";
+import { GitPill } from "./GitPill";
 
 export type BuildHeaderProps = {
   build: BuildDetailSchema;
@@ -86,17 +87,9 @@ export const BuildHeader = ({
               view storybook
             </ExternalLink>
           ) : null}
-          {build.commitUrl ? (
-            <ExternalLink href={build.commitUrl}>
-              <Icon icon={GitCommitHorizontalIcon} size={10} />
-              {build.commitSha.slice(0, 7)}
-            </ExternalLink>
-          ) : (
-            <Typography variant="caption" className="flex items-center gap-1">
-              <Icon icon={GitCommitHorizontalIcon} size={10} />
-              {build.commitSha.slice(0, 7)}
-            </Typography>
-          )}
+          <GitPill icon={GitCommitHorizontalIcon} href={build.commitUrl} external>
+            {build.commitSha.slice(0, 7)}
+          </GitPill>
           {build.author ? (
             <Typography variant="caption" className="flex items-center gap-1">
               <Icon icon={UserIcon} size={10} />

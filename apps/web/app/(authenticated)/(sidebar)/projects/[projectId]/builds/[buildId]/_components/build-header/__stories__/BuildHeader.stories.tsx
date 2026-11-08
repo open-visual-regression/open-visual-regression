@@ -176,6 +176,7 @@ export const WithGitIntegration: Story = {
       branchUrl:
         "https://github.com/acme/web/tree/feature/a-very-long-branch-name-that-should-be-truncated",
       commitUrl: "https://github.com/acme/web/commit/a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0",
+      mainBranchUrl: "https://github.com/acme/web/tree/main",
     }),
     snapshotCounts,
   },
