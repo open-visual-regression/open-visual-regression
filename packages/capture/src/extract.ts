@@ -84,18 +84,10 @@ const failUnreadableTargets = async (
   }
 };
 
-const baselineKey = (snapshot: {
-  targetId: string;
-  browser: string;
-  viewportWidth: number;
-  viewportHeight: number;
-}): string =>
-  [snapshot.targetId, snapshot.browser, snapshot.viewportWidth, snapshot.viewportHeight].join(":");
-
 const findBaselineKeys = async (projectId: string, unaffected: Set<string>) =>
   unaffected.size === 0
     ? new Set<string>()
-    : new Set((await dbClient.baselines.findByProject(projectId)).map(baselineKey));
+    : new Set((await dbClient.baselines.findByProject(projectId)).map(toComparisonKey));
 
 type ExtractedSnapshot = {
   status: "queued" | "skipped";
@@ -206,7 +198,8 @@ export const extractBuild = async (
           override,
         ),
       };
-      const keepsBaseline = unaffected.has(target.id) && baselineKeys.has(baselineKey(snapshot));
+      const keepsBaseline =
+        unaffected.has(target.id) && baselineKeys.has(toComparisonKey(snapshot));
 
       return { ...snapshot, status: keepsBaseline ? ("skipped" as const) : ("queued" as const) };
     });
