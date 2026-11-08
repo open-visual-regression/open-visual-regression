@@ -281,9 +281,9 @@ export const enqueueCaptureGroup = (
   connection: RedisConnection,
 ): Promise<Job<CaptureGroupJobPayload>> => enqueue(QueueName.SNAPSHOT_CAPTURE, payload, connection);
 
-// deadline makes a build due DEADLINE_SECONDS_PER_SNAPSHOT per snapshot after it's queued, and
-// workers take the earliest: small builds go first, but none queued after a build's deadline can
-// pass it.
+// deadline makes a build due DEADLINE_SECONDS_PER_SNAPSHOT per snapshot after it's queued, capped at
+// the max deadline, and workers take the earliest: small builds go first, but none queued after a
+// build's deadline can pass it.
 // round-robin gives a build's nth group of each browser priority n, counted from the round workers
 // are on, so a new build joins that round instead of jumping ahead of every queued build.
 export const captureQueuePolicySchema = z
@@ -292,9 +292,16 @@ export const captureQueuePolicySchema = z
 
 export type CaptureQueuePolicy = z.infer<typeof captureQueuePolicySchema>;
 
+// Lower runs large builds sooner, but small builds queued behind them wait longer.
+export const DEFAULT_CAPTURE_MAX_DEADLINE_MINUTES = 15;
+
+export const captureMaxDeadlineMinutesSchema = z.coerce
+  .number()
+  .positive()
+  .catch(DEFAULT_CAPTURE_MAX_DEADLINE_MINUTES);
+
 const LOWEST_PRIORITY = 2_097_151;
 
-// Too low and deadlines pass before builds can run, so the order falls back to fifo.
 const DEADLINE_SECONDS_PER_SNAPSHOT = 5;
 
 const nextPrioritized = async (
@@ -339,6 +346,7 @@ export const enqueueCaptureGroups = async (
   groups: Omit<CaptureGroupJobPayload, "buildId">[],
   connection: RedisConnection,
   policy: CaptureQueuePolicy,
+  maxDeadlineMinutes = DEFAULT_CAPTURE_MAX_DEADLINE_MINUTES,
 ): Promise<Job<CaptureGroupJobPayload>[]> => {
   if (groups.length === 0) {
     return [];
@@ -357,7 +365,9 @@ export const enqueueCaptureGroups = async (
     if (policy === "deadline") {
       const now = Math.floor(Date.now() / 1000);
       const snapshots = groups.reduce((count, group) => count + group.snapshotIds.length, 0);
-      const deadline = now + DEADLINE_SECONDS_PER_SNAPSHOT * snapshots;
+      const deadline =
+        now +
+        Math.min(DEADLINE_SECONDS_PER_SNAPSHOT * snapshots, Math.round(maxDeadlineMinutes * 60));
       const priority = Math.min(
         Math.max(deadline - (await deadlineEpoch(queue, now)), 1),
         LOWEST_PRIORITY,

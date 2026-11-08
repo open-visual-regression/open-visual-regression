@@ -161,6 +161,10 @@ worker:
   # "fifo". Empty uses deadline, or fifo with worker.keda's generated trigger,
   # which can't see prioritized jobs. Also read by the web app.
   captureQueuePolicy: ""
+  # Under the deadline policy, the most minutes after it's queued a build is
+  # due, so builds queued later can't pass it after that. Empty uses the app
+  # default (15). Also read by the web app.
+  captureQueueMaxDeadlineMinutes: ""
   # Minutes without snapshot or diff updates, and with no jobs left to run,
   # before an unfinished build is errored. Empty uses the app default (30).
   reaperStaleMinutes: ""

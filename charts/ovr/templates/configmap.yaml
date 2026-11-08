@@ -20,6 +20,9 @@ data:
   {{- with (include "ovr.captureQueuePolicy" .) }}
   OVR_CAPTURE_QUEUE_POLICY: {{ . | quote }}
   {{- end }}
+  {{- with .Values.worker.captureQueueMaxDeadlineMinutes }}
+  OVR_CAPTURE_QUEUE_MAX_DEADLINE_MINUTES: {{ . | quote }}
+  {{- end }}
   OVR_AUTH_MODE: {{ .Values.auth.mode | quote }}
   {{- if ne .Values.auth.mode "local" }}
   {{- with .Values.auth.trustedProxy }}
