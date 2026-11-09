@@ -1,5 +1,29 @@
 # @ovr/web
 
+## 0.22.0
+
+### Minor Changes
+
+- [#522](https://github.com/open-visual-regression/open-visual-regression/pull/522) [`e5ff227`](https://github.com/open-visual-regression/open-visual-regression/commit/e5ff227e615f87d150bd5778e1fb8ea01011916b) Thanks [@tgfischer](https://github.com/tgfischer)! - **Breaking:** The Helm chart reads only its documented keys from the Secret, by name, instead of loading every key into the environment. If you use `existingSecret`:
+
+  - Keys you added beyond the documented ones no longer reach OVR.
+  - Pods won't start until the Secret has `DATABASE_URL`, `REDIS_URL`, `BETTER_AUTH_SECRET` and `OVR_GIT_TOKEN_ENCRYPTION_KEY`. Separate `DATABASE_*` variables aren't read.
+
+- [#522](https://github.com/open-visual-regression/open-visual-regression/pull/522) [`e5ff227`](https://github.com/open-visual-regression/open-visual-regression/commit/e5ff227e615f87d150bd5778e1fb8ea01011916b) Thanks [@tgfischer](https://github.com/tgfischer)! - **Breaking:** The web app and worker read the GitHub App's private key from a mounted file named by `OVR_GITHUB_APP_PRIVATE_KEY_FILE`, so the key no longer sits in their environment. `OVR_GITHUB_APP_PRIVATE_KEY` is no longer read.
+
+  - **Docker Compose:** mount the `.pem` file as a Compose secret and set `OVR_GITHUB_APP_ID` and `OVR_GITHUB_APP_PRIVATE_KEY_FILE` in `docker-compose.override.yml`. See the GitHub App docs page.
+  - **Helm with `githubApp.privateKey`:** nothing to change, as long as the key is a multi-line string rather than one line with `\n` escapes.
+  - **Helm with `existingSecret`:** rename the Secret's `OVR_GITHUB_APP_PRIVATE_KEY` entry to `github-app-private-key.pem` with real line breaks, drop `OVR_GITHUB_APP_ID`, and set `githubApp.appId`.
+
+### Patch Changes
+
+- [#523](https://github.com/open-visual-regression/open-visual-regression/pull/523) [`37fcada`](https://github.com/open-visual-regression/open-visual-regression/commit/37fcada89b2e33c088f9b133ad3f9e99e127f040) Thanks [@tgfischer](https://github.com/tgfischer)! - The build page's commit is now a pill matching the branch pills, without the external link icon, and sits with them ahead of the "view storybook" link. A branch build compared to main's latest baselines links its main pill to the main branch on the git provider.
+
+- [#521](https://github.com/open-visual-regression/open-visual-regression/pull/521) [`42408bd`](https://github.com/open-visual-regression/open-visual-regression/commit/42408bd22478b33061a5bca2c5685dd87883becf) Thanks [@tgfischer](https://github.com/tgfischer)! - The snapshot header's metadata row no longer leaves a large gap between lines when its items wrap.
+
+- Updated dependencies [[`e5ff227`](https://github.com/open-visual-regression/open-visual-regression/commit/e5ff227e615f87d150bd5778e1fb8ea01011916b)]:
+  - @ovr/git-status@0.1.24
+
 ## 0.21.0
 
 ### Minor Changes
