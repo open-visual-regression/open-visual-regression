@@ -27,7 +27,7 @@ const ProjectsSidebarLinks = ({ projects, total, onNavigate }: ProjectsSidebarLi
       href="/projects"
       onNavigate={onNavigate}
       count={total}
-      className="shrink-0"
+      className="shrink-0 border-t border-ovr-border-subtle"
     >
       {projects.map((p) => (
         <SidebarItem

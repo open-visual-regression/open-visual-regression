@@ -17,8 +17,8 @@ type ProjectsSidebarProps = {
 const ProjectsSidebar = ({ projects, total, builds, version }: ProjectsSidebarProps) => (
   <Sidebar version={version}>
     <div className="flex min-h-0 flex-1 flex-col">
-      <ProjectsSidebarLinks projects={projects} total={total} />
       <RecentBuildsSidebarLinks builds={builds} />
+      <ProjectsSidebarLinks projects={projects} total={total} />
     </div>
   </Sidebar>
 );

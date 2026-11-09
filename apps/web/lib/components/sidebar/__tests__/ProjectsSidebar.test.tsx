@@ -137,4 +137,16 @@ describe("ProjectsSidebar", () => {
       screen.getByRole("link", { name: /Fix the active build/, current: "page" }),
     ).toBeVisible();
   });
+
+  it("should render the recent builds section above the projects section", () => {
+    vi.mocked(usePathname).mockReturnValue("/projects");
+
+    render(<ProjectsSidebar projects={PROJECTS} total={PROJECTS.length} builds={BUILDS} />);
+
+    const recentBuilds = screen.getByRole("heading", { name: "recent builds" });
+    const projects = screen.getByRole("heading", { name: "projects" });
+    expect(
+      recentBuilds.compareDocumentPosition(projects) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
 });
