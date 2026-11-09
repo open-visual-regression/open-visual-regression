@@ -105,11 +105,11 @@
       "properties": {
         "appId": {
           "type": ["string", "integer"],
-          "description": "The GitHub App's ID. Set together with privateKey."
+          "description": "The GitHub App's ID. Set together with privateKey, unless existingSecret holds the key."
         },
         "privateKey": {
           "type": "string",
-          "description": "The GitHub App's PEM private key. Set together with appId."
+          "description": "The GitHub App's PEM private key. Set together with appId, unless existingSecret holds it."
         }
       }
     },

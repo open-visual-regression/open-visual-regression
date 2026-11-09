@@ -1,4 +1,5 @@
 import { generateKeyPairSync } from "node:crypto";
+import { join } from "node:path";
 
 import { GitHubAppConfigError, readGitHubAppConfig } from "../githubApp/config";
 import { describe, expect, test } from "./fixtures";
@@ -8,10 +9,10 @@ describe("readGitHubAppConfig", () => {
     expect(readGitHubAppConfig({})).toBeNull();
   });
 
-  test("accepts a key stored on one line with escaped newlines", ({ githubAppPrivateKey }) => {
+  test("reads the key from the file", ({ githubAppPrivateKey, writeTempFile }) => {
     const config = readGitHubAppConfig({
       OVR_GITHUB_APP_ID: "1234",
-      OVR_GITHUB_APP_PRIVATE_KEY: githubAppPrivateKey.trim().replace(/\n/g, "\\n"),
+      OVR_GITHUB_APP_PRIVATE_KEY_FILE: writeTempFile(githubAppPrivateKey),
     });
 
     expect(config?.appId).toBe("1234");
@@ -20,18 +21,30 @@ describe("readGitHubAppConfig", () => {
 
   test.each([
     { OVR_GITHUB_APP_ID: "1234" },
-    { OVR_GITHUB_APP_PRIVATE_KEY: "-----BEGIN RSA PRIVATE KEY-----" },
+    { OVR_GITHUB_APP_PRIVATE_KEY_FILE: "/run/secrets/github-app.pem" },
   ])("throws when only one variable is set: %o", (env) => {
     expect(() => readGitHubAppConfig(env)).toThrow(GitHubAppConfigError);
   });
 
-  test("throws on a key that is not a PEM private key", () => {
+  test("throws when the file can't be read", ({ writeTempFile }) => {
+    const missing = join(writeTempFile(""), "..", "missing.pem");
+
     expect(() =>
-      readGitHubAppConfig({ OVR_GITHUB_APP_ID: "1234", OVR_GITHUB_APP_PRIVATE_KEY: "nope" }),
-    ).toThrow(/not a valid PEM private key/);
+      readGitHubAppConfig({ OVR_GITHUB_APP_ID: "1234", OVR_GITHUB_APP_PRIVATE_KEY_FILE: missing }),
+    ).toThrow(
+      `OVR_GITHUB_APP_PRIVATE_KEY_FILE points to ${missing}, which could not be read (ENOENT)`,
+    );
   });
 
-  test("throws on a key that is not RSA", () => {
+  test("throws without echoing a file that is not a PEM private key", ({ writeTempFile }) => {
+    const path = writeTempFile("not-a-key-but-maybe-a-secret");
+
+    expect(() =>
+      readGitHubAppConfig({ OVR_GITHUB_APP_ID: "1234", OVR_GITHUB_APP_PRIVATE_KEY_FILE: path }),
+    ).toThrow(`GitHub App is misconfigured: ${path} is not a valid PEM private key`);
+  });
+
+  test("throws on a key that is not RSA", ({ writeTempFile }) => {
     const { privateKey } = generateKeyPairSync("ec", {
       namedCurve: "P-256",
       privateKeyEncoding: { type: "pkcs8", format: "pem" },
@@ -39,7 +52,10 @@ describe("readGitHubAppConfig", () => {
     });
 
     expect(() =>
-      readGitHubAppConfig({ OVR_GITHUB_APP_ID: "1234", OVR_GITHUB_APP_PRIVATE_KEY: privateKey }),
+      readGitHubAppConfig({
+        OVR_GITHUB_APP_ID: "1234",
+        OVR_GITHUB_APP_PRIVATE_KEY_FILE: writeTempFile(privateKey),
+      }),
     ).toThrow(/RSA/);
   });
 });

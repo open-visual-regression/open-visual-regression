@@ -64,13 +64,15 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ include "ovr.fullname" . }}-config
-            - secretRef:
-                name: {{ include "ovr.secretName" . }}
           env:
+            {{- include "ovr.appSecretEnv" . | nindent 12 }}
             - name: PORT
               value: {{ .Values.web.port | quote }}
             {{- if .Values.metrics.enabled }}
             {{- include "ovr.metricsEnv" . | nindent 12 }}
+            {{- end }}
+            {{- if include "ovr.githubAppEnabled" . }}
+            {{- include "ovr.githubAppEnv" . | nindent 12 }}
             {{- end }}
           ports:
             - name: http
@@ -94,6 +96,14 @@ spec:
             periodSeconds: 20
             timeoutSeconds: 5
             failureThreshold: 6
+          {{- if include "ovr.githubAppEnabled" . }}
+          volumeMounts:
+            {{- include "ovr.githubAppVolumeMount" . | nindent 12 }}
+          {{- end }}
           resources:
             {{- toYaml .Values.web.resources | nindent 12 }}
+      {{- if include "ovr.githubAppEnabled" . }}
+      volumes:
+        {{- include "ovr.githubAppVolume" . | nindent 8 }}
+      {{- end }}
 {{- end }}

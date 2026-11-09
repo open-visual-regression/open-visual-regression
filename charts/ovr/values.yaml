@@ -13,9 +13,9 @@ imagePullSecrets: []
 
 # Name of a Secret you create yourself with keys: DATABASE_URL, REDIS_URL,
 # BETTER_AUTH_SECRET, OVR_GIT_TOKEN_ENCRYPTION_KEY, STORAGE_ACCESS_KEY,
-# STORAGE_SECRET_KEY, and optionally OVR_GITHUB_APP_ID and
-# OVR_GITHUB_APP_PRIVATE_KEY. Set this to use your own secret instead of the
-# values below (recommended if using GitOps / Sealed Secrets / External Secrets).
+# STORAGE_SECRET_KEY, and github-app-private-key.pem if githubApp.appId is set.
+# Set this to use your own secret instead of the values below (recommended if
+# using GitOps / Sealed Secrets / External Secrets).
 existingSecret: ""
 
 serviceAccount:
@@ -71,11 +71,14 @@ auth:
     organizationName: ""
 
 # Optional GitHub App that projects can publish commit statuses as, instead of
-# a personal access token. Set both or neither. See the "GitHub App" docs page.
+# a personal access token. Set both, or with existingSecret, set appId and put
+# the key in that Secret under github-app-private-key.pem. The key is mounted
+# into the web and worker pods as a file, never put in their environment. See
+# the "GitHub App" docs page.
 githubApp:
   # The App ID from the App's settings page.
   appId: ""
-  # The App's private key (.pem), as a multi-line string or on one line with \n.
+  # The App's private key (.pem), as a multi-line string.
   privateKey: ""
 
 database:

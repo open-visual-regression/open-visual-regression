@@ -30,31 +30,49 @@ To add repositories later, open the installation's **Configure** page from the a
 
 ## Configure OVR
 
-Give the web app and the worker the App ID and the private key:
+Give the web app and the worker the App ID, and mount the private key into both as a file:
 
-| Variable | Helm value | Description |
-| --- | --- | --- |
-| `OVR_GITHUB_APP_ID` | `githubApp.appId` | The App ID. |
-| `OVR_GITHUB_APP_PRIVATE_KEY` | `githubApp.privateKey` | The contents of the `.pem` file. Line breaks can be escaped as `\n` to fit the key on one line. |
+| Variable | Description |
+| --- | --- |
+| `OVR_GITHUB_APP_ID` | The App ID. |
+| `OVR_GITHUB_APP_PRIVATE_KEY_FILE` | Path to the `.pem` file inside the container. |
 
-Set both or neither. The web app and worker refuse to start if only one is set or the key can't be read, and the error names the variable at fault. The key is only read from the environment and is never stored in the database.
+Set both or neither. The web app and worker refuse to start if only one is set, or the file can't be read or doesn't hold an RSA private key, and the error names the variable or file at fault. The key is read from the file once at startup. It is never put in the environment or stored in the database.
 
 ### Docker Compose
 
-Add both to `.env`. To put the key on one line, escape its line breaks:
+Mount the key as a [Compose secret](https://docs.docker.com/compose/how-tos/use-secrets/). Put the `.pem` file next to `docker-compose.yml`, then create `docker-compose.override.yml` beside them. Compose merges the override file into `docker-compose.yml` automatically:
 
-```sh
-awk '{printf "%s\\n", $0}' my-app.private-key.pem
+```yaml docker-compose.override.yml
+secrets:
+  github_app_private_key:
+    file: ./github-app.private-key.pem
+
+services:
+  web:
+    secrets: [github_app_private_key]
+    environment:
+      OVR_GITHUB_APP_ID: "123456"
+      OVR_GITHUB_APP_PRIVATE_KEY_FILE: /run/secrets/github_app_private_key
+  worker:
+    secrets: [github_app_private_key]
+    environment:
+      OVR_GITHUB_APP_ID: "123456"
+      OVR_GITHUB_APP_PRIVATE_KEY_FILE: /run/secrets/github_app_private_key
 ```
 
+Compose mounts the file with the permissions it has on the host, and the containers run as user `1001`, so make it readable by that user:
+
 ```sh
-OVR_GITHUB_APP_ID=123456
-OVR_GITHUB_APP_PRIVATE_KEY='-----BEGIN RSA PRIVATE KEY-----\nMIIE...\n-----END RSA PRIVATE KEY-----\n'
+sudo chown 1001 github-app.private-key.pem
+chmod 400 github-app.private-key.pem
 ```
 
-Then run `docker compose up -d` to restart the web app and worker with them.
+Then run `docker compose up -d` to restart the web app and worker with it.
 
 ### Helm
+
+Set the App ID and the key, and the chart mounts the key into the web and worker pods:
 
 ```yaml
 githubApp:
@@ -65,7 +83,29 @@ githubApp:
     -----END RSA PRIVATE KEY-----
 ```
 
-With `existingSecret`, add the keys `OVR_GITHUB_APP_ID` and `OVR_GITHUB_APP_PRIVATE_KEY` to your Secret instead.
+With `existingSecret`, set only `githubApp.appId` and add the key to your Secret under `github-app-private-key.pem`. For example, to create the Secret by hand:
+
+```sh
+kubectl create secret generic ovr-secrets \
+  --from-literal=DATABASE_URL=... \
+  --from-file=github-app-private-key.pem=github-app.private-key.pem
+```
+
+The chart reads each of its environment variables from the Secret by name, so the key is only mounted as a file and never reaches the environment.
+
+### Rotating the key
+
+Generate a new key on the App's settings page, replace the file or the key in your Secret, and restart the web app and worker. With `githubApp.privateKey`, `helm upgrade` restarts them for you. Then delete the old key from the App's settings page.
+
+### Upgrading from `OVR_GITHUB_APP_PRIVATE_KEY`
+
+Earlier versions read the key from `OVR_GITHUB_APP_PRIVATE_KEY`. That variable is no longer read. If you set it, mount the key as a file as described above and set `OVR_GITHUB_APP_PRIVATE_KEY_FILE` instead:
+
+- **Docker Compose**: move `OVR_GITHUB_APP_ID` from `.env` into `docker-compose.override.yml`, save the key as a `.pem` file (the one GitHub downloaded, or a newly generated one), and delete both variables from `.env`.
+- **Helm with `githubApp.privateKey`**: no change is needed, unless you put the key on one line with `\n` escapes. Write it as a multi-line string instead, as shown above.
+- **Helm with `existingSecret`**: in your Secret, rename `OVR_GITHUB_APP_PRIVATE_KEY` to `github-app-private-key.pem` and give it the key with real line breaks, remove `OVR_GITHUB_APP_ID`, and set `githubApp.appId` instead.
+
+Until you do, either the web app and worker refuse to start because `OVR_GITHUB_APP_ID` is set without `OVR_GITHUB_APP_PRIVATE_KEY_FILE`, or projects set to **github app** fail to publish statuses with "GitHub App authentication is not configured on this deployment".
 
 ## Switch a project to the App
 
@@ -88,7 +128,7 @@ Each web and worker process caches its installation tokens in memory, one per in
 
 **the GitHub App cannot write commit statuses**: give the App the **Commit statuses: Read and write** permission. After changing an App's permissions, the account or organization that installed it has to approve the change on the installation before it takes effect.
 
-**GitHub rejected the App's credentials**: the App ID and private key don't match, or the key was revoked. Check both values, and generate a new key if needed.
+**GitHub rejected the App's credentials**: the App ID and the key in `OVR_GITHUB_APP_PRIVATE_KEY_FILE` don't match, or the key was revoked. Check both, and generate a new key if needed.
 
 Publishing failures are also recorded in the `ovr_git_status_publications_total` metric with `outcome="error"`, and logged by the worker. See [Metrics](/self-hosting/metrics).
 

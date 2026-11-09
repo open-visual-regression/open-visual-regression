@@ -15,12 +15,13 @@ Copy `values.yaml`, or pass `--set`, filling in:
 - `env.baseUrl` — public URL the app will be served at
 
 Optionally, set `githubApp.appId` and `githubApp.privateKey` so projects can
-publish commit statuses as a GitHub App instead of with an access token.
+publish commit statuses as a GitHub App instead of with an access token. The
+key is mounted into the pods as a file.
 
 Or set `existingSecret` to the name of a Secret you manage yourself with keys:
 `DATABASE_URL`, `REDIS_URL`, `BETTER_AUTH_SECRET`, `OVR_GIT_TOKEN_ENCRYPTION_KEY`,
-`STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, and optionally `OVR_GITHUB_APP_ID`
-and `OVR_GITHUB_APP_PRIVATE_KEY`.
+`STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, and `github-app-private-key.pem` if
+you set `githubApp.appId`. Only these keys are read from it.
 
 ## 2. Install
 

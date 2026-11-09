@@ -1,8 +1,8 @@
-import { createPublicKey, generateKeyPairSync, verify } from "node:crypto";
+import { createPrivateKey, createPublicKey, generateKeyPairSync, verify } from "node:crypto";
 
 import { http, HttpResponse } from "msw";
 
-import { readGitHubAppConfig, type GitHubAppConfig } from "../githubApp/config";
+import type { GitHubAppConfig } from "../githubApp/config";
 import { server } from "./setup";
 
 const API = "https://api.github.com";
@@ -15,11 +15,10 @@ export const generateAppPrivateKey = (): string =>
     publicKeyEncoding: { type: "spki", format: "pem" },
   }).privateKey;
 
-export const generateAppConfig = (): GitHubAppConfig =>
-  readGitHubAppConfig({
-    OVR_GITHUB_APP_ID: "1234",
-    OVR_GITHUB_APP_PRIVATE_KEY: generateAppPrivateKey(),
-  })!;
+export const generateAppConfig = (): GitHubAppConfig => ({
+  appId: "1234",
+  privateKey: createPrivateKey(generateAppPrivateKey()),
+});
 
 export const decodeJwt = (jwt: string, app: GitHubAppConfig) => {
   const [header = "", payload = "", signature = ""] = jwt.split(".");

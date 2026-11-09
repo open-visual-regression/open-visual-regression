@@ -75,7 +75,7 @@ const requestAsApp = async (
 
   if (response.status === 401) {
     throw new GitHubAppError(
-      "GitHub rejected the App's credentials; check OVR_GITHUB_APP_ID and OVR_GITHUB_APP_PRIVATE_KEY",
+      "GitHub rejected the App's credentials; check OVR_GITHUB_APP_ID and the key in OVR_GITHUB_APP_PRIVATE_KEY_FILE",
       false,
       401,
     );

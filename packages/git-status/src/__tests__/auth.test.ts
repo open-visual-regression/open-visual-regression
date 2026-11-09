@@ -84,7 +84,7 @@ describe("auth", () => {
     const result = await verifyIntegration(appIntegration);
 
     expect(result).toMatchObject({ ok: false, httpStatus: null });
-    expect(result.error).toMatch(/set OVR_GITHUB_APP_ID and OVR_GITHUB_APP_PRIVATE_KEY/);
+    expect(result.error).toMatch(/set OVR_GITHUB_APP_ID and OVR_GITHUB_APP_PRIVATE_KEY_FILE/);
   });
 
   test("explains when the deployment's App is half configured", async () => {
@@ -92,7 +92,9 @@ describe("auth", () => {
 
     const result = await verifyIntegration(appIntegration);
 
-    expect(result.error).toMatch(/OVR_GITHUB_APP_ID is set but OVR_GITHUB_APP_PRIVATE_KEY is not/);
+    expect(result.error).toMatch(
+      /OVR_GITHUB_APP_ID is set but OVR_GITHUB_APP_PRIVATE_KEY_FILE is not/,
+    );
   });
 
   test("offers only token auth when the deployment has no App", () => {

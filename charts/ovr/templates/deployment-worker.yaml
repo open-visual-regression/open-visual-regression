@@ -65,9 +65,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ include "ovr.fullname" . }}-config
-            - secretRef:
-                name: {{ include "ovr.secretName" . }}
           env:
+            {{- include "ovr.appSecretEnv" . | nindent 12 }}
             - name: OVR_CAPTURE_GROUP_CONCURRENCY
               value: {{ .Values.worker.concurrency | quote }}
             {{- with .Values.worker.groupSize }}
@@ -113,6 +112,9 @@ spec:
             {{- if .Values.metrics.enabled }}
             {{- include "ovr.metricsEnv" . | nindent 12 }}
             {{- end }}
+            {{- if include "ovr.githubAppEnabled" . }}
+            {{- include "ovr.githubAppEnv" . | nindent 12 }}
+            {{- end }}
           {{- if .Values.metrics.enabled }}
           ports:
             {{- include "ovr.metricsPort" . | nindent 12 }}
@@ -120,6 +122,9 @@ spec:
           volumeMounts:
             - name: dshm
               mountPath: /dev/shm
+            {{- if include "ovr.githubAppEnabled" . }}
+            {{- include "ovr.githubAppVolumeMount" . | nindent 12 }}
+            {{- end }}
           resources:
             {{- toYaml .Values.worker.resources | nindent 12 }}
       volumes:
@@ -127,4 +132,7 @@ spec:
           emptyDir:
             medium: Memory
             sizeLimit: {{ .Values.worker.shmSize }}
+        {{- if include "ovr.githubAppEnabled" . }}
+        {{- include "ovr.githubAppVolume" . | nindent 8 }}
+        {{- end }}
 {{- end }}

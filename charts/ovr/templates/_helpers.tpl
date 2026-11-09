@@ -61,6 +61,65 @@ checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha25
 {{- end }}
 {{- end -}}
 
+{{/*
+Secret values are referenced key by key rather than envFrom'd, so the GitHub App
+key in the same Secret is only ever mounted as a file, never put in the environment.
+*/}}
+{{- define "ovr.secretEnvVar" -}}
+- name: {{ .key }}
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "ovr.secretName" .root }}
+      key: {{ .key }}
+      {{- if .optional }}
+      optional: true
+      {{- end }}
+{{- end -}}
+
+{{- define "ovr.appSecretEnv" -}}
+{{- range list "DATABASE_URL" "REDIS_URL" "BETTER_AUTH_SECRET" "OVR_GIT_TOKEN_ENCRYPTION_KEY" }}
+{{ include "ovr.secretEnvVar" (dict "root" $ "key" .) }}
+{{- end }}
+{{- range list "STORAGE_ACCESS_KEY" "STORAGE_SECRET_KEY" }}
+{{ include "ovr.secretEnvVar" (dict "root" $ "key" . "optional" true) }}
+{{- end }}
+{{- end -}}
+
+{{/* "true" when a GitHub App is configured. Fails on a half-configured one. */}}
+{{- define "ovr.githubAppEnabled" -}}
+{{- with .Values.githubApp -}}
+{{- if and .privateKey (not .appId) -}}
+{{- fail "githubApp.appId is required when githubApp.privateKey is set" -}}
+{{- end -}}
+{{- if .appId -}}
+{{- if not (or .privateKey $.Values.existingSecret) -}}
+{{- fail "githubApp.privateKey is required when githubApp.appId is set (or set existingSecret, with the key under github-app-private-key.pem)" -}}
+{{- end -}}
+true
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "ovr.githubAppEnv" -}}
+- name: OVR_GITHUB_APP_PRIVATE_KEY_FILE
+  value: /etc/ovr/github-app/private-key.pem
+{{- end -}}
+
+{{- define "ovr.githubAppVolumeMount" -}}
+- name: github-app
+  mountPath: /etc/ovr/github-app
+  readOnly: true
+{{- end -}}
+
+{{- define "ovr.githubAppVolume" -}}
+- name: github-app
+  secret:
+    secretName: {{ include "ovr.secretName" . }}
+    items:
+      - key: github-app-private-key.pem
+        path: private-key.pem
+{{- end -}}
+
 {{- define "ovr.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create -}}
 {{ default (include "ovr.fullname" .) .Values.serviceAccount.name }}

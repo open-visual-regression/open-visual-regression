@@ -89,7 +89,7 @@ const fromConfig = (): AuthMethod => {
 let current: { env: string; auth: AuthMethod } | undefined;
 
 const fromEnvironment = (): AuthMethod => {
-  const env = `${process.env.OVR_GITHUB_APP_ID ?? ""}\0${process.env.OVR_GITHUB_APP_PRIVATE_KEY ?? ""}`;
+  const env = `${process.env.OVR_GITHUB_APP_ID ?? ""}\0${process.env.OVR_GITHUB_APP_PRIVATE_KEY_FILE ?? ""}`;
   if (current?.env !== env) {
     current = { env, auth: fromConfig() };
   }

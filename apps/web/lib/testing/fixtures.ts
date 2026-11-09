@@ -1,4 +1,7 @@
 import { generateKeyPairSync, randomUUID } from "node:crypto";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 import { convertSetCookieToCookie } from "better-auth/test";
 import { exportJWK, exportSPKI, generateKeyPair, SignJWT, type JWTPayload } from "jose";
@@ -156,9 +159,13 @@ export const test = vitest.extend<{
       privateKeyEncoding: { type: "pkcs1", format: "pem" },
       publicKeyEncoding: { type: "spki", format: "pem" },
     });
+    const dir = mkdtempSync(join(tmpdir(), "ovr-github-app-"));
+    const keyFile = join(dir, "private-key.pem");
+    writeFileSync(keyFile, privateKey);
     vi.stubEnv("OVR_GITHUB_APP_ID", "1234");
-    vi.stubEnv("OVR_GITHUB_APP_PRIVATE_KEY", privateKey);
+    vi.stubEnv("OVR_GITHUB_APP_PRIVATE_KEY_FILE", keyFile);
     await use();
+    rmSync(dir, { recursive: true, force: true });
   },
 
   metrics: metricsFixture,
