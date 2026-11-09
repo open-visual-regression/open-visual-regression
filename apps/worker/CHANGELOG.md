@@ -1,5 +1,25 @@
 # @ovr/worker
 
+## 0.22.0
+
+### Minor Changes
+
+- [#522](https://github.com/open-visual-regression/open-visual-regression/pull/522) [`e5ff227`](https://github.com/open-visual-regression/open-visual-regression/commit/e5ff227e615f87d150bd5778e1fb8ea01011916b) Thanks [@tgfischer](https://github.com/tgfischer)! - **Breaking:** The Helm chart reads only its documented keys from the Secret, by name, instead of loading every key into the environment. If you use `existingSecret`:
+
+  - Keys you added beyond the documented ones no longer reach OVR.
+  - Pods won't start until the Secret has `DATABASE_URL`, `REDIS_URL`, `BETTER_AUTH_SECRET` and `OVR_GIT_TOKEN_ENCRYPTION_KEY`. Separate `DATABASE_*` variables aren't read.
+
+- [#522](https://github.com/open-visual-regression/open-visual-regression/pull/522) [`e5ff227`](https://github.com/open-visual-regression/open-visual-regression/commit/e5ff227e615f87d150bd5778e1fb8ea01011916b) Thanks [@tgfischer](https://github.com/tgfischer)! - **Breaking:** The web app and worker read the GitHub App's private key from a mounted file named by `OVR_GITHUB_APP_PRIVATE_KEY_FILE`, so the key no longer sits in their environment. `OVR_GITHUB_APP_PRIVATE_KEY` is no longer read.
+
+  - **Docker Compose:** mount the `.pem` file as a Compose secret and set `OVR_GITHUB_APP_ID` and `OVR_GITHUB_APP_PRIVATE_KEY_FILE` in `docker-compose.override.yml`. See the GitHub App docs page.
+  - **Helm with `githubApp.privateKey`:** nothing to change, as long as the key is a multi-line string rather than one line with `\n` escapes.
+  - **Helm with `existingSecret`:** rename the Secret's `OVR_GITHUB_APP_PRIVATE_KEY` entry to `github-app-private-key.pem` with real line breaks, drop `OVR_GITHUB_APP_ID`, and set `githubApp.appId`.
+
+### Patch Changes
+
+- Updated dependencies [[`e5ff227`](https://github.com/open-visual-regression/open-visual-regression/commit/e5ff227e615f87d150bd5778e1fb8ea01011916b)]:
+  - @ovr/git-status@0.1.24
+
 ## 0.21.0
 
 ### Minor Changes
