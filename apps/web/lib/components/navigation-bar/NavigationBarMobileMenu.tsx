@@ -72,12 +72,12 @@ const NavigationBarMobileMenu = ({
           <SettingsSidebarLinks role={role} onNavigate={onNavigate} />
         ) : (
           <div className="flex min-h-0 flex-1 flex-col">
+            <RecentBuildsSidebarLinks builds={builds} onNavigate={onNavigate} />
             <ProjectsSidebarLinks
               projects={projects}
               total={projectsTotal}
               onNavigate={onNavigate}
             />
-            <RecentBuildsSidebarLinks builds={builds} onNavigate={onNavigate} />
           </div>
         )}
       </SheetContent>

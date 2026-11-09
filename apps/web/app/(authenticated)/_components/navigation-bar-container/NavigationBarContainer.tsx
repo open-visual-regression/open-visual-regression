@@ -10,15 +10,16 @@ import {
   toPathSegments,
 } from "@/lib/components/navigation-bar/getBreadcrumbTrail";
 import { NavigationBarBreadcrumbContainer } from "@/lib/components/navigation-bar/NavigationBarBreadcrumbContainer";
+import {
+  SIDEBAR_PROJECTS_LIMIT,
+  SIDEBAR_RECENT_BUILDS_LIMIT,
+} from "@/lib/components/sidebar/constants";
 import { getQueryClient } from "@/lib/orpc/query-client";
 import { orpcServer } from "@/lib/orpc/server";
 import { serverClient } from "@/lib/router";
 import { REQUEST_PATH_HEADER } from "@/lib/utils/redirects";
 
 import { NavigationBarContent } from "../navigation-bar-content/NavigationBarContent";
-
-const NAVIGATION_PROJECTS_LIMIT = 10;
-const NAVIGATION_RECENT_BUILDS_LIMIT = 15;
 
 const prefetchBreadcrumbTrail = async () => {
   const requestPath = (await headers()).get(REQUEST_PATH_HEADER) ?? "/";
@@ -43,9 +44,9 @@ export const NavigationBarContainer = async () => {
 
   const [[listError, listResult], [countError, countResult], [buildsError, buildsResult]] =
     await Promise.all([
-      serverClient.projects.list({ limit: NAVIGATION_PROJECTS_LIMIT }),
+      serverClient.projects.list({ limit: SIDEBAR_PROJECTS_LIMIT }),
       serverClient.projects.count(),
-      serverClient.builds.list({ limit: NAVIGATION_RECENT_BUILDS_LIMIT }),
+      serverClient.builds.list({ limit: SIDEBAR_RECENT_BUILDS_LIMIT }),
     ]);
   const projects = listError ? [] : listResult.projects;
   const projectsTotal = countError ? 0 : countResult.total;
