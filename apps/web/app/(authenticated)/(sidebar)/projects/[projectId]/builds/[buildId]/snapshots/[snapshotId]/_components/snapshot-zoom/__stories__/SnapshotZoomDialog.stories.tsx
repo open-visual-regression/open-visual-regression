@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, screen, userEvent, waitFor, within } from "storybook/test";
 
+import { SnapshotPreferencesProvider } from "../../../../_components/snapshot-preferences/snapshot-preferences";
 import { ComparisonModeProvider } from "../../snapshot-comparison-section/comparison-view/comparison-mode";
 import { SnapshotZoomDialog } from "../SnapshotZoomDialog";
 import { SnapshotZoomTrigger } from "../SnapshotZoomTrigger";
@@ -24,18 +25,20 @@ const meta: Meta<typeof SnapshotZoomDialog> = {
     diffImagePath: null,
   },
   render: (args) => (
-    <ComparisonModeProvider>
-      <SnapshotZoomDialog {...args}>
-        <div className="flex gap-4 p-4">
-          <div className="relative size-24">
-            <SnapshotZoomTrigger view="baseline" disabled={!args.baseline} />
+    <SnapshotPreferencesProvider>
+      <ComparisonModeProvider>
+        <SnapshotZoomDialog {...args}>
+          <div className="flex gap-4 p-4">
+            <div className="relative size-24">
+              <SnapshotZoomTrigger view="baseline" disabled={!args.baseline} />
+            </div>
+            <div className="relative size-24">
+              <SnapshotZoomTrigger view="new" />
+            </div>
           </div>
-          <div className="relative size-24">
-            <SnapshotZoomTrigger view="new" />
-          </div>
-        </div>
-      </SnapshotZoomDialog>
-    </ComparisonModeProvider>
+        </SnapshotZoomDialog>
+      </ComparisonModeProvider>
+    </SnapshotPreferencesProvider>
   ),
 };
 

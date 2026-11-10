@@ -5,6 +5,7 @@ import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 
 import { describe, expect, it, render, screen } from "@/test-utils";
 
+import { SnapshotPreferencesProvider } from "../../../../_components/snapshot-preferences/snapshot-preferences";
 import { ComparisonModeProvider } from "../comparison-view/comparison-mode";
 import { SnapshotComparisonSection } from "../SnapshotComparisonSection";
 
@@ -47,9 +48,15 @@ const renderSection = (
 ) =>
   render(
     <QueryClientProvider client={new QueryClient()}>
-      <ComparisonModeProvider>
-        <SnapshotComparisonSection snapshot={snapshotInput} diff={diffInput} baseline={baseline} />
-      </ComparisonModeProvider>
+      <SnapshotPreferencesProvider>
+        <ComparisonModeProvider>
+          <SnapshotComparisonSection
+            snapshot={snapshotInput}
+            diff={diffInput}
+            baseline={baseline}
+          />
+        </ComparisonModeProvider>
+      </SnapshotPreferencesProvider>
     </QueryClientProvider>,
   );
 

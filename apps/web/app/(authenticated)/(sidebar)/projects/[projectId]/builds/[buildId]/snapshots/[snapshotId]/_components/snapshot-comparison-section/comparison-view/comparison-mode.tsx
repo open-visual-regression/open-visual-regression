@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useState } from "react";
 
+import { useSnapshotPreferences } from "../../../../_components/snapshot-preferences/snapshot-preferences";
+
 export type ViewMode = "split" | "slider";
 
 type ComparisonMode = {
@@ -15,7 +17,7 @@ const ComparisonModeContext = createContext<ComparisonMode | null>(null);
 
 export const ComparisonModeProvider = ({ children }: { children: React.ReactNode }) => {
   const [viewMode, setViewMode] = useState<ViewMode>("split");
-  const [showDiff, setShowDiff] = useState(true);
+  const { showDiff, setShowDiff } = useSnapshotPreferences();
 
   return (
     <ComparisonModeContext.Provider value={{ viewMode, setViewMode, showDiff, setShowDiff }}>

@@ -6,6 +6,7 @@ import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { mockHandlers } from "@/lib/testing/mockHandlers";
 import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
 
+import { SnapshotPreferencesProvider } from "../../../../_components/snapshot-preferences/snapshot-preferences";
 import { SnapshotLayout } from "../SnapshotLayout";
 
 vi.mock("@/lib/router");
@@ -54,7 +55,9 @@ const renderComponent = (queryClient = createQueryClient()) =>
     </SnapshotLayout>,
     {
       wrapper: ({ children }) => (
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+        <QueryClientProvider client={queryClient}>
+          <SnapshotPreferencesProvider>{children}</SnapshotPreferencesProvider>
+        </QueryClientProvider>
       ),
     },
   );

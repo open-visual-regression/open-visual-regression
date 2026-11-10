@@ -1,13 +1,12 @@
 "use client";
 
-import { useState } from "react";
-
 import type { DiffSchema } from "@ovr/api/contracts/diffs";
 import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 
 import { useSnapshotHistoryPrefetch } from "@/lib/orpc/useSnapshotHistoryPrefetch";
 import { type SnapshotFilters } from "@/lib/utils/snapshotFilters";
 
+import { useSnapshotPreferences } from "../../../_components/snapshot-preferences/snapshot-preferences";
 import { SnapshotActionsRow } from "../snapshot-actions/SnapshotActionsRow";
 import { ComparisonModeProvider } from "../snapshot-comparison-section/comparison-view/comparison-mode";
 import { SnapshotSidebar } from "../snapshot-sidebar/SnapshotSidebar";
@@ -42,7 +41,8 @@ export const SnapshotLayout = ({
   sidebar,
   children,
 }: SnapshotLayoutProps) => {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const { sidebarOpen, setSidebarOpen } = useSnapshotPreferences();
+  const sidebarCollapsed = !sidebarOpen;
   const prefetchHistory = useSnapshotHistoryPrefetch(snapshot.id);
 
   const toggleSidebar = () => {
@@ -50,7 +50,7 @@ export const SnapshotLayout = ({
       prefetchHistory();
     }
 
-    setSidebarCollapsed((collapsed) => !collapsed);
+    setSidebarOpen(sidebarCollapsed);
   };
 
   return (

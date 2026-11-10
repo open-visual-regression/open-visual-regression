@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { describe, expect, it, render, screen, within } from "@/test-utils";
 
+import { SnapshotPreferencesProvider } from "../../../../../_components/snapshot-preferences/snapshot-preferences";
 import { ComparisonModeProvider } from "../comparison-mode";
 import { ComparisonControls } from "../ComparisonControls";
 import { ComparisonView, type ComparisonViewProps } from "../ComparisonView";
@@ -20,10 +21,12 @@ const props: ComparisonViewProps = {
 const renderComparison = (overrides: Partial<typeof props> = {}) =>
   render(
     <QueryClientProvider client={new QueryClient()}>
-      <ComparisonModeProvider>
-        <ComparisonControls />
-        <ComparisonView {...props} {...overrides} />
-      </ComparisonModeProvider>
+      <SnapshotPreferencesProvider>
+        <ComparisonModeProvider>
+          <ComparisonControls />
+          <ComparisonView {...props} {...overrides} />
+        </ComparisonModeProvider>
+      </SnapshotPreferencesProvider>
     </QueryClientProvider>,
   );
 
