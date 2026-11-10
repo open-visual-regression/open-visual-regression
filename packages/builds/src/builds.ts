@@ -201,8 +201,8 @@ const isRetryOfPendingUpload = async (
 };
 
 // Only a successful main-branch build of the same project can be a branch build's base.
-// Anything else is ignored rather than failing the upload, so the build is compared
-// against the latest baselines as it was before merge bases were sent.
+// Anything else is ignored rather than failing the upload, and the build is compared
+// against the latest baselines instead.
 const resolveBaseBuildId = async (
   project: { id: string; gitMainBranch: string },
   input: Pick<CreateBuildInput, "baseBuildId" | "branch">,

@@ -26,7 +26,7 @@ test("a finished snapshot can be rebuilt while the rest of its build is still ru
   await expect.poll(findBuild, { timeout: 60_000, intervals: [500] }).not.toBeNull();
   const buildId = (await findBuild())!.id;
 
-  // Wait for the moment the issue describes: some snapshots done, others still in flight.
+  // Wait until some snapshots are done while others are still in flight.
   let finished: { id: string } | undefined;
   let inFlight: { id: string } | undefined;
   await expect
