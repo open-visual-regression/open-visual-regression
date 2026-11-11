@@ -12,6 +12,7 @@ import { auth } from "@/lib/auth/auth";
 import type { User } from "@/lib/auth/auth";
 import { serverClient } from "@/lib/router";
 import { test, describe, expect } from "@/lib/testing/fixtures";
+import { asBearer } from "@/lib/testing/headers";
 
 vi.mock("next/headers");
 
@@ -31,10 +32,6 @@ const signUp = async (): Promise<User> => {
     body: { name: "Other Reviewer", email, password: TEST_PASSWORD, role: "reviewer" },
   });
   return user;
-};
-
-const asBearer = (token: string) => {
-  vi.mocked(headers).mockResolvedValue(new Headers({ authorization: `Bearer ${token}` }));
 };
 
 const TEST_PROJECT: AddProjectInputSchema = {

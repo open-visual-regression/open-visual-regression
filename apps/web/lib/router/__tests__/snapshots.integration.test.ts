@@ -13,6 +13,7 @@ import { storage } from "@ovr/storage";
 import type { User } from "@/lib/auth/auth";
 import { serverClient } from "@/lib/router";
 import { test, describe, expect } from "@/lib/testing/fixtures";
+import { asBearer } from "@/lib/testing/headers";
 
 vi.mock("next/headers");
 
@@ -20,10 +21,6 @@ const TEST_PROJECT: AddProjectInputSchema = {
   projectName: "Test Project",
   projectDescription: "A test project",
   gitMainBranch: "main",
-};
-
-const asBearer = (token: string) => {
-  vi.mocked(headers).mockResolvedValue(new Headers({ authorization: `Bearer ${token}` }));
 };
 
 const VIEWPORT = {

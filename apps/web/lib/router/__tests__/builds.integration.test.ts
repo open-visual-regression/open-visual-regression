@@ -12,6 +12,7 @@ import { storage } from "@ovr/storage";
 
 import { serverClient } from "@/lib/router";
 import { test, describe, expect } from "@/lib/testing/fixtures";
+import { asBearer } from "@/lib/testing/headers";
 
 vi.mock("next/headers");
 vi.mock("@ovr/queue/producer", async (importOriginal) => {
@@ -32,10 +33,6 @@ const VIEWPORTS = [{ name: "desktop", browser: "chromium" as const, viewportWidt
 
 const setApiKeyHeader = (key?: string) => {
   vi.mocked(headers).mockResolvedValue(new Headers(key ? { authorization: `Bearer ${key}` } : {}));
-};
-
-const asBearer = (token: string) => {
-  vi.mocked(headers).mockResolvedValue(new Headers({ authorization: `Bearer ${token}` }));
 };
 
 const createProjectWithApiKey = async () => {

@@ -7,6 +7,7 @@ import { personalTokenMetadata } from "@ovr/db/repository/accessTokens";
 import { auth } from "@/lib/auth/auth";
 import { serverClient } from "@/lib/router";
 import { test, describe, expect } from "@/lib/testing/fixtures";
+import { asBearer } from "@/lib/testing/headers";
 
 vi.mock("next/headers");
 
@@ -14,10 +15,6 @@ const TEST_PROJECT = {
   projectName: "Test Project",
   projectDescription: "A test project",
   gitMainBranch: "main",
-};
-
-const asBearer = (token: string) => {
-  vi.mocked(headers).mockResolvedValue(new Headers({ authorization: `Bearer ${token}` }));
 };
 
 const withProxyBearer = async (token: string) => {
