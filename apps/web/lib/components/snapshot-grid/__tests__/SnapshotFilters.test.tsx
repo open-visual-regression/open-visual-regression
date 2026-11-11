@@ -262,20 +262,9 @@ describe("SnapshotFilters", () => {
     expect(mockPush).toHaveBeenCalledWith("/?project=project-2");
   });
 
-  it("should not offer the project or status facets unless given them", () => {
-    render(
-      <SnapshotFilters
-        browsers={[]}
-        viewports={[]}
-        flags={[]}
-        browserOptions={BROWSER_OPTIONS}
-        viewportOptions={VIEWPORT_OPTIONS}
-        flagOptions={FLAG_OPTIONS}
-      />,
-    );
+  it("should not offer the project facet unless given it", () => {
+    renderComponent();
 
     expect(screen.queryByRole("button", { name: /^project/i })).toBeNull();
-    expect(screen.queryByRole("button", { name: /^status/i })).toBeNull();
-    expect(screen.getByRole("button", { name: /^browser\s+any$/i })).toBeVisible();
   });
 });

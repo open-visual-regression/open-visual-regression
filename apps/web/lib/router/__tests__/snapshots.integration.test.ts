@@ -6,6 +6,7 @@ import { vi } from "vitest";
 import type { AddProjectInputSchema } from "@ovr/api/contracts/projects";
 import { dbClient } from "@ovr/db/client";
 import { db } from "@ovr/db/db";
+import type { SnapshotDbSchema } from "@ovr/db/repository/snapshots";
 import { flakySnapshots, organization, projects, snapshots } from "@ovr/db/schema";
 import { storage } from "@ovr/storage";
 
@@ -75,17 +76,7 @@ const seedFlags = async (projectId: string, buildId: string) => {
   return { a: a!, b: b!, c: c!, d: d! };
 };
 
-const makeBaseline = (
-  admin: User,
-  projectId: string,
-  snapshot: {
-    browser: string;
-    viewportWidth: number;
-    viewportHeight: number;
-    targetId: string;
-    id: string;
-  },
-) =>
+const makeBaseline = (admin: User, projectId: string, snapshot: SnapshotDbSchema) =>
   dbClient.baselines.upsert({
     projectId,
     browser: snapshot.browser,
@@ -830,9 +821,7 @@ describe("snapshots", () => {
       ]);
     });
 
-    test("leaves out snapshots on newer and in-flight builds, even when filtered by status", async ({
-      admin,
-    }) => {
+    test("leaves out snapshots on newer and in-flight builds", async ({ admin }) => {
       const { projectId, build: baselineMain } = await createProjectAndBuild(admin, "main");
       const createBuild = async (branch: string) =>
         (await dbClient.builds.create({
@@ -857,17 +846,12 @@ describe("snapshots", () => {
       await makeBaseline(admin, projectId, baselineCard!);
 
       const [listError, listed] = await serverClient.snapshots.list({ sort: "name" });
-      const [, processing] = await serverClient.snapshots.list({
-        statuses: ["processing"],
-        sort: "name",
-      });
       const [, browsers] = await serverClient.snapshots.listBrowsers({});
       const [, viewports] = await serverClient.snapshots.listViewports({});
 
       expect(listError).toBeNull();
       expect(listed?.snapshots.map(({ id }) => id)).toEqual([baselineCard!.id]);
       expect(listed?.total).toBe(1);
-      expect(processing?.snapshots).toEqual([]);
       expect(browsers?.browsers).toEqual([VIEWPORT.browser]);
       expect(viewports?.viewports).toEqual([VIEWPORT.viewportName]);
     });

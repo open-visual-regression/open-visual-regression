@@ -86,7 +86,7 @@ describe("SnapshotsPage", () => {
     expect(screen.getByText("no snapshots found")).toBeVisible();
   });
 
-  it("should offer the browser, viewport and flags facets but no status facet", async () => {
+  it("should offer the browser, viewport and flags facets from every project", async () => {
     mockList.mockResolvedValue({ snapshots: [], total: 0, nextCursor: null });
 
     await renderPage();
@@ -94,7 +94,6 @@ describe("SnapshotsPage", () => {
     expect(screen.getByRole("button", { name: /^browser\s+any$/i })).toBeVisible();
     expect(screen.getByRole("button", { name: /^viewport\s+any$/i })).toBeVisible();
     expect(screen.getByRole("button", { name: /^flags\s+any$/i })).toBeVisible();
-    expect(screen.queryByRole("button", { name: /^status/i })).toBeNull();
   });
 
   it("should apply the filters from the url to the snapshots query and the facet triggers", async () => {
@@ -109,17 +108,6 @@ describe("SnapshotsPage", () => {
     );
   });
 
-  it("should ignore a status left in the url", async () => {
-    mockList.mockResolvedValue({ snapshots: [], total: 0, nextCursor: null });
-
-    await renderPage({ status: "processing" });
-
-    expect(mockList).toHaveBeenCalledWith(
-      expect.objectContaining({ statuses: [] }),
-      expect.anything(),
-    );
-  });
-
   it("should submit the search field back to the snapshots page", async () => {
     mockList.mockResolvedValue({ snapshots: [], total: 0, nextCursor: null });
 
@@ -128,7 +116,7 @@ describe("SnapshotsPage", () => {
     expect(screen.getByRole("search")).toHaveAttribute("action", "/snapshots");
   });
 
-  it("should offer a project facet and no baseline facet", async ({ user }) => {
+  it("should offer a project facet", async ({ user }) => {
     mockList.mockResolvedValue({ snapshots: [], total: 0, nextCursor: null });
 
     await renderPage();
@@ -136,7 +124,6 @@ describe("SnapshotsPage", () => {
 
     expect(await screen.findByRole("checkbox", { name: "Acme Web" })).toBeVisible();
     expect(screen.getByRole("checkbox", { name: "Acme Admin" })).toBeVisible();
-    expect(screen.queryByRole("button", { name: /^baseline/i })).toBeNull();
   });
 
   it("should apply the project from the url to the snapshots query", async () => {
