@@ -22,8 +22,7 @@ ARG PNPM_VERSION
 ENV HUSKY=0 \
     CI=1
 WORKDIR /app
-RUN corepack enable && \
-    corepack prepare pnpm@${PNPM_VERSION} --activate && \
+RUN npm install -g pnpm@${PNPM_VERSION} && \
     apt-get update && \
     apt-get install -y --no-install-recommends python3 make g++ ca-certificates && \
     rm -rf /var/lib/apt/lists/*
