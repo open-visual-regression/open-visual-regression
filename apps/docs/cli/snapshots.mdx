@@ -1,6 +1,6 @@
 ---
 title: ovr snapshots
-description: List a build's snapshots and count them by status.
+description: List a build's snapshots, count them by status, and rebuild some of them.
 ---
 
 Authenticates with a [personal access token](/cli/authentication) — a project API key is rejected.
@@ -139,3 +139,31 @@ SNAPSHOT                              BUILD                                 COMM
 
 Screenshot changed 2 times across the last 3 builds on main (3 distinct images).
 ```
+
+## `ovr snapshots rebuild`
+
+```sh
+ovr snapshots rebuild <buildId> <snapshotId...>
+ovr snapshots rebuild <buildId> --status error
+```
+
+| Flag | Description |
+|------|-------------|
+| `--server-url <url>` | OVR server URL (defaults to `ovr.config`'s `serverUrl`) |
+| `--status <status...>` | Rebuild snapshots with these statuses |
+| `--browser <name...>` | Rebuild snapshots captured in these browsers |
+| `--viewport <name...>` | Rebuild snapshots captured at these viewports |
+| `--flag <flag...>` | Rebuild snapshots with these flags |
+| `--search <text>` | Rebuild snapshots matching this text |
+| `-c, --config <path>` | Path to `ovr.config` file |
+| `--json` | Print the build and rebuilt snapshot IDs as JSON |
+
+Captures some of a build's snapshots again, in the same build. Pass the snapshot IDs, or use the same filters as
+[`ovr snapshots list`](#ovr-snapshots-list) to choose them, but not both. To rebuild every snapshot, use
+[`ovr builds rebuild`](/cli/builds#ovr-builds-rebuild).
+
+When filters choose the snapshots, ones that are still queued or processing, or whose story is skipped, are left out
+and counted in the output. A snapshot ID you pass yourself is never left out: if it can't be rebuilt, the command fails.
+
+Needs an access token with the [cancel and rebuild builds](/cli/authentication#access-token-permissions) permission,
+owned by someone who isn't a viewer.
