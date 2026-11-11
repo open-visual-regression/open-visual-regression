@@ -158,7 +158,7 @@ export type SnapshotSort = z.infer<typeof snapshotSortSchema>;
 
 export const listInputSchema = snapshotFiltersSchema.extend({
   buildId: z.uuidv7().optional().meta({
-    description: "Only this build's snapshots. Without it, each project's latest main build",
+    description: "Only this build's snapshots. Without it, each project's current baselines",
   }),
   projectIds: z
     .array(z.uuidv7())
@@ -166,7 +166,7 @@ export const listInputSchema = snapshotFiltersSchema.extend({
     .meta({ description: "Only these projects' snapshots" }),
   baseline: z.boolean().optional().meta({
     description:
-      "Only snapshots that are their project's current baseline for their target, browser and viewport",
+      "Only snapshots that are their project's current baseline for their target, browser and viewport. Always true without a buildId",
   }),
   sort: snapshotSortSchema.default("status"),
   limit: z.number().int().min(1).max(100).default(24),
@@ -221,7 +221,7 @@ export const getAdjacentContract = oc.input(getAdjacentInputSchema).output(getAd
 
 export const listSnapshotFilterOptionsInputSchema = z.object({
   buildId: z.uuidv7().optional().meta({
-    description: "Only this build's snapshots. Without it, each project's latest main build",
+    description: "Only this build's snapshots. Without it, each project's current baselines",
   }),
 });
 

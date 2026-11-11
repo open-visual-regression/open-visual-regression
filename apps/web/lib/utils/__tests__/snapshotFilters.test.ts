@@ -13,7 +13,6 @@ describe("snapshotFilters", () => {
           viewport: ["desktop", "mobile"],
           flag: ["flaky", "warning"],
           project: "018f0000-0000-7000-8000-000000000001",
-          baseline: "true",
         }),
       ).toEqual({
         search: "button",
@@ -22,7 +21,6 @@ describe("snapshotFilters", () => {
         viewports: ["desktop", "mobile"],
         flags: ["flaky", "warning"],
         projectIds: ["018f0000-0000-7000-8000-000000000001"],
-        baseline: true,
       });
     });
 
@@ -34,7 +32,6 @@ describe("snapshotFilters", () => {
         viewports: [],
         flags: [],
         projectIds: [],
-        baseline: false,
       });
     });
 

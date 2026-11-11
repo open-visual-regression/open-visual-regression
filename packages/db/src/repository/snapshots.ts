@@ -13,7 +13,7 @@ import {
   type SQL,
   sql,
 } from "drizzle-orm";
-import { alias, union, unionAll } from "drizzle-orm/pg-core";
+import { alias } from "drizzle-orm/pg-core";
 
 import { db, type DbClient } from "../db";
 import {
@@ -271,7 +271,6 @@ const flagDisplayOrder: SnapshotFlag[] = ["flaky", "warning"];
 export type ListFilters = {
   organizationId?: string;
   buildId?: string;
-  latestMainBuild?: boolean;
   projectIds?: string[];
   baseline?: boolean;
   statuses?: SnapshotDisplayStatus[];
@@ -282,95 +281,26 @@ export type ListFilters = {
 };
 
 const scopedProjects = alias(projects, "scoped_projects");
-const latestMainBuilds = alias(builds, "latest_main_builds");
 
-type BuildScope = Pick<ListFilters, "organizationId" | "projectIds">;
+type BaselineScope = Pick<ListFilters, "organizationId" | "projectIds">;
 
-const inScopedProjects = ({ organizationId, projectIds }: BuildScope) =>
-  and(
-    organizationId ? eq(scopedProjects.organizationId, organizationId) : undefined,
-    projectIds?.length ? inArray(scopedProjects.id, projectIds) : undefined,
-  );
-
-const baselineSnapshotIds = (scope: BuildScope) =>
+const baselineSnapshotIds = ({ organizationId, projectIds }: BaselineScope) =>
   db
     .select({ id: baselines.snapshotId })
     .from(baselines)
     .innerJoin(scopedProjects, eq(scopedProjects.id, baselines.projectId))
-    .where(inScopedProjects(scope));
-
-const isBaseline = (scope: BuildScope) => inArray(snapshots.id, baselineSnapshotIds(scope));
-
-const latestMainBuildIds = (scope: BuildScope) => {
-  const latestMainBuild = db
-    .select({ id: latestMainBuilds.id })
-    .from(latestMainBuilds)
     .where(
       and(
-        eq(latestMainBuilds.projectId, scopedProjects.id),
-        eq(latestMainBuilds.branch, scopedProjects.gitMainBranch),
-        ne(latestMainBuilds.processingStatus, "canceled"),
+        organizationId ? eq(scopedProjects.organizationId, organizationId) : undefined,
+        projectIds?.length ? inArray(scopedProjects.id, projectIds) : undefined,
       ),
-    )
-    .orderBy(desc(latestMainBuilds.createdAt), desc(latestMainBuilds.id))
-    .limit(1)
-    .as("latest_main_build");
+    );
 
-  return db
-    .select({ id: latestMainBuild.id })
-    .from(scopedProjects)
-    .crossJoinLateral(latestMainBuild)
-    .where(inScopedProjects(scope));
-};
-
-const isOnLatestMainBuild = (scope: BuildScope) =>
-  inArray(snapshots.buildId, latestMainBuildIds(scope));
-
-const inFlightStatuses: SnapshotDisplayStatus[] = ["queued", "processing"];
-
-const isInFlight = inArray(displayStatusExpr, inFlightStatuses);
-
-const isInFlightOnly = (statuses?: SnapshotDisplayStatus[]) =>
-  !!statuses?.length && statuses.every((status) => inFlightStatuses.includes(status));
-
-const inProgressBuilds = alias(builds, "in_progress_builds");
-const inProgressBuildSnapshots = alias(snapshots, "in_progress_build_snapshots");
-const unfinishedSnapshots = alias(snapshots, "unfinished_snapshots");
-const pendingDiffs = alias(diffs, "pending_diffs");
-
-// Snapshots that can display as queued or processing, each found through a partial index.
-// A snapshot with no diff counts only while its build is running.
-const isInFlightCandidate = inArray(
-  snapshots.id,
-  unionAll(
-    db
-      .select({ id: inProgressBuildSnapshots.id })
-      .from(inProgressBuilds)
-      .innerJoin(
-        inProgressBuildSnapshots,
-        eq(inProgressBuildSnapshots.buildId, inProgressBuilds.id),
-      )
-      .where(inArray(inProgressBuilds.processingStatus, ["queued", "processing"])),
-    db
-      .select({ id: unfinishedSnapshots.id })
-      .from(unfinishedSnapshots)
-      .where(inArray(unfinishedSnapshots.status, ["queued", "processing"])),
-    db
-      .select({ id: pendingDiffs.snapshotId })
-      .from(pendingDiffs)
-      .where(eq(pendingDiffs.processingStatus, "pending")),
-  ),
-);
-
-type LatestMainBuildFilters = Pick<ListFilters, "organizationId" | "projectIds" | "statuses">;
-
-const latestMainBuildWhere = ({ statuses, ...scope }: LatestMainBuildFilters) =>
-  isInFlightOnly(statuses) ? isInFlightCandidate : isOnLatestMainBuild(scope);
+const isBaseline = (scope: BaselineScope) => inArray(snapshots.id, baselineSnapshotIds(scope));
 
 const listWhere = ({
   organizationId,
   buildId,
-  latestMainBuild,
   projectIds,
   baseline,
   statuses,
@@ -382,7 +312,6 @@ const listWhere = ({
   and(
     organizationId ? eq(projects.organizationId, organizationId) : undefined,
     buildId ? eq(snapshots.buildId, buildId) : undefined,
-    latestMainBuild ? latestMainBuildWhere({ organizationId, projectIds, statuses }) : undefined,
     projectIds?.length ? inArray(builds.projectId, projectIds) : undefined,
     baseline ? isBaseline({ organizationId, projectIds }) : undefined,
     statuses?.length ? inArray(displayStatusExpr, statuses) : undefined,
@@ -394,26 +323,16 @@ const listWhere = ({
       : undefined,
   );
 
-export type SnapshotScope = Pick<ListFilters, "organizationId" | "buildId" | "latestMainBuild">;
+export type SnapshotScope = Pick<ListFilters, "organizationId" | "buildId" | "baseline">;
 
 export const findStatuses = async (scope: SnapshotScope): Promise<SnapshotDisplayStatus[]> => {
-  const { latestMainBuild, ...rest } = scope;
-  const findDistinct = (where: SQL | undefined) =>
-    db
-      .selectDistinct({ status: displayStatusExpr })
-      .from(snapshots)
-      .innerJoin(builds, eq(builds.id, snapshots.buildId))
-      .innerJoin(projects, eq(projects.id, builds.projectId))
-      .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
-      .where(where);
-
-  // A union rather than an OR, since an OR over the computed status can't use an index.
-  const rows = await (latestMainBuild
-    ? union(
-        findDistinct(listWhere({ ...rest, latestMainBuild })),
-        findDistinct(and(listWhere(rest), isInFlightCandidate, isInFlight)),
-      )
-    : findDistinct(listWhere(rest)));
+  const rows = await db
+    .selectDistinct({ status: displayStatusExpr })
+    .from(snapshots)
+    .innerJoin(builds, eq(builds.id, snapshots.buildId))
+    .innerJoin(projects, eq(projects.id, builds.projectId))
+    .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
+    .where(listWhere(scope));
 
   const present = new Set(rows.map((row) => row.status));
   return statusDisplayOrder.filter((status) => present.has(status));
@@ -568,10 +487,7 @@ const sortKeyOrder = (alias: string, direction: "asc" | "desc") =>
 export const findAdjacentIds = async (
   buildId: string,
   snapshotId: string,
-  filters: Omit<
-    ListFilters,
-    "organizationId" | "buildId" | "latestMainBuild" | "projectIds" | "baseline"
-  > = {},
+  filters: Omit<ListFilters, "organizationId" | "buildId" | "projectIds" | "baseline"> = {},
 ): Promise<AdjacentSnapshotIds> => {
   const { rows } = await db.execute<{
     prev_id: string | null;
