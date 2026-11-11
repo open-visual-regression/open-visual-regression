@@ -1,6 +1,6 @@
 import type { ListReviewsOutputSchema } from "@ovr/api/contracts/diffs";
 import { SnapshotSchema } from "@ovr/api/contracts/snapshots";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@ovr/ui/components/tabs";
+import { Tabs, TabsContent } from "@ovr/ui/components/tabs";
 
 import { getCachedSession } from "@/lib/auth/session";
 
@@ -8,6 +8,7 @@ import { SnapshotHistoryTabTrigger } from "./SnapshotHistoryTabTrigger";
 import { SnapshotReviews } from "./SnapshotReviews";
 import { SnapshotSidebarHistoryContent } from "./SnapshotSidebarHistoryContent";
 import { SnapshotSidebarLogsContent } from "./SnapshotSidebarLogsContent";
+import { SnapshotSidebarTabsList } from "./SnapshotSidebarTabsList";
 
 type SnapshotSidebarContentProps = {
   projectId: string;
@@ -26,15 +27,9 @@ export const SnapshotSidebarContent = async ({
 
   return (
     <Tabs defaultValue="reviews" className="gap-0">
-      <TabsList variant="line">
-        <TabsTrigger className="px-5" value="reviews">
-          Reviews
-        </TabsTrigger>
-        <TabsTrigger className="px-5" value="logs">
-          Logs
-        </TabsTrigger>
-        <SnapshotHistoryTabTrigger snapshotId={snapshot.id} />
-      </TabsList>
+      <SnapshotSidebarTabsList
+        historyTrigger={<SnapshotHistoryTabTrigger snapshotId={snapshot.id} />}
+      />
       <TabsContent value="reviews" className="px-3 pt-3">
         <SnapshotReviews
           reviews={reviews.reviews}

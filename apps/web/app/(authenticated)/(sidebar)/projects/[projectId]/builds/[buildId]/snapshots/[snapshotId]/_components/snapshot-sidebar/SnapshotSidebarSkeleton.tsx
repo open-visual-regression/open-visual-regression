@@ -1,29 +1,30 @@
 "use client";
 
-import { Skeleton } from "@ovr/ui/components/skeleton";
+import { Tabs, TabsContent, TabsTrigger } from "@ovr/ui/components/tabs";
 
 import { useSnapshotPreferences } from "@/lib/providers/SnapshotPreferencesProvider";
 
+import { SnapshotReviewsSkeleton } from "./SnapshotReviews";
 import { SnapshotSidebar } from "./SnapshotSidebar";
+import { SnapshotSidebarTabsList } from "./SnapshotSidebarTabsList";
 
 export const SnapshotSidebarSkeleton = () => {
   const { sidebarOpen } = useSnapshotPreferences();
 
-  if (!sidebarOpen) {
-    return null;
-  }
-
   return (
-    <SnapshotSidebar collapsed={false}>
-      <div className="flex h-12 items-center gap-6 border-b border-border px-5">
-        <Skeleton className="h-4 w-14" />
-        <Skeleton className="h-4 w-10" />
-        <Skeleton className="h-4 w-12" />
-      </div>
-      <div className="flex flex-col gap-3 p-3">
-        <Skeleton className="h-16 rounded-card" />
-        <Skeleton className="h-16 rounded-card" />
-      </div>
+    <SnapshotSidebar collapsed={!sidebarOpen}>
+      <Tabs defaultValue="reviews" className="gap-0">
+        <SnapshotSidebarTabsList
+          historyTrigger={
+            <TabsTrigger className="px-5" value="history">
+              History
+            </TabsTrigger>
+          }
+        />
+        <TabsContent value="reviews" className="px-3 pt-3">
+          <SnapshotReviewsSkeleton />
+        </TabsContent>
+      </Tabs>
     </SnapshotSidebar>
   );
 };
