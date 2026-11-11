@@ -1,8 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
+import { SnapshotPreferencesProvider } from "@/lib/providers/SnapshotPreferencesProvider";
 import { describe, expect, it, render, screen } from "@/test-utils";
 
-import { SnapshotPreferencesProvider } from "../../../../_components/snapshot-preferences/snapshot-preferences";
 import { ComparisonModeProvider } from "../../snapshot-comparison-section/comparison-view/comparison-mode";
 import { SnapshotZoomDialog, type SnapshotZoomDialogProps } from "../SnapshotZoomDialog";
 import { SnapshotZoomTrigger } from "../SnapshotZoomTrigger";
@@ -21,7 +21,7 @@ const props: Omit<SnapshotZoomDialogProps, "children"> = {
 const renderDialog = (overrides: Partial<typeof props> = {}) =>
   render(
     <QueryClientProvider client={new QueryClient()}>
-      <SnapshotPreferencesProvider>
+      <SnapshotPreferencesProvider initialPreferences={{ sidebarOpen: false, showDiff: true }}>
         <ComparisonModeProvider>
           <SnapshotZoomDialog {...props} {...overrides}>
             <SnapshotZoomTrigger view="baseline" />

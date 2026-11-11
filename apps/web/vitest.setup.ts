@@ -23,9 +23,6 @@ afterEach(() => {
   resetIntersectionMocking();
   toast.dismissAll();
   server.resetHandlers();
-  for (const cookie of document.cookie.split("; ").filter(Boolean)) {
-    document.cookie = `${cookie.split("=")[0]}=; path=/; max-age=0`;
-  }
 });
 
 afterAll(() => {

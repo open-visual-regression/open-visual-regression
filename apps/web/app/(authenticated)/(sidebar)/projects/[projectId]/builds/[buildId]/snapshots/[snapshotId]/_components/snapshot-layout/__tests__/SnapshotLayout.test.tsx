@@ -3,10 +3,10 @@ import { vi } from "vitest";
 
 import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 
+import { SnapshotPreferencesProvider } from "@/lib/providers/SnapshotPreferencesProvider";
 import { mockHandlers } from "@/lib/testing/mockHandlers";
 import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
 
-import { SnapshotPreferencesProvider } from "../../../../_components/snapshot-preferences/snapshot-preferences";
 import { SnapshotLayout } from "../SnapshotLayout";
 
 vi.mock("@/lib/router");
@@ -37,7 +37,7 @@ const snapshot: SnapshotSchema = {
 const createQueryClient = () =>
   new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
 
-const renderComponent = (queryClient = createQueryClient()) =>
+const renderComponent = (queryClient = createQueryClient(), sidebarOpen = false) =>
   render(
     <SnapshotLayout
       snapshot={snapshot}
@@ -56,7 +56,9 @@ const renderComponent = (queryClient = createQueryClient()) =>
     {
       wrapper: ({ children }) => (
         <QueryClientProvider client={queryClient}>
-          <SnapshotPreferencesProvider>{children}</SnapshotPreferencesProvider>
+          <SnapshotPreferencesProvider initialPreferences={{ sidebarOpen, showDiff: true }}>
+            {children}
+          </SnapshotPreferencesProvider>
         </QueryClientProvider>
       ),
     },
@@ -67,6 +69,13 @@ describe("SnapshotLayout", () => {
     renderComponent();
 
     expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
+  });
+
+  it("should show the sidebar when it was left open", () => {
+    renderComponent(createQueryClient(), true);
+
+    expect(screen.getByRole("complementary")).toHaveTextContent("sidebar contents");
+    expect(screen.getByRole("button", { name: /collapse sidebar/i })).toBeVisible();
   });
 
   it("should open the sidebar when the expand toggle is clicked", async ({ user }) => {

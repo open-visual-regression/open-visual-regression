@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState } from "react";
 
-import { useSnapshotPreferences } from "../../../../_components/snapshot-preferences/snapshot-preferences";
+import { useSnapshotPreferences } from "@/lib/providers/SnapshotPreferencesProvider";
 
 export type ViewMode = "split" | "slider";
 

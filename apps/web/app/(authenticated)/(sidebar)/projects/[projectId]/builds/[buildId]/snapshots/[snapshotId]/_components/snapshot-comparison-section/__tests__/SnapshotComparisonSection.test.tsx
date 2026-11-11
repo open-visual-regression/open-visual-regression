@@ -3,9 +3,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { DiffSchema } from "@ovr/api/contracts/diffs";
 import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 
+import { SnapshotPreferencesProvider } from "@/lib/providers/SnapshotPreferencesProvider";
 import { describe, expect, it, render, screen } from "@/test-utils";
 
-import { SnapshotPreferencesProvider } from "../../../../_components/snapshot-preferences/snapshot-preferences";
 import { ComparisonModeProvider } from "../comparison-view/comparison-mode";
 import { SnapshotComparisonSection } from "../SnapshotComparisonSection";
 
@@ -48,7 +48,7 @@ const renderSection = (
 ) =>
   render(
     <QueryClientProvider client={new QueryClient()}>
-      <SnapshotPreferencesProvider>
+      <SnapshotPreferencesProvider initialPreferences={{ sidebarOpen: false, showDiff: true }}>
         <ComparisonModeProvider>
           <SnapshotComparisonSection
             snapshot={snapshotInput}
