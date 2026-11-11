@@ -1,6 +1,6 @@
 import { Command } from "commander";
 
-import { createClient } from "../../client";
+import { createClient, type OvrClient } from "../../client";
 import { getApiKey, getServerUrl } from "../../config";
 import { formatCliError } from "../../errors";
 import { pollBuildStatus } from "../upload/poll";
@@ -12,6 +12,18 @@ type BuildsRebuildCommandOptions = {
   timeout: string;
   json?: boolean;
 };
+
+// getBuildStatus only accepts a project API key, so read the status from the build itself,
+// which an access token can read.
+export const readStatusFromBuild = (client: { builds: Pick<OvrClient["builds"], "getOne"> }) => ({
+  builds: {
+    getBuildStatus: async ({ buildId }: { buildId: string }) => {
+      const { build } = await client.builds.getOne({ buildId });
+
+      return { status: build.status, errorMessage: build.errorMessage ?? undefined };
+    },
+  },
+});
 
 export const formatRebuildOutput = (buildId: string, json: boolean | undefined): string =>
   json ? JSON.stringify({ buildId }, null, 2) : `Rebuilding as build ${buildId}`;
@@ -41,7 +53,7 @@ export const rebuildCommand = new Command("rebuild")
 
       console.error("Waiting for result...");
       await pollBuildStatus({
-        client,
+        client: readStatusFromBuild(client),
         buildId: newBuildId,
         timeoutSeconds: Number(options.timeout),
         onPoll: (status) => console.error(`  status: ${status}`),

@@ -4,7 +4,7 @@ const DEFAULT_POLL_INTERVAL_MS = 5_000;
 
 export class BuildNeedsReviewError extends Error {
   constructor(public readonly reviewUrl: string) {
-    super(`Build needs review: ${reviewUrl}`);
+    super(reviewUrl ? `Build needs review: ${reviewUrl}` : "Build needs review");
     this.name = "BuildNeedsReviewError";
   }
 }
