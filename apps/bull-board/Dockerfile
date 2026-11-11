@@ -3,7 +3,7 @@
 # Build from the repository root:
 #   docker build -f apps/bull-board/Dockerfile -t open-visual-regression/bull-board .
 
-ARG NODE_VERSION=24.22.1
+ARG NODE_VERSION=26.13.0
 # Keep in sync with the "turbo" devDependency in the root package.json.
 ARG TURBO_VERSION=2.10.8
 ARG PNPM_VERSION=11.9.0
@@ -20,8 +20,7 @@ ARG PNPM_VERSION
 ENV HUSKY=0 \
     CI=1
 WORKDIR /app
-RUN corepack enable && \
-    corepack prepare pnpm@${PNPM_VERSION} --activate && \
+RUN npm install -g pnpm@${PNPM_VERSION} && \
     apt-get update && \
     apt-get install -y --no-install-recommends python3 make g++ ca-certificates && \
     rm -rf /var/lib/apt/lists/*
