@@ -57,7 +57,7 @@ const throwOnError = (
 };
 
 export const castVote = os.diffs.castVote
-  .use(authenticatedMiddleware)
+  .use(callerMiddleware("reviews", "write"))
   .use(reviewerMiddleware)
   .use(organizationDiffMiddleware)
   .handler(async ({ input, context }) => {
@@ -88,7 +88,7 @@ export const removeVote = os.diffs.removeVote
   .actionable();
 
 export const bulkCastVote = os.diffs.bulkCastVote
-  .use(authenticatedMiddleware)
+  .use(callerMiddleware("reviews", "write"))
   .use(reviewerMiddleware)
   .use(organizationBuildMiddleware)
   .handler(async ({ input, context }) => {

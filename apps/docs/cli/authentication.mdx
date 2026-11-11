@@ -25,5 +25,6 @@ Every personal access token has `builds:read`, which lets it read builds. When y
 | Permission | Lets the token |
 |------------|----------------|
 | `builds:write` | Cancel a build, rebuild a build, and rebuild some of a build's snapshots |
+| `reviews:write` | Approve or reject a snapshot, or every snapshot in a build. Removing a vote is only possible in the web app |
 
-A token acts as you, so it can only do what your role allows: a viewer's token can't cancel or rebuild, whatever it was granted. Permissions are fixed when the token is created. To change them, create a new token and revoke the old one.
+A token acts as you, so it can only do what your role allows: a viewer's token can't cancel, rebuild, approve or reject, whatever it was granted. Permissions are fixed when the token is created. To change them, create a new token and revoke the old one.

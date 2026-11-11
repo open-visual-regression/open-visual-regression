@@ -181,6 +181,50 @@ describe("diffs", () => {
       expect(error?.code).toBe("FORBIDDEN");
     });
 
+    test("lets an access token that can review approve a diff", async ({ admin }) => {
+      const { build, captureConfiguration } = await createProjectAndBuild(admin, 1);
+      const diff = await createAwaitingDiff(build.id, captureConfiguration, "story-a");
+      const [, token] = await serverClient.accessTokens.create({
+        name: "ci",
+        permissions: { reviews: ["write"] },
+      });
+
+      asBearer(token!.token);
+
+      const [error] = await serverClient.diffs.castVote({ diffId: diff!.id, vote: "approve" });
+
+      expect(error).toBeNull();
+      expect(await dbClient.diffReviews.findByDiff(diff!.id)).toEqual([
+        expect.objectContaining({ reviewerId: admin.id, vote: "approve" }),
+      ]);
+    });
+
+    test("returns FORBIDDEN for an access token that cannot review", async ({ admin: _ }) => {
+      const [, token] = await serverClient.accessTokens.create({
+        name: "ci",
+        permissions: { builds: ["write"] },
+      });
+
+      asBearer(token!.token);
+
+      const [error] = await serverClient.diffs.castVote({ diffId: uuidv7(), vote: "approve" });
+
+      expect(error?.code).toBe("FORBIDDEN");
+    });
+
+    test("returns FORBIDDEN for a viewer's access token", async ({ viewer: _ }) => {
+      const [, token] = await serverClient.accessTokens.create({
+        name: "ci",
+        permissions: { reviews: ["write"] },
+      });
+
+      asBearer(token!.token);
+
+      const [error] = await serverClient.diffs.castVote({ diffId: uuidv7(), vote: "approve" });
+
+      expect(error?.code).toBe("FORBIDDEN");
+    });
+
     test("returns CONFLICT once a newer build lands on the branch", async ({ admin }) => {
       const { projectId, build, captureConfiguration } = await createProjectAndBuild(admin);
       const diff = await createAwaitingDiff(build.id, captureConfiguration, "story-a");
@@ -302,6 +346,25 @@ describe("diffs", () => {
 
       expect(error?.code).toBe("FORBIDDEN");
     });
+
+    test("returns UNAUTHORIZED for an access token, even one that can review", async ({
+      admin,
+    }) => {
+      const { build, captureConfiguration } = await createProjectAndBuild(admin, 1);
+      const diff = await createAwaitingDiff(build.id, captureConfiguration, "story-a");
+      await serverClient.diffs.castVote({ diffId: diff!.id, vote: "reject" });
+      const [, token] = await serverClient.accessTokens.create({
+        name: "ci",
+        permissions: { reviews: ["write"] },
+      });
+
+      asBearer(token!.token);
+
+      const [error] = await serverClient.diffs.removeVote({ diffId: diff!.id });
+
+      expect(error?.code).toBe("UNAUTHORIZED");
+      expect(await dbClient.diffReviews.findByDiff(diff!.id)).toHaveLength(1);
+    });
   });
 
   describe("bulkCastVote", () => {
@@ -336,6 +399,47 @@ describe("diffs", () => {
     });
 
     test("returns FORBIDDEN for a viewer", async ({ viewer: _ }) => {
+      const [error] = await serverClient.diffs.bulkCastVote({ buildId: uuidv7(), vote: "approve" });
+
+      expect(error?.code).toBe("FORBIDDEN");
+    });
+
+    test("lets an access token that can review approve every diff in a build", async ({
+      admin,
+    }) => {
+      const { build, captureConfiguration } = await createProjectAndBuild(admin, 1);
+      const diff = await createAwaitingDiff(build.id, captureConfiguration, "story-a");
+      const [, token] = await serverClient.accessTokens.create({
+        name: "ci",
+        permissions: { reviews: ["write"] },
+      });
+
+      asBearer(token!.token);
+
+      const [error] = await serverClient.diffs.bulkCastVote({ buildId: build.id, vote: "approve" });
+
+      expect(error).toBeNull();
+      expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({ reviewStatus: "approved" });
+    });
+
+    test("returns FORBIDDEN for an access token that cannot review", async ({ admin: _ }) => {
+      const [, token] = await serverClient.accessTokens.create({ name: "cursor" });
+
+      asBearer(token!.token);
+
+      const [error] = await serverClient.diffs.bulkCastVote({ buildId: uuidv7(), vote: "approve" });
+
+      expect(error?.code).toBe("FORBIDDEN");
+    });
+
+    test("returns FORBIDDEN for a viewer's access token", async ({ viewer: _ }) => {
+      const [, token] = await serverClient.accessTokens.create({
+        name: "ci",
+        permissions: { reviews: ["write"] },
+      });
+
+      asBearer(token!.token);
+
       const [error] = await serverClient.diffs.bulkCastVote({ buildId: uuidv7(), vote: "approve" });
 
       expect(error?.code).toBe("FORBIDDEN");
