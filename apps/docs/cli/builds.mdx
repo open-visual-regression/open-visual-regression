@@ -1,6 +1,6 @@
 ---
 title: ovr builds
-description: List builds and inspect a single build's status.
+description: List builds, inspect a single build's status, and cancel or rebuild a build.
 ---
 
 Authenticates with a [personal access token](/cli/authentication) — a project API key is rejected.
@@ -67,3 +67,38 @@ ovr builds get <buildId>
 | `--json` | Print the build as JSON instead of formatted text |
 
 Prints the build's ID, status, branch, commit, project, name, author, and creation time, plus an error message or canceling user when relevant.
+
+## `ovr builds cancel`
+
+```sh
+ovr builds cancel <buildId>
+```
+
+| Flag | Description |
+|------|-------------|
+| `--server-url <url>` | OVR server URL (defaults to `ovr.config`'s `serverUrl`) |
+| `-c, --config <path>` | Path to `ovr.config` file |
+
+Cancels a queued or processing build. A build that has already finished can't be canceled.
+
+Needs an access token with the [cancel and rebuild builds](/cli/authentication#access-token-permissions) permission, owned by someone who isn't a viewer.
+
+## `ovr builds rebuild`
+
+```sh
+ovr builds rebuild <buildId> --wait
+```
+
+| Flag | Description |
+|------|-------------|
+| `--server-url <url>` | OVR server URL (defaults to `ovr.config`'s `serverUrl`) |
+| `--wait` | Wait for the new build to finish processing before exiting |
+| `--timeout <seconds>` | Maximum seconds to wait for the build result with `--wait` (default `600`) |
+| `-c, --config <path>` | Path to `ovr.config` file |
+| `--json` | Print the new build's ID as JSON |
+
+Captures a finished build again from the same Storybook, as a new build, and prints the new build's ID. Only the latest build on its branch can be rebuilt.
+
+With `--wait`, the command exits with code `1` unless the new build passes, the same as [`ovr upload storybook --wait`](/cli/upload-storybook). Progress is printed to stderr, so `--json` output stays parseable.
+
+Needs an access token with the [cancel and rebuild builds](/cli/authentication#access-token-permissions) permission, owned by someone who isn't a viewer.
