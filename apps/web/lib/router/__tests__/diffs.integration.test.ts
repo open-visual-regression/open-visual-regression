@@ -74,6 +74,38 @@ const createAwaitingDiff = async (buildId: string, viewport: typeof VIEWPORT, ta
   return dbClient.diffs.create({ snapshotId: snapshot!.id, reviewStatus: "needs_review" });
 };
 
+const createOtherOrganizationBuild = async (admin: User) => {
+  const [otherOrg] = await db
+    .insert(organization)
+    .values({
+      id: crypto.randomUUID(),
+      name: "Other Org",
+      slug: crypto.randomUUID(),
+      createdAt: new Date(),
+    })
+    .returning();
+
+  const [otherProject] = await db
+    .insert(projects)
+    .values({
+      name: "Other Org Project",
+      gitMainBranch: "main",
+      organizationId: otherOrg!.id,
+      creatorId: admin.id,
+    })
+    .returning();
+
+  const otherBuild = await dbClient.builds.create({
+    projectId: otherProject!.id,
+    branch: "main",
+    commitSha: "a".repeat(40),
+    artifactPath: "builds/other/artifact",
+    createdBy: admin.id,
+  });
+
+  return otherBuild!;
+};
+
 describe("diffs", () => {
   describe("castVote", () => {
     test("should return UNAUTHORIZED when no session cookie is provided", async () => {
@@ -134,6 +166,18 @@ describe("diffs", () => {
       expect(error?.code).toBe("NOT_FOUND");
     });
 
+    test("returns NOT_FOUND for a diff belonging to a different organization", async ({
+      admin,
+    }) => {
+      const otherBuild = await createOtherOrganizationBuild(admin);
+      const diff = await createAwaitingDiff(otherBuild.id, VIEWPORT, "story-a");
+
+      const [error] = await serverClient.diffs.castVote({ diffId: diff!.id, vote: "approve" });
+
+      expect(error?.code).toBe("NOT_FOUND");
+      expect(await dbClient.diffReviews.findByDiff(diff!.id)).toHaveLength(0);
+    });
+
     test("returns FORBIDDEN for a viewer", async ({ viewer: _ }) => {
       const [error] = await serverClient.diffs.castVote({ diffId: uuidv7(), vote: "approve" });
 
@@ -175,35 +219,8 @@ describe("diffs", () => {
     test("returns NOT_FOUND for a diff belonging to a different organization", async ({
       admin,
     }) => {
-      const [otherOrg] = await db
-        .insert(organization)
-        .values({
-          id: crypto.randomUUID(),
-          name: "Other Org",
-          slug: crypto.randomUUID(),
-          createdAt: new Date(),
-        })
-        .returning();
-
-      const [otherProject] = await db
-        .insert(projects)
-        .values({
-          name: "Other Org Project",
-          gitMainBranch: "main",
-          organizationId: otherOrg!.id,
-          creatorId: admin.id,
-        })
-        .returning();
-
-      const otherBuild = await dbClient.builds.create({
-        projectId: otherProject!.id,
-        branch: "main",
-        commitSha: "a".repeat(40),
-        artifactPath: "builds/other/artifact",
-        createdBy: admin.id,
-      });
-
-      const diff = await createAwaitingDiff(otherBuild!.id, VIEWPORT, "story-a");
+      const otherBuild = await createOtherOrganizationBuild(admin);
+      const diff = await createAwaitingDiff(otherBuild.id, VIEWPORT, "story-a");
 
       const [error] = await serverClient.diffs.removeVote({ diffId: diff!.id });
 
@@ -327,6 +344,27 @@ describe("diffs", () => {
       expect(error?.code).toBe("FORBIDDEN");
     });
 
+    test("returns NOT_FOUND for a missing build id", async ({ admin: _ }) => {
+      const [error] = await serverClient.diffs.bulkCastVote({ buildId: uuidv7(), vote: "approve" });
+
+      expect(error?.code).toBe("NOT_FOUND");
+    });
+
+    test("returns NOT_FOUND for a build belonging to a different organization", async ({
+      admin,
+    }) => {
+      const otherBuild = await createOtherOrganizationBuild(admin);
+      const diff = await createAwaitingDiff(otherBuild.id, VIEWPORT, "story-a");
+
+      const [error] = await serverClient.diffs.bulkCastVote({
+        buildId: otherBuild.id,
+        vote: "approve",
+      });
+
+      expect(error?.code).toBe("NOT_FOUND");
+      expect(await dbClient.diffReviews.findByDiff(diff!.id)).toHaveLength(0);
+    });
+
     test("returns CONFLICT while the build is still running", async ({ admin }) => {
       const { build, captureConfiguration } = await createProjectAndBuild(admin);
       await dbClient.builds.updateProcessingStatus(build.id, "processing");
@@ -368,35 +406,8 @@ describe("diffs", () => {
     test("returns NOT_FOUND for a snapshot belonging to a different organization", async ({
       admin,
     }) => {
-      const [otherOrg] = await db
-        .insert(organization)
-        .values({
-          id: crypto.randomUUID(),
-          name: "Other Org",
-          slug: crypto.randomUUID(),
-          createdAt: new Date(),
-        })
-        .returning();
-
-      const [otherProject] = await db
-        .insert(projects)
-        .values({
-          name: "Other Org Project",
-          gitMainBranch: "main",
-          organizationId: otherOrg!.id,
-          creatorId: admin.id,
-        })
-        .returning();
-
-      const otherBuild = await dbClient.builds.create({
-        projectId: otherProject!.id,
-        branch: "main",
-        commitSha: "a".repeat(40),
-        artifactPath: "builds/other/artifact",
-        createdBy: admin.id,
-      });
-
-      const diff = await createAwaitingDiff(otherBuild!.id, VIEWPORT, "story-a");
+      const otherBuild = await createOtherOrganizationBuild(admin);
+      const diff = await createAwaitingDiff(otherBuild.id, VIEWPORT, "story-a");
 
       const [error] = await serverClient.diffs.getOne({ snapshotId: diff!.snapshotId });
 

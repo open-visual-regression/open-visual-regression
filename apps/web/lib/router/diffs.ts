@@ -16,6 +16,7 @@ import type {
 import {
   authenticatedMiddleware,
   callerMiddleware,
+  organizationBuildMiddleware,
   organizationDiffMiddleware,
   organizationSnapshotMiddleware,
   reviewerMiddleware,
@@ -58,6 +59,7 @@ const throwOnError = (
 export const castVote = os.diffs.castVote
   .use(authenticatedMiddleware)
   .use(reviewerMiddleware)
+  .use(organizationDiffMiddleware)
   .handler(async ({ input, context }) => {
     const result = await castVoteService(input.diffId, context.user.id, input.vote);
 
@@ -88,6 +90,7 @@ export const removeVote = os.diffs.removeVote
 export const bulkCastVote = os.diffs.bulkCastVote
   .use(authenticatedMiddleware)
   .use(reviewerMiddleware)
+  .use(organizationBuildMiddleware)
   .handler(async ({ input, context }) => {
     const result = await bulkCastVoteService(input.buildId, context.user.id, input.vote);
 
