@@ -5,7 +5,9 @@ import { mocks } from "@ovr/mocks";
 
 import { orpc } from "@/lib/orpc/client";
 import { snapshotHistoryInfiniteOptions } from "@/lib/orpc/snapshots-query";
-import { describe, expect, it, render, screen } from "@/test-utils";
+import { SnapshotPreferencesProvider } from "@/lib/providers/SnapshotPreferencesProvider";
+import { mockHandlers } from "@/lib/testing/mockHandlers";
+import { describe, expect, it, render, screen, waitFor } from "@/test-utils";
 
 import { SnapshotSidebarHistoryContent } from "../SnapshotSidebarHistoryContent";
 
@@ -37,10 +39,16 @@ const seedPages = (queryClient: QueryClient, pages: GetHistoryOutputSchema[]) =>
     { pages, pageParams: pages.map((_, index) => (index === 0 ? undefined : NEXT_CURSOR)) },
   );
 
-const renderContent = (queryClient: QueryClient) =>
+const renderContent = (queryClient: QueryClient, sidebarOpen = true) =>
   render(<SnapshotSidebarHistoryContent projectId={PROJECT_ID} snapshotId={SNAPSHOT_ID} />, {
     wrapper: ({ children }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        <SnapshotPreferencesProvider
+          initialPreferences={{ sidebarOpen, sidebarTab: "history", showDiff: true }}
+        >
+          {children}
+        </SnapshotPreferencesProvider>
+      </QueryClientProvider>
     ),
   });
 
@@ -67,5 +75,24 @@ describe("SnapshotSidebarHistoryContent", () => {
     renderContent(queryClient);
 
     expect(screen.getByText("no snapshots on main yet")).toBeVisible();
+  });
+
+  it("should load the history when the sidebar is open", async () => {
+    const getHistory = mockHandlers.mockGetHistory({ pending: true });
+
+    renderContent(createQueryClient());
+
+    await waitFor(() =>
+      expect(getHistory).toHaveBeenCalledWith(expect.objectContaining({ snapshotId: SNAPSHOT_ID })),
+    );
+  });
+
+  it("should not request the history while the sidebar is closed", () => {
+    mockHandlers.mockGetHistory({ pending: true });
+    const queryClient = createQueryClient();
+
+    renderContent(queryClient, false);
+
+    expect(queryClient.isFetching()).toBe(0);
   });
 });

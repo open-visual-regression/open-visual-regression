@@ -3,7 +3,7 @@
 # Build from the repository root:
 #   docker build -f apps/worker/Dockerfile -t open-visual-regression/worker .
 
-ARG NODE_VERSION=24.22.1
+ARG NODE_VERSION=26.13.0
 # Keep in sync with the pinned "playwright" version in apps/worker, packages/capture and packages/capture-browser.
 ARG PLAYWRIGHT_VERSION=1.64.1
 # Keep in sync with the "turbo" devDependency in the root package.json.
@@ -22,8 +22,7 @@ ARG PNPM_VERSION
 ENV HUSKY=0 \
     CI=1
 WORKDIR /app
-RUN corepack enable && \
-    corepack prepare pnpm@${PNPM_VERSION} --activate && \
+RUN npm install -g pnpm@${PNPM_VERSION} && \
     apt-get update && \
     apt-get install -y --no-install-recommends python3 make g++ ca-certificates && \
     rm -rf /var/lib/apt/lists/*

@@ -26,7 +26,7 @@ jobs:
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 26
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm turbo run build --affected
@@ -46,7 +46,7 @@ jobs:
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 26
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm turbo run build --filter=@ovr/web...
@@ -67,7 +67,7 @@ jobs:
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 26
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm turbo run lint --affected -- --deny-warnings
@@ -82,7 +82,7 @@ jobs:
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 26
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm format -- --check
@@ -98,7 +98,7 @@ jobs:
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 26
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm turbo run check-links --filter=@ovr/docs --affected
@@ -122,7 +122,7 @@ jobs:
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 26
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm turbo run build-storybook --filter=${{ matrix.package.filter }} --affected
@@ -187,7 +187,7 @@ jobs:
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 26
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm turbo run db:migrate --filter=@ovr/db
@@ -215,7 +215,7 @@ jobs:
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 26
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - id: detect

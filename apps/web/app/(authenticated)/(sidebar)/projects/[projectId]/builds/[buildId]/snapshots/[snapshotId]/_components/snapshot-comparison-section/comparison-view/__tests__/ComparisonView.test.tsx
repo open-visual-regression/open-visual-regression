@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
+import { SnapshotPreferencesProvider } from "@/lib/providers/SnapshotPreferencesProvider";
 import { describe, expect, it, render, screen, within } from "@/test-utils";
 
 import { ComparisonModeProvider } from "../comparison-mode";
@@ -17,13 +18,17 @@ const props: ComparisonViewProps = {
   diffImagePath: "diff.png",
 };
 
-const renderComparison = (overrides: Partial<typeof props> = {}) =>
+const renderComparison = (overrides: Partial<typeof props> = {}, showDiff = true) =>
   render(
     <QueryClientProvider client={new QueryClient()}>
-      <ComparisonModeProvider>
-        <ComparisonControls />
-        <ComparisonView {...props} {...overrides} />
-      </ComparisonModeProvider>
+      <SnapshotPreferencesProvider
+        initialPreferences={{ sidebarOpen: false, sidebarTab: "reviews", showDiff }}
+      >
+        <ComparisonModeProvider>
+          <ComparisonControls />
+          <ComparisonView {...props} {...overrides} />
+        </ComparisonModeProvider>
+      </SnapshotPreferencesProvider>
     </QueryClientProvider>,
   );
 
@@ -85,6 +90,12 @@ describe("ComparisonView", () => {
     await user.click(screen.getByRole("button", { name: "zoom baseline" }));
 
     expect(screen.getByRole("dialog", { name: "baseline" })).toBeVisible();
+  });
+
+  it("should keep the diff hidden when it was turned off", () => {
+    renderComparison({}, false);
+
+    expect(screen.getByRole("switch")).not.toBeChecked();
   });
 
   it("should open the new snapshot with the diff shown or hidden to match the split view", async ({
