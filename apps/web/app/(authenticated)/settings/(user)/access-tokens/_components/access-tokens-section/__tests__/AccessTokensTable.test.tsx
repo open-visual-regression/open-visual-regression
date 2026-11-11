@@ -33,6 +33,21 @@ describe("AccessTokensTable", () => {
     expect(screen.queryByRole("cell", { name: "never" })).not.toBeInTheDocument();
   });
 
+  it("should show what each token is allowed to do", () => {
+    const readOnly = mocks.accessToken.generateAccessToken({
+      permissions: { builds: ["read"] },
+    });
+    const ci = mocks.accessToken.generateAccessToken({
+      permissions: { builds: ["read", "write"], reviews: ["write"] },
+    });
+    render(<AccessTokensTable data={[readOnly, ci]} />);
+
+    expect(screen.getByRole("cell", { name: "read builds" })).toBeVisible();
+    expect(
+      screen.getByRole("cell", { name: "read builds, cancel and rebuild, approve and reject" }),
+    ).toBeVisible();
+  });
+
   it("should revoke the access token when confirmed", async ({ user }) => {
     mockRevoke.mockResolvedValue([null, undefined]);
     const accessToken = mocks.accessToken.generateAccessToken({ name: "cursor" });

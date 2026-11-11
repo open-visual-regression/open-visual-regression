@@ -55,6 +55,30 @@ describe("accessTokens", () => {
       });
       expect(verified.valid).toBe(false);
     });
+
+    test("should grant permission to write builds when asked for", async ({ reviewer: _ }) => {
+      const [, result] = await serverClient.accessTokens.create({
+        name: "ci",
+        permissions: { builds: ["write"] },
+      });
+
+      const verified = await auth.api.verifyApiKey({
+        body: { key: result!.token, permissions: { builds: ["read", "write"] } },
+      });
+      expect(verified.valid).toBe(true);
+    });
+
+    test("should grant permission to review when asked for", async ({ reviewer: _ }) => {
+      const [, result] = await serverClient.accessTokens.create({
+        name: "ci",
+        permissions: { reviews: ["write"] },
+      });
+
+      const verified = await auth.api.verifyApiKey({
+        body: { key: result!.token, permissions: { builds: ["read"], reviews: ["write"] } },
+      });
+      expect(verified.valid).toBe(true);
+    });
   });
 
   describe("list", () => {
@@ -81,6 +105,25 @@ describe("accessTokens", () => {
         expect.arrayContaining([
           expect.objectContaining({ name: "cursor" }),
           expect.objectContaining({ name: "claude" }),
+        ]),
+      );
+    });
+
+    test("should return each token's permissions", async ({ reviewer: _ }) => {
+      await serverClient.accessTokens.create({ name: "read only" });
+      await serverClient.accessTokens.create({
+        name: "ci",
+        permissions: { builds: ["write"], reviews: ["write"] },
+      });
+
+      const [, result] = await serverClient.accessTokens.list({});
+      expect(result?.accessTokens).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ name: "read only", permissions: { builds: ["read"] } }),
+          expect.objectContaining({
+            name: "ci",
+            permissions: { builds: ["read", "write"], reviews: ["write"] },
+          }),
         ]),
       );
     });

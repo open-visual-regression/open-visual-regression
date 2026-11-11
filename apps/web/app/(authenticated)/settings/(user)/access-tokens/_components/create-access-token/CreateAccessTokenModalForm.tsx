@@ -4,22 +4,35 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { onError, onSuccess } from "@orpc/client";
 import { useServerAction } from "@orpc/react/hooks";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { ACCESS_TOKEN_NAME_MAX_LENGTH } from "@ovr/api/contracts/accessTokens";
+import {
+  ACCESS_TOKEN_NAME_MAX_LENGTH,
+  accessTokenPermissionsSchema,
+} from "@ovr/api/contracts/accessTokens";
 import { Button } from "@ovr/ui/components/button";
+import { Checkbox } from "@ovr/ui/components/checkbox";
 import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@ovr/ui/components/dialog";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@ovr/ui/components/field";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from "@ovr/ui/components/field";
 import { Input } from "@ovr/ui/components/input";
 
 import { serverClient } from "@/lib/router";
 
+import { OPTIONAL_PERMISSIONS } from "../permissions";
 import { CreateAccessTokenModalReveal } from "./CreateAccessTokenModalReveal";
 
 const createAccessTokenFormSchema = z.object({
@@ -30,6 +43,7 @@ const createAccessTokenFormSchema = z.object({
       ACCESS_TOKEN_NAME_MAX_LENGTH,
       `the name must be less than ${ACCESS_TOKEN_NAME_MAX_LENGTH} characters`,
     ),
+  permissions: accessTokenPermissionsSchema,
 });
 
 type CreateAccessTokenFormValues = z.infer<typeof createAccessTokenFormSchema>;
@@ -39,11 +53,12 @@ export const CreateAccessTokenModalForm = () => {
   const {
     register,
     handleSubmit,
+    control,
     setError,
     formState: { errors },
   } = useForm<CreateAccessTokenFormValues>({
     resolver: zodResolver(createAccessTokenFormSchema),
-    defaultValues: { name: "" },
+    defaultValues: { name: "", permissions: { builds: [], reviews: [] } },
   });
 
   const { execute, status } = useServerAction(serverClient.accessTokens.create, {
@@ -88,6 +103,33 @@ export const CreateAccessTokenModalForm = () => {
             />
             <FieldError errors={[errors.name]} />
           </Field>
+          <FieldSet>
+            <FieldLegend variant="label">permissions</FieldLegend>
+            <FieldDescription>every access token can read builds</FieldDescription>
+            <FieldGroup data-slot="checkbox-group">
+              {OPTIONAL_PERMISSIONS.map(({ resource, action, label }) => {
+                const id = `permission-${resource}-${action}`;
+
+                return (
+                  <Controller
+                    key={id}
+                    control={control}
+                    name={`permissions.${resource}`}
+                    render={({ field }) => (
+                      <Field orientation="horizontal">
+                        <Checkbox
+                          id={id}
+                          checked={field.value?.includes(action) ?? false}
+                          onCheckedChange={(checked) => field.onChange(checked ? [action] : [])}
+                        />
+                        <FieldLabel htmlFor={id}>{label}</FieldLabel>
+                      </Field>
+                    )}
+                  />
+                );
+              })}
+            </FieldGroup>
+          </FieldSet>
           <FieldError errors={[errors.root]} />
         </FieldGroup>
         <DialogFooter showCloseButton>

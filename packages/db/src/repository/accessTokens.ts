@@ -32,6 +32,7 @@ export const findByUser = async ({ userId, limit, offset }: FindByUserInput) => 
       .select({
         id: apikey.id,
         name: apikey.name,
+        permissions: apikey.permissions,
         createdAt: apikey.createdAt,
         lastRequest: apikey.lastRequest,
       })

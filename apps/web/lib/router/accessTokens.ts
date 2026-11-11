@@ -2,12 +2,20 @@
 
 import { ORPCError } from "@orpc/client";
 
-import { ACCESS_TOKEN_PERMISSIONS } from "@ovr/api/contracts/accessTokens";
+import { toTokenPermissions, tokenPermissionsSchema } from "@ovr/api/contracts/accessTokens";
 import { dbClient } from "@ovr/db/client";
 
 import { authServerClient } from "../auth";
 import { authenticatedMiddleware } from "./middleware";
 import { os } from "./os";
+
+const parsePermissions = (permissions: string | null) => {
+  try {
+    return tokenPermissionsSchema.parse(JSON.parse(permissions ?? "{}"));
+  } catch {
+    return {};
+  }
+};
 
 export const create = os.accessTokens.create
   .use(authenticatedMiddleware)
@@ -15,7 +23,7 @@ export const create = os.accessTokens.create
     const [error, token] = await authServerClient.createAccessToken({
       name: input.name,
       userId: context.user.id,
-      permissions: ACCESS_TOKEN_PERMISSIONS,
+      permissions: toTokenPermissions(input.permissions),
     });
 
     if (error) {
@@ -39,6 +47,7 @@ export const list = os.accessTokens.list
       accessTokens: accessTokens.map((token) => ({
         id: token.id,
         name: token.name!,
+        permissions: parsePermissions(token.permissions),
         createdAt: token.createdAt,
         lastRequest: token.lastRequest,
       })),
