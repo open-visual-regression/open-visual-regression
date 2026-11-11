@@ -48,7 +48,7 @@ export const SnapshotLogsSkeleton = () => (
     <MultiLineCodeBlockHeader>
       <MultiLineCodeBlockLabel>logs</MultiLineCodeBlockLabel>
       <TypographySkeleton variant="body-sm" className="ml-auto w-12 shrink-0" />
-      <Skeleton className="h-7 w-16 shrink-0 rounded-md" />
+      <Skeleton className="h-6 w-16 shrink-0 rounded-lg" />
     </MultiLineCodeBlockHeader>
     <MultiLineCodeBlockBody aria-hidden>
       {["w-3/4", "w-1/2", "w-2/3"].map((width) => (
