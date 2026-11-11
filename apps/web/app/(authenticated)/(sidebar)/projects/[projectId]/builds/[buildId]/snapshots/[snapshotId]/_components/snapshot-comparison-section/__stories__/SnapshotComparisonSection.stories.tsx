@@ -17,7 +17,9 @@ const meta: Meta<typeof SnapshotComparisonSection> = {
     },
   },
   render: (args) => (
-    <SnapshotPreferencesProvider initialPreferences={{ sidebarOpen: false, showDiff: true }}>
+    <SnapshotPreferencesProvider
+      initialPreferences={{ sidebarOpen: false, sidebarTab: "reviews", showDiff: true }}
+    >
       <ComparisonModeProvider>
         <div className="flex flex-col lg:h-[720px]">
           {args.baseline ? <ComparisonControls /> : null}

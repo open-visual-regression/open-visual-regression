@@ -2,7 +2,7 @@ import { expect, test } from "./fixtures";
 import { seedReviewableSnapshot } from "./support/seedReviewableSnapshot";
 
 test.describe("Snapshot preferences", () => {
-  test("should keep the snapshot sidebar open after a reload", async ({
+  test("should keep the snapshot sidebar open on the same tab after a reload", async ({
     page,
     seedClient,
     snapshotReviewPage,
@@ -11,11 +11,12 @@ test.describe("Snapshot preferences", () => {
 
     await snapshotReviewPage.goto(projectId, buildId, snapshotId);
     await snapshotReviewPage.expandSidebar();
-    await expect(snapshotReviewPage.reviewsTab()).toBeVisible();
+    await snapshotReviewPage.sidebarTab("Logs").click();
+    await expect(snapshotReviewPage.sidebarTab("Logs")).toHaveAttribute("aria-selected", "true");
 
     await page.reload();
 
-    await expect(snapshotReviewPage.reviewsTab()).toBeVisible();
     await expect(snapshotReviewPage.collapseSidebarButton()).toBeVisible();
+    await expect(snapshotReviewPage.sidebarTab("Logs")).toHaveAttribute("aria-selected", "true");
   });
 });

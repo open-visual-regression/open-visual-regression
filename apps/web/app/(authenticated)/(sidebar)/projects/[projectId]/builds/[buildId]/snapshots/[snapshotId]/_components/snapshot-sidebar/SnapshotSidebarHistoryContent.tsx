@@ -4,6 +4,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 
 import { orpc } from "@/lib/orpc/client";
 import { snapshotHistoryInfiniteOptions } from "@/lib/orpc/snapshots-query";
+import { useSnapshotPreferences } from "@/lib/providers/SnapshotPreferencesProvider";
 
 import { SnapshotHistoryList, SnapshotHistoryListSkeleton } from "./SnapshotHistoryList";
 
@@ -16,6 +17,7 @@ export const SnapshotSidebarHistoryContent = ({
   projectId,
   snapshotId,
 }: SnapshotSidebarHistoryContentProps) => {
+  const { sidebarOpen } = useSnapshotPreferences();
   const {
     data,
     isPending,
@@ -25,9 +27,11 @@ export const SnapshotSidebarHistoryContent = ({
     isFetchingPreviousPage,
     fetchNextPage,
     fetchPreviousPage,
-  } = useInfiniteQuery(
-    orpc.snapshots.getHistory.infiniteOptions(snapshotHistoryInfiniteOptions(snapshotId)),
-  );
+  } = useInfiniteQuery({
+    ...orpc.snapshots.getHistory.infiniteOptions(snapshotHistoryInfiniteOptions(snapshotId)),
+    // The panel stays mounted while the sidebar is collapsed; only fetch once it is open.
+    enabled: sidebarOpen,
+  });
 
   return (
     <div className="px-3 pb-3">

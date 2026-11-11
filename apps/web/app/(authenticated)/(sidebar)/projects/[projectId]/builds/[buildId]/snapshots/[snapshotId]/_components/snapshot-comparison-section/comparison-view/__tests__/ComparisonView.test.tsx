@@ -21,7 +21,9 @@ const props: ComparisonViewProps = {
 const renderComparison = (overrides: Partial<typeof props> = {}, showDiff = true) =>
   render(
     <QueryClientProvider client={new QueryClient()}>
-      <SnapshotPreferencesProvider initialPreferences={{ sidebarOpen: false, showDiff }}>
+      <SnapshotPreferencesProvider
+        initialPreferences={{ sidebarOpen: false, sidebarTab: "reviews", showDiff }}
+      >
         <ComparisonModeProvider>
           <ComparisonControls />
           <ComparisonView {...props} {...overrides} />

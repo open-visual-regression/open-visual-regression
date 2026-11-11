@@ -56,7 +56,9 @@ const renderComponent = (queryClient = createQueryClient(), sidebarOpen = false)
     {
       wrapper: ({ children }) => (
         <QueryClientProvider client={queryClient}>
-          <SnapshotPreferencesProvider initialPreferences={{ sidebarOpen, showDiff: true }}>
+          <SnapshotPreferencesProvider
+            initialPreferences={{ sidebarOpen, sidebarTab: "reviews", showDiff: true }}
+          >
             {children}
           </SnapshotPreferencesProvider>
         </QueryClientProvider>

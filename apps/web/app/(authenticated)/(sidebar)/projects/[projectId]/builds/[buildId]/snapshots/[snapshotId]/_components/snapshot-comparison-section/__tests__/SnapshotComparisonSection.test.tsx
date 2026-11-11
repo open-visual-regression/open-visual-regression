@@ -48,7 +48,9 @@ const renderSection = (
 ) =>
   render(
     <QueryClientProvider client={new QueryClient()}>
-      <SnapshotPreferencesProvider initialPreferences={{ sidebarOpen: false, showDiff: true }}>
+      <SnapshotPreferencesProvider
+        initialPreferences={{ sidebarOpen: false, sidebarTab: "reviews", showDiff: true }}
+      >
         <ComparisonModeProvider>
           <SnapshotComparisonSection
             snapshot={snapshotInput}

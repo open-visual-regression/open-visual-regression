@@ -26,7 +26,9 @@ const meta: Meta<typeof SnapshotZoomDialog> = {
     diffImagePath: null,
   },
   render: (args) => (
-    <SnapshotPreferencesProvider initialPreferences={{ sidebarOpen: false, showDiff: true }}>
+    <SnapshotPreferencesProvider
+      initialPreferences={{ sidebarOpen: false, sidebarTab: "reviews", showDiff: true }}
+    >
       <ComparisonModeProvider>
         <SnapshotZoomDialog {...args}>
           <div className="flex gap-4 p-4">

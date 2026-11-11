@@ -21,7 +21,9 @@ const props: Omit<SnapshotZoomDialogProps, "children"> = {
 const renderDialog = (overrides: Partial<typeof props> = {}) =>
   render(
     <QueryClientProvider client={new QueryClient()}>
-      <SnapshotPreferencesProvider initialPreferences={{ sidebarOpen: false, showDiff: true }}>
+      <SnapshotPreferencesProvider
+        initialPreferences={{ sidebarOpen: false, sidebarTab: "reviews", showDiff: true }}
+      >
         <ComparisonModeProvider>
           <SnapshotZoomDialog {...props} {...overrides}>
             <SnapshotZoomTrigger view="baseline" />

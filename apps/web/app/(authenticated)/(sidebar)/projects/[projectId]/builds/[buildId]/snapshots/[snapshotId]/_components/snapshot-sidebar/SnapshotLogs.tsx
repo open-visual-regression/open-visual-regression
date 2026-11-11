@@ -1,5 +1,5 @@
 import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
-import { Typography } from "@ovr/ui/components/typography";
+import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 
 import { MultiLineCodeBlock } from "@/lib/components/multi-line-code-block/MultiLineCodeBlock";
 import { MultiLineCodeBlockBody } from "@/lib/components/multi-line-code-block/MultiLineCodeBlockBody";
@@ -41,3 +41,8 @@ export const SnapshotLogs = ({ logs }: SnapshotLogsProps) => {
     </MultiLineCodeBlock>
   );
 };
+
+// Most snapshots have no logs, so this mirrors the empty state.
+export const SnapshotLogsSkeleton = () => (
+  <TypographySkeleton variant="body-muted" className="w-28" />
+);

@@ -43,8 +43,8 @@ export class SnapshotReviewPage {
     return this.page.getByRole("button", { name: "Collapse sidebar" });
   }
 
-  reviewsTab(): Locator {
-    return this.sidebar().getByRole("tab", { name: "Reviews" });
+  sidebarTab(name: "Reviews" | "Logs" | "History"): Locator {
+    return this.sidebar().getByRole("tab", { name });
   }
 
   private sidebar(): Locator {
