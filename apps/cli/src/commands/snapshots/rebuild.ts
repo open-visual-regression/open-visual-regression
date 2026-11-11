@@ -7,6 +7,7 @@ import {
   type SnapshotsCursor,
 } from "@ovr/api/contracts/snapshots";
 
+import { chunk } from "../../chunk";
 import { createClient } from "../../client";
 import { getApiKey, getServerUrl } from "../../config";
 import { formatCliError } from "../../errors";
@@ -39,11 +40,6 @@ export const selectRebuildableSnapshots = (snapshots: RebuildCandidate[]) => {
     leftOut: snapshots.length - rebuildable.length,
   };
 };
-
-export const toBatches = <T>(items: T[], size: number): T[][] =>
-  Array.from({ length: Math.ceil(items.length / size) }, (_, index) =>
-    items.slice(index * size, (index + 1) * size),
-  );
 
 export const formatSnapshotsRebuildOutput = (
   result: { buildId: string; snapshotIds: string[]; leftOut: number },
@@ -132,7 +128,7 @@ export const rebuildCommand = new Command("rebuild")
         const selected =
           snapshotIds.length > 0 ? { snapshotIds, leftOut: 0 } : await findMatchingSnapshots();
 
-        for (const batch of toBatches(selected.snapshotIds, MAX_REBUILD_SNAPSHOTS)) {
+        for (const batch of chunk(selected.snapshotIds, MAX_REBUILD_SNAPSHOTS)) {
           await client.snapshots.rebuild({ buildId, snapshotIds: batch });
         }
 
