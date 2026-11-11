@@ -1477,6 +1477,55 @@ describe("snapshots", () => {
       expect(await dbClient.snapshots.count(filters)).toBe(1);
     });
 
+    test("should only list the given projects' flagged current baselines, not earlier builds of the same story", async ({
+      organization,
+      project,
+      user,
+      captureConfiguration,
+    }) => {
+      const { trunkProject } = await seedMainBranchProjects({
+        organizationId: organization.id,
+        projectId: project.id,
+        userId: user.id,
+        captureConfiguration,
+      });
+      const olderMain = await createBuild(project.id, user.id, "main");
+      const baselineMain = await createBuild(project.id, user.id, "main");
+      const trunkMain = await createBuild(trunkProject.id, user.id, "trunk");
+      await seedSettledStories(olderMain.id, captureConfiguration, ["Chart", "Table"]);
+      const [chart, table] = await seedSettledStories(baselineMain.id, captureConfiguration, [
+        "Chart",
+        "Table",
+      ]);
+      const [trunkChart] = await seedSettledStories(trunkMain.id, captureConfiguration, ["Chart"]);
+      for (const [projectId, snapshot] of [
+        [project.id, chart!],
+        [project.id, table!],
+        [trunkProject.id, trunkChart!],
+      ] as const) {
+        await dbClient.baselines.upsert({
+          projectId,
+          ...captureConfiguration,
+          targetId: snapshot.targetId,
+          snapshotId: snapshot.id,
+          approvedBy: user.id,
+        });
+      }
+      await flagStory(project.id, captureConfiguration, "chart");
+      await flagStory(trunkProject.id, captureConfiguration, "chart");
+      const filters = {
+        organizationId: organization.id,
+        projectIds: [project.id],
+        baseline: true,
+        flags: ["flaky" as const],
+      };
+
+      const { snapshots } = await dbClient.snapshots.list({ ...filters, sort: "name", limit: 10 });
+
+      expect(snapshots.map(({ id }) => id)).toEqual([chart!.id]);
+      expect(await dbClient.snapshots.count(filters)).toBe(1);
+    });
+
     test("should list only each project's latest main build", async ({
       organization,
       project,
