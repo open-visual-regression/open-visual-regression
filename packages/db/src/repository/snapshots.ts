@@ -292,8 +292,6 @@ const inScopedProjects = ({ organizationId, projectIds }: BuildScope) =>
     projectIds?.length ? inArray(scopedProjects.id, projectIds) : undefined,
   );
 
-// Resolve the current baselines' snapshot IDs first, so the work is bounded by the stories in
-// scope rather than by every build's history.
 const baselineSnapshotIds = (scope: BuildScope) =>
   db
     .select({ id: baselines.snapshotId })
@@ -303,7 +301,6 @@ const baselineSnapshotIds = (scope: BuildScope) =>
 
 const isBaseline = (scope: BuildScope) => inArray(snapshots.id, baselineSnapshotIds(scope));
 
-// Resolve the few latest main build IDs first, so snapshots are found by build_id.
 const latestMainBuildIds = (scope: BuildScope) => {
   const latestMainBuild = db
     .select({ id: latestMainBuilds.id })
