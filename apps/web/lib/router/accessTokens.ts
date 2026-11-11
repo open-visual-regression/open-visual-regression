@@ -9,13 +9,9 @@ import { authServerClient } from "../auth";
 import { authenticatedMiddleware } from "./middleware";
 import { os } from "./os";
 
-const parsePermissions = (permissions: string | null) => {
-  try {
-    return tokenPermissionsSchema.parse(JSON.parse(permissions ?? "{}"));
-  } catch {
-    return {};
-  }
-};
+// better-auth stores permissions as JSON text. A key without any is allowed nothing.
+const parsePermissions = (permissions: string | null) =>
+  permissions ? tokenPermissionsSchema.parse(JSON.parse(permissions)) : {};
 
 export const create = os.accessTokens.create
   .use(authenticatedMiddleware)
