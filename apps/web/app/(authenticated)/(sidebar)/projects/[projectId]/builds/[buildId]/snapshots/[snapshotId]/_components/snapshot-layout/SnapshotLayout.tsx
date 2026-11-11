@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
-
 import type { DiffSchema } from "@ovr/api/contracts/diffs";
 import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 
 import { useSnapshotHistoryPrefetch } from "@/lib/orpc/useSnapshotHistoryPrefetch";
+import { useSnapshotPreferences } from "@/lib/providers/SnapshotPreferencesProvider";
 import { type SnapshotFilters } from "@/lib/utils/snapshotFilters";
 
 import { SnapshotActionsRow } from "../snapshot-actions/SnapshotActionsRow";
@@ -42,15 +41,15 @@ export const SnapshotLayout = ({
   sidebar,
   children,
 }: SnapshotLayoutProps) => {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const { sidebarOpen, setSidebarOpen } = useSnapshotPreferences();
   const prefetchHistory = useSnapshotHistoryPrefetch(snapshot.id);
 
   const toggleSidebar = () => {
-    if (sidebarCollapsed) {
+    if (!sidebarOpen) {
       prefetchHistory();
     }
 
-    setSidebarCollapsed((collapsed) => !collapsed);
+    setSidebarOpen(!sidebarOpen);
   };
 
   return (
@@ -67,11 +66,11 @@ export const SnapshotLayout = ({
           total={total}
           filters={filters}
           canReview={canReview}
-          sidebarCollapsed={sidebarCollapsed}
+          sidebarCollapsed={!sidebarOpen}
           onToggleSidebar={toggleSidebar}
         />
       }
-      sidebar={<SnapshotSidebar collapsed={sidebarCollapsed}>{sidebar}</SnapshotSidebar>}
+      sidebar={<SnapshotSidebar collapsed={!sidebarOpen}>{sidebar}</SnapshotSidebar>}
     >
       <ComparisonModeProvider>{children}</ComparisonModeProvider>
     </SnapshotShell>

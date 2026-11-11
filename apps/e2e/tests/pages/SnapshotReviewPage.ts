@@ -39,6 +39,14 @@ export class SnapshotReviewPage {
     await this.page.getByRole("button", { name: "Expand sidebar" }).click();
   }
 
+  collapseSidebarButton(): Locator {
+    return this.page.getByRole("button", { name: "Collapse sidebar" });
+  }
+
+  sidebarTab(name: "Reviews" | "Logs" | "History"): Locator {
+    return this.sidebar().getByRole("tab", { name });
+  }
+
   private sidebar(): Locator {
     return this.page.getByRole("complementary");
   }

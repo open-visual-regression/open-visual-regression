@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, userEvent, waitFor, within } from "storybook/test";
 
+import { SnapshotPreferencesProvider } from "@/lib/providers/SnapshotPreferencesProvider";
+
 import { ComparisonModeProvider } from "../comparison-view/comparison-mode";
 import { ComparisonControls } from "../comparison-view/ComparisonControls";
 import { SnapshotComparisonSection } from "../SnapshotComparisonSection";
@@ -15,12 +17,16 @@ const meta: Meta<typeof SnapshotComparisonSection> = {
     },
   },
   render: (args) => (
-    <ComparisonModeProvider>
-      <div className="flex flex-col lg:h-[720px]">
-        {args.baseline ? <ComparisonControls /> : null}
-        <SnapshotComparisonSection {...args} />
-      </div>
-    </ComparisonModeProvider>
+    <SnapshotPreferencesProvider
+      initialPreferences={{ sidebarOpen: false, sidebarTab: "reviews", showDiff: true }}
+    >
+      <ComparisonModeProvider>
+        <div className="flex flex-col lg:h-[720px]">
+          {args.baseline ? <ComparisonControls /> : null}
+          <SnapshotComparisonSection {...args} />
+        </div>
+      </ComparisonModeProvider>
+    </SnapshotPreferencesProvider>
   ),
 };
 

@@ -1,5 +1,6 @@
 import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
-import { Typography } from "@ovr/ui/components/typography";
+import { Skeleton } from "@ovr/ui/components/skeleton";
+import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 
 import { MultiLineCodeBlock } from "@/lib/components/multi-line-code-block/MultiLineCodeBlock";
 import { MultiLineCodeBlockBody } from "@/lib/components/multi-line-code-block/MultiLineCodeBlockBody";
@@ -41,3 +42,21 @@ export const SnapshotLogs = ({ logs }: SnapshotLogsProps) => {
     </MultiLineCodeBlock>
   );
 };
+
+export const SnapshotLogsSkeleton = () => (
+  <MultiLineCodeBlock lines={[]} wrap>
+    <MultiLineCodeBlockHeader>
+      <MultiLineCodeBlockLabel>logs</MultiLineCodeBlockLabel>
+      <TypographySkeleton variant="body-sm" className="ml-auto w-12 shrink-0" />
+      <Skeleton className="h-6 w-16 shrink-0 rounded-lg" />
+    </MultiLineCodeBlockHeader>
+    <MultiLineCodeBlockBody aria-hidden>
+      {["w-3/4", "w-1/2", "w-2/3"].map((width) => (
+        <div key={width} className="flex items-start gap-3 px-3">
+          <TypographySkeleton variant="code" className="w-5 shrink-0" />
+          <TypographySkeleton variant="code" className={width} />
+        </div>
+      ))}
+    </MultiLineCodeBlockBody>
+  </MultiLineCodeBlock>
+);

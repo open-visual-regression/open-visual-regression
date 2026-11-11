@@ -1,6 +1,7 @@
 import type { DiffReviewSchema } from "@ovr/api/contracts/diffs";
-import { Badge } from "@ovr/ui/components/badge";
-import { Typography } from "@ovr/ui/components/typography";
+import { Badge, BadgeSkeleton } from "@ovr/ui/components/badge";
+import { Skeleton } from "@ovr/ui/components/skeleton";
+import { Typography, TypographySkeleton } from "@ovr/ui/components/typography";
 
 import { canReview } from "@/lib/auth/roles";
 import { Avatar } from "@/lib/components/avatar/Avatar";
@@ -75,3 +76,21 @@ export const SnapshotReviews = ({
     </div>
   );
 };
+
+export const SnapshotReviewsSkeleton = () => (
+  <div aria-hidden className="flex flex-col gap-4">
+    <TypographySkeleton variant="caption" className="w-40" />
+    <ul className="flex flex-col gap-3">
+      {[0, 1].map((index) => (
+        <li key={index} className="flex items-center gap-3">
+          <Skeleton className="size-7 shrink-0 rounded-sm" />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <TypographySkeleton className="w-32" />
+            <TypographySkeleton variant="caption" className="w-20" />
+          </div>
+          <BadgeSkeleton className="w-16" />
+        </li>
+      ))}
+    </ul>
+  </div>
+);
