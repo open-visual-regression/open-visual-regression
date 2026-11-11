@@ -8,10 +8,6 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   outputFileTracingRoot: path.join(import.meta.dirname, "../.."),
   logging: { browserToTerminal: true },
-  experimental: {
-    // Avoids an endless prefetch loop: https://github.com/vercel/next.js/issues/97135
-    optimisticRouting: false,
-  },
   async headers() {
     return [{ source: "/:path*{/}?", headers: [{ key: "X-Accel-Buffering", value: "no" }] }];
   },
