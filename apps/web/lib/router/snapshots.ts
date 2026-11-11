@@ -255,7 +255,7 @@ const REBUILD_ERROR_MESSAGES: Record<SnapshotRebuildBlockedReason | "ARTIFACT_MI
 };
 
 export const rebuild = os.snapshots.rebuild
-  .use(authenticatedMiddleware)
+  .use(callerMiddleware("builds", "write"))
   .use(reviewerMiddleware)
   .use(organizationBuildMiddleware)
   .handler(async ({ input, context }) => {

@@ -1872,6 +1872,57 @@ describe("snapshots", () => {
       expect(error?.code).toBe("FORBIDDEN");
     });
 
+    test("should let an access token that can write builds rebuild a snapshot", async ({
+      admin,
+    }) => {
+      const { build, snapshot } = await seedRebuildableSnapshot(admin);
+      const [, token] = await serverClient.accessTokens.create({
+        name: "ci",
+        permissions: { builds: ["write"] },
+      });
+
+      asBearer(token!.token);
+
+      const [error] = await serverClient.snapshots.rebuild({
+        buildId: build.id,
+        snapshotIds: [snapshot.id],
+      });
+
+      expect(error).toBeNull();
+      expect(await dbClient.snapshots.findById(snapshot.id)).toMatchObject({ status: "queued" });
+    });
+
+    test("should return FORBIDDEN for an access token that can only read builds", async ({
+      admin: _,
+    }) => {
+      const [, token] = await serverClient.accessTokens.create({ name: "cursor" });
+
+      asBearer(token!.token);
+
+      const [error] = await serverClient.snapshots.rebuild({
+        buildId: uuidv7(),
+        snapshotIds: [uuidv7()],
+      });
+
+      expect(error?.code).toBe("FORBIDDEN");
+    });
+
+    test("should return FORBIDDEN for a viewer's access token", async ({ viewer: _ }) => {
+      const [, token] = await serverClient.accessTokens.create({
+        name: "ci",
+        permissions: { builds: ["write"] },
+      });
+
+      asBearer(token!.token);
+
+      const [error] = await serverClient.snapshots.rebuild({
+        buildId: uuidv7(),
+        snapshotIds: [uuidv7()],
+      });
+
+      expect(error?.code).toBe("FORBIDDEN");
+    });
+
     test("should return NOT_FOUND for a build outside the user's organization", async ({
       admin: _,
     }) => {
