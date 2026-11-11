@@ -67,22 +67,19 @@ export const WithActiveFilters: Story = {
   },
 };
 
-const PROJECT_AND_BASELINE_ARGS = {
-  statuses: [],
+const PROJECT_ARGS = {
   browsers: [],
   viewports: [],
   flags: ["flaky"],
   projectIds: ["project-1"],
-  baseline: true,
   projectOptions: [
     { value: "project-1", label: "Storefront" },
     { value: "project-2", label: "Marketing Site" },
   ],
-  showBaselineFacet: true,
 } satisfies Story["args"];
 
-export const WithProjectAndBaseline: Story = {
-  args: PROJECT_AND_BASELINE_ARGS,
+export const WithProject: Story = {
+  args: PROJECT_ARGS,
   parameters: {
     ovr: {
       viewports: ["desktop"],
@@ -90,8 +87,8 @@ export const WithProjectAndBaseline: Story = {
   },
 };
 
-export const WithProjectAndBaselineMenuOpen: Story = {
-  args: PROJECT_AND_BASELINE_ARGS,
+export const WithProjectMenuOpen: Story = {
+  args: PROJECT_ARGS,
   parameters: {
     ovr: {
       viewports: ["tablet", "mobile"],

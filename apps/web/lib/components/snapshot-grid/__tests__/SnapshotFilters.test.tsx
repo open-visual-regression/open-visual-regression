@@ -262,34 +262,20 @@ describe("SnapshotFilters", () => {
     expect(mockPush).toHaveBeenCalledWith("/?project=project-2");
   });
 
-  it("should navigate to current baselines only when the baseline facet is applied", async ({
-    user,
-  }) => {
+  it("should not offer the project or status facets unless given them", () => {
     render(
       <SnapshotFilters
-        statuses={[]}
         browsers={[]}
         viewports={[]}
         flags={[]}
-        statusOptions={STATUS_OPTIONS}
         browserOptions={BROWSER_OPTIONS}
         viewportOptions={VIEWPORT_OPTIONS}
         flagOptions={FLAG_OPTIONS}
-        showBaselineFacet
       />,
     );
 
-    await user.click(screen.getByRole("button", { name: /^baseline\s+any$/i }));
-    await user.click(await screen.findByRole("checkbox", { name: "current" }));
-    await user.click(screen.getByRole("button", { name: /^apply$/i }));
-
-    expect(mockPush).toHaveBeenCalledWith("/?baseline=true");
-  });
-
-  it("should not offer the project or baseline facets unless given them", () => {
-    renderComponent();
-
     expect(screen.queryByRole("button", { name: /^project/i })).toBeNull();
-    expect(screen.queryByRole("button", { name: /^baseline/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^status/i })).toBeNull();
+    expect(screen.getByRole("button", { name: /^browser\s+any$/i })).toBeVisible();
   });
 });

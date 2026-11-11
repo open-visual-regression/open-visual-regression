@@ -21,7 +21,6 @@ type SnapshotsListInput = {
   viewports: string[] | undefined;
   flags: SnapshotFlag[] | undefined;
   projectIds: string[] | undefined;
-  baseline: boolean | undefined;
   limit: number;
   cursor: SnapshotsCursor | undefined;
 };
@@ -41,15 +40,7 @@ export type SnapshotsListScope = {
 
 export const snapshotsListInfiniteOptions = (
   { buildId, sort }: SnapshotsListScope,
-  {
-    search,
-    statuses,
-    browsers,
-    viewports,
-    flags,
-    projectIds,
-    baseline,
-  }: Partial<SnapshotFilters> = {},
+  { search, statuses, browsers, viewports, flags, projectIds }: Partial<SnapshotFilters> = {},
 ): SnapshotsListInfiniteOptions => ({
   input: (cursor) => ({
     buildId,
@@ -60,7 +51,6 @@ export const snapshotsListInfiniteOptions = (
     viewports,
     flags,
     projectIds,
-    baseline,
     limit: SNAPSHOTS_PAGE_SIZE,
     cursor,
   }),

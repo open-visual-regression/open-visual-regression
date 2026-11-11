@@ -13,7 +13,6 @@ vi.mock("next/navigation");
 vi.mock("@/lib/orpc/server");
 
 const mockList = vi.mocked(orpcServerClient.snapshots.list);
-const mockListStatuses = vi.mocked(orpcServerClient.snapshots.listStatuses);
 const mockListBrowsers = vi.mocked(orpcServerClient.snapshots.listBrowsers);
 const mockListViewports = vi.mocked(orpcServerClient.snapshots.listViewports);
 const mockListFlags = vi.mocked(orpcServerClient.snapshots.listFlags);
@@ -40,7 +39,6 @@ const renderPage = async (searchParams: Record<string, string | string[]> = {}) 
 describe("SnapshotsPage", () => {
   beforeEach(() => {
     getQueryClient().clear();
-    mockListStatuses.mockResolvedValue({ statuses: ["processing", "needs_review"] });
     mockListBrowsers.mockResolvedValue({ browsers: ["chromium", "firefox"] });
     mockListViewports.mockResolvedValue({ viewports: ["mobile", "desktop"] });
     mockListFlags.mockResolvedValue({ flags: ["flaky", "warning"] });
@@ -88,27 +86,36 @@ describe("SnapshotsPage", () => {
     expect(screen.getByText("no snapshots found")).toBeVisible();
   });
 
-  it("should offer the status, browser, viewport and flags facets from every project", async () => {
+  it("should offer the browser, viewport and flags facets but no status facet", async () => {
     mockList.mockResolvedValue({ snapshots: [], total: 0, nextCursor: null });
 
     await renderPage();
 
-    expect(screen.getByRole("button", { name: /^status\s+any$/i })).toBeVisible();
     expect(screen.getByRole("button", { name: /^browser\s+any$/i })).toBeVisible();
     expect(screen.getByRole("button", { name: /^viewport\s+any$/i })).toBeVisible();
     expect(screen.getByRole("button", { name: /^flags\s+any$/i })).toBeVisible();
-    expect(mockListStatuses).toHaveBeenCalledWith({}, expect.anything());
+    expect(screen.queryByRole("button", { name: /^status/i })).toBeNull();
   });
 
   it("should apply the filters from the url to the snapshots query and the facet triggers", async () => {
     mockList.mockResolvedValue({ snapshots: [], total: 0, nextCursor: null });
 
-    await renderPage({ status: "processing", flag: "flaky", search: "chart" });
+    await renderPage({ flag: "flaky", search: "chart" });
 
-    expect(screen.getByRole("button", { name: /^status\s+processing$/i })).toBeVisible();
     expect(screen.getByRole("button", { name: /^flags\s+flaky$/i })).toBeVisible();
     expect(mockList).toHaveBeenCalledWith(
-      expect.objectContaining({ statuses: ["processing"], flags: ["flaky"], search: "chart" }),
+      expect.objectContaining({ flags: ["flaky"], search: "chart" }),
+      expect.anything(),
+    );
+  });
+
+  it("should ignore a status left in the url", async () => {
+    mockList.mockResolvedValue({ snapshots: [], total: 0, nextCursor: null });
+
+    await renderPage({ status: "processing" });
+
+    expect(mockList).toHaveBeenCalledWith(
+      expect.objectContaining({ statuses: [] }),
       expect.anything(),
     );
   });
@@ -121,7 +128,7 @@ describe("SnapshotsPage", () => {
     expect(screen.getByRole("search")).toHaveAttribute("action", "/snapshots");
   });
 
-  it("should offer a project facet and a current baseline facet", async ({ user }) => {
+  it("should offer a project facet and no baseline facet", async ({ user }) => {
     mockList.mockResolvedValue({ snapshots: [], total: 0, nextCursor: null });
 
     await renderPage();
@@ -129,18 +136,17 @@ describe("SnapshotsPage", () => {
 
     expect(await screen.findByRole("checkbox", { name: "Acme Web" })).toBeVisible();
     expect(screen.getByRole("checkbox", { name: "Acme Admin" })).toBeVisible();
-    expect(screen.getByRole("button", { name: /^baseline\s+any$/i })).toBeVisible();
+    expect(screen.queryByRole("button", { name: /^baseline/i })).toBeNull();
   });
 
-  it("should apply the project and baseline from the url to the snapshots query", async () => {
+  it("should apply the project from the url to the snapshots query", async () => {
     mockList.mockResolvedValue({ snapshots: [], total: 0, nextCursor: null });
 
-    await renderPage({ project: PROJECTS[1]!.id, baseline: "true" });
+    await renderPage({ project: PROJECTS[1]!.id });
 
     expect(screen.getByRole("button", { name: /^project\s+Acme Admin$/i })).toBeVisible();
-    expect(screen.getByRole("button", { name: /^baseline\s+current$/i })).toBeVisible();
     expect(mockList).toHaveBeenCalledWith(
-      expect.objectContaining({ projectIds: [PROJECTS[1]!.id], baseline: true }),
+      expect.objectContaining({ projectIds: [PROJECTS[1]!.id] }),
       expect.anything(),
     );
   });

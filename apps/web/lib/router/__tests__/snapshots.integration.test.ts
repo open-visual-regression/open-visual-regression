@@ -75,6 +75,27 @@ const seedFlags = async (projectId: string, buildId: string) => {
   return { a: a!, b: b!, c: c!, d: d! };
 };
 
+const makeBaseline = (
+  admin: User,
+  projectId: string,
+  snapshot: {
+    browser: string;
+    viewportWidth: number;
+    viewportHeight: number;
+    targetId: string;
+    id: string;
+  },
+) =>
+  dbClient.baselines.upsert({
+    projectId,
+    browser: snapshot.browser,
+    viewportWidth: snapshot.viewportWidth,
+    viewportHeight: snapshot.viewportHeight,
+    targetId: snapshot.targetId,
+    snapshotId: snapshot.id,
+    approvedBy: admin.id,
+  });
+
 const createOtherOrganizationBuild = async (admin: User) => {
   const [otherOrg] = await db
     .insert(organization)
@@ -764,7 +785,7 @@ describe("snapshots", () => {
       ).toEqual({ baseline: null, kept: "projects/p/builds/b/snapshots/baseline.png", none: null });
     });
 
-    test("lists each project's latest main build alphabetically when no build is given", async ({
+    test("lists each project's current baselines alphabetically when no build is given", async ({
       admin,
     }) => {
       const { projectId, build } = await createProjectAndBuild(admin, "main");
@@ -772,7 +793,7 @@ describe("snapshots", () => {
         admin,
         "main",
       );
-      await dbClient.snapshots.createMany({
+      const seeded = await dbClient.snapshots.createMany({
         values: [
           { buildId: build.id, targetTitle: "Tabs" },
           { buildId: otherBuild.id, targetTitle: "Card" },
@@ -784,6 +805,13 @@ describe("snapshots", () => {
           targetName: "Default",
         })),
       });
+      for (const snapshot of seeded) {
+        await makeBaseline(
+          admin,
+          snapshot.buildId === build.id ? projectId : otherProjectId,
+          snapshot,
+        );
+      }
 
       const [error, result] = await serverClient.snapshots.list({ sort: "name" });
 
@@ -802,10 +830,10 @@ describe("snapshots", () => {
       ]);
     });
 
-    test("lists each project's latest main build, and in-flight snapshots on any build", async ({
+    test("leaves out snapshots on newer and in-flight builds, even when filtered by status", async ({
       admin,
     }) => {
-      const { projectId, build: olderMain } = await createProjectAndBuild(admin, "main");
+      const { projectId, build: baselineMain } = await createProjectAndBuild(admin, "main");
       const createBuild = async (branch: string) =>
         (await dbClient.builds.create({
           projectId,
@@ -816,116 +844,54 @@ describe("snapshots", () => {
         }))!;
       const latestMain = await createBuild("main");
       const featureBuild = await createBuild("feature/cards");
-      const seed = (buildId: string) =>
+      const seed = (buildId: string, viewport = VIEWPORT) =>
         dbClient.snapshots.createMany({
           values: [
-            { buildId, ...VIEWPORT, targetId: "card", targetTitle: "Card", targetName: "Default" },
+            { buildId, ...viewport, targetId: "card", targetTitle: "Card", targetName: "Default" },
           ],
         });
-      await seed(olderMain.id);
-      const [latestCard] = await seed(latestMain.id);
+      const [baselineCard] = await seed(baselineMain.id);
+      await seed(latestMain.id, { ...VIEWPORT, browser: "firefox", viewportName: "firefox" });
       const [featureCard] = await seed(featureBuild.id);
       await dbClient.snapshots.updateStatus(featureCard!.id, "processing");
+      await makeBaseline(admin, projectId, baselineCard!);
 
       const [listError, listed] = await serverClient.snapshots.list({ sort: "name" });
-      const [inFlightError, inFlight] = await serverClient.snapshots.list({
+      const [, processing] = await serverClient.snapshots.list({
         statuses: ["processing"],
-        sort: "name",
-      });
-      const [, statuses] = await serverClient.snapshots.listStatuses({});
-
-      expect(listError).toBeNull();
-      expect(listed?.snapshots.map(({ id }) => id)).toEqual([latestCard!.id]);
-      expect(listed?.total).toBe(1);
-      expect(inFlightError).toBeNull();
-      expect(inFlight?.snapshots.map(({ id }) => id)).toEqual([featureCard!.id]);
-      expect(statuses?.statuses).toContain("processing");
-    });
-
-    test("lists each project's own latest main build when projects use different main branches", async ({
-      admin,
-    }) => {
-      const { projectId, build: latestMain } = await createProjectAndBuild(admin, "main");
-      const { projectId: trunkProjectId, build: mainOnTrunkProject } = await createProjectAndBuild(
-        admin,
-        "main",
-      );
-      await db
-        .update(projects)
-        .set({ gitMainBranch: "trunk" })
-        .where(eq(projects.id, trunkProjectId));
-      const createBuild = async (buildProjectId: string, branch: string) =>
-        (await dbClient.builds.create({
-          projectId: buildProjectId,
-          branch,
-          commitSha: "b".repeat(40),
-          artifactPath: "builds/seed/artifact",
-          createdBy: admin.id,
-        }))!;
-      const latestTrunk = await createBuild(trunkProjectId, "trunk");
-      const trunkOnMainProject = await createBuild(projectId, "trunk");
-      const otherBuild = await createOtherOrganizationBuild(admin);
-      const firefox = { ...VIEWPORT, browser: "firefox", viewportName: "firefox desktop" };
-      const [mainCard, trunkCard] = await dbClient.snapshots.createMany({
-        values: [
-          { buildId: latestMain.id, ...VIEWPORT },
-          { buildId: latestTrunk.id, ...firefox },
-          { buildId: mainOnTrunkProject.id, ...VIEWPORT, viewportName: "branch" },
-          { buildId: trunkOnMainProject.id, ...VIEWPORT, viewportName: "branch" },
-          { buildId: otherBuild!.id, ...VIEWPORT, viewportName: "other" },
-        ].map((target) => ({
-          ...target,
-          targetId: "card",
-          targetTitle: "Card",
-          targetName: "Default",
-          status: "success" as const,
-        })),
-      });
-      const [listError, listed] = await serverClient.snapshots.list({ sort: "name" });
-      const [, trunkOnly] = await serverClient.snapshots.list({
-        projectIds: [trunkProjectId],
         sort: "name",
       });
       const [, browsers] = await serverClient.snapshots.listBrowsers({});
       const [, viewports] = await serverClient.snapshots.listViewports({});
 
       expect(listError).toBeNull();
-      expect(listed?.snapshots.map(({ id }) => id)).toEqual([mainCard!.id, trunkCard!.id]);
-      expect(listed?.total).toBe(2);
-      expect(trunkOnly?.snapshots.map(({ id }) => id)).toEqual([trunkCard!.id]);
-      expect(trunkOnly?.total).toBe(1);
-      expect(browsers?.browsers).toEqual(["chromium", "firefox"]);
-      expect(viewports?.viewports).toEqual(["desktop", "firefox desktop"]);
+      expect(listed?.snapshots.map(({ id }) => id)).toEqual([baselineCard!.id]);
+      expect(listed?.total).toBe(1);
+      expect(processing?.snapshots).toEqual([]);
+      expect(browsers?.browsers).toEqual([VIEWPORT.browser]);
+      expect(viewports?.viewports).toEqual([VIEWPORT.viewportName]);
     });
 
-    test("filters by project and by current baseline, together with the other filters", async ({
+    test("filters current baselines by project, together with the other filters", async ({
       admin,
     }) => {
       const { projectId, build } = await createProjectAndBuild(admin);
-      const { build: otherBuild } = await createProjectAndBuild(admin);
-      const [chart, card] = await dbClient.snapshots.createMany({
+      const { projectId: otherProjectId, build: otherBuild } = await createProjectAndBuild(admin);
+      const [chart, card, otherChart] = await dbClient.snapshots.createMany({
         values: [
           { buildId: build.id, targetId: "chart", targetTitle: "Chart" },
           { buildId: build.id, targetId: "card", targetTitle: "Card" },
           { buildId: otherBuild.id, targetId: "chart", targetTitle: "Chart" },
         ].map((target) => ({ ...target, ...VIEWPORT, targetName: "Default" })),
       });
-      for (const snapshot of [chart!, card!]) {
-        await dbClient.baselines.upsert({
-          projectId,
-          browser: snapshot.browser,
-          viewportWidth: snapshot.viewportWidth,
-          viewportHeight: snapshot.viewportHeight,
-          targetId: snapshot.targetId,
-          snapshotId: snapshot.id,
-          approvedBy: admin.id,
-        });
-      }
+      await makeBaseline(admin, projectId, chart!);
+      await makeBaseline(admin, projectId, card!);
+      await makeBaseline(admin, otherProjectId, otherChart!);
       await flagStory(projectId, "chart");
+      await flagStory(otherProjectId, "chart");
 
       const [error, result] = await serverClient.snapshots.list({
         projectIds: [projectId],
-        baseline: true,
         flags: ["flaky"],
         sort: "name",
       });
@@ -1848,12 +1814,14 @@ describe("snapshots", () => {
       expect(result).toEqual({ flags: [] });
     });
 
-    test("lists the flags across each project's latest main build when no build is given", async ({
+    test("lists the flags across the current baselines when no build is given", async ({
       admin,
     }) => {
       const { projectId, build } = await createProjectAndBuild(admin, "main");
       const otherOrgBuild = await createOtherOrganizationBuild(admin);
-      await seedFlags(projectId, build.id);
+      const { a, b } = await seedFlags(projectId, build.id);
+      await makeBaseline(admin, projectId, a);
+      await makeBaseline(admin, projectId, b);
       await dbClient.snapshots.createMany({
         values: [
           { buildId: otherOrgBuild!.id, ...VIEWPORT, targetId: "z", hasUncaughtPageError: true },
@@ -1863,7 +1831,7 @@ describe("snapshots", () => {
       const [error, result] = await serverClient.snapshots.listFlags({});
 
       expect(error).toBeNull();
-      expect(result).toEqual({ flags: ["flaky", "warning"] });
+      expect(result).toEqual({ flags: ["flaky"] });
     });
 
     test("returns NOT_FOUND for a build belonging to a different organization", async ({
