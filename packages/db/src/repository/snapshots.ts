@@ -281,17 +281,30 @@ export type ListFilters = {
   search?: string;
 };
 
-const isBaseline = exists(
-  db.select({ id: baselines.id }).from(baselines).where(eq(baselines.snapshotId, snapshots.id)),
-);
-
 const scopedProjects = alias(projects, "scoped_projects");
 const latestMainBuilds = alias(builds, "latest_main_builds");
 
 type BuildScope = Pick<ListFilters, "organizationId" | "projectIds">;
 
+const inScopedProjects = ({ organizationId, projectIds }: BuildScope) =>
+  and(
+    organizationId ? eq(scopedProjects.organizationId, organizationId) : undefined,
+    projectIds?.length ? inArray(scopedProjects.id, projectIds) : undefined,
+  );
+
+// Resolve the current baselines' snapshot IDs first, so the work is bounded by the stories in
+// scope rather than by every build's history.
+const baselineSnapshotIds = (scope: BuildScope) =>
+  db
+    .select({ id: baselines.snapshotId })
+    .from(baselines)
+    .innerJoin(scopedProjects, eq(scopedProjects.id, baselines.projectId))
+    .where(inScopedProjects(scope));
+
+const isBaseline = (scope: BuildScope) => inArray(snapshots.id, baselineSnapshotIds(scope));
+
 // Resolve the few latest main build IDs first, so snapshots are found by build_id.
-const latestMainBuildIds = ({ organizationId, projectIds }: BuildScope) => {
+const latestMainBuildIds = (scope: BuildScope) => {
   const latestMainBuild = db
     .select({ id: latestMainBuilds.id })
     .from(latestMainBuilds)
@@ -310,12 +323,7 @@ const latestMainBuildIds = ({ organizationId, projectIds }: BuildScope) => {
     .select({ id: latestMainBuild.id })
     .from(scopedProjects)
     .crossJoinLateral(latestMainBuild)
-    .where(
-      and(
-        organizationId ? eq(scopedProjects.organizationId, organizationId) : undefined,
-        projectIds?.length ? inArray(scopedProjects.id, projectIds) : undefined,
-      ),
-    );
+    .where(inScopedProjects(scope));
 };
 
 const isOnLatestMainBuild = (scope: BuildScope) =>
@@ -379,7 +387,7 @@ const listWhere = ({
     buildId ? eq(snapshots.buildId, buildId) : undefined,
     latestMainBuild ? latestMainBuildWhere({ organizationId, projectIds, statuses }) : undefined,
     projectIds?.length ? inArray(builds.projectId, projectIds) : undefined,
-    baseline ? isBaseline : undefined,
+    baseline ? isBaseline({ organizationId, projectIds }) : undefined,
     statuses?.length ? inArray(displayStatusExpr, statuses) : undefined,
     browsers?.length ? inArray(snapshots.browser, browsers) : undefined,
     viewports?.length ? inArray(snapshots.viewportName, viewports) : undefined,
