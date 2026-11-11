@@ -42,7 +42,6 @@ export const SnapshotLogs = ({ logs }: SnapshotLogsProps) => {
   );
 };
 
-// Most snapshots have no logs, so this mirrors the empty state.
 export const SnapshotLogsSkeleton = () => (
   <TypographySkeleton variant="body-muted" className="w-28" />
 );

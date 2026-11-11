@@ -17,7 +17,6 @@ type AppLayoutProps = Readonly<{
 export default async function AppLayout({ children }: AppLayoutProps) {
   const [, snapshotPreferences] = await Promise.all([requireSession(), getSnapshotPreferences()]);
 
-  // Mounted here so the preferences survive client navigation; the cookie covers reloads.
   return (
     <QueryProvider>
       <SnapshotPreferencesProvider initialPreferences={snapshotPreferences}>

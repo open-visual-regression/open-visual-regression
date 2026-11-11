@@ -29,7 +29,6 @@ export const SnapshotSidebarHistoryContent = ({
     fetchPreviousPage,
   } = useInfiniteQuery({
     ...orpc.snapshots.getHistory.infiniteOptions(snapshotHistoryInfiniteOptions(snapshotId)),
-    // The panel stays mounted while the sidebar is collapsed; only fetch once it is open.
     enabled: sidebarOpen,
   });
 
