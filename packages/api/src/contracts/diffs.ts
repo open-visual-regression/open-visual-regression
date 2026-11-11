@@ -3,6 +3,8 @@ import { z } from "zod";
 
 export const diffReviewVoteSchema = z.enum(["approve", "reject"]);
 
+export type DiffReviewVoteSchema = z.infer<typeof diffReviewVoteSchema>;
+
 export const castVoteInputSchema = z.object({ diffId: z.uuidv7(), vote: diffReviewVoteSchema });
 export const castVoteContract = oc.input(castVoteInputSchema).output(z.void());
 

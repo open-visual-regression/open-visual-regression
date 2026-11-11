@@ -1,6 +1,6 @@
 ---
 title: ovr diffs
-description: Inspect a snapshot's diff against its baseline.
+description: Inspect a snapshot's diff against its baseline, and approve or reject it.
 ---
 
 Authenticates with a [personal access token](/cli/authentication) — a project API key is rejected.
@@ -56,3 +56,22 @@ Analysis:
 ```
 
 With `--json`, the analysis is added to the diff as an `analysis` field.
+
+## `ovr diffs approve` and `ovr diffs reject`
+
+```sh
+ovr diffs approve <snapshotId>
+ovr diffs reject <snapshotId>
+```
+
+| Flag | Description |
+|------|-------------|
+| `--server-url <url>` | OVR server URL (defaults to `ovr.config`'s `serverUrl`) |
+| `-c, --config <path>` | Path to `ovr.config` file |
+
+Takes a snapshot ID, like `ovr diffs get`, casts your vote on its diff, and prints the diff's review status. Voting
+again replaces your earlier vote, so `ovr diffs reject` after an accidental approve changes your vote. Removing a
+vote altogether is only possible in the web app.
+
+Needs an access token with the [`reviews:write`](/cli/authentication#access-token-permissions)
+permission, owned by someone who isn't a viewer.
