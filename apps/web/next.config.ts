@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
     // Avoids an endless prefetch loop: https://github.com/vercel/next.js/issues/97135
     optimisticRouting: false,
   },
+  async redirects() {
+    return [{ source: "/settings", destination: "/settings/account", permanent: false }];
+  },
 };
 
 export default nextConfig;
