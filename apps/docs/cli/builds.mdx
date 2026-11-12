@@ -1,6 +1,6 @@
 ---
 title: ovr builds
-description: List builds, inspect a single build's status, and cancel or rebuild a build.
+description: List builds, inspect a single build's status, and cancel, rebuild, approve or reject a build.
 ---
 
 Authenticates with a [personal access token](/cli/authentication) — a project API key is rejected.
@@ -102,3 +102,24 @@ Captures a finished build again from the same Storybook, as a new build, and pri
 With `--wait`, the command exits with code `1` unless the new build passes, the same as [`ovr upload storybook --wait`](/cli/upload-storybook). Progress is printed to stderr, so `--json` output stays parseable.
 
 Needs an access token with the [`builds:write`](/cli/authentication#access-token-permissions) permission, owned by someone who isn't a viewer.
+
+## `ovr builds approve` and `ovr builds reject`
+
+```sh
+ovr builds approve <buildId>
+ovr builds reject <buildId>
+```
+
+| Flag | Description |
+|------|-------------|
+| `--server-url <url>` | OVR server URL (defaults to `ovr.config`'s `serverUrl`) |
+| `-c, --config <path>` | Path to `ovr.config` file |
+
+Casts your vote on every snapshot in the build that needs review, like **approve all** and **reject all** on the
+build page, then prints the build's status. A project that needs more than one reviewer keeps the build at
+`needs_review` until enough people approve it. To vote on a single snapshot, use
+[`ovr diffs approve`](/cli/diffs#ovr-diffs-approve-and-ovr-diffs-reject).
+
+Only a finished build that is the latest on its branch can be reviewed. Needs an access token with the
+[`reviews:write`](/cli/authentication#access-token-permissions) permission, owned by someone who isn't
+a viewer.
