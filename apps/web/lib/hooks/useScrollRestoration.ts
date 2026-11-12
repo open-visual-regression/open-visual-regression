@@ -44,8 +44,6 @@ export const useScrollRestoration = () => {
   const pathname = usePathname();
   const search = useSearchParams().toString();
 
-  // Keyed by element: a hidden copy of a page and its `loading.tsx` skeleton can
-  // share an id, and restoring one must not cancel the other.
   const restoringRef = useRef(new Map<Element, () => void>());
   // Restoring on the first render could only happen after hydration, so after
   // the first paint. Traversals only.
