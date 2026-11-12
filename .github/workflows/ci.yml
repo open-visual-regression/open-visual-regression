@@ -193,7 +193,7 @@ jobs:
       - run: pnpm turbo run db:migrate --filter=@ovr/db
       - run: pnpm --filter @ovr/capture exec playwright install --with-deps chromium
       - name: Restore Storybook fixture builds
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: packages/storybook-compat/fixtures/*/storybook-static
           key: storybook-fixtures-${{ runner.os }}-${{ hashFiles('packages/storybook-compat/fixtures/*/pnpm-lock.yaml', 'packages/storybook-compat/fixtures/stories/**', 'packages/storybook-compat/fixtures/shared/**', 'packages/storybook-compat/fixtures/*/.storybook/**', 'packages/storybook-compat/scripts/build-fixtures.mjs') }}
@@ -344,10 +344,10 @@ jobs:
       OWNER: ${{ github.repository_owner }}
     steps:
       - uses: actions/checkout@v7
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@v5
         with:
           version: v3.16.3
-      - uses: sigstore/cosign-installer@v3
+      - uses: sigstore/cosign-installer@v4
 
       - name: Stamp the release version
         run: |
