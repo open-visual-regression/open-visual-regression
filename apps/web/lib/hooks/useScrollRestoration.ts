@@ -44,7 +44,9 @@ export const useScrollRestoration = () => {
   const pathname = usePathname();
   const search = useSearchParams().toString();
 
-  const restoringRef = useRef(new Map<string, () => void>());
+  // Keyed by element: a hidden copy of a page and its `loading.tsx` skeleton can
+  // share an id, and restoring one must not cancel the other.
+  const restoringRef = useRef(new Map<Element, () => void>());
   // Restoring on the first render could only happen after hydration, so after
   // the first paint. Traversals only.
   const isFirstRenderRef = useRef(true);
@@ -80,7 +82,7 @@ export const useScrollRestoration = () => {
       }
 
       const id = container.getAttribute(SCROLL_ID_ATTRIBUTE);
-      const entryKey = id && !restoringRef.current.has(id) ? getHistoryEntryKey() : null;
+      const entryKey = id && !restoringRef.current.has(container) ? getHistoryEntryKey() : null;
       if (id && entryKey) {
         useScrollPositionStore.getState().save(entryKey, id, container.scrollTop);
       }
@@ -107,8 +109,8 @@ export const useScrollRestoration = () => {
 
   // Waits out content that is still arriving, then holds the offset briefly in
   // case the router scrolls a commit later. All before paint, so none of it shows.
-  const restoreContainer = useCallback((container: Element, id: string, top: number) => {
-    restoringRef.current.get(id)?.();
+  const restoreContainer = useCallback((container: Element, top: number) => {
+    restoringRef.current.get(container)?.();
 
     let frame = 0;
     let lastScrollHeight = container.scrollHeight;
@@ -120,8 +122,8 @@ export const useScrollRestoration = () => {
       container.removeEventListener("wheel", stop);
       container.removeEventListener("touchstart", stop);
       container.removeEventListener("keydown", stop);
-      if (restoringRef.current.get(id) === stop) {
-        restoringRef.current.delete(id);
+      if (restoringRef.current.get(container) === stop) {
+        restoringRef.current.delete(container);
       }
     };
 
@@ -152,7 +154,7 @@ export const useScrollRestoration = () => {
       frame = window.requestAnimationFrame(tick);
     };
 
-    restoringRef.current.set(id, stop);
+    restoringRef.current.set(container, stop);
     tick();
 
     // Never fight the user for the scroll position.
@@ -181,7 +183,7 @@ export const useScrollRestoration = () => {
       const id = container.getAttribute(SCROLL_ID_ATTRIBUTE);
       const top = id ? useScrollPositionStore.getState().entries[entryKey]?.[id] : undefined;
       if (id && top) {
-        cleanups.push(restoreContainer(container, id, top));
+        cleanups.push(restoreContainer(container, top));
       }
     };
 
