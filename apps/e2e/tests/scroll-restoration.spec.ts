@@ -27,6 +27,40 @@ test.describe("Scroll restoration", () => {
       .toBeCloseTo(scrolled, -2);
   });
 
+  test("should keep the build page where the user left off after reviewing a snapshot and going back", async ({
+    seedClient,
+    buildPage,
+    snapshotReviewPage,
+    page,
+  }) => {
+    const { projectId, buildId, snapshotId } = await seedReviewableSnapshot(seedClient);
+
+    await buildPage.goto(projectId, buildId);
+    await expect(buildPage.snapshotCards().first()).toBeVisible();
+
+    await buildPage.scrollDown(500);
+    const scrolled = await buildPage.scrollOffset();
+    expect(scrolled).toBeGreaterThan(0);
+
+    await buildPage.snapshotCards().first().click();
+    await page.waitForURL(`**/snapshots/${snapshotId}`);
+
+    // Approving refreshes the router, so going back refetches the build page and
+    // swaps its loading skeleton for a freshly mounted scroll container.
+    await snapshotReviewPage.approveButton().click();
+    await expect(snapshotReviewPage.approvedButton()).toBeVisible();
+
+    await page.goBack();
+    await expect(buildPage.snapshotCards().first()).toBeVisible();
+
+    await expect
+      .poll(() => buildPage.scrollOffset(), { timeout: 10_000 })
+      .toBeCloseTo(scrolled, -2);
+    // ...and stays there once the refetch has settled.
+    await page.waitForTimeout(1_500);
+    expect(await buildPage.scrollOffset()).toBeCloseTo(scrolled, -2);
+  });
+
   test("should show the top of the build page when opening it fresh", async ({
     seedClient,
     buildPage,
