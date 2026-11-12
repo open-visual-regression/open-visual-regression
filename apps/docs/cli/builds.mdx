@@ -81,7 +81,7 @@ ovr builds cancel <buildId>
 
 Cancels a queued or processing build. A build that has already finished can't be canceled.
 
-Needs an access token with the [cancel and rebuild builds](/cli/authentication#access-token-permissions) permission, owned by someone who isn't a viewer.
+Needs an access token with the [`builds:write`](/cli/authentication#access-token-permissions) permission, owned by someone who isn't a viewer.
 
 ## `ovr builds rebuild`
 
@@ -101,4 +101,4 @@ Captures a finished build again from the same Storybook, as a new build, and pri
 
 With `--wait`, the command exits with code `1` unless the new build passes, the same as [`ovr upload storybook --wait`](/cli/upload-storybook). Progress is printed to stderr, so `--json` output stays parseable.
 
-Needs an access token with the [cancel and rebuild builds](/cli/authentication#access-token-permissions) permission, owned by someone who isn't a viewer.
+Needs an access token with the [`builds:write`](/cli/authentication#access-token-permissions) permission, owned by someone who isn't a viewer.
