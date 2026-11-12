@@ -10,6 +10,7 @@ import { BuildsPage } from "./pages/BuildsPage";
 import { ForbiddenPage } from "./pages/ForbiddenPage";
 import { IdentityProviderLoginPage } from "./pages/IdentityProviderLoginPage";
 import { JobsSettingsPage } from "./pages/JobsSettingsPage";
+import { LoginPage } from "./pages/LoginPage";
 import { OrganizationSettingsPage } from "./pages/OrganizationSettingsPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { ProjectBuildsPage } from "./pages/ProjectBuildsPage";
@@ -28,6 +29,7 @@ type TestFixtures = {
   buildPage: BuildPage;
   buildsPage: BuildsPage;
   jobsSettingsPage: JobsSettingsPage;
+  loginPage: LoginPage;
   organizationSettingsPage: OrganizationSettingsPage;
   overviewPage: OverviewPage;
   snapshotsPage: SnapshotsPage;
@@ -61,6 +63,9 @@ export const test = base.extend<TestFixtures>({
   },
   jobsSettingsPage: async ({ page }, use) => {
     await use(new JobsSettingsPage(page));
+  },
+  loginPage: async ({ page }, use) => {
+    await use(new LoginPage(page));
   },
   organizationSettingsPage: async ({ page }, use) => {
     await use(new OrganizationSettingsPage(page));
