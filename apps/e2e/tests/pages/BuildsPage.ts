@@ -22,8 +22,6 @@ export class BuildsPage {
     return this.list().evaluate((element) => element.scrollTop);
   }
 
-  // Scrolls with a real wheel gesture: only user-driven scrolling is remembered,
-  // so assigning scrollTop would not be recorded.
   async scrollDown(deltaY: number) {
     const box = await this.list().boundingBox();
     if (!box) {

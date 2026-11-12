@@ -178,8 +178,6 @@ export const useScrollRestoration = () => {
       }
       handled.add(container);
 
-      // Read at mount time: a container replaced after the user scrolled should
-      // come back where they left it, not where the traversal landed.
       const id = container.getAttribute(SCROLL_ID_ATTRIBUTE);
       const top = id ? useScrollPositionStore.getState().entries[entryKey]?.[id] : undefined;
       if (id && top) {
@@ -191,10 +189,7 @@ export const useScrollRestoration = () => {
       restoreIfSaved(container);
     }
 
-    // A container can be swapped for a new element after the traversal, e.g. a
-    // `loading.tsx` skeleton replaced by the page once its refetch lands (the
-    // router cache is dropped by `router.refresh()`). The new element mounts at
-    // the top, so restore it too.
+    // Containers can mount after the traversal, e.g. when a `loading.tsx` skeleton is replaced.
     const observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
         for (const node of mutation.addedNodes) {

@@ -33,12 +33,11 @@ test.describe("Scroll restoration", () => {
     buildPage,
     page,
   }) => {
-    // Seeded oldest first, so the build to open sits below the newer ones.
     const target = await seedReviewableSnapshot(seedClient);
     await seedReviewableSnapshot(seedClient);
     await seedReviewableSnapshot(seedClient);
 
-    // A short viewport makes the list scroll without seeding dozens of builds.
+    // Short enough for a few builds to scroll.
     await page.setViewportSize({ width: 1280, height: 420 });
     await buildsPage.goto();
     const row = buildsPage.buildRow(target.projectId, target.buildId);
@@ -51,8 +50,6 @@ test.describe("Scroll restoration", () => {
     await row.click();
     await page.waitForURL(`**/builds/${target.buildId}`);
 
-    // Approving refreshes the router, so going back refetches the builds page and
-    // swaps its loading skeleton for a freshly mounted list.
     await buildPage.approveAllButton().click();
     await expect(buildPage.approvedButton()).toBeVisible();
 
@@ -62,7 +59,6 @@ test.describe("Scroll restoration", () => {
     await expect
       .poll(() => buildsPage.scrollOffset(), { timeout: 10_000 })
       .toBeCloseTo(scrolled, -1);
-    // ...and stays there once the refetch has settled.
     await page.waitForTimeout(1_500);
     expect(await buildsPage.scrollOffset()).toBeCloseTo(scrolled, -1);
   });
