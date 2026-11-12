@@ -5,7 +5,6 @@ import { ReactCompareSlider } from "react-compare-slider";
 import { Typography } from "@ovr/ui/components/typography";
 
 import { BaselineCommitLink } from "../../snapshot-pane/BaselineCommitLink";
-import { SnapshotDimensions } from "../../snapshot-pane/SnapshotDimensions";
 import { SnapshotFrameImage } from "../../snapshot-pane/SnapshotFrameImage";
 import { SnapshotPane } from "../../snapshot-pane/SnapshotPane";
 import { SnapshotPaneCanvas } from "../../snapshot-pane/SnapshotPaneCanvas";
@@ -33,8 +32,7 @@ export type SliderViewProps = {
 };
 
 export const SliderView = ({ baseline, newSnapshot }: SliderViewProps) => {
-  const canvasImagePaths = [baseline.imagePath, newSnapshot.imagePath];
-  const canvasSize = useCanvasSize(canvasImagePaths);
+  const canvasSize = useCanvasSize([baseline.imagePath, newSnapshot.imagePath]);
 
   return (
     <SnapshotPane>
@@ -42,18 +40,8 @@ export const SliderView = ({ baseline, newSnapshot }: SliderViewProps) => {
         <div className="flex items-center gap-2">
           <Typography variant="label">baseline</Typography>
           <BaselineCommitLink commitSha={baseline.commitSha} commitUrl={baseline.commitUrl} />
-          <SnapshotDimensions
-            imagePath={baseline.imagePath}
-            comparedImagePaths={canvasImagePaths}
-          />
         </div>
-        <div className="flex items-center gap-2">
-          <SnapshotDimensions
-            imagePath={newSnapshot.imagePath}
-            comparedImagePaths={canvasImagePaths}
-          />
-          <Typography variant="label">new</Typography>
-        </div>
+        <Typography variant="label">new</Typography>
       </SnapshotPaneHeader>
       <SnapshotPaneCanvas className="lg:@container-size">
         <SnapshotPaneFrame canvasSize={canvasSize} fill>

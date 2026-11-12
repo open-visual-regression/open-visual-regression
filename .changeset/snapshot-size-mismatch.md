@@ -2,4 +2,4 @@
 "@ovr/web": patch
 ---
 
-When a new snapshot and its baseline differ in size, the snapshot page shows each image's dimensions and outlines the smaller one, so a narrower screenshot no longer looks like it failed to fill the frame.
+When a new snapshot is smaller than its baseline, the snapshot page outlines its edges, so a narrower screenshot no longer looks like it failed to fill the frame.
