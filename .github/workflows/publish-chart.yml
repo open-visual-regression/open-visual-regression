@@ -30,8 +30,6 @@ jobs:
       CHART_REPO: ghcr.io/${{ github.repository_owner }}/charts
       OWNER: ${{ github.repository_owner }}
     steps:
-      # From CI, publish the commit under test (its release tag doesn't exist
-      # yet). By hand, publish from the release's tag so the chart matches it.
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.sha }}
