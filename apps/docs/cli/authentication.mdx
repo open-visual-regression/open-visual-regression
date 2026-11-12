@@ -20,10 +20,10 @@ A personal access token belongs to you, not a project — it can read builds acr
 
 ## Access token permissions
 
-Every personal access token can read builds. When you create one, you can also let it:
+Every personal access token has `builds:read`, which lets it read builds. When you create one, you can also give it:
 
 | Permission | Lets the token |
 |------------|----------------|
-| Cancel and rebuild builds | Cancel a build, rebuild a build, and rebuild some of a build's snapshots |
+| `builds:write` | Cancel a build, rebuild a build, and rebuild some of a build's snapshots |
 
 A token acts as you, so it can only do what your role allows: a viewer's token can't cancel or rebuild, whatever it was granted. Permissions are fixed when the token is created. To change them, create a new token and revoke the old one.
