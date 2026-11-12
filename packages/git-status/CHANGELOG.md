@@ -1,11 +1,17 @@
 # @ovr/git-status
 
+## 0.1.25
+
+### Patch Changes
+
+- Updated dependencies [[`f2cdf08`](https://github.com/open-visual-regression/open-visual-regression/commit/f2cdf089f02bb377005b06d6780c0db7ec97e9ad), [`4b4760a`](https://github.com/open-visual-regression/open-visual-regression/commit/4b4760aeed815484daae115685e30d7ed128f297), [`54bc735`](https://github.com/open-visual-regression/open-visual-regression/commit/54bc735e56c108919283cd3c90897c65010a64a0)]:
+  - @ovr/db@0.4.12
+
 ## 0.1.24
 
 ### Patch Changes
 
 - [#522](https://github.com/open-visual-regression/open-visual-regression/pull/522) [`e5ff227`](https://github.com/open-visual-regression/open-visual-regression/commit/e5ff227e615f87d150bd5778e1fb8ea01011916b) Thanks [@tgfischer](https://github.com/tgfischer)! - **Breaking:** The web app and worker read the GitHub App's private key from a mounted file named by `OVR_GITHUB_APP_PRIVATE_KEY_FILE`, so the key no longer sits in their environment. `OVR_GITHUB_APP_PRIVATE_KEY` is no longer read.
-
   - **Docker Compose:** mount the `.pem` file as a Compose secret and set `OVR_GITHUB_APP_ID` and `OVR_GITHUB_APP_PRIVATE_KEY_FILE` in `docker-compose.override.yml`. See the GitHub App docs page.
   - **Helm with `githubApp.privateKey`:** nothing to change, as long as the key is a multi-line string rather than one line with `\n` escapes.
   - **Helm with `existingSecret`:** rename the Secret's `OVR_GITHUB_APP_PRIVATE_KEY` entry to `github-app-private-key.pem` with real line breaks, drop `OVR_GITHUB_APP_ID`, and set `githubApp.appId`.

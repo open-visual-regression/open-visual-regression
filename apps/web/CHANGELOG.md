@@ -1,16 +1,62 @@
 # @ovr/web
 
+## 0.23.0
+
+### Minor Changes
+
+- [#535](https://github.com/open-visual-regression/open-visual-regression/pull/535) [`f2cdf08`](https://github.com/open-visual-regression/open-visual-regression/commit/f2cdf089f02bb377005b06d6780c0db7ec97e9ad) Thanks [@tgfischer](https://github.com/tgfischer)! - Personal access tokens can be allowed to cancel and rebuild builds and snapshots. Pick the permission when creating the token; existing tokens stay read-only.
+
+- [#536](https://github.com/open-visual-regression/open-visual-regression/pull/536) [`0d071e2`](https://github.com/open-visual-regression/open-visual-regression/commit/0d071e2c5e1b551d534b949562a6df00efaf0e84) Thanks [@tgfischer](https://github.com/tgfischer)! - Personal access tokens can be allowed to approve and reject snapshots. Pick the permission when creating the token. Removing a vote still needs the web app.
+
+- [#319](https://github.com/open-visual-regression/open-visual-regression/pull/319) [`ca1699e`](https://github.com/open-visual-regression/open-visual-regression/commit/ca1699e58533885c57e615cf0f7a3a47fb279596) Thanks [@tgfischer](https://github.com/tgfischer)! - Turn on Cache Components and Partial Prefetching. Each page now has a prerendered shell, so links load their page's skeleton ahead of the click and navigation shows it right away while the data streams in. Links to the same kind of page share one prefetch instead of one per link.
+
+- [#529](https://github.com/open-visual-regression/open-visual-regression/pull/529) [`54bc735`](https://github.com/open-visual-regression/open-visual-regression/commit/54bc735e56c108919283cd3c90897c65010a64a0) Thanks [@tgfischer](https://github.com/tgfischer)! - The snapshots page shows each project's current baselines, instead of its latest main build with snapshots still in review or in flight. The status and baseline filters are gone from it.
+
+### Patch Changes
+
+- [#541](https://github.com/open-visual-regression/open-visual-regression/pull/541) [`e8e659f`](https://github.com/open-visual-regression/open-visual-regression/commit/e8e659f44e0605e321a0f5032edaf2dbc4a221b7) Thanks [@tgfischer](https://github.com/tgfischer)! - The web, worker, and bull-board Docker images run on Node.js 26 LTS instead of Node.js 24.
+
+- [#542](https://github.com/open-visual-regression/open-visual-regression/pull/542) [`47d3c33`](https://github.com/open-visual-regression/open-visual-regression/commit/47d3c33a8d836b94c59ef51748a272a2c3e8bcc7) Thanks [@tgfischer](https://github.com/tgfischer)! - Pages send about half as many prefetch requests, now that the Next.js bug behind the endless prefetch loop is fixed.
+
+- [#320](https://github.com/open-visual-regression/open-visual-regression/pull/320) [`80d8d3a`](https://github.com/open-visual-regression/open-visual-regression/commit/80d8d3a6fa977241a7126a9826e703f81943af65) Thanks [@tgfischer](https://github.com/tgfischer)! - Send `X-Accel-Buffering: no` so pages keep streaming behind nginx, and document turning off response buffering on other reverse proxies.
+
+- [#547](https://github.com/open-visual-regression/open-visual-regression/pull/547) [`a99a093`](https://github.com/open-visual-regression/open-visual-regression/commit/a99a093499a9039bf3540208c0e0a89c4699f350) Thanks [@tgfischer](https://github.com/tgfischer)! - Keep the scroll position when going back to a list after approving or rejecting a build or snapshot, instead of jumping to the top once the page finishes reloading.
+
+- [#314](https://github.com/open-visual-regression/open-visual-regression/pull/314) [`2113256`](https://github.com/open-visual-regression/open-visual-regression/commit/2113256e5de7c1799215c635cb031376438e47ba) Thanks [@tgfischer](https://github.com/tgfischer)! - Show loading skeletons on the new project, users, access tokens, and account pages.
+
+- [#543](https://github.com/open-visual-regression/open-visual-regression/pull/543) [`7361191`](https://github.com/open-visual-regression/open-visual-regression/commit/73611910816d136cf6bde8e39be87d1c0ec26337) Thanks [@tgfischer](https://github.com/tgfischer)! - Opening `/settings` redirects straight to account settings before any page renders, so the redirect responds faster.
+
+- [#525](https://github.com/open-visual-regression/open-visual-regression/pull/525) [`ad18be6`](https://github.com/open-visual-regression/open-visual-regression/commit/ad18be6aad848ac04b1eebad0fe92528c0ced105) Thanks [@tgfischer](https://github.com/tgfischer)! - The sidebar now lists recent builds first, with projects below them. It shows up to 50 recent builds and the 5 most recent projects, so the builds list scrolls without moving the projects section, even on large screens. The mobile navigation menu uses the same order and limits.
+
+- [#315](https://github.com/open-visual-regression/open-visual-regression/pull/315) [`6a096ab`](https://github.com/open-visual-regression/open-visual-regression/commit/6a096abac9e2295b2a9a98eeff1398aaf8ba7d96) Thanks [@tgfischer](https://github.com/tgfischer)! - Show loading skeletons on the sign in, setup, and invitation pages.
+
+- [#531](https://github.com/open-visual-regression/open-visual-regression/pull/531) [`1da0ff4`](https://github.com/open-visual-regression/open-visual-regression/commit/1da0ff40bd69bdcaa21b89c059c1df95c74c8751) Thanks [@tgfischer](https://github.com/tgfischer)! - Snapshot cards that name their project now show it alongside the browser and viewport, instead of on a row of its own.
+
+- [#530](https://github.com/open-visual-regression/open-visual-regression/pull/530) [`263ac1a`](https://github.com/open-visual-regression/open-visual-regression/commit/263ac1a422f7bdece0aad863e8639397741a79ca) Thanks [@tgfischer](https://github.com/tgfischer)! - The snapshot page now remembers whether the right sidebar is open, which of its tabs is selected, and whether the diff overlay is shown, when you move between snapshots and after a reload.
+
+- [#528](https://github.com/open-visual-regression/open-visual-regression/pull/528) [`4b4760a`](https://github.com/open-visual-regression/open-visual-regression/commit/4b4760aeed815484daae115685e30d7ed128f297) Thanks [@tgfischer](https://github.com/tgfischer)! - Filtering the snapshots page by `current` and a flag no longer hangs on large databases, since the query now starts from current baselines instead of every build's history.
+
+- [#544](https://github.com/open-visual-regression/open-visual-regression/pull/544) [`feb3879`](https://github.com/open-visual-regression/open-visual-regression/commit/feb3879e3374a2e1979f551ef2d9531631e1f482) Thanks [@tgfischer](https://github.com/tgfischer)! - The settings sidebar stays filled in when you open settings, instead of going blank until your session loads.
+
+- [#533](https://github.com/open-visual-regression/open-visual-regression/pull/533) [`34b4893`](https://github.com/open-visual-regression/open-visual-regression/commit/34b4893cacb2d2989ea5471117dafcfa62c2bf7a) Thanks [@tgfischer](https://github.com/tgfischer)! - Approving or rejecting a snapshot or a whole build now returns not found for builds in another organization, like the rest of the review actions.
+- Updated dependencies [[`f2cdf08`](https://github.com/open-visual-regression/open-visual-regression/commit/f2cdf089f02bb377005b06d6780c0db7ec97e9ad), [`0d071e2`](https://github.com/open-visual-regression/open-visual-regression/commit/0d071e2c5e1b551d534b949562a6df00efaf0e84), [`4b4760a`](https://github.com/open-visual-regression/open-visual-regression/commit/4b4760aeed815484daae115685e30d7ed128f297), [`54bc735`](https://github.com/open-visual-regression/open-visual-regression/commit/54bc735e56c108919283cd3c90897c65010a64a0)]:
+  - @ovr/api@0.5.8
+  - @ovr/db@0.4.12
+  - @ovr/builds@0.2.16
+  - @ovr/reviews@0.1.31
+  - @ovr/git-status@0.1.25
+  - @ovr/queue@0.4.2
+  - @ovr/ui@0.1.5
+
 ## 0.22.0
 
 ### Minor Changes
 
 - [#522](https://github.com/open-visual-regression/open-visual-regression/pull/522) [`e5ff227`](https://github.com/open-visual-regression/open-visual-regression/commit/e5ff227e615f87d150bd5778e1fb8ea01011916b) Thanks [@tgfischer](https://github.com/tgfischer)! - **Breaking:** The Helm chart reads only its documented keys from the Secret, by name, instead of loading every key into the environment. If you use `existingSecret`:
-
   - Keys you added beyond the documented ones no longer reach OVR.
   - Pods won't start until the Secret has `DATABASE_URL`, `REDIS_URL`, `BETTER_AUTH_SECRET` and `OVR_GIT_TOKEN_ENCRYPTION_KEY`. Separate `DATABASE_*` variables aren't read.
 
 - [#522](https://github.com/open-visual-regression/open-visual-regression/pull/522) [`e5ff227`](https://github.com/open-visual-regression/open-visual-regression/commit/e5ff227e615f87d150bd5778e1fb8ea01011916b) Thanks [@tgfischer](https://github.com/tgfischer)! - **Breaking:** The web app and worker read the GitHub App's private key from a mounted file named by `OVR_GITHUB_APP_PRIVATE_KEY_FILE`, so the key no longer sits in their environment. `OVR_GITHUB_APP_PRIVATE_KEY` is no longer read.
-
   - **Docker Compose:** mount the `.pem` file as a Compose secret and set `OVR_GITHUB_APP_ID` and `OVR_GITHUB_APP_PRIVATE_KEY_FILE` in `docker-compose.override.yml`. See the GitHub App docs page.
   - **Helm with `githubApp.privateKey`:** nothing to change, as long as the key is a multi-line string rather than one line with `\n` escapes.
   - **Helm with `existingSecret`:** rename the Secret's `OVR_GITHUB_APP_PRIVATE_KEY` entry to `github-app-private-key.pem` with real line breaks, drop `OVR_GITHUB_APP_ID`, and set `githubApp.appId`.

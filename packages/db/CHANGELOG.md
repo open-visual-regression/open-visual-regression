@@ -1,5 +1,15 @@
 # @ovr/db
 
+## 0.4.12
+
+### Patch Changes
+
+- [#535](https://github.com/open-visual-regression/open-visual-regression/pull/535) [`f2cdf08`](https://github.com/open-visual-regression/open-visual-regression/commit/f2cdf089f02bb377005b06d6780c0db7ec97e9ad) Thanks [@tgfischer](https://github.com/tgfischer)! - Personal access tokens can be allowed to cancel and rebuild builds and snapshots. Pick the permission when creating the token; existing tokens stay read-only.
+
+- [#528](https://github.com/open-visual-regression/open-visual-regression/pull/528) [`4b4760a`](https://github.com/open-visual-regression/open-visual-regression/commit/4b4760aeed815484daae115685e30d7ed128f297) Thanks [@tgfischer](https://github.com/tgfischer)! - Filtering the snapshots page by `current` and a flag no longer hangs on large databases, since the query now starts from current baselines instead of every build's history.
+
+- [#529](https://github.com/open-visual-regression/open-visual-regression/pull/529) [`54bc735`](https://github.com/open-visual-regression/open-visual-regression/commit/54bc735e56c108919283cd3c90897c65010a64a0) Thanks [@tgfischer](https://github.com/tgfischer)! - The snapshots page shows each project's current baselines, instead of its latest main build with snapshots still in review or in flight. The status and baseline filters are gone from it.
+
 ## 0.4.11
 
 ### Patch Changes

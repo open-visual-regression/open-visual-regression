@@ -1,5 +1,15 @@
 # @ovr/api
 
+## 0.5.8
+
+### Patch Changes
+
+- [#535](https://github.com/open-visual-regression/open-visual-regression/pull/535) [`f2cdf08`](https://github.com/open-visual-regression/open-visual-regression/commit/f2cdf089f02bb377005b06d6780c0db7ec97e9ad) Thanks [@tgfischer](https://github.com/tgfischer)! - Personal access tokens can be allowed to cancel and rebuild builds and snapshots. Pick the permission when creating the token; existing tokens stay read-only.
+
+- [#536](https://github.com/open-visual-regression/open-visual-regression/pull/536) [`0d071e2`](https://github.com/open-visual-regression/open-visual-regression/commit/0d071e2c5e1b551d534b949562a6df00efaf0e84) Thanks [@tgfischer](https://github.com/tgfischer)! - Personal access tokens can be allowed to approve and reject snapshots. Pick the permission when creating the token. Removing a vote still needs the web app.
+
+- [#529](https://github.com/open-visual-regression/open-visual-regression/pull/529) [`54bc735`](https://github.com/open-visual-regression/open-visual-regression/commit/54bc735e56c108919283cd3c90897c65010a64a0) Thanks [@tgfischer](https://github.com/tgfischer)! - The snapshots page shows each project's current baselines, instead of its latest main build with snapshots still in review or in flight. The status and baseline filters are gone from it.
+
 ## 0.5.7
 
 ### Patch Changes

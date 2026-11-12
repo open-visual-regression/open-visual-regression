@@ -1,16 +1,32 @@
 # @ovr/worker
 
+## 0.23.0
+
+### Minor Changes
+
+- [#529](https://github.com/open-visual-regression/open-visual-regression/pull/529) [`54bc735`](https://github.com/open-visual-regression/open-visual-regression/commit/54bc735e56c108919283cd3c90897c65010a64a0) Thanks [@tgfischer](https://github.com/tgfischer)! - The snapshots page shows each project's current baselines, instead of its latest main build with snapshots still in review or in flight. The status and baseline filters are gone from it.
+
+### Patch Changes
+
+- [#541](https://github.com/open-visual-regression/open-visual-regression/pull/541) [`e8e659f`](https://github.com/open-visual-regression/open-visual-regression/commit/e8e659f44e0605e321a0f5032edaf2dbc4a221b7) Thanks [@tgfischer](https://github.com/tgfischer)! - The web, worker, and bull-board Docker images run on Node.js 26 LTS instead of Node.js 24.
+
+- [#528](https://github.com/open-visual-regression/open-visual-regression/pull/528) [`4b4760a`](https://github.com/open-visual-regression/open-visual-regression/commit/4b4760aeed815484daae115685e30d7ed128f297) Thanks [@tgfischer](https://github.com/tgfischer)! - Filtering the snapshots page by `current` and a flag no longer hangs on large databases, since the query now starts from current baselines instead of every build's history.
+- Updated dependencies [[`f2cdf08`](https://github.com/open-visual-regression/open-visual-regression/commit/f2cdf089f02bb377005b06d6780c0db7ec97e9ad), [`4b4760a`](https://github.com/open-visual-regression/open-visual-regression/commit/4b4760aeed815484daae115685e30d7ed128f297), [`54bc735`](https://github.com/open-visual-regression/open-visual-regression/commit/54bc735e56c108919283cd3c90897c65010a64a0)]:
+  - @ovr/db@0.4.12
+  - @ovr/builds@0.2.16
+  - @ovr/capture@0.3.24
+  - @ovr/git-status@0.1.25
+  - @ovr/queue@0.4.2
+
 ## 0.22.0
 
 ### Minor Changes
 
 - [#522](https://github.com/open-visual-regression/open-visual-regression/pull/522) [`e5ff227`](https://github.com/open-visual-regression/open-visual-regression/commit/e5ff227e615f87d150bd5778e1fb8ea01011916b) Thanks [@tgfischer](https://github.com/tgfischer)! - **Breaking:** The Helm chart reads only its documented keys from the Secret, by name, instead of loading every key into the environment. If you use `existingSecret`:
-
   - Keys you added beyond the documented ones no longer reach OVR.
   - Pods won't start until the Secret has `DATABASE_URL`, `REDIS_URL`, `BETTER_AUTH_SECRET` and `OVR_GIT_TOKEN_ENCRYPTION_KEY`. Separate `DATABASE_*` variables aren't read.
 
 - [#522](https://github.com/open-visual-regression/open-visual-regression/pull/522) [`e5ff227`](https://github.com/open-visual-regression/open-visual-regression/commit/e5ff227e615f87d150bd5778e1fb8ea01011916b) Thanks [@tgfischer](https://github.com/tgfischer)! - **Breaking:** The web app and worker read the GitHub App's private key from a mounted file named by `OVR_GITHUB_APP_PRIVATE_KEY_FILE`, so the key no longer sits in their environment. `OVR_GITHUB_APP_PRIVATE_KEY` is no longer read.
-
   - **Docker Compose:** mount the `.pem` file as a Compose secret and set `OVR_GITHUB_APP_ID` and `OVR_GITHUB_APP_PRIVATE_KEY_FILE` in `docker-compose.override.yml`. See the GitHub App docs page.
   - **Helm with `githubApp.privateKey`:** nothing to change, as long as the key is a multi-line string rather than one line with `\n` escapes.
   - **Helm with `existingSecret`:** rename the Secret's `OVR_GITHUB_APP_PRIVATE_KEY` entry to `github-app-private-key.pem` with real line breaks, drop `OVR_GITHUB_APP_ID`, and set `githubApp.appId`.
