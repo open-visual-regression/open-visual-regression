@@ -28,12 +28,13 @@ jobs:
           registry-url: https://registry.npmjs.org
       - run: pnpm install --frozen-lockfile
       - name: Create Release Pull Request or publish
-        uses: changesets/action@v2
+        # v2 requires @changesets/cli v3; stay on v1 while the repo uses CLI v2.
+        uses: changesets/action@v1
         with:
-          version-script: pnpm version-packages
-          publish-script: pnpm release
-          commit-message: "chore: version packages"
-          pr-title: "chore: version packages"
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          version: pnpm version-packages
+          publish: pnpm release
+          commit: "chore: version packages"
+          title: "chore: version packages"
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: "true"
