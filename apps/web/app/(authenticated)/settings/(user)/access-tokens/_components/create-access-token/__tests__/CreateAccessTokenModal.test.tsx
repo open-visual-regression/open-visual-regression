@@ -63,8 +63,8 @@ describe("CreateAccessTokenModal", () => {
 
     await user.click(screen.getByRole("button", { name: /new access token/i }));
     await user.type(screen.getByLabelText(/name/i), "ci");
-    await user.click(screen.getByRole("checkbox", { name: /cancel and rebuild builds/i }));
-    await user.click(screen.getByRole("checkbox", { name: /approve and reject snapshots/i }));
+    await user.click(screen.getByRole("checkbox", { name: "builds:write" }));
+    await user.click(screen.getByRole("checkbox", { name: "reviews:write" }));
     await user.click(screen.getByRole("button", { name: /^create$/i }));
 
     expect(await screen.findByRole("heading", { name: /access token created/i })).toBeVisible();

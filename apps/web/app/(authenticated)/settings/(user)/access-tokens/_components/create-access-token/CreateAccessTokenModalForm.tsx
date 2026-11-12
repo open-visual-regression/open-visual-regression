@@ -105,9 +105,9 @@ export const CreateAccessTokenModalForm = () => {
           </Field>
           <FieldSet>
             <FieldLegend variant="label">permissions</FieldLegend>
-            <FieldDescription>every access token can read builds</FieldDescription>
+            <FieldDescription>every access token has builds:read</FieldDescription>
             <FieldGroup data-slot="checkbox-group">
-              {OPTIONAL_PERMISSIONS.map(({ resource, action, label }) => {
+              {OPTIONAL_PERMISSIONS.map(({ resource, action }) => {
                 const id = `permission-${resource}-${action}`;
 
                 return (
@@ -122,7 +122,7 @@ export const CreateAccessTokenModalForm = () => {
                           checked={field.value?.includes(action) ?? false}
                           onCheckedChange={(checked) => field.onChange(checked ? [action] : [])}
                         />
-                        <FieldLabel htmlFor={id}>{label}</FieldLabel>
+                        <FieldLabel htmlFor={id}>{`${resource}:${action}`}</FieldLabel>
                       </Field>
                     )}
                   />
