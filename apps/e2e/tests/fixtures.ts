@@ -6,6 +6,7 @@ import { test as base } from "@playwright/test";
 
 import { SEED_ARTIFACT, type SeedData } from "./constants";
 import { BuildPage } from "./pages/BuildPage";
+import { BuildsPage } from "./pages/BuildsPage";
 import { ForbiddenPage } from "./pages/ForbiddenPage";
 import { IdentityProviderLoginPage } from "./pages/IdentityProviderLoginPage";
 import { JobsSettingsPage } from "./pages/JobsSettingsPage";
@@ -25,6 +26,7 @@ type TestFixtures = {
   projectBuildsPage: ProjectBuildsPage;
   snapshotReviewPage: SnapshotReviewPage;
   buildPage: BuildPage;
+  buildsPage: BuildsPage;
   jobsSettingsPage: JobsSettingsPage;
   organizationSettingsPage: OrganizationSettingsPage;
   overviewPage: OverviewPage;
@@ -53,6 +55,9 @@ export const test = base.extend<TestFixtures>({
   },
   buildPage: async ({ page }, use) => {
     await use(new BuildPage(page));
+  },
+  buildsPage: async ({ page }, use) => {
+    await use(new BuildsPage(page));
   },
   jobsSettingsPage: async ({ page }, use) => {
     await use(new JobsSettingsPage(page));

@@ -169,16 +169,46 @@ export const useScrollRestoration = () => {
       return;
     }
 
-    const saved = useScrollPositionStore.getState().entries[entryKey] ?? {};
-    const cleanups = Array.from(document.querySelectorAll(CONTAINER_SELECTOR)).flatMap(
-      (container) => {
-        const id = container.getAttribute(SCROLL_ID_ATTRIBUTE);
-        const top = id ? saved[id] : undefined;
-        return id && top ? [restoreContainer(container, id, top)] : [];
-      },
-    );
+    const cleanups: (() => void)[] = [];
+    const handled = new WeakSet<Element>();
+
+    const restoreIfSaved = (container: Element) => {
+      if (handled.has(container)) {
+        return;
+      }
+      handled.add(container);
+
+      const id = container.getAttribute(SCROLL_ID_ATTRIBUTE);
+      const top = id ? useScrollPositionStore.getState().entries[entryKey]?.[id] : undefined;
+      if (id && top) {
+        cleanups.push(restoreContainer(container, id, top));
+      }
+    };
+
+    for (const container of document.querySelectorAll(CONTAINER_SELECTOR)) {
+      restoreIfSaved(container);
+    }
+
+    // Containers can mount after the traversal, e.g. when a `loading.tsx` skeleton is replaced.
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        for (const node of mutation.addedNodes) {
+          if (!(node instanceof Element)) {
+            continue;
+          }
+          if (node.matches(CONTAINER_SELECTOR)) {
+            restoreIfSaved(node);
+          }
+          for (const container of node.querySelectorAll(CONTAINER_SELECTOR)) {
+            restoreIfSaved(container);
+          }
+        }
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
 
     return () => {
+      observer.disconnect();
       for (const cleanup of cleanups) {
         cleanup();
       }
@@ -195,8 +225,15 @@ export const useScrollRestoration = () => {
 
   // Traversal between two entries for the same URL leaves the deps above equal.
   useEffect(() => {
-    const onPopState = () => restore();
+    let cleanup: (() => void) | undefined;
+    const onPopState = () => {
+      cleanup?.();
+      cleanup = restore();
+    };
     window.addEventListener("popstate", onPopState);
-    return () => window.removeEventListener("popstate", onPopState);
+    return () => {
+      window.removeEventListener("popstate", onPopState);
+      cleanup?.();
+    };
   }, [restore]);
 };

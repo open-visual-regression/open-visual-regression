@@ -27,6 +27,42 @@ test.describe("Scroll restoration", () => {
       .toBeCloseTo(scrolled, -2);
   });
 
+  test("should keep the builds list where the user left off after approving a build and going back", async ({
+    seedClient,
+    buildsPage,
+    buildPage,
+    page,
+  }) => {
+    const target = await seedReviewableSnapshot(seedClient);
+    await seedReviewableSnapshot(seedClient);
+    await seedReviewableSnapshot(seedClient);
+
+    // Short enough for a few builds to scroll.
+    await page.setViewportSize({ width: 1280, height: 420 });
+    await buildsPage.goto();
+    const row = buildsPage.buildRow(target.projectId, target.buildId);
+    await expect(row).toBeAttached();
+
+    await buildsPage.scrollDown(150);
+    const scrolled = await buildsPage.scrollOffset();
+    expect(scrolled).toBeGreaterThan(0);
+
+    await row.click();
+    await page.waitForURL(`**/builds/${target.buildId}`);
+
+    await buildPage.approveAllButton().click();
+    await expect(buildPage.approvedButton()).toBeVisible();
+
+    await page.goBack();
+    await expect(row).toBeVisible();
+
+    await expect
+      .poll(() => buildsPage.scrollOffset(), { timeout: 10_000 })
+      .toBeCloseTo(scrolled, -1);
+    await page.waitForTimeout(1_500);
+    expect(await buildsPage.scrollOffset()).toBeCloseTo(scrolled, -1);
+  });
+
   test("should show the top of the build page when opening it fresh", async ({
     seedClient,
     buildPage,
