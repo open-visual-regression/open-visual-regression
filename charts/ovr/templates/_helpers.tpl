@@ -152,7 +152,6 @@ fifo
   containerPort: {{ .Values.metrics.port }}
 {{- end -}}
 
-{{/* Read by scrapers that discover pods by annotation. */}}
 {{- define "ovr.metricsAnnotations" -}}
 prometheus.io/scrape: "true"
 prometheus.io/port: {{ .Values.metrics.port | quote }}
