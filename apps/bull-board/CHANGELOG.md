@@ -1,5 +1,13 @@
 # @ovr/bull-board
 
+## 0.1.27
+
+### Patch Changes
+
+- [#541](https://github.com/open-visual-regression/open-visual-regression/pull/541) [`e8e659f`](https://github.com/open-visual-regression/open-visual-regression/commit/e8e659f44e0605e321a0f5032edaf2dbc4a221b7) Thanks [@tgfischer](https://github.com/tgfischer)! - The web, worker, and bull-board Docker images run on Node.js 26 LTS instead of Node.js 24.
+- Updated dependencies []:
+  - @ovr/queue@0.4.2
+
 ## 0.1.26
 
 ### Patch Changes

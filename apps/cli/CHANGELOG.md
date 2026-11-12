@@ -1,5 +1,15 @@
 # @open-visual-regression/cli
 
+## 0.14.0
+
+### Minor Changes
+
+- [#537](https://github.com/open-visual-regression/open-visual-regression/pull/537) [`6bcb001`](https://github.com/open-visual-regression/open-visual-regression/commit/6bcb00149fa1cbb7582b661477259db27a9f9de5) Thanks [@tgfischer](https://github.com/tgfischer)! - Adds `ovr builds cancel` and `ovr builds rebuild`. `rebuild --wait` waits for the new build like `ovr upload storybook --wait`. Both need an access token that can cancel and rebuild builds.
+
+- [#539](https://github.com/open-visual-regression/open-visual-regression/pull/539) [`05849eb`](https://github.com/open-visual-regression/open-visual-regression/commit/05849ebc3c2426c5a9c3a8d81f4cb9f24bbf4a26) Thanks [@tgfischer](https://github.com/tgfischer)! - Adds `ovr builds approve`, `ovr builds reject`, `ovr diffs approve` and `ovr diffs reject`. They need an access token that can approve and reject snapshots.
+
+- [#538](https://github.com/open-visual-regression/open-visual-regression/pull/538) [`e525322`](https://github.com/open-visual-regression/open-visual-regression/commit/e525322939aa0f0234efb2d3519a9cd428939f75) Thanks [@tgfischer](https://github.com/tgfischer)! - Adds `ovr snapshots rebuild` to capture some of a build's snapshots again, chosen by ID or with the `ovr snapshots list` filters, such as `--status error`.
+
 ## 0.13.1
 
 ### Patch Changes

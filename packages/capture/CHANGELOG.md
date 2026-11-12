@@ -1,5 +1,15 @@
 # @ovr/capture
 
+## 0.3.24
+
+### Patch Changes
+
+- Updated dependencies [[`f2cdf08`](https://github.com/open-visual-regression/open-visual-regression/commit/f2cdf089f02bb377005b06d6780c0db7ec97e9ad), [`4b4760a`](https://github.com/open-visual-regression/open-visual-regression/commit/4b4760aeed815484daae115685e30d7ed128f297), [`54bc735`](https://github.com/open-visual-regression/open-visual-regression/commit/54bc735e56c108919283cd3c90897c65010a64a0)]:
+  - @ovr/db@0.4.12
+  - @ovr/builds@0.2.16
+  - @ovr/reviews@0.1.31
+  - @ovr/queue@0.4.2
+
 ## 0.3.23
 
 ### Patch Changes
