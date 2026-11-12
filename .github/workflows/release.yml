@@ -36,6 +36,5 @@ jobs:
           pr-title: "chore: version packages"
           github-token: ${{ secrets.GITHUB_TOKEN }}
         env:
-          # Read by @changesets/changelog-github when generating changelog entries.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: "true"
