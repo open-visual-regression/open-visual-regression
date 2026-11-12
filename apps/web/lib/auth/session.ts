@@ -7,6 +7,7 @@ import { getLoginPath, REQUEST_PATH_HEADER } from "@/lib/utils/redirects";
 import { auth } from "./auth";
 import { getAuthConfig, type TrustedProxyConfig } from "./config";
 import { resolveRole, verifyProxyToken } from "./proxyToken";
+import { toRole } from "./roles";
 import { TRUSTED_PROXY_PROVIDER_ID } from "./trustedProxy";
 
 const getTrustedProxySession = async (requestHeaders: Headers, config: TrustedProxyConfig) => {
@@ -66,4 +67,10 @@ export const requireSession = async () => {
   }
 
   return session;
+};
+
+export const getViewerRole = async () => {
+  const session = await getCachedSession().catch(() => null);
+
+  return session ? toRole(session.user.role) : null;
 };
