@@ -34,6 +34,7 @@ export const WithAccessTokens: Story = {
       }),
       mocks.accessToken.generateAccessToken({
         name: "claude",
+        permissions: { builds: ["read", "write"], reviews: ["write"] },
         createdAt: new Date("2026-06-15T16:45:00.000Z"),
         lastRequest: null,
       }),

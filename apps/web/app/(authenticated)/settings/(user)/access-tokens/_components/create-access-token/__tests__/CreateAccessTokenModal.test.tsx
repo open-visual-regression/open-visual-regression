@@ -46,12 +46,32 @@ describe("CreateAccessTokenModal", () => {
 
     expect(await screen.findByRole("heading", { name: /access token created/i })).toBeVisible();
     expect(screen.getByText(ACCESS_TOKEN)).toBeVisible();
-    expect(mockCreate).toHaveBeenCalledWith({ name: "cursor" });
+    expect(mockCreate).toHaveBeenCalledWith({
+      name: "cursor",
+      permissions: { builds: [], reviews: [] },
+    });
     expect(mockRefresh).not.toHaveBeenCalled();
 
     await user.click(screen.getByRole("button", { name: /^done$/i }));
 
     await waitFor(() => expect(mockRefresh).toHaveBeenCalled());
+  });
+
+  it("should create an access token with the permissions that were checked", async ({ user }) => {
+    mockCreate.mockResolvedValue([null, { token: ACCESS_TOKEN }]);
+    renderComponent();
+
+    await user.click(screen.getByRole("button", { name: /new access token/i }));
+    await user.type(screen.getByLabelText(/name/i), "ci");
+    await user.click(screen.getByRole("checkbox", { name: "builds:write" }));
+    await user.click(screen.getByRole("checkbox", { name: "reviews:write" }));
+    await user.click(screen.getByRole("button", { name: /^create$/i }));
+
+    expect(await screen.findByRole("heading", { name: /access token created/i })).toBeVisible();
+    expect(mockCreate).toHaveBeenCalledWith({
+      name: "ci",
+      permissions: { builds: ["write"], reviews: ["write"] },
+    });
   });
 
   it("should show an error if access token creation fails", async ({ user }) => {

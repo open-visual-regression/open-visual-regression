@@ -3,6 +3,7 @@
 import { useTable, tableFeatures, createColumnHelper } from "@tanstack/react-table";
 import { useTanStackTableDevtools } from "@tanstack/react-table-devtools";
 
+import type { TokenPermissions } from "@ovr/api/contracts/accessTokens";
 import { ButtonSkeleton } from "@ovr/ui/components/button";
 import { Icon, XIcon } from "@ovr/ui/components/icon";
 import { Skeleton } from "@ovr/ui/components/skeleton";
@@ -24,6 +25,7 @@ import { RevokeAccessTokenButton } from "./RevokeAccessTokenButton";
 type AccessTokenTableRow = {
   id: string;
   name: string;
+  permissions: TokenPermissions;
   createdAt: Date;
   lastRequest: Date | null;
 };
@@ -35,6 +37,14 @@ const columns = columnHelper.columns([
   columnHelper.accessor("name", {
     header: "Name",
     meta: { skeleton: <Skeleton className="h-4 w-20" /> },
+  }),
+  columnHelper.accessor("permissions", {
+    header: "Permissions",
+    meta: { skeleton: <Skeleton className="h-4 w-24" /> },
+    cell: ({ getValue }) =>
+      Object.entries(getValue())
+        .flatMap(([resource, actions]) => actions.map((action) => `${resource}:${action}`))
+        .join(", "),
   }),
   columnHelper.accessor("createdAt", {
     header: "Created at",
@@ -133,6 +143,7 @@ export const AccessTokensTable = ({ data, loading = false }: AccessTokensTablePr
 const SKELETON_ROWS: AccessTokenTableRow[] = Array.from({ length: 3 }, (_, index) => ({
   id: `skeleton-${index}`,
   name: "",
+  permissions: {},
   createdAt: new Date(0),
   lastRequest: null,
 }));

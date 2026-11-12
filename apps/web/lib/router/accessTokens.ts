@@ -2,12 +2,17 @@
 
 import { ORPCError } from "@orpc/client";
 
-import { ACCESS_TOKEN_PERMISSIONS } from "@ovr/api/contracts/accessTokens";
+import { tokenPermissionsSchema } from "@ovr/api/contracts/accessTokens";
 import { dbClient } from "@ovr/db/client";
 
 import { authServerClient } from "../auth";
+import { toTokenPermissions } from "../auth/tokens";
 import { authenticatedMiddleware } from "./middleware";
 import { os } from "./os";
+
+// better-auth stores permissions as JSON text. A key without any is allowed nothing.
+const parsePermissions = (permissions: string | null) =>
+  permissions ? tokenPermissionsSchema.parse(JSON.parse(permissions)) : {};
 
 export const create = os.accessTokens.create
   .use(authenticatedMiddleware)
@@ -15,7 +20,7 @@ export const create = os.accessTokens.create
     const [error, token] = await authServerClient.createAccessToken({
       name: input.name,
       userId: context.user.id,
-      permissions: ACCESS_TOKEN_PERMISSIONS,
+      permissions: toTokenPermissions(input.permissions),
     });
 
     if (error) {
@@ -39,6 +44,7 @@ export const list = os.accessTokens.list
       accessTokens: accessTokens.map((token) => ({
         id: token.id,
         name: token.name!,
+        permissions: parsePermissions(token.permissions),
         createdAt: token.createdAt,
         lastRequest: token.lastRequest,
       })),
