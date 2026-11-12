@@ -1,5 +1,6 @@
 import { Typography } from "@ovr/ui/components/typography";
 
+import { SnapshotDimensions } from "../../snapshot-pane/SnapshotDimensions";
 import { SnapshotPane } from "../../snapshot-pane/SnapshotPane";
 import { SnapshotPaneHeader } from "../../snapshot-pane/SnapshotPaneHeader";
 import { SnapshotPaneImage } from "../../snapshot-pane/SnapshotPaneImage";
@@ -13,8 +14,12 @@ export type NewSnapshotPaneProps = {
 
 export const NewSnapshotPane = ({ imagePath, alt, canvasImagePaths }: NewSnapshotPaneProps) => (
   <SnapshotPane>
-    <SnapshotPaneHeader>
+    <SnapshotPaneHeader className="gap-2">
       <Typography variant="label">new</Typography>
+      <SnapshotDimensions
+        imagePath={imagePath}
+        comparedImagePaths={canvasImagePaths ?? [imagePath]}
+      />
     </SnapshotPaneHeader>
     <SnapshotPaneImage
       imagePath={imagePath}

@@ -1,6 +1,7 @@
 import { Typography } from "@ovr/ui/components/typography";
 
 import { BaselineCommitLink } from "../../snapshot-pane/BaselineCommitLink";
+import { SnapshotDimensions } from "../../snapshot-pane/SnapshotDimensions";
 import { SnapshotPane } from "../../snapshot-pane/SnapshotPane";
 import { SnapshotPaneHeader } from "../../snapshot-pane/SnapshotPaneHeader";
 import { SnapshotPaneImage } from "../../snapshot-pane/SnapshotPaneImage";
@@ -27,6 +28,7 @@ export const BaselineSnapshotPane = ({
     <SnapshotPaneHeader className="gap-2">
       <Typography variant="label">baseline</Typography>
       <BaselineCommitLink commitSha={commitSha} commitUrl={commitUrl} />
+      <SnapshotDimensions imagePath={imagePath} comparedImagePaths={canvasImagePaths} />
     </SnapshotPaneHeader>
     <SnapshotPaneImage
       imagePath={imagePath}

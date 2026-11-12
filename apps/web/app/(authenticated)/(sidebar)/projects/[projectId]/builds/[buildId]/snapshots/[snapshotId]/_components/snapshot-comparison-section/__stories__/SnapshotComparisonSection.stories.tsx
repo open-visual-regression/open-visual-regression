@@ -181,6 +181,13 @@ export const MobileWithBaselineAndDiff: Story = {
     },
     baseline: mobileBaseline,
   },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    const newImage = await canvas.findByRole("img", { name: "snapshot of Button Primary" });
+    await waitFor(() => expect(newImage.style.width).toBe("100%"));
+    await expect(canvas.queryByText("375×1400")).not.toBeInTheDocument();
+  },
 };
 
 export const DifferentSizes: Story = {
@@ -210,6 +217,8 @@ export const DifferentSizes: Story = {
     await waitFor(() =>
       expect(widthRatio(splitBaselineImage, splitNewImage)).toBeCloseTo(375 / 1280, 2),
     );
+    await expect(await canvas.findByText("375×1400")).toBeVisible();
+    await expect(await canvas.findByText("1280×973")).toBeVisible();
 
     await userEvent.click(canvas.getByRole("tab", { name: "slider" }));
 
@@ -220,6 +229,8 @@ export const DifferentSizes: Story = {
     await waitFor(() =>
       expect(widthRatio(sliderBaselineImage, sliderNewImage)).toBeCloseTo(375 / 1280, 2),
     );
+    await expect(await canvas.findByText("375×1400")).toBeVisible();
+    await expect(await canvas.findByText("1280×973")).toBeVisible();
     await expect(sliderBaselineImage.getBoundingClientRect().left).toBe(
       sliderNewImage.getBoundingClientRect().left,
     );

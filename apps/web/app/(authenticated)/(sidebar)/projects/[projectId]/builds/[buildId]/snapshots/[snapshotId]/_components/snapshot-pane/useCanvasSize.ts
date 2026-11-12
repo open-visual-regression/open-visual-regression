@@ -14,7 +14,7 @@ const loadImageSize = (imagePath: string) =>
     image.src = imagePath;
   });
 
-export const useCanvasSize = (imagePaths: (string | null)[]) =>
+export const useImageSizes = (imagePaths: (string | null)[]) =>
   useQueries({
     queries: imagePaths
       .filter((imagePath) => imagePath !== null)
@@ -24,16 +24,24 @@ export const useCanvasSize = (imagePaths: (string | null)[]) =>
         staleTime: Infinity,
         retry: false,
       })),
-    combine: (results): SnapshotSize | null => {
-      const sizes = results.flatMap(({ data }) => (data ? [data] : []));
-
-      if (sizes.length === 0 || results.some(({ isPending }) => isPending)) {
+    combine: (results): SnapshotSize[] | null => {
+      if (results.some(({ isPending }) => isPending)) {
         return null;
       }
 
-      return {
-        width: Math.max(...sizes.map(({ width }) => width)),
-        height: Math.max(...sizes.map(({ height }) => height)),
-      };
+      return results.flatMap(({ data }) => (data ? [data] : []));
     },
   });
+
+export const useCanvasSize = (imagePaths: (string | null)[]): SnapshotSize | null => {
+  const sizes = useImageSizes(imagePaths);
+
+  if (!sizes || sizes.length === 0) {
+    return null;
+  }
+
+  return {
+    width: Math.max(...sizes.map(({ width }) => width)),
+    height: Math.max(...sizes.map(({ height }) => height)),
+  };
+};

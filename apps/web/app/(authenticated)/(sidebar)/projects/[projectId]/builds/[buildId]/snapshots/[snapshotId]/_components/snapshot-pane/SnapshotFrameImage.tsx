@@ -22,6 +22,10 @@ export const SnapshotFrameImage = ({
   className,
 }: SnapshotFrameImageProps) => {
   const imageSize = useCanvasSize([imagePath]);
+  const isSmallerThanCanvas =
+    canvasSize !== null &&
+    imageSize !== null &&
+    (imageSize.width < canvasSize.width || imageSize.height < canvasSize.height);
 
   if (!imagePath) {
     return (
@@ -36,7 +40,11 @@ export const SnapshotFrameImage = ({
       src={imagePath}
       alt={alt}
       draggable={false}
-      className={cn("absolute top-0 left-0 block h-auto select-none", className)}
+      className={cn(
+        "absolute top-0 left-0 block h-auto select-none",
+        isSmallerThanCanvas && "outline-1 outline-ovr-fg-tertiary outline-dashed",
+        className,
+      )}
       style={
         canvasSize && imageSize
           ? { width: `${(imageSize.width / canvasSize.width) * 100}%` }

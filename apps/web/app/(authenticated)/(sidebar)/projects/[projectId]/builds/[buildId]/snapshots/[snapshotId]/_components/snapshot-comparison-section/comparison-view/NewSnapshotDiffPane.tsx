@@ -2,6 +2,7 @@ import { Switch } from "@ovr/ui/components/switch";
 import { Typography } from "@ovr/ui/components/typography";
 import { cn } from "@ovr/ui/lib/utils";
 
+import { SnapshotDimensions } from "../../snapshot-pane/SnapshotDimensions";
 import { SnapshotPane } from "../../snapshot-pane/SnapshotPane";
 import { SnapshotPaneHeader } from "../../snapshot-pane/SnapshotPaneHeader";
 import { SnapshotPaneImage } from "../../snapshot-pane/SnapshotPaneImage";
@@ -27,8 +28,9 @@ export const NewSnapshotDiffPane = ({
   onShowDiffChange,
 }: NewSnapshotDiffPaneProps) => (
   <SnapshotPane>
-    <SnapshotPaneHeader>
+    <SnapshotPaneHeader className="gap-2">
       <Typography variant="label">{label}</Typography>
+      <SnapshotDimensions imagePath={imagePath} comparedImagePaths={canvasImagePaths} />
       <label className="ml-auto flex items-center gap-2">
         <Typography variant="caption">diff</Typography>
         <Switch checked={showDiff} onCheckedChange={onShowDiffChange} />
