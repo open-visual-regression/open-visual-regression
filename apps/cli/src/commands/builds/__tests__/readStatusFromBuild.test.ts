@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { BuildDetailSchema, BuildStatus } from "@ovr/api/contracts/builds";
+import type { BuildStatus } from "@ovr/api/contracts/builds";
+import { mocks } from "@ovr/mocks";
 
 import type { OvrClient } from "../../../client";
 import { BuildFailedError, BuildNeedsReviewError, pollBuildStatus } from "../../upload/poll";
@@ -8,41 +9,18 @@ import { readStatusFromBuild } from "../rebuild";
 
 type GetOne = OvrClient["builds"]["getOne"];
 
-const BUILD: BuildDetailSchema = {
-  id: "01a092d6-b0aa-71bf-9312-dd8ef48a22fb",
-  project: { id: "01a092d6-b0aa-71bf-9312-dd8ef48a22fc", name: "web" },
-  branch: "main",
-  commitSha: "a1b2c3d4e5f6",
-  name: null,
-  author: null,
-  errorMessage: null,
-  status: "queued",
-  buildType: "storybook",
-  createdAt: "2026-09-12T10:43:15Z",
-  queuedMs: null,
-  processingMs: null,
-  durationMs: null,
-  canceledBy: null,
-  isRebuildable: false,
-  isReviewable: false,
-  latestBuildId: null,
-  commitUrl: null,
-  branchUrl: null,
-  mainBranch: "main",
-  mainBranchUrl: null,
-  baseBuild: null,
-};
+const BUILD_ID = "01a092d6-b0aa-71bf-9312-dd8ef48a22fb";
 
 const pollBuild = (getOne: GetOne) =>
   pollBuildStatus({
     client: readStatusFromBuild({ builds: { getOne } }),
-    buildId: BUILD.id,
+    buildId: BUILD_ID,
     timeoutSeconds: 10,
     pollIntervalMs: 1,
   });
 
 const withStatus = (status: BuildStatus, errorMessage: string | null = null) => ({
-  build: { ...BUILD, status, errorMessage },
+  build: mocks.build.generateBuild({ id: BUILD_ID, status, errorMessage }),
 });
 
 describe("readStatusFromBuild", () => {
@@ -53,7 +31,7 @@ describe("readStatusFromBuild", () => {
       .mockResolvedValue(withStatus("unchanged"));
 
     await expect(pollBuild(getOne)).resolves.toBeUndefined();
-    expect(getOne).toHaveBeenCalledWith({ buildId: BUILD.id });
+    expect(getOne).toHaveBeenCalledWith({ buildId: BUILD_ID });
   });
 
   it("should say the build needs review without a review link", async () => {

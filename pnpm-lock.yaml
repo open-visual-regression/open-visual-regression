@@ -140,6 +140,9 @@ importers:
       '@ovr/diff-analysis':
         specifier: workspace:*
         version: link:../../packages/diff-analysis
+      '@ovr/mocks':
+        specifier: workspace:*
+        version: link:../../packages/mocks
       '@ovr/storybook-compat':
         specifier: workspace:*
         version: link:../../packages/storybook-compat
