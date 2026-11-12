@@ -15,6 +15,9 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [{ source: "/settings", destination: "/settings/account", permanent: false }];
   },
+  async headers() {
+    return [{ source: "/:path*{/}?", headers: [{ key: "X-Accel-Buffering", value: "no" }] }];
+  },
 };
 
 export default nextConfig;
