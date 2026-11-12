@@ -16,4 +16,14 @@ OVR has two kinds of tokens. A command accepts only one kind and rejects the oth
 | Project API key | A project's settings page | `ovr upload storybook` |
 | Personal access token | Your account's access tokens settings page | every `ovr builds`, `ovr snapshots` and `ovr diffs` command |
 
-A personal access token belongs to you, not a project — it can read builds across every project you have access to. For now it only grants read access to builds.
+A personal access token belongs to you, not a project — it can read builds across every project you have access to.
+
+## Access token permissions
+
+Every personal access token has `builds:read`, which lets it read builds. When you create one, you can also give it:
+
+| Permission | Lets the token |
+|------------|----------------|
+| `builds:write` | Cancel a build, rebuild a build, and rebuild some of a build's snapshots |
+
+A token acts as you, so it can only do what your role allows: a viewer's token can't cancel or rebuild, whatever it was granted. Permissions are fixed when the token is created. To change them, create a new token and revoke the old one.

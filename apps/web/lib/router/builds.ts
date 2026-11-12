@@ -182,7 +182,7 @@ export const watchStatus = os.builds.watchStatus
   .actionable();
 
 export const cancel = os.builds.cancel
-  .use(authenticatedMiddleware)
+  .use(callerMiddleware("builds", "write"))
   .use(reviewerMiddleware)
   .use(organizationBuildMiddleware)
   .handler(async ({ context }) => {
@@ -204,7 +204,7 @@ const REBUILD_ERROR_MESSAGES: Record<RebuildBlockedReason | "ARTIFACT_MISSING", 
 };
 
 export const rebuild = os.builds.rebuild
-  .use(authenticatedMiddleware)
+  .use(callerMiddleware("builds", "write"))
   .use(reviewerMiddleware)
   .use(organizationBuildMiddleware)
   .handler(async ({ context }) => {

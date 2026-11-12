@@ -12,6 +12,7 @@ import { storage } from "@ovr/storage";
 
 import { serverClient } from "@/lib/router";
 import { test, describe, expect } from "@/lib/testing/fixtures";
+import { asBearer } from "@/lib/testing/headers";
 
 vi.mock("next/headers");
 vi.mock("@ovr/queue/producer", async (importOriginal) => {
@@ -648,6 +649,57 @@ describe("builds", () => {
 
       expect(error?.code).toBe("FORBIDDEN");
     });
+
+    test("should let an access token that can write builds cancel a build", async ({ admin }) => {
+      const [, project] = await serverClient.projects.add(TEST_PROJECT);
+      const build = await dbClient.builds.create({
+        projectId: project!.projectId,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "builds/a/artifact",
+        createdBy: admin.id,
+        processingStatus: "processing",
+      });
+      const [, token] = await serverClient.accessTokens.create({
+        name: "ci",
+        permissions: { builds: ["write"] },
+      });
+
+      asBearer(token!.token);
+
+      const [error] = await serverClient.builds.cancel({ buildId: build!.id });
+
+      expect(error).toBeNull();
+      expect(await dbClient.builds.findById(build!.id)).toMatchObject({
+        processingStatus: "canceled",
+        canceledBy: admin.id,
+      });
+    });
+
+    test("should return FORBIDDEN for an access token that can only read builds", async ({
+      admin: _,
+    }) => {
+      const [, token] = await serverClient.accessTokens.create({ name: "cursor" });
+
+      asBearer(token!.token);
+
+      const [error] = await serverClient.builds.cancel({ buildId: uuidv7() });
+
+      expect(error?.code).toBe("FORBIDDEN");
+    });
+
+    test("should return FORBIDDEN for a viewer's access token", async ({ viewer: _ }) => {
+      const [, token] = await serverClient.accessTokens.create({
+        name: "ci",
+        permissions: { builds: ["write"] },
+      });
+
+      asBearer(token!.token);
+
+      const [error] = await serverClient.builds.cancel({ buildId: uuidv7() });
+
+      expect(error?.code).toBe("FORBIDDEN");
+    });
   });
 
   describe("rebuild", () => {
@@ -681,6 +733,50 @@ describe("builds", () => {
     });
 
     test("should return FORBIDDEN for a viewer", async ({ viewer: _ }) => {
+      const [error] = await serverClient.builds.rebuild({ buildId: uuidv7() });
+
+      expect(error?.code).toBe("FORBIDDEN");
+    });
+
+    test("should let an access token that can write builds rebuild a build", async ({ admin }) => {
+      const [, project] = await serverClient.projects.add(TEST_PROJECT);
+      const build = await seedRebuildableBuild(project!.projectId, admin.id);
+      const [, token] = await serverClient.accessTokens.create({
+        name: "ci",
+        permissions: { builds: ["write"] },
+      });
+
+      asBearer(token!.token);
+
+      const [error, result] = await serverClient.builds.rebuild({ buildId: build.id });
+
+      expect(error).toBeNull();
+      expect(await dbClient.builds.findById(result!.buildId)).toMatchObject({
+        processingStatus: "queued",
+        createdBy: admin.id,
+      });
+    });
+
+    test("should return FORBIDDEN for an access token that can only read builds", async ({
+      admin: _,
+    }) => {
+      const [, token] = await serverClient.accessTokens.create({ name: "cursor" });
+
+      asBearer(token!.token);
+
+      const [error] = await serverClient.builds.rebuild({ buildId: uuidv7() });
+
+      expect(error?.code).toBe("FORBIDDEN");
+    });
+
+    test("should return FORBIDDEN for a viewer's access token", async ({ viewer: _ }) => {
+      const [, token] = await serverClient.accessTokens.create({
+        name: "ci",
+        permissions: { builds: ["write"] },
+      });
+
+      asBearer(token!.token);
+
       const [error] = await serverClient.builds.rebuild({ buildId: uuidv7() });
 
       expect(error?.code).toBe("FORBIDDEN");

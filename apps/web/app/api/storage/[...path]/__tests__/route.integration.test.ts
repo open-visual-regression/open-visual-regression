@@ -5,6 +5,7 @@ import type { AddProjectInputSchema } from "@ovr/api/contracts/projects";
 
 import { serverClient } from "@/lib/router";
 import { describe, expect, test } from "@/lib/testing/fixtures";
+import { asBearer } from "@/lib/testing/headers";
 
 import { GET } from "../route";
 
@@ -20,10 +21,6 @@ const TEST_PROJECT: AddProjectInputSchema = {
 
 const buildRequest = async (path: string[]) =>
   GET(new Request(`http://localhost/api/storage/${path.join("/")}`, { headers: await headers() }));
-
-const asBearer = (token: string) => {
-  vi.mocked(headers).mockResolvedValue(new Headers({ authorization: `Bearer ${token}` }));
-};
 
 describe("GET /api/storage/[...path]", () => {
   test("should return 401 when there is no session", async () => {

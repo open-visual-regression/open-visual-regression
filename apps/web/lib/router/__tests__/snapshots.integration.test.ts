@@ -13,6 +13,7 @@ import { storage } from "@ovr/storage";
 import type { User } from "@/lib/auth/auth";
 import { serverClient } from "@/lib/router";
 import { test, describe, expect } from "@/lib/testing/fixtures";
+import { asBearer } from "@/lib/testing/headers";
 
 vi.mock("next/headers");
 
@@ -20,10 +21,6 @@ const TEST_PROJECT: AddProjectInputSchema = {
   projectName: "Test Project",
   projectDescription: "A test project",
   gitMainBranch: "main",
-};
-
-const asBearer = (token: string) => {
-  vi.mocked(headers).mockResolvedValue(new Headers({ authorization: `Bearer ${token}` }));
 };
 
 const VIEWPORT = {
@@ -1864,6 +1861,57 @@ describe("snapshots", () => {
     });
 
     test("should return FORBIDDEN for a viewer", async ({ viewer: _ }) => {
+      const [error] = await serverClient.snapshots.rebuild({
+        buildId: uuidv7(),
+        snapshotIds: [uuidv7()],
+      });
+
+      expect(error?.code).toBe("FORBIDDEN");
+    });
+
+    test("should let an access token that can write builds rebuild a snapshot", async ({
+      admin,
+    }) => {
+      const { build, snapshot } = await seedRebuildableSnapshot(admin);
+      const [, token] = await serverClient.accessTokens.create({
+        name: "ci",
+        permissions: { builds: ["write"] },
+      });
+
+      asBearer(token!.token);
+
+      const [error] = await serverClient.snapshots.rebuild({
+        buildId: build.id,
+        snapshotIds: [snapshot.id],
+      });
+
+      expect(error).toBeNull();
+      expect(await dbClient.snapshots.findById(snapshot.id)).toMatchObject({ status: "queued" });
+    });
+
+    test("should return FORBIDDEN for an access token that can only read builds", async ({
+      admin: _,
+    }) => {
+      const [, token] = await serverClient.accessTokens.create({ name: "cursor" });
+
+      asBearer(token!.token);
+
+      const [error] = await serverClient.snapshots.rebuild({
+        buildId: uuidv7(),
+        snapshotIds: [uuidv7()],
+      });
+
+      expect(error?.code).toBe("FORBIDDEN");
+    });
+
+    test("should return FORBIDDEN for a viewer's access token", async ({ viewer: _ }) => {
+      const [, token] = await serverClient.accessTokens.create({
+        name: "ci",
+        permissions: { builds: ["write"] },
+      });
+
+      asBearer(token!.token);
+
       const [error] = await serverClient.snapshots.rebuild({
         buildId: uuidv7(),
         snapshotIds: [uuidv7()],
