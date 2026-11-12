@@ -20,7 +20,6 @@ import {
 
 import { formatDateTime } from "@/lib/utils/date";
 
-import { describePermissions } from "../permissions";
 import { RevokeAccessTokenButton } from "./RevokeAccessTokenButton";
 
 type AccessTokenTableRow = {
@@ -42,7 +41,10 @@ const columns = columnHelper.columns([
   columnHelper.accessor("permissions", {
     header: "Permissions",
     meta: { skeleton: <Skeleton className="h-4 w-24" /> },
-    cell: ({ getValue }) => describePermissions(getValue()).join(", "),
+    cell: ({ getValue }) =>
+      Object.entries(getValue())
+        .flatMap(([resource, actions]) => actions.map((action) => `${resource}:${action}`))
+        .join(", "),
   }),
   columnHelper.accessor("createdAt", {
     header: "Created at",

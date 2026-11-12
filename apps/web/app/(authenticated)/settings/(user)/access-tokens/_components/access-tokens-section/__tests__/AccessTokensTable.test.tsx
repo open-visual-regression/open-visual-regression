@@ -42,9 +42,9 @@ describe("AccessTokensTable", () => {
     });
     render(<AccessTokensTable data={[readOnly, ci]} />);
 
-    expect(screen.getByRole("cell", { name: "read builds" })).toBeVisible();
+    expect(screen.getByRole("cell", { name: "builds:read" })).toBeVisible();
     expect(
-      screen.getByRole("cell", { name: "read builds, cancel and rebuild, approve and reject" }),
+      screen.getByRole("cell", { name: "builds:read, builds:write, reviews:write" }),
     ).toBeVisible();
   });
 
