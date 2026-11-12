@@ -15,7 +15,7 @@ import { MAX_LIMIT, parseEnumOption } from "../../filters";
 import { collectAllPages } from "../../paginate";
 
 // The server refuses to rebuild a snapshot that is still being captured or whose story is skipped.
-const UNREBUILDABLE_STATUSES: SnapshotDisplayStatus[] = ["queued", "processing", "skipped"];
+const NON_REBUILDABLE_STATUSES: SnapshotDisplayStatus[] = ["queued", "processing", "skipped"];
 
 type SnapshotsRebuildCommandOptions = {
   serverUrl?: string;
@@ -32,7 +32,7 @@ type RebuildCandidate = { id: string; status: SnapshotDisplayStatus };
 
 export const selectRebuildableSnapshots = (snapshots: RebuildCandidate[]) => {
   const rebuildable = snapshots.filter(
-    (snapshot) => !UNREBUILDABLE_STATUSES.includes(snapshot.status),
+    (snapshot) => !NON_REBUILDABLE_STATUSES.includes(snapshot.status),
   );
 
   return {
