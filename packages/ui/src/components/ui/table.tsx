@@ -12,6 +12,8 @@ declare module "@tanstack/table-core" {
   > {
     className?: string;
     disableRowLink?: boolean;
+    // What a cell in this column shows while the table is loading. Shape it like the real cell.
+    skeleton?: React.ReactNode;
   }
 }
 

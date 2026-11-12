@@ -141,4 +141,26 @@ const Button = ({
   );
 };
 
-export { Button, buttonVariants };
+type ButtonSkeletonProps = Pick<VariantProps<typeof buttonVariants>, "size"> & {
+  className?: string;
+  children?: React.ReactNode;
+};
+
+// Uses the button's own size classes and keeps its label in the layout (hidden), so the
+// placeholder is exactly as big as the button it stands in for.
+const ButtonSkeleton = ({ size, className, children }: ButtonSkeletonProps) => (
+  <div
+    aria-hidden
+    data-slot="skeleton"
+    className={cn(
+      buttonVariants({ size }),
+      "pointer-events-none animate-pulse border-transparent bg-ovr-border-subtle text-transparent",
+      className,
+    )}
+  >
+    {children}
+  </div>
+);
+
+export { Button, ButtonSkeleton, buttonVariants };
+export type { ButtonSkeletonProps };
