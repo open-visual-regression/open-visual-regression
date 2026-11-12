@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 
-import { requireSession } from "@/lib/auth/session";
 import { NavigationBarSkeleton } from "@/lib/components/navigation-bar/NavigationBarSkeleton";
 import { getSnapshotPreferences } from "@/lib/preferences/getSnapshotPreferences";
 import { QueryProvider } from "@/lib/providers/QueryProvider";
@@ -9,17 +8,20 @@ import { SnapshotPreferencesProvider } from "@/lib/providers/SnapshotPreferences
 
 import { DevTools } from "./_components/DevTools";
 import { NavigationBarContainer } from "./_components/navigation-bar-container/NavigationBarContainer";
+import { SessionGuard } from "./_components/SessionGuard";
 
 type AppLayoutProps = Readonly<{
   children: React.ReactNode;
 }>;
 
-export default async function AppLayout({ children }: AppLayoutProps) {
-  const [, snapshotPreferences] = await Promise.all([requireSession(), getSnapshotPreferences()]);
-
+export default function AppLayout({ children }: AppLayoutProps) {
   return (
     <QueryProvider>
-      <SnapshotPreferencesProvider initialPreferences={snapshotPreferences}>
+      {/* Not awaited, so reading the preference cookies doesn't hold up the page shell. */}
+      <SnapshotPreferencesProvider initialPreferences={getSnapshotPreferences()}>
+        <Suspense fallback={null}>
+          <SessionGuard />
+        </Suspense>
         <Suspense fallback={null}>
           <ScrollRestoration />
         </Suspense>
