@@ -23,20 +23,6 @@ export const accessTokenPermissionsSchema = z.object({
 
 export type AccessTokenPermissions = z.infer<typeof accessTokenPermissionsSchema>;
 
-export const toTokenPermissions = (permissions: AccessTokenPermissions = {}): TokenPermissions => {
-  const granted: TokenPermissions = { ...ACCESS_TOKEN_PERMISSIONS };
-
-  for (const [resource, actions] of Object.entries(permissions)) {
-    const merged = new Set([...(granted[resource] ?? []), ...(actions ?? [])]);
-
-    if (merged.size > 0) {
-      granted[resource] = [...merged];
-    }
-  }
-
-  return granted;
-};
-
 export const accessTokenSchema = z.object({
   id: z.string(),
   name: z.string(),

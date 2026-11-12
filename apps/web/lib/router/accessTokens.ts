@@ -2,10 +2,11 @@
 
 import { ORPCError } from "@orpc/client";
 
-import { toTokenPermissions, tokenPermissionsSchema } from "@ovr/api/contracts/accessTokens";
+import { tokenPermissionsSchema } from "@ovr/api/contracts/accessTokens";
 import { dbClient } from "@ovr/db/client";
 
 import { authServerClient } from "../auth";
+import { toTokenPermissions } from "../auth/tokens";
 import { authenticatedMiddleware } from "./middleware";
 import { os } from "./os";
 
