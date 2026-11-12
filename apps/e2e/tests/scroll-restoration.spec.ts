@@ -27,38 +27,44 @@ test.describe("Scroll restoration", () => {
       .toBeCloseTo(scrolled, -2);
   });
 
-  test("should keep the build page where the user left off after reviewing a snapshot and going back", async ({
+  test("should keep the builds list where the user left off after approving a build and going back", async ({
     seedClient,
+    buildsPage,
     buildPage,
-    snapshotReviewPage,
     page,
   }) => {
-    const { projectId, buildId, snapshotId } = await seedReviewableSnapshot(seedClient);
+    // Seeded oldest first, so the build to open sits below the newer ones.
+    const target = await seedReviewableSnapshot(seedClient);
+    await seedReviewableSnapshot(seedClient);
+    await seedReviewableSnapshot(seedClient);
 
-    await buildPage.goto(projectId, buildId);
-    await expect(buildPage.snapshotCards().first()).toBeVisible();
+    // A short viewport makes the list scroll without seeding dozens of builds.
+    await page.setViewportSize({ width: 1280, height: 420 });
+    await buildsPage.goto();
+    const row = buildsPage.buildRow(target.projectId, target.buildId);
+    await expect(row).toBeAttached();
 
-    await buildPage.scrollDown(500);
-    const scrolled = await buildPage.scrollOffset();
+    await buildsPage.scrollDown(150);
+    const scrolled = await buildsPage.scrollOffset();
     expect(scrolled).toBeGreaterThan(0);
 
-    await buildPage.snapshotCards().first().click();
-    await page.waitForURL(`**/snapshots/${snapshotId}`);
+    await row.click();
+    await page.waitForURL(`**/builds/${target.buildId}`);
 
-    // Approving refreshes the router, so going back refetches the build page and
-    // swaps its loading skeleton for a freshly mounted scroll container.
-    await snapshotReviewPage.approveButton().click();
-    await expect(snapshotReviewPage.approvedButton()).toBeVisible();
+    // Approving refreshes the router, so going back refetches the builds page and
+    // swaps its loading skeleton for a freshly mounted list.
+    await buildPage.approveAllButton().click();
+    await expect(buildPage.approvedButton()).toBeVisible();
 
     await page.goBack();
-    await expect(buildPage.snapshotCards().first()).toBeVisible();
+    await expect(row).toBeVisible();
 
     await expect
-      .poll(() => buildPage.scrollOffset(), { timeout: 10_000 })
-      .toBeCloseTo(scrolled, -2);
+      .poll(() => buildsPage.scrollOffset(), { timeout: 10_000 })
+      .toBeCloseTo(scrolled, -1);
     // ...and stays there once the refetch has settled.
     await page.waitForTimeout(1_500);
-    expect(await buildPage.scrollOffset()).toBeCloseTo(scrolled, -2);
+    expect(await buildsPage.scrollOffset()).toBeCloseTo(scrolled, -1);
   });
 
   test("should show the top of the build page when opening it fresh", async ({
