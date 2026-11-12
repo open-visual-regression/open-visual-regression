@@ -14,7 +14,6 @@ import { serverClient } from "@/lib/router";
 import { test, describe, expect } from "@/lib/testing/fixtures";
 
 vi.mock("next/headers");
-vi.mock("next/server");
 vi.mock("@ovr/queue/producer", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@ovr/queue/producer")>();
   return {

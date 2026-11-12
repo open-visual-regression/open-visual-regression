@@ -14,7 +14,6 @@ import { serverClient } from "@/lib/router";
 import { test, describe, expect } from "@/lib/testing/fixtures";
 
 vi.mock("next/headers");
-vi.mock("next/server");
 
 const TEST_PASSWORD = "securepass123";
 

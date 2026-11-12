@@ -7,7 +7,6 @@ import { serverClient } from "@/lib/router";
 import { test, describe, expect } from "@/lib/testing/fixtures";
 
 vi.mock("next/headers");
-vi.mock("next/server");
 
 const FAKE_PROJECT_ID = "01900000-0000-7000-8000-000000000000";
 

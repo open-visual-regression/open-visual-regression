@@ -9,7 +9,6 @@ import { describe, expect, test } from "@/lib/testing/fixtures";
 import { GET } from "../route";
 
 vi.mock("next/headers");
-vi.mock("next/server");
 
 const NONEXISTENT_PROJECT_ID = "01900000-0000-7000-8000-000000000000";
 

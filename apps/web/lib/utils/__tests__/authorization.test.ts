@@ -8,7 +8,6 @@ import { describe, expect, it } from "@/test-utils";
 import { verifyRole } from "../authorization";
 
 vi.mock("next/headers");
-vi.mock("next/server");
 vi.mock("@/lib/auth/auth");
 
 const mockGetSession = vi.mocked(auth.api.getSession);

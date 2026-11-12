@@ -1,6 +1,5 @@
 import { implement, onError, ORPCError } from "@orpc/server";
 import { headers } from "next/headers";
-import { connection } from "next/server";
 
 import { contract } from "@ovr/api/contracts/contract";
 import { createLogger } from "@ovr/logger";
@@ -18,8 +17,6 @@ export const os = implement(contract)
     }),
   )
   .use(async ({ next }) => {
-    await connection();
-
     return next({ context: { headers: await headers() } });
   });
 

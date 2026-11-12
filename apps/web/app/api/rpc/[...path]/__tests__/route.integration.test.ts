@@ -8,7 +8,6 @@ import { APP_VERSION } from "@/lib/utils/version";
 import { POST } from "../route";
 
 vi.mock("next/headers");
-vi.mock("next/server");
 
 const callProcedure = (path: string) =>
   POST(

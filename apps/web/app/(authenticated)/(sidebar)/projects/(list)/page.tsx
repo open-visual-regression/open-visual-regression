@@ -1,5 +1,4 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { connection } from "next/server";
 
 import { getCachedSession } from "@/lib/auth/session";
 import { projectsListInfiniteOptions } from "@/lib/orpc/projects-query";
@@ -14,8 +13,6 @@ import { ProjectsPageShell } from "../_components/ProjectsPageShell";
 import { ProjectsSection } from "../_components/ProjectsSection";
 
 export default async function ProjectsPage() {
-  await connection();
-
   const queryClient = getQueryClient();
 
   const [[countError, countResult], sessionResult] = await Promise.all([
