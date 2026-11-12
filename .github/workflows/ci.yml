@@ -331,63 +331,15 @@ jobs:
 
   publish-chart:
     name: Publish Helm chart
-    runs-on: ubuntu-latest
     needs: [release-meta, promote]
     if: needs.release-meta.outputs.released == 'true'
     permissions:
       contents: read
       packages: write
       id-token: write
-    env:
-      VERSION: ${{ needs.release-meta.outputs.version }}
-      CHART_REPO: ghcr.io/${{ github.repository_owner }}/charts
-      OWNER: ${{ github.repository_owner }}
-    steps:
-      - uses: actions/checkout@v7
-      - uses: azure/setup-helm@v5
-        with:
-          version: v3.16.3
-      - uses: sigstore/cosign-installer@v4.1.3
-
-      - name: Stamp the release version
-        run: |
-          images=$(printf -- '- name: web\n  image: ghcr.io/%s/web:%s\n- name: worker\n  image: ghcr.io/%s/worker:%s\n' \
-            "$OWNER" "$VERSION" "$OWNER" "$VERSION")
-          IMAGES="$images" yq -i '
-            .version = strenv(VERSION)
-            | .appVersion = strenv(VERSION)
-            | .annotations."artifacthub.io/images" = strenv(IMAGES)
-          ' charts/ovr/Chart.yaml
-          cat charts/ovr/Chart.yaml
-
-      - name: Lint and package
-        run: |
-          helm lint charts/ovr --strict --set existingSecret=lint
-          helm package charts/ovr --destination dist
-          test -f "dist/ovr-${VERSION}.tgz"
-
-      - name: Point Helm at the Docker credential store
-        run: |
-          mkdir -p "$HOME/.docker"
-          echo "HELM_REGISTRY_CONFIG=$HOME/.docker/config.json" >> "$GITHUB_ENV"
-
-      - name: Log in to GHCR
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io \
-            --username "${{ github.actor }}" --password-stdin
-
-      - name: Push
-        id: push
-        run: |
-          set -euo pipefail
-          helm push "dist/ovr-${VERSION}.tgz" "oci://${CHART_REPO}" 2>&1 | tee push.log
-          digest=$(awk '/^Digest: /{print $2}' push.log)
-          test -n "$digest"
-          echo "digest=$digest" >> "$GITHUB_OUTPUT"
-          echo "Published ${CHART_REPO}/ovr:${VERSION}@${digest}" >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Sign
-        run: cosign sign --yes "${CHART_REPO}/ovr@${{ steps.push.outputs.digest }}"
+    uses: ./.github/workflows/publish-chart.yml
+    with:
+      version: ${{ needs.release-meta.outputs.version }}
 
   github-release:
     name: Create GitHub release
