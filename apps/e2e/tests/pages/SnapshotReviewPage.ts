@@ -1,5 +1,16 @@
 import type { Locator, Page } from "@playwright/test";
 
+type SnapshotTarget = {
+  targetTitle: string;
+  targetName: string;
+};
+
+const IMAGE_NAME_PREFIXES = {
+  baseline: "baseline ",
+  new: "",
+  diff: "diff overlay of ",
+} as const;
+
 export class SnapshotReviewPage {
   constructor(private readonly page: Page) {}
 
@@ -21,6 +32,20 @@ export class SnapshotReviewPage {
 
   rejectedButton(): Locator {
     return this.page.getByRole("button", { name: "rejected", exact: true });
+  }
+
+  image(
+    view: keyof typeof IMAGE_NAME_PREFIXES,
+    { targetTitle, targetName }: SnapshotTarget,
+  ): Locator {
+    return this.page.getByRole("img", {
+      name: `${IMAGE_NAME_PREFIXES[view]}snapshot of ${targetTitle} ${targetName}`,
+      exact: true,
+    });
+  }
+
+  imageWidth(image: Locator): Promise<number> {
+    return image.evaluate((element: HTMLImageElement) => element.naturalWidth);
   }
 
   rebuildButton(): Locator {

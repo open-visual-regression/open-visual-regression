@@ -22,6 +22,7 @@ const restyleStorybook = async (dir: string): Promise<string> => {
 test("a branch that's behind main only shows its own changes", async ({
   buildPage,
   seedClient,
+  snapshotReviewPage,
 }) => {
   test.setTimeout(15 * 60 * 1000);
 
@@ -99,6 +100,24 @@ test("a branch that's behind main only shows its own changes", async ({
 
     expect(changedBranch.exitCode).not.toBe(0);
     expect(changedBranch.stderr + changedBranch.stdout).toMatch(/needs review/i);
+
+    const { builds: afterChange } = await seedClient.builds.list({ projectIds: [projectId] });
+    const changedBuildId = afterChange.find((build) => build.commitSha === ownChange)!.id;
+    const {
+      snapshots: [changed],
+    } = await seedClient.snapshots.list({
+      buildId: changedBuildId,
+      statuses: ["needs_review"],
+      limit: 1,
+    });
+    expect(changed).toBeDefined();
+
+    await snapshotReviewPage.goto(projectId, changedBuildId, changed!.id);
+    for (const view of ["baseline", "new", "diff"] as const) {
+      await expect
+        .poll(() => snapshotReviewPage.imageWidth(snapshotReviewPage.image(view, changed!)))
+        .toBeGreaterThan(0);
+    }
   } finally {
     await rm(repo, { recursive: true, force: true });
   }
