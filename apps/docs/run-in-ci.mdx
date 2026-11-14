@@ -1,0 +1,79 @@
+---
+title: Run OVR in CI
+description: Upload a build on every push, and make pull requests wait for visual review.
+---
+
+OVR needs a build for every commit you want checked: every pull request, and every push to the main branch. The main branch's builds keep the baselines current, so skipping them leaves pull requests comparing against old images.
+
+The examples below upload a [Storybook](/storybook/overview) build.
+
+## GitHub Actions
+
+Add the project's [API key](/manage/api-keys-and-tokens#api-keys) to your repository's secrets as `OVR_API_KEY`, then add a workflow:
+
+```yaml .github/workflows/ovr.yml
+name: Visual regression
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ovr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Check out the pull request's own commit, with the history OVR needs to find where the branch started.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm ci
+
+      - run: npx storybook build
+
+      - name: Upload to OVR
+        env:
+          OVR_API_KEY: ${{ secrets.OVR_API_KEY }}
+        run: |
+          npx @open-visual-regression/cli upload storybook \
+            --dir storybook-static \
+            --server-url https://ovr.example.com \
+            --branch "${{ github.head_ref || github.ref_name }}" \
+            --commit "${{ github.event.pull_request.head.sha || github.sha }}" \
+            --name "$(git log -1 --pretty=%s)" \
+            --author "$(git log -1 --pretty=%an)"
+```
+
+Two settings matter:
+
+- **The pull request's own commit.** On pull requests, GitHub checks out a merge of the pull request into its base branch by default. Checking out the pull request's head commit makes the images match the commit OVR records.
+- **`fetch-depth: 0`.** OVR uses the git history to compare a branch against main [as it was when the branch was cut](/baselines#branch-builds). In a shallow clone, it compares against main's latest baselines instead.
+
+## Other CI providers
+
+The CLI runs anywhere Node.js does. Pass the branch name and commit SHA from your provider's variables, and set `OVR_API_KEY` from its secrets:
+
+| Provider | `--branch` | `--commit` |
+| --- | --- | --- |
+| GitLab CI | `$CI_COMMIT_REF_NAME` | `$CI_COMMIT_SHA` |
+| CircleCI | `$CIRCLE_BRANCH` | `$CIRCLE_SHA1` |
+| Buildkite | `$BUILDKITE_BRANCH` | `$BUILDKITE_COMMIT` |
+
+Check out the full git history, as with `fetch-depth: 0` above.
+
+## Make pull requests wait for review
+
+There are two ways to stop a pull request from merging with unreviewed changes:
+
+- **Commit status.** With a [git integration](/manage/git-status-checks), OVR posts a status on each commit that fails until changes are approved. Make it required in your branch protection rules. Your CI job finishes as soon as the upload is done, and the status updates when someone reviews the build.
+- **`--wait`.** The upload waits for OVR's result and fails the CI job if anything needs review. A reviewer has to approve the changes and then re-run the job. Use it when a git integration isn't an option.
+
+## Faster pull request builds
+
+On pull requests, `--only-affected` captures only the stories a change can affect. See [Capture only affected stories](/storybook/only-affected).

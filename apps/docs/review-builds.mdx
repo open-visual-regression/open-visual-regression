@@ -1,0 +1,59 @@
+---
+title: Review builds
+description: Find what changed in a build, and approve or reject it.
+---
+
+When a build on a branch has changes, its commit status fails with "visual changes need review" until someone approves them. Click **Details** on the status in your pull request to open the build in OVR.
+
+## The build page
+
+The build page shows every snapshot in the build, with its status. At the top are the branch, commit, and author, the build it's [compared against](/baselines#branch-builds), and **view storybook**, which opens the Storybook the build captured.
+
+To narrow the list, filter by **status**, by **flags**, or by searching for a snapshot's name. Snapshots that need review are the ones to look at.
+
+## Compare a snapshot
+
+Click a snapshot to open it. **split** shows the baseline and the new image side by side, and can highlight the pixels that changed. **slider** puts one over the other, with a handle to drag between them. Click an image to zoom in.
+
+The snapshot page also has its **history** across recent builds, and its **logs**: messages from the browser console, requests it was captured without, and errors.
+
+## Approve or reject
+
+Approve a snapshot when the change is what you meant, and reject it when it isn't. Each snapshot is reviewed on its own, and the build's status follows:
+
+- A snapshot is approved once it has as many approvals as the project's [required reviewers](/manage/projects#settings), one by default.
+- One rejection rejects the snapshot, and the build.
+- Once every changed snapshot is approved, the build is approved and its commit status passes.
+
+**approve all** and **reject all** vote on every snapshot in the build that needs review.
+
+Your vote is listed under **reviews**, and you can change it or remove it. Admins can remove anyone's vote.
+
+Approving a change on a branch doesn't change the baseline. The change becomes the baseline when it's merged and the main branch's next build captures it. See [How OVR works](/how-ovr-works#the-main-branch-and-other-branches).
+
+You can review a build once it has finished, if it's the latest build on its branch. A snapshot that failed has nothing to review: fix it and rebuild.
+
+## Fix a failed or flaky build
+
+From the build page's menu:
+
+- **rebuild** captures the whole build again, as a new build. Use it when a build failed for a reason that had nothing to do with your code.
+- **cancel build** stops a build that's still running.
+
+On a snapshot page, **rebuild** captures that one snapshot again, in the same build.
+
+If a snapshot changes from build to build without a code change, see [Flaky snapshot detection](/flaky-snapshots).
+
+## From the command line
+
+Everything on this page can also be done with the CLI, by you or by an AI agent working for you:
+
+| Task | Command |
+| --- | --- |
+| List what needs review | `ovr snapshots list <buildId> --status needs_review` |
+| See how a snapshot changed | `ovr diffs get <snapshotId> --analyze` |
+| Approve or reject one snapshot | `ovr diffs approve <snapshotId>`, `ovr diffs reject <snapshotId>` |
+| Approve or reject a whole build | `ovr builds approve <buildId>`, `ovr builds reject <buildId>` |
+| Rebuild | `ovr builds rebuild <buildId>`, `ovr snapshots rebuild <buildId> <snapshotId...>` |
+
+The CLI needs an [access token](/manage/api-keys-and-tokens#access-tokens) with the right permissions.

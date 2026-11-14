@@ -30,32 +30,9 @@ ovr upload storybook \
 
 Without `--wait`, the command prints the build's URL and exits as soon as the upload is done. With `--wait`, it waits for OVR to capture and compare the build, and its [exit code](/cli/overview#exit-codes) tells your CI whether the build passed.
 
-## CI example
+## In CI
 
-```yaml
-- uses: actions/checkout@v4
-  with:
-    # Build the pull request's own commit, with the history OVR needs to find its merge base.
-    ref: ${{ github.event.pull_request.head.sha || github.sha }}
-    fetch-depth: 0
-
-- name: Build Storybook
-  run: pnpm build-storybook
-
-- name: Upload to OVR
-  env:
-    OVR_API_KEY: ${{ secrets.OVR_API_KEY }}
-  run: |
-    npx @open-visual-regression/cli upload storybook \
-      --dir storybook-static \
-      --server-url https://ovr.example.com \
-      --branch "${{ github.head_ref || github.ref_name }}" \
-      --commit "${{ github.event.pull_request.head.sha || github.sha }}" \
-      --name "$(git log -1 --pretty=%s)" \
-      --author "$(git log -1 --pretty=%an)"
-```
-
-On pull requests, GitHub checks out a merge of the pull request into its base branch by default. Checking out the pull request's own commit makes the screenshots match the commit OVR records, and lets OVR compare the branch against main [as it was when the branch was cut](/baselines#branch-builds).
+See [Run OVR in CI](/run-in-ci) for a complete GitHub Actions workflow, and the variables other CI providers use.
 
 <Note>
   This command used to be called `ovr snapshot storybook`. The old name still works but prints a deprecation notice, and will be removed in a future release.
