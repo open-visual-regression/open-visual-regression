@@ -41,6 +41,6 @@ test.describe("Storybook ingestion", () => {
     expect(buildUrl, stdout).toBeDefined();
 
     await page.goto(buildUrl!);
-    await expect(page.getByRole("status", { name: "build status" })).toBeVisible();
+    await expect(page.getByRole("status", { name: "Build status" })).toBeVisible();
   });
 });

@@ -17,8 +17,8 @@ const PROJECT_ID = "018f0000-0000-7000-8000-000000000000";
 const mockPush = vi.mocked(useRouter)().push;
 
 const STATUS_OPTIONS: FacetOption<BuildStatus>[] = [
-  { value: "queued", label: "queued" },
-  { value: "error", label: "error" },
+  { value: "queued", label: "Queued" },
+  { value: "error", label: "Error" },
 ];
 
 const BRANCH_OPTIONS: FacetOption<string>[] = [
@@ -67,8 +67,8 @@ describe("BuildsFilters", () => {
     renderComponent();
 
     await user.click(screen.getByRole("button", { name: /^status\s+any$/i }));
-    await user.click(await screen.findByRole("checkbox", { name: "queued" }));
-    await user.click(await screen.findByRole("checkbox", { name: "error" }));
+    await user.click(await screen.findByRole("checkbox", { name: "Queued" }));
+    await user.click(await screen.findByRole("checkbox", { name: "Error" }));
     await user.click(screen.getByRole("button", { name: /^apply$/i }));
 
     expect(mockPush).toHaveBeenCalledWith("/?status=queued&status=error");
@@ -107,7 +107,7 @@ describe("BuildsFilters", () => {
     await user.click(screen.getByRole("button", { name: /^branch\s+any$/i }));
 
     // The async facet always renders a search box, unlike the static status facet.
-    expect(await screen.findByRole("textbox", { name: "search options" })).toBeVisible();
+    expect(await screen.findByRole("textbox", { name: "Search options" })).toBeVisible();
     expect(await screen.findByRole("checkbox", { name: "main" })).toBeVisible();
     expect(screen.getByRole("checkbox", { name: "develop" })).toBeVisible();
   });
@@ -181,13 +181,13 @@ describe("BuildsFilters", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: "filters (active)" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Filters (active)" })).toBeVisible();
   });
 
   it("should not mark the mobile filter menu button as active when no filter is applied", () => {
     renderComponent();
 
-    expect(screen.getByRole("button", { name: "filters" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Filters" })).toBeVisible();
   });
 
   it("should not render a facet that has one or zero options", () => {
@@ -198,7 +198,7 @@ describe("BuildsFilters", () => {
         branches={[]}
         authors={[]}
         commitShas={[]}
-        statusOptions={[{ value: "queued", label: "queued" }]}
+        statusOptions={[{ value: "queued", label: "Queued" }]}
         branchOptions={BRANCH_OPTIONS}
         authorOptions={[]}
         commitShaOptions={[]}
@@ -218,7 +218,7 @@ describe("BuildsFilters", () => {
         branches={[]}
         authors={[]}
         commitShas={[]}
-        statusOptions={[{ value: "queued", label: "queued" }]}
+        statusOptions={[{ value: "queued", label: "Queued" }]}
         branchOptions={[]}
         authorOptions={[]}
         commitShaOptions={[]}

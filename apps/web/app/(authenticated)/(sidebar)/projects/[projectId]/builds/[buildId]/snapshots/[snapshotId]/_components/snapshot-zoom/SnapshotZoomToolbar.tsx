@@ -45,7 +45,7 @@ export const SnapshotZoomToolbar = ({
     <div className="flex shrink-0 flex-wrap items-center justify-end gap-x-1 gap-y-2 border-b border-ovr-border-subtle px-2 py-2 sm:gap-x-4 sm:px-4">
       <div className="mr-auto flex items-center gap-2 sm:gap-4">
         <DialogTitle className={cn(baseline && "sr-only")}>
-          <Typography variant="label">{view}</Typography>
+          <Typography variant="label">{view === "baseline" ? "Baseline" : "New"}</Typography>
         </DialogTitle>
         {baseline ? (
           <SegmentedTabs
@@ -53,14 +53,14 @@ export const SnapshotZoomToolbar = ({
             onValueChange={(value) => onViewChange(value as SnapshotZoomView)}
           >
             <SegmentedTabsList>
-              <SegmentedTabsTrigger value="baseline">baseline</SegmentedTabsTrigger>
-              <SegmentedTabsTrigger value="new">new</SegmentedTabsTrigger>
+              <SegmentedTabsTrigger value="baseline">Baseline</SegmentedTabsTrigger>
+              <SegmentedTabsTrigger value="new">New</SegmentedTabsTrigger>
             </SegmentedTabsList>
           </SegmentedTabs>
         ) : null}
         {hasDiff ? (
           <label className="flex items-center gap-2">
-            <Typography variant="caption">diff</Typography>
+            <Typography variant="caption">Diff</Typography>
             <Switch
               checked={showDiff}
               disabled={view === "baseline"}
@@ -74,7 +74,7 @@ export const SnapshotZoomToolbar = ({
           variant="ghost"
           color="neutral"
           size="icon-sm"
-          aria-label="zoom out"
+          aria-label="Zoom out"
           onClick={() => zoomOut(scale * (1 - 1 / BUTTON_ZOOM_RATIO))}
         >
           <Icon icon={MinusIcon} size={12} />
@@ -86,7 +86,7 @@ export const SnapshotZoomToolbar = ({
           variant="ghost"
           color="neutral"
           size="icon-sm"
-          aria-label="zoom in"
+          aria-label="Zoom in"
           onClick={() => zoomIn(scale * (BUTTON_ZOOM_RATIO - 1))}
         >
           <Icon icon={PlusIcon} size={12} />
@@ -101,11 +101,11 @@ export const SnapshotZoomToolbar = ({
           variant="ghost"
           onClick={() => fitToView({ maxScale: 1 })}
         >
-          fit
+          Fit
         </ResponsiveActionButton>
       </div>
       <DialogClose
-        render={<Button variant="ghost" color="neutral" size="icon-sm" aria-label="close" />}
+        render={<Button variant="ghost" color="neutral" size="icon-sm" aria-label="Close" />}
       >
         <Icon icon={XIcon} size={12} />
       </DialogClose>

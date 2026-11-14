@@ -64,24 +64,24 @@ export const RemoveUsersModal = ({ trigger, users, onRemovedAction }: RemoveUser
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            remove {count} {count === 1 ? "user" : "users"}?
+            Remove {count} {count === 1 ? "user" : "users"}?
           </AlertDialogTitle>
-          <AlertDialogDescription>this cannot be undone.</AlertDialogDescription>
+          <AlertDialogDescription>This cannot be undone.</AlertDialogDescription>
         </AlertDialogHeader>
         <Typography>
-          active users will be removed from this organization and pending invitations will be
+          Active users will be removed from this organization and pending invitations will be
           cancelled.
         </Typography>
         <FieldError errors={[error]} />
         <AlertDialogFooter>
-          <AlertDialogCancel>cancel</AlertDialogCancel>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
             variant="outline"
             color="red"
             disabled={isRemoving}
             onClick={() => execute({ users: users.map(toRemoveUserInput) })}
           >
-            {isRemoving ? "removing..." : "remove"}
+            {isRemoving ? "Removing..." : "Remove"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

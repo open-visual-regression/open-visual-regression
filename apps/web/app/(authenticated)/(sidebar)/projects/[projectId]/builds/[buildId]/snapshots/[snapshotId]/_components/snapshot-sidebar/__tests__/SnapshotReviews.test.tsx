@@ -42,7 +42,7 @@ describe("SnapshotReviews", () => {
   it("should render a message when there are no reviews", () => {
     render(<SnapshotReviews reviews={[]} requiredReviewerCount={1} diffId={diffId} />);
 
-    expect(screen.getByText("no reviews yet")).toBeVisible();
+    expect(screen.getByText("No reviews yet")).toBeVisible();
   });
 
   it("should render each reviewer with their vote and summarize approvals against the required count", () => {
@@ -58,9 +58,9 @@ describe("SnapshotReviews", () => {
     );
 
     expect(screen.getByText("Ada Lovelace")).toBeVisible();
-    expect(screen.getByText("approved")).toBeVisible();
+    expect(screen.getByText("Approved")).toBeVisible();
     expect(screen.getByText("Alan Turing")).toBeVisible();
-    expect(screen.getByText("rejected")).toBeVisible();
+    expect(screen.getByText("Rejected")).toBeVisible();
     expect(screen.getByText("1 of 2 required approvals")).toBeVisible();
   });
 

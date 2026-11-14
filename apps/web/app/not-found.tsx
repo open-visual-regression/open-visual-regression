@@ -12,7 +12,7 @@ export default function NotFoundPage() {
             Not found
           </Typography>
           <Typography variant="body-muted">The requested page could not be found.</Typography>
-          <Typography variant="caption">open visual regression · v{APP_VERSION}</Typography>
+          <Typography variant="caption">Open Visual Regression · v{APP_VERSION}</Typography>
         </div>
       </div>
     </PixelGrid>

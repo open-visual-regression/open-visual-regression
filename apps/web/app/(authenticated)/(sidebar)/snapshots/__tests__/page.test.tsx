@@ -65,12 +65,12 @@ describe("SnapshotsPage", () => {
 
     await renderPage();
 
-    expect(screen.getByRole("heading", { name: "snapshots" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Snapshots" })).toBeVisible();
     expect(
-      screen.getByRole("link", { name: /^snapshot of Button Primary, Acme Web,/ }),
+      screen.getByRole("link", { name: /^Snapshot of Button Primary, Acme Web,/ }),
     ).toBeVisible();
     expect(
-      screen.getByRole("link", { name: /^snapshot of Card Default, Acme Admin,/ }),
+      screen.getByRole("link", { name: /^Snapshot of Card Default, Acme Admin,/ }),
     ).toBeVisible();
     expect(mockList).toHaveBeenCalledWith(
       expect.objectContaining({ buildId: undefined, sort: "name" }),
@@ -83,7 +83,7 @@ describe("SnapshotsPage", () => {
 
     await renderPage();
 
-    expect(screen.getByText("no snapshots found")).toBeVisible();
+    expect(screen.getByText("No snapshots found")).toBeVisible();
   });
 
   it("should offer the browser, viewport and flags facets from every project", async () => {

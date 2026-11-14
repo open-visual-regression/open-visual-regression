@@ -59,7 +59,7 @@ export const createBuild = os.builds.createBuild
 
     if (result.status === "error") {
       if (result.error === "BUILD_ID_CONFLICT") {
-        throw new ORPCError("CONFLICT", { message: "this build id is already in use" });
+        throw new ORPCError("CONFLICT", { message: "This build ID is already in use" });
       }
 
       throw new ORPCError("NOT_FOUND");
@@ -100,19 +100,19 @@ export const confirmUpload = os.builds.confirmUpload
     if (result.status === "error") {
       if (result.error === "BUILD_CANCELED") {
         throw new ORPCError("CONFLICT", {
-          message: "this build was superseded by a newer build on the branch",
+          message: "This build was superseded by a newer build on the branch",
         });
       }
 
       if (result.error === "BUILD_FAILED") {
         throw new ORPCError("CONFLICT", {
-          message: `this build has already failed: ${build.errorMessage ?? "unknown error"}`,
+          message: `This build has already failed: ${build.errorMessage ?? "unknown error"}`,
         });
       }
 
       if (result.error === "QUEUE_UNAVAILABLE") {
         throw new ORPCError("SERVICE_UNAVAILABLE", {
-          message: "the build queue is unavailable, so the build was marked as failed",
+          message: "The build queue is unavailable, so the build was marked as failed",
         });
       }
 

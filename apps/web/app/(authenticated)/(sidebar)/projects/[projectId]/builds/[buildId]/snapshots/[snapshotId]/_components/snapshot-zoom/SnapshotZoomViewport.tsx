@@ -64,7 +64,7 @@ export const SnapshotZoomViewport = ({
         {diffImagePath ? (
           <img
             src={diffImagePath}
-            alt={`diff overlay of ${newSnapshot.alt}`}
+            alt={`Diff overlay of ${newSnapshot.alt.charAt(0).toLowerCase()}${newSnapshot.alt.slice(1)}`}
             draggable={false}
             className={cn(
               "absolute inset-0 block size-full select-none",

@@ -4,10 +4,10 @@ import { userEvent, within } from "storybook/test";
 import { SnapshotFilters } from "../SnapshotFilters";
 
 const STATUS_OPTIONS = [
-  { value: "unchanged", label: "unchanged" },
-  { value: "auto_approved", label: "auto approved" },
-  { value: "needs_review", label: "needs review" },
-  { value: "error", label: "error" },
+  { value: "unchanged", label: "Unchanged" },
+  { value: "auto_approved", label: "Auto approved" },
+  { value: "needs_review", label: "Needs review" },
+  { value: "error", label: "Error" },
 ] as const;
 
 const BROWSER_OPTIONS = [
@@ -21,8 +21,8 @@ const VIEWPORT_OPTIONS = [
 ];
 
 const FLAG_OPTIONS = [
-  { value: "flaky", label: "flaky" },
-  { value: "warning", label: "warning" },
+  { value: "flaky", label: "Flaky" },
+  { value: "warning", label: "Warning" },
 ] as const;
 
 const meta: Meta<typeof SnapshotFilters> = {
@@ -211,6 +211,6 @@ export const MobileFacetDialogOpen: Story = {
 
     const body = within(canvasElement.ownerDocument.body);
     await userEvent.click(await body.findByRole("menuitem", { name: /^status$/i }));
-    await body.findByRole("checkbox", { name: "needs review" });
+    await body.findByRole("checkbox", { name: "Needs review" });
   },
 };

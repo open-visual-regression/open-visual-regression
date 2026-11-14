@@ -16,7 +16,7 @@ const InvitationCardShell = ({ description, children }: InvitationCardShellProps
   <Card className="w-full">
     <CardHeader>
       <Typography variant="h2" as="h1">
-        create your account
+        Create your account
       </Typography>
       {description}
     </CardHeader>
@@ -32,7 +32,7 @@ type InvitationDescriptionProps = {
 // Shared by the card and its skeleton, so the skeleton's sentence wraps like the real one.
 const InvitationDescription = ({ organizationName, role }: InvitationDescriptionProps) => (
   <Typography className="text-muted-foreground">
-    invited to <span className="text-foreground">{organizationName}</span>
+    Invited to <span className="text-foreground">{organizationName}</span>
     {role ? (
       <>
         {" "}
@@ -77,12 +77,12 @@ export const InvitationCardSkeleton = () => (
     }
   >
     <FieldGroup aria-hidden>
-      <FieldSkeleton label="email" />
-      <FieldSkeleton label="name" />
-      <FieldSkeleton label="password" />
-      <FieldSkeleton label="confirm password" />
+      <FieldSkeleton label="Email" />
+      <FieldSkeleton label="Name" />
+      <FieldSkeleton label="Password" />
+      <FieldSkeleton label="Confirm password" />
       <ButtonSkeleton size="lg" className="w-full">
-        create account
+        Create account
       </ButtonSkeleton>
     </FieldGroup>
   </InvitationCardShell>

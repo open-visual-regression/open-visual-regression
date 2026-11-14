@@ -19,7 +19,7 @@ export const GitIntegrationSection = ({
   availableAuthTypes,
 }: GitIntegrationSectionProps) => (
   <div className="flex flex-col gap-4">
-    <Typography variant="h2">git integration</Typography>
+    <Typography variant="h2">Git integration</Typography>
     <GitIntegrationForm
       projectId={projectId}
       integration={integration}

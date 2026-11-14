@@ -26,10 +26,10 @@ export const AdminStep = ({
   <form onSubmit={onSubmit} noValidate>
     <FieldGroup>
       <Field data-invalid={!!errors.name}>
-        <FieldLabel htmlFor="name">name</FieldLabel>
+        <FieldLabel htmlFor="name">Name</FieldLabel>
         <Input
           id="name"
-          placeholder="enter your name"
+          placeholder="Enter your name"
           autoFocus
           aria-invalid={!!errors.name}
           {...register("name")}
@@ -37,11 +37,11 @@ export const AdminStep = ({
         <FieldError errors={[errors.name]} />
       </Field>
       <Field data-invalid={!!errors.email}>
-        <FieldLabel htmlFor="email">email</FieldLabel>
+        <FieldLabel htmlFor="email">Email</FieldLabel>
         <Input
           id="email"
           type="email"
-          placeholder="enter your email"
+          placeholder="Enter your email"
           autoComplete="email"
           aria-invalid={!!errors.email}
           {...register("email")}
@@ -49,25 +49,25 @@ export const AdminStep = ({
         <FieldError errors={[errors.email]} />
       </Field>
       <Field data-invalid={!!errors.password}>
-        <FieldLabel htmlFor="password">password</FieldLabel>
+        <FieldLabel htmlFor="password">Password</FieldLabel>
         <Input
           id="password"
           type="password"
           autoComplete="new-password"
           aria-invalid={!!errors.password}
-          placeholder="enter your password"
+          placeholder="Enter your password"
           {...register("password")}
         />
         <FieldError errors={[errors.password]} />
       </Field>
       <Field data-invalid={!!errors.confirmPassword}>
-        <FieldLabel htmlFor="confirmPassword">confirm password</FieldLabel>
+        <FieldLabel htmlFor="confirmPassword">Confirm password</FieldLabel>
         <Input
           id="confirmPassword"
           type="password"
           autoComplete="new-password"
           aria-invalid={!!errors.confirmPassword}
-          placeholder="confirm your password"
+          placeholder="Confirm your password"
           {...register("confirmPassword")}
         />
         <FieldError errors={[errors.confirmPassword]} />
@@ -79,7 +79,7 @@ export const AdminStep = ({
       )}
       <div className="flex flex-col gap-2">
         <Button type="submit" size="lg" className="w-full" disabled={isPending}>
-          {isPending ? "creating…" : "create"}
+          {isPending ? "Creating…" : "Create"}
         </Button>
         <Button
           type="button"
@@ -90,7 +90,7 @@ export const AdminStep = ({
           disabled={isPending}
           onClick={onBack}
         >
-          back
+          Back
         </Button>
       </div>
     </FieldGroup>

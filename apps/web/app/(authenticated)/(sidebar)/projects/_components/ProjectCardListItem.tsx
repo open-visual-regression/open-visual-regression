@@ -34,7 +34,7 @@ export const ProjectCardListItem = ({ project }: ProjectCardListItemProps) => {
             <DescriptionList>
               <DescriptionListItem>
                 <DescriptionTerm>
-                  <Typography variant="body-muted">builds:</Typography>
+                  <Typography variant="body-muted">Builds:</Typography>
                 </DescriptionTerm>
                 <DescriptionDetails>
                   <Typography variant="body">{project.totalBuildsCount}</Typography>
@@ -42,7 +42,7 @@ export const ProjectCardListItem = ({ project }: ProjectCardListItemProps) => {
               </DescriptionListItem>
               <DescriptionListItem>
                 <DescriptionTerm>
-                  <Typography variant="body-muted">baseline:</Typography>
+                  <Typography variant="body-muted">Baseline:</Typography>
                 </DescriptionTerm>
                 <DescriptionDetails>
                   <Icon icon={GitBranchIcon} size={12} />

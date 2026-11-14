@@ -38,10 +38,10 @@ export const SliderView = ({ baseline, newSnapshot }: SliderViewProps) => {
     <SnapshotPane>
       <SnapshotPaneHeader className="justify-between">
         <div className="flex items-center gap-2">
-          <Typography variant="label">baseline</Typography>
+          <Typography variant="label">Baseline</Typography>
           <BaselineCommitLink commitSha={baseline.commitSha} commitUrl={baseline.commitUrl} />
         </div>
-        <Typography variant="label">new</Typography>
+        <Typography variant="label">New</Typography>
       </SnapshotPaneHeader>
       <SnapshotPaneCanvas className="lg:@container-size">
         <SnapshotPaneFrame canvasSize={canvasSize} fill>

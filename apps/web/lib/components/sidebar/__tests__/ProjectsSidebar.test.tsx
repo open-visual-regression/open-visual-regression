@@ -40,7 +40,7 @@ describe("ProjectsSidebar", () => {
 
     render(<ProjectsSidebar projects={PROJECTS} total={5} builds={BUILDS} />);
 
-    expect(screen.getByRole("heading", { name: "projects" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Projects" })).toBeVisible();
     expect(screen.getByText("(5)")).toBeVisible();
   });
 
@@ -49,7 +49,7 @@ describe("ProjectsSidebar", () => {
 
     render(<ProjectsSidebar projects={PROJECTS} total={PROJECTS.length} builds={BUILDS} />);
 
-    expect(screen.getByRole("link", { name: /^projects/ })).toHaveAttribute("href", "/projects");
+    expect(screen.getByRole("link", { name: /^Projects/ })).toHaveAttribute("href", "/projects");
   });
 
   it("should render the recent builds section when builds are provided", () => {
@@ -57,7 +57,7 @@ describe("ProjectsSidebar", () => {
 
     render(<ProjectsSidebar projects={PROJECTS} total={PROJECTS.length} builds={BUILDS} />);
 
-    expect(screen.getByRole("heading", { name: "recent builds" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Recent builds" })).toBeVisible();
   });
 
   it("should link the recent builds heading to the all-builds page", () => {
@@ -65,7 +65,7 @@ describe("ProjectsSidebar", () => {
 
     render(<ProjectsSidebar projects={PROJECTS} total={PROJECTS.length} builds={BUILDS} />);
 
-    expect(screen.getByRole("link", { name: "recent builds" })).toHaveAttribute("href", "/builds");
+    expect(screen.getByRole("link", { name: "Recent builds" })).toHaveAttribute("href", "/builds");
   });
 
   it("should not render the recent builds section when there are no builds", () => {
@@ -73,7 +73,7 @@ describe("ProjectsSidebar", () => {
 
     render(<ProjectsSidebar projects={PROJECTS} total={PROJECTS.length} builds={[]} />);
 
-    expect(screen.queryByRole("heading", { name: "recent builds" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Recent builds" })).not.toBeInTheDocument();
   });
 
   it("should mark the recent build matching the current path as active", () => {
@@ -143,8 +143,8 @@ describe("ProjectsSidebar", () => {
 
     render(<ProjectsSidebar projects={PROJECTS} total={PROJECTS.length} builds={BUILDS} />);
 
-    const recentBuilds = screen.getByRole("heading", { name: "recent builds" });
-    const projects = screen.getByRole("heading", { name: "projects" });
+    const recentBuilds = screen.getByRole("heading", { name: "Recent builds" });
+    const projects = screen.getByRole("heading", { name: "Projects" });
     expect(
       recentBuilds.compareDocumentPosition(projects) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();

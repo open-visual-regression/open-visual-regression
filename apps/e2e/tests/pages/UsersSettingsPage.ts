@@ -8,7 +8,7 @@ export class UsersSettingsPage {
   }
 
   heading(): Locator {
-    return this.page.getByRole("heading", { name: "users", exact: true });
+    return this.page.getByRole("heading", { name: "Users", exact: true });
   }
 
   inviteButton(): Locator {
@@ -16,6 +16,6 @@ export class UsersSettingsPage {
   }
 
   roleButton(name: string): Locator {
-    return this.page.getByRole("button", { name: `change role for ${name}` });
+    return this.page.getByRole("button", { name: `Change role for ${name}` });
   }
 }

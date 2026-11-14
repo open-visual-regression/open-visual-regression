@@ -23,7 +23,7 @@ export const EnableStatusChecksButton = ({
   const { execute, status } = useServerAction(serverClient.gitIntegrations.setStatusChecks, {
     interceptors: [
       onSuccess(() => {
-        toast.success("ci checks enabled");
+        toast.success("CI checks enabled");
         router.refresh();
       }),
       onError((err) => {
@@ -40,7 +40,7 @@ export const EnableStatusChecksButton = ({
       onClick={() => execute({ projectId, enabled: true })}
       className={className}
     >
-      {status === "pending" ? "enabling..." : "enable"}
+      {status === "pending" ? "Enabling..." : "Enable"}
     </Button>
   );
 };

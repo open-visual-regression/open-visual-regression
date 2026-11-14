@@ -68,7 +68,7 @@ export const UpdateProjectForm = ({ project }: UpdateProjectFormProps) => {
   const { execute, status } = useServerAction(serverClient.projects.update, {
     interceptors: [
       onSuccess(() => {
-        toast.success("settings saved");
+        toast.success("Settings saved");
       }),
       onError((err) => setError("root", { message: err.message })),
     ],
@@ -83,15 +83,15 @@ export const UpdateProjectForm = ({ project }: UpdateProjectFormProps) => {
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} noValidate>
       <div className="flex flex-col gap-4">
-        <Typography variant="h2">general</Typography>
+        <Typography variant="h2">General</Typography>
         <Card size="default">
           <CardContent className="flex flex-col gap-5">
             <FieldGroup>
               <Field data-invalid={!!errors.name}>
-                <FieldLabel htmlFor="name">name</FieldLabel>
+                <FieldLabel htmlFor="name">Name</FieldLabel>
                 <Input
                   id="name"
-                  placeholder="enter the project name"
+                  placeholder="Enter the project name"
                   aria-invalid={!!errors.name}
                   {...register("name")}
                 />
@@ -100,10 +100,10 @@ export const UpdateProjectForm = ({ project }: UpdateProjectFormProps) => {
             </FieldGroup>
             <FieldGroup>
               <Field data-invalid={!!errors.description}>
-                <FieldLabel htmlFor="description">description</FieldLabel>
+                <FieldLabel htmlFor="description">Description</FieldLabel>
                 <Textarea
                   id="description"
-                  placeholder="enter the project description"
+                  placeholder="Enter the project description"
                   aria-invalid={!!errors.description}
                   {...register("description")}
                 />
@@ -113,7 +113,7 @@ export const UpdateProjectForm = ({ project }: UpdateProjectFormProps) => {
             <div className="flex flex-col gap-3 sm:flex-row">
               <FieldGroup>
                 <Field data-invalid={!!errors.gitMainBranch}>
-                  <FieldLabel htmlFor="gitMainBranch">git main branch</FieldLabel>
+                  <FieldLabel htmlFor="gitMainBranch">Git main branch</FieldLabel>
                   <Input
                     id="gitMainBranch"
                     placeholder="main"
@@ -125,7 +125,7 @@ export const UpdateProjectForm = ({ project }: UpdateProjectFormProps) => {
               </FieldGroup>
               <FieldGroup>
                 <Field data-invalid={!!errors.retentionDays}>
-                  <FieldLabel htmlFor="retentionDays">retention days</FieldLabel>
+                  <FieldLabel htmlFor="retentionDays">Retention days</FieldLabel>
                   <Input
                     id="retentionDays"
                     type="number"
@@ -139,7 +139,7 @@ export const UpdateProjectForm = ({ project }: UpdateProjectFormProps) => {
               </FieldGroup>
               <FieldGroup>
                 <Field data-invalid={!!errors.requiredReviewerCount}>
-                  <FieldLabel htmlFor="requiredReviewerCount">required reviewers</FieldLabel>
+                  <FieldLabel htmlFor="requiredReviewerCount">Required reviewers</FieldLabel>
                   <Input
                     id="requiredReviewerCount"
                     type="number"
@@ -159,7 +159,7 @@ export const UpdateProjectForm = ({ project }: UpdateProjectFormProps) => {
           <CardFooter className="flex flex-row justify-end">
             <Button type="submit" disabled={isSubmitting}>
               <Icon icon={CheckIcon} />
-              {isSubmitting ? "saving..." : "save changes"}
+              {isSubmitting ? "Saving..." : "Save changes"}
             </Button>
           </CardFooter>
         </Card>

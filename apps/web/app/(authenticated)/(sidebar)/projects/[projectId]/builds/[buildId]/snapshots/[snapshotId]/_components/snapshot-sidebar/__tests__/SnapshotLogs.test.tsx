@@ -6,7 +6,7 @@ describe("SnapshotLogs", () => {
   it("should render a message when there are no logs", () => {
     render(<SnapshotLogs logs={[]} />);
 
-    expect(screen.getByText("no logs to show")).toBeVisible();
+    expect(screen.getByText("No logs to show")).toBeVisible();
   });
 
   it("should render each log line with its level and message", () => {
@@ -31,7 +31,7 @@ describe("SnapshotLogs", () => {
 
     expect(screen.getByText("[error] Timed out waiting for selector")).toBeVisible();
     expect(screen.getByText("[warn] Retrying navigation")).toBeVisible();
-    expect(screen.getByText("logs")).toBeVisible();
+    expect(screen.getByText("Logs")).toBeVisible();
     expect(screen.getByText("2 lines")).toBeVisible();
   });
 });

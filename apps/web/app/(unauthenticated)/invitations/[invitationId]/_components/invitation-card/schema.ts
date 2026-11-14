@@ -10,7 +10,7 @@ export const acceptInvitationSchema = z
     if (data.password !== data.confirmPassword) {
       ctx.addIssue({
         code: "custom",
-        message: "passwords do not match",
+        message: "Passwords do not match",
         path: ["confirmPassword"],
       });
     }

@@ -62,7 +62,7 @@ export const BuildActionsMenu = ({
               className={cn("w-8 shrink-0 px-0", className)}
             />
           }
-          aria-label="more build actions"
+          aria-label="More build actions"
         >
           <Icon icon={EllipsisIcon} size={14} />
         </DropdownMenuTrigger>
@@ -72,25 +72,25 @@ export const BuildActionsMenu = ({
               render={<a href={storybookHref} target="_blank" rel="noopener noreferrer" />}
             >
               <Icon icon={ExternalLinkIcon} />
-              view storybook
+              View Storybook
             </DropdownMenuItem>
           ) : null}
           {latestBuildHref ? (
             <DropdownMenuItem render={<Link href={latestBuildHref} />}>
               <Icon icon={ArrowRightIcon} />
-              view latest build
+              View latest build
             </DropdownMenuItem>
           ) : null}
           {canRebuild ? (
             <DropdownMenuItem onClick={() => setDialog("rebuild")}>
               <Icon icon={RefreshCwIcon} />
-              rebuild
+              Rebuild
             </DropdownMenuItem>
           ) : null}
           {canCancel ? (
             <DropdownMenuItem color="red" onClick={() => setDialog("cancel")}>
               <Icon icon={CircleSlash2Icon} />
-              cancel build
+              Cancel build
             </DropdownMenuItem>
           ) : null}
         </DropdownMenuContent>

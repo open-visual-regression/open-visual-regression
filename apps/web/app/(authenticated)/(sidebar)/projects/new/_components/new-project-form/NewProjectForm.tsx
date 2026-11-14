@@ -68,10 +68,10 @@ export const NewProjectForm = () => {
       <NewProjectFormLayout
         name={
           <Field data-invalid={!!errors.projectName}>
-            <FieldLabel>name</FieldLabel>
+            <FieldLabel>Name</FieldLabel>
             <Input
               id="name"
-              placeholder="enter the project name"
+              placeholder="Enter the project name"
               aria-invalid={!!errors.projectName}
               {...register("projectName")}
             />
@@ -80,10 +80,10 @@ export const NewProjectForm = () => {
         }
         description={
           <Field data-invalid={!!errors.projectDescription}>
-            <FieldLabel>description</FieldLabel>
+            <FieldLabel>Description</FieldLabel>
             <Textarea
               id="description"
-              placeholder="enter the project description"
+              placeholder="Enter the project description"
               aria-invalid={!!errors.projectDescription}
               {...register("projectDescription")}
             />
@@ -92,10 +92,10 @@ export const NewProjectForm = () => {
         }
         gitMainBranch={
           <Field data-invalid={!!errors.gitMainBranch}>
-            <FieldLabel>git main branch</FieldLabel>
+            <FieldLabel>Git main branch</FieldLabel>
             <Input
               id="gitMainBranch"
-              placeholder="enter the baseline git branch"
+              placeholder="Enter the baseline Git branch"
               aria-invalid={!!errors.gitMainBranch}
               {...register("gitMainBranch")}
             />
@@ -105,11 +105,11 @@ export const NewProjectForm = () => {
         actions={
           <>
             <ButtonLink href="/projects" size="lg" variant="outline" color="neutral">
-              cancel
+              Cancel
             </ButtonLink>
             <Button type="submit" size="lg" disabled={isSubmitting}>
               <Icon icon={PlusIcon} />
-              {isSubmitting ? "creating..." : "create project"}
+              {isSubmitting ? "Creating..." : "Create project"}
             </Button>
           </>
         }
@@ -132,7 +132,7 @@ const NewProjectFormLayout = ({
   actions,
 }: NewProjectFormLayoutProps) => (
   <div className="flex flex-col gap-2">
-    <Typography variant="label">general</Typography>
+    <Typography variant="label">General</Typography>
     <Card size="default">
       <CardContent className="flex flex-col gap-5">
         <FieldGroup>{name}</FieldGroup>
@@ -147,15 +147,15 @@ const NewProjectFormLayout = ({
 export const NewProjectFormSkeleton = () => (
   <div aria-hidden>
     <NewProjectFormLayout
-      name={<FieldSkeleton label="name" />}
-      description={<FieldSkeleton label="description" className="h-16" />}
-      gitMainBranch={<FieldSkeleton label="git main branch" />}
+      name={<FieldSkeleton label="Name" />}
+      description={<FieldSkeleton label="Description" className="h-16" />}
+      gitMainBranch={<FieldSkeleton label="Git main branch" />}
       actions={
         <>
-          <ButtonSkeleton size="lg">cancel</ButtonSkeleton>
+          <ButtonSkeleton size="lg">Cancel</ButtonSkeleton>
           <ButtonSkeleton size="lg">
             <Icon icon={PlusIcon} />
-            create project
+            Create project
           </ButtonSkeleton>
         </>
       }

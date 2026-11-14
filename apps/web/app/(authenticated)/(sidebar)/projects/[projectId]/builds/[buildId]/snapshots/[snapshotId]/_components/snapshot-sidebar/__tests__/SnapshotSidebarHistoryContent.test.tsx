@@ -74,7 +74,7 @@ describe("SnapshotSidebarHistoryContent", () => {
 
     renderContent(queryClient);
 
-    expect(screen.getByText("no snapshots on main yet")).toBeVisible();
+    expect(screen.getByText("No snapshots on main yet")).toBeVisible();
   });
 
   it("should load the history when the sidebar is open", async () => {

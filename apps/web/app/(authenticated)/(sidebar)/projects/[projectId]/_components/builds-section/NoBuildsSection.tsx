@@ -15,12 +15,12 @@ export const NoBuildsSection = () => (
   <Card className="bg-pixel-grid py-20">
     <CardHeader className="flex justify-center">
       <Typography variant="h2" as="h2">
-        no builds yet
+        No builds yet
       </Typography>
     </CardHeader>
     <CardContent className="flex flex-col items-center justify-center gap-6">
       <Typography variant="caption" className="text-sm">
-        builds appear here once you run the ovr cli to upload snapshots for this project.
+        Builds appear here once you run the OVR CLI to upload snapshots for this project.
       </Typography>
       <CodeBlock code={SAMPLE_COMMAND} className="w-full max-w-lg" />
     </CardContent>

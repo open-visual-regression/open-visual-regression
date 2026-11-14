@@ -20,6 +20,6 @@ export class JobsSettingsPage {
   }
 
   successToast(): Locator {
-    return this.page.getByText("flaky detection updated");
+    return this.page.getByText("Flaky detection updated");
   }
 }

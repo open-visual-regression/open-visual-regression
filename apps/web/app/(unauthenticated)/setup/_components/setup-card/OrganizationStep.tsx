@@ -16,10 +16,10 @@ export const OrganizationStep = ({ register, errors, onSubmit }: OrganizationSte
   <form onSubmit={onSubmit} noValidate>
     <FieldGroup>
       <Field data-invalid={!!errors.organizationName}>
-        <FieldLabel htmlFor="organizationName">organization name</FieldLabel>
+        <FieldLabel htmlFor="organizationName">Organization name</FieldLabel>
         <Input
           id="organizationName"
-          placeholder="enter your organization's name"
+          placeholder="Enter your organization's name"
           autoFocus
           aria-invalid={!!errors.organizationName}
           {...register("organizationName")}
@@ -27,7 +27,7 @@ export const OrganizationStep = ({ register, errors, onSubmit }: OrganizationSte
         <FieldError errors={[errors.organizationName]} />
       </Field>
       <Button type="submit" size="lg" className="w-full">
-        next
+        Next
       </Button>
     </FieldGroup>
   </form>

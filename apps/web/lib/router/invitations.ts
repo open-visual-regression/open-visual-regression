@@ -15,7 +15,7 @@ export const getInvitation = os.invitations.getInvitation
 
     if (!invitation || invitation.status !== "pending" || invitation.expiresAt < new Date()) {
       throw new ORPCError("NOT_FOUND", {
-        message: "this invitation has expired or is no longer valid",
+        message: "This invitation has expired or is no longer valid",
       });
     }
 
@@ -36,7 +36,7 @@ export const acceptInvitation = os.invitations.acceptInvitation
 
     if (!invitation || invitation.status !== "pending" || invitation.expiresAt < new Date()) {
       throw new ORPCError("BAD_REQUEST", {
-        message: "this invitation has expired or is no longer valid",
+        message: "This invitation has expired or is no longer valid",
       });
     }
 

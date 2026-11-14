@@ -33,7 +33,7 @@ describe("UserAvatar", () => {
 
     await user.click(screen.getByRole("button", { name: "User menu for Tom Fischer" }));
 
-    const settingsLink = await screen.findByRole("menuitem", { name: "settings" });
+    const settingsLink = await screen.findByRole("menuitem", { name: "Settings" });
     expect(settingsLink).toHaveAttribute("href", "/settings");
     expect(screen.getByRole("menuitem", { name: /sign out/i })).toBeVisible();
 

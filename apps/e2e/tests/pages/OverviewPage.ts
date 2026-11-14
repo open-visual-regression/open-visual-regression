@@ -8,10 +8,10 @@ export class OverviewPage {
   }
 
   heading(): Locator {
-    return this.page.getByRole("heading", { name: "overview", level: 1 });
+    return this.page.getByRole("heading", { name: "Overview", level: 1 });
   }
 
-  link(name: "projects" | "builds" | "snapshots"): Locator {
+  link(name: "Projects" | "Builds" | "Snapshots"): Locator {
     return this.page.getByRole("main").getByRole("link", { name, exact: true });
   }
 }

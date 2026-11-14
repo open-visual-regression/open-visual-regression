@@ -8,11 +8,11 @@ type FlakyBadgeProps = {
 export const FlakyBadge = ({ filled }: FlakyBadgeProps) =>
   filled ? (
     <Badge variant="solid" color="purple" className="self-stretch">
-      <Icon icon={SnowflakeIcon} size={12} role="img" aria-label="flaky" />
+      <Icon icon={SnowflakeIcon} size={12} role="img" aria-label="Flaky" />
     </Badge>
   ) : (
     <Badge color="purple">
       <Icon icon={SnowflakeIcon} size={12} aria-hidden />
-      flaky
+      Flaky
     </Badge>
   );

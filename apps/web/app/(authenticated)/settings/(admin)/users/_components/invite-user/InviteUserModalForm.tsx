@@ -49,7 +49,7 @@ export const InviteUserModalForm = () => {
     return (
       <>
         <DialogHeader>
-          <DialogTitle>invitation created</DialogTitle>
+          <DialogTitle>Invitation created</DialogTitle>
         </DialogHeader>
         <InviteUserModalReveal invitationUrl={invitationUrl} />
       </>
@@ -65,17 +65,17 @@ export const InviteUserModalForm = () => {
   return (
     <>
       <DialogHeader>
-        <DialogTitle>invite user</DialogTitle>
-        <DialogDescription>create an invitation to join this organization</DialogDescription>
+        <DialogTitle>Invite user</DialogTitle>
+        <DialogDescription>Create an invitation to join this organization</DialogDescription>
       </DialogHeader>
       <form onSubmit={handleSubmit(handleFormSubmit)} noValidate>
         <FieldGroup className="pb-6">
           <Field data-invalid={!!errors.email}>
-            <FieldLabel htmlFor="email">email</FieldLabel>
+            <FieldLabel htmlFor="email">Email</FieldLabel>
             <Input
               id="email"
               type="email"
-              placeholder="enter their email address"
+              placeholder="Enter their email address"
               aria-invalid={!!errors.email}
               {...register("email")}
             />
@@ -85,7 +85,7 @@ export const InviteUserModalForm = () => {
         </FieldGroup>
         <DialogFooter showCloseButton>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "creating..." : "create invite"}
+            {isSubmitting ? "Creating..." : "Create invite"}
           </Button>
         </DialogFooter>
       </form>

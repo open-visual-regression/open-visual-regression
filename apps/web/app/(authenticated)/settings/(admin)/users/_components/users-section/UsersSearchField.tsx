@@ -8,8 +8,8 @@ type UsersSearchFieldProps = {
 export const UsersSearchField = ({ search, className }: UsersSearchFieldProps) => (
   <SearchField
     action="/settings/users"
-    label="search users"
-    placeholder="search users..."
+    label="Search users"
+    placeholder="Search users..."
     search={search}
     className={className}
   />

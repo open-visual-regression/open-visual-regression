@@ -5,14 +5,14 @@ import { describe, expect, it, render, screen } from "@/test-utils";
 import { BuildStatusBadge } from "../BuildStatus";
 
 const cases: [BuildStatus, string][] = [
-  ["queued", "queued"],
-  ["processing", "processing"],
-  ["needs_review", "needs review"],
-  ["unchanged", "unchanged"],
-  ["auto_approved", "auto approved"],
-  ["approved", "approved"],
-  ["rejected", "rejected"],
-  ["error", "error"],
+  ["queued", "Queued"],
+  ["processing", "Processing"],
+  ["needs_review", "Needs review"],
+  ["unchanged", "Unchanged"],
+  ["auto_approved", "Auto approved"],
+  ["approved", "Approved"],
+  ["rejected", "Rejected"],
+  ["error", "Error"],
 ];
 
 describe("BuildStatusBadge", () => {

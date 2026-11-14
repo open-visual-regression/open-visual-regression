@@ -32,7 +32,7 @@ test("pushing a new commit to a branch cancels the build still running for the o
   const superseded = await findBuild(supersededSha);
   await buildPage.goto(seed.projectId, superseded!.id);
 
-  await expect(buildPage.status()).toHaveText("canceled");
+  await expect(buildPage.status()).toHaveText("Canceled");
   await expect(page.getByText(/canceled by the system/i)).toBeVisible();
   await expect(buildPage.cancelButton()).toBeHidden();
 

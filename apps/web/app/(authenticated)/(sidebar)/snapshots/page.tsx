@@ -55,7 +55,7 @@ export default async function SnapshotsPage(props: SnapshotsPageProps) {
     <SnapshotsPageShell
       heading={
         <Typography variant="h1" as="h1">
-          snapshots
+          Snapshots
         </Typography>
       }
       filters={

@@ -41,7 +41,7 @@ export const BuildApproveButton = ({ buildId, approved }: BuildApproveButtonProp
       )}
       onClick={() => execute({ buildId, vote: "approve" })}
     >
-      {approved ? "approved" : pending ? "approving..." : "approve all"}
+      {approved ? "Approved" : pending ? "Approving..." : "Approve all"}
     </Button>
   );
 };

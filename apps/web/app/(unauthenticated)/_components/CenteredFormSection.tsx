@@ -14,7 +14,7 @@ export const CenteredFormSection = ({ children }: CenteredFormSectionProps) => (
     <div className="w-full max-w-115 flex flex-col items-center gap-6">
       <LogoFull />
       {children}
-      <Typography variant="caption">open visual regression · v{APP_VERSION}</Typography>
+      <Typography variant="caption">Open Visual Regression · v{APP_VERSION}</Typography>
     </div>
   </div>
 );

@@ -61,6 +61,6 @@ describe("UpdateProjectForm", () => {
         patch: expect.objectContaining({ requiredReviewerCount: 3 }),
       }),
     );
-    expect(await screen.findByText("settings saved")).toBeVisible();
+    expect(await screen.findByText("Settings saved")).toBeVisible();
   });
 });

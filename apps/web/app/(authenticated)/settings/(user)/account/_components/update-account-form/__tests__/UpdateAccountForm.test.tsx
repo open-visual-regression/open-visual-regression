@@ -75,7 +75,7 @@ describe("UpdateAccountForm", () => {
         email: USER.email,
       }),
     );
-    expect(await screen.findByText("account updated")).toBeVisible();
+    expect(await screen.findByText("Account updated")).toBeVisible();
   });
 
   it("should disable the submit button while saving", async ({ user }) => {
@@ -90,7 +90,7 @@ describe("UpdateAccountForm", () => {
   it("should show a root error message when saving fails", async ({ user }) => {
     mockUpdateAccountInformation.mockResolvedValue([
       {
-        message: "this email is already in use",
+        message: "This email is already in use",
         code: "CONFLICT",
         status: 409,
         data: undefined,
@@ -102,7 +102,7 @@ describe("UpdateAccountForm", () => {
 
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("this email is already in use");
-    expect(screen.queryByText("account updated")).not.toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent("This email is already in use");
+    expect(screen.queryByText("Account updated")).not.toBeInTheDocument();
   });
 });

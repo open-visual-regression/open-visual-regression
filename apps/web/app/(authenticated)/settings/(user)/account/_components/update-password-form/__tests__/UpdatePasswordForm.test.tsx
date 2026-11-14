@@ -51,7 +51,7 @@ describe("UpdatePasswordForm", () => {
     await user.type(screen.getByLabelText(/^confirm password$/i), "different456");
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
-    expect(await screen.findByText("passwords do not match")).toBeVisible();
+    expect(await screen.findByText("Passwords do not match")).toBeVisible();
     expect(mockUpdatePassword).not.toHaveBeenCalled();
   });
 
@@ -70,7 +70,7 @@ describe("UpdatePasswordForm", () => {
         newPassword: "newpassword123",
       }),
     );
-    expect(await screen.findByText("password updated")).toBeVisible();
+    expect(await screen.findByText("Password updated")).toBeVisible();
   });
 
   it("should clear the password fields after a successful save", async ({ user }) => {
@@ -118,6 +118,6 @@ describe("UpdatePasswordForm", () => {
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("incorrect password");
-    expect(screen.queryByText("password updated")).not.toBeInTheDocument();
+    expect(screen.queryByText("Password updated")).not.toBeInTheDocument();
   });
 });

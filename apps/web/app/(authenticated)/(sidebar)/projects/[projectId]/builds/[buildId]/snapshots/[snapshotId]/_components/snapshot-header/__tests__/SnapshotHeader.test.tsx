@@ -1,7 +1,7 @@
 import type { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { mocks } from "@ovr/mocks";
 
-import { describe, expect, it, render, screen } from "@/test-utils";
+import { describe, expect, it, render, screen, within } from "@/test-utils";
 
 import { SnapshotHeader } from "../SnapshotHeader";
 
@@ -32,7 +32,7 @@ describe("SnapshotHeader", () => {
     const build = mocks.build.generateBuild();
     render(<SnapshotHeader snapshot={snapshot} build={build} storybookHref={null} />);
 
-    expect(screen.getByText("needs review")).toBeVisible();
+    expect(screen.getByText("Needs review")).toBeVisible();
   });
 
   it("should show a flaky badge when the story has been flagged", () => {
@@ -45,14 +45,14 @@ describe("SnapshotHeader", () => {
       />,
     );
 
-    expect(screen.getByText("flaky")).toBeVisible();
+    expect(screen.getByText("Flaky")).toBeVisible();
   });
 
   it("should not show a flaky badge when the story has not been flagged", () => {
     const build = mocks.build.generateBuild();
     render(<SnapshotHeader snapshot={snapshot} build={build} storybookHref={null} />);
 
-    expect(screen.queryByText("flaky")).not.toBeInTheDocument();
+    expect(screen.queryByText("Flaky")).not.toBeInTheDocument();
   });
 
   it("should show the error alert when the snapshot failed to capture", () => {
@@ -65,7 +65,7 @@ describe("SnapshotHeader", () => {
       />,
     );
 
-    expect(screen.getByText("Error")).toBeVisible();
+    expect(within(screen.getByRole("alert")).getByText("Error")).toBeVisible();
     expect(screen.getByText("This snapshot failed to capture.")).toBeVisible();
   });
 
@@ -83,7 +83,7 @@ describe("SnapshotHeader", () => {
       />,
     );
 
-    expect(screen.getByText("Error")).toBeVisible();
+    expect(within(screen.getByRole("alert")).getByText("Error")).toBeVisible();
     expect(screen.getByText("Cannot read properties of undefined (reading 'items')")).toBeVisible();
   });
 
@@ -137,7 +137,7 @@ describe("SnapshotHeader", () => {
     const build = mocks.build.generateBuild();
     render(<SnapshotHeader snapshot={snapshot} build={build} storybookHref={null} />);
 
-    expect(screen.getByRole("img", { name: "processing time" })).toBeVisible();
+    expect(screen.getByRole("img", { name: "Processing time" })).toBeVisible();
     expect(screen.getByText("3.4s")).toBeVisible();
   });
 
@@ -158,6 +158,6 @@ describe("SnapshotHeader", () => {
       />,
     );
 
-    expect(screen.queryByRole("img", { name: "processing time" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: "Processing time" })).not.toBeInTheDocument();
   });
 });

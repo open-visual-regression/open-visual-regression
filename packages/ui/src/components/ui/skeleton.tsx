@@ -4,7 +4,7 @@ export type SkeletonProps = React.ComponentProps<"div"> & {
   label?: string;
 };
 
-const Skeleton = ({ className, label = "loading", ...props }: SkeletonProps) => (
+const Skeleton = ({ className, label = "Loading", ...props }: SkeletonProps) => (
   <div
     data-slot="skeleton"
     role="status"

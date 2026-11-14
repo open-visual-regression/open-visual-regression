@@ -61,7 +61,7 @@ describe("UpdateOrganizationForm", () => {
 
     resolveUpdate!([null, undefined]);
 
-    expect(await screen.findByText("organization updated")).toBeVisible();
+    expect(await screen.findByText("Organization updated")).toBeVisible();
   });
 
   it("should show a root error message when saving fails", async ({ user }) => {
@@ -80,6 +80,6 @@ describe("UpdateOrganizationForm", () => {
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("something went wrong");
-    expect(screen.queryByText("organization updated")).not.toBeInTheDocument();
+    expect(screen.queryByText("Organization updated")).not.toBeInTheDocument();
   });
 });

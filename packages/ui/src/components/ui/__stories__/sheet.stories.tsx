@@ -61,8 +61,8 @@ export const Default: Story = {
 
 const NAV_ITEMS = [
   { icon: UserIcon, label: "profile" },
-  { icon: SettingsIcon, label: "general" },
-  { icon: FolderIcon, label: "projects" },
+  { icon: SettingsIcon, label: "General" },
+  { icon: FolderIcon, label: "Projects" },
 ];
 
 export const Navigation: Story = {

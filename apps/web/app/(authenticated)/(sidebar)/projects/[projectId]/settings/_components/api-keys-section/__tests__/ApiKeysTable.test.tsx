@@ -21,7 +21,7 @@ describe("ApiKeysTable", () => {
     const apiKey = mocks.apiKey.generateApiKey({ lastRequest: null });
     render(<ApiKeysTable data={[apiKey]} />);
 
-    expect(screen.getByRole("cell", { name: "never" })).toBeVisible();
+    expect(screen.getByRole("cell", { name: "Never" })).toBeVisible();
   });
 
   it("should show the last used date when the key has been used", () => {
@@ -30,7 +30,7 @@ describe("ApiKeysTable", () => {
     render(<ApiKeysTable data={[apiKey]} />);
 
     expect(screen.getByRole("cell", { name: formatDateTime(lastRequest) })).toBeVisible();
-    expect(screen.queryByRole("cell", { name: "never" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("cell", { name: "Never" })).not.toBeInTheDocument();
   });
 
   it("should revoke the api key when confirmed", async ({ user }) => {

@@ -8,16 +8,16 @@ export const NoApiKeysSection = () => (
   <Card className="bg-pixel-grid py-20">
     <CardHeader className="flex justify-center">
       <Typography variant="h2" as="h2">
-        no api keys yet
+        No API keys yet
       </Typography>
     </CardHeader>
     <CardContent className="flex flex-col items-center justify-center gap-6">
       <Typography variant="caption" className="text-sm">
-        api keys are required to upload snapshots to this project.
+        API keys are required to upload snapshots to this project.
       </Typography>
       <CreateApiKeyModalButton variant="solid" color="accent" size="lg">
         <Icon icon={PlusIcon} />
-        create first api key
+        Create first API key
       </CreateApiKeyModalButton>
     </CardContent>
   </Card>

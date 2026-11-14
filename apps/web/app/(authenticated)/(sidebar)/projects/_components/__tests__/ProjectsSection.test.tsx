@@ -30,7 +30,7 @@ describe("ProjectsSection", () => {
   it("should show the onboarding empty state when there are no projects", () => {
     renderSection([]);
 
-    expect(screen.getByRole("heading", { name: "no projects yet" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "No projects yet" })).toBeVisible();
   });
 
   it("should render a card for each project", () => {

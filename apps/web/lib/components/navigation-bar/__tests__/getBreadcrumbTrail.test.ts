@@ -8,43 +8,43 @@ const SNAPSHOT_ID = "018f0000-0000-7000-8000-000000000003";
 
 describe("getBreadcrumbTrail", () => {
   it("should return the overview segment for the overview page", () => {
-    expect(getBreadcrumbTrail([])).toEqual([{ segment: "", label: "overview" }]);
+    expect(getBreadcrumbTrail([])).toEqual([{ segment: "", label: "Overview" }]);
   });
 
   it("should treat the new project segment as a literal", () => {
     expect(getBreadcrumbTrail(["projects", "new"])).toEqual([
-      { segment: "projects", label: "projects", href: "/projects" },
-      { segment: "new", label: "new" },
+      { segment: "projects", label: "Projects", href: "/projects" },
+      { segment: "new", label: "New" },
     ]);
   });
 
   it("should mark the project segment as a project resource", () => {
     expect(getBreadcrumbTrail(["projects", PROJECT_ID, "settings"])).toEqual([
-      { segment: "projects", label: "projects", href: "/projects" },
+      { segment: "projects", label: "Projects", href: "/projects" },
       {
         segment: PROJECT_ID,
         label: PROJECT_ID,
         href: `/projects/${PROJECT_ID}`,
         resource: "project",
       },
-      { segment: "settings", label: "settings" },
+      { segment: "settings", label: "Settings" },
     ]);
   });
 
   it("should return a single segment for the all-builds page", () => {
-    expect(getBreadcrumbTrail(["builds"])).toEqual([{ segment: "builds", label: "builds" }]);
+    expect(getBreadcrumbTrail(["builds"])).toEqual([{ segment: "builds", label: "Builds" }]);
   });
 
   it("should return a single segment for the all-snapshots page", () => {
     expect(getBreadcrumbTrail(["snapshots"])).toEqual([
-      { segment: "snapshots", label: "snapshots" },
+      { segment: "snapshots", label: "Snapshots" },
     ]);
   });
 
   it("should humanize static segments outside of projects", () => {
     expect(getBreadcrumbTrail(["settings", "access-tokens"])).toEqual([
-      { segment: "settings", label: "settings", href: "/settings" },
-      { segment: "access-tokens", label: "access tokens" },
+      { segment: "settings", label: "Settings", href: "/settings" },
+      { segment: "access-tokens", label: "Access tokens" },
     ]);
   });
 
@@ -52,7 +52,7 @@ describe("getBreadcrumbTrail", () => {
     expect(
       getBreadcrumbTrail(["projects", PROJECT_ID, "builds", BUILD_ID, "snapshots", SNAPSHOT_ID]),
     ).toEqual([
-      { segment: "projects", label: "projects", href: "/projects" },
+      { segment: "projects", label: "Projects", href: "/projects" },
       {
         segment: PROJECT_ID,
         label: PROJECT_ID,

@@ -26,7 +26,7 @@ export const updateAccountInformation = os.account.updateAccountInformation
       const existingUser = await dbClient.users.findByEmail(input.email);
 
       if (existingUser && existingUser.id !== user.id) {
-        throw new ORPCError("CONFLICT", { message: "this email is already in use" });
+        throw new ORPCError("CONFLICT", { message: "This email is already in use" });
       }
 
       const [error] = await authServerClient.changeEmail({ email: input.email, headers });

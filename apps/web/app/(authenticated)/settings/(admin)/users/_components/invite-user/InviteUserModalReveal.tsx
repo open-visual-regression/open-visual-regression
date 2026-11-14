@@ -11,13 +11,13 @@ type InviteUserModalRevealProps = {
 export const InviteUserModalReveal = ({ invitationUrl }: InviteUserModalRevealProps) => (
   <div className="flex flex-col gap-4">
     <Alert color="green" className="min-w-0">
-      <AlertTitle>share this link with the user so they can accept the invitation.</AlertTitle>
+      <AlertTitle>Share this link with the user so they can accept the invitation.</AlertTitle>
       <AlertDescription className="min-w-0">
         <CodeBlock code={invitationUrl} truncate className="mt-2" />
       </AlertDescription>
     </Alert>
     <DialogFooter>
-      <DialogClose render={<Button />}>done</DialogClose>
+      <DialogClose render={<Button />}>Done</DialogClose>
     </DialogFooter>
   </div>
 );

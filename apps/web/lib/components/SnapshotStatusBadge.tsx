@@ -10,16 +10,16 @@ const SNAPSHOT_STATUS_BADGE: Record<
   SnapshotDisplayStatus,
   Pick<StatusBadgeProps, "color" | "icon"> & { label: string }
 > = {
-  queued: { color: "gray", icon: "queued", label: "queued" },
-  processing: { color: "purple", icon: "processing", label: "processing" },
-  needs_review: { color: "amber", icon: "needs_review", label: "needs review" },
-  unchanged: { color: "blue", icon: "unchanged", label: "unchanged" },
-  auto_approved: { color: "green", icon: "auto_approved", label: "auto approved" },
-  approved: { color: "green", icon: "approved", label: "approved" },
-  rejected: { color: "red", icon: "rejected", label: "rejected" },
-  error: { color: "red", icon: "error", label: "error" },
-  canceled: { color: "gray", icon: "canceled", label: "canceled" },
-  skipped: { color: "gray", icon: "skipped", label: "skipped" },
+  queued: { color: "gray", icon: "queued", label: "Queued" },
+  processing: { color: "purple", icon: "processing", label: "Processing" },
+  needs_review: { color: "amber", icon: "needs_review", label: "Needs review" },
+  unchanged: { color: "blue", icon: "unchanged", label: "Unchanged" },
+  auto_approved: { color: "green", icon: "auto_approved", label: "Auto approved" },
+  approved: { color: "green", icon: "approved", label: "Approved" },
+  rejected: { color: "red", icon: "rejected", label: "Rejected" },
+  error: { color: "red", icon: "error", label: "Error" },
+  canceled: { color: "gray", icon: "canceled", label: "Canceled" },
+  skipped: { color: "gray", icon: "skipped", label: "Skipped" },
 };
 
 export const getSnapshotStatusLabel = (status: SnapshotDisplayStatus): string =>

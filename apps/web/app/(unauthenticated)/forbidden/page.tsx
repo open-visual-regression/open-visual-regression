@@ -10,7 +10,7 @@ export default function ForbiddenPage() {
           Forbidden
         </Typography>
         <Typography variant="body-muted">You don&apos;t have access to this page.</Typography>
-        <Typography variant="caption">open visual regression · v{APP_VERSION}</Typography>
+        <Typography variant="caption">Open Visual Regression · v{APP_VERSION}</Typography>
       </div>
     </div>
   );

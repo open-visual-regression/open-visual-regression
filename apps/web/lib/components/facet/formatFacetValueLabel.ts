@@ -1,6 +1,6 @@
 export const formatFacetValueLabel = (selectedLabels: string[]): string => {
   if (selectedLabels.length === 0) {
-    return "any";
+    return "Any";
   }
 
   if (selectedLabels.length > 1) {
@@ -8,5 +8,5 @@ export const formatFacetValueLabel = (selectedLabels: string[]): string => {
   }
 
   const [label] = selectedLabels;
-  return label ?? "any";
+  return label ?? "Any";
 };

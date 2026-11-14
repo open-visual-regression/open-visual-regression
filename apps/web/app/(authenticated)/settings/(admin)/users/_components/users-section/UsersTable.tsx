@@ -64,7 +64,7 @@ export const UsersTable = ({
           cell: ({ row }) =>
             row.getCanSelect() ? (
               <Checkbox
-                aria-label={`select ${row.original.name}`}
+                aria-label={`Select ${row.original.name}`}
                 checked={row.getIsSelected()}
                 onCheckedChange={(checked) => row.toggleSelected(checked)}
               />
@@ -83,7 +83,7 @@ export const UsersTable = ({
           meta: {
             skeleton: (
               <ButtonSkeleton size="sm" className="w-full justify-between">
-                member
+                Member
                 <Icon icon={ChevronDownIcon} size={12} />
               </ButtonSkeleton>
             ),
@@ -104,9 +104,9 @@ export const UsersTable = ({
           meta: { className: "text-center", skeleton: <BadgeSkeleton className="w-14" /> },
           cell: ({ getValue }) =>
             getValue() === "invited" ? (
-              <Badge color="gray">invited</Badge>
+              <Badge color="gray">Invited</Badge>
             ) : (
-              <Badge color="green">active</Badge>
+              <Badge color="green">Active</Badge>
             ),
         }),
         columnHelper.display({
@@ -114,7 +114,7 @@ export const UsersTable = ({
           meta: { className: "w-px text-center" },
           cell: ({ row }) =>
             row.original.status === "invited" ? (
-              <CopyButton text={row.original.invitationUrl}>copy invite</CopyButton>
+              <CopyButton text={row.original.invitationUrl}>Copy invite</CopyButton>
             ) : null,
         }),
       ]),
@@ -156,7 +156,7 @@ export const UsersTable = ({
         <TableBody>
           {table.getRowModel().rows.length === 0 ? (
             <TableEmpty colSpan={columnCount}>
-              {search ? `no users found matching "${search}"` : "no users found"}
+              {search ? `No users found matching "${search}"` : "No users found"}
             </TableEmpty>
           ) : (
             table.getRowModel().rows.map((row) => (

@@ -10,7 +10,7 @@ export const updatePasswordFormSchema = z
     if (data.newPassword !== data.confirmPassword) {
       ctx.addIssue({
         code: "custom",
-        message: "passwords do not match",
+        message: "Passwords do not match",
         path: ["confirmPassword"],
       });
     }

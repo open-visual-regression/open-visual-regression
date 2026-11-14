@@ -8,10 +8,10 @@ export class Sidebar {
   }
 
   projectsLink(): Locator {
-    return this.root().getByRole("link", { name: /^projects/ });
+    return this.root().getByRole("link", { name: /^Projects/ });
   }
 
   recentBuildsLink(): Locator {
-    return this.root().getByRole("link", { name: "recent builds", exact: true });
+    return this.root().getByRole("link", { name: "Recent builds", exact: true });
   }
 }

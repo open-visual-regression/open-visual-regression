@@ -26,7 +26,7 @@ export const SnapshotFrameImage = ({
   if (!imagePath) {
     return (
       <div className={cn("absolute inset-0 flex items-center justify-center", className)}>
-        <Typography variant="caption">no preview</Typography>
+        <Typography variant="caption">No preview</Typography>
       </div>
     );
   }
@@ -44,7 +44,7 @@ export const SnapshotFrameImage = ({
       }
       errorFallback={
         <div className={cn("absolute inset-0 flex items-center justify-center", className)}>
-          <Typography variant="caption">failed to load snapshot</Typography>
+          <Typography variant="caption">Failed to load snapshot</Typography>
         </div>
       }
     />

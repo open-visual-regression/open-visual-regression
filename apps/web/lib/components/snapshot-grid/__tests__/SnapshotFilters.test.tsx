@@ -14,8 +14,8 @@ vi.mock("next/navigation");
 const mockPush = vi.mocked(useRouter)().push;
 
 const STATUS_OPTIONS: FacetOption<SnapshotDisplayStatus>[] = [
-  { value: "queued", label: "queued" },
-  { value: "error", label: "error" },
+  { value: "queued", label: "Queued" },
+  { value: "error", label: "Error" },
 ];
 
 const BROWSER_OPTIONS: FacetOption<string>[] = [
@@ -29,8 +29,8 @@ const VIEWPORT_OPTIONS: FacetOption<string>[] = [
 ];
 
 const FLAG_OPTIONS: FacetOption<SnapshotFlag>[] = [
-  { value: "flaky", label: "flaky" },
-  { value: "warning", label: "warning" },
+  { value: "flaky", label: "Flaky" },
+  { value: "warning", label: "Warning" },
 ];
 
 const renderComponent = () =>
@@ -63,8 +63,8 @@ describe("SnapshotFilters", () => {
     renderComponent();
 
     await user.click(screen.getByRole("button", { name: /^status\s+any$/i }));
-    await user.click(await screen.findByRole("checkbox", { name: "queued" }));
-    await user.click(await screen.findByRole("checkbox", { name: "error" }));
+    await user.click(await screen.findByRole("checkbox", { name: "Queued" }));
+    await user.click(await screen.findByRole("checkbox", { name: "Error" }));
     await user.click(screen.getByRole("button", { name: /^apply$/i }));
 
     expect(mockPush).toHaveBeenCalledWith("/?status=queued&status=error");
@@ -101,8 +101,8 @@ describe("SnapshotFilters", () => {
     renderComponent();
 
     await user.click(screen.getByRole("button", { name: /^flags\s+any$/i }));
-    await user.click(await screen.findByRole("checkbox", { name: "flaky" }));
-    await user.click(await screen.findByRole("checkbox", { name: "warning" }));
+    await user.click(await screen.findByRole("checkbox", { name: "Flaky" }));
+    await user.click(await screen.findByRole("checkbox", { name: "Warning" }));
     await user.click(screen.getByRole("button", { name: /^apply$/i }));
 
     expect(mockPush).toHaveBeenCalledWith("/?flag=flaky&flag=warning");
@@ -135,7 +135,7 @@ describe("SnapshotFilters", () => {
         statusOptions={STATUS_OPTIONS}
         browserOptions={BROWSER_OPTIONS}
         viewportOptions={VIEWPORT_OPTIONS}
-        flagOptions={[{ value: "warning", label: "warning" }]}
+        flagOptions={[{ value: "warning", label: "Warning" }]}
       />,
     );
 
@@ -190,13 +190,13 @@ describe("SnapshotFilters", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: "filters (active)" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Filters (active)" })).toBeVisible();
   });
 
   it("should not mark the mobile filter menu button as active when no filter is applied", () => {
     renderComponent();
 
-    expect(screen.getByRole("button", { name: "filters" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Filters" })).toBeVisible();
   });
 
   it("should not render a facet that has one or zero options", () => {
@@ -206,7 +206,7 @@ describe("SnapshotFilters", () => {
         browsers={[]}
         viewports={[]}
         flags={[]}
-        statusOptions={[{ value: "queued", label: "queued" }]}
+        statusOptions={[{ value: "queued", label: "Queued" }]}
         browserOptions={BROWSER_OPTIONS}
         viewportOptions={[]}
         flagOptions={[]}
@@ -225,7 +225,7 @@ describe("SnapshotFilters", () => {
         browsers={[]}
         viewports={[]}
         flags={[]}
-        statusOptions={[{ value: "queued", label: "queued" }]}
+        statusOptions={[{ value: "queued", label: "Queued" }]}
         browserOptions={[]}
         viewportOptions={[]}
         flagOptions={[]}

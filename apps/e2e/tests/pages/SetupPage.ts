@@ -8,30 +8,30 @@ export class SetupPage {
   }
 
   organizationNameField() {
-    return this.page.getByLabel("organization name");
+    return this.page.getByLabel("Organization name");
   }
 
   nextButton() {
-    return this.page.getByRole("button", { name: "next", exact: true });
+    return this.page.getByRole("button", { name: "Next", exact: true });
   }
 
   nameField() {
-    return this.page.getByLabel("name", { exact: true });
+    return this.page.getByLabel("Name", { exact: true });
   }
 
   emailField() {
-    return this.page.getByLabel("email", { exact: true });
+    return this.page.getByLabel("Email", { exact: true });
   }
 
   passwordField() {
-    return this.page.getByLabel("password", { exact: true });
+    return this.page.getByLabel("Password", { exact: true });
   }
 
   confirmPasswordField() {
-    return this.page.getByLabel("confirm password");
+    return this.page.getByLabel("Confirm password");
   }
 
   createButton() {
-    return this.page.getByRole("button", { name: "create" });
+    return this.page.getByRole("button", { name: "Create" });
   }
 }

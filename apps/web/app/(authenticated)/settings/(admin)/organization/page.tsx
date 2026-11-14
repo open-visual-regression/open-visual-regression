@@ -28,7 +28,7 @@ export default async function SettingsOrganizationPage() {
   return (
     <div className="flex flex-col gap-6">
       <Typography variant="h1" as="h1">
-        organization
+        Organization
       </Typography>
       <UpdateOrganizationForm organization={orgResult.organization} />
     </div>

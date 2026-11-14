@@ -7,7 +7,7 @@ type ProjectsHeadingProps = {
 export const ProjectsHeading = ({ total }: ProjectsHeadingProps) => (
   <div className="flex flex-row gap-2 items-end-safe">
     <Typography variant="h1" as="h1">
-      projects
+      Projects
     </Typography>
     <Typography variant="h2" className="text-muted-foreground" as="p">
       ({total})

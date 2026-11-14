@@ -61,7 +61,7 @@ const columns = columnHelper.columns([
         return (
           <span className="inline-flex items-center gap-1.5">
             <StatusIcon variant="stale" size={12} />
-            never
+            Never
           </span>
         );
       }
@@ -75,7 +75,7 @@ const columns = columnHelper.columns([
       skeleton: (
         <ButtonSkeleton size="sm" className="ml-auto">
           <Icon icon={XIcon} />
-          revoke
+          Revoke
         </ButtonSkeleton>
       ),
     },

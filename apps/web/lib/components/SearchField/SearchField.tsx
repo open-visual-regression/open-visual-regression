@@ -64,14 +64,14 @@ export const SearchField = ({
         <InputGroupAddon align="inline-end">
           {search ? (
             <InputGroupButton
-              aria-label="clear search"
+              aria-label="Clear search"
               render={<Link href={clearHref} />}
               nativeButton={false}
             >
               <Icon icon={XIcon} />
             </InputGroupButton>
           ) : null}
-          <InputGroupButton type="submit" aria-label="search">
+          <InputGroupButton type="submit" aria-label="Search">
             <Icon icon={SearchIcon} />
           </InputGroupButton>
         </InputGroupAddon>

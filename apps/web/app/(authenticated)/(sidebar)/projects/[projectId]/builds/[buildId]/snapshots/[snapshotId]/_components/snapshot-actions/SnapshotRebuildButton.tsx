@@ -55,27 +55,27 @@ export const SnapshotRebuildButton = ({ buildId, snapshotId }: SnapshotRebuildBu
   return (
     <AlertDialog open={open} onOpenChange={handleOpenChange}>
       <AlertDialogTrigger render={<ResponsiveActionButton icon={RefreshCwIcon} />}>
-        rebuild
+        Rebuild
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>rebuild this snapshot?</AlertDialogTitle>
-          <AlertDialogDescription>this captures the story again.</AlertDialogDescription>
+          <AlertDialogTitle>Rebuild this snapshot?</AlertDialogTitle>
+          <AlertDialogDescription>This captures the story again.</AlertDialogDescription>
         </AlertDialogHeader>
         <Typography>
-          this replaces the current screenshot, logs and diff with a new capture, and discards any
-          review on it. the rest of the build is left alone.
+          This replaces the current screenshot, logs and diff with a new capture, and discards any
+          review on it. The rest of the build is left alone.
         </Typography>
         <FieldError errors={[error]} />
         <AlertDialogFooter>
-          <AlertDialogCancel>keep as-is</AlertDialogCancel>
+          <AlertDialogCancel>Keep as-is</AlertDialogCancel>
           <AlertDialogAction
             variant="outline"
             color="neutral"
             disabled={pending}
             onClick={() => execute({ buildId, snapshotIds: [snapshotId] })}
           >
-            {pending ? "rebuilding..." : "rebuild"}
+            {pending ? "Rebuilding..." : "Rebuild"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

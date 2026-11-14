@@ -54,18 +54,18 @@ export const DeleteProjectDialog = ({ project }: DeleteProjectDialogProps) => {
   return (
     <AlertDialog open={open} onOpenChange={handleOpenChange}>
       <AlertDialogTrigger render={<Button variant="outline" color="red" size="md" />}>
-        delete project
+        Delete project
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>delete {project.name}?</AlertDialogTitle>
+          <AlertDialogTitle>Delete {project.name}?</AlertDialogTitle>
           <AlertDialogDescription>
-            this will permanently delete this project and everything stored under it. this cannot be
+            This will permanently delete this project and everything stored under it. This cannot be
             undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <Field>
-          <FieldLabel htmlFor="confirm-project-name">type {project.name} to confirm</FieldLabel>
+          <FieldLabel htmlFor="confirm-project-name">Type {project.name} to confirm</FieldLabel>
           <Input
             id="confirm-project-name"
             value={confirmName}
@@ -77,14 +77,14 @@ export const DeleteProjectDialog = ({ project }: DeleteProjectDialogProps) => {
         </Field>
         <FieldError errors={[error]} />
         <AlertDialogFooter>
-          <AlertDialogCancel>keep project</AlertDialogCancel>
+          <AlertDialogCancel>Keep project</AlertDialogCancel>
           <AlertDialogAction
             variant="outline"
             color="red"
             disabled={!canDelete}
             onClick={() => execute({ id: project.id })}
           >
-            {isDeleting ? "deleting…" : "delete project"}
+            {isDeleting ? "Deleting…" : "Delete project"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

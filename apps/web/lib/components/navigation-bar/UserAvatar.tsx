@@ -51,12 +51,12 @@ const UserAvatar = ({ name, signOutUrl = "/login" }: UserAvatarProps) => {
       <DropdownMenuContent side="bottom" align="end">
         <DropdownMenuItem render={<Link href="/settings" />}>
           <Icon icon={SettingsIcon} size={14} />
-          settings
+          Settings
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut}>
           <Icon icon={LogOutIcon} size={14} />
-          sign out
+          Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

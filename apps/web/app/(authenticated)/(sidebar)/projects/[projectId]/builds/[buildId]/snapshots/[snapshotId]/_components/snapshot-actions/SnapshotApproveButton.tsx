@@ -52,7 +52,7 @@ export const SnapshotApproveButton = ({
       }
       onClick={handleClick}
     >
-      {approved ? "approved" : pending ? "approving..." : "approve"}
+      {approved ? "Approved" : pending ? "Approving..." : "Approve"}
     </ResponsiveActionButton>
   );
 };

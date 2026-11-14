@@ -10,7 +10,7 @@ import { BuildsSection } from "../BuildsSection";
 
 const PROJECT_ID = "018f0000-0000-7000-8000-000000000000";
 
-const EMPTY_STATE = <p>no builds yet</p>;
+const EMPTY_STATE = <p>No builds yet</p>;
 
 const renderSection = (
   builds: ReturnType<typeof mocks.build.generateBuild>[],
@@ -46,7 +46,7 @@ describe("BuildsSection", () => {
   it("should show the empty state when there are no builds", () => {
     renderSection([], { projectIds: [PROJECT_ID], emptyState: EMPTY_STATE });
 
-    expect(screen.getByText("no builds yet")).toBeVisible();
+    expect(screen.getByText("No builds yet")).toBeVisible();
   });
 
   it("should render the builds list with a row for each build", () => {
@@ -59,8 +59,8 @@ describe("BuildsSection", () => {
   it("should show a no-results message instead of the empty state during a search", () => {
     renderSection([], { projectIds: [PROJECT_ID], search: "missing", emptyState: EMPTY_STATE });
 
-    expect(screen.queryByText("no builds yet")).toBeNull();
-    expect(screen.getByText('no builds found matching "missing"')).toBeVisible();
+    expect(screen.queryByText("No builds yet")).toBeNull();
+    expect(screen.getByText('No builds found matching "missing"')).toBeVisible();
   });
 
   it("should list builds from every project when no project is given", () => {
@@ -83,6 +83,6 @@ describe("BuildsSection", () => {
   it("should fall back to the list's own empty message when no empty state is given", () => {
     renderSection([]);
 
-    expect(screen.getByText("no builds found")).toBeVisible();
+    expect(screen.getByText("No builds found")).toBeVisible();
   });
 });

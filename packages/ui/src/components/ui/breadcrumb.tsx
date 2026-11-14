@@ -6,7 +6,7 @@ import * as React from "react";
 import { cn } from "../../lib/utils";
 
 const Breadcrumb = ({ className, ...props }: React.ComponentProps<"nav">) => (
-  <nav aria-label="breadcrumb" data-slot="breadcrumb" className={cn(className)} {...props} />
+  <nav aria-label="Breadcrumb" data-slot="breadcrumb" className={cn(className)} {...props} />
 );
 
 const BreadcrumbList = ({ className, ...props }: React.ComponentProps<"ol">) => (

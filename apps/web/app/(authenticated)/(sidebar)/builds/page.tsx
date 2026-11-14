@@ -61,7 +61,7 @@ export default async function BuildsPage(props: BuildsPageProps) {
     <BuildsPageShell
       heading={
         <Typography variant="h1" as="h1">
-          builds
+          Builds
         </Typography>
       }
       filters={

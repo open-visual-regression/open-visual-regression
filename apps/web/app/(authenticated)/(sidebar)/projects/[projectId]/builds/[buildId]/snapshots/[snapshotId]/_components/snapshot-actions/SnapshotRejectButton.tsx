@@ -47,7 +47,7 @@ export const SnapshotRejectButton = ({ diffId, rejected, nextHref }: SnapshotRej
       }
       onClick={handleClick}
     >
-      {rejected ? "rejected" : pending ? "rejecting..." : "reject"}
+      {rejected ? "Rejected" : pending ? "Rejecting..." : "Reject"}
     </ResponsiveActionButton>
   );
 };

@@ -10,7 +10,7 @@ const renderGrid = (items: Item[]) =>
       items={items}
       getKey={(item) => item.id}
       renderItem={(item) => <a href={`/items/${item.id}`}>{item.name}</a>}
-      emptyMessage="no snapshots found"
+      emptyMessage="No snapshots found"
     />,
   );
 
@@ -28,7 +28,7 @@ describe("SnapshotGrid", () => {
   it("should show the empty message when there are no items", () => {
     renderGrid([]);
 
-    expect(screen.getByText("no snapshots found")).toBeVisible();
+    expect(screen.getByText("No snapshots found")).toBeVisible();
   });
 
   it("should show the given skeleton cards while the next page loads", () => {
@@ -38,7 +38,7 @@ describe("SnapshotGrid", () => {
         getKey={(item) => item.id}
         renderItem={(item) => <a href={`/items/${item.id}`}>{item.name}</a>}
         skeleton={<div role="status" aria-label="loading card" />}
-        emptyMessage="no snapshots found"
+        emptyMessage="No snapshots found"
         hasNextPage
       />,
     );

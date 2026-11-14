@@ -25,7 +25,7 @@ export const SnapshotReviews = ({
   role,
 }: SnapshotReviewsProps) => {
   if (reviews.length === 0) {
-    return <Typography variant="body-muted">no reviews yet</Typography>;
+    return <Typography variant="body-muted">No reviews yet</Typography>;
   }
 
   const approvals = reviews.filter((review) => review.vote === "approve").length;
@@ -56,7 +56,7 @@ export const SnapshotReviews = ({
                 </Typography>
               </div>
               <Badge color={review.vote === "approve" ? "green" : "red"}>
-                {review.vote === "approve" ? "approved" : "rejected"}
+                {review.vote === "approve" ? "Approved" : "Rejected"}
               </Badge>
               {canRemoveAny ? (
                 <div className="flex size-7 shrink-0 items-center justify-center">
@@ -64,7 +64,7 @@ export const SnapshotReviews = ({
                     <RemoveReviewButton
                       diffId={diffId}
                       reviewerId={review.reviewerId}
-                      label={isOwnReview ? "remove your review" : "remove review"}
+                      label={isOwnReview ? "Remove your review" : "Remove review"}
                     />
                   ) : null}
                 </div>

@@ -13,11 +13,11 @@ type Story = StoryObj<typeof SegmentedProgress>;
 
 const SEGMENTS: Segment[] = [
   { label: "passed", count: 14, color: "blue" },
-  { label: "approved", count: 2, color: "green" },
-  { label: "needs review", count: 3, color: "amber" },
-  { label: "error", count: 1, color: "red" },
-  { label: "processing", count: 2, color: "purple" },
-  { label: "queued", count: 4, color: "gray" },
+  { label: "Approved", count: 2, color: "green" },
+  { label: "Needs review", count: 3, color: "amber" },
+  { label: "Error", count: 1, color: "red" },
+  { label: "Processing", count: 2, color: "purple" },
+  { label: "Queued", count: 4, color: "gray" },
 ];
 
 export const Default: Story = {

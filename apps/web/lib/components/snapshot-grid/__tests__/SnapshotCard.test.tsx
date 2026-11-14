@@ -60,42 +60,42 @@ describe("SnapshotCard", () => {
     });
     render(<SnapshotCard snapshot={snapshot} />);
 
-    expect(screen.getByText("no preview")).toBeInTheDocument();
+    expect(screen.getByText("No preview")).toBeInTheDocument();
   });
 
   it("should show the processing time when the snapshot has one", () => {
     const snapshot = mocks.build.generateBuildSnapshot({ processingMs: 2500 });
     render(<SnapshotCard snapshot={snapshot} />);
 
-    expect(screen.getByRole("img", { name: "processing time" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Processing time" })).toBeInTheDocument();
   });
 
   it("should not show the processing time when the snapshot has none", () => {
     const snapshot = mocks.build.generateBuildSnapshot({ processingMs: null });
     render(<SnapshotCard snapshot={snapshot} />);
 
-    expect(screen.queryByRole("img", { name: "processing time" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: "Processing time" })).not.toBeInTheDocument();
   });
 
   it("should show a warning badge when the snapshot has an uncaught page error", () => {
     const snapshot = mocks.build.generateBuildSnapshot({ hasUncaughtPageError: true });
     render(<SnapshotCard snapshot={snapshot} />);
 
-    expect(screen.getByRole("img", { name: "warning" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Warning" })).toBeInTheDocument();
   });
 
   it("should not show a warning badge when the snapshot has no warnings", () => {
     const snapshot = mocks.build.generateBuildSnapshot({ hasUncaughtPageError: false });
     render(<SnapshotCard snapshot={snapshot} />);
 
-    expect(screen.queryByRole("img", { name: "warning" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: "Warning" })).not.toBeInTheDocument();
   });
 
   it("should show a flaky badge when the story has been flagged as flaky", () => {
     const snapshot = mocks.build.generateBuildSnapshot({ isFlaky: true });
     render(<SnapshotCard snapshot={snapshot} />);
 
-    expect(screen.getByRole("img", { name: "flaky" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Flaky" })).toBeInTheDocument();
     expect(screen.getByRole("link")).toHaveAccessibleName(expect.stringContaining(", flaky"));
   });
 
@@ -103,7 +103,7 @@ describe("SnapshotCard", () => {
     const snapshot = mocks.build.generateBuildSnapshot({ isFlaky: false });
     render(<SnapshotCard snapshot={snapshot} />);
 
-    expect(screen.queryByRole("img", { name: "flaky" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: "Flaky" })).not.toBeInTheDocument();
   });
 
   it("should name the snapshot's project when asked to", () => {

@@ -50,7 +50,7 @@ describe("InvitationCard", () => {
     await user.type(screen.getByLabelText(/confirm password/i), "different456");
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
-    expect(await screen.findByText("passwords do not match")).toBeVisible();
+    expect(await screen.findByText("Passwords do not match")).toBeVisible();
     expect(mockAcceptInvitation).not.toHaveBeenCalled();
   });
 

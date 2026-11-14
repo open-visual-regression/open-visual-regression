@@ -21,7 +21,7 @@ const meta: Meta<typeof SnapshotZoomDialog> = {
     baseline: null,
     newSnapshot: {
       imagePath: "/api/storage/new-desktop.png",
-      alt: "snapshot of Button Primary",
+      alt: "Snapshot of Button Primary",
     },
     diffImagePath: null,
   },
@@ -51,7 +51,7 @@ type Story = StoryObj<typeof SnapshotZoomDialog>;
 const comparisonArgs = {
   baseline: {
     imagePath: "/api/storage/baseline-desktop.png",
-    alt: "baseline snapshot of Button Primary",
+    alt: "Baseline snapshot of Button Primary",
     commitSha: "abc1234567890",
     commitUrl: "https://github.com/acme/web/commit/abc1234567890",
   },
@@ -59,12 +59,14 @@ const comparisonArgs = {
 };
 
 const openDialog = async (canvasElement: HTMLElement, view: "baseline" | "new") => {
-  await userEvent.click(within(canvasElement).getByRole("button", { name: `zoom ${view}` }));
+  await userEvent.click(within(canvasElement).getByRole("button", { name: `Zoom ${view}` }));
 
-  const dialog = await screen.findByRole("dialog", { name: view });
+  const dialog = await screen.findByRole("dialog", {
+    name: view === "baseline" ? "Baseline" : "New",
+  });
   await waitFor(() => expect(dialog).toBeVisible());
   const imageName =
-    view === "baseline" ? "baseline snapshot of Button Primary" : "snapshot of Button Primary";
+    view === "baseline" ? "Baseline snapshot of Button Primary" : "Snapshot of Button Primary";
   const image = await within(dialog).findByRole("img", { name: imageName });
   await waitFor(() => expect((image as HTMLImageElement).naturalWidth).toBeGreaterThan(0));
 
@@ -82,7 +84,7 @@ export const Baseline: Story = {
   args: comparisonArgs,
   play: async ({ canvasElement }) => {
     const { dialog } = await openDialog(canvasElement, "baseline");
-    await expect(within(dialog).getByRole("tab", { name: "baseline" })).toHaveAttribute(
+    await expect(within(dialog).getByRole("tab", { name: "Baseline" })).toHaveAttribute(
       "aria-selected",
       "true",
     );
@@ -96,7 +98,7 @@ export const NewWithDiff: Story = {
     const { dialog } = await openDialog(canvasElement, "new");
     await expect(within(dialog).getByRole("switch")).toBeChecked();
     await expect(
-      within(dialog).getByRole("img", { name: "diff overlay of snapshot of Button Primary" }),
+      within(dialog).getByRole("img", { name: "Diff overlay of snapshot of Button Primary" }),
     ).toBeVisible();
   },
 };
@@ -107,7 +109,7 @@ export const NewWithDiffHidden: Story = {
   play: async ({ canvasElement }) => {
     const { dialog } = await openDialog(canvasElement, "new");
     const diffImage = within(dialog).getByRole("img", {
-      name: "diff overlay of snapshot of Button Primary",
+      name: "Diff overlay of snapshot of Button Primary",
     });
 
     await userEvent.click(within(dialog).getByRole("switch"));
@@ -123,12 +125,12 @@ export const ToggleToBaseline: Story = {
   play: async ({ canvasElement }) => {
     const { dialog, image: newImage } = await openDialog(canvasElement, "new");
 
-    await userEvent.click(within(dialog).getByRole("tab", { name: "baseline" }));
+    await userEvent.click(within(dialog).getByRole("tab", { name: "Baseline" }));
 
     const baselineImage = await within(dialog).findByRole("img", {
-      name: "baseline snapshot of Button Primary",
+      name: "Baseline snapshot of Button Primary",
     });
-    await expect(screen.getByRole("dialog", { name: "baseline" })).toBeVisible();
+    await expect(screen.getByRole("dialog", { name: "Baseline" })).toBeVisible();
     await expect(newImage).not.toBeVisible();
     await expect(baselineImage.getBoundingClientRect().left).toBe(
       newImage.getBoundingClientRect().left,

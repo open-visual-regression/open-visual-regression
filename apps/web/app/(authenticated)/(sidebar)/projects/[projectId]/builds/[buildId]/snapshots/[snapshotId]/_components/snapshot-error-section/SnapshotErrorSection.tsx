@@ -13,7 +13,7 @@ export const SnapshotErrorSection = ({ snapshot }: SnapshotErrorSectionProps) =>
     <div>
       <SnapshotPaneImage
         imagePath={getStoragePath(snapshot.imagePath)}
-        alt={`snapshot of ${snapshot.targetTitle} ${snapshot.targetName}`}
+        alt={`Snapshot of ${snapshot.targetTitle} ${snapshot.targetName}`}
       />
     </div>
   );

@@ -12,7 +12,7 @@ export default function Error() {
         <div className="w-full flex flex-col items-center gap-6">
           <Typography variant="display">Something went wrong.</Typography>
           <Typography variant="body">Please try again later.</Typography>
-          <Typography variant="caption">open visual regression · v{APP_VERSION}</Typography>
+          <Typography variant="caption">Open Visual Regression · v{APP_VERSION}</Typography>
         </div>
       </div>
     </PixelGrid>

@@ -51,7 +51,7 @@ const LogoFull = ({ className }: LogoFullProps) => (
         <span className="inline-block shrink-0 w-3.5 h-5.5 text-ovr-accent" />
       </div>
       <span className="text-label tracking-label uppercase text text-muted-foreground">
-        open visual regression
+        Open Visual Regression
       </span>
     </div>
   </div>

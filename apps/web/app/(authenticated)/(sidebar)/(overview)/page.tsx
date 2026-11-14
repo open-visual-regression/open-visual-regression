@@ -9,14 +9,14 @@ export default function OverviewPage() {
     <OverviewPageShell
       heading={
         <Typography variant="h1" as="h1">
-          overview
+          Overview
         </Typography>
       }
       links={
         <>
-          <OverviewLinkCard href="/projects" icon={FolderIcon} label="projects" />
-          <OverviewLinkCard href="/builds" icon={BoxIcon} label="builds" />
-          <OverviewLinkCard href="/snapshots" icon={CameraIcon} label="snapshots" />
+          <OverviewLinkCard href="/projects" icon={FolderIcon} label="Projects" />
+          <OverviewLinkCard href="/builds" icon={BoxIcon} label="Builds" />
+          <OverviewLinkCard href="/snapshots" icon={CameraIcon} label="Snapshots" />
         </>
       }
     />

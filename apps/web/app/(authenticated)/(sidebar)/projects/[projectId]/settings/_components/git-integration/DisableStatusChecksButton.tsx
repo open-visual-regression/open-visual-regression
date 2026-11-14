@@ -40,7 +40,7 @@ export const DisableStatusChecksButton = ({
     interceptors: [
       onSuccess(() => {
         setOpen(false);
-        toast.success("ci checks disabled");
+        toast.success("CI checks disabled");
         router.refresh();
       }),
       onError((err) => setError({ message: err.message })),
@@ -61,20 +61,20 @@ export const DisableStatusChecksButton = ({
       <AlertDialogTrigger
         render={<Button type="button" variant="outline" color="red" className={className} />}
       >
-        disable
+        Disable
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>disable git integration?</AlertDialogTitle>
-          <AlertDialogDescription>you can turn them back on at any time.</AlertDialogDescription>
+          <AlertDialogTitle>Disable Git integration?</AlertDialogTitle>
+          <AlertDialogDescription>You can turn them back on at any time.</AlertDialogDescription>
         </AlertDialogHeader>
         <Typography>
-          builds will stop updating the ci check on your commits. commit and branch links will keep
+          Builds will stop updating the CI check on your commits. Commit and branch links will keep
           working.
         </Typography>
         <FieldError errors={[error]} />
         <AlertDialogFooter>
-          <AlertDialogCancel>cancel</AlertDialogCancel>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
             type="button"
             variant="outline"
@@ -82,7 +82,7 @@ export const DisableStatusChecksButton = ({
             disabled={isDisabling}
             onClick={() => execute({ projectId, enabled: false })}
           >
-            {isDisabling ? "disabling..." : "disable"}
+            {isDisabling ? "Disabling..." : "Disable"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

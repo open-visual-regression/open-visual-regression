@@ -58,23 +58,23 @@ export const BuildCancelDialog = ({ buildId, open, onOpenChange }: BuildCancelDi
     <AlertDialog open={open} onOpenChange={handleOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>cancel build?</AlertDialogTitle>
-          <AlertDialogDescription>this cannot be undone.</AlertDialogDescription>
+          <AlertDialogTitle>Cancel build?</AlertDialogTitle>
+          <AlertDialogDescription>This cannot be undone.</AlertDialogDescription>
         </AlertDialogHeader>
         <Typography>
-          are you sure you want to cancel this build? any queued or in-progress snapshots and diffs
-          will be canceled. anything already completed stays as-is.
+          Are you sure you want to cancel this build? Any queued or in-progress snapshots and diffs
+          will be canceled. Anything already completed stays as-is.
         </Typography>
         <FieldError errors={[error]} />
         <AlertDialogFooter>
-          <AlertDialogCancel>keep building</AlertDialogCancel>
+          <AlertDialogCancel>Keep building</AlertDialogCancel>
           <AlertDialogAction
             variant="outline"
             color="neutral"
             disabled={pending}
             onClick={() => execute({ buildId })}
           >
-            {pending ? "canceling..." : "cancel build"}
+            {pending ? "Canceling..." : "Cancel build"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -93,7 +93,7 @@ export const BuildCancelButton = ({ buildId }: BuildCancelButtonProps) => {
         className="flex-1 md:flex-none"
         onClick={() => setOpen(true)}
       >
-        cancel build
+        Cancel build
       </Button>
       <BuildCancelDialog buildId={buildId} open={open} onOpenChange={setOpen} />
     </>

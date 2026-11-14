@@ -10,7 +10,7 @@ export type NewProjectButtonProps = {
 export const NewProjectButton = ({ role }: NewProjectButtonProps) => (
   <RequiresAdminRole role={role}>
     <ResponsiveActionButton href="/projects/new" icon={PlusIcon}>
-      new project
+      New project
     </ResponsiveActionButton>
   </RequiresAdminRole>
 );

@@ -13,10 +13,10 @@ const SetupCardShell = ({ children }: SetupCardShellProps) => (
   <Card className="w-full">
     <CardHeader>
       <Typography variant="h2" as="h1">
-        first-run setup
+        First-run setup
       </Typography>
       <Typography className="text-muted-foreground">
-        no users exist yet. you must create the organization and the first admin account to
+        No users exist yet. You must create the organization and the first admin account to
         continue.
       </Typography>
     </CardHeader>
@@ -35,9 +35,9 @@ export const SetupCardSkeleton = () => (
   <SetupCardShell>
     <SetupFormLayout step={1}>
       <FieldGroup aria-hidden>
-        <FieldSkeleton label="organization name" />
+        <FieldSkeleton label="Organization name" />
         <ButtonSkeleton size="lg" className="w-full">
-          next
+          Next
         </ButtonSkeleton>
       </FieldGroup>
     </SetupFormLayout>

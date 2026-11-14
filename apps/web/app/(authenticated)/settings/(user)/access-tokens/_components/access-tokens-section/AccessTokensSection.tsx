@@ -19,7 +19,7 @@ export const AccessTokensSection = ({ accessTokens }: AccessTokensSectionProps) 
         trigger={
           <CreateAccessTokenModalButton className={NEW_TOKEN_BUTTON_CLASS_NAME}>
             <Icon icon={PlusIcon} />
-            <span className="sr-only sm:not-sr-only">new access token</span>
+            <span className="sr-only sm:not-sr-only">New access token</span>
           </CreateAccessTokenModalButton>
         }
       />
@@ -44,7 +44,7 @@ type AccessTokensSectionLayoutProps = {
 const AccessTokensSectionLayout = ({ action, content }: AccessTokensSectionLayoutProps) => (
   <div className="flex flex-col gap-4">
     <div className="flex items-center justify-between">
-      <Typography variant="h2">access tokens</Typography>
+      <Typography variant="h2">Access tokens</Typography>
       {action}
     </div>
     {content}
@@ -56,7 +56,7 @@ export const AccessTokensSectionSkeleton = () => (
     action={
       <ButtonSkeleton className={NEW_TOKEN_BUTTON_CLASS_NAME}>
         <Icon icon={PlusIcon} />
-        <span className="sr-only sm:not-sr-only">new access token</span>
+        <span className="sr-only sm:not-sr-only">New access token</span>
       </ButtonSkeleton>
     }
     content={<AccessTokensTableSkeleton />}

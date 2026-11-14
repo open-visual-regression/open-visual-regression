@@ -36,7 +36,7 @@ describe("ComparisonView", () => {
   it("should default to split view with both snapshots and the diff toggle visible", () => {
     renderComparison();
 
-    expect(screen.getByRole("tab", { name: "split" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "Split" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("img", { name: "baseline snapshot" })).toBeVisible();
     expect(screen.getByRole("img", { name: "new snapshot" })).toBeVisible();
     expect(screen.getByRole("switch")).toBeVisible();
@@ -48,7 +48,7 @@ describe("ComparisonView", () => {
   }) => {
     renderComparison();
 
-    await user.click(screen.getByRole("tab", { name: "slider" }));
+    await user.click(screen.getByRole("tab", { name: "Slider" }));
 
     expect(screen.getByRole("slider")).toBeVisible();
     expect(screen.getByRole("img", { name: "baseline snapshot" })).toBeVisible();
@@ -59,8 +59,8 @@ describe("ComparisonView", () => {
   it("should restore the split view and its diff toggle when switching back", async ({ user }) => {
     renderComparison();
 
-    await user.click(screen.getByRole("tab", { name: "slider" }));
-    await user.click(screen.getByRole("tab", { name: "split" }));
+    await user.click(screen.getByRole("tab", { name: "Slider" }));
+    await user.click(screen.getByRole("tab", { name: "Split" }));
 
     expect(screen.getByRole("switch")).toBeVisible();
     expect(screen.queryByRole("slider")).not.toBeInTheDocument();
@@ -69,7 +69,7 @@ describe("ComparisonView", () => {
   it("should not show the diff toggle in split view when there is no diff image", () => {
     renderComparison({ diffImagePath: null });
 
-    expect(screen.getByRole("tab", { name: "split" })).toBeVisible();
+    expect(screen.getByRole("tab", { name: "Split" })).toBeVisible();
     expect(screen.queryByRole("switch")).not.toBeInTheDocument();
   });
 
@@ -78,7 +78,7 @@ describe("ComparisonView", () => {
   }) => {
     renderComparison({ diffImagePath: null });
 
-    await user.click(screen.getByRole("tab", { name: "slider" }));
+    await user.click(screen.getByRole("tab", { name: "Slider" }));
 
     expect(screen.getByRole("slider")).toBeVisible();
     expect(screen.queryByRole("switch")).not.toBeInTheDocument();
@@ -87,9 +87,9 @@ describe("ComparisonView", () => {
   it("should open the zoom dialog on the snapshot that was clicked", async ({ user }) => {
     renderComparison();
 
-    await user.click(screen.getByRole("button", { name: "zoom baseline" }));
+    await user.click(screen.getByRole("button", { name: "Zoom baseline" }));
 
-    expect(screen.getByRole("dialog", { name: "baseline" })).toBeVisible();
+    expect(screen.getByRole("dialog", { name: "Baseline" })).toBeVisible();
   });
 
   it("should keep the diff hidden when it was turned off", () => {
@@ -104,18 +104,18 @@ describe("ComparisonView", () => {
     renderComparison();
 
     await user.click(screen.getByRole("switch"));
-    await user.click(screen.getByRole("button", { name: "zoom new" }));
+    await user.click(screen.getByRole("button", { name: "Zoom new" }));
 
-    const dialog = screen.getByRole("dialog", { name: "new" });
+    const dialog = screen.getByRole("dialog", { name: "New" });
     expect(within(dialog).getByRole("switch")).not.toBeChecked();
   });
 
   it("should keep the split view's diff toggle in sync with the zoom dialog", async ({ user }) => {
     renderComparison();
 
-    await user.click(screen.getByRole("button", { name: "zoom new" }));
-    await user.click(within(screen.getByRole("dialog", { name: "new" })).getByRole("switch"));
-    await user.click(screen.getByRole("button", { name: "close" }));
+    await user.click(screen.getByRole("button", { name: "Zoom new" }));
+    await user.click(within(screen.getByRole("dialog", { name: "New" })).getByRole("switch"));
+    await user.click(screen.getByRole("button", { name: "Close" }));
 
     expect(screen.getByRole("switch")).not.toBeChecked();
   });

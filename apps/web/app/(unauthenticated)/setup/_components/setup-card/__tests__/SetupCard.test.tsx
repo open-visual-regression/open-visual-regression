@@ -46,7 +46,7 @@ describe("SetupCard", () => {
     await user.type(screen.getByLabelText(/^password$/i), "securepass123");
     await user.type(screen.getByLabelText(/confirm password/i), "different456");
     await user.click(screen.getByRole("button", { name: /create/i }));
-    expect(await screen.findByText("passwords do not match")).toBeVisible();
+    expect(await screen.findByText("Passwords do not match")).toBeVisible();
   });
 
   it("should remember what was typed when going back a step", async ({ user }) => {

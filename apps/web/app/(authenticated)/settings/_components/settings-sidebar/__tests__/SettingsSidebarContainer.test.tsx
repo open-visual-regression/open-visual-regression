@@ -27,8 +27,8 @@ describe("SettingsSidebarContainer", () => {
 
     await renderWithRole("admin");
 
-    expect(screen.getByRole("heading", { name: "admin" })).toBeVisible();
-    expect(screen.getByRole("link", { name: "organization" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Admin" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Organization" })).toBeVisible();
   });
 
   it("should hide the admin section when the viewer is not an admin", async () => {
@@ -36,7 +36,7 @@ describe("SettingsSidebarContainer", () => {
 
     await renderWithRole("reviewer");
 
-    expect(screen.getByRole("heading", { name: "personal" })).toBeVisible();
-    expect(screen.queryByRole("heading", { name: "admin" })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Personal" })).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "Admin" })).not.toBeInTheDocument();
   });
 });
