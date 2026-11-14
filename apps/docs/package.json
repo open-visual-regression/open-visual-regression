@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "npx mint@latest dev",
-    "check-links": "npx mint@latest broken-links"
+    "check-links": "npx mint@latest broken-links",
+    "validate": "npx mint@latest validate"
   }
 }
