@@ -27,7 +27,12 @@
           },
           {
             "group": "Storybook",
-            "pages": ["storybook/story-parameters", "storybook/only-affected"]
+            "pages": [
+              "storybook/overview",
+              "storybook/story-parameters",
+              "storybook/stable-screenshots",
+              "storybook/only-affected"
+            ]
           },
           {
             "group": "Self-hosting",

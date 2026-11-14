@@ -1,0 +1,37 @@
+---
+title: Storybook
+sidebarTitle: Overview
+description: How OVR captures a Storybook build, and what it needs from it.
+---
+
+OVR captures [Storybook](https://storybook.js.org) 8.5 and later. You build Storybook in CI with `storybook build` and upload the static output with [`ovr upload storybook`](/cli/upload-storybook). OVR's worker opens the uploaded Storybook in a browser and captures every story.
+
+## How stories become snapshots
+
+Each story is captured once per viewport, so a story with two viewports produces two snapshots. A snapshot's name is the story's title and name, such as `Components/Button / Primary`. Commands that take a story, like `ovr capture storybook --story`, use the story's ID, such as `components-button--primary`.
+
+Docs pages aren't captured.
+
+A story is captured at the viewports in [`defaultViewports`](/reference/ovr-config#options). To change that for one story, or to change its diff threshold or skip it, use [story parameters](/storybook/story-parameters).
+
+## When a story fails
+
+A story that fails to render, because it throws or Storybook shows its error screen, gets the `error` status. Its snapshot shows the error, and has nothing to review.
+
+A story that renders but whose page throws an uncaught error somewhere, such as in an event handler or a timer, is captured as usual. Its snapshot gets a **warning** flag, and the error is in its logs. To find these, use the **flags** filter on the build page, or `ovr snapshots list <buildId> --flag warning`.
+
+## Links to the baseline Storybook
+
+Every build page links to the Storybook it captured, with **view storybook**. To link to the current baseline's Storybook from somewhere else, like a README or a design system site, use:
+
+```text
+https://ovr.example.com/api/baseline/<project-id>/storybook
+```
+
+The link always opens the latest baseline build's Storybook. Add Storybook's `path` parameter to open a single story:
+
+```text
+https://ovr.example.com/api/baseline/<project-id>/storybook?path=/story/ui-button--primary
+```
+
+Opening the link requires signing in to OVR.

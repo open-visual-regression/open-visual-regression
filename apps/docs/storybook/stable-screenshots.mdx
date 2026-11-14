@@ -1,0 +1,54 @@
+---
+title: Stable screenshots
+description: Keep stories from changing between builds when their code didn't.
+---
+
+A story that renders differently from one capture to the next shows up as a change to review, even when nothing about it changed. [Flaky snapshot detection](/flaky-snapshots) points these out. This page covers how to make them stable.
+
+## What OVR waits for
+
+Before taking a story's screenshot, OVR waits for its network requests, images, and fonts to finish loading and for the page to stop changing. It also stops CSS animations.
+
+A request that hasn't finished after 5 seconds is left behind, and the screenshot is taken without it. The snapshot's logs list the requests it was captured without. Operators can change the timeout with [`OVR_CAPTURE_REQUEST_TIMEOUT_MS`](/reference/environment-variables#capture).
+
+## Animations caught mid-frame
+
+A canvas or video can keep repainting without the page changing, like a chart that animates in. For a story with a canvas, video, iframe, SVG animation, or shadow DOM, OVR retakes the screenshot until two in a row match. `screenshotStability`, in [`ovr.config`](/reference/ovr-config) or a story's [parameters](/storybook/story-parameters), controls this:
+
+| Value | Behavior |
+| --- | --- |
+| `"auto"` (default) | Retakes the screenshot for stories with the content above |
+| `"always"` | Retakes it for every story. Slower. Use it for a story whose animation `"auto"` doesn't detect |
+| `"off"` | Takes one screenshot |
+
+Each retake adds at least a quarter of a second. If a story is still changing after six screenshots, OVR keeps the last one and adds a warning to the snapshot's logs. Turn off the animation for that story, for example in the chart library's options, or set `screenshotStability: "off"`.
+
+## Content that loads late
+
+A story that keeps changing after the page goes quiet, like one that loads data on a timer or fades in large images, can be captured too early. `waitForTimeout` adds a fixed wait before the screenshot, in milliseconds:
+
+```tsx
+export const Dashboard: Story = {
+  parameters: { ovr: { waitForTimeout: 2000 } },
+};
+```
+
+The wait adds to every capture of the story, up to 30 seconds, so keep it as short as the story needs. Set it in [`ovr.config`](/reference/ovr-config) to apply it to every story.
+
+## Content from other hosts
+
+Images, fonts, and data loaded from other hosts can change without a code change, or fail to load. Set [`blockExternalRequests`](/reference/ovr-config#blocking-external-requests) to load only what's in your build, and the hosts you allow.
+
+## Reproduce it on your machine
+
+[`ovr capture storybook`](/cli/capture-storybook) captures a story many times in a row and reports whether it changed:
+
+```sh
+ovr capture storybook --dir storybook-static --story components-dialog--open --repeat 10
+```
+
+Use it to confirm a fix before pushing it. `--cpu-throttle` slows the browser down, which makes timing problems easier to reproduce.
+
+## As a last resort
+
+A story that can't produce a stable screenshot can be [skipped](/storybook/story-parameters#skipping-stories). It's listed on each build as skipped, so it's still visible.

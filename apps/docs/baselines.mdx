@@ -1,6 +1,6 @@
 ---
 title: Baselines
-description: Find a project's baseline build and link to its Storybook.
+description: Which build a new build is compared against, and how to link to the current baseline.
 ---
 
 A project's baseline build is its latest successful build on its main branch. Builds on the main branch are approved automatically, so each one becomes the baseline its later builds are diffed against.
@@ -21,17 +21,12 @@ If main changed a snapshot after the branch was cut and the build holding its ea
 
 ## Stable links
 
-These links always point at the current baseline, so you can put them in docs, READMEs, or a design system site. Replace `https://ovr.example.com` with your OVR URL and `<project-id>` with the ID from the project's URL.
-
-| Link | Opens |
-|------|-------|
-| `https://ovr.example.com/api/baseline/<project-id>` | The baseline build |
-| `https://ovr.example.com/api/baseline/<project-id>/storybook` | The baseline build's Storybook |
-
-To link to a single story, add Storybook's `path` parameter:
+This link always opens the current baseline build, so you can put it in docs, a README, or a design system site. Replace `https://ovr.example.com` with your OVR URL and `<project-id>` with the ID from the project's URL.
 
 ```text
-https://ovr.example.com/api/baseline/<project-id>/storybook?path=/story/ui-button--primary
+https://ovr.example.com/api/baseline/<project-id>
 ```
+
+This opens the project's baseline build. To link to its Storybook, see [Storybook](/storybook/overview#links-to-the-baseline-storybook).
 
 Opening a link requires signing in to OVR. After signing in, you're taken to the link you opened. A project with no baseline build yet returns a 404.
