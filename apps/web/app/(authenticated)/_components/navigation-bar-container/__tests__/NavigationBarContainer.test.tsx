@@ -50,7 +50,7 @@ describe("NavigationBarContainer", () => {
 
     await renderAtPath("/");
 
-    expect(screen.getByText("overview")).toBeVisible();
+    expect(screen.getByText("Overview")).toBeVisible();
     expect(screen.getByLabelText("User menu for Jane Doe")).toBeVisible();
   });
 
@@ -65,6 +65,6 @@ describe("NavigationBarContainer", () => {
     await renderAtPath(`/projects/${project.id}/settings`);
 
     expect(screen.getByRole("link", { name: "D's Construction" })).toBeVisible();
-    expect(screen.getByText("settings")).toBeVisible();
+    expect(screen.getByText("Settings")).toBeVisible();
   });
 });

@@ -38,8 +38,8 @@ describe("InvitationCard", () => {
 
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
-    expect(await screen.findByText("name is required")).toBeVisible();
-    expect(screen.getByText("password must be at least 8 characters")).toBeVisible();
+    expect(await screen.findByText("Name is required")).toBeVisible();
+    expect(screen.getByText("Password must be at least 8 characters")).toBeVisible();
   });
 
   it("should show an error when passwords do not match", async ({ user }) => {
@@ -50,7 +50,7 @@ describe("InvitationCard", () => {
     await user.type(screen.getByLabelText(/confirm password/i), "different456");
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
-    expect(await screen.findByText("passwords do not match")).toBeVisible();
+    expect(await screen.findByText("Passwords do not match")).toBeVisible();
     expect(mockAcceptInvitation).not.toHaveBeenCalled();
   });
 

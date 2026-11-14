@@ -76,7 +76,7 @@ describe("GitIntegrationForm", () => {
     await user.type(screen.getByLabelText(/access token/i), "a-token");
     await user.click(screen.getByRole("button", { name: /^save$/i }));
 
-    expect(await screen.findByText("you must enter a repository")).toBeVisible();
+    expect(await screen.findByText("You must enter a repository")).toBeVisible();
     expect(mockUpsert).not.toHaveBeenCalled();
   });
 
@@ -97,7 +97,7 @@ describe("GitIntegrationForm", () => {
         }),
       ),
     );
-    expect(await screen.findByText("git integration saved")).toBeVisible();
+    expect(await screen.findByText("Git integration saved")).toBeVisible();
     expect(mockRefresh).toHaveBeenCalled();
   });
 
@@ -123,7 +123,7 @@ describe("GitIntegrationForm", () => {
     await user.click(screen.getByRole("button", { name: /disconnect/i }));
 
     await waitFor(() => expect(mockRemove).toHaveBeenCalledWith({ projectId: PROJECT_ID }));
-    expect(await screen.findByText("git integration removed")).toBeVisible();
+    expect(await screen.findByText("Git integration removed")).toBeVisible();
     expect(mockRefresh).toHaveBeenCalled();
   });
 
@@ -135,13 +135,13 @@ describe("GitIntegrationForm", () => {
     expect(mockSetStatusChecks).not.toHaveBeenCalled();
 
     const dialog = await screen.findByRole("alertdialog");
-    expect(within(dialog).getByText("disable git integration?")).toBeVisible();
+    expect(within(dialog).getByText("Disable Git integration?")).toBeVisible();
     await user.click(within(dialog).getByRole("button", { name: /^disable$/i }));
 
     await waitFor(() =>
       expect(mockSetStatusChecks).toHaveBeenCalledWith({ projectId: PROJECT_ID, enabled: false }),
     );
-    expect(await screen.findByText("ci checks disabled")).toBeVisible();
+    expect(await screen.findByText("CI checks disabled")).toBeVisible();
     expect(mockRefresh).toHaveBeenCalled();
   });
 
@@ -164,7 +164,7 @@ describe("GitIntegrationForm", () => {
     await waitFor(() =>
       expect(mockSetStatusChecks).toHaveBeenCalledWith({ projectId: PROJECT_ID, enabled: true }),
     );
-    expect(await screen.findByText("ci checks enabled")).toBeVisible();
+    expect(await screen.findByText("CI checks enabled")).toBeVisible();
   });
 
   it("should not show disable when no integration is configured", () => {
@@ -198,7 +198,7 @@ describe("GitIntegrationForm", () => {
     renderComponent(null, WITH_GITHUB_APP);
 
     await user.click(screen.getByRole("combobox", { name: /authentication/i }));
-    await user.click(await screen.findByRole("option", { name: "github app" }));
+    await user.click(await screen.findByRole("option", { name: "GitHub App" }));
     expect(screen.queryByLabelText(/access token/i)).not.toBeInTheDocument();
 
     await user.type(screen.getByLabelText(/repository/i), "acme/web");
@@ -219,7 +219,7 @@ describe("GitIntegrationForm", () => {
     renderComponent(APP_INTEGRATION, WITH_GITHUB_APP);
 
     expect(screen.getByRole("combobox", { name: /authentication/i })).toHaveTextContent(
-      "github app",
+      "GitHub App",
     );
     expect(screen.queryByLabelText(/access token/i)).not.toBeInTheDocument();
   });
@@ -230,10 +230,10 @@ describe("GitIntegrationForm", () => {
     renderComponent(APP_INTEGRATION, WITH_GITHUB_APP);
 
     await user.click(screen.getByRole("combobox", { name: /authentication/i }));
-    await user.click(await screen.findByRole("option", { name: "access token" }));
+    await user.click(await screen.findByRole("option", { name: "Access token" }));
     await user.click(screen.getByRole("button", { name: /^save$/i }));
 
-    expect(await screen.findByText("you must enter an access token")).toBeVisible();
+    expect(await screen.findByText("You must enter an access token")).toBeVisible();
     expect(mockUpsert).not.toHaveBeenCalled();
   });
 
@@ -241,7 +241,7 @@ describe("GitIntegrationForm", () => {
     renderComponent(APP_INTEGRATION, TOKEN_ONLY);
 
     expect(screen.getByRole("combobox", { name: /authentication/i })).toHaveTextContent(
-      "github app",
+      "GitHub App",
     );
   });
 });

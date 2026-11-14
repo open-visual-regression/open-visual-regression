@@ -18,9 +18,9 @@ test("build page reflects live status without a manual reload", async ({
 
   await buildPage.goto(seed.projectId, buildId ?? "");
 
-  await expect(buildPage.status()).toHaveText(/queued|processing/);
+  await expect(buildPage.status()).toHaveText(/Queued|Processing/);
   await expect(buildPage.cancelButton()).toBeVisible();
 
-  await expect(buildPage.status()).toHaveText("unchanged", { timeout: 120_000 });
+  await expect(buildPage.status()).toHaveText("Unchanged", { timeout: 120_000 });
   await expect(buildPage.cancelButton()).toBeHidden();
 });

@@ -27,7 +27,7 @@ export const UsersTableBulkActions = ({ users, onRemovedAction }: UsersTableBulk
         trigger={
           <AlertDialogTrigger render={<Button variant="outline" color="red" size="sm" />}>
             <Icon icon={XIcon} />
-            remove
+            Remove
           </AlertDialogTrigger>
         }
       />

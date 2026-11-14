@@ -8,30 +8,30 @@ export class SnapshotReviewPage {
   }
 
   approveButton(): Locator {
-    return this.page.getByRole("button", { name: "approve", exact: true });
+    return this.page.getByRole("button", { name: "Approve", exact: true });
   }
 
   approvedButton(): Locator {
-    return this.page.getByRole("button", { name: "approved", exact: true });
+    return this.page.getByRole("button", { name: "Approved", exact: true });
   }
 
   rejectButton(): Locator {
-    return this.page.getByRole("button", { name: "reject", exact: true });
+    return this.page.getByRole("button", { name: "Reject", exact: true });
   }
 
   rejectedButton(): Locator {
-    return this.page.getByRole("button", { name: "rejected", exact: true });
+    return this.page.getByRole("button", { name: "Rejected", exact: true });
   }
 
   rebuildButton(): Locator {
-    return this.page.getByRole("button", { name: "rebuild", exact: true });
+    return this.page.getByRole("button", { name: "Rebuild", exact: true });
   }
 
   async confirmRebuild() {
     await this.rebuildButton().click();
     await this.page
-      .getByRole("alertdialog", { name: "rebuild this snapshot?" })
-      .getByRole("button", { name: "rebuild", exact: true })
+      .getByRole("alertdialog", { name: "Rebuild this snapshot?" })
+      .getByRole("button", { name: "Rebuild", exact: true })
       .click();
   }
 
@@ -52,10 +52,10 @@ export class SnapshotReviewPage {
   }
 
   async removeReview() {
-    await this.sidebar().getByRole("button", { name: "remove your review" }).click();
+    await this.sidebar().getByRole("button", { name: "Remove your review" }).click();
   }
 
   emptyReviews(): Locator {
-    return this.sidebar().getByText("no reviews yet");
+    return this.sidebar().getByText("No reviews yet");
   }
 }

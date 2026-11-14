@@ -18,7 +18,7 @@ export const SnapshotComparisonSection = ({
   diff,
   baseline,
 }: SnapshotComparisonSectionProps) => {
-  const alt = `snapshot of ${snapshot.targetTitle} ${snapshot.targetName}`;
+  const alt = `Snapshot of ${snapshot.targetTitle} ${snapshot.targetName}`;
   const newSnapshot = { imagePath: getStoragePath(snapshot.imagePath), alt };
 
   if (!baseline) {
@@ -33,7 +33,7 @@ export const SnapshotComparisonSection = ({
     <ComparisonView
       baseline={{
         imagePath: getStoragePath(baseline.imagePath),
-        alt: `baseline ${alt}`,
+        alt: `Baseline ${alt.charAt(0).toLowerCase()}${alt.slice(1)}`,
         commitSha: baseline.commitSha,
         commitUrl: baseline.commitUrl,
       }}

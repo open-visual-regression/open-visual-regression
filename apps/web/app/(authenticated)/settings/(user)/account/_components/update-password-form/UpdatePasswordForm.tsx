@@ -37,7 +37,7 @@ export const UpdatePasswordForm = () => {
     interceptors: [
       onSuccess(() => {
         reset();
-        toast.success("password updated");
+        toast.success("Password updated");
       }),
       onError((err) => setError("root", { message: err.message })),
     ],
@@ -57,12 +57,12 @@ export const UpdatePasswordForm = () => {
       <UpdatePasswordFormLayout
         currentPassword={
           <Field data-invalid={!!errors.currentPassword}>
-            <FieldLabel htmlFor="currentPassword">current password</FieldLabel>
+            <FieldLabel htmlFor="currentPassword">Current password</FieldLabel>
             <Input
               id="currentPassword"
               type="password"
               autoComplete="current-password"
-              placeholder="enter your current password"
+              placeholder="Enter your current password"
               aria-invalid={!!errors.currentPassword}
               {...register("currentPassword")}
             />
@@ -71,12 +71,12 @@ export const UpdatePasswordForm = () => {
         }
         newPassword={
           <Field data-invalid={!!errors.newPassword}>
-            <FieldLabel htmlFor="newPassword">new password</FieldLabel>
+            <FieldLabel htmlFor="newPassword">New password</FieldLabel>
             <Input
               id="newPassword"
               type="password"
               autoComplete="new-password"
-              placeholder="enter a new password"
+              placeholder="Enter a new password"
               aria-invalid={!!errors.newPassword}
               {...register("newPassword")}
             />
@@ -85,12 +85,12 @@ export const UpdatePasswordForm = () => {
         }
         confirmPassword={
           <Field data-invalid={!!errors.confirmPassword}>
-            <FieldLabel htmlFor="confirmPassword">confirm password</FieldLabel>
+            <FieldLabel htmlFor="confirmPassword">Confirm password</FieldLabel>
             <Input
               id="confirmPassword"
               type="password"
               autoComplete="new-password"
-              placeholder="confirm your new password"
+              placeholder="Confirm your new password"
               aria-invalid={!!errors.confirmPassword}
               {...register("confirmPassword")}
             />
@@ -101,7 +101,7 @@ export const UpdatePasswordForm = () => {
         action={
           <Button type="submit" disabled={isSubmitting}>
             <Icon icon={CheckIcon} />
-            {isSubmitting ? "saving..." : "save changes"}
+            {isSubmitting ? "Saving..." : "Save changes"}
           </Button>
         }
       />
@@ -125,7 +125,7 @@ const UpdatePasswordFormLayout = ({
   action,
 }: UpdatePasswordFormLayoutProps) => (
   <div className="flex flex-col gap-2">
-    <Typography variant="label">change password</Typography>
+    <Typography variant="label">Change password</Typography>
     <Card size="default">
       <CardContent className="flex flex-col gap-5">
         <FieldGroup>{currentPassword}</FieldGroup>
@@ -143,13 +143,13 @@ const UpdatePasswordFormLayout = ({
 export const UpdatePasswordFormSkeleton = () => (
   <div aria-hidden>
     <UpdatePasswordFormLayout
-      currentPassword={<FieldSkeleton label="current password" />}
-      newPassword={<FieldSkeleton label="new password" />}
-      confirmPassword={<FieldSkeleton label="confirm password" />}
+      currentPassword={<FieldSkeleton label="Current password" />}
+      newPassword={<FieldSkeleton label="New password" />}
+      confirmPassword={<FieldSkeleton label="Confirm password" />}
       action={
         <ButtonSkeleton>
           <Icon icon={CheckIcon} />
-          save changes
+          Save changes
         </ButtonSkeleton>
       }
     />

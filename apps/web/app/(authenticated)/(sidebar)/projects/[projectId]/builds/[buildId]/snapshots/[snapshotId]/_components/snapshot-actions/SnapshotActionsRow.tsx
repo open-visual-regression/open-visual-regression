@@ -77,7 +77,7 @@ export const SnapshotActionsRow = ({
     <SnapshotActionsRowLayout>
       <div className="flex items-center flex-row gap-2">
         <ResponsiveActionButton href={buildHref} icon={CornerLeftUpIcon}>
-          back
+          Back
         </ResponsiveActionButton>
         {prevSnapshotId || nextSnapshotId ? (
           <>
@@ -86,7 +86,7 @@ export const SnapshotActionsRow = ({
               disabled={!prevSnapshotId}
               icon={ChevronLeftIcon}
             >
-              prev
+              Prev
             </ResponsiveActionButton>
             {position !== null && total !== null ? (
               <Typography variant="caption" className="tabular-nums">
@@ -99,7 +99,7 @@ export const SnapshotActionsRow = ({
               icon={ChevronRightIcon}
               iconPosition="end"
             >
-              next
+              Next
             </ResponsiveActionButton>
           </>
         ) : null}

@@ -396,18 +396,18 @@ describe("BuildHeader", () => {
     });
     renderComponent({ build, storybookHref: "/api/storybook/mock-build/index.html" });
 
-    await user.click(screen.getByRole("button", { name: "more build actions" }));
+    await user.click(screen.getByRole("button", { name: "More build actions" }));
 
-    expect(await screen.findByRole("menuitem", { name: "view storybook" })).toHaveAttribute(
+    expect(await screen.findByRole("menuitem", { name: "View Storybook" })).toHaveAttribute(
       "href",
       "/api/storybook/mock-build/index.html",
     );
-    expect(screen.getByRole("menuitem", { name: "view latest build" })).toHaveAttribute(
+    expect(screen.getByRole("menuitem", { name: "View latest build" })).toHaveAttribute(
       "href",
       `/projects/${build.project.id}/builds/019edfc7-e040-7492-86b2-ccfdc00cf6e2`,
     );
-    expect(screen.getByRole("menuitem", { name: "rebuild" })).toBeVisible();
-    expect(screen.queryByRole("menuitem", { name: "cancel build" })).not.toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Rebuild" })).toBeVisible();
+    expect(screen.queryByRole("menuitem", { name: "Cancel build" })).not.toBeInTheDocument();
   });
 
   it("should rebuild from the menu once confirmed", async ({ user }) => {
@@ -415,8 +415,8 @@ describe("BuildHeader", () => {
     const build = mocks.build.generateBuild({ status: "needs_review", isRebuildable: true });
     renderComponent({ build });
 
-    await user.click(screen.getByRole("button", { name: "more build actions" }));
-    await user.click(await screen.findByRole("menuitem", { name: "rebuild" }));
+    await user.click(screen.getByRole("button", { name: "More build actions" }));
+    await user.click(await screen.findByRole("menuitem", { name: "Rebuild" }));
     expect(await screen.findByRole("alertdialog", { name: /rebuild\?/i })).toBeVisible();
 
     await user.click(screen.getByRole("button", { name: /^rebuild$/i }));
@@ -427,8 +427,8 @@ describe("BuildHeader", () => {
   it("should offer to cancel a running build from the menu", async ({ user }) => {
     renderComponent({ build: mocks.build.generateBuild({ status: "processing" }) });
 
-    await user.click(screen.getByRole("button", { name: "more build actions" }));
-    await user.click(await screen.findByRole("menuitem", { name: "cancel build" }));
+    await user.click(screen.getByRole("button", { name: "More build actions" }));
+    await user.click(await screen.findByRole("menuitem", { name: "Cancel build" }));
 
     expect(await screen.findByRole("alertdialog", { name: /cancel build\?/i })).toBeVisible();
   });
@@ -468,7 +468,7 @@ describe("BuildHeader", () => {
       }),
     });
 
-    expect(screen.getByText("took 2m 14s (12s queued, 2m 2s processing)")).toBeVisible();
+    expect(screen.getByText("Took 2m 14s (12s queued, 2m 2s processing)")).toBeVisible();
   });
 
   it("should not show a duration while the build has no timings", () => {
@@ -482,7 +482,7 @@ describe("BuildHeader", () => {
     });
 
     expect(screen.queryByRole("img", { name: /build duration/i })).not.toBeInTheDocument();
-    expect(screen.queryByText(/^took /)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Took /)).not.toBeInTheDocument();
   });
 
   it("should show who canceled the build", () => {

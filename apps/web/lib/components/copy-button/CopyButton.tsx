@@ -17,7 +17,7 @@ type CopyButtonProps = {
 
 export const CopyButton = ({
   text,
-  children = "copy",
+  children = "Copy",
   copiedLabel = "copied",
   variant = "outline",
   color = "neutral",

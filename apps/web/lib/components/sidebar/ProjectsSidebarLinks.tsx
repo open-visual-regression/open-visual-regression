@@ -23,7 +23,7 @@ const ProjectsSidebarLinks = ({ projects, total, onNavigate }: ProjectsSidebarLi
 
   return (
     <SidebarSection
-      label="projects"
+      label="Projects"
       href="/projects"
       onNavigate={onNavigate}
       count={total}

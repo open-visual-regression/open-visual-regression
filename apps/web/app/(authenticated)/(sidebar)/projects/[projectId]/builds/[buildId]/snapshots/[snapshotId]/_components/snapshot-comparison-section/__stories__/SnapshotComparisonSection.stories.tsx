@@ -120,7 +120,7 @@ export const NewWithBaselineAndDiff: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const diffImage = canvas.getByRole("img", {
-      name: "diff overlay of snapshot of Button Primary",
+      name: "Diff overlay of snapshot of Button Primary",
     });
 
     await userEvent.click(canvas.getByRole("switch"));
@@ -149,7 +149,7 @@ export const SliderView: Story = {
     const canvas = within(canvasElement);
 
     // Switching to slider view drops the diff toggle and shows a draggable handle.
-    await userEvent.click(canvas.getByRole("tab", { name: "slider" }));
+    await userEvent.click(canvas.getByRole("tab", { name: "Slider" }));
 
     const handle = canvas.getByRole("slider");
     await expect(handle).toBeVisible();
@@ -162,7 +162,7 @@ export const SliderView: Story = {
     await expect(Number(handle.getAttribute("aria-valuenow"))).toBeLessThan(startPosition);
 
     // Switching back restores the split view and its diff toggle.
-    await userEvent.click(canvas.getByRole("tab", { name: "split" }));
+    await userEvent.click(canvas.getByRole("tab", { name: "Split" }));
     await expect(canvas.getByRole("switch")).toBeVisible();
   },
 };
@@ -204,19 +204,19 @@ export const DifferentSizes: Story = {
       baselineImage.getBoundingClientRect().width / newImage.getBoundingClientRect().width;
 
     const splitBaselineImage = await canvas.findByRole("img", {
-      name: "baseline snapshot of Button Primary",
+      name: "Baseline snapshot of Button Primary",
     });
-    const splitNewImage = await canvas.findByRole("img", { name: "snapshot of Button Primary" });
+    const splitNewImage = await canvas.findByRole("img", { name: "Snapshot of Button Primary" });
     await waitFor(() =>
       expect(widthRatio(splitBaselineImage, splitNewImage)).toBeCloseTo(375 / 1280, 2),
     );
 
-    await userEvent.click(canvas.getByRole("tab", { name: "slider" }));
+    await userEvent.click(canvas.getByRole("tab", { name: "Slider" }));
 
     const sliderBaselineImage = await canvas.findByRole("img", {
-      name: "baseline snapshot of Button Primary",
+      name: "Baseline snapshot of Button Primary",
     });
-    const sliderNewImage = await canvas.findByRole("img", { name: "snapshot of Button Primary" });
+    const sliderNewImage = await canvas.findByRole("img", { name: "Snapshot of Button Primary" });
     await waitFor(() =>
       expect(widthRatio(sliderBaselineImage, sliderNewImage)).toBeCloseTo(375 / 1280, 2),
     );

@@ -32,12 +32,12 @@ import { serverClient } from "@/lib/router";
 import { StatusChecksToggleButton } from "./StatusChecksToggleButton";
 
 const PROVIDERS: { value: GitProviderSchema; label: string }[] = [
-  { value: "github", label: "github" },
+  { value: "github", label: "GitHub" },
 ];
 
 const AUTH_TYPE_LABELS: Record<GitAuthTypeSchema, string> = {
-  token: "access token",
-  github_app: "github app",
+  token: "Access token",
+  github_app: "GitHub App",
 };
 
 // A token is only required when there's no stored one to keep.
@@ -46,12 +46,12 @@ const makeGitIntegrationSchema = (hasStoredToken: boolean) =>
     .object({
       provider: z.enum(["github"]),
       authType: z.enum(["token", "github_app"]),
-      repoIdentifier: z.string().min(1, "you must enter a repository").max(512),
+      repoIdentifier: z.string().min(1, "You must enter a repository").max(512),
       token: z.string().max(512),
     })
     .refine(
       (values) => values.authType !== "token" || hasStoredToken || values.token.trim() !== "",
-      { path: ["token"], message: "you must enter an access token" },
+      { path: ["token"], message: "You must enter an access token" },
     );
 
 type GitIntegrationFormValues = z.infer<ReturnType<typeof makeGitIntegrationSchema>>;
@@ -101,7 +101,7 @@ export const GitIntegrationForm = ({
   const save = useServerAction(serverClient.gitIntegrations.upsert, {
     interceptors: [
       onSuccess(() => {
-        toast.success("git integration saved");
+        toast.success("Git integration saved");
         router.refresh();
       }),
       onError((err) => setError("root", { message: err.message })),
@@ -112,9 +112,9 @@ export const GitIntegrationForm = ({
     interceptors: [
       onSuccess((result) => {
         if (result.ok) {
-          toast.success("connection ok");
+          toast.success("Connection ok");
         } else {
-          toast.error(result.error ?? "connection failed");
+          toast.error(result.error ?? "Connection failed");
         }
       }),
       onError((err) => {
@@ -126,7 +126,7 @@ export const GitIntegrationForm = ({
   const disconnect = useServerAction(serverClient.gitIntegrations.remove, {
     interceptors: [
       onSuccess(() => {
-        toast.success("git integration removed");
+        toast.success("Git integration removed");
         router.refresh();
       }),
     ],
@@ -151,12 +151,12 @@ export const GitIntegrationForm = ({
         <CardContent className="flex flex-col gap-5">
           <FieldGroup>
             <Field data-invalid={!!errors.provider}>
-              <FieldLabel htmlFor="provider">provider</FieldLabel>
+              <FieldLabel htmlFor="provider">Provider</FieldLabel>
               <Controller
                 control={control}
                 name="provider"
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
+                  <Select items={PROVIDERS} value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger id="provider" className="w-full">
                       <SelectValue />
                     </SelectTrigger>
@@ -175,7 +175,7 @@ export const GitIntegrationForm = ({
           </FieldGroup>
           <FieldGroup>
             <Field data-invalid={!!errors.repoIdentifier}>
-              <FieldLabel htmlFor="repoIdentifier">repository</FieldLabel>
+              <FieldLabel htmlFor="repoIdentifier">Repository</FieldLabel>
               <Input
                 id="repoIdentifier"
                 placeholder="owner/repo"
@@ -188,7 +188,7 @@ export const GitIntegrationForm = ({
           {showAuthType ? (
             <FieldGroup>
               <Field data-invalid={!!errors.authType}>
-                <FieldLabel htmlFor="authType">authentication</FieldLabel>
+                <FieldLabel htmlFor="authType">Authentication</FieldLabel>
                 <Controller
                   control={control}
                   name="authType"
@@ -218,13 +218,13 @@ export const GitIntegrationForm = ({
           {authType === "token" ? (
             <FieldGroup>
               <Field data-invalid={!!errors.token}>
-                <FieldLabel htmlFor="token">access token</FieldLabel>
+                <FieldLabel htmlFor="token">Access token</FieldLabel>
                 <Input
                   id="token"
                   type="password"
                   autoComplete="off"
                   placeholder={
-                    integration?.hasToken ? "re-enter to update the stored token" : "paste a token"
+                    integration?.hasToken ? "Re-enter to update the stored token" : "Paste a token"
                   }
                   aria-invalid={!!errors.token}
                   {...register("token")}
@@ -246,7 +246,7 @@ export const GitIntegrationForm = ({
                 onClick={() => disconnect.execute({ projectId })}
                 className="w-full @md:w-auto"
               >
-                disconnect
+                Disconnect
               </Button>
               <StatusChecksToggleButton
                 projectId={projectId}
@@ -264,12 +264,12 @@ export const GitIntegrationForm = ({
                 onClick={() => test.execute({ projectId })}
                 className="w-full @md:w-auto"
               >
-                {test.status === "pending" ? "testing..." : "test connection"}
+                {test.status === "pending" ? "Testing..." : "Test connection"}
               </Button>
             ) : null}
             <Button type="submit" disabled={isSaving} className="w-full @md:w-auto">
               <Icon icon={CheckIcon} />
-              {isSaving ? "saving..." : "save"}
+              {isSaving ? "Saving..." : "Save"}
             </Button>
           </div>
         </CardFooter>

@@ -60,7 +60,7 @@ describe("SettingsJobsPage", () => {
 
     render(await SettingsJobsPage());
 
-    expect(screen.getByText("last run: 2 hours ago · next run: in 3 hours")).toBeVisible();
+    expect(screen.getByText("Last run: 2 hours ago · Next run: in 3 hours")).toBeVisible();
   });
 
   it("should not show a next run when flaky detection is not scheduled", async () => {
@@ -80,7 +80,7 @@ describe("SettingsJobsPage", () => {
 
     render(await SettingsJobsPage());
 
-    expect(screen.getByText("last run: never")).toBeVisible();
+    expect(screen.getByText("Last run: never")).toBeVisible();
   });
 
   it("should show a not found page for non-admins", async () => {

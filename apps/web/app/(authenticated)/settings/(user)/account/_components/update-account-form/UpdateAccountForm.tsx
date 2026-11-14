@@ -42,7 +42,7 @@ export const UpdateAccountForm = ({ user, readOnly = false }: UpdateAccountFormP
   const { execute, status } = useServerAction(serverClient.account.updateAccountInformation, {
     interceptors: [
       onSuccess(() => {
-        toast.success("account updated");
+        toast.success("Account updated");
       }),
       onError((err) => setError("root", { message: err.message })),
     ],
@@ -59,10 +59,10 @@ export const UpdateAccountForm = ({ user, readOnly = false }: UpdateAccountFormP
       <UpdateAccountFormLayout
         name={
           <Field data-invalid={!!errors.name}>
-            <FieldLabel htmlFor="name">name</FieldLabel>
+            <FieldLabel htmlFor="name">Name</FieldLabel>
             <Input
               id="name"
-              placeholder="enter your name"
+              placeholder="Enter your name"
               readOnly={readOnly}
               aria-invalid={!!errors.name}
               {...register("name")}
@@ -72,11 +72,11 @@ export const UpdateAccountForm = ({ user, readOnly = false }: UpdateAccountFormP
         }
         email={
           <Field data-invalid={!!errors.email}>
-            <FieldLabel htmlFor="email">email</FieldLabel>
+            <FieldLabel htmlFor="email">Email</FieldLabel>
             <Input
               id="email"
               type="email"
-              placeholder="enter your email"
+              placeholder="Enter your email"
               readOnly={readOnly}
               aria-invalid={!!errors.email}
               {...register("email")}
@@ -89,7 +89,7 @@ export const UpdateAccountForm = ({ user, readOnly = false }: UpdateAccountFormP
             <FieldError errors={[errors.root]} />
             {readOnly && (
               <Typography variant="body-muted" as="p">
-                your name and email are managed by your identity provider
+                Your name and email are managed by your identity provider
               </Typography>
             )}
           </>
@@ -98,7 +98,7 @@ export const UpdateAccountForm = ({ user, readOnly = false }: UpdateAccountFormP
           readOnly ? null : (
             <Button type="submit" disabled={isSubmitting}>
               <Icon icon={CheckIcon} />
-              {isSubmitting ? "saving..." : "save changes"}
+              {isSubmitting ? "Saving..." : "Save changes"}
             </Button>
           )
         }
@@ -122,7 +122,7 @@ const UpdateAccountFormLayout = ({
   action,
 }: UpdateAccountFormLayoutProps) => (
   <div className="flex flex-col gap-2">
-    <Typography variant="label">general</Typography>
+    <Typography variant="label">General</Typography>
     <Card size="default">
       <CardContent className="flex flex-col gap-5">
         <FieldGroup>{name}</FieldGroup>
@@ -137,12 +137,12 @@ const UpdateAccountFormLayout = ({
 export const UpdateAccountFormSkeleton = () => (
   <div aria-hidden>
     <UpdateAccountFormLayout
-      name={<FieldSkeleton label="name" />}
-      email={<FieldSkeleton label="email" />}
+      name={<FieldSkeleton label="Name" />}
+      email={<FieldSkeleton label="Email" />}
       action={
         <ButtonSkeleton>
           <Icon icon={CheckIcon} />
-          save changes
+          Save changes
         </ButtonSkeleton>
       }
     />

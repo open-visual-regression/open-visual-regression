@@ -65,7 +65,7 @@ describe("localAuthMiddleware", () => {
 
       expect(error).toMatchObject({
         code: "FORBIDDEN",
-        message: "this is managed by your identity provider",
+        message: "This is managed by your identity provider",
       });
     },
   );

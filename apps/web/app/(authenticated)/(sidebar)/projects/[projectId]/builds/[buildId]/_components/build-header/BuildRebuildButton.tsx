@@ -65,20 +65,20 @@ export const BuildRebuildDialog = ({
     <AlertDialog open={open} onOpenChange={handleOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>rebuild?</AlertDialogTitle>
-          <AlertDialogDescription>this creates a new build.</AlertDialogDescription>
+          <AlertDialogTitle>Rebuild?</AlertDialogTitle>
+          <AlertDialogDescription>This creates a new build.</AlertDialogDescription>
         </AlertDialogHeader>
-        <Typography>this will take new snapshots and diffs of every story.</Typography>
+        <Typography>This will take new snapshots and diffs of every story.</Typography>
         <FieldError errors={[error]} />
         <AlertDialogFooter>
-          <AlertDialogCancel>keep as-is</AlertDialogCancel>
+          <AlertDialogCancel>Keep as-is</AlertDialogCancel>
           <AlertDialogAction
             variant="outline"
             color="neutral"
             disabled={pending}
             onClick={() => execute({ buildId })}
           >
-            {pending ? "rebuilding..." : "rebuild"}
+            {pending ? "Rebuilding..." : "Rebuild"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -98,7 +98,7 @@ export const BuildRebuildButton = ({ buildId, projectId }: BuildRebuildButtonPro
         onClick={() => setOpen(true)}
       >
         <Icon icon={RefreshCwIcon} size={10} />
-        rebuild
+        Rebuild
       </Button>
       <BuildRebuildDialog
         buildId={buildId}

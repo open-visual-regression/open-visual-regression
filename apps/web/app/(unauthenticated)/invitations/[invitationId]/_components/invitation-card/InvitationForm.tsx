@@ -49,14 +49,14 @@ export const InvitationForm = ({ invitationId, email }: InvitationFormProps) => 
     <form onSubmit={handleSubmit(onSubmit)} noValidate>
       <FieldGroup>
         <Field>
-          <FieldLabel htmlFor="email">email</FieldLabel>
+          <FieldLabel htmlFor="email">Email</FieldLabel>
           <Input id="email" type="email" value={email} disabled readOnly />
         </Field>
         <Field data-invalid={!!errors.name}>
-          <FieldLabel htmlFor="name">name</FieldLabel>
+          <FieldLabel htmlFor="name">Name</FieldLabel>
           <Input
             id="name"
-            placeholder="enter your name"
+            placeholder="Enter your name"
             autoFocus
             aria-invalid={!!errors.name}
             {...register("name")}
@@ -64,24 +64,24 @@ export const InvitationForm = ({ invitationId, email }: InvitationFormProps) => 
           <FieldError errors={[errors.name]} />
         </Field>
         <Field data-invalid={!!errors.password}>
-          <FieldLabel htmlFor="password">password</FieldLabel>
+          <FieldLabel htmlFor="password">Password</FieldLabel>
           <Input
             id="password"
             type="password"
             autoComplete="new-password"
-            placeholder="enter your password"
+            placeholder="Enter your password"
             aria-invalid={!!errors.password}
             {...register("password")}
           />
           <FieldError errors={[errors.password]} />
         </Field>
         <Field data-invalid={!!errors.confirmPassword}>
-          <FieldLabel htmlFor="confirmPassword">confirm password</FieldLabel>
+          <FieldLabel htmlFor="confirmPassword">Confirm password</FieldLabel>
           <Input
             id="confirmPassword"
             type="password"
             autoComplete="new-password"
-            placeholder="confirm your password"
+            placeholder="Confirm your password"
             aria-invalid={!!errors.confirmPassword}
             {...register("confirmPassword")}
           />
@@ -89,7 +89,7 @@ export const InvitationForm = ({ invitationId, email }: InvitationFormProps) => 
         </Field>
         <FieldError errors={[errors.root]} />
         <Button type="submit" size="lg" className="w-full" disabled={isPending}>
-          {isPending ? "creating…" : "create account"}
+          {isPending ? "Creating…" : "Create account"}
         </Button>
       </FieldGroup>
     </form>

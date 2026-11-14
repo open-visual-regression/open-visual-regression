@@ -14,7 +14,7 @@ export type NewSnapshotPaneProps = {
 export const NewSnapshotPane = ({ imagePath, alt, canvasImagePaths }: NewSnapshotPaneProps) => (
   <SnapshotPane>
     <SnapshotPaneHeader>
-      <Typography variant="label">new</Typography>
+      <Typography variant="label">New</Typography>
     </SnapshotPaneHeader>
     <SnapshotPaneImage
       imagePath={imagePath}

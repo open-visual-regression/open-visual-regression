@@ -22,7 +22,7 @@ describe("SetupCard", () => {
 
     // Step 1: empty submit
     await user.click(screen.getByRole("button", { name: /next/i }));
-    expect(await screen.findByText("organization name is required")).toBeVisible();
+    expect(await screen.findByText("Organization name is required")).toBeVisible();
 
     // Advance to step 2
     await user.type(screen.getByLabelText(/organization name/i), "Tom Fischer's Organization");
@@ -30,23 +30,23 @@ describe("SetupCard", () => {
 
     // Step 2: all empty
     await user.click(await screen.findByRole("button", { name: /create/i }));
-    expect(await screen.findByText("name is required")).toBeVisible();
-    expect(screen.getByText("invalid email address")).toBeVisible();
-    expect(screen.getByText("password must be at least 8 characters")).toBeVisible();
+    expect(await screen.findByText("Name is required")).toBeVisible();
+    expect(screen.getByText("Invalid email address")).toBeVisible();
+    expect(screen.getByText("Password must be at least 8 characters")).toBeVisible();
 
     // Password too short
     await user.type(screen.getByLabelText(/^name$/i), "Tom Fischer");
     await user.type(screen.getByLabelText(/^email$/i), "tom.fischer@openvisualregression.com");
     await user.type(screen.getByLabelText(/^password$/i), "short");
     await user.click(screen.getByRole("button", { name: /create/i }));
-    expect(await screen.findByText("password must be at least 8 characters")).toBeVisible();
+    expect(await screen.findByText("Password must be at least 8 characters")).toBeVisible();
 
     // Passwords do not match
     await user.clear(screen.getByLabelText(/^password$/i));
     await user.type(screen.getByLabelText(/^password$/i), "securepass123");
     await user.type(screen.getByLabelText(/confirm password/i), "different456");
     await user.click(screen.getByRole("button", { name: /create/i }));
-    expect(await screen.findByText("passwords do not match")).toBeVisible();
+    expect(await screen.findByText("Passwords do not match")).toBeVisible();
   });
 
   it("should remember what was typed when going back a step", async ({ user }) => {

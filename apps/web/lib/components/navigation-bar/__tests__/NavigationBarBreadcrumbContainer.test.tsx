@@ -27,7 +27,7 @@ describe("NavigationBarBreadcrumbContainer", () => {
   it("should render the overview breadcrumb at the root path", () => {
     renderBreadcrumb("/");
 
-    expect(screen.getByText("overview")).toBeVisible();
+    expect(screen.getByText("Overview")).toBeVisible();
   });
 
   it("should resolve the project and build names from the query cache", () => {
@@ -56,7 +56,7 @@ describe("NavigationBarBreadcrumbContainer", () => {
 
     renderBreadcrumb(`/projects/${projectId}`);
 
-    expect(screen.getByRole("status", { name: "loading" })).toBeVisible();
+    expect(screen.getByRole("status", { name: "Loading" })).toBeVisible();
   });
 
   it("should fall back to the raw id when the project cannot be resolved", async () => {

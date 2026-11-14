@@ -81,7 +81,7 @@ test("a branch that's behind main only shows its own changes", async ({
     expect(branchBuildId).toBeDefined();
 
     await buildPage.goto(projectId, branchBuildId!);
-    await expect(buildPage.status()).toHaveText("unchanged");
+    await expect(buildPage.status()).toHaveText("Unchanged");
     await expect(buildPage.baseBuildLink("main", mergeBase.slice(0, 7))).toHaveAttribute(
       "href",
       `/projects/${projectId}/builds/${mergeBaseBuildId}`,

@@ -25,7 +25,7 @@ export const BaselineSnapshotPane = ({
 }: BaselineSnapshotPaneProps) => (
   <SnapshotPane>
     <SnapshotPaneHeader className="gap-2">
-      <Typography variant="label">baseline</Typography>
+      <Typography variant="label">Baseline</Typography>
       <BaselineCommitLink commitSha={commitSha} commitUrl={commitUrl} />
     </SnapshotPaneHeader>
     <SnapshotPaneImage

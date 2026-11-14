@@ -82,7 +82,7 @@ export const remove = os.users.remove
     );
 
     if (removingSelf) {
-      throw new ORPCError("BAD_REQUEST", { message: "you cannot remove yourself" });
+      throw new ORPCError("BAD_REQUEST", { message: "You cannot remove yourself" });
     }
 
     const results = await Promise.all(
@@ -114,7 +114,7 @@ export const changeRole = os.users.changeRole
   .use(adminMiddleware)
   .handler(async ({ input, context }) => {
     if (input.userId === context.user.id) {
-      throw new ORPCError("FORBIDDEN", { message: "you cannot change your own role" });
+      throw new ORPCError("FORBIDDEN", { message: "You cannot change your own role" });
     }
 
     const [error] = await authServerClient.setRole({

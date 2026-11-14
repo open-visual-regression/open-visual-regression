@@ -38,10 +38,10 @@ import { CreateAccessTokenModalReveal } from "./CreateAccessTokenModalReveal";
 const createAccessTokenFormSchema = z.object({
   name: z
     .string()
-    .min(1, "you must enter a name")
+    .min(1, "You must enter a name")
     .max(
       ACCESS_TOKEN_NAME_MAX_LENGTH,
-      `the name must be less than ${ACCESS_TOKEN_NAME_MAX_LENGTH} characters`,
+      `The name must be less than ${ACCESS_TOKEN_NAME_MAX_LENGTH} characters`,
     ),
   permissions: accessTokenPermissionsSchema,
 });
@@ -72,7 +72,7 @@ export const CreateAccessTokenModalForm = () => {
     return (
       <>
         <DialogHeader>
-          <DialogTitle>access token created</DialogTitle>
+          <DialogTitle>Access token created</DialogTitle>
         </DialogHeader>
         <CreateAccessTokenModalReveal accessToken={accessToken} />
       </>
@@ -88,24 +88,24 @@ export const CreateAccessTokenModalForm = () => {
   return (
     <>
       <DialogHeader>
-        <DialogTitle>new access token</DialogTitle>
-        <DialogDescription>used to authenticate ai agents and other tools</DialogDescription>
+        <DialogTitle>New access token</DialogTitle>
+        <DialogDescription>Used to authenticate AI agents and other tools</DialogDescription>
       </DialogHeader>
       <form onSubmit={handleSubmit(handleFormSubmit)}>
         <FieldGroup className="pb-6">
           <Field data-invalid={!!errors.name}>
-            <FieldLabel htmlFor="name">name</FieldLabel>
+            <FieldLabel htmlFor="name">Name</FieldLabel>
             <Input
               id="name"
-              placeholder="enter a name for the access token"
+              placeholder="Enter a name for the access token"
               aria-invalid={!!errors.name}
               {...register("name")}
             />
             <FieldError errors={[errors.name]} />
           </Field>
           <FieldSet>
-            <FieldLegend variant="label">permissions</FieldLegend>
-            <FieldDescription>every access token has builds:read</FieldDescription>
+            <FieldLegend variant="label">Permissions</FieldLegend>
+            <FieldDescription>Every access token has builds:read</FieldDescription>
             <FieldGroup data-slot="checkbox-group">
               {OPTIONAL_PERMISSIONS.map(({ resource, action }) => {
                 const id = `permission-${resource}-${action}`;
@@ -134,7 +134,7 @@ export const CreateAccessTokenModalForm = () => {
         </FieldGroup>
         <DialogFooter showCloseButton>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "creating..." : "create"}
+            {isSubmitting ? "Creating..." : "Create"}
           </Button>
         </DialogFooter>
       </form>

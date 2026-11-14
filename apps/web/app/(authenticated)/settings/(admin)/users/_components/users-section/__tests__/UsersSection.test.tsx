@@ -20,19 +20,19 @@ describe("UsersSection", () => {
   it("should show a search field for users", () => {
     render(<UsersSection users={[]} currentUserId={CURRENT_USER_ID} />);
 
-    expect(screen.getByLabelText("search users")).toBeVisible();
+    expect(screen.getByLabelText("Search users")).toBeVisible();
   });
 
   it("should show an empty state when there are no users", () => {
     render(<UsersSection users={[]} currentUserId={CURRENT_USER_ID} />);
 
-    expect(screen.getByRole("cell", { name: "no users found" })).toBeVisible();
+    expect(screen.getByRole("cell", { name: "No users found" })).toBeVisible();
   });
 
   it("should show a search-specific empty state when a search has no results", () => {
     render(<UsersSection users={[]} currentUserId={CURRENT_USER_ID} search="ari" />);
 
-    expect(screen.getByRole("cell", { name: 'no users found matching "ari"' })).toBeVisible();
+    expect(screen.getByRole("cell", { name: 'No users found matching "ari"' })).toBeVisible();
   });
 
   it("should render a row for each user", () => {
@@ -49,10 +49,10 @@ describe("UsersSection", () => {
     const reviewer = mocks.user.generateUser({ name: "sam chen", role: "reviewer" });
     render(<UsersSection users={[admin, reviewer]} currentUserId={CURRENT_USER_ID} />);
 
-    expect(screen.getByRole("button", { name: "change role for ari shapiro" })).toHaveTextContent(
+    expect(screen.getByRole("button", { name: "Change role for ari shapiro" })).toHaveTextContent(
       "admin",
     );
-    expect(screen.getByRole("button", { name: "change role for sam chen" })).toHaveTextContent(
+    expect(screen.getByRole("button", { name: "Change role for sam chen" })).toHaveTextContent(
       "reviewer",
     );
   });
@@ -63,14 +63,14 @@ describe("UsersSection", () => {
 
     expect(screen.queryByRole("button", { name: /invite user/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("checkbox", { name: "select sam chen" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "change role for sam chen" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Change role for sam chen" })).toBeDisabled();
   });
 
   it("should treat a null role as a reviewer", () => {
     const user = mocks.user.generateUser({ name: "sam chen", role: null });
     render(<UsersSection users={[user]} currentUserId={CURRENT_USER_ID} />);
 
-    expect(screen.getByRole("button", { name: "change role for sam chen" })).toHaveTextContent(
+    expect(screen.getByRole("button", { name: "Change role for sam chen" })).toHaveTextContent(
       "reviewer",
     );
   });
@@ -79,35 +79,35 @@ describe("UsersSection", () => {
     const user = mocks.user.generateUser({ name: "sam chen", status: "active" });
     render(<UsersSection users={[user]} currentUserId={CURRENT_USER_ID} />);
 
-    expect(screen.getByRole("button", { name: "change role for sam chen" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Change role for sam chen" })).toBeEnabled();
   });
 
   it("should render a disabled role switcher for your own row", () => {
     const admin = mocks.user.generateUser({ name: "ari shapiro", role: "admin", status: "active" });
     render(<UsersSection users={[admin]} currentUserId={admin.id} />);
 
-    expect(screen.getByRole("button", { name: `change role for ${admin.name}` })).toBeDisabled();
+    expect(screen.getByRole("button", { name: `Change role for ${admin.name}` })).toBeDisabled();
   });
 
   it("should render a disabled role switcher for invited users", () => {
     const invited = mocks.user.generateUser({ name: "kira vance", status: "invited" });
     render(<UsersSection users={[invited]} currentUserId={CURRENT_USER_ID} />);
 
-    expect(screen.getByRole("button", { name: `change role for ${invited.name}` })).toBeDisabled();
+    expect(screen.getByRole("button", { name: `Change role for ${invited.name}` })).toBeDisabled();
   });
 
   it("should show an active status badge for active users", () => {
     const user = mocks.user.generateUser({ status: "active" });
     render(<UsersSection users={[user]} currentUserId={CURRENT_USER_ID} />);
 
-    expect(screen.getByRole("cell", { name: "active" })).toBeVisible();
+    expect(screen.getByRole("cell", { name: "Active" })).toBeVisible();
   });
 
   it("should show an invited status badge for invited users", () => {
     const user = mocks.user.generateUser({ status: "invited" });
     render(<UsersSection users={[user]} currentUserId={CURRENT_USER_ID} />);
 
-    expect(screen.getByRole("cell", { name: "invited" })).toBeVisible();
+    expect(screen.getByRole("cell", { name: "Invited" })).toBeVisible();
   });
 
   it("should not show a copy invite button for active users", () => {
@@ -140,9 +140,9 @@ describe("UsersSection", () => {
     render(<UsersSection users={[admin, user]} currentUserId={admin.id} />);
 
     expect(
-      screen.queryByRole("checkbox", { name: `select ${admin.name}` }),
+      screen.queryByRole("checkbox", { name: `Select ${admin.name}` }),
     ).not.toBeInTheDocument();
-    expect(screen.getByRole("checkbox", { name: `select ${user.name}` })).toBeVisible();
+    expect(screen.getByRole("checkbox", { name: `Select ${user.name}` })).toBeVisible();
   });
 
   it("should remove selected users when confirmed", async ({ user }) => {
@@ -150,7 +150,7 @@ describe("UsersSection", () => {
     const activeUser = mocks.user.generateUser({ name: "sam chen", status: "active" });
     render(<UsersSection users={[activeUser]} currentUserId={CURRENT_USER_ID} />);
 
-    await user.click(screen.getByRole("checkbox", { name: `select ${activeUser.name}` }));
+    await user.click(screen.getByRole("checkbox", { name: `Select ${activeUser.name}` }));
     expect(screen.getByText("1 user selected")).toBeVisible();
 
     await user.click(screen.getByRole("button", { name: /^remove$/i }));

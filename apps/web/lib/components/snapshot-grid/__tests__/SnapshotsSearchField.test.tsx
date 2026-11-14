@@ -6,13 +6,13 @@ describe("SnapshotsSearchField", () => {
   it("should initialize the field from the search value", () => {
     render(<SnapshotsSearchField action="/projects/project-1/builds/build-1" search="home" />);
 
-    expect(screen.getByLabelText("search snapshots")).toHaveValue("home");
+    expect(screen.getByLabelText("Search snapshots")).toHaveValue("home");
   });
 
   it("should point the clear button back to the page it searches", () => {
     render(<SnapshotsSearchField action="/projects/project-1/builds/build-1" search="home" />);
 
-    expect(screen.getByRole("button", { name: "clear search" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "Clear search" })).toHaveAttribute(
       "href",
       "/projects/project-1/builds/build-1",
     );
@@ -27,7 +27,7 @@ describe("SnapshotsSearchField", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: "clear search" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "Clear search" })).toHaveAttribute(
       "href",
       "/projects/project-1/builds/build-1?browser=firefox&viewport=mobile",
     );

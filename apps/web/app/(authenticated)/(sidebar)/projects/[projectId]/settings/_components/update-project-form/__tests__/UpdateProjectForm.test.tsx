@@ -43,7 +43,7 @@ describe("UpdateProjectForm", () => {
     await user.type(screen.getByLabelText(/required reviewers/i), "0");
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
-    expect(await screen.findByText("required reviewer count must be at least 1")).toBeVisible();
+    expect(await screen.findByText("Required reviewer count must be at least 1")).toBeVisible();
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 
@@ -61,6 +61,6 @@ describe("UpdateProjectForm", () => {
         patch: expect.objectContaining({ requiredReviewerCount: 3 }),
       }),
     );
-    expect(await screen.findByText("settings saved")).toBeVisible();
+    expect(await screen.findByText("Settings saved")).toBeVisible();
   });
 });

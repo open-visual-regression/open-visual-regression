@@ -125,8 +125,8 @@ describe("SnapshotsSection", () => {
       </QueryClientProvider>,
     );
 
-    await waitFor(() => expect(screen.getByText("approved")).toBeVisible());
-    expect(screen.queryByText("needs review")).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("Approved")).toBeVisible());
+    expect(screen.queryByText("Needs review")).not.toBeInTheDocument();
   });
 
   it("should show the empty state for a build with no snapshots", () => {
@@ -135,7 +135,7 @@ describe("SnapshotsSection", () => {
 
     renderSection({ queryClient });
 
-    expect(screen.getByText("no snapshots found")).toBeVisible();
+    expect(screen.getByText("No snapshots found")).toBeVisible();
   });
 
   it("should show the search term when no snapshots match it", () => {
@@ -145,7 +145,7 @@ describe("SnapshotsSection", () => {
 
     renderSection({ queryClient, filters });
 
-    expect(screen.getByText('no snapshots found matching "home"')).toBeVisible();
+    expect(screen.getByText('No snapshots found matching "home"')).toBeVisible();
   });
 
   it("should list every build's snapshots by name with their projects, without carrying filters into the links", () => {

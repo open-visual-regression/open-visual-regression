@@ -24,7 +24,7 @@ const RecentBuildsSidebarLinks = ({ builds, onNavigate }: RecentBuildsSidebarLin
 
   return (
     <SidebarSection
-      label="recent builds"
+      label="Recent builds"
       href="/builds"
       onNavigate={onNavigate}
       className="min-h-0 flex-1"

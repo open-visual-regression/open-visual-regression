@@ -9,10 +9,10 @@ import { BuildsFilters } from "../BuildsFilters";
 const PROJECT_ID = "018f0000-0000-7000-8000-000000000000";
 
 const STATUS_OPTIONS = [
-  { value: "needs_review" as const, label: "needs review" },
-  { value: "unchanged" as const, label: "unchanged" },
-  { value: "auto_approved" as const, label: "auto approved" },
-  { value: "error" as const, label: "error" },
+  { value: "needs_review" as const, label: "Needs review" },
+  { value: "unchanged" as const, label: "Unchanged" },
+  { value: "auto_approved" as const, label: "Auto approved" },
+  { value: "error" as const, label: "Error" },
 ];
 
 const BRANCH_OPTIONS = [
@@ -151,7 +151,7 @@ export const MobileFacetDialogOpen: Story = {
 
     const body = within(canvasElement.ownerDocument.body);
     await userEvent.click(await body.findByRole("menuitem", { name: /^status$/i }));
-    await body.findByRole("checkbox", { name: "needs review" });
+    await body.findByRole("checkbox", { name: "Needs review" });
   },
 };
 

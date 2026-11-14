@@ -31,7 +31,7 @@ export const UsersSection = ({
           trigger={
             <InviteUserModalButton className={INVITE_BUTTON_CLASS_NAME}>
               <Icon icon={PlusIcon} />
-              <span className="sr-only sm:not-sr-only">invite user</span>
+              <span className="sr-only sm:not-sr-only">Invite user</span>
             </InviteUserModalButton>
           }
         />
@@ -55,7 +55,7 @@ const UsersSectionLayout = ({ search, action, table }: UsersSectionLayoutProps) 
   <div className="flex flex-col gap-6">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <Typography variant="h1" as="h1" className="w-full sm:w-auto">
-        users
+        Users
       </Typography>
       <div className="flex w-full items-center gap-3 sm:w-auto">
         {search}
@@ -72,7 +72,7 @@ export const UsersSectionSkeleton = () => (
     action={
       <ButtonSkeleton className={INVITE_BUTTON_CLASS_NAME}>
         <Icon icon={PlusIcon} />
-        <span className="sr-only sm:not-sr-only">invite user</span>
+        <span className="sr-only sm:not-sr-only">Invite user</span>
       </ButtonSkeleton>
     }
     table={<UsersTableSkeleton />}

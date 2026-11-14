@@ -11,13 +11,13 @@ type DeleteProjectSectionProps = {
 export const DeleteProjectSection = ({ project }: DeleteProjectSectionProps) => (
   <div className="flex flex-col gap-4">
     <Typography variant="label" className="text-ovr-remove">
-      danger zone
+      Danger zone
     </Typography>
     <div className="flex flex-col items-start gap-4 rounded-lg border border-ovr-remove p-4 lg:flex-row lg:items-center lg:justify-between">
       <div className="flex flex-col gap-1">
-        <Typography>delete project</Typography>
+        <Typography>Delete project</Typography>
         <Typography variant="body-muted">
-          permanently deletes this project and everything stored for it. this cannot be undone.
+          Permanently deletes this project and everything stored for it. This cannot be undone.
         </Typography>
       </div>
       <DeleteProjectDialog project={project} />

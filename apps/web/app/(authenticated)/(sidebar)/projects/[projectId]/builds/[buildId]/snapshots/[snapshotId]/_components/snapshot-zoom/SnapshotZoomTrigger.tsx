@@ -19,7 +19,7 @@ export const SnapshotZoomTrigger = ({ view, disabled }: SnapshotZoomTriggerProps
       render={
         <button
           type="button"
-          aria-label={`zoom ${view}`}
+          aria-label={`Zoom ${view}`}
           className="absolute inset-0 cursor-zoom-in outline-none focus-visible:ring-2 focus-visible:ring-ovr-accent-ring focus-visible:ring-inset disabled:cursor-default"
         />
       }

@@ -63,7 +63,7 @@ describe("FlakyDetectionForm", () => {
     await user.type(screen.getByLabelText(/schedule/i), "twice a day");
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
-    expect(await screen.findByText("you must enter a valid cron pattern")).toBeVisible();
+    expect(await screen.findByText("You must enter a valid cron pattern")).toBeVisible();
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 
@@ -91,7 +91,7 @@ describe("FlakyDetectionForm", () => {
 
     resolveUpdate!([null, undefined]);
 
-    expect(await screen.findByText("flaky detection updated")).toBeVisible();
+    expect(await screen.findByText("Flaky detection updated")).toBeVisible();
     expect(mockRefresh).toHaveBeenCalled();
   });
 
@@ -111,7 +111,7 @@ describe("FlakyDetectionForm", () => {
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("something went wrong");
-    expect(screen.queryByText("flaky detection updated")).not.toBeInTheDocument();
+    expect(screen.queryByText("Flaky detection updated")).not.toBeInTheDocument();
   });
 
   it("should run the job and confirm when run now is clicked", async ({ user }) => {
@@ -121,7 +121,7 @@ describe("FlakyDetectionForm", () => {
     await user.click(screen.getByRole("button", { name: /run now/i }));
 
     expect(mockRun).toHaveBeenCalled();
-    expect(await screen.findByText("flaky detection started")).toBeVisible();
+    expect(await screen.findByText("Flaky detection started")).toBeVisible();
     expect(mockRefresh).toHaveBeenCalled();
   });
 
@@ -159,8 +159,8 @@ describe("FlakyDetectionForm", () => {
     await user.type(screen.getByLabelText(/builds to look back on/i), "50");
     await user.click(screen.getByRole("button", { name: /run now/i }));
 
-    expect(await screen.findByText("flaky detection started")).toBeVisible();
-    expect(screen.queryByText("flaky detection updated")).not.toBeInTheDocument();
+    expect(await screen.findByText("Flaky detection started")).toBeVisible();
+    expect(screen.queryByText("Flaky detection updated")).not.toBeInTheDocument();
     expect(mockUpdate).toHaveBeenCalledWith({ ...SETTINGS, enabled: true, windowBuilds: 50 });
     expect(mockUpdate.mock.invocationCallOrder[0]).toBeLessThan(
       mockRun.mock.invocationCallOrder[0]!,
@@ -185,7 +185,7 @@ describe("FlakyDetectionForm", () => {
     await user.type(screen.getByLabelText(/schedule/i), "twice a day");
     await user.click(screen.getByRole("button", { name: /run now/i }));
 
-    expect(await screen.findByText("you must enter a valid cron pattern")).toBeVisible();
+    expect(await screen.findByText("You must enter a valid cron pattern")).toBeVisible();
     expect(mockUpdate).not.toHaveBeenCalled();
     expect(mockRun).not.toHaveBeenCalled();
   });
@@ -197,7 +197,7 @@ describe("FlakyDetectionForm", () => {
     await user.click(screen.getByRole("button", { name: /run now/i }));
 
     expect(await screen.findByText("CONFLICT")).toBeVisible();
-    expect(screen.queryByText("flaky detection started")).not.toBeInTheDocument();
+    expect(screen.queryByText("Flaky detection started")).not.toBeInTheDocument();
   });
 
   it("should disable run now and show a spinner while the job is running", () => {

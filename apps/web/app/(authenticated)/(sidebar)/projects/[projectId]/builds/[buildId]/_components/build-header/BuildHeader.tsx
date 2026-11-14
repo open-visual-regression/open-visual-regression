@@ -87,7 +87,7 @@ export const BuildHeader = ({
           </GitPill>
           {storybookHref ? (
             <ExternalLink href={storybookHref} className="hidden md:inline-flex">
-              view storybook
+              View Storybook
             </ExternalLink>
           ) : null}
           {build.author ? (
@@ -101,14 +101,14 @@ export const BuildHeader = ({
           </Typography>
           {build.durationMs ? (
             <Typography variant="caption" className="flex items-center gap-1">
-              <Icon icon={TimerIcon} size={10} role="img" aria-label="build duration" />
-              took {formatDuration(build.durationMs)} ({formatBuildTimingBreakdown(build)})
+              <Icon icon={TimerIcon} size={10} role="img" aria-label="Build duration" />
+              Took {formatDuration(build.durationMs)} ({formatBuildTimingBreakdown(build)})
             </Typography>
           ) : null}
           {isCanceled ? (
             <Typography variant="caption" className="flex items-center gap-1">
               <Icon icon={CircleSlash2Icon} size={10} />
-              canceled by {build.canceledBy ?? "the system"}
+              Canceled by {build.canceledBy ?? "the system"}
             </Typography>
           ) : null}
         </div>
@@ -123,7 +123,7 @@ export const BuildHeader = ({
               <div className="hidden md:contents">
                 {latestBuildHref ? (
                   <ButtonLink href={latestBuildHref} variant="outline" color="neutral">
-                    view latest build
+                    View latest build
                     <Icon icon={ArrowRightIcon} size={10} />
                   </ButtonLink>
                 ) : null}

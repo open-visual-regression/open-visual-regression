@@ -43,14 +43,14 @@ describe("SnapshotHistoryCard", () => {
     const entry = mocks.build.generateSnapshotHistoryEntry({ status: "needs_review" });
     render(<SnapshotHistoryCard entry={entry} projectId="project-1" />);
 
-    expect(screen.getByText("needs review")).toBeVisible();
+    expect(screen.getByText("Needs review")).toBeVisible();
   });
 
   it("should show a warning badge when the snapshot has a warning", () => {
     const entry = mocks.build.generateSnapshotHistoryEntry({ flags: ["warning"] });
     render(<SnapshotHistoryCard entry={entry} projectId="project-1" />);
 
-    expect(screen.getByRole("img", { name: "warning" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Warning" })).toBeInTheDocument();
     expect(screen.getByRole("link")).toHaveAccessibleName(
       expect.stringContaining(", has warnings"),
     );
@@ -60,7 +60,7 @@ describe("SnapshotHistoryCard", () => {
     const entry = mocks.build.generateSnapshotHistoryEntry({ flags: [] });
     render(<SnapshotHistoryCard entry={entry} projectId="project-1" />);
 
-    expect(screen.queryByRole("img", { name: "warning" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: "Warning" })).not.toBeInTheDocument();
   });
 
   it("should mark the snapshot being viewed", () => {
@@ -68,7 +68,7 @@ describe("SnapshotHistoryCard", () => {
     render(<SnapshotHistoryCard entry={entry} projectId="project-1" current />);
 
     expect(screen.getByRole("link")).toHaveAttribute("aria-current", "page");
-    expect(screen.getByText("this snapshot")).toBeVisible();
+    expect(screen.getByText("This snapshot")).toBeVisible();
   });
 
   it("should not mark other snapshots as the one being viewed", () => {
@@ -76,6 +76,6 @@ describe("SnapshotHistoryCard", () => {
     render(<SnapshotHistoryCard entry={entry} projectId="project-1" />);
 
     expect(screen.getByRole("link")).not.toHaveAttribute("aria-current");
-    expect(screen.queryByText("this snapshot")).not.toBeInTheDocument();
+    expect(screen.queryByText("This snapshot")).not.toBeInTheDocument();
   });
 });

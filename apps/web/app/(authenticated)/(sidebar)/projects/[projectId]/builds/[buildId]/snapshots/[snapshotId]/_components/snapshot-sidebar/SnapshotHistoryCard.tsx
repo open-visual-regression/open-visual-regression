@@ -42,7 +42,7 @@ export const SnapshotHistoryCard = ({ entry, projectId, current }: SnapshotHisto
   const imagePath = getStoragePath(entry.imagePath);
   const shortSha = entry.commitSha.slice(0, 7);
   const warning = entry.flags.includes("warning");
-  const label = `snapshot from ${entry.buildName ?? shortSha}, ${getSnapshotStatusLabel(entry.status)}${warning ? ", has warnings" : ""}`;
+  const label = `Snapshot from ${entry.buildName ?? shortSha}, ${getSnapshotStatusLabel(entry.status)}${warning ? ", has warnings" : ""}`;
 
   return (
     <CardLink
@@ -55,17 +55,17 @@ export const SnapshotHistoryCard = ({ entry, projectId, current }: SnapshotHisto
         {imagePath ? (
           <Image
             src={imagePath}
-            alt={`snapshot from ${entry.buildName ?? shortSha}`}
+            alt={`Snapshot from ${entry.buildName ?? shortSha}`}
             className="absolute inset-0 h-full w-full object-cover object-top"
             errorFallback={
               <div className="absolute inset-0 flex items-center justify-center">
-                <Typography variant="caption">failed to load snapshot</Typography>
+                <Typography variant="caption">Failed to load snapshot</Typography>
               </div>
             }
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
-            <Typography variant="caption">no preview</Typography>
+            <Typography variant="caption">No preview</Typography>
           </div>
         )}
         <div className="absolute bottom-2 right-2">
@@ -87,7 +87,7 @@ export const SnapshotHistoryCard = ({ entry, projectId, current }: SnapshotHisto
             <>
               <MetadataDot />
               <Typography variant="caption" className="shrink-0">
-                this snapshot
+                This snapshot
               </Typography>
             </>
           ) : null}

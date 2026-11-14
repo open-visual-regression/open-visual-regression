@@ -42,7 +42,7 @@ export const listUsersOutputSchema = z.object({
 });
 
 export const inviteUserInputSchema = z.object({
-  email: z.email("invalid email address"),
+  email: z.email("Invalid email address"),
 });
 
 export type InviteUserInputSchema = z.infer<typeof inviteUserInputSchema>;

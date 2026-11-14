@@ -47,7 +47,7 @@ export default async function ProjectSettingsPage(props: ProjectSettingsPageProp
   return (
     <div className="flex flex-col gap-6">
       <Typography variant="h1" as="h1">
-        settings
+        Settings
       </Typography>
       <div className="flex flex-col gap-6 w-full lg:w-2/3">
         <UpdateProjectForm project={projectResult.project} />

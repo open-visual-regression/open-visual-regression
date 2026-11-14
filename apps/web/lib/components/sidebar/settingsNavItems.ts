@@ -21,20 +21,20 @@ type SettingsNavSection = {
 
 const SETTINGS_NAV_SECTIONS: SettingsNavSection[] = [
   {
-    label: "personal",
+    label: "Personal",
     access: "all",
     items: [
-      { href: "/settings/account", icon: UserIcon, label: "account" },
-      { href: "/settings/access-tokens", icon: KeyRoundIcon, label: "access tokens" },
+      { href: "/settings/account", icon: UserIcon, label: "Account" },
+      { href: "/settings/access-tokens", icon: KeyRoundIcon, label: "Access tokens" },
     ],
   },
   {
-    label: "admin",
+    label: "Admin",
     access: "admin",
     items: [
-      { href: "/settings/organization", icon: SettingsIcon, label: "organization" },
-      { href: "/settings/users", icon: UsersIcon, label: "users" },
-      { href: "/settings/jobs", icon: TimerIcon, label: "jobs" },
+      { href: "/settings/organization", icon: SettingsIcon, label: "Organization" },
+      { href: "/settings/users", icon: UsersIcon, label: "Users" },
+      { href: "/settings/jobs", icon: TimerIcon, label: "Jobs" },
     ],
   },
 ];

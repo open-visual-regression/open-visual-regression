@@ -119,7 +119,7 @@ export const SnapshotHistoryList = ({
   if (entries.length === 0) {
     return (
       <Typography variant="caption" className="py-12 text-center">
-        no snapshots on {branch} yet
+        No snapshots on {branch} yet
       </Typography>
     );
   }

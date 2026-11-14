@@ -39,11 +39,11 @@ describe("InvitationCard", () => {
 
     renderComponent();
 
-    await user.type(screen.getByLabelText("email"), email);
-    await user.type(screen.getByLabelText("password"), password);
-    await user.click(screen.getByRole("button", { name: "sign in" }));
+    await user.type(screen.getByLabelText("Email"), email);
+    await user.type(screen.getByLabelText("Password"), password);
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
 
-    expect(await screen.findByRole("button", { name: "signing in..." })).toBeVisible();
+    expect(await screen.findByRole("button", { name: "Signing in..." })).toBeVisible();
 
     await waitFor(() => {
       expect(window.location.href).toBe("http://localhost:3000/projects");
@@ -58,9 +58,9 @@ describe("InvitationCard", () => {
   it("should return to the redirect path after signing in", async ({ user }) => {
     renderComponent({ redirectPath: "/projects/1/baseline" });
 
-    await user.type(screen.getByLabelText("email"), "tom@openvisualregression.com");
-    await user.type(screen.getByLabelText("password"), "hunter123");
-    await user.click(screen.getByRole("button", { name: "sign in" }));
+    await user.type(screen.getByLabelText("Email"), "tom@openvisualregression.com");
+    await user.type(screen.getByLabelText("Password"), "hunter123");
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
 
     await waitFor(() => {
       expect(window.location.href).toBe("http://localhost:3000/projects/1/baseline");
@@ -70,21 +70,21 @@ describe("InvitationCard", () => {
   it("should show validation errors for empty fields", async ({ user }) => {
     renderComponent();
 
-    await user.click(screen.getByRole("button", { name: "sign in" }));
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
 
-    expect(await screen.findByText("invalid email address")).toBeVisible();
-    expect(await screen.findByText("you must enter your password")).toBeVisible();
+    expect(await screen.findByText("Invalid email address")).toBeVisible();
+    expect(await screen.findByText("You must enter your password")).toBeVisible();
     expect(mockSignIn).not.toHaveBeenCalled();
   });
 
   it("should show an error when the email is invalid", async ({ user }) => {
     renderComponent();
 
-    await user.type(screen.getByLabelText("email"), "derp");
+    await user.type(screen.getByLabelText("Email"), "derp");
 
-    await user.click(screen.getByRole("button", { name: "sign in" }));
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
 
-    expect(await screen.findByText("invalid email address")).toBeVisible();
+    expect(await screen.findByText("Invalid email address")).toBeVisible();
     expect(mockSignIn).not.toHaveBeenCalled();
   });
 
@@ -95,9 +95,9 @@ describe("InvitationCard", () => {
 
     renderComponent();
 
-    await user.type(screen.getByLabelText("email"), "tom@openvisualregression.com");
-    await user.type(screen.getByLabelText("password"), "hunter123");
-    await user.click(screen.getByRole("button", { name: "sign in" }));
+    await user.type(screen.getByLabelText("Email"), "tom@openvisualregression.com");
+    await user.type(screen.getByLabelText("Password"), "hunter123");
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
 
     expect(await screen.findByText(errorMessage)).toBeVisible();
   });

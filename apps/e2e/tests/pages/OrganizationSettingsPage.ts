@@ -8,7 +8,7 @@ export class OrganizationSettingsPage {
   }
 
   nameField(): Locator {
-    return this.page.getByLabel("name", { exact: true });
+    return this.page.getByLabel("Name", { exact: true });
   }
 
   saveButton(): Locator {
@@ -16,6 +16,6 @@ export class OrganizationSettingsPage {
   }
 
   successToast(): Locator {
-    return this.page.getByText("organization updated");
+    return this.page.getByText("Organization updated");
   }
 }

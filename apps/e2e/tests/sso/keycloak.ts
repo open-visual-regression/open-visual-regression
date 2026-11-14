@@ -10,7 +10,7 @@ const getAdminToken = async (): Promise<string> => {
       body: new URLSearchParams({
         grant_type: "password",
         client_id: "admin-cli",
-        username: "admin",
+        username: "Admin",
         password: "admin",
       }),
     },

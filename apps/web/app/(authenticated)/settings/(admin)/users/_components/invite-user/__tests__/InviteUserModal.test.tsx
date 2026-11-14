@@ -24,7 +24,7 @@ describe("InviteUserModal", () => {
     await user.click(screen.getByRole("button", { name: /invite user/i }));
     await user.click(screen.getByRole("button", { name: /^create invite$/i }));
 
-    expect(await screen.findByText("invalid email address")).toBeVisible();
+    expect(await screen.findByText("Invalid email address")).toBeVisible();
     expect(mockInvite).not.toHaveBeenCalled();
   });
 

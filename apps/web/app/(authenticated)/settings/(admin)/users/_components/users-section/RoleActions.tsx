@@ -57,7 +57,7 @@ export const RoleActions = ({ userId, name, role, disabled = false }: RoleAction
             className="w-full justify-between"
           />
         }
-        aria-label={`change role for ${name}`}
+        aria-label={`Change role for ${name}`}
       >
         {role}
         <Icon icon={ChevronDownIcon} size={12} />

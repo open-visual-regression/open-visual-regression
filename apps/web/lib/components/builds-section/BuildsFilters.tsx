@@ -37,10 +37,10 @@ export const BuildsFilters = ({
   <FacetBar
     className={className}
     facets={[
-      { param: "status", label: "status", options: statusOptions, selected: statuses },
+      { param: "status", label: "Status", options: statusOptions, selected: statuses },
       {
         param: "branch",
-        label: "branch",
+        label: "Branch",
         options: branchOptions,
         selected: branches,
         renderContent: ({ selected, onApply, onClear }) => (
@@ -54,7 +54,7 @@ export const BuildsFilters = ({
       },
       {
         param: "author",
-        label: "author",
+        label: "Author",
         options: authorOptions,
         selected: authors,
         renderContent: ({ selected, onApply, onClear }) => (
@@ -68,7 +68,7 @@ export const BuildsFilters = ({
       },
       {
         param: "commit",
-        label: "commit",
+        label: "Commit",
         options: commitShaOptions,
         selected: commitShas,
         renderContent: ({ selected, onApply, onClear }) => (

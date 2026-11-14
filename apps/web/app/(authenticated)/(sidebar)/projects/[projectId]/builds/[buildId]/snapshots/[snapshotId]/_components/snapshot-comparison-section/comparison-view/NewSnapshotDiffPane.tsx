@@ -30,7 +30,7 @@ export const NewSnapshotDiffPane = ({
     <SnapshotPaneHeader>
       <Typography variant="label">{label}</Typography>
       <label className="ml-auto flex items-center gap-2">
-        <Typography variant="caption">diff</Typography>
+        <Typography variant="caption">Diff</Typography>
         <Switch checked={showDiff} onCheckedChange={onShowDiffChange} />
       </label>
     </SnapshotPaneHeader>
@@ -43,7 +43,7 @@ export const NewSnapshotDiffPane = ({
     >
       <img
         src={diffImagePath}
-        alt={`diff overlay of ${alt}`}
+        alt={`Diff overlay of ${alt.charAt(0).toLowerCase()}${alt.slice(1)}`}
         className={cn(
           "absolute top-0 left-0 block h-auto w-full",
           showDiff ? "opacity-100" : "opacity-0",

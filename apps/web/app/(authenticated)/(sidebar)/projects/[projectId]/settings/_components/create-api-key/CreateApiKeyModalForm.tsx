@@ -31,10 +31,10 @@ import { CreateApiKeyModalReveal } from "./CreateApiKeyModalReveal";
 const createApiKeyFormSchema = z.object({
   name: z
     .string()
-    .min(1, "you must enter a name")
+    .min(1, "You must enter a name")
     .max(
       API_KEY_NAME_MAX_LENGTH,
-      `the name must be less than ${API_KEY_NAME_MAX_LENGTH} characters`,
+      `The name must be less than ${API_KEY_NAME_MAX_LENGTH} characters`,
     ),
 });
 
@@ -67,7 +67,7 @@ export const CreateApiKeyModalForm = ({ projectId }: CreateApiKeyModalFormProps)
     return (
       <>
         <DialogHeader>
-          <DialogTitle>api key created</DialogTitle>
+          <DialogTitle>API key created</DialogTitle>
         </DialogHeader>
         <CreateApiKeyModalReveal apiKey={apiKey} />
       </>
@@ -83,27 +83,27 @@ export const CreateApiKeyModalForm = ({ projectId }: CreateApiKeyModalFormProps)
   return (
     <>
       <DialogHeader>
-        <DialogTitle>new api key</DialogTitle>
-        <DialogDescription>used to authenticate uploads for this project</DialogDescription>
+        <DialogTitle>New API key</DialogTitle>
+        <DialogDescription>Used to authenticate uploads for this project</DialogDescription>
       </DialogHeader>
       <form onSubmit={handleSubmit(handleFormSubmit)}>
         <FieldGroup className="pb-6">
           <Field data-invalid={!!errors.name}>
-            <FieldLabel htmlFor="name">name</FieldLabel>
+            <FieldLabel htmlFor="name">Name</FieldLabel>
             <Input
               id="name"
-              placeholder="enter a name for the api key"
+              placeholder="Enter a name for the API key"
               aria-invalid={!!errors.name}
               {...register("name")}
             />
-            <FieldDescription>a label to help identify this api key later</FieldDescription>
+            <FieldDescription>A label to help identify this API key later</FieldDescription>
             <FieldError errors={[errors.name]} />
           </Field>
           <FieldError errors={[errors.root]} />
         </FieldGroup>
         <DialogFooter showCloseButton>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "creating..." : "create"}
+            {isSubmitting ? "Creating..." : "Create"}
           </Button>
         </DialogFooter>
       </form>

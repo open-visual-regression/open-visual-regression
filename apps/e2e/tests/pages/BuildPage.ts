@@ -15,7 +15,7 @@ export class BuildPage {
   }
 
   status(): Locator {
-    return this.page.getByRole("status", { name: "build status" });
+    return this.page.getByRole("status", { name: "Build status" });
   }
 
   // The main-branch build a branch build was compared to, shown as `main @ <sha>`.
@@ -24,15 +24,15 @@ export class BuildPage {
   }
 
   cancelButton(): Locator {
-    return this.page.getByRole("button", { name: "cancel build", exact: true });
+    return this.page.getByRole("button", { name: "Cancel build", exact: true });
   }
 
   snapshotCards(): Locator {
-    return this.page.getByRole("link", { name: /^snapshot of/i });
+    return this.page.getByRole("link", { name: /^Snapshot of/i });
   }
 
   snapshotCard(snapshot: SnapshotCardTarget, status?: string): Locator {
-    const name = `snapshot of ${snapshot.targetTitle} ${snapshot.targetName}, ${snapshot.browser} ${snapshot.viewportName},`;
+    const name = `Snapshot of ${snapshot.targetTitle} ${snapshot.targetName}, ${snapshot.browser} ${snapshot.viewportName},`;
 
     return this.page.getByRole("link", {
       name: status === undefined ? name : `${name} ${status}`,
@@ -41,23 +41,23 @@ export class BuildPage {
   }
 
   approveAllButton(): Locator {
-    return this.page.getByRole("button", { name: "approve all", exact: true });
+    return this.page.getByRole("button", { name: "Approve all", exact: true });
   }
 
   rejectAllButton(): Locator {
-    return this.page.getByRole("button", { name: "reject all", exact: true });
+    return this.page.getByRole("button", { name: "Reject all", exact: true });
   }
 
   approvedButton(): Locator {
-    return this.page.getByRole("button", { name: "approved", exact: true });
+    return this.page.getByRole("button", { name: "Approved", exact: true });
   }
 
   rejectedButton(): Locator {
-    return this.page.getByRole("button", { name: "rejected", exact: true });
+    return this.page.getByRole("button", { name: "Rejected", exact: true });
   }
 
   backButton(): Locator {
-    return this.page.getByRole("link", { name: "back", exact: true });
+    return this.page.getByRole("link", { name: "Back", exact: true });
   }
 
   scrollContainer(): Locator {
@@ -81,18 +81,18 @@ export class BuildPage {
   }
 
   rebuildButton(): Locator {
-    return this.page.getByRole("button", { name: "rebuild", exact: true });
+    return this.page.getByRole("button", { name: "Rebuild", exact: true });
   }
 
   async confirmRebuild() {
     await this.rebuildButton().click();
     await this.page
       .getByRole("alertdialog")
-      .getByRole("button", { name: "rebuild", exact: true })
+      .getByRole("button", { name: "Rebuild", exact: true })
       .click();
   }
 
   snapshotThumbnails(): Locator {
-    return this.page.getByRole("img", { name: /^snapshot of/ });
+    return this.page.getByRole("img", { name: /^Snapshot of/ });
   }
 }

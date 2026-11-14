@@ -40,7 +40,7 @@ export const BuildRejectButton = ({ buildId, rejected }: BuildRejectButtonProps)
       )}
       onClick={() => execute({ buildId, vote: "reject" })}
     >
-      {rejected ? "rejected" : pending ? "rejecting..." : "reject all"}
+      {rejected ? "Rejected" : pending ? "Rejecting..." : "Reject all"}
     </Button>
   );
 };

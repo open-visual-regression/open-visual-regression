@@ -8,14 +8,14 @@ export class LoginPage {
   }
 
   emailField() {
-    return this.page.getByLabel("email", { exact: true });
+    return this.page.getByLabel("Email", { exact: true });
   }
 
   passwordField() {
-    return this.page.getByLabel("password", { exact: true });
+    return this.page.getByLabel("Password", { exact: true });
   }
 
   signInButton() {
-    return this.page.getByRole("button", { name: "sign in" });
+    return this.page.getByRole("button", { name: "Sign in" });
   }
 }

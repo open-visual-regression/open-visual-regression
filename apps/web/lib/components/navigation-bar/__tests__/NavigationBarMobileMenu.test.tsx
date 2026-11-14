@@ -47,9 +47,9 @@ describe("NavigationBarMobileMenu", () => {
 
     await user.click(screen.getByRole("button", { name: /open settings navigation/i }));
 
-    expect(screen.getByRole("link", { name: "account" })).toBeVisible();
-    expect(screen.getByRole("link", { name: "organization" })).toBeVisible();
-    expect(screen.getByRole("link", { name: "users" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Account" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Organization" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Users" })).toBeVisible();
   });
 
   it("should open the projects nav links from the mobile menu", async ({ user }) => {
@@ -117,10 +117,10 @@ describe("NavigationBarMobileMenu", () => {
     );
 
     await user.click(screen.getByRole("button", { name: /open projects navigation/i }));
-    await user.click(screen.getByRole("link", { name: "recent builds" }));
+    await user.click(screen.getByRole("link", { name: "Recent builds" }));
 
     await waitFor(() => {
-      expect(screen.queryByRole("link", { name: "recent builds" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: "Recent builds" })).not.toBeInTheDocument();
     });
   });
 
@@ -132,12 +132,12 @@ describe("NavigationBarMobileMenu", () => {
     );
 
     await user.click(screen.getByRole("button", { name: /open settings navigation/i }));
-    expect(screen.getByRole("link", { name: "account" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Account" })).toBeVisible();
 
-    await user.click(screen.getByRole("link", { name: "account" }));
+    await user.click(screen.getByRole("link", { name: "Account" }));
 
     await waitFor(() => {
-      expect(screen.queryByRole("link", { name: "account" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: "Account" })).not.toBeInTheDocument();
     });
   });
 
@@ -149,10 +149,10 @@ describe("NavigationBarMobileMenu", () => {
     );
 
     await user.click(screen.getByRole("button", { name: /open projects navigation/i }));
-    await user.click(screen.getByRole("link", { name: /^projects/ }));
+    await user.click(screen.getByRole("link", { name: /^Projects/ }));
 
     await waitFor(() => {
-      expect(screen.queryByRole("link", { name: /^projects/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: /^Projects/ })).not.toBeInTheDocument();
     });
   });
 
@@ -182,7 +182,7 @@ describe("NavigationBarMobileMenu", () => {
     await user.click(screen.getByRole("button", { name: /close settings navigation/i }));
 
     await waitFor(() => {
-      expect(screen.queryByRole("link", { name: "account" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: "Account" })).not.toBeInTheDocument();
     });
   });
 });

@@ -7,9 +7,9 @@ test.describe("Overview", () => {
     page,
   }) => {
     for (const [name, path] of [
-      ["projects", /\/projects$/],
-      ["builds", /\/builds$/],
-      ["snapshots", /\/snapshots$/],
+      ["Projects", /\/projects$/],
+      ["Builds", /\/builds$/],
+      ["Snapshots", /\/snapshots$/],
     ] as const) {
       await overviewPage.goto();
       await expect(overviewPage.heading()).toBeVisible();
@@ -38,7 +38,7 @@ test.describe("Overview", () => {
     expect(build.exitCode, build.stderr).toBe(0);
 
     await overviewPage.goto();
-    await overviewPage.link("snapshots").click();
+    await overviewPage.link("Snapshots").click();
     await expect(snapshotsPage.heading()).toBeVisible();
 
     await snapshotsPage.filterBy("project", projectName);

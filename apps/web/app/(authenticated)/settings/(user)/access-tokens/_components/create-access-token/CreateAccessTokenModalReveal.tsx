@@ -13,13 +13,13 @@ export const CreateAccessTokenModalReveal = ({
 }: CreateAccessTokenModalRevealProps) => (
   <div className="flex flex-col gap-4">
     <Alert className="min-w-0">
-      <AlertTitle>copy this token now, it will only be shown once</AlertTitle>
+      <AlertTitle>Copy this token now, it will only be shown once</AlertTitle>
       <AlertDescription className="min-w-0">
         <CodeBlock code={accessToken} truncate className="mt-2" />
       </AlertDescription>
     </Alert>
     <DialogFooter>
-      <DialogClose render={<Button />}>done</DialogClose>
+      <DialogClose render={<Button />}>Done</DialogClose>
     </DialogFooter>
   </div>
 );

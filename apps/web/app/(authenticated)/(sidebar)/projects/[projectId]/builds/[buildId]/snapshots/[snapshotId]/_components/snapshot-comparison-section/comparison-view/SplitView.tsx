@@ -30,7 +30,7 @@ export const SplitView = ({
       {diffImagePath ? (
         <NewSnapshotDiffPane
           {...newSnapshot}
-          label="new"
+          label="New"
           diffImagePath={diffImagePath}
           canvasImagePaths={canvasImagePaths}
           showDiff={showDiff}

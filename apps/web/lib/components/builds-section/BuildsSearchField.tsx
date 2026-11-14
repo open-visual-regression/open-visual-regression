@@ -15,8 +15,8 @@ export const BuildsSearchField = ({
 }: BuildsSearchFieldProps) => (
   <SearchField
     action={projectId ? `/projects/${projectId}` : "/builds"}
-    label="search builds"
-    placeholder="search builds..."
+    label="Search builds"
+    placeholder="Search builds..."
     search={search}
     searchParams={searchParams}
     className={className}

@@ -11,8 +11,8 @@ import { Input } from "@ovr/ui/components/input";
 import { authClient } from "@/lib/auth/client";
 
 const loginSchema = z.object({
-  email: z.email("invalid email address"),
-  password: z.string().min(1, "you must enter your password"),
+  email: z.email("Invalid email address"),
+  password: z.string().min(1, "You must enter your password"),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -40,7 +40,7 @@ export const LoginForm = ({ redirectPath }: LoginFormProps) => {
 
     if (result.error) {
       setError("root", {
-        message: result.error.message ?? "invalid email or password",
+        message: result.error.message ?? "Invalid email or password",
       });
 
       return;
@@ -53,11 +53,11 @@ export const LoginForm = ({ redirectPath }: LoginFormProps) => {
     <form onSubmit={handleSubmit(onSubmit)} noValidate>
       <FieldGroup>
         <Field data-invalid={!!errors.email}>
-          <FieldLabel htmlFor="email">email</FieldLabel>
+          <FieldLabel htmlFor="email">Email</FieldLabel>
           <Input
             id="email"
             type="email"
-            placeholder="enter your email"
+            placeholder="Enter your email"
             autoFocus
             aria-invalid={!!errors.email}
             {...register("email")}
@@ -65,11 +65,11 @@ export const LoginForm = ({ redirectPath }: LoginFormProps) => {
           <FieldError errors={[errors.email]} />
         </Field>
         <Field data-invalid={!!errors.password}>
-          <FieldLabel htmlFor="password">password</FieldLabel>
+          <FieldLabel htmlFor="password">Password</FieldLabel>
           <Input
             id="password"
             type="password"
-            placeholder="enter your password"
+            placeholder="Enter your password"
             aria-invalid={!!errors.password}
             {...register("password")}
           />
@@ -82,7 +82,7 @@ export const LoginForm = ({ redirectPath }: LoginFormProps) => {
           className="w-full"
           disabled={isSubmitting || isSubmitSuccessful}
         >
-          {isSubmitting || isSubmitSuccessful ? "signing in..." : "sign in"}
+          {isSubmitting || isSubmitSuccessful ? "Signing in..." : "Sign in"}
         </Button>
       </FieldGroup>
     </form>

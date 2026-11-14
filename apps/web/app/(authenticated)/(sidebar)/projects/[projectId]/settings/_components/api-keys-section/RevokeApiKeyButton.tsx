@@ -57,31 +57,31 @@ export const RevokeApiKeyButton = ({ keyId, keyName }: RevokeApiKeyButtonProps) 
       <AlertDialogTrigger
         className="inline-flex flex-row items-center"
         render={
-          <Button variant="ghost" color="neutral" size="sm" aria-label={`revoke ${keyName}`} />
+          <Button variant="ghost" color="neutral" size="sm" aria-label={`Revoke ${keyName}`} />
         }
       >
         <Icon icon={XIcon} />
-        revoke
+        Revoke
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>revoke api key?</AlertDialogTitle>
-          <AlertDialogDescription>this cannot be undone.</AlertDialogDescription>
+          <AlertDialogTitle>Revoke API key?</AlertDialogTitle>
+          <AlertDialogDescription>This cannot be undone.</AlertDialogDescription>
         </AlertDialogHeader>
         <Typography>
-          are you sure you want to revoke the api key &quot;{keyName}&quot;? anything still using it
+          Are you sure you want to revoke the API key &quot;{keyName}&quot;? anything still using it
           will fail.
         </Typography>
         <FieldError errors={[error]} />
         <AlertDialogFooter>
-          <AlertDialogCancel>cancel</AlertDialogCancel>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
             variant="outline"
             color="red"
             disabled={isRevoking}
             onClick={() => execute({ keyId })}
           >
-            {isRevoking ? "revoking..." : "revoke"}
+            {isRevoking ? "Revoking..." : "Revoke"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

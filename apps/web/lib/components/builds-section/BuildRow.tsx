@@ -37,7 +37,7 @@ export const BuildRow = ({ build }: BuildRowProps) => {
         </div>
         <div className="flex flex-row flex-wrap items-center gap-x-1.5 gap-y-0">
           <TruncatedText as={Typography} variant="body-muted">
-            {build.author ?? "unknown"}
+            {build.author ?? "Unknown"}
           </TruncatedText>
           <MetadataDot />
           <TruncatedText as={Typography} variant="body-muted">
@@ -63,7 +63,7 @@ export const BuildRow = ({ build }: BuildRowProps) => {
                 variant="body-muted"
                 title={formatBuildTimingBreakdown(build)}
               >
-                took {formatDuration(build.durationMs)}
+                Took {formatDuration(build.durationMs)}
               </TruncatedText>
             </>
           ) : null}

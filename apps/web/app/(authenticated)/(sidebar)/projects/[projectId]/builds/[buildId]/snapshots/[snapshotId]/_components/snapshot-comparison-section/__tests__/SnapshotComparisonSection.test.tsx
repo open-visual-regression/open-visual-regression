@@ -69,8 +69,8 @@ describe("SnapshotComparisonSection", () => {
   ])("should show only the new snapshot, with no baseline, when %s", (_description, diffInput) => {
     renderSection(diffInput);
 
-    expect(screen.getByRole("img", { name: "snapshot of UI/Button Kitchen Sink" })).toBeVisible();
-    expect(screen.queryByText("baseline")).not.toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Snapshot of UI/Button Kitchen Sink" })).toBeVisible();
+    expect(screen.queryByText("Baseline")).not.toBeInTheDocument();
   });
 
   it("should show the baseline when a skipped snapshot has no diff", () => {
@@ -81,20 +81,20 @@ describe("SnapshotComparisonSection", () => {
     });
 
     expect(
-      screen.getByRole("img", { name: "baseline snapshot of UI/Button Kitchen Sink" }),
+      screen.getByRole("img", { name: "Baseline snapshot of UI/Button Kitchen Sink" }),
     ).toBeVisible();
-    expect(screen.getByText("no preview")).toBeVisible();
+    expect(screen.getByText("No preview")).toBeVisible();
   });
 
   it("should show the baseline, the new snapshot, and the diff overlay when there is a visible diff", () => {
     renderSection(diff);
 
     expect(
-      screen.getByRole("img", { name: "baseline snapshot of UI/Button Kitchen Sink" }),
+      screen.getByRole("img", { name: "Baseline snapshot of UI/Button Kitchen Sink" }),
     ).toBeVisible();
-    expect(screen.getByRole("img", { name: "snapshot of UI/Button Kitchen Sink" })).toBeVisible();
+    expect(screen.getByRole("img", { name: "Snapshot of UI/Button Kitchen Sink" })).toBeVisible();
     expect(
-      screen.getByRole("img", { name: "diff overlay of snapshot of UI/Button Kitchen Sink" }),
+      screen.getByRole("img", { name: "Diff overlay of snapshot of UI/Button Kitchen Sink" }),
     ).toBeVisible();
   });
 
@@ -102,11 +102,11 @@ describe("SnapshotComparisonSection", () => {
     renderSection({ ...diff, diffImagePath: null });
 
     expect(
-      screen.getByRole("img", { name: "baseline snapshot of UI/Button Kitchen Sink" }),
+      screen.getByRole("img", { name: "Baseline snapshot of UI/Button Kitchen Sink" }),
     ).toBeVisible();
-    expect(screen.getByRole("img", { name: "snapshot of UI/Button Kitchen Sink" })).toBeVisible();
+    expect(screen.getByRole("img", { name: "Snapshot of UI/Button Kitchen Sink" })).toBeVisible();
     expect(
-      screen.queryByRole("img", { name: "diff overlay of snapshot of UI/Button Kitchen Sink" }),
+      screen.queryByRole("img", { name: "Diff overlay of snapshot of UI/Button Kitchen Sink" }),
     ).not.toBeInTheDocument();
   });
 });

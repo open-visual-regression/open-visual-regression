@@ -13,7 +13,7 @@ export const ProjectSettingsButton = ({ projectId, role }: ProjectSettingsButton
   return (
     <RequiresAdminRole role={role}>
       <ResponsiveActionButton href={`/projects/${projectId}/settings`} icon={SettingsIcon}>
-        project settings
+        Project settings
       </ResponsiveActionButton>
     </RequiresAdminRole>
   );

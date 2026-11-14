@@ -28,7 +28,7 @@ const REVIEW_BLOCKED_MESSAGES: Record<
   Exclude<BuildReviewBlockedReason | SnapshotReviewBlockedReason, "REVIEW_NOT_REQUIRED">,
   string
 > = {
-  NOT_SETTLED: "this build is still running",
+  NOT_SETTLED: "This build is still running",
   BUILD_CANCELED: "this build was canceled",
   BUILD_FAILED: "this build failed",
   NOT_LATEST_ON_BRANCH: "a newer build has landed on this branch",

@@ -34,11 +34,11 @@ export const SnapshotFilters = ({
   <FacetBar
     className={className}
     facets={[
-      { param: "project", label: "project", options: projectOptions, selected: projectIds },
-      { param: "status", label: "status", options: statusOptions, selected: statuses },
-      { param: "browser", label: "browser", options: browserOptions, selected: browsers },
-      { param: "viewport", label: "viewport", options: viewportOptions, selected: viewports },
-      { param: "flag", label: "flags", options: flagOptions, selected: flags, minOptions: 1 },
+      { param: "project", label: "Project", options: projectOptions, selected: projectIds },
+      { param: "status", label: "Status", options: statusOptions, selected: statuses },
+      { param: "browser", label: "Browser", options: browserOptions, selected: browsers },
+      { param: "viewport", label: "Viewport", options: viewportOptions, selected: viewports },
+      { param: "flag", label: "Flags", options: flagOptions, selected: flags, minOptions: 1 },
     ]}
   />
 );

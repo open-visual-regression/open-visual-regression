@@ -56,7 +56,7 @@ describe("BuildsPage", () => {
 
     await renderPage();
 
-    expect(screen.getByRole("heading", { name: "builds" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Builds" })).toBeVisible();
 
     expect(screen.getByText("acme web build")).toBeVisible();
     expect(screen.getByText("acme admin build")).toBeVisible();

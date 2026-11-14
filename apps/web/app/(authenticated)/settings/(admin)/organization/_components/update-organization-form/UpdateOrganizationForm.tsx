@@ -36,7 +36,7 @@ export const UpdateOrganizationForm = ({ organization }: UpdateOrganizationFormP
   const { execute, status } = useServerAction(serverClient.organizations.update, {
     interceptors: [
       onSuccess(() => {
-        toast.success("organization updated");
+        toast.success("Organization updated");
       }),
       onError((err) => setError("root", { message: err.message })),
     ],
@@ -54,10 +54,10 @@ export const UpdateOrganizationForm = ({ organization }: UpdateOrganizationFormP
         <CardContent className="flex flex-col gap-5">
           <FieldGroup>
             <Field data-invalid={!!errors.name}>
-              <FieldLabel htmlFor="name">name</FieldLabel>
+              <FieldLabel htmlFor="name">Name</FieldLabel>
               <Input
                 id="name"
-                placeholder="enter the organization name"
+                placeholder="Enter the organization name"
                 aria-invalid={!!errors.name}
                 defaultValue={organization.name}
                 {...register("name")}
@@ -70,7 +70,7 @@ export const UpdateOrganizationForm = ({ organization }: UpdateOrganizationFormP
         <CardFooter className="flex flex-row justify-end">
           <Button type="submit" disabled={isSubmitting}>
             <Icon icon={CheckIcon} />
-            {isSubmitting ? "saving..." : "save changes"}
+            {isSubmitting ? "Saving..." : "Save changes"}
           </Button>
         </CardFooter>
       </Card>

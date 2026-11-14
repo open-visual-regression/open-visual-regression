@@ -17,10 +17,10 @@ export const ApiKeysSection = ({ projectId, apiKeys }: ApiKeysSectionProps) => (
   <CreateApiKeyModal projectId={projectId}>
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <Typography variant="h2">api keys</Typography>
+        <Typography variant="h2">API keys</Typography>
         <CreateApiKeyModalButton>
           <Icon icon={PlusIcon} />
-          new api key
+          New API key
         </CreateApiKeyModalButton>
       </div>
       {apiKeys.length === 0 ? <NoApiKeysSection /> : <ApiKeysTable data={apiKeys} />}

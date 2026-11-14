@@ -57,31 +57,31 @@ export const RevokeAccessTokenButton = ({ tokenId, tokenName }: RevokeAccessToke
       <AlertDialogTrigger
         className="inline-flex flex-row items-center"
         render={
-          <Button variant="ghost" color="neutral" size="sm" aria-label={`revoke ${tokenName}`} />
+          <Button variant="ghost" color="neutral" size="sm" aria-label={`Revoke ${tokenName}`} />
         }
       >
         <Icon icon={XIcon} />
-        revoke
+        Revoke
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>revoke access token?</AlertDialogTitle>
-          <AlertDialogDescription>this cannot be undone.</AlertDialogDescription>
+          <AlertDialogTitle>Revoke access token?</AlertDialogTitle>
+          <AlertDialogDescription>This cannot be undone.</AlertDialogDescription>
         </AlertDialogHeader>
         <Typography>
-          are you sure you want to revoke the access token &quot;{tokenName}&quot;? anything still
+          Are you sure you want to revoke the access token &quot;{tokenName}&quot;? anything still
           using it will fail.
         </Typography>
         <FieldError errors={[error]} />
         <AlertDialogFooter>
-          <AlertDialogCancel>cancel</AlertDialogCancel>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
             variant="outline"
             color="red"
             disabled={isRevoking}
             onClick={() => execute({ tokenId })}
           >
-            {isRevoking ? "revoking..." : "revoke"}
+            {isRevoking ? "Revoking..." : "Revoke"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -64,7 +64,7 @@ const requireActiveProxySession = async (userId: string) => {
     sessions.length === 0
   ) {
     throw new ORPCError("UNAUTHORIZED", {
-      message: "this token's owner has not signed in through SSO recently",
+      message: "This token's owner has not signed in through SSO recently",
     });
   }
 };
@@ -86,14 +86,14 @@ const resolveTokenCaller = async (
 
   if (!isPersonalTokenMetadata(result.key.metadata)) {
     throw new ORPCError("FORBIDDEN", {
-      message: "only a personal access token can be used here",
+      message: "Only a personal access token can be used here",
     });
   }
 
   const granted = tokenPermissionsSchema.safeParse(result.key.permissions).data;
 
   if (!granted?.[resource]?.includes(action)) {
-    throw new ORPCError("FORBIDDEN", { message: `this token cannot ${action} ${resource}` });
+    throw new ORPCError("FORBIDDEN", { message: `This token cannot ${action} ${resource}` });
   }
 
   const organization = await dbClient.organizations.getOrganization();
@@ -133,7 +133,7 @@ export const unauthenticatedMiddleware = os
 
 export const localAuthMiddleware = os.$context<RequestContext>().middleware(async ({ next }) => {
   if (usesTrustedProxy()) {
-    throw new ORPCError("FORBIDDEN", { message: "this is managed by your identity provider" });
+    throw new ORPCError("FORBIDDEN", { message: "This is managed by your identity provider" });
   }
 
   return next();

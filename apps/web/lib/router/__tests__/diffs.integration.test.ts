@@ -473,7 +473,7 @@ describe("diffs", () => {
 
       const [error] = await serverClient.diffs.bulkCastVote({ buildId: build.id, vote: "approve" });
 
-      expect(error).toMatchObject({ code: "CONFLICT", message: "this build is still running" });
+      expect(error).toMatchObject({ code: "CONFLICT", message: "This build is still running" });
       expect(await dbClient.diffs.findById(awaitingDiff!.id)).toMatchObject({
         reviewStatus: "needs_review",
       });

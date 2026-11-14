@@ -54,7 +54,7 @@ export const BuildsList = ({
       ) : data.length === 0 ? (
         <li className="flex h-20 items-center justify-center px-3 text-center">
           <Typography variant="body-sm" className="text-ovr-fg-secondary">
-            {search ? `no builds found matching "${search}"` : "no builds found"}
+            {search ? `No builds found matching "${search}"` : "No builds found"}
           </Typography>
         </li>
       ) : (

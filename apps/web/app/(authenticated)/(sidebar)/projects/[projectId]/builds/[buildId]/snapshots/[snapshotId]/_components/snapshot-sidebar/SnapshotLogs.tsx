@@ -16,7 +16,7 @@ export type SnapshotLogsProps = {
 
 export const SnapshotLogs = ({ logs }: SnapshotLogsProps) => {
   if (logs.length === 0) {
-    return <Typography variant="body-muted">no logs to show</Typography>;
+    return <Typography variant="body-muted">No logs to show</Typography>;
   }
 
   const lines = logs.map((log) => `[${log.level}] ${log.message}`);
@@ -24,7 +24,7 @@ export const SnapshotLogs = ({ logs }: SnapshotLogsProps) => {
   return (
     <MultiLineCodeBlock lines={lines} wrap>
       <MultiLineCodeBlockHeader>
-        <MultiLineCodeBlockLabel>logs</MultiLineCodeBlockLabel>
+        <MultiLineCodeBlockLabel>Logs</MultiLineCodeBlockLabel>
         <MultiLineCodeBlockLineCount />
         <MultiLineCodeBlockCopyButton />
       </MultiLineCodeBlockHeader>
@@ -46,7 +46,7 @@ export const SnapshotLogs = ({ logs }: SnapshotLogsProps) => {
 export const SnapshotLogsSkeleton = () => (
   <MultiLineCodeBlock lines={[]} wrap>
     <MultiLineCodeBlockHeader>
-      <MultiLineCodeBlockLabel>logs</MultiLineCodeBlockLabel>
+      <MultiLineCodeBlockLabel>Logs</MultiLineCodeBlockLabel>
       <TypographySkeleton variant="body-sm" className="ml-auto w-12 shrink-0" />
       <Skeleton className="h-6 w-16 shrink-0 rounded-lg" />
     </MultiLineCodeBlockHeader>

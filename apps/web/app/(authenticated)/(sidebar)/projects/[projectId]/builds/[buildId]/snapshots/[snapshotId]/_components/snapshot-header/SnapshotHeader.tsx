@@ -36,7 +36,7 @@ export const SnapshotHeader = ({
           <SnapshotStatusBadge status={snapshot.status} />
           {snapshot.isFlaky ? <FlakyBadge /> : null}
         </div>
-        {storybookHref ? <ExternalLink href={storybookHref}>view story</ExternalLink> : null}
+        {storybookHref ? <ExternalLink href={storybookHref}>View story</ExternalLink> : null}
         <Typography variant="caption">{build.name}</Typography>
         <MetadataItem icon={<Icon icon={GlobeIcon} size={12} />}>{snapshot.browser}</MetadataItem>
         <MetadataItem icon={<ResolutionIcon width={snapshot.viewportWidth} size={12} />}>
@@ -44,7 +44,7 @@ export const SnapshotHeader = ({
         </MetadataItem>
         {snapshot.processingMs ? (
           <MetadataItem
-            icon={<Icon icon={TimerIcon} size={12} role="img" aria-label="processing time" />}
+            icon={<Icon icon={TimerIcon} size={12} role="img" aria-label="Processing time" />}
           >
             {formatDuration(snapshot.processingMs)}
           </MetadataItem>

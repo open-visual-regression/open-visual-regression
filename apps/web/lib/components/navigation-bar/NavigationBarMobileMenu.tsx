@@ -59,7 +59,9 @@ const NavigationBarMobileMenu = ({
         <Icon icon={MenuIcon} size={14} />
       </SheetTrigger>
       <SheetContent side="left" className="gap-0 bg-background p-0" showCloseButton={false}>
-        <SheetTitle className="sr-only">{section} navigation</SheetTitle>
+        <SheetTitle className="sr-only">
+          {section === "settings" ? "Settings" : "Projects"} navigation
+        </SheetTitle>
         <div className="flex shrink-0 justify-end px-2 pt-2">
           <SheetClose
             render={<Button variant="ghost" color="neutral" size="icon-sm" />}

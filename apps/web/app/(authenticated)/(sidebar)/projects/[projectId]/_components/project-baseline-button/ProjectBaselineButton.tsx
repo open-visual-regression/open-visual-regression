@@ -13,6 +13,6 @@ export const ProjectBaselineButton = ({ projectId, baselineBuildId }: ProjectBas
       href={`/projects/${projectId}/builds/${baselineBuildId}`}
       icon={MilestoneIcon}
     >
-      view baseline
+      View baseline
     </ResponsiveActionButton>
   ) : null;

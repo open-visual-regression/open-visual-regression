@@ -13,11 +13,11 @@ describe("SettingsSidebar", () => {
 
     render(<SettingsSidebar role="admin" />);
 
-    expect(screen.getByRole("heading", { name: "personal" })).toBeVisible();
-    expect(screen.getByRole("heading", { name: "admin" })).toBeVisible();
-    expect(screen.getByRole("link", { name: "organization" })).toBeVisible();
-    expect(screen.getByRole("link", { name: "users" })).toBeVisible();
-    expect(screen.getByRole("link", { name: "jobs" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Personal" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Admin" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Organization" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Users" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Jobs" })).toBeVisible();
   });
 
   it("should hide the admin section for a non-admin user", () => {
@@ -25,10 +25,10 @@ describe("SettingsSidebar", () => {
 
     render(<SettingsSidebar role="reviewer" />);
 
-    expect(screen.getByRole("heading", { name: "personal" })).toBeVisible();
-    expect(screen.queryByRole("heading", { name: "admin" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "organization" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "users" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "jobs" })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Personal" })).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "Admin" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Organization" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Users" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Jobs" })).not.toBeInTheDocument();
   });
 });

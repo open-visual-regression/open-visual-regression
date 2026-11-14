@@ -11,7 +11,7 @@ test.describe("Review refresh", () => {
     const reviewable = await seedReviewableSnapshot(seedClient);
 
     await buildPage.goto(reviewable.projectId, reviewable.buildId);
-    await expect(buildPage.snapshotCard(reviewable, "needs review")).toBeVisible();
+    await expect(buildPage.snapshotCard(reviewable, "Needs review")).toBeVisible();
 
     await buildPage.snapshotCard(reviewable).click();
     await page.waitForURL(`**/snapshots/${reviewable.snapshotId}`);
@@ -23,7 +23,7 @@ test.describe("Review refresh", () => {
     await buildPage.backButton().click();
     await page.waitForURL(`**/builds/${reviewable.buildId}`);
 
-    await expect(buildPage.snapshotCard(reviewable, "approved")).toBeVisible();
+    await expect(buildPage.snapshotCard(reviewable, "Approved")).toBeVisible();
   });
 
   test("should update the badge and the cards when rejecting all on a settled build", async ({
@@ -37,12 +37,12 @@ test.describe("Review refresh", () => {
     await expect(buildPage.approvedButton()).toBeVisible();
 
     await buildPage.goto(reviewable.projectId, reviewable.buildId);
-    await expect(buildPage.status()).toHaveText("approved");
+    await expect(buildPage.status()).toHaveText("Approved");
 
     await buildPage.rejectAllButton().click();
 
     await expect(buildPage.rejectedButton()).toBeVisible();
-    await expect(buildPage.status()).toHaveText("rejected");
-    await expect(buildPage.snapshotCard(reviewable, "rejected")).toBeVisible();
+    await expect(buildPage.status()).toHaveText("Rejected");
+    await expect(buildPage.snapshotCard(reviewable, "Rejected")).toBeVisible();
   });
 });

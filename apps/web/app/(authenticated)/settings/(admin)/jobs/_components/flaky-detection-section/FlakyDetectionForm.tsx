@@ -73,7 +73,7 @@ export const FlakyDetectionForm = ({ settings, running }: FlakyDetectionFormProp
 
   const handleFormSubmit = async (values: FlakyDetectionFormValues) => {
     if (await save(values)) {
-      toast.success("flaky detection updated");
+      toast.success("Flaky detection updated");
     }
   };
 
@@ -84,7 +84,7 @@ export const FlakyDetectionForm = ({ settings, running }: FlakyDetectionFormProp
     {
       interceptors: [
         onSuccess(() => {
-          toast.success("flaky detection started");
+          toast.success("Flaky detection started");
           router.refresh();
         }),
         onError((err) => {
@@ -126,12 +126,12 @@ export const FlakyDetectionForm = ({ settings, running }: FlakyDetectionFormProp
                 <Switch id="enabled" checked={field.value} onCheckedChange={field.onChange} />
               )}
             />
-            <FieldLabel htmlFor="enabled">enabled</FieldLabel>
+            <FieldLabel htmlFor="enabled">Enabled</FieldLabel>
           </Field>
           <FieldSet disabled={!enabled}>
             <FieldGroup>
               <Field data-invalid={!!errors.cron}>
-                <FieldLabel htmlFor="cron">schedule (cron)</FieldLabel>
+                <FieldLabel htmlFor="cron">Schedule (cron)</FieldLabel>
                 <Input
                   id="cron"
                   placeholder="0 7,19 * * *"
@@ -141,7 +141,7 @@ export const FlakyDetectionForm = ({ settings, running }: FlakyDetectionFormProp
                 <FieldError errors={[errors.cron]} />
               </Field>
               <Field data-invalid={!!errors.windowBuilds}>
-                <FieldLabel htmlFor="windowBuilds">builds to look back on</FieldLabel>
+                <FieldLabel htmlFor="windowBuilds">Builds to look back on</FieldLabel>
                 <Input
                   id="windowBuilds"
                   type="number"
@@ -168,11 +168,11 @@ export const FlakyDetectionForm = ({ settings, running }: FlakyDetectionFormProp
             ) : (
               <Icon icon={PlayIcon} />
             )}
-            {isRunning ? "running..." : "run now"}
+            {isRunning ? "Running..." : "Run now"}
           </Button>
           <Button type="submit" disabled={isSubmitting}>
             <Icon icon={CheckIcon} />
-            {isSubmitting ? "saving..." : "save changes"}
+            {isSubmitting ? "Saving..." : "Save changes"}
           </Button>
         </CardFooter>
       </Card>

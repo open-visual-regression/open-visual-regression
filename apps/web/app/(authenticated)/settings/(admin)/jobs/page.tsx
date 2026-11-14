@@ -28,7 +28,7 @@ export default async function SettingsJobsPage() {
   return (
     <div className="flex flex-col gap-6">
       <Typography variant="h1" as="h1">
-        jobs
+        Jobs
       </Typography>
       <FlakyDetectionSection {...flakyDetectionResult} />
     </div>

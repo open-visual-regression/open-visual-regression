@@ -24,7 +24,7 @@ export const updateFlakyDetection = os.jobs.updateFlakyDetection
     const result = await saveFlakyDetectionSettings(input, context.user.id);
 
     if (result.status === "error") {
-      throw new ORPCError("SERVICE_UNAVAILABLE", { message: "the job queue is unavailable" });
+      throw new ORPCError("SERVICE_UNAVAILABLE", { message: "The job queue is unavailable" });
     }
   })
   .actionable();
@@ -41,11 +41,11 @@ export const runFlakyDetection = os.jobs.runFlakyDetection
 
     switch (result.error) {
       case "DISABLED":
-        throw new ORPCError("PRECONDITION_FAILED", { message: "flaky detection is disabled" });
+        throw new ORPCError("PRECONDITION_FAILED", { message: "Flaky detection is disabled" });
       case "ALREADY_RUNNING":
-        throw new ORPCError("CONFLICT", { message: "flaky detection is already running" });
+        throw new ORPCError("CONFLICT", { message: "Flaky detection is already running" });
       case "QUEUE_UNAVAILABLE":
-        throw new ORPCError("SERVICE_UNAVAILABLE", { message: "the job queue is unavailable" });
+        throw new ORPCError("SERVICE_UNAVAILABLE", { message: "The job queue is unavailable" });
     }
   })
   .actionable();

@@ -13,7 +13,7 @@ const LoginCardShell = ({ children }: LoginCardShellProps) => (
   <Card className="w-full">
     <CardHeader>
       <Typography variant="h2" as="h1">
-        sign in
+        Sign in
       </Typography>
     </CardHeader>
     <CardContent>{children}</CardContent>
@@ -33,10 +33,10 @@ export const LoginCard = ({ redirectPath }: LoginCardProps) => (
 export const LoginCardSkeleton = () => (
   <LoginCardShell>
     <FieldGroup aria-hidden>
-      <FieldSkeleton label="email" />
-      <FieldSkeleton label="password" />
+      <FieldSkeleton label="Email" />
+      <FieldSkeleton label="Password" />
       <ButtonSkeleton size="lg" className="w-full">
-        sign in
+        Sign in
       </ButtonSkeleton>
     </FieldGroup>
   </LoginCardShell>

@@ -6,7 +6,7 @@ describe("Image", () => {
   it("should show a loading indicator while the image is loading", () => {
     render(<Image src="/snapshot.png" alt="snapshot" errorFallback={<div>failed</div>} />);
 
-    expect(screen.getByRole("status", { name: "loading" })).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Loading" })).toBeInTheDocument();
     expect(screen.getByAltText("snapshot")).toHaveClass("invisible");
   });
 
@@ -15,7 +15,7 @@ describe("Image", () => {
 
     fireEvent.load(screen.getByAltText("snapshot"));
 
-    expect(screen.queryByRole("status", { name: "loading" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("status", { name: "Loading" })).not.toBeInTheDocument();
     expect(screen.getByAltText("snapshot")).not.toHaveClass("invisible");
   });
 
@@ -31,7 +31,7 @@ describe("Image", () => {
 
     render(<Image src="/snapshot.png" alt="snapshot" errorFallback={<div>failed</div>} />);
 
-    expect(screen.queryByRole("status", { name: "loading" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("status", { name: "Loading" })).not.toBeInTheDocument();
     expect(screen.getByAltText("snapshot")).not.toHaveClass("invisible");
 
     Reflect.deleteProperty(HTMLImageElement.prototype, "complete");
@@ -43,13 +43,13 @@ describe("Image", () => {
       <Image
         src="/snapshot.png"
         alt="snapshot"
-        errorFallback={<div>failed to load snapshot</div>}
+        errorFallback={<div>Failed to load snapshot</div>}
       />,
     );
 
     fireEvent.error(screen.getByAltText("snapshot"));
 
     expect(screen.queryByAltText("snapshot")).not.toBeInTheDocument();
-    expect(screen.getByText("failed to load snapshot")).toBeInTheDocument();
+    expect(screen.getByText("Failed to load snapshot")).toBeInTheDocument();
   });
 });

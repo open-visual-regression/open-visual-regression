@@ -15,8 +15,8 @@ export const SnapshotsSearchField = ({
 }: SnapshotsSearchFieldProps) => (
   <SearchField
     action={action}
-    label="search snapshots"
-    placeholder="search snapshots..."
+    label="Search snapshots"
+    placeholder="Search snapshots..."
     search={search}
     searchParams={searchParams}
     className={className}

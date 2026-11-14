@@ -21,7 +21,7 @@ describe("AccessTokensTable", () => {
     const accessToken = mocks.accessToken.generateAccessToken({ lastRequest: null });
     render(<AccessTokensTable data={[accessToken]} />);
 
-    expect(screen.getByRole("cell", { name: "never" })).toBeVisible();
+    expect(screen.getByRole("cell", { name: "Never" })).toBeVisible();
   });
 
   it("should show the last used date when the token has been used", () => {
@@ -30,7 +30,7 @@ describe("AccessTokensTable", () => {
     render(<AccessTokensTable data={[accessToken]} />);
 
     expect(screen.getByRole("cell", { name: formatDateTime(lastRequest) })).toBeVisible();
-    expect(screen.queryByRole("cell", { name: "never" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("cell", { name: "Never" })).not.toBeInTheDocument();
   });
 
   it("should show what each token is allowed to do", () => {

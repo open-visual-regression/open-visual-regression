@@ -99,7 +99,7 @@ export const SetupFormLayout = ({ step, children }: SetupFormLayoutProps) => (
           {label}
         </span>
       ))}
-      <span className="ml-auto text-ovr-fg-muted">step {step} of 2</span>
+      <span className="ml-auto text-ovr-fg-muted">Step {step} of 2</span>
     </div>
     {children}
   </div>

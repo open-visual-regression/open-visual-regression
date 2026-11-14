@@ -60,7 +60,7 @@ const meta: Meta<typeof NavigationBarContent> = {
     breadcrumb: (
       <NavigationBarBreadcrumb
         segments={[
-          { label: "projects", href: "/projects" },
+          { label: "Projects", href: "/projects" },
           { label: "Marketing Website Redesign and Component Library Overhaul" },
         ]}
       />

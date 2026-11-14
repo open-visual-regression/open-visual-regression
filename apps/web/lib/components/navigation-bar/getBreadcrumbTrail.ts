@@ -23,14 +23,17 @@ const SEGMENT_FILTERS = new Set<string>(["projects/*/builds", "projects/*/builds
 
 const LITERAL_SEGMENTS = new Set(["projects", "builds", "snapshots", "new"]);
 
-const humanize = (segment: string) => segment.replace(/-/g, " ");
+const humanize = (segment: string) => {
+  const words = segment.replace(/-/g, " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+};
 
 const toPathSegments = (path: string): string[] =>
   new URL(path, "http://localhost").pathname.split("/").filter(Boolean).map(decodeURIComponent);
 
 const getBreadcrumbTrail = (segments: string[]): BreadcrumbTrailItem[] => {
   if (segments.length === 0) {
-    return [{ segment: "", label: "overview" }];
+    return [{ segment: "", label: "Overview" }];
   }
 
   const entries = segments

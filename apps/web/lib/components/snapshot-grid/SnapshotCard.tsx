@@ -46,7 +46,7 @@ type SnapshotCardProps = {
 
 export const SnapshotCard = ({ snapshot, filters, showProject = false }: SnapshotCardProps) => {
   const imagePath = getStoragePath(snapshot.imagePath ?? snapshot.baselineImagePath);
-  const label = `snapshot of ${snapshot.targetTitle} ${snapshot.targetName}, ${showProject ? `${snapshot.project.name}, ` : ""}${snapshot.browser} ${snapshot.viewportName}, ${getSnapshotStatusLabel(snapshot.status)}${snapshot.hasUncaughtPageError ? ", has warnings" : ""}${snapshot.isFlaky ? ", flaky" : ""}`;
+  const label = `Snapshot of ${snapshot.targetTitle} ${snapshot.targetName}, ${showProject ? `${snapshot.project.name}, ` : ""}${snapshot.browser} ${snapshot.viewportName}, ${getSnapshotStatusLabel(snapshot.status)}${snapshot.hasUncaughtPageError ? ", has warnings" : ""}${snapshot.isFlaky ? ", flaky" : ""}`;
 
   return (
     <CardLink
@@ -61,17 +61,17 @@ export const SnapshotCard = ({ snapshot, filters, showProject = false }: Snapsho
         {imagePath ? (
           <Image
             src={imagePath}
-            alt={`snapshot of ${snapshot.targetTitle} ${snapshot.targetName}`}
+            alt={`Snapshot of ${snapshot.targetTitle} ${snapshot.targetName}`}
             className="absolute inset-0 h-full w-full object-cover"
             errorFallback={
               <div className="absolute inset-0 flex items-center justify-center">
-                <Typography variant="caption">failed to load snapshot</Typography>
+                <Typography variant="caption">Failed to load snapshot</Typography>
               </div>
             }
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
-            <Typography variant="caption">no preview</Typography>
+            <Typography variant="caption">No preview</Typography>
           </div>
         )}
         <div className="absolute bottom-2 right-2">
@@ -114,7 +114,7 @@ export const SnapshotCard = ({ snapshot, filters, showProject = false }: Snapsho
                   size={12}
                   className="shrink-0"
                   role="img"
-                  aria-label="processing time"
+                  aria-label="Processing time"
                 />
               }
             >

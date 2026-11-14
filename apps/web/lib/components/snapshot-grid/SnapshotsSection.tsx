@@ -45,7 +45,7 @@ export const SnapshotsSection = ({
       )}
       skeleton={skeleton}
       emptyMessage={
-        filters?.search ? `no snapshots found matching "${filters.search}"` : "no snapshots found"
+        filters?.search ? `No snapshots found matching "${filters.search}"` : "No snapshots found"
       }
       hasNextPage={hasNextPage}
       isFetchingNextPage={isFetchingNextPage}

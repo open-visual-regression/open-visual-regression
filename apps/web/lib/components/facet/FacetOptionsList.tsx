@@ -54,7 +54,7 @@ export function FacetOptionsList<T extends string>({
         </label>
       ))}
       {visibleOptions.length === 0 ? (
-        <p className="px-1.5 py-1 text-xs text-ovr-fg-tertiary">no matches</p>
+        <p className="px-1.5 py-1 text-xs text-ovr-fg-tertiary">No matches</p>
       ) : null}
     </div>
   );
@@ -64,8 +64,8 @@ export function FacetOptionsList<T extends string>({
       {searchable ? (
         <InputGroup>
           <InputGroupInput
-            aria-label="search options"
-            placeholder="search..."
+            aria-label="Search options"
+            placeholder="Search..."
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
@@ -81,10 +81,10 @@ export function FacetOptionsList<T extends string>({
       )}
       <div className="flex justify-end gap-2 border-t border-ovr-border-subtle pt-2">
         <Button variant="ghost" color="neutral" size="sm" onClick={onClear}>
-          clear
+          Clear
         </Button>
         <Button variant="solid" color="accent" size="sm" onClick={() => onApply(draft)}>
-          apply
+          Apply
         </Button>
       </div>
     </div>

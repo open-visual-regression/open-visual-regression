@@ -45,7 +45,7 @@ describe("BuildsList", () => {
     });
     renderList([build]);
 
-    expect(screen.getByText("needs review")).toBeVisible();
+    expect(screen.getByText("Needs review")).toBeVisible();
     expect(screen.getByText("Acme Web")).toBeVisible();
     expect(screen.getByText("pr/482")).toBeVisible();
     expect(screen.getByText("Jordan Lee")).toBeVisible();
@@ -56,7 +56,7 @@ describe("BuildsList", () => {
       mocks.build.generateBuild({ queuedMs: 12_000, processingMs: 122_000, durationMs: 134_000 }),
     ]);
 
-    expect(screen.getByText("took 2m 14s")).toHaveAttribute(
+    expect(screen.getByText("Took 2m 14s")).toHaveAttribute(
       "title",
       "12s queued, 2m 2s processing",
     );
@@ -72,7 +72,7 @@ describe("BuildsList", () => {
       }),
     ]);
 
-    expect(screen.queryByText(/^took /)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Took /)).not.toBeInTheDocument();
   });
 
   it("should link each row to its build detail page", () => {
@@ -104,7 +104,7 @@ describe("BuildsList", () => {
   it("should show a no-results message when a search matches no builds", () => {
     renderList([], { search: "missing" });
 
-    expect(screen.getByText('no builds found matching "missing"')).toBeVisible();
+    expect(screen.getByText('No builds found matching "missing"')).toBeVisible();
   });
 
   it("should load and append more builds when the user scrolls to the bottom", () => {

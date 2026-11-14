@@ -15,8 +15,8 @@ export const ComparisonControls = () => {
     <div className="flex w-full items-center justify-end gap-4 sm:ml-auto sm:w-auto">
       <SegmentedTabs value={viewMode} onValueChange={(value) => setViewMode(value as ViewMode)}>
         <SegmentedTabsList>
-          <SegmentedTabsTrigger value="split">split</SegmentedTabsTrigger>
-          <SegmentedTabsTrigger value="slider">slider</SegmentedTabsTrigger>
+          <SegmentedTabsTrigger value="split">Split</SegmentedTabsTrigger>
+          <SegmentedTabsTrigger value="slider">Slider</SegmentedTabsTrigger>
         </SegmentedTabsList>
       </SegmentedTabs>
     </div>
