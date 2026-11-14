@@ -4,7 +4,7 @@ import * as React from "react";
 import { cn } from "../../lib/utils";
 import { Skeleton } from "./skeleton";
 
-const typographyVariants = cva("font-mono", {
+const typographyVariants = cva("font-sans", {
   variants: {
     variant: {
       display: "text-display font-medium tracking-display leading-display",
@@ -16,8 +16,8 @@ const typographyVariants = cva("font-mono", {
       "body-sm": "text-xs font-normal leading-body",
       caption: "text-label font-normal leading-body text-muted-foreground",
       label: "text-label font-semibold tracking-label uppercase text-ovr-fg-secondary",
-      code: "text-body [font-feature-settings:'calt'_0,'liga'_0]",
-      num: "tabular-nums",
+      code: "font-mono text-body [font-feature-settings:'calt'_0,'liga'_0]",
+      num: "font-mono tabular-nums",
     },
   },
   defaultVariants: {

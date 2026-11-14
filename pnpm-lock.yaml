@@ -142,7 +142,7 @@ importers:
         version: link:../../packages/diff-analysis
       '@ovr/mocks':
         specifier: workspace:*
-        version: link:../../packages/mocks
+        version: file:packages/mocks(@opentelemetry/api@1.9.1)(@types/pg@8.20.3)(kysely@0.29.4)
       '@ovr/storybook-compat':
         specifier: workspace:*
         version: link:../../packages/storybook-compat
@@ -206,7 +206,10 @@ importers:
       '@better-auth/api-key':
         specifier: ^1.7.14
         version: 1.7.14(@better-auth/core@1.7.14(@better-auth/utils@0.5.1)(@better-fetch/fetch@1.3.3)(@opentelemetry/api@1.9.1)(better-call@1.4.4(zod@4.6.7))(jose@6.2.12)(kysely@0.29.4)(nanostores@1.4.2))(@better-auth/utils@0.5.1)(better-auth@1.7.14(@opentelemetry/api@1.9.1)(drizzle-kit@0.31.10)(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.20.3)(kysely@0.29.4)(pg@8.22.0))(next@16.4.5(@opentelemetry/api@1.9.1)(@playwright/test@1.62.1)(@types/node@22.20.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(pg@8.22.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.14)(vitest@4.1.12))(better-call@1.4.4(zod@4.6.7))
-      '@fontsource-variable/jetbrains-mono':
+      '@fontsource-variable/ibm-plex-sans':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource/ibm-plex-mono':
         specifier: ^5.3.0
         version: 5.3.0
       '@hookform/resolvers':
@@ -1098,7 +1101,10 @@ importers:
       '@base-ui/react':
         specifier: ^1.7.0
         version: 1.7.0(@types/react@19.2.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      '@fontsource-variable/jetbrains-mono':
+      '@fontsource-variable/ibm-plex-sans':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource/ibm-plex-mono':
         specifier: ^5.3.0
         version: 5.3.0
       class-variance-authority:
@@ -1919,8 +1925,11 @@ packages:
   '@floating-ui/utils@0.2.12':
     resolution: {integrity: sha512-HpCo8tmWzLVad5s2d19EhAz5zqrrQ6s69qd6moPMQvkOuSwDT1YgRfWSVuc4ennqrgv3OHppiOGMQ7oC13yIww==}
 
-  '@fontsource-variable/jetbrains-mono@5.3.0':
-    resolution: {integrity: sha512-F32xpS2NsGYoQi2ADSkKTgpJj7ozajsGgDJ8woTnqjmIB+dxDIqImjl4pXZVEExu8UFZ2ndhmX18EBS/hdz3Lw==}
+  '@fontsource-variable/ibm-plex-sans@5.3.0':
+    resolution: {integrity: sha512-agG8tXFEo0hD9+J7npa4vbbWult52eMLVaQ6WQRlhs/iCAojrMAoejru85W9HTVXHfyUj96KM7gp/KGAS87XaQ==}
+
+  '@fontsource/ibm-plex-mono@5.3.0':
+    resolution: {integrity: sha512-eTgnZjZEGk1QtD3ZstF+Vclo2HLAni8YMy34/DxllwZvyz1lR/1RF/xTiAquOBO7MvqBx8D2Ig2WCPMVfdZu7Q==}
 
   '@grpc/grpc-js@1.14.7':
     resolution: {integrity: sha512-W4W/fcBMGRVtG6dW2c7cw2mnpS3hvbBd+oQXjh2iYFTZDk1JJmcNqkM5KSaPubQpamlUUurrlb7G1s9NJeERmQ==}
@@ -2776,14 +2785,23 @@ packages:
       '@orpc/client': 1.14.14
       '@tanstack/query-core': '>=5.80.2'
 
+  '@ovr/api@file:packages/api':
+    resolution: {directory: packages/api, type: directory}
+
   '@ovr/db@file:packages/db':
     resolution: {directory: packages/db, type: directory}
 
   '@ovr/logger@file:packages/logger':
     resolution: {directory: packages/logger, type: directory}
 
+  '@ovr/mocks@file:packages/mocks':
+    resolution: {directory: packages/mocks, type: directory}
+
   '@ovr/queue@file:packages/queue':
     resolution: {directory: packages/queue, type: directory}
+
+  '@ovr/storybook-compat@file:packages/storybook-compat':
+    resolution: {directory: packages/storybook-compat, type: directory}
 
   '@oxc-parser/binding-android-arm-eabi@0.127.0':
     resolution: {integrity: sha512-0LC7ye4hvqbIKxAzThzvswgHLFu2AURKzYLeSVvLdu2TBOYWQDmHnTqPLeA597BcUCxiLqLsS4CJ5uoI5WYWCQ==}
@@ -8397,7 +8415,9 @@ snapshots:
 
   '@floating-ui/utils@0.2.12': {}
 
-  '@fontsource-variable/jetbrains-mono@5.3.0': {}
+  '@fontsource-variable/ibm-plex-sans@5.3.0': {}
+
+  '@fontsource/ibm-plex-mono@5.3.0': {}
 
   '@grpc/grpc-js@1.14.7':
     dependencies:
@@ -9116,6 +9136,15 @@ snapshots:
     transitivePeerDependencies:
       - '@opentelemetry/api'
 
+  '@ovr/api@file:packages/api(@opentelemetry/api@1.9.1)':
+    dependencies:
+      '@orpc/contract': 1.14.14(@opentelemetry/api@1.9.1)
+      '@ovr/storybook-compat': file:packages/storybook-compat
+      cron-parser: 4.9.0
+      zod: 4.6.7
+    transitivePeerDependencies:
+      - '@opentelemetry/api'
+
   '@ovr/db@file:packages/db(@opentelemetry/api@1.9.1)(@types/pg@8.20.3)(kysely@0.29.4)':
     dependencies:
       '@ovr/logger': file:packages/logger
@@ -9158,6 +9187,42 @@ snapshots:
       pino: 10.3.1
       pino-pretty: 13.2.0
 
+  '@ovr/mocks@file:packages/mocks(@opentelemetry/api@1.9.1)(@types/pg@8.20.3)(kysely@0.29.4)':
+    dependencies:
+      '@faker-js/faker': 10.6.0
+      '@ovr/api': file:packages/api(@opentelemetry/api@1.9.1)
+      '@ovr/db': file:packages/db(@opentelemetry/api@1.9.1)(@types/pg@8.20.3)(kysely@0.29.4)
+    transitivePeerDependencies:
+      - '@aws-sdk/client-rds-data'
+      - '@cloudflare/workers-types'
+      - '@electric-sql/pglite'
+      - '@libsql/client'
+      - '@libsql/client-wasm'
+      - '@neondatabase/serverless'
+      - '@op-engineering/op-sqlite'
+      - '@opentelemetry/api'
+      - '@planetscale/database'
+      - '@prisma/client'
+      - '@tidbcloud/serverless'
+      - '@types/better-sqlite3'
+      - '@types/pg'
+      - '@types/sql.js'
+      - '@upstash/redis'
+      - '@vercel/postgres'
+      - '@xata.io/client'
+      - better-sqlite3
+      - bun-types
+      - expo-sqlite
+      - gel
+      - knex
+      - kysely
+      - mysql2
+      - pg-native
+      - postgres
+      - prisma
+      - sql.js
+      - sqlite3
+
   '@ovr/queue@file:packages/queue(@opentelemetry/api@1.9.1)(@types/pg@8.20.3)(kysely@0.29.4)':
     dependencies:
       '@ovr/db': file:packages/db(@opentelemetry/api@1.9.1)(@types/pg@8.20.3)(kysely@0.29.4)
@@ -9197,6 +9262,12 @@ snapshots:
       - sql.js
       - sqlite3
       - supports-color
+
+  '@ovr/storybook-compat@file:packages/storybook-compat':
+    dependencies:
+      '@streamparser/json-node': 0.0.26
+      yaml: 2.9.0
+      zod: 4.6.7
 
   '@oxc-parser/binding-android-arm-eabi@0.127.0':
     optional: true
@@ -10416,20 +10487,6 @@ snapshots:
       - msw
       - utf-8-validate
       - vite
-
-  '@vitest/browser-playwright@4.1.12(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(playwright@1.64.1)(vite@8.3.5(@types/node@22.20.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))(vitest@4.1.12)':
-    dependencies:
-      '@vitest/browser': 4.1.12(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.3.5(@types/node@22.20.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))(vitest@4.1.12)
-      '@vitest/mocker': 4.1.12(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.3.5(@types/node@22.20.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))
-      playwright: 1.64.1
-      tinyrainbow: 3.1.1
-      vitest: 4.1.12(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(@vitest/browser-playwright@4.1.12)(@vitest/coverage-v8@4.1.12)(jsdom@29.1.1(@noble/hashes@2.4.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.3.5(@types/node@22.20.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))
-    transitivePeerDependencies:
-      - bufferutil
-      - msw
-      - utf-8-validate
-      - vite
-    optional: true
 
   '@vitest/browser@4.1.12(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.3.5(@types/node@22.20.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))(vitest@4.1.12)':
     dependencies:
@@ -13516,7 +13573,7 @@ snapshots:
     optionalDependencies:
       '@opentelemetry/api': 1.9.1
       '@types/node': 22.20.1
-      '@vitest/browser-playwright': 4.1.12(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(playwright@1.64.1)(vite@8.3.5(@types/node@22.20.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))(vitest@4.1.12)
+      '@vitest/browser-playwright': 4.1.12(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(playwright@1.62.1)(vite@8.3.5(@types/node@22.20.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))(vitest@4.1.12)
       '@vitest/coverage-v8': 4.1.12(@vitest/browser@4.1.12)(vitest@4.1.12)
       jsdom: 29.1.1(@noble/hashes@2.4.0)
     transitivePeerDependencies:
