@@ -73,8 +73,6 @@ export const SnapshotActionsRow = ({
   const buildHref = withSnapshotFilters(`/projects/${projectId}/builds/${buildId}`, filters);
   const snapshotHref = (id: string) =>
     withSnapshotFilters(`/projects/${projectId}/builds/${buildId}/snapshots/${id}`, filters);
-  // Only advance after voting when this is the user's first vote on the snapshot; changing an
-  // existing vote keeps them here.
   const nextHref = nextSnapshotId && !hasVoted ? snapshotHref(nextSnapshotId) : null;
 
   return (
