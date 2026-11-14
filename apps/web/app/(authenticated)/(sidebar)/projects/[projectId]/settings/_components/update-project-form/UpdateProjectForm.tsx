@@ -22,21 +22,21 @@ import { serverClient } from "@/lib/router";
 const updateProjectSchema = z.object({
   name: z
     .string()
-    .min(1, "you must enter a project name")
-    .max(255, "the project name must be less than 255 characters"),
-  description: z.string().max(511, "the project description must be less than 511 characters"),
+    .min(1, "You must enter a project name")
+    .max(255, "The project name must be less than 255 characters"),
+  description: z.string().max(511, "The project description must be less than 511 characters"),
   gitMainBranch: z
     .string()
-    .min(1, "you must enter a baseline git branch")
-    .max(255, "the baseline git branch must be less than 255 characters"),
+    .min(1, "You must enter a baseline Git branch")
+    .max(255, "The baseline Git branch must be less than 255 characters"),
   retentionDays: z
     .number()
-    .int("retention days must be a whole number")
-    .min(1, "retention days must be at least 1"),
+    .int("Retention days must be a whole number")
+    .min(1, "Retention days must be at least 1"),
   requiredReviewerCount: z
     .number()
-    .int("required reviewer count must be a whole number")
-    .min(1, "required reviewer count must be at least 1"),
+    .int("Required reviewer count must be a whole number")
+    .min(1, "Required reviewer count must be at least 1"),
 });
 
 type UpdateProjectFormValues = z.infer<typeof updateProjectSchema>;

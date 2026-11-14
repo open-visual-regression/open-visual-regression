@@ -39,7 +39,7 @@ describe("UpdateOrganizationForm", () => {
     await user.clear(screen.getByLabelText(/^name$/i));
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
-    expect(await screen.findByText("you must enter an organization name")).toBeVisible();
+    expect(await screen.findByText("You must enter an organization name")).toBeVisible();
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 

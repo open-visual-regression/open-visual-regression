@@ -46,7 +46,7 @@ const makeGitIntegrationSchema = (hasStoredToken: boolean) =>
     .object({
       provider: z.enum(["github"]),
       authType: z.enum(["token", "github_app"]),
-      repoIdentifier: z.string().min(1, "you must enter a repository").max(512),
+      repoIdentifier: z.string().min(1, "You must enter a repository").max(512),
       token: z.string().max(512),
     })
     .refine(

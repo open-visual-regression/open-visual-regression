@@ -11,8 +11,8 @@ import { Input } from "@ovr/ui/components/input";
 import { authClient } from "@/lib/auth/client";
 
 const loginSchema = z.object({
-  email: z.email("invalid email address"),
-  password: z.string().min(1, "you must enter your password"),
+  email: z.email("Invalid email address"),
+  password: z.string().min(1, "You must enter your password"),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;

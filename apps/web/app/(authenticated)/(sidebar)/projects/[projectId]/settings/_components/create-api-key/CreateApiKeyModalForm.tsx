@@ -31,10 +31,10 @@ import { CreateApiKeyModalReveal } from "./CreateApiKeyModalReveal";
 const createApiKeyFormSchema = z.object({
   name: z
     .string()
-    .min(1, "you must enter a name")
+    .min(1, "You must enter a name")
     .max(
       API_KEY_NAME_MAX_LENGTH,
-      `the name must be less than ${API_KEY_NAME_MAX_LENGTH} characters`,
+      `The name must be less than ${API_KEY_NAME_MAX_LENGTH} characters`,
     ),
 });
 

@@ -38,8 +38,8 @@ describe("InvitationCard", () => {
 
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
-    expect(await screen.findByText("name is required")).toBeVisible();
-    expect(screen.getByText("password must be at least 8 characters")).toBeVisible();
+    expect(await screen.findByText("Name is required")).toBeVisible();
+    expect(screen.getByText("Password must be at least 8 characters")).toBeVisible();
   });
 
   it("should show an error when passwords do not match", async ({ user }) => {

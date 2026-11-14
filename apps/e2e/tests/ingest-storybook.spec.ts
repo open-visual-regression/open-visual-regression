@@ -21,7 +21,7 @@ test.describe("Storybook ingestion", () => {
 
     const row = projectBuildsPage.buildRow(shortSha);
     await expect(row).toBeVisible();
-    await expect(row.getByText(/^(auto approved|unchanged)$/)).toBeVisible();
+    await expect(row.getByText(/^(Auto approved|Unchanged)$/)).toBeVisible();
   });
 
   test("should print the build page URL and exit without waiting for processing", async ({

@@ -27,7 +27,7 @@ describe("UpdatePasswordForm", () => {
     await user.type(screen.getByLabelText(/^confirm password$/i), "newpassword123");
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
-    expect(await screen.findByText("you must enter your current password")).toBeVisible();
+    expect(await screen.findByText("You must enter your current password")).toBeVisible();
     expect(mockUpdatePassword).not.toHaveBeenCalled();
   });
 
@@ -39,7 +39,7 @@ describe("UpdatePasswordForm", () => {
     await user.type(screen.getByLabelText(/^confirm password$/i), "short");
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
-    expect(await screen.findByText("password must be at least 8 characters")).toBeVisible();
+    expect(await screen.findByText("Password must be at least 8 characters")).toBeVisible();
     expect(mockUpdatePassword).not.toHaveBeenCalled();
   });
 

@@ -291,7 +291,7 @@ describe("builds", () => {
       const [retryError] = await serverClient.builds.confirmUpload(input);
       expect(retryError?.code).toBe("CONFLICT");
       expect(retryError?.message).toBe(
-        "this build has already failed: The build queue is unavailable: could not reach Redis",
+        "This build has already failed: The build queue is unavailable: could not reach Redis",
       );
     });
 

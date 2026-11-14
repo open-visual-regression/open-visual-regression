@@ -247,7 +247,7 @@ export const listFlags = os.snapshots.listFlags
   .actionable();
 
 const REBUILD_ERROR_MESSAGES: Record<SnapshotRebuildBlockedReason | "ARTIFACT_MISSING", string> = {
-  NOT_SETTLED: "this snapshot is still being captured",
+  NOT_SETTLED: "This snapshot is still being captured",
   BUILD_CANCELED: "this build was canceled",
   NOT_LATEST_ON_BRANCH: "a newer build has landed on this branch",
   SNAPSHOT_SKIPPED: "this story is skipped",

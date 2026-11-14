@@ -197,7 +197,7 @@ export const cancel = os.builds.cancel
   .actionable();
 
 const REBUILD_ERROR_MESSAGES: Record<RebuildBlockedReason | "ARTIFACT_MISSING", string> = {
-  NOT_SETTLED: "this build is still running",
+  NOT_SETTLED: "This build is still running",
   NOT_LATEST_ON_BRANCH: "a newer build has landed on this branch",
   NO_EXTRACT_DEFAULTS: "this build was captured before rebuilding was supported",
   ARTIFACT_MISSING: "this build's storybook has been cleaned up",

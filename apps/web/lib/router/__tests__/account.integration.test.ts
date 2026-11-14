@@ -62,7 +62,7 @@ describe("account", () => {
       });
 
       expect(error?.code).toBe("CONFLICT");
-      expect(error?.message).toBe("this email is already in use");
+      expect(error?.message).toBe("This email is already in use");
     });
 
     test("should not modify another user's record", async ({ reviewer }) => {

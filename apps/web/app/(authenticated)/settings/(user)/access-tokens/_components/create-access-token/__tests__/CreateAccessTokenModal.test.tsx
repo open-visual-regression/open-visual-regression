@@ -30,7 +30,7 @@ describe("CreateAccessTokenModal", () => {
     await user.click(screen.getByRole("button", { name: /new access token/i }));
     await user.click(screen.getByRole("button", { name: /^create$/i }));
 
-    expect(await screen.findByText("you must enter a name")).toBeVisible();
+    expect(await screen.findByText("You must enter a name")).toBeVisible();
     expect(mockCreate).not.toHaveBeenCalled();
   });
 

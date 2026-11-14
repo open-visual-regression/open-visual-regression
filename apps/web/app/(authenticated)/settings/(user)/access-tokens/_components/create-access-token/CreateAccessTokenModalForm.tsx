@@ -38,10 +38,10 @@ import { CreateAccessTokenModalReveal } from "./CreateAccessTokenModalReveal";
 const createAccessTokenFormSchema = z.object({
   name: z
     .string()
-    .min(1, "you must enter a name")
+    .min(1, "You must enter a name")
     .max(
       ACCESS_TOKEN_NAME_MAX_LENGTH,
-      `the name must be less than ${ACCESS_TOKEN_NAME_MAX_LENGTH} characters`,
+      `The name must be less than ${ACCESS_TOKEN_NAME_MAX_LENGTH} characters`,
     ),
   permissions: accessTokenPermissionsSchema,
 });

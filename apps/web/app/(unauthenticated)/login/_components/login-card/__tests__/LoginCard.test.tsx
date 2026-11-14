@@ -72,8 +72,8 @@ describe("InvitationCard", () => {
 
     await user.click(screen.getByRole("button", { name: "Sign in" }));
 
-    expect(await screen.findByText("invalid email address")).toBeVisible();
-    expect(await screen.findByText("you must enter your password")).toBeVisible();
+    expect(await screen.findByText("Invalid email address")).toBeVisible();
+    expect(await screen.findByText("You must enter your password")).toBeVisible();
     expect(mockSignIn).not.toHaveBeenCalled();
   });
 
@@ -84,7 +84,7 @@ describe("InvitationCard", () => {
 
     await user.click(screen.getByRole("button", { name: "Sign in" }));
 
-    expect(await screen.findByText("invalid email address")).toBeVisible();
+    expect(await screen.findByText("Invalid email address")).toBeVisible();
     expect(mockSignIn).not.toHaveBeenCalled();
   });
 

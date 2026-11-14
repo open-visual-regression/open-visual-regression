@@ -46,7 +46,7 @@ describe("UpdateAccountForm", () => {
     await user.clear(screen.getByLabelText(/^name$/i));
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
-    expect(await screen.findByText("you must enter a name")).toBeVisible();
+    expect(await screen.findByText("You must enter a name")).toBeVisible();
     expect(mockUpdateAccountInformation).not.toHaveBeenCalled();
   });
 
@@ -57,7 +57,7 @@ describe("UpdateAccountForm", () => {
     await user.type(screen.getByLabelText(/^email$/i), "not-an-email");
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
-    expect(await screen.findByText("invalid email address")).toBeVisible();
+    expect(await screen.findByText("Invalid email address")).toBeVisible();
     expect(mockUpdateAccountInformation).not.toHaveBeenCalled();
   });
 

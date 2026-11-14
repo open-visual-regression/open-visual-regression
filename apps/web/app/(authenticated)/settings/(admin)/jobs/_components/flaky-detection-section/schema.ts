@@ -9,8 +9,8 @@ export const flakyDetectionFormSchema = z.object({
   }),
   windowBuilds: z
     .number({ error: "You must enter a whole number of builds" })
-    .int("you must enter a whole number of builds")
-    .positive("you must enter a whole number of builds"),
+    .int("You must enter a whole number of builds")
+    .positive("You must enter a whole number of builds"),
 });
 
 export type FlakyDetectionFormValues = z.infer<typeof flakyDetectionFormSchema>;

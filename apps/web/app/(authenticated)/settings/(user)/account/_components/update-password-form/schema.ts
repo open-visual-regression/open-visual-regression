@@ -2,8 +2,8 @@ import { z } from "zod";
 
 export const updatePasswordFormSchema = z
   .object({
-    currentPassword: z.string().min(1, "you must enter your current password"),
-    newPassword: z.string().min(8, "password must be at least 8 characters"),
+    currentPassword: z.string().min(1, "You must enter your current password"),
+    newPassword: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z.string(),
   })
   .superRefine((data, ctx) => {

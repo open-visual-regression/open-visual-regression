@@ -16,8 +16,8 @@ export type GetInvitationOutputSchema = z.infer<typeof getInvitationOutputSchema
 
 export const acceptInvitationInputSchema = z.object({
   invitationId: z.string(),
-  name: z.string().min(1, "name is required"),
-  password: z.string().min(8, "password must be at least 8 characters"),
+  name: z.string().min(1, "Name is required"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
 export const contract = {

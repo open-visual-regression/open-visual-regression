@@ -76,7 +76,7 @@ describe("GitIntegrationForm", () => {
     await user.type(screen.getByLabelText(/access token/i), "a-token");
     await user.click(screen.getByRole("button", { name: /^save$/i }));
 
-    expect(await screen.findByText("you must enter a repository")).toBeVisible();
+    expect(await screen.findByText("You must enter a repository")).toBeVisible();
     expect(mockUpsert).not.toHaveBeenCalled();
   });
 

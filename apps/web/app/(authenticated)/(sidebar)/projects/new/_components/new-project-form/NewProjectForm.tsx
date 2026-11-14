@@ -21,15 +21,15 @@ import { serverClient } from "@/lib/router";
 const newProjectSchema = z.object({
   projectName: z
     .string()
-    .min(1, "you must enter a project name")
-    .max(255, "the project name must be less than 255 characters"),
+    .min(1, "You must enter a project name")
+    .max(255, "The project name must be less than 255 characters"),
   projectDescription: z
     .string()
-    .max(511, "the project description must be less than 511 characters"),
+    .max(511, "The project description must be less than 511 characters"),
   gitMainBranch: z
     .string()
-    .min(1, "you must enter a baseline git branch")
-    .max(255, "the baseline git branch must be less than 255 characters"),
+    .min(1, "You must enter a baseline Git branch")
+    .max(255, "The baseline Git branch must be less than 255 characters"),
 });
 
 type NewProjectFormValues = z.infer<typeof newProjectSchema>;
