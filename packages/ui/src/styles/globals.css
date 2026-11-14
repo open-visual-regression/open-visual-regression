@@ -1,7 +1,10 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/jetbrains-mono";
+@import "@fontsource-variable/ibm-plex-sans";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
+@import "@fontsource/ibm-plex-mono/600.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -129,8 +132,8 @@
 }
 
 :root {
-  --ovr-font-sans: "JetBrains Mono Variable", monospace;
-  --ovr-font-mono: "JetBrains Mono Variable", monospace;
+  --ovr-font-sans: "IBM Plex Sans Variable", system-ui, sans-serif;
+  --ovr-font-mono: "IBM Plex Mono", ui-monospace, monospace;
   --radius: 2px;
   --background: oklch(1 0 0);
   --pixel-grid: radial-gradient(circle at 8px 8px, oklch(0 0 0 / 0.07) 1px, transparent 0);
