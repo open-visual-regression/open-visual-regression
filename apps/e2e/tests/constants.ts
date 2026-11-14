@@ -1,3 +1,5 @@
+import type { ReviewableSnapshot } from "./support/seedReviewableSnapshot";
+
 export const STORAGE_STATE = "playwright/.auth/user.json";
 
 export const SEED_ARTIFACT = "playwright/.artifacts/seed.json";
@@ -27,4 +29,6 @@ export const getBaseURL = (): string => process.env.PLAYWRIGHT_BASE_URL ?? "http
 export type SeedData = {
   projectId: string;
   apiKey: string;
+  // A full build awaiting review, shared by the tests that only look at it.
+  reviewable: ReviewableSnapshot;
 };

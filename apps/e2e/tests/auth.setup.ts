@@ -3,10 +3,12 @@ import path from "node:path";
 
 import { expect, test as setup } from "@playwright/test";
 
-import { SEED_ARTIFACT, STORAGE_STATE, TEST_ADMIN } from "./constants";
+import { SEED_ARTIFACT, STORAGE_STATE, TEST_ADMIN, type SeedData } from "./constants";
 import { LoginPage } from "./pages/LoginPage";
 import { SetupPage } from "./pages/SetupPage";
 import { seedClientForContext } from "./seed/client";
+import { STORYBOOK_DIR } from "./support/ingest";
+import { seedReviewableSnapshot } from "./support/seedReviewableSnapshot";
 
 setup("provision the test fixtures", async ({ page, context }) => {
   const setupPage = new SetupPage(page);
@@ -49,6 +51,11 @@ setup("provision the test fixtures", async ({ page, context }) => {
 
   const { key } = await client.apiKeys.create({ projectId, name: "e2e" });
 
+  const reviewable = await seedReviewableSnapshot(client, { storybookDir: STORYBOOK_DIR });
+
   await mkdir(path.dirname(SEED_ARTIFACT), { recursive: true });
-  await writeFile(SEED_ARTIFACT, JSON.stringify({ projectId, apiKey: key }, null, 2));
+  await writeFile(
+    SEED_ARTIFACT,
+    JSON.stringify({ projectId, apiKey: key, reviewable } satisfies SeedData, null, 2),
+  );
 });
