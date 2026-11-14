@@ -3,7 +3,7 @@ title: ovr upload storybook
 description: Upload a Storybook build for OVR to capture and compare.
 ---
 
-Uploads a Storybook 8.5+ static build (the output of `storybook build`) as a new build. Takes a [project API key](/cli/authentication), and the [global flags](/cli/installation#global-flags).
+Uploads a Storybook 8.5+ static build (the output of `storybook build`) as a new build. Takes a [project API key](/cli/authentication), and the [global flags](/cli/overview#global-flags).
 
 ```sh
 ovr upload storybook \
@@ -26,37 +26,9 @@ ovr upload storybook \
 | `--author <author>` | no | | Commit author |
 | `--wait` | no | `false` | Wait for the build's result before exiting |
 | `--timeout <seconds>` | no | `600` | How long `--wait` waits |
-| `--only-affected` | no | `false` | Only capture the stories a change can affect. See [below](#only-affected-stories) |
+| `--only-affected` | no | `false` | Only capture the stories a change can affect. See [Capture only affected stories](/storybook/only-affected) |
 
-Without `--wait`, the command prints the build's URL and exits as soon as the upload is done. With `--wait`, it waits for OVR to capture and compare the build, and its [exit code](/cli/installation#exit-codes) tells your CI whether the build passed.
-
-## Only affected stories
-
-`--only-affected` captures only the stories a change can affect. Every other story is listed on the build as skipped and keeps its baseline. A story with no baseline yet is always captured.
-
-It needs:
-
-- Storybook built with `--stats-json` by the Vite, Webpack 5, or Rspack (`storybook-builder-rsbuild`) builder, and `ovr` run from the directory it was built in.
-- The full git history. In GitHub Actions, check out with `fetch-depth: 0`.
-- A successful build on the project's main branch in the commit's history to compare against.
-
-When any of these is missing, or the change can affect every story, OVR captures every story and the CLI says why. Changes that affect every story include Storybook and build configuration, dependencies the Storybook uses, and global styles. To mark other files that affect stories without being imported, use [`onlyAffected`](/configuration/config#only-affected) in `ovr.config`.
-
-Use it for pull requests, and capture every story on the main branch.
-
-<Accordion title="Supported lockfiles">
-
-When a lockfile changes, OVR checks which packages changed. It captures every story only if one of them is bundled into the Storybook or is a build tool.
-
-| Package manager | Lockfile | Versions |
-| --- | --- | --- |
-| Yarn | `yarn.lock` | Yarn 1, and Yarn 2 and later |
-| pnpm | `pnpm-lock.yaml` | pnpm 8 and later |
-| npm | `package-lock.json`, `npm-shrinkwrap.json` | npm 7 and later |
-
-A change to any other lockfile, such as Bun's `bun.lock`, captures every story.
-
-</Accordion>
+Without `--wait`, the command prints the build's URL and exits as soon as the upload is done. With `--wait`, it waits for OVR to capture and compare the build, and its [exit code](/cli/overview#exit-codes) tells your CI whether the build passed.
 
 ## CI example
 

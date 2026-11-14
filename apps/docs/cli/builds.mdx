@@ -5,7 +5,7 @@ description: List and inspect builds, and cancel, rebuild, approve, or reject th
 
 import RequiresPermission from "/snippets/requires-permission.mdx";
 
-Takes a [personal access token](/cli/authentication). Every subcommand also takes the [global flags](/cli/installation#global-flags).
+Takes a [personal access token](/cli/authentication). Every subcommand also takes the [global flags](/cli/overview#global-flags).
 
 ## `ovr builds list`
 
@@ -72,7 +72,7 @@ ovr builds rebuild <buildId> --wait
 | `--wait` | Wait for the new build to finish before exiting |
 | `--timeout <seconds>` | How long `--wait` waits. Defaults to `600` |
 
-Captures a finished build again as a new build, from the same upload, and prints the new build's ID. Only the latest build on a branch can be rebuilt. With `--wait`, the command [exits](/cli/installation#exit-codes) like `ovr upload storybook --wait`.
+Captures a finished build again as a new build, from the same upload, and prints the new build's ID. Only the latest build on a branch can be rebuilt. With `--wait`, the command [exits](/cli/overview#exit-codes) like `ovr upload storybook --wait`.
 
 <RequiresPermission permission="builds:write" />
 

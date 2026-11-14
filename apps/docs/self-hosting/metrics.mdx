@@ -1,5 +1,5 @@
 ---
-title: Metrics
+title: Monitoring
 description: Monitor builds, queues, and workers with Prometheus, Grafana, Datadog, or any OpenMetrics-compatible tool.
 ---
 
@@ -97,97 +97,7 @@ Point any tool that reads Prometheus or OpenMetrics endpoints at port `9464` on 
 
 ## Available metrics
 
-Scrape both the web app and the worker. Counters and histograms add up across instances, so `sum` them. Gauges marked *deployment-wide* report the same value from every web replica, so use `max` to avoid counting them more than once.
-
-```promql
-# Builds finished per hour, by status
-sum by (processing_status) (increase(ovr_builds_finished_total[1h]))
-
-# Snapshot captures waiting to start
-sum(max by (state) (ovr_queue_jobs{queue="snapshot-capture", state=~"waiting|prioritized"}))
-
-# How long large builds waited for their first capture, 95th percentile
-histogram_quantile(0.95, sum by (le) (rate(ovr_build_capture_wait_seconds_bucket{size="1000_or_more"}[1h])))
-```
-
-`size` is how many snapshots a build captures: `under_100`, `100_to_499`, `500_to_999`, or `1000_or_more`.
-
-### Builds
-
-| Metric | Type | Labels | Description |
-| --- | --- | --- | --- |
-| `ovr_builds_created_total` | Counter | `build_type`, `trigger` | Builds created. `trigger` is `upload` or `rebuild`. |
-| `ovr_builds_finished_total` | Counter | `processing_status`, `reason` | Builds that finished, by status (`success`, `error`, `canceled`) and reason. See [finish reasons](#finish-reasons). |
-| `ovr_build_duration_seconds` | Histogram | `processing_status`, `size` | Time from when the build was created until it finished processing. |
-| `ovr_build_capture_wait_seconds` | Histogram | `size` | Time from when a build's snapshots were queued until the first one started capturing. |
-| `ovr_builds_in_progress` | Gauge, deployment-wide | `processing_status` | Builds that are `queued` or `processing`. |
-| `ovr_builds_in_progress_oldest_age_seconds` | Gauge, deployment-wide | `processing_status` | Age of the oldest queued or processing build. A value that keeps growing means a build is stuck. |
-
-#### Finish reasons
-
-| Reason | Meaning |
-| --- | --- |
-| `finalized` | Every snapshot was captured and compared. The build succeeded, or errored because some snapshots did. |
-| `canceled` | Someone canceled the build. |
-| `superseded` | A newer build on the same branch replaced it. |
-| `timed_out` | The build made no progress for `OVR_REAPER_STALE_MINUTES`. |
-| `extract_failed` | The uploaded Storybook couldn't be read. |
-| `finalize_failed` | The build's results couldn't be saved. |
-| `enqueue_failed` | The work couldn't be queued, usually because Redis was unreachable. |
-
-### Queues
-
-| Metric | Type | Labels | Description |
-| --- | --- | --- | --- |
-| `ovr_queue_jobs` | Gauge, deployment-wide | `queue`, `state` | Jobs in each queue. `waiting` and `prioritized` are waiting to start, `active` are running, `delayed` are waiting to retry or for a scheduled time, and `failed` ran out of retries. |
-| `ovr_job_attempts_total` | Counter | `queue`, `outcome` | Job attempts by outcome: `completed`, `retried` (failed, will run again), or `failed` (out of retries). |
-| `ovr_job_duration_seconds` | Histogram | `queue`, `outcome` | How long a job attempt ran. |
-| `ovr_job_wait_seconds` | Histogram | `queue` | How long a job waited before a worker started it. |
-| `ovr_jobs_stalled_total` | Counter | `queue` | Jobs interrupted mid-run, for example by a worker restart, that will run again. |
-| `ovr_worker_errors_total` | Counter | `queue` | Worker errors outside of any job, such as a lost Redis connection. |
-
-### Snapshots
-
-| Metric | Type | Labels | Description |
-| --- | --- | --- | --- |
-| `ovr_snapshots_captured_total` | Counter | `browser`, `outcome` | Snapshots captured, by `success` or `error`. |
-| `ovr_snapshot_capture_duration_seconds` | Histogram | `browser` | Time to capture and store one snapshot. |
-| `ovr_snapshot_capture_phase_duration_seconds` | Histogram | `browser`, `phase` | Time each part of a capture took: `render`, `settle`, `wait` (the story's `waitForTimeout`), `screenshot`, or `upload`. |
-| `ovr_snapshots_settled_total` | Counter | `outcome` | Snapshots whose page went `quiet`, or `timed_out` with work still pending. |
-| `ovr_capture_requests_abandoned_total` | Counter | | Requests a snapshot was captured without because they never finished loading. |
-| `ovr_capture_page_boot_duration_seconds` | Histogram | `browser` | Time to load Storybook, once per capture group. |
-| `ovr_snapshots_created_total` | Counter | `status` | Snapshots created, by `queued` or `skipped` (unaffected story). |
-| `ovr_capture_browser_relaunches_total` | Counter | `browser`, `reason` | Times a browser was restarted mid-build because a story hung (`timeout`) or the browser crashed (`closed`). |
-| `ovr_diffs_compared_total` | Counter | `result` | Snapshots compared with their baseline: `unchanged`, `changed`, `new` (no baseline yet), or `error`. |
-
-### Storage
-
-| Metric | Type | Labels | Description |
-| --- | --- | --- | --- |
-| `ovr_storage_requests_total` | Counter | `operation`, `outcome`, `error_code` | Requests to object storage, by S3 operation and outcome: `success`, `client_error`, `throttled`, `server_error`, or `network_error`. Each SDK retry counts separately. `client_error` includes expected misses, like checking for an object that doesn't exist. |
-| `ovr_storage_request_duration_seconds` | Histogram | `operation` | How long each request to object storage took, including failed attempts. |
-| `ovr_storage_objects_deleted_total` | Counter | `reason` | Objects deleted, by `build_purge` (builds past their retention) or `project_purge` (deleted projects). |
-| `ovr_storage_objects_delete_failed_total` | Counter | `reason`, `error_code` | Objects the store refused to delete, for example when throttled. Purged builds' files are retried the next night. |
-| `ovr_storage_outbox_pending` | Gauge, deployment-wide | | Purged builds whose files are still waiting to be deleted. |
-| `ovr_storage_outbox_oldest_age_seconds` | Gauge, deployment-wide | | How long the oldest of those has waited. Over a day means a nightly purge failed or fell behind, and storage is growing. |
-
-`error_code` is the code the store or network returned, such as `SlowDown`, `AccessDenied`, or `ECONNRESET`. Each process reports up to 20 distinct codes, and counts any others as `Other`.
-
-### Workers and web app
-
-| Metric | Type | Labels | Description |
-| --- | --- | --- | --- |
-| `ovr_worker_browser_processes` | Gauge | `state` | Browser processes a worker is running. A growing `zombie` count means exited processes aren't being cleaned up. Linux only. |
-| `ovr_worker_browser_memory_bytes` | Gauge | | Memory used by a worker's browsers. Linux only. |
-| `ovr_worker_browser_processes_killed_total` | Counter | | Leftover browser processes a worker killed after their builds finished. Linux only. |
-| `ovr_capture_slots` | Gauge | | Capture groups a worker can run at once. |
-| `ovr_capture_slots_busy` | Gauge | | Capture groups a worker is running. |
-| `ovr_git_status_publications_total` | Counter | `provider`, `state`, `outcome` | Commit statuses sent to your git provider, by `ok` or `error`. |
-| `ovr_http_request_errors_total` | Counter | `route_type` | Web app requests that failed with an unexpected error. |
-| `process_memory_usage_bytes` | Gauge | | Memory used by the process. |
-| `process_cpu_time_seconds_total` | Counter | `cpu_mode` | CPU time used by the process. |
-| `v8js_memory_heap_used_bytes` | Gauge | `v8js_heap_space_name` | JavaScript heap in use. |
-| `nodejs_eventloop_delay_p99_seconds` | Gauge | | How long the process was too busy to respond, at the 99th percentile. |
+See [Metrics](/reference/metrics) for every metric OVR reports, with example queries.
 
 ## Autoscale workers
 

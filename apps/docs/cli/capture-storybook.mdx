@@ -44,7 +44,7 @@ components-dialog--open (desktop): 1x, 1.12% different: out/components-dialog--o
 1 of 2 captures stayed within their diff threshold on every run.
 ```
 
-`IMAGES` counts the distinct images across runs, and `MAX DIFF%` is the largest difference from the first run. A capture is `stable` when every run is within the story's `diffThreshold`, `unstable` when a run goes over it, and `error` when the story failed to render. With [`blockExternalRequests`](/configuration/config#blocking-external-requests) set, each story also lists the hosts it requested that were blocked.
+`IMAGES` counts the distinct images across runs, and `MAX DIFF%` is the largest difference from the first run. A capture is `stable` when every run is within the story's `diffThreshold`, `unstable` when a run goes over it, and `error` when the story failed to render. With [`blockExternalRequests`](/reference/ovr-config#blocking-external-requests) set, each story also lists the hosts it requested that were blocked.
 
 The command exits `1` if any capture is unstable or failed, so it can run in CI.
 

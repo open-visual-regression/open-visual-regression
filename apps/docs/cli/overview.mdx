@@ -1,7 +1,10 @@
 ---
-title: Installation
+title: CLI overview
+sidebarTitle: Overview
 description: Install the CLI and point it at your OVR server.
 ---
+
+## Install
 
 <CodeGroup>
 
@@ -57,7 +60,7 @@ Every command that talks to OVR takes these:
 
 | Flag | Description |
 | --- | --- |
-| `--server-url <url>` | OVR server URL. Defaults to `serverUrl` in [`ovr.config`](/configuration/config) |
+| `--server-url <url>` | OVR server URL. Defaults to `serverUrl` in [`ovr.config`](/reference/ovr-config) |
 | `-c, --config <path>` | Path to `ovr.config.ts`, `.js`, or `.mjs`. Defaults to the one in the current directory |
 
 Commands that print results also take `--json`, which prints JSON instead of a table. Progress messages go to stderr, so the JSON on stdout can be piped to `jq`.

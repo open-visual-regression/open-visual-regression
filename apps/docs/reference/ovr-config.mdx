@@ -31,7 +31,7 @@ export default defineConfig({
 | `waitForTimeout` | `number`, `[0, 30000]` | `0` | Milliseconds to wait before each screenshot, e.g. for slow-loading data or images |
 | `blockExternalRequests` | `boolean \| { allow: string[] }` | `false` | Blocks requests outside the Storybook build. See [below](#blocking-external-requests) |
 | `screenshotStability` | `"auto" \| "always" \| "off"` | `"auto"` | When to retake a screenshot until two in a row match. See [Flaky snapshots](/flaky-snapshots#animations-caught-mid-frame) |
-| `onlyAffected` | `object` | | Options for [`--only-affected`](/cli/upload-storybook#only-affected-stories). See [below](#only-affected) |
+| `onlyAffected` | `object` | | Options for [`--only-affected`](/storybook/only-affected). See [below](#only-affected) |
 
 <Note>
 If `viewports` is omitted, OVR falls back to a single default: 1280px wide, full page, in Chromium.
@@ -50,7 +50,7 @@ Each entry in `viewports` describes one capture target:
 
 Unnamed viewports (no `name`) are always opt-in: they can't be referenced by `defaultViewports`, only added inline via a story override.
 
-Individual stories can override some of these options, or skip capture entirely — see [Per-story parameters](/configuration/story-parameters).
+Individual stories can override some of these options, or skip capture entirely — see [Per-story parameters](/storybook/story-parameters).
 
 ## Blocking external requests
 
@@ -80,7 +80,7 @@ Firefox ignores ports, so `example.com:8443` allows every port there.
 
 ## Only affected
 
-Options for [`ovr upload storybook --only-affected`](/cli/upload-storybook#only-affected-stories). Globs are relative to the directory you run the CLI from.
+Options for [`ovr upload storybook --only-affected`](/storybook/only-affected). Globs are relative to the directory you run the CLI from.
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|

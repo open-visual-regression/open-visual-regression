@@ -1,0 +1,29 @@
+---
+title: Capture only affected stories
+sidebarTitle: Only affected stories
+description: Capture only the stories a change can affect, to make pull request builds faster.
+---
+
+`--only-affected` captures only the stories a change can affect. Every other story is listed on the build as skipped and keeps its baseline. A story with no baseline yet is always captured.
+
+It needs:
+
+- Storybook built with `--stats-json` by the Vite, Webpack 5, or Rspack (`storybook-builder-rsbuild`) builder, and `ovr` run from the directory it was built in.
+- The full git history. In GitHub Actions, check out with `fetch-depth: 0`.
+- A successful build on the project's main branch in the commit's history to compare against.
+
+When any of these is missing, or the change can affect every story, OVR captures every story and the CLI says why. Changes that affect every story include Storybook and build configuration, dependencies the Storybook uses, and global styles. To mark other files that affect stories without being imported, use [`onlyAffected`](/reference/ovr-config#only-affected) in `ovr.config`.
+
+Use it for pull requests, and capture every story on the main branch.
+
+## Lockfiles
+
+When a lockfile changes, OVR checks which packages changed. It captures every story only if one of them is bundled into the Storybook or is a build tool.
+
+| Package manager | Lockfile | Versions |
+| --- | --- | --- |
+| Yarn | `yarn.lock` | Yarn 1, and Yarn 2 and later |
+| pnpm | `pnpm-lock.yaml` | pnpm 8 and later |
+| npm | `package-lock.json`, `npm-shrinkwrap.json` | npm 7 and later |
+
+A change to any other lockfile, such as Bun's `bun.lock`, captures every story.

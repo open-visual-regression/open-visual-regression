@@ -122,6 +122,6 @@ Switching a project to the App deletes its stored token. To switch back, choose 
 
 **GitHub rejected the App's credentials**: the App ID and the key in `OVR_GITHUB_APP_PRIVATE_KEY_FILE` don't match, or the key was revoked. Check both, and generate a new key if needed.
 
-The worker logs every failed status, and counts them in the `ovr_git_status_publications_total` metric with `outcome="error"`. See [Metrics](/self-hosting/metrics).
+The worker logs every failed status, and counts them in the `ovr_git_status_publications_total` metric with `outcome="error"`. See [Metrics](/reference/metrics#workers-and-web-app).
 
 GitHub Enterprise Server isn't supported yet.
