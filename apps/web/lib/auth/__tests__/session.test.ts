@@ -1,15 +1,17 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { vi } from "vitest";
 
 import { REQUEST_PATH_HEADER } from "@/lib/utils/redirects";
 import { describe, expect, it } from "@/test-utils";
 
 import { auth } from "../auth";
-import { requireSession } from "../session";
+import { getCachedSession, requireSession } from "../session";
 
 vi.mock("next/headers");
 vi.mock("next/navigation");
+vi.mock("next/server");
 vi.mock("../auth");
 
 describe("requireSession", () => {
@@ -41,5 +43,18 @@ describe("requireSession", () => {
     await requireSession();
 
     expect(redirect).toHaveBeenCalledWith("/login");
+  });
+});
+
+describe("getCachedSession", () => {
+  it("should wait for the request before reading the session", async () => {
+    vi.mocked(auth.api.getSession).mockResolvedValue(null as never);
+
+    await getCachedSession();
+
+    expect(connection).toHaveBeenCalled();
+    expect(vi.mocked(connection).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(auth.api.getSession).mock.invocationCallOrder[0]!,
+    );
   });
 });
