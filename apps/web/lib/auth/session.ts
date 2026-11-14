@@ -49,10 +49,6 @@ const getTrustedProxySession = async (requestHeaders: Headers, config: TrustedPr
 
 export const getCachedSession = cache(async () => {
   const requestHeaders = await headers();
-  // The session belongs to this request, so resolve it at request time. Without this, work that
-  // runs on microtasks right after `headers()` resolves still counts as prerendering. One example
-  // is jose checking whether its cached JWKS is fresh with `Date.now()` in trusted-proxy mode.
-  // Next.js then fails the render with "encountered the unstable value `Date.now()`".
   await connection();
   const config = getAuthConfig();
 
