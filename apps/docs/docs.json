@@ -13,36 +13,57 @@
     "dark": "/logo/dark.svg"
   },
   "navigation": {
-    "pages": [
+    "tabs": [
       {
-        "group": "Get Started",
-        "pages": ["index", "baselines", "flaky-snapshots"]
-      },
-      {
-        "group": "CLI",
-        "pages": [
-          "cli/installation",
-          "cli/authentication",
-          "cli/upload-storybook",
-          "cli/capture-storybook",
-          "cli/builds",
-          "cli/snapshots",
-          "cli/diffs"
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get started",
+            "pages": ["index"]
+          },
+          {
+            "group": "Using OVR",
+            "pages": ["baselines", "flaky-snapshots"]
+          },
+          {
+            "group": "Storybook",
+            "pages": ["storybook/story-parameters", "storybook/only-affected"]
+          },
+          {
+            "group": "Self-hosting",
+            "pages": [
+              "self-hosting/docker-compose",
+              "self-hosting/helm",
+              "self-hosting/sso",
+              "self-hosting/github-app",
+              "self-hosting/metrics"
+            ]
+          }
         ]
       },
       {
-        "group": "Configuration",
-        "pages": ["configuration/config", "configuration/story-parameters"]
-      },
-      {
-        "group": "Self-Hosting",
-        "pages": [
-          "self-hosting/docker-compose",
-          "self-hosting/helm",
-          "self-hosting/sso",
-          "self-hosting/github-app",
-          "self-hosting/metrics",
-          "reference/environment-variables"
+        "tab": "Reference",
+        "groups": [
+          {
+            "group": "CLI",
+            "pages": [
+              "cli/overview",
+              "cli/authentication",
+              "cli/upload-storybook",
+              "cli/capture-storybook",
+              "cli/builds",
+              "cli/snapshots",
+              "cli/diffs"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": ["reference/ovr-config"]
+          },
+          {
+            "group": "Self-hosting",
+            "pages": ["reference/environment-variables", "reference/metrics"]
+          }
         ]
       }
     ]
@@ -64,6 +85,18 @@
     {
       "source": "/cli/snapshot-storybook",
       "destination": "/cli/upload-storybook"
+    },
+    {
+      "source": "/cli/installation",
+      "destination": "/cli/overview"
+    },
+    {
+      "source": "/configuration/config",
+      "destination": "/reference/ovr-config"
+    },
+    {
+      "source": "/configuration/story-parameters",
+      "destination": "/storybook/story-parameters"
     }
   ]
 }

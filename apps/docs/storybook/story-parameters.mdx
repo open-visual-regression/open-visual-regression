@@ -22,7 +22,7 @@ export const Primary: Story = {
 | `viewports` | `(string \| { browser?, width, height? })[]` | Replaces (not merges with) the config's default viewport list for this story. String entries reference a `name` from `ovr.config.ts`; object entries define a one-off viewport inline |
 | `diffThreshold` | `number` | Replaces the config's `diffThreshold` for this story, as a fraction of pixels that may differ |
 | `waitForTimeout` | `number` | Replaces the config's `waitForTimeout` for this story, in milliseconds. Set `0` to opt a story out of a config-wide wait |
-| `blockExternalRequests` | `boolean \| { allow: string[] }` | Replaces the config's `blockExternalRequests` for this story. See [Blocking external requests](/configuration/config#blocking-external-requests) |
+| `blockExternalRequests` | `boolean \| { allow: string[] }` | Replaces the config's `blockExternalRequests` for this story. See [Blocking external requests](/reference/ovr-config#blocking-external-requests) |
 | `screenshotStability` | `"auto" \| "always" \| "off"` | Replaces the config's `screenshotStability` for this story. See [Flaky snapshots](/flaky-snapshots#animations-caught-mid-frame) |
 | `skip` | `boolean` | Skips this story; it is listed on the build as skipped, never captured or diffed |
 
