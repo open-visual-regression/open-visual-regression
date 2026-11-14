@@ -209,17 +209,12 @@ Ready-made Compose files for each combination:
 
 ## Reverse proxy
 
-Turn off response buffering for the dashboard on any proxy or load balancer in front of it, or pages wait for all their data before they show anything. nginx turns it off on its own.
+Turn off response buffering for the dashboard on any proxy in front of it. See [Reverse proxies](/self-hosting/overview#reverse-proxies).
 
 ## Update
 
-```sh
-docker compose pull
-docker compose up -d
-```
-
-Set `IMAGE_TAG` in `.env` to pin a release instead of tracking `latest`: `1.4.2` for an exact release, or `1.4` or `1` to pick up patches or minor releases as they come.
+See [Upgrading](/self-hosting/upgrading). Set `IMAGE_TAG` in `.env` to an exact release, such as `0.23.0`, instead of tracking `latest`, so you choose when to upgrade.
 
 ## Back up your data
 
-State lives in named volumes: `pgdata`, `valkeydata`, `rustfsdata`. Back them up like any container volume.
+State lives in the named volumes `pgdata` and `rustfsdata`. Back them up like any container volume. See [Backups](/self-hosting/overview#backups).

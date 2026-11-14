@@ -1,0 +1,53 @@
+---
+title: Upgrading
+description: Move to a new OVR release, and the changes that need action on your side.
+---
+
+## Versions
+
+OVR's web app, worker, and Helm chart share one version number. Images are tagged with the exact version, such as `0.23.0`, and with `latest`. The chart's version is the OVR version it installs.
+
+OVR is before 1.0, so a minor release, like 0.22 to 0.23, can include changes that need action. Pin an exact version, and read the release notes before moving to a new one. The release notes are in the [web app's changelog](https://github.com/open-visual-regression/open-visual-regression/blob/main/apps/web/CHANGELOG.md). Changes that need action start with **Breaking**.
+
+## Upgrade
+
+<Tabs>
+<Tab title="Docker Compose">
+
+Set `IMAGE_TAG` in `.env` to the new version, then pull and restart:
+
+```sh
+docker compose pull
+docker compose up -d
+```
+
+</Tab>
+<Tab title="Helm">
+
+```sh
+helm upgrade ovr oci://ghcr.io/open-visual-regression/charts/ovr \
+  --version X.Y.Z \
+  --namespace ovr \
+  -f my-values.yaml
+```
+
+</Tab>
+</Tabs>
+
+Database migrations run on their own before the new version starts.
+
+If you upgrade the CLI ahead of the server, a command the server doesn't have yet fails with "does not support this command. Upgrade the server to use it."
+
+## Changes that need action
+
+### 0.22: GitHub App private key is read from a file
+
+The web app and worker read the GitHub App's private key from a file named by `OVR_GITHUB_APP_PRIVATE_KEY_FILE`. `OVR_GITHUB_APP_PRIVATE_KEY` is no longer read. Until you move the key, either the web app and worker don't start, or projects set to **github app** fail to post statuses with "GitHub App authentication is not configured on this deployment".
+
+- **Docker Compose:** save the key as a `.pem` file, mount it as described in [GitHub App](/self-hosting/github-app#docker-compose), and move `OVR_GITHUB_APP_ID` from `.env` into `docker-compose.override.yml`. Delete both old variables from `.env`.
+- **Helm with `githubApp.privateKey`:** nothing to change, as long as the key is written over several lines rather than on one line with `\n` escapes.
+- **Helm with `existingSecret`:** in your Secret, rename `OVR_GITHUB_APP_PRIVATE_KEY` to `github-app-private-key.pem` and give it the key with real line breaks. Remove `OVR_GITHUB_APP_ID` from the Secret and set `githubApp.appId` instead.
+
+### 0.22: Helm reads only documented keys from `existingSecret`
+
+The chart passes only the keys listed in [Required values](/self-hosting/helm#required-values) from your Secret to OVR. Other keys no longer reach it, and pods don't start until the Secret has `DATABASE_URL`, `REDIS_URL`, `BETTER_AUTH_SECRET`, and `OVR_GIT_TOKEN_ENCRYPTION_KEY`.

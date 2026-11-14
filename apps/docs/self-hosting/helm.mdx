@@ -21,7 +21,7 @@ helm install ovr oci://ghcr.io/open-visual-regression/charts/ovr \
   -f my-values.yaml
 ```
 
-Chart versions match OVR versions: `--version 1.4.2` installs OVR 1.4.2. There's no floating tag, so always pass `--version`. Published versions are listed on the [GHCR package page](https://github.com/orgs/open-visual-regression/packages/container/package/charts%2Fovr).
+Chart versions match OVR versions: `--version 0.23.0` installs OVR 0.23.0. There's no floating tag, so always pass `--version`. Published versions are listed on the [GHCR package page](https://github.com/orgs/open-visual-regression/packages/container/package/charts%2Fovr).
 
 Verify a chart before installing it:
 
@@ -91,7 +91,7 @@ Set `web.ingress.enabled: true` and `web.ingress.host`, plus `web.ingress.classN
 
 With `web.ingress.tls` set, `web.ingress.redirectHttps` (default `true`) redirects HTTP to HTTPS. Implemented for `className: traefik` and `className: nginx`. Configure the redirect yourself on other controllers.
 
-Turn off response buffering for the dashboard on your ingress controller, or pages wait for all their data before they show anything. nginx turns it off on its own.
+Turn off response buffering for the dashboard on your ingress controller. See [Reverse proxies](/self-hosting/overview#reverse-proxies).
 
 ## Scaling
 
@@ -150,7 +150,7 @@ helm upgrade ovr oci://ghcr.io/open-visual-regression/charts/ovr \
   -f my-values.yaml
 ```
 
-The migration Job runs before the new pods start. Each chart version pins the matching OVR release, so `--version` decides which release runs.
+The migration Job runs before the new pods start. Each chart version pins the matching OVR release, so `--version` decides which release runs. See [Upgrading](/self-hosting/upgrading) for changes that need action.
 
 ## Full values reference
 
