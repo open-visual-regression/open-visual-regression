@@ -51,7 +51,7 @@ npx @open-visual-regression/cli upload storybook \
   --author "$(git log -1 --pretty=%an)"
 ```
 
-See the [docs](https://docs.openvisualregression.com) for self-hosting (Docker, Kubernetes, managed Postgres/Redis/S3), CLI configuration, and the API reference.
+See the [docs](https://docs.openvisualregression.com) for self-hosting (Docker, Kubernetes, managed Postgres/Redis/S3), CI setup, and the CLI reference.
 
 ## License
 

@@ -93,7 +93,7 @@ services:
     restart: "no"
 
   migrate:
-    image: ghcr.io/open-visual-regression/worker:latest
+    image: ghcr.io/open-visual-regression/worker:${IMAGE_TAG:-latest}
     command: ["node", "dist/migrate.js"]
     depends_on:
       db:
@@ -103,7 +103,7 @@ services:
     restart: "no"
 
   web:
-    image: ghcr.io/open-visual-regression/web:latest
+    image: ghcr.io/open-visual-regression/web:${IMAGE_TAG:-latest}
     restart: unless-stopped
     depends_on:
       db:
@@ -122,7 +122,7 @@ services:
       - ${WEB_PORT:-3000}:${WEB_PORT:-3000}
 
   worker:
-    image: ghcr.io/open-visual-regression/worker:latest
+    image: ghcr.io/open-visual-regression/worker:${IMAGE_TAG:-latest}
     restart: unless-stopped
     depends_on:
       db:
@@ -177,7 +177,7 @@ If `docker compose up` fails with `service_completed_successfully is an invalid 
 | --- | --- |
 | `BETTER_AUTH_SECRET` | Signs auth sessions. Generate with `openssl rand -base64 32`. |
 | `OVR_GIT_TOKEN_ENCRYPTION_KEY` | Encrypts stored git provider tokens at rest. Must decode to 32 bytes: `openssl rand -base64 32`. Rotating it invalidates every stored token. |
-| `BASE_URL` | Public URL the app is served from. Defaults to `http://localhost:3000`. |
+| `BASE_URL` | Public URL the app is served from. Set it whenever you reach OVR at anything other than `http://localhost:3000`. |
 
 ### Database
 
@@ -285,7 +285,7 @@ docker compose pull
 docker compose up -d
 ```
 
-Set `IMAGE_TAG` in `.env` to pin a release instead of tracking `latest`.
+Set `IMAGE_TAG` in `.env` to pin a release instead of tracking `latest`: `1.4.2` for an exact release, or `1.4` or `1` to pick up patches or minor releases as they come.
 
 ## Back up your data
 
