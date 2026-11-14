@@ -47,9 +47,9 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --font-heading: var(--font-mono);
-  --font-mono: "JetBrains Mono Variable", monospace;
-  --font-sans: var(--font-mono);
+  --font-heading: var(--ovr-font-sans);
+  --font-mono: var(--ovr-font-mono);
+  --font-sans: var(--ovr-font-sans);
 
   /* OVR typography scale */
   --font-size-display: 56px;
@@ -129,6 +129,8 @@
 }
 
 :root {
+  --ovr-font-sans: "JetBrains Mono Variable", monospace;
+  --ovr-font-mono: "JetBrains Mono Variable", monospace;
   --radius: 2px;
   --background: oklch(1 0 0);
   --pixel-grid: radial-gradient(circle at 8px 8px, oklch(0 0 0 / 0.07) 1px, transparent 0);
@@ -295,7 +297,7 @@
   }
 
   html {
-    @apply font-mono;
+    @apply font-sans;
   }
 
   button,
