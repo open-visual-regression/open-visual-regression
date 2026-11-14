@@ -1,13 +1,12 @@
 import { expect, test } from "./fixtures";
-import { seedReviewableSnapshot } from "./support/seedReviewableSnapshot";
 
 test.describe("Snapshot preferences", () => {
   test("should keep the snapshot sidebar open on the same tab after a reload", async ({
     page,
-    seedClient,
+    seed,
     snapshotReviewPage,
   }) => {
-    const { projectId, buildId, snapshotId } = await seedReviewableSnapshot(seedClient);
+    const { projectId, buildId, snapshotId } = seed.reviewable;
 
     await snapshotReviewPage.goto(projectId, buildId, snapshotId);
     await snapshotReviewPage.expandSidebar();

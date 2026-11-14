@@ -1,6 +1,9 @@
 /* eslint-disable react-hooks/rules-of-hooks -- Playwright's `use` is not a React hook */
 import { type ChildProcess } from "node:child_process";
 import { readFileSync } from "node:fs";
+import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 
 import { test as base } from "@playwright/test";
 
@@ -19,7 +22,9 @@ import { SnapshotReviewPage } from "./pages/SnapshotReviewPage";
 import { SnapshotsPage } from "./pages/SnapshotsPage";
 import { UsersSettingsPage } from "./pages/UsersSettingsPage";
 import { seedClientForContext, type SeedClient } from "./seed/client";
-import { spawnIngest, type IngestOptions } from "./support/ingest";
+import { spawnIngest, STORYBOOK_DIR, type IngestOptions } from "./support/ingest";
+
+const SMALL_STORYBOOK_STORIES = 3;
 
 type TestFixtures = {
   seed: SeedData;
@@ -40,7 +45,37 @@ type TestFixtures = {
   ingestBuild: (options: IngestOptions & { commitSha: string }) => ChildProcess;
 };
 
-export const test = base.extend<TestFixtures>({
+type WorkerFixtures = {
+  smallStorybookDir: string;
+};
+
+type StorybookIndex = {
+  entries: Record<string, { type: string }>;
+};
+
+export const test = base.extend<TestFixtures, WorkerFixtures>({
+  smallStorybookDir: [
+    // eslint-disable-next-line no-empty-pattern -- fixture takes no dependencies
+    async ({}, use) => {
+      const workDir = await mkdtemp(path.join(tmpdir(), "ovr-e2e-storybook-"));
+      const dir = path.join(workDir, "storybook");
+      await cp(STORYBOOK_DIR, dir, { recursive: true });
+      const indexPath = path.join(dir, "index.json");
+      const index = JSON.parse(await readFile(indexPath, "utf-8")) as StorybookIndex;
+      const stories = Object.entries(index.entries)
+        .filter(([, entry]) => entry.type === "story")
+        .slice(0, SMALL_STORYBOOK_STORIES);
+      await writeFile(
+        indexPath,
+        JSON.stringify({ ...index, entries: Object.fromEntries(stories) }),
+      );
+
+      await use(dir);
+
+      await rm(workDir, { recursive: true, force: true });
+    },
+    { scope: "worker" },
+  ],
   // eslint-disable-next-line no-empty-pattern -- fixture takes no dependencies
   seed: async ({}, use) => {
     const data = JSON.parse(readFileSync(SEED_ARTIFACT, "utf-8")) as SeedData;

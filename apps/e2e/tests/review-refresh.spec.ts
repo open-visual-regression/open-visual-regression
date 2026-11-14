@@ -6,9 +6,10 @@ test.describe("Review refresh", () => {
     page,
     buildPage,
     seedClient,
+    smallStorybookDir,
     snapshotReviewPage,
   }) => {
-    const reviewable = await seedReviewableSnapshot(seedClient);
+    const reviewable = await seedReviewableSnapshot(seedClient, smallStorybookDir);
 
     await buildPage.goto(reviewable.projectId, reviewable.buildId);
     await expect(buildPage.snapshotCard(reviewable, "needs review")).toBeVisible();
@@ -29,8 +30,9 @@ test.describe("Review refresh", () => {
   test("should update the badge and the cards when rejecting all on a settled build", async ({
     buildPage,
     seedClient,
+    smallStorybookDir,
   }) => {
-    const reviewable = await seedReviewableSnapshot(seedClient);
+    const reviewable = await seedReviewableSnapshot(seedClient, smallStorybookDir);
 
     await buildPage.goto(reviewable.projectId, reviewable.buildId);
     await buildPage.approveAllButton().click();

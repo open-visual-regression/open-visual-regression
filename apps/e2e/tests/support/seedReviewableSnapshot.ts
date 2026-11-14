@@ -15,7 +15,10 @@ export type ReviewableSnapshot = {
   viewportName: string;
 };
 
-export const seedReviewableSnapshot = async (client: SeedClient): Promise<ReviewableSnapshot> => {
+export const seedReviewableSnapshot = async (
+  client: SeedClient,
+  storybookDir: string,
+): Promise<ReviewableSnapshot> => {
   const { projectId } = await client.projects.add({
     projectName: `E2E Review ${Date.now()}`,
     projectDescription: "Project used by the snapshot review E2E test",
@@ -23,7 +26,11 @@ export const seedReviewableSnapshot = async (client: SeedClient): Promise<Review
   });
   const { key } = await client.apiKeys.create({ projectId, name: "e2e-review" });
 
-  const build = await ingestStorybook({ apiKey: key, branch: FEATURE_BRANCH });
+  const build = await ingestStorybook({
+    apiKey: key,
+    branch: FEATURE_BRANCH,
+    storybookDir,
+  });
 
   const { builds } = await client.builds.list({ projectIds: [projectId], limit: LIST_LIMIT });
   const buildId = builds.find((candidate) => candidate.commitSha === build.commitSha)?.id;

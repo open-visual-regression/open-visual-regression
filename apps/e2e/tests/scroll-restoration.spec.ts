@@ -1,13 +1,14 @@
 import { expect, test } from "./fixtures";
+import { STORYBOOK_DIR } from "./support/ingest";
 import { seedReviewableSnapshot } from "./support/seedReviewableSnapshot";
 
 test.describe("Scroll restoration", () => {
   test("should return the build page to where the user left off after going back", async ({
-    seedClient,
+    seed,
     buildPage,
     page,
   }) => {
-    const { projectId, buildId } = await seedReviewableSnapshot(seedClient);
+    const { projectId, buildId } = seed.reviewable;
 
     await buildPage.goto(projectId, buildId);
     await expect(buildPage.snapshotCards().first()).toBeVisible();
@@ -33,9 +34,9 @@ test.describe("Scroll restoration", () => {
     buildPage,
     page,
   }) => {
-    const target = await seedReviewableSnapshot(seedClient);
-    await seedReviewableSnapshot(seedClient);
-    await seedReviewableSnapshot(seedClient);
+    const target = await seedReviewableSnapshot(seedClient, STORYBOOK_DIR);
+    await seedReviewableSnapshot(seedClient, STORYBOOK_DIR);
+    await seedReviewableSnapshot(seedClient, STORYBOOK_DIR);
 
     // Short enough for a few builds to scroll.
     await page.setViewportSize({ width: 1280, height: 420 });
@@ -64,10 +65,10 @@ test.describe("Scroll restoration", () => {
   });
 
   test("should show the top of the build page when opening it fresh", async ({
-    seedClient,
+    seed,
     buildPage,
   }) => {
-    const { projectId, buildId } = await seedReviewableSnapshot(seedClient);
+    const { projectId, buildId } = seed.reviewable;
 
     await buildPage.goto(projectId, buildId);
     await expect(buildPage.snapshotCards().first()).toBeVisible();
@@ -81,11 +82,11 @@ test.describe("Scroll restoration", () => {
   });
 
   test("should leave the user where they scroll to after going back", async ({
-    seedClient,
+    seed,
     buildPage,
     page,
   }) => {
-    const { projectId, buildId } = await seedReviewableSnapshot(seedClient);
+    const { projectId, buildId } = seed.reviewable;
 
     await buildPage.goto(projectId, buildId);
     await expect(buildPage.snapshotCards().first()).toBeVisible();

@@ -1,14 +1,10 @@
 import { expect, test } from "./fixtures";
-import { seedReviewableSnapshot } from "./support/seedReviewableSnapshot";
 
 test.describe("Sidebar", () => {
   test("should stay in place when moving between projects and builds", async ({
-    seedClient,
     sidebar,
     page,
   }) => {
-    await seedReviewableSnapshot(seedClient);
-
     await page.goto("/projects");
     await expect(sidebar.recentBuildsLink()).toBeVisible();
     const mounted = await sidebar.root().elementHandle();

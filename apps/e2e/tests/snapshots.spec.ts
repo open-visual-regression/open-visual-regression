@@ -6,9 +6,10 @@ import { seedReviewableSnapshot } from "./support/seedReviewableSnapshot";
 test.describe("Snapshots", () => {
   test("should approve, reject, and remove a review for a snapshot", async ({
     seedClient,
+    smallStorybookDir,
     snapshotReviewPage,
   }) => {
-    const reviewable = await seedReviewableSnapshot(seedClient);
+    const reviewable = await seedReviewableSnapshot(seedClient, smallStorybookDir);
     const goto = () =>
       snapshotReviewPage.goto(reviewable.projectId, reviewable.buildId, reviewable.snapshotId);
 

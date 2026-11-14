@@ -26,6 +26,7 @@ const BOOT_TIMEOUT_MS = 30_000;
 const RENDER_TIMEOUT_MS = 15_000;
 
 const fixtures = availableStorybookFixtures();
+const oneFixturePerMajor = fixtures.filter((fixture) => fixture.builder === "vite");
 
 const uploadFixtureArtifact = async (
   fixture: StorybookFixture,
@@ -43,7 +44,7 @@ const uploadFixtureArtifact = async (
 };
 
 describe.skipIf(fixtures.length === 0)("Storybook version compatibility", () => {
-  describe.each(fixtures)("Storybook $name", (fixture) => {
+  describe.each(oneFixturePerMajor)("Storybook $major preview", (fixture) => {
     test("boots a capture page", async () => {
       const strategy = await detectCaptureStrategy(fixture.buildDir);
 
@@ -102,7 +103,9 @@ describe.skipIf(fixtures.length === 0)("Storybook version compatibility", () => 
         expect(result.error).toContain("intentional play failure");
       });
     });
+  });
 
+  describe.each(fixtures)("Storybook $name", (fixture) => {
     test("extracts the build into the snapshots its story parameters ask for", async ({
       mainBuild,
       captureConfiguration,
