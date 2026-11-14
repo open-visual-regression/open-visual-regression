@@ -1,0 +1,49 @@
+---
+title: Self-hosting
+sidebarTitle: Overview
+description: What you need to run OVR, and how to choose between Docker Compose and Kubernetes.
+---
+
+OVR runs on your own infrastructure. You run two services, and give them a database, a queue, and storage:
+
+| Component | What it does |
+| --- | --- |
+| **Web app** | Serves the dashboard and the API the CLI uploads to |
+| **Worker** | Captures snapshots in headless browsers and compares them with their baselines |
+| **Postgres** | Stores projects, builds, reviews, and users |
+| **Redis** | Holds the queue of work for the workers. Any Redis-compatible server works, such as Valkey |
+| **Object storage** | Stores uploaded builds and images. Any S3-compatible service works |
+
+A migration step runs before each new version starts, to update the database.
+
+## Choose how to run it
+
+- **[Docker Compose](/self-hosting/docker-compose)** runs everything on one machine, including Postgres, Valkey, and object storage if you want. It's the quickest way to start.
+- **[Kubernetes with Helm](/self-hosting/helm)** runs the web app and workers in your cluster, and scales workers with the queue. You bring Postgres, Redis, and object storage.
+
+Either way, you can use managed services, like Amazon RDS, ElastiCache, and S3, for any of the three.
+
+## Sizing
+
+The worker does the heavy work. CPU and memory grow with how many captures run at once, not with how many builds you upload. Each worker runs two captures at a time by default, each in its own browser. Run more workers, or raise [`OVR_CAPTURE_GROUP_CONCURRENCY`](/reference/environment-variables#capture), to capture more at once.
+
+Object storage grows with the number of builds and how long you keep them, which each project's [retention period](/manage/projects#settings) controls.
+
+## Network
+
+- CI and browsers reach the **web app** at `BASE_URL`.
+- CI and browsers also reach **object storage**, at its public address, to upload builds and load images. See `STORAGE_PUBLIC_ENDPOINT` in [Environment variables](/reference/environment-variables#object-storage).
+- The web app and worker reach **GitHub**, if projects post [commit statuses](/manage/git-status-checks).
+- The worker reaches any host your stories load content from, unless you [block external requests](/reference/ovr-config#blocking-external-requests).
+
+### Reverse proxies
+
+Pages stream in as their data loads. Turn off response buffering for the web app on any proxy, load balancer, or ingress in front of it, or pages wait for all their data before showing anything. nginx turns it off on its own.
+
+## Backups
+
+Back up **Postgres** and **object storage**. Together they hold everything: projects, builds, reviews, and images. Redis only holds work in progress, so losing it loses builds that were still running, which you can rebuild.
+
+## Next steps
+
+After installing, open OVR, create the first admin account, and [create a project](/manage/projects). Then [run OVR in CI](/run-in-ci).
