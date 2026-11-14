@@ -50,6 +50,7 @@ type ActionsRowProps = {
   total: number | null;
   filters?: SnapshotFilters;
   canReview: boolean;
+  hasVoted: boolean;
   sidebarCollapsed: boolean;
   onToggleSidebar: () => void;
 };
@@ -65,13 +66,16 @@ export const SnapshotActionsRow = ({
   total,
   filters,
   canReview,
+  hasVoted,
   sidebarCollapsed,
   onToggleSidebar,
 }: ActionsRowProps) => {
   const buildHref = withSnapshotFilters(`/projects/${projectId}/builds/${buildId}`, filters);
   const snapshotHref = (id: string) =>
     withSnapshotFilters(`/projects/${projectId}/builds/${buildId}/snapshots/${id}`, filters);
-  const nextHref = nextSnapshotId ? snapshotHref(nextSnapshotId) : null;
+  // Only advance after voting when this is the user's first vote on the snapshot; changing an
+  // existing vote keeps them here.
+  const nextHref = nextSnapshotId && !hasVoted ? snapshotHref(nextSnapshotId) : null;
 
   return (
     <SnapshotActionsRowLayout>

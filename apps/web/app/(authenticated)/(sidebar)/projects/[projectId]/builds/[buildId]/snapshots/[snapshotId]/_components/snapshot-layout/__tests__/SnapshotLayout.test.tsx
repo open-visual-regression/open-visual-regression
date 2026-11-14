@@ -49,6 +49,7 @@ const renderComponent = (queryClient = createQueryClient(), sidebarOpen = false)
       position={null}
       total={null}
       canReview={true}
+      hasVoted={false}
       sidebar={<div>sidebar contents</div>}
     >
       <div>snapshot contents</div>
