@@ -5,9 +5,10 @@ const LIST_LIMIT = 100;
 
 test("rebuilding a snapshot captures it again and leaves the rest of the build alone", async ({
   seedClient,
+  smallStorybookDir,
   snapshotReviewPage,
 }) => {
-  const reviewable = await seedReviewableSnapshot(seedClient);
+  const reviewable = await seedReviewableSnapshot(seedClient, smallStorybookDir);
 
   const { snapshot: before } = await seedClient.snapshots.getOne({
     snapshotId: reviewable.snapshotId,

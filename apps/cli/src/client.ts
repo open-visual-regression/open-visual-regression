@@ -14,6 +14,11 @@ const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
 const MAX_RETRY_DELAY_MS = 10_000;
 
+export type ClientOptions = {
+  timeoutMs?: number;
+  retryDelayMs?: number;
+};
+
 export class RequestTimeoutError extends Error {
   constructor(timeoutMs: number) {
     super(`no response after ${timeoutMs / 1000}s`);
@@ -27,10 +32,7 @@ const isUnknownProcedure = (response: Response): boolean =>
 export const createClient = (
   serverUrl: string,
   apiKey: string,
-  {
-    timeoutMs = REQUEST_TIMEOUT_MS,
-    retryDelayMs = RETRY_DELAY_MS,
-  }: { timeoutMs?: number; retryDelayMs?: number } = {},
+  { timeoutMs = REQUEST_TIMEOUT_MS, retryDelayMs = RETRY_DELAY_MS }: ClientOptions = {},
 ): OvrClient => {
   const link = new RPCLink({
     url: `${serverUrl}/api/rpc`,

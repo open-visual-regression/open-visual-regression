@@ -1180,8 +1180,6 @@ describe("snapshots", () => {
         targetId: "story-large",
         imagePath: baselinePath,
       });
-      // A leak of each diff's buffers grows RSS by ~300MB over 30 diffs; without one it stays near
-      // 100MB, so 30 is enough to tell them apart.
       const snapshots = await dbClient.snapshots.createMany({
         values: Array.from({ length: 30 }, () => ({
           buildId: featureBuild.id,

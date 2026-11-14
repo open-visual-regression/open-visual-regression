@@ -51,7 +51,7 @@ setup("provision the test fixtures", async ({ page, context }) => {
 
   const { key } = await client.apiKeys.create({ projectId, name: "e2e" });
 
-  const reviewable = await seedReviewableSnapshot(client, { storybookDir: STORYBOOK_DIR });
+  const reviewable = await seedReviewableSnapshot(client, STORYBOOK_DIR);
 
   await mkdir(path.dirname(SEED_ARTIFACT), { recursive: true });
   await writeFile(

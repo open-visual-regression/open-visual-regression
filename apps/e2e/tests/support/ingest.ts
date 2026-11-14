@@ -1,7 +1,5 @@
 import { execFile, spawn, type ChildProcess } from "node:child_process";
 import { randomBytes } from "node:crypto";
-import { cp, mkdtemp, readFile, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 
@@ -15,29 +13,6 @@ const CLI_ENTRY = process.env.OVR_CLI_ENTRY ?? path.join(REPO_ROOT, "apps/cli/di
 const STORYBOOK_PKG_DIR = process.env.OVR_STORYBOOK_PKG_DIR ?? path.join(REPO_ROOT, "packages/ui");
 export const STORYBOOK_DIR =
   process.env.OVR_STORYBOOK_DIR ?? path.join(STORYBOOK_PKG_DIR, "storybook-static");
-
-const SMALL_STORYBOOK_STORIES = 3;
-
-let smallStorybook: Promise<string> | undefined;
-
-// A copy of the Storybook that lists only a few stories, for tests that need a build to exist
-// rather than a full one: it captures in a fraction of the time.
-export const smallStorybookDir = (): Promise<string> => {
-  smallStorybook ??= (async () => {
-    const dir = path.join(await mkdtemp(path.join(tmpdir(), "ovr-e2e-storybook-")), "storybook");
-    await cp(STORYBOOK_DIR, dir, { recursive: true });
-    const indexPath = path.join(dir, "index.json");
-    const index = JSON.parse(await readFile(indexPath, "utf-8")) as {
-      entries: Record<string, { type: string }>;
-    };
-    const stories = Object.entries(index.entries)
-      .filter(([, entry]) => entry.type === "story")
-      .slice(0, SMALL_STORYBOOK_STORIES);
-    await writeFile(indexPath, JSON.stringify({ ...index, entries: Object.fromEntries(stories) }));
-    return dir;
-  })();
-  return smallStorybook;
-};
 
 export type IngestOptions = {
   apiKey: string;

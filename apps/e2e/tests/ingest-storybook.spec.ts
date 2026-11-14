@@ -19,7 +19,6 @@ test.describe("Storybook ingestion", () => {
     };
     await expect.poll(findBuildId, { timeout: 60_000, intervals: [500] }).not.toBeNull();
 
-    // The page picks up each status change without a reload.
     await buildPage.goto(seed.projectId, (await findBuildId())!);
     await expect(buildPage.status()).toHaveText(/queued|processing/);
     await expect(buildPage.cancelButton()).toBeVisible();

@@ -33,7 +33,6 @@ vi.mock("@ovr/capture-browser/timeouts", async (importOriginal) => ({
 }));
 
 const SNAPSHOT_COUNT = 3;
-// Stalls past the group's timeout, so it fires mid-capture.
 const STALLED_CAPTURE_MS = CAPTURE_JOB_TIMEOUT_MS * SNAPSHOT_COUNT + 1_000;
 
 const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));

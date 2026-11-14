@@ -1,5 +1,5 @@
 import type { SeedClient } from "../seed/client";
-import { ingestStorybook, smallStorybookDir } from "./ingest";
+import { ingestStorybook } from "./ingest";
 
 const FEATURE_BRANCH = "feature/e2e-review";
 
@@ -7,7 +7,6 @@ const LIST_LIMIT = 100;
 
 export type ReviewableSnapshot = {
   projectId: string;
-  apiKey: string;
   buildId: string;
   snapshotId: string;
   targetTitle: string;
@@ -16,10 +15,9 @@ export type ReviewableSnapshot = {
   viewportName: string;
 };
 
-// Ingests a few stories by default; pass the full Storybook for a build long enough to scroll.
 export const seedReviewableSnapshot = async (
   client: SeedClient,
-  { storybookDir }: { storybookDir?: string } = {},
+  storybookDir: string,
 ): Promise<ReviewableSnapshot> => {
   const { projectId } = await client.projects.add({
     projectName: `E2E Review ${Date.now()}`,
@@ -31,7 +29,7 @@ export const seedReviewableSnapshot = async (
   const build = await ingestStorybook({
     apiKey: key,
     branch: FEATURE_BRANCH,
-    storybookDir: storybookDir ?? (await smallStorybookDir()),
+    storybookDir,
   });
 
   const { builds } = await client.builds.list({ projectIds: [projectId], limit: LIST_LIMIT });
@@ -54,7 +52,6 @@ export const seedReviewableSnapshot = async (
 
   return {
     projectId,
-    apiKey: key,
     buildId,
     snapshotId: snapshot.id,
     targetTitle: snapshot.targetTitle,

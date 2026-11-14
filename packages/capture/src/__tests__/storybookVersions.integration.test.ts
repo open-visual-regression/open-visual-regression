@@ -26,8 +26,6 @@ const BOOT_TIMEOUT_MS = 30_000;
 const RENDER_TIMEOUT_MS = 15_000;
 
 const fixtures = availableStorybookFixtures();
-// The preview runtime these page checks drive ships with each major version, whatever the builder,
-// and every builder still boots a page in the screenshot test below.
 const oneFixturePerMajor = fixtures.filter((fixture) => fixture.builder === "vite");
 
 const uploadFixtureArtifact = async (

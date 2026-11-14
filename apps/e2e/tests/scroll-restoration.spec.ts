@@ -1,8 +1,5 @@
-import { randomBytes } from "node:crypto";
-
-import { getBaseURL } from "./constants";
 import { expect, test } from "./fixtures";
-import { createTokenClient } from "./seed/client";
+import { STORYBOOK_DIR } from "./support/ingest";
 import { seedReviewableSnapshot } from "./support/seedReviewableSnapshot";
 
 test.describe("Scroll restoration", () => {
@@ -37,12 +34,9 @@ test.describe("Scroll restoration", () => {
     buildPage,
     page,
   }) => {
-    const target = await seedReviewableSnapshot(seedClient);
-    // Rows to scroll past: they only need to be listed, not captured.
-    const uploader = createTokenClient(getBaseURL(), target.apiKey);
-    for (const branch of ["feature/scroll-filler-1", "feature/scroll-filler-2"]) {
-      await uploader.builds.createBuild({ branch, commitSha: randomBytes(20).toString("hex") });
-    }
+    const target = await seedReviewableSnapshot(seedClient, STORYBOOK_DIR);
+    await seedReviewableSnapshot(seedClient, STORYBOOK_DIR);
+    await seedReviewableSnapshot(seedClient, STORYBOOK_DIR);
 
     // Short enough for a few builds to scroll.
     await page.setViewportSize({ width: 1280, height: 420 });

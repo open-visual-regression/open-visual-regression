@@ -29,6 +29,5 @@ export const getBaseURL = (): string => process.env.PLAYWRIGHT_BASE_URL ?? "http
 export type SeedData = {
   projectId: string;
   apiKey: string;
-  // A full build awaiting review, shared by the tests that only look at it.
   reviewable: ReviewableSnapshot;
 };
