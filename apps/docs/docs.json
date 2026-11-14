@@ -19,7 +19,7 @@
         "groups": [
           {
             "group": "Get started",
-            "pages": ["index", "how-ovr-works"]
+            "pages": ["index", "quickstart", "how-ovr-works"]
           },
           {
             "group": "Using OVR",
