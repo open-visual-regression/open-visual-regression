@@ -73,6 +73,7 @@ export const NeedsReview: Story = {
     position: 3,
     total: 5,
     canReview: true,
+    hasVoted: false,
     sidebarCollapsed: true,
   },
 };

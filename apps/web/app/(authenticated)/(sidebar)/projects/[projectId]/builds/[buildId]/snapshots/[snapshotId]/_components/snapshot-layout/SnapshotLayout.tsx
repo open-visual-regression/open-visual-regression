@@ -23,6 +23,7 @@ export type SnapshotLayoutProps = {
   total: number | null;
   filters?: SnapshotFilters;
   canReview: boolean;
+  hasVoted: boolean;
   sidebar: React.ReactNode;
   children: React.ReactNode;
 };
@@ -38,6 +39,7 @@ export const SnapshotLayout = ({
   total,
   filters,
   canReview,
+  hasVoted,
   sidebar,
   children,
 }: SnapshotLayoutProps) => {
@@ -66,6 +68,7 @@ export const SnapshotLayout = ({
           total={total}
           filters={filters}
           canReview={canReview}
+          hasVoted={hasVoted}
           sidebarCollapsed={!sidebarOpen}
           onToggleSidebar={toggleSidebar}
         />

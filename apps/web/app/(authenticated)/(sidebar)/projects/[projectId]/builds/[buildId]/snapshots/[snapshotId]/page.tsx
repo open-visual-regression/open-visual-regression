@@ -68,6 +68,8 @@ export default async function SnapshotPage(props: SnapshotPageProps) {
   const { baseline } = baselineResult;
   const { prevSnapshotId, nextSnapshotId, position, total } = adjacentResult;
 
+  const hasVoted = reviewsResult.reviews.some((review) => review.reviewerId === session?.user.id);
+
   const storybookHref = hasHostedStorybook(build)
     ? getStorybookStoryPath(build.id, snapshot.targetId)
     : null;
@@ -84,6 +86,7 @@ export default async function SnapshotPage(props: SnapshotPageProps) {
       total={total}
       filters={filters}
       canReview={canReview(session?.user.role)}
+      hasVoted={hasVoted}
       sidebar={
         <SnapshotSidebarContent
           projectId={projectId}

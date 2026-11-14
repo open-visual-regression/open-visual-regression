@@ -68,6 +68,7 @@ const renderComponent = (
     total: number | null;
     filters: SnapshotFilters;
     canReview: boolean;
+    hasVoted: boolean;
     sidebarCollapsed: boolean;
     onToggleSidebar: () => void;
   }> = {},
@@ -86,6 +87,7 @@ const renderComponent = (
         position={3}
         total={5}
         canReview={true}
+        hasVoted={false}
         sidebarCollapsed={true}
         onToggleSidebar={vi.fn()}
         {...props}
@@ -167,6 +169,32 @@ describe("SnapshotActionsRow", () => {
 
     expect(mockPush).not.toHaveBeenCalled();
     await waitFor(() => expect(mockRefresh).toHaveBeenCalled());
+  });
+
+  it("should stay on the snapshot when changing an existing vote to approve", async ({ user }) => {
+    const mockCastVote = mockHandlers.mockCastVote();
+    renderComponent({ snapshot: { ...snapshot, status: "rejected" }, hasVoted: true });
+
+    await user.click(screen.getByRole("button", { name: /^approve$/i }));
+
+    await waitFor(() =>
+      expect(mockCastVote).toHaveBeenCalledWith({ diffId: diff.id, vote: "approve" }),
+    );
+    await waitFor(() => expect(mockRefresh).toHaveBeenCalled());
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it("should stay on the snapshot when changing an existing vote to reject", async ({ user }) => {
+    const mockCastVote = mockHandlers.mockCastVote();
+    renderComponent({ snapshot: { ...snapshot, status: "approved" }, hasVoted: true });
+
+    await user.click(screen.getByRole("button", { name: /^reject$/i }));
+
+    await waitFor(() =>
+      expect(mockCastVote).toHaveBeenCalledWith({ diffId: diff.id, vote: "reject" }),
+    );
+    await waitFor(() => expect(mockRefresh).toHaveBeenCalled());
+    expect(mockPush).not.toHaveBeenCalled();
   });
 
   it("should still navigate to the next snapshot optimistically, then show an error toast if approving fails", async ({

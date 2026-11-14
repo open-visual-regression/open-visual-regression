@@ -50,6 +50,7 @@ type ActionsRowProps = {
   total: number | null;
   filters?: SnapshotFilters;
   canReview: boolean;
+  hasVoted: boolean;
   sidebarCollapsed: boolean;
   onToggleSidebar: () => void;
 };
@@ -65,13 +66,14 @@ export const SnapshotActionsRow = ({
   total,
   filters,
   canReview,
+  hasVoted,
   sidebarCollapsed,
   onToggleSidebar,
 }: ActionsRowProps) => {
   const buildHref = withSnapshotFilters(`/projects/${projectId}/builds/${buildId}`, filters);
   const snapshotHref = (id: string) =>
     withSnapshotFilters(`/projects/${projectId}/builds/${buildId}/snapshots/${id}`, filters);
-  const nextHref = nextSnapshotId ? snapshotHref(nextSnapshotId) : null;
+  const nextHref = nextSnapshotId && !hasVoted ? snapshotHref(nextSnapshotId) : null;
 
   return (
     <SnapshotActionsRowLayout>
