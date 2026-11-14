@@ -3,7 +3,9 @@ title: ovr diffs
 description: Inspect a snapshot's diff against its baseline, and approve or reject it.
 ---
 
-Authenticates with a [personal access token](/cli/authentication) — a project API key is rejected.
+import RequiresPermission from "/snippets/requires-permission.mdx";
+
+Takes a [personal access token](/cli/authentication). Every subcommand also takes the [global flags](/cli/installation#global-flags).
 
 ## `ovr diffs get`
 
@@ -12,18 +14,11 @@ ovr diffs get <snapshotId>
 ```
 
 | Flag | Description |
-|------|-------------|
-| `--server-url <url>` | OVR server URL (defaults to `ovr.config`'s `serverUrl`) |
-| `-c, --config <path>` | Path to `ovr.config` file |
-| `--json` | Print the diff as JSON instead of formatted text |
-| `--download <dir>` | Save the baseline, new and diff images to this directory |
+| --- | --- |
+| `--download <dir>` | Save the baseline, new, and diff images to this directory as `baseline.png`, `new.png`, and `diff.png` |
 | `--analyze` | Describe what changed, such as content that moved |
 
-Takes a snapshot ID — find one with [`ovr snapshots list`](/cli/snapshots) — and
-prints how that snapshot's capture compares to its baseline: the diff's ID, review
-status, processing status, pixel diff count, diff percentage, and diff image path.
-When the snapshot has a baseline, its image path is included too, along with its
-commit and a link to that commit when the project has a git integration configured.
+Takes a snapshot ID, which you can find with [`ovr snapshots list`](/cli/snapshots#ovr-snapshots-list), and shows how the snapshot compares to its baseline. When the project has a [git integration](/self-hosting/github-app), the baseline's commit links to your git provider.
 
 ```
 Diff:       01a092d6-b0aa-71bf-9312-dd8ef48a22fb
@@ -37,25 +32,15 @@ Baseline commit: a1b2c3d
 Baseline commit URL: https://github.com/example/repo/commit/a1b2c3d
 ```
 
-A snapshot with no diff — one with no baseline to compare against, or one that
-errored before it could be diffed — prints `No diff for this snapshot.` (or `null`
-with `--json`) rather than an error.
+A snapshot with nothing to compare, because it's new or failed, prints `No diff for this snapshot.`
 
-With `--download <dir>`, the images are saved as `baseline.png`, `new.png` and `diff.png`
-in that directory.
-
-With `--analyze`, the change is described under an `Analysis:` section: how many pixels
-changed and where, whether the content moved (and by how much), and whether the
-screenshot changed size. A snapshot whose content moves by a few pixels between builds
-usually has a timing-dependent animation or interaction.
+`--analyze` describes the change: how many pixels changed and where, whether the content moved, and whether the image changed size. Content that moves by a few pixels between builds usually points to an animation or something that depends on timing.
 
 ```
 Analysis:
   15169 pixels changed within 337x718 at 347,61
   Content moved 19px left (explains 100% of the change)
 ```
-
-With `--json`, the analysis is added to the diff as an `analysis` field.
 
 ## `ovr diffs approve` and `ovr diffs reject`
 
@@ -64,14 +49,6 @@ ovr diffs approve <snapshotId>
 ovr diffs reject <snapshotId>
 ```
 
-| Flag | Description |
-|------|-------------|
-| `--server-url <url>` | OVR server URL (defaults to `ovr.config`'s `serverUrl`) |
-| `-c, --config <path>` | Path to `ovr.config` file |
+Votes on the snapshot's diff and prints its review status. Voting again replaces your earlier vote. Removing a vote is only possible in the web app.
 
-Takes a snapshot ID, like `ovr diffs get`, casts your vote on its diff, and prints the diff's review status. Voting
-again replaces your earlier vote, so `ovr diffs reject` after an accidental approve changes your vote. Removing a
-vote altogether is only possible in the web app.
-
-Needs an access token with the [`reviews:write`](/cli/authentication#access-token-permissions)
-permission, owned by someone who isn't a viewer.
+<RequiresPermission permission="reviews:write" />

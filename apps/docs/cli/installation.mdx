@@ -39,15 +39,29 @@ yarn dlx @open-visual-regression/cli
 
 ## Authentication
 
-Every command reads its credential from `OVR_API_KEY`. See [Authentication](/cli/authentication) for the two kinds of token and which commands take which.
-
-## Server URL
-
-Every command needs an OVR server URL. Resolved in order: a command's `--server-url` flag, then `serverUrl` in [`ovr.config`](/configuration/config).
+Every command reads its credential from `OVR_API_KEY`. Uploads take a project API key and every other command takes your personal access token. See [Authentication](/cli/authentication).
 
 ## Commands
 
-- [`ovr upload storybook`](/cli/upload-storybook) uploads a Storybook build and reports the result
-- [`ovr builds`](/cli/builds) lists and inspects builds
-- [`ovr snapshots`](/cli/snapshots) lists, counts and inspects a build's snapshots
-- [`ovr diffs`](/cli/diffs) inspects a snapshot's diff against its baseline
+| Command | Does |
+| --- | --- |
+| [`ovr upload storybook`](/cli/upload-storybook) | Uploads a Storybook build |
+| [`ovr capture storybook`](/cli/capture-storybook) | Captures stories on your machine to check they're stable |
+| [`ovr builds`](/cli/builds) | Lists, inspects, cancels, rebuilds, and reviews builds |
+| [`ovr snapshots`](/cli/snapshots) | Lists, counts, inspects, and rebuilds a build's snapshots |
+| [`ovr diffs`](/cli/diffs) | Inspects, approves, and rejects a snapshot's diff |
+
+## Global flags
+
+Every command that talks to OVR takes these:
+
+| Flag | Description |
+| --- | --- |
+| `--server-url <url>` | OVR server URL. Defaults to `serverUrl` in [`ovr.config`](/configuration/config) |
+| `-c, --config <path>` | Path to `ovr.config.ts`, `.js`, or `.mjs`. Defaults to the one in the current directory |
+
+Commands that print results also take `--json`, which prints JSON instead of a table. Progress messages go to stderr, so the JSON on stdout can be piped to `jq`.
+
+## Exit codes
+
+Commands exit `0` on success and `1` on failure. With `--wait`, a command exits `0` only when the build is `unchanged`, `auto_approved`, or `approved`. It exits `1` when the build needs review, is rejected or canceled, fails, or times out.
