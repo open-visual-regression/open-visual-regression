@@ -31,7 +31,7 @@ flowchart LR
 1. CI builds your UI and uploads it with the [CLI](/cli/overview). The upload names the branch and commit.
 2. A worker opens the build in a browser and captures a snapshot at each viewport.
 3. The worker compares each snapshot with its baseline. A snapshot is unchanged when the share of pixels that differ is at or below the diff threshold, 5% by default. Above that, it has changed.
-4. The build gets a [status](/reference/statuses), and OVR posts it as a commit status when the project has a [git integration](/self-hosting/github-app).
+4. The build gets a [status](/reference/statuses), and OVR posts it as a commit status when the project has a [git integration](/manage/git-status-checks).
 5. If anything changed, reviewers approve or reject it, and the status updates.
 
 ## The main branch and other branches
@@ -52,7 +52,7 @@ The build's status follows its snapshots: it's rejected if any snapshot is rejec
 
 Only the latest build on a branch can be reviewed. When you push a new commit, its build replaces the previous one, and OVR cancels the previous build if it's still running.
 
-Admins and reviewers can vote. Viewers can see everything but can't vote.
+Admins and reviewers can vote. Viewers can see everything but can't vote. See [Users and roles](/manage/users-and-roles).
 
 ## Retention
 

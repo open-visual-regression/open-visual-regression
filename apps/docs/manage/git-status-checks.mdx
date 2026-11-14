@@ -1,0 +1,28 @@
+---
+title: Git status checks
+description: Post each build's result to its commit on GitHub, so pull requests can wait for visual review.
+---
+
+With a git integration, OVR posts a commit status for every build of a project, named `Open Visual Regression / <project name>`. It's pending while the build runs, fails while changes need review, and passes once they're approved. See [Statuses](/reference/statuses#commit-statuses) for every state.
+
+To block merging until visual changes are approved, make the status required in your repository's branch protection rules.
+
+OVR supports GitHub. GitHub Enterprise Server isn't supported.
+
+## Set it up
+
+An admin sets up the git integration on the project's **settings** page, under **git integration**:
+
+1. Set **repository** to the repository's `owner/repo`.
+2. Choose how OVR authenticates with GitHub, under **authentication**:
+   - **access token**: paste a GitHub token that can write commit statuses to the repository. A fine-grained token needs the **Commit statuses: Read and write** permission. Its owner needs write access to the repository.
+   - **github app**: use the GitHub App your OVR operator set up. This option only appears once there is one. See [GitHub App](/self-hosting/github-app).
+3. Click **save**, then **test connection** to check that OVR can post statuses.
+
+A token belongs to whoever created it, and stops working when it expires or they leave. A GitHub App doesn't, so prefer it if your operator can set one up.
+
+The integration also links each build's commit and branch to GitHub.
+
+## Turn status checks off
+
+**disable** stops builds from posting statuses, and keeps the commit and branch links. **enable** turns them back on. **disconnect** removes the integration and its stored token.

@@ -1,0 +1,42 @@
+---
+title: API keys and access tokens
+description: The credentials CI and the CLI use, and what each one can do.
+---
+
+The CLI reads its credential from `OVR_API_KEY`:
+
+```sh
+export OVR_API_KEY=...
+```
+
+OVR has two kinds of credentials, and each CLI command takes one of them:
+
+| Credential | Belongs to | Used by |
+| --- | --- | --- |
+| API key | A project | `ovr upload storybook`, usually in CI |
+| Access token | A person | `ovr builds`, `ovr snapshots`, and `ovr diffs` |
+
+## API keys
+
+An API key can only upload builds, and only to its own project. Admins create them on the project's **settings** page, under **api keys**, with **new api key**. The key is shown once, so copy it into your CI's secrets straight away. Revoke a key from the same list.
+
+## Access tokens
+
+An access token lets you, or a script or AI agent working for you, use the CLI's other commands. Create one under **Settings → Access tokens** with **new access token**. It's shown once.
+
+A token acts as you. It can see every project you can, and it can only do what your [role](/manage/users-and-roles) allows: a viewer's token can't cancel, rebuild, approve, or reject, whatever its permissions.
+
+### Permissions
+
+Every access token can read builds (`builds:read`). When you create one, you can also give it:
+
+| Permission | Lets the token |
+| --- | --- |
+| `builds:write` | Cancel and rebuild builds, and rebuild some of a build's snapshots |
+| `reviews:write` | Approve or reject a snapshot, or every snapshot in a build |
+
+Removing a vote is only possible in the web app.
+
+You can't change a token's permissions after creating it. Create a new token and revoke the old one.
+
+With [SSO](/self-hosting/sso#personal-access-tokens), a token stops working about a week after its owner last signed in.

@@ -1,0 +1,29 @@
+---
+title: Projects
+description: Create a project and change its main branch, reviewers, retention, and keys.
+---
+
+A project is one UI you test, usually one repository's Storybook. Everyone in the organization can see every project. Only admins can create, change, or delete them.
+
+## Create a project
+
+Open **projects** and click **new project**. Give it a **name**, an optional **description**, and its **git main branch**, the branch whose builds become the [baseline](/how-ovr-works#the-main-branch-and-other-branches).
+
+The project's ID is the last part of its URL. You'll need it for [baseline links](/baselines#stable-links).
+
+## Settings
+
+A project's **settings** page has:
+
+| Setting | Default | Description |
+| --- | --- | --- |
+| **name**, **description** | | How the project is shown in OVR |
+| **git main branch** | | The branch whose builds are approved automatically and become the baseline |
+| **required reviewers** | `1` | How many approvals a changed snapshot needs. One rejection rejects it, whatever this is set to |
+| **retention days** | `90` | How long builds are kept. Builds older than this are deleted each night, except those holding a current baseline |
+
+Below them are the project's [API keys](/manage/api-keys-and-tokens#api-keys) and its [git integration](/manage/git-status-checks).
+
+## Delete a project
+
+**delete project**, at the bottom of the settings page, deletes the project with all its builds and images. It can't be undone.

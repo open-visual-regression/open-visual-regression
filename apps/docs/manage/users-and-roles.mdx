@@ -1,0 +1,33 @@
+---
+title: Users and roles
+description: Invite people to OVR and choose what each of them can do.
+---
+
+Everyone in an OVR organization has one of three roles:
+
+| | viewer | reviewer | admin |
+| --- | :---: | :---: | :---: |
+| See projects, builds, and snapshots | ✓ | ✓ | ✓ |
+| Create access tokens | ✓ | ✓ | ✓ |
+| Approve and reject snapshots | | ✓ | ✓ |
+| Cancel and rebuild builds and snapshots | | ✓ | ✓ |
+| Remove someone else's vote | | | ✓ |
+| Create, change, and delete projects, API keys, and git integrations | | | ✓ |
+| Invite and remove people, and change their roles | | | ✓ |
+| Change organization and job settings | | | ✓ |
+
+The person who sets up OVR becomes its first admin.
+
+## Invite someone
+
+1. Open **Settings → Users** and click **invite user**.
+2. Enter their email address.
+3. Copy the invite link and send it to them. OVR doesn't send email.
+
+They join as a reviewer when they accept. To change their role, open the role next to their name in the users list. You can't change your own role.
+
+To remove someone, or cancel an invitation, select them in the users list and remove them.
+
+## With SSO
+
+When people sign in through [SSO](/self-hosting/sso), their role comes from their groups in your identity provider, and OVR's invitations and role controls are turned off. Change someone's role by changing their groups.
