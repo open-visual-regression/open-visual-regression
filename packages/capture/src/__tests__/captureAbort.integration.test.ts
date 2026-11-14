@@ -19,7 +19,7 @@ import {
   uploadArtifactWithIframe,
 } from "./fixtures";
 
-const { CAPTURE_JOB_TIMEOUT_MS } = vi.hoisted(() => ({ CAPTURE_JOB_TIMEOUT_MS: 4_000 }));
+const { CAPTURE_JOB_TIMEOUT_MS } = vi.hoisted(() => ({ CAPTURE_JOB_TIMEOUT_MS: 2_000 }));
 
 vi.mock("../lib/captureTimeouts", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/captureTimeouts")>();
@@ -33,7 +33,8 @@ vi.mock("@ovr/capture-browser/timeouts", async (importOriginal) => ({
 }));
 
 const SNAPSHOT_COUNT = 3;
-const STALLED_CAPTURE_MS = CAPTURE_JOB_TIMEOUT_MS * (SNAPSHOT_COUNT + 1);
+// Stalls past the group's timeout, so it fires mid-capture.
+const STALLED_CAPTURE_MS = CAPTURE_JOB_TIMEOUT_MS * SNAPSHOT_COUNT + 1_000;
 
 const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
 const IFRAME_HTML = await readFile(path.join(TEST_DIR, "html/iframe-static.html"), "utf-8");

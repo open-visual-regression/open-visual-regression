@@ -11,6 +11,8 @@ export type OvrClient = ContractRouterClient<typeof contract>;
 
 export const REQUEST_TIMEOUT_MS = 60_000;
 const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 1000;
+const MAX_RETRY_DELAY_MS = 10_000;
 
 export class RequestTimeoutError extends Error {
   constructor(timeoutMs: number) {
@@ -25,7 +27,10 @@ const isUnknownProcedure = (response: Response): boolean =>
 export const createClient = (
   serverUrl: string,
   apiKey: string,
-  timeoutMs: number = REQUEST_TIMEOUT_MS,
+  {
+    timeoutMs = REQUEST_TIMEOUT_MS,
+    retryDelayMs = RETRY_DELAY_MS,
+  }: { timeoutMs?: number; retryDelayMs?: number } = {},
 ): OvrClient => {
   const link = new RPCLink({
     url: `${serverUrl}/api/rpc`,
@@ -57,7 +62,8 @@ export const createClient = (
       new ClientRetryPlugin({
         default: {
           retry: MAX_RETRIES,
-          retryDelay: ({ attemptIndex }) => Math.min(1000 * 2 ** attemptIndex, 10_000),
+          retryDelay: ({ attemptIndex }) =>
+            Math.min(retryDelayMs * 2 ** attemptIndex, MAX_RETRY_DELAY_MS),
           shouldRetry: ({ error }) =>
             !(error instanceof UnsupportedByServerError) &&
             (!(error instanceof ORPCError) || error.status >= 500),

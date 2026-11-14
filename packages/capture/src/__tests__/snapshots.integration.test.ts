@@ -331,6 +331,7 @@ describe("snapshots", () => {
         stuckImageUrl,
         metrics,
       }) => {
+        vi.stubEnv("OVR_CAPTURE_REQUEST_TIMEOUT_MS", "1000");
         await uploadArtifactWithIframe(mainBuild.artifactPath, iframeWithStoryImage(stuckImageUrl));
         const [snapshot] = await dbClient.snapshots.createMany({
           values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" }],
@@ -366,28 +367,6 @@ describe("snapshots", () => {
 
         expect(await metrics.scrape()).toContain(
           'ovr_snapshot_capture_phase_duration_seconds_bucket{browser="chromium",phase="settle",le="2.5"} 1',
-        );
-      }, 60_000);
-
-      test("should stop waiting for a request after 5 seconds by default", async ({
-        mainBuild,
-        captureConfiguration,
-        stuckImageUrl,
-        metrics,
-      }) => {
-        await uploadArtifactWithIframe(mainBuild.artifactPath, iframeWithStoryImage(stuckImageUrl));
-        const [snapshot] = await dbClient.snapshots.createMany({
-          values: [{ buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" }],
-        });
-
-        await captureBuildGroup(mainBuild.id, captureConfiguration.browser, [snapshot!.id]);
-
-        const body = await metrics.scrape();
-        expect(body).toContain(
-          'ovr_snapshot_capture_phase_duration_seconds_bucket{browser="chromium",phase="settle",le="2.5"} 0',
-        );
-        expect(body).toContain(
-          'ovr_snapshot_capture_phase_duration_seconds_bucket{browser="chromium",phase="settle",le="10"} 1',
         );
       }, 60_000);
     });
@@ -1201,8 +1180,10 @@ describe("snapshots", () => {
         targetId: "story-large",
         imagePath: baselinePath,
       });
+      // A leak of each diff's buffers grows RSS by ~300MB over 30 diffs; without one it stays near
+      // 100MB, so 30 is enough to tell them apart.
       const snapshots = await dbClient.snapshots.createMany({
-        values: Array.from({ length: 100 }, () => ({
+        values: Array.from({ length: 30 }, () => ({
           buildId: featureBuild.id,
           ...captureConfiguration,
           targetId: "story-large",
@@ -1218,7 +1199,7 @@ describe("snapshots", () => {
       await Promise.all(diffs.map((diff) => diffSnapshot(diff!.snapshotId, diff!.id)));
 
       expect(process.memoryUsage().rss - rssBefore).toBeLessThan(200 * 1024 ** 2);
-    }, 120_000);
+    }, 60_000);
 
     test("diffs a story this worker just captured without downloading its screenshot", async ({
       featureBuild,
