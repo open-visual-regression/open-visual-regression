@@ -117,11 +117,7 @@ export const SnapshotHistoryList = ({
   }
 
   if (entries.length === 0) {
-    return (
-      <Typography variant="caption" className="py-12 text-center">
-        no snapshots on {branch} yet
-      </Typography>
-    );
+    return <Typography variant="body-muted">no snapshots on {branch} yet</Typography>;
   }
 
   const renderEntry = (entry: SnapshotHistoryEntrySchema) => (
