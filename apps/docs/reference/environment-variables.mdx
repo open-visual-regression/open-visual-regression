@@ -1,0 +1,96 @@
+---
+title: Environment variables
+description: Every setting the web app and worker read from their environment, with the matching Helm value.
+---
+
+The web app and the worker both read their settings from environment variables. With Docker Compose, set them in `.env` or `docker-compose.yml`. With Helm, set the value in the second column, and the chart passes it to the right containers.
+
+Unless a row says otherwise, set a variable on both the web app and the worker.
+
+## Required
+
+| Variable | Helm value | Description |
+| --- | --- | --- |
+| `BASE_URL` | `env.baseUrl` | Public URL OVR is served at. Sign-in, invitation links, and links to builds use it. Defaults to `http://localhost:3000` |
+| `BETTER_AUTH_SECRET` | `auth.betterAuthSecret` | Signs sign-in sessions. Generate with `openssl rand -base64 32`. Web app only |
+| `OVR_GIT_TOKEN_ENCRYPTION_KEY` | `auth.gitTokenEncryptionKey` | Encrypts the git provider tokens projects store. Must decode to 32 bytes: generate with `openssl rand -base64 32`. Changing it makes every stored token unreadable, so each project's token has to be entered again |
+| `DATABASE_URL` | `database.url` | Postgres connection string, `postgresql://…` |
+| `REDIS_URL` | `redis.url` | Redis connection string, `redis://…` or `rediss://…` for TLS. Any Redis-compatible server works, such as Valkey |
+
+## Redis
+
+| Variable | Helm value | Default | Description |
+| --- | --- | --- | --- |
+| `REDIS_MODE` | `redis.mode` | `standalone` | `standalone` or `cluster`. For a Redis Cluster, point `REDIS_URL` at its configuration endpoint |
+
+<Warning>
+Redis must use `maxmemory-policy noeviction`. Managed Redis services often default to a policy that evicts keys, which silently drops queued work.
+</Warning>
+
+## Object storage
+
+Any S3-compatible service works, such as AWS S3, Cloudflare R2, Backblaze B2, RustFS, or MinIO. The bucket must already exist.
+
+| Variable | Helm value | Description |
+| --- | --- | --- |
+| `STORAGE_BUCKET` | `storage.bucket` | Bucket name |
+| `STORAGE_REGION` | `storage.region` | Bucket region |
+| `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY` | `storage.accessKey`, `storage.secretKey` | Credentials. Leave both unset to use the cloud provider's default credentials, such as an IAM role |
+| `STORAGE_ENDPOINT` | `storage.endpoint` | Address OVR uses to reach storage. Leave unset for AWS S3 |
+| `STORAGE_PUBLIC_ENDPOINT` | `storage.publicEndpoint` | Address the CLI uploads builds to and browsers load images from. Leave unset for AWS S3 |
+| `STORAGE_FORCE_PATH_STYLE` | `storage.forcePathStyle` | `true` for RustFS, MinIO, R2, and most self-hosted services. `false` for AWS S3 |
+
+## Sign-in and integrations
+
+| Variables | Page |
+| --- | --- |
+| `OVR_AUTH_MODE` and `OVR_AUTH_PROXY_*` | [SSO](/self-hosting/sso#configure-ovr) |
+| `OVR_GITHUB_APP_ID`, `OVR_GITHUB_APP_PRIVATE_KEY_FILE` | [GitHub App](/self-hosting/github-app#configure-ovr) |
+| `OVR_METRICS_PORT`, `OVR_METRICS_HOST` | [Metrics](/self-hosting/metrics#turn-on-metrics) |
+
+## Capture
+
+These set how much work each worker does at once. Each capture group runs its own browser, so CPU and memory grow with `OVR_CAPTURE_GROUP_CONCURRENCY`, not with how many builds you upload.
+
+| Variable | Helm value | Default | Description |
+| --- | --- | --- | --- |
+| `OVR_CAPTURE_GROUP_CONCURRENCY` | `worker.concurrency` | `2` | Capture groups a worker runs at once. Worker only |
+| `OVR_CAPTURE_GROUP_SIZE` | `worker.groupSize` | `10` | Snapshots in each capture group. Worker only |
+| `OVR_CAPTURE_REQUEST_TIMEOUT_MS` | `worker.requestTimeoutMs` | `5000` | How long a capture waits for a network request before taking the screenshot without it. Worker only |
+| `OVR_DIFF_CONCURRENCY` | `worker.diffConcurrency` | `4` | Snapshots a worker compares with their baselines at once. Worker only |
+| `OVR_STORYBOOK_CACHE_BYTES` | `worker.storybookCacheBytes` | `2147483648` (2 GB) | Disk a worker uses for unpacked Storybook builds. Worker only |
+| `OVR_IMAGE_CACHE_BYTES` | `worker.imageCacheBytes` | `536870912` (512 MB) | Disk a worker uses to cache images. Worker only |
+| `OVR_CAPTURE_QUEUE_POLICY` | `worker.captureQueuePolicy` | `deadline` | Which build's work runs next when several are waiting. See [Capture queue](#capture-queue) |
+| `OVR_CAPTURE_QUEUE_MAX_DEADLINE_MINUTES` | `worker.captureQueueMaxDeadlineMinutes` | `15` | The longest a large build waits behind newer builds under `deadline` |
+| `OVR_REAPER_STALE_MINUTES` | `worker.reaperStaleMinutes` | `30` | Minutes an unfinished build can go without progress, with no work left queued, before it's marked as failed. Worker only |
+
+### Capture queue
+
+The worker captures a build's snapshots in groups. When several builds are waiting, `OVR_CAPTURE_QUEUE_POLICY` decides which group runs next:
+
+| Policy | Runs |
+| --- | --- |
+| `deadline` | The build that's due soonest. A build is due 5 seconds per snapshot after it's queued, so small builds finish first. No build is due later than `OVR_CAPTURE_QUEUE_MAX_DEADLINE_MINUTES` after it's queued, so a large build is never held back for longer than that |
+| `round-robin` | One group from each waiting build in turn |
+| `fifo` | Groups in the order they were queued |
+
+Under every policy, groups that are being retried run first.
+
+## Retention
+
+Every night, OVR deletes builds older than each project's retention period. These settings control how hard that job works the database. All are worker only.
+
+| Variable | Helm value | Default | Description |
+| --- | --- | --- | --- |
+| `OVR_PURGE_CONCURRENCY` | `worker.purge.concurrency` | `1` | Projects purged at once, across all workers |
+| `OVR_PURGE_BATCH_SIZE` | `worker.purge.batchSize` | `10` | Builds deleted per transaction. Lower it on a small database |
+| `OVR_PURGE_BATCH_PAUSE_MS` | `worker.purge.batchPauseMs` | `500` | Pause between batches, so other queries can run |
+| `OVR_PURGE_TIME_BUDGET_MS` | `worker.purge.timeBudgetMs` | `600000` (10 minutes) | How long one project's purge runs before leaving the rest for the next night |
+
+## Logging
+
+| Variable | Helm value | Default | Description |
+| --- | --- | --- | --- |
+| `LOG_LEVEL` | `env.logLevel` | `info` | Log verbosity |
+| `LOG_FILE_PATH` | | unset | Write logs to this file instead of stdout |
+| `OVR_MEMORY_LOG_INTERVAL_MS` | | `60000` | How often a worker logs its memory use and browser processes. `0` turns it off. Worker only |

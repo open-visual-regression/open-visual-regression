@@ -37,13 +37,14 @@ cosign verify ghcr.io/open-visual-regression/charts/ovr:X.Y.Z \
 
 | Value | Description |
 | --- | --- |
-| `env.baseUrl` | Public URL the app will be served at. |
-| `auth.betterAuthSecret` | Signs auth sessions. Generate with `openssl rand -base64 32`. |
-| `auth.gitTokenEncryptionKey` | Encrypts stored git provider tokens at rest. Generate with `openssl rand -base64 32`. Rotating it invalidates every stored token. |
-| `database.url` | `postgresql://` connection string. |
-| `redis.url` | `redis://` or `rediss://` connection string. |
-| `redis.mode` | `standalone` (default) or `cluster`. |
-| `storage.bucket` / `storage.region` | Bucket name and region. The bucket must already exist. |
+| `env.baseUrl` | Public URL OVR is served at |
+| `auth.betterAuthSecret` | Signs sign-in sessions. Generate with `openssl rand -base64 32` |
+| `auth.gitTokenEncryptionKey` | Encrypts the git provider tokens projects store. Generate with `openssl rand -base64 32` |
+| `database.url` | Postgres connection string |
+| `redis.url` | Redis connection string |
+| `storage.bucket` / `storage.region` | Bucket name and region. The bucket must already exist |
+
+Each value is described in [Environment variables](/reference/environment-variables#required).
 
 To keep secrets out of your values file, set `existingSecret` to a Secret you manage, by hand or with a tool like Sealed Secrets or External Secrets. It needs the keys `DATABASE_URL`, `REDIS_URL`, `BETTER_AUTH_SECRET`, `OVR_GIT_TOKEN_ENCRYPTION_KEY`, `STORAGE_ACCESS_KEY`, and `STORAGE_SECRET_KEY`, plus `github-app-private-key.pem` if you use a GitHub App.
 
@@ -72,27 +73,17 @@ serviceAccount:
 
 ## Sizing
 
-CPU and memory scale with concurrent captures, not total build volume. Each capture group in flight runs its own browser instance.
+CPU and memory grow with how many captures run at once. Each worker runs `worker.concurrency` captures at a time, two by default, each in its own browser. The chart sets no requests or limits, so set `worker.resources` from what you see under load.
 
 | Value | Default | Description |
 | --- | --- | --- |
-| `worker.concurrency` | `2` | Capture groups a worker runs at once, each with its own browser instance. |
-| `worker.groupSize` | app default `10` | Snapshots per capture group. |
-| `worker.requestTimeoutMs` | app default `5000` | Milliseconds to wait for a story's request before capturing without it. |
-| `worker.diffConcurrency` | app default `4` | Snapshots compared against their baseline at once. |
-| `worker.storybookCacheBytes` | app default 2 GB | Pod-local disk for extracted Storybook builds. Counts against the pod's ephemeral storage. |
-| `worker.imageCacheBytes` | app default 512 MB | Pod-local disk for caching screenshots. Counts against the pod's ephemeral storage. |
-| `worker.captureQueuePolicy` | app default `deadline` | Order capture groups run in across builds. `deadline` runs the build due soonest, each due 5 seconds per snapshot after it's queued but no later than `worker.captureQueueMaxDeadlineMinutes`, so small builds go first without starving large ones. `round-robin` takes one group per browser from each build in turn. Both run retried groups first. `fifo` runs groups in queue order. Defaults to `fifo` when `worker.keda` uses its generated trigger (see below). |
-| `worker.captureQueueMaxDeadlineMinutes` | app default `15` | Under `deadline`, the most minutes after it's queued a build is due. Builds queued after that can't pass it, so a large build waits behind newer builds for at most this long. Lower it to run large builds sooner, at the cost of small builds queued behind them. Also read by the web app. |
-| `worker.reaperStaleMinutes` | app default `30` | Minutes an unfinished build can go without snapshot or diff updates before it is marked errored. A build with jobs still queued, retrying or running is never reaped, however long the queue. |
-| `worker.purge.concurrency` | app default `1` | Retention purge jobs running at once across all workers. Each deletes one project's expired builds. |
-| `worker.purge.batchSize` | app default `10` | Builds the retention purge deletes per transaction. Lower it on a small database. |
-| `worker.purge.batchPauseMs` | app default `500` | Pause between purge batches, so other queries get the database in between. |
-| `worker.purge.timeBudgetMs` | app default `600000` (10 minutes) | How long one project's purge runs before it leaves the rest for the next day. |
-| `worker.shmSize` | `1Gi` | In-memory `emptyDir` for the browser. |
-| `worker.terminationGracePeriodSeconds` | `180` | A capture group holds a browser open across snapshots. Cutting it off early fails the in-flight snapshot. |
-| `web.resources` / `worker.resources` | `{}` | No requests or limits by default. |
-| `web.updateStrategy` / `worker.updateStrategy` | `RollingUpdate` | Needs room for two copies of the pod during a rollout. Use `Recreate` without that headroom. |
+| `worker.concurrency` | `2` | Captures a worker runs at once |
+| `worker.shmSize` | `1Gi` | Shared memory for the browser |
+| `worker.terminationGracePeriodSeconds` | `180` | How long a stopping worker gets to finish the snapshots it's capturing |
+| `web.resources` / `worker.resources` | `{}` | Resource requests and limits |
+| `web.updateStrategy` / `worker.updateStrategy` | `RollingUpdate` | Needs room for two copies of a pod during a rollout. Use `Recreate` if the cluster doesn't have it |
+
+The worker's other settings, like the capture queue and retention, are in [Environment variables](/reference/environment-variables) with their Helm values. The worker's caches count against the pod's ephemeral storage.
 
 ## Expose it
 
@@ -126,7 +117,7 @@ worker:
     listLength: 4
 ```
 
-The generated trigger counts the capture queue's wait list, which only holds groups under `worker.captureQueuePolicy: fifo`, plus groups due to be retried. Under `deadline` and `round-robin`, other groups wait in a sorted set the trigger can't read, so with the generated trigger the chart defaults to `fifo` and refuses `deadline` and `round-robin`. To use them with KEDA, replace the trigger through `worker.keda.triggers` with one that counts prioritized jobs too.
+The generated trigger only sees work queued under the `fifo` [capture queue policy](/reference/environment-variables#capture-queue), so with it the chart uses `fifo` and refuses `deadline` and `round-robin`. To keep `deadline`, replace the trigger through `worker.keda.triggers`, for example with the [Prometheus trigger](/self-hosting/metrics#autoscale-workers).
 
 If Redis needs a password or TLS, point `worker.keda.authenticationRef` at a KEDA [`TriggerAuthentication`](https://keda.sh/docs/latest/scalers/redis-lists/#authentication-parameters). `worker.keda.triggers` replaces the generated trigger entirely.
 

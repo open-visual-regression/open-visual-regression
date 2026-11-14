@@ -41,7 +41,8 @@
           "self-hosting/helm",
           "self-hosting/sso",
           "self-hosting/github-app",
-          "self-hosting/metrics"
+          "self-hosting/metrics",
+          "reference/environment-variables"
         ]
       }
     ]
