@@ -3,7 +3,7 @@ title: GitHub App
 description: Publish commit statuses as a GitHub App instead of with a personal access token.
 ---
 
-OVR posts a commit status to GitHub for each build. By default each project stores an access token for this, which belongs to whoever created it and stops working when they leave or the token expires. A GitHub App avoids that: the statuses come from the App, and OVR mints short-lived tokens for it as needed.
+OVR posts a commit status to GitHub for each build. By default each project stores an access token for this, which belongs to whoever created it and stops working when they leave or the token expires. A GitHub App avoids that: the statuses come from the App, and the App's private key is the only credential you look after.
 
 You create one App for your OVR deployment, install it on the repositories you want statuses on, and then switch each project to use it.
 
@@ -37,7 +37,7 @@ Give the web app and the worker the App ID, and mount the private key into both 
 | `OVR_GITHUB_APP_ID` | The App ID. |
 | `OVR_GITHUB_APP_PRIVATE_KEY_FILE` | Path to the `.pem` file inside the container. |
 
-Set both or neither. The web app and worker refuse to start if only one is set, or the file can't be read or doesn't hold an RSA private key, and the error names the variable or file at fault. The key is read from the file once at startup. It is never put in the environment or stored in the database.
+Set both or neither. If only one is set, or the file can't be read or doesn't hold an RSA private key, the web app and worker refuse to start and name the setting at fault. They read the key at startup, so restart them after changing it.
 
 ### Docker Compose
 
@@ -91,8 +91,6 @@ kubectl create secret generic ovr-secrets \
   --from-file=github-app-private-key.pem=github-app.private-key.pem
 ```
 
-The chart reads each of its environment variables from the Secret by name, so the key is only mounted as a file and never reaches the environment.
-
 ### Rotating the key
 
 Generate a new key on the App's settings page, replace the file or the key in your Secret, and restart the web app and worker. With `githubApp.privateKey`, `helm upgrade` restarts them for you. Then delete the old key from the App's settings page.
@@ -116,12 +114,6 @@ Until you do, either the web app and worker refuse to start because `OVR_GITHUB_
 
 Switching a project to the App deletes its stored token. To switch back, choose **access token** and enter a new one.
 
-## How tokens are handled
-
-To publish a status, OVR signs a short JWT with the App's private key, looks up the App's installation for the repository, and exchanges the JWT for an installation token. Installation tokens expire after an hour.
-
-Each web and worker process caches its installation tokens in memory, one per installation, and replaces a token five minutes before it expires. Concurrent publishes share a single refresh. If GitHub rejects a cached token, OVR fetches a new one and retries the status once. Nothing about these tokens is written to the database, so a restarted process simply mints new ones.
-
 ## Troubleshooting
 
 **the GitHub App is not installed on owner/repo**: install the App on that repository, or add the repository to its installation. Check the repository name in the project's settings.
@@ -130,6 +122,6 @@ Each web and worker process caches its installation tokens in memory, one per in
 
 **GitHub rejected the App's credentials**: the App ID and the key in `OVR_GITHUB_APP_PRIVATE_KEY_FILE` don't match, or the key was revoked. Check both, and generate a new key if needed.
 
-Publishing failures are also recorded in the `ovr_git_status_publications_total` metric with `outcome="error"`, and logged by the worker. See [Metrics](/self-hosting/metrics).
+The worker logs every failed status, and counts them in the `ovr_git_status_publications_total` metric with `outcome="error"`. See [Metrics](/self-hosting/metrics).
 
 GitHub Enterprise Server isn't supported yet.

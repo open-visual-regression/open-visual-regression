@@ -5,7 +5,7 @@ description: Sign in through the SSO proxy in front of OVR instead of OVR's own 
 
 If OVR sits behind a proxy that already signs people in with your identity provider (Okta, Entra ID, Google, and so on), OVR can trust that sign-in instead of asking for its own password. The proxy forwards a signed identity token on every request, and OVR verifies it, signs the person in, and sets their role from their groups.
 
-OVR never trusts plain identity headers like `X-Forwarded-Email`, since anything that reaches OVR without passing through the proxy could set them. It only accepts a token signed by the issuer you configure.
+OVR only accepts a token signed by the issuer you configure. It ignores plain identity headers like `X-Forwarded-Email`, which anything that reaches OVR without going through the proxy could set.
 
 ## Modes
 
@@ -21,7 +21,7 @@ OVR never trusts plain identity headers like `X-Forwarded-Email`, since anything
 The proxy must authenticate every browser request and forward the identity provider's signed token in a header. Some examples:
 
 - **oauth2-proxy** forwards the token in one of two ways:
-  - `pass_authorization_header` sends the ID token as `Authorization: Bearer …`. Set `OVR_AUTH_PROXY_TOKEN_HEADER` to `authorization`. OVR tells the ID token apart from its own `ovr_` tokens in the same header. See [Let CI through](#let-ci-through) for the one extra setting this needs.
+  - `pass_authorization_header` sends the ID token as `Authorization: Bearer …`. Set `OVR_AUTH_PROXY_TOKEN_HEADER` to `authorization`. CLI tokens use the same header, which works, but needs [one extra setting](#let-ci-through).
   - `pass_access_token` sends the access token in `X-Forwarded-Access-Token`. Set `OVR_AUTH_PROXY_TOKEN_HEADER` to `x-forwarded-access-token`. This only works when your identity provider issues JWT access tokens, such as an Okta custom authorization server or Keycloak.
 - **AWS ALB** with an `authenticate-oidc` action: the token arrives in `x-amzn-oidc-data`, signed with ES256 by the load balancer. Set `OVR_AUTH_PROXY_KEY_URL` to `https://public-keys.auth.elb.<region>.amazonaws.com/{kid}` and `OVR_AUTH_PROXY_SIGNER` to the load balancer's ARN.
 - **Pomerium, Cloudflare Access, Google IAP**: each forwards a signed assertion header and publishes a JWKS. See your proxy's docs for the header name, issuer and JWKS URL.
@@ -49,13 +49,13 @@ OVR refuses to start if the configuration is invalid, and the error names the va
 
 Each person's role comes from their groups claim on every request. The highest matching role wins, and someone in none of the mapped groups is shown a forbidden page. OVR logs why it turned someone away, so check the web logs when a person can't get in.
 
-Make sure your identity provider puts a groups claim in the token. In Okta, add a `groups` claim to the app or authorization server, filtered to the groups OVR uses. If you grant access through Opal, have it manage membership of those groups. Granting or revoking access then takes effect in OVR on the person's next page load, and revoking it signs them out of OVR.
+Make sure your identity provider puts a groups claim in the token. In Okta, add a `groups` claim to the app or authorization server, filtered to the groups OVR uses. A change to someone's groups takes effect on their next page load, and removing them from every mapped group signs them out.
 
 ## Let CI through
 
-CI uploads and the `ovr` CLI authenticate with OVR tokens (`Authorization: Bearer ovr_…`), and can't sign in to your identity provider. Let requests carrying that header bypass the proxy's sign-in, for example with an ALB listener rule matching the header, or oauth2-proxy's `skip_auth_routes` for `^/api/rpc/`. This is safe because OVR still checks the OVR token, and a request that skips the proxy carries no identity token for OVR to trust.
+CI uploads and the `ovr` CLI authenticate with OVR tokens (`Authorization: Bearer ovr_…`), and can't sign in to your identity provider. Let requests carrying that header bypass the proxy's sign-in, for example with an ALB listener rule matching the header, or oauth2-proxy's `skip_auth_routes` for `^/api/rpc/`. OVR still checks the OVR token on these requests, and never signs anyone in from a request that skipped the proxy.
 
-With oauth2-proxy's `pass_authorization_header`, also set `skip_auth_strip_headers` to `false`. Otherwise oauth2-proxy strips the `Authorization` header from requests on skipped routes, because it's a header it would normally set itself, and the CLI's token never reaches OVR. Turning the stripping off is safe for OVR, which ignores identity headers it can't verify, but check whether anything else behind the same proxy trusts headers like `X-Forwarded-User`. A bypass at the ingress, before requests reach oauth2-proxy, avoids the question.
+With oauth2-proxy's `pass_authorization_header`, also set `skip_auth_strip_headers` to `false`. Otherwise oauth2-proxy removes the `Authorization` header from skipped routes, and the CLI's token never reaches OVR. Before turning it off, check whether anything else behind the same proxy trusts headers like `X-Forwarded-User`. Bypassing the proxy at the ingress instead avoids the question.
 
 ## Personal access tokens
 
