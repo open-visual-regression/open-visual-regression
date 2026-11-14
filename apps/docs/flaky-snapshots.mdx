@@ -1,38 +1,28 @@
 ---
-title: Flaky snapshots
-description: See which stories render differently between builds without a code change.
+title: Flaky snapshot detection
+sidebarTitle: Flaky snapshots
+description: See which snapshots change between builds without a code change.
 ---
 
-A story is flaky when it doesn't render the same way every time, for example because an animation is caught at a different frame or data loads in a different order. Flaky stories show up as changes that need review even when nothing about them changed.
+A snapshot is flaky when the same code doesn't produce the same image every time, for example because an animation is caught at a different frame or data loads in a different order. A flaky snapshot shows up as a change to review even when nothing changed.
 
-When flaky detection is enabled, OVR watches each story's screenshots across recent builds on the main branch and marks a story as flaky when it:
+When flaky detection is on, OVR watches each snapshot across recent builds on the main branch, and marks it flaky when it:
 
-- keeps returning to a look it had before,
-- renders differently for the same commit, or
+- keeps returning to an image it had before,
+- looks different for the same commit, or
 - changes on most builds.
 
-Flaky stories show a badge on their snapshot card on the build page and next to the status on the snapshot page. Every build, including pull requests and older builds, shows the story's current flaky status.
+A flaky snapshot has a **flaky** badge on the build page and on the snapshot page, in every build, including pull requests and older builds. To review only flaky snapshots, pick **flaky** in the **flags** filter on the build page, or run `ovr snapshots list <buildId> --flag flaky`.
 
-To review only flaky snapshots, pick **flaky** in the **flags** filter on the build page. The same filter also offers **warning** for snapshots whose story threw an uncaught error while rendering.
+To make a flaky snapshot stable, see [Stable screenshots](/storybook/stable-screenshots).
 
-## Animations caught mid-frame
+## Turn on detection
 
-OVR waits for a story's network requests, images, fonts, and DOM to go quiet before its screenshot, and stops CSS animations while it takes it. A canvas or video can keep repainting without changing the DOM, though, like a chart that animates in. So for a story with a canvas, video, iframe, SVG animation, or shadow DOM, OVR retakes the screenshot until two in a row match.
+Flaky detection is off by default. An admin turns it on under **Settings → Jobs**, and can set:
 
-`screenshotStability` in `ovr.config.ts` or a story's `parameters.ovr` controls this:
+- how often snapshots are checked, as a cron schedule. Twice a day, at 7am and 7pm, by default.
+- how many recent main-branch builds are considered. 30 by default.
 
-| Value | Behavior |
-|-------|----------|
-| `"auto"` (default) | Retakes the screenshot for stories with content listed above |
-| `"always"` | Retakes it for every story. Slower; use it for a story whose content `"auto"` doesn't detect |
-| `"off"` | Takes one screenshot |
+Changes apply on the next scheduled run.
 
-A retaken screenshot costs at least a quarter second. If a story is still changing after six screenshots, OVR keeps the last one and adds a warning to the snapshot's logs. Stop the animation in that story, for example by turning off the chart library's animation in Storybook, or set `screenshotStability: "off"` for it.
-
-## Enabling detection
-
-Flaky detection is off by default. An admin turns it on under **Settings → Jobs**, where they can also set how often stories are re-evaluated, as a cron pattern (7am and 7pm by default), and how many recent main-branch builds are considered (30 by default).
-
-Changes apply on the next scheduled run, without restarting the worker.
-
-Detection only uses main-branch builds captured after it was turned on, so it takes a few builds before stories can be flagged.
+Detection only uses builds captured after it was turned on, so it takes a few main-branch builds before anything is marked flaky.

@@ -1,6 +1,6 @@
 ---
 title: ovr.config
-description: Set the server URL, capture viewports, and diff threshold for a project.
+description: Set the server URL, viewports, diff threshold, and capture settings for a project.
 ---
 
 An `ovr.config.ts` (or `.js`/`.mjs`) file in the directory you run the CLI from configures the server URL, capture viewports, and diff threshold for a project.
@@ -26,12 +26,11 @@ export default defineConfig({
 |--------|------|---------|-------------|
 | `serverUrl` | `string` | | OVR server URL. Overridden by a command's `--server-url` flag |
 | `viewports` | `Viewport[]` | `[]` | Every viewport available, named or not |
-| `defaultViewports` | `string[]` | every named viewport | Names from `viewports` captured automatically for every story |
+| `defaultViewports` | `string[]` | every named viewport | Names from `viewports` to capture by default |
 | `diffThreshold` | `number`, `(0, 1]` | `0.05` | Fraction of pixels that may differ before a snapshot needs review |
 | `waitForTimeout` | `number`, `[0, 30000]` | `0` | Milliseconds to wait before each screenshot, e.g. for slow-loading data or images |
-| `blockExternalRequests` | `boolean \| { allow: string[] }` | `false` | Blocks requests outside the Storybook build. See [below](#blocking-external-requests) |
-| `screenshotStability` | `"auto" \| "always" \| "off"` | `"auto"` | When to retake a screenshot until two in a row match. See [Flaky snapshots](/flaky-snapshots#animations-caught-mid-frame) |
-| `onlyAffected` | `object` | | Options for [`--only-affected`](/storybook/only-affected). See [below](#only-affected) |
+| `blockExternalRequests` | `boolean \| { allow: string[] }` | `false` | Blocks requests to hosts outside your build. See [below](#blocking-external-requests) |
+| `screenshotStability` | `"auto" \| "always" \| "off"` | `"auto"` | When to retake a screenshot until two in a row match. See [Stable screenshots](/storybook/stable-screenshots#animations-caught-mid-frame) |
 
 <Note>
 If `viewports` is omitted, OVR falls back to a single default: 1280px wide, full page, in Chromium.
@@ -43,24 +42,24 @@ Each entry in `viewports` describes one capture target:
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `name` | `string` | | References this viewport from `defaultViewports` or a story override |
+| `name` | `string` | | Refers to this viewport from `defaultViewports` or [story parameters](/storybook/story-parameters) |
 | `browser` | `"chromium" \| "firefox" \| "webkit"` | `"chromium"` | |
 | `width` | `number` | | |
 | `height` | `number` | full page | Omit to capture the full page height instead of a fixed crop |
 
-Unnamed viewports (no `name`) are always opt-in: they can't be referenced by `defaultViewports`, only added inline via a story override.
+A viewport without a `name` is never captured by default, since `defaultViewports` can't refer to it.
 
-Individual stories can override some of these options, or skip capture entirely — see [Per-story parameters](/storybook/story-parameters).
+A Storybook story can override these for itself with [story parameters](/storybook/story-parameters).
 
 ## Blocking external requests
 
-By default, stories load whatever they request. Set `blockExternalRequests` to keep screenshots from depending on the network:
+By default, a capture loads whatever the page requests. Set `blockExternalRequests` to keep screenshots from depending on other hosts:
 
 | Value | Loads |
 |-------|-------|
 | `false` (default) | Every host |
-| `true` | Only the Storybook build |
-| `{ allow: [...] }` | The Storybook build and the listed hosts |
+| `true` | Only your uploaded build |
+| `{ allow: [...] }` | Your uploaded build and the listed hosts |
 
 This includes requests a service worker like [msw](https://mswjs.io) passes through to the network. To keep loading images and fonts from a CDN:
 
@@ -78,9 +77,11 @@ Each entry is a host (`example.com`), a host and port (`example.com:8443`), or `
 Firefox ignores ports, so `example.com:8443` allows every port there.
 </Note>
 
-## Only affected
+## Storybook
 
-Options for [`ovr upload storybook --only-affected`](/storybook/only-affected). Globs are relative to the directory you run the CLI from.
+### Only affected
+
+`onlyAffected` sets options for [capturing only affected stories](/storybook/only-affected). Globs are relative to the directory you run the CLI from.
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
