@@ -31,11 +31,9 @@ OVR captures screenshots from your UI and diffs them against approved baselines.
 
 ## Why OVR?
 
-Unit tests verify behavior, not appearance. A component can pass every test and still ship with broken spacing, a clipped label, or a layout that only breaks at one viewport width.
+Unit tests check what a component does, not how it looks. A component can pass every test and still ship with broken spacing, a clipped label, or a layout that only breaks at one screen width. That's easy to miss in a code review, whether a person or an AI agent wrote the change.
 
-That gap matters more as more UI code gets written by AI agents. A generated change can compile, pass its tests, and still be visually wrong in a way that's easy to miss in a text-based review. Asking an AI to look at a screenshot and judge whether it looks right helps, but that judgment is non-deterministic and rarely covers every breakpoint and state a change could touch.
-
-Pixel diffing is deterministic: every story, every configured viewport, every time. It won't tell you if a design is good, but it will tell you exactly what changed, and let a reviewer, human or automated, decide if that was intentional.
+Comparing screenshots is deterministic. Every story, at every viewport, on every commit, OVR shows exactly what changed, and a reviewer decides whether that was the intent.
 
 ## Usage
 
