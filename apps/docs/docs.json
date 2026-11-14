@@ -23,7 +23,12 @@
           },
           {
             "group": "Using OVR",
-            "pages": ["baselines", "flaky-snapshots"]
+            "pages": [
+              "run-in-ci",
+              "review-builds",
+              "baselines",
+              "flaky-snapshots"
+            ]
           },
           {
             "group": "Managing OVR",
