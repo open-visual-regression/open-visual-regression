@@ -26,6 +26,15 @@
             "pages": ["baselines", "flaky-snapshots"]
           },
           {
+            "group": "Managing OVR",
+            "pages": [
+              "manage/projects",
+              "manage/users-and-roles",
+              "manage/api-keys-and-tokens",
+              "manage/git-status-checks"
+            ]
+          },
+          {
             "group": "Storybook",
             "pages": [
               "storybook/overview",
@@ -53,7 +62,6 @@
             "group": "CLI",
             "pages": [
               "cli/overview",
-              "cli/authentication",
               "cli/upload-storybook",
               "cli/capture-storybook",
               "cli/builds",
@@ -106,6 +114,10 @@
     {
       "source": "/configuration/story-parameters",
       "destination": "/storybook/story-parameters"
+    },
+    {
+      "source": "/cli/authentication",
+      "destination": "/manage/api-keys-and-tokens"
     }
   ]
 }

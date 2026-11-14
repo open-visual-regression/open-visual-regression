@@ -5,7 +5,7 @@ description: Inspect a snapshot's diff against its baseline, and approve or reje
 
 import RequiresPermission from "/snippets/requires-permission.mdx";
 
-Takes a [personal access token](/cli/authentication). Every subcommand also takes the [global flags](/cli/overview#global-flags).
+Takes an [access token](/manage/api-keys-and-tokens#access-tokens). Every subcommand also takes the [global flags](/cli/overview#global-flags).
 
 ## `ovr diffs get`
 
@@ -18,7 +18,7 @@ ovr diffs get <snapshotId>
 | `--download <dir>` | Save the baseline, new, and diff images to this directory as `baseline.png`, `new.png`, and `diff.png` |
 | `--analyze` | Describe what changed, such as content that moved |
 
-Takes a snapshot ID, which you can find with [`ovr snapshots list`](/cli/snapshots#ovr-snapshots-list), and shows how the snapshot compares to its baseline. When the project has a [git integration](/self-hosting/github-app), the baseline's commit links to your git provider.
+Takes a snapshot ID, which you can find with [`ovr snapshots list`](/cli/snapshots#ovr-snapshots-list), and shows how the snapshot compares to its baseline. When the project has a [git integration](/manage/git-status-checks), the baseline's commit links to your git provider.
 
 ```
 Diff:       01a092d6-b0aa-71bf-9312-dd8ef48a22fb
