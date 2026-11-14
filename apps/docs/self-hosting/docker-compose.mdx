@@ -166,7 +166,7 @@ docker compose up -d
 Visit `BASE_URL` (`http://localhost:3000` by default). First run creates your organization and admin account.
 
 <Note>
-If `docker compose up` fails with `service_completed_successfully is an invalid type, it should be a service_started, or a service_healthy`, your Compose is older than v2.20, see [Requirements](#requirements) above.
+If `docker compose up` fails with `service_completed_successfully is an invalid type, it should be a service_started, or a service_healthy`, your Compose is older than v2.20. See [Requirements](#requirements).
 </Note>
 
 ## Environment variables
@@ -276,7 +276,7 @@ Ready-made Compose files for each combination:
 
 ## Reverse proxy
 
-Pages stream in as their data loads, so a proxy in front of the dashboard must not buffer responses. The dashboard sends `X-Accel-Buffering: no`, which nginx honors. For other proxies and load balancers, turn response buffering off for the dashboard.
+Turn off response buffering for the dashboard on any proxy or load balancer in front of it, or pages wait for all their data before they show anything. nginx turns it off on its own.
 
 ## Update
 
