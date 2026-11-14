@@ -19,7 +19,7 @@
         "groups": [
           {
             "group": "Get started",
-            "pages": ["index"]
+            "pages": ["index", "how-ovr-works"]
           },
           {
             "group": "Using OVR",
@@ -64,6 +64,10 @@
           {
             "group": "Configuration",
             "pages": ["reference/ovr-config"]
+          },
+          {
+            "group": "Builds",
+            "pages": ["reference/statuses"]
           },
           {
             "group": "Self-hosting",

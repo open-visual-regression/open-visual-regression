@@ -1,0 +1,61 @@
+---
+title: Statuses
+description: What each build and snapshot status means, and the commit status each build posts.
+---
+
+## Snapshot statuses
+
+| Status | Meaning |
+| --- | --- |
+| `queued` | Waiting to be captured or compared |
+| `processing` | Being captured |
+| `unchanged` | Within the diff threshold of its baseline |
+| `auto_approved` | Changed or new on the main branch, so approved automatically. It's the new baseline |
+| `needs_review` | Changed or new on a branch, and waiting for reviewers |
+| `approved` | Approved by enough reviewers |
+| `rejected` | Rejected by a reviewer |
+| `error` | Failed to capture or compare. The snapshot page shows why |
+| `canceled` | Its build was canceled before it was captured |
+| `skipped` | Not captured in this build. It keeps its baseline |
+
+## Build statuses
+
+A build's status comes from its snapshots, in this order: the first row that applies wins.
+
+| Status | Meaning |
+| --- | --- |
+| `queued` | Uploaded and waiting for a worker |
+| `processing` | Being captured and compared |
+| `error` | The build failed, or some of its snapshots did |
+| `canceled` | Canceled by someone, or replaced by a newer build on the same branch |
+| `rejected` | At least one snapshot is rejected |
+| `needs_review` | At least one snapshot needs review |
+| `approved` | Every changed snapshot is approved |
+| `auto_approved` | A main-branch build where something changed |
+| `unchanged` | Nothing changed |
+
+## Commit statuses
+
+With a [git integration](/self-hosting/github-app), each build posts a commit status named `Open Visual Regression / <project name>`:
+
+| Build status | Commit status | Description |
+| --- | --- | --- |
+| `queued`, `processing` | pending | analyzing visual changes |
+| `unchanged` | success | no visual changes |
+| `auto_approved` | success | changes within threshold |
+| `approved` | success | visual changes approved |
+| `needs_review` | failure | visual changes need review |
+| `rejected` | failure | visual changes rejected |
+| `canceled` | failure | build canceled |
+| `error` | error | build failed to process |
+
+To block merging until visual changes are approved, make the status required in your branch protection rules.
+
+## Flags
+
+A snapshot can also carry flags, shown as badges and filterable with **flags** on the build page or `--flag` in the CLI:
+
+| Flag | Meaning |
+| --- | --- |
+| `flaky` | The snapshot changes between builds without a code change. See [Flaky snapshot detection](/flaky-snapshots) |
+| `warning` | The page threw an uncaught error while it was captured. The error is in the snapshot's logs |
