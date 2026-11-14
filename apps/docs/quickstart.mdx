@@ -1,0 +1,84 @@
+---
+title: Quickstart
+description: Run OVR on your machine, upload a build, and review your first visual change.
+---
+
+This takes you from nothing to reviewing a visual change, in about 15 minutes. You run OVR with Docker Compose, upload your Storybook from your machine, then change a component and see OVR catch it.
+
+You need Docker Compose v2.20 or later, and a repository with a Storybook 8.5 or later.
+
+<Steps>
+<Step title="Start OVR">
+
+Create `docker-compose.yml` and `.env` from the [Docker Compose quick start](/self-hosting/docker-compose#quick-start), then start it:
+
+```sh
+docker compose up -d
+```
+
+Open [http://localhost:3000](http://localhost:3000). The first time, OVR asks you to create your organization and your account, which becomes the first admin.
+
+</Step>
+<Step title="Create a project">
+
+Click **new project**. Name it, and set **git main branch** to your repository's main branch, such as `main`.
+
+</Step>
+<Step title="Create an API key">
+
+On the project's **settings** page, under **api keys**, click **new api key**. Copy the key, which is only shown once, and export it in your terminal:
+
+```sh
+export OVR_API_KEY=...
+```
+
+</Step>
+<Step title="Upload the main branch">
+
+In your repository, on the main branch, build Storybook and upload it:
+
+```sh
+npx storybook build
+
+npx @open-visual-regression/cli upload storybook \
+  --dir storybook-static \
+  --server-url http://localhost:3000 \
+  --branch main \
+  --commit "$(git rev-parse HEAD)"
+```
+
+The CLI prints the build's URL. Open it to watch OVR capture each story. This first build on the main branch is approved automatically, and its snapshots become the baselines.
+
+</Step>
+<Step title="Change something on a branch">
+
+Make a branch, and change a component in a way you'd see, like its color or padding. Commit it, then build and upload again with the branch's name:
+
+```sh
+git switch -c try-ovr
+# change a component, then:
+git commit -am "Try OVR"
+
+npx storybook build
+
+npx @open-visual-regression/cli upload storybook \
+  --dir storybook-static \
+  --server-url http://localhost:3000 \
+  --branch try-ovr \
+  --commit "$(git rev-parse HEAD)"
+```
+
+</Step>
+<Step title="Review the change">
+
+Open the new build. The stories you changed have the `needs_review` status, and the rest are `unchanged`. Click one to compare it with its baseline, then approve or reject it. See [Review builds](/review-builds).
+
+</Step>
+</Steps>
+
+## Next steps
+
+- [Run OVR in CI](/run-in-ci), so every pull request gets a build.
+- [Post commit statuses](/manage/git-status-checks), so pull requests wait for review.
+- [Invite your team](/manage/users-and-roles#invite-someone).
+- To run OVR for your team, see [Self-hosting](/self-hosting/overview).
