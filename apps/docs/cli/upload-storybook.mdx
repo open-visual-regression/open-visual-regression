@@ -1,17 +1,9 @@
 ---
 title: ovr upload storybook
-description: Upload a Storybook build and report the visual regression result.
+description: Upload a Storybook build for OVR to capture and compare.
 ---
 
-Requires a Storybook 8.5+ static build (`storybook build`). Older builds are rejected before upload, with the detected version in the error.
-
-Authenticates with a [project API key](/cli/authentication) — a personal access token is rejected.
-
-<Note>
-  This command was called `ovr snapshot storybook` before. That name still works and
-  behaves identically, but it prints a deprecation notice and will be removed in a
-  future release.
-</Note>
+Uploads a Storybook 8.5+ static build (the output of `storybook build`) as a new build. Takes a [project API key](/cli/authentication), and the [global flags](/cli/installation#global-flags).
 
 ```sh
 ovr upload storybook \
@@ -26,56 +18,45 @@ ovr upload storybook \
 ## Flags
 
 | Flag | Required | Default | Description |
-|------|----------|---------|-------------|
-| `-d, --dir <path>` | yes | | Path to the Storybook static build output |
-| `--server-url <url>` | no | `ovr.config`'s `serverUrl` | OVR server URL |
+| --- | --- | --- | --- |
+| `-d, --dir <path>` | yes | | Path to the Storybook static build |
 | `--branch <name>` | yes | | Branch name |
 | `--commit <sha>` | yes | | Commit SHA |
-| `--name <name>` | no | | Build name, e.g. the commit message |
+| `--name <name>` | no | | Build name, such as the commit message |
 | `--author <author>` | no | | Commit author |
-| `--wait` | no | `false` | Wait for the build to finish processing before exiting |
+| `--wait` | no | `false` | Wait for the build's result before exiting |
+| `--timeout <seconds>` | no | `600` | How long `--wait` waits |
 | `--only-affected` | no | `false` | Only capture the stories a change can affect. See [below](#only-affected-stories) |
-| `--timeout <seconds>` | no | `600` | Maximum seconds to wait for the build result (with `--wait`) |
-| `-c, --config <path>` | no | auto-detected | Path to `ovr.config.ts`/`.js`/`.mjs` |
 
-By default the command uploads the build, then prints the build page URL and exits `0` as soon as the build is published — it doesn't wait for processing or review.
-
-Pass `--wait` to block until the build resolves or `--timeout` elapses instead. Exit code then reflects the outcome:
-
-| Outcome | Exit code |
-|---------|-----------|
-| Unchanged, auto-approved, or already approved | `0` |
-| Needs review | non-zero |
-| Failed | non-zero |
-| Timed out | non-zero |
+Without `--wait`, the command prints the build's URL and exits as soon as the upload is done. With `--wait`, it waits for OVR to capture and compare the build, and its [exit code](/cli/installation#exit-codes) tells your CI whether the build passed.
 
 ## Only affected stories
 
-Pass `--only-affected` to capture only the stories a change can affect. Every other story is listed on the build as skipped and keeps its baseline. Stories without a baseline for a viewport are always captured.
+`--only-affected` captures only the stories a change can affect. Every other story is listed on the build as skipped and keeps its baseline. A story with no baseline yet is always captured.
 
 It needs:
 
-- Storybook built with `--stats-json` by the Vite, Webpack 5 or Rspack (`storybook-builder-rsbuild`) builder, and `ovr` run from the directory it was built in.
+- Storybook built with `--stats-json` by the Vite, Webpack 5, or Rspack (`storybook-builder-rsbuild`) builder, and `ovr` run from the directory it was built in.
 - The full git history. In GitHub Actions, check out with `fetch-depth: 0`.
 - A successful build on the project's main branch in the commit's history to compare against.
 
-When any of these is missing, or a change could affect every story (Storybook or build configuration, dependencies the Storybook uses, global styles), every story is captured and the CLI prints why. Code and stylesheets that no story imports are ignored, since they cannot render. Use [`onlyAffected`](/configuration/config#only-affected) in `ovr.config` for files that affect stories without being imported.
+When any of these is missing, or the change can affect every story, OVR captures every story and the CLI says why. Changes that affect every story include Storybook and build configuration, dependencies the Storybook uses, and global styles. To mark other files that affect stories without being imported, use [`onlyAffected`](/configuration/config#only-affected) in `ovr.config`.
 
-### Lockfiles
+Use it for pull requests, and capture every story on the main branch.
 
-When a lockfile changes, OVR compares it with the lockfile from the build it compares against. It captures every story only if a changed package is one the Storybook bundles or a build tool; otherwise the lockfile change is ignored. These lockfiles are supported:
+<Accordion title="Supported lockfiles">
+
+When a lockfile changes, OVR checks which packages changed. It captures every story only if one of them is bundled into the Storybook or is a build tool.
 
 | Package manager | Lockfile | Versions |
-|-----------------|----------|----------|
+| --- | --- | --- |
 | Yarn | `yarn.lock` | Yarn 1, and Yarn 2 and later |
-| pnpm | `pnpm-lock.yaml` | pnpm 8 and later (lockfile `6.0` and `9.0`) |
-| npm | `package-lock.json`, `npm-shrinkwrap.json` | npm 7 and later (lockfile version 2 and 3) |
+| pnpm | `pnpm-lock.yaml` | pnpm 8 and later |
+| npm | `package-lock.json`, `npm-shrinkwrap.json` | npm 7 and later |
 
 A change to any other lockfile, such as Bun's `bun.lock`, captures every story.
 
-<Note>
-  We recommend it for pull requests only, and capturing every story on the main branch.
-</Note>
+</Accordion>
 
 ## CI example
 
@@ -89,7 +70,7 @@ A change to any other lockfile, such as Bun's `bun.lock`, captures every story.
 - name: Build Storybook
   run: pnpm build-storybook
 
-- name: Snapshot with OVR
+- name: Upload to OVR
   env:
     OVR_API_KEY: ${{ secrets.OVR_API_KEY }}
   run: |
@@ -102,6 +83,8 @@ A change to any other lockfile, such as Bun's `bun.lock`, captures every story.
       --author "$(git log -1 --pretty=%an)"
 ```
 
-On pull requests, GitHub checks out a merge of the pull request into its base branch by default. Checking out the pull request's head commit makes the screenshots match the commit OVR records, and the branch is compared against main as it was at its [merge base](/baselines#branch-builds).
+On pull requests, GitHub checks out a merge of the pull request into its base branch by default. Checking out the pull request's own commit makes the screenshots match the commit OVR records, and lets OVR compare the branch against main [as it was when the branch was cut](/baselines#branch-builds).
 
-Every story is captured at the viewports from [`ovr.config`](/configuration/config), unless overridden with [per-story parameters](/configuration/story-parameters).
+<Note>
+  This command used to be called `ovr snapshot storybook`. The old name still works but prints a deprecation notice, and will be removed in a future release.
+</Note>

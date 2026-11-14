@@ -1,9 +1,11 @@
 ---
 title: ovr builds
-description: List builds, inspect a single build's status, and cancel, rebuild, approve or reject a build.
+description: List and inspect builds, and cancel, rebuild, approve, or reject them.
 ---
 
-Authenticates with a [personal access token](/cli/authentication) — a project API key is rejected.
+import RequiresPermission from "/snippets/requires-permission.mdx";
+
+Takes a [personal access token](/cli/authentication). Every subcommand also takes the [global flags](/cli/installation#global-flags).
 
 ## `ovr builds list`
 
@@ -12,43 +14,30 @@ ovr builds list --branch main --status needs_review
 ```
 
 | Flag | Description |
-|------|-------------|
-| `--server-url <url>` | OVR server URL (defaults to `ovr.config`'s `serverUrl`) |
-| `--branch <name...>` | Filter to builds on these branches |
-| `--commit <sha...>` | Filter to builds for these commits |
-| `--status <status...>` | Filter to builds with these statuses |
-| `--author <author...>` | Filter to builds by these authors |
-| `--search <text>` | Filter to builds matching this text |
-| `--sort <direction>` | Sort by creation time, `asc` or `desc` (default `desc`) |
-| `--limit <count>` | Builds per page, 1–100 (default `20`) |
-| `--cursor <cursor>` | Fetch the page following this cursor |
-| `--all` | Fetch every page instead of just the first |
-| `-c, --config <path>` | Path to `ovr.config` file |
-| `--json` | Print results as JSON instead of a table |
+| --- | --- |
+| `--branch <name...>` | Only builds on these branches |
+| `--commit <sha...>` | Only builds for these commits |
+| `--status <status...>` | Only builds with these statuses |
+| `--author <author...>` | Only builds by these authors |
+| `--search <text>` | Only builds matching this text |
+| `--sort <direction>` | `asc` or `desc` by creation time. Defaults to `desc` |
+| `--limit <count>` | Builds per page, 1–100. Defaults to `20` |
+| `--cursor <cursor>` | Fetch the page after this cursor |
+| `--all` | Fetch every page |
 
-Prints one row per build: build ID, status, branch, commit, project, and name.
+Prints one row per build: ID, status, branch, commit, project, and name. A filter given several values matches builds that match any of them.
 
-The repeatable filters (`--branch`, `--commit`, `--status`, `--author`) match a
-build if it matches any of the values given. `--status` accepts `queued`,
-`processing`, `needs_review`, `unchanged`, `auto_approved`, `approved`,
-`rejected`, `error`, and `canceled`; anything else is rejected before the
-request is sent. When filters match nothing, the applied filters are printed
-alongside `No builds found.` so a mistyped branch or author is visible.
+`--status` takes `queued`, `processing`, `needs_review`, `unchanged`, `auto_approved`, `approved`, `rejected`, `error`, and `canceled`.
 
 ### Pagination
 
-One page is returned at a time. When more builds match than fit on the page,
-the cursor for the next page is printed:
+When more builds match than fit on a page, the command prints the cursor for the next one:
 
 ```
 Showing 20 of 137. Next page: --cursor eyJjcmVhdGVkQXQiOiIyMDI2...
 ```
 
-Pass that value back as `--cursor` to fetch the following page, or use `--all`
-to fetch every page in one command.
-
-`--json` prints an object carrying the page and its pagination state, where
-`nextCursor` is `null` on the last page:
+Pass it back with `--cursor`, or use `--all` to fetch every page at once. With `--json`, the cursor is in `nextCursor`, which is `null` on the last page:
 
 ```json
 { "builds": [], "total": 137, "nextCursor": "eyJjcmVhdGVkQXQiOiIyMDI2..." }
@@ -60,13 +49,7 @@ to fetch every page in one command.
 ovr builds get <buildId>
 ```
 
-| Flag | Description |
-|------|-------------|
-| `--server-url <url>` | OVR server URL (defaults to `ovr.config`'s `serverUrl`) |
-| `-c, --config <path>` | Path to `ovr.config` file |
-| `--json` | Print the build as JSON instead of formatted text |
-
-Prints the build's ID, status, branch, commit, project, name, author, and creation time, plus an error message or canceling user when relevant.
+Prints the build's ID, status, branch, commit, project, name, author, and creation time. A failed build also shows its error, and a canceled one shows who canceled it.
 
 ## `ovr builds cancel`
 
@@ -74,14 +57,9 @@ Prints the build's ID, status, branch, commit, project, name, author, and creati
 ovr builds cancel <buildId>
 ```
 
-| Flag | Description |
-|------|-------------|
-| `--server-url <url>` | OVR server URL (defaults to `ovr.config`'s `serverUrl`) |
-| `-c, --config <path>` | Path to `ovr.config` file |
+Cancels a build that's queued or processing.
 
-Cancels a queued or processing build. A build that has already finished can't be canceled.
-
-Needs an access token with the [`builds:write`](/cli/authentication#access-token-permissions) permission, owned by someone who isn't a viewer.
+<RequiresPermission permission="builds:write" />
 
 ## `ovr builds rebuild`
 
@@ -90,18 +68,13 @@ ovr builds rebuild <buildId> --wait
 ```
 
 | Flag | Description |
-|------|-------------|
-| `--server-url <url>` | OVR server URL (defaults to `ovr.config`'s `serverUrl`) |
-| `--wait` | Wait for the new build to finish processing before exiting |
-| `--timeout <seconds>` | Maximum seconds to wait for the build result with `--wait` (default `600`) |
-| `-c, --config <path>` | Path to `ovr.config` file |
-| `--json` | Print the new build's ID as JSON |
+| --- | --- |
+| `--wait` | Wait for the new build to finish before exiting |
+| `--timeout <seconds>` | How long `--wait` waits. Defaults to `600` |
 
-Captures a finished build again from the same Storybook, as a new build, and prints the new build's ID. Only the latest build on its branch can be rebuilt.
+Captures a finished build again as a new build, from the same upload, and prints the new build's ID. Only the latest build on a branch can be rebuilt. With `--wait`, the command [exits](/cli/installation#exit-codes) like `ovr upload storybook --wait`.
 
-With `--wait`, the command exits with code `1` unless the new build passes, the same as [`ovr upload storybook --wait`](/cli/upload-storybook). Progress is printed to stderr, so `--json` output stays parseable.
-
-Needs an access token with the [`builds:write`](/cli/authentication#access-token-permissions) permission, owned by someone who isn't a viewer.
+<RequiresPermission permission="builds:write" />
 
 ## `ovr builds approve` and `ovr builds reject`
 
@@ -110,16 +83,8 @@ ovr builds approve <buildId>
 ovr builds reject <buildId>
 ```
 
-| Flag | Description |
-|------|-------------|
-| `--server-url <url>` | OVR server URL (defaults to `ovr.config`'s `serverUrl`) |
-| `-c, --config <path>` | Path to `ovr.config` file |
+Votes on every snapshot in the build that needs review, like **approve all** and **reject all** on the build page, then prints the build's status. When the project needs more than one reviewer, the build stays at `needs_review` until enough people approve it. To vote on one snapshot, use [`ovr diffs approve`](/cli/diffs#ovr-diffs-approve-and-ovr-diffs-reject).
 
-Casts your vote on every snapshot in the build that needs review, like **approve all** and **reject all** on the
-build page, then prints the build's status. A project that needs more than one reviewer keeps the build at
-`needs_review` until enough people approve it. To vote on a single snapshot, use
-[`ovr diffs approve`](/cli/diffs#ovr-diffs-approve-and-ovr-diffs-reject).
+Only the latest build on a branch can be reviewed, once it has finished.
 
-Only a finished build that is the latest on its branch can be reviewed. Needs an access token with the
-[`reviews:write`](/cli/authentication#access-token-permissions) permission, owned by someone who isn't
-a viewer.
+<RequiresPermission permission="reviews:write" />
