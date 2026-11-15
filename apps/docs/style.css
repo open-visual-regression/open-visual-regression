@@ -1,0 +1,21 @@
+/* Code font: Cascadia Code, matching the web app. docs.json can only set the text font. */
+@import url("https://fonts.googleapis.com/css2?family=Cascadia+Code:wght@400;500;600&display=swap");
+
+/* Mintlify reads both variables. The doubled selector wins over its own :root rule. */
+:root:root {
+  --font-paper-mono:
+    "Cascadia Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  --font-family-mono-custom: "Cascadia Code";
+}
+
+/* Show the characters a reader types, without programming ligatures. */
+code,
+pre,
+kbd,
+.font-mono,
+.font-family-mono {
+  font-feature-settings:
+    "calt" 0,
+    "liga" 0;
+}
