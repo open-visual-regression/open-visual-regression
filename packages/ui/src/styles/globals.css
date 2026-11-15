@@ -2,9 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/ibm-plex-sans";
-@import "@fontsource/ibm-plex-mono/400.css";
-@import "@fontsource/ibm-plex-mono/500.css";
-@import "@fontsource/ibm-plex-mono/600.css";
+@import "@fontsource-variable/cascadia-code";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -133,7 +131,7 @@
 
 :root {
   --ovr-font-sans: "IBM Plex Sans Variable", system-ui, sans-serif;
-  --ovr-font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --ovr-font-mono: "Cascadia Code Variable", ui-monospace, monospace;
   --radius: 2px;
   --background: oklch(1 0 0);
   --pixel-grid: radial-gradient(circle at 8px 8px, oklch(0 0 0 / 0.07) 1px, transparent 0);
@@ -301,6 +299,17 @@
 
   html {
     @apply font-sans;
+  }
+
+  /* Cascadia Code's ligatures would merge characters like -> and != in SHAs, branches and logs. */
+  code,
+  kbd,
+  samp,
+  pre,
+  .font-mono {
+    font-feature-settings:
+      "calt" 0,
+      "liga" 0;
   }
 
   button,
