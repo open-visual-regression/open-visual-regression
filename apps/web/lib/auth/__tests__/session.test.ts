@@ -10,6 +10,7 @@ import { requireSession } from "../session";
 
 vi.mock("next/headers");
 vi.mock("next/navigation");
+vi.mock("next/server");
 vi.mock("../auth");
 
 describe("requireSession", () => {

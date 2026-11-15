@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { cache } from "react";
 
 import { getLoginPath, REQUEST_PATH_HEADER } from "@/lib/utils/redirects";
@@ -48,6 +49,7 @@ const getTrustedProxySession = async (requestHeaders: Headers, config: TrustedPr
 
 export const getCachedSession = cache(async () => {
   const requestHeaders = await headers();
+  await connection();
   const config = getAuthConfig();
 
   if (config.mode !== "trusted-proxy") {
