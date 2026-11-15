@@ -7,6 +7,9 @@
     "light": "#F9A300",
     "dark": "#F9A300"
   },
+  "fonts": {
+    "family": "IBM Plex Sans"
+  },
   "favicon": "/favicon.svg",
   "logo": {
     "light": "/logo/light.svg",
@@ -23,12 +26,7 @@
           },
           {
             "group": "Using OVR",
-            "pages": [
-              "run-in-ci",
-              "review-builds",
-              "baselines",
-              "flaky-snapshots"
-            ]
+            "pages": ["run-in-ci", "review-builds", "baselines", "flaky-snapshots"]
           },
           {
             "group": "Managing OVR",
