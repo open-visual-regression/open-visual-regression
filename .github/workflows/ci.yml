@@ -140,6 +140,7 @@ jobs:
           --server-url https://openvisualregression.com
           --branch "${{ github.head_ref || github.ref_name }}"
           --commit "${{ github.event.pull_request.head.sha || github.sha }}"
+          --pull-request "${{ github.event.pull_request.number }}"
           --name "$(git log -1 --pretty=%s)"
           --author "$(git log -1 --pretty=%an)"
           ${{ github.event_name == 'pull_request' && '--only-affected' || '' }}
@@ -155,6 +156,7 @@ jobs:
           --server-url https://openvisualregression.com
           --branch "${{ github.head_ref || github.ref_name }}"
           --commit "${{ github.event.pull_request.head.sha || github.sha }}"
+          --pull-request "${{ github.event.pull_request.number }}"
           --name "$(git log -1 --pretty=%s)"
           --author "$(git log -1 --pretty=%an)"
           ${{ github.event_name == 'pull_request' && '--only-affected' || '' }}

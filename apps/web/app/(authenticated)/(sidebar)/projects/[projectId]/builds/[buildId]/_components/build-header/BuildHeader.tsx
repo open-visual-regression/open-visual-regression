@@ -85,6 +85,11 @@ export const BuildHeader = ({
           <GitPill icon={GitCommitHorizontalIcon} href={build.commitUrl} external>
             {build.commitSha.slice(0, 7)}
           </GitPill>
+          {build.pullRequestUrl ? (
+            <ExternalLink href={build.pullRequestUrl}>#{build.pullRequestNumber}</ExternalLink>
+          ) : build.pullRequestNumber ? (
+            <Typography variant="caption">#{build.pullRequestNumber}</Typography>
+          ) : null}
           {storybookHref ? (
             <ExternalLink href={storybookHref} className="hidden md:inline-flex">
               view storybook

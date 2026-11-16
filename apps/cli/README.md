@@ -101,6 +101,7 @@ ovr upload storybook \
 | `--server-url <url>` | yes | | OVR server URL |
 | `--branch <name>` | yes | | Branch name |
 | `--commit <sha>` | yes | | Commit SHA |
+| `--pull-request <number>` | no | | Pull request number |
 | `--name <name>` | no | | Build name, e.g. the commit message |
 | `--author <author>` | no | | Commit author |
 | `--wait` | no | `false` | Wait for the build to finish processing before exiting |
@@ -147,6 +148,7 @@ export const Primary: Story = {
       --server-url https://ovr.example.com \
       --branch "${{ github.head_ref || github.ref_name }}" \
       --commit "${{ github.event.pull_request.head.sha || github.sha }}" \
+      --pull-request "${{ github.event.pull_request.number }}" \
       --name "$(git log -1 --pretty=%s)" \
       --author "$(git log -1 --pretty=%an)"
 ```

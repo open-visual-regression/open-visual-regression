@@ -17,6 +17,7 @@ import {
 import { dbClient } from "@ovr/db/client";
 import { buildBranchUrl } from "@ovr/git-status/webBranchUrl";
 import { buildCommitUrl } from "@ovr/git-status/webCommitUrl";
+import { buildPullRequestUrl } from "@ovr/git-status/webPullRequestUrl";
 import { checkBuildReviewable } from "@ovr/reviews/reviewable";
 import { storage } from "@ovr/storage";
 
@@ -50,6 +51,7 @@ export const createBuild = os.builds.createBuild
         projectId: context.projectId,
         branch: input.branch,
         commitSha: input.commitSha,
+        pullRequestNumber: input.pullRequestNumber,
         baseBuildId: input.baseBuildId,
         name: input.name,
         author: input.author,
@@ -385,6 +387,15 @@ export const getOne = os.builds.getOne
         branchUrl: gitIntegration
           ? buildBranchUrl(gitIntegration.provider, gitIntegration.repoIdentifier, build.branch)
           : null,
+        pullRequestNumber: build.pullRequestNumber,
+        pullRequestUrl:
+          gitIntegration && build.pullRequestNumber
+            ? buildPullRequestUrl(
+                gitIntegration.provider,
+                gitIntegration.repoIdentifier,
+                build.pullRequestNumber,
+              )
+            : null,
         mainBranch: project.gitMainBranch,
         mainBranchUrl: gitIntegration
           ? buildBranchUrl(

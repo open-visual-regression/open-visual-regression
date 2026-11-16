@@ -31,12 +31,28 @@ type StorybookCommandOptions = {
   serverUrl?: string;
   branch: string;
   commit: string;
+  pullRequest?: string;
   name?: string;
   author?: string;
   wait?: boolean;
   onlyAffected?: boolean;
   timeout: string;
   config?: string;
+};
+
+// CI providers leave their pull request variable empty outside pull requests.
+const parsePullRequestNumber = (pullRequest: string | undefined): number | undefined => {
+  if (pullRequest === undefined || pullRequest === "") {
+    return undefined;
+  }
+
+  const parsed = Number(pullRequest);
+
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    throw new Error("--pull-request must be a positive integer.");
+  }
+
+  return parsed;
 };
 
 export const createStorybookCommand = (): Command =>
@@ -46,6 +62,7 @@ export const createStorybookCommand = (): Command =>
     .option("--server-url <url>", "OVR server URL (defaults to ovr.config's serverUrl)")
     .requiredOption("--branch <name>", "branch name")
     .requiredOption("--commit <sha>", "commit SHA")
+    .option("--pull-request <number>", "pull request number")
     .option("--name <name>", "build name (e.g. commit message)")
     .option("--author <author>", "commit author")
     .option("--wait", "wait for the build to finish processing before exiting")
@@ -68,6 +85,7 @@ export const createStorybookCommand = (): Command =>
         const blockExternalRequests = resolveBlockExternalRequests(config);
         const screenshotStability = resolveScreenshotStability(config);
         const { branch, commit: commitSha, name, author } = options;
+        const pullRequestNumber = parsePullRequestNumber(options.pullRequest);
 
         const client = createClient(serverUrl, apiKey);
 
@@ -94,6 +112,7 @@ export const createStorybookCommand = (): Command =>
             buildId: uuidv7(),
             branch,
             commitSha,
+            pullRequestNumber,
             ...(base.status === "found" && { baseBuildId: base.build.id }),
             name,
             author,
