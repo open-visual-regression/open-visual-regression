@@ -54,6 +54,11 @@ const COMMIT_SHA_OPTIONS = [
   { value: "7c3b82f1234567890", label: "7c3b82f" },
 ];
 
+const PROJECT_OPTIONS = [
+  { value: "018f0000-0000-7000-8000-000000000001", label: "Acme Web" },
+  { value: "018f0000-0000-7000-8000-000000000002", label: "Acme Admin" },
+];
+
 const meta: Meta<typeof BuildsFilters> = {
   title: "Web/BuildsFilters",
   component: BuildsFilters,
@@ -94,6 +99,24 @@ export const WithActiveFilters: Story = {
     branches: ["main"],
     authors: ["Jordan Lee"],
     commitShas: ["4f2a91e1234567890"],
+  },
+};
+
+export const AcrossProjects: Story = {
+  args: {
+    projectId: undefined,
+    projectIds: [PROJECT_OPTIONS[1]!.value],
+    projectOptions: PROJECT_OPTIONS,
+    statuses: [],
+    branches: [],
+    authors: [],
+    commitShas: [],
+  },
+  parameters: {
+    nextjs: {
+      appDirectory: true,
+      navigation: { pathname: "/builds" },
+    },
   },
 };
 

@@ -7,6 +7,7 @@ const toArray = (value: string | string[] | undefined) =>
 
 const buildsSearchParamsSchema = z.object({
   search: z.string().optional().catch(undefined),
+  project: z.preprocess(toArray, z.array(z.uuidv7())).optional().catch(undefined),
   status: z.preprocess(toArray, z.array(buildStatusSchema)).optional().catch(undefined),
   branch: z.preprocess(toArray, z.array(z.string())).optional().catch(undefined),
   author: z.preprocess(toArray, z.array(z.string())).optional().catch(undefined),
@@ -18,11 +19,12 @@ export const parseBuildsSearchParams = (
 ) => {
   const {
     search,
+    project: projectIds = [],
     status: statuses = [],
     branch: branches = [],
     author: authors = [],
     commit: commitShas = [],
   } = buildsSearchParamsSchema.parse(searchParams);
 
-  return { search, statuses, branches, authors, commitShas };
+  return { search, projectIds, statuses, branches, authors, commitShas };
 };
