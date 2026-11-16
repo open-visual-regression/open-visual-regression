@@ -3,7 +3,6 @@ import { beforeEach, vi } from "vitest";
 
 import { mocks } from "@ovr/mocks";
 
-import { getQueryClient } from "@/lib/orpc/query-client";
 import { orpcServerClient } from "@/lib/orpc/server";
 import { describe, expect, it, render, screen } from "@/test-utils";
 
@@ -40,7 +39,6 @@ const renderPage = async (searchParams: Record<string, string | string[]> = {}) 
 
 describe("BuildsPage", () => {
   beforeEach(() => {
-    getQueryClient().clear();
     listProjects.mockResolvedValue({ projects: PROJECTS, nextCursor: null });
     listStatuses.mockResolvedValue({ statuses: ["queued", "needs_review"] });
     listBranches.mockResolvedValue({ branches: ["main", "develop"] });
