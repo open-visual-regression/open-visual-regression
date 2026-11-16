@@ -57,7 +57,8 @@ export const BuildHeader = ({
     ? `/projects/${build.project.id}/builds/${build.latestBuildId}`
     : null;
   const hasSecondaryActions = showLatestBuild || showCancel || showRebuild;
-  const showActionsMenu = hasSecondaryActions || storybookHref !== null;
+  const showActionsMenu =
+    hasSecondaryActions || storybookHref !== null || build.pullRequestUrl !== null;
   const showWideActions = hasSecondaryActions || showReviewActions;
 
   return (
@@ -71,6 +72,7 @@ export const BuildHeader = ({
             <BuildActionsMenu
               buildId={build.id}
               projectId={build.project.id}
+              pullRequestHref={build.pullRequestUrl}
               storybookHref={storybookHref}
               latestBuildHref={latestBuildHref}
               canCancel={showCancel}
@@ -85,6 +87,11 @@ export const BuildHeader = ({
           <GitPill icon={GitCommitHorizontalIcon} href={build.commitUrl} external>
             {build.commitSha.slice(0, 7)}
           </GitPill>
+          {build.pullRequestUrl ? (
+            <ExternalLink href={build.pullRequestUrl} className="hidden md:inline-flex">
+              view pull request
+            </ExternalLink>
+          ) : null}
           {storybookHref ? (
             <ExternalLink href={storybookHref} className="hidden md:inline-flex">
               view storybook

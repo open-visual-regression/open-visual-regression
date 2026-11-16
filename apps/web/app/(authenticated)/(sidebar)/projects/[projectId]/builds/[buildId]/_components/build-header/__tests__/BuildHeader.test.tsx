@@ -574,6 +574,44 @@ describe("BuildHeader", () => {
     expect(screen.queryByRole("link", { name: /abc1234/i })).not.toBeInTheDocument();
   });
 
+  it("should link to the pull request on the provider when a git integration is configured", () => {
+    renderComponent({
+      build: mocks.build.generateBuild({
+        pullRequestNumber: 42,
+        pullRequestUrl: "https://github.com/acme/web/pull/42",
+      }),
+    });
+
+    expect(screen.getByRole("link", { name: /view pull request/i })).toHaveAttribute(
+      "href",
+      "https://github.com/acme/web/pull/42",
+    );
+  });
+
+  it("should not render the view pull request link when there is no git integration", () => {
+    renderComponent({
+      build: mocks.build.generateBuild({ pullRequestNumber: 42, pullRequestUrl: null }),
+    });
+
+    expect(screen.queryByRole("link", { name: /view pull request/i })).not.toBeInTheDocument();
+  });
+
+  it("should offer the pull request from the menu on small screens", async ({ user }) => {
+    renderComponent({
+      build: mocks.build.generateBuild({
+        pullRequestNumber: 42,
+        pullRequestUrl: "https://github.com/acme/web/pull/42",
+      }),
+    });
+
+    await user.click(screen.getByRole("button", { name: "more build actions" }));
+
+    expect(await screen.findByRole("menuitem", { name: "view pull request" })).toHaveAttribute(
+      "href",
+      "https://github.com/acme/web/pull/42",
+    );
+  });
+
   it("should link the branch to the provider's branch page when a git integration is configured", () => {
     renderComponent({
       build: mocks.build.generateBuild({
