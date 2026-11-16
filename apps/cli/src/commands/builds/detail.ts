@@ -7,6 +7,8 @@ export type BuildDetailFields = {
   status: string;
   branch: string;
   commitSha: string;
+  pullRequestNumber: number | null;
+  pullRequestUrl: string | null;
   project: string;
   name: string | null;
   author: string | null;
@@ -26,6 +28,10 @@ export const formatBuildDetail = (build: BuildDetailFields): string => {
     ["Author", build.author ?? ""],
     ["Created", build.createdAt],
   ];
+
+  if (build.pullRequestNumber) {
+    rows.push(["Pull request", build.pullRequestUrl ?? String(build.pullRequestNumber)]);
+  }
 
   if (build.errorMessage) {
     rows.push(["Error", build.errorMessage]);
@@ -48,6 +54,8 @@ export const formatBuildOutput = (build: BuildDetailSchema, json: boolean | unde
     status: build.status,
     branch: build.branch,
     commitSha: build.commitSha,
+    pullRequestNumber: build.pullRequestNumber,
+    pullRequestUrl: build.pullRequestUrl,
     project: build.project.name,
     name: build.name,
     author: build.author,
