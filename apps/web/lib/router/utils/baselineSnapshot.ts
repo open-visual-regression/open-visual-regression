@@ -1,5 +1,5 @@
 import { dbClient } from "@ovr/db/client";
-import { buildCommitUrl } from "@ovr/git-status/webCommitUrl";
+import { buildWebLinks } from "@ovr/git-status/webLinks";
 import { findComparisonBase, findComparisonBaseline } from "@ovr/reviews/baselines";
 
 type BaselineSource = { imagePath: string | null; buildId: string };
@@ -31,9 +31,7 @@ export const toBaselineSnapshot = async (baselineSnapshot: BaselineSource, proje
     imagePath: baselineSnapshot.imagePath,
     commitSha: baselineBuild.commitSha,
     commitUrl: gitIntegration
-      ? buildCommitUrl(
-          gitIntegration.provider,
-          gitIntegration.repoIdentifier,
+      ? buildWebLinks(gitIntegration.provider, gitIntegration.repoIdentifier).commitUrl(
           baselineBuild.commitSha,
         )
       : null,
