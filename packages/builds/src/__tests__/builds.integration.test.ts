@@ -184,6 +184,23 @@ describe("builds", () => {
       });
     });
 
+    test("records a branch build's pull request number", async ({ project, user }) => {
+      const result = await createBuild(
+        {
+          projectId: project.id,
+          branch: "feature/x",
+          commitSha: "b".repeat(40),
+          pullRequestNumber: 42,
+        },
+        user.id,
+      );
+
+      assert(result.status === "ok");
+      expect(await dbClient.builds.findById(result.data)).toMatchObject({
+        pullRequestNumber: 42,
+      });
+    });
+
     test.for([
       { case: "hasn't finished", branch: "main", processingStatus: "processing" },
       { case: "failed", branch: "main", processingStatus: "error" },
@@ -1060,6 +1077,38 @@ describe("builds", () => {
         });
       },
     );
+
+    test("carries the source's pull request number", async ({ project, user }) => {
+      const created = await createBuild(
+        {
+          projectId: project.id,
+          branch: "feature/x",
+          commitSha: "b".repeat(40),
+          pullRequestNumber: 42,
+        },
+        user.id,
+      );
+      assert(created.status === "ok");
+      await storage.uploadFile(
+        getArtifactPath(project.id, created.data),
+        Buffer.from("artifact-bytes"),
+        "application/gzip",
+      );
+      await dbClient.buildExtractDefaults.create({
+        buildId: created.data,
+        targets: TARGETS,
+        viewports: VIEWPORTS,
+        diffThreshold: 0.05,
+      });
+      await dbClient.builds.updateProcessingStatus(created.data, "success");
+
+      const result = await rebuildBuild(created.data, user.id);
+
+      assert(result.status === "ok");
+      expect(await dbClient.builds.findById(result.data)).toMatchObject({
+        pullRequestNumber: 42,
+      });
+    });
 
     test("compares the rebuild against the same merge base as the source", async ({
       project,

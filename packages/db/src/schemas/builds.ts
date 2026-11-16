@@ -97,6 +97,7 @@ export const builds = pgTable(
       .notNull(),
     branch: varchar({ length: 255 }).notNull(),
     commitSha: varchar("commit_sha", { length: 64 }).notNull(),
+    pullRequestNumber: integer("pull_request_number"),
     // The main-branch build at this build's merge base. Purging it doesn't wait on this
     // build: it's set to null, and the build compares against the latest baselines instead.
     baseBuildId: uuid("base_build_id").references((): AnyPgColumn => builds.id, {

@@ -49,6 +49,7 @@ export const createBuild = os.builds.createBuild
         projectId: context.projectId,
         branch: input.branch,
         commitSha: input.commitSha,
+        pullRequestNumber: input.pullRequestNumber,
         baseBuildId: input.baseBuildId,
         name: input.name,
         author: input.author,
@@ -383,6 +384,10 @@ export const getOne = os.builds.getOne
         ...getBuildTimings(build),
         commitUrl: links?.commitUrl(build.commitSha) ?? null,
         branchUrl: links?.branchUrl(build.branch) ?? null,
+        pullRequestNumber: build.pullRequestNumber,
+        pullRequestUrl: build.pullRequestNumber
+          ? (links?.pullRequestUrl(build.pullRequestNumber) ?? null)
+          : null,
         mainBranch: project.gitMainBranch,
         mainBranchUrl: links?.branchUrl(project.gitMainBranch) ?? null,
         baseBuild: baseBuild ? { id: baseBuild.id, commitSha: baseBuild.commitSha } : null,

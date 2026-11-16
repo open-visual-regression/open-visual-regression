@@ -14,4 +14,10 @@ describe("buildWebLinks", () => {
       "https://github.com/acme/web/tree/main",
     );
   });
+
+  it("links to the pull request page on github.com for the github provider", () => {
+    expect(buildWebLinks("github", "acme/web").pullRequestUrl(42)).toBe(
+      "https://github.com/acme/web/pull/42",
+    );
+  });
 });
