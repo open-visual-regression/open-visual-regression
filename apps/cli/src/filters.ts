@@ -1,4 +1,8 @@
-export const MAX_LIMIT = 100;
+import type { listBuildsInputSchema } from "@ovr/api/contracts/builds";
+
+type LimitSchema = typeof listBuildsInputSchema.shape.limit;
+
+export const getMaxLimit = (schema: LimitSchema): number => schema.unwrap().maxValue!;
 
 export const parseEnumOption = <T extends string>(
   flag: string,
@@ -20,12 +24,12 @@ export const parseEnumOption = <T extends string>(
   return values as T[];
 };
 
-export const parseLimit = (limit: string): number => {
-  const parsed = Number(limit);
+export const parseLimit = (limit: string, schema: LimitSchema): number => {
+  const result = schema.safeParse(Number(limit));
 
-  if (!Number.isInteger(parsed) || parsed < 1 || parsed > MAX_LIMIT) {
-    throw new Error(`--limit must be an integer between 1 and ${MAX_LIMIT}.`);
+  if (!result.success) {
+    throw new Error(`--limit must be an integer between 1 and ${getMaxLimit(schema)}.`);
   }
 
-  return parsed;
+  return result.data;
 };

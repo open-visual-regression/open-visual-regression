@@ -2,6 +2,7 @@ import { Command } from "commander";
 
 import { snapshotDisplayStatusSchema, type SnapshotDisplayStatus } from "@ovr/api/contracts/builds";
 import {
+  listInputSchema,
   MAX_REBUILD_SNAPSHOTS,
   snapshotFlagSchema,
   type SnapshotsCursor,
@@ -11,7 +12,7 @@ import { chunk } from "../../chunk";
 import { createClient } from "../../client";
 import { getApiKey, getServerUrl } from "../../config";
 import { formatCliError } from "../../errors";
-import { MAX_LIMIT, parseEnumOption } from "../../filters";
+import { getMaxLimit, parseEnumOption } from "../../filters";
 import { collectAllPages } from "../../paginate";
 
 // The server refuses to rebuild a snapshot that is still being captured or whose story is skipped.
@@ -114,7 +115,7 @@ export const rebuildCommand = new Command("rebuild")
               const result = await client.snapshots.list({
                 ...filters,
                 buildId,
-                limit: MAX_LIMIT,
+                limit: getMaxLimit(listInputSchema.shape.limit),
                 cursor,
               });
 

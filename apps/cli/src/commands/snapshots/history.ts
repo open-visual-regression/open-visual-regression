@@ -1,9 +1,11 @@
 import { Command } from "commander";
 
+import { getHistoryInputSchema } from "@ovr/api/contracts/snapshots";
+
 import { createClient } from "../../client";
 import { getApiKey, getServerUrl } from "../../config";
 import { formatCliError } from "../../errors";
-import { MAX_LIMIT, parseLimit } from "../../filters";
+import { getMaxLimit, parseLimit } from "../../filters";
 import { formatHistoryOutput } from "./historyTable";
 
 const DEFAULT_LIMIT = "30";
@@ -21,7 +23,11 @@ export const historyCommand = new Command("history")
   .argument("<snapshotId>", "snapshot id")
   .option("--server-url <url>", "OVR server URL (defaults to ovr.config's serverUrl)")
   .option("--branch <name>", "branch to variant at (defaults to the project's main branch)")
-  .option("--limit <count>", `builds to show (1-${MAX_LIMIT})`, DEFAULT_LIMIT)
+  .option(
+    "--limit <count>",
+    `builds to show (1-${getMaxLimit(getHistoryInputSchema.shape.limit)})`,
+    DEFAULT_LIMIT,
+  )
   .option("-c, --config <path>", "path to ovr.config file")
   .option("--json", "print the history as JSON instead of a table")
   .action(async (snapshotId: string, options: SnapshotsHistoryCommandOptions) => {
@@ -34,7 +40,7 @@ export const historyCommand = new Command("history")
       const history = await client.snapshots.getHistory({
         snapshotId,
         branch: options.branch,
-        limit: parseLimit(options.limit),
+        limit: parseLimit(options.limit, getHistoryInputSchema.shape.limit),
       });
 
       console.log(formatHistoryOutput(history, options.json));

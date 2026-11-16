@@ -1,13 +1,17 @@
 import { Command } from "commander";
 
 import { snapshotDisplayStatusSchema } from "@ovr/api/contracts/builds";
-import { snapshotFlagSchema, type SnapshotsCursor } from "@ovr/api/contracts/snapshots";
+import {
+  listInputSchema,
+  snapshotFlagSchema,
+  type SnapshotsCursor,
+} from "@ovr/api/contracts/snapshots";
 
 import { createClient } from "../../client";
 import { getApiKey, getServerUrl } from "../../config";
 import { decodeSnapshotsCursor, encodeSnapshotsCursor } from "../../cursor";
 import { formatCliError } from "../../errors";
-import { MAX_LIMIT, parseEnumOption, parseLimit } from "../../filters";
+import { getMaxLimit, parseEnumOption, parseLimit } from "../../filters";
 import { collectAllPages } from "../../paginate";
 import { formatSnapshotsOutput } from "./table";
 
@@ -36,7 +40,11 @@ export const listCommand = new Command("list")
   .option("--viewport <name...>", "filter to snapshots captured at these viewports")
   .option("--flag <flag...>", "filter to snapshots with these flags")
   .option("--search <text>", "filter to snapshots matching this text")
-  .option("--limit <count>", `snapshots per page (1-${MAX_LIMIT})`, DEFAULT_LIMIT)
+  .option(
+    "--limit <count>",
+    `snapshots per page (1-${getMaxLimit(listInputSchema.shape.limit)})`,
+    DEFAULT_LIMIT,
+  )
   .option("--cursor <cursor>", "fetch the page following this cursor")
   .option("--all", "fetch every page instead of just the first")
   .option("-c, --config <path>", "path to ovr.config file")
@@ -53,7 +61,7 @@ export const listCommand = new Command("list")
         viewports: options.viewport,
         flags: parseEnumOption("--flag", options.flag, snapshotFlagSchema.options),
         search: options.search,
-        limit: parseLimit(options.limit),
+        limit: parseLimit(options.limit, listInputSchema.shape.limit),
       };
 
       const client = createClient(serverUrl, apiKey);

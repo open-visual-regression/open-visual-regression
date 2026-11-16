@@ -1,12 +1,16 @@
 import { Command } from "commander";
 
-import { buildStatusSchema, type BuildsCursor } from "@ovr/api/contracts/builds";
+import {
+  buildStatusSchema,
+  listBuildsInputSchema,
+  type BuildsCursor,
+} from "@ovr/api/contracts/builds";
 
 import { createClient } from "../../client";
 import { getApiKey, getServerUrl } from "../../config";
 import { decodeBuildsCursor, encodeBuildsCursor } from "../../cursor";
 import { formatCliError } from "../../errors";
-import { MAX_LIMIT, parseEnumOption, parseLimit } from "../../filters";
+import { getMaxLimit, parseEnumOption, parseLimit } from "../../filters";
 import { collectAllPages } from "../../paginate";
 import { formatBuildsOutput } from "./table";
 
@@ -38,7 +42,11 @@ export const listCommand = new Command("list")
   .option("--author <author...>", "filter to builds by these authors")
   .option("--search <text>", "filter to builds matching this text")
   .option("--sort <direction>", "sort by creation time: asc or desc")
-  .option("--limit <count>", `builds per page (1-${MAX_LIMIT})`, DEFAULT_LIMIT)
+  .option(
+    "--limit <count>",
+    `builds per page (1-${getMaxLimit(listBuildsInputSchema.shape.limit)})`,
+    DEFAULT_LIMIT,
+  )
   .option("--cursor <cursor>", "fetch the page following this cursor")
   .option("--all", "fetch every page instead of just the first")
   .option("-c, --config <path>", "path to ovr.config file")
@@ -58,7 +66,7 @@ export const listCommand = new Command("list")
         authors: options.author,
         search: options.search,
         sortDirection,
-        limit: parseLimit(options.limit),
+        limit: parseLimit(options.limit, listBuildsInputSchema.shape.limit),
       };
 
       const client = createClient(serverUrl, apiKey);
