@@ -26,6 +26,7 @@ import { BuildRebuildDialog } from "./BuildRebuildButton";
 export type BuildActionsMenuProps = {
   buildId: string;
   projectId: string;
+  pullRequestHref: string | null;
   storybookHref: string | null;
   latestBuildHref: string | null;
   canCancel: boolean;
@@ -37,6 +38,7 @@ export type BuildActionsMenuProps = {
 export const BuildActionsMenu = ({
   buildId,
   projectId,
+  pullRequestHref,
   storybookHref,
   latestBuildHref,
   canCancel,
@@ -67,6 +69,14 @@ export const BuildActionsMenu = ({
           <Icon icon={EllipsisIcon} size={14} />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-auto whitespace-nowrap">
+          {pullRequestHref ? (
+            <DropdownMenuItem
+              render={<a href={pullRequestHref} target="_blank" rel="noopener noreferrer" />}
+            >
+              <Icon icon={ExternalLinkIcon} />
+              view pull request
+            </DropdownMenuItem>
+          ) : null}
           {storybookHref ? (
             <DropdownMenuItem
               render={<a href={storybookHref} target="_blank" rel="noopener noreferrer" />}
