@@ -12,7 +12,8 @@
     "lint": "oxlint src",
     "format": "oxfmt src",
     "test": "vitest run",
-    "generate:fixtures": "node scripts/generateFixtures.mjs"
+    "generate:fixtures": "node scripts/generateFixtures.mjs",
+    "evaluate:storybook": "tsx scripts/storybookEvaluation.ts"
   },
   "dependencies": {
     "@jest/diff-sequences": "^30.5.0",
@@ -25,6 +26,7 @@
     "@types/pngjs": "^6.0.5",
     "playwright": "1.64.1",
     "pngjs": "^7.0.0",
+    "tsx": "^4.23.5",
     "typescript": "6.0.3",
     "vitest": "^5.1.0"
   }
