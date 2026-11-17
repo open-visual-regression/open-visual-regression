@@ -1,5 +1,33 @@
 # @ovr/web
 
+## 0.24.0
+
+### Minor Changes
+
+- [#582](https://github.com/open-visual-regression/open-visual-regression/pull/582) [`4b8afb7`](https://github.com/open-visual-regression/open-visual-regression/commit/4b8afb7189428a7e5273159c3f78c19b8505dd9e) Thanks [@tgfischer](https://github.com/tgfischer)! - The build page links to the build's pull request when the project has a git integration.
+
+- [#586](https://github.com/open-visual-regression/open-visual-regression/pull/586) [`83feb05`](https://github.com/open-visual-regression/open-visual-regression/commit/83feb05284df2c3f9784c66cd72d77cfc06def7f) Thanks [@tgfischer](https://github.com/tgfischer)! - You can now filter the builds page by project.
+
+### Patch Changes
+
+- [#587](https://github.com/open-visual-regression/open-visual-regression/pull/587) [`cf58db2`](https://github.com/open-visual-regression/open-visual-regression/commit/cf58db28eff101d3ce1c4d8e0a0617d4b9a6a7cb) Thanks [@tgfischer](https://github.com/tgfischer)! - The commit filter always shows the short commit sha. A selected commit no longer appears as the full 40-character sha after searching for another commit, or on the filter button.
+
+- [#585](https://github.com/open-visual-regression/open-visual-regression/pull/585) [`40b4027`](https://github.com/open-visual-regression/open-visual-regression/commit/40b4027edec0188af7f226d7962597ef819e7ca0) Thanks [@tgfischer](https://github.com/tgfischer)! - Tall snapshots on the snapshot page now fill the pane's width instead of shrinking to fit the window height.
+
+- [#571](https://github.com/open-visual-regression/open-visual-regression/pull/571) [`b303a58`](https://github.com/open-visual-regression/open-visual-regression/commit/b303a58b480dbe1504ad71d33b2c04fdbb3a7d9a) Thanks [@tgfischer](https://github.com/tgfischer)! - The "no snapshots on main yet" message in the snapshot sidebar's history tab now uses the same text size as the empty messages in the logs and reviews tabs.
+
+- [#570](https://github.com/open-visual-regression/open-visual-regression/pull/570) [`c7d0164`](https://github.com/open-visual-regression/open-visual-regression/commit/c7d0164c15f6be5a2ddb0e79d2ad1d9ba4fbdfd5) Thanks [@tgfischer](https://github.com/tgfischer)! - Approving or rejecting a snapshot you've already voted on keeps you on that snapshot instead of jumping to the next one, so changing your vote no longer moves you along the queue.
+
+- [#577](https://github.com/open-visual-regression/open-visual-regression/pull/577) [`a91cb9c`](https://github.com/open-visual-regression/open-visual-regression/commit/a91cb9c3daf24514c35ebc100c6660ef0db9e8fe) Thanks [@tgfischer](https://github.com/tgfischer)! - Pages no longer fail with "encountered the unstable value `Date.now()` while prerendering" when signing in through a trusted proxy with `OVR_AUTH_PROXY_JWKS_URL`.
+- Updated dependencies [[`80bab2d`](https://github.com/open-visual-regression/open-visual-regression/commit/80bab2d587d816b11e9d15c080c1ffc815cf5c78)]:
+  - @ovr/api@0.5.9
+  - @ovr/builds@0.2.17
+  - @ovr/db@0.4.13
+  - @ovr/git-status@0.1.26
+  - @ovr/ui@0.1.5
+  - @ovr/reviews@0.1.32
+  - @ovr/queue@0.4.3
+
 ## 0.23.0
 
 ### Minor Changes

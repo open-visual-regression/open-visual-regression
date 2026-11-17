@@ -1,5 +1,11 @@
 # @open-visual-regression/cli
 
+## 0.15.0
+
+### Minor Changes
+
+- [#581](https://github.com/open-visual-regression/open-visual-regression/pull/581) [`80bab2d`](https://github.com/open-visual-regression/open-visual-regression/commit/80bab2d587d816b11e9d15c080c1ffc815cf5c78) Thanks [@tgfischer](https://github.com/tgfischer)! - `ovr upload storybook` takes `--pull-request <number>`, and `ovr builds detail` shows the build's pull request.
+
 ## 0.14.0
 
 ### Minor Changes

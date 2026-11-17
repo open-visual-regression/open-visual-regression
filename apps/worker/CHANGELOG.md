@@ -1,5 +1,19 @@
 # @ovr/worker
 
+## 0.24.0
+
+### Patch Changes
+
+- [#587](https://github.com/open-visual-regression/open-visual-regression/pull/587) [`cf58db2`](https://github.com/open-visual-regression/open-visual-regression/commit/cf58db28eff101d3ce1c4d8e0a0617d4b9a6a7cb) Thanks [@tgfischer](https://github.com/tgfischer)! - The commit filter always shows the short commit sha. A selected commit no longer appears as the full 40-character sha after searching for another commit, or on the filter button.
+
+- [#577](https://github.com/open-visual-regression/open-visual-regression/pull/577) [`a91cb9c`](https://github.com/open-visual-regression/open-visual-regression/commit/a91cb9c3daf24514c35ebc100c6660ef0db9e8fe) Thanks [@tgfischer](https://github.com/tgfischer)! - Pages no longer fail with "encountered the unstable value `Date.now()` while prerendering" when signing in through a trusted proxy with `OVR_AUTH_PROXY_JWKS_URL`.
+- Updated dependencies [[`80bab2d`](https://github.com/open-visual-regression/open-visual-regression/commit/80bab2d587d816b11e9d15c080c1ffc815cf5c78)]:
+  - @ovr/builds@0.2.17
+  - @ovr/db@0.4.13
+  - @ovr/git-status@0.1.26
+  - @ovr/capture@0.3.25
+  - @ovr/queue@0.4.3
+
 ## 0.23.0
 
 ### Minor Changes
