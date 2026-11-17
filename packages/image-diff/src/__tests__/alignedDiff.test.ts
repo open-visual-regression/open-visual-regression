@@ -298,10 +298,6 @@ const scenarios: Record<string, Expectation> = {
     improves: false,
     regions: [{ kind: "modified", within: { ...MAIN_COLUMN, y: 190, height: 60 } }],
   },
-  "text-word-change": {
-    improves: true,
-    regions: [{ kind: "modified", within: { ...MAIN_COLUMN, y: 160, height: 30 } }],
-  },
   "small-status-dot": {
     improves: false,
     regions: [{ kind: "modified", within: { x: 230, y: 210, width: 20, height: 20 } }],
@@ -341,6 +337,24 @@ describe("alignedDiff on rendered pages", () => {
     });
     const plain = plainPixelDiff(baselinePage, current);
     expect(diff.changedPixelCount).toBeLessThanOrEqual(expectation.improves ? plain - 1 : plain);
+  });
+
+  it("should flag only the sentence with the edited word", () => {
+    const current = load("text-word-change");
+
+    const diff = alignedDiff(baselinePage, current);
+
+    // How a sentence splits into regions depends on which of several equally
+    // good alignments is picked, so only where they are is checked.
+    expect(diff.regions.length).toBeGreaterThan(0);
+    expect(
+      diff.regions.every(
+        (region) =>
+          region.kind === "modified" &&
+          contains({ ...MAIN_COLUMN, y: 160, height: 30 }, region.current),
+      ),
+    ).toBe(true);
+    expect(diff.changedPixelCount).toBeLessThan(plainPixelDiff(baselinePage, current));
   });
 
   it("should flag line reflow only where text moved between lines", () => {
