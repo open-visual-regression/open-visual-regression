@@ -1,5 +1,5 @@
 // Renders before/after screenshots of a sample app page for the aligned diff
-// tests. Run with `pnpm generate:fixtures` from packages/diff-analysis.
+// tests. Run with `pnpm generate:fixtures` from packages/image-diff.
 // Set CHROMIUM_PATH to use a browser other than Playwright's bundled one.
 import { mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";

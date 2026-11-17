@@ -1,10 +1,14 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
+import pixelmatch from "pixelmatch";
+import { PNG } from "pngjs";
 import { describe, expect, it } from "vitest";
 
-import { alignedDiff, renderAlignedDiff, type DiffRegion, type Rect } from "../alignedDiff";
-import { decodePng, type DiffImage } from "../analyzeDiff";
+import { alignedDiff } from "../alignedDiff";
+import { PIXEL_THRESHOLD } from "../masks";
+import { renderDiff } from "../renderDiff";
+import type { Image, Rect, Region } from "../types";
 
 type Color = [number, number, number];
 
@@ -15,7 +19,7 @@ const INK: Color = [20, 20, 20];
 const BLUE: Color = [37, 99, 235];
 const RED: Color = [220, 38, 38];
 
-const drawImage = (width: number, height: number, boxes: Box[], background = WHITE): DiffImage => {
+const drawImage = (width: number, height: number, boxes: Box[], background = WHITE): Image => {
   const data = new Uint8Array(width * height * 4);
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -52,7 +56,26 @@ const page = (offsetY = 0, offsetX = 0): Box[] => [
   ...text(10 + offsetX, 80 + offsetY, 6, 3),
 ];
 
-const kinds = (regions: DiffRegion[]) => regions.map((region) => region.kind);
+/** What a plain position-by-position pixelmatch reports, for comparison. */
+const plainPixelDiff = (baseline: Image, current: Image): number => {
+  const width = Math.max(baseline.width, current.width);
+  const height = Math.max(baseline.height, current.height);
+  const pad = (image: Image) => {
+    const data = new Uint8Array(width * height * 4);
+    for (let row = 0; row < image.height; row++) {
+      data.set(
+        image.data.subarray(row * image.width * 4, (row + 1) * image.width * 4),
+        row * width * 4,
+      );
+    }
+    return data;
+  };
+  return pixelmatch(pad(baseline), pad(current), undefined, width, height, {
+    threshold: PIXEL_THRESHOLD,
+  });
+};
+
+const kinds = (regions: Region[]) => regions.map((region) => region.kind);
 
 const contains = (outer: Rect, inner: Rect) =>
   inner.x >= outer.x &&
@@ -67,7 +90,6 @@ describe("alignedDiff", () => {
     const diff = alignedDiff(image, image);
 
     expect(diff.changedPixelCount).toBe(0);
-    expect(diff.naivePixelCount).toBe(0);
     expect(diff.regions).toEqual([]);
   });
 
@@ -80,7 +102,7 @@ describe("alignedDiff", () => {
 
     const diff = alignedDiff(baseline, current);
 
-    expect(diff.naivePixelCount).toBeGreaterThan(1000);
+    expect(plainPixelDiff(baseline, current)).toBeGreaterThan(1000);
     expect(diff.regions).toEqual([
       {
         kind: "inserted",
@@ -138,7 +160,7 @@ describe("alignedDiff", () => {
 
     const diff = alignedDiff(baseline, current);
 
-    expect(diff.naivePixelCount).toBeGreaterThan(500);
+    expect(plainPixelDiff(baseline, current)).toBeGreaterThan(500);
     expect(kinds(diff.regions)).toEqual(["inserted"]);
     expect(contains({ x: 10, y: 10, width: 20, height: 90 }, diff.regions[0]!.current)).toBe(true);
   });
@@ -152,7 +174,7 @@ describe("alignedDiff", () => {
 
     const diff = alignedDiff(baseline, current);
 
-    expect(diff.changedPixelCount).toBe(diff.naivePixelCount);
+    expect(diff.changedPixelCount).toBe(plainPixelDiff(baseline, current));
     expect(diff.regions).toEqual([
       {
         kind: "modified",
@@ -184,7 +206,7 @@ describe("alignedDiff", () => {
 
     const diff = alignedDiff(baseline, current);
 
-    expect(diff.changedPixelCount).toBe(diff.naivePixelCount);
+    expect(diff.changedPixelCount).toBe(plainPixelDiff(baseline, current));
     expect(diff.regions).toEqual([
       expect.objectContaining({
         kind: "modified",
@@ -193,7 +215,7 @@ describe("alignedDiff", () => {
     ]);
   });
 
-  it("should stay correct when the edit budget is exceeded", () => {
+  it("should match the pixel diff when every row changed", () => {
     const stripes = (seed: number) =>
       Array.from({ length: 40 }, (_, index) => ({
         x: 0,
@@ -206,9 +228,9 @@ describe("alignedDiff", () => {
     const baseline = drawImage(100, 130, [...stripes(0), header]);
     const current = drawImage(100, 130, [...stripes(101), header]);
 
-    const diff = alignedDiff(baseline, current, { maxEditRatio: 0.01 });
+    const diff = alignedDiff(baseline, current);
 
-    expect(diff.changedPixelCount).toBe(diff.naivePixelCount);
+    expect(diff.changedPixelCount).toBe(plainPixelDiff(baseline, current));
   });
 
   it("should render changed pixels over the current image", () => {
@@ -216,7 +238,7 @@ describe("alignedDiff", () => {
     const current = drawImage(40, 20, [{ x: 5, y: 5, width: 4, height: 4, color: INK }]);
 
     const diff = alignedDiff(baseline, current);
-    const rendered = renderAlignedDiff(current, diff);
+    const rendered = renderDiff(current, diff);
 
     expect(rendered.width).toBe(40);
     const index = (6 * 40 + 6) * 4;
@@ -230,11 +252,14 @@ describe("alignedDiff", () => {
  * report: their kinds in reading order and a box each must lie within.
  */
 const FIXTURES = join(import.meta.dirname, "fixtures/aligned");
-const load = (name: string) => decodePng(readFileSync(join(FIXTURES, `${name}.png`)));
+const load = (name: string): Image => {
+  const png = PNG.sync.read(readFileSync(join(FIXTURES, `${name}.png`)));
+  return { width: png.width, height: png.height, data: png.data };
+};
 const baselinePage = load("baseline");
 
 type Expectation = {
-  regions: Array<{ kind: DiffRegion["kind"]; within: Rect }>;
+  regions: Array<{ kind: Region["kind"]; within: Rect }>;
   /** Whether alignment must flag fewer pixels than the plain pixel diff, or may match it. */
   improves: boolean;
 };
@@ -275,10 +300,7 @@ const scenarios: Record<string, Expectation> = {
   },
   "text-word-change": {
     improves: true,
-    regions: [
-      { kind: "modified", within: { ...MAIN_COLUMN, y: 160, height: 30 } },
-      { kind: "modified", within: { ...MAIN_COLUMN, y: 160, height: 30 } },
-    ],
+    regions: [{ kind: "modified", within: { ...MAIN_COLUMN, y: 160, height: 30 } }],
   },
   "small-status-dot": {
     improves: false,
@@ -317,14 +339,16 @@ describe("alignedDiff on rendered pages", () => {
         contains(expectation.regions[index]!.within, rect),
       );
     });
-    const limit = expectation.improves ? diff.naivePixelCount - 1 : diff.naivePixelCount;
-    expect(diff.changedPixelCount).toBeLessThanOrEqual(limit);
+    const plain = plainPixelDiff(baselinePage, current);
+    expect(diff.changedPixelCount).toBeLessThanOrEqual(expectation.improves ? plain - 1 : plain);
   });
 
   it("should flag line reflow only where text moved between lines", () => {
-    const diff = alignedDiff(baselinePage, load("text-reflow-extra-line"));
+    const current = load("text-reflow-extra-line");
 
-    expect(diff.changedPixelCount).toBeLessThan(diff.naivePixelCount / 4);
+    const diff = alignedDiff(baselinePage, current);
+
+    expect(diff.changedPixelCount).toBeLessThan(plainPixelDiff(baselinePage, current) / 4);
     expect(
       diff.regions.some((region) =>
         contains({ ...MAIN_COLUMN, y: 160, height: 60 }, region.current),
@@ -333,9 +357,11 @@ describe("alignedDiff on rendered pages", () => {
   });
 
   it("should match the pixel diff when the whole page changed", () => {
-    const diff = alignedDiff(baselinePage, load("big-dark-theme"));
+    const current = load("big-dark-theme");
 
-    expect(diff.changedPixelCount).toBe(diff.naivePixelCount);
+    const diff = alignedDiff(baselinePage, current);
+
+    expect(diff.changedPixelCount).toBe(plainPixelDiff(baselinePage, current));
     expect(kinds(diff.regions)).toEqual(["modified"]);
   });
 });

@@ -3,7 +3,7 @@
 // how many flagged pixels fall outside the area the mutation really changed.
 //
 //   pnpm --filter @ovr/ui build-storybook && pnpm --filter web build-storybook
-//   pnpm dlx tsx scripts/storybookAlignedDiff.ts <out-dir> [storybook-static ...]
+//   pnpm dlx tsx scripts/storybookBenchmark.ts <out-dir> [storybook-static ...]
 //
 // Set CHROMIUM_PATH to use a system browser.
 import { spawn } from "node:child_process";
@@ -14,8 +14,14 @@ import pixelmatch from "pixelmatch";
 import { chromium, type Page } from "playwright";
 import { PNG } from "pngjs";
 
-import { alignedDiff, renderAlignedDiff, type Rect } from "../src/alignedDiff";
-import { decodePng, type DiffImage } from "../src/analyzeDiff";
+import { alignedDiff } from "../src/alignedDiff";
+import { renderDiff } from "../src/renderDiff";
+import type { Image, Rect } from "../src/types";
+
+const decodePng = (buffer: Buffer): Image => {
+  const png = PNG.sync.read(buffer);
+  return { width: png.width, height: png.height, data: png.data };
+};
 
 const outDir = resolve(process.argv[2] ?? "storybook-diff-report");
 const builds = process.argv.slice(3).length
@@ -145,7 +151,7 @@ const outside = (mask: Uint8Array, width: number, rects: Rect[]): number => {
   return count;
 };
 
-const pad = (image: DiffImage, width: number, height: number) => {
+const pad = (image: Image, width: number, height: number) => {
   const data = new Uint8Array(width * height * 4);
   for (let row = 0; row < image.height; row++) {
     data.set(
@@ -156,7 +162,7 @@ const pad = (image: DiffImage, width: number, height: number) => {
   return data;
 };
 
-const naiveMask = (baseline: DiffImage, current: DiffImage) => {
+const naiveMask = (baseline: Image, current: Image) => {
   const width = Math.max(baseline.width, current.width);
   const height = Math.max(baseline.height, current.height);
   const output = new Uint8Array(width * height * 4);
@@ -166,13 +172,15 @@ const naiveMask = (baseline: DiffImage, current: DiffImage) => {
     diffColor: [255, 0, 0],
   });
   const mask = new Uint8Array(width * height);
+  let count = 0;
   for (let index = 0; index < mask.length; index++) {
     mask[index] = output[index * 4 + 3] !== 0 && output[index * 4 + 1] === 0 ? 1 : 0;
+    count += mask[index]!;
   }
-  return { mask, width, height, output };
+  return { mask, width, height, output, count };
 };
 
-const sideBySide = (images: DiffImage[]): Buffer => {
+const sideBySide = (images: Image[]): Buffer => {
   const gap = 12;
   const width = images.reduce((sum, image) => sum + image.width, 0) + gap * (images.length - 1);
   const height = Math.max(...images.map((image) => image.height));
@@ -238,7 +246,7 @@ const main = async () => {
     });
     while (next < jobs.length) {
       const job = jobs[next++]!;
-      let baseline: DiffImage;
+      let baseline: Image;
       try {
         baseline = decodePng((await shoot(page, job.url, null)).png);
       } catch (error) {
@@ -270,13 +278,13 @@ const main = async () => {
           const ms = performance.now() - started;
           const naive = naiveMask(baseline, current);
           if (mutation.name === "no-change") {
-            flaky = diff.naivePixelCount > 0;
+            flaky = naive.count > 0;
           }
           const result: Result = {
             story: job.id,
             mutation: mutation.name,
             size: `${current.width}x${current.height}`,
-            naive: diff.naivePixelCount,
+            naive: naive.count,
             aligned: diff.changedPixelCount,
             naiveOutside: outside(naive.mask, naive.width, shot.rects),
             alignedOutside: outside(diff.mask, diff.width, shot.rects),
@@ -292,7 +300,7 @@ const main = async () => {
                 baseline,
                 current,
                 { width: naive.width, height: naive.height, data: naive.output },
-                renderAlignedDiff(current, diff),
+                renderDiff(current, diff),
               ]),
             );
           }
