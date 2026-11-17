@@ -31,44 +31,55 @@ const gridCellsOf = (region: Region): string[] => {
   return cells;
 };
 
+/** A region in the union-find forest. Groups are found by following `parent` to the root. */
+type Node = { region: Region; parent: Node | null };
+
+const rootOf = (node: Node): Node => {
+  let root = node;
+  while (root.parent) {
+    root = root.parent;
+  }
+  // Point everything on the way straight at the root, so later lookups are short.
+  for (let step = node; step.parent && step.parent !== root; ) {
+    const next: Node = step.parent;
+    step.parent = root;
+    step = next;
+  }
+  return root;
+};
+
 /** One pass of union-find over nearby regions. */
 const mergePass = (regions: Region[]): Region[] => {
-  const parent = regions.map((_, index) => index);
-  const root = (index: number): number => {
-    let node = index;
-    while (parent[node] !== node) {
-      parent[node] = parent[parent[node]!]!;
-      node = parent[node]!;
-    }
-    return node;
-  };
+  const nodes: Node[] = regions.map((region) => ({ region, parent: null }));
 
-  const grid = new Map<string, number[]>();
-  regions.forEach((region, index) => {
-    for (const cell of gridCellsOf(region)) {
+  const grid = new Map<string, Node[]>();
+  for (const node of nodes) {
+    for (const cell of gridCellsOf(node.region)) {
       const others = grid.get(cell);
       if (!others) {
-        grid.set(cell, [index]);
+        grid.set(cell, [node]);
         continue;
       }
       for (const other of others) {
+        const otherRoot = rootOf(other);
+        const nodeRoot = rootOf(node);
         if (
-          root(other) !== root(index) &&
-          rectsAreNear(regions[other]!.current, region.current, MERGE_DISTANCE)
+          otherRoot !== nodeRoot &&
+          rectsAreNear(other.region.current, node.region.current, MERGE_DISTANCE)
         ) {
-          parent[root(other)] = root(index);
+          otherRoot.parent = nodeRoot;
         }
       }
-      others.push(index);
+      others.push(node);
     }
-  });
+  }
 
-  const merged = new Map<number, Region>();
-  regions.forEach((region, index) => {
-    const group = root(index);
-    const existing = merged.get(group);
-    merged.set(group, existing ? mergeTwo(existing, region) : region);
-  });
+  const merged = new Map<Node, Region>();
+  for (const node of nodes) {
+    const root = rootOf(node);
+    const existing = merged.get(root);
+    merged.set(root, existing ? mergeTwo(existing, node.region) : node.region);
+  }
   return [...merged.values()];
 };
 

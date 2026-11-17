@@ -33,48 +33,48 @@ const MAX_UNANCHORED_LINES = 4000;
  */
 const uniqueAnchors = (baseline: Float64Array, current: Float64Array): Match[] => {
   const counts = new Map<number, { baseline: number; current: number; at: number; to: number }>();
-  baseline.forEach((line, index) => {
+  for (const [index, line] of baseline.entries()) {
     const entry = counts.get(line);
-    counts.set(
-      line,
-      entry
-        ? { ...entry, baseline: entry.baseline + 1 }
-        : { baseline: 1, current: 0, at: index, to: -1 },
-    );
-  });
-  current.forEach((line, index) => {
+    if (entry) {
+      entry.baseline += 1;
+    } else {
+      counts.set(line, { baseline: 1, current: 0, at: index, to: -1 });
+    }
+  }
+  for (const [index, line] of current.entries()) {
     const entry = counts.get(line);
     if (entry) {
       entry.current += 1;
       entry.to = index;
     }
-  });
+  }
 
   const pairs = [...counts.values()]
     .filter((entry) => entry.baseline === 1 && entry.current === 1)
     .sort((a, b) => a.at - b.at);
 
-  // Longest increasing run of `to`, in O(k log k).
-  const tails: number[] = [];
-  const previous = new Int32Array(pairs.length);
-  pairs.forEach((pair, index) => {
+  // Longest run of pairs whose `to` keeps increasing, in O(k log k). Each pile
+  // keeps its top pair, linked to the top of the pile before it when placed.
+  type Pile = { at: number; to: number; below: Pile | null };
+  const piles: Pile[] = [];
+  for (const pair of pairs) {
     let low = 0;
-    let high = tails.length;
+    let high = piles.length;
     while (low < high) {
       const middle = (low + high) >> 1;
-      if (pairs[tails[middle]!]!.to < pair.to) {
+      const pile = piles[middle];
+      if (pile && pile.to < pair.to) {
         low = middle + 1;
       } else {
         high = middle;
       }
     }
-    previous[index] = low > 0 ? tails[low - 1]! : -1;
-    tails[low] = index;
-  });
+    piles[low] = { at: pair.at, to: pair.to, below: piles[low - 1] ?? null };
+  }
 
   const chain: Match[] = [];
-  for (let index = tails.at(-1) ?? -1; index >= 0; index = previous[index]!) {
-    chain.push({ baselineStart: pairs[index]!.at, currentStart: pairs[index]!.to, length: 1 });
+  for (let pile = piles.at(-1) ?? null; pile; pile = pile.below) {
+    chain.push({ baselineStart: pile.at, currentStart: pile.to, length: 1 });
   }
   return chain.reverse();
 };

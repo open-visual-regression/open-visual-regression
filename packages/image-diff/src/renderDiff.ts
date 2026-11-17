@@ -15,11 +15,13 @@ export const renderDiff = (current: Image, diff: AlignedDiff): Image => {
   const { width, height } = current;
   const data = new Uint8Array(width * height * 4);
 
-  const blend = (pixel: number, color: Rgb, amount: number) => {
-    for (let channel = 0; channel < 3; channel++) {
-      data[pixel * 4 + channel] =
-        data[pixel * 4 + channel]! * (1 - amount) + color[channel]! * amount;
-    }
+  const mix = (index: number, value: number, amount: number) => {
+    data[index] = (data[index] ?? 0) * (1 - amount) + value * amount;
+  };
+  const blend = (pixel: number, [red, green, blue]: Rgb, amount: number) => {
+    mix(pixel * 4, red, amount);
+    mix(pixel * 4 + 1, green, amount);
+    mix(pixel * 4 + 2, blue, amount);
   };
   const blendRect = (rect: Rect, color: Rgb, amount: number) => {
     for (let row = Math.max(0, rect.y); row < Math.min(height, rect.y + rect.height); row++) {
@@ -36,9 +38,9 @@ export const renderDiff = (current: Image, diff: AlignedDiff): Image => {
   for (let pixel = 0; pixel < width * height; pixel++) {
     const source = pixel * 4;
     const gray =
-      0.299 * current.data[source]! +
-      0.587 * current.data[source + 1]! +
-      0.114 * current.data[source + 2]!;
+      0.299 * (current.data[source] ?? 0) +
+      0.587 * (current.data[source + 1] ?? 0) +
+      0.114 * (current.data[source + 2] ?? 0);
     const faded = 255 - (255 - gray) * 0.25;
     data.set([faded, faded, faded, 255], source);
   }
