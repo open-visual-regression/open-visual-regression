@@ -12,7 +12,8 @@
     "lint": "oxlint src",
     "format": "oxfmt src",
     "test": "vitest run",
-    "generate:fixtures": "node scripts/generateFixtures.mjs"
+    "generate:fixtures": "node scripts/generateFixtures.mjs",
+    "bench": "vitest bench"
   },
   "dependencies": {
     "@jest/diff-sequences": "^30.5.0",
