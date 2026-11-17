@@ -11,7 +11,7 @@ import { renderDiff } from "@ovr/image-diff/renderDiff";
 const diff = alignedDiff(baseline, current);
 diff.changedPixelCount; // pixels that really changed
 diff.regions; // [{ kind: "inserted" | "deleted" | "modified", current, baseline }]
-const image = renderDiff(current, diff); // red for changes, green for insertions
+const overlay = renderDiff(diff); // transparent overlay: red changes, green insertions
 ```
 
 ## How it works

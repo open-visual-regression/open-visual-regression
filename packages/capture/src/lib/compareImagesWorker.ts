@@ -1,6 +1,9 @@
 import pixelmatch from "pixelmatch";
 import { PNG } from "pngjs";
 
+import { alignedDiff } from "@ovr/image-diff/alignedDiff";
+import { renderDiff } from "@ovr/image-diff/renderDiff";
+
 const PIXELMATCH_THRESHOLD = 0.1;
 
 export type CompareImagesTask = {
@@ -38,6 +41,26 @@ const encodePng = (pixels: Uint8Array, width: number, height: number): Buffer =>
   return PNG.sync.write(png);
 };
 
+/**
+ * The diff image reviewers see, drawn over the captured screenshot. It comes
+ * from an aligned diff, so content that only moved down or sideways isn't
+ * painted red. When nothing but blank space moved, the aligned diff has
+ * nothing to show, so the plain pixel mask is used instead.
+ */
+const diffOverlay = (
+  baseline: PNG,
+  capture: PNG,
+  plainMask: Uint8Array,
+  plainSize: { width: number; height: number },
+): Buffer => {
+  const diff = alignedDiff(baseline, capture);
+  if (diff.regions.length === 0) {
+    return encodePng(plainMask, plainSize.width, plainSize.height);
+  }
+  const overlay = renderDiff(diff);
+  return encodePng(overlay.data, overlay.width, overlay.height);
+};
+
 const compareImages = ({
   capture,
   baseline,
@@ -62,7 +85,10 @@ const compareImages = ({
   return {
     pixelDiffCount,
     diffPercent: (pixelDiffCount / (width * height)) * 100,
-    diffImage: withDiffImage && pixelDiffCount > 0 ? encodePng(diffPixels, width, height) : null,
+    diffImage:
+      withDiffImage && pixelDiffCount > 0
+        ? diffOverlay(baselinePixels, capturePixels, diffPixels, { width, height })
+        : null,
   };
 };
 

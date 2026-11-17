@@ -329,17 +329,35 @@ describe("alignedDiff", () => {
     expect(diff.changedPixelCount).toBe(plainPixelDiff(baseline, current));
   });
 
-  it("should render changed pixels over the current image", () => {
+  it("should render changed pixels as an overlay with everything else transparent", () => {
     const baseline = drawImage(40, 20, []);
     const current = drawImage(40, 20, [{ x: 5, y: 5, width: 4, height: 4, color: INK }]);
 
-    const diff = alignedDiff(baseline, current);
-    const rendered = renderDiff(current, diff);
+    const overlay = renderDiff(alignedDiff(baseline, current));
 
-    expect(rendered.width).toBe(40);
-    const index = (6 * 40 + 6) * 4;
-    const [red = 0, green = 0] = rendered.data.subarray(index, index + 2);
-    expect(red).toBeGreaterThan(green + 100);
+    const pixelAt = (x: number, y: number) =>
+      Array.from(overlay.data.subarray((y * 40 + x) * 4, (y * 40 + x + 1) * 4));
+    expect(overlay).toMatchObject({ width: 40, height: 20 });
+    expect(pixelAt(6, 6)).toEqual([255, 0, 0, 255]);
+    expect(pixelAt(30, 15)).toEqual([0, 0, 0, 0]);
+  });
+
+  it("should mark inserted content and draw removed content as a line", () => {
+    const baseline = drawImage(200, 120, page());
+    const current = drawImage(200, 140, [
+      { x: 0, y: 0, width: 200, height: 16, color: RED },
+      ...page(20),
+    ]);
+
+    const removed = renderDiff(alignedDiff(current, baseline));
+    const inserted = renderDiff(alignedDiff(baseline, current));
+
+    const alphaAt = (image: Image, x: number, y: number) =>
+      image.data[(y * image.width + x) * 4 + 3];
+    expect(alphaAt(inserted, 100, 8)).toBe(255);
+    expect(alphaAt(inserted, 100, 60)).toBe(0);
+    expect(alphaAt(removed, 100, 0)).toBe(255);
+    expect(alphaAt(removed, 100, 60)).toBe(0);
   });
 
   it.each(Object.entries(expectedRegions))(
