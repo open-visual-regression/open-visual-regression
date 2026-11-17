@@ -27,9 +27,11 @@ import type { DiffImage } from "./analyzeDiff";
 
 const PIXELMATCH_THRESHOLD = 0.1;
 const MAX_DEPTH = 6;
+const MAX_STRIP_DEPTH = 3;
 const DEFAULT_MAX_EDIT_RATIO = 0.6;
 const MIN_EDIT_BUDGET = 64;
-const MAX_EDIT_BUDGET = 4000;
+const MAX_EDIT_BUDGET = 1000;
+const MAX_PATIENCE_DEPTH = 64;
 const MAX_SLIDE_WORK = 40_000_000;
 const REGION_MERGE_DISTANCE = 12;
 
@@ -150,113 +152,247 @@ const hashLines = (image: DiffImage, rect: Rect, axis: Axis): Float64Array => {
   return hashes;
 };
 
+/** A run of `length` equal lines starting at `baseline` and `current`. */
+type Match = [baseline: number, current: number, length: number];
+
 /**
- * Myers' O(ND) diff over two hash lists, returning the gaps between matched
- * lines. Common leading and trailing lines are always matched; when the rest
- * needs more than `maxEdits` edits, the middle is returned as a single gap.
+ * Myers' O(ND) diff of baseline[aStart, aEnd) against current[bStart, bEnd).
+ * Returns the matched runs, or null when it needs more than `maxEdits`
+ * edits. Memory is O(D^2) for the trace.
  */
+const myers = (
+  a: Float64Array,
+  b: Float64Array,
+  aStart: number,
+  aEnd: number,
+  bStart: number,
+  bEnd: number,
+  maxEdits: number,
+): Match[] | null => {
+  const aLength = aEnd - aStart;
+  const bLength = bEnd - bStart;
+  const limit = Math.min(maxEdits, aLength + bLength);
+  const offset = limit + 1;
+  const frontier = new Int32Array(2 * limit + 3);
+  // trace[e] keeps the frontier window k in [-e-1, e+1] after e edits.
+  const trace: Int32Array[] = [];
+  let finalEdits = -1;
+
+  outer: for (let edits = 0; edits <= limit; edits++) {
+    for (let k = -edits; k <= edits; k += 2) {
+      const goDown =
+        k === -edits || (k !== edits && frontier[offset + k - 1]! < frontier[offset + k + 1]!);
+      let x = goDown ? frontier[offset + k + 1]! : frontier[offset + k - 1]! + 1;
+      let y = x - k;
+      while (x < aLength && y < bLength && a[aStart + x] === b[bStart + y]) {
+        x++;
+        y++;
+      }
+      frontier[offset + k] = x;
+      if (x >= aLength && y >= bLength) {
+        finalEdits = edits;
+        break outer;
+      }
+    }
+    trace.push(frontier.slice(offset - edits - 1, offset + edits + 2));
+  }
+  if (finalEdits < 0) {
+    return null;
+  }
+
+  // Walk back through the frontiers to recover the matched diagonal runs.
+  const matches: Match[] = [];
+  let x = aLength;
+  let y = bLength;
+  for (let edits = finalEdits; edits > 0; edits--) {
+    // The window of step edits - 1 starts at k = -edits.
+    const previous = trace[edits - 1]!;
+    const k = x - y;
+    const goDown =
+      k === -edits || (k !== edits && previous[k - 1 + edits]! < previous[k + 1 + edits]!);
+    const previousK = goDown ? k + 1 : k - 1;
+    const previousX = previous[previousK + edits]!;
+    const previousY = previousX - previousK;
+    const startX = goDown ? previousX : previousX + 1;
+    const startY = goDown ? previousY + 1 : previousY;
+    if (x > startX) {
+      matches.push([aStart + startX, bStart + startY, x - startX]);
+    }
+    x = previousX;
+    y = previousY;
+  }
+  if (x > 0) {
+    matches.push([aStart, bStart, x]);
+  }
+  return matches.reverse();
+};
+
+/**
+ * Lines that occur exactly once in each range, paired up, in the longest
+ * order-preserving chain (patience sorting). These are the anchors of
+ * patience diff.
+ */
+const uniqueAnchors = (
+  a: Float64Array,
+  b: Float64Array,
+  aStart: number,
+  aEnd: number,
+  bStart: number,
+  bEnd: number,
+): Array<[number, number]> => {
+  // For each hash: occurrences in a, position in a, occurrences in b, position in b.
+  const seen = new Map<number, [number, number, number, number]>();
+  for (let index = aStart; index < aEnd; index++) {
+    const entry = seen.get(a[index]!);
+    if (entry) {
+      entry[0]++;
+    } else {
+      seen.set(a[index]!, [1, index, 0, -1]);
+    }
+  }
+  for (let index = bStart; index < bEnd; index++) {
+    const entry = seen.get(b[index]!);
+    if (entry) {
+      entry[2]++;
+      entry[3] = index;
+    }
+  }
+
+  const pairs: Array<[number, number]> = [];
+  for (const [aCount, aIndex, bCount, bIndex] of seen.values()) {
+    if (aCount === 1 && bCount === 1) {
+      pairs.push([aIndex, bIndex]);
+    }
+  }
+  pairs.sort((first, second) => first[0] - second[0]);
+
+  // Longest increasing subsequence of b positions, O(k log k).
+  const tails: number[] = [];
+  const previous = new Int32Array(pairs.length);
+  for (let index = 0; index < pairs.length; index++) {
+    const value = pairs[index]![1];
+    let low = 0;
+    let high = tails.length;
+    while (low < high) {
+      const middle = (low + high) >> 1;
+      if (pairs[tails[middle]!]![1] < value) {
+        low = middle + 1;
+      } else {
+        high = middle;
+      }
+    }
+    previous[index] = low > 0 ? tails[low - 1]! : -1;
+    tails[low] = index;
+  }
+  const chain: Array<[number, number]> = [];
+  for (let index = tails.length > 0 ? tails.at(-1)! : -1; index >= 0; index = previous[index]!) {
+    chain.push(pairs[index]!);
+  }
+  return chain.reverse();
+};
+
+/**
+ * Patience diff: match common leading and trailing lines, anchor on lines
+ * unique to both sides, and recurse into the stretches between anchors. A
+ * stretch with no anchors is handed to Myers with a small edit budget, and is
+ * left unmatched when it needs more. Stays near O(n log n) where plain Myers
+ * would be O(n * d).
+ */
+const patience = (
+  a: Float64Array,
+  b: Float64Array,
+  aStart: number,
+  aEnd: number,
+  bStart: number,
+  bEnd: number,
+  maxEdits: number,
+  out: Match[],
+  depth = 0,
+) => {
+  let prefix = 0;
+  while (
+    aStart + prefix < aEnd &&
+    bStart + prefix < bEnd &&
+    a[aStart + prefix] === b[bStart + prefix]
+  ) {
+    prefix++;
+  }
+  if (prefix > 0) {
+    out.push([aStart, bStart, prefix]);
+  }
+  aStart += prefix;
+  bStart += prefix;
+
+  let suffix = 0;
+  while (
+    aEnd - suffix > aStart &&
+    bEnd - suffix > bStart &&
+    a[aEnd - 1 - suffix] === b[bEnd - 1 - suffix]
+  ) {
+    suffix++;
+  }
+  const suffixMatch: Match | null = suffix > 0 ? [aEnd - suffix, bEnd - suffix, suffix] : null;
+  aEnd -= suffix;
+  bEnd -= suffix;
+
+  if (aStart < aEnd && bStart < bEnd) {
+    // Past the depth limit, skip anchoring so adversarial input cannot
+    // exhaust the stack.
+    const anchors =
+      depth < MAX_PATIENCE_DEPTH ? uniqueAnchors(a, b, aStart, aEnd, bStart, bEnd) : [];
+    if (anchors.length > 0) {
+      let aCursor = aStart;
+      let bCursor = bStart;
+      for (const [aIndex, bIndex] of anchors) {
+        patience(a, b, aCursor, aIndex, bCursor, bIndex, maxEdits, out, depth + 1);
+        out.push([aIndex, bIndex, 1]);
+        aCursor = aIndex + 1;
+        bCursor = bIndex + 1;
+      }
+      patience(a, b, aCursor, aEnd, bCursor, bEnd, maxEdits, out, depth + 1);
+    } else {
+      const matches = myers(a, b, aStart, aEnd, bStart, bEnd, maxEdits);
+      if (matches) {
+        out.push(...matches);
+      }
+    }
+  }
+
+  if (suffixMatch) {
+    out.push(suffixMatch);
+  }
+};
+
+/** Aligns two lists of line hashes and returns the gaps between matched lines. */
 const diffLines = (
   baseline: Float64Array,
   current: Float64Array,
   maxEdits: number,
 ): LineAlignment => {
-  const n = baseline.length;
-  const m = current.length;
-
-  let prefix = 0;
-  while (prefix < n && prefix < m && baseline[prefix] === current[prefix]) {
-    prefix++;
-  }
-  let suffix = 0;
-  while (
-    suffix < n - prefix &&
-    suffix < m - prefix &&
-    baseline[n - 1 - suffix] === current[m - 1 - suffix]
-  ) {
-    suffix++;
-  }
-
-  const a = baseline.subarray(prefix, n - suffix);
-  const b = current.subarray(prefix, m - suffix);
-  const aLength = a.length;
-  const bLength = b.length;
-  const matches: Array<[number, number, number]> = [];
-
-  if (aLength > 0 && bLength > 0) {
-    // trace[e] keeps the frontier window k in [-e-1, e+1] after e edits.
-    const limit = Math.min(maxEdits, aLength + bLength);
-    const offset = limit + 1;
-    const frontier = new Int32Array(2 * limit + 3);
-    const trace: Int32Array[] = [];
-    let finalEdits = -1;
-
-    outer: for (let edits = 0; edits <= limit; edits++) {
-      for (let k = -edits; k <= edits; k += 2) {
-        const goDown =
-          k === -edits || (k !== edits && frontier[offset + k - 1]! < frontier[offset + k + 1]!);
-        let x = goDown ? frontier[offset + k + 1]! : frontier[offset + k - 1]! + 1;
-        let y = x - k;
-        while (x < aLength && y < bLength && a[x] === b[y]) {
-          x++;
-          y++;
-        }
-        frontier[offset + k] = x;
-        if (x >= aLength && y >= bLength) {
-          finalEdits = edits;
-          break outer;
-        }
-      }
-      trace.push(frontier.slice(offset - edits - 1, offset + edits + 2));
-    }
-
-    // Walk back through the frontiers to recover the matched diagonal runs.
-    // When the budget ran out, finalEdits is -1 and the middle stays one gap.
-    let x = aLength;
-    let y = bLength;
-    for (let edits = finalEdits; edits > 0; edits--) {
-      // Window of step edits - 1 starts at k = -edits.
-      const previous = trace[edits - 1]!;
-      const k = x - y;
-      const goDown =
-        k === -edits || (k !== edits && previous[k - 1 + edits]! < previous[k + 1 + edits]!);
-      const previousK = goDown ? k + 1 : k - 1;
-      const previousX = previous[previousK + edits]!;
-      const previousY = previousX - previousK;
-      const startX = goDown ? previousX : previousX + 1;
-      const startY = goDown ? previousY + 1 : previousY;
-      if (x > startX) {
-        matches.push([startX, startY, x - startX]);
-      }
-      x = previousX;
-      y = previousY;
-    }
-    if (finalEdits >= 0 && x > 0) {
-      matches.push([0, 0, x]);
-    }
-    matches.reverse();
-  }
+  const matches: Match[] = [];
+  patience(baseline, current, 0, baseline.length, 0, current.length, maxEdits, matches);
 
   const gaps: Gap[] = [];
   let baselineCursor = 0;
   let currentCursor = 0;
-  let matchedCount = prefix + suffix;
+  let matchedCount = 0;
   const pushGap = (baselineEnd: number, currentEnd: number) => {
     if (baselineEnd > baselineCursor || currentEnd > currentCursor) {
       gaps.push({
-        baselineStart: prefix + baselineCursor,
-        baselineEnd: prefix + baselineEnd,
-        currentStart: prefix + currentCursor,
-        currentEnd: prefix + currentEnd,
+        baselineStart: baselineCursor,
+        baselineEnd,
+        currentStart: currentCursor,
+        currentEnd,
       });
     }
   };
-  for (const [startX, startY, length] of matches) {
-    pushGap(startX, startY);
-    baselineCursor = startX + length;
-    currentCursor = startY + length;
+  for (const [baselineStart, currentStart, length] of matches) {
+    pushGap(baselineStart, currentStart);
+    baselineCursor = baselineStart + length;
+    currentCursor = currentStart + length;
     matchedCount += length;
   }
-  pushGap(aLength, bLength);
+  pushGap(baseline.length, current.length);
 
   return { gaps, matchedCount };
 };
@@ -692,6 +828,91 @@ const alignAlong = (
   );
 };
 
+/** The colour of a column of a rect when every pixel in it is the same, else -1. */
+const uniformColumn = (image: DiffImage, rect: Rect, x: number): number => {
+  const color = pixelAt(image, x, rect.y);
+  for (let row = 1; row < rect.height; row++) {
+    if (pixelAt(image, x, rect.y + row) !== color) {
+      return -1;
+    }
+  }
+  return color;
+};
+
+/**
+ * Explains two same-width rects as side-by-side strips that move vertically
+ * on their own, like a fixed sidebar next to a main column whose content
+ * shifted. Rows equal at the top and bottom (a full-width header and footer)
+ * are matched first. In the band between them, columns of one solid colour in
+ * both images are gutters; the band is cut at the gutters and each strip is
+ * aligned by rows separately. Returns null when there are no gutters to cut at.
+ */
+const alignStrips = (
+  context: Context,
+  baselineRect: Rect,
+  currentRect: Rect,
+  depth: number,
+): Outcome | null => {
+  const baselineRows = hashLines(context.baseline, baselineRect, "rows");
+  const currentRows = hashLines(context.current, currentRect, "rows");
+  let prefix = 0;
+  while (
+    prefix < baselineRows.length &&
+    prefix < currentRows.length &&
+    baselineRows[prefix] === currentRows[prefix]
+  ) {
+    prefix++;
+  }
+  let suffix = 0;
+  while (
+    suffix < baselineRows.length - prefix &&
+    suffix < currentRows.length - prefix &&
+    baselineRows[baselineRows.length - 1 - suffix] === currentRows[currentRows.length - 1 - suffix]
+  ) {
+    suffix++;
+  }
+  const baselineBand = slice(baselineRect, "rows", prefix, baselineRect.height - prefix - suffix);
+  const currentBand = slice(currentRect, "rows", prefix, currentRect.height - prefix - suffix);
+  if (isEmpty(baselineBand) || isEmpty(currentBand)) {
+    return null;
+  }
+
+  const strips: Array<[number, number]> = [];
+  let stripStart = -1;
+  for (let column = 0; column <= baselineBand.width; column++) {
+    const isGutter =
+      column === baselineBand.width ||
+      (() => {
+        const color = uniformColumn(context.baseline, baselineBand, baselineBand.x + column);
+        return (
+          color !== -1 &&
+          color === uniformColumn(context.current, currentBand, currentBand.x + column)
+        );
+      })();
+    if (isGutter && stripStart >= 0) {
+      strips.push([stripStart, column]);
+      stripStart = -1;
+    } else if (!isGutter && stripStart < 0) {
+      stripStart = column;
+    }
+  }
+  if (strips.length < 2) {
+    return null;
+  }
+
+  return combine(
+    strips.map(([start, end]) =>
+      explain(
+        context,
+        slice(baselineBand, "columns", start, end - start),
+        slice(currentBand, "columns", start, end - start),
+        "rows",
+        depth + 1,
+      ),
+    ),
+  );
+};
+
 /** Returns the cheapest explanation of how `baselineRect` became `currentRect`. */
 const explain = (
   context: Context,
@@ -731,6 +952,13 @@ const explain = (
     }
   }
 
+  if (sameWidth && depth < MAX_STRIP_DEPTH) {
+    const strips = alignStrips(context, baselineRect, currentRect, depth);
+    if (strips) {
+      candidates.push(strips);
+    }
+  }
+
   if (sameWidth && !sameHeight) {
     candidates.push(slide(context, baselineRect, currentRect, "rows"));
   } else if (sameHeight && !sameWidth) {
@@ -761,27 +989,84 @@ const union = (first: Rect, second: Rect): Rect => {
   };
 };
 
-/** Merges nearby regions so one visual change reads as one region. */
-const mergeRegions = (regions: DiffRegion[]): DiffRegion[] => {
-  const merged = [...regions];
-  let changed = true;
-  while (changed) {
-    changed = false;
-    for (let first = 0; first < merged.length && !changed; first++) {
-      for (let second = first + 1; second < merged.length && !changed; second++) {
-        const a = merged[first]!;
-        const b = merged[second]!;
-        if (near(a.current, b.current, REGION_MERGE_DISTANCE)) {
-          merged[first] = {
-            kind: a.kind === b.kind ? a.kind : "modified",
-            current: union(a.current, b.current),
-            baseline: union(a.baseline, b.baseline),
-          };
-          merged.splice(second, 1);
-          changed = true;
+const MERGE_GRID = 64;
+
+/** One union-find pass: joins every pair of regions within merge distance. */
+const mergePass = (regions: DiffRegion[]): DiffRegion[] => {
+  const parent = regions.map((_, index) => index);
+  const find = (index: number): number => {
+    while (parent[index] !== index) {
+      parent[index] = parent[parent[index]!]!;
+      index = parent[index]!;
+    }
+    return index;
+  };
+
+  // Bucket regions into a coarse grid so each one is only tested against
+  // regions in the cells it touches.
+  const grid = new Map<string, number[]>();
+  regions.forEach((region, index) => {
+    const { x, y, width, height } = region.current;
+    const reach = REGION_MERGE_DISTANCE;
+    for (
+      let cy = Math.floor((y - reach) / MERGE_GRID);
+      cy <= Math.floor((y + height + reach) / MERGE_GRID);
+      cy++
+    ) {
+      for (
+        let cx = Math.floor((x - reach) / MERGE_GRID);
+        cx <= Math.floor((x + width + reach) / MERGE_GRID);
+        cx++
+      ) {
+        const key = `${cx},${cy}`;
+        const bucket = grid.get(key);
+        if (bucket) {
+          for (const other of bucket) {
+            if (
+              find(other) !== find(index) &&
+              near(regions[other]!.current, region.current, reach)
+            ) {
+              parent[find(other)] = find(index);
+            }
+          }
+          bucket.push(index);
+        } else {
+          grid.set(key, [index]);
         }
       }
     }
+  });
+
+  const groups = new Map<number, DiffRegion>();
+  regions.forEach((region, index) => {
+    const root = find(index);
+    const existing = groups.get(root);
+    groups.set(
+      root,
+      existing
+        ? {
+            kind: existing.kind === region.kind ? existing.kind : "modified",
+            current: union(existing.current, region.current),
+            baseline: union(existing.baseline, region.baseline),
+          }
+        : region,
+    );
+  });
+  return [...groups.values()];
+};
+
+/**
+ * Merges nearby regions so one visual change reads as one region. Merged
+ * boxes can grow into new neighbours, so passes repeat until nothing changes.
+ */
+const mergeRegions = (regions: DiffRegion[]): DiffRegion[] => {
+  let merged = regions;
+  for (;;) {
+    const next = mergePass(merged);
+    if (next.length === merged.length) {
+      break;
+    }
+    merged = next;
   }
   return merged.sort((a, b) => a.current.y - b.current.y || a.current.x - b.current.x);
 };
