@@ -15,8 +15,7 @@ import {
   type RebuildBlockedReason,
 } from "@ovr/builds/builds";
 import { dbClient } from "@ovr/db/client";
-import { buildBranchUrl } from "@ovr/git-status/webBranchUrl";
-import { buildCommitUrl } from "@ovr/git-status/webCommitUrl";
+import { buildWebLinks } from "@ovr/git-status/webLinks";
 import { checkBuildReviewable } from "@ovr/reviews/reviewable";
 import { storage } from "@ovr/storage";
 
@@ -361,6 +360,9 @@ export const getOne = os.builds.getOne
       dbClient.gitIntegrations.findByProject(project.id),
       build.baseBuildId ? dbClient.builds.findById(build.baseBuildId) : null,
     ]);
+    const links = gitIntegration
+      ? buildWebLinks(gitIntegration.provider, gitIntegration.repoIdentifier)
+      : null;
 
     return {
       build: {
@@ -379,20 +381,10 @@ export const getOne = os.builds.getOne
         buildType: build.buildType,
         createdAt: build.createdAt,
         ...getBuildTimings(build),
-        commitUrl: gitIntegration
-          ? buildCommitUrl(gitIntegration.provider, gitIntegration.repoIdentifier, build.commitSha)
-          : null,
-        branchUrl: gitIntegration
-          ? buildBranchUrl(gitIntegration.provider, gitIntegration.repoIdentifier, build.branch)
-          : null,
+        commitUrl: links?.commitUrl(build.commitSha) ?? null,
+        branchUrl: links?.branchUrl(build.branch) ?? null,
         mainBranch: project.gitMainBranch,
-        mainBranchUrl: gitIntegration
-          ? buildBranchUrl(
-              gitIntegration.provider,
-              gitIntegration.repoIdentifier,
-              project.gitMainBranch,
-            )
-          : null,
+        mainBranchUrl: links?.branchUrl(project.gitMainBranch) ?? null,
         baseBuild: baseBuild ? { id: baseBuild.id, commitSha: baseBuild.commitSha } : null,
       },
     };
