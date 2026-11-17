@@ -9,7 +9,6 @@ export type SnapshotPaneImageProps = {
   imagePath: string | null;
   alt: string;
   canvasImagePaths?: (string | null)[];
-  fill?: boolean;
   trigger?: React.ReactNode;
   children?: React.ReactNode;
 };
@@ -18,15 +17,14 @@ export const SnapshotPaneImage = ({
   imagePath,
   alt,
   canvasImagePaths = [imagePath],
-  fill,
   trigger,
   children,
 }: SnapshotPaneImageProps) => {
   const canvasSize = useCanvasSize(canvasImagePaths);
 
   return (
-    <SnapshotPaneCanvas className="lg:@container-size">
-      <SnapshotPaneFrame canvasSize={canvasSize} fill={fill}>
+    <SnapshotPaneCanvas>
+      <SnapshotPaneFrame canvasSize={canvasSize}>
         <SnapshotFrameImage imagePath={imagePath} alt={alt} canvasSize={canvasSize} />
         {children}
       </SnapshotPaneFrame>

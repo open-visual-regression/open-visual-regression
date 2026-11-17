@@ -38,7 +38,6 @@ export const NewSnapshotDiffPane = ({
       imagePath={imagePath}
       alt={alt}
       canvasImagePaths={canvasImagePaths}
-      fill
       trigger={<SnapshotZoomTrigger view="new" disabled={!imagePath} />}
     >
       <img

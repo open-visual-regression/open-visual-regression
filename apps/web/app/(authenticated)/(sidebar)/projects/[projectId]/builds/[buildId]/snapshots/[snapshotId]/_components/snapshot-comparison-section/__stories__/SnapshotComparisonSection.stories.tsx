@@ -21,7 +21,7 @@ const meta: Meta<typeof SnapshotComparisonSection> = {
       initialPreferences={{ sidebarOpen: false, sidebarTab: "reviews", showDiff: true }}
     >
       <ComparisonModeProvider>
-        <div className="flex flex-col lg:h-[720px]">
+        <div className="flex flex-col">
           {args.baseline ? <ComparisonControls /> : null}
           <SnapshotComparisonSection {...args} />
         </div>
@@ -180,6 +180,20 @@ export const MobileWithBaselineAndDiff: Story = {
       baselineSnapshot: mobileBaseline,
     },
     baseline: mobileBaseline,
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const images = [
+      await canvas.findByRole("img", { name: "baseline snapshot of Button Primary" }),
+      await canvas.findByRole("img", { name: "snapshot of Button Primary" }),
+    ];
+
+    for (const image of images) {
+      const pane = image.parentElement!.parentElement!;
+      await waitFor(() =>
+        expect(image.getBoundingClientRect().width).toBeCloseTo(Math.min(pane.clientWidth, 375), 0),
+      );
+    }
   },
 };
 
