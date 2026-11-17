@@ -351,7 +351,10 @@ const patience = (
       }
       patience(a, b, aCursor, aEnd, bCursor, bEnd, maxEdits, out, depth + 1);
     } else {
-      const matches = myers(a, b, aStart, aEnd, bStart, bEnd, maxEdits);
+      // Myers can only find something if the two sides share a line.
+      const aLines = new Set(a.subarray(aStart, aEnd));
+      const shared = b.subarray(bStart, bEnd).some((line) => aLines.has(line));
+      const matches = shared ? myers(a, b, aStart, aEnd, bStart, bEnd, maxEdits) : null;
       if (matches) {
         out.push(...matches);
       }
