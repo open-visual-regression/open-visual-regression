@@ -1,5 +1,6 @@
 import {
   KeyRoundIcon,
+  ScanIcon,
   SettingsIcon,
   TimerIcon,
   type LucideIcon,
@@ -34,6 +35,7 @@ const SETTINGS_NAV_SECTIONS: SettingsNavSection[] = [
     items: [
       { href: "/settings/organization", icon: SettingsIcon, label: "organization" },
       { href: "/settings/users", icon: UsersIcon, label: "users" },
+      { href: "/settings/diffs", icon: ScanIcon, label: "diffs" },
       { href: "/settings/jobs", icon: TimerIcon, label: "jobs" },
     ],
   },

@@ -48,6 +48,18 @@ export const projectsRelations = relations(projects, ({ one }) => ({
   }),
 }));
 
+export type SettingKey = "diff";
+
+/** Instance-wide settings an admin can change, one JSON value per key. */
+export const settings = pgTable("settings", {
+  key: text().$type<SettingKey>().primaryKey(),
+  value: jsonb().$type<Record<string, unknown>>().notNull(),
+  updatedBy: text("updated_by").references(() => user.id, { onDelete: "set null" }),
+  updatedAt: utcTimestamp("updated_at")
+    .default(sql`now()`)
+    .notNull(),
+});
+
 export type JobName = "flaky_detection";
 
 export const jobSettings = pgTable("job_settings", {

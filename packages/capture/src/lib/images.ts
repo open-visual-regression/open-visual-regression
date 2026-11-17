@@ -1,5 +1,7 @@
 import { Piscina } from "piscina";
 
+import type { DiffAlgorithm } from "@ovr/api/contracts/settings";
+
 import type { CompareImagesResult, CompareImagesTask } from "./compareImagesWorker";
 import { readImage } from "./imageCache";
 
@@ -34,7 +36,10 @@ type ImageComparison = {
 export const compareImages = async (
   capturePath: string,
   baselinePath: string,
-  { withDiffImage = false }: { withDiffImage?: boolean } = {},
+  {
+    withDiffImage = false,
+    diffAlgorithm = "aligned",
+  }: { withDiffImage?: boolean; diffAlgorithm?: DiffAlgorithm } = {},
 ): Promise<ImageComparison> => {
   const readStart = performance.now();
   const [capture, baseline] = await Promise.all([readImage(capturePath), readImage(baselinePath)]);
@@ -43,6 +48,7 @@ export const compareImages = async (
     capture: capture.image,
     baseline: baseline.image,
     withDiffImage,
+    diffAlgorithm,
   });
 
   return {

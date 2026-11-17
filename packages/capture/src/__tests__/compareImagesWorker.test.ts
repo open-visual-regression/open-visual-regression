@@ -36,9 +36,32 @@ describe("compareImages", () => {
   it("should report no difference and no diff image for identical screenshots", () => {
     const image = drawPng(80, PAGE);
 
-    const result = compareImages({ capture: image, baseline: image, withDiffImage: true });
+    const result = compareImages({
+      capture: image,
+      baseline: image,
+      withDiffImage: true,
+      diffAlgorithm: "aligned",
+    });
 
     expect(result).toEqual({ pixelDiffCount: 0, diffPercent: 0, diffImage: null });
+  });
+
+  it("should mark the content an inserted banner pushed down with the pixel algorithm", () => {
+    const baseline = drawPng(80, PAGE);
+    const capture = drawPng(100, [
+      { x: 0, y: 0, width: WIDTH, height: 16, color: 0xdc2626ff },
+      ...shiftedDown(PAGE, 20),
+    ]);
+
+    const result = compareImages({
+      capture,
+      baseline,
+      withDiffImage: true,
+      diffAlgorithm: "pixel",
+    });
+
+    expect(alphaAt(result.diffImage, 60, 8)).toBe(255);
+    expect(alphaAt(result.diffImage, 50, 55)).toBe(255);
   });
 
   it("should mark only the inserted banner in the diff image, not the content it pushed down", () => {
@@ -48,7 +71,12 @@ describe("compareImages", () => {
       ...shiftedDown(PAGE, 20),
     ]);
 
-    const result = compareImages({ capture, baseline, withDiffImage: true });
+    const result = compareImages({
+      capture,
+      baseline,
+      withDiffImage: true,
+      diffAlgorithm: "aligned",
+    });
 
     expect(result.pixelDiffCount).toBeGreaterThan(0);
     expect(alphaAt(result.diffImage, 60, 8)).toBe(255);
@@ -59,7 +87,12 @@ describe("compareImages", () => {
     const baseline = drawPng(80, PAGE);
     const capture = drawPng(100, shiftedDown(PAGE, 20));
 
-    const result = compareImages({ capture, baseline, withDiffImage: true });
+    const result = compareImages({
+      capture,
+      baseline,
+      withDiffImage: true,
+      diffAlgorithm: "aligned",
+    });
 
     expect(result.pixelDiffCount).toBeGreaterThan(0);
     expect(alphaAt(result.diffImage, 50, 55)).toBe(255);
@@ -69,7 +102,12 @@ describe("compareImages", () => {
     const baseline = drawPng(80, PAGE);
     const capture = drawPng(80, shiftedDown(PAGE, 5));
 
-    const result = compareImages({ capture, baseline, withDiffImage: false });
+    const result = compareImages({
+      capture,
+      baseline,
+      withDiffImage: false,
+      diffAlgorithm: "aligned",
+    });
 
     expect(result.diffImage).toBeNull();
   });

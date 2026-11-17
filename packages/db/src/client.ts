@@ -13,6 +13,7 @@ import * as gitStatusPublications from "./repository/gitStatusPublications";
 import * as jobSettings from "./repository/jobSettings";
 import * as organizations from "./repository/organizations";
 import * as projects from "./repository/projects";
+import * as settings from "./repository/settings";
 import * as snapshotLogs from "./repository/snapshotLogs";
 import * as snapshots from "./repository/snapshots";
 import * as snapshotVariants from "./repository/snapshotVariants";
@@ -39,5 +40,6 @@ export const dbClient = {
   gitIntegrations,
   gitStatusPublications,
   jobSettings,
+  settings,
   transaction: db.transaction.bind(db),
 } as const;

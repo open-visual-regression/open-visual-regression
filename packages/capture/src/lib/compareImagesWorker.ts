@@ -1,6 +1,7 @@
 import pixelmatch from "pixelmatch";
 import { PNG } from "pngjs";
 
+import type { DiffAlgorithm } from "@ovr/api/contracts/settings";
 import { alignedDiff } from "@ovr/image-diff/alignedDiff";
 import { renderDiff } from "@ovr/image-diff/renderDiff";
 
@@ -10,6 +11,7 @@ export type CompareImagesTask = {
   capture: Uint8Array;
   baseline: Uint8Array;
   withDiffImage: boolean;
+  diffAlgorithm: DiffAlgorithm;
 };
 
 export type CompareImagesResult = {
@@ -42,20 +44,21 @@ const encodePng = (pixels: Uint8Array, width: number, height: number): Buffer =>
 };
 
 /**
- * The diff image reviewers see, drawn over the captured screenshot. It comes
- * from an aligned diff, so content that only moved down or sideways isn't
- * painted red. When nothing but blank space moved, the aligned diff has
- * nothing to show, so the plain pixel mask is used instead.
+ * The diff image reviewers see, drawn over the captured screenshot. "pixel"
+ * marks every pixel that differs from the one in the same place. "aligned"
+ * lines the screenshots up first, so content that only moved down or sideways
+ * isn't marked; when nothing but blank space moved it has nothing to show, so
+ * the pixel mask is used instead.
  */
-const diffOverlay = (
+const drawDiffImage = (
+  algorithm: DiffAlgorithm,
   baseline: PNG,
   capture: PNG,
-  plainMask: Uint8Array,
-  plainSize: { width: number; height: number },
+  pixelMask: { data: Uint8Array; width: number; height: number },
 ): Buffer => {
-  const diff = alignedDiff(baseline, capture);
-  if (diff.regions.length === 0) {
-    return encodePng(plainMask, plainSize.width, plainSize.height);
+  const diff = algorithm === "aligned" ? alignedDiff(baseline, capture) : null;
+  if (!diff || diff.regions.length === 0) {
+    return encodePng(pixelMask.data, pixelMask.width, pixelMask.height);
   }
   const overlay = renderDiff(diff);
   return encodePng(overlay.data, overlay.width, overlay.height);
@@ -65,6 +68,7 @@ const compareImages = ({
   capture,
   baseline,
   withDiffImage,
+  diffAlgorithm,
 }: CompareImagesTask): CompareImagesResult => {
   const capturePixels = decodePng(capture);
   const baselinePixels = decodePng(baseline);
@@ -87,7 +91,11 @@ const compareImages = ({
     diffPercent: (pixelDiffCount / (width * height)) * 100,
     diffImage:
       withDiffImage && pixelDiffCount > 0
-        ? diffOverlay(baselinePixels, capturePixels, diffPixels, { width, height })
+        ? drawDiffImage(diffAlgorithm, baselinePixels, capturePixels, {
+            data: diffPixels,
+            width,
+            height,
+          })
         : null,
   };
 };
