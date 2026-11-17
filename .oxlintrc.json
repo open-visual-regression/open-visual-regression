@@ -13,5 +13,11 @@
     "jsx-a11y/prefer-tag-over-role": "off",
     "jsx-a11y/no-static-element-interactions": "warn",
     "jsx-a11y/click-events-have-key-events": "warn"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["**/*.bench.ts"],
+      "rules": { "vitest/expect-expect": "off" }
+    }
+  ]
 }

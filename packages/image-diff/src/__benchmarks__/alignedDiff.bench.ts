@@ -1,5 +1,5 @@
 import pixelmatch from "pixelmatch";
-import { test } from "vitest";
+import { describe, it, type TestContext } from "vitest";
 
 import { alignedDiff } from "../alignedDiff";
 import { PIXEL_THRESHOLD } from "../masks";
@@ -18,6 +18,8 @@ import {
 // page takes seconds, so a few iterations are plenty.
 const OPTIONS = { iterations: 3, time: 0, warmupIterations: 1, warmupTime: 0 };
 const TIMEOUT = 5 * 60_000;
+
+type BenchFixture = TestContext["bench"];
 
 type Case = {
   name: string;
@@ -136,21 +138,24 @@ const worstCases: Case[] = [
   },
 ];
 
-const benchCases = (cases: Case[]) => {
-  for (const { name, baseline, current } of cases) {
-    test(name, { timeout: TIMEOUT }, async ({ bench }) => {
-      await bench.compare(
-        bench("alignedDiff", () => {
-          alignedDiff(baseline, current);
-        }),
-        bench("plain pixelmatch", () => {
-          plainPixelmatch(baseline, current);
-        }),
-        OPTIONS,
-      );
-    });
-  }
+const compareWithPixelmatch = async (bench: BenchFixture, { baseline, current }: Case) => {
+  await bench.compare(
+    bench("alignedDiff", () => {
+      alignedDiff(baseline, current);
+    }),
+    bench("plain pixelmatch", () => {
+      plainPixelmatch(baseline, current);
+    }),
+    OPTIONS,
+  );
 };
 
-benchCases(typicalCases);
-benchCases(worstCases);
+describe("alignedDiff", () => {
+  it.for(typicalCases)("$name", { timeout: TIMEOUT }, async (testCase, { bench }) => {
+    await compareWithPixelmatch(bench, testCase);
+  });
+
+  it.for(worstCases)("$name (worst case)", { timeout: TIMEOUT }, async (testCase, { bench }) => {
+    await compareWithPixelmatch(bench, testCase);
+  });
+});
