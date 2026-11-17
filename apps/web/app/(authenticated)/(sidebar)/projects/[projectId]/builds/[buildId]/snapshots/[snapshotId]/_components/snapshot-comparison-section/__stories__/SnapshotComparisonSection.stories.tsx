@@ -188,8 +188,6 @@ export const MobileWithBaselineAndDiff: Story = {
       await canvas.findByRole("img", { name: "snapshot of Button Primary" }),
     ];
 
-    // Tall snapshots fill the pane's width, capped at their actual size, rather than shrinking
-    // to fit the pane's height.
     for (const image of images) {
       const pane = image.parentElement!.parentElement!;
       await waitFor(() =>
