@@ -13,33 +13,50 @@ import { orpcServer } from "@/lib/orpc/server";
 
 import { BuildsPageShell } from "./_components/BuildsPageShell";
 
+const PROJECT_OPTIONS_LIMIT = 100;
+
 type BuildsPageProps = PageProps<"/builds">;
 
 export default async function BuildsPage(props: BuildsPageProps) {
   const rawSearchParams = await props.searchParams;
-  const { search, statuses, branches, authors, commitShas } =
+  const { search, projectIds, statuses, branches, authors, commitShas } =
     parseBuildsSearchParams(rawSearchParams);
 
   const queryClient = getQueryClient();
 
-  const [statusesResult, branchesResult, authorsResult, commitShasResult] = await Promise.all([
-    queryClient.fetchQuery(orpcServer.builds.listStatuses.queryOptions({ input: {} })),
-    queryClient.fetchQuery(
-      orpcServer.builds.listBranches.queryOptions({ input: { search: undefined } }),
-    ),
-    queryClient.fetchQuery(
-      orpcServer.builds.listAuthors.queryOptions({ input: { search: undefined } }),
-    ),
-    queryClient.fetchQuery(
-      orpcServer.builds.listCommitShas.queryOptions({ input: { search: undefined } }),
-    ),
-    queryClient.prefetchInfiniteQuery(
-      orpcServer.builds.list.infiniteOptions(
-        buildsListInfiniteOptions({ search, statuses, branches, authors, commitShas }),
+  const [projectsResult, statusesResult, branchesResult, authorsResult, commitShasResult] =
+    await Promise.all([
+      queryClient.fetchQuery(
+        orpcServer.projects.list.queryOptions({ input: { limit: PROJECT_OPTIONS_LIMIT } }),
       ),
-    ),
-  ]);
+      queryClient.fetchQuery(orpcServer.builds.listStatuses.queryOptions({ input: {} })),
+      queryClient.fetchQuery(
+        orpcServer.builds.listBranches.queryOptions({ input: { search: undefined } }),
+      ),
+      queryClient.fetchQuery(
+        orpcServer.builds.listAuthors.queryOptions({ input: { search: undefined } }),
+      ),
+      queryClient.fetchQuery(
+        orpcServer.builds.listCommitShas.queryOptions({ input: { search: undefined } }),
+      ),
+      queryClient.prefetchInfiniteQuery(
+        orpcServer.builds.list.infiniteOptions(
+          buildsListInfiniteOptions({
+            projectIds,
+            search,
+            statuses,
+            branches,
+            authors,
+            commitShas,
+          }),
+        ),
+      ),
+    ]);
 
+  const projectOptions = projectsResult.projects.map((project) => ({
+    value: project.id,
+    label: project.name,
+  }));
   const statusOptions = statusesResult.statuses.map((status) => ({
     value: status,
     label: getBuildStatusLabel(status),
@@ -66,6 +83,7 @@ export default async function BuildsPage(props: BuildsPageProps) {
       }
       filters={
         <BuildsFilters
+          projectIds={projectIds}
           statuses={statuses}
           branches={branches}
           authors={authors}
@@ -74,6 +92,7 @@ export default async function BuildsPage(props: BuildsPageProps) {
           branchOptions={branchOptions}
           authorOptions={authorOptions}
           commitShaOptions={commitShaOptions}
+          projectOptions={projectOptions}
         />
       }
       search={
@@ -86,6 +105,7 @@ export default async function BuildsPage(props: BuildsPageProps) {
       content={
         <HydrationBoundary state={dehydrate(queryClient)}>
           <BuildsSection
+            projectIds={projectIds}
             search={search}
             statuses={statuses}
             branches={branches}

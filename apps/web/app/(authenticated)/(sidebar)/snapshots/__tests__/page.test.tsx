@@ -3,7 +3,6 @@ import { beforeEach, vi } from "vitest";
 
 import { mocks } from "@ovr/mocks";
 
-import { getQueryClient } from "@/lib/orpc/query-client";
 import { orpcServerClient } from "@/lib/orpc/server";
 import { describe, expect, it, render, screen } from "@/test-utils";
 
@@ -38,7 +37,6 @@ const renderPage = async (searchParams: Record<string, string | string[]> = {}) 
 
 describe("SnapshotsPage", () => {
   beforeEach(() => {
-    getQueryClient().clear();
     mockListBrowsers.mockResolvedValue({ browsers: ["chromium", "firefox"] });
     mockListViewports.mockResolvedValue({ viewports: ["mobile", "desktop"] });
     mockListFlags.mockResolvedValue({ flags: ["flaky", "warning"] });

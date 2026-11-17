@@ -11,6 +11,7 @@ import { BuildsCommitFacetContent } from "./BuildsCommitFacetContent";
 
 type BuildsFiltersProps = {
   projectId?: string;
+  projectIds?: string[];
   statuses: BuildStatus[];
   branches: string[];
   authors: string[];
@@ -19,11 +20,13 @@ type BuildsFiltersProps = {
   branchOptions: FacetOption<string>[];
   authorOptions: FacetOption<string>[];
   commitShaOptions: FacetOption<string>[];
+  projectOptions?: FacetOption<string>[];
   className?: string;
 };
 
 export const BuildsFilters = ({
   projectId,
+  projectIds = [],
   statuses,
   branches,
   authors,
@@ -32,11 +35,13 @@ export const BuildsFilters = ({
   branchOptions,
   authorOptions,
   commitShaOptions,
+  projectOptions = [],
   className,
 }: BuildsFiltersProps) => (
   <FacetBar
     className={className}
     facets={[
+      { param: "project", label: "project", options: projectOptions, selected: projectIds },
       { param: "status", label: "status", options: statusOptions, selected: statuses },
       {
         param: "branch",

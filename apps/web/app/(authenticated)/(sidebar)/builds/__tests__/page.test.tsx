@@ -17,6 +17,12 @@ const listStatuses = vi.mocked(orpcServerClient.builds.listStatuses);
 const listBranches = vi.mocked(orpcServerClient.builds.listBranches);
 const listAuthors = vi.mocked(orpcServerClient.builds.listAuthors);
 const listCommitShas = vi.mocked(orpcServerClient.builds.listCommitShas);
+const listProjects = vi.mocked(orpcServerClient.projects.list);
+
+const PROJECTS = [
+  mocks.project.generateProject({ id: "018f0000-0000-7000-8000-000000000001", name: "Acme Web" }),
+  mocks.project.generateProject({ id: "018f0000-0000-7000-8000-000000000002", name: "Acme Admin" }),
+];
 
 const renderPage = async (searchParams: Record<string, string | string[]> = {}) =>
   render(
@@ -33,6 +39,7 @@ const renderPage = async (searchParams: Record<string, string | string[]> = {}) 
 
 describe("BuildsPage", () => {
   beforeEach(() => {
+    listProjects.mockResolvedValue({ projects: PROJECTS, nextCursor: null });
     listStatuses.mockResolvedValue({ statuses: ["queued", "needs_review"] });
     listBranches.mockResolvedValue({ branches: ["main", "develop"] });
     listAuthors.mockResolvedValue({ authors: ["Jordan Lee", "Alex Kim"] });
@@ -69,17 +76,19 @@ describe("BuildsPage", () => {
       ).toHaveAttribute("href", `/projects/${build.project.id}/builds/${build.id}`);
     }
 
+    expect(listProjects).toHaveBeenCalledWith({ limit: 100 }, expect.anything());
     expect(listStatuses).toHaveBeenCalledWith({}, expect.anything());
     expect(listBranches).toHaveBeenCalledWith({ search: undefined }, expect.anything());
     expect(listAuthors).toHaveBeenCalledWith({ search: undefined }, expect.anything());
     expect(listCommitShas).toHaveBeenCalledWith({ search: undefined }, expect.anything());
   });
 
-  it("should offer a status, branch, author and commit facet sourced from every project", async () => {
+  it("should offer a project, status, branch, author and commit facet sourced from every project", async () => {
     listBuilds.mockResolvedValue({ builds: [], total: 0, nextCursor: null });
 
     await renderPage();
 
+    expect(screen.getByRole("button", { name: /^project\s+any$/i })).toBeVisible();
     expect(screen.getByRole("button", { name: /^status\s+any$/i })).toBeVisible();
     expect(screen.getByRole("button", { name: /^branch\s+any$/i })).toBeVisible();
     expect(screen.getByRole("button", { name: /^author\s+any$/i })).toBeVisible();
@@ -120,5 +129,39 @@ describe("BuildsPage", () => {
     await renderPage();
 
     expect(screen.getByRole("search")).toHaveAttribute("action", "/builds");
+  });
+
+  it("should list every project in the project facet", async ({ user }) => {
+    listBuilds.mockResolvedValue({ builds: [], total: 0, nextCursor: null });
+
+    await renderPage();
+    await user.click(screen.getByRole("button", { name: /^project\s+any$/i }));
+
+    expect(await screen.findByRole("checkbox", { name: "Acme Web" })).toBeVisible();
+    expect(screen.getByRole("checkbox", { name: "Acme Admin" })).toBeVisible();
+  });
+
+  it("should apply the project from the url to the builds query and the facet trigger", async () => {
+    listBuilds.mockResolvedValue({ builds: [], total: 0, nextCursor: null });
+
+    await renderPage({ project: PROJECTS[1]!.id });
+
+    expect(screen.getByRole("button", { name: /^project\s+Acme Admin$/i })).toBeVisible();
+    expect(listBuilds).toHaveBeenCalledWith(
+      expect.objectContaining({ projectIds: [PROJECTS[1]!.id] }),
+      expect.anything(),
+    );
+  });
+
+  it("should ignore a project in the url that is not a valid id", async () => {
+    listBuilds.mockResolvedValue({ builds: [], total: 0, nextCursor: null });
+
+    await renderPage({ project: "not-a-project" });
+
+    expect(screen.getByRole("button", { name: /^project\s+any$/i })).toBeVisible();
+    expect(listBuilds).toHaveBeenCalledWith(
+      expect.objectContaining({ projectIds: [] }),
+      expect.anything(),
+    );
   });
 });
