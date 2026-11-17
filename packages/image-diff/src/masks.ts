@@ -1,6 +1,6 @@
 import pixelmatch from "pixelmatch";
 
-import { cropPixels, dominantColor, pixelAt } from "./pixels";
+import { colorAt, cropPixels, dominantColor } from "./pixels";
 import { lineCount, unionRect } from "./rect";
 import type { Axis, Image, Mask, Rect } from "./types";
 
@@ -48,7 +48,7 @@ const repeatLine = (image: Image, rect: Rect, axis: Axis, line: number): Uint8Ar
   }
   const words = new Uint32Array(out.buffer);
   for (let row = 0; row < rect.height; row++) {
-    words.fill(pixelAt(image, line, rect.y + row), row * rect.width, (row + 1) * rect.width);
+    words.fill(colorAt(image, line, rect.y + row), row * rect.width, (row + 1) * rect.width);
   }
   return out;
 };
@@ -135,20 +135,21 @@ export const clustersOf = (mask: Mask, cellSize = CLUSTER_CELL): Rect[] => {
 
   const visited = new Set<number>();
   const clusters: Rect[] = [];
-  for (const start of cellBounds.keys()) {
+  for (const [start, startBounds] of cellBounds) {
     if (visited.has(start)) {
       continue;
     }
     visited.add(start);
-    const queue = [start];
-    let bounds = cellBounds.get(start)!;
-    while (queue.length > 0) {
-      const cell = queue.pop()!;
-      bounds = unionRect(bounds, cellBounds.get(cell)!);
+    const queue: Array<[cell: number, bounds: Rect]> = [[start, startBounds]];
+    let bounds = startBounds;
+    for (let item = queue.pop(); item; item = queue.pop()) {
+      const [cell, cellRect] = item;
+      bounds = unionRect(bounds, cellRect);
       for (const next of neighbours(cell)) {
-        if (cellBounds.has(next) && !visited.has(next)) {
+        const nextBounds = cellBounds.get(next);
+        if (nextBounds && !visited.has(next)) {
           visited.add(next);
-          queue.push(next);
+          queue.push([next, nextBounds]);
         }
       }
     }
