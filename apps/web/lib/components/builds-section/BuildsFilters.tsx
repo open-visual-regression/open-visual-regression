@@ -8,6 +8,7 @@ import { type FacetOption } from "@/lib/components/facet/FacetOptionsList";
 import { BuildsAuthorFacetContent } from "./BuildsAuthorFacetContent";
 import { BuildsBranchFacetContent } from "./BuildsBranchFacetContent";
 import { BuildsCommitFacetContent } from "./BuildsCommitFacetContent";
+import { formatCommitSha } from "./formatCommitSha";
 
 type BuildsFiltersProps = {
   projectId?: string;
@@ -76,6 +77,7 @@ export const BuildsFilters = ({
         label: "commit",
         options: commitShaOptions,
         selected: commitShas,
+        formatLabel: formatCommitSha,
         renderContent: ({ selected, onApply, onClear }) => (
           <BuildsCommitFacetContent
             projectId={projectId}
