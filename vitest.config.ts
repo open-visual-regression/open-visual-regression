@@ -12,6 +12,7 @@ export default defineConfig({
       "packages/db/vitest.config.ts",
       "packages/diff-analysis/vitest.config.ts",
       "packages/git-status/vitest.config.ts",
+      "packages/image-diff/vitest.config.ts",
       "packages/logger/vitest.config.ts",
       "packages/metrics/vitest.config.ts",
       "packages/queue/vitest.config.ts",
