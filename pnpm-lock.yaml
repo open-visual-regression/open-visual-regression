@@ -142,7 +142,7 @@ importers:
         version: link:../../packages/diff-analysis
       '@ovr/mocks':
         specifier: workspace:*
-        version: link:../../packages/mocks
+        version: file:packages/mocks(@opentelemetry/api@1.9.1)(@types/pg@8.20.3)(kysely@0.29.4)
       '@ovr/storybook-compat':
         specifier: workspace:*
         version: link:../../packages/storybook-compat
@@ -814,6 +814,9 @@ importers:
       '@types/pngjs':
         specifier: ^6.0.5
         version: 6.0.5
+      playwright:
+        specifier: 1.64.1
+        version: 1.64.1
       typescript:
         specifier: 6.0.3
         version: 6.0.3
@@ -2776,14 +2779,23 @@ packages:
       '@orpc/client': 1.14.14
       '@tanstack/query-core': '>=5.80.2'
 
+  '@ovr/api@file:packages/api':
+    resolution: {directory: packages/api, type: directory}
+
   '@ovr/db@file:packages/db':
     resolution: {directory: packages/db, type: directory}
 
   '@ovr/logger@file:packages/logger':
     resolution: {directory: packages/logger, type: directory}
 
+  '@ovr/mocks@file:packages/mocks':
+    resolution: {directory: packages/mocks, type: directory}
+
   '@ovr/queue@file:packages/queue':
     resolution: {directory: packages/queue, type: directory}
+
+  '@ovr/storybook-compat@file:packages/storybook-compat':
+    resolution: {directory: packages/storybook-compat, type: directory}
 
   '@oxc-parser/binding-android-arm-eabi@0.127.0':
     resolution: {integrity: sha512-0LC7ye4hvqbIKxAzThzvswgHLFu2AURKzYLeSVvLdu2TBOYWQDmHnTqPLeA597BcUCxiLqLsS4CJ5uoI5WYWCQ==}
@@ -9116,6 +9128,15 @@ snapshots:
     transitivePeerDependencies:
       - '@opentelemetry/api'
 
+  '@ovr/api@file:packages/api(@opentelemetry/api@1.9.1)':
+    dependencies:
+      '@orpc/contract': 1.14.14(@opentelemetry/api@1.9.1)
+      '@ovr/storybook-compat': file:packages/storybook-compat
+      cron-parser: 4.9.0
+      zod: 4.6.7
+    transitivePeerDependencies:
+      - '@opentelemetry/api'
+
   '@ovr/db@file:packages/db(@opentelemetry/api@1.9.1)(@types/pg@8.20.3)(kysely@0.29.4)':
     dependencies:
       '@ovr/logger': file:packages/logger
@@ -9158,6 +9179,42 @@ snapshots:
       pino: 10.3.1
       pino-pretty: 13.2.0
 
+  '@ovr/mocks@file:packages/mocks(@opentelemetry/api@1.9.1)(@types/pg@8.20.3)(kysely@0.29.4)':
+    dependencies:
+      '@faker-js/faker': 10.6.0
+      '@ovr/api': file:packages/api(@opentelemetry/api@1.9.1)
+      '@ovr/db': file:packages/db(@opentelemetry/api@1.9.1)(@types/pg@8.20.3)(kysely@0.29.4)
+    transitivePeerDependencies:
+      - '@aws-sdk/client-rds-data'
+      - '@cloudflare/workers-types'
+      - '@electric-sql/pglite'
+      - '@libsql/client'
+      - '@libsql/client-wasm'
+      - '@neondatabase/serverless'
+      - '@op-engineering/op-sqlite'
+      - '@opentelemetry/api'
+      - '@planetscale/database'
+      - '@prisma/client'
+      - '@tidbcloud/serverless'
+      - '@types/better-sqlite3'
+      - '@types/pg'
+      - '@types/sql.js'
+      - '@upstash/redis'
+      - '@vercel/postgres'
+      - '@xata.io/client'
+      - better-sqlite3
+      - bun-types
+      - expo-sqlite
+      - gel
+      - knex
+      - kysely
+      - mysql2
+      - pg-native
+      - postgres
+      - prisma
+      - sql.js
+      - sqlite3
+
   '@ovr/queue@file:packages/queue(@opentelemetry/api@1.9.1)(@types/pg@8.20.3)(kysely@0.29.4)':
     dependencies:
       '@ovr/db': file:packages/db(@opentelemetry/api@1.9.1)(@types/pg@8.20.3)(kysely@0.29.4)
@@ -9197,6 +9254,12 @@ snapshots:
       - sql.js
       - sqlite3
       - supports-color
+
+  '@ovr/storybook-compat@file:packages/storybook-compat':
+    dependencies:
+      '@streamparser/json-node': 0.0.26
+      yaml: 2.9.0
+      zod: 4.6.7
 
   '@oxc-parser/binding-android-arm-eabi@0.127.0':
     optional: true
