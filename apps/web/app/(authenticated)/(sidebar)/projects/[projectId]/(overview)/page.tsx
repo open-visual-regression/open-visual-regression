@@ -7,6 +7,7 @@ import { BuildsFilters } from "@/lib/components/builds-section/BuildsFilters";
 import { BuildsSearchField } from "@/lib/components/builds-section/BuildsSearchField";
 import { parseBuildsSearchParams } from "@/lib/components/builds-section/buildsSearchParams";
 import { BuildsSection } from "@/lib/components/builds-section/BuildsSection";
+import { formatCommitSha } from "@/lib/components/builds-section/formatCommitSha";
 import { getBuildStatusLabel } from "@/lib/components/BuildStatus";
 import { buildsListInfiniteOptions } from "@/lib/orpc/builds-query";
 import { getQueryClient } from "@/lib/orpc/query-client";
@@ -82,7 +83,7 @@ export default async function ProjectPage(props: ProjectPageProps) {
   }));
   const commitShaOptions = commitShasResult.commitShas.map((commitSha) => ({
     value: commitSha,
-    label: commitSha.slice(0, 7),
+    label: formatCommitSha(commitSha),
   }));
 
   return (

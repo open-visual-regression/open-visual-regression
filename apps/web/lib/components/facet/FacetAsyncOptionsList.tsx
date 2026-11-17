@@ -18,6 +18,9 @@ type FacetAsyncOptionsListProps<T extends string> = {
   onSearchChange: (search: string) => void;
   onApply: (next: T[]) => void;
   onClear: () => void;
+  // Labels the selected values pinned above the results, which may not be among the
+  // current results. Should match how `options` are labelled.
+  formatLabel?: (value: T) => string;
 };
 
 export function FacetAsyncOptionsList<T extends string>({
@@ -27,6 +30,7 @@ export function FacetAsyncOptionsList<T extends string>({
   onSearchChange,
   onApply,
   onClear,
+  formatLabel = (value) => value,
 }: FacetAsyncOptionsListProps<T>) {
   const [draft, setDraft] = useState<T[]>(selected);
   const [query, setQuery] = useState("");
@@ -41,7 +45,7 @@ export function FacetAsyncOptionsList<T extends string>({
       current.includes(value) ? current.filter((item) => item !== value) : [...current, value],
     );
 
-  const selectedOptions = selected.map((value) => ({ value, label: value }));
+  const selectedOptions = selected.map((value) => ({ value, label: formatLabel(value) }));
   const resultOptions = options.filter((option) => !selected.includes(option.value));
   const visibleOptions = [...selectedOptions, ...resultOptions];
 

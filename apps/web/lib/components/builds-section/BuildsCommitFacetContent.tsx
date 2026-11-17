@@ -6,6 +6,8 @@ import { useState } from "react";
 import { FacetAsyncOptionsList } from "@/lib/components/facet/FacetAsyncOptionsList";
 import { orpc } from "@/lib/orpc/client";
 
+import { formatCommitSha } from "./formatCommitSha";
+
 type BuildsCommitFacetContentProps = {
   projectId?: string;
   selected: string[];
@@ -30,7 +32,7 @@ export const BuildsCommitFacetContent = ({
 
   const options = (data?.commitShas ?? []).map((commitSha) => ({
     value: commitSha,
-    label: commitSha.slice(0, 7),
+    label: formatCommitSha(commitSha),
   }));
 
   return (
@@ -41,6 +43,7 @@ export const BuildsCommitFacetContent = ({
       onSearchChange={setSearch}
       onApply={onApply}
       onClear={onClear}
+      formatLabel={formatCommitSha}
     />
   );
 };

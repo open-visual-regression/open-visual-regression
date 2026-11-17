@@ -25,6 +25,9 @@ export type FacetConfig = {
   options: FacetOption<string>[];
   selected: string[];
   minOptions?: number;
+  // Labels a selected value on the trigger when it isn't among `options`, e.g. an
+  // async facet value from beyond the first page.
+  formatLabel?: (value: string) => string;
   // Overrides the default FacetOptionsList body, e.g. for a facet whose options
   // are searched against the server rather than filtered client-side.
   renderContent?: (props: FacetContentProps) => React.ReactNode;
@@ -51,7 +54,14 @@ const FacetBody = ({
     <FacetOptionsList options={options} selected={selected} onApply={onApply} onClear={onClear} />
   );
 
-const FacetPopover = ({ label, options, selected, renderContent, onApply }: ResolvedFacet) => {
+const FacetPopover = ({
+  label,
+  options,
+  selected,
+  formatLabel = (value) => value,
+  renderContent,
+  onApply,
+}: ResolvedFacet) => {
   const [open, setOpen] = useState(false);
   const labelByValue = new Map(options.map((option) => [option.value, option.label]));
 
@@ -60,7 +70,7 @@ const FacetPopover = ({ label, options, selected, renderContent, onApply }: Reso
       <FacetTrigger
         label={label}
         valueLabel={formatFacetValueLabel(
-          selected.map((value) => labelByValue.get(value) ?? value),
+          selected.map((value) => labelByValue.get(value) ?? formatLabel(value)),
         )}
         active={selected.length > 0}
       />

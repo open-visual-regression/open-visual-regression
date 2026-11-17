@@ -166,6 +166,64 @@ describe("BuildsFilters", () => {
     expect(screen.getByRole("button", { name: /^commit\s+4f2a91e$/i })).toBeVisible();
   });
 
+  it("should show the short sha on the commit facet trigger for a commit outside the loaded options", () => {
+    render(
+      <BuildsFilters
+        projectId={PROJECT_ID}
+        statuses={[]}
+        branches={[]}
+        authors={[]}
+        commitShas={["9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0d"]}
+        statusOptions={STATUS_OPTIONS}
+        branchOptions={BRANCH_OPTIONS}
+        authorOptions={AUTHOR_OPTIONS}
+        commitShaOptions={COMMIT_SHA_OPTIONS}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: /^commit\s+9e8d7c6$/i })).toBeVisible();
+  });
+
+  it("should show the short sha for an applied commit while searching for another", async ({
+    user,
+  }) => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false, staleTime: Infinity } },
+    });
+    const commitShasKey = (search?: string) =>
+      orpc.builds.listCommitShas.queryKey({ input: { projectId: PROJECT_ID, search } });
+    queryClient.setQueryData(commitShasKey(undefined), {
+      commitShas: ["4f2a91e1234567890", "7c3b82f1234567890"],
+    });
+    queryClient.setQueryData(commitShasKey("7c3"), { commitShas: ["7c3b82f1234567890"] });
+
+    render(
+      <BuildsFilters
+        projectId={PROJECT_ID}
+        statuses={[]}
+        branches={[]}
+        authors={[]}
+        commitShas={["4f2a91e1234567890"]}
+        statusOptions={STATUS_OPTIONS}
+        branchOptions={BRANCH_OPTIONS}
+        authorOptions={AUTHOR_OPTIONS}
+        commitShaOptions={COMMIT_SHA_OPTIONS}
+      />,
+      {
+        wrapper: ({ children }) => (
+          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+        ),
+      },
+    );
+
+    await user.click(screen.getByRole("button", { name: /^commit\s+4f2a91e$/i }));
+    await user.type(await screen.findByRole("textbox", { name: "search options" }), "7c3");
+
+    expect(await screen.findByRole("checkbox", { name: "7c3b82f" })).toBeVisible();
+    expect(screen.getByRole("checkbox", { name: "4f2a91e" })).toBeChecked();
+    expect(screen.queryByText("4f2a91e1234567890")).toBeNull();
+  });
+
   it("should mark the mobile filter menu button as active when a filter is applied", () => {
     render(
       <BuildsFilters
