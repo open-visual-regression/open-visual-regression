@@ -43,8 +43,8 @@ export const SliderView = ({ baseline, newSnapshot }: SliderViewProps) => {
         </div>
         <Typography variant="label">new</Typography>
       </SnapshotPaneHeader>
-      <SnapshotPaneCanvas className="lg:@container-size">
-        <SnapshotPaneFrame canvasSize={canvasSize} fill>
+      <SnapshotPaneCanvas>
+        <SnapshotPaneFrame canvasSize={canvasSize}>
           <ReactCompareSlider
             className="h-full w-full cursor-ew-resize [&_[role=slider]:focus-visible_[data-grip]]:ring-2 [&_[role=slider]:focus-visible_[data-grip]]:ring-ovr-fg [&_[role=slider]:focus-visible_[data-grip]]:ring-offset-2 [&_[role=slider]:focus-visible_[data-grip]]:ring-offset-ovr-inset"
             handle={<SliderHandle />}
