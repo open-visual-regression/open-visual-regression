@@ -74,8 +74,12 @@ const mutations: Mutation[] = [
     apply: `
       const all = candidates().filter((el) => el.getBoundingClientRect().height >= 16);
       if (all.length < 3) return null;
-      all[Math.floor(all.length / 2)].style.display = "none";
-      return [];`,
+      const target = all[Math.floor(all.length / 2)];
+      // Where the element was is the expected change; content that moved up
+      // to fill the space is not.
+      const before = rectOf(target);
+      target.style.display = "none";
+      return [before];`,
   },
   {
     name: "recolor",
@@ -87,6 +91,13 @@ const mutations: Mutation[] = [
       return [rectOf(el)];`,
   },
 ];
+
+// Comma-separated mutation names to run, e.g. MUTATIONS=hide-element.
+const onlyMutations = process.env.MUTATIONS?.split(",");
+const selectedMutations = mutations.filter(
+  (mutation) =>
+    !onlyMutations || mutation.name === "no-change" || onlyMutations.includes(mutation.name),
+);
 
 const STABILIZE = `*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}`;
 
@@ -247,7 +258,7 @@ const main = async () => {
         continue;
       }
       let flaky = false;
-      for (const mutation of mutations) {
+      for (const mutation of selectedMutations) {
         try {
           const shot = await shoot(page, job.url, mutation);
           if (shot.rects === null) {
@@ -338,7 +349,7 @@ const summarize = (results: Result[]) => {
       "max ms",
     ].join("  "),
   );
-  for (const mutation of mutations) {
+  for (const mutation of selectedMutations) {
     const group = rows.filter((result) => result.mutation === mutation.name);
     if (group.length === 0) {
       continue;
