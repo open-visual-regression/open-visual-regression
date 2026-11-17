@@ -46,6 +46,7 @@ jobs:
             --server-url https://ovr.example.com \
             --branch "${{ github.head_ref || github.ref_name }}" \
             --commit "${{ github.event.pull_request.head.sha || github.sha }}" \
+            --pull-request "${{ github.event.pull_request.number }}" \
             --name "$(git log -1 --pretty=%s)" \
             --author "$(git log -1 --pretty=%an)"
 ```
@@ -57,13 +58,15 @@ Two settings matter:
 
 ## Other CI providers
 
-The CLI runs anywhere Node.js does. Pass the branch name and commit SHA from your provider's variables, and set `OVR_API_KEY` from its secrets:
+The CLI runs anywhere Node.js does. Pass the branch name, commit SHA, and pull request number from your provider's variables, and set `OVR_API_KEY` from its secrets:
 
-| Provider | `--branch` | `--commit` |
-| --- | --- | --- |
-| GitLab CI | `$CI_COMMIT_REF_NAME` | `$CI_COMMIT_SHA` |
-| CircleCI | `$CIRCLE_BRANCH` | `$CIRCLE_SHA1` |
-| Buildkite | `$BUILDKITE_BRANCH` | `$BUILDKITE_COMMIT` |
+| Provider | `--branch` | `--commit` | `--pull-request` |
+| --- | --- | --- | --- |
+| GitLab CI | `$CI_COMMIT_REF_NAME` | `$CI_COMMIT_SHA` | `$CI_MERGE_REQUEST_IID` |
+| CircleCI | `$CIRCLE_BRANCH` | `$CIRCLE_SHA1` | `${CIRCLE_PULL_REQUEST##*/}` |
+| Buildkite | `$BUILDKITE_BRANCH` | `$BUILDKITE_COMMIT` | `${BUILDKITE_PULL_REQUEST#false}` |
+
+`--pull-request` ignores an empty value, so you can pass the same variable on every build.
 
 Check out the full git history, as with `fetch-depth: 0` above.
 

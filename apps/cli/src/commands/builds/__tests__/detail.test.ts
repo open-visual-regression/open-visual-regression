@@ -9,6 +9,8 @@ describe("formatBuildDetail", () => {
       status: "needs_review",
       branch: "main",
       commitSha: "a1b2c3d4e5f6",
+      pullRequestNumber: null,
+      pullRequestUrl: null,
       project: "web",
       name: "fix: cart total rounding",
       author: "tgfischer",
@@ -31,12 +33,52 @@ describe("formatBuildDetail", () => {
     ]);
   });
 
+  it("should link the pull request when the build has one", () => {
+    const output = formatBuildDetail({
+      id: "b1",
+      status: "needs_review",
+      branch: "feature/cart",
+      commitSha: "abc",
+      pullRequestNumber: 42,
+      pullRequestUrl: "https://github.com/acme/web/pull/42",
+      project: "web",
+      name: null,
+      author: null,
+      createdAt: "2026-09-12T10:43:15Z",
+      errorMessage: null,
+      canceledBy: null,
+    });
+
+    expect(output.split("\n")).toContain("Pull request: https://github.com/acme/web/pull/42");
+  });
+
+  it("should show the pull request number when the project has no git integration", () => {
+    const output = formatBuildDetail({
+      id: "b1",
+      status: "needs_review",
+      branch: "feature/cart",
+      commitSha: "abc",
+      pullRequestNumber: 42,
+      pullRequestUrl: null,
+      project: "web",
+      name: null,
+      author: null,
+      createdAt: "2026-09-12T10:43:15Z",
+      errorMessage: null,
+      canceledBy: null,
+    });
+
+    expect(output.split("\n")).toContain("Pull request: 42");
+  });
+
   it("should omit error and canceled-by lines when absent", () => {
     const output = formatBuildDetail({
       id: "b1",
       status: "unchanged",
       branch: "main",
       commitSha: "abc",
+      pullRequestNumber: null,
+      pullRequestUrl: null,
       project: "web",
       name: null,
       author: null,
@@ -55,6 +97,8 @@ describe("formatBuildDetail", () => {
       status: "canceled",
       branch: "main",
       commitSha: "abc",
+      pullRequestNumber: null,
+      pullRequestUrl: null,
       project: "web",
       name: null,
       author: null,

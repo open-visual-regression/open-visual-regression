@@ -43,6 +43,8 @@ describe("formatBuildOutput", () => {
         status: BUILD.status,
         branch: BUILD.branch,
         commitSha: BUILD.commitSha,
+        pullRequestNumber: BUILD.pullRequestNumber,
+        pullRequestUrl: BUILD.pullRequestUrl,
         project: BUILD.project.name,
         name: BUILD.name,
         author: BUILD.author,
