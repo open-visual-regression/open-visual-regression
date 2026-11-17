@@ -5,8 +5,7 @@ import { BROWSER_TYPES, processesOf, spyOnServers } from "./browserServers";
 import { describe, expect, test } from "./fixtures";
 
 // A stuck browser waits out every close timeout before it is killed, so they
-// are shortened here to keep the test quick. They apply to this whole file,
-// which is why the healthy-close test lives in launchBrowser.test.ts.
+// are shortened to keep these tests quick.
 vi.mock("../timeouts", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../timeouts")>()),
   CONTEXT_CLOSE_TIMEOUT_MS: 500,
