@@ -71,6 +71,7 @@ export const createBuildInputSchema = z.object({
   buildId: z.uuidv7().optional(),
   branch: z.string().min(1),
   commitSha: z.string().min(1),
+  pullRequestNumber: z.number().int().positive().optional(),
   // The main-branch build at the merge base, from findAncestorBuild. Branch builds are
   // compared against main as it was at this build instead of main's latest.
   baseBuildId: z.uuidv7().optional(),
@@ -175,6 +176,8 @@ export const buildDetailSchema = buildSchema.extend({
   latestBuildId: z.uuidv7().nullable(),
   commitUrl: z.string().nullable(),
   branchUrl: z.string().nullable(),
+  pullRequestNumber: z.number().int().positive().nullable(),
+  pullRequestUrl: z.string().nullable(),
   // The project's main branch, which branch builds are compared against.
   mainBranch: z.string().min(1),
   mainBranchUrl: z.string().nullable(),

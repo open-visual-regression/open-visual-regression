@@ -129,6 +129,22 @@ describe("builds", () => {
         reviewStatus: "not_required",
       });
     });
+
+    test("records the build's pull request number", async ({ admin: _ }) => {
+      const { apiKey } = await createProjectWithApiKey();
+      setApiKeyHeader(apiKey);
+
+      const [error, result] = await serverClient.builds.createBuild({
+        branch: "feature/checkout",
+        commitSha: "a".repeat(40),
+        pullRequestNumber: 42,
+      });
+
+      expect(error).toBeNull();
+      expect(await dbClient.builds.findById(result!.buildId)).toMatchObject({
+        pullRequestNumber: 42,
+      });
+    });
   });
 
   describe("createBuild retries", () => {
@@ -1641,6 +1657,8 @@ describe("builds", () => {
         status: "queued",
         isRebuildable: false,
         isReviewable: false,
+        pullRequestNumber: null,
+        pullRequestUrl: null,
         baseBuild: null,
       });
     });
@@ -1669,6 +1687,49 @@ describe("builds", () => {
       expect(result?.build).toMatchObject({
         baseBuild: { id: mergeBaseBuild!.id, commitSha: "a".repeat(40) },
       });
+    });
+
+    test("links the build's pull request on the project's git provider", async ({ admin }) => {
+      const [, project] = await serverClient.projects.add(TEST_PROJECT);
+      await serverClient.gitIntegrations.upsert({
+        projectId: project!.projectId,
+        provider: "github",
+        repoIdentifier: "acme/web",
+        token: "a-token",
+      });
+      const build = await dbClient.builds.create({
+        projectId: project!.projectId,
+        branch: "feature/x",
+        commitSha: "a".repeat(40),
+        pullRequestNumber: 42,
+        artifactPath: "builds/a/artifact",
+        createdBy: admin.id,
+      });
+
+      const [, result] = await serverClient.builds.getOne({ buildId: build!.id });
+
+      expect(result?.build).toMatchObject({
+        pullRequestNumber: 42,
+        pullRequestUrl: "https://github.com/acme/web/pull/42",
+      });
+    });
+
+    test("returns the pull request number without a link when the project has no git integration", async ({
+      admin,
+    }) => {
+      const [, project] = await serverClient.projects.add(TEST_PROJECT);
+      const build = await dbClient.builds.create({
+        projectId: project!.projectId,
+        branch: "feature/x",
+        commitSha: "a".repeat(40),
+        pullRequestNumber: 42,
+        artifactPath: "builds/a/artifact",
+        createdBy: admin.id,
+      });
+
+      const [, result] = await serverClient.builds.getOne({ buildId: build!.id });
+
+      expect(result?.build).toMatchObject({ pullRequestNumber: 42, pullRequestUrl: null });
     });
 
     test("reports a settled build with stored extract defaults as rebuildable", async ({

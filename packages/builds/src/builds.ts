@@ -49,6 +49,7 @@ type CreateBuildInput = {
   projectId: string;
   branch: string;
   commitSha: string;
+  pullRequestNumber?: number;
   baseBuildId?: string;
   name?: string;
   author?: string;
@@ -248,6 +249,7 @@ export const createBuild = async (
       projectId: input.projectId,
       branch: input.branch,
       commitSha: input.commitSha,
+      pullRequestNumber: input.pullRequestNumber,
       baseBuildId,
       name: input.name,
       author: input.author,
@@ -477,6 +479,7 @@ export const rebuildBuild = async (
       projectId: source.projectId,
       branch: source.branch,
       commitSha: source.commitSha,
+      pullRequestNumber: source.pullRequestNumber,
       baseBuildId: source.baseBuildId,
       name: source.name,
       author: source.author,

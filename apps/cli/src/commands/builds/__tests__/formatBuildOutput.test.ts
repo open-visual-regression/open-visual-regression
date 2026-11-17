@@ -24,6 +24,8 @@ const BUILD: BuildDetailSchema = {
   latestBuildId: null,
   commitUrl: null,
   branchUrl: null,
+  pullRequestNumber: null,
+  pullRequestUrl: null,
   mainBranch: "main",
   mainBranchUrl: null,
   baseBuild: null,
