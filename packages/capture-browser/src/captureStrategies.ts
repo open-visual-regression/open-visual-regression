@@ -3,12 +3,17 @@ import type { Page } from "playwright";
 import { assertSupportedStorybookBuild } from "@ovr/storybook-compat/version";
 
 // Kinds stay independent of the ingestion source so other target types can report the same ones.
-// `unavailable`: the bundle's runtime never exposed what capture drives it with.
-// `missing`: the bundle has no target with the requested id.
-// `render`: the target threw while rendering.
-// `interaction`: a scripted interaction run after rendering (e.g. a play function) failed.
-// `timeout`: the target never reported that it finished, which may be the target or a slow worker.
-export type RenderFailureKind = "unavailable" | "missing" | "render" | "interaction" | "timeout";
+export type RenderFailureKind =
+  // The bundle's runtime never exposed what capture drives it with.
+  | "unavailable"
+  // The bundle has no target with the requested id.
+  | "missing"
+  // The target threw while rendering.
+  | "render"
+  // A scripted interaction run after rendering (e.g. a play function) failed.
+  | "interaction"
+  // The target never reported that it finished, which may be the target or a slow worker.
+  | "timeout";
 
 export type RenderFailure = { kind: RenderFailureKind; message: string };
 
