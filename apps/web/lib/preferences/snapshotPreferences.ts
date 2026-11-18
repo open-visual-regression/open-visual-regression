@@ -11,10 +11,8 @@ export type SnapshotPreferences = {
   showDiff: boolean;
 };
 
-export const SNAPSHOT_PREFERENCE_COOKIES = {
-  sidebarOpen: "ovr-snapshot-sidebar-open",
-  sidebarTab: "ovr-snapshot-sidebar-tab",
-  showDiff: "ovr-snapshot-show-diff",
-} as const satisfies Record<keyof SnapshotPreferences, string>;
-
-export const SNAPSHOT_PREFERENCE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+export const DEFAULT_SNAPSHOT_PREFERENCES: SnapshotPreferences = {
+  sidebarOpen: false,
+  sidebarTab: "reviews",
+  showDiff: true,
+};

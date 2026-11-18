@@ -1,18 +1,15 @@
 "use client";
 
-import { setCookie } from "cookies-next/client";
-import { createContext, use, useContext, useState } from "react";
+import { createContext, useContext, useState } from "react";
 
 import {
-  SNAPSHOT_PREFERENCE_COOKIE_MAX_AGE,
-  SNAPSHOT_PREFERENCE_COOKIES,
+  DEFAULT_SNAPSHOT_PREFERENCES,
   type SnapshotPreferences,
   type SnapshotSidebarTab,
 } from "@/lib/preferences/snapshotPreferences";
 
 type SnapshotPreferencesContextValue = {
-  initialPreferences: SnapshotPreferences | Promise<SnapshotPreferences>;
-  changes: Partial<SnapshotPreferences>;
+  preferences: SnapshotPreferences;
   setPreference: <K extends keyof SnapshotPreferences>(
     key: K,
     value: SnapshotPreferences[K],
@@ -21,39 +18,29 @@ type SnapshotPreferencesContextValue = {
 
 const SnapshotPreferencesContext = createContext<SnapshotPreferencesContextValue | null>(null);
 
-const savePreference = <K extends keyof SnapshotPreferences>(
-  key: K,
-  value: SnapshotPreferences[K],
-) =>
-  setCookie(SNAPSHOT_PREFERENCE_COOKIES[key], value, {
-    path: "/",
-    maxAge: SNAPSHOT_PREFERENCE_COOKIE_MAX_AGE,
-    sameSite: "lax",
-  });
-
 type SnapshotPreferencesProviderProps = {
-  // A promise lets the layout pass the saved preferences without waiting on cookies,
-  // so prerendered page shells aren't held up. Readers suspend until it resolves.
-  initialPreferences: SnapshotPreferences | Promise<SnapshotPreferences>;
+  initialPreferences?: Partial<SnapshotPreferences>;
   children: React.ReactNode;
 };
 
+// Preferences live in memory only: they carry across client-side navigation within the
+// app, but a hard page load starts again from the defaults.
 export const SnapshotPreferencesProvider = ({
   initialPreferences,
   children,
 }: SnapshotPreferencesProviderProps) => {
-  const [changes, setChanges] = useState<Partial<SnapshotPreferences>>({});
+  const [preferences, setPreferences] = useState<SnapshotPreferences>(() => ({
+    ...DEFAULT_SNAPSHOT_PREFERENCES,
+    ...initialPreferences,
+  }));
 
   const setPreference = <K extends keyof SnapshotPreferences>(
     key: K,
     value: SnapshotPreferences[K],
-  ) => {
-    setChanges((current) => ({ ...current, [key]: value }));
-    savePreference(key, value);
-  };
+  ) => setPreferences((current) => ({ ...current, [key]: value }));
 
   return (
-    <SnapshotPreferencesContext.Provider value={{ initialPreferences, changes, setPreference }}>
+    <SnapshotPreferencesContext.Provider value={{ preferences, setPreference }}>
       {children}
     </SnapshotPreferencesContext.Provider>
   );
@@ -66,13 +53,10 @@ export const useSnapshotPreferences = () => {
     throw new Error("useSnapshotPreferences must be used within a SnapshotPreferencesProvider");
   }
 
-  const { initialPreferences, changes, setPreference } = context;
-  const saved =
-    initialPreferences instanceof Promise ? use(initialPreferences) : initialPreferences;
+  const { preferences, setPreference } = context;
 
   return {
-    ...saved,
-    ...changes,
+    ...preferences,
     setSidebarOpen: (sidebarOpen: boolean) => setPreference("sidebarOpen", sidebarOpen),
     setSidebarTab: (sidebarTab: SnapshotSidebarTab) => setPreference("sidebarTab", sidebarTab),
     setShowDiff: (showDiff: boolean) => setPreference("showDiff", showDiff),
