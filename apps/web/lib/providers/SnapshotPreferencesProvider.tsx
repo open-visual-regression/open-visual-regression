@@ -23,8 +23,6 @@ type SnapshotPreferencesProviderProps = {
   children: React.ReactNode;
 };
 
-// Preferences live in memory only: they carry across client-side navigation within the
-// app, but a hard page load starts again from the defaults.
 export const SnapshotPreferencesProvider = ({
   initialPreferences,
   children,
