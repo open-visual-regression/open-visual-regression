@@ -3,10 +3,10 @@ import { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { Button } from "@ovr/ui/components/button";
 import {
   ArrowLeftFromLineIcon,
-  ArrowRightIcon,
   ArrowRightToLineIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  CircleFadingArrowUpIcon,
   CornerLeftUpIcon,
   Icon,
 } from "@ovr/ui/components/icon";
@@ -113,8 +113,7 @@ export const SnapshotActionsRow = ({
         {latestBuildId ? (
           <ResponsiveActionButton
             href={`/projects/${projectId}/builds/${latestBuildId}`}
-            icon={ArrowRightIcon}
-            iconPosition="end"
+            icon={CircleFadingArrowUpIcon}
           >
             view latest build
           </ResponsiveActionButton>

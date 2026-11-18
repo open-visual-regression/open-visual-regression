@@ -10,6 +10,7 @@ export {
   ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  CircleFadingArrowUpIcon,
   CopyIcon,
   CornerLeftUpIcon,
   EllipsisIcon,
