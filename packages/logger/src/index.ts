@@ -20,7 +20,15 @@ export const createRootLogger = (options: LoggerOptions = {}): pino.Logger => {
     streams.push({ level, stream: pino.destination({ dest: filePath, mkdir: true, sync: true }) });
   }
 
-  return pino({ level }, pino.multistream(streams));
+  return pino(
+    {
+      level,
+      // Emit the level as its label ("error") rather than pino's number (50),
+      // so log platforms such as Datadog can map it to a severity.
+      formatters: { level: (label) => ({ level: label }) },
+    },
+    pino.multistream(streams),
+  );
 };
 
 const root = createRootLogger();
