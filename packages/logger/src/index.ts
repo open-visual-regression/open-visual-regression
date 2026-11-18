@@ -23,8 +23,6 @@ export const createRootLogger = (options: LoggerOptions = {}): pino.Logger => {
   return pino(
     {
       level,
-      // Emit the level as its label ("error") rather than pino's number (50),
-      // so log platforms such as Datadog can map it to a severity.
       formatters: { level: (label) => ({ level: label }) },
     },
     pino.multistream(streams),
