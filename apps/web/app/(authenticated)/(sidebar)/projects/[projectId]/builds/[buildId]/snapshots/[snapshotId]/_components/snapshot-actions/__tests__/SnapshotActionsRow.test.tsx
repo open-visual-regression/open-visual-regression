@@ -57,11 +57,13 @@ const projectId = "019edfc7-e040-7492-86b2-ccfdc00cf6e1";
 const buildId = "019edfc7-e040-7492-86b2-ccfdc00cf6e0";
 const prevSnapshotId = "019edfc7-e040-7492-86b2-ccfdc00cf6e4";
 const nextSnapshotId = "019edfc7-e040-7492-86b2-ccfdc00cf6e5";
+const latestBuildId = "019edfc7-e040-7492-86b2-ccfdc00cf6e6";
 
 const renderComponent = (
   props: Partial<{
     snapshot: SnapshotSchema;
     diff: DiffSchema | null;
+    latestBuildId: string | null;
     prevSnapshotId: string | null;
     nextSnapshotId: string | null;
     position: number | null;
@@ -82,6 +84,7 @@ const renderComponent = (
         diff={diff}
         projectId={projectId}
         buildId={buildId}
+        latestBuildId={null}
         prevSnapshotId={prevSnapshotId}
         nextSnapshotId={nextSnapshotId}
         position={3}
@@ -256,6 +259,25 @@ describe("SnapshotActionsRow", () => {
 
     expect(screen.queryByRole("button", { name: /^approve$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^reject$/i })).not.toBeInTheDocument();
+  });
+
+  it("should link to the latest build when this snapshot's build is outdated", () => {
+    renderComponent({
+      latestBuildId,
+      snapshot: { ...snapshot, isReviewable: false, isRebuildable: false },
+    });
+
+    expect(screen.getByRole("link", { name: /view latest build/i })).toHaveAttribute(
+      "href",
+      `/projects/${projectId}/builds/${latestBuildId}`,
+    );
+    expect(screen.queryByRole("button", { name: /^approve$/i })).not.toBeInTheDocument();
+  });
+
+  it("should not link to the latest build when this is the latest build", () => {
+    renderComponent();
+
+    expect(screen.queryByRole("link", { name: /view latest build/i })).not.toBeInTheDocument();
   });
 
   it("should link to the previous snapshot", () => {

@@ -17,6 +17,7 @@ export type SnapshotLayoutProps = {
   diff: DiffSchema | null;
   projectId: string;
   buildId: string;
+  latestBuildId: string | null;
   prevSnapshotId: string | null;
   nextSnapshotId: string | null;
   position: number | null;
@@ -33,6 +34,7 @@ export const SnapshotLayout = ({
   diff,
   projectId,
   buildId,
+  latestBuildId,
   prevSnapshotId,
   nextSnapshotId,
   position,
@@ -62,6 +64,7 @@ export const SnapshotLayout = ({
           snapshot={snapshot}
           projectId={projectId}
           buildId={buildId}
+          latestBuildId={latestBuildId}
           prevSnapshotId={prevSnapshotId}
           nextSnapshotId={nextSnapshotId}
           position={position}

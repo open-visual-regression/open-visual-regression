@@ -3,6 +3,7 @@ import { SnapshotSchema } from "@ovr/api/contracts/snapshots";
 import { Button } from "@ovr/ui/components/button";
 import {
   ArrowLeftFromLineIcon,
+  ArrowRightIcon,
   ArrowRightToLineIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -44,6 +45,8 @@ type ActionsRowProps = {
   diff: DiffSchema | null;
   projectId: string;
   buildId: string;
+  // Set when this snapshot's build has been superseded, which is why it can't be reviewed.
+  latestBuildId: string | null;
   prevSnapshotId: string | null;
   nextSnapshotId: string | null;
   position: number | null;
@@ -60,6 +63,7 @@ export const SnapshotActionsRow = ({
   snapshot,
   projectId,
   buildId,
+  latestBuildId,
   prevSnapshotId,
   nextSnapshotId,
   position,
@@ -107,6 +111,15 @@ export const SnapshotActionsRow = ({
         ) : null}
       </div>
       <div className="flex items-center flex-row gap-2">
+        {latestBuildId ? (
+          <ResponsiveActionButton
+            href={`/projects/${projectId}/builds/${latestBuildId}`}
+            icon={ArrowRightIcon}
+            iconPosition="end"
+          >
+            view latest build
+          </ResponsiveActionButton>
+        ) : null}
         {canReview && snapshot.isRebuildable ? (
           <SnapshotRebuildButton buildId={buildId} snapshotId={snapshot.id} />
         ) : null}
