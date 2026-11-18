@@ -1618,7 +1618,38 @@ describe("snapshots", () => {
         pixelDiffCount: null,
       });
 
-      expect(await metrics.scrape()).toContain('ovr_diffs_compared_total{result="error"} 1');
+      const body = await metrics.scrape();
+      expect(body).toContain('ovr_diffs_compared_total{result="render_error"} 1');
+      expect(body).not.toContain('ovr_diffs_compared_total{result="error"}');
+    });
+
+    test("marks the diff as errored without comparing pixels when the snapshot failed to capture", async ({
+      featureBuild,
+      captureConfiguration,
+      metrics,
+    }) => {
+      const [snapshot] = await dbClient.snapshots.createMany({
+        values: [
+          {
+            buildId: featureBuild.id,
+            ...captureConfiguration,
+            targetId: "story-capture-error",
+            status: "error",
+          },
+        ],
+      });
+      const diff = await dbClient.diffs.create({ snapshotId: snapshot!.id });
+
+      await diffSnapshot(snapshot!.id, diff!.id);
+
+      expect(await dbClient.diffs.findById(diff!.id)).toMatchObject({
+        processingStatus: "error",
+        pixelDiffCount: null,
+      });
+
+      const body = await metrics.scrape();
+      expect(body).toContain('ovr_diffs_compared_total{result="error"} 1');
+      expect(body).not.toContain('ovr_diffs_compared_total{result="render_error"}');
     });
   });
 

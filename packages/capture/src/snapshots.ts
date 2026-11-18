@@ -778,7 +778,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
 
   if (snapshot.status === "error" || snapshot.hasRenderError) {
     await dbClient.diffs.updateProcessingStatus(diffId, "error");
-    diffsCompared.add(1, { result: "error" });
+    diffsCompared.add(1, { result: snapshot.status === "error" ? "error" : "render_error" });
     await checkAllDoneAndFinalize(build.id);
     return;
   }
