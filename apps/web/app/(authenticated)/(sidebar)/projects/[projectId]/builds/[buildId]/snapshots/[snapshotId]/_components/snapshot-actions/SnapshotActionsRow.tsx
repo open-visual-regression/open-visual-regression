@@ -45,7 +45,6 @@ type ActionsRowProps = {
   diff: DiffSchema | null;
   projectId: string;
   buildId: string;
-  // Set when this snapshot's build has been superseded, which is why it can't be reviewed.
   latestBuildId: string | null;
   prevSnapshotId: string | null;
   nextSnapshotId: string | null;
