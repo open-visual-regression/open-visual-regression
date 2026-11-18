@@ -3,7 +3,11 @@ import { createCounter, createHistogram, DURATION_BUCKETS_SECONDS } from "@ovr/m
 // `new`: no baseline yet.
 export type DiffResult = "unchanged" | "changed" | "new" | "error";
 
-export const snapshotsCaptured = createCounter<{ browser: string; outcome: "success" | "error" }>(
+// `render_error`: captured, but the target itself failed (e.g. a scripted interaction threw).
+// `error`: capture itself failed (timeout, browser crash, upload).
+export type CaptureOutcome = "success" | "render_error" | "error";
+
+export const snapshotsCaptured = createCounter<{ browser: string; outcome: CaptureOutcome }>(
   "ovr.snapshots.captured",
   { description: "Snapshots whose capture finished, by browser and outcome." },
 );

@@ -10,6 +10,7 @@ import { launchBrowser, newPage } from "@ovr/capture-browser/browser";
 import {
   detectCaptureStrategy,
   type CaptureStrategy,
+  type RenderFailure,
 } from "@ovr/capture-browser/captureStrategies";
 import {
   blockExternalRequests,
@@ -66,6 +67,12 @@ import { createUploadQueue } from "./lib/uploadQueue";
 const logger = createLogger("capture");
 
 const MAX_PENDING_UPLOADS = 2;
+
+// Render errors carry the target author's text, which can run to whole stack traces.
+const MAX_LOGGED_RENDER_ERROR_LENGTH = 500;
+
+const truncate = (text: string, maxLength: number): string =>
+  text.length > maxLength ? `${text.slice(0, maxLength)}…` : text;
 
 const TERMINAL_BUILD_STATUSES = new Set<BuildProcessingStatus>(["error", "canceled"]);
 
@@ -257,9 +264,8 @@ type CapturedSnapshot = {
   imagePath: string;
   screenshot: Buffer;
   logs: CaptureLog[];
-  hasRenderError: boolean;
+  renderError: RenderFailure | null;
   hasUncaughtPageError: boolean;
-  errorMessage: string | null;
   renderMs: number;
   settleMs: number;
   waitMs: number;
@@ -338,10 +344,10 @@ const captureSnapshotOnPage = async (
       }),
     );
 
-    const errorMessage = renderResult.ok ? null : (renderResult.error ?? "target failed to render");
+    const renderError = renderResult.ok ? null : renderResult.error;
 
-    if (errorMessage) {
-      pageLogState.logs.push({ level: "error", message: errorMessage });
+    if (renderError) {
+      pageLogState.logs.push({ level: "error", message: renderError.message });
     }
 
     const [settled, settleMs] = renderResult.ok
@@ -398,9 +404,8 @@ const captureSnapshotOnPage = async (
       imagePath,
       screenshot,
       logs: [...pageLogState.logs],
-      hasRenderError: !renderResult.ok,
+      renderError,
       hasUncaughtPageError: pageLogState.hasPageError,
-      errorMessage,
       renderMs,
       settleMs,
       waitMs,
@@ -445,15 +450,7 @@ const persistCapturedSnapshot = async (
   captured: CapturedSnapshot,
   shutdownSignal: AbortSignal | undefined,
 ): Promise<PersistOutcome> => {
-  const {
-    snapshotId,
-    imagePath,
-    hasRenderError,
-    hasUncaughtPageError,
-    errorMessage,
-    context,
-    startedAt,
-  } = captured;
+  const { snapshotId, imagePath, renderError, hasUncaughtPageError, context, startedAt } = captured;
 
   try {
     const [, uploadMs] = await runPhase("upload", () =>
@@ -477,9 +474,9 @@ const persistCapturedSnapshot = async (
         status: "success",
         imagePath,
         imageHash: createHash("sha256").update(captured.screenshot).digest("hex"),
-        hasRenderError,
+        hasRenderError: renderError !== null,
         hasUncaughtPageError,
-        errorMessage,
+        errorMessage: renderError?.message ?? null,
         tx,
       });
     });
@@ -492,11 +489,26 @@ const persistCapturedSnapshot = async (
       upload: uploadMs,
     };
     const totalMs = performance.now() - startedAt;
-    logger.info(
-      { ...context, timings, totalMs: Math.round(totalMs), hasRenderError },
+    // A failing target is the target author's problem, not the worker's, so it stays below error.
+    // A timeout could be either, so it is raised to warn where it shows next to worker trouble.
+    const level = renderError?.kind === "timeout" ? "warn" : "info";
+    logger[level](
+      {
+        ...context,
+        timings,
+        totalMs: Math.round(totalMs),
+        hasRenderError: renderError !== null,
+        renderError: renderError && {
+          kind: renderError.kind,
+          message: truncate(renderError.message, MAX_LOGGED_RENDER_ERROR_LENGTH),
+        },
+      },
       "snapshot captured",
     );
-    snapshotsCaptured.add(1, { browser: captured.browser, outcome: "success" });
+    snapshotsCaptured.add(1, {
+      browser: captured.browser,
+      outcome: renderError ? "render_error" : "success",
+    });
     snapshotCaptureDuration.record(totalMs / 1000, { browser: captured.browser });
     for (const [phase, ms] of Object.entries(timings) as [CapturePhase, number][]) {
       snapshotCapturePhaseDuration.record(ms / 1000, { browser: captured.browser, phase });

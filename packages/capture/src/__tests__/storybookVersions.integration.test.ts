@@ -88,7 +88,7 @@ describe.skipIf(fixtures.length === 0)("Storybook version compatibility", () => 
       });
     });
 
-    test("fails a story whose play function throws", async () => {
+    test("fails a story whose play function throws as an interaction failure", async () => {
       const strategy = await detectCaptureStrategy(fixture.buildDir);
 
       await withCapturePage(fixture.buildDir, async (page) => {
@@ -99,8 +99,13 @@ describe.skipIf(fixtures.length === 0)("Storybook version compatibility", () => 
           timeoutMs: RENDER_TIMEOUT_MS,
         });
 
-        expect(result.ok).toBe(false);
-        expect(result.error).toContain("intentional play failure");
+        expect(result).toEqual({
+          ok: false,
+          error: {
+            kind: "interaction",
+            message: expect.stringContaining("intentional play failure"),
+          },
+        });
       });
     });
   });

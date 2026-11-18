@@ -149,6 +149,7 @@ describe("snapshots", () => {
     test("should still let a reviewer see the story, flagged as a render error, when the story fails to render", async ({
       mainBuild,
       captureConfiguration,
+      metrics,
     }) => {
       await uploadArtifactWithIframe(
         mainBuild.artifactPath,
@@ -174,6 +175,14 @@ describe("snapshots", () => {
 
       const logs = await dbClient.snapshotLogs.findBySnapshot(snapshot!.id);
       expect(logs.length).toBeGreaterThan(0);
+
+      const body = await metrics.scrape();
+      expect(body).toContain(
+        'ovr_snapshots_captured_total{browser="chromium",outcome="render_error"} 1',
+      );
+      expect(body).not.toContain(
+        'ovr_snapshots_captured_total{browser="chromium",outcome="success"}',
+      );
     });
 
     test("should still flag a render error when the story throws but Storybook reports it finished successfully", async ({
