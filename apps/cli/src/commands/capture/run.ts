@@ -121,7 +121,7 @@ const captureOnce = async (
 
   return {
     screenshot: (await takeStableScreenshot(page, fullPage, target.screenshotStability)).image,
-    error: renderResult.ok ? null : (renderResult.error ?? "target failed to render"),
+    error: renderResult.ok ? null : renderResult.error.message,
   };
 };
 
