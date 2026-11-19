@@ -75,30 +75,30 @@ export const BuildActionsMenu = ({
             <DropdownMenuItem
               render={<a href={pullRequestHref} target="_blank" rel="noopener noreferrer" />}
             >
-              <Icon icon={ExternalLinkIcon} />
               view pull request
+              <Icon icon={ExternalLinkIcon} />
             </DropdownMenuItem>
           ) : null}
           {commitHref ? (
             <DropdownMenuItem
               render={<a href={commitHref} target="_blank" rel="noopener noreferrer" />}
             >
-              <Icon icon={ExternalLinkIcon} />
               view commit
+              <Icon icon={ExternalLinkIcon} />
             </DropdownMenuItem>
           ) : null}
           {storybookHref ? (
             <DropdownMenuItem
               render={<a href={storybookHref} target="_blank" rel="noopener noreferrer" />}
             >
-              <Icon icon={ExternalLinkIcon} />
               view storybook
+              <Icon icon={ExternalLinkIcon} />
             </DropdownMenuItem>
           ) : null}
           {latestBuildHref ? (
             <DropdownMenuItem render={<Link href={latestBuildHref} />}>
-              <Icon icon={ArrowRightIcon} />
               view latest build
+              <Icon icon={ArrowRightIcon} />
             </DropdownMenuItem>
           ) : null}
           {canRebuild ? (
