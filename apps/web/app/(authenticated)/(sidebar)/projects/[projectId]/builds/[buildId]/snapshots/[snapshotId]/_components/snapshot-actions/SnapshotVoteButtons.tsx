@@ -28,8 +28,6 @@ export const SnapshotVoteButtons = ({ diffId, status, nextHref }: SnapshotVoteBu
   const router = useRouter();
   const refreshReview = useReviewRefresh();
   const [isRefreshing, startTransition] = useTransition();
-  // The vote just cast, shown straight away instead of the stale status until the refreshed one
-  // arrives. It is cleared in the same transition as the refresh, so the two swap in one commit.
   const [castingVote, setCastingVote] = useState<DiffReviewVote | null>(null);
 
   const { mutate, isPending } = useMutation(
