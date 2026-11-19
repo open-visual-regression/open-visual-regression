@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@ovr/ui/components/dropdown-menu";
 import {
-  ArrowRightIcon,
+  CircleFadingArrowUpIcon,
   CircleSlash2Icon,
   EllipsisIcon,
   ExternalLinkIcon,
@@ -87,7 +87,7 @@ export const BuildActionsMenu = ({
           ) : null}
           {latestBuildHref ? (
             <DropdownMenuItem render={<Link href={latestBuildHref} />}>
-              <Icon icon={ArrowRightIcon} />
+              <Icon icon={CircleFadingArrowUpIcon} />
               view latest build
             </DropdownMenuItem>
           ) : null}
