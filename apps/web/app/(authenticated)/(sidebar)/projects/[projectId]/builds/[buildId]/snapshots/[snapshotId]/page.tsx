@@ -80,6 +80,7 @@ export default async function SnapshotPage(props: SnapshotPageProps) {
       diff={diff}
       projectId={projectId}
       buildId={buildId}
+      latestBuildId={build.latestBuildId}
       prevSnapshotId={prevSnapshotId}
       nextSnapshotId={nextSnapshotId}
       position={position}

@@ -4,6 +4,7 @@ import { Button } from "@ovr/ui/components/button";
 import {
   ArrowLeftFromLineIcon,
   ArrowRightToLineIcon,
+  FastForwardIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   CornerLeftUpIcon,
@@ -44,6 +45,7 @@ type ActionsRowProps = {
   diff: DiffSchema | null;
   projectId: string;
   buildId: string;
+  latestBuildId: string | null;
   prevSnapshotId: string | null;
   nextSnapshotId: string | null;
   position: number | null;
@@ -60,6 +62,7 @@ export const SnapshotActionsRow = ({
   snapshot,
   projectId,
   buildId,
+  latestBuildId,
   prevSnapshotId,
   nextSnapshotId,
   position,
@@ -107,6 +110,15 @@ export const SnapshotActionsRow = ({
         ) : null}
       </div>
       <div className="flex items-center flex-row gap-2">
+        {latestBuildId ? (
+          <ResponsiveActionButton
+            href={`/projects/${projectId}/builds/${latestBuildId}`}
+            icon={FastForwardIcon}
+            iconPosition="end"
+          >
+            view latest build
+          </ResponsiveActionButton>
+        ) : null}
         {canReview && snapshot.isRebuildable ? (
           <SnapshotRebuildButton buildId={buildId} snapshotId={snapshot.id} />
         ) : null}

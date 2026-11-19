@@ -44,6 +44,7 @@ const renderComponent = (queryClient = createQueryClient(), sidebarOpen = false)
       diff={null}
       projectId="019edfc7-e040-7492-86b2-ccfdc00cf6e1"
       buildId="019edfc7-e040-7492-86b2-ccfdc00cf6e0"
+      latestBuildId={null}
       prevSnapshotId={null}
       nextSnapshotId={null}
       position={null}
