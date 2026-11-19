@@ -200,6 +200,30 @@ describe("SnapshotActionsRow", () => {
     expect(mockPush).not.toHaveBeenCalled();
   });
 
+  it("should show a changed vote straight away, while the request is still in flight", async ({
+    user,
+  }) => {
+    mockHandlers.mockCastVote({ pending: true });
+    renderComponent({ snapshot: { ...snapshot, status: "rejected" }, hasVoted: true });
+
+    await user.click(screen.getByRole("button", { name: /^approve$/i }));
+
+    expect(screen.getByRole("button", { name: /^approved$/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /^reject$/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^rejected$/i })).not.toBeInTheDocument();
+  });
+
+  it("should put the previous vote back if changing it fails", async ({ user }) => {
+    mockHandlers.mockCastVote({ error: createORPCError("CONFLICT", 409) });
+    renderComponent({ snapshot: { ...snapshot, status: "rejected" }, hasVoted: true });
+
+    await user.click(screen.getByRole("button", { name: /^approve$/i }));
+
+    expect(await screen.findByText("CONFLICT")).toBeVisible();
+    await waitFor(() => expect(screen.getByRole("button", { name: /^rejected$/i })).toBeDisabled());
+    expect(screen.getByRole("button", { name: /^approve$/i })).toBeEnabled();
+  });
+
   it("should still navigate to the next snapshot optimistically, then show an error toast if approving fails", async ({
     user,
   }) => {
