@@ -27,6 +27,7 @@ export type BuildActionsMenuProps = {
   buildId: string;
   projectId: string;
   pullRequestHref: string | null;
+  commitHref: string | null;
   storybookHref: string | null;
   latestBuildHref: string | null;
   canCancel: boolean;
@@ -39,6 +40,7 @@ export const BuildActionsMenu = ({
   buildId,
   projectId,
   pullRequestHref,
+  commitHref,
   storybookHref,
   latestBuildHref,
   canCancel,
@@ -75,6 +77,14 @@ export const BuildActionsMenu = ({
             >
               <Icon icon={ExternalLinkIcon} />
               view pull request
+            </DropdownMenuItem>
+          ) : null}
+          {commitHref ? (
+            <DropdownMenuItem
+              render={<a href={commitHref} target="_blank" rel="noopener noreferrer" />}
+            >
+              <Icon icon={ExternalLinkIcon} />
+              view commit
             </DropdownMenuItem>
           ) : null}
           {storybookHref ? (
