@@ -4,15 +4,12 @@ import { ResponsiveActionButton } from "@/lib/components/responsive-action-butto
 
 export type ProjectBaselineButtonProps = {
   projectId: string;
-  baselineBuildId: string | null;
+  hasBaseline: boolean;
 };
 
-export const ProjectBaselineButton = ({ projectId, baselineBuildId }: ProjectBaselineButtonProps) =>
-  baselineBuildId ? (
-    <ResponsiveActionButton
-      href={`/projects/${projectId}/builds/${baselineBuildId}`}
-      icon={MilestoneIcon}
-    >
+export const ProjectBaselineButton = ({ projectId, hasBaseline }: ProjectBaselineButtonProps) =>
+  hasBaseline ? (
+    <ResponsiveActionButton href={`/api/baseline/${projectId}`} icon={MilestoneIcon}>
       view baseline
     </ResponsiveActionButton>
   ) : null;

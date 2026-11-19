@@ -92,7 +92,7 @@ export default async function ProjectPage(props: ProjectPageProps) {
         <ProjectHeader
           projectId={projectId}
           projectName={projectResult.project.name}
-          baselineBuildId={baselineResult.build?.id ?? null}
+          hasBaseline={Boolean(baselineResult.build)}
           role={toRole(session?.user.role)}
         />
       }
