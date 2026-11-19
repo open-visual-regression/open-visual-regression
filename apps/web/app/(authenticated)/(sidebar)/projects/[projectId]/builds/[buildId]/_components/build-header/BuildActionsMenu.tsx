@@ -97,8 +97,8 @@ export const BuildActionsMenu = ({
           ) : null}
           {latestBuildHref ? (
             <DropdownMenuItem render={<Link href={latestBuildHref} />}>
-              view latest build
               <Icon icon={ArrowRightIcon} />
+              view latest build
             </DropdownMenuItem>
           ) : null}
           {canRebuild ? (
