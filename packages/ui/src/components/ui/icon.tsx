@@ -4,7 +4,7 @@ export {
   ArrowLeftIcon,
   ArrowRightIcon,
   ArrowRightToLineIcon,
-  ArrowUpRightIcon,
+  FastForwardIcon,
   BoxIcon,
   CameraIcon,
   CheckIcon,

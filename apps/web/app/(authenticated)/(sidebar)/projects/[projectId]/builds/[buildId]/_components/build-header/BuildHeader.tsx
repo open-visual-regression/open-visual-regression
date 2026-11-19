@@ -3,7 +3,7 @@ import { Alert, AlertDescription, AlertTitle } from "@ovr/ui/components/alert";
 import { BadgeSkeleton } from "@ovr/ui/components/badge";
 import {
   Icon,
-  ArrowUpRightIcon,
+  FastForwardIcon,
   CircleSlash2Icon,
   GitCommitHorizontalIcon,
   TimerIcon,
@@ -131,7 +131,7 @@ export const BuildHeader = ({
                 {latestBuildHref ? (
                   <ButtonLink href={latestBuildHref} variant="outline" color="neutral">
                     view latest build
-                    <Icon icon={ArrowUpRightIcon} size={10} />
+                    <Icon icon={FastForwardIcon} size={10} />
                   </ButtonLink>
                 ) : null}
                 {showCancel ? <BuildCancelButton buildId={build.id} /> : null}

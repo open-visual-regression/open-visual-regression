@@ -4,7 +4,7 @@ import { Button } from "@ovr/ui/components/button";
 import {
   ArrowLeftFromLineIcon,
   ArrowRightToLineIcon,
-  ArrowUpRightIcon,
+  FastForwardIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   CornerLeftUpIcon,
@@ -113,7 +113,7 @@ export const SnapshotActionsRow = ({
         {latestBuildId ? (
           <ResponsiveActionButton
             href={`/projects/${projectId}/builds/${latestBuildId}`}
-            icon={ArrowUpRightIcon}
+            icon={FastForwardIcon}
             iconPosition="end"
           >
             view latest build
