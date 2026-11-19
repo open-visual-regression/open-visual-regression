@@ -1,5 +1,13 @@
 # @ovr/reviews
 
+## 0.1.33
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @ovr/builds@0.2.18
+  - @ovr/db@0.4.14
+
 ## 0.1.32
 
 ### Patch Changes

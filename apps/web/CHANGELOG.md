@@ -1,5 +1,34 @@
 # @ovr/web
 
+## 0.25.0
+
+### Minor Changes
+
+- [#596](https://github.com/open-visual-regression/open-visual-regression/pull/596) [`4690df1`](https://github.com/open-visual-regression/open-visual-regression/commit/4690df1c69f03c4a8d6b73c287d1b04e1b8caaab) Thanks [@tgfischer](https://github.com/tgfischer)! - `ovr_snapshots_captured_total` counts snapshots whose page failed, such as a failing interaction, as `render_error` instead of `success`, and `ovr_diffs_compared_total` counts diffs skipped for that reason as `render_error` instead of `error`. Worker logs include the failure's kind and message, and log render timeouts as warnings.
+
+### Patch Changes
+
+- [#600](https://github.com/open-visual-regression/open-visual-regression/pull/600) [`3d0c22f`](https://github.com/open-visual-regression/open-visual-regression/commit/3d0c22f54cf50ebb761dc629334ae9f09c3f604d) Thanks [@tgfischer](https://github.com/tgfischer)! - The build page header now links to the build's commit with a "view commit" link next to "view pull request", in place of the short commit hash. On small screens it is in the actions menu.
+
+- [#601](https://github.com/open-visual-regression/open-visual-regression/pull/601) [`89ed2a5`](https://github.com/open-visual-regression/open-visual-regression/commit/89ed2a5a8531b77eb273e53aa206903b22455f69) Thanks [@tgfischer](https://github.com/tgfischer)! - Changing your vote on a snapshot shows the new vote right away, instead of briefly showing the old one until the page refreshes.
+
+- [#594](https://github.com/open-visual-regression/open-visual-regression/pull/594) [`2ae3015`](https://github.com/open-visual-regression/open-visual-regression/commit/2ae3015eebfe913bcfe8cbdb8e3ee150032e9486) Thanks [@tgfischer](https://github.com/tgfischer)! - Logs now show the level as a name, such as `"level":"error"`, instead of a number such as `"level":50`. Log tools such as Datadog can now read the severity.
+
+- [#599](https://github.com/open-visual-regression/open-visual-regression/pull/599) [`e68386b`](https://github.com/open-visual-regression/open-visual-regression/commit/e68386b8ceeb6e136942a86aa377575222e18087) Thanks [@tgfischer](https://github.com/tgfischer)! - The snapshot page's right sidebar and diff toggle no longer stay as you left them after you reload the page or open it fresh. They still carry over as you move between snapshots.
+
+- [#595](https://github.com/open-visual-regression/open-visual-regression/pull/595) [`d586b8f`](https://github.com/open-visual-regression/open-visual-regression/commit/d586b8f8a34e8aa3d4d3a43a59be42ad9e5faa91) Thanks [@tgfischer](https://github.com/tgfischer)! - Snapshot pages from an outdated build show a "view latest build" link, since that build's snapshots can no longer be reviewed or rebuilt.
+
+- [#597](https://github.com/open-visual-regression/open-visual-regression/pull/597) [`0b4b574`](https://github.com/open-visual-regression/open-visual-regression/commit/0b4b574f4d0c58b176e6eb280c4f6af0eee7da48) Thanks [@tgfischer](https://github.com/tgfischer)! - The **view baseline** button links to the project's stable baseline URL, so a copied or bookmarked link keeps opening the current baseline build.
+- Updated dependencies [[`2ae3015`](https://github.com/open-visual-regression/open-visual-regression/commit/2ae3015eebfe913bcfe8cbdb8e3ee150032e9486)]:
+  - @ovr/logger@0.1.1
+  - @ovr/builds@0.2.18
+  - @ovr/db@0.4.14
+  - @ovr/git-status@0.1.27
+  - @ovr/metrics@0.1.2
+  - @ovr/queue@0.4.4
+  - @ovr/reviews@0.1.33
+  - @ovr/storage@0.1.3
+
 ## 0.24.0
 
 ### Minor Changes

@@ -1,5 +1,20 @@
 # @ovr/capture
 
+## 0.3.26
+
+### Patch Changes
+
+- [#596](https://github.com/open-visual-regression/open-visual-regression/pull/596) [`4690df1`](https://github.com/open-visual-regression/open-visual-regression/commit/4690df1c69f03c4a8d6b73c287d1b04e1b8caaab) Thanks [@tgfischer](https://github.com/tgfischer)! - `ovr_snapshots_captured_total` counts snapshots whose page failed, such as a failing interaction, as `render_error` instead of `success`, and `ovr_diffs_compared_total` counts diffs skipped for that reason as `render_error` instead of `error`. Worker logs include the failure's kind and message, and log render timeouts as warnings.
+- Updated dependencies [[`4690df1`](https://github.com/open-visual-regression/open-visual-regression/commit/4690df1c69f03c4a8d6b73c287d1b04e1b8caaab), [`2ae3015`](https://github.com/open-visual-regression/open-visual-regression/commit/2ae3015eebfe913bcfe8cbdb8e3ee150032e9486)]:
+  - @ovr/capture-browser@0.0.9
+  - @ovr/logger@0.1.1
+  - @ovr/builds@0.2.18
+  - @ovr/db@0.4.14
+  - @ovr/metrics@0.1.2
+  - @ovr/queue@0.4.4
+  - @ovr/reviews@0.1.33
+  - @ovr/storage@0.1.3
+
 ## 0.3.25
 
 ### Patch Changes
