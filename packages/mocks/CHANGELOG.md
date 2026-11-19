@@ -1,5 +1,12 @@
 # @ovr/mocks
 
+## 0.2.26
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @ovr/db@0.4.14
+
 ## 0.2.25
 
 ### Patch Changes
