@@ -19,9 +19,8 @@ import {
 } from "@/lib/components/responsive-action-button/ResponsiveActionButton";
 import { type SnapshotFilters, withSnapshotFilters } from "@/lib/utils/snapshotFilters";
 
-import { SnapshotApproveButton } from "./SnapshotApproveButton";
 import { SnapshotRebuildButton } from "./SnapshotRebuildButton";
-import { SnapshotRejectButton } from "./SnapshotRejectButton";
+import { SnapshotVoteButtons } from "./SnapshotVoteButtons";
 
 type SnapshotActionsRowLayoutProps = {
   className?: string;
@@ -111,18 +110,7 @@ export const SnapshotActionsRow = ({
           <SnapshotRebuildButton buildId={buildId} snapshotId={snapshot.id} />
         ) : null}
         {canReview && snapshot.isReviewable && diff ? (
-          <>
-            <SnapshotRejectButton
-              diffId={diff.id}
-              rejected={snapshot.status === "rejected"}
-              nextHref={nextHref}
-            />
-            <SnapshotApproveButton
-              diffId={diff.id}
-              approved={snapshot.status === "approved"}
-              nextHref={nextHref}
-            />
-          </>
+          <SnapshotVoteButtons diffId={diff.id} status={snapshot.status} nextHref={nextHref} />
         ) : null}
         <Button
           variant="outline"
