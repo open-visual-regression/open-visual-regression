@@ -1,6 +1,7 @@
 ---
 "@ovr/worker": patch
+"@ovr/web": patch
 "@ovr/db": patch
 ---
 
-Checking whether a build has finished no longer scans every diff ever recorded after each snapshot's diff, so many workers running large builds no longer overload the database and slow down the web UI.
+Checking whether a build has finished, and loading the build and snapshot pages, no longer scan every diff ever recorded, so the web UI stays responsive while many workers run large builds.
