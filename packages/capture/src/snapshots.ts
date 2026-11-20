@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-import { chromium, firefox, webkit, type Page } from "playwright";
+import { chromium, firefox, webkit, type Page, type ViewportSize } from "playwright";
 
 import { publishStatus } from "@ovr/builds/builds";
 import { isFlakyDetectionEnabled } from "@ovr/builds/flakiness";
@@ -166,6 +166,9 @@ type PageLogState = { logs: CaptureLog[]; hasPageError: boolean };
 
 type CapturePage = {
   page: Page;
+  origin: string;
+  // The viewport Storybook loaded at, while no story has rendered on the page yet.
+  freshViewport: ViewportSize | null;
   pageLogState: PageLogState;
   networkActivity: NetworkActivity;
   blockedHosts: BlockedHosts;
@@ -247,6 +250,8 @@ const launchCapturePage = async (
 
   return {
     page,
+    origin: proxy.origin,
+    freshViewport: page.viewportSize(),
     pageLogState,
     networkActivity,
     blockedHosts,
@@ -258,6 +263,23 @@ const launchCapturePage = async (
   };
 };
 
+// A reload keeps cookies and web storage, so they're cleared first.
+const reloadTargetPage = async (
+  page: Page,
+  origin: string,
+  strategy: CaptureStrategy,
+): Promise<void> => {
+  await page.context().clearCookies();
+  await page
+    .evaluate(() => {
+      localStorage.clear();
+      sessionStorage.clear();
+    })
+    // A page that never loaded Storybook has no storage to clear.
+    .catch(() => undefined);
+  await bootTargetPage(page, origin, strategy);
+};
+
 type CapturedSnapshot = {
   snapshotId: string;
   browser: string;
@@ -266,6 +288,7 @@ type CapturedSnapshot = {
   logs: CaptureLog[];
   renderError: RenderFailure | null;
   hasUncaughtPageError: boolean;
+  bootMs: number;
   renderMs: number;
   settleMs: number;
   waitMs: number;
@@ -275,7 +298,7 @@ type CapturedSnapshot = {
 };
 
 const captureSnapshotOnPage = async (
-  { page, pageLogState, networkActivity, blockedHosts }: CapturePage,
+  capturePage: CapturePage,
   strategy: CaptureStrategy,
   build: NonNullable<BuildDbSchema>,
   snapshotId: string,
@@ -312,6 +335,7 @@ const captureSnapshotOnPage = async (
     await publishStatus(build.id);
   }
 
+  const { page, pageLogState, networkActivity, blockedHosts } = capturePage;
   const { fullPage, width, height } = getCaptureViewport(
     snapshot.viewportWidth,
     snapshot.viewportHeight,
@@ -335,7 +359,19 @@ const captureSnapshotOnPage = async (
   };
 
   const capture = async (): Promise<CapturedSnapshot> => {
+    // Each story gets a fresh document at its own viewport, so nothing an earlier story left
+    // behind changes how it renders. Without this, a story could render differently depending on
+    // which stories happened to share its capture group.
     await page.setViewportSize({ width, height });
+    const fresh = capturePage.freshViewport;
+    const reload = fresh?.width !== width || fresh.height !== height;
+    capturePage.freshViewport = null;
+    const [, bootMs] = reload
+      ? await runPagePhase("boot", () => reloadTargetPage(page, capturePage.origin, strategy))
+      : ([undefined, 0] as const);
+    if (reload) {
+      capturePageBootDuration.record(bootMs / 1000, { browser: snapshot.browser });
+    }
 
     const [renderResult, renderMs] = await runPagePhase("render", () =>
       page.evaluate(strategy.waitForTargetPlayed, {
@@ -404,6 +440,7 @@ const captureSnapshotOnPage = async (
       imagePath,
       screenshot,
       logs: [...pageLogState.logs],
+      bootMs,
       renderError,
       hasUncaughtPageError: pageLogState.hasPageError,
       renderMs,
@@ -482,6 +519,7 @@ const persistCapturedSnapshot = async (
     });
 
     const timings: CaptureTimings = {
+      boot: captured.bootMs,
       render: captured.renderMs,
       settle: captured.settleMs,
       wait: captured.waitMs,
