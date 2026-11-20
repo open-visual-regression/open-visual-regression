@@ -17,10 +17,8 @@ export type CompareImagesResult = {
 
 type Pixels = { data: Uint8Array; width: number; height: number };
 
-// Every comparison reads new images, so libvips' operation cache would only hold memory.
 sharp.cache(false);
 
-/** Decodes a PNG to RGBA, adding an opaque alpha channel to images saved without one. */
 const decodePng = async (image: Uint8Array): Promise<Pixels> => {
   const { data, info } = await sharp(image)
     .ensureAlpha()
