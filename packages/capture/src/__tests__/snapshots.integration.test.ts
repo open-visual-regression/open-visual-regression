@@ -574,6 +574,46 @@ describe("snapshots", () => {
       }
     });
 
+    test("should render each story in a group the same as it would alone, whatever an earlier story left behind", async ({
+      mainBuild,
+      captureConfiguration,
+    }) => {
+      // "story-leaves-state" sets a global, like a mock or a module-level cache, that any later
+      // story on the same document would pick up and fail on.
+      const iframeHtml = IFRAME_HTML.replace(
+        "_render(payload) {",
+        `_render(payload) {
+          if (payload.storyId === "story-leaves-state") {
+            window.__LEFTOVER__ = true;
+          } else if (window.__LEFTOVER__) {
+            for (const listener of this._l["storyErrored"] || []) {
+              listener({ description: "rendered with state left by an earlier story" });
+            }
+          }`,
+      );
+      await uploadArtifactWithIframe(mainBuild.artifactPath, iframeHtml);
+      const snapshots = await dbClient.snapshots.createMany({
+        values: [
+          { buildId: mainBuild.id, ...captureConfiguration, targetId: "story-leaves-state" },
+          { buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" },
+          { buildId: mainBuild.id, ...captureConfiguration, targetId: "story-b" },
+        ],
+      });
+
+      await captureBuildGroup(
+        mainBuild.id,
+        captureConfiguration.browser,
+        snapshots.map((snapshot) => snapshot!.id),
+      );
+
+      for (const snapshot of snapshots) {
+        expect(await dbClient.snapshots.findById(snapshot!.id)).toMatchObject({
+          status: "success",
+          hasRenderError: false,
+        });
+      }
+    });
+
     test("downloads the storybook bundle once for a build split across capture groups", async ({
       mainBuild,
       captureConfiguration,
@@ -692,6 +732,9 @@ describe("snapshots", () => {
       await captureBuildGroup(mainBuild.id, captureConfiguration.browser, [snapshot!.id]);
 
       const body = await metrics.scrape();
+      expect(body).toContain(
+        'ovr_snapshot_capture_phase_duration_seconds_count{browser="chromium",phase="boot"} 1',
+      );
       expect(body).toContain(
         'ovr_snapshot_capture_phase_duration_seconds_count{browser="chromium",phase="render"} 1',
       );

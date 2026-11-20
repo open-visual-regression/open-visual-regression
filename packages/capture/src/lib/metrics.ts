@@ -31,7 +31,7 @@ export const snapshotCaptureDuration = createHistogram<{ browser: string }>(
   },
 );
 
-export type CapturePhase = "render" | "settle" | "wait" | "screenshot" | "upload";
+export type CapturePhase = "boot" | "render" | "settle" | "wait" | "screenshot" | "upload";
 
 export const snapshotCapturePhaseDuration = createHistogram<{
   browser: string;
@@ -51,7 +51,7 @@ export const snapshotsSettled = createCounter<{ outcome: "quiet" | "timed_out" }
 export const capturePageBootDuration = createHistogram<{ browser: string }>(
   "ovr.capture.page.boot.duration.seconds",
   {
-    description: "Time to load Storybook in a capture browser.",
+    description: "Time to load Storybook in a capture page.",
     unit: "s",
     buckets: DURATION_BUCKETS_SECONDS,
   },

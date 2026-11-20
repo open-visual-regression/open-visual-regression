@@ -58,10 +58,10 @@ histogram_quantile(0.95, sum by (le) (rate(ovr_build_capture_wait_seconds_bucket
 | --- | --- | --- | --- |
 | `ovr_snapshots_captured_total` | Counter | `browser`, `outcome` | Snapshots captured, by `success`, `render_error` (captured, but the page under test failed, such as a failing interaction), or `error` (the capture itself failed). |
 | `ovr_snapshot_capture_duration_seconds` | Histogram | `browser` | Time to capture and store one snapshot. |
-| `ovr_snapshot_capture_phase_duration_seconds` | Histogram | `browser`, `phase` | Time each part of a capture took: `render`, `settle`, `wait` (the story's `waitForTimeout`), `screenshot`, or `upload`. |
+| `ovr_snapshot_capture_phase_duration_seconds` | Histogram | `browser`, `phase` | Time each part of a capture took: `boot` (loading Storybook afresh for the snapshot), `render`, `settle`, `wait` (the story's `waitForTimeout`), `screenshot`, or `upload`. |
 | `ovr_snapshots_settled_total` | Counter | `outcome` | Snapshots whose page went `quiet`, or `timed_out` with work still pending. |
 | `ovr_capture_requests_abandoned_total` | Counter | | Requests a snapshot was captured without because they never finished loading. |
-| `ovr_capture_page_boot_duration_seconds` | Histogram | `browser` | Time to load Storybook, once per capture group. |
+| `ovr_capture_page_boot_duration_seconds` | Histogram | `browser` | Time to load Storybook. It loads afresh for every snapshot, so no snapshot sees what an earlier one left behind. |
 | `ovr_snapshots_created_total` | Counter | `status` | Snapshots created, by `queued` or `skipped` (unaffected story). |
 | `ovr_capture_browser_relaunches_total` | Counter | `browser`, `reason` | Times a browser was restarted mid-build because a story hung (`timeout`) or the browser crashed (`closed`). |
 | `ovr_diffs_compared_total` | Counter | `result` | Snapshots compared with their baseline: `unchanged`, `changed`, `new` (no baseline yet), `render_error` (captured, but the page under test failed, so it wasn't compared), or `error` (the snapshot failed to capture). |

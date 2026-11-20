@@ -166,6 +166,9 @@ type PageLogState = { logs: CaptureLog[]; hasPageError: boolean };
 
 type CapturePage = {
   page: Page;
+  origin: string;
+  // Storybook has loaded and no story has rendered on this page yet.
+  fresh: boolean;
   pageLogState: PageLogState;
   networkActivity: NetworkActivity;
   blockedHosts: BlockedHosts;
@@ -247,6 +250,8 @@ const launchCapturePage = async (
 
   return {
     page,
+    origin: proxy.origin,
+    fresh: true,
     pageLogState,
     networkActivity,
     blockedHosts,
@@ -266,6 +271,7 @@ type CapturedSnapshot = {
   logs: CaptureLog[];
   renderError: RenderFailure | null;
   hasUncaughtPageError: boolean;
+  bootMs: number;
   renderMs: number;
   settleMs: number;
   waitMs: number;
@@ -275,7 +281,7 @@ type CapturedSnapshot = {
 };
 
 const captureSnapshotOnPage = async (
-  { page, pageLogState, networkActivity, blockedHosts }: CapturePage,
+  capturePage: CapturePage,
   strategy: CaptureStrategy,
   build: NonNullable<BuildDbSchema>,
   snapshotId: string,
@@ -312,6 +318,7 @@ const captureSnapshotOnPage = async (
     await publishStatus(build.id);
   }
 
+  const { page, pageLogState, networkActivity, blockedHosts } = capturePage;
   const { fullPage, width, height } = getCaptureViewport(
     snapshot.viewportWidth,
     snapshot.viewportHeight,
@@ -335,6 +342,19 @@ const captureSnapshotOnPage = async (
   };
 
   const capture = async (): Promise<CapturedSnapshot> => {
+    // Each story gets a fresh document, so nothing an earlier story left behind (module state,
+    // mocks, globals, storage, DOM) changes how it renders. Without this, a story could render
+    // differently depending on which stories happened to share its capture group.
+    const reload = !capturePage.fresh;
+    capturePage.fresh = false;
+    const [, bootMs] = reload
+      ? await runPagePhase("boot", () => bootTargetPage(page, capturePage.origin, strategy))
+      : ([undefined, 0] as const);
+    if (reload) {
+      capturePageBootDuration.record(bootMs / 1000, { browser: snapshot.browser });
+    }
+
+    currentPhase = "viewport";
     await page.setViewportSize({ width, height });
 
     const [renderResult, renderMs] = await runPagePhase("render", () =>
@@ -404,6 +424,7 @@ const captureSnapshotOnPage = async (
       imagePath,
       screenshot,
       logs: [...pageLogState.logs],
+      bootMs,
       renderError,
       hasUncaughtPageError: pageLogState.hasPageError,
       renderMs,
@@ -482,6 +503,7 @@ const persistCapturedSnapshot = async (
     });
 
     const timings: CaptureTimings = {
+      boot: captured.bootMs,
       render: captured.renderMs,
       settle: captured.settleMs,
       wait: captured.waitMs,

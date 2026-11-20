@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-// Max snapshots sharing one warm browser per capture-group job.
+// Max snapshots sharing one browser per capture-group job. Each still loads Storybook afresh.
 const CAPTURE_GROUP_SIZE = z.coerce
   .number()
   .int()
