@@ -1,5 +1,11 @@
 # @ovr/capture
 
+## 0.3.27
+
+### Patch Changes
+
+- [#603](https://github.com/open-visual-regression/open-visual-regression/pull/603) [`26e7685`](https://github.com/open-visual-regression/open-visual-regression/commit/26e7685d5cb19d51c74e665d1b8c0ff4034e1def) Thanks [@tgfischer](https://github.com/tgfischer)! - Comparing snapshots against their baseline is several times faster, so large builds clear the review queue sooner. Diff images are also smaller.
+
 ## 0.3.26
 
 ### Patch Changes
