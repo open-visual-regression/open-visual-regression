@@ -11,7 +11,7 @@ import { SnapshotPaneCanvas } from "../../snapshot-pane/SnapshotPaneCanvas";
 import { SnapshotPaneFrame } from "../../snapshot-pane/SnapshotPaneFrame";
 import { SnapshotPaneHeader } from "../../snapshot-pane/SnapshotPaneHeader";
 import type { BaselineSnapshotPaneData, SnapshotPaneData } from "../../snapshot-pane/types";
-import { useCanvasSize } from "../../snapshot-pane/useCanvasSize";
+import { useCanvasSize, useIsCanvasSizePending } from "../../snapshot-pane/useCanvasSize";
 
 const SliderHandle = () => (
   <div className="flex h-full cursor-ew-resize flex-col items-center">
@@ -32,7 +32,9 @@ export type SliderViewProps = {
 };
 
 export const SliderView = ({ baseline, newSnapshot }: SliderViewProps) => {
-  const canvasSize = useCanvasSize([baseline.imagePath, newSnapshot.imagePath]);
+  const imagePaths = [baseline.imagePath, newSnapshot.imagePath];
+  const canvasSize = useCanvasSize(imagePaths);
+  const pending = useIsCanvasSizePending(imagePaths);
 
   return (
     <SnapshotPane>
@@ -43,7 +45,7 @@ export const SliderView = ({ baseline, newSnapshot }: SliderViewProps) => {
         </div>
         <Typography variant="label">new</Typography>
       </SnapshotPaneHeader>
-      <SnapshotPaneCanvas>
+      <SnapshotPaneCanvas pending={pending}>
         <SnapshotPaneFrame canvasSize={canvasSize}>
           <ReactCompareSlider
             className="h-full w-full cursor-ew-resize [&_[role=slider]:focus-visible_[data-grip]]:ring-2 [&_[role=slider]:focus-visible_[data-grip]]:ring-ovr-fg [&_[role=slider]:focus-visible_[data-grip]]:ring-offset-2 [&_[role=slider]:focus-visible_[data-grip]]:ring-offset-ovr-inset"
