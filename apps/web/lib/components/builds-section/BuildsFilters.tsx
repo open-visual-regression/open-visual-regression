@@ -42,7 +42,6 @@ export const BuildsFilters = ({
   <FacetBar
     className={className}
     facets={[
-      { param: "project", label: "project", options: projectOptions, selected: projectIds },
       { param: "status", label: "status", options: statusOptions, selected: statuses },
       {
         param: "branch",
@@ -87,6 +86,7 @@ export const BuildsFilters = ({
           />
         ),
       },
+      { param: "project", label: "project", options: projectOptions, selected: projectIds },
     ]}
   />
 );
