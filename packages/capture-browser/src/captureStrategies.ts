@@ -2,7 +2,22 @@ import type { Page } from "playwright";
 
 import { assertSupportedStorybookBuild } from "@ovr/storybook-compat/version";
 
-export type RenderResult = { ok: boolean; error?: string };
+// Kinds stay independent of the ingestion source so other target types can report the same ones.
+export type RenderFailureKind =
+  // The bundle's runtime never exposed what capture drives it with.
+  | "unavailable"
+  // The bundle has no target with the requested id.
+  | "missing"
+  // The target threw while rendering.
+  | "render"
+  // A scripted interaction run after rendering (e.g. a play function) failed.
+  | "interaction"
+  // The target never reported that it finished, which may be the target or a slow worker.
+  | "timeout";
+
+export type RenderFailure = { kind: RenderFailureKind; message: string };
+
+export type RenderResult = { ok: true } | { ok: false; error: RenderFailure };
 
 export type CaptureStrategy = {
   entryPath: string;
@@ -40,13 +55,22 @@ const waitForStorybookTargetRendered = ({
     const channel = globalThis.__STORYBOOK_ADDONS_CHANNEL__;
 
     if (!channel) {
-      resolve({ ok: false, error: "Storybook channel (__STORYBOOK_ADDONS_CHANNEL__) not found" });
+      resolve({
+        ok: false,
+        error: {
+          kind: "unavailable",
+          message: "Storybook channel (__STORYBOOK_ADDONS_CHANNEL__) not found",
+        },
+      });
       return;
     }
 
     const timeout = setTimeout(() => {
       cleanup();
-      resolve({ ok: false, error: `Timed out waiting for "${targetId}" to render` });
+      resolve({
+        ok: false,
+        error: { kind: "timeout", message: `Timed out waiting for "${targetId}" to render` },
+      });
     }, timeoutMs);
 
     const cleanup = () => {
@@ -74,18 +98,27 @@ const waitForStorybookTargetRendered = ({
       },
       storyErrored: (payload?: { description?: string }) => {
         cleanup();
-        resolve({ ok: false, error: payload?.description ?? "story errored" });
+        resolve({
+          ok: false,
+          error: { kind: "render", message: payload?.description ?? "story errored" },
+        });
       },
       storyThrewException: (error?: { message?: string }) => {
         cleanup();
-        resolve({ ok: false, error: error?.message ?? "story threw an exception" });
+        resolve({
+          ok: false,
+          error: { kind: "render", message: error?.message ?? "story threw an exception" },
+        });
       },
       storyMissing: (id?: string) => {
         if (id !== targetId) {
           return;
         }
         cleanup();
-        resolve({ ok: false, error: `story "${targetId}" was missing` });
+        resolve({
+          ok: false,
+          error: { kind: "missing", message: `story "${targetId}" was missing` },
+        });
       },
     };
 
@@ -106,13 +139,22 @@ const waitForStorybookTargetPlayed = ({
     const channel = globalThis.__STORYBOOK_ADDONS_CHANNEL__;
 
     if (!channel) {
-      resolve({ ok: false, error: "Storybook channel (__STORYBOOK_ADDONS_CHANNEL__) not found" });
+      resolve({
+        ok: false,
+        error: {
+          kind: "unavailable",
+          message: "Storybook channel (__STORYBOOK_ADDONS_CHANNEL__) not found",
+        },
+      });
       return;
     }
 
     const timeout = setTimeout(() => {
       cleanup();
-      resolve({ ok: false, error: `Timed out waiting for "${targetId}" to render` });
+      resolve({
+        ok: false,
+        error: { kind: "timeout", message: `Timed out waiting for "${targetId}" to render` },
+      });
     }, timeoutMs);
 
     const cleanup = () => {
@@ -123,6 +165,7 @@ const waitForStorybookTargetPlayed = ({
     };
 
     const errorMessages: string[] = [];
+    let interactionFailed = false;
     let remounted = false;
 
     const listeners: Record<string, (...args: never[]) => void> = {
@@ -137,7 +180,11 @@ const waitForStorybookTargetPlayed = ({
         }
         resolve({
           ok: false,
-          error: errorMessages.length > 0 ? errorMessages.join("\n") : "story finished with errors",
+          error: {
+            kind: interactionFailed ? "interaction" : "render",
+            message:
+              errorMessages.length > 0 ? errorMessages.join("\n") : "story finished with errors",
+          },
         });
       },
       storyUnchanged: () => {
@@ -160,11 +207,13 @@ const waitForStorybookTargetPlayed = ({
         }
       },
       playFunctionThrewException: (error?: { message?: string }) => {
+        interactionFailed = true;
         if (error?.message) {
           errorMessages.push(error.message);
         }
       },
       unhandledErrorsWhilePlaying: (errors?: { message?: string }[]) => {
+        interactionFailed = true;
         for (const error of errors ?? []) {
           if (error.message) {
             errorMessages.push(error.message);
@@ -176,7 +225,10 @@ const waitForStorybookTargetPlayed = ({
           return;
         }
         cleanup();
-        resolve({ ok: false, error: `story "${targetId}" was missing` });
+        resolve({
+          ok: false,
+          error: { kind: "missing", message: `story "${targetId}" was missing` },
+        });
       },
     };
 

@@ -68,6 +68,7 @@ export const NeedsReview: Story = {
   args: {
     snapshot,
     diff,
+    latestBuildId: null,
     prevSnapshotId,
     nextSnapshotId,
     position: 3,
@@ -102,5 +103,13 @@ export const ErroredAndRebuildable: Story = {
     ...NeedsReview.args,
     snapshot: { ...snapshot, status: "error", isRebuildable: true },
     diff: null,
+  },
+};
+
+export const OutdatedBuild: Story = {
+  args: {
+    ...NeedsReview.args,
+    snapshot: { ...snapshot, isReviewable: false },
+    latestBuildId: "019edfc7-e040-7492-86b2-ccfdc00cf6e6",
   },
 };

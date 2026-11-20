@@ -61,7 +61,11 @@ export class SnapshotReviewPage {
   }
 
   async expandSidebar() {
-    await this.page.getByRole("button", { name: "Expand sidebar" }).click();
+    await this.expandSidebarButton().click();
+  }
+
+  expandSidebarButton(): Locator {
+    return this.page.getByRole("button", { name: "Expand sidebar" });
   }
 
   collapseSidebarButton(): Locator {

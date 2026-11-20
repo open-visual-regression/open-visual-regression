@@ -20,7 +20,13 @@ export const createRootLogger = (options: LoggerOptions = {}): pino.Logger => {
     streams.push({ level, stream: pino.destination({ dest: filePath, mkdir: true, sync: true }) });
   }
 
-  return pino({ level }, pino.multistream(streams));
+  return pino(
+    {
+      level,
+      formatters: { level: (label) => ({ level: label }) },
+    },
+    pino.multistream(streams),
+  );
 };
 
 const root = createRootLogger();

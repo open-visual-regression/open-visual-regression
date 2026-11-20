@@ -1,7 +1,7 @@
 import { expect, test } from "./fixtures";
 
 test.describe("Snapshot preferences", () => {
-  test("should keep the snapshot sidebar open on the same tab after a reload", async ({
+  test("should reset the snapshot sidebar after a reload", async ({
     page,
     seed,
     snapshotReviewPage,
@@ -15,7 +15,8 @@ test.describe("Snapshot preferences", () => {
 
     await page.reload();
 
-    await expect(snapshotReviewPage.collapseSidebarButton()).toBeVisible();
-    await expect(snapshotReviewPage.sidebarTab("Logs")).toHaveAttribute("aria-selected", "true");
+    await expect(snapshotReviewPage.expandSidebarButton()).toBeVisible();
+    await snapshotReviewPage.expandSidebar();
+    await expect(snapshotReviewPage.sidebarTab("Reviews")).toHaveAttribute("aria-selected", "true");
   });
 });

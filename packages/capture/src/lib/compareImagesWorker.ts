@@ -1,5 +1,5 @@
 import pixelmatch from "pixelmatch";
-import { PNG } from "pngjs";
+import sharp from "sharp";
 
 import type { DiffAlgorithm } from "@ovr/api/contracts/settings";
 import { alignedDiff, type AlignedDiff } from "@ovr/image-diff/alignedDiff";
@@ -20,10 +20,19 @@ export type CompareImagesResult = {
   diffImage: Uint8Array | null;
 };
 
-const decodePng = (image: Uint8Array): PNG =>
-  PNG.sync.read(Buffer.from(image.buffer, image.byteOffset, image.byteLength));
+type Pixels = { data: Uint8Array; width: number; height: number };
 
-const padToCanvas = (pixels: PNG, width: number, height: number): Uint8Array => {
+sharp.cache(false);
+
+const decodePng = async (image: Uint8Array): Promise<Pixels> => {
+  const { data, info } = await sharp(image)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  return { data, width: info.width, height: info.height };
+};
+
+const padToCanvas = (pixels: Pixels, width: number, height: number): Uint8Array => {
   if (pixels.width === width && pixels.height === height) {
     return pixels.data;
   }
@@ -37,16 +46,15 @@ const padToCanvas = (pixels: PNG, width: number, height: number): Uint8Array => 
   return padded;
 };
 
-const encodePng = (pixels: Uint8Array, width: number, height: number): Buffer => {
-  const png = new PNG({ width, height });
-  png.data = Buffer.from(pixels);
-  return PNG.sync.write(png);
-};
+const encodePng = (pixels: Uint8Array, width: number, height: number): Promise<Buffer> =>
+  sharp(pixels, { raw: { width, height, channels: 4 } })
+    .png()
+    .toBuffer();
 
 type PlainDiff = { count: number; mask: Uint8Array; width: number; height: number };
 
 /** A position-by-position pixelmatch, padding the smaller image to the larger one's size. */
-const plainDiff = (baseline: PNG, capture: PNG): PlainDiff => {
+const plainDiff = (baseline: Pixels, capture: Pixels): PlainDiff => {
   const width = Math.max(capture.width, baseline.width);
   const height = Math.max(capture.height, baseline.height);
   const mask = new Uint8Array(width * height * 4);
@@ -62,12 +70,11 @@ const plainDiff = (baseline: PNG, capture: PNG): PlainDiff => {
 };
 
 /**
- * The aligned diff image reviewers see, drawn over the captured screenshot, so
- * content that only moved down or sideways isn't painted red. When nothing but
- * blank space moved, the aligned diff has nothing to show, so the plain mask
- * is used.
+ * The diff image reviewers see, drawn over the captured screenshot, so content
+ * that only moved down or sideways isn't painted red. When nothing but blank
+ * space moved, the aligned diff has nothing to show, so the plain mask is used.
  */
-const drawDiffImage = (diff: AlignedDiff, plain: PlainDiff | null): Buffer => {
+const drawDiffImage = (diff: AlignedDiff, plain: PlainDiff | null): Promise<Buffer> => {
   if (plain && diff.regions.length === 0) {
     return encodePng(plain.mask, plain.width, plain.height);
   }
@@ -81,14 +88,16 @@ const result = (count: number, width: number, height: number, diffImage: Uint8Ar
   diffImage,
 });
 
-const compareImages = ({
+const compareImages = async ({
   capture,
   baseline,
   withDiffImage,
   diffAlgorithm,
-}: CompareImagesTask): CompareImagesResult => {
-  const capturePixels = decodePng(capture);
-  const baselinePixels = decodePng(baseline);
+}: CompareImagesTask): Promise<CompareImagesResult> => {
+  const [capturePixels, baselinePixels] = await Promise.all([
+    decodePng(capture),
+    decodePng(baseline),
+  ]);
   const width = Math.max(capturePixels.width, baselinePixels.width);
   const height = Math.max(capturePixels.height, baselinePixels.height);
 
@@ -98,7 +107,7 @@ const compareImages = ({
   // "pixel" marks every pixel that differs from the one in the same place.
   if (diffAlgorithm === "pixel") {
     const plain = plainDiff(baselinePixels, capturePixels);
-    const image = plain.count > 0 ? encodePng(plain.mask, plain.width, plain.height) : null;
+    const image = plain.count > 0 ? await encodePng(plain.mask, plain.width, plain.height) : null;
     return result(plain.count, width, height, image);
   }
 
@@ -107,7 +116,7 @@ const compareImages = ({
   const diff = alignedDiff(baselinePixels, capturePixels);
   const plain = diff.shifted ? plainDiff(baselinePixels, capturePixels) : null;
   const count = plain ? plain.count : diff.changedPixelCount;
-  return result(count, width, height, count > 0 ? drawDiffImage(diff, plain) : null);
+  return result(count, width, height, count > 0 ? await drawDiffImage(diff, plain) : null);
 };
 
 export default compareImages;

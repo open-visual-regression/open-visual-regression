@@ -1,5 +1,22 @@
 # @ovr/reviews
 
+## 0.1.33
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @ovr/builds@0.2.18
+  - @ovr/db@0.4.14
+
+## 0.1.32
+
+### Patch Changes
+
+- Updated dependencies [[`80bab2d`](https://github.com/open-visual-regression/open-visual-regression/commit/80bab2d587d816b11e9d15c080c1ffc815cf5c78)]:
+  - @ovr/api@0.5.9
+  - @ovr/builds@0.2.17
+  - @ovr/db@0.4.13
+
 ## 0.1.31
 
 ### Patch Changes
