@@ -578,14 +578,22 @@ describe("snapshots", () => {
       mainBuild,
       captureConfiguration,
     }) => {
-      // "story-leaves-state" sets a global, like a mock or a module-level cache, that any later
-      // story on the same document would pick up and fail on.
+      // "story-leaves-state" leaves a global, like a mock or a module-level cache, and stored
+      // state behind. A later story fails if it sees any of it.
       const iframeHtml = IFRAME_HTML.replace(
         "_render(payload) {",
         `_render(payload) {
           if (payload.storyId === "story-leaves-state") {
             window.__LEFTOVER__ = true;
-          } else if (window.__LEFTOVER__) {
+            localStorage.setItem("leftover", "1");
+            sessionStorage.setItem("leftover", "1");
+            document.cookie = "leftover=1";
+          } else if (
+            window.__LEFTOVER__ ||
+            localStorage.getItem("leftover") ||
+            sessionStorage.getItem("leftover") ||
+            document.cookie.includes("leftover")
+          ) {
             for (const listener of this._l["storyErrored"] || []) {
               listener({ description: "rendered with state left by an earlier story" });
             }
@@ -598,6 +606,48 @@ describe("snapshots", () => {
           { buildId: mainBuild.id, ...captureConfiguration, targetId: "story-a" },
           { buildId: mainBuild.id, ...captureConfiguration, targetId: "story-b" },
         ],
+      });
+
+      await captureBuildGroup(
+        mainBuild.id,
+        captureConfiguration.browser,
+        snapshots.map((snapshot) => snapshot!.id),
+      );
+
+      for (const snapshot of snapshots) {
+        expect(await dbClient.snapshots.findById(snapshot!.id)).toMatchObject({
+          status: "success",
+          hasRenderError: false,
+        });
+      }
+    });
+
+    test("should load Storybook at each snapshot's own viewport", async ({
+      mainBuild,
+      captureConfiguration,
+    }) => {
+      // A story fails if Storybook loaded at a different width than it renders at.
+      const iframeHtml = IFRAME_HTML.replace(
+        "<script>",
+        `<script>
+      const loadedWidth = window.innerWidth;`,
+      ).replace(
+        "_render(payload) {",
+        `_render(payload) {
+          if (window.innerWidth !== loadedWidth) {
+            for (const listener of this._l["storyErrored"] || []) {
+              listener({ description: "loaded at " + loadedWidth + "px, rendered at " + window.innerWidth + "px" });
+            }
+          }`,
+      );
+      await uploadArtifactWithIframe(mainBuild.artifactPath, iframeHtml);
+      const snapshots = await dbClient.snapshots.createMany({
+        values: [375, 1280, 768].map((viewportWidth) => ({
+          buildId: mainBuild.id,
+          ...captureConfiguration,
+          targetId: "story-a",
+          viewportWidth,
+        })),
       });
 
       await captureBuildGroup(
@@ -751,7 +801,8 @@ describe("snapshots", () => {
         'ovr_snapshot_capture_phase_duration_seconds_count{browser="chromium",phase="upload"} 1',
       );
       expect(body).toContain('ovr_snapshots_settled_total{outcome="quiet"} 1');
-      expect(body).toContain('ovr_capture_page_boot_duration_seconds_count{browser="chromium"} 1');
+      // Once when the browser launches, and again at the snapshot's viewport.
+      expect(body).toContain('ovr_capture_page_boot_duration_seconds_count{browser="chromium"} 2');
     });
 
     test("records how long a build waited for its first capture once when its groups start together", async ({
