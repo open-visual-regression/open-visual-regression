@@ -1,7 +1,7 @@
 import pixelmatch from "pixelmatch";
 import { PNG } from "pngjs";
 
-import { alignedDiff } from "@ovr/image-diff/alignedDiff";
+import { alignedDiff, type AlignedDiff } from "@ovr/image-diff/alignedDiff";
 import { renderDiff } from "@ovr/image-diff/renderDiff";
 
 const PIXELMATCH_THRESHOLD = 0.1;
@@ -41,25 +41,42 @@ const encodePng = (pixels: Uint8Array, width: number, height: number): Buffer =>
   return PNG.sync.write(png);
 };
 
+type PlainDiff = { count: number; mask: Uint8Array; width: number; height: number };
+
+/** A position-by-position pixelmatch, padding the smaller image to the larger one's size. */
+const plainDiff = (baseline: PNG, capture: PNG): PlainDiff => {
+  const width = Math.max(capture.width, baseline.width);
+  const height = Math.max(capture.height, baseline.height);
+  const mask = new Uint8Array(width * height * 4);
+  const count = pixelmatch(
+    padToCanvas(baseline, width, height),
+    padToCanvas(capture, width, height),
+    mask,
+    width,
+    height,
+    { threshold: PIXELMATCH_THRESHOLD, diffMask: true },
+  );
+  return { count, mask, width, height };
+};
+
 /**
- * The diff image reviewers see, drawn over the captured screenshot. It comes
- * from an aligned diff, so content that only moved down or sideways isn't
- * painted red. When nothing but blank space moved, the aligned diff has
- * nothing to show, so the plain pixel mask is used instead.
+ * The diff image reviewers see, drawn over the captured screenshot, so content
+ * that only moved down or sideways isn't painted red. When nothing but blank
+ * space moved, the aligned diff has nothing to show, so the plain mask is used.
  */
-const diffOverlay = (
-  baseline: PNG,
-  capture: PNG,
-  plainMask: Uint8Array,
-  plainSize: { width: number; height: number },
-): Buffer => {
-  const diff = alignedDiff(baseline, capture);
-  if (diff.regions.length === 0) {
-    return encodePng(plainMask, plainSize.width, plainSize.height);
+const drawDiffImage = (diff: AlignedDiff, plain: PlainDiff | null): Buffer => {
+  if (plain && diff.regions.length === 0) {
+    return encodePng(plain.mask, plain.width, plain.height);
   }
   const overlay = renderDiff(diff);
   return encodePng(overlay.data, overlay.width, overlay.height);
 };
+
+const result = (count: number, width: number, height: number, diffImage: Uint8Array | null) => ({
+  pixelDiffCount: count,
+  diffPercent: (count / (width * height)) * 100,
+  diffImage,
+});
 
 const compareImages = ({
   capture,
@@ -68,28 +85,19 @@ const compareImages = ({
 }: CompareImagesTask): CompareImagesResult => {
   const capturePixels = decodePng(capture);
   const baselinePixels = decodePng(baseline);
-
   const width = Math.max(capturePixels.width, baselinePixels.width);
   const height = Math.max(capturePixels.height, baselinePixels.height);
-  const diffPixels = new Uint8Array(width * height * 4);
 
-  const pixelDiffCount = pixelmatch(
-    padToCanvas(baselinePixels, width, height),
-    padToCanvas(capturePixels, width, height),
-    diffPixels,
-    width,
-    height,
-    { threshold: PIXELMATCH_THRESHOLD, diffMask: true },
-  );
+  if (!withDiffImage) {
+    return result(plainDiff(baselinePixels, capturePixels).count, width, height, null);
+  }
 
-  return {
-    pixelDiffCount,
-    diffPercent: (pixelDiffCount / (width * height)) * 100,
-    diffImage:
-      withDiffImage && pixelDiffCount > 0
-        ? diffOverlay(baselinePixels, capturePixels, diffPixels, { width, height })
-        : null,
-  };
+  // Pass or fail is always decided by the plain pixel count. When nothing
+  // moved, the aligned diff is exactly that, so the second pass is skipped.
+  const diff = alignedDiff(baselinePixels, capturePixels);
+  const plain = diff.shifted ? plainDiff(baselinePixels, capturePixels) : null;
+  const count = plain ? plain.count : diff.changedPixelCount;
+  return result(count, width, height, count > 0 ? drawDiffImage(diff, plain) : null);
 };
 
 export default compareImages;
