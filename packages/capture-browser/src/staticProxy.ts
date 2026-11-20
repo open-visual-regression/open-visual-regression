@@ -4,6 +4,10 @@ import path from "node:path";
 
 import { getContentType } from "./staticFiles";
 
+// A proxy serves one bundle that never changes while it runs, so the browser can keep every file
+// instead of downloading and parsing the bundle again each time the page reloads.
+const CACHE_CONTROL = "public, max-age=31536000, immutable";
+
 export type StaticProxy = { origin: string; close: () => void };
 
 export const startStaticProxy = (rootDir: string): Promise<StaticProxy> =>
@@ -26,7 +30,10 @@ export const startStaticProxy = (rootDir: string): Promise<StaticProxy> =>
         return;
       }
 
-      res.writeHead(200, { "Content-Type": getContentType(relativePath) });
+      res.writeHead(200, {
+        "Content-Type": getContentType(relativePath),
+        "Cache-Control": CACHE_CONTROL,
+      });
       const stream = createReadStream(absolutePath);
       stream.on("error", () => res.destroy());
       stream.pipe(res);
