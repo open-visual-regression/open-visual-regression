@@ -3,7 +3,6 @@ import { JSX } from "react";
 import { cn } from "@ovr/ui/lib/utils";
 
 type SnapshotPaneCanvasProps = JSX.IntrinsicElements["div"] & {
-  /** While the images load, fill the remaining page height so the pane doesn't grow when they arrive. */
   pending?: boolean;
 };
 
