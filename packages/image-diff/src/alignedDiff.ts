@@ -17,6 +17,11 @@ export type AlignedDiff = {
   mask: Uint8Array;
   /** Each visual change, merged with its close neighbours, top to bottom. */
   regions: Region[];
+  /**
+   * Whether any content was lined up at a new position. When not, the result
+   * is exactly a plain pixelmatch of the two images, padded to the same size.
+   */
+  shifted: boolean;
 };
 
 /**
@@ -95,6 +100,7 @@ const diffInPlace = (baseline: Image, current: Image): AlignedDiff => {
     changedPixelCount: count,
     mask,
     regions: mergeRegions(regions),
+    shifted: false,
   };
 };
 
@@ -113,7 +119,7 @@ export const alignedDiff = (baseline: Image, current: Image): AlignedDiff => {
   }
 
   const { width, height } = current;
-  const { aligned, inserted, insertions, deletions } = alignImages(baseline, current);
+  const { aligned, inserted, insertions, deletions, shifted } = alignImages(baseline, current);
   const output = new Uint8Array(aligned.length);
   pixelmatch(aligned, current.data, output, width, height, {
     threshold: PIXEL_THRESHOLD,
@@ -157,5 +163,6 @@ export const alignedDiff = (baseline: Image, current: Image): AlignedDiff => {
     changedPixelCount: count,
     mask,
     regions: mergeRegions([...modified, ...added, ...removals]),
+    shifted,
   };
 };

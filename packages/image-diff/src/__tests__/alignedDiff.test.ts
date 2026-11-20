@@ -158,6 +158,13 @@ const shiftingScenarios = [
 
 // Changes made in place. Nothing moved, so there's little to line up, but the
 // result must never be worse than a plain pixel diff.
+// Changes where nothing at all moved, so the result is exactly a plain pixel diff.
+const unshiftedScenarios = [
+  "change-right-header-badge",
+  "wide-toolbar-color",
+  "small-status-dot",
+  "card-color-change",
+];
 const inPlaceScenarios = [
   "change-bottom-footer",
   "change-right-header-badge",
@@ -381,6 +388,21 @@ describe("alignedDiff", () => {
     const diff = alignedDiff(baselinePage, current);
 
     expect(diff.changedPixelCount).toBeLessThan(plainPixelDiff(baselinePage, current));
+  });
+
+  it.each(shiftingScenarios)("should report that content moved for %s", (name) => {
+    const diff = alignedDiff(baselinePage, load(name));
+
+    expect(diff.shifted).toBe(true);
+  });
+
+  it.each(unshiftedScenarios)("should match a plain pixel diff exactly for %s", (name) => {
+    const current = load(name);
+
+    const diff = alignedDiff(baselinePage, current);
+
+    expect(diff.shifted).toBe(false);
+    expect(diff.changedPixelCount).toBe(plainPixelDiff(baselinePage, current));
   });
 
   it.each(inPlaceScenarios)("should flag no more pixels than a plain pixel diff for %s", (name) => {
