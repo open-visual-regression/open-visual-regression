@@ -7,6 +7,7 @@ describe("createClient", () => {
     unresponsiveServer,
   }) => {
     const onError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
     const client = createClient(unresponsiveServer.url, "key", {
       timeoutMs: 100,
       retryDelayMs: 10,
@@ -16,7 +17,7 @@ describe("createClient", () => {
       client.builds.createBuild({ branch: "main", commitSha: "a".repeat(40) }),
     ).rejects.toBeInstanceOf(RequestTimeoutError);
 
-    expect(unresponsiveServer.requestCount()).toBe(4);
+    expect(fetchSpy).toHaveBeenCalledTimes(4);
     expect(onError).toHaveBeenCalledWith(
       "Request to builds.createBuild failed (no response after 0.1s), retrying (1/3)...",
     );

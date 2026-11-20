@@ -28,7 +28,7 @@ export default defineConfig((options) => ({
     "ioredis",
     "tar",
     "pixelmatch",
-    "pngjs",
+    "sharp",
     "piscina",
     "pg",
   ],

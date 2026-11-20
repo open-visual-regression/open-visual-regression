@@ -4,6 +4,7 @@ import { Button } from "@ovr/ui/components/button";
 import {
   ArrowLeftFromLineIcon,
   ArrowRightToLineIcon,
+  FastForwardIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   CornerLeftUpIcon,
@@ -19,9 +20,8 @@ import {
 } from "@/lib/components/responsive-action-button/ResponsiveActionButton";
 import { type SnapshotFilters, withSnapshotFilters } from "@/lib/utils/snapshotFilters";
 
-import { SnapshotApproveButton } from "./SnapshotApproveButton";
 import { SnapshotRebuildButton } from "./SnapshotRebuildButton";
-import { SnapshotRejectButton } from "./SnapshotRejectButton";
+import { SnapshotVoteButtons } from "./SnapshotVoteButtons";
 
 type SnapshotActionsRowLayoutProps = {
   className?: string;
@@ -44,6 +44,7 @@ type ActionsRowProps = {
   diff: DiffSchema | null;
   projectId: string;
   buildId: string;
+  latestBuildId: string | null;
   prevSnapshotId: string | null;
   nextSnapshotId: string | null;
   position: number | null;
@@ -60,6 +61,7 @@ export const SnapshotActionsRow = ({
   snapshot,
   projectId,
   buildId,
+  latestBuildId,
   prevSnapshotId,
   nextSnapshotId,
   position,
@@ -107,22 +109,20 @@ export const SnapshotActionsRow = ({
         ) : null}
       </div>
       <div className="flex items-center flex-row gap-2">
+        {latestBuildId ? (
+          <ResponsiveActionButton
+            href={`/projects/${projectId}/builds/${latestBuildId}`}
+            icon={FastForwardIcon}
+            iconPosition="end"
+          >
+            view latest build
+          </ResponsiveActionButton>
+        ) : null}
         {canReview && snapshot.isRebuildable ? (
           <SnapshotRebuildButton buildId={buildId} snapshotId={snapshot.id} />
         ) : null}
         {canReview && snapshot.isReviewable && diff ? (
-          <>
-            <SnapshotRejectButton
-              diffId={diff.id}
-              rejected={snapshot.status === "rejected"}
-              nextHref={nextHref}
-            />
-            <SnapshotApproveButton
-              diffId={diff.id}
-              approved={snapshot.status === "approved"}
-              nextHref={nextHref}
-            />
-          </>
+          <SnapshotVoteButtons diffId={diff.id} status={snapshot.status} nextHref={nextHref} />
         ) : null}
         <Button
           variant="outline"

@@ -2,7 +2,6 @@ import { Suspense } from "react";
 
 import { getViewerRole } from "@/lib/auth/session";
 import { NavigationBarSkeleton } from "@/lib/components/navigation-bar/NavigationBarSkeleton";
-import { getSnapshotPreferences } from "@/lib/preferences/getSnapshotPreferences";
 import { QueryProvider } from "@/lib/providers/QueryProvider";
 import { ScrollRestoration } from "@/lib/providers/ScrollRestoration";
 import { SnapshotPreferencesProvider } from "@/lib/providers/SnapshotPreferencesProvider";
@@ -19,8 +18,7 @@ type AppLayoutProps = Readonly<{
 export default function AppLayout({ children }: AppLayoutProps) {
   return (
     <QueryProvider>
-      {/* Not awaited, so reading the preference cookies doesn't hold up the page shell. */}
-      <SnapshotPreferencesProvider initialPreferences={getSnapshotPreferences()}>
+      <SnapshotPreferencesProvider>
         <ViewerRoleProvider role={getViewerRole()}>
           <Suspense fallback={null}>
             <SessionGuard />

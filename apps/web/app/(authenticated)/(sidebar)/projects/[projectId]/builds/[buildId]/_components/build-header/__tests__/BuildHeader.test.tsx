@@ -551,7 +551,7 @@ describe("BuildHeader", () => {
     expect(screen.queryByRole("link", { name: /view storybook/i })).not.toBeInTheDocument();
   });
 
-  it("should link the commit sha to the provider's commit page when a git integration is configured", () => {
+  it("should link to the commit on the provider when a git integration is configured", () => {
     renderComponent({
       build: mocks.build.generateBuild({
         commitSha: "abc1234def",
@@ -559,19 +559,34 @@ describe("BuildHeader", () => {
       }),
     });
 
-    expect(screen.getByRole("link", { name: "abc1234" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /view commit/i })).toHaveAttribute(
       "href",
       "https://github.com/acme/web/commit/abc1234def",
     );
   });
 
-  it("should render the commit sha as plain text when there is no git integration", () => {
+  it("should not render the view commit link when there is no git integration", () => {
     renderComponent({
       build: mocks.build.generateBuild({ commitSha: "abc1234def", commitUrl: null }),
     });
 
-    expect(screen.getByText(/abc1234/i)).toBeVisible();
-    expect(screen.queryByRole("link", { name: /abc1234/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /view commit/i })).not.toBeInTheDocument();
+  });
+
+  it("should offer the commit from the menu on small screens", async ({ user }) => {
+    renderComponent({
+      build: mocks.build.generateBuild({
+        commitSha: "abc1234def",
+        commitUrl: "https://github.com/acme/web/commit/abc1234def",
+      }),
+    });
+
+    await user.click(screen.getByRole("button", { name: "more build actions" }));
+
+    expect(await screen.findByRole("menuitem", { name: "view commit" })).toHaveAttribute(
+      "href",
+      "https://github.com/acme/web/commit/abc1234def",
+    );
   });
 
   it("should link to the pull request on the provider when a git integration is configured", () => {

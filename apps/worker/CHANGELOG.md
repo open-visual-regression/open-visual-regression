@@ -1,5 +1,49 @@
 # @ovr/worker
 
+## 0.25.1
+
+### Patch Changes
+
+- [#603](https://github.com/open-visual-regression/open-visual-regression/pull/603) [`26e7685`](https://github.com/open-visual-regression/open-visual-regression/commit/26e7685d5cb19d51c74e665d1b8c0ff4034e1def) Thanks [@tgfischer](https://github.com/tgfischer)! - Comparing snapshots against their baseline is several times faster, so large builds clear the review queue sooner. Diff images are also smaller.
+- Updated dependencies [[`26e7685`](https://github.com/open-visual-regression/open-visual-regression/commit/26e7685d5cb19d51c74e665d1b8c0ff4034e1def)]:
+  - @ovr/capture@0.3.27
+
+## 0.25.0
+
+### Minor Changes
+
+- [#596](https://github.com/open-visual-regression/open-visual-regression/pull/596) [`4690df1`](https://github.com/open-visual-regression/open-visual-regression/commit/4690df1c69f03c4a8d6b73c287d1b04e1b8caaab) Thanks [@tgfischer](https://github.com/tgfischer)! - `ovr_snapshots_captured_total` counts snapshots whose page failed, such as a failing interaction, as `render_error` instead of `success`, and `ovr_diffs_compared_total` counts diffs skipped for that reason as `render_error` instead of `error`. Worker logs include the failure's kind and message, and log render timeouts as warnings.
+
+### Patch Changes
+
+- [#594](https://github.com/open-visual-regression/open-visual-regression/pull/594) [`2ae3015`](https://github.com/open-visual-regression/open-visual-regression/commit/2ae3015eebfe913bcfe8cbdb8e3ee150032e9486) Thanks [@tgfischer](https://github.com/tgfischer)! - Logs now show the level as a name, such as `"level":"error"`, instead of a number such as `"level":50`. Log tools such as Datadog can now read the severity.
+
+- [#595](https://github.com/open-visual-regression/open-visual-regression/pull/595) [`d586b8f`](https://github.com/open-visual-regression/open-visual-regression/commit/d586b8f8a34e8aa3d4d3a43a59be42ad9e5faa91) Thanks [@tgfischer](https://github.com/tgfischer)! - Snapshot pages from an outdated build show a "view latest build" link, since that build's snapshots can no longer be reviewed or rebuilt.
+- Updated dependencies [[`4690df1`](https://github.com/open-visual-regression/open-visual-regression/commit/4690df1c69f03c4a8d6b73c287d1b04e1b8caaab), [`2ae3015`](https://github.com/open-visual-regression/open-visual-regression/commit/2ae3015eebfe913bcfe8cbdb8e3ee150032e9486)]:
+  - @ovr/capture@0.3.26
+  - @ovr/capture-browser@0.0.9
+  - @ovr/logger@0.1.1
+  - @ovr/builds@0.2.18
+  - @ovr/db@0.4.14
+  - @ovr/git-status@0.1.27
+  - @ovr/metrics@0.1.2
+  - @ovr/queue@0.4.4
+  - @ovr/storage@0.1.3
+
+## 0.24.0
+
+### Patch Changes
+
+- [#587](https://github.com/open-visual-regression/open-visual-regression/pull/587) [`cf58db2`](https://github.com/open-visual-regression/open-visual-regression/commit/cf58db28eff101d3ce1c4d8e0a0617d4b9a6a7cb) Thanks [@tgfischer](https://github.com/tgfischer)! - The commit filter always shows the short commit sha. A selected commit no longer appears as the full 40-character sha after searching for another commit, or on the filter button.
+
+- [#577](https://github.com/open-visual-regression/open-visual-regression/pull/577) [`a91cb9c`](https://github.com/open-visual-regression/open-visual-regression/commit/a91cb9c3daf24514c35ebc100c6660ef0db9e8fe) Thanks [@tgfischer](https://github.com/tgfischer)! - Pages no longer fail with "encountered the unstable value `Date.now()` while prerendering" when signing in through a trusted proxy with `OVR_AUTH_PROXY_JWKS_URL`.
+- Updated dependencies [[`80bab2d`](https://github.com/open-visual-regression/open-visual-regression/commit/80bab2d587d816b11e9d15c080c1ffc815cf5c78)]:
+  - @ovr/builds@0.2.17
+  - @ovr/db@0.4.13
+  - @ovr/git-status@0.1.26
+  - @ovr/capture@0.3.25
+  - @ovr/queue@0.4.3
+
 ## 0.23.0
 
 ### Minor Changes
