@@ -27,16 +27,6 @@ export const pixelWords = (image: Image): Uint32Array => {
   return words;
 };
 
-/** Copies a rect of an image into its own RGBA buffer. */
-export const cropPixels = (image: Image, rect: Rect): Uint8Array => {
-  const out = new Uint8Array(rect.width * rect.height * 4);
-  for (let row = 0; row < rect.height; row++) {
-    const start = ((rect.y + row) * image.width + rect.x) * 4;
-    out.set(image.data.subarray(start, start + rect.width * 4), row * rect.width * 4);
-  }
-  return out;
-};
-
 const FNV_OFFSET = 0x811c9dc5;
 const FNV_PRIME = 0x01000193;
 
@@ -77,52 +67,4 @@ export const solidColumnColor = (image: Image, rect: Rect, x: number): number | 
     }
   }
   return color;
-};
-
-/** The colour of one pixel. */
-export const colorAt = (image: Image, x: number, y: number): number =>
-  pixelWords(image)[y * image.width + x] ?? 0;
-
-const MAX_COLOR_SAMPLES = 4096;
-
-/** The most common colour of a rect, from an even sample of its pixels. */
-export const dominantColor = (image: Image, rect: Rect): number => {
-  const words = pixelWords(image);
-  const step = Math.max(1, Math.floor(Math.sqrt((rect.width * rect.height) / MAX_COLOR_SAMPLES)));
-  const counts = new Map<number, number>();
-  for (let row = 0; row < rect.height; row += step) {
-    for (let column = 0; column < rect.width; column += step) {
-      const pixel = words[(rect.y + row) * image.width + rect.x + column] ?? 0;
-      counts.set(pixel, (counts.get(pixel) ?? 0) + 1);
-    }
-  }
-  let best = 0;
-  let bestCount = 0;
-  for (const [color, count] of counts) {
-    if (count > bestCount) {
-      best = color;
-      bestCount = count;
-    }
-  }
-  return best;
-};
-
-/** How many pixels of two same-size rects are not exactly equal. */
-export const countUnequalPixels = (
-  baseline: Image,
-  baselineRect: Rect,
-  current: Image,
-  currentRect: Rect,
-): number => {
-  const before = pixelWords(baseline);
-  const after = pixelWords(current);
-  let count = 0;
-  for (let row = 0; row < currentRect.height; row++) {
-    const beforeStart = (baselineRect.y + row) * baseline.width + baselineRect.x;
-    const afterStart = (currentRect.y + row) * current.width + currentRect.x;
-    for (let column = 0; column < currentRect.width; column++) {
-      count += before[beforeStart + column] === after[afterStart + column] ? 0 : 1;
-    }
-  }
-  return count;
 };
