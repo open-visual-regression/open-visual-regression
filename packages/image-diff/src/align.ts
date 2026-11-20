@@ -18,6 +18,8 @@ export type Alignment = {
   insertions: Rect[];
   /** Baseline content with no place in the current image, as zero-width or zero-height lines. */
   deletions: Array<{ current: Rect; baseline: Rect }>;
+  /** Whether anything moved. When nothing did, `aligned` is the baseline as it was. */
+  shifted: boolean;
 };
 
 // Rows, then columns inside rows that changed, then rows inside those columns,
@@ -33,11 +35,15 @@ type Context = {
   inserted: Uint8Array;
   insertions: Rect[];
   deletions: Alignment["deletions"];
+  shifted: boolean;
 };
 
 /** Copies a baseline rect into the same-size current rect of the aligned image. */
 const copyRect = (context: Context, pair: RectPair) => {
   const { baselineWords, alignedWords, baseline, current } = context;
+  if (pair.baseline.x !== pair.current.x || pair.baseline.y !== pair.current.y) {
+    context.shifted = true;
+  }
   if (pair.current.width === current.width && pair.baseline.width === baseline.width) {
     // Whole rows are contiguous, so they copy in one go.
     const from = pair.baseline.y * baseline.width;
@@ -444,6 +450,7 @@ export const alignImages = (baseline: Image, current: Image): Alignment => {
     inserted: new Uint8Array(current.width * current.height),
     insertions: [],
     deletions: [],
+    shifted: baseline.height !== current.height,
   };
   const whole: RectPair = {
     baseline: { x: 0, y: 0, width: baseline.width, height: baseline.height },
@@ -523,5 +530,6 @@ export const alignImages = (baseline: Image, current: Image): Alignment => {
     inserted: context.inserted,
     insertions: context.insertions,
     deletions: context.deletions,
+    shifted: context.shifted || context.insertions.length > 0 || context.deletions.length > 0,
   };
 };
