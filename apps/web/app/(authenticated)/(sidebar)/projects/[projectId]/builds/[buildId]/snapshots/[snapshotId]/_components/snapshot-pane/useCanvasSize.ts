@@ -14,16 +14,19 @@ const loadImageSize = (imagePath: string) =>
     image.src = imagePath;
   });
 
+const imageSizeQueries = (imagePaths: (string | null)[]) =>
+  imagePaths
+    .filter((imagePath) => imagePath !== null)
+    .map((imagePath) => ({
+      queryKey: ["image-size", imagePath],
+      queryFn: () => loadImageSize(imagePath),
+      staleTime: Infinity,
+      retry: false,
+    }));
+
 export const useCanvasSize = (imagePaths: (string | null)[]) =>
   useQueries({
-    queries: imagePaths
-      .filter((imagePath) => imagePath !== null)
-      .map((imagePath) => ({
-        queryKey: ["image-size", imagePath],
-        queryFn: () => loadImageSize(imagePath),
-        staleTime: Infinity,
-        retry: false,
-      })),
+    queries: imageSizeQueries(imagePaths),
     combine: (results): SnapshotSize | null => {
       const sizes = results.flatMap(({ data }) => (data ? [data] : []));
 
@@ -36,4 +39,14 @@ export const useCanvasSize = (imagePaths: (string | null)[]) =>
         height: Math.max(...sizes.map(({ height }) => height)),
       };
     },
+  });
+
+/**
+ * Whether any of the images is still loading, so the canvas size isn't known yet.
+ * False once every image has loaded or failed, and when there are no images at all.
+ */
+export const useIsCanvasSizePending = (imagePaths: (string | null)[]) =>
+  useQueries({
+    queries: imageSizeQueries(imagePaths),
+    combine: (results) => results.some(({ isPending }) => isPending),
   });

@@ -3,7 +3,7 @@
 import { SnapshotFrameImage } from "./SnapshotFrameImage";
 import { SnapshotPaneCanvas } from "./SnapshotPaneCanvas";
 import { SnapshotPaneFrame } from "./SnapshotPaneFrame";
-import { useCanvasSize } from "./useCanvasSize";
+import { useCanvasSize, useIsCanvasSizePending } from "./useCanvasSize";
 
 export type SnapshotPaneImageProps = {
   imagePath: string | null;
@@ -21,9 +21,10 @@ export const SnapshotPaneImage = ({
   children,
 }: SnapshotPaneImageProps) => {
   const canvasSize = useCanvasSize(canvasImagePaths);
+  const pending = useIsCanvasSizePending(canvasImagePaths);
 
   return (
-    <SnapshotPaneCanvas>
+    <SnapshotPaneCanvas pending={pending}>
       <SnapshotPaneFrame canvasSize={canvasSize}>
         <SnapshotFrameImage imagePath={imagePath} alt={alt} canvasSize={canvasSize} />
         {children}

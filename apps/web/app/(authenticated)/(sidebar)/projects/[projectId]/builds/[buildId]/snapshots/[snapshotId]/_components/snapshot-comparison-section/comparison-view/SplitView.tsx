@@ -21,7 +21,7 @@ export const SplitView = ({
   const canvasImagePaths = [baseline.imagePath, newSnapshot.imagePath];
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+    <div className="grid flex-1 grid-cols-1 gap-4 lg:grid-cols-2">
       <BaselineSnapshotPane {...baseline} canvasImagePaths={canvasImagePaths} />
       {diffImagePath ? (
         <NewSnapshotDiffPane
