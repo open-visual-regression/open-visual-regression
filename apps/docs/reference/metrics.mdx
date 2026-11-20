@@ -73,7 +73,7 @@ histogram_quantile(0.95, sum by (le) (rate(ovr_build_capture_wait_seconds_bucket
 | `ovr_storage_requests_total` | Counter | `operation`, `outcome`, `error_code` | Requests to object storage, by S3 operation and outcome: `success`, `client_error`, `throttled`, `server_error`, or `network_error`. Each SDK retry counts separately. `client_error` includes expected misses, like checking for an object that doesn't exist. |
 | `ovr_storage_request_duration_seconds` | Histogram | `operation` | How long each request to object storage took, including failed attempts. |
 | `ovr_storage_objects_deleted_total` | Counter | `reason` | Objects deleted, by `build_purge` (builds past their retention) or `project_purge` (deleted projects). |
-| `ovr_storage_objects_delete_failed_total` | Counter | `reason`, `error_code` | Objects the store refused to delete, for example when throttled. Purged builds' files are retried the next night. |
+| `ovr_storage_objects_delete_failed_total` | Counter | `reason`, `error_code` | Objects the store refused to delete, for example when throttled. The purge job retries purged builds' files twice more with backoff, then again the next night. |
 | `ovr_storage_outbox_pending` | Gauge, deployment-wide | | Purged builds whose files are still waiting to be deleted. |
 | `ovr_storage_outbox_oldest_age_seconds` | Gauge, deployment-wide | | How long the oldest of those has waited. Over a day means a nightly purge failed or fell behind, and storage is growing. |
 

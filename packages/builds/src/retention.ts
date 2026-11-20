@@ -40,13 +40,13 @@ export const dispatchPurgeJobs = async (): Promise<void> => {
   }
 };
 
-type DrainResult = { objectsDeleted: number; prefixesPending: number };
+type DrainResult = { objectsDeleted: number; prefixesPending: number; errors: unknown[] };
 
 const drainStorageOutbox = async (projectId: string, signal: AbortSignal): Promise<DrainResult> => {
   const pending = await dbClient.storageOutbox.findByProject(projectId);
 
   if (pending.length === 0) {
-    return { objectsDeleted: 0, prefixesPending: 0 };
+    return { objectsDeleted: 0, prefixesPending: 0, errors: [] };
   }
 
   const results = await mapWithConcurrency(pending, STORAGE_DELETE_CONCURRENCY, async (entry) => {
@@ -77,7 +77,7 @@ const drainStorageOutbox = async (projectId: string, signal: AbortSignal): Promi
         projectId,
         prefixes: failures.map((failure) => failure.entry.prefix),
       },
-      "failed to delete storage for purged builds; will retry on the next run",
+      "failed to delete storage for purged builds",
     );
   }
 
@@ -91,6 +91,7 @@ const drainStorageOutbox = async (projectId: string, signal: AbortSignal): Promi
   return {
     objectsDeleted: results.reduce((total, result) => total + result.deletedCount, 0),
     prefixesPending: failures.length + unfinished.length,
+    errors: failures.map((failure) => failure.error),
   };
 };
 
@@ -122,11 +123,17 @@ export const purgeExpiredBuilds = async (
   let buildsPurged = 0;
   let objectsDeleted = 0;
   let prefixesPending = 0;
+  // Each drain retries all pending prefixes, so only the latest drain's errors count.
+  let storageErrors: unknown[] = [];
   let batches = 0;
   let hitTimeBudget = false;
 
   // Retry storage deletes left over from a previous run before paging through new ones.
-  ({ objectsDeleted, prefixesPending } = await drainStorageOutbox(projectId, deadline));
+  ({
+    objectsDeleted,
+    prefixesPending,
+    errors: storageErrors,
+  } = await drainStorageOutbox(projectId, deadline));
 
   const cutoff = new Date(Date.now() - project.retentionDays * 24 * 60 * 60 * 1000).toISOString();
 
@@ -158,6 +165,7 @@ export const purgeExpiredBuilds = async (
     const drained = await drainStorageOutbox(projectId, deadline);
     objectsDeleted += drained.objectsDeleted;
     prefixesPending = drained.prefixesPending;
+    storageErrors = drained.errors;
 
     if (buildIds.length < batchSize) {
       break;
@@ -188,5 +196,13 @@ export const purgeExpiredBuilds = async (
     );
   } else {
     logger.info(summary, "purged expired builds");
+  }
+
+  // Throw so the queue retries the failed deletes now instead of next night.
+  if (storageErrors.length > 0) {
+    throw new AggregateError(
+      storageErrors,
+      `Failed to delete storage for ${storageErrors.length} purged build prefix(es) in project ${projectId}`,
+    );
   }
 };

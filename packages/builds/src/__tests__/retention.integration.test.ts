@@ -195,6 +195,37 @@ describe("retention", () => {
       expect(await storage.objectExists(artifactPath)).toBe(false);
     });
 
+    test("throws when storage deletes fail so the job retries, and the retry finishes them", async ({
+      project,
+      user,
+    }) => {
+      const build = await dbClient.builds.create({
+        projectId: project.id,
+        branch: "main",
+        commitSha: "a".repeat(40),
+        artifactPath: "artifact",
+        createdBy: user.id,
+        createdAt: daysAgo(project.retentionDays + 1),
+      });
+      const artifactPath = `${project.id}/builds/${build!.id}/artifact.tar.gz`;
+      await storage.uploadFile(artifactPath, Buffer.from("artifact"), "application/gzip");
+
+      vi.spyOn(storage, "deletePrefix").mockRejectedValueOnce(new Error("SlowDown"));
+
+      await expect(purgeExpiredBuilds(project.id)).rejects.toThrow(AggregateError);
+
+      expect(await dbClient.builds.findById(build!.id)).toBeUndefined();
+      expect(await dbClient.storageOutbox.findByProject(project.id)).toMatchObject([
+        { buildId: build!.id },
+      ]);
+      expect(await storage.objectExists(artifactPath)).toBe(true);
+
+      await expect(purgeExpiredBuilds(project.id)).resolves.toBeUndefined();
+
+      expect(await dbClient.storageOutbox.findByProject(project.id)).toEqual([]);
+      expect(await storage.objectExists(artifactPath)).toBe(false);
+    });
+
     test("does nothing for a project that no longer exists", async () => {
       await expect(purgeExpiredBuilds(uuidv7())).resolves.toBeUndefined();
     });
