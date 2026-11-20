@@ -7,7 +7,6 @@ export { describe, expect, vi } from "vitest";
 
 type UnresponsiveServer = {
   url: string;
-  requestCount: () => number;
 };
 
 type StorageServer = {
@@ -34,14 +33,11 @@ const STORAGE_IMAGES = new Map([
 export const test = vitest.extend<Fixtures>({
   // eslint-disable-next-line no-empty-pattern
   unresponsiveServer: async ({}, use) => {
-    let requests = 0;
-    const server = createServer(() => {
-      requests += 1;
-    });
+    const server = createServer(() => undefined);
     await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
     const { port } = server.address() as AddressInfo;
 
-    await use({ url: `http://127.0.0.1:${port}`, requestCount: () => requests });
+    await use({ url: `http://127.0.0.1:${port}` });
 
     server.closeAllConnections();
     await new Promise<void>((resolve) => server.close(() => resolve()));

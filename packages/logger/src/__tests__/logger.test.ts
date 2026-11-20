@@ -28,6 +28,26 @@ describe("logger", () => {
 
       expect(readFileSync(filePath, "utf-8")).toContain("hello from test");
     });
+
+    test("should write the level as its label", ({ filePath }) => {
+      const log = createRootLogger({ filePath });
+
+      log.error("something broke");
+
+      const line = JSON.parse(readFileSync(filePath, "utf-8").trim());
+      expect(line.level).toBe("error");
+    });
+
+    test("should not write lines below the configured level", ({ filePath }) => {
+      const log = createRootLogger({ filePath, level: "warn" });
+
+      log.info("too quiet");
+      log.warn("loud enough");
+
+      const contents = readFileSync(filePath, "utf-8");
+      expect(contents).not.toContain("too quiet");
+      expect(contents).toContain("loud enough");
+    });
   });
 
   describe("createLogger", () => {

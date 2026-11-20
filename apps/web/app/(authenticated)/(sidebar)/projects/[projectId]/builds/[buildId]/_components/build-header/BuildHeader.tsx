@@ -3,9 +3,8 @@ import { Alert, AlertDescription, AlertTitle } from "@ovr/ui/components/alert";
 import { BadgeSkeleton } from "@ovr/ui/components/badge";
 import {
   Icon,
-  ArrowRightIcon,
+  FastForwardIcon,
   CircleSlash2Icon,
-  GitCommitHorizontalIcon,
   TimerIcon,
   UserIcon,
 } from "@ovr/ui/components/icon";
@@ -29,7 +28,6 @@ import { BuildCancelButton } from "./BuildCancelButton";
 import { BuildRebuildButton } from "./BuildRebuildButton";
 import { BuildRejectButton } from "./BuildRejectButton";
 import { BuildStatusStream } from "./BuildStatusStream";
-import { GitPill } from "./GitPill";
 
 export type BuildHeaderProps = {
   build: BuildDetailSchema;
@@ -58,7 +56,10 @@ export const BuildHeader = ({
     : null;
   const hasSecondaryActions = showLatestBuild || showCancel || showRebuild;
   const showActionsMenu =
-    hasSecondaryActions || storybookHref !== null || build.pullRequestUrl !== null;
+    hasSecondaryActions ||
+    storybookHref !== null ||
+    build.pullRequestUrl !== null ||
+    build.commitUrl !== null;
   const showWideActions = hasSecondaryActions || showReviewActions;
 
   return (
@@ -73,6 +74,7 @@ export const BuildHeader = ({
               buildId={build.id}
               projectId={build.project.id}
               pullRequestHref={build.pullRequestUrl}
+              commitHref={build.commitUrl}
               storybookHref={storybookHref}
               latestBuildHref={latestBuildHref}
               canCancel={showCancel}
@@ -84,12 +86,14 @@ export const BuildHeader = ({
         <div className="flex flex-row flex-wrap items-center gap-4 text-xs md:order-3 md:basis-full">
           <BuildStatusStream buildId={build.id} initialStatus={build.status} />
           <BuildBranches build={build} />
-          <GitPill icon={GitCommitHorizontalIcon} href={build.commitUrl} external>
-            {build.commitSha.slice(0, 7)}
-          </GitPill>
           {build.pullRequestUrl ? (
             <ExternalLink href={build.pullRequestUrl} className="hidden md:inline-flex">
               view pull request
+            </ExternalLink>
+          ) : null}
+          {build.commitUrl ? (
+            <ExternalLink href={build.commitUrl} className="hidden md:inline-flex">
+              view commit
             </ExternalLink>
           ) : null}
           {storybookHref ? (
@@ -131,7 +135,7 @@ export const BuildHeader = ({
                 {latestBuildHref ? (
                   <ButtonLink href={latestBuildHref} variant="outline" color="neutral">
                     view latest build
-                    <Icon icon={ArrowRightIcon} size={10} />
+                    <Icon icon={FastForwardIcon} size={10} />
                   </ButtonLink>
                 ) : null}
                 {showCancel ? <BuildCancelButton buildId={build.id} /> : null}

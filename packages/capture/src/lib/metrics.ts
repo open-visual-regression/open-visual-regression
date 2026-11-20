@@ -1,9 +1,23 @@
 import { createCounter, createHistogram, DURATION_BUCKETS_SECONDS } from "@ovr/metrics";
 
-// `new`: no baseline yet.
-export type DiffResult = "unchanged" | "changed" | "new" | "error";
+export type DiffResult =
+  | "unchanged"
+  | "changed"
+  // No baseline yet.
+  | "new"
+  // The snapshot was captured, but its target failed, so pixels were not compared.
+  | "render_error"
+  // The snapshot failed to capture, so there was nothing to compare.
+  | "error";
 
-export const snapshotsCaptured = createCounter<{ browser: string; outcome: "success" | "error" }>(
+export type CaptureOutcome =
+  | "success"
+  // Captured, but the target itself failed (e.g. a scripted interaction threw).
+  | "render_error"
+  // Capture itself failed (timeout, browser crash, upload).
+  | "error";
+
+export const snapshotsCaptured = createCounter<{ browser: string; outcome: CaptureOutcome }>(
   "ovr.snapshots.captured",
   { description: "Snapshots whose capture finished, by browser and outcome." },
 );

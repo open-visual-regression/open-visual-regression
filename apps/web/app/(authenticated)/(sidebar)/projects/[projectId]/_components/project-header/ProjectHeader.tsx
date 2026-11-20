@@ -9,14 +9,14 @@ import { ProjectSettingsButton } from "../project-settings-button/ProjectSetting
 export type ProjectHeaderProps = {
   projectId: string;
   projectName: string;
-  baselineBuildId: string | null;
+  hasBaseline: boolean;
   role: Role;
 };
 
 export const ProjectHeader = ({
   projectId,
   projectName,
-  baselineBuildId,
+  hasBaseline,
   role,
 }: ProjectHeaderProps) => {
   return (
@@ -24,7 +24,7 @@ export const ProjectHeader = ({
       <Typography variant="h1" as="h1" className="min-w-0 flex-1 truncate">
         {projectName}
       </Typography>
-      <ProjectBaselineButton projectId={projectId} baselineBuildId={baselineBuildId} />
+      <ProjectBaselineButton projectId={projectId} hasBaseline={hasBaseline} />
       <ProjectSettingsButton projectId={projectId} role={role} />
     </div>
   );

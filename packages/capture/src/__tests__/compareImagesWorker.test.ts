@@ -12,8 +12,8 @@ const PAGE: Box[] = [
   { x: 10, y: 60, width: 40, height: 8, color: 0x202020ff },
 ];
 
-const drawPng = (height: number, boxes: Box[]): Uint8Array => {
-  const png = new PNG({ width: WIDTH, height });
+const drawPng = (height: number, boxes: Box[], colorType: 2 | 6 = 6): Uint8Array => {
+  const png = new PNG({ width: WIDTH, height, colorType, inputHasAlpha: true });
   png.data.fill(255);
   for (const { x, y, width, height: boxHeight, color } of boxes) {
     for (let row = y; row < y + boxHeight; row++) {
@@ -32,34 +32,34 @@ const alphaAt = (image: Uint8Array | null, x: number, y: number) => {
   return png.data[(y * png.width + x) * 4 + 3];
 };
 
-describe("compareImages", () => {
-  it("should report no difference and no diff image for identical screenshots", () => {
+describe("compareImages", async () => {
+  it("should report no difference and no diff image for identical screenshots", async () => {
     const image = drawPng(80, PAGE);
 
-    const result = compareImages({ capture: image, baseline: image, withDiffImage: true });
+    const result = await compareImages({ capture: image, baseline: image, withDiffImage: true });
 
     expect(result).toEqual({ pixelDiffCount: 0, diffPercent: 0, diffImage: null });
   });
 
-  it("should mark only the inserted banner in the diff image, not the content it pushed down", () => {
+  it("should mark only the inserted banner in the diff image, not the content it pushed down", async () => {
     const baseline = drawPng(80, PAGE);
     const capture = drawPng(100, [
       { x: 0, y: 0, width: WIDTH, height: 16, color: 0xdc2626ff },
       ...shiftedDown(PAGE, 20),
     ]);
 
-    const result = compareImages({ capture, baseline, withDiffImage: true });
+    const result = await compareImages({ capture, baseline, withDiffImage: true });
 
     expect(result.pixelDiffCount).toBeGreaterThan(0);
     expect(alphaAt(result.diffImage, 60, 8)).toBe(255);
     expect(alphaAt(result.diffImage, 50, 55)).toBe(0);
   });
 
-  it("should fall back to the plain pixel mask when only blank space moved", () => {
+  it("should fall back to the plain pixel mask when only blank space moved", async () => {
     const baseline = drawPng(80, PAGE);
     const capture = drawPng(100, shiftedDown(PAGE, 20));
 
-    const result = compareImages({ capture, baseline, withDiffImage: true });
+    const result = await compareImages({ capture, baseline, withDiffImage: true });
 
     expect(result.pixelDiffCount).toBeGreaterThan(0);
     expect(alphaAt(result.diffImage, 50, 55)).toBe(255);
@@ -71,21 +71,39 @@ describe("compareImages", () => {
       drawPng(80, [...PAGE, { x: 10, y: 60, width: 40, height: 8, color: 0xdc2626ff }]),
     ],
     ["content that moved", drawPng(100, shiftedDown(PAGE, 20))],
-  ])("should count %s the same with or without a diff image", (_, capture) => {
+  ])("should count %s the same with or without a diff image", async (_, capture) => {
     const baseline = drawPng(80, PAGE);
 
-    const withImage = compareImages({ capture, baseline, withDiffImage: true });
-    const withoutImage = compareImages({ capture, baseline, withDiffImage: false });
+    const withImage = await compareImages({ capture, baseline, withDiffImage: true });
+    const withoutImage = await compareImages({ capture, baseline, withDiffImage: false });
 
     expect(withImage.pixelDiffCount).toBeGreaterThan(0);
     expect(withImage.pixelDiffCount).toBe(withoutImage.pixelDiffCount);
   });
 
-  it("should leave out the diff image when it isn't asked for", () => {
+  it("should compare screenshots saved without an alpha channel", async () => {
+    const baseline = drawPng(80, PAGE, 2);
+    const capture = drawPng(80, PAGE, 6);
+
+    const result = await compareImages({ capture, baseline, withDiffImage: true });
+
+    expect(result.pixelDiffCount).toBe(0);
+  });
+
+  it("should count the extra area of a taller screenshot as changed", async () => {
+    const baseline = drawPng(80, PAGE);
+    const capture = drawPng(100, PAGE);
+
+    const result = await compareImages({ capture, baseline, withDiffImage: true });
+
+    expect(result.pixelDiffCount).toBe(WIDTH * 20);
+  });
+
+  it("should leave out the diff image when it isn't asked for", async () => {
     const baseline = drawPng(80, PAGE);
     const capture = drawPng(80, shiftedDown(PAGE, 5));
 
-    const result = compareImages({ capture, baseline, withDiffImage: false });
+    const result = await compareImages({ capture, baseline, withDiffImage: false });
 
     expect(result.diffImage).toBeNull();
   });

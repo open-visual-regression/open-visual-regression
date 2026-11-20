@@ -1,4 +1,6 @@
 import { Piscina } from "piscina";
+// Keeps sharp's native library loaded if the compare worker thread restarts.
+import "sharp";
 
 import type { CompareImagesResult, CompareImagesTask } from "./compareImagesWorker";
 import { readImage } from "./imageCache";
