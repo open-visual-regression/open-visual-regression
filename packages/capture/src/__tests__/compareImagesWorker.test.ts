@@ -98,6 +98,32 @@ describe("compareImages", () => {
     expect(alphaAt(result.diffImage, 50, 55)).toBe(255);
   });
 
+  it.each([
+    [
+      "a change in place",
+      drawPng(80, [...PAGE, { x: 10, y: 60, width: 40, height: 8, color: 0xdc2626ff }]),
+    ],
+    ["content that moved", drawPng(100, shiftedDown(PAGE, 20))],
+  ])("should count %s the same with or without a diff image", (_, capture) => {
+    const baseline = drawPng(80, PAGE);
+
+    const withImage = compareImages({
+      capture,
+      baseline,
+      withDiffImage: true,
+      diffAlgorithm: "aligned",
+    });
+    const withoutImage = compareImages({
+      capture,
+      baseline,
+      withDiffImage: false,
+      diffAlgorithm: "aligned",
+    });
+
+    expect(withImage.pixelDiffCount).toBeGreaterThan(0);
+    expect(withImage.pixelDiffCount).toBe(withoutImage.pixelDiffCount);
+  });
+
   it("should leave out the diff image when it isn't asked for", () => {
     const baseline = drawPng(80, PAGE);
     const capture = drawPng(80, shiftedDown(PAGE, 5));

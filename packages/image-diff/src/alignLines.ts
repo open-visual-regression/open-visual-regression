@@ -21,9 +21,8 @@ type Match = {
   length: number;
 };
 
-// Myers costs O(lines × edits), which gets slow when two long stretches have
-// little in common. Past this many lines, a stretch with no anchors is left
-// as one gap instead of being searched.
+// A stretch with no anchors that is still longer than this, even collapsed,
+// is left as one gap instead of being searched.
 const MAX_UNANCHORED_LINES = 4000;
 
 /**
@@ -79,25 +78,76 @@ const uniqueAnchors = (baseline: Float64Array, current: Float64Array): Match[] =
   return chain.reverse();
 };
 
-/** Myers diff of one stretch, unless it can't match anything or would be too slow. */
+// Myers needs at least one edit per line that can't match, and costs about
+// lines × edits. Past this many steps, runs of those lines are collapsed.
+const MAX_EXACT_STEPS = 1 << 18;
+
+/** Lines to diff, and where each sits in the stretch when they were collapsed. */
+type Sequence = { lines: ArrayLike<number>; positions: number[] | null };
+
+/**
+ * Collapses every run of lines that can't match anything on the other side
+ * into one placeholder. NaN never equals anything, so the placeholders keep
+ * the stretch's shape without ever matching.
+ */
+const collapse = (lines: Float64Array, other: Set<number>): Sequence => {
+  const collapsed: number[] = [];
+  const positions: number[] = [];
+  for (const [index, line] of lines.entries()) {
+    const shared = other.has(line);
+    if (shared || !Number.isNaN(collapsed.at(-1))) {
+      collapsed.push(shared ? line : Number.NaN);
+      positions.push(index);
+    }
+  }
+  return { lines: collapsed, positions };
+};
+
+/** How many lines don't occur anywhere in `other`. */
+const countUnshared = (lines: Float64Array, other: Set<number>) => {
+  let count = 0;
+  for (const line of lines) {
+    count += other.has(line) ? 0 : 1;
+  }
+  return count;
+};
+
+/**
+ * Myers diff of one stretch. When most lines changed, which makes Myers slow,
+ * runs of lines that can't match are collapsed first, much like `git diff`
+ * discards them. Collapsed runs weigh less, so this only kicks in when exact
+ * would be slow.
+ */
 const diffStretch = (baseline: Float64Array, current: Float64Array): Match[] => {
-  if (baseline.length === 0 || current.length === 0) {
+  const total = baseline.length + current.length;
+  const baselineSet = new Set(baseline);
+  const currentSet = new Set(current);
+  const unshared = countUnshared(baseline, currentSet) + countUnshared(current, baselineSet);
+  if (baseline.length === 0 || current.length === 0 || unshared === total) {
     return [];
   }
-  const baselineLines = new Set(baseline);
-  if (!current.some((line) => baselineLines.has(line))) {
-    return [];
-  }
-  if (baseline.length + current.length > MAX_UNANCHORED_LINES) {
+  const exact = unshared * total <= MAX_EXACT_STEPS;
+  const before: Sequence = exact
+    ? { lines: baseline, positions: null }
+    : collapse(baseline, currentSet);
+  const after: Sequence = exact
+    ? { lines: current, positions: null }
+    : collapse(current, baselineSet);
+  if (before.lines.length + after.lines.length > MAX_UNANCHORED_LINES) {
     return [];
   }
   const matches: Match[] = [];
   diffSequences(
-    baseline.length,
-    current.length,
-    (baselineIndex, currentIndex) => baseline[baselineIndex] === current[currentIndex],
+    before.lines.length,
+    after.lines.length,
+    (baselineIndex, currentIndex) => before.lines[baselineIndex] === after.lines[currentIndex],
+    // Matched lines are never placeholders, so a run maps back to a run.
     (length, baselineStart, currentStart) => {
-      matches.push({ baselineStart, currentStart, length });
+      matches.push({
+        baselineStart: before.positions?.[baselineStart] ?? baselineStart,
+        currentStart: after.positions?.[currentStart] ?? currentStart,
+        length,
+      });
     },
   );
   return matches;

@@ -17,15 +17,21 @@ const overlay = renderDiff(diff); // transparent overlay: red changes, green ins
 ## How it works
 
 Every pixel row of both images is hashed, and the two lists of hashes are
-lined up with a Myers diff (`@jest/diff-sequences`), the same way `git diff`
-lines up lines of text. Rows that match are treated as moved, not changed.
+lined up the way `git diff` lines up text: rows that occur once on each side
+anchor the alignment, and a Myers diff (`@jest/diff-sequences`) fills in
+between them. Rows that match only moved.
 
-The rows that don't match are explained again, alternating between columns
-and rows, which picks up horizontal shifts such as a wider sidebar. Side-by-
-side columns separated by solid gutters, like a fixed sidebar next to a main
-column that scrolled, can also line up on their own. For each piece we keep
-whichever explanation flags the fewest pixels, and blank space that grew or
-shrank never counts.
+Rows that don't match are lined up again by column, which picks up
+horizontal shifts such as a wider sidebar, then by row inside the columns that
+don't match, and so on for a few levels. When the band between a shared header
+and footer splits at solid gutters, like a fixed sidebar next to a main column
+whose content moved, each strip can line up on its own instead.
+
+The result is the baseline rearranged into the current image's coordinates.
+Inserted lines are filled from the baseline line next to them, so blank space
+that only grew compares equal. One pixelmatch pass then compares the
+rearranged baseline with the current image, so the cost stays close to a plain
+pixel diff whatever changed.
 
 ## Limits
 
