@@ -139,7 +139,6 @@ export const markPendingAs = async (
 const capturedSnapshotsOf = (buildId: string) =>
   and(eq(snapshots.buildId, buildId), ne(snapshots.status, "skipped"));
 
-// A diff is unique per snapshot, so "no finished diff" means "no diff, or a pending one".
 const hasNoFinishedDiff = notExists(
   db
     .select({ one: sql`1` })
@@ -147,13 +146,8 @@ const hasNoFinishedDiff = notExists(
     .where(and(eq(diffs.snapshotId, snapshots.id), ne(diffs.processingStatus, "pending"))),
 );
 
-// Captured snapshots still waiting on a capture or a diff. Written as a correlated anti-join
-// rather than `snapshots left join diffs`: diffs has no build column, so the join form gets
-// planned as a seq scan of every diff ever recorded, once per finished diff.
-//
-// The first two branches are the same set narrowed to the in-flight snapshot and pending diff
-// partial indexes, so mid-build the answer comes from an index probe or two. Only once neither
-// finds anything does the third walk the whole build.
+// Captured snapshots still waiting on a capture or a diff. The first two checks hit partial
+// indexes; a `left join diffs` would scan every diff in the table.
 const pendingSnapshotsOf = (buildId: string) =>
   or(
     exists(
@@ -204,10 +198,12 @@ export const hasAllDoneForBuild = async (buildId: string) => {
 };
 
 export const hasPendingForBuild = async (buildId: string): Promise<boolean> => {
-  const { rows } = await db.execute<{ pending: boolean }>(
-    sql`select ${pendingSnapshotsOf(buildId)} as pending`,
-  );
-  return rows[0]?.pending === true;
+  const [row] = await db
+    .select({ id: builds.id })
+    .from(builds)
+    .where(and(eq(builds.id, buildId), pendingSnapshotsOf(buildId)));
+
+  return row !== undefined;
 };
 
 export type DiffDbSchema = Awaited<ReturnType<typeof findById>>;
