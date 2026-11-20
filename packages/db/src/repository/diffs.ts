@@ -1,4 +1,4 @@
-import { and, eq, exists, inArray, isNull, ne, notExists, or, sql } from "drizzle-orm";
+import { and, eq, exists, inArray, ne, not, notExists, or, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
 import { db, type DbClient } from "../db";
@@ -139,18 +139,43 @@ export const markPendingAs = async (
 const capturedSnapshotsOf = (buildId: string) =>
   and(eq(snapshots.buildId, buildId), ne(snapshots.status, "skipped"));
 
-// Captured snapshots still waiting on a capture or a diff.
-const pendingSnapshotsOf = (buildId: string) =>
+const hasNoFinishedDiff = notExists(
   db
     .select({ one: sql`1` })
-    .from(snapshots)
-    .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
-    .where(
-      and(
-        capturedSnapshotsOf(buildId),
-        or(isNull(diffs.processingStatus), eq(diffs.processingStatus, "pending")),
-      ),
-    );
+    .from(diffs)
+    .where(and(eq(diffs.snapshotId, snapshots.id), ne(diffs.processingStatus, "pending"))),
+);
+
+// Captured snapshots still waiting on a capture or a diff. The first two checks hit partial
+// indexes; a `left join diffs` would scan every diff in the table.
+const pendingSnapshotsOf = (buildId: string) =>
+  or(
+    exists(
+      db
+        .select({ one: sql`1` })
+        .from(snapshots)
+        .where(
+          and(
+            eq(snapshots.buildId, buildId),
+            inArray(snapshots.status, ["queued", "processing"]),
+            hasNoFinishedDiff,
+          ),
+        ),
+    ),
+    exists(
+      db
+        .select({ one: sql`1` })
+        .from(diffs)
+        .innerJoin(snapshots, eq(snapshots.id, diffs.snapshotId))
+        .where(and(eq(diffs.processingStatus, "pending"), capturedSnapshotsOf(buildId))),
+    ),
+    exists(
+      db
+        .select({ one: sql`1` })
+        .from(snapshots)
+        .where(and(capturedSnapshotsOf(buildId), hasNoFinishedDiff)),
+    ),
+  )!;
 
 export const hasAllDoneForBuild = async (buildId: string) => {
   const [row] = await db
@@ -165,7 +190,7 @@ export const hasAllDoneForBuild = async (buildId: string) => {
             .from(snapshots)
             .where(capturedSnapshotsOf(buildId)),
         ),
-        notExists(pendingSnapshotsOf(buildId)),
+        not(pendingSnapshotsOf(buildId)),
       ),
     );
 
@@ -173,7 +198,11 @@ export const hasAllDoneForBuild = async (buildId: string) => {
 };
 
 export const hasPendingForBuild = async (buildId: string): Promise<boolean> => {
-  const [row] = await pendingSnapshotsOf(buildId).limit(1);
+  const [row] = await db
+    .select({ id: builds.id })
+    .from(builds)
+    .where(and(eq(builds.id, buildId), pendingSnapshotsOf(buildId)));
+
   return row !== undefined;
 };
 

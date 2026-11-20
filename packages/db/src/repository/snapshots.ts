@@ -174,19 +174,34 @@ export const countToCapture = async (buildId: string) => {
   return result?.count ?? 0;
 };
 
+// Joined laterally, one index lookup per snapshot. `limit 1` stops Postgres from flattening it
+// into a plain join, which it plans as a scan of every diff in the table.
+const snapshotDiff = db
+  .select({
+    id: diffs.id,
+    processingStatus: diffs.processingStatus,
+    reviewStatus: diffs.reviewStatus,
+    diffImagePath: diffs.diffImagePath,
+    diffPercent: diffs.diffPercent,
+  })
+  .from(diffs)
+  .where(eq(diffs.snapshotId, snapshots.id))
+  .limit(1)
+  .as("snapshot_diff");
+
 const displayStatusExpr = sql<SnapshotDisplayStatus>`case
   when ${snapshots.status} = 'skipped' then 'skipped'
   when ${snapshots.status} = 'error' or ${snapshots.hasRenderError} then 'error'
   when ${snapshots.status} = 'canceled' then 'canceled'
   when ${snapshots.status} = 'queued' then 'queued'
   when ${snapshots.status} = 'processing' then 'processing'
-  when ${diffs.processingStatus} = 'canceled' then 'canceled'
-  when ${diffs.id} is null or ${diffs.processingStatus} = 'pending' then 'queued'
-  when ${diffs.processingStatus} = 'error' then 'error'
-  when ${diffs.reviewStatus} = 'rejected' then 'rejected'
-  when ${diffs.reviewStatus} = 'needs_review' then 'needs_review'
-  when ${diffs.reviewStatus} = 'approved' then 'approved'
-  when ${diffs.reviewStatus} = 'auto_approved' then 'auto_approved'
+  when ${snapshotDiff.processingStatus} = 'canceled' then 'canceled'
+  when ${snapshotDiff.id} is null or ${snapshotDiff.processingStatus} = 'pending' then 'queued'
+  when ${snapshotDiff.processingStatus} = 'error' then 'error'
+  when ${snapshotDiff.reviewStatus} = 'rejected' then 'rejected'
+  when ${snapshotDiff.reviewStatus} = 'needs_review' then 'needs_review'
+  when ${snapshotDiff.reviewStatus} = 'approved' then 'approved'
+  when ${snapshotDiff.reviewStatus} = 'auto_approved' then 'auto_approved'
   else 'unchanged'
 end`;
 
@@ -196,7 +211,7 @@ export const getDisplayStatusCounts = async (
   const rows = await db
     .select({ status: displayStatusExpr, count: countRows() })
     .from(snapshots)
-    .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
+    .leftJoinLateral(snapshotDiff, sql`true`)
     .where(eq(snapshots.buildId, buildId))
     .groupBy(displayStatusExpr);
 
@@ -331,7 +346,7 @@ export const findStatuses = async (scope: SnapshotScope): Promise<SnapshotDispla
     .from(snapshots)
     .innerJoin(builds, eq(builds.id, snapshots.buildId))
     .innerJoin(projects, eq(projects.id, builds.projectId))
-    .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
+    .leftJoinLateral(snapshotDiff, sql`true`)
     .where(listWhere(scope));
 
   const present = new Set(rows.map((row) => row.status));
@@ -499,13 +514,13 @@ export const findAdjacentIds = async (
     with current as (
       select ${sortKeyProjection}
       from ${snapshots}
-      left join ${diffs} on ${diffs.snapshotId} = ${snapshots.id}
+      left join lateral ${snapshotDiff} on true
       where ${snapshots.id} = ${snapshotId} and ${snapshots.buildId} = ${buildId}
     ),
     filtered as (
       select ${sortKeyProjection}
       from ${snapshots}
-      left join ${diffs} on ${diffs.snapshotId} = ${snapshots.id}
+      left join lateral ${snapshotDiff} on true
       where ${listWhere({ ...filters, buildId })}
     )
     select
@@ -576,15 +591,15 @@ export const list = async ({
       completedAt: snapshots.completedAt,
       status: displayStatusExpr,
       statusPriority: statusPriorityExpr,
-      diffId: diffs.id,
-      diffImagePath: diffs.diffImagePath,
-      diffPercent: diffs.diffPercent,
+      diffId: snapshotDiff.id,
+      diffImagePath: snapshotDiff.diffImagePath,
+      diffPercent: snapshotDiff.diffPercent,
       isFlaky,
     })
     .from(snapshots)
     .innerJoin(builds, eq(builds.id, snapshots.buildId))
     .innerJoin(projects, eq(projects.id, builds.projectId))
-    .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
+    .leftJoinLateral(snapshotDiff, sql`true`)
     .where(and(listWhere(filters), cursor ? getCursorFilter(cursor, sort) : undefined))
     .orderBy(...(sort === "status" ? [snapshotOrderBy] : nameOrderBy))
     .limit(limit + 1);
@@ -615,7 +630,7 @@ export const count = async (filters: ListFilters = {}) => {
     .from(snapshots)
     .innerJoin(builds, eq(builds.id, snapshots.buildId))
     .innerJoin(projects, eq(projects.id, builds.projectId))
-    .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
+    .leftJoinLateral(snapshotDiff, sql`true`)
     .where(listWhere(filters));
   return result?.count ?? 0;
 };
@@ -693,14 +708,14 @@ export const findHistory = async ({
       commitSha: builds.commitSha,
       createdAt: builds.createdAt,
       status: displayStatusExpr,
-      diffPercent: diffs.diffPercent,
+      diffPercent: snapshotDiff.diffPercent,
       variantId: snapshots.variantId,
       imagePath: snapshots.imagePath,
       hasUncaughtPageError: snapshots.hasUncaughtPageError,
     })
     .from(builds)
     .innerJoin(snapshots, eq(snapshots.buildId, builds.id))
-    .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
+    .leftJoinLateral(snapshotDiff, sql`true`)
     .where(and(matchesStory, historyBuildComparison(getHistoryCursorOperator(cursor), cursor)))
     .orderBy(
       ...(cursor.direction === "previous"
