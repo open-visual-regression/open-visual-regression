@@ -495,9 +495,9 @@ importers:
       playwright:
         specifier: 1.64.1
         version: 1.64.1
-      pngjs:
-        specifier: ^7.0.0
-        version: 7.0.0
+      sharp:
+        specifier: '>=0.35.5'
+        version: 0.35.5(@types/node@22.20.1)
       tar:
         specifier: ^7.5.22
         version: 7.5.22
@@ -666,9 +666,9 @@ importers:
       playwright:
         specifier: 1.64.1
         version: 1.64.1
-      pngjs:
-        specifier: ^7.0.0
-        version: 7.0.0
+      sharp:
+        specifier: '>=0.35.5'
+        version: 0.35.5(@types/node@22.20.1)
       tar:
         specifier: ^7.5.22
         version: 7.5.22
@@ -706,6 +706,9 @@ importers:
       pg:
         specifier: ^8.22.0
         version: 8.22.0
+      pngjs:
+        specifier: ^7.0.0
+        version: 7.0.0
       typescript:
         specifier: 6.0.3
         version: 6.0.3
@@ -8424,8 +8427,7 @@ snapshots:
       valibot: 1.4.2(typescript@6.0.3)
       zod: 4.6.7
 
-  '@img/colour@1.1.0':
-    optional: true
+  '@img/colour@1.1.0': {}
 
   '@img/sharp-darwin-arm64@0.35.5':
     optionalDependencies:
@@ -12902,7 +12904,6 @@ snapshots:
       '@img/sharp-win32-ia32': 0.35.5
       '@img/sharp-win32-x64': 0.35.5
       '@types/node': 22.20.1
-    optional: true
 
   shebang-command@2.0.0:
     dependencies:

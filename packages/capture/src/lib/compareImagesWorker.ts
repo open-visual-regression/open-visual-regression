@@ -1,5 +1,5 @@
 import pixelmatch from "pixelmatch";
-import { PNG } from "pngjs";
+import sharp from "sharp";
 
 const PIXELMATCH_THRESHOLD = 0.1;
 
@@ -15,10 +15,21 @@ export type CompareImagesResult = {
   diffImage: Uint8Array | null;
 };
 
-const decodePng = (image: Uint8Array): PNG =>
-  PNG.sync.read(Buffer.from(image.buffer, image.byteOffset, image.byteLength));
+type Pixels = { data: Uint8Array; width: number; height: number };
 
-const padToCanvas = (pixels: PNG, width: number, height: number): Uint8Array => {
+// Every comparison reads new images, so libvips' operation cache would only hold memory.
+sharp.cache(false);
+
+/** Decodes a PNG to RGBA, adding an opaque alpha channel to images saved without one. */
+const decodePng = async (image: Uint8Array): Promise<Pixels> => {
+  const { data, info } = await sharp(image)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  return { data, width: info.width, height: info.height };
+};
+
+const padToCanvas = (pixels: Pixels, width: number, height: number): Uint8Array => {
   if (pixels.width === width && pixels.height === height) {
     return pixels.data;
   }
@@ -32,19 +43,20 @@ const padToCanvas = (pixels: PNG, width: number, height: number): Uint8Array => 
   return padded;
 };
 
-const encodePng = (pixels: Uint8Array, width: number, height: number): Buffer => {
-  const png = new PNG({ width, height });
-  png.data = Buffer.from(pixels);
-  return PNG.sync.write(png);
-};
+const encodePng = (pixels: Uint8Array, width: number, height: number): Promise<Buffer> =>
+  sharp(pixels, { raw: { width, height, channels: 4 } })
+    .png()
+    .toBuffer();
 
-const compareImages = ({
+const compareImages = async ({
   capture,
   baseline,
   withDiffImage,
-}: CompareImagesTask): CompareImagesResult => {
-  const capturePixels = decodePng(capture);
-  const baselinePixels = decodePng(baseline);
+}: CompareImagesTask): Promise<CompareImagesResult> => {
+  const [capturePixels, baselinePixels] = await Promise.all([
+    decodePng(capture),
+    decodePng(baseline),
+  ]);
 
   const width = Math.max(capturePixels.width, baselinePixels.width);
   const height = Math.max(capturePixels.height, baselinePixels.height);
@@ -62,7 +74,8 @@ const compareImages = ({
   return {
     pixelDiffCount,
     diffPercent: (pixelDiffCount / (width * height)) * 100,
-    diffImage: withDiffImage && pixelDiffCount > 0 ? encodePng(diffPixels, width, height) : null,
+    diffImage:
+      withDiffImage && pixelDiffCount > 0 ? await encodePng(diffPixels, width, height) : null,
   };
 };
 

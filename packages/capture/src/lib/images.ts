@@ -1,4 +1,7 @@
 import { Piscina } from "piscina";
+// The compare worker decodes with sharp. Loading it here too keeps its native library loaded
+// for the life of the process, so a restarted worker thread never loads it a second time.
+import "sharp";
 
 import type { CompareImagesResult, CompareImagesTask } from "./compareImagesWorker";
 import { readImage } from "./imageCache";
@@ -16,8 +19,8 @@ const getComparisons = (): Piscina<CompareImagesTask, CompareImagesResult> => {
     filename: COMPARE_WORKER_URL.href,
     minThreads: 1,
     maxThreads: 1,
-    // "sync" atomics park the thread in Atomics.wait, so its event loop never runs, and zlib
-    // releases a closed handle (with the buffer it compressed) only from that loop.
+    // "sync" atomics park an idle thread in Atomics.wait, so its event loop never runs, and
+    // memory that is only released from that loop piles up between tasks.
     atomics: "disabled",
   });
   return comparisons;
