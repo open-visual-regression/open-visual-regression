@@ -6,7 +6,7 @@ import { PNG } from "pngjs";
 import { describe, expect, it } from "vitest";
 
 import { alignedDiff } from "../alignedDiff";
-import { PIXEL_THRESHOLD } from "../masks";
+import { PIXEL_THRESHOLD } from "../alignedDiff";
 import { renderDiff } from "../renderDiff";
 import type { Image, Rect, Region } from "../types";
 

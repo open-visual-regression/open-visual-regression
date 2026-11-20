@@ -31,9 +31,3 @@ export type RegionKind = "modified" | "inserted" | "deleted";
 export type Region = RectPair & {
   kind: RegionKind;
 };
-
-/** Changed pixels of one rect of the current image, one byte per pixel. */
-export type Mask = {
-  rect: Rect;
-  bits: Uint8Array;
-};
