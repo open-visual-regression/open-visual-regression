@@ -1,4 +1,4 @@
-import { and, eq, exists, inArray, isNull, ne, notExists, or, sql } from "drizzle-orm";
+import { and, eq, exists, inArray, ne, not, notExists, or, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
 import { db, type DbClient } from "../db";
@@ -139,18 +139,49 @@ export const markPendingAs = async (
 const capturedSnapshotsOf = (buildId: string) =>
   and(eq(snapshots.buildId, buildId), ne(snapshots.status, "skipped"));
 
-// Captured snapshots still waiting on a capture or a diff.
-const pendingSnapshotsOf = (buildId: string) =>
+// A diff is unique per snapshot, so "no finished diff" means "no diff, or a pending one".
+const hasNoFinishedDiff = notExists(
   db
     .select({ one: sql`1` })
-    .from(snapshots)
-    .leftJoin(diffs, eq(diffs.snapshotId, snapshots.id))
-    .where(
-      and(
-        capturedSnapshotsOf(buildId),
-        or(isNull(diffs.processingStatus), eq(diffs.processingStatus, "pending")),
-      ),
-    );
+    .from(diffs)
+    .where(and(eq(diffs.snapshotId, snapshots.id), ne(diffs.processingStatus, "pending"))),
+);
+
+// Captured snapshots still waiting on a capture or a diff. Written as a correlated anti-join
+// rather than `snapshots left join diffs`: diffs has no build column, so the join form gets
+// planned as a seq scan of every diff ever recorded, once per finished diff.
+//
+// The first two branches are the same set narrowed to the in-flight snapshot and pending diff
+// partial indexes, so mid-build the answer comes from an index probe or two. Only once neither
+// finds anything does the third walk the whole build.
+const pendingSnapshotsOf = (buildId: string) =>
+  or(
+    exists(
+      db
+        .select({ one: sql`1` })
+        .from(snapshots)
+        .where(
+          and(
+            eq(snapshots.buildId, buildId),
+            inArray(snapshots.status, ["queued", "processing"]),
+            hasNoFinishedDiff,
+          ),
+        ),
+    ),
+    exists(
+      db
+        .select({ one: sql`1` })
+        .from(diffs)
+        .innerJoin(snapshots, eq(snapshots.id, diffs.snapshotId))
+        .where(and(eq(diffs.processingStatus, "pending"), capturedSnapshotsOf(buildId))),
+    ),
+    exists(
+      db
+        .select({ one: sql`1` })
+        .from(snapshots)
+        .where(and(capturedSnapshotsOf(buildId), hasNoFinishedDiff)),
+    ),
+  )!;
 
 export const hasAllDoneForBuild = async (buildId: string) => {
   const [row] = await db
@@ -165,7 +196,7 @@ export const hasAllDoneForBuild = async (buildId: string) => {
             .from(snapshots)
             .where(capturedSnapshotsOf(buildId)),
         ),
-        notExists(pendingSnapshotsOf(buildId)),
+        not(pendingSnapshotsOf(buildId)),
       ),
     );
 
@@ -173,8 +204,10 @@ export const hasAllDoneForBuild = async (buildId: string) => {
 };
 
 export const hasPendingForBuild = async (buildId: string): Promise<boolean> => {
-  const [row] = await pendingSnapshotsOf(buildId).limit(1);
-  return row !== undefined;
+  const { rows } = await db.execute<{ pending: boolean }>(
+    sql`select ${pendingSnapshotsOf(buildId)} as pending`,
+  );
+  return rows[0]?.pending === true;
 };
 
 export type DiffDbSchema = Awaited<ReturnType<typeof findById>>;
