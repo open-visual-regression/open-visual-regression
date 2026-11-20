@@ -123,7 +123,7 @@ export const purgeExpiredBuilds = async (
   let buildsPurged = 0;
   let objectsDeleted = 0;
   let prefixesPending = 0;
-  // Every drain retries every pending prefix, so only the latest drain's failures still stand.
+  // Each drain retries all pending prefixes, so only the latest drain's errors count.
   let storageErrors: unknown[] = [];
   let batches = 0;
   let hitTimeBudget = false;
@@ -198,9 +198,7 @@ export const purgeExpiredBuilds = async (
     logger.info(summary, "purged expired builds");
   }
 
-  // Fail the job so the queue retries it with backoff. The retry drains the outbox first, so
-  // it picks up exactly the prefixes that failed. Running out of time budget is not a failure:
-  // that work waits for the next night, as a retry would hit the same budget.
+  // Throw so the queue retries the failed deletes now instead of next night.
   if (storageErrors.length > 0) {
     throw new AggregateError(
       storageErrors,
