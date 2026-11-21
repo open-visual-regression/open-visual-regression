@@ -82,7 +82,6 @@ const uniqueAnchors = (baseline: Float64Array, current: Float64Array): Match[] =
 // lines × edits. Past this many steps, runs of those lines are collapsed.
 const MAX_EXACT_STEPS = 1 << 18;
 
-/** Lines to diff, and where each sits in the stretch when they were collapsed. */
 type Sequence = { lines: ArrayLike<number>; positions: number[] | null };
 
 /**
@@ -103,7 +102,6 @@ const collapse = (lines: Float64Array, other: Set<number>): Sequence => {
   return { lines: collapsed, positions };
 };
 
-/** How many lines don't occur anywhere in `other`. */
 const countUnshared = (lines: Float64Array, other: Set<number>) => {
   let count = 0;
   for (const line of lines) {

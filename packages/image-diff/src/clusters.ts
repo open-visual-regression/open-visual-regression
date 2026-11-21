@@ -23,7 +23,6 @@ export const clustersOf = (
   const cellsAcross = Math.ceil(width / CELL);
   const cellsDown = Math.ceil(height / CELL);
   const cellCount = cellsAcross * cellsDown;
-  // Per cell: bounds of its set pixels, and how many of them are set and inserted.
   const minX = new Int32Array(cellCount).fill(width);
   const minY = new Int32Array(cellCount).fill(height);
   const maxX = new Int32Array(cellCount).fill(-1);
