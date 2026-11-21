@@ -53,7 +53,6 @@ const encodePng = (pixels: Uint8Array, width: number, height: number): Promise<B
 
 type PlainDiff = { count: number; mask: Uint8Array; width: number; height: number };
 
-/** A position-by-position pixelmatch, padding the smaller image to the larger one's size. */
 const plainDiff = (baseline: Pixels, capture: Pixels): PlainDiff => {
   const width = Math.max(capture.width, baseline.width);
   const height = Math.max(capture.height, baseline.height);
@@ -69,10 +68,6 @@ const plainDiff = (baseline: Pixels, capture: Pixels): PlainDiff => {
   return { count, mask, width, height };
 };
 
-/**
- * The diff image reviewers see, drawn over the captured screenshot, so content
- * that only moved down or sideways isn't painted red.
- */
 const drawDiffImage = (diff: AlignedDiff): Promise<Buffer> => {
   const overlay = renderDiff(diff);
   return encodePng(overlay.data, overlay.width, overlay.height);
@@ -107,8 +102,7 @@ const compareImages = async ({
     return result(plain.count, width, height, image);
   }
 
-  // Pass or fail is always decided by the plain pixel count, which the aligned
-  // diff reports alongside its own.
+  // Pass or fail still uses the plain pixel count.
   const diff = alignedDiff(baselinePixels, capturePixels);
   const count = diff.plainChangedPixelCount;
   return result(count, width, height, count > 0 ? await drawDiffImage(diff) : null);

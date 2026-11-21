@@ -10,10 +10,9 @@ const DELETED: Rgba = [220, 0, 220, 255];
 const MOVED: Rgba = [60, 140, 255, 255];
 
 /**
- * Draws a diff as a transparent overlay for the current image: changed pixels
- * in red, inserted regions washed and outlined green, a blue outline around
- * content that moved, and a magenta line where content was removed. Everything
- * else is left transparent, so the screenshot shows through.
+ * Draws a diff as a transparent overlay for the current image: red for changed
+ * pixels, green for inserted content, blue around moved content, and a magenta
+ * line where content was removed.
  */
 export const renderDiff = (diff: AlignedDiff): Image => {
   const { width, height } = diff;
@@ -31,7 +30,6 @@ export const renderDiff = (diff: AlignedDiff): Image => {
     }
   };
 
-  /** A 2px frame just outside a rect. */
   const outline = (rect: Rect, color: Rgba) => {
     const { x, y, width: w, height: h } = rect;
     paintRect({ x: x - 2, y: y - 2, width: w + 4, height: 2 }, color);
@@ -40,8 +38,6 @@ export const renderDiff = (diff: AlignedDiff): Image => {
     paintRect({ x: x + w, y, width: 2, height: h }, color);
   };
 
-  // Inserted content is all new, so it's washed as a block rather than
-  // painted pixel by pixel.
   const inserted = new Uint8Array(width * height);
   for (const { current: rect } of diff.regions.filter((region) => region.kind === "inserted")) {
     paintRect(rect, INSERTED);
