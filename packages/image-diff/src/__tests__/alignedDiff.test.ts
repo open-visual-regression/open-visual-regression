@@ -57,7 +57,7 @@ const page = (offsetY = 0, offsetX = 0): Box[] => [
 ];
 
 /** What a plain position-by-position pixelmatch reports, for comparison. */
-const plainPixelDiff = (baseline: Image, current: Image): number => {
+const plainPixelMatch = (baseline: Image, current: Image) => {
   const width = Math.max(baseline.width, current.width);
   const height = Math.max(baseline.height, current.height);
   const pad = (image: Image) => {
@@ -70,9 +70,30 @@ const plainPixelDiff = (baseline: Image, current: Image): number => {
     }
     return data;
   };
-  return pixelmatch(pad(baseline), pad(current), undefined, width, height, {
+  const output = new Uint8Array(width * height * 4);
+  const count = pixelmatch(pad(baseline), pad(current), output, width, height, {
     threshold: PIXEL_THRESHOLD,
+    diffMask: true,
   });
+  return { count, output, width };
+};
+
+const plainPixelDiff = (baseline: Image, current: Image): number =>
+  plainPixelMatch(baseline, current).count;
+
+/** Pixels an aligned diff flags that a plain pixel diff, comparing in place, does not. */
+const flaggedOnlyWhenAligned = (baseline: Image, current: Image) => {
+  const diff = alignedDiff(baseline, current);
+  const plain = plainPixelMatch(baseline, current);
+  let count = 0;
+  for (let pixel = 0; pixel < diff.mask.length; pixel++) {
+    const y = Math.floor(pixel / diff.width);
+    const x = pixel % diff.width;
+    const index = (y * plain.width + x) * 4;
+    const plainChanged = plain.output[index + 3] !== 0 && plain.output[index + 1] === 0;
+    count += diff.mask[pixel] && !plainChanged ? 1 : 0;
+  }
+  return count;
 };
 
 const kinds = (regions: Region[]) => regions.map((region) => region.kind);
@@ -238,14 +259,34 @@ describe("alignedDiff", () => {
     ]);
   });
 
-  it("should treat added blank space as a move, not a change", () => {
+  it("should show added blank space as inserted without counting it as changed", () => {
     const baseline = drawImage(200, 120, page());
     const current = drawImage(200, 150, page(30));
 
     const diff = alignedDiff(baseline, current);
 
     expect(diff.changedPixelCount).toBe(0);
-    expect(diff.regions).toEqual([]);
+    expect(diff.regions).toEqual([
+      expect.objectContaining({
+        kind: "inserted",
+        current: { x: 0, y: 10, width: 200, height: 30 },
+      }),
+    ]);
+  });
+
+  it("should report two boxes that swapped places as a move, not a change", () => {
+    const header = text(10, 2, 6, 4);
+    const first = { y: 30, width: 40, height: 20, color: BLUE };
+    const second = { y: 30, width: 30, height: 20, color: RED };
+    const baseline = drawImage(200, 80, [...header, { ...first, x: 100 }, { ...second, x: 150 }]);
+    const current = drawImage(200, 80, [...header, { ...second, x: 100 }, { ...first, x: 140 }]);
+
+    const diff = alignedDiff(baseline, current);
+
+    expect(plainPixelDiff(baseline, current)).toBeGreaterThan(0);
+    expect(diff.changedPixelCount).toBe(0);
+    expect(kinds(diff.regions)).toContain("moved");
+    expect(kinds(diff.regions)).not.toContain("modified");
   });
 
   it("should isolate a horizontal shift inside a band of rows", () => {
@@ -386,6 +427,13 @@ describe("alignedDiff", () => {
     expect(diff.shifted).toBe(false);
     expect(diff.changedPixelCount).toBe(plainPixelDiff(baselinePage, current));
   });
+
+  it.each([...shiftingScenarios, ...inPlaceScenarios])(
+    "should only flag pixels that also differ in place for %s",
+    (name) => {
+      expect(flaggedOnlyWhenAligned(baselinePage, load(name))).toBe(0);
+    },
+  );
 
   it.each(inPlaceScenarios)("should flag no more pixels than a plain pixel diff for %s", (name) => {
     const current = load(name);
