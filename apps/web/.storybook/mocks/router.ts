@@ -2,6 +2,7 @@ import { implement } from "@orpc/server";
 
 import { contract } from "@ovr/api/contracts/contract";
 import { DEFAULT_FLAKY_DETECTION_SETTINGS } from "@ovr/api/contracts/jobs";
+import { DEFAULT_DIFF_SETTINGS } from "@ovr/api/contracts/settings";
 
 import type { serverClient as RealServerClient } from "../../lib/router";
 
@@ -208,5 +209,9 @@ export const serverClient: typeof RealServerClient = {
       .actionable(),
     updateFlakyDetection: os.jobs.updateFlakyDetection.handler(() => undefined).actionable(),
     runFlakyDetection: os.jobs.runFlakyDetection.handler(() => undefined).actionable(),
+  },
+  settings: {
+    getDiff: os.settings.getDiff.handler(() => ({ settings: DEFAULT_DIFF_SETTINGS })).actionable(),
+    updateDiff: os.settings.updateDiff.handler(() => undefined).actionable(),
   },
 } as const;
