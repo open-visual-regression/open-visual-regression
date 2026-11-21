@@ -10,9 +10,10 @@ import * as diffs from "./repository/diffs";
 import * as flakySnapshots from "./repository/flakySnapshots";
 import * as gitIntegrations from "./repository/gitIntegrations";
 import * as gitStatusPublications from "./repository/gitStatusPublications";
-import * as jobSettings from "./repository/jobSettings";
+import * as jobState from "./repository/jobState";
 import * as organizations from "./repository/organizations";
 import * as projects from "./repository/projects";
+import * as settings from "./repository/settings";
 import * as snapshotLogs from "./repository/snapshotLogs";
 import * as snapshots from "./repository/snapshots";
 import * as snapshotVariants from "./repository/snapshotVariants";
@@ -38,6 +39,7 @@ export const dbClient = {
   storageOutbox,
   gitIntegrations,
   gitStatusPublications,
-  jobSettings,
+  jobState,
+  settings,
   transaction: db.transaction.bind(db),
 } as const;

@@ -627,6 +627,9 @@ importers:
 
   packages/capture:
     dependencies:
+      '@ovr/api':
+        specifier: workspace:*
+        version: link:../api
       '@ovr/builds':
         specifier: workspace:*
         version: link:../builds
@@ -636,6 +639,9 @@ importers:
       '@ovr/db':
         specifier: workspace:*
         version: link:../db
+      '@ovr/diff-analysis':
+        specifier: workspace:*
+        version: link:../diff-analysis
       '@ovr/logger':
         specifier: workspace:*
         version: link:../logger
@@ -709,6 +715,9 @@ importers:
       pngjs:
         specifier: ^7.0.0
         version: 7.0.0
+      tsx:
+        specifier: ^4.23.5
+        version: 4.23.5
       typescript:
         specifier: 6.0.3
         version: 6.0.3
@@ -795,6 +804,9 @@ importers:
 
   packages/diff-analysis:
     dependencies:
+      '@jest/diff-sequences':
+        specifier: ^30.5.0
+        version: 30.5.0
       pixelmatch:
         specifier: ^7.2.0
         version: 7.2.0
@@ -2355,6 +2367,10 @@ packages:
   '@isaacs/fs-minipass@4.0.1':
     resolution: {integrity: sha512-wgm9Ehl2jpeqP3zw/7mo3kRHFp5MEDhqAdwy1fTGkHAwnkGOVsgpvQhL8B5n1qlb01jV3n/bI0ZfZp5lWA1k4w==}
     engines: {node: '>=18.0.0'}
+
+  '@jest/diff-sequences@30.5.0':
+    resolution: {integrity: sha512-OsqBjHXCn8cadasoAZBP6nWYvMsRhpMzGXTpxJ5aO04NlbdhIz+FVe3q49l0AwVhsz/cEmIpBes6gAFl1/dWQg==}
+    engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
 
   '@joshwooding/vite-plugin-react-docgen-typescript@0.7.0':
     resolution: {integrity: sha512-qvsTEwEFefhdirGOPnu9Wp6ChfIwy2dBCRuETU3uE+4cC+PFoxMSiiEhxk4lOluA34eARHA0OxqsEUYDqRMgeQ==}
@@ -8699,6 +8715,8 @@ snapshots:
   '@isaacs/fs-minipass@4.0.1':
     dependencies:
       minipass: 7.1.3
+
+  '@jest/diff-sequences@30.5.0': {}
 
   '@joshwooding/vite-plugin-react-docgen-typescript@0.7.0(typescript@6.0.3)(vite@8.3.5(@types/node@22.20.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))':
     dependencies:

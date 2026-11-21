@@ -48,8 +48,25 @@ export const projectsRelations = relations(projects, ({ one }) => ({
   }),
 }));
 
+export type SettingKey = "flaky_detection" | "diff_images";
+
+export const settings = pgTable("settings", {
+  key: text().$type<SettingKey>().primaryKey(),
+  value: jsonb().$type<Record<string, unknown>>().notNull(),
+  updatedBy: text("updated_by").references(() => user.id, { onDelete: "set null" }),
+  updatedAt: utcTimestamp("updated_at")
+    .default(sql`now()`)
+    .notNull(),
+});
+
 export type JobName = "flaky_detection";
 
+export const jobState = pgTable("job_state", {
+  job: text().$type<JobName>().primaryKey(),
+  lastRunAt: utcTimestamp("last_run_at").notNull(),
+});
+
+/** @deprecated Replaced by `settings` and `job_state`, and dropped in a later release. */
 export const jobSettings = pgTable("job_settings", {
   job: text().$type<JobName>().primaryKey(),
   settings: jsonb().$type<Record<string, unknown>>().notNull(),

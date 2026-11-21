@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { analyzeDiff, type DiffImage } from "../analyzeDiff";
+import { analyzeDiff } from "../analyzeDiff";
+import type { RgbaImage } from "../image";
 
 type Box = {
   x: number;
@@ -12,7 +13,7 @@ type Box = {
 
 const BACKGROUND: [number, number, number] = [20, 20, 20];
 
-const drawImage = (width: number, height: number, boxes: Box[]): DiffImage => {
+const drawImage = (width: number, height: number, boxes: Box[]): RgbaImage => {
   const data = new Uint8Array(width * height * 4);
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {

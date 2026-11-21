@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { chromium, firefox, webkit, type Page } from "playwright";
 
 import { publishStatus } from "@ovr/builds/builds";
+import { getDiffSettings } from "@ovr/builds/diffSettings";
 import { isFlakyDetectionEnabled } from "@ovr/builds/flakiness";
 import { buildCaptureWait, toBuildSize } from "@ovr/builds/lib/metrics";
 import { withBundleDir } from "@ovr/builds/storybookBundleCache";
@@ -997,10 +998,11 @@ const diffAgainstBaselineSnapshot = async (
     return { pixelDiffCount: 0, diffPercent: 0, diffImage: null };
   }
 
+  const { highlight } = await getDiffSettings();
   const { pixelDiffCount, diffPercent, diffImage, cachedImages, timings } = await compareImages(
     capturePath,
     baselineSnapshot.imagePath,
-    { withDiffImage: true },
+    { withDiffImage: true, diffHighlight: highlight },
   );
   logger.info(
     { snapshotId, baselineSnapshotId: baselineSnapshot.id, pixelDiffCount, cachedImages, timings },
