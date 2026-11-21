@@ -36,7 +36,7 @@ import { serverClient } from "@/lib/router";
 
 const DIFF_HIGHLIGHT_OPTIONS: { value: DiffHighlight; label: string; description: string }[] = [
   { value: "smart", label: "smart", description: "highlights only the content that has changed" },
-  { value: "exact", label: "exact", description: "marks every pixel that changed" },
+  { value: "exact", label: "exact", description: "highlights every changed pixel" },
 ];
 
 export type DiffSettingsFormProps = {

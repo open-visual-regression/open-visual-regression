@@ -7,4 +7,4 @@
 "@ovr/builds": patch
 ---
 
-Admins can choose how diff images mark changes under **Settings → Builds**. Pick **exact** to mark every pixel that changed, as before.
+Admins can choose how diff images highlight changes under **Settings → Builds**. Pick **exact** to highlight every changed pixel, as before.
