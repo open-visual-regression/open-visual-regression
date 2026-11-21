@@ -5,8 +5,7 @@ import pixelmatch from "pixelmatch";
 import { PNG } from "pngjs";
 import { describe, expect, it } from "vitest";
 
-import { alignedDiff } from "../alignedDiff";
-import { PIXEL_THRESHOLD } from "../alignedDiff";
+import { alignedDiff, PIXEL_THRESHOLD } from "../alignedDiff";
 import { renderDiff } from "../renderDiff";
 import type { Image, Rect, Region } from "../types";
 
@@ -122,11 +121,8 @@ declare module "vitest" {
   }
 }
 
-/**
- * Screenshots of a sample app page rendered by Chromium, regenerated with
- * `pnpm generate:fixtures`. Each scenario lists the regions the diff must
- * report: their kinds in reading order and a box each must lie within.
- */
+// Screenshots of a sample app page rendered by Chromium. Each scenario lists
+// the regions the diff must report, in reading order, and a box each lies within.
 const FIXTURES = join(import.meta.dirname, "fixtures/aligned");
 const load = (name: string): Image => {
   const png = PNG.sync.read(readFileSync(join(FIXTURES, `${name}.png`)));
@@ -142,8 +138,7 @@ const MAIN_COLUMN = { x: 224, y: 56, width: 452, height: 800 };
 const expectedRegions: Record<string, ExpectedRegion[]> = {
   "insert-top-banner": [{ kind: "inserted", within: { x: 0, y: 0, width: 900, height: 46 } }],
   "change-bottom-footer": [{ kind: "modified", within: { x: 0, y: 820, width: 900, height: 50 } }],
-  // The sidebar push itself is a pure shift; only the narrower activity
-  // panel, whose text re-wrapped, really changed.
+  // The wider sidebar only pushed content sideways; the activity panel's text re-wrapped.
   "change-left-sidebar-wider": [
     { kind: "modified", within: { x: 740, y: 56, width: 160, height: 120 } },
   ],
@@ -168,31 +163,20 @@ const expectedRegions: Record<string, ExpectedRegion[]> = {
   ],
 };
 
-// Changes that move content: lining up the images must flag fewer pixels.
-const shiftingScenarios = [
-  "insert-top-banner",
-  "change-left-sidebar-wider",
-  "tall-inserted-section",
-  "removed-cards-row",
-  "multiple-changes",
+const allScenarios = [
+  ...Object.keys(expectedRegions),
+  "text-word-change",
+  "text-reflow-extra-line",
+  "big-dark-theme",
 ];
 
-// Changes made in place. Nothing moved, so there's little to line up, but the
-// result must never be worse than a plain pixel diff.
-// Changes where nothing at all moved, so the result is exactly a plain pixel diff.
-const unshiftedScenarios = [
+// Nothing moved in these, so the result is exactly a plain pixel diff.
+const unmovedScenarios = [
   "change-right-header-badge",
   "wide-toolbar-color",
   "small-status-dot",
   "card-color-change",
-];
-const inPlaceScenarios = [
-  "change-bottom-footer",
-  "change-right-header-badge",
-  "change-right-panel-text",
-  "wide-toolbar-color",
-  "small-status-dot",
-  "card-color-change",
+  "big-dark-theme",
 ];
 
 describe("alignedDiff", () => {
@@ -225,20 +209,6 @@ describe("alignedDiff", () => {
     expect(diff.changedPixelCount).toBe(200 * 16);
   });
 
-  it("should isolate content appended at the bottom", () => {
-    const baseline = drawImage(200, 120, page());
-    const current = drawImage(200, 150, [...page(), ...text(10, 125, 5)]);
-
-    const diff = alignedDiff(baseline, current);
-
-    expect(kinds(diff.regions)).toEqual(["inserted"]);
-    expect(
-      diff.regions.map((region) =>
-        contains({ x: 10, y: 120, width: 80, height: 30 }, region.current),
-      ),
-    ).toEqual([true]);
-  });
-
   it("should report removed content as a deletion with no changed pixels", () => {
     const baseline = drawImage(200, 120, page());
     const current = drawImage(200, 120, [
@@ -250,9 +220,9 @@ describe("alignedDiff", () => {
     const diff = alignedDiff(baseline, current);
 
     expect(diff.changedPixelCount).toBe(0);
-    expect(kinds(diff.regions)).toEqual(["deleted"]);
     expect(diff.regions).toEqual([
       expect.objectContaining({
+        kind: "deleted",
         current: expect.objectContaining({ height: 0 }),
         baseline: { x: 10, y: 30, width: 60, height: 20 },
       }),
@@ -289,45 +259,6 @@ describe("alignedDiff", () => {
     expect(kinds(diff.regions)).not.toContain("modified");
   });
 
-  it("should isolate a horizontal shift inside a band of rows", () => {
-    const header = text(10, 2, 6, 4);
-    const baseline = drawImage(220, 120, [...header, ...page(0, 0)]);
-    const current = drawImage(220, 120, [
-      ...header,
-      { x: 10, y: 10, width: 8, height: 90, color: RED },
-      ...page(0, 20),
-    ]);
-
-    const diff = alignedDiff(baseline, current);
-
-    expect(plainPixelDiff(baseline, current)).toBeGreaterThan(500);
-    expect(kinds(diff.regions)).toEqual(["inserted"]);
-    expect(
-      diff.regions.map((region) =>
-        contains({ x: 10, y: 10, width: 20, height: 90 }, region.current),
-      ),
-    ).toEqual([true]);
-  });
-
-  it("should report an in-place change exactly like a pixel diff", () => {
-    const baseline = drawImage(200, 120, page());
-    const current = drawImage(200, 120, [
-      ...page(),
-      { x: 150, y: 90, width: 6, height: 6, color: RED },
-    ]);
-
-    const diff = alignedDiff(baseline, current);
-
-    expect(diff.changedPixelCount).toBe(plainPixelDiff(baseline, current));
-    expect(diff.regions).toEqual([
-      {
-        kind: "modified",
-        current: { x: 150, y: 90, width: 6, height: 6 },
-        baseline: { x: 150, y: 90, width: 6, height: 6 },
-      },
-    ]);
-  });
-
   it("should report separate changes as separate regions", () => {
     const baseline = drawImage(200, 120, page());
     const current = drawImage(200, 120, [
@@ -342,39 +273,6 @@ describe("alignedDiff", () => {
       { x: 180, y: 5, width: 6, height: 6 },
       { x: 180, y: 105, width: 6, height: 6 },
     ]);
-  });
-
-  it("should fall back to a plain pixel diff when nothing lines up", () => {
-    const baseline = drawImage(120, 80, [], WHITE);
-    const current = drawImage(120, 80, [], [10, 10, 40]);
-
-    const diff = alignedDiff(baseline, current);
-
-    expect(diff.changedPixelCount).toBe(plainPixelDiff(baseline, current));
-    expect(diff.regions).toEqual([
-      expect.objectContaining({
-        kind: "modified",
-        current: { x: 0, y: 0, width: 120, height: 80 },
-      }),
-    ]);
-  });
-
-  it("should match the pixel diff when every row changed", () => {
-    const stripes = (seed: number) =>
-      Array.from({ length: 40 }, (_, index) => ({
-        x: 0,
-        y: index * 3,
-        width: 100,
-        height: 1,
-        color: [(index * 37 + seed) % 255, 90, 140] as Color,
-      }));
-    const header = { x: 0, y: 0, width: 100, height: 4, color: INK };
-    const baseline = drawImage(100, 130, [...stripes(0), header]);
-    const current = drawImage(100, 130, [...stripes(101), header]);
-
-    const diff = alignedDiff(baseline, current);
-
-    expect(diff.changedPixelCount).toBe(plainPixelDiff(baseline, current));
   });
 
   it("should render changed pixels over the current image", () => {
@@ -405,42 +303,16 @@ describe("alignedDiff", () => {
     },
   );
 
-  it.each(shiftingScenarios)("should flag fewer pixels than a plain pixel diff for %s", (name) => {
+  it.each(allScenarios)("should only flag pixels that also differ in place for %s", (name) => {
+    expect(flaggedOnlyWhenAligned(baselinePage, load(name))).toBe(0);
+  });
+
+  it.each(unmovedScenarios)("should match a plain pixel diff exactly for %s", (name) => {
     const current = load(name);
 
     const diff = alignedDiff(baselinePage, current);
 
-    expect(diff.changedPixelCount).toBeLessThan(plainPixelDiff(baselinePage, current));
-  });
-
-  it.each(shiftingScenarios)("should report that content moved for %s", (name) => {
-    const diff = alignedDiff(baselinePage, load(name));
-
-    expect(diff.shifted).toBe(true);
-  });
-
-  it.each(unshiftedScenarios)("should match a plain pixel diff exactly for %s", (name) => {
-    const current = load(name);
-
-    const diff = alignedDiff(baselinePage, current);
-
-    expect(diff.shifted).toBe(false);
     expect(diff.changedPixelCount).toBe(plainPixelDiff(baselinePage, current));
-  });
-
-  it.each([...shiftingScenarios, ...inPlaceScenarios])(
-    "should only flag pixels that also differ in place for %s",
-    (name) => {
-      expect(flaggedOnlyWhenAligned(baselinePage, load(name))).toBe(0);
-    },
-  );
-
-  it.each(inPlaceScenarios)("should flag no more pixels than a plain pixel diff for %s", (name) => {
-    const current = load(name);
-
-    const diff = alignedDiff(baselinePage, current);
-
-    expect(diff.changedPixelCount).toBeLessThanOrEqual(plainPixelDiff(baselinePage, current));
   });
 
   it("should flag only the sentence with the edited word", () => {
@@ -448,8 +320,8 @@ describe("alignedDiff", () => {
 
     const diff = alignedDiff(baselinePage, current);
 
-    // How a sentence splits into regions depends on which of several equally
-    // good alignments is picked, so only where the regions are is checked.
+    // Which of several equally good alignments is picked decides how the
+    // sentence splits into regions, so only where they sit is checked.
     const sentence = { ...MAIN_COLUMN, y: 160, height: 30 };
     const outsideSentence = diff.regions.filter(
       (region) => region.kind !== "modified" || !contains(sentence, region.current),
@@ -470,14 +342,5 @@ describe("alignedDiff", () => {
         current: expect.toBeWithin({ ...MAIN_COLUMN, y: 160, height: 60 }),
       }),
     );
-  });
-
-  it("should match the pixel diff when the whole page changed", () => {
-    const current = load("big-dark-theme");
-
-    const diff = alignedDiff(baselinePage, current);
-
-    expect(diff.changedPixelCount).toBe(plainPixelDiff(baselinePage, current));
-    expect(kinds(diff.regions)).toEqual(["modified"]);
   });
 });

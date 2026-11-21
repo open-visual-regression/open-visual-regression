@@ -31,7 +31,6 @@ const gridCellsOf = (region: Region): string[] => {
   return cells;
 };
 
-/** A region in the union-find forest. Groups are found by following `parent` to the root. */
 type Node = { region: Region; parent: Node | null };
 
 const rootOf = (node: Node): Node => {
@@ -48,7 +47,6 @@ const rootOf = (node: Node): Node => {
   return root;
 };
 
-/** One pass of union-find over nearby regions. */
 const mergePass = (regions: Region[]): Region[] => {
   const nodes: Node[] = regions.map((region) => ({ region, parent: null }));
 
