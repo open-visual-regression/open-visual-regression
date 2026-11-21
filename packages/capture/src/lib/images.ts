@@ -8,8 +8,9 @@ import type { CompareImagesResult, CompareImagesTask } from "./compareImagesWork
 import { readImage } from "./imageCache";
 
 // The worker app bundles this module into dist/index.js, next to dist/compareImagesWorker.js.
+const FROM_SOURCE = import.meta.url.endsWith(".ts");
 const COMPARE_WORKER_URL = new URL(
-  import.meta.url.endsWith(".ts") ? "./compareImagesWorker.ts" : "./compareImagesWorker.js",
+  FROM_SOURCE ? "./compareImagesWorker.ts" : "./compareImagesWorker.js",
   import.meta.url,
 );
 
@@ -18,6 +19,8 @@ let comparisons: Piscina<CompareImagesTask, CompareImagesResult> | undefined;
 const getComparisons = (): Piscina<CompareImagesTask, CompareImagesResult> => {
   comparisons ??= new Piscina({
     filename: COMPARE_WORKER_URL.href,
+    // Node's own TypeScript support can't resolve the worker's extensionless imports.
+    execArgv: FROM_SOURCE ? [...process.execArgv, "--import", "tsx"] : undefined,
     minThreads: 1,
     maxThreads: 1,
     // "sync" atomics park the thread in Atomics.wait, so its event loop never runs, and zlib
