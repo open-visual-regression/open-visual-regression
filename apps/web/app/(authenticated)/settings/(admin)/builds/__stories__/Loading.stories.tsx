@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import Loading from "../loading";
 
 const meta: Meta<typeof Loading> = {
-  title: "Web/Skeletons/DiffsSettingsLoading",
+  title: "Web/Skeletons/BuildsSettingsLoading",
   component: Loading,
   tags: ["autodocs"],
   parameters: {

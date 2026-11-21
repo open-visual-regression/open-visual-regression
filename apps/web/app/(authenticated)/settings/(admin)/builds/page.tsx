@@ -8,7 +8,7 @@ import { serverError } from "@/lib/utils/errors";
 
 import { DiffSettingsForm } from "./_components/diff-settings-form/DiffSettingsForm";
 
-export default async function SettingsDiffsPage() {
+export default async function SettingsBuildsPage() {
   const verifyRoleResult = await verifyRole("admin");
 
   if (verifyRoleResult.status === "error") {
@@ -27,15 +27,15 @@ export default async function SettingsDiffsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <Typography variant="h1" as="h1">
+      <Typography variant="h1" as="h1">
+        builds
+      </Typography>
+      <section className="flex flex-col gap-4">
+        <Typography variant="h2" as="h2">
           diffs
         </Typography>
-        <Typography variant="body-muted" as="p">
-          how the diff overlay on a snapshot marks what changed
-        </Typography>
-      </div>
-      <DiffSettingsForm settings={diffSettingsResult.settings} />
+        <DiffSettingsForm settings={diffSettingsResult.settings} />
+      </section>
     </div>
   );
 }

@@ -8,7 +8,7 @@ import { serverClient } from "@/lib/router";
 import { createORPCError } from "@/lib/testing/orpc";
 import { describe, expect, it, render, screen } from "@/test-utils";
 
-import SettingsDiffsPage from "../page";
+import SettingsBuildsPage from "../page";
 
 vi.mock("next/headers");
 vi.mock("next/server");
@@ -20,19 +20,20 @@ const mockGetSession = vi.mocked(auth.api.getSession);
 const mockGetDiff = vi.mocked(serverClient.settings.getDiff);
 const mockNotFound = vi.mocked(notFound);
 
-describe("SettingsDiffsPage", () => {
-  it("should show the saved diff algorithm for admins", async () => {
+describe("SettingsBuildsPage", () => {
+  it("should show the saved diff setting for admins", async () => {
     mockGetSession.mockResolvedValue({
       user: mocks.user.generateAuthUser({ role: "admin" }),
       session: mocks.session.generateSession(),
     });
     mockGetDiff.mockResolvedValue([null, { settings: { algorithm: "pixel" } }]);
 
-    render(await SettingsDiffsPage());
+    render(await SettingsBuildsPage());
 
-    expect(screen.getByRole("heading", { name: /^diffs$/i })).toBeVisible();
-    expect(screen.getByRole("combobox", { name: /algorithm/i })).toHaveTextContent(
-      "pixel by pixel",
+    expect(screen.getByRole("heading", { level: 1, name: "builds" })).toBeVisible();
+    expect(screen.getByRole("heading", { level: 2, name: "diffs" })).toBeVisible();
+    expect(screen.getByRole("combobox", { name: /highlight/i })).toHaveTextContent(
+      "every changed pixel",
     );
   });
 
@@ -42,7 +43,7 @@ describe("SettingsDiffsPage", () => {
       session: mocks.session.generateSession(),
     });
 
-    render(await SettingsDiffsPage());
+    render(await SettingsBuildsPage());
 
     expect(mockNotFound).toHaveBeenCalled();
   });
@@ -54,6 +55,6 @@ describe("SettingsDiffsPage", () => {
     });
     mockGetDiff.mockResolvedValue([createORPCError("INTERNAL_SERVER_ERROR"), undefined]);
 
-    await expect(SettingsDiffsPage()).rejects.toThrow();
+    await expect(SettingsBuildsPage()).rejects.toThrow();
   });
 });

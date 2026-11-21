@@ -13,14 +13,7 @@ import {
 } from "@ovr/api/contracts/settings";
 import { Button } from "@ovr/ui/components/button";
 import { Card, CardContent, CardFooter } from "@ovr/ui/components/card";
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-  FieldSkeleton,
-} from "@ovr/ui/components/field";
+import { Field, FieldError, FieldGroup, FieldLabel, FieldSkeleton } from "@ovr/ui/components/field";
 import { CheckIcon, Icon } from "@ovr/ui/components/icon";
 import {
   Select,
@@ -34,19 +27,9 @@ import { toast } from "@ovr/ui/components/toast";
 
 import { serverClient } from "@/lib/router";
 
-const ALGORITHMS: { value: DiffAlgorithm; label: string; description: string }[] = [
-  {
-    value: "aligned",
-    label: "aligned",
-    description:
-      "lines the screenshots up first, so content that only moved down or sideways isn't marked",
-  },
-  {
-    value: "pixel",
-    label: "pixel by pixel",
-    description:
-      "compares each pixel with the one in the same place, so everything below an insertion is marked",
-  },
+const ALGORITHMS: { value: DiffAlgorithm; label: string }[] = [
+  { value: "aligned", label: "ignore moved content" },
+  { value: "pixel", label: "every changed pixel" },
 ];
 
 export type DiffSettingsFormProps = {
@@ -83,7 +66,7 @@ export const DiffSettingsForm = ({ settings }: DiffSettingsFormProps) => {
     }
 
     reset(values);
-    toast.success("diff settings updated");
+    toast.success("diff settings saved");
   };
 
   const isSubmitting = status === "pending";
@@ -94,28 +77,23 @@ export const DiffSettingsForm = ({ settings }: DiffSettingsFormProps) => {
         <CardContent className="flex flex-col gap-5">
           <FieldGroup>
             <Field data-invalid={!!errors.algorithm}>
-              <FieldLabel htmlFor="algorithm">algorithm</FieldLabel>
+              <FieldLabel htmlFor="algorithm">highlight</FieldLabel>
               <Controller
                 control={control}
                 name="algorithm"
                 render={({ field }) => (
-                  <>
-                    <Select items={ALGORITHMS} value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger id="algorithm" className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {ALGORITHMS.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FieldDescription>
-                      {ALGORITHMS.find((option) => option.value === field.value)?.description}
-                    </FieldDescription>
-                  </>
+                  <Select items={ALGORITHMS} value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger id="algorithm" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ALGORITHMS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 )}
               />
               <FieldError errors={[errors.algorithm]} />

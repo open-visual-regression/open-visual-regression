@@ -23,17 +23,16 @@ const renderComponent = (algorithm: "aligned" | "pixel" = "aligned") =>
   );
 
 describe("DiffSettingsForm", () => {
-  it("should show the saved algorithm and what it does", () => {
+  it("should show the saved choice", () => {
     renderComponent("aligned");
 
-    expect(screen.getByRole("combobox", { name: /algorithm/i })).toHaveTextContent("aligned");
-    expect(
-      screen.getByText(/content that only moved down or sideways isn't marked/i),
-    ).toBeVisible();
+    expect(screen.getByRole("combobox", { name: /highlight/i })).toHaveTextContent(
+      "ignore moved content",
+    );
   });
 
   it("should save the chosen algorithm and disable the button while saving", async ({ user }) => {
-    let resolveUpdate: (result: [null, undefined]) => void;
+    let resolveUpdate: (result: [null, undefined]) => void = () => {};
     mockUpdate.mockReturnValue(
       new Promise((resolve) => {
         resolveUpdate = resolve;
@@ -41,16 +40,16 @@ describe("DiffSettingsForm", () => {
     );
     renderComponent("aligned");
 
-    await user.click(screen.getByRole("combobox", { name: /algorithm/i }));
-    await user.click(await screen.findByRole("option", { name: "pixel by pixel" }));
+    await user.click(screen.getByRole("combobox", { name: /highlight/i }));
+    await user.click(await screen.findByRole("option", { name: "every changed pixel" }));
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
     await waitFor(() => expect(screen.getByRole("button", { name: /saving/i })).toBeDisabled());
     expect(mockUpdate).toHaveBeenCalledWith({ algorithm: "pixel" });
 
-    resolveUpdate!([null, undefined]);
+    resolveUpdate([null, undefined]);
 
-    expect(await screen.findByText("diff settings updated")).toBeVisible();
+    expect(await screen.findByText("diff settings saved")).toBeVisible();
     expect(mockRefresh).toHaveBeenCalled();
   });
 
@@ -70,6 +69,6 @@ describe("DiffSettingsForm", () => {
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("something went wrong");
-    expect(screen.queryByText("diff settings updated")).not.toBeInTheDocument();
+    expect(screen.queryByText("diff settings saved")).not.toBeInTheDocument();
   });
 });
