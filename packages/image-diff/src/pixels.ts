@@ -1,13 +1,7 @@
 import { lineCount, lineLength } from "./rect";
 import type { Axis, Image, Rect } from "./types";
 
-// Low-level pixel access. These run once per pixel, so they use plain loops
-// over typed arrays. Each function only mutates buffers it allocates itself.
-//
-// Pixels are read as one 32-bit word each (RGBA, in platform byte order),
-// which is a single read instead of four. Indexed reads are typed
-// `number | undefined` under noUncheckedIndexedAccess; every loop here stays
-// in bounds, so the `?? 0` fallbacks never apply.
+// Every loop here stays in bounds, so the `?? 0` fallbacks never apply.
 
 const wordViews = new WeakMap<Uint8Array, Uint32Array>();
 
@@ -38,7 +32,6 @@ export const hashLines = (image: Image, rect: Rect, axis: Axis): Float64Array =>
   const words = pixelWords(image);
   const hashes = new Float64Array(lineCount(rect, axis));
   const length = lineLength(rect, axis);
-  // Step through the image one pixel along the line at a time.
   const stride = axis === "rows" ? 1 : image.width;
   for (let line = 0; line < hashes.length; line++) {
     const start =

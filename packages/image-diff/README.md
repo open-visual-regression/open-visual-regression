@@ -47,9 +47,3 @@ it's still shown as inserted, so a failing snapshot always shows something.
   the next row of a grid, can only be partly lined up.
 - Rows have to match exactly to line up. If anti-aliasing changes along with
   a move, that part falls back to a plain pixel comparison.
-
-## Fixtures
-
-The tests use Chromium screenshots of a sample page in
-`src/__tests__/fixtures/aligned`. Regenerate them with `pnpm generate:fixtures`,
-setting `CHROMIUM_PATH` to use a browser other than Playwright's.

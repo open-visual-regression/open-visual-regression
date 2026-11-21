@@ -45,7 +45,6 @@ const copyRect = (context: Context, pair: RectPair) => {
     context.shifted = true;
   }
   if (pair.current.width === current.width && pair.baseline.width === baseline.width) {
-    // Whole rows are contiguous, so they copy in one go.
     const from = pair.baseline.y * baseline.width;
     alignedWords.set(
       baselineWords.subarray(from, from + pair.current.height * current.width),
@@ -62,10 +61,8 @@ const copyRect = (context: Context, pair: RectPair) => {
   }
 };
 
-/** Neighbouring baseline lines of a gap, which may sit outside the rect being aligned. */
 type Neighbours = { before: Rect | null; after: Rect | null };
 
-/** How many pixels of a baseline line equal the same-size current line. */
 const equalPixels = (context: Context, baseline: Rect, current: Rect) => {
   const { baselineWords, currentWords, baseline: image } = context;
   let equal = 0;
@@ -119,7 +116,6 @@ const deletedContent = (
   { before, after }: Neighbours,
 ): Rect | null => {
   const { baselineWords, baseline } = context;
-  // The pixel of a neighbouring line level with (row, column), or -1 when there's no line.
   const referenceIndex = (line: Rect | null, row: number, column: number) => {
     if (line === null) {
       return -1;

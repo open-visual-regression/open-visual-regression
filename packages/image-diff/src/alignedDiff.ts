@@ -6,7 +6,7 @@ import { pairMoves } from "./moves";
 import { mergeRegions } from "./regions";
 import type { Image, Rect, Region } from "./types";
 
-/** pixelmatch's colour threshold; the same value the rest of OVR compares with. */
+/** The colour threshold OVR compares pixels with. */
 export const PIXEL_THRESHOLD = 0.1;
 
 export type AlignedDiff = {
@@ -20,11 +20,6 @@ export type AlignedDiff = {
   mask: Uint8Array;
   /** Each visual change, merged with its close neighbours, top to bottom. */
   regions: Region[];
-  /**
-   * Whether any content was lined up at a new position. When not, the result
-   * is exactly a plain pixelmatch of the two images, padded to the same size.
-   */
-  shifted: boolean;
 };
 
 /**
@@ -45,7 +40,6 @@ const masksFromOutput = (output: Uint8Array, inserted: Uint8Array) => {
   return { mask, outsideInsertions, count };
 };
 
-/** The tightest rect around the set pixels of a mask inside `rect`, or null when none are set. */
 const maskBounds = (mask: Uint8Array, width: number, rect: Rect): Rect | null => {
   let left = Infinity;
   let top = Infinity;
@@ -64,7 +58,6 @@ const maskBounds = (mask: Uint8Array, width: number, rect: Rect): Rect | null =>
   return right < 0 ? null : { x: left, y: top, width: right - left + 1, height: bottom - top + 1 };
 };
 
-/** Pads an image with transparent pixels to `width` × `height`. */
 const padTo = (image: Image, width: number, height: number): Uint8Array => {
   if (image.width === width && image.height === height) {
     return image.data;
@@ -104,11 +97,9 @@ const diffInPlace = (baseline: Image, current: Image): AlignedDiff => {
     plainChangedPixelCount: count,
     mask,
     regions: mergeRegions(regions),
-    shifted: false,
   };
 };
 
-/** A plain pixelmatch of the two images, padded to the same size, as one byte per pixel. */
 const plainMask = (baseline: Image, current: Image) => {
   const width = Math.max(baseline.width, current.width);
   const height = Math.max(baseline.height, current.height);
@@ -126,10 +117,6 @@ const plainMask = (baseline: Image, current: Image) => {
  * Diffs two screenshots after lining them up, so content pushed down by a
  * new banner, or sideways by a wider sidebar, is not reported as changed.
  * Coordinates are in the current image.
- *
- * The baseline is rearranged into the current image's coordinates, then the
- * two are compared with a single pixelmatch pass, so the cost stays close to
- * a plain pixel diff whatever changed.
  */
 export const alignedDiff = (baseline: Image, current: Image): AlignedDiff => {
   if (baseline.width !== current.width) {
@@ -153,12 +140,10 @@ export const alignedDiff = (baseline: Image, current: Image): AlignedDiff => {
     changed: number,
     plainCount: number,
   ): AlignedDiff => {
-    // Changes outside inserted content are grouped by where they sit.
     const modified = clustersOf(outsideInsertions, inserted, width, height).map(
       ({ bounds }): Region => ({ kind: "modified", current: bounds, baseline: bounds }),
     );
-    // Each insertion is one region, trimmed to the pixels in it that differ.
-    // Its content is the part that differs from the lines it was filled with.
+    // An insertion's content is what differs from the lines it was filled with.
     const added = insertions.flatMap((rect) => {
       const bounds = maskBounds(mask, width, rect);
       const content = maskBounds(lined.mask, width, rect);
@@ -210,7 +195,7 @@ export const alignedDiff = (baseline: Image, current: Image): AlignedDiff => {
         }),
       );
       if (regions.length === 0) {
-        return { ...diffInPlace(baseline, current), shifted };
+        return diffInPlace(baseline, current);
       }
     }
 
@@ -221,7 +206,6 @@ export const alignedDiff = (baseline: Image, current: Image): AlignedDiff => {
       plainChangedPixelCount: plainCount,
       mask,
       regions,
-      shifted,
     };
   };
   if (!shifted) {
@@ -248,7 +232,7 @@ export const alignedDiff = (baseline: Image, current: Image): AlignedDiff => {
   // When both found changes but no pixel in common, neither explanation holds
   // up on its own, so the plain comparison is shown as it is.
   if (count === 0 && lined.count > 0) {
-    return { ...diffInPlace(baseline, current), shifted };
+    return diffInPlace(baseline, current);
   }
   return withRegions(mask, outsideInsertions, count, plain.count);
 };
