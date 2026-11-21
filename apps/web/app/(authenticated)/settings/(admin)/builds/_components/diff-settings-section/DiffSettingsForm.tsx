@@ -8,7 +8,7 @@ import { Controller, useForm } from "react-hook-form";
 
 import {
   diffSettingsSchema,
-  type DiffAlgorithm,
+  type DiffHighlight,
   type DiffSettings,
 } from "@ovr/api/contracts/settings";
 import { Button } from "@ovr/ui/components/button";
@@ -34,7 +34,7 @@ import { toast } from "@ovr/ui/components/toast";
 
 import { serverClient } from "@/lib/router";
 
-const ALGORITHMS: { value: DiffAlgorithm; label: string; description: string }[] = [
+const DIFF_HIGHLIGHT_OPTIONS: { value: DiffHighlight; label: string; description: string }[] = [
   { value: "smart", label: "smart", description: "marks what changed, not what moved" },
   { value: "exact", label: "exact", description: "marks every pixel that changed" },
 ];
@@ -56,7 +56,7 @@ export const DiffSettingsForm = ({ settings }: DiffSettingsFormProps) => {
     defaultValues: settings,
   });
 
-  const { execute, status } = useServerAction(serverClient.settings.updateDiff, {
+  const { execute, status } = useServerAction(serverClient.settings.updateDiffSettings, {
     interceptors: [
       onSuccess(() => {
         router.refresh();
@@ -83,19 +83,23 @@ export const DiffSettingsForm = ({ settings }: DiffSettingsFormProps) => {
       <Card size="default" className="w-full md:w-2/3 lg:w-1/2">
         <CardContent className="flex flex-col gap-5">
           <FieldGroup>
-            <Field data-invalid={!!errors.algorithm}>
-              <FieldLabel htmlFor="algorithm">highlight</FieldLabel>
+            <Field data-invalid={!!errors.highlight}>
+              <FieldLabel htmlFor="highlight">highlight</FieldLabel>
               <Controller
                 control={control}
-                name="algorithm"
+                name="highlight"
                 render={({ field }) => (
                   <>
-                    <Select items={ALGORITHMS} value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger id="algorithm" className="w-full">
+                    <Select
+                      items={DIFF_HIGHLIGHT_OPTIONS}
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <SelectTrigger id="highlight" className="w-full">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {ALGORITHMS.map((option) => (
+                        {DIFF_HIGHLIGHT_OPTIONS.map((option) => (
                           <SelectItem key={option.value} value={option.value}>
                             {option.label}
                           </SelectItem>
@@ -103,12 +107,15 @@ export const DiffSettingsForm = ({ settings }: DiffSettingsFormProps) => {
                       </SelectContent>
                     </Select>
                     <FieldDescription>
-                      {ALGORITHMS.find((option) => option.value === field.value)?.description}
+                      {
+                        DIFF_HIGHLIGHT_OPTIONS.find((option) => option.value === field.value)
+                          ?.description
+                      }
                     </FieldDescription>
                   </>
                 )}
               />
-              <FieldError errors={[errors.algorithm]} />
+              <FieldError errors={[errors.highlight]} />
             </Field>
           </FieldGroup>
           <FieldError errors={[errors.root]} />

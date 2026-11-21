@@ -1,10 +1,3 @@
-/** An RGBA bitmap, four bytes per pixel, rows top to bottom. */
-export type Image = {
-  width: number;
-  height: number;
-  data: Uint8Array;
-};
-
 export type Rect = {
   x: number;
   y: number;
@@ -21,7 +14,7 @@ export type RectPair = {
   current: Rect;
 };
 
-export type RegionKind = "modified" | "inserted" | "deleted" | "moved";
+export type RegionKind = "changed" | "inserted" | "deleted" | "moved";
 
 /**
  * One visual change. `current` is where it sits in the current image and

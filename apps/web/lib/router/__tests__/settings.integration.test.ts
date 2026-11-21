@@ -9,50 +9,50 @@ vi.mock("next/headers");
 
 describe("settings", () => {
   test("should return UNAUTHORIZED for the diff settings when no session cookie is provided", async () => {
-    const [error] = await serverClient.settings.getDiff();
+    const [error] = await serverClient.settings.getDiffSettings();
     expect(error?.code).toBe("UNAUTHORIZED");
   });
 
   test("should return FORBIDDEN for the diff settings when the session user is not an admin", async ({
     reviewer: _,
   }) => {
-    const [error] = await serverClient.settings.getDiff();
+    const [error] = await serverClient.settings.getDiffSettings();
     expect(error?.code).toBe("FORBIDDEN");
   });
 
   test("should return the default diff settings when none have been saved", async ({
     admin: _,
   }) => {
-    const [error, result] = await serverClient.settings.getDiff();
+    const [error, result] = await serverClient.settings.getDiffSettings();
 
     expect(error).toBeNull();
     expect(result?.settings).toEqual(DEFAULT_DIFF_SETTINGS);
   });
 
   test("should return UNAUTHORIZED when saving diff settings without a session cookie", async () => {
-    const [error] = await serverClient.settings.updateDiff({ algorithm: "exact" });
+    const [error] = await serverClient.settings.updateDiffSettings({ highlight: "exact" });
     expect(error?.code).toBe("UNAUTHORIZED");
   });
 
   test("should return FORBIDDEN when a user who is not an admin saves diff settings", async ({
     reviewer: _,
   }) => {
-    const [error] = await serverClient.settings.updateDiff({ algorithm: "exact" });
+    const [error] = await serverClient.settings.updateDiffSettings({ highlight: "exact" });
     expect(error?.code).toBe("FORBIDDEN");
   });
 
-  test("should return BAD_REQUEST for an unknown diff algorithm", async ({ admin: _ }) => {
-    const [error] = await serverClient.settings.updateDiff({
-      algorithm: "fuzzy",
+  test("should return BAD_REQUEST for an unknown diff highlight", async ({ admin: _ }) => {
+    const [error] = await serverClient.settings.updateDiffSettings({
+      highlight: "fuzzy",
     } as unknown as DiffSettings);
     expect(error?.code).toBe("BAD_REQUEST");
   });
 
   test("should save the diff settings so they are returned afterwards", async ({ admin: _ }) => {
-    const [updateError] = await serverClient.settings.updateDiff({ algorithm: "exact" });
-    const [, result] = await serverClient.settings.getDiff();
+    const [updateError] = await serverClient.settings.updateDiffSettings({ highlight: "exact" });
+    const [, result] = await serverClient.settings.getDiffSettings();
 
     expect(updateError).toBeNull();
-    expect(result?.settings).toEqual({ algorithm: "exact" });
+    expect(result?.settings).toEqual({ highlight: "exact" });
   });
 });

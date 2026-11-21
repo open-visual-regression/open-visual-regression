@@ -1,12 +1,13 @@
+import type { RgbaImage } from "./image";
 import { lineCount, lineLength } from "./rect";
-import type { Axis, Image, Rect } from "./types";
+import type { Axis, Rect } from "./types";
 
 // Every loop here stays in bounds, so the `?? 0` fallbacks never apply.
 
 const wordViews = new WeakMap<Uint8Array, Uint32Array>();
 
 /** An image's pixels as 32-bit words, one per pixel. Cached per image. */
-export const pixelWords = (image: Image): Uint32Array => {
+export const pixelWords = (image: RgbaImage): Uint32Array => {
   const cached = wordViews.get(image.data);
   if (cached) {
     return cached;
@@ -28,7 +29,7 @@ const FNV_PRIME = 0x01000193;
  * One hash per line of a rect along an axis. Two independent 32-bit hashes
  * are combined into one number, so distinct lines practically never collide.
  */
-export const hashLines = (image: Image, rect: Rect, axis: Axis): Float64Array => {
+export const hashLines = (image: RgbaImage, rect: Rect, axis: Axis): Float64Array => {
   const words = pixelWords(image);
   const hashes = new Float64Array(lineCount(rect, axis));
   const length = lineLength(rect, axis);
@@ -50,8 +51,8 @@ export const hashLines = (image: Image, rect: Rect, axis: Axis): Float64Array =>
   return hashes;
 };
 
-/** The colour of column `x` within a rect when it is one solid colour, else null. */
-export const solidColumnColor = (image: Image, rect: Rect, x: number): number | null => {
+/** The color of column `x` within a rect when it is one solid color, else null. */
+export const solidColumnColor = (image: RgbaImage, rect: Rect, x: number): number | null => {
   const words = pixelWords(image);
   const color = words[rect.y * image.width + x] ?? 0;
   for (let row = 1; row < rect.height; row++) {

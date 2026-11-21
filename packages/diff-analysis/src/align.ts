@@ -1,7 +1,8 @@
 import { alignLines, type LineAlignment, type LineSpan } from "./alignLines";
+import type { RgbaImage } from "./image";
 import { hashLines, pixelWords, solidColumnColor } from "./pixels";
 import { lineCount, otherAxis, sliceRect } from "./rect";
-import type { Axis, Image, Rect, RectPair } from "./types";
+import type { Axis, Rect, RectPair } from "./types";
 
 /**
  * The baseline rearranged into the current image's coordinates, so the two can
@@ -17,7 +18,7 @@ export type Alignment = {
   /** Rects of the current image the baseline has no counterpart for. */
   insertions: Rect[];
   /** Baseline content with no place in the current image, as zero-width or zero-height lines. */
-  deletions: Array<{ current: Rect; baseline: Rect }>;
+  deletions: RectPair[];
   /** Whether anything moved. When nothing did, `aligned` is the baseline as it was. */
   shifted: boolean;
 };
@@ -27,8 +28,8 @@ export type Alignment = {
 const MAX_DEPTH = 4;
 
 type Context = {
-  baseline: Image;
-  current: Image;
+  baseline: RgbaImage;
+  current: RgbaImage;
   baselineWords: Uint32Array;
   currentWords: Uint32Array;
   alignedWords: Uint32Array;
@@ -61,7 +62,7 @@ const copyRect = (context: Context, pair: RectPair) => {
   }
 };
 
-type Neighbours = { before: Rect | null; after: Rect | null };
+type Neighbors = { before: Rect | null; after: Rect | null };
 
 const equalPixels = (context: Context, baseline: Rect, current: Rect) => {
   const { baselineWords, currentWords, baseline: image } = context;
@@ -84,7 +85,7 @@ const equalPixels = (context: Context, baseline: Rect, current: Rect) => {
  * gap take it, the rest take the line before, so blank space that only grew
  * compares equal while new content still stands out.
  */
-const fillInserted = (context: Context, rect: Rect, axis: Axis, { before, after }: Neighbours) => {
+const fillInserted = (context: Context, rect: Rect, axis: Axis, { before, after }: Neighbors) => {
   for (let line = 0; line < lineCount(rect, axis); line++) {
     const target = sliceRect(rect, axis, line, 1);
     const source =
@@ -113,7 +114,7 @@ const deletedContent = (
   context: Context,
   rect: Rect,
   axis: Axis,
-  { before, after }: Neighbours,
+  { before, after }: Neighbors,
 ): Rect | null => {
   const { baselineWords, baseline } = context;
   const referenceIndex = (line: Rect | null, row: number, column: number) => {
@@ -158,13 +159,13 @@ const deletedContent = (
  * The baseline lines just before and just after lines [start, end) of a rect,
  * looking past the rect's edges as long as they're inside the image.
  */
-const neighboursOf = (
-  image: Image,
+const neighborsOf = (
+  image: RgbaImage,
   parent: Rect,
   axis: Axis,
   start: number,
   end: number,
-): Neighbours => {
+): Neighbors => {
   const offset = axis === "rows" ? parent.y : parent.x;
   const size = axis === "rows" ? image.height : image.width;
   return {
@@ -281,7 +282,7 @@ const alignRects = (
           copyRect(context, lines);
         }
       }
-      const neighbours = neighboursOf(
+      const neighbors = neighborsOf(
         context.baseline,
         pair.baseline,
         axis,
@@ -293,12 +294,12 @@ const alignRects = (
           context,
           sliceRect(pair.current, axis, currentExtra, currentCount - overlap),
           axis,
-          neighbours,
+          neighbors,
         );
       }
       if (baselineCount > overlap) {
         const removed = sliceRect(pair.baseline, axis, baselineExtra, baselineCount - overlap);
-        const content = deletedContent(context, removed, axis, neighbours);
+        const content = deletedContent(context, removed, axis, neighbors);
         if (content) {
           const at = sliceRect(pair.current, axis, currentExtra, 0);
           context.deletions.push({
@@ -341,11 +342,11 @@ const commonEnds = (baseline: Float64Array, current: Float64Array) => {
 
 /**
  * Side-by-side columns of a band, separated by gutters that are one solid
- * colour in both images, like a fixed sidebar next to a main column whose
+ * color in both images, like a fixed sidebar next to a main column whose
  * content moved.
  */
-const findStrips = (context: Context, band: RectPair): Array<{ x: number; width: number }> => {
-  const strips: Array<{ x: number; width: number }> = [];
+const findStrips = (context: Context, band: RectPair): { x: number; width: number }[] => {
+  const strips: { x: number; width: number }[] = [];
   let start = -1;
   for (let x = 0; x <= band.current.width; x++) {
     const color =
@@ -392,8 +393,8 @@ const linesCovered = (
  * inside the rows that don't line up.
  */
 const wholeCoverage = (
-  baseline: Image,
-  current: Image,
+  baseline: RgbaImage,
+  current: RgbaImage,
   rows: {
     baselineHashes: Float64Array;
     currentHashes: Float64Array;
@@ -435,7 +436,7 @@ const wholeCoverage = (
  * Both images must have the same width. The work is a fixed number of passes
  * over the pixels, whatever changed.
  */
-export const alignImages = (baseline: Image, current: Image): Alignment => {
+export const alignImages = (baseline: RgbaImage, current: RgbaImage): Alignment => {
   const aligned = new Uint8Array(current.width * current.height * 4);
   const context: Context = {
     baseline,
@@ -507,7 +508,7 @@ export const alignImages = (baseline: Image, current: Image): Alignment => {
       baseline: sliceRect(whole.baseline, "rows", baseline.height - suffix, suffix),
       current: sliceRect(whole.current, "rows", current.height - suffix, suffix),
     });
-    // Gutters are one solid colour, so the band is first copied in place,
+    // Gutters are one solid color, so the band is first copied in place,
     // stretched to the current height, and the strips then overwrite it.
     const shared = Math.min(band.baseline.height, band.current.height);
     for (let row = 0; row < band.current.height; row++) {

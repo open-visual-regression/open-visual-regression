@@ -1,24 +1,24 @@
 import { oc } from "@orpc/contract";
 import { z } from "zod";
 
-export const diffAlgorithmSchema = z.enum(["smart", "exact"]);
+export const diffHighlightSchema = z.enum(["smart", "exact"]);
 
-export type DiffAlgorithm = z.infer<typeof diffAlgorithmSchema>;
+export type DiffHighlight = z.infer<typeof diffHighlightSchema>;
 
 export const diffSettingsSchema = z.object({
-  algorithm: diffAlgorithmSchema,
+  highlight: diffHighlightSchema,
 });
 
 export type DiffSettings = z.infer<typeof diffSettingsSchema>;
 
 export const DEFAULT_DIFF_SETTINGS: DiffSettings = {
-  algorithm: "smart",
+  highlight: "smart",
 };
 
 /** Falls back to the defaults for anything missing or invalid. */
 export const storedDiffSettingsSchema = z
   .object({
-    algorithm: diffAlgorithmSchema.catch(DEFAULT_DIFF_SETTINGS.algorithm),
+    highlight: diffHighlightSchema.catch(DEFAULT_DIFF_SETTINGS.highlight),
   })
   .catch(DEFAULT_DIFF_SETTINGS);
 
@@ -27,6 +27,6 @@ export const getDiffSettingsContract = oc.output(z.object({ settings: diffSettin
 export const updateDiffSettingsContract = oc.input(diffSettingsSchema).output(z.void());
 
 export const contract = {
-  getDiff: getDiffSettingsContract,
-  updateDiff: updateDiffSettingsContract,
+  getDiffSettings: getDiffSettingsContract,
+  updateDiffSettings: updateDiffSettingsContract,
 } as const;

@@ -7,7 +7,7 @@ const MERGE_DISTANCE = 12;
 const GRID_CELL = 64;
 
 const mergeTwo = (first: Region, second: Region): Region => ({
-  kind: first.kind === second.kind ? first.kind : "modified",
+  kind: first.kind === second.kind ? first.kind : "changed",
   current: unionRect(first.current, second.current),
   baseline: unionRect(first.baseline, second.baseline),
 });
@@ -83,7 +83,7 @@ const mergePass = (regions: Region[]): Region[] => {
 
 /**
  * Merges regions that touch or nearly touch. A merged box can grow into a
- * new neighbour, so passes repeat until nothing changes. Sorted top to
+ * new neighbor, so passes repeat until nothing changes. Sorted top to
  * bottom, then left to right.
  */
 export const mergeRegions = (regions: Region[]): Region[] => {

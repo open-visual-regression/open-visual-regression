@@ -1,6 +1,7 @@
 import { useRouter } from "next/navigation";
 import { vi } from "vitest";
 
+import type { DiffHighlight } from "@ovr/api/contracts/settings";
 import { Toaster } from "@ovr/ui/components/sonner";
 
 import { serverClient } from "@/lib/router";
@@ -11,13 +12,13 @@ import { DiffSettingsForm } from "../DiffSettingsForm";
 vi.mock("@/lib/router");
 vi.mock("next/navigation");
 
-const mockUpdate = vi.mocked(serverClient.settings.updateDiff);
+const mockUpdate = vi.mocked(serverClient.settings.updateDiffSettings);
 const mockRefresh = vi.mocked(useRouter)().refresh;
 
-const renderComponent = (algorithm: "smart" | "exact" = "smart") =>
+const renderComponent = (highlight: DiffHighlight = "smart") =>
   render(
     <>
-      <DiffSettingsForm settings={{ algorithm }} />
+      <DiffSettingsForm settings={{ highlight }} />
       <Toaster />
     </>,
   );
@@ -30,7 +31,7 @@ describe("DiffSettingsForm", () => {
     expect(screen.getByText("marks what changed, not what moved")).toBeVisible();
   });
 
-  it("should save the chosen algorithm and disable the button while saving", async ({ user }) => {
+  it("should save the chosen highlight and disable the button while saving", async ({ user }) => {
     let resolveUpdate: (result: [null, undefined]) => void = () => {};
     mockUpdate.mockReturnValue(
       new Promise((resolve) => {
@@ -44,7 +45,7 @@ describe("DiffSettingsForm", () => {
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
     await waitFor(() => expect(screen.getByRole("button", { name: /saving/i })).toBeDisabled());
-    expect(mockUpdate).toHaveBeenCalledWith({ algorithm: "exact" });
+    expect(mockUpdate).toHaveBeenCalledWith({ highlight: "exact" });
 
     resolveUpdate([null, undefined]);
 

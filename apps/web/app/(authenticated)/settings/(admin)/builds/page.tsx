@@ -6,7 +6,7 @@ import { serverClient } from "@/lib/router";
 import { verifyRole } from "@/lib/utils/authorization";
 import { serverError } from "@/lib/utils/errors";
 
-import { DiffSettingsForm } from "./_components/diff-settings-form/DiffSettingsForm";
+import { DiffSettingsSection } from "./_components/diff-settings-section/DiffSettingsSection";
 
 export default async function SettingsBuildsPage() {
   const verifyRoleResult = await verifyRole("admin");
@@ -19,7 +19,7 @@ export default async function SettingsBuildsPage() {
     notFound();
   }
 
-  const [diffSettingsError, diffSettingsResult] = await serverClient.settings.getDiff();
+  const [diffSettingsError, diffSettingsResult] = await serverClient.settings.getDiffSettings();
 
   if (diffSettingsError) {
     serverError(diffSettingsError);
@@ -30,12 +30,7 @@ export default async function SettingsBuildsPage() {
       <Typography variant="h1" as="h1">
         builds
       </Typography>
-      <section className="flex flex-col gap-4">
-        <Typography variant="h2" as="h2">
-          diffs
-        </Typography>
-        <DiffSettingsForm settings={diffSettingsResult.settings} />
-      </section>
+      <DiffSettingsSection settings={diffSettingsResult.settings} />
     </div>
   );
 }

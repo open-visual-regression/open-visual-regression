@@ -9,19 +9,19 @@ describe("diffSettings", () => {
     expect(await getDiffSettings()).toEqual(DEFAULT_DIFF_SETTINGS);
   });
 
-  test("should return the diff settings that were saved", async ({ reviewer }) => {
-    await saveDiffSettings({ algorithm: "exact" }, reviewer.id);
+  test("should return the diff settings that were saved", async ({ user }) => {
+    await saveDiffSettings({ highlight: "exact" }, user.id);
 
-    expect(await getDiffSettings()).toEqual({ algorithm: "exact" });
+    expect(await getDiffSettings()).toEqual({ highlight: "exact" });
   });
 
-  test("should fall back to the default algorithm when the stored one is unknown", async ({
-    reviewer,
+  test("should fall back to the default highlight when the stored one is unknown", async ({
+    user,
   }) => {
     await dbClient.settings.upsert({
-      key: "diff",
-      value: { algorithm: "fuzzy" },
-      updatedBy: reviewer.id,
+      key: "diff_images",
+      value: { highlight: "fuzzy" },
+      updatedBy: user.id,
     });
 
     expect(await getDiffSettings()).toEqual(DEFAULT_DIFF_SETTINGS);

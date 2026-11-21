@@ -5,9 +5,10 @@ import pixelmatch from "pixelmatch";
 import { PNG } from "pngjs";
 import { describe, expect, it } from "vitest";
 
-import { alignedDiff, PIXEL_THRESHOLD } from "../alignedDiff";
+import { alignedDiff } from "../alignedDiff";
+import { padToCanvas, PIXELMATCH_THRESHOLD, type RgbaImage } from "../image";
 import { renderDiff } from "../renderDiff";
-import type { Image, Rect, Region } from "../types";
+import type { Rect, Region } from "../types";
 
 type Color = [number, number, number];
 
@@ -18,7 +19,7 @@ const INK: Color = [20, 20, 20];
 const BLUE: Color = [37, 99, 235];
 const RED: Color = [220, 38, 38];
 
-const drawImage = (width: number, height: number, boxes: Box[], background = WHITE): Image => {
+const drawImage = (width: number, height: number, boxes: Box[], background = WHITE): RgbaImage => {
   const data = new Uint8Array(width * height * 4);
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -56,32 +57,26 @@ const page = (offsetY = 0, offsetX = 0): Box[] => [
 ];
 
 /** What a plain position-by-position pixelmatch reports, for comparison. */
-const plainPixelMatch = (baseline: Image, current: Image) => {
+const plainPixelMatch = (baseline: RgbaImage, current: RgbaImage) => {
   const width = Math.max(baseline.width, current.width);
   const height = Math.max(baseline.height, current.height);
-  const pad = (image: Image) => {
-    const data = new Uint8Array(width * height * 4);
-    for (let row = 0; row < image.height; row++) {
-      data.set(
-        image.data.subarray(row * image.width * 4, (row + 1) * image.width * 4),
-        row * width * 4,
-      );
-    }
-    return data;
-  };
   const output = new Uint8Array(width * height * 4);
-  const count = pixelmatch(pad(baseline), pad(current), output, width, height, {
-    threshold: PIXEL_THRESHOLD,
-    diffMask: true,
-  });
+  const count = pixelmatch(
+    padToCanvas(baseline, width, height).data,
+    padToCanvas(current, width, height).data,
+    output,
+    width,
+    height,
+    { threshold: PIXELMATCH_THRESHOLD, diffMask: true },
+  );
   return { count, output, width };
 };
 
-const plainPixelDiff = (baseline: Image, current: Image): number =>
+const plainPixelDiff = (baseline: RgbaImage, current: RgbaImage): number =>
   plainPixelMatch(baseline, current).count;
 
 /** Pixels an aligned diff flags that a plain pixel diff, comparing in place, does not. */
-const flaggedOnlyWhenAligned = (baseline: Image, current: Image) => {
+const flaggedOnlyWhenAligned = (baseline: RgbaImage, current: RgbaImage) => {
   const diff = alignedDiff(baseline, current);
   const plain = plainPixelMatch(baseline, current);
   let count = 0;
@@ -124,7 +119,7 @@ declare module "vitest" {
 // Screenshots of a sample app page rendered by Chromium. Each scenario lists
 // the regions the diff must report, in reading order, and a box each lies within.
 const FIXTURES = join(import.meta.dirname, "fixtures/aligned");
-const load = (name: string): Image => {
+const load = (name: string): RgbaImage => {
   const png = PNG.sync.read(readFileSync(join(FIXTURES, `${name}.png`)));
   return { width: png.width, height: png.height, data: png.data };
 };
@@ -137,29 +132,29 @@ const MAIN_COLUMN = { x: 224, y: 56, width: 452, height: 800 };
 
 const expectedRegions: Record<string, ExpectedRegion[]> = {
   "insert-top-banner": [{ kind: "inserted", within: { x: 0, y: 0, width: 900, height: 46 } }],
-  "change-bottom-footer": [{ kind: "modified", within: { x: 0, y: 820, width: 900, height: 50 } }],
+  "change-bottom-footer": [{ kind: "changed", within: { x: 0, y: 820, width: 900, height: 50 } }],
   // The wider sidebar only pushed content sideways; the activity panel's text re-wrapped.
   "change-left-sidebar-wider": [
-    { kind: "modified", within: { x: 740, y: 56, width: 160, height: 120 } },
+    { kind: "changed", within: { x: 740, y: 56, width: 160, height: 120 } },
   ],
   "change-right-header-badge": [
-    { kind: "modified", within: { x: 700, y: 0, width: 200, height: 56 } },
+    { kind: "changed", within: { x: 700, y: 0, width: 200, height: 56 } },
   ],
   "change-right-panel-text": [
-    { kind: "modified", within: { x: 740, y: 56, width: 160, height: 120 } },
+    { kind: "changed", within: { x: 740, y: 56, width: 160, height: 120 } },
   ],
   "tall-inserted-section": [{ kind: "inserted", within: { ...MAIN_COLUMN, y: 240, height: 350 } }],
-  "wide-toolbar-color": [{ kind: "modified", within: { ...MAIN_COLUMN, y: 190, height: 60 } }],
-  "small-status-dot": [{ kind: "modified", within: { x: 230, y: 210, width: 20, height: 20 } }],
+  "wide-toolbar-color": [{ kind: "changed", within: { ...MAIN_COLUMN, y: 190, height: 60 } }],
+  "small-status-dot": [{ kind: "changed", within: { x: 230, y: 210, width: 20, height: 20 } }],
   "removed-cards-row": [{ kind: "deleted", within: { ...MAIN_COLUMN, y: 340, height: 40 } }],
   "card-color-change": Array.from({ length: 6 }, () => ({
-    kind: "modified" as const,
+    kind: "changed" as const,
     within: { ...MAIN_COLUMN, y: 260, height: 130 },
   })),
   "multiple-changes": [
     { kind: "inserted", within: { x: 0, y: 0, width: 900, height: 46 } },
-    { kind: "modified", within: { ...HEADER, y: 46 } },
-    { kind: "modified", within: { x: 0, y: 870, width: 900, height: 46 } },
+    { kind: "changed", within: { ...HEADER, y: 46 } },
+    { kind: "changed", within: { x: 0, y: 870, width: 900, height: 46 } },
   ],
 };
 
@@ -256,7 +251,7 @@ describe("alignedDiff", () => {
     expect(plainPixelDiff(baseline, current)).toBeGreaterThan(0);
     expect(diff.changedPixelCount).toBe(0);
     expect(kinds(diff.regions)).toContain("moved");
-    expect(kinds(diff.regions)).not.toContain("modified");
+    expect(kinds(diff.regions)).not.toContain("changed");
   });
 
   it("should report separate changes as separate regions", () => {
@@ -298,7 +293,7 @@ describe("alignedDiff", () => {
     const removed = renderDiff(alignedDiff(current, baseline));
     const inserted = renderDiff(alignedDiff(baseline, current));
 
-    const alphaAt = (image: Image, x: number, y: number) =>
+    const alphaAt = (image: RgbaImage, x: number, y: number) =>
       image.data[(y * image.width + x) * 4 + 3];
     expect(alphaAt(inserted, 100, 8)).toBe(90);
     expect(alphaAt(inserted, 100, 60)).toBe(0);
@@ -342,7 +337,7 @@ describe("alignedDiff", () => {
     // sentence splits into regions, so only where they sit is checked.
     const sentence = { ...MAIN_COLUMN, y: 160, height: 30 };
     const outsideSentence = diff.regions.filter(
-      (region) => region.kind !== "modified" || !contains(sentence, region.current),
+      (region) => region.kind !== "changed" || !contains(sentence, region.current),
     );
     expect(diff.regions).not.toEqual([]);
     expect(outsideSentence).toEqual([]);

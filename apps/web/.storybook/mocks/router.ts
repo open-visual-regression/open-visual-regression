@@ -211,7 +211,9 @@ export const serverClient: typeof RealServerClient = {
     runFlakyDetection: os.jobs.runFlakyDetection.handler(() => undefined).actionable(),
   },
   settings: {
-    getDiff: os.settings.getDiff.handler(() => ({ settings: DEFAULT_DIFF_SETTINGS })).actionable(),
-    updateDiff: os.settings.updateDiff.handler(() => undefined).actionable(),
+    getDiffSettings: os.settings.getDiffSettings
+      .handler(() => ({ settings: DEFAULT_DIFF_SETTINGS }))
+      .actionable(),
+    updateDiffSettings: os.settings.updateDiffSettings.handler(() => undefined).actionable(),
   },
 } as const;

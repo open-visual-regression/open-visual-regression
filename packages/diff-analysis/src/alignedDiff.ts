@@ -2,12 +2,10 @@ import pixelmatch from "pixelmatch";
 
 import { alignImages } from "./align";
 import { clustersOf } from "./clusters";
+import { padToCanvas, PIXELMATCH_THRESHOLD, type RgbaImage } from "./image";
 import { pairMoves } from "./moves";
 import { mergeRegions } from "./regions";
-import type { Image, Rect, Region } from "./types";
-
-/** The colour threshold OVR compares pixels with. */
-export const PIXEL_THRESHOLD = 0.1;
+import type { Rect, Region } from "./types";
 
 export type AlignedDiff = {
   width: number;
@@ -18,7 +16,7 @@ export type AlignedDiff = {
   plainChangedPixelCount: number;
   /** One byte per pixel of the current image: 1 where it changed. */
   mask: Uint8Array;
-  /** Each visual change, merged with its close neighbours, top to bottom. */
+  /** Each visual change, merged with its close neighbors, top to bottom. */
   regions: Region[];
 };
 
@@ -58,37 +56,28 @@ const maskBounds = (mask: Uint8Array, width: number, rect: Rect): Rect | null =>
   return right < 0 ? null : { x: left, y: top, width: right - left + 1, height: bottom - top + 1 };
 };
 
-const padTo = (image: Image, width: number, height: number): Uint8Array => {
-  if (image.width === width && image.height === height) {
-    return image.data;
-  }
-  const data = new Uint8Array(width * height * 4);
-  for (let row = 0; row < image.height; row++) {
-    data.set(
-      image.data.subarray(row * image.width * 4, (row + 1) * image.width * 4),
-      row * width * 4,
-    );
-  }
-  return data;
-};
-
-/** Screenshots of different widths can't be lined up, so they're compared in place. */
-const diffInPlace = (baseline: Image, current: Image): AlignedDiff => {
+/** Compares the two images pixel by pixel, top left aligned. */
+const diffPixels = (baseline: RgbaImage, current: RgbaImage) => {
   const width = Math.max(baseline.width, current.width);
   const height = Math.max(baseline.height, current.height);
   const output = new Uint8Array(width * height * 4);
-  pixelmatch(padTo(baseline, width, height), padTo(current, width, height), output, width, height, {
-    threshold: PIXEL_THRESHOLD,
-    diffMask: true,
-    diffColor: [255, 0, 0],
-  });
+  pixelmatch(
+    padToCanvas(baseline, width, height).data,
+    padToCanvas(current, width, height).data,
+    output,
+    width,
+    height,
+    { threshold: PIXELMATCH_THRESHOLD, diffMask: true, diffColor: [255, 0, 0] },
+  );
   const { mask, count } = masksFromOutput(output, new Uint8Array(width * height));
-  const regions = clustersOf(mask, new Uint8Array(mask.length), width, height).map(
-    ({ bounds }): Region => ({
-      kind: "modified",
-      current: bounds,
-      baseline: bounds,
-    }),
+  return { mask, count, width, height };
+};
+
+/** Screenshots of different widths can't be lined up, so they're compared in place. */
+const diffInPlace = (baseline: RgbaImage, current: RgbaImage): AlignedDiff => {
+  const { mask, count, width, height } = diffPixels(baseline, current);
+  const regions = clustersOf(mask, width, height).map(
+    (bounds): Region => ({ kind: "changed", current: bounds, baseline: bounds }),
   );
   return {
     width,
@@ -100,25 +89,12 @@ const diffInPlace = (baseline: Image, current: Image): AlignedDiff => {
   };
 };
 
-const plainMask = (baseline: Image, current: Image) => {
-  const width = Math.max(baseline.width, current.width);
-  const height = Math.max(baseline.height, current.height);
-  const output = new Uint8Array(width * height * 4);
-  pixelmatch(padTo(baseline, width, height), padTo(current, width, height), output, width, height, {
-    threshold: PIXEL_THRESHOLD,
-    diffMask: true,
-    diffColor: [255, 0, 0],
-  });
-  const { mask, count } = masksFromOutput(output, new Uint8Array(width * height));
-  return { mask, count, width };
-};
-
 /**
  * Diffs two screenshots after lining them up, so content pushed down by a
  * new banner, or sideways by a wider sidebar, is not reported as changed.
  * Coordinates are in the current image.
  */
-export const alignedDiff = (baseline: Image, current: Image): AlignedDiff => {
+export const alignedDiff = (baseline: RgbaImage, current: RgbaImage): AlignedDiff => {
   if (baseline.width !== current.width) {
     return diffInPlace(baseline, current);
   }
@@ -128,7 +104,7 @@ export const alignedDiff = (baseline: Image, current: Image): AlignedDiff => {
 
   const output = new Uint8Array(aligned.length);
   pixelmatch(aligned, current.data, output, width, height, {
-    threshold: PIXEL_THRESHOLD,
+    threshold: PIXELMATCH_THRESHOLD,
     diffMask: true,
     diffColor: [255, 0, 0],
   });
@@ -140,8 +116,8 @@ export const alignedDiff = (baseline: Image, current: Image): AlignedDiff => {
     changed: number,
     plainCount: number,
   ): AlignedDiff => {
-    const modified = clustersOf(outsideInsertions, inserted, width, height).map(
-      ({ bounds }): Region => ({ kind: "modified", current: bounds, baseline: bounds }),
+    const changedRegions = clustersOf(outsideInsertions, width, height).map(
+      (bounds): Region => ({ kind: "changed", current: bounds, baseline: bounds }),
     );
     // An insertion's content is what differs from the lines it was filled with.
     const added = insertions.flatMap((rect) => {
@@ -181,7 +157,7 @@ export const alignedDiff = (baseline: Image, current: Image): AlignedDiff => {
     }
 
     let regions = [
-      ...mergeRegions([...modified, ...moves.inserted, ...moves.deleted]),
+      ...mergeRegions([...changedRegions, ...moves.inserted, ...moves.deleted]),
       ...moves.moved,
     ].sort((a, b) => a.current.y - b.current.y || a.current.x - b.current.x);
     // The plain comparison failed but every difference was blank space that
@@ -215,7 +191,7 @@ export const alignedDiff = (baseline: Image, current: Image): AlignedDiff => {
   // A pixel that looks the same at the same spot in both images hasn't visibly
   // changed, however the alignment paired it up, so it only counts as changed
   // when the plain comparison agrees.
-  const plain = plainMask(baseline, current);
+  const plain = diffPixels(baseline, current);
   const mask = new Uint8Array(lined.mask.length);
   const outsideInsertions = new Uint8Array(lined.mask.length);
   let count = 0;

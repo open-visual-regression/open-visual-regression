@@ -1,17 +1,20 @@
 "use server";
 
-import { getDiffSettings, saveDiffSettings } from "@ovr/reviews/diffSettings";
+import {
+  getDiffSettings as getStoredDiffSettings,
+  saveDiffSettings,
+} from "@ovr/builds/diffSettings";
 
 import { adminMiddleware, authenticatedMiddleware } from "./middleware";
 import { os } from "./os";
 
-export const getDiff = os.settings.getDiff
+export const getDiffSettings = os.settings.getDiffSettings
   .use(authenticatedMiddleware)
   .use(adminMiddleware)
-  .handler(async () => ({ settings: await getDiffSettings() }))
+  .handler(async () => ({ settings: await getStoredDiffSettings() }))
   .actionable();
 
-export const updateDiff = os.settings.updateDiff
+export const updateDiffSettings = os.settings.updateDiffSettings
   .use(authenticatedMiddleware)
   .use(adminMiddleware)
   .handler(({ input, context }) => saveDiffSettings(input, context.user.id))

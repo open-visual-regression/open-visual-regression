@@ -4,7 +4,7 @@
 "@ovr/api": patch
 "@ovr/capture": patch
 "@ovr/db": patch
-"@ovr/reviews": patch
+"@ovr/builds": patch
 ---
 
 Admins can choose how diff images mark changes under **Settings → Builds**. Pick **exact** to mark every pixel that changed, as before. A migration adds the `settings` table.

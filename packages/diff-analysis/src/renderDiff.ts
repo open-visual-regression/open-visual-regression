@@ -1,5 +1,6 @@
 import type { AlignedDiff } from "./alignedDiff";
-import type { Image, Rect } from "./types";
+import type { RgbaImage } from "./image";
+import type { Rect } from "./types";
 
 type Rgba = [number, number, number, number];
 
@@ -8,13 +9,15 @@ const INSERTED: Rgba = [60, 200, 90, 90];
 const INSERTED_EDGE: Rgba = [60, 200, 90, 255];
 const DELETED: Rgba = [220, 0, 220, 255];
 const MOVED: Rgba = [60, 140, 255, 255];
+const OUTLINE_WIDTH = 2;
+const DELETED_LINE_WIDTH = 3;
 
 /**
  * Draws a diff as a transparent overlay for the current image: red for changed
  * pixels, green for inserted content, blue around moved content, and a magenta
  * line where content was removed.
  */
-export const renderDiff = (diff: AlignedDiff): Image => {
+export const renderDiff = (diff: AlignedDiff): RgbaImage => {
   const { width, height } = diff;
   const data = new Uint8Array(width * height * 4);
 
@@ -32,10 +35,11 @@ export const renderDiff = (diff: AlignedDiff): Image => {
 
   const outline = (rect: Rect, color: Rgba) => {
     const { x, y, width: w, height: h } = rect;
-    paintRect({ x: x - 2, y: y - 2, width: w + 4, height: 2 }, color);
-    paintRect({ x: x - 2, y: y + h, width: w + 4, height: 2 }, color);
-    paintRect({ x: x - 2, y, width: 2, height: h }, color);
-    paintRect({ x: x + w, y, width: 2, height: h }, color);
+    const edge = OUTLINE_WIDTH;
+    paintRect({ x: x - edge, y: y - edge, width: w + edge * 2, height: edge }, color);
+    paintRect({ x: x - edge, y: y + h, width: w + edge * 2, height: edge }, color);
+    paintRect({ x: x - edge, y, width: edge, height: h }, color);
+    paintRect({ x: x + w, y, width: edge, height: h }, color);
   };
 
   const inserted = new Uint8Array(width * height);
@@ -58,12 +62,23 @@ export const renderDiff = (diff: AlignedDiff): Image => {
   for (const { current: rect } of diff.regions.filter((region) => region.kind === "moved")) {
     outline(rect, MOVED);
   }
-  // Removed content has no area in the current image, so it's drawn as a 3px line.
+  // Removed content has no area in the current image, so it's drawn as a line centered on it.
+  const half = Math.floor(DELETED_LINE_WIDTH / 2);
   for (const { current: line } of diff.regions.filter((region) => region.kind === "deleted")) {
     paintRect(
       line.height === 0
-        ? { x: line.x, y: line.y - 1, width: Math.max(line.width, 1), height: 3 }
-        : { x: line.x - 1, y: line.y, width: 3, height: Math.max(line.height, 1) },
+        ? {
+            x: line.x,
+            y: line.y - half,
+            width: Math.max(line.width, 1),
+            height: DELETED_LINE_WIDTH,
+          }
+        : {
+            x: line.x - half,
+            y: line.y,
+            width: DELETED_LINE_WIDTH,
+            height: Math.max(line.height, 1),
+          },
       DELETED,
     );
   }

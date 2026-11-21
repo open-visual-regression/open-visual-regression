@@ -17,7 +17,7 @@ vi.mock("@/lib/auth/auth");
 vi.mock("@/lib/router");
 
 const mockGetSession = vi.mocked(auth.api.getSession);
-const mockGetDiff = vi.mocked(serverClient.settings.getDiff);
+const mockGetDiffSettings = vi.mocked(serverClient.settings.getDiffSettings);
 const mockNotFound = vi.mocked(notFound);
 
 describe("SettingsBuildsPage", () => {
@@ -26,7 +26,7 @@ describe("SettingsBuildsPage", () => {
       user: mocks.user.generateAuthUser({ role: "admin" }),
       session: mocks.session.generateSession(),
     });
-    mockGetDiff.mockResolvedValue([null, { settings: { algorithm: "exact" } }]);
+    mockGetDiffSettings.mockResolvedValue([null, { settings: { highlight: "exact" } }]);
 
     render(await SettingsBuildsPage());
 
@@ -51,7 +51,7 @@ describe("SettingsBuildsPage", () => {
       user: mocks.user.generateAuthUser({ role: "admin" }),
       session: mocks.session.generateSession(),
     });
-    mockGetDiff.mockResolvedValue([createORPCError("INTERNAL_SERVER_ERROR"), undefined]);
+    mockGetDiffSettings.mockResolvedValue([createORPCError("INTERNAL_SERVER_ERROR"), undefined]);
 
     await expect(SettingsBuildsPage()).rejects.toThrow();
   });

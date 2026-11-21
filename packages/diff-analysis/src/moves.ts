@@ -1,10 +1,11 @@
+import type { RgbaImage } from "./image";
 import { pixelWords } from "./pixels";
-import type { Image, Rect, Region } from "./types";
+import type { Rect, Region } from "./types";
 
 // Content that moved may land a pixel or two off from where its box was measured.
-const SLACK = 2;
+const MAX_OFFSET = 2;
 // Share of pixels that must be identical for two boxes to hold the same content.
-const MIN_SAME = 0.97;
+const MIN_SAME_SHARE = 0.97;
 // Smaller boxes, like a single letter or a thin line of a dotted background,
 // look the same as plenty of other boxes, so they're never called a move.
 const MIN_SIDE = 8;
@@ -14,14 +15,14 @@ const MIN_AREA = 256;
 const MAX_AREA = 160_000;
 
 /** Whether two same-size boxes hold the same pixels, allowing a small offset. */
-const sameContent = (current: Image, from: Rect, baseline: Image, to: Rect): boolean => {
+const sameContent = (current: RgbaImage, from: Rect, baseline: RgbaImage, to: Rect): boolean => {
   const currentWords = pixelWords(current);
   const baselineWords = pixelWords(baseline);
   const width = Math.min(from.width, to.width);
   const height = Math.min(from.height, to.height);
-  const needed = width * height * MIN_SAME;
-  for (let dy = -SLACK; dy <= SLACK; dy++) {
-    for (let dx = -SLACK; dx <= SLACK; dx++) {
+  const needed = width * height * MIN_SAME_SHARE;
+  for (let dy = -MAX_OFFSET; dy <= MAX_OFFSET; dy++) {
+    for (let dx = -MAX_OFFSET; dx <= MAX_OFFSET; dx++) {
       const x0 = to.x + dx;
       const y0 = to.y + dy;
       if (x0 < 0 || y0 < 0 || x0 + width > baseline.width || y0 + height > baseline.height) {
@@ -44,7 +45,7 @@ const sameContent = (current: Image, from: Rect, baseline: Image, to: Rect): boo
 };
 
 const similarSize = (a: Rect, b: Rect) =>
-  Math.abs(a.width - b.width) <= SLACK * 2 && Math.abs(a.height - b.height) <= SLACK * 2;
+  Math.abs(a.width - b.width) <= MAX_OFFSET * 2 && Math.abs(a.height - b.height) <= MAX_OFFSET * 2;
 
 /**
  * Pairs content that appeared in one place with identical content that
@@ -52,9 +53,9 @@ const similarSize = (a: Rect, b: Rect) =>
  * each pair as one move instead of an insertion and a deletion.
  */
 export const pairMoves = (
-  baseline: Image,
-  current: Image,
-  insertions: Array<{ region: Region; content: Rect }>,
+  baseline: RgbaImage,
+  current: RgbaImage,
+  insertions: { region: Region; content: Rect }[],
   deletions: Region[],
 ): { moved: Region[]; inserted: Region[]; deleted: Region[] } => {
   const used = new Set<Region>();
