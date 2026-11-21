@@ -636,6 +636,9 @@ importers:
       '@ovr/db':
         specifier: workspace:*
         version: link:../db
+      '@ovr/image-diff':
+        specifier: workspace:*
+        version: link:../image-diff
       '@ovr/logger':
         specifier: workspace:*
         version: link:../logger

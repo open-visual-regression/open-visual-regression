@@ -12,7 +12,7 @@ const diff = alignedDiff(baseline, current);
 diff.changedPixelCount; // pixels that really changed
 diff.regions; // [{ kind: "inserted" | "deleted" | "modified" | "moved", current, baseline }]
 diff.plainChangedPixelCount; // what a plain pixel diff counts, for pass or fail
-const image = renderDiff(current, diff); // red for changes, green for insertions
+const overlay = renderDiff(diff); // transparent overlay to draw over the current image
 ```
 
 ## How it works
