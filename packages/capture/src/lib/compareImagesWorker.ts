@@ -2,8 +2,8 @@ import pixelmatch from "pixelmatch";
 import sharp from "sharp";
 
 import type { DiffAlgorithm } from "@ovr/api/contracts/settings";
-import { alignedDiff, type AlignedDiff } from "@ovr/image-diff/alignedDiff";
-import { renderDiff } from "@ovr/image-diff/renderDiff";
+import { alignedDiff, type AlignedDiff } from "@ovr/diff-analysis/alignedDiff";
+import { renderDiff } from "@ovr/diff-analysis/renderDiff";
 
 const PIXELMATCH_THRESHOLD = 0.1;
 

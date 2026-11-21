@@ -15,7 +15,7 @@ export default defineConfig((options) => ({
     "../../packages/capture/src",
     "../../packages/capture-browser/src",
     "../../packages/db/src",
-    "../../packages/image-diff/src",
+    "../../packages/diff-analysis/src",
     "../../packages/queue/src",
     "../../packages/reviews/src",
     "../../packages/storage/src",

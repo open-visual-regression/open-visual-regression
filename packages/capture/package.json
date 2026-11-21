@@ -18,7 +18,7 @@
     "@ovr/builds": "workspace:*",
     "@ovr/capture-browser": "workspace:*",
     "@ovr/db": "workspace:*",
-    "@ovr/image-diff": "workspace:*",
+    "@ovr/diff-analysis": "workspace:*",
     "@ovr/logger": "workspace:*",
     "@ovr/metrics": "workspace:*",
     "@ovr/queue": "workspace:*",
