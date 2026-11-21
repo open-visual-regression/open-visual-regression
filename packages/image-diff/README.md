@@ -10,8 +10,9 @@ import { renderDiff } from "@ovr/image-diff/renderDiff";
 
 const diff = alignedDiff(baseline, current);
 diff.changedPixelCount; // pixels that really changed
-diff.regions; // [{ kind: "inserted" | "deleted" | "modified", current, baseline }]
-const overlay = renderDiff(diff); // transparent overlay: red changes, green insertions
+diff.regions; // [{ kind: "inserted" | "deleted" | "modified" | "moved", current, baseline }]
+diff.plainChangedPixelCount; // what a plain pixel diff counts, for pass or fail
+const overlay = renderDiff(diff); // transparent overlay to draw over the current image
 ```
 
 ## How it works
@@ -32,6 +33,13 @@ Inserted lines are filled from the baseline line next to them, so blank space
 that only grew compares equal. One pixelmatch pass then compares the
 rearranged baseline with the current image, so the cost stays close to a plain
 pixel diff whatever changed.
+
+A pixel only counts as changed when it also differs from the pixel at the same
+spot in the baseline, so a misaligned stretch never flags more than a plain
+pixel diff would. Content that appeared in one place and identical content that
+disappeared from another, like two buttons that swapped, is reported as one
+move. Blank space that grew isn't counted, but when that's the only difference
+it's still shown as inserted, so a failing snapshot always shows something.
 
 ## Limits
 

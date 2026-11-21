@@ -2,6 +2,7 @@ import pixelmatch from "pixelmatch";
 
 import { alignImages } from "./align";
 import { clustersOf } from "./clusters";
+import { pairMoves } from "./moves";
 import { mergeRegions } from "./regions";
 import type { Image, Rect, Region } from "./types";
 
@@ -13,6 +14,8 @@ export type AlignedDiff = {
   height: number;
   /** Pixels of the current image that changed, not counting content that only moved. */
   changedPixelCount: number;
+  /** Pixels a plain position-by-position pixelmatch counts as changed. */
+  plainChangedPixelCount: number;
   /** One byte per pixel of the current image: 1 where it changed. */
   mask: Uint8Array;
   /** Each visual change, merged with its close neighbours, top to bottom. */
@@ -98,10 +101,25 @@ const diffInPlace = (baseline: Image, current: Image): AlignedDiff => {
     width,
     height,
     changedPixelCount: count,
+    plainChangedPixelCount: count,
     mask,
     regions: mergeRegions(regions),
     shifted: false,
   };
+};
+
+/** A plain pixelmatch of the two images, padded to the same size, as one byte per pixel. */
+const plainMask = (baseline: Image, current: Image) => {
+  const width = Math.max(baseline.width, current.width);
+  const height = Math.max(baseline.height, current.height);
+  const output = new Uint8Array(width * height * 4);
+  pixelmatch(padTo(baseline, width, height), padTo(current, width, height), output, width, height, {
+    threshold: PIXEL_THRESHOLD,
+    diffMask: true,
+    diffColor: [255, 0, 0],
+  });
+  const { mask, count } = masksFromOutput(output, new Uint8Array(width * height));
+  return { mask, count, width };
 };
 
 /**
@@ -120,49 +138,117 @@ export const alignedDiff = (baseline: Image, current: Image): AlignedDiff => {
 
   const { width, height } = current;
   const { aligned, inserted, insertions, deletions, shifted } = alignImages(baseline, current);
+
   const output = new Uint8Array(aligned.length);
   pixelmatch(aligned, current.data, output, width, height, {
     threshold: PIXEL_THRESHOLD,
     diffMask: true,
     diffColor: [255, 0, 0],
   });
-  const { mask, outsideInsertions, count } = masksFromOutput(output, inserted);
+  const lined = masksFromOutput(output, inserted);
 
-  // Changes outside inserted content are grouped by where they sit.
-  const modified = clustersOf(outsideInsertions, inserted, width, height).map(
-    ({ bounds }): Region => ({
-      kind: "modified",
-      current: bounds,
-      baseline: bounds,
-    }),
-  );
-  // Each insertion is one region, trimmed to the pixels in it that differ.
-  const added = insertions.flatMap((rect): Region[] => {
-    const bounds = maskBounds(mask, width, rect);
-    return bounds
-      ? [
-          {
-            kind: "inserted",
-            current: bounds,
-            baseline: { ...bounds, height: 0 },
-          },
-        ]
-      : [];
-  });
-  const removals = deletions.map(
-    ({ current: line, baseline: rect }): Region => ({
-      kind: "deleted",
-      current: line,
-      baseline: rect,
-    }),
-  );
+  const withRegions = (
+    mask: Uint8Array,
+    outsideInsertions: Uint8Array,
+    changed: number,
+    plainCount: number,
+  ): AlignedDiff => {
+    // Changes outside inserted content are grouped by where they sit.
+    const modified = clustersOf(outsideInsertions, inserted, width, height).map(
+      ({ bounds }): Region => ({ kind: "modified", current: bounds, baseline: bounds }),
+    );
+    // Each insertion is one region, trimmed to the pixels in it that differ.
+    // Its content is the part that differs from the lines it was filled with.
+    const added = insertions.flatMap((rect) => {
+      const bounds = maskBounds(mask, width, rect);
+      const content = maskBounds(lined.mask, width, rect);
+      return bounds && content
+        ? [
+            {
+              region: {
+                kind: "inserted",
+                current: bounds,
+                baseline: { ...bounds, height: 0 },
+              } as Region,
+              content,
+            },
+          ]
+        : [];
+    });
+    const removals = deletions.map(
+      ({ current: line, baseline: rect }): Region => ({
+        kind: "deleted",
+        current: line,
+        baseline: rect,
+      }),
+    );
+    const moves = pairMoves(baseline, current, added, removals);
 
-  return {
-    width,
-    height,
-    changedPixelCount: count,
-    mask,
-    regions: mergeRegions([...modified, ...added, ...removals]),
-    shifted,
+    // Content that only moved isn't a change, so its pixels leave the mask.
+    let count = changed;
+    for (const { current: rect } of moves.moved) {
+      for (let y = rect.y; y < rect.y + rect.height; y++) {
+        for (let x = rect.x; x < rect.x + rect.width; x++) {
+          count -= mask[y * width + x] ?? 0;
+          mask[y * width + x] = 0;
+        }
+      }
+    }
+
+    let regions = [
+      ...mergeRegions([...modified, ...moves.inserted, ...moves.deleted]),
+      ...moves.moved,
+    ].sort((a, b) => a.current.y - b.current.y || a.current.x - b.current.x);
+    // The plain comparison failed but every difference was blank space that
+    // grew, so that space is shown as inserted rather than showing nothing.
+    if (regions.length === 0 && plainCount > 0) {
+      regions = insertions.map(
+        (rect): Region => ({
+          kind: "inserted",
+          current: rect,
+          baseline: { ...rect, height: 0 },
+        }),
+      );
+      if (regions.length === 0) {
+        return { ...diffInPlace(baseline, current), shifted };
+      }
+    }
+
+    return {
+      width,
+      height,
+      changedPixelCount: count,
+      plainChangedPixelCount: plainCount,
+      mask,
+      regions,
+      shifted,
+    };
   };
+  if (!shifted) {
+    return withRegions(lined.mask, lined.outsideInsertions, lined.count, lined.count);
+  }
+
+  // A pixel that looks the same at the same spot in both images hasn't visibly
+  // changed, however the alignment paired it up, so it only counts as changed
+  // when the plain comparison agrees.
+  const plain = plainMask(baseline, current);
+  const mask = new Uint8Array(lined.mask.length);
+  const outsideInsertions = new Uint8Array(lined.mask.length);
+  let count = 0;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const pixel = y * width + x;
+      if (lined.mask[pixel] && plain.mask[y * plain.width + x]) {
+        mask[pixel] = 1;
+        outsideInsertions[pixel] = inserted[pixel] ? 0 : 1;
+        count++;
+      }
+    }
+  }
+  // When both found changes but no pixel in common, neither explanation holds
+  // up on its own, so the plain comparison is shown as it is.
+  if (count === 0 && lined.count > 0) {
+    return { ...diffInPlace(baseline, current), shifted };
+  }
+  return withRegions(mask, outsideInsertions, count, plain.count);
 };

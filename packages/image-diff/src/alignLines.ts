@@ -176,6 +176,40 @@ const matchAround = (baseline: Float64Array, current: Float64Array, anchors: Mat
 };
 
 /**
+ * Lines inserted into, or removed from, a run of identical lines (blank space,
+ * say) could sit anywhere in that run. Each one-sided gap is slid to the end
+ * of its run, as `git diff` does, so space that grew shows up where it was
+ * added, like the edge of a sidebar that got wider.
+ */
+const slideGaps = (gaps: LineSpan[], baseline: Float64Array, current: Float64Array): LineSpan[] =>
+  gaps.map((gap, index) => {
+    const inserted = gap.baselineStart === gap.baselineEnd;
+    if (!inserted && gap.currentStart !== gap.currentEnd) {
+      return gap;
+    }
+    const next = gaps[index + 1];
+    const baselineLimit = next ? next.baselineStart : baseline.length;
+    const currentLimit = next ? next.currentStart : current.length;
+    const lines = inserted ? current : baseline;
+    const start = inserted ? gap.currentStart : gap.baselineStart;
+    const end = inserted ? gap.currentEnd : gap.baselineEnd;
+    let shift = 0;
+    while (
+      gap.baselineEnd + shift < baselineLimit &&
+      gap.currentEnd + shift < currentLimit &&
+      lines[start + shift] === lines[end + shift]
+    ) {
+      shift++;
+    }
+    return {
+      baselineStart: gap.baselineStart + shift,
+      baselineEnd: gap.baselineEnd + shift,
+      currentStart: gap.currentStart + shift,
+      currentEnd: gap.currentEnd + shift,
+    };
+  });
+
+/**
  * Aligns two lists of line hashes so lines that only moved still match, and
  * returns the unmatched gaps between them. Unique lines anchor the alignment
  * and a Myers diff (the algorithm behind `git diff`) fills in between.
@@ -204,6 +238,6 @@ export const alignLines = (baseline: Float64Array, current: Float64Array): LineA
 
   return {
     matchedCount: matches.reduce((sum, match) => sum + match.length, 0),
-    gaps,
+    gaps: slideGaps(gaps, baseline, current),
   };
 };

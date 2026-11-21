@@ -51,18 +51,36 @@ describe("compareImages", async () => {
     const result = await compareImages({ capture, baseline, withDiffImage: true });
 
     expect(result.pixelDiffCount).toBeGreaterThan(0);
-    expect(alphaAt(result.diffImage, 60, 8)).toBe(255);
+    expect(alphaAt(result.diffImage, 60, 8)).toBe(90);
     expect(alphaAt(result.diffImage, 50, 55)).toBe(0);
   });
 
-  it("should fall back to the plain pixel mask when only blank space moved", async () => {
+  it("should wash the added space, not the content it pushed down, when only blank space grew", async () => {
     const baseline = drawPng(80, PAGE);
     const capture = drawPng(100, shiftedDown(PAGE, 20));
 
     const result = await compareImages({ capture, baseline, withDiffImage: true });
 
     expect(result.pixelDiffCount).toBeGreaterThan(0);
-    expect(alphaAt(result.diffImage, 50, 55)).toBe(255);
+    expect(alphaAt(result.diffImage, 50, 20)).toBe(90);
+    expect(alphaAt(result.diffImage, 50, 55)).toBe(0);
+  });
+
+  it("should outline a button that moved instead of painting it", async () => {
+    const button = { y: 20, width: 30, height: 14 };
+    const baseline = drawPng(60, [
+      { ...button, x: 10, color: 0x202020ff },
+      { ...button, x: 50, color: 0x2563ebff },
+    ]);
+    const capture = drawPng(60, [
+      { ...button, x: 10, color: 0x2563ebff },
+      { ...button, x: 50, color: 0x202020ff },
+    ]);
+
+    const result = await compareImages({ capture, baseline, withDiffImage: true });
+
+    expect(result.pixelDiffCount).toBeGreaterThan(0);
+    expect(alphaAt(result.diffImage, 25, 27)).toBe(0);
   });
 
   it.each([
