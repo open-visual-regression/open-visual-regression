@@ -28,7 +28,7 @@ describe("DiffSettingsForm", () => {
     renderComponent("smart");
 
     expect(screen.getByRole("combobox", { name: /highlight/i })).toHaveTextContent("smart");
-    expect(screen.getByText("marks what changed, not what moved")).toBeVisible();
+    expect(screen.getByText("highlights only the content that has changed")).toBeVisible();
   });
 
   it("should save the chosen highlight and disable the button while saving", async ({ user }) => {
