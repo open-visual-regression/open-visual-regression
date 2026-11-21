@@ -1,5 +1,21 @@
 # @ovr/web
 
+## 0.25.2
+
+### Patch Changes
+
+- [#611](https://github.com/open-visual-regression/open-visual-regression/pull/611) [`a65ec49`](https://github.com/open-visual-regression/open-visual-regression/commit/a65ec495525e2a33f06a0034e693b5924a3e1a49) Thanks [@tgfischer](https://github.com/tgfischer)! - The project filter on the builds page now comes last, after status, branch, author, and commit.
+
+- [#609](https://github.com/open-visual-regression/open-visual-regression/pull/609) [`a595146`](https://github.com/open-visual-regression/open-visual-regression/commit/a5951469d4cba901ffe86b3ba663c242c9d51ee4) Thanks [@tgfischer](https://github.com/tgfischer)! - Checking whether a build has finished, and loading the build and snapshot pages, no longer scan every diff ever recorded, so the web UI stays responsive while many workers run large builds.
+
+- [#610](https://github.com/open-visual-regression/open-visual-regression/pull/610) [`be61ded`](https://github.com/open-visual-regression/open-visual-regression/commit/be61ded19fa7cc5fd6f05bf80212119a632900e7) Thanks [@tgfischer](https://github.com/tgfischer)! - Snapshot panes on the snapshot page now fill the page height while their images load, instead of starting short and jumping taller once the images arrive.
+- Updated dependencies [[`a595146`](https://github.com/open-visual-regression/open-visual-regression/commit/a5951469d4cba901ffe86b3ba663c242c9d51ee4), [`822d673`](https://github.com/open-visual-regression/open-visual-regression/commit/822d673580a88151e869b38dc22106bc41147e1f)]:
+  - @ovr/db@0.4.15
+  - @ovr/builds@0.2.19
+  - @ovr/git-status@0.1.28
+  - @ovr/queue@0.4.5
+  - @ovr/reviews@0.1.34
+
 ## 0.25.1
 
 ### Patch Changes
