@@ -40,13 +40,13 @@ describe("compareImages", async () => {
       capture: image,
       baseline: image,
       withDiffImage: true,
-      diffAlgorithm: "aligned",
+      diffAlgorithm: "smart",
     });
 
     expect(result).toEqual({ pixelDiffCount: 0, diffPercent: 0, diffImage: null });
   });
 
-  it("should mark the content an inserted banner pushed down with the pixel algorithm", async () => {
+  it("should mark the content an inserted banner pushed down with the exact algorithm", async () => {
     const baseline = drawPng(80, PAGE);
     const capture = drawPng(100, [
       { x: 0, y: 0, width: WIDTH, height: 16, color: 0xdc2626ff },
@@ -57,7 +57,7 @@ describe("compareImages", async () => {
       capture,
       baseline,
       withDiffImage: true,
-      diffAlgorithm: "pixel",
+      diffAlgorithm: "exact",
     });
 
     expect(alphaAt(result.diffImage, 60, 8)).toBe(255);
@@ -75,7 +75,7 @@ describe("compareImages", async () => {
       capture,
       baseline,
       withDiffImage: true,
-      diffAlgorithm: "aligned",
+      diffAlgorithm: "smart",
     });
 
     expect(result.pixelDiffCount).toBeGreaterThan(0);
@@ -91,7 +91,7 @@ describe("compareImages", async () => {
       capture,
       baseline,
       withDiffImage: true,
-      diffAlgorithm: "aligned",
+      diffAlgorithm: "smart",
     });
 
     expect(result.pixelDiffCount).toBeGreaterThan(0);
@@ -114,7 +114,7 @@ describe("compareImages", async () => {
       capture,
       baseline,
       withDiffImage: true,
-      diffAlgorithm: "aligned",
+      diffAlgorithm: "smart",
     });
 
     expect(result.pixelDiffCount).toBeGreaterThan(0);
@@ -134,13 +134,13 @@ describe("compareImages", async () => {
       capture,
       baseline,
       withDiffImage: true,
-      diffAlgorithm: "aligned",
+      diffAlgorithm: "smart",
     });
     const withoutImage = await compareImages({
       capture,
       baseline,
       withDiffImage: false,
-      diffAlgorithm: "aligned",
+      diffAlgorithm: "smart",
     });
 
     expect(withImage.pixelDiffCount).toBeGreaterThan(0);
@@ -155,7 +155,7 @@ describe("compareImages", async () => {
       capture,
       baseline,
       withDiffImage: true,
-      diffAlgorithm: "aligned",
+      diffAlgorithm: "smart",
     });
 
     expect(result.pixelDiffCount).toBe(0);
@@ -169,7 +169,7 @@ describe("compareImages", async () => {
       capture,
       baseline,
       withDiffImage: true,
-      diffAlgorithm: "aligned",
+      diffAlgorithm: "smart",
     });
 
     expect(result.pixelDiffCount).toBe(WIDTH * 20);
@@ -183,7 +183,7 @@ describe("compareImages", async () => {
       capture,
       baseline,
       withDiffImage: false,
-      diffAlgorithm: "aligned",
+      diffAlgorithm: "smart",
     });
 
     expect(result.diffImage).toBeNull();

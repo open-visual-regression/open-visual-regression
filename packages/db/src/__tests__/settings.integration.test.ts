@@ -9,13 +9,13 @@ describe("settings", () => {
   test("should store a setting and who saved it", async ({ user }) => {
     await dbClient.settings.upsert({
       key: "diff",
-      value: { algorithm: "pixel" },
+      value: { algorithm: "exact" },
       updatedBy: user.id,
     });
 
     expect(await dbClient.settings.find("diff")).toMatchObject({
       key: "diff",
-      value: { algorithm: "pixel" },
+      value: { algorithm: "exact" },
       updatedBy: user.id,
     });
   });
@@ -23,16 +23,16 @@ describe("settings", () => {
   test("should replace a setting when it is saved again", async ({ user }) => {
     await dbClient.settings.upsert({
       key: "diff",
-      value: { algorithm: "pixel" },
+      value: { algorithm: "exact" },
       updatedBy: user.id,
     });
 
     await dbClient.settings.upsert({
       key: "diff",
-      value: { algorithm: "aligned" },
+      value: { algorithm: "smart" },
       updatedBy: user.id,
     });
 
-    expect((await dbClient.settings.find("diff"))?.value).toEqual({ algorithm: "aligned" });
+    expect((await dbClient.settings.find("diff"))?.value).toEqual({ algorithm: "smart" });
   });
 });

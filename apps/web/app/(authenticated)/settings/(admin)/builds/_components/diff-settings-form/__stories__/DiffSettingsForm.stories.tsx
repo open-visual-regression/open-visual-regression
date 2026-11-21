@@ -16,10 +16,6 @@ const meta: Meta<typeof DiffSettingsForm> = {
 export default meta;
 type Story = StoryObj<typeof DiffSettingsForm>;
 
-export const Aligned: Story = {
-  args: { settings: { algorithm: "aligned" } },
-};
-
-export const PixelByPixel: Story = {
-  args: { settings: { algorithm: "pixel" } },
+export const Default: Story = {
+  args: { settings: { algorithm: "smart" } },
 };

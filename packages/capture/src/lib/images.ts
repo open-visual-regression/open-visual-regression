@@ -40,7 +40,7 @@ export const compareImages = async (
   baselinePath: string,
   {
     withDiffImage = false,
-    diffAlgorithm = "aligned",
+    diffAlgorithm = "smart",
   }: { withDiffImage?: boolean; diffAlgorithm?: DiffAlgorithm } = {},
 ): Promise<ImageComparison> => {
   const readStart = performance.now();

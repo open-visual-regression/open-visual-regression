@@ -95,8 +95,7 @@ const compareImages = async ({
   if (!withDiffImage) {
     return result(plainDiff(baselinePixels, capturePixels).count, width, height, null);
   }
-  // "pixel" marks every pixel that differs from the one in the same place.
-  if (diffAlgorithm === "pixel") {
+  if (diffAlgorithm === "exact") {
     const plain = plainDiff(baselinePixels, capturePixels);
     const image = plain.count > 0 ? await encodePng(plain.mask, plain.width, plain.height) : null;
     return result(plain.count, width, height, image);

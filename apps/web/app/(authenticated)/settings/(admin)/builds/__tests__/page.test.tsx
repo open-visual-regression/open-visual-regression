@@ -26,7 +26,7 @@ describe("SettingsBuildsPage", () => {
       user: mocks.user.generateAuthUser({ role: "admin" }),
       session: mocks.session.generateSession(),
     });
-    mockGetDiff.mockResolvedValue([null, { settings: { algorithm: "pixel" } }]);
+    mockGetDiff.mockResolvedValue([null, { settings: { algorithm: "exact" } }]);
 
     render(await SettingsBuildsPage());
 

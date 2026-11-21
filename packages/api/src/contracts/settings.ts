@@ -1,12 +1,7 @@
 import { oc } from "@orpc/contract";
 import { z } from "zod";
 
-/**
- * How diff images are drawn. "aligned" lines the screenshots up first, so
- * content that only moved isn't marked; "pixel" compares each pixel with the
- * one at the same position.
- */
-export const diffAlgorithmSchema = z.enum(["aligned", "pixel"]);
+export const diffAlgorithmSchema = z.enum(["smart", "exact"]);
 
 export type DiffAlgorithm = z.infer<typeof diffAlgorithmSchema>;
 
@@ -17,10 +12,10 @@ export const diffSettingsSchema = z.object({
 export type DiffSettings = z.infer<typeof diffSettingsSchema>;
 
 export const DEFAULT_DIFF_SETTINGS: DiffSettings = {
-  algorithm: "aligned",
+  algorithm: "smart",
 };
 
-/** Reads stored diff settings, falling back to the defaults for anything missing or invalid. */
+/** Falls back to the defaults for anything missing or invalid. */
 export const storedDiffSettingsSchema = z
   .object({
     algorithm: diffAlgorithmSchema.catch(DEFAULT_DIFF_SETTINGS.algorithm),

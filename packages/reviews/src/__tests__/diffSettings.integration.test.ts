@@ -10,9 +10,9 @@ describe("diffSettings", () => {
   });
 
   test("should return the diff settings that were saved", async ({ reviewer }) => {
-    await saveDiffSettings({ algorithm: "pixel" }, reviewer.id);
+    await saveDiffSettings({ algorithm: "exact" }, reviewer.id);
 
-    expect(await getDiffSettings()).toEqual({ algorithm: "pixel" });
+    expect(await getDiffSettings()).toEqual({ algorithm: "exact" });
   });
 
   test("should fall back to the default algorithm when the stored one is unknown", async ({

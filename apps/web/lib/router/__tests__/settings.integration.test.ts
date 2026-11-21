@@ -30,14 +30,14 @@ describe("settings", () => {
   });
 
   test("should return UNAUTHORIZED when saving diff settings without a session cookie", async () => {
-    const [error] = await serverClient.settings.updateDiff({ algorithm: "pixel" });
+    const [error] = await serverClient.settings.updateDiff({ algorithm: "exact" });
     expect(error?.code).toBe("UNAUTHORIZED");
   });
 
   test("should return FORBIDDEN when a user who is not an admin saves diff settings", async ({
     reviewer: _,
   }) => {
-    const [error] = await serverClient.settings.updateDiff({ algorithm: "pixel" });
+    const [error] = await serverClient.settings.updateDiff({ algorithm: "exact" });
     expect(error?.code).toBe("FORBIDDEN");
   });
 
@@ -49,10 +49,10 @@ describe("settings", () => {
   });
 
   test("should save the diff settings so they are returned afterwards", async ({ admin: _ }) => {
-    const [updateError] = await serverClient.settings.updateDiff({ algorithm: "pixel" });
+    const [updateError] = await serverClient.settings.updateDiff({ algorithm: "exact" });
     const [, result] = await serverClient.settings.getDiff();
 
     expect(updateError).toBeNull();
-    expect(result?.settings).toEqual({ algorithm: "pixel" });
+    expect(result?.settings).toEqual({ algorithm: "exact" });
   });
 });

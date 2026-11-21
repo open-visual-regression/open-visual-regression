@@ -14,7 +14,7 @@ vi.mock("next/navigation");
 const mockUpdate = vi.mocked(serverClient.settings.updateDiff);
 const mockRefresh = vi.mocked(useRouter)().refresh;
 
-const renderComponent = (algorithm: "aligned" | "pixel" = "aligned") =>
+const renderComponent = (algorithm: "smart" | "exact" = "smart") =>
   render(
     <>
       <DiffSettingsForm settings={{ algorithm }} />
@@ -24,7 +24,7 @@ const renderComponent = (algorithm: "aligned" | "pixel" = "aligned") =>
 
 describe("DiffSettingsForm", () => {
   it("should show the saved choice and what it does", () => {
-    renderComponent("aligned");
+    renderComponent("smart");
 
     expect(screen.getByRole("combobox", { name: /highlight/i })).toHaveTextContent("smart");
     expect(screen.getByText("marks what changed, not what moved")).toBeVisible();
@@ -37,14 +37,14 @@ describe("DiffSettingsForm", () => {
         resolveUpdate = resolve;
       }),
     );
-    renderComponent("aligned");
+    renderComponent("smart");
 
     await user.click(screen.getByRole("combobox", { name: /highlight/i }));
     await user.click(await screen.findByRole("option", { name: "exact" }));
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
     await waitFor(() => expect(screen.getByRole("button", { name: /saving/i })).toBeDisabled());
-    expect(mockUpdate).toHaveBeenCalledWith({ algorithm: "pixel" });
+    expect(mockUpdate).toHaveBeenCalledWith({ algorithm: "exact" });
 
     resolveUpdate([null, undefined]);
 

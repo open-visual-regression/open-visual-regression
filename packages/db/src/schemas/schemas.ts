@@ -50,7 +50,6 @@ export const projectsRelations = relations(projects, ({ one }) => ({
 
 export type SettingKey = "diff";
 
-/** Instance-wide settings an admin can change, one JSON value per key. */
 export const settings = pgTable("settings", {
   key: text().$type<SettingKey>().primaryKey(),
   value: jsonb().$type<Record<string, unknown>>().notNull(),
