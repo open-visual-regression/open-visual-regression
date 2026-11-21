@@ -71,13 +71,9 @@ const plainDiff = (baseline: Pixels, capture: Pixels): PlainDiff => {
 
 /**
  * The diff image reviewers see, drawn over the captured screenshot, so content
- * that only moved down or sideways isn't painted red. When nothing but blank
- * space moved, the aligned diff has nothing to show, so the plain mask is used.
+ * that only moved down or sideways isn't painted red.
  */
-const drawDiffImage = (diff: AlignedDiff, plain: PlainDiff | null): Promise<Buffer> => {
-  if (plain && diff.regions.length === 0) {
-    return encodePng(plain.mask, plain.width, plain.height);
-  }
+const drawDiffImage = (diff: AlignedDiff): Promise<Buffer> => {
   const overlay = renderDiff(diff);
   return encodePng(overlay.data, overlay.width, overlay.height);
 };
@@ -111,12 +107,11 @@ const compareImages = async ({
     return result(plain.count, width, height, image);
   }
 
-  // Pass or fail is always decided by the plain pixel count. When nothing
-  // moved, the aligned diff is exactly that, so the second pass is skipped.
+  // Pass or fail is always decided by the plain pixel count, which the aligned
+  // diff reports alongside its own.
   const diff = alignedDiff(baselinePixels, capturePixels);
-  const plain = diff.shifted ? plainDiff(baselinePixels, capturePixels) : null;
-  const count = plain ? plain.count : diff.changedPixelCount;
-  return result(count, width, height, count > 0 ? await drawDiffImage(diff, plain) : null);
+  const count = diff.plainChangedPixelCount;
+  return result(count, width, height, count > 0 ? await drawDiffImage(diff) : null);
 };
 
 export default compareImages;
