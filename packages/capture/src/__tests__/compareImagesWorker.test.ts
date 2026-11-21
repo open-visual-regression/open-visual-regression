@@ -110,7 +110,12 @@ describe("compareImages", async () => {
       { ...button, x: 50, color: 0x202020ff },
     ]);
 
-    const result = await compareImages({ capture, baseline, withDiffImage: true });
+    const result = await compareImages({
+      capture,
+      baseline,
+      withDiffImage: true,
+      diffAlgorithm: "aligned",
+    });
 
     expect(result.pixelDiffCount).toBeGreaterThan(0);
     expect(alphaAt(result.diffImage, 25, 27)).toBe(0);
