@@ -116,8 +116,8 @@ export const test = vitest.extend<Fixtures>({
 });
 
 export const enableFlakyDetection = (userId: string, settings: Record<string, unknown> = {}) =>
-  dbClient.jobSettings.upsert({
-    job: "flaky_detection",
-    settings: { enabled: true, ...settings },
+  dbClient.settings.upsert({
+    key: "flaky_detection",
+    value: { enabled: true, ...settings },
     updatedBy: userId,
   });
