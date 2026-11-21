@@ -32,9 +32,7 @@ describe("SettingsBuildsPage", () => {
 
     expect(screen.getByRole("heading", { level: 1, name: "builds" })).toBeVisible();
     expect(screen.getByRole("heading", { level: 2, name: "diffs" })).toBeVisible();
-    expect(screen.getByRole("combobox", { name: /highlight/i })).toHaveTextContent(
-      "every changed pixel",
-    );
+    expect(screen.getByRole("combobox", { name: /highlight/i })).toHaveTextContent("exact");
   });
 
   it("should show a not found page for non-admins", async () => {

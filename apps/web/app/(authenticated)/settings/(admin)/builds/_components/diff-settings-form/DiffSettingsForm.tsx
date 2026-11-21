@@ -28,8 +28,8 @@ import { toast } from "@ovr/ui/components/toast";
 import { serverClient } from "@/lib/router";
 
 const ALGORITHMS: { value: DiffAlgorithm; label: string }[] = [
-  { value: "aligned", label: "ignore moved content" },
-  { value: "pixel", label: "every changed pixel" },
+  { value: "aligned", label: "smart" },
+  { value: "pixel", label: "exact" },
 ];
 
 export type DiffSettingsFormProps = {

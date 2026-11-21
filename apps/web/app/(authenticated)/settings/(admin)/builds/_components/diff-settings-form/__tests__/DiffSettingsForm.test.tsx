@@ -26,9 +26,7 @@ describe("DiffSettingsForm", () => {
   it("should show the saved choice", () => {
     renderComponent("aligned");
 
-    expect(screen.getByRole("combobox", { name: /highlight/i })).toHaveTextContent(
-      "ignore moved content",
-    );
+    expect(screen.getByRole("combobox", { name: /highlight/i })).toHaveTextContent("smart");
   });
 
   it("should save the chosen algorithm and disable the button while saving", async ({ user }) => {
@@ -41,7 +39,7 @@ describe("DiffSettingsForm", () => {
     renderComponent("aligned");
 
     await user.click(screen.getByRole("combobox", { name: /highlight/i }));
-    await user.click(await screen.findByRole("option", { name: "every changed pixel" }));
+    await user.click(await screen.findByRole("option", { name: "exact" }));
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
     await waitFor(() => expect(screen.getByRole("button", { name: /saving/i })).toBeDisabled());
