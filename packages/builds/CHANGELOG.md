@@ -1,5 +1,14 @@
 # @ovr/builds
 
+## 0.2.19
+
+### Patch Changes
+
+- [#607](https://github.com/open-visual-regression/open-visual-regression/pull/607) [`822d673`](https://github.com/open-visual-regression/open-visual-regression/commit/822d673580a88151e869b38dc22106bc41147e1f) Thanks [@tgfischer](https://github.com/tgfischer)! - The nightly purge now retries failed object storage deletes within minutes, with backoff, so purged builds' files no longer wait until the next night after a brief storage outage.
+- Updated dependencies [[`a595146`](https://github.com/open-visual-regression/open-visual-regression/commit/a5951469d4cba901ffe86b3ba663c242c9d51ee4)]:
+  - @ovr/db@0.4.15
+  - @ovr/queue@0.4.5
+
 ## 0.2.18
 
 ### Patch Changes

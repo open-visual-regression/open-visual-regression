@@ -1,5 +1,11 @@
 # @ovr/db
 
+## 0.4.15
+
+### Patch Changes
+
+- [#609](https://github.com/open-visual-regression/open-visual-regression/pull/609) [`a595146`](https://github.com/open-visual-regression/open-visual-regression/commit/a5951469d4cba901ffe86b3ba663c242c9d51ee4) Thanks [@tgfischer](https://github.com/tgfischer)! - Checking whether a build has finished, and loading the build and snapshot pages, no longer scan every diff ever recorded, so the web UI stays responsive while many workers run large builds.
+
 ## 0.4.14
 
 ### Patch Changes
