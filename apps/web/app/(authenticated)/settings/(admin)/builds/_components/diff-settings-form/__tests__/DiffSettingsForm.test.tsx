@@ -23,10 +23,11 @@ const renderComponent = (algorithm: "aligned" | "pixel" = "aligned") =>
   );
 
 describe("DiffSettingsForm", () => {
-  it("should show the saved choice", () => {
+  it("should show the saved choice and what it does", () => {
     renderComponent("aligned");
 
     expect(screen.getByRole("combobox", { name: /highlight/i })).toHaveTextContent("smart");
+    expect(screen.getByText("marks what changed, not what moved")).toBeVisible();
   });
 
   it("should save the chosen algorithm and disable the button while saving", async ({ user }) => {

@@ -13,7 +13,14 @@ import {
 } from "@ovr/api/contracts/settings";
 import { Button } from "@ovr/ui/components/button";
 import { Card, CardContent, CardFooter } from "@ovr/ui/components/card";
-import { Field, FieldError, FieldGroup, FieldLabel, FieldSkeleton } from "@ovr/ui/components/field";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldSkeleton,
+} from "@ovr/ui/components/field";
 import { CheckIcon, Icon } from "@ovr/ui/components/icon";
 import {
   Select,
@@ -27,9 +34,9 @@ import { toast } from "@ovr/ui/components/toast";
 
 import { serverClient } from "@/lib/router";
 
-const ALGORITHMS: { value: DiffAlgorithm; label: string }[] = [
-  { value: "aligned", label: "smart" },
-  { value: "pixel", label: "exact" },
+const ALGORITHMS: { value: DiffAlgorithm; label: string; description: string }[] = [
+  { value: "aligned", label: "smart", description: "marks what changed, not what moved" },
+  { value: "pixel", label: "exact", description: "marks every pixel that changed" },
 ];
 
 export type DiffSettingsFormProps = {
@@ -82,18 +89,23 @@ export const DiffSettingsForm = ({ settings }: DiffSettingsFormProps) => {
                 control={control}
                 name="algorithm"
                 render={({ field }) => (
-                  <Select items={ALGORITHMS} value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger id="algorithm" className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ALGORITHMS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <>
+                    <Select items={ALGORITHMS} value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger id="algorithm" className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ALGORITHMS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FieldDescription>
+                      {ALGORITHMS.find((option) => option.value === field.value)?.description}
+                    </FieldDescription>
+                  </>
                 )}
               />
               <FieldError errors={[errors.algorithm]} />
