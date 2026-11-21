@@ -18,8 +18,8 @@ import type { Result } from "./types";
 const FLAKY_THRESHOLDS = { minReverts: 2, minSamples: 10, minChangeRate: 0.5 };
 
 export const getFlakyDetectionSettings = async (): Promise<FlakyDetectionSettings> => {
-  const stored = await dbClient.jobSettings.find("flaky_detection");
-  return storedFlakyDetectionSettingsSchema.parse(stored?.settings);
+  const stored = await dbClient.settings.find("flaky_detection");
+  return storedFlakyDetectionSettingsSchema.parse(stored?.value);
 };
 
 const isFlakyDetectionRunning = async (): Promise<boolean> => {
@@ -45,15 +45,16 @@ const getFlakyDetectionNextRunAt = async (): Promise<Date | null> => {
 };
 
 export const getFlakyDetection = async (): Promise<FlakyDetection> => {
-  const [stored, running, nextRunAt] = await Promise.all([
-    dbClient.jobSettings.find("flaky_detection"),
+  const [settings, state, running, nextRunAt] = await Promise.all([
+    getFlakyDetectionSettings(),
+    dbClient.jobState.find("flaky_detection"),
     isFlakyDetectionRunning(),
     getFlakyDetectionNextRunAt(),
   ]);
 
   return {
-    settings: storedFlakyDetectionSettingsSchema.parse(stored?.settings),
-    lastRunAt: stored?.lastRunAt ?? null,
+    settings,
+    lastRunAt: state?.lastRunAt ?? null,
     nextRunAt: nextRunAt?.toISOString() ?? null,
     running,
   };
@@ -71,7 +72,7 @@ export const saveFlakyDetectionSettings = async (
   settings: FlakyDetectionSettings,
   updatedBy: string,
 ): Promise<Result<undefined, "QUEUE_UNAVAILABLE">> => {
-  await dbClient.jobSettings.upsert({ job: "flaky_detection", settings, updatedBy });
+  await dbClient.settings.upsert({ key: "flaky_detection", value: settings, updatedBy });
 
   try {
     await rescheduleJob("flaky_detection", settings.enabled ? settings.cron : null);
@@ -115,7 +116,7 @@ export const dispatchFlakySnapshotScans = async (): Promise<void> => {
 
   const projectIds = await dbClient.projects.findIdsNeedingFlakyScan();
   await enqueueFlakySnapshotScanMany(projectIds.map((projectId) => ({ projectId })));
-  await dbClient.jobSettings.markRun("flaky_detection");
+  await dbClient.jobState.markRun("flaky_detection");
 };
 
 export const scanFlakySnapshots = async (projectId: string): Promise<void> => {
