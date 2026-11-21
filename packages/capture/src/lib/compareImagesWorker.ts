@@ -1,6 +1,7 @@
 import pixelmatch from "pixelmatch";
 import sharp from "sharp";
 
+import type { DiffAlgorithm } from "@ovr/api/contracts/settings";
 import { alignedDiff, type AlignedDiff } from "@ovr/image-diff/alignedDiff";
 import { renderDiff } from "@ovr/image-diff/renderDiff";
 
@@ -10,6 +11,7 @@ export type CompareImagesTask = {
   capture: Uint8Array;
   baseline: Uint8Array;
   withDiffImage: boolean;
+  diffAlgorithm: DiffAlgorithm;
 };
 
 export type CompareImagesResult = {
@@ -81,6 +83,7 @@ const compareImages = async ({
   capture,
   baseline,
   withDiffImage,
+  diffAlgorithm,
 }: CompareImagesTask): Promise<CompareImagesResult> => {
   const [capturePixels, baselinePixels] = await Promise.all([
     decodePng(capture),
@@ -91,6 +94,11 @@ const compareImages = async ({
 
   if (!withDiffImage) {
     return result(plainDiff(baselinePixels, capturePixels).count, width, height, null);
+  }
+  if (diffAlgorithm === "exact") {
+    const plain = plainDiff(baselinePixels, capturePixels);
+    const image = plain.count > 0 ? await encodePng(plain.mask, plain.width, plain.height) : null;
+    return result(plain.count, width, height, image);
   }
 
   // Pass or fail still uses the plain pixel count.

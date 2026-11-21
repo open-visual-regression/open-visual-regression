@@ -36,9 +36,32 @@ describe("compareImages", async () => {
   it("should report no difference and no diff image for identical screenshots", async () => {
     const image = drawPng(80, PAGE);
 
-    const result = await compareImages({ capture: image, baseline: image, withDiffImage: true });
+    const result = await compareImages({
+      capture: image,
+      baseline: image,
+      withDiffImage: true,
+      diffAlgorithm: "smart",
+    });
 
     expect(result).toEqual({ pixelDiffCount: 0, diffPercent: 0, diffImage: null });
+  });
+
+  it("should mark the content an inserted banner pushed down with the exact algorithm", async () => {
+    const baseline = drawPng(80, PAGE);
+    const capture = drawPng(100, [
+      { x: 0, y: 0, width: WIDTH, height: 16, color: 0xdc2626ff },
+      ...shiftedDown(PAGE, 20),
+    ]);
+
+    const result = await compareImages({
+      capture,
+      baseline,
+      withDiffImage: true,
+      diffAlgorithm: "exact",
+    });
+
+    expect(alphaAt(result.diffImage, 60, 8)).toBe(255);
+    expect(alphaAt(result.diffImage, 50, 55)).toBe(255);
   });
 
   it("should mark only the inserted banner in the diff image, not the content it pushed down", async () => {
@@ -48,7 +71,12 @@ describe("compareImages", async () => {
       ...shiftedDown(PAGE, 20),
     ]);
 
-    const result = await compareImages({ capture, baseline, withDiffImage: true });
+    const result = await compareImages({
+      capture,
+      baseline,
+      withDiffImage: true,
+      diffAlgorithm: "smart",
+    });
 
     expect(result.pixelDiffCount).toBeGreaterThan(0);
     expect(alphaAt(result.diffImage, 60, 8)).toBe(90);
@@ -59,7 +87,12 @@ describe("compareImages", async () => {
     const baseline = drawPng(80, PAGE);
     const capture = drawPng(100, shiftedDown(PAGE, 20));
 
-    const result = await compareImages({ capture, baseline, withDiffImage: true });
+    const result = await compareImages({
+      capture,
+      baseline,
+      withDiffImage: true,
+      diffAlgorithm: "smart",
+    });
 
     expect(result.pixelDiffCount).toBeGreaterThan(0);
     expect(alphaAt(result.diffImage, 50, 20)).toBe(90);
@@ -77,7 +110,12 @@ describe("compareImages", async () => {
       { ...button, x: 50, color: 0x202020ff },
     ]);
 
-    const result = await compareImages({ capture, baseline, withDiffImage: true });
+    const result = await compareImages({
+      capture,
+      baseline,
+      withDiffImage: true,
+      diffAlgorithm: "smart",
+    });
 
     expect(result.pixelDiffCount).toBeGreaterThan(0);
     expect(alphaAt(result.diffImage, 25, 27)).toBe(0);
@@ -92,8 +130,18 @@ describe("compareImages", async () => {
   ])("should count %s the same with or without a diff image", async (_, capture) => {
     const baseline = drawPng(80, PAGE);
 
-    const withImage = await compareImages({ capture, baseline, withDiffImage: true });
-    const withoutImage = await compareImages({ capture, baseline, withDiffImage: false });
+    const withImage = await compareImages({
+      capture,
+      baseline,
+      withDiffImage: true,
+      diffAlgorithm: "smart",
+    });
+    const withoutImage = await compareImages({
+      capture,
+      baseline,
+      withDiffImage: false,
+      diffAlgorithm: "smart",
+    });
 
     expect(withImage.pixelDiffCount).toBeGreaterThan(0);
     expect(withImage.pixelDiffCount).toBe(withoutImage.pixelDiffCount);
@@ -103,7 +151,12 @@ describe("compareImages", async () => {
     const baseline = drawPng(80, PAGE, 2);
     const capture = drawPng(80, PAGE, 6);
 
-    const result = await compareImages({ capture, baseline, withDiffImage: true });
+    const result = await compareImages({
+      capture,
+      baseline,
+      withDiffImage: true,
+      diffAlgorithm: "smart",
+    });
 
     expect(result.pixelDiffCount).toBe(0);
   });
@@ -112,7 +165,12 @@ describe("compareImages", async () => {
     const baseline = drawPng(80, PAGE);
     const capture = drawPng(100, PAGE);
 
-    const result = await compareImages({ capture, baseline, withDiffImage: true });
+    const result = await compareImages({
+      capture,
+      baseline,
+      withDiffImage: true,
+      diffAlgorithm: "smart",
+    });
 
     expect(result.pixelDiffCount).toBe(WIDTH * 20);
   });
@@ -121,7 +179,12 @@ describe("compareImages", async () => {
     const baseline = drawPng(80, PAGE);
     const capture = drawPng(80, shiftedDown(PAGE, 5));
 
-    const result = await compareImages({ capture, baseline, withDiffImage: false });
+    const result = await compareImages({
+      capture,
+      baseline,
+      withDiffImage: false,
+      diffAlgorithm: "smart",
+    });
 
     expect(result.diffImage).toBeNull();
   });

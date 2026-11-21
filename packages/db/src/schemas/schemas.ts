@@ -48,7 +48,7 @@ export const projectsRelations = relations(projects, ({ one }) => ({
   }),
 }));
 
-export type SettingKey = "flaky_detection";
+export type SettingKey = "flaky_detection" | "diff";
 
 export const settings = pgTable("settings", {
   key: text().$type<SettingKey>().primaryKey(),

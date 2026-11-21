@@ -40,6 +40,7 @@ import {
   findComparisonBaseline,
   promoteBaseline,
 } from "@ovr/reviews/baselines";
+import { getDiffSettings } from "@ovr/reviews/diffSettings";
 import { storage } from "@ovr/storage";
 
 import {
@@ -997,10 +998,11 @@ const diffAgainstBaselineSnapshot = async (
     return { pixelDiffCount: 0, diffPercent: 0, diffImage: null };
   }
 
+  const { algorithm } = await getDiffSettings();
   const { pixelDiffCount, diffPercent, diffImage, cachedImages, timings } = await compareImages(
     capturePath,
     baselineSnapshot.imagePath,
-    { withDiffImage: true },
+    { withDiffImage: true, diffAlgorithm: algorithm },
   );
   logger.info(
     { snapshotId, baselineSnapshotId: baselineSnapshot.id, pixelDiffCount, cachedImages, timings },

@@ -627,6 +627,9 @@ importers:
 
   packages/capture:
     dependencies:
+      '@ovr/api':
+        specifier: workspace:*
+        version: link:../api
       '@ovr/builds':
         specifier: workspace:*
         version: link:../builds
