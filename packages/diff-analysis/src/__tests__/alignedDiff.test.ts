@@ -283,7 +283,7 @@ describe("alignedDiff", () => {
     expect(pixelAt(30, 15)).toEqual([0, 0, 0, 0]);
   });
 
-  it("should wash inserted content and draw removed content as a line", () => {
+  it("should mark inserted content like any change and draw removed content as a line", () => {
     const baseline = drawImage(200, 120, page());
     const current = drawImage(200, 140, [
       { x: 0, y: 0, width: 200, height: 16, color: RED },
@@ -295,7 +295,7 @@ describe("alignedDiff", () => {
 
     const alphaAt = (image: RgbaImage, x: number, y: number) =>
       image.data[(y * image.width + x) * 4 + 3];
-    expect(alphaAt(inserted, 100, 8)).toBe(90);
+    expect(alphaAt(inserted, 100, 8)).toBe(255);
     expect(alphaAt(inserted, 100, 60)).toBe(0);
     expect(alphaAt(removed, 100, 0)).toBe(255);
     expect(alphaAt(removed, 100, 60)).toBe(0);
@@ -336,9 +336,7 @@ describe("alignedDiff", () => {
     // Which of several equally good alignments is picked decides how the
     // sentence splits into regions, so only where they sit is checked.
     const sentence = { ...MAIN_COLUMN, y: 160, height: 30 };
-    const outsideSentence = diff.regions.filter(
-      (region) => region.kind !== "changed" || !contains(sentence, region.current),
-    );
+    const outsideSentence = diff.regions.filter((region) => !contains(sentence, region.current));
     expect(diff.regions).not.toEqual([]);
     expect(outsideSentence).toEqual([]);
     expect(diff.changedPixelCount).toBeLessThan(plainPixelDiff(baselinePage, current));

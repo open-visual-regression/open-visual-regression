@@ -56,6 +56,15 @@ const maskBounds = (mask: Uint8Array, width: number, rect: Rect): Rect | null =>
   return right < 0 ? null : { x: left, y: top, width: right - left + 1, height: bottom - top + 1 };
 };
 
+const rowsHaveMarks = (mask: Uint8Array, width: number, { y, height }: Rect): boolean => {
+  for (let pixel = y * width; pixel < (y + height) * width; pixel++) {
+    if (mask[pixel]) {
+      return true;
+    }
+  }
+  return false;
+};
+
 /** Compares the two images pixel by pixel, top left aligned. */
 const diffPixels = (baseline: RgbaImage, current: RgbaImage) => {
   const width = Math.max(baseline.width, current.width);
@@ -156,8 +165,14 @@ export const alignedDiff = (baseline: RgbaImage, current: RgbaImage): AlignedDif
       }
     }
 
+    // Content removed from within a line that also changed is already marked
+    // by that change, so a separate removal line there only adds noise.
+    const removed = moves.deleted.filter(
+      ({ current: line }) => line.width > 0 || !rowsHaveMarks(mask, width, line),
+    );
+
     let regions = [
-      ...mergeRegions([...changedRegions, ...moves.inserted, ...moves.deleted]),
+      ...mergeRegions([...changedRegions, ...moves.inserted, ...removed]),
       ...moves.moved,
     ].sort((a, b) => a.current.y - b.current.y || a.current.x - b.current.x);
     // The plain comparison failed but every difference was blank space that

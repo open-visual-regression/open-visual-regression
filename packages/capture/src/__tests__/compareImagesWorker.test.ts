@@ -79,11 +79,11 @@ describe("compareImages", async () => {
     });
 
     expect(result.pixelDiffCount).toBeGreaterThan(0);
-    expect(alphaAt(result.diffImage, 60, 8)).toBe(90);
+    expect(alphaAt(result.diffImage, 60, 8)).toBe(255);
     expect(alphaAt(result.diffImage, 50, 55)).toBe(0);
   });
 
-  it("should wash the added space, not the content it pushed down, when only blank space grew", async () => {
+  it("should tint the added space, not the content it pushed down, when only blank space grew", async () => {
     const baseline = drawPng(80, PAGE);
     const capture = drawPng(100, shiftedDown(PAGE, 20));
 
