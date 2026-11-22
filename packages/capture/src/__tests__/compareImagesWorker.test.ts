@@ -83,7 +83,7 @@ describe("compareImages", async () => {
     expect(alphaAt(result.diffImage, 50, 55)).toBe(0);
   });
 
-  it("should tint the added space, not the content it pushed down, when only blank space grew", async () => {
+  it("should mark only the first content below blank space that grew", async () => {
     const baseline = drawPng(80, PAGE);
     const capture = drawPng(100, shiftedDown(PAGE, 20));
 
@@ -95,8 +95,8 @@ describe("compareImages", async () => {
     });
 
     expect(result.pixelDiffCount).toBeGreaterThan(0);
-    expect(alphaAt(result.diffImage, 50, 20)).toBe(90);
-    expect(alphaAt(result.diffImage, 50, 55)).toBe(0);
+    expect(alphaAt(result.diffImage, 30, 34)).toBe(255);
+    expect(alphaAt(result.diffImage, 50, 60)).toBe(0);
   });
 
   it.each([

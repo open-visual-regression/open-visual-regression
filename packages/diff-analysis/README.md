@@ -31,8 +31,17 @@ spot in the baseline, so a misaligned stretch never flags more than a plain
 pixel diff would.
 
 Removed content has no place in the current image, so where it was is
-highlighted instead, wherever it differs from what's there now. Blank space that
-grew isn't counted, but when that's the only difference it's still shown, so a
+highlighted instead, wherever it differs from what's there now. When that spot
+looks the same as before, like a segment gone from a bar where the one beside
+it has the same color, the rest of that row is highlighted wherever it differs.
+
+When only the space between rows changed, like a margin that grew or shrank,
+the first block of content below it moved because of it, so that block is
+highlighted wherever it differs. Only something that changes height, like new
+content, removed content or another spacing change further up in the same
+columns, explains a shift, so then nothing extra is highlighted. Something that
+changed in place, like a recolored badge, doesn't. If
+nothing explains a difference at all, the plain pixel diff is shown, so a
 failing snapshot always shows something.
 
 ## Limits

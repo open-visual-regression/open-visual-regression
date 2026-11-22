@@ -33,3 +33,44 @@ export const rectsAreNear = (first: Rect, second: Rect, distance: number): boole
   second.x <= first.x + first.width + distance &&
   first.y <= second.y + second.height + distance &&
   second.y <= first.y + first.height + distance;
+
+/** Whether two rects share any rows. */
+export const overlapsRows = (first: Rect, second: Rect): boolean =>
+  first.y < second.y + Math.max(second.height, 1) && second.y < first.y + Math.max(first.height, 1);
+
+/** Whether two rects share any columns. */
+export const overlapsColumns = (first: Rect, second: Rect): boolean =>
+  first.x < second.x + Math.max(second.width, 1) && second.x < first.x + Math.max(first.width, 1);
+
+/**
+ * Merges items whose rects are at most `distance` pixels apart, repeating
+ * until nothing more merges, so the result doesn't depend on their order.
+ */
+export const mergeNear = <T>(
+  items: T[],
+  rectOf: (item: T) => Rect,
+  merge: (first: T, second: T) => T,
+  distance: number,
+  canMerge: (first: T, second: T) => boolean = () => true,
+): T[] => {
+  let merged = items;
+  let changed = true;
+  while (changed) {
+    changed = false;
+    const next: T[] = [];
+    for (const item of merged) {
+      const index = next.findIndex(
+        (other) => canMerge(other, item) && rectsAreNear(rectOf(other), rectOf(item), distance),
+      );
+      const other = next[index];
+      if (other === undefined) {
+        next.push(item);
+      } else {
+        next[index] = merge(other, item);
+        changed = true;
+      }
+    }
+    merged = next;
+  }
+  return merged;
+};
