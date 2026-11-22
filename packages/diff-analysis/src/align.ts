@@ -13,10 +13,20 @@ import type { Axis, Rect, RectPair } from "./types";
 export type Alignment = {
   /** Baseline pixels placed where they sit in the current image (RGBA, current size). */
   aligned: Uint8Array;
-  /** Rects of the current image the baseline has no counterpart for. */
-  insertions: Rect[];
+  /**
+   * Rects of the current image the baseline has no counterpart for, the axis
+   * they run along, and whether they were found inside a band that changed
+   * rather than across a whole band.
+   */
+  insertions: { rect: Rect; axis: Axis; nested: boolean }[];
   /** Baseline content with no place in the current image, as zero-width or zero-height lines. */
   deletions: RectPair[];
+  /**
+   * Where only blank space was removed: a zero-width or zero-height line in
+   * the current image, the blank baseline rect that was removed, and whether
+   * it was found inside a band that changed rather than across a whole band.
+   */
+  removedSpace: (RectPair & { nested: boolean })[];
   /** Whether anything moved. When nothing did, `aligned` is the baseline as it was. */
   shifted: boolean;
 };
@@ -31,8 +41,9 @@ type Context = {
   baselineWords: Uint32Array;
   currentWords: Uint32Array;
   alignedWords: Uint32Array;
-  insertions: Rect[];
+  insertions: Alignment["insertions"];
   deletions: Alignment["deletions"];
+  removedSpace: Alignment["removedSpace"];
   shifted: boolean;
 };
 
@@ -82,7 +93,13 @@ const equalPixels = (context: Context, baseline: Rect, current: Rect) => {
  * gap take it, the rest take the line before, so blank space that only grew
  * compares equal while new content still stands out.
  */
-const fillInserted = (context: Context, rect: Rect, axis: Axis, { before, after }: Neighbors) => {
+const fillInserted = (
+  context: Context,
+  rect: Rect,
+  axis: Axis,
+  { before, after }: Neighbors,
+  nested: boolean,
+) => {
   for (let line = 0; line < lineCount(rect, axis); line++) {
     const target = sliceRect(rect, axis, line, 1);
     const source =
@@ -93,7 +110,7 @@ const fillInserted = (context: Context, rect: Rect, axis: Axis, { before, after 
       copyRect(context, { baseline: source, current: target });
     }
   }
-  context.insertions.push(rect);
+  context.insertions.push({ rect, axis, nested });
 };
 
 /**
@@ -285,13 +302,16 @@ const alignRects = (
           sliceRect(pair.current, axis, currentExtra, currentCount - overlap),
           axis,
           neighbors,
+          depth > 0,
         );
       }
       if (baselineCount > overlap) {
         const removed = sliceRect(pair.baseline, axis, baselineExtra, baselineCount - overlap);
         const content = deletedContent(context, removed, axis, neighbors);
-        if (content) {
-          const at = sliceRect(pair.current, axis, currentExtra, 0);
+        const at = sliceRect(pair.current, axis, currentExtra, 0);
+        if (!content) {
+          context.removedSpace.push({ current: at, baseline: removed, nested: depth > 0 });
+        } else {
           context.deletions.push({
             current:
               axis === "rows"
@@ -436,6 +456,7 @@ export const alignImages = (baseline: RgbaImage, current: RgbaImage): Alignment 
     alignedWords: new Uint32Array(aligned.buffer),
     insertions: [],
     deletions: [],
+    removedSpace: [],
     shifted: baseline.height !== current.height,
   };
   const whole: RectPair = {
@@ -515,6 +536,7 @@ export const alignImages = (baseline: RgbaImage, current: RgbaImage): Alignment 
     aligned,
     insertions: context.insertions,
     deletions: context.deletions,
+    removedSpace: context.removedSpace,
     shifted: context.shifted || context.insertions.length > 0 || context.deletions.length > 0,
   };
 };

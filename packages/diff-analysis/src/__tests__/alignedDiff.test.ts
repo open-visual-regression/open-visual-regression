@@ -163,7 +163,7 @@ describe("alignedDiff", () => {
 
     const diff = alignedDiff(image, image);
 
-    expect(diff).toMatchObject({ changedPixelCount: 0, addedSpace: [] });
+    expect(diff).toMatchObject({ changedPixelCount: 0, plainChangedPixelCount: 0 });
   });
 
   it("should isolate a block inserted at the top instead of flagging everything below it", () => {
@@ -194,14 +194,84 @@ describe("alignedDiff", () => {
     expect(highlightsOutside(diff, [{ x: 10, y: 30, width: 60, height: 20 }])).toBe(0);
   });
 
-  it("should show added blank space without counting it as changed", () => {
+  it("should highlight the content right below a gap that grew, and nothing after it", () => {
     const baseline = drawImage(200, 120, page());
-    const current = drawImage(200, 150, page(30));
+    const current = drawImage(200, 120, [
+      ...text(10, 10, 8, 1),
+      { x: 10, y: 34, width: 60, height: 20, color: BLUE },
+      ...text(10, 64, 10, 2),
+      ...text(10, 84, 6, 3),
+    ]);
 
     const diff = alignedDiff(baseline, current);
 
-    expect(diff.changedPixelCount).toBe(0);
-    expect(diff.addedSpace).toEqual([{ x: 0, y: 10, width: 200, height: 30 }]);
+    expect(highlightsIn(diff, { x: 10, y: 34, width: 60, height: 20 })).toBeGreaterThan(0);
+    expect(highlightsOutside(diff, [{ x: 10, y: 34, width: 60, height: 20 }])).toBe(0);
+  });
+
+  it("should highlight only the first block below a gap that grew inside a bordered card", () => {
+    const card = { x: 5, y: 5, width: 190, height: 110, color: [200, 200, 200] as Color };
+    const inside = { x: 6, y: 6, width: 188, height: 108, color: WHITE };
+    const baseline = drawImage(200, 120, [
+      card,
+      inside,
+      ...text(10, 10, 8, 1),
+      ...text(10, 30, 10, 2),
+      ...text(10, 50, 6, 3),
+    ]);
+    const current = drawImage(200, 120, [
+      card,
+      inside,
+      ...text(10, 10, 8, 1),
+      ...text(10, 40, 10, 2),
+      ...text(10, 60, 6, 3),
+    ]);
+
+    const diff = alignedDiff(baseline, current);
+
+    expect(highlightsIn(diff, { x: 10, y: 30, width: 140, height: 20 })).toBeGreaterThan(0);
+    expect(highlightsOutside(diff, [{ x: 10, y: 30, width: 140, height: 20 }])).toBe(0);
+  });
+
+  it("should highlight the rest of a bar when one of its solid segments was removed", () => {
+    // A segment next to one of the same color was removed, so the alignment
+    // can't tell which of the two went.
+    const baseline = load("bar-segment-baseline");
+    const current = load("bar-segment-removed");
+
+    const diff = alignedDiff(baseline, current);
+
+    const restOfBar = { x: 95, y: 12, width: 280, height: 16 };
+    expect(highlightsIn(diff, restOfBar)).toBeGreaterThan(diff.plainChangedPixelCount / 2);
+    expect(highlightsOutside(diff, [restOfBar])).toBe(0);
+  });
+
+  it("should highlight a gap that changed below a change in place, like a recolored badge", () => {
+    const badge = { x: 150, y: 5, width: 30, height: 10 };
+    const baseline = drawImage(200, 120, [{ ...badge, color: BLUE }, ...page()]);
+    const current = drawImage(200, 120, [
+      { ...badge, color: RED },
+      ...text(10, 10, 8, 1),
+      { x: 10, y: 40, width: 60, height: 20, color: BLUE },
+      ...text(10, 70, 10, 2),
+      ...text(10, 90, 6, 3),
+    ]);
+
+    const diff = alignedDiff(baseline, current);
+
+    expect(highlightsIn(diff, badge)).toBeGreaterThan(0);
+    expect(highlightsIn(diff, { x: 10, y: 30, width: 60, height: 30 })).toBeGreaterThan(0);
+  });
+
+  it("should highlight content that moved up when the gap above it was removed entirely", () => {
+    const baseline = drawImage(200, 60, [...text(10, 10, 8, 1), ...text(10, 40, 10, 2)]);
+    const current = drawImage(200, 60, [...text(10, 10, 8, 1), ...text(10, 18, 10, 2)]);
+
+    const diff = alignedDiff(baseline, current);
+
+    const movedRow = { x: 10, y: 18, width: 140, height: 10 };
+    expect(highlightsIn(diff, movedRow)).toBeGreaterThan(0);
+    expect(highlightsOutside(diff, [movedRow, { x: 10, y: 40, width: 140, height: 10 }])).toBe(0);
   });
 
   it("should highlight removed content where it was when nothing took its place", () => {
