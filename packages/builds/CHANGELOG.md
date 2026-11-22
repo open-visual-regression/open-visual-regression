@@ -1,5 +1,19 @@
 # @ovr/builds
 
+## 0.2.19
+
+### Patch Changes
+
+- [#589](https://github.com/open-visual-regression/open-visual-regression/pull/589) [`3afcaea`](https://github.com/open-visual-regression/open-visual-regression/commit/3afcaeaad55b57de120525e896376edf6fdba27a) Thanks [@tgfischer](https://github.com/tgfischer)! - Admins can choose how diff images highlight changes under **Settings → Builds**. Pick **exact** to highlight every changed pixel, as before.
+
+- [#607](https://github.com/open-visual-regression/open-visual-regression/pull/607) [`822d673`](https://github.com/open-visual-regression/open-visual-regression/commit/822d673580a88151e869b38dc22106bc41147e1f) Thanks [@tgfischer](https://github.com/tgfischer)! - The nightly purge now retries failed object storage deletes within minutes, with backoff, so purged builds' files no longer wait until the next night after a brief storage outage.
+
+- [#613](https://github.com/open-visual-regression/open-visual-regression/pull/613) [`1ba9b95`](https://github.com/open-visual-regression/open-visual-regression/commit/1ba9b95574a1e7c562f9a1ba9f83ac4f43bf08e7) Thanks [@tgfischer](https://github.com/tgfischer)! - A migration copies the flaky detection settings and their last run time from `job_settings` into new `settings` and `job_state` tables. The settings stay as they were, and `job_settings` is dropped in a later release.
+- Updated dependencies [[`3afcaea`](https://github.com/open-visual-regression/open-visual-regression/commit/3afcaeaad55b57de120525e896376edf6fdba27a), [`a595146`](https://github.com/open-visual-regression/open-visual-regression/commit/a5951469d4cba901ffe86b3ba663c242c9d51ee4), [`1ba9b95`](https://github.com/open-visual-regression/open-visual-regression/commit/1ba9b95574a1e7c562f9a1ba9f83ac4f43bf08e7)]:
+  - @ovr/api@0.5.10
+  - @ovr/db@0.4.15
+  - @ovr/queue@0.4.5
+
 ## 0.2.18
 
 ### Patch Changes

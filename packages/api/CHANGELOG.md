@@ -1,5 +1,11 @@
 # @ovr/api
 
+## 0.5.10
+
+### Patch Changes
+
+- [#589](https://github.com/open-visual-regression/open-visual-regression/pull/589) [`3afcaea`](https://github.com/open-visual-regression/open-visual-regression/commit/3afcaeaad55b57de120525e896376edf6fdba27a) Thanks [@tgfischer](https://github.com/tgfischer)! - Admins can choose how diff images highlight changes under **Settings → Builds**. Pick **exact** to highlight every changed pixel, as before.
+
 ## 0.5.9
 
 ### Patch Changes

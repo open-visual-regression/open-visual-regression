@@ -1,5 +1,15 @@
 # @ovr/db
 
+## 0.4.15
+
+### Patch Changes
+
+- [#589](https://github.com/open-visual-regression/open-visual-regression/pull/589) [`3afcaea`](https://github.com/open-visual-regression/open-visual-regression/commit/3afcaeaad55b57de120525e896376edf6fdba27a) Thanks [@tgfischer](https://github.com/tgfischer)! - Admins can choose how diff images highlight changes under **Settings → Builds**. Pick **exact** to highlight every changed pixel, as before.
+
+- [#609](https://github.com/open-visual-regression/open-visual-regression/pull/609) [`a595146`](https://github.com/open-visual-regression/open-visual-regression/commit/a5951469d4cba901ffe86b3ba663c242c9d51ee4) Thanks [@tgfischer](https://github.com/tgfischer)! - Checking whether a build has finished, and loading the build and snapshot pages, no longer scan every diff ever recorded, so the web UI stays responsive while many workers run large builds.
+
+- [#613](https://github.com/open-visual-regression/open-visual-regression/pull/613) [`1ba9b95`](https://github.com/open-visual-regression/open-visual-regression/commit/1ba9b95574a1e7c562f9a1ba9f83ac4f43bf08e7) Thanks [@tgfischer](https://github.com/tgfischer)! - A migration copies the flaky detection settings and their last run time from `job_settings` into new `settings` and `job_state` tables. The settings stay as they were, and `job_settings` is dropped in a later release.
+
 ## 0.4.14
 
 ### Patch Changes

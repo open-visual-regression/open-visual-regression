@@ -1,5 +1,20 @@
 # @ovr/capture
 
+## 0.3.28
+
+### Patch Changes
+
+- [#589](https://github.com/open-visual-regression/open-visual-regression/pull/589) [`3afcaea`](https://github.com/open-visual-regression/open-visual-regression/commit/3afcaeaad55b57de120525e896376edf6fdba27a) Thanks [@tgfischer](https://github.com/tgfischer)! - Diff images now highlight only what changed. Content pushed down or sideways by a change is no longer painted red.
+
+- [#589](https://github.com/open-visual-regression/open-visual-regression/pull/589) [`3afcaea`](https://github.com/open-visual-regression/open-visual-regression/commit/3afcaeaad55b57de120525e896376edf6fdba27a) Thanks [@tgfischer](https://github.com/tgfischer)! - Admins can choose how diff images highlight changes under **Settings → Builds**. Pick **exact** to highlight every changed pixel, as before.
+- Updated dependencies [[`3afcaea`](https://github.com/open-visual-regression/open-visual-regression/commit/3afcaeaad55b57de120525e896376edf6fdba27a), [`3afcaea`](https://github.com/open-visual-regression/open-visual-regression/commit/3afcaeaad55b57de120525e896376edf6fdba27a), [`a595146`](https://github.com/open-visual-regression/open-visual-regression/commit/a5951469d4cba901ffe86b3ba663c242c9d51ee4), [`822d673`](https://github.com/open-visual-regression/open-visual-regression/commit/822d673580a88151e869b38dc22106bc41147e1f), [`1ba9b95`](https://github.com/open-visual-regression/open-visual-regression/commit/1ba9b95574a1e7c562f9a1ba9f83ac4f43bf08e7)]:
+  - @ovr/diff-analysis@0.0.1
+  - @ovr/api@0.5.10
+  - @ovr/db@0.4.15
+  - @ovr/builds@0.2.19
+  - @ovr/reviews@0.1.34
+  - @ovr/queue@0.4.5
+
 ## 0.3.27
 
 ### Patch Changes

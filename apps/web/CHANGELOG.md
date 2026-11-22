@@ -1,5 +1,30 @@
 # @ovr/web
 
+## 0.26.0
+
+### Minor Changes
+
+- [#589](https://github.com/open-visual-regression/open-visual-regression/pull/589) [`3afcaea`](https://github.com/open-visual-regression/open-visual-regression/commit/3afcaeaad55b57de120525e896376edf6fdba27a) Thanks [@tgfischer](https://github.com/tgfischer)! - Diff images now highlight only what changed. Content pushed down or sideways by a change is no longer painted red.
+
+- [#589](https://github.com/open-visual-regression/open-visual-regression/pull/589) [`3afcaea`](https://github.com/open-visual-regression/open-visual-regression/commit/3afcaeaad55b57de120525e896376edf6fdba27a) Thanks [@tgfischer](https://github.com/tgfischer)! - Admins can choose how diff images highlight changes under **Settings → Builds**. Pick **exact** to highlight every changed pixel, as before.
+
+### Patch Changes
+
+- [#611](https://github.com/open-visual-regression/open-visual-regression/pull/611) [`a65ec49`](https://github.com/open-visual-regression/open-visual-regression/commit/a65ec495525e2a33f06a0034e693b5924a3e1a49) Thanks [@tgfischer](https://github.com/tgfischer)! - The project filter on the builds page now comes last, after status, branch, author, and commit.
+
+- [#609](https://github.com/open-visual-regression/open-visual-regression/pull/609) [`a595146`](https://github.com/open-visual-regression/open-visual-regression/commit/a5951469d4cba901ffe86b3ba663c242c9d51ee4) Thanks [@tgfischer](https://github.com/tgfischer)! - Checking whether a build has finished, and loading the build and snapshot pages, no longer scan every diff ever recorded, so the web UI stays responsive while many workers run large builds.
+
+- [#613](https://github.com/open-visual-regression/open-visual-regression/pull/613) [`1ba9b95`](https://github.com/open-visual-regression/open-visual-regression/commit/1ba9b95574a1e7c562f9a1ba9f83ac4f43bf08e7) Thanks [@tgfischer](https://github.com/tgfischer)! - A migration copies the flaky detection settings and their last run time from `job_settings` into new `settings` and `job_state` tables. The settings stay as they were, and `job_settings` is dropped in a later release.
+
+- [#610](https://github.com/open-visual-regression/open-visual-regression/pull/610) [`be61ded`](https://github.com/open-visual-regression/open-visual-regression/commit/be61ded19fa7cc5fd6f05bf80212119a632900e7) Thanks [@tgfischer](https://github.com/tgfischer)! - Snapshot panes on the snapshot page now fill the page height while their images load, instead of starting short and jumping taller once the images arrive.
+- Updated dependencies [[`3afcaea`](https://github.com/open-visual-regression/open-visual-regression/commit/3afcaeaad55b57de120525e896376edf6fdba27a), [`a595146`](https://github.com/open-visual-regression/open-visual-regression/commit/a5951469d4cba901ffe86b3ba663c242c9d51ee4), [`822d673`](https://github.com/open-visual-regression/open-visual-regression/commit/822d673580a88151e869b38dc22106bc41147e1f), [`1ba9b95`](https://github.com/open-visual-regression/open-visual-regression/commit/1ba9b95574a1e7c562f9a1ba9f83ac4f43bf08e7)]:
+  - @ovr/api@0.5.10
+  - @ovr/db@0.4.15
+  - @ovr/builds@0.2.19
+  - @ovr/reviews@0.1.34
+  - @ovr/git-status@0.1.28
+  - @ovr/queue@0.4.5
+
 ## 0.25.1
 
 ### Patch Changes
