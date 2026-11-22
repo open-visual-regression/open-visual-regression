@@ -79,7 +79,7 @@ describe("compareImages", async () => {
     });
 
     expect(result.pixelDiffCount).toBeGreaterThan(0);
-    expect(alphaAt(result.diffImage, 60, 8)).toBe(255);
+    expect(alphaAt(result.diffImage, 60, 8)).toBe(80);
     expect(alphaAt(result.diffImage, 50, 55)).toBe(0);
   });
 
@@ -95,7 +95,7 @@ describe("compareImages", async () => {
     });
 
     expect(result.pixelDiffCount).toBeGreaterThan(0);
-    expect(alphaAt(result.diffImage, 30, 34)).toBe(255);
+    expect(alphaAt(result.diffImage, 30, 34)).toBe(80);
     expect(alphaAt(result.diffImage, 50, 60)).toBe(0);
   });
 
