@@ -110,30 +110,6 @@ const highlightsOutside = (diff: AlignedDiff, areas: Rect[]) =>
     return count + (marked && !areas.some((area) => isInside(area, x, y)) ? 1 : 0);
   }, 0);
 
-const contains = (outer: Rect, inner: Rect) =>
-  inner.x >= outer.x &&
-  inner.y >= outer.y &&
-  inner.x + inner.width <= outer.x + outer.width &&
-  inner.y + inner.height <= outer.y + outer.height;
-
-expect.extend({
-  /** Passes when a rect lies entirely inside `outer`. */
-  toBeWithin(received: Rect, outer: Rect) {
-    return {
-      pass: contains(outer, received),
-      message: () => `expected ${JSON.stringify(received)} to lie within ${JSON.stringify(outer)}`,
-    };
-  },
-});
-
-declare module "vitest" {
-  // Extending Vitest's matcher types only works through interface merging.
-  // oxlint-disable-next-line typescript/consistent-type-definitions
-  interface AsymmetricMatchersContaining {
-    toBeWithin(outer: Rect): unknown;
-  }
-}
-
 // Screenshots of a sample app page rendered by Chromium. Each scenario lists
 // the areas its highlighted pixels must lie in, each holding some of them.
 const FIXTURES = join(import.meta.dirname, "fixtures/aligned");
@@ -156,6 +132,7 @@ const expectedHighlights: Record<string, Rect[]> = {
   "tall-inserted-section": [{ ...MAIN_COLUMN, y: 240, height: 350 }],
   "wide-toolbar-color": [{ ...MAIN_COLUMN, y: 190, height: 60 }],
   "small-status-dot": [{ x: 230, y: 210, width: 20, height: 20 }],
+  "removed-cards-row": [{ ...MAIN_COLUMN, y: 340, height: 80 }],
   "card-color-change": [{ ...MAIN_COLUMN, y: 260, height: 130 }],
   "multiple-changes": [
     { x: 0, y: 0, width: 900, height: 46 },
@@ -166,7 +143,6 @@ const expectedHighlights: Record<string, Rect[]> = {
 
 const allScenarios = [
   ...Object.keys(expectedHighlights),
-  "removed-cards-row",
   "text-word-change",
   "text-reflow-extra-line",
   "big-dark-theme",
@@ -187,7 +163,7 @@ describe("alignedDiff", () => {
 
     const diff = alignedDiff(image, image);
 
-    expect(diff).toMatchObject({ changedPixelCount: 0, removals: [], addedSpace: [] });
+    expect(diff).toMatchObject({ changedPixelCount: 0, addedSpace: [] });
   });
 
   it("should isolate a block inserted at the top instead of flagging everything below it", () => {
@@ -204,7 +180,7 @@ describe("alignedDiff", () => {
     expect(highlightsOutside(diff, [{ x: 0, y: 0, width: 200, height: 16 }])).toBe(0);
   });
 
-  it("should report removed content as a removal line with no changed pixels", () => {
+  it("should highlight removed content where it was when other content moved into its place", () => {
     const baseline = drawImage(200, 120, page());
     const current = drawImage(200, 120, [
       ...text(10, 10, 8, 1),
@@ -214,8 +190,8 @@ describe("alignedDiff", () => {
 
     const diff = alignedDiff(baseline, current);
 
-    expect(diff.changedPixelCount).toBe(0);
-    expect(diff.removals).toEqual([{ x: 10, y: 30, width: 60, height: 0 }]);
+    expect(diff.changedPixelCount).toBeGreaterThan(0);
+    expect(highlightsOutside(diff, [{ x: 10, y: 30, width: 60, height: 20 }])).toBe(0);
   });
 
   it("should show added blank space without counting it as changed", () => {
@@ -255,7 +231,7 @@ describe("alignedDiff", () => {
     expect(pixelAt(30, 15)).toEqual([0, 0, 0, 0]);
   });
 
-  it("should mark inserted content like any change and draw removed content as a line", () => {
+  it("should highlight inserted content and removed content alike", () => {
     const baseline = drawImage(200, 120, page());
     const current = drawImage(200, 140, [
       { x: 0, y: 0, width: 200, height: 16, color: RED },
@@ -282,13 +258,6 @@ describe("alignedDiff", () => {
       expect(areas.map((area) => highlightsIn(diff, area))).not.toContain(0);
     },
   );
-
-  it("should draw a removed row as a line where it was", () => {
-    const diff = alignedDiff(baselinePage, load("removed-cards-row"));
-
-    expect(diff.changedPixelCount).toBe(0);
-    expect(diff.removals).toEqual([expect.toBeWithin({ ...MAIN_COLUMN, y: 340, height: 40 })]);
-  });
 
   it.each(allScenarios)("should only flag pixels that also differ in place for %s", (name) => {
     expect(flaggedOnlyWhenAligned(baselinePage, load(name))).toBe(0);

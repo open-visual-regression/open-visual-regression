@@ -15,8 +15,6 @@ export type AlignedDiff = {
   plainChangedPixelCount: number;
   /** One byte per pixel of the current image: 1 where it changed. */
   mask: Uint8Array;
-  /** Where content was removed, as zero-width or zero-height lines in the current image. */
-  removals: Rect[];
   /** Blank space that grew, set only when that's the only difference. */
   addedSpace: Rect[];
 };
@@ -75,59 +73,28 @@ const diffInPlace = (baseline: RgbaImage, current: RgbaImage): AlignedDiff => {
     changedPixelCount: count,
     plainChangedPixelCount: count,
     mask,
-    removals: [],
     addedSpace: [],
   };
 };
 
-const rowsHaveMarks = (mask: Uint8Array, width: number, { y, height }: Rect): boolean => {
-  for (let pixel = y * width; pixel < (y + height) * width; pixel++) {
-    if (mask[pixel]) {
-      return true;
-    }
-  }
-  return false;
-};
-
-/** Whether every pixel of an image within a rect has the same color. */
-const isBlank = (image: RgbaImage, { x, y, width, height }: Rect): boolean => {
-  const words = pixelWords(image);
-  const first = words[y * image.width + x];
-  for (let row = y; row < y + height; row++) {
-    for (let column = x; column < x + width; column++) {
-      if (words[row * image.width + column] !== first) {
-        return false;
-      }
-    }
-  }
-  return true;
-};
-
 /** Joins removals that land at nearly the same spot in the current image. */
 const joinRemovals = (deletions: RectPair[]): RectPair[] => {
-  const groups: (RectPair & { vertical: boolean })[] = [];
+  const joined: RectPair[] = [];
   for (const deletion of deletions) {
-    const vertical = deletion.current.width === 0;
-    const index = groups.findIndex(
-      (group) =>
-        group.vertical === vertical && rectsAreNear(group.current, deletion.current, REMOVAL_GAP),
+    const index = joined.findIndex((other) =>
+      rectsAreNear(other.current, deletion.current, REMOVAL_GAP),
     );
-    const group = groups[index];
-    if (group) {
-      groups[index] = {
-        vertical,
-        current: unionRect(group.current, deletion.current),
-        baseline: unionRect(group.baseline, deletion.baseline),
+    const other = joined[index];
+    if (other) {
+      joined[index] = {
+        current: unionRect(other.current, deletion.current),
+        baseline: unionRect(other.baseline, deletion.baseline),
       };
     } else {
-      groups.push({ ...deletion, vertical });
+      joined.push(deletion);
     }
   }
-  // Each removal stays a line in the current image, along the axis it was found on.
-  return groups.map(({ vertical, current, baseline }) => ({
-    current: vertical ? { ...current, width: 0 } : { ...current, height: 0 },
-    baseline,
-  }));
+  return joined;
 };
 
 /**
@@ -151,7 +118,6 @@ export const alignedDiff = (baseline: RgbaImage, current: RgbaImage): AlignedDif
       changedPixelCount: lined.count,
       plainChangedPixelCount: lined.count,
       mask: lined.mask,
-      removals: [],
       addedSpace: [],
     };
   }
@@ -169,29 +135,19 @@ export const alignedDiff = (baseline: RgbaImage, current: RgbaImage): AlignedDif
     }
   }
 
-  // Removed content whose spot is now empty, like a link gone from the end of
-  // a row, is marked where it was rather than drawn as a line, as long as a
-  // plain comparison also sees a change there.
+  // Removed content has no place in the current image, so where it was is
+  // highlighted instead: each pixel where it differs from what's there now, as
+  // long as a plain comparison also sees a change there.
   const baselineWords = pixelWords(baseline);
   const currentWords = pixelWords(current);
-  const removedLines: Rect[] = [];
   for (const { current: line, baseline: removed } of joinRemovals(deletions)) {
-    const spot = {
-      x: line.x,
-      y: line.y,
-      width: Math.min(removed.width, width - line.x),
-      height: Math.min(removed.height, height - line.y),
-    };
-    if (spot.width <= 0 || spot.height <= 0 || !isBlank(current, spot)) {
-      removedLines.push(line);
-      continue;
-    }
-    const blank = currentWords[spot.y * width + spot.x];
-    for (let dy = 0; dy < spot.height; dy++) {
-      for (let dx = 0; dx < spot.width; dx++) {
-        const pixel = (spot.y + dy) * width + spot.x + dx;
+    const spotWidth = Math.min(removed.width, width - line.x);
+    const spotHeight = Math.min(removed.height, height - line.y);
+    for (let dy = 0; dy < spotHeight; dy++) {
+      for (let dx = 0; dx < spotWidth; dx++) {
+        const pixel = (line.y + dy) * width + line.x + dx;
         const removedPixel = baselineWords[(removed.y + dy) * baseline.width + removed.x + dx];
-        if (removedPixel !== blank && plain.mask[pixel] && !mask[pixel]) {
+        if (removedPixel !== currentWords[pixel] && plain.mask[pixel] && !mask[pixel]) {
           mask[pixel] = 1;
           count++;
         }
@@ -205,15 +161,9 @@ export const alignedDiff = (baseline: RgbaImage, current: RgbaImage): AlignedDif
     return diffInPlace(baseline, current);
   }
 
-  // Content removed from within a line that also changed is already marked by
-  // that change, so a separate removal line there only adds noise.
-  const removals = removedLines.filter(
-    (line) => line.width > 0 || !rowsHaveMarks(mask, width, line),
-  );
-
   // The plain comparison failed but every difference was blank space that
   // grew, so that space is shown rather than nothing.
-  const onlySpaceGrew = count === 0 && removals.length === 0 && plain.count > 0;
+  const onlySpaceGrew = count === 0 && plain.count > 0;
   if (onlySpaceGrew && insertions.length === 0) {
     return diffInPlace(baseline, current);
   }
@@ -224,7 +174,6 @@ export const alignedDiff = (baseline: RgbaImage, current: RgbaImage): AlignedDif
     changedPixelCount: count,
     plainChangedPixelCount: plain.count,
     mask,
-    removals,
     addedSpace: onlySpaceGrew ? insertions : [],
   };
 };

@@ -7,11 +7,10 @@ type Rgba = [number, number, number, number];
 const CHANGED: Rgba = [255, 0, 0, 255];
 // Space that only grew has no changed pixels to mark, so it's tinted instead.
 const ADDED_SPACE: Rgba = [255, 0, 0, 90];
-const REMOVAL_LINE_WIDTH = 3;
 
 /**
- * Draws a diff as a transparent overlay for the current image: changed pixels
- * in red, and a red line where content was removed.
+ * Draws a diff as a transparent overlay for the current image, with changed
+ * pixels in red.
  */
 export const renderDiff = (diff: AlignedDiff): RgbaImage => {
   const { width, height } = diff;
@@ -37,26 +36,5 @@ export const renderDiff = (diff: AlignedDiff): RgbaImage => {
       data.set(CHANGED, pixel * 4);
     }
   }
-  // Removed content has no area in the current image, so it's drawn as a line centered on it.
-  const half = Math.floor(REMOVAL_LINE_WIDTH / 2);
-  for (const line of diff.removals) {
-    paintRect(
-      line.height === 0
-        ? {
-            x: line.x,
-            y: line.y - half,
-            width: Math.max(line.width, 1),
-            height: REMOVAL_LINE_WIDTH,
-          }
-        : {
-            x: line.x - half,
-            y: line.y,
-            width: REMOVAL_LINE_WIDTH,
-            height: Math.max(line.height, 1),
-          },
-      CHANGED,
-    );
-  }
-
   return { width, height, data };
 };
