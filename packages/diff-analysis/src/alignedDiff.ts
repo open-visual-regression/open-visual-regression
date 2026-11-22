@@ -3,7 +3,6 @@ import pixelmatch from "pixelmatch";
 import { alignImages } from "./align";
 import { clustersOf } from "./clusters";
 import { padToCanvas, PIXELMATCH_THRESHOLD, type RgbaImage } from "./image";
-import { pairMoves } from "./moves";
 import { mergeRegions } from "./regions";
 import type { Rect, Region } from "./types";
 
@@ -128,53 +127,25 @@ export const alignedDiff = (baseline: RgbaImage, current: RgbaImage): AlignedDif
     const changedRegions = clustersOf(outsideInsertions, width, height).map(
       (bounds): Region => ({ kind: "changed", current: bounds, baseline: bounds }),
     );
-    // An insertion's content is what differs from the lines it was filled with.
-    const added = insertions.flatMap((rect) => {
+    const insertedRegions = insertions.flatMap((rect): Region[] => {
       const bounds = maskBounds(mask, width, rect);
-      const content = maskBounds(lined.mask, width, rect);
-      return bounds && content
-        ? [
-            {
-              region: {
-                kind: "inserted",
-                current: bounds,
-                baseline: { ...bounds, height: 0 },
-              } as Region,
-              content,
-            },
-          ]
+      return bounds
+        ? [{ kind: "inserted", current: bounds, baseline: { ...bounds, height: 0 } }]
         : [];
     });
-    const removals = deletions.map(
-      ({ current: line, baseline: rect }): Region => ({
-        kind: "deleted",
-        current: line,
-        baseline: rect,
-      }),
-    );
-    const moves = pairMoves(baseline, current, added, removals);
-
-    // Content that only moved isn't a change, so its pixels leave the mask.
-    let count = changed;
-    for (const { current: rect } of moves.moved) {
-      for (let y = rect.y; y < rect.y + rect.height; y++) {
-        for (let x = rect.x; x < rect.x + rect.width; x++) {
-          count -= mask[y * width + x] ?? 0;
-          mask[y * width + x] = 0;
-        }
-      }
-    }
-
     // Content removed from within a line that also changed is already marked
     // by that change, so a separate removal line there only adds noise.
-    const removed = moves.deleted.filter(
-      ({ current: line }) => line.width > 0 || !rowsHaveMarks(mask, width, line),
-    );
+    const removals = deletions
+      .filter(({ current: line }) => line.width > 0 || !rowsHaveMarks(mask, width, line))
+      .map(
+        ({ current: line, baseline: rect }): Region => ({
+          kind: "deleted",
+          current: line,
+          baseline: rect,
+        }),
+      );
 
-    let regions = [
-      ...mergeRegions([...changedRegions, ...moves.inserted, ...removed]),
-      ...moves.moved,
-    ].sort((a, b) => a.current.y - b.current.y || a.current.x - b.current.x);
+    let regions = mergeRegions([...changedRegions, ...insertedRegions, ...removals]);
     // The plain comparison failed but every difference was blank space that
     // grew, so that space is shown as inserted rather than showing nothing.
     if (regions.length === 0 && plainCount > 0) {
@@ -193,7 +164,7 @@ export const alignedDiff = (baseline: RgbaImage, current: RgbaImage): AlignedDif
     return {
       width,
       height,
-      changedPixelCount: count,
+      changedPixelCount: changed,
       plainChangedPixelCount: plainCount,
       mask,
       regions,

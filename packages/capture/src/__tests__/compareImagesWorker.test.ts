@@ -99,28 +99,6 @@ describe("compareImages", async () => {
     expect(alphaAt(result.diffImage, 50, 55)).toBe(0);
   });
 
-  it("should outline a button that moved instead of painting it", async () => {
-    const button = { y: 20, width: 30, height: 14 };
-    const baseline = drawPng(60, [
-      { ...button, x: 10, color: 0x202020ff },
-      { ...button, x: 50, color: 0x2563ebff },
-    ]);
-    const capture = drawPng(60, [
-      { ...button, x: 10, color: 0x2563ebff },
-      { ...button, x: 50, color: 0x202020ff },
-    ]);
-
-    const result = await compareImages({
-      capture,
-      baseline,
-      withDiffImage: true,
-      diffHighlight: "smart",
-    });
-
-    expect(result.pixelDiffCount).toBeGreaterThan(0);
-    expect(alphaAt(result.diffImage, 25, 27)).toBe(0);
-  });
-
   it.each([
     [
       "a change in place",

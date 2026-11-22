@@ -7,14 +7,11 @@ type Rgba = [number, number, number, number];
 const CHANGED: Rgba = [255, 0, 0, 255];
 // Space that only grew has no changed pixels to mark, so it's tinted instead.
 const ADDED_SPACE: Rgba = [255, 0, 0, 90];
-const MOVED: Rgba = [60, 140, 255, 255];
-const OUTLINE_WIDTH = 2;
 const REMOVED_LINE_WIDTH = 3;
 
 /**
  * Draws a diff as a transparent overlay for the current image: changed pixels
- * in red, a red line where content was removed, and a blue outline around
- * content that moved.
+ * in red, and a red line where content was removed.
  */
 export const renderDiff = (diff: AlignedDiff): RgbaImage => {
   const { width, height } = diff;
@@ -30,15 +27,6 @@ export const renderDiff = (diff: AlignedDiff): RgbaImage => {
         data.set(color, (row * width + column) * 4);
       }
     }
-  };
-
-  const outline = (rect: Rect, color: Rgba) => {
-    const { x, y, width: w, height: h } = rect;
-    const edge = OUTLINE_WIDTH;
-    paintRect({ x: x - edge, y: y - edge, width: w + edge * 2, height: edge }, color);
-    paintRect({ x: x - edge, y: y + h, width: w + edge * 2, height: edge }, color);
-    paintRect({ x: x - edge, y, width: edge, height: h }, color);
-    paintRect({ x: x + w, y, width: edge, height: h }, color);
   };
 
   const hasMarkedPixels = ({ x, y, width: w, height: h }: Rect) => {
@@ -61,9 +49,6 @@ export const renderDiff = (diff: AlignedDiff): RgbaImage => {
     if (diff.mask[pixel]) {
       data.set(CHANGED, pixel * 4);
     }
-  }
-  for (const { current: rect } of diff.regions.filter((region) => region.kind === "moved")) {
-    outline(rect, MOVED);
   }
   // Removed content has no area in the current image, so it's drawn as a line centered on it.
   const half = Math.floor(REMOVED_LINE_WIDTH / 2);

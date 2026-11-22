@@ -90,8 +90,6 @@ const flaggedOnlyWhenAligned = (baseline: RgbaImage, current: RgbaImage) => {
   return count;
 };
 
-const kinds = (regions: Region[]) => regions.map((region) => region.kind);
-
 const contains = (outer: Rect, inner: Rect) =>
   inner.x >= outer.x &&
   inner.y >= outer.y &&
@@ -237,21 +235,6 @@ describe("alignedDiff", () => {
         current: { x: 0, y: 10, width: 200, height: 30 },
       }),
     ]);
-  });
-
-  it("should report two boxes that swapped places as a move, not a change", () => {
-    const header = text(10, 2, 6, 4);
-    const first = { y: 30, width: 40, height: 20, color: BLUE };
-    const second = { y: 30, width: 30, height: 20, color: RED };
-    const baseline = drawImage(200, 80, [...header, { ...first, x: 100 }, { ...second, x: 150 }]);
-    const current = drawImage(200, 80, [...header, { ...second, x: 100 }, { ...first, x: 140 }]);
-
-    const diff = alignedDiff(baseline, current);
-
-    expect(plainPixelDiff(baseline, current)).toBeGreaterThan(0);
-    expect(diff.changedPixelCount).toBe(0);
-    expect(kinds(diff.regions)).toContain("moved");
-    expect(kinds(diff.regions)).not.toContain("changed");
   });
 
   it("should report separate changes as separate regions", () => {
