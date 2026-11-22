@@ -1435,6 +1435,145 @@ describe("snapshots", () => {
       });
     });
 
+    describe("on a main-branch rebuild", () => {
+      test("should still auto-approve a change the rebuilt build made", async ({
+        captureAndDiff,
+      }) => {
+        const before = await captureAndDiff(
+          { branch: "main", createdAt: "2026-01-01T00:00:00.000Z" },
+          0,
+        );
+        const source = await captureAndDiff(
+          { branch: "main", createdAt: "2026-01-02T00:00:00.000Z" },
+          255,
+        );
+
+        const rebuild = await captureAndDiff(
+          {
+            branch: "main",
+            createdAt: "2026-01-03T00:00:00.000Z",
+            commitSha: source.build.commitSha,
+          },
+          255,
+        );
+
+        expect(await dbClient.diffs.findById(rebuild.diff.id)).toMatchObject({
+          reviewStatus: "auto_approved",
+          diffPercent: 100,
+        });
+        expect(await dbClient.snapshots.findById(rebuild.snapshot.id)).toMatchObject({
+          baselineSnapshotId: before.snapshot.id,
+        });
+      });
+
+      test("should still auto-approve a target the rebuilt build added", async ({
+        captureAndDiff,
+      }) => {
+        const source = await captureAndDiff(
+          { branch: "main", createdAt: "2026-01-02T00:00:00.000Z" },
+          255,
+        );
+
+        const rebuild = await captureAndDiff(
+          {
+            branch: "main",
+            createdAt: "2026-01-03T00:00:00.000Z",
+            commitSha: source.build.commitSha,
+          },
+          255,
+        );
+
+        expect(await dbClient.diffs.findById(rebuild.diff.id)).toMatchObject({
+          reviewStatus: "auto_approved",
+        });
+        expect(await dbClient.snapshots.findById(rebuild.snapshot.id)).toMatchObject({
+          baselineSnapshotId: null,
+        });
+      });
+
+      test("should keep a target the rebuilt build left alone unchanged", async ({
+        captureAndDiff,
+      }) => {
+        await captureAndDiff({ branch: "main", createdAt: "2026-01-01T00:00:00.000Z" }, 255);
+        const source = await captureAndDiff(
+          { branch: "main", createdAt: "2026-01-02T00:00:00.000Z" },
+          255,
+        );
+
+        const rebuild = await captureAndDiff(
+          {
+            branch: "main",
+            createdAt: "2026-01-03T00:00:00.000Z",
+            commitSha: source.build.commitSha,
+          },
+          255,
+        );
+
+        expect(await dbClient.diffs.findById(rebuild.diff.id)).toMatchObject({
+          reviewStatus: "unchanged",
+        });
+      });
+
+      test("should keep auto-approving when the rebuild is rebuilt", async ({ captureAndDiff }) => {
+        const before = await captureAndDiff(
+          { branch: "main", createdAt: "2026-01-01T00:00:00.000Z" },
+          0,
+        );
+        const source = await captureAndDiff(
+          { branch: "main", createdAt: "2026-01-02T00:00:00.000Z" },
+          255,
+        );
+        const rebuild = { branch: "main", commitSha: source.build.commitSha };
+        await captureAndDiff({ ...rebuild, createdAt: "2026-01-03T00:00:00.000Z" }, 255);
+
+        const second = await captureAndDiff(
+          { ...rebuild, createdAt: "2026-01-04T00:00:00.000Z" },
+          255,
+        );
+
+        expect(await dbClient.diffs.findById(second.diff.id)).toMatchObject({
+          reviewStatus: "auto_approved",
+        });
+        expect(await dbClient.snapshots.findById(second.snapshot.id)).toMatchObject({
+          baselineSnapshotId: before.snapshot.id,
+        });
+      });
+
+      test("should not change what a branch cut at the rebuilt build compares against", async ({
+        captureAndDiff,
+      }) => {
+        await captureAndDiff({ branch: "main", createdAt: "2026-01-01T00:00:00.000Z" }, 0);
+        const source = await captureAndDiff(
+          { branch: "main", createdAt: "2026-01-02T00:00:00.000Z" },
+          255,
+        );
+        const rebuild = await captureAndDiff(
+          {
+            branch: "main",
+            createdAt: "2026-01-03T00:00:00.000Z",
+            commitSha: source.build.commitSha,
+          },
+          255,
+        );
+
+        const branch = await captureAndDiff(
+          {
+            branch: "feature/x",
+            createdAt: "2026-01-04T00:00:00.000Z",
+            baseBuildId: source.build.id,
+          },
+          255,
+        );
+
+        expect(await dbClient.diffs.findById(branch.diff.id)).toMatchObject({
+          reviewStatus: "unchanged",
+        });
+        expect(await dbClient.snapshots.findById(branch.snapshot.id)).toMatchObject({
+          baselineSnapshotId: rebuild.snapshot.id,
+        });
+      });
+    });
+
     test("promotes the baseline and skips review entirely for a main-branch build with no prior baseline", async ({
       mainBuild,
       project,

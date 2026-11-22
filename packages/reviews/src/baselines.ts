@@ -107,6 +107,26 @@ export const findComparisonBaseline = async (
   return baselines.get(toBaselineKey(key)) ?? { snapshotId: null, source: "latest" };
 };
 
+// The snapshot main's baseline came from, when `build` re-captures the same commit, as a
+// rebuild does. That capture already compared the commit against main before it, so a
+// re-capture compares against the same thing rather than against itself.
+export const findRecapturedSnapshot = async (
+  build: Pick<NonNullable<BuildDbSchema>, "id" | "commitSha">,
+  baselineSnapshotId: string | null | undefined,
+) => {
+  if (!baselineSnapshotId) {
+    return null;
+  }
+
+  const snapshot = await dbClient.snapshots.findById(baselineSnapshotId);
+  if (!snapshot || snapshot.buildId === build.id) {
+    return null;
+  }
+
+  const capture = await dbClient.builds.findById(snapshot.buildId);
+  return capture?.commitSha === build.commitSha ? snapshot : null;
+};
+
 export const promoteBaseline = async (diffId: string, approverId: string): Promise<void> => {
   const diff = await dbClient.diffs.findById(diffId);
   if (!diff) {
@@ -140,6 +160,13 @@ export const promoteBaseline = async (diffId: string, approverId: string): Promi
     targetId: snapshot.targetId,
   };
 
+  // A re-capture of the commit that set the baseline changes nothing main hasn't already
+  // recorded; recording it again would hide that change from branches based on that commit.
+  const recaptured = await findRecapturedSnapshot(
+    build,
+    (await dbClient.baselines.find(key))?.snapshotId,
+  );
+
   await dbClient.transaction(async (tx) => {
     const baseline = await dbClient.baselines.upsert(
       { ...key, snapshotId: snapshot.id, approvedBy: approverId },
@@ -147,7 +174,7 @@ export const promoteBaseline = async (diffId: string, approverId: string): Promi
     );
 
     // Only record changes, so unchanged targets don't add a row on every main build.
-    if (!baseline || !CHANGED_REVIEW_STATUSES.has(diff.reviewStatus)) {
+    if (!baseline || recaptured || !CHANGED_REVIEW_STATUSES.has(diff.reviewStatus)) {
       return;
     }
 
