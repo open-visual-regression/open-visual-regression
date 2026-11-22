@@ -288,7 +288,7 @@ describe("alignedDiff", () => {
     expect(highlightsOutside(diff, [{ x: 120, y: 10, width: 40, height: 8 }])).toBe(0);
   });
 
-  it("should render changed pixels as an overlay with everything else transparent", () => {
+  it("should tint the area that changed and leave everything else transparent", () => {
     const baseline = drawImage(40, 20, []);
     const current = drawImage(40, 20, [{ x: 5, y: 5, width: 4, height: 4, color: INK }]);
 
@@ -297,8 +297,24 @@ describe("alignedDiff", () => {
     const pixelAt = (x: number, y: number) =>
       Array.from(overlay.data.subarray((y * 40 + x) * 4, (y * 40 + x + 1) * 4));
     expect(overlay).toMatchObject({ width: 40, height: 20 });
-    expect(pixelAt(6, 6)).toEqual([255, 0, 0, 255]);
+    expect(pixelAt(6, 6)).toEqual([255, 40, 40, 80]);
     expect(pixelAt(30, 15)).toEqual([0, 0, 0, 0]);
+  });
+
+  it("should tint nearby changes as one area and distant ones separately", () => {
+    const baseline = drawImage(100, 40, []);
+    const current = drawImage(100, 40, [
+      { x: 0, y: 0, width: 4, height: 4, color: INK },
+      { x: 7, y: 0, width: 4, height: 4, color: INK },
+      { x: 80, y: 30, width: 4, height: 4, color: INK },
+    ]);
+
+    const overlay = renderDiff(alignedDiff(baseline, current));
+
+    const alphaAt = (x: number, y: number) => overlay.data[(y * overlay.width + x) * 4 + 3];
+    expect(alphaAt(5, 1)).toBe(80);
+    expect(alphaAt(81, 31)).toBe(80);
+    expect(alphaAt(45, 20)).toBe(0);
   });
 
   it("should highlight inserted content and removed content alike", () => {
@@ -313,9 +329,9 @@ describe("alignedDiff", () => {
 
     const alphaAt = (image: RgbaImage, x: number, y: number) =>
       image.data[(y * image.width + x) * 4 + 3];
-    expect(alphaAt(inserted, 100, 8)).toBe(255);
+    expect(alphaAt(inserted, 100, 8)).toBe(80);
     expect(alphaAt(inserted, 100, 60)).toBe(0);
-    expect(alphaAt(removed, 100, 0)).toBe(255);
+    expect(alphaAt(removed, 100, 0)).toBe(80);
     expect(alphaAt(removed, 100, 60)).toBe(0);
   });
 
