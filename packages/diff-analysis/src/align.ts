@@ -13,8 +13,6 @@ import type { Axis, Rect, RectPair } from "./types";
 export type Alignment = {
   /** Baseline pixels placed where they sit in the current image (RGBA, current size). */
   aligned: Uint8Array;
-  /** One byte per current pixel: 1 where the current image has content the baseline lacks. */
-  inserted: Uint8Array;
   /** Rects of the current image the baseline has no counterpart for. */
   insertions: Rect[];
   /** Baseline content with no place in the current image, as zero-width or zero-height lines. */
@@ -33,7 +31,6 @@ type Context = {
   baselineWords: Uint32Array;
   currentWords: Uint32Array;
   alignedWords: Uint32Array;
-  inserted: Uint8Array;
   insertions: Rect[];
   deletions: Alignment["deletions"];
   shifted: boolean;
@@ -95,13 +92,6 @@ const fillInserted = (context: Context, rect: Rect, axis: Axis, { before, after 
     if (source) {
       copyRect(context, { baseline: source, current: target });
     }
-  }
-  for (let row = rect.y; row < rect.y + rect.height; row++) {
-    context.inserted.fill(
-      1,
-      row * context.current.width + rect.x,
-      row * context.current.width + rect.x + rect.width,
-    );
   }
   context.insertions.push(rect);
 };
@@ -444,7 +434,6 @@ export const alignImages = (baseline: RgbaImage, current: RgbaImage): Alignment 
     baselineWords: pixelWords(baseline),
     currentWords: pixelWords(current),
     alignedWords: new Uint32Array(aligned.buffer),
-    inserted: new Uint8Array(current.width * current.height),
     insertions: [],
     deletions: [],
     shifted: baseline.height !== current.height,
@@ -524,7 +513,6 @@ export const alignImages = (baseline: RgbaImage, current: RgbaImage): Alignment 
 
   return {
     aligned,
-    inserted: context.inserted,
     insertions: context.insertions,
     deletions: context.deletions,
     shifted: context.shifted || context.insertions.length > 0 || context.deletions.length > 0,

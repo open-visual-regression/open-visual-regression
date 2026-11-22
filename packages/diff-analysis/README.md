@@ -28,8 +28,13 @@ pixel diff whatever changed.
 
 A pixel only counts as changed when it also differs from the pixel at the same
 spot in the baseline, so a misaligned stretch never flags more than a plain
-pixel diff would. Blank space that grew isn't counted, but when that's the only difference
-it's still shown as inserted, so a failing snapshot always shows something.
+pixel diff would.
+
+Removed content has no place in the current image. Where its spot is now
+empty, like a link gone from the end of a row, it's highlighted where it was;
+where other content moved into its spot, a line marks where it was. Blank space
+that grew isn't counted, but when that's the only difference it's still shown,
+so a failing snapshot always shows something.
 
 ## Limits
 

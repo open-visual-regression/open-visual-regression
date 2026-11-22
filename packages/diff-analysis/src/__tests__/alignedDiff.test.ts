@@ -5,10 +5,10 @@ import pixelmatch from "pixelmatch";
 import { PNG } from "pngjs";
 import { describe, expect, it } from "vitest";
 
-import { alignedDiff } from "../alignedDiff";
+import { alignedDiff, type AlignedDiff } from "../alignedDiff";
 import { padToCanvas, PIXELMATCH_THRESHOLD, type RgbaImage } from "../image";
 import { renderDiff } from "../renderDiff";
-import type { Rect, Region } from "../types";
+import type { Rect } from "../types";
 
 type Color = [number, number, number];
 
@@ -90,6 +90,26 @@ const flaggedOnlyWhenAligned = (baseline: RgbaImage, current: RgbaImage) => {
   return count;
 };
 
+const isInside = (area: Rect, x: number, y: number) =>
+  x >= area.x && y >= area.y && x < area.x + area.width && y < area.y + area.height;
+
+/** How many highlighted pixels lie inside `area`. */
+const highlightsIn = (diff: AlignedDiff, area: Rect) =>
+  diff.mask.reduce(
+    (count, marked, pixel) =>
+      count +
+      (marked && isInside(area, pixel % diff.width, Math.floor(pixel / diff.width)) ? 1 : 0),
+    0,
+  );
+
+/** How many highlighted pixels lie outside every one of `areas`. */
+const highlightsOutside = (diff: AlignedDiff, areas: Rect[]) =>
+  diff.mask.reduce((count, marked, pixel) => {
+    const x = pixel % diff.width;
+    const y = Math.floor(pixel / diff.width);
+    return count + (marked && !areas.some((area) => isInside(area, x, y)) ? 1 : 0);
+  }, 0);
+
 const contains = (outer: Rect, inner: Rect) =>
   inner.x >= outer.x &&
   inner.y >= outer.y &&
@@ -115,7 +135,7 @@ declare module "vitest" {
 }
 
 // Screenshots of a sample app page rendered by Chromium. Each scenario lists
-// the regions the diff must report, in reading order, and a box each lies within.
+// the areas its highlighted pixels must lie in, each holding some of them.
 const FIXTURES = join(import.meta.dirname, "fixtures/aligned");
 const load = (name: string): RgbaImage => {
   const png = PNG.sync.read(readFileSync(join(FIXTURES, `${name}.png`)));
@@ -123,41 +143,30 @@ const load = (name: string): RgbaImage => {
 };
 const baselinePage = load("baseline");
 
-type ExpectedRegion = { kind: Region["kind"]; within: Rect };
-
 const HEADER = { x: 0, y: 0, width: 900, height: 56 };
 const MAIN_COLUMN = { x: 224, y: 56, width: 452, height: 800 };
 
-const expectedRegions: Record<string, ExpectedRegion[]> = {
-  "insert-top-banner": [{ kind: "inserted", within: { x: 0, y: 0, width: 900, height: 46 } }],
-  "change-bottom-footer": [{ kind: "changed", within: { x: 0, y: 820, width: 900, height: 50 } }],
+const expectedHighlights: Record<string, Rect[]> = {
+  "insert-top-banner": [{ x: 0, y: 0, width: 900, height: 46 }],
+  "change-bottom-footer": [{ x: 0, y: 820, width: 900, height: 50 }],
   // The wider sidebar only pushed content sideways; the activity panel's text re-wrapped.
-  "change-left-sidebar-wider": [
-    { kind: "changed", within: { x: 740, y: 56, width: 160, height: 120 } },
-  ],
-  "change-right-header-badge": [
-    { kind: "changed", within: { x: 700, y: 0, width: 200, height: 56 } },
-  ],
-  "change-right-panel-text": [
-    { kind: "changed", within: { x: 740, y: 56, width: 160, height: 120 } },
-  ],
-  "tall-inserted-section": [{ kind: "inserted", within: { ...MAIN_COLUMN, y: 240, height: 350 } }],
-  "wide-toolbar-color": [{ kind: "changed", within: { ...MAIN_COLUMN, y: 190, height: 60 } }],
-  "small-status-dot": [{ kind: "changed", within: { x: 230, y: 210, width: 20, height: 20 } }],
-  "removed-cards-row": [{ kind: "deleted", within: { ...MAIN_COLUMN, y: 340, height: 40 } }],
-  "card-color-change": Array.from({ length: 6 }, () => ({
-    kind: "changed" as const,
-    within: { ...MAIN_COLUMN, y: 260, height: 130 },
-  })),
+  "change-left-sidebar-wider": [{ x: 740, y: 56, width: 160, height: 120 }],
+  "change-right-header-badge": [{ x: 700, y: 0, width: 200, height: 56 }],
+  "change-right-panel-text": [{ x: 740, y: 56, width: 160, height: 120 }],
+  "tall-inserted-section": [{ ...MAIN_COLUMN, y: 240, height: 350 }],
+  "wide-toolbar-color": [{ ...MAIN_COLUMN, y: 190, height: 60 }],
+  "small-status-dot": [{ x: 230, y: 210, width: 20, height: 20 }],
+  "card-color-change": [{ ...MAIN_COLUMN, y: 260, height: 130 }],
   "multiple-changes": [
-    { kind: "inserted", within: { x: 0, y: 0, width: 900, height: 46 } },
-    { kind: "changed", within: { ...HEADER, y: 46 } },
-    { kind: "changed", within: { x: 0, y: 870, width: 900, height: 46 } },
+    { x: 0, y: 0, width: 900, height: 46 },
+    { ...HEADER, y: 46 },
+    { x: 0, y: 870, width: 900, height: 46 },
   ],
 };
 
 const allScenarios = [
-  ...Object.keys(expectedRegions),
+  ...Object.keys(expectedHighlights),
+  "removed-cards-row",
   "text-word-change",
   "text-reflow-extra-line",
   "big-dark-theme",
@@ -178,8 +187,7 @@ describe("alignedDiff", () => {
 
     const diff = alignedDiff(image, image);
 
-    expect(diff.changedPixelCount).toBe(0);
-    expect(diff.regions).toEqual([]);
+    expect(diff).toMatchObject({ changedPixelCount: 0, removals: [], addedSpace: [] });
   });
 
   it("should isolate a block inserted at the top instead of flagging everything below it", () => {
@@ -192,17 +200,11 @@ describe("alignedDiff", () => {
     const diff = alignedDiff(baseline, current);
 
     expect(plainPixelDiff(baseline, current)).toBeGreaterThan(1000);
-    expect(diff.regions).toEqual([
-      {
-        kind: "inserted",
-        current: { x: 0, y: 0, width: 200, height: 16 },
-        baseline: expect.any(Object),
-      },
-    ]);
     expect(diff.changedPixelCount).toBe(200 * 16);
+    expect(highlightsOutside(diff, [{ x: 0, y: 0, width: 200, height: 16 }])).toBe(0);
   });
 
-  it("should report removed content as a deletion with no changed pixels", () => {
+  it("should report removed content as a removal line with no changed pixels", () => {
     const baseline = drawImage(200, 120, page());
     const current = drawImage(200, 120, [
       ...text(10, 10, 8, 1),
@@ -213,44 +215,31 @@ describe("alignedDiff", () => {
     const diff = alignedDiff(baseline, current);
 
     expect(diff.changedPixelCount).toBe(0);
-    expect(diff.regions).toEqual([
-      expect.objectContaining({
-        kind: "deleted",
-        current: expect.objectContaining({ height: 0 }),
-        baseline: { x: 10, y: 30, width: 60, height: 20 },
-      }),
-    ]);
+    expect(diff.removals).toEqual([{ x: 10, y: 30, width: 60, height: 0 }]);
   });
 
-  it("should show added blank space as inserted without counting it as changed", () => {
+  it("should show added blank space without counting it as changed", () => {
     const baseline = drawImage(200, 120, page());
     const current = drawImage(200, 150, page(30));
 
     const diff = alignedDiff(baseline, current);
 
     expect(diff.changedPixelCount).toBe(0);
-    expect(diff.regions).toEqual([
-      expect.objectContaining({
-        kind: "inserted",
-        current: { x: 0, y: 10, width: 200, height: 30 },
-      }),
-    ]);
+    expect(diff.addedSpace).toEqual([{ x: 0, y: 10, width: 200, height: 30 }]);
   });
 
-  it("should report separate changes as separate regions", () => {
-    const baseline = drawImage(200, 120, page());
-    const current = drawImage(200, 120, [
-      ...page(),
-      { x: 180, y: 5, width: 6, height: 6, color: RED },
-      { x: 180, y: 105, width: 6, height: 6, color: RED },
+  it("should highlight removed content where it was when nothing took its place", () => {
+    const row = text(10, 10, 8, 1);
+    const baseline = drawImage(200, 60, [
+      ...row,
+      { x: 120, y: 10, width: 40, height: 8, color: INK },
     ]);
+    const current = drawImage(200, 60, row);
 
     const diff = alignedDiff(baseline, current);
 
-    expect(diff.regions.map((region) => region.current)).toEqual([
-      { x: 180, y: 5, width: 6, height: 6 },
-      { x: 180, y: 105, width: 6, height: 6 },
-    ]);
+    expect(highlightsIn(diff, { x: 120, y: 10, width: 40, height: 8 })).toBeGreaterThan(0);
+    expect(highlightsOutside(diff, [{ x: 120, y: 10, width: 40, height: 8 }])).toBe(0);
   });
 
   it("should render changed pixels as an overlay with everything else transparent", () => {
@@ -284,20 +273,22 @@ describe("alignedDiff", () => {
     expect(alphaAt(removed, 100, 60)).toBe(0);
   });
 
-  it.each(Object.entries(expectedRegions))(
-    "should report the expected regions for %s",
-    (name, regions) => {
+  it.each(Object.entries(expectedHighlights))(
+    "should highlight only the expected areas for %s",
+    (name, areas) => {
       const diff = alignedDiff(baselinePage, load(name));
 
-      expect(diff.regions).toEqual(
-        regions.map(({ kind, within }) => ({
-          kind,
-          current: expect.toBeWithin(within),
-          baseline: expect.anything(),
-        })),
-      );
+      expect(highlightsOutside(diff, areas)).toBe(0);
+      expect(areas.map((area) => highlightsIn(diff, area))).not.toContain(0);
     },
   );
+
+  it("should draw a removed row as a line where it was", () => {
+    const diff = alignedDiff(baselinePage, load("removed-cards-row"));
+
+    expect(diff.changedPixelCount).toBe(0);
+    expect(diff.removals).toEqual([expect.toBeWithin({ ...MAIN_COLUMN, y: 340, height: 40 })]);
+  });
 
   it.each(allScenarios)("should only flag pixels that also differ in place for %s", (name) => {
     expect(flaggedOnlyWhenAligned(baselinePage, load(name))).toBe(0);
@@ -316,12 +307,9 @@ describe("alignedDiff", () => {
 
     const diff = alignedDiff(baselinePage, current);
 
-    // Which of several equally good alignments is picked decides how the
-    // sentence splits into regions, so only where they sit is checked.
     const sentence = { ...MAIN_COLUMN, y: 160, height: 30 };
-    const outsideSentence = diff.regions.filter((region) => !contains(sentence, region.current));
-    expect(diff.regions).not.toEqual([]);
-    expect(outsideSentence).toEqual([]);
+    expect(highlightsIn(diff, sentence)).toBeGreaterThan(0);
+    expect(highlightsOutside(diff, [sentence])).toBe(0);
     expect(diff.changedPixelCount).toBeLessThan(plainPixelDiff(baselinePage, current));
   });
 
@@ -331,10 +319,6 @@ describe("alignedDiff", () => {
     const diff = alignedDiff(baselinePage, current);
 
     expect(diff.changedPixelCount).toBeLessThan(plainPixelDiff(baselinePage, current) / 4);
-    expect(diff.regions).toContainEqual(
-      expect.objectContaining({
-        current: expect.toBeWithin({ ...MAIN_COLUMN, y: 160, height: 60 }),
-      }),
-    );
+    expect(highlightsIn(diff, { ...MAIN_COLUMN, y: 160, height: 60 })).toBeGreaterThan(0);
   });
 });

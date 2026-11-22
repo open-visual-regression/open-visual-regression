@@ -1,10 +1,10 @@
 import pixelmatch from "pixelmatch";
 
 import { alignImages } from "./align";
-import { clustersOf } from "./clusters";
 import { padToCanvas, PIXELMATCH_THRESHOLD, type RgbaImage } from "./image";
-import { mergeRegions } from "./regions";
-import type { Rect, Region } from "./types";
+import { pixelWords } from "./pixels";
+import { rectsAreNear, unionRect } from "./rect";
+import type { Rect, RectPair } from "./types";
 
 export type AlignedDiff = {
   width: number;
@@ -15,44 +15,69 @@ export type AlignedDiff = {
   plainChangedPixelCount: number;
   /** One byte per pixel of the current image: 1 where it changed. */
   mask: Uint8Array;
-  /** Each visual change, merged with its close neighbors, top to bottom. */
-  regions: Region[];
+  /** Where content was removed, as zero-width or zero-height lines in the current image. */
+  removals: Rect[];
+  /** Blank space that grew, set only when that's the only difference. */
+  addedSpace: Rect[];
 };
 
-/**
- * Turns pixelmatch's diff-mask output (changed pixels drawn red) into one byte
- * per pixel, plus a copy without the pixels that sit in inserted content.
- */
-const masksFromOutput = (output: Uint8Array, inserted: Uint8Array) => {
+// Removals this close together in the current image are one removal split up
+// by the blank gaps between its words, which line up on their own.
+const REMOVAL_GAP = 8;
+
+/** Turns pixelmatch's diff-mask output (changed pixels drawn red) into one byte per pixel. */
+const maskFromOutput = (output: Uint8Array) => {
   const mask = new Uint8Array(output.length / 4);
-  const outsideInsertions = new Uint8Array(mask.length);
   let count = 0;
   for (let pixel = 0; pixel < mask.length; pixel++) {
     if (output[pixel * 4 + 3] !== 0 && output[pixel * 4 + 1] === 0) {
       mask[pixel] = 1;
-      outsideInsertions[pixel] = inserted[pixel] ? 0 : 1;
       count++;
     }
   }
-  return { mask, outsideInsertions, count };
+  return { mask, count };
 };
 
-const maskBounds = (mask: Uint8Array, width: number, rect: Rect): Rect | null => {
-  let left = Infinity;
-  let top = Infinity;
-  let right = -1;
-  let bottom = -1;
-  for (let y = rect.y; y < rect.y + rect.height; y++) {
-    for (let x = rect.x; x < rect.x + rect.width; x++) {
-      if (mask[y * width + x]) {
-        left = Math.min(left, x);
-        top = Math.min(top, y);
-        right = Math.max(right, x);
-        bottom = Math.max(bottom, y);
-      }
-    }
-  }
-  return right < 0 ? null : { x: left, y: top, width: right - left + 1, height: bottom - top + 1 };
+const pixelmatchMask = (
+  baseline: Uint8Array,
+  current: Uint8Array,
+  width: number,
+  height: number,
+) => {
+  const output = new Uint8Array(width * height * 4);
+  pixelmatch(baseline, current, output, width, height, {
+    threshold: PIXELMATCH_THRESHOLD,
+    diffMask: true,
+    diffColor: [255, 0, 0],
+  });
+  return maskFromOutput(output);
+};
+
+/** Compares the two images pixel by pixel, top left aligned. */
+const diffPixels = (baseline: RgbaImage, current: RgbaImage) => {
+  const width = Math.max(baseline.width, current.width);
+  const height = Math.max(baseline.height, current.height);
+  const { mask, count } = pixelmatchMask(
+    padToCanvas(baseline, width, height).data,
+    padToCanvas(current, width, height).data,
+    width,
+    height,
+  );
+  return { mask, count, width, height };
+};
+
+/** Screenshots of different widths can't be lined up, so they're compared in place. */
+const diffInPlace = (baseline: RgbaImage, current: RgbaImage): AlignedDiff => {
+  const { mask, count, width, height } = diffPixels(baseline, current);
+  return {
+    width,
+    height,
+    changedPixelCount: count,
+    plainChangedPixelCount: count,
+    mask,
+    removals: [],
+    addedSpace: [],
+  };
 };
 
 const rowsHaveMarks = (mask: Uint8Array, width: number, { y, height }: Rect): boolean => {
@@ -64,37 +89,45 @@ const rowsHaveMarks = (mask: Uint8Array, width: number, { y, height }: Rect): bo
   return false;
 };
 
-/** Compares the two images pixel by pixel, top left aligned. */
-const diffPixels = (baseline: RgbaImage, current: RgbaImage) => {
-  const width = Math.max(baseline.width, current.width);
-  const height = Math.max(baseline.height, current.height);
-  const output = new Uint8Array(width * height * 4);
-  pixelmatch(
-    padToCanvas(baseline, width, height).data,
-    padToCanvas(current, width, height).data,
-    output,
-    width,
-    height,
-    { threshold: PIXELMATCH_THRESHOLD, diffMask: true, diffColor: [255, 0, 0] },
-  );
-  const { mask, count } = masksFromOutput(output, new Uint8Array(width * height));
-  return { mask, count, width, height };
+/** Whether every pixel of an image within a rect has the same color. */
+const isBlank = (image: RgbaImage, { x, y, width, height }: Rect): boolean => {
+  const words = pixelWords(image);
+  const first = words[y * image.width + x];
+  for (let row = y; row < y + height; row++) {
+    for (let column = x; column < x + width; column++) {
+      if (words[row * image.width + column] !== first) {
+        return false;
+      }
+    }
+  }
+  return true;
 };
 
-/** Screenshots of different widths can't be lined up, so they're compared in place. */
-const diffInPlace = (baseline: RgbaImage, current: RgbaImage): AlignedDiff => {
-  const { mask, count, width, height } = diffPixels(baseline, current);
-  const regions = clustersOf(mask, width, height).map(
-    (bounds): Region => ({ kind: "changed", current: bounds, baseline: bounds }),
-  );
-  return {
-    width,
-    height,
-    changedPixelCount: count,
-    plainChangedPixelCount: count,
-    mask,
-    regions: mergeRegions(regions),
-  };
+/** Joins removals that land at nearly the same spot in the current image. */
+const joinRemovals = (deletions: RectPair[]): RectPair[] => {
+  const groups: (RectPair & { vertical: boolean })[] = [];
+  for (const deletion of deletions) {
+    const vertical = deletion.current.width === 0;
+    const index = groups.findIndex(
+      (group) =>
+        group.vertical === vertical && rectsAreNear(group.current, deletion.current, REMOVAL_GAP),
+    );
+    const group = groups[index];
+    if (group) {
+      groups[index] = {
+        vertical,
+        current: unionRect(group.current, deletion.current),
+        baseline: unionRect(group.baseline, deletion.baseline),
+      };
+    } else {
+      groups.push({ ...deletion, vertical });
+    }
+  }
+  // Each removal stays a line in the current image, along the axis it was found on.
+  return groups.map(({ vertical, current, baseline }) => ({
+    current: vertical ? { ...current, width: 0 } : { ...current, height: 0 },
+    baseline,
+  }));
 };
 
 /**
@@ -108,70 +141,19 @@ export const alignedDiff = (baseline: RgbaImage, current: RgbaImage): AlignedDif
   }
 
   const { width, height } = current;
-  const { aligned, inserted, insertions, deletions, shifted } = alignImages(baseline, current);
+  const { aligned, insertions, deletions, shifted } = alignImages(baseline, current);
+  const lined = pixelmatchMask(aligned, current.data, width, height);
 
-  const output = new Uint8Array(aligned.length);
-  pixelmatch(aligned, current.data, output, width, height, {
-    threshold: PIXELMATCH_THRESHOLD,
-    diffMask: true,
-    diffColor: [255, 0, 0],
-  });
-  const lined = masksFromOutput(output, inserted);
-
-  const withRegions = (
-    mask: Uint8Array,
-    outsideInsertions: Uint8Array,
-    changed: number,
-    plainCount: number,
-  ): AlignedDiff => {
-    const changedRegions = clustersOf(outsideInsertions, width, height).map(
-      (bounds): Region => ({ kind: "changed", current: bounds, baseline: bounds }),
-    );
-    const insertedRegions = insertions.flatMap((rect): Region[] => {
-      const bounds = maskBounds(mask, width, rect);
-      return bounds
-        ? [{ kind: "inserted", current: bounds, baseline: { ...bounds, height: 0 } }]
-        : [];
-    });
-    // Content removed from within a line that also changed is already marked
-    // by that change, so a separate removal line there only adds noise.
-    const removals = deletions
-      .filter(({ current: line }) => line.width > 0 || !rowsHaveMarks(mask, width, line))
-      .map(
-        ({ current: line, baseline: rect }): Region => ({
-          kind: "deleted",
-          current: line,
-          baseline: rect,
-        }),
-      );
-
-    let regions = mergeRegions([...changedRegions, ...insertedRegions, ...removals]);
-    // The plain comparison failed but every difference was blank space that
-    // grew, so that space is shown as inserted rather than showing nothing.
-    if (regions.length === 0 && plainCount > 0) {
-      regions = insertions.map(
-        (rect): Region => ({
-          kind: "inserted",
-          current: rect,
-          baseline: { ...rect, height: 0 },
-        }),
-      );
-      if (regions.length === 0) {
-        return diffInPlace(baseline, current);
-      }
-    }
-
+  if (!shifted) {
     return {
       width,
       height,
-      changedPixelCount: changed,
-      plainChangedPixelCount: plainCount,
-      mask,
-      regions,
+      changedPixelCount: lined.count,
+      plainChangedPixelCount: lined.count,
+      mask: lined.mask,
+      removals: [],
+      addedSpace: [],
     };
-  };
-  if (!shifted) {
-    return withRegions(lined.mask, lined.outsideInsertions, lined.count, lined.count);
   }
 
   // A pixel that looks the same at the same spot in both images hasn't visibly
@@ -179,22 +161,70 @@ export const alignedDiff = (baseline: RgbaImage, current: RgbaImage): AlignedDif
   // when the plain comparison agrees.
   const plain = diffPixels(baseline, current);
   const mask = new Uint8Array(lined.mask.length);
-  const outsideInsertions = new Uint8Array(lined.mask.length);
   let count = 0;
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const pixel = y * width + x;
-      if (lined.mask[pixel] && plain.mask[y * plain.width + x]) {
-        mask[pixel] = 1;
-        outsideInsertions[pixel] = inserted[pixel] ? 0 : 1;
-        count++;
+  for (let pixel = 0; pixel < mask.length; pixel++) {
+    if (lined.mask[pixel] && plain.mask[pixel]) {
+      mask[pixel] = 1;
+      count++;
+    }
+  }
+
+  // Removed content whose spot is now empty, like a link gone from the end of
+  // a row, is marked where it was rather than drawn as a line, as long as a
+  // plain comparison also sees a change there.
+  const baselineWords = pixelWords(baseline);
+  const currentWords = pixelWords(current);
+  const removedLines: Rect[] = [];
+  for (const { current: line, baseline: removed } of joinRemovals(deletions)) {
+    const spot = {
+      x: line.x,
+      y: line.y,
+      width: Math.min(removed.width, width - line.x),
+      height: Math.min(removed.height, height - line.y),
+    };
+    if (spot.width <= 0 || spot.height <= 0 || !isBlank(current, spot)) {
+      removedLines.push(line);
+      continue;
+    }
+    const blank = currentWords[spot.y * width + spot.x];
+    for (let dy = 0; dy < spot.height; dy++) {
+      for (let dx = 0; dx < spot.width; dx++) {
+        const pixel = (spot.y + dy) * width + spot.x + dx;
+        const removedPixel = baselineWords[(removed.y + dy) * baseline.width + removed.x + dx];
+        if (removedPixel !== blank && plain.mask[pixel] && !mask[pixel]) {
+          mask[pixel] = 1;
+          count++;
+        }
       }
     }
   }
+
   // When both found changes but no pixel in common, neither explanation holds
   // up on its own, so the plain comparison is shown as it is.
   if (count === 0 && lined.count > 0) {
     return diffInPlace(baseline, current);
   }
-  return withRegions(mask, outsideInsertions, count, plain.count);
+
+  // Content removed from within a line that also changed is already marked by
+  // that change, so a separate removal line there only adds noise.
+  const removals = removedLines.filter(
+    (line) => line.width > 0 || !rowsHaveMarks(mask, width, line),
+  );
+
+  // The plain comparison failed but every difference was blank space that
+  // grew, so that space is shown rather than nothing.
+  const onlySpaceGrew = count === 0 && removals.length === 0 && plain.count > 0;
+  if (onlySpaceGrew && insertions.length === 0) {
+    return diffInPlace(baseline, current);
+  }
+
+  return {
+    width,
+    height,
+    changedPixelCount: count,
+    plainChangedPixelCount: plain.count,
+    mask,
+    removals,
+    addedSpace: onlySpaceGrew ? insertions : [],
+  };
 };

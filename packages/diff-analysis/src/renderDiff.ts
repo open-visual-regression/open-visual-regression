@@ -7,7 +7,7 @@ type Rgba = [number, number, number, number];
 const CHANGED: Rgba = [255, 0, 0, 255];
 // Space that only grew has no changed pixels to mark, so it's tinted instead.
 const ADDED_SPACE: Rgba = [255, 0, 0, 90];
-const REMOVED_LINE_WIDTH = 3;
+const REMOVAL_LINE_WIDTH = 3;
 
 /**
  * Draws a diff as a transparent overlay for the current image: changed pixels
@@ -29,21 +29,8 @@ export const renderDiff = (diff: AlignedDiff): RgbaImage => {
     }
   };
 
-  const hasMarkedPixels = ({ x, y, width: w, height: h }: Rect) => {
-    for (let row = y; row < y + h; row++) {
-      for (let column = x; column < x + w; column++) {
-        if (diff.mask[row * width + column]) {
-          return true;
-        }
-      }
-    }
-    return false;
-  };
-
-  for (const { current: rect } of diff.regions.filter((region) => region.kind === "inserted")) {
-    if (!hasMarkedPixels(rect)) {
-      paintRect(rect, ADDED_SPACE);
-    }
+  for (const rect of diff.addedSpace) {
+    paintRect(rect, ADDED_SPACE);
   }
   for (let pixel = 0; pixel < diff.mask.length; pixel++) {
     if (diff.mask[pixel]) {
@@ -51,20 +38,20 @@ export const renderDiff = (diff: AlignedDiff): RgbaImage => {
     }
   }
   // Removed content has no area in the current image, so it's drawn as a line centered on it.
-  const half = Math.floor(REMOVED_LINE_WIDTH / 2);
-  for (const { current: line } of diff.regions.filter((region) => region.kind === "deleted")) {
+  const half = Math.floor(REMOVAL_LINE_WIDTH / 2);
+  for (const line of diff.removals) {
     paintRect(
       line.height === 0
         ? {
             x: line.x,
             y: line.y - half,
             width: Math.max(line.width, 1),
-            height: REMOVED_LINE_WIDTH,
+            height: REMOVAL_LINE_WIDTH,
           }
         : {
             x: line.x - half,
             y: line.y,
-            width: REMOVED_LINE_WIDTH,
+            width: REMOVAL_LINE_WIDTH,
             height: Math.max(line.height, 1),
           },
       CHANGED,

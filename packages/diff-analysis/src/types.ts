@@ -13,14 +13,3 @@ export type RectPair = {
   baseline: Rect;
   current: Rect;
 };
-
-export type RegionKind = "changed" | "inserted" | "deleted";
-
-/**
- * One visual change. `current` is where it sits in the current image and
- * `baseline` where it sits in the baseline image. A deletion has no extent in
- * the current image, so its `current` rect is a line of zero height or width.
- */
-export type Region = RectPair & {
-  kind: RegionKind;
-};
