@@ -17,6 +17,7 @@ describe("SettingsSidebar", () => {
     expect(screen.getByRole("heading", { name: "admin" })).toBeVisible();
     expect(screen.getByRole("link", { name: "organization" })).toBeVisible();
     expect(screen.getByRole("link", { name: "users" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "builds" })).toBeVisible();
     expect(screen.getByRole("link", { name: "jobs" })).toBeVisible();
   });
 
@@ -29,6 +30,7 @@ describe("SettingsSidebar", () => {
     expect(screen.queryByRole("heading", { name: "admin" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "organization" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "users" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "builds" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "jobs" })).not.toBeInTheDocument();
   });
 });

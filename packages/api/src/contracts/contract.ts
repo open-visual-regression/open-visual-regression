@@ -10,6 +10,7 @@ import { contract as invitationsContract } from "./invitations";
 import { contract as jobsContract } from "./jobs";
 import { contract as organizationsContract } from "./organizations";
 import { contract as projectsContract } from "./projects";
+import { contract as settingsContract } from "./settings";
 import { contract as setupContract } from "./setup";
 import { contract as snapshotsContract } from "./snapshots";
 import { contract as storageContract } from "./storage";
@@ -34,6 +35,7 @@ export const contract = {
   gitIntegrations: { ...gitIntegrationsContract },
   accessTokens: { ...accessTokensContract },
   jobs: { ...jobsContract },
+  settings: { ...settingsContract },
 } as const;
 
 export const SERVER_VERSION_HEADER = "x-ovr-version";

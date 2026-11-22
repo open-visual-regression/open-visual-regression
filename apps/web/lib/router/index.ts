@@ -10,6 +10,7 @@ import * as invitations from "./invitations";
 import * as jobs from "./jobs";
 import * as organizations from "./organizations";
 import * as projects from "./projects";
+import * as settings from "./settings";
 import * as setup from "./setup";
 import * as snapshots from "./snapshots";
 import * as storage from "./storage";
@@ -34,4 +35,5 @@ export const serverClient = {
   gitIntegrations,
   accessTokens,
   jobs,
+  settings,
 } as const;

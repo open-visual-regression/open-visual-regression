@@ -1,17 +1,12 @@
 import pixelmatch from "pixelmatch";
 import { PNG } from "pngjs";
 
-const PIXELMATCH_THRESHOLD = 0.1;
+import { padToCanvas, PIXELMATCH_THRESHOLD, type RgbaImage } from "./image";
+
 const MAX_SHIFT = 32;
 const SHIFT_SAMPLE_SIZE = 2000;
 const MIN_EXPLAINED_RATIO = 0.5;
 const COLOR_TOLERANCE = 24;
-
-export type DiffImage = {
-  width: number;
-  height: number;
-  data: Uint8Array;
-};
 
 export type ImageSize = {
   width: number;
@@ -48,27 +43,13 @@ type Point = {
   y: number;
 };
 
-export const decodePng = (buffer: Uint8Array): DiffImage => {
+export const decodePng = (buffer: Uint8Array): RgbaImage => {
   const png = PNG.sync.read(Buffer.from(buffer));
 
   return { width: png.width, height: png.height, data: png.data };
 };
 
-const padToCanvas = (image: DiffImage, width: number, height: number): DiffImage => {
-  if (image.width === width && image.height === height) {
-    return image;
-  }
-
-  const data = new Uint8Array(width * height * 4);
-  for (let y = 0; y < image.height; y++) {
-    const rowStart = y * image.width * 4;
-    data.set(image.data.subarray(rowStart, rowStart + image.width * 4), y * width * 4);
-  }
-
-  return { width, height, data };
-};
-
-const findChangedPoints = (baseline: DiffImage, current: DiffImage): Point[] => {
+const findChangedPoints = (baseline: RgbaImage, current: RgbaImage): Point[] => {
   const { width, height } = baseline;
   const output = new Uint8Array(width * height * 4);
 
@@ -112,8 +93,8 @@ const getBoundingRegion = (points: Point[]): ChangedRegion | null => {
 };
 
 const matchesShifted = (
-  baseline: DiffImage,
-  current: DiffImage,
+  baseline: RgbaImage,
+  current: RgbaImage,
   { x, y }: Point,
   shift: Point,
 ): boolean => {
@@ -146,12 +127,12 @@ const sample = (points: Point[], size: number): Point[] => {
   return Array.from({ length: size }, (_, index) => points[Math.floor(index * step)]!);
 };
 
-const countMatches = (baseline: DiffImage, current: DiffImage, points: Point[], shift: Point) =>
+const countMatches = (baseline: RgbaImage, current: RgbaImage, points: Point[], shift: Point) =>
   points.filter((point) => matchesShifted(baseline, current, point, shift)).length;
 
 const findShift = (
-  baseline: DiffImage,
-  current: DiffImage,
+  baseline: RgbaImage,
+  current: RgbaImage,
   points: Point[],
 ): ContentShift | null => {
   const candidates = sample(points, SHIFT_SAMPLE_SIZE);
@@ -184,7 +165,7 @@ const findShift = (
   return { ...best, explainedPercent: Math.round(explainedRatio * 100) };
 };
 
-export const analyzeDiff = (baseline: DiffImage, current: DiffImage): DiffAnalysis => {
+export const analyzeDiff = (baseline: RgbaImage, current: RgbaImage): DiffAnalysis => {
   const width = Math.max(baseline.width, current.width);
   const height = Math.max(baseline.height, current.height);
   const paddedBaseline = padToCanvas(baseline, width, height);
