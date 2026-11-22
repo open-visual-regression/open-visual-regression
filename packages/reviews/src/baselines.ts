@@ -107,9 +107,8 @@ export const findComparisonBaseline = async (
   return baselines.get(toBaselineKey(key)) ?? { snapshotId: null, source: "latest" };
 };
 
-// The snapshot main's baseline came from, when `build` re-captures the same commit, as a
-// rebuild does. That capture already compared the commit against main before it, so a
-// re-capture compares against the same thing rather than against itself.
+// The baseline snapshot, when it came from another build of `build`'s commit, such as the
+// build that `build` rebuilds.
 export const findRecapturedSnapshot = async (
   build: Pick<NonNullable<BuildDbSchema>, "id" | "commitSha">,
   baselineSnapshotId: string | null | undefined,
@@ -160,8 +159,7 @@ export const promoteBaseline = async (diffId: string, approverId: string): Promi
     targetId: snapshot.targetId,
   };
 
-  // A re-capture of the commit that set the baseline changes nothing main hasn't already
-  // recorded; recording it again would hide that change from branches based on that commit.
+  // Another build of this commit already recorded any change to the target.
   const recaptured = await findRecapturedSnapshot(
     build,
     (await dbClient.baselines.find(key))?.snapshotId,

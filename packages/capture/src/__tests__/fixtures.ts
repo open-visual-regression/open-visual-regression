@@ -127,6 +127,13 @@ export type Viewport = {
   viewportName: string;
 };
 
+type CaptureAndDiffBuild = {
+  branch: string;
+  createdAt: string;
+  baseBuildId?: string;
+  commitSha?: string;
+};
+
 type Fixtures = {
   user: typeof userTable.$inferSelect;
   organization: typeof organization.$inferSelect;
@@ -142,7 +149,7 @@ type Fixtures = {
     imagePath: string;
   }) => Promise<void>;
   captureAndDiff: (
-    build: { branch: string; createdAt: string; baseBuildId?: string; commitSha?: string },
+    build: CaptureAndDiffBuild,
     fill: number,
   ) => Promise<{
     build: NonNullable<Awaited<ReturnType<typeof dbClient.builds.create>>>;
@@ -261,7 +268,7 @@ export const test = vitest.extend<Fixtures>({
 
   // Captures target-a as a solid `fill` image in a new build and diffs it, the way the worker
   // does, then marks the build successful so later builds can use it as their merge base.
-  // Each build gets its own commit unless one is given, as a rebuild's would be.
+  // Each build gets its own commit unless one is given.
   captureAndDiff: async ({ project, user, captureConfiguration }, use) => {
     await use(async (build, fill) => {
       const created = await dbClient.builds.create({
