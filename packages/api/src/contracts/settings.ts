@@ -12,7 +12,7 @@ export const diffSettingsSchema = z.object({
 export type DiffSettings = z.infer<typeof diffSettingsSchema>;
 
 export const DEFAULT_DIFF_SETTINGS: DiffSettings = {
-  highlight: "smart",
+  highlight: "exact",
 };
 
 /** Falls back to the defaults for anything missing or invalid. */
