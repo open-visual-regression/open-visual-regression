@@ -115,8 +115,8 @@ export const alignedDiff = (baseline: RgbaImage, current: RgbaImage): AlignedDif
     }
   }
 
-  const removals = highlightRemovals(highlights, baseline, current, alignment.deletions);
-  highlightSpacingChanges(highlights, baseline, current, alignment, removals);
+  highlightRemovals(highlights, baseline, current, alignment.deletions);
+  highlightSpacingChanges(highlights, baseline, current, alignment);
 
   // When nothing explains the difference, the plain comparison is shown as it is.
   if (highlights.count === 0 && plain.count > 0) {

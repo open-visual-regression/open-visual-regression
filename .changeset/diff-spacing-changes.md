@@ -5,4 +5,4 @@
 "@ovr/diff-analysis": patch
 ---
 
-Diff images highlight content that moved because the spacing above it changed, like a margin that shrank, instead of showing a red bar at the bottom of the screenshot.
+Diff images highlight content that moved because the spacing around it changed, like a margin that shrank or a badge whose padding grew, instead of a red bar at the bottom or nothing.

@@ -125,8 +125,11 @@ const MAIN_COLUMN = { x: 224, y: 56, width: 452, height: 800 };
 const expectedHighlights: Record<string, Rect[]> = {
   "insert-top-banner": [{ x: 0, y: 0, width: 900, height: 46 }],
   "change-bottom-footer": [{ x: 0, y: 820, width: 900, height: 50 }],
-  // The wider sidebar only pushed content sideways; the activity panel's text re-wrapped.
-  "change-left-sidebar-wider": [{ x: 740, y: 56, width: 160, height: 120 }],
+  // The sidebar's edge moved out, and the activity panel's text re-wrapped.
+  "change-left-sidebar-wider": [
+    { x: 232, y: 56, width: 16, height: 480 },
+    { x: 740, y: 56, width: 160, height: 120 },
+  ],
   "change-right-header-badge": [{ x: 700, y: 0, width: 200, height: 56 }],
   "change-right-panel-text": [{ x: 740, y: 56, width: 160, height: 120 }],
   "tall-inserted-section": [{ ...MAIN_COLUMN, y: 240, height: 350 }],
@@ -244,6 +247,19 @@ describe("alignedDiff", () => {
     const restOfBar = { x: 95, y: 12, width: 280, height: 16 };
     expect(highlightsIn(diff, restOfBar)).toBeGreaterThan(diff.plainChangedPixelCount / 2);
     expect(highlightsOutside(diff, [restOfBar])).toBe(0);
+  });
+
+  it("should highlight a badge whose padding grew, and not what it pushed along", () => {
+    // A real header row: the status badge got 2px more padding on each side,
+    // which moved the branch chips and links after it 4px to the right.
+    const baseline = load("badge-padding-baseline");
+    const current = load("badge-padding-wider");
+
+    const diff = alignedDiff(baseline, current);
+
+    const badge = { x: 12, y: 4, width: 100, height: 28 };
+    expect(highlightsIn(diff, badge)).toBeGreaterThan(0);
+    expect(highlightsOutside(diff, [badge])).toBe(0);
   });
 
   it("should highlight a gap that changed below a change in place, like a recolored badge", () => {

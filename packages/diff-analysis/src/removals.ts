@@ -2,7 +2,7 @@ import type { RgbaImage } from "./image";
 import { countIn, highlightChangesIn, type Highlights } from "./mask";
 import { pixelWords } from "./pixels";
 import { mergeNear, overlapsColumns, overlapsRows, unionRect } from "./rect";
-import type { Rect, RectPair } from "./types";
+import type { RectPair } from "./types";
 
 // Removals this close together in the current image are one removal split up
 // by the blank gaps between its words, which line up on their own.
@@ -48,14 +48,13 @@ const joinRemovals = (deletions: RectPair[]): Removal[] =>
  * When that spot barely changed, like a segment gone from a bar of solid
  * segments where any of them could have been the one removed, everything
  * after it in the same row that differs in place is highlighted instead.
- * Returns where each removal is, as lines in the current image.
  */
 export const highlightRemovals = (
   highlights: Highlights,
   baseline: RgbaImage,
   current: RgbaImage,
   deletions: RectPair[],
-): Rect[] => {
+): void => {
   const { width, height, plain } = highlights;
   const baselineWords = pixelWords(baseline);
   const currentWords = pixelWords(current);
@@ -76,5 +75,4 @@ export const highlightRemovals = (
         baselineWords[(removed.y + dy) * baseline.width + removed.x + dx] !== currentWords[pixel],
     );
   }
-  return removals.map(({ current: line }) => line);
 };

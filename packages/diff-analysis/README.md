@@ -35,14 +35,15 @@ highlighted instead, wherever it differs from what's there now. When that spot
 looks the same as before, like a segment gone from a bar where the one beside
 it has the same color, the rest of that row is highlighted wherever it differs.
 
-When only the space between rows changed, like a margin that grew or shrank,
-the first block of content below it moved because of it, so that block is
-highlighted wherever it differs. Only something that changes height, like new
-content, removed content or another spacing change further up in the same
-columns, explains a shift, so then nothing extra is highlighted. Something that
-changed in place, like a recolored badge, doesn't. If
-nothing explains a difference at all, the plain pixel diff is shown, so a
-failing snapshot always shows something.
+When only blank space changed, like a margin that grew or shrank, or a badge
+whose padding grew, the first block of content after it moved because of it,
+so that block is highlighted wherever it differs. That holds between rows and
+between columns, at any depth of the alignment, so every change of spacing it
+finds shows up. A change of spacing is left out only when a highlight right
+next to it already shows it, or when it's blank space that went to make room
+for at least as much content added before it, so the box around them kept its
+size. If nothing explains a difference at all, the plain pixel diff is shown,
+so a failing snapshot always shows something.
 
 ## Limits
 
