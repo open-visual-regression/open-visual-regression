@@ -39,6 +39,7 @@ import { enqueueDiff, enqueueFinalize } from "@ovr/queue/producer";
 import {
   findComparisonBase,
   findComparisonBaseline,
+  findRecapturedSnapshot,
   promoteBaseline,
 } from "@ovr/reviews/baselines";
 import { storage } from "@ovr/storage";
@@ -749,6 +750,19 @@ const diffResult = (
   return changed ? "changed" : "unchanged";
 };
 
+const findSnapshot = async (snapshotId: string | null | undefined) =>
+  snapshotId ? ((await dbClient.snapshots.findById(snapshotId)) ?? null) : null;
+
+const findBaselineSnapshot = async (
+  build: { id: string; commitSha: string },
+  latestSnapshotId: string | null,
+  isMainBranch: boolean,
+) => {
+  const recaptured = isMainBranch ? await findRecapturedSnapshot(build, latestSnapshotId) : null;
+
+  return recaptured ? findSnapshot(recaptured.baselineSnapshotId) : findSnapshot(latestSnapshotId);
+};
+
 export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<void> => {
   const snapshot = await dbClient.snapshots.findById(snapshotId);
   if (!snapshot) {
@@ -808,9 +822,7 @@ export const diffSnapshot = async (snapshotId: string, diffId: string): Promise<
     throw new Error(`Snapshot has no captured image: ${snapshotId}`);
   }
 
-  const baselineSnapshot = baseline.snapshotId
-    ? await dbClient.snapshots.findById(baseline.snapshotId)
-    : null;
+  const baselineSnapshot = await findBaselineSnapshot(build, baseline.snapshotId, isMainBranch);
   await dbClient.snapshots.setBaseline(snapshotId, baselineSnapshot?.id ?? null);
   const diff = await diffAgainstBaselineSnapshot(
     snapshotId,

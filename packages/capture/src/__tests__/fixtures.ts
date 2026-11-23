@@ -127,6 +127,13 @@ export type Viewport = {
   viewportName: string;
 };
 
+type CaptureAndDiffBuild = {
+  branch: string;
+  createdAt: string;
+  baseBuildId?: string;
+  commitSha?: string;
+};
+
 type Fixtures = {
   user: typeof userTable.$inferSelect;
   organization: typeof organization.$inferSelect;
@@ -142,7 +149,7 @@ type Fixtures = {
     imagePath: string;
   }) => Promise<void>;
   captureAndDiff: (
-    build: { branch: string; createdAt: string; baseBuildId?: string },
+    build: CaptureAndDiffBuild,
     fill: number,
   ) => Promise<{
     build: NonNullable<Awaited<ReturnType<typeof dbClient.builds.create>>>;
@@ -265,7 +272,7 @@ export const test = vitest.extend<Fixtures>({
     await use(async (build, fill) => {
       const created = await dbClient.builds.create({
         projectId: project.id,
-        commitSha: "a".repeat(40),
+        commitSha: uuidv7().replaceAll("-", ""),
         artifactPath: "builds/artifact",
         createdBy: user.id,
         ...build,

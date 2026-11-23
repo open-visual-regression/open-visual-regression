@@ -29,6 +29,7 @@ test("rebuilding a completed build produces a new build with matching snapshots"
   await buildPage.goto(seed.projectId, sourceBuildId!);
   await expect(buildPage.snapshotThumbnails().first()).toBeVisible();
   await expect(buildPage.rebuildButton()).toBeVisible();
+  const sourceStatus = (await buildPage.status().textContent()) ?? "";
 
   await buildPage.confirmRebuild();
 
@@ -37,7 +38,7 @@ test("rebuilding a completed build produces a new build with matching snapshots"
   expect(rebuiltBuildId).not.toBe(sourceBuildId);
 
   await expect(buildPage.status()).toHaveText(/queued|processing/);
-  await expect(buildPage.status()).toHaveText("unchanged", { timeout: 120_000 });
+  await expect(buildPage.status()).toHaveText(sourceStatus, { timeout: 120_000 });
 
   const { snapshots: rebuiltSnapshots, total: rebuiltTotal } = await seedClient.snapshots.list({
     buildId: rebuiltBuildId,
