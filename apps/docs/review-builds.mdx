@@ -15,7 +15,7 @@ To narrow the list, filter by **status**, by **flags**, or by searching for a sn
 
 Click a snapshot to open it. **split** shows the baseline and the new image side by side. **slider** puts one over the other, with a handle to drag between them. Click an image to zoom in.
 
-Turn on **diff** to tint the areas of the new image that changed in red. Removed content is tinted where it was. When only the spacing changed, like a bigger margin, the first element that moved because of it is tinted. Content that only moved, like everything below a new banner, isn't highlighted. An admin can switch from **smart** to **exact** under **Settings → Builds**, which also highlights content that moved.
+Turn on **diff**, next to **split** and **slider**, to see what changed the way a code diff shows it. What was removed or changed is tinted red on the baseline, and what was added or changed is tinted green on the new image. Space that grew or shrank, like a bigger margin, is tinted too. Content that only moved, like everything below a new banner, isn't. An admin can switch from **smart** to **exact** under **Settings → Builds**, which marks every pixel that differs at the same spot, including content that moved.
 
 The snapshot page also has its **history** across recent builds, and its **logs**: messages from the browser console, requests it was captured without, and errors.
 

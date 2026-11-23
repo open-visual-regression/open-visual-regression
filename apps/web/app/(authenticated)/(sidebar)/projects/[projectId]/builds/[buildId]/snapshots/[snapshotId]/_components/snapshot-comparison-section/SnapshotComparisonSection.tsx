@@ -23,7 +23,11 @@ export const SnapshotComparisonSection = ({
 
   if (!baseline) {
     return (
-      <SnapshotZoomDialog baseline={null} newSnapshot={newSnapshot} diffImagePath={null}>
+      <SnapshotZoomDialog
+        baseline={null}
+        newSnapshot={newSnapshot}
+        diffImages={{ baseline: null, newSnapshot: null }}
+      >
         <NewSnapshotPane {...newSnapshot} />
       </SnapshotZoomDialog>
     );
@@ -38,7 +42,10 @@ export const SnapshotComparisonSection = ({
         commitUrl: baseline.commitUrl,
       }}
       newSnapshot={newSnapshot}
-      diffImagePath={getStoragePath(diff?.diffImagePath ?? null)}
+      diffImages={{
+        baseline: getStoragePath(diff?.baselineDiffImagePath ?? null),
+        newSnapshot: getStoragePath(diff?.diffImagePath ?? null),
+      }}
     />
   );
 };

@@ -15,7 +15,7 @@ const props: Omit<SnapshotZoomDialogProps, "children"> = {
     commitUrl: null,
   },
   newSnapshot: { imagePath: "new.png", alt: "new snapshot" },
-  diffImagePath: "diff.png",
+  diffImages: { baseline: "diff-baseline.png", newSnapshot: "diff.png" },
 };
 
 const renderDialog = (overrides: Partial<typeof props> = {}) =>
@@ -62,14 +62,16 @@ describe("SnapshotZoomDialog", () => {
     expect(screen.getByRole("switch")).toBeChecked();
   });
 
-  it("should switch between the baseline and the new snapshot", async ({ user }) => {
+  it("should switch between the baseline and the new snapshot, each with its diff", async ({
+    user,
+  }) => {
     renderDialog();
 
     await user.click(screen.getByRole("button", { name: "zoom new" }));
     await user.click(screen.getByRole("tab", { name: "baseline" }));
 
     expect(screen.getByRole("dialog", { name: "baseline" })).toBeVisible();
-    expect(screen.getByRole("switch")).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByRole("switch")).not.toHaveAttribute("aria-disabled", "true");
 
     await user.click(screen.getByRole("tab", { name: "new" }));
 
@@ -77,8 +79,18 @@ describe("SnapshotZoomDialog", () => {
     expect(screen.getByRole("switch")).not.toHaveAttribute("aria-disabled", "true");
   });
 
+  it("should not offer the diff on a baseline that has no overlay, from a diff made before baselines had one", async ({
+    user,
+  }) => {
+    renderDialog({ diffImages: { baseline: null, newSnapshot: "diff.png" } });
+
+    await user.click(screen.getByRole("button", { name: "zoom baseline" }));
+
+    expect(screen.getByRole("switch")).toHaveAttribute("aria-disabled", "true");
+  });
+
   it("should only show the new snapshot when there is no baseline", async ({ user }) => {
-    renderDialog({ baseline: null, diffImagePath: null });
+    renderDialog({ baseline: null, diffImages: { baseline: null, newSnapshot: null } });
 
     await user.click(screen.getByRole("button", { name: "zoom new" }));
 

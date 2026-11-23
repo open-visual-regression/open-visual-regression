@@ -22,7 +22,7 @@ const meta: Meta<typeof SnapshotComparisonSection> = {
     >
       <ComparisonModeProvider>
         <div className="flex flex-col">
-          {args.baseline ? <ComparisonControls /> : null}
+          {args.baseline ? <ComparisonControls hasDiff={args.diff?.diffImagePath != null} /> : null}
           <SnapshotComparisonSection {...args} />
         </div>
       </ComparisonModeProvider>
@@ -95,6 +95,7 @@ export const NewWithBaseline: Story = {
       processingStatus: "success",
       reviewStatus: "not_required",
       diffImagePath: null,
+      baselineDiffImagePath: null,
       pixelDiffCount: 0,
       diffPercent: 0,
       baselineSnapshot: desktopBaseline,
@@ -111,6 +112,7 @@ export const NewWithBaselineAndDiff: Story = {
       processingStatus: "success",
       reviewStatus: "needs_review",
       diffImagePath: "diff-desktop.png",
+      baselineDiffImagePath: "diff-desktop-baseline.png",
       pixelDiffCount: 120,
       diffPercent: 0.4,
       baselineSnapshot: desktopBaseline,
@@ -139,6 +141,7 @@ export const SliderView: Story = {
       processingStatus: "success",
       reviewStatus: "needs_review",
       diffImagePath: "diff-desktop.png",
+      baselineDiffImagePath: "diff-desktop-baseline.png",
       pixelDiffCount: 120,
       diffPercent: 0.4,
       baselineSnapshot: desktopBaseline,
@@ -175,6 +178,7 @@ export const MobileWithBaselineAndDiff: Story = {
       processingStatus: "success",
       reviewStatus: "needs_review",
       diffImagePath: "diff-mobile.png",
+      baselineDiffImagePath: "diff-mobile-baseline.png",
       pixelDiffCount: 60_272,
       diffPercent: 11.5,
       baselineSnapshot: mobileBaseline,
@@ -206,6 +210,7 @@ export const DifferentSizes: Story = {
       processingStatus: "success",
       reviewStatus: "needs_review",
       diffImagePath: null,
+      baselineDiffImagePath: null,
       pixelDiffCount: 0,
       diffPercent: 0,
       baselineSnapshot: mobileBaseline,

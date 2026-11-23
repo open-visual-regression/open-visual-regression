@@ -3,14 +3,21 @@
 import { ReactCompareSlider } from "react-compare-slider";
 
 import { Typography } from "@ovr/ui/components/typography";
+import { cn } from "@ovr/ui/lib/utils";
 
 import { BaselineCommitLink } from "../../snapshot-pane/BaselineCommitLink";
+import { DiffKey } from "../../snapshot-pane/DiffKey";
 import { SnapshotFrameImage } from "../../snapshot-pane/SnapshotFrameImage";
 import { SnapshotPane } from "../../snapshot-pane/SnapshotPane";
 import { SnapshotPaneCanvas } from "../../snapshot-pane/SnapshotPaneCanvas";
 import { SnapshotPaneFrame } from "../../snapshot-pane/SnapshotPaneFrame";
 import { SnapshotPaneHeader } from "../../snapshot-pane/SnapshotPaneHeader";
-import type { BaselineSnapshotPaneData, SnapshotPaneData } from "../../snapshot-pane/types";
+import type {
+  BaselineSnapshotPaneData,
+  DiffImages,
+  SnapshotPaneData,
+  SnapshotSize,
+} from "../../snapshot-pane/types";
 import { useCanvasSize, useIsCanvasSizePending } from "../../snapshot-pane/useCanvasSize";
 
 const SliderHandle = () => (
@@ -26,12 +33,39 @@ const SliderHandle = () => (
   </div>
 );
 
+/** One side of the slider: a snapshot with its diff overlay over it. */
+const SliderItem = ({
+  imagePath,
+  alt,
+  diffImagePath,
+  showDiff,
+  canvasSize,
+}: SnapshotPaneData & {
+  diffImagePath: string | null;
+  showDiff: boolean;
+  canvasSize: SnapshotSize | null;
+}) => (
+  <div className="relative h-full w-full">
+    <SnapshotFrameImage imagePath={imagePath} alt={alt} canvasSize={canvasSize} />
+    {diffImagePath ? (
+      <SnapshotFrameImage
+        imagePath={diffImagePath}
+        alt={`diff overlay of ${alt}`}
+        canvasSize={canvasSize}
+        className={cn("pointer-events-none", showDiff ? "opacity-100" : "opacity-0")}
+      />
+    ) : null}
+  </div>
+);
+
 export type SliderViewProps = {
   baseline: BaselineSnapshotPaneData;
   newSnapshot: SnapshotPaneData;
+  diffImages: DiffImages;
+  showDiff: boolean;
 };
 
-export const SliderView = ({ baseline, newSnapshot }: SliderViewProps) => {
+export const SliderView = ({ baseline, newSnapshot, diffImages, showDiff }: SliderViewProps) => {
   const imagePaths = [baseline.imagePath, newSnapshot.imagePath];
   const canvasSize = useCanvasSize(imagePaths);
   const pending = useIsCanvasSizePending(imagePaths);
@@ -42,8 +76,12 @@ export const SliderView = ({ baseline, newSnapshot }: SliderViewProps) => {
         <div className="flex items-center gap-2">
           <Typography variant="label">baseline</Typography>
           <BaselineCommitLink commitSha={baseline.commitSha} commitUrl={baseline.commitUrl} />
+          {diffImages.baseline && showDiff ? <DiffKey kind="removed" /> : null}
         </div>
-        <Typography variant="label">new</Typography>
+        <div className="flex items-center gap-2">
+          {diffImages.newSnapshot && showDiff ? <DiffKey kind="added" /> : null}
+          <Typography variant="label">new</Typography>
+        </div>
       </SnapshotPaneHeader>
       <SnapshotPaneCanvas pending={pending}>
         <SnapshotPaneFrame canvasSize={canvasSize}>
@@ -51,16 +89,20 @@ export const SliderView = ({ baseline, newSnapshot }: SliderViewProps) => {
             className="h-full w-full cursor-ew-resize [&_[role=slider]:focus-visible_[data-grip]]:ring-2 [&_[role=slider]:focus-visible_[data-grip]]:ring-ovr-fg [&_[role=slider]:focus-visible_[data-grip]]:ring-offset-2 [&_[role=slider]:focus-visible_[data-grip]]:ring-offset-ovr-inset"
             handle={<SliderHandle />}
             itemOne={
-              <SnapshotFrameImage
+              <SliderItem
                 imagePath={baseline.imagePath}
                 alt={baseline.alt}
+                diffImagePath={diffImages.baseline}
+                showDiff={showDiff}
                 canvasSize={canvasSize}
               />
             }
             itemTwo={
-              <SnapshotFrameImage
+              <SliderItem
                 imagePath={newSnapshot.imagePath}
                 alt={newSnapshot.alt}
+                diffImagePath={diffImages.newSnapshot}
+                showDiff={showDiff}
                 canvasSize={canvasSize}
               />
             }

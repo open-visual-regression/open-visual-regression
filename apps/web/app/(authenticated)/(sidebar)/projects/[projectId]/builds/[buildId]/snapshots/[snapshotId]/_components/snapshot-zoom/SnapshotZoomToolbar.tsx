@@ -25,7 +25,10 @@ export type SnapshotZoomToolbarProps = {
   view: SnapshotZoomView;
   onViewChange: (view: SnapshotZoomView) => void;
   baseline: BaselineSnapshotPaneData | null;
+  /** Whether the snapshot has a diff at all. */
   hasDiff: boolean;
+  /** Whether the image in view has a diff overlay, which older diffs only have for the new image. */
+  viewHasDiff: boolean;
   showDiff: boolean;
   onShowDiffChange: (showDiff: boolean) => void;
 };
@@ -35,6 +38,7 @@ export const SnapshotZoomToolbar = ({
   onViewChange,
   baseline,
   hasDiff,
+  viewHasDiff,
   showDiff,
   onShowDiffChange,
 }: SnapshotZoomToolbarProps) => {
@@ -61,11 +65,7 @@ export const SnapshotZoomToolbar = ({
         {hasDiff ? (
           <label className="flex items-center gap-2">
             <Typography variant="caption">diff</Typography>
-            <Switch
-              checked={showDiff}
-              disabled={view === "baseline"}
-              onCheckedChange={onShowDiffChange}
-            />
+            <Switch checked={showDiff} disabled={!viewHasDiff} onCheckedChange={onShowDiffChange} />
           </label>
         ) : null}
       </div>

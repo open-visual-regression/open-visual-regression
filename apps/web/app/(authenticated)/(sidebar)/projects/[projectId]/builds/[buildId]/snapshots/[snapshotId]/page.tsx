@@ -101,7 +101,7 @@ export default async function SnapshotPage(props: SnapshotPageProps) {
         snapshot={snapshot}
         build={build}
         storybookHref={storybookHref}
-        controls={baseline ? <ComparisonControls /> : null}
+        controls={baseline ? <ComparisonControls hasDiff={diff?.diffImagePath != null} /> : null}
       />
       <SnapshotComparisonSection snapshot={snapshot} diff={diff} baseline={baseline} />
     </SnapshotLayout>

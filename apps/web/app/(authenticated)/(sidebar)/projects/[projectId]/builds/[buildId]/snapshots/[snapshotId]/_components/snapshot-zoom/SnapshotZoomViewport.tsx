@@ -6,7 +6,11 @@ import { TransformComponent, useControls } from "react-zoom-pan-pinch";
 import { cn } from "@ovr/ui/lib/utils";
 
 import { SnapshotFrameImage } from "../snapshot-pane/SnapshotFrameImage";
-import type { BaselineSnapshotPaneData, SnapshotPaneData } from "../snapshot-pane/types";
+import type {
+  BaselineSnapshotPaneData,
+  DiffImages,
+  SnapshotPaneData,
+} from "../snapshot-pane/types";
 import { useCanvasSize } from "../snapshot-pane/useCanvasSize";
 import type { SnapshotZoomView } from "./snapshot-zoom";
 
@@ -14,7 +18,7 @@ export type SnapshotZoomViewportProps = {
   view: SnapshotZoomView;
   baseline: BaselineSnapshotPaneData | null;
   newSnapshot: SnapshotPaneData;
-  diffImagePath: string | null;
+  diffImages: DiffImages;
   showDiff: boolean;
 };
 
@@ -22,7 +26,7 @@ export const SnapshotZoomViewport = ({
   view,
   baseline,
   newSnapshot,
-  diffImagePath,
+  diffImages,
   showDiff,
 }: SnapshotZoomViewportProps) => {
   const { fitToView } = useControls();
@@ -61,15 +65,20 @@ export const SnapshotZoomViewport = ({
           canvasSize={canvasSize}
           className={cn(view !== "new" && "invisible")}
         />
-        {diffImagePath ? (
-          <img
-            src={diffImagePath}
+        {baseline && diffImages.baseline ? (
+          <SnapshotFrameImage
+            imagePath={diffImages.baseline}
+            alt={`diff overlay of ${baseline.alt}`}
+            canvasSize={canvasSize}
+            className={cn(view === "baseline" && showDiff ? "opacity-100" : "opacity-0")}
+          />
+        ) : null}
+        {diffImages.newSnapshot ? (
+          <SnapshotFrameImage
+            imagePath={diffImages.newSnapshot}
             alt={`diff overlay of ${newSnapshot.alt}`}
-            draggable={false}
-            className={cn(
-              "absolute inset-0 block size-full select-none",
-              view === "new" && showDiff ? "opacity-100" : "opacity-0",
-            )}
+            canvasSize={canvasSize}
+            className={cn(view === "new" && showDiff ? "opacity-100" : "opacity-0")}
           />
         ) : null}
       </div>
