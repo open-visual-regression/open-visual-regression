@@ -5,8 +5,6 @@ import { ReactCompareSlider } from "react-compare-slider";
 import { Typography } from "@ovr/ui/components/typography";
 
 import { BaselineCommitLink } from "../../snapshot-pane/BaselineCommitLink";
-import { isTwoSided } from "../../snapshot-pane/diffImages";
-import { DiffKey } from "../../snapshot-pane/DiffKey";
 import { DiffOverlay } from "../../snapshot-pane/DiffOverlay";
 import { SnapshotFrameImage } from "../../snapshot-pane/SnapshotFrameImage";
 import { SnapshotPane } from "../../snapshot-pane/SnapshotPane";
@@ -66,7 +64,6 @@ export const SliderView = ({ baseline, newSnapshot, diffImages, showDiff }: Slid
   const imagePaths = [baseline.imagePath, newSnapshot.imagePath];
   const canvasSize = useCanvasSize(imagePaths);
   const pending = useIsCanvasSizePending(imagePaths);
-  const showDiffKey = showDiff && isTwoSided(diffImages);
 
   return (
     <SnapshotPane>
@@ -74,12 +71,8 @@ export const SliderView = ({ baseline, newSnapshot, diffImages, showDiff }: Slid
         <div className="flex items-center gap-2">
           <Typography variant="label">baseline</Typography>
           <BaselineCommitLink commitSha={baseline.commitSha} commitUrl={baseline.commitUrl} />
-          {showDiffKey ? <DiffKey kind="removed" /> : null}
         </div>
-        <div className="flex items-center gap-2">
-          {showDiffKey ? <DiffKey kind="added" /> : null}
-          <Typography variant="label">new</Typography>
-        </div>
+        <Typography variant="label">new</Typography>
       </SnapshotPaneHeader>
       <SnapshotPaneCanvas pending={pending}>
         <SnapshotPaneFrame canvasSize={canvasSize}>

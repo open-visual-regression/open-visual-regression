@@ -72,7 +72,6 @@ describe("ComparisonView", () => {
     expect(screen.getByRole("img", { name: "diff overlay of new snapshot" })).toHaveClass(
       "invisible",
     );
-    expect(screen.queryByText("removed")).not.toBeInTheDocument();
   });
 
   it("should not show the diff toggle when there is no diff image", () => {

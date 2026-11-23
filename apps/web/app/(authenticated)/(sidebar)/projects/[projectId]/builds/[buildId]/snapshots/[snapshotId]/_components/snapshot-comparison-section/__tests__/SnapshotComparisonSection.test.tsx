@@ -87,7 +87,7 @@ describe("SnapshotComparisonSection", () => {
     expect(screen.getByText("no preview")).toBeVisible();
   });
 
-  it("should show each snapshot with its diff overlay, and say what each tint means, when there is a visible diff", () => {
+  it("should show each snapshot with its diff overlay when there is a visible diff", () => {
     renderSection(diff);
 
     expect(
@@ -102,15 +102,10 @@ describe("SnapshotComparisonSection", () => {
     expect(
       screen.getByRole("img", { name: "diff overlay of snapshot of UI/Button Kitchen Sink" }),
     ).toBeVisible();
-    expect(screen.getByText("removed")).toBeVisible();
-    expect(screen.getByText("added")).toBeVisible();
   });
 
-  it("should show the overlay on the new snapshot alone, without a key, for a diff made before baselines had one", () => {
+  it("should show the overlay on the new snapshot alone for a diff made before baselines had one", () => {
     renderSection({ ...diff, baselineDiffImagePath: null });
-
-    expect(screen.queryByText("added")).not.toBeInTheDocument();
-    expect(screen.queryByText("removed")).not.toBeInTheDocument();
 
     expect(
       screen.queryByRole("img", {
