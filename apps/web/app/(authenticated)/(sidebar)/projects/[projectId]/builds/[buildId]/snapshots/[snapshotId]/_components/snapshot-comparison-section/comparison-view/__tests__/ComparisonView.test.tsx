@@ -15,17 +15,20 @@ const props: ComparisonViewProps = {
     commitUrl: null,
   },
   newSnapshot: { imagePath: "new.png", alt: "new snapshot" },
-  diffImagePath: "diff.png",
+  diffImages: { baseline: "diff-baseline.png", newSnapshot: "diff.png" },
 };
 
-const renderComparison = (overrides: Partial<typeof props> = {}, showDiff = true) =>
+const renderComparison = (
+  overrides: Partial<typeof props> = {},
+  { showDiff = true, hasDiff = true } = {},
+) =>
   render(
     <QueryClientProvider client={new QueryClient()}>
       <SnapshotPreferencesProvider
         initialPreferences={{ sidebarOpen: false, sidebarTab: "reviews", showDiff }}
       >
         <ComparisonModeProvider>
-          <ComparisonControls />
+          <ComparisonControls hasDiff={hasDiff} />
           <ComparisonView {...props} {...overrides} />
         </ComparisonModeProvider>
       </SnapshotPreferencesProvider>
@@ -43,7 +46,7 @@ describe("ComparisonView", () => {
     expect(screen.queryByRole("slider")).not.toBeInTheDocument();
   });
 
-  it("should switch to a unified slider without a diff toggle when slider view is selected", async ({
+  it("should switch to a unified slider that keeps the diff toggle and both overlays", async ({
     user,
   }) => {
     renderComparison();
@@ -53,21 +56,26 @@ describe("ComparisonView", () => {
     expect(screen.getByRole("slider")).toBeVisible();
     expect(screen.getByRole("img", { name: "baseline snapshot" })).toBeVisible();
     expect(screen.getByRole("img", { name: "new snapshot" })).toBeVisible();
-    expect(screen.queryByRole("switch")).not.toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "diff overlay of baseline snapshot" })).toBeVisible();
+    expect(screen.getByRole("img", { name: "diff overlay of new snapshot" })).toBeVisible();
+    expect(screen.getByRole("switch")).toBeChecked();
   });
 
-  it("should restore the split view and its diff toggle when switching back", async ({ user }) => {
+  it("should hide both overlays when the diff is turned off", async ({ user }) => {
     renderComparison();
 
-    await user.click(screen.getByRole("tab", { name: "slider" }));
-    await user.click(screen.getByRole("tab", { name: "split" }));
+    await user.click(screen.getByRole("switch"));
 
-    expect(screen.getByRole("switch")).toBeVisible();
-    expect(screen.queryByRole("slider")).not.toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "diff overlay of baseline snapshot" })).toHaveClass(
+      "invisible",
+    );
+    expect(screen.getByRole("img", { name: "diff overlay of new snapshot" })).toHaveClass(
+      "invisible",
+    );
   });
 
-  it("should not show the diff toggle in split view when there is no diff image", () => {
-    renderComparison({ diffImagePath: null });
+  it("should not show the diff toggle when there is no diff image", () => {
+    renderComparison({ diffImages: { baseline: null, newSnapshot: null } }, { hasDiff: false });
 
     expect(screen.getByRole("tab", { name: "split" })).toBeVisible();
     expect(screen.queryByRole("switch")).not.toBeInTheDocument();
@@ -76,7 +84,7 @@ describe("ComparisonView", () => {
   it("should still offer the slider view when there is a baseline but no diff image", async ({
     user,
   }) => {
-    renderComparison({ diffImagePath: null });
+    renderComparison({ diffImages: { baseline: null, newSnapshot: null } }, { hasDiff: false });
 
     await user.click(screen.getByRole("tab", { name: "slider" }));
 
@@ -93,7 +101,7 @@ describe("ComparisonView", () => {
   });
 
   it("should keep the diff hidden when it was turned off", () => {
-    renderComparison({}, false);
+    renderComparison({}, { showDiff: false });
 
     expect(screen.getByRole("switch")).not.toBeChecked();
   });
@@ -110,7 +118,7 @@ describe("ComparisonView", () => {
     expect(within(dialog).getByRole("switch")).not.toBeChecked();
   });
 
-  it("should keep the split view's diff toggle in sync with the zoom dialog", async ({ user }) => {
+  it("should keep the page's diff toggle in sync with the zoom dialog", async ({ user }) => {
     renderComparison();
 
     await user.click(screen.getByRole("button", { name: "zoom new" }));

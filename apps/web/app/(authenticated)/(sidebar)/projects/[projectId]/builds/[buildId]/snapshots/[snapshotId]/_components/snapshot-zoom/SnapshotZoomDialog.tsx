@@ -6,7 +6,12 @@ import { TransformWrapper } from "react-zoom-pan-pinch";
 import { Dialog, DialogContent } from "@ovr/ui/components/dialog";
 
 import { useComparisonMode } from "../snapshot-comparison-section/comparison-view/comparison-mode";
-import type { BaselineSnapshotPaneData, SnapshotPaneData } from "../snapshot-pane/types";
+import { hasDiffImages } from "../snapshot-pane/diffImages";
+import type {
+  BaselineSnapshotPaneData,
+  DiffImages,
+  SnapshotPaneData,
+} from "../snapshot-pane/types";
 import { SnapshotZoomContext, type SnapshotZoomView } from "./snapshot-zoom";
 import { SnapshotZoomToolbar } from "./SnapshotZoomToolbar";
 import { SnapshotZoomViewport } from "./SnapshotZoomViewport";
@@ -16,14 +21,14 @@ const WHEEL_ZOOM_STEP = 0.002;
 export type SnapshotZoomDialogProps = {
   baseline: BaselineSnapshotPaneData | null;
   newSnapshot: SnapshotPaneData;
-  diffImagePath: string | null;
+  diffImages: DiffImages;
   children: React.ReactNode;
 };
 
 export const SnapshotZoomDialog = ({
   baseline,
   newSnapshot,
-  diffImagePath,
+  diffImages,
   children,
 }: SnapshotZoomDialogProps) => {
   const { showDiff, setShowDiff } = useComparisonMode();
@@ -49,7 +54,10 @@ export const SnapshotZoomDialog = ({
             view={view}
             onViewChange={setView}
             baseline={baseline}
-            hasDiff={diffImagePath !== null}
+            hasDiff={hasDiffImages(diffImages)}
+            viewHasDiff={
+              (view === "baseline" ? diffImages.baseline : diffImages.newSnapshot) !== null
+            }
             showDiff={showDiff}
             onShowDiffChange={setShowDiff}
           />
@@ -58,7 +66,7 @@ export const SnapshotZoomDialog = ({
               view={view}
               baseline={baseline}
               newSnapshot={newSnapshot}
-              diffImagePath={diffImagePath}
+              diffImages={diffImages}
               showDiff={showDiff}
             />
           </div>

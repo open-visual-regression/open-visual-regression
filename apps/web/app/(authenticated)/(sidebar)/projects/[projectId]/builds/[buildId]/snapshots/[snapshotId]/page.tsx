@@ -11,6 +11,7 @@ import { ComparisonControls } from "./_components/snapshot-comparison-section/co
 import { SnapshotComparisonSection } from "./_components/snapshot-comparison-section/SnapshotComparisonSection";
 import { SnapshotHeader } from "./_components/snapshot-header/SnapshotHeader";
 import { SnapshotLayout } from "./_components/snapshot-layout/SnapshotLayout";
+import { diffImagesOf, hasDiffImages } from "./_components/snapshot-pane/diffImages";
 import { SnapshotSidebarContent } from "./_components/snapshot-sidebar/SnapshotSidebarContent";
 
 type SnapshotPageProps = PageProps<"/projects/[projectId]/builds/[buildId]/snapshots/[snapshotId]">;
@@ -101,7 +102,9 @@ export default async function SnapshotPage(props: SnapshotPageProps) {
         snapshot={snapshot}
         build={build}
         storybookHref={storybookHref}
-        controls={baseline ? <ComparisonControls /> : null}
+        controls={
+          baseline ? <ComparisonControls hasDiff={hasDiffImages(diffImagesOf(diff))} /> : null
+        }
       />
       <SnapshotComparisonSection snapshot={snapshot} diff={diff} baseline={baseline} />
     </SnapshotLayout>

@@ -12,6 +12,8 @@ export type BaselineSnapshotPaneProps = {
   commitSha: string | null;
   commitUrl: string | null;
   canvasImagePaths: (string | null)[];
+  diffImagePath?: string | null;
+  showDiff?: boolean;
 };
 
 export const BaselineSnapshotPane = ({
@@ -20,6 +22,8 @@ export const BaselineSnapshotPane = ({
   commitSha,
   commitUrl,
   canvasImagePaths,
+  diffImagePath = null,
+  showDiff = false,
 }: BaselineSnapshotPaneProps) => (
   <SnapshotPane>
     <SnapshotPaneHeader className="gap-2">
@@ -30,6 +34,7 @@ export const BaselineSnapshotPane = ({
       imagePath={imagePath}
       alt={alt}
       canvasImagePaths={canvasImagePaths}
+      overlay={diffImagePath ? { imagePath: diffImagePath, visible: showDiff } : undefined}
       trigger={<SnapshotZoomTrigger view="baseline" disabled={!imagePath} />}
     />
   </SnapshotPane>

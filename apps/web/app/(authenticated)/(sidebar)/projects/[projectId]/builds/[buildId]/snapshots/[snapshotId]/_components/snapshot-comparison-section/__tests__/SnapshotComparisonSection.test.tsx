@@ -87,7 +87,7 @@ describe("SnapshotComparisonSection", () => {
     expect(screen.getByText("no preview")).toBeVisible();
   });
 
-  it("should show the baseline, the new snapshot, and the diff overlay when there is a visible diff", () => {
+  it("should show each snapshot with its diff overlay when there is a visible diff", () => {
     renderSection(diff);
 
     expect(
@@ -95,12 +95,30 @@ describe("SnapshotComparisonSection", () => {
     ).toBeVisible();
     expect(screen.getByRole("img", { name: "snapshot of UI/Button Kitchen Sink" })).toBeVisible();
     expect(
+      screen.getByRole("img", {
+        name: "diff overlay of baseline snapshot of UI/Button Kitchen Sink",
+      }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("img", { name: "diff overlay of snapshot of UI/Button Kitchen Sink" }),
+    ).toBeVisible();
+  });
+
+  it("should show the overlay on the new snapshot alone for a diff made before baselines had one", () => {
+    renderSection({ ...diff, baselineDiffImagePath: null });
+
+    expect(
+      screen.queryByRole("img", {
+        name: "diff overlay of baseline snapshot of UI/Button Kitchen Sink",
+      }),
+    ).not.toBeInTheDocument();
+    expect(
       screen.getByRole("img", { name: "diff overlay of snapshot of UI/Button Kitchen Sink" }),
     ).toBeVisible();
   });
 
   it("should show the baseline and new snapshot without a diff overlay when there is no visible diff", () => {
-    renderSection({ ...diff, diffImagePath: null });
+    renderSection({ ...diff, diffImagePath: null, baselineDiffImagePath: null });
 
     expect(
       screen.getByRole("img", { name: "baseline snapshot of UI/Button Kitchen Sink" }),
