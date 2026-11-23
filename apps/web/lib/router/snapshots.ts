@@ -118,6 +118,7 @@ export const list = os.snapshots.list
         baselineImagePath: row.baselineImagePath,
         diffId: row.diffId,
         diffImagePath: row.diffImagePath,
+        baselineDiffImagePath: row.baselineDiffImagePath,
         diffPercent: row.diffPercent,
         browser: row.browser,
         viewportWidth: row.viewportWidth,

@@ -14,6 +14,12 @@ export type Alignment = {
   /** Baseline pixels placed where they sit in the current image (RGBA, current size). */
   aligned: Uint8Array;
   /**
+   * Where each row of the current image came from, as stretches copied from
+   * the baseline in the order they were placed, so a later one wins. Read it
+   * with `baselinePixelOf`.
+   */
+  sources: RowSources;
+  /**
    * Rects of the current image the baseline has no counterpart for, the axis
    * they run along, and whether they were found inside a band that changed
    * rather than across a whole band.
@@ -41,10 +47,42 @@ type Context = {
   baselineWords: Uint32Array;
   currentWords: Uint32Array;
   alignedWords: Uint32Array;
+  sources: RowSources;
   insertions: Alignment["insertions"];
   deletions: Alignment["deletions"];
   removedSpace: Alignment["removedSpace"];
   shifted: boolean;
+};
+
+/**
+ * For each row of the current image, flat triples of the stretches placed in
+ * it: the column the stretch starts at, its width, and the index of the
+ * baseline pixel its first pixel came from, or -1 for a stretch filled in for
+ * content the baseline doesn't have.
+ */
+export type RowSources = number[][];
+
+/** Records where a stretch of each row of a current rect came from. */
+const recordSources = (context: Context, current: Rect, baselineStart: (row: number) => number) => {
+  for (let row = 0; row < current.height; row++) {
+    context.sources[current.y + row]?.push(current.x, current.width, baselineStart(row));
+  }
+};
+
+/**
+ * The index of the baseline pixel placed at a pixel of the current image, or
+ * -1 where the current image has content the baseline doesn't.
+ */
+export const baselinePixelOf = ({ sources }: Alignment, x: number, y: number): number => {
+  const row = sources[y] ?? [];
+  for (let stretch = row.length - 3; stretch >= 0; stretch -= 3) {
+    const start = row[stretch] ?? 0;
+    const from = row[stretch + 2] ?? -1;
+    if (x >= start && x < start + (row[stretch + 1] ?? 0)) {
+      return from < 0 ? -1 : from + x - start;
+    }
+  }
+  return -1;
 };
 
 /** Copies a baseline rect into the same-size current rect of the aligned image. */
@@ -53,6 +91,11 @@ const copyRect = (context: Context, pair: RectPair) => {
   if (pair.baseline.x !== pair.current.x || pair.baseline.y !== pair.current.y) {
     context.shifted = true;
   }
+  recordSources(
+    context,
+    pair.current,
+    (row) => (pair.baseline.y + row) * baseline.width + pair.baseline.x,
+  );
   if (pair.current.width === current.width && pair.baseline.width === baseline.width) {
     const from = pair.baseline.y * baseline.width;
     alignedWords.set(
@@ -102,14 +145,16 @@ const fillInserted = (
 ) => {
   for (let line = 0; line < lineCount(rect, axis); line++) {
     const target = sliceRect(rect, axis, line, 1);
-    const source =
+    const neighbor =
       after && (!before || equalPixels(context, after, target) === target.width * target.height)
         ? after
         : before;
-    if (source) {
-      copyRect(context, { baseline: source, current: target });
+    if (neighbor) {
+      copyRect(context, { baseline: neighbor, current: target });
     }
   }
+  // The copies only stand in for what's there; none of it came from the baseline.
+  recordSources(context, rect, () => -1);
   context.insertions.push({ rect, axis, nested });
 };
 
@@ -454,6 +499,7 @@ export const alignImages = (baseline: RgbaImage, current: RgbaImage): Alignment 
     baselineWords: pixelWords(baseline),
     currentWords: pixelWords(current),
     alignedWords: new Uint32Array(aligned.buffer),
+    sources: Array.from({ length: current.height }, () => []),
     insertions: [],
     deletions: [],
     removedSpace: [],
@@ -534,6 +580,7 @@ export const alignImages = (baseline: RgbaImage, current: RgbaImage): Alignment 
 
   return {
     aligned,
+    sources: context.sources,
     insertions: context.insertions,
     deletions: context.deletions,
     removedSpace: context.removedSpace,

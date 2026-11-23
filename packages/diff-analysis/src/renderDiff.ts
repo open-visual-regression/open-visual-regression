@@ -1,9 +1,17 @@
-import type { AlignedDiff } from "./alignedDiff";
 import type { RgbaImage } from "./image";
-import type { Rect } from "./types";
+import type { DiffMask, Rect } from "./types";
 
-// Translucent, so the changed content stays readable under it.
-const TINT = [255, 40, 40, 80];
+// The color of each side of a diff, like a code diff: red on the baseline,
+// for what was removed or changed, and green on the current image, for what
+// was added or changed. Tints are translucent, so the content under them
+// stays readable.
+const COLORS = {
+  baseline: [255, 40, 40],
+  current: [30, 200, 90],
+} as const;
+const TINT_ALPHA = 80;
+
+export type DiffSide = keyof typeof COLORS;
 // Changed pixels in touching cells this size form one area, so the letters of
 // a word, or the old and new spots of something that moved a little, read as one.
 const CELL = 4;
@@ -80,17 +88,29 @@ const changedAreas = (mask: Uint8Array, width: number, height: number): Rect[] =
   return areas;
 };
 
-/** Draws a diff as a transparent overlay for the current image, tinting each area that changed. */
-export const renderDiff = (diff: AlignedDiff): RgbaImage => {
-  const { width, height } = diff;
+/** Draws one side of a diff as a transparent overlay for its image, tinting each area marked. */
+export const renderDiff = ({ width, height, mask }: DiffMask, side: DiffSide): RgbaImage => {
   const data = new Uint8Array(width * height * 4);
-  for (const area of changedAreas(diff.mask, width, height)) {
+  const tint = Uint8Array.of(...COLORS[side], TINT_ALPHA);
+  for (const area of changedAreas(mask, width, height)) {
     const right = Math.min(area.x + area.width + PADDING, width);
     const bottom = Math.min(area.y + area.height + PADDING, height);
     for (let y = Math.max(area.y - PADDING, 0); y < bottom; y++) {
       for (let x = Math.max(area.x - PADDING, 0); x < right; x++) {
-        data.set(TINT, (y * width + x) * 4);
+        data.set(tint, (y * width + x) * 4);
       }
+    }
+  }
+  return { width, height, data };
+};
+
+/** Draws one side of a diff by painting each marked pixel solid, for the exact highlight. */
+export const paintDiff = ({ width, height, mask }: DiffMask, side: DiffSide): RgbaImage => {
+  const data = new Uint8Array(width * height * 4);
+  const paint = Uint8Array.of(...COLORS[side], 255);
+  for (let pixel = 0; pixel < mask.length; pixel++) {
+    if (mask[pixel]) {
+      data.set(paint, pixel * 4);
     }
   }
   return { width, height, data };

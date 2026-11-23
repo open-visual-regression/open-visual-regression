@@ -5,10 +5,9 @@ import pixelmatch from "pixelmatch";
 import { PNG } from "pngjs";
 import { describe, expect, it } from "vitest";
 
-import { alignedDiff, type AlignedDiff } from "../alignedDiff";
+import { alignedDiff } from "../alignedDiff";
 import { padToCanvas, PIXELMATCH_THRESHOLD, type RgbaImage } from "../image";
-import { renderDiff } from "../renderDiff";
-import type { Rect } from "../types";
+import type { DiffMask, Rect } from "../types";
 
 type Color = [number, number, number];
 
@@ -49,7 +48,7 @@ const text = (x: number, y: number, words: number, seed = 0): Box[] =>
     color: INK,
   }));
 
-const page = (offsetY = 0, offsetX = 0): Box[] => [
+const pageBoxes = (offsetY = 0, offsetX = 0): Box[] => [
   ...text(10 + offsetX, 10 + offsetY, 8, 1),
   { x: 10 + offsetX, y: 30 + offsetY, width: 60, height: 20, color: BLUE },
   ...text(10 + offsetX, 60 + offsetY, 10, 2),
@@ -61,7 +60,7 @@ const plainPixelMatch = (baseline: RgbaImage, current: RgbaImage) => {
   const width = Math.max(baseline.width, current.width);
   const height = Math.max(baseline.height, current.height);
   const output = new Uint8Array(width * height * 4);
-  const count = pixelmatch(
+  pixelmatch(
     padToCanvas(baseline, width, height).data,
     padToCanvas(current, width, height).data,
     output,
@@ -69,86 +68,134 @@ const plainPixelMatch = (baseline: RgbaImage, current: RgbaImage) => {
     height,
     { threshold: PIXELMATCH_THRESHOLD, diffMask: true },
   );
-  return { count, output, width };
-};
-
-const plainPixelDiff = (baseline: RgbaImage, current: RgbaImage): number =>
-  plainPixelMatch(baseline, current).count;
-
-/** Pixels an aligned diff flags that a plain pixel diff, comparing in place, does not. */
-const flaggedOnlyWhenAligned = (baseline: RgbaImage, current: RgbaImage) => {
-  const diff = alignedDiff(baseline, current);
-  const plain = plainPixelMatch(baseline, current);
-  let count = 0;
-  for (let pixel = 0; pixel < diff.mask.length; pixel++) {
-    const y = Math.floor(pixel / diff.width);
-    const x = pixel % diff.width;
-    const index = (y * plain.width + x) * 4;
-    const plainChanged = plain.output[index + 3] !== 0 && plain.output[index + 1] === 0;
-    count += diff.mask[pixel] && !plainChanged ? 1 : 0;
-  }
-  return count;
+  return Uint8Array.from({ length: width * height }, (_, pixel) =>
+    output[pixel * 4 + 3] !== 0 && output[pixel * 4 + 1] === 0 ? 1 : 0,
+  );
 };
 
 const isInside = (area: Rect, x: number, y: number) =>
   x >= area.x && y >= area.y && x < area.x + area.width && y < area.y + area.height;
 
-/** How many highlighted pixels lie inside `area`. */
-const highlightsIn = (diff: AlignedDiff, area: Rect) =>
-  diff.mask.reduce(
+/** How many pixels of a mask are marked inside `area`. */
+const marksIn = ({ width, mask }: DiffMask, area: Rect) =>
+  mask.reduce(
     (count, marked, pixel) =>
-      count +
-      (marked && isInside(area, pixel % diff.width, Math.floor(pixel / diff.width)) ? 1 : 0),
+      count + (marked && isInside(area, pixel % width, Math.floor(pixel / width)) ? 1 : 0),
     0,
   );
 
-/** How many highlighted pixels lie outside every one of `areas`. */
-const highlightsOutside = (diff: AlignedDiff, areas: Rect[]) =>
-  diff.mask.reduce((count, marked, pixel) => {
-    const x = pixel % diff.width;
-    const y = Math.floor(pixel / diff.width);
+/** How many pixels of a mask are marked outside every one of `areas`. */
+const marksOutside = ({ width, mask }: DiffMask, areas: Rect[]) =>
+  mask.reduce((count, marked, pixel) => {
+    const x = pixel % width;
+    const y = Math.floor(pixel / width);
     return count + (marked && !areas.some((area) => isInside(area, x, y)) ? 1 : 0);
   }, 0);
 
-// Screenshots of a sample app page rendered by Chromium. Each scenario lists
-// the areas its highlighted pixels must lie in, each holding some of them.
+// Screenshots of a sample app page rendered by Chromium, and crops of real
+// OVR pages. Each scenario lists the areas marks on each side must lie in,
+// each holding some of them.
 const FIXTURES = join(import.meta.dirname, "fixtures/aligned");
 const load = (name: string): RgbaImage => {
   const png = PNG.sync.read(readFileSync(join(FIXTURES, `${name}.png`)));
   return { width: png.width, height: png.height, data: png.data };
 };
-const baselinePage = load("baseline");
 
 const HEADER = { x: 0, y: 0, width: 900, height: 56 };
 const MAIN_COLUMN = { x: 224, y: 56, width: 452, height: 800 };
+const ACTIVITY = { x: 740, y: 56, width: 160, height: 120 };
+const FOOTER = { x: 0, y: 820, width: 900, height: 50 };
 
-const expectedHighlights: Record<string, Rect[]> = {
-  "insert-top-banner": [{ x: 0, y: 0, width: 900, height: 46 }],
-  "change-bottom-footer": [{ x: 0, y: 820, width: 900, height: 50 }],
-  // The wider sidebar only pushed content sideways; the activity panel's text re-wrapped.
-  "change-left-sidebar-wider": [{ x: 740, y: 56, width: 160, height: 120 }],
-  "change-right-header-badge": [{ x: 700, y: 0, width: 200, height: 56 }],
-  "change-right-panel-text": [{ x: 740, y: 56, width: 160, height: 120 }],
-  "tall-inserted-section": [{ ...MAIN_COLUMN, y: 240, height: 350 }],
-  "wide-toolbar-color": [{ ...MAIN_COLUMN, y: 190, height: 60 }],
-  "small-status-dot": [{ x: 230, y: 210, width: 20, height: 20 }],
-  "removed-cards-row": [{ ...MAIN_COLUMN, y: 340, height: 80 }],
-  "card-color-change": [{ ...MAIN_COLUMN, y: 260, height: 130 }],
-  "multiple-changes": [
-    { x: 0, y: 0, width: 900, height: 46 },
-    { ...HEADER, y: 46 },
-    { x: 0, y: 870, width: 900, height: 46 },
-  ],
+type Scenario = {
+  baseline: string;
+  current: string;
+  /** Where marks on the baseline may be: what was removed or changed. */
+  removed: Rect[];
+  /** Where marks on the new image may be: what was added or changed. */
+  added: Rect[];
 };
 
-const allScenarios = [
-  ...Object.keys(expectedHighlights),
-  "text-word-change",
-  "text-reflow-extra-line",
-  "big-dark-theme",
-];
+const page = (current: string, removed: Rect[], added: Rect[]): Scenario => ({
+  baseline: "baseline",
+  current,
+  removed,
+  added,
+});
 
-// Nothing moved in these, so the result is exactly a plain pixel diff.
+const scenarios: Record<string, Scenario> = {
+  "a banner inserted at the top": page("insert-top-banner", [], [{ ...HEADER, height: 46 }]),
+  "footer links changed": page("change-bottom-footer", [FOOTER], [FOOTER]),
+  // The sidebar's edge moved out, and the activity panel's text re-wrapped.
+  "a wider sidebar": page(
+    "change-left-sidebar-wider",
+    [ACTIVITY],
+    [{ x: 192, y: 48, width: 56, height: 768 }, ACTIVITY],
+  ),
+  "a recolored header badge": page("change-right-header-badge", [HEADER], [HEADER]),
+  "a word changed in a side panel": page("change-right-panel-text", [ACTIVITY], [ACTIVITY]),
+  "a tall section inserted": page(
+    "tall-inserted-section",
+    [],
+    [{ ...MAIN_COLUMN, y: 240, height: 350 }],
+  ),
+  "a recolored toolbar": page(
+    "wide-toolbar-color",
+    [{ ...MAIN_COLUMN, y: 190, height: 60 }],
+    [{ ...MAIN_COLUMN, y: 190, height: 60 }],
+  ),
+  "a recolored status dot": page(
+    "small-status-dot",
+    [{ x: 230, y: 210, width: 20, height: 20 }],
+    [{ x: 230, y: 210, width: 20, height: 20 }],
+  ),
+  "a row of cards removed": page(
+    "removed-cards-row",
+    [{ ...MAIN_COLUMN, y: 340, height: 120 }],
+    [],
+  ),
+  "recolored cards": page(
+    "card-color-change",
+    [{ ...MAIN_COLUMN, y: 260, height: 130 }],
+    [{ ...MAIN_COLUMN, y: 260, height: 130 }],
+  ),
+  "a banner, a header button and the footer changed": page(
+    "multiple-changes",
+    [HEADER, FOOTER],
+    [
+      { ...HEADER, height: 46 },
+      { ...HEADER, y: 46 },
+      { ...FOOTER, y: 856, height: 46 },
+    ],
+  ),
+  "a word edited in a sentence": page(
+    "text-word-change",
+    [{ ...MAIN_COLUMN, y: 160, height: 30 }],
+    [{ ...MAIN_COLUMN, y: 160, height: 30 }],
+  ),
+  "a sentence that reflows onto an extra line": page(
+    "text-reflow-extra-line",
+    [{ ...MAIN_COLUMN, y: 160, height: 30 }],
+    [{ ...MAIN_COLUMN, y: 160, height: 60 }],
+  ),
+  // A segment next to one of the same color was removed, so the alignment
+  // can't tell which of the two went.
+  "a segment removed from a bar": {
+    baseline: "bar-segment-baseline",
+    current: "bar-segment-removed",
+    removed: [{ x: 90, y: 8, width: 285, height: 24 }],
+    added: [{ x: 90, y: 8, width: 285, height: 24 }],
+  },
+  // A real header row: the status badge got 2px more padding on each side,
+  // which moved the branch chips and links after it 4px to the right.
+  "a badge whose padding grew": {
+    baseline: "badge-padding-baseline",
+    current: "badge-padding-wider",
+    removed: [],
+    added: [{ x: 12, y: 4, width: 100, height: 28 }],
+  },
+};
+
+// Nothing moved in these, so both sides are exactly a plain pixel diff.
 const unmovedScenarios = [
   "change-right-header-badge",
   "wide-toolbar-color",
@@ -158,30 +205,32 @@ const unmovedScenarios = [
 ];
 
 describe("alignedDiff", () => {
-  it("should report nothing for identical images", () => {
-    const image = drawImage(200, 120, page());
+  it("should mark nothing for identical images", () => {
+    const image = drawImage(200, 120, pageBoxes());
 
     const diff = alignedDiff(image, image);
 
-    expect(diff).toMatchObject({ changedPixelCount: 0, plainChangedPixelCount: 0 });
+    expect(diff.plainChangedPixelCount).toBe(0);
+    expect(marksOutside(diff.baseline, [])).toBe(0);
+    expect(marksOutside(diff.current, [])).toBe(0);
   });
 
-  it("should isolate a block inserted at the top instead of flagging everything below it", () => {
-    const baseline = drawImage(200, 120, page());
+  it("should mark only a block inserted at the top, with its gap, on the new image", () => {
+    const baseline = drawImage(200, 120, pageBoxes());
     const current = drawImage(200, 140, [
       { x: 0, y: 0, width: 200, height: 16, color: RED },
-      ...page(20),
+      ...pageBoxes(20),
     ]);
 
     const diff = alignedDiff(baseline, current);
 
-    expect(plainPixelDiff(baseline, current)).toBeGreaterThan(1000);
-    expect(diff.changedPixelCount).toBe(200 * 16);
-    expect(highlightsOutside(diff, [{ x: 0, y: 0, width: 200, height: 16 }])).toBe(0);
+    expect(marksIn(diff.current, { x: 0, y: 0, width: 200, height: 16 })).toBe(200 * 16);
+    expect(marksOutside(diff.current, [{ x: 0, y: 0, width: 200, height: 20 }])).toBe(0);
+    expect(marksOutside(diff.baseline, [])).toBe(0);
   });
 
-  it("should highlight removed content where it was when other content moved into its place", () => {
-    const baseline = drawImage(200, 120, page());
+  it("should mark a removed block where it was on the baseline, and nothing that moved up", () => {
+    const baseline = drawImage(200, 120, pageBoxes());
     const current = drawImage(200, 120, [
       ...text(10, 10, 8, 1),
       ...text(10, 40, 10, 2),
@@ -190,26 +239,44 @@ describe("alignedDiff", () => {
 
     const diff = alignedDiff(baseline, current);
 
-    expect(diff.changedPixelCount).toBeGreaterThan(0);
-    expect(highlightsOutside(diff, [{ x: 10, y: 30, width: 60, height: 20 }])).toBe(0);
+    expect(marksIn(diff.baseline, { x: 10, y: 30, width: 60, height: 20 })).toBeGreaterThan(0);
+    expect(marksOutside(diff.baseline, [{ x: 0, y: 26, width: 200, height: 30 }])).toBe(0);
+    expect(marksOutside(diff.current, [])).toBe(0);
   });
 
-  it("should highlight the content right below a gap that grew, and nothing after it", () => {
-    const baseline = drawImage(200, 120, page());
-    const current = drawImage(200, 120, [
-      ...text(10, 10, 8, 1),
-      { x: 10, y: 34, width: 60, height: 20, color: BLUE },
-      ...text(10, 64, 10, 2),
-      ...text(10, 84, 6, 3),
-    ]);
+  it("should mark the space a gap grew by on the new image, and not what moved down", () => {
+    const baseline = drawImage(200, 120, pageBoxes());
+    const current = drawImage(
+      200,
+      130,
+      pageBoxes(0).map((box) => (box.y >= 30 ? { ...box, y: box.y + 10 } : box)),
+    );
 
     const diff = alignedDiff(baseline, current);
 
-    expect(highlightsIn(diff, { x: 10, y: 34, width: 60, height: 20 })).toBeGreaterThan(0);
-    expect(highlightsOutside(diff, [{ x: 10, y: 34, width: 60, height: 20 }])).toBe(0);
+    const gap = { x: 0, y: 18, width: 200, height: 22 };
+    expect(marksIn(diff.current, gap)).toBeGreaterThan(0);
+    expect(marksOutside(diff.current, [gap])).toBe(0);
+    expect(marksOutside(diff.baseline, [])).toBe(0);
   });
 
-  it("should highlight only the first block below a gap that grew inside a bordered card", () => {
+  it("should mark the space a gap shrank by on the baseline, and not what moved up", () => {
+    const baseline = drawImage(
+      200,
+      130,
+      pageBoxes(0).map((box) => (box.y >= 30 ? { ...box, y: box.y + 10 } : box)),
+    );
+    const current = drawImage(200, 120, pageBoxes());
+
+    const diff = alignedDiff(baseline, current);
+
+    const gap = { x: 0, y: 18, width: 200, height: 22 };
+    expect(marksIn(diff.baseline, gap)).toBeGreaterThan(0);
+    expect(marksOutside(diff.baseline, [gap])).toBe(0);
+    expect(marksOutside(diff.current, [])).toBe(0);
+  });
+
+  it("should mark the space a gap grew by inside a fixed-size card, and the space it took from the card's end", () => {
     const card = { x: 5, y: 5, width: 190, height: 110, color: [200, 200, 200] as Color };
     const inside = { x: 6, y: 6, width: 188, height: 108, color: WHITE };
     const baseline = drawImage(200, 120, [
@@ -229,151 +296,122 @@ describe("alignedDiff", () => {
 
     const diff = alignedDiff(baseline, current);
 
-    expect(highlightsIn(diff, { x: 10, y: 30, width: 140, height: 20 })).toBeGreaterThan(0);
-    expect(highlightsOutside(diff, [{ x: 10, y: 30, width: 140, height: 20 }])).toBe(0);
+    const gap = { x: 5, y: 16, width: 190, height: 24 };
+    const cardEnd = { x: 5, y: 100, width: 190, height: 16 };
+    expect(marksIn(diff.current, gap)).toBeGreaterThan(0);
+    expect(marksOutside(diff.current, [gap])).toBe(0);
+    expect(marksIn(diff.baseline, cardEnd)).toBeGreaterThan(0);
+    expect(marksOutside(diff.baseline, [cardEnd])).toBe(0);
   });
 
-  it("should highlight the rest of a bar when one of its solid segments was removed", () => {
-    // A segment next to one of the same color was removed, so the alignment
-    // can't tell which of the two went.
-    const baseline = load("bar-segment-baseline");
-    const current = load("bar-segment-removed");
-
-    const diff = alignedDiff(baseline, current);
-
-    const restOfBar = { x: 95, y: 12, width: 280, height: 16 };
-    expect(highlightsIn(diff, restOfBar)).toBeGreaterThan(diff.plainChangedPixelCount / 2);
-    expect(highlightsOutside(diff, [restOfBar])).toBe(0);
-  });
-
-  it("should highlight a gap that changed below a change in place, like a recolored badge", () => {
-    const badge = { x: 150, y: 5, width: 30, height: 10 };
-    const baseline = drawImage(200, 120, [{ ...badge, color: BLUE }, ...page()]);
-    const current = drawImage(200, 120, [
-      { ...badge, color: RED },
-      ...text(10, 10, 8, 1),
-      { x: 10, y: 40, width: 60, height: 20, color: BLUE },
-      ...text(10, 70, 10, 2),
-      ...text(10, 90, 6, 3),
-    ]);
-
-    const diff = alignedDiff(baseline, current);
-
-    expect(highlightsIn(diff, badge)).toBeGreaterThan(0);
-    expect(highlightsIn(diff, { x: 10, y: 30, width: 60, height: 30 })).toBeGreaterThan(0);
-  });
-
-  it("should highlight content that moved up when the gap above it was removed entirely", () => {
-    const baseline = drawImage(200, 60, [...text(10, 10, 8, 1), ...text(10, 40, 10, 2)]);
-    const current = drawImage(200, 60, [...text(10, 10, 8, 1), ...text(10, 18, 10, 2)]);
-
-    const diff = alignedDiff(baseline, current);
-
-    const movedRow = { x: 10, y: 18, width: 140, height: 10 };
-    expect(highlightsIn(diff, movedRow)).toBeGreaterThan(0);
-    expect(highlightsOutside(diff, [movedRow, { x: 10, y: 40, width: 140, height: 10 }])).toBe(0);
-  });
-
-  it("should highlight removed content where it was when nothing took its place", () => {
-    const row = text(10, 10, 8, 1);
+  it("should mark only the gap between two lines inside a card when it grew, not the lines", () => {
+    const card = { x: 5, y: 5, width: 190, height: 50, color: [200, 200, 200] as Color };
+    const inside = { x: 6, y: 6, width: 188, height: 48, color: WHITE };
     const baseline = drawImage(200, 60, [
-      ...row,
-      { x: 120, y: 10, width: 40, height: 8, color: INK },
+      card,
+      inside,
+      ...text(10, 10, 8, 1),
+      ...text(10, 22, 10, 2),
     ]);
+    const current = drawImage(200, 60, [
+      card,
+      inside,
+      ...text(10, 10, 8, 1),
+      ...text(10, 28, 10, 2),
+    ]);
+
+    const diff = alignedDiff(baseline, current);
+
+    const gap = { x: 5, y: 18, width: 190, height: 10 };
+    expect(marksIn(diff.current, gap)).toBeGreaterThan(0);
+    expect(marksOutside(diff.current, [gap])).toBe(0);
+  });
+
+  it("should mark content removed with nothing in its place on both images, where it was", () => {
+    const row = text(10, 10, 8, 1);
+    const removed = { x: 120, y: 10, width: 40, height: 8 };
+    const baseline = drawImage(200, 60, [...row, { ...removed, color: INK }]);
     const current = drawImage(200, 60, row);
 
     const diff = alignedDiff(baseline, current);
 
-    expect(highlightsIn(diff, { x: 120, y: 10, width: 40, height: 8 })).toBeGreaterThan(0);
-    expect(highlightsOutside(diff, [{ x: 120, y: 10, width: 40, height: 8 }])).toBe(0);
+    expect(marksIn(diff.baseline, removed)).toBe(40 * 8);
+    expect(marksOutside(diff.baseline, [removed])).toBe(0);
+    expect(marksOutside(diff.current, [removed])).toBe(0);
   });
 
-  it("should tint the area that changed and leave everything else transparent", () => {
-    const baseline = drawImage(40, 20, []);
-    const current = drawImage(40, 20, [{ x: 5, y: 5, width: 4, height: 4, color: INK }]);
+  it("should not mark the blank space that pads a page out to its height when content moved up", () => {
+    const baseline = drawImage(
+      200,
+      100,
+      pageBoxes().map((box) => (box.y >= 30 ? { ...box, y: box.y + 10 } : box)),
+    );
+    const current = drawImage(200, 100, pageBoxes());
 
-    const overlay = renderDiff(alignedDiff(baseline, current));
+    const diff = alignedDiff(baseline, current);
 
-    const pixelAt = (x: number, y: number) =>
-      Array.from(overlay.data.subarray((y * 40 + x) * 4, (y * 40 + x + 1) * 4));
-    expect(overlay).toMatchObject({ width: 40, height: 20 });
-    expect(pixelAt(6, 6)).toEqual([255, 40, 40, 80]);
-    expect(pixelAt(30, 15)).toEqual([0, 0, 0, 0]);
+    expect(marksOutside(diff.current, [])).toBe(0);
+    expect(marksOutside(diff.baseline, [{ x: 0, y: 18, width: 200, height: 22 }])).toBe(0);
   });
 
-  it("should tint nearby changes as one area and distant ones separately", () => {
-    const baseline = drawImage(100, 40, []);
-    const current = drawImage(100, 40, [
-      { x: 0, y: 0, width: 4, height: 4, color: INK },
-      { x: 7, y: 0, width: 4, height: 4, color: INK },
-      { x: 80, y: 30, width: 4, height: 4, color: INK },
+  it("should not mark rows that only settled by a pixel next to a real change", () => {
+    const recolored = { x: 10, y: 30, width: 60, height: 20 };
+    const baseline = drawImage(200, 120, pageBoxes());
+    const current = drawImage(200, 121, [
+      ...text(10, 10, 8, 1),
+      { ...recolored, color: RED },
+      ...text(10, 61, 10, 2),
+      ...text(10, 81, 6, 3),
     ]);
 
-    const overlay = renderDiff(alignedDiff(baseline, current));
+    const diff = alignedDiff(baseline, current);
 
-    const alphaAt = (x: number, y: number) => overlay.data[(y * overlay.width + x) * 4 + 3];
-    expect(alphaAt(5, 1)).toBe(80);
-    expect(alphaAt(81, 31)).toBe(80);
-    expect(alphaAt(45, 20)).toBe(0);
+    expect(marksIn(diff.current, recolored)).toBeGreaterThan(0);
+    expect(marksOutside(diff.current, [recolored])).toBe(0);
+    expect(marksOutside(diff.baseline, [recolored])).toBe(0);
   });
 
-  it("should highlight inserted content and removed content alike", () => {
-    const baseline = drawImage(200, 120, page());
-    const current = drawImage(200, 140, [
-      { x: 0, y: 0, width: 200, height: 16, color: RED },
-      ...page(20),
-    ]);
+  it("should mark the whole badge whose padding grew, not just the padding", () => {
+    const diff = alignedDiff(load("badge-padding-baseline"), load("badge-padding-wider"));
 
-    const removed = renderDiff(alignedDiff(current, baseline));
-    const inserted = renderDiff(alignedDiff(baseline, current));
-
-    const alphaAt = (image: RgbaImage, x: number, y: number) =>
-      image.data[(y * image.width + x) * 4 + 3];
-    expect(alphaAt(inserted, 100, 8)).toBe(80);
-    expect(alphaAt(inserted, 100, 60)).toBe(0);
-    expect(alphaAt(removed, 100, 0)).toBe(80);
-    expect(alphaAt(removed, 100, 60)).toBe(0);
+    expect(marksIn(diff.current, { x: 40, y: 10, width: 40, height: 14 })).toBeGreaterThan(0);
   });
 
-  it.each(Object.entries(expectedHighlights))(
-    "should highlight only the expected areas for %s",
-    (name, areas) => {
-      const diff = alignedDiff(baselinePage, load(name));
+  it("should mark images of different widths in place on both sides", () => {
+    const baseline = drawImage(200, 120, pageBoxes());
+    const current = drawImage(220, 120, pageBoxes(0, 20));
 
-      expect(highlightsOutside(diff, areas)).toBe(0);
-      expect(areas.map((area) => highlightsIn(diff, area))).not.toContain(0);
+    const diff = alignedDiff(baseline, current);
+
+    expect(diff.baseline).toMatchObject({ width: 200, height: 120 });
+    expect(diff.current).toMatchObject({ width: 220, height: 120 });
+    expect(marksIn(diff.current, { x: 0, y: 0, width: 220, height: 120 })).toBe(
+      diff.plainChangedPixelCount,
+    );
+  });
+
+  it.each(Object.entries(scenarios))(
+    "should mark only what changed for %s",
+    (_, { baseline, current, removed, added }) => {
+      const diff = alignedDiff(load(baseline), load(current));
+
+      expect(marksOutside(diff.baseline, removed)).toBe(0);
+      expect(marksOutside(diff.current, added)).toBe(0);
+      expect([
+        ...removed.map((area) => marksIn(diff.baseline, area)),
+        ...added.map((area) => marksIn(diff.current, area)),
+      ]).not.toContain(0);
     },
   );
 
-  it.each(allScenarios)("should only flag pixels that also differ in place for %s", (name) => {
-    expect(flaggedOnlyWhenAligned(baselinePage, load(name))).toBe(0);
-  });
-
-  it.each(unmovedScenarios)("should match a plain pixel diff exactly for %s", (name) => {
+  it.each(unmovedScenarios)("should match a plain pixel diff on both sides for %s", (name) => {
+    const baseline = load("baseline");
     const current = load(name);
 
-    const diff = alignedDiff(baselinePage, current);
+    const diff = alignedDiff(baseline, current);
 
-    expect(diff.changedPixelCount).toBe(plainPixelDiff(baselinePage, current));
-  });
-
-  it("should flag only the sentence with the edited word", () => {
-    const current = load("text-word-change");
-
-    const diff = alignedDiff(baselinePage, current);
-
-    const sentence = { ...MAIN_COLUMN, y: 160, height: 30 };
-    expect(highlightsIn(diff, sentence)).toBeGreaterThan(0);
-    expect(highlightsOutside(diff, [sentence])).toBe(0);
-    expect(diff.changedPixelCount).toBeLessThan(plainPixelDiff(baselinePage, current));
-  });
-
-  it("should flag line reflow only where text moved between lines", () => {
-    const current = load("text-reflow-extra-line");
-
-    const diff = alignedDiff(baselinePage, current);
-
-    expect(diff.changedPixelCount).toBeLessThan(plainPixelDiff(baselinePage, current) / 4);
-    expect(highlightsIn(diff, { ...MAIN_COLUMN, y: 160, height: 60 })).toBeGreaterThan(0);
+    const plain = plainPixelMatch(baseline, current);
+    expect(diff.baseline.mask).toEqual(plain);
+    expect(diff.current.mask).toEqual(plain);
   });
 });

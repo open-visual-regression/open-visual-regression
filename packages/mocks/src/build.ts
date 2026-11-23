@@ -21,6 +21,7 @@ export const generateBuildSnapshot = (
   baselineImagePath: null,
   diffId: null,
   diffImagePath: null,
+  baselineDiffImagePath: null,
   diffPercent: null,
   browser: "chromium",
   viewportWidth: 1280,

@@ -498,6 +498,13 @@
       "when": 1795291512997,
       "tag": "0070_add_settings_and_job_state",
       "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1795432293776,
+      "tag": "0071_add_baseline_diff_image",
+      "breakpoints": true
     }
   ]
 }
