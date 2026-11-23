@@ -38,7 +38,6 @@ test("rebuilding a completed build produces a new build with matching snapshots"
   expect(rebuiltBuildId).not.toBe(sourceBuildId);
 
   await expect(buildPage.status()).toHaveText(/queued|processing/);
-  // Same commit, same pixels: the rebuild reaches the status the source build did.
   await expect(buildPage.status()).toHaveText(sourceStatus, { timeout: 120_000 });
 
   const { snapshots: rebuiltSnapshots, total: rebuiltTotal } = await seedClient.snapshots.list({

@@ -758,7 +758,6 @@ const findBaselineSnapshot = async (
   latestSnapshotId: string | null,
   isMainBranch: boolean,
 ) => {
-  // On main, a build of the same commit as the baseline compares against what that build did.
   const recaptured = isMainBranch ? await findRecapturedSnapshot(build, latestSnapshotId) : null;
 
   return recaptured ? findSnapshot(recaptured.baselineSnapshotId) : findSnapshot(latestSnapshotId);

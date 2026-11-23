@@ -268,7 +268,6 @@ export const test = vitest.extend<Fixtures>({
 
   // Captures target-a as a solid `fill` image in a new build and diffs it, the way the worker
   // does, then marks the build successful so later builds can use it as their merge base.
-  // Each build gets its own commit unless one is given.
   captureAndDiff: async ({ project, user, captureConfiguration }, use) => {
     await use(async (build, fill) => {
       const created = await dbClient.builds.create({

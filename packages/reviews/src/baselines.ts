@@ -107,8 +107,6 @@ export const findComparisonBaseline = async (
   return baselines.get(toBaselineKey(key)) ?? { snapshotId: null, source: "latest" };
 };
 
-// The baseline snapshot, when it came from another build of `build`'s commit, such as the
-// build that `build` rebuilds.
 export const findRecapturedSnapshot = async (
   build: Pick<NonNullable<BuildDbSchema>, "id" | "commitSha">,
   baselineSnapshotId: string | null | undefined,
