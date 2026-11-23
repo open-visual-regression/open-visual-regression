@@ -343,6 +343,7 @@ export const diffs = pgTable(
     processingStatus: diffProcessingStatusEnum("processing_status").notNull().default("pending"),
     reviewStatus: diffReviewStatusEnum("review_status").notNull().default("not_required"),
     diffImagePath: text("diff_image_path"),
+    baselineDiffImagePath: text("baseline_diff_image_path"),
     pixelDiffCount: integer("pixel_diff_count"),
     diffPercent: real("diff_percent"),
     // No longer written; drop in a later release.

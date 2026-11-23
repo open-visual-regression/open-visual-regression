@@ -114,7 +114,12 @@ export const buildSnapshotSchema = z.object({
       "The image of the baseline this snapshot was compared against or, when skipped, the baseline it keeps",
   }),
   diffId: z.uuidv7().nullable(),
-  diffImagePath: z.string().nullable(),
+  diffImagePath: z.string().nullable().meta({
+    description: "Overlay for the new image, tinting what was added or changed",
+  }),
+  baselineDiffImagePath: z.string().nullable().meta({
+    description: "Overlay for the baseline, tinting what was removed or changed",
+  }),
   diffPercent: z.number().nullable(),
   browser: z.string().min(1),
   viewportWidth: z.number().int(),

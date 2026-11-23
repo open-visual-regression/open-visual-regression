@@ -16,6 +16,7 @@ const SNAPSHOT: BuildSnapshotSchema = {
   baselineImagePath: null,
   diffId: "01a092d6-b0aa-71bf-9312-dd8ef48a22fc",
   diffImagePath: "project/builds/build/diffs/diff.png",
+  baselineDiffImagePath: "project/builds/build/diffs/diff-baseline.png",
   diffPercent: 1.2345,
   browser: "chromium",
   viewportWidth: 1280,

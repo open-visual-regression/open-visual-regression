@@ -120,6 +120,7 @@ export const getOne = os.diffs.getOne
         processingStatus: row.diff.processingStatus,
         reviewStatus: row.diff.reviewStatus,
         diffImagePath: row.diff.diffImagePath,
+        baselineDiffImagePath: row.diff.baselineDiffImagePath,
         pixelDiffCount: row.diff.pixelDiffCount,
         diffPercent: row.diff.diffPercent,
         baselineSnapshot,

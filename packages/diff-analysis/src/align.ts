@@ -14,6 +14,11 @@ export type Alignment = {
   /** Baseline pixels placed where they sit in the current image (RGBA, current size). */
   aligned: Uint8Array;
   /**
+   * For each pixel of the current image, the index of the baseline pixel placed
+   * there, or -1 where the current image has content the baseline doesn't.
+   */
+  source: Int32Array;
+  /**
    * Rects of the current image the baseline has no counterpart for, the axis
    * they run along, and whether they were found inside a band that changed
    * rather than across a whole band.
@@ -41,6 +46,7 @@ type Context = {
   baselineWords: Uint32Array;
   currentWords: Uint32Array;
   alignedWords: Uint32Array;
+  source: Int32Array;
   insertions: Alignment["insertions"];
   deletions: Alignment["deletions"];
   removedSpace: Alignment["removedSpace"];
@@ -49,24 +55,17 @@ type Context = {
 
 /** Copies a baseline rect into the same-size current rect of the aligned image. */
 const copyRect = (context: Context, pair: RectPair) => {
-  const { baselineWords, alignedWords, baseline, current } = context;
+  const { baselineWords, alignedWords, source, baseline, current } = context;
   if (pair.baseline.x !== pair.current.x || pair.baseline.y !== pair.current.y) {
     context.shifted = true;
   }
-  if (pair.current.width === current.width && pair.baseline.width === baseline.width) {
-    const from = pair.baseline.y * baseline.width;
-    alignedWords.set(
-      baselineWords.subarray(from, from + pair.current.height * current.width),
-      pair.current.y * current.width,
-    );
-    return;
-  }
   for (let row = 0; row < pair.current.height; row++) {
     const from = (pair.baseline.y + row) * baseline.width + pair.baseline.x;
-    alignedWords.set(
-      baselineWords.subarray(from, from + pair.current.width),
-      (pair.current.y + row) * current.width + pair.current.x,
-    );
+    const to = (pair.current.y + row) * current.width + pair.current.x;
+    alignedWords.set(baselineWords.subarray(from, from + pair.current.width), to);
+    for (let column = 0; column < pair.current.width; column++) {
+      source[to + column] = from + column;
+    }
   }
 };
 
@@ -109,6 +108,14 @@ const fillInserted = (
     if (source) {
       copyRect(context, { baseline: source, current: target });
     }
+  }
+  // The copies only stand in for what's there; none of it came from the baseline.
+  for (let row = rect.y; row < rect.y + rect.height; row++) {
+    context.source.fill(
+      -1,
+      row * context.current.width + rect.x,
+      row * context.current.width + rect.x + rect.width,
+    );
   }
   context.insertions.push({ rect, axis, nested });
 };
@@ -454,6 +461,7 @@ export const alignImages = (baseline: RgbaImage, current: RgbaImage): Alignment 
     baselineWords: pixelWords(baseline),
     currentWords: pixelWords(current),
     alignedWords: new Uint32Array(aligned.buffer),
+    source: new Int32Array(current.width * current.height).fill(-1),
     insertions: [],
     deletions: [],
     removedSpace: [],
@@ -534,6 +542,7 @@ export const alignImages = (baseline: RgbaImage, current: RgbaImage): Alignment 
 
   return {
     aligned,
+    source: context.source,
     insertions: context.insertions,
     deletions: context.deletions,
     removedSpace: context.removedSpace,

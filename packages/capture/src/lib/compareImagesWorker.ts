@@ -2,9 +2,9 @@ import pixelmatch from "pixelmatch";
 import sharp from "sharp";
 
 import type { DiffHighlight } from "@ovr/api/contracts/settings";
-import { alignedDiff } from "@ovr/diff-analysis/alignedDiff";
+import { alignedDiff, diffInPlace, type AlignedDiff } from "@ovr/diff-analysis/alignedDiff";
 import { padToCanvas, PIXELMATCH_THRESHOLD, type RgbaImage } from "@ovr/diff-analysis/image";
-import { renderDiff } from "@ovr/diff-analysis/renderDiff";
+import { paintDiff, renderDiff } from "@ovr/diff-analysis/renderDiff";
 
 export type CompareImagesTask = {
   capture: Uint8Array;
@@ -16,7 +16,10 @@ export type CompareImagesTask = {
 export type CompareImagesResult = {
   pixelDiffCount: number;
   diffPercent: number;
+  /** Overlay for the new image, tinting what was added or changed. */
   diffImage: Uint8Array | null;
+  /** Overlay for the baseline, tinting what was removed or changed. */
+  baselineDiffImage: Uint8Array | null;
 };
 
 sharp.cache(false);
@@ -34,30 +37,21 @@ const encodePng = ({ data, width, height }: RgbaImage): Promise<Buffer> =>
     .png()
     .toBuffer();
 
-/** Compares the two images pixel by pixel, drawing changed pixels red in `mask`. */
-const pixelDiff = (baseline: RgbaImage, capture: RgbaImage, width: number, height: number) => {
-  const mask = new Uint8Array(width * height * 4);
-  const count = pixelmatch(
-    padToCanvas(baseline, width, height).data,
-    padToCanvas(capture, width, height).data,
-    mask,
-    width,
-    height,
-    { threshold: PIXELMATCH_THRESHOLD, diffMask: true },
-  );
-  return { count, mask: { width, height, data: mask } };
-};
-
-const toCompareResult = (
-  count: number,
+/** Counts the pixels that differ in place, without drawing anything. */
+const countChangedPixels = (
+  baseline: RgbaImage,
+  capture: RgbaImage,
   width: number,
   height: number,
-  diffImage: Uint8Array | null,
-): CompareImagesResult => ({
-  pixelDiffCount: count,
-  diffPercent: (count / (width * height)) * 100,
-  diffImage,
-});
+) =>
+  pixelmatch(
+    padToCanvas(baseline, width, height).data,
+    padToCanvas(capture, width, height).data,
+    undefined,
+    width,
+    height,
+    { threshold: PIXELMATCH_THRESHOLD },
+  );
 
 const compareImages = async ({
   capture,
@@ -72,24 +66,34 @@ const compareImages = async ({
   const width = Math.max(captureImage.width, baselineImage.width);
   const height = Math.max(captureImage.height, baselineImage.height);
 
+  const diffPercent = (count: number) => (count / (width * height)) * 100;
+
   if (!withDiffImage) {
-    const { count } = pixelDiff(baselineImage, captureImage, width, height);
-    return toCompareResult(count, width, height, null);
-  }
-  if (diffHighlight === "exact") {
-    const { count, mask } = pixelDiff(baselineImage, captureImage, width, height);
-    return toCompareResult(count, width, height, count > 0 ? await encodePng(mask) : null);
+    const count = countChangedPixels(baselineImage, captureImage, width, height);
+    return {
+      pixelDiffCount: count,
+      diffPercent: diffPercent(count),
+      diffImage: null,
+      baselineDiffImage: null,
+    };
   }
 
-  // Pass or fail still uses the plain pixel count.
-  const diff = alignedDiff(baselineImage, captureImage);
+  // Pass or fail always uses the plain pixel count.
+  const diff: AlignedDiff =
+    diffHighlight === "smart"
+      ? alignedDiff(baselineImage, captureImage)
+      : diffInPlace(baselineImage, captureImage);
   const count = diff.plainChangedPixelCount;
-  return toCompareResult(
-    count,
-    width,
-    height,
-    count > 0 ? await encodePng(renderDiff(diff)) : null,
-  );
+  const draw = diffHighlight === "smart" ? renderDiff : paintDiff;
+  const [diffImage, baselineDiffImage] =
+    count > 0
+      ? await Promise.all([
+          encodePng(draw(diff.current, "added")),
+          encodePng(draw(diff.baseline, "removed")),
+        ])
+      : [null, null];
+
+  return { pixelDiffCount: count, diffPercent: diffPercent(count), diffImage, baselineDiffImage };
 };
 
 export default compareImages;

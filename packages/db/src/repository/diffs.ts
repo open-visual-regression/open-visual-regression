@@ -86,6 +86,7 @@ type UpdateResultInput = {
   processingStatus: DiffProcessingStatus;
   reviewStatus: DiffReviewStatus;
   diffImagePath?: string;
+  baselineDiffImagePath?: string;
   pixelDiffCount?: number;
   diffPercent?: number;
 };

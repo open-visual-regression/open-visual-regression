@@ -55,6 +55,7 @@ export const getCommand = new Command("get")
           { name: "baseline", imagePath: baselineImagePath },
           { name: "new", imagePath: snapshot?.imagePath ?? null },
           { name: "diff", imagePath: diff?.diffImagePath ?? null },
+          { name: "baseline-diff", imagePath: diff?.baselineDiffImagePath ?? null },
         ]);
 
         files.forEach((file) => console.error(`Saved ${file}`));

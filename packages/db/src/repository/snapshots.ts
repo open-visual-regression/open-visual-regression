@@ -182,6 +182,7 @@ const snapshotDiff = db
     processingStatus: diffs.processingStatus,
     reviewStatus: diffs.reviewStatus,
     diffImagePath: diffs.diffImagePath,
+    baselineDiffImagePath: diffs.baselineDiffImagePath,
     diffPercent: diffs.diffPercent,
   })
   .from(diffs)
@@ -593,6 +594,7 @@ export const list = async ({
       statusPriority: statusPriorityExpr,
       diffId: snapshotDiff.id,
       diffImagePath: snapshotDiff.diffImagePath,
+      baselineDiffImagePath: snapshotDiff.baselineDiffImagePath,
       diffPercent: snapshotDiff.diffPercent,
       isFlaky,
     })
