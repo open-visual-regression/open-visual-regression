@@ -106,8 +106,11 @@ describe("SnapshotComparisonSection", () => {
     expect(screen.getByText("added")).toBeVisible();
   });
 
-  it("should show the overlay on the new snapshot alone for a diff made before baselines had one", () => {
+  it("should show the overlay on the new snapshot alone, without a key, for a diff made before baselines had one", () => {
     renderSection({ ...diff, baselineDiffImagePath: null });
+
+    expect(screen.queryByText("added")).not.toBeInTheDocument();
+    expect(screen.queryByText("removed")).not.toBeInTheDocument();
 
     expect(
       screen.queryByRole("img", {

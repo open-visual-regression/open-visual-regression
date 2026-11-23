@@ -3,6 +3,7 @@ import { expect, userEvent, waitFor, within } from "storybook/test";
 
 import { SnapshotPreferencesProvider } from "@/lib/providers/SnapshotPreferencesProvider";
 
+import { diffImagesOf, hasDiffImages } from "../../snapshot-pane/diffImages";
 import { ComparisonModeProvider } from "../comparison-view/comparison-mode";
 import { ComparisonControls } from "../comparison-view/ComparisonControls";
 import { SnapshotComparisonSection } from "../SnapshotComparisonSection";
@@ -22,7 +23,9 @@ const meta: Meta<typeof SnapshotComparisonSection> = {
     >
       <ComparisonModeProvider>
         <div className="flex flex-col">
-          {args.baseline ? <ComparisonControls hasDiff={args.diff?.diffImagePath != null} /> : null}
+          {args.baseline ? (
+            <ComparisonControls hasDiff={hasDiffImages(diffImagesOf(args.diff))} />
+          ) : null}
           <SnapshotComparisonSection {...args} />
         </div>
       </ComparisonModeProvider>
@@ -111,7 +114,7 @@ export const NewWithBaselineAndDiff: Story = {
       id: "01970000-0000-7000-8000-000000000003",
       processingStatus: "success",
       reviewStatus: "needs_review",
-      diffImagePath: "diff-desktop.png",
+      diffImagePath: "diff-desktop-new.png",
       baselineDiffImagePath: "diff-desktop-baseline.png",
       pixelDiffCount: 120,
       diffPercent: 0.4,
@@ -126,10 +129,10 @@ export const NewWithBaselineAndDiff: Story = {
     });
 
     await userEvent.click(canvas.getByRole("switch"));
-    await expect(diffImage).toHaveStyle({ opacity: "0" });
+    await expect(diffImage).toHaveClass("invisible");
 
     await userEvent.click(canvas.getByRole("switch"));
-    await expect(diffImage).toHaveStyle({ opacity: "1" });
+    await expect(diffImage).not.toHaveClass("invisible");
   },
 };
 
@@ -140,7 +143,7 @@ export const SliderView: Story = {
       id: "01970000-0000-7000-8000-000000000004",
       processingStatus: "success",
       reviewStatus: "needs_review",
-      diffImagePath: "diff-desktop.png",
+      diffImagePath: "diff-desktop-new.png",
       baselineDiffImagePath: "diff-desktop-baseline.png",
       pixelDiffCount: 120,
       diffPercent: 0.4,
@@ -177,7 +180,7 @@ export const MobileWithBaselineAndDiff: Story = {
       id: "01970000-0000-7000-8000-000000000005",
       processingStatus: "success",
       reviewStatus: "needs_review",
-      diffImagePath: "diff-mobile.png",
+      diffImagePath: "diff-mobile-new.png",
       baselineDiffImagePath: "diff-mobile-baseline.png",
       pixelDiffCount: 60_272,
       diffPercent: 11.5,

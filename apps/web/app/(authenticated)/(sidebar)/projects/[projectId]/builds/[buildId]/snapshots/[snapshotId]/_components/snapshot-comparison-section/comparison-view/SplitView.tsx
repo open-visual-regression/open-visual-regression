@@ -1,3 +1,4 @@
+import { isTwoSided } from "../../snapshot-pane/diffImages";
 import type {
   BaselineSnapshotPaneData,
   DiffImages,
@@ -23,12 +24,14 @@ export const SplitView = ({ baseline, newSnapshot, diffImages, showDiff }: Split
         canvasImagePaths={canvasImagePaths}
         diffImagePath={diffImages.baseline}
         showDiff={showDiff}
+        showDiffKey={isTwoSided(diffImages)}
       />
       <NewSnapshotPane
         {...newSnapshot}
         canvasImagePaths={canvasImagePaths}
         diffImagePath={diffImages.newSnapshot}
         showDiff={showDiff}
+        showDiffKey={isTwoSided(diffImages)}
       />
     </div>
   );

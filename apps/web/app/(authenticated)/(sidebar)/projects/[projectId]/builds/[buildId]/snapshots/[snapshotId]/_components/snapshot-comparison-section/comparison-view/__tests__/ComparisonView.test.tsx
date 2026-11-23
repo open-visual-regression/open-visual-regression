@@ -18,16 +18,17 @@ const props: ComparisonViewProps = {
   diffImages: { baseline: "diff-baseline.png", newSnapshot: "diff.png" },
 };
 
-const renderComparison = (overrides: Partial<typeof props> = {}, showDiff = true) =>
+const renderComparison = (
+  overrides: Partial<typeof props> = {},
+  { showDiff = true, hasDiff = true } = {},
+) =>
   render(
     <QueryClientProvider client={new QueryClient()}>
       <SnapshotPreferencesProvider
         initialPreferences={{ sidebarOpen: false, sidebarTab: "reviews", showDiff }}
       >
         <ComparisonModeProvider>
-          <ComparisonControls
-            hasDiff={(overrides.diffImages ?? props.diffImages).newSnapshot !== null}
-          />
+          <ComparisonControls hasDiff={hasDiff} />
           <ComparisonView {...props} {...overrides} />
         </ComparisonModeProvider>
       </SnapshotPreferencesProvider>
@@ -66,16 +67,16 @@ describe("ComparisonView", () => {
     await user.click(screen.getByRole("switch"));
 
     expect(screen.getByRole("img", { name: "diff overlay of baseline snapshot" })).toHaveClass(
-      "opacity-0",
+      "invisible",
     );
     expect(screen.getByRole("img", { name: "diff overlay of new snapshot" })).toHaveClass(
-      "opacity-0",
+      "invisible",
     );
     expect(screen.queryByText("removed")).not.toBeInTheDocument();
   });
 
   it("should not show the diff toggle when there is no diff image", () => {
-    renderComparison({ diffImages: { baseline: null, newSnapshot: null } });
+    renderComparison({ diffImages: { baseline: null, newSnapshot: null } }, { hasDiff: false });
 
     expect(screen.getByRole("tab", { name: "split" })).toBeVisible();
     expect(screen.queryByRole("switch")).not.toBeInTheDocument();
@@ -84,7 +85,7 @@ describe("ComparisonView", () => {
   it("should still offer the slider view when there is a baseline but no diff image", async ({
     user,
   }) => {
-    renderComparison({ diffImages: { baseline: null, newSnapshot: null } });
+    renderComparison({ diffImages: { baseline: null, newSnapshot: null } }, { hasDiff: false });
 
     await user.click(screen.getByRole("tab", { name: "slider" }));
 
@@ -101,7 +102,7 @@ describe("ComparisonView", () => {
   });
 
   it("should keep the diff hidden when it was turned off", () => {
-    renderComparison({}, false);
+    renderComparison({}, { showDiff: false });
 
     expect(screen.getByRole("switch")).not.toBeChecked();
   });

@@ -3,10 +3,11 @@
 import { ReactCompareSlider } from "react-compare-slider";
 
 import { Typography } from "@ovr/ui/components/typography";
-import { cn } from "@ovr/ui/lib/utils";
 
 import { BaselineCommitLink } from "../../snapshot-pane/BaselineCommitLink";
+import { isTwoSided } from "../../snapshot-pane/diffImages";
 import { DiffKey } from "../../snapshot-pane/DiffKey";
+import { DiffOverlay } from "../../snapshot-pane/DiffOverlay";
 import { SnapshotFrameImage } from "../../snapshot-pane/SnapshotFrameImage";
 import { SnapshotPane } from "../../snapshot-pane/SnapshotPane";
 import { SnapshotPaneCanvas } from "../../snapshot-pane/SnapshotPaneCanvas";
@@ -33,26 +34,22 @@ const SliderHandle = () => (
   </div>
 );
 
-/** One side of the slider: a snapshot with its diff overlay over it. */
-const SliderItem = ({
-  imagePath,
-  alt,
-  diffImagePath,
-  showDiff,
-  canvasSize,
-}: SnapshotPaneData & {
+type SliderItemProps = SnapshotPaneData & {
   diffImagePath: string | null;
   showDiff: boolean;
   canvasSize: SnapshotSize | null;
-}) => (
+};
+
+/** One side of the slider: a snapshot with its diff overlay over it. */
+const SliderItem = ({ imagePath, alt, diffImagePath, showDiff, canvasSize }: SliderItemProps) => (
   <div className="relative h-full w-full">
     <SnapshotFrameImage imagePath={imagePath} alt={alt} canvasSize={canvasSize} />
     {diffImagePath ? (
-      <SnapshotFrameImage
+      <DiffOverlay
         imagePath={diffImagePath}
         alt={`diff overlay of ${alt}`}
         canvasSize={canvasSize}
-        className={cn("pointer-events-none", showDiff ? "opacity-100" : "opacity-0")}
+        visible={showDiff}
       />
     ) : null}
   </div>
@@ -69,6 +66,7 @@ export const SliderView = ({ baseline, newSnapshot, diffImages, showDiff }: Slid
   const imagePaths = [baseline.imagePath, newSnapshot.imagePath];
   const canvasSize = useCanvasSize(imagePaths);
   const pending = useIsCanvasSizePending(imagePaths);
+  const showDiffKey = showDiff && isTwoSided(diffImages);
 
   return (
     <SnapshotPane>
@@ -76,10 +74,10 @@ export const SliderView = ({ baseline, newSnapshot, diffImages, showDiff }: Slid
         <div className="flex items-center gap-2">
           <Typography variant="label">baseline</Typography>
           <BaselineCommitLink commitSha={baseline.commitSha} commitUrl={baseline.commitUrl} />
-          {diffImages.baseline && showDiff ? <DiffKey kind="removed" /> : null}
+          {showDiffKey ? <DiffKey kind="removed" /> : null}
         </div>
         <div className="flex items-center gap-2">
-          {diffImages.newSnapshot && showDiff ? <DiffKey kind="added" /> : null}
+          {showDiffKey ? <DiffKey kind="added" /> : null}
           <Typography variant="label">new</Typography>
         </div>
       </SnapshotPaneHeader>

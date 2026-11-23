@@ -12,6 +12,8 @@ export type NewSnapshotPaneProps = {
   canvasImagePaths?: (string | null)[];
   diffImagePath?: string | null;
   showDiff?: boolean;
+  /** Whether to say what the overlay's color means, which only holds for two-sided diffs. */
+  showDiffKey?: boolean;
 };
 
 export const NewSnapshotPane = ({
@@ -20,11 +22,12 @@ export const NewSnapshotPane = ({
   canvasImagePaths,
   diffImagePath = null,
   showDiff = false,
+  showDiffKey = false,
 }: NewSnapshotPaneProps) => (
   <SnapshotPane>
     <SnapshotPaneHeader className="gap-2">
       <Typography variant="label">new</Typography>
-      {diffImagePath && showDiff ? (
+      {diffImagePath && showDiff && showDiffKey ? (
         <span className="ml-auto">
           <DiffKey kind="added" />
         </span>

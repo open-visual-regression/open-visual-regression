@@ -1,7 +1,6 @@
 "use client";
 
-import { cn } from "@ovr/ui/lib/utils";
-
+import { DiffOverlay } from "./DiffOverlay";
 import { SnapshotFrameImage } from "./SnapshotFrameImage";
 import { SnapshotPaneCanvas } from "./SnapshotPaneCanvas";
 import { SnapshotPaneFrame } from "./SnapshotPaneFrame";
@@ -31,11 +30,11 @@ export const SnapshotPaneImage = ({
       <SnapshotPaneFrame canvasSize={canvasSize}>
         <SnapshotFrameImage imagePath={imagePath} alt={alt} canvasSize={canvasSize} />
         {overlay ? (
-          <SnapshotFrameImage
+          <DiffOverlay
             imagePath={overlay.imagePath}
             alt={`diff overlay of ${alt}`}
             canvasSize={canvasSize}
-            className={cn("pointer-events-none", overlay.visible ? "opacity-100" : "opacity-0")}
+            visible={overlay.visible}
           />
         ) : null}
       </SnapshotPaneFrame>

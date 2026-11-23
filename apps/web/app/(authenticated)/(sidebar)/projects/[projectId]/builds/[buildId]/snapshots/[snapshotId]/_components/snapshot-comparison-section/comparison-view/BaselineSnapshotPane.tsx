@@ -15,6 +15,8 @@ export type BaselineSnapshotPaneProps = {
   canvasImagePaths: (string | null)[];
   diffImagePath?: string | null;
   showDiff?: boolean;
+  /** Whether to say what the overlay's color means, which only holds for two-sided diffs. */
+  showDiffKey?: boolean;
 };
 
 export const BaselineSnapshotPane = ({
@@ -25,12 +27,13 @@ export const BaselineSnapshotPane = ({
   canvasImagePaths,
   diffImagePath = null,
   showDiff = false,
+  showDiffKey = false,
 }: BaselineSnapshotPaneProps) => (
   <SnapshotPane>
     <SnapshotPaneHeader className="gap-2">
       <Typography variant="label">baseline</Typography>
       <BaselineCommitLink commitSha={commitSha} commitUrl={commitUrl} />
-      {diffImagePath && showDiff ? (
+      {diffImagePath && showDiff && showDiffKey ? (
         <span className="ml-auto">
           <DiffKey kind="removed" />
         </span>

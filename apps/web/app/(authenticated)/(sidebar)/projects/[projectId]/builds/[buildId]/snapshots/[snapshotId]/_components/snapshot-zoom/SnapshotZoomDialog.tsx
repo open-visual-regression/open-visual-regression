@@ -6,6 +6,7 @@ import { TransformWrapper } from "react-zoom-pan-pinch";
 import { Dialog, DialogContent } from "@ovr/ui/components/dialog";
 
 import { useComparisonMode } from "../snapshot-comparison-section/comparison-view/comparison-mode";
+import { hasDiffImages } from "../snapshot-pane/diffImages";
 import type {
   BaselineSnapshotPaneData,
   DiffImages,
@@ -53,7 +54,7 @@ export const SnapshotZoomDialog = ({
             view={view}
             onViewChange={setView}
             baseline={baseline}
-            hasDiff={diffImages.newSnapshot !== null}
+            hasDiff={hasDiffImages(diffImages)}
             viewHasDiff={
               (view === "baseline" ? diffImages.baseline : diffImages.newSnapshot) !== null
             }

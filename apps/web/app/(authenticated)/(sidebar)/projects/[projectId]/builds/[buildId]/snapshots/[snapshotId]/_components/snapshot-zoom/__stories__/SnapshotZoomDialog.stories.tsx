@@ -57,7 +57,7 @@ const comparisonArgs = {
   },
   diffImages: {
     baseline: "/api/storage/diff-desktop-baseline.png",
-    newSnapshot: "/api/storage/diff-desktop.png",
+    newSnapshot: "/api/storage/diff-desktop-new.png",
   },
 };
 

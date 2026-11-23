@@ -5,6 +5,7 @@ import { TransformComponent, useControls } from "react-zoom-pan-pinch";
 
 import { cn } from "@ovr/ui/lib/utils";
 
+import { DiffOverlay } from "../snapshot-pane/DiffOverlay";
 import { SnapshotFrameImage } from "../snapshot-pane/SnapshotFrameImage";
 import type {
   BaselineSnapshotPaneData,
@@ -66,19 +67,19 @@ export const SnapshotZoomViewport = ({
           className={cn(view !== "new" && "invisible")}
         />
         {baseline && diffImages.baseline ? (
-          <SnapshotFrameImage
+          <DiffOverlay
             imagePath={diffImages.baseline}
             alt={`diff overlay of ${baseline.alt}`}
             canvasSize={canvasSize}
-            className={cn(view === "baseline" && showDiff ? "opacity-100" : "opacity-0")}
+            visible={view === "baseline" && showDiff}
           />
         ) : null}
         {diffImages.newSnapshot ? (
-          <SnapshotFrameImage
+          <DiffOverlay
             imagePath={diffImages.newSnapshot}
             alt={`diff overlay of ${newSnapshot.alt}`}
             canvasSize={canvasSize}
-            className={cn(view === "new" && showDiff ? "opacity-100" : "opacity-0")}
+            visible={view === "new" && showDiff}
           />
         ) : null}
       </div>
