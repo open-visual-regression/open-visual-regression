@@ -21,7 +21,10 @@ export const getCommand = new Command("get")
   .option("--server-url <url>", "OVR server URL (defaults to ovr.config's serverUrl)")
   .option("-c, --config <path>", "path to ovr.config file")
   .option("--json", "print the diff as JSON instead of formatted text")
-  .option("--download <dir>", "save the baseline, new and diff images to this directory")
+  .option(
+    "--download <dir>",
+    "save the baseline, new and diff images, and the baseline's diff, to this directory",
+  )
   .option("--analyze", "describe what changed, such as content that moved")
   .action(async (snapshotId: string, options: DiffsGetCommandOptions) => {
     const apiKey = getApiKey();

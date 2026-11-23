@@ -2,9 +2,11 @@ import pixelmatch from "pixelmatch";
 import sharp from "sharp";
 
 import type { DiffHighlight } from "@ovr/api/contracts/settings";
-import { alignedDiff, diffInPlace, type AlignedDiff } from "@ovr/diff-analysis/alignedDiff";
+import { alignedDiff } from "@ovr/diff-analysis/alignedDiff";
 import { padToCanvas, PIXELMATCH_THRESHOLD, type RgbaImage } from "@ovr/diff-analysis/image";
+import { diffInPlace } from "@ovr/diff-analysis/inPlace";
 import { paintDiff, renderDiff } from "@ovr/diff-analysis/renderDiff";
+import type { TwoSidedDiff } from "@ovr/diff-analysis/types";
 
 export type CompareImagesTask = {
   capture: Uint8Array;
@@ -79,17 +81,20 @@ const compareImages = async ({
   }
 
   // Pass or fail always uses the plain pixel count.
-  const diff: AlignedDiff =
+  const diff: TwoSidedDiff =
     diffHighlight === "smart"
       ? alignedDiff(baselineImage, captureImage)
       : diffInPlace(baselineImage, captureImage);
   const count = diff.plainChangedPixelCount;
   const draw = diffHighlight === "smart" ? renderDiff : paintDiff;
+  // Both overlays are written even when one side has nothing marked, like a
+  // change that only added content: a baseline overlay is how the snapshot
+  // page tells these diffs from older ones, which only have the new image's.
   const [diffImage, baselineDiffImage] =
     count > 0
       ? await Promise.all([
-          encodePng(draw(diff.current, "added")),
-          encodePng(draw(diff.baseline, "removed")),
+          encodePng(draw(diff.current, "current")),
+          encodePng(draw(diff.baseline, "baseline")),
         ])
       : [null, null];
 

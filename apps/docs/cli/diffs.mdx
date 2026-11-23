@@ -15,7 +15,7 @@ ovr diffs get <snapshotId>
 
 | Flag | Description |
 | --- | --- |
-| `--download <dir>` | Save the baseline, new, and diff images to this directory as `baseline.png`, `new.png`, and `diff.png` |
+| `--download <dir>` | Save the images to this directory: `baseline.png` and `new.png`, and their diff overlays, `baseline-diff.png` with what was removed or changed and `diff.png` with what was added or changed |
 | `--analyze` | Describe what changed, such as content that moved |
 
 Takes a snapshot ID, which you can find with [`ovr snapshots list`](/cli/snapshots#ovr-snapshots-list), and shows how the snapshot compares to its baseline. When the project has a [git integration](/manage/git-status-checks), the baseline's commit links to your git provider.

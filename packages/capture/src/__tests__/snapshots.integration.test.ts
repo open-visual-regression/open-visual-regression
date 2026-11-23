@@ -1125,14 +1125,13 @@ describe("snapshots", () => {
       expect(result!.diffImagePath).toBe(
         `${featureBuild.projectId}/builds/${featureBuild.id}/diffs/${diff!.id}.png`,
       );
-      expect(result!.baselineDiffImagePath).toBe(
-        `${featureBuild.projectId}/builds/${featureBuild.id}/diffs/${diff!.id}-baseline.png`,
-      );
+      const baselineDiffImagePath = `${featureBuild.projectId}/builds/${featureBuild.id}/diffs/${diff?.id}-baseline.png`;
+      expect(result?.baselineDiffImagePath).toBe(baselineDiffImagePath);
       expect(result!.pixelDiffCount).toBeGreaterThan(0);
 
       const diffImage = await storage.getFileStream(result!.diffImagePath!);
       expect(diffImage).toBeDefined();
-      const baselineDiffImage = await storage.getFileStream(result!.baselineDiffImagePath!);
+      const baselineDiffImage = await storage.getFileStream(baselineDiffImagePath);
       expect(baselineDiffImage).toBeDefined();
 
       expect(await metrics.scrape()).toContain('ovr_diffs_compared_total{result="changed"} 1');

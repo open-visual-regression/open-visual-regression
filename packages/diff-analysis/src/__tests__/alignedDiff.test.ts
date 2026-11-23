@@ -5,9 +5,9 @@ import pixelmatch from "pixelmatch";
 import { PNG } from "pngjs";
 import { describe, expect, it } from "vitest";
 
-import { alignedDiff, type DiffMask } from "../alignedDiff";
+import { alignedDiff } from "../alignedDiff";
 import { padToCanvas, PIXELMATCH_THRESHOLD, type RgbaImage } from "../image";
-import type { Rect } from "../types";
+import type { DiffMask, Rect } from "../types";
 
 type Color = [number, number, number];
 
@@ -274,6 +274,107 @@ describe("alignedDiff", () => {
     expect(marksIn(diff.baseline, gap)).toBeGreaterThan(0);
     expect(marksOutside(diff.baseline, [gap])).toBe(0);
     expect(marksOutside(diff.current, [])).toBe(0);
+  });
+
+  it("should mark the space a gap grew by inside a fixed-size card, and the space it took from the card's end", () => {
+    const card = { x: 5, y: 5, width: 190, height: 110, color: [200, 200, 200] as Color };
+    const inside = { x: 6, y: 6, width: 188, height: 108, color: WHITE };
+    const baseline = drawImage(200, 120, [
+      card,
+      inside,
+      ...text(10, 10, 8, 1),
+      ...text(10, 30, 10, 2),
+      ...text(10, 50, 6, 3),
+    ]);
+    const current = drawImage(200, 120, [
+      card,
+      inside,
+      ...text(10, 10, 8, 1),
+      ...text(10, 40, 10, 2),
+      ...text(10, 60, 6, 3),
+    ]);
+
+    const diff = alignedDiff(baseline, current);
+
+    const gap = { x: 5, y: 16, width: 190, height: 24 };
+    const cardEnd = { x: 5, y: 100, width: 190, height: 16 };
+    expect(marksIn(diff.current, gap)).toBeGreaterThan(0);
+    expect(marksOutside(diff.current, [gap])).toBe(0);
+    expect(marksIn(diff.baseline, cardEnd)).toBeGreaterThan(0);
+    expect(marksOutside(diff.baseline, [cardEnd])).toBe(0);
+  });
+
+  it("should mark only the gap between two lines inside a card when it grew, not the lines", () => {
+    const card = { x: 5, y: 5, width: 190, height: 50, color: [200, 200, 200] as Color };
+    const inside = { x: 6, y: 6, width: 188, height: 48, color: WHITE };
+    const baseline = drawImage(200, 60, [
+      card,
+      inside,
+      ...text(10, 10, 8, 1),
+      ...text(10, 22, 10, 2),
+    ]);
+    const current = drawImage(200, 60, [
+      card,
+      inside,
+      ...text(10, 10, 8, 1),
+      ...text(10, 28, 10, 2),
+    ]);
+
+    const diff = alignedDiff(baseline, current);
+
+    const gap = { x: 5, y: 18, width: 190, height: 10 };
+    expect(marksIn(diff.current, gap)).toBeGreaterThan(0);
+    expect(marksOutside(diff.current, [gap])).toBe(0);
+  });
+
+  it("should mark content removed with nothing in its place on both images, where it was", () => {
+    const row = text(10, 10, 8, 1);
+    const removed = { x: 120, y: 10, width: 40, height: 8 };
+    const baseline = drawImage(200, 60, [...row, { ...removed, color: INK }]);
+    const current = drawImage(200, 60, row);
+
+    const diff = alignedDiff(baseline, current);
+
+    expect(marksIn(diff.baseline, removed)).toBe(40 * 8);
+    expect(marksOutside(diff.baseline, [removed])).toBe(0);
+    expect(marksOutside(diff.current, [removed])).toBe(0);
+  });
+
+  it("should not mark the blank space that pads a page out to its height when content moved up", () => {
+    const baseline = drawImage(
+      200,
+      100,
+      pageBoxes().map((box) => (box.y >= 30 ? { ...box, y: box.y + 10 } : box)),
+    );
+    const current = drawImage(200, 100, pageBoxes());
+
+    const diff = alignedDiff(baseline, current);
+
+    expect(marksOutside(diff.current, [])).toBe(0);
+    expect(marksOutside(diff.baseline, [{ x: 0, y: 18, width: 200, height: 22 }])).toBe(0);
+  });
+
+  it("should not mark rows that only settled by a pixel next to a real change", () => {
+    const recolored = { x: 10, y: 30, width: 60, height: 20 };
+    const baseline = drawImage(200, 120, pageBoxes());
+    const current = drawImage(200, 121, [
+      ...text(10, 10, 8, 1),
+      { ...recolored, color: RED },
+      ...text(10, 61, 10, 2),
+      ...text(10, 81, 6, 3),
+    ]);
+
+    const diff = alignedDiff(baseline, current);
+
+    expect(marksIn(diff.current, recolored)).toBeGreaterThan(0);
+    expect(marksOutside(diff.current, [recolored])).toBe(0);
+    expect(marksOutside(diff.baseline, [recolored])).toBe(0);
+  });
+
+  it("should mark the whole badge whose padding grew, not just the padding", () => {
+    const diff = alignedDiff(load("badge-padding-baseline"), load("badge-padding-wider"));
+
+    expect(marksIn(diff.current, { x: 40, y: 10, width: 40, height: 14 })).toBeGreaterThan(0);
   });
 
   it("should mark images of different widths in place on both sides", () => {
