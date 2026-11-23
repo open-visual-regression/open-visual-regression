@@ -35,8 +35,12 @@ import { toast } from "@ovr/ui/components/toast";
 import { serverClient } from "@/lib/router";
 
 const DIFF_HIGHLIGHT_OPTIONS: { value: DiffHighlight; label: string; description: string }[] = [
-  { value: "smart", label: "smart", description: "highlights only the content that has changed" },
   { value: "exact", label: "exact", description: "highlights every changed pixel" },
+  {
+    value: "smart",
+    label: "smart (beta)",
+    description: "highlights only the content that has changed",
+  },
 ];
 
 export type DiffSettingsFormProps = {
