@@ -8,8 +8,11 @@
 
 ## Testing
 
-<!-- What you verified by hand in the browser: the flows you exercised and what you saw.
-     Use "N/A" for changes with no user-facing surface (CI, docs, internal refactors). -->
+<!-- Required for every change. How you smoke tested it in a realistic scenario: what you ran
+     (the app in a browser, the CLI against a running stack, the worker on a real build, the
+     chart in a cluster, the docs site rendered), the flows and edge cases you exercised, and
+     what you saw. Typecheck, lint, unit tests, builds, and CI don't count.
+     "Not tested" and "N/A" are not accepted: if it hasn't been smoke tested, it isn't ready. -->
 
 ## Screenshots
 
