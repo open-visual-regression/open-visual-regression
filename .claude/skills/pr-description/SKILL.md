@@ -26,18 +26,12 @@ PRs are squash-merged, so the title becomes the commit message on `main`. Use [C
 
 - **Why:** One or two sentences on the problem or goal. Link the issue if one exists.
 - **What changed:** A few bullets on the approach, at the level you'd explain it to a teammate.
-- **Testing:** How the change was smoke tested in a realistic scenario: what was run (the app in a browser, the CLI against a running stack, the worker on a real build, the chart in a cluster, the docs site rendered), the flows and edge cases exercised, and what was observed. This is required for every change, including CI, docs, and refactors. See the `smoke-testing` skill for what that looks like for each kind of change.
-
-## Never list as testing
-
-Typecheck, lint, format, unit tests, builds, or "CI passes". CI has to pass anyway, so these say nothing a reviewer doesn't already know.
-
-Also never write "not tested", "untested", "didn't test", "couldn't test", "should work", or "N/A". A PR that hasn't been smoke tested isn't ready to open.
+- **Testing:** A short account of how you smoke tested the change, following the `smoke-testing` skill: what you exercised, the edge cases you tried, and what you saw. Every change has one, including config, CI, docs, and skill changes. Don't list typecheck, lint, unit tests, builds, or "CI passes", because CI already runs those and they tell a reviewer nothing new. Never write "not tested" or "N/A". If the change hasn't been smoke tested, it isn't ready to open.
 
 ## Process
 
 1. Look at the full branch diff against the base branch, not just the latest commit.
-2. Smoke test the final state of the branch in a realistic scenario before writing anything, using the `smoke-testing` skill, so the Testing section reports something that actually happened. Never claim testing that wasn't done. If you can't smoke test it after a real attempt (for example, Docker or the network is blocking you), don't open the PR. Stop and tell the user what's blocking you instead.
+2. Smoke test the final state of the branch with the `smoke-testing` skill before writing anything, so the Testing section reports something that actually happened. Never claim testing that wasn't done. If you're blocked, follow that skill and don't open the PR.
 3. Fill in the template and remove the HTML comments.
 4. After the PR is created, re-read the description. The server may append a Claude attribution footer (e.g. "🤖 Generated with Claude Code" and a session link). If present, update the PR body to remove it, and do this without being asked.
 
