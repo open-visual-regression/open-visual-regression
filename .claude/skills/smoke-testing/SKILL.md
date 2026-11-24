@@ -10,12 +10,18 @@ Every change gets smoke tested before it goes up for review: you exercise what y
 - **Tests and CI don't count.** Unit and integration tests, typecheck, lint, and builds still have to pass, but CI already runs them, so listing them tells a reviewer nothing new. A smoke test is the step CI doesn't do: running the real thing.
 - **Use the real path.** Use the real entry point and realistic data (a real Storybook build, a project with baselines, a build with diffs). Hit the edge cases the change is about, not just the happy path.
 - **Test the final state.** Smoke test the branch as it will be reviewed, not an earlier commit. Re-run it if you change things afterwards.
-- **No untested PRs.** If you haven't smoke tested it, you aren't done. Don't open the PR, and never write "not tested", "N/A", or "should work" in its place.
-- **Blocked means stop and ask.** If something stops you (Docker won't start, an image won't pull, a host is blocked), work through it first. `.agents/skills/pulling-images/skill.md` covers the Docker daemon and image pulls in a sandbox. If you're still blocked after a real attempt, tell the user exactly what's blocking you and what you need, and don't open the PR.
+- **No untested PRs.** If you haven't smoke tested it, you aren't done. Don't open the PR, and never write "not tested", "N/A", or "should work" in its place. A Testing section that explains what you couldn't get to is the same thing.
+- **Blocked means stop and ask.** A missing environment is something to fix, not a reason to test less. If Docker isn't running, start it (see below). If an image won't pull or a host is blocked, follow `.agents/skills/pulling-images/skill.md`. If you're still blocked after a real attempt, tell the user exactly what's blocking you and what you need, and don't open the PR.
 
 ## Bringing the stack up
 
-Most app changes need the full stack. Build it from your working tree so you're testing your change, not already-merged images:
+Most app changes need the full stack. Sandboxes usually ship Docker without starting the daemon, so a failed `docker info` means "start it", not "Docker isn't available":
+
+```bash
+docker info >/dev/null 2>&1 || { nohup dockerd >/var/log/dockerd.log 2>&1 & until docker info >/dev/null 2>&1; do sleep 1; done; }
+```
+
+Build the stack from your working tree so you're testing your change, not already-merged images:
 
 ```bash
 cp .env.example .env   # once; set BETTER_AUTH_SECRET and OVR_GIT_TOKEN_ENCRYPTION_KEY (openssl rand -base64 32 each)
@@ -63,7 +69,7 @@ For skills (`.claude/skills`, `.agents/skills`), `CLAUDE.md`, and `.claude/setti
 claude -p "<a realistic task the change should affect>" --output-format stream-json --verbose
 ```
 
-Check in the transcript that the skill was loaded (or the setting took effect), and that the agent did what the new instructions say. Don't let it do anything outward-facing, like pushing or opening a PR. For a description change, also try a task that shouldn't trigger the skill.
+Check in the transcript that the skill was loaded (or the setting took effect), and that the agent did what the new instructions say, all the way through. Don't let it do anything outward-facing, like pushing or opening a PR, but don't tell it to skip any other step either. If the instructions need the running stack, bring it up first so the session can follow them. For a description change, also try a task that shouldn't trigger the skill.
 
 ### Docs
 
