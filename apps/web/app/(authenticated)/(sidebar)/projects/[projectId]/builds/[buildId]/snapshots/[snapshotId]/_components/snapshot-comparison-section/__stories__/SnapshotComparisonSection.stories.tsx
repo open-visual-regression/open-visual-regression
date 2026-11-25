@@ -124,7 +124,8 @@ export const NewWithBaselineAndDiff: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const diffImage = canvas.getByRole("img", {
+    // The overlay shows once its size has loaded.
+    const diffImage = await canvas.findByRole("img", {
       name: "diff overlay of snapshot of Button Primary",
     });
 
@@ -132,7 +133,7 @@ export const NewWithBaselineAndDiff: Story = {
     await expect(diffImage).toHaveClass("invisible");
 
     await userEvent.click(canvas.getByRole("switch"));
-    await expect(diffImage).not.toHaveClass("invisible");
+    await waitFor(() => expect(diffImage).not.toHaveClass("invisible"));
   },
 };
 
@@ -154,12 +155,12 @@ export const SliderView: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // Switching to slider view drops the diff toggle and shows a draggable handle.
+    // Switching to slider view keeps the diff toggle and shows a draggable handle.
     await userEvent.click(canvas.getByRole("tab", { name: "slider" }));
 
     const handle = canvas.getByRole("slider");
     await expect(handle).toBeVisible();
-    await expect(canvas.queryByRole("switch")).not.toBeInTheDocument();
+    await expect(canvas.getByRole("switch")).toBeChecked();
 
     // The handle is keyboard operable.
     const startPosition = Number(handle.getAttribute("aria-valuenow"));
@@ -167,9 +168,9 @@ export const SliderView: Story = {
     await userEvent.keyboard("{ArrowLeft}");
     await expect(Number(handle.getAttribute("aria-valuenow"))).toBeLessThan(startPosition);
 
-    // Switching back restores the split view and its diff toggle.
+    // Switching back restores the split view.
     await userEvent.click(canvas.getByRole("tab", { name: "split" }));
-    await expect(canvas.getByRole("switch")).toBeVisible();
+    await expect(canvas.queryByRole("slider")).not.toBeInTheDocument();
   },
 };
 

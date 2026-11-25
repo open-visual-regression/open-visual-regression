@@ -89,7 +89,8 @@ export const Baseline: Story = {
       "aria-selected",
       "true",
     );
-    await expect(within(dialog).getByRole("switch")).toHaveAttribute("aria-disabled", "true");
+    // The baseline has its own overlay, so the diff toggle works here too.
+    await expect(within(dialog).getByRole("switch")).not.toHaveAttribute("aria-disabled", "true");
   },
 };
 
