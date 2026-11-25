@@ -2,8 +2,10 @@
 
 Compares two screenshots.
 
-- `alignedDiff` marks what changed between them without counting content that
-  only moved, and `renderDiff` draws that as the diff image OVR shows.
+- `alignedDiff` marks what changed between them on each of them, like a code
+  diff: what was removed or changed on the baseline, what was added or
+  changed on the new screenshot, and not content that only moved. `renderDiff`
+  draws each side as the tinted overlay OVR shows over that image.
 - `analyzeDiff` describes the difference for the CLI: the area that changed,
   whether the content shifted, and whether the screenshot changed size.
 
@@ -28,21 +30,18 @@ pixel diff whatever changed.
 
 A pixel only counts as changed when it also differs from the pixel at the same
 spot in the baseline, so a misaligned stretch never flags more than a plain
-pixel diff would.
+pixel diff would. A changed pixel is marked on the new screenshot, and on the
+baseline at the spot it was lined up with.
 
-Removed content has no place in the current image, so where it was is
-highlighted instead, wherever it differs from what's there now. When that spot
-looks the same as before, like a segment gone from a bar where the one beside
-it has the same color, the rest of that row is highlighted wherever it differs.
-
-When only the space between rows changed, like a margin that grew or shrank,
-the first block of content below it moved because of it, so that block is
-highlighted wherever it differs. Only something that changes height, like new
-content, removed content or another spacing change further up in the same
-columns, explains a shift, so then nothing extra is highlighted. Something that
-changed in place, like a recolored badge, doesn't. If
-nothing explains a difference at all, the plain pixel diff is shown, so a
-failing snapshot always shows something.
+Lines the alignment found added are marked on the new screenshot, and lines it
+found removed on the baseline, where they are. Blank space added or removed,
+like a margin that grew or shrank, is marked too, kept to the part with
+content beside it, or to the whole element when it's inside one, like padding
+that grew. Space isn't marked when it only pads the page out to its height, or
+when it made room for content added before it, or filled in for content
+removed before it, so the box around them kept its size. If nothing explains a
+difference at all, every changed pixel is marked in place, so a failing
+snapshot always shows something.
 
 ## Limits
 

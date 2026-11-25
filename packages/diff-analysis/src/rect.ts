@@ -34,14 +34,6 @@ export const rectsAreNear = (first: Rect, second: Rect, distance: number): boole
   first.y <= second.y + second.height + distance &&
   second.y <= first.y + first.height + distance;
 
-/** Whether two rects share any rows. */
-export const overlapsRows = (first: Rect, second: Rect): boolean =>
-  first.y < second.y + Math.max(second.height, 1) && second.y < first.y + Math.max(first.height, 1);
-
-/** Whether two rects share any columns. */
-export const overlapsColumns = (first: Rect, second: Rect): boolean =>
-  first.x < second.x + Math.max(second.width, 1) && second.x < first.x + Math.max(first.width, 1);
-
 /**
  * Merges items whose rects are at most `distance` pixels apart, repeating
  * until nothing more merges, so the result doesn't depend on their order.

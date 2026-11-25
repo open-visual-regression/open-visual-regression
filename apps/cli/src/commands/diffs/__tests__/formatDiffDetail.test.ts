@@ -9,6 +9,7 @@ const DIFF: DiffSchema = {
   processingStatus: "success",
   reviewStatus: "needs_review",
   diffImagePath: "project/builds/build/diffs/diff.png",
+  baselineDiffImagePath: "project/builds/build/diffs/diff-baseline.png",
   pixelDiffCount: 1234,
   diffPercent: 1.2345,
   baselineSnapshot: null,

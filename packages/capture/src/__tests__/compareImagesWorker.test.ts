@@ -27,10 +27,12 @@ const drawPng = (height: number, boxes: Box[], colorType: 2 | 6 = 6): Uint8Array
 
 const shiftedDown = (boxes: Box[], by: number) => boxes.map((box) => ({ ...box, y: box.y + by }));
 
-const alphaAt = (image: Uint8Array | null, x: number, y: number) => {
+const pixelAt = (image: Uint8Array | null, x: number, y: number) => {
   const png = PNG.sync.read(Buffer.from(image ?? []));
-  return png.data[(y * png.width + x) * 4 + 3];
+  return Array.from(png.data.subarray((y * png.width + x) * 4, (y * png.width + x + 1) * 4));
 };
+
+const alphaAt = (image: Uint8Array | null, x: number, y: number) => pixelAt(image, x, y)[3];
 
 describe("compareImages", async () => {
   it("should report no difference and no diff image for identical screenshots", async () => {
@@ -43,10 +45,15 @@ describe("compareImages", async () => {
       diffHighlight: "smart",
     });
 
-    expect(result).toEqual({ pixelDiffCount: 0, diffPercent: 0, diffImage: null });
+    expect(result).toEqual({
+      pixelDiffCount: 0,
+      diffPercent: 0,
+      diffImage: null,
+      baselineDiffImage: null,
+    });
   });
 
-  it("should mark the content an inserted banner pushed down with the exact highlight", async () => {
+  it("should paint every changed pixel on both images with the exact highlight", async () => {
     const baseline = drawPng(80, PAGE);
     const capture = drawPng(100, [
       { x: 0, y: 0, width: WIDTH, height: 16, color: 0xdc2626ff },
@@ -60,11 +67,12 @@ describe("compareImages", async () => {
       diffHighlight: "exact",
     });
 
-    expect(alphaAt(result.diffImage, 60, 8)).toBe(255);
+    expect(pixelAt(result.diffImage, 60, 8)).toEqual([30, 200, 90, 255]);
     expect(alphaAt(result.diffImage, 50, 55)).toBe(255);
+    expect(pixelAt(result.baselineDiffImage, 60, 8)).toEqual([255, 40, 40, 255]);
   });
 
-  it("should mark only the inserted banner in the diff image, not the content it pushed down", async () => {
+  it("should tint only the inserted banner, on the new image, not the content it pushed down", async () => {
     const baseline = drawPng(80, PAGE);
     const capture = drawPng(100, [
       { x: 0, y: 0, width: WIDTH, height: 16, color: 0xdc2626ff },
@@ -79,13 +87,17 @@ describe("compareImages", async () => {
     });
 
     expect(result.pixelDiffCount).toBeGreaterThan(0);
-    expect(alphaAt(result.diffImage, 60, 8)).toBe(80);
+    expect(pixelAt(result.diffImage, 60, 8)).toEqual([30, 200, 90, 80]);
     expect(alphaAt(result.diffImage, 50, 55)).toBe(0);
+    expect(alphaAt(result.baselineDiffImage, 50, 35)).toBe(0);
   });
 
-  it("should mark only the first content below blank space that grew", async () => {
-    const baseline = drawPng(80, PAGE);
-    const capture = drawPng(100, shiftedDown(PAGE, 20));
+  it("should tint removed content red on the baseline, not the content that moved up", async () => {
+    const baseline = drawPng(
+      100,
+      shiftedDown(PAGE, 20).concat({ x: 0, y: 0, width: WIDTH, height: 16, color: 0xdc2626ff }),
+    );
+    const capture = drawPng(80, PAGE);
 
     const result = await compareImages({
       capture,
@@ -94,9 +106,9 @@ describe("compareImages", async () => {
       diffHighlight: "smart",
     });
 
-    expect(result.pixelDiffCount).toBeGreaterThan(0);
-    expect(alphaAt(result.diffImage, 30, 34)).toBe(80);
-    expect(alphaAt(result.diffImage, 50, 60)).toBe(0);
+    expect(pixelAt(result.baselineDiffImage, 60, 8)).toEqual([255, 40, 40, 80]);
+    expect(alphaAt(result.baselineDiffImage, 50, 55)).toBe(0);
+    expect(alphaAt(result.diffImage, 50, 35)).toBe(0);
   });
 
   it.each([

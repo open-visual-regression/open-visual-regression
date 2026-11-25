@@ -1,0 +1,1 @@
+ALTER TABLE "diffs" ADD COLUMN "baseline_diff_image_path" text;

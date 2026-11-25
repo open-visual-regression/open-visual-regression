@@ -54,7 +54,12 @@ export const diffSchema = z.object({
   id: z.uuidv7(),
   processingStatus: diffProcessingStatusSchema,
   reviewStatus: diffReviewStatusSchema,
-  diffImagePath: z.string().nullable(),
+  diffImagePath: z.string().nullable().meta({
+    description: "Overlay for the new image, tinting what was added or changed",
+  }),
+  baselineDiffImagePath: z.string().nullable().meta({
+    description: "Overlay for the baseline, tinting what was removed or changed",
+  }),
   pixelDiffCount: z.number().int().nullable(),
   diffPercent: z.number().nullable(),
   baselineSnapshot: baselineSnapshotSchema.nullable(),
