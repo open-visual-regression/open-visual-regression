@@ -1,5 +1,12 @@
 # @ovr/builds
 
+## 0.2.20
+
+### Patch Changes
+
+- Updated dependencies [[`89b938f`](https://github.com/open-visual-regression/open-visual-regression/commit/89b938f07ab0358db90702b46a3d1c115601103e)]:
+  - @ovr/api@0.5.11
+
 ## 0.2.19
 
 ### Patch Changes

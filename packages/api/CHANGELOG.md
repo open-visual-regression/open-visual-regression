@@ -1,5 +1,11 @@
 # @ovr/api
 
+## 0.5.11
+
+### Patch Changes
+
+- [#621](https://github.com/open-visual-regression/open-visual-regression/pull/621) [`89b938f`](https://github.com/open-visual-regression/open-visual-regression/commit/89b938f07ab0358db90702b46a3d1c115601103e) Thanks [@tgfischer](https://github.com/tgfischer)! - Diff images use the **exact** highlight by default. **smart** is now labeled beta in **Settings → Builds**.
+
 ## 0.5.10
 
 ### Patch Changes
