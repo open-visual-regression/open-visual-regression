@@ -1,40 +1,35 @@
-import type { BaselineSnapshotPaneData, SnapshotPaneData } from "../../snapshot-pane/types";
+import type {
+  BaselineSnapshotPaneData,
+  DiffImages,
+  SnapshotPaneData,
+} from "../../snapshot-pane/types";
 import { BaselineSnapshotPane } from "./BaselineSnapshotPane";
-import { NewSnapshotDiffPane } from "./NewSnapshotDiffPane";
 import { NewSnapshotPane } from "./NewSnapshotPane";
 
 export type SplitViewProps = {
   baseline: BaselineSnapshotPaneData;
   newSnapshot: SnapshotPaneData;
-  diffImagePath: string | null;
+  diffImages: DiffImages;
   showDiff: boolean;
-  onShowDiffChange: (showDiff: boolean) => void;
 };
 
-export const SplitView = ({
-  baseline,
-  newSnapshot,
-  diffImagePath,
-  showDiff,
-  onShowDiffChange,
-}: SplitViewProps) => {
+export const SplitView = ({ baseline, newSnapshot, diffImages, showDiff }: SplitViewProps) => {
   const canvasImagePaths = [baseline.imagePath, newSnapshot.imagePath];
 
   return (
     <div className="grid flex-1 grid-cols-1 gap-4 lg:grid-cols-2">
-      <BaselineSnapshotPane {...baseline} canvasImagePaths={canvasImagePaths} />
-      {diffImagePath ? (
-        <NewSnapshotDiffPane
-          {...newSnapshot}
-          label="new"
-          diffImagePath={diffImagePath}
-          canvasImagePaths={canvasImagePaths}
-          showDiff={showDiff}
-          onShowDiffChange={onShowDiffChange}
-        />
-      ) : (
-        <NewSnapshotPane {...newSnapshot} canvasImagePaths={canvasImagePaths} />
-      )}
+      <BaselineSnapshotPane
+        {...baseline}
+        canvasImagePaths={canvasImagePaths}
+        diffImagePath={diffImages.baseline}
+        showDiff={showDiff}
+      />
+      <NewSnapshotPane
+        {...newSnapshot}
+        canvasImagePaths={canvasImagePaths}
+        diffImagePath={diffImages.newSnapshot}
+        showDiff={showDiff}
+      />
     </div>
   );
 };

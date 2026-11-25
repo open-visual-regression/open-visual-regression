@@ -23,7 +23,7 @@ const meta: Meta<typeof SnapshotZoomDialog> = {
       imagePath: "/api/storage/new-desktop.png",
       alt: "snapshot of Button Primary",
     },
-    diffImagePath: null,
+    diffImages: { baseline: null, newSnapshot: null },
   },
   render: (args) => (
     <SnapshotPreferencesProvider
@@ -55,7 +55,10 @@ const comparisonArgs = {
     commitSha: "abc1234567890",
     commitUrl: "https://github.com/acme/web/commit/abc1234567890",
   },
-  diffImagePath: "/api/storage/diff-desktop.png",
+  diffImages: {
+    baseline: "/api/storage/diff-desktop-baseline.png",
+    newSnapshot: "/api/storage/diff-desktop-new.png",
+  },
 };
 
 const openDialog = async (canvasElement: HTMLElement, view: "baseline" | "new") => {
@@ -86,7 +89,8 @@ export const Baseline: Story = {
       "aria-selected",
       "true",
     );
-    await expect(within(dialog).getByRole("switch")).toHaveAttribute("aria-disabled", "true");
+    // The baseline has its own overlay, so the diff toggle works here too.
+    await expect(within(dialog).getByRole("switch")).not.toHaveAttribute("aria-disabled", "true");
   },
 };
 
