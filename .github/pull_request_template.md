@@ -8,8 +8,9 @@
 
 ## Testing
 
-<!-- What you verified by hand in the browser: the flows you exercised and what you saw.
-     Use "N/A" for changes with no user-facing surface (CI, docs, internal refactors). -->
+<!-- How you smoke tested the change: what you exercised the way a user, operator, or agent
+     would, the edge cases you tried, and what you saw. Every change has one. Don't list checks
+     CI already runs (typecheck, lint, unit tests, builds). -->
 
 ## Screenshots
 
